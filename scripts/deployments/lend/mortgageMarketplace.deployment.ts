@@ -1,0 +1,60 @@
+import { LedgerSigner } from '@anders-t/ethers-ledger';
+import assert from 'assert';
+import { ethers, network, upgrades } from 'hardhat';
+import { Constant } from "../../../utils/constant";
+import { deployMortgageMarketplace } from '../../../utils/deployments/lend/mortgageMarketplace';
+
+async function deployOrUpgradeMortgageMarketplace() {
+    const config = network.config as any;
+    const networkName = network.name.toUpperCase();
+    const signer = networkName == 'MAINNET'
+        ? new LedgerSigner(ethers.provider)
+        : (await ethers.getSigners())[0];
+    const MortgageMarketplace = await ethers.getContractFactory('MortgageMarketplace', signer);
+    const mortgageMarketplaceAddress = config.mortgageMarketplaceAddress ?
+        await (async () => {
+            await upgrades.upgradeProxy(
+                config.mortgageMarketplaceAddress,
+                MortgageMarketplace,
+            );
+            console.log(`Contract MortgageMarketplace has been updated to address ${config.mortgageMarketplaceAddress}`);
+            return config.mortgageMarketplaceAddress;
+        })() :
+        await (async () => {
+            const adminAddress = config.adminAddress;
+            assert.ok(
+                adminAddress,
+                `Missing ${networkName}_ADMIN_ADDRESS from environment variables!`
+            );
+            const mortgageTokenAddress = config.mortgageTokenAddress;
+            assert.ok(
+                mortgageTokenAddress,
+                `Missing ${networkName}_MORTGAGE_TOKEN_ADDRESS from environment variables!`
+            );
+            const commissionTokenAddress = config.commissionTokenAddress;
+            assert.ok(
+                commissionTokenAddress,
+                `Missing ${networkName}_COMMISSION_TOKEN_ADDRESS from environment variables!`
+            );
+
+            const mortgageMarketplace = await deployMortgageMarketplace(
+                signer,
+                adminAddress,
+                mortgageTokenAddress,
+                commissionTokenAddress,
+                Constant.MORTGAGE_TOKEN_INITIAL_ExclusiveRate,
+                Constant.MORTGAGE_TOKEN_INITIAL_CommissionRate,
+            );
+            console.log(`Contract MortgageMarketplace has been deployed to address ${mortgageMarketplace.address}`);
+
+            return mortgageMarketplace.address;
+        })();
+    console.log(`${networkName}_MORTGAGE_MARKETPLACE_ADDRESS=${mortgageMarketplaceAddress}`);
+}
+
+deployOrUpgradeMortgageMarketplace()
+    .then(() => process.exit(0))
+    .catch((error) => {
+        console.error(error);
+        process.exit(1);
+    });

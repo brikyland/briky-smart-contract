@@ -1,0 +1,13 @@
+/.idea
+/.vscode
+/artifacts
+/cache
+/node_modules
+/test-results
+/typechain-types
+.DS_Store
+.env
+.venv
+
+/scripts/crawlers/transactionHashes.txt
+/balances.json
