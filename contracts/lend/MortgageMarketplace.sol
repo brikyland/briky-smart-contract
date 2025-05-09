@@ -18,7 +18,7 @@ import {IMortgageToken} from "./interfaces/IMortgageToken.sol";
 
 import {MortgageMarketplaceStorage} from "./storages/MortgageMarketplaceStorage.sol";
 
-contract EstateMarketplace is
+contract MortgageMarketplace is
 MortgageMarketplaceStorage,
 PausableUpgradeable,
 ReentrancyGuardUpgradeable {

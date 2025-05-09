@@ -309,7 +309,6 @@ ReentrancyGuardUpgradeable {
         }
 
         if (currency == address(0)) {
-            if (msg.value < principal) revert InsufficientFunds();
             CurrencyHandler.receiveNative(principal);
             CurrencyHandler.transferNative(borrower, principal - fee);
             CurrencyHandler.transferNative(feeReceiver, fee - commissionAmount);

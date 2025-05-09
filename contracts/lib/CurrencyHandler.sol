@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 library CurrencyHandler {
-    error InsufficientFunds();
+    error InsufficientValue();
     error FailedTransfer();
     error FailedRefund();
 
@@ -15,7 +15,7 @@ library CurrencyHandler {
 
     function receiveNative(uint256 _value) internal {
         if (_value > msg.value) {
-            revert InsufficientFunds();
+            revert InsufficientValue();
         }
         if (_value < msg.value) {
             unchecked {

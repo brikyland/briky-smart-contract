@@ -16,7 +16,7 @@ import {ICommissionToken} from "../land/interfaces/ICommissionToken.sol";
 
 import {CommissionMarketplaceStorage} from "./storages/CommissionMarketplaceStorage.sol";
 
-contract EstateMarketplace is
+contract CommissionMarketplace is
 CommissionMarketplaceStorage,
 PausableUpgradeable,
 ReentrancyGuardUpgradeable {
