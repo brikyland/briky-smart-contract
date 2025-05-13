@@ -129,8 +129,8 @@ ReentrancyGuardUpgradeable {
 
         IMortgageToken.Loan memory loan = mortgageTokenContract.getLoan(_tokenId);
         if (loan.state != IMortgageToken.LoanState.Supplied
-            && loan.due <= block.timestamp) {
-            revert Overdue();
+            || loan.due <= block.timestamp) {
+            revert UnavailableLoan();
         }
 
         if (_price == 0) {
@@ -170,8 +170,8 @@ ReentrancyGuardUpgradeable {
         IMortgageToken mortgageTokenContract = IMortgageToken(mortgageToken);
         IMortgageToken.Loan memory loan = mortgageTokenContract.getLoan(_tokenId);
         if (loan.state != IMortgageToken.LoanState.Supplied
-            && loan.due <= block.timestamp) {
-            revert Overdue();
+            || loan.due <= block.timestamp) {
+            revert UnavailableLoan();
         }
 
         Offer storage offer = offers[_offerId];

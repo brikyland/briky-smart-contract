@@ -44,7 +44,7 @@ interface IMortgageMarketplace is ICommon {
     error InvalidTokenId();
     error InvalidOfferId();
     error InvalidPrice();
-    error Overdue();
+    error UnavailableLoan();
 
     function admin() external view returns (address admin);
     function commissionToken() external view returns (address commissionToken);

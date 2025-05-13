@@ -253,7 +253,7 @@ Initializable {
         } else {
             for (uint256 i = 0; i < _zones.length; ++i) {
                 if (!isZone[_zones[i]]) {
-                    revert AuthorizedZone(_zones[i]);
+                    revert NotAuthorizedZone(_zones[i]);
                 }
                 isZone[_zones[i]] = false;
                 emit ZoneRenouncement(_zones[i]);
@@ -289,7 +289,7 @@ Initializable {
         } else {
             for (uint256 i = 0; i < _accounts.length; ++i) {
                 if (!isActiveIn[_zone][_accounts[i]]) revert NotActivated(_accounts[i]);
-                isActiveIn[_zone][_accounts[i]] = true;
+                isActiveIn[_zone][_accounts[i]] = false;
                 emit ZoneDeactivation(_zone, _accounts[i]);
             }
         }
