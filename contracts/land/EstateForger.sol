@@ -5,6 +5,9 @@ import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/security/
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
+import {ERC1155HolderUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
+import {ERC1155ReceiverUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/utils/ERC1155ReceiverUpgradeable.sol";
+import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable.sol";
 
 import {Constant} from "../lib/Constant.sol";
 import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
@@ -16,14 +19,14 @@ import {ICommissionToken} from "./interfaces/ICommissionToken.sol";
 import {IEstateToken} from "./interfaces/IEstateToken.sol";
 
 import {EstateForgerStorage} from "./storages/EstateForgerStorage.sol";
-
 import {EstateTokenizer} from "./EstateTokenizer.sol";
 
 contract EstateForger is
 EstateForgerStorage,
 EstateTokenizer,
 PausableUpgradeable,
-ReentrancyGuardUpgradeable {
+ReentrancyGuardUpgradeable,
+ERC1155HolderUpgradeable {
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
     string constant private VERSION = "v1.1.1";
@@ -603,5 +606,13 @@ ReentrancyGuardUpgradeable {
     function allocationOf(uint256 _requestId, address _account) public view returns (uint256 allocation) {
         if (_requestId == 0 || _requestId > requestNumber) revert InvalidRequestId();
         return deposits[_requestId][_account] * 10 ** requests[_requestId].decimals;
+    }
+
+    function supportsInterface(bytes4 _interfaceId) public view override (
+        IERC165Upgradeable,
+        ERC1155ReceiverUpgradeable,
+        EstateTokenizer
+    ) returns (bool) {
+        return super.supportsInterface(_interfaceId);
     }
 }
