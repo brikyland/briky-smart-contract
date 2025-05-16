@@ -235,7 +235,7 @@ Initializable {
         verifyAdminSignatures(
             abi.encode(
                 address(this),
-                "authorizeZones",
+                "declareZones",
                 _zones,
                 _isZone
             ),

@@ -361,9 +361,9 @@ ReentrancyGuardUpgradeable {
         if (currency == address(0)) {
             uint256 repayment = loan.repayment;
             CurrencyHandler.receiveNative(repayment);
-            CurrencyHandler.transferNative(loan.lender, repayment);
+            CurrencyHandler.transferNative(ownerOf(_loanId), repayment);
         } else {
-            IERC20Upgradeable(currency).safeTransferFrom(borrower, loan.lender, loan.repayment);
+            IERC20Upgradeable(currency).safeTransferFrom(borrower, ownerOf(_loanId), loan.repayment);
         }
 
         IEstateToken(estateToken).safeTransferFrom(
