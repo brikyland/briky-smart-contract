@@ -176,6 +176,7 @@ ReentrancyGuardUpgradeable {
                     revert InvalidTokenizer(_accounts[i]);
                 }
                 isTokenizer[_accounts[i]] = true;
+                emit TokenizerAuthorization(_accounts[i]);
             }
         } else {
             for (uint256 i = 0; i < _accounts.length; ++i) {
@@ -183,6 +184,7 @@ ReentrancyGuardUpgradeable {
                     revert NotAuthorizedAccount(_accounts[i]);
                 }
                 isTokenizer[_accounts[i]] = false;
+                emit TokenizerDeauthorization(_accounts[i]);
             }
         }
     }
