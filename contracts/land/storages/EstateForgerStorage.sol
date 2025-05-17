@@ -8,8 +8,8 @@ IEstateForger {
     mapping(uint256 => mapping(address => uint256)) public deposits;
     mapping(uint256 => mapping(address => bool)) public hasWithdrawn;
 
-    mapping(address => uint256) public minUnitPrices;
-    mapping(address => uint256) public maxUnitPrices;
+    uint256 public baseMinUnitPrice;
+    uint256 public baseMaxUnitPrice;
 
     mapping(uint256 => Request) internal requests;
 

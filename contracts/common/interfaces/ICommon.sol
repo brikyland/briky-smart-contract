@@ -9,6 +9,11 @@ interface ICommon {
         bool isExclusive;
     }
 
+    struct PriceFeedInfo {
+        address feed;
+        uint40 heartbeat;
+    }
+
     error InsufficientFunds();
     error InvalidCurrency();
     error InvalidInput();

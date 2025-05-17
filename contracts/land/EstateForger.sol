@@ -21,12 +21,14 @@ import {IEstateToken} from "./interfaces/IEstateToken.sol";
 import {EstateForgerStorage} from "./storages/EstateForgerStorage.sol";
 import {EstateTokenizer} from "./EstateTokenizer.sol";
 
+import {Formula} from "../lib/Formula.sol";
+
 contract EstateForger is
 EstateForgerStorage,
 EstateTokenizer,
+ERC1155HolderUpgradeable,
 PausableUpgradeable,
-ReentrancyGuardUpgradeable,
-ERC1155HolderUpgradeable {
+ReentrancyGuardUpgradeable {
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
     string constant private VERSION = "v1.1.1";
@@ -155,40 +157,30 @@ ERC1155HolderUpgradeable {
         emit CommissionRateUpdate(_commissionRate);
     }
 
-    function updateCurrencyUnitPrices(
-        address[] calldata _currencies,
-        uint256[] calldata _minUnitPrices,
-        uint256[] calldata _maxUnitPrices,
+    function updateBaseUnitPrice(
+        uint256 _baseMinUnitPrice,
+        uint256 _baseMaxUnitPrice,
         bytes[] calldata _signatures
     ) external {
         IAdmin(admin).verifyAdminSignatures(
             abi.encode(
                 address(this),
-                "updateCurrencyUnitPrices",
-                _currencies,
-                _minUnitPrices,
-                _maxUnitPrices
+                "updateBaseUnitPrice",
+                _baseMinUnitPrice,
+                _baseMaxUnitPrice
             ),
             _signatures
         );
 
-        if (_currencies.length != _minUnitPrices.length
-            || _currencies.length != _maxUnitPrices.length) {
+        if (_baseMinUnitPrice > _baseMaxUnitPrice) {
             revert InvalidInput();
         }
-
-        for (uint256 i = 0; i < _currencies.length; ++i) {
-            if (_minUnitPrices[i] > _maxUnitPrices[i]) {
-                revert InvalidInput();
-            }
-            minUnitPrices[_currencies[i]] = _minUnitPrices[i];
-            maxUnitPrices[_currencies[i]] = _maxUnitPrices[i];
-            emit CurrencyUnitPriceUpdate(
-                _currencies[i],
-                _minUnitPrices[i],
-                _maxUnitPrices[i]
-            );
-        }
+        baseMinUnitPrice = _baseMinUnitPrice;
+        baseMaxUnitPrice = _baseMaxUnitPrice;
+        emit BaseUnitPriceUpdate(
+            _baseMinUnitPrice,
+            _baseMaxUnitPrice
+        );
     }
 
     function getRequest(uint256 _requestId) external view returns (Request memory) {
@@ -217,13 +209,14 @@ ERC1155HolderUpgradeable {
 
         CurrencyRegistry memory currencyRegistry = IAdmin(admin).getCurrencyRegistry(_currency);
 
+        (uint256 currencyBasePrice, uint8 currencyBasePriceDecimals) = IAdmin(admin).getCurrencyBasePrice(_currency);
+        
         if (_requester == address(0)
             || _minSellingAmount > _maxSellingAmount
             || _maxSellingAmount > _totalSupply
             || _totalSupply > type(uint256).max / 10 ** _decimals
             || !currencyRegistry.isAvailable
-            || _unitPrice < minUnitPrices[_currency]
-            || _unitPrice > maxUnitPrices[_currency]
+            || !Formula.isBasePriceWithinRange(_unitPrice, currencyBasePrice, currencyBasePriceDecimals, baseMinUnitPrice, baseMaxUnitPrice)
             || _decimals > Constant.ESTATE_TOKEN_DECIMALS_LIMIT
             || _expireAt <= block.timestamp) {
             revert InvalidInput();
@@ -300,13 +293,14 @@ ERC1155HolderUpgradeable {
 
         CurrencyRegistry memory currency = IAdmin(admin).getCurrencyRegistry(_currency);
 
+        (uint256 currencyBasePrice, uint8 currencyBasePriceDecimals) = IAdmin(admin).getCurrencyBasePrice(_currency);
+
         if (_requester == address(0)
             || _minSellingAmount > _maxSellingAmount
             || _maxSellingAmount > _totalSupply
             || _totalSupply > type(uint256).max / 10 ** _decimals
             || !currency.isAvailable
-            || _unitPrice < minUnitPrices[_currency]
-            || _unitPrice > maxUnitPrices[_currency]
+            || Formula.isBasePriceWithinRange(_unitPrice, currencyBasePrice, currencyBasePriceDecimals, baseMinUnitPrice, baseMaxUnitPrice)
             || _decimals > Constant.ESTATE_TOKEN_DECIMALS_LIMIT
             || _expireAt <= block.timestamp
             || _closeAt <= block.timestamp) {

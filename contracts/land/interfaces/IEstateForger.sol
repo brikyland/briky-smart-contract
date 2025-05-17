@@ -27,10 +27,9 @@ IEstateTokenizer {
     event ExclusiveRateUpdate(uint256 newValue);
     event FeeRateUpdate(uint256 newValue);
 
-    event CurrencyUnitPriceUpdate(
-        address indexed currency,
-        uint256 minUnitPrice,
-        uint256 maxUnitPrice
+    event BaseUnitPriceUpdate(
+        uint256 baseMinUnitPrice,
+        uint256 baseMaxUnitPrice
     );
 
     event NewRequest(
@@ -114,9 +113,6 @@ IEstateTokenizer {
     function feeRate() external view returns (uint256 feeRate);
 
     function requestNumber() external view returns (uint256 requestNumber);
-
-    function minUnitPrices(address currency) external view returns (uint256 minUnitPrice);
-    function maxUnitPrices(address currency) external view returns (uint256 maxUnitPrice);
 
     function deposits(uint256 requestId, address depositor) external view returns (uint256 deposit);
     function hasWithdrawn(uint256 requestId, address account) external view returns (bool hasWithdrawn);

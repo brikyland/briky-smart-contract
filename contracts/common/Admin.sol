@@ -8,6 +8,8 @@ import {Signature} from "../lib/Signature.sol";
 
 import {AdminStorage} from "./storages/AdminStorage.sol";
 
+import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
+
 contract Admin is
 AdminStorage,
 Initializable {
@@ -340,7 +342,64 @@ Initializable {
             emit CurrencyRegistryUpdate(
                 _currencies[i],
                 _isAvailable[i],
-                _isExclusive[i]);
+                _isExclusive[i]
+            );
         }
+    }
+    
+    function updatePriceFeeds(
+        address[] calldata _currencies,
+        address[] calldata _feed,
+        uint40[] calldata _heartbeats,
+        bytes[] calldata _signatures
+    ) external {
+        verifyAdminSignatures(
+            abi.encode(
+                address(this),
+                "updatePriceFeeds",
+                _currencies,
+                _feed,
+                _heartbeats                           
+            ),
+            _signatures
+        );
+
+        if (_currencies.length != _feed.length) {
+            revert InvalidInput();
+        }
+
+        for(uint256 i = 0; i < _currencies.length; ++i) {
+            currencyPriceFeeds[_currencies[i]] = PriceFeedInfo(
+                _feed[i],
+                _heartbeats[i]
+            );
+            emit CurrencyPriceFeedUpdate(
+                _currencies[i],
+                _feed[i],
+                _heartbeats[i]
+            );
+        }
+    }
+
+    function getCurrencyBasePrice(address _currency) external view returns (uint256, uint8) {
+        PriceFeedInfo memory info = currencyPriceFeeds[_currency];
+
+        if (info.feed == address(0)) {
+            revert InvalidInput();
+        }
+
+        (, int256 currencyBasePrice, , uint256 updatedAt, ) = AggregatorV3Interface(info.feed).latestRoundData();
+        
+        if (currencyBasePrice <= 0) {
+            revert InvalidCurrencyBasePrice(_currency);
+        }
+
+        if (block.timestamp - updatedAt > info.heartbeat) {
+            revert StalePriceFeed(_currency);
+        }
+
+        uint8 currencyBasePriceDecimals = AggregatorV3Interface(info.feed).decimals();
+
+        return (uint256(currencyBasePrice), currencyBasePriceDecimals);
     }
 }
