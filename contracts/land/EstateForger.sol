@@ -208,15 +208,14 @@ ReentrancyGuardUpgradeable {
         }
 
         CurrencyRegistry memory currencyRegistry = IAdmin(admin).getCurrencyRegistry(_currency);
-
-        (uint256 currencyBasePrice, uint8 currencyBasePriceDecimals) = IAdmin(admin).getCurrencyBasePrice(_currency);
+        CurrencyBasePrice memory basePrice = IAdmin(admin).getCurrencyBasePrice(_currency);
         
         if (_requester == address(0)
             || _minSellingAmount > _maxSellingAmount
             || _maxSellingAmount > _totalSupply
             || _totalSupply > type(uint256).max / 10 ** _decimals
             || !currencyRegistry.isAvailable
-            || !Formula.isBasePriceWithinRange(_unitPrice, currencyBasePrice, currencyBasePriceDecimals, baseMinUnitPrice, baseMaxUnitPrice)
+            || !Formula.isBasePriceWithinRange(_unitPrice, basePrice.value, basePrice.decimals, baseMinUnitPrice, baseMaxUnitPrice)
             || _decimals > Constant.ESTATE_TOKEN_DECIMALS_LIMIT
             || _expireAt <= block.timestamp) {
             revert InvalidInput();
@@ -292,15 +291,14 @@ ReentrancyGuardUpgradeable {
         }
 
         CurrencyRegistry memory currency = IAdmin(admin).getCurrencyRegistry(_currency);
-
-        (uint256 currencyBasePrice, uint8 currencyBasePriceDecimals) = IAdmin(admin).getCurrencyBasePrice(_currency);
+        CurrencyBasePrice memory basePrice = IAdmin(admin).getCurrencyBasePrice(_currency);
 
         if (_requester == address(0)
             || _minSellingAmount > _maxSellingAmount
             || _maxSellingAmount > _totalSupply
             || _totalSupply > type(uint256).max / 10 ** _decimals
             || !currency.isAvailable
-            || Formula.isBasePriceWithinRange(_unitPrice, currencyBasePrice, currencyBasePriceDecimals, baseMinUnitPrice, baseMaxUnitPrice)
+            || Formula.isBasePriceWithinRange(_unitPrice, basePrice.value, basePrice.decimals, baseMinUnitPrice, baseMaxUnitPrice)
             || _decimals > Constant.ESTATE_TOKEN_DECIMALS_LIMIT
             || _expireAt <= block.timestamp
             || _closeAt <= block.timestamp) {

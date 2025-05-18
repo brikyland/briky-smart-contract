@@ -71,7 +71,7 @@ interface IAdmin is ICommon {
     function isAvailableCurrency(address currency) external view returns (bool isAvailable);
     function isExclusiveCurrency(address currency) external view returns (bool isExclusive);
 
-    function getCurrencyBasePrice(address _currency) external view returns (uint256, uint8);
+    function getCurrencyBasePrice(address _currency) external view returns (CurrencyBasePrice memory);
 
     function verifyAdminSignatures(
         bytes memory message,

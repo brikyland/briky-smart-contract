@@ -381,7 +381,7 @@ Initializable {
         }
     }
 
-    function getCurrencyBasePrice(address _currency) external view returns (uint256, uint8) {
+    function getCurrencyBasePrice(address _currency) external view returns (CurrencyBasePrice memory) {
         PriceFeedInfo memory info = currencyPriceFeeds[_currency];
 
         if (info.feed == address(0)) {
@@ -400,6 +400,6 @@ Initializable {
 
         uint8 currencyBasePriceDecimals = AggregatorV3Interface(info.feed).decimals();
 
-        return (uint256(currencyBasePrice), currencyBasePriceDecimals);
+        return CurrencyBasePrice(uint256(currencyBasePrice), currencyBasePriceDecimals);
     }
 }

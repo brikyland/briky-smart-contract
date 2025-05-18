@@ -14,6 +14,11 @@ interface ICommon {
         uint40 heartbeat;
     }
 
+    struct CurrencyBasePrice {
+        uint256 value;
+        uint8 decimals;
+    }
+
     error InsufficientFunds();
     error InvalidCurrency();
     error InvalidInput();
