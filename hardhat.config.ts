@@ -58,6 +58,11 @@ const config: HardhatUserConfig = {
             blockGasLimit: 1000000000,
             ...getNetworkEnvVariable('local', COMMON_ENV_VARIABLE_NAMES),
         } as any,
+        localhost: {
+            gas: 100000000,
+            blockGasLimit: 1000000000,
+            ...getNetworkEnvVariable('local', COMMON_ENV_VARIABLE_NAMES),
+        } as any,
         staging: {
             url: process.env.STAGING_URL,
             chainId: Number(process.env.STAGING_CHAIN_ID),

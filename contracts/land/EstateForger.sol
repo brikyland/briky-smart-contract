@@ -21,6 +21,8 @@ import {IEstateToken} from "./interfaces/IEstateToken.sol";
 import {EstateForgerStorage} from "./storages/EstateForgerStorage.sol";
 import {EstateTokenizer} from "./EstateTokenizer.sol";
 
+import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
+
 import {Formula} from "../lib/Formula.sol";
 
 contract EstateForger is
@@ -182,6 +184,62 @@ ReentrancyGuardUpgradeable {
             _baseMaxUnitPrice
         );
     }
+    
+    function updatePriceFeeds(
+        address[] calldata _currencies,
+        address[] calldata _feed,
+        uint40[] calldata _heartbeats,
+        bytes[] calldata _signatures
+    ) external {
+        IAdmin(admin).verifyAdminSignatures(
+            abi.encode(
+                address(this),
+                "updatePriceFeeds",
+                _currencies,
+                _feed,
+                _heartbeats                           
+            ),
+            _signatures
+        );
+
+        if (_currencies.length != _feed.length || _currencies.length != _heartbeats.length) {
+            revert InvalidInput();
+        }
+
+        for(uint256 i = 0; i < _currencies.length; ++i) {
+            currencyPriceFeeds[_currencies[i]] = PriceFeedInfo(
+                _feed[i],
+                _heartbeats[i]
+            );
+            emit CurrencyPriceFeedUpdate(
+                _currencies[i],
+                _feed[i],
+                _heartbeats[i]
+            );
+        }
+    }
+
+    function getCurrencyBasePrice(address _currency) public view returns (CurrencyBasePrice memory) {
+        PriceFeedInfo memory info = currencyPriceFeeds[_currency];
+
+        if (info.feed == address(0)) {
+            revert InvalidInput();
+        }
+
+        (, int256 currencyBasePrice, , uint256 updatedAt, ) = AggregatorV3Interface(info.feed).latestRoundData();
+        
+        if (currencyBasePrice <= 0) {
+            revert InvalidCurrencyBasePrice(_currency);
+        }
+
+        if (block.timestamp - updatedAt > info.heartbeat) {
+            revert StalePriceFeed(_currency);
+        }
+
+        uint8 currencyBasePriceDecimals = AggregatorV3Interface(info.feed).decimals();
+
+        return CurrencyBasePrice(uint256(currencyBasePrice), currencyBasePriceDecimals);
+    }
 
     function getRequest(uint256 _requestId) external view returns (Request memory) {
         if (_requestId == 0 || _requestId > requestNumber) {
@@ -208,7 +266,7 @@ ReentrancyGuardUpgradeable {
         }
 
         CurrencyRegistry memory currencyRegistry = IAdmin(admin).getCurrencyRegistry(_currency);
-        CurrencyBasePrice memory basePrice = IAdmin(admin).getCurrencyBasePrice(_currency);
+        CurrencyBasePrice memory basePrice = getCurrencyBasePrice(_currency);
         
         if (_requester == address(0)
             || _minSellingAmount > _maxSellingAmount
@@ -291,7 +349,7 @@ ReentrancyGuardUpgradeable {
         }
 
         CurrencyRegistry memory currency = IAdmin(admin).getCurrencyRegistry(_currency);
-        CurrencyBasePrice memory basePrice = IAdmin(admin).getCurrencyBasePrice(_currency);
+        CurrencyBasePrice memory basePrice = getCurrencyBasePrice(_currency);
 
         if (_requester == address(0)
             || _minSellingAmount > _maxSellingAmount

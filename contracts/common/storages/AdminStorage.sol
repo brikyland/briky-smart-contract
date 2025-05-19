@@ -22,7 +22,5 @@ abstract contract AdminStorage is IAdmin {
     mapping(bytes32 => bool) public isZone;
     mapping(bytes32 => mapping(address => bool)) public isActiveIn;
 
-    mapping(address => PriceFeedInfo) public currencyPriceFeeds;
-
-    uint256[45] private __gap;
+    uint256[46] private __gap;
 }

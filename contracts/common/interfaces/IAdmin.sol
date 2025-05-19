@@ -34,12 +34,6 @@ interface IAdmin is ICommon {
         bool isExclusive
     );
 
-    event CurrencyPriceFeedUpdate(
-        address indexed currency,
-        address feed,
-        uint40 heartbeat
-    );
-
     error Activated(address account);
     error AuthorizedAccount(address account);
     error AuthorizedZone(bytes32 zone);
@@ -49,9 +43,6 @@ interface IAdmin is ICommon {
     error NotActivated(address account);
     error NotAuthorizedAccount(address account);
     error NotAuthorizedZone(bytes32 zone);
-
-    error InvalidCurrencyBasePrice(address currency);
-    error StalePriceFeed(address currency);
 
     function admin1() external view returns (address admin1);
     function admin2() external view returns (address admin2);
@@ -70,8 +61,6 @@ interface IAdmin is ICommon {
     function getCurrencyRegistry(address currency) external view returns (CurrencyRegistry memory currencyRegistry);
     function isAvailableCurrency(address currency) external view returns (bool isAvailable);
     function isExclusiveCurrency(address currency) external view returns (bool isExclusive);
-
-    function getCurrencyBasePrice(address _currency) external view returns (CurrencyBasePrice memory);
 
     function verifyAdminSignatures(
         bytes memory message,

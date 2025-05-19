@@ -11,6 +11,8 @@ IEstateForger {
     uint256 public baseMinUnitPrice;
     uint256 public baseMaxUnitPrice;
 
+    mapping(address => PriceFeedInfo) internal currencyPriceFeeds;
+
     mapping(uint256 => Request) internal requests;
 
     uint256 public commissionRate;

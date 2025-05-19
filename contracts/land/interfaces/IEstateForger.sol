@@ -92,6 +92,12 @@ IEstateTokenizer {
         uint256 amount
     );
 
+    event CurrencyPriceFeedUpdate(
+        address indexed currency,
+        address feed,
+        uint40 heartbeat
+    );
+
     error AlreadyHadDepositor();
     error AlreadyWithdrawn();
     error Cancelled();
@@ -104,6 +110,9 @@ IEstateTokenizer {
     error StillSelling();
     error Tokenized();
 
+    error InvalidCurrencyBasePrice(address currency);
+    error StalePriceFeed(address currency);
+
     function admin() external view returns (address admin);
     function commissionToken() external view returns (address commissionToken);
     function feeReceiver() external view returns (address feeReceiver);
@@ -111,6 +120,8 @@ IEstateTokenizer {
     function commissionRate() external view returns (uint256 commissionRate);
     function exclusiveRate() external view returns (uint256 exclusiveRate);
     function feeRate() external view returns (uint256 feeRate);
+
+    function getCurrencyBasePrice(address _currency) external view returns (CurrencyBasePrice memory);
 
     function requestNumber() external view returns (uint256 requestNumber);
 
