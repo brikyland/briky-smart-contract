@@ -12,7 +12,9 @@ abstract contract DriptributorStorage is IDriptributor {
 
     address public admin;
     address public primaryToken;
-    address public stakeToken;
+    address public stakeToken1;
+    address public stakeToken2;
+    address public stakeToken3;
 
     uint256[50] private __gap;
 }

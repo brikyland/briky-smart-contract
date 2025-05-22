@@ -5,5 +5,9 @@ import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/intr
 
 interface IEstateTokenizer is
 IERC165Upgradeable {
-    function allocationOf(uint256 tokenizationId, address account) external view returns (uint256 allocation);
+    function allocationOfAt(
+        uint256 tokenizationId,
+        address account,
+        uint256 at
+    ) external view returns (uint256 allocation);
 }

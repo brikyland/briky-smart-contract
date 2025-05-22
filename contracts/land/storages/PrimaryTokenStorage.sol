@@ -24,8 +24,17 @@ abstract contract PrimaryTokenStorage is IPrimaryToken {
     bool public seedRoundUnlocked;
 
     address public admin;
+    // deprecated
     address public stakeToken;
     address public treasury;
 
-    uint256[50] private __gap;
+    address public stakeToken1;
+    address public stakeToken2;
+    address public stakeToken3;
+
+    uint256 public mintedStakeReward1;
+    uint256 public mintedStakeReward2;
+    uint256 public mintedStakeReward3;
+
+    uint256[44] private __gap;
 }

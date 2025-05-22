@@ -7,12 +7,13 @@ import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ER
 
 import {Constant} from "../lib/Constant.sol";
 import {FixedMath} from "../lib/FixedMath.sol";
-import {Formula} from "../lib/Formula.sol";
+import {StakeFormula} from "../lib/StakeFormula.sol";
 import {MulDiv} from "../lib/MulDiv.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 
 import {IPrimaryToken} from "./interfaces/IPrimaryToken.sol";
+import {IStakeToken} from "./interfaces/IStakeToken.sol";
 
 import {StakeTokenStorage} from "./storages/StakeTokenStorage.sol";
 
@@ -37,11 +38,11 @@ ReentrancyGuardUpgradeable {
         __ReentrancyGuard_init();
 
         admin = _admin;
-        name = _name;
-        symbol = _symbol;
         primaryToken = _primaryToken;
 
-        day = 1;
+        name = _name;
+        symbol = _symbol;
+
         interestAccumulation = FixedMath.toFixed(1);
     }
 
@@ -65,33 +66,34 @@ ReentrancyGuardUpgradeable {
         _unpause();
     }
 
-    function startRewarding(uint256 _initialLastRewardFetch, bytes[] calldata _signatures) external {
+    function initializeRewarding(
+        uint256 _initialLastRewardFetch,
+        uint256 _withdrawalUnlockedAt,
+        address _successor,
+        bytes[] calldata _signatures
+    ) external {
         IAdmin(admin).verifyAdminSignatures(
             abi.encode(
                 address(this),
-                "startRewarding",
-                _initialLastRewardFetch
+                "initializeRewarding",
+                _initialLastRewardFetch,
+                _withdrawalUnlockedAt,
+                _successor
             ),
             _signatures
         );
+
         if (lastRewardFetch != 0) {
             revert AlreadyStartedRewarding();
         }
+
         lastRewardFetch = _initialLastRewardFetch;
+        withdrawalUnlockedAt = _withdrawalUnlockedAt;
+        successor = _successor;
     }
 
     function decimals() external view returns (uint8) {
         return IPrimaryToken(primaryToken).decimals();
-    }
-
-    function unstakingFeePercentage() public view returns (uint256) {
-        return day > Constant.STAKE_TOKEN_UNSTAKING_FEE_ZEROING_DAYS
-            ? 0
-            : MulDiv.mulDiv(
-                Constant.STAKE_TOKEN_UNSTAKING_FEE_ZEROING_DAYS - day + 1,
-                Constant.STAKE_TOKEN_UNSTAKING_FEE_INITIAL_PERCENTAGE,
-                Constant.STAKE_TOKEN_UNSTAKING_FEE_ZEROING_DAYS
-            );
     }
 
     function fetchReward() public nonReentrant whenNotPaused {
@@ -106,23 +108,18 @@ ReentrancyGuardUpgradeable {
                 revert NoStakeholder();
             }
 
-            uint256 dailyReward = IPrimaryToken(primaryToken).mintForStake();
+            uint256 reward = IPrimaryToken(primaryToken).mintForStake();
 
-            uint256 reward = dailyReward + returningFee;
-
-            interestAccumulation = Formula.newInterestAccumulation(
+            interestAccumulation = StakeFormula.newInterestAccumulation(
                 interestAccumulation,
                 reward,
                 totalSupply
             );
 
             totalSupply += reward;
-
-            returningFee = 0;
             lastRewardFetch = block.timestamp;
-            day++;
 
-            emit RewardFetch(day, dailyReward, returningFee);
+            emit RewardFetch(reward);
         }
     }
 
@@ -130,48 +127,64 @@ ReentrancyGuardUpgradeable {
         IPrimaryToken(primaryToken).safeTransferFrom(msg.sender, address(this), _value);
 
         unchecked {
-            weights[_account] = weights[_account]
-                .add(Formula.tokenToWeight(_value, interestAccumulation));
             totalSupply += _value;
         }
+        weights[_account] = weights[_account]
+            .add(StakeFormula.tokenToWeight(_value, interestAccumulation));
 
         emit Stake(_account, _value);
     }
 
-    function unstake(uint256 _value) external nonReentrant whenNotPaused returns (uint256) {
-        if (_value > balanceOf(msg.sender)) {
-            revert BalanceExceeded();
+    function unstake(uint256 _value) external nonReentrant whenNotPaused {
+        if (block.timestamp < withdrawalUnlockedAt) {
+            revert NotUnlockedWithdrawing();
         }
 
-        uint256 fee = MulDiv.mulDiv(
-            _value,
-            unstakingFeePercentage(),
-            Constant.COMMON_PERCENTAGE_DENOMINATOR
-        );
+        if (_value > balanceOf(msg.sender)) {
+            revert InsufficientFunds();
+        }
 
         unchecked {
-            returningFee += fee;
-            weights[msg.sender] = weights[msg.sender]
-                .sub(Formula.tokenToWeight(_value, interestAccumulation));
             totalSupply -= _value;
         }
+        weights[msg.sender] = weights[msg.sender]
+            .sub(StakeFormula.tokenToWeight(_value, interestAccumulation));
 
-        IPrimaryToken(primaryToken).safeTransfer(msg.sender, _value - fee);
+        IPrimaryToken(primaryToken).safeTransfer(msg.sender, _value);
 
-        emit Unstake(msg.sender, _value, fee);
+        emit Unstake(msg.sender, _value);
+    }
 
-        return _value - fee;
+    function promote(uint256 _value) external nonReentrant whenNotPaused {
+        IStakeToken successorContract = IStakeToken(successor);
+        if (address(successorContract) == address(0)) {
+            revert NoSuccessor();
+        }
+
+        if (_value > balanceOf(msg.sender)) {
+            revert InsufficientFunds();
+        }
+
+        unchecked {
+            totalSupply -= _value;
+        }
+        weights[msg.sender] = weights[msg.sender]
+            .sub(StakeFormula.tokenToWeight(_value, interestAccumulation));
+
+        successorContract.stake(msg.sender, _value);
+
+        emit Promotion(msg.sender, _value);
     }
 
     function balanceOf(address _account) public view returns (uint256) {
-        return Formula.weightToToken(weights[_account], interestAccumulation);
+        return StakeFormula.weightToToken(weights[_account], interestAccumulation);
     }
 
     function _transfer(address _from, address _to, uint256 _amount) private whenNotPaused {
         require(_from != address(0), "ERC20: transfer from the zero address");
         require(_to != address(0), "ERC20: transfer to the zero address");
 
-        uint256 weight = Formula.tokenToWeight(_amount, interestAccumulation);
+        uint256 weight = StakeFormula.tokenToWeight(_amount, interestAccumulation);
         require(weight <= weights[_from], "ERC20: transfer amount exceeds balance");
         unchecked {
             weights[_from] = weights[_from].sub(weight);

@@ -10,26 +10,26 @@ interface IStakeToken is
 ICommon,
 IERC20Upgradeable,
 IERC20MetadataUpgradeable {
-    event RewardFetch(uint256 indexed day, uint256 value, uint256 returningFee);
+    event RewardFetch(uint256 value);
+    event Promotion(address indexed account, uint256 value);
     event Stake(address indexed account, uint256 value);
-    event Unstake(address indexed account, uint256 value, uint256 fee);
+    event Unstake(address indexed account, uint256 value);
 
     error AlreadyStartedRewarding();
-    error BalanceExceeded();
     error NoStakeholder();
+    error NoSuccessor();
     error NotStartedRewarding();
+    error NotUnlockedWithdrawing();
     error OnCoolDown();
 
     function admin() external view returns (address admin);
     function primaryToken() external view returns (address primaryToken);
 
-    function day() external view returns (uint256 day);
     function lastRewardFetch() external view returns (uint256 timestamp);
-    function returningFee() external view returns (uint256 fee);
-
-    function unstakingFeePercentage() external view returns (uint256 feePercentage);
+    function withdrawalUnlockedAt() external view returns (uint256 timestamp);
 
     function fetchReward() external;
+    function promote(uint256 value) external;
     function stake(address account, uint256 value) external;
-    function unstake(uint256 value) external returns (uint256 valueAfterFee);
+    function unstake(uint256 value) external;
 }

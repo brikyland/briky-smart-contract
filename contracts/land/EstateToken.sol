@@ -280,9 +280,10 @@ ReentrancyGuardUpgradeable {
         Snapshot[] storage snapshots = balanceSnapshots[_tokenId][_account];
         uint256 high = snapshots.length;
         if (high == 0 || _at < snapshots[0].timestamp) {
-            return IEstateTokenizer(estates[_tokenId].tokenizer).allocationOf(
+            return IEstateTokenizer(estates[_tokenId].tokenizer).allocationOfAt(
                 estates[_tokenId].tokenizationId,
-                _account
+                _account,
+                _at
             );
         }
         uint256 low = 0;

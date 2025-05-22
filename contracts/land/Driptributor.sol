@@ -13,6 +13,7 @@ import {IAdmin} from "../common/interfaces/IAdmin.sol";
 import {IStakeToken} from "./interfaces/IStakeToken.sol";
 
 import {DriptributorStorage} from "./storages/DriptributorStorage.sol";
+import {IPrimaryToken} from "./interfaces/IPrimaryToken.sol";
 
 contract Driptributor is
 DriptributorStorage,
@@ -27,7 +28,9 @@ ReentrancyGuardUpgradeable {
     function initialize(
         address _admin,
         address _primaryToken,
-        address _stakeToken,
+        address _stakeToken1,
+        address _stakeToken2,
+        address _stakeToken3,
         uint256 _totalAmount
     ) external initializer {
         __Pausable_init();
@@ -35,7 +38,10 @@ ReentrancyGuardUpgradeable {
 
         admin = _admin;
         primaryToken = _primaryToken;
-        stakeToken = _stakeToken;
+        stakeToken1 = _stakeToken1;
+        stakeToken2 = _stakeToken2;
+        stakeToken3 = _stakeToken3;
+
         totalAmount = _totalAmount;
     }
 
@@ -192,9 +198,12 @@ ReentrancyGuardUpgradeable {
         }
     }
 
-    function stake(uint256[] calldata _distributionIds) external nonReentrant whenNotPaused {
-        IERC20Upgradeable primaryTokenContract = IERC20Upgradeable(primaryToken);
-        IStakeToken stakeTokenContract = IStakeToken(stakeToken);
+    function stake(
+        uint256[] calldata _distributionIds,
+        uint256 _stake1,
+        uint256 _stake2
+    ) external nonReentrant whenNotPaused {
+        uint256 totalStake;
         for (uint256 i = 0; i < _distributionIds.length; ++i) {
             if (_distributionIds[i] == 0 || _distributionIds[i] > distributionNumber) {
                 revert InvalidDistributionId();
@@ -208,11 +217,34 @@ ReentrancyGuardUpgradeable {
             }
 
             distribution.isStaked = true;
-            uint256 amount = distribution.totalAmount - distribution.withdrawnAmount;
-            primaryTokenContract.safeIncreaseAllowance(stakeToken, amount);
-            stakeTokenContract.stake(distribution.receiver, amount);
 
-            emit Stake(_distributionIds[i], amount);
+            totalStake += distribution.totalAmount - distribution.withdrawnAmount;
         }
+
+        if (totalStake < _stake1 + _stake2) {
+            revert InsufficientFunds();
+        }
+
+        uint256 stake3 = totalStake - _stake1 - _stake2;
+
+        IERC20Upgradeable primaryTokenContract = IERC20Upgradeable(primaryToken);
+        IStakeToken stakeToken1Contract = IStakeToken(stakeToken1);
+        IStakeToken stakeToken2Contract = IStakeToken(stakeToken2);
+        IStakeToken stakeToken3Contract = IStakeToken(stakeToken3);
+
+        primaryTokenContract.safeIncreaseAllowance(address(stakeToken1Contract), _stake1);
+        primaryTokenContract.safeIncreaseAllowance(address(stakeToken2Contract), _stake2);
+        primaryTokenContract.safeIncreaseAllowance(address(stakeToken3Contract), stake3);
+
+        stakeToken1Contract.stake(msg.sender, _stake1);
+        stakeToken2Contract.stake(msg.sender, _stake2);
+        stakeToken3Contract.stake(msg.sender, stake3);
+
+        emit Stake(
+            _distributionIds,
+            _stake1,
+            _stake2,
+            stake3
+        );
     }
 }

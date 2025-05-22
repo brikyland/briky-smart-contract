@@ -82,22 +82,6 @@ ReentrancyGuardUpgradeable {
         _unpause();
     }
 
-    function updateStakeToken(
-        address _stakeToken,
-        bytes[] calldata _signatures
-    ) external {
-        IAdmin(admin).verifyAdminSignatures(
-            abi.encode(
-                address(this),
-                "updateStakeToken",
-                _stakeToken
-            ),
-            _signatures
-        );
-        stakeToken = _stakeToken;
-        emit StakeTokenUpdate(_stakeToken);
-    }
-
     function updateTreasury(
         address _treasury,
         bytes[] calldata _signatures
@@ -112,6 +96,54 @@ ReentrancyGuardUpgradeable {
         );
         treasury = _treasury;
         emit TreasuryUpdate(_treasury);
+    }
+
+    function updateStakeToken1(
+        address _stakeToken1,
+        bytes[] calldata _signatures
+    ) external {
+        IAdmin(admin).verifyAdminSignatures(
+            abi.encode(
+                address(this),
+                "updateStakeToken1",
+                _stakeToken1
+            ),
+            _signatures
+        );
+        stakeToken1 = _stakeToken1;
+        emit StakeToken1Update(stakeToken1);
+    }
+
+    function updateStakeToken2(
+        address _stakeToken2,
+        bytes[] calldata _signatures
+    ) external {
+        IAdmin(admin).verifyAdminSignatures(
+            abi.encode(
+                address(this),
+                "updateStakeToken2",
+                _stakeToken2
+            ),
+            _signatures
+        );
+        stakeToken2 = _stakeToken2;
+        emit StakeToken2Update(stakeToken2);
+    }
+
+    function updateStakeToken3(
+        address _stakeToken3,
+        bytes[] calldata _signatures
+    ) external {
+        IAdmin(admin).verifyAdminSignatures(
+            abi.encode(
+                address(this),
+                "updateStakeToken3",
+                _stakeToken3
+            ),
+            _signatures
+        );
+        stakeToken3 = _stakeToken3;
+        emit StakeToken3Update(stakeToken3);
     }
 
     function unlockForBackerRound(
@@ -436,30 +468,48 @@ ReentrancyGuardUpgradeable {
     }
 
     function mintForStake() external returns (uint256) {
-        address receiver = stakeToken;
-        if (msg.sender != receiver) {
+        uint256 availableAmount;
+        uint256 newStake;
+        if (msg.sender == stakeToken1) {
+            availableAmount = Constant.PRIMARY_TOKEN_STAKE_REWARD_1 - mintedStakeReward1;
+            if (availableAmount == 0) {
+                revert AllStakeRewardMinted();
+            }
+
+            newStake = availableAmount > Constant.PRIMARY_TOKEN_DAILY_STAKE_REWARD_LIMIT_1
+                ? Constant.PRIMARY_TOKEN_DAILY_STAKE_REWARD_LIMIT_1
+                : availableAmount;
+            mintedStakeReward1 += newStake;
+
+            emit DailyStake1Mint(newStake);
+        } else if (msg.sender == stakeToken2) {
+            availableAmount = Constant.PRIMARY_TOKEN_STAKE_REWARD_2 - mintedStakeReward2;
+            if (availableAmount == 0) {
+                revert AllStakeRewardMinted();
+            }
+
+            newStake = availableAmount > Constant.PRIMARY_TOKEN_DAILY_STAKE_REWARD_LIMIT_2
+                ? Constant.PRIMARY_TOKEN_DAILY_STAKE_REWARD_LIMIT_2
+                : availableAmount;
+            mintedStakeReward2 += newStake;
+
+            emit DailyStake2Mint(newStake);
+        } else if (msg.sender == stakeToken3) {
+            availableAmount = Constant.PRIMARY_TOKEN_MAXIMUM_SUPPLY - mintedStakeReward3;
+            if (availableAmount == 0) {
+                revert AllStakeRewardMinted();
+            }
+            newStake = availableAmount > Constant.PRIMARY_TOKEN_DAILY_STAKE_REWARD_LIMIT_3
+                ? Constant.PRIMARY_TOKEN_DAILY_STAKE_REWARD_LIMIT_3
+                : availableAmount;
+            mintedStakeReward3 += newStake;
+
+            emit DailyStake3Mint(newStake);
+        } else {
             revert Unauthorized();
         }
 
-        uint256 availableAmount = Constant.PRIMARY_TOKEN_MAXIMUM_SUPPLY - totalSupply();
-
-        if (availableAmount == 0) {
-            revert SupplyLimitationExceeded();
-        }
-
-        if (availableAmount > Constant.PRIMARY_TOKEN_DAILY_STAKE_REWARD_LIMIT) {
-            _mint(receiver, Constant.PRIMARY_TOKEN_DAILY_STAKE_REWARD_LIMIT);
-
-            emit DailyStakeMint(Constant.PRIMARY_TOKEN_DAILY_STAKE_REWARD_LIMIT);
-
-            return Constant.PRIMARY_TOKEN_DAILY_STAKE_REWARD_LIMIT;
-        } else {
-            _mint(receiver, availableAmount);
-
-            emit DailyStakeMint(availableAmount);
-
-            return availableAmount;
-        }
+        return newStake;
     }
 
     function liquidate(uint256 _amount) external whenNotPaused nonReentrant {

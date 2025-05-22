@@ -1,7 +1,7 @@
 import assert from 'assert';
 import { BigNumber } from "ethers";
 import { ethers, network, upgrades } from 'hardhat';
-import { deployDriptributor } from '../../../../../utils/deployments/land/driptributor';
+import { deployDriptributor } from '../../../../utils/deployments/land/driptributor';
 
 export async function deployOrUpgradeDriptributor(
     signer: any,
@@ -31,17 +31,29 @@ export async function deployOrUpgradeDriptributor(
                 primaryTokenAddress,
                 `Missing ${networkName}_PRIMARY_TOKEN_ADDRESS from environment variables!`
             );
-            const stakeTokenAddress = config.stakeTokenAddress;
+            const stakeToken1Address = config.stakeToken1Address;
             assert.ok(
-                stakeTokenAddress,
-                `Missing ${networkName}_STAKE_TOKEN_ADDRESS from environment variables!`
+                stakeToken1Address,
+                `Missing ${networkName}_STAKE_TOKEN_1_ADDRESS from environment variables!`
+            );
+            const stakeToken2Address = config.stakeToken2Address;
+            assert.ok(
+                stakeToken2Address,
+                `Missing ${networkName}_STAKE_TOKEN_2_ADDRESS from environment variables!`
+            );
+            const stakeToken3Address = config.stakeToken3Address;
+            assert.ok(
+                stakeToken3Address,
+                `Missing ${networkName}_STAKE_TOKEN_3_ADDRESS from environment variables!`
             );
 
             const driptributor = await deployDriptributor(
                 signer,
                 adminAddress,
                 primaryTokenAddress,
-                stakeTokenAddress,
+                stakeToken1Address,
+                stakeToken2Address,
+                stakeToken3Address,
                 totalAmount,
             );
             console.log(`Contract Driptributor has been deployed to address ${driptributor.address}`);

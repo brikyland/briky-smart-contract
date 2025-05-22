@@ -20,7 +20,12 @@ interface IDriptributor is ICommon {
         uint40 vestingDuration,
         uint256 totalAmount
     );
-    event Stake(uint256 indexed distributionId, uint256 amount);
+    event Stake(
+        uint256[] distributionIds,
+        uint256 stake1,
+        uint256 stake2,
+        uint256 stake3
+    );
     event Withdrawal(uint256 indexed distributionId, uint256 amount);
 
     error AlreadyStaked();
@@ -28,7 +33,9 @@ interface IDriptributor is ICommon {
 
     function admin() external view returns (address admin);
     function primaryToken() external view returns (address primaryToken);
-    function stakeToken() external view returns (address stakeToken);
+    function stakeToken1() external view returns (address stakeToken1);
+    function stakeToken2() external view returns (address stakeToken2);
+    function stakeToken3() external view returns (address stakeToken3);
 
     function distributedAmount() external view returns (uint256 distributedAmount);
     function distributionNumber() external view returns (uint256 distributionNumber);
@@ -37,6 +44,9 @@ interface IDriptributor is ICommon {
     function getDistribution(uint256 distributionId) external view returns (Distribution memory distribution);
 
     function withdraw(uint256[] calldata distributionIds) external;
-    function stake(uint256[] calldata distributionIds) external;
-
+    function stake(
+        uint256[] calldata distributionIds,
+        uint256 stake1,
+        uint256 stake2
+    ) external;
 }

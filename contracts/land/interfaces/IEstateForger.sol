@@ -23,13 +23,23 @@ IEstateTokenizer {
         address requester;
     }
 
+    struct PriceFeed {
+        address feed;
+        uint40 heartbeat;
+    }
+
     event CommissionRateUpdate(uint256 newValue);
     event ExclusiveRateUpdate(uint256 newValue);
     event FeeRateUpdate(uint256 newValue);
 
-    event BaseUnitPriceUpdate(
+    event BaseUnitPriceRangeUpdate(
         uint256 baseMinUnitPrice,
         uint256 baseMaxUnitPrice
+    );
+    event PriceFeedUpdate(
+        address indexed currency,
+        address feed,
+        uint40 heartbeat
     );
 
     event NewRequest(
@@ -92,26 +102,28 @@ IEstateTokenizer {
         uint256 amount
     );
 
-    event CurrencyPriceFeedUpdate(
-        address indexed currency,
-        address feed,
-        uint40 heartbeat
+    event UnitPriceValidation(
+        uint256 unitPrice,
+        address currency,
+        uint256 currencyRate,
+        uint256 updatedAt
     );
 
     error AlreadyHadDepositor();
     error AlreadyWithdrawn();
     error Cancelled();
     error FailedOwnershipTransfer();
+    error InvalidPriceFeedData();
     error InvalidRequestId();
+    error InvalidUnitPrice();
     error InvalidWithdrawing();
     error MaxSellingAmountExceeded();
+    error MissingPriceFeed();
     error NotEnoughSoldAmount();
     error SaleEnded();
+    error StalePriceFeed();
     error StillSelling();
     error Tokenized();
-
-    error InvalidCurrencyBasePrice(address currency);
-    error StalePriceFeed(address currency);
 
     function admin() external view returns (address admin);
     function commissionToken() external view returns (address commissionToken);
@@ -121,7 +133,8 @@ IEstateTokenizer {
     function exclusiveRate() external view returns (uint256 exclusiveRate);
     function feeRate() external view returns (uint256 feeRate);
 
-    function getCurrencyBasePrice(address _currency) external view returns (CurrencyBasePrice memory);
+    function baseMinUnitPrice() external view returns (uint256 baseMinUnitPrice);
+    function baseMaxUnitPrice() external view returns (uint256 baseMaxUnitPrice);
 
     function requestNumber() external view returns (uint256 requestNumber);
 

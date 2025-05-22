@@ -7,18 +7,18 @@ abstract contract StakeTokenStorage is IStakeToken {
     mapping(address => uint256) internal weights;
     mapping(address => mapping(address => uint256)) public allowance;
 
-    uint256 public returningFee;
-    uint256 internal interestAccumulation;
-    uint256 public totalSupply;
-
     string public name;
     string public symbol;
 
-    uint256 public day;
+    uint256 internal interestAccumulation;
+
+    uint256 public totalSupply;
     uint256 public lastRewardFetch;
+    uint256 public withdrawalUnlockedAt;
 
     address public admin;
     address public primaryToken;
+    address public successor;
 
     uint256[50] private __gap;
 }

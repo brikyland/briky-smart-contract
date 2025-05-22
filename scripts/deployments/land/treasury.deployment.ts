@@ -25,10 +25,10 @@ async function deployOrUpgradeTreasury() {
                 adminAddress,
                 `Missing ${networkName}_ADMIN_ADDRESS from environment variables!`
             );
-            const currencyAddress = config.currencyAddress;
+            const liquidationCurrencyAddress = config.liquidationCurrencyAddress;
             assert.ok(
-                currencyAddress,
-                `Missing ${networkName}_CURRENCY_ADDRESS from environment variables!`
+                liquidationCurrencyAddress,
+                `Missing ${networkName}_LIQUIDATION_CURRENCY_ADDRESS from environment variables!`
             );
             const primaryTokenAddress = config.primaryTokenAddress;
             assert.ok(
@@ -39,7 +39,7 @@ async function deployOrUpgradeTreasury() {
             const treasury = await deployTreasury(
                 signer,
                 adminAddress,
-                currencyAddress,
+                liquidationCurrencyAddress,
                 primaryTokenAddress,
             );
             console.log(`Contract Treasury has been deployed to address ${treasury.address}`);

@@ -8,17 +8,7 @@ interface ICommon {
         bool isAvailable;
         bool isExclusive;
     }
-
-    struct PriceFeedInfo {
-        address feed;
-        uint40 heartbeat;
-    }
-
-    struct CurrencyBasePrice {
-        uint256 value;
-        uint8 decimals;
-    }
-
+    
     error InsufficientFunds();
     error InvalidCurrency();
     error InvalidInput();

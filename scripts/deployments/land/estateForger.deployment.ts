@@ -51,6 +51,8 @@ async function deployOrUpgradeEstateForger() {
                 Constant.ESTATE_FORGER_INITIAL_FeeRate,
                 Constant.ESTATE_FORGER_INITIAL_ExclusiveRate,
                 Constant.ESTATE_FORGER_INITIAL_CommissionRate,
+                Constant.ESTATE_FORGER_INITIAL_BaseMinUnitPrice,
+                Constant.ESTATE_FORGER_INITIAL_BaseMaxUnitPrice
             );
             console.log(`Contract EstateForger has been deployed to address ${estateForger.address}`);
 

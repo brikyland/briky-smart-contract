@@ -11,10 +11,10 @@ async function deployOrUpgradeBackerRoundDistributor() {
 
     const backerRoundDistributor = await deployOrUpgradeDriptributor(
         signer,
-        'backerRound',
-        Constant.PRIMARY_TOKEN_BACKER_ROUND,
+        'coreTeam',
+        Constant.PRIMARY_TOKEN_CORE_TEAM,
     );
-    console.log(`${networkName}_BACKER_ROUND_DISTRIBUTOR_ADDRESS=${backerRoundDistributor}`);
+    console.log(`${networkName}_CORE_TEAM_DISTRIBUTOR_ADDRESS=${backerRoundDistributor}`);
 }
 
 deployOrUpgradeBackerRoundDistributor()

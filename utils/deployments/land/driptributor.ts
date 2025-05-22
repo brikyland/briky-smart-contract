@@ -5,7 +5,9 @@ export async function deployDriptributor(
     signer: any,
     adminAddress: string,
     primaryTokenAddress: string,
-    stakeTokenAddress: string,
+    stakeToken1Address: string,
+    stakeToken2Address: string,
+    stakeToken3Address: string,
     totalAmount: BigNumber
 ) {
     const Driptributor = await ethers.getContractFactory('Driptributor', signer);
@@ -15,7 +17,9 @@ export async function deployDriptributor(
         [
             adminAddress,
             primaryTokenAddress,
-            stakeTokenAddress,
+            stakeToken1Address,
+            stakeToken2Address,
+            stakeToken3Address,
             totalAmount,
         ]
     );

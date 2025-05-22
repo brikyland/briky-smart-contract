@@ -20,6 +20,8 @@ export const Constant = {
     ESTATE_FORGER_INITIAL_FeeRate: 10,
     ESTATE_FORGER_INITIAL_ExclusiveRate: 80_00,
     ESTATE_FORGER_INITIAL_CommissionRate: 30_00,
+    ESTATE_FORGER_INITIAL_BaseMinUnitPrice: ethers.utils.parseEther('100'),
+    ESTATE_FORGER_INITIAL_BaseMaxUnitPrice: ethers.utils.parseEther('1000'),
 
     // Estate Marketplace
     ESTATE_MARKETPLACE_INITIAL_ExclusiveRate: 80_00,
@@ -48,17 +50,21 @@ export const Constant = {
 
     PRIMARY_TOKEN_DAILY_STAKE_REWARD_LIMIT: ethers.utils.parseEther(String(7_000_000)),
 
-    PRIMARY_TOKEN_INITIAL_Name: "Briky Currency",
+    PRIMARY_TOKEN_INITIAL_Name: "Briky Capital",
     PRIMARY_TOKEN_INITIAL_Symbol: 'BRIK',
     PRIMARY_TOKEN_INITIAL_LiquidationUnlockedAt: Date.parse('2026-01-01T00:00:00') / 1000,
 
     // Stake Token
-    STAKE_TOKEN_DAY_LENGTH: DAY_LENGTH - 600,
-    STAKE_TOKEN_UNSTAKING_FEE_INITIAL_PERCENTAGE: 50_00,
-    STAKE_TOKEN_UNSTAKING_FEE_ZEROING_DAYS: 1095,
+    STAKE_TOKEN_DAY_LENGTH: DAY_LENGTH - 300,
 
-    STAKE_TOKEN_INITIAL_Name: 'Briky Stake',
-    STAKE_TOKEN_INITIAL_Symbol: 'BRISTAKE',
+    STAKE_TOKEN_INITIAL_Name_1: 'Briky Stake 2028',
+    STAKE_TOKEN_INITIAL_Symbol_1: 'BRISTAKE-27',
+
+    STAKE_TOKEN_INITIAL_Name_2: 'Briky Stake 2030',
+    STAKE_TOKEN_INITIAL_Symbol_2: 'BRISTAKE-30',
+
+    STAKE_TOKEN_INITIAL_Name_3: 'Briky Stake 2032',
+    STAKE_TOKEN_INITIAL_Symbol_3: 'BRISTAKE-32',
 
     // Treasury
     TREASURY_OPERATION_FUND_PERCENTAGE: 0.2,

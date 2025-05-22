@@ -1,6 +1,6 @@
 import { LedgerSigner } from '@anders-t/ethers-ledger';
 import { ethers, network } from 'hardhat';
-import { deployOrUpgradeDistributor } from "./base/distributor.deployment";
+import { deployOrUpgradeDistributor } from "../base/distributor.deployment";
 
 async function deployOrUpgradeSeedRoundDistributor() {
     const networkName = network.name.toUpperCase();

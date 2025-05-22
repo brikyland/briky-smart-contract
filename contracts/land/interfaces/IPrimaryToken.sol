@@ -12,10 +12,10 @@ ICommon,
 IERC20Upgradeable,
 IERC20MetadataUpgradeable,
 IERC20PermitUpgradeable {
-    event StakeTokenUpdate(address newAddress);
+    event StakeToken1Update(address newAddress);
+    event StakeToken2Update(address newAddress);
+    event StakeToken3Update(address newAddress);
     event TreasuryUpdate(address newAddress);
-
-    event DailyStakeMint(uint256 amount);
 
     event BackerRoundTokensUnlock();
     event CoreTeamTokensUnlock();
@@ -25,6 +25,10 @@ IERC20PermitUpgradeable {
     event PrivateSale2TokensUnlock();
     event PublicSaleTokensUnlock();
     event SeedRoundTokensUnlock();
+
+    event DailyStake1Mint(uint256 amount);
+    event DailyStake2Mint(uint256 amount);
+    event DailyStake3Mint(uint256 amount);
 
     event LiquidityContributionFromBackerRound(uint256 liquidity);
     event LiquidityContributionFromExternalTreasury(uint256 liquidity);
@@ -40,9 +44,10 @@ IERC20PermitUpgradeable {
         uint256 liquidity
     );
 
+    error AllStakeRewardMinted();
     error AlreadyUnlockedTokens();
     error BeingLocked();
-    error SupplyLimitationExceeded();
+    error SupplyCapReached();
 
     function admin() external view returns (address admin);
     function stakeToken() external view returns (address stakeToken);

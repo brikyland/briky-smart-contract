@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
@@ -12,6 +13,7 @@ import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/intr
 import {Constant} from "../lib/Constant.sol";
 import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
 import {MulDiv} from "../lib/MulDiv.sol";
+import {StakeFormula} from "../lib/StakeFormula.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 
@@ -19,11 +21,8 @@ import {ICommissionToken} from "./interfaces/ICommissionToken.sol";
 import {IEstateToken} from "./interfaces/IEstateToken.sol";
 
 import {EstateForgerStorage} from "./storages/EstateForgerStorage.sol";
+
 import {EstateTokenizer} from "./EstateTokenizer.sol";
-
-import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
-
-import {Formula} from "../lib/Formula.sol";
 
 contract EstateForger is
 EstateForgerStorage,
@@ -59,7 +58,9 @@ ReentrancyGuardUpgradeable {
         address _feeReceiver,
         uint256 _feeRate,
         uint256 _exclusiveRate,
-        uint256 _commissionRate
+        uint256 _commissionRate,
+        uint256 _baseMinUnitPrice,
+        uint256 _baseMaxUnitPrice
     ) external initializer {
         require(_feeRate <= Constant.COMMON_PERCENTAGE_DENOMINATOR);
         require(_exclusiveRate <= Constant.COMMON_PERCENTAGE_DENOMINATOR);
@@ -77,9 +78,13 @@ ReentrancyGuardUpgradeable {
         exclusiveRate = _exclusiveRate;
         commissionRate = _commissionRate;
 
+        baseMinUnitPrice = _baseMaxUnitPrice;
+        baseMaxUnitPrice = _baseMaxUnitPrice;
+
         emit FeeRateUpdate(_feeRate);
         emit ExclusiveRateUpdate(_exclusiveRate);
         emit CommissionRateUpdate(_commissionRate);
+        emit BaseUnitPriceRangeUpdate(_baseMinUnitPrice, _baseMaxUnitPrice);
     }
 
     function version() external pure returns (string memory) {
@@ -159,7 +164,7 @@ ReentrancyGuardUpgradeable {
         emit CommissionRateUpdate(_commissionRate);
     }
 
-    function updateBaseUnitPrice(
+    function updateBaseUnitPriceRange(
         uint256 _baseMinUnitPrice,
         uint256 _baseMaxUnitPrice,
         bytes[] calldata _signatures
@@ -167,7 +172,7 @@ ReentrancyGuardUpgradeable {
         IAdmin(admin).verifyAdminSignatures(
             abi.encode(
                 address(this),
-                "updateBaseUnitPrice",
+                "updateBaseUnitPriceRange",
                 _baseMinUnitPrice,
                 _baseMaxUnitPrice
             ),
@@ -179,7 +184,7 @@ ReentrancyGuardUpgradeable {
         }
         baseMinUnitPrice = _baseMinUnitPrice;
         baseMaxUnitPrice = _baseMaxUnitPrice;
-        emit BaseUnitPriceUpdate(
+        emit BaseUnitPriceRangeUpdate(
             _baseMinUnitPrice,
             _baseMaxUnitPrice
         );
@@ -187,7 +192,7 @@ ReentrancyGuardUpgradeable {
     
     function updatePriceFeeds(
         address[] calldata _currencies,
-        address[] calldata _feed,
+        address[] calldata _feeds,
         uint40[] calldata _heartbeats,
         bytes[] calldata _signatures
     ) external {
@@ -196,49 +201,77 @@ ReentrancyGuardUpgradeable {
                 address(this),
                 "updatePriceFeeds",
                 _currencies,
-                _feed,
+                _feeds,
                 _heartbeats                           
             ),
             _signatures
         );
 
-        if (_currencies.length != _feed.length || _currencies.length != _heartbeats.length) {
+        if (_currencies.length != _feeds.length
+            || _currencies.length != _heartbeats.length) {
             revert InvalidInput();
         }
 
         for(uint256 i = 0; i < _currencies.length; ++i) {
-            currencyPriceFeeds[_currencies[i]] = PriceFeedInfo(
-                _feed[i],
+            if (_heartbeats[i] == 0) revert InvalidInput();
+
+            priceFeeds[_currencies[i]] = PriceFeed(
+                _feeds[i],
                 _heartbeats[i]
             );
-            emit CurrencyPriceFeedUpdate(
+            emit PriceFeedUpdate(
                 _currencies[i],
-                _feed[i],
+                _feeds[i],
                 _heartbeats[i]
             );
         }
     }
 
-    function getCurrencyBasePrice(address _currency) public view returns (CurrencyBasePrice memory) {
-        PriceFeedInfo memory info = currencyPriceFeeds[_currency];
-
-        if (info.feed == address(0)) {
-            revert InvalidInput();
+    function _validateUnitPrice(uint256 _unitPrice, address _currency) private {
+        if (!IAdmin(admin).isAvailableCurrency(_currency)) {
+            revert InvalidCurrency();
         }
 
-        (, int256 currencyBasePrice, , uint256 updatedAt, ) = AggregatorV3Interface(info.feed).latestRoundData();
-        
-        if (currencyBasePrice <= 0) {
-            revert InvalidCurrencyBasePrice(_currency);
+        PriceFeed memory priceFeed = priceFeeds[_currency];
+
+        if (priceFeed.feed == address(0)) {
+            revert MissingPriceFeed();
         }
 
-        if (block.timestamp - updatedAt > info.heartbeat) {
-            revert StalePriceFeed(_currency);
+        (
+            ,
+            int256 currencyRate,
+            ,
+            uint256 updatedAt,
+
+        ) = AggregatorV3Interface(priceFeed.feed).latestRoundData();
+
+        if (currencyRate <= 0) {
+            revert InvalidPriceFeedData();
         }
 
-        uint8 currencyBasePriceDecimals = AggregatorV3Interface(info.feed).decimals();
+        if (block.timestamp - updatedAt > priceFeed.heartbeat) {
+            revert StalePriceFeed();
+        }
 
-        return CurrencyBasePrice(uint256(currencyBasePrice), currencyBasePriceDecimals);
+        uint8 priceFeedDecimals = AggregatorV3Interface(priceFeed.feed).decimals();
+
+        uint256 normalizedUnitPrice = MulDiv.mulDiv(
+            _unitPrice,
+            uint256(currencyRate),
+            10 ** priceFeedDecimals
+        );
+
+        if (baseMinUnitPrice > normalizedUnitPrice || normalizedUnitPrice > baseMaxUnitPrice) {
+            revert InvalidUnitPrice();
+        }
+
+        emit UnitPriceValidation(
+            _unitPrice,
+            _currency,
+            uint256(currencyRate),
+            updatedAt
+        );
     }
 
     function getRequest(uint256 _requestId) external view returns (Request memory) {
@@ -265,15 +298,12 @@ ReentrancyGuardUpgradeable {
             revert Unauthorized();
         }
 
-        CurrencyRegistry memory currencyRegistry = IAdmin(admin).getCurrencyRegistry(_currency);
-        CurrencyBasePrice memory basePrice = getCurrencyBasePrice(_currency);
-        
+        _validateUnitPrice(_unitPrice, _currency);
+
         if (_requester == address(0)
             || _minSellingAmount > _maxSellingAmount
             || _maxSellingAmount > _totalSupply
             || _totalSupply > type(uint256).max / 10 ** _decimals
-            || !currencyRegistry.isAvailable
-            || !Formula.isBasePriceWithinRange(_unitPrice, basePrice.value, basePrice.decimals, baseMinUnitPrice, baseMaxUnitPrice)
             || _decimals > Constant.ESTATE_TOKEN_DECIMALS_LIMIT
             || _expireAt <= block.timestamp) {
             revert InvalidInput();
@@ -348,15 +378,12 @@ ReentrancyGuardUpgradeable {
             revert AlreadyHadDepositor();
         }
 
-        CurrencyRegistry memory currency = IAdmin(admin).getCurrencyRegistry(_currency);
-        CurrencyBasePrice memory basePrice = getCurrencyBasePrice(_currency);
+        _validateUnitPrice(_unitPrice, _currency);
 
         if (_requester == address(0)
             || _minSellingAmount > _maxSellingAmount
             || _maxSellingAmount > _totalSupply
             || _totalSupply > type(uint256).max / 10 ** _decimals
-            || !currency.isAvailable
-            || Formula.isBasePriceWithinRange(_unitPrice, basePrice.value, basePrice.decimals, baseMinUnitPrice, baseMaxUnitPrice)
             || _decimals > Constant.ESTATE_TOKEN_DECIMALS_LIMIT
             || _expireAt <= block.timestamp
             || _closeAt <= block.timestamp) {
@@ -495,9 +522,12 @@ ReentrancyGuardUpgradeable {
             revert Tokenized();
         }
 
-        if (request.closeAt + Constant.ESTATE_TOKEN_CONFIRMATION_TIME_LIMIT <= block.timestamp) {
+        uint40 closeAt = request.closeAt;
+        if (closeAt + Constant.ESTATE_TOKEN_CONFIRMATION_TIME_LIMIT <= block.timestamp) {
             revert FailedOwnershipTransfer();
         }
+
+        if (closeAt < block.timestamp) request.closeAt = uint40(block.timestamp);
 
         uint256 soldAmount = request.soldAmount;
         if (soldAmount < request.minSellingAmount) {
@@ -637,7 +667,7 @@ ReentrancyGuardUpgradeable {
         }
 
         hasWithdrawn[_requestId][msg.sender] = true;
-        uint256 amount = allocationOf(_requestId, msg.sender);
+        uint256 amount = deposits[_requestId][msg.sender] * 10 ** request.decimals;
         IEstateToken(estateToken).safeTransferFrom(
             address(this),
             msg.sender,
@@ -653,9 +683,15 @@ ReentrancyGuardUpgradeable {
         );
     }
 
-    function allocationOf(uint256 _requestId, address _account) public view returns (uint256 allocation) {
+    function allocationOfAt(
+        uint256 _requestId,
+        address _account,
+        uint256 _at
+    ) external view returns (uint256 allocation) {
         if (_requestId == 0 || _requestId > requestNumber) revert InvalidRequestId();
-        return deposits[_requestId][_account] * 10 ** requests[_requestId].decimals;
+        return _at >= requests[_requestId].closeAt
+            ? deposits[_requestId][_account] * 10 ** requests[_requestId].decimals
+            : 0;
     }
 
     function supportsInterface(bytes4 _interfaceId) public view override (
