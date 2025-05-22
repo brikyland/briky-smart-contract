@@ -227,6 +227,39 @@ ReentrancyGuardUpgradeable {
         }
     }
 
+    function updateDefaultRates(
+        address[] calldata _currencies,
+        uint256[] calldata _values,
+        uint8[] calldata _decimals,
+        bytes[] calldata _signatures
+    ) external {
+        IAdmin(admin).verifyAdminSignatures(
+            abi.encode(
+                address(this),
+                "updateDefaultRates",
+                _currencies,
+                _values
+            ),
+            _signatures
+        );
+
+        if (_currencies.length != _values.length
+            || _currencies.length != _decimals.length) {
+            revert InvalidInput();
+        }
+
+        for(uint256 i = 0; i < _currencies.length; ++i) {
+            if (_decimals[i] > Constant.COMMON_DECIMALS_LIMIT) revert InvalidInput();
+
+            defaultRates[_currencies[i]] = Rate(_values[i], _decimals[i]);
+            emit DefaultRateUpdate(
+                _currencies[i],
+                _values[i],
+                _decimals[i]
+            );
+        }
+    }
+
     function _validateUnitPrice(uint256 _unitPrice, address _currency) private {
         if (!IAdmin(admin).isAvailableCurrency(_currency)) {
             revert InvalidCurrency();
@@ -234,32 +267,37 @@ ReentrancyGuardUpgradeable {
 
         PriceFeed memory priceFeed = priceFeeds[_currency];
 
+        Rate memory rate;
         if (priceFeed.feed == address(0)) {
-            revert MissingPriceFeed();
+            rate = defaultRates[_currency];
+            if (rate.value == 0)revert MissingCurrencyRate();
+        } else {
+            (
+                ,
+                int256 answer,
+                ,
+                uint256 updatedAt,
+
+            ) = AggregatorV3Interface(priceFeed.feed).latestRoundData();
+
+            if (answer <= 0) {
+                revert InvalidPriceFeedData();
+            }
+
+            if (block.timestamp - updatedAt > priceFeed.heartbeat) {
+                revert StalePriceFeed();
+            }
+
+            rate = Rate(
+                uint256(answer),
+                AggregatorV3Interface(priceFeed.feed).decimals()
+            );
         }
-
-        (
-            ,
-            int256 currencyRate,
-            ,
-            uint256 updatedAt,
-
-        ) = AggregatorV3Interface(priceFeed.feed).latestRoundData();
-
-        if (currencyRate <= 0) {
-            revert InvalidPriceFeedData();
-        }
-
-        if (block.timestamp - updatedAt > priceFeed.heartbeat) {
-            revert StalePriceFeed();
-        }
-
-        uint8 priceFeedDecimals = AggregatorV3Interface(priceFeed.feed).decimals();
 
         uint256 normalizedUnitPrice = MulDiv.mulDiv(
             _unitPrice,
-            uint256(currencyRate),
-            10 ** priceFeedDecimals
+            rate.value,
+            10 ** rate.decimals
         );
 
         if (baseMinUnitPrice > normalizedUnitPrice || normalizedUnitPrice > baseMaxUnitPrice) {
@@ -269,8 +307,8 @@ ReentrancyGuardUpgradeable {
         emit UnitPriceValidation(
             _unitPrice,
             _currency,
-            uint256(currencyRate),
-            updatedAt
+            rate.value,
+            rate.decimals
         );
     }
 
@@ -304,7 +342,7 @@ ReentrancyGuardUpgradeable {
             || _minSellingAmount > _maxSellingAmount
             || _maxSellingAmount > _totalSupply
             || _totalSupply > type(uint256).max / 10 ** _decimals
-            || _decimals > Constant.ESTATE_TOKEN_DECIMALS_LIMIT
+            || _decimals > Constant.COMMON_DECIMALS_LIMIT
             || _expireAt <= block.timestamp) {
             revert InvalidInput();
         }
@@ -384,7 +422,7 @@ ReentrancyGuardUpgradeable {
             || _minSellingAmount > _maxSellingAmount
             || _maxSellingAmount > _totalSupply
             || _totalSupply > type(uint256).max / 10 ** _decimals
-            || _decimals > Constant.ESTATE_TOKEN_DECIMALS_LIMIT
+            || _decimals > Constant.COMMON_DECIMALS_LIMIT
             || _expireAt <= block.timestamp
             || _closeAt <= block.timestamp) {
             revert InvalidInput();

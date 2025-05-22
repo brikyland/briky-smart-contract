@@ -4,12 +4,12 @@ pragma solidity ^0.8.20;
 library Constant {
     // Common
     uint256 internal constant COMMON_PERCENTAGE_DENOMINATOR = 100_00;
+    uint256 internal constant COMMON_DECIMALS_LIMIT = 18;
 
     // Admin
     uint256 internal constant ADMIN_SIGNATURE_VERIFICATION_QUORUM = 4;
 
     // Estate Token
-    uint256 internal constant ESTATE_TOKEN_DECIMALS_LIMIT = 18;
     uint256 internal constant ESTATE_TOKEN_CONFIRMATION_TIME_LIMIT = 30 days;
 
     // Primary Token

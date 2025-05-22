@@ -23,6 +23,11 @@ IEstateTokenizer {
         address requester;
     }
 
+    struct Rate {
+        uint256 value;
+        uint8 decimals;
+    }
+
     struct PriceFeed {
         address feed;
         uint40 heartbeat;
@@ -35,6 +40,11 @@ IEstateTokenizer {
     event BaseUnitPriceRangeUpdate(
         uint256 baseMinUnitPrice,
         uint256 baseMaxUnitPrice
+    );
+    event DefaultRateUpdate(
+        address indexed currency,
+        uint256 rateValue,
+        uint8 rateDecimals
     );
     event PriceFeedUpdate(
         address indexed currency,
@@ -105,8 +115,8 @@ IEstateTokenizer {
     event UnitPriceValidation(
         uint256 unitPrice,
         address currency,
-        uint256 currencyRate,
-        uint256 updatedAt
+        uint256 rateValue,
+        uint8 rateDecimals
     );
 
     error AlreadyHadDepositor();
@@ -118,7 +128,7 @@ IEstateTokenizer {
     error InvalidUnitPrice();
     error InvalidWithdrawing();
     error MaxSellingAmountExceeded();
-    error MissingPriceFeed();
+    error MissingCurrencyRate();
     error NotEnoughSoldAmount();
     error SaleEnded();
     error StalePriceFeed();
