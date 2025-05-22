@@ -238,7 +238,8 @@ ReentrancyGuardUpgradeable {
                 address(this),
                 "updateDefaultRates",
                 _currencies,
-                _values
+                _values,
+                _decimals
             ),
             _signatures
         );
