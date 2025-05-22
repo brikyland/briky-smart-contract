@@ -78,7 +78,7 @@ ReentrancyGuardUpgradeable {
         exclusiveRate = _exclusiveRate;
         commissionRate = _commissionRate;
 
-        baseMinUnitPrice = _baseMaxUnitPrice;
+        baseMinUnitPrice = _baseMinUnitPrice;
         baseMaxUnitPrice = _baseMaxUnitPrice;
 
         emit FeeRateUpdate(_feeRate);
