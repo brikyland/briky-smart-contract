@@ -313,6 +313,10 @@ ReentrancyGuardUpgradeable {
         );
     }
 
+    function getPriceFeed(address _currency) external view returns (PriceFeed memory) {
+        return priceFeeds[_currency];
+    }
+
     function getDefaultRate(address _currency) external view returns (Rate memory) {
         return defaultRates[_currency];
     }

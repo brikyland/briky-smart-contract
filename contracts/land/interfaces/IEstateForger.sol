@@ -152,6 +152,7 @@ IEstateTokenizer {
     function hasWithdrawn(uint256 requestId, address account) external view returns (bool hasWithdrawn);
 
     function getDefaultRate(address currency) external view returns (Rate memory rate);
+    function getPriceFeed(address currency) external view returns (PriceFeed memory priceFeed);
     function getRequest(uint256 requestId) external view returns (Request memory request);
 
     function cancelRequest(uint256 requestId) external;
