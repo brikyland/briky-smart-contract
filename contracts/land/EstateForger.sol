@@ -313,6 +313,10 @@ ReentrancyGuardUpgradeable {
         );
     }
 
+    function getDefaultRate(address _currency) external view returns (Rate memory) {
+        return defaultRates[_currency];
+    }
+
     function getRequest(uint256 _requestId) external view returns (Request memory) {
         if (_requestId == 0 || _requestId > requestNumber) {
             revert InvalidRequestId();

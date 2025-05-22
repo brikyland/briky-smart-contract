@@ -151,6 +151,7 @@ IEstateTokenizer {
     function deposits(uint256 requestId, address depositor) external view returns (uint256 deposit);
     function hasWithdrawn(uint256 requestId, address account) external view returns (bool hasWithdrawn);
 
+    function getDefaultRate(address currency) external view returns (Rate memory rate);
     function getRequest(uint256 requestId) external view returns (Request memory request);
 
     function cancelRequest(uint256 requestId) external;
