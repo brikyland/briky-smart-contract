@@ -27,15 +27,16 @@ library Constant {
     uint256 internal constant PRIMARY_TOKEN_PUBLIC_SALE = 500_000_000 ether;
     uint256 internal constant PRIMARY_TOKEN_SEED_ROUND = 50_000_000 ether;
 
-    uint256 internal constant PRIMARY_TOKEN_STAKE_REWARD_1 = 1_500_000 ether;
-    uint256 internal constant PRIMARY_TOKEN_STAKE_REWARD_2 = 4_500_000 ether;
+    uint256 internal constant PRIMARY_TOKEN_STAKE_1_DAILY_REWARD = 2_000_000 ether;
+    uint256 internal constant PRIMARY_TOKEN_STAKE_2_DAILY_REWARD = 3_000_000 ether;
+    uint256 internal constant PRIMARY_TOKEN_STAKE_3_DAILY_REWARD = 4_000_000 ether;
 
-    uint256 internal constant PRIMARY_TOKEN_DAILY_STAKE_REWARD_LIMIT_1 = 2_000_000 ether;
-    uint256 internal constant PRIMARY_TOKEN_DAILY_STAKE_REWARD_LIMIT_2 = 3_000_000 ether;
-    uint256 internal constant PRIMARY_TOKEN_DAILY_STAKE_REWARD_LIMIT_3 = 4_000_000 ether;
+    uint256 internal constant PRIMARY_TOKEN_STAKE_1_LAST_WAVE = 750;
+    uint256 internal constant PRIMARY_TOKEN_STAKE_2_LAST_WAVE = 1500;
+    uint256 internal constant PRIMARY_TOKEN_STAKE_3_LAST_WAVE = 2250;
 
     // Stake Token
-    uint256 internal constant STAKE_TOKEN_DAY_LENGTH = 1 days - 5 minutes;
+    uint256 internal constant STAKE_TOKEN_REWARD_FETCH_COOLDOWN = 1 days - 5 minutes;
 
     // Treasury
     uint256 internal constant TREASURY_OPERATION_FUND_RATE = 0.2 ether;

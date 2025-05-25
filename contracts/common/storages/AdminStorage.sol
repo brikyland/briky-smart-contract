@@ -5,7 +5,7 @@ import {IAdmin} from "../interfaces/IAdmin.sol";
 
 abstract contract AdminStorage is IAdmin {
     // deprecated
-    mapping(address => uint256) public currencyUnitPriceLimits;
+    mapping(address => uint256) private currencyUnitPriceLimits;
     mapping(address => bool) public isManager;
 
     uint256 public nonce;

@@ -25,16 +25,21 @@ abstract contract PrimaryTokenStorage is IPrimaryToken {
 
     address public admin;
     // deprecated
-    address public stakeToken;
+    address private stakeToken;
     address public treasury;
+
+    uint256 public stakeToken1Waves;
+    uint256 public stakeToken2Waves;
+    uint256 public stakeToken3Waves;
+
+    uint256 public stakeToken1Contribution;
+    uint256 public stakeToken2Contribution;
+    uint256 public stakeToken3Contribution;
 
     address public stakeToken1;
     address public stakeToken2;
     address public stakeToken3;
 
-    uint256 public mintedStakeReward1;
-    uint256 public mintedStakeReward2;
-    uint256 public mintedStakeReward3;
 
-    uint256[44] private __gap;
+    uint256[41] private __gap;
 }

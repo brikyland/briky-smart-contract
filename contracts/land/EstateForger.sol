@@ -346,7 +346,7 @@ ReentrancyGuardUpgradeable {
 
         requests[_requestId] = Request(
             0,
-            zone,
+            _zone,
             _uri,
             _totalSupply,
             _minSellingAmount,
@@ -363,6 +363,7 @@ ReentrancyGuardUpgradeable {
         emit RequestUpdate(
             _requestId,
             _requester,
+            _zone,
             _uri,
             _totalSupply,
             _minSellingAmount,

@@ -160,6 +160,13 @@ ReentrancyGuardUpgradeable {
             + IERC20Upgradeable(stakeToken3).totalSupply();
     }
 
+    function isStakeRewardingCompleted() external view returns (bool) {
+        if (msg.sender == stakeToken1) return stakeToken1Waves >= Constant.PRIMARY_TOKEN_STAKE_1_LAST_WAVE;
+        if (msg.sender == stakeToken2) return stakeToken2Waves >= Constant.PRIMARY_TOKEN_STAKE_2_LAST_WAVE;
+        if (msg.sender == stakeToken3) return stakeToken3Waves >= Constant.PRIMARY_TOKEN_STAKE_3_LAST_WAVE;
+        revert Unauthorized();
+    }
+
     function unlockForBackerRound(
         address _receiver,
         bytes[] calldata _signatures
@@ -481,49 +488,74 @@ ReentrancyGuardUpgradeable {
         emit LiquidityContributionFromExternalTreasury(_liquidity);
     }
 
+    function contributeLiquidityFromStakeToken(uint256 _liquidity, address _stakeToken) external nonReentrant {
+        ITreasury treasuryContract = ITreasury(treasury);
+        IERC20Upgradeable currencyContract = IERC20Upgradeable(treasuryContract.currency());
+        currencyContract.safeTransferFrom(msg.sender, address(this), _liquidity);
+
+        currencyContract.safeIncreaseAllowance(address(treasuryContract), _liquidity);
+        treasuryContract.provideLiquidity(_liquidity);
+
+        unchecked {
+            if (_stakeToken == stakeToken1) {
+                stakeToken1Contribution += _liquidity;
+                emit LiquidityContributionFromStakeToken1(_liquidity);
+            } else if (_stakeToken == stakeToken2) {
+                stakeToken2Contribution += _liquidity;
+                emit LiquidityContributionFromStakeToken2(_liquidity);
+            } else if (_stakeToken == stakeToken3) {
+                stakeToken3Contribution += _liquidity;
+                emit LiquidityContributionFromStakeToken3(_liquidity);
+            }
+        }
+    }
+
     function mintForStake() external returns (uint256) {
-        uint256 availableAmount;
-        uint256 newStake;
         if (msg.sender == stakeToken1) {
-            availableAmount = Constant.PRIMARY_TOKEN_STAKE_REWARD_1 - mintedStakeReward1;
-            if (availableAmount == 0) {
+            if (stakeToken1Waves == Constant.PRIMARY_TOKEN_STAKE_1_LAST_WAVE) {
                 revert AllStakeRewardMinted();
             }
+            unchecked {
+                stakeToken1Waves += 1;
+            }
 
-            newStake = availableAmount > Constant.PRIMARY_TOKEN_DAILY_STAKE_REWARD_LIMIT_1
-                ? Constant.PRIMARY_TOKEN_DAILY_STAKE_REWARD_LIMIT_1
-                : availableAmount;
-            mintedStakeReward1 += newStake;
+            _mint(msg.sender, Constant.PRIMARY_TOKEN_STAKE_1_DAILY_REWARD);
 
-            emit DailyStake1Mint(newStake);
+            emit DailyStake1Mint(stakeToken1Waves, Constant.PRIMARY_TOKEN_STAKE_1_DAILY_REWARD);
+
+            return Constant.PRIMARY_TOKEN_STAKE_1_DAILY_REWARD;
         } else if (msg.sender == stakeToken2) {
-            availableAmount = Constant.PRIMARY_TOKEN_STAKE_REWARD_2 - mintedStakeReward2;
-            if (availableAmount == 0) {
+            if (stakeToken2Waves == Constant.PRIMARY_TOKEN_STAKE_2_LAST_WAVE) {
                 revert AllStakeRewardMinted();
             }
+            unchecked {
+                stakeToken2Waves += 1;
+            }
 
-            newStake = availableAmount > Constant.PRIMARY_TOKEN_DAILY_STAKE_REWARD_LIMIT_2
-                ? Constant.PRIMARY_TOKEN_DAILY_STAKE_REWARD_LIMIT_2
-                : availableAmount;
-            mintedStakeReward2 += newStake;
+            _mint(msg.sender, Constant.PRIMARY_TOKEN_STAKE_2_DAILY_REWARD);
 
-            emit DailyStake2Mint(newStake);
+            emit DailyStake2Mint(stakeToken2Waves, Constant.PRIMARY_TOKEN_STAKE_2_DAILY_REWARD);
+
+            return Constant.PRIMARY_TOKEN_STAKE_2_DAILY_REWARD;
         } else if (msg.sender == stakeToken3) {
-            availableAmount = Constant.PRIMARY_TOKEN_MAX_SUPPLY - mintedStakeReward3;
-            if (availableAmount == 0) {
+            uint256 amount = Constant.PRIMARY_TOKEN_MAX_SUPPLY - totalSupply();
+            if (amount == 0) {
                 revert AllStakeRewardMinted();
             }
-            newStake = availableAmount > Constant.PRIMARY_TOKEN_DAILY_STAKE_REWARD_LIMIT_3
-                ? Constant.PRIMARY_TOKEN_DAILY_STAKE_REWARD_LIMIT_3
-                : availableAmount;
-            mintedStakeReward3 += newStake;
+            unchecked {
+                stakeToken3Waves += 1;
+            }
 
-            emit DailyStake3Mint(newStake);
+            amount = amount > Constant.PRIMARY_TOKEN_STAKE_3_DAILY_REWARD
+                ? Constant.PRIMARY_TOKEN_STAKE_3_DAILY_REWARD
+                : amount;
+
+            emit DailyStake3Mint(stakeToken3Waves, amount);
+
+            return amount;
         } else {
             revert Unauthorized();
         }
-
-        return newStake;
     }
 
     function liquidate(uint256 _amount) external whenNotPaused nonReentrant {

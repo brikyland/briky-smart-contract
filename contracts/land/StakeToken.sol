@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
 import {Constant} from "../lib/Constant.sol";
@@ -13,6 +14,7 @@ import {IAdmin} from "../common/interfaces/IAdmin.sol";
 
 import {IPrimaryToken} from "./interfaces/IPrimaryToken.sol";
 import {IStakeToken} from "./interfaces/IStakeToken.sol";
+import {ITreasury} from "./interfaces/ITreasury.sol";
 
 import {StakeTokenStorage} from "./storages/StakeTokenStorage.sol";
 
@@ -22,6 +24,7 @@ PausableUpgradeable,
 ReentrancyGuardUpgradeable {
     using FixedMath for uint256;
     using Formula for uint256;
+    using SafeERC20Upgradeable for IERC20Upgradeable;
     using SafeERC20Upgradeable for IPrimaryToken;
 
     string internal constant VERSION = "v1.1.1";
@@ -68,7 +71,6 @@ ReentrancyGuardUpgradeable {
 
     function initializeRewarding(
         uint256 _initialLastRewardFetch,
-        uint256 _withdrawalUnlockedAt,
         address _successor,
         bytes[] calldata _signatures
     ) external {
@@ -77,7 +79,6 @@ ReentrancyGuardUpgradeable {
                 address(this),
                 "initializeRewarding",
                 _initialLastRewardFetch,
-                _withdrawalUnlockedAt,
                 _successor
             ),
             _signatures
@@ -88,12 +89,34 @@ ReentrancyGuardUpgradeable {
         }
 
         lastRewardFetch = _initialLastRewardFetch;
-        withdrawalUnlockedAt = _withdrawalUnlockedAt;
         successor = _successor;
+    }
+
+    function updateFeeRate(
+        uint256 _feeRate,
+        bytes[] calldata _signatures
+    ) external {
+        IAdmin(admin).verifyAdminSignatures(
+            abi.encode(
+                address(this),
+                "updateFeeRate",
+                _feeRate
+            ),
+            _signatures
+        );
+        if (_feeRate > Constant.COMMON_RATE_MAX_FRACTION) {
+            revert InvalidRate();
+        }
+        feeRate = _feeRate;
+        emit FeeRateUpdate(_feeRate);
     }
 
     function decimals() external view returns (uint8) {
         return IPrimaryToken(primaryToken).decimals();
+    }
+
+    function getFeeRate() external view returns (Rate memory) {
+        return Rate(feeRate, Constant.COMMON_RATE_DECIMALS);
     }
 
     function fetchReward() public nonReentrant whenNotPaused {
@@ -101,7 +124,7 @@ ReentrancyGuardUpgradeable {
             if (lastRewardFetch == 0) {
                 revert NotStartedRewarding();
             }
-            if (lastRewardFetch + Constant.STAKE_TOKEN_DAY_LENGTH > block.timestamp) {
+            if (lastRewardFetch + Constant.STAKE_TOKEN_REWARD_FETCH_COOLDOWN > block.timestamp) {
                 revert OnCoolDown();
             }
             if (totalSupply == 0) {
@@ -124,7 +147,23 @@ ReentrancyGuardUpgradeable {
     }
 
     function stake(address _account, uint256 _value) external nonReentrant whenNotPaused {
-        IPrimaryToken(primaryToken).safeTransferFrom(msg.sender, address(this), _value);
+        IPrimaryToken primaryTokenContract = IPrimaryToken(primaryToken);
+        if (primaryTokenContract.isStakeRewardingCompleted()) {
+            ITreasury treasuryContract = ITreasury(primaryTokenContract.treasury());
+            uint256 fee = _stakingFee(
+                treasuryContract.liquidity(),
+                _value,
+                primaryTokenContract.totalSupply(),
+                feeRate
+            );
+
+            IERC20Upgradeable currencyContract = IERC20Upgradeable(treasuryContract.currency());
+            currencyContract.safeTransferFrom(_account, address(this), fee);
+            currencyContract.safeIncreaseAllowance(address(primaryTokenContract), fee);
+            primaryTokenContract.contributeLiquidityFromStakeToken(fee, address(this));
+        }
+
+        primaryTokenContract.safeTransferFrom(msg.sender, address(this), _value);
 
         unchecked {
             totalSupply += _value;
@@ -136,8 +175,9 @@ ReentrancyGuardUpgradeable {
     }
 
     function unstake(uint256 _value) external nonReentrant whenNotPaused {
-        if (block.timestamp < withdrawalUnlockedAt) {
-            revert NotUnlockedWithdrawing();
+        IPrimaryToken primaryTokenContract = IPrimaryToken(primaryToken);
+        if (!primaryTokenContract.isStakeRewardingCompleted()) {
+            revert NotCompletedRewarding();
         }
 
         if (_value > balanceOf(msg.sender)) {
@@ -150,7 +190,7 @@ ReentrancyGuardUpgradeable {
         weights[msg.sender] = weights[msg.sender]
             .sub(_tokenToWeight(_value, interestAccumulation));
 
-        IPrimaryToken(primaryToken).safeTransfer(msg.sender, _value);
+        primaryTokenContract.safeTransfer(msg.sender, _value);
 
         emit Unstake(msg.sender, _value);
     }
@@ -159,6 +199,10 @@ ReentrancyGuardUpgradeable {
         IStakeToken successorContract = IStakeToken(successor);
         if (address(successorContract) == address(0)) {
             revert NoSuccessor();
+        }
+
+        if (IPrimaryToken(primaryToken).isStakeRewardingCompleted()) {
+            revert InvalidPromoting();
         }
 
         if (_value > balanceOf(msg.sender)) {
@@ -212,9 +256,13 @@ ReentrancyGuardUpgradeable {
 
     function exclusiveDiscount() external view returns (Rate memory rate) {
         IPrimaryToken primaryTokenContract = IPrimaryToken(primaryToken);
+        uint256 totalStake = primaryTokenContract.totalStake();
+
         Rate memory primaryDiscount = primaryTokenContract.exclusiveDiscount();
         return Rate(
-            primaryDiscount.value.scale(totalSupply, primaryTokenContract.totalStake()),
+            primaryDiscount.value
+                .scale(totalStake - totalSupply, totalStake << 1)
+                .add(Constant.PRIMARY_TOKEN_BASE_DISCOUNT),
             primaryDiscount.decimals
         );
     }
@@ -249,6 +297,17 @@ ReentrancyGuardUpgradeable {
                 _approve(_owner, _spender, currentAllowance - _amount);
             }
         }
+    }
+
+    function _stakingFee(
+        uint256 _liquidity,
+        uint256 _value,
+        uint256 _totalSupply,
+        uint256 _feeRate
+    ) private pure returns (uint256) {
+        return _liquidity
+            .scale(_value, _totalSupply)
+            .scale(_feeRate, Constant.COMMON_RATE_DECIMALS);
     }
 
     function _newInterestAccumulation(

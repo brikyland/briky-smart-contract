@@ -69,6 +69,7 @@ interface IEstateForger is IEstateTokenizer {
     event RequestUpdate(
         uint256 indexed requestId,
         address indexed requester,
+        bytes32 indexed zone,
         string uri,
         uint256 totalSupply,
         uint256 minSellingAmount,
