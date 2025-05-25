@@ -8,9 +8,6 @@ abstract contract CommissionMarketplaceStorage is ICommissionMarketplace {
 
     uint256 public offerNumber;
 
-    uint256 public commissionRate;
-    uint256 public exclusiveRate;
-
     address public admin;
     address public commissionToken;
 

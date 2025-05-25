@@ -17,9 +17,12 @@ import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ER
 import {ERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 
 import {Constant} from "../lib/Constant.sol";
-import {MulDiv} from "../lib/MulDiv.sol";
+import {Formula} from "../lib/Formula.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
+import {IRoyaltyRateToken} from "../common/interfaces/IRoyaltyRateToken.sol";
+
+import {RoyaltyRateToken} from "../common/utilities/RoyaltyRateToken.sol";
 
 import {ICommissionToken} from "./interfaces/ICommissionToken.sol";
 import {IEstateToken} from "./interfaces/IEstateToken.sol";
@@ -33,7 +36,9 @@ ERC1155PausableUpgradeable,
 ERC1155SupplyUpgradeable,
 ERC1155URIStorageUpgradeable,
 ERC1155HolderUpgradeable,
+RoyaltyRateToken,
 ReentrancyGuardUpgradeable {
+    using Formula for uint256;
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
     string constant private VERSION = "v1.1.1";
@@ -60,7 +65,7 @@ ReentrancyGuardUpgradeable {
         string calldata _uri,
         uint256 _royaltyRate
     ) external initializer {
-        require(_royaltyRate <= Constant.COMMON_PERCENTAGE_DENOMINATOR);
+        require(_royaltyRate <= Constant.COMMON_RATE_MAX_FRACTION);
         __ERC1155Pausable_init();
         __ERC1155Supply_init();
         __ERC1155URIStorage_init();
@@ -145,8 +150,8 @@ ReentrancyGuardUpgradeable {
             ),
             _signatures
         );
-        if (_royaltyRate > Constant.COMMON_PERCENTAGE_DENOMINATOR) {
-            revert InvalidPercentage();
+        if (_royaltyRate > Constant.COMMON_RATE_MAX_FRACTION) {
+            revert InvalidRate();
         }
         royaltyRate = _royaltyRate;
         emit RoyaltyRateUpdate(_royaltyRate);
@@ -189,6 +194,13 @@ ReentrancyGuardUpgradeable {
         }
     }
 
+    function getRoyaltyRate() public view override(
+        IRoyaltyRateToken,
+        RoyaltyRateToken
+    ) returns (Rate memory) {
+        return Rate(royaltyRate, Constant.COMMON_RATE_DECIMALS);
+    }
+
     function getEstate(uint256 _estateId) external view returns (Estate memory) {
         if (!exists(_estateId)) {
             revert InvalidEstateId();
@@ -205,7 +217,9 @@ ReentrancyGuardUpgradeable {
         uint8 _decimals,
         address _commissionReceiver
     ) external onlyTokenizer returns (uint256) {
-        if (_expireAt <= uint40(block.timestamp)) {
+        if (!IAdmin(admin).isZone(_zone)
+            || _decimals > Constant.ESTATE_TOKEN_MAX_DECIMALS
+            || _expireAt <= uint40(block.timestamp)) {
             revert InvalidInput();
         }
 
@@ -269,8 +283,8 @@ ReentrancyGuardUpgradeable {
         _setURI(_estateId, _uri);
     }
 
-    function balanceOf(address _account, uint256 _tokenId)
-    public view override (ERC1155Upgradeable, IERC1155Upgradeable) returns (uint256) {
+    function balanceOf(address _account, uint256 _tokenId) public view
+    override(IERC1155Upgradeable, ERC1155Upgradeable) returns (uint256) {
         return estates[_tokenId].isDeprecated || estates[_tokenId].expireAt <= block.timestamp
             ? 0
             : super.balanceOf(_account, _tokenId);
@@ -298,7 +312,7 @@ ReentrancyGuardUpgradeable {
         return snapshots[pivot].value;
     }
 
-    function uri(uint256 _tokenId) public view override (
+    function uri(uint256 _tokenId) public view override(
         IERC1155MetadataURIUpgradeable,
         ERC1155Upgradeable,
         ERC1155URIStorageUpgradeable
@@ -306,33 +320,23 @@ ReentrancyGuardUpgradeable {
         return super.uri(_tokenId);
     }
 
-    function royaltyInfo(uint256 _tokenId, uint256 _salePrice) external view returns (address, uint256) {
-        return (
-            feeReceiver,
-            MulDiv.mulDiv(
-                _salePrice,
-                royaltyRate,
-                Constant.COMMON_PERCENTAGE_DENOMINATOR
-            )
-        );
-    }
-
-    function totalSupply(uint256 _tokenId)
-    public view override (ERC1155SupplyUpgradeable, IEstateToken) returns (uint256) {
+    function totalSupply(uint256 _tokenId) public view
+    override(IEstateToken, ERC1155SupplyUpgradeable) returns (uint256) {
         return super.totalSupply(_tokenId);
     }
 
-    function exists(uint256 _tokenId)
-    public view override (ERC1155SupplyUpgradeable, IEstateToken) returns (bool) {
+    function exists(uint256 _tokenId) public view
+    override(IEstateToken, ERC1155SupplyUpgradeable) returns (bool) {
         return super.exists(_tokenId);
     }
 
-    function supportsInterface(bytes4 _interfaceId) public view override (
+    function supportsInterface(bytes4 _interfaceId) public view override(
         IERC165Upgradeable,
         ERC1155Upgradeable,
-        ERC1155ReceiverUpgradeable
+        ERC1155ReceiverUpgradeable,
+        RoyaltyRateToken
     ) returns (bool) {
-        return _interfaceId == type(IERC2981Upgradeable).interfaceId || super.supportsInterface(_interfaceId);
+        return super.supportsInterface(_interfaceId);
     }
 
     function _beforeTokenTransfer(
@@ -342,7 +346,7 @@ ReentrancyGuardUpgradeable {
         uint256[] memory _ids,
         uint256[] memory _amounts,
         bytes memory _data
-    ) internal override (
+    ) internal override(
         ERC1155Upgradeable,
         ERC1155PausableUpgradeable,
         ERC1155SupplyUpgradeable
@@ -364,7 +368,7 @@ ReentrancyGuardUpgradeable {
         uint256[] memory _ids,
         uint256[] memory _amounts,
         bytes memory _data
-    ) internal override (ERC1155Upgradeable) {
+    ) internal override(ERC1155Upgradeable) {
         super._afterTokenTransfer(_operator, _from, _to, _ids, _amounts, _data);
         uint256 timestamp = block.timestamp;
         uint256 n = _ids.length;
@@ -377,5 +381,9 @@ ReentrancyGuardUpgradeable {
                 balanceSnapshots[tokenId][_to].push(Snapshot(balanceOf(_to, tokenId), timestamp));
             }
         }
+    }
+
+    function _royaltyReceiver() internal view override returns (address) {
+        return feeReceiver;
     }
 }

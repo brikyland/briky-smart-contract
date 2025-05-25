@@ -5,8 +5,6 @@ export async function deployEstateMarketplace(
     adminAddress: string,
     estateTokenAddress: string,
     commissionTokenAddress: string,
-    exclusiveRate: number,
-    commissionRate: number
 ) {
     const EstateMarketplace = await ethers.getContractFactory('EstateMarketplace', signer);
     const estateMarketplace = await upgrades.deployProxy(
@@ -15,8 +13,6 @@ export async function deployEstateMarketplace(
             adminAddress,
             estateTokenAddress,
             commissionTokenAddress,
-            exclusiveRate,
-            commissionRate,
         ]
     );
     await estateMarketplace.deployed();

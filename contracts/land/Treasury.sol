@@ -7,7 +7,7 @@ import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20
 import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
 import {Constant} from "../lib/Constant.sol";
-import {MulDiv} from "../lib/MulDiv.sol";
+import {Formula} from "../lib/Formula.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 
@@ -17,6 +17,7 @@ contract Treasury is
 TreasuryStorage,
 PausableUpgradeable,
 ReentrancyGuardUpgradeable {
+    using Formula for uint256;
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
     string constant private VERSION = "v1.1.1";
@@ -99,11 +100,7 @@ ReentrancyGuardUpgradeable {
     function provideLiquidity(uint256 _value) external nonReentrant whenNotPaused {
         IERC20Upgradeable(currency).safeTransferFrom(msg.sender, address(this), _value);
 
-        uint256 fee = MulDiv.mulDiv(
-            _value,
-            Constant.TREASURY_OPERATION_FUND_PERCENTAGE,
-            Constant.COMMON_PERCENTAGE_DENOMINATOR
-        );
+        uint256 fee = _value.scale(Constant.TREASURY_OPERATION_FUND_RATE, Constant.COMMON_RATE_MAX_FRACTION);
 
         operationFund += fee;
         liquidity += _value - fee;

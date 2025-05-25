@@ -8,10 +8,8 @@ abstract contract MortgageTokenStorage is IMortgageToken {
 
     uint256 public loanNumber;
 
-    uint256 public commissionRate;
-    uint256 public exclusiveRate;
-    uint256 public feeRate;
-    uint256 public royaltyRate;
+    uint256 internal feeRate;
+    uint256 internal royaltyRate;
 
     string internal baseURI;
 

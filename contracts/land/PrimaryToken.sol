@@ -11,7 +11,7 @@ import {IERC20MetadataUpgradeable} from "@openzeppelin/contracts-upgradeable/tok
 import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
 import {Constant} from "../lib/Constant.sol";
-import {MulDiv} from "../lib/MulDiv.sol";
+import {Formula} from "../lib/Formula.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 
@@ -25,6 +25,7 @@ ERC20CappedUpgradeable,
 ERC20PausableUpgradeable,
 ERC20PermitUpgradeable,
 ReentrancyGuardUpgradeable {
+    using Formula for uint256;
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
     string internal constant VERSION = "v1.1.1";
@@ -38,7 +39,7 @@ ReentrancyGuardUpgradeable {
         uint256 _liquidationUnlockedAt
     ) external initializer {
         __ERC20_init(_name, _symbol);
-        __ERC20Capped_init(Constant.PRIMARY_TOKEN_MAXIMUM_SUPPLY);
+        __ERC20Capped_init(Constant.PRIMARY_TOKEN_MAX_SUPPLY);
         __ERC20Pausable_init();
         __ERC20Permit_init(_name);
 
@@ -94,6 +95,7 @@ ReentrancyGuardUpgradeable {
             ),
             _signatures
         );
+        if (treasury != address(0)) revert InvalidUpdating();
         treasury = _treasury;
         emit TreasuryUpdate(_treasury);
     }
@@ -110,6 +112,9 @@ ReentrancyGuardUpgradeable {
             ),
             _signatures
         );
+        if (stakeToken1 != address(0)) {
+            revert InvalidUpdating();
+        }
         stakeToken1 = _stakeToken1;
         emit StakeToken1Update(stakeToken1);
     }
@@ -142,8 +147,17 @@ ReentrancyGuardUpgradeable {
             ),
             _signatures
         );
+        if (stakeToken3 != address(0)) {
+            revert InvalidUpdating();
+        }
         stakeToken3 = _stakeToken3;
         emit StakeToken3Update(stakeToken3);
+    }
+
+    function totalStake() public view returns (uint256) {
+        return IERC20Upgradeable(stakeToken1).totalSupply()
+            + IERC20Upgradeable(stakeToken2).totalSupply()
+            + IERC20Upgradeable(stakeToken3).totalSupply();
     }
 
     function unlockForBackerRound(
@@ -495,7 +509,7 @@ ReentrancyGuardUpgradeable {
 
             emit DailyStake2Mint(newStake);
         } else if (msg.sender == stakeToken3) {
-            availableAmount = Constant.PRIMARY_TOKEN_MAXIMUM_SUPPLY - mintedStakeReward3;
+            availableAmount = Constant.PRIMARY_TOKEN_MAX_SUPPLY - mintedStakeReward3;
             if (availableAmount == 0) {
                 revert AllStakeRewardMinted();
             }
@@ -517,11 +531,7 @@ ReentrancyGuardUpgradeable {
 
         ITreasury treasuryContract = ITreasury(treasury);
 
-        uint256 liquidity = MulDiv.mulDiv(
-            _amount,
-            treasuryContract.liquidity(),
-            totalSupply()
-        );
+        uint256 liquidity = treasuryContract.liquidity().scale(_amount, totalSupply());
 
         treasuryContract.withdrawLiquidity(liquidity);
         IERC20Upgradeable(treasuryContract.currency()).safeTransfer(msg.sender, liquidity);
@@ -530,13 +540,20 @@ ReentrancyGuardUpgradeable {
         emit Liquidation(msg.sender, _amount, liquidity);
     }
 
-    function _beforeTokenTransfer(address _from, address _to, uint256 _amount)
-    internal override (ERC20Upgradeable, ERC20PausableUpgradeable) {
+    function exclusiveDiscount() external view returns (Rate memory rate) {
+        return Rate(
+            Constant.PRIMARY_TOKEN_BASE_DISCOUNT.scale(totalStake() + totalSupply(), totalSupply()),
+            Constant.PRIMARY_TOKEN_DISCOUNT_DECIMALS
+        );
+    }
+
+    function _beforeTokenTransfer(address _from, address _to, uint256 _amount) internal
+    override(ERC20Upgradeable, ERC20PausableUpgradeable) {
         super._beforeTokenTransfer(_from, _to, _amount);
     }
 
-    function _mint(address _account, uint256 _amount)
-    internal override (ERC20Upgradeable, ERC20CappedUpgradeable) {
+    function _mint(address _account, uint256 _amount) internal
+    override(ERC20Upgradeable, ERC20CappedUpgradeable) {
         super._mint(_account, _amount);
     }
 }

@@ -18,10 +18,6 @@ interface IMortgageMarketplace is ICommon {
         OfferState state;
         address seller;
     }
-
-    event CommissionRateUpdate(uint256 newValue);
-    event ExclusiveRateUpdate(uint256 newValue);
-
     event NewOffer(
         uint256 indexed offerId,
         uint256 indexed tokenId,
@@ -49,9 +45,6 @@ interface IMortgageMarketplace is ICommon {
     function admin() external view returns (address admin);
     function commissionToken() external view returns (address commissionToken);
     function mortgageToken() external view returns (address mortgageToken);
-
-    function commissionRate() external view returns (uint256 commissionRate);
-    function exclusiveRate() external view returns (uint256 exclusiveRate);
 
     function offerNumber() external view returns (uint256 offerNumber);
 

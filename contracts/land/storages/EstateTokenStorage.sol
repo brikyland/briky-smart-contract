@@ -10,7 +10,7 @@ abstract contract EstateTokenStorage is IEstateToken {
 
     mapping(uint256 => Estate) internal estates;
 
-    uint256 public royaltyRate;
+    uint256 internal royaltyRate;
 
     uint256 public estateNumber;
 

@@ -4,7 +4,7 @@ import { deployAuction } from '../../../../utils/deployments/land/auction';
 
 export async function deployOrUpgradeAuction(
     signer: any,
-    roundName: string
+    roundName: string,
 ) {
     const config = network.config as any;
     const networkName = network.name.toUpperCase();
@@ -29,9 +29,19 @@ export async function deployOrUpgradeAuction(
                 primaryTokenAddress,
                 `Missing ${networkName}_PRIMARY_TOKEN_ADDRESS from environment variables!`
             );
-            const stakeTokenAddress = config.stakeTokenAddress;
+            const stakeToken1Address = config.stakeTokenAddress;
             assert.ok(
-                stakeTokenAddress,
+                stakeToken1Address,
+                `Missing ${networkName}_STAKE_TOKEN_ADDRESS from environment variables!`
+            );
+            const stakeToken2Address = config.stakeTokenAddress;
+            assert.ok(
+                stakeToken2Address,
+                `Missing ${networkName}_STAKE_TOKEN_ADDRESS from environment variables!`
+            );
+            const stakeToken3Address = config.stakeTokenAddress;
+            assert.ok(
+                stakeToken3Address,
                 `Missing ${networkName}_STAKE_TOKEN_ADDRESS from environment variables!`
             );
 
@@ -39,7 +49,9 @@ export async function deployOrUpgradeAuction(
                 signer,
                 adminAddress,
                 primaryTokenAddress,
-                stakeTokenAddress
+                stakeToken3Address,
+                stakeToken2Address,
+                stakeToken3Address
             );
             console.log(`Contract Auction has been deployed to address ${auction.address}`);
 

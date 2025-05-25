@@ -49,8 +49,6 @@ async function deployOrUpgradeEstateForger() {
                 commissionTokenAddress,
                 feeReceiverAddress,
                 Constant.ESTATE_FORGER_INITIAL_FeeRate,
-                Constant.ESTATE_FORGER_INITIAL_ExclusiveRate,
-                Constant.ESTATE_FORGER_INITIAL_CommissionRate,
                 Constant.ESTATE_FORGER_INITIAL_BaseMinUnitPrice,
                 Constant.ESTATE_FORGER_INITIAL_BaseMaxUnitPrice
             );

@@ -51,10 +51,8 @@ async function deployOrUpgradeMortgageToken() {
                 Constant.MORTGAGE_TOKEN_INITIAL_Name,
                 Constant.MORTGAGE_TOKEN_INITIAL_Symbol,
                 Constant.MORTGAGE_TOKEN_INITIAL_BaseURI,
-                Constant.MORTGAGE_TOKEN_INITIAL_RoyaltyRate,
                 Constant.MORTGAGE_TOKEN_INITIAL_FeeRate,
-                Constant.MORTGAGE_TOKEN_INITIAL_ExclusiveRate,
-                Constant.MORTGAGE_TOKEN_INITIAL_CommissionRate,
+                Constant.MORTGAGE_TOKEN_INITIAL_RoyaltyRate,
             );
             console.log(`Contract MortgageToken has been deployed to address ${mortgageToken.address}`);
 

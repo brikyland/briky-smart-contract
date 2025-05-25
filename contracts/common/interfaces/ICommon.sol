@@ -8,11 +8,16 @@ interface ICommon {
         bool isAvailable;
         bool isExclusive;
     }
+
+    struct Rate {
+        uint256 value;
+        uint8 decimals;
+    }
     
     error InsufficientFunds();
     error InvalidCurrency();
     error InvalidInput();
-    error InvalidPercentage();
+    error InvalidRate();
     error InvalidUpdating();
     error Unauthorized();
 

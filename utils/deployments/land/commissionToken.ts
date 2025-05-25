@@ -1,3 +1,4 @@
+import { BigNumber } from "ethers";
 import { ethers, upgrades } from "hardhat";
 
 export async function deployCommissionToken(
@@ -8,7 +9,8 @@ export async function deployCommissionToken(
     name: string,
     symbol: string,
     baseURI: string,
-    royaltyRate: number,
+    commissionRate: BigNumber,
+    royaltyRate: BigNumber,
 ) {
     const CommissionToken = await ethers.getContractFactory('CommissionToken', signer);
 
@@ -21,7 +23,8 @@ export async function deployCommissionToken(
             name,
             symbol,
             baseURI,
-            royaltyRate,
+            commissionRate,
+            royaltyRate
         ]
     );
     await commissionToken.deployed();

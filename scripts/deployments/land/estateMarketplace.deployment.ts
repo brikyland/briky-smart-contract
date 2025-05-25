@@ -1,7 +1,6 @@
 import { LedgerSigner } from '@anders-t/ethers-ledger';
 import assert from 'assert';
 import { ethers, network, upgrades } from 'hardhat';
-import { Constant } from "../../../utils/constant";
 import { deployEstateMarketplace } from '../../../utils/deployments/land/estateMarketplace';
 
 async function deployOrUpgradeEstateMarketplace() {
@@ -42,8 +41,6 @@ async function deployOrUpgradeEstateMarketplace() {
                 adminAddress,
                 estateTokenAddress,
                 commissionTokenAddress,
-                Constant.ESTATE_MARKETPLACE_INITIAL_ExclusiveRate,
-                Constant.ESTATE_MARKETPLACE_INITIAL_CommissionRate,
             );
             console.log(`Contract EstateMarketplace has been deployed to address ${estateMarketplace.address}`);
 

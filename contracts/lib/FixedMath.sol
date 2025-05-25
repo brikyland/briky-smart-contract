@@ -34,11 +34,4 @@ library FixedMath {
         }
         return MulDiv.mulDiv(_a, ONE, _b);
     }
-
-    function mulDiv(uint256 _a, uint256 _b, uint256 _c) internal pure returns (uint256) {
-        if (_c == 0) {
-            revert DivisionByZero();
-        }
-        return MulDiv.mulDiv(_a, _b, _c);
-    }
 }

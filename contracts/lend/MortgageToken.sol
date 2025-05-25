@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol";
 import {IERC2981Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
+import {ERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import {ERC1155HolderUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
 import {ERC1155ReceiverUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/utils/ERC1155ReceiverUpgradeable.sol";
@@ -15,22 +16,27 @@ import {ERC721URIStorageUpgradeable} from "@openzeppelin/contracts-upgradeable/t
 
 import {Constant} from "../lib/Constant.sol";
 import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
-import {MulDiv} from "../lib/MulDiv.sol";
+import {Formula} from "../lib/Formula.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
+import {IRoyaltyRateToken} from "../common/interfaces/IRoyaltyRateToken.sol";
+
+import {RoyaltyRateToken} from "../common/utilities/RoyaltyRateToken.sol";
 
 import {ICommissionToken} from "../land/interfaces/ICommissionToken.sol";
 import {IEstateToken} from "../land/interfaces/IEstateToken.sol";
+import {IExclusiveToken} from "../land/interfaces/IExclusiveToken.sol";
 
 import {MortgageTokenStorage} from "./storages/MortgageTokenStorage.sol";
-import {Currency} from "../mock/Currency.sol";
 
 contract MortgageToken is
 MortgageTokenStorage,
 ERC721PausableUpgradeable,
 ERC721URIStorageUpgradeable,
 ERC1155HolderUpgradeable,
+RoyaltyRateToken,
 ReentrancyGuardUpgradeable {
+    using Formula for uint256;
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
     string constant private VERSION = "v1.1.1";
@@ -45,15 +51,11 @@ ReentrancyGuardUpgradeable {
         string calldata _name,
         string calldata _symbol,
         string calldata _uri,
-        uint256 _royaltyRate,
         uint256 _feeRate,
-        uint256 _exclusiveRate,
-        uint256 _commissionRate
+        uint256 _royaltyRate
     ) external initializer {
-        require(_royaltyRate <= Constant.COMMON_PERCENTAGE_DENOMINATOR);
-        require(_feeRate <= Constant.COMMON_PERCENTAGE_DENOMINATOR);
-        require(_exclusiveRate <= Constant.COMMON_PERCENTAGE_DENOMINATOR);
-        require(_commissionRate <= Constant.COMMON_PERCENTAGE_DENOMINATOR);
+        require(_feeRate <= Constant.COMMON_RATE_MAX_FRACTION);
+        require(_royaltyRate <= Constant.COMMON_RATE_MAX_FRACTION);
 
         __ERC721_init(_name, _symbol);
         __ERC721Pausable_init();
@@ -69,15 +71,11 @@ ReentrancyGuardUpgradeable {
 
         baseURI = _uri;
 
-        royaltyRate = _royaltyRate;
         feeRate = _feeRate;
-        exclusiveRate = _exclusiveRate;
-        commissionRate = _commissionRate;
+        royaltyRate = _royaltyRate;
 
         emit RoyaltyRateUpdate(_royaltyRate);
         emit FeeRateUpdate(_feeRate);
-        emit ExclusiveRateUpdate(_exclusiveRate);
-        emit CommissionRateUpdate(_commissionRate);
     }
 
     function version() external pure returns (string memory) {
@@ -125,13 +123,13 @@ ReentrancyGuardUpgradeable {
         IAdmin(admin).verifyAdminSignatures(
             abi.encode(
                 address(this),
-                "updateRoyaltyFeeRate",
+                "updateRoyaltyRate",
                 _royaltyRate
             ),
             _signature
         );
-        if (_royaltyRate > Constant.COMMON_PERCENTAGE_DENOMINATOR) {
-            revert InvalidPercentage();
+        if (_royaltyRate > Constant.COMMON_RATE_MAX_FRACTION) {
+            revert InvalidRate();
         }
         royaltyRate = _royaltyRate;
         emit RoyaltyRateUpdate(_royaltyRate);
@@ -149,49 +147,22 @@ ReentrancyGuardUpgradeable {
             ),
             _signature
         );
-        if (_feeRate > Constant.COMMON_PERCENTAGE_DENOMINATOR) {
-            revert InvalidPercentage();
+        if (_feeRate > Constant.COMMON_RATE_MAX_FRACTION) {
+            revert InvalidRate();
         }
         feeRate = _feeRate;
         emit FeeRateUpdate(_feeRate);
     }
 
-    function updateExclusiveRate(
-        uint256 _exclusiveRate,
-        bytes[] calldata _signature
-    ) external {
-        IAdmin(admin).verifyAdminSignatures(
-            abi.encode(
-                address(this),
-                "updateExclusiveRate",
-                _exclusiveRate
-            ),
-            _signature
-        );
-        if (_exclusiveRate > Constant.COMMON_PERCENTAGE_DENOMINATOR) {
-            revert InvalidPercentage();
-        }
-        exclusiveRate = _exclusiveRate;
-        emit ExclusiveRateUpdate(_exclusiveRate);
+    function getFeeRate() external view returns (Rate memory) {
+        return Rate(feeRate, Constant.COMMON_RATE_DECIMALS);
     }
 
-    function updateCommissionRate(
-        uint256 _commissionRate,
-        bytes[] calldata _signature
-    ) external {
-        IAdmin(admin).verifyAdminSignatures(
-            abi.encode(
-                address(this),
-                "updateCommissionRate",
-                _commissionRate
-            ),
-            _signature
-        );
-        if (_commissionRate > Constant.COMMON_PERCENTAGE_DENOMINATOR) {
-            revert InvalidPercentage();
-        }
-        commissionRate = _commissionRate;
-        emit CommissionRateUpdate(_commissionRate);
+    function getRoyaltyRate() public view override(
+        IRoyaltyRateToken,
+        RoyaltyRateToken
+    ) returns (Rate memory) {
+        return Rate(royaltyRate, Constant.COMMON_RATE_DECIMALS);
     }
 
     function getLoan(uint256 _loanId) external view returns (Loan memory) {
@@ -282,17 +253,10 @@ ReentrancyGuardUpgradeable {
 
         address currency = loan.currency;
         uint256 principal = loan.principal;
-        uint256 fee = MulDiv.mulDiv(
-            principal,
-            feeRate,
-            Constant.COMMON_PERCENTAGE_DENOMINATOR
-        );
+        uint256 fee = principal.scale(feeRate, Constant.COMMON_RATE_MAX_FRACTION);
+
         if (IAdmin(admin).isExclusiveCurrency(currency)) {
-            fee = MulDiv.mulDiv(
-                fee,
-                exclusiveRate,
-                Constant.COMMON_PERCENTAGE_DENOMINATOR
-            );
+            fee = fee.applyDiscount(IExclusiveToken(currency).exclusiveDiscount());
         }
 
         ICommissionToken commissionContract = ICommissionToken(commissionToken);
@@ -300,12 +264,7 @@ ReentrancyGuardUpgradeable {
         uint256 commissionAmount;
         if (commissionContract.exists(_estateId)) {
             commissionReceiver = commissionContract.ownerOf(_estateId);
-            commissionAmount = MulDiv.mulDiv(
-                fee,
-                commissionRate,
-                Constant.COMMON_PERCENTAGE_DENOMINATOR
-            );
-            fee;
+            commissionAmount = fee.scale(commissionContract.getCommissionRate());
         }
 
         if (currency == address(0)) {
@@ -415,24 +374,14 @@ ReentrancyGuardUpgradeable {
         return super.tokenURI(_tokenId);
     }
 
-    function royaltyInfo(uint256 _tokenId, uint256 _salePrice) external view returns (address, uint256) {
-        return (
-            feeReceiver,
-            MulDiv.mulDiv(
-                _salePrice,
-            royaltyRate,
-                Constant.COMMON_PERCENTAGE_DENOMINATOR
-            )
-        );
-    }
-
-    function supportsInterface(bytes4 _interfaceId) public view override (
+    function supportsInterface(bytes4 _interfaceId) public view override(
         IERC165Upgradeable,
         ERC1155ReceiverUpgradeable,
         ERC721Upgradeable,
-        ERC721URIStorageUpgradeable
+        ERC721URIStorageUpgradeable,
+        RoyaltyRateToken
     ) returns (bool) {
-        return _interfaceId == type(IERC2981Upgradeable).interfaceId || super.supportsInterface(_interfaceId);
+        return super.supportsInterface(_interfaceId);
     }
 
     function _baseURI() internal view override returns (string memory) {
@@ -444,12 +393,15 @@ ReentrancyGuardUpgradeable {
         address _to,
         uint256 _firstTokenId,
         uint256 _batchSize
-    ) internal override (ERC721Upgradeable, ERC721PausableUpgradeable) {
+    ) internal override(ERC721Upgradeable, ERC721PausableUpgradeable) {
         super._beforeTokenTransfer(_from, _to, _firstTokenId, _batchSize);
     }
 
-    function _burn(uint256 _tokenId)
-    internal override (ERC721Upgradeable, ERC721URIStorageUpgradeable) {
+    function _burn(uint256 _tokenId) internal
+    override(ERC721Upgradeable, ERC721URIStorageUpgradeable) {
         super._burn(_tokenId);
+    }
+    function _royaltyReceiver() internal view override returns (address) {
+        return feeReceiver;
     }
 }

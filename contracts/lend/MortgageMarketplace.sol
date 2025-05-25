@@ -8,11 +8,12 @@ import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ER
 
 import {Constant} from "../lib/Constant.sol";
 import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
-import {MulDiv} from "../lib/MulDiv.sol";
+import {Formula} from "../lib/Formula.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 
 import {ICommissionToken} from "../land/interfaces/ICommissionToken.sol";
+import {IExclusiveToken} from "../land/interfaces/IExclusiveToken.sol";
 
 import {IMortgageToken} from "./interfaces/IMortgageToken.sol";
 
@@ -22,6 +23,7 @@ contract MortgageMarketplace is
 MortgageMarketplaceStorage,
 PausableUpgradeable,
 ReentrancyGuardUpgradeable {
+    using Formula for uint256;
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
     string constant private VERSION = "v1.1.1";
@@ -31,25 +33,14 @@ ReentrancyGuardUpgradeable {
     function initialize(
         address _admin,
         address _mortgageToken,
-        address _commissionToken,
-        uint256 _exclusiveRate,
-        uint256 _commissionRate
+        address _commissionToken
     ) external initializer {
-        require(_exclusiveRate <= Constant.COMMON_PERCENTAGE_DENOMINATOR);
-        require(_commissionRate <= Constant.COMMON_PERCENTAGE_DENOMINATOR);
-
         __Pausable_init();
         __ReentrancyGuard_init();
 
         admin = _admin;
         mortgageToken = _mortgageToken;
         commissionToken = _commissionToken;
-
-        exclusiveRate = _exclusiveRate;
-        commissionRate = _commissionRate;
-
-        emit ExclusiveRateUpdate(_exclusiveRate);
-        emit CommissionRateUpdate(_commissionRate);
     }
 
     function version() external pure returns (string memory) {
@@ -70,44 +61,6 @@ ReentrancyGuardUpgradeable {
             _signatures
         );
         _unpause();
-    }
-
-    function updateExclusiveRate(
-        uint256 _exclusiveRate,
-        bytes[] calldata _signature
-    ) external {
-        IAdmin(admin).verifyAdminSignatures(
-            abi.encode(
-                address(this),
-                "updateExclusiveRate",
-                _exclusiveRate
-            ),
-            _signature
-        );
-        if (_exclusiveRate > Constant.COMMON_PERCENTAGE_DENOMINATOR) {
-            revert InvalidPercentage();
-        }
-        exclusiveRate = _exclusiveRate;
-        emit ExclusiveRateUpdate(_exclusiveRate);
-    }
-
-    function updateCommissionRate(
-        uint256 _commissionRate,
-        bytes[] calldata _signature
-    ) external {
-        IAdmin(admin).verifyAdminSignatures(
-            abi.encode(
-                address(this),
-                "updateCommissionRate",
-                _commissionRate
-            ),
-            _signature
-        );
-        if (_commissionRate > Constant.COMMON_PERCENTAGE_DENOMINATOR) {
-            revert InvalidPercentage();
-        }
-        commissionRate = _commissionRate;
-        emit CommissionRateUpdate(_commissionRate);
     }
 
     function getOffer(uint256 _offerId) external view returns (Offer memory) {
@@ -188,11 +141,7 @@ ReentrancyGuardUpgradeable {
 
         address currency = offer.currency;
         if (IAdmin(admin).isExclusiveCurrency(currency)) {
-            royaltyAmount = MulDiv.mulDiv(
-                royaltyAmount,
-                exclusiveRate,
-                Constant.COMMON_PERCENTAGE_DENOMINATOR
-            );
+            royaltyAmount = royaltyAmount.applyDiscount(IExclusiveToken(currency).exclusiveDiscount());
         }
 
         ICommissionToken commissionContract = ICommissionToken(commissionToken);
@@ -200,11 +149,7 @@ ReentrancyGuardUpgradeable {
         uint256 commissionAmount;
         if (commissionContract.exists(_tokenId)) {
             commissionReceiver = commissionContract.ownerOf(loan.estateId);
-            commissionAmount = MulDiv.mulDiv(
-                royaltyAmount,
-                commissionRate,
-                Constant.COMMON_PERCENTAGE_DENOMINATOR
-            );
+            commissionAmount = royaltyAmount.scale(commissionContract.getCommissionRate());
         }
 
         if (currency == address(0)) {

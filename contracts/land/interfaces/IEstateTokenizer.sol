@@ -3,7 +3,10 @@ pragma solidity ^0.8.20;
 
 import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable.sol";
 
+import {ICommon} from "../../common/interfaces/ICommon.sol";
+
 interface IEstateTokenizer is
+ICommon,
 IERC165Upgradeable {
     function allocationOfAt(
         uint256 tokenizationId,

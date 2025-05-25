@@ -7,9 +7,7 @@ export async function deployEstateForger(
     estateTokenAddress: string,
     commissionTokenAddress: string,
     feeReceiverAddress: string,
-    feeRate: number,
-    exclusiveRate: number,
-    commissionRate: number,
+    feeRate: BigNumber,
     baseMinUnitPrice: BigNumber,
     baseMaxUnitPrice: BigNumber,
 ) {
@@ -22,8 +20,6 @@ export async function deployEstateForger(
             commissionTokenAddress,
             feeReceiverAddress,
             feeRate,
-            exclusiveRate,
-            commissionRate,
             baseMinUnitPrice,
             baseMaxUnitPrice,
         ]

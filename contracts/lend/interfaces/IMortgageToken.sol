@@ -1,19 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {IERC2981Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
 import {IERC4906Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC4906Upgradeable.sol";
 import {IERC1155ReceiverUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/IERC1155ReceiverUpgradeable.sol";
 import {IERC721MetadataUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/IERC721MetadataUpgradeable.sol";
 
-import {ICommon} from "../../common/interfaces/ICommon.sol";
+import {IRoyaltyRateToken} from "../../common/interfaces/IRoyaltyRateToken.sol";
 
 interface IMortgageToken is
-ICommon,
+IRoyaltyRateToken,
 IERC4906Upgradeable,
 IERC721MetadataUpgradeable,
-IERC1155ReceiverUpgradeable,
-IERC2981Upgradeable {
+IERC1155ReceiverUpgradeable {
     enum LoanState {
         Nil,
         Pending,
@@ -37,8 +35,6 @@ IERC2981Upgradeable {
 
     event BaseURIUpdate(string newValue);
 
-    event CommissionRateUpdate(uint256 newValue);
-    event ExclusiveRateUpdate(uint256 newValue);
     event FeeRateUpdate(uint256 newValue);
     event RoyaltyRateUpdate(uint256 newValue);
 
@@ -83,10 +79,7 @@ IERC2981Upgradeable {
     function estateToken() external view returns (address estateToken);
     function feeReceiver() external view returns (address feeReceiver);
 
-    function commissionRate() external view returns (uint256 commissionRate);
-    function exclusiveRate() external view returns (uint256 exclusiveRate);
-    function feeRate() external view returns (uint256 feeRate);
-    function royaltyRate() external view returns (uint256 royaltyFeeRate);
+    function getFeeRate() external view returns (Rate memory rate);
 
     function loanNumber() external view returns (uint256 loanNumber);
 

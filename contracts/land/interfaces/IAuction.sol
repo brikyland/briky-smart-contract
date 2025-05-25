@@ -10,7 +10,12 @@ interface IAuction is ICommon {
     }
 
     event Deposit(address indexed account, uint256 value);
-    event Stake(address indexed account, uint256 amount);
+    event Stake(
+        address indexed account,
+        uint256 stake1,
+        uint256 stake2,
+        uint256 stake3
+    );
     event Withdrawal(address indexed account, uint256 amount);
 
     error Ended();
@@ -20,7 +25,9 @@ interface IAuction is ICommon {
 
     function admin() external view returns (address admin);
     function primaryToken() external view returns (address primaryToken);
-    function stakeToken() external view returns (address stakeToken);
+    function stakeToken1() external view returns (address stakeToken1);
+    function stakeToken2() external view returns (address stakeToken2);
+    function stakeToken3() external view returns (address stakeToken3);
 
     function endAt() external view returns (uint256 endAt);
     function totalDeposit() external view returns (uint256 totalDeposit);
@@ -30,9 +37,9 @@ interface IAuction is ICommon {
     function deposits(address account) external view returns (uint256 deposit);
     function withdrawnAmount(address account) external view returns (uint256 amount);
 
-    function evaluatedAllocationOf(address account) external view returns (uint256 amount);
+    function allocationOf(address account) external view returns (uint256 amount);
 
     function deposit(uint256 value) external;
-    function stake() external;
+    function stake(uint256 stake1, uint256 stake2) external;
     function withdraw() external;
 }

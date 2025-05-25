@@ -26,17 +26,4 @@ library CurrencyHandler {
             }
         }
     }
-
-    function isCurrencyPriceWithinRange(
-        uint256 _currencyAmount,
-        uint256 _currencyBasePrice,
-        uint8 _currencyBasePriceDecimals,
-        uint256 _baseMinPrice,
-        uint256 _baseMaxPrice
-    ) internal pure returns (bool) {
-        // Condition to check: _baseMinPrice <= basePrice <= _baseMaxPrice
-        // With: basePrice = (_currencyAmount / 10 ** 18) * _currencyBasePrice / (10 ** priceDecimals)
-        return _currencyAmount * _currencyBasePrice >= _baseMinPrice * 10 ** _currencyBasePriceDecimals * 10 ** 18
-            && _currencyAmount * _currencyBasePrice <= _baseMaxPrice * 10 ** _currencyBasePriceDecimals * 10 ** 18;
-    }
 }

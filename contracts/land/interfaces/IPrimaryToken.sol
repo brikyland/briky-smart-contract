@@ -1,16 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-import {IERC20MetadataUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
 import {IERC20PermitUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20PermitUpgradeable.sol";
 
-import {ICommon} from "../../common/interfaces/ICommon.sol";
+import {IExclusiveToken} from "./IExclusiveToken.sol";
 
 interface IPrimaryToken is
-ICommon,
-IERC20Upgradeable,
-IERC20MetadataUpgradeable,
+IExclusiveToken,
 IERC20PermitUpgradeable {
     event StakeToken1Update(address newAddress);
     event StakeToken2Update(address newAddress);
@@ -79,6 +75,8 @@ IERC20PermitUpgradeable {
     function contributeLiquidityFromPrivateSale2(uint256 liquidity) external;
     function contributeLiquidityFromPublicSale(uint256 liquidity) external;
     function contributeLiquidityFromSeedRound(uint256 liquidity) external;
+
+    function totalStake() external view returns (uint256 totalStake);
 
     function mintForStake() external returns (uint256 reward);
 

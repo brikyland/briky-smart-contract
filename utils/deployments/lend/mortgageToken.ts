@@ -1,3 +1,4 @@
+import { BigNumber } from "ethers";
 import { ethers, upgrades } from "hardhat";
 
 export async function deployMortgageToken(
@@ -9,10 +10,8 @@ export async function deployMortgageToken(
     name: string,
     symbol: string,
     uri: string,
-    royaltyRate: number,
-    feeRate: number,
-    exclusiveRate: number,
-    commissionRate: number,
+    feeRate: BigNumber,
+    royaltyRate: BigNumber,
 ) {
     const MortgageToken = await ethers.getContractFactory('MortgageToken', signer);
     const mortgageToken = await upgrades.deployProxy(
@@ -25,10 +24,8 @@ export async function deployMortgageToken(
             name,
             symbol,
             uri,
-            royaltyRate,
             feeRate,
-            exclusiveRate,
-            commissionRate,
+            royaltyRate,
         ]
     );
     await mortgageToken.deployed();

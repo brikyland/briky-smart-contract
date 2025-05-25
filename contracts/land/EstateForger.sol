@@ -12,8 +12,7 @@ import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/intr
 
 import {Constant} from "../lib/Constant.sol";
 import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
-import {MulDiv} from "../lib/MulDiv.sol";
-import {StakeFormula} from "../lib/StakeFormula.sol";
+import {Formula} from "../lib/Formula.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 
@@ -22,7 +21,8 @@ import {IEstateToken} from "./interfaces/IEstateToken.sol";
 
 import {EstateForgerStorage} from "./storages/EstateForgerStorage.sol";
 
-import {EstateTokenizer} from "./EstateTokenizer.sol";
+import {EstateTokenizer} from "./utilities/EstateTokenizer.sol";
+import {IExclusiveToken} from "./interfaces/IExclusiveToken.sol";
 
 contract EstateForger is
 EstateForgerStorage,
@@ -30,6 +30,7 @@ EstateTokenizer,
 ERC1155HolderUpgradeable,
 PausableUpgradeable,
 ReentrancyGuardUpgradeable {
+    using Formula for uint256;
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
     string constant private VERSION = "v1.1.1";
@@ -57,14 +58,10 @@ ReentrancyGuardUpgradeable {
         address _commissionToken,
         address _feeReceiver,
         uint256 _feeRate,
-        uint256 _exclusiveRate,
-        uint256 _commissionRate,
         uint256 _baseMinUnitPrice,
         uint256 _baseMaxUnitPrice
     ) external initializer {
-        require(_feeRate <= Constant.COMMON_PERCENTAGE_DENOMINATOR);
-        require(_exclusiveRate <= Constant.COMMON_PERCENTAGE_DENOMINATOR);
-        require(_commissionRate <= Constant.COMMON_PERCENTAGE_DENOMINATOR);
+        require(_feeRate <= Constant.COMMON_RATE_MAX_FRACTION);
 
         __Pausable_init();
         __ReentrancyGuard_init();
@@ -75,15 +72,11 @@ ReentrancyGuardUpgradeable {
         feeReceiver = _feeReceiver;
 
         feeRate = _feeRate;
-        exclusiveRate = _exclusiveRate;
-        commissionRate = _commissionRate;
 
         baseMinUnitPrice = _baseMinUnitPrice;
         baseMaxUnitPrice = _baseMaxUnitPrice;
 
         emit FeeRateUpdate(_feeRate);
-        emit ExclusiveRateUpdate(_exclusiveRate);
-        emit CommissionRateUpdate(_commissionRate);
         emit BaseUnitPriceRangeUpdate(_baseMinUnitPrice, _baseMaxUnitPrice);
     }
 
@@ -119,49 +112,11 @@ ReentrancyGuardUpgradeable {
             ),
             _signatures
         );
-        if (_feeRate > Constant.COMMON_PERCENTAGE_DENOMINATOR) {
-            revert InvalidPercentage();
+        if (_feeRate > Constant.COMMON_RATE_MAX_FRACTION) {
+            revert InvalidRate();
         }
         feeRate = _feeRate;
         emit FeeRateUpdate(_feeRate);
-    }
-
-    function updateExclusiveRate(
-        uint256 _exclusiveRate,
-        bytes[] calldata _signatures
-    ) external {
-        IAdmin(admin).verifyAdminSignatures(
-            abi.encode(
-                address(this),
-                "updateExclusiveRate",
-                _exclusiveRate
-            ),
-            _signatures
-        );
-        if (_exclusiveRate > Constant.COMMON_PERCENTAGE_DENOMINATOR) {
-            revert InvalidPercentage();
-        }
-        exclusiveRate = _exclusiveRate;
-        emit ExclusiveRateUpdate(_exclusiveRate);
-    }
-
-    function updateCommissionRate(
-        uint256 _commissionRate,
-        bytes[] calldata _signatures
-    ) external {
-        IAdmin(admin).verifyAdminSignatures(
-            abi.encode(
-                address(this),
-                "updateCommissionRate",
-                _commissionRate
-            ),
-            _signatures
-        );
-        if (_commissionRate > Constant.COMMON_PERCENTAGE_DENOMINATOR) {
-            revert InvalidPercentage();
-        }
-        commissionRate = _commissionRate;
-        emit CommissionRateUpdate(_commissionRate);
     }
 
     function updateBaseUnitPriceRange(
@@ -250,7 +205,7 @@ ReentrancyGuardUpgradeable {
         }
 
         for(uint256 i = 0; i < _currencies.length; ++i) {
-            if (_decimals[i] > Constant.COMMON_DECIMALS_LIMIT) revert InvalidInput();
+            if (_decimals[i] > Constant.ESTATE_TOKEN_MAX_DECIMALS) revert InvalidInput();
 
             defaultRates[_currencies[i]] = Rate(_values[i], _decimals[i]);
             emit DefaultRateUpdate(
@@ -261,64 +216,16 @@ ReentrancyGuardUpgradeable {
         }
     }
 
-    function _validateUnitPrice(uint256 _unitPrice, address _currency) private {
-        if (!IAdmin(admin).isAvailableCurrency(_currency)) {
-            revert InvalidCurrency();
-        }
-
-        PriceFeed memory priceFeed = priceFeeds[_currency];
-
-        Rate memory rate;
-        if (priceFeed.feed == address(0)) {
-            rate = defaultRates[_currency];
-            if (rate.value == 0)revert MissingCurrencyRate();
-        } else {
-            (
-                ,
-                int256 answer,
-                ,
-                uint256 updatedAt,
-
-            ) = AggregatorV3Interface(priceFeed.feed).latestRoundData();
-
-            if (answer <= 0) {
-                revert InvalidPriceFeedData();
-            }
-
-            if (block.timestamp - updatedAt > priceFeed.heartbeat) {
-                revert StalePriceFeed();
-            }
-
-            rate = Rate(
-                uint256(answer),
-                AggregatorV3Interface(priceFeed.feed).decimals()
-            );
-        }
-
-        uint256 normalizedUnitPrice = MulDiv.mulDiv(
-            _unitPrice,
-            rate.value,
-            10 ** rate.decimals
-        );
-
-        if (baseMinUnitPrice > normalizedUnitPrice || normalizedUnitPrice > baseMaxUnitPrice) {
-            revert InvalidUnitPrice();
-        }
-
-        emit UnitPriceValidation(
-            _unitPrice,
-            _currency,
-            rate.value,
-            rate.decimals
-        );
-    }
-
     function getPriceFeed(address _currency) external view returns (PriceFeed memory) {
         return priceFeeds[_currency];
     }
 
     function getDefaultRate(address _currency) external view returns (Rate memory) {
         return defaultRates[_currency];
+    }
+
+    function getFeeRate() external view returns (Rate memory) {
+        return Rate(feeRate, Constant.COMMON_RATE_DECIMALS);
     }
 
     function getRequest(uint256 _requestId) external view returns (Request memory) {
@@ -351,7 +258,7 @@ ReentrancyGuardUpgradeable {
             || _minSellingAmount > _maxSellingAmount
             || _maxSellingAmount > _totalSupply
             || _totalSupply > type(uint256).max / 10 ** _decimals
-            || _decimals > Constant.COMMON_DECIMALS_LIMIT
+            || _decimals > Constant.ESTATE_TOKEN_MAX_DECIMALS
             || _expireAt <= block.timestamp) {
             revert InvalidInput();
         }
@@ -431,7 +338,7 @@ ReentrancyGuardUpgradeable {
             || _minSellingAmount > _maxSellingAmount
             || _maxSellingAmount > _totalSupply
             || _totalSupply > type(uint256).max / 10 ** _decimals
-            || _decimals > Constant.COMMON_DECIMALS_LIMIT
+            || _decimals > Constant.ESTATE_TOKEN_MAX_DECIMALS
             || _expireAt <= block.timestamp
             || _closeAt <= block.timestamp) {
             revert InvalidInput();
@@ -609,26 +516,14 @@ ReentrancyGuardUpgradeable {
 
         address currency = request.currency;
         uint256 value = soldAmount * request.unitPrice;
-        uint256 fee = MulDiv.mulDiv(
-            value,
-            feeRate,
-            Constant.COMMON_PERCENTAGE_DENOMINATOR
-        );
+        uint256 fee = value.scale(feeRate, Constant.COMMON_RATE_MAX_FRACTION);
         if (IAdmin(admin).isExclusiveCurrency(currency)) {
-            fee = MulDiv.mulDiv(
-                fee,
-                exclusiveRate,
-                Constant.COMMON_PERCENTAGE_DENOMINATOR
-            );
+            fee = fee.applyDiscount(IExclusiveToken(currency).exclusiveDiscount());
         }
 
         uint256 commissionAmount;
         if (_commissionReceiver != address(0)) {
-            commissionAmount = MulDiv.mulDiv(
-                fee,
-                commissionRate,
-                Constant.COMMON_PERCENTAGE_DENOMINATOR
-            );
+            commissionAmount = fee.scale(ICommissionToken(commissionToken).getCommissionRate());
         }
 
         if (currency == address(0)) {
@@ -741,11 +636,59 @@ ReentrancyGuardUpgradeable {
             : 0;
     }
 
-    function supportsInterface(bytes4 _interfaceId) public view override (
+    function supportsInterface(bytes4 _interfaceId) public view override(
         IERC165Upgradeable,
         ERC1155ReceiverUpgradeable,
         EstateTokenizer
     ) returns (bool) {
         return super.supportsInterface(_interfaceId);
+    }
+
+    function _validateUnitPrice(uint256 _unitPrice, address _currency) private {
+        if (!IAdmin(admin).isAvailableCurrency(_currency)) {
+            revert InvalidCurrency();
+        }
+
+        PriceFeed memory priceFeed = priceFeeds[_currency];
+
+        Rate memory rate;
+        if (priceFeed.feed == address(0)) {
+            rate = defaultRates[_currency];
+            if (rate.value == 0)revert MissingCurrencyRate();
+        } else {
+            (
+                ,
+                int256 answer,
+                ,
+                uint256 updatedAt,
+
+            ) = AggregatorV3Interface(priceFeed.feed).latestRoundData();
+
+            if (answer <= 0) {
+                revert InvalidPriceFeedData();
+            }
+
+            if (block.timestamp - updatedAt > priceFeed.heartbeat) {
+                revert StalePriceFeed();
+            }
+
+            rate = Rate(
+                uint256(answer),
+                AggregatorV3Interface(priceFeed.feed).decimals()
+            );
+        }
+
+        uint256 normalizedUnitPrice = _unitPrice.scale(rate);
+
+        if (baseMinUnitPrice > normalizedUnitPrice || normalizedUnitPrice > baseMaxUnitPrice) {
+            revert InvalidUnitPrice();
+        }
+
+        emit UnitPriceValidation(
+            _unitPrice,
+            _currency,
+            rate.value,
+            rate.decimals
+        );
     }
 }

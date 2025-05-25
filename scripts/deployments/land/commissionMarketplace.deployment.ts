@@ -1,7 +1,6 @@
 import { LedgerSigner } from '@anders-t/ethers-ledger';
 import assert from 'assert';
 import { ethers, network, upgrades } from 'hardhat';
-import { Constant } from "../../../utils/constant";
 import { deployCommissionMarketplace } from '../../../utils/deployments/land/commissionMarketplace';
 
 async function deployOrUpgradeCommissionMarketplace() {
@@ -36,8 +35,6 @@ async function deployOrUpgradeCommissionMarketplace() {
                 signer,
                 adminAddress,
                 commissionTokenAddress,
-                Constant.MORTGAGE_TOKEN_INITIAL_ExclusiveRate,
-                Constant.MORTGAGE_TOKEN_INITIAL_CommissionRate,
             );
             console.log(`Contract CommissionMarketplace has been deployed to address ${commissionMarketplace.address}`);
 

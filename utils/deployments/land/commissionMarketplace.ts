@@ -3,9 +3,7 @@ import { ethers, upgrades } from "hardhat";
 export async function deployCommissionMarketplace(
     signer: any,
     adminAddress: string,
-    commissionTokenAddress: string,
-    exclusiveRate: number,
-    commissionRate: number,
+    commissionTokenAddress: string
 ) {
     const CommissionMarketplace = await ethers.getContractFactory('CommissionMarketplace', signer);
 
@@ -14,8 +12,6 @@ export async function deployCommissionMarketplace(
         [
             adminAddress,
             commissionTokenAddress,
-            exclusiveRate,
-            commissionRate,
         ]
     );
     await commissionMarketplace.deployed();

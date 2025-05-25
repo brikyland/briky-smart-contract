@@ -3,15 +3,13 @@ pragma solidity ^0.8.20;
 
 import {IERC1155MetadataURIUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/extensions/IERC1155MetadataURIUpgradeable.sol";
 import {IERC1155ReceiverUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/IERC1155ReceiverUpgradeable.sol";
-import {IERC2981Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
 
-import {ICommon} from "../../common/interfaces/ICommon.sol";
+import {IRoyaltyRateToken} from "../../common/interfaces/IRoyaltyRateToken.sol";
 
 interface IEstateToken is
-ICommon,
+IRoyaltyRateToken,
 IERC1155MetadataURIUpgradeable,
-IERC1155ReceiverUpgradeable,
-IERC2981Upgradeable {
+IERC1155ReceiverUpgradeable {
     struct Estate {
         bytes32 zone;
         uint256 tokenizationId;
@@ -57,8 +55,6 @@ IERC2981Upgradeable {
     function admin() external view returns (address admin);
     function commissionToken() external view returns (address commissionToken);
     function feeReceiver() external view returns (address feeReceiver);
-
-    function royaltyRate() external view returns (uint256 royaltyRate);
 
     function estateNumber() external view returns (uint256 tokenNumber);
 

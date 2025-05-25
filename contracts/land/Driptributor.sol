@@ -10,10 +10,10 @@ import {MulDiv} from "../lib/MulDiv.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 
+import {IPrimaryToken} from "./interfaces/IPrimaryToken.sol";
 import {IStakeToken} from "./interfaces/IStakeToken.sol";
 
 import {DriptributorStorage} from "./storages/DriptributorStorage.sol";
-import {IPrimaryToken} from "./interfaces/IPrimaryToken.sol";
 
 contract Driptributor is
 DriptributorStorage,
@@ -203,7 +203,7 @@ ReentrancyGuardUpgradeable {
         uint256 _stake1,
         uint256 _stake2
     ) external nonReentrant whenNotPaused {
-        uint256 totalStake;
+        uint256 remain;
         for (uint256 i = 0; i < _distributionIds.length; ++i) {
             if (_distributionIds[i] == 0 || _distributionIds[i] > distributionNumber) {
                 revert InvalidDistributionId();
@@ -218,14 +218,14 @@ ReentrancyGuardUpgradeable {
 
             distribution.isStaked = true;
 
-            totalStake += distribution.totalAmount - distribution.withdrawnAmount;
+            remain += distribution.totalAmount - distribution.withdrawnAmount;
         }
 
-        if (totalStake < _stake1 + _stake2) {
+        if (remain < _stake1 + _stake2) {
             revert InsufficientFunds();
         }
 
-        uint256 stake3 = totalStake - _stake1 - _stake2;
+        uint256 stake3 = remain - _stake1 - _stake2;
 
         IERC20Upgradeable primaryTokenContract = IERC20Upgradeable(primaryToken);
         IStakeToken stakeToken1Contract = IStakeToken(stakeToken1);

@@ -22,9 +22,6 @@ interface IEstateMarketplace is ICommon {
         address seller;
     }
 
-    event CommissionRateUpdate(uint256 newValue);
-    event ExclusiveRateUpdate(uint256 newValue);
-
     event NewOffer(
         uint256 indexed offerId,
         uint256 indexed tokenId,
@@ -58,9 +55,6 @@ interface IEstateMarketplace is ICommon {
     function admin() external view returns (address admin);
     function commissionToken() external view returns (address commissionToken);
     function estateToken() external view returns (address estateToken);
-
-    function commissionRate() external view returns (uint256 commissionRate);
-    function exclusiveRate() external view returns (uint256 exclusiveRate);
 
     function offerNumber() external view returns (uint256 offerNumber);
 

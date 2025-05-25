@@ -1,3 +1,4 @@
+import { BigNumber } from "ethers";
 import { ethers, upgrades } from "hardhat";
 
 export async function deployEstateToken(
@@ -5,7 +6,7 @@ export async function deployEstateToken(
     adminAddress: string,
     feeReceiverAddress: string,
     baseURI: string,
-    royaltyRate: number,
+    royaltyRate: BigNumber,
 ) {
     const EstateToken = await ethers.getContractFactory('EstateToken', signer);
 

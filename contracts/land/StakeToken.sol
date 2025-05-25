@@ -7,8 +7,7 @@ import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ER
 
 import {Constant} from "../lib/Constant.sol";
 import {FixedMath} from "../lib/FixedMath.sol";
-import {StakeFormula} from "../lib/StakeFormula.sol";
-import {MulDiv} from "../lib/MulDiv.sol";
+import {Formula} from "../lib/Formula.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 
@@ -22,6 +21,7 @@ StakeTokenStorage,
 PausableUpgradeable,
 ReentrancyGuardUpgradeable {
     using FixedMath for uint256;
+    using Formula for uint256;
     using SafeERC20Upgradeable for IPrimaryToken;
 
     string internal constant VERSION = "v1.1.1";
@@ -43,7 +43,7 @@ ReentrancyGuardUpgradeable {
         name = _name;
         symbol = _symbol;
 
-        interestAccumulation = FixedMath.toFixed(1);
+        interestAccumulation = FixedMath.ONE;
     }
 
     function version() external pure returns (string memory) {
@@ -110,7 +110,7 @@ ReentrancyGuardUpgradeable {
 
             uint256 reward = IPrimaryToken(primaryToken).mintForStake();
 
-            interestAccumulation = StakeFormula.newInterestAccumulation(
+            interestAccumulation = _newInterestAccumulation(
                 interestAccumulation,
                 reward,
                 totalSupply
@@ -130,7 +130,7 @@ ReentrancyGuardUpgradeable {
             totalSupply += _value;
         }
         weights[_account] = weights[_account]
-            .add(StakeFormula.tokenToWeight(_value, interestAccumulation));
+            .add(_tokenToWeight(_value, interestAccumulation));
 
         emit Stake(_account, _value);
     }
@@ -148,7 +148,7 @@ ReentrancyGuardUpgradeable {
             totalSupply -= _value;
         }
         weights[msg.sender] = weights[msg.sender]
-            .sub(StakeFormula.tokenToWeight(_value, interestAccumulation));
+            .sub(_tokenToWeight(_value, interestAccumulation));
 
         IPrimaryToken(primaryToken).safeTransfer(msg.sender, _value);
 
@@ -169,7 +169,7 @@ ReentrancyGuardUpgradeable {
             totalSupply -= _value;
         }
         weights[msg.sender] = weights[msg.sender]
-            .sub(StakeFormula.tokenToWeight(_value, interestAccumulation));
+            .sub(_tokenToWeight(_value, interestAccumulation));
 
         successorContract.stake(msg.sender, _value);
 
@@ -177,39 +177,7 @@ ReentrancyGuardUpgradeable {
     }
 
     function balanceOf(address _account) public view returns (uint256) {
-        return StakeFormula.weightToToken(weights[_account], interestAccumulation);
-    }
-
-    function _transfer(address _from, address _to, uint256 _amount) private whenNotPaused {
-        require(_from != address(0), "ERC20: transfer from the zero address");
-        require(_to != address(0), "ERC20: transfer to the zero address");
-
-        uint256 weight = StakeFormula.tokenToWeight(_amount, interestAccumulation);
-        require(weight <= weights[_from], "ERC20: transfer amount exceeds balance");
-        unchecked {
-            weights[_from] = weights[_from].sub(weight);
-            weights[_to] = weights[_to].add(weight);
-        }
-
-        emit Transfer(_from, _to, _amount);
-    }
-
-    function _approve(address _owner, address _spender, uint256 _amount) private {
-        require(_owner != address(0), "ERC20: approve from the zero address");
-        require(_spender != address(0), "ERC20: approve to the zero address");
-
-        allowance[_owner][_spender] = _amount;
-        emit Approval(_owner, _spender, _amount);
-    }
-
-    function _spendAllowance(address _owner, address _spender, uint256 _amount) private {
-        uint256 currentAllowance = allowance[_owner][_spender];
-        if (currentAllowance != type(uint256).max) {
-            require(currentAllowance >= _amount, "ERC20: insufficient allowance");
-            unchecked {
-                _approve(_owner, _spender, currentAllowance - _amount);
-            }
-        }
+        return _weightToToken(weights[_account], interestAccumulation);
     }
 
     function transfer(address _to, uint256 _amount) external returns (bool) {
@@ -240,5 +208,62 @@ ReentrancyGuardUpgradeable {
             _approve(msg.sender, _spender, currentAllowance - _value);
         }
         return true;
+    }
+
+    function exclusiveDiscount() external view returns (Rate memory rate) {
+        IPrimaryToken primaryTokenContract = IPrimaryToken(primaryToken);
+        Rate memory primaryDiscount = primaryTokenContract.exclusiveDiscount();
+        return Rate(
+            primaryDiscount.value.scale(totalSupply, primaryTokenContract.totalStake()),
+            primaryDiscount.decimals
+        );
+    }
+
+    function _transfer(address _from, address _to, uint256 _amount) private whenNotPaused {
+        require(_from != address(0), "ERC20: transfer from the zero address");
+        require(_to != address(0), "ERC20: transfer to the zero address");
+
+        uint256 weight = _tokenToWeight(_amount, interestAccumulation);
+        require(weight <= weights[_from], "ERC20: transfer amount exceeds balance");
+        unchecked {
+            weights[_from] = weights[_from].sub(weight);
+            weights[_to] = weights[_to].add(weight);
+        }
+
+        emit Transfer(_from, _to, _amount);
+    }
+
+    function _approve(address _owner, address _spender, uint256 _amount) private {
+        require(_owner != address(0), "ERC20: approve from the zero address");
+        require(_spender != address(0), "ERC20: approve to the zero address");
+
+        allowance[_owner][_spender] = _amount;
+        emit Approval(_owner, _spender, _amount);
+    }
+
+    function _spendAllowance(address _owner, address _spender, uint256 _amount) private {
+        uint256 currentAllowance = allowance[_owner][_spender];
+        if (currentAllowance != type(uint256).max) {
+            require(currentAllowance >= _amount, "ERC20: insufficient allowance");
+            unchecked {
+                _approve(_owner, _spender, currentAllowance - _amount);
+            }
+        }
+    }
+
+    function _newInterestAccumulation(
+        uint256 _interestAccumulation,
+        uint256 _reward,
+        uint256 _totalSupply
+    ) private pure returns (uint256) {
+        return _interestAccumulation.mul(FixedMath.ONE.add(_reward.div(_totalSupply)));
+    }
+
+    function _tokenToWeight(uint256 _token, uint256 _accumulateInterestRate) private pure returns (uint256) {
+        return _token.toFixed().div(_accumulateInterestRate);
+    }
+
+    function _weightToToken(uint256 _weight, uint256 _accumulateInterestRate) private pure returns (uint256) {
+        return _weight.mul(_accumulateInterestRate).toUint();
     }
 }

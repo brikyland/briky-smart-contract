@@ -43,10 +43,10 @@ interface IDriptributor is ICommon {
 
     function getDistribution(uint256 distributionId) external view returns (Distribution memory distribution);
 
-    function withdraw(uint256[] calldata distributionIds) external;
     function stake(
         uint256[] calldata distributionIds,
         uint256 stake1,
         uint256 stake2
     ) external;
+    function withdraw(uint256[] calldata distributionIds) external;
 }

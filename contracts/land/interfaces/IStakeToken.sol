@@ -1,15 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-import {IERC20MetadataUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
+import {IExclusiveToken} from "./IExclusiveToken.sol";
 
-import {ICommon} from "../../common/interfaces/ICommon.sol";
-
-interface IStakeToken is
-ICommon,
-IERC20Upgradeable,
-IERC20MetadataUpgradeable {
+interface IStakeToken is IExclusiveToken {
     event RewardFetch(uint256 value);
     event Promotion(address indexed account, uint256 value);
     event Stake(address indexed account, uint256 value);

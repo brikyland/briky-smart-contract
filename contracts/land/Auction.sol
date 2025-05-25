@@ -6,8 +6,7 @@ import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/se
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
-import {Constant} from "../lib/Constant.sol";
-import {MulDiv} from "../lib/MulDiv.sol";
+import {Formula} from "../lib/Formula.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 
@@ -21,6 +20,7 @@ contract Auction is
 AuctionStorage,
 PausableUpgradeable,
 ReentrancyGuardUpgradeable {
+    using Formula for uint256;
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
     string constant private VERSION = "v1.1.1";
@@ -30,14 +30,18 @@ ReentrancyGuardUpgradeable {
     function initialize(
         address _admin,
         address _primaryToken,
-        address _stakeToken
+        address _stakeToken1,
+        address _stakeToken2,
+        address _stakeToken3
     ) external initializer {
         __Pausable_init();
         __ReentrancyGuard_init();
 
         admin = _admin;
         primaryToken = _primaryToken;
-        stakeToken = _stakeToken;
+        stakeToken1 = _stakeToken1;
+        stakeToken2 = _stakeToken2;
+        stakeToken3 = _stakeToken3;
     }
 
     function version() external pure returns (string memory) {
@@ -110,14 +114,10 @@ ReentrancyGuardUpgradeable {
         emit Deposit(msg.sender, _value);
     }
 
-    function evaluatedAllocationOf(address _account) public view returns (uint256) {
+    function allocationOf(address _account) public view returns (uint256) {
         return totalDeposit == 0
             ? 0
-            : MulDiv.mulDiv(
-                deposits[_account],
-                totalToken,
-                totalDeposit
-            );
+            : deposits[_account].scale(totalToken, totalDeposit);
     }
 
     function withdraw() external nonReentrant whenNotPaused {
@@ -128,14 +128,10 @@ ReentrancyGuardUpgradeable {
             revert NotEnded();
         }
 
-        uint256 tokenAmount = evaluatedAllocationOf(msg.sender);
+        uint256 allocation = allocationOf(msg.sender);
         uint256 vestedAmount = endAt + vestingDuration <= block.timestamp
-            ? tokenAmount
-            : MulDiv.mulDiv(
-                tokenAmount,
-                block.timestamp - endAt,
-                vestingDuration
-            );
+            ? allocation
+            : allocation.scale(block.timestamp - endAt, vestingDuration);
 
         uint256 withdrawableAmount = vestedAmount - withdrawnAmount[msg.sender];
         IERC20Upgradeable(primaryToken).safeTransfer(msg.sender, withdrawableAmount);
@@ -143,7 +139,7 @@ ReentrancyGuardUpgradeable {
         emit Withdrawal(msg.sender, withdrawableAmount);
     }
 
-    function stake() external nonReentrant whenNotPaused {
+    function stake(uint256 _stake1, uint256 _stake2) external nonReentrant whenNotPaused {
         if (endAt == 0) {
             revert NotStarted();
         }
@@ -151,13 +147,34 @@ ReentrancyGuardUpgradeable {
             revert NotEnded();
         }
 
-        uint256 tokenAmount = evaluatedAllocationOf(msg.sender);
-        uint256 amount = tokenAmount - withdrawnAmount[msg.sender];
-        withdrawnAmount[msg.sender] = tokenAmount;
+        uint256 allocation = allocationOf(msg.sender);
+        uint256 remain = allocation - withdrawnAmount[msg.sender];
+        withdrawnAmount[msg.sender] = allocation;
 
-        IERC20Upgradeable(primaryToken).safeIncreaseAllowance(stakeToken, amount);
-        IStakeToken(stakeToken).stake(msg.sender, amount);
+        if (remain < _stake1 + _stake2) {
+            revert InsufficientFunds();
+        }
 
-        emit Stake(msg.sender, amount);
+        uint256 stake3 = remain - _stake1 - _stake2;
+
+        IERC20Upgradeable primaryTokenContract = IERC20Upgradeable(primaryToken);
+        IStakeToken stakeToken1Contract = IStakeToken(stakeToken1);
+        IStakeToken stakeToken2Contract = IStakeToken(stakeToken2);
+        IStakeToken stakeToken3Contract = IStakeToken(stakeToken3);
+
+        primaryTokenContract.safeIncreaseAllowance(address(stakeToken1Contract), _stake1);
+        primaryTokenContract.safeIncreaseAllowance(address(stakeToken2Contract), _stake2);
+        primaryTokenContract.safeIncreaseAllowance(address(stakeToken3Contract), stake3);
+
+        stakeToken1Contract.stake(msg.sender, _stake1);
+        stakeToken2Contract.stake(msg.sender, _stake2);
+        stakeToken3Contract.stake(msg.sender, stake3);
+
+        emit Stake(
+            msg.sender,
+            _stake1,
+            _stake2,
+            stake3
+        );
     }
 }

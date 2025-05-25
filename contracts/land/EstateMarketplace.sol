@@ -8,12 +8,13 @@ import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ER
 
 import {Constant} from "../lib/Constant.sol";
 import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
-import {MulDiv} from "../lib/MulDiv.sol";
+import {Formula} from "../lib/Formula.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 
 import {ICommissionToken} from "./interfaces/ICommissionToken.sol";
 import {IEstateToken} from "./interfaces/IEstateToken.sol";
+import {IExclusiveToken} from "./interfaces/IExclusiveToken.sol";
 
 import {EstateMarketplaceStorage} from "./storages/EstateMarketplaceStorage.sol";
 
@@ -21,6 +22,7 @@ contract EstateMarketplace is
 EstateMarketplaceStorage,
 PausableUpgradeable,
 ReentrancyGuardUpgradeable {
+    using Formula for uint256;
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
     string constant private VERSION = "v1.1.1";
@@ -30,25 +32,14 @@ ReentrancyGuardUpgradeable {
     function initialize(
         address _admin,
         address _estateToken,
-        address _commissionToken,
-        uint256 _exclusiveRate,
-        uint256 _commissionRate
+        address _commissionToken
     ) external initializer {
-        require(_exclusiveRate <= Constant.COMMON_PERCENTAGE_DENOMINATOR);
-        require(_commissionRate <= Constant.COMMON_PERCENTAGE_DENOMINATOR);
-
         __Pausable_init();
         __ReentrancyGuard_init();
 
         admin = _admin;
         estateToken = _estateToken;
         commissionToken = _commissionToken;
-
-        exclusiveRate = _exclusiveRate;
-        commissionRate = _commissionRate;
-
-        emit ExclusiveRateUpdate(_exclusiveRate);
-        emit CommissionRateUpdate(_commissionRate);
     }
 
     function version() external pure returns (string memory) {
@@ -69,44 +60,6 @@ ReentrancyGuardUpgradeable {
             _signatures
         );
         _unpause();
-    }
-
-    function updateExclusiveRate(
-        uint256 _exclusiveRate,
-        bytes[] calldata _signature
-    ) external {
-        IAdmin(admin).verifyAdminSignatures(
-            abi.encode(
-                address(this),
-                "updateExclusiveRate",
-                _exclusiveRate
-            ),
-            _signature
-        );
-        if (_exclusiveRate > Constant.COMMON_PERCENTAGE_DENOMINATOR) {
-            revert InvalidPercentage();
-        }
-        exclusiveRate = _exclusiveRate;
-        emit ExclusiveRateUpdate(_exclusiveRate);
-    }
-
-    function updateCommissionRate(
-        uint256 _commissionRate,
-        bytes[] calldata _signature
-    ) external {
-        IAdmin(admin).verifyAdminSignatures(
-            abi.encode(
-                address(this),
-                "updateCommissionRate",
-                _commissionRate
-            ),
-            _signature
-        );
-        if (_commissionRate > Constant.COMMON_PERCENTAGE_DENOMINATOR) {
-            revert InvalidPercentage();
-        }
-        commissionRate = _commissionRate;
-        emit CommissionRateUpdate(_commissionRate);
     }
 
     function getOffer(uint256 _offerId) external view returns (Offer memory) {
@@ -185,20 +138,12 @@ ReentrancyGuardUpgradeable {
 
         IEstateToken estateTokenContract = IEstateToken(estateToken);
 
-        uint256 value = MulDiv.mulDiv(
-            amount,
-            offer.unitPrice,
-            10 ** estateTokenContract.getEstate(_tokenId).decimals
-        );
+        uint256 value = offer.unitPrice.scale(Rate(amount, estateTokenContract.getEstate(_tokenId).decimals));
 
         address currency = offer.currency;
         (address royaltyReceiver, uint256 royaltyAmount) = estateTokenContract.royaltyInfo(_tokenId, value);
         if (IAdmin(admin).isExclusiveCurrency(currency)) {
-            royaltyAmount = MulDiv.mulDiv(
-                royaltyAmount,
-                exclusiveRate,
-                Constant.COMMON_PERCENTAGE_DENOMINATOR
-            );
+            royaltyAmount = royaltyAmount.applyDiscount(IExclusiveToken(currency).exclusiveDiscount());
         }
 
         ICommissionToken commissionContract = ICommissionToken(commissionToken);
@@ -206,11 +151,7 @@ ReentrancyGuardUpgradeable {
         uint256 commissionAmount;
         if (commissionContract.exists(_tokenId)) {
             commissionReceiver = commissionContract.ownerOf(_tokenId);
-            commissionAmount = MulDiv.mulDiv(
-                royaltyAmount,
-                commissionRate,
-                Constant.COMMON_PERCENTAGE_DENOMINATOR
-            );
+            commissionAmount = royaltyAmount.scale(commissionContract.getCommissionRate());
         }
 
         if (currency == address(0)) {
@@ -271,20 +212,12 @@ ReentrancyGuardUpgradeable {
         if (newSoldAmount > sellingAmount) revert NotEnoughTokensToSell();
 
         IEstateToken estateTokenContract = IEstateToken(estateToken);
-        uint256 value = MulDiv.mulDiv(
-            _amount,
-            offer.unitPrice,
-            10 ** estateTokenContract.getEstate(_tokenId).decimals
-        );
+        uint256 value = offer.unitPrice.scale(Rate(_amount, estateTokenContract.getEstate(_tokenId).decimals));
 
         address currency = offer.currency;
         (address royaltyReceiver, uint256 royaltyAmount) = estateTokenContract.royaltyInfo(_tokenId, value);
         if (IAdmin(admin).isExclusiveCurrency(currency)) {
-            royaltyAmount = MulDiv.mulDiv(
-                royaltyAmount,
-                exclusiveRate,
-                Constant.COMMON_PERCENTAGE_DENOMINATOR
-            );
+            royaltyAmount = royaltyAmount.applyDiscount(IExclusiveToken(currency).exclusiveDiscount());
         }
 
         ICommissionToken commissionContract = ICommissionToken(commissionToken);
@@ -292,11 +225,7 @@ ReentrancyGuardUpgradeable {
         uint256 commissionAmount;
         if (commissionContract.exists(_tokenId)) {
             commissionReceiver = commissionContract.ownerOf(_tokenId);
-            commissionAmount = MulDiv.mulDiv(
-                royaltyAmount,
-                commissionRate,
-                Constant.COMMON_PERCENTAGE_DENOMINATOR
-            );
+            commissionAmount = royaltyAmount.scale(commissionContract.getCommissionRate());
         }
 
         if (currency == address(0)) {

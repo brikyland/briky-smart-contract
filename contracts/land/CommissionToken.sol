@@ -10,9 +10,11 @@ import {ERC721URIStorageUpgradeable} from "@openzeppelin/contracts-upgradeable/t
 import {IERC721MetadataUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/IERC721MetadataUpgradeable.sol";
 
 import {Constant} from "../lib/Constant.sol";
-import {MulDiv} from "../lib/MulDiv.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
+import {IRoyaltyRateToken} from "../common/interfaces/IRoyaltyRateToken.sol";
+
+import {RoyaltyRateToken} from "../common/utilities/RoyaltyRateToken.sol";
 
 import {IEstateToken} from "./interfaces/IEstateToken.sol";
 
@@ -22,6 +24,7 @@ contract CommissionToken is
 CommissionTokenStorage,
 ERC721PausableUpgradeable,
 ERC721URIStorageUpgradeable,
+RoyaltyRateToken,
 ReentrancyGuardUpgradeable {
     string constant private VERSION = "v1.1.1";
 
@@ -34,9 +37,11 @@ ReentrancyGuardUpgradeable {
         string calldata _name,
         string calldata _symbol,
         string calldata _uri,
+        uint256 _commissionRate,
         uint256 _royaltyRate
     ) external initializer {
-        require(_royaltyRate <= Constant.COMMON_PERCENTAGE_DENOMINATOR);
+        require(_royaltyRate <= Constant.COMMON_RATE_MAX_FRACTION);
+        require(_commissionRate <= Constant.COMMON_RATE_MAX_FRACTION);
 
         __ERC721_init(_name, _symbol);
         __ERC721Pausable_init();
@@ -49,9 +54,11 @@ ReentrancyGuardUpgradeable {
         feeReceiver = _feeReceiver;
 
         baseURI = _uri;
-
+        commissionRate = _commissionRate;
         royaltyRate = _royaltyRate;
 
+        emit BaseURIUpdate(_uri);
+        emit CommissionRateUpdate(_commissionRate);
         emit RoyaltyRateUpdate(_royaltyRate);
     }
 
@@ -87,8 +94,8 @@ ReentrancyGuardUpgradeable {
             ),
             _signature
         );
-        if (_royaltyRate > Constant.COMMON_PERCENTAGE_DENOMINATOR) {
-            revert InvalidPercentage();
+        if (_royaltyRate > Constant.COMMON_RATE_MAX_FRACTION) {
+            revert InvalidRate();
         }
         royaltyRate = _royaltyRate;
         emit RoyaltyRateUpdate(_royaltyRate);
@@ -112,6 +119,17 @@ ReentrancyGuardUpgradeable {
         emit BatchMetadataUpdate(1, IEstateToken(estateToken).estateNumber());
     }
 
+    function getCommissionRate() external view returns (Rate memory) {
+        return Rate(commissionRate, Constant.COMMON_RATE_DECIMALS);
+    }
+
+    function getRoyaltyRate() public view override(
+        IRoyaltyRateToken,
+        RoyaltyRateToken
+    ) returns (Rate memory) {
+        return Rate(royaltyRate, Constant.COMMON_RATE_DECIMALS);
+    }
+
     function mint(address _account, uint256 _tokenId) external {
         if (msg.sender != estateToken) {
             revert Unauthorized();
@@ -127,7 +145,7 @@ ReentrancyGuardUpgradeable {
         return _exists(_tokenId);
     }
 
-    function tokenURI(uint256 _tokenId) public view override (
+    function tokenURI(uint256 _tokenId) public view override(
         IERC721MetadataUpgradeable,
         ERC721Upgradeable,
         ERC721URIStorageUpgradeable
@@ -135,23 +153,13 @@ ReentrancyGuardUpgradeable {
         return super.tokenURI(_tokenId);
     }
 
-    function royaltyInfo(uint256 _tokenId, uint256 _salePrice) external view returns (address, uint256) {
-        return (
-            feeReceiver,
-            MulDiv.mulDiv(
-                _salePrice,
-                royaltyRate,
-                Constant.COMMON_PERCENTAGE_DENOMINATOR
-            )
-        );
-    }
-
-    function supportsInterface(bytes4 _interfaceId) public view override (
+    function supportsInterface(bytes4 _interfaceId) public view override(
         IERC165Upgradeable,
         ERC721Upgradeable,
-        ERC721URIStorageUpgradeable
+        ERC721URIStorageUpgradeable,
+        RoyaltyRateToken
     ) returns (bool) {
-        return _interfaceId == type(IERC2981Upgradeable).interfaceId || super.supportsInterface(_interfaceId);
+        return super.supportsInterface(_interfaceId);
     }
 
     function _baseURI() internal view override returns (string memory) {
@@ -163,12 +171,16 @@ ReentrancyGuardUpgradeable {
         address _to,
         uint256 _firstTokenId,
         uint256 _batchSize
-    ) internal override (ERC721Upgradeable, ERC721PausableUpgradeable) {
+    ) internal override(ERC721Upgradeable, ERC721PausableUpgradeable) {
         super._beforeTokenTransfer(_from, _to, _firstTokenId, _batchSize);
     }
 
-    function _burn(uint256 _tokenId)
-    internal override (ERC721Upgradeable, ERC721URIStorageUpgradeable) {
+    function _burn(uint256 _tokenId) internal
+    override(ERC721Upgradeable, ERC721URIStorageUpgradeable) {
         super._burn(_tokenId);
+    }
+
+    function _royaltyReceiver() internal view override returns (address) {
+        return feeReceiver;
     }
 }

@@ -1,12 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {ICommon} from "../../common/interfaces/ICommon.sol";
 import {IEstateTokenizer} from "./IEstateTokenizer.sol";
 
-interface IEstateForger is
-ICommon,
-IEstateTokenizer {
+interface IEstateForger is IEstateTokenizer {
     struct Request {
         uint256 estateId;
         bytes32 zone;
@@ -23,18 +20,11 @@ IEstateTokenizer {
         address requester;
     }
 
-    struct Rate {
-        uint256 value;
-        uint8 decimals;
-    }
-
     struct PriceFeed {
         address feed;
         uint40 heartbeat;
     }
 
-    event CommissionRateUpdate(uint256 newValue);
-    event ExclusiveRateUpdate(uint256 newValue);
     event FeeRateUpdate(uint256 newValue);
 
     event BaseUnitPriceRangeUpdate(
@@ -139,9 +129,7 @@ IEstateTokenizer {
     function commissionToken() external view returns (address commissionToken);
     function feeReceiver() external view returns (address feeReceiver);
 
-    function commissionRate() external view returns (uint256 commissionRate);
-    function exclusiveRate() external view returns (uint256 exclusiveRate);
-    function feeRate() external view returns (uint256 feeRate);
+    function getFeeRate() external view returns (Rate memory rate);
 
     function baseMinUnitPrice() external view returns (uint256 baseMinUnitPrice);
     function baseMaxUnitPrice() external view returns (uint256 baseMaxUnitPrice);
