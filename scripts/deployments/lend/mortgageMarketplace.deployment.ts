@@ -1,7 +1,6 @@
 import { LedgerSigner } from '@anders-t/ethers-ledger';
 import assert from 'assert';
 import { ethers, network, upgrades } from 'hardhat';
-import { Constant } from "../../../utils/constant";
 import { deployMortgageMarketplace } from '../../../utils/deployments/lend/mortgageMarketplace';
 
 async function deployOrUpgradeMortgageMarketplace() {
@@ -41,9 +40,7 @@ async function deployOrUpgradeMortgageMarketplace() {
                 signer,
                 adminAddress,
                 mortgageTokenAddress,
-                commissionTokenAddress,
-                Constant.MORTGAGE_TOKEN_INITIAL_ExclusiveRate,
-                Constant.MORTGAGE_TOKEN_INITIAL_CommissionRate,
+                commissionTokenAddress
             );
             console.log(`Contract MortgageMarketplace has been deployed to address ${mortgageMarketplace.address}`);
 
