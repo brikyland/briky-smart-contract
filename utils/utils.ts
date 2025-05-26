@@ -103,3 +103,36 @@ export function randomArrayWithSum(
 
     return result;
 }
+
+export class OrderedMap<int, V> {
+    private map: Map<int, V>;
+    private keys: int[];
+    private defaultValue: V;
+
+    constructor(defaultValue: V) {
+        this.map = new Map();
+        this.keys = [];
+        this.defaultValue = defaultValue;
+    }
+
+    public get(key: int): V {
+        for (let i = this.keys.length - 1; i >= 0; i--) {
+            if (this.keys[i] <= key) {
+                return this.map.get(this.keys[i])!;
+            }
+        }
+        return this.defaultValue;
+    }
+
+    public set(key: int, value: V): void {
+        this.map.set(key, value);
+        for (let i = 0; i <= this.keys.length; i++) {
+            if (i == this.keys.length || this.keys[i] >= key) {
+                if (i == this.keys.length || this.keys[i] > key) {
+                    this.keys.splice(i, 0, key);
+                }
+                break;
+            }
+        }
+    }
+}

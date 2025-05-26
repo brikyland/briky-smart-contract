@@ -23,7 +23,6 @@
     "deployStakeToken2:local": "npx hardhat --network localhost run scripts/deployments/land/stakeToken2.deployment.ts",
     "deployStakeToken3:local": "npx hardhat --network localhost run scripts/deployments/land/stakeToken3.deployment.ts",
     "deployTreasury:local": "npx hardhat --network localhost run scripts/deployments/land/treasury.deployment.ts",
-
     "console:staging": "npx hardhat --network staging console",
     "deployAdmin:staging": "npx hardhat --network staging run scripts/deployments/common/admin.deployment.ts",
     "deployBackerRoundDistributor:staging": "npx hardhat --network staging run scripts/deployments/land/distributors/backerRoundDistributor.deployment.ts",
@@ -46,7 +45,6 @@
     "deployStakeToken2:staging": "npx hardhat --network staging run scripts/deployments/land/stakeToken2.deployment.ts",
     "deployStakeToken3:staging": "npx hardhat --network staging run scripts/deployments/land/stakeToken3.deployment.ts",
     "deployTreasury:staging": "npx hardhat --network staging run scripts/deployments/land/treasury.deployment.ts",
-
     "console:testnet": "npx hardhat --network testnet console",
     "deployAdmin:testnet": "npx hardhat --network testnet run scripts/deployments/common/admin.deployment.ts",
     "deployBackerRoundDistributor:testnet": "npx hardhat --network testnet run scripts/deployments/land/distributors/backerRoundDistributor.deployment.ts",
@@ -70,7 +68,6 @@
     "deployStakeToken3:testnet": "npx hardhat --network testnet run scripts/deployments/land/stakeToken3.deployment.ts",
     "deployTreasury:testnet": "npx hardhat --network testnet run scripts/deployments/land/treasury.deployment.ts",
     "console:mainnet": "npx hardhat --network mainnet console",
-
     "deployAdmin:mainnet": "npx hardhat --network mainnet run scripts/deployments/common/admin.deployment.ts",
     "deployBackerRoundDistributor:mainnet": "npx hardhat --network mainnet run scripts/deployments/land/distributors/backerRoundDistributor.deployment.ts",
     "deployCommissionMarketplace:mainnet": "npx hardhat --network mainnet run scripts/deployments/land/commissionMarketplace.deployment.ts",
@@ -93,8 +90,9 @@
     "deployTreasury:mainnet": "npx hardhat --network mainnet run scripts/deployments/land/treasury.deployment.ts"
   },
   "devDependencies": {
-    "@chainlink/contracts": "^1.4.0",
     "@anders-t/ethers-ledger": "^1.0.4",
+    "@chainlink/contracts": "^1.4.0",
+    "@defi-wonderland/smock": "^2.4.1",
     "@ledgerhq/hw-transport-node-hid": "^6.29.1",
     "@nomicfoundation/hardhat-network-helpers": "^1.0.8",
     "@nomicfoundation/hardhat-toolbox": "^2.0.2",
@@ -104,6 +102,7 @@
     "dotenv": "^16.1.4",
     "hardhat-contract-sizer": "^2.10.0",
     "mocha-junit-reporter": "^2.2.0",
-    "mocha-multi-reporters": "^1.5.1"
+    "mocha-multi-reporters": "^1.5.1",
+    "tsconfig-paths": "^4.2.0"
   }
 }

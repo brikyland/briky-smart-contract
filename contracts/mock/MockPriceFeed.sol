@@ -87,4 +87,9 @@ contract MockPriceFeed is AggregatorV3Interface, Initializable {
     function updateDecimals(uint8 newDecimals) external {
         _decimals = newDecimals;
     }
+
+    function updateData(uint256 newAnswer, uint8 newDecimals) external {
+        _answer = newAnswer;
+        _decimals = newDecimals;
+    }
 } 

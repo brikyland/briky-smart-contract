@@ -1,4 +1,4 @@
-import { BigNumber } from "ethers";
+import { BigNumber, BigNumberish } from "ethers";
 import { ethers, upgrades } from "hardhat";
 
 export async function deployEstateForger(
