@@ -25,6 +25,7 @@ import { smock } from '@defi-wonderland/smock';
 import {
     callAdmin_AuthorizeManagers,
     callAdmin_AuthorizeModerators,
+    callAdmin_DeclareZones,
 } from '@utils/callWithSignatures/admin';
 import {
     callEstateToken_UpdateCommissionToken,
@@ -117,6 +118,7 @@ describe('3. EstateToken', async () => {
             Constant.COMMISSION_TOKEN_INITIAL_Name,
             Constant.COMMISSION_TOKEN_INITIAL_Symbol,
             Constant.COMMISSION_TOKEN_INITIAL_BaseURI,
+            Constant.COMMISSION_TOKEN_INITIAL_CommissionRate,
             Constant.COMMISSION_TOKEN_INITIAL_RoyaltyRate,
         ) as CommissionToken;
 
@@ -212,6 +214,14 @@ describe('3. EstateToken', async () => {
         const sampleEstates: any[] = [];
 
         if (addSampleEstates) {
+            await callAdmin_DeclareZones(
+                admin,
+                admins,
+                [ethers.utils.formatBytes32String("TestZone")],
+                true,
+                await fixture.admin.nonce()
+            );
+
             await time.setNextBlockTimestamp(baseTimestamp);
 
             await estateForger.call(estateToken.address, estateToken.interface.encodeFunctionData('tokenizeEstate', [
@@ -255,8 +265,9 @@ describe('3. EstateToken', async () => {
             const feeReceiverAddress = await estateToken.feeReceiver();
             expect(feeReceiverAddress).to.equal(feeReceiver.address);
 
-            const royaltyRate = await estateToken.royaltyRate();
-            expect(royaltyRate).to.equal(Constant.ESTATE_TOKEN_INITIAL_RoyaltyRate);
+            const royaltyRate = await estateToken.getRoyaltyRate();
+            expect(royaltyRate.value).to.equal(Constant.ESTATE_TOKEN_INITIAL_RoyaltyRate);
+            expect(royaltyRate.decimals).to.equal(Constant.COMMON_RATE_DECIMALS);
 
             const estateNumber = await estateToken.estateNumber();
             expect(estateNumber).to.equal(0);
@@ -275,7 +286,7 @@ describe('3. EstateToken', async () => {
                 admin.address,
                 feeReceiver.address,
                 Constant.ESTATE_TOKEN_INITIAL_BaseURI,
-                100_01,
+                Constant.COMMON_RATE_MAX_FRACTION.add(1),
             ])).to.be.reverted;
         });
     });
@@ -474,19 +485,21 @@ describe('3. EstateToken', async () => {
 
             const message = ethers.utils.defaultAbiCoder.encode(
                 ["address", "string", "uint256"],
-                [estateToken.address, "updateRoyaltyRate", 20_00]
+                [estateToken.address, "updateRoyaltyRate", ethers.utils.parseEther('0.2')]
             );
 
             const signatures = await getSignatures(message, admins, await admin.nonce());
 
-            const tx = await estateToken.updateRoyaltyRate(20_00, signatures);
+            const tx = await estateToken.updateRoyaltyRate(ethers.utils.parseEther('0.2'), signatures);
             await tx.wait();
 
             await expect(tx).to
                 .emit(estateToken, 'RoyaltyRateUpdate')
-                .withArgs(20_00);
+                .withArgs(ethers.utils.parseEther('0.2'));
 
-            expect(await estateToken.royaltyRate()).to.equal(20_00);
+            const royaltyRate = await estateToken.getRoyaltyRate();
+            expect(royaltyRate.value).to.equal(ethers.utils.parseEther('0.2'));
+            expect(royaltyRate.decimals).to.equal(Constant.COMMON_RATE_DECIMALS);
         });
 
         it('3.6.2. updateRoyaltyRate unsuccessfully with invalid signatures', async () => {
@@ -494,12 +507,12 @@ describe('3. EstateToken', async () => {
 
             const message = ethers.utils.defaultAbiCoder.encode(
                 ["address", "string", "uint256"],
-                [estateToken.address, "updateRoyaltyRate", 20_00]
+                [estateToken.address, "updateRoyaltyRate", ethers.utils.parseEther('0.2')]
             );
             const invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
 
             await expect(estateToken.updateRoyaltyRate(
-                20_00,
+                ethers.utils.parseEther('0.2'),
                 invalidSignatures
             )).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
@@ -509,14 +522,14 @@ describe('3. EstateToken', async () => {
 
             let message = ethers.utils.defaultAbiCoder.encode(
                 ["address", "string", "uint256"],
-                [estateToken.address, "updateRoyaltyRate", 100_01]
+                [estateToken.address, "updateRoyaltyRate", Constant.COMMON_RATE_MAX_FRACTION.add(1)]
             );
             const signatures = await getSignatures(message, admins, await admin.nonce());
 
             await expect(estateToken.updateRoyaltyRate(
-                100_01,
+                Constant.COMMON_RATE_MAX_FRACTION.add(1),
                 signatures
-            )).to.be.revertedWithCustomError(estateToken, 'InvalidPercentage');
+            )).to.be.revertedWithCustomError(estateToken, 'InvalidRate');
         });
     });
 
@@ -809,11 +822,20 @@ describe('3. EstateToken', async () => {
         };
 
         it('3.8.1. tokenize estate successfully with no commission receiver', async () => {
-            const { estateToken, estateForger, commissionToken } = await beforeEstateTokenTest({
+            const { estateToken, estateForger, commissionToken, admin, admins } = await beforeEstateTokenTest({
                 updateCommissionToken: true,
                 authorizeEstateForger: true,
             });
             const { baseTimestamp, defaultParams } = await beforeTokenizeEstateTest();
+
+            await callAdmin_DeclareZones(
+                admin,
+                admins,
+                [defaultParams.zone],
+                true,
+                await admin.nonce()
+            );
+
             await time.setNextBlockTimestamp(baseTimestamp);
 
             let tx = await estateForger.call(estateToken.address, estateToken.interface.encodeFunctionData('tokenizeEstate', [
@@ -857,12 +879,20 @@ describe('3. EstateToken', async () => {
         });
 
         it('3.8.2. tokenize estate successfully with commission receiver', async () => {
-            const { estateToken, estateForger, commissionToken } = await beforeEstateTokenTest({
+            const { estateToken, estateForger, commissionToken, admin, admins } = await beforeEstateTokenTest({
                 updateCommissionToken: true,
                 authorizeEstateForger: true,
             });
             const { baseTimestamp, defaultParams } = await beforeTokenizeEstateTest();
             defaultParams.commissionReceiverAddress = commissionToken.address;
+
+            await callAdmin_DeclareZones(
+                admin,
+                admins,
+                [defaultParams.zone],
+                true,
+                await admin.nonce()
+            );
 
             await time.setNextBlockTimestamp(baseTimestamp);
 
@@ -908,10 +938,18 @@ describe('3. EstateToken', async () => {
         });
 
         it('3.8.3. tokenize estate unsuccessfully when tokenizer is not authorized', async () => {
-            const { estateToken, estateForger, commissionToken } = await beforeEstateTokenTest({
+            const { estateToken, estateForger, commissionToken, admin, admins } = await beforeEstateTokenTest({
                 updateCommissionToken: true,
             });
             const { baseTimestamp, defaultParams } = await beforeTokenizeEstateTest();
+
+            await callAdmin_DeclareZones(
+                admin,
+                admins,
+                [defaultParams.zone],
+                true,
+                await admin.nonce()
+            );
 
             await time.setNextBlockTimestamp(baseTimestamp);
 
@@ -926,12 +964,40 @@ describe('3. EstateToken', async () => {
             ]))).to.be.revertedWithCustomError(estateToken, `Unauthorized`);
         });
 
-        it('3.8.4. tokenize estate unsuccessfully when expireAt exceed current timestamp', async () => {
+        it('3.8.4. tokenize estate unsuccessfully when zone is not declared', async () => {
             const { estateToken, estateForger, commissionToken } = await beforeEstateTokenTest({
                 updateCommissionToken: true,
                 authorizeEstateForger: true,
             });
             const { baseTimestamp, defaultParams } = await beforeTokenizeEstateTest();
+
+            await time.setNextBlockTimestamp(baseTimestamp);
+
+            await expect(estateForger.call(estateToken.address, estateToken.interface.encodeFunctionData('tokenizeEstate', [
+                defaultParams.totalSupply,
+                defaultParams.zone,
+                defaultParams.tokenizationId,
+                defaultParams.uri,
+                defaultParams.expireAt,
+                defaultParams.decimals,
+                defaultParams.commissionReceiverAddress,
+            ]))).to.be.revertedWithCustomError(estateToken, `InvalidInput`);
+        });
+
+        it('3.8.5. tokenize estate unsuccessfully when expireAt exceed current timestamp', async () => {
+            const { estateToken, estateForger, commissionToken, admin, admins } = await beforeEstateTokenTest({
+                updateCommissionToken: true,
+                authorizeEstateForger: true,
+            });
+            const { baseTimestamp, defaultParams } = await beforeTokenizeEstateTest();
+
+            await callAdmin_DeclareZones(
+                admin,
+                admins,
+                [defaultParams.zone],
+                true,
+                await admin.nonce()
+            );
 
             await time.setNextBlockTimestamp(baseTimestamp);
 
@@ -956,13 +1022,21 @@ describe('3. EstateToken', async () => {
             ]))).to.be.revertedWithCustomError(estateToken, `InvalidInput`);
         });
 
-        it('3.8.5. tokenize estate unsuccessfully when commission token is not set', async () => {
-            const { estateToken, estateForger, commissionToken } = await beforeEstateTokenTest({
+        it('3.8.6. tokenize estate unsuccessfully when commission token is not set', async () => {
+            const { estateToken, estateForger, commissionToken, admin, admins } = await beforeEstateTokenTest({
                 updateCommissionToken: false,
                 authorizeEstateForger: true,
             });
             const { baseTimestamp, defaultParams } = await beforeTokenizeEstateTest();
             defaultParams.commissionReceiverAddress = commissionToken.address;
+
+            await callAdmin_DeclareZones(
+                admin,
+                admins,
+                [defaultParams.zone],
+                true,
+                await admin.nonce()
+            );
 
             await time.setNextBlockTimestamp(baseTimestamp);
 
@@ -1228,7 +1302,7 @@ describe('3. EstateToken', async () => {
 
             await expect(tx)
                 .to.emit(estateToken, "URI")
-                .withArgs(1, 'new_URI_1');
+                .withArgs('new_URI_1', 1);
 
             expect(await estateToken.uri(1)).to.equal(Constant.ESTATE_TOKEN_INITIAL_BaseURI + 'new_URI_1');
 
@@ -1237,7 +1311,7 @@ describe('3. EstateToken', async () => {
 
             await expect(tx)
                 .to.emit(estateToken, "URI")
-                .withArgs(2, 'new_URI_2');
+                .withArgs('new_URI_2', 2);
 
             expect(await estateToken.uri(2)).to.equal(Constant.ESTATE_TOKEN_INITIAL_BaseURI + 'new_URI_2');
         });
@@ -1514,41 +1588,8 @@ describe('3. EstateToken', async () => {
         });
     });
 
-    describe('3.16. royaltyInfo(uint256, uint256)', () => {
-        it('3.16.1. return correct royalty info', async () => {
-            const { estateToken, feeReceiver } = await beforeEstateTokenTest({
-                updateCommissionToken: true,
-                authorizeEstateForger: true,
-                addSampleEstates: true,
-            });
-
-            const royaltyInfo = await estateToken.royaltyInfo(1, 1e6);
-            const royaltyFee = 1e6 * Constant.ESTATE_TOKEN_INITIAL_RoyaltyRate / Constant.COMMON_PERCENTAGE_DENOMINATOR;
-            expect(royaltyInfo[0]).to.equal(feeReceiver.address);
-            expect(royaltyInfo[1]).to.equal(royaltyFee);
-        });
-    });
-
-    describe('3.17. supportsInterface(bytes4)', () => {
-        it('3.17.1. return true for IERC2981Upgradeable interface', async () => {
-            const { estateToken } = await beforeEstateTokenTest({
-                updateCommissionToken: true,
-                authorizeEstateForger: true,
-                addSampleEstates: true,
-            });
-
-            const IERC165UpgradeableInterface = IERC165Upgradeable__factory.createInterface();
-            const IERC165UpgradeableInterfaceId = getInterfaceID(IERC165UpgradeableInterface);
-
-            const IERC2981UpgradeableInterface = IERC2981Upgradeable__factory.createInterface();
-            const IERC2981UpgradeableInterfaceId = getInterfaceID(IERC2981UpgradeableInterface).xor(IERC165UpgradeableInterfaceId);
-
-            expect(await estateToken.supportsInterface(IERC2981UpgradeableInterfaceId._hex)).to.equal(true);
-        });
-    });
-
-    describe('3.18. safeTransferFrom(address, address, uint256, uint256, bytes)', () => {
-        it('3.18.1. transfer unsuccessfully when the token is deprecated', async () => {
+    describe('3.16. safeTransferFrom(address, address, uint256, uint256, bytes)', () => {
+        it('3.16.1. transfer unsuccessfully when the token is deprecated', async () => {
             const { estateToken, manager, depositor1, depositor2 } = await beforeEstateTokenTest({
                 updateCommissionToken: true,
                 authorizeEstateForger: true,
@@ -1569,7 +1610,7 @@ describe('3. EstateToken', async () => {
             )).to.be.revertedWith("estateToken: Token is unavailable");
         });
 
-        it('3.18.2. transfer unsuccessfully when the token is expired', async () => {
+        it('3.16.2. transfer unsuccessfully when the token is expired', async () => {
             const { estateToken, manager, depositor1, depositor2 } = await beforeEstateTokenTest({
                 updateCommissionToken: true,
                 authorizeEstateForger: true,
