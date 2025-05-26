@@ -5,8 +5,6 @@ export async function deployMortgageMarketplace(
     adminAddress: string,
     mortgageTokenAddress: string,
     commissionTokenAddress: string,
-    exclusiveRate: number,
-    commissionRate: number,
 ) {
     const MortgageMarketplace = await ethers.getContractFactory('MortgageMarketplace', signer);
 
@@ -16,8 +14,6 @@ export async function deployMortgageMarketplace(
             adminAddress,
             mortgageTokenAddress,
             commissionTokenAddress,
-            exclusiveRate,
-            commissionRate,
         ]
     );
     await mortgageMarketplace.deployed();

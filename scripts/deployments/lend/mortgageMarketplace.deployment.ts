@@ -42,8 +42,6 @@ async function deployOrUpgradeMortgageMarketplace() {
                 adminAddress,
                 mortgageTokenAddress,
                 commissionTokenAddress,
-                Constant.MORTGAGE_TOKEN_INITIAL_ExclusiveRate,
-                Constant.MORTGAGE_TOKEN_INITIAL_CommissionRate,
             );
             console.log(`Contract MortgageMarketplace has been deployed to address ${mortgageMarketplace.address}`);
 

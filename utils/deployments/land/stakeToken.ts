@@ -1,6 +1,6 @@
 import { ethers, upgrades } from "hardhat";
 
-export async function deployStateToken(
+export async function deployStakeToken(
     signer: any,
     adminAddress: string,
     primaryTokenAddress: string,

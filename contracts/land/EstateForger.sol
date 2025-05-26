@@ -24,8 +24,6 @@ import {EstateForgerStorage} from "./storages/EstateForgerStorage.sol";
 import {EstateTokenizer} from "./utilities/EstateTokenizer.sol";
 import {IExclusiveToken} from "./interfaces/IExclusiveToken.sol";
 
-import "hardhat/console.sol";
-
 contract EstateForger is
 EstateForgerStorage,
 EstateTokenizer,

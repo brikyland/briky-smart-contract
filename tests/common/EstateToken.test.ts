@@ -359,7 +359,7 @@ describe('3. EstateToken', async () => {
             await expect(estateToken.unpause(invalidSignatures)).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('3.3.3. pause unsuccessfully when already paused', async () => {
+        it('3.3.3. unpause unsuccessfully when not paused', async () => {
             const { estateToken, admin, admins } = await beforeEstateTokenTest({ pause: true });
 
             let message = ethers.utils.defaultAbiCoder.encode(
