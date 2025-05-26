@@ -29,32 +29,36 @@ export async function isContract(provider: any, address: string) {
 export async function prepareNativeToken(
     provider: JsonRpcProvider,
     signer: ethers.Wallet,
-    sender: ethers.Wallet | ethers.Contract,
+    senders: (ethers.Wallet | ethers.Contract)[],
     amount: ethers.BigNumber
 ) {
     const deployerBalance = await provider.getBalance(signer.address);
-    await provider.send("hardhat_setBalance", [
-        signer.address,
-        ethers.utils.hexValue(deployerBalance.add(amount))
-    ]);
-    await callTransaction(signer.sendTransaction({
-        to: sender.address,
-        value: amount,
-    }));
-    await provider.send("hardhat_setBalance", [
-        signer.address,
-        ethers.utils.hexValue(ethers.utils.parseEther("10000.0"))
-    ]);
+    for (const sender of senders) {
+        await provider.send("hardhat_setBalance", [
+            signer.address,
+            ethers.utils.hexValue(deployerBalance.add(amount))
+        ]);
+        await callTransaction(signer.sendTransaction({
+            to: sender.address,
+            value: amount,
+        }));
+        await provider.send("hardhat_setBalance", [
+            signer.address,
+            ethers.utils.hexValue(ethers.utils.parseEther("10000.0"))
+        ]);
+    }
 }
 
 export async function prepareERC20(
     token: ethers.Contract,
-    sender: ethers.Wallet,
+    senders: ethers.Wallet[],
     operator: ethers.Wallet | ethers.Contract,
     amount: ethers.BigNumberish
 ) {
-    await callTransaction(token.mint(sender.address, amount));
-    await callTransaction(token.connect(sender).increaseAllowance(operator.address, amount));
+    for (const sender of senders) {
+        await callTransaction(token.mint(sender.address, amount));
+        await callTransaction(token.connect(sender).increaseAllowance(operator.address, amount));
+    }
 }
 
 export async function resetNativeToken(
