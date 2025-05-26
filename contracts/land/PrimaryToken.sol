@@ -161,9 +161,9 @@ ReentrancyGuardUpgradeable {
     }
 
     function isStakeRewardingCompleted() external view returns (bool) {
-        if (msg.sender == stakeToken1) return stakeToken1Waves >= Constant.PRIMARY_TOKEN_STAKE_1_LAST_WAVE;
-        if (msg.sender == stakeToken2) return stakeToken2Waves >= Constant.PRIMARY_TOKEN_STAKE_2_LAST_WAVE;
-        if (msg.sender == stakeToken3) return stakeToken3Waves >= Constant.PRIMARY_TOKEN_STAKE_3_LAST_WAVE;
+        if (msg.sender == stakeToken1) return stakeToken1Waves >= Constant.PRIMARY_TOKEN_STAKE_1_CULMINATING_WAVE;
+        if (msg.sender == stakeToken2) return stakeToken2Waves >= Constant.PRIMARY_TOKEN_STAKE_2_CULMINATING_WAVE;
+        if (msg.sender == stakeToken3) return stakeToken3Waves >= Constant.PRIMARY_TOKEN_STAKE_3_CULMINATING_WAVE;
         revert Unauthorized();
     }
 
@@ -512,42 +512,42 @@ ReentrancyGuardUpgradeable {
 
     function mintForStake() external returns (uint256) {
         if (msg.sender == stakeToken1) {
-            if (stakeToken1Waves == Constant.PRIMARY_TOKEN_STAKE_1_LAST_WAVE) {
+            if (stakeToken1Waves == Constant.PRIMARY_TOKEN_STAKE_1_CULMINATING_WAVE) {
                 revert AllStakeRewardMinted();
             }
             unchecked {
                 stakeToken1Waves += 1;
             }
 
-            _mint(msg.sender, Constant.PRIMARY_TOKEN_STAKE_1_DAILY_REWARD);
+            _mint(msg.sender, Constant.PRIMARY_TOKEN_STAKE_1_WAVE_REWARD);
 
-            emit DailyStake1Mint(stakeToken1Waves, Constant.PRIMARY_TOKEN_STAKE_1_DAILY_REWARD);
+            emit DailyStake1Mint(stakeToken1Waves, Constant.PRIMARY_TOKEN_STAKE_1_WAVE_REWARD);
 
-            return Constant.PRIMARY_TOKEN_STAKE_1_DAILY_REWARD;
+            return Constant.PRIMARY_TOKEN_STAKE_1_WAVE_REWARD;
         } else if (msg.sender == stakeToken2) {
-            if (stakeToken2Waves == Constant.PRIMARY_TOKEN_STAKE_2_LAST_WAVE) {
+            if (stakeToken2Waves == Constant.PRIMARY_TOKEN_STAKE_2_CULMINATING_WAVE) {
                 revert AllStakeRewardMinted();
             }
             unchecked {
                 stakeToken2Waves += 1;
             }
 
-            _mint(msg.sender, Constant.PRIMARY_TOKEN_STAKE_2_DAILY_REWARD);
+            _mint(msg.sender, Constant.PRIMARY_TOKEN_STAKE_2_WAVE_REWARD);
 
-            emit DailyStake2Mint(stakeToken2Waves, Constant.PRIMARY_TOKEN_STAKE_2_DAILY_REWARD);
+            emit DailyStake2Mint(stakeToken2Waves, Constant.PRIMARY_TOKEN_STAKE_2_WAVE_REWARD);
 
-            return Constant.PRIMARY_TOKEN_STAKE_2_DAILY_REWARD;
+            return Constant.PRIMARY_TOKEN_STAKE_2_WAVE_REWARD;
         } else if (msg.sender == stakeToken3) {
             uint256 amount = Constant.PRIMARY_TOKEN_MAX_SUPPLY - totalSupply();
             if (amount == 0) {
-                revert AllStakeRewardMinted();
+                revert SupplyCapReached();
             }
             unchecked {
                 stakeToken3Waves += 1;
             }
 
-            amount = amount > Constant.PRIMARY_TOKEN_STAKE_3_DAILY_REWARD
-                ? Constant.PRIMARY_TOKEN_STAKE_3_DAILY_REWARD
+            amount = amount > Constant.PRIMARY_TOKEN_STAKE_3_WAVE_REWARD
+                ? Constant.PRIMARY_TOKEN_STAKE_3_WAVE_REWARD
                 : amount;
 
             emit DailyStake3Mint(stakeToken3Waves, amount);

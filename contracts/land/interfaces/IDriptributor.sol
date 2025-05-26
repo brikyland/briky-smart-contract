@@ -18,7 +18,8 @@ interface IDriptributor is ICommon {
         address indexed receiver,
         uint40 distributeAt,
         uint40 vestingDuration,
-        uint256 totalAmount
+        uint256 amount,
+        string data
     );
     event Stake(
         uint256[] distributionIds,

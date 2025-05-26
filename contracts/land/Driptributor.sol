@@ -76,15 +76,17 @@ ReentrancyGuardUpgradeable {
         address[] calldata _receivers,
         uint256[] calldata _amounts,
         uint40[] calldata _vestingDuration,
+        string[] calldata _data,
         bytes[] calldata _signatures
     ) external nonReentrant {
         IAdmin(admin).verifyAdminSignatures(
             abi.encode(
                 address(this),
-                "allocateTokensWithDuration",
+                "distributeTokensWithDuration",
                 _receivers,
                 _amounts,
-                _vestingDuration
+                _vestingDuration,
+                _data
             ),
             _signatures
         );
@@ -114,7 +116,8 @@ ReentrancyGuardUpgradeable {
                     _receivers[i],
                     uint40(block.timestamp),
                     _vestingDuration[i],
-                    _amounts[i]
+                    _amounts[i],
+                    _data[i]
                 );
             }
         }
@@ -124,15 +127,17 @@ ReentrancyGuardUpgradeable {
         address[] calldata _receivers,
         uint256[] calldata _amounts,
         uint40[] calldata _endAts,
+        string[] calldata _data,
         bytes[] calldata _signatures
     ) external nonReentrant {
         IAdmin(admin).verifyAdminSignatures(
             abi.encode(
                 address(this),
-                "allocateTokensWithDuration",
+                "distributeTokensWithTimestamp",
                 _receivers,
                 _amounts,
-                _endAts
+                _endAts,
+                _data
             ),
             _signatures
         );
@@ -165,7 +170,8 @@ ReentrancyGuardUpgradeable {
                     _receivers[i],
                     uint40(block.timestamp),
                     _endAts[i] - uint40(block.timestamp),
-                    _amounts[i]
+                    _amounts[i],
+                    _data[i]
                 );
             }
         }

@@ -14,7 +14,7 @@ library Constant {
     uint8 internal constant ESTATE_TOKEN_MAX_DECIMALS = 18;
 
     // Primary Token
-    uint256 internal constant PRIMARY_TOKEN_BASE_DISCOUNT = 15 ether;
+    uint256 internal constant PRIMARY_TOKEN_BASE_DISCOUNT = 0.15 ether;
     uint8 internal constant PRIMARY_TOKEN_DISCOUNT_DECIMALS = 18;
 
     uint256 internal constant PRIMARY_TOKEN_MAX_SUPPLY = 20_000_000_000 ether;
@@ -27,13 +27,13 @@ library Constant {
     uint256 internal constant PRIMARY_TOKEN_PUBLIC_SALE = 500_000_000 ether;
     uint256 internal constant PRIMARY_TOKEN_SEED_ROUND = 50_000_000 ether;
 
-    uint256 internal constant PRIMARY_TOKEN_STAKE_1_DAILY_REWARD = 2_000_000 ether;
-    uint256 internal constant PRIMARY_TOKEN_STAKE_2_DAILY_REWARD = 3_000_000 ether;
-    uint256 internal constant PRIMARY_TOKEN_STAKE_3_DAILY_REWARD = 4_000_000 ether;
+    uint256 internal constant PRIMARY_TOKEN_STAKE_1_WAVE_REWARD = 2_000_000 ether;
+    uint256 internal constant PRIMARY_TOKEN_STAKE_2_WAVE_REWARD = 3_000_000 ether;
+    uint256 internal constant PRIMARY_TOKEN_STAKE_3_WAVE_REWARD = 4_000_000 ether;
 
-    uint256 internal constant PRIMARY_TOKEN_STAKE_1_LAST_WAVE = 750;
-    uint256 internal constant PRIMARY_TOKEN_STAKE_2_LAST_WAVE = 1500;
-    uint256 internal constant PRIMARY_TOKEN_STAKE_3_LAST_WAVE = 2250;
+    uint256 internal constant PRIMARY_TOKEN_STAKE_1_CULMINATING_WAVE = 750;
+    uint256 internal constant PRIMARY_TOKEN_STAKE_2_CULMINATING_WAVE = 1500;
+    uint256 internal constant PRIMARY_TOKEN_STAKE_3_CULMINATING_WAVE = 2250;
 
     // Stake Token
     uint256 internal constant STAKE_TOKEN_REWARD_FETCH_COOLDOWN = 1 days - 5 minutes;
