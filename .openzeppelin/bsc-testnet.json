@@ -289,7 +289,7 @@
             "label": "currencyRegistries",
             "offset": 0,
             "slot": "9",
-            "type": "t_mapping(t_address,t_struct(CurrencyRegistry)8806_storage)",
+            "type": "t_mapping(t_address,t_struct(CurrencyRegistry)1702_storage)",
             "contract": "AdminStorage",
             "src": "contracts/common/storages/AdminStorage.sol:20"
           },
@@ -356,7 +356,7 @@
             "label": "mapping(address => bool)",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_address,t_struct(CurrencyRegistry)8806_storage)": {
+          "t_mapping(t_address,t_struct(CurrencyRegistry)1702_storage)": {
             "label": "mapping(address => struct ICommon.CurrencyRegistry)",
             "numberOfBytes": "32"
           },
@@ -372,7 +372,7 @@
             "label": "mapping(bytes32 => mapping(address => bool))",
             "numberOfBytes": "32"
           },
-          "t_struct(CurrencyRegistry)8806_storage": {
+          "t_struct(CurrencyRegistry)1702_storage": {
             "label": "struct ICommon.CurrencyRegistry",
             "members": [
               {
@@ -2396,7 +2396,7 @@
             "label": "priceFeeds",
             "offset": 0,
             "slot": "3",
-            "type": "t_mapping(t_address,t_struct(PriceFeed)17855_storage)",
+            "type": "t_mapping(t_address,t_struct(PriceFeed)19119_storage)",
             "contract": "EstateForgerStorage",
             "src": "contracts/land/storages/EstateForgerStorage.sol:10"
           },
@@ -2404,7 +2404,7 @@
             "label": "defaultRates",
             "offset": 0,
             "slot": "4",
-            "type": "t_mapping(t_address,t_struct(Rate)8811_storage)",
+            "type": "t_mapping(t_address,t_struct(Rate)8966_storage)",
             "contract": "EstateForgerStorage",
             "src": "contracts/land/storages/EstateForgerStorage.sol:11"
           },
@@ -2412,7 +2412,7 @@
             "label": "requests",
             "offset": 0,
             "slot": "5",
-            "type": "t_mapping(t_uint256,t_struct(Request)17850_storage)",
+            "type": "t_mapping(t_uint256,t_struct(Request)19114_storage)",
             "contract": "EstateForgerStorage",
             "src": "contracts/land/storages/EstateForgerStorage.sol:12"
           },
@@ -2578,11 +2578,11 @@
             "label": "mapping(address => bool)",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_address,t_struct(PriceFeed)17855_storage)": {
+          "t_mapping(t_address,t_struct(PriceFeed)19119_storage)": {
             "label": "mapping(address => struct IEstateForger.PriceFeed)",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_address,t_struct(Rate)8811_storage)": {
+          "t_mapping(t_address,t_struct(Rate)8966_storage)": {
             "label": "mapping(address => struct ICommon.Rate)",
             "numberOfBytes": "32"
           },
@@ -2598,7 +2598,7 @@
             "label": "mapping(uint256 => mapping(address => uint256))",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_uint256,t_struct(Request)17850_storage)": {
+          "t_mapping(t_uint256,t_struct(Request)19114_storage)": {
             "label": "mapping(uint256 => struct IEstateForger.Request)",
             "numberOfBytes": "32"
           },
@@ -2606,7 +2606,7 @@
             "label": "string",
             "numberOfBytes": "32"
           },
-          "t_struct(PriceFeed)17855_storage": {
+          "t_struct(PriceFeed)19119_storage": {
             "label": "struct IEstateForger.PriceFeed",
             "members": [
               {
@@ -2624,7 +2624,7 @@
             ],
             "numberOfBytes": "32"
           },
-          "t_struct(Rate)8811_storage": {
+          "t_struct(Rate)8966_storage": {
             "label": "struct ICommon.Rate",
             "members": [
               {
@@ -2642,7 +2642,7 @@
             ],
             "numberOfBytes": "64"
           },
-          "t_struct(Request)17850_storage": {
+          "t_struct(Request)19114_storage": {
             "label": "struct IEstateForger.Request",
             "members": [
               {
@@ -3902,6 +3902,602 @@
           "t_uint256": {
             "label": "uint256",
             "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        },
+        "namespaces": {}
+      }
+    },
+    "e5e17357cf952915879d04af1ed21c6843a884e927c782470ceee61021d94c45": {
+      "address": "0x9014e1F4afbf997a928B28501F8440Da313972dC",
+      "txHash": "0x2ce97ffd98036aaa8e848cf8ed6146f86ff733a2c610ffd071dd65202bea5650",
+      "layout": {
+        "solcVersion": "0.8.20",
+        "storage": [
+          {
+            "label": "currencyUnitPriceLimits",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "AdminStorage",
+            "src": "contracts/common/storages/AdminStorage.sol:8"
+          },
+          {
+            "label": "isManager",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_mapping(t_address,t_bool)",
+            "contract": "AdminStorage",
+            "src": "contracts/common/storages/AdminStorage.sol:9"
+          },
+          {
+            "label": "nonce",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_uint256",
+            "contract": "AdminStorage",
+            "src": "contracts/common/storages/AdminStorage.sol:11"
+          },
+          {
+            "label": "admin1",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_address",
+            "contract": "AdminStorage",
+            "src": "contracts/common/storages/AdminStorage.sol:13"
+          },
+          {
+            "label": "admin2",
+            "offset": 0,
+            "slot": "4",
+            "type": "t_address",
+            "contract": "AdminStorage",
+            "src": "contracts/common/storages/AdminStorage.sol:14"
+          },
+          {
+            "label": "admin3",
+            "offset": 0,
+            "slot": "5",
+            "type": "t_address",
+            "contract": "AdminStorage",
+            "src": "contracts/common/storages/AdminStorage.sol:15"
+          },
+          {
+            "label": "admin4",
+            "offset": 0,
+            "slot": "6",
+            "type": "t_address",
+            "contract": "AdminStorage",
+            "src": "contracts/common/storages/AdminStorage.sol:16"
+          },
+          {
+            "label": "admin5",
+            "offset": 0,
+            "slot": "7",
+            "type": "t_address",
+            "contract": "AdminStorage",
+            "src": "contracts/common/storages/AdminStorage.sol:17"
+          },
+          {
+            "label": "isModerator",
+            "offset": 0,
+            "slot": "8",
+            "type": "t_mapping(t_address,t_bool)",
+            "contract": "AdminStorage",
+            "src": "contracts/common/storages/AdminStorage.sol:19"
+          },
+          {
+            "label": "currencyRegistries",
+            "offset": 0,
+            "slot": "9",
+            "type": "t_mapping(t_address,t_struct(CurrencyRegistry)8984_storage)",
+            "contract": "AdminStorage",
+            "src": "contracts/common/storages/AdminStorage.sol:20"
+          },
+          {
+            "label": "isZone",
+            "offset": 0,
+            "slot": "10",
+            "type": "t_mapping(t_bytes32,t_bool)",
+            "contract": "AdminStorage",
+            "src": "contracts/common/storages/AdminStorage.sol:22"
+          },
+          {
+            "label": "isActiveIn",
+            "offset": 0,
+            "slot": "11",
+            "type": "t_mapping(t_bytes32,t_mapping(t_address,t_bool))",
+            "contract": "AdminStorage",
+            "src": "contracts/common/storages/AdminStorage.sol:23"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "12",
+            "type": "t_array(t_uint256)46_storage",
+            "contract": "AdminStorage",
+            "src": "contracts/common/storages/AdminStorage.sol:25"
+          },
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "58",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:63",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "58",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:68"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_uint256)46_storage": {
+            "label": "uint256[46]",
+            "numberOfBytes": "1472"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_bytes32": {
+            "label": "bytes32",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_struct(CurrencyRegistry)8984_storage)": {
+            "label": "mapping(address => struct ICommon.CurrencyRegistry)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_bool)": {
+            "label": "mapping(bytes32 => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_mapping(t_address,t_bool))": {
+            "label": "mapping(bytes32 => mapping(address => bool))",
+            "numberOfBytes": "32"
+          },
+          "t_struct(CurrencyRegistry)8984_storage": {
+            "label": "struct ICommon.CurrencyRegistry",
+            "members": [
+              {
+                "label": "unitPriceLowerBound",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "unitPriceUpperBound",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "isAvailable",
+                "type": "t_bool",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "isExclusive",
+                "type": "t_bool",
+                "offset": 1,
+                "slot": "2"
+              }
+            ],
+            "numberOfBytes": "96"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        },
+        "namespaces": {}
+      }
+    },
+    "32bda416a2e85d1216e02d1ee53793e1888abf103ecea22868228e48891ba9f1": {
+      "address": "0xDB029F3bBdB3C27f6F7249B441BeB78298b13851",
+      "txHash": "0x1d817312237e09c7ed2261b6ede71f1306ce5be37fb63af06dac658dea9e2eac",
+      "layout": {
+        "solcVersion": "0.8.20",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:63",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:68"
+          },
+          {
+            "label": "deposits",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_mapping(t_uint256,t_mapping(t_address,t_uint256))",
+            "contract": "EstateForgerStorage",
+            "src": "contracts/land/storages/EstateForgerStorage.sol:7"
+          },
+          {
+            "label": "hasWithdrawn",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_mapping(t_uint256,t_mapping(t_address,t_bool))",
+            "contract": "EstateForgerStorage",
+            "src": "contracts/land/storages/EstateForgerStorage.sol:8"
+          },
+          {
+            "label": "priceFeeds",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_mapping(t_address,t_struct(PriceFeed)19149_storage)",
+            "contract": "EstateForgerStorage",
+            "src": "contracts/land/storages/EstateForgerStorage.sol:10"
+          },
+          {
+            "label": "defaultRates",
+            "offset": 0,
+            "slot": "4",
+            "type": "t_mapping(t_address,t_struct(Rate)8989_storage)",
+            "contract": "EstateForgerStorage",
+            "src": "contracts/land/storages/EstateForgerStorage.sol:11"
+          },
+          {
+            "label": "requests",
+            "offset": 0,
+            "slot": "5",
+            "type": "t_mapping(t_uint256,t_struct(Request)19144_storage)",
+            "contract": "EstateForgerStorage",
+            "src": "contracts/land/storages/EstateForgerStorage.sol:12"
+          },
+          {
+            "label": "requestNumber",
+            "offset": 0,
+            "slot": "6",
+            "type": "t_uint256",
+            "contract": "EstateForgerStorage",
+            "src": "contracts/land/storages/EstateForgerStorage.sol:14"
+          },
+          {
+            "label": "baseMinUnitPrice",
+            "offset": 0,
+            "slot": "7",
+            "type": "t_uint256",
+            "contract": "EstateForgerStorage",
+            "src": "contracts/land/storages/EstateForgerStorage.sol:16"
+          },
+          {
+            "label": "baseMaxUnitPrice",
+            "offset": 0,
+            "slot": "8",
+            "type": "t_uint256",
+            "contract": "EstateForgerStorage",
+            "src": "contracts/land/storages/EstateForgerStorage.sol:17"
+          },
+          {
+            "label": "feeRate",
+            "offset": 0,
+            "slot": "9",
+            "type": "t_uint256",
+            "contract": "EstateForgerStorage",
+            "src": "contracts/land/storages/EstateForgerStorage.sol:19"
+          },
+          {
+            "label": "admin",
+            "offset": 0,
+            "slot": "10",
+            "type": "t_address",
+            "contract": "EstateForgerStorage",
+            "src": "contracts/land/storages/EstateForgerStorage.sol:21"
+          },
+          {
+            "label": "feeReceiver",
+            "offset": 0,
+            "slot": "11",
+            "type": "t_address",
+            "contract": "EstateForgerStorage",
+            "src": "contracts/land/storages/EstateForgerStorage.sol:22"
+          },
+          {
+            "label": "commissionToken",
+            "offset": 0,
+            "slot": "12",
+            "type": "t_address",
+            "contract": "EstateForgerStorage",
+            "src": "contracts/land/storages/EstateForgerStorage.sol:23"
+          },
+          {
+            "label": "estateToken",
+            "offset": 0,
+            "slot": "13",
+            "type": "t_address",
+            "contract": "EstateForgerStorage",
+            "src": "contracts/land/storages/EstateForgerStorage.sol:24"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "14",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "EstateForgerStorage",
+            "src": "contracts/land/storages/EstateForgerStorage.sol:26"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "64",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ERC165Upgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol:41"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "114",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ERC1155ReceiverUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/token/ERC1155/utils/ERC1155ReceiverUpgradeable.sol:31"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "164",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ERC1155HolderUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol:48"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "214",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:40"
+          },
+          {
+            "label": "_paused",
+            "offset": 0,
+            "slot": "264",
+            "type": "t_bool",
+            "contract": "PausableUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol:29"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "265",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "PausableUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol:116"
+          },
+          {
+            "label": "_status",
+            "offset": 0,
+            "slot": "314",
+            "type": "t_uint256",
+            "contract": "ReentrancyGuardUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol:38"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "315",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "ReentrancyGuardUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol:88"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_bytes32": {
+            "label": "bytes32",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_struct(PriceFeed)19149_storage)": {
+            "label": "mapping(address => struct IEstateForger.PriceFeed)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_struct(Rate)8989_storage)": {
+            "label": "mapping(address => struct ICommon.Rate)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_mapping(t_address,t_bool))": {
+            "label": "mapping(uint256 => mapping(address => bool))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_mapping(t_address,t_uint256))": {
+            "label": "mapping(uint256 => mapping(address => uint256))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_struct(Request)19144_storage)": {
+            "label": "mapping(uint256 => struct IEstateForger.Request)",
+            "numberOfBytes": "32"
+          },
+          "t_string_storage": {
+            "label": "string",
+            "numberOfBytes": "32"
+          },
+          "t_struct(PriceFeed)19149_storage": {
+            "label": "struct IEstateForger.PriceFeed",
+            "members": [
+              {
+                "label": "feed",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "heartbeat",
+                "type": "t_uint40",
+                "offset": 20,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(Rate)8989_storage": {
+            "label": "struct ICommon.Rate",
+            "members": [
+              {
+                "label": "value",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "decimals",
+                "type": "t_uint8",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_struct(Request)19144_storage": {
+            "label": "struct IEstateForger.Request",
+            "members": [
+              {
+                "label": "estateId",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "zone",
+                "type": "t_bytes32",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "uri",
+                "type": "t_string_storage",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "totalSupply",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "3"
+              },
+              {
+                "label": "minSellingAmount",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "4"
+              },
+              {
+                "label": "maxSellingAmount",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "5"
+              },
+              {
+                "label": "soldAmount",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "6"
+              },
+              {
+                "label": "unitPrice",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "7"
+              },
+              {
+                "label": "currency",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "8"
+              },
+              {
+                "label": "decimals",
+                "type": "t_uint8",
+                "offset": 20,
+                "slot": "8"
+              },
+              {
+                "label": "expireAt",
+                "type": "t_uint40",
+                "offset": 21,
+                "slot": "8"
+              },
+              {
+                "label": "closeAt",
+                "type": "t_uint40",
+                "offset": 26,
+                "slot": "8"
+              },
+              {
+                "label": "requester",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "9"
+              }
+            ],
+            "numberOfBytes": "320"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint40": {
+            "label": "uint40",
+            "numberOfBytes": "5"
           },
           "t_uint8": {
             "label": "uint8",

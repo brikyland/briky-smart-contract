@@ -295,6 +295,10 @@ Initializable {
         }
     }
 
+    function isExecutive(address _account) external view returns (bool) {
+        return isModerator[_account] || isManager[_account];
+    }
+
     function getCurrencyRegistry(address _currency) external view returns (CurrencyRegistry memory) {
         return currencyRegistries[_currency];
     }
