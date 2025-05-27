@@ -7,47 +7,18 @@ import { BigNumberish } from "ethers";
 export async function callEstateForger_UpdateFeeRate(
     estateForger: EstateForger,
     admins: any[],
-    royaltyRate: number,
+    feeRate: BigNumberish,
     nonce: BigNumberish
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
         ["address", "string", "uint256"],
-        [estateForger.address, "updateFeeRate", royaltyRate]
+        [estateForger.address, "updateFeeRate", feeRate]
     );
     const signatures = await getSignatures(message, admins, nonce);
 
-    await callTransaction(estateForger.updateFeeRate(royaltyRate, signatures));
+    await callTransaction(estateForger.updateFeeRate(feeRate, signatures));
 }
 
-export async function callEstateForger_UpdateExclusiveRate(
-    estateForger: EstateForger,
-    admins: any[],
-    exclusiveRate: number,
-    nonce: BigNumberish
-) {
-    const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "uint256"],
-        [estateForger.address, "updateExclusiveRate", exclusiveRate]
-    );
-    const signatures = await getSignatures(message, admins, nonce);
-
-    await callTransaction(estateForger.updateExclusiveRate(exclusiveRate, signatures));
-}
-
-export async function callEstateForger_UpdateCommissionRate(
-    estateForger: EstateForger,
-    admins: any[],
-    commissionRate: number,
-    nonce: BigNumberish
-) {
-    const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "uint256"],
-        [estateForger.address, "updateCommissionRate", commissionRate]
-    );
-    const signatures = await getSignatures(message, admins, nonce);
-
-    await callTransaction(estateForger.updateCommissionRate(commissionRate, signatures));
-}
 
 export async function callEstateForger_Pause(
     estateForger: EstateForger,
@@ -110,4 +81,20 @@ export async function callEstateForger_UpdateDefaultRates(
     const signatures = await getSignatures(message, admins, nonce);
 
     await callTransaction(estateForger.updateDefaultRates(currencyAddresses, values, decimals, signatures));
+}
+
+export async function callEstateForger_UpdateBaseUnitPriceRange(
+    estateForger: EstateForger,
+    admins: any[],
+    baseMinUnitPrice: BigNumberish,
+    baseMaxUnitPrice: BigNumberish,
+    nonce: BigNumberish
+) {
+    const message = ethers.utils.defaultAbiCoder.encode(
+        ["address", "string", "uint256", "uint256"],
+        [estateForger.address, "updateBaseUnitPriceRange", baseMinUnitPrice, baseMaxUnitPrice]
+    );
+    const signatures = await getSignatures(message, admins, nonce);
+
+    await callTransaction(estateForger.updateBaseUnitPriceRange(baseMinUnitPrice, baseMaxUnitPrice, signatures));
 }

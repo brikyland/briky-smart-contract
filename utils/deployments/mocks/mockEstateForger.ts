@@ -7,9 +7,7 @@ export async function deployMockEstateForger(
     estateTokenAddress: string,
     commissionTokenAddress: string,
     feeReceiverAddress: string,
-    feeRate: number,
-    exclusiveRate: number,
-    commissionRate: number,
+    feeRate: BigNumberish,
     baseMinUnitPrice: BigNumberish,
     baseMaxUnitPrice: BigNumberish,
 ) {
@@ -22,8 +20,6 @@ export async function deployMockEstateForger(
             commissionTokenAddress,
             feeReceiverAddress,
             feeRate,
-            exclusiveRate,
-            commissionRate,
             baseMinUnitPrice,
             baseMaxUnitPrice,
         ]

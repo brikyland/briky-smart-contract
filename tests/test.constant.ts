@@ -16,7 +16,7 @@ export const Constant = {
     // Commission Token
     COMMISSION_TOKEN_INITIAL_Name: 'Briky Commission',
     COMMISSION_TOKEN_INITIAL_Symbol: 'COMIKY',
-    COMMISSION_TOKEN_INITIAL_BaseURI: '',
+    COMMISSION_TOKEN_INITIAL_BaseURI: 'CommissionBaseURI:',
     COMMISSION_TOKEN_INITIAL_CommissionRate: ethers.utils.parseEther(String(0.3)),
     COMMISSION_TOKEN_INITIAL_RoyaltyRate: ethers.utils.parseEther(String(0.06)),
 
@@ -29,7 +29,7 @@ export const Constant = {
     ESTATE_TOKEN_CONFIRMATION_TIME_LIMIT: 30 * DAY,
     ESTATE_TOKEN_MAX_DECIMALS: 18,
 
-    ESTATE_TOKEN_INITIAL_BaseURI: '',
+    ESTATE_TOKEN_INITIAL_BaseURI: 'EstateBaseURI:',
     ESTATE_TOKEN_INITIAL_RoyaltyRate: ethers.utils.parseEther(String(0.003)),
 
     // Primary Token
@@ -76,7 +76,7 @@ export const Constant = {
     // Mortgage Token
     MORTGAGE_TOKEN_INITIAL_Name: 'Briky Mortgage',
     MORTGAGE_TOKEN_INITIAL_Symbol: 'MORTY',
-    MORTGAGE_TOKEN_INITIAL_BaseURI: '',
+    MORTGAGE_TOKEN_INITIAL_BaseURI: 'MortgageBaseURI:',
     MORTGAGE_TOKEN_INITIAL_FeeRate: ethers.utils.parseEther(String(0.002)),
     MORTGAGE_TOKEN_INITIAL_RoyaltyRate: ethers.utils.parseEther(String(0.03)),
 }

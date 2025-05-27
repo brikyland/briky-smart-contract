@@ -3,6 +3,7 @@ import { getSignatures } from "../blockchain";
 import { ethers } from "hardhat";
 import { callTransaction } from "../blockchain";
 import { BigNumberish } from "ethers";
+import { MockContract } from "@defi-wonderland/smock";
 
 export async function callEstateToken_AuthorizeTokenizers(
     estateToken: EstateToken,
@@ -25,7 +26,7 @@ export async function callEstateToken_AuthorizeTokenizers(
 }
 
 export async function callEstateToken_UpdateCommissionToken(
-    estateToken: EstateToken,
+    estateToken: EstateToken | MockContract<EstateToken>,
     admins: any[],
     commissionTokenAddress: string,
     nonce: BigNumberish

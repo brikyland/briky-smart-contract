@@ -11,4 +11,8 @@ contract MockEstateForger is EstateForger {
             Revert.revertFromReturnedData(result);
         }
     }
+
+    function setFeeReceiver(address _feeReceiver) external {
+        feeReceiver = _feeReceiver;
+    }
 }

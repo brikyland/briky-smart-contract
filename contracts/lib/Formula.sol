@@ -24,6 +24,6 @@ library Formula {
     }
 
     function applyDiscount(uint256 _value, ICommon.Rate memory _discount) internal pure returns (uint256) {
-        return _value - scale(_value, _discount.value, _discount.decimals);
+        return _value - scale(_value, _discount);
     }
 }

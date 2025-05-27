@@ -136,3 +136,7 @@ export class OrderedMap<int, V> {
         }
     }
 }
+
+export function scale(value: ethers.BigNumber, rate_value: ethers.BigNumberish, rate_decimals: number): ethers.BigNumber {
+    return value.mul(rate_value).div(ethers.BigNumber.from(10).pow(rate_decimals));
+}
