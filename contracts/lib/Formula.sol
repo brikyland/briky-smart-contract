@@ -16,7 +16,7 @@ library Formula {
     }
 
     function scale(uint256 _value, ICommon.Rate memory _rate) internal pure returns (uint256) {
-        return MulDiv.mulDiv(
+        return scale(
             _value,
             _rate.value,
             10 ** _rate.decimals

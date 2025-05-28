@@ -51,6 +51,7 @@ interface IAdmin is ICommon {
     function admin5() external view returns (address admin5);
     function nonce() external view returns (uint256 nonce);
 
+    function isExecutive(address account) external view returns (bool isExecutive);
     function isManager(address account) external view returns (bool isManager);
     function isModerator(address account) external view returns (bool isModerator);
     function isZone(bytes32 value) external view returns (bool isZone);

@@ -45,8 +45,7 @@ ReentrancyGuardUpgradeable {
     }
 
     modifier onlyExecutive() {
-        if (!IAdmin(admin).isManager(msg.sender)
-            && !IAdmin(admin).isModerator(msg.sender)) {
+        if (!IAdmin(admin).isExecutive(msg.sender)) {
             revert Unauthorized();
         }
         _;
