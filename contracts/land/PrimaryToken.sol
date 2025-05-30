@@ -515,7 +515,7 @@ ReentrancyGuardUpgradeable {
     function exclusiveDiscount() external view returns (Rate memory rate) {
         return Rate(
             Constant.PRIMARY_TOKEN_BASE_DISCOUNT.scale(totalStake() + totalSupply(), totalSupply()),
-            Constant.PRIMARY_TOKEN_DISCOUNT_DECIMALS
+            Constant.COMMON_RATE_DECIMALS
         );
     }
 

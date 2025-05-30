@@ -19,7 +19,6 @@ export const Constant = {
 
     // Primary Token
     PRIMARY_TOKEN_BASE_DISCOUNT: ethers.utils.parseEther(String(0.15)),
-    PRIMARY_TOKEN_DISCOUNT_DECIMALS: 18,
 
     PRIMARY_TOKEN_MAXIMUM_SUPPLY: ethers.utils.parseEther(String(20_000_000_000)),
     PRIMARY_TOKEN_BACKER_ROUND: ethers.utils.parseEther(String(100_000_000)),
