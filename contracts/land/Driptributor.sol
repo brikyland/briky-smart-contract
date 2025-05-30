@@ -243,10 +243,7 @@ ReentrancyGuardUpgradeable {
 
         uint256 remain;
         for (uint256 i = 0; i < _distributionIds.length; ++i) {
-            if (_distributionIds[i] == 0 || _distributionIds[i] > distributionNumber) {
-                revert InvalidDistributionId();
-            }
-            Distribution memory distribution = distributions[_distributionIds[i]];
+            Distribution memory distribution = getDistribution(_distributionIds[i]);
             if (distribution.receiver != msg.sender) {
                 revert Unauthorized();
             }
@@ -254,7 +251,7 @@ ReentrancyGuardUpgradeable {
                 revert AlreadyStaked();
             }
 
-            distribution.isStaked = true;
+            distributions[_distributionIds[i]].isStaked = true;
 
             remain += distribution.totalAmount - distribution.withdrawnAmount;
         }
