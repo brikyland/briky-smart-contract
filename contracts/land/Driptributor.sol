@@ -76,7 +76,7 @@ ReentrancyGuardUpgradeable {
             _signatures
         );
 
-        if (_stakeToken1 == address(0) || stakeToken2 == address(0) || stakeToken3 == address(0)
+        if (_stakeToken1 == address(0) || _stakeToken2 == address(0) || _stakeToken3 == address(0)
             || stakeToken1 != address(0) || stakeToken2 != address(0) || stakeToken3 != address(0)) {
             revert InvalidUpdating();
         }
