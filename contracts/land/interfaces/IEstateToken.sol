@@ -4,10 +4,10 @@ pragma solidity ^0.8.20;
 import {IERC1155MetadataURIUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/extensions/IERC1155MetadataURIUpgradeable.sol";
 import {IERC1155ReceiverUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/IERC1155ReceiverUpgradeable.sol";
 
-import {IRoyaltyRateToken} from "../../common/interfaces/IRoyaltyRateToken.sol";
+import {IRoyaltyRateProposer} from "../../common/interfaces/IRoyaltyRateProposer.sol";
 
 interface IEstateToken is
-IRoyaltyRateToken,
+IRoyaltyRateProposer,
 IERC1155MetadataURIUpgradeable,
 IERC1155ReceiverUpgradeable {
     struct Estate {

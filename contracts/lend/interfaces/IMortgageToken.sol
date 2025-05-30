@@ -5,10 +5,10 @@ import {IERC4906Upgradeable} from "@openzeppelin/contracts-upgradeable/interface
 import {IERC1155ReceiverUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/IERC1155ReceiverUpgradeable.sol";
 import {IERC721MetadataUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/IERC721MetadataUpgradeable.sol";
 
-import {IRoyaltyRateToken} from "../../common/interfaces/IRoyaltyRateToken.sol";
+import {IRoyaltyRateProposer} from "../../common/interfaces/IRoyaltyRateProposer.sol";
 
 interface IMortgageToken is
-IRoyaltyRateToken,
+IRoyaltyRateProposer,
 IERC4906Upgradeable,
 IERC721MetadataUpgradeable,
 IERC1155ReceiverUpgradeable {

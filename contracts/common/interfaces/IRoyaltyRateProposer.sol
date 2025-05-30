@@ -6,7 +6,7 @@ import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/intr
 
 import {ICommon} from "./ICommon.sol";
 
-interface IRoyaltyRateToken is
+interface IRoyaltyRateProposer is
 ICommon,
 IERC165Upgradeable,
 IERC2981Upgradeable {

@@ -4,10 +4,10 @@ pragma solidity ^0.8.20;
 import {IERC4906Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC4906Upgradeable.sol";
 import {IERC721MetadataUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/IERC721MetadataUpgradeable.sol";
 
-import {IRoyaltyRateToken} from "../../common/interfaces/IRoyaltyRateToken.sol";
+import {IRoyaltyRateProposer} from "../../common/interfaces/IRoyaltyRateProposer.sol";
 
 interface ICommissionToken is
-IRoyaltyRateToken,
+IRoyaltyRateProposer,
 IERC4906Upgradeable,
 IERC721MetadataUpgradeable {
     event BaseURIUpdate(string newValue);

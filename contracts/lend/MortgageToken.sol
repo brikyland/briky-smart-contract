@@ -19,9 +19,9 @@ import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
 import {Formula} from "../lib/Formula.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
-import {IRoyaltyRateToken} from "../common/interfaces/IRoyaltyRateToken.sol";
+import {IRoyaltyRateProposer} from "../common/interfaces/IRoyaltyRateProposer.sol";
 
-import {RoyaltyRateToken} from "../common/utilities/RoyaltyRateToken.sol";
+import {RoyaltyRateProposer} from "../common/utilities/RoyaltyRateProposer.sol";
 
 import {ICommissionToken} from "../land/interfaces/ICommissionToken.sol";
 import {IEstateToken} from "../land/interfaces/IEstateToken.sol";
@@ -36,7 +36,7 @@ MortgageTokenStorage,
 ERC721PausableUpgradeable,
 ERC721URIStorageUpgradeable,
 ERC1155HolderUpgradeable,
-RoyaltyRateToken,
+RoyaltyRateProposer,
 Discountable,
 ReentrancyGuardUpgradeable {
     using Formula for uint256;
@@ -162,8 +162,8 @@ ReentrancyGuardUpgradeable {
     }
 
     function getRoyaltyRate() public view override(
-        IRoyaltyRateToken,
-        RoyaltyRateToken
+    IRoyaltyRateProposer,
+    RoyaltyRateProposer
     ) returns (Rate memory) {
         return Rate(royaltyRate, Constant.COMMON_RATE_DECIMALS);
     }
@@ -374,7 +374,7 @@ ReentrancyGuardUpgradeable {
         ERC1155ReceiverUpgradeable,
         ERC721Upgradeable,
         ERC721URIStorageUpgradeable,
-        RoyaltyRateToken
+    RoyaltyRateProposer
     ) returns (bool) {
         return super.supportsInterface(_interfaceId);
     }
@@ -396,6 +396,7 @@ ReentrancyGuardUpgradeable {
     override(ERC721Upgradeable, ERC721URIStorageUpgradeable) {
         super._burn(_tokenId);
     }
+
     function _royaltyReceiver() internal view override returns (address) {
         return feeReceiver;
     }

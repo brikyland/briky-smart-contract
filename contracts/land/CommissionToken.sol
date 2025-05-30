@@ -13,9 +13,9 @@ import {Constant} from "../lib/Constant.sol";
 import {Formula} from "../lib/Formula.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
-import {IRoyaltyRateToken} from "../common/interfaces/IRoyaltyRateToken.sol";
+import {IRoyaltyRateProposer} from "../common/interfaces/IRoyaltyRateProposer.sol";
 
-import {RoyaltyRateToken} from "../common/utilities/RoyaltyRateToken.sol";
+import {RoyaltyRateProposer} from "../common/utilities/RoyaltyRateProposer.sol";
 
 import {IEstateToken} from "./interfaces/IEstateToken.sol";
 
@@ -25,7 +25,7 @@ contract CommissionToken is
 CommissionTokenStorage,
 ERC721PausableUpgradeable,
 ERC721URIStorageUpgradeable,
-RoyaltyRateToken,
+RoyaltyRateProposer,
 ReentrancyGuardUpgradeable {
     using Formula for uint256;
 
@@ -127,8 +127,8 @@ ReentrancyGuardUpgradeable {
     }
 
     function getRoyaltyRate() public view override(
-        IRoyaltyRateToken,
-        RoyaltyRateToken
+    IRoyaltyRateProposer,
+    RoyaltyRateProposer
     ) returns (Rate memory) {
         return Rate(royaltyRate, Constant.COMMON_RATE_DECIMALS);
     }
@@ -167,7 +167,7 @@ ReentrancyGuardUpgradeable {
         IERC165Upgradeable,
         ERC721Upgradeable,
         ERC721URIStorageUpgradeable,
-        RoyaltyRateToken
+    RoyaltyRateProposer
     ) returns (bool) {
         return super.supportsInterface(_interfaceId);
     }
