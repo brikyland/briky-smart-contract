@@ -36,6 +36,7 @@ interface IDriptributor is ICommon {
     event Withdrawal(uint256 indexed distributionId, uint256 amount);
 
     error AlreadyStaked();
+    error NotAssignedStakeTokens();
     error InvalidDistributionId();
 
     function primaryToken() external view returns (address primaryToken);

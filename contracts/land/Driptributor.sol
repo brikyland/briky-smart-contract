@@ -229,6 +229,10 @@ ReentrancyGuardUpgradeable {
         uint256 _stake1,
         uint256 _stake2
     ) external nonReentrant whenNotPaused {
+        if (stakeToken1 == address(0) || stakeToken2 == address(0) || stakeToken3 == address(0)) {
+            revert NotAssignedStakeTokens();
+        }
+
         uint256 remain;
         for (uint256 i = 0; i < _distributionIds.length; ++i) {
             if (_distributionIds[i] == 0 || _distributionIds[i] > distributionNumber) {
