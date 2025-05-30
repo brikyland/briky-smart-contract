@@ -15,12 +15,15 @@ import {IAdmin} from "../common/interfaces/IAdmin.sol";
 import {ICommissionToken} from "../land/interfaces/ICommissionToken.sol";
 import {IExclusiveToken} from "../land/interfaces/IExclusiveToken.sol";
 
+import {Discountable} from "../land/utilities/Discountable.sol";
+
 import {IMortgageToken} from "./interfaces/IMortgageToken.sol";
 
 import {MortgageMarketplaceStorage} from "./storages/MortgageMarketplaceStorage.sol";
 
 contract MortgageMarketplace is
 MortgageMarketplaceStorage,
+Discountable,
 PausableUpgradeable,
 ReentrancyGuardUpgradeable {
     using Formula for uint256;
@@ -140,31 +143,23 @@ ReentrancyGuardUpgradeable {
         (address royaltyReceiver, uint256 royaltyAmount) = mortgageTokenContract.royaltyInfo(_tokenId, price);
 
         address currency = offer.currency;
-        if (IAdmin(admin).isExclusiveCurrency(currency)) {
-            royaltyAmount = royaltyAmount.applyDiscount(IExclusiveToken(currency).exclusiveDiscount());
-        }
+        royaltyAmount = _applyDiscount(royaltyAmount, currency);
 
-        ICommissionToken commissionContract = ICommissionToken(commissionToken);
-        address commissionReceiver;
-        uint256 commissionAmount;
-        if (commissionContract.exists(_tokenId)) {
-            commissionReceiver = commissionContract.ownerOf(loan.estateId);
-            commissionAmount = royaltyAmount.scale(commissionContract.getCommissionRate());
-        }
+        (address commissionReceiver, uint256 commissionAmount) = ICommissionToken(commissionToken).commissionInfo(_tokenId, royaltyAmount);
 
         if (currency == address(0)) {
             uint256 total = price + royaltyAmount;
             CurrencyHandler.receiveNative(total);
             CurrencyHandler.transferNative(seller, price);
             CurrencyHandler.transferNative(royaltyReceiver, royaltyAmount - commissionAmount);
-            if (commissionReceiver != address(0)) {
+            if (commissionAmount != 0) {
                 CurrencyHandler.transferNative(commissionReceiver, commissionAmount);
             }
         } else {
             IERC20Upgradeable currencyContract = IERC20Upgradeable(currency);
             currencyContract.safeTransferFrom(msg.sender, seller, price);
             currencyContract.safeTransferFrom(msg.sender, royaltyReceiver, royaltyAmount - commissionAmount);
-            if (commissionReceiver != address(0)) {
+            if (commissionAmount != 0) {
                 currencyContract.safeTransferFrom(msg.sender, commissionReceiver, commissionAmount);
             }
         }

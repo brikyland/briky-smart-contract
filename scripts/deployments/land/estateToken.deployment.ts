@@ -1,8 +1,8 @@
 import { LedgerSigner } from '@anders-t/ethers-ledger';
 import assert from 'assert';
 import { ethers, network, upgrades } from 'hardhat';
-import { Constant } from "../../../utils/constant";
 import { deployEstateToken } from '../../../utils/deployments/land/estateToken';
+import { Initialization } from "./initialization";
 
 async function deployOrUpgradeEstateToken() {
     const config = network.config as any;
@@ -36,8 +36,8 @@ async function deployOrUpgradeEstateToken() {
                 signer,
                 adminAddress,
                 feeReceiverAddress,
-                Constant.ESTATE_TOKEN_INITIAL_BaseURI,
-                Constant.ESTATE_TOKEN_INITIAL_RoyaltyRate,
+                Initialization.ESTATE_TOKEN_BaseURI,
+                Initialization.ESTATE_TOKEN_RoyaltyRate,
             );
             console.log(`Contract EstateToken has been deployed to address ${estateToken.address}`);
 

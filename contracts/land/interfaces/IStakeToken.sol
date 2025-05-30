@@ -19,7 +19,6 @@ interface IStakeToken is IExclusiveToken {
     error NotCompletedRewarding();
     error OnCoolDown();
 
-    function admin() external view returns (address admin);
     function primaryToken() external view returns (address primaryToken);
 
     function lastRewardFetch() external view returns (uint256 timestamp);

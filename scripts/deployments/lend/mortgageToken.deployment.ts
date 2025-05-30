@@ -1,8 +1,8 @@
 import { LedgerSigner } from '@anders-t/ethers-ledger';
 import assert from 'assert';
 import { ethers, network, upgrades } from 'hardhat';
-import { Constant } from "../../../utils/constant";
 import { deployMortgageToken } from '../../../utils/deployments/lend/mortgageToken';
+import { Initialization } from "./initialization";
 
 async function deployOrUpgradeMortgageToken() {
     const config = network.config as any;
@@ -48,11 +48,11 @@ async function deployOrUpgradeMortgageToken() {
                 estateTokenAddress,
                 commissionTokenAddress,
                 feeReceiverAddress,
-                Constant.MORTGAGE_TOKEN_INITIAL_Name,
-                Constant.MORTGAGE_TOKEN_INITIAL_Symbol,
-                Constant.MORTGAGE_TOKEN_INITIAL_BaseURI,
-                Constant.MORTGAGE_TOKEN_INITIAL_FeeRate,
-                Constant.MORTGAGE_TOKEN_INITIAL_RoyaltyRate,
+                Initialization.MORTGAGE_TOKEN_Name,
+                Initialization.MORTGAGE_TOKEN_Symbol,
+                Initialization.MORTGAGE_TOKEN_BaseURI,
+                Initialization.MORTGAGE_TOKEN_FeeRate,
+                Initialization.MORTGAGE_TOKEN_RoyaltyRate,
             );
             console.log(`Contract MortgageToken has been deployed to address ${mortgageToken.address}`);
 

@@ -52,7 +52,6 @@ IERC1155ReceiverUpgradeable {
     error AuthorizedAccount(address account);
     error NotAuthorizedAccount(address account);
 
-    function admin() external view returns (address admin);
     function commissionToken() external view returns (address commissionToken);
     function feeReceiver() external view returns (address feeReceiver);
 

@@ -29,29 +29,11 @@ export async function deployOrUpgradeAuction(
                 primaryTokenAddress,
                 `Missing ${networkName}_PRIMARY_TOKEN_ADDRESS from environment variables!`
             );
-            const stakeToken1Address = config.stakeTokenAddress;
-            assert.ok(
-                stakeToken1Address,
-                `Missing ${networkName}_STAKE_TOKEN_ADDRESS from environment variables!`
-            );
-            const stakeToken2Address = config.stakeTokenAddress;
-            assert.ok(
-                stakeToken2Address,
-                `Missing ${networkName}_STAKE_TOKEN_ADDRESS from environment variables!`
-            );
-            const stakeToken3Address = config.stakeTokenAddress;
-            assert.ok(
-                stakeToken3Address,
-                `Missing ${networkName}_STAKE_TOKEN_ADDRESS from environment variables!`
-            );
 
             const auction = await deployAuction(
                 signer,
                 adminAddress,
                 primaryTokenAddress,
-                stakeToken3Address,
-                stakeToken2Address,
-                stakeToken3Address
             );
             console.log(`Contract Auction has been deployed to address ${auction.address}`);
 

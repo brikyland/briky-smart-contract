@@ -52,7 +52,6 @@ interface IEstateMarketplace is ICommon {
     error InvalidUnitPrice();
     error NotEnoughTokensToSell();
 
-    function admin() external view returns (address admin);
     function commissionToken() external view returns (address commissionToken);
     function estateToken() external view returns (address estateToken);
 

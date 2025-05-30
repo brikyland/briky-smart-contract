@@ -1,8 +1,8 @@
 import { LedgerSigner } from '@anders-t/ethers-ledger';
 import assert from 'assert';
 import { ethers, network, upgrades } from 'hardhat';
-import { Constant } from '../../../utils/constant';
 import { deployPrimaryToken } from '../../../utils/deployments/land/primaryToken';
+import { Initialization } from "./initialization";
 
 async function deployOrUpgradePrimaryToken() {
     const config = network.config as any;
@@ -30,9 +30,9 @@ async function deployOrUpgradePrimaryToken() {
             const primaryToken = await deployPrimaryToken(
                 signer,
                 adminAddress,
-                Constant.PRIMARY_TOKEN_INITIAL_Name,
-                Constant.PRIMARY_TOKEN_INITIAL_Symbol,
-                Constant.PRIMARY_TOKEN_INITIAL_LiquidationUnlockedAt,
+                Initialization.PRIMARY_TOKEN_Name,
+                Initialization.PRIMARY_TOKEN_Symbol,
+                Initialization.PRIMARY_TOKEN_LiquidationUnlockedAt,
             );
             console.log(`Contract PrimaryToken has been deployed to address ${primaryToken.address}`);
 

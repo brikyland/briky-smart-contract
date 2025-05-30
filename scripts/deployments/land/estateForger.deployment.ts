@@ -1,8 +1,8 @@
 import { LedgerSigner } from '@anders-t/ethers-ledger';
 import assert from 'assert';
 import { ethers, network, upgrades } from 'hardhat';
-import { Constant } from "../../../utils/constant";
 import { deployEstateForger } from '../../../utils/deployments/land/estateForger';
+import { Initialization } from "./initialization";
 
 async function deployOrUpgradeEstateForger() {
     const config = network.config as any;
@@ -48,9 +48,9 @@ async function deployOrUpgradeEstateForger() {
                 estateTokenAddress,
                 commissionTokenAddress,
                 feeReceiverAddress,
-                Constant.ESTATE_FORGER_INITIAL_FeeRate,
-                Constant.ESTATE_FORGER_INITIAL_BaseMinUnitPrice,
-                Constant.ESTATE_FORGER_INITIAL_BaseMaxUnitPrice
+                Initialization.ESTATE_FORGER_FeeRate,
+                Initialization.ESTATE_FORGER_BaseMinUnitPrice,
+                Initialization.ESTATE_FORGER_BaseMaxUnitPrice
             );
             console.log(`Contract EstateForger has been deployed to address ${estateForger.address}`);
 

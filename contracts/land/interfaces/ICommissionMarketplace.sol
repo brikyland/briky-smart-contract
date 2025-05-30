@@ -41,7 +41,6 @@ interface ICommissionMarketplace is ICommon {
     error InvalidPrice();
     error Overdue();
 
-    function admin() external view returns (address admin);
     function commissionToken() external view returns (address commissionToken);
 
     function offerNumber() external view returns (uint256 offerNumber);

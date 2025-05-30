@@ -150,7 +150,7 @@ ReentrancyGuardUpgradeable {
         IPrimaryToken primaryTokenContract = IPrimaryToken(primaryToken);
         if (primaryTokenContract.isStakeRewardingCompleted()) {
             ITreasury treasuryContract = ITreasury(primaryTokenContract.treasury());
-            uint256 fee = _stakingFee(
+            uint256 feeAmount = _stakingFee(
                 treasuryContract.liquidity(),
                 _value,
                 primaryTokenContract.totalSupply(),
@@ -158,9 +158,9 @@ ReentrancyGuardUpgradeable {
             );
 
             IERC20Upgradeable currencyContract = IERC20Upgradeable(treasuryContract.currency());
-            currencyContract.safeTransferFrom(_account, address(this), fee);
-            currencyContract.safeIncreaseAllowance(address(primaryTokenContract), fee);
-            primaryTokenContract.contributeLiquidityFromStakeToken(fee, address(this));
+            currencyContract.safeTransferFrom(_account, address(this), feeAmount);
+            currencyContract.safeIncreaseAllowance(address(primaryTokenContract), feeAmount);
+            primaryTokenContract.contributeLiquidityFromStakeToken(feeAmount, address(this));
         }
 
         primaryTokenContract.safeTransferFrom(msg.sender, address(this), _value);

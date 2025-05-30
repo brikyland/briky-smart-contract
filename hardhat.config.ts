@@ -1,3 +1,4 @@
+import { ethers } from "ethers";
 import { HardhatUserConfig } from 'hardhat/config';
 import 'dotenv/config';
 import '@nomicfoundation/hardhat-toolbox';
@@ -71,13 +72,13 @@ const config: HardhatUserConfig = {
         staging: {
             url: process.env.STAGING_URL,
             chainId: Number(process.env.STAGING_CHAIN_ID),
-            accounts: [process.env.STAGING_DEPLOYER_PRIVATE_KEY],
+            accounts: [process.env.STAGING_DEPLOYER_PRIVATE_KEY || ethers.utils.id("")],
             ...getNetworkEnvVariable('staging', COMMON_ENV_VARIABLE_NAMES),
         } as any,
         testnet: {
             url: process.env.TESTNET_URL,
             chainId: Number(process.env.TESTNET_CHAIN_ID),
-            accounts: [process.env.TESTNET_DEPLOYER_PRIVATE_KEY],
+            accounts: [process.env.TESTNET_DEPLOYER_PRIVATE_KEY || ethers.utils.id("")],
             ...getNetworkEnvVariable('testnet', COMMON_ENV_VARIABLE_NAMES),
         } as any,
         mainnet: {

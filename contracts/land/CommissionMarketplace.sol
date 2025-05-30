@@ -12,6 +12,8 @@ import {Formula} from "../lib/Formula.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 
+import {Discountable} from "./utilities/Discountable.sol";
+
 import {ICommissionToken} from "../land/interfaces/ICommissionToken.sol";
 
 import {IExclusiveToken} from "./interfaces/IExclusiveToken.sol";
@@ -20,6 +22,7 @@ import {CommissionMarketplaceStorage} from "./storages/CommissionMarketplaceStor
 
 contract CommissionMarketplace is
 CommissionMarketplaceStorage,
+Discountable,
 PausableUpgradeable,
 ReentrancyGuardUpgradeable {
     using Formula for uint256;
@@ -125,9 +128,7 @@ ReentrancyGuardUpgradeable {
         (address royaltyReceiver, uint256 royaltyAmount) = commissionTokenContract.royaltyInfo(_tokenId, price);
 
         address currency = offer.currency;
-        if (IAdmin(admin).isExclusiveCurrency(currency)) {
-            royaltyAmount = royaltyAmount.applyDiscount(IExclusiveToken(currency).exclusiveDiscount());
-        }
+        royaltyAmount = _applyDiscount(royaltyAmount, currency);
 
         if (currency == address(0)) {
             uint256 total = price + royaltyAmount;

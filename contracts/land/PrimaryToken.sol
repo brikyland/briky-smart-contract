@@ -95,63 +95,44 @@ ReentrancyGuardUpgradeable {
             ),
             _signatures
         );
-        if (treasury != address(0)) revert InvalidUpdating();
+        if (_treasury == address(0) || treasury != address(0)) {
+            revert InvalidUpdating();
+        }
         treasury = _treasury;
         emit TreasuryUpdate(_treasury);
     }
 
-    function updateStakeToken1(
+    function updateStakeTokens(
         address _stakeToken1,
-        bytes[] calldata _signatures
-    ) external {
-        IAdmin(admin).verifyAdminSignatures(
-            abi.encode(
-                address(this),
-                "updateStakeToken1",
-                _stakeToken1
-            ),
-            _signatures
-        );
-        if (stakeToken1 != address(0)) {
-            revert InvalidUpdating();
-        }
-        stakeToken1 = _stakeToken1;
-        emit StakeToken1Update(stakeToken1);
-    }
-
-    function updateStakeToken2(
         address _stakeToken2,
-        bytes[] calldata _signatures
-    ) external {
-        IAdmin(admin).verifyAdminSignatures(
-            abi.encode(
-                address(this),
-                "updateStakeToken2",
-                _stakeToken2
-            ),
-            _signatures
-        );
-        stakeToken2 = _stakeToken2;
-        emit StakeToken2Update(stakeToken2);
-    }
-
-    function updateStakeToken3(
         address _stakeToken3,
         bytes[] calldata _signatures
     ) external {
         IAdmin(admin).verifyAdminSignatures(
             abi.encode(
                 address(this),
-                "updateStakeToken3",
+                "updateStakeTokens",
+                _stakeToken1,
+                _stakeToken2,
                 _stakeToken3
             ),
             _signatures
         );
-        if (stakeToken3 != address(0)) {
+
+        if (_stakeToken1 == address(0) || stakeToken2 == address(0) || stakeToken3 == address(0)
+            || stakeToken1 != address(0) || stakeToken2 != address(0) || stakeToken3 != address(0)) {
             revert InvalidUpdating();
         }
+
+        stakeToken1 = _stakeToken1;
+        stakeToken2 = _stakeToken2;
         stakeToken3 = _stakeToken3;
-        emit StakeToken3Update(stakeToken3);
+
+        emit StakeTokensUpdate(
+            _stakeToken1,
+            _stakeToken2,
+            _stakeToken3
+        );
     }
 
     function totalStake() public view returns (uint256) {

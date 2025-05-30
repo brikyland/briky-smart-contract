@@ -1,9 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {ICommon} from "./ICommon.sol";
+interface IAdmin {
+    struct CurrencyRegistry {
+        uint256 unitPriceLowerBound; // deprecated
+        uint256 unitPriceUpperBound; // deprecated
+        bool isAvailable;
+        bool isExclusive;
+    }
 
-interface IAdmin is ICommon {
     event AdminSignaturesVerification(
         bytes message,
         uint256 nonce,
@@ -39,10 +44,14 @@ interface IAdmin is ICommon {
     error AuthorizedZone(bytes32 zone);
     error CannotSelfDeauthorizing();
     error FailedVerification();
+    error InvalidInput();
     error InvalidSignatureNumber();
     error NotActivated(address account);
     error NotAuthorizedAccount(address account);
     error NotAuthorizedZone(bytes32 zone);
+    error Unauthorized();
+
+    function version() external pure returns (string memory version);
 
     function admin1() external view returns (address admin1);
     function admin2() external view returns (address admin2);

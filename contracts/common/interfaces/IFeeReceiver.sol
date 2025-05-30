@@ -9,8 +9,4 @@ interface IFeeReceiver is ICommon {
         address currency,
         uint256 value
     );
-
-    function version() external pure returns (string memory version);
-
-    function admin() external view returns (address admin);
 }

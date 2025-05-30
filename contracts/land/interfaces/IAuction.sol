@@ -9,6 +9,12 @@ interface IAuction is ICommon {
         bool hasWithdrawn;
     }
 
+    event StakeTokensUpdate(
+        address newAddress1,
+        address newAddress2,
+        address newAddress3
+    );
+
     event Deposit(address indexed account, uint256 value);
     event Stake(
         address indexed account,
@@ -23,7 +29,6 @@ interface IAuction is ICommon {
     error NotStarted();
     error Started();
 
-    function admin() external view returns (address admin);
     function primaryToken() external view returns (address primaryToken);
     function stakeToken1() external view returns (address stakeToken1);
     function stakeToken2() external view returns (address stakeToken2);

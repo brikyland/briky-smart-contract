@@ -18,8 +18,11 @@ import {IExclusiveToken} from "./interfaces/IExclusiveToken.sol";
 
 import {EstateMarketplaceStorage} from "./storages/EstateMarketplaceStorage.sol";
 
+import {Discountable} from "./utilities/Discountable.sol";
+
 contract EstateMarketplace is
 EstateMarketplaceStorage,
+Discountable,
 PausableUpgradeable,
 ReentrancyGuardUpgradeable {
     using Formula for uint256;
@@ -120,7 +123,10 @@ ReentrancyGuardUpgradeable {
         return offerId;
     }
 
-    function buy(uint256 _offerId, uint256 _tokenId) external payable nonReentrant whenNotPaused {
+    function buy(
+        uint256 _offerId,
+        uint256 _tokenId
+    ) external payable nonReentrant whenNotPaused {
         if (_offerId == 0 || _offerId > offerNumber) {
             revert InvalidOfferId();
         }
@@ -139,34 +145,26 @@ ReentrancyGuardUpgradeable {
         IEstateToken estateTokenContract = IEstateToken(estateToken);
 
         uint256 value = offer.unitPrice.scale(Rate(amount, estateTokenContract.getEstate(_tokenId).decimals));
+        (address royaltyReceiver, uint256 royaltyAmount) = estateTokenContract.royaltyInfo(_tokenId, value);
 
         address currency = offer.currency;
-        (address royaltyReceiver, uint256 royaltyAmount) = estateTokenContract.royaltyInfo(_tokenId, value);
-        if (IAdmin(admin).isExclusiveCurrency(currency)) {
-            royaltyAmount = royaltyAmount.applyDiscount(IExclusiveToken(currency).exclusiveDiscount());
-        }
+        royaltyAmount = _applyDiscount(royaltyAmount, currency);
 
-        ICommissionToken commissionContract = ICommissionToken(commissionToken);
-        address commissionReceiver;
-        uint256 commissionAmount;
-        if (commissionContract.exists(_tokenId)) {
-            commissionReceiver = commissionContract.ownerOf(_tokenId);
-            commissionAmount = royaltyAmount.scale(commissionContract.getCommissionRate());
-        }
+        (address commissionReceiver, uint256 commissionAmount) = ICommissionToken(commissionToken).commissionInfo(_tokenId, royaltyAmount);
 
         if (currency == address(0)) {
             uint256 total = value + royaltyAmount;
             CurrencyHandler.receiveNative(total);
             CurrencyHandler.transferNative(seller, value);
             CurrencyHandler.transferNative(royaltyReceiver, royaltyAmount - commissionAmount);
-            if (commissionReceiver != address(0)) {
+            if (commissionAmount != 0) {
                 CurrencyHandler.transferNative(commissionReceiver, commissionAmount);
             }
         } else {
             IERC20Upgradeable currencyContract = IERC20Upgradeable(currency);
             currencyContract.safeTransferFrom(msg.sender, seller, value);
             currencyContract.safeTransferFrom(msg.sender, royaltyReceiver, royaltyAmount - commissionAmount);
-            if (commissionReceiver != address(0)) {
+            if (commissionAmount != 0) {
                 currencyContract.safeTransferFrom(msg.sender, commissionReceiver, commissionAmount);
             }
         }
@@ -213,34 +211,26 @@ ReentrancyGuardUpgradeable {
 
         IEstateToken estateTokenContract = IEstateToken(estateToken);
         uint256 value = offer.unitPrice.scale(Rate(_amount, estateTokenContract.getEstate(_tokenId).decimals));
+        (address royaltyReceiver, uint256 royaltyAmount) = estateTokenContract.royaltyInfo(_tokenId, value);
 
         address currency = offer.currency;
-        (address royaltyReceiver, uint256 royaltyAmount) = estateTokenContract.royaltyInfo(_tokenId, value);
-        if (IAdmin(admin).isExclusiveCurrency(currency)) {
-            royaltyAmount = royaltyAmount.applyDiscount(IExclusiveToken(currency).exclusiveDiscount());
-        }
+        royaltyAmount = _applyDiscount(royaltyAmount, currency);
 
-        ICommissionToken commissionContract = ICommissionToken(commissionToken);
-        address commissionReceiver;
-        uint256 commissionAmount;
-        if (commissionContract.exists(_tokenId)) {
-            commissionReceiver = commissionContract.ownerOf(_tokenId);
-            commissionAmount = royaltyAmount.scale(commissionContract.getCommissionRate());
-        }
+        (address commissionReceiver, uint256 commissionAmount) = ICommissionToken(commissionToken).commissionInfo(_tokenId, royaltyAmount);
 
         if (currency == address(0)) {
             uint256 total = value + royaltyAmount;
             CurrencyHandler.receiveNative(total);
             CurrencyHandler.transferNative(seller, value);
             CurrencyHandler.transferNative(royaltyReceiver, royaltyAmount - commissionAmount);
-            if (commissionReceiver != address(0)) {
+            if (commissionAmount != 0) {
                 CurrencyHandler.transferNative(commissionReceiver, commissionAmount);
             }
         } else {
             IERC20Upgradeable currencyContract = IERC20Upgradeable(currency);
             currencyContract.safeTransferFrom(msg.sender, seller, value);
             currencyContract.safeTransferFrom(msg.sender, royaltyReceiver, royaltyAmount - commissionAmount);
-            if (commissionReceiver != address(0)) {
+            if (commissionAmount != 0) {
                 currencyContract.safeTransferFrom(msg.sender, commissionReceiver, commissionAmount);
             }
         }

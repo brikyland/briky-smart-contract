@@ -31,29 +31,11 @@ export async function deployOrUpgradeDriptributor(
                 primaryTokenAddress,
                 `Missing ${networkName}_PRIMARY_TOKEN_ADDRESS from environment variables!`
             );
-            const stakeToken1Address = config.stakeToken1Address;
-            assert.ok(
-                stakeToken1Address,
-                `Missing ${networkName}_STAKE_TOKEN_1_ADDRESS from environment variables!`
-            );
-            const stakeToken2Address = config.stakeToken2Address;
-            assert.ok(
-                stakeToken2Address,
-                `Missing ${networkName}_STAKE_TOKEN_2_ADDRESS from environment variables!`
-            );
-            const stakeToken3Address = config.stakeToken3Address;
-            assert.ok(
-                stakeToken3Address,
-                `Missing ${networkName}_STAKE_TOKEN_3_ADDRESS from environment variables!`
-            );
 
             const driptributor = await deployDriptributor(
                 signer,
                 adminAddress,
                 primaryTokenAddress,
-                stakeToken1Address,
-                stakeToken2Address,
-                stakeToken3Address,
                 totalAmount,
             );
             console.log(`Contract Driptributor has been deployed to address ${driptributor.address}`);

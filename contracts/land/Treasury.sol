@@ -100,11 +100,11 @@ ReentrancyGuardUpgradeable {
     function provideLiquidity(uint256 _value) external nonReentrant whenNotPaused {
         IERC20Upgradeable(currency).safeTransferFrom(msg.sender, address(this), _value);
 
-        uint256 fee = _value.scale(Constant.TREASURY_OPERATION_FUND_RATE, Constant.COMMON_RATE_MAX_FRACTION);
+        uint256 feeAmount = _value.scale(Constant.TREASURY_OPERATION_FUND_RATE, Constant.COMMON_RATE_MAX_FRACTION);
 
-        operationFund += fee;
-        liquidity += _value - fee;
+        operationFund += feeAmount;
+        liquidity += _value - feeAmount;
 
-        emit LiquidityProvision(_value, fee);
+        emit LiquidityProvision(_value, feeAmount);
     }
 }

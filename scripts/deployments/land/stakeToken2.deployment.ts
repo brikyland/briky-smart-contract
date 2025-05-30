@@ -1,7 +1,7 @@
 import { LedgerSigner } from '@anders-t/ethers-ledger';
 import { ethers, network } from 'hardhat';
-import { Constant } from '../../../utils/constant';
 import { deployOrUpgradeStakeToken } from "./base/stakeToken.deployment";
+import { Initialization } from "./initialization";
 
 async function deployOrUpgradeStakeToken2() {
     const networkName = network.name.toUpperCase();
@@ -12,8 +12,8 @@ async function deployOrUpgradeStakeToken2() {
     const stakeToken2Address = await deployOrUpgradeStakeToken(
         signer,
         2,
-        Constant.STAKE_TOKEN_INITIAL_Name_2,
-        Constant.STAKE_TOKEN_INITIAL_Symbol_2,
+        Initialization.STAKE_TOKEN_Name_2,
+        Initialization.STAKE_TOKEN_Symbol_2,
     );
 
     console.log(`${networkName}_STAKE_TOKEN_2_ADDRESS=${stakeToken2Address}`);

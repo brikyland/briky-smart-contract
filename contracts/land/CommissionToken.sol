@@ -10,6 +10,7 @@ import {ERC721URIStorageUpgradeable} from "@openzeppelin/contracts-upgradeable/t
 import {IERC721MetadataUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/IERC721MetadataUpgradeable.sol";
 
 import {Constant} from "../lib/Constant.sol";
+import {Formula} from "../lib/Formula.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 import {IRoyaltyRateToken} from "../common/interfaces/IRoyaltyRateToken.sol";
@@ -26,6 +27,8 @@ ERC721PausableUpgradeable,
 ERC721URIStorageUpgradeable,
 RoyaltyRateToken,
 ReentrancyGuardUpgradeable {
+    using Formula for uint256;
+
     string constant private VERSION = "v1.1.1";
 
     receive() external payable {}
@@ -119,7 +122,7 @@ ReentrancyGuardUpgradeable {
         emit BatchMetadataUpdate(1, IEstateToken(estateToken).estateNumber());
     }
 
-    function getCommissionRate() external view returns (Rate memory) {
+    function getCommissionRate() public view returns (Rate memory) {
         return Rate(commissionRate, Constant.COMMON_RATE_DECIMALS);
     }
 
@@ -128,6 +131,13 @@ ReentrancyGuardUpgradeable {
         RoyaltyRateToken
     ) returns (Rate memory) {
         return Rate(royaltyRate, Constant.COMMON_RATE_DECIMALS);
+    }
+
+    function commissionInfo(uint256 _tokenId, uint256 _value) external view returns (address, uint256) {
+        address receiver = _ownerOf(_tokenId);
+        return receiver != address(0)
+            ? (receiver, _value.scale(getCommissionRate()))
+            : (address(0), 0);
     }
 
     function mint(address _account, uint256 _tokenId) external {
