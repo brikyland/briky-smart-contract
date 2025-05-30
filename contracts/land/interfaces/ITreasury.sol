@@ -8,8 +8,15 @@ interface ITreasury is ICommon {
 
     event OperationFundWithdrawal(uint256 value, address operator);
 
-    event LiquidityProvision(uint256 value, uint256 feeAmount);
-    event LiquidityWithdrawal(uint256 value);
+    event LiquidityProvision(
+        address indexed provider,
+        uint256 value,
+        uint256 feeAmount
+    );
+    event LiquidityWithdrawal(
+        address indexed withdrawer,
+        uint256 value
+    );
 
     function currency() external view returns (address currency);
     function primaryToken() external view returns (address primaryToken);
@@ -18,5 +25,5 @@ interface ITreasury is ICommon {
     function liquidity() external view returns (uint256 liquidity);
 
     function provideLiquidity(uint256 value) external;
-    function withdrawLiquidity(uint256 value) external;
+    function withdrawLiquidity(address receiver, uint256 value) external;
 }

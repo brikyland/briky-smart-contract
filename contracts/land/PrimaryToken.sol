@@ -506,8 +506,7 @@ ReentrancyGuardUpgradeable {
 
         uint256 liquidity = treasuryContract.liquidity().scale(_amount, totalSupply());
 
-        treasuryContract.withdrawLiquidity(liquidity);
-        IERC20Upgradeable(treasuryContract.currency()).safeTransfer(msg.sender, liquidity);
+        treasuryContract.withdrawLiquidity(msg.sender, liquidity);
         _burn(msg.sender, _amount);
 
         emit Liquidation(msg.sender, _amount, liquidity);
