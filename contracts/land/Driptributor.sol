@@ -123,7 +123,7 @@ ReentrancyGuardUpgradeable {
         }
 
         for (uint256 i = 0; i < _receivers.length; ++i) {
-            if (_amounts[i] > totalAmount - distributedAmount) {
+            if (distributedAmount + _amounts[i] > totalAmount) {
                 revert InsufficientFunds();
             }
             unchecked {
@@ -175,7 +175,7 @@ ReentrancyGuardUpgradeable {
         }
 
         for (uint256 i = 0; i < _receivers.length; ++i) {
-            if (_amounts[i] + distributedAmount > totalAmount) {
+            if (distributedAmount + _amounts[i] > totalAmount) {
                 revert InsufficientFunds();
             }
             if (_endAts[i] <= block.timestamp) {
