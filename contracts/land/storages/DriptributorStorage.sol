@@ -6,9 +6,10 @@ import {IDriptributor} from "../interfaces/IDriptributor.sol";
 abstract contract DriptributorStorage is IDriptributor {
     mapping(uint256 => Distribution) internal distributions;
 
+    uint256 public distributionNumber;
+
     uint256 public totalAmount;
     uint256 public distributedAmount;
-    uint256 public distributionNumber;
 
     address public admin;
     address public primaryToken;

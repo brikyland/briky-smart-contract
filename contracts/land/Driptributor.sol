@@ -75,6 +75,12 @@ ReentrancyGuardUpgradeable {
             ),
             _signatures
         );
+
+        if (_stakeToken1 == address(0) || stakeToken2 == address(0) || stakeToken3 == address(0)
+            || stakeToken1 != address(0) || stakeToken2 != address(0) || stakeToken3 != address(0)) {
+            revert InvalidUpdating();
+        }
+
         stakeToken1 = _stakeToken1;
         stakeToken2 = _stakeToken2;
         stakeToken3 = _stakeToken3;
@@ -111,7 +117,8 @@ ReentrancyGuardUpgradeable {
             _signatures
         );
         if (_receivers.length != _amounts.length
-            || _receivers.length != _vestingDuration.length) {
+            || _receivers.length != _vestingDuration.length
+            || _receivers.length != _data.length) {
             revert InvalidInput();
         }
 
@@ -162,7 +169,8 @@ ReentrancyGuardUpgradeable {
             _signatures
         );
         if (_receivers.length != _amounts.length
-            || _receivers.length != _endAts.length) {
+            || _receivers.length != _endAts.length
+            || _receivers.length != _data.length) {
             revert InvalidInput();
         }
 

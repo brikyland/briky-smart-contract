@@ -10,11 +10,11 @@ abstract contract StakeTokenStorage is IStakeToken {
     string public name;
     string public symbol;
 
-    uint256 internal interestAccumulation;
-
     uint256 public totalSupply;
     uint256 public lastRewardFetch;
+
     uint256 internal feeRate;
+    uint256 internal interestAccumulation;
 
     address public admin;
     address public primaryToken;
