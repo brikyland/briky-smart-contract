@@ -9,6 +9,8 @@ abstract contract DistributorStorage is IDistributor {
     address public treasury;
 
     mapping(address => uint256) public distributedTokens;
+
+    uint256[50] private __gap;
 }
 
 
