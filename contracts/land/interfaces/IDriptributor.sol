@@ -13,6 +13,12 @@ interface IDriptributor is ICommon {
         bool isStaked;
     }
 
+    event StakeTokensUpdate(
+        address newAddress1,
+        address newAddress2,
+        address newAddress3
+    );
+
     event NewDistribution(
         uint256 indexed distributionId,
         address indexed receiver,
@@ -32,7 +38,6 @@ interface IDriptributor is ICommon {
     error AlreadyStaked();
     error InvalidDistributionId();
 
-    function admin() external view returns (address admin);
     function primaryToken() external view returns (address primaryToken);
     function stakeToken1() external view returns (address stakeToken1);
     function stakeToken2() external view returns (address stakeToken2);

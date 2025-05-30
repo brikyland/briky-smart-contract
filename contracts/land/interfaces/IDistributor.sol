@@ -6,7 +6,6 @@ import {ICommon} from "../../common/interfaces/ICommon.sol";
 interface IDistributor is ICommon {
     event TokenDistribution(uint256 amount, string data);
 
-    function admin() external view returns (address admin);
     function primaryToken() external view returns (address stakeToken);
     function treasury() external view returns (address treasury);
 

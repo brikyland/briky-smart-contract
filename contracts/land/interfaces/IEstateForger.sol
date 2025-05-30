@@ -62,7 +62,7 @@ interface IEstateForger is IEstateTokenizer {
         uint256 indexed estateId,
         uint256 soldAmount,
         uint256 value,
-        uint256 fee,
+        uint256 feeAmount,
         address commissionReceiver,
         uint256 commissionAmount
     );
@@ -126,7 +126,6 @@ interface IEstateForger is IEstateTokenizer {
     error StillSelling();
     error Tokenized();
 
-    function admin() external view returns (address admin);
     function commissionToken() external view returns (address commissionToken);
     function feeReceiver() external view returns (address feeReceiver);
 

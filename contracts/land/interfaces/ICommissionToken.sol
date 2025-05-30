@@ -18,12 +18,12 @@ IERC721MetadataUpgradeable {
 
     error AlreadyMinted();
 
-    function admin() external view returns (address admin);
     function estateToken() external view returns (address estateToken);
 
     function getCommissionRate() external view returns (Rate memory rate);
 
-    function exists(uint256 tokenId) external view returns (bool existence);
+    function commissionInfo(uint256 tokenId, uint256 value)
+    external view returns (address receiver, uint256 commissionAmount);
 
     function mint(address account, uint256 tokenId) external;
 }

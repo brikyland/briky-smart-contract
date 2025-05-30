@@ -42,7 +42,6 @@ interface IMortgageMarketplace is ICommon {
     error InvalidPrice();
     error UnavailableLoan();
 
-    function admin() external view returns (address admin);
     function commissionToken() external view returns (address commissionToken);
     function mortgageToken() external view returns (address mortgageToken);
 

@@ -29,19 +29,13 @@ ReentrancyGuardUpgradeable {
 
     function initialize(
         address _admin,
-        address _primaryToken,
-        address _stakeToken1,
-        address _stakeToken2,
-        address _stakeToken3
+        address _primaryToken
     ) external initializer {
         __Pausable_init();
         __ReentrancyGuard_init();
 
         admin = _admin;
         primaryToken = _primaryToken;
-        stakeToken1 = _stakeToken1;
-        stakeToken2 = _stakeToken2;
-        stakeToken3 = _stakeToken3;
     }
 
     function version() external pure returns (string memory) {
@@ -62,6 +56,39 @@ ReentrancyGuardUpgradeable {
             _signatures
         );
         _unpause();
+    }
+
+    function updateStakeTokens(
+        address _stakeToken1,
+        address _stakeToken2,
+        address _stakeToken3,
+        bytes[] calldata _signatures
+    ) external {
+        IAdmin(admin).verifyAdminSignatures(
+            abi.encode(
+                address(this),
+                "updateStakeTokens",
+                _stakeToken1,
+                _stakeToken2,
+                _stakeToken3
+            ),
+            _signatures
+        );
+
+        if (_stakeToken1 == address(0) || stakeToken2 == address(0) || stakeToken3 == address(0)
+        || stakeToken1 != address(0) || stakeToken2 != address(0) || stakeToken3 != address(0)) {
+            revert InvalidUpdating();
+        }
+
+        stakeToken1 = _stakeToken1;
+        stakeToken2 = _stakeToken2;
+        stakeToken3 = _stakeToken3;
+
+        emit StakeTokensUpdate(
+            _stakeToken1,
+            _stakeToken2,
+            _stakeToken3
+        );
     }
 
     function startAuction(

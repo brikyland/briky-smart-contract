@@ -42,7 +42,7 @@ IERC1155ReceiverUpgradeable {
         uint256 indexed tokenId,
         address indexed lender,
         uint40 due,
-        uint256 fee,
+        uint256 feeAmount,
         address commissionReceiver,
         uint256 commissionAmount
     );
@@ -75,7 +75,6 @@ IERC1155ReceiverUpgradeable {
     error InvalidRepayment();
     error Overdue();
 
-    function admin() external view returns (address admin);
     function estateToken() external view returns (address estateToken);
     function feeReceiver() external view returns (address feeReceiver);
 

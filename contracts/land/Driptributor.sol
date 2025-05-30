@@ -28,9 +28,6 @@ ReentrancyGuardUpgradeable {
     function initialize(
         address _admin,
         address _primaryToken,
-        address _stakeToken1,
-        address _stakeToken2,
-        address _stakeToken3,
         uint256 _totalAmount
     ) external initializer {
         __Pausable_init();
@@ -38,9 +35,6 @@ ReentrancyGuardUpgradeable {
 
         admin = _admin;
         primaryToken = _primaryToken;
-        stakeToken1 = _stakeToken1;
-        stakeToken2 = _stakeToken2;
-        stakeToken3 = _stakeToken3;
 
         totalAmount = _totalAmount;
     }
@@ -63,6 +57,32 @@ ReentrancyGuardUpgradeable {
             _signatures
         );
         _unpause();
+    }
+
+    function updateStakeTokens(
+        address _stakeToken1,
+        address _stakeToken2,
+        address _stakeToken3,
+        bytes[] calldata _signatures
+    ) external {
+        IAdmin(admin).verifyAdminSignatures(
+            abi.encode(
+                address(this),
+                "updateStakeTokens",
+                _stakeToken1,
+                _stakeToken2,
+                _stakeToken3
+            ),
+            _signatures
+        );
+        stakeToken1 = _stakeToken1;
+        stakeToken2 = _stakeToken2;
+        stakeToken3 = _stakeToken3;
+        emit StakeTokensUpdate(
+            _stakeToken1,
+            _stakeToken2,
+            _stakeToken3
+        );
     }
 
     function getDistribution(uint256 _distributionId) public view returns (Distribution memory) {

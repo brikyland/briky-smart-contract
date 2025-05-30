@@ -115,7 +115,7 @@ ReentrancyGuardUpgradeable {
             ),
             _signatures
         );
-        if (commissionToken != address(0)) {
+        if (_commissionToken == address(0) || commissionToken != address(0)) {
             revert InvalidUpdating();
         }
         commissionToken = _commissionToken;

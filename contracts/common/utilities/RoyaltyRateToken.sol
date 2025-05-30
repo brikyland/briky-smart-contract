@@ -23,8 +23,8 @@ ERC165Upgradeable {
 
     function supportsInterface(bytes4 _interfaceId) public view virtual
     override(IERC165Upgradeable, ERC165Upgradeable) returns (bool) {
-        return _interfaceId == type(IRoyaltyRateToken).interfaceId
-            || _interfaceId == type(IERC2981Upgradeable).interfaceId
+        return _interfaceId == type(IERC2981Upgradeable).interfaceId
+            || _interfaceId == type(IRoyaltyRateToken).interfaceId
             || super.supportsInterface(_interfaceId);
     }
 }

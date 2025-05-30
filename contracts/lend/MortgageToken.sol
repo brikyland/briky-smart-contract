@@ -27,6 +27,8 @@ import {ICommissionToken} from "../land/interfaces/ICommissionToken.sol";
 import {IEstateToken} from "../land/interfaces/IEstateToken.sol";
 import {IExclusiveToken} from "../land/interfaces/IExclusiveToken.sol";
 
+import {Discountable} from "../land/utilities/Discountable.sol";
+
 import {MortgageTokenStorage} from "./storages/MortgageTokenStorage.sol";
 
 contract MortgageToken is
@@ -35,6 +37,7 @@ ERC721PausableUpgradeable,
 ERC721URIStorageUpgradeable,
 ERC1155HolderUpgradeable,
 RoyaltyRateToken,
+Discountable,
 ReentrancyGuardUpgradeable {
     using Formula for uint256;
     using SafeERC20Upgradeable for IERC20Upgradeable;
@@ -251,33 +254,25 @@ ReentrancyGuardUpgradeable {
             || _estateId != loan.estateId
             || loan.state != LoanState.Pending) revert InvalidLending();
 
-        address currency = loan.currency;
         uint256 principal = loan.principal;
-        uint256 fee = principal.scale(feeRate, Constant.COMMON_RATE_MAX_FRACTION);
+        uint256 feeAmount = principal.scale(feeRate, Constant.COMMON_RATE_MAX_FRACTION);
 
-        if (IAdmin(admin).isExclusiveCurrency(currency)) {
-            fee = fee.applyDiscount(IExclusiveToken(currency).exclusiveDiscount());
-        }
+        address currency = loan.currency;
+        feeAmount = _applyDiscount(feeAmount, currency);
 
-        ICommissionToken commissionContract = ICommissionToken(commissionToken);
-        address commissionReceiver;
-        uint256 commissionAmount;
-        if (commissionContract.exists(_estateId)) {
-            commissionReceiver = commissionContract.ownerOf(_estateId);
-            commissionAmount = fee.scale(commissionContract.getCommissionRate());
-        }
+        (address commissionReceiver, uint256 commissionAmount) = ICommissionToken(commissionToken).commissionInfo(_estateId, feeAmount);
 
         if (currency == address(0)) {
             CurrencyHandler.receiveNative(principal);
-            CurrencyHandler.transferNative(borrower, principal - fee);
-            CurrencyHandler.transferNative(feeReceiver, fee - commissionAmount);
+            CurrencyHandler.transferNative(borrower, principal - feeAmount);
+            CurrencyHandler.transferNative(feeReceiver, feeAmount - commissionAmount);
             if (commissionAmount != 0) {
                 CurrencyHandler.transferNative(commissionReceiver, commissionAmount);
             }
         } else {
             IERC20Upgradeable currencyContract = IERC20Upgradeable(currency);
-            currencyContract.safeTransferFrom(msg.sender, borrower, principal - fee);
-            currencyContract.safeTransferFrom(msg.sender, feeReceiver, fee - commissionAmount);
+            currencyContract.safeTransferFrom(msg.sender, borrower, principal - feeAmount);
+            currencyContract.safeTransferFrom(msg.sender, feeReceiver, feeAmount - commissionAmount);
             if (commissionAmount != 0) {
                 currencyContract.safeTransferFrom(msg.sender, commissionReceiver, commissionAmount);
             }
@@ -302,7 +297,7 @@ ReentrancyGuardUpgradeable {
             _loanId,
             msg.sender,
             due,
-            fee,
+            feeAmount,
             commissionReceiver,
             commissionAmount
         );

@@ -1,8 +1,8 @@
 import { LedgerSigner } from '@anders-t/ethers-ledger';
 import assert from 'assert';
 import { ethers, network, upgrades } from 'hardhat';
-import { Constant } from "../../../utils/constant";
 import { deployCommissionToken } from '../../../utils/deployments/land/commissionToken';
+import { Initialization } from "./initialization";
 
 async function deployOrUpgradeCommissionToken() {
     const config = network.config as any;
@@ -42,11 +42,11 @@ async function deployOrUpgradeCommissionToken() {
                 adminAddress,
                 estateTokenAddress,
                 feeReceiverAddress,
-                Constant.COMMISSION_TOKEN_INITIAL_Name,
-                Constant.COMMISSION_TOKEN_INITIAL_Symbol,
-                Constant.COMMISSION_TOKEN_INITIAL_BaseURI,
-                Constant.COMMISSION_TOKEN_INITIAL_CommissionRate,
-                Constant.COMMISSION_TOKEN_INITIAL_RoyaltyRate,
+                Initialization.COMMISSION_TOKEN_Name,
+                Initialization.COMMISSION_TOKEN_Symbol,
+                Initialization.COMMISSION_TOKEN_BaseURI,
+                Initialization.COMMISSION_TOKEN_CommissionRate,
+                Initialization.COMMISSION_TOKEN_RoyaltyRate,
             );
             console.log(`Contract CommissionToken has been deployed to address ${commissionToken.address}`);
 

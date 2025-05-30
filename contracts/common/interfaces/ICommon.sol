@@ -2,13 +2,6 @@
 pragma solidity ^0.8.20;
 
 interface ICommon {
-    struct CurrencyRegistry {
-        uint256 unitPriceLowerBound; // deprecated
-        uint256 unitPriceUpperBound; // deprecated
-        bool isAvailable;
-        bool isExclusive;
-    }
-
     struct Rate {
         uint256 value;
         uint8 decimals;
@@ -22,4 +15,6 @@ interface ICommon {
     error Unauthorized();
 
     function version() external pure returns (string memory version);
+
+    function admin() external view returns (address admin);
 }

@@ -18,16 +18,18 @@ import {IAdmin} from "../common/interfaces/IAdmin.sol";
 
 import {ICommissionToken} from "./interfaces/ICommissionToken.sol";
 import {IEstateToken} from "./interfaces/IEstateToken.sol";
+import {IExclusiveToken} from "./interfaces/IExclusiveToken.sol";
 
 import {EstateForgerStorage} from "./storages/EstateForgerStorage.sol";
 
+import {Discountable} from "./utilities/Discountable.sol";
 import {EstateTokenizer} from "./utilities/EstateTokenizer.sol";
-import {IExclusiveToken} from "./interfaces/IExclusiveToken.sol";
 
 contract EstateForger is
 EstateForgerStorage,
 EstateTokenizer,
 ERC1155HolderUpgradeable,
+Discountable,
 PausableUpgradeable,
 ReentrancyGuardUpgradeable {
     using Formula for uint256;
@@ -514,28 +516,24 @@ ReentrancyGuardUpgradeable {
             );
         }
 
-        address currency = request.currency;
         uint256 value = soldAmount * request.unitPrice;
-        uint256 fee = value.scale(feeRate, Constant.COMMON_RATE_MAX_FRACTION);
-        if (IAdmin(admin).isExclusiveCurrency(currency)) {
-            fee = fee.applyDiscount(IExclusiveToken(currency).exclusiveDiscount());
-        }
+        uint256 feeAmount = value.scale(feeRate, Constant.COMMON_RATE_MAX_FRACTION);
 
-        uint256 commissionAmount;
-        if (_commissionReceiver != address(0)) {
-            commissionAmount = fee.scale(ICommissionToken(commissionToken).getCommissionRate());
-        }
+        address currency = request.currency;
+        feeAmount = _applyDiscount(feeAmount, currency);
+
+        ( , uint256 commissionAmount) = ICommissionToken(commissionToken).commissionInfo(estateId, feeAmount);
 
         if (currency == address(0)) {
-            CurrencyHandler.transferNative(requester, value - fee);
-            CurrencyHandler.transferNative(feeReceiver, fee - commissionAmount);
+            CurrencyHandler.transferNative(requester, value - feeAmount);
+            CurrencyHandler.transferNative(feeReceiver, feeAmount - commissionAmount);
             if (commissionAmount != 0) {
                 CurrencyHandler.transferNative(_commissionReceiver, commissionAmount);
             }
         } else {
             IERC20Upgradeable currencyContract = IERC20Upgradeable(currency);
-            currencyContract.safeTransfer(requester, value - fee);
-            currencyContract.safeTransfer(feeReceiver, fee - commissionAmount);
+            currencyContract.safeTransfer(requester, value - feeAmount);
+            currencyContract.safeTransfer(feeReceiver, feeAmount - commissionAmount);
             if (commissionAmount != 0) {
                 currencyContract.safeTransfer(_commissionReceiver, commissionAmount);
             }
@@ -546,7 +544,7 @@ ReentrancyGuardUpgradeable {
             estateId,
             soldAmount,
             value,
-            fee,
+            feeAmount,
             _commissionReceiver,
             commissionAmount
         );

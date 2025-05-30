@@ -8,9 +8,11 @@ import {IExclusiveToken} from "./IExclusiveToken.sol";
 interface IPrimaryToken is
 IExclusiveToken,
 IERC20PermitUpgradeable {
-    event StakeToken1Update(address newAddress);
-    event StakeToken2Update(address newAddress);
-    event StakeToken3Update(address newAddress);
+    event StakeTokensUpdate(
+        address newAddress1,
+        address newAddress2,
+        address newAddress3
+    );
     event TreasuryUpdate(address newAddress);
 
     event BackerRoundTokensUnlock();
