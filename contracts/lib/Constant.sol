@@ -15,7 +15,6 @@ library Constant {
 
     // Primary Token
     uint256 internal constant PRIMARY_TOKEN_BASE_DISCOUNT = 0.15 ether;
-    uint8 internal constant PRIMARY_TOKEN_DISCOUNT_DECIMALS = 18;
 
     uint256 internal constant PRIMARY_TOKEN_MAX_SUPPLY = 20_000_000_000 ether;
     uint256 internal constant PRIMARY_TOKEN_BACKER_ROUND = 100_000_000 ether;

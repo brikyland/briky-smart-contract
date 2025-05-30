@@ -25,6 +25,7 @@ interface IAuction is ICommon {
     event Withdrawal(address indexed account, uint256 amount);
 
     error Ended();
+    error NotAssignedStakeTokens();
     error NotEnded();
     error NotStarted();
     error Started();

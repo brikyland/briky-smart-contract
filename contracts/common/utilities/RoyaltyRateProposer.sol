@@ -7,10 +7,10 @@ import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/intr
 
 import {Formula} from "../../lib/Formula.sol";
 
-import {IRoyaltyRateToken} from "../interfaces/IRoyaltyRateToken.sol";
+import {IRoyaltyRateProposer} from "../interfaces/IRoyaltyRateProposer.sol";
 
-abstract contract RoyaltyRateToken is
-IRoyaltyRateToken,
+abstract contract RoyaltyRateProposer is
+IRoyaltyRateProposer,
 ERC165Upgradeable {
     using Formula for uint256;
 
@@ -24,7 +24,7 @@ ERC165Upgradeable {
     function supportsInterface(bytes4 _interfaceId) public view virtual
     override(IERC165Upgradeable, ERC165Upgradeable) returns (bool) {
         return _interfaceId == type(IERC2981Upgradeable).interfaceId
-            || _interfaceId == type(IRoyaltyRateToken).interfaceId
+            || _interfaceId == type(IRoyaltyRateProposer).interfaceId
             || super.supportsInterface(_interfaceId);
     }
 }

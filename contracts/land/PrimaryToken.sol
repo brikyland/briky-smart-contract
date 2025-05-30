@@ -28,7 +28,7 @@ ReentrancyGuardUpgradeable {
     using Formula for uint256;
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
-    string internal constant VERSION = "v1.1.1";
+    string constant private VERSION = "v1.1.1";
 
     receive() external payable {}
 
@@ -365,12 +365,7 @@ ReentrancyGuardUpgradeable {
     }
 
     function contributeLiquidityFromBackerRound(uint256 _liquidity) external nonReentrant {
-        ITreasury treasuryContract = ITreasury(treasury);
-        IERC20Upgradeable currencyContract = IERC20Upgradeable(treasuryContract.currency());
-        currencyContract.safeTransferFrom(msg.sender, address(this), _liquidity);
-
-        currencyContract.safeIncreaseAllowance(address(treasuryContract), _liquidity);
-        treasuryContract.provideLiquidity(_liquidity);
+        _contributeLiquidity(_liquidity);
 
         unchecked {
             backerRoundContribution += _liquidity;
@@ -380,12 +375,7 @@ ReentrancyGuardUpgradeable {
     }
 
     function contributeLiquidityFromSeedRound(uint256 _liquidity) external nonReentrant {
-        ITreasury treasuryContract = ITreasury(treasury);
-        IERC20Upgradeable currencyContract = IERC20Upgradeable(treasuryContract.currency());
-        currencyContract.safeTransferFrom(msg.sender, address(this), _liquidity);
-
-        currencyContract.safeIncreaseAllowance(address(treasuryContract), _liquidity);
-        treasuryContract.provideLiquidity(_liquidity);
+        _contributeLiquidity(_liquidity);
 
         unchecked {
             seedRoundContribution += _liquidity;
@@ -395,12 +385,7 @@ ReentrancyGuardUpgradeable {
     }
 
     function contributeLiquidityFromPrivateSale1(uint256 _liquidity) external nonReentrant {
-        ITreasury treasuryContract = ITreasury(treasury);
-        IERC20Upgradeable currencyContract = IERC20Upgradeable(treasuryContract.currency());
-        currencyContract.safeTransferFrom(msg.sender, address(this), _liquidity);
-
-        currencyContract.safeIncreaseAllowance(address(treasuryContract), _liquidity);
-        treasuryContract.provideLiquidity(_liquidity);
+        _contributeLiquidity(_liquidity);
 
         unchecked {
             privateSale1Contribution += _liquidity;
@@ -410,12 +395,7 @@ ReentrancyGuardUpgradeable {
     }
 
     function contributeLiquidityFromPrivateSale2(uint256 _liquidity) external nonReentrant {
-        ITreasury treasuryContract = ITreasury(treasury);
-        IERC20Upgradeable currencyContract = IERC20Upgradeable(treasuryContract.currency());
-        currencyContract.safeTransferFrom(msg.sender, address(this), _liquidity);
-
-        currencyContract.safeIncreaseAllowance(address(treasuryContract), _liquidity);
-        treasuryContract.provideLiquidity(_liquidity);
+        _contributeLiquidity(_liquidity);
 
         unchecked {
             privateSale2Contribution += _liquidity;
@@ -425,12 +405,7 @@ ReentrancyGuardUpgradeable {
     }
 
     function contributeLiquidityFromPublicSale(uint256 _liquidity) external nonReentrant {
-        ITreasury treasuryContract = ITreasury(treasury);
-        IERC20Upgradeable currencyContract = IERC20Upgradeable(treasuryContract.currency());
-
-        currencyContract.safeTransferFrom(msg.sender, address(this), _liquidity);
-        currencyContract.safeIncreaseAllowance(address(treasuryContract), _liquidity);
-        treasuryContract.provideLiquidity(_liquidity);
+        _contributeLiquidity(_liquidity);
 
         unchecked {
             publicSaleContribution += _liquidity;
@@ -440,12 +415,7 @@ ReentrancyGuardUpgradeable {
     }
 
     function contributeLiquidityFromMarketMaker(uint256 _liquidity) external nonReentrant {
-        ITreasury treasuryContract = ITreasury(treasury);
-        IERC20Upgradeable currencyContract = IERC20Upgradeable(treasuryContract.currency());
-        currencyContract.safeTransferFrom(msg.sender, address(this), _liquidity);
-
-        currencyContract.safeIncreaseAllowance(address(treasuryContract), _liquidity);
-        treasuryContract.provideLiquidity(_liquidity);
+        _contributeLiquidity(_liquidity);
 
         unchecked {
             marketMakerContribution += _liquidity;
@@ -455,12 +425,7 @@ ReentrancyGuardUpgradeable {
     }
 
     function contributeLiquidityFromExternalTreasury(uint256 _liquidity) external nonReentrant {
-        ITreasury treasuryContract = ITreasury(treasury);
-        IERC20Upgradeable currencyContract = IERC20Upgradeable(treasuryContract.currency());
-        currencyContract.safeTransferFrom(msg.sender, address(this), _liquidity);
-
-        currencyContract.safeIncreaseAllowance(address(treasuryContract), _liquidity);
-        treasuryContract.provideLiquidity(_liquidity);
+        _contributeLiquidity(_liquidity);
 
         unchecked {
             externalTreasuryContribution += _liquidity;
@@ -470,12 +435,7 @@ ReentrancyGuardUpgradeable {
     }
 
     function contributeLiquidityFromStakeToken(uint256 _liquidity, address _stakeToken) external nonReentrant {
-        ITreasury treasuryContract = ITreasury(treasury);
-        IERC20Upgradeable currencyContract = IERC20Upgradeable(treasuryContract.currency());
-        currencyContract.safeTransferFrom(msg.sender, address(this), _liquidity);
-
-        currencyContract.safeIncreaseAllowance(address(treasuryContract), _liquidity);
-        treasuryContract.provideLiquidity(_liquidity);
+        _contributeLiquidity(_liquidity);
 
         unchecked {
             if (_stakeToken == stakeToken1) {
@@ -546,8 +506,7 @@ ReentrancyGuardUpgradeable {
 
         uint256 liquidity = treasuryContract.liquidity().scale(_amount, totalSupply());
 
-        treasuryContract.withdrawLiquidity(liquidity);
-        IERC20Upgradeable(treasuryContract.currency()).safeTransfer(msg.sender, liquidity);
+        treasuryContract.withdrawLiquidity(msg.sender, liquidity);
         _burn(msg.sender, _amount);
 
         emit Liquidation(msg.sender, _amount, liquidity);
@@ -556,7 +515,7 @@ ReentrancyGuardUpgradeable {
     function exclusiveDiscount() external view returns (Rate memory rate) {
         return Rate(
             Constant.PRIMARY_TOKEN_BASE_DISCOUNT.scale(totalStake() + totalSupply(), totalSupply()),
-            Constant.PRIMARY_TOKEN_DISCOUNT_DECIMALS
+            Constant.COMMON_RATE_DECIMALS
         );
     }
 
@@ -568,5 +527,14 @@ ReentrancyGuardUpgradeable {
     function _mint(address _account, uint256 _amount) internal
     override(ERC20Upgradeable, ERC20CappedUpgradeable) {
         super._mint(_account, _amount);
+    }
+
+    function _contributeLiquidity(uint256 _liquidity) private {
+        ITreasury treasuryContract = ITreasury(treasury);
+        IERC20Upgradeable currencyContract = IERC20Upgradeable(treasuryContract.currency());
+        currencyContract.safeTransferFrom(msg.sender, address(this), _liquidity);
+
+        currencyContract.safeIncreaseAllowance(address(treasuryContract), _liquidity);
+        treasuryContract.provideLiquidity(_liquidity);
     }
 }

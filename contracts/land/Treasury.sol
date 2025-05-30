@@ -83,7 +83,7 @@ ReentrancyGuardUpgradeable {
         emit OperationFundWithdrawal(_value, _operator);
     }
 
-    function withdrawLiquidity(uint256 _value) external nonReentrant whenNotPaused {
+    function withdrawLiquidity(address _withdrawer, uint256 _value) external nonReentrant whenNotPaused {
         if (msg.sender != primaryToken) {
             revert Unauthorized();
         }
@@ -92,9 +92,9 @@ ReentrancyGuardUpgradeable {
         }
 
         liquidity -= _value;
-        IERC20Upgradeable(currency).safeTransfer(msg.sender, _value);
+        IERC20Upgradeable(currency).safeTransfer(_withdrawer, _value);
 
-        emit LiquidityWithdrawal(_value);
+        emit LiquidityWithdrawal(_withdrawer, _value);
     }
 
     function provideLiquidity(uint256 _value) external nonReentrant whenNotPaused {
@@ -105,6 +105,6 @@ ReentrancyGuardUpgradeable {
         operationFund += feeAmount;
         liquidity += _value - feeAmount;
 
-        emit LiquidityProvision(_value, feeAmount);
+        emit LiquidityProvision(msg.sender, _value, feeAmount);
     }
 }

@@ -76,7 +76,7 @@ ReentrancyGuardUpgradeable {
         );
 
         if (_stakeToken1 == address(0) || stakeToken2 == address(0) || stakeToken3 == address(0)
-        || stakeToken1 != address(0) || stakeToken2 != address(0) || stakeToken3 != address(0)) {
+            || stakeToken1 != address(0) || stakeToken2 != address(0) || stakeToken3 != address(0)) {
             revert InvalidUpdating();
         }
 
@@ -167,6 +167,10 @@ ReentrancyGuardUpgradeable {
     }
 
     function stake(uint256 _stake1, uint256 _stake2) external nonReentrant whenNotPaused {
+        if (stakeToken1 == address(0) || stakeToken2 == address(0) || stakeToken3 == address(0)) {
+            revert NotAssignedStakeTokens();
+        }
+
         if (endAt == 0) {
             revert NotStarted();
         }

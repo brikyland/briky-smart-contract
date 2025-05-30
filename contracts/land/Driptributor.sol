@@ -75,6 +75,12 @@ ReentrancyGuardUpgradeable {
             ),
             _signatures
         );
+
+        if (_stakeToken1 == address(0) || stakeToken2 == address(0) || stakeToken3 == address(0)
+            || stakeToken1 != address(0) || stakeToken2 != address(0) || stakeToken3 != address(0)) {
+            revert InvalidUpdating();
+        }
+
         stakeToken1 = _stakeToken1;
         stakeToken2 = _stakeToken2;
         stakeToken3 = _stakeToken3;
@@ -111,12 +117,13 @@ ReentrancyGuardUpgradeable {
             _signatures
         );
         if (_receivers.length != _amounts.length
-            || _receivers.length != _vestingDuration.length) {
+            || _receivers.length != _vestingDuration.length
+            || _receivers.length != _data.length) {
             revert InvalidInput();
         }
 
         for (uint256 i = 0; i < _receivers.length; ++i) {
-            if (_amounts[i] > totalAmount - distributedAmount) {
+            if (distributedAmount + _amounts[i] > totalAmount) {
                 revert InsufficientFunds();
             }
             unchecked {
@@ -162,12 +169,13 @@ ReentrancyGuardUpgradeable {
             _signatures
         );
         if (_receivers.length != _amounts.length
-            || _receivers.length != _endAts.length) {
+            || _receivers.length != _endAts.length
+            || _receivers.length != _data.length) {
             revert InvalidInput();
         }
 
         for (uint256 i = 0; i < _receivers.length; ++i) {
-            if (_amounts[i] + distributedAmount > totalAmount) {
+            if (distributedAmount + _amounts[i] > totalAmount) {
                 revert InsufficientFunds();
             }
             if (_endAts[i] <= block.timestamp) {
@@ -229,12 +237,13 @@ ReentrancyGuardUpgradeable {
         uint256 _stake1,
         uint256 _stake2
     ) external nonReentrant whenNotPaused {
+        if (stakeToken1 == address(0) || stakeToken2 == address(0) || stakeToken3 == address(0)) {
+            revert NotAssignedStakeTokens();
+        }
+
         uint256 remain;
         for (uint256 i = 0; i < _distributionIds.length; ++i) {
-            if (_distributionIds[i] == 0 || _distributionIds[i] > distributionNumber) {
-                revert InvalidDistributionId();
-            }
-            Distribution memory distribution = distributions[_distributionIds[i]];
+            Distribution memory distribution = getDistribution(_distributionIds[i]);
             if (distribution.receiver != msg.sender) {
                 revert Unauthorized();
             }
@@ -242,7 +251,7 @@ ReentrancyGuardUpgradeable {
                 revert AlreadyStaked();
             }
 
-            distribution.isStaked = true;
+            distributions[_distributionIds[i]].isStaked = true;
 
             remain += distribution.totalAmount - distribution.withdrawnAmount;
         }

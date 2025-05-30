@@ -27,7 +27,7 @@ ReentrancyGuardUpgradeable {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using SafeERC20Upgradeable for IPrimaryToken;
 
-    string internal constant VERSION = "v1.1.1";
+    string constant private VERSION = "v1.1.1";
 
     receive() external payable {}
 
