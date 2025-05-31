@@ -11,14 +11,14 @@ export async function deployOrUpgradeDriptributor(
     const config = network.config as any;
     const networkName = network.name.toUpperCase();
     const Driptributor = await ethers.getContractFactory('Driptributor', signer);
-    return config[`${roundName}DriptributorAddress`] ?
+    return config[`${roundName}DistributorAddress`] ?
         await (async () => {
             await upgrades.upgradeProxy(
-                config[`${roundName}DriptributorAddress`],
+                config[`${roundName}DistributorAddress`],
                 Driptributor,
             );
-            console.log(`Contract Driptributor has been updated to address ${config[`${roundName}DriptributorAddress`]}`);
-            return config[`${roundName}DriptributorAddress`];
+            console.log(`Contract Driptributor has been updated to address ${config[`${roundName}DistributorAddress`]}`);
+            return config[`${roundName}DistributorAddress`];
         })() :
         await (async () => {
             const adminAddress = config.adminAddress;
