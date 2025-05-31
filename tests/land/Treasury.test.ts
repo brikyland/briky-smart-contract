@@ -1,13 +1,15 @@
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
-import { Admin, Currency, PrimaryToken, Treasury } from '@typechain-types';
-import { callTransaction, getSignatures, randomWallet } from '@utils/blockchain';
+import { Admin, Currency, FeeReceiver, MockPrimaryToken, PrimaryToken, Treasury } from '@typechain-types';
+import { callTransaction, getSignatures, prepareERC20, randomWallet } from '@utils/blockchain';
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { Constant } from '@tests/test.constant';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { deployCurrency } from '@utils/deployments/common/currency';
 import { deployPrimaryToken } from '@utils/deployments/land/primaryToken';
 import { deployTreasury } from '@utils/deployments/land/treasury';
+import { callTreasury_Pause } from '@utils/callWithSignatures/treasury';
+import { deployMockPrimaryToken } from '@utils/deployments/mocks/mockPrimaryToken';
 
 interface TreasuryFixture {
     deployer: any;
@@ -15,7 +17,8 @@ interface TreasuryFixture {
     admin: Admin;
     treasury: Treasury;
     currency: Currency;
-    primaryToken: PrimaryToken;
+    primaryToken: MockPrimaryToken;
+    receiver: any;
 }
 
 describe('8. Treasury', async () => {
@@ -24,6 +27,7 @@ describe('8. Treasury', async () => {
         const deployer = accounts[0];
         const admins = [];
         for (let i = 1; i <= Constant.ADMIN_NUMBER; ++i) admins.push(accounts[i]);
+        const receiver = accounts[Constant.ADMIN_NUMBER + 1];
 
         const adminAddresses: string[] = admins.map(signer => signer.address);
         const admin = await deployAdmin(
@@ -41,13 +45,13 @@ describe('8. Treasury', async () => {
             'MCK'
         ) as Currency;
         
-        const primaryToken = await deployPrimaryToken(
+        const primaryToken = await deployMockPrimaryToken(
             deployer,
             admin.address,
             Constant.PRIMARY_TOKEN_INITIAL_Name,
             Constant.PRIMARY_TOKEN_INITIAL_Symbol,
             Constant.PRIMARY_TOKEN_INITIAL_LiquidationUnlockedAt,
-        ) as PrimaryToken;
+        ) as MockPrimaryToken;
         
         const treasury = await deployTreasury(
             deployer,
@@ -63,100 +67,297 @@ describe('8. Treasury', async () => {
             treasury,
             currency,
             primaryToken,
+            receiver,
         };
     };
 
-    async function setupBeforeTest(): Promise<TreasuryFixture> {
-        return await loadFixture(treasuryFixture);
+    async function setupBeforeTest({
+        prepareLiquidity = false,
+        pause = false,
+    } = {}): Promise<TreasuryFixture> {
+        const fixture = await loadFixture(treasuryFixture);
+
+        const { deployer, treasury, admin, admins, currency, primaryToken } = fixture;
+
+        if (prepareLiquidity) {
+            await prepareERC20(currency, [deployer], treasury as any, ethers.utils.parseEther("1000000"));
+            await treasury.provideLiquidity(ethers.utils.parseEther("1000000"));
+        }
+
+        if (pause) {
+            await callTreasury_Pause(
+                treasury,
+                admins,
+                await admin.nonce()
+            );
+        }
+
+        return {
+            ...fixture,
+        }
     }
 
     describe('8.1. initialize(address, address, address)', async () => {
         it('8.1.1. Deploy successfully', async () => {
+            const { treasury, admin, currency, primaryToken } = await setupBeforeTest();
+
+            expect(await treasury.admin()).to.equal(admin.address);
+            expect(await treasury.currency()).to.equal(currency.address);
+            expect(await treasury.primaryToken()).to.equal(primaryToken.address);
+
+            expect(await treasury.liquidity()).to.equal(0);
+            expect(await treasury.operationFund()).to.equal(0);
+        });
+    });
+
+    // TODO: Andy
+    describe('8.2. pause(bytes[])', async () => {
+        it('8.2.1. pause successfully with valid signatures', async () => {
+
+        });
+
+        it('8.2.2. pause unsuccessfully with invalid signatures', async () => {
+
+        });
+
+        it('8.2.3. pause unsuccessfully when already paused', async () => {
 
         });
     });
 
     // TODO: Andy
-    describe('9.2. pause(bytes[])', async () => {
-        it('9.2.1. pause successfully with valid signatures', async () => {
+    describe('8.3. unpause(bytes[])', async () => {
+        it('8.3.1. unpause successfully with valid signatures', async () => {
 
         });
 
-        it('9.2.2. pause unsuccessfully with invalid signatures', async () => {
+        it('8.3.2. unpause unsuccessfully with invalid signatures', async () => {
 
         });
 
-        it('9.2.3. pause unsuccessfully when already paused', async () => {
-
-        });
-    });
-
-    // TODO: Andy
-    describe('9.3. unpause(bytes[])', async () => {
-        it('9.3.1. unpause successfully with valid signatures', async () => {
-
-        });
-
-        it('9.3.2. unpause unsuccessfully with invalid signatures', async () => {
-
-        });
-
-        it('9.3.3. unpause unsuccessfully when not paused', async () => {
+        it('8.3.3. unpause unsuccessfully when not paused', async () => {
 
         });
     });
     
     describe('8.4. withdrawOperationFund(uint256, address, bytes[])', async () => {
         it('8.4.1. withdrawOperationFund successfully with valid signatures', async () => {
+            const { treasury, admin, admins, currency, primaryToken, receiver } = await setupBeforeTest({
+                prepareLiquidity: true,
+            });
 
+            const value1 = ethers.utils.parseEther("100");
+
+            const initialTreasuryBalance = await currency.balanceOf(treasury.address);
+            const initialOperationFund = await treasury.operationFund();
+
+            const message1 = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string", "uint256", "address"],
+                [treasury.address, "withdrawOperationFund", value1, receiver.address]
+            );
+
+            const signatures1 = await getSignatures(message1, admins, await admin.nonce());
+            const tx1 = await treasury.withdrawOperationFund(value1, receiver.address, signatures1);
+            await tx1.wait();
+
+            await expect(tx1).to
+                .emit(treasury, "OperationFundWithdrawal")
+                .withArgs(value1, receiver.address);
+
+            expect(await treasury.operationFund()).to.equal(initialOperationFund.sub(value1));
+            expect(await currency.balanceOf(treasury.address)).to.equal(initialTreasuryBalance.sub(value1));
+            expect(await currency.balanceOf(receiver.address)).to.equal(value1);
+
+            const value2 = ethers.utils.parseEther("1000");
+
+            const message2 = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string", "uint256", "address"],
+                [treasury.address, "withdrawOperationFund", value2, receiver.address]
+            );
+
+            const signatures2 = await getSignatures(message2, admins, await admin.nonce());
+            const tx2 = await treasury.withdrawOperationFund(value2, receiver.address, signatures2);
+            await tx2.wait();
+
+            await expect(tx2).to
+                .emit(treasury, "OperationFundWithdrawal")
+                .withArgs(value2, receiver.address);
+
+            expect(await treasury.operationFund()).to.equal(initialOperationFund.sub(value1).sub(value2));
+            expect(await currency.balanceOf(treasury.address)).to.equal(initialTreasuryBalance.sub(value1).sub(value2));
+            expect(await currency.balanceOf(receiver.address)).to.equal(value1.add(value2));
         });
 
         it('8.4.2. withdrawOperationFund unsuccessfully with invalid signatures', async () => {
+            const { treasury, admin, admins, currency, primaryToken, receiver } = await setupBeforeTest({
+                prepareLiquidity: true,
+            });
 
+            const value = ethers.utils.parseEther("100");
+
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string", "uint256", "address"],
+                [treasury.address, "withdrawOperationFund", value, receiver.address]
+            );
+            let invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+
+            await expect(treasury.withdrawOperationFund(value, receiver.address, invalidSignatures))
+                .to.be.revertedWithCustomError(admin, "FailedVerification");
         });
 
         it('8.4.3. withdrawOperationFund unsuccessfully with insufficient funds', async () => {
+            const { treasury, admin, admins, currency, primaryToken, receiver } = await setupBeforeTest({
+                prepareLiquidity: true,
+            });
 
-        });
+            const operationFund = await treasury.operationFund();
+            const value = operationFund.add(1);
 
-        it('8.4.4. withdrawOperationFund unsuccessfully when the contract is reentered', async () => {
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string", "uint256", "address"],
+                [treasury.address, "withdrawOperationFund", value, receiver.address]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
 
+            await expect(treasury.withdrawOperationFund(value, receiver.address, signatures))
+                .to.be.revertedWithCustomError(treasury, "InsufficientFunds");
         });
     });
 
     describe('8.5. withdrawLiquidity(uint256)', async () => {
         it('8.5.1. withdrawLiquidity successfully', async () => {
+            const { treasury, admin, admins, currency, primaryToken, receiver } = await setupBeforeTest({
+                prepareLiquidity: true,
+            });
 
+            const value1 = ethers.utils.parseEther("100");
+
+            const initialTreasuryBalance = await currency.balanceOf(treasury.address);
+            const initialOperationFund = await treasury.operationFund();
+            const initialLiquidity = await treasury.liquidity();
+
+            const tx1 = await primaryToken.call(treasury.address, treasury.interface.encodeFunctionData("withdrawLiquidity", [
+                receiver.address,
+                value1
+            ]))
+            await tx1.wait();
+
+            await expect(tx1).to
+                .emit(treasury, "LiquidityWithdrawal")
+                .withArgs(receiver.address, value1);
+
+            expect(await treasury.liquidity()).to.equal(initialLiquidity.sub(value1));
+            expect(await treasury.operationFund()).to.equal(initialOperationFund);
+            expect(await currency.balanceOf(treasury.address)).to.equal(initialTreasuryBalance.sub(value1));
+            expect(await currency.balanceOf(receiver.address)).to.equal(value1);
+
+            const value2 = ethers.utils.parseEther("1000");
+
+            const tx2 = await primaryToken.call(treasury.address, treasury.interface.encodeFunctionData("withdrawLiquidity", [
+                receiver.address,
+                value2
+            ]))
+            await tx2.wait();
+
+            await expect(tx2).to
+                .emit(treasury, "LiquidityWithdrawal")
+                .withArgs(receiver.address, value2);
+
+            expect(await treasury.liquidity()).to.equal(initialLiquidity.sub(value1).sub(value2));
+            expect(await treasury.operationFund()).to.equal(initialOperationFund);
+            expect(await currency.balanceOf(treasury.address)).to.equal(initialTreasuryBalance.sub(value1).sub(value2));
         });
 
         it('8.5.2. withdrawLiquidity unsuccessfully when paused', async () => {
+            const { treasury, primaryToken, receiver } = await setupBeforeTest({
+                prepareLiquidity: true,
+                pause: true,
+            });
 
+            const value = ethers.utils.parseEther("100");
+            
+            await expect(primaryToken.call(treasury.address, treasury.interface.encodeFunctionData("withdrawLiquidity", [
+                receiver.address,
+                value
+            ]))).to.be.revertedWith("Pausable: paused");
         });
 
         it('8.5.3. withdrawLiquidity unsuccessfully by unauthorized user', async () => {
+            const { treasury, primaryToken, receiver } = await setupBeforeTest({
+                prepareLiquidity: true,
+            });
 
+            const value = ethers.utils.parseEther("100");
+
+            await expect(treasury.withdrawLiquidity(receiver.address, value))
+                .to.be.revertedWithCustomError(treasury, "Unauthorized");
         });
 
         it('8.5.4. withdrawLiquidity unsuccessfully with insufficient funds', async () => {
+            const { treasury, primaryToken, receiver } = await setupBeforeTest({
+                prepareLiquidity: true,
+            });
 
-        });
-
-        it('8.5.5. withdrawLiquidity unsuccessfully when the contract is reentered', async () => {
-
+            const value = (await treasury.liquidity()).add(1);
+            
+            await expect(primaryToken.call(treasury.address, treasury.interface.encodeFunctionData("withdrawLiquidity", [
+                receiver.address,
+                value
+            ]))).to.be.revertedWithCustomError(treasury, "InsufficientFunds");
         });
     });
 
     describe('8.6. provideLiquidity(uint256)', async () => {
         it('8.6.1. provideLiquidity successfully', async () => {
+            const { treasury, admin, admins, currency, primaryToken, receiver } = await setupBeforeTest();
 
+            const value1 = ethers.utils.parseEther("100");
+            const value2 = ethers.utils.parseEther("1000");
+
+            await prepareERC20(currency, [receiver], treasury as any, value1.add(value2));
+
+            const initialTreasuryBalance = await currency.balanceOf(treasury.address);
+            const initialOperationFund = await treasury.operationFund();
+
+            const feeAmount1 = value1.mul(Constant.TREASURY_OPERATION_FUND_RATE).div(Constant.COMMON_RATE_MAX_FRACTION);
+            const valueAfterFee1 = value1.sub(feeAmount1);
+
+            const tx1 = await treasury.connect(receiver).provideLiquidity(value1);
+            await tx1.wait();
+
+            await expect(tx1).to
+                .emit(treasury, "LiquidityProvision")
+                .withArgs(receiver.address, value1, feeAmount1);
+    
+            expect(await treasury.liquidity()).to.equal(valueAfterFee1);
+            expect(await treasury.operationFund()).to.equal(feeAmount1);
+            expect(await currency.balanceOf(treasury.address)).to.equal(initialTreasuryBalance.add(value1));
+
+            const tx2 = await treasury.connect(receiver).provideLiquidity(value2);
+            await tx2.wait();
+
+            const feeAmount2 = value2.mul(Constant.TREASURY_OPERATION_FUND_RATE).div(Constant.COMMON_RATE_MAX_FRACTION);
+            const valueAfterFee2 = value2.sub(feeAmount2);
+    
+            await expect(tx2).to
+                .emit(treasury, "LiquidityProvision")
+                .withArgs(receiver.address, value2, feeAmount2);
+
+            expect(await treasury.liquidity()).to.equal(valueAfterFee1.add(valueAfterFee2));
+            expect(await treasury.operationFund()).to.equal(feeAmount1.add(feeAmount2));
+            expect(await currency.balanceOf(treasury.address)).to.equal(initialTreasuryBalance.add(value1).add(value2));
         });
 
         it('8.6.2. provideLiquidity unsuccessfully when paused', async () => {
+            const { treasury, receiver } = await setupBeforeTest({
+                prepareLiquidity: true,
+                pause: true,
+            });
 
-        });
+            const value = ethers.utils.parseEther("100");
 
-        it('8.6.3. provideLiquidity unsuccessfully when the contract is reentered', async () => {
-
+            await expect(treasury.connect(receiver).provideLiquidity(value))
+                .to.be.revertedWith("Pausable: paused");
         });
     });
 });

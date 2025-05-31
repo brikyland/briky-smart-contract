@@ -26,7 +26,7 @@ interface PrimaryTokenFixture {
     contributor: any;
 }
 
-describe.only('9. PrimaryToken', async () => {
+describe('9. PrimaryToken', async () => {
     async function primaryTokenFixture(): Promise<PrimaryTokenFixture> {
         const accounts = await ethers.getSigners();
         const deployer = accounts[0];
