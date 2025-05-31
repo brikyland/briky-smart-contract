@@ -8,7 +8,7 @@ abstract contract DriptributorStorage is IDriptributor {
 
     uint256 public distributionNumber;
 
-    uint256 internal totalAmount;
+    uint256 public totalAllocation;
     uint256 public distributedAmount;
 
     address public admin;

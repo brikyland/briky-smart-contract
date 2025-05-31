@@ -29,7 +29,7 @@ ReentrancyGuardUpgradeable {
     function initialize(
         address _admin,
         address _primaryToken,
-        uint256 _totalAmount
+        uint256 _totalAllocation
     ) external initializer {
         __Pausable_init();
         __ReentrancyGuard_init();
@@ -37,7 +37,7 @@ ReentrancyGuardUpgradeable {
         admin = _admin;
         primaryToken = _primaryToken;
 
-        totalAmount = _totalAmount;
+        totalAllocation = _totalAllocation;
     }
 
     function version() external pure returns (string memory) {
@@ -124,7 +124,7 @@ ReentrancyGuardUpgradeable {
         }
 
         for (uint256 i = 0; i < _receivers.length; ++i) {
-            if (distributedAmount + _amounts[i] > totalAmount) {
+            if (distributedAmount + _amounts[i] > totalAllocation) {
                 revert InsufficientFunds();
             }
             unchecked {
@@ -176,7 +176,7 @@ ReentrancyGuardUpgradeable {
         }
 
         for (uint256 i = 0; i < _receivers.length; ++i) {
-            if (distributedAmount + _amounts[i] > totalAmount) {
+            if (distributedAmount + _amounts[i] > totalAllocation) {
                 revert InsufficientFunds();
             }
             if (_endAts[i] <= block.timestamp) {
