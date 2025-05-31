@@ -128,7 +128,8 @@ describe('15. MortgageMarketplace', async () => {
     };
 
     async function beforeMortgageMarketplaceTest({
-
+        pause = false,
+        listSampleLoan = false,
     } = {}): Promise<MortgageMarketplaceFixture> {
         const fixture = await loadFixture(mortgageMarketplaceFixture);
 
@@ -139,7 +140,13 @@ describe('15. MortgageMarketplace', async () => {
 
     describe('15.1. initialize(address, address, address, address)', async () => {
         it('15.1.1. Deploy successfully', async () => {
+            const { mortgageMarketplace, admin, commissionToken, mortgageToken } = await beforeMortgageMarketplaceTest();
 
+            expect(await mortgageMarketplace.offerNumber()).to.equal(0);
+
+            expect(await mortgageMarketplace.admin()).to.equal(admin.address);
+            expect(await mortgageMarketplace.commissionToken()).to.equal(commissionToken.address);
+            expect(await mortgageMarketplace.mortgageToken()).to.equal(mortgageToken.address);
         });
     });
 
@@ -152,4 +159,6 @@ describe('15. MortgageMarketplace', async () => {
     describe('15.3. unpause(bytes[])', async () => {
 
     });
+
+    
 });
