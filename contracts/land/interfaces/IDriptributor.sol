@@ -46,7 +46,6 @@ interface IDriptributor is ICommon {
 
     function distributedAmount() external view returns (uint256 distributedAmount);
     function distributionNumber() external view returns (uint256 distributionNumber);
-    function totalAmount() external view returns (uint256 totalAmount);
 
     function getDistribution(uint256 distributionId) external view returns (Distribution memory distribution);
 

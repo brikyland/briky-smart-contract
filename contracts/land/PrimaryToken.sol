@@ -491,6 +491,8 @@ ReentrancyGuardUpgradeable {
                 ? Constant.PRIMARY_TOKEN_STAKE_3_WAVE_REWARD
                 : amount;
 
+            _mint(msg.sender, amount);
+
             emit DailyStake3Mint(stakeToken3Waves, amount);
 
             return amount;
