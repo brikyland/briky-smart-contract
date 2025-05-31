@@ -3,8 +3,8 @@ pragma solidity ^0.8.20;
 
 interface IAdmin {
     struct CurrencyRegistry {
-        uint256 unitPriceLowerBound; // deprecated
-        uint256 unitPriceUpperBound; // deprecated
+        uint256 minUnitPrice; // deprecated
+        uint256 maxUnitPrice; // deprecated
         bool isAvailable;
         bool isExclusive;
     }

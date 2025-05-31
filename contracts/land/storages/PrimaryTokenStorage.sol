@@ -40,6 +40,5 @@ abstract contract PrimaryTokenStorage is IPrimaryToken {
     address public stakeToken2;
     address public stakeToken3;
 
-
     uint256[41] private __gap;
 }
