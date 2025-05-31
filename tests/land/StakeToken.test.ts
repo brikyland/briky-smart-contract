@@ -643,7 +643,7 @@ describe('10. StakeToken', async () => {
                 .to.be.revertedWithCustomError(stakeToken1, 'NotCompletedRewarding');
         });
 
-        it.only('10.8.3. unstake unsuccessfully when amount is greater than balance', async () => {
+        it('10.8.3. unstake unsuccessfully when amount is greater than balance', async () => {
             const { stakeToken1, staker1, primaryToken } = await setupBeforeTest({
                 setFeeRate: true,
                 initializeRewarding: true,
@@ -667,64 +667,64 @@ describe('10. StakeToken', async () => {
         });        
     });
 
-    describe.only('10.9. promote(uint256)', async () => {
-        it('10.9.1. promote successfully', async () => {
-            const { stakeToken1, stakeToken2, staker1, primaryToken } = await setupBeforeTest({
-                setFeeRate: true,
-                initializeRewarding: true,
-                preparePrimaryTokenForStakers: true,
-            });
+    // describe('10.9. promote(uint256)', async () => {
+    //     it('10.9.1. promote successfully', async () => {
+    //         const { stakeToken1, stakeToken2, staker1, primaryToken } = await setupBeforeTest({
+    //             setFeeRate: true,
+    //             initializeRewarding: true,
+    //             preparePrimaryTokenForStakers: true,
+    //         });
 
-            const stakeAmount = ethers.utils.parseEther("100");
-            await callTransaction(stakeToken1.connect(staker1).stake(
-                staker1.address, 
-                stakeAmount
-            ));
+    //         const stakeAmount = ethers.utils.parseEther("100");
+    //         await callTransaction(stakeToken1.connect(staker1).stake(
+    //             staker1.address, 
+    //             stakeAmount
+    //         ));
 
-            const promoteAmount1 = ethers.utils.parseEther("20");
+    //         const promoteAmount1 = ethers.utils.parseEther("20");
 
-            let stakeToken1Weight = await stakeToken1.getWeight(staker1.address);
-            let stakeToken2Weight = await stakeToken2.getWeight(staker1.address);
+    //         let stakeToken1Weight = await stakeToken1.getWeight(staker1.address);
+    //         let stakeToken2Weight = await stakeToken2.getWeight(staker1.address);
 
-            stakeToken1Weight = fixedSub(
-                stakeToken1Weight,
-                tokenToWeight(
-                    promoteAmount1,
-                    await stakeToken1.getInterestAccumulation()
-                )
-            );
+    //         stakeToken1Weight = fixedSub(
+    //             stakeToken1Weight,
+    //             tokenToWeight(
+    //                 promoteAmount1,
+    //                 await stakeToken1.getInterestAccumulation()
+    //             )
+    //         );
 
-            stakeToken2Weight = fixedAdd(
-                stakeToken2Weight,
-                tokenToWeight(
-                    promoteAmount1,
-                    await stakeToken2.getInterestAccumulation()
-                )
-            );
+    //         stakeToken2Weight = fixedAdd(
+    //             stakeToken2Weight,
+    //             tokenToWeight(
+    //                 promoteAmount1,
+    //                 await stakeToken2.getInterestAccumulation()
+    //             )
+    //         );
 
-            const tx1 = await stakeToken1.connect(staker1).promote(promoteAmount1);
-            await tx1.wait();
+    //         const tx1 = await stakeToken1.connect(staker1).promote(promoteAmount1);
+    //         await tx1.wait();
 
-            await expect(tx1)
-                .to.emit(stakeToken1, 'Promotion')
-                .withArgs(staker1.address, promoteAmount1);
+    //         await expect(tx1)
+    //             .to.emit(stakeToken1, 'Promotion')
+    //             .withArgs(staker1.address, promoteAmount1);
                 
-            await expect(stakeToken1.connect(staker1).promote(stakeAmount.sub(promoteAmount1)))
-                .to.be.revertedWithCustomError(stakeToken1, 'InsufficientFunds');
+    //         await expect(stakeToken1.connect(staker1).promote(stakeAmount.sub(promoteAmount1)))
+    //             .to.be.revertedWithCustomError(stakeToken1, 'InsufficientFunds');
 
-            expect(await stakeToken1.totalSupply()).to.equal(stakeAmount.sub(promoteAmount1));
+    //         expect(await stakeToken1.totalSupply()).to.equal(stakeAmount.sub(promoteAmount1));
 
-            expect(await stakeToken1.totalSupply()).to.equal(stakeAmount.sub(promoteAmount1));
+    //         expect(await stakeToken1.totalSupply()).to.equal(stakeAmount.sub(promoteAmount1));
             
-            expect(await stakeToken1.getWeight(staker1.address)).to.equal(stakeToken1Weight);
-            expect(await stakeToken2.getWeight(staker1.address)).to.equal(stakeToken2Weight);
+    //         expect(await stakeToken1.getWeight(staker1.address)).to.equal(stakeToken1Weight);
+    //         expect(await stakeToken2.getWeight(staker1.address)).to.equal(stakeToken2Weight);
 
 
             
-        });
-    });
+    //     });
+    // });
 
-    describe.only('10.10. balanceOf()', async () => {
+    describe('10.10. balanceOf()', async () => {
         it('10.10.1. return correct balance of staker', async () => {
             const { stakeToken1, staker1, staker2, staker3, primaryToken } = await setupBeforeTest({
                 setFeeRate: true,

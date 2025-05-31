@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { ethers } from 'hardhat';
+import { ethers, network } from 'hardhat';
 import { Admin, Currency, Driptributor, PrimaryToken, StakeToken, Treasury, MockStakeToken, MockPrimaryToken } from '@typechain-types';
 import { callTransaction, getSignatures, prepareERC20, randomWallet } from '@utils/blockchain';
 import { deployAdmin } from '@utils/deployments/common/admin';
@@ -11,6 +11,7 @@ import { deployTreasury } from '@utils/deployments/land/treasury';
 import { deployStakeToken } from '@utils/deployments/land/stakeToken';
 import { callPrimaryToken_Pause, callPrimaryToken_UnlockForBackerRound, callPrimaryToken_UnlockForCoreTeam, callPrimaryToken_UnlockForExternalTreasury, callPrimaryToken_UnlockForMarketMaker, callPrimaryToken_UnlockForPrivateSale1, callPrimaryToken_UnlockForPrivateSale2, callPrimaryToken_UnlockForPublicSale, callPrimaryToken_UnlockForSeedRound, callPrimaryToken_UpdateStakeTokens, callPrimaryToken_UpdateTreasury } from '@utils/callWithSignatures/primary';
 import { MockContract, smock } from '@defi-wonderland/smock';
+import { BigNumber } from 'ethers';
 
 interface PrimaryTokenFixture {
     deployer: any;
@@ -24,6 +25,7 @@ interface PrimaryTokenFixture {
     primaryToken: MockContract<MockPrimaryToken>;
     receiver: any;
     contributor: any;
+    liquidationUnlockedAt: number;
 }
 
 describe('9. PrimaryToken', async () => {
@@ -50,6 +52,8 @@ describe('9. PrimaryToken', async () => {
             'MockCurrency',
             'MCK'
         ) as Currency;
+
+        const liquidationUnlockedAt = await time.latest() + 1e9;
         
         const SmockPrimaryTokenFactory = await smock.mock('MockPrimaryToken') as any;
         const primaryToken = await SmockPrimaryTokenFactory.deploy();
@@ -57,7 +61,7 @@ describe('9. PrimaryToken', async () => {
             admin.address,
             Constant.PRIMARY_TOKEN_INITIAL_Name,
             Constant.PRIMARY_TOKEN_INITIAL_Symbol,
-            Constant.PRIMARY_TOKEN_INITIAL_LiquidationUnlockedAt,
+            liquidationUnlockedAt,
         );
         
         const SmockTreasuryFactory = await smock.mock('Treasury') as any;
@@ -107,6 +111,7 @@ describe('9. PrimaryToken', async () => {
             stakeToken3,
             receiver,
             contributor,
+            liquidationUnlockedAt,
         };
     };
 
@@ -151,10 +156,10 @@ describe('9. PrimaryToken', async () => {
 
     describe('9.1. initialize(address, string, string, uint256)', async () => {
         it('9.1.1. Deploy successfully', async () => {
-            const { primaryToken, admin } = await setupBeforeTest();
+            const { primaryToken, admin, liquidationUnlockedAt } = await setupBeforeTest();
 
             expect(await primaryToken.admin()).to.equal(admin.address);
-            expect(await primaryToken.liquidationUnlockedAt()).to.equal(Constant.PRIMARY_TOKEN_INITIAL_LiquidationUnlockedAt);
+            expect(await primaryToken.liquidationUnlockedAt()).to.equal(liquidationUnlockedAt);
 
             expect(await primaryToken.name()).to.equal(Constant.PRIMARY_TOKEN_INITIAL_Name);
             expect(await primaryToken.symbol()).to.equal(Constant.PRIMARY_TOKEN_INITIAL_Symbol);

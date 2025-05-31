@@ -1302,7 +1302,7 @@ describe('3. EstateToken', async () => {
 
             await expect(tx)
                 .to.emit(estateToken, "URI")
-                .withArgs('new_URI_1', 1);
+                .withArgs(Constant.ESTATE_TOKEN_INITIAL_BaseURI + 'new_URI_1', 1);
 
             expect(await estateToken.uri(1)).to.equal(Constant.ESTATE_TOKEN_INITIAL_BaseURI + 'new_URI_1');
 
@@ -1311,7 +1311,7 @@ describe('3. EstateToken', async () => {
 
             await expect(tx)
                 .to.emit(estateToken, "URI")
-                .withArgs('new_URI_2', 2);
+                .withArgs(Constant.ESTATE_TOKEN_INITIAL_BaseURI + 'new_URI_2', 2);
 
             expect(await estateToken.uri(2)).to.equal(Constant.ESTATE_TOKEN_INITIAL_BaseURI + 'new_URI_2');
         });

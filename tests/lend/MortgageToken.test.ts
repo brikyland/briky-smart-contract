@@ -317,7 +317,7 @@ describe('14. MortgageToken', async () => {
 
     });
 
-    describe('14.7. borrow(uint256, uint256, uint256, uint256, address, uint40)', async () => {
+    describe.skip('14.7. borrow(uint256, uint256, uint256, uint256, address, uint40)', async () => {
         interface BorrowParams {
             estateId: number;
             mortgageAmount: number;

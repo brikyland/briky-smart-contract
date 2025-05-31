@@ -219,7 +219,6 @@ describe('12. Driptributor', async () => {
         it('12.1.1. Deploy successfully', async () => {
             const { admin, primaryToken, driptributor, totalAmount } = await setupBeforeTest();
             
-            expect(await driptributor.totalAmount()).to.equal(totalAmount);
             expect(await driptributor.primaryToken()).to.equal(primaryToken.address);
             expect(await driptributor.admin()).to.equal(admin.address);
 
@@ -359,7 +358,6 @@ describe('12. Driptributor', async () => {
                 .emit(driptributor, 'NewDistribution')
                 .withArgs(2, receiver2.address, currentTimestamp, 1000, ethers.utils.parseEther('200'), 'data2')
 
-            expect(await driptributor.totalAmount()).to.equal(totalAmount);
             expect(await driptributor.distributedAmount()).to.equal(ethers.utils.parseEther('300'));
             
             const distribution1 = await driptributor.getDistribution(1);
@@ -407,7 +405,6 @@ describe('12. Driptributor', async () => {
                 .emit(driptributor, 'NewDistribution')
                 .withArgs(4, receiver2.address, currentTimestamp, 2000, ethers.utils.parseEther('20'), 'data4')
 
-            expect(await driptributor.totalAmount()).to.equal(totalAmount);
             expect(await driptributor.distributedAmount()).to.equal(ethers.utils.parseEther('330'));
             
             const distribution3 = await driptributor.getDistribution(3);
@@ -565,7 +562,6 @@ describe('12. Driptributor', async () => {
                 .emit(driptributor, 'NewDistribution')
                 .withArgs(2, receiver2.address, currentTimestamp, 1000, ethers.utils.parseEther('200'), 'data2')
 
-            expect(await driptributor.totalAmount()).to.equal(totalAmount);
             expect(await driptributor.distributedAmount()).to.equal(ethers.utils.parseEther('300'));
             
             const distribution1 = await driptributor.getDistribution(1);
@@ -613,7 +609,6 @@ describe('12. Driptributor', async () => {
                 .emit(driptributor, 'NewDistribution')
                 .withArgs(4, receiver2.address, currentTimestamp, 2000, ethers.utils.parseEther('20'), 'data4')
 
-            expect(await driptributor.totalAmount()).to.equal(totalAmount);
             expect(await driptributor.distributedAmount()).to.equal(ethers.utils.parseEther('330'));
             
             const distribution3 = await driptributor.getDistribution(3);

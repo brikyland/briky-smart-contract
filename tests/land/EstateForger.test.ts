@@ -2557,7 +2557,7 @@ describe('4. EstateForger', async () => {
 
             await callEstateForger_UpdateFeeRate(estateForger, admins, feeRate, await admin.nonce());
 
-            commissionToken.getCommissionRate.returns({ value: commissionRate, decimals: Constant.COMMON_RATE_DECIMALS });
+            commissionToken.setVariable("commissionRate", commissionRate);
 
             for (const record of deposits) {
                 const value = record.depositedValue.mul(unitPrice);
@@ -2783,13 +2783,13 @@ describe('4. EstateForger', async () => {
                             ethers.utils.parseEther("0.9"),
                             isERC20,
                             isExclusive,
-                            ethers.BigNumber.from(2).pow(255),
-                            ethers.BigNumber.from(2).pow(256).sub(1),
-                            ethers.BigNumber.from(2).pow(256).sub(1),
+                            ethers.BigNumber.from(2).pow(255).div(Constant.COMMON_RATE_MAX_FRACTION),
+                            ethers.BigNumber.from(2).pow(256).sub(1).div(Constant.COMMON_RATE_MAX_FRACTION),
+                            ethers.BigNumber.from(2).pow(256).sub(1).div(Constant.COMMON_RATE_MAX_FRACTION),
                             0,
                             ethers.BigNumber.from(1),
                             [
-                                { depositor: depositor1, depositedValue: ethers.BigNumber.from(2).pow(255) },
+                                { depositor: depositor1, depositedValue: ethers.BigNumber.from(2).pow(255).div(Constant.COMMON_RATE_MAX_FRACTION) },
                             ],
                             hasCommissionReceiver,
                         );
@@ -2826,7 +2826,7 @@ describe('4. EstateForger', async () => {
                 const randomNums = []
                 const decimals = randomInt(0, 19);
                 for (let i = 0; i < 3; ++i) {
-                    const maxSupply = ethers.BigNumber.from(2).pow(256).sub(1).div(ethers.BigNumber.from(10).pow(decimals));
+                    const maxSupply = ethers.BigNumber.from(2).pow(256).sub(1).div(ethers.BigNumber.from(10).pow(decimals)).div(Constant.COMMON_RATE_MAX_FRACTION);
                     randomNums.push(ethers.BigNumber.from(ethers.utils.randomBytes(32)).mod(maxSupply).add(1));
                 }
                 randomNums.sort((a, b) => a.sub(b).lt(0) ? -1 : 1);
@@ -2835,7 +2835,7 @@ describe('4. EstateForger', async () => {
                 const maxSellingAmount = randomNums[1];
                 const totalSupply = randomNums[2];
 
-                const unitPrice = randomBigNumber(ethers.BigNumber.from(1), ethers.BigNumber.from(2).pow(256).sub(1).div(totalSupply));
+                const unitPrice = randomBigNumber(ethers.BigNumber.from(1), ethers.BigNumber.from(2).pow(256).sub(1).div(Constant.COMMON_RATE_MAX_FRACTION).div(totalSupply));
                 const deposits = [
                     { depositor: depositor1, depositedValue: randomBigNumber(minSellingAmount, maxSellingAmount) },
                 ];
@@ -3105,8 +3105,6 @@ describe('4. EstateForger', async () => {
             ));
 
             const requestId = receipt.events!.filter(e => e.event === "NewRequest")[0].args![0];
-
-            console.log("requestId:", requestId);
 
             await callTransaction(estateForger.connect(depositor1).deposit(requestId, 10, { value: ethers.utils.parseEther("100") }));
 
