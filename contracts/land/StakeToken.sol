@@ -307,7 +307,7 @@ ReentrancyGuardUpgradeable {
     ) private pure returns (uint256) {
         return _liquidity
             .scale(_value, _totalSupply)
-            .scale(_feeRate, Constant.COMMON_RATE_DECIMALS);
+            .scale(Rate(_feeRate, Constant.COMMON_RATE_DECIMALS));
     }
 
     function _newInterestAccumulation(
