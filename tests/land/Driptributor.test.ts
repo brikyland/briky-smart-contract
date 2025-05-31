@@ -39,8 +39,8 @@ async function testReentrancy_driptributor(
     assertion: any,
 ) {
     let data = [
-        driptributor.interface.encodeFunctionData("withdraw", [0]),
-        driptributor.interface.encodeFunctionData("stake", [0]),
+        driptributor.interface.encodeFunctionData("withdraw", [[0]]),
+        driptributor.interface.encodeFunctionData("stake", [[0], 0, 0]),
     ];
 
     await testReentrancy(
@@ -51,7 +51,7 @@ async function testReentrancy_driptributor(
     );
 }
 
-describe.only('12. Driptributor', async () => {
+describe('12. Driptributor', async () => {
     async function driptributorFixture(): Promise<DriptributorFixture> {
         const accounts = await ethers.getSigners();
         const deployer = accounts[0];
@@ -825,7 +825,36 @@ describe.only('12. Driptributor', async () => {
             expect(await primaryToken.balanceOf(driptributor.address)).to.equal(totalAmount.sub(vestedAmount1_tx3).sub(vestedAmount3_tx3));
         });
 
-        it('12.7.2. withdraw unsuccessfully by unauthorized sender', async () => {
+        it('12.7.2. withdraw unsuccessfully with zero vesting duration distribution', async () => {
+            const { driptributor, admin, admins, receiver1, primaryToken, totalAmount } = await setupBeforeTest({
+                updateStakeTokens: true,
+            });
+
+            await callDriptributor_DistributeTokensWithDuration(
+                driptributor,
+                admins,
+                [receiver1.address],
+                [ethers.utils.parseEther('100')],
+                [0],
+                ['data1'],
+                await admin.nonce(),
+            );
+            
+            let tx = await driptributor.connect(receiver1).withdraw([1]);
+            await tx.wait();
+
+            await expect(tx).to
+                .emit(driptributor, 'Withdrawal')
+                .withArgs(1, ethers.utils.parseEther('100'));
+
+            let distribution1 = await driptributor.getDistribution(1);
+            expect(distribution1.withdrawnAmount).to.equal(ethers.utils.parseEther('100'));
+
+            expect(await primaryToken.balanceOf(receiver1.address)).to.equal(ethers.utils.parseEther('100'));
+            expect(await primaryToken.balanceOf(driptributor.address)).to.equal(totalAmount.sub(ethers.utils.parseEther('100')));
+        });
+
+        it('12.7.3. withdraw unsuccessfully by unauthorized sender', async () => {
             const { driptributor, receiver1, receiver2 } = await setupBeforeTest({
                 updateStakeTokens: true,
                 addDistribution: true,
@@ -837,7 +866,7 @@ describe.only('12. Driptributor', async () => {
             await expect(driptributor.connect(receiver2).withdraw(distributionIds)).to.be.revertedWithCustomError(driptributor, 'Unauthorized');
         });
 
-        it('12.7.3. withdraw unsuccessfully with staked distribution', async () => {
+        it('12.7.4. withdraw unsuccessfully with staked distribution', async () => {
             const { driptributor, receiver1 } = await setupBeforeTest({
                 updateStakeTokens: true,
                 addDistribution: true,
@@ -849,7 +878,7 @@ describe.only('12. Driptributor', async () => {
             await expect(driptributor.connect(receiver1).withdraw(distributionIds)).to.be.revertedWithCustomError(driptributor, 'AlreadyStaked');
         });
 
-        it('12.7.4. withdraw unsuccessfully when paused', async () => {
+        it('12.7.5. withdraw unsuccessfully when paused', async () => {
             const { driptributor, receiver1 } = await setupBeforeTest({
                 updateStakeTokens: true,
                 addDistribution: true,

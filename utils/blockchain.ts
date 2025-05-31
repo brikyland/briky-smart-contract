@@ -1,5 +1,6 @@
 import { BigNumberish, ethers, Wallet } from 'ethers';
 import { JsonRpcProvider } from '@ethersproject/providers';
+import { MockContract } from '@defi-wonderland/smock';
 
 export async function callTransaction(tx: Promise<ethers.ContractTransaction>): Promise<ethers.ContractReceipt> {
     return await ((await tx).wait());
