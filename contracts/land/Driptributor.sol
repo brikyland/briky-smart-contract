@@ -6,7 +6,7 @@ import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/se
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
-import {MulDiv} from "../lib/MulDiv.sol";
+import {Formula} from "../lib/Formula.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 
@@ -19,6 +19,7 @@ contract Driptributor is
 DriptributorStorage,
 PausableUpgradeable,
 ReentrancyGuardUpgradeable {
+    using Formula for uint256;
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
     string constant private VERSION = "v1.1.1";
@@ -218,8 +219,7 @@ ReentrancyGuardUpgradeable {
 
             uint256 vestedAmount = distribution.distributeAt + distribution.vestingDuration <= block.timestamp
                 ? distribution.totalAmount
-                : MulDiv.mulDiv(
-                    distribution.totalAmount,
+                : distribution.totalAmount.scale(
                     block.timestamp - uint256(distribution.distributeAt),
                     distribution.vestingDuration
                 );
