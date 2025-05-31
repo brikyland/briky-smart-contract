@@ -70,6 +70,9 @@ export const Constant = {
     STAKE_TOKEN_INITIAL_Name_3: 'Briky Stake 2032',
     STAKE_TOKEN_INITIAL_Symbol_3: 'sBRIK-32',
 
+    STAKE_TOKEN_INITIAL_FeeRate: ethers.utils.parseEther(String(0.001)),
+    STAKE_TOKEN_REWARD_FETCH_COOLDOWN: 24 * 60 * 60 - 5 * 60,
+
     // Treasury
     TREASURY_OPERATION_FUND_RATE: ethers.utils.parseEther(String(0.2)),
 

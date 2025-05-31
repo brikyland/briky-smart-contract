@@ -298,7 +298,7 @@ describe('4. EstateForger', async () => {
         }
 
         if (fundERC20ForDepositors) {
-            await prepareERC20(currency, [depositor1, depositor2, depositor3], estateForger, ethers.utils.parseEther('1000000000'));
+            await prepareERC20(currency, [depositor1, depositor2, depositor3], [estateForger], ethers.utils.parseEther('1000000000'));
         }
 
         await callAdmin_DeclareZones(
@@ -2564,7 +2564,7 @@ describe('4. EstateForger', async () => {
                 let ethValue = ethers.BigNumber.from(0);
                 await prepareNativeToken(ethers.provider, deployer, [record.depositor], ethers.utils.parseEther("1.0"));
                 if (isERC20) {
-                    await prepareERC20(newCurrency!, [record.depositor], estateForger, value);
+                    await prepareERC20(newCurrency!, [record.depositor], [estateForger], value);
                 } else {
                     ethValue = value;
                     await prepareNativeToken(ethers.provider, deployer, [record.depositor], value);

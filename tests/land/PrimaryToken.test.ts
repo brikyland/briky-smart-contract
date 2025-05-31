@@ -887,7 +887,7 @@ describe('9. PrimaryToken', async () => {
                 updateTreasury: true,
             });
 
-            await prepareERC20(currency, [contributor], primaryToken as any, ethers.utils.parseEther("10000"));
+            await prepareERC20(currency, [contributor], [primaryToken as any], ethers.utils.parseEther("10000"));
 
             const tx = await primaryToken.connect(contributor).contributeLiquidityFromBackerRound(ethers.utils.parseEther("1000"));
             await tx.wait();
@@ -911,7 +911,7 @@ describe('9. PrimaryToken', async () => {
                 updateTreasury: true,
             });
 
-            await prepareERC20(currency, [contributor], primaryToken as any, ethers.utils.parseEther("10000"));
+            await prepareERC20(currency, [contributor], [primaryToken as any], ethers.utils.parseEther("10000"));
 
             const tx = await primaryToken.connect(contributor).contributeLiquidityFromSeedRound(ethers.utils.parseEther("1000"));
             await tx.wait();
@@ -935,7 +935,7 @@ describe('9. PrimaryToken', async () => {
                 updateTreasury: true,
             });
 
-            await prepareERC20(currency, [contributor], primaryToken as any, ethers.utils.parseEther("10000"));
+            await prepareERC20(currency, [contributor], [primaryToken as any], ethers.utils.parseEther("10000"));
 
             const tx = await primaryToken.connect(contributor).contributeLiquidityFromPrivateSale1(ethers.utils.parseEther("1000"));
             await tx.wait();
@@ -959,7 +959,7 @@ describe('9. PrimaryToken', async () => {
                 updateTreasury: true,
             });
 
-            await prepareERC20(currency, [contributor], primaryToken as any, ethers.utils.parseEther("10000"));
+            await prepareERC20(currency, [contributor], [primaryToken as any], ethers.utils.parseEther("10000"));
 
             const tx = await primaryToken.connect(contributor).contributeLiquidityFromPrivateSale2(ethers.utils.parseEther("1000"));
             await tx.wait();
@@ -983,7 +983,7 @@ describe('9. PrimaryToken', async () => {
                 updateTreasury: true,
             });
 
-            await prepareERC20(currency, [contributor], primaryToken as any, ethers.utils.parseEther("10000"));
+            await prepareERC20(currency, [contributor], [primaryToken as any], ethers.utils.parseEther("10000"));
 
             const tx = await primaryToken.connect(contributor).contributeLiquidityFromPublicSale(ethers.utils.parseEther("1000"));
             await tx.wait();
@@ -1007,7 +1007,7 @@ describe('9. PrimaryToken', async () => {
                 updateTreasury: true,
             });
 
-            await prepareERC20(currency, [contributor], primaryToken as any, ethers.utils.parseEther("10000"));
+            await prepareERC20(currency, [contributor], [primaryToken as any], ethers.utils.parseEther("10000"));
 
             const tx = await primaryToken.connect(contributor).contributeLiquidityFromMarketMaker(ethers.utils.parseEther("1000"));
             await tx.wait();
@@ -1031,7 +1031,7 @@ describe('9. PrimaryToken', async () => {
                 updateTreasury: true,
             });
 
-            await prepareERC20(currency, [contributor], primaryToken as any, ethers.utils.parseEther("10000"));
+            await prepareERC20(currency, [contributor], [primaryToken as any], ethers.utils.parseEther("10000"));
 
             const tx = await primaryToken.connect(contributor).contributeLiquidityFromExternalTreasury(ethers.utils.parseEther("1000"));
             await tx.wait();
@@ -1055,7 +1055,7 @@ describe('9. PrimaryToken', async () => {
                 updateTreasury: true,
             });
 
-            await prepareERC20(currency, [contributor], primaryToken as any, ethers.utils.parseEther("10000"));
+            await prepareERC20(currency, [contributor], [primaryToken as any], ethers.utils.parseEther("10000"));
 
             const tx = await primaryToken.connect(contributor).contributeLiquidityFromStakeToken(ethers.utils.parseEther("1000"), stakeToken1.address);
             await tx.wait();
@@ -1077,7 +1077,7 @@ describe('9. PrimaryToken', async () => {
                 updateTreasury: true,
             });
 
-            await prepareERC20(currency, [contributor], primaryToken as any, ethers.utils.parseEther("10000"));
+            await prepareERC20(currency, [contributor], [primaryToken as any], ethers.utils.parseEther("10000"));
 
             const tx = await primaryToken.connect(contributor).contributeLiquidityFromStakeToken(ethers.utils.parseEther("1000"), stakeToken2.address);
             await tx.wait();
@@ -1099,7 +1099,7 @@ describe('9. PrimaryToken', async () => {
                 updateTreasury: true,
             });
 
-            await prepareERC20(currency, [contributor], primaryToken as any, ethers.utils.parseEther("10000"));
+            await prepareERC20(currency, [contributor], [primaryToken as any], ethers.utils.parseEther("10000"));
 
             const tx = await primaryToken.connect(contributor).contributeLiquidityFromStakeToken(ethers.utils.parseEther("1000"), stakeToken3.address);
             await tx.wait();
@@ -1121,7 +1121,7 @@ describe('9. PrimaryToken', async () => {
                 updateTreasury: true,
             });
 
-            await prepareERC20(currency, [contributor], primaryToken as any, ethers.utils.parseEther("10000"));
+            await prepareERC20(currency, [contributor], [primaryToken as any], ethers.utils.parseEther("10000"));
 
             const tx = await primaryToken.connect(contributor).contributeLiquidityFromStakeToken(ethers.utils.parseEther("1000"), ethers.constants.AddressZero);
             const receipt = await tx.wait();
@@ -1302,7 +1302,7 @@ describe('9. PrimaryToken', async () => {
             await primaryToken.mint(contributor.address, ethers.utils.parseEther("10000"));
             await primaryToken.call(primaryToken.address, primaryToken.interface.encodeFunctionData("burn", [primaryToken.address, ethers.utils.parseEther("10000")]));
 
-            await prepareERC20(currency, [deployer], treasury as any, ethers.utils.parseEther("1000000"));
+            await prepareERC20(currency, [deployer], [treasury as any], ethers.utils.parseEther("1000000"));
             await treasury.provideLiquidity(ethers.utils.parseEther("1000000"));
             
             const supplyBefore = await primaryToken.totalSupply();
@@ -1343,7 +1343,7 @@ describe('9. PrimaryToken', async () => {
             await primaryToken.mint(contributor.address, ethers.utils.parseEther("10000"));
             await primaryToken.call(primaryToken.address, primaryToken.interface.encodeFunctionData("burn", [primaryToken.address, ethers.utils.parseEther("10000")]));
 
-            await prepareERC20(currency, [deployer], treasury as any, ethers.utils.parseEther("1000000"));
+            await prepareERC20(currency, [deployer], [treasury as any], ethers.utils.parseEther("1000000"));
             await treasury.provideLiquidity(ethers.utils.parseEther("1000000"));
 
             await time.setNextBlockTimestamp((await primaryToken.liquidationUnlockedAt()).sub(1));
@@ -1360,7 +1360,7 @@ describe('9. PrimaryToken', async () => {
             await primaryToken.mint(contributor.address, ethers.utils.parseEther("10000"));
             await primaryToken.call(primaryToken.address, primaryToken.interface.encodeFunctionData("burn", [primaryToken.address, ethers.utils.parseEther("10000")]));
 
-            await prepareERC20(currency, [deployer], treasury as any, ethers.utils.parseEther("1000000"));
+            await prepareERC20(currency, [deployer], [treasury as any], ethers.utils.parseEther("1000000"));
             await treasury.provideLiquidity(ethers.utils.parseEther("1000000"));
 
             await callPrimaryToken_Pause(primaryToken, admins, await admin.nonce());
@@ -1379,7 +1379,7 @@ describe('9. PrimaryToken', async () => {
             await primaryToken.mint(contributor.address, ethers.utils.parseEther("10000"));
             await primaryToken.call(primaryToken.address, primaryToken.interface.encodeFunctionData("burn", [primaryToken.address, ethers.utils.parseEther("10000")]));
 
-            await prepareERC20(currency, [deployer], treasury as any, ethers.utils.parseEther("1000000"));
+            await prepareERC20(currency, [deployer], [treasury as any], ethers.utils.parseEther("1000000"));
             await treasury.provideLiquidity(ethers.utils.parseEther("1000000"));
 
             const burnAmount = (await primaryToken.totalSupply()).add(ethers.utils.parseEther("1"));

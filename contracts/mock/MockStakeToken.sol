@@ -26,4 +26,12 @@ contract MockStakeToken is StakeToken {
         }
         return result;
     }
+
+    function getInterestAccumulation() external view returns (uint256) {
+        return interestAccumulation;
+    }
+
+    function getWeight(address _staker) external view returns (uint256) {
+        return weights[_staker];
+    }
 }

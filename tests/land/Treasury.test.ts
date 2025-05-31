@@ -80,7 +80,7 @@ describe('8. Treasury', async () => {
         const { deployer, treasury, admin, admins, currency, primaryToken } = fixture;
 
         if (prepareLiquidity) {
-            await prepareERC20(currency, [deployer], treasury as any, ethers.utils.parseEther("1000000"));
+            await prepareERC20(currency, [deployer], [treasury as any], ethers.utils.parseEther("1000000"));
             await treasury.provideLiquidity(ethers.utils.parseEther("1000000"));
         }
 
@@ -314,7 +314,7 @@ describe('8. Treasury', async () => {
             const value1 = ethers.utils.parseEther("100");
             const value2 = ethers.utils.parseEther("1000");
 
-            await prepareERC20(currency, [receiver], treasury as any, value1.add(value2));
+            await prepareERC20(currency, [receiver], [treasury as any], value1.add(value2));
 
             const initialTreasuryBalance = await currency.balanceOf(treasury.address);
             const initialOperationFund = await treasury.operationFund();
