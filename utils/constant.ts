@@ -39,7 +39,7 @@ export const Constant = {
     PRIMARY_TOKEN_STAKE_3_CULMINATING_WAVE: 2250,
 
     // Stake Token
-    STAKE_TOKEN_DAY_LENGTH: DAY - 5 * MINUTE,
+    STAKE_TOKEN_REWARD_FETCH_COOLDOWN: DAY - 5 * MINUTE,
 
     // Treasury
     TREASURY_OPERATION_FUND_RATE: ethers.utils.parseEther(String(0.2)),
