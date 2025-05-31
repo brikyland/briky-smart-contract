@@ -738,7 +738,7 @@ describe('12. Driptributor', async () => {
     });
     
     describe('12.7. withdraw(uint256[])', async () => {
-        it('12.7.1. withdraw successfully', async () => {
+        it.only('12.7.1. withdraw successfully', async () => {
             const { admin, admins, driptributor, totalAmount, receiver1, receiver2, primaryToken } = await setupBeforeTest({
                 updateStakeTokens: true,
                 addDistribution: true,
@@ -761,8 +761,19 @@ describe('12. Driptributor', async () => {
             const vestedAmount1_tx1 = distribution1.totalAmount.mul(currentTimestamp + 100 - distribution1.distributeAt).div(distribution1.vestingDuration);
             const vestedAmount3_tx1 = distribution3.totalAmount.mul(currentTimestamp + 100 - distribution3.distributeAt).div(distribution3.vestingDuration);
 
+            expect(distribution1.totalAmount).to.equal(ethers.utils.parseEther('100'));
             expect(distribution1.withdrawnAmount).to.equal(vestedAmount1_tx1);
+            expect(distribution1.receiver).to.equal(receiver1.address);
+            expect(distribution1.distributeAt).to.equal(currentTimestamp - 100);
+            expect(distribution1.vestingDuration).to.equal(1000);
+            expect(distribution1.isStaked).to.equal(false);
+
             expect(distribution3.withdrawnAmount).to.equal(vestedAmount3_tx1);
+            expect(distribution3.totalAmount).to.equal(ethers.utils.parseEther('10'));
+            expect(distribution3.receiver).to.equal(receiver1.address);
+            expect(distribution3.distributeAt).to.equal(currentTimestamp);
+            expect(distribution3.vestingDuration).to.equal(2000);
+            expect(distribution3.isStaked).to.equal(false);
 
             await expect(tx1).to
                 .emit(driptributor, 'Withdrawal')
@@ -784,8 +795,19 @@ describe('12. Driptributor', async () => {
             const vestedAmount1_tx2 = distribution1.totalAmount
             const vestedAmount3_tx2 = distribution3.totalAmount.mul(currentTimestamp + 1000 - distribution3.distributeAt).div(distribution3.vestingDuration);
 
+            expect(distribution1.totalAmount).to.equal(ethers.utils.parseEther('100'));
             expect(distribution1.withdrawnAmount).to.equal(vestedAmount1_tx2);
+            expect(distribution1.receiver).to.equal(receiver1.address);
+            expect(distribution1.distributeAt).to.equal(currentTimestamp - 100);
+            expect(distribution1.vestingDuration).to.equal(1000);
+            expect(distribution1.isStaked).to.equal(false);
+
             expect(distribution3.withdrawnAmount).to.equal(vestedAmount3_tx2);
+            expect(distribution3.totalAmount).to.equal(ethers.utils.parseEther('10'));
+            expect(distribution3.receiver).to.equal(receiver1.address);
+            expect(distribution3.distributeAt).to.equal(currentTimestamp);
+            expect(distribution3.vestingDuration).to.equal(2000);
+            expect(distribution3.isStaked).to.equal(false);
 
             await expect(tx2).to
                 .emit(driptributor, 'Withdrawal')
@@ -807,8 +829,19 @@ describe('12. Driptributor', async () => {
             const vestedAmount1_tx3 = distribution1.totalAmount
             const vestedAmount3_tx3 = distribution3.totalAmount
 
+            expect(distribution1.totalAmount).to.equal(ethers.utils.parseEther('100'));
             expect(distribution1.withdrawnAmount).to.equal(vestedAmount1_tx3);
+            expect(distribution1.receiver).to.equal(receiver1.address);
+            expect(distribution1.distributeAt).to.equal(currentTimestamp - 100);
+            expect(distribution1.vestingDuration).to.equal(1000);
+            expect(distribution1.isStaked).to.equal(false);
+
             expect(distribution3.withdrawnAmount).to.equal(vestedAmount3_tx3);
+            expect(distribution3.totalAmount).to.equal(ethers.utils.parseEther('10'));
+            expect(distribution3.receiver).to.equal(receiver1.address);
+            expect(distribution3.distributeAt).to.equal(currentTimestamp);
+            expect(distribution3.vestingDuration).to.equal(2000);
+            expect(distribution3.isStaked).to.equal(false);
 
             await expect(tx3).to
                 .emit(driptributor, 'Withdrawal')
