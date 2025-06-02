@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import { BigNumber, BigNumberish, Contract } from 'ethers';
 import { ethers } from 'hardhat';
 import { Admin, Currency, Driptributor, PrimaryToken, StakeToken, Treasury, MockPrimaryToken } from '@typechain-types';
-import { callTransaction, getSignatures, randomWallet, testReentrancy } from '@utils/blockchain';
+import { callTransaction, getSignatures, prepareERC20, randomWallet, testReentrancy } from '@utils/blockchain';
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { Constant } from '@tests/test.constant';
 import { loadFixture, time } from '@nomicfoundation/hardhat-network-helpers';
@@ -163,7 +163,10 @@ describe('12. Driptributor', async () => {
     } = {}): Promise<DriptributorFixture> {
         const fixture = await loadFixture(driptributorFixture);
 
-        const { admin, driptributor, admins, stakeToken1, stakeToken2, stakeToken3, receiver1, receiver2 } = fixture;
+        const { admin, driptributor, admins, stakeToken1, stakeToken2, stakeToken3, receiver1, receiver2, treasury, currency, deployer } = fixture;
+
+        await prepareERC20(currency, [deployer], [treasury], ethers.utils.parseEther("1000000"));
+        await treasury.provideLiquidity(ethers.utils.parseEther("1000000"));
 
         if (updateStakeTokens) {
             await callDriptributor_UpdateStakeTokens(
@@ -219,6 +222,7 @@ describe('12. Driptributor', async () => {
         it('12.1.1. Deploy successfully', async () => {
             const { admin, primaryToken, driptributor, totalAmount } = await setupBeforeTest();
             
+            expect(await driptributor.totalAllocation()).to.equal(totalAmount);
             expect(await driptributor.primaryToken()).to.equal(primaryToken.address);
             expect(await driptributor.admin()).to.equal(admin.address);
 
@@ -358,6 +362,7 @@ describe('12. Driptributor', async () => {
                 .emit(driptributor, 'NewDistribution')
                 .withArgs(2, receiver2.address, currentTimestamp, 1000, ethers.utils.parseEther('200'), 'data2')
 
+            expect(await driptributor.totalAllocation()).to.equal(totalAmount);
             expect(await driptributor.distributedAmount()).to.equal(ethers.utils.parseEther('300'));
             
             const distribution1 = await driptributor.getDistribution(1);
@@ -405,6 +410,7 @@ describe('12. Driptributor', async () => {
                 .emit(driptributor, 'NewDistribution')
                 .withArgs(4, receiver2.address, currentTimestamp, 2000, ethers.utils.parseEther('20'), 'data4')
 
+            expect(await driptributor.totalAllocation()).to.equal(totalAmount);
             expect(await driptributor.distributedAmount()).to.equal(ethers.utils.parseEther('330'));
             
             const distribution3 = await driptributor.getDistribution(3);
@@ -562,6 +568,7 @@ describe('12. Driptributor', async () => {
                 .emit(driptributor, 'NewDistribution')
                 .withArgs(2, receiver2.address, currentTimestamp, 1000, ethers.utils.parseEther('200'), 'data2')
 
+            expect(await driptributor.totalAllocation()).to.equal(totalAmount);
             expect(await driptributor.distributedAmount()).to.equal(ethers.utils.parseEther('300'));
             
             const distribution1 = await driptributor.getDistribution(1);
@@ -609,6 +616,7 @@ describe('12. Driptributor', async () => {
                 .emit(driptributor, 'NewDistribution')
                 .withArgs(4, receiver2.address, currentTimestamp, 2000, ethers.utils.parseEther('20'), 'data4')
 
+            expect(await driptributor.totalAllocation()).to.equal(totalAmount);
             expect(await driptributor.distributedAmount()).to.equal(ethers.utils.parseEther('330'));
             
             const distribution3 = await driptributor.getDistribution(3);
@@ -738,7 +746,7 @@ describe('12. Driptributor', async () => {
     });
     
     describe('12.7. withdraw(uint256[])', async () => {
-        it.only('12.7.1. withdraw successfully', async () => {
+        it('12.7.1. withdraw successfully', async () => {
             const { admin, admins, driptributor, totalAmount, receiver1, receiver2, primaryToken } = await setupBeforeTest({
                 updateStakeTokens: true,
                 addDistribution: true,
