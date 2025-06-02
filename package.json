@@ -72,7 +72,7 @@
     "deployBackerRoundDistributor:mainnet": "npx hardhat --network mainnet run scripts/deployments/land/investments/backerRoundDistributor.deployment.ts",
     "deployCommissionMarketplace:mainnet": "npx hardhat --network mainnet run scripts/deployments/land/commissionMarketplace.deployment.ts",
     "deployCommissionToken:mainnet": "npx hardhat --network mainnet run scripts/deployments/land/commissionToken.deployment.ts",
-    "deployCoreTeamDistributor:mainnet": "npx hardhat --network localhost run scripts/deployments/land/investments/coreTeamDistributor.deployment.ts",
+    "deployCoreTeamDistributor:mainnet": "npx hardhat --network mainnet run scripts/deployments/land/investments/coreTeamDistributor.deployment.ts",
     "deployEstateForger:mainnet": "npx hardhat --network mainnet run scripts/deployments/land/estateForger.deployment.ts",
     "deployEstateMarketplace:mainnet": "npx hardhat --network mainnet run scripts/deployments/land/estateMarketplace.deployment.ts",
     "deployEstateToken:mainnet": "npx hardhat --network mainnet run scripts/deployments/land/estateToken.deployment.ts",
@@ -84,9 +84,9 @@
     "deployPrivateSale2Distributor:mainnet": "npx hardhat --network mainnet run scripts/deployments/land/investments/privateSale2Distributor.deployment.ts",
     "deployPublicSaleAuction:mainnet": "npx hardhat --network mainnet run scripts/deployments/land/investments/publicSaleAuction.deployment.ts",
     "deploySeedRoundDistributor:mainnet": "npx hardhat --network mainnet run scripts/deployments/land/investments/seedRoundDistributor.deployment.ts",
-    "deployStakeToken1:mainnet": "npx hardhat --network localhost run scripts/deployments/land/stakeToken1.deployment.ts",
-    "deployStakeToken2:mainnet": "npx hardhat --network localhost run scripts/deployments/land/stakeToken2.deployment.ts",
-    "deployStakeToken3:mainnet": "npx hardhat --network localhost run scripts/deployments/land/stakeToken3.deployment.ts",
+    "deployStakeToken1:mainnet": "npx hardhat --network mainnet run scripts/deployments/land/stakeToken1.deployment.ts",
+    "deployStakeToken2:mainnet": "npx hardhat --network mainnet run scripts/deployments/land/stakeToken2.deployment.ts",
+    "deployStakeToken3:mainnet": "npx hardhat --network mainnet run scripts/deployments/land/stakeToken3.deployment.ts",
     "deployTreasury:mainnet": "npx hardhat --network mainnet run scripts/deployments/land/treasury.deployment.ts"
   },
   "devDependencies": {
