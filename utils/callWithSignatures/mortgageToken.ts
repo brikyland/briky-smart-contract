@@ -35,7 +35,7 @@ export async function callMortgageToken_Unpause(
 export async function callMortgageToken_UpdateFeeRate(
     mortgageToken: MortgageToken,
     admins: any[],
-    feeRate: number,
+    feeRate: BigNumberish,
     nonce: BigNumberish
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(

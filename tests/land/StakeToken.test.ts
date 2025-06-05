@@ -725,7 +725,7 @@ describe('10. StakeToken', async () => {
     //     });
     // });
 
-    describe.only('10.10. balanceOf()', async () => {
+    describe('10.10. balanceOf()', async () => {
         it('10.10.1. return correct balance of staker', async () => {
             const { stakeToken1, staker1, staker2, staker3, primaryToken } = await setupBeforeTest({
                 setFeeRate: true,

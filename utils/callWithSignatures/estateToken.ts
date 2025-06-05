@@ -6,7 +6,7 @@ import { BigNumberish } from "ethers";
 import { MockContract } from "@defi-wonderland/smock";
 
 export async function callEstateToken_AuthorizeTokenizers(
-    estateToken: EstateToken,
+    estateToken: EstateToken | MockContract<EstateToken>,
     admins: any[],
     tokenizers: string[],
     isTokenizer: boolean,

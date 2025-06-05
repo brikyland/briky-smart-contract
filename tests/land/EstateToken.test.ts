@@ -241,7 +241,7 @@ describe('3. EstateToken', async () => {
                 "Token2_URI",
                 baseTimestamp + 2e8,
                 3,
-                fixture.commissionToken.address,
+                commissionToken.address,
             ]));
         }
 

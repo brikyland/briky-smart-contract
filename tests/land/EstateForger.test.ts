@@ -43,7 +43,7 @@ import { randomInt } from 'crypto';
 import { getInterfaceID, randomBigNumber, scale } from '@utils/utils';
 import { OrderedMap } from '@utils/utils';
 import { deployEstateForger } from '@utils/deployments/land/estateForger';
-import { addCurrency } from '@utils/callWithSignatures/common';
+import { addCurrencyToEstateForger } from '@utils/callWithSignatures/common';
 import { callEstateForger_Pause, callEstateForger_UpdateBaseUnitPriceRange, callEstateForger_UpdateFeeRate } from '@utils/callWithSignatures/estateForger';
 import { deployMockPriceFeed } from '@utils/deployments/mocks/mockPriceFeed';
 import { deployFailReceiver } from '@utils/deployments/mocks/failReceiver';
@@ -270,7 +270,7 @@ describe('4. EstateForger', async () => {
             await nativePriceFeed.updateData(1000_00000000, 8);
             await currencyPriceFeed.updateData(5_00000000, 8);
 
-            await addCurrency(
+            await addCurrencyToEstateForger(
                 admin,
                 estateForger,
                 admins,
@@ -283,7 +283,7 @@ describe('4. EstateForger', async () => {
                 [3],
             );
             
-            await addCurrency(
+            await addCurrencyToEstateForger(
                 admin,
                 estateForger,
                 admins,
@@ -1033,7 +1033,7 @@ describe('4. EstateForger', async () => {
                 "NC",
             );
 
-            await addCurrency(
+            await addCurrencyToEstateForger(
                 admin,
                 estateForger,
                 admins,
@@ -1183,7 +1183,7 @@ describe('4. EstateForger', async () => {
 
             const unavailableCurrency = randomWallet();
 
-            await addCurrency(
+            await addCurrencyToEstateForger(
                 admin,
                 estateForger,
                 admins,
@@ -1216,7 +1216,7 @@ describe('4. EstateForger', async () => {
 
             const unavailableCurrency = randomWallet();
 
-            await addCurrency(
+            await addCurrencyToEstateForger(
                 admin,
                 estateForger,
                 admins,
@@ -1414,7 +1414,7 @@ describe('4. EstateForger', async () => {
                 4,
             ) as MockPriceFeed;
 
-            await addCurrency(
+            await addCurrencyToEstateForger(
                 admin,
                 estateForger,
                 admins,
@@ -1637,7 +1637,7 @@ describe('4. EstateForger', async () => {
 
             const unavailableCurrency = randomWallet();
 
-            await addCurrency(
+            await addCurrencyToEstateForger(
                 admin,
                 estateForger,
                 admins,
@@ -1667,7 +1667,7 @@ describe('4. EstateForger', async () => {
 
             const unavailableCurrency = randomWallet();
 
-            await addCurrency(
+            await addCurrencyToEstateForger(
                 admin,
                 estateForger,
                 admins,
@@ -2528,7 +2528,7 @@ describe('4. EstateForger', async () => {
 
             const currentEstateId = currentRequestId;
 
-            await addCurrency(
+            await addCurrencyToEstateForger(
                 admin,
                 estateForger,
                 admins,

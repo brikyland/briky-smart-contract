@@ -6,7 +6,7 @@ import {
     callEstateForger_UpdatePriceFeeds
 } from "./estateForger";
 
-export async function addCurrency(
+export async function addCurrencyToEstateForger(
     admin: Admin,
     estateForger: EstateForger,
     admins: any[],
