@@ -1,20 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC20Upgradeable.sol";
 import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol";
-import {IERC2981Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
+import {IERC1155Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC1155Upgradeable.sol";
+import {IERC1155MetadataURIUpgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC1155MetadataURIUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import {IERC1155Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/IERC1155Upgradeable.sol";
 import {ERC1155Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
 import {ERC1155PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/extensions/ERC1155PausableUpgradeable.sol";
 import {ERC1155SupplyUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/extensions/ERC1155SupplyUpgradeable.sol";
 import {ERC1155URIStorageUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/extensions/ERC1155URIStorageUpgradeable.sol";
-import {IERC1155MetadataURIUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/extensions/IERC1155MetadataURIUpgradeable.sol";
-import {ERC1155ReceiverUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/utils/ERC1155ReceiverUpgradeable.sol";
-import {ERC1155HolderUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
-import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
-import {ERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 
 import {Constant} from "../lib/Constant.sol";
 import {Formula} from "../lib/Formula.sol";
@@ -32,11 +28,10 @@ import {EstateTokenStorage} from "./storages/EstateTokenStorage.sol";
 
 contract EstateToken is
 EstateTokenStorage,
+RoyaltyRateProposer,
 ERC1155PausableUpgradeable,
 ERC1155SupplyUpgradeable,
 ERC1155URIStorageUpgradeable,
-ERC1155HolderUpgradeable,
-RoyaltyRateProposer,
 ReentrancyGuardUpgradeable {
     using Formula for uint256;
     using SafeERC20Upgradeable for IERC20Upgradeable;
@@ -67,9 +62,6 @@ ReentrancyGuardUpgradeable {
     ) external initializer {
         require(_royaltyRate <= Constant.COMMON_RATE_MAX_FRACTION);
         __ERC1155Pausable_init();
-        __ERC1155Supply_init();
-        __ERC1155URIStorage_init();
-        __ERC1155Holder_init();
 
         __ReentrancyGuard_init();
 
@@ -80,6 +72,7 @@ ReentrancyGuardUpgradeable {
 
         royaltyRate = _royaltyRate;
 
+        emit BaseURIUpdate(_uri);
         emit RoyaltyRateUpdate(_royaltyRate);
     }
 
@@ -194,10 +187,7 @@ ReentrancyGuardUpgradeable {
         }
     }
 
-    function getRoyaltyRate() public view override(
-    IRoyaltyRateProposer,
-    RoyaltyRateProposer
-    ) returns (Rate memory) {
+    function getRoyaltyRate() public view override(IRoyaltyRateProposer, RoyaltyRateProposer) returns (Rate memory) {
         return Rate(royaltyRate, Constant.COMMON_RATE_DECIMALS);
     }
 
@@ -271,9 +261,15 @@ ReentrancyGuardUpgradeable {
     }
 
     function extendEstateExpiration(uint256 _estateId, uint40 _expireAt) external onlyManager {
-        if (!exists(_estateId)) revert InvalidEstateId();
-        if (estates[_estateId].isDeprecated) revert Deprecated();
-        if (_expireAt <= block.timestamp) revert InvalidInput();
+        if (!exists(_estateId)) {
+            revert InvalidEstateId();
+        }
+        if (estates[_estateId].isDeprecated) {
+            revert Deprecated();
+        }
+        if (_expireAt <= block.timestamp) {
+            revert InvalidInput();
+        }
         estates[_estateId].expireAt = _expireAt;
         emit EstateExpirationExtension(_estateId, _expireAt);
     }
@@ -283,8 +279,8 @@ ReentrancyGuardUpgradeable {
         _setURI(_estateId, _uri);
     }
 
-    function balanceOf(address _account, uint256 _tokenId) public view
-    override(IERC1155Upgradeable, ERC1155Upgradeable) returns (uint256) {
+    function balanceOf(address _account, uint256 _tokenId)
+    public view override(IERC1155Upgradeable, ERC1155Upgradeable) returns (uint256) {
         return estates[_tokenId].isDeprecated || estates[_tokenId].expireAt <= block.timestamp
             ? 0
             : super.balanceOf(_account, _tokenId);
@@ -320,21 +316,20 @@ ReentrancyGuardUpgradeable {
         return super.uri(_tokenId);
     }
 
-    function totalSupply(uint256 _tokenId) public view
-    override(IEstateToken, ERC1155SupplyUpgradeable) returns (uint256) {
+    function totalSupply(uint256 _tokenId)
+    public view override(IEstateToken, ERC1155SupplyUpgradeable) returns (uint256) {
         return super.totalSupply(_tokenId);
     }
 
-    function exists(uint256 _tokenId) public view
-    override(IEstateToken, ERC1155SupplyUpgradeable) returns (bool) {
+    function exists(uint256 _tokenId)
+    public view override(IEstateToken, ERC1155SupplyUpgradeable) returns (bool) {
         return super.exists(_tokenId);
     }
 
     function supportsInterface(bytes4 _interfaceId) public view override(
         IERC165Upgradeable,
-        ERC1155Upgradeable,
-        ERC1155ReceiverUpgradeable,
-    RoyaltyRateProposer
+        RoyaltyRateProposer,
+        ERC1155Upgradeable
     ) returns (bool) {
         return super.supportsInterface(_interfaceId);
     }
@@ -368,7 +363,7 @@ ReentrancyGuardUpgradeable {
         uint256[] memory _ids,
         uint256[] memory _amounts,
         bytes memory _data
-    ) internal override(ERC1155Upgradeable) {
+    ) internal override {
         super._afterTokenTransfer(_operator, _from, _to, _ids, _amounts, _data);
         uint256 timestamp = block.timestamp;
         uint256 n = _ids.length;

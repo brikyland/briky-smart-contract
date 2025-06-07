@@ -11,6 +11,8 @@ abstract contract EstateForgerStorage is IEstateForger {
     mapping(address => Rate) internal defaultRates;
     mapping(uint256 => Request) internal requests;
 
+    mapping(address => bool) internal isSeller;
+
     uint256 public requestNumber;
 
     uint256 public baseMinUnitPrice;

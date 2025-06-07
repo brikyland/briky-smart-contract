@@ -2,13 +2,10 @@
 pragma solidity ^0.8.20;
 
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
+import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC20Upgradeable.sol";
 import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
-import {ERC1155HolderUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
-import {ERC1155ReceiverUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/utils/ERC1155ReceiverUpgradeable.sol";
-import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable.sol";
 
 import {Constant} from "../lib/Constant.sol";
 import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
@@ -18,7 +15,6 @@ import {IAdmin} from "../common/interfaces/IAdmin.sol";
 
 import {ICommissionToken} from "./interfaces/ICommissionToken.sol";
 import {IEstateToken} from "./interfaces/IEstateToken.sol";
-import {IExclusiveToken} from "./interfaces/IExclusiveToken.sol";
 
 import {EstateForgerStorage} from "./storages/EstateForgerStorage.sol";
 
@@ -28,7 +24,6 @@ import {EstateTokenizer} from "./utilities/EstateTokenizer.sol";
 contract EstateForger is
 EstateForgerStorage,
 EstateTokenizer,
-ERC1155HolderUpgradeable,
 Discountable,
 PausableUpgradeable,
 ReentrancyGuardUpgradeable {
@@ -38,20 +33,6 @@ ReentrancyGuardUpgradeable {
     string constant private VERSION = "v1.1.1";
 
     receive() external payable {}
-
-    modifier onlyManager() {
-        if (!IAdmin(admin).isManager(msg.sender)) {
-            revert Unauthorized();
-        }
-        _;
-    }
-
-    modifier onlyExecutive() {
-        if (!IAdmin(admin).isExecutive(msg.sender)) {
-            revert Unauthorized();
-        }
-        _;
-    }
 
     function initialize(
         address _admin,
@@ -217,6 +198,40 @@ ReentrancyGuardUpgradeable {
         }
     }
 
+    function registerSellers(
+        address[] calldata _accounts,
+        bool _isSeller,
+        bytes[] calldata _signatures
+    ) external {
+        IAdmin(admin).verifyAdminSignatures(
+            abi.encode(
+                address(this),
+                "registerSellers",
+                _accounts,
+                _isSeller
+            ),
+            _signatures
+        );
+
+        if (_isSeller) {
+            for (uint256 i = 0; i < _accounts.length; ++i) {
+                if (isSeller[_accounts[i]]) {
+                    revert RegisteredSeller(_accounts[i]);
+                }
+                isSeller[_accounts[i]] = true;
+                emit SellerRegistration(_accounts[i]);
+            }
+        } else {
+            for (uint256 i = 0; i < _accounts.length; ++i) {
+                if (!isSeller[_accounts[i]]) {
+                    revert NotRegisteredSeller(_accounts[i]);
+                }
+                isSeller[_accounts[i]] = false;
+                emit SellerUnregistration(_accounts[i]);
+            }
+        }
+    }
+
     function getPriceFeed(address _currency) external view returns (PriceFeed memory) {
         return priceFeeds[_currency];
     }
@@ -237,7 +252,7 @@ ReentrancyGuardUpgradeable {
     }
 
     function requestTokenization(
-        address _requester,
+        address _seller,
         bytes32 _zone,
         string calldata _uri,
         uint256 _totalSupply,
@@ -255,7 +270,7 @@ ReentrancyGuardUpgradeable {
 
         _validateUnitPrice(_unitPrice, _currency);
 
-        if (_requester == address(0)
+        if (isSeller[_seller]
             || _minSellingAmount > _maxSellingAmount
             || _maxSellingAmount > _totalSupply
             || _totalSupply > type(uint256).max / 10 ** _decimals
@@ -278,12 +293,12 @@ ReentrancyGuardUpgradeable {
             _decimals,
             _expireAt,
             uint40(block.timestamp) + _duration,
-            _requester
+            _seller
         );
 
         emit NewRequest(
             requestId,
-            _requester,
+            _seller,
             _zone,
             _uri,
             _totalSupply,
@@ -301,7 +316,7 @@ ReentrancyGuardUpgradeable {
 
     function updateRequest(
         uint256 _requestId,
-        address _requester,
+        address _seller,
         bytes32 _zone,
         string calldata _uri,
         uint256 _totalSupply,
@@ -335,7 +350,7 @@ ReentrancyGuardUpgradeable {
 
         _validateUnitPrice(_unitPrice, _currency);
 
-        if (_requester == address(0)
+        if (isSeller[_seller]
             || _minSellingAmount > _maxSellingAmount
             || _maxSellingAmount > _totalSupply
             || _totalSupply > type(uint256).max / 10 ** _decimals
@@ -358,12 +373,12 @@ ReentrancyGuardUpgradeable {
             _decimals,
             _expireAt,
             _closeAt,
-            _requester
+            _seller
         );
 
         emit RequestUpdate(
             _requestId,
-            _requester,
+            _seller,
             _zone,
             _uri,
             _totalSupply,
@@ -483,7 +498,9 @@ ReentrancyGuardUpgradeable {
             revert FailedOwnershipTransfer();
         }
 
-        if (closeAt < block.timestamp) request.closeAt = uint40(block.timestamp);
+        if (closeAt <= block.timestamp) {
+            request.closeAt = uint40(block.timestamp);
+        }
 
         uint256 soldAmount = request.soldAmount;
         if (soldAmount < request.minSellingAmount) {
@@ -505,11 +522,11 @@ ReentrancyGuardUpgradeable {
         );
         request.estateId = estateId;
 
-        address requester = request.requester;
+        address seller = request.seller;
         unchecked {
             estateTokenContract.safeTransferFrom(
                 address(this),
-                request.requester,
+                request.seller,
                 estateId,
                 (request.totalSupply - soldAmount) * unit,
                 ""
@@ -525,14 +542,14 @@ ReentrancyGuardUpgradeable {
         ( , uint256 commissionAmount) = ICommissionToken(commissionToken).commissionInfo(estateId, feeAmount);
 
         if (currency == address(0)) {
-            CurrencyHandler.transferNative(requester, value - feeAmount);
+            CurrencyHandler.transferNative(seller, value - feeAmount);
             CurrencyHandler.transferNative(feeReceiver, feeAmount - commissionAmount);
             if (commissionAmount != 0) {
                 CurrencyHandler.transferNative(_commissionReceiver, commissionAmount);
             }
         } else {
             IERC20Upgradeable currencyContract = IERC20Upgradeable(currency);
-            currencyContract.safeTransfer(requester, value - feeAmount);
+            currencyContract.safeTransfer(seller, value - feeAmount);
             currencyContract.safeTransfer(feeReceiver, feeAmount - commissionAmount);
             if (commissionAmount != 0) {
                 currencyContract.safeTransfer(_commissionReceiver, commissionAmount);
@@ -624,22 +641,14 @@ ReentrancyGuardUpgradeable {
     }
 
     function allocationOfAt(
-        uint256 _requestId,
+        uint256 _tokenizationId,
         address _account,
         uint256 _at
     ) external view returns (uint256 allocation) {
-        if (_requestId == 0 || _requestId > requestNumber) revert InvalidRequestId();
-        return _at >= requests[_requestId].closeAt
-            ? deposits[_requestId][_account] * 10 ** requests[_requestId].decimals
+        if (_tokenizationId == 0 || _tokenizationId > requestNumber) revert InvalidRequestId();
+        return _at >= requests[_tokenizationId].closeAt
+            ? deposits[_tokenizationId][_account] * 10 ** requests[_tokenizationId].decimals
             : 0;
-    }
-
-    function supportsInterface(bytes4 _interfaceId) public view override(
-        IERC165Upgradeable,
-        ERC1155ReceiverUpgradeable,
-        EstateTokenizer
-    ) returns (bool) {
-        return super.supportsInterface(_interfaceId);
     }
 
     function _validateUnitPrice(uint256 _unitPrice, address _currency) private {
@@ -666,7 +675,7 @@ ReentrancyGuardUpgradeable {
                 revert InvalidPriceFeedData();
             }
 
-            if (block.timestamp - updatedAt > priceFeed.heartbeat) {
+            if (updatedAt + priceFeed.heartbeat <= block.timestamp) {
                 revert StalePriceFeed();
             }
 

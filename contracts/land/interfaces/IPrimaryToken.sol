@@ -1,13 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {IERC20PermitUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20PermitUpgradeable.sol";
-
 import {IExclusiveToken} from "./IExclusiveToken.sol";
 
-interface IPrimaryToken is
-IExclusiveToken,
-IERC20PermitUpgradeable {
+interface IPrimaryToken is IExclusiveToken {
     event StakeTokensUpdate(
         address newAddress1,
         address newAddress2,

@@ -17,7 +17,7 @@ interface IEstateForger is IEstateTokenizer {
         uint8 decimals;
         uint40 expireAt;
         uint40 closeAt;
-        address requester;
+        address seller;
     }
 
     struct PriceFeed {
@@ -41,6 +41,9 @@ interface IEstateForger is IEstateTokenizer {
         address feed,
         uint40 heartbeat
     );
+
+    event SellerRegistration(address indexed account);
+    event SellerUnregistration(address indexed account);
 
     event NewRequest(
         uint256 indexed requestId,
@@ -121,6 +124,8 @@ interface IEstateForger is IEstateTokenizer {
     error MaxSellingAmountExceeded();
     error MissingCurrencyRate();
     error NotEnoughSoldAmount();
+    error NotRegisteredSeller(address account);
+    error RegisteredSeller(address account);
     error SaleEnded();
     error StalePriceFeed();
     error StillSelling();

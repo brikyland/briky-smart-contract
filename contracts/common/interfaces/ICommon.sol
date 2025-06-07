@@ -6,6 +6,11 @@ interface ICommon {
         uint256 value;
         uint8 decimals;
     }
+
+    struct Snapshot {
+        uint256 value;
+        uint256 timestamp;
+    }
     
     error InsufficientFunds();
     error InvalidCurrency();

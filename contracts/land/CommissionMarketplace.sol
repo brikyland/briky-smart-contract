@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC20Upgradeable.sol";
 import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
 import {Constant} from "../lib/Constant.sol";
@@ -15,8 +15,6 @@ import {IAdmin} from "../common/interfaces/IAdmin.sol";
 import {Discountable} from "./utilities/Discountable.sol";
 
 import {ICommissionToken} from "../land/interfaces/ICommissionToken.sol";
-
-import {IExclusiveToken} from "./interfaces/IExclusiveToken.sol";
 
 import {CommissionMarketplaceStorage} from "./storages/CommissionMarketplaceStorage.sol";
 

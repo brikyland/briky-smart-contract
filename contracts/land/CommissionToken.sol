@@ -2,12 +2,12 @@
 pragma solidity ^0.8.20;
 
 import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol";
-import {IERC2981Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
+import {IERC721MetadataUpgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC721MetadataUpgradeable.sol";
+import {IERC4906Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC4906Upgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import {ERC721PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721PausableUpgradeable.sol";
 import {ERC721URIStorageUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol";
-import {IERC721MetadataUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/IERC721MetadataUpgradeable.sol";
 
 import {Constant} from "../lib/Constant.sol";
 import {Formula} from "../lib/Formula.sol";
@@ -43,12 +43,11 @@ ReentrancyGuardUpgradeable {
         uint256 _commissionRate,
         uint256 _royaltyRate
     ) external initializer {
-        require(_royaltyRate <= Constant.COMMON_RATE_MAX_FRACTION);
         require(_commissionRate <= Constant.COMMON_RATE_MAX_FRACTION);
+        require(_royaltyRate <= Constant.COMMON_RATE_MAX_FRACTION);
 
         __ERC721_init(_name, _symbol);
         __ERC721Pausable_init();
-        __ERC721URIStorage_init();
 
         __ReentrancyGuard_init();
 
@@ -126,10 +125,8 @@ ReentrancyGuardUpgradeable {
         return Rate(commissionRate, Constant.COMMON_RATE_DECIMALS);
     }
 
-    function getRoyaltyRate() public view override(
-    IRoyaltyRateProposer,
-    RoyaltyRateProposer
-    ) returns (Rate memory) {
+    function getRoyaltyRate()
+    public view override(IRoyaltyRateProposer, RoyaltyRateProposer) returns (Rate memory) {
         return Rate(royaltyRate, Constant.COMMON_RATE_DECIMALS);
     }
 
@@ -165,11 +162,12 @@ ReentrancyGuardUpgradeable {
 
     function supportsInterface(bytes4 _interfaceId) public view override(
         IERC165Upgradeable,
+        RoyaltyRateProposer,
         ERC721Upgradeable,
-        ERC721URIStorageUpgradeable,
-    RoyaltyRateProposer
+        ERC721URIStorageUpgradeable
     ) returns (bool) {
-        return super.supportsInterface(_interfaceId);
+        return _interfaceId == type(IERC4906Upgradeable).interfaceId
+            || super.supportsInterface(_interfaceId);
     }
 
     function _baseURI() internal view override returns (string memory) {
@@ -185,8 +183,8 @@ ReentrancyGuardUpgradeable {
         super._beforeTokenTransfer(_from, _to, _firstTokenId, _batchSize);
     }
 
-    function _burn(uint256 _tokenId) internal
-    override(ERC721Upgradeable, ERC721URIStorageUpgradeable) {
+    function _burn(uint256 _tokenId)
+    internal override(ERC721Upgradeable, ERC721URIStorageUpgradeable) {
         super._burn(_tokenId);
     }
 
