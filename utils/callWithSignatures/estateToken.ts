@@ -41,9 +41,9 @@ export async function callEstateToken_UpdateCommissionToken(
 }
 
 export async function callEstateToken_UpdateRoyaltyRate(
-    estateToken: EstateToken,
+    estateToken: EstateToken | MockContract<EstateToken>,
     admins: any[],
-    royaltyRate: number,
+    royaltyRate: BigNumberish,
     nonce: BigNumberish
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(

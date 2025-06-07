@@ -30,8 +30,6 @@ import {IEstateTokenizer} from "./interfaces/IEstateTokenizer.sol";
 
 import {EstateTokenStorage} from "./storages/EstateTokenStorage.sol";
 
-import "hardhat/console.sol";
-
 contract EstateToken is
 EstateTokenStorage,
 ERC1155PausableUpgradeable,
