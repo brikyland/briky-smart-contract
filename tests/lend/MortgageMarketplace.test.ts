@@ -12,6 +12,8 @@ import {
     MockEstateForger__factory,
     MortgageToken,
     MortgageMarketplace,
+    MortgageToken__factory,
+    MockMortgageToken,
 } from '@typechain-types';
 import { callTransaction, getSignatures, prepareNativeToken, randomWallet } from '@utils/blockchain';
 import { Constant } from '@tests/test.constant';
@@ -22,7 +24,7 @@ import { deployMockEstateToken } from '@utils/deployments/mocks/mockEstateToken'
 import { deployCommissionToken } from '@utils/deployments/land/commissionToken';
 import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 
-import { smock } from '@defi-wonderland/smock';
+import { MockContract, smock } from '@defi-wonderland/smock';
 
 import {
     callAdmin_AuthorizeManagers,
@@ -34,17 +36,22 @@ import { getInterfaceID, randomBigNumber } from '@utils/utils';
 import { OrderedMap } from '@utils/utils';
 import { deployMortgageToken } from '@utils/deployments/lend/mortgageToken';
 import { deployMortgageMarketplace } from '@utils/deployments/lend/mortgageMarketplace';
+import { callMortgageMarketplace_Pause } from '@utils/callWithSignatures/mortgageMarketplace';
 
 interface MortgageMarketplaceFixture {
     admin: Admin;
     feeReceiver: FeeReceiver;
     currency: Currency;
     commissionToken: CommissionToken;
-    mortgageToken: MortgageToken;
+    mortgageToken: MockContract<MockMortgageToken>;
     mortgageMarketplace: MortgageMarketplace;
 
     deployer: any;
     admins: any[];
+    borrower1: any;
+    borrower2: any;
+    lender1: any;
+    lender2: any;
 }
 
 describe('15. MortgageMarketplace', async () => {
@@ -95,8 +102,9 @@ describe('15. MortgageMarketplace', async () => {
             Constant.COMMISSION_TOKEN_INITIAL_RoyaltyRate,
         ) as CommissionToken;
 
-        const mortgageToken = await deployMortgageToken(
-            deployer.address,
+        const SmockMortgageTokenFactory = await smock.mock<MortgageToken__factory>('MockMortgageToken');
+        const mortgageToken = await SmockMortgageTokenFactory.deploy();
+        await mortgageToken.initialize(
             admin.address,
             estateToken.address,
             commissionToken.address,
@@ -106,7 +114,7 @@ describe('15. MortgageMarketplace', async () => {
             Constant.MORTGAGE_TOKEN_INITIAL_BaseURI,
             Constant.MORTGAGE_TOKEN_INITIAL_FeeRate,
             Constant.MORTGAGE_TOKEN_INITIAL_RoyaltyRate,
-        ) as MortgageToken;
+        );
 
         const mortgageMarketplace = await deployMortgageMarketplace(
             deployer.address,
@@ -129,9 +137,51 @@ describe('15. MortgageMarketplace', async () => {
 
     async function beforeMortgageMarketplaceTest({
         pause = false,
-        listSampleLoan = false,
+        listSampleMortgageToken = false,
     } = {}): Promise<MortgageMarketplaceFixture> {
         const fixture = await loadFixture(mortgageMarketplaceFixture);
+        const { admin, admins, mortgageToken, mortgageMarketplace, borrower1, borrower2, lender1, lender2 } = fixture;
+
+        let currentTimestamp = await time.latest();
+
+        if (listSampleMortgageToken) {
+            await mortgageToken.setVariable('loanNumber', 2);
+            await mortgageToken.setVariable('loans', {
+                1: {
+                    id: 1,
+                    mortgageAmount: 150_000,
+                    principal: 10e5,
+                    repayment: 11e5,
+                    currency: ethers.constants.AddressZero,
+                    due: currentTimestamp + 1000,
+                    state: LoanState.Supplied,
+                    borrower: borrower1.address,
+                    lender: lender1.address,
+                },
+                2: {
+                    id: 2,
+                    mortgageAmount: 200,
+                    principal: 100000,
+                    repayment: 110000,
+                    currency: ethers.constants.AddressZero,
+                    due: currentTimestamp + 1100,
+                    state: LoanState.Supplied,
+                    borrower: borrower2.address,
+                    lender: lender2.address,
+                },
+            });
+
+            await callTransaction(mortgageToken.mint(lender1.address, 1));
+            await callTransaction(mortgageToken.mint(lender2.address, 2));
+        }
+
+        if (pause) {
+            await callMortgageMarketplace_Pause(
+                mortgageMarketplace,
+                admins,
+                await admin.nonce()
+            );
+        }
 
         return {
             ...fixture,
@@ -158,6 +208,88 @@ describe('15. MortgageMarketplace', async () => {
     // TODO: Andy
     describe('15.3. unpause(bytes[])', async () => {
 
+    });
+
+    describe('15.4. listToken(uint256, uint256, address)', async () => {
+        it('15.4.1. list token successfully', async () => {
+            const { mortgageMarketplace, lender1 } = await beforeMortgageMarketplaceTest({
+                listSampleMortgageToken: true,
+            });
+
+            let tx = await mortgageMarketplace.connect(lender1).list(1, 1000, ethers.constants.AddressZero);
+            await tx.wait();
+
+            expect(tx).to
+                .emit(marketplace, 'NewOffer')
+                .withArgs(1, 100, 1000, ethers.constants.AddressZero, false);
+
+            expect(await marketplace.offerNumber()).to.equal(1);
+
+            let offer = await marketplace.getOffer(1);
+            expect(offer.tokenId).to.equal(1);
+            expect(offer.sellingAmount).to.equal(100);
+            expect(offer.soldAmount).to.equal(0);
+            expect(offer.unitPrice).to.equal(1000);
+            expect(offer.currency).to.equal(ethers.constants.AddressZero);
+            expect(offer.isDivisible).to.equal(false);
+            expect(offer.state).to.equal(OfferState.Selling);
+            expect(offer.seller).to.equal(depositor1.address);
+
+            tx = await marketplace.connect(depositor1).listToken(2, 200, 500, currency.address, true);
+            await tx.wait();
+
+            expect(tx).to
+                .emit(marketplace, 'NewOffer')
+                .withArgs(2, 200, 500, currency.address, true);
+
+            expect(await marketplace.offerNumber()).to.equal(2);
+
+            offer = await marketplace.getOffer(2);
+            expect(offer.tokenId).to.equal(2);
+            expect(offer.sellingAmount).to.equal(200);
+            expect(offer.soldAmount).to.equal(0);
+            expect(offer.unitPrice).to.equal(500);
+            expect(offer.currency).to.equal(currency.address);
+            expect(offer.isDivisible).to.equal(true);
+            expect(offer.state).to.equal(OfferState.Selling);
+            expect(offer.seller).to.equal(depositor1.address);
+        });
+
+        it('5.7.2. list token unsuccessfully when paused', async () => {
+            await callMarketPlace_Pause(marketplace, admins, nonce++);
+
+            await expect(marketplace.connect(depositor1).listToken(1, 100, 1000, ethers.constants.AddressZero, false))
+                .to.be.revertedWith('Pausable: paused');
+        });
+
+        it('5.7.3. list token unsuccessfully with invalid token id', async () => {
+            await expect(marketplace.connect(depositor1).listToken(0, 100, 1000, ethers.constants.AddressZero, false))
+                .to.be.revertedWithCustomError(marketplace, 'InvalidTokenId');
+
+            await expect(marketplace.connect(depositor1).listToken(3, 100, 1000, ethers.constants.AddressZero, false))
+                .to.be.revertedWithCustomError(marketplace, 'InvalidTokenId');
+        });
+
+        it('5.7.4. list token unsuccessfully with zero unit price', async () => {
+            await expect(marketplace.connect(depositor1).listToken(1, 100, 0, ethers.constants.AddressZero, false))
+                .to.be.revertedWithCustomError(marketplace, 'InvalidUnitPrice');
+        });
+
+        it('5.7.5. list token unsuccessfully with invalid currency', async () => {
+            const newCurrency = randomWallet()
+            await expect(marketplace.connect(depositor1).listToken(1, 100, 1000, newCurrency.address, false))
+                .to.be.revertedWithCustomError(marketplace, 'InvalidCurrency');
+        });
+
+        it('5.7.6. list token unsuccessfully with zero selling amount', async () => {
+            await expect(marketplace.connect(depositor1).listToken(1, 0, 1000, ethers.constants.AddressZero, false))
+                .to.be.revertedWithCustomError(marketplace, 'InvalidSellingAmount');
+        });
+
+        it('5.7.7. list token unsuccessfully with selling amount exceeding owned amount', async () => {
+            await expect(marketplace.connect(depositor1).listToken(1, 200_001, 1000, ethers.constants.AddressZero, false))
+                .to.be.revertedWithCustomError(marketplace, 'InvalidSellingAmount');
+        });
     });
 
     

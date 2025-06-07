@@ -123,7 +123,13 @@ describe('7. CommissionMarketplace', async () => {
 
     describe('7.1. initialize(address, address, address)', async () => {
         it('7.1.1. Deploy successfully', async () => {
+            const fixture = await commissionMarketplaceFixture();
+            const { admin, commissionToken, commissionMarketplace } = fixture;
 
+            expect(await commissionMarketplace.offerNumber()).to.equal(0);
+
+            expect(await commissionMarketplace.admin()).to.equal(admin.address);
+            expect(await commissionMarketplace.commissionToken()).to.equal(commissionToken.address);
         });
     });
 
