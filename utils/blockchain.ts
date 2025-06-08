@@ -1,4 +1,4 @@
-import { ethers, Wallet } from 'ethers';
+import { BigNumberish, ethers, Wallet } from 'ethers';
 import { JsonRpcProvider } from '@ethersproject/providers';
 
 export async function callTransaction(tx: Promise<ethers.ContractTransaction>): Promise<ethers.ContractReceipt> {
@@ -8,7 +8,7 @@ export async function callTransaction(tx: Promise<ethers.ContractTransaction>): 
 export async function getSignatures(
     message: string,
     signers: ethers.Wallet[],
-    nonce: number
+    nonce: BigNumberish
 ): Promise<string[]> {
     const messageHash = ethers.utils.arrayify(ethers.utils.solidityKeccak256(
         ['bytes', 'uint256'],
