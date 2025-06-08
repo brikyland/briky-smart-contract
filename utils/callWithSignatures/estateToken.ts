@@ -56,7 +56,7 @@ export async function callEstateToken_UpdateRoyaltyRate(
 }
 
 export async function callEstateToken_Pause(
-    estateToken: EstateToken,
+    estateToken: EstateToken | MockContract<EstateToken>,
     admins: any[],
     nonce: BigNumberish
 ) {
@@ -70,7 +70,7 @@ export async function callEstateToken_Pause(
 }
 
 export async function callEstateToken_Unpause(
-    estateToken: EstateToken,
+    estateToken: EstateToken | MockContract<EstateToken>,
     admins: any[],
     nonce: BigNumberish
 ) {
