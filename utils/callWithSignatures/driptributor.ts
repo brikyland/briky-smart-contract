@@ -3,10 +3,38 @@ import { getSignatures } from "../blockchain";
 import { ethers } from "hardhat";
 import { callTransaction } from "../blockchain";
 import { BigNumberish } from "ethers";
+import { MockContract } from "@defi-wonderland/smock";
 
+export async function callDriptributor_Pause(
+    driptributor: Driptributor | MockContract<Driptributor>,
+    admins: any[],
+    nonce: BigNumberish
+) {
+    let message = ethers.utils.defaultAbiCoder.encode(
+        ["address", "string"],
+        [driptributor.address, "pause"]
+    );
+    let signatures = await getSignatures(message, admins, nonce);
+    
+    await callTransaction(driptributor.pause(signatures));
+}
+
+export async function callDriptributor_Unpause(
+    driptributor: Driptributor | MockContract<Driptributor>,
+    admins: any[],
+    nonce: BigNumberish
+) {
+    let message = ethers.utils.defaultAbiCoder.encode(
+        ["address", "string"],
+        [driptributor.address, "unpause"]
+    );
+    let signatures = await getSignatures(message, admins, nonce);
+
+    await callTransaction(driptributor.unpause(signatures));
+}
 
 export async function callDriptributor_UpdateStakeTokens(
-    driptributor: Driptributor,
+    driptributor: Driptributor | MockContract<Driptributor>,
     admins: any[],
     stakeToken1: string,
     stakeToken2: string,
@@ -22,36 +50,8 @@ export async function callDriptributor_UpdateStakeTokens(
     await callTransaction(driptributor.updateStakeTokens(stakeToken1, stakeToken2, stakeToken3, signatures));
 }
 
-export async function callDriptributor_Pause(
-    driptributor: Driptributor,
-    admins: any[],
-    nonce: BigNumberish
-) {
-    let message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string"],
-        [driptributor.address, "pause"]
-    );
-    let signatures = await getSignatures(message, admins, nonce);
-    
-    await callTransaction(driptributor.pause(signatures));
-}
-
-export async function callDriptributor_Unpause(
-    driptributor: Driptributor,
-    admins: any[],
-    nonce: BigNumberish
-) {
-    let message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string"],
-        [driptributor.address, "unpause"]
-    );
-    let signatures = await getSignatures(message, admins, nonce);
-
-    await callTransaction(driptributor.unpause(signatures));
-}
-
 export async function callDriptributor_DistributeTokensWithDuration(
-    driptributor: Driptributor,
+    driptributor: Driptributor | MockContract<Driptributor>,
     admins: any[],
     receivers: string[],
     amounts: BigNumberish[],
@@ -74,9 +74,8 @@ export async function callDriptributor_DistributeTokensWithDuration(
     ));
 }
 
-
 export async function callDriptributor_DistributeTokensWithTimestamp(
-    driptributor: Driptributor,
+    driptributor: Driptributor | MockContract<Driptributor>,
     admins: any[],
     receivers: string[],
     amounts: BigNumberish[],

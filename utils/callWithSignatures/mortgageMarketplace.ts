@@ -3,9 +3,10 @@ import { callTransaction } from "../blockchain";
 import { getSignatures } from "../blockchain";
 import { ethers } from "hardhat";
 import { BigNumberish } from "ethers";
+import { MockContract } from "@defi-wonderland/smock";
 
 export async function callMortgageMarketplace_Pause(
-    mortgageMarketplace: MortgageMarketplace,
+    mortgageMarketplace: MortgageMarketplace | MockContract<MortgageMarketplace>,
     admins: any[],
     nonce: BigNumberish
 ) {
@@ -19,7 +20,7 @@ export async function callMortgageMarketplace_Pause(
 }
 
 export async function callMortgageMarketplace_Unpause(
-    mortgageMarketplace: MortgageMarketplace,
+    mortgageMarketplace: MortgageMarketplace | MockContract<MortgageMarketplace>,
     admins: any[],
     nonce: BigNumberish
 ) {

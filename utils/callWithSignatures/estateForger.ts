@@ -3,25 +3,10 @@ import { getSignatures } from "../blockchain";
 import { ethers } from "hardhat";
 import { callTransaction } from "../blockchain";
 import { BigNumberish } from "ethers";
-
-export async function callEstateForger_UpdateFeeRate(
-    estateForger: EstateForger,
-    admins: any[],
-    feeRate: BigNumberish,
-    nonce: BigNumberish
-) {
-    const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "uint256"],
-        [estateForger.address, "updateFeeRate", feeRate]
-    );
-    const signatures = await getSignatures(message, admins, nonce);
-
-    await callTransaction(estateForger.updateFeeRate(feeRate, signatures));
-}
-
+import { MockContract } from "@defi-wonderland/smock";
 
 export async function callEstateForger_Pause(
-    estateForger: EstateForger,
+    estateForger: EstateForger | MockContract<EstateForger>,
     admins: any[],
     nonce: BigNumberish
 ) {
@@ -35,7 +20,7 @@ export async function callEstateForger_Pause(
 }
 
 export async function callEstateForger_Unpause(
-    estateForger: EstateForger,
+    estateForger: EstateForger | MockContract<EstateForger>,
     admins: any[],
     nonce: BigNumberish
 ) {
@@ -48,8 +33,39 @@ export async function callEstateForger_Unpause(
     await callTransaction(estateForger.unpause(signatures));
 }
 
+export async function callEstateForger_UpdateFeeRate(
+    estateForger: EstateForger | MockContract<EstateForger>,
+    admins: any[],
+    feeRate: BigNumberish,
+    nonce: BigNumberish
+) {
+    const message = ethers.utils.defaultAbiCoder.encode(
+        ["address", "string", "uint256"],
+        [estateForger.address, "updateFeeRate", feeRate]
+    );
+    const signatures = await getSignatures(message, admins, nonce);
+
+    await callTransaction(estateForger.updateFeeRate(feeRate, signatures));
+}
+
+export async function callEstateForger_UpdateBaseUnitPriceRange(
+    estateForger: EstateForger | MockContract<EstateForger>,
+    admins: any[],
+    baseMinUnitPrice: BigNumberish,
+    baseMaxUnitPrice: BigNumberish,
+    nonce: BigNumberish
+) {
+    const message = ethers.utils.defaultAbiCoder.encode(
+        ["address", "string", "uint256", "uint256"],
+        [estateForger.address, "updateBaseUnitPriceRange", baseMinUnitPrice, baseMaxUnitPrice]
+    );
+    const signatures = await getSignatures(message, admins, nonce);
+
+    await callTransaction(estateForger.updateBaseUnitPriceRange(baseMinUnitPrice, baseMaxUnitPrice, signatures));
+}
+
 export async function callEstateForger_UpdatePriceFeeds(
-    estateForger: EstateForger,
+    estateForger: EstateForger | MockContract<EstateForger>,
     admins: any[],
     currencyAddresses: string[],
     priceFeeds: string[],
@@ -65,9 +81,8 @@ export async function callEstateForger_UpdatePriceFeeds(
     await callTransaction(estateForger.updatePriceFeeds(currencyAddresses, priceFeeds, heartbeats, signatures));
 }
 
-
 export async function callEstateForger_UpdateDefaultRates(
-    estateForger: EstateForger,
+    estateForger: EstateForger | MockContract<EstateForger>,
     admins: any[],
     currencyAddresses: string[],
     values: number[],
@@ -83,18 +98,18 @@ export async function callEstateForger_UpdateDefaultRates(
     await callTransaction(estateForger.updateDefaultRates(currencyAddresses, values, decimals, signatures));
 }
 
-export async function callEstateForger_UpdateBaseUnitPriceRange(
-    estateForger: EstateForger,
+export async function callEstateForger_RegisterSellers(
+    estateForger: EstateForger | MockContract<EstateForger>,
     admins: any[],
-    baseMinUnitPrice: BigNumberish,
-    baseMaxUnitPrice: BigNumberish,
+    accounts: string[],
+    isSeller: boolean,
     nonce: BigNumberish
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "uint256", "uint256"],
-        [estateForger.address, "updateBaseUnitPriceRange", baseMinUnitPrice, baseMaxUnitPrice]
+        ["address", "string", "address[]", "bool"],
+        [estateForger.address, "registerSellers", accounts, isSeller]
     );
     const signatures = await getSignatures(message, admins, nonce);
 
-    await callTransaction(estateForger.updateBaseUnitPriceRange(baseMinUnitPrice, baseMaxUnitPrice, signatures));
+    await callTransaction(estateForger.registerSellers(accounts, isSeller, signatures));
 }

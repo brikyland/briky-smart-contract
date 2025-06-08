@@ -3,31 +3,100 @@ import { ethers } from "hardhat";
 import { callTransaction } from "../blockchain";
 import { getSignatures } from "../blockchain";
 import { BigNumberish } from "ethers";
+import { MockContract } from "@defi-wonderland/smock";
 
-export async function callAdmin_UpdateCurrencyRegistries(
-    admin: Admin,
+export async function callAdmin_TransferAdministration1(
+    admin: Admin | MockContract<Admin>,
     admins: any[],
-    currencies: string[],
-    isAvailable: boolean[],
-    isExclusive: boolean[],
+    admin1: string,
     nonce: BigNumberish
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "address[]", "bool[]", "bool[]"],
-        [admin.address, "updateCurrencyRegistries", currencies, isAvailable, isExclusive]
+        ["address", "string", "address"],
+        [admin.address, "transferAdministration1", admin1]
     );
     const signatures = await getSignatures(message, admins, nonce);
 
-    await callTransaction(admin.updateCurrencyRegistries(
-        currencies,
-        isAvailable,
-        isExclusive,
+    await callTransaction(admin.transferAdministration1(
+        admin1,
+        signatures
+    ));
+}
+
+export async function callAdmin_TransferAdministration2(
+    admin: Admin | MockContract<Admin>,
+    admins: any[],
+    admin2: string,
+    nonce: BigNumberish
+) {
+    const message = ethers.utils.defaultAbiCoder.encode(
+        ["address", "string", "address"],
+        [admin.address, "transferAdministration2", admin2]
+    );
+    const signatures = await getSignatures(message, admins, nonce);
+
+    await callTransaction(admin.transferAdministration2(
+        admin2,
+        signatures
+    ));
+}
+
+export async function callAdmin_TransferAdministration3(
+    admin: Admin | MockContract<Admin>,
+    admins: any[],
+    admin3: string,
+    nonce: BigNumberish
+) {
+    const message = ethers.utils.defaultAbiCoder.encode(
+        ["address", "string", "address"],
+        [admin.address, "transferAdministration3", admin3]
+    );
+    const signatures = await getSignatures(message, admins, nonce);
+
+    await callTransaction(admin.transferAdministration3(
+        admin3,
+        signatures
+    ));
+}
+
+export async function callAdmin_TransferAdministration4(
+    admin: Admin | MockContract<Admin>,
+    admins: any[],
+    admin4: string,
+    nonce: BigNumberish
+) {
+    const message = ethers.utils.defaultAbiCoder.encode(
+        ["address", "string", "address"],
+        [admin.address, "transferAdministration4", admin4]
+    );
+    const signatures = await getSignatures(message, admins, nonce);
+
+    await callTransaction(admin.transferAdministration4(
+        admin4,
+        signatures
+    ));
+}
+
+export async function callAdmin_TransferAdministration5(
+    admin: Admin | MockContract<Admin>,
+    admins: any[],
+    admin5: string,
+    nonce: BigNumberish
+) {
+    const message = ethers.utils.defaultAbiCoder.encode(
+        ["address", "string", "address"],
+        [admin.address, "transferAdministration5", admin5]
+    );
+    const signatures = await getSignatures(message, admins, nonce);
+
+    await callTransaction(admin.transferAdministration5(
+        admin5,
         signatures
     ));
 }
 
 export async function callAdmin_AuthorizeManagers(
-    admin: Admin,
+    admin: Admin | MockContract<Admin>,
     admins: any[],
     accounts: string[],
     isManager: boolean,
@@ -47,7 +116,7 @@ export async function callAdmin_AuthorizeManagers(
 }
 
 export async function callAdmin_AuthorizeModerators(
-    admin: Admin,
+    admin: Admin | MockContract<Admin>,
     admins: any[],
     accounts: string[],
     isModerator: boolean,
@@ -68,7 +137,7 @@ export async function callAdmin_AuthorizeModerators(
 
 
 export async function callAdmin_DeclareZones(
-    admin: Admin,
+    admin: Admin | MockContract<Admin>,
     admins: any[],
     zones: string[],
     isZone: boolean,
@@ -87,9 +156,8 @@ export async function callAdmin_DeclareZones(
     ));
 }
 
-
 export async function callAdmin_ActivateIn(
-    admin: Admin,
+    admin: Admin | MockContract<Admin>,
     admins: any[],
     zone: string,
     accounts: string[],
@@ -110,3 +178,24 @@ export async function callAdmin_ActivateIn(
     ));
 }
 
+export async function callAdmin_UpdateCurrencyRegistries(
+    admin: Admin | MockContract<Admin>,
+    admins: any[],
+    currencies: string[],
+    isAvailable: boolean[],
+    isExclusive: boolean[],
+    nonce: BigNumberish
+) {
+    const message = ethers.utils.defaultAbiCoder.encode(
+        ["address", "string", "address[]", "bool[]", "bool[]"],
+        [admin.address, "updateCurrencyRegistries", currencies, isAvailable, isExclusive]
+    );
+    const signatures = await getSignatures(message, admins, nonce);
+
+    await callTransaction(admin.updateCurrencyRegistries(
+        currencies,
+        isAvailable,
+        isExclusive,
+        signatures
+    ));
+}
