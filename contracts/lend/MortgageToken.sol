@@ -1,18 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC20Upgradeable.sol";
 import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol";
-import {IERC2981Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
-import {ERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
+import {IERC721MetadataUpgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC721MetadataUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import {ERC1155HolderUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
 import {ERC1155ReceiverUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/utils/ERC1155ReceiverUpgradeable.sol";
-import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
-import {IERC721MetadataUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/IERC721MetadataUpgradeable.sol";
 import {ERC721PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721PausableUpgradeable.sol";
 import {ERC721URIStorageUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol";
+import {ERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 
 import {Constant} from "../lib/Constant.sol";
 import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
@@ -25,7 +23,6 @@ import {RoyaltyRateProposer} from "../common/utilities/RoyaltyRateProposer.sol";
 
 import {ICommissionToken} from "../land/interfaces/ICommissionToken.sol";
 import {IEstateToken} from "../land/interfaces/IEstateToken.sol";
-import {IExclusiveToken} from "../land/interfaces/IExclusiveToken.sol";
 
 import {Discountable} from "../land/utilities/Discountable.sol";
 
@@ -35,9 +32,9 @@ contract MortgageToken is
 MortgageTokenStorage,
 ERC721PausableUpgradeable,
 ERC721URIStorageUpgradeable,
-ERC1155HolderUpgradeable,
-RoyaltyRateProposer,
 Discountable,
+RoyaltyRateProposer,
+ERC1155ReceiverUpgradeable,
 ReentrancyGuardUpgradeable {
     using Formula for uint256;
     using SafeERC20Upgradeable for IERC20Upgradeable;
@@ -62,8 +59,6 @@ ReentrancyGuardUpgradeable {
 
         __ERC721_init(_name, _symbol);
         __ERC721Pausable_init();
-        __ERC721URIStorage_init();
-        __ERC1155Holder_init();
 
         __ReentrancyGuard_init();
 
@@ -161,10 +156,7 @@ ReentrancyGuardUpgradeable {
         return Rate(feeRate, Constant.COMMON_RATE_DECIMALS);
     }
 
-    function getRoyaltyRate() public view override(
-    IRoyaltyRateProposer,
-    RoyaltyRateProposer
-    ) returns (Rate memory) {
+    function getRoyaltyRate() public view override(IRoyaltyRateProposer, RoyaltyRateProposer) returns (Rate memory) {
         return Rate(royaltyRate, Constant.COMMON_RATE_DECIMALS);
     }
 
@@ -308,7 +300,9 @@ ReentrancyGuardUpgradeable {
         Loan storage loan = loans[_loanId];
         if (loan.state != LoanState.Supplied) revert InvalidRepaying();
 
-        if (loan.due <= block.timestamp) revert Overdue();
+        if (loan.due <= block.timestamp) {
+            revert Overdue();
+        }
 
         address borrower = loan.borrower;
         address currency = loan.currency;
@@ -336,10 +330,14 @@ ReentrancyGuardUpgradeable {
     }
 
     function foreclose(uint256 _loanId) external nonReentrant whenNotPaused {
-        if (_loanId == 0 || _loanId > loanNumber) revert InvalidLoanId();
+        if (_loanId == 0 || _loanId > loanNumber) {
+            revert InvalidLoanId();
+        }
         Loan storage loan = loans[_loanId];
         if (loan.due > block.timestamp
-            || loan.state != LoanState.Supplied) revert InvalidForeclosing();
+            || loan.state != LoanState.Supplied) {
+            revert InvalidForeclosing();
+        }
 
         address receiver = _ownerOf(_loanId);
         IEstateToken(estateToken).safeTransferFrom(
@@ -371,12 +369,32 @@ ReentrancyGuardUpgradeable {
 
     function supportsInterface(bytes4 _interfaceId) public view override(
         IERC165Upgradeable,
+        RoyaltyRateProposer,
         ERC1155ReceiverUpgradeable,
         ERC721Upgradeable,
-        ERC721URIStorageUpgradeable,
-    RoyaltyRateProposer
+        ERC721URIStorageUpgradeable
     ) returns (bool) {
         return super.supportsInterface(_interfaceId);
+    }
+
+    function onERC1155Received(
+        address _operator,
+        address _from,
+        uint256 _id,
+        uint256 _value,
+        bytes calldata _data
+    ) public virtual override returns (bytes4) {
+        return msg.sender == estateToken ? this.onERC1155Received.selector : bytes4(0);
+    }
+
+    function onERC1155BatchReceived(
+        address _operator,
+        address _from,
+        uint256[] calldata _ids,
+        uint256[] calldata _values,
+        bytes calldata _data
+    ) public virtual override returns (bytes4) {
+        return msg.sender == estateToken ? this.onERC1155BatchReceived.selector : bytes4(0);
     }
 
     function _baseURI() internal view override returns (string memory) {
@@ -392,8 +410,8 @@ ReentrancyGuardUpgradeable {
         super._beforeTokenTransfer(_from, _to, _firstTokenId, _batchSize);
     }
 
-    function _burn(uint256 _tokenId) internal
-    override(ERC721Upgradeable, ERC721URIStorageUpgradeable) {
+    function _burn(uint256 _tokenId)
+    internal override(ERC721Upgradeable, ERC721URIStorageUpgradeable) {
         super._burn(_tokenId);
     }
 

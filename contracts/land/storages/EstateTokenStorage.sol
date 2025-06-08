@@ -6,9 +6,9 @@ import {IEstateToken} from "../interfaces/IEstateToken.sol";
 abstract contract EstateTokenStorage is IEstateToken {
     mapping(uint256 => mapping(address => Snapshot[])) internal balanceSnapshots;
 
-    mapping(address => bool) public isTokenizer;
-
     mapping(uint256 => Estate) internal estates;
+
+    mapping(address => bool) public isTokenizer;
 
     uint256 public estateNumber;
 

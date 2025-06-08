@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC20Upgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import {ERC20CappedUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20CappedUpgradeable.sol";
 import {ERC20PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PausableUpgradeable.sol";
 import {ERC20PermitUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
-import {IERC20MetadataUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
 import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
 import {Constant} from "../lib/Constant.sol";
@@ -521,13 +520,13 @@ ReentrancyGuardUpgradeable {
         );
     }
 
-    function _beforeTokenTransfer(address _from, address _to, uint256 _amount) internal
-    override(ERC20Upgradeable, ERC20PausableUpgradeable) {
+    function _beforeTokenTransfer(address _from, address _to, uint256 _amount)
+    internal override(ERC20Upgradeable, ERC20PausableUpgradeable) {
         super._beforeTokenTransfer(_from, _to, _amount);
     }
 
-    function _mint(address _account, uint256 _amount) internal
-    override(ERC20Upgradeable, ERC20CappedUpgradeable) {
+    function _mint(address _account, uint256 _amount)
+    internal override(ERC20Upgradeable, ERC20CappedUpgradeable) {
         super._mint(_account, _amount);
     }
 

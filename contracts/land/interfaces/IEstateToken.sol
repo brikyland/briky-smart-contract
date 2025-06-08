@@ -1,15 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {IERC1155MetadataURIUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/extensions/IERC1155MetadataURIUpgradeable.sol";
-import {IERC1155ReceiverUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/IERC1155ReceiverUpgradeable.sol";
+import {IERC1155MetadataURIUpgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC1155MetadataURIUpgradeable.sol";
 
 import {IRoyaltyRateProposer} from "../../common/interfaces/IRoyaltyRateProposer.sol";
 
 interface IEstateToken is
 IRoyaltyRateProposer,
-IERC1155MetadataURIUpgradeable,
-IERC1155ReceiverUpgradeable {
+IERC1155MetadataURIUpgradeable {
     struct Estate {
         bytes32 zone;
         uint256 tokenizationId;
@@ -18,11 +16,6 @@ IERC1155ReceiverUpgradeable {
         uint40 expireAt;
         uint8 decimals;
         bool isDeprecated;
-    }
-
-    struct Snapshot {
-        uint256 value;
-        uint256 timestamp;
     }
 
     event CommissionTokenUpdate(address newAddress);
