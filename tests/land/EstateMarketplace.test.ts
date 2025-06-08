@@ -123,16 +123,16 @@ describe('5. EstateMarketplace', async () => {
 
         const SmockEstateTokenFactory = await smock.mock<MockEstateToken__factory>('MockEstateToken');
         const estateToken = await SmockEstateTokenFactory.deploy();
-        await estateToken.initialize(
+        await callTransaction(estateToken.initialize(
             admin.address,
             feeReceiver.address,
             Constant.ESTATE_TOKEN_INITIAL_BaseURI,
             Constant.ESTATE_TOKEN_INITIAL_RoyaltyRate,
-        );        
+        ));        
 
         const SmockCommissionTokenFactory = await smock.mock<CommissionToken__factory>('CommissionToken');
         const commissionToken = await SmockCommissionTokenFactory.deploy();
-        await commissionToken.initialize(
+        await callTransaction(commissionToken.initialize(
             admin.address,
             estateToken.address,
             feeReceiver.address,
@@ -141,11 +141,11 @@ describe('5. EstateMarketplace', async () => {
             Constant.COMMISSION_TOKEN_INITIAL_BaseURI,
             Constant.COMMISSION_TOKEN_INITIAL_CommissionRate,
             Constant.COMMISSION_TOKEN_INITIAL_RoyaltyRate,
-        );
+        ));
 
         const SmockEstateForgerFactory = await smock.mock<MockEstateForger__factory>('MockEstateForger');
         const estateForger = await SmockEstateForgerFactory.deploy();
-        await estateForger.initialize(
+        await callTransaction(estateForger.initialize(
             admin.address,
             estateToken.address,
             commissionToken.address,
@@ -153,7 +153,7 @@ describe('5. EstateMarketplace', async () => {
             Constant.ESTATE_FORGER_INITIAL_FeeRate,
             Constant.ESTATE_FORGER_INITIAL_BaseMinUnitPrice,
             Constant.ESTATE_FORGER_INITIAL_BaseMaxUnitPrice,
-        );
+        ));
 
         const estateMarketplace = await deployEstateMarketplace(
             deployer.address,

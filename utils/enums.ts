@@ -20,3 +20,10 @@ export enum CommissionMarketplaceOfferState {
     Sold,
     Cancelled
 }
+
+export enum MortgageMarketplaceOfferState {
+    Nil,
+    Selling,
+    Sold,
+    Cancelled
+}

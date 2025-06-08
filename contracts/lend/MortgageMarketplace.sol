@@ -83,6 +83,7 @@ ReentrancyGuardUpgradeable {
         }
 
         IMortgageToken.Loan memory loan = mortgageTokenContract.getLoan(_tokenId);
+
         if (loan.state != IMortgageToken.LoanState.Supplied
             || loan.due <= block.timestamp) {
             revert UnavailableLoan();
@@ -144,7 +145,7 @@ ReentrancyGuardUpgradeable {
         address currency = offer.currency;
         royaltyAmount = _applyDiscount(royaltyAmount, currency);
 
-        (address commissionReceiver, uint256 commissionAmount) = ICommissionToken(commissionToken).commissionInfo(_tokenId, royaltyAmount);
+        (address commissionReceiver, uint256 commissionAmount) = ICommissionToken(commissionToken).commissionInfo(mortgageTokenContract.getLoan(_tokenId).estateId, royaltyAmount);
 
         if (currency == address(0)) {
             uint256 total = price + royaltyAmount;

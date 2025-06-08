@@ -45,16 +45,8 @@ import { callMortgageToken_Pause, callMortgageToken_UpdateFeeRate } from '@utils
 import { deployFailReceiver } from '@utils/deployments/mocks/failReceiver';
 import { deployReentrancyERC1155Holder } from '@utils/deployments/mocks/mockReentrancy/reentrancyERC1155Holder';
 import { deployReentrancy } from '@utils/deployments/mocks/mockReentrancy/reentrancy';
+import { LoanState } from '@utils/enums';
 
-
-enum LoanState {
-    Nil,
-    Pending,
-    Supplied,
-    Repaid,
-    Foreclosed,
-    Cancelled
-}
 
 async function testReentrancy_mortgageToken(
     mortgageToken: MortgageToken,
@@ -139,16 +131,16 @@ describe('14. MortgageToken', async () => {
 
         const MockEstateTokenFactory = await smock.mock('MockEstateToken') as any;
         const estateToken = await MockEstateTokenFactory.deploy();
-        await estateToken.initialize(
+        await callTransaction(estateToken.initialize(
             admin.address,
             feeReceiver.address,
             Constant.ESTATE_TOKEN_INITIAL_BaseURI,
             Constant.ESTATE_TOKEN_INITIAL_RoyaltyRate,
-        );   
+        ));   
 
         const MockCommissionTokenFactory = await smock.mock<CommissionToken__factory>('CommissionToken');
         const commissionToken = await MockCommissionTokenFactory.deploy();
-        await commissionToken.initialize(
+        await callTransaction(commissionToken.initialize(
             admin.address,
             estateToken.address,
             feeReceiver.address,
@@ -157,11 +149,11 @@ describe('14. MortgageToken', async () => {
             Constant.COMMISSION_TOKEN_INITIAL_BaseURI,
             Constant.COMMISSION_TOKEN_INITIAL_CommissionRate,
             Constant.COMMISSION_TOKEN_INITIAL_RoyaltyRate,
-        ) as CommissionToken;
+        ));
 
         const MockEstateForgerFactory = await smock.mock<MockEstateForger__factory>('MockEstateForger');
         const estateForger = await MockEstateForgerFactory.deploy();
-        await estateForger.initialize(
+        await callTransaction(estateForger.initialize(
             admin.address,
             estateToken.address,
             commissionToken.address,
@@ -169,7 +161,7 @@ describe('14. MortgageToken', async () => {
             Constant.ESTATE_FORGER_INITIAL_FeeRate,
             Constant.ESTATE_FORGER_INITIAL_BaseMinUnitPrice,
             Constant.ESTATE_FORGER_INITIAL_BaseMaxUnitPrice,
-        );
+        ));
 
         const mortgageToken = await deployMortgageToken(
             deployer.address,

@@ -138,7 +138,7 @@ describe('4. EstateForger', async () => {
 
         const SmockCurrencyFactory = await smock.mock('Currency') as any;
         const currency = await SmockCurrencyFactory.deploy();
-        await currency.initialize('MockCurrency', 'MCK');
+        await callTransaction(currency.initialize('MockCurrency', 'MCK'));
 
         const mockCurrencyExclusiveRate = ethers.utils.parseEther('0.3');
         await callTransaction(currency.setExclusiveDiscount(mockCurrencyExclusiveRate, Constant.COMMON_RATE_DECIMALS));
@@ -148,16 +148,16 @@ describe('4. EstateForger', async () => {
         
         const MockEstateTokenFactory = await smock.mock('EstateToken') as any;
         const estateToken = await MockEstateTokenFactory.deploy() as MockContract<EstateToken>;
-        await estateToken.initialize(
+        await callTransaction(estateToken.initialize(
             admin.address,
             feeReceiver.address,
             Constant.ESTATE_TOKEN_INITIAL_BaseURI,
             Constant.ESTATE_TOKEN_INITIAL_RoyaltyRate,
-        );
+        ));
 
         const SmockCommissionTokenFactory = await smock.mock('CommissionToken') as any;
         const commissionToken = await SmockCommissionTokenFactory.deploy() as MockContract<CommissionToken>;
-        await commissionToken.initialize(
+        await callTransaction(commissionToken.initialize(
             admin.address,
             estateToken.address,
             feeReceiver.address,
@@ -166,7 +166,7 @@ describe('4. EstateForger', async () => {
             Constant.COMMISSION_TOKEN_INITIAL_BaseURI,
             Constant.COMMISSION_TOKEN_INITIAL_CommissionRate,
             Constant.COMMISSION_TOKEN_INITIAL_RoyaltyRate,
-        );
+        ));
 
         await callEstateToken_UpdateCommissionToken(
             estateToken,

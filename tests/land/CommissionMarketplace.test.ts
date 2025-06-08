@@ -111,16 +111,16 @@ describe('7. CommissionMarketplace', async () => {
 
         const SmockEstateTokenFactory = await smock.mock<MockEstateToken__factory>("MockEstateToken");
         const estateToken = await SmockEstateTokenFactory.deploy();
-        await estateToken.initialize(
+        await callTransaction(estateToken.initialize(
             admin.address,
             feeReceiver.address,
             Constant.ESTATE_TOKEN_INITIAL_BaseURI,
             Constant.ESTATE_TOKEN_INITIAL_RoyaltyRate,
-        );
+        ));
 
         const SmockCommissionTokenFactory = await smock.mock<CommissionToken__factory>("CommissionToken");
         const commissionToken = await SmockCommissionTokenFactory.deploy();
-        await commissionToken.initialize(
+        await callTransaction(commissionToken.initialize(
             admin.address,
             estateToken.address,
             feeReceiver.address,
@@ -129,7 +129,7 @@ describe('7. CommissionMarketplace', async () => {
             Constant.COMMISSION_TOKEN_INITIAL_BaseURI,
             Constant.COMMISSION_TOKEN_INITIAL_CommissionRate,
             Constant.COMMISSION_TOKEN_INITIAL_RoyaltyRate,
-        );
+        ));
 
         const commissionMarketplace = await deployCommissionMarketplace(
             deployer.address,
@@ -204,9 +204,6 @@ describe('7. CommissionMarketplace', async () => {
             await callTransaction(estateToken.call(commissionToken.address, commissionToken.interface.encodeFunctionData('mint', [seller1.address, 1])));
             await callTransaction(estateToken.call(commissionToken.address, commissionToken.interface.encodeFunctionData('mint', [seller2.address, 2])));
 
-            await callTransaction(commissionToken.connect(seller1).setApprovalForAll(commissionMarketplace.address, true));
-            await callTransaction(commissionToken.connect(seller2).setApprovalForAll(commissionMarketplace.address, true));
-
             await estateToken.setVariable("estateNumber", 2);
         }
 
@@ -214,6 +211,8 @@ describe('7. CommissionMarketplace', async () => {
             await callTransaction(commissionMarketplace.connect(seller1).list(1, 200000, ethers.constants.AddressZero));
             await callTransaction(commissionMarketplace.connect(seller2).list(2, 500000, currency.address));
 
+            await callTransaction(commissionToken.connect(seller1).setApprovalForAll(commissionMarketplace.address, true));
+            await callTransaction(commissionToken.connect(seller2).setApprovalForAll(commissionMarketplace.address, true));
         }
 
         if (fundERC20ForBuyers) {
@@ -845,5 +844,4 @@ describe('7. CommissionMarketplace', async () => {
                 .to.be.revertedWithCustomError(commissionMarketplace, "InvalidCancelling");
         });
     });
-
 });

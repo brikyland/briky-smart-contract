@@ -57,47 +57,47 @@ describe('9. PrimaryToken', async () => {
         
         const SmockPrimaryTokenFactory = await smock.mock('MockPrimaryToken') as any;
         const primaryToken = await SmockPrimaryTokenFactory.deploy();
-        await primaryToken.initialize(
+        await callTransaction(primaryToken.initialize(
             admin.address,
             Constant.PRIMARY_TOKEN_INITIAL_Name,
             Constant.PRIMARY_TOKEN_INITIAL_Symbol,
             liquidationUnlockedAt,
-        );
+        ));
         
         const SmockTreasuryFactory = await smock.mock('Treasury') as any;
         const treasury = await SmockTreasuryFactory.deploy();
-        await treasury.initialize(
+        await callTransaction(treasury.initialize(
             admin.address,
             currency.address,
             primaryToken.address,
-        );
+        ));
 
         const SmockStakeTokenFactory = await smock.mock('MockStakeToken') as any;
         const stakeToken1 = await SmockStakeTokenFactory.deploy();
-        await stakeToken1.initialize(
+        await callTransaction(stakeToken1.initialize(
             admin.address,
             primaryToken.address,
             Constant.STAKE_TOKEN_INITIAL_Name_1,
             Constant.STAKE_TOKEN_INITIAL_Symbol_1,
-        );
+        ));
 
         const SmockStakeTokenFactory2 = await smock.mock('MockStakeToken') as any;
         const stakeToken2 = await SmockStakeTokenFactory2.deploy();
-        await stakeToken2.initialize(
+        await callTransaction(stakeToken2.initialize(
             admin.address,
             primaryToken.address,
             Constant.STAKE_TOKEN_INITIAL_Name_2,
             Constant.STAKE_TOKEN_INITIAL_Symbol_2,
-        );
+        ));
 
         const SmockStakeTokenFactory3 = await smock.mock('MockStakeToken') as any;
         const stakeToken3 = await SmockStakeTokenFactory3.deploy();
-        await stakeToken3.initialize(
+        await callTransaction(stakeToken3.initialize(
             admin.address,
             primaryToken.address,
             Constant.STAKE_TOKEN_INITIAL_Name_3,
             Constant.STAKE_TOKEN_INITIAL_Symbol_3,
-        );
+        ));
         
         return {
             deployer,

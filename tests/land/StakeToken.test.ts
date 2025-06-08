@@ -64,12 +64,12 @@ describe('10. StakeToken', async () => {
         
         const SmockPrimaryTokenFactory = await smock.mock("MockPrimaryToken") as any;
         const primaryToken = await SmockPrimaryTokenFactory.deploy();
-        await primaryToken.initialize(
+        await callTransaction(primaryToken.initialize(
             admin.address,
             Constant.PRIMARY_TOKEN_INITIAL_Name,
             Constant.PRIMARY_TOKEN_INITIAL_Symbol,
             Constant.PRIMARY_TOKEN_INITIAL_LiquidationUnlockedAt,
-        );
+        ));
         
         const stakeToken1 = await deployMockStakeToken(
             deployer,

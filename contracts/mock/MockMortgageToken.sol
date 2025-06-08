@@ -15,4 +15,18 @@ contract MockMortgageToken is MortgageToken {
             Revert.revertFromReturnedData(result);
         }
     }
+
+    function addLoan(uint256 estateId, uint256 mortgageAmount, uint256 principal, uint256 repayment, address currency, uint40 due, LoanState state, address borrower, address lender) external {
+        loans[++loanNumber] = Loan(
+            estateId,
+            mortgageAmount,
+            principal,
+            repayment,
+            currency,
+            due,
+            state,
+            borrower,
+            lender
+        );
+    }
 }
