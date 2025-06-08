@@ -14,3 +14,9 @@ export enum EstateMarketplaceOfferState {
     Cancelled
 }
 
+export enum CommissionMarketplaceOfferState {
+    Nil,
+    Selling,
+    Sold,
+    Cancelled
+}

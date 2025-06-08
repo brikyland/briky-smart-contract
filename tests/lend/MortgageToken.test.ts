@@ -161,6 +161,15 @@ describe('14. MortgageToken', async () => {
 
         const MockEstateForgerFactory = await smock.mock<MockEstateForger__factory>('MockEstateForger');
         const estateForger = await MockEstateForgerFactory.deploy();
+        await estateForger.initialize(
+            admin.address,
+            estateToken.address,
+            commissionToken.address,
+            feeReceiver.address,
+            Constant.ESTATE_FORGER_INITIAL_FeeRate,
+            Constant.ESTATE_FORGER_INITIAL_BaseMinUnitPrice,
+            Constant.ESTATE_FORGER_INITIAL_BaseMaxUnitPrice,
+        );
 
         const mortgageToken = await deployMortgageToken(
             deployer.address,
