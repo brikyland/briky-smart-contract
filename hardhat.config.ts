@@ -66,6 +66,7 @@ const config: HardhatUserConfig = {
         localhost: {
             gas: 100000000,
             blockGasLimit: 1000000000,
+            accounts: [process.env.STAGING_DEPLOYER_PRIVATE_KEY || ethers.utils.id("")],
             ...getNetworkEnvVariable('local', COMMON_ENV_VARIABLE_NAMES),
         } as any,
         staging: {
