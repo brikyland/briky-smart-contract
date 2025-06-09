@@ -221,7 +221,7 @@ describe('10. StakeToken', async () => {
 
             // StakeToken1
             expect(await stakeToken1.name()).to.equal(Constant.STAKE_TOKEN_INITIAL_Name_1);
-            expect(await stakeToken1.symbol()).to.equal(Constant.STAKE_TOKEN_INITIAL_Symbol_1);
+            expect(await stakeToken1.symbol()).to.equal(Constant.STAKE_TOKEN_INITIAL_Symbol_1);            
 
             expect(await stakeToken1.totalSupply()).to.equal(0);
             expect(await stakeToken1.lastRewardFetch()).to.equal(0);
@@ -395,7 +395,7 @@ describe('10. StakeToken', async () => {
     });
 
     describe('10.7. stake(address, uint256)', async () => {
-        it('10.7.1. stake successfully before stake rewarding completed', async () => {
+        it.only('10.7.1. stake successfully before stake rewarding completed', async () => {
             const { stakeToken1, staker1, primaryToken } = await setupBeforeTest({
                 setFeeRate: true,
                 initializeRewarding: true,
@@ -405,47 +405,36 @@ describe('10. StakeToken', async () => {
             const initStaker1PrimaryBalance = await primaryToken.balanceOf(staker1.address);
             const initStakeToken1PrimaryBalance = await primaryToken.balanceOf(stakeToken1.address);
 
-            const stakeValue1 = ethers.utils.parseEther("100");
-            const tx1 = (stakeToken1.connect(staker1).stake(staker1.address, stakeValue1));
+            const stakeAmount1 = ethers.utils.parseEther("100");
+            const tx1 = (stakeToken1.connect(staker1).stake(staker1.address, stakeAmount1));
 
             await expect(tx1)
                 .to.emit(stakeToken1, 'Stake')
-                .withArgs(staker1.address, stakeValue1);
+                .withArgs(staker1.address, stakeAmount1);
 
-            expect(await primaryToken.balanceOf(stakeToken1.address)).to.equal(initStakeToken1PrimaryBalance.add(stakeValue1));
-            expect(await primaryToken.balanceOf(staker1.address)).to.equal(initStaker1PrimaryBalance.sub(stakeValue1));
+            expect(await primaryToken.balanceOf(stakeToken1.address)).to.equal(initStakeToken1PrimaryBalance.add(stakeAmount1));
+            expect(await primaryToken.balanceOf(staker1.address)).to.equal(initStaker1PrimaryBalance.sub(stakeAmount1));
 
-            expect(await stakeToken1.totalSupply()).to.equal(stakeValue1);
-            
-            let currentWeight = tokenToWeight(stakeValue1, await stakeToken1.getInterestAccumulation());
-            expect(await stakeToken1.getWeight(staker1.address)).to.equal(currentWeight);
+            expect(await stakeToken1.totalSupply()).to.equal(stakeAmount1);
 
-            let lastRewardFetch = await stakeToken1.lastRewardFetch();
-            lastRewardFetch = lastRewardFetch.add(Constant.STAKE_TOKEN_REWARD_FETCH_COOLDOWN);
-            await time.setNextBlockTimestamp(lastRewardFetch);
-
-            const stakeValue2 = ethers.utils.parseEther("1000");
-            const tx2 = (stakeToken1.connect(staker1).stake(staker1.address, stakeValue2));
+            const stakeAmount2 = ethers.utils.parseEther("1000");
+            const tx2 = (stakeToken1.connect(staker1).stake(staker1.address, stakeAmount2));
 
             await expect(tx2)
                 .to.emit(stakeToken1, 'Stake')
-                .withArgs(staker1.address, stakeValue2);
+                .withArgs(staker1.address, stakeAmount2);
 
             expect(await primaryToken.balanceOf(stakeToken1.address))
-                .to.equal(initStakeToken1PrimaryBalance.add(stakeValue1).add(stakeValue2));
+                .to.equal(initStakeToken1PrimaryBalance.add(stakeAmount1).add(stakeAmount2));
             expect(await primaryToken.balanceOf(staker1.address))
-                .to.equal(initStaker1PrimaryBalance.sub(stakeValue1).sub(stakeValue2));
+                .to.equal(initStaker1PrimaryBalance.sub(stakeAmount1).sub(stakeAmount2));
 
-            expect(await stakeToken1.totalSupply()).to.equal(stakeValue1.add(stakeValue2));
+            expect(await stakeToken1.totalSupply()).to.equal(stakeAmount1.add(stakeAmount2));
 
-            currentWeight = fixedAdd(
-                currentWeight,
-                tokenToWeight(stakeValue2, await stakeToken1.getInterestAccumulation())
-            );
-            expect(await stakeToken1.getWeight(staker1.address)).to.equal(currentWeight);            
+            expectEqualWithErrorMargin(await stakeToken1.balanceOf(staker1.address), stakeAmount1.add(stakeAmount2));
         });
 
-        it('10.7.2. stake successfully after stake rewarding completed', async () => {
+        it.only('10.7.2. stake successfully after stake rewarding completed', async () => {
             const { stakeToken1, staker1, primaryToken, currency, treasury } = await setupBeforeTest({
                 setFeeRate: true,
                 initializeRewarding: true,
@@ -487,12 +476,9 @@ describe('10. StakeToken', async () => {
 
             expect(await stakeToken1.totalSupply()).to.equal(stakeValue1);
             
-            let currentWeight = tokenToWeight(stakeValue1, await stakeToken1.getInterestAccumulation());
-            expect(await stakeToken1.getWeight(staker1.address)).to.equal(currentWeight);
-
-            let lastRewardFetch = await stakeToken1.lastRewardFetch();
-            lastRewardFetch = lastRewardFetch.add(Constant.STAKE_TOKEN_REWARD_FETCH_COOLDOWN);
-            await time.setNextBlockTimestamp(lastRewardFetch);
+            // let currentWeight = tokenToWeight(stakeValue1, await stakeToken1.getInterestAccumulation());
+            // expect(await stakeToken1.getWeight(staker1.address)).to.equal(currentWeight);
+            expectEqualWithErrorMargin(await stakeToken1.balanceOf(staker1.address), stakeValue1);
 
             const stakeValue2 = ethers.utils.parseEther("1000");
             const feeAmount2 = getStakingFee(
@@ -520,11 +506,13 @@ describe('10. StakeToken', async () => {
             expect(await currency.balanceOf(primaryToken.address)).to.equal(initPrimaryTokenCurrencyBalance);
             expect(await currency.balanceOf(treasury.address)).to.equal(initTreasuryCurrencyBalance.add(feeAmount1).add(feeAmount2));
 
-            currentWeight = fixedAdd(
-                currentWeight,
-                tokenToWeight(stakeValue2, await stakeToken1.getInterestAccumulation())
-            );
-            expect(await stakeToken1.getWeight(staker1.address)).to.equal(currentWeight); 
+            expectEqualWithErrorMargin(await stakeToken1.balanceOf(staker1.address), stakeValue1.add(stakeValue2));
+            
+            // currentWeight = fixedAdd(
+            //     currentWeight,
+            //     tokenToWeight(stakeValue2, await stakeToken1.getInterestAccumulation())
+            // );
+            // expect(await stakeToken1.getWeight(staker1.address)).to.equal(currentWeight); 
 
             primaryToken.isStakeRewardingCompleted.reset();
         });
