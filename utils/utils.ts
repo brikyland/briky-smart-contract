@@ -47,6 +47,10 @@ export function randomBigNumber(min: ethers.BigNumber, max: ethers.BigNumber): e
     return min.add(ethers.BigNumber.from(ethers.utils.randomBytes(32)).mod(range.add(1)));
 }
 
+export function randomInt(min: number, max: number): number {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
 // get the interface ID of a contract interface
 export function getInterfaceID(contractInterface: ethers.utils.Interface) {
     let interfaceID: ethers.BigNumber = ethers.constants.Zero;
@@ -139,4 +143,19 @@ export class OrderedMap<int, V> {
 
 export function scale(value: ethers.BigNumber, rate_value: ethers.BigNumberish, rate_decimals: number): ethers.BigNumber {
     return value.mul(rate_value).div(ethers.BigNumber.from(10).pow(rate_decimals));
+}
+
+export function shuffle(array: any[]) {
+    let currentIndex = array.length;
+  
+    // While there remain elements to shuffle...
+    while (currentIndex != 0) {
+  
+        // Pick a remaining element...
+        let randomIndex = Math.floor(Math.random() * currentIndex);
+        currentIndex--;
+    
+        // And swap it with the current element.
+        [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+    }
 }

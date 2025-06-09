@@ -8,12 +8,12 @@ import { PrimaryToken } from "../land/PrimaryToken.sol";
 import { Revert } from "../lib/Revert.sol";
 
 contract MockPrimaryToken is PrimaryToken {
-    function burn(address from, uint256 amount) external {
-        _burn(from, amount);
+    function burn(address _from, uint256 _amount) external {
+        _burn(_from, _amount);
     }
 
-    function mint(address to, uint256 amount) external {
-        _mint(to, amount);
+    function mint(address _to, uint256 _amount) external {
+        _mint(_to, _amount);
     }
 
     function call(address _to, bytes calldata _data) external {
@@ -21,5 +21,13 @@ contract MockPrimaryToken is PrimaryToken {
         if (!success) {
             Revert.revertFromReturnedData(result);
         }
+    }
+
+    function selfTransfer(address _to, uint256 _amount) external {
+        _transfer(
+            address(this),
+            _to,
+            _amount
+        );
     }
 }

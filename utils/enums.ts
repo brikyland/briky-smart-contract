@@ -27,3 +27,11 @@ export enum MortgageMarketplaceOfferState {
     Sold,
     Cancelled
 }
+
+export enum StakeTokenOperation {
+    Stake,
+    Unstake,
+    FetchReward,
+    Promote,
+    Transfer
+}

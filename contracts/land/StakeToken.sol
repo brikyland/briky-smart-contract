@@ -214,6 +214,7 @@ ReentrancyGuardUpgradeable {
         weights[msg.sender] = weights[msg.sender]
             .sub(_tokenToWeight(_value, interestAccumulation));
 
+        IPrimaryToken(primaryToken).safeIncreaseAllowance(successor, _value);
         successorContract.stake(msg.sender, _value);
 
         emit Promotion(msg.sender, _value);
@@ -231,12 +232,12 @@ ReentrancyGuardUpgradeable {
 
     function exclusiveDiscount() external view returns (Rate memory rate) {
         IPrimaryToken primaryTokenContract = IPrimaryToken(primaryToken);
-        uint256 totalStake = primaryTokenContract.totalStake();
+        uint256 primaryTotalStake = primaryTokenContract.totalStake();
 
         Rate memory primaryDiscount = primaryTokenContract.exclusiveDiscount();
         return Rate(
             primaryDiscount.value
-                .scale(totalStake - totalStake, totalStake << 1)
+                .scale(primaryTotalStake - totalStake, primaryTotalStake << 1)
                 .add(Constant.PRIMARY_TOKEN_BASE_DISCOUNT),
             primaryDiscount.decimals
         );
