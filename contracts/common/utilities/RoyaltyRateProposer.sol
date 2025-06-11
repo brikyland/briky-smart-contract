@@ -17,7 +17,7 @@ ERC165Upgradeable {
     function _royaltyReceiver() internal view virtual returns (address royaltyReceiver);
     function getRoyaltyRate() public view virtual returns (Rate memory rate);
 
-    function royaltyInfo(uint256 _tokenId, uint256 _salePrice) external view returns (address, uint256) {
+    function royaltyInfo(uint256, uint256 _salePrice) external view returns (address, uint256) {
         return (_royaltyReceiver(), _salePrice.scale(getRoyaltyRate()));
     }
 

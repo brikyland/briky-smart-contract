@@ -9,7 +9,7 @@ export async function deployMortgageToken(
     feeReceiverAddress: string,
     name: string,
     symbol: string,
-    uri: string,
+    baseURI: string,
     feeRate: BigNumber,
     royaltyRate: BigNumber,
 ) {
@@ -23,7 +23,7 @@ export async function deployMortgageToken(
             feeReceiverAddress,
             name,
             symbol,
-            uri,
+            baseURI,
             feeRate,
             royaltyRate,
         ]

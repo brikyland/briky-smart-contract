@@ -1,6 +1,6 @@
 import { LedgerSigner } from '@anders-t/ethers-ledger';
 import { ethers, network } from 'hardhat';
-import {deployOrUpgradeAuction} from "../base/auction.deployment";
+import {deployOrUpgradeAuction} from '../base/auction.deployment';
 
 async function deployOrUpgradePublicSaleAuction() {
     const networkName = network.name.toUpperCase();

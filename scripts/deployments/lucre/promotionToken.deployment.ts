@@ -1,24 +1,24 @@
 import { LedgerSigner } from '@anders-t/ethers-ledger';
 import assert from 'assert';
 import { ethers, network, upgrades } from 'hardhat';
-import { deployEstateToken } from '../../../utils/deployments/land/estateToken';
+import { deployPromotionToken } from '../../../utils/deployments/lucre/promotionToken';
 import { Initialization } from './initialization';
 
-async function deployOrUpgradeEstateToken() {
+async function deployOrUpgradePromotionToken() {
     const config = network.config as any;
     const networkName = network.name.toUpperCase();
     const signer = networkName == 'MAINNET'
         ? new LedgerSigner(ethers.provider)
         : (await ethers.getSigners())[0];
-    const EstateToken = await ethers.getContractFactory('EstateToken', signer);
-    const estateTokenAddress = config.estateTokenAddress ?
+    const PromotionToken = await ethers.getContractFactory('PromotionToken', signer);
+    const promotionTokenAddress = config.promotionTokenAddress ?
         await (async () => {
             await upgrades.upgradeProxy(
-                config.estateTokenAddress,
-                EstateToken,
+                config.promotionTokenAddress,
+                PromotionToken,
             );
-            console.log(`Contract EstateToken has been updated to address ${config.estateTokenAddress}`);
-            return config.estateTokenAddress;
+            console.log(`Contract PromotionToken has been updated to address ${config.promotionTokenAddress}`);
+            return config.promotionTokenAddress;
         })() :
         await (async () => {
             const adminAddress = config.adminAddress;
@@ -32,21 +32,24 @@ async function deployOrUpgradeEstateToken() {
                 `Missing ${networkName}_FEE_RECEIVER_ADDRESS from environment variables!`
             );
 
-            const estateToken = await deployEstateToken(
+            const promotionToken = await deployPromotionToken(
                 signer,
                 adminAddress,
                 feeReceiverAddress,
-                Initialization.ESTATE_TOKEN_BaseURI,
-                Initialization.ESTATE_TOKEN_RoyaltyRate,
+                Initialization.PROMOTION_TOKEN_Name,
+                Initialization.PROMOTION_TOKEN_Symbol,
+                Initialization.PROMOTION_TOKEN_BaseURI,
+                Initialization.PROMOTION_TOKEN_Fee,
+                Initialization.PROMOTION_TOKEN_RoyaltyRate,
             );
-            console.log(`Contract EstateToken has been deployed to address ${estateToken.address}`);
+            console.log(`Contract PromotionToken has been deployed to address ${promotionToken.address}`);
 
-            return estateToken.address;
+            return promotionToken.address;
         })();
-    console.log(`${networkName}_ESTATE_TOKEN_ADDRESS=${estateTokenAddress}`);
+    console.log(`${networkName}_PROMOTION_TOKEN_ADDRESS=${promotionTokenAddress}`);
 }
 
-deployOrUpgradeEstateToken()
+deployOrUpgradePromotionToken()
     .then(() => process.exit(0))
     .catch((error) => {
         console.error(error);

@@ -1,7 +1,7 @@
 import { LedgerSigner } from '@anders-t/ethers-ledger';
 import { ethers, network } from 'hardhat';
-import { deployOrUpgradeStakeToken } from "./base/stakeToken.deployment";
-import { Initialization } from "./initialization";
+import { deployOrUpgradeStakeToken } from './base/stakeToken.deployment';
+import { Initialization } from './initialization';
 
 async function deployOrUpgradeStakeToken3() {
     const networkName = network.name.toUpperCase();

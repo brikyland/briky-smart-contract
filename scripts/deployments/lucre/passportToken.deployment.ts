@@ -1,24 +1,24 @@
 import { LedgerSigner } from '@anders-t/ethers-ledger';
 import assert from 'assert';
 import { ethers, network, upgrades } from 'hardhat';
-import { deployEstateToken } from '../../../utils/deployments/land/estateToken';
+import { deployPassportToken } from '../../../utils/deployments/lucre/passportToken';
 import { Initialization } from './initialization';
 
-async function deployOrUpgradeEstateToken() {
+async function deployOrUpgradePassportToken() {
     const config = network.config as any;
     const networkName = network.name.toUpperCase();
     const signer = networkName == 'MAINNET'
         ? new LedgerSigner(ethers.provider)
         : (await ethers.getSigners())[0];
-    const EstateToken = await ethers.getContractFactory('EstateToken', signer);
-    const estateTokenAddress = config.estateTokenAddress ?
+    const PassportToken = await ethers.getContractFactory('PassportToken', signer);
+    const passportTokenAddress = config.passportTokenAddress ?
         await (async () => {
             await upgrades.upgradeProxy(
-                config.estateTokenAddress,
-                EstateToken,
+                config.passportTokenAddress,
+                PassportToken,
             );
-            console.log(`Contract EstateToken has been updated to address ${config.estateTokenAddress}`);
-            return config.estateTokenAddress;
+            console.log(`Contract PassportToken has been updated to address ${config.passportTokenAddress}`);
+            return config.passportTokenAddress;
         })() :
         await (async () => {
             const adminAddress = config.adminAddress;
@@ -32,21 +32,24 @@ async function deployOrUpgradeEstateToken() {
                 `Missing ${networkName}_FEE_RECEIVER_ADDRESS from environment variables!`
             );
 
-            const estateToken = await deployEstateToken(
+            const passportToken = await deployPassportToken(
                 signer,
                 adminAddress,
                 feeReceiverAddress,
-                Initialization.ESTATE_TOKEN_BaseURI,
-                Initialization.ESTATE_TOKEN_RoyaltyRate,
+                Initialization.PASSPORT_TOKEN_Name,
+                Initialization.PASSPORT_TOKEN_Symbol,
+                Initialization.PASSPORT_TOKEN_BaseURI,
+                Initialization.PASSPORT_TOKEN_Fee,
+                Initialization.PASSPORT_TOKEN_RoyaltyRate,
             );
-            console.log(`Contract EstateToken has been deployed to address ${estateToken.address}`);
+            console.log(`Contract PassportToken has been deployed to address ${passportToken.address}`);
 
-            return estateToken.address;
+            return passportToken.address;
         })();
-    console.log(`${networkName}_ESTATE_TOKEN_ADDRESS=${estateTokenAddress}`);
+    console.log(`${networkName}_PASSPORT_TOKEN_ADDRESS=${passportTokenAddress}`);
 }
 
-deployOrUpgradeEstateToken()
+deployOrUpgradePassportToken()
     .then(() => process.exit(0))
     .catch((error) => {
         console.error(error);

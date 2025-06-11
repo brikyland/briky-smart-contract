@@ -5,9 +5,7 @@
 /node_modules
 /test-results
 /typechain-types
+/.openzeppelin
 .DS_Store
 .env
 .venv
-
-/scripts/crawlers/transactionHashes.txt
-/balances.json
