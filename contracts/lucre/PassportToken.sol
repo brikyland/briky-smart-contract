@@ -13,6 +13,7 @@ import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 
+import {Pausable} from "../common/utilities/Pausable.sol";
 import {RoyaltyRateProposer} from "../common/utilities/RoyaltyRateProposer.sol";
 
 import {IPassportToken} from "./interfaces/IPassportToken.sol";

@@ -10,13 +10,15 @@ import {Formula} from "../lib/Formula.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 
+import {Pausable} from "../common/utilities/Pausable.sol";
+
 import {IStakeToken} from "./interfaces/IStakeToken.sol";
 
 import {DriptributorStorage} from "./storages/DriptributorStorage.sol";
 
 contract Driptributor is
 DriptributorStorage,
-PausableUpgradeable,
+Pausable,
 ReentrancyGuardUpgradeable {
     using Formula for uint256;
     using SafeERC20Upgradeable for IERC20Upgradeable;
@@ -41,22 +43,6 @@ ReentrancyGuardUpgradeable {
 
     function version() external pure returns (string memory) {
         return VERSION;
-    }
-
-    function pause(bytes[] calldata _signatures) external whenNotPaused {
-        IAdmin(admin).verifyAdminSignatures(
-            abi.encode(address(this), "pause"),
-            _signatures
-        );
-        _pause();
-    }
-
-    function unpause(bytes[] calldata _signatures) external whenPaused {
-        IAdmin(admin).verifyAdminSignatures(
-            abi.encode(address(this), "unpause"),
-            _signatures
-        );
-        _unpause();
     }
 
     function updateStakeTokens(

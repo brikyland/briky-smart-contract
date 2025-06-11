@@ -25,6 +25,7 @@ import {IEstateToken} from "./interfaces/IEstateToken.sol";
 import {IEstateTokenizer} from "./interfaces/IEstateTokenizer.sol";
 
 import {EstateTokenStorage} from "./storages/EstateTokenStorage.sol";
+import {Pausable} from "../common/utilities/Pausable.sol";
 
 contract EstateToken is
 EstateTokenStorage,
@@ -32,6 +33,7 @@ RoyaltyRateProposer,
 ERC1155PausableUpgradeable,
 ERC1155SupplyUpgradeable,
 ERC1155URIStorageUpgradeable,
+Pausable,
 ReentrancyGuardUpgradeable {
     using Formula for uint256;
     using SafeERC20Upgradeable for IERC20Upgradeable;
@@ -78,22 +80,6 @@ ReentrancyGuardUpgradeable {
 
     function version() external pure returns (string memory) {
         return VERSION;
-    }
-
-    function pause(bytes[] calldata _signatures) external whenNotPaused {
-        IAdmin(admin).verifyAdminSignatures(
-            abi.encode(address(this), "pause"),
-            _signatures
-        );
-        _pause();
-    }
-
-    function unpause(bytes[] calldata _signatures) external whenPaused {
-        IAdmin(admin).verifyAdminSignatures(
-            abi.encode(address(this), "unpause"),
-            _signatures
-        );
-        _unpause();
     }
 
     function updateCommissionToken(

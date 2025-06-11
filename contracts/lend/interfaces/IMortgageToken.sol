@@ -7,11 +7,13 @@ import {IERC4906Upgradeable} from "@openzeppelin/contracts-upgradeable/interface
 
 import {IRoyaltyRateProposer} from "../../common/interfaces/IRoyaltyRateProposer.sol";
 
+import {IEstateTokenReceiver} from "../../land/interfaces/IEstateTokenReceiver.sol";
+
 interface IMortgageToken is
+IEstateTokenReceiver,
 IRoyaltyRateProposer,
 IERC4906Upgradeable,
-IERC721MetadataUpgradeable,
-IERC1155ReceiverUpgradeable {
+IERC721MetadataUpgradeable {
     enum LoanState {
         Nil,
         Pending,
@@ -75,7 +77,6 @@ IERC1155ReceiverUpgradeable {
     error InvalidRepayment();
     error Overdue();
 
-    function estateToken() external view returns (address estateToken);
     function feeReceiver() external view returns (address feeReceiver);
 
     function getFeeRate() external view returns (Rate memory rate);

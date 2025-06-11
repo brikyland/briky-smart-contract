@@ -13,6 +13,8 @@ import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 
+import {Pausable} from "../common/utilities/Pausable.sol";
+
 import {RoyaltyRateProposer} from "../common/utilities/RoyaltyRateProposer.sol";
 
 import {IPromotionToken} from "./interfaces/IPromotionToken.sol";
@@ -22,6 +24,7 @@ import {PromotionTokenStorage} from "./storages/PromotionTokenStorage.sol";
 contract PromotionToken is
 PromotionTokenStorage,
 ERC721PausableUpgradeable,
+Pausable,
 RoyaltyRateProposer,
 ReentrancyGuardUpgradeable {
     string constant private VERSION = "v1.1.1";
@@ -65,22 +68,6 @@ ReentrancyGuardUpgradeable {
 
     function version() external pure returns (string memory) {
         return VERSION;
-    }
-
-    function pause(bytes[] calldata _signatures) external whenNotPaused {
-        IAdmin(admin).verifyAdminSignatures(
-            abi.encode(address(this), "pause"),
-            _signatures
-        );
-        _pause();
-    }
-
-    function unpause(bytes[] calldata _signatures) external whenPaused {
-        IAdmin(admin).verifyAdminSignatures(
-            abi.encode(address(this), "unpause"),
-            _signatures
-        );
-        _unpause();
     }
 
     function updateBaseURI(

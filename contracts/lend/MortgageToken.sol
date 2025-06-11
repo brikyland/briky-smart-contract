@@ -5,7 +5,6 @@ import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/
 import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol";
 import {IERC721MetadataUpgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC721MetadataUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import {ERC1155ReceiverUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/utils/ERC1155ReceiverUpgradeable.sol";
 import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import {ERC721PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721PausableUpgradeable.sol";
@@ -19,12 +18,14 @@ import {Formula} from "../lib/Formula.sol";
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 import {IRoyaltyRateProposer} from "../common/interfaces/IRoyaltyRateProposer.sol";
 
+import {Pausable} from "../common/utilities/Pausable.sol";
 import {RoyaltyRateProposer} from "../common/utilities/RoyaltyRateProposer.sol";
 
 import {ICommissionToken} from "../land/interfaces/ICommissionToken.sol";
 import {IEstateToken} from "../land/interfaces/IEstateToken.sol";
 
 import {Discountable} from "../land/utilities/Discountable.sol";
+import {EstateTokenReceiver} from "../land/utilities/EstateTokenReceiver.sol";
 
 import {MortgageTokenStorage} from "./storages/MortgageTokenStorage.sol";
 
@@ -33,8 +34,9 @@ MortgageTokenStorage,
 ERC721PausableUpgradeable,
 ERC721URIStorageUpgradeable,
 Discountable,
+Pausable,
 RoyaltyRateProposer,
-ERC1155ReceiverUpgradeable,
+EstateTokenReceiver,
 ReentrancyGuardUpgradeable {
     using Formula for uint256;
     using SafeERC20Upgradeable for IERC20Upgradeable;
@@ -78,22 +80,6 @@ ReentrancyGuardUpgradeable {
 
     function version() external pure returns (string memory) {
         return VERSION;
-    }
-
-    function pause(bytes[] calldata _signatures) external whenNotPaused {
-        IAdmin(admin).verifyAdminSignatures(
-            abi.encode(address(this), "pause"),
-            _signatures
-        );
-        _pause();
-    }
-
-    function unpause(bytes[] calldata _signatures) external whenPaused {
-        IAdmin(admin).verifyAdminSignatures(
-            abi.encode(address(this), "unpause"),
-            _signatures
-        );
-        _unpause();
     }
 
     function updateBaseURI(
@@ -369,32 +355,12 @@ ReentrancyGuardUpgradeable {
 
     function supportsInterface(bytes4 _interfaceId) public view override(
         IERC165Upgradeable,
+        EstateTokenReceiver,
         RoyaltyRateProposer,
-        ERC1155ReceiverUpgradeable,
         ERC721Upgradeable,
         ERC721URIStorageUpgradeable
     ) returns (bool) {
         return super.supportsInterface(_interfaceId);
-    }
-
-    function onERC1155Received(
-        address,
-        address,
-        uint256,
-        uint256,
-        bytes calldata
-    ) public virtual override returns (bytes4) {
-        return msg.sender == estateToken ? this.onERC1155Received.selector : bytes4(0);
-    }
-
-    function onERC1155BatchReceived(
-        address,
-        address,
-        uint256[] calldata,
-        uint256[] calldata,
-        bytes calldata
-    ) public virtual override returns (bytes4) {
-        return msg.sender == estateToken ? this.onERC1155BatchReceived.selector : bytes4(0);
     }
 
     function _baseURI() internal view override returns (string memory) {

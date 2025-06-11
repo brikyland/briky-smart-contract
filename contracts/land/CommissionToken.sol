@@ -15,6 +15,7 @@ import {Formula} from "../lib/Formula.sol";
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 import {IRoyaltyRateProposer} from "../common/interfaces/IRoyaltyRateProposer.sol";
 
+import {Pausable} from "../common/utilities/Pausable.sol";
 import {RoyaltyRateProposer} from "../common/utilities/RoyaltyRateProposer.sol";
 
 import {IEstateToken} from "./interfaces/IEstateToken.sol";
@@ -25,6 +26,7 @@ contract CommissionToken is
 CommissionTokenStorage,
 ERC721PausableUpgradeable,
 ERC721URIStorageUpgradeable,
+Pausable,
 RoyaltyRateProposer,
 ReentrancyGuardUpgradeable {
     using Formula for uint256;
@@ -66,22 +68,6 @@ ReentrancyGuardUpgradeable {
 
     function version() external pure returns (string memory) {
         return VERSION;
-    }
-
-    function pause(bytes[] calldata _signatures) external whenNotPaused {
-        IAdmin(admin).verifyAdminSignatures(
-            abi.encode(address(this), "pause"),
-            _signatures
-        );
-        _pause();
-    }
-
-    function unpause(bytes[] calldata _signatures) external whenPaused {
-        IAdmin(admin).verifyAdminSignatures(
-            abi.encode(address(this), "unpause"),
-            _signatures
-        );
-        _unpause();
     }
 
     function updateBaseURI(
