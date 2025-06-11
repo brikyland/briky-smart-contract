@@ -29,16 +29,17 @@ ERC1155URIStorageUpgradeable {
     receive() external payable {}
 
     function __LaunchPad_init(
-        string calldata _name,
-        string calldata _symbol,
         address _admin,
         address _feeReceiver,
         address _estateToken,
+        string calldata _uri,
         uint256 _feeRate,
         uint256 _royaltyRate
     ) internal onlyInitializing {
         require(_feeRate <= Constant.COMMON_RATE_MAX_FRACTION);
         require(_royaltyRate <= Constant.COMMON_RATE_MAX_FRACTION);
+
+        __ERC1155_init(_uri);
 
         admin = _admin;
         feeReceiver = _feeReceiver;

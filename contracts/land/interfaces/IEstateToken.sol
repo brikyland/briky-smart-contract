@@ -51,7 +51,7 @@ IERC1155MetadataURIUpgradeable {
     function estateNumber() external view returns (uint256 tokenNumber);
 
     function balanceOfAt(address account, uint256 tokenId, uint256 at) external view returns (uint256 balance);
-    function exists(uint256 tokenId) external view returns (bool existed);
+    function exists(uint256 tokenId) external view returns (bool existence);
     function totalSupply(uint256 tokenId) external view returns (uint256 totalSupply);
 
     function getEstate(uint256 estateId) external view returns (Estate memory tokenInfo);

@@ -1,5 +1,5 @@
 import assert from 'assert';
-import { BigNumber } from "ethers";
+import { BigNumber } from 'ethers';
 import { ethers, network, upgrades } from 'hardhat';
 import { deployDriptributor } from '../../../../utils/deployments/land/driptributor';
 

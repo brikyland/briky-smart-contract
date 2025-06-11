@@ -2,7 +2,7 @@ import { LedgerSigner } from '@anders-t/ethers-ledger';
 import assert from 'assert';
 import { ethers, network, upgrades } from 'hardhat';
 import { deployMortgageToken } from '../../../utils/deployments/lend/mortgageToken';
-import { Initialization } from "./initialization";
+import { Initialization } from './initialization';
 
 async function deployOrUpgradeMortgageToken() {
     const config = network.config as any;

@@ -6,25 +6,29 @@ import {IERC4906Upgradeable} from "@openzeppelin/contracts-upgradeable/interface
 
 import {IRoyaltyRateProposer} from "../../common/interfaces/IRoyaltyRateProposer.sol";
 
-interface ICommissionToken is
+interface IPassportToken is
 IRoyaltyRateProposer,
 IERC4906Upgradeable,
 IERC721MetadataUpgradeable {
     event BaseURIUpdate(string newValue);
-    event CommissionRateUpdate(uint256 newValue);
+    event FeeUpdate(uint256 newValue);
     event RoyaltyRateUpdate(uint256 newValue);
 
     event NewToken(uint256 indexed tokenId, address indexed owner);
 
     error AlreadyMinted();
 
-    function estateToken() external view returns (address estateToken);
     function feeReceiver() external view returns (address feeReceiver);
 
-    function getCommissionRate() external view returns (Rate memory rate);
+    function tokenNumber() external view returns (uint256 tokenNumber);
 
-    function commissionInfo(uint256 tokenId, uint256 value)
-    external view returns (address receiver, uint256 commissionAmount);
+    function fee() external view returns (uint256 fee);
 
-    function mint(address account, uint256 tokenId) external;
+    function getRoyaltyRate() external view returns (Rate memory rate);
+
+    function exists(uint256 tokenId) external view returns (bool existence);
+
+    function hasMinted(address account) external view returns (bool hasMinted);
+
+    function mint() external payable returns (uint256 tokenId);
 }

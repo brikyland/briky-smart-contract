@@ -202,7 +202,7 @@ ReentrancyGuardUpgradeable {
         address[] calldata _accounts,
         bool _isSeller,
         bytes[] calldata _signatures
-    ) external {
+    ) external onlyManager {
         IAdmin(admin).verifyAdminSignatures(
             abi.encode(
                 address(this),

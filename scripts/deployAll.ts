@@ -1,11 +1,11 @@
 import { LedgerSigner } from '@anders-t/ethers-ledger';
 import assert from 'assert';
-import { ethers, network, upgrades } from 'hardhat';
+import { ethers, network } from 'hardhat';
 import { deployAdmin } from '../utils/deployments/common/admin';
 import { deployFeeReceiver } from '../utils/deployments/common/feeReceiver';
 import { deployCurrency } from '../utils/deployments/common/currency';
 import { deployEstateToken } from '../utils/deployments/land/estateToken';
-import { Initialization, Initialization as LandInitialization } from './deployments/land/initialization';
+import { Initialization as LandInitialization } from './deployments/land/initialization';
 import { Initialization as LendInitialization } from './deployments/lend/initialization';
 import { deployEstateForger } from '../utils/deployments/land/estateForger';
 import { deployEstateMarketplace } from '../utils/deployments/land/estateMarketplace';
@@ -69,7 +69,7 @@ async function deployAll() {
     console.log(`${networkName}_FEE_RECEIVER_ADDRESS=${feeReceiver.address}`);
 
     // Deploy currency
-    const currency = await deployCurrency(signer, "Local", "LOC") as Currency;
+    const currency = await deployCurrency(signer, 'Local', 'LOC') as Currency;
     console.log(`${networkName}_CURRENCY_ADDRESS=${currency.address}`);
     
     // Deploy estate token
@@ -168,7 +168,7 @@ async function deployAll() {
         [false],
         await admin.nonce(),
     );
-    console.log("Added currency to admin");
+    console.log('Added currency to admin');
 
     // Deploy and add price feed to estateForger
     const priceFeed = await deployMockPriceFeed(signer, 1 * (10 ** 8), 8) as MockPriceFeed;
@@ -180,7 +180,7 @@ async function deployAll() {
         [1],
         await admin.nonce(),
     );
-    console.log("Added price feed to estateForger");
+    console.log('Added price feed to estateForger');
 }
 
 deployAll()

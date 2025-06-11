@@ -2,7 +2,7 @@ import { LedgerSigner } from '@anders-t/ethers-ledger';
 import assert from 'assert';
 import { ethers, network, upgrades } from 'hardhat';
 import { deployPrimaryToken } from '../../../utils/deployments/land/primaryToken';
-import { Initialization } from "./initialization";
+import { Initialization } from './initialization';
 
 async function deployOrUpgradePrimaryToken() {
     const config = network.config as any;

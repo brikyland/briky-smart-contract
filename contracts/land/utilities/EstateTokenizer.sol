@@ -36,11 +36,11 @@ ERC165Upgradeable {
     }
 
     function onERC1155BatchReceived(
-        address _operator,
-        address _from,
-        uint256[] calldata _ids,
-        uint256[] calldata _values,
-        bytes calldata _data
+        address,
+        address,
+        uint256[] calldata,
+        uint256[] calldata,
+        bytes calldata
     ) public virtual override returns (bytes4) {
         return msg.sender == this.estateToken() ? this.onERC1155BatchReceived.selector : bytes4(0);
     }

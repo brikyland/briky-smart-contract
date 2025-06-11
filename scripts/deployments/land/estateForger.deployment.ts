@@ -2,7 +2,7 @@ import { LedgerSigner } from '@anders-t/ethers-ledger';
 import assert from 'assert';
 import { ethers, network, upgrades } from 'hardhat';
 import { deployEstateForger } from '../../../utils/deployments/land/estateForger';
-import { Initialization } from "./initialization";
+import { Initialization } from './initialization';
 
 async function deployOrUpgradeEstateForger() {
     const config = network.config as any;

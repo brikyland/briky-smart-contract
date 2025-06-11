@@ -18,7 +18,7 @@ export const Initialization = {
     ESTATE_TOKEN_RoyaltyRate: ethers.utils.parseEther(String(0.0003)),
 
     // Primary Token
-    PRIMARY_TOKEN_Name: "Briky Capital",
+    PRIMARY_TOKEN_Name: 'Briky Capital',
     PRIMARY_TOKEN_Symbol: 'BRIK',
     PRIMARY_TOKEN_LiquidationUnlockedAt: Date.parse('2026-01-01T00:00:00') / 1000,
 
