@@ -11,7 +11,8 @@ interface ICommon {
         uint256 value;
         uint256 timestamp;
     }
-    
+
+    error FailedVerification();
     error InsufficientFunds();
     error InvalidCurrency();
     error InvalidInput();

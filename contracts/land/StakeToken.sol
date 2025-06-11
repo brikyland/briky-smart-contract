@@ -200,7 +200,8 @@ ReentrancyGuardUpgradeable {
             revert NoSuccessor();
         }
 
-        if (IPrimaryToken(primaryToken).isStakeRewardingCompleted()) {
+        IPrimaryToken primaryTokenContract = IPrimaryToken(primaryToken);
+        if (primaryTokenContract.isStakeRewardingCompleted()) {
             revert InvalidPromoting();
         }
 
@@ -214,7 +215,7 @@ ReentrancyGuardUpgradeable {
         weights[msg.sender] = weights[msg.sender]
             .sub(_tokenToWeight(_value, interestAccumulation));
 
-        IPrimaryToken(primaryToken).safeIncreaseAllowance(successor, _value);
+        primaryTokenContract.safeApprove(address(successorContract), _value);
         successorContract.stake(msg.sender, _value);
 
         emit Promotion(msg.sender, _value);
@@ -232,12 +233,12 @@ ReentrancyGuardUpgradeable {
 
     function exclusiveDiscount() external view returns (Rate memory rate) {
         IPrimaryToken primaryTokenContract = IPrimaryToken(primaryToken);
-        uint256 primaryTotalStake = primaryTokenContract.totalStake();
+        uint256 globalStake = primaryTokenContract.totalStake();
 
         Rate memory primaryDiscount = primaryTokenContract.exclusiveDiscount();
         return Rate(
             primaryDiscount.value
-                .scale(primaryTotalStake - totalStake, primaryTotalStake << 1)
+                .scale(globalStake - totalStake, globalStake << 1)
                 .add(Constant.PRIMARY_TOKEN_BASE_DISCOUNT),
             primaryDiscount.decimals
         );

@@ -135,9 +135,9 @@ ReentrancyGuardUpgradeable {
     }
 
     function totalStake() public view returns (uint256) {
-        return IERC20Upgradeable(stakeToken1).totalSupply()
-            + IERC20Upgradeable(stakeToken2).totalSupply()
-            + IERC20Upgradeable(stakeToken3).totalSupply();
+        return (stakeToken1 != address(0) ? IERC20Upgradeable(stakeToken1).totalSupply() : 0)
+            + (stakeToken2 != address(0) ? IERC20Upgradeable(stakeToken2).totalSupply() : 0)
+            + (stakeToken3 != address(0) ? IERC20Upgradeable(stakeToken3).totalSupply() : 0);
     }
 
     function isStakeRewardingCompleted() external view returns (bool) {
