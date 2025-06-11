@@ -5,7 +5,7 @@ import { ethers } from "ethers";
 export function expectEqualWithErrorMargin(
     expected: ethers.BigNumber,
     actual: ethers.BigNumber,
-    errorMargin: ethers.BigNumber = ethers.utils.parseUnits("1", "gwei"),
+    errorMargin: ethers.BigNumber = ethers.utils.parseUnits("10", "wei"),
 ) {
     expect(expected).to.be.at.least(actual.sub(errorMargin));
     expect(expected).to.be.at.most(actual.add(errorMargin));

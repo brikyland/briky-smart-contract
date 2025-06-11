@@ -1,13 +1,12 @@
 import { expect } from 'chai';
 import { ethers, upgrades } from 'hardhat';
-import { Admin, Currency, MockPrimaryToken, MockPrimaryToken__factory, MockStakeToken, MockStakeToken__factory, PrimaryToken, StakeToken, TokenSender, Treasury } from '@typechain-types';
+import { Admin, Currency, MockPrimaryToken, MockPrimaryToken__factory, MockStakeToken, MockStakeToken__factory, PrimaryToken, StakeToken, Treasury } from '@typechain-types';
 import { callTransaction, getSignatures, prepareERC20, randomWallet } from '@utils/blockchain';
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { Constant } from '@tests/test.constant';
 import { loadFixture, time } from '@nomicfoundation/hardhat-network-helpers';
 import { deployCurrency } from '@utils/deployments/common/currency';
 import { deployTreasury } from '@utils/deployments/land/treasury';
-import { FIXED_ONE, fixedAdd, fixedDiv, fixedMul, fixedSub } from '@utils/fixedMath';
 import { callStakeToken_Pause, callStakeToken_UpdateFeeRate } from '@utils/callWithSignatures/stakeToken';
 import { callStakeToken_InitializeRewarding } from '@utils/callWithSignatures/stakeToken';
 import { callPrimaryToken_UpdateStakeTokens, callPrimaryToken_UpdateTreasury } from '@utils/callWithSignatures/primary';
@@ -15,7 +14,7 @@ import { MockContract, smock } from '@defi-wonderland/smock';
 import { getStakingFee } from '@utils/formula';
 import { expectBetween, expectEqualWithErrorMargin } from '@utils/testHelper';
 import { BigNumber, Wallet } from 'ethers';
-import { getRandomEnumValue, randomArrayWithSum, randomBigNumber, randomInt, shuffle } from '@utils/utils';
+import { randomArrayWithSum, randomBigNumber, randomInt, shuffle } from '@utils/utils';
 import { StakeTokenOperation } from '@utils/enums';
 
 interface StakeTokenFixture {
@@ -27,7 +26,6 @@ interface StakeTokenFixture {
     stakeToken1: MockContract<MockStakeToken>;
     stakeToken2: MockContract<MockStakeToken>;
     stakeToken3: MockContract<MockStakeToken>;
-    tokenSender: TokenSender;
     treasury: Treasury;
 
     initialLastRewardFetch: number;
@@ -119,9 +117,6 @@ describe('10. StakeToken', async () => {
             await admin.nonce()
         );
 
-        const TokenSender = await ethers.getContractFactory("TokenSender");
-        const tokenSender = await TokenSender.deploy(primaryToken.address);
-        
         return {
             deployer,
             admins,
@@ -132,7 +127,6 @@ describe('10. StakeToken', async () => {
             stakeToken2,
             stakeToken3,
             treasury,
-            tokenSender,
             initialLastRewardFetch: 0,
             staker1,
             staker2,
@@ -148,7 +142,7 @@ describe('10. StakeToken', async () => {
         pause = false,
     } = {}): Promise<StakeTokenFixture> {
         const fixture = await loadFixture(stakeTokenFixture);
-        const { deployer, admin, admins, currency, primaryToken, stakeToken1, stakeToken2, stakeToken3, staker1, staker2, staker3, treasury, tokenSender } = fixture;
+        const { deployer, admin, admins, currency, primaryToken, stakeToken1, stakeToken2, stakeToken3, staker1, staker2, staker3, treasury } = fixture;
 
         let currentTimestamp = await time.latest() + 100;
         await time.increaseTo(currentTimestamp);
@@ -235,8 +229,6 @@ describe('10. StakeToken', async () => {
             expect(feeRate1.value).to.equal(0);
             expect(feeRate1.decimals).to.equal(Constant.COMMON_RATE_DECIMALS);
 
-            expect(await stakeToken1.getInterestAccumulation()).to.equal(FIXED_ONE);
-
             expect(await stakeToken1.admin()).to.equal(admin.address);
             expect(await stakeToken1.primaryToken()).to.equal(primaryToken.address);
             expect(await stakeToken1.successor()).to.equal(ethers.constants.AddressZero);
@@ -252,8 +244,6 @@ describe('10. StakeToken', async () => {
             expect(feeRate2.value).to.equal(0);
             expect(feeRate2.decimals).to.equal(Constant.COMMON_RATE_DECIMALS);
 
-            expect(await stakeToken2.getInterestAccumulation()).to.equal(FIXED_ONE);
-
             expect(await stakeToken2.admin()).to.equal(admin.address);
             expect(await stakeToken2.primaryToken()).to.equal(primaryToken.address);
             expect(await stakeToken2.successor()).to.equal(ethers.constants.AddressZero);
@@ -268,8 +258,6 @@ describe('10. StakeToken', async () => {
             const feeRate3 = await stakeToken3.getFeeRate();
             expect(feeRate3.value).to.equal(0);
             expect(feeRate3.decimals).to.equal(Constant.COMMON_RATE_DECIMALS);
-
-            expect(await stakeToken3.getInterestAccumulation()).to.equal(FIXED_ONE);
 
             expect(await stakeToken3.admin()).to.equal(admin.address);
             expect(await stakeToken3.primaryToken()).to.equal(primaryToken.address);
@@ -311,7 +299,6 @@ describe('10. StakeToken', async () => {
             const reward = Constant.PRIMARY_TOKEN_STAKE_1_WAVE_REWARD;
 
             let lastRewardFetch = await stakeToken1.lastRewardFetch();
-            let interestAccumulation = FIXED_ONE;
             let currentSupply;
 
             for(let i = 0; i < 10; ++i) {
@@ -328,12 +315,6 @@ describe('10. StakeToken', async () => {
 
                 expect(await stakeToken1.totalSupply()).to.equal(currentSupply.add(reward));
                 expect(await stakeToken1.lastRewardFetch()).to.equal(lastRewardFetch);
-
-                interestAccumulation = fixedMul(
-                    interestAccumulation,
-                    fixedAdd(FIXED_ONE, fixedDiv(reward, currentSupply)),
-                );
-                expect(await stakeToken1.getInterestAccumulation()).to.equal(interestAccumulation);
             }
         });
 
@@ -481,8 +462,6 @@ describe('10. StakeToken', async () => {
 
             expect(await stakeToken1.totalSupply()).to.equal(stakeValue1);
             
-            // let currentWeight = tokenToWeight(stakeValue1, await stakeToken1.getInterestAccumulation());
-            // expect(await stakeToken1.getWeight(staker1.address)).to.equal(currentWeight);
             expectEqualWithErrorMargin(await stakeToken1.balanceOf(staker1.address), stakeValue1);
 
             const stakeValue2 = ethers.utils.parseEther("1000");
@@ -513,12 +492,6 @@ describe('10. StakeToken', async () => {
 
             expectEqualWithErrorMargin(await stakeToken1.balanceOf(staker1.address), stakeValue1.add(stakeValue2));
             
-            // currentWeight = fixedAdd(
-            //     currentWeight,
-            //     tokenToWeight(stakeValue2, await stakeToken1.getInterestAccumulation())
-            // );
-            // expect(await stakeToken1.getWeight(staker1.address)).to.equal(currentWeight); 
-
             primaryToken.isStakeRewardingCompleted.reset();
         });
     });
@@ -537,25 +510,12 @@ describe('10. StakeToken', async () => {
             // Initial staking
             const stakeAmount = ethers.utils.parseEther("100");
 
-            // let currentWeight = tokenToWeight(
-            //     stakeAmount,
-            //     await stakeToken1.getInterestAccumulation()
-            // );
-
             await callTransaction(stakeToken1.connect(staker1).stake(
                 staker1.address, 
                 stakeAmount
             ));
 
             primaryToken.isStakeRewardingCompleted.returns(true);
-
-            // currentWeight = fixedSub(
-            //     currentWeight,
-            //     tokenToWeight(
-            //         ethers.utils.parseEther("30"),
-            //         await stakeToken1.getInterestAccumulation()
-            //     )
-            // );
 
             // Unstake #1
             const unstakeAmount1 = ethers.utils.parseEther("30");
@@ -568,7 +528,6 @@ describe('10. StakeToken', async () => {
                 .withArgs(staker1.address, unstakeAmount1);
 
             expect(await stakeToken1.totalSupply()).to.equal(stakeAmount.sub(unstakeAmount1));
-            // expect(await stakeToken1.getWeight(staker1.address)).to.equal(currentWeight);
 
             expect(await primaryToken.balanceOf(stakeToken1.address)).to.equal(
                 initStakeToken1PrimaryBalance.add(stakeAmount).sub(unstakeAmount1)
@@ -584,14 +543,6 @@ describe('10. StakeToken', async () => {
 
             const unstakeAmount2 = ethers.utils.parseEther("20");
 
-            // currentWeight = fixedSub(
-            //     currentWeight,
-            //     tokenToWeight(
-            //         ethers.utils.parseEther("20"),
-            //         await stakeToken1.getInterestAccumulation()
-            //     )
-            // );
-
             const tx2 = await stakeToken1.connect(staker1).unstake(unstakeAmount2);
             await tx2.wait();
 
@@ -600,7 +551,6 @@ describe('10. StakeToken', async () => {
                 .withArgs(staker1.address, unstakeAmount2);
 
             expect(await stakeToken1.totalSupply()).to.equal(initStakeToken1PrimaryBalance.sub(unstakeAmount2));
-            // expect(await stakeToken1.getWeight(staker1.address)).to.equal(currentWeight);
 
             expect(await primaryToken.balanceOf(stakeToken1.address)).to.equal(
                 initStakeToken1PrimaryBalance.sub(unstakeAmount2)
@@ -673,25 +623,6 @@ describe('10. StakeToken', async () => {
             // Transaction #1
             const promoteAmount1 = ethers.utils.parseEther("80");
 
-            // let stakeToken1Weight = await stakeToken1.getWeight(staker1.address);
-            // let stakeToken2Weight = await stakeToken2.getWeight(staker1.address);
-
-            // stakeToken1Weight = fixedSub(
-            //     stakeToken1Weight,
-            //     tokenToWeight(
-            //         promoteAmount1,
-            //         await stakeToken1.getInterestAccumulation()
-            //     )
-            // );
-
-            // stakeToken2Weight = fixedAdd(
-            //     stakeToken2Weight,
-            //     tokenToWeight(
-            //         promoteAmount1,
-            //         await stakeToken2.getInterestAccumulation()
-            //     )
-            // );
-
             const tx1 = await stakeToken1.connect(staker1).promote(promoteAmount1);
             await tx1.wait();
 
@@ -707,12 +638,7 @@ describe('10. StakeToken', async () => {
 
             expectEqualWithErrorMargin(await stakeToken1.balanceOf(staker1.address), stakeAmount.sub(promoteAmount1));
             expectEqualWithErrorMargin(await stakeToken2.balanceOf(staker1.address), promoteAmount1);
-
-            // expect(await stakeToken1.totalSupply()).to.equal(stakeAmount.sub(promoteAmount1));
             
-            // expect(await stakeToken1.getWeight(staker1.address)).to.equal(stakeToken1Weight);
-            // expect(await stakeToken2.getWeight(staker1.address)).to.equal(stakeToken2Weight);
-
             // Transaction #2
             const promoteAmount2 = ethers.utils.parseEther("40");
 
@@ -835,26 +761,16 @@ describe('10. StakeToken', async () => {
                 return expectedBalances[pool].has(staker.address) ? expectedBalances[pool].get(staker.address)! : ethers.constants.Zero;
             }
 
-            async function performFetchReward(pool: number) {
-                const totalSupply = await stakeTokens[pool].totalSupply();
+            let errorMargin = ethers.constants.Zero;
 
-                const nextRewardFetch = (await stakeTokens[pool].lastRewardFetch()).add(Constant.STAKE_TOKEN_REWARD_FETCH_COOLDOWN);
-                if (nextRewardFetch.gt(await time.latest())) {
-                    await time.setNextBlockTimestamp(nextRewardFetch);
+            for (const [index, operation] of operations.entries()) {
+                if (index % 100 === 0) {
+                    const indexRange = [index, Math.min(index + 100, operations.length)];
+                    console.log(`Operation [${indexRange[0]}; ${indexRange[1]})`);
                 }
-                await callTransaction(stakeTokens[pool].fetchReward());
 
-                const newTotalSupply = await stakeTokens[pool].totalSupply();
-
-                for (const staker of stakers) {
-                    const balance = getBalance(pool, staker);
-                    const newBalance = balance.mul(newTotalSupply).div(totalSupply);
-                    expectedBalances[pool].set(staker.address, newBalance);
-                    expectEqualWithErrorMargin(await stakeTokens[pool].balanceOf(staker.address), newBalance);
-                }
-            }
-
-            for (const operation of operations) {
+                errorMargin = errorMargin.add(ethers.utils.parseUnits("2", "wei"));
+                
                 const [type, stakeToken, ...args] = operation;
                 const pool = stakeTokens.findIndex(t => t.address === stakeToken.address);
 
@@ -870,7 +786,7 @@ describe('10. StakeToken', async () => {
 
                     expectedBalances[pool].set(staker.address, getBalance(pool, staker).add(amount));
 
-                    expectEqualWithErrorMargin(await stakeTokens[pool].balanceOf(staker.address), getBalance(pool, staker));
+                    expectEqualWithErrorMargin(await stakeTokens[pool].balanceOf(staker.address), getBalance(pool, staker), errorMargin);
                 } else if (type === StakeTokenOperation.Unstake) {
                     const [staker, amount] = args;
                     // console.log("Unstake", pool, staker.address, amount);
@@ -880,7 +796,7 @@ describe('10. StakeToken', async () => {
 
                     expectedBalances[pool].set(staker.address, getBalance(pool, staker).sub(amount));
 
-                    expectEqualWithErrorMargin(await stakeTokens[pool].balanceOf(staker.address), getBalance(pool, staker));
+                    expectEqualWithErrorMargin(await stakeTokens[pool].balanceOf(staker.address), getBalance(pool, staker), errorMargin);
                 } else if (type === StakeTokenOperation.Promote) {
                     const [staker, amount] = args;
                     // console.log("Promote", pool, staker.address, amount);
@@ -891,8 +807,8 @@ describe('10. StakeToken', async () => {
                     expectedBalances[pool].set(staker.address, getBalance(pool, staker).sub(amount));
                     expectedBalances[pool+1].set(staker.address, getBalance(pool+1, staker).add(amount));
 
-                    expectEqualWithErrorMargin(await stakeTokens[pool].balanceOf(staker.address), getBalance(pool, staker));
-                    expectEqualWithErrorMargin(await stakeTokens[pool+1].balanceOf(staker.address), getBalance(pool+1, staker));
+                    expectEqualWithErrorMargin(await stakeTokens[pool].balanceOf(staker.address), getBalance(pool, staker), errorMargin);
+                    expectEqualWithErrorMargin(await stakeTokens[pool+1].balanceOf(staker.address), getBalance(pool+1, staker), errorMargin);
                 } else if (type === StakeTokenOperation.Transfer) {
                     const [sender, receiver, amount] = args;
                     // console.log("Transfer", pool, sender.address, receiver.address, amount);
@@ -906,11 +822,26 @@ describe('10. StakeToken', async () => {
                     expectedBalances[pool].set(sender.address, getBalance(pool, sender).sub(amount));
                     expectedBalances[pool].set(receiver.address, getBalance(pool, receiver).add(amount));
 
-                    expectEqualWithErrorMargin(await stakeTokens[pool].balanceOf(sender.address), getBalance(pool, sender));
-                    expectEqualWithErrorMargin(await stakeTokens[pool].balanceOf(receiver.address), getBalance(pool, receiver));
+                    expectEqualWithErrorMargin(await stakeTokens[pool].balanceOf(sender.address), getBalance(pool, sender), errorMargin);
+                    expectEqualWithErrorMargin(await stakeTokens[pool].balanceOf(receiver.address), getBalance(pool, receiver), errorMargin);
                 } else if (type === StakeTokenOperation.FetchReward) {
                     // console.log("FetchReward", pool);
-                    await performFetchReward(pool);
+                    const totalSupply = await stakeTokens[pool].totalSupply();
+
+                    const nextRewardFetch = (await stakeTokens[pool].lastRewardFetch()).add(Constant.STAKE_TOKEN_REWARD_FETCH_COOLDOWN);
+                    if (nextRewardFetch.gt(await time.latest())) {
+                        await time.setNextBlockTimestamp(nextRewardFetch);
+                    }
+                    await callTransaction(stakeTokens[pool].fetchReward());
+    
+                    const newTotalSupply = await stakeTokens[pool].totalSupply();
+    
+                    for (const staker of stakers) {
+                        const balance = getBalance(pool, staker);
+                        const newBalance = balance.mul(newTotalSupply).div(totalSupply);
+                        expectedBalances[pool].set(staker.address, newBalance);
+                        expectEqualWithErrorMargin(await stakeTokens[pool].balanceOf(staker.address), newBalance, errorMargin);
+                    }
                 }
 
                 // Total supply should always equal primary token balance
@@ -1051,67 +982,7 @@ describe('10. StakeToken', async () => {
             return operations;
         }
         
-        it('10.10.1. manual test (staking and rewarding)', async () => {
-            const { stakeToken1, staker1, staker2, staker3, primaryToken } = await setupBeforeTest({
-                setFeeRate: true,
-                initializeRewarding: true,
-                prepareCurrencyForStakers: true,
-                preparePrimaryTokenForStakers: true,
-            });
-
-            const stakeAmount1_Day0 = ethers.utils.parseEther("100");
-            const stakeAmount2_Day0 = ethers.utils.parseEther("200");
-            await callTransaction(stakeToken1.connect(staker1).stake(
-                staker1.address, 
-                stakeAmount1_Day0
-            ));
-            await callTransaction(stakeToken1.connect(staker2).stake(
-                staker2.address, 
-                stakeAmount2_Day0
-            ));
-
-            expectEqualWithErrorMargin(await stakeToken1.balanceOf(staker1.address), stakeAmount1_Day0);
-            expectEqualWithErrorMargin(await stakeToken1.balanceOf(staker2.address), stakeAmount2_Day0);
-
-            let lastRewardFetch = await stakeToken1.lastRewardFetch();
-            lastRewardFetch = lastRewardFetch.add(Constant.STAKE_TOKEN_REWARD_FETCH_COOLDOWN);
-            await time.setNextBlockTimestamp(lastRewardFetch);
-
-            const totalSupply = await stakeToken1.totalSupply();
-
-            await callTransaction(stakeToken1.fetchReward());
-
-            const newTotalSupply = await stakeToken1.totalSupply();
-
-            const stakeAmount1_Day1 = ethers.utils.parseEther("300");
-            const stakeAmount2_Day1 = ethers.utils.parseEther("400");
-            await callTransaction(stakeToken1.connect(staker1).stake(
-                staker1.address, 
-                stakeAmount1_Day1
-            ));
-            await callTransaction(stakeToken1.connect(staker2).stake(
-                staker2.address, 
-                stakeAmount2_Day1
-            ));
-
-            const stakeAmount3_Day1 = ethers.utils.parseEther("500");
-            await callTransaction(stakeToken1.connect(staker3).stake(
-                staker3.address, 
-                stakeAmount3_Day1
-            ));
-
-            const stakeAmount1_Day0_AfterInterest = stakeAmount1_Day0.mul(newTotalSupply).div(totalSupply);
-            const stakeAmount2_Day0_AfterInterest = stakeAmount2_Day0.mul(newTotalSupply).div(totalSupply);
-
-            expect(await stakeToken1.balanceOf(staker1.address)).to.equal(stakeAmount1_Day0_AfterInterest.add(stakeAmount1_Day1));
-            expect(await stakeToken1.balanceOf(staker2.address)).to.equal(stakeAmount2_Day0_AfterInterest.add(stakeAmount2_Day1));
-
-            // expectEqualWithErrorMargin(await stakeToken1.balanceOf(staker1.address), stakeAmount1_Day0_AfterInterest);
-            // expectEqualWithErrorMargin(await stakeToken1.balanceOf(staker2.address), stakeAmount2_Day0_AfterInterest);
-            expectEqualWithErrorMargin(await stakeToken1.balanceOf(staker3.address), stakeAmount3_Day1);
-        });
-
-        it('10.10.2. automated test (staking and rewarding)', async () => {
+        it('10.10.2. return correct balance in a few staking and rewarding operations', async () => {
             const fixture = await setupBeforeTest({
                 setFeeRate: true,
                 initializeRewarding: true,
@@ -1119,7 +990,7 @@ describe('10. StakeToken', async () => {
                 preparePrimaryTokenForStakers: true,
             });
 
-            const { stakeToken1, stakeToken2, stakeToken3, staker1, staker2, staker3 } = fixture;
+            const { stakeToken1, staker1, staker2, staker3 } = fixture;
             
             const operations = [
                 [StakeTokenOperation.Stake, stakeToken1, staker1, ethers.utils.parseEther("100")],
@@ -1133,7 +1004,7 @@ describe('10. StakeToken', async () => {
             await testBalanceAfterOperations(fixture, operations);
         });
 
-        it.only('10.10.3. random test', async () => {
+        it('10.10.3. return correct balance in 1000 random operations', async () => {
             const fixture = await setupBeforeTest({
                 setFeeRate: true,
                 initializeRewarding: true,
