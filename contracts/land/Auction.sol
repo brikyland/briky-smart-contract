@@ -146,6 +146,7 @@ ReentrancyGuardUpgradeable {
             : allocation.scale(block.timestamp - endAt, vestingDuration);
 
         uint256 withdrawableAmount = vestedAmount - withdrawnAmount[msg.sender];
+        withdrawnAmount[msg.sender] = vestedAmount;
         IERC20Upgradeable(primaryToken).safeTransfer(msg.sender, withdrawableAmount);
 
         emit Withdrawal(msg.sender, withdrawableAmount);
