@@ -12,6 +12,7 @@ IERC4906Upgradeable,
 IERC721MetadataUpgradeable {
     struct Content {
         string uri;
+        uint40 openAt;
         uint40 lockAt;
     }
 
@@ -22,6 +23,7 @@ IERC721MetadataUpgradeable {
     event NewContent(
         uint256 indexed contentId,
         string uri,
+        uint40 openAt,
         uint40 duration
     );
     event ContentCancellation(uint256 indexed contentId);
@@ -33,7 +35,9 @@ IERC721MetadataUpgradeable {
     );
 
     error AlreadyMinted();
+    error AlreadyLocked();
     error InvalidContentId();
+    error NotOpened();
 
     function feeReceiver() external view returns (address feeReceiver);
 
