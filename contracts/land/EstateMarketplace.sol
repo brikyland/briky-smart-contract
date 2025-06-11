@@ -2,7 +2,6 @@
 pragma solidity ^0.8.20;
 
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC20Upgradeable.sol";
-import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
@@ -24,7 +23,7 @@ import {Discountable} from "./utilities/Discountable.sol";
 contract EstateMarketplace is
 EstateMarketplaceStorage,
 Discountable,
-PausableUpgradeable,
+Pausable,
 ReentrancyGuardUpgradeable {
     using Formula for uint256;
     using SafeERC20Upgradeable for IERC20Upgradeable;
