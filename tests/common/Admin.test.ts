@@ -17,8 +17,10 @@ import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 interface AdminFixture {
     deployer: any;
     admins: any[];
-    nonAdmin: any;
     admin: Admin;
+    manager: any;
+    moderator: any;
+    user: any;
 }
 
 describe('1. Admin', async () => {
@@ -27,7 +29,9 @@ describe('1. Admin', async () => {
         const deployer = accounts[0];
         const admins = [];
         for (let i = 1; i <= Constant.ADMIN_NUMBER; ++i) admins.push(accounts[i]);
-        const nonAdmin = accounts[Constant.ADMIN_NUMBER + 1];
+        const manager = accounts[Constant.ADMIN_NUMBER + 1];
+        const moderator = accounts[Constant.ADMIN_NUMBER + 2];
+        const user = accounts[Constant.ADMIN_NUMBER + 3];
 
         const adminAddresses: string[] = admins.map(signer => signer.address);
         const admin = await deployAdmin(
@@ -42,8 +46,10 @@ describe('1. Admin', async () => {
         return {
             deployer,
             admins,
-            nonAdmin,
             admin,
+            manager,
+            moderator,
+            user,
         };
     };
 
@@ -72,8 +78,9 @@ describe('1. Admin', async () => {
     });
 
     describe('1.2. verifyAdminSignature(bytes, bytes[])', async () => {
-        it('1.2.1. verify admin signatures successfully with at least 4/5 valid admin signatures (incorrect nonce)', async () => {
-            const { admins, admin } = await setupBeforeTest();
+        it('1.2.1. verify admin signatures successfully with at least 4/5 valid admin signatures', async () => {
+            const fixture = await setupBeforeTest();
+            const { admins, admin } = fixture;            
             let currentNonce = 0;
 
             const message = ethers.utils.hexlify(ethers.utils.toUtf8Bytes('Blockchain'));
@@ -109,89 +116,9 @@ describe('1. Admin', async () => {
             }
         });
 
-        it('1.2.2. verify admin signatures successfully with at least 4/5 valid admin signatures (incorrect message)', async () => {
-            const { admins, admin } = await setupBeforeTest();
-            let currentNonce = 0;
-
-            const message = ethers.utils.hexlify(ethers.utils.toUtf8Bytes('Blockchain'));
-            const invalidSignatures = await getSignatures(
-                ethers.utils.hexlify(ethers.utils.toUtf8Bytes('Blockchain2')),
-                admins,
-                999999999
-            );
-
-            for (let mask = 0; mask < (1 << Constant.ADMIN_NUMBER); ++mask) {
-                const validSignatures = await getSignatures(message, admins, currentNonce);
-                let countValidSignatures = 0;
-                const signatures = [];
-                for (let i = 0; i < Constant.ADMIN_NUMBER; ++i) {
-                    if ((mask >> i) & 1) {
-                        signatures.push(validSignatures[i]);
-                        ++countValidSignatures;
-                    } else {
-                        signatures.push(invalidSignatures[i]);
-                    }
-                }
-
-                if (countValidSignatures < 4) continue;
-
-                let tx = await admin.verifyAdminSignatures(
-                    message,
-                    signatures,
-                );
-
-                await expect(tx).to
-                    .emit(admin, 'AdminSignaturesVerification')
-                    .withArgs(message, currentNonce, signatures);
-
-                ++currentNonce;
-                let nonce = await admin.nonce();
-                expect(nonce).to.equal(currentNonce);
-            }
-        });
-
-        it('1.2.3. verify admin signatures successfully with at least 4/5 valid admin signatures (incorrect address)', async () => {
-            const { admins, admin } = await setupBeforeTest();
-            let currentNonce = 0;
-
-            const invalidAdmins: Wallet[] = [];
-            for (let i = 0; i < Constant.ADMIN_NUMBER; ++i) invalidAdmins.push(randomWallet());
-
-            const message = ethers.utils.hexlify(ethers.utils.toUtf8Bytes('Blockchain'));
-            const invalidSignatures = await getSignatures(message, invalidAdmins, 999999999);
-
-            for (let mask = 0; mask < (1 << Constant.ADMIN_NUMBER); ++mask) {
-                const validSignatures = await getSignatures(message, admins, currentNonce);
-                let countValidSignatures = 0;
-                const signatures = [];
-                for (let i = 0; i < Constant.ADMIN_NUMBER; ++i) {
-                    if ((mask >> i) & 1) {
-                        signatures.push(validSignatures[i]);
-                        ++countValidSignatures;
-                    } else {
-                        signatures.push(invalidSignatures[i]);
-                    }
-                }
-
-                if (countValidSignatures < 4) continue;
-
-                let tx = await admin.verifyAdminSignatures(
-                    message,
-                    signatures,
-                );
-
-                await expect(tx).to
-                    .emit(admin, 'AdminSignaturesVerification')
-                    .withArgs(message, currentNonce, signatures);
-
-                ++currentNonce;
-                let nonce = await admin.nonce();
-                expect(nonce).to.equal(currentNonce);
-            }
-        });
-
-        it('1.2.4. verify admin signatures successfully multiple times', async () => {
-            const { admins, admin } = await setupBeforeTest();
+        it('1.2.2. verify admin signatures successfully multiple times', async () => {
+            const fixture = await setupBeforeTest();
+            const { admins, admin } = fixture;            
             let currentNonce = 0;
 
             const messageA = ethers.utils.hexlify(ethers.utils.toUtf8Bytes('Blockchain'));
@@ -250,8 +177,9 @@ describe('1. Admin', async () => {
             expect(nonce).to.equal(3);
         });
 
-        it('1.2.5. Verify admin signatures unsuccessfully with less than 4/5 valid admin signatures ', async () => {
-            const { admins, admin } = await setupBeforeTest();
+        it('1.2.3. Verify admin signatures unsuccessfully with less than 4/5 valid admin signatures (incorrect nonce)', async () => {
+            const fixture = await setupBeforeTest();
+            const { admins, admin } = fixture;            
             let currentNonce = 0;
 
             const message = ethers.utils.hexlify(ethers.utils.toUtf8Bytes('Blockchain'));
@@ -280,8 +208,75 @@ describe('1. Admin', async () => {
             }
         });
 
+        it('1.2.4. Verify admin signatures unsuccessfully with less than 4/5 valid admin signatures (incorrect message)', async () => {
+            const fixture = await setupBeforeTest();
+            const { admins, admin } = fixture;            
+            let currentNonce = 0;
+
+            const message = ethers.utils.hexlify(ethers.utils.toUtf8Bytes('Blockchain'));
+            const incorrectMessage = ethers.utils.hexlify(ethers.utils.toUtf8Bytes('Bitcoin'));
+
+            const validSignatures = await getSignatures(message, admins, currentNonce);
+            const invalidSignatures = await getSignatures(incorrectMessage, admins, currentNonce);
+
+            for (let mask = 0; mask < (1 << Constant.ADMIN_NUMBER); ++mask) {
+                let countValidSignatures = 0;
+                const signatures = [];
+                for (let i = 0; i < Constant.ADMIN_NUMBER; ++i) {
+                    if ((mask >> i) & 1) {
+                        signatures.push(validSignatures[i]);
+                        ++countValidSignatures;
+                    } else {
+                        signatures.push(invalidSignatures[i]);
+                    }
+                }
+
+                if (countValidSignatures >= 4) continue;
+
+                await expect(admin.verifyAdminSignatures(
+                    message,
+                    signatures,
+                )).to.be.revertedWithCustomError(admin, 'FailedVerification');
+            }
+        });
+
+        it('1.2.5. Verify admin signatures unsuccessfully with less than 4/5 valid admin signatures (incorrect address)', async () => {
+            const fixture = await setupBeforeTest();
+            const { admins, admin } = fixture;            
+            let currentNonce = 0;
+
+            const invalidAdmins: Wallet[] = [];
+            for (let i = 0; i < Constant.ADMIN_NUMBER; ++i) invalidAdmins.push(randomWallet());
+
+            const message = ethers.utils.hexlify(ethers.utils.toUtf8Bytes('Blockchain'));
+
+            const validSignatures = await getSignatures(message, admins, currentNonce);
+            const invalidSignatures = await getSignatures(message, invalidAdmins, currentNonce);
+
+            for (let mask = 0; mask < (1 << Constant.ADMIN_NUMBER); ++mask) {
+                let countValidSignatures = 0;
+                const signatures = [];
+                for (let i = 0; i < Constant.ADMIN_NUMBER; ++i) {
+                    if ((mask >> i) & 1) {
+                        signatures.push(validSignatures[i]);
+                        ++countValidSignatures;
+                    } else {
+                        signatures.push(invalidSignatures[i]);
+                    }
+                }
+
+                if (countValidSignatures >= 4) continue;
+
+                await expect(admin.verifyAdminSignatures(
+                    message,
+                    signatures,
+                )).to.be.revertedWithCustomError(admin, 'FailedVerification');
+            }
+        });
+
         it('1.2.6. Verify admin signatures unsuccessfully with incorrect admin signatures order', async () => {
-            const { admins, admin } = await setupBeforeTest();
+            const fixture = await setupBeforeTest();
+            const { admins, admin } = fixture;            
             let currentNonce = 0;
 
             const message = ethers.utils.hexlify(ethers.utils.toUtf8Bytes('Blockchain'));
@@ -304,7 +299,8 @@ describe('1. Admin', async () => {
         });
 
         it('1.2.7. Verify admin signatures unsuccessfully with incorrect number of signatures', async () => {
-            const { admins, admin } = await setupBeforeTest();
+            const fixture = await setupBeforeTest();
+            const { admins, admin } = fixture;            
             let currentNonce = 0;
 
             const message = ethers.utils.hexlify(ethers.utils.toUtf8Bytes('Blockchain'));
@@ -323,13 +319,17 @@ describe('1. Admin', async () => {
         });
 
         it('1.2.8. Verify admin signatures unsuccessfully by non-manager origin caller', async () => {
-            const { admins, admin, nonAdmin } = await setupBeforeTest();
+            const { admins, admin, moderator, user } = await setupBeforeTest();
             let currentNonce = 0;
 
             const message = ethers.utils.hexlify(ethers.utils.toUtf8Bytes('Blockchain'));
             let validSignatures = await getSignatures(message, admins, currentNonce);
 
-            await expect(admin.connect(nonAdmin).verifyAdminSignatures(
+            await expect(admin.connect(moderator).verifyAdminSignatures(
+                message,
+                validSignatures,
+            )).to.be.revertedWithCustomError(admin, 'Unauthorized');
+            await expect(admin.connect(user).verifyAdminSignatures(
                 message,
                 validSignatures,
             )).to.be.revertedWithCustomError(admin, 'Unauthorized');
@@ -338,7 +338,8 @@ describe('1. Admin', async () => {
 
     describe('1.3. transferAdministration1(address, bytes[])', async () => {
         it('1.3.1. Change admin 1 successfully', async () => {
-            const { admins, admin } = await setupBeforeTest();
+            const fixture = await setupBeforeTest();
+            const { admins, admin } = fixture;            
 
             const newAdmin = randomWallet();
             const message = ethers.utils.defaultAbiCoder.encode(
@@ -362,7 +363,8 @@ describe('1. Admin', async () => {
         });
 
         it('1.3.2. Change admin 1 unsuccessfully because of invalid signatures', async () => {
-            const { admins, admin } = await setupBeforeTest();
+            const fixture = await setupBeforeTest();
+            const { admins, admin } = fixture;            
 
             const newAdmin = randomWallet();
             const message = ethers.utils.defaultAbiCoder.encode(
@@ -380,8 +382,8 @@ describe('1. Admin', async () => {
 
     describe('1.4. transferAdministration2(address, bytes[])', async () => {
         it('1.4.1. Change admin 2 successfully', async () => {
-            const { admins, admin } = await setupBeforeTest();
-            let currentNonce = 0;
+            const fixture = await setupBeforeTest();
+            const { admins, admin } = fixture;            
 
             const newAdmin = randomWallet();
             const message = ethers.utils.defaultAbiCoder.encode(
@@ -405,7 +407,8 @@ describe('1. Admin', async () => {
         });
 
         it('1.4.2. Change admin 2 unsuccessfully because of invalid signatures', async () => {
-            const { admins, admin } = await setupBeforeTest();
+            const fixture = await setupBeforeTest();
+            const { admins, admin } = fixture;            
 
             const newAdmin = randomWallet();
             const message = ethers.utils.defaultAbiCoder.encode(
@@ -423,7 +426,8 @@ describe('1. Admin', async () => {
 
     describe('1.5. transferAdministration3(address, bytes[])', async () => {
         it('1.5.1. Change admin 3 successfully', async () => {
-            const { admins, admin } = await setupBeforeTest();
+            const fixture = await setupBeforeTest();
+            const { admins, admin } = fixture;            
 
             const newAdmin = randomWallet();
             const message = ethers.utils.defaultAbiCoder.encode(
@@ -447,7 +451,8 @@ describe('1. Admin', async () => {
         });
 
         it('1.5.2. Change admin 3 unsuccessfully because of invalid signatures', async () => {
-            const { admins, admin } = await setupBeforeTest();
+            const fixture = await setupBeforeTest();
+            const { admins, admin } = fixture;            
 
             const newAdmin = randomWallet();
             const message = ethers.utils.defaultAbiCoder.encode(
@@ -465,7 +470,8 @@ describe('1. Admin', async () => {
 
     describe('1.6. transferAdministration4(address, bytes[])', async () => {
         it('1.6.1. Change admin 4 successfully', async () => {
-            const { admins, admin } = await setupBeforeTest();
+            const fixture = await setupBeforeTest();
+            const { admins, admin } = fixture;            
 
             const newAdmin = randomWallet();
             const message = ethers.utils.defaultAbiCoder.encode(
@@ -489,7 +495,8 @@ describe('1. Admin', async () => {
         });
 
         it('1.6.2. Change admin 4 unsuccessfully because of invalid signatures', async () => {
-            const { admins, admin } = await setupBeforeTest();
+            const fixture = await setupBeforeTest();
+            const { admins, admin } = fixture;            
 
             const newAdmin = randomWallet();
             const message = ethers.utils.defaultAbiCoder.encode(
@@ -507,7 +514,8 @@ describe('1. Admin', async () => {
 
     describe('1.7. transferAdministration5(address, bytes[])', async () => {
         it('1.7.1. Change admin 5 successfully', async () => {
-            const { admins, admin } = await setupBeforeTest();
+            const fixture = await setupBeforeTest();
+            const { admins, admin } = fixture;            
             let currentNonce = 0;
 
             const newAdmin = randomWallet();
@@ -532,7 +540,8 @@ describe('1. Admin', async () => {
         });
 
         it('1.7.2. Change admin 5 unsuccessfully because of invalid signatures', async () => {
-            const { admins, admin } = await setupBeforeTest();
+            const fixture = await setupBeforeTest();
+            const { admins, admin } = fixture;            
 
             const newAdmin = randomWallet();
             const message = ethers.utils.defaultAbiCoder.encode(
@@ -550,7 +559,8 @@ describe('1. Admin', async () => {
 
     describe('1.8. authorizeManager(address[], bool, bytes[])', async () => {
         it('1.8.1. Authorize manager successfully', async () => {
-            const { admins, admin } = await setupBeforeTest();
+            const fixture = await setupBeforeTest();
+            const { admins, admin } = fixture;            
 
             const toBeManagers = [];
             for (let i = 0; i < 5; ++i) toBeManagers.push(randomWallet());
@@ -581,7 +591,8 @@ describe('1. Admin', async () => {
         });
 
         it('1.8.2. Authorize manager unsuccessfully because of invalid signatures', async () => {
-            const { admins, admin } = await setupBeforeTest();
+            const fixture = await setupBeforeTest();
+            const { admins, admin } = fixture;            
 
             const toBeManagers = [];
             for (let i = 0; i < 5; ++i) toBeManagers.push(randomWallet());
@@ -600,7 +611,8 @@ describe('1. Admin', async () => {
         });
 
         it('1.8.3. Authorize manager unsuccessfully with authorized accounts on same tx', async () => {
-            const { admins, admin } = await setupBeforeTest();
+            const fixture = await setupBeforeTest();
+            const { admins, admin } = fixture;            
 
             const duplicateManagers = [];
             for (let i = 0; i < 5; ++i) duplicateManagers.push(randomWallet());
@@ -621,7 +633,8 @@ describe('1. Admin', async () => {
         });
 
         it('1.8.4. Authorize manager unsuccessfully with authorized account on different tx', async () => {
-            const { admins, admin } = await setupBeforeTest();
+            const fixture = await setupBeforeTest();
+            const { admins, admin } = fixture;            
 
             const toBeManagers = [];
             for (let i = 0; i < 5; ++i) toBeManagers.push(randomWallet());
@@ -674,7 +687,8 @@ describe('1. Admin', async () => {
         }
 
         it('1.8.5. Deauthorize manager successfully', async () => {
-            const { admins, admin } = await setupBeforeTest();
+            const fixture = await setupBeforeTest();
+            const { admins, admin } = fixture;            
 
             const managers = await setupManagers(admins, admin);
 
@@ -711,7 +725,8 @@ describe('1. Admin', async () => {
         });
 
         it('1.8.6. Deauthorize manager unsuccessfully with unauthorized accounts', async () => {
-            const { admins, admin } = await setupBeforeTest();
+            const fixture = await setupBeforeTest();
+            const { admins, admin } = fixture;            
 
             const managers = await setupManagers(admins, admin);
 
@@ -733,7 +748,8 @@ describe('1. Admin', async () => {
         });
 
         it('1.8.7. Deauthorize manager unsuccessfully when unauthorizing same accounts twice on same tx', async () => {
-            const { admins, admin } = await setupBeforeTest();
+            const fixture = await setupBeforeTest();
+            const { admins, admin } = fixture;            
 
             const managers = await setupManagers(admins, admin);
 
@@ -754,7 +770,8 @@ describe('1. Admin', async () => {
         });
 
         it('1.8.8. Deauthorize manager unsuccessfully when unauthorizing same accounts twice on different tx', async () => {
-            const { admins, admin } = await setupBeforeTest();
+            const fixture = await setupBeforeTest();
+            const { admins, admin } = fixture;            
 
             const managers = await setupManagers(admins, admin);
 
@@ -797,7 +814,8 @@ describe('1. Admin', async () => {
 
     describe('1.9. authorizeModerators(address[], bool, bytes[])', async () => {
         it('1.9.1. Authorize moderator successfully', async () => {
-            const { admins, admin } = await setupBeforeTest();
+            const fixture = await setupBeforeTest();
+            const { admins, admin } = fixture;            
 
             const toBeModerators = [];
             for (let i = 0; i < 5; ++i) toBeModerators.push(randomWallet());
@@ -828,7 +846,8 @@ describe('1. Admin', async () => {
         });
 
         it('1.9.2. Authorize moderator unsuccessfully because of invalid signatures', async () => {
-            const { admins, admin } = await setupBeforeTest();
+            const fixture = await setupBeforeTest();
+            const { admins, admin } = fixture;            
 
             const toBeModerators = [];
             for (let i = 0; i < 5; ++i) toBeModerators.push(randomWallet());
@@ -847,7 +866,8 @@ describe('1. Admin', async () => {
         });
 
         it('1.9.3. Authorize moderator unsuccessfully with authorized accounts on same tx', async () => {
-            const { admins, admin } = await setupBeforeTest();
+            const fixture = await setupBeforeTest();
+            const { admins, admin } = fixture;            
 
             const duplicateModerators = [];
             for (let i = 0; i < 5; ++i) duplicateModerators.push(randomWallet());
@@ -868,7 +888,8 @@ describe('1. Admin', async () => {
         });
 
         it('1.9.4. Authorize moderator unsuccessfully with authorized account on different tx', async () => {
-            const { admins, admin } = await setupBeforeTest();
+            const fixture = await setupBeforeTest();
+            const { admins, admin } = fixture;            
 
             const toBeModerators = [];
             for (let i = 0; i < 5; ++i) toBeModerators.push(randomWallet());
@@ -921,7 +942,8 @@ describe('1. Admin', async () => {
         }
 
         it('1.9.5. Deauthorize moderator successfully', async () => {
-            const { admins, admin } = await setupBeforeTest();
+            const fixture = await setupBeforeTest();
+            const { admins, admin } = fixture;            
 
             const moderators = await setupModerators(admin, admins);
 
@@ -958,7 +980,8 @@ describe('1. Admin', async () => {
         });
 
         it('1.9.6. Deauthorize moderator unsuccessfully with unauthorized accounts', async () => {
-            const { admins, admin } = await setupBeforeTest();
+            const fixture = await setupBeforeTest();
+            const { admins, admin } = fixture;            
 
             const moderators = await setupModerators(admin, admins);
 
@@ -980,7 +1003,8 @@ describe('1. Admin', async () => {
         });
 
         it('1.9.7. Deauthorize moderator unsuccessfully when unauthorizing same accounts twice on same tx', async () => {
-            const { admins, admin } = await setupBeforeTest();
+            const fixture = await setupBeforeTest();
+            const { admins, admin } = fixture;            
 
             const moderators = await setupModerators(admin, admins);
 
@@ -1001,7 +1025,8 @@ describe('1. Admin', async () => {
         });
 
         it('1.9.8. Deauthorize moderator unsuccessfully when unauthorizing same accounts twice on different tx', async () => {
-            const { admins, admin } = await setupBeforeTest();
+            const fixture = await setupBeforeTest();
+            const { admins, admin } = fixture;            
 
             const moderators = await setupModerators(admin, admins);
 
@@ -1026,7 +1051,8 @@ describe('1. Admin', async () => {
 
     describe('1.10. declareZones(bytes32[], bool, bytes[])', async () => {
         it('1.10.1. Declare zone successfully', async () => {
-            const { admins, admin } = await setupBeforeTest();
+            const fixture = await setupBeforeTest();
+            const { admins, admin } = fixture;            
 
             const zones = [
                 ethers.utils.formatBytes32String("TestZone1"),
@@ -1062,8 +1088,8 @@ describe('1. Admin', async () => {
         });
 
         it('1.10.2. Declare zone unsuccessfully with invalid signatures', async () => {
-            const { admins, admin } = await setupBeforeTest();
-            let currentNonce = 0;
+            const fixture = await setupBeforeTest();
+            const { admins, admin } = fixture;            
 
             const zones = [
                 ethers.utils.formatBytes32String("TestZone1"),
@@ -1087,7 +1113,8 @@ describe('1. Admin', async () => {
         });
 
         it('1.10.3. Declare zone unsuccessfully with authorized zone on same tx', async () => {
-            const { admins, admin } = await setupBeforeTest();
+            const fixture = await setupBeforeTest();
+            const { admins, admin } = fixture;            
 
             const zones = [
                 ethers.utils.formatBytes32String("TestZone1"),
@@ -1110,7 +1137,8 @@ describe('1. Admin', async () => {
         });
 
         it('1.10.4. Declare zone unsuccessfully with authorized zone on different tx', async () => {
-            const { admins, admin } = await setupBeforeTest();
+            const fixture = await setupBeforeTest();
+            const { admins, admin } = fixture;            
 
             let zones = [
                 ethers.utils.formatBytes32String("TestZone1"),
@@ -1149,7 +1177,8 @@ describe('1. Admin', async () => {
         }
         
         it('1.10.5. Renounce zone successfully', async () => {
-            const { admins, admin } = await setupBeforeTest();
+            const fixture = await setupBeforeTest();
+            const { admins, admin } = fixture;            
 
             const announcedZones = await setupZones(admins, admin);
 
@@ -1187,7 +1216,8 @@ describe('1. Admin', async () => {
         });
 
         it('1.10.6. Renounce zone unsuccessfully with unauthorized zone', async () => {
-            const { admins, admin } = await setupBeforeTest();
+            const fixture = await setupBeforeTest();
+            const { admins, admin } = fixture;            
 
             await setupZones(admins, admin);
 
@@ -1209,7 +1239,8 @@ describe('1. Admin', async () => {
         });
 
         it('1.10.7. Renounce zone unsuccessfully when unauthorized same zone twice on same tx', async () => {
-            const { admins, admin } = await setupBeforeTest();
+            const fixture = await setupBeforeTest();
+            const { admins, admin } = fixture;            
 
             await setupZones(admins, admin);
 
@@ -1233,7 +1264,8 @@ describe('1. Admin', async () => {
         });
 
         it('1.10.8. Renounce zone unsuccessfully when unauthorized same zone twice on different tx', async () => {
-            const { admins, admin } = await setupBeforeTest();
+            const fixture = await setupBeforeTest();
+            const { admins, admin } = fixture;            
 
             await setupZones(admins, admin);
 
@@ -1281,7 +1313,8 @@ describe('1. Admin', async () => {
         }
 
         it('1.11.1. Activate accounts in zone successfully', async () => {
-            const { admins, admin } = await setupBeforeTest();
+            const fixture = await setupBeforeTest();
+            const { admins, admin } = fixture;            
 
             const { zone1, zone2, accounts } = await setupAccounts(admins, admin);
 
@@ -1333,9 +1366,10 @@ describe('1. Admin', async () => {
         });
 
         it('1.11.2. Activate accounts in zone unsuccessfully with invalid signatures', async () => {
-            const { admins, admin } = await setupBeforeTest();
+            const fixture = await setupBeforeTest();
+            const { admins, admin } = fixture;            
 
-            const { zone1, zone2, accounts } = await setupAccounts(admins, admin);
+            const { zone1, accounts } = await setupAccounts(admins, admin);
 
             const zone1Accounts = [accounts[0], accounts[1]];
 
@@ -1351,9 +1385,10 @@ describe('1. Admin', async () => {
         });
 
         it('1.11.3. Activate accounts in zone unsuccessfully with activated accounts on same tx', async () => {
-            const { admins, admin } = await setupBeforeTest();
+            const fixture = await setupBeforeTest();
+            const { admins, admin } = fixture;            
 
-            const { zone1, zone2, accounts } = await setupAccounts(admins, admin);
+            const { zone1, accounts } = await setupAccounts(admins, admin);
 
             const zone1Accounts = [accounts[0], accounts[1], accounts[2], accounts[1]];
 
@@ -1370,9 +1405,10 @@ describe('1. Admin', async () => {
         });
 
         it('1.11.4. Activate accounts in zone unsuccessfully when activated accounts on different tx', async () => {
-            const { admins, admin } = await setupBeforeTest();
+            const fixture = await setupBeforeTest();
+            const { admins, admin } = fixture;            
 
-            const { zone1, zone2, accounts } = await setupAccounts(admins, admin);
+            const { zone1, accounts } = await setupAccounts(admins, admin);
 
             const tx1_accounts = [accounts[0], accounts[1], accounts[2]];
             await callAdmin_ActivateIn(admin, admins, zone1, tx1_accounts.map(x => x.address), true, await admin.nonce());
@@ -1392,7 +1428,8 @@ describe('1. Admin', async () => {
         });
 
         it('1.11.5. Deactivate accounts in zone successfully', async () => {
-            const { admins, admin } = await setupBeforeTest();
+            const fixture = await setupBeforeTest();
+            const { admins, admin } = fixture;            
 
             const { zone1, zone2, accounts } = await setupAccounts(admins, admin);
 
@@ -1449,7 +1486,8 @@ describe('1. Admin', async () => {
         });
 
         it('1.11.6. Deactivate accounts in zone unsuccessfully with inactive accounts', async () => {
-            const { admins, admin } = await setupBeforeTest();
+            const fixture = await setupBeforeTest();
+            const { admins, admin } = fixture;            
 
             const { zone1, zone2, accounts } = await setupAccounts(admins, admin);
 
@@ -1471,7 +1509,8 @@ describe('1. Admin', async () => {
         });
 
         it('1.11.7. Deactivate accounts in zone unsuccessfully with deactivated accounts on same tx', async () => {
-            const { admins, admin } = await setupBeforeTest();
+            const fixture = await setupBeforeTest();
+            const { admins, admin } = fixture;            
 
             const { zone1, zone2, accounts } = await setupAccounts(admins, admin);
 
@@ -1492,7 +1531,8 @@ describe('1. Admin', async () => {
         });
 
         it('1.11.8. Deactivate accounts in zone unsuccessfully when deactivated accounts on different tx', async () => {
-            const { admins, admin } = await setupBeforeTest();
+            const fixture = await setupBeforeTest();
+            const { admins, admin } = fixture;            
 
             const { zone1, zone2, accounts } = await setupAccounts(admins, admin);
 
@@ -1518,7 +1558,8 @@ describe('1. Admin', async () => {
 
     describe('1.12. getZoneEligibility(bytes32, address)', async () => {
         it('1.12.1. Return correct zone eligibility', async () => {
-            const { admins, admin } = await setupBeforeTest();
+            const fixture = await setupBeforeTest();
+            const { admins, admin } = fixture;            
 
             const account1 = randomWallet();
             const zone1 = ethers.utils.formatBytes32String("TestZone1");
@@ -1544,7 +1585,8 @@ describe('1. Admin', async () => {
 
     describe('1.13. updateCurrencyRegistries(address[], bool[], bool[], uint256[], uint256[], bytes[])', async () => {
         it('1.13.1. Update currency registry successfully', async () => {
-            const { admins, admin } = await setupBeforeTest();
+            const fixture = await setupBeforeTest();
+            const { admins, admin } = fixture;            
 
             const currencyAddresses = [];
             for (let i = 0; i < 5; ++i) currencyAddresses.push(ethers.utils.computeAddress(ethers.utils.id(`currency_${i}`)));
@@ -1589,8 +1631,9 @@ describe('1. Admin', async () => {
             }
         });
 
-        it('1.12.2. Update currency registry successfully with last record of currency with same address', async () => {
-            const { admins, admin } = await setupBeforeTest();
+        it('1.13.2. Update currency registry successfully with multiple records of same currency', async () => {
+            const fixture = await setupBeforeTest();
+            const { admins, admin } = fixture;            
 
             const address = ethers.utils.computeAddress(ethers.utils.id(`currency`));
             const currencyAddresses = [address, address];
@@ -1629,8 +1672,9 @@ describe('1. Admin', async () => {
             expect(currencyRegistry.isExclusive).to.equal(isExclusive[1]);
         });
 
-        it('1.12.3. Update currency registries unsuccesfully with incorrect signatures', async () => {
-            const { admins, admin } = await setupBeforeTest();
+        it('1.13.3. Update currency registries unsuccesfully with incorrect signatures', async () => {
+            const fixture = await setupBeforeTest();
+            const { admins, admin } = fixture;            
 
             const currencyAddresses = [];
             for (let i = 0; i < 5; ++i) currencyAddresses.push(ethers.utils.computeAddress(ethers.utils.id(`currency_${i}`)));
@@ -1651,8 +1695,9 @@ describe('1. Admin', async () => {
             )).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('1.12.4. Update currency registries unsuccesfully with conflict arrays', async () => {
-            const { admins, admin } = await setupBeforeTest();
+        it('1.13.4. Update currency registries unsuccesfully with conflict arrays', async () => {
+            const fixture = await setupBeforeTest();
+            const { admins, admin } = fixture;            
 
             async function testForInvalidInput(currencyAddresses: string[], isAvailable: boolean[], isExclusive: boolean[]) {
                 let message = ethers.utils.defaultAbiCoder.encode(
