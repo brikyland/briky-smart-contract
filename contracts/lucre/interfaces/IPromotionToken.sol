@@ -12,8 +12,8 @@ IERC4906Upgradeable,
 IERC721MetadataUpgradeable {
     struct Content {
         string uri;
-        uint40 openAt;
-        uint40 lockAt;
+        uint40 startAt;
+        uint40 endAt;
     }
 
     event BaseURIUpdate(string newValue);
@@ -23,7 +23,7 @@ IERC721MetadataUpgradeable {
     event NewContent(
         uint256 indexed contentId,
         string uri,
-        uint40 openAt,
+        uint40 startAt,
         uint40 duration
     );
     event ContentCancellation(uint256 indexed contentId);

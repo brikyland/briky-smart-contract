@@ -118,7 +118,7 @@ ReentrancyGuardUpgradeable {
 
     function createContents(
         string[] calldata _uris,
-        uint40[] calldata _openAts,
+        uint40[] calldata _startAts,
         uint40[] calldata _durations,
         bytes[] calldata _signature
     ) external {
@@ -127,13 +127,13 @@ ReentrancyGuardUpgradeable {
                 address(this),
                 "createContents",
                 _uris,
-                _openAts,
+                _startAts,
                 _durations
             ),
             _signature
         );
 
-        if (_uris.length != _openAts.length
+        if (_uris.length != _startAts.length
             || _uris.length != _durations.length) {
             revert InvalidInput();
         }
@@ -142,14 +142,14 @@ ReentrancyGuardUpgradeable {
             uint256 contentId = ++contentNumber;
             contents[contentId] = Content(
                 _uris[i],
-                _openAts[i],
-                _openAts[i] + _durations[i]
+                _startAts[i],
+                _startAts[i] + _durations[i]
             );
 
             emit NewContent(
                 contentId,
                 _uris[i],
-                _openAts[i],
+                _startAts[i],
                 _durations[i]
             );
         }
@@ -169,10 +169,10 @@ ReentrancyGuardUpgradeable {
         );
 
         for (uint256 i = 0; i < _contentIds.length; ++i) {
-            if (contents[_contentIds[i]].lockAt < block.timestamp) {
+            if (contents[_contentIds[i]].endAt < block.timestamp) {
                 revert AlreadyLocked();
             }
-            contents[_contentIds[i]].lockAt = uint40(block.timestamp);
+            contents[_contentIds[i]].endAt = uint40(block.timestamp);
             emit ContentCancellation(_contentIds[i]);
         }
     }
@@ -181,11 +181,11 @@ ReentrancyGuardUpgradeable {
     external payable nonReentrant whenNotPaused returns (uint256) {
         Content memory content = getContent(_contentId);
 
-        if (block.timestamp < content.openAt) {
+        if (block.timestamp < content.startAt) {
             revert NotOpened();
         }
 
-        if (block.timestamp >= content.lockAt) {
+        if (block.timestamp >= content.endAt) {
             revert AlreadyLocked();
         }
 
