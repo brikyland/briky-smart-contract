@@ -36,6 +36,7 @@ import { BigNumber } from 'ethers';
 import { randomInt } from 'crypto';
 import { getInterfaceID, randomBigNumber } from '@utils/utils';
 import { OrderedMap } from '@utils/utils';
+import { Initialization as LandInitialization } from '@tests/land/test.initialization';
 
 interface EstateTokenFixture {
     admin: Admin;
@@ -106,8 +107,8 @@ describe('3. EstateToken', async () => {
             deployer.address,
             admin.address,
             feeReceiver.address,
-            Constant.ESTATE_TOKEN_INITIAL_BaseURI,
-            Constant.ESTATE_TOKEN_INITIAL_RoyaltyRate,
+            LandInitialization.ESTATE_TOKEN_BaseURI,
+            LandInitialization.ESTATE_TOKEN_RoyaltyRate,
         ) as MockEstateToken;        
 
         const commissionToken = await deployCommissionToken(
@@ -115,11 +116,11 @@ describe('3. EstateToken', async () => {
             admin.address,
             estateToken.address,
             feeReceiver.address,
-            Constant.COMMISSION_TOKEN_INITIAL_Name,
-            Constant.COMMISSION_TOKEN_INITIAL_Symbol,
-            Constant.COMMISSION_TOKEN_INITIAL_BaseURI,
-            Constant.COMMISSION_TOKEN_INITIAL_CommissionRate,
-            Constant.COMMISSION_TOKEN_INITIAL_RoyaltyRate,
+            LandInitialization.COMMISSION_TOKEN_Name,
+            LandInitialization.COMMISSION_TOKEN_Symbol,
+            LandInitialization.COMMISSION_TOKEN_BaseURI,
+            LandInitialization.COMMISSION_TOKEN_CommissionRate,
+            LandInitialization.COMMISSION_TOKEN_RoyaltyRate,
         ) as CommissionToken;
 
         const MockEstateForgerFactory = await smock.mock<MockEstateForger__factory>('MockEstateForger');
@@ -266,7 +267,7 @@ describe('3. EstateToken', async () => {
             expect(feeReceiverAddress).to.equal(feeReceiver.address);
 
             const royaltyRate = await estateToken.getRoyaltyRate();
-            expect(royaltyRate.value).to.equal(Constant.ESTATE_TOKEN_INITIAL_RoyaltyRate);
+            expect(royaltyRate.value).to.equal(LandInitialization.ESTATE_TOKEN_RoyaltyRate);
             expect(royaltyRate.decimals).to.equal(Constant.COMMON_RATE_DECIMALS);
 
             const estateNumber = await estateToken.estateNumber();
@@ -285,7 +286,7 @@ describe('3. EstateToken', async () => {
             await expect(upgrades.deployProxy(EstateToken, [
                 admin.address,
                 feeReceiver.address,
-                Constant.ESTATE_TOKEN_INITIAL_BaseURI,
+                LandInitialization.ESTATE_TOKEN_BaseURI,
                 Constant.COMMON_RATE_MAX_FRACTION.add(1),
             ])).to.be.reverted;
         });
@@ -871,7 +872,7 @@ describe('3. EstateToken', async () => {
             expect(estate.decimals).to.equal(defaultParams.decimals);
             expect(estate.isDeprecated).to.equal(false);
 
-            expect(await estateToken.uri(1)).to.equal(Constant.ESTATE_TOKEN_INITIAL_BaseURI + defaultParams.uri);
+            expect(await estateToken.uri(1)).to.equal(LandInitialization.ESTATE_TOKEN_BaseURI + defaultParams.uri);
 
             expect(await estateToken.balanceOf(estateForger.address, 1)).to.equal(10_000);
 
@@ -929,7 +930,7 @@ describe('3. EstateToken', async () => {
             expect(estate.decimals).to.equal(defaultParams.decimals);
             expect(estate.isDeprecated).to.equal(false);
 
-            expect(await estateToken.uri(1)).to.equal(Constant.ESTATE_TOKEN_INITIAL_BaseURI + defaultParams.uri);
+            expect(await estateToken.uri(1)).to.equal(LandInitialization.ESTATE_TOKEN_BaseURI + defaultParams.uri);
 
             expect(await estateToken.balanceOf(estateForger.address, 1)).to.equal(10_000);
 
@@ -1302,18 +1303,18 @@ describe('3. EstateToken', async () => {
 
             await expect(tx)
                 .to.emit(estateToken, "URI")
-                .withArgs(Constant.ESTATE_TOKEN_INITIAL_BaseURI + 'new_URI_1', 1);
+                .withArgs(LandInitialization.ESTATE_TOKEN_BaseURI + 'new_URI_1', 1);
 
-            expect(await estateToken.uri(1)).to.equal(Constant.ESTATE_TOKEN_INITIAL_BaseURI + 'new_URI_1');
+            expect(await estateToken.uri(1)).to.equal(LandInitialization.ESTATE_TOKEN_BaseURI + 'new_URI_1');
 
             tx = await estateToken.connect(manager).updateEstateURI(2, 'new_URI_2');
             await tx.wait();
 
             await expect(tx)
                 .to.emit(estateToken, "URI")
-                .withArgs(Constant.ESTATE_TOKEN_INITIAL_BaseURI + 'new_URI_2', 2);
+                .withArgs(LandInitialization.ESTATE_TOKEN_BaseURI + 'new_URI_2', 2);
 
-            expect(await estateToken.uri(2)).to.equal(Constant.ESTATE_TOKEN_INITIAL_BaseURI + 'new_URI_2');
+            expect(await estateToken.uri(2)).to.equal(LandInitialization.ESTATE_TOKEN_BaseURI + 'new_URI_2');
         });
 
         it('3.13.2. update estate URI unsuccessfully with unavailable estate', async () => {

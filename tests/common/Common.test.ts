@@ -39,6 +39,9 @@ import { deployDriptributor } from '@utils/deployments/land/driptributor';
 import { deployAuction } from '@utils/deployments/land/auction';
 import { deployMortgageMarketplace } from '@utils/deployments/lend/mortgageMarketplace';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
+import { Initialization as LandInitialization } from '@tests/land/test.initialization';
+import { Initialization as LendInitialization } from '@tests/lend/test.initialization';
+import { Initialization as LucreInitialization } from '@tests/lucre/test.initialization';
 
 interface CommonFixture {
     deployer: any;
@@ -62,7 +65,7 @@ interface CommonFixture {
 }
 
 
-describe('0. Common', async () => {
+describe.only('0. Common', async () => {
 
     async function commonFixture(): Promise<CommonFixture> {
         const accounts = await ethers.getSigners();
@@ -91,8 +94,8 @@ describe('0. Common', async () => {
             deployer.address,
             admin.address,
             feeReceiver.address,
-            Constant.ESTATE_TOKEN_INITIAL_BaseURI,
-            Constant.ESTATE_TOKEN_INITIAL_RoyaltyRate,
+            LandInitialization.ESTATE_TOKEN_BaseURI,
+            LandInitialization.ESTATE_TOKEN_RoyaltyRate,
         ) as MockEstateToken;        
       
         const commissionToken = await deployCommissionToken(
@@ -100,11 +103,11 @@ describe('0. Common', async () => {
             admin.address,
             estateToken.address,
             feeReceiver.address,
-            Constant.COMMISSION_TOKEN_INITIAL_Name,
-            Constant.COMMISSION_TOKEN_INITIAL_Symbol,
-            Constant.COMMISSION_TOKEN_INITIAL_BaseURI,
-            Constant.COMMISSION_TOKEN_INITIAL_CommissionRate,
-            Constant.COMMISSION_TOKEN_INITIAL_RoyaltyRate,
+            LandInitialization.COMMISSION_TOKEN_Name,
+            LandInitialization.COMMISSION_TOKEN_Symbol,
+            LandInitialization.COMMISSION_TOKEN_BaseURI,
+            LandInitialization.COMMISSION_TOKEN_CommissionRate,
+            LandInitialization.COMMISSION_TOKEN_RoyaltyRate,
         ) as CommissionToken;
 
         const estateForger = await deployEstateForger(
@@ -113,9 +116,9 @@ describe('0. Common', async () => {
             estateToken.address,
             commissionToken.address,
             feeReceiver.address,
-            Constant.ESTATE_FORGER_INITIAL_FeeRate,
-            Constant.ESTATE_FORGER_INITIAL_BaseMinUnitPrice,
-            Constant.ESTATE_FORGER_INITIAL_BaseMaxUnitPrice
+            LandInitialization.ESTATE_FORGER_FeeRate,
+            LandInitialization.ESTATE_FORGER_BaseMinUnitPrice,
+            LandInitialization.ESTATE_FORGER_BaseMaxUnitPrice
         ) as MockEstateForger;
   
         const estateMarketplace = await deployEstateMarketplace(
@@ -140,9 +143,9 @@ describe('0. Common', async () => {
         const primaryToken = await deployPrimaryToken(
             deployer,
             admin.address,
-            Constant.PRIMARY_TOKEN_INITIAL_Name,
-            Constant.PRIMARY_TOKEN_INITIAL_Symbol,
-            Constant.PRIMARY_TOKEN_INITIAL_LiquidationUnlockedAt
+            LandInitialization.PRIMARY_TOKEN_Name,
+            LandInitialization.PRIMARY_TOKEN_Symbol,
+            LandInitialization.PRIMARY_TOKEN_LiquidationUnlockedAt
         ) as PrimaryToken;
 
         const treasury = await deployTreasury(
@@ -156,8 +159,8 @@ describe('0. Common', async () => {
             deployer,
             admin.address,
             primaryToken.address,
-            Constant.STAKE_TOKEN_INITIAL_Name_1,
-            Constant.STAKE_TOKEN_INITIAL_Symbol_1,
+            LandInitialization.STAKE_TOKEN_Name_1,
+            LandInitialization.STAKE_TOKEN_Symbol_1,
         ) as StakeToken;
 
         const distributor = await deployDistributor(
@@ -186,11 +189,11 @@ describe('0. Common', async () => {
             estateToken.address,
             commissionToken.address,
             feeReceiver.address,
-            Constant.MORTGAGE_TOKEN_INITIAL_Name,
-            Constant.MORTGAGE_TOKEN_INITIAL_Symbol,
-            Constant.MORTGAGE_TOKEN_INITIAL_BaseURI,
-            Constant.MORTGAGE_TOKEN_INITIAL_RoyaltyRate,
-            Constant.MORTGAGE_TOKEN_INITIAL_FeeRate,
+            LendInitialization.MORTGAGE_TOKEN_Name,
+            LendInitialization.MORTGAGE_TOKEN_Symbol,
+            LendInitialization.MORTGAGE_TOKEN_BaseURI,
+            LendInitialization.MORTGAGE_TOKEN_RoyaltyRate,
+            LendInitialization.MORTGAGE_TOKEN_FeeRate,
         ) as MortgageToken;
 
         const mortgageMarketplace = await deployMortgageMarketplace(

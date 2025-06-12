@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import { ethers, upgrades } from 'hardhat';
 import {
     Admin,
-    CommissionToken,
+    PassportToken,
     Currency,
     EstateToken,
     FeeReceiver,
@@ -17,7 +17,7 @@ import { deployAdmin } from '@utils/deployments/common/admin';
 import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
 import { deployCurrency } from '@utils/deployments/common/currency';
 import { deployMockEstateToken } from '@utils/deployments/mocks/mockEstateToken';
-import { deployCommissionToken } from '@utils/deployments/land/commissionToken';
+import { deployPassportToken } from '@utils/deployments/lucre/passportToken';
 import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 
 import { smock } from '@defi-wonderland/smock';
@@ -30,19 +30,17 @@ import { BigNumber } from 'ethers';
 import { randomInt } from 'crypto';
 import { getInterfaceID, randomBigNumber } from '@utils/utils';
 import { OrderedMap } from '@utils/utils';
-import { Initialization as LandInitialization } from '@tests/land/test.initialization';
+import { Initialization } from './test.initialization';
 
 interface CommissionTokenFixture {
     admin: Admin;
     feeReceiver: FeeReceiver;
-    currency: Currency;
-    estateToken: MockEstateToken;
-    commissionToken: CommissionToken;
+    passportToken: PassportToken;
 
     deployer: any;
     admins: any[];
-    receiver1: any;
-    receiver2: any;
+    participant1: any;
+    participant2: any;
 }
 
 describe('6. CommissionToken', async () => {
@@ -51,8 +49,9 @@ describe('6. CommissionToken', async () => {
         const deployer = accounts[0];
         const admins = [];
         for (let i = 1; i <= Constant.ADMIN_NUMBER; ++i) admins.push(accounts[i]);
-        const receiver1 = accounts[Constant.ADMIN_NUMBER + 1];
-        const receiver2 = accounts[Constant.ADMIN_NUMBER + 2];
+        const participant1 = accounts[Constant.ADMIN_NUMBER + 1];
+        const participant2 = accounts[Constant.ADMIN_NUMBER + 2];
+        const participant3 = accounts[Constant.ADMIN_NUMBER + 3];
         
         const adminAddresses: string[] = admins.map(signer => signer.address);
         const admin = await deployAdmin(
@@ -69,42 +68,26 @@ describe('6. CommissionToken', async () => {
             admin.address
         ) as FeeReceiver;
 
-        const currency = await deployCurrency(
-            deployer.address,
-            'MockCurrency',
-            'MCK'
-        ) as Currency;
-
-        const estateToken = await deployMockEstateToken(
+        const passportToken = await deployPassportToken(
             deployer.address,
             admin.address,
             feeReceiver.address,
-            LandInitialization.ESTATE_TOKEN_BaseURI,
-            LandInitialization.ESTATE_TOKEN_RoyaltyRate,
-        ) as MockEstateToken;        
-
-        const commissionToken = await deployCommissionToken(
-            deployer.address,
-            admin.address,
-            estateToken.address,
-            feeReceiver.address,
-            LandInitialization.COMMISSION_TOKEN_Name,
-            LandInitialization.COMMISSION_TOKEN_Symbol,
-            LandInitialization.COMMISSION_TOKEN_BaseURI,
-            LandInitialization.COMMISSION_TOKEN_CommissionRate,
-            LandInitialization.COMMISSION_TOKEN_RoyaltyRate,
-        ) as CommissionToken;
+            Initialization.PASSPORT_TOKEN_Name,
+            Initialization.PASSPORT_TOKEN_Symbol,
+            Initialization.PASSPORT_TOKEN_BaseURI,
+            Initialization.PASSPORT_TOKEN_Fee,
+            Initialization.PASSPORT_TOKEN_RoyaltyRate,
+        ) as PassportToken;
 
         return {
             admin,
             feeReceiver,
-            currency,
-            estateToken,
-            commissionToken,
+            passportToken,
             deployer,
             admins,
-            receiver1,
-            receiver2,
+            participant1,
+            participant2,
+            participant3,
         };
     };
 
@@ -130,11 +113,11 @@ describe('6. CommissionToken', async () => {
                     admin.address,
                     estateToken.address,
                     feeReceiver.address,
-                    LandInitialization.COMMISSION_TOKEN_Name,
-                    LandInitialization.COMMISSION_TOKEN_Symbol,
-                    LandInitialization.COMMISSION_TOKEN_BaseURI,
-                    LandInitialization.COMMISSION_TOKEN_CommissionRate,
-                    LandInitialization.COMMISSION_TOKEN_RoyaltyRate,
+                    Constant.COMMISSION_TOKEN_INITIAL_Name,
+                    Constant.COMMISSION_TOKEN_INITIAL_Symbol,
+                    Constant.COMMISSION_TOKEN_INITIAL_BaseURI,
+                    Constant.COMMISSION_TOKEN_INITIAL_CommissionRate,
+                    Constant.COMMISSION_TOKEN_INITIAL_RoyaltyRate,
                 ]
             );
             await commissionToken.deployed();
@@ -144,18 +127,18 @@ describe('6. CommissionToken', async () => {
             expect(await commissionToken.feeReceiver()).to.equal(feeReceiver.address);
 
             const commissionRate = await commissionToken.getCommissionRate();
-            expect(commissionRate.value).to.equal(LandInitialization.COMMISSION_TOKEN_CommissionRate);
+            expect(commissionRate.value).to.equal(Constant.COMMISSION_TOKEN_INITIAL_CommissionRate);
             expect(commissionRate.decimals).to.equal(Constant.COMMON_RATE_DECIMALS);
 
             const royaltyRate = await commissionToken.getRoyaltyRate();
-            expect(royaltyRate.value).to.equal(LandInitialization.COMMISSION_TOKEN_RoyaltyRate);
+            expect(royaltyRate.value).to.equal(Constant.COMMISSION_TOKEN_INITIAL_RoyaltyRate);
             expect(royaltyRate.decimals).to.equal(Constant.COMMON_RATE_DECIMALS);
 
             const tx = commissionToken.deployTransaction;
             await expect(tx).to
-                .emit(commissionToken, 'BaseURIUpdate').withArgs(LandInitialization.COMMISSION_TOKEN_BaseURI)
-                .emit(commissionToken, 'CommissionRateUpdate').withArgs(LandInitialization.COMMISSION_TOKEN_CommissionRate)
-                .emit(commissionToken, 'RoyaltyRateUpdate').withArgs(LandInitialization.COMMISSION_TOKEN_RoyaltyRate);
+                .emit(commissionToken, 'BaseURIUpdate').withArgs(Constant.COMMISSION_TOKEN_INITIAL_BaseURI)
+                .emit(commissionToken, 'CommissionRateUpdate').withArgs(Constant.COMMISSION_TOKEN_INITIAL_CommissionRate)
+                .emit(commissionToken, 'RoyaltyRateUpdate').withArgs(Constant.COMMISSION_TOKEN_INITIAL_RoyaltyRate);
         });
 
         it('6.1.2. Deploy unsuccessfully with invalid commission rate', async () => {
@@ -167,11 +150,11 @@ describe('6. CommissionToken', async () => {
                 admin.address,
                 estateToken.address,
                 feeReceiver.address,
-                LandInitialization.COMMISSION_TOKEN_Name,
-                LandInitialization.COMMISSION_TOKEN_Symbol,
-                LandInitialization.COMMISSION_TOKEN_BaseURI,
+                Constant.COMMISSION_TOKEN_INITIAL_Name,
+                Constant.COMMISSION_TOKEN_INITIAL_Symbol,
+                Constant.COMMISSION_TOKEN_INITIAL_BaseURI,
                 Constant.COMMON_RATE_MAX_FRACTION.add(1),
-                LandInitialization.COMMISSION_TOKEN_RoyaltyRate,
+                Constant.COMMISSION_TOKEN_INITIAL_RoyaltyRate,
             ])).to.be.reverted;
         });
 
@@ -184,10 +167,10 @@ describe('6. CommissionToken', async () => {
                 admin.address,
                 estateToken.address,
                 feeReceiver.address,
-                LandInitialization.COMMISSION_TOKEN_Name,
-                LandInitialization.COMMISSION_TOKEN_Symbol,
-                LandInitialization.COMMISSION_TOKEN_BaseURI,
-                LandInitialization.COMMISSION_TOKEN_CommissionRate,
+                Constant.COMMISSION_TOKEN_INITIAL_Name,
+                Constant.COMMISSION_TOKEN_INITIAL_Symbol,
+                Constant.COMMISSION_TOKEN_INITIAL_BaseURI,
+                Constant.COMMISSION_TOKEN_INITIAL_CommissionRate,
                 Constant.COMMON_RATE_MAX_FRACTION.add(1),
             ])).to.be.reverted;
         });
@@ -227,7 +210,7 @@ describe('6. CommissionToken', async () => {
                 .withArgs(1, receiver1.address);
 
             expect(await commissionToken.ownerOf(1)).to.equal(receiver1.address);
-            expect(await commissionToken.tokenURI(1)).to.equal(LandInitialization.COMMISSION_TOKEN_BaseURI + '1');
+            expect(await commissionToken.tokenURI(1)).to.equal(Constant.COMMISSION_TOKEN_INITIAL_BaseURI + '1');
 
             tx = await estateToken.call(commissionToken.address, commissionToken.interface.encodeFunctionData('mint', [
                 receiver2.address,
@@ -239,7 +222,7 @@ describe('6. CommissionToken', async () => {
                 .withArgs(2, receiver2.address);
 
             expect(await commissionToken.ownerOf(2)).to.equal(receiver2.address);
-            expect(await commissionToken.tokenURI(2)).to.equal(LandInitialization.COMMISSION_TOKEN_BaseURI + '2');
+            expect(await commissionToken.tokenURI(2)).to.equal(Constant.COMMISSION_TOKEN_INITIAL_BaseURI + '2');
         });
 
         it('6.6.2. mint unsuccessfully by unauthorized sender', async () => {

@@ -12,6 +12,7 @@ import { deployStakeToken } from '@utils/deployments/land/stakeToken';
 import { callPrimaryToken_Pause, callPrimaryToken_UnlockForBackerRound, callPrimaryToken_UnlockForCoreTeam, callPrimaryToken_UnlockForExternalTreasury, callPrimaryToken_UnlockForMarketMaker, callPrimaryToken_UnlockForPrivateSale1, callPrimaryToken_UnlockForPrivateSale2, callPrimaryToken_UnlockForPublicSale, callPrimaryToken_UnlockForSeedRound, callPrimaryToken_UpdateStakeTokens, callPrimaryToken_UpdateTreasury } from '@utils/callWithSignatures/primary';
 import { MockContract, smock } from '@defi-wonderland/smock';
 import { BigNumber } from 'ethers';
+import { Initialization as LandInitialization } from '@tests/land/test.initialization';
 
 interface PrimaryTokenFixture {
     deployer: any;
@@ -59,8 +60,8 @@ describe('9. PrimaryToken', async () => {
         const primaryToken = await SmockPrimaryTokenFactory.deploy();
         await callTransaction(primaryToken.initialize(
             admin.address,
-            Constant.PRIMARY_TOKEN_INITIAL_Name,
-            Constant.PRIMARY_TOKEN_INITIAL_Symbol,
+            LandInitialization.PRIMARY_TOKEN_Name,
+            LandInitialization.PRIMARY_TOKEN_Symbol,
             liquidationUnlockedAt,
         ));
         
@@ -77,8 +78,8 @@ describe('9. PrimaryToken', async () => {
         await callTransaction(stakeToken1.initialize(
             admin.address,
             primaryToken.address,
-            Constant.STAKE_TOKEN_INITIAL_Name_1,
-            Constant.STAKE_TOKEN_INITIAL_Symbol_1,
+            LandInitialization.STAKE_TOKEN_Name_1,
+            LandInitialization.STAKE_TOKEN_Symbol_1,
         ));
 
         const SmockStakeTokenFactory2 = await smock.mock('MockStakeToken') as any;
@@ -86,8 +87,8 @@ describe('9. PrimaryToken', async () => {
         await callTransaction(stakeToken2.initialize(
             admin.address,
             primaryToken.address,
-            Constant.STAKE_TOKEN_INITIAL_Name_2,
-            Constant.STAKE_TOKEN_INITIAL_Symbol_2,
+            LandInitialization.STAKE_TOKEN_Name_2,
+            LandInitialization.STAKE_TOKEN_Symbol_2,
         ));
 
         const SmockStakeTokenFactory3 = await smock.mock('MockStakeToken') as any;
@@ -95,8 +96,8 @@ describe('9. PrimaryToken', async () => {
         await callTransaction(stakeToken3.initialize(
             admin.address,
             primaryToken.address,
-            Constant.STAKE_TOKEN_INITIAL_Name_3,
-            Constant.STAKE_TOKEN_INITIAL_Symbol_3,
+            LandInitialization.STAKE_TOKEN_Name_3,
+            LandInitialization.STAKE_TOKEN_Symbol_3,
         ));
         
         return {
@@ -161,8 +162,8 @@ describe('9. PrimaryToken', async () => {
             expect(await primaryToken.admin()).to.equal(admin.address);
             expect(await primaryToken.liquidationUnlockedAt()).to.equal(liquidationUnlockedAt);
 
-            expect(await primaryToken.name()).to.equal(Constant.PRIMARY_TOKEN_INITIAL_Name);
-            expect(await primaryToken.symbol()).to.equal(Constant.PRIMARY_TOKEN_INITIAL_Symbol);
+            expect(await primaryToken.name()).to.equal(LandInitialization.PRIMARY_TOKEN_Name);
+            expect(await primaryToken.symbol()).to.equal(LandInitialization.PRIMARY_TOKEN_Symbol);
             expect(await primaryToken.cap()).to.equal(Constant.PRIMARY_TOKEN_MAXIMUM_SUPPLY);
             expect(await primaryToken.totalSupply()).to.equal(ethers.utils.parseEther('5000000000'));
             

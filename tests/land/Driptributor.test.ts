@@ -15,6 +15,7 @@ import { callDriptributor_DistributeTokensWithDuration, callDriptributor_Distrib
 import { deployMockPrimaryToken } from '@utils/deployments/mocks/mockPrimaryToken';
 import { callPrimaryToken_UpdateStakeTokens } from '@utils/callWithSignatures/primary';
 import { MockContract, smock } from '@defi-wonderland/smock';
+import { Initialization as LandInitialization } from '@tests/land/test.initialization';
 
 interface DriptributorFixture {
     deployer: any;
@@ -80,9 +81,9 @@ describe('12. Driptributor', async () => {
         const primaryToken = await deployMockPrimaryToken(
             deployer,
             admin.address,
-            Constant.PRIMARY_TOKEN_INITIAL_Name,
-            Constant.PRIMARY_TOKEN_INITIAL_Symbol,
-            Constant.PRIMARY_TOKEN_INITIAL_LiquidationUnlockedAt,
+            LandInitialization.PRIMARY_TOKEN_Name,
+            LandInitialization.PRIMARY_TOKEN_Symbol,
+            LandInitialization.PRIMARY_TOKEN_LiquidationUnlockedAt,
         ) as MockPrimaryToken;
         
         const treasury = await deployTreasury(
@@ -97,8 +98,8 @@ describe('12. Driptributor', async () => {
         await callTransaction(stakeToken1.initialize(
             admin.address,
             primaryToken.address,
-            Constant.STAKE_TOKEN_INITIAL_Name_1,
-            Constant.STAKE_TOKEN_INITIAL_Symbol_1,
+            LandInitialization.STAKE_TOKEN_Name_1,
+            LandInitialization.STAKE_TOKEN_Symbol_1,
         ));
 
         const SmockStakeTokenFactory2 = await smock.mock('StakeToken') as any;
@@ -106,8 +107,8 @@ describe('12. Driptributor', async () => {
         await callTransaction(stakeToken2.initialize(
             admin.address,
             primaryToken.address,
-            Constant.STAKE_TOKEN_INITIAL_Name_2,
-            Constant.STAKE_TOKEN_INITIAL_Symbol_2,
+            LandInitialization.STAKE_TOKEN_Name_2,
+            LandInitialization.STAKE_TOKEN_Symbol_2,
         ));
 
         const SmockStakeTokenFactory3 = await smock.mock('StakeToken') as any;
@@ -115,8 +116,8 @@ describe('12. Driptributor', async () => {
         await callTransaction(stakeToken3.initialize(
             admin.address,
             primaryToken.address,
-            Constant.STAKE_TOKEN_INITIAL_Name_3,
-            Constant.STAKE_TOKEN_INITIAL_Symbol_3,
+            LandInitialization.STAKE_TOKEN_Name_3,
+            LandInitialization.STAKE_TOKEN_Symbol_3,
         ));
 
         const totalAmount = ethers.utils.parseEther('1000');

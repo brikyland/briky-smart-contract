@@ -42,6 +42,7 @@ import { callEstateMarketplace_Pause } from '@utils/callWithSignatures/estateMar
 import { deployFailReceiver } from '@utils/deployments/mocks/failReceiver';
 import { deployReentrancyERC1155Holder } from '@utils/deployments/mocks/mockReentrancy/reentrancyERC1155Holder';
 import { deployReentrancy } from '@utils/deployments/mocks/mockReentrancy/reentrancy';
+import { Initialization as LandInitialization } from '@tests/land/test.initialization';
 
 interface EstateMarketplaceFixture {
     admin: Admin;
@@ -126,8 +127,8 @@ describe('5. EstateMarketplace', async () => {
         await callTransaction(estateToken.initialize(
             admin.address,
             feeReceiver.address,
-            Constant.ESTATE_TOKEN_INITIAL_BaseURI,
-            Constant.ESTATE_TOKEN_INITIAL_RoyaltyRate,
+            LandInitialization.ESTATE_TOKEN_BaseURI,
+            LandInitialization.ESTATE_TOKEN_RoyaltyRate,
         ));        
 
         const SmockCommissionTokenFactory = await smock.mock<CommissionToken__factory>('CommissionToken');
@@ -136,11 +137,11 @@ describe('5. EstateMarketplace', async () => {
             admin.address,
             estateToken.address,
             feeReceiver.address,
-            Constant.COMMISSION_TOKEN_INITIAL_Name,
-            Constant.COMMISSION_TOKEN_INITIAL_Symbol,
-            Constant.COMMISSION_TOKEN_INITIAL_BaseURI,
-            Constant.COMMISSION_TOKEN_INITIAL_CommissionRate,
-            Constant.COMMISSION_TOKEN_INITIAL_RoyaltyRate,
+            LandInitialization.COMMISSION_TOKEN_Name,
+            LandInitialization.COMMISSION_TOKEN_Symbol,
+            LandInitialization.COMMISSION_TOKEN_BaseURI,
+            LandInitialization.COMMISSION_TOKEN_CommissionRate,
+            LandInitialization.COMMISSION_TOKEN_RoyaltyRate,
         ));
 
         const SmockEstateForgerFactory = await smock.mock<MockEstateForger__factory>('MockEstateForger');
@@ -150,9 +151,9 @@ describe('5. EstateMarketplace', async () => {
             estateToken.address,
             commissionToken.address,
             feeReceiver.address,
-            Constant.ESTATE_FORGER_INITIAL_FeeRate,
-            Constant.ESTATE_FORGER_INITIAL_BaseMinUnitPrice,
-            Constant.ESTATE_FORGER_INITIAL_BaseMaxUnitPrice,
+            LandInitialization.ESTATE_FORGER_FeeRate,
+            LandInitialization.ESTATE_FORGER_BaseMinUnitPrice,
+            LandInitialization.ESTATE_FORGER_BaseMaxUnitPrice,
         ));
 
         const estateMarketplace = await deployEstateMarketplace(
@@ -491,7 +492,7 @@ describe('5. EstateMarketplace', async () => {
                 let unitPrice = (await estateMarketplace.getOffer(1)).unitPrice;
                 let value = unitPrice.mul(amount).div(ethers.BigNumber.from(10).pow(decimals));
                 let royaltyReceiver = feeReceiver.address;
-                let royaltyAmount = value.mul(Constant.ESTATE_TOKEN_INITIAL_RoyaltyRate).div(Constant.COMMON_RATE_MAX_FRACTION);
+                let royaltyAmount = value.mul(LandInitialization.ESTATE_TOKEN_RoyaltyRate).div(Constant.COMMON_RATE_MAX_FRACTION);
 
                 let commissionReceiver = ethers.constants.AddressZero;
                 let commissionAmount = 0;
@@ -545,10 +546,10 @@ describe('5. EstateMarketplace', async () => {
                 let unitPrice = (await estateMarketplace.getOffer(2)).unitPrice;
                 let value = unitPrice.mul(amount).div(ethers.BigNumber.from(10).pow(decimals));
                 let royaltyReceiver = feeReceiver.address;
-                let royaltyAmount = value.mul(Constant.ESTATE_TOKEN_INITIAL_RoyaltyRate).div(Constant.COMMON_RATE_MAX_FRACTION);
+                let royaltyAmount = value.mul(LandInitialization.ESTATE_TOKEN_RoyaltyRate).div(Constant.COMMON_RATE_MAX_FRACTION);
                 royaltyAmount = royaltyAmount.sub(royaltyAmount.mul(fixture.mockCurrencyExclusiveRate).div(Constant.COMMON_RATE_MAX_FRACTION));
 
-                let commissionAmount = royaltyAmount.mul(Constant.COMMISSION_TOKEN_INITIAL_CommissionRate).div(Constant.COMMON_RATE_MAX_FRACTION);
+                let commissionAmount = royaltyAmount.mul(LandInitialization.COMMISSION_TOKEN_CommissionRate).div(Constant.COMMON_RATE_MAX_FRACTION);
                 let total = value.add(royaltyAmount);
 
                 let buyer2Balance = await currency.balanceOf(buyer2.address);
@@ -756,8 +757,8 @@ describe('5. EstateMarketplace', async () => {
             await testBuyOffer(
                 fixture,
                 mockCurrencyExclusiveRate,
-                Constant.COMMISSION_TOKEN_INITIAL_CommissionRate,
-                Constant.ESTATE_TOKEN_INITIAL_RoyaltyRate,
+                LandInitialization.COMMISSION_TOKEN_CommissionRate,
+                LandInitialization.ESTATE_TOKEN_RoyaltyRate,
                 false,
                 false,
                 3,
@@ -770,8 +771,8 @@ describe('5. EstateMarketplace', async () => {
             await testBuyOffer(
                 fixture,
                 mockCurrencyExclusiveRate,
-                Constant.COMMISSION_TOKEN_INITIAL_CommissionRate,
-                Constant.ESTATE_TOKEN_INITIAL_RoyaltyRate,
+                LandInitialization.COMMISSION_TOKEN_CommissionRate,
+                LandInitialization.ESTATE_TOKEN_RoyaltyRate,
                 true,
                 true,
                 0,
@@ -798,8 +799,8 @@ describe('5. EstateMarketplace', async () => {
                         await testBuyOffer(
                             fixture,
                             mockCurrencyExclusiveRate,
-                            Constant.COMMISSION_TOKEN_INITIAL_CommissionRate,
-                            Constant.ESTATE_TOKEN_INITIAL_RoyaltyRate,
+                            LandInitialization.COMMISSION_TOKEN_CommissionRate,
+                            LandInitialization.ESTATE_TOKEN_RoyaltyRate,
                             isERC20,
                             isExclusive,
                             3,
@@ -1059,7 +1060,7 @@ describe('5. EstateMarketplace', async () => {
                 let unitPrice = (await estateMarketplace.getOffer(1)).unitPrice;
                 let value = unitPrice.mul(amount_1).div(ethers.BigNumber.from(10).pow(decimals));
                 let royaltyReceiver = feeReceiver.address;
-                let royaltyAmount = value.mul(Constant.ESTATE_TOKEN_INITIAL_RoyaltyRate).div(Constant.COMMON_RATE_MAX_FRACTION);
+                let royaltyAmount = value.mul(LandInitialization.ESTATE_TOKEN_RoyaltyRate).div(Constant.COMMON_RATE_MAX_FRACTION);
 
                 let commissionReceiver = ethers.constants.AddressZero;
                 let commissionAmount = 0;
@@ -1101,7 +1102,7 @@ describe('5. EstateMarketplace', async () => {
 
                 let amount_2 = totalAmount.sub(amount_1);
                 value = unitPrice.mul(amount_2).div(ethers.BigNumber.from(10).pow(decimals));
-                royaltyAmount = value.mul(Constant.ESTATE_TOKEN_INITIAL_RoyaltyRate).div(Constant.COMMON_RATE_MAX_FRACTION);
+                royaltyAmount = value.mul(LandInitialization.ESTATE_TOKEN_RoyaltyRate).div(Constant.COMMON_RATE_MAX_FRACTION);
 
                 commissionReceiver = ethers.constants.AddressZero;
                 commissionAmount = 0;
@@ -1152,10 +1153,10 @@ describe('5. EstateMarketplace', async () => {
                 let unitPrice = (await estateMarketplace.getOffer(2)).unitPrice;
                 let value = unitPrice.mul(amount_1).div(ethers.BigNumber.from(10).pow(decimals));
                 let royaltyReceiver = feeReceiver.address;
-                let royaltyAmount = value.mul(Constant.ESTATE_TOKEN_INITIAL_RoyaltyRate).div(Constant.COMMON_RATE_MAX_FRACTION);
+                let royaltyAmount = value.mul(LandInitialization.ESTATE_TOKEN_RoyaltyRate).div(Constant.COMMON_RATE_MAX_FRACTION);
                 royaltyAmount = royaltyAmount.sub(royaltyAmount.mul(fixture.mockCurrencyExclusiveRate).div(Constant.COMMON_RATE_MAX_FRACTION));
 
-                let commissionAmount = royaltyAmount.mul(Constant.COMMISSION_TOKEN_INITIAL_CommissionRate).div(Constant.COMMON_RATE_MAX_FRACTION);
+                let commissionAmount = royaltyAmount.mul(LandInitialization.COMMISSION_TOKEN_CommissionRate).div(Constant.COMMON_RATE_MAX_FRACTION);
                 let total = value.add(royaltyAmount);
 
                 let buyer2Balance = await currency.balanceOf(buyer2.address);
@@ -1192,10 +1193,10 @@ describe('5. EstateMarketplace', async () => {
 
                 let amount_2 = totalAmount.sub(amount_1);
                 value = unitPrice.mul(amount_2).div(ethers.BigNumber.from(10).pow(decimals));
-                royaltyAmount = value.mul(Constant.ESTATE_TOKEN_INITIAL_RoyaltyRate).div(Constant.COMMON_RATE_MAX_FRACTION);
+                royaltyAmount = value.mul(LandInitialization.ESTATE_TOKEN_RoyaltyRate).div(Constant.COMMON_RATE_MAX_FRACTION);
                 royaltyAmount = royaltyAmount.sub(royaltyAmount.mul(fixture.mockCurrencyExclusiveRate).div(Constant.COMMON_RATE_MAX_FRACTION));
 
-                commissionAmount = royaltyAmount.mul(Constant.COMMISSION_TOKEN_INITIAL_CommissionRate).div(Constant.COMMON_RATE_MAX_FRACTION);
+                commissionAmount = royaltyAmount.mul(LandInitialization.COMMISSION_TOKEN_CommissionRate).div(Constant.COMMON_RATE_MAX_FRACTION);
                 total = value.add(royaltyAmount);
 
                 buyer2Balance = await currency.balanceOf(buyer2.address);
@@ -1416,8 +1417,8 @@ describe('5. EstateMarketplace', async () => {
             await testBuyOffer(
                 fixture,
                 mockCurrencyExclusiveRate,
-                Constant.COMMISSION_TOKEN_INITIAL_CommissionRate,
-                Constant.ESTATE_TOKEN_INITIAL_RoyaltyRate,
+                LandInitialization.COMMISSION_TOKEN_CommissionRate,
+                LandInitialization.ESTATE_TOKEN_RoyaltyRate,
                 false,
                 false,
                 3,
@@ -1435,8 +1436,8 @@ describe('5. EstateMarketplace', async () => {
             await testBuyOffer(
                 fixture,
                 mockCurrencyExclusiveRate,
-                Constant.COMMISSION_TOKEN_INITIAL_CommissionRate,
-                Constant.ESTATE_TOKEN_INITIAL_RoyaltyRate,
+                LandInitialization.COMMISSION_TOKEN_CommissionRate,
+                LandInitialization.ESTATE_TOKEN_RoyaltyRate,
                 true,
                 true,
                 0,
@@ -1468,8 +1469,8 @@ describe('5. EstateMarketplace', async () => {
                         await testBuyOffer(
                             fixture,
                             mockCurrencyExclusiveRate,
-                            Constant.COMMISSION_TOKEN_INITIAL_CommissionRate,
-                            Constant.ESTATE_TOKEN_INITIAL_RoyaltyRate,
+                            LandInitialization.COMMISSION_TOKEN_CommissionRate,
+                            LandInitialization.ESTATE_TOKEN_RoyaltyRate,
                             isERC20,
                             isExclusive,
                             3,

@@ -9,6 +9,7 @@ import { deployCurrency } from '@utils/deployments/common/currency';
 import { deployPrimaryToken } from '@utils/deployments/land/primaryToken';
 import { deployTreasury } from '@utils/deployments/land/treasury';
 import { deployStakeToken } from '@utils/deployments/land/stakeToken';
+import { Initialization as LandInitialization } from '@tests/land/test.initialization';
 
 interface AuctionFixture {
     deployer: any;
@@ -48,9 +49,9 @@ describe('13. Auction', async () => {
         const primaryToken = await deployPrimaryToken(
             deployer,
             admin.address,
-            Constant.PRIMARY_TOKEN_INITIAL_Name,
-            Constant.PRIMARY_TOKEN_INITIAL_Symbol,
-            Constant.PRIMARY_TOKEN_INITIAL_LiquidationUnlockedAt,
+            LandInitialization.PRIMARY_TOKEN_Name,
+            LandInitialization.PRIMARY_TOKEN_Symbol,
+            LandInitialization.PRIMARY_TOKEN_LiquidationUnlockedAt,
         ) as PrimaryToken;
         
         const treasury = await deployTreasury(
@@ -64,24 +65,24 @@ describe('13. Auction', async () => {
             deployer,
             admin.address,
             primaryToken.address,
-            Constant.STAKE_TOKEN_INITIAL_Name_1,
-            Constant.STAKE_TOKEN_INITIAL_Symbol_1,
+            LandInitialization.STAKE_TOKEN_Name_1,
+            LandInitialization.STAKE_TOKEN_Symbol_1,
         ) as StakeToken;
 
         const stakeToken2 = await deployStakeToken(
             deployer,
             admin.address,
             primaryToken.address,
-            Constant.STAKE_TOKEN_INITIAL_Name_2,
-            Constant.STAKE_TOKEN_INITIAL_Symbol_2,
+            LandInitialization.STAKE_TOKEN_Name_2,
+            LandInitialization.STAKE_TOKEN_Symbol_2,
         ) as StakeToken;
 
         const stakeToken3 = await deployStakeToken(
             deployer,
             admin.address,
             primaryToken.address,
-            Constant.STAKE_TOKEN_INITIAL_Name_3,
-            Constant.STAKE_TOKEN_INITIAL_Symbol_3,
+            LandInitialization.STAKE_TOKEN_Name_3,
+            LandInitialization.STAKE_TOKEN_Symbol_3,
         ) as StakeToken;
         
         return {

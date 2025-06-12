@@ -52,6 +52,7 @@ import { deployEstateToken } from '@utils/deployments/land/estateToken';
 import { deployMockEstateForger } from '@utils/deployments/mocks/mockEstateForger';
 import { deployReentrancyERC1155Holder } from '@utils/deployments/mocks/mockReentrancy/reentrancyERC1155Holder';
 import { request } from 'http';
+import { Initialization as LandInitialization } from '@tests/land/test.initialization';
 
 chai.use(smock.matchers);
 
@@ -151,8 +152,8 @@ describe('4. EstateForger', async () => {
         await callTransaction(estateToken.initialize(
             admin.address,
             feeReceiver.address,
-            Constant.ESTATE_TOKEN_INITIAL_BaseURI,
-            Constant.ESTATE_TOKEN_INITIAL_RoyaltyRate,
+            LandInitialization.ESTATE_TOKEN_BaseURI,
+            LandInitialization.ESTATE_TOKEN_RoyaltyRate,
         ));
 
         const SmockCommissionTokenFactory = await smock.mock('CommissionToken') as any;
@@ -161,11 +162,11 @@ describe('4. EstateForger', async () => {
             admin.address,
             estateToken.address,
             feeReceiver.address,
-            Constant.COMMISSION_TOKEN_INITIAL_Name,
-            Constant.COMMISSION_TOKEN_INITIAL_Symbol,
-            Constant.COMMISSION_TOKEN_INITIAL_BaseURI,
-            Constant.COMMISSION_TOKEN_INITIAL_CommissionRate,
-            Constant.COMMISSION_TOKEN_INITIAL_RoyaltyRate,
+            LandInitialization.COMMISSION_TOKEN_Name,
+            LandInitialization.COMMISSION_TOKEN_Symbol,
+            LandInitialization.COMMISSION_TOKEN_BaseURI,
+            LandInitialization.COMMISSION_TOKEN_CommissionRate,
+            LandInitialization.COMMISSION_TOKEN_RoyaltyRate,
         ));
 
         await callEstateToken_UpdateCommissionToken(
@@ -181,9 +182,9 @@ describe('4. EstateForger', async () => {
             estateToken.address,
             commissionToken.address,
             feeReceiver.address,
-            Constant.ESTATE_FORGER_INITIAL_FeeRate,
-            Constant.ESTATE_FORGER_INITIAL_BaseMinUnitPrice,
-            Constant.ESTATE_FORGER_INITIAL_BaseMaxUnitPrice
+            LandInitialization.ESTATE_FORGER_FeeRate,
+            LandInitialization.ESTATE_FORGER_BaseMinUnitPrice,
+            LandInitialization.ESTATE_FORGER_BaseMaxUnitPrice
         ) as MockEstateForger;
 
         const zone1 = ethers.utils.formatBytes32String("TestZone1");
@@ -418,11 +419,11 @@ describe('4. EstateForger', async () => {
             expect(await estateForger.commissionToken()).to.equal(commissionToken.address);
 
             const feeRate = await estateForger.getFeeRate();
-            expect(feeRate.value).to.equal(Constant.ESTATE_FORGER_INITIAL_FeeRate);
+            expect(feeRate.value).to.equal(LandInitialization.ESTATE_FORGER_FeeRate);
             expect(feeRate.decimals).to.equal(Constant.COMMON_RATE_DECIMALS);
 
-            expect(await estateForger.baseMinUnitPrice()).to.equal(Constant.ESTATE_FORGER_INITIAL_BaseMinUnitPrice);
-            expect(await estateForger.baseMaxUnitPrice()).to.equal(Constant.ESTATE_FORGER_INITIAL_BaseMaxUnitPrice);
+            expect(await estateForger.baseMinUnitPrice()).to.equal(LandInitialization.ESTATE_FORGER_BaseMinUnitPrice);
+            expect(await estateForger.baseMaxUnitPrice()).to.equal(LandInitialization.ESTATE_FORGER_BaseMaxUnitPrice);
 
             expect(await estateForger.requestNumber()).to.equal(0);
 
@@ -439,8 +440,8 @@ describe('4. EstateForger', async () => {
                 commissionToken.address,
                 feeReceiver.address,
                 Constant.COMMON_RATE_MAX_FRACTION.add(1),
-                Constant.ESTATE_FORGER_INITIAL_BaseMinUnitPrice,
-                Constant.ESTATE_FORGER_INITIAL_BaseMaxUnitPrice
+                LandInitialization.ESTATE_FORGER_BaseMinUnitPrice,
+                LandInitialization.ESTATE_FORGER_BaseMaxUnitPrice
             ])).to.be.reverted;
         });
     });
@@ -2388,7 +2389,7 @@ describe('4. EstateForger', async () => {
                 const decimals = request.decimals;
 
                 let value = soldAmount.mul(request.unitPrice);
-                let fee = scale(value, Constant.ESTATE_FORGER_INITIAL_FeeRate, Constant.COMMON_RATE_DECIMALS);
+                let fee = scale(value, LandInitialization.ESTATE_FORGER_FeeRate, Constant.COMMON_RATE_DECIMALS);
                 let commissionAmount = 0;
 
                 await expect(tx).to
@@ -2437,7 +2438,7 @@ describe('4. EstateForger', async () => {
                 await tx.wait();
 
                 let value = soldAmount.mul(request.unitPrice); // 5000
-                let fee = value.mul(Constant.ESTATE_FORGER_INITIAL_FeeRate).div(Constant.COMMON_RATE_MAX_FRACTION);
+                let fee = value.mul(LandInitialization.ESTATE_FORGER_FeeRate).div(Constant.COMMON_RATE_MAX_FRACTION);
                 fee = fee.sub(fee.mul(mockCurrencyExclusiveRate).div(Constant.COMMON_RATE_MAX_FRACTION));
                 const commissionRate = await commissionToken.getCommissionRate();
                 let commissionAmount = fee.mul(commissionRate.value).div(Constant.COMMON_RATE_MAX_FRACTION);
@@ -2674,7 +2675,7 @@ describe('4. EstateForger', async () => {
             await testConfirmTokenization(
                 1,
                 fixture,
-                Constant.ESTATE_FORGER_INITIAL_FeeRate,
+                LandInitialization.ESTATE_FORGER_FeeRate,
                 mockCurrencyExclusiveRate,
                 (await commissionToken.getCommissionRate()).value,
                 false,
@@ -2695,7 +2696,7 @@ describe('4. EstateForger', async () => {
             await testConfirmTokenization(
                 2,
                 fixture,
-                Constant.ESTATE_FORGER_INITIAL_FeeRate,
+                LandInitialization.ESTATE_FORGER_FeeRate,
                 fixture.mockCurrencyExclusiveRate,
                 (await fixture.commissionToken.getCommissionRate()).value,
                 true,
@@ -2733,7 +2734,7 @@ describe('4. EstateForger', async () => {
                         await testConfirmTokenization(
                             ++currentRequestId,
                             fixture,
-                            Constant.ESTATE_FORGER_INITIAL_FeeRate,
+                            LandInitialization.ESTATE_FORGER_FeeRate,
                             mockCurrencyExclusiveRate,
                             (await commissionToken.getCommissionRate()).value,
                             isERC20,

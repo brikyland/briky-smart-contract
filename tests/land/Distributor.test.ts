@@ -9,6 +9,7 @@ import { deployCurrency } from '@utils/deployments/common/currency';
 import { deployPrimaryToken } from '@utils/deployments/land/primaryToken';
 import { deployTreasury } from '@utils/deployments/land/treasury';
 import { deployStakeToken } from '@utils/deployments/land/stakeToken';
+import { Initialization as LandInitialization } from '@tests/land/test.initialization';
 
 interface DistributorFixture {
     deployer: any;
@@ -45,9 +46,9 @@ describe('11. Distributor', async () => {
         const primaryToken = await deployPrimaryToken(
             deployer,
             admin.address,
-            Constant.PRIMARY_TOKEN_INITIAL_Name,
-            Constant.PRIMARY_TOKEN_INITIAL_Symbol,
-            Constant.PRIMARY_TOKEN_INITIAL_LiquidationUnlockedAt,
+            LandInitialization.PRIMARY_TOKEN_Name,
+            LandInitialization.PRIMARY_TOKEN_Symbol,
+            LandInitialization.PRIMARY_TOKEN_LiquidationUnlockedAt,
         ) as PrimaryToken;
         
         const treasury = await deployTreasury(

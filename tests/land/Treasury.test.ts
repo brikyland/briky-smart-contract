@@ -10,6 +10,7 @@ import { deployPrimaryToken } from '@utils/deployments/land/primaryToken';
 import { deployTreasury } from '@utils/deployments/land/treasury';
 import { callTreasury_Pause } from '@utils/callWithSignatures/treasury';
 import { deployMockPrimaryToken } from '@utils/deployments/mocks/mockPrimaryToken';
+import { Initialization as LandInitialization } from '@tests/land/test.initialization';
 
 interface TreasuryFixture {
     deployer: any;
@@ -48,9 +49,9 @@ describe('8. Treasury', async () => {
         const primaryToken = await deployMockPrimaryToken(
             deployer,
             admin.address,
-            Constant.PRIMARY_TOKEN_INITIAL_Name,
-            Constant.PRIMARY_TOKEN_INITIAL_Symbol,
-            Constant.PRIMARY_TOKEN_INITIAL_LiquidationUnlockedAt,
+            LandInitialization.PRIMARY_TOKEN_Name,
+            LandInitialization.PRIMARY_TOKEN_Symbol,
+            LandInitialization.PRIMARY_TOKEN_LiquidationUnlockedAt,
         ) as MockPrimaryToken;
         
         const treasury = await deployTreasury(

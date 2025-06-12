@@ -16,6 +16,7 @@ import { expectBetween, expectEqualWithErrorMargin } from '@utils/testHelper';
 import { BigNumber, Wallet } from 'ethers';
 import { randomArrayWithSum, randomBigNumber, randomInt, shuffle } from '@utils/utils';
 import { StakeTokenOperation } from '@utils/enums';
+import { Initialization as LandInitialization } from '@tests/land/test.initialization';
 
 interface StakeTokenFixture {
     deployer: any;
@@ -64,9 +65,9 @@ describe('10. StakeToken', async () => {
         const primaryToken = await SmockPrimaryTokenFactory.deploy();
         await callTransaction(primaryToken.initialize(
             admin.address,
-            Constant.PRIMARY_TOKEN_INITIAL_Name,
-            Constant.PRIMARY_TOKEN_INITIAL_Symbol,
-            Constant.PRIMARY_TOKEN_INITIAL_LiquidationUnlockedAt,
+            LandInitialization.PRIMARY_TOKEN_Name,
+            LandInitialization.PRIMARY_TOKEN_Symbol,
+            LandInitialization.PRIMARY_TOKEN_LiquidationUnlockedAt,
         ));
         
         const SmockStakeTokenFactory = await smock.mock<MockStakeToken__factory>("MockStakeToken");
@@ -74,24 +75,24 @@ describe('10. StakeToken', async () => {
         await callTransaction(stakeToken1.initialize(
             admin.address,
             primaryToken.address,
-            Constant.STAKE_TOKEN_INITIAL_Name_1,
-            Constant.STAKE_TOKEN_INITIAL_Symbol_1,
+            LandInitialization.STAKE_TOKEN_Name_1,
+            LandInitialization.STAKE_TOKEN_Symbol_1,
         ));
 
         const stakeToken2 = await SmockStakeTokenFactory.deploy();
         await callTransaction(stakeToken2.initialize(
             admin.address,
             primaryToken.address,
-            Constant.STAKE_TOKEN_INITIAL_Name_2,
-            Constant.STAKE_TOKEN_INITIAL_Symbol_2,
+            LandInitialization.STAKE_TOKEN_Name_2,
+            LandInitialization.STAKE_TOKEN_Symbol_2,
         ));
 
         const stakeToken3 = await SmockStakeTokenFactory.deploy();
         await callTransaction(stakeToken3.initialize(
             admin.address,
             primaryToken.address,
-            Constant.STAKE_TOKEN_INITIAL_Name_3,
-            Constant.STAKE_TOKEN_INITIAL_Symbol_3,
+            LandInitialization.STAKE_TOKEN_Name_3,
+            LandInitialization.STAKE_TOKEN_Symbol_3,
         ));
 
         await callPrimaryToken_UpdateStakeTokens(
@@ -154,7 +155,7 @@ describe('10. StakeToken', async () => {
             await callStakeToken_UpdateFeeRate(
                 stakeToken1,
                 admins,
-                Constant.STAKE_TOKEN_INITIAL_FeeRate,
+                LandInitialization.STAKE_TOKEN_FeeRate,
                 await admin.nonce()
             );
         }
@@ -219,8 +220,8 @@ describe('10. StakeToken', async () => {
             const { admin, primaryToken, stakeToken1, stakeToken2, stakeToken3 } = await setupBeforeTest();
 
             // StakeToken1
-            expect(await stakeToken1.name()).to.equal(Constant.STAKE_TOKEN_INITIAL_Name_1);
-            expect(await stakeToken1.symbol()).to.equal(Constant.STAKE_TOKEN_INITIAL_Symbol_1);            
+            expect(await stakeToken1.name()).to.equal(LandInitialization.STAKE_TOKEN_Name_1);
+            expect(await stakeToken1.symbol()).to.equal(LandInitialization.STAKE_TOKEN_Symbol_1);            
 
             expect(await stakeToken1.totalSupply()).to.equal(0);
             expect(await stakeToken1.lastRewardFetch()).to.equal(0);
@@ -234,8 +235,8 @@ describe('10. StakeToken', async () => {
             expect(await stakeToken1.successor()).to.equal(ethers.constants.AddressZero);
 
             // StakeToken2
-            expect(await stakeToken2.name()).to.equal(Constant.STAKE_TOKEN_INITIAL_Name_2);
-            expect(await stakeToken2.symbol()).to.equal(Constant.STAKE_TOKEN_INITIAL_Symbol_2);
+            expect(await stakeToken2.name()).to.equal(LandInitialization.STAKE_TOKEN_Name_2);
+            expect(await stakeToken2.symbol()).to.equal(LandInitialization.STAKE_TOKEN_Symbol_2);
 
             expect(await stakeToken2.totalSupply()).to.equal(0);
             expect(await stakeToken2.lastRewardFetch()).to.equal(0);
@@ -249,8 +250,8 @@ describe('10. StakeToken', async () => {
             expect(await stakeToken2.successor()).to.equal(ethers.constants.AddressZero);
 
             // StakeToken3
-            expect(await stakeToken3.name()).to.equal(Constant.STAKE_TOKEN_INITIAL_Name_3);
-            expect(await stakeToken3.symbol()).to.equal(Constant.STAKE_TOKEN_INITIAL_Symbol_3);
+            expect(await stakeToken3.name()).to.equal(LandInitialization.STAKE_TOKEN_Name_3);
+            expect(await stakeToken3.symbol()).to.equal(LandInitialization.STAKE_TOKEN_Symbol_3);
 
             expect(await stakeToken3.totalSupply()).to.equal(0);
             expect(await stakeToken3.lastRewardFetch()).to.equal(0);

@@ -35,6 +35,7 @@ import { callCommissionToken_UpdateRoyaltyRate } from '@utils/callWithSignatures
 import { callCommissionMarketplace_Pause } from '@utils/callWithSignatures/commissionMarketplace';
 import { deployFailReceiver } from '@utils/deployments/mocks/failReceiver';
 import { deployReentrancy } from '@utils/deployments/mocks/mockReentrancy/reentrancy';
+import { Initialization as LandInitialization } from '@tests/land/test.initialization';
 
 interface CommissionMarketplaceFixture {
     admin: Admin;
@@ -114,8 +115,8 @@ describe('7. CommissionMarketplace', async () => {
         await callTransaction(estateToken.initialize(
             admin.address,
             feeReceiver.address,
-            Constant.ESTATE_TOKEN_INITIAL_BaseURI,
-            Constant.ESTATE_TOKEN_INITIAL_RoyaltyRate,
+            LandInitialization.ESTATE_TOKEN_BaseURI,
+            LandInitialization.ESTATE_TOKEN_RoyaltyRate,
         ));
 
         const SmockCommissionTokenFactory = await smock.mock<CommissionToken__factory>("CommissionToken");
@@ -124,11 +125,11 @@ describe('7. CommissionMarketplace', async () => {
             admin.address,
             estateToken.address,
             feeReceiver.address,
-            Constant.COMMISSION_TOKEN_INITIAL_Name,
-            Constant.COMMISSION_TOKEN_INITIAL_Symbol,
-            Constant.COMMISSION_TOKEN_INITIAL_BaseURI,
-            Constant.COMMISSION_TOKEN_INITIAL_CommissionRate,
-            Constant.COMMISSION_TOKEN_INITIAL_RoyaltyRate,
+            LandInitialization.COMMISSION_TOKEN_Name,
+            LandInitialization.COMMISSION_TOKEN_Symbol,
+            LandInitialization.COMMISSION_TOKEN_BaseURI,
+            LandInitialization.COMMISSION_TOKEN_CommissionRate,
+            LandInitialization.COMMISSION_TOKEN_RoyaltyRate,
         ));
 
         const commissionMarketplace = await deployCommissionMarketplace(
@@ -509,7 +510,7 @@ describe('7. CommissionMarketplace', async () => {
             await testBuyOffer(
                 fixture,
                 mockCurrencyExclusiveRate,
-                Constant.COMMISSION_TOKEN_INITIAL_RoyaltyRate,
+                LandInitialization.COMMISSION_TOKEN_RoyaltyRate,
                 false,
                 false,
                 ethers.BigNumber.from(200000),
@@ -518,7 +519,7 @@ describe('7. CommissionMarketplace', async () => {
             await testBuyOffer(
                 fixture,
                 mockCurrencyExclusiveRate,
-                Constant.COMMISSION_TOKEN_INITIAL_RoyaltyRate,
+                LandInitialization.COMMISSION_TOKEN_RoyaltyRate,
                 true,
                 true,
                 ethers.BigNumber.from(500000),
@@ -540,7 +541,7 @@ describe('7. CommissionMarketplace', async () => {
                     await testBuyOffer(
                         fixture,
                         mockCurrencyExclusiveRate,
-                        Constant.COMMISSION_TOKEN_INITIAL_RoyaltyRate,
+                        LandInitialization.COMMISSION_TOKEN_RoyaltyRate,
                         isERC20,
                         isExclusive,
                         ethers.BigNumber.from(200000),
