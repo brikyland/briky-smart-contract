@@ -109,7 +109,7 @@ ReentrancyGuardUpgradeable {
         return Rate(royaltyRate, Constant.COMMON_RATE_DECIMALS);
     }
 
-    function getContent(uint256 _contentId) external view returns (Content memory) {
+    function getContent(uint256 _contentId) public view returns (Content memory) {
         if (_contentId == 0 || _contentId > contentNumber) {
             revert InvalidContentId();
         }
@@ -118,6 +118,7 @@ ReentrancyGuardUpgradeable {
 
     function createContents(
         string[] calldata _uris,
+        uint40[] calldata _openAts,
         uint40[] calldata _durations,
         bytes[] calldata _signature
     ) external {
@@ -126,12 +127,14 @@ ReentrancyGuardUpgradeable {
                 address(this),
                 "createContents",
                 _uris,
+                _openAts,
                 _durations
             ),
             _signature
         );
 
-        if (_uris.length != _durations.length) {
+        if (_uris.length != _openAts.length
+            || _uris.length != _durations.length) {
             revert InvalidInput();
         }
 
@@ -139,12 +142,14 @@ ReentrancyGuardUpgradeable {
             uint256 contentId = ++contentNumber;
             contents[contentId] = Content(
                 _uris[i],
-                uint40(block.timestamp) + _durations[i]
+                _openAts[i],
+                _openAts[i] + _durations[i]
             );
 
             emit NewContent(
                 contentId,
                 _uris[i],
+                _openAts[i],
                 _durations[i]
             );
         }
@@ -165,18 +170,23 @@ ReentrancyGuardUpgradeable {
 
         for (uint256 i = 0; i < _contentIds.length; ++i) {
             if (contents[_contentIds[i]].lockAt < block.timestamp) {
-                contents[_contentIds[i]].lockAt = uint40(block.timestamp);
-
-                emit ContentCancellation(_contentIds[i]);
+                revert AlreadyLocked();
             }
+            contents[_contentIds[i]].lockAt = uint40(block.timestamp);
+            emit ContentCancellation(_contentIds[i]);
         }
     }
 
     function mint(uint256 _contentId)
     external payable nonReentrant whenNotPaused returns (uint256) {
-        if (_contentId == 0 || _contentId > contentNumber
-            || contents[_contentId].lockAt >= block.timestamp) {
-            revert InvalidContentId();
+        Content memory content = getContent(_contentId);
+
+        if (block.timestamp < content.openAt) {
+            revert NotOpened();
+        }
+
+        if (block.timestamp >= content.lockAt) {
+            revert AlreadyLocked();
         }
 
         if (hasMinted[msg.sender][_contentId]) {
