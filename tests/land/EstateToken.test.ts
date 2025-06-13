@@ -127,6 +127,15 @@ describe('3. EstateToken', async () => {
         let tokenizers: any[] = [];
         for (let i = 0; i < 6; ++i) {
             const mockEstateForger = await MockEstateForgerFactory.deploy();
+            await callTransaction(mockEstateForger.initialize(
+                admin.address,
+                estateToken.address,
+                commissionToken.address,
+                feeReceiver.address,
+                LandInitialization.ESTATE_FORGER_FeeRate,
+                LandInitialization.ESTATE_FORGER_BaseMinUnitPrice,
+                LandInitialization.ESTATE_FORGER_BaseMaxUnitPrice,
+            ));
             tokenizers.push(mockEstateForger);
         }
 
