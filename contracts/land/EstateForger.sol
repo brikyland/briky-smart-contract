@@ -172,7 +172,9 @@ ReentrancyGuardUpgradeable {
         }
 
         for(uint256 i = 0; i < _currencies.length; ++i) {
-            if (_decimals[i] > Constant.ESTATE_TOKEN_MAX_DECIMALS) revert InvalidInput();
+            if (_decimals[i] > Constant.ESTATE_TOKEN_MAX_DECIMALS) {
+                revert InvalidInput();
+            }
 
             defaultRates[_currencies[i]] = Rate(_values[i], _decimals[i]);
             emit DefaultRateUpdate(
@@ -248,7 +250,7 @@ ReentrancyGuardUpgradeable {
         uint8 _decimals,
         uint40 _expireAt,
         uint40 _duration
-    ) external onlyExecutive returns (uint256) {
+    ) external onlyExecutive whenNotPaused returns (uint256) {
         if (!IAdmin(admin).getZoneEligibility(_zone, msg.sender)) {
             revert Unauthorized();
         }
@@ -312,7 +314,7 @@ ReentrancyGuardUpgradeable {
         uint8 _decimals,
         uint40 _expireAt,
         uint40 _closeAt
-    ) external onlyExecutive {
+    ) external onlyExecutive whenNotPaused {
         if (_requestId == 0 || _requestId > requestNumber) {
             revert InvalidRequestId();
         }
@@ -377,7 +379,8 @@ ReentrancyGuardUpgradeable {
         );
     }
 
-    function updateRequestURI(uint256 _requestId, string calldata _uri) external onlyExecutive {
+    function updateRequestURI(uint256 _requestId, string calldata _uri)
+    external onlyExecutive whenNotPaused {
         if (_requestId == 0 || _requestId > requestNumber) {
             revert InvalidRequestId();
         }
@@ -398,10 +401,209 @@ ReentrancyGuardUpgradeable {
     }
 
     function deposit(uint256 _requestId, uint256 _amount)
-    external payable nonReentrant whenNotPaused {
+    external payable returns (uint256) {
         if (_requestId == 0 || _requestId > requestNumber) {
             revert InvalidRequestId();
         }
+
+        return _deposit(_requestId, _amount);
+    }
+
+    function safeDeposit(
+        uint256 _requestId,
+        uint256 _amount,
+        string calldata _anchor
+    ) external payable returns (uint256) {
+        if (_requestId == 0 || _requestId > requestNumber) {
+            revert InvalidRequestId();
+        }
+
+        if (keccak256(bytes(_anchor)) == keccak256(bytes(requests[_requestId].uri))) {
+            revert BadAnchor();
+        }
+
+        return _deposit(_requestId, _amount);
+    }
+
+    function cancel(uint256 _requestId) external onlyManager whenNotPaused {
+        if (_requestId == 0 || _requestId > requestNumber) {
+            revert InvalidRequestId();
+        }
+        Request storage request = requests[_requestId];
+        if (!IAdmin(admin).isActiveIn(request.zone, msg.sender)) {
+            revert Unauthorized();
+        }
+        if (request.totalSupply == 0) {
+            revert Cancelled();
+        }
+        if (request.estateId != 0) {
+            revert Tokenized();
+        }
+        request.totalSupply = 0;
+        emit RequestCancellation(_requestId);
+    }
+
+    function confirm(uint256 _requestId, address _commissionReceiver)
+    external onlyManager returns (uint256) {
+        if (_requestId == 0 || _requestId > requestNumber) {
+            revert InvalidRequestId();
+        }
+
+        return _confirm(_requestId, _commissionReceiver);
+    }
+
+    function safeConfirm(
+        uint256 _requestId,
+        address _commissionReceiver,
+        string calldata _anchor
+    ) external onlyManager returns (uint256) {
+        if (_requestId == 0 || _requestId > requestNumber) {
+            revert InvalidRequestId();
+        }
+
+        if (keccak256(bytes(_anchor)) == keccak256(bytes(requests[_requestId].uri))) {
+            revert BadAnchor();
+        }
+
+        return _confirm(_requestId, _commissionReceiver);
+    }
+
+    function withdrawDeposit(uint256 _requestId) external nonReentrant whenNotPaused returns (uint256) {
+        if (_requestId == 0 || _requestId > requestNumber) {
+            revert InvalidRequestId();
+        }
+        Request storage request = requests[_requestId];
+        if (request.estateId != 0) {
+            revert Tokenized();
+        }
+        if (request.totalSupply != 0) {
+            uint256 closeAt = request.closeAt;
+            if (closeAt > block.timestamp) {
+                revert StillSelling();
+            }
+            if (closeAt + Constant.ESTATE_TOKEN_CONFIRMATION_TIME_LIMIT > block.timestamp
+                && request.soldAmount >= request.minSellingAmount) {
+                revert InvalidWithdrawing();
+            }
+        }
+        if (hasWithdrawn[_requestId][msg.sender]) {
+            revert AlreadyWithdrawn();
+        }
+
+        address currency = request.currency;
+        uint256 amount = deposits[_requestId][msg.sender];
+        uint256 value = amount * request.unitPrice;
+
+        hasWithdrawn[_requestId][msg.sender] = true;
+
+        if (currency == address(0)) {
+            CurrencyHandler.transferNative(msg.sender, value);
+        } else {
+            IERC20Upgradeable(currency).safeTransfer(msg.sender, value);
+        }
+
+        emit DepositWithdrawal(
+            _requestId,
+            msg.sender,
+            amount,
+            value
+        );
+
+        return value;
+    }
+
+    function withdrawToken(uint256 _requestId) external whenNotPaused returns (uint256) {
+        if (_requestId == 0 || _requestId > requestNumber) {
+            revert InvalidRequestId();
+        }
+        Request storage request = requests[_requestId];
+        if (request.estateId == 0) {
+            revert InvalidWithdrawing();
+        }
+        if (hasWithdrawn[_requestId][msg.sender]) {
+            revert AlreadyWithdrawn();
+        }
+
+        hasWithdrawn[_requestId][msg.sender] = true;
+        uint256 amount = deposits[_requestId][msg.sender] * 10 ** request.decimals;
+        IEstateToken(estateToken).safeTransferFrom(
+            address(this),
+            msg.sender,
+            request.estateId,
+            amount,
+            ""
+        );
+
+        emit TokenWithdrawal(
+            _requestId,
+            msg.sender,
+            amount
+        );
+
+        return amount;
+    }
+
+    function allocationOfAt(
+        uint256 _tokenizationId,
+        address _account,
+        uint256 _at
+    ) external view returns (uint256 allocation) {
+        if (_tokenizationId == 0 || _tokenizationId > requestNumber) revert InvalidRequestId();
+        return _at >= requests[_tokenizationId].closeAt
+            ? deposits[_tokenizationId][_account] * 10 ** requests[_tokenizationId].decimals
+            : 0;
+    }
+
+    function _validateUnitPrice(uint256 _unitPrice, address _currency) private {
+        if (!IAdmin(admin).isAvailableCurrency(_currency)) {
+            revert InvalidCurrency();
+        }
+
+        PriceFeed memory priceFeed = priceFeeds[_currency];
+
+        Rate memory rate;
+        if (priceFeed.feed == address(0)) {
+            rate = defaultRates[_currency];
+            if (rate.value == 0)revert MissingCurrencyRate();
+        } else {
+            (
+                ,
+                int256 answer,
+                ,
+                uint256 updatedAt,
+
+            ) = AggregatorV3Interface(priceFeed.feed).latestRoundData();
+
+            if (answer <= 0) {
+                revert InvalidPriceFeedData();
+            }
+
+            if (updatedAt + priceFeed.heartbeat <= block.timestamp) {
+                revert StalePriceFeed();
+            }
+
+            rate = Rate(
+                uint256(answer),
+                AggregatorV3Interface(priceFeed.feed).decimals()
+            );
+        }
+
+        uint256 normalizedUnitPrice = _unitPrice.scale(rate);
+
+        if (baseMinUnitPrice > normalizedUnitPrice || normalizedUnitPrice > baseMaxUnitPrice) {
+            revert InvalidUnitPrice();
+        }
+
+        emit UnitPriceValidation(
+            _unitPrice,
+            _currency,
+            rate.value,
+            rate.decimals
+        );
+    }
+
+    function _deposit(uint256 _requestId, uint256 _amount)
+    private nonReentrant whenNotPaused returns (uint256) {
         Request storage request = requests[_requestId];
         if (request.totalSupply == 0) {
             revert Cancelled();
@@ -435,30 +637,12 @@ ReentrancyGuardUpgradeable {
             _amount,
             value
         );
+
+        return value;
     }
 
-    function cancelRequest(uint256 _requestId) external onlyManager {
-        if (_requestId == 0 || _requestId > requestNumber) {
-            revert InvalidRequestId();
-        }
-        Request storage request = requests[_requestId];
-        if (!IAdmin(admin).isActiveIn(request.zone, msg.sender)) {
-            revert Unauthorized();
-        }
-        if (request.totalSupply == 0) {
-            revert Cancelled();
-        }
-        if (request.estateId != 0) {
-            revert Tokenized();
-        }
-        request.totalSupply = 0;
-        emit RequestCancellation(_requestId);
-    }
-
-    function confirmRequest(
-        uint256 _requestId,
-        address _commissionReceiver
-    ) external nonReentrant onlyManager whenNotPaused returns (uint256) {
+    function _confirm(uint256 _requestId, address _commissionReceiver)
+    private nonReentrant whenNotPaused returns (uint256) {
         if (_requestId == 0 || _requestId > requestNumber) {
             revert InvalidRequestId();
         }
@@ -552,135 +736,5 @@ ReentrancyGuardUpgradeable {
         );
 
         return estateId;
-    }
-
-    function withdrawDeposit(uint256 _requestId) external nonReentrant whenNotPaused {
-        if (_requestId == 0 || _requestId > requestNumber) {
-            revert InvalidRequestId();
-        }
-        Request storage request = requests[_requestId];
-        if (request.estateId != 0) {
-            revert Tokenized();
-        }
-        if (request.totalSupply != 0) {
-            uint256 closeAt = request.closeAt;
-            if (closeAt > block.timestamp) {
-                revert StillSelling();
-            }
-            if (closeAt + Constant.ESTATE_TOKEN_CONFIRMATION_TIME_LIMIT > block.timestamp
-                && request.soldAmount >= request.minSellingAmount) {
-                revert InvalidWithdrawing();
-            }
-        }
-        if (hasWithdrawn[_requestId][msg.sender]) {
-            revert AlreadyWithdrawn();
-        }
-
-        address currency = request.currency;
-        uint256 amount = deposits[_requestId][msg.sender];
-        uint256 value = amount * request.unitPrice;
-
-        hasWithdrawn[_requestId][msg.sender] = true;
-
-        if (currency == address(0)) {
-            CurrencyHandler.transferNative(msg.sender, value);
-        } else {
-            IERC20Upgradeable(currency).safeTransfer(msg.sender, value);
-        }
-
-        emit DepositWithdrawal(
-            _requestId,
-            msg.sender,
-            amount,
-            value
-        );
-    }
-
-    function withdrawToken(uint256 _requestId) external whenNotPaused {
-        if (_requestId == 0 || _requestId > requestNumber) {
-            revert InvalidRequestId();
-        }
-        Request storage request = requests[_requestId];
-        if (request.estateId == 0) {
-            revert InvalidWithdrawing();
-        }
-        if (hasWithdrawn[_requestId][msg.sender]) {
-            revert AlreadyWithdrawn();
-        }
-
-        hasWithdrawn[_requestId][msg.sender] = true;
-        uint256 amount = deposits[_requestId][msg.sender] * 10 ** request.decimals;
-        IEstateToken(estateToken).safeTransferFrom(
-            address(this),
-            msg.sender,
-            request.estateId,
-            amount,
-            ""
-        );
-
-        emit TokenWithdrawal(
-            _requestId,
-            msg.sender,
-            amount
-        );
-    }
-
-    function allocationOfAt(
-        uint256 _tokenizationId,
-        address _account,
-        uint256 _at
-    ) external view returns (uint256 allocation) {
-        if (_tokenizationId == 0 || _tokenizationId > requestNumber) revert InvalidRequestId();
-        return _at >= requests[_tokenizationId].closeAt
-            ? deposits[_tokenizationId][_account] * 10 ** requests[_tokenizationId].decimals
-            : 0;
-    }
-
-    function _validateUnitPrice(uint256 _unitPrice, address _currency) private {
-        if (!IAdmin(admin).isAvailableCurrency(_currency)) {
-            revert InvalidCurrency();
-        }
-
-        PriceFeed memory priceFeed = priceFeeds[_currency];
-
-        Rate memory rate;
-        if (priceFeed.feed == address(0)) {
-            rate = defaultRates[_currency];
-            if (rate.value == 0)revert MissingCurrencyRate();
-        } else {
-            (
-                ,
-                int256 answer,
-                ,
-                uint256 updatedAt,
-
-            ) = AggregatorV3Interface(priceFeed.feed).latestRoundData();
-
-            if (answer <= 0) {
-                revert InvalidPriceFeedData();
-            }
-
-            if (updatedAt + priceFeed.heartbeat <= block.timestamp) {
-                revert StalePriceFeed();
-            }
-
-            rate = Rate(
-                uint256(answer),
-                AggregatorV3Interface(priceFeed.feed).decimals()
-            );
-        }
-
-        uint256 normalizedUnitPrice = _unitPrice.scale(rate);
-
-        if (baseMinUnitPrice > normalizedUnitPrice || normalizedUnitPrice > baseMaxUnitPrice) {
-            revert InvalidUnitPrice();
-        }
-
-        emit UnitPriceValidation(
-            _unitPrice,
-            _currency,
-            rate.value,
-            rate.decimals
-        );
     }
 }

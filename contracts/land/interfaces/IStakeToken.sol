@@ -26,6 +26,7 @@ interface IStakeToken is IExclusiveToken {
     function getFeeRate() external view returns (Rate memory rate);
 
     function fetchReward() external;
+
     function promote(uint256 value) external;
     function stake(address account, uint256 value) external;
     function unstake(uint256 value) external;

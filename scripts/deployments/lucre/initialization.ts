@@ -12,6 +12,6 @@ export const Initialization = {
     PASSPORT_TOKEN_Name: 'Briky Passport',
     PASSPORT_TOKEN_Symbol: 'PASSY',
     PASSPORT_TOKEN_BaseURI: '',
-    PASSPORT_TOKEN_Fee: ethers.utils.parseEther(String(150e-10)),
+    PASSPORT_TOKEN_Fee: ethers.utils.parseEther(String(150e-8)),
     PASSPORT_TOKEN_RoyaltyRate: ethers.utils.parseEther(String(0.06)),
 }
