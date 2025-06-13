@@ -65,8 +65,7 @@ interface CommonFixture {
 }
 
 
-describe.only('0. Common', async () => {
-
+describe('0. Common', async () => {
     async function commonFixture(): Promise<CommonFixture> {
         const accounts = await ethers.getSigners();
         const deployer = accounts[0];

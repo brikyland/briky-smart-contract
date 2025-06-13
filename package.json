@@ -95,7 +95,8 @@
     "deployStakeToken1:mainnet": "npx hardhat --network mainnet run scripts/deployments/land/stakeToken1.deployment.ts",
     "deployStakeToken2:mainnet": "npx hardhat --network mainnet run scripts/deployments/land/stakeToken2.deployment.ts",
     "deployStakeToken3:mainnet": "npx hardhat --network mainnet run scripts/deployments/land/stakeToken3.deployment.ts",
-    "deployTreasury:mainnet": "npx hardhat --network mainnet run scripts/deployments/land/treasury.deployment.ts"
+    "deployTreasury:mainnet": "npx hardhat --network mainnet run scripts/deployments/land/treasury.deployment.ts",
+    "test": "npx hardhat run tests/run_test.ts"
   },
   "devDependencies": {
     "@anders-t/ethers-ledger": "^1.0.4",

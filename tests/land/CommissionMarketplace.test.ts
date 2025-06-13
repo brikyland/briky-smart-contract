@@ -205,6 +205,9 @@ describe('7. CommissionMarketplace', async () => {
             await callTransaction(estateToken.call(commissionToken.address, commissionToken.interface.encodeFunctionData('mint', [seller1.address, 1])));
             await callTransaction(estateToken.call(commissionToken.address, commissionToken.interface.encodeFunctionData('mint', [seller2.address, 2])));
 
+            await callTransaction(commissionToken.connect(seller1).setApprovalForAll(commissionMarketplace.address, true));
+            await callTransaction(commissionToken.connect(seller2).setApprovalForAll(commissionMarketplace.address, true));
+
             await estateToken.setVariable("estateNumber", 2);
         }
 
@@ -421,12 +424,11 @@ describe('7. CommissionMarketplace', async () => {
                 await admin.nonce(),
             );
 
-            let currentTimestamp = await time.latest();
-
             const seller = seller1;
             const buyer = buyer1;
 
-            await callTransaction(estateToken.call(commissionToken.address, commissionToken.interface.encodeFunctionData('mint', [seller1.address, currentTokenId])));
+            await callTransaction(estateToken.call(commissionToken.address, commissionToken.interface.encodeFunctionData('mint', [seller.address, currentTokenId])));
+            await callTransaction(commissionToken.connect(seller).setApprovalForAll(commissionMarketplace.address, true));
             await estateToken.setVariable("estateNumber", currentTokenId);
 
             await callTransaction(commissionMarketplace.connect(seller).list(

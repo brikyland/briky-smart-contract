@@ -18,6 +18,8 @@ import {ICommissionToken} from "../land/interfaces/ICommissionToken.sol";
 
 import {CommissionMarketplaceStorage} from "./storages/CommissionMarketplaceStorage.sol";
 
+import "hardhat/console.sol";
+
 contract CommissionMarketplace is
 CommissionMarketplaceStorage,
 Discountable,
@@ -122,6 +124,8 @@ ReentrancyGuardUpgradeable {
             currencyContract.safeTransferFrom(msg.sender, seller, price);
             currencyContract.safeTransferFrom(msg.sender, royaltyReceiver, royaltyAmount);
         }
+
+        console.log("seller", seller);
 
         offer.state = OfferState.Sold;
         commissionTokenContract.safeTransferFrom(
