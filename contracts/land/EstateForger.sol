@@ -255,7 +255,7 @@ ReentrancyGuardUpgradeable {
 
         _validateUnitPrice(_unitPrice, _currency);
 
-        if (isSeller[_seller]
+        if (!isSeller[_seller]
             || _minSellingAmount > _maxSellingAmount
             || _maxSellingAmount > _totalSupply
             || _totalSupply > type(uint256).max / 10 ** _decimals
@@ -335,7 +335,7 @@ ReentrancyGuardUpgradeable {
 
         _validateUnitPrice(_unitPrice, _currency);
 
-        if (isSeller[_seller]
+        if (!isSeller[_seller]
             || _minSellingAmount > _maxSellingAmount
             || _maxSellingAmount > _totalSupply
             || _totalSupply > type(uint256).max / 10 ** _decimals
