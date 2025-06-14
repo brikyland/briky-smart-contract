@@ -159,3 +159,7 @@ export function shuffle(array: any[]) {
         [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
     }
 }
+
+export function replaceFromIndex(str: string, index: number, pattern: string, replacement: string): string {
+    return str.slice(0, index) + str.slice(index).replace(pattern, replacement);
+}
