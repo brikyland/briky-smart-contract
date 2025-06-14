@@ -240,7 +240,7 @@ ReentrancyGuardUpgradeable {
 
     function deprecateEstate(uint256 _estateId) external onlyManager {
         if (!exists(_estateId)) revert InvalidEstateId();
-        if (!IAdmin(admin).isActiveIn(estates[_estateId].zone, msg.sender)) {
+        if (!IAdmin(admin).getZoneEligibility(estates[_estateId].zone, msg.sender)) {
             revert Unauthorized();
         }
         if (estates[_estateId].isDeprecated) revert Deprecated();
@@ -252,7 +252,7 @@ ReentrancyGuardUpgradeable {
         if (!exists(_estateId)) {
             revert InvalidEstateId();
         }
-        if (!IAdmin(admin).isActiveIn(estates[_estateId].zone, msg.sender)) {
+        if (!IAdmin(admin).getZoneEligibility(estates[_estateId].zone, msg.sender)) {
             revert Unauthorized();
         }
         if (estates[_estateId].isDeprecated) {
@@ -269,7 +269,7 @@ ReentrancyGuardUpgradeable {
         if (!isAvailable(_estateId)) {
             revert InvalidEstateId();
         }
-        if (!IAdmin(admin).isActiveIn(estates[_estateId].zone, msg.sender)) {
+        if (!IAdmin(admin).getZoneEligibility(estates[_estateId].zone, msg.sender)) {
             revert Unauthorized();
         }
         _setURI(_estateId, _uri);
