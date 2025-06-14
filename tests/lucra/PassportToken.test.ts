@@ -17,7 +17,7 @@ import { deployAdmin } from '@utils/deployments/common/admin';
 import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
 import { deployCurrency } from '@utils/deployments/common/currency';
 import { deployMockEstateToken } from '@utils/deployments/mocks/mockEstateToken';
-import { deployPassportToken } from '@utils/deployments/lucre/passportToken';
+import { deployPassportToken } from '@utils/deployments/lucra/passportToken';
 import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 
 import { smock } from '@defi-wonderland/smock';

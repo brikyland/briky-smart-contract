@@ -2,7 +2,7 @@ import { ethers } from "hardhat";
 
 export const Initialization = {
     // Promotion Token
-    PROMOTION_TOKEN_Name: 'Briky Lucre',
+    PROMOTION_TOKEN_Name: 'Briky Lucra',
     PROMOTION_TOKEN_Symbol: 'LUCKY',
     PROMOTION_TOKEN_BaseURI: 'PromotionToken_TestURI',
     PROMOTION_TOKEN_Fee: ethers.utils.parseEther(String(3e-10.toFixed(18))),

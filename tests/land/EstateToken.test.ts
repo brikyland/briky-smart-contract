@@ -23,6 +23,7 @@ import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 import { smock } from '@defi-wonderland/smock';
 
 import {
+    callAdmin_ActivateIn,
     callAdmin_AuthorizeManagers,
     callAdmin_AuthorizeModerators,
     callAdmin_DeclareZones,
@@ -56,6 +57,7 @@ interface EstateTokenFixture {
     commissionReceiver: any;
     depositor1: any, depositor2: any, depositor3: any;
     depositors: any[];
+    zone: string;
 
     tokenizers: any[];
 
@@ -142,6 +144,8 @@ describe('3. EstateToken', async () => {
         const estateForger = tokenizers[0];
         tokenizers = tokenizers.slice(1);
 
+        const zone = ethers.utils.formatBytes32String("TestZone");
+
         return {
             admin,
             feeReceiver,
@@ -163,6 +167,7 @@ describe('3. EstateToken', async () => {
             depositor3,
             depositors,
             tokenizers,
+            zone,
             sampleEstates: [],
             baseTimestamp: 0,
         };
@@ -175,7 +180,7 @@ describe('3. EstateToken', async () => {
         addSampleEstates = false,
     } = {}): Promise<EstateTokenFixture> {
         const fixture = await loadFixture(estateTokenFixture);
-        const { admin, admins, manager, moderator, estateToken, estateForger, commissionToken } = fixture;
+        const { admin, admins, manager, moderator, estateToken, estateForger, commissionToken, zone } = fixture;
 
         await callAdmin_AuthorizeManagers(
             admin,
@@ -227,7 +232,16 @@ describe('3. EstateToken', async () => {
             await callAdmin_DeclareZones(
                 admin,
                 admins,
-                [ethers.utils.formatBytes32String("TestZone")],
+                [zone],
+                true,
+                await fixture.admin.nonce()
+            );
+
+            await callAdmin_ActivateIn(
+                admin,
+                admins,
+                zone,
+                [manager.address],
                 true,
                 await fixture.admin.nonce()
             );
@@ -236,7 +250,7 @@ describe('3. EstateToken', async () => {
 
             await estateForger.call(estateToken.address, estateToken.interface.encodeFunctionData('tokenizeEstate', [
                 10_000,
-                ethers.utils.formatBytes32String("TestZone"),
+                zone,
                 10,
                 "Token1_URI",
                 baseTimestamp + 1e8,
@@ -246,7 +260,7 @@ describe('3. EstateToken', async () => {
 
             await estateForger.call(estateToken.address, estateToken.interface.encodeFunctionData('tokenizeEstate', [
                 10_000,
-                ethers.utils.formatBytes32String("TestZone"),
+                zone,
                 10,
                 "Token2_URI",
                 baseTimestamp + 2e8,
@@ -1226,6 +1240,45 @@ describe('3. EstateToken', async () => {
             await expect(estateToken.connect(moderator).deprecateEstate(1))
                 .to.be.revertedWithCustomError(estateToken, "Unauthorized");
         });
+
+        it('3.11.5. deprecate estate unsuccessfully when zone is not declared', async () => {
+            const { estateToken, manager, admin, admins, zone } = await beforeEstateTokenTest({
+                updateCommissionToken: true,
+                authorizeEstateForger: true,
+                addSampleEstates: true,
+            });
+
+            await callAdmin_DeclareZones(
+                admin,
+                admins,
+                [zone],
+                false,
+                await admin.nonce()
+            );
+
+            await expect(estateToken.connect(manager).deprecateEstate(1))
+                .to.be.revertedWithCustomError(estateToken, "Unauthorized");
+        });
+
+        it('3.11.6. deprecate estate unsuccessfully when sender is not active in zone', async () => {
+            const { estateToken, manager, admin, admins, zone } = await beforeEstateTokenTest({
+                updateCommissionToken: true,
+                authorizeEstateForger: true,
+                addSampleEstates: true,
+            });
+
+            await callAdmin_ActivateIn(
+                admin,
+                admins,
+                zone,
+                [manager.address],
+                false,
+                await admin.nonce()
+            );
+
+            await expect(estateToken.connect(manager).deprecateEstate(1))
+                .to.be.revertedWithCustomError(estateToken, "Unauthorized");
+        });
     });
 
     describe('3.12. extendEstateExpiration(uint256, uint40)', () => {
@@ -1297,6 +1350,45 @@ describe('3. EstateToken', async () => {
             await expect(estateToken.connect(moderator).extendEstateExpiration(1, baseTimestamp + 1e9))
                 .to.be.revertedWithCustomError(estateToken, "Unauthorized");
         });
+
+        it('3.12.5. extend estate expiration unsuccessfully when zone is not declared', async () => {
+            const { estateToken, manager, admin, admins, zone, baseTimestamp } = await beforeEstateTokenTest({
+                updateCommissionToken: true,
+                authorizeEstateForger: true,
+                addSampleEstates: true,
+            });
+
+            await callAdmin_DeclareZones(
+                admin,
+                admins,
+                [zone],
+                false,
+                await admin.nonce()
+            );
+
+            await expect(estateToken.connect(manager).extendEstateExpiration(1, baseTimestamp + 1e9))
+                .to.be.revertedWithCustomError(estateToken, "Unauthorized");
+        });
+
+        it('3.12.6. extend estate expiration unsuccessfully when sender is not active in zone', async () => {
+            const { estateToken, manager, admin, admins, zone, baseTimestamp } = await beforeEstateTokenTest({
+                updateCommissionToken: true,
+                authorizeEstateForger: true,
+                addSampleEstates: true,
+            });
+
+            await callAdmin_ActivateIn(
+                admin,
+                admins,
+                zone,
+                [manager.address],
+                false,
+                await admin.nonce()
+            );
+
+            await expect(estateToken.connect(manager).extendEstateExpiration(1, baseTimestamp + 1e9))
+                .to.be.revertedWithCustomError(estateToken, "Unauthorized");
+        });
     });
 
     describe('3.13. updateEstateURI(uint256, string)', () => {
@@ -1355,6 +1447,45 @@ describe('3. EstateToken', async () => {
                 .to.be.revertedWithCustomError(estateToken, "Unauthorized");
 
             await expect(estateToken.connect(moderator).updateEstateURI(1, 'new_URI_1'))
+                .to.be.revertedWithCustomError(estateToken, "Unauthorized");
+        });
+
+        it('3.13.4. update estate URI unsuccessfully when zone is not declared', async () => {
+            const { estateToken, manager, admin, admins, zone } = await beforeEstateTokenTest({
+                updateCommissionToken: true,
+                authorizeEstateForger: true,
+                addSampleEstates: true,
+            });
+
+            await callAdmin_DeclareZones(
+                admin,
+                admins,
+                [zone],
+                false,
+                await admin.nonce()
+            );
+
+            await expect(estateToken.connect(manager).updateEstateURI(1, 'new_URI_1'))
+                .to.be.revertedWithCustomError(estateToken, "Unauthorized");
+        });
+
+        it('3.13.5. update estate URI unsuccessfully when sender is not active in zone', async () => {
+            const { estateToken, manager, admin, admins, zone } = await beforeEstateTokenTest({
+                updateCommissionToken: true,
+                authorizeEstateForger: true,
+                addSampleEstates: true,
+            });
+
+            await callAdmin_ActivateIn(
+                admin,
+                admins,
+                zone,
+                [manager.address],
+                false,
+                await admin.nonce()
+            );
+
+            await expect(estateToken.connect(manager).updateEstateURI(1, 'new_URI_1'))
                 .to.be.revertedWithCustomError(estateToken, "Unauthorized");
         });
     });

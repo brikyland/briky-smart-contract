@@ -41,7 +41,7 @@ import { deployMortgageMarketplace } from '@utils/deployments/lend/mortgageMarke
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { Initialization as LandInitialization } from '@tests/land/test.initialization';
 import { Initialization as LendInitialization } from '@tests/lend/test.initialization';
-import { Initialization as LucreInitialization } from '@tests/lucre/test.initialization';
+import { Initialization as LucraInitialization } from '@tests/lucra/test.initialization';
 
 interface CommonFixture {
     deployer: any;
@@ -281,7 +281,7 @@ describe('0. Common', async () => {
             await testReceiveNotExecuteAnyCode(estateForger, 28228);
             await testReceiveNotExecuteAnyCode(estateMarketplace, 28223);
             await testReceiveNotExecuteAnyCode(commissionToken, 28228);
-            await testReceiveNotExecuteAnyCode(commissionMarketplace, 28223);
+            await testReceiveNotExecuteAnyCode(commissionMarketplace, 28236);
             await testReceiveNotExecuteAnyCode(treasury, 28236);
             await testReceiveNotExecuteAnyCode(primaryToken, 28228);
             await testReceiveNotExecuteAnyCode(stakeToken, 28228);
@@ -289,7 +289,7 @@ describe('0. Common', async () => {
             await testReceiveNotExecuteAnyCode(dripDistributor, 28228);
             await testReceiveNotExecuteAnyCode(auction, 28241);
             await testReceiveNotExecuteAnyCode(mortgageToken, 28228);
-            await testReceiveNotExecuteAnyCode(mortgageMarketplace, 28223);
+            await testReceiveNotExecuteAnyCode(mortgageMarketplace, 28236);
         });
     });
 });

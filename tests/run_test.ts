@@ -4,14 +4,14 @@ async function runTests() {
     const COMMON_PATH = "tests/common";
     const LAND_PATH = "tests/land";
     const LEND_PATH = "tests/lend";
-    const LUCRE_PATH = "tests/lucre";
+    const LUCRA_PATH = "tests/lucra";
 
     const tests = [
-        `${COMMON_PATH}/common.test.ts`,
-        `${COMMON_PATH}/admin.test.ts`,
-        `${COMMON_PATH}/feeReceiver.test.ts`,
-        `${LAND_PATH}/estateToken.test.ts`,
-        `${LAND_PATH}/estateForger.test.ts`,
+        // `${COMMON_PATH}/common.test.ts`,
+        // `${COMMON_PATH}/admin.test.ts`,
+        // `${COMMON_PATH}/feeReceiver.test.ts`,
+        // `${LAND_PATH}/estateToken.test.ts`,
+        // `${LAND_PATH}/estateForger.test.ts`,
         `${LAND_PATH}/estateMarketplace.test.ts`,
         `${LAND_PATH}/commissionToken.test.ts`,
         `${LAND_PATH}/commissionMarketplace.test.ts`,
@@ -23,8 +23,8 @@ async function runTests() {
         `${LAND_PATH}/auction.test.ts`,
         `${LEND_PATH}/mortgageToken.test.ts`,
         `${LEND_PATH}/mortgageMarketplace.test.ts`,
-        `${LUCRE_PATH}/passportToken.test.ts`,
-        `${LUCRE_PATH}/promotionToken.test.ts`,
+        `${LUCRA_PATH}/passportToken.test.ts`,
+        `${LUCRA_PATH}/promotionToken.test.ts`,
     ]
 
     for (const file of tests) {

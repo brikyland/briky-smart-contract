@@ -1,7 +1,7 @@
 import { LedgerSigner } from '@anders-t/ethers-ledger';
 import assert from 'assert';
 import { ethers, network, upgrades } from 'hardhat';
-import { deployPassportToken } from '../../../utils/deployments/lucre/passportToken';
+import { deployPassportToken } from '../../../utils/deployments/lucra/passportToken';
 import { Initialization } from './initialization';
 
 async function deployOrUpgradePassportToken() {

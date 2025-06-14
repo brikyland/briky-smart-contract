@@ -71,8 +71,8 @@ async function testReentrancy_Marketplace(
     assertion: any,
 ) {
     let data = [
-        estateMarketplace.interface.encodeFunctionData("buy(uint256,uint256)", [0, 0]),
-        estateMarketplace.interface.encodeFunctionData("buy(uint256,uint256,uint256)", [0, 0, 0]),
+        estateMarketplace.interface.encodeFunctionData("safeBuy(uint256,uint256)", [0, 0]),
+        estateMarketplace.interface.encodeFunctionData("safeBuy(uint256,uint256,uint256)", [0, 0, 0]),
         estateMarketplace.interface.encodeFunctionData("cancel", [0]),
     ];
 
@@ -482,7 +482,7 @@ describe('5. EstateMarketplace', async () => {
         });
     });
 
-    describe('5.6. buyToken(uint256, uint256)', async () => {
+    describe('5.6. safeBuy(uint256, uint256)', async () => {
         it('5.6.1. buy token successfully', async () => {
             async function testcase1(fixture: EstateMarketplaceFixture) {
                 const { estateToken, estateMarketplace, seller1, buyer1, feeReceiver } = fixture;
@@ -505,15 +505,10 @@ describe('5. EstateMarketplace', async () => {
                 let royaltyReceiverBalance = await ethers.provider.getBalance(royaltyReceiver);
                 let commissionReceiverBalance = await ethers.provider.getBalance(commissionReceiver);
 
-                let tx = await estateMarketplace.connect(buyer1)["buy(uint256,uint256)"](1, 1, { value: 1e9 });
+                let tx = await estateMarketplace.connect(buyer1)["safeBuy(uint256,uint256)"](1, 1, { value: 1e9 });
                 let receipt = await tx.wait();
 
                 let gasFee = receipt.gasUsed.mul(receipt.effectiveGasPrice);
-
-                console.log("amount", amount);
-                console.log("value", value);
-                console.log("royaltyAmount", royaltyAmount);
-                console.log("commissionAmount", commissionAmount);
 
                 await expect(tx).to
                     .emit(estateMarketplace, 'OfferSale')
@@ -559,7 +554,7 @@ describe('5. EstateMarketplace', async () => {
                 let buyer2TokenBalance = await estateToken.balanceOf(buyer2.address, 2);
                 let seller2TokenBalance = await estateToken.balanceOf(seller2.address, 2);
 
-                let tx = await estateMarketplace.connect(buyer2)["buy(uint256,uint256)"](2, 2);
+                let tx = await estateMarketplace.connect(buyer2)["safeBuy(uint256,uint256)"](2, 2);
                 await tx.wait();
 
                 let offer = await estateMarketplace.getOffer(2);
@@ -694,7 +689,7 @@ describe('5. EstateMarketplace', async () => {
             let initFeeReceiverBalance = await getBalance(ethers.provider, feeReceiver.address, newCurrency);
             let initCommissionReceiverBalance = await getBalance(ethers.provider, commissionReceiverAddress, newCurrency);
 
-            let tx = await estateMarketplace.connect(buyer)["buy(uint256,uint256)"](
+            let tx = await estateMarketplace.connect(buyer)["safeBuy(uint256,uint256)"](
                 currentOfferId,
                 currentEstateId,
                 { value: ethValue }
@@ -856,7 +851,7 @@ describe('5. EstateMarketplace', async () => {
             });
             const { estateMarketplace, buyer1 } = fixture;
 
-            await expect(estateMarketplace.connect(buyer1)["buy(uint256,uint256)"](1, 1, { value: 1e9 }))
+            await expect(estateMarketplace.connect(buyer1)["safeBuy(uint256,uint256)"](1, 1, { value: 1e9 }))
                 .to.be.revertedWith("Pausable: paused");
         });
 
@@ -869,10 +864,10 @@ describe('5. EstateMarketplace', async () => {
             });
             const { estateMarketplace, buyer1 } = fixture;
 
-            await expect(estateMarketplace.connect(buyer1)["buy(uint256,uint256)"](0, 1, { value: 1e9 }))
+            await expect(estateMarketplace.connect(buyer1)["safeBuy(uint256,uint256)"](0, 1, { value: 1e9 }))
                 .to.be.revertedWithCustomError(estateMarketplace, "InvalidOfferId");
 
-            await expect(estateMarketplace.connect(buyer1)["buy(uint256,uint256)"](3, 1, { value: 1e9 }))
+            await expect(estateMarketplace.connect(buyer1)["safeBuy(uint256,uint256)"](3, 1, { value: 1e9 }))
                 .to.be.revertedWithCustomError(estateMarketplace, "InvalidOfferId");
         });
 
@@ -885,14 +880,14 @@ describe('5. EstateMarketplace', async () => {
             });
             const { estateMarketplace, seller1, seller2 } = fixture;
 
-            await expect(estateMarketplace.connect(seller1)["buy(uint256,uint256)"](1, 1, { value: 1e9 }))
+            await expect(estateMarketplace.connect(seller1)["safeBuy(uint256,uint256)"](1, 1, { value: 1e9 }))
                 .to.be.revertedWithCustomError(estateMarketplace, "InvalidBuying");
 
-            await expect(estateMarketplace.connect(seller2)["buy(uint256,uint256)"](2, 2))
+            await expect(estateMarketplace.connect(seller2)["safeBuy(uint256,uint256)"](2, 2))
                 .to.be.revertedWithCustomError(estateMarketplace, "InvalidBuying");
         });
 
-        it('5.6.8. buy token unsuccessfully with invalid token id', async () => {
+        it('5.6.8. buy token unsuccessfully with invalid anchor', async () => {
             const fixture = await beforeEstateMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleEstateToken: true,
@@ -901,11 +896,11 @@ describe('5. EstateMarketplace', async () => {
             });
             const { estateMarketplace, buyer1, buyer2 } = fixture;
 
-            await expect(estateMarketplace.connect(buyer1)["buy(uint256,uint256)"](1, 2, { value: 1e9 }))
-                .to.be.revertedWithCustomError(estateMarketplace, "InvalidBuying");
+            await expect(estateMarketplace.connect(buyer1)["safeBuy(uint256,uint256)"](1, 2, { value: 1e9 }))
+                .to.be.revertedWithCustomError(estateMarketplace, "BadAnchor");
 
-            await expect(estateMarketplace.connect(buyer2)["buy(uint256,uint256)"](2, 1))
-                .to.be.revertedWithCustomError(estateMarketplace, "InvalidBuying");
+            await expect(estateMarketplace.connect(buyer2)["safeBuy(uint256,uint256)"](2, 1))
+                .to.be.revertedWithCustomError(estateMarketplace, "BadAnchor");
         });
 
         it('5.6.9. buy token unsuccessfully when offer is not selling', async () => {
@@ -917,10 +912,10 @@ describe('5. EstateMarketplace', async () => {
             });
             const { estateMarketplace, buyer1, buyer2 } = fixture;
 
-            await callTransaction(estateMarketplace.connect(buyer1)["buy(uint256,uint256)"](1, 1, { value: 1e9 }));
+            await callTransaction(estateMarketplace.connect(buyer1)["safeBuy(uint256,uint256)"](1, 1, { value: 1e9 }));
 
-            await expect(estateMarketplace.connect(buyer2)["buy(uint256,uint256)"](1, 1, { value: 1e9 }))
-                .to.be.revertedWithCustomError(estateMarketplace, "InvalidBuying");
+            await expect(estateMarketplace.connect(buyer2)["safeBuy(uint256,uint256)"](1, 1, { value: 1e9 }))
+                .to.be.revertedWithCustomError(estateMarketplace, "InvalidAmount");
         });
 
         it('5.6.10. buy token unsuccessfully with insufficient native token', async () => {
@@ -931,7 +926,7 @@ describe('5. EstateMarketplace', async () => {
             });
             const { estateMarketplace, buyer1 } = fixture;
 
-            await expect(estateMarketplace.connect(buyer1)["buy(uint256,uint256)"](1, 1))
+            await expect(estateMarketplace.connect(buyer1)["safeBuy(uint256,uint256)"](1, 1))
                 .to.be.revertedWithCustomError(estateMarketplace, "InsufficientValue");
         });
 
@@ -959,7 +954,7 @@ describe('5. EstateMarketplace', async () => {
 
             await callTransaction(failReceiver.call(estateMarketplace.address, data));
 
-            await expect(estateMarketplace.connect(buyer1)["buy(uint256,uint256)"](1, 1, { value: 1e9 }))
+            await expect(estateMarketplace.connect(buyer1)["safeBuy(uint256,uint256)"](1, 1, { value: 1e9 }))
                 .to.be.revertedWithCustomError(estateMarketplace, "FailedTransfer");
         });
 
@@ -976,7 +971,7 @@ describe('5. EstateMarketplace', async () => {
 
             await estateToken.updateFeeReceiver(failReceiver.address);
 
-            await expect(estateMarketplace.connect(buyer1)["buy(uint256,uint256)"](1, 1, { value: 1e9 }))
+            await expect(estateMarketplace.connect(buyer1)["safeBuy(uint256,uint256)"](1, 1, { value: 1e9 }))
                 .to.be.revertedWithCustomError(estateMarketplace, "FailedTransfer");
         });
 
@@ -995,14 +990,12 @@ describe('5. EstateMarketplace', async () => {
                 2,
             ));
 
-            console.log("ownerOf(2)", await commissionToken.ownerOf(2));
-
             await callTransaction(estateMarketplace.connect(seller1).list(2, 200, 500000, ethers.constants.AddressZero, true));
             await callTransaction(estateToken.connect(seller1).setApprovalForAll(estateMarketplace.address, true));
 
             const offerId = await estateMarketplace.offerNumber();
 
-            await expect(estateMarketplace.connect(buyer1)["buy(uint256,uint256)"](offerId, 2, { value: 1e9 }))
+            await expect(estateMarketplace.connect(buyer1)["safeBuy(uint256,uint256)"](offerId, 2, { value: 1e9 }))
                 .to.be.revertedWithCustomError(estateMarketplace, "FailedTransfer");
         });
 
@@ -1017,7 +1010,7 @@ describe('5. EstateMarketplace', async () => {
 
             const failReceiver = await deployFailReceiver(deployer);
 
-            let data = estateMarketplace.interface.encodeFunctionData("buy(uint256,uint256)", [1, 1]);
+            let data = estateMarketplace.interface.encodeFunctionData("safeBuy(uint256,uint256)", [1, 1]);
 
             await expect(failReceiver.call(estateMarketplace.address, data, { value: 1e9 }))
                 .to.be.revertedWithCustomError(estateMarketplace, "FailedRefund");
@@ -1043,12 +1036,12 @@ describe('5. EstateMarketplace', async () => {
             await testReentrancy_Marketplace(
                 estateMarketplace,
                 reentrancy,
-                expect(estateMarketplace.connect(buyer1)["buy(uint256,uint256)"](1, 1, { value: 1e9 })).to.be.revertedWithCustomError(estateMarketplace, "FailedTransfer"),
+                expect(estateMarketplace.connect(buyer1)["safeBuy(uint256,uint256)"](1, 1, { value: 1e9 })).to.be.revertedWithCustomError(estateMarketplace, "FailedTransfer"),
             );
         });
     });
 
-    describe('5.7. buyToken(uint256, uint256, uint256)', async () => {
+    describe('5.7. safeBuy(uint256, uint256, uint256)', async () => {
         it('5.7.1. buy token successfully', async () => {
             async function testcase1(fixture: EstateMarketplaceFixture) {
                 const { estateToken, estateMarketplace, seller1, buyer1, feeReceiver } = fixture;
@@ -1073,7 +1066,7 @@ describe('5. EstateMarketplace', async () => {
                 let royaltyReceiverBalance = await ethers.provider.getBalance(royaltyReceiver);
                 let commissionReceiverBalance = await ethers.provider.getBalance(commissionReceiver);
 
-                let tx = await estateMarketplace.connect(buyer1)["buy(uint256,uint256,uint256)"](1, 1, amount_1, { value: 1e9 });
+                let tx = await estateMarketplace.connect(buyer1)["safeBuy(uint256,uint256,uint256)"](1, amount_1, 1, { value: 1e9 });
                 let receipt = await tx.wait();
 
                 let gasFee = receipt.gasUsed.mul(receipt.effectiveGasPrice);
@@ -1115,7 +1108,7 @@ describe('5. EstateMarketplace', async () => {
                 royaltyReceiverBalance = await ethers.provider.getBalance(royaltyReceiver);
                 commissionReceiverBalance = await ethers.provider.getBalance(commissionReceiver);
 
-                tx = await estateMarketplace.connect(buyer1)["buy(uint256,uint256,uint256)"](1, 1, amount_2, { value: 1e9 });
+                tx = await estateMarketplace.connect(buyer1)["safeBuy(uint256,uint256,uint256)"](1, amount_2, 1, { value: 1e9 });
                 receipt = await tx.wait();
 
                 gasFee = receipt.gasUsed.mul(receipt.effectiveGasPrice);
@@ -1166,7 +1159,7 @@ describe('5. EstateMarketplace', async () => {
                 let buyer2TokenBalance = await estateToken.balanceOf(buyer2.address, 2);
                 let seller2TokenBalance = await estateToken.balanceOf(seller2.address, 2);
 
-                let tx = await estateMarketplace.connect(buyer2)["buy(uint256,uint256,uint256)"](2, 2, amount_1);
+                let tx = await estateMarketplace.connect(buyer2)["safeBuy(uint256,uint256,uint256)"](2, amount_1, 2);
                 await tx.wait();
 
                 let offer = await estateMarketplace.getOffer(2);
@@ -1206,7 +1199,7 @@ describe('5. EstateMarketplace', async () => {
                 buyer2TokenBalance = await estateToken.balanceOf(buyer2.address, 2);
                 seller2TokenBalance = await estateToken.balanceOf(seller2.address, 2);
 
-                tx = await estateMarketplace.connect(buyer2)["buy(uint256,uint256,uint256)"](2, 2, amount_2);
+                tx = await estateMarketplace.connect(buyer2)["safeBuy(uint256,uint256,uint256)"](2, amount_2, 2);
                 await tx.wait();
 
                 offer = await estateMarketplace.getOffer(2);
@@ -1347,10 +1340,10 @@ describe('5. EstateMarketplace', async () => {
                 let initFeeReceiverBalance = await getBalance(ethers.provider, feeReceiver.address, newCurrency);
                 let initCommissionReceiverBalance = await getBalance(ethers.provider, commissionReceiverAddress, newCurrency);
 
-                let tx = await estateMarketplace.connect(buyer)["buy(uint256,uint256,uint256)"](
+                let tx = await estateMarketplace.connect(buyer)["safeBuy(uint256,uint256,uint256)"](
                     currentOfferId,
-                    currentEstateId,
                     amount,
+                    currentEstateId,
                     { value: ethValue }
                 );
                 const receipt = await tx.wait();
@@ -1599,7 +1592,7 @@ describe('5. EstateMarketplace', async () => {
             });
             const { estateMarketplace, buyer1 } = fixture;
 
-            await expect(estateMarketplace.connect(buyer1)["buy(uint256,uint256,uint256)"](1, 1, 100_000, { value: 1e9 }))
+            await expect(estateMarketplace.connect(buyer1)["safeBuy(uint256,uint256,uint256)"](1, 100_000, 1, { value: 1e9 }))
                 .to.be.revertedWith("Pausable: paused");
         });
 
@@ -1612,10 +1605,10 @@ describe('5. EstateMarketplace', async () => {
             });
             const { estateMarketplace, buyer1 } = fixture;
 
-            await expect(estateMarketplace.connect(buyer1)["buy(uint256,uint256,uint256)"](0, 1, 100_000, { value: 1e9 }))
+            await expect(estateMarketplace.connect(buyer1)["safeBuy(uint256,uint256,uint256)"](0, 100_000, 1, { value: 1e9 }))
                 .to.be.revertedWithCustomError(estateMarketplace, "InvalidOfferId");
 
-            await expect(estateMarketplace.connect(buyer1)["buy(uint256,uint256,uint256)"](3, 1, 100_000, { value: 1e9 }))
+            await expect(estateMarketplace.connect(buyer1)["safeBuy(uint256,uint256,uint256)"](3, 100_000, 1, { value: 1e9 }))
                 .to.be.revertedWithCustomError(estateMarketplace, "InvalidOfferId");
         });
 
@@ -1628,14 +1621,14 @@ describe('5. EstateMarketplace', async () => {
             });
             const { estateMarketplace, seller1, seller2 } = fixture;
 
-            await expect(estateMarketplace.connect(seller1)["buy(uint256,uint256,uint256)"](1, 1, 100_000, { value: 1e9 }))
+            await expect(estateMarketplace.connect(seller1)["safeBuy(uint256,uint256,uint256)"](1, 100_000, 1, { value: 1e9 }))
                 .to.be.revertedWithCustomError(estateMarketplace, "InvalidBuying");
 
-            await expect(estateMarketplace.connect(seller2)["buy(uint256,uint256,uint256)"](2, 2, 100_000))
+            await expect(estateMarketplace.connect(seller2)["safeBuy(uint256,uint256,uint256)"](2, 100_000, 2))
                 .to.be.revertedWithCustomError(estateMarketplace, "InvalidBuying");
         });
 
-        it('5.7.9. buy token unsuccessfully with invalid token id', async () => {
+        it('5.7.9. buy token unsuccessfully with invalid anchor', async () => {
             const fixture = await beforeEstateMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleEstateToken: true,
@@ -1644,11 +1637,11 @@ describe('5. EstateMarketplace', async () => {
             });
             const { estateMarketplace, buyer1, buyer2 } = fixture;
 
-            await expect(estateMarketplace.connect(buyer1)["buy(uint256,uint256,uint256)"](1, 2, 100_000, { value: 1e9 }))
-                .to.be.revertedWithCustomError(estateMarketplace, "InvalidBuying");
+            await expect(estateMarketplace.connect(buyer1)["safeBuy(uint256,uint256,uint256)"](1, 100_000, 2, { value: 1e9 }))
+                .to.be.revertedWithCustomError(estateMarketplace, "BadAnchor");
 
-            await expect(estateMarketplace.connect(buyer2)["buy(uint256,uint256,uint256)"](2, 1, 100_000))
-                .to.be.revertedWithCustomError(estateMarketplace, "InvalidBuying");
+            await expect(estateMarketplace.connect(buyer2)["safeBuy(uint256,uint256,uint256)"](2, 100_000, 1))
+                .to.be.revertedWithCustomError(estateMarketplace, "BadAnchor");
         });
 
         it('5.7.10. buy token unsuccessfully when offer is not selling', async () => {
@@ -1660,9 +1653,9 @@ describe('5. EstateMarketplace', async () => {
             });
             const { estateMarketplace, buyer1, buyer2 } = fixture;
 
-            await callTransaction(estateMarketplace.connect(buyer1)["buy(uint256,uint256,uint256)"](1, 1, 150_000, { value: 1e9 }));
+            await callTransaction(estateMarketplace.connect(buyer1)["safeBuy(uint256,uint256,uint256)"](1, 150_000, 1, { value: 1e9 }));
 
-            await expect(estateMarketplace.connect(buyer2)["buy(uint256,uint256,uint256)"](1, 1, 100_000, { value: 1e9 }))
+            await expect(estateMarketplace.connect(buyer2)["safeBuy(uint256,uint256,uint256)"](1, 150_000, 1, { value: 1e9 }))
                 .to.be.revertedWithCustomError(estateMarketplace, "InvalidBuying");
         });
 
@@ -1681,8 +1674,8 @@ describe('5. EstateMarketplace', async () => {
 
             const offerId = await estateMarketplace.offerNumber();
 
-            await expect(estateMarketplace.connect(buyer1)["buy(uint256,uint256,uint256)"](offerId, 1, 50_000, { value: 1e9 }))
-                .to.be.revertedWithCustomError(estateMarketplace, "InvalidBuying");
+            await expect(estateMarketplace.connect(buyer1)["safeBuy(uint256,uint256,uint256)"](offerId, 50_000, 1, { value: 1e9 }))
+                .to.be.revertedWithCustomError(estateMarketplace, "NotDivisible");
         });
 
         it('5.7.12. buy token unsuccessfully when there is not enough tokens to sell', async () => {
@@ -1694,9 +1687,9 @@ describe('5. EstateMarketplace', async () => {
             });
             const { estateMarketplace, buyer1, buyer2 } = fixture;
 
-            await callTransaction(estateMarketplace.connect(buyer1)["buy(uint256,uint256,uint256)"](1, 1, 100_000, { value: 1e9 }));
+            await callTransaction(estateMarketplace.connect(buyer1)["safeBuy(uint256,uint256,uint256)"](1, 100_000, 1, { value: 1e9 }));
 
-            await expect(estateMarketplace.connect(buyer2)["buy(uint256,uint256,uint256)"](1, 1, 100_000, { value: 1e9 }))
+            await expect(estateMarketplace.connect(buyer2)["safeBuy(uint256,uint256,uint256)"](1, 100_000, 1, { value: 1e9 }))
                 .to.be.revertedWithCustomError(estateMarketplace, "NotEnoughTokensToSell");
         });
 
@@ -1708,7 +1701,7 @@ describe('5. EstateMarketplace', async () => {
             });
             const { estateMarketplace, buyer1 } = fixture;
 
-            await expect(estateMarketplace.connect(buyer1)["buy(uint256,uint256,uint256)"](1, 1, 100_000))
+            await expect(estateMarketplace.connect(buyer1)["safeBuy(uint256,uint256,uint256)"](1, 100_000, 1))
                 .to.be.revertedWithCustomError(estateMarketplace, "InsufficientValue");
         });
 
@@ -1736,7 +1729,7 @@ describe('5. EstateMarketplace', async () => {
 
             await callTransaction(failReceiver.call(estateMarketplace.address, data));
 
-            await expect(estateMarketplace.connect(buyer1)["buy(uint256,uint256,uint256)"](1, 1, 100_000, { value: 1e9 }))
+            await expect(estateMarketplace.connect(buyer1)["safeBuy(uint256,uint256,uint256)"](1, 100_000, 1, { value: 1e9 }))
                 .to.be.revertedWithCustomError(estateMarketplace, "FailedTransfer");
         });
 
@@ -1753,7 +1746,7 @@ describe('5. EstateMarketplace', async () => {
 
             await estateToken.updateFeeReceiver(failReceiver.address);
 
-            await expect(estateMarketplace.connect(buyer1)["buy(uint256,uint256,uint256)"](1, 1, 100_000, { value: 1e9 }))
+            await expect(estateMarketplace.connect(buyer1)["safeBuy(uint256,uint256,uint256)"](1, 100_000, 1, { value: 1e9 }))
                 .to.be.revertedWithCustomError(estateMarketplace, "FailedTransfer");
         });
 
@@ -1772,14 +1765,12 @@ describe('5. EstateMarketplace', async () => {
                 2,
             ));
 
-            console.log("ownerOf(2)", await commissionToken.ownerOf(2));
-
             await callTransaction(estateMarketplace.connect(seller1).list(2, 200, 500000, ethers.constants.AddressZero, true));
             await callTransaction(estateToken.connect(seller1).setApprovalForAll(estateMarketplace.address, true));
 
             const offerId = await estateMarketplace.offerNumber();
 
-            await expect(estateMarketplace.connect(buyer1)["buy(uint256,uint256,uint256)"](offerId, 2, 100, { value: 1e9 }))
+            await expect(estateMarketplace.connect(buyer1)["safeBuy(uint256,uint256,uint256)"](offerId, 100, 2, { value: 1e9 }))
                 .to.be.revertedWithCustomError(estateMarketplace, "FailedTransfer");
         });
 
@@ -1794,7 +1785,7 @@ describe('5. EstateMarketplace', async () => {
 
             const failReceiver = await deployFailReceiver(deployer);
 
-            let data = estateMarketplace.interface.encodeFunctionData("buy(uint256,uint256,uint256)", [1, 1, 100_000]);
+            let data = estateMarketplace.interface.encodeFunctionData("safeBuy(uint256,uint256,uint256)", [1, 100_000, 1]);
 
             await expect(failReceiver.call(estateMarketplace.address, data, { value: 1e9 }))
                 .to.be.revertedWithCustomError(estateMarketplace, "FailedRefund");
@@ -1820,7 +1811,7 @@ describe('5. EstateMarketplace', async () => {
             await testReentrancy_Marketplace(
                 estateMarketplace,
                 reentrancy,
-                expect(estateMarketplace.connect(buyer1)["buy(uint256,uint256,uint256)"](1, 1, 100_000, { value: 1e9 })).to.be.revertedWithCustomError(estateMarketplace, "FailedTransfer"),
+                expect(estateMarketplace.connect(buyer1)["safeBuy(uint256,uint256,uint256)"](1, 100_000, 1, { value: 1e9 })).to.be.revertedWithCustomError(estateMarketplace, "FailedTransfer"),
             );
         });
     });
@@ -1919,7 +1910,7 @@ describe('5. EstateMarketplace', async () => {
             });
             const { estateMarketplace, manager,buyer1 } = fixture;
 
-            await callTransaction(estateMarketplace.connect(buyer1)["buy(uint256,uint256)"](1, 1, { value: 1e9 }));
+            await callTransaction(estateMarketplace.connect(buyer1)["safeBuy(uint256,uint256)"](1, 1, { value: 1e9 }));
 
             await expect(estateMarketplace.connect(manager).cancel(1))
                 .to.be.revertedWithCustomError(estateMarketplace, "InvalidCancelling");
