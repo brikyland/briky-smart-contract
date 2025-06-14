@@ -385,7 +385,7 @@ ReentrancyGuardUpgradeable {
             revert InvalidRequestId();
         }
         Request storage request = requests[_requestId];
-        if (!IAdmin(admin).isActiveIn(request.zone, msg.sender)) {
+        if (!IAdmin(admin).getZoneEligibility(request.zone, msg.sender)) {
             revert Unauthorized();
         }
 
@@ -430,7 +430,7 @@ ReentrancyGuardUpgradeable {
             revert InvalidRequestId();
         }
         Request storage request = requests[_requestId];
-        if (!IAdmin(admin).isActiveIn(request.zone, msg.sender)) {
+        if (!IAdmin(admin).getZoneEligibility(request.zone, msg.sender)) {
             revert Unauthorized();
         }
         if (request.totalSupply == 0) {
@@ -649,7 +649,7 @@ ReentrancyGuardUpgradeable {
         Request storage request = requests[_requestId];
 
         bytes32 zone = request.zone;
-        if (!IAdmin(admin).isActiveIn(zone, msg.sender)) {
+        if (!IAdmin(admin).getZoneEligibility(zone, msg.sender)) {
             revert Unauthorized();
         }
 
