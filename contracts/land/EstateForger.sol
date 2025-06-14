@@ -418,7 +418,7 @@ ReentrancyGuardUpgradeable {
             revert InvalidRequestId();
         }
 
-        if (keccak256(bytes(_anchor)) == keccak256(bytes(requests[_requestId].uri))) {
+        if (keccak256(bytes(_anchor)) != keccak256(bytes(requests[_requestId].uri))) {
             revert BadAnchor();
         }
 
@@ -461,7 +461,7 @@ ReentrancyGuardUpgradeable {
             revert InvalidRequestId();
         }
 
-        if (keccak256(bytes(_anchor)) == keccak256(bytes(requests[_requestId].uri))) {
+        if (keccak256(bytes(_anchor)) != keccak256(bytes(requests[_requestId].uri))) {
             revert BadAnchor();
         }
 
