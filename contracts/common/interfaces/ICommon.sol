@@ -12,6 +12,7 @@ interface ICommon {
         uint256 timestamp;
     }
 
+    error BadAnchor();
     error FailedVerification();
     error InsufficientFunds();
     error InvalidCurrency();

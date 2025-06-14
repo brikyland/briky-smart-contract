@@ -54,7 +54,6 @@ ReentrancyGuardUpgradeable {
             revert InvalidInput();
         }
 
-        uint256 total = 0;
         IERC20Upgradeable primaryTokenContract = IERC20Upgradeable(primaryToken);
         for (uint256 i = 0; i < _receivers.length; ++i) {
             if (_amounts[i] > primaryTokenContract.balanceOf(address(this))) {
@@ -62,11 +61,10 @@ ReentrancyGuardUpgradeable {
             }
             primaryTokenContract.safeTransfer(_receivers[i], _amounts[i]);
             unchecked {
-                total += _amounts[i];
                 distributedTokens[_receivers[i]] += _amounts[i];
             }
-        }
 
-        emit TokenDistribution(total, _data);
+            emit TokenDistribution(_receivers[i], _amounts[i]);
+        }
     }
 }

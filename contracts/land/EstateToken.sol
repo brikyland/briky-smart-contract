@@ -40,8 +40,6 @@ ReentrancyGuardUpgradeable {
 
     string constant private VERSION = "v1.1.1";
 
-    receive() external payable {}
-
     modifier onlyManager() {
         if (!IAdmin(admin).isManager(msg.sender)) {
             revert Unauthorized();
@@ -55,6 +53,8 @@ ReentrancyGuardUpgradeable {
         }
         _;
     }
+
+    receive() external payable {}
 
     function initialize(
         address _admin,
@@ -239,8 +239,10 @@ ReentrancyGuardUpgradeable {
     }
 
     function deprecateEstate(uint256 _estateId) external onlyManager {
-        if (!IAdmin(admin).isManager(msg.sender)) revert Unauthorized();
         if (!exists(_estateId)) revert InvalidEstateId();
+        if (!IAdmin(admin).isActiveIn(estates[_estateId].zone, msg.sender)) {
+            revert Unauthorized();
+        }
         if (estates[_estateId].isDeprecated) revert Deprecated();
         estates[_estateId].isDeprecated = true;
         emit EstateDeprecation(_estateId);
@@ -249,6 +251,9 @@ ReentrancyGuardUpgradeable {
     function extendEstateExpiration(uint256 _estateId, uint40 _expireAt) external onlyManager {
         if (!exists(_estateId)) {
             revert InvalidEstateId();
+        }
+        if (!IAdmin(admin).isActiveIn(estates[_estateId].zone, msg.sender)) {
+            revert Unauthorized();
         }
         if (estates[_estateId].isDeprecated) {
             revert Deprecated();
@@ -261,7 +266,12 @@ ReentrancyGuardUpgradeable {
     }
 
     function updateEstateURI(uint256 _estateId, string calldata _uri) external onlyManager {
-        if (!isAvailable(_estateId)) revert InvalidEstateId();
+        if (!isAvailable(_estateId)) {
+            revert InvalidEstateId();
+        }
+        if (!IAdmin(admin).isActiveIn(estates[_estateId].zone, msg.sender)) {
+            revert Unauthorized();
+        }
         _setURI(_estateId, _uri);
     }
 
@@ -289,7 +299,9 @@ ReentrancyGuardUpgradeable {
             if (snapshots[mid].timestamp <= _at) {
                 pivot = mid;
                 low = mid + 1;
-            } else high = mid;
+            } else {
+                high = mid;
+            }
         }
         return snapshots[pivot].value;
     }

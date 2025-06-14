@@ -132,7 +132,7 @@ ReentrancyGuardUpgradeable {
             : deposits[_account].scale(totalToken, totalDeposit);
     }
 
-    function withdraw() external nonReentrant whenNotPaused {
+    function withdraw() external nonReentrant whenNotPaused returns (uint256) {
         if (endAt == 0) {
             revert NotStarted();
         }
@@ -145,14 +145,16 @@ ReentrancyGuardUpgradeable {
             ? allocation
             : allocation.scale(block.timestamp - endAt, vestingDuration);
 
-        uint256 withdrawableAmount = vestedAmount - withdrawnAmount[msg.sender];
+        uint256 amount = vestedAmount - withdrawnAmount[msg.sender];
         withdrawnAmount[msg.sender] = vestedAmount;
-        IERC20Upgradeable(primaryToken).safeTransfer(msg.sender, withdrawableAmount);
+        IERC20Upgradeable(primaryToken).safeTransfer(msg.sender, amount);
 
-        emit Withdrawal(msg.sender, withdrawableAmount);
+        emit Withdrawal(msg.sender, amount);
+
+        return amount;
     }
 
-    function stake(uint256 _stake1, uint256 _stake2) external nonReentrant whenNotPaused {
+    function stake(uint256 _stake1, uint256 _stake2) external nonReentrant whenNotPaused returns (uint256) {
         if (stakeToken1 == address(0) || stakeToken2 == address(0) || stakeToken3 == address(0)) {
             revert NotAssignedStakeTokens();
         }
@@ -193,5 +195,7 @@ ReentrancyGuardUpgradeable {
             _stake2,
             stake3
         );
+
+        return stake3;
     }
 }

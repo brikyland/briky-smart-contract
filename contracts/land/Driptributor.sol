@@ -190,8 +190,10 @@ ReentrancyGuardUpgradeable {
         }
     }
 
-    function withdraw(uint256[] calldata _distributionIds) external nonReentrant whenNotPaused {
+    function withdraw(uint256[] calldata _distributionIds)
+    external nonReentrant whenNotPaused returns (uint256) {
         IERC20Upgradeable primaryTokenContract = IERC20Upgradeable(primaryToken);
+        uint256 totalAmount = 0;
         for (uint256 i = 0; i < _distributionIds.length; ++i) {
             Distribution memory distribution = getDistribution(_distributionIds[i]);
             if (distribution.receiver != msg.sender) {
@@ -208,19 +210,23 @@ ReentrancyGuardUpgradeable {
                     distribution.vestingDuration
                 );
 
-            uint256 withdrawableAmount = vestedAmount - distribution.withdrawnAmount;
+            uint256 amount = vestedAmount - distribution.withdrawnAmount;
             distributions[_distributionIds[i]].withdrawnAmount = vestedAmount;
-            primaryTokenContract.safeTransfer(distribution.receiver, withdrawableAmount);
+            totalAmount += amount;
 
-            emit Withdrawal(_distributionIds[i], withdrawableAmount);
+            emit Withdrawal(_distributionIds[i], amount);
         }
+
+        primaryTokenContract.safeTransfer(msg.sender, totalAmount);
+
+        return totalAmount;
     }
 
     function stake(
         uint256[] calldata _distributionIds,
         uint256 _stake1,
         uint256 _stake2
-    ) external nonReentrant whenNotPaused {
+    ) external nonReentrant whenNotPaused returns (uint256) {
         if (stakeToken1 == address(0) || stakeToken2 == address(0) || stakeToken3 == address(0)) {
             revert NotAssignedStakeTokens();
         }
@@ -244,26 +250,30 @@ ReentrancyGuardUpgradeable {
             revert InsufficientFunds();
         }
 
-        uint256 stake3 = remain - _stake1 - _stake2;
+        unchecked {
+            uint256 stake3 = remain - _stake1 - _stake2;
 
-        IERC20Upgradeable primaryTokenContract = IERC20Upgradeable(primaryToken);
-        IStakeToken stakeToken1Contract = IStakeToken(stakeToken1);
-        IStakeToken stakeToken2Contract = IStakeToken(stakeToken2);
-        IStakeToken stakeToken3Contract = IStakeToken(stakeToken3);
+            IERC20Upgradeable primaryTokenContract = IERC20Upgradeable(primaryToken);
+            IStakeToken stakeToken1Contract = IStakeToken(stakeToken1);
+            IStakeToken stakeToken2Contract = IStakeToken(stakeToken2);
+            IStakeToken stakeToken3Contract = IStakeToken(stakeToken3);
 
-        primaryTokenContract.safeIncreaseAllowance(address(stakeToken1Contract), _stake1);
-        primaryTokenContract.safeIncreaseAllowance(address(stakeToken2Contract), _stake2);
-        primaryTokenContract.safeIncreaseAllowance(address(stakeToken3Contract), stake3);
+            primaryTokenContract.safeIncreaseAllowance(address(stakeToken1Contract), _stake1);
+            primaryTokenContract.safeIncreaseAllowance(address(stakeToken2Contract), _stake2);
+            primaryTokenContract.safeIncreaseAllowance(address(stakeToken3Contract), stake3);
 
-        stakeToken1Contract.stake(msg.sender, _stake1);
-        stakeToken2Contract.stake(msg.sender, _stake2);
-        stakeToken3Contract.stake(msg.sender, stake3);
+            stakeToken1Contract.stake(msg.sender, _stake1);
+            stakeToken2Contract.stake(msg.sender, _stake2);
+            stakeToken3Contract.stake(msg.sender, stake3);
 
-        emit Stake(
-            _distributionIds,
-            _stake1,
-            _stake2,
-            stake3
-        );
+            emit Stake(
+                _distributionIds,
+                _stake1,
+                _stake2,
+                stake3
+            );
+
+            return stake3;
+        }
     }
 }

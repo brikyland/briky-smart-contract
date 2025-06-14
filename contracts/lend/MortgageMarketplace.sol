@@ -67,9 +67,8 @@ ReentrancyGuardUpgradeable {
             revert InvalidTokenId();
         }
 
-        IMortgageToken.Loan memory loan = mortgageTokenContract.getLoan(_tokenId);
-
-        if (loan.state != IMortgageToken.LoanState.Supplied
+        Loan memory loan = mortgageTokenContract.getLoan(_tokenId);
+        if (loan.state != LoanState.Supplied
             || loan.due <= block.timestamp) {
             revert UnavailableLoan();
         }
@@ -103,38 +102,73 @@ ReentrancyGuardUpgradeable {
         return offerId;
     }
 
-    function buy(uint256 _offerId, uint256 _tokenId) external payable nonReentrant whenNotPaused {
+    function buy(uint256 _offerId) external payable returns (uint256) {
         if (_offerId == 0 || _offerId > offerNumber) {
             revert InvalidOfferId();
         }
 
+        return _buy(_offerId);
+    }
+
+    function safeBuy(uint256 _offerId, uint256 _anchor) external payable returns (uint256) {
+        if (_offerId == 0 || _offerId > offerNumber) {
+            revert InvalidOfferId();
+        }
+
+        if (_anchor != offers[_offerId].tokenId) {
+            revert BadAnchor();
+        }
+
+        return _buy(_offerId);
+    }
+
+    function cancel(uint256 _offerId) external nonReentrant whenNotPaused {
+        if (_offerId == 0 || _offerId > offerNumber) {
+            revert InvalidOfferId();
+        }
+        Offer storage offer = offers[_offerId];
+        if (msg.sender != offer.seller && !IAdmin(admin).isManager(msg.sender)) {
+            revert Unauthorized();
+        }
+        if (offer.state != OfferState.Selling) revert InvalidCancelling();
+
+        offer.state = OfferState.Cancelled;
+
+        emit OfferCancellation(_offerId);
+    }
+
+    function _buy(uint256 _offerId) private nonReentrant whenNotPaused returns (uint256) {
+        Offer storage offer = offers[_offerId];
+
         IMortgageToken mortgageTokenContract = IMortgageToken(mortgageToken);
-        IMortgageToken.Loan memory loan = mortgageTokenContract.getLoan(_tokenId);
-        if (loan.state != IMortgageToken.LoanState.Supplied
+        uint256 tokenId = offer.tokenId;
+        Loan memory loan = mortgageTokenContract.getLoan(tokenId);
+        if (loan.state != LoanState.Supplied
             || loan.due <= block.timestamp) {
             revert UnavailableLoan();
         }
 
-        Offer storage offer = offers[_offerId];
         address seller = offer.seller;
-
-        if (msg.sender == seller
-            || _tokenId != offer.tokenId
-            || offer.state != OfferState.Selling) {
+        if (msg.sender == seller || offer.state != OfferState.Selling) {
             revert InvalidBuying();
         }
 
         uint256 price = offer.price;
-        (address royaltyReceiver, uint256 royaltyAmount) = mortgageTokenContract.royaltyInfo(_tokenId, price);
+        (
+            address royaltyReceiver,
+            uint256 royaltyAmount
+        ) = mortgageTokenContract.royaltyInfo(tokenId, price);
 
         address currency = offer.currency;
         royaltyAmount = _applyDiscount(royaltyAmount, currency);
 
-        (address commissionReceiver, uint256 commissionAmount) = ICommissionToken(commissionToken).commissionInfo(mortgageTokenContract.getLoan(_tokenId).estateId, royaltyAmount);
+        (
+            address commissionReceiver,
+            uint256 commissionAmount
+        ) = ICommissionToken(commissionToken).commissionInfo(load.estateId, royaltyAmount);
 
         if (currency == address(0)) {
-            uint256 total = price + royaltyAmount;
-            CurrencyHandler.receiveNative(total);
+            CurrencyHandler.receiveNative(price + royaltyAmount);
             CurrencyHandler.transferNative(seller, price);
             CurrencyHandler.transferNative(royaltyReceiver, royaltyAmount - commissionAmount);
             if (commissionAmount != 0) {
@@ -153,7 +187,7 @@ ReentrancyGuardUpgradeable {
         mortgageTokenContract.safeTransferFrom(
             seller,
             msg.sender,
-            _tokenId,
+            tokenId,
             ""
         );
 
@@ -165,16 +199,8 @@ ReentrancyGuardUpgradeable {
             commissionReceiver,
             commissionAmount
         );
+
+        return price + royaltyAmount;
     }
 
-    function cancel(uint256 _offerId) external nonReentrant whenNotPaused {
-        if (_offerId == 0 || _offerId > offerNumber) revert InvalidOfferId();
-        Offer storage offer = offers[_offerId];
-        if (msg.sender != offer.seller && !IAdmin(admin).isManager(msg.sender)) revert Unauthorized();
-        if (offer.state != OfferState.Selling) revert InvalidCancelling();
-
-        offer.state = OfferState.Cancelled;
-
-        emit OfferCancellation(_offerId);
-    }
 }

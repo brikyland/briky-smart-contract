@@ -46,6 +46,6 @@ interface IAuction is ICommon {
     function allocationOf(address account) external view returns (uint256 amount);
 
     function deposit(uint256 value) external;
-    function stake(uint256 stake1, uint256 stake2) external;
-    function withdraw() external;
+    function stake(uint256 stake1, uint256 stake2) external returns (uint256 stake3);
+    function withdraw() external returns (uint256 amount);
 }

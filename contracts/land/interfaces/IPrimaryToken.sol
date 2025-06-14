@@ -93,5 +93,5 @@ interface IPrimaryToken is IExclusiveToken {
 
     function mintForStake() external returns (uint256 reward);
 
-    function liquidate(uint256 amount) external;
+    function liquidate(uint256 amount) external returns (uint256 liquidity);
 }

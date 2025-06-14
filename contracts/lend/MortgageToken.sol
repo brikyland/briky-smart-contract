@@ -223,96 +223,44 @@ ReentrancyGuardUpgradeable {
         emit LoanCancellation(_loanId);
     }
 
-    function lend(uint256 _loanId, uint256 _estateId) external payable nonReentrant whenNotPaused {
-        if (_loanId == 0 || _loanId > loanNumber) revert InvalidLoanId();
-        Loan storage loan = loans[_loanId];
-        address borrower = loan.borrower;
-
-        if (msg.sender == loan.borrower
-            || _estateId != loan.estateId
-            || loan.state != LoanState.Pending) revert InvalidLending();
-
-        uint256 principal = loan.principal;
-        uint256 feeAmount = principal.scale(feeRate, Constant.COMMON_RATE_MAX_FRACTION);
-
-        address currency = loan.currency;
-        feeAmount = _applyDiscount(feeAmount, currency);
-
-        (address commissionReceiver, uint256 commissionAmount) = ICommissionToken(commissionToken).commissionInfo(_estateId, feeAmount);
-
-        if (currency == address(0)) {
-            CurrencyHandler.receiveNative(principal);
-            CurrencyHandler.transferNative(borrower, principal - feeAmount);
-            CurrencyHandler.transferNative(feeReceiver, feeAmount - commissionAmount);
-            if (commissionAmount != 0) {
-                CurrencyHandler.transferNative(commissionReceiver, commissionAmount);
-            }
-        } else {
-            IERC20Upgradeable currencyContract = IERC20Upgradeable(currency);
-            currencyContract.safeTransferFrom(msg.sender, borrower, principal - feeAmount);
-            currencyContract.safeTransferFrom(msg.sender, feeReceiver, feeAmount - commissionAmount);
-            if (commissionAmount != 0) {
-                currencyContract.safeTransferFrom(msg.sender, commissionReceiver, commissionAmount);
-            }
+    function lend(uint256 _loanId) external payable returns (uint256) {
+        if (_loanId == 0 || _loanId > loanNumber) {
+            revert InvalidLoanId();
         }
 
-        IEstateToken(estateToken).safeTransferFrom(
-            borrower,
-            address(this),
-            _estateId,
-            loan.mortgageAmount,
-            ""
-        );
-
-        uint40 due = loan.due + uint40(block.timestamp);
-        loan.due = due;
-        loan.lender = msg.sender;
-        loan.state = LoanState.Supplied;
-
-        _mint(msg.sender, _loanId);
-
-        emit NewToken(
-            _loanId,
-            msg.sender,
-            due,
-            feeAmount,
-            commissionReceiver,
-            commissionAmount
-        );
+        return _lend(_loanId);
     }
 
-    function repay(uint256 _loanId) external payable nonReentrant whenNotPaused {
-        if (_loanId == 0 || _loanId > loanNumber) revert InvalidLoanId();
-        Loan storage loan = loans[_loanId];
-        if (loan.state != LoanState.Supplied) revert InvalidRepaying();
-
-        if (loan.due <= block.timestamp) {
-            revert Overdue();
+    function safeLend(uint256 _loanId, uint256 _anchor) external payable returns (uint256) {
+        if (_loanId == 0 || _loanId > loanNumber) {
+            revert InvalidLoanId();
         }
 
-        address borrower = loan.borrower;
-        address currency = loan.currency;
-        if (currency == address(0)) {
-            uint256 repayment = loan.repayment;
-            CurrencyHandler.receiveNative(repayment);
-            CurrencyHandler.transferNative(ownerOf(_loanId), repayment);
-        } else {
-            IERC20Upgradeable(currency).safeTransferFrom(borrower, ownerOf(_loanId), loan.repayment);
+        if (_anchor != loans[_loanId].estateId) {
+            revert BadAnchor();
         }
 
-        IEstateToken(estateToken).safeTransferFrom(
-            address(this),
-            borrower,
-            loan.estateId,
-            loan.mortgageAmount,
-            ""
-        );
+        return _lend(_loanId);
+    }
 
-        loan.state = LoanState.Repaid;
+    function repay(uint256 _loanId) external payable {
+        if (_loanId == 0 || _loanId > loanNumber) {
+            revert InvalidLoanId();
+        }
 
-        _burn(_loanId);
+        _repay(_loanId);
+    }
 
-        emit LoanRepayment(_loanId);
+    function safeRepay(uint256 _loanId, uint256 _anchor) external payable {
+        if (_loanId == 0 || _loanId > loanNumber) {
+            revert InvalidLoanId();
+        }
+
+        if (_anchor != loans[_loanId].estateId) {
+            revert BadAnchor();
+        }
+
+        _repay(_loanId);
     }
 
     function foreclose(uint256 _loanId) external nonReentrant whenNotPaused {
@@ -384,4 +332,104 @@ ReentrancyGuardUpgradeable {
     function _royaltyReceiver() internal view override returns (address) {
         return feeReceiver;
     }
+
+    function _lend(uint256 _loanId) private nonReentrant whenNotPaused returns (uint256) {
+        Loan storage loan = loans[_loanId];
+        address borrower = loan.borrower;
+
+        if (msg.sender == loan.borrower || loan.state != LoanState.Pending) revert InvalidLending();
+
+        uint256 principal = loan.principal;
+        uint256 feeAmount = principal.scale(feeRate, Constant.COMMON_RATE_MAX_FRACTION);
+
+        address currency = loan.currency;
+        feeAmount = _applyDiscount(feeAmount, currency);
+
+        uint256 estateId = loan.estateId;
+        (
+            address commissionReceiver,
+            uint256 commissionAmount
+        ) = ICommissionToken(commissionToken).commissionInfo(estateId, feeAmount);
+
+        if (currency == address(0)) {
+            CurrencyHandler.receiveNative(principal);
+            CurrencyHandler.transferNative(borrower, principal - feeAmount);
+            CurrencyHandler.transferNative(feeReceiver, feeAmount - commissionAmount);
+            if (commissionAmount != 0) {
+                CurrencyHandler.transferNative(commissionReceiver, commissionAmount);
+            }
+        } else {
+            IERC20Upgradeable currencyContract = IERC20Upgradeable(currency);
+            currencyContract.safeTransferFrom(msg.sender, borrower, principal - feeAmount);
+            currencyContract.safeTransferFrom(msg.sender, feeReceiver, feeAmount - commissionAmount);
+            if (commissionAmount != 0) {
+                currencyContract.safeTransferFrom(msg.sender, commissionReceiver, commissionAmount);
+            }
+        }
+
+        IEstateToken(estateToken).safeTransferFrom(
+            borrower,
+            address(this),
+            estateId,
+            loan.mortgageAmount,
+            ""
+        );
+
+        uint40 due = loan.due + uint40(block.timestamp);
+        loan.due = due;
+        loan.lender = msg.sender;
+        loan.state = LoanState.Supplied;
+
+        _mint(msg.sender, _loanId);
+
+        emit NewToken(
+            _loanId,
+            msg.sender,
+            due,
+            feeAmount,
+            commissionReceiver,
+            commissionAmount
+        );
+
+        return  principal - feeAmount;
+    }
+
+    function _repay(uint256 _loanId) private nonReentrant whenNotPaused {
+        Loan storage loan = loans[_loanId];
+        if (msg.sender != loan.borrower) {
+            revert Unauthorized();
+        }
+
+        if (loan.state != LoanState.Supplied) {
+            revert InvalidRepaying();
+        }
+
+        if (loan.due <= block.timestamp) {
+            revert Overdue();
+        }
+
+        address currency = loan.currency;
+        if (currency == address(0)) {
+            uint256 repayment = loan.repayment;
+            CurrencyHandler.receiveNative(repayment);
+            CurrencyHandler.transferNative(ownerOf(_loanId), repayment);
+        } else {
+            IERC20Upgradeable(currency).safeTransferFrom(msg.sender, ownerOf(_loanId), loan.repayment);
+        }
+
+        IEstateToken(estateToken).safeTransferFrom(
+            address(this),
+            msg.sender,
+            loan.estateId,
+            loan.mortgageAmount,
+            ""
+        );
+
+        loan.state = LoanState.Repaid;
+
+        _burn(_loanId);
+
+        emit LoanRepayment(_loanId);
+    }
+
 }

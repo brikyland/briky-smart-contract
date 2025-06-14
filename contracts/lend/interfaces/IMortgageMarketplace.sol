@@ -3,7 +3,11 @@ pragma solidity ^0.8.20;
 
 import {ICommon} from "../../common/interfaces/ICommon.sol";
 
-interface IMortgageMarketplace is ICommon {
+import {IMortgage} from "./IMortgage.sol";
+
+interface IMortgageMarketplace is
+ICommon,
+IMortgage {
     enum OfferState {
         Nil,
         Selling,
@@ -54,6 +58,8 @@ interface IMortgageMarketplace is ICommon {
         uint256 price,
         address currency
     ) external returns (uint256 offerId);
-    function buy(uint256 offerId, uint256 tokenId) external payable;
+    function buy(uint256 offerId) external payable returns (uint256 price);
     function cancel(uint256 offerId) external;
+
+    function safeBuy(uint256 offerId, uint256 anchor) external payable returns (uint256 price);
 }

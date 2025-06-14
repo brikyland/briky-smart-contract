@@ -3,7 +3,11 @@ pragma solidity ^0.8.20;
 
 import {ICommon} from "../../common/interfaces/ICommon.sol";
 
-interface IEstateMarketplace is ICommon {
+import {IEstate} from "./IEstate.sol";
+
+interface IEstateMarketplace is
+ICommon,
+IEstate {
     enum OfferState {
         Nil,
         Selling,
@@ -50,6 +54,7 @@ interface IEstateMarketplace is ICommon {
     error InvalidOfferId();
     error InvalidSellingAmount();
     error InvalidUnitPrice();
+    error NotDivisible();
     error NotEnoughTokensToSell();
 
     function commissionToken() external view returns (address commissionToken);
@@ -66,7 +71,14 @@ interface IEstateMarketplace is ICommon {
         address currency,
         bool isDivisible
     ) external returns (uint256 offerId);
-    function buy(uint256 offerId, uint256 tokenId) external payable;
-    function buy(uint256 offerId, uint256 tokenId, uint256 amount) external payable;
+    function buy(uint256 offerId) external payable returns (uint256 price);
+    function buy(uint256 offerId, uint256 amount) external payable returns (uint256 price);
     function cancel(uint256 offerId) external;
+
+    function safeBuy(uint256 offerId, uint256 anchor) external payable returns (uint256 price);
+    function safeBuy(
+        uint256 offerId,
+        uint256 amount,
+        uint256 anchor
+    ) external payable returns (uint256 price);
 }

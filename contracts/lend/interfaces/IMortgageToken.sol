@@ -9,32 +9,14 @@ import {IRoyaltyRateProposer} from "../../common/interfaces/IRoyaltyRateProposer
 
 import {IEstateTokenReceiver} from "../../land/interfaces/IEstateTokenReceiver.sol";
 
+import {IMortgage} from "./IMortgage.sol";
+
 interface IMortgageToken is
+IMortgage,
 IEstateTokenReceiver,
 IRoyaltyRateProposer,
 IERC4906Upgradeable,
 IERC721MetadataUpgradeable {
-    enum LoanState {
-        Nil,
-        Pending,
-        Supplied,
-        Repaid,
-        Foreclosed,
-        Cancelled
-    }
-
-    struct Loan {
-        uint256 estateId;
-        uint256 mortgageAmount;
-        uint256 principal;
-        uint256 repayment;
-        address currency;
-        uint40 due;
-        LoanState state;
-        address borrower;
-        address lender;
-    }
-
     event BaseURIUpdate(string newValue);
 
     event FeeRateUpdate(uint256 newValue);
@@ -84,6 +66,7 @@ IERC721MetadataUpgradeable {
     function loanNumber() external view returns (uint256 loanNumber);
 
     function getLoan(uint256 loanId) external view returns (Loan memory loan);
+
     function exists(uint256 loanId) external view returns (bool existence);
 
     function borrow(
@@ -94,8 +77,11 @@ IERC721MetadataUpgradeable {
         address currency,
         uint40 duration
     ) external returns (uint256 loanId);
-    function lend(uint256 loanId, uint256 estateId) external payable;
+    function lend(uint256 loanId) external payable returns (uint256 value);
     function repay(uint256 loanId) external payable;
     function foreclose(uint256 loanId) external;
     function cancel(uint256 loanId) external;
+
+    function safeLend(uint256 loanId, uint256 anchor) external payable returns (uint256 value);
+    function safeRepay(uint256 loanId, uint256 anchor) external payable;
 }

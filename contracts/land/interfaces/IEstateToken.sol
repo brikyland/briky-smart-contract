@@ -5,19 +5,12 @@ import {IERC1155MetadataURIUpgradeable} from "@openzeppelin/contracts-upgradeabl
 
 import {IRoyaltyRateProposer} from "../../common/interfaces/IRoyaltyRateProposer.sol";
 
+import {IEstate} from "./IEstate.sol";
+
 interface IEstateToken is
+IEstate,
 IRoyaltyRateProposer,
 IERC1155MetadataURIUpgradeable {
-    struct Estate {
-        bytes32 zone;
-        uint256 tokenizationId;
-        address tokenizer;
-        uint40 tokenizeAt;
-        uint40 expireAt;
-        uint8 decimals;
-        bool isDeprecated;
-    }
-
     event CommissionTokenUpdate(address newAddress);
 
     event BaseURIUpdate(string newValue);

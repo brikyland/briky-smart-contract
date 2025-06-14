@@ -487,7 +487,7 @@ ReentrancyGuardUpgradeable {
         }
     }
 
-    function liquidate(uint256 _amount) external whenNotPaused nonReentrant {
+    function liquidate(uint256 _amount) external whenNotPaused nonReentrant returns (uint256) {
         if (liquidationUnlockedAt > block.timestamp) revert BeingLocked();
 
         ITreasury treasuryContract = ITreasury(treasury);
@@ -498,6 +498,8 @@ ReentrancyGuardUpgradeable {
         _burn(msg.sender, _amount);
 
         emit Liquidation(msg.sender, _amount, liquidity);
+
+        return liquidity;
     }
 
     function exclusiveDiscount() external view returns (Rate memory rate) {

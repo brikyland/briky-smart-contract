@@ -54,6 +54,6 @@ interface IDriptributor is ICommon {
         uint256[] calldata distributionIds,
         uint256 stake1,
         uint256 stake2
-    ) external;
-    function withdraw(uint256[] calldata distributionIds) external;
+    ) external returns (uint256 stake3);
+    function withdraw(uint256[] calldata distributionIds) external returns (uint256 totalAmount);
 }
