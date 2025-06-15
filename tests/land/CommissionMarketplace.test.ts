@@ -75,7 +75,7 @@ async function testReentrancy_CommissionMarketplace(
     );
 }
 
-describe.only('7. CommissionMarketplace', async () => {
+describe('7. CommissionMarketplace', async () => {
     async function commissionMarketplaceFixture(): Promise<CommissionMarketplaceFixture> {
         const accounts = await ethers.getSigners();
         const deployer = accounts[0];
