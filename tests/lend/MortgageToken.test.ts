@@ -39,8 +39,8 @@ import { deployFailReceiver } from '@utils/deployments/mocks/failReceiver';
 import { deployReentrancyERC1155Holder } from '@utils/deployments/mocks/mockReentrancy/reentrancyERC1155Holder';
 import { deployReentrancy } from '@utils/deployments/mocks/mockReentrancy/reentrancy';
 import { LoanState } from '@utils/enums';
-import { Initialization as LandInitialization } from 'scripts/deployments/land/initialization';
-import { Initialization as LendInitialization } from 'scripts/deployments/lend/initialization';
+import { Initialization as LandInitialization } from '@tests/land/test.initialization';
+import { Initialization as LendInitialization } from '@tests/lend/test.initialization';
 
 
 async function testReentrancy_mortgageToken(

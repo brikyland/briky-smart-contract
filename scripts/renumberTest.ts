@@ -2,8 +2,8 @@ import { replaceFromIndex } from "@utils/utils";
 import fs from "fs"
 
 function printInterfaceIds() {
-    const filePath = "tests/lend/MortgageToken.test.ts";
-    const outputPath = "tests/lend/MortgageToken.test.renumbered.ts";
+    const filePath = "tests/lend/MortgageMarketplace.test.ts";
+    const outputPath = "tests/lend/MortgageMarketplace.test.renumbered.ts";
     let file = fs.readFileSync(filePath, "utf8");
 
     const testNumberPattern = new RegExp(`describe(\\.only)?\\(["']([0-9]+)\\.`, 'g');
