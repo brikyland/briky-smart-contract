@@ -62,7 +62,8 @@ async function testReentrancy_CommissionMarketplace(
     assertion: any,
 ) {
     let data = [
-        commissionMarketplace.interface.encodeFunctionData("buy", [0, 0]),
+        commissionMarketplace.interface.encodeFunctionData("buy", [0]),
+        commissionMarketplace.interface.encodeFunctionData("safeBuy", [0, 0]),
         commissionMarketplace.interface.encodeFunctionData("cancel", [0]),
     ];
 
@@ -74,7 +75,7 @@ async function testReentrancy_CommissionMarketplace(
     );
 }
 
-describe('7. CommissionMarketplace', async () => {
+describe.only('7. CommissionMarketplace', async () => {
     async function commissionMarketplaceFixture(): Promise<CommissionMarketplaceFixture> {
         const accounts = await ethers.getSigners();
         const deployer = accounts[0];
@@ -384,7 +385,7 @@ describe('7. CommissionMarketplace', async () => {
         });
     });
 
-    describe('7.6. buy(uint256, uint256)', async () => {
+    describe('7.6. buy(uint256)', async () => {
         async function testBuyOffer(
             fixture: CommissionMarketplaceFixture,
             mockCurrencyExclusiveRate: BigNumber,
@@ -460,11 +461,7 @@ describe('7. CommissionMarketplace', async () => {
             let initSellerBalance = await getBalance(ethers.provider, seller.address, newCurrency);
             let initFeeReceiverBalance = await getBalance(ethers.provider, feeReceiver.address, newCurrency);
 
-            let tx = await commissionMarketplace.connect(buyer).buy(
-                currentOfferId,
-                currentTokenId,
-                { value: ethValue }
-            );
+            let tx = await commissionMarketplace.connect(buyer).buy(currentOfferId, { value: ethValue });
             const receipt = await tx.wait();
 
             let expectedBuyerBalance = initBuyerBalance.sub(total);
@@ -585,7 +582,7 @@ describe('7. CommissionMarketplace', async () => {
             });
             const { commissionMarketplace, buyer1 } = fixture;
 
-            await expect(commissionMarketplace.connect(buyer1).buy(1, 1, { value: 1e9 }))
+            await expect(commissionMarketplace.connect(buyer1).buy(1, { value: 1e9 }))
                 .to.be.revertedWith("Pausable: paused");
         });
 
@@ -597,10 +594,10 @@ describe('7. CommissionMarketplace', async () => {
             });
             const { commissionMarketplace, buyer1 } = fixture;
 
-            await expect(commissionMarketplace.connect(buyer1).buy(0, 1, { value: 1e9 }))
+            await expect(commissionMarketplace.connect(buyer1).buy(0, { value: 1e9 }))
                 .to.be.revertedWithCustomError(commissionMarketplace, "InvalidOfferId");
 
-            await expect(commissionMarketplace.connect(buyer1).buy(3, 1, { value: 1e9 }))
+            await expect(commissionMarketplace.connect(buyer1).buy(3, { value: 1e9 }))
                 .to.be.revertedWithCustomError(commissionMarketplace, "InvalidOfferId");
         });
 
@@ -612,14 +609,14 @@ describe('7. CommissionMarketplace', async () => {
             });
             const { commissionMarketplace, seller1, seller2 } = fixture;
 
-            await expect(commissionMarketplace.connect(seller1).buy(1, 1, { value: 1e9 }))
+            await expect(commissionMarketplace.connect(seller1).buy(1, { value: 1e9 }))
                 .to.be.revertedWithCustomError(commissionMarketplace, "InvalidBuying");
 
-            await expect(commissionMarketplace.connect(seller2).buy(2, 2))
+            await expect(commissionMarketplace.connect(seller2).buy(2))
                 .to.be.revertedWithCustomError(commissionMarketplace, "InvalidBuying");
         });
 
-        it('7.6.7. buy token unsuccessfully with invalid token id', async () => {
+        it('7.6.7. buy token unsuccessfully when offer is not selling', async () => {
             const fixture = await beforeCommissionMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleCommissionToken: true,
@@ -627,28 +624,13 @@ describe('7. CommissionMarketplace', async () => {
             });
             const { commissionMarketplace, buyer1, buyer2 } = fixture;
 
-            await expect(commissionMarketplace.connect(buyer1).buy(1, 2, { value: 1e9 }))
-                .to.be.revertedWithCustomError(commissionMarketplace, "InvalidBuying");
+            await callTransaction(commissionMarketplace.connect(buyer1).buy(1, { value: 1e9 }));
 
-            await expect(commissionMarketplace.connect(buyer2).buy(2, 1))
-                .to.be.revertedWithCustomError(commissionMarketplace, "InvalidBuying");
-        });
-
-        it('7.6.8. buy token unsuccessfully when offer is not selling', async () => {
-            const fixture = await beforeCommissionMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleCommissionToken: true,
-                listSampleOffers: true,
-            });
-            const { commissionMarketplace, buyer1, buyer2 } = fixture;
-
-            await callTransaction(commissionMarketplace.connect(buyer1).buy(1, 1, { value: 1e9 }));
-
-            await expect(commissionMarketplace.connect(buyer2).buy(1, 1, { value: 1e9 }))
+            await expect(commissionMarketplace.connect(buyer2).buy(1, { value: 1e9 }))
                 .to.be.revertedWithCustomError(commissionMarketplace, "InvalidBuying");
         });
 
-        it('7.6.9. buy token unsuccessfully with insufficient native token', async () => {
+        it('7.6.8. buy token unsuccessfully with insufficient native token', async () => {
             const fixture = await beforeCommissionMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleCommissionToken: true,
@@ -656,11 +638,11 @@ describe('7. CommissionMarketplace', async () => {
             });
             const { commissionMarketplace, buyer1 } = fixture;
 
-            await expect(commissionMarketplace.connect(buyer1).buy(1, 1))
+            await expect(commissionMarketplace.connect(buyer1).buy(1))
                 .to.be.revertedWithCustomError(commissionMarketplace, "InsufficientValue");
         });
 
-        it('7.6.10. buy token unsuccessfully when native token transfer to seller failed', async () => {
+        it('7.6.9. buy token unsuccessfully when native token transfer to seller failed', async () => {
             const fixture = await beforeCommissionMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleCommissionToken: true,
@@ -682,11 +664,11 @@ describe('7. CommissionMarketplace', async () => {
 
             await callTransaction(failReceiver.call(commissionMarketplace.address, data));
 
-            await expect(commissionMarketplace.connect(buyer1).buy(1, 1, { value: 1e9 }))
+            await expect(commissionMarketplace.connect(buyer1).buy(1, { value: 1e9 }))
                 .to.be.revertedWithCustomError(commissionMarketplace, "FailedTransfer");
         });
 
-        it('7.6.11. buy token unsuccessfully when native token transfer to royalty receiver failed', async () => {
+        it('7.6.10. buy token unsuccessfully when native token transfer to royalty receiver failed', async () => {
             const fixture = await beforeCommissionMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleCommissionToken: true,
@@ -699,11 +681,11 @@ describe('7. CommissionMarketplace', async () => {
 
             commissionToken.setVariable("feeReceiver", failReceiver.address);
 
-            await expect(commissionMarketplace.connect(buyer1).buy(1, 1, { value: 1e9 }))
+            await expect(commissionMarketplace.connect(buyer1).buy(1, { value: 1e9 }))
                 .to.be.revertedWithCustomError(commissionMarketplace, "FailedTransfer");
         });
 
-        it('7.6.12. buy token unsuccessfully when refund to sender failed', async () => {
+        it('7.6.11. buy token unsuccessfully when refund to sender failed', async () => {
             const fixture = await beforeCommissionMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleCommissionToken: true,
@@ -714,13 +696,13 @@ describe('7. CommissionMarketplace', async () => {
 
             const failReceiver = await deployFailReceiver(deployer);
 
-            let data = commissionMarketplace.interface.encodeFunctionData("buy", [1, 1]);
+            let data = commissionMarketplace.interface.encodeFunctionData("buy", [1]);
 
             await expect(failReceiver.call(commissionMarketplace.address, data, { value: 1e9 }))
                 .to.be.revertedWithCustomError(commissionMarketplace, "FailedRefund");
         });
 
-        it('7.6.13. buy token unsuccessfully when this contract is reentered', async () => {
+        it('7.6.12. buy token unsuccessfully when this contract is reentered', async () => {
             const fixture = await beforeCommissionMarketplaceTest({
                 listSampleCurrencies: true,
             });
@@ -742,13 +724,376 @@ describe('7. CommissionMarketplace', async () => {
             await testReentrancy_CommissionMarketplace(
                 commissionMarketplace,
                 reentrancy,
-                expect(commissionMarketplace.connect(buyer1).buy(1, 1, { value: 1e9 })).to.be.revertedWithCustomError(commissionMarketplace, "FailedTransfer"),
+                expect(commissionMarketplace.connect(buyer1).buy(1, { value: 1e9 })).to.be.revertedWithCustomError(commissionMarketplace, "FailedTransfer"),
             );
         });
     });
 
-    describe('7.7. cancelOffer(uint256)', async () => {
-        it('7.7.1. cancel offer successfully by seller', async () => {
+    describe('7.7. safeBuy(uint256, uint256)', async () => {
+        async function testSafeBuyOffer(
+            fixture: CommissionMarketplaceFixture,
+            mockCurrencyExclusiveRate: BigNumber,
+            commissionTokenRoyaltyRate: BigNumber,
+            isERC20: boolean,
+            isExclusive: boolean,
+            price: BigNumber,
+        ) {
+            const { deployer, estateToken,commissionToken, commissionMarketplace, seller1, buyer1, feeReceiver, admins, admin } = fixture;
+
+            await callCommissionToken_UpdateRoyaltyRate(commissionToken, admins, commissionTokenRoyaltyRate, await admin.nonce());
+
+            const currentTokenId = (await estateToken.estateNumber()).add(1);
+            const currentOfferId = (await commissionMarketplace.offerNumber()).add(1);
+
+            let newCurrency: Currency | undefined;
+            let newCurrencyAddress: string;
+            if (isERC20) {
+                newCurrency = await deployCurrency(
+                    deployer.address,
+                    `NewMockCurrency_${currentOfferId}`,
+                    `NMC_${currentOfferId}`
+                ) as Currency;
+                newCurrencyAddress = newCurrency.address;
+
+                await callTransaction(newCurrency.setExclusiveDiscount(mockCurrencyExclusiveRate, Constant.COMMON_RATE_DECIMALS));
+            } else {
+                newCurrencyAddress = ethers.constants.AddressZero;
+            }
+
+            await callAdmin_UpdateCurrencyRegistries(
+                admin,
+                admins,
+                [newCurrencyAddress],
+                [true],
+                [isExclusive],
+                await admin.nonce(),
+            );
+
+            const seller = seller1;
+            const buyer = buyer1;
+
+            await callTransaction(estateToken.call(commissionToken.address, commissionToken.interface.encodeFunctionData('mint', [seller.address, currentTokenId])));
+            await callTransaction(commissionToken.connect(seller).setApprovalForAll(commissionMarketplace.address, true));
+            await estateToken.setVariable("estateNumber", currentTokenId);
+
+            await callTransaction(commissionMarketplace.connect(seller).list(
+                currentTokenId,
+                price,
+                newCurrencyAddress,
+            ));
+
+            let royaltyReceiver = feeReceiver.address;
+            let royaltyAmount = price.mul(commissionTokenRoyaltyRate).div(Constant.COMMON_RATE_MAX_FRACTION);
+            if (isExclusive) {
+                royaltyAmount = royaltyAmount.sub(royaltyAmount.mul(mockCurrencyExclusiveRate).div(Constant.COMMON_RATE_MAX_FRACTION));
+            }
+            let commissionAmount = ethers.BigNumber.from(0);
+            let total = price.add(royaltyAmount);
+
+            let ethValue = ethers.BigNumber.from(0);
+            await prepareNativeToken(ethers.provider, deployer, [buyer], ethers.utils.parseEther("1.0"));
+            if (isERC20) {
+                await prepareERC20(newCurrency!, [buyer], [commissionMarketplace], total);
+            } else {
+                ethValue = total;
+                await prepareNativeToken(ethers.provider, deployer, [buyer], total);
+            }
+
+            await callTransaction(estateToken.connect(seller).setApprovalForAll(commissionMarketplace.address, true));
+
+            let initBuyerBalance = await getBalance(ethers.provider, buyer.address, newCurrency);
+            let initSellerBalance = await getBalance(ethers.provider, seller.address, newCurrency);
+            let initFeeReceiverBalance = await getBalance(ethers.provider, feeReceiver.address, newCurrency);
+
+            let tx = await commissionMarketplace.connect(buyer).safeBuy(
+                currentOfferId,
+                currentTokenId,
+                { value: ethValue }
+            );
+            const receipt = await tx.wait();
+
+            let expectedBuyerBalance = initBuyerBalance.sub(total);
+            let expectedSellerBalance = initSellerBalance.add(price);
+            let expectedFeeReceiverBalance = initFeeReceiverBalance.add(royaltyAmount.sub(commissionAmount));
+
+            if (!isERC20) {
+                const gasFee = receipt.gasUsed.mul(receipt.effectiveGasPrice);
+                expectedBuyerBalance = expectedBuyerBalance.sub(gasFee);
+            }
+
+            await expect(tx).to
+                .emit(commissionMarketplace, 'OfferSale')
+                .withArgs(currentOfferId, buyer.address, royaltyReceiver, royaltyAmount);
+
+            let offer = await commissionMarketplace.getOffer(currentOfferId);
+            expect(offer.tokenId).to.equal(currentTokenId);
+            expect(offer.price).to.equal(price);
+            expect(offer.currency).to.equal(newCurrencyAddress);
+            expect(offer.state).to.equal(CommissionMarketplaceOfferState.Sold);
+            expect(offer.seller).to.equal(seller.address);
+
+            expect(await getBalance(ethers.provider, buyer.address, newCurrency)).to.equal(expectedBuyerBalance);
+            expect(await getBalance(ethers.provider, seller.address, newCurrency)).to.equal(expectedSellerBalance);
+            expect(await getBalance(ethers.provider, feeReceiver.address, newCurrency)).to.equal(expectedFeeReceiverBalance);
+
+            expect(await commissionToken.ownerOf(currentTokenId)).to.equal(buyer.address);
+
+            let walletsToReset = [seller, buyer, feeReceiver];
+            if (isERC20) {
+                await resetERC20(newCurrency!, walletsToReset);
+            } else {
+                await resetNativeToken(ethers.provider, walletsToReset);
+                await prepareNativeToken(ethers.provider, deployer, [seller, buyer], ethers.utils.parseEther("1.0"));
+            }
+        }
+
+        it('7.7.1. buy token successfully (automatic test)', async () => {
+            const fixture = await beforeCommissionMarketplaceTest({
+                listSampleCurrencies: true,
+                listSampleCommissionToken: true,
+            });
+            const { mockCurrencyExclusiveRate } = fixture;
+    
+            await testSafeBuyOffer(
+                fixture,
+                mockCurrencyExclusiveRate,
+                LandInitialization.COMMISSION_TOKEN_RoyaltyRate,
+                false,
+                false,
+                ethers.BigNumber.from(200000),
+            );
+
+            await testSafeBuyOffer(
+                fixture,
+                mockCurrencyExclusiveRate,
+                LandInitialization.COMMISSION_TOKEN_RoyaltyRate,
+                true,
+                true,
+                ethers.BigNumber.from(500000),
+            );
+        });
+
+        it('7.7.2. buy token successfully (all flows)', async () => {
+            const fixture = await beforeCommissionMarketplaceTest({
+                listSampleCurrencies: true,
+                listSampleCommissionToken: true,
+            });
+            const { mockCurrencyExclusiveRate } = fixture;
+
+            for (const isERC20 of [false, true]) {
+                for (const isExclusive of [false, true]) {
+                    if (!isERC20 && isExclusive) {
+                        continue;
+                    }
+                    await testSafeBuyOffer(
+                        fixture,
+                        mockCurrencyExclusiveRate,
+                        LandInitialization.COMMISSION_TOKEN_RoyaltyRate,
+                        isERC20,
+                        isExclusive,
+                        ethers.BigNumber.from(200000),
+                    )
+                }
+            }
+        });
+
+        it('7.7.3. buy token successfully with very large amount (all flows)', async () => {
+            const fixture = await beforeCommissionMarketplaceTest({
+                listSampleCurrencies: true,
+                listSampleCommissionToken: true,
+            });
+
+            for (const isERC20 of [false, true]) {
+                for (const isExclusive of [false, true]) {
+                    if (!isERC20 && isExclusive) {
+                        continue;
+                    }
+                    const price = ethers.BigNumber.from(2).pow(255);
+                    await testSafeBuyOffer(
+                        fixture,
+                        ethers.utils.parseEther("0.99"),
+                        ethers.utils.parseEther("0.99"),
+                        isERC20,
+                        isExclusive,
+                        price,
+                    )
+                }
+            }            
+        });
+
+        it('7.7.4. buy token unsuccessfully when paused', async () => {
+            const fixture = await beforeCommissionMarketplaceTest({
+                listSampleCurrencies: true,
+                listSampleCommissionToken: true,
+                listSampleOffers: true,
+                pause: true,
+            });
+            const { commissionMarketplace, buyer1 } = fixture;
+
+            await expect(commissionMarketplace.connect(buyer1).safeBuy(1, 1, { value: 1e9 }))
+                .to.be.revertedWith("Pausable: paused");
+        });
+
+        it('7.7.5. buy token unsuccessfully with invalid offer id', async () => {
+            const fixture = await beforeCommissionMarketplaceTest({
+                listSampleCurrencies: true,
+                listSampleCommissionToken: true,
+                listSampleOffers: true,
+            });
+            const { commissionMarketplace, buyer1 } = fixture;
+
+            await expect(commissionMarketplace.connect(buyer1).safeBuy(0, 1, { value: 1e9 }))
+                .to.be.revertedWithCustomError(commissionMarketplace, "InvalidOfferId");
+
+            await expect(commissionMarketplace.connect(buyer1).safeBuy(3, 1, { value: 1e9 }))
+                .to.be.revertedWithCustomError(commissionMarketplace, "InvalidOfferId");
+        });
+
+        it('7.7.6. buy token unsuccessfully when seller buy their own token', async () => {
+            const fixture = await beforeCommissionMarketplaceTest({
+                listSampleCurrencies: true,
+                listSampleCommissionToken: true,
+                listSampleOffers: true,
+            });
+            const { commissionMarketplace, seller1, seller2 } = fixture;
+
+            await expect(commissionMarketplace.connect(seller1).safeBuy(1, 1, { value: 1e9 }))
+                .to.be.revertedWithCustomError(commissionMarketplace, "InvalidBuying");
+
+            await expect(commissionMarketplace.connect(seller2).safeBuy(2, 2))
+                .to.be.revertedWithCustomError(commissionMarketplace, "InvalidBuying");
+        });
+
+        it('7.7.7. buy token unsuccessfully with invalid anchor', async () => {
+            const fixture = await beforeCommissionMarketplaceTest({
+                listSampleCurrencies: true,
+                listSampleCommissionToken: true,
+                listSampleOffers: true,
+            });
+            const { commissionMarketplace, buyer1, buyer2 } = fixture;
+
+            await expect(commissionMarketplace.connect(buyer1).safeBuy(1, 2, { value: 1e9 }))
+                .to.be.revertedWithCustomError(commissionMarketplace, "BadAnchor");
+
+            await expect(commissionMarketplace.connect(buyer2).safeBuy(2, 1))
+                .to.be.revertedWithCustomError(commissionMarketplace, "BadAnchor");
+        });
+
+        it('7.7.8. buy token unsuccessfully when offer is not selling', async () => {
+            const fixture = await beforeCommissionMarketplaceTest({
+                listSampleCurrencies: true,
+                listSampleCommissionToken: true,
+                listSampleOffers: true,
+            });
+            const { commissionMarketplace, buyer1, buyer2 } = fixture;
+
+            await callTransaction(commissionMarketplace.connect(buyer1).safeBuy(1, 1, { value: 1e9 }));
+
+            await expect(commissionMarketplace.connect(buyer2).safeBuy(1, 1, { value: 1e9 }))
+                .to.be.revertedWithCustomError(commissionMarketplace, "InvalidBuying");
+        });
+
+        it('7.7.9. buy token unsuccessfully with insufficient native token', async () => {
+            const fixture = await beforeCommissionMarketplaceTest({
+                listSampleCurrencies: true,
+                listSampleCommissionToken: true,
+                listSampleOffers: true,
+            });
+            const { commissionMarketplace, buyer1 } = fixture;
+
+            await expect(commissionMarketplace.connect(buyer1).safeBuy(1, 1))
+                .to.be.revertedWithCustomError(commissionMarketplace, "InsufficientValue");
+        });
+
+        it('7.7.10. buy token unsuccessfully when native token transfer to seller failed', async () => {
+            const fixture = await beforeCommissionMarketplaceTest({
+                listSampleCurrencies: true,
+                listSampleCommissionToken: true,
+            });
+            const { commissionMarketplace, seller1, buyer1, deployer, commissionToken } = fixture;
+            
+            const failReceiver = await deployFailReceiver(deployer);
+
+            await callTransaction(commissionToken.connect(seller1).transferFrom(
+                seller1.address,
+                failReceiver.address,
+                1,
+            ));
+
+            let data = commissionToken.interface.encodeFunctionData("setApprovalForAll", [commissionMarketplace.address, true]);
+            await callTransaction(failReceiver.call(commissionToken.address, data));
+
+            data = commissionMarketplace.interface.encodeFunctionData("list", [1, 200000, ethers.constants.AddressZero]);
+
+            await callTransaction(failReceiver.call(commissionMarketplace.address, data));
+
+            await expect(commissionMarketplace.connect(buyer1).safeBuy(1, 1, { value: 1e9 }))
+                .to.be.revertedWithCustomError(commissionMarketplace, "FailedTransfer");
+        });
+
+        it('7.7.11. buy token unsuccessfully when native token transfer to royalty receiver failed', async () => {
+            const fixture = await beforeCommissionMarketplaceTest({
+                listSampleCurrencies: true,
+                listSampleCommissionToken: true,
+                listSampleOffers: true,
+                fundERC20ForBuyers: true,
+            });
+            const { commissionMarketplace, buyer1, deployer, commissionToken } = fixture;
+
+            const failReceiver = await deployFailReceiver(deployer);
+
+            commissionToken.setVariable("feeReceiver", failReceiver.address);
+
+            await expect(commissionMarketplace.connect(buyer1).safeBuy(1, 1, { value: 1e9 }))
+                .to.be.revertedWithCustomError(commissionMarketplace, "FailedTransfer");
+        });
+
+        it('7.7.12. buy token unsuccessfully when refund to sender failed', async () => {
+            const fixture = await beforeCommissionMarketplaceTest({
+                listSampleCurrencies: true,
+                listSampleCommissionToken: true,
+                listSampleOffers: true,
+                fundERC20ForBuyers: true,
+            });
+            const { commissionMarketplace, deployer } = fixture;
+
+            const failReceiver = await deployFailReceiver(deployer);
+
+            let data = commissionMarketplace.interface.encodeFunctionData("buy", [1]);
+
+            await expect(failReceiver.call(commissionMarketplace.address, data, { value: 1e9 }))
+                .to.be.revertedWithCustomError(commissionMarketplace, "FailedRefund");
+        });
+
+        it('7.7.13. buy token unsuccessfully when this contract is reentered', async () => {
+            const fixture = await beforeCommissionMarketplaceTest({
+                listSampleCurrencies: true,
+            });
+            const { deployer, estateToken, commissionToken, commissionMarketplace, buyer1 } = fixture;
+
+            const reentrancy = await deployReentrancy(deployer);
+
+            await callTransaction(estateToken.call(
+                commissionToken.address,
+                commissionToken.interface.encodeFunctionData('mint', [reentrancy.address, 1])
+            ));
+
+            let data = commissionMarketplace.interface.encodeFunctionData("list", [1, 200000, ethers.constants.AddressZero]);
+            await callTransaction(reentrancy.call(commissionMarketplace.address, data));
+
+            data = commissionToken.interface.encodeFunctionData("setApprovalForAll", [commissionMarketplace.address, true]);
+            await callTransaction(reentrancy.call(commissionToken.address, data));
+
+            await testReentrancy_CommissionMarketplace(
+                commissionMarketplace,
+                reentrancy,
+                expect(commissionMarketplace.connect(buyer1).safeBuy(1, 1, { value: 1e9 })).to.be.revertedWithCustomError(commissionMarketplace, "FailedTransfer"),
+            );
+        });
+    });
+
+    describe('7.8. cancelOffer(uint256)', async () => {
+        it('7.8.1. cancel offer successfully by seller', async () => {
             const fixture = await beforeCommissionMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleCommissionToken: true,
@@ -768,7 +1113,7 @@ describe('7. CommissionMarketplace', async () => {
                 .withArgs(1);
         });
 
-        it('7.7.2. cancel offer successfully by manager', async () => {
+        it('7.8.2. cancel offer successfully by manager', async () => {
             const fixture = await beforeCommissionMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleCommissionToken: true,
@@ -787,7 +1132,7 @@ describe('7. CommissionMarketplace', async () => {
                 .withArgs(1);
         });
 
-        it('7.7.3. cancel offer unsuccessfully with invalid offer id', async () => {
+        it('7.8.3. cancel offer unsuccessfully with invalid offer id', async () => {
             const fixture = await beforeCommissionMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleCommissionToken: true,
@@ -802,7 +1147,7 @@ describe('7. CommissionMarketplace', async () => {
                 .to.be.revertedWithCustomError(commissionMarketplace, "InvalidOfferId");
         });
 
-        it('7.7.4. cancel offer unsuccessfully by unauthorized user', async () => {
+        it('7.8.4. cancel offer unsuccessfully by unauthorized user', async () => {
             const fixture = await beforeCommissionMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleCommissionToken: true,
@@ -818,7 +1163,7 @@ describe('7. CommissionMarketplace', async () => {
                 .to.be.revertedWithCustomError(commissionMarketplace, "Unauthorized");
         });
 
-        it('7.7.5. cancel offer unsuccessfully when offer is already cancelled', async () => {
+        it('7.8.5. cancel offer unsuccessfully when offer is already cancelled', async () => {
             const fixture = await beforeCommissionMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleCommissionToken: true,
@@ -832,7 +1177,7 @@ describe('7. CommissionMarketplace', async () => {
                 .to.be.revertedWithCustomError(commissionMarketplace, "InvalidCancelling");
         });
 
-        it('7.7.6. cancel offer unsuccessfully when offer is sold out', async () => {
+        it('7.8.6. cancel offer unsuccessfully when offer is sold out', async () => {
             const fixture = await beforeCommissionMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleCommissionToken: true,
@@ -841,7 +1186,7 @@ describe('7. CommissionMarketplace', async () => {
             });
             const { commissionMarketplace, manager, buyer1 } = fixture;
 
-            await callTransaction(commissionMarketplace.connect(buyer1).buy(1, 1, { value: 1e9 }));
+            await callTransaction(commissionMarketplace.connect(buyer1).safeBuy(1, 1, { value: 1e9 }));
 
             await expect(commissionMarketplace.connect(manager).cancel(1))
                 .to.be.revertedWithCustomError(commissionMarketplace, "InvalidCancelling");

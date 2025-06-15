@@ -10,6 +10,8 @@ import {
     IERC2981Upgradeable__factory,
     MockEstateToken,
     MockEstateForger__factory,
+    IERC4906Upgradeable__factory,
+    IERC721Upgradeable__factory,
 } from '@typechain-types';
 import { callTransaction, getSignatures, prepareNativeToken, randomWallet } from '@utils/blockchain';
 import { Constant } from '@tests/test.constant';
@@ -31,6 +33,7 @@ import { randomInt } from 'crypto';
 import { getInterfaceID, randomBigNumber } from '@utils/utils';
 import { OrderedMap } from '@utils/utils';
 import { Initialization as LandInitialization } from '@tests/land/test.initialization';
+import { callCommissionToken_Pause } from '@utils/callWithSignatures/commissionToken';
 
 interface CommissionTokenFixture {
     admin: Admin;
@@ -109,9 +112,31 @@ describe('6. CommissionToken', async () => {
     };
 
     async function beforeCommissionTokenTest({
+        mintSampleTokens = false,
         pause = false,
     } = {}): Promise<CommissionTokenFixture> {
         const fixture = await loadFixture(commissionTokenFixture);
+        const { admin, admins, commissionToken, estateToken, receiver1, receiver2 } = fixture;
+
+        if (mintSampleTokens) {
+            await callTransaction(estateToken.call(
+                commissionToken.address, 
+                commissionToken.interface.encodeFunctionData('mint', [receiver1.address, 1])
+            ));
+
+            await callTransaction(estateToken.call(
+                commissionToken.address, 
+                commissionToken.interface.encodeFunctionData('mint', [receiver2.address, 2])
+            ));
+        }
+
+        if (pause) {
+            await callCommissionToken_Pause(
+                commissionToken,
+                admins,
+                await admin.nonce(),
+            )
+        }
 
         return {
             ...fixture,
@@ -204,13 +229,47 @@ describe('6. CommissionToken', async () => {
     });
 
     // TODO: Andy
-    describe('6.4. updateRoyaltyRate(uint256, bytes[])', async () => {
+    describe('6.5. updateBaseURI(string, bytes[])', async () => {
 
     });
 
     // TODO: Andy
-    describe('6.5. updateBaseURI(string, bytes[])', async () => {
+    describe('6.4. updateRoyaltyRate(uint256, bytes[])', async () => {
 
+    });
+
+    describe('6.6. commissionInfo(uint256, uint256)', async() => {
+        it('6.6.1. return correct commission info for minted token', async () => {
+            const { commissionToken, receiver1, receiver2 } = await beforeCommissionTokenTest({
+                mintSampleTokens: true,
+            });
+
+            const value1 = ethers.utils.parseEther('100');
+            const commissionInfo1 = await commissionToken.commissionInfo(1, value1);
+            expect(commissionInfo1[0]).to.equal(receiver1.address);
+            expect(commissionInfo1[1]).to.equal(value1.mul(LandInitialization.COMMISSION_TOKEN_CommissionRate).div(Constant.COMMON_RATE_MAX_FRACTION));
+
+            const value2 = ethers.utils.parseEther('20');
+            const commissionInfo2 = await commissionToken.commissionInfo(2, value2);
+            expect(commissionInfo2[0]).to.equal(receiver2.address);
+            expect(commissionInfo2[1]).to.equal(value2.mul(LandInitialization.COMMISSION_TOKEN_CommissionRate).div(Constant.COMMON_RATE_MAX_FRACTION));
+        });
+
+        it('6.6.2. return default value info for unminted token', async () => {
+            const { commissionToken, receiver1, receiver2 } = await beforeCommissionTokenTest({
+                mintSampleTokens: true,
+            });
+
+            const value1 = ethers.utils.parseEther('100');
+            const commissionInfo1 = await commissionToken.commissionInfo(0, value1);
+            expect(commissionInfo1[0]).to.equal(ethers.constants.AddressZero);
+            expect(commissionInfo1[1]).to.equal(ethers.constants.Zero);
+
+            const value2 = ethers.utils.parseEther('20');
+            const commissionInfo2 = await commissionToken.commissionInfo(100, value2);
+            expect(commissionInfo2[0]).to.equal(ethers.constants.AddressZero);
+            expect(commissionInfo2[1]).to.equal(ethers.constants.Zero);
+        });
     });
 
     describe('6.6. mint(address, uint256)', async () => {
@@ -263,6 +322,22 @@ describe('6. CommissionToken', async () => {
                 receiver2.address,
                 1,
             ]))).to.be.revertedWithCustomError(commissionToken, 'AlreadyMinted');
+        });
+    });
+
+    describe('6.7. supportsInterface(bytes4)', async () => {
+        it('6.7.1. return true for IERC4906Upgradeable interface', async () => {
+            const { commissionToken } = await beforeCommissionTokenTest();
+
+            const IERC4906Upgradeable = IERC4906Upgradeable__factory.createInterface();
+            const IERC165Upgradeable = IERC165Upgradeable__factory.createInterface();
+            const IERC721Upgradeable = IERC721Upgradeable__factory.createInterface();
+
+            const IERC4906UpgradeableInterfaceId = getInterfaceID(IERC4906Upgradeable)
+                .xor(getInterfaceID(IERC165Upgradeable))
+                .xor(getInterfaceID(IERC721Upgradeable))
+
+            expect(await commissionToken.supportsInterface(IERC4906UpgradeableInterfaceId._hex)).to.equal(true);
         });
     });
 });

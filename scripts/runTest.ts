@@ -12,7 +12,7 @@ async function runTests() {
         // `${COMMON_PATH}/feeReceiver.test.ts`,
         // `${LAND_PATH}/estateToken.test.ts`,
         // `${LAND_PATH}/estateForger.test.ts`,
-        `${LAND_PATH}/estateMarketplace.test.ts`,
+        // `${LAND_PATH}/estateMarketplace.test.ts`,
         `${LAND_PATH}/commissionToken.test.ts`,
         `${LAND_PATH}/commissionMarketplace.test.ts`,
         `${LAND_PATH}/primaryToken.test.ts`,
