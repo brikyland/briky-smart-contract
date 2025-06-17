@@ -177,8 +177,12 @@ ReentrancyGuardUpgradeable {
         }
     }
 
-    function mint(uint256 _contentId)
-    external payable nonReentrant whenNotPaused returns (uint256) {
+    function mint(uint256 _contentId, uint256 _amount)
+    external payable nonReentrant whenNotPaused returns (uint256, uint256) {
+        if (_amount == 0) {
+            revert InvalidInput();
+        }
+
         Content memory content = getContent(_contentId);
 
         if (block.timestamp < content.startAt) {
@@ -189,24 +193,26 @@ ReentrancyGuardUpgradeable {
             revert AlreadyLocked();
         }
 
-        if (hasMinted[msg.sender][_contentId]) {
-            revert AlreadyMinted();
+        CurrencyHandler.receiveNative(fee * _amount);
+
+        uint256 firstTokenId = tokenNumber + 1;
+        uint256 lastTokenId = firstTokenId + _amount - 1;
+        tokenNumber = lastTokenId;
+
+        unchecked {
+            for (uint256 tokenId = firstTokenId; tokenId <= lastTokenId; ++tokenId) {
+                tokenContents[tokenId] = _contentId;
+                _mint(msg.sender, tokenId);
+
+                emit NewToken(
+                    tokenId,
+                    _contentId,
+                    msg.sender
+                );
+            }
         }
 
-        CurrencyHandler.receiveNative(fee);
-
-        uint256 tokenId = ++tokenNumber;
-        tokenContents[tokenId] = _contentId;
-        hasMinted[msg.sender][_contentId] = true;
-        _mint(msg.sender, tokenId);
-
-        emit NewToken(
-            tokenId,
-            _contentId,
-            msg.sender
-        );
-
-        return tokenId;
+        return (firstTokenId, lastTokenId);
     }
 
     function exists(uint256 _tokenId) external view returns (bool) {

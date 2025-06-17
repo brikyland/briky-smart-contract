@@ -34,7 +34,6 @@ IERC721MetadataUpgradeable {
         address indexed owner
     );
 
-    error AlreadyMinted();
     error AlreadyLocked();
     error InvalidContentId();
     error NotOpened();
@@ -52,7 +51,5 @@ IERC721MetadataUpgradeable {
 
     function exists(uint256 tokenId) external view returns (bool existence);
 
-    function hasMinted(address account, uint256 contentId) external view returns (bool hasMinted);
-
-    function mint(uint256 contentId) external payable returns (uint256 tokenId);
+    function mint(uint256 contentId, uint256 amount) external payable returns (uint256 firstTokenId, uint256 lastTokenId);
 }
