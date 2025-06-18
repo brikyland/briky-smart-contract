@@ -10,6 +10,8 @@ import {
     IERC2981Upgradeable__factory,
     MockEstateToken,
     MockEstateForger__factory,
+    IERC721Upgradeable__factory,
+    IERC4906Upgradeable__factory,
 } from '@typechain-types';
 import { callTransaction, getSignatures, prepareNativeToken, randomWallet } from '@utils/blockchain';
 import { Constant } from '@tests/test.constant';
@@ -31,6 +33,7 @@ import { randomInt } from 'crypto';
 import { getInterfaceID, randomBigNumber } from '@utils/utils';
 import { OrderedMap } from '@utils/utils';
 import { Initialization } from './test.initialization';
+import { callPassportToken_Pause } from '@utils/callWithSignatures/passportToken';
 
 interface PassportTokenFixture {
     admin: Admin;
@@ -96,6 +99,10 @@ describe('16. PassportToken', async () => {
         pause = false,
     } = {}): Promise<PassportTokenFixture> {
         const fixture = await loadFixture(passportTokenFixture);
+
+        if (pause) {
+            await callPassportToken_Pause(fixture.passportToken, fixture.admins, 0);
+        }
 
         return {
             ...fixture,
@@ -189,6 +196,7 @@ describe('16. PassportToken', async () => {
 
             const initMinter1Balance = await ethers.provider.getBalance(minter1.address);
             const initMinter2Balance = await ethers.provider.getBalance(minter2.address);
+            const initPassportTokenBalance = await ethers.provider.getBalance(passportToken.address);
 
             // Mint with just enough value
             const tx1 = await passportToken.connect(minter1).mint({ value: fee });
@@ -203,6 +211,7 @@ describe('16. PassportToken', async () => {
 
             const tx1GasFee = receipt1.gasUsed.mul(receipt1.effectiveGasPrice);
             expect(await ethers.provider.getBalance(minter1.address)).to.equal(initMinter1Balance.sub(tx1GasFee).sub(fee));
+            expect(await ethers.provider.getBalance(passportToken.address)).to.equal(initPassportTokenBalance.add(fee));
             
             // Refund when minting with more value than needed
             const tx2 = await passportToken.connect(minter2).mint({ value: fee.add(ethers.utils.parseEther('1')) });
@@ -217,9 +226,20 @@ describe('16. PassportToken', async () => {
 
             const tx2GasFee = receipt2.gasUsed.mul(receipt2.effectiveGasPrice);
             expect(await ethers.provider.getBalance(minter2.address)).to.equal(initMinter2Balance.sub(tx2GasFee).sub(fee));
+            expect(await ethers.provider.getBalance(passportToken.address)).to.equal(initPassportTokenBalance.add(fee).add(fee));
         });
 
-        it('16.6.2. mint unsuccessfully when already minted', async () => {
+        it('16.6.2. mint successfully when paused', async () => {
+            const { passportToken, minter1, minter2 } = await beforePassportTokenTest({
+                pause: true,
+            });
+
+            const fee = await passportToken.fee();
+            await expect(passportToken.connect(minter1).mint({ value: fee }))
+                .to.be.revertedWith('Pausable: paused');
+        });
+
+        it('16.6.3. mint unsuccessfully when already minted', async () => {
             const { passportToken, minter1, minter2 } = await beforePassportTokenTest();
 
             const fee = await passportToken.fee();
@@ -233,11 +253,27 @@ describe('16. PassportToken', async () => {
                 .to.be.revertedWithCustomError(passportToken, 'AlreadyMinted');
         });
 
-        it('16.6.3. mint unsuccessfully with insufficient value', async () => {
+        it('16.6.4. mint unsuccessfully with insufficient value', async () => {
             const { passportToken, minter1 } = await beforePassportTokenTest();
 
             await expect(passportToken.connect(minter1).mint())
                 .to.be.revertedWithCustomError(passportToken, 'InsufficientValue');
+        });
+    });
+
+    describe('16.7. supportsInterface(bytes4)', async () => {
+        it('16.7.1. return true for IERC4906Upgradeable interface', async () => {
+            const { passportToken } = await beforePassportTokenTest();
+
+            const IERC4906Upgradeable = IERC4906Upgradeable__factory.createInterface();
+            const IERC165Upgradeable = IERC165Upgradeable__factory.createInterface();
+            const IERC721Upgradeable = IERC721Upgradeable__factory.createInterface();
+
+            const IERC4906UpgradeableInterfaceId = getInterfaceID(IERC4906Upgradeable)
+                .xor(getInterfaceID(IERC165Upgradeable))
+                .xor(getInterfaceID(IERC721Upgradeable))
+
+            expect(await passportToken.supportsInterface(IERC4906UpgradeableInterfaceId._hex)).to.equal(true);
         });
     });
 });
