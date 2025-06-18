@@ -131,6 +131,7 @@ ReentrancyGuardUpgradeable {
         CurrencyHandler.receiveNative(fee);
 
         uint256 tokenId = ++tokenNumber;
+        hasMinted[msg.sender] = true;
         _mint(msg.sender, tokenId);
 
         emit NewToken(
