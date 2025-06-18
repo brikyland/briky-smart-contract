@@ -32,26 +32,27 @@ import { getInterfaceID, randomBigNumber } from '@utils/utils';
 import { OrderedMap } from '@utils/utils';
 import { Initialization } from './test.initialization';
 
-interface CommissionTokenFixture {
+interface PassportTokenFixture {
     admin: Admin;
     feeReceiver: FeeReceiver;
     passportToken: PassportToken;
 
     deployer: any;
     admins: any[];
-    participant1: any;
-    participant2: any;
+    minter1: any;
+    minter2: any;
+    minter3: any;
 }
 
-describe('6. CommissionToken', async () => {
-    async function commissionTokenFixture(): Promise<CommissionTokenFixture> {
+describe('16. PassportToken', async () => {
+    async function passportTokenFixture(): Promise<PassportTokenFixture> {
         const accounts = await ethers.getSigners();
         const deployer = accounts[0];
         const admins = [];
         for (let i = 1; i <= Constant.ADMIN_NUMBER; ++i) admins.push(accounts[i]);
-        const participant1 = accounts[Constant.ADMIN_NUMBER + 1];
-        const participant2 = accounts[Constant.ADMIN_NUMBER + 2];
-        const participant3 = accounts[Constant.ADMIN_NUMBER + 3];
+        const minter1 = accounts[Constant.ADMIN_NUMBER + 1];
+        const minter2 = accounts[Constant.ADMIN_NUMBER + 2];
+        const minter3 = accounts[Constant.ADMIN_NUMBER + 3];
         
         const adminAddresses: string[] = admins.map(signer => signer.address);
         const admin = await deployAdmin(
@@ -85,167 +86,158 @@ describe('6. CommissionToken', async () => {
             passportToken,
             deployer,
             admins,
-            participant1,
-            participant2,
-            participant3,
+            minter1,
+            minter2,
+            minter3,
         };
     };
 
-    async function beforeCommissionTokenTest({
+    async function beforePassportTokenTest({
         pause = false,
-    } = {}): Promise<CommissionTokenFixture> {
-        const fixture = await loadFixture(commissionTokenFixture);
+    } = {}): Promise<PassportTokenFixture> {
+        const fixture = await loadFixture(passportTokenFixture);
 
         return {
             ...fixture,
         }
     }
 
-    describe('6.1. initialize(address, address, address)', async () => {
-        it('6.1.1. Deploy successfully', async () => {
-            const { deployer, admin, estateToken, feeReceiver } = await beforeCommissionTokenTest();
+    describe('16.1. initialize(address, address, string, string, string, uint256, uint256)', async () => {
+        it('16.1.1. Deploy successfully', async () => {
+            const { deployer, admin, feeReceiver } = await beforePassportTokenTest();
 
-            const CommissionToken = await ethers.getContractFactory('CommissionToken', deployer);
+            const PassportToken = await ethers.getContractFactory('PassportToken', deployer);
 
-            const commissionToken = await upgrades.deployProxy(
-                CommissionToken,
+            const passportToken = await upgrades.deployProxy(
+                PassportToken,
                 [
                     admin.address,
-                    estateToken.address,
                     feeReceiver.address,
-                    Constant.COMMISSION_TOKEN_INITIAL_Name,
-                    Constant.COMMISSION_TOKEN_INITIAL_Symbol,
-                    Constant.COMMISSION_TOKEN_INITIAL_BaseURI,
-                    Constant.COMMISSION_TOKEN_INITIAL_CommissionRate,
-                    Constant.COMMISSION_TOKEN_INITIAL_RoyaltyRate,
+                    Initialization.PASSPORT_TOKEN_Name,
+                    Initialization.PASSPORT_TOKEN_Symbol,
+                    Initialization.PASSPORT_TOKEN_BaseURI,
+                    Initialization.PASSPORT_TOKEN_Fee,
+                    Initialization.PASSPORT_TOKEN_RoyaltyRate,
                 ]
-            );
-            await commissionToken.deployed();
+            ) as PassportToken;
+            await passportToken.deployed();
             
-            expect(await commissionToken.admin()).to.equal(admin.address);
-            expect(await commissionToken.estateToken()).to.equal(estateToken.address);
-            expect(await commissionToken.feeReceiver()).to.equal(feeReceiver.address);
+            expect(await passportToken.admin()).to.equal(admin.address);
+            expect(await passportToken.feeReceiver()).to.equal(feeReceiver.address);
 
-            const commissionRate = await commissionToken.getCommissionRate();
-            expect(commissionRate.value).to.equal(Constant.COMMISSION_TOKEN_INITIAL_CommissionRate);
-            expect(commissionRate.decimals).to.equal(Constant.COMMON_RATE_DECIMALS);
+            expect(await passportToken.name()).to.equal(Initialization.PASSPORT_TOKEN_Name);
+            expect(await passportToken.symbol()).to.equal(Initialization.PASSPORT_TOKEN_Symbol);
+            
+            expect(await passportToken.tokenNumber()).to.equal(0);            
 
-            const royaltyRate = await commissionToken.getRoyaltyRate();
-            expect(royaltyRate.value).to.equal(Constant.COMMISSION_TOKEN_INITIAL_RoyaltyRate);
+            const fee = await passportToken.fee();
+            expect(fee).to.equal(Initialization.PASSPORT_TOKEN_Fee);
+
+            const royaltyRate = await passportToken.getRoyaltyRate();
+            expect(royaltyRate.value).to.equal(Initialization.PASSPORT_TOKEN_RoyaltyRate);
             expect(royaltyRate.decimals).to.equal(Constant.COMMON_RATE_DECIMALS);
 
-            const tx = commissionToken.deployTransaction;
+            const tx = passportToken.deployTransaction;
             await expect(tx).to
-                .emit(commissionToken, 'BaseURIUpdate').withArgs(Constant.COMMISSION_TOKEN_INITIAL_BaseURI)
-                .emit(commissionToken, 'CommissionRateUpdate').withArgs(Constant.COMMISSION_TOKEN_INITIAL_CommissionRate)
-                .emit(commissionToken, 'RoyaltyRateUpdate').withArgs(Constant.COMMISSION_TOKEN_INITIAL_RoyaltyRate);
+                .emit(passportToken, 'BaseURIUpdate').withArgs(Initialization.PASSPORT_TOKEN_BaseURI)
+                .emit(passportToken, 'FeeUpdate').withArgs(Initialization.PASSPORT_TOKEN_Fee)
+                .emit(passportToken, 'RoyaltyRateUpdate').withArgs(Initialization.PASSPORT_TOKEN_RoyaltyRate);
         });
 
-        it('6.1.2. Deploy unsuccessfully with invalid commission rate', async () => {
-            const { deployer, admin, estateToken, feeReceiver } = await beforeCommissionTokenTest();
+        it('16.1.2. Deploy unsuccessfully with invalid fee', async () => {
+            const { deployer, admin, feeReceiver } = await beforePassportTokenTest();
 
-            const CommissionToken = await ethers.getContractFactory('CommissionToken', deployer);
+            const PassportToken = await ethers.getContractFactory('PassportToken', deployer);
 
-            await expect(upgrades.deployProxy(CommissionToken, [
+            await expect(upgrades.deployProxy(PassportToken, [
                 admin.address,
-                estateToken.address,
                 feeReceiver.address,
-                Constant.COMMISSION_TOKEN_INITIAL_Name,
-                Constant.COMMISSION_TOKEN_INITIAL_Symbol,
-                Constant.COMMISSION_TOKEN_INITIAL_BaseURI,
-                Constant.COMMON_RATE_MAX_FRACTION.add(1),
-                Constant.COMMISSION_TOKEN_INITIAL_RoyaltyRate,
-            ])).to.be.reverted;
-        });
-
-        it('6.1.3. Deploy unsuccessfully with invalid royalty rate', async () => {
-            const { deployer, admin, estateToken, feeReceiver } = await beforeCommissionTokenTest();
-
-            const CommissionToken = await ethers.getContractFactory('CommissionToken', deployer);
-
-            await expect(upgrades.deployProxy(CommissionToken, [
-                admin.address,
-                estateToken.address,
-                feeReceiver.address,
-                Constant.COMMISSION_TOKEN_INITIAL_Name,
-                Constant.COMMISSION_TOKEN_INITIAL_Symbol,
-                Constant.COMMISSION_TOKEN_INITIAL_BaseURI,
-                Constant.COMMISSION_TOKEN_INITIAL_CommissionRate,
+                Initialization.PASSPORT_TOKEN_Name,
+                Initialization.PASSPORT_TOKEN_Symbol,
+                Initialization.PASSPORT_TOKEN_BaseURI,
+                Initialization.PASSPORT_TOKEN_Fee,
                 Constant.COMMON_RATE_MAX_FRACTION.add(1),
             ])).to.be.reverted;
         });
     });
 
     // TODO: Andy
-    describe('6.2. pause(bytes[])', async () => {
+    describe('16.2. pause(bytes[])', async () => {
 
     });
 
     // TODO: Andy
-    describe('6.3. unpause(bytes[])', async () => {
+    describe('16.3. unpause(bytes[])', async () => {
 
     });
 
     // TODO: Andy
-    describe('6.4. updateRoyaltyRate(uint256, bytes[])', async () => {
+    describe('16.4. updateBaseURI(string, bytes[])', async () => {
 
     });
 
     // TODO: Andy
-    describe('6.5. updateBaseURI(string, bytes[])', async () => {
+    describe('16.5. updateFee(uint256, bytes[])', async () => {
 
     });
 
-    describe('6.6. mint(address, uint256)', async () => {
-        it('6.6.1. mint successfully by estateToken contract', async () => {
-            const { estateToken, commissionToken, receiver1, receiver2 } = await beforeCommissionTokenTest();
+    describe('16.6. mint(address, uint256)', async () => {
+        it('16.6.1. mint successfully by estateToken contract', async () => {
+            const { passportToken, minter1, minter2 } = await beforePassportTokenTest();
 
-            let tx = await estateToken.call(commissionToken.address, commissionToken.interface.encodeFunctionData('mint', [
-                receiver1.address,
-                1,
-            ]));
-            await tx.wait();
-            await expect(tx).to
-                .emit(commissionToken, 'NewToken')
-                .withArgs(1, receiver1.address);
+            const fee = await passportToken.fee();
 
-            expect(await commissionToken.ownerOf(1)).to.equal(receiver1.address);
-            expect(await commissionToken.tokenURI(1)).to.equal(Constant.COMMISSION_TOKEN_INITIAL_BaseURI + '1');
+            const initMinter1Balance = await ethers.provider.getBalance(minter1.address);
+            const initMinter2Balance = await ethers.provider.getBalance(minter2.address);
 
-            tx = await estateToken.call(commissionToken.address, commissionToken.interface.encodeFunctionData('mint', [
-                receiver2.address,
-                2,
-            ]));
-            await tx.wait();
-            await expect(tx).to
-                .emit(commissionToken, 'NewToken')
-                .withArgs(2, receiver2.address);
+            // Mint with just enough value
+            const tx1 = await passportToken.connect(minter1).mint({ value: fee });
+            const receipt1 = await tx1.wait();
+            await expect(tx1).to
+                .emit(passportToken, 'NewToken')
+                .withArgs(1, minter1.address);
 
-            expect(await commissionToken.ownerOf(2)).to.equal(receiver2.address);
-            expect(await commissionToken.tokenURI(2)).to.equal(Constant.COMMISSION_TOKEN_INITIAL_BaseURI + '2');
+            expect(await passportToken.tokenNumber()).to.equal(1);
+            expect(await passportToken.ownerOf(1)).to.equal(minter1.address);
+            expect(await passportToken.tokenURI(1)).to.equal(Initialization.PASSPORT_TOKEN_BaseURI + '1');
+
+            const tx1GasFee = receipt1.gasUsed.mul(receipt1.effectiveGasPrice);
+            expect(await ethers.provider.getBalance(minter1.address)).to.equal(initMinter1Balance.sub(tx1GasFee).sub(fee));
+            
+            // Refund when minting with more value than needed
+            const tx2 = await passportToken.connect(minter2).mint({ value: fee.add(ethers.utils.parseEther('1')) });
+            const receipt2 = await tx2.wait();
+            await expect(tx2).to
+                .emit(passportToken, 'NewToken')
+                .withArgs(2, minter2.address);
+
+            expect(await passportToken.tokenNumber()).to.equal(2);
+            expect(await passportToken.ownerOf(2)).to.equal(minter2.address);
+            expect(await passportToken.tokenURI(2)).to.equal(Initialization.PASSPORT_TOKEN_BaseURI + '2');
+
+            const tx2GasFee = receipt2.gasUsed.mul(receipt2.effectiveGasPrice);
+            expect(await ethers.provider.getBalance(minter2.address)).to.equal(initMinter2Balance.sub(tx2GasFee).sub(fee));
         });
 
-        it('6.6.2. mint unsuccessfully by unauthorized sender', async () => {
-            const { commissionToken, receiver1, receiver2 } = await beforeCommissionTokenTest();
+        it('16.6.2. mint unsuccessfully when already minted', async () => {
+            const { passportToken, minter1, minter2 } = await beforePassportTokenTest();
 
-            await expect(commissionToken.mint(receiver1.address, 1))
-                .to.be.revertedWithCustomError(commissionToken, 'Unauthorized');
-            await expect(commissionToken.mint(receiver2.address, 2))
-                .to.be.revertedWithCustomError(commissionToken, 'Unauthorized');
+            const fee = await passportToken.fee();
+
+            await callTransaction(passportToken.connect(minter1).mint({ value: fee }));
+            await expect(passportToken.connect(minter1).mint({ value: fee }))
+                .to.be.revertedWithCustomError(passportToken, 'AlreadyMinted');
+
+            await callTransaction(passportToken.connect(minter2).mint({ value: fee }));
+            await expect(passportToken.connect(minter2).mint({ value: fee }))
+                .to.be.revertedWithCustomError(passportToken, 'AlreadyMinted');
         });
 
-        it('6.6.3. mint unsuccessfully when already minted', async () => {
-            const { estateToken, commissionToken, receiver1, receiver2 } = await beforeCommissionTokenTest();
+        it('16.6.3. mint unsuccessfully with insufficient value', async () => {
+            const { passportToken, minter1 } = await beforePassportTokenTest();
 
-            await callTransaction(estateToken.call(commissionToken.address, commissionToken.interface.encodeFunctionData('mint', [
-                receiver1.address,
-                1,
-            ])));
-
-            await expect(estateToken.call(commissionToken.address, commissionToken.interface.encodeFunctionData('mint', [
-                receiver2.address,
-                1,
-            ]))).to.be.revertedWithCustomError(commissionToken, 'AlreadyMinted');
+            await expect(passportToken.connect(minter1).mint())
+                .to.be.revertedWithCustomError(passportToken, 'InsufficientValue');
         });
     });
 });

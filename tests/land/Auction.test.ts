@@ -50,7 +50,7 @@ async function testReentrancy_Auction(
     );
 }
 
-describe.only('13. Auction', async () => {
+describe('13. Auction', async () => {
     async function auctionFixture(): Promise<AuctionFixture> {
         const accounts = await ethers.getSigners();
         const deployer = accounts[0];
