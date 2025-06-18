@@ -165,7 +165,7 @@ ReentrancyGuardUpgradeable {
         (
             address commissionReceiver,
             uint256 commissionAmount
-        ) = ICommissionToken(commissionToken).commissionInfo(tokenId, royaltyAmount);
+        ) = ICommissionToken(commissionToken).commissionInfo(loan.estateId, royaltyAmount);
 
         if (currency == address(0)) {
             CurrencyHandler.receiveNative(price + royaltyAmount);
