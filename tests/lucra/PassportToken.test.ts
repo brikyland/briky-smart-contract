@@ -151,7 +151,7 @@ describe('16. PassportToken', async () => {
                 .emit(passportToken, 'RoyaltyRateUpdate').withArgs(Initialization.PASSPORT_TOKEN_RoyaltyRate);
         });
 
-        it('16.1.2. Deploy unsuccessfully with invalid fee', async () => {
+        it('16.1.2. Deploy unsuccessfully with invalid royalty rate', async () => {
             const { deployer, admin, feeReceiver } = await beforePassportTokenTest();
 
             const PassportToken = await ethers.getContractFactory('PassportToken', deployer);
@@ -188,8 +188,8 @@ describe('16. PassportToken', async () => {
 
     });
 
-    describe('16.6. mint(address, uint256)', async () => {
-        it('16.6.1. mint successfully by estateToken contract', async () => {
+    describe('16.6. mint()', async () => {
+        it('16.6.1. mint successfully', async () => {
             const { passportToken, minter1, minter2 } = await beforePassportTokenTest();
 
             const fee = await passportToken.fee();
