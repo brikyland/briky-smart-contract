@@ -224,7 +224,7 @@ ReentrancyGuardUpgradeable {
         IERC721MetadataUpgradeable,
         ERC721Upgradeable
     ) returns (string memory) {
-        return contents[tokenContents[_tokenId]].uri;
+        return string.concat(baseURI, contents[tokenContents[_tokenId]].uri);
     }
 
     function supportsInterface(bytes4 _interfaceId) public view override(
