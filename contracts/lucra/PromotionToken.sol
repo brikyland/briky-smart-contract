@@ -155,14 +155,14 @@ ReentrancyGuardUpgradeable {
         }
     }
 
-    function cancelContent(
+    function cancelContents(
         uint256[] calldata _contentIds,
         bytes[] calldata _signature
     ) external {
         IAdmin(admin).verifyAdminSignatures(
             abi.encode(
                 address(this),
-                "cancelContent",
+                "cancelContents",
                 _contentIds
             ),
             _signature
