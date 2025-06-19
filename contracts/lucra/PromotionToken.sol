@@ -169,7 +169,8 @@ ReentrancyGuardUpgradeable {
         );
 
         for (uint256 i = 0; i < _contentIds.length; ++i) {
-            if (contents[_contentIds[i]].endAt < block.timestamp) {
+            Content memory content = getContent(_contentIds[i]);
+            if (content.endAt < block.timestamp) {
                 revert AlreadyLocked();
             }
             contents[_contentIds[i]].endAt = uint40(block.timestamp);
