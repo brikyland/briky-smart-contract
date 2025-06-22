@@ -43,7 +43,6 @@ ReentrancyGuardUpgradeable {
         address _feeReceiver,
         string calldata _name,
         string calldata _symbol,
-        string calldata _uri,
         uint256 _fee,
         uint256 _royaltyRate
     ) external initializer {
@@ -57,35 +56,15 @@ ReentrancyGuardUpgradeable {
         admin = _admin;
         feeReceiver = _feeReceiver;
 
-        baseURI = _uri;
         fee = _fee;
         royaltyRate = _royaltyRate;
 
-        emit BaseURIUpdate(_uri);
         emit FeeUpdate(_fee);
         emit RoyaltyRateUpdate(_royaltyRate);
     }
 
     function version() external pure returns (string memory) {
         return VERSION;
-    }
-
-    function updateBaseURI(
-        string calldata _uri,
-        bytes[] calldata _signatures
-    ) external {
-        IAdmin(admin).verifyAdminSignatures(
-            abi.encode(
-                address(this),
-                "updateBaseURI",
-                _uri
-            ),
-            _signatures
-        );
-        baseURI = _uri;
-
-        emit BaseURIUpdate(_uri);
-        emit BatchMetadataUpdate(1, tokenNumber);
     }
 
     function updateFee(
@@ -155,6 +134,35 @@ ReentrancyGuardUpgradeable {
         }
     }
 
+    function updateContentURIs(
+        uint256[] calldata _contentIds,
+        string[] calldata _uris,
+        bytes[] calldata _signatures
+    ) external {
+        IAdmin(admin).verifyAdminSignatures(
+            abi.encode(
+                address(this),
+                "updateContentURIs",
+                _contentIds,
+                _uris
+            ),
+            _signatures
+        );
+
+        if (_contentIds.length != _uris.length) {
+            revert InvalidInput();
+        }
+
+        for (uint256 i = 0; i < _contentIds.length; ++i) {
+            Content memory content = getContent(_contentIds[i]);
+            if (content.startAt <= block.timestamp) {
+                revert AlreadyStarted();
+            }
+            contents[_contentIds[i]].uri = _uris[i];
+            emit ContentURIUpdate(_contentIds[i], _uris[i]);
+        }
+    }
+
     function cancelContents(
         uint256[] calldata _contentIds,
         bytes[] calldata _signature
@@ -170,8 +178,8 @@ ReentrancyGuardUpgradeable {
 
         for (uint256 i = 0; i < _contentIds.length; ++i) {
             Content memory content = getContent(_contentIds[i]);
-            if (content.endAt < block.timestamp) {
-                revert AlreadyLocked();
+            if (content.endAt <= block.timestamp) {
+                revert AlreadyEnded();
             }
             contents[_contentIds[i]].endAt = uint40(block.timestamp);
             emit ContentCancellation(_contentIds[i]);
@@ -191,7 +199,7 @@ ReentrancyGuardUpgradeable {
         }
 
         if (block.timestamp >= content.endAt) {
-            revert AlreadyLocked();
+            revert AlreadyEnded();
         }
 
         CurrencyHandler.receiveNative(fee * _amount);
@@ -211,6 +219,8 @@ ReentrancyGuardUpgradeable {
                     msg.sender
                 );
             }
+
+            mintCounters[msg.sender] += _amount;
         }
 
         return (firstTokenId, lastTokenId);
@@ -234,10 +244,6 @@ ReentrancyGuardUpgradeable {
     ) returns (bool) {
         return _interfaceId == type(IERC4906Upgradeable).interfaceId
             || super.supportsInterface(_interfaceId);
-    }
-
-    function _baseURI() internal view override returns (string memory) {
-        return baseURI;
     }
 
     function _royaltyReceiver() internal view override returns (address) {

@@ -185,36 +185,64 @@ ReentrancyGuardUpgradeable {
         }
     }
 
-    function registerSellers(
+    function whitelist(
         address[] calldata _accounts,
-        bool _isSeller,
+        bool _isWhitelisted,
         bytes[] calldata _signatures
-    ) external onlyManager {
+    ) external {
         IAdmin(admin).verifyAdminSignatures(
             abi.encode(
                 address(this),
-                "registerSellers",
+                "whitelist",
                 _accounts,
-                _isSeller
+                _isWhitelisted
             ),
             _signatures
         );
 
-        if (_isSeller) {
+        if (_isWhitelisted) {
             for (uint256 i = 0; i < _accounts.length; ++i) {
-                if (isSeller[_accounts[i]]) {
-                    revert RegisteredSeller(_accounts[i]);
+                if (isWhitelisted[_accounts[i]]) {
+                    revert Whitelisted(_accounts[i]);
                 }
-                isSeller[_accounts[i]] = true;
-                emit SellerRegistration(_accounts[i]);
+                isWhitelisted[_accounts[i]] = true;
+                emit Whitelist(_accounts[i]);
             }
         } else {
             for (uint256 i = 0; i < _accounts.length; ++i) {
-                if (!isSeller[_accounts[i]]) {
-                    revert NotRegisteredSeller(_accounts[i]);
+                if (!isWhitelisted[_accounts[i]]) {
+                    revert NotWhitelisted(_accounts[i]);
                 }
-                isSeller[_accounts[i]] = false;
-                emit SellerUnregistration(_accounts[i]);
+                isWhitelisted[_accounts[i]] = false;
+                emit Unwhitelist(_accounts[i]);
+            }
+        }
+    }
+
+    function activateSellerIn(
+        bytes32 _zone,
+        address[] calldata _accounts,
+        bool _isSeller
+    ) external onlyManager {
+        if (!IAdmin(admin).getZoneEligibility(_zone, msg.sender)) {
+            revert Unauthorized();
+        }
+
+        if (_isSeller) {
+            for (uint256 i = 0; i < _accounts.length; ++i) {
+                if (isActiveSellerIn[_zone][_accounts[i]]) {
+                    revert Activated(_accounts[i]);
+                }
+                isActiveSellerIn[_zone][_accounts[i]] = true;
+                emit Activation(_zone, _accounts[i]);
+            }
+        } else {
+            for (uint256 i = 0; i < _accounts.length; ++i) {
+                if (!isActiveSellerIn[_zone][_accounts[i]]) {
+                    revert NotActivated(_accounts[i]);
+                }
+                isActiveSellerIn[_zone][_accounts[i]] = false;
+                emit Deactivation(_zone, _accounts[i]);
             }
         }
     }
@@ -238,7 +266,7 @@ ReentrancyGuardUpgradeable {
         return requests[_requestId];
     }
 
-    function requestTokenization(
+    function requestTokenizationWithDuration(
         address _seller,
         bytes32 _zone,
         string calldata _uri,
@@ -249,42 +277,14 @@ ReentrancyGuardUpgradeable {
         address _currency,
         uint8 _decimals,
         uint40 _expireAt,
-        uint40 _duration
-    ) external onlyExecutive whenNotPaused returns (uint256) {
-        if (!IAdmin(admin).getZoneEligibility(_zone, msg.sender)) {
-            revert Unauthorized();
-        }
-
-        _validateUnitPrice(_unitPrice, _currency);
-
-        if (!isSeller[_seller]
-            || _minSellingAmount > _maxSellingAmount
-            || _maxSellingAmount > _totalSupply
-            || _totalSupply > type(uint256).max / 10 ** _decimals
-            || _decimals > Constant.ESTATE_TOKEN_MAX_DECIMALS
-            || _expireAt <= block.timestamp) {
+        uint40 _privateSaleDuration,
+        uint40 _publicSaleDuration
+    ) external returns (uint256) {
+        if (_privateSaleDuration == 0 || _publicSaleDuration == 0) {
             revert InvalidInput();
         }
 
-        uint256 requestId = ++requestNumber;
-        requests[requestId] = Request(
-            0,
-            _zone,
-            _uri,
-            _totalSupply,
-            _minSellingAmount,
-            _maxSellingAmount,
-            0,
-            _unitPrice,
-            _currency,
-            _decimals,
-            _expireAt,
-            uint40(block.timestamp) + _duration,
-            _seller
-        );
-
-        emit NewRequest(
-            requestId,
+        return _requestTokenization(
             _seller,
             _zone,
             _uri,
@@ -295,10 +295,43 @@ ReentrancyGuardUpgradeable {
             _currency,
             _decimals,
             _expireAt,
-            uint40(block.timestamp) + _duration
+            uint40(block.timestamp) + _privateSaleDuration,
+            uint40(block.timestamp) + _privateSaleDuration + _publicSaleDuration
         );
+    }
 
-        return requestId;
+    function requestTokenizationWithTimestamp(
+        address _seller,
+        bytes32 _zone,
+        string calldata _uri,
+        uint256 _totalSupply,
+        uint256 _minSellingAmount,
+        uint256 _maxSellingAmount,
+        uint256 _unitPrice,
+        address _currency,
+        uint8 _decimals,
+        uint40 _expireAt,
+        uint40 _privateSaleEndsAt,
+        uint40 _publicSaleEndsAt
+    ) external returns (uint256) {
+        if (block.timestamp >= _privateSaleEndsAt || _privateSaleEndsAt >= _publicSaleEndsAt) {
+            revert InvalidInput();
+        }
+
+        return _requestTokenization(
+            _seller,
+            _zone,
+            _uri,
+            _totalSupply,
+            _minSellingAmount,
+            _maxSellingAmount,
+            _unitPrice,
+            _currency,
+            _decimals,
+            _expireAt,
+            _privateSaleEndsAt,
+            _publicSaleEndsAt
+        );
     }
 
     function updateRequest(
@@ -313,7 +346,8 @@ ReentrancyGuardUpgradeable {
         address _currency,
         uint8 _decimals,
         uint40 _expireAt,
-        uint40 _closeAt
+        uint40 _privateSaleEndsAt,
+        uint40 _publicSaleEndsAt
     ) external onlyExecutive whenNotPaused {
         if (_requestId == 0 || _requestId > requestNumber) {
             revert InvalidRequestId();
@@ -321,7 +355,7 @@ ReentrancyGuardUpgradeable {
         Request storage request = requests[_requestId];
         bytes32 zone = request.zone;
         if ((zone != _zone && !IAdmin(admin).getZoneEligibility(_zone, msg.sender))
-            || !IAdmin(admin).isActiveIn(zone, msg.sender)) {
+            || !IAdmin(admin).getZoneEligibility(zone, msg.sender)) {
             revert Unauthorized();
         }
 
@@ -337,13 +371,14 @@ ReentrancyGuardUpgradeable {
 
         _validateUnitPrice(_unitPrice, _currency);
 
-        if (!isSeller[_seller]
+        if (!isActiveSellerIn[_zone][_seller]
             || _minSellingAmount > _maxSellingAmount
             || _maxSellingAmount > _totalSupply
             || _totalSupply > type(uint256).max / 10 ** _decimals
             || _decimals > Constant.ESTATE_TOKEN_MAX_DECIMALS
             || _expireAt <= block.timestamp
-            || _closeAt <= block.timestamp) {
+            || _privateSaleEndsAt <= block.timestamp
+            || _publicSaleEndsAt <= _privateSaleEndsAt) {
             revert InvalidInput();
         }
 
@@ -359,7 +394,8 @@ ReentrancyGuardUpgradeable {
             _currency,
             _decimals,
             _expireAt,
-            _closeAt,
+            _privateSaleEndsAt,
+            _publicSaleEndsAt,
             _seller
         );
 
@@ -375,7 +411,8 @@ ReentrancyGuardUpgradeable {
             _currency,
             _decimals,
             _expireAt,
-            _closeAt
+            _privateSaleEndsAt,
+            _publicSaleEndsAt
         );
     }
 
@@ -477,11 +514,11 @@ ReentrancyGuardUpgradeable {
             revert Tokenized();
         }
         if (request.totalSupply != 0) {
-            uint256 closeAt = request.closeAt;
-            if (closeAt > block.timestamp) {
+            uint256 publicSaleEndsAt = request.publicSaleEndsAt;
+            if (publicSaleEndsAt > block.timestamp) {
                 revert StillSelling();
             }
-            if (closeAt + Constant.ESTATE_TOKEN_CONFIRMATION_TIME_LIMIT > block.timestamp
+            if (publicSaleEndsAt + Constant.ESTATE_TOKEN_CONFIRMATION_TIME_LIMIT > block.timestamp
                 && request.soldAmount >= request.minSellingAmount) {
                 revert InvalidWithdrawing();
             }
@@ -549,7 +586,8 @@ ReentrancyGuardUpgradeable {
         uint256 _at
     ) external view returns (uint256 allocation) {
         if (_tokenizationId == 0 || _tokenizationId > requestNumber) revert InvalidRequestId();
-        return _at >= requests[_tokenizationId].closeAt
+        return requests[_tokenizationId].estateId != 0
+            && _at >= requests[_tokenizationId].publicSaleEndsAt
             ? deposits[_tokenizationId][_account] * 10 ** requests[_tokenizationId].decimals
             : 0;
     }
@@ -602,6 +640,72 @@ ReentrancyGuardUpgradeable {
         );
     }
 
+    function _requestTokenization(
+        address _seller,
+        bytes32 _zone,
+        string calldata _uri,
+        uint256 _totalSupply,
+        uint256 _minSellingAmount,
+        uint256 _maxSellingAmount,
+        uint256 _unitPrice,
+        address _currency,
+        uint8 _decimals,
+        uint40 _expireAt,
+        uint40 _privateSaleEndsAt,
+        uint40 _publicSaleEndsAt
+    ) private onlyExecutive whenNotPaused returns (uint256) {
+        if (!IAdmin(admin).getZoneEligibility(_zone, msg.sender)) {
+            revert Unauthorized();
+        }
+
+        _validateUnitPrice(_unitPrice, _currency);
+
+        if (!isActiveSellerIn[_zone][_seller]
+        || _minSellingAmount > _maxSellingAmount
+        || _maxSellingAmount > _totalSupply
+        || _totalSupply > type(uint256).max / 10 ** _decimals
+        || _decimals > Constant.ESTATE_TOKEN_MAX_DECIMALS
+        || _expireAt <= block.timestamp) {
+            revert InvalidInput();
+        }
+
+        uint256 requestId = ++requestNumber;
+        requests[requestId] = Request(
+            0,
+            _zone,
+            _uri,
+            _totalSupply,
+            _minSellingAmount,
+            _maxSellingAmount,
+            0,
+            _unitPrice,
+            _currency,
+            _decimals,
+            _expireAt,
+            _privateSaleEndsAt,
+            _publicSaleEndsAt,
+            _seller
+        );
+
+        emit NewRequest(
+            requestId,
+            _seller,
+            _zone,
+            _uri,
+            _totalSupply,
+            _minSellingAmount,
+            _maxSellingAmount,
+            _unitPrice,
+            _currency,
+            _decimals,
+            _expireAt,
+            _privateSaleEndsAt,
+            _publicSaleEndsAt
+        );
+
+        return requestId;
+    }
+
     function _deposit(uint256 _requestId, uint256 _amount)
     private nonReentrant whenNotPaused returns (uint256) {
         Request storage request = requests[_requestId];
@@ -611,9 +715,11 @@ ReentrancyGuardUpgradeable {
         if (request.estateId != 0) {
             revert Tokenized();
         }
-        if (request.closeAt <= block.timestamp) {
-            revert SaleEnded();
+        if (request.privateSaleEndsAt > block.timestamp && !isWhitelisted[msg.sender]
+            || request.publicSaleEndsAt <= block.timestamp) {
+            revert InvalidDepositing();
         }
+
         uint256 newSoldAmount = request.soldAmount + _amount;
         if (newSoldAmount > request.maxSellingAmount) {
             revert MaxSellingAmountExceeded();
@@ -662,13 +768,13 @@ ReentrancyGuardUpgradeable {
             revert Tokenized();
         }
 
-        uint40 closeAt = request.closeAt;
-        if (closeAt + Constant.ESTATE_TOKEN_CONFIRMATION_TIME_LIMIT <= block.timestamp) {
+        uint40 publicSaleEndsAt = request.publicSaleEndsAt;
+        if (publicSaleEndsAt + Constant.ESTATE_TOKEN_CONFIRMATION_TIME_LIMIT <= block.timestamp) {
             revert FailedOwnershipTransfer();
         }
 
-        if (closeAt <= block.timestamp) {
-            request.closeAt = uint40(block.timestamp);
+        if (publicSaleEndsAt <= block.timestamp) {
+            request.publicSaleEndsAt = uint40(block.timestamp);
         }
 
         uint256 soldAmount = request.soldAmount;

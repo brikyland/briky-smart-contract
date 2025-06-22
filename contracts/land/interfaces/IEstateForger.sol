@@ -16,7 +16,8 @@ interface IEstateForger is IEstateTokenizer {
         address currency;
         uint8 decimals;
         uint40 expireAt;
-        uint40 closeAt;
+        uint40 privateSaleEndsAt;
+        uint40 publicSaleEndsAt;
         address seller;
     }
 
@@ -42,12 +43,15 @@ interface IEstateForger is IEstateTokenizer {
         uint40 heartbeat
     );
 
-    event SellerRegistration(address indexed account);
-    event SellerUnregistration(address indexed account);
+    event Whitelist(address indexed account);
+    event Unwhitelist(address indexed account);
+
+    event Activation(bytes32 indexed zone, address indexed account);
+    event Deactivation(bytes32 indexed zone, address indexed account);
 
     event NewRequest(
         uint256 indexed requestId,
-        address indexed requester,
+        address indexed seller,
         bytes32 indexed zone,
         string uri,
         uint256 totalSupply,
@@ -57,7 +61,8 @@ interface IEstateForger is IEstateTokenizer {
         address currency,
         uint8 decimals,
         uint40 expireAt,
-        uint40 endAt
+        uint40 privateSaleEndsAt,
+        uint40 publicSaleEndsAt
     );
     event RequestCancellation(uint256 indexed requestId);
     event RequestConfirmation(
@@ -71,7 +76,7 @@ interface IEstateForger is IEstateTokenizer {
     );
     event RequestUpdate(
         uint256 indexed requestId,
-        address indexed requester,
+        address indexed seller,
         bytes32 indexed zone,
         string uri,
         uint256 totalSupply,
@@ -81,7 +86,8 @@ interface IEstateForger is IEstateTokenizer {
         address currency,
         uint8 decimals,
         uint40 expireAt,
-        uint40 publicSaleEndAt
+        uint40 privateSaleEndsAt,
+        uint40 publicSaleEndsAt
     );
     event RequestURIUpdate(
         uint256 indexed requestId,
@@ -113,23 +119,27 @@ interface IEstateForger is IEstateTokenizer {
         uint8 rateDecimals
     );
 
+    error Activated(address account);
     error AlreadyHadDepositor();
     error AlreadyWithdrawn();
     error Cancelled();
     error FailedOwnershipTransfer();
+    error InvalidDepositing();
     error InvalidPriceFeedData();
     error InvalidRequestId();
     error InvalidUnitPrice();
     error InvalidWithdrawing();
     error MaxSellingAmountExceeded();
     error MissingCurrencyRate();
+    error NotActivated(address account);
     error NotEnoughSoldAmount();
     error NotRegisteredSeller(address account);
+    error NotWhitelisted(address account);
     error RegisteredSeller(address account);
-    error SaleEnded();
     error StalePriceFeed();
     error StillSelling();
     error Tokenized();
+    error Whitelisted(address account);
 
     function commissionToken() external view returns (address commissionToken);
     function feeReceiver() external view returns (address feeReceiver);
@@ -141,10 +151,10 @@ interface IEstateForger is IEstateTokenizer {
 
     function requestNumber() external view returns (uint256 requestNumber);
 
-    function isSeller(address account) external view returns (bool isSeller);
-
     function deposits(uint256 requestId, address depositor) external view returns (uint256 deposit);
     function hasWithdrawn(uint256 requestId, address account) external view returns (bool hasWithdrawn);
+
+    function isActiveSellerIn(bytes32 zone, address account) external view returns (bool isActive);
 
     function getDefaultRate(address currency) external view returns (Rate memory rate);
     function getPriceFeed(address currency) external view returns (PriceFeed memory priceFeed);
@@ -153,8 +163,8 @@ interface IEstateForger is IEstateTokenizer {
     function cancel(uint256 requestId) external;
     function confirm(uint256 requestId, address commissionReceiver) external returns (uint256 estateId);
     function deposit(uint256 requestId, uint256 amount) external payable returns (uint256 value);
-    function requestTokenization(
-        address requester,
+    function requestTokenizationWithDuration(
+        address seller,
         bytes32 zone,
         string calldata uri,
         uint256 totalSupply,
@@ -164,8 +174,38 @@ interface IEstateForger is IEstateTokenizer {
         address currency,
         uint8 decimals,
         uint40 expireAt,
-        uint40 duration
+        uint40 privateSaleDuration,
+        uint40 publicSaleDuration
     ) external returns (uint256 requestId);
+    function requestTokenizationWithTimestamp(
+        address seller,
+        bytes32 zone,
+        string calldata uri,
+        uint256 totalSupply,
+        uint256 minSellingAmount,
+        uint256 maxSellingAmount,
+        uint256 unitPrice,
+        address currency,
+        uint8 decimals,
+        uint40 expireAt,
+        uint40 privateSaleEndsAt,
+        uint40 publicSaleEndsAt
+    ) external returns (uint256 requestId);
+    function updateRequest(
+        uint256 requestId,
+        address seller,
+        bytes32 zone,
+        string calldata uri,
+        uint256 totalSupply,
+        uint256 minSellingAmount,
+        uint256 maxSellingAmount,
+        uint256 unitPrice,
+        address currency,
+        uint8 decimals,
+        uint40 expireAt,
+        uint40 privateSaleEndsAt,
+        uint40 publicSaleEndsAt
+    ) external;
     function withdrawDeposit(uint256 requestId) external returns (uint256 value);
     function withdrawToken(uint256 requestId) external returns (uint256 amount);
 

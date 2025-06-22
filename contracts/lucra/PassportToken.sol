@@ -23,6 +23,7 @@ import {PassportTokenStorage} from "./storages/PassportTokenStorage.sol";
 contract PassportToken is
 PassportTokenStorage,
 ERC721PausableUpgradeable,
+Pausable,
 RoyaltyRateProposer,
 ReentrancyGuardUpgradeable {
     string constant private VERSION = "v1.1.1";
@@ -66,22 +67,6 @@ ReentrancyGuardUpgradeable {
 
     function version() external pure returns (string memory) {
         return VERSION;
-    }
-
-    function pause(bytes[] calldata _signatures) external whenNotPaused {
-        IAdmin(admin).verifyAdminSignatures(
-            abi.encode(address(this), "pause"),
-            _signatures
-        );
-        _pause();
-    }
-
-    function unpause(bytes[] calldata _signatures) external whenPaused {
-        IAdmin(admin).verifyAdminSignatures(
-            abi.encode(address(this), "unpause"),
-            _signatures
-        );
-        _unpause();
     }
 
     function updateBaseURI(
@@ -130,27 +115,29 @@ ReentrancyGuardUpgradeable {
 
         CurrencyHandler.receiveNative(fee);
 
-        uint256 tokenId = ++tokenNumber;
-        hasMinted[msg.sender] = true;
-        _mint(msg.sender, tokenId);
+        unchecked {
+            uint256 tokenId = ++tokenNumber;
+            hasMinted[msg.sender] = true;
+            _mint(msg.sender, tokenId);
 
-        emit NewToken(
-            tokenId,
-            msg.sender
-        );
+            emit NewToken(
+                tokenId,
+                msg.sender
+            );
 
-        return tokenId;
+            return tokenId;
+        }
     }
 
     function exists(uint256 _tokenId) external view returns (bool) {
         return _exists(_tokenId);
     }
 
-    function tokenURI(uint256 _tokenId) public view override(
+    function tokenURI(uint256) public view override(
         IERC721MetadataUpgradeable,
         ERC721Upgradeable
     ) returns (string memory) {
-        return super.tokenURI(_tokenId);
+        return baseURI;
     }
 
     function supportsInterface(bytes4 _interfaceId) public view override(
@@ -160,10 +147,6 @@ ReentrancyGuardUpgradeable {
     ) returns (bool) {
         return _interfaceId == type(IERC4906Upgradeable).interfaceId
             || super.supportsInterface(_interfaceId);
-    }
-
-    function _baseURI() internal view override returns (string memory) {
-        return baseURI;
     }
 
     function _royaltyReceiver() internal view override returns (address) {

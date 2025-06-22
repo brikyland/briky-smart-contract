@@ -8,9 +8,7 @@ abstract contract PromotionTokenStorage is IPromotionToken {
 
     mapping(uint256 => uint256) internal tokenContents;
 
-    mapping(address => mapping(uint256 => bool)) public hasMinted;
-
-    string internal baseURI;
+    mapping(address => uint256) public mintCounters;
 
     uint256 public contentNumber;
     uint256 public tokenNumber;

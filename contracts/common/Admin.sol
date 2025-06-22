@@ -278,19 +278,25 @@ Initializable {
             _signatures
         );
 
+        if (!isZone[_zone]) {
+            revert InvalidInput();
+        }
+
         if (_isActive) {
             for (uint256 i = 0; i < _accounts.length; ++i) {
                 if (isActiveIn[_zone][_accounts[i]]) {
                     revert Activated(_accounts[i]);
                 }
                 isActiveIn[_zone][_accounts[i]] = true;
-                emit ZoneActivation(_zone, _accounts[i]);
+                emit Activation(_zone, _accounts[i]);
             }
         } else {
             for (uint256 i = 0; i < _accounts.length; ++i) {
-                if (!isActiveIn[_zone][_accounts[i]]) revert NotActivated(_accounts[i]);
+                if (!isActiveIn[_zone][_accounts[i]]) {
+                    revert NotActivated(_accounts[i]);
+                }
                 isActiveIn[_zone][_accounts[i]] = false;
-                emit ZoneDeactivation(_zone, _accounts[i]);
+                emit Deactivation(_zone, _accounts[i]);
             }
         }
     }

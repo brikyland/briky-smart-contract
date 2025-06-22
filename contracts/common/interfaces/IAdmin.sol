@@ -30,8 +30,8 @@ interface IAdmin {
     event ZoneAnnouncement(bytes32 indexed zone);
     event ZoneRenouncement(bytes32 indexed zone);
 
-    event ZoneActivation(bytes32 indexed zone, address indexed account);
-    event ZoneDeactivation(bytes32 indexed zone, address indexed account);
+    event Activation(bytes32 indexed zone, address indexed account);
+    event Deactivation(bytes32 indexed zone, address indexed account);
 
     event CurrencyRegistryUpdate(
         address indexed currency,
