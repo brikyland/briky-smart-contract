@@ -575,6 +575,7 @@ describe('17. PromotionToken', async () => {
                 expect(await promotionToken.ownerOf(i)).to.equal(minter1.address);
                 expect(await promotionToken.tokenURI(i)).to.equal(contentURI);
             }
+            expect(await promotionToken.mintCounts(minter1.address, 1)).to.equal(amount1);
 
             const tx1GasFee = receipt1.gasUsed.mul(receipt1.effectiveGasPrice);
             expect(await ethers.provider.getBalance(minter1.address)).to.equal(initMinter1Balance.sub(tx1GasFee).sub(fee.mul(amount1)));
@@ -603,6 +604,7 @@ describe('17. PromotionToken', async () => {
                 expect(await promotionToken.ownerOf(i)).to.equal(minter1.address);
                 expect(await promotionToken.tokenURI(i)).to.equal(contentURI);
             }
+            expect(await promotionToken.mintCounts(minter1.address, 1)).to.equal(amount1 + amount2);
 
             const tx2GasFee = receipt2.gasUsed.mul(receipt2.effectiveGasPrice);
             expect(await ethers.provider.getBalance(minter1.address)).to.equal(minter1BalanceAfterTx1.sub(tx2GasFee).sub(fee.mul(amount2)));
@@ -632,6 +634,7 @@ describe('17. PromotionToken', async () => {
                 expect(await promotionToken.ownerOf(i)).to.equal(minter2.address);
                 expect(await promotionToken.tokenURI(i)).to.equal(contentURI);
             }
+            expect(await promotionToken.mintCounts(minter2.address, 2)).to.equal(amount3);
 
             const tx3GasFee = receipt3.gasUsed.mul(receipt3.effectiveGasPrice);
             expect(await ethers.provider.getBalance(minter2.address)).to.equal(initMinter2Balance.sub(tx3GasFee).sub(fee.mul(amount3)));
