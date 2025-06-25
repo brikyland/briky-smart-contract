@@ -207,7 +207,7 @@ describe('16. PassportToken', async () => {
 
             expect(await passportToken.tokenNumber()).to.equal(1);
             expect(await passportToken.ownerOf(1)).to.equal(minter1.address);
-            expect(await passportToken.tokenURI(1)).to.equal(Initialization.PASSPORT_TOKEN_BaseURI + '1');
+            expect(await passportToken.tokenURI(1)).to.equal(Initialization.PASSPORT_TOKEN_BaseURI);
 
             const tx1GasFee = receipt1.gasUsed.mul(receipt1.effectiveGasPrice);
             expect(await ethers.provider.getBalance(minter1.address)).to.equal(initMinter1Balance.sub(tx1GasFee).sub(fee));
@@ -222,7 +222,7 @@ describe('16. PassportToken', async () => {
 
             expect(await passportToken.tokenNumber()).to.equal(2);
             expect(await passportToken.ownerOf(2)).to.equal(minter2.address);
-            expect(await passportToken.tokenURI(2)).to.equal(Initialization.PASSPORT_TOKEN_BaseURI + '2');
+            expect(await passportToken.tokenURI(2)).to.equal(Initialization.PASSPORT_TOKEN_BaseURI);
 
             const tx2GasFee = receipt2.gasUsed.mul(receipt2.effectiveGasPrice);
             expect(await ethers.provider.getBalance(minter2.address)).to.equal(initMinter2Balance.sub(tx2GasFee).sub(fee));

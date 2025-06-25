@@ -31,7 +31,7 @@ interface PromotionTokenFixture {
     minter3: any;
 }
 
-describe.only('17. PromotionToken', async () => {
+describe('17. PromotionToken', async () => {
     async function promotionTokenFixture(): Promise<PromotionTokenFixture> {
         const accounts = await ethers.getSigners();
         const deployer = accounts[0];
