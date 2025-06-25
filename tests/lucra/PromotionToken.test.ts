@@ -31,7 +31,7 @@ interface PromotionTokenFixture {
     minter3: any;
 }
 
-describe('17. PromotionToken', async () => {
+describe.only('17. PromotionToken', async () => {
     async function promotionTokenFixture(): Promise<PromotionTokenFixture> {
         const accounts = await ethers.getSigners();
         const deployer = accounts[0];
@@ -175,12 +175,12 @@ describe('17. PromotionToken', async () => {
     });
 
     // TODO: Andy
-    describe('17.5. updateFee(uint256, bytes[])', async () => {
+    describe('17.4. updateFee(uint256, bytes[])', async () => {
 
     });
 
-    describe('17.6. getContent(uint256)', async () => {
-        it('17.6.1. return successfully with valid content id', async () => {
+    describe('17.5. getContent(uint256)', async () => {
+        it('17.5.1. return successfully with valid content id', async () => {
             const { promotionToken, admin, admins } = await beforePromotionTokenTest({
                 listSampleContents: true,
             });
@@ -190,7 +190,7 @@ describe('17. PromotionToken', async () => {
             await expect(promotionToken.getContent(3)).to.not.be.reverted;
         });
 
-        it('17.6.2. revert with invalid content id', async () => {
+        it('17.5.2. revert with invalid content id', async () => {
             const { promotionToken, admin, admins } = await beforePromotionTokenTest({
                 listSampleContents: true,
             });
@@ -315,8 +315,8 @@ describe('17. PromotionToken', async () => {
         });
     });
 
-    describe('17.4. updateContentURIs(uint256[],string[], bytes[])', async () => {
-        it('17.4.1. update content uris successfully', async () => {
+    describe('17.7. updateContentURIs(uint256[],string[], bytes[])', async () => {
+        it('17.7.1. update content uris successfully', async () => {
             const { promotionToken, admin, admins } = await beforePromotionTokenTest({
                 listSampleContents: true,
             });
@@ -344,7 +344,7 @@ describe('17. PromotionToken', async () => {
             expect((await promotionToken.getContent(3)).uri).to.equal("testing_uri_3");
         });
 
-        it('17.4.2. update content uris unsuccessfully with invalid signatures', async () => {
+        it('17.7.2. update content uris unsuccessfully with invalid signatures', async () => {
             const { promotionToken, admin, admins } = await beforePromotionTokenTest({
                 listSampleContents: true,
             });
@@ -375,7 +375,7 @@ describe('17. PromotionToken', async () => {
                 .to.be.revertedWithCustomError(promotionToken, customError);
         }
 
-        it('17.4.3. update content uris unsuccessfully with invalid input', async () => {
+        it('17.7.3. update content uris unsuccessfully with invalid input', async () => {
             const fixture = await beforePromotionTokenTest({
                 listSampleContents: true,
             });
@@ -386,7 +386,7 @@ describe('17. PromotionToken', async () => {
             await testRevert(fixture, contentIds, uris, 'InvalidInput');
         });
 
-        it('17.4.4. update content uris unsuccessfully with invalid content id', async () => {
+        it('17.7.4. update content uris unsuccessfully with invalid content id', async () => {
             const fixture = await beforePromotionTokenTest({
                 listSampleContents: true,
             });
@@ -397,7 +397,7 @@ describe('17. PromotionToken', async () => {
             await testRevert(fixture, contentIds, uris, 'InvalidContentId');
         });
 
-        it('17.4.5. update content uris unsuccessfully with already started content', async () => {
+        it('17.7.5. update content uris unsuccessfully with already started content', async () => {
             const fixture = await beforePromotionTokenTest({
                 listSampleContents: true,
             });
@@ -413,8 +413,8 @@ describe('17. PromotionToken', async () => {
         });
     });
 
-    describe('17.7. cancelContents(uint256, bytes[])', async () => {
-        it('17.7.1. cancel contents successfully', async () => {
+    describe('17.8. cancelContents(uint256, bytes[])', async () => {
+        it('17.8.1. cancel contents successfully', async () => {
             const { promotionToken, admin, admins } = await beforePromotionTokenTest({
                 listSampleContents: true,
             });
@@ -464,7 +464,7 @@ describe('17. PromotionToken', async () => {
             expect(content3.endAt).to.equal(endAt3);
         });
 
-        it('17.7.2. cancel contents unsuccessfully with invalid signatures', async () => {
+        it('17.8.2. cancel contents unsuccessfully with invalid signatures', async () => {
             const { promotionToken, admin, admins } = await beforePromotionTokenTest({
                 listSampleContents: true,
             });
@@ -482,7 +482,7 @@ describe('17. PromotionToken', async () => {
                 .to.be.revertedWithCustomError(promotionToken, 'FailedVerification');
         });
 
-        it('17.7.3. revert with invalid content id', async () => {
+        it('17.8.3. revert with invalid content id', async () => {
             const { promotionToken, admin, admins } = await beforePromotionTokenTest({
                 listSampleContents: true,
             });
@@ -500,7 +500,7 @@ describe('17. PromotionToken', async () => {
                 .to.be.revertedWithCustomError(promotionToken, 'InvalidContentId');
         });
 
-        it('17.7.4. cancel contents unsuccessfully with ended events', async () => {
+        it('17.8.4. cancel contents unsuccessfully with ended events', async () => {
             const { promotionToken, admin, admins } = await beforePromotionTokenTest({
                 listSampleContents: true,
             });
@@ -518,7 +518,7 @@ describe('17. PromotionToken', async () => {
                 .to.be.revertedWithCustomError(promotionToken, 'AlreadyEnded');
         });
 
-        it('17.7.5. cancel contents unsuccessfully with already cancelled content', async () => {
+        it('17.8.5. cancel contents unsuccessfully with already cancelled content', async () => {
             const { promotionToken, admin, admins } = await beforePromotionTokenTest({
                 listSampleContents: true,
             });
@@ -539,8 +539,8 @@ describe('17. PromotionToken', async () => {
         });
     });
 
-    describe('17.8. mint(uint256, uint256)', async () => {
-        it('17.8.1. mint successfully', async () => {
+    describe('17.9. mint(uint256, uint256)', async () => {
+        it('17.9.1. mint successfully', async () => {
             const { promotionToken, minter1, minter2 } = await beforePromotionTokenTest({
                 listSampleContents: true,
             });
@@ -638,7 +638,7 @@ describe('17. PromotionToken', async () => {
             expect(await ethers.provider.getBalance(promotionToken.address)).to.equal(initPromotionTokenBalance.add(fee.mul(amount1 + amount2 + amount3)));
         });
 
-        it('17.8.2. mint successfully when paused', async () => {
+        it('17.9.2. mint successfully when paused', async () => {
             const { promotionToken, minter1 } = await beforePromotionTokenTest({
                 listSampleContents: true,
                 pause: true,
@@ -652,7 +652,7 @@ describe('17. PromotionToken', async () => {
                 .to.be.revertedWith('Pausable: paused');
         });
 
-        it('17.8.3. mint unsuccessfully with invalid amount', async () => {
+        it('17.9.3. mint unsuccessfully with invalid amount', async () => {
             const { promotionToken, minter1 } = await beforePromotionTokenTest({
                 listSampleContents: true,
             });
@@ -664,7 +664,7 @@ describe('17. PromotionToken', async () => {
                 .to.be.revertedWithCustomError(promotionToken, 'InvalidInput');
         });
 
-        it('17.8.4. mint unsuccessfully with invalid content id', async () => {
+        it('17.9.4. mint unsuccessfully with invalid content id', async () => {
             const { promotionToken, minter1 } = await beforePromotionTokenTest({
                 listSampleContents: true,
             });
@@ -679,7 +679,7 @@ describe('17. PromotionToken', async () => {
                 .to.be.revertedWithCustomError(promotionToken, 'InvalidContentId');
         });
 
-        it('17.8.5. mint unsuccessfully with unopened content', async () => {
+        it('17.9.5. mint unsuccessfully with unopened content', async () => {
             const { promotionToken, minter1 } = await beforePromotionTokenTest({
                 listSampleContents: true,
             });
@@ -691,7 +691,7 @@ describe('17. PromotionToken', async () => {
                 .to.be.revertedWithCustomError(promotionToken, 'NotOpened');
         });
 
-        it('17.8.6. mint unsuccessfully with ended content', async () => {
+        it('17.9.6. mint unsuccessfully with ended content', async () => {
             const { promotionToken, minter1 } = await beforePromotionTokenTest({
                 listSampleContents: true,
             });
@@ -703,7 +703,7 @@ describe('17. PromotionToken', async () => {
                 .to.be.revertedWithCustomError(promotionToken, 'AlreadyEnded');
         }); 
 
-        it('17.8.7. mint unsuccessfully with insufficient value', async () => {
+        it('17.9.7. mint unsuccessfully with insufficient value', async () => {
             const { promotionToken, minter1 } = await beforePromotionTokenTest({
                 listSampleContents: true,
             });
@@ -716,8 +716,8 @@ describe('17. PromotionToken', async () => {
         });
     });
 
-    describe('17.9. supportsInterface(bytes4)', async () => {
-        it('17.9.1. return true for IERC4906Upgradeable interface', async () => {
+    describe('17.10. supportsInterface(bytes4)', async () => {
+        it('17.10.1. return true for IERC4906Upgradeable interface', async () => {
             const { promotionToken } = await beforePromotionTokenTest();
 
             const IERC4906Upgradeable = IERC4906Upgradeable__factory.createInterface();
