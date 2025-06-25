@@ -220,7 +220,7 @@ ReentrancyGuardUpgradeable {
                 );
             }
 
-            mintCounters[_contentId][msg.sender] += _amount;
+            mintCounts[msg.sender][_contentId] += _amount;
         }
 
         return (firstTokenId, lastTokenId);

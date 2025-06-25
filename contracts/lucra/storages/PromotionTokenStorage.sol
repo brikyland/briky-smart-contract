@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import {IPromotionToken} from "../interfaces/IPromotionToken.sol";
 
 abstract contract PromotionTokenStorage is IPromotionToken {
-    mapping(address => mapping(uint256 => uint256)) public mintCounters;
+    mapping(address => mapping(uint256 => uint256)) public mintCounts;
 
     mapping(uint256 => Content) internal contents;
 
