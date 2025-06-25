@@ -62,7 +62,6 @@ describe('17. PromotionToken', async () => {
             feeReceiver.address,
             Initialization.PASSPORT_TOKEN_Name,
             Initialization.PASSPORT_TOKEN_Symbol,
-            Initialization.PASSPORT_TOKEN_BaseURI,
             Initialization.PASSPORT_TOKEN_Fee,
             Initialization.PASSPORT_TOKEN_RoyaltyRate,
         ) as PromotionToken;
@@ -121,7 +120,6 @@ describe('17. PromotionToken', async () => {
                     feeReceiver.address,
                     Initialization.PASSPORT_TOKEN_Name,
                     Initialization.PASSPORT_TOKEN_Symbol,
-                    Initialization.PASSPORT_TOKEN_BaseURI,
                     Initialization.PASSPORT_TOKEN_Fee,
                     Initialization.PASSPORT_TOKEN_RoyaltyRate,
                 ]
@@ -146,7 +144,6 @@ describe('17. PromotionToken', async () => {
 
             const tx = promotionToken.deployTransaction;
             await expect(tx).to
-                .emit(promotionToken, 'BaseURIUpdate').withArgs(Initialization.PASSPORT_TOKEN_BaseURI)
                 .emit(promotionToken, 'FeeUpdate').withArgs(Initialization.PASSPORT_TOKEN_Fee)
                 .emit(promotionToken, 'RoyaltyRateUpdate').withArgs(Initialization.PASSPORT_TOKEN_RoyaltyRate);
         });
@@ -161,7 +158,6 @@ describe('17. PromotionToken', async () => {
                 feeReceiver.address,
                 Initialization.PASSPORT_TOKEN_Name,
                 Initialization.PASSPORT_TOKEN_Symbol,
-                Initialization.PASSPORT_TOKEN_BaseURI,
                 Initialization.PASSPORT_TOKEN_Fee,
                 Constant.COMMON_RATE_MAX_FRACTION.add(1),
             ])).to.be.reverted;
@@ -175,11 +171,6 @@ describe('17. PromotionToken', async () => {
 
     // TODO: Andy
     describe('17.3. unpause(bytes[])', async () => {
-
-    });
-
-    // TODO: Andy
-    describe('17.4. updateBaseURI(string, bytes[])', async () => {
 
     });
 
@@ -289,8 +280,8 @@ describe('17. PromotionToken', async () => {
                 .to.be.revertedWithCustomError(promotionToken, 'FailedVerification');
         })
 
-        async function testRevert(uris: string[], startAts: number[], durations: number[], customError: string) {
-            const { promotionToken, admin, admins } = await beforePromotionTokenTest();
+        async function testRevert(fixture: PromotionTokenFixture, uris: string[], startAts: number[], durations: number[], customError: string) {
+            const { promotionToken, admin, admins } = fixture;
 
             let message = ethers.utils.defaultAbiCoder.encode(
                 ["address", "string", "string[]", "uint40[]", "uint40[]"],
@@ -303,8 +294,8 @@ describe('17. PromotionToken', async () => {
         }
 
         it('17.6.3. create contents unsuccessfully with invalid input', async () => {
-            const { promotionToken, admin, admins } = await beforePromotionTokenTest();
-
+            const fixture = await beforePromotionTokenTest();
+            
             const currentTimestamp = await time.latest();
 
             const startAt1 = currentTimestamp + 100;
@@ -318,9 +309,107 @@ describe('17. PromotionToken', async () => {
             const startAts = [startAt1, startAt2, startAt3];
             const durations = [duration1, duration2, duration3];
             
-            await testRevert(uris.slice(0, 2), startAts, durations, 'InvalidInput');
-            await testRevert(uris, startAts.slice(0, 2), durations, 'InvalidInput');
-            await testRevert(uris, startAts, durations.slice(0, 2), 'InvalidInput');
+            await testRevert(fixture, uris.slice(0, 2), startAts, durations, 'InvalidInput');
+            await testRevert(fixture, uris, startAts.slice(0, 2), durations, 'InvalidInput');
+            await testRevert(fixture, uris, startAts, durations.slice(0, 2), 'InvalidInput');
+        });
+    });
+
+    describe('17.4. updateContentURIs(uint256[],string[], bytes[])', async () => {
+        it('17.4.1. update content uris successfully', async () => {
+            const { promotionToken, admin, admins } = await beforePromotionTokenTest({
+                listSampleContents: true,
+            });
+
+            const contentIds = [1, 2];
+            const uris = ["testing_uri_1_updated", "testing_uri_2_updated"];
+
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string", "uint256[]", "string[]"],
+                [promotionToken.address, "updateContentURIs", contentIds, uris]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
+
+            const tx = await promotionToken.updateContentURIs(contentIds, uris, signatures);
+            await tx.wait();
+
+            await expect(tx).to
+                .emit(promotionToken, 'ContentURIUpdate')
+                .withArgs(1, "testing_uri_1_updated")
+                .emit(promotionToken, 'ContentURIUpdate')
+                .withArgs(2, "testing_uri_2_updated");
+
+            expect((await promotionToken.getContent(1)).uri).to.equal("testing_uri_1_updated");
+            expect((await promotionToken.getContent(2)).uri).to.equal("testing_uri_2_updated");
+            expect((await promotionToken.getContent(3)).uri).to.equal("testing_uri_3");
+        });
+
+        it('17.4.2. update content uris unsuccessfully with invalid signatures', async () => {
+            const { promotionToken, admin, admins } = await beforePromotionTokenTest({
+                listSampleContents: true,
+            });
+
+            const contentIds = [1, 2];
+            const uris = ["testing_uri_1_updated", "testing_uri_2_updated"];
+
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string", "uint256[]", "string[]"],
+                [promotionToken.address, "updateContentURIs", contentIds, uris]
+            );
+            let invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+
+            await expect(promotionToken.updateContentURIs(contentIds, uris, invalidSignatures))
+                .to.be.revertedWithCustomError(promotionToken, 'FailedVerification');
+        });
+
+        async function testRevert(fixture: PromotionTokenFixture, contentIds: number[], uris: string[], customError: string) {
+            const { promotionToken, admin, admins } = fixture;
+
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string", "uint256[]", "string[]"],
+                [promotionToken.address, "updateContentURIs", contentIds, uris]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(promotionToken.updateContentURIs(contentIds, uris, signatures))
+                .to.be.revertedWithCustomError(promotionToken, customError);
+        }
+
+        it('17.4.3. update content uris unsuccessfully with invalid input', async () => {
+            const fixture = await beforePromotionTokenTest({
+                listSampleContents: true,
+            });
+
+            const contentIds = [1, 2, 3];
+            const uris = ["testing_uri_1_updated", "testing_uri_2_updated"];
+
+            await testRevert(fixture, contentIds, uris, 'InvalidInput');
+        });
+
+        it('17.4.4. update content uris unsuccessfully with invalid content id', async () => {
+            const fixture = await beforePromotionTokenTest({
+                listSampleContents: true,
+            });
+
+            const contentIds = [1, 0];
+            const uris = ["testing_uri_1_updated", "testing_uri_2_updated"];
+
+            await testRevert(fixture, contentIds, uris, 'InvalidContentId');
+        });
+
+        it('17.4.5. update content uris unsuccessfully with already started content', async () => {
+            const fixture = await beforePromotionTokenTest({
+                listSampleContents: true,
+            });
+            const { promotionToken } = fixture;
+
+            const contentIds = [1];
+            const uris = ["testing_uri_1_updated"];
+
+            const startAt = (await promotionToken.getContent(1)).startAt;
+            await time.setNextBlockTimestamp(startAt);
+
+            await testRevert(fixture, contentIds, uris, 'AlreadyStarted');
         });
     });
 
@@ -416,7 +505,7 @@ describe('17. PromotionToken', async () => {
                 listSampleContents: true,
             });
 
-            const cancelAt = (await promotionToken.getContent(1)).endAt + 1;
+            const cancelAt = (await promotionToken.getContent(1)).endAt;
             await time.setNextBlockTimestamp(cancelAt);
 
             let message = ethers.utils.defaultAbiCoder.encode(
@@ -426,7 +515,7 @@ describe('17. PromotionToken', async () => {
             let signatures = await getSignatures(message, admins, await admin.nonce());
 
             await expect(promotionToken.cancelContents([1, 2], signatures))
-                .to.be.revertedWithCustomError(promotionToken, 'AlreadyLocked');
+                .to.be.revertedWithCustomError(promotionToken, 'AlreadyEnded');
         });
 
         it('17.7.5. cancel contents unsuccessfully with already cancelled content', async () => {
@@ -445,10 +534,8 @@ describe('17. PromotionToken', async () => {
             );
             let signatures = await getSignatures(message, admins, await admin.nonce());
 
-            await time.setNextBlockTimestamp(cancelAt + 5);
-
             await expect(promotionToken.cancelContents([2, 3], signatures))
-                .to.be.revertedWithCustomError(promotionToken, 'AlreadyLocked');
+                .to.be.revertedWithCustomError(promotionToken, 'AlreadyEnded');
         });
     });
 
@@ -486,7 +573,7 @@ describe('17. PromotionToken', async () => {
             for(let i = tokenIdStart; i.lte(tokenIdEnd); i = i.add(1)) {
                 const contentURI = (await promotionToken.getContent(1)).uri;
                 expect(await promotionToken.ownerOf(i)).to.equal(minter1.address);
-                expect(await promotionToken.tokenURI(i)).to.equal(Initialization.PASSPORT_TOKEN_BaseURI + contentURI);
+                expect(await promotionToken.tokenURI(i)).to.equal(contentURI);
             }
 
             const tx1GasFee = receipt1.gasUsed.mul(receipt1.effectiveGasPrice);
@@ -514,7 +601,7 @@ describe('17. PromotionToken', async () => {
             for(let i = tokenIdStart; i.lte(tokenIdEnd); i = i.add(1)) {
                 const contentURI = (await promotionToken.getContent(1)).uri;
                 expect(await promotionToken.ownerOf(i)).to.equal(minter1.address);
-                expect(await promotionToken.tokenURI(i)).to.equal(Initialization.PASSPORT_TOKEN_BaseURI + contentURI);
+                expect(await promotionToken.tokenURI(i)).to.equal(contentURI);
             }
 
             const tx2GasFee = receipt2.gasUsed.mul(receipt2.effectiveGasPrice);
@@ -543,7 +630,7 @@ describe('17. PromotionToken', async () => {
             for(let i = tokenIdStart; i.lte(tokenIdEnd); i = i.add(1)) {
                 const contentURI = (await promotionToken.getContent(2)).uri;
                 expect(await promotionToken.ownerOf(i)).to.equal(minter2.address);
-                expect(await promotionToken.tokenURI(i)).to.equal(Initialization.PASSPORT_TOKEN_BaseURI + contentURI);
+                expect(await promotionToken.tokenURI(i)).to.equal(contentURI);
             }
 
             const tx3GasFee = receipt3.gasUsed.mul(receipt3.effectiveGasPrice);
@@ -613,7 +700,7 @@ describe('17. PromotionToken', async () => {
             await time.setNextBlockTimestamp(endAt1 + 1);
 
             await expect(promotionToken.connect(minter1).mint(1, 1))
-                .to.be.revertedWithCustomError(promotionToken, 'AlreadyLocked');
+                .to.be.revertedWithCustomError(promotionToken, 'AlreadyEnded');
         }); 
 
         it('17.8.7. mint unsuccessfully with insufficient value', async () => {
