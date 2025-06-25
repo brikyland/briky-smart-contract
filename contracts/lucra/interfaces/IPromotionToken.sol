@@ -16,7 +16,6 @@ IERC721MetadataUpgradeable {
         uint40 endAt;
     }
 
-    event BaseURIUpdate(string newValue);
     event FeeUpdate(uint256 newValue);
     event RoyaltyRateUpdate(uint256 newValue);
 
@@ -27,6 +26,7 @@ IERC721MetadataUpgradeable {
         uint40 duration
     );
     event ContentCancellation(uint256 indexed contentId);
+    event ContentURIUpdate(uint256 indexed contentId, string uri);
 
     event NewToken(
         uint256 indexed tokenId,
@@ -34,7 +34,8 @@ IERC721MetadataUpgradeable {
         address indexed owner
     );
 
-    error AlreadyLocked();
+    error AlreadyEnded();
+    error AlreadyStarted();
     error InvalidContentId();
     error NotOpened();
 
@@ -50,6 +51,8 @@ IERC721MetadataUpgradeable {
     function getContent(uint256 contentId) external view returns (Content memory content);
 
     function exists(uint256 tokenId) external view returns (bool existence);
+
+    function mintCounts(address account, uint256 contentId) external view returns (uint256 count);
 
     function mint(uint256 contentId, uint256 amount) external payable returns (uint256 firstTokenId, uint256 lastTokenId);
 }

@@ -10,7 +10,7 @@ library Constant {
     uint256 internal constant ADMIN_SIGNATURE_VERIFICATION_QUORUM = 4;
 
     // Estate Token
-    uint256 internal constant ESTATE_TOKEN_CONFIRMATION_TIME_LIMIT = 30 days;
+    uint256 internal constant ESTATE_TOKEN_CONFIRMATION_TIME_LIMIT = 60 days;
     uint8 internal constant ESTATE_TOKEN_MAX_DECIMALS = 18;
 
     // Primary Token

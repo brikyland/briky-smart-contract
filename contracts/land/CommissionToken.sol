@@ -7,7 +7,6 @@ import {IERC4906Upgradeable} from "@openzeppelin/contracts-upgradeable/interface
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import {ERC721PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721PausableUpgradeable.sol";
-import {ERC721URIStorageUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol";
 
 import {Constant} from "../lib/Constant.sol";
 import {Formula} from "../lib/Formula.sol";
@@ -25,7 +24,6 @@ import {CommissionTokenStorage} from "./storages/CommissionTokenStorage.sol";
 contract CommissionToken is
 CommissionTokenStorage,
 ERC721PausableUpgradeable,
-ERC721URIStorageUpgradeable,
 Pausable,
 RoyaltyRateProposer,
 ReentrancyGuardUpgradeable {
@@ -138,40 +136,20 @@ ReentrancyGuardUpgradeable {
         return _exists(_tokenId);
     }
 
-    function tokenURI(uint256 _tokenId) public view override(
+    function tokenURI(uint256) public view override(
         IERC721MetadataUpgradeable,
-        ERC721Upgradeable,
-        ERC721URIStorageUpgradeable
+        ERC721Upgradeable
     ) returns (string memory) {
-        return super.tokenURI(_tokenId);
+        return baseURI;
     }
 
     function supportsInterface(bytes4 _interfaceId) public view override(
         IERC165Upgradeable,
         RoyaltyRateProposer,
-        ERC721Upgradeable,
-        ERC721URIStorageUpgradeable
+        ERC721Upgradeable
     ) returns (bool) {
         return _interfaceId == type(IERC4906Upgradeable).interfaceId
             || super.supportsInterface(_interfaceId);
-    }
-
-    function _baseURI() internal view override returns (string memory) {
-        return baseURI;
-    }
-
-    function _beforeTokenTransfer(
-        address _from,
-        address _to,
-        uint256 _firstTokenId,
-        uint256 _batchSize
-    ) internal override(ERC721Upgradeable, ERC721PausableUpgradeable) {
-        super._beforeTokenTransfer(_from, _to, _firstTokenId, _batchSize);
-    }
-
-    function _burn(uint256 _tokenId)
-    internal override(ERC721Upgradeable, ERC721URIStorageUpgradeable) {
-        super._burn(_tokenId);
     }
 
     function _royaltyReceiver() internal view override returns (address) {
