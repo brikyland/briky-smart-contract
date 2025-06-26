@@ -38,7 +38,6 @@ async function deployOrUpgradePromotionToken() {
                 feeReceiverAddress,
                 Initialization.PROMOTION_TOKEN_Name,
                 Initialization.PROMOTION_TOKEN_Symbol,
-                Initialization.PROMOTION_TOKEN_BaseURI,
                 Initialization.PROMOTION_TOKEN_Fee,
                 Initialization.PROMOTION_TOKEN_RoyaltyRate,
             );

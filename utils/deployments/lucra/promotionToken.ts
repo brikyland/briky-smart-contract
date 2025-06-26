@@ -7,7 +7,6 @@ export async function deployPromotionToken(
     feeReceiverAddress: string,
     name: string,
     symbol: string,
-    baseURI: string,
     fee: BigNumber,
     royaltyRate: BigNumber,
 ) {
@@ -19,7 +18,6 @@ export async function deployPromotionToken(
             feeReceiverAddress,
             name,
             symbol,
-            baseURI,
             fee,
             royaltyRate,
         ]
