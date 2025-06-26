@@ -104,10 +104,10 @@ export async function testReentrancy(
     reentrancyContract: ethers.Contract,
     target: ethers.Contract,
     reentrancyData: string[],
-    assertion: any,
+    callback: any,
 ) {
     for (const data of reentrancyData) {
         await callTransaction(reentrancyContract.updateReentrancyPlan(target.address, data));
-        await assertion;
+        await callback();
     }
 }

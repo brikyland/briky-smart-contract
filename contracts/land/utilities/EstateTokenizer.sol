@@ -20,7 +20,7 @@ EstateTokenReceiver {
     }
 
     modifier onlyExecutive() {
-        if (!IAdmin(this.admin()).isExecutive(msg.sender)) {
+        if (!IAdmin(this.admin()).isManager(msg.sender) && !IAdmin(this.admin()).isModerator(msg.sender)) {
             revert Unauthorized();
         }
         _;

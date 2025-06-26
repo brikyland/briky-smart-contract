@@ -86,7 +86,7 @@ async function testReentrancy_Marketplace(
     );
 }
 
-describe.skip('5. EstateMarketplace', async () => {
+describe('5. EstateMarketplace', async () => {
     async function estateMarketplaceFixture(): Promise<EstateMarketplaceFixture> {
         const accounts = await ethers.getSigners();
         const deployer = accounts[0];
@@ -894,7 +894,7 @@ describe.skip('5. EstateMarketplace', async () => {
                 .to.be.revertedWithCustomError(estateMarketplace, "FailedRefund");
         });
 
-        it('5.6.13. buy token unsuccessfully when this contract is reentered', async () => {
+        it.only('5.6.13. buy token unsuccessfully when this contract is reentered', async () => {
             const fixture = await beforeEstateMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleEstateToken: true,
@@ -914,7 +914,10 @@ describe.skip('5. EstateMarketplace', async () => {
             await testReentrancy_Marketplace(
                 estateMarketplace,
                 reentrancy,
-                expect(estateMarketplace.connect(buyer1)["buy(uint256)"](1, { value: 1e9 })).to.be.revertedWithCustomError(estateMarketplace, "FailedTransfer"),
+                async () => {
+                    await expect(estateMarketplace.connect(buyer1)["buy(uint256)"](1, { value: 1e9 }))
+                        .to.be.revertedWithCustomError(estateMarketplace, "FailedTransfer");
+                },
             );
         });
     });
@@ -1459,7 +1462,7 @@ describe.skip('5. EstateMarketplace', async () => {
                 .to.be.revertedWithCustomError(estateMarketplace, "FailedRefund");
         });
 
-        it('5.7.16. buy token unsuccessfully when this contract is reentered', async () => {
+        it.only('5.7.16. buy token unsuccessfully when this contract is reentered', async () => {
             const fixture = await beforeEstateMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleEstateToken: true,
@@ -1479,7 +1482,10 @@ describe.skip('5. EstateMarketplace', async () => {
             await testReentrancy_Marketplace(
                 estateMarketplace,
                 reentrancy,
-                expect(estateMarketplace.connect(buyer1)["buy(uint256,uint256)"](1, 100_000, { value: 1e9 })).to.be.revertedWithCustomError(estateMarketplace, "FailedTransfer"),
+                async () => {
+                    await expect(estateMarketplace.connect(buyer1)["buy(uint256,uint256)"](1, 100_000, { value: 1e9 }))
+                        .to.be.revertedWithCustomError(estateMarketplace, "FailedTransfer");
+                },
             );
         });
     });
@@ -1911,7 +1917,7 @@ describe.skip('5. EstateMarketplace', async () => {
                 .to.be.revertedWithCustomError(estateMarketplace, "FailedRefund");
         });
 
-        it('5.8.14. buy token unsuccessfully when this contract is reentered', async () => {
+        it.only('5.8.14. buy token unsuccessfully when this contract is reentered', async () => {
             const fixture = await beforeEstateMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleEstateToken: true,
@@ -1931,7 +1937,10 @@ describe.skip('5. EstateMarketplace', async () => {
             await testReentrancy_Marketplace(
                 estateMarketplace,
                 reentrancy,
-                expect(estateMarketplace.connect(buyer1)["safeBuy(uint256,uint256)"](1, 1, { value: 1e9 })).to.be.revertedWithCustomError(estateMarketplace, "FailedTransfer"),
+                async () => {
+                    await expect(estateMarketplace.connect(buyer1)["safeBuy(uint256,uint256)"](1, 1, { value: 1e9 }))
+                        .to.be.revertedWithCustomError(estateMarketplace, "FailedTransfer");
+                },
             );
         });
     });
@@ -2493,7 +2502,7 @@ describe.skip('5. EstateMarketplace', async () => {
                 .to.be.revertedWithCustomError(estateMarketplace, "FailedRefund");
         });
 
-        it('5.9.17. buy token unsuccessfully when this contract is reentered', async () => {
+        it.only('5.9.17. buy token unsuccessfully when this contract is reentered', async () => {
             const fixture = await beforeEstateMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleEstateToken: true,
@@ -2513,7 +2522,10 @@ describe.skip('5. EstateMarketplace', async () => {
             await testReentrancy_Marketplace(
                 estateMarketplace,
                 reentrancy,
-                expect(estateMarketplace.connect(buyer1)["safeBuy(uint256,uint256,uint256)"](1, 100_000, 1, { value: 1e9 })).to.be.revertedWithCustomError(estateMarketplace, "FailedTransfer"),
+                async () => {
+                    await expect(estateMarketplace.connect(buyer1)["safeBuy(uint256,uint256,uint256)"](1, 100_000, 1, { value: 1e9 }))
+                        .to.be.revertedWithCustomError(estateMarketplace, "FailedTransfer");
+                },
             );
         });
     });

@@ -809,7 +809,7 @@ describe('15. MortgageMarketplace', async () => {
                 .to.be.revertedWithCustomError(mortgageMarketplace, "FailedRefund");
         });
 
-        it('15.6.12. buy token unsuccessfully when this contract is reentered', async () => {
+        it.only('15.6.12. buy token unsuccessfully when this contract is reentered', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
@@ -833,7 +833,10 @@ describe('15. MortgageMarketplace', async () => {
             await testReentrancy_MortgageMarketplace(
                 mortgageMarketplace,
                 reentrancy,
-                expect(mortgageMarketplace.connect(buyer1).buy(1, { value: 1e9 })).to.be.revertedWithCustomError(mortgageMarketplace, "FailedTransfer"),
+                async () => {
+                    await expect(mortgageMarketplace.connect(buyer1).buy(1, { value: 1e9 }))
+                        .to.be.revertedWithCustomError(mortgageMarketplace, "FailedTransfer");
+                },
             );
         });
     });
@@ -1219,7 +1222,7 @@ describe('15. MortgageMarketplace', async () => {
                 .to.be.revertedWithCustomError(mortgageMarketplace, "FailedRefund");
         });
 
-        it('15.7.13. buy token unsuccessfully when this contract is reentered', async () => {
+        it.only('15.7.13. buy token unsuccessfully when this contract is reentered', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
@@ -1243,7 +1246,10 @@ describe('15. MortgageMarketplace', async () => {
             await testReentrancy_MortgageMarketplace(
                 mortgageMarketplace,
                 reentrancy,
-                expect(mortgageMarketplace.connect(buyer1).safeBuy(1, 1, { value: 1e9 })).to.be.revertedWithCustomError(mortgageMarketplace, "FailedTransfer"),
+                async () => {
+                    await expect(mortgageMarketplace.connect(buyer1).safeBuy(1, 1, { value: 1e9 }))
+                        .to.be.revertedWithCustomError(mortgageMarketplace, "FailedTransfer");
+                },
             );
         });
     });

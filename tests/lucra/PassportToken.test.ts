@@ -12,28 +12,20 @@ import {
     MockEstateForger__factory,
     IERC721Upgradeable__factory,
     IERC4906Upgradeable__factory,
+    MortgageToken,
 } from '@typechain-types';
-import { callTransaction, getSignatures, prepareNativeToken, randomWallet } from '@utils/blockchain';
+import { callTransaction, getSignatures, prepareNativeToken, randomWallet, testReentrancy } from '@utils/blockchain';
 import { Constant } from '@tests/test.constant';
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
-import { deployCurrency } from '@utils/deployments/common/currency';
-import { deployMockEstateToken } from '@utils/deployments/mocks/mockEstateToken';
 import { deployPassportToken } from '@utils/deployments/lucra/passportToken';
 import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 
-import { smock } from '@defi-wonderland/smock';
-
-import {
-    callAdmin_AuthorizeManagers,
-    callAdmin_AuthorizeModerators,
-} from '@utils/callWithSignatures/admin';
-import { BigNumber } from 'ethers';
-import { randomInt } from 'crypto';
-import { getInterfaceID, randomBigNumber } from '@utils/utils';
-import { OrderedMap } from '@utils/utils';
+import { Contract } from 'ethers';
+import { getInterfaceID } from '@utils/utils';
 import { Initialization } from './test.initialization';
 import { callPassportToken_Pause } from '@utils/callWithSignatures/passportToken';
+import { deployReentrancy } from '@utils/deployments/mocks/mockReentrancy/reentrancy';
 
 interface PassportTokenFixture {
     admin: Admin;
@@ -45,6 +37,23 @@ interface PassportTokenFixture {
     minter1: any;
     minter2: any;
     minter3: any;
+}
+
+async function testReentrancy_passportToken(
+    passportToken: PassportToken,
+    reentrancyContract: Contract,
+    callback: any,
+) {
+    let data = [
+        passportToken.interface.encodeFunctionData("mint", []),
+    ];
+
+    await testReentrancy(
+        reentrancyContract,
+        passportToken,
+        data,
+        callback,
+    );
 }
 
 describe('16. PassportToken', async () => {
@@ -404,6 +413,25 @@ describe('16. PassportToken', async () => {
 
             await expect(passportToken.connect(minter1).mint())
                 .to.be.revertedWithCustomError(passportToken, 'InsufficientValue');
+        });
+
+        it.only('16.6.5. mint unsuccessfully when sender reenter the contract', async () => {
+            const { passportToken, deployer, minter1 } = await beforePassportTokenTest();
+
+            const reentrancy = await deployReentrancy(deployer);
+
+            const fee = await passportToken.fee();
+
+            const callData = passportToken.interface.encodeFunctionData('mint', []);
+
+            await testReentrancy_passportToken(
+                passportToken,
+                reentrancy,
+                async () => {
+                    await expect(reentrancy.call(passportToken.address, callData, { value: fee.add(ethers.utils.parseEther('1')) }))
+                        .to.be.revertedWithCustomError(passportToken, 'FailedRefund');
+                },
+            );
         });
     });
 

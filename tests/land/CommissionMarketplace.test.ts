@@ -702,7 +702,7 @@ describe('7. CommissionMarketplace', async () => {
                 .to.be.revertedWithCustomError(commissionMarketplace, "FailedRefund");
         });
 
-        it('7.6.12. buy token unsuccessfully when this contract is reentered', async () => {
+        it.only('7.6.12. buy token unsuccessfully when this contract is reentered', async () => {
             const fixture = await beforeCommissionMarketplaceTest({
                 listSampleCurrencies: true,
             });
@@ -724,7 +724,9 @@ describe('7. CommissionMarketplace', async () => {
             await testReentrancy_CommissionMarketplace(
                 commissionMarketplace,
                 reentrancy,
-                expect(commissionMarketplace.connect(buyer1).buy(1, { value: 1e9 })).to.be.revertedWithCustomError(commissionMarketplace, "FailedTransfer"),
+                async () => {
+                    await expect(commissionMarketplace.connect(buyer1).buy(1, { value: 1e9 })).to.be.revertedWithCustomError(commissionMarketplace, "FailedTransfer");
+                }
             );
         });
     });
@@ -1065,7 +1067,7 @@ describe('7. CommissionMarketplace', async () => {
                 .to.be.revertedWithCustomError(commissionMarketplace, "FailedRefund");
         });
 
-        it('7.7.13. buy token unsuccessfully when this contract is reentered', async () => {
+        it.only('7.7.13. buy token unsuccessfully when this contract is reentered', async () => {
             const fixture = await beforeCommissionMarketplaceTest({
                 listSampleCurrencies: true,
             });
@@ -1087,7 +1089,10 @@ describe('7. CommissionMarketplace', async () => {
             await testReentrancy_CommissionMarketplace(
                 commissionMarketplace,
                 reentrancy,
-                expect(commissionMarketplace.connect(buyer1).safeBuy(1, 1, { value: 1e9 })).to.be.revertedWithCustomError(commissionMarketplace, "FailedTransfer"),
+                async () => {
+                    await expect(commissionMarketplace.connect(buyer1).safeBuy(1, 1, { value: 1e9 }))
+                        .to.be.revertedWithCustomError(commissionMarketplace, "FailedTransfer");
+                },
             );
         });
     });

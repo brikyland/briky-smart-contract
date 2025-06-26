@@ -18,9 +18,11 @@ contract ReentrancyERC1155Holder is ERC1155HolderUpgradeable, IMockCommon {
     }
 
     receive() external payable {
-        (bool success, bytes memory res) = reentrancyTarget.call{value: msg.value}(reentrancyData);
-        if (!success) {
-            Revert.revertFromReturnedData(res);
+        if (reentrancyTarget != address(0)) {
+            (bool success, bytes memory res) = reentrancyTarget.call{value: msg.value}(reentrancyData);
+            if (!success) {
+                Revert.revertFromReturnedData(res);
+            }
         }
     }
 

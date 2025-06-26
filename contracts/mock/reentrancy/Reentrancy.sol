@@ -9,15 +9,17 @@ contract Reentrancy {
 
     constructor() {}
 
-    function updateReentrancyPlan(address _reentrancyTarget, bytes memory _reentrancyData) external {
+    function updateReentrancyPlan(address _reentrancyTarget, bytes memory _reentrancyData) external {        
         reentrancyTarget = _reentrancyTarget;
         reentrancyData = _reentrancyData;
     }
 
     receive() external payable {
-        (bool success, bytes memory res) = reentrancyTarget.call{value: msg.value}(reentrancyData);
-        if (!success) {
-            Revert.revertFromReturnedData(res);
+        if (reentrancyTarget != address(0)) {
+            (bool success, bytes memory res) = reentrancyTarget.call{value: msg.value}(reentrancyData);
+            if (!success) {
+                Revert.revertFromReturnedData(res);
+            }
         }
     }
 

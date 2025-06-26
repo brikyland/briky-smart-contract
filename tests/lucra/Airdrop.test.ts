@@ -21,7 +21,7 @@ interface AirdropFixture {
     receiver3: any;
 }
 
-describe.only('18. Airdrop', async () => {
+describe('18. Airdrop', async () => {
     async function airdropFixture(): Promise<AirdropFixture> {
         const accounts = await ethers.getSigners();
         const deployer = accounts[0];

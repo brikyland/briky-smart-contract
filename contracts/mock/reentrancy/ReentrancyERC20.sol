@@ -18,11 +18,13 @@ contract ReentrancyERC20 is ERC20Upgradeable {
     }
 
     function transfer(address to, uint256 value) public override returns (bool) {
-        (bool success, bytes memory res) = reentrancyTarget.call(reentrancyData);
-        if (!success) {
-            Revert.revertFromReturnedData(res);
+        if (reentrancyTarget != address(0)) {
+            (bool success, bytes memory res) = reentrancyTarget.call(reentrancyData);
+            if (!success) {
+                Revert.revertFromReturnedData(res);
+            }
+            return true;
         }
-        return true;
     }
 
     function transferFrom(address from, address to, uint256 value) public override returns (bool) {

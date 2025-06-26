@@ -536,7 +536,7 @@ describe('13. Auction', async () => {
             await expect(auction.connect(depositor1).deposit(amount)).to.be.revertedWithCustomError(auction, 'Ended');
         });
 
-        it('13.6.5. deposit unsuccessfully when contract is reentered', async () => {
+        it.only('13.6.5. deposit unsuccessfully when contract is reentered', async () => {
             const fixture = await setupBeforeTest({
                 updateStakeTokens: true,
                 mintPrimaryTokenForAuction: true,
@@ -557,7 +557,9 @@ describe('13. Auction', async () => {
             await testReentrancy_Auction(
                 auction,
                 reentrancyERC20,
-                expect(auction.connect(depositor1).deposit(amount)).to.be.revertedWith('ReentrancyGuard: reentrant call'),
+                async () => {
+                    await expect(auction.connect(depositor1).deposit(amount)).to.be.revertedWith('ReentrancyGuard: reentrant call');
+                },
             );
         });
     });

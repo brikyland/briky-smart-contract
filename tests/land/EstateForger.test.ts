@@ -2586,7 +2586,7 @@ describe('4. EstateForger', async () => {
                 .to.be.revertedWithCustomError(estateForger, "FailedRefund");
         });
 
-        it('4.12.12. deposit tokenization request unsuccessfully when this contract is reentered', async () => {
+        it.only('4.12.12. deposit tokenization request unsuccessfully when this contract is reentered', async () => {
             const fixture = await beforeEstateForgerTest({
                 listSampleCurrencies: true,
                 addZoneForExecutive: true,
@@ -2606,8 +2606,10 @@ describe('4. EstateForger', async () => {
             await testReentrancy_estateForger(
                 estateForger,
                 reentrancy,
-                expect(reentrancy.call(estateForger.address, message, { value: ethers.utils.parseEther('100') }))
-                    .to.be.revertedWithCustomError(estateForger, "FailedRefund")
+                async () => {
+                    await expect(reentrancy.call(estateForger.address, message, { value: ethers.utils.parseEther('100') }))
+                        .to.be.revertedWithCustomError(estateForger, "FailedRefund");
+                }
             );
         });
     });
@@ -2976,7 +2978,7 @@ describe('4. EstateForger', async () => {
                 .to.be.revertedWithCustomError(estateForger, "FailedRefund");
         });
 
-        it('4.13.13. deposit tokenization request unsuccessfully when this contract is reentered', async () => {
+        it.only('4.13.13. deposit tokenization request unsuccessfully when this contract is reentered', async () => {
             const fixture = await beforeEstateForgerTest({
                 listSampleCurrencies: true,
                 addZoneForExecutive: true,
@@ -2997,8 +2999,10 @@ describe('4. EstateForger', async () => {
             await testReentrancy_estateForger(
                 estateForger,
                 reentrancy,
-                expect(reentrancy.call(estateForger.address, message, { value: ethers.utils.parseEther('100') }))
-                    .to.be.revertedWithCustomError(estateForger, "FailedRefund")
+                async () => {
+                    await expect(reentrancy.call(estateForger.address, message, { value: ethers.utils.parseEther('100') }))
+                        .to.be.revertedWithCustomError(estateForger, "FailedRefund");
+                }
             );
         });
     });
@@ -3796,7 +3800,7 @@ describe('4. EstateForger', async () => {
             )).to.be.revertedWithCustomError(estateForger, "FailedTransfer");
         });
 
-        it('4.15.16. confirm tokenization unsuccessfully when this contract is reentered', async () => {
+        it.only('4.15.16. confirm tokenization unsuccessfully when this contract is reentered', async () => {
             const fixture = await beforeEstateForgerTest({
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
@@ -3823,8 +3827,10 @@ describe('4. EstateForger', async () => {
             await testReentrancy_estateForger(
                 estateForger,
                 reentrancy,
-                expect(reentrancy.call(estateForger.address, message))
-                    .to.be.revertedWithCustomError(estateForger, "FailedTransfer")
+                async () => {
+                    await expect(reentrancy.call(estateForger.address, message))
+                        .to.be.revertedWithCustomError(estateForger, "FailedTransfer");
+                }
             );
         });
     });
@@ -4526,7 +4532,7 @@ describe('4. EstateForger', async () => {
             )).to.be.revertedWithCustomError(estateForger, "FailedTransfer");
         });
 
-        it('4.16.17. confirm tokenization unsuccessfully when this contract is reentered', async () => {
+        it.only('4.16.17. confirm tokenization unsuccessfully when this contract is reentered', async () => {
             const fixture = await beforeEstateForgerTest({
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
@@ -4553,8 +4559,10 @@ describe('4. EstateForger', async () => {
             await testReentrancy_estateForger(
                 estateForger,
                 reentrancy,
-                expect(reentrancy.call(estateForger.address, message))
-                    .to.be.revertedWithCustomError(estateForger, "FailedTransfer")
+                async () => {
+                    await expect(reentrancy.call(estateForger.address, message))
+                        .to.be.revertedWithCustomError(estateForger, "FailedTransfer");
+                }
             );
         });
     });
@@ -4805,7 +4813,7 @@ describe('4. EstateForger', async () => {
                 .to.be.revertedWithCustomError(estateForger, "FailedTransfer");
         });
 
-        it("4.17.11. withdraw deposit unsuccessfully when this contract is reentered", async () => {
+        it.only("4.17.11. withdraw deposit unsuccessfully when this contract is reentered", async () => {
             const fixture = await beforeEstateForgerTest({
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
@@ -4830,8 +4838,10 @@ describe('4. EstateForger', async () => {
             await testReentrancy_estateForger(
                 estateForger,
                 reentrancy,
-                expect(reentrancy.call(estateForger.address, message))
-                .to.be.revertedWithCustomError(estateForger, "FailedTransfer")
+                async () => {
+                    await expect(reentrancy.call(estateForger.address, message))
+                        .to.be.revertedWithCustomError(estateForger, "FailedTransfer");
+                }
             );
         });
     });
