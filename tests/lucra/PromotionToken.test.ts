@@ -164,19 +164,131 @@ describe('17. PromotionToken', async () => {
         });
     });
 
-    // TODO: Andy
     describe('17.2. pause(bytes[])', async () => {
+        it('17.2.1. pause successfully', async () => {
+            const { promotionToken, admin, admins } = await beforePromotionTokenTest();
 
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string'],
+                [promotionToken.address, 'pause']
+            );
+
+            let signatures = await getSignatures(message, admins, await admin.nonce());
+            const tx = await promotionToken.pause(signatures);
+            await expect(tx).to.emit(promotionToken, 'Paused');
+
+            expect(await promotionToken.paused()).to.equal(true);
+        });
+
+        it('17.2.2. pause unsuccessfully with invalid signature', async () => {
+            const { promotionToken, admin, admins } = await beforePromotionTokenTest();
+
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string'],
+                [promotionToken.address, 'pause']
+            );
+            let invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+            await expect(promotionToken.pause(invalidSignatures)).to.be
+                .revertedWithCustomError(promotionToken, 'FailedVerification');
+        });
+
+        it('17.2.3. pause unsuccessfully when already paused', async () => {
+            const { promotionToken, admin, admins } = await beforePromotionTokenTest({
+                pause: true,
+            });
+
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string'],
+                [promotionToken.address, 'pause']
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
+            
+            await expect(promotionToken.pause(signatures)).to.be
+                .revertedWith('Pausable: paused');
+        });
     });
 
-    // TODO: Andy
     describe('17.3. unpause(bytes[])', async () => {
+        it('17.3.1. unpause successfully', async () => {
+            const { promotionToken, admin, admins } = await beforePromotionTokenTest({
+                pause: true,
+            });
 
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string'],
+                [promotionToken.address, 'unpause']
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
+            const tx = await promotionToken.unpause(signatures);
+            await expect(tx).to.emit(promotionToken, 'Unpaused');
+
+            expect(await promotionToken.paused()).to.equal(false);
+        });
+
+        it('17.3.2. unpause unsuccessfully with invalid signature', async () => {
+            const { promotionToken, admin, admins } = await beforePromotionTokenTest({
+                pause: true,
+            });
+
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string'],
+                [promotionToken.address, 'unpause']
+            );
+            let invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+            
+            await expect(promotionToken.unpause(invalidSignatures)).to.be
+                .revertedWithCustomError(promotionToken, 'FailedVerification');
+        });
+
+        it('17.3.3. unpause unsuccessfully when not paused', async () => {
+            const { promotionToken, admin, admins } = await beforePromotionTokenTest();
+
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string'],
+                [promotionToken.address, 'unpause']
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(promotionToken.unpause(signatures)).to.be
+                .revertedWith('Pausable: not paused');
+        });
     });
 
-    // TODO: Andy
-    describe('17.4. updateFee(uint256, bytes[])', async () => {
 
+    describe('17.4. updateFee(uint256, bytes[])', async () => {
+        it('17.4.1. updateFee successfully', async () => {
+            const { promotionToken, admin, admins } = await beforePromotionTokenTest();
+
+            const fee = await promotionToken.fee();
+            const newFee = fee.add(ethers.utils.parseEther('1'));
+
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'uint256'],
+                [promotionToken.address, 'updateFee', newFee]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
+
+            const tx = await promotionToken.updateFee(newFee, signatures);
+            await expect(tx).to.emit(promotionToken, 'FeeUpdate').withArgs(newFee);
+            
+            expect(await promotionToken.fee()).to.equal(newFee);
+        });
+
+        it('17.4.2. updateFee unsuccessfully with invalid signature', async () => {
+            const { promotionToken, admin, admins } = await beforePromotionTokenTest();
+
+            const fee = await promotionToken.fee();
+            const newFee = fee.add(ethers.utils.parseEther('1'));
+
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'uint256'],
+                [promotionToken.address, 'updateFee', newFee]
+            );
+            let invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+
+            await expect(promotionToken.updateFee(newFee, invalidSignatures)).to.be
+                .revertedWithCustomError(promotionToken, 'FailedVerification');
+        });
     });
 
     describe('17.5. getContent(uint256)', async () => {

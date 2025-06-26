@@ -168,24 +168,170 @@ describe('16. PassportToken', async () => {
         });
     });
 
-    // TODO: Andy
     describe('16.2. pause(bytes[])', async () => {
+        it('16.2.1. pause successfully', async () => {
+            const { passportToken, admin, admins } = await beforePassportTokenTest();
 
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string'],
+                [passportToken.address, 'pause']
+            );
+
+            let signatures = await getSignatures(message, admins, await admin.nonce());
+            const tx = await passportToken.pause(signatures);
+            await expect(tx).to.emit(passportToken, 'Paused');
+
+            expect(await passportToken.paused()).to.equal(true);
+        });
+
+        it('16.2.2. pause unsuccessfully with invalid signature', async () => {
+            const { passportToken, admin, admins } = await beforePassportTokenTest();
+
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string'],
+                [passportToken.address, 'pause']
+            );
+            let invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+            await expect(passportToken.pause(invalidSignatures)).to.be
+                .revertedWithCustomError(passportToken, 'FailedVerification');
+        });
+
+        it('16.2.3. pause unsuccessfully when already paused', async () => {
+            const { passportToken, admin, admins } = await beforePassportTokenTest({
+                pause: true,
+            });
+
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string'],
+                [passportToken.address, 'pause']
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
+            
+            await expect(passportToken.pause(signatures)).to.be
+                .revertedWith('Pausable: paused');
+        });
     });
 
-    // TODO: Andy
     describe('16.3. unpause(bytes[])', async () => {
+        it('16.3.1. unpause successfully', async () => {
+            const { passportToken, admin, admins } = await beforePassportTokenTest({
+                pause: true,
+            });
 
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string'],
+                [passportToken.address, 'unpause']
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
+            const tx = await passportToken.unpause(signatures);
+            await expect(tx).to.emit(passportToken, 'Unpaused');
+
+            expect(await passportToken.paused()).to.equal(false);
+        });
+
+        it('16.3.2. unpause unsuccessfully with invalid signature', async () => {
+            const { passportToken, admin, admins } = await beforePassportTokenTest({
+                pause: true,
+            });
+
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string'],
+                [passportToken.address, 'unpause']
+            );
+            let invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+            
+            await expect(passportToken.unpause(invalidSignatures)).to.be
+                .revertedWithCustomError(passportToken, 'FailedVerification');
+        });
+
+        it('16.3.3. unpause unsuccessfully when not paused', async () => {
+            const { passportToken, admin, admins } = await beforePassportTokenTest();
+
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string'],
+                [passportToken.address, 'unpause']
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(passportToken.unpause(signatures)).to.be
+                .revertedWith('Pausable: not paused');
+        });
     });
 
-    // TODO: Andy
     describe('16.4. updateBaseURI(string, bytes[])', async () => {
+        it('16.4.1. updateBaseURI successfully', async () => {
+            const { passportToken, admin, admins, minter1, minter2 } = await beforePassportTokenTest();
 
+            const fee = await passportToken.fee();
+            await callTransaction(passportToken.connect(minter1).mint({ value: fee }));
+            await callTransaction(passportToken.connect(minter2).mint({ value: fee }));
+
+            const newBaseURI = "new_base_uri";
+            const tokenNumber = await passportToken.tokenNumber();
+
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'string'],
+                [passportToken.address, 'updateBaseURI', newBaseURI]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
+            const tx = await passportToken.updateBaseURI(newBaseURI, signatures);
+            await expect(tx).to.emit(passportToken, 'BaseURIUpdate').withArgs(newBaseURI);
+            await expect(tx).to.emit(passportToken, 'BatchMetadataUpdate').withArgs(1, tokenNumber);
+
+            expect(await passportToken.tokenURI(1)).to.equal(newBaseURI);
+            expect(await passportToken.tokenURI(2)).to.equal(newBaseURI);
+        });
+
+        it('16.4.2. updateBaseURI unsuccessfully with invalid signature', async () => {
+            const { passportToken, admin, admins } = await beforePassportTokenTest();
+
+            const newBaseURI = "new_base_uri";
+
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'string'],
+                [passportToken.address, 'updateBaseURI', newBaseURI]
+            );
+            let invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+
+            await expect(passportToken.updateBaseURI(newBaseURI, invalidSignatures)).to.be
+                .revertedWithCustomError(passportToken, 'FailedVerification');
+        });
     });
 
-    // TODO: Andy
     describe('16.5. updateFee(uint256, bytes[])', async () => {
+        it('16.5.1. updateFee successfully', async () => {
+            const { passportToken, admin, admins } = await beforePassportTokenTest();
 
+            const fee = await passportToken.fee();
+            const newFee = fee.add(ethers.utils.parseEther('1'));
+
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'uint256'],
+                [passportToken.address, 'updateFee', newFee]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
+
+            const tx = await passportToken.updateFee(newFee, signatures);
+            await expect(tx).to.emit(passportToken, 'FeeUpdate').withArgs(newFee);
+            
+            expect(await passportToken.fee()).to.equal(newFee);
+        });
+
+        it('16.5.2. updateFee unsuccessfully with invalid signature', async () => {
+            const { passportToken, admin, admins } = await beforePassportTokenTest();
+
+            const fee = await passportToken.fee();
+            const newFee = fee.add(ethers.utils.parseEther('1'));
+
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'uint256'],
+                [passportToken.address, 'updateFee', newFee]
+            );
+            let invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+
+            await expect(passportToken.updateFee(newFee, invalidSignatures)).to.be
+                .revertedWithCustomError(passportToken, 'FailedVerification');
+        });
     });
 
     describe('16.6. mint()', async () => {
