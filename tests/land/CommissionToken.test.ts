@@ -286,7 +286,7 @@ describe('6. CommissionToken', async () => {
                 .withArgs(1, receiver1.address);
 
             expect(await commissionToken.ownerOf(1)).to.equal(receiver1.address);
-            expect(await commissionToken.tokenURI(1)).to.equal(LandInitialization.COMMISSION_TOKEN_BaseURI + '1');
+            expect(await commissionToken.tokenURI(1)).to.equal(LandInitialization.COMMISSION_TOKEN_BaseURI);
 
             tx = await estateToken.call(commissionToken.address, commissionToken.interface.encodeFunctionData('mint', [
                 receiver2.address,
@@ -298,7 +298,7 @@ describe('6. CommissionToken', async () => {
                 .withArgs(2, receiver2.address);
 
             expect(await commissionToken.ownerOf(2)).to.equal(receiver2.address);
-            expect(await commissionToken.tokenURI(2)).to.equal(LandInitialization.COMMISSION_TOKEN_BaseURI + '2');
+            expect(await commissionToken.tokenURI(2)).to.equal(LandInitialization.COMMISSION_TOKEN_BaseURI);
         });
 
         it('6.6.2. mint unsuccessfully by unauthorized sender', async () => {

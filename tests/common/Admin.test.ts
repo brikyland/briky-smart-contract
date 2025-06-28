@@ -1332,7 +1332,7 @@ describe('1. Admin', async () => {
 
             for(const account of zone1Accounts) {
                 await expect(tx).to
-                    .emit(admin, 'ZoneActivation')
+                    .emit(admin, 'Activation')
                     .withArgs(zone1, account.address);
             }
 
@@ -1347,7 +1347,7 @@ describe('1. Admin', async () => {
 
             for(const account of zone2Accounts) {
                 await expect(tx).to
-                    .emit(admin, 'ZoneActivation')
+                    .emit(admin, 'Activation')
                     .withArgs(zone2, account.address);
             }
 
@@ -1384,7 +1384,28 @@ describe('1. Admin', async () => {
             ).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('1.11.3. Activate accounts in zone unsuccessfully with activated accounts on same tx', async () => {
+        it('1.11.3. Activate accounts in zone unsuccessfully with invalid zone', async () => {
+            const fixture = await setupBeforeTest();
+            const { admins, admin } = fixture;
+
+            const { accounts } = await setupAccounts(admins, admin);
+
+            const invalidZone = ethers.utils.formatBytes32String("InvalidZone");
+
+            const zone1Accounts = [accounts[0], accounts[1]];
+
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'bytes32', 'address[]', 'bool'],
+                [admin.address, 'activateIn', invalidZone, zone1Accounts.map(x => x.address), true]
+            );
+            const signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(
+                admin.activateIn(invalidZone, zone1Accounts.map(x => x.address), true, signatures)
+            ).to.be.revertedWithCustomError(admin, 'InvalidInput')
+        });
+
+        it('1.11.4. Activate accounts in zone unsuccessfully with activated accounts on same tx', async () => {
             const fixture = await setupBeforeTest();
             const { admins, admin } = fixture;            
 
@@ -1404,7 +1425,7 @@ describe('1. Admin', async () => {
                 .withArgs(accounts[1].address);
         });
 
-        it('1.11.4. Activate accounts in zone unsuccessfully when activated accounts on different tx', async () => {
+        it('1.11.5. Activate accounts in zone unsuccessfully when activated accounts on different tx', async () => {
             const fixture = await setupBeforeTest();
             const { admins, admin } = fixture;            
 
@@ -1427,7 +1448,7 @@ describe('1. Admin', async () => {
                 .withArgs(accounts[2].address);
         });
 
-        it('1.11.5. Deactivate accounts in zone successfully', async () => {
+        it('1.11.6. Deactivate accounts in zone successfully', async () => {
             const fixture = await setupBeforeTest();
             const { admins, admin } = fixture;            
 
@@ -1449,7 +1470,7 @@ describe('1. Admin', async () => {
 
             for(const account of zone1ToDeacivate) {
                 await expect(tx).to
-                    .emit(admin, 'ZoneDeactivation')
+                    .emit(admin, 'Deactivation')
                     .withArgs(zone1, account.address);
             }
 
@@ -1467,7 +1488,7 @@ describe('1. Admin', async () => {
 
             for(const account of zone2ToDeacivate) {
                 await expect(tx).to
-                    .emit(admin, 'ZoneDeactivation')
+                    .emit(admin, 'Deactivation')
                     .withArgs(zone2, account.address);
             }
 
@@ -1485,7 +1506,7 @@ describe('1. Admin', async () => {
             }
         });
 
-        it('1.11.6. Deactivate accounts in zone unsuccessfully with inactive accounts', async () => {
+        it('1.11.7. Deactivate accounts in zone unsuccessfully with inactive accounts', async () => {
             const fixture = await setupBeforeTest();
             const { admins, admin } = fixture;            
 
@@ -1508,7 +1529,7 @@ describe('1. Admin', async () => {
                 .withArgs(newAccount.address);
         });
 
-        it('1.11.7. Deactivate accounts in zone unsuccessfully with deactivated accounts on same tx', async () => {
+        it('1.11.8. Deactivate accounts in zone unsuccessfully with deactivated accounts on same tx', async () => {
             const fixture = await setupBeforeTest();
             const { admins, admin } = fixture;            
 
@@ -1530,7 +1551,7 @@ describe('1. Admin', async () => {
                 .withArgs(accounts[0].address);
         });
 
-        it('1.11.8. Deactivate accounts in zone unsuccessfully when deactivated accounts on different tx', async () => {
+        it('1.11.9. Deactivate accounts in zone unsuccessfully when deactivated accounts on different tx', async () => {
             const fixture = await setupBeforeTest();
             const { admins, admin } = fixture;            
 

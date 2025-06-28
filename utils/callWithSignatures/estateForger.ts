@@ -98,18 +98,18 @@ export async function callEstateForger_UpdateDefaultRates(
     await callTransaction(estateForger.updateDefaultRates(currencyAddresses, values, decimals, signatures));
 }
 
-export async function callEstateForger_RegisterSellers(
+export async function callEstateForger_Whitelist(
     estateForger: EstateForger | MockContract<EstateForger>,
     admins: any[],
     accounts: string[],
-    isSeller: boolean,
+    isWhitelisted: boolean,
     nonce: BigNumberish
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
         ["address", "string", "address[]", "bool"],
-        [estateForger.address, "registerSellers", accounts, isSeller]
+        [estateForger.address, "whitelist", accounts, isWhitelisted]
     );
     const signatures = await getSignatures(message, admins, nonce);
 
-    await callTransaction(estateForger.registerSellers(accounts, isSeller, signatures));
+    await callTransaction(estateForger.whitelist(accounts, isWhitelisted, signatures));
 }

@@ -809,7 +809,7 @@ describe('15. MortgageMarketplace', async () => {
                 .to.be.revertedWithCustomError(mortgageMarketplace, "FailedRefund");
         });
 
-        it.only('15.6.12. buy token unsuccessfully when this contract is reentered', async () => {
+        it('15.6.12. buy token unsuccessfully when this contract is reentered', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
@@ -1222,7 +1222,7 @@ describe('15. MortgageMarketplace', async () => {
                 .to.be.revertedWithCustomError(mortgageMarketplace, "FailedRefund");
         });
 
-        it.only('15.7.13. buy token unsuccessfully when this contract is reentered', async () => {
+        it('15.7.13. buy token unsuccessfully when this contract is reentered', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,

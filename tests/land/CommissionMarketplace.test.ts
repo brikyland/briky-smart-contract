@@ -702,7 +702,7 @@ describe('7. CommissionMarketplace', async () => {
                 .to.be.revertedWithCustomError(commissionMarketplace, "FailedRefund");
         });
 
-        it.only('7.6.12. buy token unsuccessfully when this contract is reentered', async () => {
+        it('7.6.12. buy token unsuccessfully when this contract is reentered', async () => {
             const fixture = await beforeCommissionMarketplaceTest({
                 listSampleCurrencies: true,
             });
@@ -1067,7 +1067,7 @@ describe('7. CommissionMarketplace', async () => {
                 .to.be.revertedWithCustomError(commissionMarketplace, "FailedRefund");
         });
 
-        it.only('7.7.13. buy token unsuccessfully when this contract is reentered', async () => {
+        it('7.7.13. buy token unsuccessfully when this contract is reentered', async () => {
             const fixture = await beforeCommissionMarketplaceTest({
                 listSampleCurrencies: true,
             });

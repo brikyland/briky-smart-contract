@@ -536,7 +536,7 @@ describe('13. Auction', async () => {
             await expect(auction.connect(depositor1).deposit(amount)).to.be.revertedWithCustomError(auction, 'Ended');
         });
 
-        it.only('13.6.5. deposit unsuccessfully when contract is reentered', async () => {
+        it('13.6.5. deposit unsuccessfully when contract is reentered', async () => {
             const fixture = await setupBeforeTest({
                 updateStakeTokens: true,
                 mintPrimaryTokenForAuction: true,

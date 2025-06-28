@@ -415,7 +415,7 @@ describe('16. PassportToken', async () => {
                 .to.be.revertedWithCustomError(passportToken, 'InsufficientValue');
         });
 
-        it.only('16.6.5. mint unsuccessfully when sender reenter the contract', async () => {
+        it('16.6.5. mint unsuccessfully when sender reenter the contract', async () => {
             const { passportToken, deployer, minter1 } = await beforePassportTokenTest();
 
             const reentrancy = await deployReentrancy(deployer);

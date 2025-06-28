@@ -41,7 +41,7 @@ import { getInterfaceID, randomBigNumber, scale } from '@utils/utils';
 import { OrderedMap } from '@utils/utils';
 import { deployEstateForger } from '@utils/deployments/land/estateForger';
 import { addCurrencyToEstateForger } from '@utils/callWithSignatures/common';
-import { callEstateForger_Pause, callEstateForger_RegisterSellers, callEstateForger_UpdateBaseUnitPriceRange, callEstateForger_UpdateFeeRate } from '@utils/callWithSignatures/estateForger';
+import { callEstateForger_Pause, callEstateForger_RegisterSellers, callEstateForger_UpdateBaseUnitPriceRange, callEstateForger_UpdateFeeRate, callEstateForger_Whitelist } from '@utils/callWithSignatures/estateForger';
 import { deployMockPriceFeed } from '@utils/deployments/mocks/mockPriceFeed';
 import { deployFailReceiver } from '@utils/deployments/mocks/failReceiver';
 import { deployReentrancy } from '@utils/deployments/mocks/mockReentrancy/reentrancy';
@@ -221,6 +221,7 @@ describe('4. EstateForger', async () => {
         listSampleCurrencies = false,
         fundERC20ForDepositors = false,
         addZoneForExecutive = false,
+        whitelistDepositors = false,
         pause = false,
         listSampleSellers = false,
         addSampleRequests = false,
@@ -342,6 +343,16 @@ describe('4. EstateForger', async () => {
                 admins,
                 zone2,
                 [manager.address, moderator.address],
+                true,
+                await fixture.admin.nonce()
+            );
+        }
+
+        if (whitelistDepositors) {
+            await callEstateForger_Whitelist(
+                estateForger,
+                admins,
+                [depositor1.address, depositor2.address, depositor3.address],
                 true,
                 await fixture.admin.nonce()
             );
@@ -896,6 +907,199 @@ describe('4. EstateForger', async () => {
             await testForInvalidInput(currencyAddresses.slice(0, 4), values, decimals);
             await testForInvalidInput(currencyAddresses, values.slice(0, 4), decimals);
             await testForInvalidInput(currencyAddresses, values, decimals.slice(0, 4));
+        });
+    });
+
+    describe('4.8. whitelist(address[], bool, bytes[])', async () => {
+        it('1.10.1. Whitelist depositors successfully', async () => {
+            const fixture = await beforeEstateForgerTest();
+            const { admins, admin, estateForger, depositor1, depositor2, depositor3 } = fixture;            
+
+            const depositors = [depositor1, depositor2, depositor3];
+
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address[]', 'bool'],
+                [estateForger.address, 'whitelist', depositors.map(x => x.address), true]
+            );
+            const signatures = await getSignatures(message, admins, await admin.nonce());
+            
+            const tx = await estateForger.whitelist(depositors.map(x => x.address), true, signatures);
+            await tx.wait();
+            
+            for(const depositor of depositors) {
+                await expect(tx).to
+                    .emit(estateForger, 'Whitelist')
+                    .withArgs(depositor.address);
+            }
+
+            for (let i = 0; i < depositors.length; ++i) {
+                const isWhitelisted = await estateForger.isWhitelisted(depositors[i].address);
+                expect(isWhitelisted).to.be.true;
+            }
+        });
+
+        it('1.10.2. Whitelist unsuccessfully with invalid signatures', async () => {
+            const fixture = await beforeEstateForgerTest();
+            const { admins, admin, estateForger, depositor1, depositor2, depositor3 } = fixture;            
+
+            const depositors = [depositor1, depositor2, depositor3];
+
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address[]', 'bool'],
+                [estateForger.address, 'whitelist', depositors.map(x => x.address), true]
+            );
+            const signatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+            
+            await expect(estateForger.whitelist(
+                depositors.map(x => x.address),
+                true,
+                signatures
+            )).to.be.revertedWithCustomError(admin, 'FailedVerification');
+        });
+
+        it('1.10.3. Whitelist unsuccessfully with whitelisted depositor on same tx', async () => {
+            const fixture = await beforeEstateForgerTest();
+            const { admins, admin, estateForger, depositor1, depositor2, depositor3 } = fixture;            
+
+            const depositors = [depositor1, depositor2, depositor3, depositor1];
+
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address[]', 'bool'],
+                [estateForger.address, 'whitelist', depositors.map(x => x.address), true]
+            );
+            const signatures = await getSignatures(message, admins, await admin.nonce());
+            
+            await expect(estateForger.whitelist(
+                depositors.map(x => x.address),
+                true,
+                signatures
+            )).to.be.revertedWithCustomError(estateForger, 'Whitelisted')
+                .withArgs(depositor1.address);
+        });
+
+        it('1.10.4. Whitelist unsuccessfully with whitelisted depositor on different tx', async () => {
+            const fixture = await beforeEstateForgerTest();
+            const { admins, admin, estateForger, depositor1, depositor2, depositor3 } = fixture;            
+
+            let depositors = [depositor1, depositor3];
+            await callEstateForger_Whitelist(estateForger, admins, depositors.map(x => x.address), true, await admin.nonce());
+
+            depositors = [depositor2, depositor3];
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address[]', 'bool'],
+                [estateForger.address, 'whitelist', depositors.map(x => x.address), true]
+            );
+            const signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(estateForger.whitelist(
+                depositors.map(x => x.address),
+                true,
+                signatures
+            )).to.be.revertedWithCustomError(estateForger, 'Whitelisted')
+                .withArgs(depositor3.address);
+        });
+
+        
+        it('1.10.5. Unwhitelist depositor successfully', async () => {
+            const fixture = await beforeEstateForgerTest({
+                whitelistDepositors: true,
+            });
+            const { admins, admin, estateForger, depositor1, depositor2, depositor3 } = fixture;            
+
+            const depositors = [depositor1, depositor2, depositor3];
+            const toUnwhitelistDepositors = [depositor1, depositor3];
+
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address[]', 'bool'],
+                [estateForger.address, 'whitelist', toUnwhitelistDepositors.map(x => x.address), false]
+            );
+            const signatures = await getSignatures(message, admins, await admin.nonce());
+            
+            const tx = await estateForger.whitelist(
+                toUnwhitelistDepositors.map(x => x.address),
+                false,
+                signatures
+            );
+            await tx.wait();
+            
+            for(const depositor of toUnwhitelistDepositors) {
+                await expect(tx).to
+                    .emit(estateForger, 'Unwhitelist')
+                    .withArgs(depositor.address);
+            }
+
+            for(const depositor of depositors) {
+                if (toUnwhitelistDepositors.includes(depositor)) {
+                    expect(await estateForger.isWhitelisted(depositor.address)).to.be.false;
+                } else {
+                    expect(await estateForger.isWhitelisted(depositor.address)).to.be.true;
+                }
+            }
+        });
+
+        it('1.10.6. Unwhitelist depositor unsuccessfully with not whitelisted depositor', async () => {
+            const fixture = await beforeEstateForgerTest();
+            const { admins, admin, estateForger, depositor1, depositor2, depositor3 } = fixture;            
+
+            const toUnwhitelistDepositors = [depositor1, depositor2, depositor3];
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address[]', 'bool'],
+                [estateForger.address, 'whitelist', toUnwhitelistDepositors.map(x => x.address), false]
+            );
+            const signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(estateForger.whitelist(
+                toUnwhitelistDepositors.map(x => x.address),
+                false,
+                signatures
+            )).to.be.revertedWithCustomError(estateForger, 'NotWhitelisted')
+                .withArgs(depositor1.address);            
+        });
+
+        it('1.10.7. Unwhitelist depositor unsuccessfully when unauthorized same depositor twice on same tx', async () => {
+            const fixture = await beforeEstateForgerTest({
+                whitelistDepositors: true,
+            });
+            const { admins, admin, estateForger, depositor1, depositor2, depositor3 } = fixture;            
+
+            const toUnwhitelistDepositors = [depositor1, depositor2, depositor3, depositor1];
+
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address[]', 'bool'],
+                [estateForger.address, 'whitelist', toUnwhitelistDepositors.map(x => x.address), false]
+            );
+            const signatures = await getSignatures(message, admins, await admin.nonce());
+            
+            await expect(estateForger.whitelist(
+                toUnwhitelistDepositors.map(x => x.address),
+                false,
+                signatures
+            )).to.be.revertedWithCustomError(estateForger, 'NotWhitelisted')
+                .withArgs(depositor1.address);            
+        });
+
+        it('1.10.8. Unwhitelist depositor unsuccessfully when unauthorized same depositor twice on different tx', async () => {
+            const fixture = await beforeEstateForgerTest({
+                whitelistDepositors: true,
+            });
+            const { admins, admin, estateForger, depositor1, depositor2, depositor3 } = fixture;            
+
+            const tx1_depositors = [depositor1, depositor2];
+            await callEstateForger_Whitelist(estateForger, admins, tx1_depositors.map(x => x.address), false, await admin.nonce());
+            
+            const tx2_depositors = [depositor3, depositor2];
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address[]', 'bool'],
+                [estateForger.address, 'whitelist', tx2_depositors.map(x => x.address), false]
+            );
+            const signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(estateForger.whitelist(
+                tx2_depositors.map(x => x.address),
+                false,
+                signatures
+            )).to.be.revertedWithCustomError(estateForger, 'NotWhitelisted')
+                .withArgs(depositor2.address);
         });
     });
 
@@ -2586,7 +2790,7 @@ describe('4. EstateForger', async () => {
                 .to.be.revertedWithCustomError(estateForger, "FailedRefund");
         });
 
-        it.only('4.12.12. deposit tokenization request unsuccessfully when this contract is reentered', async () => {
+        it('4.12.12. deposit tokenization request unsuccessfully when this contract is reentered', async () => {
             const fixture = await beforeEstateForgerTest({
                 listSampleCurrencies: true,
                 addZoneForExecutive: true,
@@ -2978,7 +3182,7 @@ describe('4. EstateForger', async () => {
                 .to.be.revertedWithCustomError(estateForger, "FailedRefund");
         });
 
-        it.only('4.13.13. deposit tokenization request unsuccessfully when this contract is reentered', async () => {
+        it('4.13.13. deposit tokenization request unsuccessfully when this contract is reentered', async () => {
             const fixture = await beforeEstateForgerTest({
                 listSampleCurrencies: true,
                 addZoneForExecutive: true,
@@ -3800,7 +4004,7 @@ describe('4. EstateForger', async () => {
             )).to.be.revertedWithCustomError(estateForger, "FailedTransfer");
         });
 
-        it.only('4.15.16. confirm tokenization unsuccessfully when this contract is reentered', async () => {
+        it('4.15.16. confirm tokenization unsuccessfully when this contract is reentered', async () => {
             const fixture = await beforeEstateForgerTest({
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
@@ -4532,7 +4736,7 @@ describe('4. EstateForger', async () => {
             )).to.be.revertedWithCustomError(estateForger, "FailedTransfer");
         });
 
-        it.only('4.16.17. confirm tokenization unsuccessfully when this contract is reentered', async () => {
+        it('4.16.17. confirm tokenization unsuccessfully when this contract is reentered', async () => {
             const fixture = await beforeEstateForgerTest({
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
@@ -4813,7 +5017,7 @@ describe('4. EstateForger', async () => {
                 .to.be.revertedWithCustomError(estateForger, "FailedTransfer");
         });
 
-        it.only("4.17.11. withdraw deposit unsuccessfully when this contract is reentered", async () => {
+        it("4.17.11. withdraw deposit unsuccessfully when this contract is reentered", async () => {
             const fixture = await beforeEstateForgerTest({
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,

@@ -515,6 +515,8 @@ describe('14. MortgageToken', async () => {
             expect(loan.borrower).to.equal(borrower1.address);
             expect(loan.lender).to.equal(ethers.constants.AddressZero);
 
+            expect(await mortgageToken.tokenURI(1)).to.equal(LendInitialization.MORTGAGE_TOKEN_BaseURI);
+
             tx = await mortgageToken.connect(borrower2).borrow(2, 200, 100000, 110000, ethers.constants.AddressZero, 1000);
             await tx.wait();
 
@@ -534,6 +536,8 @@ describe('14. MortgageToken', async () => {
             expect(loan.state).to.equal(LoanState.Pending);
             expect(loan.borrower).to.equal(borrower2.address);
             expect(loan.lender).to.equal(ethers.constants.AddressZero);
+
+            expect(await mortgageToken.tokenURI(2)).to.equal(LendInitialization.MORTGAGE_TOKEN_BaseURI);
         });
 
         it('14.7.2. create loan unsuccessfully when paused', async () => {
@@ -1265,7 +1269,7 @@ describe('14. MortgageToken', async () => {
                 .to.be.revertedWithCustomError(mortgageToken, "FailedRefund");
         });
 
-        it.only('14.9.16. buy token unsuccessfully when borrower reenter this function', async () => {
+        it('14.9.16. buy token unsuccessfully when borrower reenter this function', async () => {
             const fixture = await beforeMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,
@@ -1804,7 +1808,7 @@ describe('14. MortgageToken', async () => {
                 .to.be.revertedWithCustomError(mortgageToken, "FailedRefund");
         });
 
-        it.only('14.10.17. buy token unsuccessfully when borrower reenter this function', async () => {
+        it('14.10.17. buy token unsuccessfully when borrower reenter this function', async () => {
             const fixture = await beforeMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,
@@ -2081,7 +2085,7 @@ describe('14. MortgageToken', async () => {
                 .to.be.revertedWithCustomError(mortgageToken, "FailedTransfer");
         });
 
-        it.only('14.11.11. repay unsuccessfully when this contract is reentered', async () => {
+        it('14.11.11. repay unsuccessfully when this contract is reentered', async () => {
             const fixture = await beforeMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,
@@ -2370,7 +2374,7 @@ describe('14. MortgageToken', async () => {
                 .to.be.revertedWithCustomError(mortgageToken, "FailedTransfer");
         });
 
-        it.only('14.12.12. repay unsuccessfully when this contract is reentered', async () => {
+        it('14.12.12. repay unsuccessfully when this contract is reentered', async () => {
             const fixture = await beforeMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,
