@@ -1179,7 +1179,7 @@ describe.only('4. EstateForger', async () => {
             )).to.be.revertedWithCustomError(estateForger, `Unauthorized`)
         });
 
-        it('4.9.3. Activate seller unsuccessfully with authorized account on same tx', async () => {
+        it('4.9.3. Activate seller unsuccessfully when authorizing same account twice on same tx', async () => {
             const { estateForger, manager, seller1, seller2, seller3, zone1 } = await beforeEstateForgerTest({
                 addZoneForExecutive: true,
             });
@@ -1194,7 +1194,7 @@ describe.only('4. EstateForger', async () => {
                 .withArgs(seller1.address);
         });
 
-        it('4.9.4. Activate seller unsuccessfully with authorized account on different tx', async () => {
+        it('4.9.4. Activate seller unsuccessfully when authorizing same account twice on different tx', async () => {
             const { estateForger, manager, seller1, seller2, seller3, zone1 } = await beforeEstateForgerTest({
                 addZoneForExecutive: true,
             });

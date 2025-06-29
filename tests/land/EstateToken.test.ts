@@ -592,7 +592,7 @@ describe('3. EstateToken', async () => {
             }
         });
 
-        it('3.7.2. Authorize tokenizer unsuccessfully because of invalid signatures', async () => {
+        it('3.7.2. Authorize tokenizer unsuccessfully with invalid signatures', async () => {
             const { estateToken, admin, admins, tokenizers } = await beforeEstateTokenTest();
 
             const toBeTokenizers = tokenizers.slice(0, 3);
@@ -628,7 +628,7 @@ describe('3. EstateToken', async () => {
             )).to.be.revertedWithoutReason();
         })
 
-        it('3.7.4. Authorize tokenizer reverted with custom error with contract not supporting EstateTokenizer interface', async () => {
+        it('3.7.4. Authorize tokenizer reverted with contract not supporting EstateTokenizer interface', async () => {
             const { estateToken, admin, admins } = await beforeEstateTokenTest();
 
             const invalidTokenizer = estateToken;
@@ -646,7 +646,7 @@ describe('3. EstateToken', async () => {
             )).to.be.revertedWithCustomError(estateToken, 'InvalidTokenizer');
         })
 
-        it('3.7.5. Authorize tokenizer unsuccessfully with authorized accounts on same tx', async () => {
+        it('3.7.5. Authorize tokenizer unsuccessfully when authorizing same account twice on same tx', async () => {
             const { estateToken, admin, admins, tokenizers } = await beforeEstateTokenTest();
 
             const duplicateTokenizers = [tokenizers[0], tokenizers[1], tokenizers[2], tokenizers[0]];
@@ -665,7 +665,7 @@ describe('3. EstateToken', async () => {
                 .withArgs(duplicateTokenizers[0].address);
         });
 
-        it('3.7.6. Authorize tokenizer unsuccessfully with authorized account on different tx', async () => {
+        it('3.7.6. Authorize tokenizer unsuccessfully when authorizing same account twice on different tx', async () => {
             const { estateToken, admin, admins, tokenizers } = await beforeEstateTokenTest();
 
             const tx1Tokenizers = tokenizers.slice(0, 3);
@@ -744,7 +744,7 @@ describe('3. EstateToken', async () => {
             }            
         });
 
-        it('3.7.8. Deauthorize tokenizer unsuccessfully with unauthorized accounts', async () => {
+        it('3.7.8. Deauthorize tokenizer unsuccessfully with unauthorized account', async () => {
             const { estateToken, admin, admins, tokenizers } = await beforeEstateTokenTest();
 
             await setupTokenizers(estateToken, admin, admins, tokenizers);
@@ -1008,7 +1008,7 @@ describe('3. EstateToken', async () => {
             ]))).to.be.revertedWithCustomError(estateToken, `InvalidInput`);
         });
 
-        it('3.8.5. tokenize estate unsuccessfully when expireAt exceed current timestamp', async () => {
+        it('3.8.5. tokenize estate unsuccessfully with expired estate', async () => {
             const { estateToken, estateForger, commissionToken, admin, admins } = await beforeEstateTokenTest({
                 updateCommissionToken: true,
                 authorizeEstateForger: true,
@@ -1618,7 +1618,7 @@ describe('3. EstateToken', async () => {
             expect(await estateToken.balanceOfAt(depositor3.address, 1, baseTimestamp + 120)).to.equal(8_000);
         });
 
-        it('3.15.2. return estateTokenizer allocationOfAt when there is no snapshot', async () => {
+        it('3.15.2. return correct expected estate token balance when user has not withdrawn from tokenizer', async () => {
             const { estateToken, sampleEstates, manager, baseTimestamp, depositor1, depositor2, depositor3, deployer, estateForger } = await beforeEstateTokenTest({
                 updateCommissionToken: true,
                 authorizeEstateForger: true,

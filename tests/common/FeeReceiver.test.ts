@@ -203,42 +203,55 @@ describe('2. FeeReceiver', async () => {
         });
 
         it('2.2.3. Withdraw token successfully multiple times in the same tx', async () => {
-            const { admins, admin, currency, feeReceiver } = await setupBeforeTest();
+            const { deployer, admins, admin, currency, feeReceiver } = await setupBeforeTest();
 
             let receiver = randomWallet();
+
+            await callTransaction(deployer.sendTransaction({
+                to: feeReceiver.address,
+                value: 2000
+            }));
 
             await callTransaction(currency.mint(feeReceiver.address, 1000));
 
             expect(await currency.balanceOf(feeReceiver.address)).to.equal(1000);
             expect(await currency.balanceOf(receiver.address)).to.equal(0);
 
+            const currencies = [ethers.constants.AddressZero, ethers.constants.AddressZero, currency.address, currency.address];
+            const amounts = [100, 200, 300, 400];
+
             let message = ethers.utils.defaultAbiCoder.encode(
                 ['address', 'string', 'address', 'address[]', 'uint256[]'],
-                [feeReceiver.address, 'withdraw', receiver.address, [currency.address, currency.address, currency.address], [100, 200, 300]]
+                [feeReceiver.address, 'withdraw', receiver.address, currencies, amounts]
             );
             let signatures = await getSignatures(message, admins, await admin.nonce());
 
             let tx = await feeReceiver.withdraw(
                 receiver.address,
-                [currency.address, currency.address, currency.address],
-                [100, 200, 300],
+                currencies,
+                amounts,
                 signatures,
             );
             await tx.wait();
 
             await expect(tx).to
                 .emit(feeReceiver, 'Withdrawal')
-                .withArgs(receiver.address, currency.address, 100)
+                .withArgs(receiver.address, currencies[0], amounts[0])
                 .emit(feeReceiver, 'Withdrawal')
-                .withArgs(receiver.address, currency.address, 200)
+                .withArgs(receiver.address, currencies[1], amounts[1])
                 .emit(feeReceiver, 'Withdrawal')
-                .withArgs(receiver.address, currency.address, 300)
+                .withArgs(receiver.address, currencies[2], amounts[2])
+                .emit(feeReceiver, 'Withdrawal')
+                .withArgs(receiver.address, currencies[3], amounts[3])
 
-            expect(await currency.balanceOf(feeReceiver.address)).to.equal(400);
-            expect(await currency.balanceOf(receiver.address)).to.equal(600);
+            expect(await ethers.provider.getBalance(feeReceiver.address)).to.equal(1700);
+            expect(await ethers.provider.getBalance(receiver.address)).to.equal(300);
+
+            expect(await currency.balanceOf(feeReceiver.address)).to.equal(300);
+            expect(await currency.balanceOf(receiver.address)).to.equal(700);
         });
 
-        it('2.2.4. Withdraw unsuccessfully because of invalid signatures', async () => {
+        it('2.2.4. Withdraw unsuccessfully with invalid signatures', async () => {
             const { deployer, admins, admin, feeReceiver } = await setupBeforeTest();
 
             const message = ethers.utils.defaultAbiCoder.encode(
@@ -255,7 +268,7 @@ describe('2. FeeReceiver', async () => {
             )).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('2.2.5. Withdraw unsuccessfully because of insufficient native tokens', async () => {
+        it('2.2.5. Withdraw unsuccessfully with insufficient native tokens', async () => {
             const { deployer, admins, admin, feeReceiver } = await setupBeforeTest();
 
             const message = ethers.utils.defaultAbiCoder.encode(
@@ -272,7 +285,7 @@ describe('2. FeeReceiver', async () => {
             )).to.be.revertedWithCustomError(feeReceiver, 'FailedTransfer');
         })
 
-        it('2.2.6. Withdraw unsuccessfully because of insufficient ERC20 tokens', async () => {
+        it('2.2.6. Withdraw unsuccessfully with insufficient ERC20 tokens', async () => {
             const { deployer, admins, admin, feeReceiver, currency } = await setupBeforeTest();
 
             const message = ethers.utils.defaultAbiCoder.encode(

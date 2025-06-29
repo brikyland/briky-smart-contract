@@ -20,7 +20,10 @@ import {
     Distributor,
     Driptributor,
     Auction,
-    MortgageMarketplace
+    MortgageMarketplace,
+    PromotionToken,
+    PassportToken,
+    Airdrop
 } from '@typechain-types';
 import { deployTreasury } from '@utils/deployments/land/treasury';
 import { deployAdmin } from '@utils/deployments/common/admin';
@@ -42,6 +45,9 @@ import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { Initialization as LandInitialization } from '@tests/land/test.initialization';
 import { Initialization as LendInitialization } from '@tests/lend/test.initialization';
 import { Initialization as LucraInitialization } from '@tests/lucra/test.initialization';
+import { deployPassportToken } from '@utils/deployments/lucra/passportToken';
+import { deployPromotionToken } from '@utils/deployments/lucra/promotionToken';
+import { deployAirdrop } from '@utils/deployments/lucra/airdrop';
 
 interface CommonFixture {
     deployer: any;
@@ -62,6 +68,9 @@ interface CommonFixture {
     auction: Auction;
     mortgageToken: MortgageToken;
     mortgageMarketplace: MortgageMarketplace;
+    passportToken: PassportToken;
+    promotionToken: PromotionToken;
+    airdrop: Airdrop;
 }
 
 
@@ -202,6 +211,29 @@ describe('0. Common', async () => {
             mortgageToken.address,
         ) as MortgageMarketplace;
 
+        const passportToken = await deployPassportToken(
+            deployer,
+            admin.address,
+            feeReceiver.address,
+            LucraInitialization.PASSPORT_TOKEN_Name,
+            LucraInitialization.PASSPORT_TOKEN_Symbol,
+            LucraInitialization.PASSPORT_TOKEN_BaseURI,
+            LucraInitialization.PASSPORT_TOKEN_Fee,
+            LucraInitialization.PASSPORT_TOKEN_RoyaltyRate,
+        ) as PassportToken;
+
+        const promotionToken = await deployPromotionToken(
+            deployer,
+            admin.address,
+            passportToken.address,
+            LucraInitialization.PROMOTION_TOKEN_Name,
+            LucraInitialization.PROMOTION_TOKEN_Symbol,
+            LucraInitialization.PROMOTION_TOKEN_Fee,
+            LucraInitialization.PROMOTION_TOKEN_RoyaltyRate,
+        ) as PromotionToken;
+
+        const airdrop = await deployAirdrop(deployer) as Airdrop;
+
         return {
             deployer,
             admins,
@@ -220,13 +252,16 @@ describe('0. Common', async () => {
             auction,
             mortgageToken,
             mortgageMarketplace,
+            passportToken,
+            promotionToken,
+            airdrop,
         }
     }
 
     describe('0.1. version', async () => {
         it('0.1.1. Return correct version for each contract', async () => {
             const fixture = await loadFixture(commonFixture);
-            const { admin, feeReceiver, estateForger, estateToken, estateMarketplace, commissionToken, commissionMarketplace, treasury, primaryToken, stakeToken, distributor, dripDistributor, auction, mortgageToken, mortgageMarketplace } = fixture;
+            const { admin, feeReceiver, estateForger, estateToken, estateMarketplace, commissionToken, commissionMarketplace, treasury, primaryToken, stakeToken, distributor, dripDistributor, auction, mortgageToken, mortgageMarketplace, passportToken, promotionToken, airdrop } = fixture;
 
             expect(await admin.version()).to.equal('v1.1.1');
             expect(await feeReceiver.version()).to.equal('v1.1.1');
@@ -243,6 +278,9 @@ describe('0. Common', async () => {
             expect(await auction.version()).to.equal('v1.1.1');
             expect(await mortgageToken.version()).to.equal('v1.1.1');
             expect(await mortgageMarketplace.version()).to.equal('v1.1.1');
+            expect(await passportToken.version()).to.equal('v1.1.1');
+            expect(await promotionToken.version()).to.equal('v1.1.1');
+            expect(await airdrop.version()).to.equal('v1.1.1');
         });
     });
 
@@ -273,7 +311,7 @@ describe('0. Common', async () => {
             }
 
             const fixture = await loadFixture(commonFixture);
-            const { admin, feeReceiver, estateToken, estateForger, estateMarketplace, commissionToken, commissionMarketplace, treasury, primaryToken, stakeToken, distributor, dripDistributor, auction, mortgageToken, mortgageMarketplace } = fixture;
+            const { admin, feeReceiver, estateToken, estateForger, estateMarketplace, commissionToken, commissionMarketplace, treasury, primaryToken, stakeToken, distributor, dripDistributor, auction, mortgageToken, mortgageMarketplace, passportToken, promotionToken, airdrop } = fixture;
 
             await testReceiveNotExecuteAnyCode(admin, 28223);
             await testReceiveNotExecuteAnyCode(feeReceiver, 28228);
@@ -289,7 +327,10 @@ describe('0. Common', async () => {
             await testReceiveNotExecuteAnyCode(dripDistributor, 28228);
             await testReceiveNotExecuteAnyCode(auction, 28241);
             await testReceiveNotExecuteAnyCode(mortgageToken, 28228);
-            await testReceiveNotExecuteAnyCode(mortgageMarketplace, 28236);
+            await testReceiveNotExecuteAnyCode(mortgageMarketplace, 28223);
+            await testReceiveNotExecuteAnyCode(passportToken, 28228);
+            await testReceiveNotExecuteAnyCode(promotionToken, 28228);
+            await testReceiveNotExecuteAnyCode(airdrop, 28241);
         });
     });
 });

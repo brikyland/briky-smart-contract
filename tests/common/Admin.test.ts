@@ -362,7 +362,7 @@ describe('1. Admin', async () => {
             expect(admin1).to.equal(newAdmin.address);
         });
 
-        it('1.3.2. Change admin 1 unsuccessfully because of invalid signatures', async () => {
+        it('1.3.2. Change admin 1 unsuccessfully with invalid signatures', async () => {
             const fixture = await setupBeforeTest();
             const { admins, admin } = fixture;            
 
@@ -406,7 +406,7 @@ describe('1. Admin', async () => {
             expect(admin2).to.equal(newAdmin.address);
         });
 
-        it('1.4.2. Change admin 2 unsuccessfully because of invalid signatures', async () => {
+        it('1.4.2. Change admin 2 unsuccessfully with invalid signatures', async () => {
             const fixture = await setupBeforeTest();
             const { admins, admin } = fixture;            
 
@@ -450,7 +450,7 @@ describe('1. Admin', async () => {
             expect(admin3).to.equal(newAdmin.address);
         });
 
-        it('1.5.2. Change admin 3 unsuccessfully because of invalid signatures', async () => {
+        it('1.5.2. Change admin 3 unsuccessfully with invalid signatures', async () => {
             const fixture = await setupBeforeTest();
             const { admins, admin } = fixture;            
 
@@ -494,7 +494,7 @@ describe('1. Admin', async () => {
             expect(admin4).to.equal(newAdmin.address);
         });
 
-        it('1.6.2. Change admin 4 unsuccessfully because of invalid signatures', async () => {
+        it('1.6.2. Change admin 4 unsuccessfully with invalid signatures', async () => {
             const fixture = await setupBeforeTest();
             const { admins, admin } = fixture;            
 
@@ -539,7 +539,7 @@ describe('1. Admin', async () => {
             expect(admin5).to.equal(newAdmin.address);
         });
 
-        it('1.7.2. Change admin 5 unsuccessfully because of invalid signatures', async () => {
+        it('1.7.2. Change admin 5 unsuccessfully with invalid signatures', async () => {
             const fixture = await setupBeforeTest();
             const { admins, admin } = fixture;            
 
@@ -590,7 +590,7 @@ describe('1. Admin', async () => {
             }
         });
 
-        it('1.8.2. Authorize manager unsuccessfully because of invalid signatures', async () => {
+        it('1.8.2. Authorize manager unsuccessfully with invalid signatures', async () => {
             const fixture = await setupBeforeTest();
             const { admins, admin } = fixture;            
 
@@ -610,7 +610,7 @@ describe('1. Admin', async () => {
             )).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('1.8.3. Authorize manager unsuccessfully with authorized accounts on same tx', async () => {
+        it('1.8.3. Authorize manager unsuccessfully when authorizing same account twice on same tx', async () => {
             const fixture = await setupBeforeTest();
             const { admins, admin } = fixture;            
 
@@ -632,7 +632,7 @@ describe('1. Admin', async () => {
                 .withArgs(duplicateManagers[0].address);
         });
 
-        it('1.8.4. Authorize manager unsuccessfully with authorized account on different tx', async () => {
+        it('1.8.4. Authorize manager unsuccessfully when authorizing same account twice on different tx', async () => {
             const fixture = await setupBeforeTest();
             const { admins, admin } = fixture;            
 
@@ -724,7 +724,7 @@ describe('1. Admin', async () => {
             }            
         });
 
-        it('1.8.6. Deauthorize manager unsuccessfully with unauthorized accounts', async () => {
+        it('1.8.6. Deauthorize manager unsuccessfully with unauthorized account', async () => {
             const fixture = await setupBeforeTest();
             const { admins, admin } = fixture;            
 
@@ -845,7 +845,7 @@ describe('1. Admin', async () => {
             }
         });
 
-        it('1.9.2. Authorize moderator unsuccessfully because of invalid signatures', async () => {
+        it('1.9.2. Authorize moderator unsuccessfully with invalid signatures', async () => {
             const fixture = await setupBeforeTest();
             const { admins, admin } = fixture;            
 
@@ -865,7 +865,7 @@ describe('1. Admin', async () => {
             )).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('1.9.3. Authorize moderator unsuccessfully with authorized accounts on same tx', async () => {
+        it('1.9.3. Authorize moderator unsuccessfully when authorizing same account twice on same tx', async () => {
             const fixture = await setupBeforeTest();
             const { admins, admin } = fixture;            
 
@@ -887,7 +887,7 @@ describe('1. Admin', async () => {
                 .withArgs(duplicateModerators[0].address);
         });
 
-        it('1.9.4. Authorize moderator unsuccessfully with authorized account on different tx', async () => {
+        it('1.9.4. Authorize moderator unsuccessfully when authorizing same account twice on different tx', async () => {
             const fixture = await setupBeforeTest();
             const { admins, admin } = fixture;            
 
@@ -979,7 +979,7 @@ describe('1. Admin', async () => {
             }            
         });
 
-        it('1.9.6. Deauthorize moderator unsuccessfully with unauthorized accounts', async () => {
+        it('1.9.6. Deauthorize moderator unsuccessfully with unauthorized account', async () => {
             const fixture = await setupBeforeTest();
             const { admins, admin } = fixture;            
 
@@ -1112,7 +1112,7 @@ describe('1. Admin', async () => {
             )).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('1.10.3. Declare zone unsuccessfully with authorized zone on same tx', async () => {
+        it('1.10.3. Declare zone unsuccessfully when declaring same zone twice on same tx', async () => {
             const fixture = await setupBeforeTest();
             const { admins, admin } = fixture;            
 
@@ -1136,7 +1136,7 @@ describe('1. Admin', async () => {
                 .withArgs(ethers.utils.formatBytes32String("TestZone1"));
         });
 
-        it('1.10.4. Declare zone unsuccessfully with authorized zone on different tx', async () => {
+        it('1.10.4. Declare zone unsuccessfully when declaring same zone twice on different tx', async () => {
             const fixture = await setupBeforeTest();
             const { admins, admin } = fixture;            
 
@@ -1238,7 +1238,7 @@ describe('1. Admin', async () => {
                 .withArgs(ethers.utils.formatBytes32String("TestZone6"));            
         });
 
-        it('1.10.7. Renounce zone unsuccessfully when unauthorized same zone twice on same tx', async () => {
+        it('1.10.7. Renounce zone unsuccessfully when renouncing same zone twice on same tx', async () => {
             const fixture = await setupBeforeTest();
             const { admins, admin } = fixture;            
 
@@ -1263,7 +1263,7 @@ describe('1. Admin', async () => {
                 .withArgs(ethers.utils.formatBytes32String("TestZone2"));            
         });
 
-        it('1.10.8. Renounce zone unsuccessfully when unauthorized same zone twice on different tx', async () => {
+        it('1.10.8. Renounce zone unsuccessfully when renouncing same zone twice on different tx', async () => {
             const fixture = await setupBeforeTest();
             const { admins, admin } = fixture;            
 
@@ -1307,9 +1307,10 @@ describe('1. Admin', async () => {
             return { zone1, zone2, accounts };
         }
 
-        async function setupActivateIn(admin: Admin, admins: any[], zone1: string, zone2: string, accounts: Wallet[]) {
-            await callAdmin_ActivateIn(admin, admins, zone1, accounts.map(x => x.address), true, await admin.nonce());
-            await callAdmin_ActivateIn(admin, admins, zone2, accounts.map(x => x.address), true, await admin.nonce());
+        async function setupActivateIn(admin: Admin, admins: any[], zones: string[], accounts: Wallet[]) {
+            for(const zone of zones) {
+                await callAdmin_ActivateIn(admin, admins, zone, accounts.map(x => x.address), true, await admin.nonce());
+            }
         }
 
         it('1.11.1. Activate accounts in zone successfully', async () => {
@@ -1317,6 +1318,8 @@ describe('1. Admin', async () => {
             const { admins, admin } = fixture;            
 
             const { zone1, zone2, accounts } = await setupAccounts(admins, admin);
+
+            await callAdmin_DeclareZones(admin, admins, [zone1, zone2], true, await admin.nonce());
 
             const zone1Accounts = [accounts[0], accounts[2], accounts[4]];
             const zone2Accounts = [accounts[0], accounts[1], accounts[3]];
@@ -1370,6 +1373,7 @@ describe('1. Admin', async () => {
             const { admins, admin } = fixture;            
 
             const { zone1, accounts } = await setupAccounts(admins, admin);
+            await callAdmin_DeclareZones(admin, admins, [zone1], true, await admin.nonce());
 
             const zone1Accounts = [accounts[0], accounts[1]];
 
@@ -1405,11 +1409,12 @@ describe('1. Admin', async () => {
             ).to.be.revertedWithCustomError(admin, 'InvalidInput')
         });
 
-        it('1.11.4. Activate accounts in zone unsuccessfully with activated accounts on same tx', async () => {
+        it('1.11.4. Activate accounts in zone unsuccessfully when activating same account twice on same tx', async () => {
             const fixture = await setupBeforeTest();
             const { admins, admin } = fixture;            
 
             const { zone1, accounts } = await setupAccounts(admins, admin);
+            await callAdmin_DeclareZones(admin, admins, [zone1], true, await admin.nonce());
 
             const zone1Accounts = [accounts[0], accounts[1], accounts[2], accounts[1]];
 
@@ -1425,11 +1430,12 @@ describe('1. Admin', async () => {
                 .withArgs(accounts[1].address);
         });
 
-        it('1.11.5. Activate accounts in zone unsuccessfully when activated accounts on different tx', async () => {
+        it('1.11.5. Activate accounts in zone unsuccessfully when activating same account twice on different tx', async () => {
             const fixture = await setupBeforeTest();
             const { admins, admin } = fixture;            
 
             const { zone1, accounts } = await setupAccounts(admins, admin);
+            await callAdmin_DeclareZones(admin, admins, [zone1], true, await admin.nonce());
 
             const tx1_accounts = [accounts[0], accounts[1], accounts[2]];
             await callAdmin_ActivateIn(admin, admins, zone1, tx1_accounts.map(x => x.address), true, await admin.nonce());
@@ -1454,7 +1460,8 @@ describe('1. Admin', async () => {
 
             const { zone1, zone2, accounts } = await setupAccounts(admins, admin);
 
-            await setupActivateIn(admin, admins, zone1, zone2, accounts);
+            await callAdmin_DeclareZones(admin, admins, [zone1, zone2], true, await admin.nonce());
+            await setupActivateIn(admin, admins, [zone1, zone2], accounts);
 
             const zone1ToDeacivate = [accounts[0], accounts[2], accounts[4]];
             const zone1Remaining = accounts.filter(x => !zone1ToDeacivate.includes(x));
@@ -1512,7 +1519,8 @@ describe('1. Admin', async () => {
 
             const { zone1, zone2, accounts } = await setupAccounts(admins, admin);
 
-            await setupActivateIn(admin, admins, zone1, zone2, accounts);
+            await callAdmin_DeclareZones(admin, admins, [zone1, zone2], true, await admin.nonce());
+            await setupActivateIn(admin, admins, [zone1, zone2], accounts);
 
             const newAccount = randomWallet();
             const zone1ToDeacivate = [accounts[0], accounts[2], newAccount];
@@ -1529,13 +1537,14 @@ describe('1. Admin', async () => {
                 .withArgs(newAccount.address);
         });
 
-        it('1.11.8. Deactivate accounts in zone unsuccessfully with deactivated accounts on same tx', async () => {
+        it('1.11.8. Deactivate accounts in zone unsuccessfully when deactivating same account twice on same tx', async () => {
             const fixture = await setupBeforeTest();
             const { admins, admin } = fixture;            
 
             const { zone1, zone2, accounts } = await setupAccounts(admins, admin);
 
-            await setupActivateIn(admin, admins, zone1, zone2, accounts);
+            await callAdmin_DeclareZones(admin, admins, [zone1, zone2], true, await admin.nonce());
+            await setupActivateIn(admin, admins, [zone1, zone2], accounts);
 
             const zone1ToDeacivate = [accounts[0], accounts[1], accounts[2], accounts[0]];
             
@@ -1551,13 +1560,14 @@ describe('1. Admin', async () => {
                 .withArgs(accounts[0].address);
         });
 
-        it('1.11.9. Deactivate accounts in zone unsuccessfully when deactivated accounts on different tx', async () => {
+        it('1.11.9. Deactivate accounts in zone unsuccessfully when deactivating same account twice on different tx', async () => {
             const fixture = await setupBeforeTest();
             const { admins, admin } = fixture;            
 
             const { zone1, zone2, accounts } = await setupAccounts(admins, admin);
 
-            await setupActivateIn(admin, admins, zone1, zone2, accounts);
+            await callAdmin_DeclareZones(admin, admins, [zone1, zone2], true, await admin.nonce());
+            await setupActivateIn(admin, admins, [zone1, zone2], accounts);
 
             let tx1_accounts = [accounts[0], accounts[1], accounts[2]];
             await callAdmin_ActivateIn(admin, admins, zone1, tx1_accounts.map(x => x.address), false, await admin.nonce());
@@ -1595,7 +1605,9 @@ describe('1. Admin', async () => {
 
             const account3 = randomWallet();
             const zone3 = ethers.utils.formatBytes32String("TestZone3");
+            await callAdmin_DeclareZones(admin, admins, [zone3], true, await admin.nonce());
             await callAdmin_ActivateIn(admin, admins, zone3, [account3.address], true, await admin.nonce());
+            await callAdmin_DeclareZones(admin, admins, [zone3], false, await admin.nonce());
             expect(await admin.getZoneEligibility(zone3, account3.address)).to.be.false;
 
             const account4 = randomWallet();
@@ -1716,7 +1728,7 @@ describe('1. Admin', async () => {
             )).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('1.13.4. Update currency registries unsuccesfully with conflict arrays', async () => {
+        it('1.13.4. Update currency registries unsuccesfully with conflicting params lengths', async () => {
             const fixture = await setupBeforeTest();
             const { admins, admin } = fixture;            
 
