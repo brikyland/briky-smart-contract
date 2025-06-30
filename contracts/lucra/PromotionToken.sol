@@ -85,6 +85,25 @@ ReentrancyGuardUpgradeable {
         emit FeeUpdate(_fee);
     }
 
+    function updateRoyaltyRate(
+        uint256 _royaltyRate,
+        bytes[] calldata _signature
+    ) external {
+        IAdmin(admin).verifyAdminSignatures(
+            abi.encode(
+                address(this),
+                "updateRoyaltyRate",
+                _royaltyRate
+            ),
+            _signature
+        );
+        if (_royaltyRate > Constant.COMMON_RATE_MAX_FRACTION) {
+            revert InvalidRate();
+        }
+        royaltyRate = _royaltyRate;
+        emit RoyaltyRateUpdate(_royaltyRate);
+    }
+
     function withdraw(
         address _receiver,
         address[] calldata _currencies,
