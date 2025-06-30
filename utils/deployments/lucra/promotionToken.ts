@@ -4,7 +4,6 @@ import { ethers, upgrades } from "hardhat";
 export async function deployPromotionToken(
     signer: any,
     adminAddress: string,
-    feeReceiverAddress: string,
     name: string,
     symbol: string,
     fee: BigNumber,
@@ -15,7 +14,6 @@ export async function deployPromotionToken(
         PromotionToken,
         [
             adminAddress,
-            feeReceiverAddress,
             name,
             symbol,
             fee,
