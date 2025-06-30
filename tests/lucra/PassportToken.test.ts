@@ -406,8 +406,8 @@ describe('16. PassportToken', async () => {
         });
     });
 
-    describe('16.8. withdraw(address, address[], uint256[], bytes[])', async () => {
-        it('16.8.1. Withdraw native tokens successfully', async () => {
+    describe('16.7. withdraw(address, address[], uint256[], bytes[])', async () => {
+        it('16.7.1. Withdraw native tokens successfully', async () => {
             const { deployer, admins, admin, passportToken } = await beforePassportTokenTest();
 
             let receiver = randomWallet();
@@ -469,7 +469,7 @@ describe('16. PassportToken', async () => {
             expect(balance).to.equal(5000);
         });
 
-        it('16.8.2. Withdraw ERC-20 tokens successfully', async () => {
+        it('16.7.2. Withdraw ERC-20 tokens successfully', async () => {
             const { admins, admin, passportToken, currency1, currency2 } = await beforePassportTokenTest();
 
             let receiver = randomWallet();
@@ -502,7 +502,7 @@ describe('16. PassportToken', async () => {
             expect(await currency2.balanceOf(receiver.address)).to.equal(ethers.constants.MaxUint256);
         });
 
-        it('16.8.3. Withdraw token successfully multiple times in the same tx', async () => {
+        it('16.7.3. Withdraw token successfully multiple times in the same tx', async () => {
             const { deployer, admins, admin, passportToken, currency1, currency2 } = await beforePassportTokenTest();
 
             let receiver = randomWallet();
@@ -546,7 +546,7 @@ describe('16. PassportToken', async () => {
             expect(await currency2.balanceOf(receiver.address)).to.equal(800);
         });
 
-        it('16.8.4. Withdraw unsuccessfully with invalid signatures', async () => {
+        it('16.7.4. Withdraw unsuccessfully with invalid signatures', async () => {
             const { deployer, admins, admin, passportToken } = await beforePassportTokenTest();
 
             const message = ethers.utils.defaultAbiCoder.encode(
@@ -563,7 +563,7 @@ describe('16. PassportToken', async () => {
             )).to.be.revertedWithCustomError(passportToken, 'FailedVerification');
         });
 
-        it('16.8.5. Withdraw unsuccessfully with insufficient native tokens', async () => {
+        it('16.7.5. Withdraw unsuccessfully with insufficient native tokens', async () => {
             const { deployer, admins, admin, passportToken } = await beforePassportTokenTest();
 
             const message = ethers.utils.defaultAbiCoder.encode(
@@ -580,7 +580,7 @@ describe('16. PassportToken', async () => {
             )).to.be.revertedWithCustomError(passportToken, 'FailedTransfer');
         })
 
-        it('16.8.6. Withdraw unsuccessfully with insufficient ERC20 tokens', async () => {
+        it('16.7.6. Withdraw unsuccessfully with insufficient ERC20 tokens', async () => {
             const { deployer, admins, admin, passportToken, currency1, currency2 } = await beforePassportTokenTest();
 
             const message = ethers.utils.defaultAbiCoder.encode(
@@ -597,7 +597,7 @@ describe('16. PassportToken', async () => {
             )).to.be.revertedWith('ERC20: transfer amount exceeds balance');
         })
 
-        it('16.8.7. withdraw unsuccessfully when native token receiving failed', async () => {
+        it('16.7.7. withdraw unsuccessfully when native token receiving failed', async () => {
             const { deployer, admins, admin, passportToken } = await beforePassportTokenTest();
 
             const failReceiver = await deployFailReceiver(deployer);
@@ -621,7 +621,7 @@ describe('16. PassportToken', async () => {
             )).to.be.revertedWithCustomError(passportToken, 'FailedTransfer');
         });
 
-        it('16.8.8. withdraw unsuccessfully when the contract is reentered', async () => {
+        it('16.7.8. withdraw unsuccessfully when the contract is reentered', async () => {
             const { deployer, admins, admin, passportToken } = await beforePassportTokenTest();
 
             const reentrancyERC20 = await deployReentrancyERC20(deployer);
@@ -660,8 +660,8 @@ describe('16. PassportToken', async () => {
         });
     });
 
-    describe('16.6. mint()', async () => {
-        it('16.6.1. mint successfully', async () => {
+    describe('16.8. mint()', async () => {
+        it('16.8.1. mint successfully', async () => {
             const { passportToken, minter1, minter2 } = await beforePassportTokenTest();
 
             const fee = await passportToken.fee();
@@ -701,7 +701,7 @@ describe('16. PassportToken', async () => {
             expect(await ethers.provider.getBalance(passportToken.address)).to.equal(initPassportTokenBalance.add(fee).add(fee));
         });
 
-        it('16.6.2. mint successfully when paused', async () => {
+        it('16.8.2. mint successfully when paused', async () => {
             const { passportToken, minter1, minter2 } = await beforePassportTokenTest({
                 pause: true,
             });
@@ -711,7 +711,7 @@ describe('16. PassportToken', async () => {
                 .to.be.revertedWith('Pausable: paused');
         });
 
-        it('16.6.3. mint unsuccessfully when already minted', async () => {
+        it('16.8.3. mint unsuccessfully when already minted', async () => {
             const { passportToken, minter1, minter2 } = await beforePassportTokenTest();
 
             const fee = await passportToken.fee();
@@ -725,14 +725,14 @@ describe('16. PassportToken', async () => {
                 .to.be.revertedWithCustomError(passportToken, 'AlreadyMinted');
         });
 
-        it('16.6.4. mint unsuccessfully with insufficient value', async () => {
+        it('16.8.4. mint unsuccessfully with insufficient value', async () => {
             const { passportToken, minter1 } = await beforePassportTokenTest();
 
             await expect(passportToken.connect(minter1).mint())
                 .to.be.revertedWithCustomError(passportToken, 'InsufficientValue');
         });
 
-        it('16.6.5. mint unsuccessfully when sender reenter the contract', async () => {
+        it('16.8.5. mint unsuccessfully when sender reenter the contract', async () => {
             const { passportToken, deployer, minter1 } = await beforePassportTokenTest();
 
             const reentrancy = await deployReentrancy(deployer);
@@ -752,8 +752,8 @@ describe('16. PassportToken', async () => {
         });
     });
 
-    describe('16.7. supportsInterface(bytes4)', async () => {
-        it('16.7.1. return true for IERC4906Upgradeable interface', async () => {
+    describe('16.9. supportsInterface(bytes4)', async () => {
+        it('16.9.1. return true for IERC4906Upgradeable interface', async () => {
             const { passportToken } = await beforePassportTokenTest();
 
             const IERC4906Upgradeable = IERC4906Upgradeable__factory.createInterface();
