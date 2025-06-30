@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC20Upgradeable.sol";
 import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol";
 import {IERC721MetadataUpgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC721MetadataUpgradeable.sol";
 import {IERC4906Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC4906Upgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import {ERC721PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721PausableUpgradeable.sol";
 
@@ -27,6 +29,8 @@ ERC721PausableUpgradeable,
 Pausable,
 RoyaltyRateProposer,
 ReentrancyGuardUpgradeable {
+    using SafeERC20Upgradeable for IERC20Upgradeable;
+
     string constant private VERSION = "v1.1.1";
 
     modifier onlyManager() {
@@ -40,7 +44,6 @@ ReentrancyGuardUpgradeable {
 
     function initialize(
         address _admin,
-        address _feeReceiver,
         string calldata _name,
         string calldata _symbol,
         uint256 _fee,
@@ -54,7 +57,6 @@ ReentrancyGuardUpgradeable {
         __ReentrancyGuard_init();
 
         admin = _admin;
-        feeReceiver = _feeReceiver;
 
         fee = _fee;
         royaltyRate = _royaltyRate;
@@ -81,6 +83,36 @@ ReentrancyGuardUpgradeable {
         );
         fee = _fee;
         emit FeeUpdate(_fee);
+    }
+
+    function withdraw(
+        address _receiver,
+        address[] calldata _currencies,
+        uint256[] calldata _values,
+        bytes[] calldata _signatures
+    ) external nonReentrant {
+        IAdmin(admin).verifyAdminSignatures(
+            abi.encode(
+                address(this),
+                "withdraw",
+                _receiver,
+                _currencies,
+                _values
+            ),
+            _signatures
+        );
+
+        if (_currencies.length != _values.length) {
+            revert InvalidInput();
+        }
+
+        for (uint256 i = 0; i < _currencies.length; ++i) {
+            if (_currencies[i] == address(0)) {
+                CurrencyHandler.transferNative(_receiver, _values[i]);
+            } else {
+                IERC20Upgradeable(_currencies[i]).safeTransfer(_receiver, _values[i]);
+            }
+        }
     }
 
     function getRoyaltyRate()
@@ -203,7 +235,6 @@ ReentrancyGuardUpgradeable {
         }
 
         CurrencyHandler.receiveNative(fee * _amount);
-        CurrencyHandler.transferNative(feeReceiver, fee * _amount);
 
         uint256 firstTokenId = tokenNumber + 1;
         uint256 lastTokenId = firstTokenId + _amount - 1;
@@ -248,6 +279,6 @@ ReentrancyGuardUpgradeable {
     }
 
     function _royaltyReceiver() internal view override returns (address) {
-        return feeReceiver;
+        return address(this);
     }
 }
