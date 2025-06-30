@@ -26,11 +26,16 @@ import { getInterfaceID } from '@utils/utils';
 import { Initialization } from './test.initialization';
 import { callPassportToken_Pause } from '@utils/callWithSignatures/passportToken';
 import { deployReentrancy } from '@utils/deployments/mocks/mockReentrancy/reentrancy';
+import { deployCurrency } from '@utils/deployments/common/currency';
+import { deployFailReceiver } from '@utils/deployments/mocks/failReceiver';
+import { deployReentrancyERC20 } from '@utils/deployments/mocks/mockReentrancy/reentrancyERC20';
 
 interface PassportTokenFixture {
     admin: Admin;
     feeReceiver: FeeReceiver;
     passportToken: PassportToken;
+    currency1: Currency;
+    currency2: Currency;
 
     deployer: any;
     admins: any[];
@@ -84,13 +89,15 @@ describe('16. PassportToken', async () => {
         const passportToken = await deployPassportToken(
             deployer.address,
             admin.address,
-            feeReceiver.address,
             Initialization.PASSPORT_TOKEN_Name,
             Initialization.PASSPORT_TOKEN_Symbol,
             Initialization.PASSPORT_TOKEN_BaseURI,
             Initialization.PASSPORT_TOKEN_Fee,
             Initialization.PASSPORT_TOKEN_RoyaltyRate,
         ) as PassportToken;
+
+        const currency1 = await deployCurrency(deployer, "MockCurrency1", "MCK1") as Currency;
+        const currency2 = await deployCurrency(deployer, "MockCurrency2", "MCK2") as Currency;
 
         return {
             admin,
@@ -101,6 +108,8 @@ describe('16. PassportToken', async () => {
             minter1,
             minter2,
             minter3,
+            currency1,
+            currency2,
         };
     };
 
@@ -340,6 +349,314 @@ describe('16. PassportToken', async () => {
 
             await expect(passportToken.updateFee(newFee, invalidSignatures)).to.be
                 .revertedWithCustomError(passportToken, 'FailedVerification');
+        });
+    });
+
+    describe('16.6. updateRoyaltyRate(uint256, bytes[])', async () => {
+        it('16.6.1. updateRoyaltyRate successfully with valid signatures', async () => {
+            const { passportToken, admin, admins } = await beforePassportTokenTest();
+
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string", "uint256"],
+                [passportToken.address, "updateRoyaltyRate", ethers.utils.parseEther('0.2')]
+            );
+
+            const signatures = await getSignatures(message, admins, await admin.nonce());
+
+            const tx = await passportToken.updateRoyaltyRate(ethers.utils.parseEther('0.2'), signatures);
+            await tx.wait();
+
+            await expect(tx).to
+                .emit(passportToken, 'RoyaltyRateUpdate')
+                .withArgs(ethers.utils.parseEther('0.2'));
+
+            const royaltyRate = await passportToken.getRoyaltyRate();
+            expect(royaltyRate.value).to.equal(ethers.utils.parseEther('0.2'));
+            expect(royaltyRate.decimals).to.equal(Constant.COMMON_RATE_DECIMALS);
+        });
+
+        it('16.6.2. updateRoyaltyRate unsuccessfully with invalid signatures', async () => {
+            const { passportToken, admin, admins } = await beforePassportTokenTest();
+
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string", "uint256"],
+                [passportToken.address, "updateRoyaltyRate", ethers.utils.parseEther('0.2')]
+            );
+            const invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+
+            await expect(passportToken.updateRoyaltyRate(
+                ethers.utils.parseEther('0.2'),
+                invalidSignatures
+            )).to.be.revertedWithCustomError(admin, 'FailedVerification');
+        });
+
+        it('16.6.3. updateRoyaltyRate unsuccessfully with invalid rate', async () => {
+            const { passportToken, admin, admins } = await beforePassportTokenTest();
+
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string", "uint256"],
+                [passportToken.address, "updateRoyaltyRate", Constant.COMMON_RATE_MAX_FRACTION.add(1)]
+            );
+            const signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(passportToken.updateRoyaltyRate(
+                Constant.COMMON_RATE_MAX_FRACTION.add(1),
+                signatures
+            )).to.be.revertedWithCustomError(passportToken, 'InvalidRate');
+        });
+    });
+
+    describe('16.8. withdraw(address, address[], uint256[], bytes[])', async () => {
+        it('16.8.1. Withdraw native tokens successfully', async () => {
+            const { deployer, admins, admin, passportToken } = await beforePassportTokenTest();
+
+            let receiver = randomWallet();
+
+            await callTransaction(deployer.sendTransaction({
+                to: passportToken.address,
+                value: 2000
+            }));
+
+            let balance = await ethers.provider.getBalance(passportToken.address);
+            expect(balance).to.equal(2000);
+
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address', 'address[]', 'uint256[]'],
+                [passportToken.address, 'withdraw', receiver.address, [ethers.constants.AddressZero], [1200]]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
+
+            let tx = await passportToken.withdraw(
+                receiver.address,
+                [ethers.constants.AddressZero],
+                [1200],
+                signatures,
+            );
+            await tx.wait();
+
+            balance = await ethers.provider.getBalance(passportToken.address);
+            expect(balance).to.equal(800);
+
+            balance = await ethers.provider.getBalance(receiver.address);
+            expect(balance).to.equal(1200);
+
+            await callTransaction(deployer.sendTransaction({
+                to: passportToken.address,
+                value: 3000
+            }));
+
+            balance = await ethers.provider.getBalance(passportToken.address);
+            expect(balance).to.equal(3800);
+
+            message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address', 'address[]', 'uint256[]'],
+                [passportToken.address, 'withdraw', receiver.address, [ethers.constants.AddressZero], [3800]]
+            );
+            signatures = await getSignatures(message, admins, await admin.nonce());
+
+            tx = await passportToken.withdraw(
+                receiver.address,
+                [ethers.constants.AddressZero],
+                [3800],
+                signatures,
+            );
+            await tx.wait();
+
+            balance = await ethers.provider.getBalance(passportToken.address);
+            expect(balance).to.equal(0);
+
+            balance = await ethers.provider.getBalance(receiver.address);
+            expect(balance).to.equal(5000);
+        });
+
+        it('16.8.2. Withdraw ERC-20 tokens successfully', async () => {
+            const { admins, admin, passportToken, currency1, currency2 } = await beforePassportTokenTest();
+
+            let receiver = randomWallet();
+
+            await callTransaction(currency1.mint(passportToken.address, 1000));
+            await callTransaction(currency2.mint(passportToken.address, ethers.constants.MaxUint256));
+
+            expect(await currency1.balanceOf(passportToken.address)).to.equal(1000);
+            expect(await currency2.balanceOf(passportToken.address)).to.equal(ethers.constants.MaxUint256);
+            expect(await currency1.balanceOf(receiver.address)).to.equal(0);
+            expect(await currency2.balanceOf(receiver.address)).to.equal(0);
+
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address', 'address[]', 'uint256[]'],
+                [passportToken.address, 'withdraw', receiver.address, [currency1.address, currency2.address], [700, ethers.constants.MaxUint256]]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
+
+            let tx = await passportToken.withdraw(
+                receiver.address,
+                [currency1.address, currency2.address],
+                [700, ethers.constants.MaxUint256],
+                signatures,
+            );
+            await tx.wait();
+
+            expect(await currency1.balanceOf(passportToken.address)).to.equal(300);
+            expect(await currency2.balanceOf(passportToken.address)).to.equal(0);
+            expect(await currency1.balanceOf(receiver.address)).to.equal(700);
+            expect(await currency2.balanceOf(receiver.address)).to.equal(ethers.constants.MaxUint256);
+        });
+
+        it('16.8.3. Withdraw token successfully multiple times in the same tx', async () => {
+            const { deployer, admins, admin, passportToken, currency1, currency2 } = await beforePassportTokenTest();
+
+            let receiver = randomWallet();
+
+            await callTransaction(deployer.sendTransaction({
+                to: passportToken.address,
+                value: 2000
+            }));
+
+            await callTransaction(currency1.mint(passportToken.address, 1000));
+            await callTransaction(currency2.mint(passportToken.address, ethers.constants.MaxUint256));
+
+            expect(await currency1.balanceOf(passportToken.address)).to.equal(1000);
+            expect(await currency2.balanceOf(passportToken.address)).to.equal(ethers.constants.MaxUint256);
+            expect(await currency1.balanceOf(receiver.address)).to.equal(0);
+            expect(await currency2.balanceOf(receiver.address)).to.equal(0);
+
+            const currencies = [ethers.constants.AddressZero, ethers.constants.AddressZero, currency1.address, currency2.address];
+            const amounts = [100, 200, 400, 800];
+
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address', 'address[]', 'uint256[]'],
+                [passportToken.address, 'withdraw', receiver.address, currencies, amounts]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
+
+            let tx = await passportToken.withdraw(
+                receiver.address,
+                currencies,
+                amounts,
+                signatures,
+            );
+            await tx.wait();
+
+            expect(await ethers.provider.getBalance(passportToken.address)).to.equal(1700);
+            expect(await ethers.provider.getBalance(receiver.address)).to.equal(300);
+
+            expect(await currency1.balanceOf(passportToken.address)).to.equal(600);
+            expect(await currency1.balanceOf(receiver.address)).to.equal(400);
+            expect(await currency2.balanceOf(passportToken.address)).to.equal(ethers.constants.MaxUint256.sub(800));
+            expect(await currency2.balanceOf(receiver.address)).to.equal(800);
+        });
+
+        it('16.8.4. Withdraw unsuccessfully with invalid signatures', async () => {
+            const { deployer, admins, admin, passportToken } = await beforePassportTokenTest();
+
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address', 'address[]', 'uint256[]'],
+                [passportToken.address, 'withdraw', deployer.address, [ethers.constants.AddressZero], [1000]]
+            );
+            let invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+
+            await expect(passportToken.withdraw(
+                deployer.address,
+                [ethers.constants.AddressZero],
+                [1000],
+                invalidSignatures,
+            )).to.be.revertedWithCustomError(passportToken, 'FailedVerification');
+        });
+
+        it('16.8.5. Withdraw unsuccessfully with insufficient native tokens', async () => {
+            const { deployer, admins, admin, passportToken } = await beforePassportTokenTest();
+
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address', 'address[]', 'uint256[]'],
+                [passportToken.address, 'withdraw', deployer.address, [ethers.constants.AddressZero], [1000]]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(passportToken.withdraw(
+                deployer.address,
+                [ethers.constants.AddressZero],
+                [1000],
+                signatures
+            )).to.be.revertedWithCustomError(passportToken, 'FailedTransfer');
+        })
+
+        it('16.8.6. Withdraw unsuccessfully with insufficient ERC20 tokens', async () => {
+            const { deployer, admins, admin, passportToken, currency1, currency2 } = await beforePassportTokenTest();
+
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address', 'address[]', 'uint256[]'],
+                [passportToken.address, 'withdraw', deployer.address, [currency1.address], [1000]]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(passportToken.withdraw(
+                deployer.address,
+                [currency1.address],
+                [1000],
+                signatures
+            )).to.be.revertedWith('ERC20: transfer amount exceeds balance');
+        })
+
+        it('16.8.7. withdraw unsuccessfully when native token receiving failed', async () => {
+            const { deployer, admins, admin, passportToken } = await beforePassportTokenTest();
+
+            const failReceiver = await deployFailReceiver(deployer);
+
+            await callTransaction(deployer.sendTransaction({
+                to: passportToken.address,
+                value: 1000,
+            }));
+
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address', 'address[]', 'uint256[]'],
+                [passportToken.address, 'withdraw', failReceiver.address, [ethers.constants.AddressZero], [1000]]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(passportToken.withdraw(
+                failReceiver.address,
+                [ethers.constants.AddressZero],
+                [1000],
+                signatures
+            )).to.be.revertedWithCustomError(passportToken, 'FailedTransfer');
+        });
+
+        it('16.8.8. withdraw unsuccessfully when the contract is reentered', async () => {
+            const { deployer, admins, admin, passportToken } = await beforePassportTokenTest();
+
+            const reentrancyERC20 = await deployReentrancyERC20(deployer);
+
+            await callTransaction(reentrancyERC20.mint(passportToken.address, 1000));
+
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address', 'address[]', 'uint256[]'],
+                [passportToken.address, 'withdraw', reentrancyERC20.address, [reentrancyERC20.address], [200]]
+            );
+
+            let calldata = passportToken.interface.encodeFunctionData('withdraw', [
+                reentrancyERC20.address,
+                [reentrancyERC20.address],
+                [200],
+                await getSignatures(message, admins, (await admin.nonce()).add(1))
+            ]);
+
+            await callTransaction(reentrancyERC20.updateReentrancyPlan(
+                passportToken.address,
+                calldata
+            ));
+
+            calldata = passportToken.interface.encodeFunctionData('withdraw', [
+                reentrancyERC20.address,
+                [reentrancyERC20.address],
+                [200],
+                await getSignatures(message, admins, await admin.nonce())
+            ]);
+
+            await expect(reentrancyERC20.call(passportToken.address, calldata))
+                .to.be.revertedWith('ReentrancyGuard: reentrant call');
+
+            const balance = await reentrancyERC20.balanceOf(passportToken.address);
+            expect(balance).to.equal(1000);
         });
     });
 

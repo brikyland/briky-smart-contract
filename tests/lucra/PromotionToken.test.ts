@@ -7,8 +7,9 @@ import {
     IERC165Upgradeable__factory,
     IERC721Upgradeable__factory,
     IERC4906Upgradeable__factory,
+    Currency,
 } from '@typechain-types';
-import { getSignatures } from '@utils/blockchain';
+import { callTransaction, getSignatures, randomWallet } from '@utils/blockchain';
 import { Constant } from '@tests/test.constant';
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
@@ -18,11 +19,16 @@ import { getInterfaceID } from '@utils/utils';
 import { Initialization } from './test.initialization';
 import { callPromotionToken_CancelContents, callPromotionToken_CreateContents, callPromotionToken_Pause } from '@utils/callWithSignatures/promotionToken';
 import { deployPromotionToken } from '@utils/deployments/lucra/promotionToken';
+import { deployFailReceiver } from '@utils/deployments/mocks/failReceiver';
+import { deployReentrancyERC20 } from '@utils/deployments/mocks/mockReentrancy/reentrancyERC20';
+import { deployCurrency } from '@utils/deployments/common/currency';
 
 interface PromotionTokenFixture {
     admin: Admin;
     feeReceiver: FeeReceiver;
     promotionToken: PromotionToken;
+    currency1: Currency;
+    currency2: Currency;
 
     deployer: any;
     admins: any[];
@@ -40,7 +46,7 @@ describe('17. PromotionToken', async () => {
         const minter1 = accounts[Constant.ADMIN_NUMBER + 1];
         const minter2 = accounts[Constant.ADMIN_NUMBER + 2];
         const minter3 = accounts[Constant.ADMIN_NUMBER + 3];
-        
+
         const adminAddresses: string[] = admins.map(signer => signer.address);
         const admin = await deployAdmin(
             deployer.address,
@@ -59,12 +65,14 @@ describe('17. PromotionToken', async () => {
         const promotionToken = await deployPromotionToken(
             deployer.address,
             admin.address,
-            feeReceiver.address,
             Initialization.PASSPORT_TOKEN_Name,
             Initialization.PASSPORT_TOKEN_Symbol,
             Initialization.PASSPORT_TOKEN_Fee,
             Initialization.PASSPORT_TOKEN_RoyaltyRate,
         ) as PromotionToken;
+
+        const currency1 = await deployCurrency(deployer, "MockCurrency1", "MCK1");
+        const currency2 = await deployCurrency(deployer, "MockCurrency2", "MCK2");
 
         return {
             admin,
@@ -75,6 +83,8 @@ describe('17. PromotionToken', async () => {
             minter1,
             minter2,
             minter3,
+            currency1,
+            currency2,
         };
     };
 
@@ -288,6 +298,314 @@ describe('17. PromotionToken', async () => {
 
             await expect(promotionToken.updateFee(newFee, invalidSignatures)).to.be
                 .revertedWithCustomError(promotionToken, 'FailedVerification');
+        });
+    });
+
+    describe('17.5. updateRoyaltyRate(uint256, bytes[])', async () => {
+        it('17.5.1. updateRoyaltyRate successfully with valid signatures', async () => {
+            const { promotionToken, admin, admins } = await beforePromotionTokenTest();
+
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string", "uint256"],
+                [promotionToken.address, "updateRoyaltyRate", ethers.utils.parseEther('0.2')]
+            );
+
+            const signatures = await getSignatures(message, admins, await admin.nonce());
+
+            const tx = await promotionToken.updateRoyaltyRate(ethers.utils.parseEther('0.2'), signatures);
+            await tx.wait();
+
+            await expect(tx).to
+                .emit(promotionToken, 'RoyaltyRateUpdate')
+                .withArgs(ethers.utils.parseEther('0.2'));
+
+            const royaltyRate = await promotionToken.getRoyaltyRate();
+            expect(royaltyRate.value).to.equal(ethers.utils.parseEther('0.2'));
+            expect(royaltyRate.decimals).to.equal(Constant.COMMON_RATE_DECIMALS);
+        });
+
+        it('17.5.2. updateRoyaltyRate unsuccessfully with invalid signatures', async () => {
+            const { promotionToken, admin, admins } = await beforePromotionTokenTest();
+
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string", "uint256"],
+                [promotionToken.address, "updateRoyaltyRate", ethers.utils.parseEther('0.2')]
+            );
+            const invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+
+            await expect(promotionToken.updateRoyaltyRate(
+                ethers.utils.parseEther('0.2'),
+                invalidSignatures
+            )).to.be.revertedWithCustomError(admin, 'FailedVerification');
+        });
+
+        it('17.5.3. updateRoyaltyRate unsuccessfully with invalid rate', async () => {
+            const { promotionToken, admin, admins } = await beforePromotionTokenTest();
+
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string", "uint256"],
+                [promotionToken.address, "updateRoyaltyRate", Constant.COMMON_RATE_MAX_FRACTION.add(1)]
+            );
+            const signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(promotionToken.updateRoyaltyRate(
+                Constant.COMMON_RATE_MAX_FRACTION.add(1),
+                signatures
+            )).to.be.revertedWithCustomError(promotionToken, 'InvalidRate');
+        });
+    });
+
+    describe('17.6. withdraw(address, address[], uint256[], bytes[])', async () => {
+        it('17.6.1. Withdraw native tokens successfully', async () => {
+            const { deployer, admins, admin, promotionToken } = await beforePromotionTokenTest();
+
+            let receiver = randomWallet();
+
+            await callTransaction(deployer.sendTransaction({
+                to: promotionToken.address,
+                value: 2000
+            }));
+
+            let balance = await ethers.provider.getBalance(promotionToken.address);
+            expect(balance).to.equal(2000);
+
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address', 'address[]', 'uint256[]'],
+                [promotionToken.address, 'withdraw', receiver.address, [ethers.constants.AddressZero], [1200]]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
+
+            let tx = await promotionToken.withdraw(
+                receiver.address,
+                [ethers.constants.AddressZero],
+                [1200],
+                signatures,
+            );
+            await tx.wait();
+
+            balance = await ethers.provider.getBalance(promotionToken.address);
+            expect(balance).to.equal(800);
+
+            balance = await ethers.provider.getBalance(receiver.address);
+            expect(balance).to.equal(1200);
+
+            await callTransaction(deployer.sendTransaction({
+                to: promotionToken.address,
+                value: 3000
+            }));
+
+            balance = await ethers.provider.getBalance(promotionToken.address);
+            expect(balance).to.equal(3800);
+
+            message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address', 'address[]', 'uint256[]'],
+                [promotionToken.address, 'withdraw', receiver.address, [ethers.constants.AddressZero], [3800]]
+            );
+            signatures = await getSignatures(message, admins, await admin.nonce());
+
+            tx = await promotionToken.withdraw(
+                receiver.address,
+                [ethers.constants.AddressZero],
+                [3800],
+                signatures,
+            );
+            await tx.wait();
+
+            balance = await ethers.provider.getBalance(promotionToken.address);
+            expect(balance).to.equal(0);
+
+            balance = await ethers.provider.getBalance(receiver.address);
+            expect(balance).to.equal(5000);
+        });
+
+        it('17.6.2. Withdraw ERC-20 tokens successfully', async () => {
+            const { admins, admin, promotionToken, currency1, currency2 } = await beforePromotionTokenTest();
+
+            let receiver = randomWallet();
+
+            await callTransaction(currency1.mint(promotionToken.address, 1000));
+            await callTransaction(currency2.mint(promotionToken.address, ethers.constants.MaxUint256));
+
+            expect(await currency1.balanceOf(promotionToken.address)).to.equal(1000);
+            expect(await currency2.balanceOf(promotionToken.address)).to.equal(ethers.constants.MaxUint256);
+            expect(await currency1.balanceOf(receiver.address)).to.equal(0);
+            expect(await currency2.balanceOf(receiver.address)).to.equal(0);
+
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address', 'address[]', 'uint256[]'],
+                [promotionToken.address, 'withdraw', receiver.address, [currency1.address, currency2.address], [700, ethers.constants.MaxUint256]]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
+
+            let tx = await promotionToken.withdraw(
+                receiver.address,
+                [currency1.address, currency2.address],
+                [700, ethers.constants.MaxUint256],
+                signatures,
+            );
+            await tx.wait();
+
+            expect(await currency1.balanceOf(promotionToken.address)).to.equal(300);
+            expect(await currency2.balanceOf(promotionToken.address)).to.equal(0);
+            expect(await currency1.balanceOf(receiver.address)).to.equal(700);
+            expect(await currency2.balanceOf(receiver.address)).to.equal(ethers.constants.MaxUint256);
+        });
+
+        it('17.6.3. Withdraw token successfully multiple times in the same tx', async () => {
+            const { deployer, admins, admin, promotionToken, currency1, currency2 } = await beforePromotionTokenTest();
+
+            let receiver = randomWallet();
+
+            await callTransaction(deployer.sendTransaction({
+                to: promotionToken.address,
+                value: 2000
+            }));
+
+            await callTransaction(currency1.mint(promotionToken.address, 1000));
+            await callTransaction(currency2.mint(promotionToken.address, ethers.constants.MaxUint256));
+
+            expect(await currency1.balanceOf(promotionToken.address)).to.equal(1000);
+            expect(await currency2.balanceOf(promotionToken.address)).to.equal(ethers.constants.MaxUint256);
+            expect(await currency1.balanceOf(receiver.address)).to.equal(0);
+            expect(await currency2.balanceOf(receiver.address)).to.equal(0);
+
+            const currencies = [ethers.constants.AddressZero, ethers.constants.AddressZero, currency1.address, currency2.address];
+            const amounts = [100, 200, 400, 800];
+
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address', 'address[]', 'uint256[]'],
+                [promotionToken.address, 'withdraw', receiver.address, currencies, amounts]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
+
+            let tx = await promotionToken.withdraw(
+                receiver.address,
+                currencies,
+                amounts,
+                signatures,
+            );
+            await tx.wait();
+
+            expect(await ethers.provider.getBalance(promotionToken.address)).to.equal(1700);
+            expect(await ethers.provider.getBalance(receiver.address)).to.equal(300);
+
+            expect(await currency1.balanceOf(promotionToken.address)).to.equal(600);
+            expect(await currency1.balanceOf(receiver.address)).to.equal(400);
+            expect(await currency2.balanceOf(promotionToken.address)).to.equal(ethers.constants.MaxUint256.sub(800));
+            expect(await currency2.balanceOf(receiver.address)).to.equal(800);
+        });
+
+        it('17.6.4. Withdraw unsuccessfully with invalid signatures', async () => {
+            const { deployer, admins, admin, promotionToken } = await beforePromotionTokenTest();
+
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address', 'address[]', 'uint256[]'],
+                [promotionToken.address, 'withdraw', deployer.address, [ethers.constants.AddressZero], [1000]]
+            );
+            let invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+
+            await expect(promotionToken.withdraw(
+                deployer.address,
+                [ethers.constants.AddressZero],
+                [1000],
+                invalidSignatures,
+            )).to.be.revertedWithCustomError(promotionToken, 'FailedVerification');
+        });
+
+        it('17.6.5. Withdraw unsuccessfully with insufficient native tokens', async () => {
+            const { deployer, admins, admin, promotionToken } = await beforePromotionTokenTest();
+
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address', 'address[]', 'uint256[]'],
+                [promotionToken.address, 'withdraw', deployer.address, [ethers.constants.AddressZero], [1000]]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(promotionToken.withdraw(
+                deployer.address,
+                [ethers.constants.AddressZero],
+                [1000],
+                signatures
+            )).to.be.revertedWithCustomError(promotionToken, 'FailedTransfer');
+        })
+
+        it('17.6.6. Withdraw unsuccessfully with insufficient ERC20 tokens', async () => {
+            const { deployer, admins, admin, promotionToken, currency1, currency2 } = await beforePromotionTokenTest();
+
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address', 'address[]', 'uint256[]'],
+                [promotionToken.address, 'withdraw', deployer.address, [currency1.address], [1000]]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(promotionToken.withdraw(
+                deployer.address,
+                [currency1.address],
+                [1000],
+                signatures
+            )).to.be.revertedWith('ERC20: transfer amount exceeds balance');
+        })
+
+        it('17.6.7. withdraw unsuccessfully when native token receiving failed', async () => {
+            const { deployer, admins, admin, promotionToken } = await beforePromotionTokenTest();
+
+            const failReceiver = await deployFailReceiver(deployer);
+
+            await callTransaction(deployer.sendTransaction({
+                to: promotionToken.address,
+                value: 1000,
+            }));
+
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address', 'address[]', 'uint256[]'],
+                [promotionToken.address, 'withdraw', failReceiver.address, [ethers.constants.AddressZero], [1000]]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(promotionToken.withdraw(
+                failReceiver.address,
+                [ethers.constants.AddressZero],
+                [1000],
+                signatures
+            )).to.be.revertedWithCustomError(promotionToken, 'FailedTransfer');
+        });
+
+        it('17.6.8. withdraw unsuccessfully when the contract is reentered', async () => {
+            const { deployer, admins, admin, promotionToken } = await beforePromotionTokenTest();
+
+            const reentrancyERC20 = await deployReentrancyERC20(deployer);
+
+            await callTransaction(reentrancyERC20.mint(promotionToken.address, 1000));
+
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address', 'address[]', 'uint256[]'],
+                [promotionToken.address, 'withdraw', reentrancyERC20.address, [reentrancyERC20.address], [200]]
+            );
+
+            let calldata = promotionToken.interface.encodeFunctionData('withdraw', [
+                reentrancyERC20.address,
+                [reentrancyERC20.address],
+                [200],
+                await getSignatures(message, admins, (await admin.nonce()).add(1))
+            ]);
+
+            await callTransaction(reentrancyERC20.updateReentrancyPlan(
+                promotionToken.address,
+                calldata
+            ));
+
+            calldata = promotionToken.interface.encodeFunctionData('withdraw', [
+                reentrancyERC20.address,
+                [reentrancyERC20.address],
+                [200],
+                await getSignatures(message, admins, await admin.nonce())
+            ]);
+
+            await expect(reentrancyERC20.call(promotionToken.address, calldata))
+                .to.be.revertedWith('ReentrancyGuard: reentrant call');
+
+            const balance = await reentrancyERC20.balanceOf(promotionToken.address);
+            expect(balance).to.equal(1000);
         });
     });
 

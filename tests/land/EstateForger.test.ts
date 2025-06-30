@@ -100,7 +100,7 @@ async function testReentrancy_estateForger(
     );
 }
 
-describe.only('4. EstateForger', async () => {
+describe('4. EstateForger', async () => {
     async function estateForgerFixture(): Promise<EstateForgerFixture> {
         const accounts = await ethers.getSigners();
         const deployer = accounts[0];
