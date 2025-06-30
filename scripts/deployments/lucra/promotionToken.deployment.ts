@@ -26,16 +26,10 @@ async function deployOrUpgradePromotionToken() {
                 adminAddress,
                 `Missing ${networkName}_ADMIN_ADDRESS from environment variables!`
             );
-            const feeReceiverAddress = config.feeReceiverAddress;
-            assert.ok(
-                feeReceiverAddress,
-                `Missing ${networkName}_FEE_RECEIVER_ADDRESS from environment variables!`
-            );
 
             const promotionToken = await deployPromotionToken(
                 signer,
                 adminAddress,
-                feeReceiverAddress,
                 Initialization.PROMOTION_TOKEN_Name,
                 Initialization.PROMOTION_TOKEN_Symbol,
                 Initialization.PROMOTION_TOKEN_Fee,

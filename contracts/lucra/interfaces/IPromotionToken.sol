@@ -39,8 +39,6 @@ IERC721MetadataUpgradeable {
     error InvalidContentId();
     error NotOpened();
 
-    function feeReceiver() external view returns (address feeReceiver);
-
     function contentNumber() external view returns (uint256 contentNumber);
     function tokenNumber() external view returns (uint256 tokenNumber);
 

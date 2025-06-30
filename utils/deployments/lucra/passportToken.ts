@@ -4,7 +4,6 @@ import { ethers, upgrades } from "hardhat";
 export async function deployPassportToken(
     signer: any,
     adminAddress: string,
-    feeReceiverAddress: string,
     name: string,
     symbol: string,
     baseURI: string,
@@ -16,7 +15,6 @@ export async function deployPassportToken(
         PassportToken,
         [
             adminAddress,
-            feeReceiverAddress,
             name,
             symbol,
             baseURI,

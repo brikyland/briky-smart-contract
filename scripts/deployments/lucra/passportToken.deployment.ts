@@ -26,16 +26,10 @@ async function deployOrUpgradePassportToken() {
                 adminAddress,
                 `Missing ${networkName}_ADMIN_ADDRESS from environment variables!`
             );
-            const feeReceiverAddress = config.feeReceiverAddress;
-            assert.ok(
-                feeReceiverAddress,
-                `Missing ${networkName}_FEE_RECEIVER_ADDRESS from environment variables!`
-            );
 
             const passportToken = await deployPassportToken(
                 signer,
                 adminAddress,
-                feeReceiverAddress,
                 Initialization.PASSPORT_TOKEN_Name,
                 Initialization.PASSPORT_TOKEN_Symbol,
                 Initialization.PASSPORT_TOKEN_BaseURI,

@@ -18,8 +18,6 @@ IERC721MetadataUpgradeable {
 
     error AlreadyMinted();
 
-    function feeReceiver() external view returns (address feeReceiver);
-
     function tokenNumber() external view returns (uint256 tokenNumber);
 
     function fee() external view returns (uint256 fee);
