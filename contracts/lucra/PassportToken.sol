@@ -114,6 +114,7 @@ ReentrancyGuardUpgradeable {
         }
 
         CurrencyHandler.receiveNative(fee);
+        CurrencyHandler.transferNative(feeReceiver, fee);
 
         unchecked {
             uint256 tokenId = ++tokenNumber;

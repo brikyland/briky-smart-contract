@@ -203,6 +203,7 @@ ReentrancyGuardUpgradeable {
         }
 
         CurrencyHandler.receiveNative(fee * _amount);
+        CurrencyHandler.transferNative(feeReceiver, fee * _amount);
 
         uint256 firstTokenId = tokenNumber + 1;
         uint256 lastTokenId = firstTokenId + _amount - 1;
