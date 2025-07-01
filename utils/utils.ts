@@ -163,3 +163,7 @@ export function shuffle(array: any[]) {
 export function replaceFromIndex(str: string, index: number, pattern: string, replacement: string): string {
     return str.slice(0, index) + str.slice(index).replace(pattern, replacement);
 }
+
+export function getAddressShortString(address: string): string {
+    return address.slice(0, 6) + "..." + address.slice(-4);
+}
