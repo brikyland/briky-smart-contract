@@ -2,6 +2,10 @@ import { BigNumberish, ethers, Wallet } from 'ethers';
 import { JsonRpcProvider } from '@ethersproject/providers';
 import { MockContract } from '@defi-wonderland/smock';
 
+export function parseEther(x: number) {
+    return ethers.utils.parseEther(x.toFixed(18));
+}
+
 export async function callTransaction(tx: Promise<ethers.ContractTransaction>): Promise<ethers.ContractReceipt> {
     return await ((await tx).wait());
 }
@@ -45,7 +49,7 @@ export async function prepareNativeToken(
         }));
         await provider.send("hardhat_setBalance", [
             signer.address,
-            ethers.utils.hexValue(ethers.utils.parseEther("10000.0"))
+            ethers.utils.hexValue(parseEther(10_000))
         ]);
     }
 }
