@@ -111,36 +111,102 @@ describe('8. Treasury', async () => {
         });
     });
 
-    // TODO: Andy
     describe('8.2. pause(bytes[])', async () => {
         it('8.2.1. pause successfully with valid signatures', async () => {
+            const { deployer, admin, admins, treasury } = await setupBeforeTest({});
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [treasury.address, "pause"]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
 
+            const tx = await treasury.pause(signatures);
+            await tx.wait();
+
+            expect(await treasury.paused()).to.equal(true);
+
+            await expect(tx).to
+                .emit(treasury, 'Paused')
+                .withArgs(deployer.address);
         });
 
         it('8.2.2. pause unsuccessfully with invalid signatures', async () => {
+            const { admin, admins, treasury } = await setupBeforeTest({});
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [treasury.address, "pause"]
+            );
+            let invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
 
+            await expect(treasury.pause(invalidSignatures)).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
         it('8.2.3. pause unsuccessfully when already paused', async () => {
+            const { admin, admins, treasury } = await setupBeforeTest({});
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [treasury.address, "pause"]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
 
+            await callTransaction(treasury.pause(signatures));
+
+            signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(treasury.pause(signatures)).to.be.revertedWith('Pausable: paused');
         });
     });
 
-    // TODO: Andy
     describe('8.3. unpause(bytes[])', async () => {
         it('8.3.1. unpause successfully with valid signatures', async () => {
+            const { deployer, admin, admins, treasury } = await setupBeforeTest({
+                pause: true,
+            });
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [treasury.address, "unpause"]
+            );
+            const signatures = await getSignatures(message, admins, await admin.nonce());
 
+            const tx = await treasury.unpause(signatures);
+            await tx.wait();
+
+            await expect(tx).to
+                .emit(treasury, 'Unpaused')
+                .withArgs(deployer.address);
         });
 
         it('8.3.2. unpause unsuccessfully with invalid signatures', async () => {
+            const { admin, admins, treasury } = await setupBeforeTest({
+                pause: true,
+            });
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [treasury.address, "unpause"]
+            );
+            const invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
 
+            await expect(treasury.unpause(invalidSignatures)).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
         it('8.3.3. unpause unsuccessfully when not paused', async () => {
+            const { admin, admins, treasury } = await setupBeforeTest({
+                pause: true,
+            });
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [treasury.address, "unpause"]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
 
+            await callTransaction(treasury.unpause(signatures));
+
+            signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(treasury.unpause(signatures)).to.be.revertedWith('Pausable: not paused');
         });
     });
-    
+
     describe('8.4. withdrawOperationFund(uint256, address, bytes[])', async () => {
         it('8.4.1. withdrawOperationFund successfully with valid signatures', async () => {
             const { treasury, admin, admins, currency, primaryToken, receiver } = await setupBeforeTest({

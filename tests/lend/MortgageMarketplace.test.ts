@@ -93,7 +93,7 @@ async function testReentrancy_MortgageMarketplace(
     );
 }
 
-describe('15. MortgageMarketplace', async () => {
+describe.only('15. MortgageMarketplace', async () => {
     async function mortgageMarketplaceFixture(): Promise<MortgageMarketplaceFixture> {
         const accounts = await ethers.getSigners();
         const deployer = accounts[0];
@@ -308,14 +308,100 @@ describe('15. MortgageMarketplace', async () => {
         });
     });
 
-    // TODO: Andy
     describe('15.2. pause(bytes[])', async () => {
+        it('15.2.1. pause successfully with valid signatures', async () => {
+            const { deployer, admin, admins, mortgageMarketplace } = await beforeMortgageMarketplaceTest();
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [mortgageMarketplace.address, "pause"]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
 
+            const tx = await mortgageMarketplace.pause(signatures);
+            await tx.wait();
+
+            expect(await mortgageMarketplace.paused()).to.equal(true);
+
+            await expect(tx).to
+                .emit(mortgageMarketplace, 'Paused')
+                .withArgs(deployer.address);
+        });
+
+        it('15.2.2. pause unsuccessfully with invalid signatures', async () => {
+            const { admin, admins, mortgageMarketplace } = await beforeMortgageMarketplaceTest();
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [mortgageMarketplace.address, "pause"]
+            );
+            let invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+
+            await expect(mortgageMarketplace.pause(invalidSignatures)).to.be.revertedWithCustomError(admin, 'FailedVerification');
+        });
+
+        it('15.2.3. pause unsuccessfully when already paused', async () => {
+            const { admin, admins, mortgageMarketplace } = await beforeMortgageMarketplaceTest();
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [mortgageMarketplace.address, "pause"]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await callTransaction(mortgageMarketplace.pause(signatures));
+
+            signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(mortgageMarketplace.pause(signatures)).to.be.revertedWith('Pausable: paused');
+        });
     });
 
-    // TODO: Andy
     describe('15.3. unpause(bytes[])', async () => {
+        it('15.3.1. unpause successfully with valid signatures', async () => {
+            const { deployer, admin, admins, mortgageMarketplace } = await beforeMortgageMarketplaceTest({
+                pause: true,
+            });
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [mortgageMarketplace.address, "unpause"]
+            );
+            const signatures = await getSignatures(message, admins, await admin.nonce());
 
+            const tx = await mortgageMarketplace.unpause(signatures);
+            await tx.wait();
+
+            await expect(tx).to
+                .emit(mortgageMarketplace, 'Unpaused')
+                .withArgs(deployer.address);
+        });
+
+        it('15.3.2. unpause unsuccessfully with invalid signatures', async () => {
+            const { admin, admins, mortgageMarketplace } = await beforeMortgageMarketplaceTest({
+                pause: true,
+            });
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [mortgageMarketplace.address, "unpause"]
+            );
+            const invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+
+            await expect(mortgageMarketplace.unpause(invalidSignatures)).to.be.revertedWithCustomError(admin, 'FailedVerification');
+        });
+
+        it('15.3.3. unpause unsuccessfully when not paused', async () => {
+            const { admin, admins, mortgageMarketplace } = await beforeMortgageMarketplaceTest({
+                pause: true,
+            });
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [mortgageMarketplace.address, "unpause"]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await callTransaction(mortgageMarketplace.unpause(signatures));
+
+            signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(mortgageMarketplace.unpause(signatures)).to.be.revertedWith('Pausable: not paused');
+        });
     });
 
     describe('15.4. getOffer(uint256)', async () => {

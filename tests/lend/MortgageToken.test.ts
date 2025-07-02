@@ -429,29 +429,245 @@ describe('14. MortgageToken', async () => {
         });
     });
 
-    // TODO: Andy
     describe('14.2. pause(bytes[])', async () => {
+        it('14.2.1. pause successfully with valid signatures', async () => {
+            const { deployer, admin, admins, mortgageToken } = await beforeMortgageTokenTest();
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [mortgageToken.address, "pause"]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
 
+            const tx = await mortgageToken.pause(signatures);
+            await tx.wait();
+
+            expect(await mortgageToken.paused()).to.equal(true);
+
+            await expect(tx).to
+                .emit(mortgageToken, 'Paused')
+                .withArgs(deployer.address);
+        });
+
+        it('14.2.2. pause unsuccessfully with invalid signatures', async () => {
+            const { admin, admins, mortgageToken } = await beforeMortgageTokenTest();
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [mortgageToken.address, "pause"]
+            );
+            let invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+
+            await expect(mortgageToken.pause(invalidSignatures)).to.be.revertedWithCustomError(admin, 'FailedVerification');
+        });
+
+        it('14.2.3. pause unsuccessfully when already paused', async () => {
+            const { admin, admins, mortgageToken } = await beforeMortgageTokenTest();
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [mortgageToken.address, "pause"]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await callTransaction(mortgageToken.pause(signatures));
+
+            signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(mortgageToken.pause(signatures)).to.be.revertedWith('Pausable: paused');
+        });
     });
 
-    // TODO: Andy
     describe('14.3. unpause(bytes[])', async () => {
+        it('14.3.1. unpause successfully with valid signatures', async () => {
+            const { deployer, admin, admins, mortgageToken } = await beforeMortgageTokenTest({
+                pause: true,
+            });
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [mortgageToken.address, "unpause"]
+            );
+            const signatures = await getSignatures(message, admins, await admin.nonce());
 
+            const tx = await mortgageToken.unpause(signatures);
+            await tx.wait();
+
+            await expect(tx).to
+                .emit(mortgageToken, 'Unpaused')
+                .withArgs(deployer.address);
+        });
+
+        it('14.3.2. unpause unsuccessfully with invalid signatures', async () => {
+            const { admin, admins, mortgageToken } = await beforeMortgageTokenTest({
+                pause: true,
+            });
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [mortgageToken.address, "unpause"]
+            );
+            const invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+
+            await expect(mortgageToken.unpause(invalidSignatures)).to.be.revertedWithCustomError(admin, 'FailedVerification');
+        });
+
+        it('14.3.3. unpause unsuccessfully when not paused', async () => {
+            const { admin, admins, mortgageToken } = await beforeMortgageTokenTest({
+                pause: true,
+            });
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [mortgageToken.address, "unpause"]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await callTransaction(mortgageToken.unpause(signatures));
+
+            signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(mortgageToken.unpause(signatures)).to.be.revertedWith('Pausable: not paused');
+        });
     });
 
-    // TODO: Andy
     describe('14.4. updateBaseURI(string, bytes[])', async () => {
+        it('14.4.1. updateBaseURI successfully with valid signatures', async () => {
+            const { mortgageToken, admin, admins } = await beforeMortgageTokenTest({});
 
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string", "string"],
+                [mortgageToken.address, "updateBaseURI", "NewBaseURI:"]
+            );
+            const signatures = await getSignatures(message, admins, await admin.nonce());
+
+            const tx = await mortgageToken.updateBaseURI("NewBaseURI:", signatures);
+            await tx.wait();
+
+            await expect(tx).to
+                .emit(mortgageToken, 'BaseURIUpdate')
+                .withArgs("NewBaseURI:");
+
+            expect(await mortgageToken.tokenURI(1)).to.equal("NewBaseURI:");
+            expect(await mortgageToken.tokenURI(2)).to.equal("NewBaseURI:");
+        });
+
+        it('14.4.2. updateBaseURI unsuccessfully with invalid signatures', async () => {
+            const { mortgageToken, admin, admins } = await beforeMortgageTokenTest({});
+
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string", "string"],
+                [mortgageToken.address, "updateBaseURI", "NewBaseURI:"]
+            );
+            const invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+
+            await expect(mortgageToken.updateBaseURI(
+                "NewBaseURI:",
+                invalidSignatures
+            )).to.be.revertedWithCustomError(admin, 'FailedVerification');
+        });
     });
 
-    // TODO: Andy
-    describe('14.5. updateRoyaltyRate(string, bytes[])', async () => {
+    describe('14.5. updateRoyaltyRate(uint256, bytes[])', async () => {
+        it('14.5.1. updateRoyaltyRate successfully with valid signatures', async () => {
+            const { mortgageToken, admin, admins } = await beforeMortgageTokenTest({});
 
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string", "uint256"],
+                [mortgageToken.address, "updateRoyaltyRate", ethers.utils.parseEther('0.2')]
+            );
+
+            const signatures = await getSignatures(message, admins, await admin.nonce());
+
+            const tx = await mortgageToken.updateRoyaltyRate(ethers.utils.parseEther('0.2'), signatures);
+            await tx.wait();
+
+            await expect(tx).to
+                .emit(mortgageToken, 'RoyaltyRateUpdate')
+                .withArgs(ethers.utils.parseEther('0.2'));
+
+            const royaltyRate = await mortgageToken.getRoyaltyRate();
+            expect(royaltyRate.value).to.equal(ethers.utils.parseEther('0.2'));
+            expect(royaltyRate.decimals).to.equal(Constant.COMMON_RATE_DECIMALS);
+        });
+
+        it('14.5.2. updateRoyaltyRate unsuccessfully with invalid signatures', async () => {
+            const { mortgageToken, admin, admins } = await beforeMortgageTokenTest({});
+
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string", "uint256"],
+                [mortgageToken.address, "updateRoyaltyRate", ethers.utils.parseEther('0.2')]
+            );
+            const invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+
+            await expect(mortgageToken.updateRoyaltyRate(
+                ethers.utils.parseEther('0.2'),
+                invalidSignatures
+            )).to.be.revertedWithCustomError(admin, 'FailedVerification');
+        });
+
+        it('14.5.3. updateRoyaltyRate unsuccessfully with invalid rate', async () => {
+            const { mortgageToken, admin, admins } = await beforeMortgageTokenTest({});
+
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string", "uint256"],
+                [mortgageToken.address, "updateRoyaltyRate", Constant.COMMON_RATE_MAX_FRACTION.add(1)]
+            );
+            const signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(mortgageToken.updateRoyaltyRate(
+                Constant.COMMON_RATE_MAX_FRACTION.add(1),
+                signatures
+            )).to.be.revertedWithCustomError(mortgageToken, 'InvalidRate');
+        });
     });
 
-    // TODO: Andy
     describe('14.6. updateFeeRate(uint256, bytes[])', async () => {
+        it('14.6.1. updateFeeRate successfully with valid signatures', async () => {
+            const { mortgageToken, admin, admins } = await beforeMortgageTokenTest({});
 
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string", "uint256"],
+                [mortgageToken.address, "updateFeeRate", ethers.utils.parseEther('0.2')]
+            );
+
+            const signatures = await getSignatures(message, admins, await admin.nonce());
+
+            const tx = await mortgageToken.updateFeeRate(ethers.utils.parseEther('0.2'), signatures);
+            await tx.wait();
+
+            await expect(tx).to
+                .emit(mortgageToken, 'FeeRateUpdate')
+                .withArgs(ethers.utils.parseEther('0.2'));
+
+            const feeRate = await mortgageToken.getFeeRate();
+            expect(feeRate.value).to.equal(ethers.utils.parseEther('0.2'));
+            expect(feeRate.decimals).to.equal(Constant.COMMON_RATE_DECIMALS);
+        });
+
+        it('14.6.2. updateFeeRate unsuccessfully with invalid signatures', async () => {
+            const { mortgageToken, admin, admins } = await beforeMortgageTokenTest({});
+
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string", "uint256"],
+                [mortgageToken.address, "updateFeeRate", ethers.utils.parseEther('0.2')]
+            );
+            const invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+
+            await expect(mortgageToken.updateFeeRate(
+                ethers.utils.parseEther('0.2'),
+                invalidSignatures
+            )).to.be.revertedWithCustomError(admin, 'FailedVerification');
+        });
+
+        it('14.6.3. updateFeeRate unsuccessfully with invalid rate', async () => {
+            const { mortgageToken, admin, admins } = await beforeMortgageTokenTest({});
+
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string", "uint256"],
+                [mortgageToken.address, "updateFeeRate", Constant.COMMON_RATE_MAX_FRACTION.add(1)]
+            );
+            const signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(mortgageToken.updateFeeRate(
+                Constant.COMMON_RATE_MAX_FRACTION.add(1),
+                signatures
+            )).to.be.revertedWithCustomError(mortgageToken, 'InvalidRate');
+        });
     });
 
     describe('14.7. borrow(uint256, uint256, uint256, uint256, address, uint40)', async () => {

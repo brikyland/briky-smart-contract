@@ -552,7 +552,7 @@ describe('4. EstateForger', async () => {
             await expect(estateForger.unpause(invalidSignatures)).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('4.3.3. pause unsuccessfully when already paused', async () => {
+        it('4.3.3. unpause unsuccessfully when not paused', async () => {
             const { admin, admins, estateForger } = await beforeEstateForgerTest({
                 pause: true,
             });

@@ -331,14 +331,100 @@ describe('5. EstateMarketplace', async () => {
         });
     });
 
-    // TODO: Andy
     describe('5.2. pause(bytes[])', async () => {
+        it('5.2.1. pause successfully with valid signatures', async () => {
+            const { deployer, admin, admins, estateMarketplace } = await beforeEstateMarketplaceTest({});
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [estateMarketplace.address, "pause"]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
 
+            const tx = await estateMarketplace.pause(signatures);
+            await tx.wait();
+
+            expect(await estateMarketplace.paused()).to.equal(true);
+
+            await expect(tx).to
+                .emit(estateMarketplace, 'Paused')
+                .withArgs(deployer.address);
+        });
+
+        it('5.2.2. pause unsuccessfully with invalid signatures', async () => {
+            const { admin, admins, estateMarketplace } = await beforeEstateMarketplaceTest({});
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [estateMarketplace.address, "pause"]
+            );
+            let invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+
+            await expect(estateMarketplace.pause(invalidSignatures)).to.be.revertedWithCustomError(admin, 'FailedVerification');
+        });
+
+        it('5.2.3. pause unsuccessfully when already paused', async () => {
+            const { admin, admins, estateMarketplace } = await beforeEstateMarketplaceTest({});
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [estateMarketplace.address, "pause"]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await callTransaction(estateMarketplace.pause(signatures));
+
+            signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(estateMarketplace.pause(signatures)).to.be.revertedWith('Pausable: paused');
+        });
     });
 
-    // TODO: Andy
     describe('5.3. unpause(bytes[])', async () => {
+        it('5.3.1. unpause successfully with valid signatures', async () => {
+            const { deployer, admin, admins, estateMarketplace } = await beforeEstateMarketplaceTest({
+                pause: true,
+            });
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [estateMarketplace.address, "unpause"]
+            );
+            const signatures = await getSignatures(message, admins, await admin.nonce());
 
+            const tx = await estateMarketplace.unpause(signatures);
+            await tx.wait();
+
+            await expect(tx).to
+                .emit(estateMarketplace, 'Unpaused')
+                .withArgs(deployer.address);
+        });
+
+        it('5.3.2. unpause unsuccessfully with invalid signatures', async () => {
+            const { admin, admins, estateMarketplace } = await beforeEstateMarketplaceTest({
+                pause: true,
+            });
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [estateMarketplace.address, "unpause"]
+            );
+            const invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+
+            await expect(estateMarketplace.unpause(invalidSignatures)).to.be.revertedWithCustomError(admin, 'FailedVerification');
+        });
+
+        it('5.3.3. unpause unsuccessfully when not paused', async () => {
+            const { admin, admins, estateMarketplace } = await beforeEstateMarketplaceTest({
+                pause: true,
+            });
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [estateMarketplace.address, "unpause"]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await callTransaction(estateMarketplace.unpause(signatures));
+
+            signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(estateMarketplace.unpause(signatures)).to.be.revertedWith('Pausable: not paused');
+        });
     });
 
     describe('5.4. getOffer(uint256)', async () => {

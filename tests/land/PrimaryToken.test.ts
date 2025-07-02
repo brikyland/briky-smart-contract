@@ -171,48 +171,170 @@ describe('9. PrimaryToken', async () => {
         });
     });
 
-    // TODO: Andy
     describe('9.2. pause(bytes[])', async () => {
         it('9.2.1. pause successfully with valid signatures', async () => {
+            const { deployer, admin, admins, primaryToken } = await setupBeforeTest({});
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [primaryToken.address, "pause"]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
 
+            const tx = await primaryToken.pause(signatures);
+            await tx.wait();
+
+            expect(await primaryToken.paused()).to.equal(true);
+
+            await expect(tx).to
+                .emit(primaryToken, 'Paused')
+                .withArgs(deployer.address);
         });
 
         it('9.2.2. pause unsuccessfully with invalid signatures', async () => {
+            const { admin, admins, primaryToken } = await setupBeforeTest({});
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [primaryToken.address, "pause"]
+            );
+            let invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
 
+            await expect(primaryToken.pause(invalidSignatures)).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
         it('9.2.3. pause unsuccessfully when already paused', async () => {
+            const { admin, admins, primaryToken } = await setupBeforeTest({});
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [primaryToken.address, "pause"]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
 
+            await callTransaction(primaryToken.pause(signatures));
+
+            signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(primaryToken.pause(signatures)).to.be.revertedWith('Pausable: paused');
         });
     });
 
-    // TODO: Andy
     describe('9.3. unpause(bytes[])', async () => {
         it('9.3.1. unpause successfully with valid signatures', async () => {
+            const { deployer, admin, admins, primaryToken } = await setupBeforeTest({
+                pause: true,
+            });
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [primaryToken.address, "unpause"]
+            );
+            const signatures = await getSignatures(message, admins, await admin.nonce());
 
+            const tx = await primaryToken.unpause(signatures);
+            await tx.wait();
+
+            await expect(tx).to
+                .emit(primaryToken, 'Unpaused')
+                .withArgs(deployer.address);
         });
 
         it('9.3.2. unpause unsuccessfully with invalid signatures', async () => {
+            const { admin, admins, primaryToken } = await setupBeforeTest({
+                pause: true,
+            });
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [primaryToken.address, "unpause"]
+            );
+            const invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
 
+            await expect(primaryToken.unpause(invalidSignatures)).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
         it('9.3.3. unpause unsuccessfully when not paused', async () => {
+            const { admin, admins, primaryToken } = await setupBeforeTest({
+                pause: true,
+            });
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [primaryToken.address, "unpause"]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
 
+            await callTransaction(primaryToken.unpause(signatures));
+
+            signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(primaryToken.unpause(signatures)).to.be.revertedWith('Pausable: not paused');
         });
     });
 
-    // TODO: Andy
     describe('9.4. updateTreasury(address)', async () => {
         it('9.4.1. updateTreasury successfully', async () => {
+            const { admin, admins, primaryToken, treasury } = await setupBeforeTest();
 
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string", "address"],
+                [primaryToken.address, "updateTreasury", treasury.address]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
+
+            const tx = await primaryToken.updateTreasury(
+                treasury.address,
+                signatures,
+            );
+            await tx.wait();
+
+            await expect(tx).to
+                .emit(primaryToken, 'TreasuryUpdate')
+                .withArgs(treasury.address);
+
+            expect(await primaryToken.treasury()).to.equal(treasury.address);
         });
 
         it('9.4.2. updateTreasury unsuccessfully with invalid signatures', async () => {
+            const { admin, admins, primaryToken, treasury } = await setupBeforeTest();
 
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string", "address"],
+                [primaryToken.address, "updateTreasury", treasury.address]
+            );
+            let invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+
+            await expect(primaryToken.updateTreasury(
+                treasury.address,
+                invalidSignatures,
+            )).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
         it('9.4.3. updateTreasury unsuccessfully when already updated', async () => {
+            const { admin, admins, primaryToken, treasury } = await setupBeforeTest({
+                updateTreasury: true,
+            });
 
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string", "address"],
+                [primaryToken.address, "updateTreasury", treasury.address]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(primaryToken.updateTreasury(
+                treasury.address,
+                signatures,
+            )).to.be.revertedWithCustomError(primaryToken, 'InvalidUpdating');            
+        });
+
+        it('9.4.4. updateTreasury unsuccessfully with zero address', async () => {
+            const { admin, admins, primaryToken } = await setupBeforeTest();
+
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string", "address"],
+                [primaryToken.address, "updateTreasury", ethers.constants.AddressZero]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
+            
+            await expect(primaryToken.updateTreasury(
+                ethers.constants.AddressZero,
+                signatures,
+            )).to.be.revertedWithCustomError(primaryToken, 'InvalidUpdating');
         });
     });
 

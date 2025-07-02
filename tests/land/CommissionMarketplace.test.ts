@@ -249,14 +249,100 @@ describe('7. CommissionMarketplace', async () => {
         });
     });
 
-    // TODO: Andy
     describe('7.2. pause(bytes[])', async () => {
+        it('7.2.1. pause successfully with valid signatures', async () => {
+            const { deployer, admin, admins, commissionMarketplace } = await beforeCommissionMarketplaceTest({});
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [commissionMarketplace.address, "pause"]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
 
+            const tx = await commissionMarketplace.pause(signatures);
+            await tx.wait();
+
+            expect(await commissionMarketplace.paused()).to.equal(true);
+
+            await expect(tx).to
+                .emit(commissionMarketplace, 'Paused')
+                .withArgs(deployer.address);
+        });
+
+        it('7.2.2. pause unsuccessfully with invalid signatures', async () => {
+            const { admin, admins, commissionMarketplace } = await beforeCommissionMarketplaceTest({});
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [commissionMarketplace.address, "pause"]
+            );
+            let invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+
+            await expect(commissionMarketplace.pause(invalidSignatures)).to.be.revertedWithCustomError(admin, 'FailedVerification');
+        });
+
+        it('7.2.3. pause unsuccessfully when already paused', async () => {
+            const { admin, admins, commissionMarketplace } = await beforeCommissionMarketplaceTest({});
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [commissionMarketplace.address, "pause"]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await callTransaction(commissionMarketplace.pause(signatures));
+
+            signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(commissionMarketplace.pause(signatures)).to.be.revertedWith('Pausable: paused');
+        });
     });
 
-    // TODO: Andy
     describe('7.3. unpause(bytes[])', async () => {
+        it('7.3.1. unpause successfully with valid signatures', async () => {
+            const { deployer, admin, admins, commissionMarketplace } = await beforeCommissionMarketplaceTest({
+                pause: true,
+            });
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [commissionMarketplace.address, "unpause"]
+            );
+            const signatures = await getSignatures(message, admins, await admin.nonce());
 
+            const tx = await commissionMarketplace.unpause(signatures);
+            await tx.wait();
+
+            await expect(tx).to
+                .emit(commissionMarketplace, 'Unpaused')
+                .withArgs(deployer.address);
+        });
+
+        it('7.3.2. unpause unsuccessfully with invalid signatures', async () => {
+            const { admin, admins, commissionMarketplace } = await beforeCommissionMarketplaceTest({
+                pause: true,
+            });
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [commissionMarketplace.address, "unpause"]
+            );
+            const invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+
+            await expect(commissionMarketplace.unpause(invalidSignatures)).to.be.revertedWithCustomError(admin, 'FailedVerification');
+        });
+
+        it('7.3.3. unpause unsuccessfully when not paused', async () => {
+            const { admin, admins, commissionMarketplace } = await beforeCommissionMarketplaceTest({
+                pause: true,
+            });
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [commissionMarketplace.address, "unpause"]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await callTransaction(commissionMarketplace.unpause(signatures));
+
+            signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(commissionMarketplace.unpause(signatures)).to.be.revertedWith('Pausable: not paused');
+        });
     });
 
     describe('7.4. getOffer(uint256)', async () => {

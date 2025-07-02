@@ -218,24 +218,191 @@ describe('6. CommissionToken', async () => {
         });
     });
 
-    // TODO: Andy
     describe('6.2. pause(bytes[])', async () => {
+        it('6.2.1. pause successfully with valid signatures', async () => {
+            const { deployer, admin, admins, commissionToken } = await beforeCommissionTokenTest({});
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [commissionToken.address, "pause"]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
 
+            const tx = await commissionToken.pause(signatures);
+            await tx.wait();
+
+            expect(await commissionToken.paused()).to.equal(true);
+
+            await expect(tx).to
+                .emit(commissionToken, 'Paused')
+                .withArgs(deployer.address);
+        });
+
+        it('6.2.2. pause unsuccessfully with invalid signatures', async () => {
+            const { admin, admins, commissionToken } = await beforeCommissionTokenTest({});
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [commissionToken.address, "pause"]
+            );
+            let invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+
+            await expect(commissionToken.pause(invalidSignatures)).to.be.revertedWithCustomError(admin, 'FailedVerification');
+        });
+
+        it('6.2.3. pause unsuccessfully when already paused', async () => {
+            const { admin, admins, commissionToken } = await beforeCommissionTokenTest({});
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [commissionToken.address, "pause"]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await callTransaction(commissionToken.pause(signatures));
+
+            signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(commissionToken.pause(signatures)).to.be.revertedWith('Pausable: paused');
+        });
     });
 
-    // TODO: Andy
     describe('6.3. unpause(bytes[])', async () => {
+        it('6.3.1. unpause successfully with valid signatures', async () => {
+            const { deployer, admin, admins, commissionToken } = await beforeCommissionTokenTest({
+                pause: true,
+            });
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [commissionToken.address, "unpause"]
+            );
+            const signatures = await getSignatures(message, admins, await admin.nonce());
 
+            const tx = await commissionToken.unpause(signatures);
+            await tx.wait();
+
+            await expect(tx).to
+                .emit(commissionToken, 'Unpaused')
+                .withArgs(deployer.address);
+        });
+
+        it('6.3.2. unpause unsuccessfully with invalid signatures', async () => {
+            const { admin, admins, commissionToken } = await beforeCommissionTokenTest({
+                pause: true,
+            });
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [commissionToken.address, "unpause"]
+            );
+            const invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+
+            await expect(commissionToken.unpause(invalidSignatures)).to.be.revertedWithCustomError(admin, 'FailedVerification');
+        });
+
+        it('6.3.3. unpause unsuccessfully when not paused', async () => {
+            const { admin, admins, commissionToken } = await beforeCommissionTokenTest({
+                pause: true,
+            });
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [commissionToken.address, "unpause"]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await callTransaction(commissionToken.unpause(signatures));
+
+            signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(commissionToken.unpause(signatures)).to.be.revertedWith('Pausable: not paused');
+        });
     });
 
-    // TODO: Andy
-    describe('6.5. updateBaseURI(string, bytes[])', async () => {
+    describe('6.4. updateBaseURI(string, bytes[])', async () => {
+        it('6.4.1. updateBaseURI successfully with valid signatures', async () => {
+            const { commissionToken, admin, admins } = await beforeCommissionTokenTest({});
 
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string", "string"],
+                [commissionToken.address, "updateBaseURI", "NewBaseURI:"]
+            );
+            const signatures = await getSignatures(message, admins, await admin.nonce());
+
+            const tx = await commissionToken.updateBaseURI("NewBaseURI:", signatures);
+            await tx.wait();
+
+            await expect(tx).to
+                .emit(commissionToken, 'BaseURIUpdate')
+                .withArgs("NewBaseURI:");
+
+            expect(await commissionToken.tokenURI(1)).to.equal("NewBaseURI:");
+            expect(await commissionToken.tokenURI(2)).to.equal("NewBaseURI:");
+        });
+
+        it('6.4.2. updateBaseURI unsuccessfully with invalid signatures', async () => {
+            const { commissionToken, admin, admins } = await beforeCommissionTokenTest({});
+
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string", "string"],
+                [commissionToken.address, "updateBaseURI", "NewBaseURI:"]
+            );
+            const invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+
+            await expect(commissionToken.updateBaseURI(
+                "NewBaseURI:",
+                invalidSignatures
+            )).to.be.revertedWithCustomError(admin, 'FailedVerification');
+        });
     });
 
-    // TODO: Andy
-    describe('6.4. updateRoyaltyRate(uint256, bytes[])', async () => {
+    describe('6.5. updateRoyaltyRate(uint256, bytes[])', async () => {
+        it('6.5.1. updateRoyaltyRate successfully with valid signatures', async () => {
+            const { commissionToken, admin, admins } = await beforeCommissionTokenTest({});
 
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string", "uint256"],
+                [commissionToken.address, "updateRoyaltyRate", ethers.utils.parseEther('0.2')]
+            );
+
+            const signatures = await getSignatures(message, admins, await admin.nonce());
+
+            const tx = await commissionToken.updateRoyaltyRate(ethers.utils.parseEther('0.2'), signatures);
+            await tx.wait();
+
+            await expect(tx).to
+                .emit(commissionToken, 'RoyaltyRateUpdate')
+                .withArgs(ethers.utils.parseEther('0.2'));
+
+            const royaltyRate = await commissionToken.getRoyaltyRate();
+            expect(royaltyRate.value).to.equal(ethers.utils.parseEther('0.2'));
+            expect(royaltyRate.decimals).to.equal(Constant.COMMON_RATE_DECIMALS);
+        });
+
+        it('6.5.2. updateRoyaltyRate unsuccessfully with invalid signatures', async () => {
+            const { commissionToken, admin, admins } = await beforeCommissionTokenTest({});
+
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string", "uint256"],
+                [commissionToken.address, "updateRoyaltyRate", ethers.utils.parseEther('0.2')]
+            );
+            const invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+
+            await expect(commissionToken.updateRoyaltyRate(
+                ethers.utils.parseEther('0.2'),
+                invalidSignatures
+            )).to.be.revertedWithCustomError(admin, 'FailedVerification');
+        });
+
+        it('6.5.3. updateRoyaltyRate unsuccessfully with invalid rate', async () => {
+            const { commissionToken, admin, admins } = await beforeCommissionTokenTest({});
+
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string", "uint256"],
+                [commissionToken.address, "updateRoyaltyRate", Constant.COMMON_RATE_MAX_FRACTION.add(1)]
+            );
+            const signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(commissionToken.updateRoyaltyRate(
+                Constant.COMMON_RATE_MAX_FRACTION.add(1),
+                signatures
+            )).to.be.revertedWithCustomError(commissionToken, 'InvalidRate');
+        });
     });
 
     describe('6.6. commissionInfo(uint256, uint256)', async() => {

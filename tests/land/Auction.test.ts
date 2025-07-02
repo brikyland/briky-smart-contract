@@ -244,16 +244,101 @@ describe('13. Auction', async () => {
         });
     });
 
-    // TODO: Andy
     describe('13.2. pause(bytes[])', async () => {
+        it('13.2.1. pause successfully with valid signatures', async () => {
+            const { deployer, admin, admins, auction } = await setupBeforeTest({});
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [auction.address, "pause"]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
 
+            const tx = await auction.pause(signatures);
+            await tx.wait();
+
+            expect(await auction.paused()).to.equal(true);
+
+            await expect(tx).to
+                .emit(auction, 'Paused')
+                .withArgs(deployer.address);
+        });
+
+        it('13.2.2. pause unsuccessfully with invalid signatures', async () => {
+            const { admin, admins, auction } = await setupBeforeTest({});
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [auction.address, "pause"]
+            );
+            let invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+
+            await expect(auction.pause(invalidSignatures)).to.be.revertedWithCustomError(admin, 'FailedVerification');
+        });
+
+        it('13.2.3. pause unsuccessfully when already paused', async () => {
+            const { admin, admins, auction } = await setupBeforeTest({});
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [auction.address, "pause"]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await callTransaction(auction.pause(signatures));
+
+            signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(auction.pause(signatures)).to.be.revertedWith('Pausable: paused');
+        });
     });
 
-    // TODO: Andy
     describe('13.3. unpause(bytes[])', async () => {
+        it('13.3.1. unpause successfully with valid signatures', async () => {
+            const { deployer, admin, admins, auction } = await setupBeforeTest({
+                pause: true,
+            });
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [auction.address, "unpause"]
+            );
+            const signatures = await getSignatures(message, admins, await admin.nonce());
 
+            const tx = await auction.unpause(signatures);
+            await tx.wait();
+
+            await expect(tx).to
+                .emit(auction, 'Unpaused')
+                .withArgs(deployer.address);
+        });
+
+        it('13.3.2. unpause unsuccessfully with invalid signatures', async () => {
+            const { admin, admins, auction } = await setupBeforeTest({
+                pause: true,
+            });
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [auction.address, "unpause"]
+            );
+            const invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+
+            await expect(auction.unpause(invalidSignatures)).to.be.revertedWithCustomError(admin, 'FailedVerification');
+        });
+
+        it('13.3.3. unpause unsuccessfully when not paused', async () => {
+            const { admin, admins, auction } = await setupBeforeTest({
+                pause: true,
+            });
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [auction.address, "unpause"]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await callTransaction(auction.unpause(signatures));
+
+            signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(auction.unpause(signatures)).to.be.revertedWith('Pausable: not paused');
+        });
     });
-
 
     describe('13.4. updateStakeTokens(address, address, address, bytes[])', async () => {
         it('13.4.1. updateStakeTokens successfully', async () => {

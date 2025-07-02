@@ -266,24 +266,211 @@ describe('10. StakeToken', async () => {
         });
     });
 
-    // TODO: Andy
     describe('10.2. pause(bytes[])', async () => {
+        it('10.2.1. pause successfully with valid signatures', async () => {
+            const { deployer, admin, admins, stakeToken1 } = await setupBeforeTest({});
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [stakeToken1.address, "pause"]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
 
+            const tx = await stakeToken1.pause(signatures);
+            await tx.wait();
+
+            expect(await stakeToken1.paused()).to.equal(true);
+
+            await expect(tx).to
+                .emit(stakeToken1, 'Paused')
+                .withArgs(deployer.address);
+        });
+
+        it('10.2.2. pause unsuccessfully with invalid signatures', async () => {
+            const { admin, admins, stakeToken1 } = await setupBeforeTest({});
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [stakeToken1.address, "pause"]
+            );
+            let invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+
+            await expect(stakeToken1.pause(invalidSignatures)).to.be.revertedWithCustomError(admin, 'FailedVerification');
+        });
+
+        it('10.2.3. pause unsuccessfully when already paused', async () => {
+            const { admin, admins, stakeToken1 } = await setupBeforeTest({});
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [stakeToken1.address, "pause"]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await callTransaction(stakeToken1.pause(signatures));
+
+            signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(stakeToken1.pause(signatures)).to.be.revertedWith('Pausable: paused');
+        });
     });
 
-    // TODO: Andy
     describe('10.3. unpause(bytes[])', async () => {
+        it('10.3.1. unpause successfully with valid signatures', async () => {
+            const { deployer, admin, admins, stakeToken1 } = await setupBeforeTest({
+                pause: true,
+            });
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [stakeToken1.address, "unpause"]
+            );
+            const signatures = await getSignatures(message, admins, await admin.nonce());
 
+            const tx = await stakeToken1.unpause(signatures);
+            await tx.wait();
+
+            await expect(tx).to
+                .emit(stakeToken1, 'Unpaused')
+                .withArgs(deployer.address);
+        });
+
+        it('10.3.2. unpause unsuccessfully with invalid signatures', async () => {
+            const { admin, admins, stakeToken1 } = await setupBeforeTest({
+                pause: true,
+            });
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [stakeToken1.address, "unpause"]
+            );
+            const invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+
+            await expect(stakeToken1.unpause(invalidSignatures)).to.be.revertedWithCustomError(admin, 'FailedVerification');
+        });
+
+        it('10.3.3. unpause unsuccessfully when not paused', async () => {
+            const { admin, admins, stakeToken1 } = await setupBeforeTest({
+                pause: true,
+            });
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [stakeToken1.address, "unpause"]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await callTransaction(stakeToken1.unpause(signatures));
+
+            signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(stakeToken1.unpause(signatures)).to.be.revertedWith('Pausable: not paused');
+        });
     });
 
-    // TODO: Andy
     describe('10.4. initializeRewarding(uint256, address, bytes[])', async () => {
+        it('10.4.1. initialize rewarding successfully', async () => {
+            const { deployer, admin, admins, stakeToken1, stakeToken2 } = await setupBeforeTest();
 
+            let timestamp = await time.latest() + 100;
+
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string", "uint256", "address"],
+                [stakeToken1.address, "initializeRewarding", timestamp, stakeToken2.address]
+            );
+            const signatures = await getSignatures(message, admins, await admin.nonce());
+
+            const tx = await stakeToken1.initializeRewarding(timestamp, stakeToken2.address, signatures);
+            await tx.wait();
+
+            expect(await stakeToken1.lastRewardFetch()).to.equal(timestamp);
+            expect(await stakeToken1.successor()).to.equal(stakeToken2.address); 
+        });
+
+        it('10.4.2. initialize rewarding unsuccessfully with invalid signatures', async () => {
+            const { admin, admins, stakeToken1, stakeToken2 } = await setupBeforeTest();
+
+            let timestamp = await time.latest() + 100;
+
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string", "uint256", "address"],
+                [stakeToken1.address, "initializeRewarding", timestamp, stakeToken2.address]
+            );
+            const invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+            
+            await expect(stakeToken1.initializeRewarding(
+                timestamp,
+                stakeToken2.address,
+                invalidSignatures,
+            )).to.be.revertedWithCustomError(admin, 'FailedVerification');
+        });
+
+        it('10.4.3. initialize rewarding unsuccessfully when already initialized', async () => {
+            const { admin, admins, stakeToken1, stakeToken2 } = await setupBeforeTest({
+                initializeRewarding: true,
+            });
+
+            let timestamp = await time.latest() + 100;
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string", "uint256", "address"],
+                [stakeToken1.address, "initializeRewarding", timestamp, stakeToken2.address]
+            );
+            const signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(stakeToken1.initializeRewarding(
+                timestamp,
+                stakeToken2.address,
+                signatures,
+            )).to.be.revertedWithCustomError(stakeToken1, 'AlreadyStartedRewarding');
+        });
     });
 
-    // TODO: Andy
     describe('10.5. updateFeeRate(uint256, bytes[])', async () => {
+        it('10.5.1. updateFeeRate successfully with valid signatures', async () => {
+            const { admin, admins, stakeToken1 } = await setupBeforeTest();
 
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string", "uint256"],
+                [stakeToken1.address, "updateFeeRate", ethers.utils.parseEther('0.2')]
+            );
+
+            const signatures = await getSignatures(message, admins, await admin.nonce());
+
+            const tx = await stakeToken1.updateFeeRate(ethers.utils.parseEther('0.2'), signatures);
+            await tx.wait();
+
+            await expect(tx).to
+                .emit(stakeToken1, 'FeeRateUpdate')
+                .withArgs(ethers.utils.parseEther('0.2'));
+
+            const feeRate = await stakeToken1.getFeeRate();
+            expect(feeRate.value).to.equal(ethers.utils.parseEther('0.2'));
+            expect(feeRate.decimals).to.equal(Constant.COMMON_RATE_DECIMALS);
+        });
+
+        it('10.5.2. updateFeeRate unsuccessfully with invalid signatures', async () => {
+            const { admin, admins, stakeToken1 } = await setupBeforeTest();
+
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string", "uint256"],
+                [stakeToken1.address, "updateFeeRate", ethers.utils.parseEther('0.2')]
+            );
+            const invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+
+            await expect(stakeToken1.updateFeeRate(
+                ethers.utils.parseEther('0.2'),
+                invalidSignatures
+            )).to.be.revertedWithCustomError(admin, 'FailedVerification');
+        });
+
+        it('10.5.3. updateFeeRate unsuccessfully with invalid rate', async () => {
+            const { admin, admins, stakeToken1 } = await setupBeforeTest();
+            
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string", "uint256"],
+                [stakeToken1.address, "updateFeeRate", Constant.COMMON_RATE_MAX_FRACTION.add(1)]
+            );
+            const signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(stakeToken1.updateFeeRate(
+                Constant.COMMON_RATE_MAX_FRACTION.add(1),
+                signatures
+            )).to.be.revertedWithCustomError(stakeToken1, 'InvalidRate');
+        });
     });
 
     describe('10.6. fetchReward()', async () => {

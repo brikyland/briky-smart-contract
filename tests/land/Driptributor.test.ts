@@ -236,14 +236,100 @@ describe('12. Driptributor', async () => {
         });
     });
 
-    // TODO: Andy
     describe('12.2. pause(bytes[])', async () => {
+        it('12.2.1. pause successfully with valid signatures', async () => {
+            const { deployer, admin, admins, driptributor } = await setupBeforeTest({});
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [driptributor.address, "pause"]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
 
+            const tx = await driptributor.pause(signatures);
+            await tx.wait();
+
+            expect(await driptributor.paused()).to.equal(true);
+
+            await expect(tx).to
+                .emit(driptributor, 'Paused')
+                .withArgs(deployer.address);
+        });
+
+        it('12.2.2. pause unsuccessfully with invalid signatures', async () => {
+            const { admin, admins, driptributor } = await setupBeforeTest({});
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [driptributor.address, "pause"]
+            );
+            let invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+
+            await expect(driptributor.pause(invalidSignatures)).to.be.revertedWithCustomError(admin, 'FailedVerification');
+        });
+
+        it('12.2.3. pause unsuccessfully when already paused', async () => {
+            const { admin, admins, driptributor } = await setupBeforeTest({});
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [driptributor.address, "pause"]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await callTransaction(driptributor.pause(signatures));
+
+            signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(driptributor.pause(signatures)).to.be.revertedWith('Pausable: paused');
+        });
     });
 
-    // TODO: Andy
     describe('12.3. unpause(bytes[])', async () => {
+        it('12.3.1. unpause successfully with valid signatures', async () => {
+            const { deployer, admin, admins, driptributor } = await setupBeforeTest({
+                pause: true,
+            });
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [driptributor.address, "unpause"]
+            );
+            const signatures = await getSignatures(message, admins, await admin.nonce());
 
+            const tx = await driptributor.unpause(signatures);
+            await tx.wait();
+
+            await expect(tx).to
+                .emit(driptributor, 'Unpaused')
+                .withArgs(deployer.address);
+        });
+
+        it('12.3.2. unpause unsuccessfully with invalid signatures', async () => {
+            const { admin, admins, driptributor } = await setupBeforeTest({
+                pause: true,
+            });
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [driptributor.address, "unpause"]
+            );
+            const invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+
+            await expect(driptributor.unpause(invalidSignatures)).to.be.revertedWithCustomError(admin, 'FailedVerification');
+        });
+
+        it('12.3.3. unpause unsuccessfully when not paused', async () => {
+            const { admin, admins, driptributor } = await setupBeforeTest({
+                pause: true,
+            });
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [driptributor.address, "unpause"]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await callTransaction(driptributor.unpause(signatures));
+
+            signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(driptributor.unpause(signatures)).to.be.revertedWith('Pausable: not paused');
+        });
     });
 
     describe('12.4. updateStakeTokens(address, address, address, bytes[])', async () => {
