@@ -5,7 +5,7 @@ import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interf
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 contract MockPriceFeed is AggregatorV3Interface, Initializable {
-    uint256 private _answer;
+    int256 private _answer;
     uint8 private _decimals;
     uint80 private _roundId;
     uint256 private _startedAt;
@@ -13,7 +13,7 @@ contract MockPriceFeed is AggregatorV3Interface, Initializable {
     uint80 private _answeredInRound;
 
     function initialize(
-        uint256 answer,
+        int256 answer,
         uint8 decimals_
     ) public initializer {
         _answer = answer;
@@ -79,7 +79,7 @@ contract MockPriceFeed is AggregatorV3Interface, Initializable {
     }
 
     // Admin functions to update values
-    function updateAnswer(uint256 newAnswer) external {
+    function updateAnswer(int256 newAnswer) external {
         _answer = newAnswer;
         _updatedAt = block.timestamp;
     }
@@ -88,7 +88,7 @@ contract MockPriceFeed is AggregatorV3Interface, Initializable {
         _decimals = newDecimals;
     }
 
-    function updateData(uint256 newAnswer, uint8 newDecimals) external {
+    function updateData(int256 newAnswer, uint8 newDecimals) external {
         _answer = newAnswer;
         _decimals = newDecimals;
     }

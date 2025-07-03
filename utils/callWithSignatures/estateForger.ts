@@ -64,40 +64,6 @@ export async function callEstateForger_UpdateBaseUnitPriceRange(
     await callTransaction(estateForger.updateBaseUnitPriceRange(baseMinUnitPrice, baseMaxUnitPrice, signatures));
 }
 
-export async function callEstateForger_UpdatePriceFeeds(
-    estateForger: EstateForger | MockContract<EstateForger>,
-    admins: any[],
-    currencyAddresses: string[],
-    priceFeeds: string[],
-    heartbeats: number[],
-    nonce: BigNumberish
-) {
-    const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "address[]", "address[]", "uint40[]"],
-        [estateForger.address, "updatePriceFeeds", currencyAddresses, priceFeeds, heartbeats]
-    );
-    const signatures = await getSignatures(message, admins, nonce);
-
-    await callTransaction(estateForger.updatePriceFeeds(currencyAddresses, priceFeeds, heartbeats, signatures));
-}
-
-export async function callEstateForger_UpdateDefaultRates(
-    estateForger: EstateForger | MockContract<EstateForger>,
-    admins: any[],
-    currencyAddresses: string[],
-    values: number[],
-    decimals: number[],
-    nonce: BigNumberish
-) {
-    const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "address[]", "uint256[]", "uint8[]"],
-        [estateForger.address, "updateDefaultRates", currencyAddresses, values, decimals]
-    );
-    const signatures = await getSignatures(message, admins, nonce);
-
-    await callTransaction(estateForger.updateDefaultRates(currencyAddresses, values, decimals, signatures));
-}
-
 export async function callEstateForger_Whitelist(
     estateForger: EstateForger | MockContract<EstateForger>,
     admins: any[],

@@ -12,6 +12,8 @@ import {IAdmin} from "../common/interfaces/IAdmin.sol";
 
 import {PriceWatcherStorage} from "./storages/PriceWatcherStorage.sol";
 
+import "hardhat/console.sol";
+
 contract PriceWatcher is
 PriceWatcherStorage,
 Initializable {
@@ -125,7 +127,7 @@ Initializable {
         Rate memory rate;
         if (priceFeed.feed == address(0)) {
             rate = defaultRates[_currency];
-            if (rate.value == 0)revert MissingCurrencyRate();
+            if (rate.value == 0) revert MissingCurrencyRate();
         } else {
             (
                 ,

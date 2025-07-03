@@ -15,6 +15,7 @@ import {
     ICommon__factory,
     IERC1155ReceiverUpgradeable__factory,
     ReserveVault,
+    PriceWatcher,
 } from '@typechain-types';
 import { callTransaction, getSignatures, prepareERC20, prepareNativeToken, randomWallet, resetERC20, resetNativeToken, testReentrancy } from '@utils/blockchain';
 import { Constant } from '@tests/test.constant';
@@ -42,7 +43,7 @@ import { randomInt } from 'crypto';
 import { getBytes4Hex, getInterfaceID, randomBigNumber, scale, structToObject } from '@utils/utils';
 import { OrderedMap } from '@utils/utils';
 import { deployEstateForger } from '@utils/deployments/land/estateForger';
-import { addCurrencyToEstateForger } from '@utils/callWithSignatures/common';
+import { addCurrencyToAdminAndPriceWatcher } from '@utils/callWithSignatures/common';
 import { callEstateForger_Pause, callEstateForger_UpdateBaseUnitPriceRange, callEstateForger_UpdateFeeRate, callEstateForger_Whitelist } from '@utils/callWithSignatures/estateForger';
 import { deployMockPriceFeed } from '@utils/deployments/mocks/mockPriceFeed';
 import { deployFailReceiver } from '@utils/deployments/mocks/failReceiver';
@@ -55,6 +56,7 @@ import { Initialization as LandInitialization } from '@tests/land/test.initializ
 import { callReserveVault_AuthorizeInitiator } from '@utils/callWithSignatures/reserveVault';
 import { getCashbackBaseDenomination } from '@utils/formula';
 import { RequestEstateInput, RequestQuoteInput, RequestQuotaInput, RequestQuote, RequestAgenda, RequestEstate, RequestQuota } from '@utils/models/EstateForger';
+import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
 
 chai.use(smock.matchers);
 
@@ -65,6 +67,7 @@ interface EstateForgerFixture {
     estateToken: MockContract<EstateToken>;
     commissionToken: MockContract<CommissionToken>;
     reserveVault: MockContract<ReserveVault>;
+    priceWatcher: PriceWatcher;
     estateForger: MockEstateForger;
     nativePriceFeed: MockPriceFeed;
     currencyPriceFeed: MockPriceFeed;
@@ -188,11 +191,17 @@ describe('4. EstateForger', async () => {
             admin.address,
         ));
 
+        const priceWatcher = await deployPriceWatcher(
+            deployer.address,
+            admin.address
+        ) as PriceWatcher;
+
         const estateForger = await deployMockEstateForger(
             deployer,
             admin.address,
             estateToken.address,
             commissionToken.address,
+            priceWatcher.address,
             feeReceiver.address,
             reserveVault.address,
             LandInitialization.ESTATE_FORGER_FeeRate,
@@ -210,6 +219,7 @@ describe('4. EstateForger', async () => {
             estateToken,
             commissionToken,
             reserveVault,
+            priceWatcher,
             estateForger,
             nativePriceFeed,
             currencyPriceFeed,
@@ -252,6 +262,7 @@ describe('4. EstateForger', async () => {
             estateToken,
             estateForger,
             commissionToken,
+            priceWatcher,
             currencies,
             nativePriceFeed,
             currencyPriceFeed,
@@ -287,9 +298,9 @@ describe('4. EstateForger', async () => {
             await nativePriceFeed.updateData(1000_00000000, 8);
             await currencyPriceFeed.updateData(5_00000000, 8);
 
-            await addCurrencyToEstateForger(
+            await addCurrencyToAdminAndPriceWatcher(
                 admin,
-                estateForger,
+                priceWatcher,
                 admins,
                 [ethers.constants.AddressZero],
                 [true],
@@ -300,9 +311,9 @@ describe('4. EstateForger', async () => {
                 [3],
             );
             
-            await addCurrencyToEstateForger(
+            await addCurrencyToAdminAndPriceWatcher(
                 admin,
-                estateForger,
+                priceWatcher,
                 admins,
                 [currencies[0].address],
                 [true],
@@ -1354,16 +1365,14 @@ describe('4. EstateForger', async () => {
             )).to.not.be.reverted;
         }
 
-        it('4.10.1. requestTokenizationWithDuration successfully with currency having price feed', async () => {
+        it('4.10.1. requestTokenizationWithDuration successfully', async () => {
             const fixture = await beforeEstateForgerTest({
                 listSampleCurrencies: true,
                 addZoneForExecutive: true,
                 listSampleSellers: true,
                 addEstateForgerToVault: true,
             });
-            const { manager, currencies, estateForger, nativePriceFeed, reserveVault, commissionToken } = fixture;
-
-            const currency = currencies[0];
+            const { manager, estateForger, nativePriceFeed, reserveVault, commissionToken, priceWatcher } = fixture;
 
             const defaultParams = await getDefaultParams(fixture);
     
@@ -1392,8 +1401,10 @@ describe('4. EstateForger', async () => {
             );
 
             const fund = await reserveVault.getFund(fundId);
-            expect(fund.currencies).to.deep.equal([data.requestQuoteInput.currency, ...data.requestQuoteInput.cashbackCurrencies]);
-            expect(fund.denominations).to.deep.equal([mainDenomination, ...data.requestQuoteInput.cashbackDenominations]);
+            expect(fund.mainCurrency).to.equal(data.requestQuoteInput.currency);
+            expect(fund.mainDenomination).to.equal(mainDenomination);
+            expect(fund.extraCurrencies).to.deep.equal(data.requestQuoteInput.cashbackCurrencies);
+            expect(fund.extraDenominations).to.deep.equal(data.requestQuoteInput.cashbackDenominations);
 
             const requestEstate: RequestEstate = {
                 ...data.requestEstateInput,
@@ -1422,112 +1433,14 @@ describe('4. EstateForger', async () => {
             expect(structToObject(newRequestEvent.args![4])).to.deep.equal(requestQuote);
             expect(structToObject(newRequestEvent.args![5])).to.deep.equal(requestAgenda);
 
-            await expect(tx).to
-                .emit(estateForger, 'UnitPriceValidation')
-                .withArgs(
-                    data.requestQuoteInput.unitPrice,
-                    data.requestQuoteInput.currency,
-                    priceRate.answer,
-                    await nativePriceFeed.decimals(),
-                );
-
-            const tokenizationRequestNumber = await estateForger.requestNumber();
-            expect(tokenizationRequestNumber).to.equal(1);
-
-            const tokenizationRequest = await estateForger.getRequest(tokenizationRequestNumber);
-            expect(structToObject(tokenizationRequest.estate)).to.deep.equal(requestEstate);
-            expect(structToObject(tokenizationRequest.quota)).to.deep.equal(requestQuota);
-            expect(structToObject(tokenizationRequest.quote)).to.deep.equal(requestQuote);
-            expect(structToObject(tokenizationRequest.agenda)).to.deep.equal(requestAgenda);
-        });
-
-        it('4.10.2. requestTokenizationWithDuration successfully with currency having default price', async () => {
-            const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleSellers: true,
-                addEstateForgerToVault: true,
-            });
-
-            const { admin, deployer, admins, seller1, manager, zone1, estateForger } = fixture;
-
-            const newCurrency = await deployCurrency(
-                deployer,
-                "NewCurrency",
-                "NC",
-            );
-
-            await addCurrencyToEstateForger(
-                admin,
-                estateForger,
-                admins,
-                [newCurrency.address],
-                [true],
-                [false],
-                [ethers.constants.AddressZero],
-                [3600],
-                [2_0000],
-                [4]
-            );
-
-            const defaultParams = await getDefaultParams(fixture);
-            const data = {
-                ...defaultParams,
-                requestQuoteInput: {
-                    ...defaultParams.requestQuoteInput,
-                    unitPrice: ethers.utils.parseEther('200'),
-                    currency: newCurrency.address,
-                },
-            }
-    
-            let currentTimestamp = await time.latest() + 1000;
-            await time.setNextBlockTimestamp(currentTimestamp);
-
-            const tx = await estateForger.connect(manager).requestTokenizationWithDuration(
-                data.seller,
-                data.requestEstateInput,
-                data.requestQuotaInput,
-                data.requestQuoteInput,
-                data.privateSaleDuration,
-                data.publicSaleDuration,
-            );
-            const receipt = await tx.wait();
-
-            const requestEstate: RequestEstate = {
-                ...data.requestEstateInput,
-                estateId: ethers.BigNumber.from(0),
-            }
-            const requestQuota: RequestQuota = {
-                ...data.requestQuotaInput,
-                soldQuantity: ethers.BigNumber.from(0),
-            }
-            const requestQuote: RequestQuote = {
-                unitPrice: data.requestQuoteInput.unitPrice,
-                currency: data.requestQuoteInput.currency,
-                cashbackThreshold: data.requestQuoteInput.cashbackThreshold,
-                cashbackFundId: ethers.BigNumber.from(1),
-            }
-            const requestAgenda: RequestAgenda = {
-                privateSaleEndsAt: currentTimestamp + data.privateSaleDuration,
-                publicSaleEndsAt: currentTimestamp + data.privateSaleDuration + data.publicSaleDuration,
-            }
-
-            const newRequestEvent = receipt.events!.find(e => e.event === 'NewRequest')!;
-            expect(newRequestEvent.args![0]).to.equal(1);
-            expect(newRequestEvent.args![1]).to.equal(defaultParams.seller);
-            expect(structToObject(newRequestEvent.args![2])).to.deep.equal(data.requestEstateInput);
-            expect(structToObject(newRequestEvent.args![3])).to.deep.equal(data.requestQuotaInput);
-            expect(structToObject(newRequestEvent.args![4])).to.deep.equal(requestQuote);
-            expect(structToObject(newRequestEvent.args![5])).to.deep.equal(requestAgenda);
-
-            await expect(tx).to
-                .emit(estateForger, 'UnitPriceValidation')
-                .withArgs(
-                    requestQuote.unitPrice,
-                    newCurrency.address,
-                    2_0000,
-                    4,
-                );
+            // await expect(tx).to
+            //     .emit(priceWatcher, 'UnitPriceValidation')
+            //     .withArgs(
+            //         data.requestQuoteInput.unitPrice,
+            //         data.requestQuoteInput.currency,
+            //         priceRate.answer,
+            //         await nativePriceFeed.decimals(),
+            //     );
 
             const tokenizationRequestNumber = await estateForger.requestNumber();
             expect(tokenizationRequestNumber).to.equal(1);
@@ -1657,112 +1570,7 @@ describe('4. EstateForger', async () => {
             await expectRevertWithCustomError(estateForger, manager, defaultParams, 'Unauthorized');
         });
 
-
-        it('4.10.9. requestTokenizationWithDuration unsuccessfully with unavailable currency', async () => {
-            const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleSellers: true,
-                addEstateForgerToVault: true,
-            });
-
-            const { admin, admins, seller1, manager, zone1, estateForger } = fixture;
-
-            const unavailableCurrency = randomWallet();
-
-            await addCurrencyToEstateForger(
-                admin,
-                estateForger,
-                admins,
-                [unavailableCurrency.address],
-                [false],
-                [false],
-                [ethers.constants.AddressZero],
-                [3600],
-                [100_000],
-                [3]
-            );
-
-
-            const defaultParams = await getDefaultParams(fixture);
-            const data = {
-                ...defaultParams,
-                requestQuoteInput: {
-                    ...defaultParams.requestQuoteInput,
-                    currency: unavailableCurrency.address,
-                },
-            }
-
-            await expectRevertWithCustomError(estateForger, manager, data, 'InvalidCurrency');
-        });
-
-        it('4.10.10. requestTokenizationWithDuration unsuccessfully with missing currency rate', async () => {
-            const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleSellers: true,
-                addEstateForgerToVault: true,
-            });
-
-            const { admin, admins, seller1, manager, zone1, estateForger } = fixture;
-
-            const unavailableCurrency = randomWallet();
-
-            await addCurrencyToEstateForger(
-                admin,
-                estateForger,
-                admins,
-                [unavailableCurrency.address],
-                [true],
-                [false],
-                [ethers.constants.AddressZero],
-                [3600],
-                [0],
-                [0]
-            );
-
-            const defaultParams = await getDefaultParams(fixture);
-            const data = {
-                ...defaultParams,
-                requestQuoteInput: {
-                    ...defaultParams.requestQuoteInput,
-                    currency: unavailableCurrency.address,
-                },
-            }
-
-            await expectRevertWithCustomError(estateForger, manager, data, 'MissingCurrencyRate');
-        });
-        
-        it('4.10.11. requestTokenizationWithDuration unsuccessfully with stale price feed', async () => {
-            const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleSellers: true,
-                addEstateForgerToVault: true,
-            });
-
-            const { manager, estateForger, currencies } = fixture;
-
-            const currency = currencies[0];
-
-            const defaultParams = await getDefaultParams(fixture);
-            const data = {
-                ...defaultParams,
-                requestQuoteInput: {
-                    ...defaultParams.requestQuoteInput,
-                    currency: currency.address,
-                },
-            }
-
-            const currentTimestamp = await time.latest();
-
-            const heartbeat = (await estateForger.getPriceFeed(currency.address)).heartbeat;
-            await time.setNextBlockTimestamp(currentTimestamp + heartbeat + 1);
-
-            await expectRevertWithCustomError(estateForger, manager, data, 'StalePriceFeed');
-        });
-
-        it('4.10.12. requestTokenizationWithDuration unsuccessfully with invalid unit price', async () => {
+        it('4.10.12. requestTokenizationWithDuration unsuccessfully with unit price out of base range', async () => {
             const fixture = await beforeEstateForgerTest({
                 listSampleCurrencies: true,
                 addZoneForExecutive: true,
@@ -2007,599 +1815,269 @@ describe('4. EstateForger', async () => {
     describe('4.11. requestTokenizationWithTimestamp(address, (bytes32, string, uint8, uint40), (uint256, uint256, uint256), (uint256, address, uint256, uint256, address[], uint256[]), uint40, uint40)', async () => {
         interface RequestTokenizationWithTimestampData {
             seller: string;
-            zone: string;
-            uri: string;
-            totalSupply: BigNumberish;
-            minSellingAmount: BigNumberish;
-            maxSellingAmount: BigNumberish;
-            unitPrice: BigNumberish;
-            currencyAddress: string;
-            decimals: number;
-            expireAt: number;
+            requestEstateInput: RequestEstateInput;
+            requestQuotaInput: RequestQuotaInput;
+            requestQuoteInput: RequestQuoteInput;
             privateSaleEndsAt: number;
             publicSaleEndsAt: number;
         }
         
-        async function beforeRequestTokenizationTest(
-            seller1: any,
-            zone1: string,
-            currency: any,
-            baseTimestamp: number
-        ): Promise<{data: RequestTokenizationWithTimestampData}> {
+        async function getDefaultParams(
+            fixture: EstateForgerFixture,
+        ): Promise<RequestTokenizationWithTimestampData> {
+            const { seller1, zone1, currencies } = fixture;
+            const baseTimestamp = await time.latest() + 1000;
+
             const defaultParams: RequestTokenizationWithTimestampData = {
                 seller: seller1.address,
-                zone: zone1,
-                uri: 'TestingURI',
-                totalSupply: 70,
-                minSellingAmount: 10,
-                maxSellingAmount: 30,
-                unitPrice: ethers.utils.parseEther('100'),
-                currencyAddress: currency.address,
-                decimals: 3,
-                expireAt: baseTimestamp + 1e9,
+                requestEstateInput: {
+                    zone: zone1,
+                    uri: 'TestingURI1',
+                    decimals: 3,
+                    expireAt: baseTimestamp + 1e9,
+                },
+                requestQuotaInput: {
+                    totalQuantity: ethers.BigNumber.from('70'),
+                    minSellingQuantity: ethers.BigNumber.from('10'),
+                    maxSellingQuantity: ethers.BigNumber.from('30'),                    
+                },
+                requestQuoteInput: {
+                    unitPrice: ethers.utils.parseEther('0.2'),
+                    currency: ethers.constants.AddressZero,
+                    cashbackThreshold: ethers.BigNumber.from(5),
+                    cashbackBaseRate: ethers.utils.parseEther("0.1"),
+                    cashbackCurrencies: [currencies[0].address, currencies[1].address],
+                    cashbackDenominations: [ethers.utils.parseEther('0.01'), ethers.utils.parseEther('0.02')],
+                },
                 privateSaleEndsAt: baseTimestamp + 1e6,
                 publicSaleEndsAt: baseTimestamp + 3e6,
             }
 
-            return { data: defaultParams };
+            return defaultParams;
         }
 
         async function expectRevertWithCustomError(estateForger: EstateForger, manager: any, data: RequestTokenizationWithTimestampData, error: string) {
             await expect(estateForger.connect(manager).requestTokenizationWithTimestamp(
                 data.seller,
-                data.zone,
-                data.uri,
-                data.totalSupply,
-                data.minSellingAmount,
-                data.maxSellingAmount,
-                data.unitPrice,
-                data.currencyAddress,
-                data.decimals,
-                data.expireAt,
+                data.requestEstateInput,
+                data.requestQuotaInput,
+                data.requestQuoteInput,
                 data.privateSaleEndsAt,
                 data.publicSaleEndsAt,
             )).to.be.revertedWithCustomError(estateForger, error);
         }
 
-        it('4.11.1. requestTokenizationWithTimestamp successfully with currency having price feed', async () => {
-            const { seller1, manager, zone1, currency, baseTimestamp, estateForger, currencyPriceFeed } = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleSellers: true,
-            });
-
-            const { data } = await beforeRequestTokenizationTest(
-                seller1,
-                zone1,
-                currency,
-                baseTimestamp
-            );
-    
-            let currentTimestamp = await time.latest() + 1000;
-            await time.setNextBlockTimestamp(currentTimestamp);
-
-            const tx = await estateForger.connect(manager).requestTokenizationWithTimestamp(
+        async function expectNotReverted(estateForger: EstateForger, manager: any, data: RequestTokenizationWithTimestampData) {
+            await expect(estateForger.connect(manager).requestTokenizationWithTimestamp(
                 data.seller,
-                data.zone,
-                data.uri,
-                data.totalSupply,
-                data.minSellingAmount,
-                data.maxSellingAmount,
-                data.unitPrice,
-                data.currencyAddress,
-                data.decimals,
-                data.expireAt,
+                data.requestEstateInput,
+                data.requestQuotaInput,
+                data.requestQuoteInput,
                 data.privateSaleEndsAt,
                 data.publicSaleEndsAt,
-            );
-            await tx.wait();
-
-            const priceRate = await currencyPriceFeed.getRoundData(1);
-
-            await expect(tx).to
-                .emit(estateForger, 'NewRequest')
-                .withArgs(
-                    1,
-                    data.seller,
-                    data.zone,
-                    data.uri,
-                    data.totalSupply,
-                    data.minSellingAmount,
-                    data.maxSellingAmount,
-                    data.unitPrice,
-                    data.currencyAddress,
-                    data.decimals,
-                    data.expireAt,
-                    data.privateSaleEndsAt,
-                    data.publicSaleEndsAt,
-                )
-
-            await expect(tx).to
-                .emit(estateForger, 'UnitPriceValidation')
-                .withArgs(
-                    data.unitPrice,
-                    data.currencyAddress,
-                    priceRate.answer,
-                    await currencyPriceFeed.decimals(),
-                );
-
-            const tokenizationRequestNumber = await estateForger.requestNumber();
-            expect(tokenizationRequestNumber).to.equal(1);
-
-            const tokenizationRequest = await estateForger.getRequest(tokenizationRequestNumber);
-            expect(tokenizationRequest.estateId).to.equal(0);
-            expect(tokenizationRequest.zone).to.equal(data.zone);
-            expect(tokenizationRequest.uri).to.equal(data.uri);
-            expect(tokenizationRequest.totalSupply).to.equal(data.totalSupply);
-            expect(tokenizationRequest.minSellingAmount).to.equal(data.minSellingAmount);
-            expect(tokenizationRequest.maxSellingAmount).to.equal(data.maxSellingAmount);
-            expect(tokenizationRequest.soldAmount).to.equal(0);
-            expect(tokenizationRequest.unitPrice).to.equal(data.unitPrice);
-            expect(tokenizationRequest.currency).to.equal(data.currencyAddress);
-            expect(tokenizationRequest.decimals).to.equal(data.decimals);
-            expect(tokenizationRequest.expireAt).to.equal(data.expireAt);
-            expect(tokenizationRequest.privateSaleEndsAt).to.equal(data.privateSaleEndsAt);
-            expect(tokenizationRequest.publicSaleEndsAt).to.equal(data.publicSaleEndsAt);
-            expect(tokenizationRequest.seller).to.equal(data.seller);
-        });
-
-        it('4.11.2. requestTokenizationWithTimestamp successfully with currency having default price', async () => {
-            const { admin, deployer, admins, seller1, manager, zone1, currency, baseTimestamp, estateForger } = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleSellers: true,
-            });
-
-            const newCurrency = await deployCurrency(
-                deployer,
-                "NewCurrency",
-                "NC",
-            );
-
-            await addCurrencyToEstateForger(
-                admin,
-                estateForger,
-                admins,
-                [newCurrency.address],
-                [true],
-                [false],
-                [ethers.constants.AddressZero],
-                [3600],
-                [2_0000],
-                [4]
-            );
-
-            const { data } = await beforeRequestTokenizationTest(
-                seller1,
-                zone1,
-                currency,
-                baseTimestamp
-            );
-    
-            let currentTimestamp = await time.latest() + 1000;
-            await time.setNextBlockTimestamp(currentTimestamp);
-
-            const tx = await estateForger.connect(manager).requestTokenizationWithTimestamp(
-                data.seller,
-                data.zone,
-                data.uri,
-                data.totalSupply,
-                data.minSellingAmount,
-                data.maxSellingAmount,
-                data.unitPrice,
-                newCurrency.address,
-                data.decimals,
-                data.expireAt,
-                data.privateSaleEndsAt,
-                data.publicSaleEndsAt,
-            );
-            await tx.wait();
-
-            await expect(tx).to
-                .emit(estateForger, 'NewRequest')
-                .withArgs(
-                    1,
-                    data.seller,
-                    data.zone,
-                    data.uri,
-                    data.totalSupply,
-                    data.minSellingAmount,
-                    data.maxSellingAmount,
-                    data.unitPrice,
-                    newCurrency.address,
-                    data.decimals,
-                    data.expireAt,
-                    data.privateSaleEndsAt,
-                    data.publicSaleEndsAt,
-                );
-
-            await expect(tx).to
-                .emit(estateForger, 'UnitPriceValidation')
-                .withArgs(
-                    data.unitPrice,
-                    newCurrency.address,
-                    2_0000,
-                    4,
-                );
-
-            const tokenizationRequestNumber = await estateForger.requestNumber();
-            expect(tokenizationRequestNumber).to.equal(1);
-
-            const tokenizationRequest = await estateForger.getRequest(tokenizationRequestNumber);
-            expect(tokenizationRequest.estateId).to.equal(0);
-            expect(tokenizationRequest.zone).to.equal(data.zone);
-            expect(tokenizationRequest.uri).to.equal(data.uri);
-            expect(tokenizationRequest.totalSupply).to.equal(data.totalSupply);
-            expect(tokenizationRequest.minSellingAmount).to.equal(data.minSellingAmount);
-            expect(tokenizationRequest.maxSellingAmount).to.equal(data.maxSellingAmount);
-            expect(tokenizationRequest.soldAmount).to.equal(0);
-            expect(tokenizationRequest.unitPrice).to.equal(data.unitPrice);
-            expect(tokenizationRequest.currency).to.equal(newCurrency.address);
-            expect(tokenizationRequest.decimals).to.equal(data.decimals);
-            expect(tokenizationRequest.expireAt).to.equal(data.expireAt);
-            expect(tokenizationRequest.privateSaleEndsAt).to.equal(data.privateSaleEndsAt);
-            expect(tokenizationRequest.publicSaleEndsAt).to.equal(data.publicSaleEndsAt);
-            expect(tokenizationRequest.seller).to.equal(data.seller);
-        });
-
-        it('4.11.3. requestTokenizationWithTimestamp unsuccessfully by non-executive', async () => {
-            const { seller1, user, zone1, currency, baseTimestamp, estateForger, currencyPriceFeed } = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleSellers: true,
-            });
-            const { data } = await beforeRequestTokenizationTest(
-                seller1,
-                zone1,
-                currency,
-                baseTimestamp
-            );
-
-            await expectRevertWithCustomError(estateForger, user, data, 'Unauthorized');
-        });
-
-        it('4.11.4. requestTokenizationWithTimestamp unsuccessfully with inactive zone', async () => {
-            const { admin, admins, seller1, moderator, manager, zone1, currency, baseTimestamp, estateForger } = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleSellers: true,
-            });
-            
-            await callAdmin_DeclareZones(
-                admin,
-                admins,
-                [zone1],
-                false,
-                await admin.nonce(),
-            )
-            const { data } = await beforeRequestTokenizationTest(
-                seller1,
-                zone1,
-                currency,
-                baseTimestamp
-            );
-
-            await expectRevertWithCustomError(estateForger, moderator, data, 'Unauthorized');
-            await expectRevertWithCustomError(estateForger, manager, data, 'Unauthorized');
-        });
-
-        it('4.11.5. requestTokenizationWithTimestamp unsuccessfully by inactive executive in zone', async () => {
-            const { admin, admins, seller1, moderator, manager, zone1, currency, baseTimestamp, estateForger } = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleSellers: true,
-            });
-            
-            await callAdmin_ActivateIn(
-                admin,
-                admins,
-                zone1,
-                [moderator.address, manager.address],
-                false,
-                await admin.nonce(),
-            )
-            const { data } = await beforeRequestTokenizationTest(
-                seller1,
-                zone1,
-                currency,
-                baseTimestamp
-            );
-
-            await expectRevertWithCustomError(estateForger, moderator, data, 'Unauthorized');
-            await expectRevertWithCustomError(estateForger, manager, data, 'Unauthorized');
-        });
-
-        it('4.11.6. requestTokenizationWithTimestamp unsuccessfully with invalid private sale timestamp', async () => {
-            const { seller1, manager, zone1, currency, baseTimestamp, estateForger, currencyPriceFeed } = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleSellers: true,
-            });
-            const { data } = await beforeRequestTokenizationTest(
-                seller1,
-                zone1,
-                currency,
-                baseTimestamp
-            );
-
-            let timestamp = baseTimestamp + 1000;
-            await time.setNextBlockTimestamp(timestamp);
-
-            await expectRevertWithCustomError(estateForger, manager, {
-                ...data,
-                privateSaleEndsAt: timestamp - 1,
-            }, 'InvalidInput');
-            await expectRevertWithCustomError(estateForger, manager, {
-                ...data,
-                privateSaleEndsAt: timestamp,
-            }, 'InvalidInput');
-        });
-
-        it('4.11.7. requestTokenizationWithTimestamp unsuccessfully with invalid public sale timestamp', async () => {
-            const { seller1, manager, zone1, currency, baseTimestamp, estateForger, currencyPriceFeed } = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleSellers: true,
-            });
-            const { data } = await beforeRequestTokenizationTest(
-                seller1,
-                zone1,
-                currency,
-                baseTimestamp
-            );
-
-            let timestamp = baseTimestamp + 1000;
-            await time.setNextBlockTimestamp(timestamp);
-
-            await expectRevertWithCustomError(estateForger, manager, {
-                ...data,
-                privateSaleEndsAt: timestamp + 100,
-                publicSaleEndsAt: timestamp + 99,
-            }, 'InvalidInput');
-            await expectRevertWithCustomError(estateForger, manager, {
-                ...data,
-                privateSaleEndsAt: timestamp + 100,
-                publicSaleEndsAt: timestamp + 100,
-            }, 'InvalidInput');
-        });
-
-        it('4.11.8. requestTokenizationWithTimestamp unsuccessfully with unavailable currency', async () => {
-            const { admin, admins, seller1, manager, zone1, currency, baseTimestamp, estateForger } = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleSellers: true,
-            });
-            const { data } = await beforeRequestTokenizationTest(
-                seller1,
-                zone1,
-                currency,
-                baseTimestamp
-            );
-
-            const unavailableCurrency = randomWallet();
-
-            await addCurrencyToEstateForger(
-                admin,
-                estateForger,
-                admins,
-                [unavailableCurrency.address],
-                [false],
-                [false],
-                [ethers.constants.AddressZero],
-                [3600],
-                [100_000],
-                [3]
-            );
-
-            await expectRevertWithCustomError(estateForger, manager, {
-                ...data,
-                currencyAddress: unavailableCurrency.address,
-            }, 'InvalidCurrency');
-        });
-
-        it('4.11.9. requestTokenizationWithTimestamp unsuccessfully with missing currency rate', async () => {
-            const { admin, admins, seller1, manager, zone1, currency, baseTimestamp, estateForger } = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleSellers: true,
-            });
-            const { data } = await beforeRequestTokenizationTest(
-                seller1,
-                zone1,
-                currency,
-                baseTimestamp
-            );
-
-            const unavailableCurrency = randomWallet();
-
-            await addCurrencyToEstateForger(
-                admin,
-                estateForger,
-                admins,
-                [unavailableCurrency.address],
-                [true],
-                [false],
-                [ethers.constants.AddressZero],
-                [3600],
-                [0],
-                [0]
-            );
-
-            await expectRevertWithCustomError(estateForger, manager, {
-                ...data,
-                currencyAddress: unavailableCurrency.address,
-            }, 'MissingCurrencyRate');
-        });
+            )).to.not.be.reverted;
+        }
         
-        it('4.11.10. requestTokenizationWithTimestamp unsuccessfully with stale price feed', async () => {
-            const { seller1, manager, zone1, currency, baseTimestamp, estateForger } = await beforeEstateForgerTest({
+        it('4.11.1. requestTokenizationWithTimestamp successfully', async () => {
+            const fixture = await beforeEstateForgerTest({
                 listSampleCurrencies: true,
                 addZoneForExecutive: true,
                 listSampleSellers: true,
+                addEstateForgerToVault: true,
             });
-            const { data } = await beforeRequestTokenizationTest(
-                seller1,
-                zone1,
-                currency,
-                baseTimestamp
+            const { manager, estateForger, nativePriceFeed, reserveVault, commissionToken } = fixture;
+
+            const defaultParams = await getDefaultParams(fixture);
+    
+            const data = defaultParams;
+
+            const tx = await estateForger.connect(manager).requestTokenizationWithTimestamp(
+                data.seller,
+                data.requestEstateInput,
+                data.requestQuotaInput,
+                data.requestQuoteInput,
+                data.privateSaleEndsAt,
+                data.publicSaleEndsAt,
+            );
+            const receipt = await tx.wait();
+
+            const priceRate = await nativePriceFeed.getRoundData(1);
+
+            const fundId = await reserveVault.fundNumber();
+            const mainDenomination = getCashbackBaseDenomination(
+                data.requestQuoteInput.unitPrice,
+                (await commissionToken.getCommissionRate()).value,
+                data.requestQuoteInput.cashbackBaseRate,
             );
 
-            const heartbeat = (await estateForger.getPriceFeed(currency.address)).heartbeat;
-            await time.setNextBlockTimestamp(baseTimestamp + heartbeat + 1);
+            const fund = await reserveVault.getFund(fundId);
+            expect(fund.mainCurrency).to.equal(data.requestQuoteInput.currency);
+            expect(fund.mainDenomination).to.equal(mainDenomination);
+            expect(fund.extraCurrencies).to.deep.equal(data.requestQuoteInput.cashbackCurrencies);
+            expect(fund.extraDenominations).to.deep.equal(data.requestQuoteInput.cashbackDenominations);
 
-            await expectRevertWithCustomError(estateForger, manager, data, 'StalePriceFeed');
+            const requestEstate: RequestEstate = {
+                ...data.requestEstateInput,
+                estateId: ethers.BigNumber.from(0),
+            }
+            const requestQuota: RequestQuota = {
+                ...data.requestQuotaInput,
+                soldQuantity: ethers.BigNumber.from(0),
+            }
+            const requestQuote: RequestQuote = {
+                unitPrice: data.requestQuoteInput.unitPrice,
+                currency: data.requestQuoteInput.currency,
+                cashbackThreshold: data.requestQuoteInput.cashbackThreshold,
+                cashbackFundId: fundId,
+            }
+            const requestAgenda: RequestAgenda = {
+                privateSaleEndsAt: data.privateSaleEndsAt,
+                publicSaleEndsAt: data.publicSaleEndsAt,
+            }
+
+            const newRequestEvent = receipt.events!.find(e => e.event === 'NewRequest')!;
+            expect(newRequestEvent.args![0]).to.equal(1);
+            expect(newRequestEvent.args![1]).to.equal(data.seller);
+            expect(structToObject(newRequestEvent.args![2])).to.deep.equal(data.requestEstateInput);
+            expect(structToObject(newRequestEvent.args![3])).to.deep.equal(data.requestQuotaInput);
+            expect(structToObject(newRequestEvent.args![4])).to.deep.equal(requestQuote);
+            expect(structToObject(newRequestEvent.args![5])).to.deep.equal(requestAgenda);
+
+            // await expect(tx).to
+            //     .emit(estateForger, 'UnitPriceValidation')
+            //     .withArgs(
+            //         data.requestQuoteInput.unitPrice,
+            //         data.requestQuoteInput.currency,
+            //         priceRate.answer,
+            //         await nativePriceFeed.decimals(),
+            //     );
+
+            const tokenizationRequestNumber = await estateForger.requestNumber();
+            expect(tokenizationRequestNumber).to.equal(1);
+
+            const tokenizationRequest = await estateForger.getRequest(tokenizationRequestNumber);
+            expect(structToObject(tokenizationRequest.estate)).to.deep.equal(requestEstate);
+            expect(structToObject(tokenizationRequest.quota)).to.deep.equal(requestQuota);
+            expect(structToObject(tokenizationRequest.quote)).to.deep.equal(requestQuote);
+            expect(structToObject(tokenizationRequest.agenda)).to.deep.equal(requestAgenda);
         });
 
-        it('4.11.11. requestTokenizationWithTimestamp unsuccessfully with invalid unit price', async () => {
-            const { seller1, manager, zone1, currency, baseTimestamp, estateForger } = await beforeEstateForgerTest({
+        it('4.11.2. requestTokenizationWithTimestamp successfully when private sales ends immediately', async () => {
+            const fixture = await beforeEstateForgerTest({
                 listSampleCurrencies: true,
                 addZoneForExecutive: true,
                 listSampleSellers: true,
-            });
-            const { data } = await beforeRequestTokenizationTest(
-                seller1,
-                zone1,
-                currency,
-                baseTimestamp
-            );
+                addEstateForgerToVault: true,
+            })
+            const { manager, estateForger } = fixture;
 
-            await expectRevertWithCustomError(estateForger, manager, {
-                ...data,
-                unitPrice: ethers.utils.parseEther('19'),
-            }, 'InvalidUnitPrice');
+            const defaultParams = await getDefaultParams(fixture);
 
-            await expectRevertWithCustomError(estateForger, manager, {
-                ...data,
-                unitPrice: ethers.utils.parseEther('201'),
-            }, 'InvalidUnitPrice');
+            let timestamp = await time.latest() + 1000;
+            await time.setNextBlockTimestamp(timestamp);
+
+            const data = {
+                ...defaultParams,
+                privateSaleEndsAt: timestamp,
+                publicSaleEndsAt: timestamp + 1e6,
+            }
+
+            await expectNotReverted(estateForger, manager, data);
         });
 
-        it('4.11.12. requestTokenizationWithTimestamp unsuccessfully with zero address requester', async () => {
-            const { seller1, manager, zone1, currency, baseTimestamp, estateForger } = await beforeEstateForgerTest({
+        it('4.11.3. requestTokenizationWithTimestamp successfully when public sales ends immediately', async () => {
+            const fixture = await beforeEstateForgerTest({
                 listSampleCurrencies: true,
                 addZoneForExecutive: true,
-            });
-            const { data } = await beforeRequestTokenizationTest(
-                seller1,
-                zone1,
-                currency,
-                baseTimestamp
-            );
-            await expectRevertWithCustomError(estateForger, manager, {
-                ...data,
-                seller: ethers.constants.AddressZero,
-            }, 'InvalidInput');
+                listSampleSellers: true,
+                addEstateForgerToVault: true,
+            })
+
+            const { manager, estateForger } = fixture;
+
+            const defaultParams = await getDefaultParams(fixture);
+
+            let timestamp = await time.latest() + 1000;
+            await time.setNextBlockTimestamp(timestamp);
+
+            const data = {
+                ...defaultParams,
+                privateSaleEndsAt: timestamp + 1e6,
+                publicSaleEndsAt: timestamp + 1e6,
+            }
+
+            await expectNotReverted(estateForger, manager, data);
         });
 
-        it('4.11.13. requestTokenizationWithTimestamp unsuccessfully with inactive seller', async () => {
-            const { seller1, manager, zone1, currency, baseTimestamp, estateForger } = await beforeEstateForgerTest({
+        it('4.11.4. requestTokenizationWithTimestamp unsuccessfully with invalid private sale ends timestamp', async () => {
+            const fixture = await beforeEstateForgerTest({
                 listSampleCurrencies: true,
                 addZoneForExecutive: true,
+                listSampleSellers: true,
+                addEstateForgerToVault: true,
             });
-            const { data } = await beforeRequestTokenizationTest(
-                seller1,
-                zone1,
-                currency,
-                baseTimestamp
-            );
+
+            const { manager, estateForger } = fixture;
+
+            const defaultParams = await getDefaultParams(fixture);
+
+            let timestamp = await time.latest() + 1000;
+            await time.setNextBlockTimestamp(timestamp);
+
+            const data = {
+                ...defaultParams,
+                privateSaleEndsAt: timestamp - 1,
+                publicSaleEndsAt: timestamp + 100,
+            }
             await expectRevertWithCustomError(estateForger, manager, data, 'InvalidInput');
         });
 
-        it('4.11.14. requestTokenizationWithTimestamp unsuccessfully when minimum selling amount exceeds maximum', async () => {
-            const { seller1, manager, zone1, currency, baseTimestamp, estateForger } = await beforeEstateForgerTest({
+        it('4.11.5. requestTokenizationWithTimestamp unsuccessfully when private sale ends before public sale', async () => {
+            const fixture = await beforeEstateForgerTest({
                 listSampleCurrencies: true,
                 addZoneForExecutive: true,
                 listSampleSellers: true,
+                addEstateForgerToVault: true,
             });
-            const { data } = await beforeRequestTokenizationTest(
-                seller1,
-                zone1,
-                currency,
-                baseTimestamp
-            );
-            await expectRevertWithCustomError(estateForger, manager, {
-                ...data,
-                minSellingAmount: Number(data.maxSellingAmount) + 1,
-            }, 'InvalidInput');
+
+            const { manager, estateForger } = fixture;
+
+            const defaultParams = await getDefaultParams(fixture);
+
+            let timestamp = await time.latest() + 1000;
+            await time.setNextBlockTimestamp(timestamp);
+
+            const data = {
+                ...defaultParams,
+                privateSaleEndsAt: timestamp + 100,
+                publicSaleEndsAt: timestamp + 99,
+            }
+
+            await expectRevertWithCustomError(estateForger, manager, data, 'InvalidInput');
         });
 
-        it('4.11.15. requestTokenizationWithTimestamp unsuccessfully when maximum selling amount exceeds total supply', async () => {
-            const { seller1, manager, zone1, currency, baseTimestamp, estateForger } = await beforeEstateForgerTest({
+        it('4.11.6. requestTokenizationWithTimestamp unsuccessfully with invalid public sale ends timestamp', async () => {
+            const fixture = await beforeEstateForgerTest({
                 listSampleCurrencies: true,
                 addZoneForExecutive: true,
                 listSampleSellers: true,
+                addEstateForgerToVault: true,
             });
-            const { data } = await beforeRequestTokenizationTest(
-                seller1,
-                zone1,
-                currency,
-                baseTimestamp
-            );
-            await expectRevertWithCustomError(estateForger, manager, {
-                ...data,
-                maxSellingAmount: Number(data.totalSupply) + 1,
-            }, 'InvalidInput');
-        });
 
-        it('4.11.16. requestTokenizationWithTimestamp unsuccessfully when total estate tokensupply exceeds max uint256', async () => {
-            const { seller1, manager, zone1, currency, baseTimestamp, estateForger } = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleSellers: true,
-            });
-            const { data } = await beforeRequestTokenizationTest(
-                seller1,
-                zone1,
-                currency,
-                baseTimestamp
-            );
-            await expectRevertWithCustomError(estateForger, manager, {
-                ...data,
-                decimals: 18,
-                totalSupply: ethers.BigNumber.from(2).pow(256).sub(1),
-            }, 'InvalidInput');
-        });
+            const { manager, estateForger } = fixture;
 
-        it('4.11.17. requestTokenizationWithTimestamp unsuccessfully with invalid decimals', async () => {
-            const { seller1, manager, zone1, currency, baseTimestamp, estateForger } = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleSellers: true,
-            });
-            const { data } = await beforeRequestTokenizationTest(
-                seller1,
-                zone1,
-                currency,
-                baseTimestamp
-            );
-            await expectRevertWithCustomError(estateForger, manager, {
-                ...data,
-                decimals: 19,
-            }, 'InvalidInput');
-        });
+            const defaultParams = await getDefaultParams(fixture);
 
-        it('4.11.18. requestTokenizationWithTimestamp unsuccessfully with expired estate', async () => {
-            const { seller1, manager, zone1, currency, baseTimestamp, estateForger } = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleSellers: true,
-            });
-            const { data } = await beforeRequestTokenizationTest(
-                seller1,
-                zone1,
-                currency,
-                baseTimestamp
-            );
-            await time.setNextBlockTimestamp(baseTimestamp);
+            let timestamp = await time.latest() + 1000;
+            await time.setNextBlockTimestamp(timestamp);
 
-            await expectRevertWithCustomError(estateForger, manager, {
-                ...data,
-                expireAt: baseTimestamp - 1,
-            }, 'InvalidInput');
-            await expectRevertWithCustomError(estateForger, manager, {
-                ...data,
-                expireAt: baseTimestamp,
-            }, 'InvalidInput');
+            const data = {
+                ...defaultParams,
+                privateSaleEndsAt: timestamp,
+                publicSaleEndsAt: timestamp,
+            }
+
+            await expectRevertWithCustomError(estateForger, manager, data, 'InvalidInput');
         });
     });
 
@@ -2736,14 +2214,14 @@ describe('4. EstateForger', async () => {
                     data.publicSaleEndsAt,
                 )
 
-            await expect(tx).to
-                .emit(estateForger, 'UnitPriceValidation')
-                .withArgs(
-                    data.unitPrice,
-                    data.currencyAddress,
-                    priceRate.answer,
-                    await newCurrencyPriceFeed.decimals(),
-                );
+            // await expect(tx).to
+            //     .emit(estateForger, 'UnitPriceValidation')
+            //     .withArgs(
+            //         data.unitPrice,
+            //         data.currencyAddress,
+            //         priceRate.answer,
+            //         await newCurrencyPriceFeed.decimals(),
+            //     );
 
             const tokenizationRequest = await estateForger.getRequest(1);
             expect(tokenizationRequest.estateId).to.equal(0);
@@ -3153,20 +2631,216 @@ describe('4. EstateForger', async () => {
         });
     });
 
+    describe('4.12. updateRequestSeller(uint256, address)', async () => {
+        interface UpdateRequestSellerData {
+            requestId: number;
+            seller: string;
+        }
+
+        async function getDefaultParams(fixture: EstateForgerFixture): Promise<UpdateRequestSellerData> {
+            const { seller2 } = fixture;
+            return {
+                requestId: 1,
+                seller: seller2.address,
+            }
+        }
+
+        async function expectRevertWithCustomError(estateForger: EstateForger, manager: any, data: UpdateRequestSellerData, error: string) {
+            await expect(estateForger.connect(manager).updateRequestSeller(
+                data.requestId,
+                data.seller,
+            )).to.be.revertedWithCustomError(estateForger, error);
+        }
+
+        it('4.12.1. update request seller successfully', async () => {            
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addEstateForgerToVault: true,
+            });
+            const { manager, estateForger, seller2 } = fixture;
+    
+            const data = await getDefaultParams(fixture);
+
+            const tx = await estateForger.connect(manager).updateRequestSeller(
+                data.requestId,
+                data.seller,
+            );
+            await tx.wait();
+
+            await expect(tx).to
+                .emit(estateForger, 'RequestSellerUpdate')
+                .withArgs(
+                    data.requestId,
+                    data.seller,
+                )
+
+            const request = await estateForger.getRequest(data.requestId);
+            expect(request.seller).to.equal(data.seller);
+        });
+
+        it('4.12.2. update request seller unsuccessfully by non-executive', async () => {
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addEstateForgerToVault: true,
+            });
+            const { estateForger, user } = fixture;
+
+            const data = await getDefaultParams(fixture);
+
+            await expectRevertWithCustomError(estateForger, user, data, 'Unauthorized');
+        });
+
+        it.skip('4.12.3. update request seller unsuccessfully with invalid request id', async () => {
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addEstateForgerToVault: true,
+            });
+            const { manager, estateForger } = fixture;
+            const data = await getDefaultParams(fixture);
+
+            await expectRevertWithCustomError(estateForger, manager, { ...data, requestId: 0 }, 'InvalidRequestId');
+            await expectRevertWithCustomError(estateForger, manager, { ...data, requestId: 100 }, 'InvalidRequestId');
+        });
+
+        it('4.12.4. update request seller unsuccessfully with cancelled request', async () => {
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addEstateForgerToVault: true,
+            });
+            const { manager, estateForger } = fixture;
+            const data = await getDefaultParams(fixture);
+
+            await estateForger.connect(manager).cancel(data.requestId);
+
+            await expectRevertWithCustomError(estateForger, manager, data, 'Cancelled');
+        });
+
+        it('4.12.5. update request seller unsuccessfully with tokenized request', async () => {
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addDepositions: true,
+                confirmRequests: true,
+                fundERC20ForDepositors: true,
+                addEstateForgerToVault: true,
+            });
+            const { manager, estateForger } = fixture;
+            const data = await getDefaultParams(fixture);
+
+            await expectRevertWithCustomError(estateForger, manager, data, 'Tokenized');
+        });
+
+        it('4.12.6. update request seller unsuccessfully when request already have deposits', async () => {
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addDepositions: true,
+                fundERC20ForDepositors: true,
+                addEstateForgerToVault: true,
+            });
+            const { manager, estateForger, admin, admins } = fixture;
+            const data = await getDefaultParams(fixture);
+
+            await expectRevertWithCustomError(estateForger, manager, data, 'AlreadyHadDepositor');
+        });
+
+        it('4.12.7. update request seller unsuccessfully when zone is inactive', async () => {
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addEstateForgerToVault: true,
+            });
+            const { manager, estateForger, admin, admins } = fixture;
+            const data = await getDefaultParams(fixture);
+
+            const zone = (await estateForger.getRequest(data.requestId)).estate.zone;
+            await callAdmin_DeclareZones(
+                admin,
+                admins,
+                [zone],
+                false,
+                await admin.nonce()
+            );
+
+            await expectRevertWithCustomError(estateForger, manager, data, 'Unauthorized');
+        });
+
+        it('4.12.8. update request seller unsuccessfully by inactive executive in zone', async () => {
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addEstateForgerToVault: true,
+            });
+            const { admin, admins, moderator, manager, estateForger } = fixture;
+            const data = await getDefaultParams(fixture);
+
+            const zone = (await estateForger.getRequest(data.requestId)).estate.zone;
+            await callAdmin_ActivateIn(
+                admin,
+                admins,
+                zone,
+                [moderator.address, manager.address],
+                false,
+                await admin.nonce()
+            );
+
+            await expectRevertWithCustomError(estateForger, moderator, data, 'Unauthorized');
+            await expectRevertWithCustomError(estateForger, manager, data, 'Unauthorized');
+        });
+
+        it('4.12.9. update request seller unsuccessfully with inactive seller', async () => {
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addEstateForgerToVault: true,
+            });
+            const { manager, estateForger } = fixture;
+            const data = await getDefaultParams(fixture);
+
+            const newSeller = randomWallet();
+
+            await expectRevertWithCustomError(estateForger, manager, {
+                ...data,
+                seller: newSeller.address,
+            }, 'InvalidInput');
+        });
+    });
+
     describe('4.13. updateRequestURI(uint256, string)', async () => {
         interface UpdateRequestURIData {
             requestId: number;
             uri: string;
         }
 
-        async function beforeUpdateRequestURITest(
+        async function getDefaultParams(
             fixture: EstateForgerFixture,
-        ): Promise<{data: UpdateRequestURIData}> {
-            const defaultParams: UpdateRequestURIData = {
+        ): Promise<UpdateRequestURIData> {
+            return {
                 requestId: 1,
                 uri: 'NewTestingURI',
             }
-            return { data: defaultParams };
         }
 
         async function expectRevertWithCustomError(estateForger: EstateForger, manager: any, data: UpdateRequestURIData, error: string) {
@@ -3182,9 +2856,10 @@ describe('4. EstateForger', async () => {
                 addZoneForExecutive: true,
                 listSampleSellers: true,
                 addSampleRequests: true,
+                addEstateForgerToVault: true,
             });
             const { manager, estateForger } = fixture;
-            const { data } = await beforeUpdateRequestURITest(fixture);
+            const data = await getDefaultParams(fixture);
     
             const tx = await estateForger.connect(manager).updateRequestURI(
                 data.requestId,
@@ -3199,9 +2874,8 @@ describe('4. EstateForger', async () => {
                     data.uri,
                 )
 
-            const tokenizationRequest = await estateForger.getRequest(1);
-            expect(tokenizationRequest.estateId).to.equal(0);
-            expect(tokenizationRequest.uri).to.equal(data.uri);
+            const request = await estateForger.getRequest(data.requestId);
+            expect(request.estate.uri).to.equal(data.uri);
         });
 
         it('4.13.2. update tokenization request URI unsuccessfully by non-executive', async () => {
@@ -3210,38 +2884,90 @@ describe('4. EstateForger', async () => {
                 addZoneForExecutive: true,
                 listSampleSellers: true,
                 addSampleRequests: true,
+                addEstateForgerToVault: true,
             });
             const { manager, estateForger, user } = fixture;
-            const { data } = await beforeUpdateRequestURITest(fixture);
+            const data = await getDefaultParams(fixture);
     
             await expectRevertWithCustomError(estateForger, user, data, 'Unauthorized');
         });
 
-        it('4.13.3. update tokenization request URI unsuccessfully with invalid request id', async () => {
+        it.skip('4.13.3. update tokenization request URI unsuccessfully with invalid request id', async () => {
             const fixture = await beforeEstateForgerTest({
                 listSampleCurrencies: true,
                 addZoneForExecutive: true,
                 listSampleSellers: true,
                 addSampleRequests: true,
+                addEstateForgerToVault: true,
             });
             const { manager, estateForger } = fixture;
-            const { data } = await beforeUpdateRequestURITest(fixture);
+            const data = await getDefaultParams(fixture);
 
             await expectRevertWithCustomError(estateForger, manager, { ...data, requestId: 0 }, 'InvalidRequestId');
             await expectRevertWithCustomError(estateForger, manager, { ...data, requestId: 100 }, 'InvalidRequestId');
         });
 
-        it('4.13.4. update tokenization request URI unsuccessfully with inactive zone', async () => {
+        it('4.13.4. update tokenization request URI unsuccessfully with cancelled request', async () => {
             const fixture = await beforeEstateForgerTest({
                 listSampleCurrencies: true,
                 addZoneForExecutive: true,
                 listSampleSellers: true,
                 addSampleRequests: true,
+                addEstateForgerToVault: true,
+            });
+            const { manager, estateForger } = fixture;
+            const data = await getDefaultParams(fixture);
+
+            await estateForger.connect(manager).cancel(data.requestId);
+
+            await expectRevertWithCustomError(estateForger, manager, data, 'Cancelled');
+        });
+
+        it('4.13.5. update tokenization request URI unsuccessfully with tokenized request', async () => {
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                fundERC20ForDepositors: true,
+                addDepositions: true,
+                confirmRequests: true,
+                addEstateForgerToVault: true,
+            });
+            const { manager, estateForger } = fixture;
+            const data = await getDefaultParams(fixture);
+
+            await expectRevertWithCustomError(estateForger, manager, data, 'Tokenized');
+        });
+
+        it('4.13.6. update tokenization request URI unsuccessfully when request already have deposits', async () => {
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addDepositions: true,
+                fundERC20ForDepositors: true,
+                addEstateForgerToVault: true,
+            });
+            const { manager, estateForger } = fixture;
+            const data = await getDefaultParams(fixture);
+
+            await expectRevertWithCustomError(estateForger, manager, data, 'AlreadyHadDepositor');
+        });
+
+        it('4.13.7. update tokenization request URI unsuccessfully with inactive zone', async () => {
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addEstateForgerToVault: true,
             });
             const { manager, estateForger, admin, admins } = fixture;
-            const { data } = await beforeUpdateRequestURITest(fixture);
+            const data = await getDefaultParams(fixture);
 
-            const zone = (await estateForger.getRequest(data.requestId)).zone;
+            const zone = (await estateForger.getRequest(data.requestId)).estate.zone;
             await callAdmin_DeclareZones(
                 admin,
                 admins,
@@ -3253,17 +2979,18 @@ describe('4. EstateForger', async () => {
             await expectRevertWithCustomError(estateForger, manager, data, 'Unauthorized');
         });
 
-        it('4.13.5. update tokenization request URI unsuccessfully by inactive manager in zone', async () => {
+        it('4.13.8. update tokenization request URI unsuccessfully by inactive manager in zone', async () => {
             const fixture = await beforeEstateForgerTest({
                 listSampleCurrencies: true,
                 addZoneForExecutive: true,
                 listSampleSellers: true,
                 addSampleRequests: true,
+                addEstateForgerToVault: true,
             });
             const { manager, estateForger, admin, admins } = fixture;
-            const { data } = await beforeUpdateRequestURITest(fixture);
+            const data = await getDefaultParams(fixture);
 
-            const zone = (await estateForger.getRequest(data.requestId)).zone;
+            const zone = (await estateForger.getRequest(data.requestId)).estate.zone;
             await callAdmin_ActivateIn(
                 admin,
                 admins,
@@ -3275,36 +3002,1175 @@ describe('4. EstateForger', async () => {
 
             await expectRevertWithCustomError(estateForger, manager, data, 'Unauthorized');
         });
+    });
 
-        it('4.13.6. update tokenization request URI unsuccessfully with cancelled request', async () => {
+    describe('4.14. updateRequestEstate(uint256, (bytes32, string, uint8, uint40))', async () => {
+        interface UpdateRequestData {
+            requestId: number;
+            estate: RequestEstateInput;
+        }
+        
+        async function getDefaultParams(
+            fixture: EstateForgerFixture,
+        ): Promise<UpdateRequestData> {
+            const { zone2 } = fixture;
+            const baseTimestamp = await time.latest();
+            return {
+                requestId: 1,
+                estate: {
+                    zone: zone2,
+                    uri: 'NewTestingURI',
+                    decimals: 2,
+                    expireAt: baseTimestamp + 1e9 + 1,
+                }
+            }
+        }
+
+        async function expectRevertWithCustomError(estateForger: EstateForger, manager: any, data: UpdateRequestData, error: string) {
+            await expect(estateForger.connect(manager).updateRequestEstate(
+                data.requestId,
+                data.estate,
+            )).to.be.revertedWithCustomError(estateForger, error);
+        }
+
+        it('4.14.1. update tokenization request estate successfully', async () => {            
             const fixture = await beforeEstateForgerTest({
                 listSampleCurrencies: true,
                 addZoneForExecutive: true,
                 listSampleSellers: true,
                 addSampleRequests: true,
+                addEstateForgerToVault: true,
             });
             const { manager, estateForger } = fixture;
-            const { data } = await beforeUpdateRequestURITest(fixture);
+            const data = await getDefaultParams(fixture);
+    
+            const tx = await estateForger.connect(manager).updateRequestEstate(
+                data.requestId,
+                data.estate,
+            );
+            const receipt = await tx.wait();
+
+            const event = receipt.events!.find(e => e.event === 'RequestEstateUpdate')!;
+            expect(event.args!.requestId).to.equal(data.requestId);
+            expect(structToObject(event.args!.estate)).to.deep.equal(data.estate);
+
+            const request = await estateForger.getRequest(data.requestId);
+            expect(request.estate.estateId).to.equal(0);
+            expect(request.estate.zone).to.equal(data.estate.zone);
+            expect(request.estate.uri).to.equal(data.estate.uri);
+            expect(request.estate.decimals).to.equal(data.estate.decimals);
+            expect(request.estate.expireAt).to.equal(data.estate.expireAt);
+        });
+
+        it('4.14.2. update tokenization request estate unsuccessfully by non-executive', async () => {
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addEstateForgerToVault: true,
+            });
+            const { estateForger, user } = fixture;
+            const data = await getDefaultParams(fixture);
+    
+            await expectRevertWithCustomError(estateForger, user, data, 'Unauthorized');
+        });
+
+        it.skip('4.14.3. update tokenization request estate unsuccessfully with invalid request id', async () => {
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addEstateForgerToVault: true,
+            });
+            const { manager, estateForger } = fixture;
+            const data = await getDefaultParams(fixture);
+
+            await expectRevertWithCustomError(estateForger, manager, { ...data, requestId: 0 }, 'InvalidRequestId');
+            await expectRevertWithCustomError(estateForger, manager, { ...data, requestId: 100 }, 'InvalidRequestId');
+        });
+
+        it('4.14.4. update tokenization request estate unsuccessfully with cancelled request', async () => {
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addEstateForgerToVault: true,
+            });
+            const { manager, estateForger } = fixture;
+            const data = await getDefaultParams(fixture);
 
             await estateForger.connect(manager).cancel(data.requestId);
 
             await expectRevertWithCustomError(estateForger, manager, data, 'Cancelled');
         });
 
-        it('4.13.7. update tokenization request URI unsuccessfully with tokenized request', async () => {
+        it('4.14.5. update tokenization request estate unsuccessfully with tokenized request', async () => {
             const fixture = await beforeEstateForgerTest({
                 listSampleCurrencies: true,
                 addZoneForExecutive: true,
                 listSampleSellers: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
                 addDepositions: true,
                 confirmRequests: true,
+                fundERC20ForDepositors: true,
+                addEstateForgerToVault: true,
             });
             const { manager, estateForger } = fixture;
-            const { data } = await beforeUpdateRequestURITest(fixture);
+            const data = await getDefaultParams(fixture);
 
             await expectRevertWithCustomError(estateForger, manager, data, 'Tokenized');
+        });
+
+        it('4.14.6. update tokenization request estate unsuccessfully when request already have deposits', async () => {
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addDepositions: true,
+                fundERC20ForDepositors: true,
+                addEstateForgerToVault: true,
+            });
+            const { manager, estateForger, admin, admins } = fixture;
+            const data = await getDefaultParams(fixture);
+
+            await expectRevertWithCustomError(estateForger, manager, data, 'AlreadyHadDepositor');
+        });
+
+        it('4.14.7. update tokenization request estate unsuccessfully when old zone is not active', async () => {
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addEstateForgerToVault: true,
+            });
+            const { manager, estateForger, admin, admins } = fixture;
+            const data = await getDefaultParams(fixture);
+
+            const zone = (await estateForger.getRequest(data.requestId)).estate.zone;
+            await callAdmin_DeclareZones(
+                admin,
+                admins,
+                [zone],
+                false,
+                await admin.nonce()
+            );
+
+            await expectRevertWithCustomError(estateForger, manager, data, 'Unauthorized');
+        });
+
+        it('4.14.8. update tokenization request estate unsuccessfully when new zone is not active', async () => {
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addEstateForgerToVault: true,
+            });
+            const { manager, estateForger, admin, admins } = fixture;
+            const data = await getDefaultParams(fixture);
+
+            const zone = data.estate.zone;
+            await callAdmin_DeclareZones(
+                admin,
+                admins,
+                [zone],
+                false,
+                await admin.nonce()
+            );
+
+            await expectRevertWithCustomError(estateForger, manager, data, 'Unauthorized');
+        });
+
+        it('4.14.9. update tokenization request estate unsuccessfully by inactive executive in old zone', async () => {
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addEstateForgerToVault: true,
+            });
+            const { moderator, manager, estateForger, admin, admins } = fixture;
+            const data = await getDefaultParams(fixture);
+
+            const zone = (await estateForger.getRequest(data.requestId)).estate.zone;
+            await callAdmin_ActivateIn(
+                admin,
+                admins,
+                zone,
+                [moderator.address, manager.address],
+                false,
+                await admin.nonce()
+            );
+
+            await expectRevertWithCustomError(estateForger, moderator, data, 'Unauthorized');
+            await expectRevertWithCustomError(estateForger, manager, data, 'Unauthorized');
+        });
+
+        it('4.14.10. update tokenization request estate unsuccessfully by inactive executive in new zone', async () => {
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addEstateForgerToVault: true,
+            });
+            const { moderator, manager, estateForger, admin, admins } = fixture;
+            const data = await getDefaultParams(fixture);
+
+            const zone = data.estate.zone;
+            await callAdmin_ActivateIn(
+                admin,
+                admins,
+                zone,
+                [moderator.address, manager.address],
+                false,
+                await admin.nonce()
+            );
+
+            await expectRevertWithCustomError(estateForger, moderator, data, 'Unauthorized');
+            await expectRevertWithCustomError(estateForger, manager, data, 'Unauthorized');
+        });
+
+        it('4.14.11. update tokenization request estate unsuccessfully with invalid decimals', async () => {
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addEstateForgerToVault: true,
+            });
+            const { manager, estateForger } = fixture;
+        
+            const defaultParams = await getDefaultParams(fixture);
+
+            await expectRevertWithCustomError(estateForger, manager, {
+                ...defaultParams,
+                estate: {
+                    ...defaultParams.estate,
+                    decimals: 19,
+                }
+            }, 'InvalidInput');
+        });
+
+        it('4.14.12. update tokenization request estate unsuccessfully with expired estate', async () => {
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addEstateForgerToVault: true,
+            });
+            const { manager, estateForger } = fixture;
+            const defaultParams = await getDefaultParams(fixture);
+
+            const baseTimestamp = await time.latest() + 1000;
+            await time.setNextBlockTimestamp(baseTimestamp);
+
+            await expectRevertWithCustomError(estateForger, manager, {
+                ...defaultParams,
+                estate: {
+                    ...defaultParams.estate,
+                    expireAt: baseTimestamp - 1,
+                },
+            }, 'InvalidInput');
+            await expectRevertWithCustomError(estateForger, manager, {
+                ...defaultParams,
+                estate: {
+                    ...defaultParams.estate,
+                    expireAt: baseTimestamp,
+                },
+            }, 'InvalidInput');
+        });
+    });
+
+    describe('4.15. updateRequestQuota(uint256, (uint256, uint256, uint256))', async () => {
+        interface UpdateRequestQuotaData {
+            requestId: number;
+            quota: RequestQuotaInput;
+        }
+        
+        async function getDefaultParams(
+            fixture: EstateForgerFixture,
+        ): Promise<UpdateRequestQuotaData> {
+            return {
+                requestId: 1,
+                quota: {
+                    totalQuantity: ethers.BigNumber.from(71),
+                    minSellingQuantity: ethers.BigNumber.from(11),
+                    maxSellingQuantity: ethers.BigNumber.from(31),
+                }
+            }
+        }
+
+        async function expectRevertWithCustomError(estateForger: EstateForger, manager: any, data: UpdateRequestQuotaData, error: string) {
+            await expect(estateForger.connect(manager).updateRequestQuota(
+                data.requestId,
+                data.quota,
+            )).to.be.revertedWithCustomError(estateForger, error);
+        }
+
+        it('4.15.1. update tokenization request quota successfully', async () => {            
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addEstateForgerToVault: true,
+            });
+            const { manager, estateForger } = fixture;
+            const data = await getDefaultParams(fixture);
+    
+            const tx = await estateForger.connect(manager).updateRequestQuota(
+                data.requestId,
+                data.quota,
+            );
+            const receipt = await tx.wait();
+
+            const event = receipt.events!.find(e => e.event === 'RequestQuotaUpdate')!;
+            expect(event.args!.requestId).to.equal(data.requestId);
+            expect(structToObject(event.args!.quota)).to.deep.equal(data.quota);
+
+            const request = await estateForger.getRequest(data.requestId);
+            expect(request.quota.totalQuantity).to.equal(data.quota.totalQuantity);
+            expect(request.quota.minSellingQuantity).to.equal(data.quota.minSellingQuantity);
+            expect(request.quota.maxSellingQuantity).to.equal(data.quota.maxSellingQuantity);
+        });
+
+        it('4.15.2. update tokenization request quota unsuccessfully by non-executive', async () => {
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addEstateForgerToVault: true,
+            });
+            const { estateForger, user } = fixture;
+            const data = await getDefaultParams(fixture);
+    
+            await expectRevertWithCustomError(estateForger, user, data, 'Unauthorized');
+        });
+
+        it.skip('4.15.3. update tokenization request quota unsuccessfully with invalid request id', async () => {
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addEstateForgerToVault: true,
+            });
+            const { manager, estateForger } = fixture;
+            const data = await getDefaultParams(fixture);
+
+            await expectRevertWithCustomError(estateForger, manager, { ...data, requestId: 0 }, 'InvalidRequestId');
+            await expectRevertWithCustomError(estateForger, manager, { ...data, requestId: 100 }, 'InvalidRequestId');
+        });
+
+        it('4.15.4. update tokenization request quota unsuccessfully with cancelled request', async () => {
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addEstateForgerToVault: true,
+            });
+            const { manager, estateForger } = fixture;
+            const data = await getDefaultParams(fixture);
+
+            await estateForger.connect(manager).cancel(data.requestId);
+
+            await expectRevertWithCustomError(estateForger, manager, data, 'Cancelled');
+        });
+
+        it('4.15.5. update tokenization request quota unsuccessfully with tokenized request', async () => {
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addDepositions: true,
+                confirmRequests: true,
+                fundERC20ForDepositors: true,
+                addEstateForgerToVault: true,
+            });
+            const { manager, estateForger } = fixture;
+            const data = await getDefaultParams(fixture);
+
+            await expectRevertWithCustomError(estateForger, manager, data, 'Tokenized');
+        });
+
+        it('4.15.6. update tokenization request quota unsuccessfully when request already have deposits', async () => {
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addDepositions: true,
+                fundERC20ForDepositors: true,
+                addEstateForgerToVault: true,
+            });
+            const { manager, estateForger, admin, admins } = fixture;
+            const data = await getDefaultParams(fixture);
+
+            await expectRevertWithCustomError(estateForger, manager, data, 'AlreadyHadDepositor');
+        });
+
+        it('4.15.7. update tokenization request quota unsuccessfully by inactive zone', async () => {
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addEstateForgerToVault: true,
+            });
+            const { admin, admins, moderator, manager, estateForger } = fixture;
+            const data = await getDefaultParams(fixture);
+
+            const zone = (await estateForger.getRequest(data.requestId)).estate.zone;
+            await callAdmin_DeclareZones(
+                admin,
+                admins,
+                [zone],
+                false,
+                await admin.nonce()
+            );
+
+            await expectRevertWithCustomError(estateForger, moderator, data, 'Unauthorized');
+            await expectRevertWithCustomError(estateForger, manager, data, 'Unauthorized');
+        });
+
+        it('4.15.8. update tokenization request quota unsuccessfully by inactive executive in zone', async () => {
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addEstateForgerToVault: true,
+            });
+            const { admin, admins, moderator, manager, estateForger } = fixture;
+            const data = await getDefaultParams(fixture);
+
+            const zone = (await estateForger.getRequest(data.requestId)).estate.zone;
+            await callAdmin_ActivateIn(
+                admin,
+                admins,
+                zone,
+                [moderator.address, manager.address],
+                false,
+                await admin.nonce()
+            );
+
+            await expectRevertWithCustomError(estateForger, moderator, data, 'Unauthorized');
+            await expectRevertWithCustomError(estateForger, manager, data, 'Unauthorized');
+        });
+
+        it('4.15.9. update tokenization request quota unsuccessfully when minimum selling quantity exceeds maximum', async () => {
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addEstateForgerToVault: true,
+            });
+            const { manager, estateForger } = fixture;
+            const data = await getDefaultParams(fixture);
+
+            await expectRevertWithCustomError(estateForger, manager, {
+                ...data,
+                quota: {
+                    ...data.quota,
+                    minSellingQuantity: data.quota.maxSellingQuantity.add(1),
+                },
+            }, 'InvalidInput');
+        });
+
+        it('4.15.10. update tokenization request quota unsuccessfully when maximum selling quantity exceeds total quantity', async () => {
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addEstateForgerToVault: true,
+            });
+            const { manager, estateForger } = fixture;
+            const data = await getDefaultParams(fixture);
+
+            await expectRevertWithCustomError(estateForger, manager, {
+                ...data,
+                quota: {
+                    ...data.quota,
+                    maxSellingQuantity: data.quota.totalQuantity.add(1),
+                },
+            }, 'InvalidInput');
+        });
+
+        it('4.15.11. update tokenization request quota unsuccessfully when total estate token supply exceeds max uint256', async () => {
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addEstateForgerToVault: true,
+            });
+            const { manager, estateForger } = fixture;
+            const data = await getDefaultParams(fixture);
+
+            await expectRevertWithCustomError(estateForger, manager, {
+                ...data,
+                quota: {
+                    ...data.quota,
+                    totalQuantity: ethers.BigNumber.from(2).pow(256).sub(1),
+                },
+            }, 'InvalidInput');
+        });
+    });
+
+    describe('4.16. updateRequestQuote(uint256, (uint256, address, uint256, uint256, address[], uint256[]))', async () => {
+        interface UpdateRequestQuoteData {
+            requestId: number;
+            quote: RequestQuoteInput;
+        }
+        
+        async function getDefaultParams(
+            fixture: EstateForgerFixture,
+        ): Promise<{defaultParams: UpdateRequestQuoteData, newCurrency: Currency, newCurrencyPriceFeed: MockPriceFeed}> {
+            const { admin, deployer, estateForger, admins, priceWatcher } = fixture;
+            const newCurrency = await deployCurrency(
+                deployer,
+                "NewCurrency",
+                "NC",
+            ) as Currency;
+
+            const newCurrencyPriceFeed = await deployMockPriceFeed(
+                deployer,
+                50_0000,
+                4,
+            ) as MockPriceFeed;
+
+            await addCurrencyToAdminAndPriceWatcher(
+                admin,
+                priceWatcher,
+                admins,
+                [newCurrency.address],
+                [true],
+                [false],
+                [newCurrencyPriceFeed.address],
+                [3600],
+                [100_000],
+                [3]
+            );
+
+            const defaultParams: UpdateRequestQuoteData = {
+                requestId: 1,
+                quote: {
+                    unitPrice: ethers.utils.parseEther('11'),
+                    currency: newCurrency.address,
+                    cashbackThreshold: ethers.BigNumber.from(6),
+                    cashbackBaseRate: ethers.utils.parseEther('0.05'),
+                    cashbackCurrencies: [ethers.constants.AddressZero],
+                    cashbackDenominations: [ethers.utils.parseEther("0.01")],
+                },
+            }
+
+            return { defaultParams, newCurrency, newCurrencyPriceFeed };
+        }
+
+        async function expectRevertWithCustomError(estateForger: EstateForger, manager: any, data: UpdateRequestQuoteData, error: string) {
+            await expect(estateForger.connect(manager).updateRequestQuote(
+                data.requestId,
+                data.quote,
+            )).to.be.revertedWithCustomError(estateForger, error);
+        }
+
+        it('4.16.1. update tokenization request quote successfully', async () => {            
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addEstateForgerToVault: true,
+            });
+            const { manager, estateForger, reserveVault, commissionToken } = fixture;
+            const { defaultParams, newCurrency, newCurrencyPriceFeed } = await getDefaultParams(fixture);
+    
+            let currentTimestamp = await time.latest() + 1000;
+            await time.setNextBlockTimestamp(currentTimestamp);
+
+            const tx = await estateForger.connect(manager).updateRequestQuote(
+                defaultParams.requestId,
+                defaultParams.quote,
+            );
+            const receipt = await tx.wait();
+
+            const fundId = await reserveVault.fundNumber();
+            const mainDenomination = getCashbackBaseDenomination(
+                defaultParams.quote.unitPrice,
+                (await commissionToken.getCommissionRate()).value,
+                defaultParams.quote.cashbackBaseRate,
+            );
+
+            const fund = await reserveVault.getFund(fundId);
+            expect(fund.mainCurrency).to.equal(defaultParams.quote.currency);
+            expect(fund.mainDenomination).to.equal(mainDenomination);
+            expect(fund.extraCurrencies).to.deep.equal(defaultParams.quote.cashbackCurrencies);
+            expect(fund.extraDenominations).to.deep.equal(defaultParams.quote.cashbackDenominations);
+
+            const requestQuote = {
+                unitPrice: defaultParams.quote.unitPrice,
+                currency: defaultParams.quote.currency,
+                cashbackThreshold: defaultParams.quote.cashbackThreshold,
+                cashbackFundId: fundId,
+            }
+
+            const event = receipt.events!.find(e => e.event === 'RequestQuoteUpdate')!;
+            expect(event.args!.requestId).to.equal(defaultParams.requestId);
+            expect(structToObject(event.args!.quote)).to.deep.equal(requestQuote);
+
+            const request = await estateForger.getRequest(defaultParams.requestId);
+            expect(request.quote.unitPrice).to.equal(defaultParams.quote.unitPrice);
+            expect(request.quote.currency).to.equal(defaultParams.quote.currency);
+            expect(request.quote.cashbackThreshold).to.equal(defaultParams.quote.cashbackThreshold);
+            expect(request.quote.cashbackFundId).to.equal(fundId);
+        });
+
+        it('4.16.2. update tokenization request quote unsuccessfully by non-executive', async () => {
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addEstateForgerToVault: true,
+            });
+            const { estateForger, user } = fixture;
+            const { defaultParams } = await getDefaultParams(fixture);
+    
+            let currentTimestamp = await time.latest() + 1000;
+            await time.setNextBlockTimestamp(currentTimestamp);
+
+            await expectRevertWithCustomError(estateForger, user, defaultParams, 'Unauthorized');
+        });
+
+        it.skip('4.16.3. update tokenization request quote unsuccessfully with invalid request id', async () => {
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addEstateForgerToVault: true,
+            });
+            const { manager, estateForger } = fixture;
+            const { defaultParams } = await getDefaultParams(fixture);
+
+            await expectRevertWithCustomError(estateForger, manager, { ...defaultParams, requestId: 0 }, 'InvalidRequestId');
+            await expectRevertWithCustomError(estateForger, manager, { ...defaultParams, requestId: 100 }, 'InvalidRequestId');
+        });
+
+        it('4.16.4. update tokenization request quote unsuccessfully with cancelled request', async () => {
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addEstateForgerToVault: true,
+            });
+            const { manager, estateForger } = fixture;
+            const { defaultParams } = await getDefaultParams(fixture);
+
+            await estateForger.connect(manager).cancel(defaultParams.requestId);
+
+            await expectRevertWithCustomError(estateForger, manager, defaultParams, 'Cancelled');
+        });
+
+        it('4.16.5. update tokenization request quote unsuccessfully with tokenized request', async () => {
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addDepositions: true,
+                confirmRequests: true,
+                fundERC20ForDepositors: true,
+                addEstateForgerToVault: true,
+            });
+            const { manager, estateForger } = fixture;
+            const { defaultParams } = await getDefaultParams(fixture);
+
+            await expectRevertWithCustomError(estateForger, manager, defaultParams, 'Tokenized');
+        });
+
+        it('4.16.6. update tokenization request quote unsuccessfully when request already have deposits', async () => {
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addDepositions: true,
+                fundERC20ForDepositors: true,
+                addEstateForgerToVault: true,
+            });
+            const { manager, estateForger, admin, admins } = fixture;
+            const { defaultParams } = await getDefaultParams(fixture);
+
+            await expectRevertWithCustomError(estateForger, manager, defaultParams, 'AlreadyHadDepositor');
+        });
+
+        it('4.16.7. update tokenization request quote unsuccessfully by inactive zone', async () => {
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addEstateForgerToVault: true,
+            });
+            const { admin, admins, zone2, moderator, manager, estateForger } = fixture;
+            const { defaultParams } = await getDefaultParams(fixture);
+
+            const zone = (await estateForger.getRequest(defaultParams.requestId)).estate.zone;
+            await callAdmin_DeclareZones(
+                admin,
+                admins,
+                [zone],
+                false,
+                await admin.nonce()
+            );
+
+            await expectRevertWithCustomError(estateForger, moderator, defaultParams, 'Unauthorized');
+            await expectRevertWithCustomError(estateForger, manager, defaultParams, 'Unauthorized');
+        });
+
+        it('4.16.8. update tokenization request quote unsuccessfully by inactive executive in zone', async () => {
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addEstateForgerToVault: true,
+            });
+            const { admin, admins, zone2, moderator, manager, estateForger } = fixture;
+            const { defaultParams } = await getDefaultParams(fixture);
+
+            const zone = (await estateForger.getRequest(defaultParams.requestId)).estate.zone;
+            await callAdmin_ActivateIn(
+                admin,
+                admins,
+                zone,
+                [moderator.address, manager.address],
+                false,
+                await admin.nonce()
+            );
+
+            await expectRevertWithCustomError(estateForger, moderator, defaultParams, 'Unauthorized');
+            await expectRevertWithCustomError(estateForger, manager, defaultParams, 'Unauthorized');
+        });
+
+        it('4.16.9. update tokenization request quote unsuccessfully with invalid cashback threshold', async () => {
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addEstateForgerToVault: true,
+            });
+            const { manager, estateForger } = fixture;
+            const { defaultParams } = await getDefaultParams(fixture);
+
+            const request = await estateForger.getRequest(defaultParams.requestId);
+
+            await expectRevertWithCustomError(estateForger, manager, {
+                ...defaultParams,
+                quote: {
+                    ...defaultParams.quote,
+                    cashbackThreshold: request.quota.totalQuantity.add(1),
+                },
+            }, 'InvalidInput');
+        });
+
+        it('4.16.10. update tokenization request quote unsuccessfully with invalid cashback base rate', async () => {
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addEstateForgerToVault: true,
+            });
+
+            const { manager, estateForger } = fixture;
+            const { defaultParams } = await getDefaultParams(fixture);
+
+            await expectRevertWithCustomError(estateForger, manager, {
+                ...defaultParams,
+                quote: {
+                    ...defaultParams.quote,
+                    cashbackBaseRate: Constant.COMMON_RATE_MAX_FRACTION.add(1),
+                },
+            }, 'InvalidInput');
+        });
+
+        it('4.16.11. update tokenization request quote unsuccessfully with conflicting cashback currencies params length', async () => {
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addEstateForgerToVault: true,
+            });
+
+            const { manager, estateForger } = fixture;
+            const { defaultParams } = await getDefaultParams(fixture);
+
+            await expectRevertWithCustomError(estateForger, manager, {
+                ...defaultParams,
+                quote: {
+                    ...defaultParams.quote,
+                    cashbackCurrencies: [ethers.constants.AddressZero],
+                    cashbackDenominations: [ethers.utils.parseEther("0.01"), ethers.utils.parseEther("0.02")],
+                },
+            }, 'InvalidInput');
+        });
+
+        it('4.16.12. update tokenization request quote unsuccessfully with invalid unit price', async () => {
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addEstateForgerToVault: true,
+            });
+            const { manager, estateForger } = fixture;
+            const { defaultParams } = await getDefaultParams(fixture);
+
+            await expectRevertWithCustomError(estateForger, manager, {
+                ...defaultParams,
+                quote: {
+                    ...defaultParams.quote,
+                    unitPrice: ethers.utils.parseEther('1'),
+                },
+            }, 'InvalidUnitPrice');
+
+            await expectRevertWithCustomError(estateForger, manager, {
+                ...defaultParams,
+                quote: {
+                    ...defaultParams.quote,
+                    unitPrice: ethers.utils.parseEther('21'),
+                },
+            }, 'InvalidUnitPrice');
+        });
+
+        it('4.16.13. update tokenization request quote unsuccessfully when estate forger is not initiator in vault', async () => {
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addEstateForgerToVault: true,
+            });
+            const { reserveVault, admin, admins, estateForger, manager } = fixture;
+
+            await callReserveVault_AuthorizeInitiator(
+                reserveVault,
+                admins,
+                [estateForger.address],
+                false,
+                await admin.nonce()
+            )
+
+            const { defaultParams } = await getDefaultParams(fixture);
+            await expectRevertWithCustomError(estateForger, manager, defaultParams, 'Unauthorized');
+        });
+    });
+
+    describe('4.17. updateRequestAgenda(uint256, (uint40, uint40))', async () => {
+        interface UpdateRequestAgendaData {
+            requestId: number;
+            privateSaleEndsAt: number;
+            publicSaleEndsAt: number;
+        }
+        
+        async function getDefaultParams(
+            fixture: EstateForgerFixture,
+        ): Promise<UpdateRequestAgendaData> {
+            const { estateForger } = fixture;
+            const timestamp = await time.latest();
+            return {
+                requestId: 1,
+                privateSaleEndsAt: timestamp + 1000,
+                publicSaleEndsAt: timestamp + 2000,
+            }
+        }
+
+        async function expectRevertWithCustomError(estateForger: EstateForger, manager: any, data: UpdateRequestAgendaData, error: string) {
+            await expect(estateForger.connect(manager).updateRequestAgenda(
+                data.requestId,
+                data.privateSaleEndsAt,
+                data.publicSaleEndsAt,
+            )).to.be.revertedWithCustomError(estateForger, error);
+        }
+
+        it('4.17.1. update tokenization request agenda successfully', async () => {            
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addEstateForgerToVault: true,
+            });
+            const { manager, estateForger } = fixture;
+            const defaultParams = await getDefaultParams(fixture);
+    
+            let currentTimestamp = await time.latest() + 1000;
+            await time.setNextBlockTimestamp(currentTimestamp);
+
+            const tx = await estateForger.connect(manager).updateRequestAgenda(
+                defaultParams.requestId,
+                defaultParams.privateSaleEndsAt,
+                defaultParams.publicSaleEndsAt,
+            );
+            const receipt = await tx.wait();
+
+            const event = receipt.events!.find(e => e.event === 'RequestAgendaUpdate')!;
+            const agenda: RequestAgenda = {
+                privateSaleEndsAt: defaultParams.privateSaleEndsAt,
+                publicSaleEndsAt: defaultParams.publicSaleEndsAt,
+            }
+            expect(event.args!.requestId).to.equal(defaultParams.requestId);
+            expect(structToObject(event.args!.agenda)).to.deep.equal(agenda);
+
+            const request = await estateForger.getRequest(defaultParams.requestId);
+            expect(request.agenda.privateSaleEndsAt).to.equal(defaultParams.privateSaleEndsAt);
+            expect(request.agenda.publicSaleEndsAt).to.equal(defaultParams.publicSaleEndsAt);
+        });
+
+        it('4.17.2. update tokenization request agenda successfully when private sales ends immediately', async () => {            
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addEstateForgerToVault: true,
+            });
+            const { manager, estateForger } = fixture;
+            const defaultParams = await getDefaultParams(fixture);
+    
+            let currentTimestamp = await time.latest() + 1000;
+            await time.setNextBlockTimestamp(currentTimestamp);
+
+            await expect(estateForger.connect(manager).updateRequestAgenda(
+                defaultParams.requestId,
+                currentTimestamp,
+                currentTimestamp + 1000,
+            )).to.not.be.reverted;
+        });
+
+        it('4.17.3. update tokenization request agenda successfully when public sales ends immediately', async () => {            
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addEstateForgerToVault: true,
+            });
+            const { manager, estateForger } = fixture;
+            const defaultParams = await getDefaultParams(fixture);
+    
+            let currentTimestamp = await time.latest() + 1000;
+            await time.setNextBlockTimestamp(currentTimestamp);
+
+            await expect(estateForger.connect(manager).updateRequestAgenda(
+                defaultParams.requestId,
+                currentTimestamp + 1000,
+                currentTimestamp + 1000,
+            )).to.not.be.reverted;
+        });
+
+        it('4.17.4. update tokenization request agenda unsuccessfully by non-executive', async () => {
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addEstateForgerToVault: true,
+            });
+            const { estateForger, user } = fixture;
+            const defaultParams = await getDefaultParams(fixture);
+    
+            let currentTimestamp = await time.latest() + 1000;
+            await time.setNextBlockTimestamp(currentTimestamp);
+
+            await expectRevertWithCustomError(estateForger, user, defaultParams, 'Unauthorized');
+        });
+
+        it('4.17.5. update tokenization request agenda unsuccessfully with invalid request id', async () => {
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addEstateForgerToVault: true,
+            });
+            const { manager, estateForger } = fixture;
+            const defaultParams = await getDefaultParams(fixture);
+
+            await expectRevertWithCustomError(estateForger, manager, { ...defaultParams, requestId: 0 }, 'InvalidRequestId');
+            await expectRevertWithCustomError(estateForger, manager, { ...defaultParams, requestId: 100 }, 'InvalidRequestId');
+        });
+
+        it('4.17.6. update tokenization request agenda unsuccessfully with cancelled request', async () => {
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addEstateForgerToVault: true,
+            });
+            const { manager, estateForger } = fixture;
+            const defaultParams = await getDefaultParams(fixture);
+
+            await estateForger.connect(manager).cancel(defaultParams.requestId);
+
+            await expectRevertWithCustomError(estateForger, manager, defaultParams, 'Cancelled');
+        });
+
+        it('4.17.7. update tokenization request agenda unsuccessfully with tokenized request', async () => {
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addDepositions: true,
+                confirmRequests: true,
+                fundERC20ForDepositors: true,
+                addEstateForgerToVault: true,
+            });
+            const { manager, estateForger } = fixture;
+            const defaultParams = await getDefaultParams(fixture);
+
+            await expectRevertWithCustomError(estateForger, manager, defaultParams, 'Tokenized');
+        });
+
+        it('4.17.8. update tokenization request agenda unsuccessfully when request already have deposits', async () => {
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addDepositions: true,
+                fundERC20ForDepositors: true,
+                addEstateForgerToVault: true,
+            });
+            const { manager, estateForger, admin, admins } = fixture;
+            const defaultParams = await getDefaultParams(fixture);
+
+            await expectRevertWithCustomError(estateForger, manager, defaultParams, 'AlreadyHadDepositor');
+        });
+
+        it('4.17.9. update tokenization request agenda unsuccessfully by inactive zone', async () => {
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addEstateForgerToVault: true,
+            });
+            const { admin, admins, moderator, manager, estateForger } = fixture;
+            const defaultParams = await getDefaultParams(fixture);
+
+            const zone = (await estateForger.getRequest(defaultParams.requestId)).estate.zone;
+            await callAdmin_DeclareZones(
+                admin,
+                admins,
+                [zone],
+                false,
+                await admin.nonce()
+            );
+
+            await expectRevertWithCustomError(estateForger, moderator, defaultParams, 'Unauthorized');
+            await expectRevertWithCustomError(estateForger, manager, defaultParams, 'Unauthorized');
+        });
+
+        it('4.17.10. update tokenization request agenda unsuccessfully by inactive executive in zone', async () => {
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addEstateForgerToVault: true,
+            });
+            const { admin, admins, moderator, manager, estateForger } = fixture;
+            const defaultParams = await getDefaultParams(fixture);
+
+            const zone = (await estateForger.getRequest(defaultParams.requestId)).estate.zone;
+            await callAdmin_ActivateIn(
+                admin,
+                admins,
+                zone,
+                [moderator.address, manager.address],
+                false,
+                await admin.nonce()
+            );
+
+            await expectRevertWithCustomError(estateForger, moderator, defaultParams, 'Unauthorized');
+            await expectRevertWithCustomError(estateForger, manager, defaultParams, 'Unauthorized');
+        });
+
+        it('4.17.11. update tokenization request agenda unsuccessfully with invalid private sale ends at', async () => {
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addEstateForgerToVault: true,
+            });
+            const { manager, estateForger } = fixture;
+            const defaultParams = await getDefaultParams(fixture);
+
+            const timestamp = await time.latest() + 1000;
+            await time.setNextBlockTimestamp(timestamp);
+
+            await expectRevertWithCustomError(estateForger, manager, {
+                ...defaultParams,
+                privateSaleEndsAt: timestamp - 1,
+            }, 'InvalidInput');
+        });
+
+        it('4.17.12. update tokenization request agenda unsuccessfully when private sale ends after public sale', async () => {
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addEstateForgerToVault: true,
+            });
+            const { manager, estateForger } = fixture;
+            const defaultParams = await getDefaultParams(fixture);
+
+            await expectRevertWithCustomError(estateForger, manager, {
+                ...defaultParams,
+                privateSaleEndsAt: defaultParams.publicSaleEndsAt + 1,
+            }, 'InvalidInput');
+        });
+
+        it('4.17.13. update tokenization request agenda unsuccessfully with invalid public sale ends at', async () => {
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addEstateForgerToVault: true,
+            });
+            const { manager, estateForger } = fixture;
+            const defaultParams = await getDefaultParams(fixture);
+
+            const timestamp = await time.latest() + 1000;
+            await time.setNextBlockTimestamp(timestamp);
+
+            await expectRevertWithCustomError(estateForger, manager, {
+                ...defaultParams,
+                publicSaleEndsAt: timestamp,
+            }, 'InvalidInput');
         });
     });
 

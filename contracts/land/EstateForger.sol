@@ -283,7 +283,7 @@ ReentrancyGuardUpgradeable {
     ) external onlyExecutive onlyUpdatableRequest(_requestId) whenNotPaused {
         bytes32 zone = requests[_requestId].estate.zone;
         if (!IAdmin(admin).getZoneEligibility(zone, msg.sender)
-            || (_estate.zone != zone && IAdmin(admin).getZoneEligibility(_estate.zone, msg.sender))) {
+            || (_estate.zone != zone && !IAdmin(admin).getZoneEligibility(_estate.zone, msg.sender))) {
             revert Unauthorized();
         }
 
