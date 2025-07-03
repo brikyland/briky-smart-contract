@@ -4,8 +4,8 @@ pragma solidity ^0.8.0;
 import { Revert } from "../lib/Revert.sol";
 
 contract ProxyCaller {
-    function call(address _to, bytes calldata _data) external {
-        (bool success, bytes memory result) = _to.call(_data);
+    function call(address _to, bytes calldata _data) external payable {
+        (bool success, bytes memory result) = _to.call{value: msg.value}(_data);
         if (!success) {
             Revert.revertFromReturnedData(result);
         }

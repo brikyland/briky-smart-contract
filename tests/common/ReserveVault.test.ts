@@ -18,8 +18,10 @@ import {
     ReserveVault,
     ProxyCaller__factory,
     ProxyCaller,
+    ReserveVault__factory,
+    MockInitiator,
 } from '@typechain-types';
-import { callTransaction, getSignatures, prepareNativeToken, randomWallet } from '@utils/blockchain';
+import { callTransaction, getSignatures, prepareERC20, prepareNativeToken, randomWallet } from '@utils/blockchain';
 import { Constant } from '@tests/test.constant';
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
@@ -28,11 +30,12 @@ import { deployMockEstateToken } from '@utils/deployments/mocks/mockEstateToken'
 import { deployCommissionToken } from '@utils/deployments/land/commissionToken';
 import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 
-import { smock } from '@defi-wonderland/smock';
+import { MockContract, smock } from '@defi-wonderland/smock';
 
 import {
     callAdmin_AuthorizeManagers,
     callAdmin_AuthorizeModerators,
+    callAdmin_UpdateCurrencyRegistries,
 } from '@utils/callWithSignatures/admin';
 import { BigNumber } from 'ethers';
 import { randomInt } from 'crypto';
@@ -43,14 +46,13 @@ import { callCommissionToken_Pause } from '@utils/callWithSignatures/commissionT
 import { deployProxyCaller } from '@utils/deployments/mocks/proxyCaller';
 import { deployReserveVault } from '@utils/deployments/common/reserveVault';
 import { callReserveVault_AuthorizeInitiator, callReserveVault_Pause } from '@utils/callWithSignatures/reserveVault';
+import { deployMockInitiator } from '@utils/deployments/mocks/mockInitiator';
 
 interface ReserveVaultFixture {
     admin: Admin;
-    reserveVault: ReserveVault;
-    initiator1: ProxyCaller;
-    initiator2: ProxyCaller;
-    initiator3: ProxyCaller;
-    initiators: ProxyCaller[];
+    reserveVault: MockContract<ReserveVault>;
+    initiators: MockInitiator[];
+    currencies: Currency[];
 
     deployer: any;
     admins: any[];
@@ -81,23 +83,28 @@ describe('20. ReserveVault', async () => {
             adminAddresses[4],
         ) as Admin;
 
-        const initiator1 = await deployProxyCaller(deployer.address) as ProxyCaller;
-        const initiator2 = await deployProxyCaller(deployer.address) as ProxyCaller;
-        const initiator3 = await deployProxyCaller(deployer.address) as ProxyCaller;
+        const initiator1 = await deployMockInitiator(deployer) as MockInitiator;
+        const initiator2 = await deployMockInitiator(deployer) as MockInitiator;
+        const initiator3 = await deployMockInitiator(deployer) as MockInitiator;
         const initiators = [initiator1, initiator2, initiator3];
 
-        const reserveVault = await deployReserveVault(
-            deployer.address,
+        const currency1 = await deployCurrency(deployer.address, 'MockCurrency1', 'MCK1') as Currency;
+        const currency2 = await deployCurrency(deployer.address, 'MockCurrency2', 'MCK2') as Currency;
+        const currency3 = await deployCurrency(deployer.address, 'MockCurrency3', 'MCK3') as Currency;
+        const currency4 = await deployCurrency(deployer.address, 'MockCurrency4', 'MCK4') as Currency;
+        const currencies = [currency1, currency2, currency3, currency4];
+
+        const SmockReserveVaultFactory = await smock.mock<ReserveVault__factory>('ReserveVault');
+        const reserveVault = await SmockReserveVaultFactory.deploy();
+        await callTransaction(reserveVault.initialize(
             admin.address,
-        ) as ReserveVault;
+        ));
 
         return {
             admin,
             reserveVault,
-            initiator1,
-            initiator2,
-            initiator3,
             initiators,
+            currencies,
             deployer,
             admins,
             funder1,
@@ -108,11 +115,15 @@ describe('20. ReserveVault', async () => {
     };
 
     async function beforeReserveVaultTest({
+        listSampleCurrencies = false,
         authorizeInitiators = false,
+        listSampleFunds = false,
+        listSampleDeposits = false,
+        fundInitiator = false,
         pause = false,
     } = {}): Promise<ReserveVaultFixture> {
         const fixture = await loadFixture(reserveVaultFixture);
-        const { admin, admins, reserveVault, initiators } = fixture;
+        const { deployer, admin, admins, reserveVault, initiators, currencies } = fixture;
 
         if (authorizeInitiators) {
             await callReserveVault_AuthorizeInitiator(
@@ -122,6 +133,62 @@ describe('20. ReserveVault', async () => {
                 true,
                 await admin.nonce(),
             )
+        }
+
+        if (listSampleCurrencies) {
+            const currencyAddresses = [
+                ethers.constants.AddressZero,
+                ...currencies.map(x => x.address),
+            ];
+
+            await callAdmin_UpdateCurrencyRegistries(
+                admin,
+                admins,
+                currencyAddresses,
+                currencyAddresses.map(_ => true),
+                currencyAddresses.map(_ => false),
+                await admin.nonce(),
+            )
+        }
+
+        if (listSampleFunds) {
+            await callTransaction(initiators[0].call(
+                reserveVault.address,
+                reserveVault.interface.encodeFunctionData(
+                    'initiateFund',
+                    [
+                        currencies[0].address,
+                        100,
+                        [currencies[1].address, ethers.constants.AddressZero],
+                        [200, 400],
+                    ]
+                )
+            ));
+        }
+
+        if (listSampleDeposits) {
+            reserveVault.setVariable('funds', {
+                1: {
+                    supply: 1000,
+                }
+            })
+        }
+
+        if (fundInitiator) {            
+            await prepareNativeToken(
+                ethers.provider,
+                deployer,
+                initiators,
+                ethers.utils.parseEther('100')
+            );
+            for (const currency of currencies) {
+                await prepareERC20(
+                    currency,
+                    initiators,
+                    [reserveVault],
+                    ethers.utils.parseEther('100')
+                );
+            }
         }
 
         if (pause) {
@@ -365,25 +432,291 @@ describe('20. ReserveVault', async () => {
 
     describe('20.3. initiateFund(address, uint256, address[], uint256[])', async () => {
         it('20.3.1. initiate fund successfully', async () => {
+            const { reserveVault, initiators, currencies } = await beforeReserveVaultTest({
+                authorizeInitiators: true,
+                listSampleCurrencies: true,
+            });
 
+            const initiator = initiators[0];
+
+            // Tx1: Native main currency
+            const mainCurrencyAddress1 = ethers.constants.AddressZero;
+            const mainDenomination1 = 100;
+            const subCurrencyAddresses1 = [currencies[0].address, currencies[1].address, ethers.constants.AddressZero];
+            const subDenominations1 = [200, 400, 800];
+
+            const callData1 = reserveVault.interface.encodeFunctionData(
+                'initiateFund',
+                [
+                    mainCurrencyAddress1,
+                    mainDenomination1,
+                    subCurrencyAddresses1,
+                    subDenominations1,
+                ]
+            );
+            const tx1 = await initiator.call(reserveVault.address, callData1);
+            await tx1.wait();
+
+            const fundId1 = 1;
+
+            await expect(tx1).to
+                .emit(reserveVault, 'FundInitiation')
+                .withArgs(
+                    fundId1,
+                    initiator.address,
+                    mainCurrencyAddress1,
+                    mainDenomination1,
+                    subCurrencyAddresses1,
+                    subDenominations1,
+                );
+
+            expect(await reserveVault.fundNumber()).to.equal(1);
+
+            const fund1 = await reserveVault.getFund(fundId1);
+            expect(fund1.currencies).to.deep.equal([mainCurrencyAddress1, ...subCurrencyAddresses1]);
+            expect(fund1.denominations).to.deep.equal([mainDenomination1, ...subDenominations1]);
+            expect(fund1.supply).to.equal(0);
+            expect(fund1.initiator).to.equal(initiator.address);
+            expect(fund1.isSufficient).to.equal(false);
+
+            // Tx2: ERC20 main currency
+
+            const mainCurrencyAddress2 = currencies[0].address;
+            const mainDenomination2 = 1600;
+            const subCurrencyAddresses2 = [currencies[1].address, currencies[2].address, ethers.constants.AddressZero];
+            const subDenominations2 = [3200, 6400, 12800];
+
+            const callData2 = reserveVault.interface.encodeFunctionData(
+                'initiateFund',
+                [
+                    mainCurrencyAddress2,
+                    mainDenomination2,
+                    subCurrencyAddresses2,
+                    subDenominations2,
+                ]
+            );
+            const tx2 = await initiator.call(reserveVault.address, callData2);
+            await tx2.wait();
+
+            const fundId2 = 2;
+
+            await expect(tx2).to
+                .emit(reserveVault, 'FundInitiation')
+                .withArgs(
+                    fundId2,
+                    initiator.address,
+                    mainCurrencyAddress2,
+                    mainDenomination2,
+                    subCurrencyAddresses2,
+                    subDenominations2,
+                );
+
+            expect(await reserveVault.fundNumber()).to.equal(2);
+
+            const fund2 = await reserveVault.getFund(fundId2);
+            expect(fund2.currencies).to.deep.equal([mainCurrencyAddress2, ...subCurrencyAddresses2]);
+            expect(fund2.denominations).to.deep.equal([mainDenomination2, ...subDenominations2]);
+            expect(fund2.supply).to.equal(0);
+            expect(fund2.initiator).to.equal(initiator.address);
+            expect(fund2.isSufficient).to.equal(false);
         });
 
-        it('20.3.2. initiate fund unsuccessfully when paused', async () => {
+        it('20.3.2. initiate fund successfully with zero denomination main currency', async () => {
+            const { reserveVault, initiators, currencies } = await beforeReserveVaultTest({
+                authorizeInitiators: true,
+                listSampleCurrencies: true,
+            });
+
+            const initiator = initiators[0];
+
+            const mainCurrencyAddress = currencies[0].address;
+            const mainDenomination = 0;
+            const subCurrencyAddresses = [currencies[1].address, currencies[2].address, ethers.constants.AddressZero];
+            const subDenominations = [100, 200, 400];
+
+            const callData = reserveVault.interface.encodeFunctionData(
+                'initiateFund',
+                [
+                    mainCurrencyAddress,
+                    mainDenomination,
+                    subCurrencyAddresses,
+                    subDenominations,
+                ]
+            );
+            const tx = await initiator.call(reserveVault.address, callData);
+            await tx.wait();
+            
+            const fundId = 1;
+
+            await expect(tx).to
+                .emit(reserveVault, 'FundInitiation')
+                .withArgs(
+                    fundId,
+                    initiator.address,
+                    mainCurrencyAddress,
+                    mainDenomination,
+                    subCurrencyAddresses,
+                    subDenominations,
+                );
+
+            expect(await reserveVault.fundNumber()).to.equal(1);
+
+            const fund = await reserveVault.getFund(fundId);
+            expect(fund.currencies).to.deep.equal(subCurrencyAddresses);
+            expect(fund.denominations).to.deep.equal(subDenominations);
+            expect(fund.supply).to.equal(0);
+            expect(fund.initiator).to.equal(initiator.address);
+            expect(fund.isSufficient).to.equal(false);
         });
 
-        it('20.3.3. initiate fund unsuccessfully by unauthorized account', async () => {
+        it('20.3.3. initiate fund unsuccessfully when paused', async () => {
+            const { reserveVault, initiators, currencies } = await beforeReserveVaultTest({
+                authorizeInitiators: true,
+                listSampleCurrencies: true,
+                pause: true,
+            });
+
+            const initiator = initiators[0];
+
+            const mainCurrencyAddress = currencies[0].address;
+            const mainDenomination = 100;
+            const subCurrencyAddresses = [currencies[1].address, currencies[2].address, ethers.constants.AddressZero];
+            const subDenominations = [200, 400, 800];
+
+            const callData = reserveVault.interface.encodeFunctionData(
+                'initiateFund',
+                [
+                    mainCurrencyAddress,
+                    mainDenomination,
+                    subCurrencyAddresses,
+                    subDenominations,
+                ]
+            );
+            await expect(initiator.call(reserveVault.address, callData))
+                .to.be.revertedWith('Pausable: paused');
         });
 
-        it('20.3.4. initiate fund unsuccessfully with invalid params length', async () => {
+        it('20.3.4. initiate fund unsuccessfully by unauthorized account', async () => {
+            const { reserveVault, currencies } = await beforeReserveVaultTest({
+                authorizeInitiators: true,
+                listSampleCurrencies: true,
+            });
 
+            const mainCurrencyAddress = currencies[0].address;
+            const mainDenomination = 100;
+            const subCurrencyAddresses = [currencies[1].address, currencies[2].address, ethers.constants.AddressZero];
+            const subDenominations = [200, 400, 800];
+
+            await expect(reserveVault.initiateFund(
+                mainCurrencyAddress,
+                mainDenomination,
+                subCurrencyAddresses,
+                subDenominations,
+            )).to.be.revertedWithCustomError(reserveVault, 'Unauthorized');
         });
 
-        it('20.3.5. initiate fund unsuccessfully with invalid main currency', async () => {
+        it('20.3.5. initiate fund unsuccessfully with invalid params length', async () => {
+            const { reserveVault, initiators, currencies } = await beforeReserveVaultTest({
+                authorizeInitiators: true,
+                listSampleCurrencies: true,
+            });
 
+            const initiator = initiators[0];
+
+            const mainCurrencyAddress = currencies[0].address;
+            const mainDenomination = 100;
+            const subCurrencyAddresses = [currencies[1].address, currencies[2].address, ethers.constants.AddressZero];
+            const subDenominations = [200, 400];
+            
+            const callData = reserveVault.interface.encodeFunctionData(
+                'initiateFund',
+                [
+                    mainCurrencyAddress,
+                    mainDenomination,
+                    subCurrencyAddresses,
+                    subDenominations,
+                ]
+            );
+            await expect(initiator.call(reserveVault.address, callData))
+                .to.be.revertedWithCustomError(reserveVault, 'InvalidInput');
         });
 
-        it('20.3.6. initiate fund unsuccessfully with invalid sub currencies', async () => {
+        it('20.3.6. initiate fund unsuccessfully with invalid main currency', async () => {
+            const { reserveVault, initiators, currencies } = await beforeReserveVaultTest({
+                authorizeInitiators: true,
+                listSampleCurrencies: true,
+            });
 
+            const initiator = initiators[0];
+            
+            const mainCurrencyAddress = randomWallet().address;
+            const mainDenomination = 100;
+            const subCurrencyAddresses = [currencies[1].address, currencies[2].address, ethers.constants.AddressZero];
+            const subDenominations = [200, 400, 800];
+
+            const callData = reserveVault.interface.encodeFunctionData(
+                'initiateFund',
+                [
+                    mainCurrencyAddress,
+                    mainDenomination,
+                    subCurrencyAddresses,
+                    subDenominations,
+                ]
+            );
+            await expect(initiator.call(reserveVault.address, callData))
+                .to.be.revertedWithCustomError(reserveVault, 'InvalidCurrency');
+        });
+
+        it('20.3.7. initiate fund unsuccessfully with invalid sub currencies', async () => {
+            const { reserveVault, initiators, currencies } = await beforeReserveVaultTest({
+                authorizeInitiators: true,
+                listSampleCurrencies: true,
+            });
+
+            const initiator = initiators[0];
+            
+            const mainCurrencyAddress = currencies[0].address;
+            const mainDenomination = 100;
+            const subCurrencyAddresses = [currencies[1].address, currencies[2].address, randomWallet().address];
+            const subDenominations = [200, 400, 800];
+
+            const callData = reserveVault.interface.encodeFunctionData(
+                'initiateFund',
+                [
+                    mainCurrencyAddress,
+                    mainDenomination,
+                    subCurrencyAddresses,
+                    subDenominations,
+                ]
+            );
+            await expect(initiator.call(reserveVault.address, callData))
+                .to.be.revertedWithCustomError(reserveVault, 'InvalidCurrency');
+        });
+
+        it('20.3.8. initiate fund unsuccessfully with zero denomination sub currencies', async () => {
+            const { reserveVault, initiators, currencies } = await beforeReserveVaultTest({
+                authorizeInitiators: true,
+                listSampleCurrencies: true,
+            });
+
+            const initiator = initiators[0];
+            
+            const mainCurrencyAddress = currencies[0].address;
+            const mainDenomination = 100;
+            const subCurrencyAddresses = [currencies[1].address, currencies[2].address, ethers.constants.AddressZero];
+            const subDenominations = [200, 400, 0];
+
+            const callData = reserveVault.interface.encodeFunctionData(
+                'initiateFund',
+                [
+                    mainCurrencyAddress,
+                    mainDenomination,
+                    subCurrencyAddresses,
+                    subDenominations,
+                ]
+            );
+            await expect(initiator.call(reserveVault.address, callData))
+                .to.be.revertedWithCustomError(reserveVault, 'InvalidDenomination');
         });
     });
 
@@ -391,6 +724,128 @@ describe('20. ReserveVault', async () => {
     });
 
     describe('20.5. safeProvideFund(uint256, uint256)', async () => {
+        it.only('20.5.1. safe provide fund successfully with just enough native currency', async () => {
+            const { reserveVault, initiators, currencies, deployer } = await beforeReserveVaultTest({
+                authorizeInitiators: true,
+                listSampleCurrencies: true,
+                listSampleFunds: true,
+                listSampleDeposits: true,
+                fundInitiator: true,
+            });
+
+            const initiator = initiators[0];
+            
+            const fundId = 1;
+            const initSupply = (await reserveVault.getFund(fundId)).supply;
+            const anchor = initSupply;
+
+            const currency0Denomination = 100;
+            const currency1Denomination = 200;
+            const nativeDenomination = 400;
+
+            const deployerInitNativeBalance = await ethers.provider.getBalance(deployer.address);
+            const initiatorInitNativeBalance = await ethers.provider.getBalance(initiator.address);
+            const initiatorInitCurrency0Balance = await currencies[0].balanceOf(initiator.address);
+            const initiatorInitCurrency1Balance = await currencies[1].balanceOf(initiator.address);
+            const initiatorInitCurrency2Balance = await currencies[2].balanceOf(initiator.address);
+
+            const callData = reserveVault.interface.encodeFunctionData(
+                'safeProvideFund',
+                [fundId, anchor],
+            );
+            const tx = await initiator.call(reserveVault.address, callData, { value: initSupply.mul(nativeDenomination) });
+            const receipt = await tx.wait();
+            const gasFee = receipt.gasUsed.mul(receipt.effectiveGasPrice);
+
+            await expect(tx).to
+                .emit(reserveVault, 'FundProvision')
+                .withArgs(fundId);
+
+            expect(await ethers.provider.getBalance(deployer.address)).to.equal(deployerInitNativeBalance.sub(gasFee).sub(initSupply.mul(nativeDenomination)));
+            expect(await ethers.provider.getBalance(initiator.address)).to.equal(initiatorInitNativeBalance);
+            expect(await currencies[0].balanceOf(initiator.address)).to.equal(initiatorInitCurrency0Balance.sub(initSupply.mul(currency0Denomination)));
+            expect(await currencies[1].balanceOf(initiator.address)).to.equal(initiatorInitCurrency1Balance.sub(initSupply.mul(currency1Denomination)));
+            expect(await currencies[2].balanceOf(initiator.address)).to.equal(initiatorInitCurrency2Balance);
+
+            const fund = await reserveVault.getFund(fundId);
+            expect(fund.supply).to.equal(initSupply);
+            expect(fund.isSufficient).to.equal(true);
+        });
+
+        it.only('20.5.2. safe provide fund successfully with excess native currency', async () => {
+            const { reserveVault, initiators, currencies, deployer } = await beforeReserveVaultTest({
+                authorizeInitiators: true,
+                listSampleCurrencies: true,
+                listSampleFunds: true,
+                listSampleDeposits: true,
+                fundInitiator: true,
+            });
+
+            const initiator = initiators[0];
+            
+            const fundId = 1;
+            const initSupply = (await reserveVault.getFund(fundId)).supply;
+            const anchor = initSupply;
+
+            const currency0Denomination = 100;
+            const currency1Denomination = 200;
+            const nativeDenomination = 400;
+
+            const deployerInitNativeBalance = await ethers.provider.getBalance(deployer.address);
+            const initiatorInitNativeBalance = await ethers.provider.getBalance(initiator.address);
+            const initiatorInitCurrency0Balance = await currencies[0].balanceOf(initiator.address);
+            const initiatorInitCurrency1Balance = await currencies[1].balanceOf(initiator.address);
+            const initiatorInitCurrency2Balance = await currencies[2].balanceOf(initiator.address);
+
+            const callData = reserveVault.interface.encodeFunctionData(
+                'safeProvideFund',
+                [fundId, anchor],
+            );
+            const tx = await initiator.call(reserveVault.address, callData, { value: initSupply.mul(nativeDenomination).add(ethers.utils.parseEther('100')) });
+            const receipt = await tx.wait();
+            const gasFee = receipt.gasUsed.mul(receipt.effectiveGasPrice);
+
+            await expect(tx).to
+                .emit(reserveVault, 'FundProvision')
+                .withArgs(fundId);
+
+            expect(await ethers.provider.getBalance(deployer.address)).to.equal(deployerInitNativeBalance.sub(gasFee).sub(initSupply.mul(nativeDenomination)));
+            expect(await ethers.provider.getBalance(initiator.address)).to.equal(initiatorInitNativeBalance);
+            expect(await currencies[0].balanceOf(initiator.address)).to.equal(initiatorInitCurrency0Balance.sub(initSupply.mul(currency0Denomination)));
+            expect(await currencies[1].balanceOf(initiator.address)).to.equal(initiatorInitCurrency1Balance.sub(initSupply.mul(currency1Denomination)));
+            expect(await currencies[2].balanceOf(initiator.address)).to.equal(initiatorInitCurrency2Balance);
+
+            const fund = await reserveVault.getFund(fundId);
+            expect(fund.supply).to.equal(initSupply);
+            expect(fund.isSufficient).to.equal(true);
+        });
+
+        it('20.5.2. safe provide fund unsuccessfully with invalid fund id', async () => {
+        });
+
+        it('20.5.3. safe provide fund unsuccessfully with invalid anchor', async () => {
+        });
+
+        it('20.5.4. safe provide fund unsuccessfully when paused', async () => {
+        });
+
+        it('20.5.5. safe provide fund unsuccessfully by unauthorized account', async () => {
+        });
+
+        it('20.5.6. safe provide fund unsuccessfully with already provided fund', async () => {
+        });
+
+        it('20.5.7. safe provide fund unsuccessfully with insufficient native currency', async () => {
+        });
+
+        it('20.5.8. safe provide fund unsuccessfully with insufficient ERC20 currencies', async () => {
+        });
+
+        it('20.5.9. safe provide fund unsuccessfully when receiving native currency failed', async () => {
+        });
+
+        it('20.5.10. safe provide fund unsuccessfully when this contract is reentered', async () => {
+        });
     });
 
     describe('20.6. withdrawFund(uint256, address, uint256)', async () => {

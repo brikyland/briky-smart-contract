@@ -56,14 +56,24 @@ export async function prepareNativeToken(
 
 export async function prepareERC20(
     token: ethers.Contract,
-    senders: ethers.Wallet[],
+    senders: (ethers.Wallet | ethers.Contract)[],
     operators: (ethers.Wallet | ethers.Contract)[],
     amount: ethers.BigNumberish
 ) {
     for (const sender of senders) {
         await callTransaction(token.mint(sender.address, amount));
         for (const operator of operators) {
-            await callTransaction(token.connect(sender).increaseAllowance(operator.address, amount));
+            if (sender instanceof ethers.Wallet) {
+                await callTransaction(token.connect(sender).increaseAllowance(operator.address, amount));
+            } else {
+                await callTransaction(sender.call(
+                    token.address,
+                    token.interface.encodeFunctionData(
+                        'increaseAllowance',
+                        [operator.address, amount]
+                    )
+                ))
+            }
         }
     }
 }
