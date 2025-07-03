@@ -26,6 +26,8 @@ RoyaltyRateProposer,
 ERC1155PausableUpgradeable,
 ERC1155SupplyUpgradeable,
 ERC1155URIStorageUpgradeable {
+    string constant private VERSION = "v1.1.1";
+
     receive() external payable {}
 
     function __LaunchPad_init(
@@ -95,8 +97,7 @@ ERC1155URIStorageUpgradeable {
     ) internal override {
         super._afterTokenTransfer(_operator, _from, _to, _ids, _amounts, _data);
         uint256 timestamp = block.timestamp;
-        uint256 n = _ids.length;
-        for (uint256 i = 0; i < n; ++i) {
+        for (uint256 i = 0; i < _ids.length; ++i) {
             uint256 tokenId = _ids[i];
             if (_from != address(0)) {
                 balanceSnapshots[tokenId][_from].push(Snapshot(balanceOf(_from, tokenId), timestamp));

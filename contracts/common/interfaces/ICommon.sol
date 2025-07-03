@@ -12,6 +12,7 @@ interface ICommon {
         uint256 timestamp;
     }
 
+    error AuthorizedAccount(address account);
     error BadAnchor();
     error FailedVerification();
     error InsufficientFunds();
@@ -19,6 +20,7 @@ interface ICommon {
     error InvalidInput();
     error InvalidRate();
     error InvalidUpdating();
+    error NotAuthorizedAccount(address account);
     error Unauthorized();
 
     function version() external pure returns (string memory version);

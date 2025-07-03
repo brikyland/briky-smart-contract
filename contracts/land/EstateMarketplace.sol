@@ -30,6 +30,13 @@ ReentrancyGuardUpgradeable {
 
     string constant private VERSION = "v1.1.1";
 
+    modifier validOffer(uint256 _offerId) {
+        if (_offerId == 0 || _offerId > offerNumber) {
+            revert InvalidOfferId();
+        }
+        _;
+    }
+
     receive() external payable {}
 
     function initialize(
@@ -49,10 +56,7 @@ ReentrancyGuardUpgradeable {
         return VERSION;
     }
 
-    function getOffer(uint256 _offerId) external view returns (Offer memory) {
-        if (_offerId == 0 || _offerId > offerNumber) {
-            revert InvalidOfferId();
-        }
+    function getOffer(uint256 _offerId) external view validOffer(_offerId) returns (Offer memory) {
         return offers[_offerId];
     }
 
@@ -107,19 +111,11 @@ ReentrancyGuardUpgradeable {
         return offerId;
     }
 
-    function buy(uint256 _offerId) external payable returns (uint256) {
-        if (_offerId == 0 || _offerId > offerNumber) {
-            revert InvalidOfferId();
-        }
-
+    function buy(uint256 _offerId) external payable validOffer(_offerId) returns (uint256) {
         return _buy(_offerId, offers[_offerId].sellingAmount - offers[_offerId].soldAmount);
     }
 
-    function buy(uint256 _offerId, uint256 _amount) external payable returns (uint256) {
-        if (_offerId == 0 || _offerId > offerNumber) {
-            revert InvalidOfferId();
-        }
-
+    function buy(uint256 _offerId, uint256 _amount) external payable validOffer(_offerId) returns (uint256) {
         if (!offers[_offerId].isDivisible) {
             revert NotDivisible();
         }
@@ -127,11 +123,7 @@ ReentrancyGuardUpgradeable {
         return _buy(_offerId, _amount);
     }
 
-    function safeBuy(uint256 _offerId, uint256 _anchor) external payable returns (uint256) {
-        if (_offerId == 0 || _offerId > offerNumber) {
-            revert InvalidOfferId();
-        }
-
+    function safeBuy(uint256 _offerId, uint256 _anchor) external payable validOffer(_offerId) returns (uint256) {
         if (_anchor != offers[_offerId].tokenId) {
             revert BadAnchor();
         }
@@ -143,11 +135,7 @@ ReentrancyGuardUpgradeable {
         uint256 _offerId,
         uint256 _amount,
         uint256 _anchor
-    ) external payable returns (uint256) {
-        if (_offerId == 0 || _offerId > offerNumber) {
-            revert InvalidOfferId();
-        }
-
+    ) external payable validOffer(_offerId) returns (uint256) {
         if (_anchor != offers[_offerId].tokenId) {
             revert BadAnchor();
         }
@@ -159,27 +147,38 @@ ReentrancyGuardUpgradeable {
         return _buy(_offerId, _amount);
     }
 
-    function cancel(uint256 _offerId) external nonReentrant whenNotPaused {
-        if (_offerId == 0 || _offerId > offerNumber) revert InvalidOfferId();
+    function cancel(uint256 _offerId) external nonReentrant validOffer(_offerId) whenNotPaused {
         Offer storage offer = offers[_offerId];
-        if (msg.sender != offer.seller && !IAdmin(admin).isManager(msg.sender)) revert Unauthorized();
-        if (offer.state != OfferState.Selling) revert InvalidCancelling();
+        if (msg.sender != offer.seller && !IAdmin(admin).isManager(msg.sender)) {
+            revert Unauthorized();
+        }
+        if (offer.state != OfferState.Selling) {
+            revert InvalidCancelling();
+        }
 
         offer.state = OfferState.Cancelled;
 
         emit OfferCancellation(_offerId);
     }
 
-    function _buy(uint256 _offerId, uint256 _amount) private nonReentrant whenNotPaused returns (uint256) {
-        if (_amount == 0) revert InvalidAmount();
+    function _buy(uint256 _offerId, uint256 _amount)
+    private nonReentrant whenNotPaused returns (uint256) {
+        if (_amount == 0) {
+            revert InvalidAmount();
+        }
+
         Offer storage offer = offers[_offerId];
         if (msg.sender == offer.seller
-            || offer.state != OfferState.Selling) revert InvalidBuying();
+            || offer.state != OfferState.Selling) {
+            revert InvalidBuying();
+        }
 
         address seller = offer.seller;
         uint256 sellingAmount = offer.sellingAmount;
         uint256 newSoldAmount = offer.soldAmount + _amount;
-        if (newSoldAmount > sellingAmount) revert NotEnoughTokensToSell();
+        if (newSoldAmount > sellingAmount) {
+            revert NotEnoughTokensToSell();
+        }
 
         IEstateToken estateTokenContract = IEstateToken(estateToken);
         uint256 tokenId = offer.tokenId;

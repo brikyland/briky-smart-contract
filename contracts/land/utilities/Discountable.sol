@@ -13,7 +13,7 @@ abstract contract Discountable is ICommon {
 
     function _applyDiscount(uint256 _feeAmount, address _currency) internal view returns (uint256) {
         return IAdmin(this.admin()).isExclusiveCurrency(_currency)
-            ? _feeAmount.applyDiscount(IExclusiveToken(_currency).exclusiveDiscount())
+            ? _feeAmount.remain(IExclusiveToken(_currency).exclusiveDiscount())
             : _feeAmount;
     }
 }

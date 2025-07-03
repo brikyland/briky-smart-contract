@@ -18,6 +18,8 @@ import {Formula} from "../lib/Formula.sol";
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 import {IRoyaltyRateProposer} from "../common/interfaces/IRoyaltyRateProposer.sol";
 
+import {Administrable} from "../common/utilities/Administrable.sol";
+import {Pausable} from "../common/utilities/Pausable.sol";
 import {RoyaltyRateProposer} from "../common/utilities/RoyaltyRateProposer.sol";
 
 import {ICommissionToken} from "./interfaces/ICommissionToken.sol";
@@ -25,7 +27,6 @@ import {IEstateToken} from "./interfaces/IEstateToken.sol";
 import {IEstateTokenizer} from "./interfaces/IEstateTokenizer.sol";
 
 import {EstateTokenStorage} from "./storages/EstateTokenStorage.sol";
-import {Pausable} from "../common/utilities/Pausable.sol";
 
 contract EstateToken is
 EstateTokenStorage,
@@ -33,26 +34,13 @@ RoyaltyRateProposer,
 ERC1155PausableUpgradeable,
 ERC1155SupplyUpgradeable,
 ERC1155URIStorageUpgradeable,
+Administrable,
 Pausable,
 ReentrancyGuardUpgradeable {
     using Formula for uint256;
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
     string constant private VERSION = "v1.1.1";
-
-    modifier onlyManager() {
-        if (!IAdmin(admin).isManager(msg.sender)) {
-            revert Unauthorized();
-        }
-        _;
-    }
-
-    modifier onlyTokenizer() {
-        if (!isTokenizer[msg.sender]) {
-            revert Unauthorized();
-        }
-        _;
-    }
 
     receive() external payable {}
 
@@ -192,7 +180,11 @@ ReentrancyGuardUpgradeable {
         uint40 _expireAt,
         uint8 _decimals,
         address _commissionReceiver
-    ) external onlyTokenizer returns (uint256) {
+    ) external returns (uint256) {
+        if (!isTokenizer[msg.sender]) {
+            revert Unauthorized();
+        }
+
         if (!IAdmin(admin).isZone(_zone)
             || _decimals > Constant.ESTATE_TOKEN_MAX_DECIMALS
             || _expireAt <= uint40(block.timestamp)) {
@@ -239,11 +231,15 @@ ReentrancyGuardUpgradeable {
     }
 
     function deprecateEstate(uint256 _estateId) external onlyManager {
-        if (!exists(_estateId)) revert InvalidEstateId();
+        if (!exists(_estateId)) {
+            revert InvalidEstateId();
+        }
         if (!IAdmin(admin).getZoneEligibility(estates[_estateId].zone, msg.sender)) {
             revert Unauthorized();
         }
-        if (estates[_estateId].isDeprecated) revert Deprecated();
+        if (estates[_estateId].isDeprecated) {
+            revert Deprecated();
+        }
         estates[_estateId].isDeprecated = true;
         emit EstateDeprecation(_estateId);
     }
@@ -345,8 +341,7 @@ ReentrancyGuardUpgradeable {
         ERC1155SupplyUpgradeable
     ) {
         super._beforeTokenTransfer(_operator, _from, _to, _ids, _amounts, _data);
-        uint256 n = _ids.length;
-        for (uint256 i = 0; i < n; ++i) {
+        for (uint256 i = 0; i < _ids.length; ++i) {
             require(
                 !estates[_ids[i]].isDeprecated && estates[_ids[i]].expireAt > block.timestamp,
                 "estateToken: Token is unavailable"
@@ -364,8 +359,7 @@ ReentrancyGuardUpgradeable {
     ) internal override {
         super._afterTokenTransfer(_operator, _from, _to, _ids, _amounts, _data);
         uint256 timestamp = block.timestamp;
-        uint256 n = _ids.length;
-        for (uint256 i = 0; i < n; ++i) {
+        for (uint256 i = 0; i < _ids.length; ++i) {
             uint256 tokenId = _ids[i];
             if (_from != address(0)) {
                 balanceSnapshots[tokenId][_from].push(Snapshot(balanceOf(_from, tokenId), timestamp));

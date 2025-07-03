@@ -25,6 +25,7 @@ abstract contract EstateForgerStorage is IEstateForger {
 
     address public admin;
     address public feeReceiver;
+    address public reserveVault;
     address public commissionToken;
     address public estateToken;
 

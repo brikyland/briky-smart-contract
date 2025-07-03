@@ -11,6 +11,7 @@ import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
 import {Formula} from "../lib/Formula.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
+import {IReserveVault} from "../common/interfaces/IReserveVault.sol";
 
 import {Pausable} from "../common/utilities/Pausable.sol";
 
@@ -33,6 +34,26 @@ ReentrancyGuardUpgradeable {
 
     string constant private VERSION = "v1.1.1";
 
+    modifier validRequest(uint256 _requestId) {
+        if (_requestId == 0 || _requestId > requestNumber) {
+            revert InvalidRequestId();
+        }
+        _;
+    }
+
+    modifier onlyUpdatableRequest(uint256 _requestId) {
+        if (requests[_requestId].estate.estateId != 0) {
+            revert Tokenized();
+        }
+        if (requests[_requestId].quota.totalQuantity == 0) {
+            revert Cancelled();
+        }
+        if (requests[_requestId].quota.soldQuantity > 0) {
+            revert AlreadyHadDeposit();
+        }
+        _;
+    }
+
     receive() external payable {}
 
     function initialize(
@@ -40,6 +61,7 @@ ReentrancyGuardUpgradeable {
         address _estateToken,
         address _commissionToken,
         address _feeReceiver,
+        address _reserveVault,
         uint256 _feeRate,
         uint256 _baseMinUnitPrice,
         uint256 _baseMaxUnitPrice
@@ -53,6 +75,7 @@ ReentrancyGuardUpgradeable {
         estateToken = _estateToken;
         commissionToken = _commissionToken;
         feeReceiver = _feeReceiver;
+        reserveVault = _reserveVault;
 
         feeRate = _feeRate;
 
@@ -259,42 +282,27 @@ ReentrancyGuardUpgradeable {
         return Rate(feeRate, Constant.COMMON_RATE_DECIMALS);
     }
 
-    function getRequest(uint256 _requestId) external view returns (Request memory) {
-        if (_requestId == 0 || _requestId > requestNumber) {
-            revert InvalidRequestId();
-        }
+    function getRequest(uint256 _requestId) external view validRequest(_requestId) returns (Request memory) {
         return requests[_requestId];
     }
 
     function requestTokenizationWithDuration(
         address _seller,
-        bytes32 _zone,
-        string calldata _uri,
-        uint256 _totalSupply,
-        uint256 _minSellingAmount,
-        uint256 _maxSellingAmount,
-        uint256 _unitPrice,
-        address _currency,
-        uint8 _decimals,
-        uint40 _expireAt,
+        RequestEstateInput calldata _estate,
+        RequestQuotaInput calldata _quota,
+        RequestQuoteInput calldata _quote,
         uint40 _privateSaleDuration,
         uint40 _publicSaleDuration
     ) external returns (uint256) {
-        if (_privateSaleDuration == 0 || _publicSaleDuration == 0) {
+        if (_privateSaleDuration == 0 && _publicSaleDuration == 0) {
             revert InvalidInput();
         }
 
         return _requestTokenization(
             _seller,
-            _zone,
-            _uri,
-            _totalSupply,
-            _minSellingAmount,
-            _maxSellingAmount,
-            _unitPrice,
-            _currency,
-            _decimals,
-            _expireAt,
+            _estate,
+            _quota,
+            _quote,
             uint40(block.timestamp) + _privateSaleDuration,
             uint40(block.timestamp) + _privateSaleDuration + _publicSaleDuration
         );
@@ -302,224 +310,231 @@ ReentrancyGuardUpgradeable {
 
     function requestTokenizationWithTimestamp(
         address _seller,
-        bytes32 _zone,
-        string calldata _uri,
-        uint256 _totalSupply,
-        uint256 _minSellingAmount,
-        uint256 _maxSellingAmount,
-        uint256 _unitPrice,
-        address _currency,
-        uint8 _decimals,
-        uint40 _expireAt,
+        RequestEstateInput calldata _estate,
+        RequestQuotaInput calldata _quota,
+        RequestQuoteInput calldata _quote,
         uint40 _privateSaleEndsAt,
         uint40 _publicSaleEndsAt
     ) external returns (uint256) {
-        if (block.timestamp >= _privateSaleEndsAt || _privateSaleEndsAt >= _publicSaleEndsAt) {
+        if (block.timestamp > _privateSaleEndsAt
+            || _privateSaleEndsAt > _publicSaleEndsAt
+            || _publicSaleEndsAt == block.timestamp) {
             revert InvalidInput();
         }
 
         return _requestTokenization(
             _seller,
-            _zone,
-            _uri,
-            _totalSupply,
-            _minSellingAmount,
-            _maxSellingAmount,
-            _unitPrice,
-            _currency,
-            _decimals,
-            _expireAt,
+            _estate,
+            _quota,
+            _quote,
             _privateSaleEndsAt,
             _publicSaleEndsAt
         );
     }
 
-    function updateRequest(
+    function updateRequestSeller(
         uint256 _requestId,
-        address _seller,
-        bytes32 _zone,
-        string calldata _uri,
-        uint256 _totalSupply,
-        uint256 _minSellingAmount,
-        uint256 _maxSellingAmount,
-        uint256 _unitPrice,
-        address _currency,
-        uint8 _decimals,
-        uint40 _expireAt,
-        uint40 _privateSaleEndsAt,
-        uint40 _publicSaleEndsAt
-    ) external onlyExecutive whenNotPaused {
-        if (_requestId == 0 || _requestId > requestNumber) {
-            revert InvalidRequestId();
-        }
-        Request storage request = requests[_requestId];
-        bytes32 zone = request.zone;
-        if ((zone != _zone && !IAdmin(admin).getZoneEligibility(_zone, msg.sender))
-            || !IAdmin(admin).getZoneEligibility(zone, msg.sender)) {
+        address _seller
+    ) external onlyExecutive onlyUpdatableRequest(_requestId) whenNotPaused {
+        bytes32 zone = requests[_requestId].estate.zone;
+        if (!IAdmin(admin).getZoneEligibility(zone, msg.sender)) {
             revert Unauthorized();
         }
-
-        if (request.totalSupply == 0) {
-            revert Cancelled();
-        }
-        if (request.estateId != 0) {
-            revert Tokenized();
-        }
-        if (request.soldAmount > 0) {
-            revert AlreadyHadDepositor();
-        }
-
-        _validateUnitPrice(_unitPrice, _currency);
-
-        if (!isActiveSellerIn[_zone][_seller]
-            || _minSellingAmount > _maxSellingAmount
-            || _maxSellingAmount > _totalSupply
-            || _totalSupply > type(uint256).max / 10 ** _decimals
-            || _decimals > Constant.ESTATE_TOKEN_MAX_DECIMALS
-            || _expireAt <= block.timestamp
-            || _privateSaleEndsAt <= block.timestamp
-            || _publicSaleEndsAt <= _privateSaleEndsAt) {
+        if (!isActiveSellerIn[zone][_seller]) {
             revert InvalidInput();
         }
+        requests[_requestId].seller = _seller;
 
-        requests[_requestId] = Request(
-            0,
-            _zone,
-            _uri,
-            _totalSupply,
-            _minSellingAmount,
-            _maxSellingAmount,
-            0,
-            _unitPrice,
-            _currency,
-            _decimals,
-            _expireAt,
-            _privateSaleEndsAt,
-            _publicSaleEndsAt,
-            _seller
-        );
-
-        emit RequestUpdate(
-            _requestId,
-            _seller,
-            _zone,
-            _uri,
-            _totalSupply,
-            _minSellingAmount,
-            _maxSellingAmount,
-            _unitPrice,
-            _currency,
-            _decimals,
-            _expireAt,
-            _privateSaleEndsAt,
-            _publicSaleEndsAt
-        );
+        emit RequestSellerUpdate(_requestId, _seller);
     }
 
     function updateRequestURI(uint256 _requestId, string calldata _uri)
-    external onlyExecutive whenNotPaused {
-        if (_requestId == 0 || _requestId > requestNumber) {
-            revert InvalidRequestId();
-        }
-        Request storage request = requests[_requestId];
-        if (!IAdmin(admin).getZoneEligibility(request.zone, msg.sender)) {
+    external onlyExecutive onlyUpdatableRequest(_requestId) whenNotPaused {
+        if (!IAdmin(admin).getZoneEligibility(requests[_requestId].estate.zone, msg.sender)) {
             revert Unauthorized();
         }
 
-        if (request.totalSupply == 0) {
-            revert Cancelled();
-        }
-        if (request.estateId != 0) {
-            revert Tokenized();
-        }
+        requests[_requestId].estate.uri = _uri;
 
-        request.uri = _uri;
         emit RequestURIUpdate(_requestId, _uri);
     }
 
-    function deposit(uint256 _requestId, uint256 _amount)
-    external payable returns (uint256) {
-        if (_requestId == 0 || _requestId > requestNumber) {
-            revert InvalidRequestId();
+    function updateRequestEstate(
+        uint256 _requestId,
+        RequestEstateInput calldata _estate
+    ) external onlyExecutive onlyUpdatableRequest(_requestId) whenNotPaused {
+        bytes32 zone = requests[_requestId].estate.zone;
+        if (!IAdmin(admin).getZoneEligibility(zone, msg.sender)
+            || (_estate.zone != zone && IAdmin(admin).getZoneEligibility(_estate.zone, msg.sender))) {
+            revert Unauthorized();
         }
 
-        return _deposit(_requestId, _amount);
+        if (_estate.decimals > Constant.ESTATE_TOKEN_MAX_DECIMALS
+            || _estate.expireAt <= block.timestamp) {
+            revert InvalidInput();
+        }
+
+        requests[_requestId].estate = RequestEstate(
+            0,
+            _estate.zone,
+            _estate.uri,
+            _estate.decimals,
+            _estate.expireAt
+        );
+
+        emit RequestEstateUpdate(_requestId, _estate);
+    }
+
+    function updateRequestQuota(
+        uint256 _requestId,
+        RequestQuotaInput calldata _quota
+    ) external onlyExecutive onlyUpdatableRequest(_requestId) whenNotPaused {
+        if (!IAdmin(admin).getZoneEligibility(requests[_requestId].estate.zone, msg.sender)) {
+            revert Unauthorized();
+        }
+
+        if (_quota.minSellingQuantity > _quota.maxSellingQuantity
+            || _quota.maxSellingQuantity > _quota.totalQuantity
+            || _quota.totalQuantity > type(uint256).max / 10 ** requests[_requestId].estate.decimals) {
+            revert InvalidInput();
+        }
+
+        requests[_requestId].quota = RequestQuota(
+            _quota.totalQuantity,
+            _quota.minSellingQuantity,
+            _quota.maxSellingQuantity,
+            0
+        );
+
+        emit RequestQuotaUpdate(_requestId, _quota);
+    }
+
+    function updateRequestQuote(
+        uint256 _requestId,
+        RequestQuoteInput calldata _quote
+    ) external onlyExecutive onlyUpdatableRequest(_requestId) whenNotPaused {
+        if (!IAdmin(admin).getZoneEligibility(requests[_requestId].estate.zone, msg.sender)) {
+            revert Unauthorized();
+        }
+
+        if (_quote.cashbackThreshold > requests[_requestId].quota.totalQuantity
+            || _quote.cashbackBaseRate > Constant.COMMON_RATE_MAX_FRACTION
+            || _quote.cashbackCurrencies.length != _quote.cashbackDenominations.length) {
+            revert InvalidInput();
+        }
+
+        _validateUnitPrice(_quote.unitPrice, _quote.currency);
+
+        Rate memory commissionRate = ICommissionToken(commissionToken).getCommissionRate();
+        uint256 cashbackFundId = IReserveVault(reserveVault).initiateFund(
+                _quote.currency,
+                _cashbackBaseDenomination(
+                _quote.unitPrice,
+                commissionRate,
+                Rate(_quote.cashbackBaseRate, Constant.COMMON_RATE_DECIMALS)
+            ),
+            _quote.cashbackCurrencies,
+            _quote.cashbackDenominations
+        );
+
+        RequestQuote memory quote = RequestQuote(
+            _quote.unitPrice,
+            _quote.currency,
+            _quote.cashbackThreshold,
+            cashbackFundId
+        );
+        requests[_requestId].quote = quote;
+
+        emit RequestQuoteUpdate(_requestId, quote);
+    }
+
+    function updateRequestAgenda(
+        uint256 _requestId,
+        uint40 _privateSaleEndsAt,
+        uint40 _publicSaleEndsAt
+    ) external onlyExecutive onlyUpdatableRequest(_requestId) whenNotPaused {
+        if (!IAdmin(admin).getZoneEligibility(requests[_requestId].estate.zone, msg.sender)) {
+            revert Unauthorized();
+        }
+
+        if (block.timestamp > _privateSaleEndsAt
+            || _privateSaleEndsAt > _publicSaleEndsAt
+            || _publicSaleEndsAt == block.timestamp) {
+            revert InvalidInput();
+        }
+
+        RequestAgenda memory agenda = RequestAgenda(
+            _privateSaleEndsAt,
+            _publicSaleEndsAt
+        );
+        requests[_requestId].agenda = agenda;
+
+        emit RequestAgendaUpdate(_requestId, agenda);
+    }
+
+
+    function deposit(uint256 _requestId, uint256 _quantity)
+    external payable validRequest(_requestId) returns (uint256) {
+        return _deposit(_requestId, _quantity);
     }
 
     function safeDeposit(
         uint256 _requestId,
-        uint256 _amount,
-        string calldata _anchor
-    ) external payable returns (uint256) {
-        if (_requestId == 0 || _requestId > requestNumber) {
-            revert InvalidRequestId();
-        }
-
-        if (keccak256(bytes(_anchor)) != keccak256(bytes(requests[_requestId].uri))) {
+        uint256 _quantity,
+        bytes32 _anchor
+    ) external payable validRequest(_requestId) returns (uint256) {
+        if (_anchor != keccak256(bytes(requests[_requestId].estate.uri))) {
             revert BadAnchor();
         }
 
-        return _deposit(_requestId, _amount);
+        return _deposit(_requestId, _quantity);
     }
 
-    function cancel(uint256 _requestId) external onlyManager whenNotPaused {
-        if (_requestId == 0 || _requestId > requestNumber) {
-            revert InvalidRequestId();
-        }
+    function cancel(uint256 _requestId) external onlyManager validRequest(_requestId) whenNotPaused {
         Request storage request = requests[_requestId];
-        if (!IAdmin(admin).getZoneEligibility(request.zone, msg.sender)) {
+        if (!IAdmin(admin).getZoneEligibility(request.estate.zone, msg.sender)) {
             revert Unauthorized();
         }
-        if (request.totalSupply == 0) {
+        if (request.quota.totalQuantity == 0) {
             revert Cancelled();
         }
-        if (request.estateId != 0) {
+        if (request.estate.estateId != 0) {
             revert Tokenized();
         }
-        request.totalSupply = 0;
+        request.quota.totalQuantity = 0;
         emit RequestCancellation(_requestId);
     }
 
     function confirm(uint256 _requestId, address _commissionReceiver)
-    external onlyManager returns (uint256) {
-        if (_requestId == 0 || _requestId > requestNumber) {
-            revert InvalidRequestId();
-        }
-
+    external onlyManager validRequest(_requestId) returns (uint256) {
         return _confirm(_requestId, _commissionReceiver);
     }
 
     function safeConfirm(
         uint256 _requestId,
         address _commissionReceiver,
-        string calldata _anchor
-    ) external onlyManager returns (uint256) {
-        if (_requestId == 0 || _requestId > requestNumber) {
-            revert InvalidRequestId();
-        }
-
-        if (keccak256(bytes(_anchor)) != keccak256(bytes(requests[_requestId].uri))) {
+        bytes32 _anchor
+    ) external onlyManager validRequest(_requestId) returns (uint256) {
+        if (_anchor != keccak256(bytes(requests[_requestId].estate.uri))) {
             revert BadAnchor();
         }
 
         return _confirm(_requestId, _commissionReceiver);
     }
 
-    function withdrawDeposit(uint256 _requestId) external nonReentrant whenNotPaused returns (uint256) {
-        if (_requestId == 0 || _requestId > requestNumber) {
-            revert InvalidRequestId();
-        }
+    function withdrawDeposit(uint256 _requestId)
+    external nonReentrant validRequest(_requestId) whenNotPaused returns (uint256) {
         Request storage request = requests[_requestId];
-        if (request.estateId != 0) {
+        if (request.estate.estateId != 0) {
             revert Tokenized();
         }
-        if (request.totalSupply != 0) {
-            uint256 publicSaleEndsAt = request.publicSaleEndsAt;
+        if (request.quota.totalQuantity != 0) {
+            uint256 publicSaleEndsAt = request.agenda.publicSaleEndsAt;
             if (publicSaleEndsAt > block.timestamp) {
                 revert StillSelling();
             }
             if (publicSaleEndsAt + Constant.ESTATE_TOKEN_CONFIRMATION_TIME_LIMIT > block.timestamp
-                && request.soldAmount >= request.minSellingAmount) {
+                && request.quota.soldQuantity >= request.quota.minSellingQuantity) {
                 revert InvalidWithdrawing();
             }
         }
@@ -527,9 +542,9 @@ ReentrancyGuardUpgradeable {
             revert AlreadyWithdrawn();
         }
 
-        address currency = request.currency;
-        uint256 amount = deposits[_requestId][msg.sender];
-        uint256 value = amount * request.unitPrice;
+        address currency = request.quote.currency;
+        uint256 quantity = deposits[_requestId][msg.sender];
+        uint256 value = quantity * request.quote.unitPrice;
 
         hasWithdrawn[_requestId][msg.sender] = true;
 
@@ -542,19 +557,17 @@ ReentrancyGuardUpgradeable {
         emit DepositWithdrawal(
             _requestId,
             msg.sender,
-            amount,
+            quantity,
             value
         );
 
         return value;
     }
 
-    function withdrawToken(uint256 _requestId) external whenNotPaused returns (uint256) {
-        if (_requestId == 0 || _requestId > requestNumber) {
-            revert InvalidRequestId();
-        }
+    function withdrawToken(uint256 _requestId)
+    external nonReentrant validRequest(_requestId) whenNotPaused returns (uint256) {
         Request storage request = requests[_requestId];
-        if (request.estateId == 0) {
+        if (request.estate.estateId == 0) {
             revert InvalidWithdrawing();
         }
         if (hasWithdrawn[_requestId][msg.sender]) {
@@ -562,11 +575,11 @@ ReentrancyGuardUpgradeable {
         }
 
         hasWithdrawn[_requestId][msg.sender] = true;
-        uint256 amount = deposits[_requestId][msg.sender] * 10 ** request.decimals;
+        uint256 amount = deposits[_requestId][msg.sender] * 10 ** request.estate.decimals;
         IEstateToken(estateToken).safeTransferFrom(
             address(this),
             msg.sender,
-            request.estateId,
+            request.estate.estateId,
             amount,
             ""
         );
@@ -584,12 +597,19 @@ ReentrancyGuardUpgradeable {
         uint256 _tokenizationId,
         address _account,
         uint256 _at
-    ) external view returns (uint256 allocation) {
-        if (_tokenizationId == 0 || _tokenizationId > requestNumber) revert InvalidRequestId();
-        return requests[_tokenizationId].estateId != 0
-            && _at >= requests[_tokenizationId].publicSaleEndsAt
-            ? deposits[_tokenizationId][_account] * 10 ** requests[_tokenizationId].decimals
+    ) external view validRequest(_tokenizationId) returns (uint256 allocation) {
+        return requests[_tokenizationId].estate.estateId != 0
+            && _at >= requests[_tokenizationId].agenda.publicSaleEndsAt
+            ? deposits[_tokenizationId][_account] * 10 ** requests[_tokenizationId].estate.decimals
             : 0;
+    }
+
+    function _cashbackBaseDenomination(
+        uint256 _unitPrice,
+        Rate memory _commissionRate,
+        Rate memory _cashbackBaseRate
+    ) private pure returns (uint256) {
+        return _unitPrice.remain(_commissionRate).scale(_cashbackBaseRate);
     }
 
     function _validateUnitPrice(uint256 _unitPrice, address _currency) private {
@@ -642,92 +662,107 @@ ReentrancyGuardUpgradeable {
 
     function _requestTokenization(
         address _seller,
-        bytes32 _zone,
-        string calldata _uri,
-        uint256 _totalSupply,
-        uint256 _minSellingAmount,
-        uint256 _maxSellingAmount,
-        uint256 _unitPrice,
-        address _currency,
-        uint8 _decimals,
-        uint40 _expireAt,
+        RequestEstateInput calldata _estate,
+        RequestQuotaInput calldata _quota,
+        RequestQuoteInput calldata _quote,
         uint40 _privateSaleEndsAt,
         uint40 _publicSaleEndsAt
     ) private onlyExecutive whenNotPaused returns (uint256) {
-        if (!IAdmin(admin).getZoneEligibility(_zone, msg.sender)) {
+        if (!IAdmin(admin).getZoneEligibility(_estate.zone, msg.sender)) {
             revert Unauthorized();
         }
 
-        _validateUnitPrice(_unitPrice, _currency);
+        _validateUnitPrice(_quote.unitPrice, _quote.currency);
 
-        if (!isActiveSellerIn[_zone][_seller]
-        || _minSellingAmount > _maxSellingAmount
-        || _maxSellingAmount > _totalSupply
-        || _totalSupply > type(uint256).max / 10 ** _decimals
-        || _decimals > Constant.ESTATE_TOKEN_MAX_DECIMALS
-        || _expireAt <= block.timestamp) {
+        if (!isActiveSellerIn[_estate.zone][_seller]
+            || _estate.decimals > Constant.ESTATE_TOKEN_MAX_DECIMALS
+            || _estate.expireAt <= block.timestamp
+            || _quota.minSellingQuantity > _quota.maxSellingQuantity
+            || _quota.maxSellingQuantity > _quota.totalQuantity
+            || _quota.totalQuantity > type(uint256).max / 10 ** _estate.decimals
+            || _quote.cashbackThreshold > _quota.totalQuantity
+            || _quote.cashbackBaseRate > Constant.COMMON_RATE_MAX_FRACTION
+            || _quote.cashbackCurrencies.length != _quote.cashbackDenominations.length) {
             revert InvalidInput();
         }
 
+        Rate memory commissionRate = ICommissionToken(commissionToken).getCommissionRate();
+        uint256 cashbackFundId = IReserveVault(reserveVault).initiateFund(
+            _quote.currency,
+            _cashbackBaseDenomination(
+                _quote.unitPrice,
+                commissionRate,
+                Rate(_quote.cashbackBaseRate, Constant.COMMON_RATE_DECIMALS)
+            ),
+            _quote.cashbackCurrencies,
+            _quote.cashbackDenominations
+        );
+
+        RequestQuote memory quote = RequestQuote(
+            _quote.unitPrice,
+            _quote.currency,
+            _quote.cashbackThreshold,
+            cashbackFundId
+        );
+        RequestAgenda memory agenda = RequestAgenda(
+            _privateSaleEndsAt,
+            _publicSaleEndsAt
+        );
+
         uint256 requestId = ++requestNumber;
         requests[requestId] = Request(
-            0,
-            _zone,
-            _uri,
-            _totalSupply,
-            _minSellingAmount,
-            _maxSellingAmount,
-            0,
-            _unitPrice,
-            _currency,
-            _decimals,
-            _expireAt,
-            _privateSaleEndsAt,
-            _publicSaleEndsAt,
+            RequestEstate(
+                0,
+                _estate.zone,
+                _estate.uri,
+                _estate.decimals,
+                _estate.expireAt
+            ),
+            RequestQuota(
+                _quota.totalQuantity,
+                _quota.minSellingQuantity,
+                _quota.maxSellingQuantity,
+                0
+            ),
+            quote,
+            agenda,
             _seller
         );
 
         emit NewRequest(
             requestId,
             _seller,
-            _zone,
-            _uri,
-            _totalSupply,
-            _minSellingAmount,
-            _maxSellingAmount,
-            _unitPrice,
-            _currency,
-            _decimals,
-            _expireAt,
-            _privateSaleEndsAt,
-            _publicSaleEndsAt
+            _estate,
+            _quota,
+            quote,
+            agenda
         );
 
         return requestId;
     }
 
-    function _deposit(uint256 _requestId, uint256 _amount)
+    function _deposit(uint256 _requestId, uint256 _quantity)
     private nonReentrant whenNotPaused returns (uint256) {
         Request storage request = requests[_requestId];
-        if (request.totalSupply == 0) {
+        if (request.quota.totalQuantity == 0) {
             revert Cancelled();
         }
-        if (request.estateId != 0) {
+        if (request.estate.estateId != 0) {
             revert Tokenized();
         }
-        if (request.privateSaleEndsAt > block.timestamp && !isWhitelisted[msg.sender]
-            || request.publicSaleEndsAt <= block.timestamp) {
+        if (request.agenda.privateSaleEndsAt > block.timestamp && !isWhitelisted[msg.sender]
+            || request.agenda.publicSaleEndsAt <= block.timestamp) {
             revert InvalidDepositing();
         }
 
-        uint256 newSoldAmount = request.soldAmount + _amount;
-        if (newSoldAmount > request.maxSellingAmount) {
-            revert MaxSellingAmountExceeded();
+        uint256 newSoldQuantity = request.quota.soldQuantity + _quantity;
+        if (newSoldQuantity > request.quota.maxSellingQuantity) {
+            revert MaxSellingQuantityExceeded();
         }
-        request.soldAmount = newSoldAmount;
+        request.quota.soldQuantity = newSoldQuantity;
 
-        address currency = request.currency;
-        uint256 value = _amount * request.unitPrice;
+        address currency = request.quote.currency;
+        uint256 value = _quantity * request.quote.unitPrice;
 
         if (currency == address(0)) {
             CurrencyHandler.receiveNative(value);
@@ -735,12 +770,12 @@ ReentrancyGuardUpgradeable {
             IERC20Upgradeable(currency).safeTransferFrom(msg.sender, address(this), value);
         }
 
-        deposits[_requestId][msg.sender] += _amount;
+        deposits[_requestId][msg.sender] += _quantity;
 
         emit Deposit(
             _requestId,
             msg.sender,
-            _amount,
+            _quantity,
             value
         );
 
@@ -749,53 +784,50 @@ ReentrancyGuardUpgradeable {
 
     function _confirm(uint256 _requestId, address _commissionReceiver)
     private nonReentrant whenNotPaused returns (uint256) {
-        if (_requestId == 0 || _requestId > requestNumber) {
-            revert InvalidRequestId();
-        }
         Request storage request = requests[_requestId];
 
-        bytes32 zone = request.zone;
+        bytes32 zone = request.estate.zone;
         if (!IAdmin(admin).getZoneEligibility(zone, msg.sender)) {
             revert Unauthorized();
         }
 
-        uint256 totalSupply = request.totalSupply;
-        if (totalSupply == 0) {
+        uint256 totalQuantity = request.quota.totalQuantity;
+        if (totalQuantity == 0) {
             revert Cancelled();
         }
 
-        if (request.estateId != 0) {
+        if (request.estate.estateId != 0) {
             revert Tokenized();
         }
 
-        uint40 publicSaleEndsAt = request.publicSaleEndsAt;
+        uint40 publicSaleEndsAt = request.agenda.publicSaleEndsAt;
         if (publicSaleEndsAt + Constant.ESTATE_TOKEN_CONFIRMATION_TIME_LIMIT <= block.timestamp) {
             revert FailedOwnershipTransfer();
         }
 
         if (publicSaleEndsAt <= block.timestamp) {
-            request.publicSaleEndsAt = uint40(block.timestamp);
+            request.agenda.publicSaleEndsAt = uint40(block.timestamp);
         }
 
-        uint256 soldAmount = request.soldAmount;
-        if (soldAmount < request.minSellingAmount) {
-            revert NotEnoughSoldAmount();
+        uint256 soldQuantity = request.quota.soldQuantity;
+        if (soldQuantity < request.quota.minSellingQuantity) {
+            revert NotEnoughSoldQuantity();
         }
 
-        uint8 decimals = request.decimals;
+        uint8 decimals = request.estate.decimals;
         uint256 unit = 10 ** decimals;
 
         IEstateToken estateTokenContract = IEstateToken(estateToken);
         uint256 estateId = estateTokenContract.tokenizeEstate(
-            totalSupply * unit,
+            totalQuantity * unit,
             zone,
             _requestId,
-            request.uri,
-            request.expireAt,
-            request.decimals,
+            request.estate.uri,
+            request.estate.expireAt,
+            request.estate.decimals,
             _commissionReceiver
         );
-        request.estateId = estateId;
+        request.estate.estateId = estateId;
 
         address seller = request.seller;
         unchecked {
@@ -803,15 +835,15 @@ ReentrancyGuardUpgradeable {
                 address(this),
                 request.seller,
                 estateId,
-                (request.totalSupply - soldAmount) * unit,
+                (request.quota.totalQuantity - soldQuantity) * unit,
                 ""
             );
         }
 
-        uint256 value = soldAmount * request.unitPrice;
+        uint256 value = soldQuantity * request.quote.unitPrice;
         uint256 feeAmount = value.scale(feeRate, Constant.COMMON_RATE_MAX_FRACTION);
 
-        address currency = request.currency;
+        address currency = request.quote.currency;
         feeAmount = _applyDiscount(feeAmount, currency);
 
         ( , uint256 commissionAmount) = ICommissionToken(commissionToken).commissionInfo(estateId, feeAmount);
@@ -834,7 +866,7 @@ ReentrancyGuardUpgradeable {
         emit RequestConfirmation(
             _requestId,
             estateId,
-            soldAmount,
+            soldQuantity,
             value,
             feeAmount,
             _commissionReceiver,

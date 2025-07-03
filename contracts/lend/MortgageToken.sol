@@ -41,6 +41,13 @@ ReentrancyGuardUpgradeable {
 
     string constant private VERSION = "v1.1.1";
 
+    modifier validLoan(uint256 _loanId) {
+        if (_loanId == 0 || _loanId > loanNumber) {
+            revert InvalidLoanId();
+        }
+        _;
+    }
+
     receive() external payable {}
 
     function initialize(
@@ -144,10 +151,7 @@ ReentrancyGuardUpgradeable {
         return Rate(royaltyRate, Constant.COMMON_RATE_DECIMALS);
     }
 
-    function getLoan(uint256 _loanId) external view returns (Loan memory) {
-        if (_loanId == 0 || _loanId > loanNumber) {
-            revert InvalidLoanId();
-        }
+    function getLoan(uint256 _loanId) external view validLoan(_loanId) returns (Loan memory) {
         return loans[_loanId];
     }
 
@@ -204,10 +208,7 @@ ReentrancyGuardUpgradeable {
         return loanId;
     }
 
-    function cancel(uint256 _loanId) external {
-        if (_loanId == 0 || _loanId > loanNumber) {
-            revert InvalidLoanId();
-        }
+    function cancel(uint256 _loanId) external validLoan(_loanId) {
         Loan storage loan = loans[_loanId];
         if (msg.sender != loan.borrower && !IAdmin(admin).isManager(msg.sender)) {
             revert Unauthorized();
@@ -221,19 +222,11 @@ ReentrancyGuardUpgradeable {
         emit LoanCancellation(_loanId);
     }
 
-    function lend(uint256 _loanId) external payable returns (uint256) {
-        if (_loanId == 0 || _loanId > loanNumber) {
-            revert InvalidLoanId();
-        }
-
+    function lend(uint256 _loanId) external payable validLoan(_loanId) returns (uint256) {
         return _lend(_loanId);
     }
 
-    function safeLend(uint256 _loanId, uint256 _anchor) external payable returns (uint256) {
-        if (_loanId == 0 || _loanId > loanNumber) {
-            revert InvalidLoanId();
-        }
-
+    function safeLend(uint256 _loanId, uint256 _anchor) external payable validLoan(_loanId) returns (uint256) {
         if (_anchor != loans[_loanId].estateId) {
             revert BadAnchor();
         }
@@ -241,19 +234,11 @@ ReentrancyGuardUpgradeable {
         return _lend(_loanId);
     }
 
-    function repay(uint256 _loanId) external payable {
-        if (_loanId == 0 || _loanId > loanNumber) {
-            revert InvalidLoanId();
-        }
-
+    function repay(uint256 _loanId) external payable validLoan(_loanId) {
         _repay(_loanId);
     }
 
-    function safeRepay(uint256 _loanId, uint256 _anchor) external payable {
-        if (_loanId == 0 || _loanId > loanNumber) {
-            revert InvalidLoanId();
-        }
-
+    function safeRepay(uint256 _loanId, uint256 _anchor) external payable validLoan(_loanId) {
         if (_anchor != loans[_loanId].estateId) {
             revert BadAnchor();
         }
@@ -261,10 +246,7 @@ ReentrancyGuardUpgradeable {
         _repay(_loanId);
     }
 
-    function foreclose(uint256 _loanId) external nonReentrant whenNotPaused {
-        if (_loanId == 0 || _loanId > loanNumber) {
-            revert InvalidLoanId();
-        }
+    function foreclose(uint256 _loanId) external nonReentrant validLoan(_loanId) whenNotPaused {
         Loan storage loan = loans[_loanId];
         if (loan.due > block.timestamp
             || loan.state != LoanState.Supplied) {
@@ -315,7 +297,9 @@ ReentrancyGuardUpgradeable {
         Loan storage loan = loans[_loanId];
         address borrower = loan.borrower;
 
-        if (msg.sender == loan.borrower || loan.state != LoanState.Pending) revert InvalidLending();
+        if (msg.sender == loan.borrower || loan.state != LoanState.Pending) {
+            revert InvalidLending();
+        }
 
         uint256 principal = loan.principal;
         uint256 feeAmount = principal.scale(feeRate, Constant.COMMON_RATE_MAX_FRACTION);

@@ -488,7 +488,9 @@ ReentrancyGuardUpgradeable {
     }
 
     function liquidate(uint256 _amount) external whenNotPaused nonReentrant returns (uint256) {
-        if (liquidationUnlockedAt > block.timestamp) revert BeingLocked();
+        if (liquidationUnlockedAt > block.timestamp) {
+            revert BeingLocked();
+        }
 
         ITreasury treasuryContract = ITreasury(treasury);
 
