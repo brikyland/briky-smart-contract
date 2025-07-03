@@ -9,6 +9,7 @@ import {
     IERC165Upgradeable__factory,
     MockEstateToken,
     MockEstateForger__factory,
+    ReserveVault,
     IERC1155ReceiverUpgradeable__factory,
     IERC2981Upgradeable__factory,
     IRoyaltyRateProposer__factory,
@@ -40,14 +41,16 @@ import {
 } from '@utils/callWithSignatures/estateToken';
 import { BigNumber } from 'ethers';
 import { randomInt } from 'crypto';
-import { getBytes4Hex, getBytes4Hex, getInterfaceID, randomBigNumber } from '@utils/utils';
+import { getBytes4Hex, getInterfaceID, randomBigNumber } from '@utils/utils';
 import { OrderedMap } from '@utils/utils';
 import { Initialization as LandInitialization } from '@tests/land/test.initialization';
+import { deployReserveVault } from '@utils/deployments/common/reserveVault';
 
 interface EstateTokenFixture {
     admin: Admin;
     feeReceiver: FeeReceiver;
     currency: Currency;
+    reserveVault: ReserveVault;
     estateToken: MockEstateToken;
     commissionToken: CommissionToken;
 
@@ -104,6 +107,11 @@ describe('3. EstateToken', async () => {
             admin.address
         ) as FeeReceiver;
 
+        const reserveVault = await deployReserveVault(
+            deployer.address,
+            admin.address,
+        ) as ReserveVault;
+
         const currency = await deployCurrency(
             deployer.address,
             'MockCurrency',
@@ -139,6 +147,7 @@ describe('3. EstateToken', async () => {
                 estateToken.address,
                 commissionToken.address,
                 feeReceiver.address,
+                reserveVault.address,
                 LandInitialization.ESTATE_FORGER_FeeRate,
                 LandInitialization.ESTATE_FORGER_BaseMinUnitPrice,
                 LandInitialization.ESTATE_FORGER_BaseMaxUnitPrice,
@@ -155,6 +164,7 @@ describe('3. EstateToken', async () => {
             admin,
             feeReceiver,
             currency,
+            reserveVault,
             estateToken,
             commissionToken,
             deployer,
