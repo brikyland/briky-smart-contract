@@ -26,6 +26,7 @@ IFund {
     );
 
     error AlreadyProvided();
+    error InvalidDenomination();
     error InvalidFundId();
 
     function fundNumber() external view returns (uint256 fundNumber);

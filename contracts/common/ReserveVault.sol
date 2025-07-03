@@ -110,6 +110,9 @@ ReentrancyGuardUpgradeable {
         }
 
         for (uint256 i = 0; i < _currencies.length; ++i) {
+            if (_denominations[i] == 0) {
+                revert InvalidDenomination();
+            }
             if (!adminContract.isAvailableCurrency(_currencies[i])) {
                 revert InvalidCurrency();
             }
