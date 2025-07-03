@@ -52,14 +52,30 @@ export function randomInt(min: number, max: number): number {
 }
 
 // get the interface ID of a contract interface
-export function getInterfaceID(contractInterface: ethers.utils.Interface) {
+export function getInterfaceID(contractInterface: ethers.utils.Interface, parentInterfaces: ethers.utils.Interface[]) {
     let interfaceID: ethers.BigNumber = ethers.constants.Zero;
     const functions: string[] = Object.keys(contractInterface.functions);
     for (let i = 0; i < functions.length; i++) {
-        interfaceID = interfaceID.xor(contractInterface.getSighash(functions[i]));
+        let isInherited = false;
+        for (let j = 0; j < parentInterfaces.length; j++) {
+            if (parentInterfaces[j].functions[functions[i]]) {
+                isInherited = true;
+                break;
+            }
+        }
+        if (!isInherited) {
+            interfaceID = interfaceID.xor(contractInterface.getSighash(functions[i]));
+        }
     }
-
     return interfaceID;
+}
+
+export function getBytes4Hex(interfaceID: ethers.BigNumber): string {
+    const hex = interfaceID.toHexString().slice(0, 10);
+    if (hex.length < 10) {
+        return "0x" + "0".repeat(10 - hex.length) + hex.slice(2);
+    }
+    return hex;
 }
 
 // generate a random array of length n with sum equal to s and each element >= min

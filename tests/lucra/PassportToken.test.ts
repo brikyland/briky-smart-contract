@@ -13,6 +13,9 @@ import {
     IERC721Upgradeable__factory,
     IERC4906Upgradeable__factory,
     MortgageToken,
+    IERC721MetadataUpgradeable__factory,
+    IRoyaltyRateProposer__factory,
+    ICommon__factory,
 } from '@typechain-types';
 import { callTransaction, getSignatures, prepareNativeToken, randomWallet, testReentrancy } from '@utils/blockchain';
 import { Constant } from '@tests/test.constant';
@@ -22,7 +25,7 @@ import { deployPassportToken } from '@utils/deployments/lucra/passportToken';
 import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 
 import { Contract } from 'ethers';
-import { getInterfaceID } from '@utils/utils';
+import { getBytes4Hex, getInterfaceID } from '@utils/utils';
 import { Initialization } from './test.initialization';
 import { callPassportToken_Pause } from '@utils/callWithSignatures/passportToken';
 import { deployReentrancy } from '@utils/deployments/mocks/mockReentrancy/reentrancy';
@@ -753,18 +756,30 @@ describe('16. PassportToken', async () => {
     });
 
     describe('16.9. supportsInterface(bytes4)', async () => {
-        it('16.9.1. return true for IERC4906Upgradeable interface', async () => {
+        it('16.9.1. return true for appropriate interface', async () => {
             const { passportToken } = await beforePassportTokenTest();
 
             const IERC4906Upgradeable = IERC4906Upgradeable__factory.createInterface();
             const IERC165Upgradeable = IERC165Upgradeable__factory.createInterface();
             const IERC721Upgradeable = IERC721Upgradeable__factory.createInterface();
+            const IERC2981Upgradeable = IERC2981Upgradeable__factory.createInterface();
+            const IERC721MetadataUpgradeable = IERC721MetadataUpgradeable__factory.createInterface();
+            const ICommon = ICommon__factory.createInterface();
+            const IRoyaltyRateProposer = IRoyaltyRateProposer__factory.createInterface();
 
-            const IERC4906UpgradeableInterfaceId = getInterfaceID(IERC4906Upgradeable)
-                .xor(getInterfaceID(IERC165Upgradeable))
-                .xor(getInterfaceID(IERC721Upgradeable))
+            const IERC4906UpgradeableInterfaceId = getInterfaceID(IERC4906Upgradeable, [IERC165Upgradeable, IERC721Upgradeable]);
+            const IRoyaltyRateProposerInterfaceId = getInterfaceID(IRoyaltyRateProposer, [ICommon, IERC165Upgradeable, IERC2981Upgradeable]);
+            const IERC2981UpgradeableInterfaceId = getInterfaceID(IERC2981Upgradeable, [IERC165Upgradeable]);
+            const IERC165UpgradeableInterfaceId = getInterfaceID(IERC165Upgradeable, []);
+            const IERC721UpgradeableInterfaceId = getInterfaceID(IERC721Upgradeable, [IERC165Upgradeable]);
+            const IERC721MetadataUpgradeableInterfaceId = getInterfaceID(IERC721MetadataUpgradeable, [IERC721Upgradeable]);
 
-            expect(await passportToken.supportsInterface(IERC4906UpgradeableInterfaceId._hex)).to.equal(true);
+            expect(await passportToken.supportsInterface(getBytes4Hex(IERC4906UpgradeableInterfaceId))).to.equal(true);
+            expect(await passportToken.supportsInterface(getBytes4Hex(IRoyaltyRateProposerInterfaceId))).to.equal(true);
+            expect(await passportToken.supportsInterface(getBytes4Hex(IERC2981UpgradeableInterfaceId))).to.equal(true);
+            expect(await passportToken.supportsInterface(getBytes4Hex(IERC165UpgradeableInterfaceId))).to.equal(true);
+            expect(await passportToken.supportsInterface(getBytes4Hex(IERC721UpgradeableInterfaceId))).to.equal(true);
+            expect(await passportToken.supportsInterface(getBytes4Hex(IERC721MetadataUpgradeableInterfaceId))).to.equal(true);
         });
     });
 });

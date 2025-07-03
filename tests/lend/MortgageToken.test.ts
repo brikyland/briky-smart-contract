@@ -14,6 +14,12 @@ import {
     MockPriceFeed,
     MockEstateForger,
     CommissionToken__factory,
+    IEstateTokenReceiver__factory,
+    IERC1155ReceiverUpgradeable__factory,
+    ICommon__factory,
+    IRoyaltyRateProposer__factory,
+    IERC721MetadataUpgradeable__factory,
+    IERC721Upgradeable__factory,
 } from '@typechain-types';
 import { callTransaction, getBalance, getSignatures, prepareERC20, prepareNativeToken, randomWallet, resetERC20, resetNativeToken, testReentrancy } from '@utils/blockchain';
 import { Constant } from '@tests/test.constant';
@@ -31,7 +37,7 @@ import {
     callAdmin_UpdateCurrencyRegistries,
 } from '@utils/callWithSignatures/admin';
 import { BigNumber, Contract, Wallet } from 'ethers';
-import { getInterfaceID, randomBigNumber } from '@utils/utils';
+import { getBytes4Hex, getInterfaceID, randomBigNumber } from '@utils/utils';
 import { deployMortgageToken } from '@utils/deployments/lend/mortgageToken';
 import { callEstateToken_AuthorizeTokenizers, callEstateToken_UpdateCommissionToken } from '@utils/callWithSignatures/estateToken';
 import { callMortgageToken_Pause, callMortgageToken_UpdateFeeRate } from '@utils/callWithSignatures/mortgageToken';
@@ -2816,17 +2822,32 @@ describe('14. MortgageToken', async () => {
     });
 
     describe('14.15. supportsInterface(bytes4)', () => {
-        it('14.15.1. return true for IERC2981Upgradeable interface', async () => {
+        it('14.15.1. return true for appropriate interface', async () => {
             const fixture = await beforeMortgageTokenTest();
             const { mortgageToken } = fixture;
 
-            const IERC165UpgradeableInterface = IERC165Upgradeable__factory.createInterface();
-            const IERC165UpgradeableInterfaceId = getInterfaceID(IERC165UpgradeableInterface);
+            const IERC165Upgradeable = IERC165Upgradeable__factory.createInterface();
+            const IERC2981Upgradeable = IERC2981Upgradeable__factory.createInterface();
+            const IERC1155ReceiverUpgradeable = IERC1155ReceiverUpgradeable__factory.createInterface();
+            const ICommon = ICommon__factory.createInterface();
+            const IRoyaltyRateProposer = IRoyaltyRateProposer__factory.createInterface();
+            const IEstateTokenReceiver = IEstateTokenReceiver__factory.createInterface();
+            const IERC721Upgradeable = IERC721Upgradeable__factory.createInterface();
+            const IERC721MetadataUpgradeable = IERC721MetadataUpgradeable__factory.createInterface();
 
-            const IERC2981UpgradeableInterface = IERC2981Upgradeable__factory.createInterface();
-            const IERC2981UpgradeableInterfaceId = getInterfaceID(IERC2981UpgradeableInterface).xor(IERC165UpgradeableInterfaceId);
+            const IERC165UpgradeableInterfaceId = getInterfaceID(IERC165Upgradeable, []);
+            const IERC2981UpgradeableInterfaceId = getInterfaceID(IERC2981Upgradeable, [IERC165Upgradeable]);
+            const IEstateTokenReceiverInterfaceId = getInterfaceID(IEstateTokenReceiver, [IERC1155ReceiverUpgradeable]);
+            const IRoyaltyRateProposerInterfaceId = getInterfaceID(IRoyaltyRateProposer, [ICommon, IERC165Upgradeable, IERC2981Upgradeable]);
+            const IERC721UpgradeableInterfaceId = getInterfaceID(IERC721Upgradeable, [IERC165Upgradeable]);
+            const IERC721MetadataUpgradeableInterfaceId = getInterfaceID(IERC721MetadataUpgradeable, [IERC721Upgradeable]);
 
-            expect(await mortgageToken.supportsInterface(IERC2981UpgradeableInterfaceId._hex)).to.equal(true);
+            expect(await mortgageToken.supportsInterface(getBytes4Hex(IERC165UpgradeableInterfaceId))).to.equal(true);
+            expect(await mortgageToken.supportsInterface(getBytes4Hex(IEstateTokenReceiverInterfaceId))).to.equal(true);
+            expect(await mortgageToken.supportsInterface(getBytes4Hex(IERC2981UpgradeableInterfaceId))).to.equal(true);
+            expect(await mortgageToken.supportsInterface(getBytes4Hex(IRoyaltyRateProposerInterfaceId))).to.equal(true);
+            expect(await mortgageToken.supportsInterface(getBytes4Hex(IERC721UpgradeableInterfaceId))).to.equal(true);
+            expect(await mortgageToken.supportsInterface(getBytes4Hex(IERC721MetadataUpgradeableInterfaceId))).to.equal(true);
         });
     });
 });

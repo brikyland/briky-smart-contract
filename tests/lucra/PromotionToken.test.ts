@@ -8,6 +8,10 @@ import {
     IERC721Upgradeable__factory,
     IERC4906Upgradeable__factory,
     Currency,
+    IERC2981Upgradeable__factory,
+    IRoyaltyRateProposer__factory,
+    ICommon__factory,
+    IERC721MetadataUpgradeable__factory,
 } from '@typechain-types';
 import { callTransaction, getSignatures, randomWallet } from '@utils/blockchain';
 import { Constant } from '@tests/test.constant';
@@ -15,7 +19,7 @@ import { deployAdmin } from '@utils/deployments/common/admin';
 import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
 import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 
-import { getInterfaceID } from '@utils/utils';
+import { getBytes4Hex, getInterfaceID } from '@utils/utils';
 import { Initialization } from './test.initialization';
 import { callPromotionToken_CancelContents, callPromotionToken_CreateContents, callPromotionToken_Pause } from '@utils/callWithSignatures/promotionToken';
 import { deployPromotionToken } from '@utils/deployments/lucra/promotionToken';
@@ -1150,18 +1154,30 @@ describe('17. PromotionToken', async () => {
     });
 
     describe('17.12. supportsInterface(bytes4)', async () => {
-        it('17.12.1. return true for IERC4906Upgradeable interface', async () => {
+        it('17.12.1. return true for appropriate interface', async () => {
             const { promotionToken } = await beforePromotionTokenTest();
 
             const IERC4906Upgradeable = IERC4906Upgradeable__factory.createInterface();
             const IERC165Upgradeable = IERC165Upgradeable__factory.createInterface();
             const IERC721Upgradeable = IERC721Upgradeable__factory.createInterface();
+            const IERC2981Upgradeable = IERC2981Upgradeable__factory.createInterface();
+            const IERC721MetadataUpgradeable = IERC721MetadataUpgradeable__factory.createInterface();
+            const ICommon = ICommon__factory.createInterface();
+            const IRoyaltyRateProposer = IRoyaltyRateProposer__factory.createInterface();
 
-            const IERC4906UpgradeableInterfaceId = getInterfaceID(IERC4906Upgradeable)
-                .xor(getInterfaceID(IERC165Upgradeable))
-                .xor(getInterfaceID(IERC721Upgradeable))
+            const IERC4906UpgradeableInterfaceId = getInterfaceID(IERC4906Upgradeable, [IERC165Upgradeable, IERC721Upgradeable]);
+            const IRoyaltyRateProposerInterfaceId = getInterfaceID(IRoyaltyRateProposer, [ICommon, IERC165Upgradeable, IERC2981Upgradeable]);
+            const IERC2981UpgradeableInterfaceId = getInterfaceID(IERC2981Upgradeable, [IERC165Upgradeable]);
+            const IERC165UpgradeableInterfaceId = getInterfaceID(IERC165Upgradeable, []);
+            const IERC721UpgradeableInterfaceId = getInterfaceID(IERC721Upgradeable, [IERC165Upgradeable]);
+            const IERC721MetadataUpgradeableInterfaceId = getInterfaceID(IERC721MetadataUpgradeable, [IERC721Upgradeable]);
 
-            expect(await promotionToken.supportsInterface(IERC4906UpgradeableInterfaceId._hex)).to.equal(true);
+            expect(await promotionToken.supportsInterface(getBytes4Hex(IERC4906UpgradeableInterfaceId))).to.equal(true);
+            expect(await promotionToken.supportsInterface(getBytes4Hex(IRoyaltyRateProposerInterfaceId))).to.equal(true);
+            expect(await promotionToken.supportsInterface(getBytes4Hex(IERC2981UpgradeableInterfaceId))).to.equal(true);
+            expect(await promotionToken.supportsInterface(getBytes4Hex(IERC165UpgradeableInterfaceId))).to.equal(true);
+            expect(await promotionToken.supportsInterface(getBytes4Hex(IERC721UpgradeableInterfaceId))).to.equal(true);
+            expect(await promotionToken.supportsInterface(getBytes4Hex(IERC721MetadataUpgradeableInterfaceId))).to.equal(true);
         });
     });
 });

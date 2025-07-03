@@ -12,6 +12,9 @@ import {
     MockEstateForger__factory,
     IERC4906Upgradeable__factory,
     IERC721Upgradeable__factory,
+    IRoyaltyRateProposer__factory,
+    ICommon__factory,
+    IERC721MetadataUpgradeable__factory,
 } from '@typechain-types';
 import { callTransaction, getSignatures, prepareNativeToken, randomWallet } from '@utils/blockchain';
 import { Constant } from '@tests/test.constant';
@@ -30,7 +33,7 @@ import {
 } from '@utils/callWithSignatures/admin';
 import { BigNumber } from 'ethers';
 import { randomInt } from 'crypto';
-import { getInterfaceID, randomBigNumber } from '@utils/utils';
+import { getBytes4Hex, getInterfaceID, randomBigNumber } from '@utils/utils';
 import { OrderedMap } from '@utils/utils';
 import { Initialization as LandInitialization } from '@tests/land/test.initialization';
 import { callCommissionToken_Pause } from '@utils/callWithSignatures/commissionToken';
@@ -493,18 +496,29 @@ describe('6. CommissionToken', async () => {
     });
 
     describe('6.7. supportsInterface(bytes4)', async () => {
-        it('6.7.1. return true for IERC4906Upgradeable interface', async () => {
+        it('6.7.1. return true for appropriate interface', async () => {
             const { commissionToken } = await beforeCommissionTokenTest();
 
             const IERC4906Upgradeable = IERC4906Upgradeable__factory.createInterface();
             const IERC165Upgradeable = IERC165Upgradeable__factory.createInterface();
             const IERC721Upgradeable = IERC721Upgradeable__factory.createInterface();
+            const IERC2981Upgradeable = IERC2981Upgradeable__factory.createInterface();
+            const IERC721MetadataUpgradeable = IERC721MetadataUpgradeable__factory.createInterface();
 
-            const IERC4906UpgradeableInterfaceId = getInterfaceID(IERC4906Upgradeable)
-                .xor(getInterfaceID(IERC165Upgradeable))
-                .xor(getInterfaceID(IERC721Upgradeable))
+            const ICommon = ICommon__factory.createInterface();
+            const IRoyaltyRateProposer = IRoyaltyRateProposer__factory.createInterface();
 
-            expect(await commissionToken.supportsInterface(IERC4906UpgradeableInterfaceId._hex)).to.equal(true);
+            const IERC2981UpgradeableInterfaceId = getInterfaceID(IERC2981Upgradeable, [IERC165Upgradeable]);
+            const IERC4906UpgradeableInterfaceId = getInterfaceID(IERC4906Upgradeable, [IERC165Upgradeable, IERC721Upgradeable])
+            const IRoyaltyRateProposerInterfaceId = getInterfaceID(IRoyaltyRateProposer, [ICommon, IERC165Upgradeable, IERC2981Upgradeable]);
+            const IERC721UpgradeableInterfaceId = getInterfaceID(IERC721Upgradeable, [IERC165Upgradeable]);
+            const IERC721MetadataUpgradeableInterfaceId = getInterfaceID(IERC721MetadataUpgradeable, [IERC721Upgradeable]);
+
+            expect(await commissionToken.supportsInterface(getBytes4Hex(IERC2981UpgradeableInterfaceId))).to.equal(true);
+            expect(await commissionToken.supportsInterface(getBytes4Hex(IERC4906UpgradeableInterfaceId))).to.equal(true);
+            expect(await commissionToken.supportsInterface(getBytes4Hex(IERC721UpgradeableInterfaceId))).to.equal(true);
+            expect(await commissionToken.supportsInterface(getBytes4Hex(IERC721MetadataUpgradeableInterfaceId))).to.equal(true);
+            expect(await commissionToken.supportsInterface(getBytes4Hex(IRoyaltyRateProposerInterfaceId))).to.equal(true);
         });
     });
 });

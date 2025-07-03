@@ -7,9 +7,14 @@ import {
     EstateToken,
     FeeReceiver,
     IERC165Upgradeable__factory,
-    IERC2981Upgradeable__factory,
     MockEstateToken,
     MockEstateForger__factory,
+    IERC1155ReceiverUpgradeable__factory,
+    IERC2981Upgradeable__factory,
+    IRoyaltyRateProposer__factory,
+    ICommon__factory,
+    IERC1155Upgradeable__factory,
+    IERC1155MetadataURIUpgradeable__factory,
 } from '@typechain-types';
 import { callTransaction, getSignatures, prepareNativeToken, randomWallet } from '@utils/blockchain';
 import { Constant } from '@tests/test.constant';
@@ -35,7 +40,7 @@ import {
 } from '@utils/callWithSignatures/estateToken';
 import { BigNumber } from 'ethers';
 import { randomInt } from 'crypto';
-import { getInterfaceID, randomBigNumber } from '@utils/utils';
+import { getBytes4Hex, getBytes4Hex, getInterfaceID, randomBigNumber } from '@utils/utils';
 import { OrderedMap } from '@utils/utils';
 import { Initialization as LandInitialization } from '@tests/land/test.initialization';
 
@@ -1772,6 +1777,37 @@ describe('3. EstateToken', async () => {
                 [10_000, 500],
                 ethers.utils.formatBytes32String(""),
             )).to.be.revertedWith("estateToken: Token is unavailable");
+        });
+    });
+
+    describe('3.17. supportsInterface(bytes4)', () => {
+        it('3.17.1. return true for appropriate interface', async () => {
+            const fixture = await beforeEstateTokenTest();
+            const { estateToken } = fixture;
+
+            const ICommon = ICommon__factory.createInterface();
+
+            const IERC165Upgradeable = IERC165Upgradeable__factory.createInterface();
+            const IERC2981Upgradeable = IERC2981Upgradeable__factory.createInterface();
+            const IRoyaltyRateProposer = IRoyaltyRateProposer__factory.createInterface();
+            const IERC1155Upgradeable = IERC1155Upgradeable__factory.createInterface();
+            const IERC1155MetadataURIUpgradeable = IERC1155MetadataURIUpgradeable__factory.createInterface();
+
+            const IERC2981UpgradeableInterfaceId = getInterfaceID(IERC2981Upgradeable, [IERC165Upgradeable]);
+
+            const IRoyaltyRateProposerInterfaceId = getInterfaceID(IRoyaltyRateProposer, [ICommon, IERC165Upgradeable, IERC2981Upgradeable]);
+
+            const IERC165UpgradeableInterfaceId = getInterfaceID(IERC165Upgradeable, []);
+
+            const IERC1155UpgradeableInterfaceId = getInterfaceID(IERC1155Upgradeable, [IERC165Upgradeable]);
+
+            const IERC1155MetadataURIUpgradeableInterfaceId = getInterfaceID(IERC1155MetadataURIUpgradeable, [IERC1155Upgradeable]);
+
+            expect(await estateToken.supportsInterface(getBytes4Hex(IERC2981UpgradeableInterfaceId))).to.equal(true);
+            expect(await estateToken.supportsInterface(getBytes4Hex(IRoyaltyRateProposerInterfaceId))).to.equal(true);
+            expect(await estateToken.supportsInterface(getBytes4Hex(IERC165UpgradeableInterfaceId))).to.equal(true);
+            expect(await estateToken.supportsInterface(getBytes4Hex(IERC1155UpgradeableInterfaceId))).to.equal(true);
+            expect(await estateToken.supportsInterface(getBytes4Hex(IERC1155MetadataURIUpgradeableInterfaceId))).to.equal(true);
         });
     });
 });

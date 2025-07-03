@@ -37,7 +37,7 @@ import {
 } from '@utils/callWithSignatures/estateToken';
 import { BigNumber, BigNumberish, Contract } from 'ethers';
 import { randomInt } from 'crypto';
-import { getInterfaceID, randomBigNumber, scale } from '@utils/utils';
+import { getBytes4Hex, getInterfaceID, randomBigNumber, scale } from '@utils/utils';
 import { OrderedMap } from '@utils/utils';
 import { deployEstateForger } from '@utils/deployments/land/estateForger';
 import { addCurrencyToEstateForger } from '@utils/callWithSignatures/common';
@@ -6205,7 +6205,7 @@ describe('4. EstateForger', async () => {
     });
 
     describe('4.22. supportsInterface(bytes4)', () => {
-        it('4.22.1. return true for IERC2981Upgradeable interface', async () => {
+        it('4.22.1. return true for appropriate interface', async () => {
             const fixture = await beforeEstateForgerTest();
             const { estateForger } = fixture;
 
@@ -6214,15 +6214,11 @@ describe('4. EstateForger', async () => {
             const IEstateTokenReceiver = IEstateTokenReceiver__factory.createInterface();
             const IEstateTokenizer = IEstateTokenizer__factory.createInterface();
 
-            const IEstateTokenReceiverInterfaceId = getInterfaceID(IEstateTokenReceiver)
-                .xor(getInterfaceID(IERC1155ReceiverUpgradeable));
+            const IEstateTokenReceiverInterfaceId = getInterfaceID(IEstateTokenReceiver, [IERC1155ReceiverUpgradeable])
+            const IEstateTokenizerInterfaceId = getInterfaceID(IEstateTokenizer, [ICommon, IEstateTokenReceiver])
 
-            const IEstateTokenizerInterfaceId = getInterfaceID(IEstateTokenizer)
-                .xor(getInterfaceID(ICommon))
-                .xor(getInterfaceID(IEstateTokenReceiver));
-
-            expect(await estateForger.supportsInterface(IEstateTokenReceiverInterfaceId._hex)).to.equal(true);
-            expect(await estateForger.supportsInterface(IEstateTokenizerInterfaceId._hex)).to.equal(true);
+            expect(await estateForger.supportsInterface(getBytes4Hex(IEstateTokenReceiverInterfaceId))).to.equal(true);
+            expect(await estateForger.supportsInterface(getBytes4Hex(IEstateTokenizerInterfaceId))).to.equal(true);
         });
     });
 });
