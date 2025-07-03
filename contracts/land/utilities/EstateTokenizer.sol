@@ -5,27 +5,16 @@ import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces
 
 import {IAdmin} from "../../common/interfaces/IAdmin.sol";
 
+import {Administrable} from "../../common/utilities/Administrable.sol";
+
 import {IEstateTokenizer} from "../interfaces/IEstateTokenizer.sol";
 
 import {EstateTokenReceiver} from "./EstateTokenReceiver.sol";
 
 abstract contract EstateTokenizer is
 IEstateTokenizer,
+Administrable,
 EstateTokenReceiver {
-    modifier onlyManager() {
-        if (!IAdmin(this.admin()).isManager(msg.sender)) {
-            revert Unauthorized();
-        }
-        _;
-    }
-
-    modifier onlyExecutive() {
-        if (!IAdmin(this.admin()).isExecutive(msg.sender)) {
-            revert Unauthorized();
-        }
-        _;
-    }
-
     function supportsInterface(bytes4 _interfaceId)
     public view virtual override(IERC165Upgradeable, EstateTokenReceiver) returns (bool) {
         return _interfaceId == type(IEstateTokenizer).interfaceId || super.supportsInterface(_interfaceId);

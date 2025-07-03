@@ -23,7 +23,7 @@ library Formula {
         );
     }
 
-    function applyDiscount(uint256 _value, ICommon.Rate memory _discount) internal pure returns (uint256) {
-        return _value - scale(_value, _discount);
+    function remain(uint256 _value, ICommon.Rate memory _rate) internal pure returns (uint256) {
+        return _value - scale(_value, _rate);
     }
 }

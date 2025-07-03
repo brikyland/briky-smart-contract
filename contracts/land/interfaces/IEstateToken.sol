@@ -35,8 +35,6 @@ IERC1155MetadataURIUpgradeable {
     error Deprecated();
     error InvalidEstateId();
     error InvalidTokenizer(address account);
-    error AuthorizedAccount(address account);
-    error NotAuthorizedAccount(address account);
 
     function commissionToken() external view returns (address commissionToken);
     function feeReceiver() external view returns (address feeReceiver);

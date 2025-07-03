@@ -338,7 +338,9 @@ Initializable {
             _signatures
         );
         if (_currencies.length != _isAvailable.length
-            || _currencies.length != _isExclusive.length) revert InvalidInput();
+            || _currencies.length != _isExclusive.length) {
+            revert InvalidInput();
+        }
 
         for (uint256 i = 0; i < _currencies.length; ++i) {
             currencyRegistries[_currencies[i]] = CurrencyRegistry(

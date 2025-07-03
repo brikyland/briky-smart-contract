@@ -15,8 +15,8 @@ import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 
+import {Administrable} from "../common/utilities/Administrable.sol";
 import {Pausable} from "../common/utilities/Pausable.sol";
-
 import {RoyaltyRateProposer} from "../common/utilities/RoyaltyRateProposer.sol";
 
 import {IPromotionToken} from "./interfaces/IPromotionToken.sol";
@@ -26,19 +26,13 @@ import {PromotionTokenStorage} from "./storages/PromotionTokenStorage.sol";
 contract PromotionToken is
 PromotionTokenStorage,
 ERC721PausableUpgradeable,
+Administrable,
 Pausable,
 RoyaltyRateProposer,
 ReentrancyGuardUpgradeable {
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
     string constant private VERSION = "v1.1.1";
-
-    modifier onlyManager() {
-        if (!IAdmin(this.admin()).isManager(msg.sender)) {
-            revert Unauthorized();
-        }
-        _;
-    }
 
     receive() external payable {}
 

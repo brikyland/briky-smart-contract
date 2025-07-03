@@ -31,6 +31,13 @@ ReentrancyGuardUpgradeable {
 
     string constant private VERSION = "v1.1.1";
 
+    modifier validOffer(uint256 _offerId) {
+        if (_offerId == 0 || _offerId > offerNumber) {
+            revert InvalidOfferId();
+        }
+        _;
+    }
+
     receive() external payable {}
 
     function initialize(
@@ -50,10 +57,7 @@ ReentrancyGuardUpgradeable {
         return VERSION;
     }
 
-    function getOffer(uint256 _offerId) external view returns (Offer memory) {
-        if (_offerId == 0 || _offerId > offerNumber) {
-            revert InvalidOfferId();
-        }
+    function getOffer(uint256 _offerId) external view validOffer(_offerId) returns (Offer memory) {
         return offers[_offerId];
     }
 
@@ -102,19 +106,11 @@ ReentrancyGuardUpgradeable {
         return offerId;
     }
 
-    function buy(uint256 _offerId) external payable returns (uint256) {
-        if (_offerId == 0 || _offerId > offerNumber) {
-            revert InvalidOfferId();
-        }
-
+    function buy(uint256 _offerId) external payable validOffer(_offerId) returns (uint256) {
         return _buy(_offerId);
     }
 
-    function safeBuy(uint256 _offerId, uint256 _anchor) external payable returns (uint256) {
-        if (_offerId == 0 || _offerId > offerNumber) {
-            revert InvalidOfferId();
-        }
-
+    function safeBuy(uint256 _offerId, uint256 _anchor) external payable validOffer(_offerId) returns (uint256) {
         if (_anchor != offers[_offerId].tokenId) {
             revert BadAnchor();
         }
@@ -122,15 +118,14 @@ ReentrancyGuardUpgradeable {
         return _buy(_offerId);
     }
 
-    function cancel(uint256 _offerId) external nonReentrant whenNotPaused {
-        if (_offerId == 0 || _offerId > offerNumber) {
-            revert InvalidOfferId();
-        }
+    function cancel(uint256 _offerId) external nonReentrant validOffer(_offerId) whenNotPaused {
         Offer storage offer = offers[_offerId];
         if (msg.sender != offer.seller && !IAdmin(admin).isManager(msg.sender)) {
             revert Unauthorized();
         }
-        if (offer.state != OfferState.Selling) revert InvalidCancelling();
+        if (offer.state != OfferState.Selling) {
+            revert InvalidCancelling();
+        }
 
         offer.state = OfferState.Cancelled;
 

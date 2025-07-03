@@ -32,13 +32,6 @@ ReentrancyGuardUpgradeable {
 
     string constant private VERSION = "v1.1.1";
 
-    modifier onlyManager() {
-        if (!IAdmin(this.admin()).isManager(msg.sender)) {
-            revert Unauthorized();
-        }
-        _;
-    }
-
     receive() external payable {}
 
     function initialize(
