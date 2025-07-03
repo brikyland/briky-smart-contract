@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
 import {Constant} from "../lib/Constant.sol";
@@ -9,6 +8,7 @@ import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
 import {Formula} from "../lib/Formula.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
+import {IPriceWatcher} from "../common/interfaces/IPriceWatcher.sol";
 import {IReserveVault} from "../common/interfaces/IReserveVault.sol";
 
 import {Pausable} from "../common/utilities/Pausable.sol";
@@ -57,6 +57,7 @@ ReentrancyGuardUpgradeable {
         address _admin,
         address _estateToken,
         address _commissionToken,
+        address _priceWatcher,
         address _feeReceiver,
         address _reserveVault,
         uint256 _feeRate,
@@ -71,6 +72,7 @@ ReentrancyGuardUpgradeable {
         admin = _admin;
         estateToken = _estateToken;
         commissionToken = _commissionToken;
+        priceWatcher = _priceWatcher;
         feeReceiver = _feeReceiver;
         reserveVault = _reserveVault;
 
@@ -130,79 +132,6 @@ ReentrancyGuardUpgradeable {
             _baseMinUnitPrice,
             _baseMaxUnitPrice
         );
-    }
-    
-    function updatePriceFeeds(
-        address[] calldata _currencies,
-        address[] calldata _feeds,
-        uint40[] calldata _heartbeats,
-        bytes[] calldata _signatures
-    ) external {
-        IAdmin(admin).verifyAdminSignatures(
-            abi.encode(
-                address(this),
-                "updatePriceFeeds",
-                _currencies,
-                _feeds,
-                _heartbeats                           
-            ),
-            _signatures
-        );
-
-        if (_currencies.length != _feeds.length
-            || _currencies.length != _heartbeats.length) {
-            revert InvalidInput();
-        }
-
-        for(uint256 i; i < _currencies.length; ++i) {
-            if (_heartbeats[i] == 0) revert InvalidInput();
-
-            priceFeeds[_currencies[i]] = PriceFeed(
-                _feeds[i],
-                _heartbeats[i]
-            );
-            emit PriceFeedUpdate(
-                _currencies[i],
-                _feeds[i],
-                _heartbeats[i]
-            );
-        }
-    }
-
-    function updateDefaultRates(
-        address[] calldata _currencies,
-        uint256[] calldata _values,
-        uint8[] calldata _decimals,
-        bytes[] calldata _signatures
-    ) external {
-        IAdmin(admin).verifyAdminSignatures(
-            abi.encode(
-                address(this),
-                "updateDefaultRates",
-                _currencies,
-                _values,
-                _decimals
-            ),
-            _signatures
-        );
-
-        if (_currencies.length != _values.length
-            || _currencies.length != _decimals.length) {
-            revert InvalidInput();
-        }
-
-        for(uint256 i; i < _currencies.length; ++i) {
-            if (_decimals[i] > Constant.ESTATE_TOKEN_MAX_DECIMALS) {
-                revert InvalidInput();
-            }
-
-            defaultRates[_currencies[i]] = Rate(_values[i], _decimals[i]);
-            emit DefaultRateUpdate(
-                _currencies[i],
-                _values[i],
-                _decimals[i]
-            );
-        }
     }
 
     function whitelist(
@@ -265,14 +194,6 @@ ReentrancyGuardUpgradeable {
                 emit Deactivation(_zone, _accounts[i]);
             }
         }
-    }
-
-    function getPriceFeed(address _currency) external view returns (PriceFeed memory) {
-        return priceFeeds[_currency];
-    }
-
-    function getDefaultRate(address _currency) external view returns (Rate memory) {
-        return defaultRates[_currency];
     }
 
     function getFeeRate() external view returns (Rate memory) {
@@ -420,7 +341,14 @@ ReentrancyGuardUpgradeable {
             revert InvalidInput();
         }
 
-        _validateUnitPrice(_quote.unitPrice, _quote.currency);
+        if (!IPriceWatcher(priceWatcher).isPriceInRange(
+            _quote.currency,
+            _quote.unitPrice,
+            baseMinUnitPrice,
+            baseMaxUnitPrice
+        )) {
+            revert InvalidUnitPrice();
+        }
 
         Rate memory commissionRate = ICommissionToken(commissionToken).getCommissionRate();
         uint256 cashbackFundId = IReserveVault(reserveVault).initiateFund(
@@ -525,6 +453,7 @@ ReentrancyGuardUpgradeable {
         if (request.estate.estateId != 0) {
             revert Tokenized();
         }
+
         if (request.quota.totalQuantity != 0) {
             uint256 publicSaleEndsAt = request.agenda.publicSaleEndsAt;
             if (publicSaleEndsAt > block.timestamp) {
@@ -608,54 +537,6 @@ ReentrancyGuardUpgradeable {
         return _unitPrice.remain(_commissionRate).scale(_cashbackBaseRate);
     }
 
-    function _validateUnitPrice(uint256 _unitPrice, address _currency) private {
-        if (!IAdmin(admin).isAvailableCurrency(_currency)) {
-            revert InvalidCurrency();
-        }
-
-        PriceFeed memory priceFeed = priceFeeds[_currency];
-
-        Rate memory rate;
-        if (priceFeed.feed == address(0)) {
-            rate = defaultRates[_currency];
-            if (rate.value == 0)revert MissingCurrencyRate();
-        } else {
-            (
-                ,
-                int256 answer,
-                ,
-                uint256 updatedAt,
-
-            ) = AggregatorV3Interface(priceFeed.feed).latestRoundData();
-
-            if (answer <= 0) {
-                revert InvalidPriceFeedData();
-            }
-
-            if (updatedAt + priceFeed.heartbeat <= block.timestamp) {
-                revert StalePriceFeed();
-            }
-
-            rate = Rate(
-                uint256(answer),
-                AggregatorV3Interface(priceFeed.feed).decimals()
-            );
-        }
-
-        uint256 normalizedUnitPrice = _unitPrice.scale(rate);
-
-        if (baseMinUnitPrice > normalizedUnitPrice || normalizedUnitPrice > baseMaxUnitPrice) {
-            revert InvalidUnitPrice();
-        }
-
-        emit UnitPriceValidation(
-            _unitPrice,
-            _currency,
-            rate.value,
-            rate.decimals
-        );
-    }
-
     function _requestTokenization(
         address _seller,
         RequestEstateInput calldata _estate,
@@ -668,7 +549,14 @@ ReentrancyGuardUpgradeable {
             revert Unauthorized();
         }
 
-        _validateUnitPrice(_quote.unitPrice, _quote.currency);
+        if (!IPriceWatcher(priceWatcher).isPriceInRange(
+            _quote.currency,
+            _quote.unitPrice,
+            baseMinUnitPrice,
+            baseMaxUnitPrice
+        )) {
+            revert InvalidUnitPrice();
+        }
 
         if (!isActiveSellerIn[_estate.zone][_seller]
             || _estate.decimals > Constant.ESTATE_TOKEN_MAX_DECIMALS
@@ -807,7 +695,7 @@ ReentrancyGuardUpgradeable {
 
         uint40 publicSaleEndsAt = request.agenda.publicSaleEndsAt;
         if (publicSaleEndsAt + Constant.ESTATE_TOKEN_CONFIRMATION_TIME_LIMIT <= block.timestamp) {
-            revert FailedOwnershipTransfer();
+            revert TimeOut();
         }
 
         if (publicSaleEndsAt <= block.timestamp) {

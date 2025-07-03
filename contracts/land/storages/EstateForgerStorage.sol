@@ -11,9 +11,6 @@ abstract contract EstateForgerStorage is IEstateForger {
 
     mapping(address => bool) public isWhitelisted;
 
-    mapping(address => PriceFeed) internal priceFeeds;
-    mapping(address => Rate) internal defaultRates;
-
     mapping(uint256 => Request) internal requests;
 
     uint256 public requestNumber;
@@ -24,10 +21,11 @@ abstract contract EstateForgerStorage is IEstateForger {
     uint256 internal feeRate;
 
     address public admin;
-    address public feeReceiver;
-    address public reserveVault;
     address public commissionToken;
     address public estateToken;
+    address public feeReceiver;
+    address public priceWatcher;
+    address public reserveVault;
 
     uint256[50] private __gap;
 }

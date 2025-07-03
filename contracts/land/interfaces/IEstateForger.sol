@@ -65,26 +65,11 @@ IEstateTokenizer {
         address seller;
     }
 
-    struct PriceFeed {
-        address feed;
-        uint40 heartbeat;
-    }
-
     event FeeRateUpdate(uint256 newValue);
 
     event BaseUnitPriceRangeUpdate(
         uint256 baseMinUnitPrice,
         uint256 baseMaxUnitPrice
-    );
-    event DefaultRateUpdate(
-        address indexed currency,
-        uint256 rateValue,
-        uint8 rateDecimals
-    );
-    event PriceFeedUpdate(
-        address indexed currency,
-        address feed,
-        uint40 heartbeat
     );
 
     event Whitelist(address indexed account);
@@ -139,32 +124,22 @@ IEstateTokenizer {
         uint256 amount
     );
 
-    event UnitPriceValidation(
-        uint256 unitPrice,
-        address currency,
-        uint256 rateValue,
-        uint8 rateDecimals
-    );
-
     error Activated(address account);
     error AlreadyHadDeposit();
     error AlreadyWithdrawn();
     error Cancelled();
-    error FailedOwnershipTransfer();
     error InvalidDepositing();
-    error InvalidPriceFeedData();
     error InvalidRequestId();
     error InvalidUnitPrice();
     error InvalidWithdrawing();
     error MaxSellingQuantityExceeded();
-    error MissingCurrencyRate();
     error NotActivated(address account);
     error NotEnoughSoldQuantity();
     error NotRegisteredSeller(address account);
     error NotWhitelisted(address account);
     error RegisteredSeller(address account);
-    error StalePriceFeed();
     error StillSelling();
+    error TimeOut();
     error Tokenized();
     error Whitelisted(address account);
 
@@ -183,8 +158,6 @@ IEstateTokenizer {
 
     function isActiveSellerIn(bytes32 zone, address account) external view returns (bool isActive);
 
-    function getDefaultRate(address currency) external view returns (Rate memory rate);
-    function getPriceFeed(address currency) external view returns (PriceFeed memory priceFeed);
     function getRequest(uint256 requestId) external view returns (Request memory request);
 
     function cancel(uint256 requestId) external;

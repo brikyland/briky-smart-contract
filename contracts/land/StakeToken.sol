@@ -8,6 +8,7 @@ import {ERC20PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/toke
 import {ERC20PermitUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
 
 import {Constant} from "../lib/Constant.sol";
+import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
 import {FixedMath} from "../lib/FixedMath.sol";
 import {Formula} from "../lib/Formula.sol";
 
@@ -20,7 +21,6 @@ import {IStakeToken} from "./interfaces/IStakeToken.sol";
 import {ITreasury} from "./interfaces/ITreasury.sol";
 
 import {StakeTokenStorage} from "./storages/StakeTokenStorage.sol";
-import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
 
 contract StakeToken is
 StakeTokenStorage,
