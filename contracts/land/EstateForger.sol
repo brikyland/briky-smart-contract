@@ -21,6 +21,8 @@ import {EstateForgerStorage} from "./storages/EstateForgerStorage.sol";
 import {Discountable} from "./utilities/Discountable.sol";
 import {EstateTokenizer} from "./utilities/EstateTokenizer.sol";
 
+import "hardhat/console.sol";
+
 contract EstateForger is
 EstateForgerStorage,
 EstateTokenizer,
@@ -661,7 +663,7 @@ ReentrancyGuardUpgradeable {
         } else if (newDeposit >= cashbackThreshold) {
             IReserveVault(reserveVault).expandFund(
                 request.quote.cashbackFundId,
-                oldDeposit
+                newDeposit
             );
         }
 

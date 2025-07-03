@@ -63,9 +63,9 @@ export async function prepareERC20(
     for (const sender of senders) {
         await callTransaction(token.mint(sender.address, amount));
         for (const operator of operators) {
-            if (sender instanceof ethers.Wallet) {
+            try {
                 await callTransaction(token.connect(sender).increaseAllowance(operator.address, amount));
-            } else {
+            } catch (error) {
                 await callTransaction(sender.call(
                     token.address,
                     token.interface.encodeFunctionData(
