@@ -325,7 +325,9 @@ ReentrancyGuardUpgradeable {
         RoyaltyRateProposer,
         ERC1155Upgradeable
     ) returns (bool) {
-        return RoyaltyRateProposer.supportsInterface(_interfaceId) || ERC1155Upgradeable.supportsInterface(_interfaceId);
+        return RoyaltyRateProposer.supportsInterface(_interfaceId) 
+            || ERC1155Upgradeable.supportsInterface(_interfaceId)
+            || super.supportsInterface(_interfaceId);
     }
 
     function _beforeTokenTransfer(
