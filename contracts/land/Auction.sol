@@ -3,8 +3,8 @@ pragma solidity ^0.8.20;
 
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC20Upgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
+import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
 import {Formula} from "../lib/Formula.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
@@ -22,7 +22,6 @@ AuctionStorage,
 Pausable,
 ReentrancyGuardUpgradeable {
     using Formula for uint256;
-    using SafeERC20Upgradeable for IERC20Upgradeable;
 
     string constant private VERSION = "v1.1.1";
 
@@ -112,11 +111,12 @@ ReentrancyGuardUpgradeable {
             revert Ended();
         }
 
-        IERC20Upgradeable currencyContract = IERC20Upgradeable(ITreasury(IPrimaryToken(primaryToken).treasury()).currency());
-        currencyContract.safeTransferFrom(msg.sender, address(this), _value);
+        address currency = ITreasury(IPrimaryToken(primaryToken).treasury()).currency();
+        CurrencyHandler.receiveERC20(currency, _value);
 
-        currencyContract.safeIncreaseAllowance(primaryToken, _value);
-        IPrimaryToken(primaryToken).contributeLiquidityFromPublicSale(_value);
+        address primaryTokenAddress = primaryToken;
+        CurrencyHandler.allowERC20(currency, primaryTokenAddress, _value);
+        IPrimaryToken(primaryTokenAddress).contributeLiquidityFromPublicSale(_value);
 
         unchecked {
             totalDeposit += _value;
@@ -147,7 +147,7 @@ ReentrancyGuardUpgradeable {
 
         uint256 amount = vestedAmount - withdrawnAmount[msg.sender];
         withdrawnAmount[msg.sender] = vestedAmount;
-        IERC20Upgradeable(primaryToken).safeTransfer(msg.sender, amount);
+        CurrencyHandler.receiveERC20(primaryToken, amount);
 
         emit Withdrawal(msg.sender, amount);
 
@@ -176,18 +176,18 @@ ReentrancyGuardUpgradeable {
 
         uint256 stake3 = remain - _stake1 - _stake2;
 
-        IERC20Upgradeable primaryTokenContract = IERC20Upgradeable(primaryToken);
-        IStakeToken stakeToken1Contract = IStakeToken(stakeToken1);
-        IStakeToken stakeToken2Contract = IStakeToken(stakeToken2);
-        IStakeToken stakeToken3Contract = IStakeToken(stakeToken3);
+        address primaryTokenAddress = primaryToken;
+        address stakeToken1Address = stakeToken1;
+        address stakeToken2Address = stakeToken2;
+        address stakeToken3Address = stakeToken3;
 
-        primaryTokenContract.safeIncreaseAllowance(address(stakeToken1Contract), _stake1);
-        primaryTokenContract.safeIncreaseAllowance(address(stakeToken2Contract), _stake2);
-        primaryTokenContract.safeIncreaseAllowance(address(stakeToken3Contract), stake3);
+        CurrencyHandler.allowERC20(primaryTokenAddress, stakeToken1Address, _stake1);
+        CurrencyHandler.allowERC20(primaryTokenAddress, stakeToken2Address, _stake2);
+        CurrencyHandler.allowERC20(primaryTokenAddress, stakeToken3Address, stake3);
 
-        stakeToken1Contract.stake(msg.sender, _stake1);
-        stakeToken2Contract.stake(msg.sender, _stake2);
-        stakeToken3Contract.stake(msg.sender, stake3);
+        IStakeToken(stakeToken1Address).stake(msg.sender, _stake1);
+        IStakeToken(stakeToken2Address).stake(msg.sender, _stake2);
+        IStakeToken(stakeToken3Address).stake(msg.sender, stake3);
 
         emit Stake(
             msg.sender,

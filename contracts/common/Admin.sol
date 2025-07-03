@@ -52,7 +52,7 @@ Initializable {
         }
 
         uint256 currentNonce = nonce++;
-        uint256 counter = 0;
+        uint256 counter;
 
         if (Signature.verify(admin1, _message, currentNonce, _signatures[0])) counter++;
         if (Signature.verify(admin2, _message, currentNonce, _signatures[1])) counter++;
@@ -172,7 +172,7 @@ Initializable {
         );
 
         if (_isManager) {
-            for (uint256 i = 0; i < _accounts.length; ++i) {
+            for (uint256 i; i < _accounts.length; ++i) {
                 if (isManager[_accounts[i]]) {
                     revert AuthorizedAccount(_accounts[i]);
                 }
@@ -180,7 +180,7 @@ Initializable {
                 emit ManagerAuthorization(_accounts[i]);
             }
         } else {
-            for (uint256 i = 0; i < _accounts.length; ++i) {
+            for (uint256 i; i < _accounts.length; ++i) {
                 if (!isManager[_accounts[i]]) {
                     revert NotAuthorizedAccount(_accounts[i]);
                 }
@@ -209,7 +209,7 @@ Initializable {
         );
 
         if (_isModerator) {
-            for (uint256 i = 0; i < _accounts.length; ++i) {
+            for (uint256 i; i < _accounts.length; ++i) {
                 if (isModerator[_accounts[i]]) {
                     revert AuthorizedAccount(_accounts[i]);
                 }
@@ -217,7 +217,7 @@ Initializable {
                 emit ModeratorAuthorization(_accounts[i]);
             }
         } else {
-            for (uint256 i = 0; i < _accounts.length; ++i) {
+            for (uint256 i; i < _accounts.length; ++i) {
                 if (!isModerator[_accounts[i]]) {
                     revert NotAuthorizedAccount(_accounts[i]);
                 }
@@ -243,7 +243,7 @@ Initializable {
         );
 
         if (_isZone) {
-            for (uint256 i = 0; i < _zones.length; ++i) {
+            for (uint256 i; i < _zones.length; ++i) {
                 if (isZone[_zones[i]]) {
                     revert AuthorizedZone(_zones[i]);
                 }
@@ -251,7 +251,7 @@ Initializable {
                 emit ZoneAnnouncement(_zones[i]);
             }
         } else {
-            for (uint256 i = 0; i < _zones.length; ++i) {
+            for (uint256 i; i < _zones.length; ++i) {
                 if (!isZone[_zones[i]]) {
                     revert NotAuthorizedZone(_zones[i]);
                 }
@@ -283,7 +283,7 @@ Initializable {
         }
 
         if (_isActive) {
-            for (uint256 i = 0; i < _accounts.length; ++i) {
+            for (uint256 i; i < _accounts.length; ++i) {
                 if (isActiveIn[_zone][_accounts[i]]) {
                     revert Activated(_accounts[i]);
                 }
@@ -291,7 +291,7 @@ Initializable {
                 emit Activation(_zone, _accounts[i]);
             }
         } else {
-            for (uint256 i = 0; i < _accounts.length; ++i) {
+            for (uint256 i; i < _accounts.length; ++i) {
                 if (!isActiveIn[_zone][_accounts[i]]) {
                     revert NotActivated(_accounts[i]);
                 }
@@ -342,7 +342,7 @@ Initializable {
             revert InvalidInput();
         }
 
-        for (uint256 i = 0; i < _currencies.length; ++i) {
+        for (uint256 i; i < _currencies.length; ++i) {
             currencyRegistries[_currencies[i]] = CurrencyRegistry(
                 0,
                 0,

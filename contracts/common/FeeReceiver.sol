@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC20Upgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
 import {Signature} from "../lib/Signature.sol";
 import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
@@ -15,8 +13,6 @@ import {FeeReceiverStorage} from "./storages/FeeReceiverStorage.sol";
 contract FeeReceiver is
 FeeReceiverStorage,
 ReentrancyGuardUpgradeable {
-    using SafeERC20Upgradeable for IERC20Upgradeable;
-
     string constant private VERSION = "v1.1.1";
 
     receive() external payable {}
@@ -52,12 +48,8 @@ ReentrancyGuardUpgradeable {
             revert InvalidInput();
         }
 
-        for (uint256 i = 0; i < _currencies.length; ++i) {
-            if (_currencies[i] == address(0)) {
-                CurrencyHandler.transferNative(_receiver, _values[i]);
-            } else {
-                IERC20Upgradeable(_currencies[i]).safeTransfer(_receiver, _values[i]);
-            }
+        for (uint256 i; i < _currencies.length; ++i) {
+            CurrencyHandler.sendCurrency(_currencies[i], _receiver, _values[i]);
 
             emit Withdrawal(_receiver, _currencies[i], _values[i]);
         }

@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC20Upgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
 import {Constant} from "../lib/Constant.sol";
 import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
@@ -26,7 +24,6 @@ Discountable,
 Pausable,
 ReentrancyGuardUpgradeable {
     using Formula for uint256;
-    using SafeERC20Upgradeable for IERC20Upgradeable;
 
     string constant private VERSION = "v1.1.1";
 
@@ -198,17 +195,16 @@ ReentrancyGuardUpgradeable {
 
         if (currency == address(0)) {
             CurrencyHandler.receiveNative(value + royaltyAmount);
-            CurrencyHandler.transferNative(seller, value);
-            CurrencyHandler.transferNative(royaltyReceiver, royaltyAmount - commissionAmount);
+            CurrencyHandler.sendNative(seller, value);
+            CurrencyHandler.sendNative(royaltyReceiver, royaltyAmount - commissionAmount);
             if (commissionAmount != 0) {
-                CurrencyHandler.transferNative(commissionReceiver, commissionAmount);
+                CurrencyHandler.sendNative(commissionReceiver, commissionAmount);
             }
         } else {
-            IERC20Upgradeable currencyContract = IERC20Upgradeable(currency);
-            currencyContract.safeTransferFrom(msg.sender, seller, value);
-            currencyContract.safeTransferFrom(msg.sender, royaltyReceiver, royaltyAmount - commissionAmount);
+            CurrencyHandler.forwardERC20(currency, seller, value);
+            CurrencyHandler.forwardERC20(currency, royaltyReceiver, royaltyAmount - commissionAmount);
             if (commissionAmount != 0) {
-                currencyContract.safeTransferFrom(msg.sender, commissionReceiver, commissionAmount);
+                CurrencyHandler.forwardERC20(currency, commissionReceiver, commissionAmount);
             }
         }
 

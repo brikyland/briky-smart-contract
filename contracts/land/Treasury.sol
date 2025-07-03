@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC20Upgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
 import {Constant} from "../lib/Constant.sol";
+import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
 import {Formula} from "../lib/Formula.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
@@ -19,7 +18,6 @@ TreasuryStorage,
 Pausable,
 ReentrancyGuardUpgradeable {
     using Formula for uint256;
-    using SafeERC20Upgradeable for IERC20Upgradeable;
 
     string constant private VERSION = "v1.1.1";
 
@@ -63,7 +61,7 @@ ReentrancyGuardUpgradeable {
         }
 
         operationFund = fund - _value;
-        IERC20Upgradeable(currency).safeTransfer(_operator, _value);
+        CurrencyHandler.sendERC20(currency, _operator, _value);
 
         emit OperationFundWithdrawal(_value, _operator);
     }
@@ -77,13 +75,13 @@ ReentrancyGuardUpgradeable {
         }
 
         liquidity -= _value;
-        IERC20Upgradeable(currency).safeTransfer(_withdrawer, _value);
+        CurrencyHandler.sendERC20(currency, _withdrawer, _value);
 
         emit LiquidityWithdrawal(_withdrawer, _value);
     }
 
     function provideLiquidity(uint256 _value) external nonReentrant whenNotPaused {
-        IERC20Upgradeable(currency).safeTransferFrom(msg.sender, address(this), _value);
+        CurrencyHandler.receiveERC20(currency, _value);
 
         uint256 feeAmount = _value.scale(Constant.TREASURY_OPERATION_FUND_RATE, Constant.COMMON_RATE_MAX_FRACTION);
 

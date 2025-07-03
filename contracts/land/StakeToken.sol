@@ -6,7 +6,6 @@ import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/se
 import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import {ERC20PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PausableUpgradeable.sol";
 import {ERC20PermitUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
-import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
 import {Constant} from "../lib/Constant.sol";
 import {FixedMath} from "../lib/FixedMath.sol";
@@ -21,6 +20,7 @@ import {IStakeToken} from "./interfaces/IStakeToken.sol";
 import {ITreasury} from "./interfaces/ITreasury.sol";
 
 import {StakeTokenStorage} from "./storages/StakeTokenStorage.sol";
+import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
 
 contract StakeToken is
 StakeTokenStorage,
@@ -30,8 +30,6 @@ Pausable,
 ReentrancyGuardUpgradeable {
     using FixedMath for uint256;
     using Formula for uint256;
-    using SafeERC20Upgradeable for IERC20Upgradeable;
-    using SafeERC20Upgradeable for IPrimaryToken;
 
     string constant private VERSION = "v1.1.1";
 
@@ -133,23 +131,23 @@ ReentrancyGuardUpgradeable {
     }
 
     function stake(address _account, uint256 _value) external nonReentrant whenNotPaused {
-        IPrimaryToken primaryTokenContract = IPrimaryToken(primaryToken);
-        if (primaryTokenContract.isStakeRewardingCompleted()) {
-            ITreasury treasuryContract = ITreasury(primaryTokenContract.treasury());
+        address primaryTokenAddress = primaryToken;
+        if (IPrimaryToken(primaryTokenAddress).isStakeRewardingCompleted()) {
+            address treasuryAddress = IPrimaryToken(primaryToken).treasury();
             uint256 feeAmount = _stakingFee(
-                treasuryContract.liquidity(),
+                ITreasury(treasuryAddress).liquidity(),
                 _value,
-                primaryTokenContract.totalSupply(),
+                IPrimaryToken(primaryTokenAddress).totalSupply(),
                 feeRate
             );
 
-            IERC20Upgradeable currencyContract = IERC20Upgradeable(treasuryContract.currency());
-            currencyContract.safeTransferFrom(_account, address(this), feeAmount);
-            currencyContract.safeIncreaseAllowance(address(primaryTokenContract), feeAmount);
-            primaryTokenContract.contributeLiquidityFromStakeToken(feeAmount, address(this));
+            address currency = ITreasury(treasuryAddress).currency();
+            CurrencyHandler.receiveERC20(currency, feeAmount);
+            CurrencyHandler.allowERC20(currency, primaryTokenAddress, feeAmount);
+            IPrimaryToken(primaryTokenAddress).contributeLiquidityFromStakeToken(feeAmount, address(this));
         }
 
-        primaryTokenContract.safeTransferFrom(msg.sender, address(this), _value);
+        CurrencyHandler.receiveERC20(primaryTokenAddress, _value);
 
         unchecked {
             totalStake += _value;
@@ -161,8 +159,8 @@ ReentrancyGuardUpgradeable {
     }
 
     function unstake(uint256 _value) external nonReentrant whenNotPaused {
-        IPrimaryToken primaryTokenContract = IPrimaryToken(primaryToken);
-        if (!primaryTokenContract.isStakeRewardingCompleted()) {
+        address primaryTokenAddress = primaryToken;
+        if (!IPrimaryToken(primaryTokenAddress).isStakeRewardingCompleted()) {
             revert NotCompletedRewarding();
         }
 
@@ -176,19 +174,19 @@ ReentrancyGuardUpgradeable {
         weights[msg.sender] = weights[msg.sender]
             .sub(_tokenToWeight(_value, interestAccumulation));
 
-        primaryTokenContract.safeTransfer(msg.sender, _value);
+        CurrencyHandler.sendERC20(primaryTokenAddress, msg.sender, _value);
 
         emit Unstake(msg.sender, _value);
     }
 
     function promote(uint256 _value) external nonReentrant whenNotPaused {
-        IStakeToken successorContract = IStakeToken(successor);
-        if (address(successorContract) == address(0)) {
+        address successorAddress = successor;
+        if (successorAddress == address(0)) {
             revert NoSuccessor();
         }
 
-        IPrimaryToken primaryTokenContract = IPrimaryToken(primaryToken);
-        if (primaryTokenContract.isStakeRewardingCompleted()) {
+        address primaryTokenAddress = primaryToken;
+        if (IPrimaryToken(primaryTokenAddress).isStakeRewardingCompleted()) {
             revert InvalidPromoting();
         }
 
@@ -202,8 +200,8 @@ ReentrancyGuardUpgradeable {
         weights[msg.sender] = weights[msg.sender]
             .sub(_tokenToWeight(_value, interestAccumulation));
 
-        primaryTokenContract.safeApprove(address(successorContract), _value);
-        successorContract.stake(msg.sender, _value);
+        CurrencyHandler.allowERC20(primaryTokenAddress, successorAddress, _value);
+        IStakeToken(successorAddress).stake(msg.sender, _value);
 
         emit Promotion(msg.sender, _value);
     }

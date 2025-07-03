@@ -1,7 +1,7 @@
 import { LedgerSigner } from '@anders-t/ethers-ledger';
 import assert from 'assert';
 import { ethers, network, upgrades } from 'hardhat';
-import { deployReserveVault } from '@utils/deployments/common/reserveVault';
+import { deployReserveVault } from '../../../utils/deployments/common/reserveVault';
 
 async function deployOrUpgradeReserveVault() {
     const config = network.config as any;
