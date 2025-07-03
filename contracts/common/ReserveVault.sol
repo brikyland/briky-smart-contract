@@ -158,7 +158,7 @@ ReentrancyGuardUpgradeable {
             revert BadAnchor();
         }
 
-        _expandFund(_fundId);
+        _expandFund(_fundId, _quantity);
     }
 
     function safeProvideFund(uint256 _fundId, uint256 _anchor) external payable validFund(_fundId) {
