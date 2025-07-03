@@ -183,3 +183,10 @@ export function replaceFromIndex(str: string, index: number, pattern: string, re
 export function getAddressShortString(address: string): string {
     return address.slice(0, 6) + "..." + address.slice(-4);
 }
+
+export function structToObject(struct: any): any {
+    // Only keep named keys, ignore numeric keys
+    return Object.fromEntries(
+      Object.entries(struct).filter(([key]) => isNaN(Number(key)))
+    );
+}

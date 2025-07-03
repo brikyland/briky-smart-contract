@@ -65,6 +65,7 @@ const config: HardhatUserConfig = {
         hardhat: {
             gas: 100000000,
             blockGasLimit: 1000000000,
+            allowUnlimitedContractSize: true,
             ...getNetworkEnvVariable('local', COMMON_ENV_VARIABLE_NAMES),
         } as any,
         localhost: {

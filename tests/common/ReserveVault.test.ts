@@ -721,43 +721,43 @@ describe('20. ReserveVault', async () => {
     });
 
     describe('20.4. expandFund(uint256, uint256)', async () => {
-        it.only('20.4.1. expand fund successfully', async () => {
+        it('20.4.1. expand fund successfully', async () => {
 
         });
 
-        it.only('20.4.2. expand fund unsuccessfully with invalid fund id', async () => {
+        it('20.4.2. expand fund unsuccessfully with invalid fund id', async () => {
 
         });
 
-        it.only('20.4.3. expand fund unsuccessfully when paused', async () => {
+        it('20.4.3. expand fund unsuccessfully when paused', async () => {
 
         });
 
-        it.only('20.4.4. expand fund unsuccessfully by unauthorized account', async () => {
+        it('20.4.4. expand fund unsuccessfully by unauthorized account', async () => {
 
         });
 
-        it.only('20.4.5. expand fund unsuccessfully with already provided fund', async () => {
+        it('20.4.5. expand fund unsuccessfully with already provided fund', async () => {
 
         });
     });
 
     describe('20.5. safeExpandFund(uint256, uint256, uint256)', async () => {
-        it.only('20.5.1. safe expand fund successfully', async () => {
+        it('20.5.1. safe expand fund successfully', async () => {
 
         });
 
-        it.only('20.5.2. safe expand fund unsuccessfully with invalid fund id', async () => {
+        it('20.5.2. safe expand fund unsuccessfully with invalid fund id', async () => {
 
         });
 
-        it.only('20.5.3. safe expand fund unsuccessfully with invalid anchor', async () => {
+        it('20.5.3. safe expand fund unsuccessfully with invalid anchor', async () => {
 
         });
     });
 
     describe('20.6. provideFund(uint256)', async () => {
-        it.only('20.6.1. provide fund successfully with just enough native currency', async () => {
+        it('20.6.1. provide fund successfully with just enough native currency', async () => {
             const { reserveVault, initiators, currencies, deployer } = await beforeReserveVaultTest({
                 authorizeInitiators: true,
                 listSampleCurrencies: true,
@@ -805,7 +805,7 @@ describe('20. ReserveVault', async () => {
             expect(fund.isSufficient).to.equal(true);
         });
 
-        it.only('20.6.2. provide fund successfully with excess native currency', async () => {
+        it('20.6.2. provide fund successfully with excess native currency', async () => {
             const { reserveVault, initiators, currencies, deployer } = await beforeReserveVaultTest({
                 authorizeInitiators: true,
                 listSampleCurrencies: true,
@@ -879,7 +879,7 @@ describe('20. ReserveVault', async () => {
     });
 
     describe('20.7. safeProvideFund(uint256, uint256)', async () => {
-        it.only('20.7.1. safe provide fund successfully', async () => {
+        it('20.7.1. safe provide fund successfully', async () => {
             const { reserveVault, initiators, currencies, deployer } = await beforeReserveVaultTest({
                 authorizeInitiators: true,
                 listSampleCurrencies: true,
@@ -935,41 +935,41 @@ describe('20. ReserveVault', async () => {
     });
 
     describe('20.8. withdrawFund(uint256, address, uint256)', async () => {
-        it.only('20.8.1. withdraw fund successfully', async () => {
+        it('20.8.1. withdraw fund successfully', async () => {
             
         });
 
-        it.only('20.8.2. withdraw fund unsuccessfully with invalid fund id', async () => {
+        it('20.8.2. withdraw fund unsuccessfully with invalid fund id', async () => {
 
         });
 
-        it.only('20.8.3. withdraw fund unsuccessfully when paused', async () => {
+        it('20.8.3. withdraw fund unsuccessfully when paused', async () => {
             
         });
 
-        it.only('20.8.4. withdraw fund unsuccessfully by unauthorized account', async () => {
+        it('20.8.4. withdraw fund unsuccessfully by unauthorized account', async () => {
             
         });
 
-        it.only('20.8.5. withdraw fund unsuccessfully with unprovided fund', async () => {
+        it('20.8.5. withdraw fund unsuccessfully with unprovided fund', async () => {
 
         });
 
-        it.only('20.8.6. withdraw fund unsuccessfully when withdraw quantity exceed fund quantity', async () => {
+        it('20.8.6. withdraw fund unsuccessfully when withdraw quantity exceed fund quantity', async () => {
 
         });
     });
 
     describe('20.9. safeWithdrawFund(uint256, address, uint256, uint256)', async () => {
-        it.only('20.9.1. safe withdraw fund successfully', async () => {
+        it('20.9.1. safe withdraw fund successfully', async () => {
 
         });
 
-        it.only('20.9.2. safe withdraw fund unsuccessfully with invalid fund id', async () => {
+        it('20.9.2. safe withdraw fund unsuccessfully with invalid fund id', async () => {
 
         });
 
-        it.only('20.9.3. safe withdraw fund unsuccessfully with invalid anchor', async () => {
+        it('20.9.3. safe withdraw fund unsuccessfully with invalid anchor', async () => {
 
         });
     });
