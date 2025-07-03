@@ -21,6 +21,13 @@ ReentrancyGuardUpgradeable {
 
     string constant private VERSION = "v1.1.1";
 
+    modifier onlyInitiator(uint256 _fundId) {
+        if (msg.sender != funds[_fundId].initiator) {
+            revert Unauthorized();
+        }
+        _;
+    }
+
     modifier validFund(uint256 _fundId) {
         if (_fundId == 0 || _fundId < fundNumber) {
             revert InvalidFundId();
@@ -134,12 +141,28 @@ ReentrancyGuardUpgradeable {
         return fundId;
     }
 
+    function expandFund(uint256 _fundId, uint256 _quantity) external validFund(_fundId) {
+        _expandFund(_fundId, _quantity);
+    }
+
     function provideFund(uint256 _fundId) external payable validFund(_fundId) {
         _provideFund(_fundId);
     }
 
+    function safeExpandFund(
+        uint256 _fundId,
+        uint256 _quantity,
+        uint256 _anchor
+    ) external {
+        if (_anchor != funds[_fundId].totalQuantity) {
+            revert BadAnchor();
+        }
+
+        _expandFund(_fundId);
+    }
+
     function safeProvideFund(uint256 _fundId, uint256 _anchor) external payable validFund(_fundId) {
-        if (_anchor != funds[_fundId].supply) {
+        if (_anchor != funds[_fundId].totalQuantity) {
             revert BadAnchor();
         }
 
@@ -160,25 +183,32 @@ ReentrancyGuardUpgradeable {
         uint256 _quantity,
         uint256 _anchor
     ) external validFund(_fundId) {
-        if (_anchor != funds[_fundId].supply) {
+        if (_anchor != funds[_fundId].totalQuantity) {
             revert BadAnchor();
         }
 
         _withdrawFund(_fundId, _receiver, _quantity);
     }
 
-    function _provideFund(uint256 _fundId) private nonReentrant whenNotPaused {
-        Fund storage fund = funds[_fundId];
-        if (msg.sender != fund.initiator) {
-            revert Unauthorized();
+    function _expandFund(uint256 _fundId, uint256 _quantity) private onlyInitiator(_fundId) whenNotPaused {
+        if (funds[_fundId].isSufficient) {
+            revert AlreadyProvided();
         }
+
+        funds[_fundId].totalQuantity += _quantity;
+
+        emit FundExpansion(_fundId, _quantity);
+    }
+
+    function _provideFund(uint256 _fundId) private onlyInitiator(_fundId) whenNotPaused {
+        Fund storage fund = funds[_fundId];
         if (fund.isSufficient == true) {
             revert AlreadyProvided();
         }
 
         address[] memory currencies = fund.currencies;
         uint256[] memory denominations = fund.denominations;
-        uint256 supply = fund.supply;
+        uint256 supply = fund.totalQuantity;
         for (uint256 i = 0; i < currencies.length; ++i) {
             if (currencies[i] == address(0)) {
                 CurrencyHandler.receiveNative(denominations[i] * supply);
@@ -196,18 +226,15 @@ ReentrancyGuardUpgradeable {
         uint256 _fundId,
         address _receiver,
         uint256 _quantity
-    ) private nonReentrant whenNotPaused {
+    ) private onlyInitiator(_fundId) whenNotPaused {
         Fund storage fund = funds[_fundId];
-        if (msg.sender != fund.initiator) {
-            revert Unauthorized();
-        }
 
-        if (fund.isSufficient == false || _quantity > fund.supply) {
+        if (fund.isSufficient == false || _quantity > fund.totalQuantity) {
             revert InsufficientFunds();
         }
 
         unchecked {
-            fund.supply -= _quantity;
+            fund.totalQuantity -= _quantity;
         }
 
         address[] memory currencies = fund.currencies;

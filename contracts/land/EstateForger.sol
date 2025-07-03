@@ -584,6 +584,8 @@ ReentrancyGuardUpgradeable {
             ""
         );
 
+        // TODO:
+
         emit TokenWithdrawal(
             _requestId,
             msg.sender,
@@ -770,7 +772,25 @@ ReentrancyGuardUpgradeable {
             IERC20Upgradeable(currency).safeTransferFrom(msg.sender, address(this), value);
         }
 
-        deposits[_requestId][msg.sender] += _quantity;
+        uint256 cashbackThreshold = request.quote.cashbackThreshold;
+        uint256 deposit = deposits[_requestId][msg.sender];
+        uint256 newDeposit = deposit + _quantity;
+        deposits[_requestId][msg.sender] = deposit + _quantity;
+
+        if (deposit >= cashbackThreshold) {
+            IReserveVault(reserveVault).expandFund(
+                request.quote.cashbackFundId,
+                _quantity
+            );
+        } else {
+            deposit += _quantity;
+            if (deposit >= cashbackThreshold) {
+                IReserveVault(reserveVault).expandFund(
+                    request.quote.cashbackFundId,
+                    deposit
+                );
+            }
+        }
 
         emit Deposit(
             _requestId,
@@ -862,6 +882,11 @@ ReentrancyGuardUpgradeable {
                 currencyContract.safeTransfer(_commissionReceiver, commissionAmount);
             }
         }
+
+        uint256 fundId = request.quote.cashbackFundId;
+        Fund memory fund = IReserveVault(reserveVault).getFund(fundId);
+
+        // TODO:
 
         emit RequestConfirmation(
             _requestId,
