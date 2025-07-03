@@ -1,11 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC20Upgradeable.sol";
 import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol";
 import {IERC721MetadataUpgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC721MetadataUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import {ERC721PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721PausableUpgradeable.sol";
 import {ERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
@@ -37,7 +35,6 @@ RoyaltyRateProposer,
 EstateTokenReceiver,
 ReentrancyGuardUpgradeable {
     using Formula for uint256;
-    using SafeERC20Upgradeable for IERC20Upgradeable;
 
     string constant private VERSION = "v1.1.1";
 
@@ -315,17 +312,16 @@ ReentrancyGuardUpgradeable {
 
         if (currency == address(0)) {
             CurrencyHandler.receiveNative(principal);
-            CurrencyHandler.transferNative(borrower, principal - feeAmount);
-            CurrencyHandler.transferNative(feeReceiver, feeAmount - commissionAmount);
+            CurrencyHandler.sendNative(borrower, principal - feeAmount);
+            CurrencyHandler.sendNative(feeReceiver, feeAmount - commissionAmount);
             if (commissionAmount != 0) {
-                CurrencyHandler.transferNative(commissionReceiver, commissionAmount);
+                CurrencyHandler.sendNative(commissionReceiver, commissionAmount);
             }
         } else {
-            IERC20Upgradeable currencyContract = IERC20Upgradeable(currency);
-            currencyContract.safeTransferFrom(msg.sender, borrower, principal - feeAmount);
-            currencyContract.safeTransferFrom(msg.sender, feeReceiver, feeAmount - commissionAmount);
+            CurrencyHandler.forwardERC20(currency, borrower, principal - feeAmount);
+            CurrencyHandler.forwardERC20(currency, feeReceiver, feeAmount - commissionAmount);
             if (commissionAmount != 0) {
-                currencyContract.safeTransferFrom(msg.sender, commissionReceiver, commissionAmount);
+                CurrencyHandler.forwardERC20(currency, commissionReceiver, commissionAmount);
             }
         }
 
@@ -370,14 +366,7 @@ ReentrancyGuardUpgradeable {
             revert Overdue();
         }
 
-        address currency = loan.currency;
-        if (currency == address(0)) {
-            uint256 repayment = loan.repayment;
-            CurrencyHandler.receiveNative(repayment);
-            CurrencyHandler.transferNative(ownerOf(_loanId), repayment);
-        } else {
-            IERC20Upgradeable(currency).safeTransferFrom(msg.sender, ownerOf(_loanId), loan.repayment);
-        }
+        CurrencyHandler.forwardCurrency(loan.currency, ownerOf(_loanId), loan.repayment);
 
         IEstateToken(estateToken).safeTransferFrom(
             address(this),

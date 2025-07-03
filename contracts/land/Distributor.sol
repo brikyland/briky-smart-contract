@@ -3,17 +3,16 @@ pragma solidity ^0.8.20;
 
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC20Upgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
+
+import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
 
 import {DistributorStorage} from "./storages/DistributorStorage.sol";
 
 contract Distributor is
 DistributorStorage,
 ReentrancyGuardUpgradeable {
-    using SafeERC20Upgradeable for IERC20Upgradeable;
-
     string constant private VERSION = "v1.1.1";
 
     receive() external payable {}
@@ -54,12 +53,14 @@ ReentrancyGuardUpgradeable {
             revert InvalidInput();
         }
 
-        IERC20Upgradeable primaryTokenContract = IERC20Upgradeable(primaryToken);
-        for (uint256 i = 0; i < _receivers.length; ++i) {
-            if (_amounts[i] > primaryTokenContract.balanceOf(address(this))) {
+        address primaryTokenAddress = primaryToken;
+        for (uint256 i; i < _receivers.length; ++i) {
+            if (_amounts[i] > IERC20Upgradeable(primaryTokenAddress).balanceOf(address(this))) {
                 revert InsufficientFunds();
             }
-            primaryTokenContract.safeTransfer(_receivers[i], _amounts[i]);
+
+            CurrencyHandler.sendERC20(primaryTokenAddress, _receivers[i], _amounts[i]);
+
             unchecked {
                 distributedTokens[_receivers[i]] += _amounts[i];
             }

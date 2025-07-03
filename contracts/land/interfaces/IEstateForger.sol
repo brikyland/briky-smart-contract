@@ -109,7 +109,8 @@ IEstateTokenizer {
         uint256 value,
         uint256 feeAmount,
         address commissionReceiver,
-        uint256 commissionAmount
+        uint256 commissionAmount,
+        uint256 cashbackBaseAmount
     );
 
     event RequestSellerUpdate(uint256 indexed requestId, address indexed seller);

@@ -2,9 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
-import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC20Upgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
 import {Constant} from "../lib/Constant.sol";
 import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
@@ -30,7 +28,6 @@ Discountable,
 Pausable,
 ReentrancyGuardUpgradeable {
     using Formula for uint256;
-    using SafeERC20Upgradeable for IERC20Upgradeable;
 
     string constant private VERSION = "v1.1.1";
 
@@ -157,7 +154,7 @@ ReentrancyGuardUpgradeable {
             revert InvalidInput();
         }
 
-        for(uint256 i = 0; i < _currencies.length; ++i) {
+        for(uint256 i; i < _currencies.length; ++i) {
             if (_heartbeats[i] == 0) revert InvalidInput();
 
             priceFeeds[_currencies[i]] = PriceFeed(
@@ -194,7 +191,7 @@ ReentrancyGuardUpgradeable {
             revert InvalidInput();
         }
 
-        for(uint256 i = 0; i < _currencies.length; ++i) {
+        for(uint256 i; i < _currencies.length; ++i) {
             if (_decimals[i] > Constant.ESTATE_TOKEN_MAX_DECIMALS) {
                 revert InvalidInput();
             }
@@ -224,7 +221,7 @@ ReentrancyGuardUpgradeable {
         );
 
         if (_isWhitelisted) {
-            for (uint256 i = 0; i < _accounts.length; ++i) {
+            for (uint256 i; i < _accounts.length; ++i) {
                 if (isWhitelisted[_accounts[i]]) {
                     revert Whitelisted(_accounts[i]);
                 }
@@ -232,7 +229,7 @@ ReentrancyGuardUpgradeable {
                 emit Whitelist(_accounts[i]);
             }
         } else {
-            for (uint256 i = 0; i < _accounts.length; ++i) {
+            for (uint256 i; i < _accounts.length; ++i) {
                 if (!isWhitelisted[_accounts[i]]) {
                     revert NotWhitelisted(_accounts[i]);
                 }
@@ -252,7 +249,7 @@ ReentrancyGuardUpgradeable {
         }
 
         if (_isSeller) {
-            for (uint256 i = 0; i < _accounts.length; ++i) {
+            for (uint256 i; i < _accounts.length; ++i) {
                 if (isActiveSellerIn[_zone][_accounts[i]]) {
                     revert Activated(_accounts[i]);
                 }
@@ -260,7 +257,7 @@ ReentrancyGuardUpgradeable {
                 emit Activation(_zone, _accounts[i]);
             }
         } else {
-            for (uint256 i = 0; i < _accounts.length; ++i) {
+            for (uint256 i; i < _accounts.length; ++i) {
                 if (!isActiveSellerIn[_zone][_accounts[i]]) {
                     revert NotActivated(_accounts[i]);
                 }
@@ -548,11 +545,7 @@ ReentrancyGuardUpgradeable {
 
         hasWithdrawn[_requestId][msg.sender] = true;
 
-        if (currency == address(0)) {
-            CurrencyHandler.transferNative(msg.sender, value);
-        } else {
-            IERC20Upgradeable(currency).safeTransfer(msg.sender, value);
-        }
+        CurrencyHandler.sendCurrency(currency, msg.sender, value);
 
         emit DepositWithdrawal(
             _requestId,
@@ -575,7 +568,8 @@ ReentrancyGuardUpgradeable {
         }
 
         hasWithdrawn[_requestId][msg.sender] = true;
-        uint256 amount = deposits[_requestId][msg.sender] * 10 ** request.estate.decimals;
+        uint256 quantity = deposits[_requestId][msg.sender];
+        uint256 amount = quantity * 10 ** request.estate.decimals;
         IEstateToken(estateToken).safeTransferFrom(
             address(this),
             msg.sender,
@@ -584,7 +578,7 @@ ReentrancyGuardUpgradeable {
             ""
         );
 
-        // TODO:
+        IReserveVault(reserveVault).withdrawFund(request.quote.cashbackFundId, msg.sender, quantity);
 
         emit TokenWithdrawal(
             _requestId,
@@ -763,33 +757,24 @@ ReentrancyGuardUpgradeable {
         }
         request.quota.soldQuantity = newSoldQuantity;
 
-        address currency = request.quote.currency;
         uint256 value = _quantity * request.quote.unitPrice;
-
-        if (currency == address(0)) {
-            CurrencyHandler.receiveNative(value);
-        } else {
-            IERC20Upgradeable(currency).safeTransferFrom(msg.sender, address(this), value);
-        }
+        CurrencyHandler.receiveCurrency(request.quote.currency, value);
 
         uint256 cashbackThreshold = request.quote.cashbackThreshold;
-        uint256 deposit = deposits[_requestId][msg.sender];
-        uint256 newDeposit = deposit + _quantity;
-        deposits[_requestId][msg.sender] = deposit + _quantity;
+        uint256 oldDeposit = deposits[_requestId][msg.sender];
+        uint256 newDeposit = oldDeposit + _quantity;
+        deposits[_requestId][msg.sender] = newDeposit;
 
-        if (deposit >= cashbackThreshold) {
+        if (oldDeposit >= cashbackThreshold) {
             IReserveVault(reserveVault).expandFund(
                 request.quote.cashbackFundId,
                 _quantity
             );
-        } else {
-            deposit += _quantity;
-            if (deposit >= cashbackThreshold) {
-                IReserveVault(reserveVault).expandFund(
-                    request.quote.cashbackFundId,
-                    deposit
-                );
-            }
+        } else if (newDeposit >= cashbackThreshold) {
+            IReserveVault(reserveVault).expandFund(
+                request.quote.cashbackFundId,
+                oldDeposit
+            );
         }
 
         emit Deposit(
@@ -868,25 +853,35 @@ ReentrancyGuardUpgradeable {
 
         ( , uint256 commissionAmount) = ICommissionToken(commissionToken).commissionInfo(estateId, feeAmount);
 
-        if (currency == address(0)) {
-            CurrencyHandler.transferNative(seller, value - feeAmount);
-            CurrencyHandler.transferNative(feeReceiver, feeAmount - commissionAmount);
-            if (commissionAmount != 0) {
-                CurrencyHandler.transferNative(_commissionReceiver, commissionAmount);
-            }
-        } else {
-            IERC20Upgradeable currencyContract = IERC20Upgradeable(currency);
-            currencyContract.safeTransfer(seller, value - feeAmount);
-            currencyContract.safeTransfer(feeReceiver, feeAmount - commissionAmount);
-            if (commissionAmount != 0) {
-                currencyContract.safeTransfer(_commissionReceiver, commissionAmount);
-            }
+        CurrencyHandler.sendCurrency(currency, seller, value - feeAmount);
+        if (commissionAmount != 0) {
+            CurrencyHandler.sendCurrency(currency,_commissionReceiver, commissionAmount);
         }
 
-        uint256 fundId = request.quote.cashbackFundId;
-        Fund memory fund = IReserveVault(reserveVault).getFund(fundId);
+        uint256 cashbackFundId = request.quote.cashbackFundId;
+        address reserveVaultAddress = reserveVault;
+        Fund memory fund = IReserveVault(reserveVaultAddress).getFund(cashbackFundId);
 
-        // TODO:
+        uint256 cashbackBaseAmount;
+        if (fund.totalQuantity != 0) {
+            uint256 totalNative;
+            if (fund.mainDenomination != 0) {
+                cashbackBaseAmount = fund.mainDenomination * fund.totalQuantity;
+                if (fund.mainDenomination != 0) {
+                    totalNative += cashbackBaseAmount;
+                } else {
+                    CurrencyHandler.receiveERC20(fund.mainCurrency, cashbackBaseAmount);
+                    CurrencyHandler.allowERC20(fund.mainCurrency, reserveVaultAddress, cashbackBaseAmount);
+                }
+            }
+            CurrencyHandler.receiveNative(totalNative);
+        }
+
+        CurrencyHandler.sendCurrency(
+            currency,
+            feeReceiver,
+            feeAmount - commissionAmount - cashbackBaseAmount
+        );
 
         emit RequestConfirmation(
             _requestId,
@@ -895,7 +890,8 @@ ReentrancyGuardUpgradeable {
             value,
             feeAmount,
             _commissionReceiver,
-            commissionAmount
+            commissionAmount,
+            cashbackBaseAmount
         );
 
         return estateId;

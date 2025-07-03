@@ -15,8 +15,8 @@ IFund {
         address indexed initiator,
         address mainCurrency,
         uint256 mainDenomination,
-        address[] currencies,
-        uint256[] denominations
+        address[] extraCurrencies,
+        uint256[] extraDenominations
     );
     event FundExpansion(uint256 indexed fundId, uint256 quantity);
     event FundProvision(uint256 indexed fundId);
@@ -30,6 +30,7 @@ IFund {
     error InvalidDenomination();
     error InvalidExpandingFund();
     error InvalidFundId();
+    error ZeroQuantity();
 
     function fundNumber() external view returns (uint256 fundNumber);
 
@@ -41,8 +42,8 @@ IFund {
     function initiateFund(
         address mainCurrency,
         uint256 mainDenomination,
-        address[] calldata currencies,
-        uint256[] calldata denominations
+        address[] calldata extraCurrencies,
+        uint256[] calldata extraDenominations
     ) external returns (uint256 fundId);
     function expandFund(
         uint256 fundId,

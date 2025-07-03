@@ -97,7 +97,7 @@ ERC1155URIStorageUpgradeable {
     ) internal override {
         super._afterTokenTransfer(_operator, _from, _to, _ids, _amounts, _data);
         uint256 timestamp = block.timestamp;
-        for (uint256 i = 0; i < _ids.length; ++i) {
+        for (uint256 i; i < _ids.length; ++i) {
             uint256 tokenId = _ids[i];
             if (_from != address(0)) {
                 balanceSnapshots[tokenId][_from].push(Snapshot(balanceOf(_from, tokenId), timestamp));

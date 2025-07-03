@@ -3,8 +3,10 @@ pragma solidity ^0.8.20;
 
 interface IFund {
     struct Fund {
-        address[] currencies;
-        uint256[] denominations;
+        address[] extraCurrencies;
+        uint256[] extraDenominations;
+        address mainCurrency;
+        uint256 mainDenomination;
         uint256 totalQuantity;
         address initiator;
         bool isSufficient;

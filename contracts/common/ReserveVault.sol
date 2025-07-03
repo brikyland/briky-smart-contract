@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC20Upgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
 import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
 
@@ -17,19 +15,10 @@ contract ReserveVault is
 ReserveVaultStorage,
 Pausable,
 ReentrancyGuardUpgradeable {
-    using SafeERC20Upgradeable for IERC20Upgradeable;
-
     string constant private VERSION = "v1.1.1";
 
-    modifier onlyInitiator(uint256 _fundId) {
-        if (msg.sender != funds[_fundId].initiator) {
-            revert Unauthorized();
-        }
-        _;
-    }
-
     modifier validFund(uint256 _fundId) {
-        if (_fundId == 0 || _fundId < fundNumber) {
+        if (_fundId == 0 || _fundId > fundNumber) {
             revert InvalidFundId();
         }
         _;
@@ -64,7 +53,7 @@ ReentrancyGuardUpgradeable {
         );
 
         if (_isInitiator) {
-            for (uint256 i = 0; i < _accounts.length; ++i) {
+            for (uint256 i; i < _accounts.length; ++i) {
                 if (isInitiator[_accounts[i]]) {
                     revert AuthorizedAccount(_accounts[i]);
                 }
@@ -72,7 +61,7 @@ ReentrancyGuardUpgradeable {
                 emit InitiatorAuthorization(_accounts[i]);
             }
         } else {
-            for (uint256 i = 0; i < _accounts.length; ++i) {
+            for (uint256 i; i < _accounts.length; ++i) {
                 if (!isInitiator[_accounts[i]]) {
                     revert NotAuthorizedAccount(_accounts[i]);
                 }
@@ -93,14 +82,14 @@ ReentrancyGuardUpgradeable {
     function initiateFund(
         address _mainCurrency,
         uint256 _mainDenomination,
-        address[] calldata _currencies,
-        uint256[] calldata _denominations
+        address[] calldata _extraCurrencies,
+        uint256[] calldata _extraDenominations
     ) external whenNotPaused returns (uint256) {
         if (!isInitiator[msg.sender]) {
             revert Unauthorized();
         }
 
-        if (_currencies.length != _denominations.length) {
+        if (_extraCurrencies.length != _extraDenominations.length) {
             revert InvalidInput();
         }
 
@@ -108,23 +97,21 @@ ReentrancyGuardUpgradeable {
         Fund storage fund = funds[fundId];
 
         IAdmin adminContract = IAdmin(admin);
-        if (_mainDenomination != 0) {
-            if (!adminContract.isAvailableCurrency(_mainCurrency)) {
+        if (!adminContract.isAvailableCurrency(_mainCurrency)) {
+            revert InvalidCurrency();
+        }
+        fund.mainCurrency = _mainCurrency;
+        fund.mainDenomination = _mainDenomination;
+
+        for (uint256 i; i < _extraCurrencies.length; ++i) {
+            if (!adminContract.isAvailableCurrency(_extraCurrencies[i])) {
                 revert InvalidCurrency();
             }
-            fund.currencies.push(_mainCurrency);
-            fund.denominations.push(_mainDenomination);
-        }
-
-        for (uint256 i = 0; i < _currencies.length; ++i) {
-            if (_denominations[i] == 0) {
+            if (_extraDenominations[i] == 0) {
                 revert InvalidDenomination();
             }
-            if (!adminContract.isAvailableCurrency(_currencies[i])) {
-                revert InvalidCurrency();
-            }
-            fund.currencies.push(_currencies[i]);
-            fund.denominations.push(_denominations[i]);
+            fund.extraCurrencies.push(_extraCurrencies[i]);
+            fund.extraDenominations.push(_extraDenominations[i]);
         }
 
         fund.initiator = msg.sender;
@@ -134,8 +121,8 @@ ReentrancyGuardUpgradeable {
             msg.sender,
             _mainCurrency,
             _mainDenomination,
-            _currencies,
-            _denominations
+            _extraCurrencies,
+            _extraDenominations
         );
 
         return fundId;
@@ -145,20 +132,20 @@ ReentrancyGuardUpgradeable {
         _expandFund(_fundId, _quantity);
     }
 
-    function provideFund(uint256 _fundId) external payable validFund(_fundId) {
-        _provideFund(_fundId);
-    }
-
     function safeExpandFund(
         uint256 _fundId,
         uint256 _quantity,
         uint256 _anchor
-    ) external {
+    ) external validFund(_fundId) {
         if (_anchor != funds[_fundId].totalQuantity) {
             revert BadAnchor();
         }
 
         _expandFund(_fundId, _quantity);
+    }
+
+    function provideFund(uint256 _fundId) external payable validFund(_fundId) {
+        _provideFund(_fundId);
     }
 
     function safeProvideFund(uint256 _fundId, uint256 _anchor) external payable validFund(_fundId) {
@@ -190,7 +177,11 @@ ReentrancyGuardUpgradeable {
         _withdrawFund(_fundId, _receiver, _quantity);
     }
 
-    function _expandFund(uint256 _fundId, uint256 _quantity) private onlyInitiator(_fundId) whenNotPaused {
+    function _expandFund(uint256 _fundId, uint256 _quantity) private whenNotPaused {
+        if (msg.sender != funds[_fundId].initiator) {
+            revert Unauthorized();
+        }
+
         if (funds[_fundId].isSufficient) {
             revert AlreadyProvided();
         }
@@ -200,24 +191,44 @@ ReentrancyGuardUpgradeable {
         emit FundExpansion(_fundId, _quantity);
     }
 
-    function _provideFund(uint256 _fundId) private onlyInitiator(_fundId) whenNotPaused {
-        Fund storage fund = funds[_fundId];
+    function _provideFund(uint256 _fundId) private nonReentrant whenNotPaused {
+        Fund memory fund = funds[_fundId];
+        if (msg.sender != fund.initiator) {
+            revert Unauthorized();
+        }
+
         if (fund.isSufficient == true) {
             revert AlreadyProvided();
         }
 
-        address[] memory currencies = fund.currencies;
-        uint256[] memory denominations = fund.denominations;
-        uint256 supply = fund.totalQuantity;
-        for (uint256 i = 0; i < currencies.length; ++i) {
-            if (currencies[i] == address(0)) {
-                CurrencyHandler.receiveNative(denominations[i] * supply);
-            } else {
-                IERC20Upgradeable(currencies[i]).safeTransferFrom(msg.sender, address(this), denominations[i] * supply);
+        uint256 totalNative;
+        if (fund.totalQuantity != 0) {
+            if (fund.mainDenomination != 0) {
+                if (fund.mainCurrency == address(0)) {
+                    totalNative += fund.mainDenomination * fund.totalQuantity;
+                } else {
+                    CurrencyHandler.receiveERC20(
+                        fund.mainCurrency,
+                        fund.mainDenomination * fund.totalQuantity
+                    );
+                }
+            }
+
+            for (uint256 i; i < fund.extraCurrencies.length; ++i) {
+                if (fund.mainCurrency == address(0)) {
+                    totalNative += fund.extraDenominations[i] * fund.totalQuantity;
+                } else {
+                    CurrencyHandler.receiveERC20(
+                        fund.extraCurrencies[i],
+                        fund.extraDenominations[i] * fund.totalQuantity
+                    );
+                }
             }
         }
 
-        fund.isSufficient = true;
+        CurrencyHandler.receiveNative(totalNative);
+
+        funds[_fundId].isSufficient = true;
 
         emit FundProvision(_fundId);
     }
@@ -226,25 +237,28 @@ ReentrancyGuardUpgradeable {
         uint256 _fundId,
         address _receiver,
         uint256 _quantity
-    ) private onlyInitiator(_fundId) whenNotPaused {
-        Fund storage fund = funds[_fundId];
+    ) private nonReentrant whenNotPaused {
+        Fund memory fund = funds[_fundId];
 
         if (fund.isSufficient == false || _quantity > fund.totalQuantity) {
             revert InsufficientFunds();
         }
 
         unchecked {
-            fund.totalQuantity -= _quantity;
+            funds[_fundId].totalQuantity -= _quantity;
         }
 
-        address[] memory currencies = fund.currencies;
-        uint256[] memory denominations = fund.denominations;
-        for (uint256 i = 0; i < currencies.length; ++i) {
-            if (currencies[i] == address(0)) {
-                CurrencyHandler.transferNative(_receiver, denominations[i] * _quantity);
-            } else {
-                IERC20Upgradeable(currencies[i]).safeTransfer(_receiver, denominations[i] * _quantity);
-            }
+        CurrencyHandler.sendCurrency(
+            fund.mainCurrency,
+            _receiver,
+            fund.mainDenomination * _quantity
+        );
+        for (uint256 i; i < fund.extraCurrencies.length; ++i) {
+            CurrencyHandler.sendCurrency(
+                fund.extraCurrencies[i],
+                _receiver,
+                fund.extraDenominations[i] * _quantity
+            );
         }
 
         emit FundWithdrawal(

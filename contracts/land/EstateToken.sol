@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC20Upgradeable.sol";
 import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol";
 import {IERC1155Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC1155Upgradeable.sol";
 import {IERC1155MetadataURIUpgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC1155MetadataURIUpgradeable.sol";
@@ -10,7 +9,6 @@ import {ERC1155Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1
 import {ERC1155PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/extensions/ERC1155PausableUpgradeable.sol";
 import {ERC1155SupplyUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/extensions/ERC1155SupplyUpgradeable.sol";
 import {ERC1155URIStorageUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/extensions/ERC1155URIStorageUpgradeable.sol";
-import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
 import {Constant} from "../lib/Constant.sol";
 import {Formula} from "../lib/Formula.sol";
@@ -38,7 +36,6 @@ Administrable,
 Pausable,
 ReentrancyGuardUpgradeable {
     using Formula for uint256;
-    using SafeERC20Upgradeable for IERC20Upgradeable;
 
     string constant private VERSION = "v1.1.1";
 
@@ -140,7 +137,7 @@ ReentrancyGuardUpgradeable {
         );
 
         if (_isTokenizer) {
-            for (uint256 i = 0; i < _accounts.length; ++i) {
+            for (uint256 i; i < _accounts.length; ++i) {
                 if (isTokenizer[_accounts[i]]) {
                     revert AuthorizedAccount(_accounts[i]);
                 }
@@ -151,7 +148,7 @@ ReentrancyGuardUpgradeable {
                 emit TokenizerAuthorization(_accounts[i]);
             }
         } else {
-            for (uint256 i = 0; i < _accounts.length; ++i) {
+            for (uint256 i; i < _accounts.length; ++i) {
                 if (!isTokenizer[_accounts[i]]) {
                     revert NotAuthorizedAccount(_accounts[i]);
                 }
@@ -343,7 +340,7 @@ ReentrancyGuardUpgradeable {
         ERC1155SupplyUpgradeable
     ) {
         super._beforeTokenTransfer(_operator, _from, _to, _ids, _amounts, _data);
-        for (uint256 i = 0; i < _ids.length; ++i) {
+        for (uint256 i; i < _ids.length; ++i) {
             require(
                 !estates[_ids[i]].isDeprecated && estates[_ids[i]].expireAt > block.timestamp,
                 "estateToken: Token is unavailable"
@@ -361,7 +358,7 @@ ReentrancyGuardUpgradeable {
     ) internal override {
         super._afterTokenTransfer(_operator, _from, _to, _ids, _amounts, _data);
         uint256 timestamp = block.timestamp;
-        for (uint256 i = 0; i < _ids.length; ++i) {
+        for (uint256 i; i < _ids.length; ++i) {
             uint256 tokenId = _ids[i];
             if (_from != address(0)) {
                 balanceSnapshots[tokenId][_from].push(Snapshot(balanceOf(_from, tokenId), timestamp));

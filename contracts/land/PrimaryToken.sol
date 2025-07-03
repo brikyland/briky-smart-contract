@@ -7,9 +7,9 @@ import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/
 import {ERC20CappedUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20CappedUpgradeable.sol";
 import {ERC20PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PausableUpgradeable.sol";
 import {ERC20PermitUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
-import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
 import {Constant} from "../lib/Constant.sol";
+import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
 import {Formula} from "../lib/Formula.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
@@ -28,7 +28,6 @@ ERC20PermitUpgradeable,
 Pausable,
 ReentrancyGuardUpgradeable {
     using Formula for uint256;
-    using SafeERC20Upgradeable for IERC20Upgradeable;
 
     string constant private VERSION = "v1.1.1";
 
@@ -227,6 +226,7 @@ ReentrancyGuardUpgradeable {
             ),
             _signatures
         );
+
 
         if (privateSale2Unlocked) {
             revert AlreadyUnlockedTokens();
@@ -522,11 +522,12 @@ ReentrancyGuardUpgradeable {
     }
 
     function _contributeLiquidity(uint256 _liquidity) private {
-        ITreasury treasuryContract = ITreasury(treasury);
-        IERC20Upgradeable currencyContract = IERC20Upgradeable(treasuryContract.currency());
-        currencyContract.safeTransferFrom(msg.sender, address(this), _liquidity);
+        address treasuryAddress = treasury;
 
-        currencyContract.safeIncreaseAllowance(address(treasuryContract), _liquidity);
-        treasuryContract.provideLiquidity(_liquidity);
+        address currency = ITreasury(treasuryAddress).currency();
+        CurrencyHandler.receiveERC20(currency, _liquidity);
+
+        CurrencyHandler.allowERC20(currency, treasuryAddress, _liquidity);
+        ITreasury(treasuryAddress).provideLiquidity(_liquidity);
     }
 }
