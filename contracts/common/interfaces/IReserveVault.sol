@@ -59,7 +59,7 @@ IFund {
         uint256 fundId,
         uint256 quantity,
         uint256 anchor
-    );
+    ) external;
     function safeProvideFund(uint256 fundId, uint256 anchor) external payable;
     function safeWithdrawFund(
         uint256 fundId,
