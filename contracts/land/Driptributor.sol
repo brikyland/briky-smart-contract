@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
+import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
 import {Formula} from "../lib/Formula.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
@@ -12,7 +13,6 @@ import {Pausable} from "../common/utilities/Pausable.sol";
 import {IStakeToken} from "./interfaces/IStakeToken.sol";
 
 import {DriptributorStorage} from "./storages/DriptributorStorage.sol";
-import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
 
 contract Driptributor is
 DriptributorStorage,
