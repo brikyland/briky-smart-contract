@@ -18,6 +18,7 @@ IFund {
         address[] currencies,
         uint256[] denominations
     );
+    event FundExpansion(uint256 indexed fundId, uint256 quantity);
     event FundProvision(uint256 indexed fundId);
     event FundWithdrawal(
         uint256 indexed fundId,
@@ -27,6 +28,7 @@ IFund {
 
     error AlreadyProvided();
     error InvalidDenomination();
+    error InvalidExpandingFund();
     error InvalidFundId();
 
     function fundNumber() external view returns (uint256 fundNumber);
@@ -42,6 +44,10 @@ IFund {
         address[] calldata currencies,
         uint256[] calldata denominations
     ) external returns (uint256 fundId);
+    function expandFund(
+        uint256 fundId,
+        uint256 quantity
+    ) external;
     function provideFund(uint256 fundId) external payable;
     function withdrawFund(
         uint256 fundId,
@@ -49,6 +55,11 @@ IFund {
         uint256 quantity
     ) external;
 
+    function safeExpandFund(
+        uint256 fundId,
+        uint256 quantity,
+        uint256 anchor
+    );
     function safeProvideFund(uint256 fundId, uint256 anchor) external payable;
     function safeWithdrawFund(
         uint256 fundId,
