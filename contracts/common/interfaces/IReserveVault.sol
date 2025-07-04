@@ -55,17 +55,4 @@ IFund {
         address receiver,
         uint256 quantity
     ) external;
-
-    function safeExpandFund(
-        uint256 fundId,
-        uint256 quantity,
-        uint256 anchor
-    ) external;
-    function safeProvideFund(uint256 fundId, uint256 anchor) external payable;
-    function safeWithdrawFund(
-        uint256 fundId,
-        address receiver,
-        uint256 quantity,
-        uint256 anchor
-    ) external;
 }

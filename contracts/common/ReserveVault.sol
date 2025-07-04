@@ -128,56 +128,8 @@ ReentrancyGuardUpgradeable {
         return fundId;
     }
 
-    function expandFund(uint256 _fundId, uint256 _quantity) external validFund(_fundId) {
-        _expandFund(_fundId, _quantity);
-    }
-
-    function safeExpandFund(
-        uint256 _fundId,
-        uint256 _quantity,
-        uint256 _anchor
-    ) external validFund(_fundId) {
-        if (_anchor != funds[_fundId].totalQuantity) {
-            revert BadAnchor();
-        }
-
-        _expandFund(_fundId, _quantity);
-    }
-
-    function provideFund(uint256 _fundId) external payable validFund(_fundId) {
-        _provideFund(_fundId);
-    }
-
-    function safeProvideFund(uint256 _fundId, uint256 _anchor) external payable validFund(_fundId) {
-        if (_anchor != funds[_fundId].totalQuantity) {
-            revert BadAnchor();
-        }
-
-        _provideFund(_fundId);
-    }
-
-    function withdrawFund(
-        uint256 _fundId,
-        address _receiver,
-        uint256 _quantity
-    ) external validFund(_fundId) {
-        _withdrawFund(_fundId, _receiver, _quantity);
-    }
-
-    function safeWithdrawFund(
-        uint256 _fundId,
-        address _receiver,
-        uint256 _quantity,
-        uint256 _anchor
-    ) external validFund(_fundId) {
-        if (_anchor != funds[_fundId].totalQuantity) {
-            revert BadAnchor();
-        }
-
-        _withdrawFund(_fundId, _receiver, _quantity);
-    }
-
-    function _expandFund(uint256 _fundId, uint256 _quantity) private whenNotPaused {
+    function expandFund(uint256 _fundId, uint256 _quantity)
+    external validFund(_fundId) whenNotPaused {
         if (msg.sender != funds[_fundId].initiator) {
             revert Unauthorized();
         }
@@ -191,7 +143,8 @@ ReentrancyGuardUpgradeable {
         emit FundExpansion(_fundId, _quantity);
     }
 
-    function _provideFund(uint256 _fundId) private nonReentrant whenNotPaused {
+    function provideFund(uint256 _fundId)
+    external payable validFund(_fundId) nonReentrant whenNotPaused {
         Fund memory fund = funds[_fundId];
         if (msg.sender != fund.initiator) {
             revert Unauthorized();
@@ -233,11 +186,11 @@ ReentrancyGuardUpgradeable {
         emit FundProvision(_fundId);
     }
 
-    function _withdrawFund(
+    function withdrawFund(
         uint256 _fundId,
         address _receiver,
         uint256 _quantity
-    ) private nonReentrant whenNotPaused {
+    ) external validFund(_fundId) nonReentrant whenNotPaused {
         Fund memory fund = funds[_fundId];
 
         if (fund.isSufficient == false || _quantity > fund.totalQuantity) {

@@ -401,7 +401,6 @@ ReentrancyGuardUpgradeable {
         emit RequestAgendaUpdate(_requestId, agenda);
     }
 
-
     function deposit(uint256 _requestId, uint256 _quantity)
     external payable validRequest(_requestId) returns (uint256) {
         return _deposit(_requestId, _quantity);
