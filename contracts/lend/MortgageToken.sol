@@ -314,15 +314,11 @@ ReentrancyGuardUpgradeable {
             CurrencyHandler.receiveNative(principal);
             CurrencyHandler.sendNative(borrower, principal - feeAmount);
             CurrencyHandler.sendNative(feeReceiver, feeAmount - commissionAmount);
-            if (commissionAmount != 0) {
-                CurrencyHandler.sendNative(commissionReceiver, commissionAmount);
-            }
+            CurrencyHandler.sendNative(commissionReceiver, commissionAmount);
         } else {
             CurrencyHandler.forwardERC20(currency, borrower, principal - feeAmount);
             CurrencyHandler.forwardERC20(currency, feeReceiver, feeAmount - commissionAmount);
-            if (commissionAmount != 0) {
-                CurrencyHandler.forwardERC20(currency, commissionReceiver, commissionAmount);
-            }
+            CurrencyHandler.forwardERC20(currency, commissionReceiver, commissionAmount);
         }
 
         IEstateToken(estateToken).safeTransferFrom(

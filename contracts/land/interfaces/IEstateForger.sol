@@ -41,6 +41,8 @@ IEstateTokenizer {
         address currency;
         uint256 cashbackThreshold;
         uint256 cashbackFundId;
+        uint256 feeDenomination;
+        uint256 commissionDenomination;
     }
 
     struct RequestQuoteInput {
@@ -128,6 +130,7 @@ IEstateTokenizer {
     error AlreadyHadDeposit();
     error AlreadyWithdrawn();
     error Cancelled();
+    error InvalidCommissionReceiver();
     error InvalidDepositing();
     error InvalidRequestId();
     error InvalidUnitPrice();
@@ -161,7 +164,7 @@ IEstateTokenizer {
     function getRequest(uint256 requestId) external view returns (Request memory request);
 
     function cancel(uint256 requestId) external;
-    function confirm(uint256 requestId, address commissionReceiver) external returns (uint256 estateId);
+    function confirm(uint256 requestId, address commissionReceiver) external payable returns (uint256 estateId);
     function deposit(uint256 requestId, uint256 quantity) external payable returns (uint256 value);
     function requestTokenizationWithDuration(
         address seller,
@@ -210,7 +213,7 @@ IEstateTokenizer {
         uint256 requestId,
         address commissionReceiver,
         bytes32 anchor
-    ) external returns (uint256 estateId);
+    ) external payable returns (uint256 estateId);
     function safeDeposit(
         uint256 requestId,
         uint256 quantity,

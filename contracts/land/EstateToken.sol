@@ -201,12 +201,10 @@ ReentrancyGuardUpgradeable {
         _mint(msg.sender, estateId, _totalSupply, "");
         _setURI(estateId, _uri);
 
-        if (_commissionReceiver != address(0)) {
-            ICommissionToken(commissionToken).mint(
-                _commissionReceiver,
-                estateId
-            );
-        }
+        ICommissionToken(commissionToken).mint(
+            _commissionReceiver,
+            estateId
+        );
 
         emit NewToken(
             estateId,

@@ -196,7 +196,7 @@ ReentrancyGuardUpgradeable {
         }
     }
 
-    function getFeeRate() external view returns (Rate memory) {
+    function getFeeRate() public view returns (Rate memory) {
         return Rate(feeRate, Constant.COMMON_RATE_DECIMALS);
     }
 
@@ -351,9 +351,15 @@ ReentrancyGuardUpgradeable {
             revert InvalidUnitPrice();
         }
 
+        uint256 feeDenomination = _getFeeDenomination(_quote.unitPrice, _quote.currency);
+        uint256 commissionDenomination = _getCommissionDenomination(feeDenomination);
         uint256 cashbackFundId = IReserveVault(reserveVault).initiateFund(
             _quote.currency,
-            _cashbackBaseDenomination(_quote.unitPrice,_quote.cashbackBaseRate),
+            _getCashbackBaseDenomination(
+                feeDenomination,
+                commissionDenomination,
+                _quote.cashbackBaseRate
+            ),
             _quote.cashbackCurrencies,
             _quote.cashbackDenominations
         );
@@ -362,7 +368,9 @@ ReentrancyGuardUpgradeable {
             _quote.unitPrice,
             _quote.currency,
             _quote.cashbackThreshold,
-            cashbackFundId
+            cashbackFundId,
+            feeDenomination,
+            commissionDenomination
         );
         requests[_requestId].quote = quote;
 
@@ -427,7 +435,7 @@ ReentrancyGuardUpgradeable {
     }
 
     function confirm(uint256 _requestId, address _commissionReceiver)
-    external onlyManager validRequest(_requestId) returns (uint256) {
+    external payable onlyManager validRequest(_requestId) returns (uint256) {
         return _confirm(_requestId, _commissionReceiver);
     }
 
@@ -435,7 +443,7 @@ ReentrancyGuardUpgradeable {
         uint256 _requestId,
         address _commissionReceiver,
         bytes32 _anchor
-    ) external onlyManager validRequest(_requestId) returns (uint256) {
+    ) external payable onlyManager validRequest(_requestId) returns (uint256) {
         if (_anchor != keccak256(bytes(requests[_requestId].estate.uri))) {
             revert BadAnchor();
         }
@@ -525,14 +533,24 @@ ReentrancyGuardUpgradeable {
             : 0;
     }
 
-    function _cashbackBaseDenomination(
-        uint256 _unitPrice,
+    function _getFeeDenomination(uint256 _unitPrice, address _currency) private view returns (uint256) {
+        return _applyDiscount(
+            _unitPrice.scale(feeRate, Constant.COMMON_RATE_MAX_FRACTION),
+            _currency
+        );
+    }
+
+    function _getCommissionDenomination(uint256 _feeDenomination) private view returns (uint256) {
+        return _feeDenomination
+            .scale(ICommissionToken(commissionToken).getCommissionRate());
+    }
+
+    function _getCashbackBaseDenomination(
+        uint256 _feeDenomination,
+        uint256 _commissionDenomination,
         uint256 _cashbackBaseRate
-    ) private view returns (uint256) {
-        Rate memory commissionRate = ICommissionToken(commissionToken).getCommissionRate();
-        return _unitPrice
-            .scale(feeRate, Constant.COMMON_RATE_MAX_FRACTION)
-            .remain(commissionRate)
+    ) private pure returns (uint256) {
+        return (_feeDenomination - _commissionDenomination)
             .scale(_cashbackBaseRate, Constant.COMMON_RATE_MAX_FRACTION);
     }
 
@@ -569,9 +587,15 @@ ReentrancyGuardUpgradeable {
             revert InvalidInput();
         }
 
+        uint256 feeDenomination = _getFeeDenomination(_quote.unitPrice, _quote.currency);
+        uint256 commissionDenomination = _getCommissionDenomination(feeDenomination);
         uint256 cashbackFundId = IReserveVault(reserveVault).initiateFund(
             _quote.currency,
-            _cashbackBaseDenomination(_quote.unitPrice, _quote.cashbackBaseRate),
+            _getCashbackBaseDenomination(
+                feeDenomination,
+                commissionDenomination,
+                _quote.cashbackBaseRate
+            ),
             _quote.cashbackCurrencies,
             _quote.cashbackDenominations
         );
@@ -580,8 +604,11 @@ ReentrancyGuardUpgradeable {
             _quote.unitPrice,
             _quote.currency,
             _quote.cashbackThreshold,
-            cashbackFundId
+            cashbackFundId,
+            feeDenomination,
+            commissionDenomination
         );
+
         RequestAgenda memory agenda = RequestAgenda(
             _privateSaleEndsAt,
             _publicSaleEndsAt
@@ -673,6 +700,10 @@ ReentrancyGuardUpgradeable {
     private nonReentrant whenNotPaused returns (uint256) {
         Request storage request = requests[_requestId];
 
+        if (_commissionReceiver == address(0)) {
+            revert InvalidCommissionReceiver();
+        }
+
         bytes32 zone = request.estate.zone;
         if (!IAdmin(admin).getZoneEligibility(zone, msg.sender)) {
             revert Unauthorized();
@@ -727,18 +758,13 @@ ReentrancyGuardUpgradeable {
             );
         }
 
-        uint256 value = soldQuantity * request.quote.unitPrice;
-        uint256 feeAmount = value.scale(feeRate, Constant.COMMON_RATE_MAX_FRACTION);
-
         address currency = request.quote.currency;
-        feeAmount = _applyDiscount(feeAmount, currency);
-
-        ( , uint256 commissionAmount) = ICommissionToken(commissionToken).commissionInfo(estateId, feeAmount);
-
+        uint256 value = soldQuantity * request.quote.unitPrice;
+        uint256 feeAmount = soldQuantity * request.quote.feeDenomination;
         CurrencyHandler.sendCurrency(currency, seller, value - feeAmount);
-        if (commissionAmount != 0) {
-            CurrencyHandler.sendCurrency(currency,_commissionReceiver, commissionAmount);
-        }
+
+        uint256 commissionAmount = soldQuantity * request.quote.commissionDenomination;
+        CurrencyHandler.sendCurrency(currency,_commissionReceiver, commissionAmount);
 
         uint256 cashbackFundId = request.quote.cashbackFundId;
         address reserveVaultAddress = reserveVault;
