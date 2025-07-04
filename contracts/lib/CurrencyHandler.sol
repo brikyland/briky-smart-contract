@@ -50,7 +50,7 @@ library CurrencyHandler {
     }
 
     function allowERC20(address _currency, address _spender, uint256 _value) internal {
-        IERC20Upgradeable(_currency).safeApprove(_spender, _value);
+        IERC20Upgradeable(_currency).safeIncreaseAllowance(_spender, _value);
     }
     
     function sendCurrency(address _currency, address _receiver, uint256 _value) internal {

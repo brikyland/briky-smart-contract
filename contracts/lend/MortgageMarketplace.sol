@@ -163,15 +163,11 @@ ReentrancyGuardUpgradeable {
             CurrencyHandler.receiveNative(price + royaltyAmount);
             CurrencyHandler.sendNative(seller, price);
             CurrencyHandler.sendNative(royaltyReceiver, royaltyAmount - commissionAmount);
-            if (commissionAmount != 0) {
-                CurrencyHandler.sendNative(commissionReceiver, commissionAmount);
-            }
+            CurrencyHandler.sendNative(commissionReceiver, commissionAmount);
         } else {
             CurrencyHandler.forwardERC20(currency, seller, price);
             CurrencyHandler.forwardERC20(currency, royaltyReceiver, royaltyAmount - commissionAmount);
-            if (commissionAmount != 0) {
-                CurrencyHandler.forwardERC20(currency, commissionReceiver, commissionAmount);
-            }
+            CurrencyHandler.forwardERC20(currency, commissionReceiver, commissionAmount);
         }
 
         offer.state = OfferState.Sold;
