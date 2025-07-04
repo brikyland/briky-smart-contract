@@ -30,7 +30,6 @@ IERC1155MetadataURIUpgradeable {
     struct Project {
         bytes32 zone;
         address requester;
-        uint8 decimals;
         uint40 expireAt;
         uint40 completeAt;
         ProjectState state;

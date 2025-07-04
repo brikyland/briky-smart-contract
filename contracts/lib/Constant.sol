@@ -10,8 +10,11 @@ library Constant {
     uint256 internal constant ADMIN_SIGNATURE_VERIFICATION_QUORUM = 4;
 
     // Estate Token
+    uint8 internal constant ESTATE_TOKEN_DECIMALS = 18;
+    uint256 internal constant ESTATE_TOKEN_UNIT = 10 ** ESTATE_TOKEN_DECIMALS;
+    uint256 internal constant ESTATE_TOKEN_TOTAL_QUANTITY_LIMIT = type(uint256).max / ESTATE_TOKEN_UNIT;
+
     uint256 internal constant ESTATE_TOKEN_CONFIRMATION_TIME_LIMIT = 60 days;
-    uint8 internal constant ESTATE_TOKEN_MAX_DECIMALS = 18;
 
     // Primary Token
     uint256 internal constant PRIMARY_TOKEN_BASE_DISCOUNT = 0.15 ether;

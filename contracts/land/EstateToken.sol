@@ -67,6 +67,10 @@ ReentrancyGuardUpgradeable {
         return VERSION;
     }
 
+    function decimals() external pure returns (uint8) {
+        return Constant.ESTATE_TOKEN_DECIMALS;
+    }
+
     function updateCommissionToken(
         address _commissionToken,
         bytes[] calldata _signatures
@@ -175,7 +179,6 @@ ReentrancyGuardUpgradeable {
         uint256 _tokenizationId,
         string calldata _uri,
         uint40 _expireAt,
-        uint8 _decimals,
         address _commissionReceiver
     ) external returns (uint256) {
         if (!isTokenizer[msg.sender]) {
@@ -183,7 +186,6 @@ ReentrancyGuardUpgradeable {
         }
 
         if (!IAdmin(admin).isZone(_zone)
-            || _decimals > Constant.ESTATE_TOKEN_MAX_DECIMALS
             || _expireAt <= uint40(block.timestamp)) {
             revert InvalidInput();
         }
@@ -195,7 +197,6 @@ ReentrancyGuardUpgradeable {
             msg.sender,
             uint40(block.timestamp),
             _expireAt,
-            _decimals,
             false
         );
         _mint(msg.sender, estateId, _totalSupply, "");
@@ -212,8 +213,7 @@ ReentrancyGuardUpgradeable {
             _tokenizationId,
             msg.sender,
             uint40(block.timestamp),
-            _expireAt,
-            _decimals
+            _expireAt
         );
 
         return estateId;

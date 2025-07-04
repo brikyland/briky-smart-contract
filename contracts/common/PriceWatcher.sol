@@ -89,7 +89,7 @@ Initializable {
         }
 
         for(uint256 i; i < _currencies.length; ++i) {
-            if (_decimals[i] > Constant.ESTATE_TOKEN_MAX_DECIMALS) {
+            if (_decimals[i] > Constant.COMMON_RATE_DECIMALS) {
                 revert InvalidInput();
             }
 
