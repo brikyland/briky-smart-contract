@@ -512,7 +512,9 @@ ReentrancyGuardUpgradeable {
             ""
         );
 
-        IReserveVault(reserveVault).withdrawFund(request.quote.cashbackFundId, msg.sender, quantity);
+        if (quantity >= request.quote.cashbackThreshold) {
+            IReserveVault(reserveVault).withdrawFund(request.quote.cashbackFundId, msg.sender, quantity);
+        }
 
         emit TokenWithdrawal(
             _requestId,
