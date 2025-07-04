@@ -292,6 +292,7 @@ describe('4. EstateForger', async () => {
     async function beforeEstateForgerTest({
         listSampleCurrencies = false,
         fundERC20ForDepositors = false,
+        fundERC20ForManagers = false,
         addZoneForExecutive = false,
         addEstateForgerToVault = false,
         whitelistDepositors = false,
@@ -324,6 +325,7 @@ describe('4. EstateForger', async () => {
             depositor2,
             depositor3,
             reserveVault,
+            deployer,
         } = fixture;
 
         await callAdmin_AuthorizeManagers(
@@ -534,9 +536,17 @@ describe('4. EstateForger', async () => {
             await callTransaction(estateForger.connect(depositor3).deposit(2, 500));
         }
 
-        if (confirmRequests) {         
-            await callTransaction(estateForger.connect(manager).confirm(1, ethers.constants.AddressZero));
-            await callTransaction(estateForger.connect(manager).confirm(2, commissionReceiver.address));
+        if (fundERC20ForManagers) {
+            // await prepareNativeToken(ethers.provider, deployer, [manager], ethers.utils.parseEther('10000'));
+
+            for(const currency of currencies) {
+                await prepareERC20(currency, [manager], [estateForger], ethers.utils.parseEther('10000'));
+            }
+        }
+
+        if (confirmRequests) {
+            await callTransaction(estateForger.connect(manager).confirm(1, commissionReceiver.address, {value: ethers.utils.parseEther('1000')}));
+            await callTransaction(estateForger.connect(manager).confirm(2, commissionReceiver.address, {value: ethers.utils.parseEther('1000')}));
         }
 
         if (pause) {
@@ -5182,7 +5192,75 @@ describe('4. EstateForger', async () => {
             );
         });
 
-        it('4.21.3. confirm tokenization successfully in all cases', async () => {
+        it('4.21.2. confirm tokenization successfully with no cashback currency', async () => {
+            const fixture = await beforeEstateForgerTest({
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addEstateForgerToVault: true,
+            });
+            const {estateForger, admin, admins, depositor1, depositor2, depositor3, commissionToken, currencies} = fixture;
+        
+            await callEstateForger_UpdateBaseUnitPriceRange(
+                estateForger,
+                admins,
+                ethers.BigNumber.from(0),
+                ethers.constants.MaxUint256,
+                await admin.nonce()
+            );
+
+            // Native token as main currency
+            await testConfirmTokenization(
+                1,
+                fixture,
+                LandInitialization.ESTATE_FORGER_FeeRate,
+                ethers.utils.parseEther("0.3"),
+                (await commissionToken.getCommissionRate()).value,
+                null,
+                false,
+                false,
+                ethers.BigNumber.from(10),
+                ethers.BigNumber.from(30),
+                ethers.BigNumber.from(70),
+                3,
+                ethers.utils.parseEther('0.2'),
+                ethers.BigNumber.from(5),
+                ethers.utils.parseEther("0.001"),
+                [],
+                [],
+                [
+                    { depositor: depositor1, depositedValue: ethers.BigNumber.from(1) },
+                    { depositor: depositor2, depositedValue: ethers.BigNumber.from(2) },
+                    { depositor: depositor2, depositedValue: ethers.BigNumber.from(4) },
+                    { depositor: depositor3, depositedValue: ethers.BigNumber.from(8) },
+                ],
+                true,
+            );
+
+            // ERC20 as main currency, native token as extra currency
+            await testConfirmTokenization(
+                2,
+                fixture,
+                LandInitialization.ESTATE_FORGER_FeeRate,
+                ethers.utils.parseEther("0.3"),
+                (await fixture.commissionToken.getCommissionRate()).value,
+                currencies[0],
+                true,
+                true,
+                ethers.BigNumber.from(200),
+                ethers.BigNumber.from(1000),
+                ethers.BigNumber.from(1000),
+                0,
+                ethers.utils.parseEther("0.02"),
+                ethers.BigNumber.from(50),
+                ethers.utils.parseEther("0.00001"),
+                [],
+                [],                
+                [{ depositor: fixture.depositor1, depositedValue: ethers.BigNumber.from(1000) }],
+                true,
+            );
+        });
+
+        it('4.21.3. confirm tokenization successfully with different native/erc20 and exclusive/non-exclusive combinations', async () => {
             const fixture = await beforeEstateForgerTest({
                 addZoneForExecutive: true,
                 listSampleSellers: true,
@@ -5348,7 +5426,7 @@ describe('4. EstateForger', async () => {
             }
         });
 
-        it('4.17.5. confirm tokenization unsuccessfully when paused', async () => {
+        it('4.21.6. confirm tokenization unsuccessfully by non-manager', async () => {
             const fixture = await beforeEstateForgerTest({
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
@@ -5356,38 +5434,23 @@ describe('4. EstateForger', async () => {
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addDepositions: true,
-            });
-            const {estateForger, admin, admins, estateToken, manager, user, moderator, commissionReceiver} = fixture;
-
-            await callEstateForger_Pause(estateForger, admins, await admin.nonce());
-
-            await expect(estateForger.connect(manager).confirm(1, commissionReceiver.address)).to.be.revertedWith("Pausable: paused");
-            await expect(estateForger.connect(manager).confirm(2, commissionReceiver.address)).to.be.revertedWith("Pausable: paused");
-        });
-
-        it('4.17.6. confirm tokenization unsuccessfully by non-manager', async () => {
-            const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleCurrencies: true,
-                listSampleSellers: true,
-                addSampleRequests: true,
-                fundERC20ForDepositors: true,
-                addDepositions: true,
+                addEstateForgerToVault: true,
+                fundERC20ForManagers: true,
             });
             
             const {estateForger, user, moderator, commissionReceiver} = fixture;
             
             await expect(estateForger.connect(user).confirm(
-                1, commissionReceiver.address,
+                1, commissionReceiver.address, { value: ethers.utils.parseEther("1000") }
             )).to.be.revertedWithCustomError(estateForger, "Unauthorized");
 
             await expect(estateForger.connect(moderator).confirm(
-                1, commissionReceiver.address,
+                1, commissionReceiver.address, { value: ethers.utils.parseEther("1000") }
             )).to.be.revertedWithCustomError(estateForger, "Unauthorized");
 
         });
 
-        it('4.17.7. confirm tokenization unsuccessfully with invalid request id', async () => {
+        it('4.21.7. confirm tokenization unsuccessfully with invalid request id', async () => {
             const fixture = await beforeEstateForgerTest({
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
@@ -5395,24 +5458,122 @@ describe('4. EstateForger', async () => {
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addDepositions: true,
+                addEstateForgerToVault: true,
+                fundERC20ForManagers: true,
             });
             const {estateForger, manager, commissionReceiver} = fixture;
             
             await expect(estateForger.connect(manager).confirm(
-                0, commissionReceiver.address,
+                0, commissionReceiver.address, { value: ethers.utils.parseEther("1000") }
             )).to.be.revertedWithCustomError(estateForger, "InvalidRequestId");
 
             await expect(estateForger.connect(manager).confirm(
-                100, commissionReceiver.address,
+                100, commissionReceiver.address, { value: ethers.utils.parseEther("1000") }
             )).to.be.revertedWithCustomError(estateForger, "InvalidRequestId");
         });
 
-        it('4.17.8. confirm tokenization unsuccessfully with cancelled request id', async () => {
+        it('4.21.8. confirm tokenization unsuccessfully when paused', async () => {
             const fixture = await beforeEstateForgerTest({
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
                 listSampleSellers: true,
                 addSampleRequests: true,
+                fundERC20ForDepositors: true,
+                addDepositions: true,
+                addEstateForgerToVault: true,
+                fundERC20ForManagers: true,
+            });
+            const {estateForger, admin, admins, estateToken, manager, user, moderator, commissionReceiver} = fixture;
+
+            await callEstateForger_Pause(estateForger, admins, await admin.nonce());
+
+            await expect(estateForger.connect(manager).confirm(
+                1, commissionReceiver.address, { value: ethers.utils.parseEther("1000") }
+            )).to.be.revertedWith("Pausable: paused");
+            await expect(estateForger.connect(manager).confirm(
+                2, commissionReceiver.address, { value: ethers.utils.parseEther("1000") }
+            )).to.be.revertedWith("Pausable: paused");
+        });
+
+        it('4.21.9. confirm tokenization unsuccessfully with invalid commission receiver', async () => {
+            const fixture = await beforeEstateForgerTest({
+                addZoneForExecutive: true,
+                listSampleCurrencies: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                fundERC20ForDepositors: true,
+                addDepositions: true,
+                addEstateForgerToVault: true,
+                fundERC20ForManagers: true,
+            });
+            const {estateForger, manager} = fixture;
+
+            await expect(estateForger.connect(manager).confirm(1, ethers.constants.AddressZero, { value: ethers.utils.parseEther("1000") })).to.be.revertedWithCustomError(estateForger, "InvalidCommissionReceiver");
+        });
+
+        it('4.21.10. confirm tokenization unsuccessfully with inactive zone', async () => {
+            const fixture = await beforeEstateForgerTest({
+                addZoneForExecutive: true,
+                listSampleCurrencies: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                fundERC20ForDepositors: true,
+                addDepositions: true,
+                addEstateForgerToVault: true,
+                fundERC20ForManagers: true,
+            });
+            const {estateForger, manager, admin, admins, commissionReceiver} = fixture;
+
+            const zone = (await estateForger.getRequest(1)).estate.zone;
+            await callAdmin_DeclareZones(
+                admin,
+                admins,
+                [zone],
+                false,
+                await admin.nonce()
+            );
+
+            await expect(estateForger.connect(manager).confirm(
+                1, commissionReceiver.address, { value: ethers.utils.parseEther("1000") }
+            )).to.be.revertedWithCustomError(estateForger, "Unauthorized");
+        });
+
+        it('4.21.11. confirm tokenization unsuccessfully with inactive manager in zone', async () => {
+            const fixture = await beforeEstateForgerTest({
+                addZoneForExecutive: true,
+                listSampleCurrencies: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                fundERC20ForDepositors: true,
+                addDepositions: true,
+                addEstateForgerToVault: true,
+                fundERC20ForManagers: true,
+            });
+            const {estateForger, manager, admin, admins, commissionReceiver} = fixture;
+
+            const zone = (await estateForger.getRequest(1)).estate.zone;
+            await callAdmin_ActivateIn(
+                admin,
+                admins,
+                zone,
+                [manager.address],
+                false,
+                await admin.nonce()
+            );
+
+            await expect(estateForger.connect(manager).confirm(
+                1, commissionReceiver.address, { value: ethers.utils.parseEther("1000") }
+            )).to.be.revertedWithCustomError(estateForger, "Unauthorized");
+        });
+
+        it('4.21.12. confirm tokenization unsuccessfully with cancelled request id', async () => {
+            const fixture = await beforeEstateForgerTest({
+                addZoneForExecutive: true,
+                listSampleCurrencies: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addEstateForgerToVault: true,
+                fundERC20ForManagers: true,
             });
             const {estateForger, manager, commissionReceiver} = fixture;
 
@@ -5420,15 +5581,15 @@ describe('4. EstateForger', async () => {
             await callTransaction(estateForger.connect(manager).cancel(2));
 
             await expect(estateForger.connect(manager).confirm(
-                1, commissionReceiver.address,
+                1, commissionReceiver.address, { value: ethers.utils.parseEther("1000") }
             )).to.be.revertedWithCustomError(estateForger, "Cancelled");
 
             await expect(estateForger.connect(manager).confirm(
-                2, commissionReceiver.address,
+                2, commissionReceiver.address, { value: ethers.utils.parseEther("1000") }
             )).to.be.revertedWithCustomError(estateForger, "Cancelled");
         });
 
-        it('4.17.9. confirm tokenization unsuccessfully with tokenized request id', async () => {
+        it('4.21.13. confirm tokenization unsuccessfully with tokenized request id', async () => {
             const fixture = await beforeEstateForgerTest({
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
@@ -5437,19 +5598,21 @@ describe('4. EstateForger', async () => {
                 fundERC20ForDepositors: true,
                 addDepositions: true,
                 confirmRequests: true,
+                addEstateForgerToVault: true,
+                fundERC20ForManagers: true,
             });
             const {estateForger, manager, commissionReceiver} = fixture;
 
             await expect(estateForger.connect(manager).confirm(
-                1, commissionReceiver.address,
+                1, commissionReceiver.address, { value: ethers.utils.parseEther("1000") }
             )).to.be.revertedWithCustomError(estateForger, "Tokenized");
 
             await expect(estateForger.connect(manager).confirm(
-                2, commissionReceiver.address,
+                2, commissionReceiver.address, { value: ethers.utils.parseEther("1000") }
             )).to.be.revertedWithCustomError(estateForger, "Tokenized");
         });
 
-        it('4.17.10. confirm tokenization successfully within 60 days after public sale ends', async () => {
+        it('4.21.14. confirm tokenization successfully within 60 days after public sale ends', async () => {
             const fixture = await beforeEstateForgerTest({
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
@@ -5457,21 +5620,23 @@ describe('4. EstateForger', async () => {
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addDepositions: true,
+                addEstateForgerToVault: true,
+                fundERC20ForManagers: true,
             });
             const {estateForger, manager, commissionReceiver} = fixture;
 
-            const confirmationTimeLimit = 60 * 24 * 60 * 60; // 60 days
+            const confirmationTimeLimit = Constant.ESTATE_TOKEN_CONFIRMATION_TIME_LIMIT;
 
             const request = await estateForger.getRequest(1);
-            const publicSaleEndsAt = request.publicSaleEndsAt;
+            const publicSaleEndsAt = request.agenda.publicSaleEndsAt;
             await time.setNextBlockTimestamp(publicSaleEndsAt + confirmationTimeLimit - 1);
 
             await callTransaction(estateForger.connect(manager).confirm(
-                1, commissionReceiver.address
+                1, commissionReceiver.address, { value: ethers.utils.parseEther("1000") }
             ));
         });
 
-        it('4.17.11. confirm tokenization unsuccessfully after 60 days after public sale ends', async () => {
+        it('4.21.15. confirm tokenization unsuccessfully after 60 days after public sale ends', async () => {
             const fixture = await beforeEstateForgerTest({
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
@@ -5479,50 +5644,92 @@ describe('4. EstateForger', async () => {
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addDepositions: true,
+                addEstateForgerToVault: true,
+                fundERC20ForManagers: true,
             });
             const {estateForger, manager, commissionReceiver} = fixture;
 
-            const confirmationTimeLimit = 60 * 24 * 60 * 60; // 60 days
+            const confirmationTimeLimit = Constant.ESTATE_TOKEN_CONFIRMATION_TIME_LIMIT;
 
             const request = await estateForger.getRequest(1);
-            const publicSaleEndsAt = request.publicSaleEndsAt;
+            const publicSaleEndsAt = request.agenda.publicSaleEndsAt;
             await time.setNextBlockTimestamp(publicSaleEndsAt + confirmationTimeLimit);
 
             await expect(estateForger.connect(manager).confirm(
-                1, commissionReceiver.address
-            )).to.be.revertedWithCustomError(estateForger, "FailedOwnershipTransfer");
+                1, commissionReceiver.address, { value: ethers.utils.parseEther("1000") }
+            )).to.be.revertedWithCustomError(estateForger, "TimeOut");
         });
 
-        it('4.17.12. confirm tokenization unsuccessfully when sold amount is less than min selling amount', async () => {
+        it('4.21.16. confirm tokenization unsuccessfully when sold amount is less than min selling amount', async () => {
             const fixture = await beforeEstateForgerTest({
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
                 listSampleSellers: true,
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
+                addEstateForgerToVault: true,
+                fundERC20ForManagers: true,
             });
             const {estateForger, manager, commissionReceiver, depositor1} = fixture;
             
-            const privateSaleEndsAt1 = (await estateForger.getRequest(1)).privateSaleEndsAt;
+            const privateSaleEndsAt1 = (await estateForger.getRequest(1)).agenda.privateSaleEndsAt;
             await time.setNextBlockTimestamp(privateSaleEndsAt1);
             await callTransaction(estateForger.connect(depositor1).deposit(1, 9, { value: ethers.utils.parseEther("100") }));
 
-            const privateSaleEndsAt2 = (await estateForger.getRequest(2)).privateSaleEndsAt;
+            const privateSaleEndsAt2 = (await estateForger.getRequest(2)).agenda.privateSaleEndsAt;
             await time.setNextBlockTimestamp(privateSaleEndsAt2);
             await callTransaction(estateForger.connect(depositor1).deposit(2, 199));
 
             await expect(estateForger.connect(manager).confirm(
-                1, commissionReceiver.address
-            )).to.be.revertedWithCustomError(estateForger, "NotEnoughSoldAmount");
+                1, commissionReceiver.address, { value: ethers.utils.parseEther("1000") }
+            )).to.be.revertedWithCustomError(estateForger, "NotEnoughSoldQuantity");
         });
 
-        it('4.17.13. confirm tokenization unsuccessfully when native token transfer to requester failed', async () => {
+        it('4.21.17. confirm tokenization unsuccessfully with insufficient native token', async () => {
             const fixture = await beforeEstateForgerTest({
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
                 listSampleSellers: true,
+                addSampleRequests: true,
+                fundERC20ForDepositors: true,
+                addDepositions: true,
+                addEstateForgerToVault: true,
+                fundERC20ForManagers: true,
             });
-            const {estateForger, zone1, manager, commissionReceiver, depositor1, deployer, baseTimestamp, admin, admins} = fixture;
+            const {estateForger, manager, commissionReceiver} = fixture;
+
+            await expect(estateForger.connect(manager).confirm(
+                2, commissionReceiver.address
+            )).to.be.revertedWithCustomError(estateForger, "InsufficientValue");            
+        });
+
+        it('4.21.18. confirm tokenization unsuccessfully with insufficient erc20 allowance or balance', async () => {
+            const fixture = await beforeEstateForgerTest({
+                addZoneForExecutive: true,
+                listSampleCurrencies: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                fundERC20ForDepositors: true,
+                addDepositions: true,
+                addEstateForgerToVault: true,
+            });
+            const {estateForger, manager, commissionReceiver} = fixture;
+
+            await expect(estateForger.connect(manager).confirm(
+                1, commissionReceiver.address, { value: ethers.utils.parseEther("1000") }
+            )).to.be.revertedWith("ERC20: insufficient allowance");  
+        });
+
+        it('4.21.17. confirm tokenization unsuccessfully when native token transfer to requester failed', async () => {
+            const fixture = await beforeEstateForgerTest({
+                addZoneForExecutive: true,
+                listSampleCurrencies: true,
+                listSampleSellers: true,
+                addEstateForgerToVault: true,
+                fundERC20ForManagers: true,
+            });
+            const {estateForger, zone1, manager, commissionReceiver, depositor1, deployer, admin, admins, currencies} = fixture;
+            const baseTimestamp = await time.latest();
 
             await callEstateForger_UpdateBaseUnitPriceRange(
                 estateForger,
@@ -5540,34 +5747,48 @@ describe('4. EstateForger', async () => {
                 true
             );
 
+            const requestEstateInput = {
+                zone: zone1,
+                uri: "uri",
+                decimals: 18,
+                expireAt: baseTimestamp + 1e9,
+            }
+            const requestQuotaInput = {
+                totalQuantity: ethers.BigNumber.from(70),
+                minSellingQuantity: ethers.BigNumber.from(10),
+                maxSellingQuantity: ethers.BigNumber.from(20),
+            }
+            const requestQuoteInput: RequestQuoteInput = {
+                unitPrice: ethers.BigNumber.from(1000000),
+                currency: ethers.constants.AddressZero,
+                cashbackThreshold: ethers.BigNumber.from(5),
+                cashbackBaseRate: ethers.utils.parseEther("0.01"),
+                cashbackCurrencies: [],
+                cashbackDenominations: [],
+            }
+
             const receipt = await callTransaction(estateForger.connect(manager).requestTokenizationWithDuration(
                 failReceiver.address,
-                zone1,
-                "uri",
-                70,
-                10,
-                20,
-                1000000,
-                ethers.constants.AddressZero,
-                3,
-                baseTimestamp + 1e9,
+                requestEstateInput,
+                requestQuotaInput,
+                requestQuoteInput,
                 1000,
                 2000,
             ));
 
             const requestId = receipt.events!.filter(e => e.event === "NewRequest")[0].args![0];
 
-            const privateSaleEndsAt = (await estateForger.getRequest(requestId)).privateSaleEndsAt;
+            const privateSaleEndsAt = (await estateForger.getRequest(requestId)).agenda.privateSaleEndsAt;
             await time.setNextBlockTimestamp(privateSaleEndsAt);
 
             await callTransaction(estateForger.connect(depositor1).deposit(requestId, 10, { value: ethers.utils.parseEther("100") }));
 
             await expect(estateForger.connect(manager).confirm(
-                requestId, commissionReceiver.address
+                requestId, commissionReceiver.address, { value: ethers.utils.parseEther("1000") }
             )).to.be.revertedWithCustomError(estateForger, "FailedTransfer");
         });
 
-        it('4.17.14. confirm tokenization unsuccessfully when native token transfer to fee receiver failed', async () => {
+        it('4.21.18. confirm tokenization unsuccessfully when native token transfer to fee receiver failed', async () => {
             const fixture = await beforeEstateForgerTest({
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
@@ -5575,25 +5796,30 @@ describe('4. EstateForger', async () => {
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addDepositions: true,
+                addEstateForgerToVault: true,
+                fundERC20ForManagers: true,
             });
-            const {estateForger, zone1, manager, commissionReceiver, depositor1, deployer, baseTimestamp, admin, admins} = fixture;
+            const {estateForger, manager, commissionReceiver, deployer} = fixture;
 
             const failReceiver = await deployFailReceiver(deployer);
 
             await callTransaction(estateForger.setFeeReceiver(failReceiver.address));
 
             await expect(estateForger.connect(manager).confirm(
-                1, commissionReceiver.address
+                1, commissionReceiver.address, { value: ethers.utils.parseEther("1000") }
             )).to.be.revertedWithCustomError(estateForger, "FailedTransfer");
         });
 
-        it('4.17.15. confirm tokenization unsuccessfully when native token transfer to commission receiver failed', async () => {
+        it('4.21.19. confirm tokenization unsuccessfully when native token transfer to commission receiver failed', async () => {
             const fixture = await beforeEstateForgerTest({
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
                 listSampleSellers: true,
+                fundERC20ForManagers: true,
+                addEstateForgerToVault: true,
             });
-            const {estateForger, zone1, manager, depositor1, deployer, baseTimestamp, admin, admins, seller1} = fixture;
+            const {estateForger, zone1, manager, depositor1, deployer, admin, admins, seller1} = fixture;
+            const baseTimestamp = await time.latest();
 
             await callEstateForger_UpdateBaseUnitPriceRange(
                 estateForger,
@@ -5605,34 +5831,48 @@ describe('4. EstateForger', async () => {
 
             const failReceiver = await deployFailReceiver(deployer);
 
+            const requestEstateInput = {
+                zone: zone1,
+                uri: "uri",
+                decimals: 18,
+                expireAt: baseTimestamp + 1e9,
+            }
+            const requestQuotaInput = {
+                totalQuantity: ethers.BigNumber.from(70),
+                minSellingQuantity: ethers.BigNumber.from(10),
+                maxSellingQuantity: ethers.BigNumber.from(20),
+            }
+            const requestQuoteInput: RequestQuoteInput = {
+                unitPrice: ethers.BigNumber.from(1000000),
+                currency: ethers.constants.AddressZero,
+                cashbackThreshold: ethers.BigNumber.from(5),
+                cashbackBaseRate: ethers.utils.parseEther("0.01"),
+                cashbackCurrencies: [],
+                cashbackDenominations: [],
+            }
+
             const receipt = await callTransaction(estateForger.connect(manager).requestTokenizationWithDuration(
                 seller1.address,
-                zone1,
-                "uri",
-                70,
-                10,
-                20,
-                1000000,
-                ethers.constants.AddressZero,
-                3,
-                baseTimestamp + 1e9,
+                requestEstateInput,
+                requestQuotaInput,
+                requestQuoteInput,
                 1000,
                 2000,
             ));
 
             const requestId = receipt.events!.filter(e => e.event === "NewRequest")[0].args![0];
 
-            const privateSaleEndsAt = (await estateForger.getRequest(requestId)).privateSaleEndsAt;
+            const privateSaleEndsAt = (await estateForger.getRequest(requestId)).agenda.privateSaleEndsAt;
             await time.setNextBlockTimestamp(privateSaleEndsAt);
 
             await callTransaction(estateForger.connect(depositor1).deposit(requestId, 10, { value: ethers.utils.parseEther("100") }));
 
             await expect(estateForger.connect(manager).confirm(
-                requestId, failReceiver.address
+                requestId, failReceiver.address, { value: ethers.utils.parseEther("1000") }
             )).to.be.revertedWithCustomError(estateForger, "FailedTransfer");
         });
 
-        it('4.17.16. confirm tokenization unsuccessfully when this contract is reentered', async () => {
+        it('4.21.20. confirm tokenization unsuccessfully when this contract is reentered', async () => {
             const fixture = await beforeEstateForgerTest({
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
@@ -5640,8 +5880,10 @@ describe('4. EstateForger', async () => {
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addDepositions: true,
+                addEstateForgerToVault: true,
+                fundERC20ForManagers: true,
             });
-            const {estateForger, zone1, manager, commissionReceiver, depositor1, deployer, baseTimestamp, admin, admins} = fixture;
+            const {estateForger, zone1, deployer, admin, admins} = fixture;
 
             let reentrancy = await deployReentrancyERC1155Holder(deployer);
 
@@ -5667,389 +5909,39 @@ describe('4. EstateForger', async () => {
         });
     });
 
-    describe('4.18. safeConfirm(uint256, address, string)', async () => {
-        async function testSafeConfirmTokenization(
-            currentRequestId: number,
-            fixture: EstateForgerFixture,
-            feeRate: BigNumber,
-            exclusiveRate: BigNumber,
-            commissionRate: BigNumber,
-            isERC20: boolean,
-            isExclusive: boolean,
-            minSellingAmount: BigNumber,
-            maxSellingAmount: BigNumber,
-            totalSupply: BigNumber,
-            decimals: number,
-            unitPrice: BigNumber,
-            deposits: any[],
-            hasCommissionReceiver: boolean,
-        ) {
-            const { admin, admins, zone1, deployer, manager, estateForger, depositor1, depositor2, depositor3, seller1, estateToken, feeReceiver, commissionToken, mockCurrencyExclusiveRate, commissionReceiver, currency } = fixture;
-
-            const currentTimestamp = await time.latest() + 1000;
-
-            const zone = zone1;
-            const seller = seller1;
-
-            let newCurrency: Currency | undefined;
-            let newCurrencyAddress: string;
-            if (isERC20) {
-                newCurrency = await deployCurrency(
-                    deployer.address,
-                    `NewMockCurrency_${currentRequestId}`,
-                    `NMC_${currentRequestId}`
-                ) as Currency;
-                await callTransaction(newCurrency.setExclusiveDiscount(exclusiveRate, Constant.COMMON_RATE_DECIMALS));
-                newCurrencyAddress = newCurrency.address;
-            } else {
-                newCurrencyAddress = ethers.constants.AddressZero;
-            }
-
-            const commissionReceiverAddress = hasCommissionReceiver ? commissionReceiver.address : ethers.constants.AddressZero;
-
-            const currentEstateId = currentRequestId;
-
-            await addCurrencyToEstateForger(
-                admin,
-                estateForger,
-                admins,
-                [newCurrencyAddress],
-                [true],
-                [isExclusive],
-                [ethers.constants.AddressZero],
-                [100],
-                [100],
-                [0],
-            );
-
-            await callTransaction(estateForger.connect(manager).requestTokenizationWithDuration(
-                seller.address,
-                zone,
-                `Token_${currentRequestId}`,
-                totalSupply,
-                minSellingAmount,
-                maxSellingAmount,
-                unitPrice,
-                newCurrencyAddress,
-                decimals,
-                currentTimestamp + 1e9,
-                5,
-                1e9,
-            ));
-
-            await time.setNextBlockTimestamp(await time.latest() + 5);
-
-            await callEstateForger_UpdateFeeRate(estateForger, admins, feeRate, await admin.nonce());
-
-            commissionToken.setVariable("commissionRate", commissionRate);
-
-            for (const record of deposits) {
-                const value = record.depositedValue.mul(unitPrice);
-                let ethValue = ethers.BigNumber.from(0);
-                await prepareNativeToken(ethers.provider, deployer, [record.depositor], ethers.utils.parseEther("1.0"));
-                if (isERC20) {
-                    await prepareERC20(newCurrency!, [record.depositor], [estateForger], value);
-                } else {
-                    ethValue = value;
-                    await prepareNativeToken(ethers.provider, deployer, [record.depositor], value);
-                }
-
-                await callTransaction(estateForger.connect(record.depositor).deposit(
-                    currentRequestId,
-                    record.depositedValue,
-                    { value: ethValue }
-                ));
-            }
+    describe('4.22. safeConfirm(uint256, address, string)', async () => {
+        it('4.22.1. safe confirm tokenization successfully with correct anchor', async () => {
+            const fixture = await beforeEstateForgerTest({
+                addZoneForExecutive: true,
+                listSampleCurrencies: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                fundERC20ForDepositors: true,
+                addDepositions: true,
+                addEstateForgerToVault: true,
+                fundERC20ForManagers: true,
+            });
             
-            const walletToReset = [seller, feeReceiver];
-            if (hasCommissionReceiver) {
-                walletToReset.push(commissionReceiver);
-            }
+            const {estateForger, manager, commissionReceiver} = fixture;
 
-            if (isERC20) {
-                await resetERC20(newCurrency!, walletToReset);
-            } else {
-                await resetNativeToken(ethers.provider, walletToReset);
-            }
-
-            const anchor = (await estateForger.getRequest(currentRequestId)).uri;
-
-            await time.setNextBlockTimestamp(currentTimestamp);
-            const tx = await estateForger.connect(manager).safeConfirm(currentRequestId, commissionReceiverAddress, anchor);
-            await tx.wait();
-
-            const request = await estateForger.getRequest(currentRequestId);
-            expect(request.estateId).to.equal(currentEstateId);
-
-            const soldAmount = request.soldAmount;
-
-            let value = ethers.BigNumber.from(soldAmount).mul(unitPrice);
-            let fee = value.mul(feeRate).div(Constant.COMMON_RATE_MAX_FRACTION);
-            if (isExclusive) {
-                fee = fee.sub(fee.mul(exclusiveRate).div(Constant.COMMON_RATE_MAX_FRACTION));
-            }
-            let commissionAmount = ethers.BigNumber.from(0);
-            if (commissionReceiverAddress !== ethers.constants.AddressZero) {
-                commissionAmount = fee.mul(commissionRate).div(Constant.COMMON_RATE_MAX_FRACTION);
-            }
-
-            await expect(tx).to
-                .emit(estateForger, 'RequestConfirmation')
-                .withArgs(
-                    currentRequestId,
-                    currentEstateId,
-                    soldAmount,
-                    value,
-                    fee,
-                    commissionReceiverAddress,
-                    commissionAmount,
-                )
-
-            expect(estateToken.tokenizeEstate).to.have.been.calledWith(
-                request.totalSupply.mul(ethers.BigNumber.from(10).pow(decimals)),
-                request.zone,
-                currentRequestId,
-                request.uri,
-                request.expireAt,
-                request.decimals,
-                commissionReceiverAddress,
+            const anchor1 = ethers.utils.solidityKeccak256(
+                ["string"],
+                [(await estateForger.getRequest(1)).estate.uri]
             );
-            if (isERC20) {
-                expect(await newCurrency!.balanceOf(seller.address)).to.equal(value.sub(fee));
-                expect(await newCurrency!.balanceOf(feeReceiver.address)).to.equal(fee.sub(commissionAmount));
-                if (commissionReceiverAddress !== ethers.constants.AddressZero) {
-                    expect(await newCurrency!.balanceOf(commissionReceiverAddress)).to.equal(commissionAmount);
-                }
-            } else {
-                expect(await ethers.provider.getBalance(seller.address)).to.equal(value.sub(fee));
-                expect(await ethers.provider.getBalance(feeReceiver.address)).to.equal(fee.sub(commissionAmount));
-                if (commissionReceiverAddress !== ethers.constants.AddressZero) {
-                    expect(await ethers.provider.getBalance(commissionReceiverAddress)).to.equal(commissionAmount);
-                }
-            }
+            await expect(estateForger.connect(manager).safeConfirm(
+                1, commissionReceiver.address, anchor1, { value: ethers.utils.parseEther("1000") }
+            )).to.be.not.reverted;
 
-            expect(await estateToken.balanceOf(seller.address, currentEstateId)).to.equal(
-                (totalSupply.sub(soldAmount)).mul(ethers.BigNumber.from(10).pow(decimals))
+            const anchor2 = ethers.utils.solidityKeccak256(
+                ["string"],
+                [(await estateForger.getRequest(2)).estate.uri]
             );
-            expect(await estateToken.balanceOf(estateForger.address, currentEstateId)).to.equal(
-                soldAmount.mul(ethers.BigNumber.from(10).pow(decimals))
-            );
-
-            if (commissionReceiverAddress !== ethers.constants.AddressZero) {
-                expect(await commissionToken.ownerOf(currentEstateId)).to.equal(commissionReceiverAddress);
-                expect(await commissionToken.exists(currentEstateId)).to.equal(true);
-            } else {
-                expect(await commissionToken.exists(currentEstateId)).to.equal(false);
-            }
-        }
-
-        it('4.18.1. confirm tokenization successfully (small test)', async () => {
-            const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleSellers: true,
-            });
-            const {estateForger, admin, admins, depositor1, depositor2, depositor3, mockCurrencyExclusiveRate, commissionToken} = fixture;
-        
-            await callEstateForger_UpdateBaseUnitPriceRange(
-                estateForger,
-                admins,
-                ethers.BigNumber.from(0),
-                ethers.constants.MaxUint256,
-                await admin.nonce()
-            );
-
-            await testSafeConfirmTokenization(
-                1,
-                fixture,
-                LandInitialization.ESTATE_FORGER_FeeRate,
-                mockCurrencyExclusiveRate,
-                (await commissionToken.getCommissionRate()).value,
-                false,
-                false,
-                ethers.BigNumber.from(10),
-                ethers.BigNumber.from(30),
-                ethers.BigNumber.from(70),
-                3,
-                ethers.BigNumber.from(1000),
-                [
-                    { depositor: depositor1, depositedValue: ethers.BigNumber.from(2) },
-                    { depositor: depositor2, depositedValue: ethers.BigNumber.from(3) },
-                    { depositor: depositor3, depositedValue: ethers.BigNumber.from(5) },
-                ],
-                false,
-            );
-
-            await testSafeConfirmTokenization(
-                2,
-                fixture,
-                LandInitialization.ESTATE_FORGER_FeeRate,
-                fixture.mockCurrencyExclusiveRate,
-                (await fixture.commissionToken.getCommissionRate()).value,
-                true,
-                true,
-                ethers.BigNumber.from(200),
-                ethers.BigNumber.from(1000),
-                ethers.BigNumber.from(1000),
-                0,
-                ethers.BigNumber.from(20000),
-                [{ depositor: fixture.depositor1, depositedValue: ethers.BigNumber.from(1000) }],
-                true,
-            );
+            await expect(estateForger.connect(manager).safeConfirm(
+                2, commissionReceiver.address, anchor2, { value: ethers.utils.parseEther("1000") }
+            )).to.be.not.reverted;
         });
 
-        it('4.18.2. confirm tokenization successfully in all cases', async () => {
-            const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleSellers: true,
-            });
-            const {estateForger, admin, admins, depositor1, depositor2, depositor3, mockCurrencyExclusiveRate, commissionToken} = fixture;
-        
-            await callEstateForger_UpdateBaseUnitPriceRange(
-                estateForger,
-                admins,
-                ethers.BigNumber.from(0),
-                ethers.constants.MaxUint256,
-                await admin.nonce()
-            );
-
-            let currentRequestId = 0;
-            for (const hasCommissionReceiver of [false, true]) {
-                for (const isERC20 of [false, true]) {
-                    for (const isExclusive of [false, true]) {
-                        if (isExclusive && !isERC20) continue;
-
-                        await testSafeConfirmTokenization(
-                            ++currentRequestId,
-                            fixture,
-                            LandInitialization.ESTATE_FORGER_FeeRate,
-                            mockCurrencyExclusiveRate,
-                            (await commissionToken.getCommissionRate()).value,
-                            isERC20,
-                            isExclusive,
-                            ethers.BigNumber.from(10),
-                            ethers.BigNumber.from(30),
-                            ethers.BigNumber.from(70),
-                            3,
-                            ethers.BigNumber.from(1000),
-                            [
-                                { depositor: depositor1, depositedValue: ethers.BigNumber.from(2) },
-                                { depositor: depositor2, depositedValue: ethers.BigNumber.from(3) },
-                                { depositor: depositor3, depositedValue: ethers.BigNumber.from(5) },
-                            ],
-                            hasCommissionReceiver,
-                        );
-                    }
-                }
-            }
-        });
-
-        it('4.18.3. confirm tokenization successfully with very large deposition', async () => {
-            const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleSellers: true,
-            });
-            const {estateForger, admin, admins, depositor1, depositor2, depositor3, mockCurrencyExclusiveRate, commissionToken} = fixture;
-        
-            await callEstateForger_UpdateBaseUnitPriceRange(
-                estateForger,
-                admins,
-                ethers.BigNumber.from(0),
-                ethers.constants.MaxUint256,
-                await admin.nonce()
-            );
-
-            let currentRequestId = 0;
-            for (const hasCommissionReceiver of [false, true]) {
-                for (const isERC20 of [false, true]) {
-                    for (const isExclusive of [false, true]) {
-                        if (isExclusive && !isERC20) continue;
-
-                        await testSafeConfirmTokenization(
-                            ++currentRequestId,
-                            fixture,
-                            ethers.utils.parseEther("0.9"),
-                            ethers.utils.parseEther("0.9"),
-                            ethers.utils.parseEther("0.9"),
-                            isERC20,
-                            isExclusive,
-                            ethers.BigNumber.from(2).pow(255).div(Constant.COMMON_RATE_MAX_FRACTION),
-                            ethers.BigNumber.from(2).pow(256).sub(1).div(Constant.COMMON_RATE_MAX_FRACTION),
-                            ethers.BigNumber.from(2).pow(256).sub(1).div(Constant.COMMON_RATE_MAX_FRACTION),
-                            0,
-                            ethers.BigNumber.from(1),
-                            [
-                                { depositor: depositor1, depositedValue: ethers.BigNumber.from(2).pow(255).div(Constant.COMMON_RATE_MAX_FRACTION) },
-                            ],
-                            hasCommissionReceiver,
-                        );
-                    }
-                }
-            }
-        });
-
-        it('4.18.4. confirm tokenization successfully in 100 random test cases', async () => {
-            const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleSellers: true,
-            });
-            const {estateForger, admin, admins, depositor1, depositor2, depositor3, mockCurrencyExclusiveRate, commissionToken} = fixture;
-        
-            await callEstateForger_UpdateBaseUnitPriceRange(
-                estateForger,
-                admins,
-                ethers.BigNumber.from(0),
-                ethers.constants.MaxUint256,
-                await admin.nonce()
-            );
-
-            let currentRequestId = 0;
-            for (let testcase = 0; testcase < 100; testcase++) {
-                const hasCommissionReceiver = Math.random() < 0.5;
-                const isERC20 = Math.random() < 0.5;
-                const isExclusive = Math.random() < 0.5;
-                if (isExclusive && !isERC20) { --testcase; continue; }
-
-                const feeRate = randomBigNumber(ethers.BigNumber.from(0), Constant.COMMON_RATE_MAX_FRACTION);
-                const exclusiveRate = randomBigNumber(ethers.BigNumber.from(0), Constant.COMMON_RATE_MAX_FRACTION);
-                const commissionRate = randomBigNumber(ethers.BigNumber.from(0), Constant.COMMON_RATE_MAX_FRACTION);
-
-                const randomNums = []
-                const decimals = randomInt(0, 19);
-                for (let i = 0; i < 3; ++i) {
-                    const maxSupply = ethers.BigNumber.from(2).pow(256).sub(1).div(ethers.BigNumber.from(10).pow(decimals)).div(Constant.COMMON_RATE_MAX_FRACTION);
-                    randomNums.push(ethers.BigNumber.from(ethers.utils.randomBytes(32)).mod(maxSupply).add(1));
-                }
-                randomNums.sort((a, b) => a.sub(b).lt(0) ? -1 : 1);
-
-                const minSellingAmount = randomNums[0];
-                const maxSellingAmount = randomNums[1];
-                const totalSupply = randomNums[2];
-
-                const unitPrice = randomBigNumber(ethers.BigNumber.from(1), ethers.BigNumber.from(2).pow(256).sub(1).div(Constant.COMMON_RATE_MAX_FRACTION).div(totalSupply));
-                const deposits = [
-                    { depositor: depositor1, depositedValue: randomBigNumber(minSellingAmount, maxSellingAmount) },
-                ];
-
-                await testSafeConfirmTokenization(
-                    ++currentRequestId,
-                    fixture,
-                    feeRate,
-                    exclusiveRate,
-                    commissionRate,
-                    isERC20,
-                    isExclusive,
-                    minSellingAmount,
-                    maxSellingAmount,
-                    totalSupply,
-                    decimals,
-                    unitPrice,
-                    deposits,
-                    hasCommissionReceiver,
-                );
-            }
-        });
-
-        it('4.18.5. confirm tokenization unsuccessfully when paused', async () => {
+        it('4.22.2. confirm tokenization unsuccessfully by non-manager', async () => {
             const fixture = await beforeEstateForgerTest({
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
@@ -6057,43 +5949,26 @@ describe('4. EstateForger', async () => {
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addDepositions: true,
-            });
-            const {estateForger, admin, admins, estateToken, manager, user, moderator, commissionReceiver} = fixture;
-
-            await callEstateForger_Pause(estateForger, admins, await admin.nonce());
-
-            const anchor1 = (await estateForger.getRequest(1)).uri;
-            const anchor2 = (await estateForger.getRequest(2)).uri;
-
-            await expect(estateForger.connect(manager).safeConfirm(1, commissionReceiver.address, anchor1)).to.be.revertedWith("Pausable: paused");
-            await expect(estateForger.connect(manager).safeConfirm(2, commissionReceiver.address, anchor2)).to.be.revertedWith("Pausable: paused");
-        });
-
-        it('4.18.6. confirm tokenization unsuccessfully by non-manager', async () => {
-            const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleCurrencies: true,
-                listSampleSellers: true,
-                addSampleRequests: true,
-                fundERC20ForDepositors: true,
-                addDepositions: true,
+                addEstateForgerToVault: true,
+                fundERC20ForManagers: true,
             });
             
             const {estateForger, user, moderator, commissionReceiver} = fixture;
-            
-            const anchor = (await estateForger.getRequest(1)).uri;
+
+            const anchor1 = ethers.utils.solidityKeccak256(
+                ["string"],
+                [(await estateForger.getRequest(1)).estate.uri]
+            );
 
             await expect(estateForger.connect(user).safeConfirm(
-                1, commissionReceiver.address, anchor
+                1, commissionReceiver.address, anchor1, { value: ethers.utils.parseEther("1000") }
             )).to.be.revertedWithCustomError(estateForger, "Unauthorized");
-
             await expect(estateForger.connect(moderator).safeConfirm(
-                1, commissionReceiver.address, anchor
+                1, commissionReceiver.address, anchor1, { value: ethers.utils.parseEther("1000") }
             )).to.be.revertedWithCustomError(estateForger, "Unauthorized");
-
         });
 
-        it('4.18.7. confirm tokenization unsuccessfully with invalid request id', async () => {
+        it('4.22.3. confirm tokenization unsuccessfully with invalid request id', async () => {
             const fixture = await beforeEstateForgerTest({
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
@@ -6101,19 +5976,27 @@ describe('4. EstateForger', async () => {
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addDepositions: true,
+                addEstateForgerToVault: true,
+                fundERC20ForManagers: true,
             });
             const {estateForger, manager, commissionReceiver} = fixture;
             
             await expect(estateForger.connect(manager).safeConfirm(
-                0, commissionReceiver.address, ""
+                0,
+                commissionReceiver.address,
+                ethers.utils.solidityKeccak256(["string"], [""]),
+                { value: ethers.utils.parseEther("1000") }
             )).to.be.revertedWithCustomError(estateForger, "InvalidRequestId");
 
             await expect(estateForger.connect(manager).safeConfirm(
-                100, commissionReceiver.address, ""
+                100,
+                commissionReceiver.address,
+                ethers.utils.solidityKeccak256(["string"], [""]),
+                { value: ethers.utils.parseEther("1000") }
             )).to.be.revertedWithCustomError(estateForger, "InvalidRequestId");
         });
 
-        it('4.18.8. confirm tokenization unsuccessfully with incorrect anchor', async () => {
+        it('4.22.4. safe confirm tokenization unsuccessfully with bad anchor', async () => {
             const fixture = await beforeEstateForgerTest({
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
@@ -6121,295 +6004,27 @@ describe('4. EstateForger', async () => {
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addDepositions: true,
+                addEstateForgerToVault: true,
+                fundERC20ForManagers: true,
             });
-            const {estateForger, manager, commissionReceiver} = fixture;
             
-            const incorrectAnchor = "TestAnchor";
+            const {estateForger, manager, commissionReceiver} = fixture;
+
+            const anchor1 = ethers.utils.solidityKeccak256(
+                ["string"],
+                [(await estateForger.getRequest(1)).estate.uri]
+            );
+            const anchor2 = ethers.utils.solidityKeccak256(
+                ["string"],
+                [(await estateForger.getRequest(2)).estate.uri]
+            );
 
             await expect(estateForger.connect(manager).safeConfirm(
-                1, commissionReceiver.address, incorrectAnchor
+                1, commissionReceiver.address, anchor2, { value: ethers.utils.parseEther("1000") }
             )).to.be.revertedWithCustomError(estateForger, "BadAnchor");
-
             await expect(estateForger.connect(manager).safeConfirm(
-                2, commissionReceiver.address, incorrectAnchor
+                2, commissionReceiver.address, anchor1, { value: ethers.utils.parseEther("1000") }
             )).to.be.revertedWithCustomError(estateForger, "BadAnchor");
-        });
-
-        it('4.18.9. confirm tokenization unsuccessfully with cancelled request id', async () => {
-            const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleCurrencies: true,
-                listSampleSellers: true,
-                addSampleRequests: true,
-            });
-            const {estateForger, manager, commissionReceiver} = fixture;
-
-            await callTransaction(estateForger.connect(manager).cancel(1));
-            await callTransaction(estateForger.connect(manager).cancel(2));
-
-            const anchor1 = (await estateForger.getRequest(1)).uri;
-            const anchor2 = (await estateForger.getRequest(2)).uri;
-
-            await expect(estateForger.connect(manager).safeConfirm(
-                1, commissionReceiver.address, anchor1
-            )).to.be.revertedWithCustomError(estateForger, "Cancelled");
-
-            await expect(estateForger.connect(manager).safeConfirm(
-                2, commissionReceiver.address, anchor2
-            )).to.be.revertedWithCustomError(estateForger, "Cancelled");
-        });
-
-        it('4.18.10. confirm tokenization unsuccessfully with tokenized request id', async () => {
-            const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleCurrencies: true,
-                listSampleSellers: true,
-                addSampleRequests: true,
-                fundERC20ForDepositors: true,
-                addDepositions: true,
-                confirmRequests: true,
-            });
-            const {estateForger, manager, commissionReceiver} = fixture;
-
-            const anchor1 = (await estateForger.getRequest(1)).uri;
-            const anchor2 = (await estateForger.getRequest(2)).uri;
-
-            await expect(estateForger.connect(manager).safeConfirm(
-                1, commissionReceiver.address, anchor1
-            )).to.be.revertedWithCustomError(estateForger, "Tokenized");
-
-            await expect(estateForger.connect(manager).safeConfirm(
-                2, commissionReceiver.address, anchor2
-            )).to.be.revertedWithCustomError(estateForger, "Tokenized");
-        });
-
-        it('4.18.11. confirm tokenization successfully within 60 days after public sale ends', async () => {
-            const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleCurrencies: true,
-                listSampleSellers: true,
-                addSampleRequests: true,
-                fundERC20ForDepositors: true,
-                addDepositions: true,
-            });
-            const {estateForger, manager, commissionReceiver} = fixture;
-
-            const confirmationTimeLimit = 60 * 24 * 60 * 60; // 60 days
-
-            const request = await estateForger.getRequest(1);
-            const publicSaleEndsAt = request.publicSaleEndsAt;
-            await time.setNextBlockTimestamp(publicSaleEndsAt + confirmationTimeLimit - 1);
-
-            const anchor = request.uri;
-
-            await callTransaction(estateForger.connect(manager).safeConfirm(
-                1, commissionReceiver.address, anchor
-            ));
-        });
-
-        it('4.18.12. confirm tokenization unsuccessfully after 60 days after public sale ends', async () => {
-            const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleCurrencies: true,
-                listSampleSellers: true,
-                addSampleRequests: true,
-                fundERC20ForDepositors: true,
-                addDepositions: true,
-            });
-            const {estateForger, manager, commissionReceiver} = fixture;
-
-            const confirmationTimeLimit = 60 * 24 * 60 * 60; // 60 days
-
-            const request = await estateForger.getRequest(1);
-            const publicSaleEndsAt = request.publicSaleEndsAt;
-            await time.setNextBlockTimestamp(publicSaleEndsAt + confirmationTimeLimit);
-
-            const anchor = request.uri;
-
-            await expect(estateForger.connect(manager).safeConfirm(
-                1, commissionReceiver.address, anchor
-            )).to.be.revertedWithCustomError(estateForger, "FailedOwnershipTransfer");
-        });
-
-        it('4.18.13. confirm tokenization unsuccessfully when sold amount is less than min selling amount', async () => {
-            const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleCurrencies: true,
-                listSampleSellers: true,
-                addSampleRequests: true,
-                fundERC20ForDepositors: true,
-            });
-            const {estateForger, manager, commissionReceiver, depositor1} = fixture;
-            
-            const privateSaleEndsAt1 = (await estateForger.getRequest(1)).privateSaleEndsAt;
-            await time.setNextBlockTimestamp(privateSaleEndsAt1);
-            await callTransaction(estateForger.connect(depositor1).deposit(1, 9, { value: ethers.utils.parseEther("100") }));
-
-            const privateSaleEndsAt2 = (await estateForger.getRequest(2)).privateSaleEndsAt;
-            await time.setNextBlockTimestamp(privateSaleEndsAt2);
-            await callTransaction(estateForger.connect(depositor1).deposit(2, 199));
-
-            const anchor = (await estateForger.getRequest(1)).uri;
-
-            await expect(estateForger.connect(manager).safeConfirm(
-                1, commissionReceiver.address, anchor
-            )).to.be.revertedWithCustomError(estateForger, "NotEnoughSoldAmount");
-        });
-
-        it('4.18.14. confirm tokenization unsuccessfully when native token transfer to requester failed', async () => {
-            const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleCurrencies: true,
-                listSampleSellers: true,
-            });
-            const {estateForger, zone1, manager, commissionReceiver, depositor1, deployer, baseTimestamp, admin, admins} = fixture;
-
-            await callEstateForger_UpdateBaseUnitPriceRange(
-                estateForger,
-                admins,
-                ethers.BigNumber.from(0),
-                ethers.constants.MaxUint256,
-                await admin.nonce()
-            );
-
-            const failReceiver = await deployFailReceiver(deployer);
-
-            await estateForger.connect(manager).activateSellerIn(
-                zone1,
-                [failReceiver.address],
-                true
-            );
-
-            const receipt = await callTransaction(estateForger.connect(manager).requestTokenizationWithDuration(
-                failReceiver.address,
-                zone1,
-                "uri",
-                70,
-                10,
-                20,
-                1000000,
-                ethers.constants.AddressZero,
-                3,
-                baseTimestamp + 1e9,
-                1000,
-                2000,
-            ));
-
-            const requestId = receipt.events!.filter(e => e.event === "NewRequest")[0].args![0];
-
-            const privateSaleEndsAt = (await estateForger.getRequest(requestId)).privateSaleEndsAt;
-            await time.setNextBlockTimestamp(privateSaleEndsAt);
-
-            await callTransaction(estateForger.connect(depositor1).deposit(requestId, 10, { value: ethers.utils.parseEther("100") }));
-
-            const anchor = (await estateForger.getRequest(requestId)).uri;
-
-            await expect(estateForger.connect(manager).safeConfirm(
-                requestId, commissionReceiver.address, anchor
-            )).to.be.revertedWithCustomError(estateForger, "FailedTransfer");
-        });
-
-        it('4.18.15. confirm tokenization unsuccessfully when native token transfer to fee receiver failed', async () => {
-            const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleCurrencies: true,
-                listSampleSellers: true,
-                addSampleRequests: true,
-                fundERC20ForDepositors: true,
-                addDepositions: true,
-            });
-            const {estateForger, zone1, manager, commissionReceiver, depositor1, deployer, baseTimestamp, admin, admins} = fixture;
-
-            const failReceiver = await deployFailReceiver(deployer);
-
-            await callTransaction(estateForger.setFeeReceiver(failReceiver.address));
-
-            const anchor = (await estateForger.getRequest(1)).uri;
-
-            await expect(estateForger.connect(manager).safeConfirm(
-                1, commissionReceiver.address, anchor
-            )).to.be.revertedWithCustomError(estateForger, "FailedTransfer");
-        });
-
-        it('4.18.16. confirm tokenization unsuccessfully when native token transfer to commission receiver failed', async () => {
-            const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleCurrencies: true,
-                listSampleSellers: true,
-            });
-            const {estateForger, zone1, manager, depositor1, deployer, baseTimestamp, admin, admins, seller1} = fixture;
-
-            await callEstateForger_UpdateBaseUnitPriceRange(
-                estateForger,
-                admins,
-                ethers.BigNumber.from(0),
-                ethers.constants.MaxUint256,
-                await admin.nonce()
-            );
-
-            const failReceiver = await deployFailReceiver(deployer);
-
-            const receipt = await callTransaction(estateForger.connect(manager).requestTokenizationWithDuration(
-                seller1.address,
-                zone1,
-                "uri",
-                70,
-                10,
-                20,
-                1000000,
-                ethers.constants.AddressZero,
-                3,
-                baseTimestamp + 1e9,
-                1000,
-                2000,
-            ));
-
-            const requestId = receipt.events!.filter(e => e.event === "NewRequest")[0].args![0];
-
-            const privateSaleEndsAt = (await estateForger.getRequest(requestId)).privateSaleEndsAt;
-            await time.setNextBlockTimestamp(privateSaleEndsAt);
-
-            await callTransaction(estateForger.connect(depositor1).deposit(requestId, 10, { value: ethers.utils.parseEther("100") }));
-
-            const anchor = (await estateForger.getRequest(requestId)).uri;
-
-            await expect(estateForger.connect(manager).safeConfirm(
-                requestId, failReceiver.address, anchor
-            )).to.be.revertedWithCustomError(estateForger, "FailedTransfer");
-        });
-
-        it('4.18.17. confirm tokenization unsuccessfully when this contract is reentered', async () => {
-            const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleCurrencies: true,
-                listSampleSellers: true,
-                addSampleRequests: true,
-                fundERC20ForDepositors: true,
-                addDepositions: true,
-            });
-            const {estateForger, zone1, manager, commissionReceiver, depositor1, deployer, baseTimestamp, admin, admins} = fixture;
-
-            let reentrancy = await deployReentrancyERC1155Holder(deployer);
-
-            await callAdmin_AuthorizeManagers(admin, admins, [reentrancy.address], true, await admin.nonce());
-            await callAdmin_ActivateIn(admin, admins, zone1, [reentrancy.address], true, await admin.nonce());
-
-            const requestId = 1;
-            const anchor = (await estateForger.getRequest(requestId)).uri;
-            let reentrancyData = estateForger.interface.encodeFunctionData('safeConfirm', [requestId, reentrancy.address, anchor]);
-
-            await callTransaction(reentrancy.updateReentrancyPlan(estateForger.address, reentrancyData));
-
-            let message = estateForger.interface.encodeFunctionData('safeConfirm', [requestId, reentrancy.address, anchor]);
-
-            await testReentrancy_estateForger(
-                estateForger,
-                reentrancy,
-                async () => {
-                    await expect(reentrancy.call(estateForger.address, message))
-                        .to.be.revertedWithCustomError(estateForger, "FailedTransfer");
-                }
-            );
         });
     });
 

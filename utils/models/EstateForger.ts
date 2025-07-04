@@ -42,6 +42,8 @@ export interface RequestQuote {
     currency: string;
     cashbackThreshold: BigNumber;
     cashbackFundId: BigNumber;
+    feeDenomination: BigNumber;
+    commissionDenomination: BigNumber;
 };
 
 export interface RequestAgenda {

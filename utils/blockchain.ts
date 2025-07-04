@@ -1,6 +1,5 @@
 import { BigNumberish, ethers, Wallet } from 'ethers';
 import { JsonRpcProvider } from '@ethersproject/providers';
-import { MockContract } from '@defi-wonderland/smock';
 
 export function parseEther(x: number) {
     return ethers.utils.parseEther(x.toFixed(18));
@@ -64,7 +63,7 @@ export async function prepareERC20(
         await callTransaction(token.mint(sender.address, amount));
         for (const operator of operators) {
             try {
-                await callTransaction(token.connect(sender).increaseAllowance(operator.address, amount));
+                await callTransaction(token.connect(sender as any).increaseAllowance(operator.address, amount));
             } catch (error) {
                 await callTransaction(sender.call(
                     token.address,
