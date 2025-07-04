@@ -35,7 +35,6 @@ import { deployReentrancyERC20 } from '@utils/deployments/mocks/mockReentrancy/r
 
 interface PassportTokenFixture {
     admin: Admin;
-    feeReceiver: FeeReceiver;
     passportToken: PassportToken;
     currency1: Currency;
     currency2: Currency;
@@ -84,11 +83,6 @@ describe('16. PassportToken', async () => {
             adminAddresses[4],
         ) as Admin;
 
-        const feeReceiver = await deployFeeReceiver(
-            deployer.address,
-            admin.address
-        ) as FeeReceiver;
-
         const passportToken = await deployPassportToken(
             deployer.address,
             admin.address,
@@ -104,7 +98,6 @@ describe('16. PassportToken', async () => {
 
         return {
             admin,
-            feeReceiver,
             passportToken,
             deployer,
             admins,
@@ -130,9 +123,9 @@ describe('16. PassportToken', async () => {
         }
     }
 
-    describe('16.1. initialize(address, address, string, string, string, uint256, uint256)', async () => {
+    describe('16.1. initialize(address, string, string, string, uint256, uint256)', async () => {
         it('16.1.1. Deploy successfully', async () => {
-            const { deployer, admin, feeReceiver } = await beforePassportTokenTest();
+            const { deployer, admin } = await beforePassportTokenTest();
 
             const PassportToken = await ethers.getContractFactory('PassportToken', deployer);
 
@@ -140,7 +133,6 @@ describe('16. PassportToken', async () => {
                 PassportToken,
                 [
                     admin.address,
-                    feeReceiver.address,
                     Initialization.PASSPORT_TOKEN_Name,
                     Initialization.PASSPORT_TOKEN_Symbol,
                     Initialization.PASSPORT_TOKEN_BaseURI,
@@ -151,7 +143,6 @@ describe('16. PassportToken', async () => {
             await passportToken.deployed();
             
             expect(await passportToken.admin()).to.equal(admin.address);
-            expect(await passportToken.feeReceiver()).to.equal(feeReceiver.address);
 
             expect(await passportToken.name()).to.equal(Initialization.PASSPORT_TOKEN_Name);
             expect(await passportToken.symbol()).to.equal(Initialization.PASSPORT_TOKEN_Symbol);
@@ -173,13 +164,12 @@ describe('16. PassportToken', async () => {
         });
 
         it('16.1.2. Deploy unsuccessfully with invalid royalty rate', async () => {
-            const { deployer, admin, feeReceiver } = await beforePassportTokenTest();
+            const { deployer, admin } = await beforePassportTokenTest();
 
             const PassportToken = await ethers.getContractFactory('PassportToken', deployer);
 
             await expect(upgrades.deployProxy(PassportToken, [
                 admin.address,
-                feeReceiver.address,
                 Initialization.PASSPORT_TOKEN_Name,
                 Initialization.PASSPORT_TOKEN_Symbol,
                 Initialization.PASSPORT_TOKEN_BaseURI,

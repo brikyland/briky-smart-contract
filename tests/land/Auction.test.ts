@@ -704,7 +704,9 @@ describe('13. Auction', async () => {
 
             const vestedAmount1_timestamp1 = (await auction.allocationOf(depositor1.address)).mul(timestamp1.sub(endAt)).div(vestingDuration);
 
-            await expect(depositor1_timestamp1_tx).to.emit(auction, 'Withdrawal').withArgs(depositor1.address, vestedAmount1_timestamp1);
+            await expect(depositor1_timestamp1_tx)
+                .to.emit(auction, 'Withdrawal')
+                .withArgs(depositor1.address, vestedAmount1_timestamp1);
 
             expect(await primaryToken.balanceOf(depositor1.address)).to.equal(vestedAmount1_timestamp1);
             expect(await auction.withdrawnAmount(depositor1.address)).to.equal(vestedAmount1_timestamp1);

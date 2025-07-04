@@ -29,7 +29,6 @@ import { deployCurrency } from '@utils/deployments/common/currency';
 
 interface PromotionTokenFixture {
     admin: Admin;
-    feeReceiver: FeeReceiver;
     promotionToken: PromotionToken;
     currency1: Currency;
     currency2: Currency;
@@ -61,26 +60,20 @@ describe('17. PromotionToken', async () => {
             adminAddresses[4],
         ) as Admin;
 
-        const feeReceiver = await deployFeeReceiver(
-            deployer.address,
-            admin.address
-        ) as FeeReceiver;
-
         const promotionToken = await deployPromotionToken(
             deployer.address,
             admin.address,
-            Initialization.PASSPORT_TOKEN_Name,
-            Initialization.PASSPORT_TOKEN_Symbol,
-            Initialization.PASSPORT_TOKEN_Fee,
-            Initialization.PASSPORT_TOKEN_RoyaltyRate,
+            Initialization.PROMOTION_TOKEN_Name,
+            Initialization.PROMOTION_TOKEN_Symbol,
+            Initialization.PROMOTION_TOKEN_Fee,
+            Initialization.PROMOTION_TOKEN_RoyaltyRate,
         ) as PromotionToken;
 
-        const currency1 = await deployCurrency(deployer, "MockCurrency1", "MCK1");
-        const currency2 = await deployCurrency(deployer, "MockCurrency2", "MCK2");
+        const currency1 = await deployCurrency(deployer, "MockCurrency1", "MCK1") as Currency;
+        const currency2 = await deployCurrency(deployer, "MockCurrency2", "MCK2") as Currency;
 
         return {
             admin,
-            feeReceiver,
             promotionToken,
             deployer,
             admins,
@@ -121,9 +114,9 @@ describe('17. PromotionToken', async () => {
         }
     }
 
-    describe('17.1. initialize(address, address, string, string, string, uint256, uint256)', async () => {
+    describe('17.1. initialize(address, string, string, uint256, uint256)', async () => {
         it('17.1.1. Deploy successfully', async () => {
-            const { deployer, admin, feeReceiver } = await beforePromotionTokenTest();
+            const { deployer, admin } = await beforePromotionTokenTest();
 
             const PromotionToken = await ethers.getContractFactory('PromotionToken', deployer);
 
@@ -131,48 +124,45 @@ describe('17. PromotionToken', async () => {
                 PromotionToken,
                 [
                     admin.address,
-                    feeReceiver.address,
-                    Initialization.PASSPORT_TOKEN_Name,
-                    Initialization.PASSPORT_TOKEN_Symbol,
-                    Initialization.PASSPORT_TOKEN_Fee,
-                    Initialization.PASSPORT_TOKEN_RoyaltyRate,
+                    Initialization.PROMOTION_TOKEN_Name,
+                    Initialization.PROMOTION_TOKEN_Symbol,
+                    Initialization.PROMOTION_TOKEN_Fee,
+                    Initialization.PROMOTION_TOKEN_RoyaltyRate,
                 ]
             ) as PromotionToken;
             await promotionToken.deployed();
             
             expect(await promotionToken.admin()).to.equal(admin.address);
-            expect(await promotionToken.feeReceiver()).to.equal(feeReceiver.address);
 
-            expect(await promotionToken.name()).to.equal(Initialization.PASSPORT_TOKEN_Name);
-            expect(await promotionToken.symbol()).to.equal(Initialization.PASSPORT_TOKEN_Symbol);
+            expect(await promotionToken.name()).to.equal(Initialization.PROMOTION_TOKEN_Name);
+            expect(await promotionToken.symbol()).to.equal(Initialization.PROMOTION_TOKEN_Symbol);
             
             expect(await promotionToken.tokenNumber()).to.equal(0);
             expect(await promotionToken.contentNumber()).to.equal(0);            
 
             const fee = await promotionToken.fee();
-            expect(fee).to.equal(Initialization.PASSPORT_TOKEN_Fee);
+            expect(fee).to.equal(Initialization.PROMOTION_TOKEN_Fee);
 
             const royaltyRate = await promotionToken.getRoyaltyRate();
-            expect(royaltyRate.value).to.equal(Initialization.PASSPORT_TOKEN_RoyaltyRate);
+            expect(royaltyRate.value).to.equal(Initialization.PROMOTION_TOKEN_RoyaltyRate);
             expect(royaltyRate.decimals).to.equal(Constant.COMMON_RATE_DECIMALS);
 
             const tx = promotionToken.deployTransaction;
             await expect(tx).to
-                .emit(promotionToken, 'FeeUpdate').withArgs(Initialization.PASSPORT_TOKEN_Fee)
-                .emit(promotionToken, 'RoyaltyRateUpdate').withArgs(Initialization.PASSPORT_TOKEN_RoyaltyRate);
+                .emit(promotionToken, 'FeeUpdate').withArgs(Initialization.PROMOTION_TOKEN_Fee)
+                .emit(promotionToken, 'RoyaltyRateUpdate').withArgs(Initialization.PROMOTION_TOKEN_RoyaltyRate);
         });
 
         it('17.1.2. Deploy unsuccessfully with invalid royalty rate', async () => {
-            const { deployer, admin, feeReceiver } = await beforePromotionTokenTest();
+            const { deployer, admin } = await beforePromotionTokenTest();
 
             const PromotionToken = await ethers.getContractFactory('PromotionToken', deployer);
 
             await expect(upgrades.deployProxy(PromotionToken, [
                 admin.address,
-                feeReceiver.address,
-                Initialization.PASSPORT_TOKEN_Name,
-                Initialization.PASSPORT_TOKEN_Symbol,
-                Initialization.PASSPORT_TOKEN_Fee,
+                Initialization.PROMOTION_TOKEN_Name,
+                Initialization.PROMOTION_TOKEN_Symbol,
+                Initialization.PROMOTION_TOKEN_Fee,
                 Constant.COMMON_RATE_MAX_FRACTION.add(1),
             ])).to.be.reverted;
         });
