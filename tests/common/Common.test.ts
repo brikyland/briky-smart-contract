@@ -23,7 +23,9 @@ import {
     MortgageMarketplace,
     PromotionToken,
     PassportToken,
-    Airdrop
+    Airdrop,
+    PriceWatcher,
+    ReserveVault
 } from '@typechain-types';
 import { deployTreasury } from '@utils/deployments/land/treasury';
 import { deployAdmin } from '@utils/deployments/common/admin';
@@ -48,6 +50,8 @@ import { Initialization as LucraInitialization } from '@tests/lucra/test.initial
 import { deployPassportToken } from '@utils/deployments/lucra/passportToken';
 import { deployPromotionToken } from '@utils/deployments/lucra/promotionToken';
 import { deployAirdrop } from '@utils/deployments/lucra/airdrop';
+import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
+import { deployReserveVault } from '@utils/deployments/common/reserveVault';
 
 interface CommonFixture {
     deployer: any;
@@ -55,6 +59,8 @@ interface CommonFixture {
 
     admin: Admin;
     feeReceiver: FeeReceiver;
+    priceWatcher: PriceWatcher;
+    reserveVault: ReserveVault;
     estateToken: EstateToken;
     estateForger: EstateForger;
     estateMarketplace: EstateMarketplace;
@@ -98,6 +104,16 @@ describe('0. Common', async () => {
             admin.address,
         ) as FeeReceiver;
 
+        const priceWatcher = await deployPriceWatcher(
+            deployer,
+            admin.address,
+        ) as PriceWatcher;
+
+        const reserveVault = await deployReserveVault(
+            deployer,
+            admin.address,
+        ) as ReserveVault;
+
         const estateToken = await deployEstateToken(
             deployer.address,
             admin.address,
@@ -123,7 +139,9 @@ describe('0. Common', async () => {
             admin.address,
             estateToken.address,
             commissionToken.address,
+            priceWatcher.address,
             feeReceiver.address,
+            reserveVault.address,
             LandInitialization.ESTATE_FORGER_FeeRate,
             LandInitialization.ESTATE_FORGER_BaseMinUnitPrice,
             LandInitialization.ESTATE_FORGER_BaseMaxUnitPrice
@@ -214,7 +232,6 @@ describe('0. Common', async () => {
         const passportToken = await deployPassportToken(
             deployer,
             admin.address,
-            feeReceiver.address,
             LucraInitialization.PASSPORT_TOKEN_Name,
             LucraInitialization.PASSPORT_TOKEN_Symbol,
             LucraInitialization.PASSPORT_TOKEN_BaseURI,
@@ -225,7 +242,6 @@ describe('0. Common', async () => {
         const promotionToken = await deployPromotionToken(
             deployer,
             admin.address,
-            passportToken.address,
             LucraInitialization.PROMOTION_TOKEN_Name,
             LucraInitialization.PROMOTION_TOKEN_Symbol,
             LucraInitialization.PROMOTION_TOKEN_Fee,
@@ -239,6 +255,8 @@ describe('0. Common', async () => {
             admins,
             admin,
             feeReceiver,
+            priceWatcher,
+            reserveVault,
             estateToken,
             estateForger,
             estateMarketplace,
@@ -261,10 +279,12 @@ describe('0. Common', async () => {
     describe('0.1. version', async () => {
         it('0.1.1. Return correct version for each contract', async () => {
             const fixture = await loadFixture(commonFixture);
-            const { admin, feeReceiver, estateForger, estateToken, estateMarketplace, commissionToken, commissionMarketplace, treasury, primaryToken, stakeToken, distributor, dripDistributor, auction, mortgageToken, mortgageMarketplace, passportToken, promotionToken, airdrop } = fixture;
+            const { admin, feeReceiver, priceWatcher, reserveVault, estateForger, estateToken, estateMarketplace, commissionToken, commissionMarketplace, treasury, primaryToken, stakeToken, distributor, dripDistributor, auction, mortgageToken, mortgageMarketplace, passportToken, promotionToken, airdrop } = fixture;
 
             expect(await admin.version()).to.equal('v1.1.1');
             expect(await feeReceiver.version()).to.equal('v1.1.1');
+            expect(await priceWatcher.version()).to.equal('v1.1.1');
+            expect(await reserveVault.version()).to.equal('v1.1.1');
             expect(await estateToken.version()).to.equal('v1.1.1');
             expect(await estateForger.version()).to.equal('v1.1.1');
             expect(await estateMarketplace.version()).to.equal('v1.1.1');
@@ -311,15 +331,17 @@ describe('0. Common', async () => {
             }
 
             const fixture = await loadFixture(commonFixture);
-            const { admin, feeReceiver, estateToken, estateForger, estateMarketplace, commissionToken, commissionMarketplace, treasury, primaryToken, stakeToken, distributor, dripDistributor, auction, mortgageToken, mortgageMarketplace, passportToken, promotionToken, airdrop } = fixture;
+            const { admin, feeReceiver, priceWatcher, reserveVault, estateToken, estateForger, estateMarketplace, commissionToken, commissionMarketplace, treasury, primaryToken, stakeToken, distributor, dripDistributor, auction, mortgageToken, mortgageMarketplace, passportToken, promotionToken, airdrop } = fixture;
 
             await testReceiveNotExecuteAnyCode(admin, 28223);
             await testReceiveNotExecuteAnyCode(feeReceiver, 28228);
+            await testReceiveNotExecuteAnyCode(priceWatcher, 28233);
+            await testReceiveNotExecuteAnyCode(reserveVault, 28228);
             await testReceiveNotExecuteAnyCode(estateToken, 28228);
             await testReceiveNotExecuteAnyCode(estateForger, 28228);
             await testReceiveNotExecuteAnyCode(estateMarketplace, 28223);
             await testReceiveNotExecuteAnyCode(commissionToken, 28228);
-            await testReceiveNotExecuteAnyCode(commissionMarketplace, 28236);
+            await testReceiveNotExecuteAnyCode(commissionMarketplace, 28241);
             await testReceiveNotExecuteAnyCode(treasury, 28236);
             await testReceiveNotExecuteAnyCode(primaryToken, 28228);
             await testReceiveNotExecuteAnyCode(stakeToken, 28228);

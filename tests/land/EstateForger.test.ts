@@ -1133,6 +1133,38 @@ describe('4. EstateForger', async () => {
         });
     });
 
+    describe('4.10. getRequest(uint256)', async () => {
+        it('4.10.1. return successfully', async () => {
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addEstateForgerToVault: true,
+            });
+            const { estateForger } = fixture;
+
+            await expect(estateForger.getRequest(1)).to.not.be.reverted;
+            await expect(estateForger.getRequest(2)).to.not.be.reverted;
+        });
+
+        it('4.10.2. revert with invalid request id', async () => {
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleSellers: true,
+                addSampleRequests: true,
+                addEstateForgerToVault: true,
+            });
+            const { estateForger } = fixture;
+
+            await expect(estateForger.getRequest(0))
+                .to.be.revertedWithCustomError(estateForger, 'InvalidRequestId');
+            await expect(estateForger.getRequest(3))
+                .to.be.revertedWithCustomError(estateForger, 'InvalidRequestId');
+        });
+    });
+
     describe('4.10. requestTokenizationWithDuration(address, (bytes32, string, uint8, uint40), (uint256, uint256, uint256), (uint256, address, uint256, uint256, address[], uint256[]), uint40, uint40)', async () => {
         interface RequestTokenizationWithDurationData {
             seller: string;
@@ -5390,7 +5422,7 @@ describe('4. EstateForger', async () => {
             );
             await expect(estateForger.connect(manager).safeConfirm(
                 1, commissionReceiver.address, anchor1, { value: ethers.utils.parseEther("1000") }
-            )).to.be.not.reverted;
+            )).to.not.be.reverted;
 
             const anchor2 = ethers.utils.solidityKeccak256(
                 ["string"],
@@ -5398,7 +5430,7 @@ describe('4. EstateForger', async () => {
             );
             await expect(estateForger.connect(manager).safeConfirm(
                 2, commissionReceiver.address, anchor2, { value: ethers.utils.parseEther("1000") }
-            )).to.be.not.reverted;
+            )).to.not.be.reverted;
         });
 
         it('4.22.2. confirm tokenization unsuccessfully by non-manager', async () => {

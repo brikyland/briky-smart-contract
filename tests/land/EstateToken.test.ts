@@ -16,6 +16,7 @@ import {
     ICommon__factory,
     IERC1155Upgradeable__factory,
     IERC1155MetadataURIUpgradeable__factory,
+    PriceWatcher,
 } from '@typechain-types';
 import { callTransaction, getSignatures, prepareNativeToken, randomWallet } from '@utils/blockchain';
 import { Constant } from '@tests/test.constant';
@@ -45,10 +46,12 @@ import { getBytes4Hex, getInterfaceID, randomBigNumber } from '@utils/utils';
 import { OrderedMap } from '@utils/utils';
 import { Initialization as LandInitialization } from '@tests/land/test.initialization';
 import { deployReserveVault } from '@utils/deployments/common/reserveVault';
+import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
 
 interface EstateTokenFixture {
     admin: Admin;
     feeReceiver: FeeReceiver;
+    priceWatcher: PriceWatcher;
     currency: Currency;
     reserveVault: ReserveVault;
     estateToken: MockEstateToken;
@@ -107,6 +110,11 @@ describe('3. EstateToken', async () => {
             admin.address
         ) as FeeReceiver;
 
+        const priceWatcher = await deployPriceWatcher(
+            deployer.address,
+            admin.address,
+        ) as PriceWatcher;
+
         const reserveVault = await deployReserveVault(
             deployer.address,
             admin.address,
@@ -146,6 +154,7 @@ describe('3. EstateToken', async () => {
                 admin.address,
                 estateToken.address,
                 commissionToken.address,
+                priceWatcher.address,
                 feeReceiver.address,
                 reserveVault.address,
                 LandInitialization.ESTATE_FORGER_FeeRate,
@@ -163,6 +172,7 @@ describe('3. EstateToken', async () => {
         return {
             admin,
             feeReceiver,
+            priceWatcher,
             currency,
             reserveVault,
             estateToken,
@@ -860,64 +870,7 @@ describe('3. EstateToken', async () => {
             return { baseTimestamp, defaultParams };
         };
 
-        it('3.8.1. tokenize estate successfully with no commission receiver', async () => {
-            const { estateToken, estateForger, commissionToken, admin, admins } = await beforeEstateTokenTest({
-                updateCommissionToken: true,
-                authorizeEstateForger: true,
-            });
-            const { baseTimestamp, defaultParams } = await beforeTokenizeEstateTest();
-
-            await callAdmin_DeclareZones(
-                admin,
-                admins,
-                [defaultParams.zone],
-                true,
-                await admin.nonce()
-            );
-
-            await time.setNextBlockTimestamp(baseTimestamp);
-
-            let tx = await estateForger.call(estateToken.address, estateToken.interface.encodeFunctionData('tokenizeEstate', [
-                defaultParams.totalSupply,
-                defaultParams.zone,
-                defaultParams.tokenizationId,
-                defaultParams.uri,
-                defaultParams.expireAt,
-                defaultParams.decimals,
-                defaultParams.commissionReceiverAddress,
-            ]));
-
-            await tx.wait();
-
-            await expect(tx).to
-                .emit(estateToken, 'NewToken')
-                .withArgs(
-                    1,
-                    defaultParams.zone,
-                    defaultParams.tokenizationId,
-                    estateForger.address,
-                    baseTimestamp,
-                    defaultParams.expireAt,
-                    defaultParams.decimals,
-                );
-
-            const estate = await estateToken.getEstate(1);
-            expect(estate.zone).to.equal(defaultParams.zone);
-            expect(estate.tokenizationId).to.equal(defaultParams.tokenizationId);
-            expect(estate.tokenizer).to.equal(estateForger.address);
-            expect(estate.tokenizeAt).to.equal(baseTimestamp);
-            expect(estate.expireAt).to.equal(defaultParams.expireAt);
-            expect(estate.decimals).to.equal(defaultParams.decimals);
-            expect(estate.isDeprecated).to.equal(false);
-
-            expect(await estateToken.uri(1)).to.equal(LandInitialization.ESTATE_TOKEN_BaseURI + defaultParams.uri);
-
-            expect(await estateToken.balanceOf(estateForger.address, 1)).to.equal(10_000);
-
-            expect(await commissionToken.exists(1)).to.equal(false);
-        });
-
-        it('3.8.2. tokenize estate successfully with commission receiver', async () => {
+        it('3.8.1. tokenize estate successfully with commission receiver', async () => {
             const { estateToken, estateForger, commissionToken, admin, admins } = await beforeEstateTokenTest({
                 updateCommissionToken: true,
                 authorizeEstateForger: true,
@@ -974,6 +927,35 @@ describe('3. EstateToken', async () => {
 
             expect(await commissionToken.exists(1)).to.equal(true);
             expect(await commissionToken.ownerOf(1)).to.equal(defaultParams.commissionReceiverAddress);
+        });
+
+        it('3.8.2. tokenize estate unsuccessfully with no commission receiver', async () => {
+            const { estateToken, estateForger, commissionToken, admin, admins } = await beforeEstateTokenTest({
+                updateCommissionToken: true,
+                authorizeEstateForger: true,
+            });
+            const { baseTimestamp, defaultParams } = await beforeTokenizeEstateTest();
+
+            await callAdmin_DeclareZones(
+                admin,
+                admins,
+                [defaultParams.zone],
+                true,
+                await admin.nonce()
+            );
+
+            await time.setNextBlockTimestamp(baseTimestamp);
+
+            await expect(estateForger.call(estateToken.address, estateToken.interface.encodeFunctionData('tokenizeEstate', [
+                defaultParams.totalSupply,
+                defaultParams.zone,
+                defaultParams.tokenizationId,
+                defaultParams.uri,
+                defaultParams.expireAt,
+                defaultParams.decimals,
+                defaultParams.commissionReceiverAddress,
+            ]))).to.be.revertedWith("ERC721: mint to the zero address");
+
         });
 
         it('3.8.3. tokenize estate unsuccessfully when tokenizer is not authorized', async () => {
