@@ -12,14 +12,12 @@ IEstateTokenizer {
         uint256 estateId;
         bytes32 zone;
         string uri;
-        uint8 decimals;
         uint40 expireAt;
     }
 
     struct RequestEstateInput {
         bytes32 zone;
         string uri;
-        uint8 decimals;
         uint40 expireAt;
     }
 
@@ -183,23 +181,7 @@ IEstateTokenizer {
         uint40 publicSaleEndsAt
     ) external returns (uint256 requestId);
 
-    function updateRequestSeller(
-        uint256 _requestId,
-        address _seller
-    ) external;
     function updateRequestURI(uint256 requestId, string calldata uri) external;
-    function updateRequestEstate(
-        uint256 _requestId,
-        RequestEstateInput calldata _estate
-    ) external;
-    function updateRequestQuota(
-        uint256 _requestId,
-        RequestQuotaInput calldata _quota
-    ) external;
-    function updateRequestQuote(
-        uint256 _requestId,
-        RequestQuoteInput calldata _quote
-    ) external;
     function updateRequestAgenda(
         uint256 _requestId,
         uint40 _privateSaleEndsAt,
@@ -209,11 +191,6 @@ IEstateTokenizer {
     function withdrawDeposit(uint256 requestId) external returns (uint256 value);
     function withdrawToken(uint256 requestId) external returns (uint256 amount);
 
-    function safeConfirm(
-        uint256 requestId,
-        address commissionReceiver,
-        bytes32 anchor
-    ) external payable returns (uint256 estateId);
     function safeDeposit(
         uint256 requestId,
         uint256 quantity,

@@ -179,7 +179,7 @@ ReentrancyGuardUpgradeable {
 
         IEstateToken estateTokenContract = IEstateToken(estateToken);
         uint256 tokenId = offer.tokenId;
-        uint256 value = offer.unitPrice.scale(Rate(_amount, estateTokenContract.getEstate(tokenId).decimals));
+        uint256 value = offer.unitPrice.scale(Rate(_amount, estateTokenContract.decimals()));
         (
             address royaltyReceiver,
             uint256 royaltyAmount

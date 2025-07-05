@@ -26,8 +26,7 @@ IERC1155MetadataURIUpgradeable {
         uint256 indexed tokenizationId,
         address tokenizer,
         uint40 tokenizeAt,
-        uint40 expireAt,
-        uint8 decimals
+        uint40 expireAt
     );
     event EstateDeprecation(uint256 indexed estateId);
     event EstateExpirationExtension(uint256 indexed estateId, uint40 expireAt);
@@ -35,6 +34,8 @@ IERC1155MetadataURIUpgradeable {
     error Deprecated();
     error InvalidEstateId();
     error InvalidTokenizer(address account);
+
+    function decimals() external view returns (uint8 decimals);
 
     function commissionToken() external view returns (address commissionToken);
     function feeReceiver() external view returns (address feeReceiver);
@@ -54,7 +55,6 @@ IERC1155MetadataURIUpgradeable {
         uint256 tokenizationId,
         string calldata uri,
         uint40 expireAt,
-        uint8 decimals,
         address commissionReceiver
     ) external returns (uint256 estateId);
 }

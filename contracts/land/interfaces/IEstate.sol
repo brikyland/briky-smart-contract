@@ -8,7 +8,6 @@ interface IEstate {
         address tokenizer;
         uint40 tokenizeAt;
         uint40 expireAt;
-        uint8 decimals;
         bool isDeprecated;
     }
 }
