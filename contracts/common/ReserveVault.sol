@@ -192,6 +192,9 @@ ReentrancyGuardUpgradeable {
         uint256 _quantity
     ) external validFund(_fundId) nonReentrant whenNotPaused {
         Fund memory fund = funds[_fundId];
+        if (msg.sender != fund.initiator) {
+            revert Unauthorized();
+        }
 
         if (fund.isSufficient == false || _quantity > fund.totalQuantity) {
             revert InsufficientFunds();
