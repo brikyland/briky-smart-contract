@@ -1170,7 +1170,7 @@ describe('10. StakeToken', async () => {
             return operations;
         }
         
-        it('10.10.2. return correct balance in a few staking and rewarding operations', async () => {
+        it('10.10.1. return correct balance in a few staking and rewarding operations', async () => {
             const fixture = await setupBeforeTest({
                 setFeeRate: true,
                 initializeRewarding: true,
@@ -1192,7 +1192,7 @@ describe('10. StakeToken', async () => {
             await testBalanceAfterOperations(fixture, operations);
         });
 
-        it('10.10.3. return correct balance in 1000 random operations', async () => {
+        it('10.10.2. return correct balance in 1000 random operations', async () => {
             const fixture = await setupBeforeTest({
                 setFeeRate: true,
                 initializeRewarding: true,
@@ -1259,8 +1259,8 @@ describe('10. StakeToken', async () => {
         });
     });
 
-    describe('10.11. transfer(address, uint256)', async () => {
-        it('10.11.1. transfer successfully', async () => {
+    describe('10.12. transfer(address, uint256)', async () => {
+        it('10.12.1. transfer successfully', async () => {
             const { stakeToken1, staker1, staker2 } = await setupBeforeTest({
                 setFeeRate: true,
                 initializeRewarding: true,

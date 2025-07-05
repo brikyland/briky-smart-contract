@@ -124,5 +124,8 @@
     "mocha-junit-reporter": "^2.2.0",
     "mocha-multi-reporters": "^1.5.1",
     "tsconfig-paths": "^4.2.0"
+  },
+  "dependencies": {
+    "glob": "^11.0.3"
   }
 }

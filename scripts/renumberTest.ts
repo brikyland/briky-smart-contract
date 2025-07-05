@@ -1,9 +1,8 @@
 import { replaceFromIndex } from "@utils/utils";
 import fs from "fs"
+import { globSync } from "glob";
 
-function printInterfaceIds() {
-    const filePath = "tests/lucra/PromotionToken.test.ts";
-    const outputPath = "tests/lucra/PromotionToken.test.renumbered.ts";
+function renumberTest(filePath: string, outputPath: string) {
     let file = fs.readFileSync(filePath, "utf8");
 
     const testNumberPattern = new RegExp(`describe(\\.only)?\\(["']([0-9]+)\\.`, 'g');
@@ -43,6 +42,14 @@ function printInterfaceIds() {
     }
     
     fs.writeFileSync(outputPath, file, "utf8");
+}
+
+function printInterfaceIds() {
+    const testFiles = globSync("tests/**/*.test.ts");
+
+    for (const file of testFiles) {
+        renumberTest(file, file);
+    }
 }
 
 printInterfaceIds(); 

@@ -973,7 +973,7 @@ describe('5. EstateMarketplace', async () => {
     });
 
     describe('5.7. buy(uint256, uint256)', async () => {
-        it('5.7.2. buy token successfully in all native/erc20 and exclusive/non-exclusive combinations', async () => {
+        it('5.7.1. buy token successfully in all native/erc20 and exclusive/non-exclusive combinations', async () => {
             const fixture = await beforeEstateMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleEstateToken: true,
@@ -1007,7 +1007,7 @@ describe('5. EstateMarketplace', async () => {
             }
         });
 
-        it('5.7.3. buy token successfully at very large amount in all native/erc20 and exclusive/non-exclusive combinations', async () => {
+        it('5.7.2. buy token successfully at very large amount in all native/erc20 and exclusive/non-exclusive combinations', async () => {
             const fixture = await beforeEstateMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleEstateToken: true,
@@ -1043,7 +1043,7 @@ describe('5. EstateMarketplace', async () => {
             }            
         });
 
-        it('5.7.4. buy token successfully in 10 random test cases', async () => {
+        it('5.7.3. buy token successfully in 10 random test cases', async () => {
             const fixture = await beforeEstateMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleEstateToken: true,
@@ -1111,7 +1111,7 @@ describe('5. EstateMarketplace', async () => {
             }
         });
 
-        it('5.7.5. buy token unsuccessfully when paused', async () => {
+        it('5.7.4. buy token unsuccessfully when paused', async () => {
             const fixture = await beforeEstateMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleEstateToken: true,
@@ -1125,7 +1125,7 @@ describe('5. EstateMarketplace', async () => {
                 .to.be.revertedWith("Pausable: paused");
         });
 
-        it('5.7.6. buy token unsuccessfully with invalid offer id', async () => {
+        it('5.7.5. buy token unsuccessfully with invalid offer id', async () => {
             const fixture = await beforeEstateMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleEstateToken: true,
@@ -1141,7 +1141,7 @@ describe('5. EstateMarketplace', async () => {
                 .to.be.revertedWithCustomError(estateMarketplace, "InvalidOfferId");
         });
 
-        it('5.7.7. buy token unsuccessfully when seller buy their own token', async () => {
+        it('5.7.6. buy token unsuccessfully when seller buy their own token', async () => {
             const fixture = await beforeEstateMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleEstateToken: true,
@@ -1157,7 +1157,7 @@ describe('5. EstateMarketplace', async () => {
                 .to.be.revertedWithCustomError(estateMarketplace, "InvalidBuying");
         });
 
-        it('5.7.8. buy token unsuccessfully when offer is not selling', async () => {
+        it('5.7.7. buy token unsuccessfully when offer is not selling', async () => {
             const fixture = await beforeEstateMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleEstateToken: true,
@@ -1172,7 +1172,7 @@ describe('5. EstateMarketplace', async () => {
                 .to.be.revertedWithCustomError(estateMarketplace, "InvalidBuying");
         });
 
-        it('5.7.9. buy token unsuccessfully with indivisible offer', async () => {
+        it('5.7.8. buy token unsuccessfully with indivisible offer', async () => {
             const fixture = await beforeEstateMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleEstateToken: true,
@@ -1191,7 +1191,7 @@ describe('5. EstateMarketplace', async () => {
                 .to.be.revertedWithCustomError(estateMarketplace, "NotDivisible");
         });
 
-        it('5.7.10. buy token unsuccessfully when there is not enough tokens to sell', async () => {
+        it('5.7.9. buy token unsuccessfully when there is not enough tokens to sell', async () => {
             const fixture = await beforeEstateMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleEstateToken: true,
@@ -1206,7 +1206,7 @@ describe('5. EstateMarketplace', async () => {
                 .to.be.revertedWithCustomError(estateMarketplace, "NotEnoughTokensToSell");
         });
 
-        it('5.7.11. buy token unsuccessfully with insufficient native token', async () => {
+        it('5.7.10. buy token unsuccessfully with insufficient native token', async () => {
             const fixture = await beforeEstateMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleEstateToken: true,
@@ -1218,7 +1218,7 @@ describe('5. EstateMarketplace', async () => {
                 .to.be.revertedWithCustomError(estateMarketplace, "InsufficientValue");
         });
 
-        it('5.7.12. buy token unsuccessfully when native token transfer to seller failed', async () => {
+        it('5.7.11. buy token unsuccessfully when native token transfer to seller failed', async () => {
             const fixture = await beforeEstateMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleEstateToken: true,
@@ -1246,7 +1246,7 @@ describe('5. EstateMarketplace', async () => {
                 .to.be.revertedWithCustomError(estateMarketplace, "FailedTransfer");
         });
 
-        it('5.7.13. buy token unsuccessfully when native token transfer to royalty receiver failed', async () => {
+        it('5.7.12. buy token unsuccessfully when native token transfer to royalty receiver failed', async () => {
             const fixture = await beforeEstateMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleEstateToken: true,
@@ -1263,7 +1263,7 @@ describe('5. EstateMarketplace', async () => {
                 .to.be.revertedWithCustomError(estateMarketplace, "FailedTransfer");
         });
 
-        it('5.7.14. buy token unsuccessfully when native token transfer to commission receiver failed', async () => {
+        it('5.7.13. buy token unsuccessfully when native token transfer to commission receiver failed', async () => {
             const fixture = await beforeEstateMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleEstateToken: true,
@@ -1293,7 +1293,7 @@ describe('5. EstateMarketplace', async () => {
                 .to.be.revertedWithCustomError(estateMarketplace, "FailedTransfer");
         });
 
-        it('5.7.15. buy token unsuccessfully when refund to sender failed', async () => {
+        it('5.7.14. buy token unsuccessfully when refund to sender failed', async () => {
             const fixture = await beforeEstateMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleEstateToken: true,
@@ -1310,7 +1310,7 @@ describe('5. EstateMarketplace', async () => {
                 .to.be.revertedWithCustomError(estateMarketplace, "FailedRefund");
         });
 
-        it('5.7.16. buy token unsuccessfully when this contract is reentered', async () => {
+        it('5.7.15. buy token unsuccessfully when this contract is reentered', async () => {
             const fixture = await beforeEstateMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleEstateToken: true,

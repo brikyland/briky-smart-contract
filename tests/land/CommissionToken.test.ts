@@ -442,8 +442,8 @@ describe('6. CommissionToken', async () => {
         });
     });
 
-    describe('6.6. mint(address, uint256)', async () => {
-        it('6.6.1. mint successfully by estateToken contract', async () => {
+    describe('6.7. mint(address, uint256)', async () => {
+        it('6.7.1. mint successfully by estateToken contract', async () => {
             const { estateToken, commissionToken, receiver1, receiver2 } = await beforeCommissionTokenTest();
 
             let tx = await estateToken.call(commissionToken.address, commissionToken.interface.encodeFunctionData('mint', [
@@ -471,7 +471,7 @@ describe('6. CommissionToken', async () => {
             expect(await commissionToken.tokenURI(2)).to.equal(LandInitialization.COMMISSION_TOKEN_BaseURI);
         });
 
-        it('6.6.2. mint unsuccessfully by unauthorized sender', async () => {
+        it('6.7.2. mint unsuccessfully by unauthorized sender', async () => {
             const { commissionToken, receiver1, receiver2 } = await beforeCommissionTokenTest();
 
             await expect(commissionToken.mint(receiver1.address, 1))
@@ -480,7 +480,7 @@ describe('6. CommissionToken', async () => {
                 .to.be.revertedWithCustomError(commissionToken, 'Unauthorized');
         });
 
-        it('6.6.3. mint unsuccessfully when already minted', async () => {
+        it('6.7.3. mint unsuccessfully when already minted', async () => {
             const { estateToken, commissionToken, receiver1, receiver2 } = await beforeCommissionTokenTest();
 
             await callTransaction(estateToken.call(commissionToken.address, commissionToken.interface.encodeFunctionData('mint', [
@@ -495,8 +495,8 @@ describe('6. CommissionToken', async () => {
         });
     });
 
-    describe('6.7. supportsInterface(bytes4)', async () => {
-        it('6.7.1. return true for appropriate interface', async () => {
+    describe('6.8. supportsInterface(bytes4)', async () => {
+        it('6.8.1. return true for appropriate interface', async () => {
             const { commissionToken } = await beforeCommissionTokenTest();
 
             const IERC4906Upgradeable = IERC4906Upgradeable__factory.createInterface();
