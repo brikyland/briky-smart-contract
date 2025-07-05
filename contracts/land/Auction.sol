@@ -147,7 +147,7 @@ ReentrancyGuardUpgradeable {
 
         uint256 amount = vestedAmount - withdrawnAmount[msg.sender];
         withdrawnAmount[msg.sender] = vestedAmount;
-        CurrencyHandler.sendERC20(primaryToken, amount);
+        CurrencyHandler.sendERC20(primaryToken, msg.sender, amount);
 
         emit Withdrawal(msg.sender, amount);
 
