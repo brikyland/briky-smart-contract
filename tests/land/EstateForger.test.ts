@@ -1882,7 +1882,7 @@ describe('4. EstateForger', async () => {
             await expectRevertWithCustomError(estateForger, manager, data, 'InvalidInput');
         });
 
-        it('4.8.5. requestTokenizationWithTimestamp unsuccessfully when private sale ends before public sale', async () => {
+        it('4.8.5. requestTokenizationWithTimestamp unsuccessfully when private sale ends after public sale', async () => {
             const fixture = await beforeEstateForgerTest({
                 listSampleCurrencies: true,
                 addZoneForExecutive: true,

@@ -48,6 +48,7 @@ import { deployProxyCaller } from '@utils/deployments/mocks/proxyCaller';
 import { deployReserveVault } from '@utils/deployments/common/reserveVault';
 import { callReserveVault_AuthorizeInitiator, callReserveVault_Pause } from '@utils/callWithSignatures/reserveVault';
 import { deployMockInitiator } from '@utils/deployments/mocks/mockInitiator';
+import { deployFailReceiver } from '@utils/deployments/mocks/failReceiver';
 
 interface ReserveVaultFixture {
     admin: Admin;
@@ -203,7 +204,7 @@ describe('20. ReserveVault', async () => {
                 await prepareERC20(
                     currency,
                     initiators,
-                    [reserveVault],
+                    [reserveVault as any],
                     ethers.utils.parseEther('100')
                 );
             }
@@ -822,26 +823,20 @@ describe('20. ReserveVault', async () => {
             });
 
             const initiator = initiators[0];
-            const invalidFundId = 0;
-            const expansionQuantity = 2000;
-            const callData0 = reserveVault.interface.encodeFunctionData(
-                'expandFund',
-                [
-                    invalidFundId,
-                    expansionQuantity,
-                ]
-            );
-            const callData3 = reserveVault.interface.encodeFunctionData(
-                'expandFund',
-                [
-                    3,
-                    expansionQuantity,
-                ]
-            );
-            await expect(initiator.call(reserveVault.address, callData0))
-                .to.be.revertedWithCustomError(reserveVault, 'InvalidFundId');
-            await expect(initiator.call(reserveVault.address, callData3))
-                .to.be.revertedWithCustomError(reserveVault, 'InvalidFundId');
+            const invalidFundIds = [0, 3];
+
+            for (const invalidFundId of invalidFundIds) {
+                const expansionQuantity = 2000;
+                const callData = reserveVault.interface.encodeFunctionData(
+                    'expandFund',
+                    [
+                        invalidFundId,
+                        expansionQuantity,
+                    ]
+                );
+                await expect(initiator.call(reserveVault.address, callData))
+                    .to.be.revertedWithCustomError(reserveVault, 'InvalidFundId');
+            }
         });
 
         it('20.4.3. expand fund unsuccessfully when paused', async () => {
@@ -1131,7 +1126,62 @@ describe('20. ReserveVault', async () => {
             await expect(initiator.call(reserveVault.address, callData, { value: initTotalQuantity.mul(nativeDenomination) })).to.be.revertedWith('ERC20: insufficient allowance');
         });
 
-        it('20.5.9. provide fund unsuccessfully when receiving native currency failed', async () => {
+        it('20.5.9. provide fund unsuccessfully when refunding native currency failed', async () => {
+            const { reserveVault, admins, deployer, admin, currencies } = await beforeReserveVaultTest({
+                authorizeInitiators: true,
+                listSampleCurrencies: true,
+                listSampleFunds: true,
+                listSampleDeposits: true,
+                fundInitiator: true,
+            });
+
+            const failReceiver = await deployFailReceiver(deployer);
+
+            await callReserveVault_AuthorizeInitiator(
+                reserveVault,
+                admins,
+                [failReceiver.address],
+                true,
+                await admin.nonce(),
+            );
+
+            const mainCurrency = currencies[0].address;
+            const mainDenomination = 100
+            const extraCurrencies = [currencies[1].address, ethers.constants.AddressZero];
+            const extraDenominations = [200, 400];
+            await callTransaction(failReceiver.call(
+                reserveVault.address,
+                reserveVault.interface.encodeFunctionData(
+                    'initiateFund',
+                    [
+                        mainCurrency,
+                        mainDenomination,
+                        extraCurrencies,
+                        extraDenominations,
+                    ]
+                )
+            ));
+
+            await prepareNativeToken(
+                ethers.provider,
+                deployer,
+                [failReceiver],
+                ethers.utils.parseEther('100')
+            );
+
+            await callTransaction(failReceiver.activate(true));
+
+            const fundId = 2;
+            const initTotalQuantity = (await reserveVault.getFund(fundId)).totalQuantity;
+            const nativeDenomination = 400;
+
+            const callData = reserveVault.interface.encodeFunctionData(
+                'provideFund',
+                [fundId],
+            );
+
+            await expect(failReceiver.call(reserveVault.address, callData, { value: initTotalQuantity.mul(nativeDenomination).add(1) })).to.be.revertedWithCustomError(reserveVault, 'FailedRefund');
+            
         });
 
         it('20.5.10. provide fund unsuccessfully when this contract is reentered', async () => {

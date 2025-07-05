@@ -7,8 +7,16 @@ import "@openzeppelin/contracts-upgradeable/token/ERC721/utils/ERC721HolderUpgra
 import { Revert } from "../lib/Revert.sol";
 
 contract FailReceiver is ERC1155HolderUpgradeable, ERC721HolderUpgradeable {
+    bool isActive;
+
     receive() external payable {
-        revert("Fail");
+        if (isActive) {
+            revert("Fail");
+        }
+    }
+
+    function activate(bool _isActive) external {
+        isActive = _isActive;
     }
 
     function call(address _to, bytes calldata _data) external payable {
