@@ -304,7 +304,6 @@ describe('14. MortgageToken', async () => {
                 10,
                 "Token1_URI",
                 currentTimestamp + 1e8,
-                3,
                 commissionReceiver.address,
             ]));
             await estateForger.call(estateToken.address, estateToken.interface.encodeFunctionData('tokenizeEstate', [
@@ -313,7 +312,6 @@ describe('14. MortgageToken', async () => {
                 10,
                 "Token2_URI",
                 currentTimestamp + 2e8,
-                3,
                 commissionReceiver.address,
             ]));
 
@@ -1077,7 +1075,6 @@ describe('14. MortgageToken', async () => {
                 currentTokenizationId,
                 "TestURI",
                 currentTimestamp + 1e9,
-                0,
                 commissionReceiverAddress,
             ])));
 

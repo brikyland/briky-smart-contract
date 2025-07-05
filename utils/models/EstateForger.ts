@@ -3,7 +3,6 @@ import { BigNumber } from "ethers";
 export interface RequestEstateInput {
     zone: string;
     uri: string;
-    decimals: number;
     expireAt: number;
 };
 
@@ -26,7 +25,6 @@ export interface RequestEstate {
     estateId: BigNumber;
     zone: string;
     uri: string;
-    decimals: number;
     expireAt: number;
 };
 

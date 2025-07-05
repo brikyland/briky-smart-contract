@@ -276,7 +276,6 @@ describe('5. EstateMarketplace', async () => {
                 10,
                 "Token1_URI",
                 currentTimestamp + 1e8,
-                3,
                 commissionReceiver.address,
             ]));
 
@@ -286,7 +285,6 @@ describe('5. EstateMarketplace', async () => {
                 10,
                 "Token2_URI",
                 currentTimestamp + 2e8,
-                3,
                 commissionReceiver.address,
             ]));
 
@@ -302,10 +300,10 @@ describe('5. EstateMarketplace', async () => {
 
         if (listSampleOffers) {
             await callTransaction(estateMarketplace.connect(seller1).list(
-                1, 150_000, 100000, ethers.constants.AddressZero, true
+                1, 150_000, ethers.utils.parseEther("100"), ethers.constants.AddressZero, true
             ));
             await callTransaction(estateMarketplace.connect(seller2).list(
-                2, 200, 500000, currency.address, true
+                2, 200, ethers.utils.parseEther("500000"), currency.address, true
             ));
 
             await callTransaction(estateToken.connect(seller1).setApprovalForAll(estateMarketplace.address, true));
@@ -485,12 +483,26 @@ describe('5. EstateMarketplace', async () => {
                 listSampleCurrencies: true,
                 listSampleEstateToken: true,
             });
-            let tx = await estateMarketplace.connect(seller1).list(1, 150_000, 100000, ethers.constants.AddressZero, false);
+            let tx = await estateMarketplace.connect(seller1).list(
+                1,
+                150_000,
+                ethers.utils.parseEther("100"),
+                ethers.constants.AddressZero,
+                false
+            );
             await tx.wait();
 
             expect(tx).to
                 .emit(estateMarketplace, 'NewOffer')
-                .withArgs(1, 1, seller1.address, 150_000, 100000, ethers.constants.AddressZero, false);
+                .withArgs(
+                    1,
+                    1,
+                    seller1.address,
+                    150_000,
+                    ethers.utils.parseEther("100"),
+                    ethers.constants.AddressZero,
+                    false
+                );
 
             expect(await estateMarketplace.offerNumber()).to.equal(1);
 
@@ -498,18 +510,32 @@ describe('5. EstateMarketplace', async () => {
             expect(offer.tokenId).to.equal(1);
             expect(offer.sellingAmount).to.equal(150_000);
             expect(offer.soldAmount).to.equal(0);
-            expect(offer.unitPrice).to.equal(100000);
+            expect(offer.unitPrice).to.equal(ethers.utils.parseEther("100"));
             expect(offer.currency).to.equal(ethers.constants.AddressZero);
             expect(offer.isDivisible).to.equal(false);
             expect(offer.state).to.equal(EstateMarketplaceOfferState.Selling);
             expect(offer.seller).to.equal(seller1.address);
 
-            tx = await estateMarketplace.connect(seller2).list(2, 200, 500000, currency.address, true);
+            tx = await estateMarketplace.connect(seller2).list(
+                2,
+                200,
+                ethers.utils.parseEther("500000"),
+                currency.address,
+                true
+            );
             await tx.wait();
 
             expect(tx).to
                 .emit(estateMarketplace, 'NewOffer')
-                .withArgs(2, 2, seller2.address, 200, 500000, currency.address, true);
+                .withArgs(
+                    2,
+                    2,
+                    seller2.address,
+                    200,
+                    ethers.utils.parseEther("500000"),
+                    currency.address,
+                    true
+                );
 
             expect(await estateMarketplace.offerNumber()).to.equal(2);
 
@@ -517,7 +543,7 @@ describe('5. EstateMarketplace', async () => {
             expect(offer.tokenId).to.equal(2);
             expect(offer.sellingAmount).to.equal(200);
             expect(offer.soldAmount).to.equal(0);
-            expect(offer.unitPrice).to.equal(500000);
+            expect(offer.unitPrice).to.equal(ethers.utils.parseEther("500000"));
             expect(offer.currency).to.equal(currency.address);
             expect(offer.isDivisible).to.equal(true);
             expect(offer.state).to.equal(EstateMarketplaceOfferState.Selling);
@@ -594,79 +620,86 @@ describe('5. EstateMarketplace', async () => {
         });
     });
 
-    describe('5.6. buy(uint256)', async () => {
-        async function testBuyOffer(
-            fixture: EstateMarketplaceFixture,
-            mockCurrencyExclusiveRate: BigNumber,
-            commissionRate: BigNumber,
-            estateTokenRoyaltyRate: BigNumber,
-            isERC20: boolean,
-            isExclusive: boolean,
-            decimals: number,
-            initialAmount: BigNumber,
-            offerAmount: BigNumber,
-            unitPrice: BigNumber,
-            hasCommissionReceiver: boolean
-        ) {
-            const { deployer, estateForger, estateToken, estateMarketplace, seller1, buyer1, feeReceiver, commissionToken, commissionReceiver, admins, admin } = fixture;
+    async function testBuyOffer(
+        fixture: EstateMarketplaceFixture,
+        mockCurrencyExclusiveRate: BigNumber,
+        commissionRate: BigNumber,
+        estateTokenRoyaltyRate: BigNumber,
+        isERC20: boolean,
+        isExclusive: boolean,
+        initialAmount: BigNumber,
+        offerAmount: BigNumber,
+        unitPrice: BigNumber,
+        seller: Wallet,
+        buyRecords: {
+            buyer: Wallet,
+            amount: BigNumber | null,
+        }[],
+        hasCommissionReceiver: boolean,
+        isDivisible: boolean,
+    ) {
+        const { deployer, estateForger, estateToken, estateMarketplace, feeReceiver, commissionToken, commissionReceiver, admins, admin } = fixture;
+        const decimals = Constant.ESTATE_TOKEN_DECIMALS;
 
-            await callEstateToken_UpdateRoyaltyRate(estateToken, admins, estateTokenRoyaltyRate, await admin.nonce());
+        await callEstateToken_UpdateRoyaltyRate(estateToken, admins, estateTokenRoyaltyRate, await admin.nonce());
 
-            const currentEstateId = (await estateToken.estateNumber()).add(1);
-            const currentOfferId = (await estateMarketplace.offerNumber()).add(1);
+        const currentEstateId = (await estateToken.estateNumber()).add(1);
+        const currentOfferId = (await estateMarketplace.offerNumber()).add(1);
 
-            commissionToken.setVariable("commissionRate", commissionRate);
+        commissionToken.setVariable("commissionRate", commissionRate);
 
-            let newCurrency: Currency | undefined;
-            let newCurrencyAddress: string;
-            if (isERC20) {
-                newCurrency = await deployCurrency(
-                    deployer.address,
-                    `NewMockCurrency_${currentOfferId}`,
-                    `NMC_${currentOfferId}`
-                ) as Currency;
-                newCurrencyAddress = newCurrency.address;
+        let newCurrency: Currency | undefined;
+        let newCurrencyAddress: string;
+        if (isERC20) {
+            newCurrency = await deployCurrency(
+                deployer.address,
+                `NewMockCurrency_${currentOfferId}`,
+                `NMC_${currentOfferId}`
+            ) as Currency;
+            newCurrencyAddress = newCurrency.address;
 
-                await callTransaction(newCurrency.setExclusiveDiscount(mockCurrencyExclusiveRate, Constant.COMMON_RATE_DECIMALS));
-            } else {
-                newCurrencyAddress = ethers.constants.AddressZero;
-            }
-            let commissionReceiverAddress = (hasCommissionReceiver) ? commissionReceiver.address : ethers.constants.AddressZero;
+            await callTransaction(newCurrency.setExclusiveDiscount(mockCurrencyExclusiveRate, Constant.COMMON_RATE_DECIMALS));
+        } else {
+            newCurrencyAddress = ethers.constants.AddressZero;
+        }
+        let commissionReceiverAddress = (hasCommissionReceiver) ? commissionReceiver.address : ethers.constants.AddressZero;
 
-            await callAdmin_UpdateCurrencyRegistries(
-                admin,
-                admins,
-                [newCurrencyAddress],
-                [true],
-                [isExclusive],
-                await admin.nonce(),
-            );
+        await callAdmin_UpdateCurrencyRegistries(
+            admin,
+            admins,
+            [newCurrencyAddress],
+            [true],
+            [isExclusive],
+            await admin.nonce(),
+        );
 
-            let currentTimestamp = await time.latest();
+        let currentTimestamp = await time.latest();
 
-            const seller = seller1;
-            const buyer = buyer1;
+        await callTransaction(estateForger.call(estateToken.address, estateToken.interface.encodeFunctionData("tokenizeEstate", [
+            0,
+            ethers.utils.formatBytes32String("TestZone"),
+            0,
+            `Token_${currentEstateId}`,
+            currentTimestamp + 1e8,
+            commissionReceiverAddress,
+        ])));
+        await callTransaction(estateToken.mint(seller.address, currentEstateId, initialAmount));
 
-            await callTransaction(estateForger.call(estateToken.address, estateToken.interface.encodeFunctionData("tokenizeEstate", [
-                0,
-                ethers.utils.formatBytes32String("TestZone"),
-                0,
-                `Token_${currentEstateId}`,
-                currentTimestamp + 1e8,
-                decimals,
-                commissionReceiverAddress,
-            ])));
-            await callTransaction(estateToken.mint(seller.address, currentEstateId, initialAmount));
+        await callTransaction(estateMarketplace.connect(seller).list(
+            currentEstateId,
+            offerAmount,
+            unitPrice,
+            newCurrencyAddress,
+            isDivisible,
+        ));
 
-            await callTransaction(estateMarketplace.connect(seller).list(
-                currentEstateId,
-                offerAmount,
-                unitPrice,
-                newCurrencyAddress,
-                true,
-            ));
+        let totalSold = ethers.BigNumber.from(0);
+        let totalBought = new Map<string, BigNumber>();
 
-            let value = offerAmount.mul(unitPrice).div(ethers.BigNumber.from(10).pow(decimals));
+        for (const { buyer, amount: ogAmount } of buyRecords) {
+            const amount = ogAmount || offerAmount.sub(totalSold);
+
+            let value = amount.mul(unitPrice).div(ethers.BigNumber.from(10).pow(decimals));
             let royaltyReceiver = feeReceiver.address;
             let royaltyAmount = value.mul(estateTokenRoyaltyRate).div(Constant.COMMON_RATE_MAX_FRACTION);
             if (isExclusive) {
@@ -694,10 +727,19 @@ describe('5. EstateMarketplace', async () => {
             let initFeeReceiverBalance = await getBalance(ethers.provider, feeReceiver.address, newCurrency);
             let initCommissionReceiverBalance = await getBalance(ethers.provider, commissionReceiverAddress, newCurrency);
 
-            let tx = await estateMarketplace.connect(buyer)["buy(uint256)"](
-                currentOfferId,
-                { value: ethValue }
-            );
+            let tx;
+            if (ogAmount === null) {
+                tx = await estateMarketplace.connect(buyer)["buy(uint256)"](
+                    currentOfferId,
+                    { value: ethValue }
+                );
+            } else {
+                tx = await estateMarketplace.connect(buyer)["buy(uint256,uint256)"](
+                    currentOfferId,
+                    amount,
+                    { value: ethValue }
+                );    
+            }
             const receipt = await tx.wait();
 
             let expectedBuyerBalance = initBuyerBalance.sub(total);
@@ -712,16 +754,21 @@ describe('5. EstateMarketplace', async () => {
 
             await expect(tx).to
                 .emit(estateMarketplace, 'OfferSale')
-                .withArgs(currentOfferId, buyer.address, offerAmount, value, royaltyReceiver, royaltyAmount, commissionReceiverAddress, commissionAmount);
+                .withArgs(currentOfferId, buyer.address, amount, value, royaltyReceiver, royaltyAmount, commissionReceiverAddress, commissionAmount);
+            
+            totalSold = totalSold.add(amount);
+
+            let totalBoughtOfBuyer = (totalBought.get(buyer.address) || ethers.BigNumber.from(0)).add(amount);
+            totalBought.set(buyer.address, totalBoughtOfBuyer);
 
             let offer = await estateMarketplace.getOffer(currentOfferId);
             expect(offer.tokenId).to.equal(currentEstateId);
             expect(offer.sellingAmount).to.equal(offerAmount);
-            expect(offer.soldAmount).to.equal(offerAmount);
+            expect(offer.soldAmount).to.equal(totalSold);
             expect(offer.unitPrice).to.equal(unitPrice);
             expect(offer.currency).to.equal(newCurrencyAddress);
-            expect(offer.isDivisible).to.equal(true);
-            expect(offer.state).to.equal(EstateMarketplaceOfferState.Sold);
+            expect(offer.isDivisible).to.equal(isDivisible);
+            expect(offer.state).to.equal(totalSold.eq(offerAmount) ? EstateMarketplaceOfferState.Sold : EstateMarketplaceOfferState.Selling);
             expect(offer.seller).to.equal(seller.address);
 
             expect(await getBalance(ethers.provider, buyer.address, newCurrency)).to.equal(expectedBuyerBalance);
@@ -731,8 +778,8 @@ describe('5. EstateMarketplace', async () => {
                 expect(await getBalance(ethers.provider, commissionReceiverAddress, newCurrency)).to.equal(expectedCommissionReceiverBalance);
             }
 
-            expect(await estateToken.balanceOf(seller.address, currentEstateId)).to.equal(initialAmount.sub(offerAmount));
-            expect(await estateToken.balanceOf(buyer.address, currentEstateId)).to.equal(offerAmount);
+            expect(await estateToken.balanceOf(seller.address, currentEstateId)).to.equal(initialAmount.sub(totalSold));
+            expect(await estateToken.balanceOf(buyer.address, currentEstateId)).to.equal(totalBoughtOfBuyer);
 
             let walletsToReset = [seller, buyer, feeReceiver];
             if (hasCommissionReceiver) {
@@ -745,49 +792,15 @@ describe('5. EstateMarketplace', async () => {
                 await prepareNativeToken(ethers.provider, deployer, [seller, buyer], ethers.utils.parseEther("1.0"));
             }
         }
+    }
 
-        it('5.6.1. buy token successfully in both native and ERC20', async () => {
+    describe('5.6. buy(uint256)', async () => {
+        it('5.6.1. buy token successfully in all native/erc20 and exclusive/non-exclusive combinations', async () => {
             const fixture = await beforeEstateMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleEstateToken: true,
             });
-            const { mockCurrencyExclusiveRate } = fixture;
-    
-            await testBuyOffer(
-                fixture,
-                mockCurrencyExclusiveRate,
-                LandInitialization.COMMISSION_TOKEN_CommissionRate,
-                LandInitialization.ESTATE_TOKEN_RoyaltyRate,
-                false,
-                false,
-                3,
-                ethers.BigNumber.from(200_000),
-                ethers.BigNumber.from(100_000),
-                ethers.BigNumber.from(100000),
-                true,
-            )
-
-            await testBuyOffer(
-                fixture,
-                mockCurrencyExclusiveRate,
-                LandInitialization.COMMISSION_TOKEN_CommissionRate,
-                LandInitialization.ESTATE_TOKEN_RoyaltyRate,
-                true,
-                true,
-                0,
-                ethers.BigNumber.from(300),
-                ethers.BigNumber.from(200),
-                ethers.BigNumber.from(500),
-                true,
-            )
-        });
-
-        it('5.6.2. buy token successfully in all native/erc20 and exclusive/non-exclusive combinations', async () => {
-            const fixture = await beforeEstateMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleEstateToken: true,
-            });
-            const { mockCurrencyExclusiveRate } = fixture;
+            const { mockCurrencyExclusiveRate, seller1, buyer1 } = fixture;
 
             for (const isERC20 of [false, true]) {
                 for (const isExclusive of [false, true]) {
@@ -801,21 +814,24 @@ describe('5. EstateMarketplace', async () => {
                         LandInitialization.ESTATE_TOKEN_RoyaltyRate,
                         isERC20,
                         isExclusive,
-                        3,
                         ethers.BigNumber.from(200_000),
                         ethers.BigNumber.from(100_000),
-                        ethers.BigNumber.from(100000),
+                        ethers.utils.parseEther("100"),
+                        seller1,
+                        [{ buyer: buyer1, amount: null }],
+                        true,
                         true,
                     )
                 }
             }
         });
 
-        it('5.6.3. buy token successfully at very large amount in all native/erc20 and exclusive/non-exclusive combinations', async () => {
+        it('5.6.2. buy token successfully at very large amount', async () => {
             const fixture = await beforeEstateMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleEstateToken: true,
             });
+            const { seller1, buyer1 } = fixture;
 
             for (const isERC20 of [false, true]) {
                 for (const isExclusive of [false, true]) {
@@ -831,28 +847,112 @@ describe('5. EstateMarketplace', async () => {
                         ethers.utils.parseEther("0.99"),
                         isERC20,
                         isExclusive,
-                        18,
                         amount,
                         amount,
                         base,
+                        seller1,
+                        [{ buyer: buyer1, amount: null }],
+                        true,
                         true,
                     )
                 }
             }
         });
-
-        it('5.6.4. buy token unsuccessfully when paused', async () => {
+        
+        it('5.6.3. buy token successfully with indivisible offer', async () => {
             const fixture = await beforeEstateMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleEstateToken: true,
-                listSampleOffers: true,
-                fundERC20ForBuyers: true,
-                pause: true,
             });
-            const { estateMarketplace, buyer1 } = fixture;
+            const { mockCurrencyExclusiveRate, seller1, buyer1 } = fixture;
+    
+            await testBuyOffer(
+                fixture,
+                mockCurrencyExclusiveRate,
+                LandInitialization.COMMISSION_TOKEN_CommissionRate,
+                LandInitialization.ESTATE_TOKEN_RoyaltyRate,
+                false,
+                false,
+                ethers.BigNumber.from(200_000),
+                ethers.BigNumber.from(100_000),
+                ethers.BigNumber.from("100"),
+                seller1,
+                [{ buyer: buyer1, amount: null }],
+                true,
+                false,
+            )
 
-            await expect(estateMarketplace.connect(buyer1)["buy(uint256)"](1, { value: 1e9 }))
-                .to.be.revertedWith("Pausable: paused");
+            await testBuyOffer(
+                fixture,
+                mockCurrencyExclusiveRate,
+                LandInitialization.COMMISSION_TOKEN_CommissionRate,
+                LandInitialization.ESTATE_TOKEN_RoyaltyRate,
+                true,
+                true,
+                ethers.BigNumber.from(300),
+                ethers.BigNumber.from(200),
+                ethers.utils.parseEther("500000"),
+                seller1,
+                [{ buyer: buyer1, amount: null }],
+                true,
+                false,
+            )
+        });
+
+        it('5.6.4. buy token successfully in 10 random test cases', async () => {
+            const fixture = await beforeEstateMarketplaceTest({
+                listSampleCurrencies: true,
+                listSampleEstateToken: true,
+            });
+            const { seller1, buyer1, buyer2 } = fixture;
+
+            for (let testcase = 0; testcase < 10; testcase++) {
+                const hasCommissionReceiver = true;
+                const isERC20 = Math.random() < 0.5;
+                const isExclusive = Math.random() < 0.5;
+                if (!isERC20 && isExclusive) {
+                    --testcase; continue;
+                }
+
+                const royaltyRate = randomBigNumber(ethers.BigNumber.from(0), ethers.utils.parseEther("1"));
+                const exclusiveRate = randomBigNumber(ethers.BigNumber.from(0), ethers.utils.parseEther("1"));
+                const commissionRate = randomBigNumber(ethers.BigNumber.from(0), ethers.utils.parseEther("1"));
+
+                const randomNums = []
+                for (let i = 0; i < 2; ++i) {
+                    const maxSupply = ethers.BigNumber.from(2).pow(256).sub(1)
+                    randomNums.push(ethers.BigNumber.from(ethers.utils.randomBytes(32)).mod(maxSupply).add(1));
+                }
+                randomNums.sort((a, b) => a.sub(b).lt(0) ? -1 : 1);
+
+                const offerAmount = randomNums[0];
+                const initAmount = randomNums[1];
+
+                const unitPrice = randomBigNumber(ethers.BigNumber.from(1), ethers.BigNumber.from(2).pow(256).sub(1).div(initAmount));
+
+                const seller = seller1;
+                const buyRecords = [{
+                    buyer: Math.random() < 0.5 ? buyer1 : buyer2,
+                    amount: null,
+                }];
+                const isDivisible = Math.random() < 0.5;
+
+                await testBuyOffer(
+                    fixture,
+                    exclusiveRate,
+                    commissionRate,
+                    royaltyRate, 
+                    isERC20,
+                    isExclusive,
+                    initAmount,
+                    offerAmount,
+                    unitPrice,
+                    seller,
+                    buyRecords,
+                    hasCommissionReceiver,
+                    isDivisible,
+                );
+            }
         });
 
         it('5.6.5. buy token unsuccessfully with invalid offer id', async () => {
@@ -870,375 +970,9 @@ describe('5. EstateMarketplace', async () => {
             await expect(estateMarketplace.connect(buyer1)["buy(uint256)"](3, { value: 1e9 }))
                 .to.be.revertedWithCustomError(estateMarketplace, "InvalidOfferId");
         });
-
-        it('5.6.6. buy token unsuccessfully when seller buy their own token', async () => {
-            const fixture = await beforeEstateMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleEstateToken: true,
-                listSampleOffers: true,
-                fundERC20ForBuyers: true,
-            });
-            const { estateMarketplace, seller1, seller2 } = fixture;
-
-            await expect(estateMarketplace.connect(seller1)["buy(uint256)"](1, { value: 1e9 }))
-                .to.be.revertedWithCustomError(estateMarketplace, "InvalidBuying");
-
-            await expect(estateMarketplace.connect(seller2)["buy(uint256)"](2))
-                .to.be.revertedWithCustomError(estateMarketplace, "InvalidBuying");
-        });
-
-        it('5.6.7. buy token unsuccessfully when offer is not selling', async () => {
-            const fixture = await beforeEstateMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleEstateToken: true,
-                listSampleOffers: true,
-                fundERC20ForBuyers: true,
-            });
-            const { estateMarketplace, buyer1, buyer2 } = fixture;
-
-            await callTransaction(estateMarketplace.connect(buyer1)["buy(uint256)"](1, { value: 1e9 }));
-
-            await expect(estateMarketplace.connect(buyer2)["buy(uint256)"](1, { value: 1e9 }))
-                .to.be.revertedWithCustomError(estateMarketplace, "InvalidAmount");
-        });
-
-        it('5.6.8. buy token unsuccessfully with insufficient native token', async () => {
-            const fixture = await beforeEstateMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleEstateToken: true,
-                listSampleOffers: true,
-            });
-            const { estateMarketplace, buyer1 } = fixture;
-
-            await expect(estateMarketplace.connect(buyer1)["buy(uint256)"](1))
-                .to.be.revertedWithCustomError(estateMarketplace, "InsufficientValue");
-        });
-
-        it('5.6.9. buy token unsuccessfully when native token transfer to seller failed', async () => {
-            const fixture = await beforeEstateMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleEstateToken: true,
-            });
-            const { estateMarketplace, seller1, buyer1, deployer, estateToken } = fixture;
-            
-            const failReceiver = await deployFailReceiver(deployer);
-
-            await callTransaction(estateToken.connect(seller1).safeTransferFrom(
-                seller1.address,
-                failReceiver.address,
-                1,
-                200_000,
-                ethers.utils.toUtf8Bytes("TestToken_1")
-            ));
-
-            let data = estateToken.interface.encodeFunctionData("setApprovalForAll", [estateMarketplace.address, true]);
-            await callTransaction(failReceiver.call(estateToken.address, data));
-
-            data = estateMarketplace.interface.encodeFunctionData("list", [1, 100_000, 1000, ethers.constants.AddressZero, true]);
-
-            await callTransaction(failReceiver.call(estateMarketplace.address, data));
-
-            await expect(estateMarketplace.connect(buyer1)["buy(uint256)"](1, { value: 1e9 }))
-                .to.be.revertedWithCustomError(estateMarketplace, "FailedTransfer");
-        });
-
-        it('5.6.10. buy token unsuccessfully when native token transfer to royalty receiver failed', async () => {
-            const fixture = await beforeEstateMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleEstateToken: true,
-                listSampleOffers: true,
-                fundERC20ForBuyers: true,
-            });
-            const { estateMarketplace, seller1, buyer1, deployer, estateToken } = fixture;
-
-            const failReceiver = await deployFailReceiver(deployer);
-
-            await estateToken.updateFeeReceiver(failReceiver.address);
-
-            await expect(estateMarketplace.connect(buyer1)["buy(uint256)"](1, { value: 1e9 }))
-                .to.be.revertedWithCustomError(estateMarketplace, "FailedTransfer");
-        });
-
-        it('5.6.11. buy token unsuccessfully when native token transfer to commission receiver failed', async () => {
-            const fixture = await beforeEstateMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleEstateToken: true,
-            });
-            const { estateMarketplace, seller1, buyer1, deployer, estateToken, commissionToken, commissionReceiver } = fixture;
-
-            const failReceiver = await deployFailReceiver(deployer);
-
-            await callTransaction(commissionToken.connect(commissionReceiver).transferFrom(
-                commissionReceiver.address,
-                failReceiver.address,
-                2,
-            ));
-
-            await callTransaction(estateMarketplace.connect(seller1).list(2, 200, 500000, ethers.constants.AddressZero, true));
-            await callTransaction(estateToken.connect(seller1).setApprovalForAll(estateMarketplace.address, true));
-
-            const offerId = await estateMarketplace.offerNumber();
-
-            await expect(estateMarketplace.connect(buyer1)["buy(uint256)"](offerId, { value: 1e9 }))
-                .to.be.revertedWithCustomError(estateMarketplace, "FailedTransfer");
-        });
-
-        it('5.6.12. buy token unsuccessfully when refund to sender failed', async () => {
-            const fixture = await beforeEstateMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleEstateToken: true,
-                listSampleOffers: true,
-                fundERC20ForBuyers: true,
-            });
-            const { estateMarketplace, deployer } = fixture;
-
-            const failReceiver = await deployFailReceiver(deployer);
-
-            let data = estateMarketplace.interface.encodeFunctionData("buy(uint256)", [1]);
-
-            await expect(failReceiver.call(estateMarketplace.address, data, { value: 1e9 }))
-                .to.be.revertedWithCustomError(estateMarketplace, "FailedRefund");
-        });
-
-        it('5.6.13. buy token unsuccessfully when this contract is reentered', async () => {
-            const fixture = await beforeEstateMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleEstateToken: true,
-            });
-            const { deployer, estateToken, estateMarketplace, buyer1 } = fixture;
-
-            const reentrancy = await deployReentrancyERC1155Holder(deployer);
-
-            await callTransaction(estateToken.mint(reentrancy.address, 1, 100_000));
-
-            let data = estateMarketplace.interface.encodeFunctionData("list", [1, 100_000, 1000, ethers.constants.AddressZero, true]);
-            await callTransaction(reentrancy.call(estateMarketplace.address, data));
-
-            data = estateToken.interface.encodeFunctionData("setApprovalForAll", [estateMarketplace.address, true]);
-            await callTransaction(reentrancy.call(estateToken.address, data));
-
-            await testReentrancy_Marketplace(
-                estateMarketplace,
-                reentrancy,
-                async () => {
-                    await expect(estateMarketplace.connect(buyer1)["buy(uint256)"](1, { value: 1e9 }))
-                        .to.be.revertedWithCustomError(estateMarketplace, "FailedTransfer");
-                },
-            );
-        });
     });
 
     describe('5.7. buy(uint256, uint256)', async () => {
-        async function testBuyOffer(
-            fixture: EstateMarketplaceFixture,
-            mockCurrencyExclusiveRate: BigNumber,
-            commissionRate: BigNumber,
-            estateTokenRoyaltyRate: BigNumber,
-            isERC20: boolean,
-            isExclusive: boolean,
-            decimals: number,
-            initialAmount: BigNumber,
-            offerAmount: BigNumber,
-            unitPrice: BigNumber,
-            seller: Wallet,
-            buyRecords: {
-                buyer: Wallet,
-                amount: BigNumber,
-            }[],
-            hasCommissionReceiver: boolean
-        ) {
-            const { deployer, estateForger, estateToken, estateMarketplace, feeReceiver, commissionToken, commissionReceiver, admins, admin } = fixture;
-
-            await callEstateToken_UpdateRoyaltyRate(estateToken, admins, estateTokenRoyaltyRate, await admin.nonce());
-
-            const currentEstateId = (await estateToken.estateNumber()).add(1);
-            const currentOfferId = (await estateMarketplace.offerNumber()).add(1);
-
-            commissionToken.setVariable("commissionRate", commissionRate);
-
-            let newCurrency: Currency | undefined;
-            let newCurrencyAddress: string;
-            if (isERC20) {
-                newCurrency = await deployCurrency(
-                    deployer.address,
-                    `NewMockCurrency_${currentOfferId}`,
-                    `NMC_${currentOfferId}`
-                ) as Currency;
-                newCurrencyAddress = newCurrency.address;
-
-                await callTransaction(newCurrency.setExclusiveDiscount(mockCurrencyExclusiveRate, Constant.COMMON_RATE_DECIMALS));
-            } else {
-                newCurrencyAddress = ethers.constants.AddressZero;
-            }
-            let commissionReceiverAddress = (hasCommissionReceiver) ? commissionReceiver.address : ethers.constants.AddressZero;
-
-            await callAdmin_UpdateCurrencyRegistries(
-                admin,
-                admins,
-                [newCurrencyAddress],
-                [true],
-                [isExclusive],
-                await admin.nonce(),
-            );
-
-            let currentTimestamp = await time.latest();
-
-            await callTransaction(estateForger.call(estateToken.address, estateToken.interface.encodeFunctionData("tokenizeEstate", [
-                0,
-                ethers.utils.formatBytes32String("TestZone"),
-                0,
-                `Token_${currentEstateId}`,
-                currentTimestamp + 1e8,
-                decimals,
-                commissionReceiverAddress,
-            ])));
-            await callTransaction(estateToken.mint(seller.address, currentEstateId, initialAmount));
-
-            await callTransaction(estateMarketplace.connect(seller).list(
-                currentEstateId,
-                offerAmount,
-                unitPrice,
-                newCurrencyAddress,
-                true,
-            ));
-
-            let totalSold = ethers.BigNumber.from(0);
-            let totalBought = new Map<string, BigNumber>();
-
-            for (const { buyer, amount } of buyRecords) {
-                let value = amount.mul(unitPrice).div(ethers.BigNumber.from(10).pow(decimals));
-                let royaltyReceiver = feeReceiver.address;
-                let royaltyAmount = value.mul(estateTokenRoyaltyRate).div(Constant.COMMON_RATE_MAX_FRACTION);
-                if (isExclusive) {
-                    royaltyAmount = royaltyAmount.sub(royaltyAmount.mul(mockCurrencyExclusiveRate).div(Constant.COMMON_RATE_MAX_FRACTION));
-                }
-                let commissionAmount = ethers.BigNumber.from(0);
-                if (hasCommissionReceiver) {
-                    commissionAmount = royaltyAmount.mul(commissionRate).div(Constant.COMMON_RATE_MAX_FRACTION);
-                }
-                let total = value.add(royaltyAmount);
-
-                let ethValue = ethers.BigNumber.from(0);
-                await prepareNativeToken(ethers.provider, deployer, [buyer], ethers.utils.parseEther("1.0"));
-                if (isERC20) {
-                    await prepareERC20(newCurrency!, [buyer], [estateMarketplace], total);
-                } else {
-                    ethValue = total;
-                    await prepareNativeToken(ethers.provider, deployer, [buyer], total);
-                }
-
-                await callTransaction(estateToken.connect(seller).setApprovalForAll(estateMarketplace.address, true));
-
-                let initBuyerBalance = await getBalance(ethers.provider, buyer.address, newCurrency);
-                let initSellerBalance = await getBalance(ethers.provider, seller.address, newCurrency);
-                let initFeeReceiverBalance = await getBalance(ethers.provider, feeReceiver.address, newCurrency);
-                let initCommissionReceiverBalance = await getBalance(ethers.provider, commissionReceiverAddress, newCurrency);
-
-                let tx = await estateMarketplace.connect(buyer)["buy(uint256,uint256)"](
-                    currentOfferId,
-                    amount,
-                    { value: ethValue }
-                );
-                const receipt = await tx.wait();
-
-                let expectedBuyerBalance = initBuyerBalance.sub(total);
-                let expectedSellerBalance = initSellerBalance.add(value);
-                let expectedFeeReceiverBalance = initFeeReceiverBalance.add(royaltyAmount.sub(commissionAmount));
-                let expectedCommissionReceiverBalance = initCommissionReceiverBalance.add(commissionAmount);
-
-                if (!isERC20) {
-                    const gasFee = receipt.gasUsed.mul(receipt.effectiveGasPrice);
-                    expectedBuyerBalance = expectedBuyerBalance.sub(gasFee);
-                }
-
-                await expect(tx).to
-                    .emit(estateMarketplace, 'OfferSale')
-                    .withArgs(currentOfferId, buyer.address, amount, value, royaltyReceiver, royaltyAmount, commissionReceiverAddress, commissionAmount);
-                
-                totalSold = totalSold.add(amount);
-
-                let totalBoughtOfBuyer = (totalBought.get(buyer.address) || ethers.BigNumber.from(0)).add(amount);
-                totalBought.set(buyer.address, totalBoughtOfBuyer);
-
-                let offer = await estateMarketplace.getOffer(currentOfferId);
-                expect(offer.tokenId).to.equal(currentEstateId);
-                expect(offer.sellingAmount).to.equal(offerAmount);
-                expect(offer.soldAmount).to.equal(totalSold);
-                expect(offer.unitPrice).to.equal(unitPrice);
-                expect(offer.currency).to.equal(newCurrencyAddress);
-                expect(offer.isDivisible).to.equal(true);
-                expect(offer.state).to.equal(totalSold.eq(offerAmount) ? EstateMarketplaceOfferState.Sold : EstateMarketplaceOfferState.Selling);
-                expect(offer.seller).to.equal(seller.address);
-
-                expect(await getBalance(ethers.provider, buyer.address, newCurrency)).to.equal(expectedBuyerBalance);
-                expect(await getBalance(ethers.provider, seller.address, newCurrency)).to.equal(expectedSellerBalance);
-                expect(await getBalance(ethers.provider, feeReceiver.address, newCurrency)).to.equal(expectedFeeReceiverBalance);
-                if (hasCommissionReceiver) {
-                    expect(await getBalance(ethers.provider, commissionReceiverAddress, newCurrency)).to.equal(expectedCommissionReceiverBalance);
-                }
-
-                expect(await estateToken.balanceOf(seller.address, currentEstateId)).to.equal(initialAmount.sub(totalSold));
-                expect(await estateToken.balanceOf(buyer.address, currentEstateId)).to.equal(totalBoughtOfBuyer);
-
-                let walletsToReset = [seller, buyer, feeReceiver];
-                if (hasCommissionReceiver) {
-                    walletsToReset.push(commissionReceiver);
-                }
-                if (isERC20) {
-                    await resetERC20(newCurrency!, walletsToReset);
-                } else {
-                    await resetNativeToken(ethers.provider, walletsToReset);
-                    await prepareNativeToken(ethers.provider, deployer, [seller, buyer], ethers.utils.parseEther("1.0"));
-                }
-            }
-        }
-
-        it('5.7.1. buy token successfully in both native and ERC20', async () => {
-            const fixture = await beforeEstateMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleEstateToken: true,
-            });
-            const { mockCurrencyExclusiveRate, seller1, buyer1, seller2, buyer2 } = fixture;
-    
-            await testBuyOffer(
-                fixture,
-                mockCurrencyExclusiveRate,
-                LandInitialization.COMMISSION_TOKEN_CommissionRate,
-                LandInitialization.ESTATE_TOKEN_RoyaltyRate,
-                false,
-                false,
-                3,
-                ethers.BigNumber.from(200_000),
-                ethers.BigNumber.from(150_000),
-                ethers.BigNumber.from(100000),
-                seller1,
-                [
-                    { buyer: buyer1, amount: ethers.BigNumber.from(100_000) },
-                    { buyer: buyer1, amount: ethers.BigNumber.from(50_000) },
-                ],
-                true,
-            );
-
-            await testBuyOffer(
-                fixture,
-                mockCurrencyExclusiveRate,
-                LandInitialization.COMMISSION_TOKEN_CommissionRate,
-                LandInitialization.ESTATE_TOKEN_RoyaltyRate,
-                true,
-                true,
-                0,
-                ethers.BigNumber.from(300),
-                ethers.BigNumber.from(220),
-                ethers.BigNumber.from(500),
-                seller2,
-                [
-                    { buyer: buyer2, amount: ethers.BigNumber.from(200) },
-                    { buyer: buyer2, amount: ethers.BigNumber.from(20) },
-                ],
-                true,
-            )
-        });
-
         it('5.7.2. buy token successfully in all native/erc20 and exclusive/non-exclusive combinations', async () => {
             const fixture = await beforeEstateMarketplaceTest({
                 listSampleCurrencies: true,
@@ -1258,15 +992,15 @@ describe('5. EstateMarketplace', async () => {
                         LandInitialization.ESTATE_TOKEN_RoyaltyRate,
                         isERC20,
                         isExclusive,
-                        3,
                         ethers.BigNumber.from(200_000),
                         ethers.BigNumber.from(150_000),
-                        ethers.BigNumber.from(120000),
+                        ethers.BigNumber.from("120"),
                         seller1,
                         [
                             { buyer: buyer1, amount: ethers.BigNumber.from(100_000) },
                             { buyer: buyer1, amount: ethers.BigNumber.from(50_000) },
                         ],
+                        true,
                         true,
                     )
                 }
@@ -1294,7 +1028,6 @@ describe('5. EstateMarketplace', async () => {
                         ethers.utils.parseEther("0.99"),
                         isERC20,
                         isExclusive,
-                        18,
                         amount,
                         amount,
                         base,
@@ -1303,6 +1036,7 @@ describe('5. EstateMarketplace', async () => {
                             { buyer: buyer1, amount: ethers.BigNumber.from(150_000) },
                             { buyer: buyer1, amount: ethers.BigNumber.from(50_000) },
                         ],
+                        true,
                         true,
                     )
                 }
@@ -1329,7 +1063,6 @@ describe('5. EstateMarketplace', async () => {
                 const commissionRate = randomBigNumber(ethers.BigNumber.from(0), ethers.utils.parseEther("1"));
 
                 const randomNums = []
-                const decimals = randomInt(0, 19);
                 for (let i = 0; i < 2; ++i) {
                     const maxSupply = ethers.BigNumber.from(2).pow(256).sub(1)
                     randomNums.push(ethers.BigNumber.from(ethers.utils.randomBytes(32)).mod(maxSupply).add(1));
@@ -1341,16 +1074,23 @@ describe('5. EstateMarketplace', async () => {
 
                 const unitPrice = randomBigNumber(ethers.BigNumber.from(1), ethers.BigNumber.from(2).pow(256).sub(1).div(initAmount));
 
-                const nTx = randomInt(1, 10 + 1);
+                const nTx = randomInt(2, 10 + 1);
                 const amounts = randomArrayWithSum(nTx, offerAmount, ethers.BigNumber.from(1));
 
                 const seller = seller1;
                 const buyRecords = [];
                 for (let i = 0; i < nTx; ++i) {
-                    buyRecords.push({
-                        buyer: Math.random() < 0.5 ? buyer1 : buyer2,
-                        amount: amounts[i],
-                    });
+                    if (i < nTx - 1) {
+                        buyRecords.push({
+                            buyer: Math.random() < 0.5 ? buyer1 : buyer2,
+                            amount: amounts[i],
+                        });
+                    } else {
+                        buyRecords.push({
+                            buyer: Math.random() < 0.5 ? buyer1 : buyer2,
+                            amount: null,
+                        });
+                    }
                 }
 
                 await testBuyOffer(
@@ -1360,13 +1100,13 @@ describe('5. EstateMarketplace', async () => {
                     royaltyRate, 
                     isERC20,
                     isExclusive,
-                    decimals,
                     initAmount,
                     offerAmount,
                     unitPrice,
                     seller,
                     buyRecords,
                     hasCommissionReceiver,
+                    true,
                 );
             }
         });
@@ -1442,7 +1182,7 @@ describe('5. EstateMarketplace', async () => {
             const { estateMarketplace, seller1, buyer1 } = fixture;
             
             await callTransaction(estateMarketplace.connect(seller1).list(
-                1, 50_000, 100000, ethers.constants.AddressZero, false
+                1, 50_000, ethers.utils.parseEther("100"), ethers.constants.AddressZero, false
             ));
 
             const offerId = await estateMarketplace.offerNumber();
@@ -1538,7 +1278,13 @@ describe('5. EstateMarketplace', async () => {
                 2,
             ));
 
-            await callTransaction(estateMarketplace.connect(seller1).list(2, 200, 500000, ethers.constants.AddressZero, true));
+            await callTransaction(estateMarketplace.connect(seller1).list(
+                2,
+                200,
+                ethers.utils.parseEther("500000"),
+                ethers.constants.AddressZero,
+                true
+            ));
             await callTransaction(estateToken.connect(seller1).setApprovalForAll(estateMarketplace.address, true));
 
             const offerId = await estateMarketplace.offerNumber();

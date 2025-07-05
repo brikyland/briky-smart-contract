@@ -4,6 +4,9 @@ const MINUTE = 60;
 const HOUR = 60 * MINUTE;
 const DAY = 24 * HOUR;
 
+const DECIMALS = 18;
+const UNIT = ethers.BigNumber.from(10).pow(DECIMALS);
+
 export const Constant = {
     // Common
     COMMON_RATE_DECIMALS: 18,
@@ -15,7 +18,9 @@ export const Constant = {
 
     // Estate Token
     ESTATE_TOKEN_CONFIRMATION_TIME_LIMIT: 60 * DAY,
-    ESTATE_TOKEN_MAX_DECIMALS: 18,
+    ESTATE_TOKEN_DECIMALS: DECIMALS,
+    ESTATE_TOKEN_UNIT: UNIT,
+    ESTATE_TOKEN_TOTAL_QUANTITY_LIMIT: ethers.constants.MaxUint256.div(UNIT),
 
     // Primary Token
     PRIMARY_TOKEN_BASE_DISCOUNT: ethers.utils.parseEther(String(0.15)),
