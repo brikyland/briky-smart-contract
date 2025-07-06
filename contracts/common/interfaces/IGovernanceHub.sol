@@ -46,7 +46,8 @@ interface IGovernanceHub is ICommon {
         uint256 quorum;
         address proposer;
         uint40 permitAt;
-        uint40 due;
+        uint40 votingDue;
+        uint40 executingDue;
         ProposalRule rule;
         ProposalState state;
         uint256 budget;         // required money
@@ -56,11 +57,60 @@ interface IGovernanceHub is ICommon {
 
     event FeeUpdate(uint256 newValue);
     event ValidatorUpdate(address newAddress);
+    event NewProposal(
+        uint256 indexed proposalId,
+        string uuid,
+        address indexed governor,
+        uint256 indexed tokenId,
+        uint256 quorum,
+        address proposer,
+        ProposalRule rule,
+        uint40 votingDue,
+        uint40 executingDue
+    );
+    event ProposalPermit(
+        uint256 indexed proposalId,
+        string uri,
+        uint256 totalWeight,
+        uint256 permitAt,
+        uint256 budget,
+        address currency
+    );
+    event ProposalReject(
+        uint256 indexed proposalId,
+        string uri
+    );
+    event ProposalVote(
+        uint256 indexed proposalId,
+        address voter,
+        Vote vote,
+        ProposalVerdict verdict
+    );
+    event ProposalVotingClose(
+        uint256 indexed proposalId
+    );
+    event ProposalContribute(
+        uint256 indexed proposalId,
+        uint256 value
+    );
 
     error InvalidProposalId();
+    error InvalidTokenId();
+    error InvalidPermitting();
+    error InvalidRejecting();
+    error InvalidVoting();
+    error InvalidClosing();
+    error InvalidContributing();
+    error VotingEnded();
+    error VotingNotEnded();
+    error ExecutingEnded();
+    error NoVotingPower();
 
     // function propose(uuid, ..., signature)
     // function permit(id, uri, budget, currency, anchor) // anchor = hash(raw-context from uri)
+    // function reject(...)
     // function vote(...)
-    // function donate(...)
+    // function closeVoting(...)
+    // function contribute(...)
+    // function withdraw(...)
 }
