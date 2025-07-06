@@ -16,7 +16,7 @@ import {IEstateToken} from "./interfaces/IEstateToken.sol";
 
 import {EstateMarketplaceStorage} from "./storages/EstateMarketplaceStorage.sol";
 
-import {Discountable} from "./utilities/Discountable.sol";
+import {Discountable} from "../common/utilities/Discountable.sol";
 
 contract EstateMarketplace is
 EstateMarketplaceStorage,

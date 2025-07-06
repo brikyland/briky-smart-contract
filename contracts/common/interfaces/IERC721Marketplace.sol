@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import {ICommon} from "../../common/interfaces/ICommon.sol";
 
-interface ICommissionMarketplace is ICommon {
+interface IERC721Marketplace is ICommon {
     enum OfferState {
         Nil,
         Selling,
@@ -12,6 +12,7 @@ interface ICommissionMarketplace is ICommon {
     }
 
     struct Offer {
+        address collection;
         uint256 tokenId;
         uint256 price;
         address currency;
@@ -20,9 +21,10 @@ interface ICommissionMarketplace is ICommon {
     }
 
     event NewOffer(
+        address indexed collection,
         uint256 indexed offerId,
         uint256 indexed tokenId,
-        address indexed seller,
+        address seller,
         uint256 price,
         address currency
     );
@@ -33,7 +35,7 @@ interface ICommissionMarketplace is ICommon {
         address royaltyReceiver,
         uint256 royaltyAmount
     );
-
+    
     error InvalidBuying();
     error InvalidCancelling();
     error InvalidTokenId();
@@ -41,13 +43,12 @@ interface ICommissionMarketplace is ICommon {
     error InvalidPrice();
     error Overdue();
 
-    function commissionToken() external view returns (address commissionToken);
-
     function offerNumber() external view returns (uint256 offerNumber);
 
     function getOffer(uint256 offerId) external view returns (Offer memory offer);
 
     function list(
+        address collection,
         uint256 tokenId,
         uint256 price,
         address currency

@@ -18,7 +18,7 @@ import {IEstateToken} from "./interfaces/IEstateToken.sol";
 
 import {EstateForgerStorage} from "./storages/EstateForgerStorage.sol";
 
-import {Discountable} from "./utilities/Discountable.sol";
+import {Discountable} from "../common/utilities/Discountable.sol";
 import {EstateTokenizer} from "./utilities/EstateTokenizer.sol";
 
 contract EstateForger is
