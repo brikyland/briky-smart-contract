@@ -1,16 +1,22 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {ERC165CheckerUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 
 import {Constant} from "../lib/Constant.sol";
 import {Signature} from "../lib/Signature.sol";
+
+import {IGovernor} from "./interfaces/IGovernor.sol";
 
 import {AdminStorage} from "./storages/AdminStorage.sol";
 
 contract Admin is
 AdminStorage,
 Initializable {
+    using ERC165CheckerUpgradeable for address;
+
     string constant private VERSION = "v1.1.1";
 
     receive() external payable {}
@@ -223,6 +229,43 @@ Initializable {
                 }
                 isModerator[_accounts[i]] = false;
                 emit ModeratorDeauthorization(_accounts[i]);
+            }
+        }
+    }
+
+    function authorizeGovernor(
+        address[] calldata _accounts,
+        bool _isGovernor,
+        bytes[] calldata _signatures
+    ) external {
+        verifyAdminSignatures(
+            abi.encode(
+                address(this),
+                "authorizeGovernor",
+                _accounts,
+                _isGovernor
+            ),
+            _signatures
+        );
+
+        if (_isGovernor) {
+            for (uint256 i; i < _accounts.length; ++i) {
+                if (isGovernor[_accounts[i]]) {
+                    revert AuthorizedAccount(_accounts[i]);
+                }
+                if (!_accounts[i].supportsInterface(type(IGovernor).interfaceId)) {
+                    revert InvalidGovernor();
+                }
+                isGovernor[_accounts[i]] = true;
+                emit GovernorAuthorization(_accounts[i]);
+            }
+        } else {
+            for (uint256 i; i < _accounts.length; ++i) {
+                if (!isGovernor[_accounts[i]]) {
+                    revert NotAuthorizedAccount(_accounts[i]);
+                }
+                isGovernor[_accounts[i]] = false;
+                emit GovernorDeauthorization(_accounts[i]);
             }
         }
     }

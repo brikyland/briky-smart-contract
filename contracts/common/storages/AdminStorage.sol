@@ -17,10 +17,13 @@ abstract contract AdminStorage is IAdmin {
     address public admin5;
 
     mapping(address => bool) public isModerator;
+    
     mapping(address => CurrencyRegistry) internal currencyRegistries;
 
     mapping(bytes32 => bool) public isZone;
     mapping(bytes32 => mapping(address => bool)) public isActiveIn;
 
-    uint256[46] private __gap;
+    mapping(address => bool) public isGovernor;
+
+    uint256[45] private __gap;
 }

@@ -6,7 +6,7 @@ import {Formula} from "../../lib/Formula.sol";
 import {IAdmin} from "../../common/interfaces/IAdmin.sol";
 import {ICommon} from "../../common/interfaces/ICommon.sol";
 
-import {IExclusiveToken} from "../../land/interfaces/IExclusiveToken.sol";
+import {IExclusiveToken} from "../interfaces/IExclusiveToken.sol";
 
 abstract contract Discountable is ICommon {
     using Formula for uint256;

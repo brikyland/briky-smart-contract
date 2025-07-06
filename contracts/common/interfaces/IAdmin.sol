@@ -27,6 +27,9 @@ interface IAdmin {
     event ModeratorAuthorization(address indexed account);
     event ModeratorDeauthorization(address indexed account);
 
+    event GovernorAuthorization(address indexed account);
+    event GovernorDeauthorization(address indexed account);
+
     event ZoneAnnouncement(bytes32 indexed zone);
     event ZoneRenouncement(bytes32 indexed zone);
 
@@ -44,6 +47,7 @@ interface IAdmin {
     error AuthorizedZone(bytes32 zone);
     error CannotSelfDeauthorizing();
     error FailedVerification();
+    error InvalidGovernor();
     error InvalidInput();
     error InvalidSignatureNumber();
     error NotActivated(address account);
@@ -61,6 +65,7 @@ interface IAdmin {
     function nonce() external view returns (uint256 nonce);
 
     function isExecutive(address account) external view returns (bool isExecutive);
+    function isGovernor(address account) external view returns (bool isGovernor);
     function isManager(address account) external view returns (bool isManager);
     function isModerator(address account) external view returns (bool isModerator);
     function isZone(bytes32 value) external view returns (bool isZone);

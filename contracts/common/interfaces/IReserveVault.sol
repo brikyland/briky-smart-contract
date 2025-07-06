@@ -30,7 +30,6 @@ IFund {
     error InvalidDenomination();
     error InvalidExpandingFund();
     error InvalidFundId();
-    error ZeroQuantity();
 
     function fundNumber() external view returns (uint256 fundNumber);
 

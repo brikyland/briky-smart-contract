@@ -5,6 +5,7 @@ library Constant {
     // Common
     uint8 internal constant COMMON_RATE_DECIMALS = 18;
     uint256 internal constant COMMON_RATE_MAX_FRACTION = 10 ** COMMON_RATE_DECIMALS;
+    uint40 internal constant COMMON_INFINITE_TIMESTAMP = type(uint40).max;
 
     // Admin
     uint256 internal constant ADMIN_SIGNATURE_VERIFICATION_QUORUM = 4;

@@ -165,10 +165,6 @@ ReentrancyGuardUpgradeable {
         }
     }
 
-    function exists(uint256 _tokenId) external view returns (bool) {
-        return _exists(_tokenId);
-    }
-
     function tokenURI(uint256) public view override(
         IERC721MetadataUpgradeable,
         ERC721Upgradeable

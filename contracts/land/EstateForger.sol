@@ -11,6 +11,7 @@ import {IAdmin} from "../common/interfaces/IAdmin.sol";
 import {IPriceWatcher} from "../common/interfaces/IPriceWatcher.sol";
 import {IReserveVault} from "../common/interfaces/IReserveVault.sol";
 
+import {Discountable} from "../common/utilities/Discountable.sol";
 import {Pausable} from "../common/utilities/Pausable.sol";
 
 import {ICommissionToken} from "./interfaces/ICommissionToken.sol";
@@ -18,7 +19,6 @@ import {IEstateToken} from "./interfaces/IEstateToken.sol";
 
 import {EstateForgerStorage} from "./storages/EstateForgerStorage.sol";
 
-import {Discountable} from "../common/utilities/Discountable.sol";
 import {EstateTokenizer} from "./utilities/EstateTokenizer.sol";
 
 import "hardhat/console.sol";
@@ -189,7 +189,8 @@ ReentrancyGuardUpgradeable {
         return Rate(feeRate, Constant.COMMON_RATE_DECIMALS);
     }
 
-    function getRequest(uint256 _requestId) external view validRequest(_requestId) returns (Request memory) {
+    function getRequest(uint256 _requestId)
+    external view validRequest(_requestId) returns (Request memory) {
         return requests[_requestId];
     }
 
@@ -366,6 +367,7 @@ ReentrancyGuardUpgradeable {
             _requestId,
             request.estate.uri,
             request.estate.expireAt,
+            request.seller,
             _commissionReceiver
         );
         request.estate.estateId = estateId;
