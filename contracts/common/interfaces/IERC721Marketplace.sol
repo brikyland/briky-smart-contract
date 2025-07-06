@@ -38,6 +38,7 @@ interface IERC721Marketplace is ICommon {
     
     error InvalidBuying();
     error InvalidCancelling();
+    error InvalidCollection();
     error InvalidTokenId();
     error InvalidOfferId();
     error InvalidPrice();

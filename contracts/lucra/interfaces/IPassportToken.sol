@@ -24,8 +24,6 @@ IERC721MetadataUpgradeable {
 
     function getRoyaltyRate() external view returns (Rate memory rate);
 
-    function exists(uint256 tokenId) external view returns (bool existence);
-
     function hasMinted(address account) external view returns (bool hasMinted);
 
     function mint() external payable returns (uint256 tokenId);

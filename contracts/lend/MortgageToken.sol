@@ -15,13 +15,13 @@ import {Formula} from "../lib/Formula.sol";
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 import {IRoyaltyRateProposer} from "../common/interfaces/IRoyaltyRateProposer.sol";
 
+import {Discountable} from "../common/utilities/Discountable.sol";
 import {Pausable} from "../common/utilities/Pausable.sol";
 import {RoyaltyRateProposer} from "../common/utilities/RoyaltyRateProposer.sol";
 
 import {ICommissionToken} from "../land/interfaces/ICommissionToken.sol";
 import {IEstateToken} from "../land/interfaces/IEstateToken.sol";
 
-import {Discountable} from "../common/utilities/Discountable.sol";
 import {EstateTokenReceiver} from "../land/utilities/EstateTokenReceiver.sol";
 
 import {MortgageTokenStorage} from "./storages/MortgageTokenStorage.sol";
@@ -144,11 +144,13 @@ ReentrancyGuardUpgradeable {
         return Rate(feeRate, Constant.COMMON_RATE_DECIMALS);
     }
 
-    function getRoyaltyRate() public view override(IRoyaltyRateProposer, RoyaltyRateProposer) returns (Rate memory) {
+    function getRoyaltyRate()
+    public view override(IRoyaltyRateProposer, RoyaltyRateProposer) returns (Rate memory) {
         return Rate(royaltyRate, Constant.COMMON_RATE_DECIMALS);
     }
 
-    function getLoan(uint256 _loanId) external view validLoan(_loanId) returns (Loan memory) {
+    function getLoan(uint256 _loanId)
+    external view validLoan(_loanId) returns (Loan memory) {
         return loans[_loanId];
     }
 
@@ -264,10 +266,6 @@ ReentrancyGuardUpgradeable {
         _burn(_loanId);
 
         emit LoanForeclosure(_loanId, receiver);
-    }
-
-    function exists(uint256 _loanId) external view returns (bool) {
-        return _exists(_loanId);
     }
 
     function tokenURI(uint256) public view override(

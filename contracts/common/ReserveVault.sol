@@ -78,11 +78,13 @@ ReentrancyGuardUpgradeable {
         }
     }
 
-    function getFund(uint256 _fundId) external view validFund(_fundId) returns (Fund memory) {
+    function getFund(uint256 _fundId)
+    external view validFund(_fundId) returns (Fund memory) {
         return funds[_fundId];
     }
 
-    function isFundSufficient(uint256 _fundId) external view validFund(_fundId) returns (bool) {
+    function isFundSufficient(uint256 _fundId)
+    external view validFund(_fundId) returns (bool) {
         return funds[_fundId].isSufficient;
     }
 

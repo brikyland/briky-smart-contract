@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {IExclusiveToken} from "./IExclusiveToken.sol";
+import {IExclusiveToken} from "../../common/interfaces/IExclusiveToken.sol";
 
 interface IStakeToken is IExclusiveToken {
     event FeeRateUpdate(uint256 newValue);

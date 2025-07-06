@@ -67,8 +67,6 @@ IERC721MetadataUpgradeable {
 
     function getLoan(uint256 loanId) external view returns (Loan memory loan);
 
-    function exists(uint256 loanId) external view returns (bool existence);
-
     function borrow(
         uint256 estateId,
         uint256 mortgageAmount,

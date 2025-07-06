@@ -9,11 +9,10 @@ import {Formula} from "../lib/Formula.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 
+import {Discountable} from "../common/utilities/Discountable.sol";
 import {Pausable} from "../common/utilities/Pausable.sol";
 
 import {ICommissionToken} from "../land/interfaces/ICommissionToken.sol";
-
-import {Discountable} from "../common/utilities/Discountable.sol";
 
 import {IMortgageToken} from "./interfaces/IMortgageToken.sol";
 
@@ -54,7 +53,8 @@ ReentrancyGuardUpgradeable {
         return VERSION;
     }
 
-    function getOffer(uint256 _offerId) external view validOffer(_offerId) returns (Offer memory) {
+    function getOffer(uint256 _offerId)
+    external view validOffer(_offerId) returns (Offer memory) {
         return offers[_offerId];
     }
 

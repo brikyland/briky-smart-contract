@@ -9,11 +9,13 @@ import {ERC1155Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1
 import {ERC1155PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/extensions/ERC1155PausableUpgradeable.sol";
 import {ERC1155SupplyUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/extensions/ERC1155SupplyUpgradeable.sol";
 import {ERC1155URIStorageUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/extensions/ERC1155URIStorageUpgradeable.sol";
+import {ERC165CheckerUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 
 import {Constant} from "../lib/Constant.sol";
 import {Formula} from "../lib/Formula.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
+import {IGovernor} from "../common/interfaces/IGovernor.sol";
 import {IRoyaltyRateProposer} from "../common/interfaces/IRoyaltyRateProposer.sol";
 
 import {Administrable} from "../common/utilities/Administrable.sol";
@@ -35,9 +37,24 @@ ERC1155URIStorageUpgradeable,
 Administrable,
 Pausable,
 ReentrancyGuardUpgradeable {
+    using ERC165CheckerUpgradeable for address;
     using Formula for uint256;
 
     string constant private VERSION = "v1.1.1";
+
+    modifier validEstate(uint256 _estateId) {
+        if (!isAvailable(_estateId)) {
+            revert InvalidEstateId();
+        }
+        _;
+    }
+
+    modifier onlyEligibleZone(uint256 _estateId) {
+        if (!IAdmin(admin).getZoneEligibility(estates[_estateId].zone, msg.sender)) {
+            revert Unauthorized();
+        }
+        _;
+    }
 
     receive() external payable {}
 
@@ -145,7 +162,7 @@ ReentrancyGuardUpgradeable {
                 if (isTokenizer[_accounts[i]]) {
                     revert AuthorizedAccount(_accounts[i]);
                 }
-                if (!IEstateTokenizer(_accounts[i]).supportsInterface(type(IEstateTokenizer).interfaceId)) {
+                if (!_accounts[i].supportsInterface(type(IEstateTokenizer).interfaceId)) {
                     revert InvalidTokenizer(_accounts[i]);
                 }
                 isTokenizer[_accounts[i]] = true;
@@ -162,7 +179,8 @@ ReentrancyGuardUpgradeable {
         }
     }
 
-    function getRoyaltyRate() public view override(IRoyaltyRateProposer, RoyaltyRateProposer) returns (Rate memory) {
+    function getRoyaltyRate()
+    public view override(IRoyaltyRateProposer, RoyaltyRateProposer) returns (Rate memory) {
         return Rate(royaltyRate, Constant.COMMON_RATE_DECIMALS);
     }
 
@@ -179,6 +197,7 @@ ReentrancyGuardUpgradeable {
         uint256 _tokenizationId,
         string calldata _uri,
         uint40 _expireAt,
+        address _operator,
         address _commissionReceiver
     ) external returns (uint256) {
         if (!isTokenizer[msg.sender]) {
@@ -197,7 +216,8 @@ ReentrancyGuardUpgradeable {
             msg.sender,
             uint40(block.timestamp),
             _expireAt,
-            false
+            Constant.COMMON_INFINITE_TIMESTAMP,
+            _operator
         );
         _mint(msg.sender, estateId, _totalSupply, "");
         _setURI(estateId, _uri);
@@ -213,7 +233,8 @@ ReentrancyGuardUpgradeable {
             _tokenizationId,
             msg.sender,
             uint40(block.timestamp),
-            _expireAt
+            _expireAt,
+            _operator
         );
 
         return estateId;
@@ -221,34 +242,18 @@ ReentrancyGuardUpgradeable {
 
     function isAvailable(uint256 _estateId) public view returns (bool) {
         return exists(_estateId)
-            && !estates[_estateId].isDeprecated
+            && estates[_estateId].deprecateAt == 0
             && estates[_estateId].expireAt > block.timestamp;
     }
 
-    function deprecateEstate(uint256 _estateId) external onlyManager {
-        if (!exists(_estateId)) {
-            revert InvalidEstateId();
-        }
-        if (!IAdmin(admin).getZoneEligibility(estates[_estateId].zone, msg.sender)) {
-            revert Unauthorized();
-        }
-        if (estates[_estateId].isDeprecated) {
-            revert Deprecated();
-        }
-        estates[_estateId].isDeprecated = true;
+    function deprecateEstate(uint256 _estateId)
+    external validEstate(_estateId) onlyManager onlyEligibleZone(_estateId) {
+        estates[_estateId].deprecateAt = uint40(block.timestamp);
         emit EstateDeprecation(_estateId);
     }
 
-    function extendEstateExpiration(uint256 _estateId, uint40 _expireAt) external onlyManager {
-        if (!exists(_estateId)) {
-            revert InvalidEstateId();
-        }
-        if (!IAdmin(admin).getZoneEligibility(estates[_estateId].zone, msg.sender)) {
-            revert Unauthorized();
-        }
-        if (estates[_estateId].isDeprecated) {
-            revert Deprecated();
-        }
+    function extendEstateExpiration(uint256 _estateId, uint40 _expireAt)
+    external validEstate(_estateId) onlyManager onlyEligibleZone(_estateId) {
         if (_expireAt <= block.timestamp) {
             revert InvalidInput();
         }
@@ -256,29 +261,30 @@ ReentrancyGuardUpgradeable {
         emit EstateExpirationExtension(_estateId, _expireAt);
     }
 
-    function updateEstateURI(uint256 _estateId, string calldata _uri) external onlyManager {
-        if (!isAvailable(_estateId)) {
-            revert InvalidEstateId();
-        }
-        if (!IAdmin(admin).getZoneEligibility(estates[_estateId].zone, msg.sender)) {
-            revert Unauthorized();
-        }
+    function updateEstateURI(uint256 _estateId, string calldata _uri)
+    external validEstate(_estateId) onlyManager onlyEligibleZone(_estateId) {
         _setURI(_estateId, _uri);
     }
 
-    function balanceOf(address _account, uint256 _tokenId)
+    function balanceOf(address _account, uint256 _estateId)
     public view override(IERC1155Upgradeable, ERC1155Upgradeable) returns (uint256) {
-        return estates[_tokenId].isDeprecated || estates[_tokenId].expireAt <= block.timestamp
+        return estates[_estateId].deprecateAt <= block.timestamp || estates[_estateId].expireAt <= block.timestamp
             ? 0
-            : super.balanceOf(_account, _tokenId);
+            : super.balanceOf(_account, _estateId);
     }
 
-    function balanceOfAt(address _account, uint256 _tokenId, uint256 _at) external view returns (uint256) {
-        Snapshot[] storage snapshots = balanceSnapshots[_tokenId][_account];
+    function balanceOfAt(address _account, uint256 _estateId, uint256 _at) public view returns (uint256) {
+        if (!exists(_estateId)) {
+            revert InvalidEstateId();
+        }
+        if (_account == estates[_estateId].tokenizer) {
+            return 0;
+        }
+        Snapshot[] storage snapshots = balanceSnapshots[_estateId][_account];
         uint256 high = snapshots.length;
         if (high == 0 || _at < snapshots[0].timestamp) {
-            return IEstateTokenizer(estates[_tokenId].tokenizer).allocationOfAt(
-                estates[_tokenId].tokenizationId,
+            return IEstateTokenizer(estates[_estateId].tokenizer).allocationOfAt(
+                estates[_estateId].tokenizationId,
                 _account,
                 _at
             );
@@ -297,30 +303,43 @@ ReentrancyGuardUpgradeable {
         return snapshots[pivot].value;
     }
 
-    function uri(uint256 _tokenId) public view override(
+    function uri(uint256 _estateId) public view override(
         IERC1155MetadataURIUpgradeable,
         ERC1155Upgradeable,
         ERC1155URIStorageUpgradeable
     ) returns (string memory) {
-        return super.uri(_tokenId);
+        return super.uri(_estateId);
     }
 
-    function totalSupply(uint256 _tokenId)
+    function totalSupply(uint256 _estateId)
     public view override(IEstateToken, ERC1155SupplyUpgradeable) returns (uint256) {
-        return super.totalSupply(_tokenId);
+        return super.totalSupply(_estateId);
     }
 
-    function exists(uint256 _tokenId)
-    public view override(IEstateToken, ERC1155SupplyUpgradeable) returns (bool) {
-        return super.exists(_tokenId);
+    function totalVoteAt(uint256 _estateId, uint256 _at) external view returns (uint256) {
+        if (!exists(_estateId)) {
+            revert InvalidEstateId();
+        }
+        return estates[_estateId].tokenizeAt > _at || _at > estates[_estateId].deprecateAt
+            ? 0
+            : totalSupply(_estateId);
+    }
+
+    function voteOfAt(address _account, uint256 _estateId, uint256 _at) external view returns (uint256) {
+        if (!exists(_estateId)) {
+            revert InvalidEstateId();
+        }
+
+        return balanceOfAt(_account, _estateId, _at);
     }
 
     function supportsInterface(bytes4 _interfaceId) public view override(
         IERC165Upgradeable,
-        RoyaltyRateProposer,
-        ERC1155Upgradeable
+        ERC1155Upgradeable,
+        RoyaltyRateProposer
     ) returns (bool) {
-        return RoyaltyRateProposer.supportsInterface(_interfaceId) 
+        return _interfaceId == type(IGovernor).interfaceId
+            || RoyaltyRateProposer.supportsInterface(_interfaceId)
             || ERC1155Upgradeable.supportsInterface(_interfaceId)
             || super.supportsInterface(_interfaceId);
     }
@@ -329,7 +348,7 @@ ReentrancyGuardUpgradeable {
         address _operator,
         address _from,
         address _to,
-        uint256[] memory _ids,
+        uint256[] memory _estateIds,
         uint256[] memory _amounts,
         bytes memory _data
     ) internal override(
@@ -337,11 +356,11 @@ ReentrancyGuardUpgradeable {
         ERC1155PausableUpgradeable,
         ERC1155SupplyUpgradeable
     ) {
-        super._beforeTokenTransfer(_operator, _from, _to, _ids, _amounts, _data);
-        for (uint256 i; i < _ids.length; ++i) {
+        super._beforeTokenTransfer(_operator, _from, _to, _estateIds, _amounts, _data);
+        for (uint256 i; i < _estateIds.length; ++i) {
             require(
-                !estates[_ids[i]].isDeprecated && estates[_ids[i]].expireAt > block.timestamp,
-                "estateToken: Token is unavailable"
+                estates[_estateIds[i]].deprecateAt == 0 && estates[_estateIds[i]].expireAt > block.timestamp,
+                "EstateToken: Token is unavailable"
             );
         }
     }
@@ -350,19 +369,19 @@ ReentrancyGuardUpgradeable {
         address _operator,
         address _from,
         address _to,
-        uint256[] memory _ids,
+        uint256[] memory _estateIds,
         uint256[] memory _amounts,
         bytes memory _data
     ) internal override {
-        super._afterTokenTransfer(_operator, _from, _to, _ids, _amounts, _data);
+        super._afterTokenTransfer(_operator, _from, _to, _estateIds, _amounts, _data);
         uint256 timestamp = block.timestamp;
-        for (uint256 i; i < _ids.length; ++i) {
-            uint256 tokenId = _ids[i];
+        for (uint256 i; i < _estateIds.length; ++i) {
+            uint256 estateId = _estateIds[i];
             if (_from != address(0)) {
-                balanceSnapshots[tokenId][_from].push(Snapshot(balanceOf(_from, tokenId), timestamp));
+                balanceSnapshots[estateId][_from].push(Snapshot(balanceOf(_from, estateId), timestamp));
             }
             if (_to != address(0)) {
-                balanceSnapshots[tokenId][_to].push(Snapshot(balanceOf(_to, tokenId), timestamp));
+                balanceSnapshots[estateId][_to].push(Snapshot(balanceOf(_to, estateId), timestamp));
             }
         }
     }

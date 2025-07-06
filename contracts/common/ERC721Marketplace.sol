@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {ERC165CheckerUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol";
-import {IERC2981Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC721Upgradeable.sol";
+import {IERC2981Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import {ERC165CheckerUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 
 import {Constant} from "../lib/Constant.sol";
 import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
@@ -23,8 +23,8 @@ ERC721MarketplaceStorage,
 Discountable,
 Pausable,
 ReentrancyGuardUpgradeable {
-    using Formula for uint256;
     using ERC165CheckerUpgradeable for address;
+    using Formula for uint256;
 
     string private constant VERSION = "v1.1.1";
 
@@ -37,20 +37,23 @@ ReentrancyGuardUpgradeable {
 
     receive() external payable {}
 
-    function initialize(address _admin) external initializer {
+    function initialize(
+        address _admin,
+        address _feeReceiver
+    ) external initializer {
         __Pausable_init();
         __ReentrancyGuard_init();
 
         admin = _admin;
+        feeReceiver = _feeReceiver;
     }
 
     function version() external pure returns (string memory) {
         return VERSION;
     }
 
-    function getOffer(
-        uint256 _offerId
-    ) external view validOffer(_offerId) returns (Offer memory) {
+    function getOffer(uint256 _offerId)
+    external view validOffer(_offerId) returns (Offer memory) {
         return offers[_offerId];
     }
 
@@ -60,8 +63,11 @@ ReentrancyGuardUpgradeable {
         uint256 _price,
         address _currency
     ) external whenNotPaused returns (uint256) {
-        IERC721Upgradeable collectionContract = IERC721Upgradeable(_collection);
-        if (collectionContract.ownerOf(_tokenId) != msg.sender) {
+        if (!_collection.supportsInterface(type(IERC721Upgradeable).interfaceId)) {
+            revert InvalidCollection();
+        }
+
+        if (IERC721Upgradeable(_collection).ownerOf(_tokenId) != msg.sender) {
             revert InvalidTokenId();
         }
 
@@ -142,7 +148,9 @@ ReentrancyGuardUpgradeable {
             (royaltyReceiver, royaltyAmount) = IERC2981Upgradeable(collection)
                 .royaltyInfo(tokenId, price);
 
-            royaltyAmount = _applyDiscount(royaltyAmount, currency);
+            if (royaltyReceiver == feeReceiver) {
+                royaltyAmount = _applyDiscount(royaltyAmount, currency);
+            }
         }
 
         if (currency == address(0)) {
