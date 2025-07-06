@@ -186,11 +186,17 @@ describe('20. ReserveVault', async () => {
         }
 
         if (listSampleDeposits) {
-            reserveVault.setVariable('funds', {
-                1: {
-                    totalQuantity: 1000,
-                }
-            })
+            const quantity = 1000;
+            await callTransaction(initiators[0].call(
+                reserveVault.address,
+                reserveVault.interface.encodeFunctionData(
+                    'expandFund',
+                    [
+                        1,
+                        quantity,
+                    ]
+                )
+            ));
         }
 
         if (fundInitiator) {            
