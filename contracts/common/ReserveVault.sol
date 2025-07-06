@@ -24,6 +24,13 @@ ReentrancyGuardUpgradeable {
         _;
     }
 
+    modifier onlyInitiator(uint256 _fundId) {
+        if (msg.sender != funds[_fundId].initiator) {
+            revert Unauthorized();
+        }
+        _;
+    }
+
     receive() external payable {}
 
     function initialize(address _admin) external initializer {
@@ -129,11 +136,7 @@ ReentrancyGuardUpgradeable {
     }
 
     function expandFund(uint256 _fundId, uint256 _quantity)
-    external validFund(_fundId) whenNotPaused {
-        if (msg.sender != funds[_fundId].initiator) {
-            revert Unauthorized();
-        }
-
+    external validFund(_fundId) onlyInitiator(_fundId) whenNotPaused {
         if (funds[_fundId].isSufficient) {
             revert AlreadyProvided();
         }
@@ -144,12 +147,8 @@ ReentrancyGuardUpgradeable {
     }
 
     function provideFund(uint256 _fundId)
-    external payable validFund(_fundId) nonReentrant whenNotPaused {
+    external payable validFund(_fundId) onlyInitiator(_fundId) nonReentrant whenNotPaused {
         Fund memory fund = funds[_fundId];
-        if (msg.sender != fund.initiator) {
-            revert Unauthorized();
-        }
-
         if (fund.isSufficient == true) {
             revert AlreadyProvided();
         }
@@ -190,12 +189,8 @@ ReentrancyGuardUpgradeable {
         uint256 _fundId,
         address _receiver,
         uint256 _quantity
-    ) external validFund(_fundId) nonReentrant whenNotPaused {
+    ) external validFund(_fundId) onlyInitiator(_fundId) nonReentrant whenNotPaused {
         Fund memory fund = funds[_fundId];
-        if (msg.sender != fund.initiator) {
-            revert Unauthorized();
-        }
-
         if (fund.isSufficient == false || _quantity > fund.totalQuantity) {
             revert InsufficientFunds();
         }

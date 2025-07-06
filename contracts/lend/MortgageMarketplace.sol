@@ -13,7 +13,7 @@ import {Pausable} from "../common/utilities/Pausable.sol";
 
 import {ICommissionToken} from "../land/interfaces/ICommissionToken.sol";
 
-import {Discountable} from "../land/utilities/Discountable.sol";
+import {Discountable} from "../common/utilities/Discountable.sol";
 
 import {IMortgageToken} from "./interfaces/IMortgageToken.sol";
 

@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+import {ERC165CheckerUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
+import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol";
+import {IERC2981Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
+import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC721Upgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
 import {Constant} from "../lib/Constant.sol";
@@ -10,20 +14,19 @@ import {Formula} from "../lib/Formula.sol";
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 
 import {Discountable} from "./utilities/Discountable.sol";
-import {Pausable} from "../common/utilities/Pausable.sol";
+import {Pausable} from "./utilities/Pausable.sol";
 
-import {ICommissionToken} from "../land/interfaces/ICommissionToken.sol";
+import {ERC721MarketplaceStorage} from "./storages/ERC721MarketplaceStorage.sol";
 
-import {CommissionMarketplaceStorage} from "./storages/CommissionMarketplaceStorage.sol";
-
-contract CommissionMarketplace is
-CommissionMarketplaceStorage,
+contract ERC721Marketplace is
+ERC721MarketplaceStorage,
 Discountable,
 Pausable,
 ReentrancyGuardUpgradeable {
     using Formula for uint256;
+    using ERC165CheckerUpgradeable for address;
 
-    string constant private VERSION = "v1.1.1";
+    string private constant VERSION = "v1.1.1";
 
     modifier validOffer(uint256 _offerId) {
         if (_offerId == 0 || _offerId > offerNumber) {
@@ -34,33 +37,31 @@ ReentrancyGuardUpgradeable {
 
     receive() external payable {}
 
-    function initialize(
-        address _admin,
-        address _commissionToken
-    ) external initializer {
+    function initialize(address _admin) external initializer {
         __Pausable_init();
         __ReentrancyGuard_init();
 
         admin = _admin;
-        commissionToken = _commissionToken;
     }
 
     function version() external pure returns (string memory) {
         return VERSION;
     }
 
-    function getOffer(uint256 _offerId)
-    external view validOffer(_offerId) returns (Offer memory) {
+    function getOffer(
+        uint256 _offerId
+    ) external view validOffer(_offerId) returns (Offer memory) {
         return offers[_offerId];
     }
 
     function list(
+        address _collection,
         uint256 _tokenId,
         uint256 _price,
         address _currency
     ) external whenNotPaused returns (uint256) {
-        ICommissionToken commissionTokenContract = ICommissionToken(commissionToken);
-        if (commissionTokenContract.ownerOf(_tokenId) != msg.sender) {
+        IERC721Upgradeable collectionContract = IERC721Upgradeable(_collection);
+        if (collectionContract.ownerOf(_tokenId) != msg.sender) {
             revert InvalidTokenId();
         }
 
@@ -75,6 +76,7 @@ ReentrancyGuardUpgradeable {
         uint256 offerId = ++offerNumber;
 
         offers[offerId] = Offer(
+            _collection,
             _tokenId,
             _price,
             _currency,
@@ -83,6 +85,7 @@ ReentrancyGuardUpgradeable {
         );
 
         emit NewOffer(
+            _collection,
             offerId,
             _tokenId,
             msg.sender,
@@ -123,45 +126,49 @@ ReentrancyGuardUpgradeable {
         Offer storage offer = offers[_offerId];
 
         address seller = offer.seller;
+        address collection = offer.collection;
 
         if (msg.sender == seller || offer.state != OfferState.Selling) {
             revert InvalidBuying();
         }
 
-        ICommissionToken commissionTokenContract = ICommissionToken(commissionToken);
         uint256 tokenId = offer.tokenId;
         uint256 price = offer.price;
-        (
-            address royaltyReceiver,
-            uint256 royaltyAmount
-        ) = commissionTokenContract.royaltyInfo(tokenId, price);
-
         address currency = offer.currency;
-        royaltyAmount = _applyDiscount(royaltyAmount, currency);
+
+        address royaltyReceiver;
+        uint256 royaltyAmount;
+        if (collection.supportsInterface(type(IERC2981Upgradeable).interfaceId)) {
+            (royaltyReceiver, royaltyAmount) = IERC2981Upgradeable(collection)
+                .royaltyInfo(tokenId, price);
+
+            royaltyAmount = _applyDiscount(royaltyAmount, currency);
+        }
 
         if (currency == address(0)) {
             CurrencyHandler.receiveNative(price + royaltyAmount);
             CurrencyHandler.sendNative(seller, price);
-            CurrencyHandler.sendNative(royaltyReceiver, royaltyAmount);
+            if (royaltyReceiver != address(0)) {
+                CurrencyHandler.sendNative(royaltyReceiver, royaltyAmount);
+            }
         } else {
             CurrencyHandler.forwardERC20(currency, seller, price);
-            CurrencyHandler.forwardERC20(currency, royaltyReceiver, royaltyAmount);
+            CurrencyHandler.forwardERC20(
+                currency,
+                royaltyReceiver,
+                royaltyAmount
+            );
         }
 
         offer.state = OfferState.Sold;
-        commissionTokenContract.safeTransferFrom(
+        IERC721Upgradeable(collection).safeTransferFrom(
             seller,
             msg.sender,
             tokenId,
             ""
         );
 
-        emit OfferSale(
-            _offerId,
-            msg.sender,
-            royaltyReceiver,
-            royaltyAmount
-        );
+        emit OfferSale(_offerId, msg.sender, royaltyReceiver, royaltyAmount);
 
         return price + royaltyAmount;
     }

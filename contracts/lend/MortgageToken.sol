@@ -21,7 +21,7 @@ import {RoyaltyRateProposer} from "../common/utilities/RoyaltyRateProposer.sol";
 import {ICommissionToken} from "../land/interfaces/ICommissionToken.sol";
 import {IEstateToken} from "../land/interfaces/IEstateToken.sol";
 
-import {Discountable} from "../land/utilities/Discountable.sol";
+import {Discountable} from "../common/utilities/Discountable.sol";
 import {EstateTokenReceiver} from "../land/utilities/EstateTokenReceiver.sol";
 
 import {MortgageTokenStorage} from "./storages/MortgageTokenStorage.sol";
