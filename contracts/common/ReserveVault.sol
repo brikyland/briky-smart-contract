@@ -28,6 +28,7 @@ ReentrancyGuardUpgradeable {
         if (msg.sender != funds[_fundId].initiator) {
             revert Unauthorized();
         }
+        _;
     }
 
     receive() external payable {}
