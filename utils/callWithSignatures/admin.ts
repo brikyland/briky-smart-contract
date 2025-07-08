@@ -135,6 +135,25 @@ export async function callAdmin_AuthorizeModerators(
     ));
 }
 
+export async function callAdmin_AuthorizeGovernor(
+    admin: Admin | MockContract<Admin>,
+    admins: any[],
+    accounts: string[],
+    isGovernor: boolean,
+    nonce: BigNumberish
+) {
+    const message = ethers.utils.defaultAbiCoder.encode(
+        ["address", "string", "address[]", "bool"],
+        [admin.address, "authorizeGovernor", accounts, isGovernor]
+    );
+    const signatures = await getSignatures(message, admins, nonce);
+
+    await callTransaction(admin.authorizeGovernor(
+        accounts,
+        isGovernor,
+        signatures
+    ));
+}
 
 export async function callAdmin_DeclareZones(
     admin: Admin | MockContract<Admin>,

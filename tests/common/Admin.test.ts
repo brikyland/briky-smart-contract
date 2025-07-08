@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
-import { Admin } from '@typechain-types';
+import { Admin, Governor__factory } from '@typechain-types';
 import { callTransaction, getSignatures, randomWallet } from '@utils/blockchain';
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { nextPermutation } from '@utils/utils';
@@ -8,16 +8,20 @@ import { Constant } from '@tests/test.constant';
 import { Wallet } from 'ethers';
 import { 
     callAdmin_ActivateIn,
+    callAdmin_AuthorizeGovernor,
     callAdmin_AuthorizeManagers,
     callAdmin_AuthorizeModerators,
     callAdmin_DeclareZones
 } from '@utils/callWithSignatures/admin';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
+import { smock } from '@defi-wonderland/smock';
+import { deployCurrency } from '@utils/deployments/common/currency';
 
 interface AdminFixture {
     deployer: any;
     admins: any[];
     admin: Admin;
+    governors: any[];
     manager: any;
     moderator: any;
     user: any;
@@ -43,10 +47,18 @@ describe('1. Admin', async () => {
             adminAddresses[4],
         ) as Admin;
 
+        const SmockGovernorFactory = await smock.mock<Governor__factory>("Governor");
+        const governors = [];
+        for (let i = 0; i < 5; ++i) {
+            const governor = await SmockGovernorFactory.deploy();
+            governors.push(governor);
+        }
+
         return {
             deployer,
             admins,
             admin,
+            governors,
             manager,
             moderator,
             user,
@@ -1048,6 +1060,272 @@ describe('1. Admin', async () => {
                 .withArgs(moderators[0].address);
         });
     });
+
+    describe('1.10. authorizeGovernor(address[], bool, bytes[])', async () => {
+        it('1.10.1. Authorize governor successfully', async () => {
+            const fixture = await setupBeforeTest();
+            const { admins, admin, governors } = fixture;            
+
+            const toBeGovernors = [];
+            for (let i = 0; i < 5; ++i) toBeGovernors.push(governors[i]);
+
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address[]', 'bool'],
+                [admin.address, 'authorizeGovernor', toBeGovernors.map(x => x.address), true]
+            );
+            const signatures = await getSignatures(message, admins, await admin.nonce());
+
+            const tx = await admin.authorizeGovernor(
+                toBeGovernors.map(x => x.address),
+                true,
+                signatures
+            );
+            await tx.wait();
+
+            for (const governor of toBeGovernors) {
+                await expect(tx).to
+                    .emit(admin, 'GovernorAuthorization')
+                    .withArgs(governor.address);
+            }
+
+            for (let i = 0; i < 5; ++i) {
+                const isGovernor = await admin.isGovernor(toBeGovernors[i].address);
+                expect(isGovernor).to.be.true;
+            }
+        });
+
+        it('1.10.2. Authorize governor unsuccessfully with invalid signatures', async () => {
+            const fixture = await setupBeforeTest();
+            const { admins, admin, governors } = fixture;            
+
+            const toBeGovernors = [];
+            for (let i = 0; i < 5; ++i) toBeGovernors.push(governors[i]);
+
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address[]', 'bool'],
+                [admin.address, 'authorizeGovernor', toBeGovernors.map(x => x.address), true]
+            );
+            const invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+
+            await expect(admin.authorizeGovernor(
+                toBeGovernors.map(x => x.address),
+                true,
+                invalidSignatures
+            )).to.be.revertedWithCustomError(admin, 'FailedVerification');
+        });
+
+        it('1.10.3. Authorize governor reverted without reason with EOA address', async () => {
+            const fixture = await setupBeforeTest();
+            const { admins, admin } = fixture;            
+
+            const invalidGovernor = randomWallet();
+
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address[]', 'bool'],
+                [admin.address, 'authorizeGovernor', [invalidGovernor.address], true]
+            );
+            const signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(admin.authorizeGovernor(
+                [invalidGovernor.address],
+                true,
+                signatures
+            )).to.be.revertedWithCustomError(admin, 'InvalidGovernor');
+        })
+
+        it('1.10.4. Authorize governor reverted with contract not supporting Governor interface', async () => {
+            const fixture = await setupBeforeTest();
+            const { admins, admin, deployer } = fixture;            
+
+            const invalidGovernor = await deployCurrency(deployer, "MockCurrency", "MCK");
+
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address[]', 'bool'],
+                [admin.address, 'authorizeGovernor', [invalidGovernor.address], true]
+            );
+            const signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(admin.authorizeGovernor(
+                [invalidGovernor.address],
+                true,
+                signatures
+            )).to.be.revertedWithCustomError(admin, 'InvalidGovernor');
+        })
+
+        it('1.10.3. Authorize governor unsuccessfully when authorizing same account twice on same tx', async () => {
+            const fixture = await setupBeforeTest();
+            const { admins, admin, governors } = fixture;            
+
+            const duplicateGovernors = [];
+            for (let i = 0; i < 5; ++i) duplicateGovernors.push(governors[i]);
+            duplicateGovernors.push(duplicateGovernors[0]);
+
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address[]', 'bool'],
+                [admin.address, 'authorizeGovernor', duplicateGovernors.map(x => x.address), true]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(admin.authorizeGovernor(
+                duplicateGovernors.map(x => x.address),
+                true,
+                signatures
+            )).to.be.revertedWithCustomError(admin, `AuthorizedAccount`)
+                .withArgs(duplicateGovernors[0].address);
+        });
+
+        it('1.10.4. Authorize governor unsuccessfully when authorizing same account twice on different tx', async () => {
+            const fixture = await setupBeforeTest();
+            const { admins, admin, governors } = fixture;            
+
+            const tx1Governors = [governors[0], governors[1]];
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address[]', 'bool'],
+                [admin.address, 'authorizeGovernor', tx1Governors.map(x => x.address), true]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await callTransaction(admin.authorizeGovernor(
+                tx1Governors.map(x => x.address),
+                true,
+                signatures
+            ));
+
+            const tx2Governors = [governors[2], governors[1]];
+            message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address[]', 'bool'],
+                [admin.address, 'authorizeGovernor', tx2Governors.map(x => x.address), true]
+            );
+            signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(admin.authorizeGovernor(
+                tx2Governors.map(x => x.address),
+                true,
+                signatures
+            )).to.be.revertedWithCustomError(admin, `AuthorizedAccount`)
+                .withArgs(governors[1].address);
+        })
+
+        async function setupGovernors(fixture: AdminFixture) {
+            const { admins, admin, governors } = fixture;
+
+            await callAdmin_AuthorizeGovernor(
+                admin,
+                admins,
+                governors.map(x => x.address),
+                true,
+                await admin.nonce()
+            );
+        }
+
+        it('1.10.5. Deauthorize governor successfully', async () => {
+            const fixture = await setupBeforeTest();
+            const { admins, admin, governors } = fixture;            
+
+            await setupGovernors(fixture);
+
+            const toDeauth = governors.slice(0, 2);
+            const remainGovernors = governors.slice(2);
+
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address[]', 'bool'],
+                [admin.address, 'authorizeGovernor', toDeauth.map(x => x.address), false]
+            );
+            const signatures = await getSignatures(message, admins, await admin.nonce());
+
+            const tx = await admin.authorizeGovernor(
+                toDeauth.map(x => x.address),
+                false,
+                signatures
+            );
+            await tx.wait();
+
+            for (const governor of toDeauth) {
+                await expect(tx).to
+                    .emit(admin, 'GovernorDeauthorization')
+                    .withArgs(governor.address);
+            }
+
+            for (let i = 0; i < toDeauth.length; ++i) {
+                const isGovernor = await admin.isGovernor(toDeauth[i].address);
+                expect(isGovernor).to.be.false;
+            }
+            for (let i = 0; i < remainGovernors.length; ++i) {
+                const isGovernor = await admin.isGovernor(remainGovernors[i].address);
+                expect(isGovernor).to.be.true;
+            }            
+        });
+
+        it('1.10.6. Deauthorize governor unsuccessfully with unauthorized account', async () => {
+            const fixture = await setupBeforeTest();
+            const { admins, admin, governors } = fixture;            
+
+            await setupGovernors(fixture);
+
+            const account = randomWallet();
+            const toDeauth = [governors[0], account];
+
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address[]', 'bool'],
+                [admin.address, 'authorizeGovernor', toDeauth.map(x => x.address), false]
+            );
+            const signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(admin.authorizeGovernor(
+                toDeauth.map(x => x.address),
+                false,
+                signatures
+            )).to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`)
+                .withArgs(account.address);
+        });
+
+        it('1.10.7. Deauthorize governor unsuccessfully when unauthorizing same accounts twice on same tx', async () => {
+            const fixture = await setupBeforeTest();
+            const { admins, admin, governors } = fixture;            
+
+            await setupGovernors(fixture);
+
+            const toDeauth = governors.slice(0, 2).concat([governors[0]]);
+
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address[]', 'bool'],
+                [admin.address, 'authorizeGovernor', toDeauth.map(x => x.address), false]
+            );
+            const signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(admin.authorizeGovernor(
+                toDeauth.map(x => x.address),
+                false,
+                signatures
+            )).to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`)
+                .withArgs(governors[0].address);
+        });
+
+        it('1.10.8. Deauthorize governor unsuccessfully when unauthorizing same accounts twice on different tx', async () => {
+            const fixture = await setupBeforeTest();
+            const { admins, admin, governors } = fixture;            
+
+            await setupGovernors(fixture);
+
+            const tx1_accounts = governors.slice(0, 2);
+            await callAdmin_AuthorizeGovernor(admin, admins, tx1_accounts.map(x => x.address), false, await admin.nonce());
+
+            const tx2_accounts = [governors[0]];
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address[]', 'bool'],
+                [admin.address, 'authorizeGovernor', tx2_accounts.map(x => x.address), false]
+            );
+            const signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(admin.authorizeGovernor(
+                tx2_accounts.map(x => x.address),
+                false,
+                signatures
+            )).to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`)
+                .withArgs(governors[0].address);
+        });
+    });
+
 
     describe('1.10. declareZones(bytes32[], bool, bytes[])', async () => {
         it('1.10.1. Declare zone successfully', async () => {
