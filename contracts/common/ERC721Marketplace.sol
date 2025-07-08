@@ -18,6 +18,8 @@ import {Pausable} from "./utilities/Pausable.sol";
 
 import {ERC721MarketplaceStorage} from "./storages/ERC721MarketplaceStorage.sol";
 
+import "hardhat/console.sol";
+
 contract ERC721Marketplace is
 ERC721MarketplaceStorage,
 Discountable,
@@ -153,6 +155,12 @@ ReentrancyGuardUpgradeable {
             }
         }
 
+        console.log("collection", collection);
+        console.log("seller", seller);
+        console.log("currency", currency);
+        console.log("price", price);
+        console.log("royaltyReceiver", royaltyReceiver);
+        console.log("royaltyAmount", royaltyAmount);
         if (currency == address(0)) {
             CurrencyHandler.receiveNative(price + royaltyAmount);
             CurrencyHandler.sendNative(seller, price);

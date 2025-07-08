@@ -10,7 +10,6 @@ import {
     EstateForger,
     EstateMarketplace,
     MortgageToken,
-    CommissionMarketplace,
     PrimaryToken,
     StakeToken,
     Treasury,
@@ -25,14 +24,15 @@ import {
     PassportToken,
     Airdrop,
     PriceWatcher,
-    ReserveVault
+    ReserveVault,
+    ERC721Marketplace
 } from '@typechain-types';
 import { deployTreasury } from '@utils/deployments/land/treasury';
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
 import { deployEstateToken } from '@utils/deployments/land/estateToken';
 import { deployCommissionToken } from '@utils/deployments/land/commissionToken';
-import { deployCommissionMarketplace } from '@utils/deployments/land/commissionMarketplace';
+import { deployERC721Marketplace } from '@utils/deployments/common/erc721Marketplace';
 import { deployMortgageToken } from '@utils/deployments/lend/mortgageToken';
 import { deployEstateForger } from '@utils/deployments/land/estateForger';
 import { deployEstateMarketplace } from '@utils/deployments/land/estateMarketplace';
@@ -65,7 +65,7 @@ interface CommonFixture {
     estateForger: EstateForger;
     estateMarketplace: EstateMarketplace;
     commissionToken: CommissionToken;
-    commissionMarketplace: CommissionMarketplace;
+    erc721Marketplace: ERC721Marketplace;
     treasury: Treasury;
     primaryToken: PrimaryToken;
     stakeToken: StakeToken;
@@ -154,11 +154,11 @@ describe('0. Common', async () => {
             commissionToken.address,
         ) as EstateMarketplace;
 
-        const commissionMarketplace = await deployCommissionMarketplace(
+        const erc721Marketplace = await deployERC721Marketplace(
             deployer,
             admin.address,
-            commissionToken.address,
-        ) as CommissionMarketplace;
+            feeReceiver.address,
+        ) as ERC721Marketplace;
 
         const currency = await deployCurrency(
             deployer,
@@ -261,7 +261,7 @@ describe('0. Common', async () => {
             estateForger,
             estateMarketplace,
             commissionToken,
-            commissionMarketplace,
+            erc721Marketplace,
             treasury,
             primaryToken,
             stakeToken,
@@ -279,7 +279,7 @@ describe('0. Common', async () => {
     describe('0.1. version', async () => {
         it('0.1.1. Return correct version for each contract', async () => {
             const fixture = await loadFixture(commonFixture);
-            const { admin, feeReceiver, priceWatcher, reserveVault, estateForger, estateToken, estateMarketplace, commissionToken, commissionMarketplace, treasury, primaryToken, stakeToken, distributor, dripDistributor, auction, mortgageToken, mortgageMarketplace, passportToken, promotionToken, airdrop } = fixture;
+            const { admin, feeReceiver, priceWatcher, reserveVault, estateForger, estateToken, estateMarketplace, commissionToken, erc721Marketplace, treasury, primaryToken, stakeToken, distributor, dripDistributor, auction, mortgageToken, mortgageMarketplace, passportToken, promotionToken, airdrop } = fixture;
 
             expect(await admin.version()).to.equal('v1.1.1');
             expect(await feeReceiver.version()).to.equal('v1.1.1');
@@ -289,7 +289,7 @@ describe('0. Common', async () => {
             expect(await estateForger.version()).to.equal('v1.1.1');
             expect(await estateMarketplace.version()).to.equal('v1.1.1');
             expect(await commissionToken.version()).to.equal('v1.1.1');
-            expect(await commissionMarketplace.version()).to.equal('v1.1.1');
+            expect(await erc721Marketplace.version()).to.equal('v1.1.1');
             expect(await treasury.version()).to.equal('v1.1.1');
             expect(await primaryToken.version()).to.equal('v1.1.1');
             expect(await stakeToken.version()).to.equal('v1.1.1');
@@ -331,17 +331,17 @@ describe('0. Common', async () => {
             }
 
             const fixture = await loadFixture(commonFixture);
-            const { admin, feeReceiver, priceWatcher, reserveVault, estateToken, estateForger, estateMarketplace, commissionToken, commissionMarketplace, treasury, primaryToken, stakeToken, distributor, dripDistributor, auction, mortgageToken, mortgageMarketplace, passportToken, promotionToken, airdrop } = fixture;
+            const { admin, feeReceiver, priceWatcher, reserveVault, estateToken, estateForger, estateMarketplace, commissionToken, erc721Marketplace, treasury, primaryToken, stakeToken, distributor, dripDistributor, auction, mortgageToken, mortgageMarketplace, passportToken, promotionToken, airdrop } = fixture;
 
             await testReceiveNotExecuteAnyCode(admin, 28223);
             await testReceiveNotExecuteAnyCode(feeReceiver, 28228);
             await testReceiveNotExecuteAnyCode(priceWatcher, 28233);
             await testReceiveNotExecuteAnyCode(reserveVault, 28228);
-            await testReceiveNotExecuteAnyCode(estateToken, 28228);
+            await testReceiveNotExecuteAnyCode(estateToken, 28223);
             await testReceiveNotExecuteAnyCode(estateForger, 28228);
             await testReceiveNotExecuteAnyCode(estateMarketplace, 28223);
             await testReceiveNotExecuteAnyCode(commissionToken, 28228);
-            await testReceiveNotExecuteAnyCode(commissionMarketplace, 28241);
+            await testReceiveNotExecuteAnyCode(erc721Marketplace, 28223);
             await testReceiveNotExecuteAnyCode(treasury, 28236);
             await testReceiveNotExecuteAnyCode(primaryToken, 28228);
             await testReceiveNotExecuteAnyCode(stakeToken, 28228);
@@ -349,7 +349,7 @@ describe('0. Common', async () => {
             await testReceiveNotExecuteAnyCode(dripDistributor, 28228);
             await testReceiveNotExecuteAnyCode(auction, 28241);
             await testReceiveNotExecuteAnyCode(mortgageToken, 28228);
-            await testReceiveNotExecuteAnyCode(mortgageMarketplace, 28223);
+            await testReceiveNotExecuteAnyCode(mortgageMarketplace, 28236);
             await testReceiveNotExecuteAnyCode(passportToken, 28228);
             await testReceiveNotExecuteAnyCode(promotionToken, 28228);
             await testReceiveNotExecuteAnyCode(airdrop, 28241);

@@ -1,33 +1,33 @@
-import { CommissionMarketplace } from "../../typechain-types";
+import { ERC721Marketplace } from "../../typechain-types";
 import { callTransaction } from "../blockchain";
 import { getSignatures } from "../blockchain";
 import { ethers } from "hardhat";
 import { BigNumberish } from "ethers";
 
-export async function callCommissionMarketplace_Pause(
-    commissionMarketplace: CommissionMarketplace,
+export async function callERC721Marketplace_Pause(
+    erc721Marketplace: ERC721Marketplace,
     admins: any[],
     nonce: BigNumberish
 ) {
     let message = ethers.utils.defaultAbiCoder.encode(
         ["address", "string"],
-        [commissionMarketplace.address, "pause"]
+        [erc721Marketplace.address, "pause"]
     );
     let signatures = await getSignatures(message, admins, nonce);
 
-    await callTransaction(commissionMarketplace.pause(signatures));
+    await callTransaction(erc721Marketplace.pause(signatures));
 }
 
-export async function callCommissionMarketplace_Unpause(
-    commissionMarketplace: CommissionMarketplace,
+export async function callERC721Marketplace_Unpause(
+    erc721Marketplace: ERC721Marketplace,
     admins: any[],
     nonce: BigNumberish
 ) {
     let message = ethers.utils.defaultAbiCoder.encode(
         ["address", "string"],
-        [commissionMarketplace.address, "unpause"]
+        [erc721Marketplace.address, "unpause"]
     );
     let signatures = await getSignatures(message, admins, nonce);
 
-    await callTransaction(commissionMarketplace.unpause(signatures));
+    await callTransaction(erc721Marketplace.unpause(signatures));
 }

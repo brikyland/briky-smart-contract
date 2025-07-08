@@ -14,7 +14,7 @@ export enum EstateMarketplaceOfferState {
     Cancelled
 }
 
-export enum CommissionMarketplaceOfferState {
+export enum ERC721MarketplaceOfferState {
     Nil,
     Selling,
     Sold,

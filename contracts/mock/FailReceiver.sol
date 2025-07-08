@@ -9,6 +9,10 @@ import { Revert } from "../lib/Revert.sol";
 contract FailReceiver is ERC1155HolderUpgradeable, ERC721HolderUpgradeable {
     bool isActive;
 
+    function initialize(bool _isActive) external initializer {
+        isActive = _isActive;
+    }
+
     receive() external payable {
         if (isActive) {
             revert("Fail");
