@@ -751,7 +751,7 @@ describe.only('7. ERC721Marketplace', async () => {
                 .to.be.revertedWithCustomError(erc721Marketplace, "InsufficientValue");
         });
 
-        it.only('7.6.9. buy token unsuccessfully when native token transfer to seller failed', async () => {
+        it('7.6.9. buy token unsuccessfully when native token transfer to seller failed', async () => {
             const fixture = await beforeERC721MarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleCollectionTokens: true,
@@ -759,8 +759,6 @@ describe.only('7. ERC721Marketplace', async () => {
             const { erc721Marketplace, seller1, buyer1, deployer, feeReceiverCollection } = fixture;
             
             const failReceiver = await deployFailReceiver(deployer, true);
-
-            console.log("failReceiver:", failReceiver.address);
 
             await callTransaction(feeReceiverCollection.connect(seller1).transferFrom(
                 seller1.address,
@@ -779,7 +777,7 @@ describe.only('7. ERC721Marketplace', async () => {
                 .to.be.revertedWithCustomError(erc721Marketplace, "FailedTransfer");
         });
 
-        it.only('7.6.10. buy token unsuccessfully when native token transfer to royalty receiver failed', async () => {
+        it('7.6.10. buy token unsuccessfully when native token transfer to royalty receiver failed', async () => {
             const fixture = await beforeERC721MarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleCollectionTokens: true,
@@ -789,15 +787,13 @@ describe.only('7. ERC721Marketplace', async () => {
             const { erc721Marketplace, buyer1, deployer, feeReceiverCollection } = fixture;
 
             const failReceiver = await deployFailReceiver(deployer, true);
-            console.log("failReceiver:", failReceiver.address);
-            console.log("feeReceiverCollection:", feeReceiverCollection.address);
             await callTransaction(feeReceiverCollection.updateRoyaltyReceiver(failReceiver.address));
 
             await expect(erc721Marketplace.connect(buyer1).buy(1, { value: 1e9 }))
                 .to.be.revertedWithCustomError(erc721Marketplace, "FailedTransfer");
         });
 
-        it.only('7.6.11. buy token unsuccessfully when refund to sender failed', async () => {
+        it('7.6.11. buy token unsuccessfully when refund to sender failed', async () => {
             const fixture = await beforeERC721MarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleCollectionTokens: true,
@@ -807,8 +803,7 @@ describe.only('7. ERC721Marketplace', async () => {
             const { erc721Marketplace, deployer } = fixture;
 
             const failReceiver = await deployFailReceiver(deployer, true);
-            console.log("failReceiver:", failReceiver.address);
-
+            
             let data = erc721Marketplace.interface.encodeFunctionData("buy", [1]);
 
             await expect(failReceiver.call(erc721Marketplace.address, data, { value: 1e9 }))

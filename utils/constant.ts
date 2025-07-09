@@ -1,4 +1,5 @@
 import { parseEther } from "./blockchain";
+import { BigNumber } from "ethers";
 
 const MINUTE = 60;
 const HOUR = 60 * MINUTE;
@@ -8,6 +9,7 @@ export const Constant = {
     // Common
     COMMON_RATE_DECIMALS: 18,
     COMMON_RATE_MAX_FRACTION: parseEther(1),
+    COMMON_INFINITE_TIMESTAMP: BigNumber.from(2).pow(40).sub(1),
 
     // Admin
     ADMIN_NUMBER: 5,
