@@ -33,4 +33,11 @@ interface IPaymentHub is ICommon {
     error InvalidPaymentId();
     error InvalidTokenId();
     error InvalidWithdrawing();
+
+    function issuePayment(
+        address governor,
+        uint256 tokenId,
+        uint256 value,
+        address currency
+    ) external payable returns (uint256 paymentId);
 }

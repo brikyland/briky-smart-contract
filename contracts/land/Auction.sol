@@ -90,11 +90,12 @@ ReentrancyGuardUpgradeable {
             _signatures
         );
 
-        if (_endAt == 0) {
-            revert InvalidInput();
-        }
         if (endAt != 0) {
             revert Started();
+        }
+
+        if (_endAt <= block.timestamp) {
+            revert InvalidTimestamp();
         }
 
         totalToken = IERC20Upgradeable(primaryToken).balanceOf(address(this));

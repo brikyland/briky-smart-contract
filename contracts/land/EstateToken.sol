@@ -204,9 +204,12 @@ ReentrancyGuardUpgradeable {
             revert Unauthorized();
         }
 
-        if (!IAdmin(admin).isZone(_zone)
-            || _expireAt <= uint40(block.timestamp)) {
+        if (!IAdmin(admin).isZone(_zone)) {
             revert InvalidInput();
+        }
+
+        if (_expireAt <= block.timestamp) {
+            revert InvalidTimestamp();
         }
 
         uint256 estateId = ++estateNumber;
@@ -240,12 +243,6 @@ ReentrancyGuardUpgradeable {
         return estateId;
     }
 
-    function isAvailable(uint256 _estateId) public view returns (bool) {
-        return exists(_estateId)
-            && estates[_estateId].deprecateAt == 0
-            && estates[_estateId].expireAt > block.timestamp;
-    }
-
     function deprecateEstate(uint256 _estateId)
     external validEstate(_estateId) onlyManager onlyEligibleZone(_estateId) {
         estates[_estateId].deprecateAt = uint40(block.timestamp);
@@ -255,7 +252,7 @@ ReentrancyGuardUpgradeable {
     function extendEstateExpiration(uint256 _estateId, uint40 _expireAt)
     external validEstate(_estateId) onlyManager onlyEligibleZone(_estateId) {
         if (_expireAt <= block.timestamp) {
-            revert InvalidInput();
+            revert InvalidTimestamp();
         }
         estates[_estateId].expireAt = _expireAt;
         emit EstateExpirationExtension(_estateId, _expireAt);
@@ -274,6 +271,9 @@ ReentrancyGuardUpgradeable {
     }
 
     function balanceOfAt(address _account, uint256 _estateId, uint256 _at) public view returns (uint256) {
+        if (_at > block.timestamp) {
+            revert InvalidTimestamp();
+        }
         if (!exists(_estateId)) {
             revert InvalidEstateId();
         }
@@ -314,6 +314,16 @@ ReentrancyGuardUpgradeable {
     function totalSupply(uint256 _estateId)
     public view override(IEstateToken, ERC1155SupplyUpgradeable) returns (uint256) {
         return super.totalSupply(_estateId);
+    }
+
+    function isAvailable(uint256 _estateId) public view returns (bool) {
+        return exists(_estateId)
+            && estates[_estateId].deprecateAt == 0
+            && estates[_estateId].expireAt > block.timestamp;
+    }
+
+    function zoneOf(uint256 _estateId) external view returns (bytes32) {
+        return estates[_estateId].zone;
     }
 
     function totalVoteAt(uint256 _estateId, uint256 _at) external view returns (uint256) {

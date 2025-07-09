@@ -17,6 +17,10 @@ library Constant {
 
     uint256 internal constant ESTATE_TOKEN_CONFIRMATION_TIME_LIMIT = 60 days;
 
+    // Governance Hub
+    uint256 internal constant GOVERNANCE_HUB_SIGNATURE_TTL = 1 hours;
+    uint256 internal constant GOVERNANCE_HUB_CONFIRMATION_TIME_LIMIT = 1 hours;
+
     // Primary Token
     uint256 internal constant PRIMARY_TOKEN_BASE_DISCOUNT = 0.15 ether;
 

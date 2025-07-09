@@ -114,13 +114,13 @@ IEstateTokenizer {
     );
     event DepositWithdrawal(
         uint256 indexed requestId,
-        address indexed withdrawer,
+        address indexed depositor,
         uint256 quantity,
         uint256 value
     );
     event TokenWithdrawal(
         uint256 indexed requestId,
-        address indexed withdrawer,
+        address indexed depositor,
         uint256 amount
     );
 
@@ -140,7 +140,7 @@ IEstateTokenizer {
     error NotWhitelisted(address account);
     error RegisteredSeller(address account);
     error StillSelling();
-    error TimeOut();
+    error Timeout();
     error Tokenized();
     error Whitelisted(address account);
 
