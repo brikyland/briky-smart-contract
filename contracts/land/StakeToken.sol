@@ -133,15 +133,15 @@ ReentrancyGuardUpgradeable {
     function stake(address _account, uint256 _value) external nonReentrant whenNotPaused {
         address primaryTokenAddress = primaryToken;
         if (IPrimaryToken(primaryTokenAddress).isStakeRewardingCompleted()) {
-            address treasuryAddress = IPrimaryToken(primaryToken).treasury();
+            ITreasury treasuryContract = ITreasury(IPrimaryToken(primaryToken).treasury());
             uint256 feeAmount = _stakingFee(
-                ITreasury(treasuryAddress).liquidity(),
+                treasuryContract.liquidity(),
                 _value,
                 IPrimaryToken(primaryTokenAddress).totalSupply(),
                 feeRate
             );
 
-            address currency = ITreasury(treasuryAddress).currency();
+            address currency = treasuryContract.currency();
             CurrencyHandler.receiveERC20(currency, feeAmount);
             CurrencyHandler.allowERC20(currency, primaryTokenAddress, feeAmount);
             IPrimaryToken(primaryTokenAddress).contributeLiquidityFromStakeToken(feeAmount, address(this));

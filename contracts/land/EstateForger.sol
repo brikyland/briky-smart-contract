@@ -227,7 +227,7 @@ ReentrancyGuardUpgradeable {
         if (block.timestamp > _privateSaleEndsAt
             || _privateSaleEndsAt > _publicSaleEndsAt
             || _publicSaleEndsAt == block.timestamp) {
-            revert InvalidInput();
+            revert InvalidTimestamp();
         }
 
         return _requestTokenization(
@@ -280,7 +280,7 @@ ReentrancyGuardUpgradeable {
         if (block.timestamp > _privateSaleEndsAt
             || _privateSaleEndsAt > _publicSaleEndsAt
             || _publicSaleEndsAt == block.timestamp) {
-            revert InvalidInput();
+            revert InvalidTimestamp();
         }
 
         RequestAgenda memory agenda = RequestAgenda(
@@ -348,7 +348,7 @@ ReentrancyGuardUpgradeable {
 
         uint40 publicSaleEndsAt = request.agenda.publicSaleEndsAt;
         if (publicSaleEndsAt + Constant.ESTATE_TOKEN_CONFIRMATION_TIME_LIMIT <= block.timestamp) {
-            revert TimeOut();
+            revert Timeout();
         }
 
         if (publicSaleEndsAt <= block.timestamp) {
@@ -566,8 +566,11 @@ ReentrancyGuardUpgradeable {
             revert InvalidUnitPrice();
         }
 
+        if (_estate.expireAt <= block.timestamp) {
+            revert InvalidTimestamp();
+        }
+
         if (!isActiveSellerIn[_estate.zone][_seller]
-            || _estate.expireAt <= block.timestamp
             || _quota.minSellingQuantity > _quota.maxSellingQuantity
             || _quota.maxSellingQuantity > _quota.totalQuantity
             || _quota.totalQuantity > Constant.ESTATE_TOKEN_TOTAL_QUANTITY_LIMIT

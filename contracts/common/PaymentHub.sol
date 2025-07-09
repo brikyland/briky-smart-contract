@@ -53,7 +53,7 @@ ReentrancyGuardUpgradeable {
         uint256 _tokenId,
         uint256 _value,
         address _currency
-    ) external payable nonReentrant whenNotPaused {
+    ) external payable nonReentrant whenNotPaused returns (uint256) {
         IAdmin adminContract = IAdmin(admin);
         if (!adminContract.isGovernor(_governor)) {
             revert InvalidGovernor();
@@ -61,6 +61,7 @@ ReentrancyGuardUpgradeable {
         if (!IGovernor(_governor).isAvailable(_tokenId)) {
             revert InvalidTokenId();
         }
+
         if (!adminContract.isAvailableCurrency(_currency)) {
             revert InvalidCurrency();
         }
@@ -90,6 +91,8 @@ ReentrancyGuardUpgradeable {
             _value,
             _currency
         );
+
+        return paymentId;
     }
 
     function withdraw(uint256 _paymentId)

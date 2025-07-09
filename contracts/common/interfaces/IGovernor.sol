@@ -6,6 +6,8 @@ import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces
 interface IGovernor is IERC165Upgradeable {
     function isAvailable(uint256 _tokenId) external view returns (bool isAvailable);
 
+    function zoneOf(uint256 _tokenId) external view returns (bytes32 zone);
+
     function totalVoteAt(
         uint256 _tokenId,
         uint256 _at

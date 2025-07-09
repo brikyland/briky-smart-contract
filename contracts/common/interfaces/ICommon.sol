@@ -19,6 +19,7 @@ interface ICommon {
     error InvalidCurrency();
     error InvalidInput();
     error InvalidRate();
+    error InvalidTimestamp();
     error InvalidUpdating();
     error NotAuthorizedAccount(address account);
     error Unauthorized();

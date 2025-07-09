@@ -162,7 +162,7 @@ ReentrancyGuardUpgradeable {
                 revert InsufficientFunds();
             }
             if (_endAts[i] <= block.timestamp) {
-                revert InvalidInput();
+                revert InvalidTimestamp();
             }
             unchecked {
                 distributedAmount += _amounts[i];

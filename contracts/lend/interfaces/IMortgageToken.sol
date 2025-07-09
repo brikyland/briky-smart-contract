@@ -48,6 +48,7 @@ IERC721MetadataUpgradeable {
     );
     event LoanRepayment(uint256 indexed loanId);
 
+    error AlreadySettled();
     error InvalidCancelling();
     error InvalidEstateId();
     error InvalidForeclosing();
