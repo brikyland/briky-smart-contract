@@ -318,104 +318,8 @@ describe('15. MortgageMarketplace', async () => {
         });
     });
 
-    describe('15.2. pause(bytes[])', async () => {
-        it('15.2.1. pause successfully with valid signatures', async () => {
-            const { deployer, admin, admins, mortgageMarketplace } = await beforeMortgageMarketplaceTest();
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string"],
-                [mortgageMarketplace.address, "pause"]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
-
-            const tx = await mortgageMarketplace.pause(signatures);
-            await tx.wait();
-
-            expect(await mortgageMarketplace.paused()).to.equal(true);
-
-            await expect(tx).to
-                .emit(mortgageMarketplace, 'Paused')
-                .withArgs(deployer.address);
-        });
-
-        it('15.2.2. pause unsuccessfully with invalid signatures', async () => {
-            const { admin, admins, mortgageMarketplace } = await beforeMortgageMarketplaceTest();
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string"],
-                [mortgageMarketplace.address, "pause"]
-            );
-            let invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
-
-            await expect(mortgageMarketplace.pause(invalidSignatures)).to.be.revertedWithCustomError(admin, 'FailedVerification');
-        });
-
-        it('15.2.3. pause unsuccessfully when already paused', async () => {
-            const { admin, admins, mortgageMarketplace } = await beforeMortgageMarketplaceTest();
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string"],
-                [mortgageMarketplace.address, "pause"]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await callTransaction(mortgageMarketplace.pause(signatures));
-
-            signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await expect(mortgageMarketplace.pause(signatures)).to.be.revertedWith('Pausable: paused');
-        });
-    });
-
-    describe('15.3. unpause(bytes[])', async () => {
-        it('15.3.1. unpause successfully with valid signatures', async () => {
-            const { deployer, admin, admins, mortgageMarketplace } = await beforeMortgageMarketplaceTest({
-                pause: true,
-            });
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string"],
-                [mortgageMarketplace.address, "unpause"]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
-
-            const tx = await mortgageMarketplace.unpause(signatures);
-            await tx.wait();
-
-            await expect(tx).to
-                .emit(mortgageMarketplace, 'Unpaused')
-                .withArgs(deployer.address);
-        });
-
-        it('15.3.2. unpause unsuccessfully with invalid signatures', async () => {
-            const { admin, admins, mortgageMarketplace } = await beforeMortgageMarketplaceTest({
-                pause: true,
-            });
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string"],
-                [mortgageMarketplace.address, "unpause"]
-            );
-            const invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
-
-            await expect(mortgageMarketplace.unpause(invalidSignatures)).to.be.revertedWithCustomError(admin, 'FailedVerification');
-        });
-
-        it('15.3.3. unpause unsuccessfully when not paused', async () => {
-            const { admin, admins, mortgageMarketplace } = await beforeMortgageMarketplaceTest({
-                pause: true,
-            });
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string"],
-                [mortgageMarketplace.address, "unpause"]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await callTransaction(mortgageMarketplace.unpause(signatures));
-
-            signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await expect(mortgageMarketplace.unpause(signatures)).to.be.revertedWith('Pausable: not paused');
-        });
-    });
-
-    describe('15.4. getOffer(uint256)', async () => {
-        it('15.4.1. return successfully', async () => {
+    describe('15.2. getOffer(uint256)', async () => {
+        it('15.2.1. return successfully', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
@@ -427,7 +331,7 @@ describe('15. MortgageMarketplace', async () => {
             expect(await mortgageMarketplace.getOffer(2)).to.not.be.reverted;
         });
 
-        it('15.4.2. revert with invalid offer id', async () => {
+        it('15.2.2. revert with invalid offer id', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
@@ -444,8 +348,8 @@ describe('15. MortgageMarketplace', async () => {
         });
     });
     
-    describe('15.5. list(uint256, uint256, address)', async () => {
-        it('15.5.1. list token successfully', async () => {
+    describe('15.3. list(uint256, uint256, address)', async () => {
+        it('15.3.1. list token successfully', async () => {
             const { mortgageMarketplace, mortgageToken, currency, seller1, seller2 } = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
@@ -483,7 +387,7 @@ describe('15. MortgageMarketplace', async () => {
             expect(offer.seller).to.equal(seller2.address);
         });
 
-        it('15.5.2. list token unsuccessfully when paused', async () => {
+        it('15.3.2. list token unsuccessfully when paused', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
@@ -495,7 +399,7 @@ describe('15. MortgageMarketplace', async () => {
                 .to.be.revertedWith('Pausable: paused');
         });
 
-        it('15.5.3. list token unsuccessfully with invalid token id', async () => {
+        it('15.3.3. list token unsuccessfully with invalid token id', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
@@ -509,7 +413,7 @@ describe('15. MortgageMarketplace', async () => {
                 .to.be.revertedWith('ERC721: invalid token ID');
         });
 
-        it('15.5.4. list token unsuccessfully when not token owner', async () => {
+        it('15.3.4. list token unsuccessfully when not token owner', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
@@ -520,7 +424,7 @@ describe('15. MortgageMarketplace', async () => {
                 .to.be.revertedWithCustomError(mortgageMarketplace, 'InvalidTokenId');
         });
 
-        it('15.5.5. list token unsuccessfully with zero unit price', async () => {
+        it('15.3.5. list token unsuccessfully with zero unit price', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
@@ -531,7 +435,7 @@ describe('15. MortgageMarketplace', async () => {
                 .to.be.revertedWithCustomError(mortgageMarketplace, 'InvalidPrice');
         });
 
-        it('15.5.6. list token unsuccessfully with invalid currency', async () => {
+        it('15.3.6. list token unsuccessfully with invalid currency', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleMortgageToken: true,
             });
@@ -542,7 +446,7 @@ describe('15. MortgageMarketplace', async () => {
         });
     });
 
-    describe('15.6. buy(uint256)', async () => {
+    describe('15.4. buy(uint256)', async () => {
         async function testBuyOffer(
             fixture: MortgageMarketplaceFixture,
             mockCurrencyExclusiveRate: BigNumber,
@@ -692,7 +596,7 @@ describe('15. MortgageMarketplace', async () => {
             }
         }
 
-        it('15.6.1. buy token successfully in native and erc20 token', async () => {
+        it('15.4.1. buy token successfully in native and erc20 token', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
@@ -722,7 +626,7 @@ describe('15. MortgageMarketplace', async () => {
             );
         });
 
-        it('15.6.2. buy token successfully in all native/erc20 and exclusive/non-exclusive combinations', async () => {
+        it('15.4.2. buy token successfully in all native/erc20 and exclusive/non-exclusive combinations', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
@@ -748,7 +652,7 @@ describe('15. MortgageMarketplace', async () => {
             }
         });
 
-        it('15.6.3. buy token successfully with very large amount in all native/erc20 and exclusive/non-exclusive combinations', async () => {
+        it('15.4.3. buy token successfully with very large amount in all native/erc20 and exclusive/non-exclusive combinations', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
@@ -774,7 +678,7 @@ describe('15. MortgageMarketplace', async () => {
             }
         });
 
-        it('15.6.4. buy token unsuccessfully when paused', async () => {
+        it('15.4.4. buy token unsuccessfully when paused', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
@@ -787,7 +691,7 @@ describe('15. MortgageMarketplace', async () => {
                 .to.be.revertedWith("Pausable: paused");
         });
 
-        it('15.6.5. buy token unsuccessfully with invalid offer id', async () => {
+        it('15.4.5. buy token unsuccessfully with invalid offer id', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
@@ -802,7 +706,7 @@ describe('15. MortgageMarketplace', async () => {
                 .to.be.revertedWithCustomError(mortgageMarketplace, "InvalidOfferId");
         });
 
-        it('15.6.6. buy token unsuccessfully when seller buy their own token', async () => {
+        it('15.4.6. buy token unsuccessfully when seller buy their own token', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
@@ -817,7 +721,7 @@ describe('15. MortgageMarketplace', async () => {
                 .to.be.revertedWithCustomError(mortgageMarketplace, "InvalidBuying");
         });
 
-        it('15.6.7. buy token unsuccessfully when offer is not selling', async () => {
+        it('15.4.7. buy token unsuccessfully when offer is not selling', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
@@ -831,7 +735,7 @@ describe('15. MortgageMarketplace', async () => {
                 .to.be.revertedWithCustomError(mortgageMarketplace, "InvalidBuying");
         });
 
-        it('15.6.8. buy token unsuccessfully with insufficient native token', async () => {
+        it('15.4.8. buy token unsuccessfully with insufficient native token', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
@@ -843,7 +747,7 @@ describe('15. MortgageMarketplace', async () => {
                 .to.be.revertedWithCustomError(mortgageMarketplace, "InsufficientValue");
         });
 
-        it('15.6.9. buy token unsuccessfully when native token transfer to seller failed', async () => {
+        it('15.4.9. buy token unsuccessfully when native token transfer to seller failed', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
@@ -869,7 +773,7 @@ describe('15. MortgageMarketplace', async () => {
                 .to.be.revertedWithCustomError(mortgageMarketplace, "FailedTransfer");
         });
 
-        it('15.6.10. buy token unsuccessfully when native token transfer to royalty receiver failed', async () => {
+        it('15.4.10. buy token unsuccessfully when native token transfer to royalty receiver failed', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
@@ -886,7 +790,7 @@ describe('15. MortgageMarketplace', async () => {
                 .to.be.revertedWithCustomError(mortgageMarketplace, "FailedTransfer");
         });
 
-        it('15.6.11. buy token unsuccessfully when refund to sender failed', async () => {
+        it('15.4.11. buy token unsuccessfully when refund to sender failed', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
@@ -903,7 +807,7 @@ describe('15. MortgageMarketplace', async () => {
                 .to.be.revertedWithCustomError(mortgageMarketplace, "FailedRefund");
         });
 
-        it('15.6.12. buy token unsuccessfully when this contract is reentered', async () => {
+        it('15.4.12. buy token unsuccessfully when this contract is reentered', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
@@ -935,8 +839,8 @@ describe('15. MortgageMarketplace', async () => {
         });
     });
 
-    describe('15.7. safeBuy(uint256, uint256)', async () => {
-        it('15.7.1. buy token successfully', async () => {
+    describe('15.5. safeBuy(uint256, uint256)', async () => {
+        it('15.5.1. buy token successfully', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
@@ -952,7 +856,7 @@ describe('15. MortgageMarketplace', async () => {
                 .to.not.be.reverted;
         });
 
-        it('15.7.2. buy token unsuccessfully with invalid offer id', async () => {
+        it('15.5.2. buy token unsuccessfully with invalid offer id', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
@@ -967,7 +871,7 @@ describe('15. MortgageMarketplace', async () => {
                 .to.be.revertedWithCustomError(mortgageMarketplace, "InvalidOfferId");
         });
 
-        it('15.7.3. buy token unsuccessfully with invalid anchor', async () => {
+        it('15.5.3. buy token unsuccessfully with invalid anchor', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
@@ -983,8 +887,8 @@ describe('15. MortgageMarketplace', async () => {
         });
     });
 
-    describe('15.8. cancelOffer(uint256)', async () => {
-        it('15.8.1. cancel offer successfully by seller', async () => {
+    describe('15.6. cancelOffer(uint256)', async () => {
+        it('15.6.1. cancel offer successfully by seller', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
@@ -1004,7 +908,7 @@ describe('15. MortgageMarketplace', async () => {
                 .withArgs(1);
         });
 
-        it('15.8.2. cancel offer successfully by manager', async () => {
+        it('15.6.2. cancel offer successfully by manager', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
@@ -1023,7 +927,7 @@ describe('15. MortgageMarketplace', async () => {
                 .withArgs(1);
         });
 
-        it('15.8.3. cancel offer unsuccessfully with invalid offer id', async () => {
+        it('15.6.3. cancel offer unsuccessfully with invalid offer id', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
@@ -1038,7 +942,7 @@ describe('15. MortgageMarketplace', async () => {
                 .to.be.revertedWithCustomError(mortgageMarketplace, "InvalidOfferId");
         });
 
-        it('15.8.4. cancel offer unsuccessfully by unauthorized user', async () => {
+        it('15.6.4. cancel offer unsuccessfully by unauthorized user', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
@@ -1054,7 +958,7 @@ describe('15. MortgageMarketplace', async () => {
                 .to.be.revertedWithCustomError(mortgageMarketplace, "Unauthorized");
         });
 
-        it('15.8.5. cancel offer unsuccessfully when offer is already cancelled', async () => {
+        it('15.6.5. cancel offer unsuccessfully when offer is already cancelled', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
@@ -1068,7 +972,7 @@ describe('15. MortgageMarketplace', async () => {
                 .to.be.revertedWithCustomError(mortgageMarketplace, "InvalidCancelling");
         });
 
-        it('15.8.6. cancel offer unsuccessfully when offer is sold out', async () => {
+        it('15.6.6. cancel offer unsuccessfully when offer is sold out', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,

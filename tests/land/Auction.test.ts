@@ -244,104 +244,8 @@ describe('13. Auction', async () => {
         });
     });
 
-    describe('13.2. pause(bytes[])', async () => {
-        it('13.2.1. pause successfully with valid signatures', async () => {
-            const { deployer, admin, admins, auction } = await setupBeforeTest({});
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string"],
-                [auction.address, "pause"]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
-
-            const tx = await auction.pause(signatures);
-            await tx.wait();
-
-            expect(await auction.paused()).to.equal(true);
-
-            await expect(tx).to
-                .emit(auction, 'Paused')
-                .withArgs(deployer.address);
-        });
-
-        it('13.2.2. pause unsuccessfully with invalid signatures', async () => {
-            const { admin, admins, auction } = await setupBeforeTest({});
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string"],
-                [auction.address, "pause"]
-            );
-            let invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
-
-            await expect(auction.pause(invalidSignatures)).to.be.revertedWithCustomError(admin, 'FailedVerification');
-        });
-
-        it('13.2.3. pause unsuccessfully when already paused', async () => {
-            const { admin, admins, auction } = await setupBeforeTest({});
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string"],
-                [auction.address, "pause"]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await callTransaction(auction.pause(signatures));
-
-            signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await expect(auction.pause(signatures)).to.be.revertedWith('Pausable: paused');
-        });
-    });
-
-    describe('13.3. unpause(bytes[])', async () => {
-        it('13.3.1. unpause successfully with valid signatures', async () => {
-            const { deployer, admin, admins, auction } = await setupBeforeTest({
-                pause: true,
-            });
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string"],
-                [auction.address, "unpause"]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
-
-            const tx = await auction.unpause(signatures);
-            await tx.wait();
-
-            await expect(tx).to
-                .emit(auction, 'Unpaused')
-                .withArgs(deployer.address);
-        });
-
-        it('13.3.2. unpause unsuccessfully with invalid signatures', async () => {
-            const { admin, admins, auction } = await setupBeforeTest({
-                pause: true,
-            });
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string"],
-                [auction.address, "unpause"]
-            );
-            const invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
-
-            await expect(auction.unpause(invalidSignatures)).to.be.revertedWithCustomError(admin, 'FailedVerification');
-        });
-
-        it('13.3.3. unpause unsuccessfully when not paused', async () => {
-            const { admin, admins, auction } = await setupBeforeTest({
-                pause: true,
-            });
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string"],
-                [auction.address, "unpause"]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await callTransaction(auction.unpause(signatures));
-
-            signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await expect(auction.unpause(signatures)).to.be.revertedWith('Pausable: not paused');
-        });
-    });
-
-    describe('13.4. updateStakeTokens(address, address, address, bytes[])', async () => {
-        it('13.4.1. updateStakeTokens successfully', async () => {
+    describe('13.2. updateStakeTokens(address, address, address, bytes[])', async () => {
+        it('13.2.1. updateStakeTokens successfully', async () => {
             const fixture = await setupBeforeTest({});
             const { admin, admins, auction, stakeToken1, stakeToken2, stakeToken3 } = fixture;
             
@@ -368,7 +272,7 @@ describe('13. Auction', async () => {
             expect(await auction.stakeToken3()).to.equal(stakeToken3.address);
         });
 
-        it('13.4.2. updateStakeTokens unsuccessfully with invalid signatures', async () => {
+        it('13.2.2. updateStakeTokens unsuccessfully with invalid signatures', async () => {
             const { admin, admins, auction, stakeToken1, stakeToken2, stakeToken3 } = await setupBeforeTest({});
             
             let message = ethers.utils.defaultAbiCoder.encode(
@@ -407,7 +311,7 @@ describe('13. Auction', async () => {
             )).to.be.revertedWithCustomError(auction, 'InvalidUpdating');
         }
 
-        it('13.4.3. updateStakeTokens unsuccessfully with zero address stake tokens', async () => {
+        it('13.2.3. updateStakeTokens unsuccessfully with zero address stake tokens', async () => {
             const { admin, admins, auction, stakeToken1, stakeToken2, stakeToken3 } = await setupBeforeTest({});
 
             await testForInvalidInput(auction, admins, admin, ethers.constants.AddressZero, stakeToken2.address, stakeToken3.address);
@@ -415,7 +319,7 @@ describe('13. Auction', async () => {
             await testForInvalidInput(auction, admins, admin, stakeToken1.address, stakeToken2.address, ethers.constants.AddressZero);
         });
 
-        it('13.4.4. updateStakeTokens unsuccessfully with already updated stake tokens', async () => {
+        it('13.2.4. updateStakeTokens unsuccessfully with already updated stake tokens', async () => {
             const { admin, admins, auction, stakeToken1, stakeToken2, stakeToken3 } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -423,8 +327,8 @@ describe('13. Auction', async () => {
         });        
     });
 
-    describe('13.5. startAuction(uint256, uint256, bytes[])', async () => {
-        it('13.5.1. startAuction successfully', async () => {
+    describe('13.3. startAuction(uint256, uint256, bytes[])', async () => {
+        it('13.3.1. startAuction successfully', async () => {
             const fixture = await setupBeforeTest({
                 updateStakeTokens: true,
                 mintPrimaryTokenForAuction: true,
@@ -456,7 +360,7 @@ describe('13. Auction', async () => {
             expect(await auction.totalToken()).to.equal(Constant.PRIMARY_TOKEN_PUBLIC_SALE);            
         });
 
-        it('13.5.2. startAuction unsuccessfully with invalid signatures', async () => {
+        it('13.3.2. startAuction unsuccessfully with invalid signatures', async () => {
             const { admin, admins, auction } = await setupBeforeTest({
                 updateStakeTokens: true,
                 mintPrimaryTokenForAuction: true,
@@ -479,7 +383,7 @@ describe('13. Auction', async () => {
             )).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('13.5.3. startAuction unsuccessfully with invalid end time', async () => {
+        it('13.3.3. startAuction unsuccessfully with invalid end time', async () => {
             const { admin, admins, auction } = await setupBeforeTest({
                 updateStakeTokens: true,
                 mintPrimaryTokenForAuction: true,
@@ -504,7 +408,7 @@ describe('13. Auction', async () => {
             )).to.be.revertedWithCustomError(auction, 'InvalidTimestamp');
         });
 
-        it('13.5.4. startAuction unsuccessfully when it has already started', async () => {
+        it('13.3.4. startAuction unsuccessfully when it has already started', async () => {
             const { admin, admins, auction } = await setupBeforeTest({
                 updateStakeTokens: true,
                 mintPrimaryTokenForAuction: true,
@@ -529,8 +433,8 @@ describe('13. Auction', async () => {
         });
     });
     
-    describe('13.6. deposit(uint256, bytes[])', async () => {
-        it('13.6.1. deposit successfully', async () => {
+    describe('13.4. deposit(uint256, bytes[])', async () => {
+        it('13.4.1. deposit successfully', async () => {
             const fixture = await setupBeforeTest({
                 updateStakeTokens: true,
                 mintPrimaryTokenForAuction: true,
@@ -586,7 +490,7 @@ describe('13. Auction', async () => {
             expect(await auction.deposits(depositor1.address)).to.equal(amount1.add(amount3));
         });
         
-        it('13.6.2. deposit unsuccessfully when paused', async () => {
+        it('13.4.2. deposit unsuccessfully when paused', async () => {
             const fixture = await setupBeforeTest({
                 updateStakeTokens: true,
                 mintPrimaryTokenForAuction: true,
@@ -599,7 +503,7 @@ describe('13. Auction', async () => {
             await expect(auction.connect(depositor1).deposit(amount)).to.be.revertedWith('Pausable: paused');
         });
 
-        it('13.6.3. deposit unsuccessfully when auction not started', async () => {
+        it('13.4.3. deposit unsuccessfully when auction not started', async () => {
             const fixture = await setupBeforeTest({
                 updateStakeTokens: true,
                 mintPrimaryTokenForAuction: true,
@@ -610,7 +514,7 @@ describe('13. Auction', async () => {
             await expect(auction.connect(depositor1).deposit(amount)).to.be.revertedWithCustomError(auction, 'NotStarted');            
         });
 
-        it('13.6.4. deposit unsuccessfully when auction ended', async () => {
+        it('13.4.4. deposit unsuccessfully when auction ended', async () => {
             const fixture = await setupBeforeTest({
                 updateStakeTokens: true,
                 mintPrimaryTokenForAuction: true,
@@ -624,7 +528,7 @@ describe('13. Auction', async () => {
             await expect(auction.connect(depositor1).deposit(amount)).to.be.revertedWithCustomError(auction, 'Ended');
         });
 
-        it('13.6.5. deposit unsuccessfully when contract is reentered', async () => {
+        it('13.4.5. deposit unsuccessfully when contract is reentered', async () => {
             const fixture = await setupBeforeTest({
                 updateStakeTokens: true,
                 mintPrimaryTokenForAuction: true,
@@ -652,8 +556,8 @@ describe('13. Auction', async () => {
         });
     });
 
-    describe('13.7. allocationOf(address)', async () => {
-        it('13.7.1. return correct allocation', async () => {
+    describe('13.5. allocationOf(address)', async () => {
+        it('13.5.1. return correct allocation', async () => {
             const fixture = await setupBeforeTest({
                 updateStakeTokens: true,
                 mintPrimaryTokenForAuction: true,
@@ -673,7 +577,7 @@ describe('13. Auction', async () => {
             expect(await auction.allocationOf(depositor3.address)).to.equal(deposit3.mul(Constant.PRIMARY_TOKEN_PUBLIC_SALE).div(totalDeposit));
         });
 
-        it('13.7.2. return zero allocation before any deposits', async () => {
+        it('13.5.2. return zero allocation before any deposits', async () => {
             const fixture = await setupBeforeTest({});
             const { depositor1, depositor2, depositor3, auction } = fixture;
 
@@ -683,8 +587,8 @@ describe('13. Auction', async () => {
         });
     });
 
-    describe('13.8. withdraw(uint256)', async () => {
-        it('13.8.1. deposit successfully', async () => {
+    describe('13.6. withdraw(uint256)', async () => {
+        it('13.6.1. deposit successfully', async () => {
             const fixture = await setupBeforeTest({
                 updateStakeTokens: true,
                 mintPrimaryTokenForAuction: true,
@@ -758,7 +662,7 @@ describe('13. Auction', async () => {
             await ethers.provider.send("evm_setAutomine", [true]);
         });
 
-        it('13.8.2. withdraw unsuccessfully when paused', async () => {
+        it('13.6.2. withdraw unsuccessfully when paused', async () => {
             const fixture = await setupBeforeTest({
                 updateStakeTokens: true,
                 mintPrimaryTokenForAuction: true,
@@ -772,7 +676,7 @@ describe('13. Auction', async () => {
             await expect(auction.connect(depositor1).withdraw()).to.be.revertedWith('Pausable: paused');
         });
 
-        it('13.8.3. withdraw unsuccessfully when auction not started', async () => {
+        it('13.6.3. withdraw unsuccessfully when auction not started', async () => {
             const fixture = await setupBeforeTest({
                 updateStakeTokens: true,
                 mintPrimaryTokenForAuction: true,                
@@ -783,7 +687,7 @@ describe('13. Auction', async () => {
             await expect(auction.connect(depositor1).withdraw()).to.be.revertedWithCustomError(auction, 'NotStarted');
         });
     
-        it('13.8.4. withdraw unsuccessfully when auction not ended', async () => {
+        it('13.6.4. withdraw unsuccessfully when auction not ended', async () => {
             const fixture = await setupBeforeTest({
                 updateStakeTokens: true,
                 mintPrimaryTokenForAuction: true,
@@ -797,8 +701,8 @@ describe('13. Auction', async () => {
         });
     });
 
-    describe('13.9. stake(uint256, uint256)', async () => {
-        it('13.9.1. stake successfully', async () => {
+    describe('13.7. stake(uint256, uint256)', async () => {
+        it('13.7.1. stake successfully', async () => {
             const fixture = await setupBeforeTest({
                 updateStakeTokens: true,
                 mintPrimaryTokenForAuction: true,
@@ -896,7 +800,7 @@ describe('13. Auction', async () => {
             await ethers.provider.send("evm_setAutomine", [true]);
         });
 
-        it('13.9.2. stake unsuccessfully when paused', async () => {
+        it('13.7.2. stake unsuccessfully when paused', async () => {
             const fixture = await setupBeforeTest({
                 updateStakeTokens: true,
                 mintPrimaryTokenForAuction: true,
@@ -913,7 +817,7 @@ describe('13. Auction', async () => {
             )).to.be.revertedWith('Pausable: paused');
         });
 
-        it('13.9.3. stake unsuccessfully when stake tokens not assigned', async () => {
+        it('13.7.3. stake unsuccessfully when stake tokens not assigned', async () => {
             const fixture = await setupBeforeTest({
                 mintPrimaryTokenForAuction: true,
                 startAuction: true,
@@ -928,7 +832,7 @@ describe('13. Auction', async () => {
             )).to.be.revertedWithCustomError(auction, 'NotAssignedStakeTokens');
         });
 
-        it('13.9.4. stake unsuccessfully when auction not started', async () => {
+        it('13.7.4. stake unsuccessfully when auction not started', async () => {
             const fixture = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -941,7 +845,7 @@ describe('13. Auction', async () => {
             )).to.be.revertedWithCustomError(auction, 'NotStarted');
         });
 
-        it('13.9.5. stake unsuccessfully when auction not ended', async () => {
+        it('13.7.5. stake unsuccessfully when auction not ended', async () => {
             const fixture = await setupBeforeTest({
                 updateStakeTokens: true,
                 mintPrimaryTokenForAuction: true,
@@ -957,7 +861,7 @@ describe('13. Auction', async () => {
             )).to.be.revertedWithCustomError(auction, 'NotEnded');
         });
 
-        it('13.9.6. stake unsuccessfully with insufficient funds', async () => {
+        it('13.7.6. stake unsuccessfully with insufficient funds', async () => {
             const fixture = await setupBeforeTest({
                 updateStakeTokens: true,
                 mintPrimaryTokenForAuction: true,

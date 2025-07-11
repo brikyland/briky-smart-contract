@@ -111,104 +111,8 @@ describe('8. Treasury', async () => {
         });
     });
 
-    describe('8.2. pause(bytes[])', async () => {
-        it('8.2.1. pause successfully with valid signatures', async () => {
-            const { deployer, admin, admins, treasury } = await setupBeforeTest({});
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string"],
-                [treasury.address, "pause"]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
-
-            const tx = await treasury.pause(signatures);
-            await tx.wait();
-
-            expect(await treasury.paused()).to.equal(true);
-
-            await expect(tx).to
-                .emit(treasury, 'Paused')
-                .withArgs(deployer.address);
-        });
-
-        it('8.2.2. pause unsuccessfully with invalid signatures', async () => {
-            const { admin, admins, treasury } = await setupBeforeTest({});
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string"],
-                [treasury.address, "pause"]
-            );
-            let invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
-
-            await expect(treasury.pause(invalidSignatures)).to.be.revertedWithCustomError(admin, 'FailedVerification');
-        });
-
-        it('8.2.3. pause unsuccessfully when already paused', async () => {
-            const { admin, admins, treasury } = await setupBeforeTest({});
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string"],
-                [treasury.address, "pause"]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await callTransaction(treasury.pause(signatures));
-
-            signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await expect(treasury.pause(signatures)).to.be.revertedWith('Pausable: paused');
-        });
-    });
-
-    describe('8.3. unpause(bytes[])', async () => {
-        it('8.3.1. unpause successfully with valid signatures', async () => {
-            const { deployer, admin, admins, treasury } = await setupBeforeTest({
-                pause: true,
-            });
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string"],
-                [treasury.address, "unpause"]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
-
-            const tx = await treasury.unpause(signatures);
-            await tx.wait();
-
-            await expect(tx).to
-                .emit(treasury, 'Unpaused')
-                .withArgs(deployer.address);
-        });
-
-        it('8.3.2. unpause unsuccessfully with invalid signatures', async () => {
-            const { admin, admins, treasury } = await setupBeforeTest({
-                pause: true,
-            });
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string"],
-                [treasury.address, "unpause"]
-            );
-            const invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
-
-            await expect(treasury.unpause(invalidSignatures)).to.be.revertedWithCustomError(admin, 'FailedVerification');
-        });
-
-        it('8.3.3. unpause unsuccessfully when not paused', async () => {
-            const { admin, admins, treasury } = await setupBeforeTest({
-                pause: true,
-            });
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string"],
-                [treasury.address, "unpause"]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await callTransaction(treasury.unpause(signatures));
-
-            signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await expect(treasury.unpause(signatures)).to.be.revertedWith('Pausable: not paused');
-        });
-    });
-
-    describe('8.4. withdrawOperationFund(uint256, address, bytes[])', async () => {
-        it('8.4.1. withdrawOperationFund successfully with valid signatures', async () => {
+    describe('8.2. withdrawOperationFund(uint256, address, bytes[])', async () => {
+        it('8.2.1. withdrawOperationFund successfully with valid signatures', async () => {
             const { treasury, admin, admins, currency, primaryToken, receiver } = await setupBeforeTest({
                 prepareLiquidity: true,
             });
@@ -255,7 +159,7 @@ describe('8. Treasury', async () => {
             expect(await currency.balanceOf(receiver.address)).to.equal(value1.add(value2));
         });
 
-        it('8.4.2. withdrawOperationFund unsuccessfully with invalid signatures', async () => {
+        it('8.2.2. withdrawOperationFund unsuccessfully with invalid signatures', async () => {
             const { treasury, admin, admins, currency, primaryToken, receiver } = await setupBeforeTest({
                 prepareLiquidity: true,
             });
@@ -272,7 +176,7 @@ describe('8. Treasury', async () => {
                 .to.be.revertedWithCustomError(admin, "FailedVerification");
         });
 
-        it('8.4.3. withdrawOperationFund unsuccessfully with insufficient funds', async () => {
+        it('8.2.3. withdrawOperationFund unsuccessfully with insufficient funds', async () => {
             const { treasury, admin, admins, currency, primaryToken, receiver } = await setupBeforeTest({
                 prepareLiquidity: true,
             });
@@ -291,8 +195,8 @@ describe('8. Treasury', async () => {
         });
     });
 
-    describe('8.5. withdrawLiquidity(uint256)', async () => {
-        it('8.5.1. withdrawLiquidity successfully', async () => {
+    describe('8.3. withdrawLiquidity(uint256)', async () => {
+        it('8.3.1. withdrawLiquidity successfully', async () => {
             const { treasury, admin, admins, currency, primaryToken, receiver } = await setupBeforeTest({
                 prepareLiquidity: true,
             });
@@ -335,7 +239,7 @@ describe('8. Treasury', async () => {
             expect(await currency.balanceOf(treasury.address)).to.equal(initialTreasuryBalance.sub(value1).sub(value2));
         });
 
-        it('8.5.2. withdrawLiquidity unsuccessfully when paused', async () => {
+        it('8.3.2. withdrawLiquidity unsuccessfully when paused', async () => {
             const { treasury, primaryToken, receiver } = await setupBeforeTest({
                 prepareLiquidity: true,
                 pause: true,
@@ -349,7 +253,7 @@ describe('8. Treasury', async () => {
             ]))).to.be.revertedWith("Pausable: paused");
         });
 
-        it('8.5.3. withdrawLiquidity unsuccessfully by unauthorized user', async () => {
+        it('8.3.3. withdrawLiquidity unsuccessfully by unauthorized user', async () => {
             const { treasury, primaryToken, receiver } = await setupBeforeTest({
                 prepareLiquidity: true,
             });
@@ -360,7 +264,7 @@ describe('8. Treasury', async () => {
                 .to.be.revertedWithCustomError(treasury, "Unauthorized");
         });
 
-        it('8.5.4. withdrawLiquidity unsuccessfully with insufficient funds', async () => {
+        it('8.3.4. withdrawLiquidity unsuccessfully with insufficient funds', async () => {
             const { treasury, primaryToken, receiver } = await setupBeforeTest({
                 prepareLiquidity: true,
             });
@@ -374,8 +278,8 @@ describe('8. Treasury', async () => {
         });
     });
 
-    describe('8.6. provideLiquidity(uint256)', async () => {
-        it('8.6.1. provideLiquidity successfully', async () => {
+    describe('8.4. provideLiquidity(uint256)', async () => {
+        it('8.4.1. provideLiquidity successfully', async () => {
             const { treasury, admin, admins, currency, primaryToken, receiver } = await setupBeforeTest();
 
             const value1 = ethers.utils.parseEther("100");
@@ -415,7 +319,7 @@ describe('8. Treasury', async () => {
             expect(await currency.balanceOf(treasury.address)).to.equal(initialTreasuryBalance.add(value1).add(value2));
         });
 
-        it('8.6.2. provideLiquidity unsuccessfully when paused', async () => {
+        it('8.4.2. provideLiquidity unsuccessfully when paused', async () => {
             const { treasury, receiver } = await setupBeforeTest({
                 prepareLiquidity: true,
                 pause: true,

@@ -266,104 +266,8 @@ describe('10. StakeToken', async () => {
         });
     });
 
-    describe('10.2. pause(bytes[])', async () => {
-        it('10.2.1. pause successfully with valid signatures', async () => {
-            const { deployer, admin, admins, stakeToken1 } = await setupBeforeTest({});
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string"],
-                [stakeToken1.address, "pause"]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
-
-            const tx = await stakeToken1.pause(signatures);
-            await tx.wait();
-
-            expect(await stakeToken1.paused()).to.equal(true);
-
-            await expect(tx).to
-                .emit(stakeToken1, 'Paused')
-                .withArgs(deployer.address);
-        });
-
-        it('10.2.2. pause unsuccessfully with invalid signatures', async () => {
-            const { admin, admins, stakeToken1 } = await setupBeforeTest({});
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string"],
-                [stakeToken1.address, "pause"]
-            );
-            let invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
-
-            await expect(stakeToken1.pause(invalidSignatures)).to.be.revertedWithCustomError(admin, 'FailedVerification');
-        });
-
-        it('10.2.3. pause unsuccessfully when already paused', async () => {
-            const { admin, admins, stakeToken1 } = await setupBeforeTest({});
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string"],
-                [stakeToken1.address, "pause"]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await callTransaction(stakeToken1.pause(signatures));
-
-            signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await expect(stakeToken1.pause(signatures)).to.be.revertedWith('Pausable: paused');
-        });
-    });
-
-    describe('10.3. unpause(bytes[])', async () => {
-        it('10.3.1. unpause successfully with valid signatures', async () => {
-            const { deployer, admin, admins, stakeToken1 } = await setupBeforeTest({
-                pause: true,
-            });
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string"],
-                [stakeToken1.address, "unpause"]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
-
-            const tx = await stakeToken1.unpause(signatures);
-            await tx.wait();
-
-            await expect(tx).to
-                .emit(stakeToken1, 'Unpaused')
-                .withArgs(deployer.address);
-        });
-
-        it('10.3.2. unpause unsuccessfully with invalid signatures', async () => {
-            const { admin, admins, stakeToken1 } = await setupBeforeTest({
-                pause: true,
-            });
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string"],
-                [stakeToken1.address, "unpause"]
-            );
-            const invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
-
-            await expect(stakeToken1.unpause(invalidSignatures)).to.be.revertedWithCustomError(admin, 'FailedVerification');
-        });
-
-        it('10.3.3. unpause unsuccessfully when not paused', async () => {
-            const { admin, admins, stakeToken1 } = await setupBeforeTest({
-                pause: true,
-            });
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string"],
-                [stakeToken1.address, "unpause"]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await callTransaction(stakeToken1.unpause(signatures));
-
-            signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await expect(stakeToken1.unpause(signatures)).to.be.revertedWith('Pausable: not paused');
-        });
-    });
-
-    describe('10.4. initializeRewarding(uint256, address, bytes[])', async () => {
-        it('10.4.1. initialize rewarding successfully', async () => {
+    describe('10.2. initializeRewarding(uint256, address, bytes[])', async () => {
+        it('10.2.1. initialize rewarding successfully', async () => {
             const { deployer, admin, admins, stakeToken1, stakeToken2 } = await setupBeforeTest();
 
             let timestamp = await time.latest() + 100;
@@ -381,7 +285,7 @@ describe('10. StakeToken', async () => {
             expect(await stakeToken1.successor()).to.equal(stakeToken2.address); 
         });
 
-        it('10.4.2. initialize rewarding unsuccessfully with invalid signatures', async () => {
+        it('10.2.2. initialize rewarding unsuccessfully with invalid signatures', async () => {
             const { admin, admins, stakeToken1, stakeToken2 } = await setupBeforeTest();
 
             let timestamp = await time.latest() + 100;
@@ -399,7 +303,7 @@ describe('10. StakeToken', async () => {
             )).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('10.4.3. initialize rewarding unsuccessfully when already initialized', async () => {
+        it('10.2.3. initialize rewarding unsuccessfully when already initialized', async () => {
             const { admin, admins, stakeToken1, stakeToken2 } = await setupBeforeTest({
                 initializeRewarding: true,
             });
@@ -419,8 +323,8 @@ describe('10. StakeToken', async () => {
         });
     });
 
-    describe('10.5. updateFeeRate(uint256, bytes[])', async () => {
-        it('10.5.1. updateFeeRate successfully with valid signatures', async () => {
+    describe('10.3. updateFeeRate(uint256, bytes[])', async () => {
+        it('10.3.1. updateFeeRate successfully with valid signatures', async () => {
             const { admin, admins, stakeToken1 } = await setupBeforeTest();
 
             const message = ethers.utils.defaultAbiCoder.encode(
@@ -442,7 +346,7 @@ describe('10. StakeToken', async () => {
             expect(feeRate.decimals).to.equal(Constant.COMMON_RATE_DECIMALS);
         });
 
-        it('10.5.2. updateFeeRate unsuccessfully with invalid signatures', async () => {
+        it('10.3.2. updateFeeRate unsuccessfully with invalid signatures', async () => {
             const { admin, admins, stakeToken1 } = await setupBeforeTest();
 
             const message = ethers.utils.defaultAbiCoder.encode(
@@ -457,7 +361,7 @@ describe('10. StakeToken', async () => {
             )).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('10.5.3. updateFeeRate unsuccessfully with invalid rate', async () => {
+        it('10.3.3. updateFeeRate unsuccessfully with invalid rate', async () => {
             const { admin, admins, stakeToken1 } = await setupBeforeTest();
             
             let message = ethers.utils.defaultAbiCoder.encode(
@@ -473,8 +377,8 @@ describe('10. StakeToken', async () => {
         });
     });
 
-    describe('10.6. fetchReward()', async () => {
-        it('10.6.1. fetchReward successfully for stake token', async () => {
+    describe('10.4. fetchReward()', async () => {
+        it('10.4.1. fetchReward successfully for stake token', async () => {
             const { stakeToken1, primaryToken, staker1 } = await setupBeforeTest({
                 setFeeRate: true,
                 initializeRewarding: true,
@@ -506,7 +410,7 @@ describe('10. StakeToken', async () => {
             }
         });
 
-        it('10.6.2. fetchReward unsuccessfully when not started rewarding', async () => {
+        it('10.4.2. fetchReward unsuccessfully when not started rewarding', async () => {
             const { stakeToken1, staker1 } = await setupBeforeTest({
                 setFeeRate: true,
                 preparePrimaryTokenForStakers: true,
@@ -519,7 +423,7 @@ describe('10. StakeToken', async () => {
                 .to.be.revertedWithCustomError(stakeToken1, 'NotStartedRewarding');
         });
 
-        it('10.6.3. fetchReward unsuccessfully when on initial cooldown', async () => {
+        it('10.4.3. fetchReward unsuccessfully when on initial cooldown', async () => {
             const { stakeToken1, staker1 } = await setupBeforeTest({
                 setFeeRate: true,
                 initializeRewarding: true,
@@ -535,7 +439,7 @@ describe('10. StakeToken', async () => {
                 .to.be.revertedWithCustomError(stakeToken1, 'OnCoolDown');
         });
 
-        it('10.6.4. fetchReward unsuccessfully when on cooldown after fetching reward', async () => {
+        it('10.4.4. fetchReward unsuccessfully when on cooldown after fetching reward', async () => {
             const { stakeToken1, staker1 } = await setupBeforeTest({
                 setFeeRate: true,
                 initializeRewarding: true,
@@ -554,7 +458,7 @@ describe('10. StakeToken', async () => {
                 .to.be.revertedWithCustomError(stakeToken1, 'OnCoolDown');
         });
 
-        it('10.6.5. fetchReward unsuccessfully when stake token has zero stake', async () => {
+        it('10.4.5. fetchReward unsuccessfully when stake token has zero stake', async () => {
             const { stakeToken1, staker1 } = await setupBeforeTest({
                 setFeeRate: true,
                 initializeRewarding: true,
@@ -568,8 +472,8 @@ describe('10. StakeToken', async () => {
         });        
     });
 
-    describe('10.7. stake(address, uint256)', async () => {
-        it('10.7.1. stake successfully before stake rewarding completed', async () => {
+    describe('10.5. stake(address, uint256)', async () => {
+        it('10.5.1. stake successfully before stake rewarding completed', async () => {
             const { stakeToken1, staker1, primaryToken } = await setupBeforeTest({
                 setFeeRate: true,
                 initializeRewarding: true,
@@ -608,7 +512,7 @@ describe('10. StakeToken', async () => {
             expectEqualWithErrorMargin(await stakeToken1.balanceOf(staker1.address), stakeAmount1.add(stakeAmount2));
         });
 
-        it('10.7.2. stake successfully after stake rewarding completed', async () => {
+        it('10.5.2. stake successfully after stake rewarding completed', async () => {
             const { stakeToken1, staker1, primaryToken, currency, treasury } = await setupBeforeTest({
                 setFeeRate: true,
                 initializeRewarding: true,
@@ -684,8 +588,8 @@ describe('10. StakeToken', async () => {
         });
     });
 
-    describe('10.8. unstake(uint256)', async () => {
-        it('10.8.1. unstake successfully', async () => {
+    describe('10.6. unstake(uint256)', async () => {
+        it('10.6.1. unstake successfully', async () => {
             const { stakeToken1, staker1, primaryToken } = await setupBeforeTest({
                 setFeeRate: true,
                 initializeRewarding: true,
@@ -751,7 +655,7 @@ describe('10. StakeToken', async () => {
             primaryToken.isStakeRewardingCompleted.reset();
         });
 
-        it('10.8.2. unstake unsuccessfully when rewarding is not completed', async () => {
+        it('10.6.2. unstake unsuccessfully when rewarding is not completed', async () => {
             const { stakeToken1, staker1, primaryToken } = await setupBeforeTest({
                 setFeeRate: true,
                 initializeRewarding: true,
@@ -770,7 +674,7 @@ describe('10. StakeToken', async () => {
                 .to.be.revertedWithCustomError(stakeToken1, 'NotCompletedRewarding');
         });
 
-        it('10.8.3. unstake unsuccessfully when amount is greater than balance', async () => {
+        it('10.6.3. unstake unsuccessfully when amount is greater than balance', async () => {
             const { stakeToken1, staker1, primaryToken } = await setupBeforeTest({
                 setFeeRate: true,
                 initializeRewarding: true,
@@ -794,8 +698,8 @@ describe('10. StakeToken', async () => {
         });        
     });
 
-    describe('10.9. promote(uint256)', async () => {
-        it('10.9.1. promote successfully', async () => {
+    describe('10.7. promote(uint256)', async () => {
+        it('10.7.1. promote successfully', async () => {
             const { stakeToken1, stakeToken2, stakeToken3, staker1, primaryToken } = await setupBeforeTest({
                 setFeeRate: true,
                 initializeRewarding: true,
@@ -866,7 +770,7 @@ describe('10. StakeToken', async () => {
             expectEqualWithErrorMargin(await stakeToken3.balanceOf(staker1.address), promoteAmount3);
         });
 
-        it('10.9.2. promote unsuccessfully when paused', async () => {
+        it('10.7.2. promote unsuccessfully when paused', async () => {
             const fixture = await setupBeforeTest({
                 setFeeRate: true,
                 initializeRewarding: true,
@@ -879,7 +783,7 @@ describe('10. StakeToken', async () => {
                 .to.be.revertedWith('Pausable: paused');
         });
 
-        it('10.9.3. promote unsuccessfully when there is no successor', async () => {
+        it('10.7.3. promote unsuccessfully when there is no successor', async () => {
             const fixture = await setupBeforeTest({
                 setFeeRate: true,
                 initializeRewarding: true,
@@ -891,7 +795,7 @@ describe('10. StakeToken', async () => {
                 .to.be.revertedWithCustomError(stakeToken3, 'NoSuccessor');
         });
 
-        it('10.9.4. promote unsuccessfully when stake rewarding is completed', async () => {
+        it('10.7.4. promote unsuccessfully when stake rewarding is completed', async () => {
             const fixture = await setupBeforeTest({
                 setFeeRate: true,
                 initializeRewarding: true,
@@ -906,7 +810,7 @@ describe('10. StakeToken', async () => {
             primaryToken.isStakeRewardingCompleted.reset();
         });
 
-        it('10.9.5. promote unsuccessfully when amount is greater than balance', async () => {
+        it('10.7.5. promote unsuccessfully when amount is greater than balance', async () => {
             const fixture = await setupBeforeTest({
                 setFeeRate: true,
                 initializeRewarding: true,
@@ -924,7 +828,7 @@ describe('10. StakeToken', async () => {
         });        
     });
 
-    describe('10.10. balanceOf()', async () => {
+    describe('10.8. balanceOf()', async () => {
         async function testBalanceAfterOperations(
             fixture: StakeTokenFixture,
             operations: any[],
@@ -1170,7 +1074,7 @@ describe('10. StakeToken', async () => {
             return operations;
         }
         
-        it('10.10.1. return correct balance in a few staking and rewarding operations', async () => {
+        it('10.8.1. return correct balance in a few staking and rewarding operations', async () => {
             const fixture = await setupBeforeTest({
                 setFeeRate: true,
                 initializeRewarding: true,
@@ -1192,7 +1096,7 @@ describe('10. StakeToken', async () => {
             await testBalanceAfterOperations(fixture, operations);
         });
 
-        it('10.10.2. return correct balance in 1000 random operations', async () => {
+        it('10.8.2. return correct balance in 1000 random operations', async () => {
             const fixture = await setupBeforeTest({
                 setFeeRate: true,
                 initializeRewarding: true,
@@ -1205,7 +1109,7 @@ describe('10. StakeToken', async () => {
         });
     });
 
-    describe('10.11. exclusiveDiscount()', async () => {
+    describe('10.9. exclusiveDiscount()', async () => {
         async function testDiscount(
             fixture: StakeTokenFixture,
             stakeToken1Supply: BigNumber,
@@ -1236,7 +1140,7 @@ describe('10. StakeToken', async () => {
             expectBetween(expectedStateToken3Discount, ethers.utils.parseEther("0.15"), ethers.utils.parseEther("0.30"));
         }
         
-        it('10.11.1. return correct discount', async () => {
+        it('10.9.1. return correct discount', async () => {
             const fixture = await setupBeforeTest();
             
             const primaryTokenMaxSupply = Constant.PRIMARY_TOKEN_MAXIMUM_SUPPLY;
@@ -1259,8 +1163,8 @@ describe('10. StakeToken', async () => {
         });
     });
 
-    describe('10.12. transfer(address, uint256)', async () => {
-        it('10.12.1. transfer successfully', async () => {
+    describe('10.10. transfer(address, uint256)', async () => {
+        it('10.10.1. transfer successfully', async () => {
             const { stakeToken1, staker1, staker2 } = await setupBeforeTest({
                 setFeeRate: true,
                 initializeRewarding: true,

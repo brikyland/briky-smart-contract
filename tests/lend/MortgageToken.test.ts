@@ -455,104 +455,8 @@ describe('14. MortgageToken', async () => {
         });
     });
 
-    describe('14.2. pause(bytes[])', async () => {
-        it('14.2.1. pause successfully with valid signatures', async () => {
-            const { deployer, admin, admins, mortgageToken } = await beforeMortgageTokenTest();
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string"],
-                [mortgageToken.address, "pause"]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
-
-            const tx = await mortgageToken.pause(signatures);
-            await tx.wait();
-
-            expect(await mortgageToken.paused()).to.equal(true);
-
-            await expect(tx).to
-                .emit(mortgageToken, 'Paused')
-                .withArgs(deployer.address);
-        });
-
-        it('14.2.2. pause unsuccessfully with invalid signatures', async () => {
-            const { admin, admins, mortgageToken } = await beforeMortgageTokenTest();
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string"],
-                [mortgageToken.address, "pause"]
-            );
-            let invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
-
-            await expect(mortgageToken.pause(invalidSignatures)).to.be.revertedWithCustomError(admin, 'FailedVerification');
-        });
-
-        it('14.2.3. pause unsuccessfully when already paused', async () => {
-            const { admin, admins, mortgageToken } = await beforeMortgageTokenTest();
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string"],
-                [mortgageToken.address, "pause"]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await callTransaction(mortgageToken.pause(signatures));
-
-            signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await expect(mortgageToken.pause(signatures)).to.be.revertedWith('Pausable: paused');
-        });
-    });
-
-    describe('14.3. unpause(bytes[])', async () => {
-        it('14.3.1. unpause successfully with valid signatures', async () => {
-            const { deployer, admin, admins, mortgageToken } = await beforeMortgageTokenTest({
-                pause: true,
-            });
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string"],
-                [mortgageToken.address, "unpause"]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
-
-            const tx = await mortgageToken.unpause(signatures);
-            await tx.wait();
-
-            await expect(tx).to
-                .emit(mortgageToken, 'Unpaused')
-                .withArgs(deployer.address);
-        });
-
-        it('14.3.2. unpause unsuccessfully with invalid signatures', async () => {
-            const { admin, admins, mortgageToken } = await beforeMortgageTokenTest({
-                pause: true,
-            });
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string"],
-                [mortgageToken.address, "unpause"]
-            );
-            const invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
-
-            await expect(mortgageToken.unpause(invalidSignatures)).to.be.revertedWithCustomError(admin, 'FailedVerification');
-        });
-
-        it('14.3.3. unpause unsuccessfully when not paused', async () => {
-            const { admin, admins, mortgageToken } = await beforeMortgageTokenTest({
-                pause: true,
-            });
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string"],
-                [mortgageToken.address, "unpause"]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await callTransaction(mortgageToken.unpause(signatures));
-
-            signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await expect(mortgageToken.unpause(signatures)).to.be.revertedWith('Pausable: not paused');
-        });
-    });
-
-    describe('14.4. updateBaseURI(string, bytes[])', async () => {
-        it('14.4.1. updateBaseURI successfully with valid signatures', async () => {
+    describe('14.2. updateBaseURI(string, bytes[])', async () => {
+        it('14.2.1. updateBaseURI successfully with valid signatures', async () => {
             const { mortgageToken, admin, admins } = await beforeMortgageTokenTest({});
 
             const message = ethers.utils.defaultAbiCoder.encode(
@@ -572,7 +476,7 @@ describe('14. MortgageToken', async () => {
             expect(await mortgageToken.tokenURI(2)).to.equal("NewBaseURI:");
         });
 
-        it('14.4.2. updateBaseURI unsuccessfully with invalid signatures', async () => {
+        it('14.2.2. updateBaseURI unsuccessfully with invalid signatures', async () => {
             const { mortgageToken, admin, admins } = await beforeMortgageTokenTest({});
 
             const message = ethers.utils.defaultAbiCoder.encode(
@@ -588,8 +492,8 @@ describe('14. MortgageToken', async () => {
         });
     });
 
-    describe('14.5. updateRoyaltyRate(uint256, bytes[])', async () => {
-        it('14.5.1. updateRoyaltyRate successfully with valid signatures', async () => {
+    describe('14.3. updateRoyaltyRate(uint256, bytes[])', async () => {
+        it('14.3.1. updateRoyaltyRate successfully with valid signatures', async () => {
             const { mortgageToken, admin, admins } = await beforeMortgageTokenTest({});
 
             const message = ethers.utils.defaultAbiCoder.encode(
@@ -611,7 +515,7 @@ describe('14. MortgageToken', async () => {
             expect(royaltyRate.decimals).to.equal(Constant.COMMON_RATE_DECIMALS);
         });
 
-        it('14.5.2. updateRoyaltyRate unsuccessfully with invalid signatures', async () => {
+        it('14.3.2. updateRoyaltyRate unsuccessfully with invalid signatures', async () => {
             const { mortgageToken, admin, admins } = await beforeMortgageTokenTest({});
 
             const message = ethers.utils.defaultAbiCoder.encode(
@@ -626,7 +530,7 @@ describe('14. MortgageToken', async () => {
             )).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('14.5.3. updateRoyaltyRate unsuccessfully with invalid rate', async () => {
+        it('14.3.3. updateRoyaltyRate unsuccessfully with invalid rate', async () => {
             const { mortgageToken, admin, admins } = await beforeMortgageTokenTest({});
 
             let message = ethers.utils.defaultAbiCoder.encode(
@@ -642,8 +546,8 @@ describe('14. MortgageToken', async () => {
         });
     });
 
-    describe('14.6. updateFeeRate(uint256, bytes[])', async () => {
-        it('14.6.1. updateFeeRate successfully with valid signatures', async () => {
+    describe('14.4. updateFeeRate(uint256, bytes[])', async () => {
+        it('14.4.1. updateFeeRate successfully with valid signatures', async () => {
             const { mortgageToken, admin, admins } = await beforeMortgageTokenTest({});
 
             const message = ethers.utils.defaultAbiCoder.encode(
@@ -665,7 +569,7 @@ describe('14. MortgageToken', async () => {
             expect(feeRate.decimals).to.equal(Constant.COMMON_RATE_DECIMALS);
         });
 
-        it('14.6.2. updateFeeRate unsuccessfully with invalid signatures', async () => {
+        it('14.4.2. updateFeeRate unsuccessfully with invalid signatures', async () => {
             const { mortgageToken, admin, admins } = await beforeMortgageTokenTest({});
 
             const message = ethers.utils.defaultAbiCoder.encode(
@@ -680,7 +584,7 @@ describe('14. MortgageToken', async () => {
             )).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('14.6.3. updateFeeRate unsuccessfully with invalid rate', async () => {
+        it('14.4.3. updateFeeRate unsuccessfully with invalid rate', async () => {
             const { mortgageToken, admin, admins } = await beforeMortgageTokenTest({});
 
             let message = ethers.utils.defaultAbiCoder.encode(
@@ -696,7 +600,7 @@ describe('14. MortgageToken', async () => {
         });
     });
 
-    describe('14.7. borrow(uint256, uint256, uint256, uint256, address, uint40)', async () => {
+    describe('14.5. borrow(uint256, uint256, uint256, uint256, address, uint40)', async () => {
         interface BorrowParams {
             estateId: number;
             mortgageAmount: number;
@@ -730,7 +634,7 @@ describe('14. MortgageToken', async () => {
             }
         }
 
-        it('14.7.1. create loan successfully', async () => {
+        it('14.5.1. create loan successfully', async () => {
             const fixture = await beforeMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,
@@ -782,7 +686,7 @@ describe('14. MortgageToken', async () => {
             expect(await mortgageToken.tokenURI(2)).to.equal(LendInitialization.MORTGAGE_TOKEN_BaseURI);
         });
 
-        it('14.7.2. create loan unsuccessfully when paused', async () => {
+        it('14.5.2. create loan unsuccessfully when paused', async () => {
             const fixture = await beforeMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,
@@ -794,7 +698,7 @@ describe('14. MortgageToken', async () => {
                 .to.be.revertedWith('Pausable: paused');
         });
 
-        it('14.7.3. create loan unsuccessfully with invalid estate id', async () => {
+        it('14.5.3. create loan unsuccessfully with invalid estate id', async () => {
             const fixture = await beforeMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,
@@ -813,7 +717,7 @@ describe('14. MortgageToken', async () => {
                 .to.be.revertedWithCustomError(mortgageToken, 'InvalidEstateId');
         });
 
-        it('14.7.4. create loan unsuccessfully with invalid currency', async () => {
+        it('14.5.4. create loan unsuccessfully with invalid currency', async () => {
             const fixture = await beforeMortgageTokenTest({
                 listEstateToken: true,
             });
@@ -823,7 +727,7 @@ describe('14. MortgageToken', async () => {
             await revertedWithCustomError(mortgageToken, borrower1, defaultParams, 'InvalidCurrency');
         });
 
-        it('14.7.5. create loan unsuccessfully with invalid mortgage amount', async () => {
+        it('14.5.5. create loan unsuccessfully with invalid mortgage amount', async () => {
             const fixture = await beforeMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,
@@ -839,7 +743,7 @@ describe('14. MortgageToken', async () => {
             }, 'InvalidMortgageAmount');
         });
 
-        it('14.7.6. create loan unsuccessfully with invalid principal', async () => {
+        it('14.5.6. create loan unsuccessfully with invalid principal', async () => {
             const fixture = await beforeMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,
@@ -853,7 +757,7 @@ describe('14. MortgageToken', async () => {
             }, 'InvalidPrincipal');
         });
 
-        it('14.7.7. create loan unsuccessfully with invalid repayment', async () => {
+        it('14.5.7. create loan unsuccessfully with invalid repayment', async () => {
             const fixture = await beforeMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,
@@ -868,8 +772,8 @@ describe('14. MortgageToken', async () => {
         });
     });
 
-    describe('14.8. cancel(uint256)', async () => {
-        it('14.8.1. cancel loan successfully by borrower', async () => {
+    describe('14.6. cancel(uint256)', async () => {
+        it('14.6.1. cancel loan successfully by borrower', async () => {
             const fixture = await beforeMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,
@@ -898,7 +802,7 @@ describe('14. MortgageToken', async () => {
             expect(loan.lender).to.equal(ethers.constants.AddressZero);
         });
 
-        it('14.8.2. cancel loan successfully by manager', async () => {
+        it('14.6.2. cancel loan successfully by manager', async () => {
             const fixture = await beforeMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,
@@ -927,7 +831,7 @@ describe('14. MortgageToken', async () => {
             expect(loan.lender).to.equal(ethers.constants.AddressZero);
         });
 
-        it('14.8.3. cancel loan unsuccessfully by unauthorized user', async () => {
+        it('14.6.3. cancel loan unsuccessfully by unauthorized user', async () => {
             const fixture = await beforeMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,
@@ -940,7 +844,7 @@ describe('14. MortgageToken', async () => {
                 .to.be.revertedWithCustomError(mortgageToken, 'Unauthorized');
         });
 
-        it('14.8.4. cancel loan unsuccessfully with invalid loan id', async () => {
+        it('14.6.4. cancel loan unsuccessfully with invalid loan id', async () => {
             const fixture = await beforeMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,
@@ -954,7 +858,7 @@ describe('14. MortgageToken', async () => {
                 .to.be.revertedWithCustomError(mortgageToken, 'InvalidLoanId');
         });
 
-        it('14.8.5. cancel loan unsuccessfully with cancelled loan', async () => {
+        it('14.6.5. cancel loan unsuccessfully with cancelled loan', async () => {
             const fixture = await beforeMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,
@@ -967,7 +871,7 @@ describe('14. MortgageToken', async () => {
                 .to.be.revertedWithCustomError(mortgageToken, 'InvalidCancelling');
         });
 
-        it('14.8.6. cancel loan unsuccessfully with supplied loan', async () => {
+        it('14.6.6. cancel loan unsuccessfully with supplied loan', async () => {
             const fixture = await beforeMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,
@@ -981,7 +885,7 @@ describe('14. MortgageToken', async () => {
                 .to.be.revertedWithCustomError(mortgageToken, 'InvalidCancelling');
         });
 
-        it('14.8.7. cancel loan unsuccessfully with foreclosed loan', async () => {
+        it('14.6.7. cancel loan unsuccessfully with foreclosed loan', async () => {
             const fixture = await beforeMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,
@@ -1000,7 +904,7 @@ describe('14. MortgageToken', async () => {
                 .to.be.revertedWithCustomError(mortgageToken, 'InvalidCancelling');
         });
 
-        it('14.8.8. cancel loan unsuccessfully with repaid loan', async () => {
+        it('14.6.8. cancel loan unsuccessfully with repaid loan', async () => {
             const fixture = await beforeMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,
@@ -1018,7 +922,7 @@ describe('14. MortgageToken', async () => {
     });
 
 
-    describe('14.9. lend(uint256)', async () => {
+    describe('14.7. lend(uint256)', async () => {
         async function testLend(
             fixture: MortgageTokenFixture,
             currencyExclusiveRate: BigNumber,
@@ -1184,7 +1088,7 @@ describe('14. MortgageToken', async () => {
             }
         }
 
-        it('14.9.1. lend successfully in native and erc20 token', async () => {
+        it('14.7.1. lend successfully in native and erc20 token', async () => {
             const fixture = await beforeMortgageTokenTest({});
             await testLend(
                 fixture,
@@ -1215,7 +1119,7 @@ describe('14. MortgageToken', async () => {
             )
         });
 
-        it('14.9.2. lend successfully in all native/erc20 and exclusive/non-exclusive combinations', async () => {
+        it('14.7.2. lend successfully in all native/erc20 and exclusive/non-exclusive combinations', async () => {
             const fixture = await beforeMortgageTokenTest({});
             for (const isERC20 of [false, true]) {
                 for (const isExclusive of [false, true]) {
@@ -1239,7 +1143,7 @@ describe('14. MortgageToken', async () => {
             }
         });
 
-        it('14.9.3. lend successfully with very large amount in all native/erc20 and exclusive/non-exclusive combinations', async () => {
+        it('14.7.3. lend successfully with very large amount in all native/erc20 and exclusive/non-exclusive combinations', async () => {
             const fixture = await beforeMortgageTokenTest({});
             for (const isERC20 of [false, true]) {
                 for (const isExclusive of [false, true]) {
@@ -1266,7 +1170,7 @@ describe('14. MortgageToken', async () => {
             }
         });
 
-        it('14.9.4. lend successfully in 100 random test cases', async () => {
+        it('14.7.4. lend successfully in 100 random test cases', async () => {
             const fixture = await beforeMortgageTokenTest({});
             for (let testcase = 0; testcase < 100; testcase++) {
                 const hasCommissionReceiver = true;
@@ -1317,7 +1221,7 @@ describe('14. MortgageToken', async () => {
             }
         });
 
-        it('14.9.5. lend unsuccessfully when paused', async () => {
+        it('14.7.5. lend unsuccessfully when paused', async () => {
             const fixture = await beforeMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,
@@ -1330,7 +1234,7 @@ describe('14. MortgageToken', async () => {
                 .to.be.revertedWith("Pausable: paused");
         });
 
-        it('14.9.6. lend unsuccessfully with invalid loan id', async () => {
+        it('14.7.6. lend unsuccessfully with invalid loan id', async () => {
             const fixture = await beforeMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,
@@ -1345,7 +1249,7 @@ describe('14. MortgageToken', async () => {
                 .to.be.revertedWithCustomError(mortgageToken, "InvalidLoanId");
         });
 
-        it('14.9.7. lend unsuccessfully when borrower lend their own loan', async () => {
+        it('14.7.7. lend unsuccessfully when borrower lend their own loan', async () => {
             const fixture = await beforeMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,
@@ -1360,7 +1264,7 @@ describe('14. MortgageToken', async () => {
                 .to.be.revertedWithCustomError(mortgageToken, "InvalidLending");
         });
 
-        it('14.9.8. lend unsuccessfully with supplied loan', async () => {
+        it('14.7.8. lend unsuccessfully with supplied loan', async () => {
             const fixture = await beforeMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,
@@ -1376,7 +1280,7 @@ describe('14. MortgageToken', async () => {
                 .to.be.revertedWithCustomError(mortgageToken, "InvalidLending");
         });
 
-        it('14.9.9. lend unsuccessfully with repaid loan', async () => {
+        it('14.7.9. lend unsuccessfully with repaid loan', async () => {
             const fixture = await beforeMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,
@@ -1394,7 +1298,7 @@ describe('14. MortgageToken', async () => {
                 .to.be.revertedWithCustomError(mortgageToken, "InvalidLending");
         });
 
-        it('14.9.10. lend unsuccessfully with cancelled loan', async () => {
+        it('14.7.10. lend unsuccessfully with cancelled loan', async () => {
             const fixture = await beforeMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,
@@ -1408,7 +1312,7 @@ describe('14. MortgageToken', async () => {
                 .to.be.revertedWithCustomError(mortgageToken, "InvalidLending");
         });
 
-        it('14.9.11. lend unsuccessfully with foreclosed loan', async () => {
+        it('14.7.11. lend unsuccessfully with foreclosed loan', async () => {
             const fixture = await beforeMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,
@@ -1429,7 +1333,7 @@ describe('14. MortgageToken', async () => {
                 .to.be.revertedWithCustomError(mortgageToken, "InvalidLending");
         });
 
-        it('14.9.12. lend unsuccessfully with insufficient native token', async () => {
+        it('14.7.12. lend unsuccessfully with insufficient native token', async () => {
             const fixture = await beforeMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,
@@ -1441,7 +1345,7 @@ describe('14. MortgageToken', async () => {
                 .to.be.revertedWithCustomError(mortgageToken, "InsufficientValue");
         });
 
-        it('14.9.13. lend unsuccessfully when native token transfer to borrower failed', async () => {
+        it('14.7.13. lend unsuccessfully when native token transfer to borrower failed', async () => {
             const fixture = await beforeMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,
@@ -1460,7 +1364,7 @@ describe('14. MortgageToken', async () => {
                 .to.be.revertedWithCustomError(mortgageToken, "FailedTransfer");
         });
 
-        it('14.9.14. lend unsuccessfully when native token transfer to commission receiver failed', async () => {
+        it('14.7.14. lend unsuccessfully when native token transfer to commission receiver failed', async () => {
             const fixture = await beforeMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,
@@ -1489,7 +1393,7 @@ describe('14. MortgageToken', async () => {
                 .to.be.revertedWithCustomError(mortgageToken, "FailedTransfer");
         });
 
-        it('14.9.15. buy token unsuccessfully when refund to lender failed', async () => {
+        it('14.7.15. buy token unsuccessfully when refund to lender failed', async () => {
             const fixture = await beforeMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,
@@ -1504,7 +1408,7 @@ describe('14. MortgageToken', async () => {
                 .to.be.revertedWithCustomError(mortgageToken, "FailedRefund");
         });
 
-        it('14.9.16. buy token unsuccessfully when borrower reenter this function', async () => {
+        it('14.7.16. buy token unsuccessfully when borrower reenter this function', async () => {
             const fixture = await beforeMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,
@@ -1534,8 +1438,8 @@ describe('14. MortgageToken', async () => {
         });
     });
 
-    describe('14.10. safeLend(uint256, uint256)', async () => {
-        it('14.10.1. safe lend successfully', async () => {
+    describe('14.8. safeLend(uint256, uint256)', async () => {
+        it('14.8.1. safe lend successfully', async () => {
             const fixture = await beforeMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,
@@ -1550,7 +1454,7 @@ describe('14. MortgageToken', async () => {
                 .to.not.be.reverted;
         });
 
-        it('14.10.2. safe lend unsuccessfully with invalid loan id', async () => {
+        it('14.8.2. safe lend unsuccessfully with invalid loan id', async () => {
             const fixture = await beforeMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,
@@ -1566,7 +1470,7 @@ describe('14. MortgageToken', async () => {
         });
 
 
-        it('14.10.3. safe lend unsuccessfully with bad anchor', async () => {
+        it('14.8.3. safe lend unsuccessfully with bad anchor', async () => {
             const fixture = await beforeMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,
@@ -1582,8 +1486,8 @@ describe('14. MortgageToken', async () => {
         });
     });
     
-    describe('14.11. repay(uint256)', () => {
-        it('14.11.1. repay successfully', async () => {
+    describe('14.9. repay(uint256)', () => {
+        it('14.9.1. repay successfully', async () => {
             const fixture = await beforeMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,
@@ -1669,7 +1573,7 @@ describe('14. MortgageToken', async () => {
             expect(await currency.balanceOf(mortgageTokenOwner.address)).to.equal(mortgageTokenOwnerBalance.add(110000));
         });
 
-        it('14.11.2. repay unsuccessfully when paused', async () => {
+        it('14.9.2. repay unsuccessfully when paused', async () => {
             const fixture = await beforeMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,
@@ -1683,7 +1587,7 @@ describe('14. MortgageToken', async () => {
                 .to.be.revertedWith("Pausable: paused");
         });
 
-        it('14.11.3. repay unsuccessfully with invalid loan id', async () => {
+        it('14.9.3. repay unsuccessfully with invalid loan id', async () => {
             const fixture = await beforeMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,
@@ -1699,7 +1603,7 @@ describe('14. MortgageToken', async () => {
                 .to.be.revertedWithCustomError(mortgageToken, "InvalidLoanId");
         });
 
-        it('14.11.4. repay unsuccessfully with overdue loan', async () => {
+        it('14.9.4. repay unsuccessfully with overdue loan', async () => {
             const fixture = await beforeMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,
@@ -1721,7 +1625,7 @@ describe('14. MortgageToken', async () => {
                 .to.be.revertedWithCustomError(mortgageToken, "Overdue");
         });
 
-        it('14.11.5. repay unsuccessfully with pending loan', async () => {
+        it('14.9.5. repay unsuccessfully with pending loan', async () => {
             const fixture = await beforeMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,
@@ -1735,7 +1639,7 @@ describe('14. MortgageToken', async () => {
                 .to.be.revertedWithCustomError(mortgageToken, "InvalidRepaying");
         });
 
-        it('14.11.6. repay unsuccessfully with already repaid loan', async () => {
+        it('14.9.6. repay unsuccessfully with already repaid loan', async () => {
             const fixture = await beforeMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,
@@ -1753,7 +1657,7 @@ describe('14. MortgageToken', async () => {
                 .to.be.revertedWithCustomError(mortgageToken, "InvalidRepaying");
         });
 
-        it('14.11.7. repay unsuccessfully with foreclosed loan', async () => {
+        it('14.9.7. repay unsuccessfully with foreclosed loan', async () => {
             const fixture = await beforeMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,
@@ -1774,7 +1678,7 @@ describe('14. MortgageToken', async () => {
                 .to.be.revertedWithCustomError(mortgageToken, "InvalidRepaying");
         });
 
-        it('14.11.8. repay unsuccessfully with cancelled loan', async () => {
+        it('14.9.8. repay unsuccessfully with cancelled loan', async () => {
             const fixture = await beforeMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,
@@ -1791,7 +1695,7 @@ describe('14. MortgageToken', async () => {
                 .to.be.revertedWithCustomError(mortgageToken, "InvalidRepaying");
         });
 
-        it('14.11.9. repay unsuccessfully with insufficient funds', async () => {
+        it('14.9.9. repay unsuccessfully with insufficient funds', async () => {
             const fixture = await beforeMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,
@@ -1808,7 +1712,7 @@ describe('14. MortgageToken', async () => {
                 .to.be.revertedWith("ERC20: transfer amount exceeds balance");
         });
 
-        it('14.11.10. repay unsuccessfully native token transfer to lender failed', async () => {
+        it('14.9.10. repay unsuccessfully native token transfer to lender failed', async () => {
             const fixture = await beforeMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,
@@ -1827,7 +1731,7 @@ describe('14. MortgageToken', async () => {
                 .to.be.revertedWithCustomError(mortgageToken, "FailedTransfer");
         });
 
-        it('14.11.11. repay unsuccessfully when this contract is reentered', async () => {
+        it('14.9.11. repay unsuccessfully when this contract is reentered', async () => {
             const fixture = await beforeMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,
@@ -1853,8 +1757,8 @@ describe('14. MortgageToken', async () => {
         });
     });
     
-    describe('14.12. safeRepay(uint256, uint256)', () => {
-        it('14.12.1. safe repay successfully', async () => {
+    describe('14.10. safeRepay(uint256, uint256)', () => {
+        it('14.10.1. safe repay successfully', async () => {
             const fixture = await beforeMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,
@@ -1870,7 +1774,7 @@ describe('14. MortgageToken', async () => {
                 .to.not.be.reverted;
         });
 
-        it('14.12.2. safe repay unsuccessfully with invalid loan id', async () => {
+        it('14.10.2. safe repay unsuccessfully with invalid loan id', async () => {
             const fixture = await beforeMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,
@@ -1886,7 +1790,7 @@ describe('14. MortgageToken', async () => {
                 .to.be.revertedWithCustomError(mortgageToken, "InvalidLoanId");
         });
 
-        it('14.12.3. repay unsuccessfully with invalid anchor', async () => {
+        it('14.10.3. repay unsuccessfully with invalid anchor', async () => {
             const fixture = await beforeMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,
@@ -1903,8 +1807,8 @@ describe('14. MortgageToken', async () => {
         });
     });
 
-    describe('14.13. foreclose(uint256)', () => {
-        it('14.13.1. foreclose successfully', async () => {
+    describe('14.11. foreclose(uint256)', () => {
+        it('14.11.1. foreclose successfully', async () => {
             const fixture = await beforeMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,
@@ -1980,7 +1884,7 @@ describe('14. MortgageToken', async () => {
             expect(await estateToken.balanceOf(mortgageToken.address, 2)).to.equal(mortgageContractBalance.sub(200));
         });
 
-        it('14.13.2. foreclose unsuccessfully when paused', async () => {
+        it('14.11.2. foreclose unsuccessfully when paused', async () => {
             const fixture = await beforeMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,
@@ -1994,7 +1898,7 @@ describe('14. MortgageToken', async () => {
                 .to.be.revertedWith("Pausable: paused");
         });
 
-        it('14.13.3. foreclose unsuccessfully with invalid loan id', async () => {
+        it('14.11.3. foreclose unsuccessfully with invalid loan id', async () => {
             const fixture = await beforeMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,
@@ -2010,7 +1914,7 @@ describe('14. MortgageToken', async () => {
                 .to.be.revertedWithCustomError(mortgageToken, "InvalidLoanId");
         });
 
-        it('14.13.4. foreclose unsuccessfully when loan is not overdue', async () => {
+        it('14.11.4. foreclose unsuccessfully when loan is not overdue', async () => {
             const fixture = await beforeMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,
@@ -2023,7 +1927,7 @@ describe('14. MortgageToken', async () => {
                 .to.be.revertedWithCustomError(mortgageToken, "InvalidForeclosing");
         });
 
-        it('14.13.5. foreclose unsuccessfully with pending loan', async () => {
+        it('14.11.5. foreclose unsuccessfully with pending loan', async () => {
             const fixture = await beforeMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,
@@ -2035,7 +1939,7 @@ describe('14. MortgageToken', async () => {
                 .to.be.revertedWithCustomError(mortgageToken, "InvalidForeclosing");
         });
 
-        it('14.13.6. foreclose unsuccessfully with repaid loan', async () => {
+        it('14.11.6. foreclose unsuccessfully with repaid loan', async () => {
             const fixture = await beforeMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,
@@ -2053,7 +1957,7 @@ describe('14. MortgageToken', async () => {
                 .to.be.revertedWithCustomError(mortgageToken, "InvalidForeclosing");
         });
 
-        it('14.13.7. foreclose unsuccessfully with foreclosed loan', async () => {
+        it('14.11.7. foreclose unsuccessfully with foreclosed loan', async () => {
             const fixture = await beforeMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,
@@ -2071,7 +1975,7 @@ describe('14. MortgageToken', async () => {
                 .to.be.revertedWithCustomError(mortgageToken, "InvalidForeclosing");
         });
 
-        it('14.13.8. foreclose unsuccessfully with cancelled loan', async () => {
+        it('14.11.8. foreclose unsuccessfully with cancelled loan', async () => {
             const fixture = await beforeMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,
@@ -2086,8 +1990,8 @@ describe('14. MortgageToken', async () => {
         });
     });
 
-    describe('14.14. royaltyInfo(uint256, uint256)', () => {
-        it('14.14.1. return correct royalty info', async () => {
+    describe('14.12. royaltyInfo(uint256, uint256)', () => {
+        it('14.12.1. return correct royalty info', async () => {
             const fixture = await beforeMortgageTokenTest();
             const { mortgageToken, feeReceiver } = fixture;
 
@@ -2100,8 +2004,8 @@ describe('14. MortgageToken', async () => {
         });
     });
 
-    describe('14.15. supportsInterface(bytes4)', () => {
-        it('14.15.1. return true for appropriate interface', async () => {
+    describe('14.13. supportsInterface(bytes4)', () => {
+        it('14.13.1. return true for appropriate interface', async () => {
             const fixture = await beforeMortgageTokenTest();
             const { mortgageToken } = fixture;
 

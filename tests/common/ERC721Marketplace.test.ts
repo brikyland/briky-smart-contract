@@ -246,8 +246,8 @@ describe('7. ERC721Marketplace', async () => {
         });
     });
 
-    describe('7.4. getOffer(uint256)', async () => {
-        it('7.4.1. return successfully', async () => {
+    describe('7.2. getOffer(uint256)', async () => {
+        it('7.2.1. return successfully', async () => {
             const fixture = await beforeERC721MarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleCollectionTokens: true,
@@ -259,7 +259,7 @@ describe('7. ERC721Marketplace', async () => {
             expect(await erc721Marketplace.getOffer(2)).to.not.be.reverted;
         });
 
-        it('7.4.2. revert with invalid offer id', async () => {
+        it('7.2.2. revert with invalid offer id', async () => {
             const fixture = await beforeERC721MarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleCollectionTokens: true,
@@ -274,8 +274,8 @@ describe('7. ERC721Marketplace', async () => {
         });
     });
 
-    describe('7.5. list(address, uint256, uint256, address)', async () => {
-        it('7.5.1. list token successfully', async () => {
+    describe('7.3. list(address, uint256, uint256, address)', async () => {
+        it('7.3.1. list token successfully', async () => {
             const { erc721Marketplace, feeReceiverCollection, otherCollection, currency, seller1, seller2 } = await beforeERC721MarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleCollectionTokens: true,
@@ -329,7 +329,7 @@ describe('7. ERC721Marketplace', async () => {
             expect(offer.seller).to.equal(seller2.address);
         });
 
-        it('7.5.2. list token unsuccessfully when paused', async () => {
+        it('7.3.2. list token unsuccessfully when paused', async () => {
             const fixture = await beforeERC721MarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleCollectionTokens: true,
@@ -341,7 +341,7 @@ describe('7. ERC721Marketplace', async () => {
                 .to.be.revertedWith('Pausable: paused');
         });
 
-        it('7.5.3. list token unsuccessfully with invalid collection', async () => {
+        it('7.3.3. list token unsuccessfully with invalid collection', async () => {
             const fixture = await beforeERC721MarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleCollectionTokens: true,
@@ -353,7 +353,7 @@ describe('7. ERC721Marketplace', async () => {
                 .to.be.revertedWithCustomError(erc721Marketplace, 'InvalidCollection');
         });
 
-        it('7.5.3. list token unsuccessfully with invalid token id', async () => {
+        it('7.3.4. list token unsuccessfully with invalid token id', async () => {
             const fixture = await beforeERC721MarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleCollectionTokens: true,
@@ -367,7 +367,7 @@ describe('7. ERC721Marketplace', async () => {
                 .to.be.revertedWith('ERC721: invalid token ID');
         });
 
-        it('7.5.4. list token unsuccessfully when not token owner', async () => {
+        it('7.3.5. list token unsuccessfully when not token owner', async () => {
             const fixture = await beforeERC721MarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleCollectionTokens: true,
@@ -378,7 +378,7 @@ describe('7. ERC721Marketplace', async () => {
                 .to.be.revertedWithCustomError(erc721Marketplace, 'InvalidTokenId');
         });
 
-        it('7.5.5. list token unsuccessfully with zero price', async () => {
+        it('7.3.6. list token unsuccessfully with zero price', async () => {
             const fixture = await beforeERC721MarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleCollectionTokens: true,
@@ -389,7 +389,7 @@ describe('7. ERC721Marketplace', async () => {
                 .to.be.revertedWithCustomError(erc721Marketplace, 'InvalidPrice');
         });
 
-        it('7.5.6. list token unsuccessfully with invalid currency', async () => {
+        it('7.3.7. list token unsuccessfully with invalid currency', async () => {
             const fixture = await beforeERC721MarketplaceTest({
                 listSampleCollectionTokens: true,
             });
@@ -400,7 +400,7 @@ describe('7. ERC721Marketplace', async () => {
         });
     });
 
-    describe('7.6. buy(uint256)', async () => {
+    describe('7.4. buy(uint256)', async () => {
         async function testBuyOffer(
             fixture: ERC721MarketplaceFixture,
             collectionSupportsERC2981: boolean,
@@ -545,7 +545,7 @@ describe('7. ERC721Marketplace', async () => {
             }
         }
 
-        it('7.6.1. buy token successfully (automatic test)', async () => {
+        it('7.4.1. buy token successfully (automatic test)', async () => {
             const fixture = await beforeERC721MarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleCollectionTokens: true,
@@ -579,7 +579,7 @@ describe('7. ERC721Marketplace', async () => {
             );
         });
 
-        it('7.6.2. buy token successfully in all native/erc20 and exclusive/non-exclusive combinations', async () => {
+        it('7.4.2. buy token successfully in all native/erc20 and exclusive/non-exclusive combinations', async () => {
             const fixture = await beforeERC721MarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleCollectionTokens: true,
@@ -619,7 +619,7 @@ describe('7. ERC721Marketplace', async () => {
             }
         });
 
-        it('7.6.3. buy token successfully with very large amount', async () => {
+        it('7.4.3. buy token successfully with very large amount', async () => {
             const fixture = await beforeERC721MarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleCollectionTokens: true,
@@ -662,7 +662,7 @@ describe('7. ERC721Marketplace', async () => {
             }            
         });
 
-        it('7.6.4. buy token unsuccessfully when paused', async () => {
+        it('7.4.4. buy token unsuccessfully when paused', async () => {
             const fixture = await beforeERC721MarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleCollectionTokens: true,
@@ -675,7 +675,7 @@ describe('7. ERC721Marketplace', async () => {
                 .to.be.revertedWith("Pausable: paused");
         });
 
-        it('7.6.5. buy token unsuccessfully with invalid offer id', async () => {
+        it('7.4.5. buy token unsuccessfully with invalid offer id', async () => {
             const fixture = await beforeERC721MarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleCollectionTokens: true,
@@ -690,7 +690,7 @@ describe('7. ERC721Marketplace', async () => {
                 .to.be.revertedWithCustomError(erc721Marketplace, "InvalidOfferId");
         });
 
-        it('7.6.6. buy token unsuccessfully when seller buy their own token', async () => {
+        it('7.4.6. buy token unsuccessfully when seller buy their own token', async () => {
             const fixture = await beforeERC721MarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleCollectionTokens: true,
@@ -705,7 +705,7 @@ describe('7. ERC721Marketplace', async () => {
                 .to.be.revertedWithCustomError(erc721Marketplace, "InvalidBuying");
         });
 
-        it('7.6.7. buy token unsuccessfully when offer is not selling', async () => {
+        it('7.4.7. buy token unsuccessfully when offer is not selling', async () => {
             const fixture = await beforeERC721MarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleCollectionTokens: true,
@@ -719,7 +719,7 @@ describe('7. ERC721Marketplace', async () => {
                 .to.be.revertedWithCustomError(erc721Marketplace, "InvalidBuying");
         });
 
-        it('7.6.8. buy token successfully when collection does not support ERC2981 interface', async () => {
+        it('7.4.8. buy token successfully when collection does not support ERC2981 interface', async () => {
             const fixture = await beforeERC721MarketplaceTest({
                 listSampleCurrencies: true,
             });
@@ -739,7 +739,7 @@ describe('7. ERC721Marketplace', async () => {
             );
         });
 
-        it('7.6.8. buy token unsuccessfully with insufficient native token', async () => {
+        it('7.4.9. buy token unsuccessfully with insufficient native token', async () => {
             const fixture = await beforeERC721MarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleCollectionTokens: true,
@@ -751,7 +751,7 @@ describe('7. ERC721Marketplace', async () => {
                 .to.be.revertedWithCustomError(erc721Marketplace, "InsufficientValue");
         });
 
-        it('7.6.9. buy token unsuccessfully when native token transfer to seller failed', async () => {
+        it('7.4.10. buy token unsuccessfully when native token transfer to seller failed', async () => {
             const fixture = await beforeERC721MarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleCollectionTokens: true,
@@ -777,7 +777,7 @@ describe('7. ERC721Marketplace', async () => {
                 .to.be.revertedWithCustomError(erc721Marketplace, "FailedTransfer");
         });
 
-        it('7.6.10. buy token unsuccessfully when native token transfer to royalty receiver failed', async () => {
+        it('7.4.11. buy token unsuccessfully when native token transfer to royalty receiver failed', async () => {
             const fixture = await beforeERC721MarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleCollectionTokens: true,
@@ -793,7 +793,7 @@ describe('7. ERC721Marketplace', async () => {
                 .to.be.revertedWithCustomError(erc721Marketplace, "FailedTransfer");
         });
 
-        it('7.6.11. buy token unsuccessfully when refund to sender failed', async () => {
+        it('7.4.12. buy token unsuccessfully when refund to sender failed', async () => {
             const fixture = await beforeERC721MarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleCollectionTokens: true,
@@ -810,7 +810,7 @@ describe('7. ERC721Marketplace', async () => {
                 .to.be.revertedWithCustomError(erc721Marketplace, "FailedRefund");
         });
 
-        it('7.6.12. buy token unsuccessfully when this contract is reentered', async () => {
+        it('7.4.13. buy token unsuccessfully when this contract is reentered', async () => {
             const fixture = await beforeERC721MarketplaceTest({
                 listSampleCurrencies: true,
             });
@@ -836,8 +836,8 @@ describe('7. ERC721Marketplace', async () => {
         });
     });
 
-    describe('7.7. safeBuy(uint256, uint256)', async () => {
-        it('7.7.1. buy token successfully in both native and ERC20', async () => {
+    describe('7.5. safeBuy(uint256, uint256)', async () => {
+        it('7.5.1. buy token successfully in both native and ERC20', async () => {
             const fixture = await beforeERC721MarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleCollectionTokens: true,
@@ -853,7 +853,7 @@ describe('7. ERC721Marketplace', async () => {
                 .to.not.be.reverted;
         });
 
-        it('7.7.2. buy token unsuccessfully with invalid offer id', async () => {
+        it('7.5.2. buy token unsuccessfully with invalid offer id', async () => {
             const fixture = await beforeERC721MarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleCollectionTokens: true,
@@ -868,7 +868,7 @@ describe('7. ERC721Marketplace', async () => {
                 .to.be.revertedWithCustomError(erc721Marketplace, "InvalidOfferId");
         });
 
-        it('7.7.3. buy token unsuccessfully with invalid anchor', async () => {
+        it('7.5.3. buy token unsuccessfully with invalid anchor', async () => {
             const fixture = await beforeERC721MarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleCollectionTokens: true,
@@ -884,8 +884,8 @@ describe('7. ERC721Marketplace', async () => {
         });
     });
 
-    describe('7.8. cancelOffer(uint256)', async () => {
-        it('7.8.1. cancel offer successfully by seller', async () => {
+    describe('7.6. cancelOffer(uint256)', async () => {
+        it('7.6.1. cancel offer successfully by seller', async () => {
             const fixture = await beforeERC721MarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleCollectionTokens: true,
@@ -905,7 +905,7 @@ describe('7. ERC721Marketplace', async () => {
                 .withArgs(1);
         });
 
-        it('7.8.2. cancel offer successfully by manager', async () => {
+        it('7.6.2. cancel offer successfully by manager', async () => {
             const fixture = await beforeERC721MarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleCollectionTokens: true,
@@ -924,7 +924,7 @@ describe('7. ERC721Marketplace', async () => {
                 .withArgs(1);
         });
 
-        it('7.8.3. cancel offer unsuccessfully with invalid offer id', async () => {
+        it('7.6.3. cancel offer unsuccessfully with invalid offer id', async () => {
             const fixture = await beforeERC721MarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleCollectionTokens: true,
@@ -939,7 +939,7 @@ describe('7. ERC721Marketplace', async () => {
                 .to.be.revertedWithCustomError(erc721Marketplace, "InvalidOfferId");
         });
 
-        it('7.8.4. cancel offer unsuccessfully by unauthorized user', async () => {
+        it('7.6.4. cancel offer unsuccessfully by unauthorized user', async () => {
             const fixture = await beforeERC721MarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleCollectionTokens: true,
@@ -955,7 +955,7 @@ describe('7. ERC721Marketplace', async () => {
                 .to.be.revertedWithCustomError(erc721Marketplace, "Unauthorized");
         });
 
-        it('7.8.5. cancel offer unsuccessfully when offer is already cancelled', async () => {
+        it('7.6.5. cancel offer unsuccessfully when offer is already cancelled', async () => {
             const fixture = await beforeERC721MarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleCollectionTokens: true,
@@ -969,7 +969,7 @@ describe('7. ERC721Marketplace', async () => {
                 .to.be.revertedWithCustomError(erc721Marketplace, "InvalidCancelling");
         });
 
-        it('7.8.6. cancel offer unsuccessfully when offer is sold out', async () => {
+        it('7.6.6. cancel offer unsuccessfully when offer is sold out', async () => {
             const fixture = await beforeERC721MarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleCollectionTokens: true,

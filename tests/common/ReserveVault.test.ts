@@ -1390,7 +1390,7 @@ describe('20. ReserveVault', async () => {
             await expect(initiator.call(reserveVault.address, callData, { value: 0 })).to.be.revertedWithCustomError(reserveVault, 'InsufficientFunds');
         });
 
-        it('20.6.6. withdraw fund unsuccessfully when this contract is reentered', async () => {
+        it('20.6.7. withdraw fund unsuccessfully when this contract is reentered', async () => {
             const { reserveVault, initiators, deployer, withdrawer1, reentrancyERC20 } = await beforeReserveVaultTest({
                 authorizeInitiators: true,
                 listSampleCurrencies: true,

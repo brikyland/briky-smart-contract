@@ -236,104 +236,8 @@ describe('12. Driptributor', async () => {
         });
     });
 
-    describe('12.2. pause(bytes[])', async () => {
-        it('12.2.1. pause successfully with valid signatures', async () => {
-            const { deployer, admin, admins, driptributor } = await setupBeforeTest({});
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string"],
-                [driptributor.address, "pause"]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
-
-            const tx = await driptributor.pause(signatures);
-            await tx.wait();
-
-            expect(await driptributor.paused()).to.equal(true);
-
-            await expect(tx).to
-                .emit(driptributor, 'Paused')
-                .withArgs(deployer.address);
-        });
-
-        it('12.2.2. pause unsuccessfully with invalid signatures', async () => {
-            const { admin, admins, driptributor } = await setupBeforeTest({});
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string"],
-                [driptributor.address, "pause"]
-            );
-            let invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
-
-            await expect(driptributor.pause(invalidSignatures)).to.be.revertedWithCustomError(admin, 'FailedVerification');
-        });
-
-        it('12.2.3. pause unsuccessfully when already paused', async () => {
-            const { admin, admins, driptributor } = await setupBeforeTest({});
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string"],
-                [driptributor.address, "pause"]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await callTransaction(driptributor.pause(signatures));
-
-            signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await expect(driptributor.pause(signatures)).to.be.revertedWith('Pausable: paused');
-        });
-    });
-
-    describe('12.3. unpause(bytes[])', async () => {
-        it('12.3.1. unpause successfully with valid signatures', async () => {
-            const { deployer, admin, admins, driptributor } = await setupBeforeTest({
-                pause: true,
-            });
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string"],
-                [driptributor.address, "unpause"]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
-
-            const tx = await driptributor.unpause(signatures);
-            await tx.wait();
-
-            await expect(tx).to
-                .emit(driptributor, 'Unpaused')
-                .withArgs(deployer.address);
-        });
-
-        it('12.3.2. unpause unsuccessfully with invalid signatures', async () => {
-            const { admin, admins, driptributor } = await setupBeforeTest({
-                pause: true,
-            });
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string"],
-                [driptributor.address, "unpause"]
-            );
-            const invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
-
-            await expect(driptributor.unpause(invalidSignatures)).to.be.revertedWithCustomError(admin, 'FailedVerification');
-        });
-
-        it('12.3.3. unpause unsuccessfully when not paused', async () => {
-            const { admin, admins, driptributor } = await setupBeforeTest({
-                pause: true,
-            });
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string"],
-                [driptributor.address, "unpause"]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await callTransaction(driptributor.unpause(signatures));
-
-            signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await expect(driptributor.unpause(signatures)).to.be.revertedWith('Pausable: not paused');
-        });
-    });
-
-    describe('12.4. updateStakeTokens(address, address, address, bytes[])', async () => {
-        it('12.4.1. updateStakeTokens successfully', async () => {
+    describe('12.2. updateStakeTokens(address, address, address, bytes[])', async () => {
+        it('12.2.1. updateStakeTokens successfully', async () => {
             const { admin, admins, driptributor, stakeToken1, stakeToken2, stakeToken3 } = await setupBeforeTest();
             
             let message = ethers.utils.defaultAbiCoder.encode(
@@ -359,7 +263,7 @@ describe('12. Driptributor', async () => {
             expect(await driptributor.stakeToken3()).to.equal(stakeToken3.address);
         });
 
-        it('12.4.2. updateStakeTokens unsuccessfully with invalid signatures', async () => {
+        it('12.2.2. updateStakeTokens unsuccessfully with invalid signatures', async () => {
             const { admin, admins, driptributor, stakeToken1, stakeToken2, stakeToken3 } = await setupBeforeTest();
             
             let message = ethers.utils.defaultAbiCoder.encode(
@@ -398,7 +302,7 @@ describe('12. Driptributor', async () => {
             )).to.be.revertedWithCustomError(driptributor, 'InvalidUpdating');
         }
 
-        it('12.4.3. updateStakeTokens unsuccessfully with zero address stake tokens', async () => {
+        it('12.2.3. updateStakeTokens unsuccessfully with zero address stake tokens', async () => {
             const { admin, admins, driptributor, stakeToken1, stakeToken2, stakeToken3 } = await setupBeforeTest();
 
             await testForInvalidInput(driptributor, admins, admin, ethers.constants.AddressZero, stakeToken2.address, stakeToken3.address);
@@ -406,7 +310,7 @@ describe('12. Driptributor', async () => {
             await testForInvalidInput(driptributor, admins, admin, stakeToken1.address, stakeToken2.address, ethers.constants.AddressZero);
         });
 
-        it('12.4.4. updateStakeTokens unsuccessfully with already updated stake tokens', async () => {
+        it('12.2.4. updateStakeTokens unsuccessfully with already updated stake tokens', async () => {
             const { admin, admins, driptributor, stakeToken1, stakeToken2, stakeToken3 } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -414,8 +318,8 @@ describe('12. Driptributor', async () => {
         });
     });
 
-    describe('12.5. distributeTokensWithDuration(address[], uint256[], uint40[], string[], bytes[])', async () => {
-        it('12.5.1. distributeTokensWithDuration successfully with valid signatures', async () => {
+    describe('12.3. distributeTokensWithDuration(address[], uint256[], uint40[], string[], bytes[])', async () => {
+        it('12.3.1. distributeTokensWithDuration successfully with valid signatures', async () => {
             const { admin, admins, driptributor, totalAmount, receiver1, receiver2 } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -517,7 +421,7 @@ describe('12. Driptributor', async () => {
             expect(distribution4.isStaked).to.equal(false);
         });
 
-        it('12.5.2. distributeTokensWithDuration unsuccessfully with invalid signatures', async () => {
+        it('12.3.2. distributeTokensWithDuration unsuccessfully with invalid signatures', async () => {
             const { admin, admins, driptributor, totalAmount, receiver1, receiver2 } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -542,7 +446,7 @@ describe('12. Driptributor', async () => {
             )).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('12.5.3. distributeTokensWithDuration unsuccessfully with invalid input', async () => {
+        it('12.3.3. distributeTokensWithDuration unsuccessfully with invalid input', async () => {
             const { admin, admins, driptributor, totalAmount, receiver1, receiver2 } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -579,7 +483,7 @@ describe('12. Driptributor', async () => {
             await testForInvalidInput(receivers, amounts, vestingDurations, data.slice(0, 1));
         });
 
-        it('12.5.4. distributeTokensWithDuration unsuccessfully with insufficient funds', async () => {
+        it('12.3.4. distributeTokensWithDuration unsuccessfully with insufficient funds', async () => {
             const { admin, admins, driptributor, totalAmount, receiver1, receiver2 } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -620,8 +524,8 @@ describe('12. Driptributor', async () => {
         });
     });
     
-    describe('12.6. distributeTokensWithTimestamp(address[], uint256[], uint40[], string[], bytes[])', async () => {
-        it('12.6.1. distributeTokensWithTimestamp successfully with valid signatures', async () => {
+    describe('12.4. distributeTokensWithTimestamp(address[], uint256[], uint40[], string[], bytes[])', async () => {
+        it('12.4.1. distributeTokensWithTimestamp successfully with valid signatures', async () => {
             const { admin, admins, driptributor, totalAmount, receiver1, receiver2 } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -723,7 +627,7 @@ describe('12. Driptributor', async () => {
             expect(distribution4.isStaked).to.equal(false);
         });
 
-        it('12.6.2. distributeTokensWithTimestamp unsuccessfully with invalid signatures', async () => {
+        it('12.4.2. distributeTokensWithTimestamp unsuccessfully with invalid signatures', async () => {
             const { admin, admins, driptributor, totalAmount, receiver1, receiver2 } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -750,7 +654,7 @@ describe('12. Driptributor', async () => {
             )).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('12.6.3. distributeTokensWithTimestamp unsuccessfully with invalid input', async () => {
+        it('12.4.3. distributeTokensWithTimestamp unsuccessfully with invalid input', async () => {
             const { admin, admins, driptributor, totalAmount, receiver1, receiver2 } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -789,7 +693,7 @@ describe('12. Driptributor', async () => {
             await testForInvalidInput(receivers, amounts, endAts, data.slice(0, 1));
         });
 
-        it('12.6.4. distributeTokensWithTimestamp unsuccessfully with insufficient funds', async () => {
+        it('12.4.4. distributeTokensWithTimestamp unsuccessfully with insufficient funds', async () => {
             const { admin, admins, driptributor, totalAmount, receiver1, receiver2 } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -831,7 +735,7 @@ describe('12. Driptributor', async () => {
             )).to.be.revertedWithCustomError(driptributor, 'InsufficientFunds');
         });
 
-        it('12.6.5. distributeTokensWithTimestamp unsuccessfully with invalid end timestamp', async () => {
+        it('12.4.5. distributeTokensWithTimestamp unsuccessfully with invalid end timestamp', async () => {
             const { admin, admins, driptributor, receiver1, receiver2 } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -860,8 +764,8 @@ describe('12. Driptributor', async () => {
         });
     });
     
-    describe('12.7. withdraw(uint256[])', async () => {
-        it('12.7.1. withdraw successfully', async () => {
+    describe('12.5. withdraw(uint256[])', async () => {
+        it('12.5.1. withdraw successfully', async () => {
             const { admin, admins, driptributor, totalAmount, receiver1, receiver2, primaryToken } = await setupBeforeTest({
                 updateStakeTokens: true,
                 addDistribution: true,
@@ -976,7 +880,7 @@ describe('12. Driptributor', async () => {
             expect(await primaryToken.balanceOf(driptributor.address)).to.equal(totalAmount.sub(vestedAmount1_tx3).sub(vestedAmount3_tx3));
         });
 
-        it('12.7.2. withdraw unsuccessfully with zero vesting duration distribution', async () => {
+        it('12.5.2. withdraw unsuccessfully with zero vesting duration distribution', async () => {
             const { driptributor, admin, admins, receiver1, primaryToken, totalAmount } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -1005,7 +909,7 @@ describe('12. Driptributor', async () => {
             expect(await primaryToken.balanceOf(driptributor.address)).to.equal(totalAmount.sub(ethers.utils.parseEther('100')));
         });
 
-        it('12.7.3. withdraw unsuccessfully by unauthorized sender', async () => {
+        it('12.5.3. withdraw unsuccessfully by unauthorized sender', async () => {
             const { driptributor, receiver1, receiver2 } = await setupBeforeTest({
                 updateStakeTokens: true,
                 addDistribution: true,
@@ -1017,7 +921,7 @@ describe('12. Driptributor', async () => {
             await expect(driptributor.connect(receiver2).withdraw(distributionIds)).to.be.revertedWithCustomError(driptributor, 'Unauthorized');
         });
 
-        it('12.7.4. withdraw unsuccessfully with staked distribution', async () => {
+        it('12.5.4. withdraw unsuccessfully with staked distribution', async () => {
             const { driptributor, receiver1 } = await setupBeforeTest({
                 updateStakeTokens: true,
                 addDistribution: true,
@@ -1029,7 +933,7 @@ describe('12. Driptributor', async () => {
             await expect(driptributor.connect(receiver1).withdraw(distributionIds)).to.be.revertedWithCustomError(driptributor, 'AlreadyStaked');
         });
 
-        it('12.7.5. withdraw unsuccessfully when paused', async () => {
+        it('12.5.5. withdraw unsuccessfully when paused', async () => {
             const { driptributor, receiver1 } = await setupBeforeTest({
                 updateStakeTokens: true,
                 addDistribution: true,
@@ -1042,8 +946,8 @@ describe('12. Driptributor', async () => {
         });
     });
 
-    describe('12.8. stake(uint256[], uint256, uint256)', async () => {
-        it('12.8.1. stake successfully with fresh distributions', async () => {
+    describe('12.6. stake(uint256[], uint256, uint256)', async () => {
+        it('12.6.1. stake successfully with fresh distributions', async () => {
             const { driptributor, receiver1, primaryToken, stakeToken1, stakeToken2, stakeToken3 } = await setupBeforeTest({
                 updateStakeTokens: true,
                 addDistribution: true,
@@ -1076,7 +980,7 @@ describe('12. Driptributor', async () => {
             expect(stakeToken3.stake).to.have.been.calledWith(receiver1.address, ethers.utils.parseEther('50'));
         });
 
-        it('12.8.2. stake successfully with withdrawn distributions', async () => {
+        it('12.6.2. stake successfully with withdrawn distributions', async () => {
             const { driptributor, receiver1, primaryToken, stakeToken1, stakeToken2, stakeToken3 } = await setupBeforeTest({
                 updateStakeTokens: true,
                 addDistribution: true,
@@ -1122,7 +1026,7 @@ describe('12. Driptributor', async () => {
             expect(stakeToken3.stake).to.have.been.calledWith(receiver1.address, expectedStakeToken3);
         });
 
-        it('12.8.3. stake unsuccessfully when stake tokens are not assigned', async () => {
+        it('12.6.3. stake unsuccessfully when stake tokens are not assigned', async () => {
             const { driptributor, receiver1 } = await setupBeforeTest({
                 addDistribution: true,
             });
@@ -1135,7 +1039,7 @@ describe('12. Driptributor', async () => {
             )).to.be.revertedWithCustomError(driptributor, 'NotAssignedStakeTokens');
         });
 
-        it('12.8.4. stake unsuccessfully by unauthorized sender', async () => {
+        it('12.6.4. stake unsuccessfully by unauthorized sender', async () => {
             const { driptributor, receiver1, receiver2 } = await setupBeforeTest({
                 updateStakeTokens: true,
                 addDistribution: true,
@@ -1154,7 +1058,7 @@ describe('12. Driptributor', async () => {
             )).to.be.revertedWithCustomError(driptributor, 'Unauthorized');
         });
 
-        it('12.8.5. stake unsuccessfully when distribution is already staked', async () => {
+        it('12.6.5. stake unsuccessfully when distribution is already staked', async () => {
             const { driptributor, receiver1 } = await setupBeforeTest({
                 updateStakeTokens: true,
                 addDistribution: true,
@@ -1174,7 +1078,7 @@ describe('12. Driptributor', async () => {
             )).to.be.revertedWithCustomError(driptributor, 'AlreadyStaked');
         });
 
-        it('12.8.6. stake unsuccessfully when distributions\' total amount is insufficient', async () => {
+        it('12.6.6. stake unsuccessfully when distributions\' total amount is insufficient', async () => {
             const { driptributor, receiver1 } = await setupBeforeTest({
                 updateStakeTokens: true,
                 addDistribution: true,
@@ -1188,7 +1092,7 @@ describe('12. Driptributor', async () => {
             )).to.be.revertedWithCustomError(driptributor, 'InsufficientFunds');
         });
 
-        it('12.8.7. stake unsuccessfully when paused', async () => {
+        it('12.6.7. stake unsuccessfully when paused', async () => {
             const { driptributor, receiver1 } = await setupBeforeTest({
                 updateStakeTokens: true,
                 addDistribution: true,
