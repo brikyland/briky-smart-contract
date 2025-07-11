@@ -3,7 +3,6 @@ import { ethers, upgrades } from 'hardhat';
 import {
     Admin,
     PromotionToken,
-    FeeReceiver,
     IERC165Upgradeable__factory,
     IERC721Upgradeable__factory,
     IERC4906Upgradeable__factory,
@@ -16,7 +15,6 @@ import {
 import { callTransaction, getSignatures, randomWallet } from '@utils/blockchain';
 import { Constant } from '@tests/test.constant';
 import { deployAdmin } from '@utils/deployments/common/admin';
-import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
 import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 
 import { getBytes4Hex, getInterfaceID } from '@utils/utils';

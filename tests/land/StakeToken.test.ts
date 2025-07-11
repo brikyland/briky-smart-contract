@@ -1,7 +1,7 @@
 import { expect } from 'chai';
-import { ethers, upgrades } from 'hardhat';
-import { Admin, Currency, MockPrimaryToken, MockPrimaryToken__factory, MockStakeToken, MockStakeToken__factory, PrimaryToken, StakeToken, Treasury } from '@typechain-types';
-import { callTransaction, getSignatures, prepareERC20, randomWallet } from '@utils/blockchain';
+import { ethers } from 'hardhat';
+import { Admin, Currency, MockPrimaryToken, MockPrimaryToken__factory, MockStakeToken, MockStakeToken__factory, Treasury } from '@typechain-types';
+import { callTransaction, getSignatures, prepareERC20 } from '@utils/blockchain';
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { Constant } from '@tests/test.constant';
 import { loadFixture, time } from '@nomicfoundation/hardhat-network-helpers';

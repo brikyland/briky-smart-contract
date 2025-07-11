@@ -10,7 +10,6 @@ import {
     MockEstateToken,
     MockEstateForger__factory,
     ReserveVault,
-    IERC1155ReceiverUpgradeable__factory,
     IERC2981Upgradeable__factory,
     IRoyaltyRateProposer__factory,
     ICommon__factory,
@@ -19,7 +18,7 @@ import {
     PriceWatcher,
     IGovernor__factory,
 } from '@typechain-types';
-import { callTransaction, getSignatures, prepareNativeToken, randomWallet } from '@utils/blockchain';
+import { callTransaction, getSignatures, randomWallet } from '@utils/blockchain';
 import { Constant } from '@tests/test.constant';
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';

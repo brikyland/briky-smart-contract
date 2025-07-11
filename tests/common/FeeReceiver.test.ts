@@ -2,12 +2,8 @@ import { expect } from 'chai';
 import { ethers, upgrades } from 'hardhat';
 import {
     Admin,
-    Admin__factory,
     Currency,
-    Currency__factory,
     FeeReceiver,
-    FeeReceiver__factory,
-    CurrencyHandler,
 } from '@typechain-types';
 import { callTransaction, getSignatures, randomWallet } from '@utils/blockchain';
 import { Constant } from '@tests/test.constant';
