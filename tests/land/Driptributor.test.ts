@@ -830,6 +830,34 @@ describe('12. Driptributor', async () => {
                 signatures2,
             )).to.be.revertedWithCustomError(driptributor, 'InsufficientFunds');
         });
+
+        it('12.6.5. distributeTokensWithTimestamp unsuccessfully with invalid end timestamp', async () => {
+            const { admin, admins, driptributor, receiver1, receiver2 } = await setupBeforeTest({
+                updateStakeTokens: true,
+            });
+
+            const currentTimestamp = await time.latest();
+            await time.setNextBlockTimestamp(currentTimestamp + 10);
+
+            const receivers = [receiver1.address, receiver2.address];
+            const amounts = [ethers.utils.parseEther('100'), ethers.utils.parseEther('200')];
+            const endAts = [currentTimestamp + 10, currentTimestamp + 9];
+            const data = ['data1', 'data2'];
+
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string", "address[]", "uint256[]", "uint40[]", "string[]"],
+                [driptributor.address, "distributeTokensWithTimestamp", receivers, amounts, endAts, data]
+            );
+            const signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(driptributor.distributeTokensWithTimestamp(
+                receivers,
+                amounts,
+                endAts,
+                data,
+                signatures,
+            )).to.be.revertedWithCustomError(driptributor, 'InvalidTimestamp');
+        });
     });
     
     describe('12.7. withdraw(uint256[])', async () => {

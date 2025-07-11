@@ -1141,7 +1141,7 @@ describe('20. ReserveVault', async () => {
                 fundInitiator: true,
             });
 
-            const failReceiver = await deployFailReceiver(deployer);
+            const failReceiver = await deployFailReceiver(deployer, false);
 
             await callReserveVault_AuthorizeInitiator(
                 reserveVault,
@@ -1210,13 +1210,22 @@ describe('20. ReserveVault', async () => {
                 'provideFund',
                 [fundId],
             );
+
+            const proxyCallData = initiator.interface.encodeFunctionData(
+                'call',
+                [reserveVault.address, callData],
+            );
             
             await callTransaction(reentrancyERC20.updateReentrancyPlan(
-                reserveVault.address,
-                callData
+                initiator.address,
+                proxyCallData
             ));
 
-            await expect(initiator.call(reserveVault.address, callData, { value: initTotalQuantity.mul(nativeDenomination) })).to.be.revertedWith('ReentrancyGuard: reentrant call');
+            await expect(initiator.call(
+                reserveVault.address,
+                callData,
+                { value: initTotalQuantity.mul(nativeDenomination) }
+            )).to.be.revertedWith('ReentrancyGuard: reentrant call');
         });        
     });
 
@@ -1362,6 +1371,7 @@ describe('20. ReserveVault', async () => {
             );
             await expect(initiator.call(reserveVault.address, callData, { value: 0 })).to.be.revertedWithCustomError(reserveVault, 'InsufficientFunds');
         });
+        
         it('20.6.6. withdraw fund unsuccessfully when withdraw quantity exceed fund quantity', async () => {
             const { reserveVault, initiators, withdrawer1 } = await beforeReserveVaultTest({
                 authorizeInitiators: true,
@@ -1402,9 +1412,14 @@ describe('20. ReserveVault', async () => {
                 [fundId, withdrawer1.address, withdrawalQuantity],
             );
 
+            const proxyCallData = initiator.interface.encodeFunctionData(
+                'call',
+                [reserveVault.address, callData],
+            );
+
             await callTransaction(reentrancyERC20.updateReentrancyPlan(
-                reserveVault.address,
-                callData,
+                initiator.address,
+                proxyCallData,
             ));
             await expect(initiator.call(reserveVault.address, callData, { value: 0 })).to.be.revertedWith('ReentrancyGuard: reentrant call');
         });

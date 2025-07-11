@@ -43,7 +43,7 @@ import { deployMortgageToken } from '@utils/deployments/lend/mortgageToken';
 import { deployMortgageMarketplace } from '@utils/deployments/lend/mortgageMarketplace';
 import { callMortgageMarketplace_Pause } from '@utils/callWithSignatures/mortgageMarketplace';
 import { Contract } from 'ethers';
-import { CommissionMarketplaceOfferState, LoanState, MortgageMarketplaceOfferState } from '@utils/enums';
+import { LoanState, MortgageMarketplaceOfferState } from '@utils/enums';
 import { callMortgageToken_UpdateRoyaltyRate } from '@utils/callWithSignatures/mortgageToken';
 import { getBalance } from '@utils/blockchain';
 import { deployFailReceiver } from '@utils/deployments/mocks/failReceiver';
@@ -850,7 +850,7 @@ describe('15. MortgageMarketplace', async () => {
             });
             const { mortgageMarketplace, seller1, buyer1, deployer, mortgageToken } = fixture;
             
-            const failReceiver = await deployFailReceiver(deployer);
+            const failReceiver = await deployFailReceiver(deployer, true);
 
             await callTransaction(mortgageToken.connect(seller1).transferFrom(
                 seller1.address,
@@ -878,7 +878,7 @@ describe('15. MortgageMarketplace', async () => {
             });
             const { mortgageMarketplace, buyer1, deployer, mortgageToken } = fixture;
 
-            const failReceiver = await deployFailReceiver(deployer);
+            const failReceiver = await deployFailReceiver(deployer, true);
 
             mortgageToken.setVariable("feeReceiver", failReceiver.address);
 
@@ -895,7 +895,7 @@ describe('15. MortgageMarketplace', async () => {
             });
             const { mortgageMarketplace, deployer } = fixture;
 
-            const failReceiver = await deployFailReceiver(deployer);
+            const failReceiver = await deployFailReceiver(deployer, true);
 
             let data = mortgageMarketplace.interface.encodeFunctionData("buy", [1]);
 

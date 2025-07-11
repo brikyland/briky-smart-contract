@@ -23,10 +23,9 @@ interface IPaymentHub is ICommon {
     );
 
     event Withdrawal(
-        uint256 indexed tokenId,
-        address indexed currency,
+        uint256 indexed paymentId,
         address indexed withdrawer,
-        uint256 totalValue
+        uint256 value
     );
 
     error AlreadyWithdrawn();
@@ -42,6 +41,5 @@ interface IPaymentHub is ICommon {
         address currency
     ) external payable returns (uint256 paymentId);
 
-    function withdraw(uint256 tokenId, address currency)
-    external payable returns (uint256 totalValue);
+    function withdraw(uint256 paymentId) external;
 }

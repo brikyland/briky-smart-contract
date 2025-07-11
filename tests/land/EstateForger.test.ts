@@ -1511,7 +1511,7 @@ describe('4. EstateForger', async () => {
                     expireAt: timestamp - 1,
                 },
             };
-            await expectRevertWithCustomError(estateForger, manager, data, 'InvalidInput');
+            await expectRevertWithCustomError(estateForger, manager, data, 'InvalidTimestamp');
         });
 
         it('4.7.10. requestTokenizationWithDuration unsuccessfully when minimum selling amount exceeds maximum', async () => {
@@ -1879,7 +1879,7 @@ describe('4. EstateForger', async () => {
                 privateSaleEndsAt: timestamp - 1,
                 publicSaleEndsAt: timestamp + 100,
             }
-            await expectRevertWithCustomError(estateForger, manager, data, 'InvalidInput');
+            await expectRevertWithCustomError(estateForger, manager, data, 'InvalidTimestamp');
         });
 
         it('4.8.5. requestTokenizationWithTimestamp unsuccessfully when private sale ends after public sale', async () => {
@@ -1903,7 +1903,7 @@ describe('4. EstateForger', async () => {
                 publicSaleEndsAt: timestamp + 99,
             }
 
-            await expectRevertWithCustomError(estateForger, manager, data, 'InvalidInput');
+            await expectRevertWithCustomError(estateForger, manager, data, 'InvalidTimestamp');
         });
 
         it('4.8.6. requestTokenizationWithTimestamp unsuccessfully with invalid public sale ends timestamp', async () => {
@@ -1927,7 +1927,7 @@ describe('4. EstateForger', async () => {
                 publicSaleEndsAt: timestamp,
             }
 
-            await expectRevertWithCustomError(estateForger, manager, data, 'InvalidInput');
+            await expectRevertWithCustomError(estateForger, manager, data, 'InvalidTimestamp');
         });
     });
 
@@ -2343,7 +2343,7 @@ describe('4. EstateForger', async () => {
             await expectRevertWithCustomError(estateForger, manager, {
                 ...defaultParams,
                 privateSaleEndsAt: timestamp - 1,
-            }, 'InvalidInput');
+            }, 'InvalidTimestamp');
         });
 
         it('4.10.12. update tokenization request agenda unsuccessfully when private sale ends after public sale', async () => {
@@ -2360,7 +2360,7 @@ describe('4. EstateForger', async () => {
             await expectRevertWithCustomError(estateForger, manager, {
                 ...defaultParams,
                 privateSaleEndsAt: defaultParams.publicSaleEndsAt + 1,
-            }, 'InvalidInput');
+            }, 'InvalidTimestamp');
         });
 
         it('4.10.13. update tokenization request agenda unsuccessfully with invalid public sale ends at', async () => {
@@ -2380,7 +2380,7 @@ describe('4. EstateForger', async () => {
             await expectRevertWithCustomError(estateForger, manager, {
                 ...defaultParams,
                 publicSaleEndsAt: timestamp,
-            }, 'InvalidInput');
+            }, 'InvalidTimestamp');
         });
     });
 
@@ -2837,7 +2837,7 @@ describe('4. EstateForger', async () => {
             });
             const { deployer, estateForger } = fixture;
 
-            const failReceiver = await deployFailReceiver(deployer);
+            const failReceiver = await deployFailReceiver(deployer, true);
 
             const message = estateForger.interface.encodeFunctionData('deposit', [1, 2]);
 
@@ -3359,6 +3359,7 @@ describe('4. EstateForger', async () => {
                 currentRequestId,
                 request.estate.uri,
                 request.estate.expireAt,
+                request.seller,
                 commissionReceiverAddress,
             );
 
@@ -3403,9 +3404,8 @@ describe('4. EstateForger', async () => {
 
             if (commissionReceiverAddress !== ethers.constants.AddressZero) {
                 expect(await commissionToken.ownerOf(currentEstateId)).to.equal(commissionReceiverAddress);
-                expect(await commissionToken.exists(currentEstateId)).to.equal(true);
             } else {
-                expect(await commissionToken.exists(currentEstateId)).to.equal(false);
+                expect(await commissionToken.ownerOf(currentEstateId)).to.equal(ethers.constants.AddressZero);
             }
         }
 
@@ -4001,7 +4001,7 @@ describe('4. EstateForger', async () => {
 
             await expect(estateForger.connect(manager).confirm(
                 1, commissionReceiver.address, { value: ethers.utils.parseEther("1000") }
-            )).to.be.revertedWithCustomError(estateForger, "TimeOut");
+            )).to.be.revertedWithCustomError(estateForger, "Timeout");
         });
 
         it('4.14.17. confirm tokenization unsuccessfully when sold amount is less than min selling amount', async () => {
@@ -4083,7 +4083,7 @@ describe('4. EstateForger', async () => {
                 await admin.nonce()
             );
 
-            const failReceiver = await deployFailReceiver(deployer);
+            const failReceiver = await deployFailReceiver(deployer, true);
 
             await estateForger.connect(manager).activateSellerIn(
                 zone1,
@@ -4145,7 +4145,7 @@ describe('4. EstateForger', async () => {
             });
             const {estateForger, manager, commissionReceiver, deployer} = fixture;
 
-            const failReceiver = await deployFailReceiver(deployer);
+            const failReceiver = await deployFailReceiver(deployer, true);
 
             await callTransaction(estateForger.setFeeReceiver(failReceiver.address));
 
@@ -4173,7 +4173,7 @@ describe('4. EstateForger', async () => {
                 await admin.nonce()
             );
 
-            const failReceiver = await deployFailReceiver(deployer);
+            const failReceiver = await deployFailReceiver(deployer, true);
 
             const requestEstateInput = {
                 zone: zone1,
@@ -4496,7 +4496,7 @@ describe('4. EstateForger', async () => {
 
             const request = await estateForger.getRequest(1);
 
-            const failedReceiver = await deployFailReceiver(deployer);
+            const failedReceiver = await deployFailReceiver(deployer, true);
 
             let message = estateForger.interface.encodeFunctionData("deposit", [1, 5]);
 

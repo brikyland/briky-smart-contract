@@ -318,7 +318,7 @@ ReentrancyGuardUpgradeable {
 
     function isAvailable(uint256 _estateId) public view returns (bool) {
         return exists(_estateId)
-            && estates[_estateId].deprecateAt == 0
+            && estates[_estateId].deprecateAt == Constant.COMMON_INFINITE_TIMESTAMP
             && estates[_estateId].expireAt > block.timestamp;
     }
 
@@ -330,7 +330,7 @@ ReentrancyGuardUpgradeable {
         if (!exists(_estateId)) {
             revert InvalidEstateId();
         }
-        return estates[_estateId].tokenizeAt > _at || _at > estates[_estateId].deprecateAt
+        return estates[_estateId].tokenizeAt > _at || _at >= estates[_estateId].deprecateAt
             ? 0
             : totalSupply(_estateId);
     }
@@ -369,7 +369,7 @@ ReentrancyGuardUpgradeable {
         super._beforeTokenTransfer(_operator, _from, _to, _estateIds, _amounts, _data);
         for (uint256 i; i < _estateIds.length; ++i) {
             require(
-                estates[_estateIds[i]].deprecateAt == 0 && estates[_estateIds[i]].expireAt > block.timestamp,
+                estates[_estateIds[i]].deprecateAt == Constant.COMMON_INFINITE_TIMESTAMP && estates[_estateIds[i]].expireAt > block.timestamp,
                 "EstateToken: Token is unavailable"
             );
         }

@@ -485,7 +485,10 @@ describe('13. Auction', async () => {
                 mintPrimaryTokenForAuction: true,
             });
 
-            let endAt = 0;
+            let currentTimestamp = await time.latest();
+            await time.setNextBlockTimestamp(currentTimestamp + 10);
+
+            let endAt = currentTimestamp + 9;
             let vestingDuration = 1000;
 
             let message = ethers.utils.defaultAbiCoder.encode(
@@ -498,7 +501,7 @@ describe('13. Auction', async () => {
                 endAt,
                 vestingDuration,
                 signatures,
-            )).to.be.revertedWithCustomError(auction, 'InvalidInput');
+            )).to.be.revertedWithCustomError(auction, 'InvalidTimestamp');
         });
 
         it('13.5.4. startAuction unsuccessfully when it has already started', async () => {

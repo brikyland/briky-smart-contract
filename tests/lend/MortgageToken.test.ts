@@ -304,6 +304,7 @@ describe('14. MortgageToken', async () => {
                 10,
                 "Token1_URI",
                 currentTimestamp + 1e8,
+                borrower1.address,
                 commissionReceiver.address,
             ]));
             await estateForger.call(estateToken.address, estateToken.interface.encodeFunctionData('tokenizeEstate', [
@@ -312,6 +313,7 @@ describe('14. MortgageToken', async () => {
                 10,
                 "Token2_URI",
                 currentTimestamp + 2e8,
+                borrower2.address,
                 commissionReceiver.address,
             ]));
 
@@ -1075,6 +1077,7 @@ describe('14. MortgageToken', async () => {
                 currentTokenizationId,
                 "TestURI",
                 currentTimestamp + 1e9,
+                borrower.address,
                 commissionReceiverAddress,
             ])));
 
@@ -1171,7 +1174,6 @@ describe('14. MortgageToken', async () => {
             expect(await estateToken.balanceOf(borrower.address, currentEstateId)).to.equal(initialAmount.sub(mortgageAmount));
             expect(await estateToken.balanceOf(mortgageToken.address, currentEstateId)).to.equal(mortgageAmount);
 
-            expect(await mortgageToken.exists(currentLoanId)).to.equal(true);
             expect(await mortgageToken.ownerOf(currentLoanId)).to.equal(lender.address);
 
             if (isERC20) {
@@ -1446,7 +1448,7 @@ describe('14. MortgageToken', async () => {
             });
             const { mortgageToken, lender1, deployer, estateToken } = fixture;
 
-            const failReceiver = await deployFailReceiver(deployer);
+            const failReceiver = await deployFailReceiver(deployer, true);
 
             await callTransaction(estateToken.mint(failReceiver.address, 1, 200_000));
             await callTransaction(estateToken.setApprovalForAll(mortgageToken.address, true));
@@ -1465,7 +1467,7 @@ describe('14. MortgageToken', async () => {
             });
             const { mortgageToken, borrower2, lender1, deployer, estateToken, commissionToken, commissionReceiver } = fixture;
 
-            const failReceiver = await deployFailReceiver(deployer);
+            const failReceiver = await deployFailReceiver(deployer, true);
 
             await callTransaction(mortgageToken.connect(borrower2).borrow(
                 2,
@@ -1494,7 +1496,7 @@ describe('14. MortgageToken', async () => {
                 listSampleLoan: true,
             });
             const { mortgageToken, deployer } = fixture;
-            const failReceiver = await deployFailReceiver(deployer);
+            const failReceiver = await deployFailReceiver(deployer, true);
 
             let data = mortgageToken.interface.encodeFunctionData("lend", [1]);
 
@@ -1619,7 +1621,6 @@ describe('14. MortgageToken', async () => {
             expect(loan.lender).to.equal(lender1.address);
 
             expect(await mortgageToken.balanceOf(borrower1.address)).to.equal(0);
-            expect(await mortgageToken.exists(1)).to.equal(false);
 
             expect(await estateToken.balanceOf(borrower1.address, 1)).to.equal(borrower1Balance.add(150_000));
             expect(await estateToken.balanceOf(mortgageToken.address, 1)).to.equal(mortgageTokenBalance.sub(150_000));
@@ -1659,7 +1660,6 @@ describe('14. MortgageToken', async () => {
             expect(loan.lender).to.equal(lender2.address);
 
             expect(await mortgageToken.balanceOf(borrower2.address)).to.equal(0);
-            expect(await mortgageToken.exists(2)).to.equal(false);
 
             expect(await estateToken.balanceOf(borrower2.address, 2)).to.equal(borrower2Balance.add(200));
             expect(await estateToken.balanceOf(mortgageToken.address, 2)).to.equal(mortgageTokenBalance.sub(200));
@@ -1816,7 +1816,7 @@ describe('14. MortgageToken', async () => {
             });
             const { mortgageToken, borrower1, deployer } = fixture;
 
-            const failReceiver = await deployFailReceiver(deployer);
+            const failReceiver = await deployFailReceiver(deployer, true);
 
             const principal = (await mortgageToken.getLoan(1)).principal;
 
@@ -1938,7 +1938,6 @@ describe('14. MortgageToken', async () => {
             expect(loan.lender).to.equal(lender1.address);
 
             expect(await mortgageToken.balanceOf(lender1.address)).to.equal(0);
-            expect(await mortgageToken.exists(1)).to.equal(false);
 
             expect(await estateToken.balanceOf(lender1.address, 1)).to.equal(lender1Balance.add(150_000));
             expect(await estateToken.balanceOf(mortgageToken.address, 1)).to.equal(mortgageContractBalance.sub(150_000));
@@ -1975,7 +1974,6 @@ describe('14. MortgageToken', async () => {
             expect(loan.lender).to.equal(lender2.address);
 
             expect(await mortgageToken.balanceOf(lender2.address)).to.equal(0);
-            expect(await mortgageToken.exists(2)).to.equal(false);
 
             expect(await estateToken.balanceOf(lender2.address, 2)).to.equal(lender2Balance);
             expect(await estateToken.balanceOf(mortgageTokenOwner.address, 2)).to.equal(mortgageTokenOwnerBalance.add(200));

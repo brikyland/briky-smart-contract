@@ -12,8 +12,6 @@ import {IAdmin} from "../common/interfaces/IAdmin.sol";
 
 import {PriceWatcherStorage} from "./storages/PriceWatcherStorage.sol";
 
-import "hardhat/console.sol";
-
 contract PriceWatcher is
 PriceWatcherStorage,
 Initializable {

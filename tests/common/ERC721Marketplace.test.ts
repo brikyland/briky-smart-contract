@@ -78,7 +78,7 @@ async function testReentrancy_ERC721Marketplace(
     );
 }
 
-describe.only('7. ERC721Marketplace', async () => {
+describe('7. ERC721Marketplace', async () => {
     async function erc721MarketplaceFixture(): Promise<ERC721MarketplaceFixture> {
         const accounts = await ethers.getSigners();
         const deployer = accounts[0];
@@ -417,7 +417,7 @@ describe.only('7. ERC721Marketplace', async () => {
 
             let collection;
             if (collectionSupportsERC2981) {
-                const SmockCollectionFactory = await smock.mock<MockCollection__factory>("RoyaltyCollection");
+                const SmockCollectionFactory = await smock.mock<RoyaltyCollection__factory>("RoyaltyCollection");
                 collection = await SmockCollectionFactory.deploy();
                 await collection.initialize(
                     admin.address,

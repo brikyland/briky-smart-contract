@@ -17,6 +17,8 @@ IGovernor,
 ERC1155Upgradeable,
 ERC1155SupplyUpgradeable {
     mapping(uint256 => mapping(address => Snapshot[])) internal balanceSnapshots;
+    mapping(uint256 => bytes32) zones;    
+    address public admin;
 
     struct Snapshot {
         uint256 value;
@@ -30,6 +32,14 @@ ERC1155SupplyUpgradeable {
     string constant private VERSION = "v1.1.1";
 
     receive() external payable {}
+
+    function initialize(address _admin) external initializer {
+        admin = _admin;
+    }
+
+    function setZone(uint256 _tokenId, bytes32 _zone) external {
+        zones[_tokenId] = _zone;
+    }
     
     function mint(uint256 _tokenId, uint256 _amount) external {
         _mint(msg.sender, _tokenId, _amount, "");
@@ -39,6 +49,9 @@ ERC1155SupplyUpgradeable {
         _burn(msg.sender, _tokenId, _amount);
     }
 
+    function zoneOf(uint256 _tokenId) external view returns (bytes32) {
+        return zones[_tokenId];
+    }
 
     function isAvailable(uint256 _tokenId) public view returns (bool) {
         return exists(_tokenId);
