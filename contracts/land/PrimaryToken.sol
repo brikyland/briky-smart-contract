@@ -487,7 +487,7 @@ ReentrancyGuardUpgradeable {
         }
     }
 
-    function liquidate(uint256 _amount) external whenNotPaused nonReentrant returns (uint256) {
+    function liquidate(uint256 _amount) external nonReentrant whenNotPaused returns (uint256) {
         if (liquidationUnlockedAt > block.timestamp) {
             revert BeingLocked();
         }
@@ -521,7 +521,7 @@ ReentrancyGuardUpgradeable {
         super._mint(_account, _amount);
     }
 
-    function _contributeLiquidity(uint256 _liquidity) private {
+    function _contributeLiquidity(uint256 _liquidity) internal {
         address treasuryAddress = treasury;
 
         address currency = ITreasury(treasuryAddress).currency();

@@ -3,9 +3,12 @@ pragma solidity ^0.8.20;
 
 library Constant {
     // Common
+    uint40 internal constant COMMON_INFINITE_TIMESTAMP = type(uint40).max;
+
     uint8 internal constant COMMON_RATE_DECIMALS = 18;
     uint256 internal constant COMMON_RATE_MAX_FRACTION = 10 ** COMMON_RATE_DECIMALS;
-    uint40 internal constant COMMON_INFINITE_TIMESTAMP = type(uint40).max;
+
+    uint256 internal constant COMMON_VALIDATION_SIGNATURE_TTL = 10 minutes;
 
     // Admin
     uint256 internal constant ADMIN_SIGNATURE_VERIFICATION_QUORUM = 4;
@@ -15,11 +18,15 @@ library Constant {
     uint256 internal constant ESTATE_TOKEN_UNIT = 10 ** ESTATE_TOKEN_DECIMALS;
     uint256 internal constant ESTATE_TOKEN_TOTAL_QUANTITY_LIMIT = type(uint256).max / ESTATE_TOKEN_UNIT;
 
-    uint256 internal constant ESTATE_TOKEN_CONFIRMATION_TIME_LIMIT = 60 days;
+    uint40 internal constant ESTATE_TOKEN_CONFIRMATION_TIME_LIMIT = 30 days;
+
+    uint256 internal constant ESTATE_TOKEN_EXTRACTION_UNANIMOUS_GUARD_DURATION = 365 days;
+    uint256 internal constant ESTATE_TOKEN_EXTRACTION_UNANIMOUS_QUORUM_RATE = 1 ether;
+    uint256 internal constant ESTATE_TOKEN_EXTRACTION_MAJORITY_QUORUM_RATE = 0.75 ether;
+    uint40 internal constant ESTATE_TOKEN_EXTRACTION_VOTING_DURATION = 30 days;
 
     // Governance Hub
-    uint256 internal constant GOVERNANCE_HUB_SIGNATURE_TTL = 1 hours;
-    uint256 internal constant GOVERNANCE_HUB_CONFIRMATION_TIME_LIMIT = 1 hours;
+    uint40 internal constant GOVERNANCE_HUB_CONFIRMATION_TIME_LIMIT = 30 days;
 
     // Primary Token
     uint256 internal constant PRIMARY_TOKEN_BASE_DISCOUNT = 0.15 ether;

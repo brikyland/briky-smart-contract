@@ -15,6 +15,7 @@ import {Formula} from "../lib/Formula.sol";
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 import {IRoyaltyRateProposer} from "../common/interfaces/IRoyaltyRateProposer.sol";
 
+import {Administrable} from "../common/utilities/Administrable.sol";
 import {Discountable} from "../common/utilities/Discountable.sol";
 import {Pausable} from "../common/utilities/Pausable.sol";
 import {RoyaltyRateProposer} from "../common/utilities/RoyaltyRateProposer.sol";
@@ -29,6 +30,7 @@ import {MortgageTokenStorage} from "./storages/MortgageTokenStorage.sol";
 contract MortgageToken is
 MortgageTokenStorage,
 ERC721PausableUpgradeable,
+Administrable,
 Discountable,
 Pausable,
 RoyaltyRateProposer,
@@ -161,13 +163,10 @@ ReentrancyGuardUpgradeable {
         uint256 _repayment,
         address _currency,
         uint40 _duration
-    ) external whenNotPaused returns (uint256) {
+    ) external onlyAvailableCurrency(_currency) whenNotPaused returns (uint256) {
         IEstateToken estateTokenContract = IEstateToken(estateToken);
         if (!estateTokenContract.isAvailable(_estateId)) {
             revert InvalidEstateId();
-        }
-        if (!IAdmin(admin).isAvailableCurrency(_currency)) {
-            revert InvalidCurrency();
         }
         if (_mortgageAmount > estateTokenContract.balanceOf(msg.sender, _estateId)) {
             revert InvalidMortgageAmount();
@@ -225,7 +224,8 @@ ReentrancyGuardUpgradeable {
         return _lend(_loanId);
     }
 
-    function safeLend(uint256 _loanId, uint256 _anchor) external payable validLoan(_loanId) returns (uint256) {
+    function safeLend(uint256 _loanId, uint256 _anchor)
+    external payable validLoan(_loanId) returns (uint256) {
         if (_anchor != loans[_loanId].estateId) {
             revert BadAnchor();
         }
@@ -288,7 +288,7 @@ ReentrancyGuardUpgradeable {
         return feeReceiver;
     }
 
-    function _lend(uint256 _loanId) private nonReentrant whenNotPaused returns (uint256) {
+    function _lend(uint256 _loanId) internal nonReentrant whenNotPaused returns (uint256) {
         Loan storage loan = loans[_loanId];
         address borrower = loan.borrower;
 
@@ -346,7 +346,7 @@ ReentrancyGuardUpgradeable {
         return  principal - feeAmount;
     }
 
-    function _repay(uint256 _loanId) private nonReentrant whenNotPaused {
+    function _repay(uint256 _loanId) internal nonReentrant whenNotPaused {
         Loan storage loan = loans[_loanId];
         if (msg.sender != loan.borrower) {
             revert Unauthorized();

@@ -9,12 +9,14 @@ import {Formula} from "../lib/Formula.sol";
 import {IAdmin} from "./interfaces/IAdmin.sol";
 import {IGovernor} from "./interfaces/IGovernor.sol";
 
+import {Administrable} from "./utilities/Administrable.sol";
 import {Pausable} from "./utilities/Pausable.sol";
 
 import {PaymentHubStorage} from "./storages/PaymentHubStorage.sol";
 
 contract PaymentHub is
 PaymentHubStorage,
+Administrable,
 Pausable,
 ReentrancyGuardUpgradeable {
     using Formula for uint256;
@@ -53,7 +55,7 @@ ReentrancyGuardUpgradeable {
         uint256 _tokenId,
         uint256 _value,
         address _currency
-    ) external payable nonReentrant whenNotPaused returns (uint256) {
+    ) external payable nonReentrant onlyAvailableCurrency(_currency) whenNotPaused returns (uint256) {
         IAdmin adminContract = IAdmin(admin);
         if (!adminContract.isGovernor(_governor)) {
             revert InvalidGovernor();
@@ -62,9 +64,6 @@ ReentrancyGuardUpgradeable {
             revert InvalidTokenId();
         }
 
-        if (!adminContract.isAvailableCurrency(_currency)) {
-            revert InvalidCurrency();
-        }
         if (_value == 0) {
             revert InvalidInput();
         }
@@ -95,40 +94,43 @@ ReentrancyGuardUpgradeable {
         return paymentId;
     }
 
-    function withdraw(uint256 _paymentId)
-    external nonReentrant validPayment(_paymentId) whenNotPaused {
-        if (hasWithdrawn[_paymentId][msg.sender]) {
-            revert AlreadyWithdrawn();
+    function withdraw(uint256[] calldata _paymentIds)
+    external nonReentrant whenNotPaused {
+        for (uint256 i = 0; i < _paymentIds.length; ++i) {
+            if (hasWithdrawn[_paymentIds[i]][msg.sender]) {
+                revert AlreadyWithdrawn();
+            }
+
+            Payment storage payment = payments[_paymentIds[i]];
+
+            uint256 weight = IGovernor(payment.governor).voteOfAt(
+                msg.sender,
+                payment.tokenId,
+                payment.at
+            );
+            uint256 remainWeight = payment.remainWeight;
+
+            if (weight == 0) {
+                revert InvalidWithdrawing();
+            }
+
+            if (weight > remainWeight) {
+                revert InsufficientFunds();
+            }
+
+            uint256 value = payment.remainValue.scale(weight, payment.remainWeight);
+
+            payment.remainWeight -= weight;
+            payment.remainValue -= value;
+            hasWithdrawn[_paymentIds[i]][msg.sender] = true;
+
+            CurrencyHandler.sendCurrency(payment.currency, msg.sender, value);
+
+            emit Withdrawal(
+                _paymentIds[i],
+                msg.sender,
+                value
+            );
         }
-
-        Payment storage payment = payments[_paymentId];
-
-        uint256 weight = IGovernor(payment.governor).voteOfAt(
-            msg.sender,
-            payment.tokenId,
-            payment.at
-        );
-        uint256 remainWeight = payment.remainWeight;
-
-        if (weight == 0) {
-            revert InvalidWithdrawing();
-        }
-
-        if (weight > remainWeight) {
-            revert InsufficientFunds();
-        }
-
-        uint256 value = payment.remainValue.scale(weight, payment.remainWeight);
-
-        payment.remainWeight -= weight;
-        payment.remainValue -= value;
-
-        CurrencyHandler.sendCurrency(payment.currency, msg.sender, value);
-
-        emit Withdrawal(
-            _paymentId,
-            msg.sender,
-            value
-        );
     }
 }

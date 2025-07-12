@@ -9,6 +9,7 @@ import {Formula} from "../lib/Formula.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 
+import {Administrable} from "../common/utilities/Administrable.sol";
 import {Discountable} from "../common/utilities/Discountable.sol";
 import {Pausable} from "../common/utilities/Pausable.sol";
 
@@ -20,6 +21,7 @@ import {MortgageMarketplaceStorage} from "./storages/MortgageMarketplaceStorage.
 
 contract MortgageMarketplace is
 MortgageMarketplaceStorage,
+Administrable,
 Discountable,
 Pausable,
 ReentrancyGuardUpgradeable {
@@ -62,7 +64,7 @@ ReentrancyGuardUpgradeable {
         uint256 _tokenId,
         uint256 _price,
         address _currency
-    ) external whenNotPaused returns (uint256) {
+    ) external onlyAvailableCurrency(_currency) whenNotPaused returns (uint256) {
         IMortgageToken mortgageTokenContract = IMortgageToken(mortgageToken);
         if (mortgageTokenContract.ownerOf(_tokenId) != msg.sender) {
             revert InvalidTokenId();
@@ -76,10 +78,6 @@ ReentrancyGuardUpgradeable {
 
         if (_price == 0) {
             revert InvalidPrice();
-        }
-
-        if (!IAdmin(admin).isAvailableCurrency(_currency)) {
-            revert InvalidCurrency();
         }
 
         uint256 offerId = ++offerNumber;
@@ -129,7 +127,7 @@ ReentrancyGuardUpgradeable {
         emit OfferCancellation(_offerId);
     }
 
-    function _buy(uint256 _offerId) private nonReentrant whenNotPaused returns (uint256) {
+    function _buy(uint256 _offerId) internal nonReentrant whenNotPaused returns (uint256) {
         Offer storage offer = offers[_offerId];
 
         IMortgageToken mortgageTokenContract = IMortgageToken(mortgageToken);

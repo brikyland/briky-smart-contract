@@ -190,12 +190,16 @@ ReentrancyGuardUpgradeable {
             revert InvalidInput();
         }
 
+        uint256 n = contentNumber;
         for (uint256 i; i < _contentIds.length; ++i) {
-            Content memory content = getContent(_contentIds[i]);
+            if (_contentIds[i] == 0 || _contentIds[i] > n) {
+                revert InvalidContentId();
+            }
+            Content storage content = contents[_contentIds[i]];
             if (content.startAt <= block.timestamp) {
                 revert AlreadyStarted();
             }
-            contents[_contentIds[i]].uri = _uris[i];
+            content.uri = _uris[i];
             emit ContentURIUpdate(_contentIds[i], _uris[i]);
         }
     }
@@ -213,12 +217,16 @@ ReentrancyGuardUpgradeable {
             _signature
         );
 
+        uint256 n = contentNumber;
         for (uint256 i; i < _contentIds.length; ++i) {
-            Content memory content = getContent(_contentIds[i]);
-            if (content.endAt <= block.timestamp) {
-                revert AlreadyEnded();
+            if (_contentIds[i] == 0 || _contentIds[i] > n) {
+                revert InvalidContentId();
             }
-            contents[_contentIds[i]].endAt = uint40(block.timestamp);
+            Content storage content = contents[_contentIds[i]];
+            if (content.startAt <= block.timestamp) {
+                revert AlreadyStarted();
+            }
+            content.endAt = uint40(block.timestamp);
             emit ContentCancellation(_contentIds[i]);
         }
     }
@@ -229,13 +237,17 @@ ReentrancyGuardUpgradeable {
             revert InvalidInput();
         }
 
-        Content memory content = getContent(_contentId);
+        if (_contentId == 0 || _contentId > contentNumber) {
+            revert InvalidContentId();
+        }
 
-        if (block.timestamp < content.startAt) {
+        Content storage content = contents[_contentId];
+
+        if (content.startAt > block.timestamp)  {
             revert NotOpened();
         }
 
-        if (block.timestamp >= content.endAt) {
+        if (content.endAt <= block.timestamp) {
             revert AlreadyEnded();
         }
 

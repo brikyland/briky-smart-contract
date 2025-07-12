@@ -149,7 +149,7 @@ ReentrancyGuardUpgradeable {
     }
 
     function provideFund(uint256 _fundId)
-    external payable validFund(_fundId) onlyInitiator(_fundId) nonReentrant whenNotPaused {
+    external payable nonReentrant validFund(_fundId) onlyInitiator(_fundId) whenNotPaused {
         Fund memory fund = funds[_fundId];
         if (fund.isSufficient == true) {
             revert AlreadyProvided();
@@ -191,7 +191,7 @@ ReentrancyGuardUpgradeable {
         uint256 _fundId,
         address _receiver,
         uint256 _quantity
-    ) external validFund(_fundId) onlyInitiator(_fundId) nonReentrant whenNotPaused {
+    ) external nonReentrant validFund(_fundId) onlyInitiator(_fundId) whenNotPaused {
         Fund memory fund = funds[_fundId];
         if (fund.isSufficient == false || _quantity > fund.totalQuantity) {
             revert InsufficientFunds();

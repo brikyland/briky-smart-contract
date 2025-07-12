@@ -44,6 +44,7 @@ IFund {
         address[] calldata extraCurrencies,
         uint256[] calldata extraDenominations
     ) external returns (uint256 fundId);
+
     function expandFund(
         uint256 fundId,
         uint256 quantity

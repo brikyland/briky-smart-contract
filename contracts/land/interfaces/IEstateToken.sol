@@ -4,15 +4,28 @@ pragma solidity ^0.8.20;
 import {IERC1155MetadataURIUpgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC1155MetadataURIUpgradeable.sol";
 
 import {IGovernor} from "../../common/interfaces/IGovernor.sol";
+import {IProposal} from "../../common/interfaces/IProposal.sol";
 import {IRoyaltyRateProposer} from "../../common/interfaces/IRoyaltyRateProposer.sol";
+import {IValidation} from "../../common/interfaces/IValidation.sol";
 
 import {IEstate} from "./IEstate.sol";
+import {IValidatable} from "../../common/interfaces/IValidatable.sol";
 
 interface IEstateToken is
 IEstate,
+IProposal,
+IValidatable,
 IGovernor,
 IRoyaltyRateProposer,
 IERC1155MetadataURIUpgradeable {
+    struct Extraction {
+        uint256 estateId;
+        uint256 proposalId;
+        uint256 value;
+        address currency;
+        address extractor;
+    }
+
     event CommissionTokenUpdate(address newAddress);
 
     event BaseURIUpdate(string newValue);
@@ -21,6 +34,12 @@ IERC1155MetadataURIUpgradeable {
 
     event TokenizerAuthorization(address indexed account);
     event TokenizerDeauthorization(address indexed account);
+
+    event OperatorRegistration(
+        bytes32 indexed zone,
+        address indexed account,
+        string uri
+    );
 
     event NewToken(
         uint256 indexed tokenId,
@@ -33,22 +52,52 @@ IERC1155MetadataURIUpgradeable {
     );
     event EstateDeprecation(uint256 indexed estateId);
     event EstateExpirationExtension(uint256 indexed estateId, uint40 expireAt);
+    event EstateExtraction(uint256 indexed estateId, uint256 indexed extractionId);
+    event EstateOperatorAssignment(uint256 indexed estateId, address indexed operator);
 
+    event NewExtraction(
+        uint256 indexed extractionId,
+        uint256 indexed estateId,
+        uint256 indexed proposalId,
+        address extractor,
+        uint256 value,
+        address currency
+    );
+    event ExtractionCancellation(uint256 indexed extractionId);
+
+    error Cancelled();
     error Deprecated();
     error InvalidEstateId();
+    error InvalidExtractionConclusion();
+    error InvalidExtractionId();
+    error InvalidOperator();
     error InvalidTokenizer(address account);
+    error UnavailableEstate();
 
     function decimals() external view returns (uint8 decimals);
 
     function commissionToken() external view returns (address commissionToken);
     function feeReceiver() external view returns (address feeReceiver);
+    function governanceHub() external view returns (address governanceHub);
+    function paymentHub() external view returns (address paymentHub);
 
     function estateNumber() external view returns (uint256 tokenNumber);
+    function extractionNumber() external view returns (uint256 extractionNumber);
+
+    function operatorURIs(bytes32 zone, address operator) external view returns (string memory uri);
+    function isOperatorIn(bytes32 zone, address operator) external view returns (bool isActive);
 
     function balanceOfAt(address account, uint256 tokenId, uint256 at) external view returns (uint256 balance);
     function totalSupply(uint256 tokenId) external view returns (uint256 totalSupply);
 
     function getEstate(uint256 estateId) external view returns (Estate memory tokenInfo);
+
+    function registerOperator(
+        bytes32 zone,
+        address account,
+        string calldata uri,
+        Validation calldata validator
+    ) external;
 
     function tokenizeEstate(
         uint256 totalSupply,
@@ -59,8 +108,23 @@ IERC1155MetadataURIUpgradeable {
         address operator,
         address commissionReceiver
     ) external returns (uint256 estateId);
+
+    function assignEstateOperator(uint256 estateId, address operator) external;
     function deprecateEstate(uint256 estateId) external;
     function extendEstateExpiration(uint256 estateId, uint40 expireAt) external;
-    function updateEstateURI(uint256 estateId, string calldata uri) external;
+    function updateEstateURI(
+        uint256 estateId,
+        string calldata uri,
+        Validation calldata validation
+    ) external;
 
+    function requestExtraction(
+        uint256 estateId,
+        uint256 value,
+        address currency,
+        bytes32 uuid,
+        Validation calldata validation
+    ) external returns (uint256 extractionId);
+
+    function concludeExtraction(uint256 extractionId) external returns (bool isSuccessful);
 }

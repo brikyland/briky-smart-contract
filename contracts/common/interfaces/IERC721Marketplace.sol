@@ -54,6 +54,7 @@ interface IERC721Marketplace is ICommon {
         uint256 price,
         address currency
     ) external returns (uint256 offerId);
+
     function buy(uint256 offerId) external payable returns (uint256 price);
     function cancel(uint256 offerId) external;
 

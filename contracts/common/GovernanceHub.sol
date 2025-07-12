@@ -5,6 +5,7 @@ import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/se
 
 import {Constant} from "../lib/Constant.sol";
 import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
+import {Formula} from "../lib/Formula.sol";
 import {Signature} from "../lib/Signature.sol";
 
 import {IAdmin} from "./interfaces/IAdmin.sol";
@@ -14,13 +15,16 @@ import {GovernanceHubStorage} from "./storages/GovernanceHubStorage.sol";
 
 import {Administrable} from "./utilities/Administrable.sol";
 import {Pausable} from "./utilities/Pausable.sol";
+import {Validatable} from "./utilities/Validatable.sol";
 
 abstract contract GovernanceHub is
 GovernanceHubStorage,
 Administrable,
 Pausable,
+Validatable,
 ReentrancyGuardUpgradeable {
     using CurrencyHandler for uint256;
+    using Formula for uint256;
 
     string constant private VERSION = "v1.1.1";
 
@@ -48,8 +52,9 @@ ReentrancyGuardUpgradeable {
         __Pausable_init();
         __ReentrancyGuard_init();
 
+        __Validatable_init(_validator);
+
         admin = _admin;
-        validator = _validator;
         fee = _fee;
     }
 
@@ -73,22 +78,6 @@ ReentrancyGuardUpgradeable {
         emit FeeUpdate(_fee);
     }
 
-    function updateValidator(
-        address _validator,
-        bytes[] calldata _signature
-    ) external {
-        IAdmin(admin).verifyAdminSignatures(
-            abi.encode(
-                address(this),
-                "updateValidator",
-                _validator
-            ),
-            _signature
-        );
-        validator = _validator;
-        emit ValidatorUpdate(_validator);
-    }
-
     function getProposal(uint256 _proposalId)
     external view validProposal(_proposalId) returns (Proposal memory) {
         return proposals[_proposalId];
@@ -99,40 +88,56 @@ ReentrancyGuardUpgradeable {
         return _votingVerdict(proposals[_proposalId]);
     }
 
+    function getProposalState(uint256 _proposalId)
+    external view validProposal(_proposalId) returns (ProposalState) {
+        if (proposals[_proposalId].state == ProposalState.Voting
+            && proposals[_proposalId].due + Constant.GOVERNANCE_HUB_CONFIRMATION_TIME_LIMIT <= block.timestamp) {
+            return ProposalState.Disqualified;
+        }
+
+        return proposals[_proposalId].state;
+    }
+
     function propose(
+        address _governor,
         uint256 _tokenId,
-        address _proposer,
         address _executor,
         bytes32 _uuid,
         ProposalRule _rule,
-        uint256 _quorum,
+        uint256 _quorumRate,
         uint40 _duration,
-        uint256 _nonce,
-        uint256 _expiry,
-        bytes calldata _signature
+        uint40 _admissionExpiry,
+        Validation calldata _signature
     ) external payable whenNotPaused returns (uint256) {
-        if (!IAdmin(admin).isGovernor(msg.sender)) {
-            revert Unauthorized();
-        }
-
         _validate(
             abi.encode(
-                msg.sender,
+                _governor,
                 _tokenId,
-                _proposer,
-                _executor,
+                msg.sender,
                 _uuid,
+                _executor,
                 _rule,
-                _quorum,
-                _duration
+                _quorumRate,
+                _duration,
+                _admissionExpiry
             ),
-            _nonce,
-            _expiry,
             _signature
         );
 
+        if (!IAdmin(admin).isGovernor(_governor)) {
+            revert InvalidGovernor();
+        }
+
         if (!IGovernor(msg.sender).isAvailable(_tokenId)) {
             revert InvalidTokenId();
+        }
+
+        if (_quorumRate > Constant.COMMON_RATE_MAX_FRACTION) {
+            revert InvalidInput();
+        }
+
+        if (_admissionExpiry <= block.timestamp) {
+            revert InvalidTimestamp();
         }
 
         CurrencyHandler.receiveNative(fee);
@@ -140,25 +145,29 @@ ReentrancyGuardUpgradeable {
         uint256 proposalId = ++proposalNumber;
         Proposal storage proposal = proposals[proposalId];
 
-        proposal.governor = msg.sender;
+        proposal.governor = _governor;
         proposal.tokenId = _tokenId;
-        proposal.proposer = _proposer;
-        proposal.executor = _executor;
+        proposal.proposer = msg.sender;
         proposal.uuid = _uuid;
+        proposal.executor = _executor;
         proposal.rule = _rule;
-        proposal.quorum = _quorum;
+        proposal.quorum = _quorumRate;
         proposal.due = _duration;
+        proposal.timePivot = _admissionExpiry;
+
         proposal.state = ProposalState.Pending;
 
+
         emit NewProposal(
-            msg.sender,
+            _governor,
             proposalId,
-            _proposer,
-            _executor,
+            msg.sender,
             _uuid,
+            _executor,
             _rule,
-            _quorum,
-            _duration
+            _quorumRate,
+            _duration,
+            _admissionExpiry
         );
 
         return proposalId;
@@ -166,26 +175,28 @@ ReentrancyGuardUpgradeable {
 
     function admit(
         uint256 _proposalId,
-        string calldata _uri,
+        string calldata _metadataUri,
+        string calldata _stateUri,
         address _currency,
-        uint256 _nonce,
-        uint256 _expiry,
-        bytes calldata _signature
-    ) external onlyExecutive validProposal(_proposalId) whenNotPaused {
+        Validation calldata _signature
+    ) external validProposal(_proposalId) onlyExecutive whenNotPaused {
         _validate(
             abi.encode(
                 _proposalId,
-                _uri,
+                _metadataUri,
+                _stateUri,
                 _currency
             ),
-            _nonce,
-            _expiry,
             _signature
         );
 
         Proposal storage proposal = proposals[_proposalId];
         if (proposal.state != ProposalState.Pending) {
             revert InvalidAdmitting();
+        }
+
+        if (proposal.timePivot <= block.timestamp) {
+            revert Timeout();
         }
 
         IGovernor governorContract = IGovernor(proposal.governor);
@@ -200,21 +211,26 @@ ReentrancyGuardUpgradeable {
         }
 
         uint256 totalWeight = IGovernor(proposal.governor).totalVoteAt(tokenId, block.timestamp);
-        if (totalWeight < proposal.quorum) {
-            revert ConflictedQuorum();
-        }
+        uint256 quorum = totalWeight.scale(
+            proposal.quorum,
+            Constant.COMMON_RATE_MAX_FRACTION
+        );
 
-        proposal.uri = _uri;
+        proposal.metadataUri = _metadataUri;
+        proposal.stateUri = _stateUri;
         proposal.totalWeight = totalWeight;
-        proposal.admitAt = uint40(block.timestamp);
+        proposal.quorum = quorum;
+        proposal.timePivot = uint40(block.timestamp);
         proposal.state = ProposalState.Voting;
         proposal.currency = _currency;
         proposal.due += uint40(block.timestamp);
 
         emit ProposalAdmission(
             _proposalId,
-            _uri,
+            _metadataUri,
+            _stateUri,
             totalWeight,
+            quorum,
             block.timestamp,
             _currency
         );
@@ -222,32 +238,43 @@ ReentrancyGuardUpgradeable {
 
     function disqualify(
         uint256 _proposalId,
-        string calldata _uri,
-        uint256 _nonce,
-        uint256 _expiry,
-        bytes calldata _signature
-    ) external onlyExecutive validProposal(_proposalId) whenNotPaused {
+        string calldata _metadataUri,
+        string calldata _stateUri,
+        Validation calldata _validation
+    ) external validProposal(_proposalId) whenNotPaused {
         _validate(
             abi.encode(
                 _proposalId,
-                _uri
+                _metadataUri,
+                _stateUri
             ),
-            _nonce,
-            _expiry,
-            _signature
+            _validation
         );
 
         Proposal storage proposal = proposals[_proposalId];
-        if (proposal.state != ProposalState.Pending
-            && proposal.state != ProposalState.Voting
-            && proposal.state != ProposalState.Executing) {
+        if (!IAdmin(admin).getZoneEligibility(
+            IGovernor(proposal.governor).zoneOf(proposal.tokenId),
+            msg.sender
+        )) {
+            revert Unauthorized();
+        }
+
+        IAdmin adminContract = IAdmin(admin);
+        ProposalState state = proposal.state;
+        if (!(state == ProposalState.Pending && adminContract.isExecutive(msg.sender))
+            && !(state == ProposalState.Voting && adminContract.isManager(msg.sender))) {
             revert InvalidDisqualifying();
         }
 
-        proposal.uri = _uri;
+        proposal.metadataUri = _metadataUri;
+        proposal.stateUri = _stateUri;
         proposal.state = ProposalState.Disqualified;
 
-        emit ProposalDisqualification(_proposalId, _uri);
+        emit ProposalDisqualification(
+            _proposalId,
+            _metadataUri,
+            _stateUri
+        );
     }
 
     function vote(uint256 _proposalId, ProposalVoteOption _option)
@@ -286,13 +313,18 @@ ReentrancyGuardUpgradeable {
 
     function withdrawBudgetContribution(uint256 _proposalId)
     external nonReentrant validProposal(_proposalId) whenNotPaused returns (uint256) {
+        Proposal storage proposal = proposals[_proposalId];
+        ProposalState state = proposal.state;
+        if (!(state == ProposalState.Voting && proposal.due + Constant.GOVERNANCE_HUB_CONFIRMATION_TIME_LIMIT <= block.timestamp)
+            && _votingVerdict(proposal) != ProposalVerdict.Failed) {
+            revert InvalidBudgetContributionWithdrawing();
+        }
         uint256 contribution = contributions[_proposalId][msg.sender];
 
         if (contribution == 0) {
             revert NothingToWithdraw();
         }
         contributions[_proposalId][msg.sender] = 0;
-
         CurrencyHandler.sendCurrency(proposals[_proposalId].currency, msg.sender, contribution);
 
         emit ProposalBudgetContributionWithdrawal(
@@ -305,9 +337,17 @@ ReentrancyGuardUpgradeable {
     }
 
     function confirmExecution(uint256 _proposalId)
-    external nonReentrant validProposal(_proposalId) onlyExecutor(_proposalId) whenNotPaused {
+    external nonReentrant validProposal(_proposalId) onlyManager whenNotPaused {
         Proposal storage proposal = proposals[_proposalId];
+        if (!IAdmin(admin).getZoneEligibility(
+            IGovernor(proposal.governor).zoneOf(proposal.tokenId),
+            msg.sender
+        )) {
+            revert Unauthorized();
+        }
+
         if (proposal.state != ProposalState.Voting
+            || proposal.due + Constant.GOVERNANCE_HUB_CONFIRMATION_TIME_LIMIT <= block.timestamp
             || _votingVerdict(proposal) != ProposalVerdict.Passed) {
             revert InvalidExecutionConfirming();
         }
@@ -322,29 +362,85 @@ ReentrancyGuardUpgradeable {
     external validProposal(_proposalId) onlyExecutor(_proposalId) whenNotPaused {
         Proposal storage proposal = proposals[_proposalId];
         ProposalState state = proposal.state;
-        if (state != ProposalState.Pending && state != ProposalState.Voting) {
+
+        if (state != ProposalState.Voting) {
             revert InvalidExecutionRejecting();
         }
+
         proposal.state = ProposalState.Rejected;
 
         emit ProposalExecutionRejection(_proposalId);
     }
 
-    function concludeExecution(uint256 _proposalId, bool _isSuccessful)
-    external onlyManager validProposal(_proposalId) whenNotPaused {
+    function updateExecution(
+        uint256 _proposalId,
+        string calldata _stateUri,
+        Validation calldata _validation
+    ) external validProposal(_proposalId) onlyExecutor(_proposalId) whenNotPaused {
+        _validate(
+            abi.encode(
+                _proposalId,
+                _stateUri
+            ),
+            _validation
+        );
+
+        if (proposals[_proposalId].state != ProposalState.Executing) {
+            revert InvalidExecutionUpdating();
+        }
+
+        proposals[_proposalId].stateUri = _stateUri;
+
+        emit ProposalExecutionUpdate(_proposalId, _stateUri);
+    }
+
+    function concludeExecution(
+        uint256 _proposalId,
+        string calldata _stateUri,
+        bool _isSuccessful,
+        Validation calldata _validation
+    ) external validProposal(_proposalId) onlyManager whenNotPaused {
+        _validate(
+            abi.encode(
+                _proposalId,
+                _stateUri,
+                _isSuccessful
+            ),
+            _validation
+        );
+
         Proposal storage proposal = proposals[_proposalId];
+        if (!IAdmin(admin).getZoneEligibility(
+            IGovernor(proposal.governor).zoneOf(proposal.tokenId),
+            msg.sender
+        )) {
+            revert Unauthorized();
+        }
+
         if (proposal.state != ProposalState.Executing) {
             revert InvalidExecutionConcluding();
         }
+
+        proposal.stateUri = _stateUri;
         proposal.state = _isSuccessful ? ProposalState.SuccessfulExecuted : ProposalState.UnsuccessfulExecuted;
 
-        emit ProposalExecutionConclusion(_proposalId, _isSuccessful);
+        emit ProposalExecutionConclusion(
+            _proposalId,
+            _stateUri,
+            _isSuccessful
+        );
     }
 
     function _votingVerdict(Proposal storage _proposal) private view returns (ProposalVerdict) {
         ProposalState state = _proposal.state;
-        if (state == ProposalState.Pending) {
+        if (state == ProposalState.Nil
+            || state == ProposalState.Pending) {
             return ProposalVerdict.Unsettled;
+        }
+        if (state == ProposalState.Executing
+            || state == ProposalState.SuccessfulExecuted
+            || state == ProposalState.UnsuccessfulExecuted) {
+            return ProposalVerdict.Passed;
         }
         if (state == ProposalState.Disqualified
             || state == ProposalState.Rejected) {
@@ -357,30 +453,43 @@ ReentrancyGuardUpgradeable {
                 if (_proposal.approvalWeight >= _proposal.quorum) {
                     return ProposalVerdict.Passed;
                 }
-            }
-            if (rule == ProposalRule.ApprovalBelowQuorum) {
-                if (_proposal.disapprovalWeight + _proposal.neutralWeight >= _proposal.totalWeight - _proposal.quorum) {
-                    return ProposalVerdict.Failed;
-                }
-            }
-            if (rule == ProposalRule.DisapprovalBeyondQuorum) {
+                return _proposal.due <= block.timestamp
+                    ? ProposalVerdict.Failed
+                    : ProposalVerdict.Unsettled;
+            } else if (rule == ProposalRule.ApprovalBelowQuorum) {
+                uint256 approvalWeight = _proposal.approvalWeight;
+                uint256 remain = _proposal.due > block.timestamp
+                    ? _proposal.totalWeight
+                        - approvalWeight
+                        - _proposal.disapprovalWeight
+                        - _proposal.neutralWeight
+                    : 0;
+                return approvalWeight + remain < _proposal.quorum
+                    ? ProposalVerdict.Failed
+                    : ProposalVerdict.Unsettled;
+            } else if (rule == ProposalRule.DisapprovalBeyondQuorum) {
                 if (_proposal.disapprovalWeight >= _proposal.quorum) {
                     return ProposalVerdict.Failed;
                 }
-            }
-            if (rule == ProposalRule.DisapprovalBelowQuorum) {
-                if (_proposal.approvalWeight + _proposal.neutralWeight >= _proposal.totalWeight - _proposal.quorum) {
-                    return ProposalVerdict.Passed;
-                }
+                return _proposal.due <= block.timestamp
+                    ? ProposalVerdict.Passed
+                    : ProposalVerdict.Unsettled;
+            } else {
+                uint256 disapprovalWeight = _proposal.disapprovalWeight;
+                uint256 remain = _proposal.due > block.timestamp
+                    ? _proposal.totalWeight
+                        - _proposal.approvalWeight
+                        - disapprovalWeight
+                        - _proposal.neutralWeight
+                    : 0;
+                return disapprovalWeight + remain < _proposal.quorum
+                    ? ProposalVerdict.Passed
+                    : ProposalVerdict.Unsettled;
             }
         }
-
-        return (state == ProposalState.Voting && _proposal.due <= block.timestamp)
-            ? ProposalVerdict.Failed
-            : ProposalVerdict.Unsettled;
     }
 
-    function _vote(uint256 _proposalId, ProposalVoteOption _option) private whenNotPaused returns (uint256) {
+    function _vote(uint256 _proposalId, ProposalVoteOption _voteOption) private whenNotPaused returns (uint256) {
         Proposal storage proposal = proposals[_proposalId];
         if (proposal.state != ProposalState.Voting) {
             revert InvalidVoting();
@@ -390,28 +499,34 @@ ReentrancyGuardUpgradeable {
             revert Overdue();
         }
 
+        if (voteOptions[_proposalId][msg.sender] != ProposalVoteOption.Nil) {
+            revert AlreadyVoted();
+        }
+
         uint256 weight = IGovernor(proposal.governor).voteOfAt(
             msg.sender,
             proposal.tokenId,
-            proposal.admitAt
+            proposal.timePivot
         );
         if (weight == 0) {
             revert NoVotingPower();
         }
 
-        if (_option == ProposalVoteOption.Approval) {
+        voteOptions[_proposalId][msg.sender] = _voteOption;
+
+        if (_voteOption == ProposalVoteOption.Approval) {
             uint256 newWeight = proposal.approvalWeight + weight;
             if (newWeight + proposal.disapprovalWeight + proposal.neutralWeight > proposal.totalWeight) {
                 revert ConflictedWeight();
             }
             proposal.approvalWeight = newWeight;
-        } else if (_option == ProposalVoteOption.Disapproval) {
+        } else if (_voteOption == ProposalVoteOption.Disapproval) {
             uint256 newWeight = proposal.disapprovalWeight + weight;
             if (newWeight + proposal.approvalWeight + proposal.neutralWeight > proposal.totalWeight) {
                 revert ConflictedWeight();
             }
             proposal.disapprovalWeight = newWeight;
-        } else if (_option == ProposalVoteOption.Neutral) {
+        } else if (_voteOption == ProposalVoteOption.Neutral) {
             uint256 newWeight = proposal.neutralWeight + weight;
             if (newWeight + proposal.approvalWeight + proposal.disapprovalWeight > proposal.totalWeight) {
                 revert ConflictedWeight();
@@ -422,7 +537,7 @@ ReentrancyGuardUpgradeable {
         emit ProposalVote(
             _proposalId,
             msg.sender,
-            _option,
+            _voteOption,
             weight
         );
 
@@ -432,8 +547,13 @@ ReentrancyGuardUpgradeable {
     function _contributeBudget(uint256 _proposalId, uint256 _value)
     private nonReentrant whenNotPaused {
         Proposal storage proposal = proposals[_proposalId];
-        if (proposal.state != ProposalState.Voting) {
+        ProposalState state = proposal.state;
+        if (state != ProposalState.Voting) {
             revert InvalidBudgetContributing();
+        }
+
+        if (proposal.due + Constant.GOVERNANCE_HUB_CONFIRMATION_TIME_LIMIT <= block.timestamp) {
+            revert Overdue();
         }
 
         CurrencyHandler.receiveCurrency(proposal.currency, _value);
@@ -446,31 +566,5 @@ ReentrancyGuardUpgradeable {
             msg.sender,
             _value
         );
-    }
-
-    function _validate(
-        bytes memory _data,
-        uint256 _nonce,
-        uint256 _expiry,
-        bytes calldata _signature
-    ) private {
-        if (_expiry <= block.timestamp + Constant.GOVERNANCE_HUB_SIGNATURE_TTL) {
-            revert ExpiredSignature();
-        }
-
-        if (isNonceUsed[_nonce]) {
-            revert InvalidNonce();
-        }
-
-        isNonceUsed[_nonce] = true;
-
-        if (!Signature.verify(
-            validator,
-            abi.encode(address(this), _data, _nonce, _expiry),
-            _nonce,
-            _signature)
-        ) {
-            revert InvalidSignature();
-        }
     }
 }

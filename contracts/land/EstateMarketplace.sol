@@ -9,6 +9,7 @@ import {Formula} from "../lib/Formula.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 
+import {Administrable} from "../common/utilities/Administrable.sol";
 import {Discountable} from "../common/utilities/Discountable.sol";
 import {Pausable} from "../common/utilities/Pausable.sol";
 
@@ -19,6 +20,7 @@ import {EstateMarketplaceStorage} from "./storages/EstateMarketplaceStorage.sol"
 
 contract EstateMarketplace is
 EstateMarketplaceStorage,
+Administrable,
 Discountable,
 Pausable,
 ReentrancyGuardUpgradeable {
@@ -63,7 +65,7 @@ ReentrancyGuardUpgradeable {
         uint256 _unitPrice,
         address _currency,
         bool _isDivisible
-    ) external whenNotPaused returns (uint256) {
+    ) external onlyAvailableCurrency(_currency) whenNotPaused returns (uint256) {
         IEstateToken estateTokenContract = IEstateToken(estateToken);
         if (!estateTokenContract.isAvailable(_tokenId)) {
             revert InvalidTokenId();
@@ -71,10 +73,6 @@ ReentrancyGuardUpgradeable {
 
         if (_unitPrice == 0) {
             revert InvalidUnitPrice();
-        }
-
-        if (!IAdmin(admin).isAvailableCurrency(_currency)) {
-            revert InvalidCurrency();
         }
 
         if (_sellingAmount == 0
@@ -159,7 +157,7 @@ ReentrancyGuardUpgradeable {
     }
 
     function _buy(uint256 _offerId, uint256 _amount)
-    private nonReentrant whenNotPaused returns (uint256) {
+    internal nonReentrant whenNotPaused returns (uint256) {
         if (_amount == 0) {
             revert InvalidAmount();
         }

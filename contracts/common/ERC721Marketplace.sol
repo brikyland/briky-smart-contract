@@ -13,6 +13,7 @@ import {Formula} from "../lib/Formula.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 
+import {Administrable} from "../common/utilities/Administrable.sol";
 import {Discountable} from "./utilities/Discountable.sol";
 import {Pausable} from "./utilities/Pausable.sol";
 
@@ -20,6 +21,7 @@ import {ERC721MarketplaceStorage} from "./storages/ERC721MarketplaceStorage.sol"
 
 contract ERC721Marketplace is
 ERC721MarketplaceStorage,
+Administrable,
 Discountable,
 Pausable,
 ReentrancyGuardUpgradeable {
@@ -62,7 +64,7 @@ ReentrancyGuardUpgradeable {
         uint256 _tokenId,
         uint256 _price,
         address _currency
-    ) external whenNotPaused returns (uint256) {
+    ) external onlyAvailableCurrency(_currency) whenNotPaused returns (uint256) {
         if (!_collection.supportsInterface(type(IERC721Upgradeable).interfaceId)) {
             revert InvalidCollection();
         }
@@ -73,10 +75,6 @@ ReentrancyGuardUpgradeable {
 
         if (_price == 0) {
             revert InvalidPrice();
-        }
-
-        if (!IAdmin(admin).isAvailableCurrency(_currency)) {
-            revert InvalidCurrency();
         }
 
         uint256 offerId = ++offerNumber;
