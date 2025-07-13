@@ -124,3 +124,15 @@ export async function testReentrancy(
         await callback();
     }
 }
+
+export function getValidationMessage(
+    validatable: ethers.Contract,
+    data: string,
+    nonce: BigNumberish,
+    expiry: BigNumberish,
+) {
+    return ethers.utils.defaultAbiCoder.encode(
+        ["address", "bytes", "uint256", "uint256"],
+        [validatable.address, data, nonce, expiry]
+    );
+}

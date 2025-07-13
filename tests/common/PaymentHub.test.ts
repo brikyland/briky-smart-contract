@@ -22,6 +22,7 @@ import { deployGovernor } from '@utils/deployments/common/governor';
 import { BigNumber } from 'ethers';
 import { deployFailReceiver } from '@utils/deployments/mocks/failReceiver';
 import { MockContract, smock } from '@defi-wonderland/smock';
+import { expectEqualWithErrorMargin } from '@utils/testHelper';
 
 interface PaymentHubFixture {
     admin: Admin;
@@ -161,7 +162,10 @@ describe('22. PaymentHub', async () => {
 
         if (initGovernorTokens) {
             if (useFailReceiver) {
-                await callTransaction(governor.connect(receiver1).mint(1, ethers.utils.parseEther('2')));
+                await callTransaction(failReceiver.call(
+                    governor.address,
+                    governor.interface.encodeFunctionData('mint', [1, ethers.utils.parseEther('2')]),
+                ));
             } else {
                 await callTransaction(governor.connect(receiver1).mint(1, ethers.utils.parseEther('2')));
             }
@@ -169,9 +173,12 @@ describe('22. PaymentHub', async () => {
             await callTransaction(governor.connect(receiver3).mint(1, ethers.utils.parseEther('5')));
 
             if (useFailReceiver) {
-                await callTransaction(governor.connect(receiver1).mint(1, ethers.utils.parseEther('100')));
+                await callTransaction(failReceiver.call(
+                    governor.address,
+                    governor.interface.encodeFunctionData('mint', [2, ethers.utils.parseEther('100')]),
+                ));
             } else {
-                await callTransaction(governor.connect(receiver1).mint(1, ethers.utils.parseEther('100')));
+                await callTransaction(governor.connect(receiver1).mint(2, ethers.utils.parseEther('100')));
             }
             await callTransaction(governor.connect(receiver2).mint(2, ethers.utils.parseEther('300')));
         }
@@ -520,8 +527,8 @@ describe('22. PaymentHub', async () => {
         });
     });
 
-    describe.only('22.3. withdraw(address, uint256)', async () => {
-        it('22.3.1. Withdraw successfully', async () => {
+    describe('22.3. withdraw(address, uint256)', async () => {
+        it('22.3.1. Withdraw successfully with multiple tx', async () => {
             const fixture = await beforePaymentHubTest({
                 registerCurrencies: true,
                 authorizeGovernor: true,
@@ -546,15 +553,14 @@ describe('22. PaymentHub', async () => {
             let paymentHubInitBalance = await ethers.provider.getBalance(paymentHub.address);
             let receiver1InitBalance = await ethers.provider.getBalance(receiver1.address);
 
-            const tx1 = await paymentHub.connect(receiver1).withdraw(paymentId1);
+            const tx1 = await paymentHub.connect(receiver1).withdraw([paymentId1]);
             const receipt1 = await tx1.wait();
             const gasFee1 = receipt1.gasUsed.mul(receipt1.effectiveGasPrice);
 
-            await expect(tx1).to.emit(paymentHub, 'Withdrawal').withArgs(
-                paymentId1,
-                receiver1.address,
-                receiver1Value1,
-            );
+            const event1 = receipt1.events!.find(e => e.event === 'Withdrawal')!;
+            expect(event1.args!.paymentId).to.equal(paymentId1);
+            expect(event1.args!.withdrawer).to.equal(receiver1.address);
+            expectEqualWithErrorMargin(event1.args!.value, receiver1Value1);
 
             expect(await ethers.provider.getBalance(paymentHub.address)).to.equal(paymentHubInitBalance.sub(receiver1Value1));
             expect(await ethers.provider.getBalance(receiver1.address)).to.equal(receiver1InitBalance.add(receiver1Value1).sub(gasFee1));
@@ -567,15 +573,14 @@ describe('22. PaymentHub', async () => {
             paymentHubInitBalance = await ethers.provider.getBalance(paymentHub.address);
             let receiver2InitBalance = await ethers.provider.getBalance(receiver2.address);
 
-            const tx2 = await paymentHub.connect(receiver2).withdraw(paymentId1);
+            const tx2 = await paymentHub.connect(receiver2).withdraw([paymentId1]);
             const receipt2 = await tx2.wait();
             const gasFee2 = receipt2.gasUsed.mul(receipt2.effectiveGasPrice);
 
-            await expect(tx2).to.emit(paymentHub, 'Withdrawal').withArgs(
-                paymentId1,
-                receiver2.address,
-                receiver2Value1,
-            );
+            const event2 = receipt2.events!.find(e => e.event === 'Withdrawal')!;
+            expect(event2.args!.paymentId).to.equal(paymentId1);
+            expect(event2.args!.withdrawer).to.equal(receiver2.address);
+            expectEqualWithErrorMargin(event2.args!.value, receiver2Value1, ethers.utils.parseUnits("10", "wei"));
 
             expect(await ethers.provider.getBalance(paymentHub.address)).to.equal(paymentHubInitBalance.sub(receiver2Value1));
             expect(await ethers.provider.getBalance(receiver2.address)).to.equal(receiver2InitBalance.add(receiver2Value1).sub(gasFee2));
@@ -588,15 +593,14 @@ describe('22. PaymentHub', async () => {
             paymentHubInitBalance = await ethers.provider.getBalance(paymentHub.address);
             let receiver3InitBalance = await ethers.provider.getBalance(receiver3.address);
 
-            const tx3 = await paymentHub.connect(receiver3).withdraw(paymentId1);
+            const tx3 = await paymentHub.connect(receiver3).withdraw([paymentId1]);
             const receipt3 = await tx3.wait();
             const gasFee3 = receipt3.gasUsed.mul(receipt3.effectiveGasPrice);
 
-            await expect(tx3).to.emit(paymentHub, 'Withdrawal').withArgs(
-                paymentId1,
-                receiver3.address,
-                receiver3Value1,
-            );
+            const event3 = receipt3.events!.find(e => e.event === 'Withdrawal')!;
+            expect(event3.args!.paymentId).to.equal(paymentId1);
+            expect(event3.args!.withdrawer).to.equal(receiver3.address);
+            expectEqualWithErrorMargin(event3.args!.value, receiver3Value1, ethers.utils.parseUnits("10", "wei"));
 
             expect(await ethers.provider.getBalance(paymentHub.address)).to.equal(paymentHubInitBalance.sub(receiver3Value1));
             expect(await ethers.provider.getBalance(receiver3.address)).to.equal(receiver3InitBalance.add(receiver3Value1).sub(gasFee3));
@@ -616,15 +620,14 @@ describe('22. PaymentHub', async () => {
             paymentHubInitBalance = await ethers.provider.getBalance(paymentHub.address);
             receiver1InitBalance = await ethers.provider.getBalance(receiver1.address);
 
-            const tx4 = await paymentHub.connect(receiver1).withdraw(paymentId2);
+            const tx4 = await paymentHub.connect(receiver1).withdraw([paymentId2]);
             const receipt4 = await tx4.wait();
             const gasFee4 = receipt4.gasUsed.mul(receipt4.effectiveGasPrice);
 
-            await expect(tx4).to.emit(paymentHub, 'Withdrawal').withArgs(
-                paymentId2,
-                receiver1.address,
-                receiver1Value2,
-            );
+            const event4 = receipt4.events!.find(e => e.event === 'Withdrawal')!;
+            expect(event4.args!.paymentId).to.equal(paymentId2);
+            expect(event4.args!.withdrawer).to.equal(receiver1.address);
+            expectEqualWithErrorMargin(event4.args!.value, receiver1Value2, ethers.utils.parseUnits("10", "wei"));
 
             expect(await ethers.provider.getBalance(paymentHub.address)).to.equal(paymentHubInitBalance.sub(receiver1Value2));
             expect(await ethers.provider.getBalance(receiver1.address)).to.equal(receiver1InitBalance.add(receiver1Value2).sub(gasFee4));
@@ -645,14 +648,13 @@ describe('22. PaymentHub', async () => {
             paymentHubInitBalance = await currency.balanceOf(paymentHub.address);
             receiver2InitBalance = await currency.balanceOf(receiver2.address);
 
-            const tx5 = await paymentHub.connect(receiver2).withdraw(paymentId3);
-            await tx5.wait();
+            const tx5 = await paymentHub.connect(receiver2).withdraw([paymentId3]);
+            const receipt5 = await tx5.wait();
 
-            await expect(tx5).to.emit(paymentHub, 'Withdrawal').withArgs(
-                paymentId3,
-                receiver2.address,
-                receiver2Value3,
-            );
+            const event5 = receipt5.events!.find(e => e.event === 'Withdrawal')!;
+            expect(event5.args!.paymentId).to.equal(paymentId3);
+            expect(event5.args!.withdrawer).to.equal(receiver2.address);
+            expectEqualWithErrorMargin(event5.args!.value, receiver2Value3, ethers.utils.parseUnits("10", "wei"));
 
             expect(await currency.balanceOf(paymentHub.address)).to.equal(paymentHubInitBalance.sub(receiver2Value3));
             expect(await currency.balanceOf(receiver2.address)).to.equal(receiver2InitBalance.add(receiver2Value3));
@@ -660,6 +662,88 @@ describe('22. PaymentHub', async () => {
             payment = await paymentHub.getPayment(paymentId3);
             expect(payment.remainWeight).to.equal(totalWeight3.sub(receiver2Weight3));
             expect(payment.remainValue).to.equal(totalValue3.sub(receiver2Value3));
+        });
+
+        it('22.3.2. Withdraw successfully with multiple payment ids', async () => {
+            const fixture = await beforePaymentHubTest({
+                registerCurrencies: true,
+                authorizeGovernor: true,
+                fundERC20ForIssuer: true,
+                initGovernorTokens: true,
+                issueSamplePayments: true,
+            });
+            const { paymentHub, governor, receiver1, currencies } = fixture;
+
+            // Tx1: Receiver 1 withdraw payment 1, 2 (native token) and 3 (erc20 token)
+            let paymentHubInitNativeBalance = await ethers.provider.getBalance(paymentHub.address);
+            let receiver1InitNativeBalance = await ethers.provider.getBalance(receiver1.address);
+            let paymentHubInitERC20Balance = await currencies[0].balanceOf(paymentHub.address);
+            let receiver1InitERC20Balance = await currencies[0].balanceOf(receiver1.address);
+
+            const tokenId1 = 1;
+            const paymentId1 = 1;
+            const totalValue1 = (await paymentHub.getPayment(paymentId1)).remainValue;
+            const totalWeight1 = (await paymentHub.getPayment(paymentId1)).remainWeight;
+            const receiver1Weight1 = await governor.balanceOf(receiver1.address, tokenId1);
+            const receiver1Value1 = receiver1Weight1.mul(totalValue1).div(totalWeight1);
+
+            const tokenId2 = 1;
+            const paymentId2 = 2;
+            const totalValue2 = (await paymentHub.getPayment(paymentId2)).remainValue;
+            const totalWeight2 = (await paymentHub.getPayment(paymentId2)).remainWeight;
+            const receiver1Weight2 = await governor.balanceOf(receiver1.address, tokenId2);
+            const receiver1Value2 = receiver1Weight2.mul(totalValue2).div(totalWeight2);
+            
+            const currency = currencies[0];
+            const tokenId3 = 2;
+            const paymentId3 = 3;
+            const totalValue3 = (await paymentHub.getPayment(paymentId3)).remainValue;
+            const totalWeight3 = (await paymentHub.getPayment(paymentId3)).remainWeight;
+            const receiver1Weight3 = await governor.balanceOf(receiver1.address, tokenId3);
+            const receiver1Value3 = receiver1Weight3.mul(totalValue3).div(totalWeight3);
+
+            const tx = await paymentHub.connect(receiver1).withdraw([paymentId1, paymentId2, paymentId3]);
+            const receipt = await tx.wait();
+            const gasFee = receipt.gasUsed.mul(receipt.effectiveGasPrice);
+
+            const events = receipt.events!.filter(e => e.event === 'Withdrawal');
+
+            expect(events[0].args!.paymentId).to.equal(paymentId1);
+            expect(events[0].args!.withdrawer).to.equal(receiver1.address);
+            expectEqualWithErrorMargin(events[0].args!.value, receiver1Value1);
+
+            expect(events[1].args!.paymentId).to.equal(paymentId2);
+            expect(events[1].args!.withdrawer).to.equal(receiver1.address);
+            expectEqualWithErrorMargin(events[1].args!.value, receiver1Value2);
+
+            expect(events[2].args!.paymentId).to.equal(paymentId3);
+            expect(events[2].args!.withdrawer).to.equal(receiver1.address);
+            expectEqualWithErrorMargin(events[2].args!.value, receiver1Value3);
+
+            expect(await ethers.provider.getBalance(paymentHub.address)).to.equal(
+                paymentHubInitNativeBalance.sub(receiver1Value1).sub(receiver1Value2)
+            );
+            expect(await ethers.provider.getBalance(receiver1.address)).to.equal(
+                receiver1InitNativeBalance.add(receiver1Value1).add(receiver1Value2).sub(gasFee)
+            );
+            expect(await currency.balanceOf(paymentHub.address)).to.equal(
+                paymentHubInitERC20Balance.sub(receiver1Value3)
+            );
+            expect(await currency.balanceOf(receiver1.address)).to.equal(
+                receiver1InitERC20Balance.add(receiver1Value3)
+            );
+
+            const payment1 = await paymentHub.getPayment(paymentId1);
+            expect(payment1.remainWeight).to.equal(totalWeight1.sub(receiver1Weight1));
+            expect(payment1.remainValue).to.equal(totalValue1.sub(receiver1Value1));
+
+            const payment2 = await paymentHub.getPayment(paymentId2);
+            expect(payment2.remainWeight).to.equal(totalWeight2.sub(receiver1Weight2));
+            expect(payment2.remainValue).to.equal(totalValue2.sub(receiver1Value2));
+
+            const payment3 = await paymentHub.getPayment(paymentId3);
+            expect(payment3.remainWeight).to.equal(totalWeight3.sub(receiver1Weight3));
+            expect(payment3.remainValue).to.equal(totalValue3.sub(receiver1Value3));
         });
 
         it('22.3.3. Withdraw unsuccessfully when paused', async () => {
@@ -673,7 +757,7 @@ describe('22. PaymentHub', async () => {
             });
             const { paymentHub, receiver1 } = fixture;
 
-            await expect(paymentHub.connect(receiver1).withdraw(1))
+            await expect(paymentHub.connect(receiver1).withdraw([1]))
                 .to.be.revertedWith('Pausable: paused');
         });
 
@@ -687,13 +771,13 @@ describe('22. PaymentHub', async () => {
             });
             const { paymentHub, receiver1 } = fixture;
 
-            await expect(paymentHub.connect(receiver1).withdraw(0))
+            await expect(paymentHub.connect(receiver1).withdraw([0]))
                 .to.be.revertedWithCustomError(paymentHub, 'InvalidPaymentId');
-            await expect(paymentHub.connect(receiver1).withdraw(4))
+            await expect(paymentHub.connect(receiver1).withdraw([4]))
                 .to.be.revertedWithCustomError(paymentHub, 'InvalidPaymentId');
         });
 
-        it('22.3.5. Withdraw unsuccessfully with already withdrawn user', async () => {
+        it('22.3.5. Withdraw unsuccessfully when withdraw same payment id in same tx', async () => {
             const fixture = await beforePaymentHubTest({
                 registerCurrencies: true,
                 authorizeGovernor: true,
@@ -703,9 +787,23 @@ describe('22. PaymentHub', async () => {
             });
             const { paymentHub, receiver1 } = fixture;
 
-            await callTransaction(paymentHub.connect(receiver1).withdraw(1));
+            await expect(paymentHub.connect(receiver1).withdraw([1, 2, 1]))
+                .to.be.revertedWithCustomError(paymentHub, 'AlreadyWithdrawn');
+        });
 
-            await expect(paymentHub.connect(receiver1).withdraw(1))
+        it('22.3.5. Withdraw unsuccessfully when withdraw same payment id in different tx', async () => {
+            const fixture = await beforePaymentHubTest({
+                registerCurrencies: true,
+                authorizeGovernor: true,
+                fundERC20ForIssuer: true,
+                initGovernorTokens: true,
+                issueSamplePayments: true,
+            });
+            const { paymentHub, receiver1 } = fixture;
+
+            await callTransaction(paymentHub.connect(receiver1).withdraw([1]));
+
+            await expect(paymentHub.connect(receiver1).withdraw([1]))
                 .to.be.revertedWithCustomError(paymentHub, 'AlreadyWithdrawn');
         });
 
@@ -719,9 +817,7 @@ describe('22. PaymentHub', async () => {
             });
             const { paymentHub, receiver3 } = fixture;
 
-            await callTransaction(paymentHub.connect(receiver3).withdraw(3));
-
-            await expect(paymentHub.connect(receiver3).withdraw(3))
+            await expect(paymentHub.connect(receiver3).withdraw([3]))
                 .to.be.revertedWithCustomError(paymentHub, 'InvalidWithdrawing');
         });
 
@@ -735,17 +831,23 @@ describe('22. PaymentHub', async () => {
 
             const { governor, issuer1, paymentHub, receiver1 } = fixture;
 
-            governor.totalVoteAt.whenCalledWith(1).returns(ethers.utils.parseEther('1'));
-            governor.totalVoteAt.whenCalledWith(2).returns(ethers.utils.parseEther('1'));
+            const timestamp = await time.latest() + 10;
+            await time.setNextBlockTimestamp(timestamp);
+
+            governor.totalVoteAt.whenCalledWith(1, timestamp).returns(ethers.utils.parseEther('1'));
+            governor.totalVoteAt.whenCalledWith(2, timestamp).returns(ethers.utils.parseEther('1'));
 
             await callTransaction(paymentHub.connect(issuer1).issuePayment(
                 governor.address,
                 1,
                 ethers.utils.parseEther('1000'),
                 ethers.constants.AddressZero,
+                { value: ethers.utils.parseEther('1000') },
             ));
 
-            await expect(paymentHub.connect(receiver1).withdraw(1))
+            governor.totalVoteAt.reset();
+
+            await expect(paymentHub.connect(receiver1).withdraw([1]))
                 .to.be.revertedWithCustomError(paymentHub, 'InsufficientFunds');
         });
 
@@ -756,7 +858,6 @@ describe('22. PaymentHub', async () => {
                 fundERC20ForIssuer: true,
                 initGovernorTokens: true,
                 useFailReceiver: true,
-                issueSamplePayments: true,
             });
 
             const { governor, issuer1, paymentHub, failReceiver } = fixture;
@@ -766,11 +867,14 @@ describe('22. PaymentHub', async () => {
                 1,
                 ethers.utils.parseEther('1000'),
                 ethers.constants.AddressZero,
+                { value: ethers.utils.parseEther('1000') },
             ));
+
+            await callTransaction(failReceiver.activate(true));
 
             await expect(failReceiver.call(
                 paymentHub.address,
-                paymentHub.interface.encodeFunctionData('withdraw', [1]),
+                paymentHub.interface.encodeFunctionData('withdraw', [[1]]),
             )).to.be.revertedWithCustomError(paymentHub, 'FailedTransfer');
         });
 
@@ -791,16 +895,16 @@ describe('22. PaymentHub', async () => {
                 reentrancyERC20.address,
             ));
 
-            const callData = paymentHub.interface.encodeFunctionData('withdraw', [1]);
+            const callData = paymentHub.interface.encodeFunctionData('withdraw', [[1]]);
 
             await callTransaction(reentrancyERC20.updateReentrancyPlan(paymentHub.address, callData));
 
-            await expect(paymentHub.connect(receiver1).withdraw(1))
+            await expect(paymentHub.connect(receiver1).withdraw([1]))
                 .to.be.revertedWith('ReentrancyGuard: reentrant call');
         });
     });
 
-    describe.only('22.4. getPayment(uint256)', async () => {
+    describe('22.4. getPayment(uint256)', async () => {
         it('22.4.1. return correct payment', async () => {
             const fixture = await beforePaymentHubTest({
                 registerCurrencies: true,
@@ -845,9 +949,9 @@ describe('22. PaymentHub', async () => {
             const { paymentHub, receiver1 } = fixture;
 
             await expect(paymentHub.connect(receiver1).getPayment(0))
-                .to.be.revertedWithoutReason();
+                .to.be.revertedWithCustomError(paymentHub, 'InvalidPaymentId');
             await expect(paymentHub.connect(receiver1).getPayment(4))
-                .to.be.revertedWithoutReason();
+                .to.be.revertedWithCustomError(paymentHub, 'InvalidPaymentId');
         });
     });
 });

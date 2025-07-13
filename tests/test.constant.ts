@@ -12,6 +12,7 @@ export const Constant = {
     COMMON_RATE_DECIMALS: 18,
     COMMON_RATE_MAX_FRACTION: ethers.utils.parseEther(String(1)),
     COMMON_INFINITE_TIMESTAMP: ethers.BigNumber.from(2).pow(40).sub(1),
+    COMMON_VALIDATION_SIGNATURE_TTL: 10 * MINUTE,
     
     // Admin
     ADMIN_NUMBER: 5,
