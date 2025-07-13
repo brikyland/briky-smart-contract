@@ -39,7 +39,7 @@ Initializable {
         bytes memory _data,
         Validation calldata _validation
     ) internal {
-        if (_validation.expiry <= block.timestamp + Constant.COMMON_VALIDATION_SIGNATURE_TTL) {
+        if (_validation.expiry <= block.timestamp) {
             revert ValidationExpired();
         }
 

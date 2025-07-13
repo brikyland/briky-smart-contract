@@ -97,6 +97,9 @@ ReentrancyGuardUpgradeable {
     function withdraw(uint256[] calldata _paymentIds)
     external nonReentrant whenNotPaused {
         for (uint256 i = 0; i < _paymentIds.length; ++i) {
+            if (_paymentIds[i] == 0 || _paymentIds[i] > paymentNumber) {
+                revert InvalidPaymentId();
+            }
             if (hasWithdrawn[_paymentIds[i]][msg.sender]) {
                 revert AlreadyWithdrawn();
             }
