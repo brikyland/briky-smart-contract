@@ -2,23 +2,27 @@
 pragma solidity ^0.8.20;
 
 import {IFund} from "../../common/interfaces/IFund.sol";
+import {IValidatable} from "../../common/interfaces/IValidatable.sol";
 
 import {IEstateTokenizer} from "./IEstateTokenizer.sol";
 
 interface IEstateForger is
 IFund,
+IValidatable,
 IEstateTokenizer {
     struct RequestEstate {
         uint256 estateId;
         bytes32 zone;
         string uri;
         uint40 expireAt;
+        address operator;
     }
 
     struct RequestEstateInput {
         bytes32 zone;
         string uri;
         uint40 expireAt;
+        address operator;
     }
 
     struct RequestQuota {
@@ -75,8 +79,11 @@ IEstateTokenizer {
     event Whitelist(address indexed account);
     event Unwhitelist(address indexed account);
 
-    event Activation(bytes32 indexed zone, address indexed account);
-    event Deactivation(bytes32 indexed zone, address indexed account);
+    event SellerRegistration(
+        bytes32 indexed zone,
+        address indexed account,
+        string uri
+    );
 
     event NewRequest(
         uint256 indexed requestId,
@@ -130,15 +137,14 @@ IEstateTokenizer {
     error Cancelled();
     error InvalidCommissionReceiver();
     error InvalidDepositing();
+    error InvalidOperator();
     error InvalidRequestId();
     error InvalidUnitPrice();
     error InvalidWithdrawing();
     error MaxSellingQuantityExceeded();
     error NotActivated(address account);
     error NotEnoughSoldQuantity();
-    error NotRegisteredSeller(address account);
     error NotWhitelisted(address account);
-    error RegisteredSeller(address account);
     error StillSelling();
     error Timeout();
     error Tokenized();
@@ -154,23 +160,29 @@ IEstateTokenizer {
 
     function requestNumber() external view returns (uint256 requestNumber);
 
+    function sellerURIs(bytes32 zone, address account) external view returns (string memory uri);
+    function isSellerIn(bytes32 zone, address account) external view returns (bool isActive);
+
     function deposits(uint256 requestId, address depositor) external view returns (uint256 deposit);
     function hasWithdrawn(uint256 requestId, address account) external view returns (bool hasWithdrawn);
 
-    function isActiveSellerIn(bytes32 zone, address account) external view returns (bool isActive);
-
     function getRequest(uint256 requestId) external view returns (Request memory request);
 
-    function cancel(uint256 requestId) external;
-    function confirm(uint256 requestId, address commissionReceiver) external payable returns (uint256 estateId);
-    function deposit(uint256 requestId, uint256 quantity) external payable returns (uint256 value);
+    function registerSeller(
+        bytes32 zone,
+        address account,
+        string calldata uri,
+        Validation calldata validation
+    ) external;
+
     function requestTokenizationWithDuration(
         address seller,
         RequestEstateInput calldata estate,
         RequestQuotaInput calldata quota,
         RequestQuoteInput calldata quote,
         uint40 privateSaleDuration,
-        uint40 publicSaleDuration
+        uint40 publicSaleDuration,
+        Validation calldata validation
     ) external returns (uint256 requestId);
     function requestTokenizationWithTimestamp(
         address seller,
@@ -178,16 +190,23 @@ IEstateTokenizer {
         RequestQuotaInput calldata quota,
         RequestQuoteInput calldata quote,
         uint40 privateSaleEndsAt,
-        uint40 publicSaleEndsAt
+        uint40 publicSaleEndsAt,
+        Validation calldata validation
     ) external returns (uint256 requestId);
 
-    function updateRequestURI(uint256 requestId, string calldata uri) external;
-    function updateRequestAgenda(
-        uint256 _requestId,
-        uint40 _privateSaleEndsAt,
-        uint40 _publicSaleEndsAt
+    function cancel(uint256 requestId) external;
+    function confirm(uint256 requestId, address commissionReceiver) external payable returns (uint256 estateId);
+    function deposit(uint256 requestId, uint256 quantity) external payable returns (uint256 value);
+    function updateRequestURI(
+        uint256 requestId,
+        string calldata uri,
+        Validation calldata validation
     ) external;
-
+    function updateRequestAgenda(
+        uint256 requestId,
+        uint40 privateSaleEndsAt,
+        uint40 publicSaleEndsAt
+    ) external;
     function withdrawDeposit(uint256 requestId) external returns (uint256 value);
     function withdrawToken(uint256 requestId) external returns (uint256 amount);
 

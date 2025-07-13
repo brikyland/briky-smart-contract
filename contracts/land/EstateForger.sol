@@ -13,6 +13,7 @@ import {IReserveVault} from "../common/interfaces/IReserveVault.sol";
 
 import {Discountable} from "../common/utilities/Discountable.sol";
 import {Pausable} from "../common/utilities/Pausable.sol";
+import {Validatable} from "../common/utilities/Validatable.sol";
 
 import {ICommissionToken} from "./interfaces/ICommissionToken.sol";
 import {IEstateToken} from "./interfaces/IEstateToken.sol";
@@ -26,6 +27,7 @@ EstateForgerStorage,
 EstateTokenizer,
 Discountable,
 Pausable,
+Validatable,
 ReentrancyGuardUpgradeable {
     using Formula for uint256;
 
@@ -47,6 +49,7 @@ ReentrancyGuardUpgradeable {
         address _priceWatcher,
         address _feeReceiver,
         address _reserveVault,
+        address _validator,
         uint256 _feeRate,
         uint256 _baseMinUnitPrice,
         uint256 _baseMaxUnitPrice
@@ -55,6 +58,8 @@ ReentrancyGuardUpgradeable {
 
         __Pausable_init();
         __ReentrancyGuard_init();
+
+        __Validatable_init(_validator);
 
         admin = _admin;
         estateToken = _estateToken;
@@ -155,32 +160,36 @@ ReentrancyGuardUpgradeable {
         }
     }
 
-    function activateSellerIn(
+    function isSellerIn(bytes32 _zone, address _seller) public view returns (bool) {
+        return bytes(sellerURIs[_zone][_seller]).length != 0;
+    }
+
+    function registerSeller(
         bytes32 _zone,
-        address[] calldata _accounts,
-        bool _isSeller
+        address _account,
+        string calldata _uri,
+        Validation calldata _validation
     ) external onlyManager {
+        _validate(
+            abi.encode(
+                _zone,
+                _account,
+                _uri
+            ),
+            _validation
+        );
+
         if (!IAdmin(admin).getZoneEligibility(_zone, msg.sender)) {
             revert Unauthorized();
         }
 
-        if (_isSeller) {
-            for (uint256 i; i < _accounts.length; ++i) {
-                if (isActiveSellerIn[_zone][_accounts[i]]) {
-                    revert Activated(_accounts[i]);
-                }
-                isActiveSellerIn[_zone][_accounts[i]] = true;
-                emit Activation(_zone, _accounts[i]);
-            }
-        } else {
-            for (uint256 i; i < _accounts.length; ++i) {
-                if (!isActiveSellerIn[_zone][_accounts[i]]) {
-                    revert NotActivated(_accounts[i]);
-                }
-                isActiveSellerIn[_zone][_accounts[i]] = false;
-                emit Deactivation(_zone, _accounts[i]);
-            }
-        }
+        sellerURIs[_zone][_account] = _uri;
+
+        emit SellerRegistration(
+            _zone,
+            _account,
+            _uri
+        );
     }
 
     function getFeeRate() public view returns (Rate memory) {
@@ -198,8 +207,11 @@ ReentrancyGuardUpgradeable {
         RequestQuotaInput calldata _quota,
         RequestQuoteInput calldata _quote,
         uint40 _privateSaleDuration,
-        uint40 _publicSaleDuration
+        uint40 _publicSaleDuration,
+        Validation calldata _validation
     ) external returns (uint256) {
+        _validate(abi.encode(_estate.uri), _validation);
+
         if (_privateSaleDuration == 0 && _publicSaleDuration == 0) {
             revert InvalidInput();
         }
@@ -220,8 +232,11 @@ ReentrancyGuardUpgradeable {
         RequestQuotaInput calldata _quota,
         RequestQuoteInput calldata _quote,
         uint40 _privateSaleEndsAt,
-        uint40 _publicSaleEndsAt
+        uint40 _publicSaleEndsAt,
+        Validation calldata _validation
     ) external returns (uint256) {
+        _validate(abi.encode(_estate.uri), _validation);
+
         if (block.timestamp > _privateSaleEndsAt
             || _privateSaleEndsAt > _publicSaleEndsAt
             || _publicSaleEndsAt == block.timestamp) {
@@ -238,8 +253,13 @@ ReentrancyGuardUpgradeable {
         );
     }
 
-    function updateRequestURI(uint256 _requestId, string calldata _uri)
-    external onlyExecutive validRequest(_requestId) whenNotPaused {
+    function updateRequestURI(
+        uint256 _requestId,
+        string calldata _uri,
+        Validation calldata _validation
+    ) external validRequest(_requestId) onlyExecutive whenNotPaused {
+        _validate(abi.encode(_uri), _validation);
+
         if (!IAdmin(admin).getZoneEligibility(requests[_requestId].estate.zone, msg.sender)) {
             revert Unauthorized();
         }
@@ -260,7 +280,7 @@ ReentrancyGuardUpgradeable {
         uint256 _requestId,
         uint40 _privateSaleEndsAt,
         uint40 _publicSaleEndsAt
-    ) external onlyExecutive validRequest(_requestId) whenNotPaused {
+    ) external validRequest(_requestId) onlyExecutive whenNotPaused {
         if (!IAdmin(admin).getZoneEligibility(requests[_requestId].estate.zone, msg.sender)) {
             revert Unauthorized();
         }
@@ -307,7 +327,7 @@ ReentrancyGuardUpgradeable {
         return _deposit(_requestId, _quantity);
     }
 
-    function cancel(uint256 _requestId) external onlyManager validRequest(_requestId) whenNotPaused {
+    function cancel(uint256 _requestId) external validRequest(_requestId) onlyManager whenNotPaused {
         Request storage request = requests[_requestId];
         if (!IAdmin(admin).getZoneEligibility(request.estate.zone, msg.sender)) {
             revert Unauthorized();
@@ -323,7 +343,7 @@ ReentrancyGuardUpgradeable {
     }
 
     function confirm(uint256 _requestId, address _commissionReceiver)
-    external payable onlyManager validRequest(_requestId) nonReentrant whenNotPaused returns (uint256) {
+    external payable validRequest(_requestId) nonReentrant whenNotPaused returns (uint256) {
         Request storage request = requests[_requestId];
 
         if (_commissionReceiver == address(0)) {
@@ -365,7 +385,7 @@ ReentrancyGuardUpgradeable {
             _requestId,
             request.estate.uri,
             request.estate.expireAt,
-            request.seller,
+            request.estate.operator,
             _commissionReceiver
         );
         request.estate.estateId = estateId;
@@ -522,14 +542,14 @@ ReentrancyGuardUpgradeable {
             : 0;
     }
 
-    function _getFeeDenomination(uint256 _unitPrice, address _currency) private view returns (uint256) {
+    function _getFeeDenomination(uint256 _unitPrice, address _currency) internal view returns (uint256) {
         return _applyDiscount(
             _unitPrice.scale(feeRate, Constant.COMMON_RATE_MAX_FRACTION),
             _currency
         );
     }
 
-    function _getCommissionDenomination(uint256 _feeDenomination) private view returns (uint256) {
+    function _getCommissionDenomination(uint256 _feeDenomination) internal view returns (uint256) {
         return _feeDenomination
             .scale(ICommissionToken(commissionToken).getCommissionRate());
     }
@@ -550,7 +570,7 @@ ReentrancyGuardUpgradeable {
         RequestQuoteInput calldata _quote,
         uint40 _privateSaleEndsAt,
         uint40 _publicSaleEndsAt
-    ) private onlyExecutive whenNotPaused returns (uint256) {
+    ) internal onlyExecutive whenNotPaused returns (uint256) {
         if (!IAdmin(admin).getZoneEligibility(_estate.zone, msg.sender)) {
             revert Unauthorized();
         }
@@ -568,7 +588,11 @@ ReentrancyGuardUpgradeable {
             revert InvalidTimestamp();
         }
 
-        if (!isActiveSellerIn[_estate.zone][_seller]
+        if (!IEstateToken(estateToken).isOperatorIn(_estate.zone, _estate.operator)) {
+            revert InvalidOperator();
+        }
+
+        if (!isSellerIn(_estate.zone, _seller)
             || _quota.minSellingQuantity > _quota.maxSellingQuantity
             || _quota.maxSellingQuantity > _quota.totalQuantity
             || _quota.totalQuantity > Constant.ESTATE_TOKEN_TOTAL_QUANTITY_LIMIT
@@ -611,7 +635,8 @@ ReentrancyGuardUpgradeable {
                 0,
                 _estate.zone,
                 _estate.uri,
-                _estate.expireAt
+                _estate.expireAt,
+                _estate.operator
             ),
             RequestQuota(
                 _quota.totalQuantity,
@@ -637,7 +662,7 @@ ReentrancyGuardUpgradeable {
     }
 
     function _deposit(uint256 _requestId, uint256 _quantity)
-    private nonReentrant whenNotPaused returns (uint256) {
+    internal nonReentrant whenNotPaused returns (uint256) {
         Request storage request = requests[_requestId];
         if (request.quota.totalQuantity == 0) {
             revert Cancelled();

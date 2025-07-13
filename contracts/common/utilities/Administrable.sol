@@ -18,4 +18,11 @@ abstract contract Administrable is ICommon {
         }
         _;
     }
+
+    modifier onlyAvailableCurrency(address _currency) {
+        if (!IAdmin(this.admin()).isAvailableCurrency(_currency)) {
+            revert InvalidCurrency();
+        }
+        _;
+    }
 }

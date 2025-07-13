@@ -34,6 +34,12 @@ interface IPaymentHub is ICommon {
     error InvalidTokenId();
     error InvalidWithdrawing();
 
+    function paymentNumber() external view returns (uint256 paymentNumber);
+
+    function getPayment(uint256 paymentId) external view returns (Payment memory payment);
+
+    function hasWithdrawn(uint256 paymentId, address account) external view returns (bool hasWithdrawn);
+
     function issuePayment(
         address governor,
         uint256 tokenId,
@@ -41,5 +47,5 @@ interface IPaymentHub is ICommon {
         address currency
     ) external payable returns (uint256 paymentId);
 
-    function withdraw(uint256 paymentId) external;
+    function withdraw(uint256[] calldata paymentIds) external;
 }

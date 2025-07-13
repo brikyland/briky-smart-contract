@@ -71,6 +71,7 @@ IEstate {
         address currency,
         bool isDivisible
     ) external returns (uint256 offerId);
+
     function buy(uint256 offerId) external payable returns (uint256 price);
     function buy(uint256 offerId, uint256 amount) external payable returns (uint256 price);
     function cancel(uint256 offerId) external;

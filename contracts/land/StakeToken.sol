@@ -253,7 +253,7 @@ ReentrancyGuardUpgradeable {
         uint256 _value,
         uint256 _totalSupply,
         uint256 _feeRate
-    ) private pure returns (uint256) {
+    ) internal pure returns (uint256) {
         return _liquidity
             .scale(_value, _totalSupply)
             .scale(_feeRate, Constant.COMMON_RATE_MAX_FRACTION);
@@ -263,15 +263,15 @@ ReentrancyGuardUpgradeable {
         uint256 _interestAccumulation,
         uint256 _reward,
         uint256 _totalSupply
-    ) private pure returns (uint256) {
+    ) internal pure returns (uint256) {
         return _interestAccumulation.mul(FixedMath.ONE.add(_reward.div(_totalSupply)));
     }
 
-    function _tokenToWeight(uint256 _token, uint256 _accumulateInterestRate) private pure returns (uint256) {
+    function _tokenToWeight(uint256 _token, uint256 _accumulateInterestRate) internal pure returns (uint256) {
         return _token.toFixed().div(_accumulateInterestRate);
     }
 
-    function _weightToToken(uint256 _weight, uint256 _accumulateInterestRate) private pure returns (uint256) {
+    function _weightToToken(uint256 _weight, uint256 _accumulateInterestRate) internal pure returns (uint256) {
         return _weight.mul(_accumulateInterestRate).toUint();
     }
 }

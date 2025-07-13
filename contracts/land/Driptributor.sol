@@ -191,8 +191,13 @@ ReentrancyGuardUpgradeable {
     function withdraw(uint256[] calldata _distributionIds)
     external nonReentrant whenNotPaused returns (uint256) {
         uint256 totalAmount;
+        uint256 n = distributionNumber;
         for (uint256 i; i < _distributionIds.length; ++i) {
-            Distribution memory distribution = getDistribution(_distributionIds[i]);
+            if (_distributionIds[i] == 0 || _distributionIds[i] > n) {
+                revert InvalidDistributionId();
+            }
+
+            Distribution storage distribution = distributions[_distributionIds[i]];
             if (distribution.receiver != msg.sender) {
                 revert Unauthorized();
             }
@@ -200,15 +205,16 @@ ReentrancyGuardUpgradeable {
                 revert AlreadyStaked();
             }
 
-            uint256 vestedAmount = distribution.distributeAt + distribution.vestingDuration <= block.timestamp
+            uint256 distributeAt = distribution.distributeAt;
+            uint256 vestedAmount = distributeAt + distribution.vestingDuration <= block.timestamp
                 ? distribution.totalAmount
                 : distribution.totalAmount.scale(
-                    block.timestamp - uint256(distribution.distributeAt),
+                    block.timestamp - uint256(distributeAt),
                     distribution.vestingDuration
                 );
 
             uint256 amount = vestedAmount - distribution.withdrawnAmount;
-            distributions[_distributionIds[i]].withdrawnAmount = vestedAmount;
+            distribution.withdrawnAmount = vestedAmount;
             totalAmount += amount;
 
             emit Withdrawal(_distributionIds[i], amount);
@@ -229,8 +235,13 @@ ReentrancyGuardUpgradeable {
         }
 
         uint256 remain;
+        uint256 n = distributionNumber;
         for (uint256 i; i < _distributionIds.length; ++i) {
-            Distribution memory distribution = getDistribution(_distributionIds[i]);
+            if (_distributionIds[i] == 0 || _distributionIds[i] > n) {
+                revert InvalidDistributionId();
+            }
+
+            Distribution storage distribution = distributions[_distributionIds[i]];
             if (distribution.receiver != msg.sender) {
                 revert Unauthorized();
             }
@@ -238,7 +249,7 @@ ReentrancyGuardUpgradeable {
                 revert AlreadyStaked();
             }
 
-            distributions[_distributionIds[i]].isStaked = true;
+            distribution.isStaked = true;
 
             remain += distribution.totalAmount - distribution.withdrawnAmount;
         }

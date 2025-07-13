@@ -12,9 +12,12 @@ import {IAdmin} from "../common/interfaces/IAdmin.sol";
 
 import {PriceWatcherStorage} from "./storages/PriceWatcherStorage.sol";
 
+import {Administrable} from "./utilities/Administrable.sol";
+
 contract PriceWatcher is
 PriceWatcherStorage,
-Initializable {
+Initializable,
+Administrable {
     using Formula for uint256;
 
     string constant private VERSION = "v1.1.1";
@@ -115,17 +118,15 @@ Initializable {
         uint256 _price,
         uint256 _lowerBound,
         uint256 _upperBound
-    ) external view returns (bool) {
-        if (!IAdmin(admin).isAvailableCurrency(_currency)) {
-            revert InvalidCurrency();
-        }
-
-        PriceFeed memory priceFeed = priceFeeds[_currency];
+    ) external view onlyAvailableCurrency(_currency) returns (bool) {
+        address feed = priceFeeds[_currency].feed;
 
         Rate memory rate;
-        if (priceFeed.feed == address(0)) {
+        if (feed == address(0)) {
             rate = defaultRates[_currency];
-            if (rate.value == 0) revert MissingCurrencyRate();
+            if (rate.value == 0) {
+                revert MissingCurrencyRate();
+            }
         } else {
             (
                 ,
@@ -133,19 +134,19 @@ Initializable {
                 ,
                 uint256 updatedAt,
 
-            ) = AggregatorV3Interface(priceFeed.feed).latestRoundData();
+            ) = AggregatorV3Interface(feed).latestRoundData();
 
             if (answer <= 0) {
                 revert InvalidPriceFeedData();
             }
 
-            if (updatedAt + priceFeed.heartbeat <= block.timestamp) {
+            if (updatedAt + priceFeeds[_currency].heartbeat <= block.timestamp) {
                 revert StalePriceFeed();
             }
 
             rate = Rate(
                 uint256(answer),
-                AggregatorV3Interface(priceFeed.feed).decimals()
+                AggregatorV3Interface(feed).decimals()
             );
         }
 

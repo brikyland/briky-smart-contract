@@ -76,6 +76,7 @@ IERC721MetadataUpgradeable {
         address currency,
         uint40 duration
     ) external returns (uint256 loanId);
+
     function lend(uint256 loanId) external payable returns (uint256 value);
     function repay(uint256 loanId) external payable;
     function foreclose(uint256 loanId) external;

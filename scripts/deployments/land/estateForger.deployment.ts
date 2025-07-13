@@ -36,18 +36,36 @@ async function deployOrUpgradeEstateForger() {
                 commissionTokenAddress,
                 `Missing ${networkName}_COMMISSION_TOKEN_ADDRESS from environment variables!`
             )
+            const priceWatcherAddress = config.priceWatcherAddress;
+            assert.ok(
+                priceWatcherAddress,
+                `Missing ${networkName}_PRICE_WATCHER_ADDRESS from environment variables!`
+            );
             const feeReceiverAddress = config.feeReceiverAddress;
             assert.ok(
                 feeReceiverAddress,
                 `Missing ${networkName}_FEE_RECEIVER_ADDRESS from environment variables!`
             );
-
+            const reserveVaultAddress = config.reserveVaultAddress;
+            assert.ok(
+                reserveVaultAddress,
+                `Missing ${networkName}_RESERVE_VAULT_ADDRESS from environment variables!`
+            );
+            const estateForgerValidatorAddress = config.estateForgerValidatorAddress;
+            assert.ok(
+                estateForgerValidatorAddress,
+                `Missing ${networkName}_ESTATE_FORGER_VALIDATOR_ADDRESS from environment variables!`
+            );
+            
             const estateForger = await deployEstateForger(
                 signer,
                 adminAddress,
                 estateTokenAddress,
                 commissionTokenAddress,
+                priceWatcherAddress,
                 feeReceiverAddress,
+                reserveVaultAddress,
+                estateForgerValidatorAddress,
                 Initialization.ESTATE_FORGER_FeeRate,
                 Initialization.ESTATE_FORGER_BaseMinUnitPrice,
                 Initialization.ESTATE_FORGER_BaseMaxUnitPrice
