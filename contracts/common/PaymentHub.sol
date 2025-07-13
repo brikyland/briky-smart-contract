@@ -13,6 +13,8 @@ import {Pausable} from "./utilities/Pausable.sol";
 
 import {PaymentHubStorage} from "./storages/PaymentHubStorage.sol";
 
+import "hardhat/console.sol";
+
 contract PaymentHub is
 PaymentHubStorage,
 Pausable,
@@ -119,6 +121,9 @@ ReentrancyGuardUpgradeable {
         }
 
         uint256 value = payment.remainValue.scale(weight, payment.remainWeight);
+        console.log('payment.remainValue:', payment.remainValue);
+        console.log('payment.remainWeight:', payment.remainWeight);
+        console.log('value:', value);
 
         payment.remainWeight -= weight;
         payment.remainValue -= value;
