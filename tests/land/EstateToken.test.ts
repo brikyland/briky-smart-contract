@@ -17,6 +17,8 @@ import {
     IERC1155MetadataURIUpgradeable__factory,
     PriceWatcher,
     IGovernor__factory,
+    GovernanceHub,
+    PaymentHub,
 } from '@typechain-types';
 import { callTransaction, getSignatures, randomWallet } from '@utils/blockchain';
 import { Constant } from '@tests/test.constant';
@@ -47,6 +49,8 @@ import { OrderedMap } from '@utils/utils';
 import { Initialization as LandInitialization } from '@tests/land/test.initialization';
 import { deployReserveVault } from '@utils/deployments/common/reserveVault';
 import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
+import { deployGovernanceHub } from '@utils/deployments/common/governanceHub';
+import { deployPaymentHub } from '@utils/deployments/common/paymentHub';
 
 interface EstateTokenFixture {
     admin: Admin;
@@ -54,6 +58,8 @@ interface EstateTokenFixture {
     priceWatcher: PriceWatcher;
     currency: Currency;
     reserveVault: ReserveVault;
+    governanceHub: GovernanceHub;
+    paymentHub: PaymentHub;
     estateToken: MockEstateToken;
     commissionToken: CommissionToken;
 
@@ -69,6 +75,7 @@ interface EstateTokenFixture {
     depositor1: any, depositor2: any, depositor3: any;
     depositors: any[];
     operator: any;
+    validator: any;
     zone: string;
 
     tokenizers: any[];
@@ -92,6 +99,7 @@ describe('3. EstateToken', async () => {
         const depositor3 = accounts[Constant.ADMIN_NUMBER + 10];        
         const depositors = [depositor1, depositor2, depositor3];
         const operator = accounts[Constant.ADMIN_NUMBER + 11];
+        const validator = accounts[Constant.ADMIN_NUMBER + 12];
 
         const adminAddresses: string[] = admins.map(signer => signer.address);
         const admin = await deployAdmin(
@@ -124,10 +132,25 @@ describe('3. EstateToken', async () => {
             'MCK'
         ) as Currency;
 
+        const governanceHub = await deployGovernanceHub(
+            deployer,
+            admin.address,
+            validator.address,
+            Constant.GOVERNANCE_HUB_FEE,
+        ) as GovernanceHub;
+        
+        const paymentHub = await deployPaymentHub(
+            deployer.address,
+            admin.address,
+        ) as PaymentHub;
+
         const estateToken = await deployMockEstateToken(
             deployer.address,
             admin.address,
             feeReceiver.address,
+            governanceHub.address,
+            paymentHub.address,
+            validator.address,
             LandInitialization.ESTATE_TOKEN_BaseURI,
             LandInitialization.ESTATE_TOKEN_RoyaltyRate,
         ) as MockEstateToken;        
@@ -173,6 +196,8 @@ describe('3. EstateToken', async () => {
             priceWatcher,
             currency,
             reserveVault,
+            governanceHub,
+            paymentHub,
             estateToken,
             commissionToken,
             deployer,
@@ -192,6 +217,7 @@ describe('3. EstateToken', async () => {
             tokenizers,
             zone,
             operator,
+            validator,
         };
     };
 
@@ -295,7 +321,7 @@ describe('3. EstateToken', async () => {
 
     describe('3.1. initialize(address, address, string, uint256)', async () => {
         it('3.1.1. Deploy successfully', async () => {
-            const { estateToken, admin, feeReceiver } = await beforeEstateTokenTest();
+            const { estateToken, admin, feeReceiver, governanceHub, paymentHub, validator } = await beforeEstateTokenTest();
 
             const paused = await estateToken.paused();
             expect(paused).to.equal(false);
@@ -316,7 +342,11 @@ describe('3. EstateToken', async () => {
             const commissionTokenAddress = await estateToken.commissionToken();
             expect(commissionTokenAddress).to.equal(ethers.constants.AddressZero);
 
-            expect(await estateToken.decimals()).to.equal(Constant.ESTATE_TOKEN_DECIMALS);
+            expect(await estateToken.governanceHub()).to.equal(governanceHub.address);
+            expect(await estateToken.paymentHub()).to.equal(paymentHub.address);
+            expect(await estateToken.validator()).to.equal(validator.address);
+
+            expect(await estateToken.decimals()).to.equal(Constant.ESTATE_TOKEN_MAX_DECIMALS);
         });
 
         it('3.1.2. revert with invalid rate', async () => {

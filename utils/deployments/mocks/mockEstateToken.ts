@@ -5,6 +5,9 @@ export async function deployMockEstateToken(
     signer: any,
     adminAddress: string,
     feeReceiverAddress: string,
+    governanceHubAddress: string,
+    paymentHubAddress: string,
+    validatorAddress: string,
     baseURI: string,
     royaltyRate: BigNumberish,
 ) {
@@ -15,6 +18,9 @@ export async function deployMockEstateToken(
         [
             adminAddress,
             feeReceiverAddress,
+            governanceHubAddress,
+            paymentHubAddress,
+            validatorAddress,
             baseURI,
             royaltyRate,
         ]
