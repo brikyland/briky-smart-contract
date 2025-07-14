@@ -24,6 +24,7 @@ library Constant {
     uint256 internal constant ESTATE_TOKEN_EXTRACTION_UNANIMOUS_QUORUM_RATE = 1 ether;
     uint256 internal constant ESTATE_TOKEN_EXTRACTION_MAJORITY_QUORUM_RATE = 0.75 ether;
     uint40 internal constant ESTATE_TOKEN_EXTRACTION_VOTING_DURATION = 30 days;
+    uint40 internal constant ESTATE_TOKEN_EXTRACTION_ADMISSION_DURATION = 30 days;
 
     // Governance Hub
     uint40 internal constant GOVERNANCE_HUB_CONFIRMATION_TIME_LIMIT = 30 days;

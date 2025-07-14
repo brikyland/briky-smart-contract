@@ -7,8 +7,6 @@ abstract contract GovernanceHubStorage is IGovernanceHub {
     mapping(uint256 => mapping(address => uint256)) public contributions;
     mapping(uint256 => mapping(address => ProposalVoteOption)) public voteOptions;
 
-    mapping(uint256 => bool) public isGovernor;
-
     mapping(uint256 => Proposal) internal proposals;
 
     uint256 public fee;
