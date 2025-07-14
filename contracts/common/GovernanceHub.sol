@@ -17,7 +17,7 @@ import {Administrable} from "./utilities/Administrable.sol";
 import {Pausable} from "./utilities/Pausable.sol";
 import {Validatable} from "./utilities/Validatable.sol";
 
-abstract contract GovernanceHub is
+contract GovernanceHub is
 GovernanceHubStorage,
 Administrable,
 Pausable,
@@ -128,7 +128,7 @@ ReentrancyGuardUpgradeable {
             revert InvalidGovernor();
         }
 
-        if (!IGovernor(msg.sender).isAvailable(_tokenId)) {
+        if (!IGovernor(_governor).isAvailable(_tokenId)) {
             revert InvalidTokenId();
         }
 

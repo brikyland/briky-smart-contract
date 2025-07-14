@@ -320,6 +320,7 @@ ReentrancyGuardUpgradeable {
                 Constant.COMMON_RATE_MAX_FRACTION
             ),
             Constant.ESTATE_TOKEN_EXTRACTION_VOTING_DURATION,
+            uint40(block.timestamp) + Constant.ESTATE_TOKEN_EXTRACTION_ADMISSION_DURATION,
             _validation
         );
 

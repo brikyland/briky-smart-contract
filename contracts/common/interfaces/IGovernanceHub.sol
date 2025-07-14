@@ -85,8 +85,6 @@ IValidatable {
     function fee() external view returns (uint256 fee);
     function proposalNumber() external view returns (uint256 proposalNumber);
 
-    function isGovernor(address account) external view returns (bool isGovernor);
-
     function getProposal(uint256 proposalId) external view returns (Proposal memory proposal);
     function getProposalState(uint256 proposalId) external view returns (ProposalState state);
     function getProposalVerdict(uint256 proposalId) external view returns (ProposalVerdict verdict);
@@ -102,18 +100,22 @@ IValidatable {
         ProposalRule rule,
         uint256 quorum,
         uint40 duration,
+        uint40 admissionExpiry,
         Validation calldata signature
     ) external payable returns (uint256 proposalId);
 
     function admit(
         uint256 proposalId,
         string calldata metadataUri,
+        string calldata stateUri,
+        address currency,
         Validation calldata signature
     ) external;
     function contributeBudget(uint256 proposalId, uint256 value) external payable;
     function disqualify(
         uint256 proposalId,
         string calldata metadataUri,
+        string calldata stateUri,
         Validation calldata signature
     ) external;
     function vote(uint256 proposalId, ProposalVoteOption option) external returns (uint256 weight);
