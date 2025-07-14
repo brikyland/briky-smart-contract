@@ -200,38 +200,6 @@ ReentrancyGuardUpgradeable {
         }
     }
 
-    function registerOperator(
-        bytes32 _zone,
-        address _account,
-        string calldata _uri,
-        Validation calldata _validation
-    ) external onlyManager {
-        _validate(
-            abi.encode(
-                _zone,
-                _account,
-                _uri
-            ),
-            _validation
-        );
-
-        if (!IAdmin(admin).getZoneEligibility(_zone, msg.sender)) {
-            revert Unauthorized();
-        }
-
-        operatorURIs[_zone][_account] = _uri;
-
-        emit OperatorRegistration(
-            _zone,
-            _account,
-            _uri
-        );
-    }
-
-    function isOperatorIn(bytes32 _zone, address _operator) public view returns (bool) {
-        return _operator == address(0) || bytes(operatorURIs[_zone][_operator]).length != 0;
-    }
-
     function getRoyaltyRate()
     public view override(IRoyaltyRateProposer, RoyaltyRateProposer) returns (Rate memory) {
         return Rate(royaltyRate, Constant.COMMON_RATE_DECIMALS);
@@ -255,7 +223,6 @@ ReentrancyGuardUpgradeable {
         uint256 _tokenizationId,
         string calldata _uri,
         uint40 _expireAt,
-        address _operator,
         address _commissionReceiver
     ) external whenNotPaused returns (uint256) {
         if (!isTokenizer[msg.sender]) {
@@ -277,8 +244,7 @@ ReentrancyGuardUpgradeable {
             msg.sender,
             uint40(block.timestamp),
             _expireAt,
-            Constant.COMMON_INFINITE_TIMESTAMP,
-            _operator
+            Constant.COMMON_INFINITE_TIMESTAMP
         );
         _mint(msg.sender, estateId, _totalSupply, "");
         _setURI(estateId, _uri);
@@ -294,8 +260,7 @@ ReentrancyGuardUpgradeable {
             _tokenizationId,
             msg.sender,
             uint40(block.timestamp),
-            _expireAt,
-            _operator
+            _expireAt
         );
 
         return estateId;
@@ -327,15 +292,6 @@ ReentrancyGuardUpgradeable {
         );
 
         _setURI(_estateId, _uri);
-    }
-
-    function assignEstateOperator(uint256 _estateId, address _operator)
-    external validEstate(_estateId) onlyManager onlyEligibleZone(_estateId) {
-        if (!isOperatorIn(estates[_estateId].zone, _operator)) {
-            revert InvalidOperator();
-        }
-        estates[_estateId].operator = _operator;
-        emit EstateOperatorAssignment(_estateId, _operator);
     }
 
     function requestExtraction(
