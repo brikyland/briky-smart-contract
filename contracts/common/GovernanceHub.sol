@@ -201,7 +201,7 @@ ReentrancyGuardUpgradeable {
         }
 
         IGovernor governorContract = IGovernor(proposal.governor);
-        if (governorContract.isAvailable(proposal.tokenId)) {
+        if (!governorContract.isAvailable(proposal.tokenId)) {
             revert InvalidTokenId();
         }
 
