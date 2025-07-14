@@ -44,7 +44,7 @@ import { callMortgageToken_Pause, callMortgageToken_UpdateFeeRate } from '@utils
 import { deployFailReceiver } from '@utils/deployments/mocks/failReceiver';
 import { deployReentrancyERC1155Holder } from '@utils/deployments/mocks/mockReentrancy/reentrancyERC1155Holder';
 import { deployReentrancy } from '@utils/deployments/mocks/mockReentrancy/reentrancy';
-import { LoanState } from '@utils/enums';
+import { LoanState } from '@utils/models/enums';
 import { Initialization as LandInitialization } from '@tests/land/test.initialization';
 import { Initialization as LendInitialization } from '@tests/lend/test.initialization';
 import { deployReserveVault } from '@utils/deployments/common/reserveVault';

@@ -15,7 +15,7 @@ import { getStakingFee } from '@utils/formula';
 import { expectBetween, expectEqualWithErrorMargin } from '@utils/testHelper';
 import { BigNumber, Wallet } from 'ethers';
 import { randomArrayWithSum, randomBigNumber, randomInt, shuffle } from '@utils/utils';
-import { StakeTokenOperation } from '@utils/enums';
+import { StakeTokenOperation } from '@utils/models/enums';
 import { Initialization as LandInitialization } from '@tests/land/test.initialization';
 
 interface StakeTokenFixture {

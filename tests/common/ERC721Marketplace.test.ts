@@ -25,7 +25,7 @@ import {
 } from '@utils/callWithSignatures/admin';
 import { BigNumber, Contract, Wallet } from 'ethers';
 import { deployERC721Marketplace } from '@utils/deployments/common/erc721Marketplace';
-import { ERC721MarketplaceOfferState } from '@utils/enums';
+import { ERC721MarketplaceOfferState } from '@utils/models/enums';
 import { callERC721Marketplace_Pause } from '@utils/callWithSignatures/erc721Marketplace';
 import { deployFailReceiver } from '@utils/deployments/mocks/failReceiver';
 import { deployReentrancy } from '@utils/deployments/mocks/mockReentrancy/reentrancy';

@@ -35,7 +35,7 @@ import { deployMortgageToken } from '@utils/deployments/lend/mortgageToken';
 import { deployMortgageMarketplace } from '@utils/deployments/lend/mortgageMarketplace';
 import { callMortgageMarketplace_Pause } from '@utils/callWithSignatures/mortgageMarketplace';
 import { Contract } from 'ethers';
-import { LoanState, MortgageMarketplaceOfferState } from '@utils/enums';
+import { LoanState, MortgageMarketplaceOfferState } from '@utils/models/enums';
 import { callMortgageToken_UpdateRoyaltyRate } from '@utils/callWithSignatures/mortgageToken';
 import { getBalance } from '@utils/blockchain';
 import { deployFailReceiver } from '@utils/deployments/mocks/failReceiver';
