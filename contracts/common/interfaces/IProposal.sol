@@ -5,15 +5,12 @@ interface IProposal {
     enum ProposalVoteOption {
         Nil,
         Approval,
-        Disapproval,
-        Neutral
+        Disapproval
     }
 
     enum ProposalRule {
         ApprovalBeyondQuorum,
-        ApprovalBelowQuorum,
-        DisapprovalBeyondQuorum,
-        DisapprovalBelowQuorum
+        DisapprovalBeyondQuorum
     }
 
     enum ProposalState {
@@ -42,10 +39,9 @@ interface IProposal {
         uint256 totalWeight;
         uint256 approvalWeight;
         uint256 disapprovalWeight;
-        uint256 neutralWeight;
         uint256 quorum;
         address proposer;
-        address executor;
+        address operator;
         uint40 timePivot;
         uint40 due;
         ProposalRule rule;
