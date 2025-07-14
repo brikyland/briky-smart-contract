@@ -15,6 +15,7 @@ IValidatable {
         address indexed governor,
         uint256 indexed proposalId,
         address indexed proposer,
+        uint256 tokenId,
         bytes32 uuid,
         address operator,
         ProposalRule rule,

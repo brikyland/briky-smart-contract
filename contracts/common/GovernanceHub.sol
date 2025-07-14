@@ -162,6 +162,7 @@ ReentrancyGuardUpgradeable {
             _governor,
             proposalId,
             msg.sender,
+            _tokenId,
             _uuid,
             _operator,
             _rule,
