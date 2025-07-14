@@ -35,8 +35,8 @@ ReentrancyGuardUpgradeable {
         _;
     }
 
-    modifier onlyExecutor(uint256 _proposalId) {
-        if (msg.sender != proposals[_proposalId].executor) {
+    modifier onlyOperator(uint256 _proposalId) {
+        if (msg.sender != proposals[_proposalId].operator) {
             revert Unauthorized();
         }
         _;
@@ -101,7 +101,7 @@ ReentrancyGuardUpgradeable {
     function propose(
         address _governor,
         uint256 _tokenId,
-        address _executor,
+        address _operator,
         bytes32 _uuid,
         ProposalRule _rule,
         uint256 _quorumRate,
@@ -115,7 +115,7 @@ ReentrancyGuardUpgradeable {
                 _tokenId,
                 msg.sender,
                 _uuid,
-                _executor,
+                _operator,
                 _rule,
                 _quorumRate,
                 _duration,
@@ -149,7 +149,7 @@ ReentrancyGuardUpgradeable {
         proposal.tokenId = _tokenId;
         proposal.proposer = msg.sender;
         proposal.uuid = _uuid;
-        proposal.executor = _executor;
+        proposal.operator = _operator;
         proposal.rule = _rule;
         proposal.quorum = _quorumRate;
         proposal.due = _duration;
@@ -163,7 +163,7 @@ ReentrancyGuardUpgradeable {
             proposalId,
             msg.sender,
             _uuid,
-            _executor,
+            _operator,
             _rule,
             _quorumRate,
             _duration,
@@ -353,13 +353,13 @@ ReentrancyGuardUpgradeable {
         }
 
         proposal.state = ProposalState.Executing;
-        CurrencyHandler.sendCurrency(proposal.currency, msg.sender, proposal.budget);
+        CurrencyHandler.sendCurrency(proposal.currency, proposal.operator, proposal.budget);
 
         emit ProposalExecutionConfirmation(_proposalId);
     }
 
     function rejectExecution(uint256 _proposalId)
-    external validProposal(_proposalId) onlyExecutor(_proposalId) whenNotPaused {
+    external validProposal(_proposalId) onlyOperator(_proposalId) whenNotPaused {
         Proposal storage proposal = proposals[_proposalId];
         ProposalState state = proposal.state;
 
@@ -376,7 +376,7 @@ ReentrancyGuardUpgradeable {
         uint256 _proposalId,
         string calldata _stateUri,
         Validation calldata _validation
-    ) external validProposal(_proposalId) onlyExecutor(_proposalId) whenNotPaused {
+    ) external validProposal(_proposalId) onlyOperator(_proposalId) whenNotPaused {
         _validate(
             abi.encode(
                 _proposalId,
@@ -448,44 +448,20 @@ ReentrancyGuardUpgradeable {
         }
 
         ProposalRule rule = _proposal.rule;
-        unchecked {
-            if (rule == ProposalRule.ApprovalBeyondQuorum) {
-                if (_proposal.approvalWeight >= _proposal.quorum) {
-                    return ProposalVerdict.Passed;
-                }
-                return _proposal.due <= block.timestamp
-                    ? ProposalVerdict.Failed
-                    : ProposalVerdict.Unsettled;
-            } else if (rule == ProposalRule.ApprovalBelowQuorum) {
-                uint256 approvalWeight = _proposal.approvalWeight;
-                uint256 remain = _proposal.due > block.timestamp
-                    ? _proposal.totalWeight
-                        - approvalWeight
-                        - _proposal.disapprovalWeight
-                        - _proposal.neutralWeight
-                    : 0;
-                return approvalWeight + remain < _proposal.quorum
-                    ? ProposalVerdict.Failed
-                    : ProposalVerdict.Unsettled;
-            } else if (rule == ProposalRule.DisapprovalBeyondQuorum) {
-                if (_proposal.disapprovalWeight >= _proposal.quorum) {
-                    return ProposalVerdict.Failed;
-                }
-                return _proposal.due <= block.timestamp
-                    ? ProposalVerdict.Passed
-                    : ProposalVerdict.Unsettled;
-            } else {
-                uint256 disapprovalWeight = _proposal.disapprovalWeight;
-                uint256 remain = _proposal.due > block.timestamp
-                    ? _proposal.totalWeight
-                        - _proposal.approvalWeight
-                        - disapprovalWeight
-                        - _proposal.neutralWeight
-                    : 0;
-                return disapprovalWeight + remain < _proposal.quorum
-                    ? ProposalVerdict.Passed
-                    : ProposalVerdict.Unsettled;
+        if (rule == ProposalRule.ApprovalBeyondQuorum) {
+            if (_proposal.approvalWeight >= _proposal.quorum) {
+                return ProposalVerdict.Passed;
             }
+            return _proposal.due <= block.timestamp
+                ? ProposalVerdict.Failed
+                : ProposalVerdict.Unsettled;
+        } else {
+            if (_proposal.disapprovalWeight >= _proposal.quorum) {
+                return ProposalVerdict.Failed;
+            }
+            return _proposal.due <= block.timestamp
+                ? ProposalVerdict.Passed
+                : ProposalVerdict.Unsettled;
         }
     }
 
@@ -516,22 +492,16 @@ ReentrancyGuardUpgradeable {
 
         if (_voteOption == ProposalVoteOption.Approval) {
             uint256 newWeight = proposal.approvalWeight + weight;
-            if (newWeight + proposal.disapprovalWeight + proposal.neutralWeight > proposal.totalWeight) {
+            if (newWeight + proposal.disapprovalWeight > proposal.totalWeight) {
                 revert ConflictedWeight();
             }
             proposal.approvalWeight = newWeight;
         } else if (_voteOption == ProposalVoteOption.Disapproval) {
             uint256 newWeight = proposal.disapprovalWeight + weight;
-            if (newWeight + proposal.approvalWeight + proposal.neutralWeight > proposal.totalWeight) {
+            if (newWeight + proposal.approvalWeight > proposal.totalWeight) {
                 revert ConflictedWeight();
             }
             proposal.disapprovalWeight = newWeight;
-        } else if (_voteOption == ProposalVoteOption.Neutral) {
-            uint256 newWeight = proposal.neutralWeight + weight;
-            if (newWeight + proposal.approvalWeight + proposal.disapprovalWeight > proposal.totalWeight) {
-                revert ConflictedWeight();
-            }
-            proposal.neutralWeight = newWeight;
         }
 
         emit ProposalVote(

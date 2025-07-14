@@ -16,7 +16,7 @@ IValidatable {
         uint256 indexed proposalId,
         address indexed proposer,
         bytes32 uuid,
-        address executor,
+        address operator,
         ProposalRule rule,
         uint256 quorumRate,
         uint40 duration,
