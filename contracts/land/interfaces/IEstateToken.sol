@@ -35,25 +35,17 @@ IERC1155MetadataURIUpgradeable {
     event TokenizerAuthorization(address indexed account);
     event TokenizerDeauthorization(address indexed account);
 
-    event OperatorRegistration(
-        bytes32 indexed zone,
-        address indexed account,
-        string uri
-    );
-
     event NewToken(
         uint256 indexed tokenId,
         bytes32 indexed zone,
         uint256 indexed tokenizationId,
         address tokenizer,
         uint40 tokenizeAt,
-        uint40 expireAt,
-        address operator
+        uint40 expireAt
     );
     event EstateDeprecation(uint256 indexed estateId);
     event EstateExpirationExtension(uint256 indexed estateId, uint40 expireAt);
     event EstateExtraction(uint256 indexed estateId, uint256 indexed extractionId);
-    event EstateOperatorAssignment(uint256 indexed estateId, address indexed operator);
 
     event NewExtraction(
         uint256 indexed extractionId,
@@ -70,7 +62,6 @@ IERC1155MetadataURIUpgradeable {
     error InvalidEstateId();
     error InvalidExtractionConclusion();
     error InvalidExtractionId();
-    error InvalidOperator();
     error InvalidTokenizer(address account);
     error UnavailableEstate();
 
@@ -84,20 +75,10 @@ IERC1155MetadataURIUpgradeable {
     function estateNumber() external view returns (uint256 tokenNumber);
     function extractionNumber() external view returns (uint256 extractionNumber);
 
-    function operatorURIs(bytes32 zone, address operator) external view returns (string memory uri);
-    function isOperatorIn(bytes32 zone, address operator) external view returns (bool isActive);
-
     function balanceOfAt(address account, uint256 tokenId, uint256 at) external view returns (uint256 balance);
     function totalSupply(uint256 tokenId) external view returns (uint256 totalSupply);
 
     function getEstate(uint256 estateId) external view returns (Estate memory tokenInfo);
-
-    function registerOperator(
-        bytes32 zone,
-        address account,
-        string calldata uri,
-        Validation calldata validator
-    ) external;
 
     function tokenizeEstate(
         uint256 totalSupply,
@@ -105,11 +86,9 @@ IERC1155MetadataURIUpgradeable {
         uint256 tokenizationId,
         string calldata uri,
         uint40 expireAt,
-        address operator,
         address commissionReceiver
     ) external returns (uint256 estateId);
 
-    function assignEstateOperator(uint256 estateId, address operator) external;
     function deprecateEstate(uint256 estateId) external;
     function extendEstateExpiration(uint256 estateId, uint40 expireAt) external;
     function updateEstateURI(

@@ -15,14 +15,12 @@ IEstateTokenizer {
         bytes32 zone;
         string uri;
         uint40 expireAt;
-        address operator;
     }
 
     struct RequestEstateInput {
         bytes32 zone;
         string uri;
         uint40 expireAt;
-        address operator;
     }
 
     struct RequestQuota {
@@ -137,7 +135,6 @@ IEstateTokenizer {
     error Cancelled();
     error InvalidCommissionReceiver();
     error InvalidDepositing();
-    error InvalidOperator();
     error InvalidRequestId();
     error InvalidUnitPrice();
     error InvalidWithdrawing();

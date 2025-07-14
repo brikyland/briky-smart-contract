@@ -385,7 +385,6 @@ ReentrancyGuardUpgradeable {
             _requestId,
             request.estate.uri,
             request.estate.expireAt,
-            request.estate.operator,
             _commissionReceiver
         );
         request.estate.estateId = estateId;
@@ -588,10 +587,6 @@ ReentrancyGuardUpgradeable {
             revert InvalidTimestamp();
         }
 
-        if (!IEstateToken(estateToken).isOperatorIn(_estate.zone, _estate.operator)) {
-            revert InvalidOperator();
-        }
-
         if (!isSellerIn(_estate.zone, _seller)
             || _quota.minSellingQuantity > _quota.maxSellingQuantity
             || _quota.maxSellingQuantity > _quota.totalQuantity
@@ -635,8 +630,7 @@ ReentrancyGuardUpgradeable {
                 0,
                 _estate.zone,
                 _estate.uri,
-                _estate.expireAt,
-                _estate.operator
+                _estate.expireAt
             ),
             RequestQuota(
                 _quota.totalQuantity,
