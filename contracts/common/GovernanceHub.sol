@@ -212,6 +212,10 @@ ReentrancyGuardUpgradeable {
         }
 
         uint256 totalWeight = IGovernor(proposal.governor).totalVoteAt(tokenId, block.timestamp);
+        if (totalWeight == 0) {
+            revert NoVotingPower();
+        }
+
         uint256 quorum = totalWeight.scale(
             proposal.quorum,
             Constant.COMMON_RATE_MAX_FRACTION
