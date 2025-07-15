@@ -5,15 +5,16 @@ import {
     GovernanceHub,
     Governor,
     Governor__factory,
+    Currency,
 } from '@typechain-types';
-import { callTransaction, getSignatures, getValidationMessage, randomWallet } from '@utils/blockchain';
+import { callTransaction, getSignatures, getValidationMessage, prepareERC20, randomWallet } from '@utils/blockchain';
 import { Constant } from '@tests/test.constant';
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 import { deployMockValidatable } from '@utils/deployments/mock/mockValidatable';
 import { Validation } from '@utils/models/Validation';
 import { deployGovernanceHub } from '@utils/deployments/common/governanceHub';
-import { ProposalRule, ProposalState } from '@utils/models/Proposal';
+import { ProposalRule, ProposalState, ProposalVerdict, ProposalVoteOption } from '@utils/models/Proposal';
 import { BigNumber, Wallet } from 'ethers';
 import { MockContract, smock } from '@defi-wonderland/smock';
 import { callAdmin_ActivateIn, callAdmin_AuthorizeGovernor, callAdmin_AuthorizeManagers, callAdmin_DeclareZones } from '@utils/callWithSignatures/admin';
@@ -21,7 +22,6 @@ import { callGovernanceHub_Pause } from '@utils/callWithSignatures/governanceHub
 import { MockValidator } from '@utils/mockValidator';
 import { scale } from '@utils/utils';
 import { deployCurrency } from '@utils/deployments/common/currency';
-import { Currency } from '@utils/models/Currency';
 
 interface GovernanceHubFixture {
     admin: Admin;
@@ -36,6 +36,8 @@ interface GovernanceHubFixture {
     proposer2: any;
     operator1: any;
     operator2: any;
+    contributor1: any;
+    contributor2: any;
     voter1: any;
     voter2: any;
     voter3: any;
@@ -262,11 +264,13 @@ describe('24. GovernanceHub', async () => {
         const proposer2 = accounts[Constant.ADMIN_NUMBER + 3];
         const operator1 = accounts[Constant.ADMIN_NUMBER + 4];
         const operator2 = accounts[Constant.ADMIN_NUMBER + 5];
-        const voter1 = accounts[Constant.ADMIN_NUMBER + 6];
-        const voter2 = accounts[Constant.ADMIN_NUMBER + 7];
-        const voter3 = accounts[Constant.ADMIN_NUMBER + 8];
-        const manager = accounts[Constant.ADMIN_NUMBER + 9];
-        const moderator = accounts[Constant.ADMIN_NUMBER + 10];
+        const contributor1 = accounts[Constant.ADMIN_NUMBER + 6];
+        const contributor2 = accounts[Constant.ADMIN_NUMBER + 7];
+        const voter1 = accounts[Constant.ADMIN_NUMBER + 8];
+        const voter2 = accounts[Constant.ADMIN_NUMBER + 9];
+        const voter3 = accounts[Constant.ADMIN_NUMBER + 10];
+        const manager = accounts[Constant.ADMIN_NUMBER + 11];
+        const moderator = accounts[Constant.ADMIN_NUMBER + 12];
 
         const zone = ethers.utils.formatBytes32String("TestZone");
 
@@ -282,9 +286,9 @@ describe('24. GovernanceHub', async () => {
             adminAddresses[4],
         ) as Admin;
 
-        const currency1 = await deployCurrency(deployer.address, "MockCurrency1", "MC1");
-        const currency2 = await deployCurrency(deployer.address, "MockCurrency2", "MC2");
-        const currencies = [currency1.address, currency2.address];
+        const currency1 = await deployCurrency(deployer.address, "MockCurrency1", "MC1") as Currency;
+        const currency2 = await deployCurrency(deployer.address, "MockCurrency2", "MC2") as Currency;
+        const currencies = [currency1, currency2];
 
         const SmockGovernor = await smock.mock<Governor__factory>('Governor');
         const governor = await SmockGovernor.deploy();
@@ -308,6 +312,8 @@ describe('24. GovernanceHub', async () => {
             proposer2,
             operator1,
             operator2,
+            contributor1,
+            contributor2,
             voter1,
             voter2,
             voter3,
@@ -321,11 +327,27 @@ describe('24. GovernanceHub', async () => {
     async function beforeGovernanceHubTest({
         initGovernorTokens = false,
         addSampleProposals = false,
+        admitSampleProposals = false,
+        disqualifySampleProposals = false,
+        voteAndContributeBudget = false,
+        confirmExecutionSampleProposals = false,
+        rejectExecutionSampleProposals = false,
+        concludeExecutionSucceededSampleProposals = false,
+        concludeExecutionFailedSampleProposals = false,
         useFailReceiver = false,
         pause = false,
     } = {}): Promise<GovernanceHubFixture> {
         const fixture = await loadFixture(governanceHubFixture);
-        const { admin, admins, governanceHub, governor, voter1, voter2, voter3, proposer1, proposer2, operator1, operator2, manager, moderator, zone } = fixture;
+        const { 
+            admin, admins, governanceHub, governor, 
+            contributor1, contributor2,
+            voter1, voter2, voter3, 
+            proposer1, proposer2, 
+            operator1, operator2, 
+            manager, moderator,
+            zone,
+            currencies,
+        } = fixture;
         const fee = await governanceHub.fee();
 
         await callAdmin_AuthorizeManagers(
@@ -406,7 +428,6 @@ describe('24. GovernanceHub', async () => {
                 { value: fee },
             ));
 
-            // Tx2: Send more than fee, need to be refunded
             timestamp += 10;
 
             const params2 = {
@@ -433,6 +454,175 @@ describe('24. GovernanceHub', async () => {
                 params2.admissionExpiry,
                 validation2,
                 { value: fee },
+            ));
+        }
+
+        if (admitSampleProposals) {
+            const params1 = {
+                proposalId: 1,
+                metadataUri: "metadata_uri_1",
+                stateUri: "state_uri_1",
+                currency: ethers.constants.AddressZero,
+            }
+            const validation1 = await getAdmitValidation(fixture, params1);
+
+            await callTransaction(governanceHub.connect(manager).admit(
+                params1.proposalId,
+                params1.metadataUri,
+                params1.stateUri,
+                params1.currency,
+                validation1,
+            ));
+
+            const params2 = {
+                proposalId: 2,
+                metadataUri: "metadata_uri_2",
+                stateUri: "state_uri_2",
+                currency: currencies[0].address,
+            }
+            const validation2 = await getAdmitValidation(fixture, params2);
+
+            await callTransaction(governanceHub.connect(manager).admit(
+                params2.proposalId,
+                params2.metadataUri,
+                params2.stateUri,
+                params2.currency,
+                validation2,
+            ));
+        }
+
+        if (disqualifySampleProposals) {
+            const params1 = {
+                proposalId: 1,
+                metadataUri: "metadata_uri_1",
+                stateUri: "state_uri_1",
+            }
+            const validation1 = await getDisqualifyValidation(fixture, params1);
+
+            await callTransaction(governanceHub.connect(moderator).disqualify(
+                params1.proposalId,
+                params1.metadataUri,
+                params1.stateUri,
+                validation1,
+            ));
+
+            const params2 = {
+                proposalId: 2,
+                metadataUri: "metadata_uri_2",
+                stateUri: "state_uri_2",
+            }
+            const validation2 = await getDisqualifyValidation(fixture, params2);
+
+            await callTransaction(governanceHub.connect(moderator).disqualify(
+                params2.proposalId,
+                params2.metadataUri,
+                params2.stateUri,
+                validation2,
+            ));
+        }
+
+        await prepareERC20(
+            currencies[0],
+            [contributor1, contributor2],
+            [governanceHub],
+            ethers.utils.parseEther(String(1e9)),
+        )
+
+        if (voteAndContributeBudget) {
+            await callTransaction(governanceHub.connect(voter1).vote(1, ProposalVoteOption.Approval));
+            await callTransaction(governanceHub.connect(voter2).vote(1, ProposalVoteOption.Approval));
+            await callTransaction(governanceHub.connect(voter3).vote(1, ProposalVoteOption.Approval));
+
+            await callTransaction(governanceHub.connect(voter1).vote(2, ProposalVoteOption.Approval));
+            await callTransaction(governanceHub.connect(voter2).vote(2, ProposalVoteOption.Approval));
+
+            await callTransaction(governanceHub.connect(contributor1).contributeBudget(
+                1,
+                ethers.utils.parseEther("100"),
+                { value: ethers.utils.parseEther("100") }
+            ));
+            await callTransaction(governanceHub.connect(contributor2).contributeBudget(
+                2,
+                ethers.utils.parseEther("200"))
+            );
+        }
+
+        if (confirmExecutionSampleProposals) {
+            timestamp = (await governanceHub.getProposal(1)).due;
+            await time.setNextBlockTimestamp(timestamp);
+            await callTransaction(governanceHub.connect(manager).confirmExecution(1));
+
+            timestamp = (await governanceHub.getProposal(2)).due;
+            await time.setNextBlockTimestamp(timestamp);
+            await callTransaction(governanceHub.connect(manager).confirmExecution(2));            
+        }
+
+        if (rejectExecutionSampleProposals) {
+            timestamp = (await governanceHub.getProposal(1)).due;
+            await time.setNextBlockTimestamp(timestamp);
+            await callTransaction(governanceHub.connect(operator1).rejectExecution(1));
+
+            timestamp = (await governanceHub.getProposal(2)).due;
+            await time.setNextBlockTimestamp(timestamp);
+            await callTransaction(governanceHub.connect(operator2).rejectExecution(2));
+        }
+
+        if (concludeExecutionSucceededSampleProposals) {
+            const params1 = {
+                proposalId: 1,
+                stateUri: "state_uri_1",
+                isSuccessful: true,
+            }
+            const validation1 = await getConcludeExecutionValidation(fixture, params1);
+
+            await callTransaction(governanceHub.connect(manager).concludeExecution(
+                params1.proposalId,
+                params1.stateUri,
+                params1.isSuccessful,
+                validation1,
+            ));
+
+            const params2 = {
+                proposalId: 2,
+                stateUri: "state_uri_2",
+                isSuccessful: true,
+            }
+            const validation2 = await getConcludeExecutionValidation(fixture, params2);
+
+            await callTransaction(governanceHub.connect(manager).concludeExecution(
+                params2.proposalId,
+                params2.stateUri,
+                params2.isSuccessful,
+                validation2,
+            ));
+        }
+
+        if (concludeExecutionFailedSampleProposals) {
+            const params1 = {
+                proposalId: 1,
+                stateUri: "state_uri_1",
+                isSuccessful: false,
+            }
+            const validation1 = await getConcludeExecutionValidation(fixture, params1);
+            
+            await callTransaction(governanceHub.connect(manager).concludeExecution(
+                params1.proposalId,
+                params1.stateUri,
+                params1.isSuccessful,
+                validation1,
+            ));
+
+            const params2 = {
+                proposalId: 2,
+                stateUri: "state_uri_2",
+                isSuccessful: false,
+            }
+            const validation2 = await getConcludeExecutionValidation(fixture, params2);
+            await callTransaction(governanceHub.connect(manager).concludeExecution(
+                params2.proposalId,
+                params2.stateUri,
+                params2.isSuccessful,
+                validation2,
             ));
         }
 
@@ -491,83 +681,376 @@ describe('24. GovernanceHub', async () => {
 
     describe('24.3. getProposal(uint256)', async () => {
         it('24.3.1. return correct proposal', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+            });
+            const { governanceHub, governor, operator1, proposer1 } = fixture;
+
+            let timestamp = await time.latest() + 10;
+
+            const fee = await governanceHub.fee();
+            const params = {
+                governor: governor.address,
+                tokenId: 1,
+                operator: operator1.address,
+                uuid: ethers.utils.formatBytes32String("uuid_1"),
+                rule: ProposalRule.ApprovalBeyondQuorum,
+                quorumRate: ethers.utils.parseEther("0.7"),
+                duration: 1000,
+                admissionExpiry: timestamp + 2000,
+            }
+            const validation = await getProposeValidation(fixture, proposer1, params);
+            await callTransaction(governanceHub.connect(proposer1).propose(
+                params.governor,
+                params.tokenId,
+                params.operator,
+                params.uuid,
+                params.rule,
+                params.quorumRate,
+                params.duration,
+                params.admissionExpiry,
+                validation,
+                { value: fee }
+            ));
             
+            const proposal = await governanceHub.getProposal(1);
+            expect(proposal.uuid).to.equal(params.uuid);
+            expect(proposal.metadataUri).to.equal("");
+            expect(proposal.stateUri).to.equal("");
+            expect(proposal.governor).to.equal(params.governor);
+            expect(proposal.tokenId).to.equal(params.tokenId);
+            expect(proposal.totalWeight).to.equal(0);
+            expect(proposal.approvalWeight).to.equal(0);
+            expect(proposal.disapprovalWeight).to.equal(0);
+            expect(proposal.quorum).to.equal(params.quorumRate);
+            expect(proposal.proposer).to.equal(proposer1.address);
+            expect(proposal.operator).to.equal(params.operator);
+            expect(proposal.timePivot).to.equal(params.admissionExpiry);
+            expect(proposal.due).to.equal(params.duration);
+            expect(proposal.rule).to.equal(params.rule);
+            expect(proposal.state).to.equal(ProposalState.Pending);
+            expect(proposal.budget).to.equal(0);
+            expect(proposal.currency).to.equal(ethers.constants.AddressZero);            
         });
 
         it('24.3.2. revert with invalid proposal id', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+            });
+            const { governanceHub } = fixture;
 
+            await expect(governanceHub.getProposal(0))
+                .to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
+            await expect(governanceHub.getProposal(100))
+                .to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
         });
     });
 
     describe('24.4. getProposalVerdict(uint256)', async () => {
         it('24.4.1. return unsettled verdict for pending proposal', async () => {
-            
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+            });
+            const { governanceHub } = fixture;
+
+            expect(await governanceHub.getProposalVerdict(1)).to.equal(ProposalVerdict.Unsettled);
+            expect(await governanceHub.getProposalVerdict(2)).to.equal(ProposalVerdict.Unsettled);
         });
 
         it('24.4.2. return passed verdict for executing proposal', async () => {
-            
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteAndContributeBudget: true,
+                confirmExecutionSampleProposals: true,
+                concludeExecutionSucceededSampleProposals: true,
+            });
+            const { governanceHub } = fixture;
+
+            expect(await governanceHub.getProposalVerdict(1)).to.equal(ProposalVerdict.Passed);
+            expect(await governanceHub.getProposalVerdict(2)).to.equal(ProposalVerdict.Passed);
         });
 
         it('24.4.3. return passed verdict for successfully executed proposal', async () => {
-            
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteAndContributeBudget: true,
+                confirmExecutionSampleProposals: true,
+                concludeExecutionSucceededSampleProposals: true,
+            });
+            const { governanceHub } = fixture;
+
+            expect(await governanceHub.getProposalVerdict(1)).to.equal(ProposalVerdict.Passed);
+            expect(await governanceHub.getProposalVerdict(2)).to.equal(ProposalVerdict.Passed);
         });
 
         it('24.4.4. return passed verdict for unsuccessfully executed proposal', async () => {
-            
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteAndContributeBudget: true,
+                confirmExecutionSampleProposals: true,
+                concludeExecutionFailedSampleProposals: true,
+            });
+            const { governanceHub } = fixture;
+
+            expect(await governanceHub.getProposalVerdict(1)).to.equal(ProposalVerdict.Passed);
+            expect(await governanceHub.getProposalVerdict(2)).to.equal(ProposalVerdict.Passed);
         });
 
         it('24.4.5. return failed verdict for disqualified proposal', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                disqualifySampleProposals: true,
+            });
+            const { governanceHub } = fixture;
 
+            expect(await governanceHub.getProposalVerdict(1)).to.equal(ProposalVerdict.Failed);
+            expect(await governanceHub.getProposalVerdict(2)).to.equal(ProposalVerdict.Failed);
         });
 
         it('24.4.6. return failed verdict for rejected proposal', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                rejectExecutionSampleProposals: true,
+            });
+            const { governanceHub } = fixture;
 
-        });
-
-        it('24.4.7. return failed verdict for expired proposal', async () => {
-
+            expect(await governanceHub.getProposalVerdict(1)).to.equal(ProposalVerdict.Failed);
+            expect(await governanceHub.getProposalVerdict(2)).to.equal(ProposalVerdict.Failed);
         });
 
         it('24.4.8. return passed verdict with enough approval votes for approval beyond quorum rule', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+            });
+            const { governanceHub, voter1, voter2, voter3 } = fixture;
 
+            await callTransaction(governanceHub.connect(voter2).vote(1, ProposalVoteOption.Approval));
+            await callTransaction(governanceHub.connect(voter3).vote(1, ProposalVoteOption.Approval));
+            expect(await governanceHub.getProposalVerdict(1)).to.equal(ProposalVerdict.Passed);
+
+            await callTransaction(governanceHub.connect(voter1).vote(1, ProposalVoteOption.Disapproval));
+            expect(await governanceHub.getProposalVerdict(1)).to.equal(ProposalVerdict.Passed);
         });
 
         it('24.4.9. return failed verdict with not enough approval votes after due for approval beyond quorum rule', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+            });
+            const { governanceHub, voter1 } = fixture;
+            
+            await callTransaction(governanceHub.connect(voter1).vote(1, ProposalVoteOption.Disapproval));
 
+            const due = (await governanceHub.getProposal(1)).due;
+            await time.increaseTo(due);
+
+            expect(await governanceHub.getProposalVerdict(1)).to.equal(ProposalVerdict.Failed);
         });
 
         it('24.4.10. return unsettled verdict with not enough approval votes before due for approval beyond quorum rule', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+            });
+            const { governanceHub, voter1 } = fixture;
+            
+            await callTransaction(governanceHub.connect(voter1).vote(1, ProposalVoteOption.Disapproval));
 
+            expect(await governanceHub.getProposalVerdict(1)).to.equal(ProposalVerdict.Unsettled);
         });
 
         it('24.4.11. return failed verdict with enough disapproval votes for disapproval beyond quorum rule', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+            });
+            const { governanceHub, voter1, voter2 } = fixture;
 
+            await callTransaction(governanceHub.connect(voter2).vote(2, ProposalVoteOption.Disapproval));
+            expect(await governanceHub.getProposalVerdict(2)).to.equal(ProposalVerdict.Failed);
+
+            await callTransaction(governanceHub.connect(voter1).vote(2, ProposalVoteOption.Approval));
+            expect(await governanceHub.getProposalVerdict(2)).to.equal(ProposalVerdict.Failed);
         });
 
         it('24.4.12. return failed verdict with not enough disapproval votes after due for disapproval beyond quorum rule', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+            });
+            const { governanceHub, voter1 } = fixture;
 
+            await callTransaction(governanceHub.connect(voter1).vote(2, ProposalVoteOption.Disapproval));
+
+            const due = (await governanceHub.getProposal(2)).due;
+            await time.increaseTo(due);
+
+            expect(await governanceHub.getProposalVerdict(2)).to.equal(ProposalVerdict.Passed);
         });
 
         it('24.4.13. return unsettled verdict with not enough disapproval votes before due for disapproval beyond quorum rule', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+            });
+            const { governanceHub, voter1 } = fixture;
 
+            await callTransaction(governanceHub.connect(voter1).vote(2, ProposalVoteOption.Approval));
+
+            expect(await governanceHub.getProposalVerdict(2)).to.equal(ProposalVerdict.Unsettled);
         });
 
         it('24.4.14. revert with invalid proposal id', async () => {
-            
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+            });
+            const { governanceHub } = fixture;
+
+            await expect(governanceHub.getProposalVerdict(0))
+                .to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
+            await expect(governanceHub.getProposalVerdict(100))
+                .to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
         });
     });
 
     describe('24.5. getProposalState(uint256)', async () => {
         it('24.5.1. return disqualified state with confirmation overdue proposal', async () => {
-            
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteAndContributeBudget: true,
+            });
+            const { governanceHub } = fixture;
+
+            const proposal = await governanceHub.getProposal(1);
+            const due = proposal.due;
+            await time.increaseTo(due + Constant.GOVERNANCE_HUB_CONFIRMATION_TIME_LIMIT);
+            expect(await governanceHub.getProposalState(1)).to.equal(ProposalState.Disqualified);
+
+            await time.increaseTo(due + Constant.GOVERNANCE_HUB_CONFIRMATION_TIME_LIMIT + 10);
+            expect(await governanceHub.getProposalState(1)).to.equal(ProposalState.Disqualified);
         });
 
-        it('24.5.2. return correct proposal state', async () => {
-            
+        it('24.5.2. return correct proposal state for pending proposal', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+            });
+            const { governanceHub } = fixture;
+
+            expect(await governanceHub.getProposalState(1)).to.equal(ProposalState.Pending);
+            expect(await governanceHub.getProposalState(2)).to.equal(ProposalState.Pending);
         });
 
-        it('24.5.3. revert with invalid proposal id', async () => {
+        it('24.5.3. return correct proposal state for voting proposal that is not confirming overdue', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+            });
+            const { governanceHub } = fixture;
+
+            expect(await governanceHub.getProposalState(1)).to.equal(ProposalState.Voting);
+            expect(await governanceHub.getProposalState(2)).to.equal(ProposalState.Voting);
+        });
+
+        it('24.5.4. return correct proposal state for executing proposal', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteAndContributeBudget: true,
+                confirmExecutionSampleProposals: true,
+            });
+            const { governanceHub } = fixture;
             
+            expect(await governanceHub.getProposalState(1)).to.equal(ProposalState.Executing);
+            expect(await governanceHub.getProposalState(2)).to.equal(ProposalState.Executing);
+        });
+
+        it('24.5.5. return correct proposal state for successfully executed proposal', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteAndContributeBudget: true,
+                confirmExecutionSampleProposals: true,
+                concludeExecutionSucceededSampleProposals: true,
+            });
+            const { governanceHub } = fixture;
+
+            expect(await governanceHub.getProposalState(1)).to.equal(ProposalState.SuccessfulExecuted);
+            expect(await governanceHub.getProposalState(2)).to.equal(ProposalState.SuccessfulExecuted);
+        });
+
+        it('24.5.6. return correct proposal state for unsuccessfully executed proposal', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteAndContributeBudget: true,
+                confirmExecutionSampleProposals: true,
+                concludeExecutionFailedSampleProposals: true,
+            });
+            const { governanceHub } = fixture;
+
+            expect(await governanceHub.getProposalState(1)).to.equal(ProposalState.UnsuccessfulExecuted);
+            expect(await governanceHub.getProposalState(2)).to.equal(ProposalState.UnsuccessfulExecuted);
+        });
+
+        it('24.5.7. return correct proposal state for disqualified proposal', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                disqualifySampleProposals: true,
+            });
+            const { governanceHub } = fixture;
+
+            expect(await governanceHub.getProposalState(1)).to.equal(ProposalState.Disqualified);
+            expect(await governanceHub.getProposalState(2)).to.equal(ProposalState.Disqualified);
+        });
+
+        it('24.5.8. return correct proposal state for rejected proposal', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                rejectExecutionSampleProposals: true,
+            });
+            const { governanceHub } = fixture;
+
+            expect(await governanceHub.getProposalState(1)).to.equal(ProposalState.Rejected);
+            expect(await governanceHub.getProposalState(2)).to.equal(ProposalState.Rejected);
+        });
+
+        it('24.5.9. revert with invalid proposal id', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+            });
+            const { governanceHub } = fixture;
+
+            await expect(governanceHub.getProposalState(0))
+                .to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
+            await expect(governanceHub.getProposalState(100))
+                .to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
         });
     });
 
@@ -908,7 +1391,51 @@ describe('24. GovernanceHub', async () => {
     });
 
     describe('24.7. admit(uint256, string, string, address, (uint256, uint256, bytes))', async () => {
-        it.only('24.7.1. admit successfully with valid validation', async () => {
+        async function beforeAdmitTest(fixture: GovernanceHubFixture): Promise<{defaultParams: AdmitParams}> {
+            const defaultParams = {
+                proposalId: 1,
+                metadataUri: "metadata_uri_1",
+                stateUri: "state_uri_1",
+                currency: ethers.constants.AddressZero,
+            }
+            return { defaultParams };
+        }
+
+        async function expectRevertWithCustomError(
+            fixture: GovernanceHubFixture,
+            params: AdmitParams,
+            signer: Wallet,
+            error: string,
+        ) {
+            const { governanceHub } = fixture;
+            const validation = await getAdmitValidation(fixture, params);
+            await expect(governanceHub.connect(signer).admit(
+                params.proposalId,
+                params.metadataUri,
+                params.stateUri,
+                params.currency,
+                validation,
+            )).to.be.revertedWithCustomError(governanceHub, error);
+        }
+
+        async function expectRevert(
+            fixture: GovernanceHubFixture,
+            params: AdmitParams,
+            signer: Wallet,
+            error: string,
+        ) {
+            const { governanceHub } = fixture;
+            const validation = await getAdmitValidation(fixture, params);
+            await expect(governanceHub.connect(signer).admit(
+                params.proposalId,
+                params.metadataUri,
+                params.stateUri,
+                params.currency,
+                validation,
+            )).to.be.revertedWith(error);
+        }
+
+        it('24.7.1. admit successfully with valid validation', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
                 addSampleProposals: true,
@@ -966,7 +1493,7 @@ describe('24. GovernanceHub', async () => {
                 proposalId: 2,
                 metadataUri: "metadata_uri_2",
                 stateUri: "state_uri_2",
-                currency: currencies[0],
+                currency: currencies[0].address,
             }
             const validation2 = await getAdmitValidation(fixture, params2);
 
@@ -1009,63 +1536,308 @@ describe('24. GovernanceHub', async () => {
         });
 
         it('24.7.2. admit unsuccessfully with invalid validation', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+            });
+            const { governanceHub, manager } = fixture;
+
+            const { defaultParams } = await beforeAdmitTest(fixture);
             
+            const validation = await getAdmitInvalidValidation(fixture, defaultParams);
+            await expect(governanceHub.connect(manager).admit(
+                defaultParams.proposalId,
+                defaultParams.metadataUri,
+                defaultParams.stateUri,
+                defaultParams.currency,
+                validation,
+            )).to.be.revertedWithCustomError(governanceHub, 'InvalidSignature');
         });
 
         it('24.7.3. admit unsuccessfully with invalid proposal id', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+            });
+            const { manager } = fixture;
 
+            const { defaultParams } = await beforeAdmitTest(fixture);
+            await expectRevertWithCustomError(
+                fixture,
+                { ...defaultParams, proposalId: 0 },
+                manager,
+                'InvalidProposalId',
+            );
+            await expectRevertWithCustomError(
+                fixture,
+                { ...defaultParams, proposalId: 100 },
+                manager,
+                'InvalidProposalId',
+            );
         });
 
         it('24.7.4. admit unsuccessfully by unauthorized sender', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+            });
+            const { proposer1 } = fixture;
 
+            const { defaultParams } = await beforeAdmitTest(fixture);
+            await expectRevertWithCustomError(
+                fixture,
+                defaultParams,
+                proposer1,
+                'Unauthorized',
+            );
         });
 
         it('24.7.5. admit unsuccessfully when paused', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                pause: true,
+            });
+            const { manager } = fixture;
 
+            const { defaultParams } = await beforeAdmitTest(fixture);
+            await expectRevert(
+                fixture,
+                defaultParams,
+                manager,
+                'Pausable: paused',
+            );
         });
 
         it('24.7.6. admit unsuccessfully with voting proposal', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+            });
+            const { manager } = fixture;
 
+            const { defaultParams } = await beforeAdmitTest(fixture);
+            await expectRevertWithCustomError(
+                fixture,
+                defaultParams,
+                manager,
+                'InvalidAdmitting',
+            );
         });
 
         it('24.7.6. admit unsuccessfully with executing proposal', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteAndContributeBudget: true,
+                confirmExecutionSampleProposals: true,
+            });
+            const { manager } = fixture;
 
+            const { defaultParams } = await beforeAdmitTest(fixture);
+            await expectRevertWithCustomError(
+                fixture,
+                defaultParams,
+                manager,
+                'InvalidAdmitting',
+            );
         });
 
         it('24.7.7. admit unsuccessfully with successfully executed proposal', async () => {
-
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteAndContributeBudget: true,
+                confirmExecutionSampleProposals: true,
+                concludeExecutionSucceededSampleProposals: true,
+            });
+            const { manager } = fixture;
+            
+            const { defaultParams } = await beforeAdmitTest(fixture);
+            await expectRevertWithCustomError(
+                fixture,
+                defaultParams,
+                manager,
+                'InvalidAdmitting',
+            );
         });
 
         it('24.7.8. admit unsuccessfully with unsuccessfully executed proposal', async () => {
-
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteAndContributeBudget: true,
+                confirmExecutionSampleProposals: true,
+                concludeExecutionFailedSampleProposals: true,
+            });
+            const { manager } = fixture;
+            
+            const { defaultParams } = await beforeAdmitTest(fixture);
+            await expectRevertWithCustomError(
+                fixture,
+                defaultParams,
+                manager,
+                'InvalidAdmitting',
+            );
         });
 
         it('24.7.9. admit unsuccessfully with disqualified proposal', async () => {
-
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                disqualifySampleProposals: true,
+            });
+            const { manager } = fixture;
+            
+            const { defaultParams } = await beforeAdmitTest(fixture);
+            await expectRevertWithCustomError(
+                fixture,
+                defaultParams,
+                manager,
+                'InvalidAdmitting',
+            );
         });
 
         it('24.7.10. admit unsuccessfully with rejected proposal', async () => {
-
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                rejectExecutionSampleProposals: true,
+            });
+            const { manager } = fixture;
+            
+            const { defaultParams } = await beforeAdmitTest(fixture);
+            await expectRevertWithCustomError(
+                fixture,
+                defaultParams,
+                manager,
+                'InvalidAdmitting',
+            );
         });
 
         it('24.7.11. admit unsuccessfully with admission expired proposal', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+            });
+            const { governanceHub, manager } = fixture;
 
+            const timePivot1 = (await governanceHub.getProposal(1)).timePivot;
+            await time.setNextBlockTimestamp(timePivot1);
+
+            const { defaultParams } = await beforeAdmitTest(fixture);
+            await expectRevertWithCustomError(
+                fixture,
+                { ...defaultParams, proposalId: 1 },
+                manager,
+                'Timeout',
+            );
+
+            const timePivot2 = (await governanceHub.getProposal(2)).timePivot;
+            await time.setNextBlockTimestamp(timePivot2 + 1);
+
+            await expectRevertWithCustomError(
+                fixture,
+                { ...defaultParams, proposalId: 2 },
+                manager,
+                'Timeout',
+            );
         });
 
         it('24.7.12. admit unsuccessfully with no longer available token id', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+            });
+            const { governor, manager } = fixture;
 
+            governor.isAvailable.whenCalledWith(1).returns(false);
+
+            const { defaultParams } = await beforeAdmitTest(fixture);
+            await expectRevertWithCustomError(
+                fixture,
+                { ...defaultParams, proposalId: 1 },
+                manager,
+                'InvalidTokenId',
+            );
+
+            governor.isAvailable.reset();
         });
 
         it('24.7.13. admit unsuccessfully when zone is not active', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+            });
+            const { admin, admins, manager, zone } = fixture;
 
+            await callAdmin_DeclareZones(
+                admin,
+                admins,
+                [zone],
+                false,
+                await admin.nonce(),
+            );
+
+            const { defaultParams } = await beforeAdmitTest(fixture);
+            await expectRevertWithCustomError(
+                fixture,
+                defaultParams,
+                manager,
+                'Unauthorized',
+            );
         });
 
         it('24.7.14. admit unsuccessfully when sender is not active in zone', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+            });
+            const { admin, admins, manager, zone } = fixture;
 
+            await callAdmin_ActivateIn(
+                admin,
+                admins,
+                zone,
+                [manager.address],
+                false,
+                await admin.nonce(),
+            );
+
+            const { defaultParams } = await beforeAdmitTest(fixture);
+            await expectRevertWithCustomError(
+                fixture,
+                defaultParams,
+                manager,
+                'Unauthorized',
+            );
         });
         
-        it('24.7.15. admin unsuccessfully when token have zero total vote power', async () => {
+        it('24.7.15. admit unsuccessfully when token have zero total vote power', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+            });
+            const { governor, manager } = fixture;
 
+            let timestamp = await time.latest() + 10;
+            await time.setNextBlockTimestamp(timestamp);
+
+            governor.totalVoteAt.whenCalledWith(1, timestamp).returns(0);
+
+            const { defaultParams } = await beforeAdmitTest(fixture);
+            await expectRevertWithCustomError(
+                fixture,
+                { ...defaultParams, proposalId: 1 },
+                manager,
+                'NoVotingPower',
+            );
+
+            governor.isAvailable.reset();
         });
     });
 

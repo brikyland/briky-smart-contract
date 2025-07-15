@@ -47,5 +47,6 @@ export const Constant = {
     TREASURY_OPERATION_FUND_RATE: parseEther(0.2),
 
     // Governance Hub
+    GOVERNANCE_HUB_CONFIRMATION_TIME_LIMIT: 30 * DAY,
     GOVERNANCE_HUB_FEE: parseEther(0.001),
 }
