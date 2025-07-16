@@ -96,7 +96,7 @@ IValidatable {
     function propose(
         address governor,
         uint256 tokenId,
-        address executor,
+        address operator,
         bytes32 uuid,
         ProposalRule rule,
         uint256 quorum,

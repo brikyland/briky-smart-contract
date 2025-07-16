@@ -36,10 +36,10 @@ async function deployOrUpgradeEstateToken() {
                 governanceHubAddress,
                 `Missing ${networkName}_GOVERNANCE_HUB_ADDRESS from environment variables!`
             );
-            const paymentHubAddress = config.paymentHubAddress;
+            const dividendHubAddress = config.dividendHubAddress;
             assert.ok(
-                paymentHubAddress,
-                `Missing ${networkName}_PAYMENT_HUB_ADDRESS from environment variables!`
+                dividendHubAddress,
+                `Missing ${networkName}_DIVIDEND_HUB_ADDRESS from environment variables!`
             );
             const estateTokenValidatorAddress = config.estateTokenValidatorAddress;
             assert.ok(
@@ -52,7 +52,7 @@ async function deployOrUpgradeEstateToken() {
                 adminAddress,
                 feeReceiverAddress,
                 governanceHubAddress,
-                paymentHubAddress,
+                dividendHubAddress,
                 estateTokenValidatorAddress,
                 Initialization.ESTATE_TOKEN_BaseURI,
                 Initialization.ESTATE_TOKEN_RoyaltyRate,

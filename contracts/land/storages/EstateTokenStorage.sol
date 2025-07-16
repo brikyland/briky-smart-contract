@@ -18,9 +18,9 @@ abstract contract EstateTokenStorage is IEstateToken {
 
     address public admin;
     address public commissionToken;
+    address public dividendHub;
     address public feeReceiver;
     address public governanceHub;
-    address public paymentHub;
 
     uint256[50] private __gap;
 }

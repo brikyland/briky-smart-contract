@@ -453,16 +453,23 @@ ReentrancyGuardUpgradeable {
         }
 
         ProposalRule rule = _proposal.rule;
+        uint256 quorum = _proposal.quorum;
         if (rule == ProposalRule.ApprovalBeyondQuorum) {
-            if (_proposal.approvalWeight >= _proposal.quorum) {
+            if (_proposal.approvalWeight >= quorum) {
                 return ProposalVerdict.Passed;
+            }
+            if (_proposal.disapprovalWeight > _proposal.totalWeight - quorum) {
+                return ProposalVerdict.Failed;
             }
             return _proposal.due <= block.timestamp
                 ? ProposalVerdict.Failed
                 : ProposalVerdict.Unsettled;
         } else {
-            if (_proposal.disapprovalWeight >= _proposal.quorum) {
+            if (_proposal.disapprovalWeight >= quorum) {
                 return ProposalVerdict.Failed;
+            }
+            if (_proposal.approvalWeight > _proposal.totalWeight - quorum) {
+                return ProposalVerdict.Passed;
             }
             return _proposal.due <= block.timestamp
                 ? ProposalVerdict.Passed

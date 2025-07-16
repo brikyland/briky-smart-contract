@@ -16,9 +16,9 @@ import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
 import {Formula} from "../lib/Formula.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
+import {IDividendHub} from "../common/interfaces/IDividendHub.sol";
 import {IGovernanceHub} from "../common/interfaces/IGovernanceHub.sol";
 import {IGovernor} from "../common/interfaces/IGovernor.sol";
-import {IPaymentHub} from "../common/interfaces/IPaymentHub.sol";
 import {IRoyaltyRateProposer} from "../common/interfaces/IRoyaltyRateProposer.sol";
 
 import {Administrable} from "../common/utilities/Administrable.sol";
@@ -74,7 +74,7 @@ ReentrancyGuardUpgradeable {
         address _admin,
         address _feeReceiver,
         address _governanceHub,
-        address _paymentHub,
+        address _dividendHub,
         address _validator,
         string calldata _uri,
         uint256 _royaltyRate
@@ -90,7 +90,7 @@ ReentrancyGuardUpgradeable {
         admin = _admin;
         feeReceiver = _feeReceiver;
         governanceHub = _governanceHub;
-        paymentHub = _paymentHub;
+        dividendHub = _dividendHub;
         validator = _validator;
 
         _setBaseURI(_uri);
@@ -365,16 +365,16 @@ ReentrancyGuardUpgradeable {
             address currency = extraction.currency;
             uint256 value = extraction.value;
             if (currency == address(0)) {
-                IPaymentHub(paymentHub).issuePayment{value: value}(
+                IDividendHub(dividendHub).issueDividend{value: value}(
                     address(this),
                     estateId,
                     value,
                     currency
                 );
             } else {
-                address paymentHubAddress = paymentHub;
-                CurrencyHandler.allowERC20(currency, paymentHubAddress, value);
-                IPaymentHub(paymentHubAddress).issuePayment(
+                address dividendHubAddress = dividendHub;
+                CurrencyHandler.allowERC20(currency, dividendHubAddress, value);
+                IDividendHub(dividendHubAddress).issueDividend(
                     address(this),
                     estateId,
                     value,

@@ -7,9 +7,7 @@ library Constant {
 
     uint8 internal constant COMMON_RATE_DECIMALS = 18;
     uint256 internal constant COMMON_RATE_MAX_FRACTION = 10 ** COMMON_RATE_DECIMALS;
-
-    uint256 internal constant COMMON_VALIDATION_SIGNATURE_TTL = 10 minutes;
-
+    
     // Admin
     uint256 internal constant ADMIN_SIGNATURE_VERIFICATION_QUORUM = 4;
 

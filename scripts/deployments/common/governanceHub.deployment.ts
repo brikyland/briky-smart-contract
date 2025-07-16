@@ -2,7 +2,7 @@ import { LedgerSigner } from '@anders-t/ethers-ledger';
 import assert from 'assert';
 import { ethers, network, upgrades } from 'hardhat';
 import { deployGovernanceHub } from '../../../utils/deployments/common/governanceHub';
-import { Constant } from '../../../utils/constant';
+import { Initialization } from "./initialization";
 
 async function deployOrUpgradeGovernanceHub() {
     const config = network.config as any;
@@ -36,7 +36,7 @@ async function deployOrUpgradeGovernanceHub() {
                 signer,
                 adminAddress,
                 governanceHubValidatorAddress,
-                Constant.GOVERNANCE_HUB_FEE,
+                Initialization.GOVERNANCE_HUB_Fee,
             );
             console.log(`Contract GovernanceHub has been deployed to address ${governanceHub.address}`);
             return governanceHub.address;

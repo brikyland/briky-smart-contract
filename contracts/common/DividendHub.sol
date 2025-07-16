@@ -9,13 +9,13 @@ import {Formula} from "../lib/Formula.sol";
 import {IAdmin} from "./interfaces/IAdmin.sol";
 import {IGovernor} from "./interfaces/IGovernor.sol";
 
+import {DividendHubStorage} from "./storages/DividendHubStorage.sol";
+
 import {Administrable} from "./utilities/Administrable.sol";
 import {Pausable} from "./utilities/Pausable.sol";
 
-import {PaymentHubStorage} from "./storages/PaymentHubStorage.sol";
-
-contract PaymentHub is
-PaymentHubStorage,
+contract DividendHub is
+DividendHubStorage,
 Administrable,
 Pausable,
 ReentrancyGuardUpgradeable {
@@ -23,9 +23,9 @@ ReentrancyGuardUpgradeable {
 
     string constant private VERSION = "v1.1.1";
 
-    modifier validPayment(uint256 _paymentId) {
-        if (_paymentId == 0 || _paymentId > paymentNumber) {
-            revert InvalidPaymentId();
+    modifier validDividend(uint256 _dividendId) {
+        if (_dividendId == 0 || _dividendId > dividendNumber) {
+            revert InvalidDividendId();
         }
         _;
     }
@@ -45,12 +45,12 @@ ReentrancyGuardUpgradeable {
         return VERSION;
     }
 
-    function getPayment(uint256 _paymentId)
-    external view validPayment(_paymentId) returns (Payment memory) {
-        return payments[_paymentId];
+    function getDividend(uint256 _dividendId)
+    external view validDividend(_dividendId) returns (Dividend memory) {
+        return dividends[_dividendId];
     }
 
-    function issuePayment(
+    function issueDividend(
         address _governor,
         uint256 _tokenId,
         uint256 _value,
@@ -72,8 +72,8 @@ ReentrancyGuardUpgradeable {
 
         uint256 totalWeight = IGovernor(_governor).totalVoteAt(_tokenId, block.timestamp);
 
-        uint256 paymentId = ++paymentNumber;
-        payments[paymentId] = Payment(
+        uint256 dividendId = ++dividendNumber;
+        dividends[dividendId] = Dividend(
             _tokenId,
             totalWeight,
             _value,
@@ -82,7 +82,7 @@ ReentrancyGuardUpgradeable {
             _governor
         );
 
-        emit NewPayment(
+        emit NewDividend(
             _governor,
             _tokenId,
             msg.sender,
@@ -91,27 +91,27 @@ ReentrancyGuardUpgradeable {
             _currency
         );
 
-        return paymentId;
+        return dividendId;
     }
 
-    function withdraw(uint256[] calldata _paymentIds)
+    function withdraw(uint256[] calldata _dividendIds)
     external nonReentrant whenNotPaused {
-        for (uint256 i = 0; i < _paymentIds.length; ++i) {
-            if (_paymentIds[i] == 0 || _paymentIds[i] > paymentNumber) {
-                revert InvalidPaymentId();
+        for (uint256 i = 0; i < _dividendIds.length; ++i) {
+            if (_dividendIds[i] == 0 || _dividendIds[i] > dividendNumber) {
+                revert InvalidDividendId();
             }
-            if (hasWithdrawn[_paymentIds[i]][msg.sender]) {
+            if (hasWithdrawn[_dividendIds[i]][msg.sender]) {
                 revert AlreadyWithdrawn();
             }
 
-            Payment storage payment = payments[_paymentIds[i]];
+            Dividend storage dividend = dividends[_dividendIds[i]];
 
-            uint256 weight = IGovernor(payment.governor).voteOfAt(
+            uint256 weight = IGovernor(dividend.governor).voteOfAt(
                 msg.sender,
-                payment.tokenId,
-                payment.at
+                dividend.tokenId,
+                dividend.at
             );
-            uint256 remainWeight = payment.remainWeight;
+            uint256 remainWeight = dividend.remainWeight;
 
             if (weight == 0) {
                 revert InvalidWithdrawing();
@@ -121,16 +121,16 @@ ReentrancyGuardUpgradeable {
                 revert InsufficientFunds();
             }
 
-            uint256 value = payment.remainValue.scale(weight, payment.remainWeight);
+            uint256 value = dividend.remainValue.scale(weight, dividend.remainWeight);
 
-            payment.remainWeight -= weight;
-            payment.remainValue -= value;
-            hasWithdrawn[_paymentIds[i]][msg.sender] = true;
+            dividend.remainWeight -= weight;
+            dividend.remainValue -= value;
+            hasWithdrawn[_dividendIds[i]][msg.sender] = true;
 
-            CurrencyHandler.sendCurrency(payment.currency, msg.sender, value);
+            CurrencyHandler.sendCurrency(dividend.currency, msg.sender, value);
 
             emit Withdrawal(
-                _paymentIds[i],
+                _dividendIds[i],
                 msg.sender,
                 value
             );

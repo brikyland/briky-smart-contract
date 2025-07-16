@@ -43,7 +43,4 @@ export const Constant = {
 
     // Treasury
     TREASURY_OPERATION_FUND_RATE: parseEther(0.2),
-
-    // Governance Hub
-    GOVERNANCE_HUB_FEE: parseEther(0.001),
 }

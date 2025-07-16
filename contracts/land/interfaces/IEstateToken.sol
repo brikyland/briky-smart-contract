@@ -68,9 +68,9 @@ IERC1155MetadataURIUpgradeable {
     function decimals() external view returns (uint8 decimals);
 
     function commissionToken() external view returns (address commissionToken);
+    function dividendHub() external view returns (address dividendHub);
     function feeReceiver() external view returns (address feeReceiver);
     function governanceHub() external view returns (address governanceHub);
-    function paymentHub() external view returns (address paymentHub);
 
     function estateNumber() external view returns (uint256 tokenNumber);
     function extractionNumber() external view returns (uint256 extractionNumber);

@@ -3,8 +3,8 @@ pragma solidity ^0.8.20;
 
 import {ICommon} from "./ICommon.sol";
 
-interface IPaymentHub is ICommon {
-    struct Payment {
+interface IDividendHub is ICommon {
+    struct Dividend {
         uint256 tokenId;
         uint256 remainWeight;
         uint256 remainValue;
@@ -13,7 +13,7 @@ interface IPaymentHub is ICommon {
         address governor;
     }
 
-    event NewPayment(
+    event NewDividend(
         address indexed governor,
         uint256 indexed tokenId,
         address indexed issuer,
@@ -23,29 +23,29 @@ interface IPaymentHub is ICommon {
     );
 
     event Withdrawal(
-        uint256 indexed paymentId,
+        uint256 indexed dividendId,
         address indexed withdrawer,
         uint256 value
     );
 
     error AlreadyWithdrawn();
+    error InvalidDividendId();
     error InvalidGovernor();
-    error InvalidPaymentId();
     error InvalidTokenId();
     error InvalidWithdrawing();
 
-    function paymentNumber() external view returns (uint256 paymentNumber);
+    function dividendNumber() external view returns (uint256 dividendNumber);
 
-    function getPayment(uint256 paymentId) external view returns (Payment memory payment);
+    function getDividend(uint256 dividendId) external view returns (Dividend memory dividend);
 
-    function hasWithdrawn(uint256 paymentId, address account) external view returns (bool hasWithdrawn);
+    function hasWithdrawn(uint256 dividendId, address account) external view returns (bool hasWithdrawn);
 
-    function issuePayment(
+    function issueDividend(
         address governor,
         uint256 tokenId,
         uint256 value,
         address currency
-    ) external payable returns (uint256 paymentId);
+    ) external payable returns (uint256 dividendId);
 
-    function withdraw(uint256[] calldata paymentIds) external;
+    function withdraw(uint256[] calldata dividendIds) external;
 }
