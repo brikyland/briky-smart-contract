@@ -17,7 +17,7 @@ import { deployGovernanceHub } from '@utils/deployments/common/governanceHub';
 import { ProposalRule, ProposalState, ProposalVerdict, ProposalVoteOption } from '@utils/models/Proposal';
 import { BigNumber, Wallet } from 'ethers';
 import { MockContract, smock } from '@defi-wonderland/smock';
-import { callAdmin_ActivateIn, callAdmin_AuthorizeGovernor, callAdmin_AuthorizeManagers, callAdmin_DeclareZones } from '@utils/callWithSignatures/admin';
+import { callAdmin_ActivateIn, callAdmin_AuthorizeGovernor, callAdmin_AuthorizeManagers, callAdmin_AuthorizeModerators, callAdmin_DeclareZones } from '@utils/callWithSignatures/admin';
 import { callGovernanceHub_Pause } from '@utils/callWithSignatures/governanceHub';
 import { MockValidator } from '@utils/mockValidator';
 import { scale } from '@utils/utils';
@@ -357,7 +357,7 @@ describe('24. GovernanceHub', async () => {
             true,
             await admin.nonce(),
         );
-        await callAdmin_AuthorizeManagers(
+        await callAdmin_AuthorizeModerators(
             admin,
             admins,
             [moderator.address],
@@ -383,7 +383,7 @@ describe('24. GovernanceHub', async () => {
             admin,
             admins,
             zone,
-            [manager.address, moderator.address],
+            [manager.address, moderator.address, operator1.address, operator2.address],
             true,
             await admin.nonce(),
         );
@@ -1842,56 +1842,357 @@ describe('24. GovernanceHub', async () => {
     });
 
     describe('24.8. disqualify(uint256, string, string, (uint256, uint256, bytes))', async () => {
-        it('24.8.1. disqualify proposal successfully', async () => {
+        async function beforeDisqualifyTest(fixture: GovernanceHubFixture): Promise<{defaultParams: DisqualifyParams}> {
+            const defaultParams: DisqualifyParams = {
+                proposalId: 1,
+                metadataUri: 'metadata_uri_1',
+                stateUri: 'state_uri_1',
+            };
+            return { defaultParams };
+        }
 
+        async function expectRevertWithCustomError(
+            fixture: GovernanceHubFixture,
+            params: DisqualifyParams,
+            signer: Wallet,
+            error: string,
+        ) {
+            const { governanceHub } = fixture;
+            const validation = await getDisqualifyValidation(fixture, params);
+            await expect(governanceHub.connect(signer).disqualify(
+                params.proposalId,
+                params.metadataUri,
+                params.stateUri,
+                validation
+            )).to.be.revertedWithCustomError(governanceHub, error);
+        }
+
+        async function expectRevert(
+            fixture: GovernanceHubFixture,
+            params: DisqualifyParams,
+            signer: Wallet,
+            error: string,
+        ) {
+            const { governanceHub } = fixture;
+            const validation = await getDisqualifyValidation(fixture, params);
+            await expect(governanceHub.connect(signer).disqualify(
+                params.proposalId,
+                params.metadataUri,
+                params.stateUri,
+                validation
+            )).to.be.revertedWith(error);
+        }
+
+        it('24.8.1. disqualify pending proposal successfully', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+            });
+            const { governanceHub, manager, moderator } = fixture;
+
+            const params1 = {
+                proposalId: 1,
+                metadataUri: 'metadata_uri_1',
+                stateUri: 'state_uri_1',
+            };
+            const validation1 = await getDisqualifyValidation(fixture, params1);
+
+            // Tx1: Disqualify by manager
+            const tx1 = await governanceHub.connect(manager).disqualify(
+                params1.proposalId,
+                params1.metadataUri,
+                params1.stateUri,
+                validation1
+            );
+            await expect(tx1).to.emit(governanceHub, 'ProposalDisqualification').withArgs(
+                params1.proposalId,
+                params1.metadataUri,
+                params1.stateUri,
+            );
+
+            const proposal1 = await governanceHub.getProposal(params1.proposalId);
+            expect(proposal1.metadataUri).to.equal(params1.metadataUri);
+            expect(proposal1.stateUri).to.equal(params1.stateUri);
+            expect(proposal1.state).to.equal(ProposalState.Disqualified);
+
+            const params2 = {
+                proposalId: 2,
+                metadataUri: 'metadata_uri_2',
+                stateUri: 'state_uri_2',
+            };
+            const validation2 = await getDisqualifyValidation(fixture, params2);
+
+            // Tx2: Disqualify by moderator
+            const tx2 = await governanceHub.connect(moderator).disqualify(
+                params2.proposalId,
+                params2.metadataUri,
+                params2.stateUri,
+                validation2
+            );
+            await expect(tx2).to.emit(governanceHub, 'ProposalDisqualification').withArgs(
+                params2.proposalId,
+                params2.metadataUri,
+                params2.stateUri,
+            );
+
+            const proposal2 = await governanceHub.getProposal(params2.proposalId);
+            expect(proposal2.metadataUri).to.equal(params2.metadataUri);
+            expect(proposal2.stateUri).to.equal(params2.stateUri);
+            expect(proposal2.state).to.equal(ProposalState.Disqualified);
         });
 
-        it('24.8.2. disqualify pending proposal successfully', async () => {
+        it.only('24.8.2. disqualify voting proposal successfully', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+            });
+            const { governanceHub, manager } = fixture;
 
+            const params = {
+                proposalId: 1,
+                metadataUri: 'metadata_uri_1',
+                stateUri: 'state_uri_1',
+            };
+            const validation = await getDisqualifyValidation(fixture, params);
+
+            const tx = await governanceHub.connect(manager).disqualify(
+                params.proposalId,
+                params.metadataUri,
+                params.stateUri,
+                validation
+            );
+            await expect(tx).to.emit(governanceHub, 'ProposalDisqualification').withArgs(
+                params.proposalId,
+                params.metadataUri,
+                params.stateUri,
+            );
+
+            const proposal1 = await governanceHub.getProposal(params.proposalId);
+            expect(proposal1.metadataUri).to.equal(params.metadataUri);
+            expect(proposal1.stateUri).to.equal(params.stateUri);
+            expect(proposal1.state).to.equal(ProposalState.Disqualified);
         });
 
-        it('24.8.3. disqualify unsuccessfully with invalid validation', async () => {
-            
+        it.only('24.8.3. disqualify unsuccessfully with invalid validation', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+            });
+            const { governanceHub, manager } = fixture;
+
+            const { defaultParams } = await beforeDisqualifyTest(fixture);
+            const validation = await getDisqualifyInvalidValidation(fixture, defaultParams);
+
+            await expect(governanceHub.connect(manager).disqualify(
+                defaultParams.proposalId,
+                defaultParams.metadataUri,
+                defaultParams.stateUri,
+                validation
+            )).to.be.revertedWithCustomError(governanceHub, 'InvalidSignature');
         });
 
-        it('24.8.4. disqualify unsuccessfully with invalid proposal id', async () => {
+        it.only('24.8.4. disqualify unsuccessfully with invalid proposal id', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+            });
+            const { manager } = fixture;
 
+            const { defaultParams } = await beforeDisqualifyTest(fixture);
+            await expectRevertWithCustomError(
+                fixture,
+                { ...defaultParams, proposalId: 0 },
+                manager,
+                'InvalidProposalId',
+            );
+            await expectRevertWithCustomError(
+                fixture,
+                { ...defaultParams, proposalId: 100 },
+                manager,
+                'InvalidProposalId',
+            );
         });
 
-        it('24.8.5. disqualify unsuccessfully when zone is not active', async () => {
+        it.only('24.8.5. disqualify unsuccessfully when zone is not active', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+            });
+            const { admin, admins, manager, zone } = fixture;
 
+            await callAdmin_DeclareZones(
+                admin,
+                admins,
+                [zone],
+                false,
+                await admin.nonce(),
+            );
+
+            const { defaultParams } = await beforeDisqualifyTest(fixture);
+            await expectRevertWithCustomError(
+                fixture,
+                defaultParams,
+                manager,
+                'Unauthorized',
+            );
         });
 
-        it('24.8.6. disqualify unsuccessfully when sender is not active in zone', async () => {
+        it.only('24.8.6. disqualify unsuccessfully when sender is not active in zone', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+            });
+            const { admin, admins, manager, zone } = fixture;
 
+            await callAdmin_ActivateIn(
+                admin,
+                admins,
+                zone,
+                [manager.address],
+                false,
+                await admin.nonce(),
+            );
+
+            const { defaultParams } = await beforeDisqualifyTest(fixture);
+            await expectRevertWithCustomError(
+                fixture,
+                defaultParams,
+                manager,
+                'Unauthorized',
+            );
         });
 
-        it('24.8.7. disqualify unsuccessfully by non-executive for pending proposal', async () => {
+        it.only('24.8.7. disqualify unsuccessfully by non-executive for pending proposal', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+            });
+            const { operator1 } = fixture;
 
+            const { defaultParams } = await beforeDisqualifyTest(fixture);
+            await expectRevertWithCustomError(
+                fixture,
+                defaultParams,
+                operator1,
+                'InvalidDisqualifying',
+            );
         });
 
-        it('24.8.8. disqualify unsuccessfully by non-mananger for voting proposal', async () => {
+        it.only('24.8.8. disqualify unsuccessfully by non-mananger for voting proposal', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,                
+            });
+            const { moderator, operator1 } = fixture;
 
+            const { defaultParams } = await beforeDisqualifyTest(fixture);
+            await expectRevertWithCustomError(
+                fixture,
+                defaultParams,
+                moderator,
+                'InvalidDisqualifying',
+            );
+            await expectRevertWithCustomError(
+                fixture,
+                defaultParams,
+                operator1,
+                'InvalidDisqualifying',
+            );
         });
 
-        it('24.8.9. disqualify unsuccessfully by non-mananger for executing proposal', async () => {
+        it.only('24.8.9. disqualify unsuccessfully with executing proposal', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteAndContributeBudget: true,
+                confirmExecutionSampleProposals: true,
+            });
+            const { manager } = fixture;
 
+            const { defaultParams } = await beforeDisqualifyTest(fixture);
+            await expectRevertWithCustomError(
+                fixture,
+                defaultParams,
+                manager,
+                'InvalidDisqualifying',
+            );
         });
 
-        it('24.8.10. disqualify unsuccessfully by non-mananger for successfully executed proposal', async () => {
+        it.only('24.8.10. disqualify unsuccessfully with successfully executed proposal', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteAndContributeBudget: true,
+                confirmExecutionSampleProposals: true,
+                concludeExecutionSucceededSampleProposals: true,
+            });
+            const { manager } = fixture;
 
+            const { defaultParams } = await beforeDisqualifyTest(fixture);
+            await expectRevertWithCustomError(
+                fixture,
+                defaultParams,
+                manager,
+                'InvalidDisqualifying',
+            );
         });
 
-        it('24.8.11. disqualify unsuccessfully by non-mananger for unsuccessfully executed proposal', async () => {
+        it.only('24.8.11. disqualify unsuccessfully with unsuccessfully executed proposal', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteAndContributeBudget: true,
+                confirmExecutionSampleProposals: true,
+                concludeExecutionFailedSampleProposals: true,
+            });
+            const { manager } = fixture;
 
+            const { defaultParams } = await beforeDisqualifyTest(fixture);
+            await expectRevertWithCustomError(
+                fixture,
+                defaultParams,
+                manager,
+                'InvalidDisqualifying',
+            );
         });
 
-        it('24.8.12. disqualify unsuccessfully by non-mananger for disqualified proposal', async () => {
+        it.only('24.8.12. disqualify unsuccessfully with disqualified proposal', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                disqualifySampleProposals: true,
+            });
+            const { manager } = fixture;
 
+            const { defaultParams } = await beforeDisqualifyTest(fixture);
+            await expectRevertWithCustomError(
+                fixture,
+                defaultParams,
+                manager,
+                'InvalidDisqualifying',
+            );
         });
 
-        it('24.8.13. disqualify unsuccessfully by non-mananger for rejected proposal', async () => {
+        it.only('24.8.13. disqualify unsuccessfully with rejected proposal', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                rejectExecutionSampleProposals: true,
+            });
+            const { manager } = fixture;
 
+            const { defaultParams } = await beforeDisqualifyTest(fixture);
+            await expectRevertWithCustomError(
+                fixture,
+                defaultParams,
+                manager,
+                'InvalidDisqualifying',
+            );
         });
     });
 
