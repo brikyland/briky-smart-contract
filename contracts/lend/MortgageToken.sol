@@ -78,12 +78,13 @@ ReentrancyGuardUpgradeable {
         feeReceiver = _feeReceiver;
 
         baseURI = _uri;
+        emit BaseURIUpdate(_uri);
 
         feeRate = _feeRate;
-        royaltyRate = _royaltyRate;
-
-        emit RoyaltyRateUpdate(_royaltyRate);
         emit FeeRateUpdate(_feeRate);
+
+        royaltyRate = _royaltyRate;
+        emit RoyaltyRateUpdate(_royaltyRate);
     }
 
     function version() external pure returns (string memory) {

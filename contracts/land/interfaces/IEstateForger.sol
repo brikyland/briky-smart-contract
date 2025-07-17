@@ -104,13 +104,12 @@ IEstateTokenizer {
         uint256 cashbackBaseAmount
     );
 
-    event RequestSellerUpdate(uint256 indexed requestId, address indexed seller);
+    event RequestAgendaUpdate(
+        uint256 indexed requestId,
+        uint256 indexed privateSaleEndsAt,
+        uint256 indexed publicSaleEndsAt
+    );
     event RequestURIUpdate(uint256 indexed requestId, string uri);
-
-    event RequestAgendaUpdate(uint256 indexed requestId, RequestAgenda agenda);
-    event RequestEstateUpdate(uint256 indexed requestId, RequestEstateInput estate);
-    event RequestQuotaUpdate(uint256 indexed requestId, RequestQuotaInput quota);
-    event RequestQuoteUpdate(uint256 indexed requestId, RequestQuote quote);
 
     event Deposit(
         uint256 indexed requestId,

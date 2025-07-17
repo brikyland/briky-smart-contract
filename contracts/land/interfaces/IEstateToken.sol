@@ -19,7 +19,6 @@ IERC1155MetadataURIUpgradeable {
     event CommissionTokenUpdate(address newAddress);
 
     event BaseURIUpdate(string newValue);
-
     event RoyaltyRateUpdate(uint256 newValue);
 
     event TokenizerAuthorization(address indexed account);

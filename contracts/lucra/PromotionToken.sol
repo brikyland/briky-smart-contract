@@ -50,9 +50,9 @@ ReentrancyGuardUpgradeable {
         admin = _admin;
 
         fee = _fee;
-        royaltyRate = _royaltyRate;
-
         emit FeeUpdate(_fee);
+
+        royaltyRate = _royaltyRate;
         emit RoyaltyRateUpdate(_royaltyRate);
     }
 

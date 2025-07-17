@@ -74,13 +74,10 @@ Validatable {
         admin = _admin;
         feeReceiver = _feeReceiver;
 
-        validator = _validator;
-
         _setBaseURI(_uri);
+        emit BaseURIUpdate(_uri);
 
         royaltyRate = _royaltyRate;
-
-        emit BaseURIUpdate(_uri);
         emit RoyaltyRateUpdate(_royaltyRate);
     }
 

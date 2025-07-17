@@ -32,8 +32,8 @@ interface IProposal {
 
     struct Proposal {
         bytes32 uuid;
-        string metadataUri;
-        string stateUri;
+        string contentURI;
+        string stateURI;
         address governor;
         uint256 tokenId;
         uint256 totalWeight;

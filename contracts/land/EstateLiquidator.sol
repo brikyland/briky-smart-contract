@@ -70,7 +70,6 @@ ReentrancyGuardUpgradeable {
         feeReceiver = _feeReceiver;
 
         feeRate = _feeRate;
-
         emit FeeRateUpdate(_feeRate);
     }
 

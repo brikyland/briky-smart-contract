@@ -57,7 +57,9 @@ ReentrancyGuardUpgradeable {
         __Validatable_init(_validator);
 
         admin = _admin;
+
         fee = _fee;
+        emit FeeUpdate(_fee);
     }
 
     function version() external pure returns (string memory) {
@@ -178,16 +180,16 @@ ReentrancyGuardUpgradeable {
 
     function admit(
         uint256 _proposalId,
-        string calldata _metadataUri,
-        string calldata _stateUri,
+        string calldata _contentURI,
+        string calldata _stateURI,
         address _currency,
         Validation calldata _signature
     ) external validProposal(_proposalId) onlyExecutive whenNotPaused {
         _validate(
             abi.encode(
                 _proposalId,
-                _metadataUri,
-                _stateUri,
+                _contentURI,
+                _stateURI,
                 _currency
             ),
             _signature
@@ -223,8 +225,8 @@ ReentrancyGuardUpgradeable {
             CommonConstant.COMMON_RATE_MAX_FRACTION
         );
 
-        proposal.metadataUri = _metadataUri;
-        proposal.stateUri = _stateUri;
+        proposal.contentURI = _contentURI;
+        proposal.stateURI = _stateURI;
         proposal.totalWeight = totalWeight;
         proposal.quorum = quorum;
         proposal.timePivot = uint40(block.timestamp);
@@ -234,8 +236,8 @@ ReentrancyGuardUpgradeable {
 
         emit ProposalAdmission(
             _proposalId,
-            _metadataUri,
-            _stateUri,
+            _contentURI,
+            _stateURI,
             totalWeight,
             quorum,
             block.timestamp,
@@ -245,15 +247,15 @@ ReentrancyGuardUpgradeable {
 
     function disqualify(
         uint256 _proposalId,
-        string calldata _metadataUri,
-        string calldata _stateUri,
+        string calldata _contentURI,
+        string calldata _stateURI,
         Validation calldata _validation
     ) external validProposal(_proposalId) whenNotPaused {
         _validate(
             abi.encode(
                 _proposalId,
-                _metadataUri,
-                _stateUri
+                _contentURI,
+                _stateURI
             ),
             _validation
         );
@@ -273,14 +275,14 @@ ReentrancyGuardUpgradeable {
             revert InvalidDisqualifying();
         }
 
-        proposal.metadataUri = _metadataUri;
-        proposal.stateUri = _stateUri;
+        proposal.contentURI = _contentURI;
+        proposal.stateURI = _stateURI;
         proposal.state = ProposalState.Disqualified;
 
         emit ProposalDisqualification(
             _proposalId,
-            _metadataUri,
-            _stateUri
+            _contentURI,
+            _stateURI
         );
     }
 
@@ -384,13 +386,13 @@ ReentrancyGuardUpgradeable {
 
     function updateExecution(
         uint256 _proposalId,
-        string calldata _stateUri,
+        string calldata _stateURI,
         Validation calldata _validation
     ) external validProposal(_proposalId) onlyOperator(_proposalId) whenNotPaused {
         _validate(
             abi.encode(
                 _proposalId,
-                _stateUri
+                _stateURI
             ),
             _validation
         );
@@ -399,21 +401,21 @@ ReentrancyGuardUpgradeable {
             revert InvalidExecutionUpdating();
         }
 
-        proposals[_proposalId].stateUri = _stateUri;
+        proposals[_proposalId].stateURI = _stateURI;
 
-        emit ProposalExecutionUpdate(_proposalId, _stateUri);
+        emit ProposalExecutionUpdate(_proposalId, _stateURI);
     }
 
     function concludeExecution(
         uint256 _proposalId,
-        string calldata _stateUri,
+        string calldata _stateURI,
         bool _isSuccessful,
         Validation calldata _validation
     ) external validProposal(_proposalId) onlyManager whenNotPaused {
         _validate(
             abi.encode(
                 _proposalId,
-                _stateUri,
+                _stateURI,
                 _isSuccessful
             ),
             _validation
@@ -434,12 +436,12 @@ ReentrancyGuardUpgradeable {
             revert InvalidExecutionConcluding();
         }
 
-        proposal.stateUri = _stateUri;
+        proposal.stateURI = _stateURI;
         proposal.state = _isSuccessful ? ProposalState.SuccessfulExecuted : ProposalState.UnsuccessfulExecuted;
 
         emit ProposalExecutionConclusion(
             _proposalId,
-            _stateUri,
+            _stateURI,
             _isSuccessful
         );
     }

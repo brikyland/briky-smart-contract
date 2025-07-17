@@ -57,11 +57,12 @@ ReentrancyGuardUpgradeable {
         feeReceiver = _feeReceiver;
 
         baseURI = _uri;
-        commissionRate = _commissionRate;
-        royaltyRate = _royaltyRate;
-
         emit BaseURIUpdate(_uri);
+
+        commissionRate = _commissionRate;
         emit CommissionRateUpdate(_commissionRate);
+
+        royaltyRate = _royaltyRate;
         emit RoyaltyRateUpdate(_royaltyRate);
     }
 

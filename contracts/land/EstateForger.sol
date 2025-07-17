@@ -55,9 +55,9 @@ ReentrancyGuardUpgradeable {
         address _feeReceiver,
         address _reserveVault,
         address _validator,
-        uint256 _feeRate,
         uint256 _baseMinUnitPrice,
-        uint256 _baseMaxUnitPrice
+        uint256 _baseMaxUnitPrice,
+        uint256 _feeRate
     ) external initializer {
         require(_feeRate <= CommonConstant.COMMON_RATE_MAX_FRACTION);
 
@@ -73,13 +73,12 @@ ReentrancyGuardUpgradeable {
         feeReceiver = _feeReceiver;
         reserveVault = _reserveVault;
 
-        feeRate = _feeRate;
-
         baseMinUnitPrice = _baseMinUnitPrice;
         baseMaxUnitPrice = _baseMaxUnitPrice;
-
-        emit FeeRateUpdate(_feeRate);
         emit BaseUnitPriceRangeUpdate(_baseMinUnitPrice, _baseMaxUnitPrice);
+
+        feeRate = _feeRate;
+        emit FeeRateUpdate(_feeRate);
     }
 
     function version() external pure returns (string memory) {
@@ -306,13 +305,16 @@ ReentrancyGuardUpgradeable {
             revert InvalidTimestamp();
         }
 
-        RequestAgenda memory agenda = RequestAgenda(
+        requests[_requestId].agenda = RequestAgenda(
             _privateSaleEndsAt,
             _publicSaleEndsAt
         );
-        requests[_requestId].agenda = agenda;
 
-        emit RequestAgendaUpdate(_requestId, agenda);
+        emit RequestAgendaUpdate(
+            _requestId,
+            _privateSaleEndsAt,
+            _publicSaleEndsAt
+        );
     }
 
     function deposit(uint256 _requestId, uint256 _quantity)

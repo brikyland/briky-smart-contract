@@ -25,8 +25,8 @@ IValidatable {
     );
     event ProposalAdmission(
         uint256 indexed proposalId,
-        string metadataUri,
-        string stateUri,
+        string contentURI,
+        string stateURI,
         uint256 totalWeight,
         uint256 quorum,
         uint256 budget,
@@ -44,8 +44,8 @@ IValidatable {
     );
     event ProposalDisqualification(
         uint256 indexed proposalId,
-        string metadataUri,
-        string stateUri
+        string contentURI,
+        string stateURI
     );
     event ProposalVote(
         uint256 indexed proposalId,
@@ -56,12 +56,12 @@ IValidatable {
 
     event ProposalExecutionConclusion(
         uint256 indexed proposalId,
-        string resultUri,
+        string resultURI,
         bool isSuccessful
     );
     event ProposalExecutionConfirmation(uint256 indexed proposalId);
     event ProposalExecutionRejection(uint256 indexed proposalId);
-    event ProposalExecutionUpdate(uint256 indexed proposalId, string stateUri);
+    event ProposalExecutionUpdate(uint256 indexed proposalId, string stateURI);
 
     error AlreadyVoted();
     error ConflictedQuorum();
@@ -108,16 +108,16 @@ IValidatable {
 
     function admit(
         uint256 proposalId,
-        string calldata metadataUri,
-        string calldata stateUri,
+        string calldata contentURI,
+        string calldata stateURI,
         address currency,
         Validation calldata signature
     ) external;
     function contributeBudget(uint256 proposalId, uint256 value) external payable;
     function disqualify(
         uint256 proposalId,
-        string calldata metadataUri,
-        string calldata stateUri,
+        string calldata contentURI,
+        string calldata stateURI,
         Validation calldata signature
     ) external;
     function vote(uint256 proposalId, ProposalVoteOption option) external returns (uint256 weight);
@@ -125,7 +125,7 @@ IValidatable {
 
     function concludeExecution(
         uint256 proposalId,
-        string calldata resultUri,
+        string calldata resultURI,
         bool isSuccessful,
         Validation calldata validation
     ) external;
@@ -133,7 +133,7 @@ IValidatable {
     function rejectExecution(uint256 proposalId) external;
     function updateExecution(
         uint256 proposalId,
-        string calldata _stateUri,
+        string calldata _stateURI,
         Validation calldata _validation
     ) external;
 

@@ -49,11 +49,12 @@ ReentrancyGuardUpgradeable {
         admin = _admin;
 
         baseURI = _uri;
-        fee = _fee;
-        royaltyRate = _royaltyRate;
-
         emit BaseURIUpdate(_uri);
+
+        fee = _fee;
         emit FeeUpdate(_fee);
+
+        royaltyRate = _royaltyRate;
         emit RoyaltyRateUpdate(_royaltyRate);
     }
 
