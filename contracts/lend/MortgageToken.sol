@@ -8,9 +8,10 @@ import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC72
 import {ERC721PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721PausableUpgradeable.sol";
 import {ERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 
-import {Constant} from "../lib/Constant.sol";
 import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
 import {Formula} from "../lib/Formula.sol";
+
+import {CommonConstant} from "../common/constants/CommonConstant.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 import {IRoyaltyRateProposer} from "../common/interfaces/IRoyaltyRateProposer.sol";
@@ -60,8 +61,8 @@ ReentrancyGuardUpgradeable {
         uint256 _feeRate,
         uint256 _royaltyRate
     ) external initializer {
-        require(_feeRate <= Constant.COMMON_RATE_MAX_FRACTION);
-        require(_royaltyRate <= Constant.COMMON_RATE_MAX_FRACTION);
+        require(_feeRate <= CommonConstant.COMMON_RATE_MAX_FRACTION);
+        require(_royaltyRate <= CommonConstant.COMMON_RATE_MAX_FRACTION);
 
         __ERC721_init(_name, _symbol);
         __ERC721Pausable_init();
@@ -116,7 +117,7 @@ ReentrancyGuardUpgradeable {
             ),
             _signature
         );
-        if (_royaltyRate > Constant.COMMON_RATE_MAX_FRACTION) {
+        if (_royaltyRate > CommonConstant.COMMON_RATE_MAX_FRACTION) {
             revert InvalidRate();
         }
         royaltyRate = _royaltyRate;
@@ -135,7 +136,7 @@ ReentrancyGuardUpgradeable {
             ),
             _signature
         );
-        if (_feeRate > Constant.COMMON_RATE_MAX_FRACTION) {
+        if (_feeRate > CommonConstant.COMMON_RATE_MAX_FRACTION) {
             revert InvalidRate();
         }
         feeRate = _feeRate;
@@ -143,12 +144,12 @@ ReentrancyGuardUpgradeable {
     }
 
     function getFeeRate() external view returns (Rate memory) {
-        return Rate(feeRate, Constant.COMMON_RATE_DECIMALS);
+        return Rate(feeRate, CommonConstant.COMMON_RATE_DECIMALS);
     }
 
     function getRoyaltyRate()
     public view override(IRoyaltyRateProposer, RoyaltyRateProposer) returns (Rate memory) {
-        return Rate(royaltyRate, Constant.COMMON_RATE_DECIMALS);
+        return Rate(royaltyRate, CommonConstant.COMMON_RATE_DECIMALS);
     }
 
     function getLoan(uint256 _loanId)
@@ -297,7 +298,7 @@ ReentrancyGuardUpgradeable {
         }
 
         uint256 principal = loan.principal;
-        uint256 feeAmount = principal.scale(feeRate, Constant.COMMON_RATE_MAX_FRACTION);
+        uint256 feeAmount = principal.scale(feeRate, CommonConstant.COMMON_RATE_MAX_FRACTION);
 
         address currency = loan.currency;
         feeAmount = _applyDiscount(feeAmount, currency);

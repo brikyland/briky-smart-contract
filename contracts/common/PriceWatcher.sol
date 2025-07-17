@@ -5,10 +5,11 @@ import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interf
 
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-import {Constant} from "../lib/Constant.sol";
 import {Formula} from "../lib/Formula.sol";
 
-import {IAdmin} from "../common/interfaces/IAdmin.sol";
+import {CommonConstant} from "./constants/CommonConstant.sol";
+
+import {IAdmin} from "./interfaces/IAdmin.sol";
 
 import {PriceWatcherStorage} from "./storages/PriceWatcherStorage.sol";
 
@@ -92,7 +93,7 @@ Administrable {
         }
 
         for(uint256 i; i < _currencies.length; ++i) {
-            if (_decimals[i] > Constant.COMMON_RATE_DECIMALS) {
+            if (_decimals[i] > CommonConstant.COMMON_RATE_DECIMALS) {
                 revert InvalidInput();
             }
 

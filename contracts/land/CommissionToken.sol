@@ -8,8 +8,9 @@ import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/se
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import {ERC721PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721PausableUpgradeable.sol";
 
-import {Constant} from "../lib/Constant.sol";
 import {Formula} from "../lib/Formula.sol";
+
+import {CommonConstant} from "../common/constants/CommonConstant.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 import {IRoyaltyRateProposer} from "../common/interfaces/IRoyaltyRateProposer.sol";
@@ -43,8 +44,8 @@ ReentrancyGuardUpgradeable {
         uint256 _commissionRate,
         uint256 _royaltyRate
     ) external initializer {
-        require(_commissionRate <= Constant.COMMON_RATE_MAX_FRACTION);
-        require(_royaltyRate <= Constant.COMMON_RATE_MAX_FRACTION);
+        require(_commissionRate <= CommonConstant.COMMON_RATE_MAX_FRACTION);
+        require(_royaltyRate <= CommonConstant.COMMON_RATE_MAX_FRACTION);
 
         __ERC721_init(_name, _symbol);
         __ERC721Pausable_init();
@@ -98,7 +99,7 @@ ReentrancyGuardUpgradeable {
             ),
             _signature
         );
-        if (_royaltyRate > Constant.COMMON_RATE_MAX_FRACTION) {
+        if (_royaltyRate > CommonConstant.COMMON_RATE_MAX_FRACTION) {
             revert InvalidRate();
         }
         royaltyRate = _royaltyRate;
@@ -106,12 +107,12 @@ ReentrancyGuardUpgradeable {
     }
 
     function getCommissionRate() public view returns (Rate memory) {
-        return Rate(commissionRate, Constant.COMMON_RATE_DECIMALS);
+        return Rate(commissionRate, CommonConstant.COMMON_RATE_DECIMALS);
     }
 
     function getRoyaltyRate()
     public view override(IRoyaltyRateProposer, RoyaltyRateProposer) returns (Rate memory) {
-        return Rate(royaltyRate, Constant.COMMON_RATE_DECIMALS);
+        return Rate(royaltyRate, CommonConstant.COMMON_RATE_DECIMALS);
     }
 
     function commissionInfo(uint256 _tokenId, uint256 _value) external view returns (address, uint256) {

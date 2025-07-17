@@ -4,7 +4,6 @@ pragma solidity ^0.8.20;
 import {IERC1155MetadataURIUpgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC1155MetadataURIUpgradeable.sol";
 
 import {IGovernor} from "../../common/interfaces/IGovernor.sol";
-import {IProposal} from "../../common/interfaces/IProposal.sol";
 import {IRoyaltyRateProposer} from "../../common/interfaces/IRoyaltyRateProposer.sol";
 import {IValidation} from "../../common/interfaces/IValidation.sol";
 
@@ -13,19 +12,10 @@ import {IValidatable} from "../../common/interfaces/IValidatable.sol";
 
 interface IEstateToken is
 IEstate,
-IProposal,
 IValidatable,
 IGovernor,
 IRoyaltyRateProposer,
 IERC1155MetadataURIUpgradeable {
-    struct Extraction {
-        uint256 estateId;
-        uint256 proposalId;
-        uint256 value;
-        address currency;
-        address extractor;
-    }
-
     event CommissionTokenUpdate(address newAddress);
 
     event BaseURIUpdate(string newValue);
@@ -47,33 +37,15 @@ IERC1155MetadataURIUpgradeable {
     event EstateExpirationExtension(uint256 indexed estateId, uint40 expireAt);
     event EstateExtraction(uint256 indexed estateId, uint256 indexed extractionId);
 
-    event NewExtraction(
-        uint256 indexed extractionId,
-        uint256 indexed estateId,
-        uint256 indexed proposalId,
-        address extractor,
-        uint256 value,
-        address currency
-    );
-    event ExtractionCancellation(uint256 indexed extractionId);
-
-    error Cancelled();
-    error Deprecated();
     error InvalidEstateId();
-    error InvalidExtractionConclusion();
-    error InvalidExtractionId();
     error InvalidTokenizer(address account);
-    error UnavailableEstate();
 
     function decimals() external view returns (uint8 decimals);
 
     function commissionToken() external view returns (address commissionToken);
-    function dividendHub() external view returns (address dividendHub);
     function feeReceiver() external view returns (address feeReceiver);
-    function governanceHub() external view returns (address governanceHub);
 
     function estateNumber() external view returns (uint256 tokenNumber);
-    function extractionNumber() external view returns (uint256 extractionNumber);
 
     function balanceOfAt(address account, uint256 tokenId, uint256 at) external view returns (uint256 balance);
     function totalSupply(uint256 tokenId) external view returns (uint256 totalSupply);
@@ -96,14 +68,5 @@ IERC1155MetadataURIUpgradeable {
         string calldata uri,
         Validation calldata validation
     ) external;
-
-    function requestExtraction(
-        uint256 estateId,
-        uint256 value,
-        address currency,
-        bytes32 uuid,
-        Validation calldata validation
-    ) external returns (uint256 extractionId);
-
-    function concludeExtraction(uint256 extractionId) external returns (bool isSuccessful);
+    function extractEstate(uint256 requestId, uint256 extractionId) external;
 }

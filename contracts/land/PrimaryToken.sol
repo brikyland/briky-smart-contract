@@ -8,13 +8,16 @@ import {ERC20CappedUpgradeable} from "@openzeppelin/contracts-upgradeable/token/
 import {ERC20PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PausableUpgradeable.sol";
 import {ERC20PermitUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
 
-import {Constant} from "../lib/Constant.sol";
 import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
 import {Formula} from "../lib/Formula.sol";
+
+import {CommonConstant} from "../common/constants/CommonConstant.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 
 import {Pausable} from "../common/utilities/Pausable.sol";
+
+import {PrimaryTokenConstant} from "./constants/PrimaryTokenConstant.sol";
 
 import {ITreasury} from "./interfaces/ITreasury.sol";
 
@@ -40,7 +43,7 @@ ReentrancyGuardUpgradeable {
         uint256 _liquidationUnlockedAt
     ) external initializer {
         __ERC20_init(_name, _symbol);
-        __ERC20Capped_init(Constant.PRIMARY_TOKEN_MAX_SUPPLY);
+        __ERC20Capped_init(PrimaryTokenConstant.PRIMARY_TOKEN_MAX_SUPPLY);
         __ERC20Pausable_init();
         __ERC20Permit_init(_name);
 
@@ -52,14 +55,14 @@ ReentrancyGuardUpgradeable {
         unchecked {
             _mint(
                 address(this),
-                Constant.PRIMARY_TOKEN_BACKER_ROUND
-                + Constant.PRIMARY_TOKEN_CORE_TEAM
-                + Constant.PRIMARY_TOKEN_EXTERNAL_TREASURY
-                + Constant.PRIMARY_TOKEN_MARKET_MAKER
-                + Constant.PRIMARY_TOKEN_PRIVATE_SALE_1
-                + Constant.PRIMARY_TOKEN_PRIVATE_SALE_2
-                + Constant.PRIMARY_TOKEN_PUBLIC_SALE
-                + Constant.PRIMARY_TOKEN_SEED_ROUND
+                PrimaryTokenConstant.PRIMARY_TOKEN_BACKER_ROUND
+                + PrimaryTokenConstant.PRIMARY_TOKEN_CORE_TEAM
+                + PrimaryTokenConstant.PRIMARY_TOKEN_EXTERNAL_TREASURY
+                + PrimaryTokenConstant.PRIMARY_TOKEN_MARKET_MAKER
+                + PrimaryTokenConstant.PRIMARY_TOKEN_PRIVATE_SALE_1
+                + PrimaryTokenConstant.PRIMARY_TOKEN_PRIVATE_SALE_2
+                + PrimaryTokenConstant.PRIMARY_TOKEN_PUBLIC_SALE
+                + PrimaryTokenConstant.PRIMARY_TOKEN_SEED_ROUND
             );
         }
     }
@@ -126,10 +129,10 @@ ReentrancyGuardUpgradeable {
             + (stakeToken3 != address(0) ? IERC20Upgradeable(stakeToken3).totalSupply() : 0);
     }
 
-    function isStakeRewardingCompleted() external view returns (bool) {
-        if (msg.sender == stakeToken1) return stakeToken1Waves >= Constant.PRIMARY_TOKEN_STAKE_1_CULMINATING_WAVE;
-        if (msg.sender == stakeToken2) return stakeToken2Waves >= Constant.PRIMARY_TOKEN_STAKE_2_CULMINATING_WAVE;
-        if (msg.sender == stakeToken3) return stakeToken3Waves >= Constant.PRIMARY_TOKEN_STAKE_3_CULMINATING_WAVE;
+    function isStakeRewardingCulminated() external view returns (bool) {
+        if (msg.sender == stakeToken1) return stakeToken1Waves >= PrimaryTokenConstant.PRIMARY_TOKEN_STAKE_1_CULMINATING_WAVE;
+        if (msg.sender == stakeToken2) return stakeToken2Waves >= PrimaryTokenConstant.PRIMARY_TOKEN_STAKE_2_CULMINATING_WAVE;
+        if (msg.sender == stakeToken3) return stakeToken3Waves >= PrimaryTokenConstant.PRIMARY_TOKEN_STAKE_3_CULMINATING_WAVE;
         revert Unauthorized();
     }
 
@@ -154,7 +157,7 @@ ReentrancyGuardUpgradeable {
         _transfer(
             address(this),
             _receiver,
-            Constant.PRIMARY_TOKEN_BACKER_ROUND
+            PrimaryTokenConstant.PRIMARY_TOKEN_BACKER_ROUND
         );
 
         emit BackerRoundTokensUnlock();
@@ -181,7 +184,7 @@ ReentrancyGuardUpgradeable {
         _transfer(
             address(this),
             _receiver,
-            Constant.PRIMARY_TOKEN_SEED_ROUND
+            PrimaryTokenConstant.PRIMARY_TOKEN_SEED_ROUND
         );
 
         emit SeedRoundTokensUnlock();
@@ -208,7 +211,7 @@ ReentrancyGuardUpgradeable {
         _transfer(
             address(this),
             _receiver,
-            Constant.PRIMARY_TOKEN_PRIVATE_SALE_1
+            PrimaryTokenConstant.PRIMARY_TOKEN_PRIVATE_SALE_1
         );
 
         emit PrivateSale1TokensUnlock();
@@ -236,7 +239,7 @@ ReentrancyGuardUpgradeable {
         _transfer(
             address(this),
             _receiver,
-            Constant.PRIMARY_TOKEN_PRIVATE_SALE_2
+            PrimaryTokenConstant.PRIMARY_TOKEN_PRIVATE_SALE_2
         );
 
         emit PrivateSale2TokensUnlock();
@@ -263,7 +266,7 @@ ReentrancyGuardUpgradeable {
         _transfer(
             address(this),
             _receiver,
-            Constant.PRIMARY_TOKEN_PUBLIC_SALE
+            PrimaryTokenConstant.PRIMARY_TOKEN_PUBLIC_SALE
         );
 
         emit PublicSaleTokensUnlock();
@@ -290,7 +293,7 @@ ReentrancyGuardUpgradeable {
         _transfer(
             address(this),
             _receiver,
-            Constant.PRIMARY_TOKEN_CORE_TEAM
+            PrimaryTokenConstant.PRIMARY_TOKEN_CORE_TEAM
         );
 
         emit CoreTeamTokensUnlock();
@@ -317,7 +320,7 @@ ReentrancyGuardUpgradeable {
         _transfer(
             address(this),
             _receiver,
-            Constant.PRIMARY_TOKEN_MARKET_MAKER
+            PrimaryTokenConstant.PRIMARY_TOKEN_MARKET_MAKER
         );
 
         emit MarketMakerTokensUnlock();
@@ -344,7 +347,7 @@ ReentrancyGuardUpgradeable {
         _transfer(
             address(this),
             _receiver,
-            Constant.PRIMARY_TOKEN_EXTERNAL_TREASURY
+            PrimaryTokenConstant.PRIMARY_TOKEN_EXTERNAL_TREASURY
         );
 
         emit ExternalTreasuryTokensUnlock();
@@ -439,33 +442,33 @@ ReentrancyGuardUpgradeable {
 
     function mintForStake() external returns (uint256) {
         if (msg.sender == stakeToken1) {
-            if (stakeToken1Waves == Constant.PRIMARY_TOKEN_STAKE_1_CULMINATING_WAVE) {
+            if (stakeToken1Waves == PrimaryTokenConstant.PRIMARY_TOKEN_STAKE_1_CULMINATING_WAVE) {
                 revert AllStakeRewardMinted();
             }
             unchecked {
                 stakeToken1Waves += 1;
             }
 
-            _mint(msg.sender, Constant.PRIMARY_TOKEN_STAKE_1_WAVE_REWARD);
+            _mint(msg.sender, PrimaryTokenConstant.PRIMARY_TOKEN_STAKE_1_WAVE_REWARD);
 
-            emit DailyStake1Mint(stakeToken1Waves, Constant.PRIMARY_TOKEN_STAKE_1_WAVE_REWARD);
+            emit DailyStake1Mint(stakeToken1Waves, PrimaryTokenConstant.PRIMARY_TOKEN_STAKE_1_WAVE_REWARD);
 
-            return Constant.PRIMARY_TOKEN_STAKE_1_WAVE_REWARD;
+            return PrimaryTokenConstant.PRIMARY_TOKEN_STAKE_1_WAVE_REWARD;
         } else if (msg.sender == stakeToken2) {
-            if (stakeToken2Waves == Constant.PRIMARY_TOKEN_STAKE_2_CULMINATING_WAVE) {
+            if (stakeToken2Waves == PrimaryTokenConstant.PRIMARY_TOKEN_STAKE_2_CULMINATING_WAVE) {
                 revert AllStakeRewardMinted();
             }
             unchecked {
                 stakeToken2Waves += 1;
             }
 
-            _mint(msg.sender, Constant.PRIMARY_TOKEN_STAKE_2_WAVE_REWARD);
+            _mint(msg.sender, PrimaryTokenConstant.PRIMARY_TOKEN_STAKE_2_WAVE_REWARD);
 
-            emit DailyStake2Mint(stakeToken2Waves, Constant.PRIMARY_TOKEN_STAKE_2_WAVE_REWARD);
+            emit DailyStake2Mint(stakeToken2Waves, PrimaryTokenConstant.PRIMARY_TOKEN_STAKE_2_WAVE_REWARD);
 
-            return Constant.PRIMARY_TOKEN_STAKE_2_WAVE_REWARD;
+            return PrimaryTokenConstant.PRIMARY_TOKEN_STAKE_2_WAVE_REWARD;
         } else if (msg.sender == stakeToken3) {
-            uint256 amount = Constant.PRIMARY_TOKEN_MAX_SUPPLY - totalSupply();
+            uint256 amount = PrimaryTokenConstant.PRIMARY_TOKEN_MAX_SUPPLY - totalSupply();
             if (amount == 0) {
                 revert SupplyCapReached();
             }
@@ -473,8 +476,8 @@ ReentrancyGuardUpgradeable {
                 stakeToken3Waves += 1;
             }
 
-            amount = amount > Constant.PRIMARY_TOKEN_STAKE_3_WAVE_REWARD
-                ? Constant.PRIMARY_TOKEN_STAKE_3_WAVE_REWARD
+            amount = amount > PrimaryTokenConstant.PRIMARY_TOKEN_STAKE_3_WAVE_REWARD
+                ? PrimaryTokenConstant.PRIMARY_TOKEN_STAKE_3_WAVE_REWARD
                 : amount;
 
             _mint(msg.sender, amount);
@@ -506,8 +509,8 @@ ReentrancyGuardUpgradeable {
 
     function exclusiveDiscount() external view returns (Rate memory rate) {
         return Rate(
-            Constant.PRIMARY_TOKEN_BASE_DISCOUNT.scale(totalStake() + totalSupply(), totalSupply()),
-            Constant.COMMON_RATE_DECIMALS
+            PrimaryTokenConstant.PRIMARY_TOKEN_BASE_DISCOUNT.scale(totalStake() + totalSupply(), totalSupply()),
+            CommonConstant.COMMON_RATE_DECIMALS
         );
     }
 

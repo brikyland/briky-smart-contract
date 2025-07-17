@@ -7,9 +7,9 @@ abstract contract EstateTokenStorage is IEstateToken {
     mapping(uint256 => mapping(address => Snapshot[])) internal balanceSnapshots;
 
     mapping(uint256 => Estate) internal estates;
-    mapping(uint256 => Extraction) internal extractions;
 
     mapping(address => bool) public isTokenizer;
+    mapping(address => bool) public isExtractor;
 
     uint256 public estateNumber;
     uint256 public extractionNumber;
@@ -18,9 +18,7 @@ abstract contract EstateTokenStorage is IEstateToken {
 
     address public admin;
     address public commissionToken;
-    address public dividendHub;
     address public feeReceiver;
-    address public governanceHub;
 
     uint256[50] private __gap;
 }

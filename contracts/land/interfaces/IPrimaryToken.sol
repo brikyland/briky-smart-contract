@@ -88,7 +88,7 @@ interface IPrimaryToken is IExclusiveToken {
     function contributeLiquidityFromSeedRound(uint256 liquidity) external;
     function contributeLiquidityFromStakeToken(uint256 liquidity, address _stakeToken) external;
 
-    function isStakeRewardingCompleted() external view returns (bool isCompleted);
+    function isStakeRewardingCulminated() external view returns (bool isCompleted);
     function totalStake() external view returns (uint256 totalStake);
 
     function mintForStake() external returns (uint256 reward);

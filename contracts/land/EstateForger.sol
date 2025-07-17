@@ -3,9 +3,10 @@ pragma solidity ^0.8.20;
 
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
-import {Constant} from "../lib/Constant.sol";
 import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
 import {Formula} from "../lib/Formula.sol";
+
+import {CommonConstant} from "../common/constants/CommonConstant.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 import {IPriceWatcher} from "../common/interfaces/IPriceWatcher.sol";
@@ -14,6 +15,8 @@ import {IReserveVault} from "../common/interfaces/IReserveVault.sol";
 import {Discountable} from "../common/utilities/Discountable.sol";
 import {Pausable} from "../common/utilities/Pausable.sol";
 import {Validatable} from "../common/utilities/Validatable.sol";
+
+import {EstateForgerConstant} from "./constants/EstateForgerConstant.sol";
 
 import {ICommissionToken} from "./interfaces/ICommissionToken.sol";
 import {IEstateToken} from "./interfaces/IEstateToken.sol";
@@ -54,7 +57,7 @@ ReentrancyGuardUpgradeable {
         uint256 _baseMinUnitPrice,
         uint256 _baseMaxUnitPrice
     ) external initializer {
-        require(_feeRate <= Constant.COMMON_RATE_MAX_FRACTION);
+        require(_feeRate <= CommonConstant.COMMON_RATE_MAX_FRACTION);
 
         __Pausable_init();
         __ReentrancyGuard_init();
@@ -93,7 +96,7 @@ ReentrancyGuardUpgradeable {
             ),
             _signatures
         );
-        if (_feeRate > Constant.COMMON_RATE_MAX_FRACTION) {
+        if (_feeRate > CommonConstant.COMMON_RATE_MAX_FRACTION) {
             revert InvalidRate();
         }
         feeRate = _feeRate;
@@ -193,7 +196,7 @@ ReentrancyGuardUpgradeable {
     }
 
     function getFeeRate() public view returns (Rate memory) {
-        return Rate(feeRate, Constant.COMMON_RATE_DECIMALS);
+        return Rate(feeRate, CommonConstant.COMMON_RATE_DECIMALS);
     }
 
     function getRequest(uint256 _requestId)
@@ -365,7 +368,7 @@ ReentrancyGuardUpgradeable {
         }
 
         uint40 publicSaleEndsAt = request.agenda.publicSaleEndsAt;
-        if (publicSaleEndsAt + Constant.ESTATE_TOKEN_CONFIRMATION_TIME_LIMIT <= block.timestamp) {
+        if (publicSaleEndsAt + EstateForgerConstant.ESTATE_FORGER_CONFIRMATION_TIME_LIMIT <= block.timestamp) {
             revert Timeout();
         }
 
@@ -379,8 +382,9 @@ ReentrancyGuardUpgradeable {
         }
 
         IEstateToken estateTokenContract = IEstateToken(estateToken);
+        uint256 unit = 10 ** estateTokenContract.decimals();
         uint256 estateId = estateTokenContract.tokenizeEstate(
-            totalQuantity * Constant.ESTATE_TOKEN_UNIT,
+            totalQuantity * unit,
             zone,
             _requestId,
             request.estate.uri,
@@ -395,7 +399,7 @@ ReentrancyGuardUpgradeable {
                 address(this),
                 request.seller,
                 estateId,
-                (request.quota.totalQuantity - soldQuantity) * Constant.ESTATE_TOKEN_UNIT,
+                (request.quota.totalQuantity - soldQuantity) * unit,
                 ""
             );
         }
@@ -469,7 +473,7 @@ ReentrancyGuardUpgradeable {
             if (publicSaleEndsAt > block.timestamp) {
                 revert StillSelling();
             }
-            if (publicSaleEndsAt + Constant.ESTATE_TOKEN_CONFIRMATION_TIME_LIMIT > block.timestamp
+            if (publicSaleEndsAt + EstateForgerConstant.ESTATE_FORGER_CONFIRMATION_TIME_LIMIT > block.timestamp
                 && request.quota.soldQuantity >= request.quota.minSellingQuantity) {
                 revert InvalidWithdrawing();
             }
@@ -508,7 +512,10 @@ ReentrancyGuardUpgradeable {
 
         hasWithdrawn[_requestId][msg.sender] = true;
         uint256 quantity = deposits[_requestId][msg.sender];
-        uint256 amount = quantity * Constant.ESTATE_TOKEN_UNIT;
+
+        IEstateToken estateTokenContract = IEstateToken(estateToken);
+        uint256 unit = 10 ** estateTokenContract.decimals();
+        uint256 amount = quantity * unit;
         IEstateToken(estateToken).safeTransferFrom(
             address(this),
             msg.sender,
@@ -537,13 +544,13 @@ ReentrancyGuardUpgradeable {
     ) external view validRequest(_tokenizationId) returns (uint256 allocation) {
         return requests[_tokenizationId].estate.estateId != 0
             && _at >= requests[_tokenizationId].agenda.publicSaleEndsAt
-            ? deposits[_tokenizationId][_account] * Constant.ESTATE_TOKEN_UNIT
+            ? deposits[_tokenizationId][_account] * 10 ** IEstateToken(estateToken).decimals()
             : 0;
     }
 
     function _getFeeDenomination(uint256 _unitPrice, address _currency) internal view returns (uint256) {
         return _applyDiscount(
-            _unitPrice.scale(feeRate, Constant.COMMON_RATE_MAX_FRACTION),
+            _unitPrice.scale(feeRate, CommonConstant.COMMON_RATE_MAX_FRACTION),
             _currency
         );
     }
@@ -559,7 +566,7 @@ ReentrancyGuardUpgradeable {
         uint256 _cashbackBaseRate
     ) private pure returns (uint256) {
         return (_feeDenomination - _commissionDenomination)
-            .scale(_cashbackBaseRate, Constant.COMMON_RATE_MAX_FRACTION);
+            .scale(_cashbackBaseRate, CommonConstant.COMMON_RATE_MAX_FRACTION);
     }
 
     function _requestTokenization(
@@ -590,9 +597,9 @@ ReentrancyGuardUpgradeable {
         if (!isSellerIn(_estate.zone, _seller)
             || _quota.minSellingQuantity > _quota.maxSellingQuantity
             || _quota.maxSellingQuantity > _quota.totalQuantity
-            || _quota.totalQuantity > Constant.ESTATE_TOKEN_TOTAL_QUANTITY_LIMIT
+            || _quota.totalQuantity > type(uint256).max / 10 ** IEstateToken(estateToken).decimals()
             || _quote.cashbackThreshold > _quota.totalQuantity
-            || _quote.cashbackBaseRate > Constant.COMMON_RATE_MAX_FRACTION
+            || _quote.cashbackBaseRate > CommonConstant.COMMON_RATE_MAX_FRACTION
             || _quote.cashbackCurrencies.length != _quote.cashbackDenominations.length) {
             revert InvalidInput();
         }
