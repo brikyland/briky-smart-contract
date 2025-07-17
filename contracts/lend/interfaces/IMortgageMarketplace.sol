@@ -34,9 +34,7 @@ IMortgage {
         uint256 indexed offerId,
         address indexed buyer,
         address royaltyReceiver,
-        uint256 royaltyAmount,
-        address commissionReceiver,
-        uint256 commissionAmount
+        uint256 royaltyAmount
     );
 
     error InvalidBuying();
@@ -46,7 +44,6 @@ IMortgage {
     error InvalidPrice();
     error UnavailableLoan();
 
-    function commissionToken() external view returns (address commissionToken);
     function mortgageToken() external view returns (address mortgageToken);
 
     function offerNumber() external view returns (uint256 offerNumber);

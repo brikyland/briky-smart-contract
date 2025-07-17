@@ -4,8 +4,11 @@ pragma solidity ^0.8.20;
 import {IValidatable} from "../../common/interfaces/IValidatable.sol";
 import {IProposal} from "../../common/interfaces/IProposal.sol";
 
+import {ICommissionDispatchable} from "./ICommissionDispatchable.sol";
+
 interface IEstateLiquidator is
 IProposal,
+ICommissionDispatchable,
 IValidatable {
     struct Request {
         uint256 estateId;
@@ -25,7 +28,7 @@ IValidatable {
         uint256 value,
         address currency
     );
-    event RequestApproval(uint256 indexed requestId, uint256 fee);
+    event RequestApproval(uint256 indexed requestId, uint256 feeAmount);
     event RequestDisapproval(uint256 indexed requestId);
 
     error Cancelled();

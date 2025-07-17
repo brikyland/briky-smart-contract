@@ -9,7 +9,6 @@ abstract contract EstateMarketplaceStorage is IEstateMarketplace {
     uint256 public offerNumber;
 
     address public admin;
-    address public commissionToken;
     address public estateToken;
 
     uint256[50] private __gap;

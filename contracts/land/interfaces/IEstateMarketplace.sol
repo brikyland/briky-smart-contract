@@ -40,11 +40,7 @@ IEstate {
         uint256 indexed offerId,
         address indexed buyer,
         uint256 amount,
-        uint256 value,
-        address royaltyReceiver,
-        uint256 royaltyAmount,
-        address commissionReceiver,
-        uint256 commissionAmount
+        uint256 value
     );
 
     error InvalidAmount();
@@ -57,7 +53,6 @@ IEstate {
     error NotDivisible();
     error NotEnoughTokensToSell();
 
-    function commissionToken() external view returns (address commissionToken);
     function estateToken() external view returns (address estateToken);
 
     function offerNumber() external view returns (uint256 offerNumber);

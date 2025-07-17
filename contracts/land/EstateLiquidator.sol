@@ -17,14 +17,18 @@ import {Discountable} from "../common/utilities/Discountable.sol";
 import {Pausable} from "../common/utilities/Pausable.sol";
 import {Validatable} from "../common/utilities/Validatable.sol";
 
+import {EstateLiquidatorConstant} from "./constants/EstateLiquidatorConstant.sol";
+
 import {IEstateToken} from "./interfaces/IEstateToken.sol";
 
 import {EstateLiquidatorStorage} from "./storages/EstateLiquidatorStorage.sol";
-import {EstateLiquidatorConstant} from "./constants/EstateLiquidatorConstant.sol";
+
+import {CommissionDispatchable} from "./utilities/CommissionDispatchable.sol";
 
 contract EstateLiquidator is
 EstateLiquidatorStorage,
 Administrable,
+CommissionDispatchable,
 Discountable,
 Pausable,
 Validatable,
@@ -55,6 +59,7 @@ ReentrancyGuardUpgradeable {
         __Pausable_init();
         __ReentrancyGuard_init();
 
+        __CommissionDispatchable_init(_commissionToken);
         __Validatable_init(_validator);
 
         admin = _admin;
@@ -179,32 +184,38 @@ ReentrancyGuardUpgradeable {
             uint256 value = request.value;
             address currency = request.currency;
 
-            uint256 fee = _applyDiscount(
+            uint256 feeAmount = _applyDiscount(
                 value.scale(feeRate, CommonConstant.COMMON_RATE_MAX_FRACTION),
                 currency
             );
 
+            uint256 commissionAmount = _dispatchCommission(
+                estateId,
+                feeAmount,
+                currency
+            );
+
             if (currency == address(0)) {
-                CurrencyHandler.sendNative(feeReceiver, fee);
-                IDividendHub(dividendHub).issueDividend{value: value - fee}(
+                CurrencyHandler.sendNative(feeReceiver, feeAmount - commissionAmount);
+                IDividendHub(dividendHub).issueDividend{value: value - feeAmount}(
                     address(this),
                     estateId,
-                    value - fee,
+                    value - feeAmount,
                     currency
                 );
             } else {
                 address dividendHubAddress = dividendHub;
-                CurrencyHandler.sendCurrency(currency, feeReceiver, fee);
-                CurrencyHandler.allowERC20(currency, dividendHubAddress, value - fee);
+                CurrencyHandler.sendCurrency(currency, feeReceiver, feeAmount - commissionAmount);
+                CurrencyHandler.allowERC20(currency, dividendHubAddress, value - feeAmount);
                 IDividendHub(dividendHubAddress).issueDividend(
                     address(this),
                     estateId,
-                    value - fee,
+                    value - feeAmount,
                     currency
                 );
             }
 
-            emit RequestApproval(_requestId, fee);
+            emit RequestApproval(_requestId, feeAmount);
 
             return true;
         }

@@ -24,6 +24,7 @@ import {RoyaltyRateProposer} from "../common/utilities/RoyaltyRateProposer.sol";
 import {ICommissionToken} from "../land/interfaces/ICommissionToken.sol";
 import {IEstateToken} from "../land/interfaces/IEstateToken.sol";
 
+import {CommissionDispatchable} from "../land/utilities/CommissionDispatchable.sol";
 import {EstateTokenReceiver} from "../land/utilities/EstateTokenReceiver.sol";
 
 import {MortgageTokenStorage} from "./storages/MortgageTokenStorage.sol";
@@ -32,6 +33,7 @@ contract MortgageToken is
 MortgageTokenStorage,
 ERC721PausableUpgradeable,
 Administrable,
+CommissionDispatchable,
 EstateTokenReceiver,
 Discountable,
 Pausable,
@@ -69,9 +71,10 @@ ReentrancyGuardUpgradeable {
 
         __ReentrancyGuard_init();
 
+        __CommissionDispatchable_init(_commissionToken);
+
         admin = _admin;
         estateToken = _estateToken;
-        commissionToken = _commissionToken;
         feeReceiver = _feeReceiver;
 
         baseURI = _uri;
@@ -304,20 +307,19 @@ ReentrancyGuardUpgradeable {
         feeAmount = _applyDiscount(feeAmount, currency);
 
         uint256 estateId = loan.estateId;
-        (
-            address commissionReceiver,
-            uint256 commissionAmount
-        ) = ICommissionToken(commissionToken).commissionInfo(estateId, feeAmount);
+        uint256 commissionAmount = _dispatchCommission(
+            estateId,
+            feeAmount,
+            currency
+        );
 
         if (currency == address(0)) {
             CurrencyHandler.receiveNative(principal);
             CurrencyHandler.sendNative(borrower, principal - feeAmount);
             CurrencyHandler.sendNative(feeReceiver, feeAmount - commissionAmount);
-            CurrencyHandler.sendNative(commissionReceiver, commissionAmount);
         } else {
             CurrencyHandler.forwardERC20(currency, borrower, principal - feeAmount);
             CurrencyHandler.forwardERC20(currency, feeReceiver, feeAmount - commissionAmount);
-            CurrencyHandler.forwardERC20(currency, commissionReceiver, commissionAmount);
         }
 
         IEstateToken(estateToken).safeTransferFrom(
@@ -339,9 +341,7 @@ ReentrancyGuardUpgradeable {
             _loanId,
             msg.sender,
             due,
-            feeAmount,
-            commissionReceiver,
-            commissionAmount
+            feeAmount
         );
 
         return  principal - feeAmount;

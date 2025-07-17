@@ -23,11 +23,13 @@ import {IEstateToken} from "./interfaces/IEstateToken.sol";
 
 import {EstateForgerStorage} from "./storages/EstateForgerStorage.sol";
 
+import {CommissionDispatchable} from "./utilities/CommissionDispatchable.sol";
 import {EstateTokenizer} from "./utilities/EstateTokenizer.sol";
 
 contract EstateForger is
 EstateForgerStorage,
 EstateTokenizer,
+CommissionDispatchable,
 Discountable,
 Pausable,
 Validatable,
@@ -62,11 +64,11 @@ ReentrancyGuardUpgradeable {
         __Pausable_init();
         __ReentrancyGuard_init();
 
+        __CommissionDispatchable_init(_commissionToken);
         __Validatable_init(_validator);
 
         admin = _admin;
         estateToken = _estateToken;
-        commissionToken = _commissionToken;
         priceWatcher = _priceWatcher;
         feeReceiver = _feeReceiver;
         reserveVault = _reserveVault;
@@ -412,6 +414,12 @@ ReentrancyGuardUpgradeable {
         uint256 commissionAmount = soldQuantity * request.quote.commissionDenomination;
         CurrencyHandler.sendCurrency(currency,_commissionReceiver, commissionAmount);
 
+        emit CommissionDispatch(
+            _commissionReceiver,
+            commissionAmount,
+            currency
+        );
+
         uint256 cashbackFundId = request.quote.cashbackFundId;
         address reserveVaultAddress = reserveVault;
         Fund memory fund = IReserveVault(reserveVaultAddress).getFund(cashbackFundId);
@@ -454,7 +462,6 @@ ReentrancyGuardUpgradeable {
             value,
             feeAmount,
             _commissionReceiver,
-            commissionAmount,
             cashbackBaseAmount
         );
 

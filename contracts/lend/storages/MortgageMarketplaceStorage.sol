@@ -9,7 +9,6 @@ abstract contract MortgageMarketplaceStorage is IMortgageMarketplace {
     uint256 public offerNumber;
 
     address public admin;
-    address public commissionToken;
     address public mortgageToken;
 
     uint256[50] private __gap;
