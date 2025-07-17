@@ -32,10 +32,10 @@ contract MortgageToken is
 MortgageTokenStorage,
 ERC721PausableUpgradeable,
 Administrable,
+EstateTokenReceiver,
 Discountable,
 Pausable,
 RoyaltyRateProposer,
-EstateTokenReceiver,
 ReentrancyGuardUpgradeable {
     using Formula for uint256;
 

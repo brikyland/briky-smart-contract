@@ -1,9 +1,10 @@
-import { ethers } from "hardhat";
+import { network } from "hardhat";
+import { parseEther } from "../../../utils/blockchain";
 
 export const Initialization = {
     // Governance Hub
-    // Testnet
-    GOVERNANCE_HUB_Fee: ethers.utils.parseEther('0.000001'),
-    // Mainnet
-    // GOVERNANCE_HUB_Fee: ethers.utils.parseEther('0'),
+    GOVERNANCE_HUB_Fee: {
+        testnet: parseEther(0.000000001),
+        mainnet: parseEther(0),
+    }[network.name] || parseEther(0.000000001),
 }

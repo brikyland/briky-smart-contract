@@ -31,13 +31,13 @@ import {EstateTokenStorage} from "./storages/EstateTokenStorage.sol";
 
 contract EstateToken is
 EstateTokenStorage,
-RoyaltyRateProposer,
 ERC1155PausableUpgradeable,
 ERC1155SupplyUpgradeable,
 ERC1155URIStorageUpgradeable,
 Administrable,
-Validatable,
-Pausable {
+Pausable,
+RoyaltyRateProposer,
+Validatable {
     using ERC165CheckerUpgradeable for address;
 
     string constant private VERSION = "v1.1.1";
@@ -179,6 +179,40 @@ Pausable {
                 }
                 isTokenizer[_accounts[i]] = false;
                 emit TokenizerDeauthorization(_accounts[i]);
+            }
+        }
+    }
+
+    function authorizeExtractors(
+        address[] calldata _accounts,
+        bool _isExtractor,
+        bytes[] calldata _signatures
+    ) external {
+        IAdmin(admin).verifyAdminSignatures(
+            abi.encode(
+                address(this),
+                "authorizeExtractor",
+                _accounts,
+                _isExtractor
+            ),
+            _signatures
+        );
+
+        if (_isExtractor) {
+            for (uint256 i; i < _accounts.length; ++i) {
+                if (isExtractor[_accounts[i]]) {
+                    revert AuthorizedAccount(_accounts[i]);
+                }
+                isExtractor[_accounts[i]] = true;
+                emit ExtractorAuthorization(_accounts[i]);
+            }
+        } else {
+            for (uint256 i; i < _accounts.length; ++i) {
+                if (!isExtractor[_accounts[i]]) {
+                    revert NotAuthorizedAccount(_accounts[i]);
+                }
+                isExtractor[_accounts[i]] = false;
+                emit ExtractorDeauthorization(_accounts[i]);
             }
         }
     }

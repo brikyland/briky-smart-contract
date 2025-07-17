@@ -5,8 +5,6 @@ export async function deployEstateToken(
     signer: any,
     adminAddress: string,
     feeReceiverAddress: string,
-    governanceHubAddress: string,
-    dividendHubAddress: string,
     validatorAddress: string,
     baseURI: string,
     royaltyRate: BigNumber,
@@ -18,8 +16,6 @@ export async function deployEstateToken(
         [
             adminAddress,
             feeReceiverAddress,
-            governanceHubAddress,
-            dividendHubAddress,
             validatorAddress,
             baseURI,
             royaltyRate,

@@ -24,10 +24,10 @@ import {EstateLiquidatorConstant} from "./constants/EstateLiquidatorConstant.sol
 
 contract EstateLiquidator is
 EstateLiquidatorStorage,
-Validatable,
-Discountable,
 Administrable,
+Discountable,
 Pausable,
+Validatable,
 ReentrancyGuardUpgradeable {
     using Formula for uint256;
 
@@ -45,6 +45,10 @@ ReentrancyGuardUpgradeable {
     function initialize(
         address _admin,
         address _estateToken,
+        address _commissionToken,
+        address _governanceHub,
+        address _dividendHub,
+        address _feeReceiver,
         address _validator,
         uint256 _feeRate
     ) external initializer {
@@ -55,6 +59,10 @@ ReentrancyGuardUpgradeable {
 
         admin = _admin;
         estateToken = _estateToken;
+        commissionToken = _commissionToken;
+        governanceHub = _governanceHub;
+        dividendHub = _dividendHub;
+        feeReceiver = _feeReceiver;
 
         feeRate = _feeRate;
 

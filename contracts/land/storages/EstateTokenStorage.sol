@@ -8,8 +8,8 @@ abstract contract EstateTokenStorage is IEstateToken {
 
     mapping(uint256 => Estate) internal estates;
 
-    mapping(address => bool) public isTokenizer;
     mapping(address => bool) public isExtractor;
+    mapping(address => bool) public isTokenizer;
 
     uint256 public estateNumber;
     uint256 public extractionNumber;

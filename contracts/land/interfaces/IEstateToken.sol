@@ -25,6 +25,9 @@ IERC1155MetadataURIUpgradeable {
     event TokenizerAuthorization(address indexed account);
     event TokenizerDeauthorization(address indexed account);
 
+    event ExtractorAuthorization(address indexed account);
+    event ExtractorDeauthorization(address indexed account);
+
     event NewToken(
         uint256 indexed tokenId,
         bytes32 indexed zone,
