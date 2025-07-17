@@ -8,8 +8,9 @@ import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/se
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import {ERC721PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721PausableUpgradeable.sol";
 
-import {Constant} from "../lib/Constant.sol";
 import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
+
+import {CommonConstant} from "../common/constants/CommonConstant.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 
@@ -38,7 +39,7 @@ ReentrancyGuardUpgradeable {
         uint256 _fee,
         uint256 _royaltyRate
     ) external initializer {
-        require(_royaltyRate <= Constant.COMMON_RATE_MAX_FRACTION);
+        require(_royaltyRate <= CommonConstant.COMMON_RATE_MAX_FRACTION);
 
         __ERC721_init(_name, _symbol);
         __ERC721Pausable_init();
@@ -106,7 +107,7 @@ ReentrancyGuardUpgradeable {
             ),
             _signature
         );
-        if (_royaltyRate > Constant.COMMON_RATE_MAX_FRACTION) {
+        if (_royaltyRate > CommonConstant.COMMON_RATE_MAX_FRACTION) {
             revert InvalidRate();
         }
         royaltyRate = _royaltyRate;
@@ -141,7 +142,7 @@ ReentrancyGuardUpgradeable {
 
     function getRoyaltyRate()
     public view override(IPassportToken, RoyaltyRateProposer) returns (Rate memory) {
-        return Rate(royaltyRate, Constant.COMMON_RATE_DECIMALS);
+        return Rate(royaltyRate, CommonConstant.COMMON_RATE_DECIMALS);
     }
 
     function mint() external payable nonReentrant whenNotPaused returns (uint256) {

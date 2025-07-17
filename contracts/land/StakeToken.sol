@@ -7,20 +7,24 @@ import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/
 import {ERC20PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PausableUpgradeable.sol";
 import {ERC20PermitUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
 
-import {Constant} from "../lib/Constant.sol";
 import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
 import {FixedMath} from "../lib/FixedMath.sol";
 import {Formula} from "../lib/Formula.sol";
 
+import {CommonConstant} from "../common/constants/CommonConstant.sol";
+
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 
 import {Pausable} from "../common/utilities/Pausable.sol";
+
+import {StakeTokenConstant} from "./constants/StakeTokenConstant.sol";
 
 import {IPrimaryToken} from "./interfaces/IPrimaryToken.sol";
 import {IStakeToken} from "./interfaces/IStakeToken.sol";
 import {ITreasury} from "./interfaces/ITreasury.sol";
 
 import {StakeTokenStorage} from "./storages/StakeTokenStorage.sol";
+import {PrimaryTokenConstant} from "./constants/PrimaryTokenConstant.sol";
 
 contract StakeToken is
 StakeTokenStorage,
@@ -92,7 +96,7 @@ ReentrancyGuardUpgradeable {
             ),
             _signatures
         );
-        if (_feeRate > Constant.COMMON_RATE_MAX_FRACTION) {
+        if (_feeRate > CommonConstant.COMMON_RATE_MAX_FRACTION) {
             revert InvalidRate();
         }
         feeRate = _feeRate;
@@ -100,7 +104,7 @@ ReentrancyGuardUpgradeable {
     }
 
     function getFeeRate() external view returns (Rate memory) {
-        return Rate(feeRate, Constant.COMMON_RATE_DECIMALS);
+        return Rate(feeRate, CommonConstant.COMMON_RATE_DECIMALS);
     }
 
     function fetchReward() public nonReentrant whenNotPaused {
@@ -108,7 +112,7 @@ ReentrancyGuardUpgradeable {
             if (lastRewardFetch == 0) {
                 revert NotStartedRewarding();
             }
-            if (lastRewardFetch + Constant.STAKE_TOKEN_REWARD_FETCH_COOLDOWN > block.timestamp) {
+            if (lastRewardFetch + StakeTokenConstant.STAKE_TOKEN_REWARD_FETCH_COOLDOWN > block.timestamp) {
                 revert OnCoolDown();
             }
             if (totalStake == 0) {
@@ -132,7 +136,7 @@ ReentrancyGuardUpgradeable {
 
     function stake(address _account, uint256 _value) external nonReentrant whenNotPaused {
         address primaryTokenAddress = primaryToken;
-        if (IPrimaryToken(primaryTokenAddress).isStakeRewardingCompleted()) {
+        if (IPrimaryToken(primaryTokenAddress).isStakeRewardingCulminated()) {
             ITreasury treasuryContract = ITreasury(IPrimaryToken(primaryToken).treasury());
             uint256 feeAmount = _stakingFee(
                 treasuryContract.liquidity(),
@@ -160,7 +164,7 @@ ReentrancyGuardUpgradeable {
 
     function unstake(uint256 _value) external nonReentrant whenNotPaused {
         address primaryTokenAddress = primaryToken;
-        if (!IPrimaryToken(primaryTokenAddress).isStakeRewardingCompleted()) {
+        if (!IPrimaryToken(primaryTokenAddress).isStakeRewardingCulminated()) {
             revert NotCompletedRewarding();
         }
 
@@ -186,7 +190,7 @@ ReentrancyGuardUpgradeable {
         }
 
         address primaryTokenAddress = primaryToken;
-        if (IPrimaryToken(primaryTokenAddress).isStakeRewardingCompleted()) {
+        if (IPrimaryToken(primaryTokenAddress).isStakeRewardingCulminated()) {
             revert InvalidPromoting();
         }
 
@@ -224,7 +228,7 @@ ReentrancyGuardUpgradeable {
         return Rate(
             primaryDiscount.value
                 .scale(globalStake - totalStake, globalStake << 1)
-                .add(Constant.PRIMARY_TOKEN_BASE_DISCOUNT),
+                .add(PrimaryTokenConstant.PRIMARY_TOKEN_BASE_DISCOUNT),
             primaryDiscount.decimals
         );
     }
@@ -256,7 +260,7 @@ ReentrancyGuardUpgradeable {
     ) internal pure returns (uint256) {
         return _liquidity
             .scale(_value, _totalSupply)
-            .scale(_feeRate, Constant.COMMON_RATE_MAX_FRACTION);
+            .scale(_feeRate, CommonConstant.COMMON_RATE_MAX_FRACTION);
     }
 
     function _newInterestAccumulation(

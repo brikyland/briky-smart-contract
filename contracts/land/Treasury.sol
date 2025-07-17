@@ -3,13 +3,16 @@ pragma solidity ^0.8.20;
 
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
-import {Constant} from "../lib/Constant.sol";
 import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
 import {Formula} from "../lib/Formula.sol";
+
+import {CommonConstant} from "../common/constants/CommonConstant.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 
 import {Pausable} from "../common/utilities/Pausable.sol";
+
+import {TreasuryConstant} from "./constants/TreasuryConstant.sol";
 
 import {TreasuryStorage} from "./storages/TreasuryStorage.sol";
 
@@ -83,7 +86,7 @@ ReentrancyGuardUpgradeable {
     function provideLiquidity(uint256 _value) external nonReentrant whenNotPaused {
         CurrencyHandler.receiveERC20(currency, _value);
 
-        uint256 feeAmount = _value.scale(Constant.TREASURY_OPERATION_FUND_RATE, Constant.COMMON_RATE_MAX_FRACTION);
+        uint256 feeAmount = _value.scale(TreasuryConstant.TREASURY_OPERATION_FUND_RATE, CommonConstant.COMMON_RATE_MAX_FRACTION);
 
         operationFund += feeAmount;
         liquidity += _value - feeAmount;

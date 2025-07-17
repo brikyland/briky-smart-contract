@@ -26,9 +26,7 @@ IERC721MetadataUpgradeable {
         uint256 indexed tokenId,
         address indexed lender,
         uint40 due,
-        uint256 feeAmount,
-        address commissionReceiver,
-        uint256 commissionAmount
+        uint256 feeAmount
     );
 
     event NewLoan(

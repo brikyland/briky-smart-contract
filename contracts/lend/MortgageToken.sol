@@ -8,9 +8,10 @@ import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC72
 import {ERC721PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721PausableUpgradeable.sol";
 import {ERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 
-import {Constant} from "../lib/Constant.sol";
 import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
 import {Formula} from "../lib/Formula.sol";
+
+import {CommonConstant} from "../common/constants/CommonConstant.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 import {IRoyaltyRateProposer} from "../common/interfaces/IRoyaltyRateProposer.sol";
@@ -23,6 +24,7 @@ import {RoyaltyRateProposer} from "../common/utilities/RoyaltyRateProposer.sol";
 import {ICommissionToken} from "../land/interfaces/ICommissionToken.sol";
 import {IEstateToken} from "../land/interfaces/IEstateToken.sol";
 
+import {CommissionDispatchable} from "../land/utilities/CommissionDispatchable.sol";
 import {EstateTokenReceiver} from "../land/utilities/EstateTokenReceiver.sol";
 
 import {MortgageTokenStorage} from "./storages/MortgageTokenStorage.sol";
@@ -31,10 +33,11 @@ contract MortgageToken is
 MortgageTokenStorage,
 ERC721PausableUpgradeable,
 Administrable,
+CommissionDispatchable,
+EstateTokenReceiver,
 Discountable,
 Pausable,
 RoyaltyRateProposer,
-EstateTokenReceiver,
 ReentrancyGuardUpgradeable {
     using Formula for uint256;
 
@@ -60,17 +63,18 @@ ReentrancyGuardUpgradeable {
         uint256 _feeRate,
         uint256 _royaltyRate
     ) external initializer {
-        require(_feeRate <= Constant.COMMON_RATE_MAX_FRACTION);
-        require(_royaltyRate <= Constant.COMMON_RATE_MAX_FRACTION);
+        require(_feeRate <= CommonConstant.COMMON_RATE_MAX_FRACTION);
+        require(_royaltyRate <= CommonConstant.COMMON_RATE_MAX_FRACTION);
 
         __ERC721_init(_name, _symbol);
         __ERC721Pausable_init();
 
         __ReentrancyGuard_init();
 
+        __CommissionDispatchable_init(_commissionToken);
+
         admin = _admin;
         estateToken = _estateToken;
-        commissionToken = _commissionToken;
         feeReceiver = _feeReceiver;
 
         baseURI = _uri;
@@ -116,7 +120,7 @@ ReentrancyGuardUpgradeable {
             ),
             _signature
         );
-        if (_royaltyRate > Constant.COMMON_RATE_MAX_FRACTION) {
+        if (_royaltyRate > CommonConstant.COMMON_RATE_MAX_FRACTION) {
             revert InvalidRate();
         }
         royaltyRate = _royaltyRate;
@@ -135,7 +139,7 @@ ReentrancyGuardUpgradeable {
             ),
             _signature
         );
-        if (_feeRate > Constant.COMMON_RATE_MAX_FRACTION) {
+        if (_feeRate > CommonConstant.COMMON_RATE_MAX_FRACTION) {
             revert InvalidRate();
         }
         feeRate = _feeRate;
@@ -143,12 +147,12 @@ ReentrancyGuardUpgradeable {
     }
 
     function getFeeRate() external view returns (Rate memory) {
-        return Rate(feeRate, Constant.COMMON_RATE_DECIMALS);
+        return Rate(feeRate, CommonConstant.COMMON_RATE_DECIMALS);
     }
 
     function getRoyaltyRate()
     public view override(IRoyaltyRateProposer, RoyaltyRateProposer) returns (Rate memory) {
-        return Rate(royaltyRate, Constant.COMMON_RATE_DECIMALS);
+        return Rate(royaltyRate, CommonConstant.COMMON_RATE_DECIMALS);
     }
 
     function getLoan(uint256 _loanId)
@@ -297,26 +301,25 @@ ReentrancyGuardUpgradeable {
         }
 
         uint256 principal = loan.principal;
-        uint256 feeAmount = principal.scale(feeRate, Constant.COMMON_RATE_MAX_FRACTION);
+        uint256 feeAmount = principal.scale(feeRate, CommonConstant.COMMON_RATE_MAX_FRACTION);
 
         address currency = loan.currency;
         feeAmount = _applyDiscount(feeAmount, currency);
 
         uint256 estateId = loan.estateId;
-        (
-            address commissionReceiver,
-            uint256 commissionAmount
-        ) = ICommissionToken(commissionToken).commissionInfo(estateId, feeAmount);
+        uint256 commissionAmount = _dispatchCommission(
+            estateId,
+            feeAmount,
+            currency
+        );
 
         if (currency == address(0)) {
             CurrencyHandler.receiveNative(principal);
             CurrencyHandler.sendNative(borrower, principal - feeAmount);
             CurrencyHandler.sendNative(feeReceiver, feeAmount - commissionAmount);
-            CurrencyHandler.sendNative(commissionReceiver, commissionAmount);
         } else {
             CurrencyHandler.forwardERC20(currency, borrower, principal - feeAmount);
             CurrencyHandler.forwardERC20(currency, feeReceiver, feeAmount - commissionAmount);
-            CurrencyHandler.forwardERC20(currency, commissionReceiver, commissionAmount);
         }
 
         IEstateToken(estateToken).safeTransferFrom(
@@ -338,9 +341,7 @@ ReentrancyGuardUpgradeable {
             _loanId,
             msg.sender,
             due,
-            feeAmount,
-            commissionReceiver,
-            commissionAmount
+            feeAmount
         );
 
         return  principal - feeAmount;

@@ -1,3 +1,4 @@
+import { network } from 'hardhat';
 import { parseEther } from "../../../utils/blockchain";
 
 export const Initialization = {
@@ -12,6 +13,12 @@ export const Initialization = {
     ESTATE_FORGER_FeeRate: parseEther(0.001),
     ESTATE_FORGER_BaseMinUnitPrice: parseEther(100),
     ESTATE_FORGER_BaseMaxUnitPrice: parseEther(1_000),
+
+    // Estate Liquidator
+    ESTATE_LIQUIDATOR_FeeRate: {
+        testnet: parseEther(0.000000001),
+        mainnet: parseEther(0),
+    }[network.name] || parseEther(0.000000001),
 
     // Estate Token
     ESTATE_TOKEN_BaseURI: '',

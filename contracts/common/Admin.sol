@@ -5,10 +5,11 @@ import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {ERC165CheckerUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 
-import {Constant} from "../lib/Constant.sol";
 import {Signature} from "../lib/Signature.sol";
 
 import {IGovernor} from "./interfaces/IGovernor.sol";
+
+import {AdminConstant} from "./constants/AdminConstant.sol";
 
 import {AdminStorage} from "./storages/AdminStorage.sol";
 
@@ -66,7 +67,7 @@ Initializable {
         if (Signature.verify(admin4, _message, currentNonce, _signatures[3])) counter++;
         if (Signature.verify(admin5, _message, currentNonce, _signatures[4])) counter++;
 
-        if (counter < Constant.ADMIN_SIGNATURE_VERIFICATION_QUORUM) {
+        if (counter < AdminConstant.ADMIN_SIGNATURE_VERIFICATION_QUORUM) {
             revert FailedVerification();
         }
 

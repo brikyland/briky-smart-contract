@@ -3,7 +3,6 @@ pragma solidity ^0.8.20;
 
 import {ICommon} from "../common/interfaces/ICommon.sol";
 
-import {Constant} from "./Constant.sol";
 import {MulDiv} from "./MulDiv.sol";
 
 library Formula {

@@ -9,7 +9,7 @@ import {ERC1155PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/to
 import {ERC1155SupplyUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/extensions/ERC1155SupplyUpgradeable.sol";
 import {ERC1155URIStorageUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/extensions/ERC1155URIStorageUpgradeable.sol";
 
-import {Constant} from "../../lib/Constant.sol";
+import {CommonConstant} from "../../common/constants/CommonConstant.sol";
 
 import {RoyaltyRateProposer} from "../../common/utilities/RoyaltyRateProposer.sol";
 
@@ -38,8 +38,8 @@ ERC1155URIStorageUpgradeable {
         uint256 _feeRate,
         uint256 _royaltyRate
     ) internal onlyInitializing {
-        require(_feeRate <= Constant.COMMON_RATE_MAX_FRACTION);
-        require(_royaltyRate <= Constant.COMMON_RATE_MAX_FRACTION);
+        require(_feeRate <= CommonConstant.COMMON_RATE_MAX_FRACTION);
+        require(_royaltyRate <= CommonConstant.COMMON_RATE_MAX_FRACTION);
 
         __ERC1155_init(_uri);
 

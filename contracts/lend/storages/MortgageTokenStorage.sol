@@ -14,7 +14,6 @@ abstract contract MortgageTokenStorage is IMortgageToken {
     string internal baseURI;
 
     address public admin;
-    address public commissionToken;
     address public estateToken;
     address public feeReceiver;
 

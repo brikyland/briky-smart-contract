@@ -3,9 +3,10 @@ pragma solidity ^0.8.20;
 
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
-import {Constant} from "../lib/Constant.sol";
 import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
 import {Formula} from "../lib/Formula.sol";
+
+import {CommonConstant} from "../common/constants/CommonConstant.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 
@@ -18,9 +19,12 @@ import {IEstateToken} from "./interfaces/IEstateToken.sol";
 
 import {EstateMarketplaceStorage} from "./storages/EstateMarketplaceStorage.sol";
 
+import {CommissionDispatchable} from "./utilities/CommissionDispatchable.sol";
+
 contract EstateMarketplace is
 EstateMarketplaceStorage,
 Administrable,
+CommissionDispatchable,
 Discountable,
 Pausable,
 ReentrancyGuardUpgradeable {
@@ -45,9 +49,10 @@ ReentrancyGuardUpgradeable {
         __Pausable_init();
         __ReentrancyGuard_init();
 
+        __CommissionDispatchable_init(_commissionToken);
+
         admin = _admin;
         estateToken = _estateToken;
-        commissionToken = _commissionToken;
     }
 
     function version() external pure returns (string memory) {
@@ -185,21 +190,19 @@ ReentrancyGuardUpgradeable {
 
         address currency = offer.currency;
         royaltyAmount = _applyDiscount(royaltyAmount, currency);
-
-        (
-            address commissionReceiver,
-            uint256 commissionAmount
-        ) = ICommissionToken(commissionToken).commissionInfo(tokenId, royaltyAmount);
+        uint256 commissionAmount = _dispatchCommission(
+            tokenId,
+            royaltyAmount,
+            currency
+        );
 
         if (currency == address(0)) {
             CurrencyHandler.receiveNative(value + royaltyAmount);
             CurrencyHandler.sendNative(seller, value);
             CurrencyHandler.sendNative(royaltyReceiver, royaltyAmount - commissionAmount);
-            CurrencyHandler.sendNative(commissionReceiver, commissionAmount);
         } else {
             CurrencyHandler.forwardERC20(currency, seller, value);
             CurrencyHandler.forwardERC20(currency, royaltyReceiver, royaltyAmount - commissionAmount);
-            CurrencyHandler.forwardERC20(currency, commissionReceiver, commissionAmount);
         }
 
         offer.soldAmount = newSoldAmount;
@@ -218,11 +221,7 @@ ReentrancyGuardUpgradeable {
             _offerId,
             msg.sender,
             _amount,
-            value,
-            royaltyReceiver,
-            royaltyAmount,
-            commissionReceiver,
-            commissionAmount
+            value
         );
 
         return value + royaltyAmount;

@@ -3,10 +3,12 @@ pragma solidity ^0.8.20;
 
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
-import {Constant} from "../lib/Constant.sol";
 import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
 import {Formula} from "../lib/Formula.sol";
 import {Signature} from "../lib/Signature.sol";
+
+import {CommonConstant} from "./constants/CommonConstant.sol";
+import {GovernanceHubConstant} from "./constants/GovernanceHubConstant.sol";
 
 import {IAdmin} from "./interfaces/IAdmin.sol";
 import {IGovernor} from "./interfaces/IGovernor.sol";
@@ -91,7 +93,7 @@ ReentrancyGuardUpgradeable {
     function getProposalState(uint256 _proposalId)
     external view validProposal(_proposalId) returns (ProposalState) {
         if (proposals[_proposalId].state == ProposalState.Voting
-            && proposals[_proposalId].due + Constant.GOVERNANCE_HUB_CONFIRMATION_TIME_LIMIT <= block.timestamp) {
+            && proposals[_proposalId].due + GovernanceHubConstant.GOVERNANCE_HUB_CONFIRMATION_TIME_LIMIT <= block.timestamp) {
             return ProposalState.Disqualified;
         }
 
@@ -129,10 +131,10 @@ ReentrancyGuardUpgradeable {
         }
 
         if (!IGovernor(_governor).isAvailable(_tokenId)) {
-            revert InvalidTokenId();
+            revert UnavailableToken();
         }
 
-        if (_quorumRate > Constant.COMMON_RATE_MAX_FRACTION) {
+        if (_quorumRate > CommonConstant.COMMON_RATE_MAX_FRACTION) {
             revert InvalidInput();
         }
 
@@ -201,12 +203,12 @@ ReentrancyGuardUpgradeable {
         }
 
         IGovernor governorContract = IGovernor(proposal.governor);
-        if (!governorContract.isAvailable(proposal.tokenId)) {
-            revert InvalidTokenId();
+        uint256 tokenId = proposal.tokenId;
+        if (!governorContract.isAvailable(tokenId)) {
+            revert UnavailableToken();
         }
 
         IAdmin adminContract = IAdmin(admin);
-        uint256 tokenId = proposal.tokenId;
         if (!adminContract.getZoneEligibility(governorContract.zoneOf(tokenId), msg.sender)) {
             revert Unauthorized();
         }
@@ -218,7 +220,7 @@ ReentrancyGuardUpgradeable {
 
         uint256 quorum = totalWeight.scale(
             proposal.quorum,
-            Constant.COMMON_RATE_MAX_FRACTION
+            CommonConstant.COMMON_RATE_MAX_FRACTION
         );
 
         proposal.metadataUri = _metadataUri;
@@ -320,7 +322,7 @@ ReentrancyGuardUpgradeable {
     external nonReentrant validProposal(_proposalId) whenNotPaused returns (uint256) {
         Proposal storage proposal = proposals[_proposalId];
         ProposalState state = proposal.state;
-        if (!(state == ProposalState.Voting && proposal.due + Constant.GOVERNANCE_HUB_CONFIRMATION_TIME_LIMIT <= block.timestamp)
+        if (!(state == ProposalState.Voting && proposal.due + GovernanceHubConstant.GOVERNANCE_HUB_CONFIRMATION_TIME_LIMIT <= block.timestamp)
             && _votingVerdict(proposal) != ProposalVerdict.Failed) {
             revert InvalidBudgetContributionWithdrawing();
         }
@@ -344,15 +346,18 @@ ReentrancyGuardUpgradeable {
     function confirmExecution(uint256 _proposalId)
     external nonReentrant validProposal(_proposalId) onlyManager whenNotPaused {
         Proposal storage proposal = proposals[_proposalId];
-        if (!IAdmin(admin).getZoneEligibility(
-            IGovernor(proposal.governor).zoneOf(proposal.tokenId),
-            msg.sender
-        )) {
+        uint256 tokenId = proposal.tokenId;
+        IGovernor governorContract = IGovernor(proposal.governor);
+        if (!governorContract.isAvailable(tokenId)) {
+            revert UnavailableToken();
+        }
+
+        if (!IAdmin(admin).getZoneEligibility(governorContract.zoneOf(tokenId), msg.sender)) {
             revert Unauthorized();
         }
 
         if (proposal.state != ProposalState.Voting
-            || proposal.due + Constant.GOVERNANCE_HUB_CONFIRMATION_TIME_LIMIT <= block.timestamp
+            || proposal.due + GovernanceHubConstant.GOVERNANCE_HUB_CONFIRMATION_TIME_LIMIT <= block.timestamp
             || _votingVerdict(proposal) != ProposalVerdict.Passed) {
             revert InvalidExecutionConfirming();
         }
@@ -415,10 +420,13 @@ ReentrancyGuardUpgradeable {
         );
 
         Proposal storage proposal = proposals[_proposalId];
-        if (!IAdmin(admin).getZoneEligibility(
-            IGovernor(proposal.governor).zoneOf(proposal.tokenId),
-            msg.sender
-        )) {
+        uint256 tokenId = proposal.tokenId;
+        IGovernor governorContract = IGovernor(proposal.governor);
+        if (!governorContract.isAvailable(tokenId)) {
+            revert UnavailableToken();
+        }
+
+        if (!IAdmin(admin).getZoneEligibility(governorContract.zoneOf(tokenId), msg.sender)) {
             revert Unauthorized();
         }
 
@@ -453,16 +461,23 @@ ReentrancyGuardUpgradeable {
         }
 
         ProposalRule rule = _proposal.rule;
+        uint256 quorum = _proposal.quorum;
         if (rule == ProposalRule.ApprovalBeyondQuorum) {
-            if (_proposal.approvalWeight >= _proposal.quorum) {
+            if (_proposal.approvalWeight >= quorum) {
                 return ProposalVerdict.Passed;
+            }
+            if (_proposal.disapprovalWeight > _proposal.totalWeight - quorum) {
+                return ProposalVerdict.Failed;
             }
             return _proposal.due <= block.timestamp
                 ? ProposalVerdict.Failed
                 : ProposalVerdict.Unsettled;
         } else {
-            if (_proposal.disapprovalWeight >= _proposal.quorum) {
+            if (_proposal.disapprovalWeight >= quorum) {
                 return ProposalVerdict.Failed;
+            }
+            if (_proposal.approvalWeight > _proposal.totalWeight - quorum) {
+                return ProposalVerdict.Passed;
             }
             return _proposal.due <= block.timestamp
                 ? ProposalVerdict.Passed
@@ -484,9 +499,15 @@ ReentrancyGuardUpgradeable {
             revert AlreadyVoted();
         }
 
-        uint256 weight = IGovernor(proposal.governor).voteOfAt(
+        uint256 tokenId = proposal.tokenId;
+        IGovernor governorContract = IGovernor(proposal.governor);
+        if (!governorContract.isAvailable(tokenId)) {
+            revert UnavailableToken();
+        }
+
+        uint256 weight = governorContract.voteOfAt(
             msg.sender,
-            proposal.tokenId,
+            tokenId,
             proposal.timePivot
         );
         if (weight == 0) {
@@ -527,7 +548,7 @@ ReentrancyGuardUpgradeable {
             revert InvalidBudgetContributing();
         }
 
-        if (proposal.due + Constant.GOVERNANCE_HUB_CONFIRMATION_TIME_LIMIT <= block.timestamp) {
+        if (proposal.due + GovernanceHubConstant.GOVERNANCE_HUB_CONFIRMATION_TIME_LIMIT <= block.timestamp) {
             revert Overdue();
         }
 

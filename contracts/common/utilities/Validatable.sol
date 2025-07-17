@@ -3,8 +3,9 @@ pragma solidity ^0.8.20;
 
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-import {Constant} from "../../lib/Constant.sol";
 import {Signature} from "../../lib/Signature.sol";
+
+import {CommonConstant} from "../constants/CommonConstant.sol";
 
 import {IAdmin} from "../interfaces/IAdmin.sol";
 

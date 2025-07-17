@@ -4,10 +4,12 @@ pragma solidity ^0.8.20;
 import {IFund} from "../../common/interfaces/IFund.sol";
 import {IValidatable} from "../../common/interfaces/IValidatable.sol";
 
+import {ICommissionDispatchable} from "./ICommissionDispatchable.sol";
 import {IEstateTokenizer} from "./IEstateTokenizer.sol";
 
 interface IEstateForger is
 IFund,
+ICommissionDispatchable,
 IValidatable,
 IEstateTokenizer {
     struct RequestEstate {
@@ -99,7 +101,6 @@ IEstateTokenizer {
         uint256 value,
         uint256 feeAmount,
         address commissionReceiver,
-        uint256 commissionAmount,
         uint256 cashbackBaseAmount
     );
 
@@ -147,7 +148,6 @@ IEstateTokenizer {
     error Tokenized();
     error Whitelisted(address account);
 
-    function commissionToken() external view returns (address commissionToken);
     function feeReceiver() external view returns (address feeReceiver);
 
     function getFeeRate() external view returns (Rate memory rate);

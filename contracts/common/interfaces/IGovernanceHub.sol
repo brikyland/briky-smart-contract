@@ -82,6 +82,7 @@ IValidatable {
     error NoVotingPower();
     error Overdue();
     error Timeout();
+    error UnavailableToken();
 
     function fee() external view returns (uint256 fee);
     function proposalNumber() external view returns (uint256 proposalNumber);
@@ -96,7 +97,7 @@ IValidatable {
     function propose(
         address governor,
         uint256 tokenId,
-        address executor,
+        address operator,
         bytes32 uuid,
         ProposalRule rule,
         uint256 quorum,
