@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+import {IProposal} from "../structs/IProposal.sol";
+
 import {ICommon} from "./ICommon.sol";
-import {IProposal} from "./IProposal.sol";
 import {IValidatable} from "./IValidatable.sol";
 
 interface IGovernanceHub is
-ICommon,
 IProposal,
+ICommon,
 IValidatable {
     event FeeUpdate(uint256 newValue);
 
@@ -67,17 +68,15 @@ IValidatable {
     error ConflictedQuorum();
     error ConflictedWeight();
     error InvalidAdmitting();
-    error InvalidBudgetContributing();
-    error InvalidBudgetContributionWithdrawing();
+    error InvalidConcluding();
+    error InvalidConfirming();
+    error InvalidContributing();
     error InvalidDisqualifying();
-    error InvalidExecutionConcluding();
-    error InvalidExecutionConfirming();
-    error InvalidExecutionRejecting();
-    error InvalidExecutionUpdating();
-    error InvalidGovernor();
     error InvalidProposalId();
+    error InvalidRejecting();
     error InvalidTokenId();
     error InvalidVoting();
+    error InvalidWithdrawing();
     error NothingToWithdraw();
     error NoVotingPower();
     error Overdue();

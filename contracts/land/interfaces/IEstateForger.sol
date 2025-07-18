@@ -1,74 +1,23 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {IFund} from "../../common/interfaces/IFund.sol";
 import {IValidatable} from "../../common/interfaces/IValidatable.sol";
+
+import {IFund} from "../../common/structs/IFund.sol";
+import {IRate} from "../../common/structs/IRate.sol";
+
+import {IEstateForgerRequest} from "../structs/IEstateForgerRequest.sol";
 
 import {ICommissionDispatchable} from "./ICommissionDispatchable.sol";
 import {IEstateTokenizer} from "./IEstateTokenizer.sol";
 
 interface IEstateForger is
+IEstateForgerRequest,
 IFund,
+IRate,
 ICommissionDispatchable,
 IValidatable,
 IEstateTokenizer {
-    struct RequestEstate {
-        uint256 estateId;
-        bytes32 zone;
-        string uri;
-        uint40 expireAt;
-    }
-
-    struct RequestEstateInput {
-        bytes32 zone;
-        string uri;
-        uint40 expireAt;
-    }
-
-    struct RequestQuota {
-        uint256 totalQuantity;
-        uint256 minSellingQuantity;
-        uint256 maxSellingQuantity;
-        uint256 soldQuantity;
-    }
-
-    struct RequestQuotaInput {
-        uint256 totalQuantity;
-        uint256 minSellingQuantity;
-        uint256 maxSellingQuantity;
-    }
-
-    struct RequestQuote {
-        uint256 unitPrice;
-        address currency;
-        uint256 cashbackThreshold;
-        uint256 cashbackFundId;
-        uint256 feeDenomination;
-        uint256 commissionDenomination;
-    }
-
-    struct RequestQuoteInput {
-        uint256 unitPrice;
-        address currency;
-        uint256 cashbackThreshold;
-        uint256 cashbackBaseRate;
-        address[] cashbackCurrencies;
-        uint256[] cashbackDenominations;
-    }
-
-    struct RequestAgenda {
-        uint40 privateSaleEndsAt;
-        uint40 publicSaleEndsAt;
-    }
-
-    struct Request {
-        RequestEstate estate;
-        RequestQuota quota;
-        RequestQuote quote;
-        RequestAgenda agenda;
-        address seller;
-    }
-
     event FeeRateUpdate(uint256 newValue);
 
     event BaseUnitPriceRangeUpdate(
@@ -88,10 +37,10 @@ IEstateTokenizer {
     event NewRequest(
         uint256 indexed requestId,
         address indexed seller,
-        RequestEstateInput estate,
-        RequestQuotaInput quota,
-        RequestQuote quote,
-        RequestAgenda agenda
+        EstateForgerRequestEstateInput estate,
+        EstateForgerRequestQuotaInput quota,
+        EstateForgerRequestQuote quote,
+        EstateForgerRequestAgenda agenda
     );
     event RequestCancellation(uint256 indexed requestId);
     event RequestConfirmation(
@@ -123,13 +72,7 @@ IEstateTokenizer {
         uint256 quantity,
         uint256 value
     );
-    event TokenWithdrawal(
-        uint256 indexed requestId,
-        address indexed depositor,
-        uint256 amount
-    );
 
-    error Activated(address account);
     error AlreadyHadDeposit();
     error AlreadyWithdrawn();
     error Cancelled();
@@ -139,13 +82,12 @@ IEstateTokenizer {
     error InvalidUnitPrice();
     error InvalidWithdrawing();
     error MaxSellingQuantityExceeded();
-    error NotActivated(address account);
     error NotEnoughSoldQuantity();
-    error NotWhitelisted(address account);
+    error NotWhitelistedAccount(address account);
     error StillSelling();
     error Timeout();
     error Tokenized();
-    error Whitelisted(address account);
+    error WhitelistedAccount(address account);
 
     function feeReceiver() external view returns (address feeReceiver);
 
@@ -162,9 +104,9 @@ IEstateTokenizer {
     function deposits(uint256 requestId, address depositor) external view returns (uint256 deposit);
     function hasWithdrawn(uint256 requestId, address account) external view returns (bool hasWithdrawn);
 
-    function getRequest(uint256 requestId) external view returns (Request memory request);
+    function getRequest(uint256 requestId) external view returns (EstateForgerRequest memory request);
 
-    function registerSeller(
+    function registerSellerIn(
         bytes32 zone,
         address account,
         string calldata uri,
@@ -173,18 +115,18 @@ IEstateTokenizer {
 
     function requestTokenizationWithDuration(
         address seller,
-        RequestEstateInput calldata estate,
-        RequestQuotaInput calldata quota,
-        RequestQuoteInput calldata quote,
+        EstateForgerRequestEstateInput calldata estate,
+        EstateForgerRequestQuotaInput calldata quota,
+        EstateForgerRequestQuoteInput calldata quote,
         uint40 privateSaleDuration,
         uint40 publicSaleDuration,
         Validation calldata validation
     ) external returns (uint256 requestId);
     function requestTokenizationWithTimestamp(
         address seller,
-        RequestEstateInput calldata estate,
-        RequestQuotaInput calldata quota,
-        RequestQuoteInput calldata quote,
+        EstateForgerRequestEstateInput calldata estate,
+        EstateForgerRequestQuotaInput calldata quota,
+        EstateForgerRequestQuoteInput calldata quote,
         uint40 privateSaleEndsAt,
         uint40 publicSaleEndsAt,
         Validation calldata validation
@@ -204,7 +146,6 @@ IEstateTokenizer {
         uint40 publicSaleEndsAt
     ) external;
     function withdrawDeposit(uint256 requestId) external returns (uint256 value);
-    function withdrawToken(uint256 requestId) external returns (uint256 amount);
 
     function safeDeposit(
         uint256 requestId,

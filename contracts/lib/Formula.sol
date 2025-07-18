@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {ICommon} from "../common/interfaces/ICommon.sol";
+import {IRate} from "../common/structs/IRate.sol";
 
 import {MulDiv} from "./MulDiv.sol";
 
@@ -14,7 +14,7 @@ library Formula {
         );
     }
 
-    function scale(uint256 _value, ICommon.Rate memory _rate) internal pure returns (uint256) {
+    function scale(uint256 _value, IRate.Rate memory _rate) internal pure returns (uint256) {
         return scale(
             _value,
             _rate.value,
@@ -26,7 +26,7 @@ library Formula {
         return _value - scale(_value, _numerator, _denominator);
     }
 
-    function remain(uint256 _value, ICommon.Rate memory _rate) internal pure returns (uint256) {
+    function remain(uint256 _value, IRate.Rate memory _rate) internal pure returns (uint256) {
         return _value - scale(_value, _rate);
     }
 }

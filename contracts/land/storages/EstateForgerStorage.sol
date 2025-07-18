@@ -11,7 +11,7 @@ abstract contract EstateForgerStorage is IEstateForger {
 
     mapping(address => bool) public isWhitelisted;
 
-    mapping(uint256 => Request) internal requests;
+    mapping(uint256 => EstateForgerRequest) internal requests;
 
     uint256 public requestNumber;
 

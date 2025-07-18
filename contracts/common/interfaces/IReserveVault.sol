@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+import {IFund} from "../structs/IFund.sol";
+
 import {ICommon} from "./ICommon.sol";
-import {IFund} from "./IFund.sol";
 
 interface IReserveVault is
-ICommon,
-IFund {
+IFund,
+ICommon {
     event InitiatorAuthorization(address indexed account);
     event InitiatorDeauthorization(address indexed account);
 
@@ -28,7 +29,7 @@ IFund {
 
     error AlreadyProvided();
     error InvalidDenomination();
-    error InvalidExpandingFund();
+    error InvalidExpanding();
     error InvalidFundId();
 
     function fundNumber() external view returns (uint256 fundNumber);

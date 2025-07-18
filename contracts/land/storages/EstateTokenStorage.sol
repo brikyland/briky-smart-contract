@@ -13,8 +13,6 @@ abstract contract EstateTokenStorage is IEstateToken {
 
     uint256 public estateNumber;
 
-    uint256 internal royaltyRate;
-
     address public admin;
     address public commissionToken;
     address public feeReceiver;

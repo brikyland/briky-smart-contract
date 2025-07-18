@@ -1,18 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+import {IDividend} from "../structs/IDividend.sol";
+
 import {ICommon} from "./ICommon.sol";
 
-interface IDividendHub is ICommon {
-    struct Dividend {
-        uint256 tokenId;
-        uint256 remainWeight;
-        uint256 remainValue;
-        address currency;
-        uint40 at;
-        address governor;
-    }
-
+interface IDividendHub is
+IDividend,
+ICommon {
     event NewDividend(
         address indexed governor,
         uint256 indexed tokenId,
@@ -30,7 +25,6 @@ interface IDividendHub is ICommon {
 
     error AlreadyWithdrawn();
     error InvalidDividendId();
-    error InvalidGovernor();
     error InvalidTokenId();
     error InvalidWithdrawing();
 

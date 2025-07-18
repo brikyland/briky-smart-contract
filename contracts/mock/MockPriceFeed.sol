@@ -5,27 +5,24 @@ import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interf
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 contract MockPriceFeed is AggregatorV3Interface, Initializable {
-    uint256 private _answer;
-    uint8 private _decimals;
-    uint80 private _roundId;
-    uint256 private _startedAt;
-    uint256 private _updatedAt;
-    uint80 private _answeredInRound;
+    uint256 private answer;
+    uint80 private roundId;
+    uint256 private startedAt;
+    uint256 private updatedAt;
+    uint80 private answeredInRound;
+
+    uint8 public decimals;
 
     function initialize(
-        uint256 answer,
-        uint8 decimals_
+        uint256 _answer,
+        uint8 _decimals
     ) public initializer {
-        _answer = answer;
-        _decimals = decimals_;
-        _roundId = 1;
-        _startedAt = block.timestamp;
-        _updatedAt = block.timestamp;
-        _answeredInRound = 1;
-    }
-
-    function decimals() external view override returns (uint8) {
-        return _decimals;
+        answer = _answer;
+        decimals = _decimals;
+        roundId = 1;
+        startedAt = block.timestamp;
+        updatedAt = block.timestamp;
+        answeredInRound = 1;
     }
 
     function description() external pure override returns (string memory) {
@@ -38,14 +35,14 @@ contract MockPriceFeed is AggregatorV3Interface, Initializable {
 
     function getRoundData(uint80 _roundId)
         external
-        view
+        pure
         override
         returns (
-            uint80 roundId,
-            int256 answer,
-            uint256 startedAt,
-            uint256 updatedAt,
-            uint80 answeredInRound
+            uint80,
+            int256 _answer,
+            uint256 _startedAt,
+            uint256 _updatedAt,
+            uint80 _answeredInRound
         )
     {
         return (
@@ -59,14 +56,14 @@ contract MockPriceFeed is AggregatorV3Interface, Initializable {
 
     function latestRoundData()
         external
-        view
+        pure
         override
         returns (
-            uint80 roundId,
-            int256 answer,
-            uint256 startedAt,
-            uint256 updatedAt,
-            uint80 answeredInRound
+            uint80 _roundId,
+            int256 _answer,
+            uint256 _startedAt,
+            uint256 _updatedAt,
+            uint80 _answeredInRound
         )
     {
         return (
@@ -79,12 +76,12 @@ contract MockPriceFeed is AggregatorV3Interface, Initializable {
     }
 
     // Admin functions to update values
-    function updateAnswer(uint256 newAnswer) external {
-        _answer = newAnswer;
-        _updatedAt = block.timestamp;
+    function updateAnswer(uint256 _newAnswer) external {
+        answer = _newAnswer;
+        updatedAt = block.timestamp;
     }
 
-    function updateDecimals(uint8 newDecimals) external {
-        _decimals = newDecimals;
+    function updateDecimals(uint8 _newDecimals) external {
+        decimals = _newDecimals;
     }
 } 

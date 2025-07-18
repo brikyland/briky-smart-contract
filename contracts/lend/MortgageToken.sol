@@ -11,10 +11,10 @@ import {ERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/intro
 import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
 import {Formula} from "../lib/Formula.sol";
 
-import {CommonConstant} from "../common/constants/CommonConstant.sol";
-
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 import {IRoyaltyRateProposer} from "../common/interfaces/IRoyaltyRateProposer.sol";
+
+import {CommonConstant} from "../common/constants/CommonConstant.sol";
 
 import {Administrable} from "../common/utilities/Administrable.sol";
 import {Discountable} from "../common/utilities/Discountable.sol";
@@ -72,6 +72,7 @@ ReentrancyGuardUpgradeable {
         __ReentrancyGuard_init();
 
         __CommissionDispatchable_init(_commissionToken);
+        __RoyaltyRateProposer_init(_royaltyRate);
 
         admin = _admin;
         estateToken = _estateToken;
@@ -82,9 +83,6 @@ ReentrancyGuardUpgradeable {
 
         feeRate = _feeRate;
         emit FeeRateUpdate(_feeRate);
-
-        royaltyRate = _royaltyRate;
-        emit RoyaltyRateUpdate(_royaltyRate);
     }
 
     function version() external pure returns (string memory) {
@@ -109,25 +107,6 @@ ReentrancyGuardUpgradeable {
         emit BatchMetadataUpdate(1, loanNumber);
     }
 
-    function updateRoyaltyRate(
-        uint256 _royaltyRate,
-        bytes[] calldata _signature
-    ) external {
-        IAdmin(admin).verifyAdminSignatures(
-            abi.encode(
-                address(this),
-                "updateRoyaltyRate",
-                _royaltyRate
-            ),
-            _signature
-        );
-        if (_royaltyRate > CommonConstant.COMMON_RATE_MAX_FRACTION) {
-            revert InvalidRate();
-        }
-        royaltyRate = _royaltyRate;
-        emit RoyaltyRateUpdate(_royaltyRate);
-    }
-
     function updateFeeRate(
         uint256 _feeRate,
         bytes[] calldata _signature
@@ -149,11 +128,6 @@ ReentrancyGuardUpgradeable {
 
     function getFeeRate() external view returns (Rate memory) {
         return Rate(feeRate, CommonConstant.COMMON_RATE_DECIMALS);
-    }
-
-    function getRoyaltyRate()
-    public view override(IRoyaltyRateProposer, RoyaltyRateProposer) returns (Rate memory) {
-        return Rate(royaltyRate, CommonConstant.COMMON_RATE_DECIMALS);
     }
 
     function getLoan(uint256 _loanId)

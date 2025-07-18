@@ -5,13 +5,16 @@ import {IERC1155MetadataURIUpgradeable} from "@openzeppelin/contracts-upgradeabl
 
 import {IGovernor} from "../../common/interfaces/IGovernor.sol";
 import {IRoyaltyRateProposer} from "../../common/interfaces/IRoyaltyRateProposer.sol";
-import {IValidation} from "../../common/interfaces/IValidation.sol";
-
-import {IEstate} from "./IEstate.sol";
 import {IValidatable} from "../../common/interfaces/IValidatable.sol";
+
+import {ISnapshot} from "../../common/structs/ISnapshot.sol";
+import {IValidation} from "../../common/structs/IValidation.sol";
+
+import {IEstate} from "../structs/IEstate.sol";
 
 interface IEstateToken is
 IEstate,
+ISnapshot,
 IValidatable,
 IGovernor,
 IRoyaltyRateProposer,
@@ -19,7 +22,6 @@ IERC1155MetadataURIUpgradeable {
     event CommissionTokenUpdate(address newAddress);
 
     event BaseURIUpdate(string newValue);
-    event RoyaltyRateUpdate(uint256 newValue);
 
     event TokenizerAuthorization(address indexed account);
     event TokenizerDeauthorization(address indexed account);
@@ -32,7 +34,6 @@ IERC1155MetadataURIUpgradeable {
         bytes32 indexed zone,
         uint256 indexed tokenizationId,
         address tokenizer,
-        uint40 tokenizeAt,
         uint40 expireAt
     );
     event EstateDeprecation(uint256 indexed estateId);

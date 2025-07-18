@@ -10,9 +10,9 @@ import {ERC721PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/tok
 
 import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
 
-import {CommonConstant} from "../common/constants/CommonConstant.sol";
-
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
+
+import {CommonConstant} from "../common/constants/CommonConstant.sol";
 
 import {Pausable} from "../common/utilities/Pausable.sol";
 import {RoyaltyRateProposer} from "../common/utilities/RoyaltyRateProposer.sol";
@@ -39,12 +39,12 @@ ReentrancyGuardUpgradeable {
         uint256 _fee,
         uint256 _royaltyRate
     ) external initializer {
-        require(_royaltyRate <= CommonConstant.COMMON_RATE_MAX_FRACTION);
-
         __ERC721_init(_name, _symbol);
         __ERC721Pausable_init();
 
         __ReentrancyGuard_init();
+
+        __RoyaltyRateProposer_init(_royaltyRate);
 
         admin = _admin;
 
@@ -53,9 +53,6 @@ ReentrancyGuardUpgradeable {
 
         fee = _fee;
         emit FeeUpdate(_fee);
-
-        royaltyRate = _royaltyRate;
-        emit RoyaltyRateUpdate(_royaltyRate);
     }
 
     function version() external pure returns (string memory) {
@@ -96,25 +93,6 @@ ReentrancyGuardUpgradeable {
         emit FeeUpdate(_fee);
     }
 
-    function updateRoyaltyRate(
-        uint256 _royaltyRate,
-        bytes[] calldata _signature
-    ) external {
-        IAdmin(admin).verifyAdminSignatures(
-            abi.encode(
-                address(this),
-                "updateRoyaltyRate",
-                _royaltyRate
-            ),
-            _signature
-        );
-        if (_royaltyRate > CommonConstant.COMMON_RATE_MAX_FRACTION) {
-            revert InvalidRate();
-        }
-        royaltyRate = _royaltyRate;
-        emit RoyaltyRateUpdate(_royaltyRate);
-    }
-
     function withdraw(
         address _receiver,
         address[] calldata _currencies,
@@ -139,11 +117,6 @@ ReentrancyGuardUpgradeable {
         for (uint256 i; i < _currencies.length; ++i) {
             CurrencyHandler.sendCurrency(_currencies[i], _receiver, _values[i]);
         }
-    }
-
-    function getRoyaltyRate()
-    public view override(IPassportToken, RoyaltyRateProposer) returns (Rate memory) {
-        return Rate(royaltyRate, CommonConstant.COMMON_RATE_DECIMALS);
     }
 
     function mint() external payable nonReentrant whenNotPaused returns (uint256) {
@@ -180,6 +153,7 @@ ReentrancyGuardUpgradeable {
         ERC721Upgradeable
     ) returns (bool) {
         return _interfaceId == type(IERC4906Upgradeable).interfaceId
+            || RoyaltyRateProposer.supportsInterface(_interfaceId)
             || super.supportsInterface(_interfaceId);
     }
 

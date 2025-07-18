@@ -326,7 +326,7 @@ ReentrancyGuardUpgradeable {
         ProposalState state = proposal.state;
         if (!(state == ProposalState.Voting && proposal.due + GovernanceHubConstant.GOVERNANCE_HUB_CONFIRMATION_TIME_LIMIT <= block.timestamp)
             && _votingVerdict(proposal) != ProposalVerdict.Failed) {
-            revert InvalidBudgetContributionWithdrawing();
+            revert InvalidWithdrawing();
         }
         uint256 contribution = contributions[_proposalId][msg.sender];
 
@@ -361,7 +361,7 @@ ReentrancyGuardUpgradeable {
         if (proposal.state != ProposalState.Voting
             || proposal.due + GovernanceHubConstant.GOVERNANCE_HUB_CONFIRMATION_TIME_LIMIT <= block.timestamp
             || _votingVerdict(proposal) != ProposalVerdict.Passed) {
-            revert InvalidExecutionConfirming();
+            revert InvalidConfirming();
         }
 
         proposal.state = ProposalState.Executing;
@@ -376,7 +376,7 @@ ReentrancyGuardUpgradeable {
         ProposalState state = proposal.state;
 
         if (state != ProposalState.Voting) {
-            revert InvalidExecutionRejecting();
+            revert InvalidRejecting();
         }
 
         proposal.state = ProposalState.Rejected;
@@ -398,7 +398,7 @@ ReentrancyGuardUpgradeable {
         );
 
         if (proposals[_proposalId].state != ProposalState.Executing) {
-            revert InvalidExecutionUpdating();
+            revert InvalidUpdating();
         }
 
         proposals[_proposalId].stateURI = _stateURI;
@@ -433,7 +433,7 @@ ReentrancyGuardUpgradeable {
         }
 
         if (proposal.state != ProposalState.Executing) {
-            revert InvalidExecutionConcluding();
+            revert InvalidConcluding();
         }
 
         proposal.stateURI = _stateURI;
@@ -547,7 +547,7 @@ ReentrancyGuardUpgradeable {
         Proposal storage proposal = proposals[_proposalId];
         ProposalState state = proposal.state;
         if (state != ProposalState.Voting) {
-            revert InvalidBudgetContributing();
+            revert InvalidContributing();
         }
 
         if (proposal.due + GovernanceHubConstant.GOVERNANCE_HUB_CONFIRMATION_TIME_LIMIT <= block.timestamp) {
