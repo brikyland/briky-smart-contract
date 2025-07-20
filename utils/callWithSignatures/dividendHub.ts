@@ -1,34 +1,34 @@
-import { PaymentHub } from "../../typechain-types";
+import { DividendHub } from "../../typechain-types";
 import { callTransaction } from "../blockchain";
 import { getSignatures } from "../blockchain";
 import { ethers } from "hardhat";
 import { BigNumberish } from "ethers";
 import { MockContract } from "@defi-wonderland/smock";
 
-export async function callPaymentHub_Pause(
-    paymentHub: PaymentHub | MockContract<PaymentHub>,
+export async function callDividendHub_Pause(
+    dividendHub: DividendHub | MockContract<DividendHub>,
     admins: any[],
     nonce: BigNumberish
 ) {
     let message = ethers.utils.defaultAbiCoder.encode(
         ["address", "string"],
-        [paymentHub.address, "pause"]
+        [dividendHub.address, "pause"]
     );
     let signatures = await getSignatures(message, admins, nonce);
 
-    await callTransaction(paymentHub.pause(signatures));
+    await callTransaction(dividendHub.pause(signatures));
 }
 
-export async function callPaymentHub_Unpause(
-    paymentHub: PaymentHub | MockContract<PaymentHub>,
+export async function callDividendHub_Unpause(
+    dividendHub: DividendHub | MockContract<DividendHub>,
     admins: any[],
     nonce: BigNumberish
 ) {
     let message = ethers.utils.defaultAbiCoder.encode(
         ["address", "string"],
-        [paymentHub.address, "unpause"]
+        [dividendHub.address, "unpause"]
     );
     let signatures = await getSignatures(message, admins, nonce);
 
-    await callTransaction(paymentHub.unpause(signatures));
+    await callTransaction(dividendHub.unpause(signatures));
 }

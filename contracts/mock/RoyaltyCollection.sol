@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol";
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 
-import {Constant} from "../lib/Constant.sol";
+import {CommonConstant} from "../common/constants/CommonConstant.sol";
 
 import {ICommon} from "../common/interfaces/ICommon.sol";
 
@@ -60,7 +60,7 @@ contract RoyaltyCollection is ERC721Upgradeable, RoyaltyRateProposer {
     }
 
     function getRoyaltyRate() public view override returns (Rate memory rate) {
-        return Rate(royaltyRate, Constant.COMMON_RATE_DECIMALS);
+        return Rate(royaltyRate, CommonConstant.COMMON_RATE_DECIMALS);
     }
 
     function _royaltyReceiver() internal view virtual override returns (address) {

@@ -49,8 +49,6 @@ import { OrderedMap } from '@utils/utils';
 import { Initialization as LandInitialization } from '@tests/land/test.initialization';
 import { deployReserveVault } from '@utils/deployments/common/reserveVault';
 import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
-import { deployGovernanceHub } from '@utils/deployments/common/governanceHub';
-import { deployPaymentHub } from '@utils/deployments/common/paymentHub';
 
 interface EstateTokenFixture {
     admin: Admin;
@@ -58,8 +56,6 @@ interface EstateTokenFixture {
     priceWatcher: PriceWatcher;
     currency: Currency;
     reserveVault: ReserveVault;
-    governanceHub: GovernanceHub;
-    paymentHub: PaymentHub;
     estateToken: MockEstateToken;
     commissionToken: CommissionToken;
 
@@ -74,7 +70,6 @@ interface EstateTokenFixture {
     commissionReceiver: any;
     depositor1: any, depositor2: any, depositor3: any;
     depositors: any[];
-    operator: any;
     validator: any;
     zone: string;
 
@@ -98,8 +93,7 @@ describe('3. EstateToken', async () => {
         const depositor2 = accounts[Constant.ADMIN_NUMBER + 9];
         const depositor3 = accounts[Constant.ADMIN_NUMBER + 10];        
         const depositors = [depositor1, depositor2, depositor3];
-        const operator = accounts[Constant.ADMIN_NUMBER + 11];
-        const validator = accounts[Constant.ADMIN_NUMBER + 12];
+        const validator = accounts[Constant.ADMIN_NUMBER + 11];
 
         const adminAddresses: string[] = admins.map(signer => signer.address);
         const admin = await deployAdmin(
@@ -132,24 +126,10 @@ describe('3. EstateToken', async () => {
             'MCK'
         ) as Currency;
 
-        const governanceHub = await deployGovernanceHub(
-            deployer,
-            admin.address,
-            validator.address,
-            Constant.GOVERNANCE_HUB_FEE,
-        ) as GovernanceHub;
-        
-        const paymentHub = await deployPaymentHub(
-            deployer.address,
-            admin.address,
-        ) as PaymentHub;
-
         const estateToken = await deployMockEstateToken(
             deployer.address,
             admin.address,
             feeReceiver.address,
-            governanceHub.address,
-            paymentHub.address,
             validator.address,
             LandInitialization.ESTATE_TOKEN_BaseURI,
             LandInitialization.ESTATE_TOKEN_RoyaltyRate,
@@ -196,8 +176,6 @@ describe('3. EstateToken', async () => {
             priceWatcher,
             currency,
             reserveVault,
-            governanceHub,
-            paymentHub,
             estateToken,
             commissionToken,
             deployer,
@@ -216,7 +194,6 @@ describe('3. EstateToken', async () => {
             depositors,
             tokenizers,
             zone,
-            operator,
             validator,
         };
     };
@@ -228,7 +205,7 @@ describe('3. EstateToken', async () => {
         addSampleEstates = false,
     } = {}): Promise<EstateTokenFixture> {
         const fixture = await loadFixture(estateTokenFixture);
-        const { admin, admins, manager, moderator, estateToken, estateForger, commissionToken, zone, operator, commissionReceiver } = fixture;
+        const { admin, admins, manager, moderator, estateToken, estateForger, commissionToken, zone, commissionReceiver } = fixture;
 
         await callAdmin_AuthorizeManagers(
             admin,
@@ -301,7 +278,6 @@ describe('3. EstateToken', async () => {
                 10,
                 "Token1_URI",
                 baseTimestamp + 1e8,
-                operator.address,
                 commissionReceiver.address,
             ]));
 
@@ -311,7 +287,6 @@ describe('3. EstateToken', async () => {
                 10,
                 "Token2_URI",
                 baseTimestamp + 2e8,
-                operator.address,
                 commissionReceiver.address,
             ]));
         }
@@ -321,7 +296,7 @@ describe('3. EstateToken', async () => {
 
     describe('3.1. initialize(address, address, string, uint256)', async () => {
         it('3.1.1. Deploy successfully', async () => {
-            const { estateToken, admin, feeReceiver, governanceHub, paymentHub, validator } = await beforeEstateTokenTest();
+            const { estateToken, admin, feeReceiver, validator } = await beforeEstateTokenTest();
 
             const paused = await estateToken.paused();
             expect(paused).to.equal(false);
@@ -342,8 +317,6 @@ describe('3. EstateToken', async () => {
             const commissionTokenAddress = await estateToken.commissionToken();
             expect(commissionTokenAddress).to.equal(ethers.constants.AddressZero);
 
-            expect(await estateToken.governanceHub()).to.equal(governanceHub.address);
-            expect(await estateToken.paymentHub()).to.equal(paymentHub.address);
             expect(await estateToken.validator()).to.equal(validator.address);
 
             expect(await estateToken.decimals()).to.equal(Constant.ESTATE_TOKEN_MAX_DECIMALS);
@@ -776,7 +749,6 @@ describe('3. EstateToken', async () => {
             tokenizationId: number;
             uri: string;
             expireAt: number;
-            operator: string;
             commissionReceiverAddress: string;
         };
 
@@ -784,7 +756,6 @@ describe('3. EstateToken', async () => {
             baseTimestamp: number;
             defaultParams: DefaultParam;
         }> {
-            const { operator } = fixture;
             const baseTimestamp = await time.latest() + 1000;
             const defaultParams = {
                 totalSupply: 10_000,
@@ -792,7 +763,6 @@ describe('3. EstateToken', async () => {
                 tokenizationId: 10,
                 uri: "Token1_URI",
                 expireAt: baseTimestamp + 100,
-                operator: operator.address,
                 commissionReceiverAddress: ethers.constants.AddressZero,
             }
             return { baseTimestamp, defaultParams };
@@ -823,7 +793,6 @@ describe('3. EstateToken', async () => {
                 defaultParams.tokenizationId,
                 defaultParams.uri,
                 defaultParams.expireAt,
-                defaultParams.operator,
                 defaultParams.commissionReceiverAddress,
             ]));
 
@@ -838,7 +807,6 @@ describe('3. EstateToken', async () => {
                     estateForger.address,
                     baseTimestamp,
                     defaultParams.expireAt,
-                    defaultParams.operator,
                 );
 
             const estate = await estateToken.getEstate(1);
@@ -848,7 +816,6 @@ describe('3. EstateToken', async () => {
             expect(estate.tokenizeAt).to.equal(baseTimestamp);
             expect(estate.expireAt).to.equal(defaultParams.expireAt);
             expect(estate.deprecateAt).to.equal(Constant.COMMON_INFINITE_TIMESTAMP);
-            expect(estate.operator).to.equal(defaultParams.operator);
 
             expect(await estateToken.uri(1)).to.equal(LandInitialization.ESTATE_TOKEN_BaseURI + defaultParams.uri);
 
@@ -881,7 +848,6 @@ describe('3. EstateToken', async () => {
                 defaultParams.tokenizationId,
                 defaultParams.uri,
                 defaultParams.expireAt,
-                defaultParams.operator,
                 defaultParams.commissionReceiverAddress,
             ]))).to.be.revertedWith("ERC721: mint to the zero address");
 
@@ -910,7 +876,6 @@ describe('3. EstateToken', async () => {
                 defaultParams.tokenizationId,
                 defaultParams.uri,
                 defaultParams.expireAt,
-                defaultParams.operator,
                 defaultParams.commissionReceiverAddress,
             ]))).to.be.revertedWithCustomError(estateToken, `Unauthorized`);
         });
@@ -931,7 +896,6 @@ describe('3. EstateToken', async () => {
                 defaultParams.tokenizationId,
                 defaultParams.uri,
                 defaultParams.expireAt,
-                defaultParams.operator,
                 defaultParams.commissionReceiverAddress,
             ]))).to.be.revertedWithCustomError(estateToken, `InvalidInput`);
         });
@@ -960,7 +924,6 @@ describe('3. EstateToken', async () => {
                 defaultParams.tokenizationId,
                 defaultParams.uri,
                 baseTimestamp,
-                defaultParams.operator,
                 defaultParams.commissionReceiverAddress,
             ]))).to.be.revertedWithCustomError(estateToken, `InvalidTimestamp`);
 
@@ -970,7 +933,6 @@ describe('3. EstateToken', async () => {
                 defaultParams.tokenizationId,
                 defaultParams.uri,
                 baseTimestamp - 100,
-                defaultParams.operator,
                 defaultParams.commissionReceiverAddress,
             ]))).to.be.revertedWithCustomError(estateToken, `InvalidTimestamp`);
         });
@@ -1000,7 +962,6 @@ describe('3. EstateToken', async () => {
                 defaultParams.tokenizationId,
                 defaultParams.uri,
                 defaultParams.expireAt,
-                defaultParams.operator,
                 defaultParams.commissionReceiverAddress,
             ]))).to.be.revertedWith("CallUtils: target revert()");
         });
@@ -1805,7 +1766,7 @@ describe('3. EstateToken', async () => {
         });
 
         it('3.14.5. return total vote of each voteOfAt', async () => {
-            const { estateToken, manager, depositor1, depositor2, estateForger, zone, operator, commissionReceiver } = await beforeEstateTokenTest({
+            const { estateToken, manager, depositor1, depositor2, estateForger, zone, commissionReceiver } = await beforeEstateTokenTest({
                 updateCommissionToken: true,
                 authorizeEstateForger: true,
                 addSampleEstates: true,
@@ -1866,7 +1827,6 @@ describe('3. EstateToken', async () => {
                 10,
                 "Token2_URI",
                 expireAt3,
-                operator.address,
                 commissionReceiver.address,
             ]));
 

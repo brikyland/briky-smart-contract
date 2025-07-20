@@ -5,7 +5,7 @@ import {
     FailReceiver,
     Governor,
     Governor__factory,
-    PaymentHub,
+    DividendHub,
     ReentrancyERC20,
 } from '@typechain-types';
 import { Constant } from '@tests/test.constant';
@@ -13,8 +13,8 @@ import { deployAdmin } from '@utils/deployments/common/admin';
 import { deployCurrency } from '@utils/deployments/common/currency';
 import { deployReentrancyERC20 } from '@utils/deployments/mocks/mockReentrancy/reentrancyERC20';
 import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
-import { deployPaymentHub } from '@utils/deployments/common/paymentHub';
-import { callPaymentHub_Pause } from '@utils/callWithSignatures/paymentHub';
+import { deployDividendHub } from '@utils/deployments/common/dividendHub';
+import { callDividendHub_Pause } from '@utils/callWithSignatures/dividendHub';
 import { callAdmin_AuthorizeGovernor, callAdmin_UpdateCurrencyRegistries } from '@utils/callWithSignatures/admin';
 import { expect } from 'chai';
 import { callTransaction, prepareERC20, prepareNativeToken } from '@utils/blockchain';
@@ -24,9 +24,9 @@ import { deployFailReceiver } from '@utils/deployments/mocks/failReceiver';
 import { MockContract, smock } from '@defi-wonderland/smock';
 import { expectEqualWithErrorMargin } from '@utils/testHelper';
 
-interface PaymentHubFixture {
+interface DividendHubFixture {
     admin: Admin;
-    paymentHub: PaymentHub;
+    dividendHub: DividendHub;
     currencies: Currency[];
     governor: MockContract<Governor>;
     reentrancyERC20: ReentrancyERC20;
@@ -46,8 +46,8 @@ interface PaymentHubFixture {
     zone: string;
 }
 
-describe('22. PaymentHub', async () => {
-    async function paymentHubFixture(): Promise<PaymentHubFixture> {
+describe('22. DividendHub', async () => {
+    async function dividendHubFixture(): Promise<DividendHubFixture> {
         const accounts = await ethers.getSigners();
         const deployer = accounts[0];
         const admins = [];
@@ -86,13 +86,13 @@ describe('22. PaymentHub', async () => {
 
         const failReceiver = await deployFailReceiver(deployer, false) as FailReceiver;
 
-        const paymentHub = await deployPaymentHub(deployer.address, admin.address) as PaymentHub;
+        const dividendHub = await deployDividendHub(deployer.address, admin.address) as DividendHub;
 
         const zone = ethers.utils.formatBytes32String("TestZone");
 
         return {
             admin,
-            paymentHub,
+            dividendHub,
             currencies,
             governor,
             failReceiver,
@@ -112,18 +112,18 @@ describe('22. PaymentHub', async () => {
         };
     };
 
-    async function beforePaymentHubTest({
+    async function beforeDividendHubTest({
         registerCurrencies = false,
         authorizeGovernor = false,
         fundERC20ForIssuer = false,
         initGovernorTokens = false,
         useReentrancyERC20 = false,
         useFailReceiver = false,
-        issueSamplePayments = false,
+        issueSampleDividends = false,
         pause = false,
-    } = {}): Promise<PaymentHubFixture> {
-        const fixture = await loadFixture(paymentHubFixture);
-        const { admin, admins, paymentHub, governor, zone, receiver1, receiver2, receiver3, issuer1, issuer2, reentrancyERC20, failReceiver } = fixture;
+    } = {}): Promise<DividendHubFixture> {
+        const fixture = await loadFixture(dividendHubFixture);
+        const { admin, admins, dividendHub, governor, zone, receiver1, receiver2, receiver3, issuer1, issuer2, reentrancyERC20, failReceiver } = fixture;
         let { currencies } = fixture;
 
         if (useReentrancyERC20) {
@@ -155,7 +155,7 @@ describe('22. PaymentHub', async () => {
             await prepareERC20(
                 currencies[0],
                 [issuer1, issuer2, receiver1, receiver2, receiver3],
-                [paymentHub],
+                [dividendHub],
                 ethers.utils.parseEther(String(1e9)),
             )
         }
@@ -183,22 +183,22 @@ describe('22. PaymentHub', async () => {
             await callTransaction(governor.connect(receiver2).mint(2, ethers.utils.parseEther('300')));
         }
 
-        if (issueSamplePayments) {
-            await callTransaction(paymentHub.connect(issuer1).issuePayment(
+        if (issueSampleDividends) {
+            await callTransaction(dividendHub.connect(issuer1).issueDividend(
                 governor.address,
                 1,
                 ethers.utils.parseEther('1000'),
                 ethers.constants.AddressZero,
                 { value: ethers.utils.parseEther('1000') },
             ));
-            await callTransaction(paymentHub.connect(issuer2).issuePayment(
+            await callTransaction(dividendHub.connect(issuer2).issueDividend(
                 governor.address,
                 1,
                 ethers.utils.parseEther('100'),
                 ethers.constants.AddressZero,
                 { value: ethers.utils.parseEther('100') },
             ));
-            await callTransaction(paymentHub.connect(issuer2).issuePayment(
+            await callTransaction(dividendHub.connect(issuer2).issueDividend(
                 governor.address,
                 2,
                 ethers.utils.parseEther('2000'),
@@ -207,8 +207,8 @@ describe('22. PaymentHub', async () => {
         }
 
         if (pause) {
-            await callPaymentHub_Pause(
-                paymentHub,
+            await callDividendHub_Pause(
+                dividendHub,
                 admins,
                 await admin.nonce(),
             )
@@ -221,33 +221,33 @@ describe('22. PaymentHub', async () => {
 
     describe('22.1. initialize(address)', async () => {
         it('22.1.1. Deploy successfully', async () => {
-            const fixture = await loadFixture(paymentHubFixture);
-            const { admin, paymentHub } = fixture;
+            const fixture = await loadFixture(dividendHubFixture);
+            const { admin, dividendHub } = fixture;
 
-            expect(await paymentHub.admin()).to.equal(admin.address);
+            expect(await dividendHub.admin()).to.equal(admin.address);
         });
     });
 
-    describe('22.2. issuePayment(address, uint256, uint256, address)', async () => {
-        it('22.2.1. Issue payment successfully', async () => {
-            const fixture = await beforePaymentHubTest({
+    describe('22.2. issueDividend(address, uint256, uint256, address)', async () => {
+        it('22.2.1. Issue dividend successfully', async () => {
+            const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
                 authorizeGovernor: true,
                 fundERC20ForIssuer: true,
                 initGovernorTokens: true,
             });
-            const { paymentHub, currencies, reentrancyERC20, issuer1, issuer2, governor } = fixture;
+            const { dividendHub, currencies, reentrancyERC20, issuer1, issuer2, governor } = fixture;
 
             const tokenId1 = 1;
             const value1 = ethers.utils.parseEther('1000');
             const totalVote = await governor.totalSupply(tokenId1);
 
             let issuer1InitBalance = await ethers.provider.getBalance(issuer1.address);
-            let paymentHubInitBalance = await ethers.provider.getBalance(paymentHub.address);
+            let dividendHubInitBalance = await ethers.provider.getBalance(dividendHub.address);
 
             let timestamp = await time.latest() + 10;
             await time.setNextBlockTimestamp(timestamp);
-            const tx1 = await paymentHub.connect(issuer1).issuePayment(
+            const tx1 = await dividendHub.connect(issuer1).issueDividend(
                 governor.address,
                 tokenId1,
                 value1,
@@ -257,7 +257,7 @@ describe('22. PaymentHub', async () => {
             const receipt1 = await tx1.wait();
             const gasFee1 = receipt1.gasUsed.mul(receipt1.effectiveGasPrice);
  
-            await expect(tx1).to.emit(paymentHub, 'NewPayment').withArgs(
+            await expect(tx1).to.emit(dividendHub, 'NewDividend').withArgs(
                 governor.address,
                 tokenId1,
                 issuer1.address,
@@ -266,16 +266,16 @@ describe('22. PaymentHub', async () => {
                 ethers.constants.AddressZero,
             );
 
-            const payment = await paymentHub.getPayment(tokenId1);
-            expect(payment.tokenId).to.equal(tokenId1);
-            expect(payment.remainWeight).to.equal(totalVote);
-            expect(payment.remainValue).to.equal(value1);
-            expect(payment.currency).to.equal(ethers.constants.AddressZero);
-            expect(payment.at(4)).to.equal(timestamp);
-            expect(payment.governor).to.equal(governor.address);
+            const dividend = await dividendHub.getDividend(tokenId1);
+            expect(dividend.tokenId).to.equal(tokenId1);
+            expect(dividend.remainWeight).to.equal(totalVote);
+            expect(dividend.remainValue).to.equal(value1);
+            expect(dividend.currency).to.equal(ethers.constants.AddressZero);
+            expect(dividend.at(4)).to.equal(timestamp);
+            expect(dividend.governor).to.equal(governor.address);
 
             expect(await ethers.provider.getBalance(issuer1.address)).to.equal(issuer1InitBalance.sub(gasFee1).sub(value1));
-            expect(await ethers.provider.getBalance(paymentHub.address)).to.equal(paymentHubInitBalance.add(value1));
+            expect(await ethers.provider.getBalance(dividendHub.address)).to.equal(dividendHubInitBalance.add(value1));
 
             const tokenId2 = 2;
             const currency = currencies[0];
@@ -283,11 +283,11 @@ describe('22. PaymentHub', async () => {
             const totalVote2 = await governor.totalSupply(tokenId2);
 
             let issuer2InitBalance = await currency.balanceOf(issuer2.address);
-            paymentHubInitBalance = await currency.balanceOf(paymentHub.address);
+            dividendHubInitBalance = await currency.balanceOf(dividendHub.address);
 
             timestamp += 10;
             await time.setNextBlockTimestamp(timestamp);
-            const tx2 = await paymentHub.connect(issuer2).issuePayment(
+            const tx2 = await dividendHub.connect(issuer2).issueDividend(
                 governor.address,
                 tokenId2,
                 value2,
@@ -295,7 +295,7 @@ describe('22. PaymentHub', async () => {
             );
             await tx2.wait();
 
-            await expect(tx2).to.emit(paymentHub, 'NewPayment').withArgs(
+            await expect(tx2).to.emit(dividendHub, 'NewDividend').withArgs(
                 governor.address,
                 tokenId2,
                 issuer2.address,
@@ -304,32 +304,32 @@ describe('22. PaymentHub', async () => {
                 currency.address,
             );
 
-            const payment2 = await paymentHub.getPayment(tokenId2);
-            expect(payment2.tokenId).to.equal(tokenId2);
-            expect(payment2.remainWeight).to.equal(totalVote2);
-            expect(payment2.remainValue).to.equal(value2);
-            expect(payment2.currency).to.equal(currency.address);
-            expect(payment2.at(4)).to.equal(timestamp);
-            expect(payment2.governor).to.equal(governor.address);
+            const dividend2 = await dividendHub.getDividend(tokenId2);
+            expect(dividend2.tokenId).to.equal(tokenId2);
+            expect(dividend2.remainWeight).to.equal(totalVote2);
+            expect(dividend2.remainValue).to.equal(value2);
+            expect(dividend2.currency).to.equal(currency.address);
+            expect(dividend2.at(4)).to.equal(timestamp);
+            expect(dividend2.governor).to.equal(governor.address);
 
             expect(await currency.balanceOf(issuer2.address)).to.equal(issuer2InitBalance.sub(value2));
-            expect(await currency.balanceOf(paymentHub.address)).to.equal(paymentHubInitBalance.add(value2));
+            expect(await currency.balanceOf(dividendHub.address)).to.equal(dividendHubInitBalance.add(value2));
         });
 
-        it('22.2.3. Issue payment unsuccessfully when paused', async () => {
-            const fixture = await beforePaymentHubTest({
+        it('22.2.3. Issue dividend unsuccessfully when paused', async () => {
+            const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
                 authorizeGovernor: true,
                 fundERC20ForIssuer: true,
                 initGovernorTokens: true,
                 pause: true,
             });
-            const { paymentHub, issuer1, governor } = fixture;
+            const { dividendHub, issuer1, governor } = fixture;
 
             const tokenId = 1;
             const value = ethers.utils.parseEther('1000');
             
-            await expect(paymentHub.connect(issuer1).issuePayment(
+            await expect(dividendHub.connect(issuer1).issueDividend(
                 governor.address,
                 tokenId,
                 value,
@@ -337,133 +337,133 @@ describe('22. PaymentHub', async () => {
             )).to.be.revertedWith('Pausable: paused');
         });
 
-        it('22.2.4. Issue payment unsuccessfully with unauthorized governor', async () => {
-            const fixture = await beforePaymentHubTest({
+        it('22.2.4. Issue dividend unsuccessfully with unauthorized governor', async () => {
+            const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
                 fundERC20ForIssuer: true,
                 initGovernorTokens: true,
             });
-            const { paymentHub, issuer1, governor } = fixture;
+            const { dividendHub, issuer1, governor } = fixture;
 
             const tokenId = 1;
             const value = ethers.utils.parseEther('1000');
             
-            await expect(paymentHub.connect(issuer1).issuePayment(
+            await expect(dividendHub.connect(issuer1).issueDividend(
                 governor.address,
                 tokenId,
                 value,
                 ethers.constants.AddressZero,
-            )).to.be.revertedWithCustomError(paymentHub, 'InvalidGovernor');
+            )).to.be.revertedWithCustomError(dividendHub, 'InvalidGovernor');
         });
 
-        it('22.2.5. Issue payment unsuccessfully with invalid token id', async () => {
-            const fixture = await beforePaymentHubTest({
+        it('22.2.5. Issue dividend unsuccessfully with invalid token id', async () => {
+            const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
                 authorizeGovernor: true,
                 fundERC20ForIssuer: true,
                 initGovernorTokens: true,
             });
-            const { paymentHub, issuer1, governor } = fixture;
+            const { dividendHub, issuer1, governor } = fixture;
 
             const tokenId = 0;
             const value = ethers.utils.parseEther('1000');
             
-            await expect(paymentHub.connect(issuer1).issuePayment(
+            await expect(dividendHub.connect(issuer1).issueDividend(
                 governor.address,
                 tokenId,
                 value,
                 ethers.constants.AddressZero,
-            )).to.be.revertedWithCustomError(paymentHub, 'InvalidTokenId');
+            )).to.be.revertedWithCustomError(dividendHub, 'InvalidTokenId');
         });
 
-        it('22.2.6. Issue payment unsuccessfully with unavailable currency', async () => {
-            const fixture = await beforePaymentHubTest({
+        it('22.2.6. Issue dividend unsuccessfully with unavailable currency', async () => {
+            const fixture = await beforeDividendHubTest({
                 authorizeGovernor: true,
                 fundERC20ForIssuer: true,
                 initGovernorTokens: true,
             });
-            const { paymentHub, issuer1, governor, currencies } = fixture;
+            const { dividendHub, issuer1, governor, currencies } = fixture;
 
             const tokenId = 1;
             const value = ethers.utils.parseEther('1000');
-            await expect(paymentHub.connect(issuer1).issuePayment(
+            await expect(dividendHub.connect(issuer1).issueDividend(
                 governor.address,
                 tokenId,
                 value,
                 ethers.constants.AddressZero,
-            )).to.be.revertedWithCustomError(paymentHub, 'InvalidCurrency');
+            )).to.be.revertedWithCustomError(dividendHub, 'InvalidCurrency');
         });
 
-        it('22.2.7. Issue payment unsuccessfully with insufficient balance', async () => {
-            const fixture = await beforePaymentHubTest({
+        it('22.2.7. Issue dividend unsuccessfully with insufficient balance', async () => {
+            const fixture = await beforeDividendHubTest({
                 authorizeGovernor: true,
                 fundERC20ForIssuer: true,
                 initGovernorTokens: true,
             });
-            const { paymentHub, issuer1, governor } = fixture;
+            const { dividendHub, issuer1, governor } = fixture;
 
             const tokenId = 1;
             const value = ethers.utils.parseEther('1000');
-            await expect(paymentHub.connect(issuer1).issuePayment(
+            await expect(dividendHub.connect(issuer1).issueDividend(
                 governor.address,
                 tokenId,
                 value,
                 ethers.constants.AddressZero,
-            )).to.be.revertedWithCustomError(paymentHub, 'InvalidCurrency');
+            )).to.be.revertedWithCustomError(dividendHub, 'InvalidCurrency');
         });
 
-        it('22.2.8. Issue payment unsuccessfully with invalid value', async () => {
-            const fixture = await beforePaymentHubTest({
+        it('22.2.8. Issue dividend unsuccessfully with invalid value', async () => {
+            const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
                 authorizeGovernor: true,
                 fundERC20ForIssuer: true,
                 initGovernorTokens: true,
             });
-            const { paymentHub, issuer1, governor } = fixture;
+            const { dividendHub, issuer1, governor } = fixture;
 
             const tokenId = 1;
             const value = 0;
-            await expect(paymentHub.connect(issuer1).issuePayment(
+            await expect(dividendHub.connect(issuer1).issueDividend(
                 governor.address,
                 tokenId,
                 value,
                 ethers.constants.AddressZero,
-            )).to.be.revertedWithCustomError(paymentHub, 'InvalidInput');
+            )).to.be.revertedWithCustomError(dividendHub, 'InvalidInput');
         });
 
-        it('22.2.9. Issue payment unsuccessfully with insufficient native token', async () => {
-            const fixture = await beforePaymentHubTest({
+        it('22.2.9. Issue dividend unsuccessfully with insufficient native token', async () => {
+            const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
                 authorizeGovernor: true,
                 fundERC20ForIssuer: true,
                 initGovernorTokens: true,
             });
-            const { paymentHub, issuer1, governor } = fixture;
+            const { dividendHub, issuer1, governor } = fixture;
 
             const tokenId = 1;
             const value = ethers.utils.parseEther('1000');
             
-            await expect(paymentHub.connect(issuer1).issuePayment(
+            await expect(dividendHub.connect(issuer1).issueDividend(
                 governor.address,
                 tokenId,
                 value,
                 ethers.constants.AddressZero,
-            )).to.be.revertedWithCustomError(paymentHub, 'InsufficientValue');
+            )).to.be.revertedWithCustomError(dividendHub, 'InsufficientValue');
         });
 
-        it('22.2.10. Issue payment unsuccessfully with insufficient erc20 token', async () => {
-            const fixture = await beforePaymentHubTest({
+        it('22.2.10. Issue dividend unsuccessfully with insufficient erc20 token', async () => {
+            const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
                 authorizeGovernor: true,
                 initGovernorTokens: true,
             });
-            const { paymentHub, issuer1, governor, currencies } = fixture;
+            const { dividendHub, issuer1, governor, currencies } = fixture;
 
             const tokenId = 1;
             const value = ethers.utils.parseEther('1000');
             const currency = currencies[0];
 
-            await expect(paymentHub.connect(issuer1).issuePayment(
+            await expect(dividendHub.connect(issuer1).issueDividend(
                 governor.address,
                 tokenId,
                 value,
@@ -471,21 +471,21 @@ describe('22. PaymentHub', async () => {
             )).to.be.revertedWith('ERC20: insufficient allowance');
         });
 
-        it('22.2.11. Issue payment unsuccessfully when receiving native token failed', async () => {
-            const fixture = await beforePaymentHubTest({
+        it('22.2.11. Issue dividend unsuccessfully when receiving native token failed', async () => {
+            const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
                 authorizeGovernor: true,
                 fundERC20ForIssuer: true,
                 initGovernorTokens: true,
             });
 
-            const { deployer, paymentHub, governor } = fixture;
+            const { deployer, dividendHub, governor } = fixture;
 
             const failReceiver = await deployFailReceiver(deployer.address, false);
             await prepareNativeToken(ethers.provider, deployer, [failReceiver], ethers.utils.parseEther('10000'));
             await callTransaction(failReceiver.activate(true));
 
-            const callData = paymentHub.interface.encodeFunctionData('issuePayment', [
+            const callData = dividendHub.interface.encodeFunctionData('issueDividend', [
                 governor.address,
                 1,
                 ethers.utils.parseEther('100'),
@@ -493,32 +493,32 @@ describe('22. PaymentHub', async () => {
             ]);
 
             await expect(failReceiver.call(
-                paymentHub.address,
+                dividendHub.address,
                 callData,
                 { value: ethers.utils.parseEther('1000') },
-            )).to.be.revertedWithCustomError(paymentHub, 'FailedRefund');
+            )).to.be.revertedWithCustomError(dividendHub, 'FailedRefund');
         });
 
-        it('22.2.11. Issue payment unsuccessfully when this contract is reentered', async () => {
-            const fixture = await beforePaymentHubTest({
+        it('22.2.11. Issue dividend unsuccessfully when this contract is reentered', async () => {
+            const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
                 authorizeGovernor: true,
                 fundERC20ForIssuer: true,
                 initGovernorTokens: true,
                 useReentrancyERC20: true,
             });
-            const { paymentHub, issuer1, governor, reentrancyERC20 } = fixture;
+            const { dividendHub, issuer1, governor, reentrancyERC20 } = fixture;
 
-            const callData = paymentHub.interface.encodeFunctionData('issuePayment', [
+            const callData = dividendHub.interface.encodeFunctionData('issueDividend', [
                 governor.address,
                 1,
                 ethers.utils.parseEther('1000'),
                 reentrancyERC20.address,
             ]);
 
-            await callTransaction(reentrancyERC20.updateReentrancyPlan(paymentHub.address, callData));
+            await callTransaction(reentrancyERC20.updateReentrancyPlan(dividendHub.address, callData));
 
-            await expect(paymentHub.connect(issuer1).issuePayment(
+            await expect(dividendHub.connect(issuer1).issueDividend(
                 governor.address,
                 2,
                 ethers.utils.parseEther('1000'),
@@ -529,19 +529,19 @@ describe('22. PaymentHub', async () => {
 
     describe('22.3. withdraw(address, uint256)', async () => {
         it('22.3.1. Withdraw successfully with multiple tx', async () => {
-            const fixture = await beforePaymentHubTest({
+            const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
                 authorizeGovernor: true,
                 fundERC20ForIssuer: true,
                 initGovernorTokens: true,
-                issueSamplePayments: true,
+                issueSampleDividends: true,
             });
-            const { paymentHub, governor, receiver1, receiver2, receiver3, currencies } = fixture;
+            const { dividendHub, governor, receiver1, receiver2, receiver3, currencies } = fixture;
 
             const tokenId1 = 1;
-            const paymentId1 = 1;
-            const totalValue1 = (await paymentHub.getPayment(paymentId1)).remainValue;
-            const totalWeight1 = (await paymentHub.getPayment(paymentId1)).remainWeight;
+            const dividendId1 = 1;
+            const totalValue1 = (await dividendHub.getDividend(dividendId1)).remainValue;
+            const totalWeight1 = (await dividendHub.getDividend(dividendId1)).remainWeight;
             const receiver1Weight1 = await governor.balanceOf(receiver1.address, tokenId1);
             const receiver2Weight1 = await governor.balanceOf(receiver2.address, tokenId1);
             const receiver3Weight1 = await governor.balanceOf(receiver3.address, tokenId1);
@@ -549,287 +549,287 @@ describe('22. PaymentHub', async () => {
             const receiver2Value1 = receiver2Weight1.mul(totalValue1).div(totalWeight1);
             const receiver3Value1 = receiver3Weight1.mul(totalValue1).div(totalWeight1);
 
-            // Tx1: Receiver 1 withdraw payment 1 (native token)
-            let paymentHubInitBalance = await ethers.provider.getBalance(paymentHub.address);
+            // Tx1: Receiver 1 withdraw dividend 1 (native token)
+            let dividendHubInitBalance = await ethers.provider.getBalance(dividendHub.address);
             let receiver1InitBalance = await ethers.provider.getBalance(receiver1.address);
 
-            const tx1 = await paymentHub.connect(receiver1).withdraw([paymentId1]);
+            const tx1 = await dividendHub.connect(receiver1).withdraw([dividendId1]);
             const receipt1 = await tx1.wait();
             const gasFee1 = receipt1.gasUsed.mul(receipt1.effectiveGasPrice);
 
             const event1 = receipt1.events!.find(e => e.event === 'Withdrawal')!;
-            expect(event1.args!.paymentId).to.equal(paymentId1);
+            expect(event1.args!.dividendId).to.equal(dividendId1);
             expect(event1.args!.withdrawer).to.equal(receiver1.address);
             expectEqualWithErrorMargin(event1.args!.value, receiver1Value1);
 
-            expect(await ethers.provider.getBalance(paymentHub.address)).to.equal(paymentHubInitBalance.sub(receiver1Value1));
+            expect(await ethers.provider.getBalance(dividendHub.address)).to.equal(dividendHubInitBalance.sub(receiver1Value1));
             expect(await ethers.provider.getBalance(receiver1.address)).to.equal(receiver1InitBalance.add(receiver1Value1).sub(gasFee1));
 
-            let payment = await paymentHub.getPayment(paymentId1);
-            expect(payment.remainWeight).to.equal(totalWeight1.sub(receiver1Weight1));
-            expect(payment.remainValue).to.equal(totalValue1.sub(receiver1Value1));
+            let dividend = await dividendHub.getDividend(dividendId1);
+            expect(dividend.remainWeight).to.equal(totalWeight1.sub(receiver1Weight1));
+            expect(dividend.remainValue).to.equal(totalValue1.sub(receiver1Value1));
 
-            // Tx2: Receiver 2 withdraw payment 1 (native token)
-            paymentHubInitBalance = await ethers.provider.getBalance(paymentHub.address);
+            // Tx2: Receiver 2 withdraw dividend 1 (native token)
+            dividendHubInitBalance = await ethers.provider.getBalance(dividendHub.address);
             let receiver2InitBalance = await ethers.provider.getBalance(receiver2.address);
 
-            const tx2 = await paymentHub.connect(receiver2).withdraw([paymentId1]);
+            const tx2 = await dividendHub.connect(receiver2).withdraw([dividendId1]);
             const receipt2 = await tx2.wait();
             const gasFee2 = receipt2.gasUsed.mul(receipt2.effectiveGasPrice);
 
             const event2 = receipt2.events!.find(e => e.event === 'Withdrawal')!;
-            expect(event2.args!.paymentId).to.equal(paymentId1);
+            expect(event2.args!.dividendId).to.equal(dividendId1);
             expect(event2.args!.withdrawer).to.equal(receiver2.address);
             expectEqualWithErrorMargin(event2.args!.value, receiver2Value1, ethers.utils.parseUnits("10", "wei"));
 
-            expect(await ethers.provider.getBalance(paymentHub.address)).to.equal(paymentHubInitBalance.sub(receiver2Value1));
+            expect(await ethers.provider.getBalance(dividendHub.address)).to.equal(dividendHubInitBalance.sub(receiver2Value1));
             expect(await ethers.provider.getBalance(receiver2.address)).to.equal(receiver2InitBalance.add(receiver2Value1).sub(gasFee2));
 
-            payment = await paymentHub.getPayment(paymentId1);
-            expect(payment.remainWeight).to.equal(totalWeight1.sub(receiver1Weight1).sub(receiver2Weight1));
-            expect(payment.remainValue).to.equal(totalValue1.sub(receiver1Value1).sub(receiver2Value1));
+            dividend = await dividendHub.getDividend(dividendId1);
+            expect(dividend.remainWeight).to.equal(totalWeight1.sub(receiver1Weight1).sub(receiver2Weight1));
+            expect(dividend.remainValue).to.equal(totalValue1.sub(receiver1Value1).sub(receiver2Value1));
 
-            // Tx3: Receiver 3 withdraw payment 1 (native token)
-            paymentHubInitBalance = await ethers.provider.getBalance(paymentHub.address);
+            // Tx3: Receiver 3 withdraw dividend 1 (native token)
+            dividendHubInitBalance = await ethers.provider.getBalance(dividendHub.address);
             let receiver3InitBalance = await ethers.provider.getBalance(receiver3.address);
 
-            const tx3 = await paymentHub.connect(receiver3).withdraw([paymentId1]);
+            const tx3 = await dividendHub.connect(receiver3).withdraw([dividendId1]);
             const receipt3 = await tx3.wait();
             const gasFee3 = receipt3.gasUsed.mul(receipt3.effectiveGasPrice);
 
             const event3 = receipt3.events!.find(e => e.event === 'Withdrawal')!;
-            expect(event3.args!.paymentId).to.equal(paymentId1);
+            expect(event3.args!.dividendId).to.equal(dividendId1);
             expect(event3.args!.withdrawer).to.equal(receiver3.address);
             expectEqualWithErrorMargin(event3.args!.value, receiver3Value1, ethers.utils.parseUnits("10", "wei"));
 
-            expect(await ethers.provider.getBalance(paymentHub.address)).to.equal(paymentHubInitBalance.sub(receiver3Value1));
+            expect(await ethers.provider.getBalance(dividendHub.address)).to.equal(dividendHubInitBalance.sub(receiver3Value1));
             expect(await ethers.provider.getBalance(receiver3.address)).to.equal(receiver3InitBalance.add(receiver3Value1).sub(gasFee3));
 
-            payment = await paymentHub.getPayment(paymentId1);
-            expect(payment.remainWeight).to.equal(0);
-            expect(payment.remainValue).to.equal(0);
+            dividend = await dividendHub.getDividend(dividendId1);
+            expect(dividend.remainWeight).to.equal(0);
+            expect(dividend.remainValue).to.equal(0);
 
-            // Tx4: Receiver 1 withdraw payment 2 (native token)
+            // Tx4: Receiver 1 withdraw dividend 2 (native token)
             const tokenId2 = 1;
-            const paymentId2 = 2;
-            const totalValue2 = (await paymentHub.getPayment(paymentId2)).remainValue;
-            const totalWeight2 = (await paymentHub.getPayment(paymentId2)).remainWeight;
+            const dividendId2 = 2;
+            const totalValue2 = (await dividendHub.getDividend(dividendId2)).remainValue;
+            const totalWeight2 = (await dividendHub.getDividend(dividendId2)).remainWeight;
             const receiver1Weight2 = await governor.balanceOf(receiver1.address, tokenId2);
             const receiver1Value2 = receiver1Weight2.mul(totalValue2).div(totalWeight2);
 
-            paymentHubInitBalance = await ethers.provider.getBalance(paymentHub.address);
+            dividendHubInitBalance = await ethers.provider.getBalance(dividendHub.address);
             receiver1InitBalance = await ethers.provider.getBalance(receiver1.address);
 
-            const tx4 = await paymentHub.connect(receiver1).withdraw([paymentId2]);
+            const tx4 = await dividendHub.connect(receiver1).withdraw([dividendId2]);
             const receipt4 = await tx4.wait();
             const gasFee4 = receipt4.gasUsed.mul(receipt4.effectiveGasPrice);
 
             const event4 = receipt4.events!.find(e => e.event === 'Withdrawal')!;
-            expect(event4.args!.paymentId).to.equal(paymentId2);
+            expect(event4.args!.dividendId).to.equal(dividendId2);
             expect(event4.args!.withdrawer).to.equal(receiver1.address);
             expectEqualWithErrorMargin(event4.args!.value, receiver1Value2, ethers.utils.parseUnits("10", "wei"));
 
-            expect(await ethers.provider.getBalance(paymentHub.address)).to.equal(paymentHubInitBalance.sub(receiver1Value2));
+            expect(await ethers.provider.getBalance(dividendHub.address)).to.equal(dividendHubInitBalance.sub(receiver1Value2));
             expect(await ethers.provider.getBalance(receiver1.address)).to.equal(receiver1InitBalance.add(receiver1Value2).sub(gasFee4));
 
-            payment = await paymentHub.getPayment(paymentId2);
-            expect(payment.remainWeight).to.equal(totalWeight2.sub(receiver1Weight2));
-            expect(payment.remainValue).to.equal(totalValue2.sub(receiver1Value2));
+            dividend = await dividendHub.getDividend(dividendId2);
+            expect(dividend.remainWeight).to.equal(totalWeight2.sub(receiver1Weight2));
+            expect(dividend.remainValue).to.equal(totalValue2.sub(receiver1Value2));
 
-            // Tx5: Receiver 2 withdraw payment 3 (erc20 token)
+            // Tx5: Receiver 2 withdraw dividend 3 (erc20 token)
             const currency = currencies[0];
             const tokenId3 = 2;
-            const paymentId3 = 3;
-            const totalValue3 = (await paymentHub.getPayment(paymentId3)).remainValue;
-            const totalWeight3 = (await paymentHub.getPayment(paymentId3)).remainWeight;
+            const dividendId3 = 3;
+            const totalValue3 = (await dividendHub.getDividend(dividendId3)).remainValue;
+            const totalWeight3 = (await dividendHub.getDividend(dividendId3)).remainWeight;
             const receiver2Weight3 = await governor.balanceOf(receiver2.address, tokenId3);
             const receiver2Value3 = receiver2Weight3.mul(totalValue3).div(totalWeight3);
 
-            paymentHubInitBalance = await currency.balanceOf(paymentHub.address);
+            dividendHubInitBalance = await currency.balanceOf(dividendHub.address);
             receiver2InitBalance = await currency.balanceOf(receiver2.address);
 
-            const tx5 = await paymentHub.connect(receiver2).withdraw([paymentId3]);
+            const tx5 = await dividendHub.connect(receiver2).withdraw([dividendId3]);
             const receipt5 = await tx5.wait();
 
             const event5 = receipt5.events!.find(e => e.event === 'Withdrawal')!;
-            expect(event5.args!.paymentId).to.equal(paymentId3);
+            expect(event5.args!.dividendId).to.equal(dividendId3);
             expect(event5.args!.withdrawer).to.equal(receiver2.address);
             expectEqualWithErrorMargin(event5.args!.value, receiver2Value3, ethers.utils.parseUnits("10", "wei"));
 
-            expect(await currency.balanceOf(paymentHub.address)).to.equal(paymentHubInitBalance.sub(receiver2Value3));
+            expect(await currency.balanceOf(dividendHub.address)).to.equal(dividendHubInitBalance.sub(receiver2Value3));
             expect(await currency.balanceOf(receiver2.address)).to.equal(receiver2InitBalance.add(receiver2Value3));
 
-            payment = await paymentHub.getPayment(paymentId3);
-            expect(payment.remainWeight).to.equal(totalWeight3.sub(receiver2Weight3));
-            expect(payment.remainValue).to.equal(totalValue3.sub(receiver2Value3));
+            dividend = await dividendHub.getDividend(dividendId3);
+            expect(dividend.remainWeight).to.equal(totalWeight3.sub(receiver2Weight3));
+            expect(dividend.remainValue).to.equal(totalValue3.sub(receiver2Value3));
         });
 
-        it('22.3.2. Withdraw successfully with multiple payment ids', async () => {
-            const fixture = await beforePaymentHubTest({
+        it('22.3.2. Withdraw successfully with multiple dividend ids', async () => {
+            const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
                 authorizeGovernor: true,
                 fundERC20ForIssuer: true,
                 initGovernorTokens: true,
-                issueSamplePayments: true,
+                issueSampleDividends: true,
             });
-            const { paymentHub, governor, receiver1, currencies } = fixture;
+            const { dividendHub, governor, receiver1, currencies } = fixture;
 
-            // Tx1: Receiver 1 withdraw payment 1, 2 (native token) and 3 (erc20 token)
-            let paymentHubInitNativeBalance = await ethers.provider.getBalance(paymentHub.address);
+            // Tx1: Receiver 1 withdraw dividend 1, 2 (native token) and 3 (erc20 token)
+            let dividendHubInitNativeBalance = await ethers.provider.getBalance(dividendHub.address);
             let receiver1InitNativeBalance = await ethers.provider.getBalance(receiver1.address);
-            let paymentHubInitERC20Balance = await currencies[0].balanceOf(paymentHub.address);
+            let dividendHubInitERC20Balance = await currencies[0].balanceOf(dividendHub.address);
             let receiver1InitERC20Balance = await currencies[0].balanceOf(receiver1.address);
 
             const tokenId1 = 1;
-            const paymentId1 = 1;
-            const totalValue1 = (await paymentHub.getPayment(paymentId1)).remainValue;
-            const totalWeight1 = (await paymentHub.getPayment(paymentId1)).remainWeight;
+            const dividendId1 = 1;
+            const totalValue1 = (await dividendHub.getDividend(dividendId1)).remainValue;
+            const totalWeight1 = (await dividendHub.getDividend(dividendId1)).remainWeight;
             const receiver1Weight1 = await governor.balanceOf(receiver1.address, tokenId1);
             const receiver1Value1 = receiver1Weight1.mul(totalValue1).div(totalWeight1);
 
             const tokenId2 = 1;
-            const paymentId2 = 2;
-            const totalValue2 = (await paymentHub.getPayment(paymentId2)).remainValue;
-            const totalWeight2 = (await paymentHub.getPayment(paymentId2)).remainWeight;
+            const dividendId2 = 2;
+            const totalValue2 = (await dividendHub.getDividend(dividendId2)).remainValue;
+            const totalWeight2 = (await dividendHub.getDividend(dividendId2)).remainWeight;
             const receiver1Weight2 = await governor.balanceOf(receiver1.address, tokenId2);
             const receiver1Value2 = receiver1Weight2.mul(totalValue2).div(totalWeight2);
             
             const currency = currencies[0];
             const tokenId3 = 2;
-            const paymentId3 = 3;
-            const totalValue3 = (await paymentHub.getPayment(paymentId3)).remainValue;
-            const totalWeight3 = (await paymentHub.getPayment(paymentId3)).remainWeight;
+            const dividendId3 = 3;
+            const totalValue3 = (await dividendHub.getDividend(dividendId3)).remainValue;
+            const totalWeight3 = (await dividendHub.getDividend(dividendId3)).remainWeight;
             const receiver1Weight3 = await governor.balanceOf(receiver1.address, tokenId3);
             const receiver1Value3 = receiver1Weight3.mul(totalValue3).div(totalWeight3);
 
-            const tx = await paymentHub.connect(receiver1).withdraw([paymentId1, paymentId2, paymentId3]);
+            const tx = await dividendHub.connect(receiver1).withdraw([dividendId1, dividendId2, dividendId3]);
             const receipt = await tx.wait();
             const gasFee = receipt.gasUsed.mul(receipt.effectiveGasPrice);
 
             const events = receipt.events!.filter(e => e.event === 'Withdrawal');
 
-            expect(events[0].args!.paymentId).to.equal(paymentId1);
+            expect(events[0].args!.dividendId).to.equal(dividendId1);
             expect(events[0].args!.withdrawer).to.equal(receiver1.address);
             expectEqualWithErrorMargin(events[0].args!.value, receiver1Value1);
 
-            expect(events[1].args!.paymentId).to.equal(paymentId2);
+            expect(events[1].args!.dividendId).to.equal(dividendId2);
             expect(events[1].args!.withdrawer).to.equal(receiver1.address);
             expectEqualWithErrorMargin(events[1].args!.value, receiver1Value2);
 
-            expect(events[2].args!.paymentId).to.equal(paymentId3);
+            expect(events[2].args!.dividendId).to.equal(dividendId3);
             expect(events[2].args!.withdrawer).to.equal(receiver1.address);
             expectEqualWithErrorMargin(events[2].args!.value, receiver1Value3);
 
-            expect(await ethers.provider.getBalance(paymentHub.address)).to.equal(
-                paymentHubInitNativeBalance.sub(receiver1Value1).sub(receiver1Value2)
+            expect(await ethers.provider.getBalance(dividendHub.address)).to.equal(
+                dividendHubInitNativeBalance.sub(receiver1Value1).sub(receiver1Value2)
             );
             expect(await ethers.provider.getBalance(receiver1.address)).to.equal(
                 receiver1InitNativeBalance.add(receiver1Value1).add(receiver1Value2).sub(gasFee)
             );
-            expect(await currency.balanceOf(paymentHub.address)).to.equal(
-                paymentHubInitERC20Balance.sub(receiver1Value3)
+            expect(await currency.balanceOf(dividendHub.address)).to.equal(
+                dividendHubInitERC20Balance.sub(receiver1Value3)
             );
             expect(await currency.balanceOf(receiver1.address)).to.equal(
                 receiver1InitERC20Balance.add(receiver1Value3)
             );
 
-            const payment1 = await paymentHub.getPayment(paymentId1);
-            expect(payment1.remainWeight).to.equal(totalWeight1.sub(receiver1Weight1));
-            expect(payment1.remainValue).to.equal(totalValue1.sub(receiver1Value1));
+            const dividend1 = await dividendHub.getDividend(dividendId1);
+            expect(dividend1.remainWeight).to.equal(totalWeight1.sub(receiver1Weight1));
+            expect(dividend1.remainValue).to.equal(totalValue1.sub(receiver1Value1));
 
-            const payment2 = await paymentHub.getPayment(paymentId2);
-            expect(payment2.remainWeight).to.equal(totalWeight2.sub(receiver1Weight2));
-            expect(payment2.remainValue).to.equal(totalValue2.sub(receiver1Value2));
+            const dividend2 = await dividendHub.getDividend(dividendId2);
+            expect(dividend2.remainWeight).to.equal(totalWeight2.sub(receiver1Weight2));
+            expect(dividend2.remainValue).to.equal(totalValue2.sub(receiver1Value2));
 
-            const payment3 = await paymentHub.getPayment(paymentId3);
-            expect(payment3.remainWeight).to.equal(totalWeight3.sub(receiver1Weight3));
-            expect(payment3.remainValue).to.equal(totalValue3.sub(receiver1Value3));
+            const dividend3 = await dividendHub.getDividend(dividendId3);
+            expect(dividend3.remainWeight).to.equal(totalWeight3.sub(receiver1Weight3));
+            expect(dividend3.remainValue).to.equal(totalValue3.sub(receiver1Value3));
         });
 
         it('22.3.3. Withdraw unsuccessfully when paused', async () => {
-            const fixture = await beforePaymentHubTest({
+            const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
                 authorizeGovernor: true,
                 fundERC20ForIssuer: true,
                 initGovernorTokens: true,
-                issueSamplePayments: true,
+                issueSampleDividends: true,
                 pause: true,
             });
-            const { paymentHub, receiver1 } = fixture;
+            const { dividendHub, receiver1 } = fixture;
 
-            await expect(paymentHub.connect(receiver1).withdraw([1]))
+            await expect(dividendHub.connect(receiver1).withdraw([1]))
                 .to.be.revertedWith('Pausable: paused');
         });
 
-        it('22.3.4. Withdraw unsuccessfully with invalid payment id', async () => {
-            const fixture = await beforePaymentHubTest({
+        it('22.3.4. Withdraw unsuccessfully with invalid dividend id', async () => {
+            const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
                 authorizeGovernor: true,
                 fundERC20ForIssuer: true,
                 initGovernorTokens: true,
-                issueSamplePayments: true,
+                issueSampleDividends: true,
             });
-            const { paymentHub, receiver1 } = fixture;
+            const { dividendHub, receiver1 } = fixture;
 
-            await expect(paymentHub.connect(receiver1).withdraw([0]))
-                .to.be.revertedWithCustomError(paymentHub, 'InvalidPaymentId');
-            await expect(paymentHub.connect(receiver1).withdraw([4]))
-                .to.be.revertedWithCustomError(paymentHub, 'InvalidPaymentId');
+            await expect(dividendHub.connect(receiver1).withdraw([0]))
+                .to.be.revertedWithCustomError(dividendHub, 'InvalidDividendId');
+            await expect(dividendHub.connect(receiver1).withdraw([4]))
+                .to.be.revertedWithCustomError(dividendHub, 'InvalidDividendId');
         });
 
-        it('22.3.5. Withdraw unsuccessfully when withdraw same payment id in same tx', async () => {
-            const fixture = await beforePaymentHubTest({
+        it('22.3.5. Withdraw unsuccessfully when withdraw same dividend id in same tx', async () => {
+            const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
                 authorizeGovernor: true,
                 fundERC20ForIssuer: true,
                 initGovernorTokens: true,
-                issueSamplePayments: true,
+                issueSampleDividends: true,
             });
-            const { paymentHub, receiver1 } = fixture;
+            const { dividendHub, receiver1 } = fixture;
 
-            await expect(paymentHub.connect(receiver1).withdraw([1, 2, 1]))
-                .to.be.revertedWithCustomError(paymentHub, 'AlreadyWithdrawn');
+            await expect(dividendHub.connect(receiver1).withdraw([1, 2, 1]))
+                .to.be.revertedWithCustomError(dividendHub, 'AlreadyWithdrawn');
         });
 
-        it('22.3.5. Withdraw unsuccessfully when withdraw same payment id in different tx', async () => {
-            const fixture = await beforePaymentHubTest({
+        it('22.3.5. Withdraw unsuccessfully when withdraw same dividend id in different tx', async () => {
+            const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
                 authorizeGovernor: true,
                 fundERC20ForIssuer: true,
                 initGovernorTokens: true,
-                issueSamplePayments: true,
+                issueSampleDividends: true,
             });
-            const { paymentHub, receiver1 } = fixture;
+            const { dividendHub, receiver1 } = fixture;
 
-            await callTransaction(paymentHub.connect(receiver1).withdraw([1]));
+            await callTransaction(dividendHub.connect(receiver1).withdraw([1]));
 
-            await expect(paymentHub.connect(receiver1).withdraw([1]))
-                .to.be.revertedWithCustomError(paymentHub, 'AlreadyWithdrawn');
+            await expect(dividendHub.connect(receiver1).withdraw([1]))
+                .to.be.revertedWithCustomError(dividendHub, 'AlreadyWithdrawn');
         });
 
         it('22.3.6. Withdraw unsuccessfully with zero weight', async () => {
-            const fixture = await beforePaymentHubTest({
+            const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
                 authorizeGovernor: true,
                 fundERC20ForIssuer: true,
                 initGovernorTokens: true,
-                issueSamplePayments: true,
+                issueSampleDividends: true,
             });
-            const { paymentHub, receiver3 } = fixture;
+            const { dividendHub, receiver3 } = fixture;
 
-            await expect(paymentHub.connect(receiver3).withdraw([3]))
-                .to.be.revertedWithCustomError(paymentHub, 'InvalidWithdrawing');
+            await expect(dividendHub.connect(receiver3).withdraw([3]))
+                .to.be.revertedWithCustomError(dividendHub, 'InvalidWithdrawing');
         });
 
         it('22.3.7. Withdraw unsuccessfully with insufficient remaining funds', async () => {
-            const fixture = await beforePaymentHubTest({
+            const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
                 authorizeGovernor: true,
                 fundERC20ForIssuer: true,
                 initGovernorTokens: true,
             });
 
-            const { governor, issuer1, paymentHub, receiver1 } = fixture;
+            const { governor, issuer1, dividendHub, receiver1 } = fixture;
 
             const timestamp = await time.latest() + 10;
             await time.setNextBlockTimestamp(timestamp);
@@ -837,7 +837,7 @@ describe('22. PaymentHub', async () => {
             governor.totalVoteAt.whenCalledWith(1, timestamp).returns(ethers.utils.parseEther('1'));
             governor.totalVoteAt.whenCalledWith(2, timestamp).returns(ethers.utils.parseEther('1'));
 
-            await callTransaction(paymentHub.connect(issuer1).issuePayment(
+            await callTransaction(dividendHub.connect(issuer1).issueDividend(
                 governor.address,
                 1,
                 ethers.utils.parseEther('1000'),
@@ -847,12 +847,12 @@ describe('22. PaymentHub', async () => {
 
             governor.totalVoteAt.reset();
 
-            await expect(paymentHub.connect(receiver1).withdraw([1]))
-                .to.be.revertedWithCustomError(paymentHub, 'InsufficientFunds');
+            await expect(dividendHub.connect(receiver1).withdraw([1]))
+                .to.be.revertedWithCustomError(dividendHub, 'InsufficientFunds');
         });
 
         it('22.3.8. Withdraw unsuccessfully when receiving native token failed', async () => {
-            const fixture = await beforePaymentHubTest({
+            const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
                 authorizeGovernor: true,
                 fundERC20ForIssuer: true,
@@ -860,9 +860,9 @@ describe('22. PaymentHub', async () => {
                 useFailReceiver: true,
             });
 
-            const { governor, issuer1, paymentHub, failReceiver } = fixture;
+            const { governor, issuer1, dividendHub, failReceiver } = fixture;
 
-            await callTransaction(paymentHub.connect(issuer1).issuePayment(
+            await callTransaction(dividendHub.connect(issuer1).issueDividend(
                 governor.address,
                 1,
                 ethers.utils.parseEther('1000'),
@@ -873,47 +873,47 @@ describe('22. PaymentHub', async () => {
             await callTransaction(failReceiver.activate(true));
 
             await expect(failReceiver.call(
-                paymentHub.address,
-                paymentHub.interface.encodeFunctionData('withdraw', [[1]]),
-            )).to.be.revertedWithCustomError(paymentHub, 'FailedTransfer');
+                dividendHub.address,
+                dividendHub.interface.encodeFunctionData('withdraw', [[1]]),
+            )).to.be.revertedWithCustomError(dividendHub, 'FailedTransfer');
         });
 
         it('22.3.9. Withdraw unsuccessfully when this contract is reentered', async () => {
-            const fixture = await beforePaymentHubTest({
+            const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
                 authorizeGovernor: true,
                 fundERC20ForIssuer: true,
                 initGovernorTokens: true,
                 useReentrancyERC20: true,
             });
-            const { paymentHub, issuer1, governor, reentrancyERC20, receiver1 } = fixture;
+            const { dividendHub, issuer1, governor, reentrancyERC20, receiver1 } = fixture;
 
-            await callTransaction(paymentHub.connect(issuer1).issuePayment(
+            await callTransaction(dividendHub.connect(issuer1).issueDividend(
                 governor.address,
                 2,
                 ethers.utils.parseEther('1000'),
                 reentrancyERC20.address,
             ));
 
-            const callData = paymentHub.interface.encodeFunctionData('withdraw', [[1]]);
+            const callData = dividendHub.interface.encodeFunctionData('withdraw', [[1]]);
 
-            await callTransaction(reentrancyERC20.updateReentrancyPlan(paymentHub.address, callData));
+            await callTransaction(reentrancyERC20.updateReentrancyPlan(dividendHub.address, callData));
 
-            await expect(paymentHub.connect(receiver1).withdraw([1]))
+            await expect(dividendHub.connect(receiver1).withdraw([1]))
                 .to.be.revertedWith('ReentrancyGuard: reentrant call');
         });
     });
 
-    describe('22.4. getPayment(uint256)', async () => {
-        it('22.4.1. return correct payment', async () => {
-            const fixture = await beforePaymentHubTest({
+    describe('22.4. getDividend(uint256)', async () => {
+        it('22.4.1. return correct dividend', async () => {
+            const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
                 authorizeGovernor: true,
                 fundERC20ForIssuer: true,
                 initGovernorTokens: true,
             });
 
-            const { paymentHub, issuer1, governor } = fixture;
+            const { dividendHub, issuer1, governor } = fixture;
 
             const tokenId1 = 1;
             const value1 = ethers.utils.parseEther('1000');
@@ -921,7 +921,7 @@ describe('22. PaymentHub', async () => {
 
             let timestamp = await time.latest() + 10;
             await time.setNextBlockTimestamp(timestamp);
-            await callTransaction(paymentHub.connect(issuer1).issuePayment(
+            await callTransaction(dividendHub.connect(issuer1).issueDividend(
                 governor.address,
                 tokenId1,
                 value1,
@@ -929,29 +929,29 @@ describe('22. PaymentHub', async () => {
                 { value: value1.add(ethers.utils.parseEther('1')) },
             ));
  
-            const payment = await paymentHub.getPayment(tokenId1);
-            expect(payment.tokenId).to.equal(tokenId1);
-            expect(payment.remainWeight).to.equal(totalVote);
-            expect(payment.remainValue).to.equal(value1);
-            expect(payment.currency).to.equal(ethers.constants.AddressZero);
-            expect(payment.at(4)).to.equal(timestamp);
-            expect(payment.governor).to.equal(governor.address);
+            const dividend = await dividendHub.getDividend(tokenId1);
+            expect(dividend.tokenId).to.equal(tokenId1);
+            expect(dividend.remainWeight).to.equal(totalVote);
+            expect(dividend.remainValue).to.equal(value1);
+            expect(dividend.currency).to.equal(ethers.constants.AddressZero);
+            expect(dividend.at(4)).to.equal(timestamp);
+            expect(dividend.governor).to.equal(governor.address);
         });
 
-        it('22.4.2. revert with invalid payment id', async () => {
-            const fixture = await beforePaymentHubTest({
+        it('22.4.2. revert with invalid dividend id', async () => {
+            const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
                 authorizeGovernor: true,
                 fundERC20ForIssuer: true,
                 initGovernorTokens: true,
-                issueSamplePayments: true,
+                issueSampleDividends: true,
             });
-            const { paymentHub, receiver1 } = fixture;
+            const { dividendHub, receiver1 } = fixture;
 
-            await expect(paymentHub.connect(receiver1).getPayment(0))
-                .to.be.revertedWithCustomError(paymentHub, 'InvalidPaymentId');
-            await expect(paymentHub.connect(receiver1).getPayment(4))
-                .to.be.revertedWithCustomError(paymentHub, 'InvalidPaymentId');
+            await expect(dividendHub.connect(receiver1).getDividend(0))
+                .to.be.revertedWithCustomError(dividendHub, 'InvalidDividendId');
+            await expect(dividendHub.connect(receiver1).getDividend(4))
+                .to.be.revertedWithCustomError(dividendHub, 'InvalidDividendId');
         });
     });
 });
