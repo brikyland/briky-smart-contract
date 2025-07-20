@@ -21,7 +21,7 @@ interface AirdropFixture {
     receiver3: any;
 }
 
-describe('18. Airdrop', async () => {
+describe('1.3. Airdrop', async () => {
     async function airdropFixture(): Promise<AirdropFixture> {
         const accounts = await ethers.getSigners();
         const deployer = accounts[0];
@@ -65,14 +65,14 @@ describe('18. Airdrop', async () => {
         return fixture;
     }
 
-    describe('16.1. initialize(address, address, string, string, string, uint256, uint256)', async () => {
-        it('16.1.1. Deploy successfully', async () => {
+    describe('1.3.1. initialize(address, address, string, string, string, uint256, uint256)', async () => {
+        it('1.3.1.1. Deploy successfully', async () => {
             await beforeAirdropTest();
         });
     });
 
-    describe('16.2. airdrop(address[], uint256[], currency)', async () => {
-        it('16.2.1. airdrop successfully with native token', async () => {
+    describe('1.3.2. airdrop(address[], uint256[], currency)', async () => {
+        it('1.3.2.1. airdrop successfully with native token', async () => {
             const { airdrop, sender1, sender2, receiver1, receiver2, receiver3 } = await beforeAirdropTest();
 
             const sender1InitBalance = await ethers.provider.getBalance(sender1.address);
@@ -112,7 +112,7 @@ describe('18. Airdrop', async () => {
             expect(await ethers.provider.getBalance(receiver3.address)).to.equal(receiver3InitBalance.add(amount2_receiver3));
         });
 
-        it('16.2.2. airdrop successfully with ERC20 token', async () => {
+        it('1.3.2.2. airdrop successfully with ERC20 token', async () => {
             const { airdrop, currency, sender1, sender2, receiver1, receiver2, receiver3 } = await beforeAirdropTest({
                 prepareERC20ForSender: true,
             });
@@ -149,7 +149,7 @@ describe('18. Airdrop', async () => {
             expect(await currency.balanceOf(receiver3.address)).to.equal(receiver3InitBalance.add(amount2_receiver3));
         });
 
-        it('16.2.3. aidrop unsuccessfully with invalid input', async () => {
+        it('1.3.2.3. aidrop unsuccessfully with invalid input', async () => {
             const { airdrop, sender1, receiver1, receiver2 } = await beforeAirdropTest();
 
             const accounts = [receiver1.address, receiver2.address];
@@ -159,7 +159,7 @@ describe('18. Airdrop', async () => {
                 .to.be.revertedWith('invalid input');
         });
 
-        it('16.2.4. airdrop unsuccessfully with insufficient native balance', async () => {
+        it('1.3.2.4. airdrop unsuccessfully with insufficient native balance', async () => {
             const { airdrop, sender1, receiver1, receiver2, deployer } = await beforeAirdropTest();
 
             await resetNativeToken(ethers.provider, [sender1]);
@@ -172,7 +172,7 @@ describe('18. Airdrop', async () => {
                 .to.be.revertedWithCustomError(airdrop, 'InsufficientValue');
         });
 
-        it('16.2.5. airdrop unsuccessfully with insufficient ERC20 balance', async () => {
+        it('1.3.2.5. airdrop unsuccessfully with insufficient ERC20 balance', async () => {
             const { airdrop, currency, sender1, receiver1 } = await beforeAirdropTest();
 
             const accounts = [receiver1.address];
@@ -182,7 +182,7 @@ describe('18. Airdrop', async () => {
                 .to.be.revertedWith('ERC20: insufficient allowance');
         });
         
-        it('16.2.6. airdrop unsuccessfully with invalid address', async () => {
+        it('1.3.2.6. airdrop unsuccessfully with invalid address', async () => {
             const { airdrop, sender1, receiver1 } = await beforeAirdropTest();
 
             const accounts = [receiver1.address, ethers.constants.AddressZero];
@@ -192,7 +192,7 @@ describe('18. Airdrop', async () => {
                 .to.be.revertedWith('invalid address');
         });
 
-        it('16.2.7. airdrop unsuccessfully with invalid amount', async () => {
+        it('1.3.2.7. airdrop unsuccessfully with invalid amount', async () => {
             const { airdrop, sender1, receiver1, receiver2 } = await beforeAirdropTest();
 
             const accounts = [receiver1.address, receiver2.address];

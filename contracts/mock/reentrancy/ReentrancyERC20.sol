@@ -5,8 +5,9 @@ import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ER
 import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import {Revert} from "../../lib/Revert.sol";
+import {ProxyCaller} from "../common/ProxyCaller.sol";
 
-contract ReentrancyERC20 is ERC20Upgradeable {
+contract ReentrancyERC20 is ERC20Upgradeable, ProxyCaller {
     address public reentrancyTarget;
     bytes public reentrancyData;
 
@@ -17,33 +18,23 @@ contract ReentrancyERC20 is ERC20Upgradeable {
         reentrancyData = _reentrancyData;
     }
 
-    function transfer(address to, uint256 value) public override returns (bool) {
-        if (reentrancyTarget != address(0)) {
-            (bool success, bytes memory res) = reentrancyTarget.call(reentrancyData);
-            if (!success) {
-                Revert.revertFromReturnedData(res);
-            }
-            return true;
-        }
+    function transfer(address _to, uint256 _value) public override returns (bool) {
+        return _reentrancy();
     }
 
-    function transferFrom(address from, address to, uint256 value) public override returns (bool) {
-        if (reentrancyTarget != address(0)) {
-            (bool success, bytes memory res) = reentrancyTarget.call(reentrancyData);
-            if (!success) {
-                Revert.revertFromReturnedData(res);
-            }
-            return true;
-        }
+    function transferFrom(address _from, address _to, uint256 _value) public override returns (bool) {
+        return _reentrancy();
     }
 
-    function call(address _to, bytes calldata _data) external payable {
+    function _reentrancy() internal returns (bool) {
         if (reentrancyTarget != address(0)) {
-            (bool success, bytes memory res) = _to.call{value: msg.value}(_data);
+            (bool success, bytes memory res) = reentrancyTarget.call{value: msg.value}(reentrancyData);
             if (!success) {
                 Revert.revertFromReturnedData(res);
             }
+            return success;
         }
+        return true;
     }
 
     function mint(address to, uint256 amount) external {

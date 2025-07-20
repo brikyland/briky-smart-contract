@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 
-import { PrimaryToken } from "../land/PrimaryToken.sol";
+import { PrimaryToken } from "../liquidity/PrimaryToken.sol";
 import { Revert } from "../lib/Revert.sol";
 
 contract MockPrimaryToken is PrimaryToken {

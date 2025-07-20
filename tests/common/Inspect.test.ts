@@ -80,7 +80,7 @@ interface CommonFixture {
 }
 
 
-describe('0. Common', async () => {
+describe('1.1. Inspect', async () => {
     async function commonFixture(): Promise<CommonFixture> {
         const accounts = await ethers.getSigners();
         const deployer = accounts[0];
@@ -276,8 +276,8 @@ describe('0. Common', async () => {
         }
     }
 
-    describe('0.1. version', async () => {
-        it('0.1.1. Return correct version for each contract', async () => {
+    describe('1.1.1. version', async () => {
+        it('1.1.1.1. Return correct version for each contract', async () => {
             const fixture = await loadFixture(commonFixture);
             const { admin, feeReceiver, priceWatcher, reserveVault, estateForger, estateToken, estateMarketplace, commissionToken, erc721Marketplace, treasury, primaryToken, stakeToken, distributor, dripDistributor, auction, mortgageToken, mortgageMarketplace, passportToken, promotionToken, airdrop } = fixture;
 
@@ -304,8 +304,8 @@ describe('0. Common', async () => {
         });
     });
 
-    describe('0.2. receive', async () => {
-        it('0.2.1. receive function of each contract should not execute any code', async () => {
+    describe('1.1.2. receive', async () => {
+        it('1.1.2.1. receive function of each contract should not execute any code', async () => {
             async function testReceiveNotExecuteAnyCode(contract: any, gasLimit: number) {
                 const [owner] = await ethers.getSigners();
 

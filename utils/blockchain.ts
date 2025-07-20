@@ -119,7 +119,7 @@ export async function testReentrancy(
     reentrancyData: string[],
     callback: any,
 ) {
-    for (const data of reentrancyData) {
+    for (const [index, data] of reentrancyData.entries()) {
         await callTransaction(reentrancyContract.updateReentrancyPlan(target.address, data));
         await callback();
     }

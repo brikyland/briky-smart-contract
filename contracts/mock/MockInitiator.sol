@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import { Revert } from "../lib/Revert.sol";
 
-import { ProxyCaller } from "./ProxyCaller.sol";
+import { ProxyCaller } from "./common/ProxyCaller.sol";
 
 contract MockInitiator is ProxyCaller {
     receive() external payable {}

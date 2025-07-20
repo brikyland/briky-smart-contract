@@ -18,7 +18,7 @@ interface PausableFixture {
     admins: any[];
 }
 
-describe('19. Pausable', async () => {
+describe('1.a. Pausable', async () => {
     async function pausableFixture(): Promise<PausableFixture> {
         const accounts = await ethers.getSigners();
         const deployer = accounts[0];
@@ -67,8 +67,8 @@ describe('19. Pausable', async () => {
         return fixture;
     }
 
-    describe('19.1. pause(bytes[])', async () => {
-        it('19.1.1. pause successfully with valid signatures', async () => {
+    describe('1.a.1. pause(bytes[])', async () => {
+        it('1.a.1.1. pause successfully with valid signatures', async () => {
             const { deployer, admin, admins, pausable } = await beforePausableTest({});
             let message = ethers.utils.defaultAbiCoder.encode(
                 ["address", "string"],
@@ -86,7 +86,7 @@ describe('19. Pausable', async () => {
                 .withArgs(deployer.address);
         });
 
-        it('19.1.2. pause unsuccessfully with invalid signatures', async () => {
+        it('1.a.1.2. pause unsuccessfully with invalid signatures', async () => {
             const { admin, admins, pausable } = await beforePausableTest({});
             let message = ethers.utils.defaultAbiCoder.encode(
                 ["address", "string"],
@@ -97,7 +97,7 @@ describe('19. Pausable', async () => {
             await expect(pausable.pause(invalidSignatures)).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('19.1.3. pause unsuccessfully when already paused', async () => {
+        it('1.a.1.3. pause unsuccessfully when already paused', async () => {
             const { admin, admins, pausable } = await beforePausableTest({});
             let message = ethers.utils.defaultAbiCoder.encode(
                 ["address", "string"],
@@ -113,8 +113,8 @@ describe('19. Pausable', async () => {
         });
     });
 
-    describe('19.2. unpause(bytes[])', async () => {
-        it('19.2.1. unpause successfully with valid signatures', async () => {
+    describe('1.a.2. unpause(bytes[])', async () => {
+        it('1.a.2.1. unpause successfully with valid signatures', async () => {
             const { deployer, admin, admins, pausable } = await beforePausableTest({
                 pause: true,
             });
@@ -132,7 +132,7 @@ describe('19. Pausable', async () => {
                 .withArgs(deployer.address);
         });
 
-        it('19.2.2. unpause unsuccessfully with invalid signatures', async () => {
+        it('1.a.2.2. unpause unsuccessfully with invalid signatures', async () => {
             const { admin, admins, pausable } = await beforePausableTest({
                 pause: true,
             });
@@ -145,7 +145,7 @@ describe('19. Pausable', async () => {
             await expect(pausable.unpause(invalidSignatures)).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('19.2.3. unpause unsuccessfully when not paused', async () => {
+        it('1.a.2.3. unpause unsuccessfully when not paused', async () => {
             const { admin, admins, pausable } = await beforePausableTest({
                 pause: true,
             });

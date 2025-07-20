@@ -24,7 +24,7 @@ interface FeeReceiverFixture {
     currency2: Currency;
 }
 
-describe('2. FeeReceiver', async () => {
+describe('1.5. FeeReceiver', async () => {
     async function feeReceiverFixture(): Promise<FeeReceiverFixture> {
         const accounts = await ethers.getSigners();
         const deployer = accounts[0];
@@ -80,16 +80,16 @@ describe('2. FeeReceiver', async () => {
         return await loadFixture(feeReceiverFixture);
     }
 
-    describe('2.1. initialize(address)', async () => {
-        it('2.1.1. Deploy successfully', async () => {
+    describe('1.5.1. initialize(address)', async () => {
+        it('1.5.1.1. Deploy successfully', async () => {
             const { admin, feeReceiver } = await setupBeforeTest();
             const adminAddress = await feeReceiver.admin();
             expect(adminAddress).to.equal(admin.address);
         });
     });
 
-    describe('2.2. withdraw(address, address[], uint256[], bytes[])', async () => {
-        it('2.2.1. Withdraw native tokens successfully', async () => {
+    describe('1.5.2. withdraw(address, address[], uint256[], bytes[])', async () => {
+        it('1.5.2.1. Withdraw native tokens successfully', async () => {
             const { deployer, admins, admin, feeReceiver } = await setupBeforeTest();
 
             let receiver = randomWallet();
@@ -159,7 +159,7 @@ describe('2. FeeReceiver', async () => {
             expect(balance).to.equal(5000);
         });
 
-        it('2.2.2. Withdraw ERC-20 tokens successfully', async () => {
+        it('1.5.2.2. Withdraw ERC-20 tokens successfully', async () => {
             const { deployer, admins, admin, feeReceiver, currency1, currency2 } = await setupBeforeTest();
 
             let receiver = randomWallet();
@@ -198,7 +198,7 @@ describe('2. FeeReceiver', async () => {
             expect(await currency2.balanceOf(receiver.address)).to.equal(ethers.constants.MaxUint256);
         });
 
-        it('2.2.3. Withdraw token successfully multiple times in the same tx', async () => {
+        it('1.5.2.3. Withdraw token successfully multiple times in the same tx', async () => {
             const { deployer, admins, admin, currency, feeReceiver } = await setupBeforeTest();
 
             let receiver = randomWallet();
@@ -247,7 +247,7 @@ describe('2. FeeReceiver', async () => {
             expect(await currency.balanceOf(receiver.address)).to.equal(700);
         });
 
-        it('2.2.4. Withdraw unsuccessfully with invalid signatures', async () => {
+        it('1.5.2.4. Withdraw unsuccessfully with invalid signatures', async () => {
             const { deployer, admins, admin, feeReceiver } = await setupBeforeTest();
 
             const message = ethers.utils.defaultAbiCoder.encode(
@@ -264,7 +264,7 @@ describe('2. FeeReceiver', async () => {
             )).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('2.2.5. Withdraw unsuccessfully with insufficient native tokens', async () => {
+        it('1.5.2.5. Withdraw unsuccessfully with insufficient native tokens', async () => {
             const { deployer, admins, admin, feeReceiver } = await setupBeforeTest();
 
             const message = ethers.utils.defaultAbiCoder.encode(
@@ -281,7 +281,7 @@ describe('2. FeeReceiver', async () => {
             )).to.be.revertedWithCustomError(feeReceiver, 'FailedTransfer');
         })
 
-        it('2.2.6. Withdraw unsuccessfully with insufficient ERC20 tokens', async () => {
+        it('1.5.2.6. Withdraw unsuccessfully with insufficient ERC20 tokens', async () => {
             const { deployer, admins, admin, feeReceiver, currency } = await setupBeforeTest();
 
             const message = ethers.utils.defaultAbiCoder.encode(
@@ -298,7 +298,7 @@ describe('2. FeeReceiver', async () => {
             )).to.be.revertedWith('ERC20: transfer amount exceeds balance');
         })
 
-        it('2.2.7. withdraw unsuccessfully when native token receiving failed', async () => {
+        it('1.5.2.7. withdraw unsuccessfully when native token receiving failed', async () => {
             const { deployer, admins, admin, feeReceiver } = await setupBeforeTest();
 
             const failReceiver = await deployFailReceiver(deployer, true);
@@ -322,7 +322,7 @@ describe('2. FeeReceiver', async () => {
             )).to.be.revertedWithCustomError(feeReceiver, 'FailedTransfer');
         });
 
-        it('2.2.8. withdraw unsuccessfully when the contract is reentered', async () => {
+        it('1.5.2.8. withdraw unsuccessfully when the contract is reentered', async () => {
             const { deployer, admins, admin, feeReceiver } = await setupBeforeTest();
 
             const reentrancyERC20 = await deployReentrancyERC20(deployer);

@@ -2,10 +2,10 @@
 pragma solidity ^0.8.20;
 
 import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-import {ICommon} from "../common/interfaces/ICommon.sol";
+import {IRate} from "../common/structs/IRate.sol";
 
 contract Currency is ERC20Upgradeable {
-    ICommon.Rate public exclusiveDiscount;
+    IRate.Rate public exclusiveDiscount;
 
     function initialize(
         string calldata _name,
@@ -23,6 +23,6 @@ contract Currency is ERC20Upgradeable {
     }
 
     function setExclusiveDiscount(uint256 value, uint8 decimals) external {
-        exclusiveDiscount = ICommon.Rate(value, decimals);
+        exclusiveDiscount = IRate.Rate(value, decimals);
     }
 }

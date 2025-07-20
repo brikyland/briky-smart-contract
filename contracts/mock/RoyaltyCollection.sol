@@ -13,7 +13,6 @@ import {RoyaltyRateProposer} from "../common/utilities/RoyaltyRateProposer.sol";
 contract RoyaltyCollection is ERC721Upgradeable, RoyaltyRateProposer {
     address public admin;
     address public royaltyReceiver;
-    uint256 public royaltyRate;
     uint256 public tokenNumber;
 
     string constant private VERSION = "v1.1.1";

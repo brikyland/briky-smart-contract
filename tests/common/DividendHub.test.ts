@@ -46,7 +46,7 @@ interface DividendHubFixture {
     zone: string;
 }
 
-describe('22. DividendHub', async () => {
+describe('1.4. DividendHub', async () => {
     async function dividendHubFixture(): Promise<DividendHubFixture> {
         const accounts = await ethers.getSigners();
         const deployer = accounts[0];
@@ -219,8 +219,8 @@ describe('22. DividendHub', async () => {
         }
     }
 
-    describe('22.1. initialize(address)', async () => {
-        it('22.1.1. Deploy successfully', async () => {
+    describe('1.4.1. initialize(address)', async () => {
+        it('1.4.1.1. Deploy successfully', async () => {
             const fixture = await loadFixture(dividendHubFixture);
             const { admin, dividendHub } = fixture;
 
@@ -228,8 +228,8 @@ describe('22. DividendHub', async () => {
         });
     });
 
-    describe('22.2. issueDividend(address, uint256, uint256, address)', async () => {
-        it('22.2.1. Issue dividend successfully', async () => {
+    describe('1.4.2. issueDividend(address, uint256, uint256, address)', async () => {
+        it('1.4.2.1. Issue dividend successfully', async () => {
             const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
                 authorizeGovernor: true,
@@ -316,7 +316,7 @@ describe('22. DividendHub', async () => {
             expect(await currency.balanceOf(dividendHub.address)).to.equal(dividendHubInitBalance.add(value2));
         });
 
-        it('22.2.3. Issue dividend unsuccessfully when paused', async () => {
+        it('1.4.2.3. Issue dividend unsuccessfully when paused', async () => {
             const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
                 authorizeGovernor: true,
@@ -337,7 +337,7 @@ describe('22. DividendHub', async () => {
             )).to.be.revertedWith('Pausable: paused');
         });
 
-        it('22.2.4. Issue dividend unsuccessfully with unauthorized governor', async () => {
+        it('1.4.2.4. Issue dividend unsuccessfully with unauthorized governor', async () => {
             const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
                 fundERC20ForIssuer: true,
@@ -356,7 +356,7 @@ describe('22. DividendHub', async () => {
             )).to.be.revertedWithCustomError(dividendHub, 'InvalidGovernor');
         });
 
-        it('22.2.5. Issue dividend unsuccessfully with invalid token id', async () => {
+        it('1.4.2.5. Issue dividend unsuccessfully with invalid token id', async () => {
             const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
                 authorizeGovernor: true,
@@ -376,7 +376,7 @@ describe('22. DividendHub', async () => {
             )).to.be.revertedWithCustomError(dividendHub, 'InvalidTokenId');
         });
 
-        it('22.2.6. Issue dividend unsuccessfully with unavailable currency', async () => {
+        it('1.4.2.6. Issue dividend unsuccessfully with unavailable currency', async () => {
             const fixture = await beforeDividendHubTest({
                 authorizeGovernor: true,
                 fundERC20ForIssuer: true,
@@ -394,7 +394,7 @@ describe('22. DividendHub', async () => {
             )).to.be.revertedWithCustomError(dividendHub, 'InvalidCurrency');
         });
 
-        it('22.2.7. Issue dividend unsuccessfully with insufficient balance', async () => {
+        it('1.4.2.7. Issue dividend unsuccessfully with insufficient balance', async () => {
             const fixture = await beforeDividendHubTest({
                 authorizeGovernor: true,
                 fundERC20ForIssuer: true,
@@ -412,7 +412,7 @@ describe('22. DividendHub', async () => {
             )).to.be.revertedWithCustomError(dividendHub, 'InvalidCurrency');
         });
 
-        it('22.2.8. Issue dividend unsuccessfully with invalid value', async () => {
+        it('1.4.2.8. Issue dividend unsuccessfully with invalid value', async () => {
             const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
                 authorizeGovernor: true,
@@ -431,7 +431,7 @@ describe('22. DividendHub', async () => {
             )).to.be.revertedWithCustomError(dividendHub, 'InvalidInput');
         });
 
-        it('22.2.9. Issue dividend unsuccessfully with insufficient native token', async () => {
+        it('1.4.2.9. Issue dividend unsuccessfully with insufficient native token', async () => {
             const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
                 authorizeGovernor: true,
@@ -451,7 +451,7 @@ describe('22. DividendHub', async () => {
             )).to.be.revertedWithCustomError(dividendHub, 'InsufficientValue');
         });
 
-        it('22.2.10. Issue dividend unsuccessfully with insufficient erc20 token', async () => {
+        it('1.4.2.10. Issue dividend unsuccessfully with insufficient erc20 token', async () => {
             const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
                 authorizeGovernor: true,
@@ -471,7 +471,7 @@ describe('22. DividendHub', async () => {
             )).to.be.revertedWith('ERC20: insufficient allowance');
         });
 
-        it('22.2.11. Issue dividend unsuccessfully when receiving native token failed', async () => {
+        it('1.4.2.11. Issue dividend unsuccessfully when receiving native token failed', async () => {
             const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
                 authorizeGovernor: true,
@@ -499,7 +499,7 @@ describe('22. DividendHub', async () => {
             )).to.be.revertedWithCustomError(dividendHub, 'FailedRefund');
         });
 
-        it('22.2.11. Issue dividend unsuccessfully when this contract is reentered', async () => {
+        it('1.4.2.11. Issue dividend unsuccessfully when this contract is reentered', async () => {
             const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
                 authorizeGovernor: true,
@@ -527,8 +527,8 @@ describe('22. DividendHub', async () => {
         });
     });
 
-    describe('22.3. withdraw(address, uint256)', async () => {
-        it('22.3.1. Withdraw successfully with multiple tx', async () => {
+    describe('1.4.3. withdraw(address, uint256)', async () => {
+        it('1.4.3.1. Withdraw successfully with multiple tx', async () => {
             const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
                 authorizeGovernor: true,
@@ -664,7 +664,7 @@ describe('22. DividendHub', async () => {
             expect(dividend.remainValue).to.equal(totalValue3.sub(receiver2Value3));
         });
 
-        it('22.3.2. Withdraw successfully with multiple dividend ids', async () => {
+        it('1.4.3.2. Withdraw successfully with multiple dividend ids', async () => {
             const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
                 authorizeGovernor: true,
@@ -746,7 +746,7 @@ describe('22. DividendHub', async () => {
             expect(dividend3.remainValue).to.equal(totalValue3.sub(receiver1Value3));
         });
 
-        it('22.3.3. Withdraw unsuccessfully when paused', async () => {
+        it('1.4.3.3. Withdraw unsuccessfully when paused', async () => {
             const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
                 authorizeGovernor: true,
@@ -761,7 +761,7 @@ describe('22. DividendHub', async () => {
                 .to.be.revertedWith('Pausable: paused');
         });
 
-        it('22.3.4. Withdraw unsuccessfully with invalid dividend id', async () => {
+        it('1.4.3.4. Withdraw unsuccessfully with invalid dividend id', async () => {
             const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
                 authorizeGovernor: true,
@@ -777,7 +777,7 @@ describe('22. DividendHub', async () => {
                 .to.be.revertedWithCustomError(dividendHub, 'InvalidDividendId');
         });
 
-        it('22.3.5. Withdraw unsuccessfully when withdraw same dividend id in same tx', async () => {
+        it('1.4.3.5. Withdraw unsuccessfully when withdraw same dividend id in same tx', async () => {
             const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
                 authorizeGovernor: true,
@@ -791,7 +791,7 @@ describe('22. DividendHub', async () => {
                 .to.be.revertedWithCustomError(dividendHub, 'AlreadyWithdrawn');
         });
 
-        it('22.3.5. Withdraw unsuccessfully when withdraw same dividend id in different tx', async () => {
+        it('1.4.3.5. Withdraw unsuccessfully when withdraw same dividend id in different tx', async () => {
             const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
                 authorizeGovernor: true,
@@ -807,7 +807,7 @@ describe('22. DividendHub', async () => {
                 .to.be.revertedWithCustomError(dividendHub, 'AlreadyWithdrawn');
         });
 
-        it('22.3.6. Withdraw unsuccessfully with zero weight', async () => {
+        it('1.4.3.6. Withdraw unsuccessfully with zero weight', async () => {
             const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
                 authorizeGovernor: true,
@@ -821,7 +821,7 @@ describe('22. DividendHub', async () => {
                 .to.be.revertedWithCustomError(dividendHub, 'InvalidWithdrawing');
         });
 
-        it('22.3.7. Withdraw unsuccessfully with insufficient remaining funds', async () => {
+        it('1.4.3.7. Withdraw unsuccessfully with insufficient remaining funds', async () => {
             const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
                 authorizeGovernor: true,
@@ -851,7 +851,7 @@ describe('22. DividendHub', async () => {
                 .to.be.revertedWithCustomError(dividendHub, 'InsufficientFunds');
         });
 
-        it('22.3.8. Withdraw unsuccessfully when receiving native token failed', async () => {
+        it('1.4.3.8. Withdraw unsuccessfully when receiving native token failed', async () => {
             const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
                 authorizeGovernor: true,
@@ -878,7 +878,7 @@ describe('22. DividendHub', async () => {
             )).to.be.revertedWithCustomError(dividendHub, 'FailedTransfer');
         });
 
-        it('22.3.9. Withdraw unsuccessfully when this contract is reentered', async () => {
+        it('1.4.3.9. Withdraw unsuccessfully when this contract is reentered', async () => {
             const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
                 authorizeGovernor: true,
@@ -904,8 +904,8 @@ describe('22. DividendHub', async () => {
         });
     });
 
-    describe('22.4. getDividend(uint256)', async () => {
-        it('22.4.1. return correct dividend', async () => {
+    describe('1.4.4. getDividend(uint256)', async () => {
+        it('1.4.4.1. return correct dividend', async () => {
             const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
                 authorizeGovernor: true,
@@ -938,7 +938,7 @@ describe('22. DividendHub', async () => {
             expect(dividend.governor).to.equal(governor.address);
         });
 
-        it('22.4.2. revert with invalid dividend id', async () => {
+        it('1.4.4.2. revert with invalid dividend id', async () => {
             const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
                 authorizeGovernor: true,

@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { Revert } from "../../lib/Revert.sol";
+import {Revert} from "../../lib/Revert.sol";
+import {ProxyCaller} from "../common/ProxyCaller.sol";
 
-contract Reentrancy {
+contract Reentrancy is ProxyCaller {
     address public reentrancyTarget;
     bytes public reentrancyData;
 
@@ -20,13 +21,6 @@ contract Reentrancy {
             if (!success) {
                 Revert.revertFromReturnedData(res);
             }
-        }
-    }
-
-    function call(address _to, bytes calldata _data) external payable {
-        (bool success, bytes memory res) = _to.call{value: msg.value}(_data);
-        if (!success) {
-            Revert.revertFromReturnedData(res);
         }
     }
 }

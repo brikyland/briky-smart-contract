@@ -32,6 +32,4 @@ contract MockValidatable is Validatable {
     function version() external pure override returns (string memory) {
         return VERSION;
     }
-
-
 }

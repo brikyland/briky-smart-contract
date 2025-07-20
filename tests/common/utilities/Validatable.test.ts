@@ -20,7 +20,7 @@ interface ValidatableFixture {
     validator: any;
 }
 
-describe('23. Validatable', async () => {
+describe('1.b. Validatable', async () => {
     async function validatableFixture(): Promise<ValidatableFixture> {
         const accounts = await ethers.getSigners();
         const deployer = accounts[0];
@@ -58,14 +58,14 @@ describe('23. Validatable', async () => {
         return fixture;
     }
 
-    describe('23.1. __Validatable_init(address)', async () => {
-        it('23.1.1. init validator successfully after deploy', async () => {
+    describe('1.b.1. __Validatable_init(address)', async () => {
+        it('1.b.1.1. init validator successfully after deploy', async () => {
             const { validatable, validator } = await beforeValidatableTest();
 
             expect(await validatable.validator()).to.equal(validator.address);
         });
 
-        it('23.1.2. init validator unsuccessfully when not initializing', async () => {
+        it('1.b.1.2. init validator unsuccessfully when not initializing', async () => {
             const { validatable } = await beforeValidatableTest();
 
             const newValidator = randomWallet();
@@ -75,8 +75,8 @@ describe('23. Validatable', async () => {
         });
     });
 
-    describe('23.2. updateValidator(address)', async () => {
-        it('23.2.1. updateValidator successfully with valid signatures', async () => {
+    describe('1.b.2. updateValidator(address)', async () => {
+        it('1.b.2.1. updateValidator successfully with valid signatures', async () => {
             const { admin, admins, validatable } = await beforeValidatableTest();
 
             const newValidator = randomWallet();
@@ -97,7 +97,7 @@ describe('23. Validatable', async () => {
                 .withArgs(newValidator.address);
         });
 
-        it('23.2.2. updateValidator unsuccessfully with invalid signatures', async () => {
+        it('1.b.2.2. updateValidator unsuccessfully with invalid signatures', async () => {
             const { admin, admins, validatable } = await beforeValidatableTest();
 
             const newValidator = randomWallet();
@@ -113,8 +113,8 @@ describe('23. Validatable', async () => {
         });
     });
 
-    describe('23.3. _validate(bytes, (uint256, uint256, bytes))', async () => {
-        it('23.3.1. validate successfully with valid signatures', async () => {
+    describe('1.b.3. _validate(bytes, (uint256, uint256, bytes))', async () => {
+        it('1.b.3.1. validate successfully with valid signatures', async () => {
             const { validatable, validator } = await beforeValidatableTest();
 
             const content = "Bitcoin";
@@ -122,7 +122,7 @@ describe('23. Validatable', async () => {
             await time.setNextBlockTimestamp(timestamp);
 
             const nonce = ethers.BigNumber.from(1);
-            const expiry = ethers.BigNumber.from(timestamp + Constant.COMMON_VALIDATION_SIGNATURE_TTL);
+            const expiry = ethers.BigNumber.from(timestamp + 1);
 
             let data = ethers.utils.defaultAbiCoder.encode(
                 ["string"],
@@ -142,7 +142,7 @@ describe('23. Validatable', async () => {
             expect(await validatable.isNonceUsed(nonce)).to.equal(true);
         });
 
-        it('23.3.2. validate unsuccessfully with different content', async () => {
+        it('1.b.3.2. validate unsuccessfully with different content', async () => {
             const { validatable, validator } = await beforeValidatableTest();
 
             const content = "Bitcoin";
@@ -150,7 +150,7 @@ describe('23. Validatable', async () => {
             await time.setNextBlockTimestamp(timestamp);
 
             const nonce = ethers.BigNumber.from(1);
-            const expiry = ethers.BigNumber.from(timestamp + Constant.COMMON_VALIDATION_SIGNATURE_TTL);
+            const expiry = ethers.BigNumber.from(timestamp + 1);
 
             let data = ethers.utils.defaultAbiCoder.encode(
                 ["string"],
@@ -168,7 +168,7 @@ describe('23. Validatable', async () => {
                 .to.be.revertedWithCustomError(validatable, 'InvalidSignature');
         });
 
-        it('23.3.3. validate unsuccessfully with different nonce', async () => {
+        it('1.b.3.3. validate unsuccessfully with different nonce', async () => {
             const { validatable, validator } = await beforeValidatableTest();
 
             const content = "Bitcoin";
@@ -176,7 +176,7 @@ describe('23. Validatable', async () => {
             await time.setNextBlockTimestamp(timestamp);
 
             const nonce = ethers.BigNumber.from(1);
-            const expiry = ethers.BigNumber.from(timestamp + Constant.COMMON_VALIDATION_SIGNATURE_TTL);
+            const expiry = ethers.BigNumber.from(timestamp + 1);
 
             let data = ethers.utils.defaultAbiCoder.encode(
                 ["string"],
@@ -194,7 +194,7 @@ describe('23. Validatable', async () => {
                 .to.be.revertedWithCustomError(validatable, 'InvalidSignature');
         });
 
-        it('23.3.4. validate unsuccessfully with different expiry', async () => {
+        it('1.b.3.4. validate unsuccessfully with different expiry', async () => {
             const { validatable, validator } = await beforeValidatableTest();
 
             const content = "Bitcoin";
@@ -202,7 +202,7 @@ describe('23. Validatable', async () => {
             await time.setNextBlockTimestamp(timestamp);
 
             const nonce = ethers.BigNumber.from(1);
-            const expiry = ethers.BigNumber.from(timestamp + Constant.COMMON_VALIDATION_SIGNATURE_TTL);
+            const expiry = ethers.BigNumber.from(timestamp + 1);
 
             let data = ethers.utils.defaultAbiCoder.encode(
                 ["string"],
@@ -220,7 +220,7 @@ describe('23. Validatable', async () => {
                 .to.be.revertedWithCustomError(validatable, 'InvalidSignature');
         });
 
-        it('23.3.5. validate unsuccessfully with expired validation', async () => {
+        it('1.b.3.5. validate unsuccessfully with expired validation', async () => {
             const { validatable, validator } = await beforeValidatableTest();
 
             const content = "Bitcoin";
@@ -255,7 +255,7 @@ describe('23. Validatable', async () => {
                 .to.be.revertedWithCustomError(validatable, 'ValidationExpired');
         });
 
-        it('23.3.6. validate unsuccessfully with used nonce', async () => {
+        it('1.b.3.6. validate unsuccessfully with used nonce', async () => {
             const { validatable, validator } = await beforeValidatableTest();
 
             const content = "Bitcoin";

@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
+import {ERC1155HolderUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
 
-import "../interfaces/ICommonEvents.sol";
 import {Revert} from "../../lib/Revert.sol";
 
-contract ReentrancyERC1155Holder is ERC1155HolderUpgradeable, IMockCommon {
+contract ReentrancyERC1155Holder is ERC1155HolderUpgradeable {
     address public reentrancyTarget;
     bytes public reentrancyData;
 
@@ -18,18 +17,15 @@ contract ReentrancyERC1155Holder is ERC1155HolderUpgradeable, IMockCommon {
     }
 
     receive() external payable {
+        _reentrancy();
+    }
+
+    function _reentrancy() internal {
         if (reentrancyTarget != address(0)) {
             (bool success, bytes memory res) = reentrancyTarget.call{value: msg.value}(reentrancyData);
             if (!success) {
                 Revert.revertFromReturnedData(res);
             }
-        }
-    }
-
-    function call(address _to, bytes calldata _data) external payable {
-        (bool success, bytes memory res) = _to.call{value: msg.value}(_data);
-        if (!success) {
-            Revert.revertFromReturnedData(res);
         }
     }
 }
