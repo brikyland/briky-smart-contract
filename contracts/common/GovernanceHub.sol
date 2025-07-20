@@ -112,7 +112,7 @@ ReentrancyGuardUpgradeable {
         uint40 _duration,
         uint40 _admissionExpiry,
         Validation calldata _signature
-    ) external payable whenNotPaused returns (uint256) {
+    ) external payable nonReentrant whenNotPaused returns (uint256) {
         _validate(
             abi.encode(
                 _governor,
