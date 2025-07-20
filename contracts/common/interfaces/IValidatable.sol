@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {ICommon} from "./ICommon.sol";
-import {IValidation} from "./IValidation.sol";
+import {IValidation} from "../structs/IValidation.sol";
 
 interface IValidatable is
 ICommon,

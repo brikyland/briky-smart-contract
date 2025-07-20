@@ -3,8 +3,6 @@ pragma solidity ^0.8.20;
 
 import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol";
 
-import {IAdmin} from "../../common/interfaces/IAdmin.sol";
-
 import {Administrable} from "../../common/utilities/Administrable.sol";
 
 import {IEstateTokenizer} from "../interfaces/IEstateTokenizer.sol";

@@ -5,14 +5,16 @@ import {IERC721MetadataUpgradeable} from "@openzeppelin/contracts-upgradeable/in
 import {IERC1155ReceiverUpgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC1155ReceiverUpgradeable.sol";
 import {IERC4906Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC4906Upgradeable.sol";
 
+import {ICommon} from "../../common/interfaces/ICommon.sol";
 import {IRoyaltyRateProposer} from "../../common/interfaces/IRoyaltyRateProposer.sol";
 
 import {IEstateTokenReceiver} from "../../land/interfaces/IEstateTokenReceiver.sol";
 
-import {IMortgage} from "./IMortgage.sol";
+import {ILoan} from "../structs/ILoan.sol";
 
 interface IMortgageToken is
-IMortgage,
+ILoan,
+ICommon,
 IEstateTokenReceiver,
 IRoyaltyRateProposer,
 IERC4906Upgradeable,
@@ -20,7 +22,6 @@ IERC721MetadataUpgradeable {
     event BaseURIUpdate(string newValue);
 
     event FeeRateUpdate(uint256 newValue);
-    event RoyaltyRateUpdate(uint256 newValue);
 
     event NewToken(
         uint256 indexed tokenId,

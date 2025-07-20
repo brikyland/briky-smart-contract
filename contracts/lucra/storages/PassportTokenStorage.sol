@@ -11,7 +11,6 @@ abstract contract PassportTokenStorage is IPassportToken {
     uint256 public tokenNumber;
 
     uint256 public fee;
-    uint256 public royaltyRate;
 
     address public admin;
     // deprecated

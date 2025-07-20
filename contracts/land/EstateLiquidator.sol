@@ -6,11 +6,11 @@ import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/se
 import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
 import {Formula} from "../lib/Formula.sol";
 
-import {CommonConstant} from "../common/constants/CommonConstant.sol";
-
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 import {IDividendHub} from "../common/interfaces/IDividendHub.sol";
 import {IGovernanceHub} from "../common/interfaces/IGovernanceHub.sol";
+
+import {CommonConstant} from "../common/constants/CommonConstant.sol";
 
 import {Administrable} from "../common/utilities/Administrable.sol";
 import {Discountable} from "../common/utilities/Discountable.sol";
@@ -35,7 +35,7 @@ Validatable,
 ReentrancyGuardUpgradeable {
     using Formula for uint256;
 
-    string constant private VERSION = "";
+    string constant private VERSION = "v1.1.1";
 
     modifier validRequest(uint256 _requestId) {
         if (_requestId == 0 || _requestId > requestNumber) {
@@ -70,7 +70,6 @@ ReentrancyGuardUpgradeable {
         feeReceiver = _feeReceiver;
 
         feeRate = _feeRate;
-
         emit FeeRateUpdate(_feeRate);
     }
 
@@ -102,7 +101,7 @@ ReentrancyGuardUpgradeable {
     }
 
     function getRequest(uint256 _requestId)
-    external view validRequest(_requestId) returns (Request memory) {
+    external view validRequest(_requestId) returns (EstateLiquidatorRequest memory) {
         return requests[_requestId];
     }
 
@@ -144,7 +143,7 @@ ReentrancyGuardUpgradeable {
         );
 
         uint256 requestId = ++requestNumber;
-        requests[requestId] = Request(
+        requests[requestId] = EstateLiquidatorRequest(
             _estateId,
             proposalId,
             _value,
@@ -166,7 +165,7 @@ ReentrancyGuardUpgradeable {
 
     function conclude(uint256 _requestId)
     external nonReentrant validRequest(_requestId) whenNotPaused returns (bool) {
-        Request storage request = requests[_requestId];
+        EstateLiquidatorRequest storage request = requests[_requestId];
         uint256 estateId = request.estateId;
         if (estateId == 0) {
             revert Cancelled();
@@ -235,6 +234,6 @@ ReentrancyGuardUpgradeable {
             return false;
         }
 
-        revert InvalidRequestConclusion();
+        revert InvalidConclusion();
     }
 }

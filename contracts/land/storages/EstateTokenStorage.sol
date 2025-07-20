@@ -12,9 +12,6 @@ abstract contract EstateTokenStorage is IEstateToken {
     mapping(address => bool) public isTokenizer;
 
     uint256 public estateNumber;
-    uint256 public extractionNumber;
-
-    uint256 internal royaltyRate;
 
     address public admin;
     address public commissionToken;

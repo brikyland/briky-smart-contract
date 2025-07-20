@@ -2,22 +2,19 @@
 pragma solidity ^0.8.20;
 
 import {IValidatable} from "../../common/interfaces/IValidatable.sol";
-import {IProposal} from "../../common/interfaces/IProposal.sol";
+
+import {IEstateLiquidatorRequest} from "../structs/IEstateLiquidatorRequest.sol";
+import {IProposal} from "../../common/structs/IProposal.sol";
+import {IRate} from "../../common/structs/IRate.sol";
 
 import {ICommissionDispatchable} from "./ICommissionDispatchable.sol";
 
 interface IEstateLiquidator is
+IEstateLiquidatorRequest,
 IProposal,
+IRate,
 ICommissionDispatchable,
 IValidatable {
-    struct Request {
-        uint256 estateId;
-        uint256 proposalId;
-        uint256 value;
-        address currency;
-        address buyer;
-    }
-
     event FeeRateUpdate(uint256 newValue);
 
     event NewRequest(
@@ -32,8 +29,8 @@ IValidatable {
     event RequestDisapproval(uint256 indexed requestId);
 
     error Cancelled();
+    error InvalidConclusion();
     error InvalidRequestId();
-    error InvalidRequestConclusion();
     error UnavailableEstate();
 
     function requestExtraction(

@@ -10,15 +10,16 @@ import {ERC1155SupplyUpgradeable} from "@openzeppelin/contracts-upgradeable/toke
 import {ERC1155URIStorageUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/extensions/ERC1155URIStorageUpgradeable.sol";
 import {ERC165CheckerUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 
-import {CommonConstant} from "../common/constants/CommonConstant.sol";
-
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 import {IGovernor} from "../common/interfaces/IGovernor.sol";
 import {IRoyaltyRateProposer} from "../common/interfaces/IRoyaltyRateProposer.sol";
 
+import {CommonConstant} from "../common/constants/CommonConstant.sol";
+
 import {Administrable} from "../common/utilities/Administrable.sol";
 import {Pausable} from "../common/utilities/Pausable.sol";
 import {RoyaltyRateProposer} from "../common/utilities/RoyaltyRateProposer.sol";
+import {Snapshotable} from "../common/utilities/Snapshotable.sol";
 import {Validatable} from "../common/utilities/Validatable.sol";
 
 import {EstateTokenConstant} from "./constants/EstateTokenConstant.sol";
@@ -37,6 +38,7 @@ ERC1155URIStorageUpgradeable,
 Administrable,
 Pausable,
 RoyaltyRateProposer,
+Snapshotable,
 Validatable {
     using ERC165CheckerUpgradeable for address;
 
@@ -65,23 +67,16 @@ Validatable {
         string calldata _uri,
         uint256 _royaltyRate
     ) external initializer {
-        require(_royaltyRate <= CommonConstant.COMMON_RATE_MAX_FRACTION);
-
         __ERC1155Pausable_init();
 
         __Validatable_init(_validator);
+        __RoyaltyRateProposer_init(_royaltyRate);
 
         admin = _admin;
         feeReceiver = _feeReceiver;
 
-        validator = _validator;
-
         _setBaseURI(_uri);
-
-        royaltyRate = _royaltyRate;
-
         emit BaseURIUpdate(_uri);
-        emit RoyaltyRateUpdate(_royaltyRate);
     }
 
     function version() external pure returns (string memory) {
@@ -125,25 +120,6 @@ Validatable {
         );
         _setBaseURI(_uri);
         emit BaseURIUpdate(_uri);
-    }
-
-    function updateRoyaltyRate(
-        uint256 _royaltyRate,
-        bytes[] calldata _signatures
-    ) external {
-        IAdmin(admin).verifyAdminSignatures(
-            abi.encode(
-                address(this),
-                "updateRoyaltyRate",
-                _royaltyRate
-            ),
-            _signatures
-        );
-        if (_royaltyRate > CommonConstant.COMMON_RATE_MAX_FRACTION) {
-            revert InvalidRate();
-        }
-        royaltyRate = _royaltyRate;
-        emit RoyaltyRateUpdate(_royaltyRate);
     }
 
     function authorizeTokenizers(
@@ -217,16 +193,16 @@ Validatable {
         }
     }
 
-    function getRoyaltyRate()
-    public view override(IRoyaltyRateProposer, RoyaltyRateProposer) returns (Rate memory) {
-        return Rate(royaltyRate, CommonConstant.COMMON_RATE_DECIMALS);
-    }
-
     function getEstate(uint256 _estateId) external view returns (Estate memory) {
         if (!exists(_estateId)) {
             revert InvalidEstateId();
         }
         return estates[_estateId];
+    }
+
+    function isAvailable(uint256 _estateId) public view returns (bool) {
+        return estates[_estateId].deprecateAt == CommonConstant.COMMON_INFINITE_TIMESTAMP
+            && estates[_estateId].expireAt > block.timestamp;
     }
 
     function tokenizeEstate(
@@ -271,7 +247,6 @@ Validatable {
             _zone,
             _tokenizationId,
             msg.sender,
-            uint40(block.timestamp),
             _expireAt
         );
 
@@ -315,6 +290,14 @@ Validatable {
         emit EstateExtraction(_estateId, _extractionId);
     }
 
+
+    function zoneOf(uint256 _estateId) external view returns (bytes32) {
+        if (!exists(_estateId)) {
+            revert InvalidEstateId();
+        }
+        return estates[_estateId].zone;
+    }
+
     function balanceOf(address _account, uint256 _estateId)
     public view override(IERC1155Upgradeable, ERC1155Upgradeable) returns (uint256) {
         return estates[_estateId].deprecateAt <= block.timestamp || estates[_estateId].expireAt <= block.timestamp
@@ -332,30 +315,31 @@ Validatable {
             || _at >= estates[_estateId].expireAt) {
             revert InvalidTimestamp();
         }
+
+        return _snapshotAt(balanceSnapshots[_estateId][_account], _at);
+    }
+
+    function voteOfAt(address _account, uint256 _estateId, uint256 _at) external view returns (uint256) {
+        if (!exists(_estateId)) {
+            revert InvalidEstateId();
+        }
+        if (_at > block.timestamp
+            || _at < estates[_estateId].tokenizeAt
+            || _at > estates[_estateId].deprecateAt
+            || _at >= estates[_estateId].expireAt) {
+            revert InvalidTimestamp();
+        }
         if (_account == estates[_estateId].tokenizer) {
             return 0;
         }
         Snapshot[] storage snapshots = balanceSnapshots[_estateId][_account];
-        uint256 high = snapshots.length;
-        if (high == 0 || _at < snapshots[0].timestamp) {
-            return IEstateTokenizer(estates[_estateId].tokenizer).allocationOfAt(
+        return snapshots.length != 0 && _at >= snapshots[0].timestamp
+            ? _snapshotAt(snapshots, _at)
+            : IEstateTokenizer(estates[_estateId].tokenizer).allocationOfAt(
                 estates[_estateId].tokenizationId,
                 _account,
                 _at
             );
-        }
-        uint256 low = 0;
-        uint256 pivot;
-        while (low < high) {
-            uint256 mid = (low + high) >> 1;
-            if (snapshots[mid].timestamp <= _at) {
-                pivot = mid;
-                low = mid + 1;
-            } else {
-                high = mid;
-            }
-        }
-        return snapshots[pivot].value;
     }
 
     function uri(uint256 _estateId) public view override(
@@ -371,19 +355,6 @@ Validatable {
         return super.totalSupply(_estateId);
     }
 
-    function isAvailable(uint256 _estateId) public view returns (bool) {
-        return exists(_estateId)
-            && estates[_estateId].deprecateAt == CommonConstant.COMMON_INFINITE_TIMESTAMP
-            && estates[_estateId].expireAt > block.timestamp;
-    }
-
-    function zoneOf(uint256 _estateId) external view returns (bytes32) {
-        if (!exists(_estateId)) {
-            revert InvalidEstateId();
-        }
-        return estates[_estateId].zone;
-    }
-
     function totalVoteAt(uint256 _estateId, uint256 _at) external view returns (uint256) {
         if (!exists(_estateId)) {
             revert InvalidEstateId();
@@ -395,10 +366,6 @@ Validatable {
             || _at >= estates[_estateId].expireAt
             ? 0
             : totalSupply(_estateId);
-    }
-
-    function voteOfAt(address _account, uint256 _estateId, uint256 _at) external view returns (uint256) {
-        return balanceOfAt(_account, _estateId, _at);
     }
 
     function supportsInterface(bytes4 _interfaceId) public view override(

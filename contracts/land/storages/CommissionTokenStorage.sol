@@ -7,7 +7,6 @@ abstract contract CommissionTokenStorage is ICommissionToken {
     string internal baseURI;
 
     uint256 internal commissionRate;
-    uint256 internal royaltyRate;
 
     address public admin;
     address public estateToken;

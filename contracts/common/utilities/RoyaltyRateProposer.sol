@@ -7,18 +7,51 @@ import {ERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/intro
 
 import {Formula} from "../../lib/Formula.sol";
 
+import {CommonConstant} from "../constants/CommonConstant.sol";
+
+import {IAdmin} from "../interfaces/IAdmin.sol";
 import {IRoyaltyRateProposer} from "../interfaces/IRoyaltyRateProposer.sol";
 
+import {RoyaltyRateProposerStorage} from "../storages/RoyaltyRateProposerStorage.sol";
+
 abstract contract RoyaltyRateProposer is
-IRoyaltyRateProposer,
+RoyaltyRateProposerStorage,
 ERC165Upgradeable {
     using Formula for uint256;
 
     function _royaltyReceiver() internal view virtual returns (address royaltyReceiver);
-    function getRoyaltyRate() public view virtual returns (Rate memory rate);
+
+    function __RoyaltyRateProposer_init(uint256 _royaltyRate) internal onlyInitializing {
+        require(_royaltyRate <= CommonConstant.COMMON_RATE_MAX_FRACTION);
+        royaltyRate = _royaltyRate;
+        emit RoyaltyRateUpdate(_royaltyRate);
+    }
+
+    function updateRoyaltyRate(
+        uint256 _royaltyRate,
+        bytes[] calldata _signatures
+    ) external {
+        IAdmin(this.admin()).verifyAdminSignatures(
+            abi.encode(
+                address(this),
+                "updateRoyaltyRate",
+                _royaltyRate
+            ),
+            _signatures
+        );
+        if (_royaltyRate > CommonConstant.COMMON_RATE_MAX_FRACTION) {
+            revert InvalidRate();
+        }
+        royaltyRate = _royaltyRate;
+        emit RoyaltyRateUpdate(_royaltyRate);
+    }
+
+    function getRoyaltyRate() public view virtual returns (Rate memory) {
+        return Rate(royaltyRate, CommonConstant.COMMON_RATE_DECIMALS);
+    }
 
     function royaltyInfo(uint256, uint256 _salePrice) external view returns (address, uint256) {
-        return (_royaltyReceiver(), _salePrice.scale(getRoyaltyRate()));
+        return (_royaltyReceiver(), _salePrice.scale(royaltyRate, CommonConstant.COMMON_RATE_MAX_FRACTION));
     }
 
     function supportsInterface(bytes4 _interfaceId)

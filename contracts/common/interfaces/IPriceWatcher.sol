@@ -1,14 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+import {IPriceFeed} from "../structs/IPriceFeed.sol";
+import {IRate} from "../structs/IRate.sol";
+
 import {ICommon} from "./ICommon.sol";
 
-interface IPriceWatcher is ICommon{
-    struct PriceFeed {
-        address feed;
-        uint40 heartbeat;
-    }
-
+interface IPriceWatcher is
+IPriceFeed,
+IRate,
+ICommon {
     event DefaultRateUpdate(
         address indexed currency,
         uint256 rateValue,

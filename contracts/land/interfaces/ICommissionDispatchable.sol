@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {ICommon} from "../../common/interfaces/ICommon.sol";
-
-interface ICommissionDispatchable is ICommon {
+interface ICommissionDispatchable {
     event CommissionDispatch(
         address indexed receiver,
         uint256 value,

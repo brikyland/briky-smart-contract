@@ -6,7 +6,7 @@ import {IEstateLiquidator} from "../interfaces/IEstateLiquidator.sol";
 abstract contract EstateLiquidatorStorage is IEstateLiquidator {
     mapping(uint256 => mapping(address => bool)) public hasWithdrawn;
 
-    mapping(uint256 => Request) internal requests;
+    mapping(uint256 => EstateLiquidatorRequest) internal requests;
 
     uint256 public requestNumber;
 
