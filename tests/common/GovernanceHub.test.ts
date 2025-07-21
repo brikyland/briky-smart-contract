@@ -305,7 +305,7 @@ async function testReentrancy_GovernanceHub(
     );
 }
 
-describe.only('1.6. GovernanceHub', async () => {
+describe('1.6. GovernanceHub', async () => {
     async function governanceHubFixture(): Promise<GovernanceHubFixture> {
         const accounts = await ethers.getSigners();
         const deployer = accounts[0];
@@ -394,6 +394,7 @@ describe.only('1.6. GovernanceHub', async () => {
         concludeExecutionSucceededSampleProposals = false,
         concludeExecutionFailedSampleProposals = false,
         useFailReceiverContributor = false,
+        useFailReceiverOperator = false,
         useReentrancyERC20 = false,
         pause = false,
     } = {}): Promise<GovernanceHubFixture> {
@@ -468,7 +469,7 @@ describe.only('1.6. GovernanceHub', async () => {
             const params1 = {
                 governor: governor.address,
                 tokenId: 1,
-                operator: operator1.address,
+                operator: useFailReceiverOperator ? failReceiver.address : operator1.address,
                 uuid: ethers.utils.formatBytes32String("uuid_1"),
                 rule: ProposalRule.ApprovalBeyondQuorum,
                 quorumRate: ethers.utils.parseEther("0.7"),
@@ -861,7 +862,6 @@ describe.only('1.6. GovernanceHub', async () => {
                 addSampleProposals: true,
                 admitSampleProposals: true,
                 voteApprovalSampleProposals: true,
-                contributeBudgetSampleProposals: true,
                 confirmExecutionSampleProposals: true,
                 concludeExecutionSucceededSampleProposals: true,
             });
@@ -877,7 +877,6 @@ describe.only('1.6. GovernanceHub', async () => {
                 addSampleProposals: true,
                 admitSampleProposals: true,
                 voteApprovalSampleProposals: true,
-                contributeBudgetSampleProposals: true,
                 confirmExecutionSampleProposals: true,
                 concludeExecutionSucceededSampleProposals: true,
             });
@@ -893,7 +892,6 @@ describe.only('1.6. GovernanceHub', async () => {
                 addSampleProposals: true,
                 admitSampleProposals: true,
                 voteApprovalSampleProposals: true,
-                contributeBudgetSampleProposals: true,
                 confirmExecutionSampleProposals: true,
                 concludeExecutionFailedSampleProposals: true,
             });
@@ -1072,7 +1070,6 @@ describe.only('1.6. GovernanceHub', async () => {
                 addSampleProposals: true,
                 admitSampleProposals: true,
                 voteApprovalSampleProposals: true,
-                contributeBudgetSampleProposals: true,
             });
             const { governanceHub } = fixture;
 
@@ -1114,7 +1111,6 @@ describe.only('1.6. GovernanceHub', async () => {
                 addSampleProposals: true,
                 admitSampleProposals: true,
                 voteApprovalSampleProposals: true,
-                contributeBudgetSampleProposals: true,
                 confirmExecutionSampleProposals: true,
             });
             const { governanceHub } = fixture;
@@ -1129,7 +1125,6 @@ describe.only('1.6. GovernanceHub', async () => {
                 addSampleProposals: true,
                 admitSampleProposals: true,
                 voteApprovalSampleProposals: true,
-                contributeBudgetSampleProposals: true,
                 confirmExecutionSampleProposals: true,
                 concludeExecutionSucceededSampleProposals: true,
             });
@@ -1145,7 +1140,6 @@ describe.only('1.6. GovernanceHub', async () => {
                 addSampleProposals: true,
                 admitSampleProposals: true,
                 voteApprovalSampleProposals: true,
-                contributeBudgetSampleProposals: true,
                 confirmExecutionSampleProposals: true,
                 concludeExecutionFailedSampleProposals: true,
             });
@@ -1840,7 +1834,6 @@ describe.only('1.6. GovernanceHub', async () => {
                 addSampleProposals: true,
                 admitSampleProposals: true,
                 voteApprovalSampleProposals: true,
-                contributeBudgetSampleProposals: true,
                 confirmExecutionSampleProposals: true,
             });
             const { manager } = fixture;
@@ -1860,7 +1853,6 @@ describe.only('1.6. GovernanceHub', async () => {
                 addSampleProposals: true,
                 admitSampleProposals: true,
                 voteApprovalSampleProposals: true,
-                contributeBudgetSampleProposals: true,
                 confirmExecutionSampleProposals: true,
                 concludeExecutionSucceededSampleProposals: true,
             });
@@ -1881,7 +1873,6 @@ describe.only('1.6. GovernanceHub', async () => {
                 addSampleProposals: true,
                 admitSampleProposals: true,
                 voteApprovalSampleProposals: true,
-                contributeBudgetSampleProposals: true,
                 confirmExecutionSampleProposals: true,
                 concludeExecutionFailedSampleProposals: true,
             });
@@ -2049,7 +2040,7 @@ describe.only('1.6. GovernanceHub', async () => {
                 'NoVotingPower',
             );
 
-            governor.isAvailable.reset();
+            governor.totalVoteAt.reset();
         });
     });
 
@@ -2319,7 +2310,6 @@ describe.only('1.6. GovernanceHub', async () => {
                 addSampleProposals: true,
                 admitSampleProposals: true,
                 voteApprovalSampleProposals: true,
-                contributeBudgetSampleProposals: true,
                 confirmExecutionSampleProposals: true,
             });
             const { manager } = fixture;
@@ -2339,7 +2329,6 @@ describe.only('1.6. GovernanceHub', async () => {
                 addSampleProposals: true,
                 admitSampleProposals: true,
                 voteApprovalSampleProposals: true,
-                contributeBudgetSampleProposals: true,
                 confirmExecutionSampleProposals: true,
                 concludeExecutionSucceededSampleProposals: true,
             });
@@ -2360,7 +2349,6 @@ describe.only('1.6. GovernanceHub', async () => {
                 addSampleProposals: true,
                 admitSampleProposals: true,
                 voteApprovalSampleProposals: true,
-                contributeBudgetSampleProposals: true,
                 confirmExecutionSampleProposals: true,
                 concludeExecutionFailedSampleProposals: true,
             });
@@ -2543,7 +2531,6 @@ describe.only('1.6. GovernanceHub', async () => {
                 addSampleProposals: true,
                 admitSampleProposals: true,
                 voteApprovalSampleProposals: true,
-                contributeBudgetSampleProposals: true,
                 confirmExecutionSampleProposals: true,
             });
             const { governanceHub, voter3 } = fixture;
@@ -2558,7 +2545,6 @@ describe.only('1.6. GovernanceHub', async () => {
                 addSampleProposals: true,
                 admitSampleProposals: true,
                 voteApprovalSampleProposals: true,
-                contributeBudgetSampleProposals: true,
                 confirmExecutionSampleProposals: true,
                 concludeExecutionSucceededSampleProposals: true,
             });
@@ -2574,7 +2560,6 @@ describe.only('1.6. GovernanceHub', async () => {
                 addSampleProposals: true,
                 admitSampleProposals: true,
                 voteApprovalSampleProposals: true,
-                contributeBudgetSampleProposals: true,
                 confirmExecutionSampleProposals: true,
                 concludeExecutionFailedSampleProposals: true,
             });
@@ -2699,7 +2684,7 @@ describe.only('1.6. GovernanceHub', async () => {
             await expect(governanceHub.connect(voter3).vote(1, ProposalVoteOption.Disapproval))
                 .to.be.revertedWithCustomError(governanceHub, 'ConflictedWeight');
 
-            governor.voteOfAt.whenCalledWith(voter3.address, 1, timestamp).returns(voter3Vote.add(1));
+            governor.voteOfAt.reset();
         }); 
     });
 
@@ -3543,7 +3528,7 @@ describe.only('1.6. GovernanceHub', async () => {
     });
 
     describe('1.6.14. confirmExecution(uint256)', async () => {
-        it.only('1.6.14.1. confirm execution successfully', async () => {
+        it('1.6.14.1. confirm execution successfully', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
                 addSampleProposals: true,
@@ -3583,8 +3568,7 @@ describe.only('1.6. GovernanceHub', async () => {
             const budget2 = (await governanceHub.getProposal(2)).budget;
             
             const tx2 = await governanceHub.connect(manager).confirmExecution(2);
-            const receipt2 = await tx2.wait();
-            const gasFee2 = receipt2.gasUsed.mul(receipt2.effectiveGasPrice);
+            await tx2.wait();
 
             await expect(tx2).to.emit(governanceHub, 'ProposalExecutionConfirmation').withArgs(2);
 
@@ -3596,206 +3580,1162 @@ describe.only('1.6. GovernanceHub', async () => {
             expect(proposal2.state).to.equal(ProposalState.Executing);
         });
 
+        it('1.6.14.2. confirm execution successfully with no budget', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteApprovalSampleProposals: true,
+            });
+
+            const { governanceHub, manager, operator1, operator2, currencies } = fixture;
+
+            // Tx1: confirm execution with no budget
+            let initManagerNativeBalance = await ethers.provider.getBalance(manager.address);
+            let initGovernanceHubNativeBalance = await ethers.provider.getBalance(governanceHub.address);
+            let initOperator1NativeBalance = await ethers.provider.getBalance(operator1.address);
+
+            const tx1 = await governanceHub.connect(manager).confirmExecution(1);
+            const receipt1 = await tx1.wait();
+            const gasFee1 = receipt1.gasUsed.mul(receipt1.effectiveGasPrice);
+
+            await expect(tx1).to.emit(governanceHub, 'ProposalExecutionConfirmation').withArgs(1);
+
+            expect(await ethers.provider.getBalance(manager.address)).to.equal(initManagerNativeBalance.sub(gasFee1));
+            expect(await ethers.provider.getBalance(operator1.address)).to.equal(initOperator1NativeBalance);
+            expect(await ethers.provider.getBalance(governanceHub.address)).to.equal(initGovernanceHubNativeBalance);
+
+            let proposal1 = await governanceHub.getProposal(1);
+            expect(proposal1.state).to.equal(ProposalState.Executing);
+        });
+
         it('1.6.14.2. confirm execution unsuccessfully with invalid proposal id', async () => {
-            
+            const fixture = await beforeGovernanceHubTest();
+
+            const { governanceHub, manager } = fixture;
+
+            await expect(governanceHub.connect(manager).confirmExecution(0))
+                .to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
+            await expect(governanceHub.connect(manager).confirmExecution(100))
+                .to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
         });
 
         it('1.6.14.3. confirm execution unsuccessfully when paused', async () => {
-            
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteApprovalSampleProposals: true,
+                contributeBudgetSampleProposals: true,
+                pause: true,
+            });
+
+            const { governanceHub, manager } = fixture;
+
+            await expect(governanceHub.connect(manager).confirmExecution(1))
+                .to.be.revertedWith('Pausable: paused');
         });
 
         it('1.6.14.4. confirm execution unsuccessfully when contract is reentered', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteApprovalSampleProposals: true,
+                contributeBudgetSampleProposals: true,
+                useReentrancyERC20: true,
+            });
 
+            const { governanceHub, reentrancyERC20, manager } = fixture;
+
+            await testReentrancy_GovernanceHub(
+                fixture,
+                reentrancyERC20,
+                async () => {
+                    await expect(governanceHub.connect(manager).confirmExecution(2))
+                        .to.be.revertedWith("ReentrancyGuard: reentrant call");
+                }
+            )
         });
 
         it('1.6.14.5. confirm execution unsuccessfully with unauthorized sender', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteApprovalSampleProposals: true,
+                contributeBudgetSampleProposals: true,
+            });
 
+            const { governanceHub, moderator, operator1 } = fixture;
+
+            await expect(governanceHub.connect(moderator).confirmExecution(1))
+                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
+
+            await expect(governanceHub.connect(operator1).confirmExecution(1))
+                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
         });
 
-        it('1.6.14.6. confirm execution unsuccessfully with inactive zone', async () => {
+        it('1.6.14.6. confirm execution unsuccessfully with unavailable token', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteApprovalSampleProposals: true,
+                contributeBudgetSampleProposals: true,
+            });
 
+            const { governanceHub, manager, governor } = fixture;
+
+            governor.isAvailable.whenCalledWith(1).returns(false);
+
+            await expect(governanceHub.connect(manager).confirmExecution(1))
+                .to.be.revertedWithCustomError(governanceHub, 'UnavailableToken');
+
+            governor.isAvailable.reset();            
         });
 
-        it('1.6.14.7. confirm execution unsuccessfully when sender is inactive in zone', async () => {
+        it('1.6.14.7. confirm execution unsuccessfully with inactive zone', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteApprovalSampleProposals: true,
+                contributeBudgetSampleProposals: true,
+            });
 
+            const { governanceHub, zone, manager, admin, admins } = fixture;
+
+            await callAdmin_DeclareZones(
+                admin,
+                admins,
+                [zone],
+                false,
+                await admin.nonce(),
+            )
+
+            await expect(governanceHub.connect(manager).confirmExecution(1))
+                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
         });
 
-        it('1.6.14.8. confirm execution unsuccessfully when proposal is pending', async () => {
+        it('1.6.14.8. confirm execution unsuccessfully when sender is inactive in zone', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteApprovalSampleProposals: true,
+                contributeBudgetSampleProposals: true,
+            });
 
+            const { governanceHub, admin, admins, zone, manager } = fixture;
+
+            await callAdmin_ActivateIn(
+                admin,
+                admins,
+                zone,                
+                [manager.address],
+                false,
+                await admin.nonce(),
+            );
+
+            await expect(governanceHub.connect(manager).confirmExecution(1))
+                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
         });
 
-        it('1.6.14.9. confirm execution unsuccessfully when proposal is executing', async () => {
+        it('1.6.14.9. confirm execution unsuccessfully when proposal is pending', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+            });
 
+            const { governanceHub, manager } = fixture;
+
+            await expect(governanceHub.connect(manager).confirmExecution(1))
+                .to.be.revertedWithCustomError(governanceHub, 'InvalidConfirming');
         });
 
-        it('1.6.14.10. confirm execution unsuccessfully when proposal is successfully executed', async () => {
+        it('1.6.14.10. confirm execution unsuccessfully when proposal is executing', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteApprovalSampleProposals: true,
+                contributeBudgetSampleProposals: true,
+                confirmExecutionSampleProposals: true,   
+            });
 
+            const { governanceHub, manager } = fixture;
+
+            await expect(governanceHub.connect(manager).confirmExecution(1))
+                .to.be.revertedWithCustomError(governanceHub, 'InvalidConfirming');
         });
 
-        it('1.6.14.11. confirm execution unsuccessfully when proposal is unsuccessfully executed', async () => {
+        it('1.6.14.11. confirm execution unsuccessfully when proposal is successfully executed', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteApprovalSampleProposals: true,
+                contributeBudgetSampleProposals: true,
+                confirmExecutionSampleProposals: true,
+                concludeExecutionSucceededSampleProposals: true,
+            });
 
+            const { governanceHub, manager } = fixture;
+
+            await expect(governanceHub.connect(manager).confirmExecution(1))
+                .to.be.revertedWithCustomError(governanceHub, 'InvalidConfirming');
+        });
+
+        it('1.6.14.12. confirm execution unsuccessfully when proposal is unsuccessfully executed', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteApprovalSampleProposals: true,
+                contributeBudgetSampleProposals: true,
+                confirmExecutionSampleProposals: true,
+                concludeExecutionFailedSampleProposals: true,
+            });
+
+            const { governanceHub, manager } = fixture;
+
+            await expect(governanceHub.connect(manager).confirmExecution(1))
+                .to.be.revertedWithCustomError(governanceHub, 'InvalidConfirming');
         });
         
-        it('1.6.14.12. confirm execution unsuccessfully when proposal is disqualified', async () => {
+        it('1.6.14.13. confirm execution unsuccessfully when proposal is disqualified', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                disqualifySampleProposals: true,
+            });
 
+            const { governanceHub, manager } = fixture;
+
+            await expect(governanceHub.connect(manager).confirmExecution(1))
+                .to.be.revertedWithCustomError(governanceHub, 'InvalidConfirming');
         });
         
-        it('1.6.14.13. confirm execution unsuccessfully when proposal is rejected', async () => {
+        it('1.6.14.14. confirm execution unsuccessfully when proposal is rejected', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                rejectExecutionSampleProposals: true,
+            });
 
+            const { governanceHub, manager } = fixture;
+
+            await expect(governanceHub.connect(manager).confirmExecution(1))
+                .to.be.revertedWithCustomError(governanceHub, "InvalidConfirming");
         });
         
         it('1.6.14.14. confirm execution unsuccessfully when execution confirmation is overdue', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteApprovalSampleProposals: true,
+                contributeBudgetSampleProposals: true,
+            });
 
+            const { governanceHub, manager } = fixture;
+
+            let timestamp = (await governanceHub.getProposal(1)).due + Constant.GOVERNANCE_HUB_CONFIRMATION_TIME_LIMIT;
+            await time.setNextBlockTimestamp(timestamp);
+
+            await expect(governanceHub.connect(manager).confirmExecution(1))
+                .to.be.revertedWithCustomError(governanceHub, "InvalidConfirming");
         });
 
-        it('1.6.14.15. confirm execution unsuccessfully with failed or unsettled verdict proposal', async () => {
+        it('1.6.14.15. confirm execution unsuccessfully with failed proposal', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteDisapprovalSampleProposals: true,
+                contributeBudgetSampleProposals: true,
+            });
 
+            const { governanceHub, manager } = fixture;
+
+            await expect(governanceHub.connect(manager).confirmExecution(1))
+                .to.be.revertedWithCustomError(governanceHub, "InvalidConfirming");
+        });
+
+        it('1.6.14.16. confirm execution unsuccessfully with unsettled proposal', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                contributeBudgetSampleProposals: true,
+            });
+
+            const { governanceHub, manager } = fixture;
+
+            await expect(governanceHub.connect(manager).confirmExecution(1))
+                .to.be.revertedWithCustomError(governanceHub, "InvalidConfirming");
         });
        
-        it('1.6.14.16. confirm execution unsuccessfully when transfer to operator failed', async () => {
+        it('1.6.14.17. confirm execution unsuccessfully when transfer to operator failed', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteApprovalSampleProposals: true,
+                contributeBudgetSampleProposals: true,
+                useFailReceiverOperator: true,
+            });
 
+            const { governanceHub, failReceiver, manager } = fixture;
+
+            await callTransaction(failReceiver.activate(true));
+
+            await expect(governanceHub.connect(manager).confirmExecution(1))
+                .to.be.revertedWithCustomError(governanceHub, "FailedTransfer");
         });
     });
 
     describe('1.6.15. rejectExecution(uint256)', async () => {
         it('1.6.15.1. reject execution successfully', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+            });
 
+            const { governanceHub, operator1, operator2 } = fixture;
+
+            const tx1 = await governanceHub.connect(operator1).rejectExecution(1);
+            await tx1.wait();
+
+            await expect(tx1).to.emit(governanceHub, 'ProposalExecutionRejection').withArgs(1);            
+
+            const proposal1 = await governanceHub.getProposal(1);
+            expect(proposal1.state).to.equal(ProposalState.Rejected);
+
+            const tx2 = await governanceHub.connect(operator2).rejectExecution(2);
+            await tx2.wait();
+
+            await expect(tx2).to.emit(governanceHub, 'ProposalExecutionRejection').withArgs(2);
+
+            const proposal2 = await governanceHub.getProposal(2);
+            expect(proposal2.state).to.equal(ProposalState.Rejected);
         });
 
         it('1.6.15.2. reject execution unsuccessfully with invalid proposal id', async () => {
+            const fixture = await beforeGovernanceHubTest();
 
+            const { governanceHub, operator1 } = fixture;
+
+            await expect(governanceHub.connect(operator1).rejectExecution(0))
+                .to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
+            await expect(governanceHub.connect(operator1).rejectExecution(100))
+                .to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
         });
 
         it('1.6.15.3. reject execution unsuccessfully when paused', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                pause: true,
+            });
 
+            const { governanceHub, operator1 } = fixture;
+
+            await expect(governanceHub.connect(operator1).rejectExecution(1))
+                .to.be.revertedWith('Pausable: paused');
         });
 
         it('1.6.15.4. reject execution unsuccessfully with unauthorized sender', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+            });
 
+            const { governanceHub, moderator, manager, operator1, operator2 } = fixture;
+
+            await expect(governanceHub.connect(moderator).rejectExecution(1))
+                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
+            await expect(governanceHub.connect(manager).rejectExecution(1))
+                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
+            await expect(governanceHub.connect(operator2).rejectExecution(1))
+                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
+            await expect(governanceHub.connect(operator1).rejectExecution(2))
+                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
         });
 
         it('1.6.15.5. reject execution unsuccessfully when proposal is pending', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+            });
 
+            const { governanceHub, operator1 } = fixture;
+
+            await expect(governanceHub.connect(operator1).rejectExecution(1))
+                .to.be.revertedWithCustomError(governanceHub, 'InvalidRejecting');
         });
 
         it('1.6.15.6. reject execution unsuccessfully when proposal is executing', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteApprovalSampleProposals: true,
+                confirmExecutionSampleProposals: true,
+            });
 
+            const { governanceHub, operator1 } = fixture;
+
+            await expect(governanceHub.connect(operator1).rejectExecution(1))
+                .to.be.revertedWithCustomError(governanceHub, 'InvalidRejecting');
         });
         
         it('1.6.15.7. reject execution unsuccessfully when proposal is successfully executed', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteApprovalSampleProposals: true,
+                confirmExecutionSampleProposals: true,
+                concludeExecutionSucceededSampleProposals: true,
+            });
 
+            const { governanceHub, operator1 } = fixture;
+
+            await expect(governanceHub.connect(operator1).rejectExecution(1))
+                .to.be.revertedWithCustomError(governanceHub, 'InvalidRejecting');
         });
 
         it('1.6.15.8. reject execution unsuccessfully when proposal is unsuccessfully executed', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteApprovalSampleProposals: true,
+                confirmExecutionSampleProposals: true,
+                concludeExecutionFailedSampleProposals: true,
+            });
 
+            const { governanceHub, operator1 } = fixture;
+
+            await expect(governanceHub.connect(operator1).rejectExecution(1))
+                .to.be.revertedWithCustomError(governanceHub, 'InvalidRejecting');
         });
         
         it('1.6.15.9. reject execution unsuccessfully when proposal is disqualified', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                disqualifySampleProposals: true,
+            });
 
+            const { governanceHub, operator1 } = fixture;
+
+            await expect(governanceHub.connect(operator1).rejectExecution(1))
+                .to.be.revertedWithCustomError(governanceHub, 'InvalidRejecting');
         });
         
         it('1.6.15.10. reject execution unsuccessfully when proposal is rejected', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                rejectExecutionSampleProposals: true,
+            });
 
+            const { governanceHub, operator1, operator2 } = fixture;
+
+            await expect(governanceHub.connect(operator1).rejectExecution(1))
+                .to.be.revertedWithCustomError(governanceHub, 'InvalidRejecting');
+            await expect(governanceHub.connect(operator2).rejectExecution(2))
+                .to.be.revertedWithCustomError(governanceHub, 'InvalidRejecting');
         });
     });
 
     describe('1.6.16. updateExecution(uint256, string, (uint256, uint256, bytes))', async () => {
-        it('1.6.16.1. update execution successfully', async () => {
+        async function beforeUpdateExecutionTest(fixture: GovernanceHubFixture): Promise<{ defaultParams: UpdateExecutionParams }> {
+            const defaultParams = {
+                proposalId: 1,
+                stateURI: "updated_state_uri_1",
+            }
+            return { defaultParams };
+        }
 
+        async function expectRevertWithCustomError(
+            fixture: GovernanceHubFixture,
+            operator: Wallet,
+            params: UpdateExecutionParams,
+            error: string
+        ) {
+            const { governanceHub } = fixture;
+            const validation = await getUpdateExecutionValidation(fixture, params);
+            await expect(governanceHub.connect(operator).updateExecution(
+                params.proposalId,
+                params.stateURI,
+                validation
+            )).to.be.revertedWithCustomError(governanceHub, error);
+        }
+
+        async function expectRevert(
+            fixture: GovernanceHubFixture,
+            operator: Wallet,
+            params: UpdateExecutionParams,
+            error: string
+        ) {
+            const { governanceHub } = fixture;
+            const validation = await getUpdateExecutionValidation(fixture, params);
+            await expect(governanceHub.connect(operator).updateExecution(
+                params.proposalId,
+                params.stateURI,
+                validation
+            )).to.be.revertedWith(error);
+        }
+
+        it('1.6.16.1. update execution successfully', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteApprovalSampleProposals: true,
+                contributeBudgetSampleProposals: true,
+                confirmExecutionSampleProposals: true,
+            });
+
+            const { governanceHub, operator1, operator2 } = fixture;
+
+            // Tx1: Operator 1
+            const params1 = {
+                proposalId: 1,
+                stateURI: "updated_state_uri_1",
+            }
+            const validation1 = await getUpdateExecutionValidation(fixture, params1);
+
+            const tx1 = await governanceHub.connect(operator1).updateExecution(params1.proposalId, params1.stateURI, validation1);
+            await tx1.wait();
+
+            await expect(tx1).to.emit(governanceHub, 'ProposalExecutionUpdate').withArgs(params1.proposalId, params1.stateURI);
+
+            const proposal1 = await governanceHub.getProposal(params1.proposalId);
+            expect(proposal1.state).to.equal(ProposalState.Executing);
+            expect(proposal1.stateURI).to.equal(params1.stateURI);
+
+            // Tx2: Operator 2
+            const params2 = {
+                proposalId: 2,
+                stateURI: "updated_state_uri_2",
+            }
+            const validation2 = await getUpdateExecutionValidation(fixture, params2);
+
+            const tx2 = await governanceHub.connect(operator2).updateExecution(params2.proposalId, params2.stateURI, validation2);
+            await tx2.wait();
+
+            await expect(tx2).to.emit(governanceHub, 'ProposalExecutionUpdate').withArgs(params2.proposalId, params2.stateURI);
+
+            const proposal2 = await governanceHub.getProposal(params2.proposalId);
+            expect(proposal2.state).to.equal(ProposalState.Executing);
+            expect(proposal2.stateURI).to.equal(params2.stateURI);            
         });
 
         it('1.6.16.2. update execution unsuccessfully with invalid proposal id', async () => {
+            const fixture = await beforeGovernanceHubTest();
 
+            const { operator1, operator2 } = fixture;
+
+            const { defaultParams } = await beforeUpdateExecutionTest(fixture);            
+
+            await expectRevertWithCustomError(
+                fixture,
+                operator1,
+                { ...defaultParams, proposalId: 0 },
+                'InvalidProposalId'
+            );
+            await expectRevertWithCustomError(
+                fixture,
+                operator2,
+                { ...defaultParams, proposalId: 100 },
+                'InvalidProposalId'
+            );
         });
 
         it('1.6.16.3. update execution unsuccessfully when paused', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteApprovalSampleProposals: true,
+                confirmExecutionSampleProposals: true,
+                pause: true,
+            });
 
+            const { operator1 } = fixture;
+
+            const { defaultParams } = await beforeUpdateExecutionTest(fixture);
+
+            await expectRevert(
+                fixture,
+                operator1,
+                defaultParams,
+                'Pausable: paused'
+            );
         });
 
         it('1.6.16.4. update execution unsuccessfully with unauthorized sender', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteApprovalSampleProposals: true,
+                confirmExecutionSampleProposals: true,
+            });
 
+            const { moderator, manager, operator1, operator2 } = fixture;
+
+            const { defaultParams } = await beforeUpdateExecutionTest(fixture);
+
+            await expectRevertWithCustomError(
+                fixture,
+                moderator,
+                defaultParams,
+                'Unauthorized'
+            );
+            await expectRevertWithCustomError(
+                fixture,
+                manager,
+                defaultParams,
+                'Unauthorized'
+            );
+            await expectRevertWithCustomError(
+                fixture,
+                operator2,
+                { ...defaultParams, proposalId: 1 },
+                'Unauthorized'
+            );
+            await expectRevertWithCustomError(
+                fixture,
+                operator1,
+                { ...defaultParams, proposalId: 2 },
+                'Unauthorized'
+            );
         });
 
         it('1.6.16.5. update execution unsuccessfully with invalid validation', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteApprovalSampleProposals: true,
+                confirmExecutionSampleProposals: true,
+            });
 
+            const { governanceHub, operator1 } = fixture;
+
+            const { defaultParams } = await beforeUpdateExecutionTest(fixture);
+            const validation = await getUpdateExecutionInvalidValidation(fixture, defaultParams);
+
+            await expect(governanceHub.connect(operator1).updateExecution(
+                defaultParams.proposalId,
+                defaultParams.stateURI,
+                validation
+            )).to.be.revertedWithCustomError(governanceHub, 'InvalidSignature');
         });
 
         it('1.6.16.6. update execution unsuccessfully when proposal is pending', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+            });
 
+            const { operator1 } = fixture;
+
+            const { defaultParams } = await beforeUpdateExecutionTest(fixture);
+            
+            await expectRevertWithCustomError(
+                fixture,
+                operator1,
+                defaultParams,
+                'InvalidUpdating'
+            );
         });
 
         it('1.6.16.7. update execution unsuccessfully when proposal is voting', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+            });
 
+            const { operator1 } = fixture;
+
+            const { defaultParams } = await beforeUpdateExecutionTest(fixture);
+
+            await expectRevertWithCustomError(
+                fixture,
+                operator1,
+                defaultParams,
+                'InvalidUpdating'
+            );
         });
 
         it('1.6.16.8. update execution unsuccessfully when proposal is successfully executed', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteApprovalSampleProposals: true,
+                confirmExecutionSampleProposals: true,
+                concludeExecutionSucceededSampleProposals: true,
+            });
 
+            const { operator1 } = fixture;
+
+            const { defaultParams } = await beforeUpdateExecutionTest(fixture);
+
+            await expectRevertWithCustomError(
+                fixture,
+                operator1,
+                defaultParams,
+                'InvalidUpdating'
+            );
         });
 
         it('1.6.16.9. update execution unsuccessfully when proposal is unsuccessfully executed', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteApprovalSampleProposals: true,
+                confirmExecutionSampleProposals: true,
+                concludeExecutionFailedSampleProposals: true,
+            });
 
+            const { operator1 } = fixture;
+
+            const { defaultParams } = await beforeUpdateExecutionTest(fixture);
+
+            await expectRevertWithCustomError(
+                fixture,
+                operator1,
+                defaultParams,
+                'InvalidUpdating'
+            );
         });
 
         it('1.6.16.10. update execution unsuccessfully when proposal is disqualified', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                disqualifySampleProposals: true,
+            });
 
+            const { operator1 } = fixture;
+
+            const { defaultParams } = await beforeUpdateExecutionTest(fixture);
+
+            await expectRevertWithCustomError(
+                fixture,
+                operator1,
+                defaultParams,
+                'InvalidUpdating'
+            );
         });
 
         it('1.6.16.11. update execution unsuccessfully when proposal is rejected', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                rejectExecutionSampleProposals: true,
+            });
 
+            const { operator1 } = fixture;
+
+            const { defaultParams } = await beforeUpdateExecutionTest(fixture);
+
+            await expectRevertWithCustomError(
+                fixture,
+                operator1,
+                defaultParams,
+                'InvalidUpdating'
+            );
         });
     });
 
     describe('1.6.17. concludeExecution(uint256, string, bool, (uint256, uint256, bytes))', async () => {
-        it('1.6.17.1. conclude execution successfully', async () => {
+        async function beforeConcludeExecutionTest(fixture: GovernanceHubFixture): Promise<{ defaultParams: ConcludeExecutionParams }> {
+            const defaultParams = {
+                proposalId: 1,
+                stateURI: "concluded_state_uri_1",
+                isSuccessful: true,
+            }
+            return { defaultParams };
+        }
 
+        async function expectRevertWithCustomError(
+            fixture: GovernanceHubFixture,
+            operator: Wallet,
+            params: ConcludeExecutionParams,
+            error: string
+        ) {
+            const { governanceHub } = fixture;
+            const validation = await getConcludeExecutionValidation(fixture, params);
+            await expect(governanceHub.connect(operator).concludeExecution(
+                params.proposalId,
+                params.stateURI,
+                params.isSuccessful,
+                validation
+            )).to.be.revertedWithCustomError(governanceHub, error);
+        }
+
+        async function expectRevert(
+            fixture: GovernanceHubFixture,
+            operator: Wallet,
+            params: ConcludeExecutionParams,
+            error: string
+        ) {
+            const { governanceHub } = fixture;
+            const validation = await getConcludeExecutionValidation(fixture, params);
+            await expect(governanceHub.connect(operator).concludeExecution(
+                params.proposalId,
+                params.stateURI,
+                params.isSuccessful,
+                validation
+            )).to.be.revertedWith(error);
+        }
+
+        it('1.6.17.1. conclude execution successfully', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteApprovalSampleProposals: true,
+                confirmExecutionSampleProposals: true,
+            });
+
+            const { governanceHub, manager } = fixture;
+
+            // Tx1: Conclude execution succeeded
+            const params1 = {
+                proposalId: 1,
+                stateURI: "concluded_state_uri_1",
+                isSuccessful: true,
+            }
+            const validation1 = await getConcludeExecutionValidation(fixture, params1);
+
+            const tx1 = await governanceHub.connect(manager).concludeExecution(params1.proposalId, params1.stateURI, params1.isSuccessful, validation1);
+            await tx1.wait();
+
+            await expect(tx1).to.emit(governanceHub, 'ProposalExecutionConclusion').withArgs(
+                params1.proposalId,
+                params1.stateURI,
+                params1.isSuccessful
+            );
+
+            const proposal1 = await governanceHub.getProposal(params1.proposalId);
+            expect(proposal1.state).to.equal(ProposalState.SuccessfulExecuted);
+            expect(proposal1.stateURI).to.equal(params1.stateURI);
+
+            // Tx2: Conclude execution failed
+            const params2 = {
+                proposalId: 2,
+                stateURI: "concluded_state_uri_2",
+                isSuccessful: false,
+            }
+            const validation2 = await getConcludeExecutionValidation(fixture, params2);
+
+            const tx2 = await governanceHub.connect(manager).concludeExecution(params2.proposalId, params2.stateURI, params2.isSuccessful, validation2);
+            await tx2.wait();
+
+            await expect(tx2).to.emit(governanceHub, 'ProposalExecutionConclusion').withArgs(
+                params2.proposalId,
+                params2.stateURI,
+                params2.isSuccessful
+            );
+            
+            const proposal2 = await governanceHub.getProposal(params2.proposalId);
+            expect(proposal2.state).to.equal(ProposalState.UnsuccessfulExecuted);
+            expect(proposal2.stateURI).to.equal(params2.stateURI);
         });
 
         it('1.6.17.2. conclude execution unsuccessfully with invalid proposal id', async () => {
+            const fixture = await beforeGovernanceHubTest();
 
+            const { manager } = fixture;
+
+            const { defaultParams } = await beforeConcludeExecutionTest(fixture);
+
+            await expectRevertWithCustomError(
+                fixture,
+                manager,
+                { ...defaultParams, proposalId: 0 },
+                'InvalidProposalId'
+            );
+            await expectRevertWithCustomError(
+                fixture,
+                manager,
+                { ...defaultParams, proposalId: 100 },
+                'InvalidProposalId'
+            );
         });
 
         it('1.6.17.3. conclude execution unsuccessfully when paused', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteApprovalSampleProposals: true,
+                confirmExecutionSampleProposals: true,
+                pause: true,
+            });
 
+            const { manager } = fixture;
+
+            const { defaultParams } = await beforeConcludeExecutionTest(fixture);
+            
+            await expectRevert(
+                fixture,
+                manager,
+                defaultParams,
+                'Pausable: paused'
+            );            
         });
 
         it('1.6.17.4. conclude execution unsuccessfully with unauthorized sender', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteApprovalSampleProposals: true,
+                confirmExecutionSampleProposals: true,
+            });
 
+            const { moderator, operator1, operator2 } = fixture;
+
+            const { defaultParams } = await beforeConcludeExecutionTest(fixture);
+
+            await expectRevertWithCustomError(
+                fixture,
+                moderator,
+                defaultParams,
+                'Unauthorized'
+            );
+            await expectRevertWithCustomError(
+                fixture,
+                operator1,
+                { ...defaultParams, proposalId: 1 },
+                'Unauthorized'
+            );
+            await expectRevertWithCustomError(
+                fixture,
+                operator2,
+                { ...defaultParams, proposalId: 2 },
+                'Unauthorized'
+            );
         });
 
         it('1.6.17.5. conclude execution unsuccessfully with invalid validation', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteApprovalSampleProposals: true,
+                confirmExecutionSampleProposals: true,
+            });
 
+            const { governanceHub, manager } = fixture;
+
+            const { defaultParams } = await beforeConcludeExecutionTest(fixture);
+            const validation = await getConcludeExecutionInvalidValidation(fixture, defaultParams);
+
+            await expect(governanceHub.connect(manager).concludeExecution(
+                defaultParams.proposalId,
+                defaultParams.stateURI,
+                defaultParams.isSuccessful,
+                validation
+            )).to.be.revertedWithCustomError(governanceHub, 'InvalidSignature');
         });
 
         it('1.6.17.6. conclude execution unsuccessfully with inactive zone', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteApprovalSampleProposals: true,
+                confirmExecutionSampleProposals: true,
+            });
 
+            const { admin, admins, manager, zone } = fixture;
+
+            const { defaultParams } = await beforeConcludeExecutionTest(fixture);
+
+            await callAdmin_DeclareZones(
+                admin,
+                admins,
+                [zone],
+                false,
+                await admin.nonce(),
+            );
+
+            await expectRevertWithCustomError(
+                fixture,
+                manager,
+                defaultParams,
+                'Unauthorized'
+            );
         });
 
         it('1.6.17.7. conclude execution unsuccessfully when sender is inactive in zone', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteApprovalSampleProposals: true,
+                confirmExecutionSampleProposals: true,
+            });
 
+            const { admin, admins, zone, manager } = fixture;
+
+            const { defaultParams } = await beforeConcludeExecutionTest(fixture);
+
+            await callAdmin_ActivateIn(
+                admin,
+                admins,
+                zone,
+                [manager.address],
+                false,
+                await admin.nonce(),
+            );
+
+            await expectRevertWithCustomError(
+                fixture,
+                manager,
+                defaultParams,
+                'Unauthorized'
+            );
         });
 
         it('1.6.17.8. conclude execution unsuccessfully when proposal is pending', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+            });
 
+            const { manager } = fixture;
+
+            const { defaultParams } = await beforeConcludeExecutionTest(fixture);
+
+            await expectRevertWithCustomError(
+                fixture,
+                manager,
+                defaultParams,
+                'InvalidConcluding'
+            );
         });
         
         it('1.6.17.9. conclude execution unsuccessfully when proposal is voting', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+            });
 
+            const { manager } = fixture;
+
+            const { defaultParams } = await beforeConcludeExecutionTest(fixture);
+            
+            await expectRevertWithCustomError(
+                fixture,
+                manager,
+                defaultParams,
+                'InvalidConcluding'
+            );
         });
 
         it('1.6.17.10. conclude execution unsuccessfully when proposal is successfully executed', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteApprovalSampleProposals: true,
+                confirmExecutionSampleProposals: true,
+                concludeExecutionSucceededSampleProposals: true,
+            });
 
+            const { manager } = fixture;
+
+            const { defaultParams } = await beforeConcludeExecutionTest(fixture);
+
+            await expectRevertWithCustomError(
+                fixture,
+                manager,
+                defaultParams,
+                'InvalidConcluding'
+            );
         });
 
         it('1.6.17.11. conclude execution unsuccessfully when proposal is unsuccessfully executed', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteApprovalSampleProposals: true,
+                confirmExecutionSampleProposals: true,
+                concludeExecutionFailedSampleProposals: true,
+            });
 
+            const { manager } = fixture;
+
+            const { defaultParams } = await beforeConcludeExecutionTest(fixture);
+            
+            await expectRevertWithCustomError(
+                fixture,
+                manager,
+                defaultParams,
+                'InvalidConcluding'
+            );
         });
         
         it('1.6.17.12. conclude execution unsuccessfully when proposal is disqualified', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                disqualifySampleProposals: true,
+            });
 
+            const { manager } = fixture;
+
+            const { defaultParams } = await beforeConcludeExecutionTest(fixture);
+            
+            await expectRevertWithCustomError(
+                fixture,
+                manager,
+                defaultParams,
+                'InvalidConcluding'
+            );
         });
 
         it('1.6.17.13. conclude execution unsuccessfully when proposal is rejected', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                rejectExecutionSampleProposals: true,
+            });
 
+            const { manager } = fixture;
+
+            const { defaultParams } = await beforeConcludeExecutionTest(fixture);
+
+            await expectRevertWithCustomError(
+                fixture,
+                manager,
+                defaultParams,
+                'InvalidConcluding'
+            );
         });
     });
 });
