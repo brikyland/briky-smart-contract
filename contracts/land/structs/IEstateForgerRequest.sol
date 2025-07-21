@@ -47,8 +47,15 @@ interface IEstateForgerRequest {
     }
 
     struct EstateForgerRequestAgenda {
+        uint40 saleStartsAt;
         uint40 privateSaleEndsAt;
         uint40 publicSaleEndsAt;
+    }
+
+    struct EstateForgerRequestAgendaInput {
+        uint40 saleStartsAt;
+        uint40 privateSaleDuration;
+        uint40 publicSaleDuration;
     }
 
     struct EstateForgerRequest {

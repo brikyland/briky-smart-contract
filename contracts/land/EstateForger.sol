@@ -205,56 +205,98 @@ ReentrancyGuardUpgradeable {
         return requests[_requestId];
     }
 
-    function requestTokenizationWithDuration(
+    function requestTokenization(
         address _seller,
         EstateForgerRequestEstateInput calldata _estate,
         EstateForgerRequestQuotaInput calldata _quota,
         EstateForgerRequestQuoteInput calldata _quote,
-        uint40 _privateSaleDuration,
-        uint40 _publicSaleDuration,
+        EstateForgerRequestAgendaInput calldata _agenda,
         Validation calldata _validation
     ) external returns (uint256) {
         _validate(abi.encode(_estate.uri), _validation);
 
-        if (_privateSaleDuration == 0 && _publicSaleDuration == 0) {
-            revert InvalidInput();
+        if (!IAdmin(admin).getZoneEligibility(_estate.zone, msg.sender)) {
+            revert Unauthorized();
         }
 
-        return _requestTokenization(
-            _seller,
-            _estate,
-            _quota,
-            _quote,
-            uint40(block.timestamp) + _privateSaleDuration,
-            uint40(block.timestamp) + _privateSaleDuration + _publicSaleDuration
-        );
-    }
+        if (!IPriceWatcher(priceWatcher).isPriceInRange(
+            _quote.currency,
+            _quote.unitPrice,
+            baseMinUnitPrice,
+            baseMaxUnitPrice
+        )) {
+            revert InvalidUnitPrice();
+        }
 
-    function requestTokenizationWithTimestamp(
-        address _seller,
-        EstateForgerRequestEstateInput calldata _estate,
-        EstateForgerRequestQuotaInput calldata _quota,
-        EstateForgerRequestQuoteInput calldata _quote,
-        uint40 _privateSaleEndsAt,
-        uint40 _publicSaleEndsAt,
-        Validation calldata _validation
-    ) external returns (uint256) {
-        _validate(abi.encode(_estate.uri), _validation);
-
-        if (block.timestamp > _privateSaleEndsAt
-            || _privateSaleEndsAt > _publicSaleEndsAt
-            || _publicSaleEndsAt == block.timestamp) {
+        if (_estate.expireAt <= block.timestamp) {
             revert InvalidTimestamp();
         }
 
-        return _requestTokenization(
+        if (!isSellerIn(_estate.zone, _seller)
+            || _quota.minSellingQuantity > _quota.maxSellingQuantity
+            || _quota.maxSellingQuantity > _quota.totalQuantity
+            || _quote.cashbackThreshold > _quota.totalQuantity
+            || _quote.cashbackBaseRate > CommonConstant.COMMON_RATE_MAX_FRACTION
+            || _quote.cashbackCurrencies.length != _quote.cashbackDenominations.length
+            || _agenda.saleStartsAt <= block.timestamp
+            || _agenda.privateSaleDuration + _agenda.publicSaleDuration < EstateForgerConstant.ESTATE_FORGER_MINIMUM_SALE_DURATION) {
+            revert InvalidInput();
+        }
+
+        uint256 feeDenomination = _getFeeDenomination(_quote.unitPrice, _quote.currency);
+        uint256 commissionDenomination = _getCommissionDenomination(feeDenomination);
+        uint256 cashbackFundId = IReserveVault(reserveVault).initiateFund(
+            _quote.currency,
+            _getCashbackBaseDenomination(
+                feeDenomination,
+                commissionDenomination,
+                _quote.cashbackBaseRate
+            ),
+            _quote.cashbackCurrencies,
+            _quote.cashbackDenominations
+        );
+
+        uint256 requestId = ++requestNumber;
+        requests[requestId] = EstateForgerRequest(
+            EstateForgerRequestEstate(
+                0,
+                _estate.zone,
+                _estate.uri,
+                _estate.expireAt
+            ),
+            EstateForgerRequestQuota(
+                _quota.totalQuantity,
+                _quota.minSellingQuantity,
+                _quota.maxSellingQuantity,
+                0
+            ),
+            EstateForgerRequestQuote(
+                _quote.unitPrice,
+                _quote.currency,
+                _quote.cashbackThreshold,
+                cashbackFundId,
+                feeDenomination,
+                commissionDenomination
+            ),
+            EstateForgerRequestAgenda(
+                _agenda.saleStartsAt,
+                _agenda.saleStartsAt + _agenda.privateSaleDuration,
+                _agenda.saleStartsAt + _agenda.privateSaleDuration + _agenda.publicSaleDuration
+            ),
+            _seller
+        );
+
+        emit NewRequest(
+            requestId,
+            cashbackFundId,
             _seller,
             _estate,
             _quota,
             _quote,
-            _privateSaleEndsAt,
-            _publicSaleEndsAt
+            _agenda
         );
+
+        return requestId;
     }
 
     function updateRequestURI(
@@ -282,39 +324,36 @@ ReentrancyGuardUpgradeable {
 
     function updateRequestAgenda(
         uint256 _requestId,
-        uint40 _privateSaleEndsAt,
-        uint40 _publicSaleEndsAt
+        EstateForgerRequestAgendaInput calldata _agenda
     ) external validRequest(_requestId) onlyExecutive whenNotPaused {
-        if (!IAdmin(admin).getZoneEligibility(requests[_requestId].estate.zone, msg.sender)) {
+        EstateForgerRequest storage request = requests[_requestId];
+
+        if (!IAdmin(admin).getZoneEligibility(request.estate.zone, msg.sender)) {
             revert Unauthorized();
         }
 
-        if (requests[_requestId].estate.estateId != 0) {
+        if (request.estate.estateId != 0) {
             revert Tokenized();
         }
-        if (requests[_requestId].quota.totalQuantity == 0) {
+        if (request.quota.totalQuantity == 0) {
             revert Cancelled();
         }
-        if (requests[_requestId].quota.soldQuantity > 0) {
+        if (request.quota.soldQuantity > 0) {
             revert AlreadyHadDeposit();
         }
 
-        if (block.timestamp > _privateSaleEndsAt
-            || _privateSaleEndsAt > _publicSaleEndsAt
-            || _publicSaleEndsAt == block.timestamp) {
-            revert InvalidTimestamp();
+        if (_agenda.privateSaleDuration + _agenda.publicSaleDuration < EstateForgerConstant.ESTATE_FORGER_MINIMUM_SALE_DURATION) {
+            revert InvalidInput();
         }
 
-        requests[_requestId].agenda = EstateForgerRequestAgenda(
-            _privateSaleEndsAt,
-            _publicSaleEndsAt
-        );
+        if (request.agenda.saleStartsAt > block.timestamp) {
+            request.agenda.saleStartsAt = _agenda.saleStartsAt;
+        }
 
-        emit RequestAgendaUpdate(
-            _requestId,
-            _privateSaleEndsAt,
-            _publicSaleEndsAt
-        );
+        request.agenda.privateSaleEndsAt = _agenda.saleStartsAt + _agenda.privateSaleDuration;
+        request.agenda.publicSaleEndsAt = _agenda.saleStartsAt + _agenda.privateSaleDuration + _agenda.publicSaleDuration;
+
+        emit RequestAgendaUpdate(_requestId, _agenda);
     }
 
     function deposit(uint256 _requestId, uint256 _quantity)
@@ -585,98 +624,6 @@ ReentrancyGuardUpgradeable {
             .scale(_cashbackBaseRate, CommonConstant.COMMON_RATE_MAX_FRACTION);
     }
 
-    function _requestTokenization(
-        address _seller,
-        EstateForgerRequestEstateInput calldata _estate,
-        EstateForgerRequestQuotaInput calldata _quota,
-        EstateForgerRequestQuoteInput calldata _quote,
-        uint40 _privateSaleEndsAt,
-        uint40 _publicSaleEndsAt
-    ) internal onlyExecutive whenNotPaused returns (uint256) {
-        if (!IAdmin(admin).getZoneEligibility(_estate.zone, msg.sender)) {
-            revert Unauthorized();
-        }
-
-        if (!IPriceWatcher(priceWatcher).isPriceInRange(
-            _quote.currency,
-            _quote.unitPrice,
-            baseMinUnitPrice,
-            baseMaxUnitPrice
-        )) {
-            revert InvalidUnitPrice();
-        }
-
-        if (_estate.expireAt <= block.timestamp) {
-            revert InvalidTimestamp();
-        }
-
-        if (!isSellerIn(_estate.zone, _seller)
-            || _quota.minSellingQuantity > _quota.maxSellingQuantity
-            || _quota.maxSellingQuantity > _quota.totalQuantity
-            || _quote.cashbackThreshold > _quota.totalQuantity
-            || _quote.cashbackBaseRate > CommonConstant.COMMON_RATE_MAX_FRACTION
-            || _quote.cashbackCurrencies.length != _quote.cashbackDenominations.length) {
-            revert InvalidInput();
-        }
-
-        uint256 feeDenomination = _getFeeDenomination(_quote.unitPrice, _quote.currency);
-        uint256 commissionDenomination = _getCommissionDenomination(feeDenomination);
-        uint256 cashbackFundId = IReserveVault(reserveVault).initiateFund(
-            _quote.currency,
-            _getCashbackBaseDenomination(
-                feeDenomination,
-                commissionDenomination,
-                _quote.cashbackBaseRate
-            ),
-            _quote.cashbackCurrencies,
-            _quote.cashbackDenominations
-        );
-
-        EstateForgerRequestQuote memory quote = EstateForgerRequestQuote(
-            _quote.unitPrice,
-            _quote.currency,
-            _quote.cashbackThreshold,
-            cashbackFundId,
-            feeDenomination,
-            commissionDenomination
-        );
-
-        EstateForgerRequestAgenda memory agenda = EstateForgerRequestAgenda(
-            _privateSaleEndsAt,
-            _publicSaleEndsAt
-        );
-
-        uint256 requestId = ++requestNumber;
-        requests[requestId] = EstateForgerRequest(
-            EstateForgerRequestEstate(
-                0,
-                _estate.zone,
-                _estate.uri,
-                _estate.expireAt
-            ),
-            EstateForgerRequestQuota(
-                _quota.totalQuantity,
-                _quota.minSellingQuantity,
-                _quota.maxSellingQuantity,
-                0
-            ),
-            quote,
-            agenda,
-            _seller
-        );
-
-        emit NewRequest(
-            requestId,
-            _seller,
-            _estate,
-            _quota,
-            quote,
-            agenda
-        );
-
-        return requestId;
-    }
-
     function _deposit(uint256 _requestId, uint256 _quantity)
     internal nonReentrant whenNotPaused returns (uint256) {
         EstateForgerRequest storage request = requests[_requestId];
@@ -686,7 +633,8 @@ ReentrancyGuardUpgradeable {
         if (request.estate.estateId != 0) {
             revert Tokenized();
         }
-        if (request.agenda.privateSaleEndsAt > block.timestamp && !isWhitelisted[msg.sender]
+        if (request.agenda.saleStartsAt > block.timestamp
+            || request.agenda.privateSaleEndsAt > block.timestamp && !isWhitelisted[msg.sender]
             || request.agenda.publicSaleEndsAt <= block.timestamp) {
             revert InvalidDepositing();
         }

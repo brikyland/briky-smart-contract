@@ -36,11 +36,12 @@ IEstateTokenizer {
 
     event NewRequest(
         uint256 indexed requestId,
+        uint256 indexed cashbackFundId,
         address indexed seller,
         EstateForgerRequestEstateInput estate,
         EstateForgerRequestQuotaInput quota,
-        EstateForgerRequestQuote quote,
-        EstateForgerRequestAgenda agenda
+        EstateForgerRequestQuoteInput quote,
+        EstateForgerRequestAgendaInput agenda
     );
     event RequestCancellation(uint256 indexed requestId);
     event RequestConfirmation(
@@ -55,8 +56,7 @@ IEstateTokenizer {
 
     event RequestAgendaUpdate(
         uint256 indexed requestId,
-        uint256 indexed privateSaleEndsAt,
-        uint256 indexed publicSaleEndsAt
+        EstateForgerRequestAgendaInput agenda
     );
     event RequestURIUpdate(uint256 indexed requestId, string uri);
 
@@ -113,22 +113,12 @@ IEstateTokenizer {
         Validation calldata validation
     ) external;
 
-    function requestTokenizationWithDuration(
+    function requestTokenization(
         address seller,
         EstateForgerRequestEstateInput calldata estate,
         EstateForgerRequestQuotaInput calldata quota,
         EstateForgerRequestQuoteInput calldata quote,
-        uint40 privateSaleDuration,
-        uint40 publicSaleDuration,
-        Validation calldata validation
-    ) external returns (uint256 requestId);
-    function requestTokenizationWithTimestamp(
-        address seller,
-        EstateForgerRequestEstateInput calldata estate,
-        EstateForgerRequestQuotaInput calldata quota,
-        EstateForgerRequestQuoteInput calldata quote,
-        uint40 privateSaleEndsAt,
-        uint40 publicSaleEndsAt,
+        EstateForgerRequestAgendaInput calldata agenda,
         Validation calldata validation
     ) external returns (uint256 requestId);
 
@@ -140,11 +130,7 @@ IEstateTokenizer {
         string calldata uri,
         Validation calldata validation
     ) external;
-    function updateRequestAgenda(
-        uint256 requestId,
-        uint40 privateSaleEndsAt,
-        uint40 publicSaleEndsAt
-    ) external;
+    function updateRequestAgenda(uint256 requestId, EstateForgerRequestAgendaInput calldata agenda) external;
     function withdrawDeposit(uint256 requestId) external returns (uint256 value);
 
     function safeDeposit(
