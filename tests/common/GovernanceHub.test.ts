@@ -10,7 +10,7 @@ import {
     FailReceiver,
     Reentrancy,
 } from '@typechain-types';
-import { callTransaction, getSignatures, getValidationMessage, prepareERC20, randomWallet, testReentrancy } from '@utils/blockchain';
+import { callTransaction, getSignatures, getValidationMessage, prepareERC20, prepareNativeToken, randomWallet, testReentrancy } from '@utils/blockchain';
 import { Constant } from '@tests/test.constant';
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
@@ -393,7 +393,7 @@ describe.only('1.6. GovernanceHub', async () => {
         rejectExecutionSampleProposals = false,
         concludeExecutionSucceededSampleProposals = false,
         concludeExecutionFailedSampleProposals = false,
-        useFailReceiver = false,
+        useFailReceiverContributor = false,
         useReentrancyERC20 = false,
         pause = false,
     } = {}): Promise<GovernanceHubFixture> {
@@ -408,6 +408,8 @@ describe.only('1.6. GovernanceHub', async () => {
             zone,
             currencies,
             reentrancyERC20,
+            failReceiver,
+            deployer,
         } = fixture;
         const fee = await governanceHub.fee();
 
@@ -587,7 +589,14 @@ describe.only('1.6. GovernanceHub', async () => {
             [contributor1, contributor2],
             [governanceHub],
             ethers.utils.parseEther(String(1e9)),
-        )
+        );
+
+        await prepareNativeToken(
+            ethers.provider,
+            deployer,
+            [failReceiver],
+            ethers.utils.parseEther("10000"),
+        );
 
         if (voteApprovalSampleProposals) {
             await callTransaction(governanceHub.connect(voter1).vote(1, ProposalVoteOption.Approval));
@@ -608,11 +617,23 @@ describe.only('1.6. GovernanceHub', async () => {
         }
 
         if (contributeBudgetSampleProposals) {
-            await callTransaction(governanceHub.connect(contributor1).contributeBudget(
-                1,
-                ethers.utils.parseEther("100"),
-                { value: ethers.utils.parseEther("100") }
-            ));
+            if (useFailReceiverContributor) {
+                await callTransaction(failReceiver.call(
+                    governanceHub.address,
+                    governanceHub.interface.encodeFunctionData("contributeBudget", [
+                        1,
+                        ethers.utils.parseEther("100"),
+                    ]),
+                    { value: ethers.utils.parseEther("100") }
+                ));
+            } else {
+                await callTransaction(governanceHub.connect(contributor1).contributeBudget(
+                    1,
+                    ethers.utils.parseEther("100"),
+                    { value: ethers.utils.parseEther("100") }
+                ));
+            }
+
             await callTransaction(governanceHub.connect(contributor2).contributeBudget(
                 2,
                 ethers.utils.parseEther("200"))
@@ -1510,7 +1531,6 @@ describe.only('1.6. GovernanceHub', async () => {
         it('1.6.6.8. propose unsuccessfully when refund native token failed', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
-                useFailReceiver: true,
             });
             const { failReceiver, governanceHub} = fixture;
 
@@ -3148,7 +3168,7 @@ describe.only('1.6. GovernanceHub', async () => {
             )).to.be.revertedWithCustomError(governanceHub, 'Overdue');
         });
 
-        it.only('1.6.11.11. contribute budget unsuccessfully when contract is reentered', async () => {
+        it('1.6.11.11. contribute budget unsuccessfully when contract is reentered', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
                 addSampleProposals: true,
@@ -3288,57 +3308,292 @@ describe.only('1.6. GovernanceHub', async () => {
         });
 
         it('1.6.13.2. withdraw budget contribution successfully with confirmation overdue proposal', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteApprovalSampleProposals: true,
+                contributeBudgetSampleProposals: true,
+            });
 
+            const { governanceHub, contributor1, contributor2, currencies } = fixture;
+
+            // Tx1: Withdraw at exact overdue timestamp
+            let timestamp = (await governanceHub.getProposal(1)).due + Constant.GOVERNANCE_HUB_CONFIRMATION_TIME_LIMIT;
+            await time.setNextBlockTimestamp(timestamp);
+
+            let governanceHubInitNativeBalance = await ethers.provider.getBalance(governanceHub.address);
+            let contributor1InitNativeBalance = await ethers.provider.getBalance(contributor1.address);
+
+            const value1 = await governanceHub.contributions(1, contributor1.address);
+            const tx1 = await governanceHub.connect(contributor1).withdrawBudgetContribution(1);
+            const receipt1 = await tx1.wait();
+            const gasFee1 = receipt1.gasUsed.mul(receipt1.effectiveGasPrice);
+
+            await expect(tx1).to.emit(governanceHub, 'ProposalBudgetContributionWithdrawal').withArgs(
+                1,
+                contributor1.address,
+                value1,
+            );
+
+            expect(await ethers.provider.getBalance(governanceHub.address)).to.equal(governanceHubInitNativeBalance.sub(value1));
+            expect(await ethers.provider.getBalance(contributor1.address)).to.equal(contributor1InitNativeBalance.add(value1).sub(gasFee1));
+            expect(await governanceHub.contributions(1, contributor1.address)).to.equal(0);
+
+            // Tx2: Withdraw at slightly after overdue timestamp
+            timestamp = (await governanceHub.getProposal(2)).due + Constant.GOVERNANCE_HUB_CONFIRMATION_TIME_LIMIT + 10;
+            await time.setNextBlockTimestamp(timestamp);
+
+            const currency = currencies[0];
+            let governanceHubInitERC20Balance = await currency.balanceOf(governanceHub.address);
+            let contributor2InitERC20Balance = await currency.balanceOf(contributor2.address);
+
+            const value2 = await governanceHub.contributions(2, contributor2.address);
+            const tx2 = await governanceHub.connect(contributor2).withdrawBudgetContribution(2);
+            await tx2.wait();
+
+            await expect(tx2).to.emit(governanceHub, 'ProposalBudgetContributionWithdrawal').withArgs(
+                2,
+                contributor2.address,
+                value2,
+            );
+
+            expect(await currency.balanceOf(governanceHub.address)).to.equal(governanceHubInitERC20Balance.sub(value2));
+            expect(await currency.balanceOf(contributor2.address)).to.equal(contributor2InitERC20Balance.add(value2));
+            expect(await governanceHub.contributions(2, contributor2.address)).to.equal(0);
         });
 
         it('1.6.13.3. withdraw budget contribution unsuccessfully with invalid proposal id', async () => {
+            const fixture = await beforeGovernanceHubTest();
+            const { governanceHub, contributor1 } = fixture;
 
+            await expect(governanceHub.connect(contributor1).withdrawBudgetContribution(0))
+                .to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
+            await expect(governanceHub.connect(contributor1).withdrawBudgetContribution(100))
+                .to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
         });
 
         it('1.6.13.4. withdraw budget contribution unsuccessfully when paused', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteDisapprovalSampleProposals: true,
+                contributeBudgetSampleProposals: true,
+                pause: true,
+            });
 
+            const { governanceHub, contributor1 } = fixture;
+
+            await expect(governanceHub.connect(contributor1).withdrawBudgetContribution(1))
+                .to.be.revertedWith('Pausable: paused');
         });
 
         it('1.6.13.5. withdraw budget contribution unsuccessfully when contract is reentered', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteDisapprovalSampleProposals: true,
+                contributeBudgetSampleProposals: true,
+                useReentrancyERC20: true,
+            });
 
+            const { reentrancyERC20, governanceHub, contributor2 } = fixture;
+
+            await testReentrancy_GovernanceHub(
+                fixture,
+                reentrancyERC20,
+                async () => {
+                    await expect(governanceHub.connect(contributor2).withdrawBudgetContribution(2))
+                        .to.be.revertedWith("ReentrancyGuard: reentrant call");
+                }
+            );
         });
 
         it('1.6.13.6. withdraw budget contribution unsuccessfully when proposal is pending', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+            });
 
+            const { governanceHub, contributor1 } = fixture;
+
+            await expect(governanceHub.connect(contributor1).withdrawBudgetContribution(1))
+                .to.be.revertedWithCustomError(governanceHub, 'InvalidWithdrawing');
         });
 
         it('1.6.13.7. withdraw budget contribution unsuccessfully when proposal is executing', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteApprovalSampleProposals: true,
+                contributeBudgetSampleProposals: true,
+                confirmExecutionSampleProposals: true,                
+            });
+
+            const { governanceHub, contributor1 } = fixture;
+
+            await expect(governanceHub.connect(contributor1).withdrawBudgetContribution(1))
+                .to.be.revertedWithCustomError(governanceHub, 'InvalidWithdrawing');
 
         });
 
         it('1.6.13.8. withdraw budget contribution unsuccessfully when proposal is successfully executed', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteApprovalSampleProposals: true,
+                contributeBudgetSampleProposals: true,
+                confirmExecutionSampleProposals: true,
+                concludeExecutionSucceededSampleProposals: true,
+            });
 
+            const { governanceHub, contributor1 } = fixture;
+
+            await expect(governanceHub.connect(contributor1).withdrawBudgetContribution(1))
+                .to.be.revertedWithCustomError(governanceHub, 'InvalidWithdrawing');
         });
 
         it('1.6.13.9. withdraw budget contribution unsuccessfully when proposal is unsuccessfully executed', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteApprovalSampleProposals: true,
+                contributeBudgetSampleProposals: true,
+                confirmExecutionSampleProposals: true,
+                concludeExecutionFailedSampleProposals: true,
+            });
 
+            const { governanceHub, contributor1 } = fixture;
+
+            await expect(governanceHub.connect(contributor1).withdrawBudgetContribution(1))
+                .to.be.revertedWithCustomError(governanceHub, 'InvalidWithdrawing');
         });
 
         it('1.6.13.11. withdraw budget contribution unsuccessfully when proposal is voting and execution confirmation is not overdue', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteApprovalSampleProposals: true,
+                contributeBudgetSampleProposals: true,
+            });
 
+            const { governanceHub, contributor1 } = fixture;
+
+            await expect(governanceHub.connect(contributor1).withdrawBudgetContribution(1))
+                .to.be.revertedWithCustomError(governanceHub, 'InvalidWithdrawing');
         });
 
         it('1.6.13.12. withdraw budget contribution unsuccessfully when sender did not contribute', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteDisapprovalSampleProposals: true,
+                contributeBudgetSampleProposals: true,
+            });
 
+            const { governanceHub, proposer2 } = fixture;
+
+            await expect(governanceHub.connect(proposer2).withdrawBudgetContribution(1))
+                .to.be.revertedWithCustomError(governanceHub, 'NothingToWithdraw');
         });
         
         it('1.6.13.13. withdraw budget contribution unsuccessfully when sender already withdrawn contribution', async () => {
-            
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteDisapprovalSampleProposals: true,
+                contributeBudgetSampleProposals: true,
+            });
+
+            const { governanceHub, contributor1 } = fixture;
+
+            await callTransaction(governanceHub.connect(contributor1).withdrawBudgetContribution(1));
+
+            await expect(governanceHub.connect(contributor1).withdrawBudgetContribution(1))
+                .to.be.revertedWithCustomError(governanceHub, 'NothingToWithdraw');            
         });
         
         it('1.6.13.14. withdraw budget contribution unsuccessfully when sending native token failed', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteDisapprovalSampleProposals: true,
+                contributeBudgetSampleProposals: true,
+                useFailReceiverContributor: true,
+            });
 
+            const { governanceHub, failReceiver } = fixture;
+
+            await callTransaction(failReceiver.activate(true));
+
+            await expect(failReceiver.call(
+                governanceHub.address,
+                governanceHub.interface.encodeFunctionData("withdrawBudgetContribution", [1])
+            )).to.be.revertedWithCustomError(governanceHub, 'FailedTransfer');
         });
     });
 
     describe('1.6.14. confirmExecution(uint256)', async () => {
-        it('1.6.14.1. confirm execution successfully', async () => {
+        it.only('1.6.14.1. confirm execution successfully', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteApprovalSampleProposals: true,
+                contributeBudgetSampleProposals: true,
+            });
 
+            const { governanceHub, manager, operator1, operator2, currencies } = fixture;
+
+            // Tx1: confirm execution with native token budget
+            let initManagerNativeBalance = await ethers.provider.getBalance(manager.address);
+            let initGovernanceHubNativeBalance = await ethers.provider.getBalance(governanceHub.address);
+            let initOperator1NativeBalance = await ethers.provider.getBalance(operator1.address);
+
+            const budget1 = (await governanceHub.getProposal(1)).budget;
+
+            const tx1 = await governanceHub.connect(manager).confirmExecution(1);
+            const receipt1 = await tx1.wait();
+            const gasFee1 = receipt1.gasUsed.mul(receipt1.effectiveGasPrice);
+
+            await expect(tx1).to.emit(governanceHub, 'ProposalExecutionConfirmation').withArgs(1);
+
+            expect(await ethers.provider.getBalance(manager.address)).to.equal(initManagerNativeBalance.sub(gasFee1));
+            expect(await ethers.provider.getBalance(operator1.address)).to.equal(initOperator1NativeBalance.add(budget1));
+            expect(await ethers.provider.getBalance(governanceHub.address)).to.equal(initGovernanceHubNativeBalance.sub(budget1));
+
+            let proposal1 = await governanceHub.getProposal(1);
+            expect(proposal1.state).to.equal(ProposalState.Executing);
+
+            // Tx2: confirm execution with erc20 budget
+            const currency = currencies[0];
+            let initManagerERC20Balance = await currency.balanceOf(manager.address);
+            let initGovernanceHubERC20Balance = await currency.balanceOf(governanceHub.address);
+            let initOperator2ERC20Balance = await currency.balanceOf(operator2.address);
+
+            const budget2 = (await governanceHub.getProposal(2)).budget;
+            
+            const tx2 = await governanceHub.connect(manager).confirmExecution(2);
+            const receipt2 = await tx2.wait();
+            const gasFee2 = receipt2.gasUsed.mul(receipt2.effectiveGasPrice);
+
+            await expect(tx2).to.emit(governanceHub, 'ProposalExecutionConfirmation').withArgs(2);
+
+            expect(await currency.balanceOf(manager.address)).to.equal(initManagerERC20Balance);
+            expect(await currency.balanceOf(operator2.address)).to.equal(initOperator2ERC20Balance.add(budget2));
+            expect(await currency.balanceOf(governanceHub.address)).to.equal(initGovernanceHubERC20Balance.sub(budget2));
+
+            let proposal2 = await governanceHub.getProposal(2);
+            expect(proposal2.state).to.equal(ProposalState.Executing);
         });
 
         it('1.6.14.2. confirm execution unsuccessfully with invalid proposal id', async () => {
