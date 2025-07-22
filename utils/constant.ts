@@ -1,9 +1,9 @@
 import { parseEther } from "./blockchain";
 import { BigNumber } from "ethers";
 
-const MINUTE = 60;
-const HOUR = 60 * MINUTE;
-const DAY = 24 * HOUR;
+export const MINUTE = 60;
+export const HOUR = 60 * MINUTE;
+export const DAY = 24 * HOUR;
 
 export const Constant = {
     // Common

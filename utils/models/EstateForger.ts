@@ -6,10 +6,24 @@ export interface RequestEstateInput {
     expireAt: number;
 };
 
+export interface RequestEstate {
+    estateId: BigNumber;
+    zone: string;
+    uri: string;
+    expireAt: number;
+};
+
 export interface RequestQuotaInput {
     totalQuantity: BigNumber;
     minSellingQuantity: BigNumber;
     maxSellingQuantity: BigNumber;
+};
+
+export interface RequestQuota {
+    totalQuantity: BigNumber;
+    minSellingQuantity: BigNumber;
+    maxSellingQuantity: BigNumber;
+    soldQuantity: BigNumber;
 };
 
 export interface RequestQuoteInput {
@@ -21,20 +35,6 @@ export interface RequestQuoteInput {
     cashbackDenominations: BigNumber[];
 };
 
-export interface RequestEstate {
-    estateId: BigNumber;
-    zone: string;
-    uri: string;
-    expireAt: number;
-};
-
-export interface RequestQuota {
-    totalQuantity: BigNumber;
-    minSellingQuantity: BigNumber;
-    maxSellingQuantity: BigNumber;
-    soldQuantity: BigNumber;
-};
-
 export interface RequestQuote {
     unitPrice: BigNumber;
     currency: string;
@@ -44,7 +44,14 @@ export interface RequestQuote {
     commissionDenomination: BigNumber;
 };
 
+export interface RequestAgendaInput {
+    saleStartsAt: number;
+    privateSaleDuration: number;
+    publicSaleDuration: number;
+};
+
 export interface RequestAgenda {
+    saleStartsAt: number;
     privateSaleEndsAt: number;
     publicSaleEndsAt: number;
 };

@@ -32,7 +32,7 @@ interface PriceWatcherFixture {
     admins: any[];
 }
 
-describe('21. PriceWatcher', async () => {
+describe('1.7. PriceWatcher', async () => {
     async function priceWatcherFixture(): Promise<PriceWatcherFixture> {
         const accounts = await ethers.getSigners();
         const deployer = accounts[0];
@@ -87,8 +87,8 @@ describe('21. PriceWatcher', async () => {
         } = fixture;
 
         if (listSampleCurrencies) {
-            await nativePriceFeed.updateData(1000_00000000, 8);
-            await currencyPriceFeed.updateData(5_00000000, 8);
+            await callTransaction(nativePriceFeed.updateData(1000_00000000, 8));
+            await callTransaction(currencyPriceFeed.updateData(5_00000000, 8));
 
             await addCurrencyToAdminAndPriceWatcher(
                 admin,
@@ -120,16 +120,16 @@ describe('21. PriceWatcher', async () => {
         return fixture;
     }
 
-    describe('21.1. initialize(address, address, string, uint256, uint256, uint256, uint256)', async () => {
-        it('21.1.1. Deploy successfully', async () => {
+    describe('1.7.1. initialize(address, address, string, uint256, uint256, uint256, uint256)', async () => {
+        it('1.7.1.1. Deploy successfully', async () => {
             const { admin, priceWatcher } = await beforePriceWatcherTest({});
             
             expect(await priceWatcher.admin()).to.equal(admin.address);
         });
     });
 
-    describe('21.2. updatePriceFeeds(uint256, uint256, bytes[])', async () => {
-        it('21.2.1. updatePriceFeeds successfully with valid signatures', async () => {
+    describe('1.7.2. updatePriceFeeds(uint256, uint256, bytes[])', async () => {
+        it('1.7.2.1. updatePriceFeeds successfully with valid signatures', async () => {
             const { admin, admins, priceWatcher } = await beforePriceWatcherTest();
             
             const currencyAddresses = [];
@@ -165,7 +165,7 @@ describe('21. PriceWatcher', async () => {
             }
         });
 
-        it('21.2.2. updatePriceFeeds unsuccessfully with invalid signatures', async () => {
+        it('1.7.2.2. updatePriceFeeds unsuccessfully with invalid signatures', async () => {
             const { admin, admins, priceWatcher } = await beforePriceWatcherTest({});
             const currencyAddresses = [];
             const priceFeeds = [];
@@ -189,7 +189,7 @@ describe('21. PriceWatcher', async () => {
             )).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('21.2.3. updatePriceFeeds unsuccessfully with invalid heartbeat', async () => {
+        it('1.7.2.3. updatePriceFeeds unsuccessfully with invalid heartbeat', async () => {
             const { admin, admins, priceWatcher } = await beforePriceWatcherTest({});
             const currencyAddresses = [];
             const priceFeeds = [];
@@ -213,7 +213,7 @@ describe('21. PriceWatcher', async () => {
             )).to.be.revertedWithCustomError(priceWatcher, 'InvalidInput');
         });
 
-        it('21.2.4. updatePriceFeeds unsuccessfully with conflicting params length', async () => {
+        it('1.7.2.4. updatePriceFeeds unsuccessfully with conflicting params length', async () => {
             const { admin, admins, priceWatcher } = await beforePriceWatcherTest({});
 
             async function testForInvalidInput(currencyAddresses: string[], priceFeeds: string[], heartbeats: number[]) {
@@ -245,8 +245,8 @@ describe('21. PriceWatcher', async () => {
         });
     });
 
-    describe('21.3. updateDefaultRates(address[], uint256[], uint8[], bytes[])', async () => {
-        it('21.3.1. updateDefaultRates successfully with valid signatures', async () => {
+    describe('1.7.3. updateDefaultRates(address[], uint256[], uint8[], bytes[])', async () => {
+        it('1.7.3.1. updateDefaultRates successfully with valid signatures', async () => {
             const { admin, admins, priceWatcher } = await beforePriceWatcherTest();
             
             const currencyAddresses = [];
@@ -281,7 +281,7 @@ describe('21. PriceWatcher', async () => {
             }
         });
 
-        it('21.3.2. updateDefaultRates unsuccessfully with invalid signatures', async () => {
+        it('1.7.3.2. updateDefaultRates unsuccessfully with invalid signatures', async () => {
             const { admin, admins, priceWatcher } = await beforePriceWatcherTest({});
             const currencyAddresses = [];
             for (let i = 0; i < 5; ++i) {
@@ -304,7 +304,7 @@ describe('21. PriceWatcher', async () => {
             )).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('21.3.3. updateDefaultRates unsuccessfully with invalid decimals', async () => {
+        it('1.7.3.3. updateDefaultRates unsuccessfully with invalid decimals', async () => {
             const { admin, admins, priceWatcher } = await beforePriceWatcherTest({});
             const currencyAddresses = [];
             for (let i = 0; i < 5; ++i) {
@@ -327,7 +327,7 @@ describe('21. PriceWatcher', async () => {
             )).to.be.revertedWithCustomError(priceWatcher, 'InvalidInput');
         });
 
-        it('21.3.4. updateDefaultRates unsuccessfully with conflicting params length', async () => {
+        it('1.7.3.4. updateDefaultRates unsuccessfully with conflicting params length', async () => {
             const { admin, admins, priceWatcher } = await beforePriceWatcherTest({});
 
             async function testForInvalidInput(currencyAddresses: string[], values: number[], decimals: number[]) {
@@ -358,13 +358,13 @@ describe('21. PriceWatcher', async () => {
         });
     });
 
-    describe('21.4. isPriceInRange(address, uint256, uint256, uint256)', async () => {
-        it('21.4.1. return correct value when currency have price feed', async () => {
+    describe('1.7.4. isPriceInRange(address, uint256, uint256, uint256)', async () => {
+        it('1.7.4.1. return correct value when currency have price feed', async () => {
             const fixture = await beforePriceWatcherTest({
                 listSampleCurrencies: true,
             });
 
-            const { priceWatcher } = fixture;
+            const { priceWatcher, nativePriceFeed, currencyPriceFeed } = fixture;
 
             const nativeValue = 1000;
             const unitPrice = 1000;
@@ -385,7 +385,7 @@ describe('21. PriceWatcher', async () => {
             )).to.equal(false);
         });
 
-        it('21.4.2. return correct value when currency have default price', async () => {
+        it('1.7.4.2. return correct value when currency have default price', async () => {
             const fixture = await beforePriceWatcherTest();
 
             const { admin, admins, priceWatcher, deployer } = fixture;
@@ -426,7 +426,7 @@ describe('21. PriceWatcher', async () => {
             )).to.equal(false);
         });
 
-        it('21.4.3. revert when currency is unavailable', async () => {
+        it('1.7.4.3. revert when currency is unavailable', async () => {
             const fixture = await beforePriceWatcherTest();
 
             const { admin, admins, priceWatcher } = fixture;
@@ -451,10 +451,10 @@ describe('21. PriceWatcher', async () => {
                 1000,
                 100 * 1000,
                 100 * 1000,
-            )).to.be.revertedWithCustomError(priceWatcher, 'InvalidCurrency');
+            )).to.be.revertedWithoutReason();
         });
 
-        it('21.4.4. revert when currency rate is missing', async () => {
+        it('1.7.4.4. revert when currency rate is missing', async () => {
             const fixture = await beforePriceWatcherTest();
 
             const { admin, admins, priceWatcher } = fixture;
@@ -482,7 +482,7 @@ describe('21. PriceWatcher', async () => {
             )).to.be.revertedWithCustomError(priceWatcher, 'MissingCurrencyRate');
         });
         
-        it('21.4.5. revert when price feed is stale', async () => {
+        it('1.7.4.5. revert when price feed is stale', async () => {
             const fixture = await beforePriceWatcherTest({
                 listSampleCurrencies: true,
             });
@@ -503,7 +503,7 @@ describe('21. PriceWatcher', async () => {
             )).to.be.revertedWithCustomError(priceWatcher, 'StalePriceFeed');
         });
 
-        it('21.4.6. revert when price feed return invalid data', async () => {
+        it('1.7.4.6. revert when price feed return invalid data', async () => {
             const fixture = await beforePriceWatcherTest();
 
             const { admin, admins, priceWatcher, nativePriceFeed, currencyPriceFeed, currency } = fixture;

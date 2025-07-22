@@ -9,9 +9,10 @@ export async function deployMockEstateForger(
     priceWatcherAddress: string,
     feeReceiverAddress: string,
     reserveVaultAddress: string,
-    feeRate: BigNumberish,
+    validatorAddress: string,
     baseMinUnitPrice: BigNumberish,
     baseMaxUnitPrice: BigNumberish,
+    feeRate: BigNumberish,
 ) {
     const MockEstateForger = await ethers.getContractFactory('MockEstateForger', signer);
     const mockEstateForger = await upgrades.deployProxy(
@@ -23,9 +24,10 @@ export async function deployMockEstateForger(
             priceWatcherAddress,
             feeReceiverAddress,
             reserveVaultAddress,
-            feeRate,
+            validatorAddress,
             baseMinUnitPrice,
             baseMaxUnitPrice,
+            feeRate,
         ]
     );
     await mockEstateForger.deployed();

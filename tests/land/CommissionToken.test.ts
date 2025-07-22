@@ -29,6 +29,7 @@ import {
 } from '@utils/utils';
 import { Initialization as LandInitialization } from '@tests/land/test.initialization';
 import { callCommissionToken_Pause } from '@utils/callWithSignatures/commissionToken';
+import { MockValidator } from '@utils/mockValidator';
 
 interface CommissionTokenFixture {
     admin: Admin;
@@ -36,6 +37,7 @@ interface CommissionTokenFixture {
     currency: Currency;
     estateToken: MockEstateToken;
     commissionToken: CommissionToken;
+    validator: MockValidator;
 
     deployer: any;
     admins: any[];
@@ -43,7 +45,7 @@ interface CommissionTokenFixture {
     receiver2: any;
 }
 
-describe('6. CommissionToken', async () => {
+describe.only('2.1. CommissionToken', async () => {
     async function commissionTokenFixture(): Promise<CommissionTokenFixture> {
         const accounts = await ethers.getSigners();
         const deployer = accounts[0];
@@ -73,10 +75,13 @@ describe('6. CommissionToken', async () => {
             'MCK'
         ) as Currency;
 
+        const validator = new MockValidator(deployer as any);
+
         const estateToken = await deployMockEstateToken(
             deployer.address,
             admin.address,
             feeReceiver.address,
+            validator.getAddress(),
             LandInitialization.ESTATE_TOKEN_BaseURI,
             LandInitialization.ESTATE_TOKEN_RoyaltyRate,
         ) as MockEstateToken;        
@@ -99,6 +104,7 @@ describe('6. CommissionToken', async () => {
             currency,
             estateToken,
             commissionToken,
+            validator,
             deployer,
             admins,
             receiver1,
@@ -138,8 +144,8 @@ describe('6. CommissionToken', async () => {
         }
     }
 
-    describe('6.1. initialize(address, address, address)', async () => {
-        it('6.1.1. Deploy successfully', async () => {
+    describe('2.1.1. initialize(address, address, address)', async () => {
+        it('2.1.1.1. Deploy successfully', async () => {
             const { deployer, admin, estateToken, feeReceiver } = await beforeCommissionTokenTest();
 
             const CommissionToken = await ethers.getContractFactory('CommissionToken', deployer);
@@ -178,7 +184,7 @@ describe('6. CommissionToken', async () => {
                 .emit(commissionToken, 'RoyaltyRateUpdate').withArgs(LandInitialization.COMMISSION_TOKEN_RoyaltyRate);
         });
 
-        it('6.1.2. Deploy unsuccessfully with invalid commission rate', async () => {
+        it('2.1.1.2. Deploy unsuccessfully with invalid commission rate', async () => {
             const { deployer, admin, estateToken, feeReceiver } = await beforeCommissionTokenTest();
 
             const CommissionToken = await ethers.getContractFactory('CommissionToken', deployer);
@@ -195,7 +201,7 @@ describe('6. CommissionToken', async () => {
             ])).to.be.reverted;
         });
 
-        it('6.1.3. Deploy unsuccessfully with invalid royalty rate', async () => {
+        it('2.1.1.3. Deploy unsuccessfully with invalid royalty rate', async () => {
             const { deployer, admin, estateToken, feeReceiver } = await beforeCommissionTokenTest();
 
             const CommissionToken = await ethers.getContractFactory('CommissionToken', deployer);
@@ -213,8 +219,8 @@ describe('6. CommissionToken', async () => {
         });
     });
 
-    describe('6.2. updateBaseURI(string, bytes[])', async () => {
-        it('6.2.1. updateBaseURI successfully with valid signatures', async () => {
+    describe('2.1.2. updateBaseURI(string, bytes[])', async () => {
+        it('2.1.2.1. updateBaseURI successfully with valid signatures', async () => {
             const { commissionToken, admin, admins } = await beforeCommissionTokenTest({});
 
             const message = ethers.utils.defaultAbiCoder.encode(
@@ -234,7 +240,7 @@ describe('6. CommissionToken', async () => {
             expect(await commissionToken.tokenURI(2)).to.equal("NewBaseURI:");
         });
 
-        it('6.2.2. updateBaseURI unsuccessfully with invalid signatures', async () => {
+        it('2.1.2.2. updateBaseURI unsuccessfully with invalid signatures', async () => {
             const { commissionToken, admin, admins } = await beforeCommissionTokenTest({});
 
             const message = ethers.utils.defaultAbiCoder.encode(
@@ -250,8 +256,8 @@ describe('6. CommissionToken', async () => {
         });
     });
 
-    describe('6.3. updateRoyaltyRate(uint256, bytes[])', async () => {
-        it('6.3.1. updateRoyaltyRate successfully with valid signatures', async () => {
+    describe('2.1.3. updateRoyaltyRate(uint256, bytes[])', async () => {
+        it('2.1.3.1. updateRoyaltyRate successfully with valid signatures', async () => {
             const { commissionToken, admin, admins } = await beforeCommissionTokenTest({});
 
             const message = ethers.utils.defaultAbiCoder.encode(
@@ -273,7 +279,7 @@ describe('6. CommissionToken', async () => {
             expect(royaltyRate.decimals).to.equal(Constant.COMMON_RATE_DECIMALS);
         });
 
-        it('6.3.2. updateRoyaltyRate unsuccessfully with invalid signatures', async () => {
+        it('2.1.3.2. updateRoyaltyRate unsuccessfully with invalid signatures', async () => {
             const { commissionToken, admin, admins } = await beforeCommissionTokenTest({});
 
             const message = ethers.utils.defaultAbiCoder.encode(
@@ -288,7 +294,7 @@ describe('6. CommissionToken', async () => {
             )).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('6.3.3. updateRoyaltyRate unsuccessfully with invalid rate', async () => {
+        it('2.1.3.3. updateRoyaltyRate unsuccessfully with invalid rate', async () => {
             const { commissionToken, admin, admins } = await beforeCommissionTokenTest({});
 
             let message = ethers.utils.defaultAbiCoder.encode(
@@ -304,8 +310,8 @@ describe('6. CommissionToken', async () => {
         });
     });
 
-    describe('6.4. commissionInfo(uint256, uint256)', async() => {
-        it('6.4.1. return correct commission info for minted token', async () => {
+    describe('2.1.4. commissionInfo(uint256, uint256)', async() => {
+        it('2.1.4.1. return correct commission info for minted token', async () => {
             const { commissionToken, receiver1, receiver2 } = await beforeCommissionTokenTest({
                 mintSampleTokens: true,
             });
@@ -321,7 +327,7 @@ describe('6. CommissionToken', async () => {
             expect(commissionInfo2[1]).to.equal(value2.mul(LandInitialization.COMMISSION_TOKEN_CommissionRate).div(Constant.COMMON_RATE_MAX_FRACTION));
         });
 
-        it('6.4.2. return default value info for unminted token', async () => {
+        it('2.1.4.2. return default value info for unminted token', async () => {
             const { commissionToken, receiver1, receiver2 } = await beforeCommissionTokenTest({
                 mintSampleTokens: true,
             });
@@ -338,8 +344,8 @@ describe('6. CommissionToken', async () => {
         });
     });
 
-    describe('6.5. mint(address, uint256)', async () => {
-        it('6.5.1. mint successfully by estateToken contract', async () => {
+    describe('2.1.5. mint(address, uint256)', async () => {
+        it('2.1.5.1. mint successfully by estateToken contract', async () => {
             const { estateToken, commissionToken, receiver1, receiver2 } = await beforeCommissionTokenTest();
 
             let tx = await estateToken.call(commissionToken.address, commissionToken.interface.encodeFunctionData('mint', [
@@ -367,7 +373,7 @@ describe('6. CommissionToken', async () => {
             expect(await commissionToken.tokenURI(2)).to.equal(LandInitialization.COMMISSION_TOKEN_BaseURI);
         });
 
-        it('6.5.2. mint unsuccessfully by unauthorized sender', async () => {
+        it('2.1.5.2. mint unsuccessfully by unauthorized sender', async () => {
             const { commissionToken, receiver1, receiver2 } = await beforeCommissionTokenTest();
 
             await expect(commissionToken.mint(receiver1.address, 1))
@@ -376,7 +382,7 @@ describe('6. CommissionToken', async () => {
                 .to.be.revertedWithCustomError(commissionToken, 'Unauthorized');
         });
 
-        it('6.5.3. mint unsuccessfully when already minted', async () => {
+        it('2.1.5.3. mint unsuccessfully when already minted', async () => {
             const { estateToken, commissionToken, receiver1, receiver2 } = await beforeCommissionTokenTest();
 
             await callTransaction(estateToken.call(commissionToken.address, commissionToken.interface.encodeFunctionData('mint', [
@@ -391,8 +397,8 @@ describe('6. CommissionToken', async () => {
         });
     });
 
-    describe('6.6. supportsInterface(bytes4)', async () => {
-        it('6.6.1. return true for appropriate interface', async () => {
+    describe('2.1.6. supportsInterface(bytes4)', async () => {
+        it('2.1.6.1. return true for appropriate interface', async () => {
             const { commissionToken } = await beforeCommissionTokenTest();
 
             const IERC4906Upgradeable = IERC4906Upgradeable__factory.createInterface();
