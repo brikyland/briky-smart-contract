@@ -45,7 +45,7 @@ interface CommissionTokenFixture {
     receiver2: any;
 }
 
-describe.only('2.1. CommissionToken', async () => {
+describe('2.1. CommissionToken', async () => {
     async function commissionTokenFixture(): Promise<CommissionTokenFixture> {
         const accounts = await ethers.getSigners();
         const deployer = accounts[0];
