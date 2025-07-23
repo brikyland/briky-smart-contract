@@ -19,4 +19,5 @@ export const Initialization = {
     // Estate Token
     ESTATE_TOKEN_BaseURI: 'EstateToken_TestURI',
     ESTATE_TOKEN_RoyaltyRate: ethers.utils.parseEther(String(0.0003)),
+    ESTATE_TOKEN_Decimals: 18,
 }
