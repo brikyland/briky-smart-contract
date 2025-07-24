@@ -158,9 +158,10 @@ describe('3. EstateToken', async () => {
                 priceWatcher.address,
                 feeReceiver.address,
                 reserveVault.address,
-                LandInitialization.ESTATE_FORGER_FeeRate,
+                validator.getAddress(),
                 LandInitialization.ESTATE_FORGER_BaseMinUnitPrice,
                 LandInitialization.ESTATE_FORGER_BaseMaxUnitPrice,
+                LandInitialization.ESTATE_FORGER_FeeRate,
             ));
             tokenizers.push(mockEstateForger);
         }

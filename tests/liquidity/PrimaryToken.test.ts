@@ -20,7 +20,7 @@ import {
     callPrimaryToken_UpdateTreasury 
 } from '@utils/callWithSignatures/primary';
 import { MockContract, smock } from '@defi-wonderland/smock';
-import { Initialization as LandInitialization } from '@tests/land/test.initialization';
+import { Initialization as LiquidityInitialization } from '@tests/liquidity/test.initialization';
 
 interface PrimaryTokenFixture {
     deployer: any;
@@ -37,7 +37,7 @@ interface PrimaryTokenFixture {
     liquidationUnlockedAt: number;
 }
 
-describe('9. PrimaryToken', async () => {
+describe('4.4. PrimaryToken', async () => {
     async function primaryTokenFixture(): Promise<PrimaryTokenFixture> {
         const accounts = await ethers.getSigners();
         const deployer = accounts[0];
@@ -68,8 +68,8 @@ describe('9. PrimaryToken', async () => {
         const primaryToken = await SmockPrimaryTokenFactory.deploy();
         await callTransaction(primaryToken.initialize(
             admin.address,
-            LandInitialization.PRIMARY_TOKEN_Name,
-            LandInitialization.PRIMARY_TOKEN_Symbol,
+            LiquidityInitialization.PRIMARY_TOKEN_Name,
+            LiquidityInitialization.PRIMARY_TOKEN_Symbol,
             liquidationUnlockedAt,
         ));
         
@@ -86,8 +86,8 @@ describe('9. PrimaryToken', async () => {
         await callTransaction(stakeToken1.initialize(
             admin.address,
             primaryToken.address,
-            LandInitialization.STAKE_TOKEN_Name_1,
-            LandInitialization.STAKE_TOKEN_Symbol_1,
+            LiquidityInitialization.STAKE_TOKEN_Name_1,
+            LiquidityInitialization.STAKE_TOKEN_Symbol_1,
         ));
 
         const SmockStakeTokenFactory2 = await smock.mock('MockStakeToken') as any;
@@ -95,8 +95,8 @@ describe('9. PrimaryToken', async () => {
         await callTransaction(stakeToken2.initialize(
             admin.address,
             primaryToken.address,
-            LandInitialization.STAKE_TOKEN_Name_2,
-            LandInitialization.STAKE_TOKEN_Symbol_2,
+            LiquidityInitialization.STAKE_TOKEN_Name_2,
+            LiquidityInitialization.STAKE_TOKEN_Symbol_2,
         ));
 
         const SmockStakeTokenFactory3 = await smock.mock('MockStakeToken') as any;
@@ -104,8 +104,8 @@ describe('9. PrimaryToken', async () => {
         await callTransaction(stakeToken3.initialize(
             admin.address,
             primaryToken.address,
-            LandInitialization.STAKE_TOKEN_Name_3,
-            LandInitialization.STAKE_TOKEN_Symbol_3,
+            LiquidityInitialization.STAKE_TOKEN_Name_3,
+            LiquidityInitialization.STAKE_TOKEN_Symbol_3,
         ));
         
         return {
@@ -163,15 +163,15 @@ describe('9. PrimaryToken', async () => {
         return fixture;
     }
 
-    describe('9.1. initialize(address, string, string, uint256)', async () => {
-        it('9.1.1. Deploy successfully', async () => {
+    describe('4.4.1. initialize(address, string, string, uint256)', async () => {
+        it('4.4.1.1. Deploy successfully', async () => {
             const { primaryToken, admin, liquidationUnlockedAt } = await setupBeforeTest();
 
             expect(await primaryToken.admin()).to.equal(admin.address);
             expect(await primaryToken.liquidationUnlockedAt()).to.equal(liquidationUnlockedAt);
 
-            expect(await primaryToken.name()).to.equal(LandInitialization.PRIMARY_TOKEN_Name);
-            expect(await primaryToken.symbol()).to.equal(LandInitialization.PRIMARY_TOKEN_Symbol);
+            expect(await primaryToken.name()).to.equal(LiquidityInitialization.PRIMARY_TOKEN_Name);
+            expect(await primaryToken.symbol()).to.equal(LiquidityInitialization.PRIMARY_TOKEN_Symbol);
             expect(await primaryToken.cap()).to.equal(Constant.PRIMARY_TOKEN_MAXIMUM_SUPPLY);
             expect(await primaryToken.totalSupply()).to.equal(ethers.utils.parseEther('5000000000'));
             
@@ -179,8 +179,8 @@ describe('9. PrimaryToken', async () => {
         });
     });
 
-    describe('9.2. updateTreasury(address)', async () => {
-        it('9.2.1. updateTreasury successfully', async () => {
+    describe('4.4.2. updateTreasury(address)', async () => {
+        it('4.4.2.1. updateTreasury successfully', async () => {
             const { admin, admins, primaryToken, treasury } = await setupBeforeTest();
 
             let message = ethers.utils.defaultAbiCoder.encode(
@@ -202,7 +202,7 @@ describe('9. PrimaryToken', async () => {
             expect(await primaryToken.treasury()).to.equal(treasury.address);
         });
 
-        it('9.2.2. updateTreasury unsuccessfully with invalid signatures', async () => {
+        it('4.4.2.2. updateTreasury unsuccessfully with invalid signatures', async () => {
             const { admin, admins, primaryToken, treasury } = await setupBeforeTest();
 
             let message = ethers.utils.defaultAbiCoder.encode(
@@ -217,7 +217,7 @@ describe('9. PrimaryToken', async () => {
             )).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('9.2.3. updateTreasury unsuccessfully when already updated', async () => {
+        it('4.4.2.3. updateTreasury unsuccessfully when already updated', async () => {
             const { admin, admins, primaryToken, treasury } = await setupBeforeTest({
                 updateTreasury: true,
             });
@@ -234,7 +234,7 @@ describe('9. PrimaryToken', async () => {
             )).to.be.revertedWithCustomError(primaryToken, 'InvalidUpdating');            
         });
 
-        it('9.2.4. updateTreasury unsuccessfully with zero address', async () => {
+        it('4.4.2.4. updateTreasury unsuccessfully with zero address', async () => {
             const { admin, admins, primaryToken } = await setupBeforeTest();
 
             let message = ethers.utils.defaultAbiCoder.encode(
@@ -250,8 +250,8 @@ describe('9. PrimaryToken', async () => {
         });
     });
 
-    describe('9.3. updateStakeTokens(address)', async () => {
-        it('9.3.1. updateStakeTokens successfully', async () => {
+    describe('4.4.3. updateStakeTokens(address)', async () => {
+        it('4.4.3.1. updateStakeTokens successfully', async () => {
             const { admin, admins, primaryToken, stakeToken1, stakeToken2, stakeToken3 } = await setupBeforeTest();
             
             let message = ethers.utils.defaultAbiCoder.encode(
@@ -277,7 +277,7 @@ describe('9. PrimaryToken', async () => {
             expect(await primaryToken.stakeToken3()).to.equal(stakeToken3.address);
         });
 
-        it('9.3.2. updateStakeTokens unsuccessfully with invalid signatures', async () => {
+        it('4.4.3.2. updateStakeTokens unsuccessfully with invalid signatures', async () => {
             const { admin, admins, primaryToken, stakeToken1, stakeToken2, stakeToken3 } = await setupBeforeTest();
             
             let message = ethers.utils.defaultAbiCoder.encode(
@@ -316,7 +316,7 @@ describe('9. PrimaryToken', async () => {
             )).to.be.revertedWithCustomError(primaryToken, 'InvalidUpdating');
         }
 
-        it('9.3.3. updateStakeTokens unsuccessfully with zero address stake tokens', async () => {
+        it('4.4.3.3. updateStakeTokens unsuccessfully with zero address stake tokens', async () => {
             const { admin, admins, primaryToken, stakeToken1, stakeToken2, stakeToken3 } = await setupBeforeTest();
 
             await testForInvalidInput(primaryToken, admins, admin, ethers.constants.AddressZero, stakeToken2.address, stakeToken3.address);
@@ -324,7 +324,7 @@ describe('9. PrimaryToken', async () => {
             await testForInvalidInput(primaryToken, admins, admin, stakeToken1.address, stakeToken2.address, ethers.constants.AddressZero);
         });
 
-        it('9.3.4. updateStakeTokens unsuccessfully with already updated stake tokens', async () => {
+        it('4.4.3.4. updateStakeTokens unsuccessfully with already updated stake tokens', async () => {
             const { admin, admins, primaryToken, stakeToken1, stakeToken2, stakeToken3 } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -332,8 +332,8 @@ describe('9. PrimaryToken', async () => {
         });        
     });
 
-    describe('9.4. totalStake()', async () => {
-        it('9.4.1. return correct total stake', async () => {
+    describe('4.4.4. totalStake()', async () => {
+        it('4.4.4.1. return correct total stake', async () => {
             const { primaryToken, stakeToken1, stakeToken2, stakeToken3 } = await setupBeforeTest({
                 updateStakeTokens: true,
             });            
@@ -352,48 +352,48 @@ describe('9. PrimaryToken', async () => {
         });
     });
 
-    describe('9.5. isStakeRewardingCompleted(address)', async () => {
-        async function getIsStakeRewardingCompleted(primaryToken: MockContract<MockPrimaryToken>, stakeToken: MockContract<MockStakeToken>) {
-            const encodedResult = await stakeToken.callView(primaryToken.address, primaryToken.interface.encodeFunctionData('isStakeRewardingCompleted'));
+    describe('4.4.5. isStakeRewardingCulminated(address)', async () => {
+        async function getIsStakeRewardingCulminated(primaryToken: MockContract<MockPrimaryToken>, stakeToken: MockContract<MockStakeToken>) {
+            const encodedResult = await stakeToken.callView(primaryToken.address, primaryToken.interface.encodeFunctionData('isStakeRewardingCulminated'));
             return ethers.utils.defaultAbiCoder.decode(['bool'], encodedResult)[0];
         }
         
-        it('9.5.1. return corrent value', async () => {
+        it('4.4.5.1. return corrent value', async () => {
             const { primaryToken, stakeToken1, stakeToken2, stakeToken3 } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
 
-            expect(await getIsStakeRewardingCompleted(primaryToken, stakeToken1)).to.equal(false);
-            expect(await getIsStakeRewardingCompleted(primaryToken, stakeToken2)).to.equal(false);
-            expect(await getIsStakeRewardingCompleted(primaryToken, stakeToken3)).to.equal(false);
+            expect(await getIsStakeRewardingCulminated(primaryToken, stakeToken1)).to.equal(false);
+            expect(await getIsStakeRewardingCulminated(primaryToken, stakeToken2)).to.equal(false);
+            expect(await getIsStakeRewardingCulminated(primaryToken, stakeToken3)).to.equal(false);
             
             primaryToken.setVariable('stakeToken1Waves', Constant.PRIMARY_TOKEN_STAKE_1_CULMINATING_WAVE);
-            expect(await getIsStakeRewardingCompleted(primaryToken, stakeToken1)).to.equal(true);
-            expect(await getIsStakeRewardingCompleted(primaryToken, stakeToken2)).to.equal(false);
-            expect(await getIsStakeRewardingCompleted(primaryToken, stakeToken3)).to.equal(false);
+            expect(await getIsStakeRewardingCulminated(primaryToken, stakeToken1)).to.equal(true);
+            expect(await getIsStakeRewardingCulminated(primaryToken, stakeToken2)).to.equal(false);
+            expect(await getIsStakeRewardingCulminated(primaryToken, stakeToken3)).to.equal(false);
 
             primaryToken.setVariable('stakeToken2Waves', Constant.PRIMARY_TOKEN_STAKE_2_CULMINATING_WAVE);
-            expect(await getIsStakeRewardingCompleted(primaryToken, stakeToken1)).to.equal(true);
-            expect(await getIsStakeRewardingCompleted(primaryToken, stakeToken2)).to.equal(true);
-            expect(await getIsStakeRewardingCompleted(primaryToken, stakeToken3)).to.equal(false);
+            expect(await getIsStakeRewardingCulminated(primaryToken, stakeToken1)).to.equal(true);
+            expect(await getIsStakeRewardingCulminated(primaryToken, stakeToken2)).to.equal(true);
+            expect(await getIsStakeRewardingCulminated(primaryToken, stakeToken3)).to.equal(false);
 
             primaryToken.setVariable('stakeToken3Waves', Constant.PRIMARY_TOKEN_STAKE_3_CULMINATING_WAVE);
-            expect(await getIsStakeRewardingCompleted(primaryToken, stakeToken1)).to.equal(true);
-            expect(await getIsStakeRewardingCompleted(primaryToken, stakeToken2)).to.equal(true);
-            expect(await getIsStakeRewardingCompleted(primaryToken, stakeToken3)).to.equal(true);
+            expect(await getIsStakeRewardingCulminated(primaryToken, stakeToken1)).to.equal(true);
+            expect(await getIsStakeRewardingCulminated(primaryToken, stakeToken2)).to.equal(true);
+            expect(await getIsStakeRewardingCulminated(primaryToken, stakeToken3)).to.equal(true);
         });
 
-        it('9.5.2. revert when sender is unauthorized', async () => {
+        it('4.4.5.2. revert when sender is unauthorized', async () => {
             const { primaryToken } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
 
-            await expect(primaryToken.isStakeRewardingCompleted()).to.be.revertedWithCustomError(primaryToken, 'Unauthorized');
+            await expect(primaryToken.isStakeRewardingCulminated()).to.be.revertedWithCustomError(primaryToken, 'Unauthorized');
         });
     });
 
-    describe('9.6. unlockForBackerRound(address, bytes[])', async () => {
-        it('9.6.1. unlockForBackerRound successfully', async () => {
+    describe('4.4.6. unlockForBackerRound(address, bytes[])', async () => {
+        it('4.4.6.1. unlockForBackerRound successfully', async () => {
             const { primaryToken, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -416,7 +416,7 @@ describe('9. PrimaryToken', async () => {
             await expect(tx).to.emit(primaryToken, 'BackerRoundTokensUnlock');
         });
 
-        it('9.6.2. unlockForBackerRound unsuccessfully with invalid signatures', async () => {
+        it('4.4.6.2. unlockForBackerRound unsuccessfully with invalid signatures', async () => {
             const { primaryToken, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -433,7 +433,7 @@ describe('9. PrimaryToken', async () => {
             )).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('9.6.3. unlockForBackerRound unsuccessfully when already unlocked', async () => {
+        it('4.4.6.3. unlockForBackerRound unsuccessfully when already unlocked', async () => {
             const { primaryToken, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -458,8 +458,8 @@ describe('9. PrimaryToken', async () => {
         });
     });
 
-    describe('9.7. unlockForSeedRound(address, bytes[])', async () => {
-        it('9.7.1. unlockForSeedRound successfully', async () => {
+    describe('4.4.7. unlockForSeedRound(address, bytes[])', async () => {
+        it('4.4.7.1. unlockForSeedRound successfully', async () => {
             const { primaryToken, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -482,7 +482,7 @@ describe('9. PrimaryToken', async () => {
             await expect(tx).to.emit(primaryToken, 'SeedRoundTokensUnlock');
         });
 
-        it('9.7.2. unlockForSeedRound unsuccessfully with invalid signatures', async () => {
+        it('4.4.7.2. unlockForSeedRound unsuccessfully with invalid signatures', async () => {
             const { primaryToken, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -499,7 +499,7 @@ describe('9. PrimaryToken', async () => {
             )).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('9.7.3. unlockForSeedRound unsuccessfully when already unlocked', async () => {
+        it('4.4.7.3. unlockForSeedRound unsuccessfully when already unlocked', async () => {
             const { primaryToken, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -524,8 +524,8 @@ describe('9. PrimaryToken', async () => {
         });
     });
 
-    describe('9.8. unlockForPrivateSale1(address, bytes[])', async () => {
-        it('9.8.1. unlockForPrivateSale1 successfully', async () => {
+    describe('4.4.8. unlockForPrivateSale1(address, bytes[])', async () => {
+        it('4.4.8.1. unlockForPrivateSale1 successfully', async () => {
             const { primaryToken, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -548,7 +548,7 @@ describe('9. PrimaryToken', async () => {
             await expect(tx).to.emit(primaryToken, 'PrivateSale1TokensUnlock');
         });
 
-        it('9.8.2. unlockForPrivateSale1 unsuccessfully with invalid signatures', async () => {
+        it('4.4.8.2. unlockForPrivateSale1 unsuccessfully with invalid signatures', async () => {
             const { primaryToken, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -565,7 +565,7 @@ describe('9. PrimaryToken', async () => {
             )).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('9.8.3. unlockForPrivateSale1 unsuccessfully when already unlocked', async () => {
+        it('4.4.8.3. unlockForPrivateSale1 unsuccessfully when already unlocked', async () => {
             const { primaryToken, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -590,8 +590,8 @@ describe('9. PrimaryToken', async () => {
         });
     });
 
-    describe('9.9. unlockForPrivateSale2(address, bytes[])', async () => {
-        it('9.9.1. unlockForPrivateSale2 successfully', async () => {
+    describe('4.4.9. unlockForPrivateSale2(address, bytes[])', async () => {
+        it('4.4.9.1. unlockForPrivateSale2 successfully', async () => {
             const { primaryToken, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -614,7 +614,7 @@ describe('9. PrimaryToken', async () => {
             await expect(tx).to.emit(primaryToken, 'PrivateSale2TokensUnlock');
         });
 
-        it('9.9.2. unlockForPrivateSale2 unsuccessfully with invalid signatures', async () => {
+        it('4.4.9.2. unlockForPrivateSale2 unsuccessfully with invalid signatures', async () => {
             const { primaryToken, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -631,7 +631,7 @@ describe('9. PrimaryToken', async () => {
             )).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('9.9.3. unlockForPrivateSale2 unsuccessfully when already unlocked', async () => {
+        it('4.4.9.3. unlockForPrivateSale2 unsuccessfully when already unlocked', async () => {
             const { primaryToken, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -656,8 +656,8 @@ describe('9. PrimaryToken', async () => {
         });
     });
 
-    describe('9.10. unlockForPublicSale(address, bytes[])', async () => {
-        it('9.10.1. unlockForPublicSale successfully', async () => {
+    describe('4.4.10. unlockForPublicSale(address, bytes[])', async () => {
+        it('4.4.10.1. unlockForPublicSale successfully', async () => {
             const { primaryToken, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -680,7 +680,7 @@ describe('9. PrimaryToken', async () => {
             await expect(tx).to.emit(primaryToken, 'PublicSaleTokensUnlock');
         });
 
-        it('9.10.2. unlockForPublicSale unsuccessfully with invalid signatures', async () => {
+        it('4.4.10.2. unlockForPublicSale unsuccessfully with invalid signatures', async () => {
             const { primaryToken, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -697,7 +697,7 @@ describe('9. PrimaryToken', async () => {
             )).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('9.10.3. unlockForPublicSale unsuccessfully when already unlocked', async () => {
+        it('4.4.10.3. unlockForPublicSale unsuccessfully when already unlocked', async () => {
             const { primaryToken, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -722,8 +722,8 @@ describe('9. PrimaryToken', async () => {
         });
     });
 
-    describe('9.11. unlockForCoreTeam(address, bytes[])', async () => {
-        it('9.11.1. unlockForCoreTeam successfully', async () => {
+    describe('4.4.11. unlockForCoreTeam(address, bytes[])', async () => {
+        it('4.4.11.1. unlockForCoreTeam successfully', async () => {
             const { primaryToken, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -746,7 +746,7 @@ describe('9. PrimaryToken', async () => {
             await expect(tx).to.emit(primaryToken, 'CoreTeamTokensUnlock');
         });
 
-        it('9.11.2. unlockForCoreTeam unsuccessfully with invalid signatures', async () => {
+        it('4.4.11.2. unlockForCoreTeam unsuccessfully with invalid signatures', async () => {
             const { primaryToken, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -763,7 +763,7 @@ describe('9. PrimaryToken', async () => {
             )).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('9.11.3. unlockForCoreTeam unsuccessfully when already unlocked', async () => {
+        it('4.4.11.3. unlockForCoreTeam unsuccessfully when already unlocked', async () => {
             const { primaryToken, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -788,8 +788,8 @@ describe('9. PrimaryToken', async () => {
         });
     });
 
-    describe('9.12. unlockForMarketMaker(address, bytes[])', async () => {
-        it('9.12.1. unlockForMarketMaker successfully', async () => {
+    describe('4.4.12. unlockForMarketMaker(address, bytes[])', async () => {
+        it('4.4.12.1. unlockForMarketMaker successfully', async () => {
             const { primaryToken, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -812,7 +812,7 @@ describe('9. PrimaryToken', async () => {
             await expect(tx).to.emit(primaryToken, 'MarketMakerTokensUnlock');
         });
 
-        it('9.12.2. unlockForMarketMaker unsuccessfully with invalid signatures', async () => {
+        it('4.4.12.2. unlockForMarketMaker unsuccessfully with invalid signatures', async () => {
             const { primaryToken, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -829,7 +829,7 @@ describe('9. PrimaryToken', async () => {
             )).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('9.12.3. unlockForMarketMaker unsuccessfully when already unlocked', async () => {
+        it('4.4.12.3. unlockForMarketMaker unsuccessfully when already unlocked', async () => {
             const { primaryToken, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -854,8 +854,8 @@ describe('9. PrimaryToken', async () => {
         });
     });
 
-    describe('9.13. unlockForExternalTreasury(address, bytes[])', async () => {
-        it('9.13.1. unlockForExternalTreasury successfully', async () => {
+    describe('4.4.13. unlockForExternalTreasury(address, bytes[])', async () => {
+        it('4.4.13.1. unlockForExternalTreasury successfully', async () => {
             const { primaryToken, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -878,7 +878,7 @@ describe('9. PrimaryToken', async () => {
             await expect(tx).to.emit(primaryToken, 'ExternalTreasuryTokensUnlock');
         });
 
-        it('9.13.2. unlockForExternalTreasury unsuccessfully with invalid signatures', async () => {
+        it('4.4.13.2. unlockForExternalTreasury unsuccessfully with invalid signatures', async () => {
             const { primaryToken, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -895,7 +895,7 @@ describe('9. PrimaryToken', async () => {
             )).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('9.13.3. unlockForExternalTreasury unsuccessfully when already unlocked', async () => {
+        it('4.4.13.3. unlockForExternalTreasury unsuccessfully when already unlocked', async () => {
             const { primaryToken, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -920,8 +920,8 @@ describe('9. PrimaryToken', async () => {
         });
     });
 
-    describe('9.14. contributeLiquidityFromBackerRound(uint256)', async () => {
-        it('9.14.1. contributeLiquidityFromBackerRound successfully', async () => {
+    describe('4.4.14. contributeLiquidityFromBackerRound(uint256)', async () => {
+        it('4.4.14.1. contributeLiquidityFromBackerRound successfully', async () => {
             const { primaryToken, contributor, currency, treasury } = await setupBeforeTest({
                 updateStakeTokens: true,
                 updateTreasury: true,
@@ -944,8 +944,8 @@ describe('9. PrimaryToken', async () => {
         });
     });
 
-    describe('9.15. contributeLiquidityFromSeedRound(uint256)', async () => {
-        it('9.15.1. contributeLiquidityFromSeedRound successfully', async () => {
+    describe('4.4.15. contributeLiquidityFromSeedRound(uint256)', async () => {
+        it('4.4.15.1. contributeLiquidityFromSeedRound successfully', async () => {
             const { primaryToken, contributor, currency, treasury } = await setupBeforeTest({
                 updateStakeTokens: true,
                 updateTreasury: true,
@@ -968,8 +968,8 @@ describe('9. PrimaryToken', async () => {
         }); 
     });
 
-    describe('9.16. contributeLiquidityFromPrivateSale1(uint256)', async () => {
-        it('9.16.1. contributeLiquidityFromPrivateSale1 successfully', async () => {
+    describe('4.4.16. contributeLiquidityFromPrivateSale1(uint256)', async () => {
+        it('4.4.16.1. contributeLiquidityFromPrivateSale1 successfully', async () => {
             const { primaryToken, contributor, currency, treasury } = await setupBeforeTest({
                 updateStakeTokens: true,
                 updateTreasury: true,
@@ -992,8 +992,8 @@ describe('9. PrimaryToken', async () => {
         });
     });
 
-    describe('9.17. contributeLiquidityFromPrivateSale2(uint256)', async () => {
-        it('9.17.1. contributeLiquidityFromPrivateSale2 successfully', async () => {
+    describe('4.4.17. contributeLiquidityFromPrivateSale2(uint256)', async () => {
+        it('4.4.17.1. contributeLiquidityFromPrivateSale2 successfully', async () => {
             const { primaryToken, contributor, currency, treasury } = await setupBeforeTest({
                 updateStakeTokens: true,
                 updateTreasury: true,
@@ -1016,8 +1016,8 @@ describe('9. PrimaryToken', async () => {
         });
     });
 
-    describe('9.18. contributeLiquidityFromPublicSale(uint256)', async () => {
-        it('9.18.1. contributeLiquidityFromPublicSale successfully', async () => {
+    describe('4.4.18. contributeLiquidityFromPublicSale(uint256)', async () => {
+        it('4.4.18.1. contributeLiquidityFromPublicSale successfully', async () => {
             const { primaryToken, contributor, currency, treasury } = await setupBeforeTest({
                 updateStakeTokens: true,
                 updateTreasury: true,
@@ -1040,8 +1040,8 @@ describe('9. PrimaryToken', async () => {
         });
     });
 
-    describe('9.19. contributeLiquidityFromMarketMaker(uint256)', async () => {
-        it('9.19.1. contributeLiquidityFromMarketMaker successfully', async () => {
+    describe('4.4.19. contributeLiquidityFromMarketMaker(uint256)', async () => {
+        it('4.4.19.1. contributeLiquidityFromMarketMaker successfully', async () => {
             const { primaryToken, contributor, currency, treasury } = await setupBeforeTest({
                 updateStakeTokens: true,
                 updateTreasury: true,
@@ -1064,8 +1064,8 @@ describe('9. PrimaryToken', async () => {
         });
     });
 
-    describe('9.20. contributeLiquidityFromExternalTreasury(uint256)', async () => {
-        it('9.20.1. contributeLiquidityFromExternalTreasury successfully', async () => {
+    describe('4.4.20. contributeLiquidityFromExternalTreasury(uint256)', async () => {
+        it('4.4.20.1. contributeLiquidityFromExternalTreasury successfully', async () => {
             const { primaryToken, contributor, currency, treasury } = await setupBeforeTest({
                 updateStakeTokens: true,
                 updateTreasury: true,
@@ -1088,8 +1088,8 @@ describe('9. PrimaryToken', async () => {
         });
     });
 
-    describe('9.21. contributeLiquidityFromStakeToken(uint256, address)', async () => {
-        it('9.21.1. contributeLiquidityFromStakeToken successfully from stake token 1', async () => {
+    describe('4.4.21. contributeLiquidityFromStakeToken(uint256, address)', async () => {
+        it('4.4.21.1. contributeLiquidityFromStakeToken successfully from stake token 1', async () => {
             const { primaryToken, contributor, currency, stakeToken1, treasury } = await setupBeforeTest({
                 updateStakeTokens: true,
                 updateTreasury: true,
@@ -1111,7 +1111,7 @@ describe('9. PrimaryToken', async () => {
             expect(treasury.provideLiquidity).to.be.calledWith(ethers.utils.parseEther("1000"));
         });
 
-        it('9.21.2. contributeLiquidityFromStakeToken successfully from stake token 2', async () => {
+        it('4.4.21.2. contributeLiquidityFromStakeToken successfully from stake token 2', async () => {
             const { primaryToken, contributor, currency, stakeToken2, treasury } = await setupBeforeTest({
                 updateStakeTokens: true,
                 updateTreasury: true,
@@ -1133,7 +1133,7 @@ describe('9. PrimaryToken', async () => {
             expect(treasury.provideLiquidity).to.be.calledWith(ethers.utils.parseEther("1000"));
         });
 
-        it('9.21.3. contributeLiquidityFromStakeToken successfully from stake token 3', async () => {
+        it('4.4.21.3. contributeLiquidityFromStakeToken successfully from stake token 3', async () => {
             const { primaryToken, contributor, currency, stakeToken3, treasury } = await setupBeforeTest({
                 updateStakeTokens: true,
                 updateTreasury: true,
@@ -1155,7 +1155,7 @@ describe('9. PrimaryToken', async () => {
             expect(treasury.provideLiquidity).to.be.calledWith(ethers.utils.parseEther("1000"));
         });
 
-        it('9.21.4. contributeLiquidityFromStakeToken successfully with unknown stake token', async () => {
+        it('4.4.21.4. contributeLiquidityFromStakeToken successfully with unknown stake token', async () => {
             const { primaryToken, contributor, currency, stakeToken3, treasury } = await setupBeforeTest({
                 updateStakeTokens: true,
                 updateTreasury: true,
@@ -1183,8 +1183,8 @@ describe('9. PrimaryToken', async () => {
         });
     });
 
-    describe('9.22. mintForStake()', async () => {
-        it('9.22.1. mintForStake successfully by stake token 1', async () => {
+    describe('4.4.22. mintForStake()', async () => {
+        it('4.4.22.1. mintForStake successfully by stake token 1', async () => {
             const { primaryToken, stakeToken1 } = await setupBeforeTest({
                 updateStakeTokens: true,
                 updateTreasury: true,
@@ -1209,7 +1209,7 @@ describe('9. PrimaryToken', async () => {
             }
         });
 
-        it('9.22.2. mintForStake unsuccessfully by stake token 1 when all stake reward is minted', async () => {
+        it('4.4.22.2. mintForStake unsuccessfully by stake token 1 when all stake reward is minted', async () => {
             const { primaryToken, stakeToken1 } = await setupBeforeTest({
                 updateStakeTokens: true,
                 updateTreasury: true,
@@ -1222,7 +1222,7 @@ describe('9. PrimaryToken', async () => {
             await expect(stakeToken1.call(primaryToken.address, primaryToken.interface.encodeFunctionData("mintForStake"))).to.be.revertedWithCustomError(primaryToken, 'AllStakeRewardMinted');
         });
 
-        it('9.22.3. mintForStake successfully by stake token 2', async () => {
+        it('4.4.22.3. mintForStake successfully by stake token 2', async () => {
             const { primaryToken, stakeToken2 } = await setupBeforeTest({
                 updateStakeTokens: true,
                 updateTreasury: true,
@@ -1247,7 +1247,7 @@ describe('9. PrimaryToken', async () => {
             }
         });
 
-        it('9.22.4. mintForStake unsuccessfully by stake token 2 when all stake reward is minted', async () => {
+        it('4.4.22.4. mintForStake unsuccessfully by stake token 2 when all stake reward is minted', async () => {
             const { primaryToken, stakeToken2 } = await setupBeforeTest({
                 updateStakeTokens: true,
                 updateTreasury: true,
@@ -1260,7 +1260,7 @@ describe('9. PrimaryToken', async () => {
             await expect(stakeToken2.call(primaryToken.address, primaryToken.interface.encodeFunctionData("mintForStake"))).to.be.revertedWithCustomError(primaryToken, 'AllStakeRewardMinted');
         });
 
-        it('9.22.5. mintForStake successfully by stake token 3', async () => {
+        it('4.4.22.5. mintForStake successfully by stake token 3', async () => {
             const { primaryToken, stakeToken3 } = await setupBeforeTest({
                 updateStakeTokens: true,
                 updateTreasury: true,
@@ -1285,7 +1285,7 @@ describe('9. PrimaryToken', async () => {
             }
         });
 
-        it('9.22.6. mintForStake successfully by stake token 3 when total supply is nearly capped', async () => {
+        it('4.4.22.6. mintForStake successfully by stake token 3 when total supply is nearly capped', async () => {
             const { primaryToken, receiver, currency, stakeToken3 } = await setupBeforeTest({
                 updateStakeTokens: true,
                 updateTreasury: true,
@@ -1309,7 +1309,7 @@ describe('9. PrimaryToken', async () => {
             expect(await primaryToken.balanceOf(stakeToken3.address)).to.equal(ethers.utils.parseEther("1"));
         });
 
-        it('9.22.7. mintForStake unsuccessfully by stake token 3 when total supply is capped', async () => {
+        it('4.4.22.7. mintForStake unsuccessfully by stake token 3 when total supply is capped', async () => {
             const { primaryToken, receiver, currency, stakeToken3 } = await setupBeforeTest({
                 updateStakeTokens: true,
                 updateTreasury: true,
@@ -1322,7 +1322,7 @@ describe('9. PrimaryToken', async () => {
             await expect(stakeToken3.call(primaryToken.address, primaryToken.interface.encodeFunctionData("mintForStake"))).to.be.revertedWithCustomError(primaryToken, 'SupplyCapReached');
         });
         
-        it('9.22.8. mintForStake unsuccessfully by unauthorized user', async () => {
+        it('4.4.22.8. mintForStake unsuccessfully by unauthorized user', async () => {
             const { primaryToken } = await setupBeforeTest({
                 updateStakeTokens: true,
                 updateTreasury: true,
@@ -1332,8 +1332,8 @@ describe('9. PrimaryToken', async () => {
         });
     });
 
-    describe('9.23. liquidate(uint256)', async () => {
-        it('9.23.1. liquidate successfully', async () => {
+    describe('4.4.23. liquidate(uint256)', async () => {
+        it('4.4.23.1. liquidate successfully', async () => {
             const { primaryToken, contributor, currency, stakeToken1, treasury, deployer } = await setupBeforeTest({
                 updateStakeTokens: true,
                 updateTreasury: true,
@@ -1374,7 +1374,7 @@ describe('9. PrimaryToken', async () => {
             expect(liquidityBefore.mul(supplyAfter)).to.equal(liquidityAfter.mul(supplyBefore));
         });
 
-        it('9.23.2. liquidate unsuccessfully when liquidation is not unlocked', async () => {
+        it('4.4.23.2. liquidate unsuccessfully when liquidation is not unlocked', async () => {
             const { primaryToken, contributor, currency, stakeToken1, treasury, deployer } = await setupBeforeTest({
                 updateStakeTokens: true,
                 updateTreasury: true,
@@ -1391,7 +1391,7 @@ describe('9. PrimaryToken', async () => {
                 .to.be.revertedWithCustomError(primaryToken, 'BeingLocked');
         });
 
-        it('9.23.3. liquidate unsuccessfully when the contract is paused', async () => {
+        it('4.4.23.3. liquidate unsuccessfully when the contract is paused', async () => {
             const { primaryToken, contributor, currency, treasury, deployer, admins, admin } = await setupBeforeTest({
                 updateStakeTokens: true,
                 updateTreasury: true,
@@ -1410,7 +1410,7 @@ describe('9. PrimaryToken', async () => {
                 .to.be.revertedWith('Pausable: paused');
         });
 
-        it('9.23.4. liquidate unsuccessfully when the amount to liquidate is greater than the liquidity', async () => {
+        it('4.4.23.4. liquidate unsuccessfully when the amount to liquidate is greater than the liquidity', async () => {
             const { primaryToken, contributor, currency, treasury, deployer } = await setupBeforeTest({
                 updateStakeTokens: true,
                 updateTreasury: true,
@@ -1429,8 +1429,8 @@ describe('9. PrimaryToken', async () => {
         });
     });
 
-    describe('9.24. exclusiveDiscount()', async () => {
-        it('9.24.1. return correct value', async () => {
+    describe('4.4.24. exclusiveDiscount()', async () => {
+        it('4.4.24.1. return correct value', async () => {
             const { primaryToken, stakeToken1, stakeToken2, stakeToken3 } = await setupBeforeTest({
                 updateStakeTokens: true,
                 updateTreasury: true,

@@ -42,6 +42,7 @@ import { deployReentrancy } from '@utils/deployments/mocks/mockReentrancy/reentr
 import { Initialization as LandInitialization } from '@tests/land/test.initialization';
 import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
 import { deployReserveVault } from '@utils/deployments/common/reserveVault';
+import { MockValidator } from '@utils/mockValidator';
 
 interface EstateMarketplaceFixture {
     admin: Admin;
@@ -53,6 +54,7 @@ interface EstateMarketplaceFixture {
     estateToken: MockContract<MockEstateToken>;
     commissionToken: MockContract<CommissionToken>;
     estateMarketplace: EstateMarketplace;
+    validator: MockValidator;
 
     deployer: any;
     admins: any[];
@@ -126,6 +128,8 @@ describe('5. EstateMarketplace', async () => {
             admin.address,
         ) as ReserveVault;
 
+        const validator = new MockValidator(deployer as any);
+
         const currency = await deployCurrency(
             deployer.address,
             'MockCurrency',
@@ -140,6 +144,7 @@ describe('5. EstateMarketplace', async () => {
         await callTransaction(estateToken.initialize(
             admin.address,
             feeReceiver.address,
+            validator.getAddress(),
             LandInitialization.ESTATE_TOKEN_BaseURI,
             LandInitialization.ESTATE_TOKEN_RoyaltyRate,
         ));        
@@ -166,9 +171,10 @@ describe('5. EstateMarketplace', async () => {
             priceWatcher.address,
             feeReceiver.address,
             reserveVault.address,
-            LandInitialization.ESTATE_FORGER_FeeRate,
+            validator.getAddress(),
             LandInitialization.ESTATE_FORGER_BaseMinUnitPrice,
             LandInitialization.ESTATE_FORGER_BaseMaxUnitPrice,
+            LandInitialization.ESTATE_FORGER_FeeRate,
         ));
 
         const estateMarketplace = await deployEstateMarketplace(
@@ -188,6 +194,7 @@ describe('5. EstateMarketplace', async () => {
             estateToken,
             commissionToken,
             estateMarketplace,
+            validator,
             deployer,
             admins,
             seller1,

@@ -3,7 +3,7 @@
 1.a. Pausable (DONE)
 1.b. Validatable (DONE)
 1.c. RoyaltyRateProposer
-1.1. Inspect
+1.1. Inspect (WIP)
 1.2. Admin (DONE)
 1.3. Airdrop (DONE)
 1.4. DividendHub (DONE)
@@ -19,14 +19,14 @@
 2.4. EstateToken
 
 3. Lend
-3.1. MortgageToken
+3.1. MortgageToken (DONE)
 
 4. Liquidity
-4.1. Auction
-4.2. Distributor
-4.3. Driptributor
-4.4. PrimaryToken
-4.5. StateToken
+4.1. Auction (DONE)
+4.2. Distributor (DONE)
+4.3. Driptributor (DONE)
+4.4. PrimaryToken (DONE)
+4.5. StateToken (DONE)
 4.6. Treasury
 
 5. Lucra

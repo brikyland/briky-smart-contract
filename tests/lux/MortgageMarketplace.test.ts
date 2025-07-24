@@ -42,6 +42,7 @@ import { deployFailReceiver } from '@utils/deployments/mocks/failReceiver';
 import { deployReentrancy } from '@utils/deployments/mocks/mockReentrancy/reentrancy';
 import { Initialization as LandInitialization } from '@tests/land/test.initialization';
 import { Initialization as LendInitialization } from '@tests/lend/test.initialization';
+import { MockValidator } from '@utils/mockValidator';
 
 interface MortgageMarketplaceFixture {
     admin: Admin;
@@ -51,6 +52,7 @@ interface MortgageMarketplaceFixture {
     commissionToken: MockContract<CommissionToken>;
     mortgageToken: MockContract<MockMortgageToken>;
     mortgageMarketplace: MortgageMarketplace;
+    validator: MockValidator;
 
     deployer: any;
     admins: any[];
@@ -116,6 +118,8 @@ describe('15. MortgageMarketplace', async () => {
             admin.address
         ) as FeeReceiver;
 
+        const validator = new MockValidator(deployer as any);
+
         const currency = await deployCurrency(
             deployer.address,
             'MockCurrency',
@@ -129,6 +133,7 @@ describe('15. MortgageMarketplace', async () => {
         await callTransaction(estateToken.initialize(
             admin.address,
             feeReceiver.address,
+            validator.getAddress(),
             LandInitialization.ESTATE_TOKEN_BaseURI,
             LandInitialization.ESTATE_TOKEN_RoyaltyRate,
         ));
@@ -175,6 +180,7 @@ describe('15. MortgageMarketplace', async () => {
             commissionToken,
             mortgageToken,
             mortgageMarketplace,
+            validator,
             deployer,
             admins,
             borrower1,

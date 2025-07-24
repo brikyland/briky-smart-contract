@@ -9,7 +9,7 @@ import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { deployCurrency } from '@utils/deployments/common/currency';
 import { deployPrimaryToken } from '@utils/deployments/land/primaryToken';
 import { deployTreasury } from '@utils/deployments/land/treasury';
-import { Initialization as LandInitialization } from '@tests/land/test.initialization';
+import { Initialization as LiquidityInitialization } from '@tests/liquidity/test.initialization';
 import { deployDistributor } from '@utils/deployments/land/distributor';
 import { callPrimaryToken_UnlockForCoreTeam } from '@utils/callWithSignatures/primary';
 
@@ -24,7 +24,7 @@ interface DistributorFixture {
     receiver1: any, receiver2: any, receiver3: any;
 }
 
-describe('11. Distributor', async () => {
+describe('4.2. Distributor', async () => {
     async function distributorFixture(): Promise<DistributorFixture> {
         const accounts = await ethers.getSigners();
         const deployer = accounts[0];
@@ -53,9 +53,9 @@ describe('11. Distributor', async () => {
         const primaryToken = await deployPrimaryToken(
             deployer,
             admin.address,
-            LandInitialization.PRIMARY_TOKEN_Name,
-            LandInitialization.PRIMARY_TOKEN_Symbol,
-            LandInitialization.PRIMARY_TOKEN_LiquidationUnlockedAt,
+            LiquidityInitialization.PRIMARY_TOKEN_Name,
+            LiquidityInitialization.PRIMARY_TOKEN_Symbol,
+            LiquidityInitialization.PRIMARY_TOKEN_LiquidationUnlockedAt,
         ) as PrimaryToken;
         
         const treasury = await deployTreasury(
@@ -100,8 +100,8 @@ describe('11. Distributor', async () => {
         return fixture;
     }
 
-    describe('11.1. initialize(address, address, address)', async () => {
-        it('11.1.1. Deploy successfully', async () => {
+    describe('4.2.1. initialize(address, address, address)', async () => {
+        it('4.2.1.1. Deploy successfully', async () => {
             const fixture = await setupBeforeTest();
             const { admin, distributor, primaryToken, treasury } = fixture;
 
@@ -111,8 +111,8 @@ describe('11. Distributor', async () => {
         });
     });
 
-    describe('11.2. distributeToken(address[], uint256[], string, bytes[])', async () => {
-        it('11.2.1. distribute tokens successfully', async () => {
+    describe('4.2.2. distributeToken(address[], uint256[], string, bytes[])', async () => {
+        it('4.2.2.1. distribute tokens successfully', async () => {
             const fixture = await setupBeforeTest();
             const { admin, admins, distributor, primaryToken, receiver1, receiver2, receiver3 } = fixture;
 
@@ -146,7 +146,7 @@ describe('11. Distributor', async () => {
             expect(await primaryToken.balanceOf(distributor.address)).to.equal(initDistributorBalance.sub(ethers.utils.parseEther('600')));
         });
 
-        it('11.2.2. distribute tokens unsuccessfully with invalid signatures', async () => {
+        it('4.2.2.2. distribute tokens unsuccessfully with invalid signatures', async () => {
             const fixture = await setupBeforeTest();
             const { admin, admins, distributor, primaryToken, receiver1, receiver2, receiver3 } = fixture;
 
@@ -164,7 +164,7 @@ describe('11. Distributor', async () => {
                 .to.be.revertedWithCustomError(distributor, "FailedVerification");
         });
 
-        it('11.2.3. distribute tokens unsuccessfully with invalid inputs length', async () => {
+        it('4.2.2.3. distribute tokens unsuccessfully with invalid inputs length', async () => {
             const fixture = await setupBeforeTest();
             const { admin, admins, distributor, primaryToken, receiver1, receiver2, receiver3 } = fixture;
 
@@ -190,7 +190,7 @@ describe('11. Distributor', async () => {
             await testForInvalidInput(receivers.slice(0, 2), amounts, data);
         });
 
-        it('11.2.4. distribute tokens unsuccessfully with insufficient funds', async () => {
+        it('4.2.2.4. distribute tokens unsuccessfully with insufficient funds', async () => {
             const fixture = await setupBeforeTest();
             const { admin, admins, distributor, primaryToken, receiver1, receiver2, receiver3 } = fixture;
 
