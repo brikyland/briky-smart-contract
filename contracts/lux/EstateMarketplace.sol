@@ -190,7 +190,7 @@ ReentrancyGuardUpgradeable {
 
         address currency = offer.currency;
         royaltyAmount = _applyDiscount(royaltyAmount, currency);
-        uint256 commissionAmount = _dispatchCommission(
+        uint256 commissionAmount = _forwardCommission(
             tokenId,
             royaltyAmount,
             currency

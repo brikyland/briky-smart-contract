@@ -282,7 +282,7 @@ ReentrancyGuardUpgradeable {
         feeAmount = _applyDiscount(feeAmount, currency);
 
         uint256 estateId = loan.estateId;
-        uint256 commissionAmount = _dispatchCommission(
+        uint256 commissionAmount = _forwardCommission(
             estateId,
             feeAmount,
             currency
