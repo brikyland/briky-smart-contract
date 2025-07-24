@@ -84,7 +84,7 @@ Validatable {
     }
 
     function decimals() external pure returns (uint8) {
-        return EstateTokenConstant.ESTATE_TOKEN_DECIMALS;
+        return EstateTokenConstant.TOKEN_DECIMALS;
     }
 
     function updateCommissionToken(
@@ -138,9 +138,9 @@ Validatable {
         );
 
         if (_isTokenizer) {
-            for (uint256 i; i < _accounts.length; ++i) {
+            for (uint256 i; i < _accounts.length; i++) {
                 if (isTokenizer[_accounts[i]]) {
-                    revert AuthorizedAccount(_accounts[i]);
+                    revert AuthorizedAccount();
                 }
                 if (!_accounts[i].supportsInterface(type(IEstateTokenizer).interfaceId)) {
                     revert InvalidTokenizer(_accounts[i]);
@@ -149,9 +149,9 @@ Validatable {
                 emit TokenizerAuthorization(_accounts[i]);
             }
         } else {
-            for (uint256 i; i < _accounts.length; ++i) {
+            for (uint256 i; i < _accounts.length; i++) {
                 if (!isTokenizer[_accounts[i]]) {
-                    revert NotAuthorizedAccount(_accounts[i]);
+                    revert NotAuthorizedAccount();
                 }
                 isTokenizer[_accounts[i]] = false;
                 emit TokenizerDeauthorization(_accounts[i]);
@@ -175,17 +175,17 @@ Validatable {
         );
 
         if (_isExtractor) {
-            for (uint256 i; i < _accounts.length; ++i) {
+            for (uint256 i; i < _accounts.length; i++) {
                 if (isExtractor[_accounts[i]]) {
-                    revert AuthorizedAccount(_accounts[i]);
+                    revert AuthorizedAccount();
                 }
                 isExtractor[_accounts[i]] = true;
                 emit ExtractorAuthorization(_accounts[i]);
             }
         } else {
-            for (uint256 i; i < _accounts.length; ++i) {
+            for (uint256 i; i < _accounts.length; i++) {
                 if (!isExtractor[_accounts[i]]) {
-                    revert NotAuthorizedAccount(_accounts[i]);
+                    revert NotAuthorizedAccount();
                 }
                 isExtractor[_accounts[i]] = false;
                 emit ExtractorDeauthorization(_accounts[i]);
@@ -201,7 +201,7 @@ Validatable {
     }
 
     function isAvailable(uint256 _estateId) public view returns (bool) {
-        return estates[_estateId].deprecateAt == CommonConstant.COMMON_INFINITE_TIMESTAMP
+        return estates[_estateId].deprecateAt == CommonConstant.INFINITE_TIMESTAMP
             && estates[_estateId].expireAt > block.timestamp;
     }
 
@@ -232,7 +232,7 @@ Validatable {
             msg.sender,
             uint40(block.timestamp),
             _expireAt,
-            CommonConstant.COMMON_INFINITE_TIMESTAMP
+            CommonConstant.INFINITE_TIMESTAMP
         );
         _mint(msg.sender, estateId, _totalSupply, "");
         _setURI(estateId, _uri);
@@ -290,7 +290,6 @@ Validatable {
         emit EstateExtraction(_estateId, _extractionId);
     }
 
-
     function zoneOf(uint256 _estateId) external view returns (bytes32) {
         if (!exists(_estateId)) {
             revert InvalidEstateId();
@@ -300,7 +299,7 @@ Validatable {
 
     function balanceOf(address _account, uint256 _estateId)
     public view override(IERC1155Upgradeable, ERC1155Upgradeable) returns (uint256) {
-        return estates[_estateId].deprecateAt <= block.timestamp || estates[_estateId].expireAt <= block.timestamp
+        return estates[_estateId].deprecateAt != CommonConstant.INFINITE_TIMESTAMP || estates[_estateId].expireAt <= block.timestamp
             ? 0
             : super.balanceOf(_account, _estateId);
     }
@@ -310,7 +309,6 @@ Validatable {
             revert InvalidEstateId();
         }
         if (_at > block.timestamp
-            || _at < estates[_estateId].tokenizeAt
             || _at > estates[_estateId].deprecateAt
             || _at >= estates[_estateId].expireAt) {
             revert InvalidTimestamp();
@@ -324,7 +322,6 @@ Validatable {
             revert InvalidEstateId();
         }
         if (_at > block.timestamp
-            || _at < estates[_estateId].tokenizeAt
             || _at > estates[_estateId].deprecateAt
             || _at >= estates[_estateId].expireAt) {
             revert InvalidTimestamp();
@@ -332,10 +329,9 @@ Validatable {
         if (_account == estates[_estateId].tokenizer) {
             return 0;
         }
-        Snapshot[] storage snapshots = balanceSnapshots[_estateId][_account];
-        return snapshots.length != 0 && _at >= snapshots[0].timestamp
-            ? _snapshotAt(snapshots, _at)
-            : IEstateTokenizer(estates[_estateId].tokenizer).allocationOfAt(
+
+        return _snapshotAt(balanceSnapshots[_estateId][_account], _at)
+            + IEstateTokenizer(estates[_estateId].tokenizer).allocationOfAt(
                 estates[_estateId].tokenizationId,
                 _account,
                 _at
@@ -392,9 +388,9 @@ Validatable {
         ERC1155SupplyUpgradeable
     ) {
         super._beforeTokenTransfer(_operator, _from, _to, _estateIds, _amounts, _data);
-        for (uint256 i; i < _estateIds.length; ++i) {
+        for (uint256 i; i < _estateIds.length; i++) {
             require(
-                estates[_estateIds[i]].deprecateAt == CommonConstant.COMMON_INFINITE_TIMESTAMP
+                estates[_estateIds[i]].deprecateAt == CommonConstant.INFINITE_TIMESTAMP
                     && estates[_estateIds[i]].expireAt > block.timestamp,
                 "EstateToken: Token is unavailable"
             );
@@ -411,7 +407,7 @@ Validatable {
     ) internal override {
         super._afterTokenTransfer(_operator, _from, _to, _estateIds, _amounts, _data);
         uint256 timestamp = block.timestamp;
-        for (uint256 i; i < _estateIds.length; ++i) {
+        for (uint256 i; i < _estateIds.length; i++) {
             uint256 estateId = _estateIds[i];
             if (_from != address(0)) {
                 balanceSnapshots[estateId][_from].push(Snapshot(balanceOf(_from, estateId), timestamp));

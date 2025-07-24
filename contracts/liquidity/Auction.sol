@@ -91,7 +91,7 @@ ReentrancyGuardUpgradeable {
         );
 
         if (endAt != 0) {
-            revert Started();
+            revert AlreadyStarted();
         }
 
         if (_endAt <= block.timestamp) {
@@ -109,7 +109,7 @@ ReentrancyGuardUpgradeable {
             revert NotStarted();
         }
         if (endAt <= block.timestamp) {
-            revert Ended();
+            revert AlreadyEnded();
         }
 
         address currency = ITreasury(IPrimaryToken(primaryToken).treasury()).currency();

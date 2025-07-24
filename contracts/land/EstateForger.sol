@@ -59,7 +59,7 @@ ReentrancyGuardUpgradeable {
         uint256 _baseMaxUnitPrice,
         uint256 _feeRate
     ) external initializer {
-        require(_feeRate <= CommonConstant.COMMON_RATE_MAX_FRACTION);
+        require(_feeRate <= CommonConstant.RATE_MAX_FRACTION);
 
         __Pausable_init();
         __ReentrancyGuard_init();
@@ -97,7 +97,7 @@ ReentrancyGuardUpgradeable {
             ),
             _signatures
         );
-        if (_feeRate > CommonConstant.COMMON_RATE_MAX_FRACTION) {
+        if (_feeRate > CommonConstant.RATE_MAX_FRACTION) {
             revert InvalidRate();
         }
         feeRate = _feeRate;
@@ -146,17 +146,17 @@ ReentrancyGuardUpgradeable {
         );
 
         if (_isWhitelisted) {
-            for (uint256 i; i < _accounts.length; ++i) {
+            for (uint256 i; i < _accounts.length; i++) {
                 if (isWhitelisted[_accounts[i]]) {
-                    revert WhitelistedAccount(_accounts[i]);
+                    revert WhitelistedAccount();
                 }
                 isWhitelisted[_accounts[i]] = true;
                 emit Whitelist(_accounts[i]);
             }
         } else {
-            for (uint256 i; i < _accounts.length; ++i) {
+            for (uint256 i; i < _accounts.length; i++) {
                 if (!isWhitelisted[_accounts[i]]) {
-                    revert NotWhitelistedAccount(_accounts[i]);
+                    revert NotWhitelistedAccount();
                 }
                 isWhitelisted[_accounts[i]] = false;
                 emit Unwhitelist(_accounts[i]);
@@ -164,40 +164,32 @@ ReentrancyGuardUpgradeable {
         }
     }
 
-    function isSellerIn(bytes32 _zone, address _seller) public view returns (bool) {
-        return bytes(sellerURIs[_zone][_seller]).length != 0;
-    }
-
     function registerSellerIn(
         bytes32 _zone,
         address _account,
-        string calldata _uri,
-        Validation calldata _validation
+        bool _isSeller
     ) external onlyManager {
-        _validate(
-            abi.encode(
-                _zone,
-                _account,
-                _uri
-            ),
-            _validation
-        );
-
         if (!IAdmin(admin).getZoneEligibility(_zone, msg.sender)) {
             revert Unauthorized();
         }
 
-        sellerURIs[_zone][_account] = _uri;
-
-        emit SellerRegistration(
-            _zone,
-            _account,
-            _uri
-        );
+        if (_isSeller) {
+            if (isSellerIn[_zone][_account]) {
+                revert RegisteredAccount();
+            }
+            isSellerIn[_zone][_account] = true;
+            emit SellerRegistration(_zone, _account);
+        } else {
+            if (!isSellerIn[_zone][_account]) {
+                revert NotRegisteredAccount();
+            }
+            isSellerIn[_zone][_account] = false;
+            emit SellerDeregistration(_zone, _account);
+        }
     }
 
     function getFeeRate() public view returns (Rate memory) {
-        return Rate(feeRate, CommonConstant.COMMON_RATE_DECIMALS);
+        return Rate(feeRate, CommonConstant.RATE_DECIMALS);
     }
 
     function getRequest(uint256 _requestId)
@@ -212,7 +204,7 @@ ReentrancyGuardUpgradeable {
         EstateForgerRequestQuoteInput calldata _quote,
         EstateForgerRequestAgendaInput calldata _agenda,
         Validation calldata _validation
-    ) external returns (uint256) {
+    ) external nonReentrant onlyExecutive whenNotPaused returns (uint256) {
         _validate(abi.encode(_estate.uri), _validation);
 
         if (!IAdmin(admin).getZoneEligibility(_estate.zone, msg.sender)) {
@@ -236,25 +228,33 @@ ReentrancyGuardUpgradeable {
             || _quota.minSellingQuantity > _quota.maxSellingQuantity
             || _quota.maxSellingQuantity > _quota.totalQuantity
             || _quote.cashbackThreshold > _quota.totalQuantity
-            || _quote.cashbackBaseRate > CommonConstant.COMMON_RATE_MAX_FRACTION
+            || _quote.cashbackBaseRate > CommonConstant.RATE_MAX_FRACTION
             || _quote.cashbackCurrencies.length != _quote.cashbackDenominations.length
             || _agenda.saleStartsAt <= block.timestamp
-            || _agenda.privateSaleDuration + _agenda.publicSaleDuration < EstateForgerConstant.ESTATE_FORGER_MINIMUM_SALE_DURATION) {
+            || _agenda.privateSaleDuration + _agenda.publicSaleDuration < EstateForgerConstant.SALE_MINIMUM_DURATION) {
             revert InvalidInput();
         }
 
-        uint256 feeDenomination = _getFeeDenomination(_quote.unitPrice, _quote.currency);
-        uint256 commissionDenomination = _getCommissionDenomination(feeDenomination);
-        uint256 cashbackFundId = IReserveVault(reserveVault).initiateFund(
-            _quote.currency,
-            _getCashbackBaseDenomination(
-                feeDenomination,
-                commissionDenomination,
-                _quote.cashbackBaseRate
-            ),
-            _quote.cashbackCurrencies,
-            _quote.cashbackDenominations
+        uint256 feeDenomination = _applyDiscount(
+            _quote.unitPrice.scale(feeRate, CommonConstant.RATE_MAX_FRACTION),
+            _quote.currency
         );
+        uint256 commissionDenomination = feeDenomination
+            .scale(ICommissionToken(commissionToken).getCommissionRate());
+
+        uint256 cashbackFundId;
+        if (_quote.cashbackBaseRate == 0 && _quote.cashbackCurrencies.length == 0) {
+            if (_quote.cashbackThreshold != 0) {
+                revert InvalidInput();
+            }
+            cashbackFundId = IReserveVault(reserveVault).requestFund(
+                _quote.currency,
+                (feeDenomination - commissionDenomination)
+                    .scale(_quote.cashbackBaseRate, CommonConstant.RATE_MAX_FRACTION),
+                _quote.cashbackCurrencies,
+                _quote.cashbackDenominations
+            );
+        }
 
         uint256 requestId = ++requestNumber;
         requests[requestId] = EstateForgerRequest(
@@ -311,10 +311,10 @@ ReentrancyGuardUpgradeable {
         }
 
         if (requests[_requestId].estate.estateId != 0) {
-            revert Tokenized();
+            revert AlreadyTokenized();
         }
         if (requests[_requestId].quota.totalQuantity == 0) {
-            revert Cancelled();
+            revert AlreadyCancelled();
         }
 
         requests[_requestId].estate.uri = _uri;
@@ -333,16 +333,16 @@ ReentrancyGuardUpgradeable {
         }
 
         if (request.estate.estateId != 0) {
-            revert Tokenized();
+            revert AlreadyTokenized();
         }
         if (request.quota.totalQuantity == 0) {
-            revert Cancelled();
+            revert AlreadyCancelled();
         }
         if (request.quota.soldQuantity > 0) {
             revert AlreadyHadDeposit();
         }
 
-        if (_agenda.privateSaleDuration + _agenda.publicSaleDuration < EstateForgerConstant.ESTATE_FORGER_MINIMUM_SALE_DURATION) {
+        if (_agenda.privateSaleDuration + _agenda.publicSaleDuration < EstateForgerConstant.SALE_MINIMUM_DURATION) {
             revert InvalidInput();
         }
 
@@ -379,17 +379,17 @@ ReentrancyGuardUpgradeable {
             revert Unauthorized();
         }
         if (request.quota.totalQuantity == 0) {
-            revert Cancelled();
+            revert AlreadyCancelled();
         }
         if (request.estate.estateId != 0) {
-            revert Tokenized();
+            revert AlreadyTokenized();
         }
         request.quota.totalQuantity = 0;
         emit RequestCancellation(_requestId);
     }
 
     function confirm(uint256 _requestId, address _commissionReceiver)
-    external payable validRequest(_requestId) nonReentrant whenNotPaused returns (uint256) {
+    external payable validRequest(_requestId) nonReentrant onlyManager whenNotPaused returns (uint256) {
         if (_commissionReceiver == address(0)) {
             revert InvalidCommissionReceiver();
         }
@@ -401,26 +401,26 @@ ReentrancyGuardUpgradeable {
         }
 
         if (request.estate.estateId != 0) {
-            revert Tokenized();
+            revert AlreadyTokenized();
         }
 
         uint256 totalQuantity = request.quota.totalQuantity;
         if (totalQuantity == 0) {
-            revert Cancelled();
+            revert AlreadyCancelled();
         }
 
         uint40 publicSaleEndsAt = request.agenda.publicSaleEndsAt;
-        if (publicSaleEndsAt + EstateForgerConstant.ESTATE_FORGER_CONFIRMATION_TIME_LIMIT <= block.timestamp) {
+        if (publicSaleEndsAt + EstateForgerConstant.SALE_CONFIRMATION_TIME_LIMIT <= block.timestamp) {
             revert Timeout();
-        }
-
-        if (publicSaleEndsAt <= block.timestamp) {
-            request.agenda.publicSaleEndsAt = uint40(block.timestamp);
         }
 
         uint256 soldQuantity = request.quota.soldQuantity;
         if (soldQuantity < request.quota.minSellingQuantity) {
             revert NotEnoughSoldQuantity();
+        }
+
+        if (publicSaleEndsAt > block.timestamp) {
+            request.agenda.publicSaleEndsAt = uint40(block.timestamp);
         }
 
         IEstateToken estateTokenContract = IEstateToken(estateToken);
@@ -460,35 +460,37 @@ ReentrancyGuardUpgradeable {
             currency
         );
 
-        uint256 cashbackFundId = request.quote.cashbackFundId;
-        address reserveVaultAddress = reserveVault;
-        Fund memory fund = IReserveVault(reserveVaultAddress).getFund(cashbackFundId);
-
-        uint256 totalNative;
         uint256 cashbackBaseAmount;
-        if (fund.totalQuantity != 0) {
-            for (uint256 i; i < fund.extraCurrencies.length; ++i) {
-                if (fund.extraCurrencies[i] == address(0)) {
-                    totalNative += fund.extraDenominations[i] * fund.totalQuantity;
-                } else {
-                    CurrencyHandler.receiveERC20(fund.extraCurrencies[i], fund.extraDenominations[i] * fund.totalQuantity);
-                    CurrencyHandler.allowERC20(fund.extraCurrencies[i], reserveVaultAddress, fund.extraDenominations[i] * fund.totalQuantity);
-                }
-            }
-            CurrencyHandler.receiveNative(totalNative);
+        uint256 cashbackFundId = request.quote.cashbackFundId;
+        if (cashbackFundId != 0) {
+            address reserveVaultAddress = reserveVault;
+            Fund memory fund = IReserveVault(reserveVaultAddress).getFund(cashbackFundId);
 
-            if (fund.mainDenomination != 0) {
-                cashbackBaseAmount = fund.mainDenomination * fund.totalQuantity;
-                if (fund.mainCurrency == address(0)) {
-                    totalNative += cashbackBaseAmount;
-                } else {
-                    CurrencyHandler.allowERC20(fund.mainCurrency, reserveVaultAddress, cashbackBaseAmount);
+            uint256 totalNative;
+            uint256 cashbackBaseAmount;
+            if (fund.totalQuantity != 0) {
+                for (uint256 i; i < fund.extraCurrencies.length; i++) {
+                    if (fund.extraCurrencies[i] == address(0)) {
+                        totalNative += fund.extraDenominations[i] * fund.totalQuantity;
+                    } else {
+                        CurrencyHandler.receiveERC20(fund.extraCurrencies[i], fund.extraDenominations[i] * fund.totalQuantity);
+                        CurrencyHandler.allowERC20(fund.extraCurrencies[i], reserveVaultAddress, fund.extraDenominations[i] * fund.totalQuantity);
+                    }
                 }
+
+                if (fund.mainDenomination != 0) {
+                    if (fund.mainCurrency == address(0)) {
+                        totalNative += fund.mainDenomination * fund.totalQuantity;
+                    } else {
+                        CurrencyHandler.allowERC20(fund.mainCurrency, reserveVaultAddress, fund.mainDenomination * fund.totalQuantity);
+                    }
+                }
+
+                CurrencyHandler.receiveNative(totalNative);
             }
+
+            IReserveVault(reserveVaultAddress).provideFund{value: totalNative}(cashbackFundId);
         }
-
-        IReserveVault(reserveVaultAddress).provideFund{value: totalNative}(cashbackFundId);
-
         CurrencyHandler.sendCurrency(
             currency,
             feeReceiver,
@@ -512,7 +514,7 @@ ReentrancyGuardUpgradeable {
     external nonReentrant validRequest(_requestId) whenNotPaused returns (uint256) {
         EstateForgerRequest storage request = requests[_requestId];
         if (request.estate.estateId != 0) {
-            revert Tokenized();
+            revert AlreadyTokenized();
         }
 
         if (request.quota.totalQuantity != 0) {
@@ -520,20 +522,20 @@ ReentrancyGuardUpgradeable {
             if (publicSaleEndsAt > block.timestamp) {
                 revert StillSelling();
             }
-            if (publicSaleEndsAt + EstateForgerConstant.ESTATE_FORGER_CONFIRMATION_TIME_LIMIT > block.timestamp
+            if (publicSaleEndsAt + EstateForgerConstant.SALE_CONFIRMATION_TIME_LIMIT > block.timestamp
                 && request.quota.soldQuantity >= request.quota.minSellingQuantity) {
                 revert InvalidWithdrawing();
             }
         }
-        if (hasWithdrawn[_requestId][msg.sender]) {
-            revert AlreadyWithdrawn();
-        }
 
-        address currency = request.quote.currency;
         uint256 quantity = deposits[_requestId][msg.sender];
+        if (quantity == 0) {
+            revert NothingToWithdraw();
+        }
+        address currency = request.quote.currency;
         uint256 value = quantity * request.quote.unitPrice;
 
-        hasWithdrawn[_requestId][msg.sender] = true;
+        deposits[_requestId][msg.sender] = 0;
 
         CurrencyHandler.sendCurrency(currency, msg.sender, value);
 
@@ -554,12 +556,11 @@ ReentrancyGuardUpgradeable {
         if (estateId == 0) {
             revert InvalidWithdrawing();
         }
-        if (hasWithdrawn[_requestId][msg.sender]) {
+        if (withdrawAt[_requestId][msg.sender] > 0) {
             revert AlreadyWithdrawn();
         }
 
-        hasWithdrawn[_requestId][msg.sender] = true;
-
+        withdrawAt[_requestId][msg.sender] = block.timestamp;
 
         IEstateToken estateTokenContract = IEstateToken(estateToken);
         uint256 unit = 10 ** estateTokenContract.decimals();
@@ -574,8 +575,11 @@ ReentrancyGuardUpgradeable {
             ""
         );
 
-        if (quantity >= request.quote.cashbackThreshold) {
-            IReserveVault(reserveVault).withdrawFund(request.quote.cashbackFundId, msg.sender, quantity);
+        uint256 cashbackFundId = request.quote.cashbackFundId;
+        if (cashbackFundId != 0) {
+            if (quantity >= request.quote.cashbackThreshold) {
+                IReserveVault(reserveVault).withdrawFund(cashbackFundId, msg.sender, quantity);
+            }
         }
 
         emit EstateTokenWithdrawal(
@@ -596,42 +600,22 @@ ReentrancyGuardUpgradeable {
         address _account,
         uint256 _at
     ) external view validRequest(_tokenizationId) returns (uint256) {
-        // TODO: check
+        uint256 withdrawAt = withdrawAt[_tokenizationId][_account];
         return requests[_tokenizationId].estate.estateId != 0
             && _at >= requests[_tokenizationId].agenda.publicSaleEndsAt
+            && (withdrawAt == 0 || _at < withdrawAt)
             ? deposits[_tokenizationId][_account] * 10 ** IEstateToken(estateToken).decimals()
             : 0;
-    }
-
-    function _getFeeDenomination(uint256 _unitPrice, address _currency) internal view returns (uint256) {
-        return _applyDiscount(
-            _unitPrice.scale(feeRate, CommonConstant.COMMON_RATE_MAX_FRACTION),
-            _currency
-        );
-    }
-
-    function _getCommissionDenomination(uint256 _feeDenomination) internal view returns (uint256) {
-        return _feeDenomination
-            .scale(ICommissionToken(commissionToken).getCommissionRate());
-    }
-
-    function _getCashbackBaseDenomination(
-        uint256 _feeDenomination,
-        uint256 _commissionDenomination,
-        uint256 _cashbackBaseRate
-    ) private pure returns (uint256) {
-        return (_feeDenomination - _commissionDenomination)
-            .scale(_cashbackBaseRate, CommonConstant.COMMON_RATE_MAX_FRACTION);
     }
 
     function _deposit(uint256 _requestId, uint256 _quantity)
     internal nonReentrant whenNotPaused returns (uint256) {
         EstateForgerRequest storage request = requests[_requestId];
         if (request.quota.totalQuantity == 0) {
-            revert Cancelled();
+            revert AlreadyCancelled();
         }
         if (request.estate.estateId != 0) {
-            revert Tokenized();
+            revert AlreadyTokenized();
         }
         if (request.agenda.saleStartsAt > block.timestamp
             || request.agenda.privateSaleEndsAt > block.timestamp && !isWhitelisted[msg.sender]
@@ -648,21 +632,24 @@ ReentrancyGuardUpgradeable {
         uint256 value = _quantity * request.quote.unitPrice;
         CurrencyHandler.receiveCurrency(request.quote.currency, value);
 
-        uint256 cashbackThreshold = request.quote.cashbackThreshold;
-        uint256 oldDeposit = deposits[_requestId][msg.sender];
-        uint256 newDeposit = oldDeposit + _quantity;
-        deposits[_requestId][msg.sender] = newDeposit;
+        uint256 cashbackFundId = request.quote.cashbackFundId;
+        if (cashbackFundId != 0) {
+            uint256 cashbackThreshold = request.quote.cashbackThreshold;
+            uint256 oldDeposit = deposits[_requestId][msg.sender];
+            uint256 newDeposit = oldDeposit + _quantity;
+            deposits[_requestId][msg.sender] = newDeposit;
 
-        if (oldDeposit >= cashbackThreshold) {
-            IReserveVault(reserveVault).expandFund(
-                request.quote.cashbackFundId,
-                _quantity
-            );
-        } else if (newDeposit >= cashbackThreshold) {
-            IReserveVault(reserveVault).expandFund(
-                request.quote.cashbackFundId,
-                oldDeposit
-            );
+            if (oldDeposit >= cashbackThreshold) {
+                IReserveVault(reserveVault).expandFund(
+                    cashbackFundId,
+                    _quantity
+                );
+            } else if (newDeposit >= cashbackThreshold) {
+                IReserveVault(reserveVault).expandFund(
+                    cashbackFundId,
+                    newDeposit
+                );
+            }
         }
 
         emit Deposit(

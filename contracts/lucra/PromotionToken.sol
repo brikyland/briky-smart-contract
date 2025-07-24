@@ -94,7 +94,7 @@ ReentrancyGuardUpgradeable {
             revert InvalidInput();
         }
 
-        for (uint256 i; i < _currencies.length; ++i) {
+        for (uint256 i; i < _currencies.length; i++) {
             CurrencyHandler.sendCurrency(_currencies[i], _receiver, _values[i]);
         }
     }
@@ -128,8 +128,11 @@ ReentrancyGuardUpgradeable {
             revert InvalidInput();
         }
 
-        for (uint256 i; i < _uris.length; ++i) {
+        for (uint256 i; i < _uris.length; i++) {
             uint256 contentId = ++contentNumber;
+            if (_startAts[i] <= block.timestamp) {
+                revert InvalidTimestamp();
+            }
             contents[contentId] = Content(
                 _uris[i],
                 _startAts[i],
@@ -165,7 +168,7 @@ ReentrancyGuardUpgradeable {
         }
 
         uint256 n = contentNumber;
-        for (uint256 i; i < _contentIds.length; ++i) {
+        for (uint256 i; i < _contentIds.length; i++) {
             if (_contentIds[i] == 0 || _contentIds[i] > n) {
                 revert InvalidContentId();
             }
@@ -192,7 +195,7 @@ ReentrancyGuardUpgradeable {
         );
 
         uint256 n = contentNumber;
-        for (uint256 i; i < _contentIds.length; ++i) {
+        for (uint256 i; i < _contentIds.length; i++) {
             if (_contentIds[i] == 0 || _contentIds[i] > n) {
                 revert InvalidContentId();
             }

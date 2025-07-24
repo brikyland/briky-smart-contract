@@ -37,17 +37,17 @@ interface IAdmin is ICurrencyRegistry {
         bool isExclusive
     );
 
-    error Activated(address account);
-    error AuthorizedAccount(address account);
-    error AuthorizedZone(bytes32 zone);
+    error ActivatedAccount();
+    error AuthorizedAccount();
+    error AuthorizedZone();
     error CannotSelfDeauthorizing();
     error FailedVerification();
     error InvalidGovernor();
     error InvalidInput();
     error InvalidSignatureNumber();
-    error NotActivated(address account);
-    error NotAuthorizedAccount(address account);
-    error NotAuthorizedZone(bytes32 zone);
+    error NotActivatedAccount();
+    error NotAuthorizedAccount();
+    error NotAuthorizedZone();
     error Unauthorized();
 
     function version() external pure returns (string memory version);

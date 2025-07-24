@@ -8,7 +8,7 @@ interface IFund {
         address mainCurrency;
         uint256 mainDenomination;
         uint256 totalQuantity;
-        address initiator;
+        address provider;
         bool isSufficient;
     }
 }

@@ -54,7 +54,7 @@ ReentrancyGuardUpgradeable {
         }
 
         address primaryTokenAddress = primaryToken;
-        for (uint256 i; i < _receivers.length; ++i) {
+        for (uint256 i; i < _receivers.length; i++) {
             if (_amounts[i] > IERC20Upgradeable(primaryTokenAddress).balanceOf(address(this))) {
                 revert InsufficientFunds();
             }

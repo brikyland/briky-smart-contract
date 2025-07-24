@@ -55,7 +55,7 @@ Administrable {
             revert InvalidInput();
         }
 
-        for(uint256 i; i < _currencies.length; ++i) {
+        for(uint256 i; i < _currencies.length; i++) {
             if (_heartbeats[i] == 0) revert InvalidInput();
 
             priceFeeds[_currencies[i]] = PriceFeed(
@@ -92,8 +92,8 @@ Administrable {
             revert InvalidInput();
         }
 
-        for(uint256 i; i < _currencies.length; ++i) {
-            if (_decimals[i] > CommonConstant.COMMON_RATE_DECIMALS) {
+        for(uint256 i; i < _currencies.length; i++) {
+            if (_decimals[i] > CommonConstant.RATE_DECIMALS) {
                 revert InvalidInput();
             }
 

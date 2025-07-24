@@ -4,10 +4,10 @@ pragma solidity ^0.8.20;
 import {IEstateForger} from "../interfaces/IEstateForger.sol";
 
 abstract contract EstateForgerStorage is IEstateForger {
-    mapping(bytes32 => mapping(address => string)) public sellerURIs;
+    mapping(bytes32 => mapping(address => bool)) public isSellerIn;
 
     mapping(uint256 => mapping(address => uint256)) public deposits;
-    mapping(uint256 => mapping(address => bool)) public hasWithdrawn;
+    mapping(uint256 => mapping(address => uint256)) public withdrawAt;
 
     mapping(address => bool) public isWhitelisted;
 

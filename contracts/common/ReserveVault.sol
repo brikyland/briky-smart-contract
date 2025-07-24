@@ -24,8 +24,8 @@ ReentrancyGuardUpgradeable {
         _;
     }
 
-    modifier onlyInitiator(uint256 _fundId) {
-        if (msg.sender != funds[_fundId].initiator) {
+    modifier onlyProvider(uint256 _fundId) {
+        if (msg.sender != funds[_fundId].provider) {
             revert Unauthorized();
         }
         _;
@@ -44,36 +44,36 @@ ReentrancyGuardUpgradeable {
         return VERSION;
     }
 
-    function authorizeInitiator(
+    function authorizeProvider(
         address[] calldata _accounts,
-        bool _isInitiator,
+        bool _isProvider,
         bytes[] calldata _signatures
     ) external {
         IAdmin(admin).verifyAdminSignatures(
             abi.encode(
                 address(this),
-                "authorizeInitiator",
+                "authorizeProvider",
                 _accounts,
-                _isInitiator
+                _isProvider
             ),
             _signatures
         );
 
-        if (_isInitiator) {
-            for (uint256 i; i < _accounts.length; ++i) {
-                if (isInitiator[_accounts[i]]) {
-                    revert AuthorizedAccount(_accounts[i]);
+        if (_isProvider) {
+            for (uint256 i; i < _accounts.length; i++) {
+                if (isProvider[_accounts[i]]) {
+                    revert AuthorizedAccount();
                 }
-                isInitiator[_accounts[i]] = true;
-                emit InitiatorAuthorization(_accounts[i]);
+                isProvider[_accounts[i]] = true;
+                emit ProviderAuthorization(_accounts[i]);
             }
         } else {
-            for (uint256 i; i < _accounts.length; ++i) {
-                if (!isInitiator[_accounts[i]]) {
-                    revert NotAuthorizedAccount(_accounts[i]);
+            for (uint256 i; i < _accounts.length; i++) {
+                if (!isProvider[_accounts[i]]) {
+                    revert NotAuthorizedAccount();
                 }
-                isInitiator[_accounts[i]] = false;
-                emit InitiatorDeauthorization(_accounts[i]);
+                isProvider[_accounts[i]] = false;
+                emit ProviderDeauthorization(_accounts[i]);
             }
         }
     }
@@ -88,13 +88,13 @@ ReentrancyGuardUpgradeable {
         return funds[_fundId].isSufficient;
     }
 
-    function initiateFund(
+    function requestFund(
         address _mainCurrency,
         uint256 _mainDenomination,
         address[] calldata _extraCurrencies,
         uint256[] calldata _extraDenominations
     ) external whenNotPaused returns (uint256) {
-        if (!isInitiator[msg.sender]) {
+        if (!isProvider[msg.sender]) {
             revert Unauthorized();
         }
 
@@ -112,7 +112,7 @@ ReentrancyGuardUpgradeable {
         fund.mainCurrency = _mainCurrency;
         fund.mainDenomination = _mainDenomination;
 
-        for (uint256 i; i < _extraCurrencies.length; ++i) {
+        for (uint256 i; i < _extraCurrencies.length; i++) {
             if (!adminContract.isAvailableCurrency(_extraCurrencies[i])) {
                 revert InvalidCurrency();
             }
@@ -123,7 +123,7 @@ ReentrancyGuardUpgradeable {
             fund.extraDenominations.push(_extraDenominations[i]);
         }
 
-        fund.initiator = msg.sender;
+        fund.provider = msg.sender;
 
         emit FundInitiation(
             fundId,
@@ -138,7 +138,7 @@ ReentrancyGuardUpgradeable {
     }
 
     function expandFund(uint256 _fundId, uint256 _quantity)
-    external validFund(_fundId) onlyInitiator(_fundId) whenNotPaused {
+    external validFund(_fundId) onlyProvider(_fundId) whenNotPaused {
         if (funds[_fundId].isSufficient) {
             revert AlreadyProvided();
         }
@@ -149,7 +149,7 @@ ReentrancyGuardUpgradeable {
     }
 
     function provideFund(uint256 _fundId)
-    external payable nonReentrant validFund(_fundId) onlyInitiator(_fundId) whenNotPaused {
+    external payable nonReentrant validFund(_fundId) onlyProvider(_fundId) whenNotPaused {
         Fund memory fund = funds[_fundId];
         if (fund.isSufficient == true) {
             revert AlreadyProvided();
@@ -168,7 +168,7 @@ ReentrancyGuardUpgradeable {
                 }
             }
 
-            for (uint256 i; i < fund.extraCurrencies.length; ++i) {
+            for (uint256 i; i < fund.extraCurrencies.length; i++) {
                 if (fund.extraCurrencies[i] == address(0)) {
                     totalNative += fund.extraDenominations[i] * fund.totalQuantity;
                 } else {
@@ -191,7 +191,7 @@ ReentrancyGuardUpgradeable {
         uint256 _fundId,
         address _receiver,
         uint256 _quantity
-    ) external nonReentrant validFund(_fundId) onlyInitiator(_fundId) whenNotPaused {
+    ) external nonReentrant validFund(_fundId) onlyProvider(_fundId) whenNotPaused {
         Fund memory fund = funds[_fundId];
         if (fund.isSufficient == false || _quantity > fund.totalQuantity) {
             revert InsufficientFunds();
@@ -206,7 +206,7 @@ ReentrancyGuardUpgradeable {
             _receiver,
             fund.mainDenomination * _quantity
         );
-        for (uint256 i; i < fund.extraCurrencies.length; ++i) {
+        for (uint256 i; i < fund.extraCurrencies.length; i++) {
             CurrencyHandler.sendCurrency(
                 fund.extraCurrencies[i],
                 _receiver,

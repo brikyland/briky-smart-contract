@@ -66,13 +66,13 @@ async function deployOrUpgradeEstateLiquidator() {
                 dividendHubAddress,
                 feeReceiverAddress,
                 estateLiquidatorValidatorAddress,
-                Initialization.ESTATE_FORGER_FeeRate,
+                Initialization.ESTATE_LIQUIDATOR_FeeRate,
             );
             console.log(`Contract EstateLiquidator has been deployed to address ${estateLiquidator.address}`);
 
             return estateLiquidator.address;
         })();
-    console.log(`${networkName}_ESTATE_FORGER_ADDRESS=${estateLiquidatorAddress}`);
+    console.log(`${networkName}_ESTATE_LIQUIDATOR_ADDRESS=${estateLiquidatorAddress}`);
 }
 
 deployOrUpgradeEstateLiquidator()

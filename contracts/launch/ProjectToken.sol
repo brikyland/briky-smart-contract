@@ -35,7 +35,7 @@ import {IProjectToken} from "./interfaces/IProjectToken.sol";
 
 import {ProjectTokenStorage} from "./storages/ProjectTokenStorage.sol";
 
-abstract contract ProjectToken is
+contract ProjectToken is
 ProjectTokenStorage,
 ERC1155PausableUpgradeable,
 ERC1155SupplyUpgradeable,
@@ -43,6 +43,7 @@ ERC1155URIStorageUpgradeable,
 EstateTokenizer,
 Pausable,
 RoyaltyRateProposer,
+Snapshotable,
 Validatable,
 ReentrancyGuardUpgradeable {
     using ERC165CheckerUpgradeable for address;
@@ -100,7 +101,7 @@ ReentrancyGuardUpgradeable {
     }
 
     function decimals() external pure returns (uint8) {
-        return ProjectTokenConstant.PROJECT_TOKEN_DECIMALS;
+        return ProjectTokenConstant.TOKEN_DECIMALS;
     }
 
     function updateBaseURI(
@@ -135,20 +136,20 @@ ReentrancyGuardUpgradeable {
         );
 
         if (_isLaunchpad) {
-            for (uint256 i; i < _accounts.length; ++i) {
+            for (uint256 i; i < _accounts.length; i++) {
                 if (isLaunchpad[_accounts[i]]) {
-                    revert AuthorizedAccount(_accounts[i]);
+                    revert AuthorizedAccount();
                 }
                 if (!_accounts[i].supportsInterface(type(IProjectLaunchpad).interfaceId)) {
-                    revert InvalidLaunchpad(_accounts[i]);
+                    revert InvalidLaunchpad();
                 }
                 isLaunchpad[_accounts[i]] = true;
                 emit LaunchpadAuthorization(_accounts[i]);
             }
         } else {
-            for (uint256 i; i < _accounts.length; ++i) {
+            for (uint256 i; i < _accounts.length; i++) {
                 if (!isLaunchpad[_accounts[i]]) {
-                    revert NotAuthorizedAccount(_accounts[i]);
+                    revert NotAuthorizedAccount();
                 }
                 isLaunchpad[_accounts[i]] = false;
                 emit LaunchpadDeauthorization(_accounts[i]);
@@ -164,7 +165,7 @@ ReentrancyGuardUpgradeable {
     }
 
     function isAvailable(uint256 _projectId) public view returns (bool) {
-        return projects[_projectId].deprecateAt == CommonConstant.COMMON_INFINITE_TIMESTAMP;
+        return projects[_projectId].deprecateAt == CommonConstant.INFINITE_TIMESTAMP;
     }
 
     function launchProject(
@@ -187,7 +188,7 @@ ReentrancyGuardUpgradeable {
             _launchId,
             msg.sender,
             uint40(block.timestamp),
-            CommonConstant.COMMON_INFINITE_TIMESTAMP
+            CommonConstant.INFINITE_TIMESTAMP
         );
         _setURI(projectId, _uri);
 
@@ -243,7 +244,7 @@ ReentrancyGuardUpgradeable {
         }
 
         if (project.estateId != 0) {
-            revert Tokenized();
+            revert AlreadyTokenized();
         }
 
         uint256 supply = totalSupply(_projectId);
@@ -261,7 +262,7 @@ ReentrancyGuardUpgradeable {
             zone,
             _projectId,
             uri(_projectId),
-            CommonConstant.COMMON_INFINITE_TIMESTAMP,
+            CommonConstant.INFINITE_TIMESTAMP,
             _commissionReceiver
         );
         project.estateId = estateId;
@@ -283,11 +284,11 @@ ReentrancyGuardUpgradeable {
         if (estateId == 0) {
             revert InvalidWithdrawing();
         }
-        if (hasWithdrawn[_projectId][msg.sender]) {
+        if (withdrawAt[_projectId][msg.sender] > 0) {
             revert AlreadyWithdrawn();
         }
 
-        hasWithdrawn[_projectId][msg.sender] = true;
+        withdrawAt[_projectId][msg.sender] = block.timestamp;
 
         uint256 amount = balanceOf(msg.sender, _projectId);
         IEstateToken(estateToken).safeTransferFrom(
@@ -311,11 +312,46 @@ ReentrancyGuardUpgradeable {
         return projects[_projectId].estateId != 0;
     }
 
+    function zoneOf(uint256 _projectId) public view returns (bool) {
+        if (!exists(_projectId)) {
+            revert InvalidProjectId();
+        }
+        return projects[_projectId].zone;
+    }
+
+
+    function balanceOf(address _account, uint256 _projectId)
+    public view override(IERC1155Upgradeable, ERC1155Upgradeable) returns (uint256) {
+        return projects[_projectId].deprecateAt != CommonConstant.INFINITE_TIMESTAMP
+            ? 0
+            : super.balanceOf(_account, _projectId);
+    }
+
+    function balanceOfAt(address _account, uint256 _projectId, uint256 _at) public view returns (uint256) {
+        if (!exists(_projectId)) {
+            revert InvalidProjectId();
+        }
+        if (_at > block.timestamp || _at > projects[_projectId].deprecateAt) {
+            revert InvalidTimestamp();
+        }
+
+        return _snapshotAt(balanceSnapshots[_projectId][_account], _at);
+    }
+
     function allocationOfAt(
         uint256 _tokenizationId,
         address _account,
         uint256 _at
     ) external view validProject(_tokenizationId) returns (uint256) {
+        // TODO: implement
+        return 0;
+    }
+
+    function voteOfAt(
+        address _account,
+        uint256 _estateId,
+        uint256 _at
+    ) external view returns (uint256) {
         // TODO: implement
         return 0;
     }
@@ -363,7 +399,7 @@ ReentrancyGuardUpgradeable {
     ) internal override {
         super._afterTokenTransfer(_operator, _from, _to, _ids, _amounts, _data);
         uint256 timestamp = block.timestamp;
-        for (uint256 i; i < _ids.length; ++i) {
+        for (uint256 i; i < _ids.length; i++) {
             uint256 tokenId = _ids[i];
             if (_from != address(0)) {
                 balanceSnapshots[tokenId][_from].push(Snapshot(balanceOf(_from, tokenId), timestamp));

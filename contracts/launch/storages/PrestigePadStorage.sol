@@ -4,10 +4,10 @@ pragma solidity ^0.8.20;
 import {IPrestigePad} from "../interfaces/IPrestigePad.sol";
 
 abstract contract PrestigePadStorage is IPrestigePad {
-    mapping(bytes32 => mapping(address => string)) public originatorURIs;
+    mapping(bytes32 => mapping(address => bool)) public isInitiatorIn;
 
     mapping(uint256 => mapping(address => uint256)) public deposits;
-    mapping(uint256 => mapping(address => bool)) public hasWithdrawn;
+    mapping(uint256 => mapping(address => uint256)) public withdrawAt;
 
     mapping(address => bool) public isWhitelisted;
 

@@ -63,8 +63,8 @@ ReentrancyGuardUpgradeable {
         uint256 _feeRate,
         uint256 _royaltyRate
     ) external initializer {
-        require(_feeRate <= CommonConstant.COMMON_RATE_MAX_FRACTION);
-        require(_royaltyRate <= CommonConstant.COMMON_RATE_MAX_FRACTION);
+        require(_feeRate <= CommonConstant.RATE_MAX_FRACTION);
+        require(_royaltyRate <= CommonConstant.RATE_MAX_FRACTION);
 
         __ERC721_init(_name, _symbol);
         __ERC721Pausable_init();
@@ -119,7 +119,7 @@ ReentrancyGuardUpgradeable {
             ),
             _signature
         );
-        if (_feeRate > CommonConstant.COMMON_RATE_MAX_FRACTION) {
+        if (_feeRate > CommonConstant.RATE_MAX_FRACTION) {
             revert InvalidRate();
         }
         feeRate = _feeRate;
@@ -127,7 +127,7 @@ ReentrancyGuardUpgradeable {
     }
 
     function getFeeRate() external view returns (Rate memory) {
-        return Rate(feeRate, CommonConstant.COMMON_RATE_DECIMALS);
+        return Rate(feeRate, CommonConstant.RATE_DECIMALS);
     }
 
     function getLoan(uint256 _loanId)
@@ -263,8 +263,14 @@ ReentrancyGuardUpgradeable {
         return super.supportsInterface(_interfaceId);
     }
 
-    function _royaltyReceiver() internal view override returns (address) {
-        return feeReceiver;
+    function _mint(address _to, uint256 _tokenId) internal override {
+        totalSupply++;
+        super._mint(_to, _tokenId);
+    }
+
+    function _burn(uint256 _tokenId) internal override {
+        totalSupply--;
+        super._burn(_tokenId);
     }
 
     function _lend(uint256 _loanId) internal nonReentrant whenNotPaused returns (uint256) {
@@ -276,7 +282,7 @@ ReentrancyGuardUpgradeable {
         }
 
         uint256 principal = loan.principal;
-        uint256 feeAmount = principal.scale(feeRate, CommonConstant.COMMON_RATE_MAX_FRACTION);
+        uint256 feeAmount = principal.scale(feeRate, CommonConstant.RATE_MAX_FRACTION);
 
         address currency = loan.currency;
         feeAmount = _applyDiscount(feeAmount, currency);
@@ -353,4 +359,7 @@ ReentrancyGuardUpgradeable {
         emit LoanRepayment(_loanId);
     }
 
+    function _royaltyReceiver() internal view override returns (address) {
+        return feeReceiver;
+    }
 }

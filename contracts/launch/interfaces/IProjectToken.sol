@@ -42,6 +42,7 @@ IERC1155MetadataURIUpgradeable {
         address commissionReceiver
     );
 
+    error AlreadyTokenized();
     error AlreadyWithdrawn();
     error InvalidCommissionReceiver();
     error InvalidLaunchpad(address account);
@@ -49,7 +50,6 @@ IERC1155MetadataURIUpgradeable {
     error InvalidTokenizing();
     error InvalidWithdrawing();
     error NothingToTokenize();
-    error Tokenized();
 
     function decimals() external view returns (uint8 decimals);
 
@@ -61,7 +61,7 @@ IERC1155MetadataURIUpgradeable {
 
     function getProject(uint256 projectId) external view returns (Project memory project);
 
-    function hasWithdrawn(uint256 projectId, address account) external view returns (bool hasWithdrawn);
+    function withdrawAt(uint256 projectId, address account) external view returns (uint256 withdrawAt);
 
     function launchProject(
         bytes32 zone,

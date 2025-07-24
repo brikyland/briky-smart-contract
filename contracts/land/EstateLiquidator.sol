@@ -89,7 +89,7 @@ ReentrancyGuardUpgradeable {
             ),
             _signatures
         );
-        if (_feeRate > CommonConstant.COMMON_RATE_MAX_FRACTION) {
+        if (_feeRate > CommonConstant.RATE_MAX_FRACTION) {
             revert InvalidRate();
         }
         feeRate = _feeRate;
@@ -97,7 +97,7 @@ ReentrancyGuardUpgradeable {
     }
 
     function getFeeRate() public view returns (Rate memory) {
-        return Rate(feeRate, CommonConstant.COMMON_RATE_DECIMALS);
+        return Rate(feeRate, CommonConstant.RATE_DECIMALS);
     }
 
     function getRequest(uint256 _requestId)
@@ -132,13 +132,13 @@ ReentrancyGuardUpgradeable {
             _uuid,
             ProposalRule.ApprovalBeyondQuorum,
             estateTokenContract.totalSupply(_estateId).scale(
-                estateTokenContract.getEstate(_estateId).tokenizeAt + EstateLiquidatorConstant.ESTATE_LIQUIDATOR_UNANIMOUS_GUARD_DURATION > block.timestamp
-                    ? EstateLiquidatorConstant.ESTATE_LIQUIDATOR_UNANIMOUS_QUORUM_RATE
-                    : EstateLiquidatorConstant.ESTATE_LIQUIDATOR_MAJORITY_QUORUM_RATE,
-                CommonConstant.COMMON_RATE_MAX_FRACTION
+                estateTokenContract.getEstate(_estateId).tokenizeAt + EstateLiquidatorConstant.UNANIMOUS_GUARD_DURATION > block.timestamp
+                    ? EstateLiquidatorConstant.UNANIMOUS_QUORUM_RATE
+                    : EstateLiquidatorConstant.MAJORITY_QUORUM_RATE,
+                CommonConstant.RATE_MAX_FRACTION
             ),
-            EstateLiquidatorConstant.ESTATE_LIQUIDATOR_VOTING_DURATION,
-            uint40(block.timestamp) + EstateLiquidatorConstant.ESTATE_LIQUIDATOR_ADMISSION_DURATION,
+            EstateLiquidatorConstant.VOTING_DURATION,
+            uint40(block.timestamp) + EstateLiquidatorConstant.ADMISSION_DURATION,
             _validation
         );
 
@@ -168,7 +168,7 @@ ReentrancyGuardUpgradeable {
         EstateLiquidatorRequest storage request = requests[_requestId];
         uint256 estateId = request.estateId;
         if (estateId == 0) {
-            revert Cancelled();
+            revert AlreadyCancelled();
         }
 
         IEstateToken estateTokenContract = IEstateToken(estateToken);
@@ -184,7 +184,7 @@ ReentrancyGuardUpgradeable {
             address currency = request.currency;
 
             uint256 feeAmount = _applyDiscount(
-                value.scale(feeRate, CommonConstant.COMMON_RATE_MAX_FRACTION),
+                value.scale(feeRate, CommonConstant.RATE_MAX_FRACTION),
                 currency
             );
 

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 interface ICommon {
-    error AuthorizedAccount(address account);
+    error AuthorizedAccount();
     error BadAnchor();
     error FailedVerification();
     error InsufficientFunds();
@@ -11,7 +11,7 @@ interface ICommon {
     error InvalidInput();
     error InvalidTimestamp();
     error InvalidUpdating();
-    error NotAuthorizedAccount(address account);
+    error NotAuthorizedAccount();
     error Unauthorized();
 
     function version() external pure returns (string memory version);

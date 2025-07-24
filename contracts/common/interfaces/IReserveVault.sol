@@ -8,12 +8,12 @@ import {ICommon} from "./ICommon.sol";
 interface IReserveVault is
 IFund,
 ICommon {
-    event InitiatorAuthorization(address indexed account);
-    event InitiatorDeauthorization(address indexed account);
+    event ProviderAuthorization(address indexed account);
+    event ProviderDeauthorization(address indexed account);
 
     event FundInitiation(
         uint256 indexed fundId,
-        address indexed initiator,
+        address indexed provider,
         address mainCurrency,
         uint256 mainDenomination,
         address[] extraCurrencies,
@@ -34,12 +34,12 @@ ICommon {
 
     function fundNumber() external view returns (uint256 fundNumber);
 
-    function isInitiator(address account) external view returns (bool isInitiator);
+    function isProvider(address account) external view returns (bool isProvider);
 
     function getFund(uint256 fundId) external view returns (Fund memory fund);
     function isFundSufficient(uint256 fundId) external view returns (bool isSufficient);
 
-    function initiateFund(
+    function requestFund(
         address mainCurrency,
         uint256 mainDenomination,
         address[] calldata extraCurrencies,

@@ -96,11 +96,11 @@ ReentrancyGuardUpgradeable {
 
     function withdraw(uint256[] calldata _dividendIds)
     external nonReentrant whenNotPaused {
-        for (uint256 i; i < _dividendIds.length; ++i) {
+        for (uint256 i; i < _dividendIds.length; i++) {
             if (_dividendIds[i] == 0 || _dividendIds[i] > dividendNumber) {
                 revert InvalidDividendId();
             }
-            if (hasWithdrawn[_dividendIds[i]][msg.sender]) {
+            if (withdrawAt[_dividendIds[i]][msg.sender] > 0) {
                 revert AlreadyWithdrawn();
             }
 
@@ -125,7 +125,7 @@ ReentrancyGuardUpgradeable {
 
             dividend.remainWeight -= weight;
             dividend.remainValue -= value;
-            hasWithdrawn[_dividendIds[i]][msg.sender] = true;
+            withdrawAt[_dividendIds[i]][msg.sender] = block.timestamp;
 
             CurrencyHandler.sendCurrency(dividend.currency, msg.sender, value);
 

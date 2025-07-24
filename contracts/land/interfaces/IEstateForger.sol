@@ -28,11 +28,8 @@ IEstateTokenizer {
     event Whitelist(address indexed account);
     event Unwhitelist(address indexed account);
 
-    event SellerRegistration(
-        bytes32 indexed zone,
-        address indexed account,
-        string uri
-    );
+    event SellerRegistration(bytes32 indexed zone, address indexed account);
+    event SellerDeregistration(bytes32 indexed zone, address indexed account);
 
     event NewRequest(
         uint256 indexed requestId,
@@ -73,9 +70,10 @@ IEstateTokenizer {
         uint256 value
     );
 
+    error AlreadyCancelled();
     error AlreadyHadDeposit();
+    error AlreadyTokenized();
     error AlreadyWithdrawn();
-    error Cancelled();
     error InvalidCommissionReceiver();
     error InvalidDepositing();
     error InvalidRequestId();
@@ -83,11 +81,13 @@ IEstateTokenizer {
     error InvalidWithdrawing();
     error MaxSellingQuantityExceeded();
     error NotEnoughSoldQuantity();
-    error NotWhitelistedAccount(address account);
+    error NothingToWithdraw();
+    error NotRegisteredAccount();
+    error NotWhitelistedAccount();
+    error RegisteredAccount();
     error StillSelling();
     error Timeout();
-    error Tokenized();
-    error WhitelistedAccount(address account);
+    error WhitelistedAccount();
 
     function feeReceiver() external view returns (address feeReceiver);
 
@@ -98,20 +98,14 @@ IEstateTokenizer {
 
     function requestNumber() external view returns (uint256 requestNumber);
 
-    function sellerURIs(bytes32 zone, address account) external view returns (string memory uri);
     function isSellerIn(bytes32 zone, address account) external view returns (bool isActive);
 
     function deposits(uint256 requestId, address depositor) external view returns (uint256 deposit);
-    function hasWithdrawn(uint256 requestId, address account) external view returns (bool hasWithdrawn);
+    function withdrawAt(uint256 requestId, address account) external view returns (uint256 withdrawAt);
 
     function getRequest(uint256 requestId) external view returns (EstateForgerRequest memory request);
 
-    function registerSellerIn(
-        bytes32 zone,
-        address account,
-        string calldata uri,
-        Validation calldata validation
-    ) external;
+    function registerSellerIn(bytes32 zone, address account) external;
 
     function requestTokenization(
         address seller,

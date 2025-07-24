@@ -22,6 +22,8 @@ IERC721MetadataUpgradeable {
     function estateToken() external view returns (address estateToken);
     function feeReceiver() external view returns (address feeReceiver);
 
+    function totalSupply() external view returns (uint256 totalSupply);
+
     function getCommissionRate() external view returns (Rate memory rate);
 
     function commissionInfo(uint256 tokenId, uint256 value)

@@ -105,7 +105,7 @@ ReentrancyGuardUpgradeable {
             revert InvalidInput();
         }
 
-        for (uint256 i; i < _receivers.length; ++i) {
+        for (uint256 i; i < _receivers.length; i++) {
             if (distributedAmount + _amounts[i] > totalAllocation) {
                 revert InsufficientFunds();
             }
@@ -157,7 +157,7 @@ ReentrancyGuardUpgradeable {
             revert InvalidInput();
         }
 
-        for (uint256 i; i < _receivers.length; ++i) {
+        for (uint256 i; i < _receivers.length; i++) {
             if (distributedAmount + _amounts[i] > totalAllocation) {
                 revert InsufficientFunds();
             }
@@ -192,7 +192,7 @@ ReentrancyGuardUpgradeable {
     external nonReentrant whenNotPaused returns (uint256) {
         uint256 totalAmount;
         uint256 n = distributionNumber;
-        for (uint256 i; i < _distributionIds.length; ++i) {
+        for (uint256 i; i < _distributionIds.length; i++) {
             if (_distributionIds[i] == 0 || _distributionIds[i] > n) {
                 revert InvalidDistributionId();
             }
@@ -236,7 +236,7 @@ ReentrancyGuardUpgradeable {
 
         uint256 remain;
         uint256 n = distributionNumber;
-        for (uint256 i; i < _distributionIds.length; ++i) {
+        for (uint256 i; i < _distributionIds.length; i++) {
             if (_distributionIds[i] == 0 || _distributionIds[i] > n) {
                 revert InvalidDistributionId();
             }

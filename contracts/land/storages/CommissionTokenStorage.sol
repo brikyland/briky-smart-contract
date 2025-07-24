@@ -8,6 +8,8 @@ abstract contract CommissionTokenStorage is ICommissionToken {
 
     uint256 internal commissionRate;
 
+    uint256 public totalSupply;
+
     address public admin;
     address public estateToken;
     address public feeReceiver;

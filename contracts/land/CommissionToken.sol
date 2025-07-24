@@ -44,7 +44,7 @@ ReentrancyGuardUpgradeable {
         uint256 _commissionRate,
         uint256 _royaltyRate
     ) external initializer {
-        require(_commissionRate <= CommonConstant.COMMON_RATE_MAX_FRACTION);
+        require(_commissionRate <= CommonConstant.RATE_MAX_FRACTION);
 
         __ERC721_init(_name, _symbol);
         __ERC721Pausable_init();
@@ -87,7 +87,7 @@ ReentrancyGuardUpgradeable {
     }
 
     function getCommissionRate() public view returns (Rate memory) {
-        return Rate(commissionRate, CommonConstant.COMMON_RATE_DECIMALS);
+        return Rate(commissionRate, CommonConstant.RATE_DECIMALS);
     }
 
     function commissionInfo(uint256 _tokenId, uint256 _value) external view returns (address, uint256) {
@@ -104,6 +104,7 @@ ReentrancyGuardUpgradeable {
         if (_exists(_tokenId)) {
             revert AlreadyMinted();
         }
+
         _mint(_account, _tokenId);
         emit NewToken(_tokenId, _account);
     }
@@ -122,6 +123,11 @@ ReentrancyGuardUpgradeable {
     ) returns (bool) {
         return _interfaceId == type(IERC4906Upgradeable).interfaceId
             || super.supportsInterface(_interfaceId);
+    }
+
+    function _mint(address _to, uint256 _tokenId) internal override {
+        totalSupply++;
+        super._mint(_to, _tokenId);
     }
 
     function _royaltyReceiver() internal view override returns (address) {
