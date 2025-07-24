@@ -1879,7 +1879,7 @@ describe('2.2. EstateForger', async () => {
                 ...defaultParams,
                 agenda: {
                     ...defaultParams.agenda,
-                    privateSaleDuration: LandInitialization.ESTATE_FORGER_MinimumSaleDuration,
+                    privateSaleDuration: Constant.ESTATE_FORGER_MINIMUM_SALE_DURATION,
                     publicSaleDuration: 0,
                 },
             }
@@ -1891,7 +1891,7 @@ describe('2.2. EstateForger', async () => {
                 agenda: {
                     ...defaultParams.agenda,
                     privateSaleDuration: 0,
-                    publicSaleDuration: LandInitialization.ESTATE_FORGER_MinimumSaleDuration,
+                    publicSaleDuration: Constant.ESTATE_FORGER_MINIMUM_SALE_DURATION,
                 },
             }
             await expectNotReverted(fixture, manager, data4);
@@ -2511,7 +2511,7 @@ describe('2.2. EstateForger', async () => {
                 ...defaultParams,
                 agenda: {
                     ...defaultParams.agenda,
-                    privateSaleDuration: LandInitialization.ESTATE_FORGER_MinimumSaleDuration,
+                    privateSaleDuration: Constant.ESTATE_FORGER_MINIMUM_SALE_DURATION,
                     publicSaleDuration: 0,
                 },
             }
@@ -2523,7 +2523,7 @@ describe('2.2. EstateForger', async () => {
                 agenda: {
                     ...defaultParams.agenda,
                     privateSaleDuration: 0,
-                    publicSaleDuration: LandInitialization.ESTATE_FORGER_MinimumSaleDuration,
+                    publicSaleDuration: Constant.ESTATE_FORGER_MINIMUM_SALE_DURATION,
                 },
             }
             await expectNotRevert(fixture, manager, data4);
