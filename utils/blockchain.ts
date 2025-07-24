@@ -1,8 +1,12 @@
 import { BigNumberish, ethers, Wallet } from 'ethers';
 import { JsonRpcProvider } from '@ethersproject/providers';
 
-export function parseEther(x: number) {
-    return ethers.utils.parseEther(x.toFixed(18));
+export function parseEther(x: string) {
+    const decimalStr = Number(x).toLocaleString("fullwide", {
+        useGrouping: false,
+        maximumSignificantDigits: 21,
+    });
+    return ethers.utils.parseEther(decimalStr);
 }
 
 export async function callTransaction(tx: Promise<ethers.ContractTransaction>): Promise<ethers.ContractReceipt> {
@@ -48,7 +52,7 @@ export async function prepareNativeToken(
         }));
         await provider.send("hardhat_setBalance", [
             signer.address,
-            ethers.utils.hexValue(parseEther(10_000))
+            ethers.utils.hexValue(parseEther(String(10_000)))
         ]);
     }
 }
