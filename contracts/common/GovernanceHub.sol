@@ -95,7 +95,7 @@ ReentrancyGuardUpgradeable {
     function getProposalState(uint256 _proposalId)
     external view validProposal(_proposalId) returns (ProposalState) {
         if (proposals[_proposalId].state == ProposalState.Voting
-            && proposals[_proposalId].due + GovernanceHubConstant.GOVERNANCE_HUB_CONFIRMATION_TIME_LIMIT <= block.timestamp) {
+            && proposals[_proposalId].due + GovernanceHubConstant.EXECUTION_CONFIRMATION_TIME_LIMIT <= block.timestamp) {
             return ProposalState.Disqualified;
         }
 
@@ -136,7 +136,7 @@ ReentrancyGuardUpgradeable {
             revert UnavailableToken();
         }
 
-        if (_quorumRate > CommonConstant.COMMON_RATE_MAX_FRACTION) {
+        if (_quorumRate > CommonConstant.RATE_MAX_FRACTION) {
             revert InvalidInput();
         }
 
@@ -222,7 +222,7 @@ ReentrancyGuardUpgradeable {
 
         uint256 quorum = totalWeight.scale(
             proposal.quorum,
-            CommonConstant.COMMON_RATE_MAX_FRACTION
+            CommonConstant.RATE_MAX_FRACTION
         );
 
         proposal.contentURI = _contentURI;
@@ -240,7 +240,6 @@ ReentrancyGuardUpgradeable {
             _stateURI,
             totalWeight,
             quorum,
-            block.timestamp,
             _currency
         );
     }
@@ -324,7 +323,7 @@ ReentrancyGuardUpgradeable {
     external nonReentrant validProposal(_proposalId) whenNotPaused returns (uint256) {
         Proposal storage proposal = proposals[_proposalId];
         ProposalState state = proposal.state;
-        if (!(state == ProposalState.Voting && proposal.due + GovernanceHubConstant.GOVERNANCE_HUB_CONFIRMATION_TIME_LIMIT <= block.timestamp)
+        if (!(state == ProposalState.Voting && proposal.due + GovernanceHubConstant.EXECUTION_CONFIRMATION_TIME_LIMIT <= block.timestamp)
             && _votingVerdict(proposal) != ProposalVerdict.Failed) {
             revert InvalidWithdrawing();
         }
@@ -359,7 +358,7 @@ ReentrancyGuardUpgradeable {
         }
 
         if (proposal.state != ProposalState.Voting
-            || proposal.due + GovernanceHubConstant.GOVERNANCE_HUB_CONFIRMATION_TIME_LIMIT <= block.timestamp
+            || proposal.due + GovernanceHubConstant.EXECUTION_CONFIRMATION_TIME_LIMIT <= block.timestamp
             || _votingVerdict(proposal) != ProposalVerdict.Passed) {
             revert InvalidConfirming();
         }
@@ -550,7 +549,7 @@ ReentrancyGuardUpgradeable {
             revert InvalidContributing();
         }
 
-        if (proposal.due + GovernanceHubConstant.GOVERNANCE_HUB_CONFIRMATION_TIME_LIMIT <= block.timestamp) {
+        if (proposal.due + GovernanceHubConstant.EXECUTION_CONFIRMATION_TIME_LIMIT <= block.timestamp) {
             revert Overdue();
         }
 

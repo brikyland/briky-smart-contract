@@ -61,6 +61,8 @@ IERC721MetadataUpgradeable {
 
     function feeReceiver() external view returns (address feeReceiver);
 
+    function totalSupply() external view returns (uint256 totalSupply);
+
     function getFeeRate() external view returns (Rate memory rate);
 
     function loanNumber() external view returns (uint256 loanNumber);

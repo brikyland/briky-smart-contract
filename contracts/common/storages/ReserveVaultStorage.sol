@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import {IReserveVault} from "../interfaces/IReserveVault.sol";
 
 abstract contract ReserveVaultStorage is IReserveVault {
-    mapping(address => bool) public isInitiator;
+    mapping(address => bool) public isProvider;
 
     mapping(uint256 => Fund) internal funds;
 

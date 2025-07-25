@@ -96,7 +96,7 @@ ReentrancyGuardUpgradeable {
             ),
             _signatures
         );
-        if (_feeRate > CommonConstant.COMMON_RATE_MAX_FRACTION) {
+        if (_feeRate > CommonConstant.RATE_MAX_FRACTION) {
             revert InvalidRate();
         }
         feeRate = _feeRate;
@@ -104,7 +104,7 @@ ReentrancyGuardUpgradeable {
     }
 
     function getFeeRate() external view returns (Rate memory) {
-        return Rate(feeRate, CommonConstant.COMMON_RATE_DECIMALS);
+        return Rate(feeRate, CommonConstant.RATE_DECIMALS);
     }
 
     function fetchReward() public nonReentrant whenNotPaused {
@@ -112,7 +112,7 @@ ReentrancyGuardUpgradeable {
             if (lastRewardFetch == 0) {
                 revert NotStartedRewarding();
             }
-            if (lastRewardFetch + StakeTokenConstant.STAKE_TOKEN_REWARD_FETCH_COOLDOWN > block.timestamp) {
+            if (lastRewardFetch + StakeTokenConstant.REWARD_FETCH_COOLDOWN > block.timestamp) {
                 revert OnCoolDown();
             }
             if (totalStake == 0) {
@@ -228,7 +228,7 @@ ReentrancyGuardUpgradeable {
         return Rate(
             primaryDiscount.value
                 .scale(globalStake - totalStake, globalStake << 1)
-                .add(PrimaryTokenConstant.PRIMARY_TOKEN_BASE_DISCOUNT),
+                .add(PrimaryTokenConstant.BASE_DISCOUNT),
             primaryDiscount.decimals
         );
     }
@@ -260,7 +260,7 @@ ReentrancyGuardUpgradeable {
     ) internal pure returns (uint256) {
         return _liquidity
             .scale(_value, _totalSupply)
-            .scale(_feeRate, CommonConstant.COMMON_RATE_MAX_FRACTION);
+            .scale(_feeRate, CommonConstant.RATE_MAX_FRACTION);
     }
 
     function _newInterestAccumulation(

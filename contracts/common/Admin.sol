@@ -67,7 +67,7 @@ Initializable {
         if (Signature.verify(admin4, _message, currentNonce, _signatures[3])) counter++;
         if (Signature.verify(admin5, _message, currentNonce, _signatures[4])) counter++;
 
-        if (counter < AdminConstant.ADMIN_SIGNATURE_VERIFICATION_QUORUM) {
+        if (counter < AdminConstant.SIGNATURE_VERIFICATION_QUORUM) {
             revert FailedVerification();
         }
 
@@ -179,17 +179,17 @@ Initializable {
         );
 
         if (_isManager) {
-            for (uint256 i; i < _accounts.length; ++i) {
+            for (uint256 i; i < _accounts.length; i++) {
                 if (isManager[_accounts[i]]) {
-                    revert AuthorizedAccount(_accounts[i]);
+                    revert AuthorizedAccount();
                 }
                 isManager[_accounts[i]] = true;
                 emit ManagerAuthorization(_accounts[i]);
             }
         } else {
-            for (uint256 i; i < _accounts.length; ++i) {
+            for (uint256 i; i < _accounts.length; i++) {
                 if (!isManager[_accounts[i]]) {
-                    revert NotAuthorizedAccount(_accounts[i]);
+                    revert NotAuthorizedAccount();
                 }
                 if (_accounts[i] == tx.origin) {
                     revert CannotSelfDeauthorizing();
@@ -216,17 +216,17 @@ Initializable {
         );
 
         if (_isModerator) {
-            for (uint256 i; i < _accounts.length; ++i) {
+            for (uint256 i; i < _accounts.length; i++) {
                 if (isModerator[_accounts[i]]) {
-                    revert AuthorizedAccount(_accounts[i]);
+                    revert AuthorizedAccount();
                 }
                 isModerator[_accounts[i]] = true;
                 emit ModeratorAuthorization(_accounts[i]);
             }
         } else {
-            for (uint256 i; i < _accounts.length; ++i) {
+            for (uint256 i; i < _accounts.length; i++) {
                 if (!isModerator[_accounts[i]]) {
-                    revert NotAuthorizedAccount(_accounts[i]);
+                    revert NotAuthorizedAccount();
                 }
                 isModerator[_accounts[i]] = false;
                 emit ModeratorDeauthorization(_accounts[i]);
@@ -250,9 +250,9 @@ Initializable {
         );
 
         if (_isGovernor) {
-            for (uint256 i; i < _accounts.length; ++i) {
+            for (uint256 i; i < _accounts.length; i++) {
                 if (isGovernor[_accounts[i]]) {
-                    revert AuthorizedAccount(_accounts[i]);
+                    revert AuthorizedAccount();
                 }
                 if (!_accounts[i].supportsInterface(type(IGovernor).interfaceId)) {
                     revert InvalidGovernor();
@@ -261,9 +261,9 @@ Initializable {
                 emit GovernorAuthorization(_accounts[i]);
             }
         } else {
-            for (uint256 i; i < _accounts.length; ++i) {
+            for (uint256 i; i < _accounts.length; i++) {
                 if (!isGovernor[_accounts[i]]) {
-                    revert NotAuthorizedAccount(_accounts[i]);
+                    revert NotAuthorizedAccount();
                 }
                 isGovernor[_accounts[i]] = false;
                 emit GovernorDeauthorization(_accounts[i]);
@@ -287,17 +287,17 @@ Initializable {
         );
 
         if (_isZone) {
-            for (uint256 i; i < _zones.length; ++i) {
+            for (uint256 i; i < _zones.length; i++) {
                 if (isZone[_zones[i]]) {
-                    revert AuthorizedZone(_zones[i]);
+                    revert AuthorizedZone();
                 }
                 isZone[_zones[i]] = true;
                 emit ZoneAnnouncement(_zones[i]);
             }
         } else {
-            for (uint256 i; i < _zones.length; ++i) {
+            for (uint256 i; i < _zones.length; i++) {
                 if (!isZone[_zones[i]]) {
-                    revert NotAuthorizedZone(_zones[i]);
+                    revert NotAuthorizedZone();
                 }
                 isZone[_zones[i]] = false;
                 emit ZoneRenouncement(_zones[i]);
@@ -327,17 +327,17 @@ Initializable {
         }
 
         if (_isActive) {
-            for (uint256 i; i < _accounts.length; ++i) {
+            for (uint256 i; i < _accounts.length; i++) {
                 if (isActiveIn[_zone][_accounts[i]]) {
-                    revert Activated(_accounts[i]);
+                    revert ActivatedAccount();
                 }
                 isActiveIn[_zone][_accounts[i]] = true;
                 emit Activation(_zone, _accounts[i]);
             }
         } else {
-            for (uint256 i; i < _accounts.length; ++i) {
+            for (uint256 i; i < _accounts.length; i++) {
                 if (!isActiveIn[_zone][_accounts[i]]) {
-                    revert NotActivated(_accounts[i]);
+                    revert NotActivatedAccount();
                 }
                 isActiveIn[_zone][_accounts[i]] = false;
                 emit Deactivation(_zone, _accounts[i]);
@@ -386,7 +386,7 @@ Initializable {
             revert InvalidInput();
         }
 
-        for (uint256 i; i < _currencies.length; ++i) {
+        for (uint256 i; i < _currencies.length; i++) {
             currencyRegistries[_currencies[i]] = CurrencyRegistry(
                 0,
                 0,

@@ -86,7 +86,7 @@ ReentrancyGuardUpgradeable {
     function provideLiquidity(uint256 _value) external nonReentrant whenNotPaused {
         CurrencyHandler.receiveERC20(currency, _value);
 
-        uint256 feeAmount = _value.scale(TreasuryConstant.TREASURY_OPERATION_FUND_RATE, CommonConstant.COMMON_RATE_MAX_FRACTION);
+        uint256 feeAmount = _value.scale(TreasuryConstant.OPERATION_FUND_RATE, CommonConstant.RATE_MAX_FRACTION);
 
         operationFund += feeAmount;
         liquidity += _value - feeAmount;

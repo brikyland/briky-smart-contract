@@ -6,6 +6,7 @@ import {IMortgageToken} from "../interfaces/IMortgageToken.sol";
 abstract contract MortgageTokenStorage is IMortgageToken {
     mapping(uint256 => Loan) internal loans;
 
+    uint256 public totalSupply;
     uint256 public loanNumber;
 
     uint256 internal feeRate;

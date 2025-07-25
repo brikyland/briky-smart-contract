@@ -30,7 +30,6 @@ IValidatable {
         string stateURI,
         uint256 totalWeight,
         uint256 quorum,
-        uint256 budget,
         address currency
     );
     event ProposalBudgetContribution(

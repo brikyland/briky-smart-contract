@@ -27,39 +27,56 @@ IProjectLaunchpad {
     event Whitelist(address indexed account);
     event Unwhitelist(address indexed account);
 
-    event OriginatorRegistration(
-        bytes32 indexed zone,
-        address indexed account,
-        string uri
-    );
+    event InitiatorRegistration(bytes32 indexed zone, address indexed account);
+    event InitiatorDeregistration(bytes32 indexed zone, address indexed account);
 
     event NewRequest(
         uint256 indexed requestId,
         uint256 indexed projectId,
-        address indexed originator,
+        address indexed initiator,
         string uri,
         uint256 initialQuantity
     );
-
-    event RequestRoundsUpdate(
-        uint256 indexed requestId,
-        uint256 removedRoundNumber,
-        uint256 addedRoundNumber
-    );
-
     event NewRound(
         uint256 indexed roundId,
         uint256 indexed projectId,
         string uri,
-        uint256 totalQuantity,
-        uint256 minSellingQuantity,
-        uint256 maxSellingQuantity
+        PrestigePadRoundQuotaInput quota,
+        PrestigePadRoundQuoteInput quote
     );
 
+    event RequestRoundUpdate(
+        uint256 indexed requestId,
+        uint256 indexed roundId,
+        uint256 index,
+        PrestigePadRoundInput round
+    );
+    event RequestNextRoundInitiation(
+        uint256 indexed requestId,
+        uint256 indexed roundId,
+        uint256 indexed cashbackRoundId,
+        uint256 index,
+        uint40 raiseStartsAt,
+        uint40 raiseEndsAt
+    );
+    event RequestCurrentRoundCancellation(
+        uint256 indexed requestId,
+        uint256 indexed roundId
+    );
+
+    error AlreadyConfirmed();
+    error AlreadyFinalized();
+    error AlreadyInitiated();
+    error InvalidCancelling();
+    error InvalidConfirming();
+    error InvalidInitiating();
     error InvalidRemoving();
     error InvalidRequestId();
     error InvalidRoundId();
     error InvalidUnitPrice();
-    error NotWhitelistedAccount(address account);
-    error WhitelistedAccount(address acount);
+    error NoRoundToInitiate();
+    error NotInitiated();
+    error NotRegisteredAccount();
+    error RegisteredAccount();
+    error Timeout();
 }

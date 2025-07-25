@@ -5,9 +5,9 @@ interface IPrestigePadRequest {
     struct PrestigePadRequest {
         uint256 projectId;
         string uri;
-        uint256 lastRoundId;
+        uint256 currentIndex;
         uint256[] roundIds;
-        address originator;
+        address initiator;
         bool isFinalized;
     }
 }

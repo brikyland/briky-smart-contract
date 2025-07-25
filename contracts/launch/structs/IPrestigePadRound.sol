@@ -11,6 +11,12 @@ interface IPrestigePadRound is IValidation {
         uint256 soldQuantity;
     }
 
+    struct PrestigePadRoundQuotaInput {
+        uint256 totalQuantity;
+        uint256 minSellingQuantity;
+        uint256 maxSellingQuantity;
+    }
+
     struct PrestigePadRoundQuote {
         uint256 unitPrice;
         address currency;
@@ -19,10 +25,14 @@ interface IPrestigePadRound is IValidation {
         uint256 feeDenomination;
     }
 
+    struct PrestigePadRoundQuoteInput {
+        uint256 unitPrice;
+        address currency;
+    }
+
     struct PrestigePadRoundAgenda {
-        uint40 startAt;
-        uint40 privateSaleEndsAt;
-        uint40 publicSaleEndsAt;
+        uint40 raiseStartsAt;
+        uint40 raiseEndsAt;
         uint40 confirmAt;
     }
 
@@ -35,9 +45,8 @@ interface IPrestigePadRound is IValidation {
 
     struct PrestigePadRoundInput {
         string uri;
-        uint256 totalQuantity;
-        uint256 minSellingQuantity;
-        uint256 maxSellingQuantity;
+        PrestigePadRoundQuotaInput quota;
+        PrestigePadRoundQuoteInput quote;
         Validation validation;
     }
 }

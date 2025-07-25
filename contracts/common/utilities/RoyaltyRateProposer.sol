@@ -22,7 +22,7 @@ ERC165Upgradeable {
     function _royaltyReceiver() internal view virtual returns (address royaltyReceiver);
 
     function __RoyaltyRateProposer_init(uint256 _royaltyRate) internal onlyInitializing {
-        require(_royaltyRate <= CommonConstant.COMMON_RATE_MAX_FRACTION);
+        require(_royaltyRate <= CommonConstant.RATE_MAX_FRACTION);
         royaltyRate = _royaltyRate;
         emit RoyaltyRateUpdate(_royaltyRate);
     }
@@ -39,7 +39,7 @@ ERC165Upgradeable {
             ),
             _signatures
         );
-        if (_royaltyRate > CommonConstant.COMMON_RATE_MAX_FRACTION) {
+        if (_royaltyRate > CommonConstant.RATE_MAX_FRACTION) {
             revert InvalidRate();
         }
         royaltyRate = _royaltyRate;
@@ -47,11 +47,11 @@ ERC165Upgradeable {
     }
 
     function getRoyaltyRate() public view virtual returns (Rate memory) {
-        return Rate(royaltyRate, CommonConstant.COMMON_RATE_DECIMALS);
+        return Rate(royaltyRate, CommonConstant.RATE_DECIMALS);
     }
 
     function royaltyInfo(uint256, uint256 _salePrice) external view returns (address, uint256) {
-        return (_royaltyReceiver(), _salePrice.scale(royaltyRate, CommonConstant.COMMON_RATE_MAX_FRACTION));
+        return (_royaltyReceiver(), _salePrice.scale(royaltyRate, CommonConstant.RATE_MAX_FRACTION));
     }
 
     function supportsInterface(bytes4 _interfaceId)

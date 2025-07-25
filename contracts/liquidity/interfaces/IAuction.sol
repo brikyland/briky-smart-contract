@@ -19,11 +19,11 @@ interface IAuction is ICommon {
     );
     event Withdrawal(address indexed account, uint256 amount);
 
-    error Ended();
+    error AlreadyEnded();
+    error AlreadyStarted();
     error NotAssignedStakeTokens();
     error NotEnded();
     error NotStarted();
-    error Started();
 
     function primaryToken() external view returns (address primaryToken);
     function stakeToken1() external view returns (address stakeToken1);

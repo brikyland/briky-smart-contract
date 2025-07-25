@@ -28,7 +28,7 @@ IValidatable {
     event RequestApproval(uint256 indexed requestId, uint256 feeAmount);
     event RequestDisapproval(uint256 indexed requestId);
 
-    error Cancelled();
+    error AlreadyCancelled();
     error InvalidConclusion();
     error InvalidRequestId();
     error UnavailableEstate();

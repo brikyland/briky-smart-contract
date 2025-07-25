@@ -32,7 +32,7 @@ ICommon {
 
     function getDividend(uint256 dividendId) external view returns (Dividend memory dividend);
 
-    function hasWithdrawn(uint256 dividendId, address account) external view returns (bool hasWithdrawn);
+    function withdrawAt(uint256 dividendId, address account) external view returns (uint256 withdrawAt);
 
     function issueDividend(
         address governor,

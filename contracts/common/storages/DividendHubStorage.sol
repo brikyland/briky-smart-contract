@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import {IDividendHub} from "../interfaces/IDividendHub.sol";
 
 abstract contract DividendHubStorage is IDividendHub {
-    mapping(uint256 => mapping(address => bool)) public hasWithdrawn;
+    mapping(uint256 => mapping(address => uint256)) public withdrawAt;
 
     mapping(uint256 => Dividend) internal dividends;
 

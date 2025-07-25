@@ -19,7 +19,7 @@ contract Airdrop {
     ) external payable {
         require(_accounts.length == _amounts.length, "invalid input");
         uint256 total;
-        for (uint256 i; i < _accounts.length; ++i) {
+        for (uint256 i; i < _accounts.length; i++) {
             require(_accounts[i] != address(0), "invalid address");
             require(_amounts[i] > 0, "invalid amount");
             total += _amounts[i];
@@ -27,12 +27,12 @@ contract Airdrop {
 
         if (currency == address(0)) {
             CurrencyHandler.receiveNative(total);
-            for (uint256 i; i < _accounts.length; ++i) {
+            for (uint256 i; i < _accounts.length; i++) {
                 CurrencyHandler.sendNative(_accounts[i], _amounts[i]);
             }
         } else {
             CurrencyHandler.receiveERC20(currency, total);
-            for (uint256 i; i < _accounts.length; ++i) {
+            for (uint256 i; i < _accounts.length; i++) {
                 CurrencyHandler.sendERC20(currency, _accounts[i], _amounts[i]);
             }
         }
