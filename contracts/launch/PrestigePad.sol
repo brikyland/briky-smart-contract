@@ -6,6 +6,8 @@ import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/se
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 import {IPriceWatcher} from "../common/interfaces/IPriceWatcher.sol";
 
+import {Formula} from "../lib/Formula.sol";
+
 import {CommonConstant} from "../common/constants/CommonConstant.sol";
 
 import {Discountable} from "../common/utilities/Discountable.sol";
@@ -28,6 +30,8 @@ Discountable,
 Pausable,
 Validatable,
 ReentrancyGuardUpgradeable {
+    using Formula for uint256;
+
     string constant private VERSION = "v1.1.1";
 
     modifier validRequest(uint256 _requestId) {
@@ -192,7 +196,7 @@ ReentrancyGuardUpgradeable {
             revert Unauthorized();
         }
 
-        if (!isInitiatorIn(_zone, _initiator)) {
+        if (!isInitiatorIn[_zone][_initiator]) {
             revert InvalidInput();
         }
 
@@ -255,6 +259,7 @@ ReentrancyGuardUpgradeable {
 
         emit RequestRoundUpdate(
             _requestId,
+            roundId,
             _index,
             _round
         );
@@ -307,8 +312,8 @@ ReentrancyGuardUpgradeable {
         uint256 _requestId,
         uint256 _cashbackThreshold,
         uint256 _cashbackBaseRate,
-        address[] _cashbackCurrencies,
-        uint256[] _cashbackDenominations,
+        address[] calldata _cashbackCurrencies,
+        uint256[] calldata _cashbackDenominations,
         uint40 _raiseStartsAt,
         uint40 _raiseDuration
     ) external nonReentrant validRequest(_requestId) onlyInitiator(_requestId) whenNotPaused returns (uint256) {
@@ -421,7 +426,7 @@ ReentrancyGuardUpgradeable {
             revert Timeout();
         }
 
-        uint256 soldQuantity = request.quota.soldQuantity;
+        // uint256 soldQuantity = request.quota.soldQuantity;
 
     }
 

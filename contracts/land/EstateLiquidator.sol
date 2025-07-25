@@ -137,8 +137,8 @@ ReentrancyGuardUpgradeable {
                     : EstateLiquidatorConstant.MAJORITY_QUORUM_RATE,
                 CommonConstant.RATE_MAX_FRACTION
             ),
-            EstateLiquidatorConstant.VOTING_DURATION,
-            uint40(block.timestamp) + EstateLiquidatorConstant.ADMISSION_DURATION,
+            uint40(EstateLiquidatorConstant.VOTING_DURATION),
+            uint40(block.timestamp) + uint40(EstateLiquidatorConstant.ADMISSION_DURATION),
             _validation
         );
 

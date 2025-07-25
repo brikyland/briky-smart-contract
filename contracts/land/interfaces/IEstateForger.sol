@@ -105,7 +105,7 @@ IEstateTokenizer {
 
     function getRequest(uint256 requestId) external view returns (EstateForgerRequest memory request);
 
-    function registerSellerIn(bytes32 zone, address account) external;
+    function registerSellerIn(bytes32 zone, address account, bool isSeller) external;
 
     function requestTokenization(
         address seller,
