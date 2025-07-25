@@ -9,7 +9,7 @@ import { deployCurrency } from '@utils/deployments/common/currency';
 import { deployTreasury } from '@utils/deployments/land/treasury';
 import { callTreasury_Pause } from '@utils/callWithSignatures/treasury';
 import { deployMockPrimaryToken } from '@utils/deployments/mocks/mockPrimaryToken';
-import { Initialization as LandInitialization } from '@tests/land/test.initialization';
+import { Initialization as LiquidityInitialization } from '@tests/liquidity/test.initialization';
 
 interface TreasuryFixture {
     deployer: any;
@@ -21,7 +21,7 @@ interface TreasuryFixture {
     receiver: any;
 }
 
-describe('8. Treasury', async () => {
+describe('4.6. Treasury', async () => {
     async function treasuryFixture(): Promise<TreasuryFixture> {
         const accounts = await ethers.getSigners();
         const deployer = accounts[0];
@@ -48,9 +48,9 @@ describe('8. Treasury', async () => {
         const primaryToken = await deployMockPrimaryToken(
             deployer,
             admin.address,
-            LandInitialization.PRIMARY_TOKEN_Name,
-            LandInitialization.PRIMARY_TOKEN_Symbol,
-            LandInitialization.PRIMARY_TOKEN_LiquidationUnlockedAt,
+            LiquidityInitialization.PRIMARY_TOKEN_Name,
+            LiquidityInitialization.PRIMARY_TOKEN_Symbol,
+            LiquidityInitialization.PRIMARY_TOKEN_LiquidationUnlockedAt,
         ) as MockPrimaryToken;
         
         const treasury = await deployTreasury(
@@ -97,8 +97,8 @@ describe('8. Treasury', async () => {
         }
     }
 
-    describe('8.1. initialize(address, address, address)', async () => {
-        it('8.1.1. Deploy successfully', async () => {
+    describe('4.6.1. initialize(address, address, address)', async () => {
+        it('4.6.1.1. Deploy successfully', async () => {
             const { treasury, admin, currency, primaryToken } = await setupBeforeTest();
 
             expect(await treasury.admin()).to.equal(admin.address);
@@ -110,8 +110,8 @@ describe('8. Treasury', async () => {
         });
     });
 
-    describe('8.2. withdrawOperationFund(uint256, address, bytes[])', async () => {
-        it('8.2.1. withdrawOperationFund successfully with valid signatures', async () => {
+    describe('4.6.2. withdrawOperationFund(uint256, address, bytes[])', async () => {
+        it('4.6.2.1. withdrawOperationFund successfully with valid signatures', async () => {
             const { treasury, admin, admins, currency, primaryToken, receiver } = await setupBeforeTest({
                 prepareLiquidity: true,
             });
@@ -158,7 +158,7 @@ describe('8. Treasury', async () => {
             expect(await currency.balanceOf(receiver.address)).to.equal(value1.add(value2));
         });
 
-        it('8.2.2. withdrawOperationFund unsuccessfully with invalid signatures', async () => {
+        it('4.6.2.2. withdrawOperationFund unsuccessfully with invalid signatures', async () => {
             const { treasury, admin, admins, currency, primaryToken, receiver } = await setupBeforeTest({
                 prepareLiquidity: true,
             });
@@ -175,7 +175,7 @@ describe('8. Treasury', async () => {
                 .to.be.revertedWithCustomError(admin, "FailedVerification");
         });
 
-        it('8.2.3. withdrawOperationFund unsuccessfully with insufficient funds', async () => {
+        it('4.6.2.3. withdrawOperationFund unsuccessfully with insufficient funds', async () => {
             const { treasury, admin, admins, currency, primaryToken, receiver } = await setupBeforeTest({
                 prepareLiquidity: true,
             });
@@ -194,8 +194,8 @@ describe('8. Treasury', async () => {
         });
     });
 
-    describe('8.3. withdrawLiquidity(uint256)', async () => {
-        it('8.3.1. withdrawLiquidity successfully', async () => {
+    describe('4.6.3. withdrawLiquidity(uint256)', async () => {
+        it('4.6.3.1. withdrawLiquidity successfully', async () => {
             const { treasury, admin, admins, currency, primaryToken, receiver } = await setupBeforeTest({
                 prepareLiquidity: true,
             });
@@ -238,7 +238,7 @@ describe('8. Treasury', async () => {
             expect(await currency.balanceOf(treasury.address)).to.equal(initialTreasuryBalance.sub(value1).sub(value2));
         });
 
-        it('8.3.2. withdrawLiquidity unsuccessfully when paused', async () => {
+        it('4.6.3.2. withdrawLiquidity unsuccessfully when paused', async () => {
             const { treasury, primaryToken, receiver } = await setupBeforeTest({
                 prepareLiquidity: true,
                 pause: true,
@@ -252,7 +252,7 @@ describe('8. Treasury', async () => {
             ]))).to.be.revertedWith("Pausable: paused");
         });
 
-        it('8.3.3. withdrawLiquidity unsuccessfully by unauthorized user', async () => {
+        it('4.6.3.3. withdrawLiquidity unsuccessfully by unauthorized user', async () => {
             const { treasury, primaryToken, receiver } = await setupBeforeTest({
                 prepareLiquidity: true,
             });
@@ -263,7 +263,7 @@ describe('8. Treasury', async () => {
                 .to.be.revertedWithCustomError(treasury, "Unauthorized");
         });
 
-        it('8.3.4. withdrawLiquidity unsuccessfully with insufficient funds', async () => {
+        it('4.6.3.4. withdrawLiquidity unsuccessfully with insufficient funds', async () => {
             const { treasury, primaryToken, receiver } = await setupBeforeTest({
                 prepareLiquidity: true,
             });
@@ -277,8 +277,8 @@ describe('8. Treasury', async () => {
         });
     });
 
-    describe('8.4. provideLiquidity(uint256)', async () => {
-        it('8.4.1. provideLiquidity successfully', async () => {
+    describe('4.6.4. provideLiquidity(uint256)', async () => {
+        it('4.6.4.1. provideLiquidity successfully', async () => {
             const { treasury, admin, admins, currency, primaryToken, receiver } = await setupBeforeTest();
 
             const value1 = ethers.utils.parseEther("100");
@@ -318,7 +318,7 @@ describe('8. Treasury', async () => {
             expect(await currency.balanceOf(treasury.address)).to.equal(initialTreasuryBalance.add(value1).add(value2));
         });
 
-        it('8.4.2. provideLiquidity unsuccessfully when paused', async () => {
+        it('4.6.4.2. provideLiquidity unsuccessfully when paused', async () => {
             const { treasury, receiver } = await setupBeforeTest({
                 prepareLiquidity: true,
                 pause: true,

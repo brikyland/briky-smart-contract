@@ -27,7 +27,7 @@
 4.3. Driptributor (DONE)
 4.4. PrimaryToken (DONE)
 4.5. StateToken (DONE)
-4.6. Treasury
+4.6. Treasury (DONE)
 
 5. Lucra
 5.1. PassportToken

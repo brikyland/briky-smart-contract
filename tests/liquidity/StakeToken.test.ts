@@ -1109,7 +1109,7 @@ describe('4.5. StakeToken', async () => {
         });
     });
 
-    describe.only('4.5.9. exclusiveDiscount()', async () => {
+    describe('4.5.9. exclusiveDiscount()', async () => {
         async function testDiscount(
             fixture: StakeTokenFixture,
             stakeToken1Supply: BigNumber,
