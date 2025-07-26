@@ -25,6 +25,8 @@ import {EstateLiquidatorStorage} from "./storages/EstateLiquidatorStorage.sol";
 
 import {CommissionDispatchable} from "./utilities/CommissionDispatchable.sol";
 
+import "hardhat/console.sol";
+
 contract EstateLiquidator is
 EstateLiquidatorStorage,
 Administrable,
@@ -56,6 +58,8 @@ ReentrancyGuardUpgradeable {
         address _validator,
         uint256 _feeRate
     ) external initializer {
+        require(_feeRate <= CommonConstant.RATE_MAX_FRACTION);
+
         __Pausable_init();
         __ReentrancyGuard_init();
 
@@ -113,7 +117,7 @@ ReentrancyGuardUpgradeable {
         Validation calldata _validation
     ) external payable nonReentrant whenNotPaused returns (uint256) {
         IEstateToken estateTokenContract = IEstateToken(estateToken);
-        if (estateTokenContract.isAvailable(_estateId)) {
+        if (!estateTokenContract.isAvailable(_estateId)) {
             revert UnavailableEstate();
         }
 
@@ -121,22 +125,26 @@ ReentrancyGuardUpgradeable {
             revert InvalidInput();
         }
 
-        CurrencyHandler.receiveCurrency(_currency, _value);
         IGovernanceHub governanceHubContract = IGovernanceHub(governanceHub);
+        uint256 fee = governanceHubContract.fee();
+        if (_currency == address(0)) {
+            CurrencyHandler.receiveNative(_value + fee);
+        } else {
+            CurrencyHandler.receiveNative(fee);
+            CurrencyHandler.receiveERC20(_currency, _value);
+        }
+        
         uint256 proposalId = governanceHubContract.propose{
             value: governanceHubContract.fee()
         }(
-            address(this),
+            estateToken,
             _estateId,
             msg.sender,
             _uuid,
             ProposalRule.ApprovalBeyondQuorum,
-            estateTokenContract.totalSupply(_estateId).scale(
-                estateTokenContract.getEstate(_estateId).tokenizeAt + EstateLiquidatorConstant.UNANIMOUS_GUARD_DURATION > block.timestamp
-                    ? EstateLiquidatorConstant.UNANIMOUS_QUORUM_RATE
-                    : EstateLiquidatorConstant.MAJORITY_QUORUM_RATE,
-                CommonConstant.RATE_MAX_FRACTION
-            ),
+            estateTokenContract.getEstate(_estateId).tokenizeAt + EstateLiquidatorConstant.UNANIMOUS_GUARD_DURATION > block.timestamp
+                ? EstateLiquidatorConstant.UNANIMOUS_QUORUM_RATE
+                : EstateLiquidatorConstant.MAJORITY_QUORUM_RATE,
             uint40(EstateLiquidatorConstant.VOTING_DURATION),
             uint40(block.timestamp) + uint40(EstateLiquidatorConstant.ADMISSION_DURATION),
             _validation
