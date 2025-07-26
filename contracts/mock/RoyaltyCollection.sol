@@ -59,7 +59,7 @@ contract RoyaltyCollection is ERC721Upgradeable, RoyaltyRateProposer {
     }
 
     function getRoyaltyRate() public view override returns (Rate memory rate) {
-        return Rate(royaltyRate, CommonConstant.COMMON_RATE_DECIMALS);
+        return Rate(royaltyRate, CommonConstant.RATE_DECIMALS);
     }
 
     function _royaltyReceiver() internal view virtual override returns (address) {

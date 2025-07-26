@@ -1,6 +1,7 @@
 import { BigNumber, ethers, Wallet } from "ethers";
 import { Validation } from "./models/Validation";
 import { getSignatures } from "./blockchain";
+import { MockContract } from "@defi-wonderland/smock";
 
 export class MockValidator {
     public signer: Wallet;
@@ -12,7 +13,7 @@ export class MockValidator {
     }
 
     async getValidation(
-        validatable: ethers.Contract,
+        validatable: ethers.Contract | MockContract<ethers.Contract>,
         content: string,
         expiry: BigNumber,
     ) {
@@ -32,7 +33,7 @@ export class MockValidator {
     }
 
     async getInvalidValidation(
-        validatable: ethers.Contract,
+        validatable: ethers.Contract | MockContract<ethers.Contract>,
         content: string,
         expiry: BigNumber,
     ) {

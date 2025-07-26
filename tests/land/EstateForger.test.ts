@@ -55,14 +55,16 @@ import { request } from 'http';
 import { Initialization as LandInitialization } from '@tests/land/test.initialization';
 import { callReserveVault_AuthorizeInitiator } from '@utils/callWithSignatures/reserveVault';
 import { remain, scale } from '@utils/formula';
-import { RequestEstateInput, RequestQuoteInput, RequestQuotaInput, RequestQuote, RequestAgenda, RequestEstate, RequestQuota, RequestAgendaInput } from '@utils/models/EstateForger';
+import { RequestQuote, RequestAgenda, RequestEstate, RequestQuota } from '@utils/models/EstateForger';
 import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
 import { Rate } from '@utils/models/Common';
 import { MockValidator } from '@utils/mockValidator';
+import { RegisterSellerInParams, RequestTokenizationParams, UpdateRequestURIParams, UpdateRequestAgendaParams } from '@utils/models/EstateForger';
+import { getRegisterSellerInValidation, getRequestTokenizationValidation, getRegisterSellerInInvalidValidation, getRequestTokenizationInvalidValidation, getUpdateRequestURIValidation, getUpdateRequestURIInvalidValidation } from '@utils/validation/EstateForger';
 
 chai.use(smock.matchers);
 
-interface EstateForgerFixture {
+export interface EstateForgerFixture {
     admin: Admin;
     feeReceiver: FeeReceiver;
     currencies: Currency[];
@@ -87,30 +89,6 @@ interface EstateForgerFixture {
     depositors: any[];
 
     zone1: string, zone2: string;
-}
-
-interface RegisterSellerInParams {
-    zone: string;
-    account: string;
-    uri: string;
-}
-
-interface RequestTokenizationParams {
-    seller: string;
-    estate: RequestEstateInput;
-    quota: RequestQuotaInput;
-    quote: RequestQuoteInput;
-    agenda: RequestAgendaInput;
-}
-
-interface UpdateRequestURIParams {
-    requestId: BigNumber;
-    uri: string;
-}
-
-interface UpdateRequestAgendaParams {
-    requestId: BigNumber;
-    agenda: RequestAgendaInput;
 }
 
 async function testReentrancy_estateForger(
@@ -177,95 +155,6 @@ export async function getCashbackBaseDenomination(
         feeDenomination.sub(commissionDenomination),
         cashbackBaseRate,
     );
-}
-
-async function getRegisterSellerInValidation(
-    fixture: EstateForgerFixture,
-    params: RegisterSellerInParams,
-) {
-    const { estateForger, validator } = fixture;
-    const content = ethers.utils.defaultAbiCoder.encode(
-        ["bytes32", "address", "string"],
-        [params.zone, params.account, params.uri]
-    );
-    const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
-
-    const validation = await validator.getValidation(estateForger, content, expiry);
-    return validation;
-}
-
-
-async function getRegisterSellerInInvalidValidation(
-    fixture: EstateForgerFixture,
-    params: RegisterSellerInParams,
-) {
-    const { estateForger, validator } = fixture;
-    const content = ethers.utils.defaultAbiCoder.encode(
-        ["bytes32", "address", "string"],
-        [params.zone, params.account, params.uri]
-    );
-    const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
-
-    const validation = await validator.getInvalidValidation(estateForger, content, expiry);
-    return validation;
-}
-
-async function getRequestTokenizationValidation(
-    fixture: EstateForgerFixture,
-    params: RequestTokenizationParams,
-) {
-    const { estateForger, validator } = fixture;
-    const content = ethers.utils.defaultAbiCoder.encode(
-        ["string"],
-        [params.estate.uri]
-    );    
-    const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
-
-    const validation = await validator.getValidation(estateForger, content, expiry);
-    return validation;
-}
-
-async function getRequestTokenizationInvalidValidation(
-    fixture: EstateForgerFixture,
-    params: RequestTokenizationParams,
-) {
-    const { estateForger, validator } = fixture;
-    const content = ethers.utils.defaultAbiCoder.encode(
-        ["string"],
-        [params.estate.uri]
-    );    
-    const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
-
-    const validation = await validator.getInvalidValidation(estateForger, content, expiry);
-    return validation;
-}
-
-async function getUpdateRequestURIValidation(
-    fixture: EstateForgerFixture,
-    params: UpdateRequestURIParams,
-) {
-    const { estateForger, validator } = fixture;
-    const content = ethers.utils.defaultAbiCoder.encode(
-        ["string"],
-        [params.uri]
-    );
-    const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
-    const validation = await validator.getValidation(estateForger, content, expiry);
-    return validation;
-}
-
-async function getUpdateRequestURIInvalidValidation(
-    fixture: EstateForgerFixture,
-    params: UpdateRequestURIParams,
-) {
-    const { estateForger, validator } = fixture;
-    const content = ethers.utils.defaultAbiCoder.encode(
-        ["string"],
-        [params.uri]
-    );
-    const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
-    const validation = await validator.getInvalidValidation(estateForger, content, expiry);
-    return validation;
 }
 
 describe('2.2. EstateForger', async () => {
@@ -446,6 +335,7 @@ describe('2.2. EstateForger', async () => {
             depositor3,
             reserveVault,
             deployer,
+            validator,
         } = fixture;
 
         await callAdmin_AuthorizeManagers(
@@ -587,7 +477,7 @@ describe('2.2. EstateForger', async () => {
                         account: seller.address,
                         uri: sellerUri,
                     };
-                    const validation = await getRegisterSellerInValidation(fixture, params);
+                    const validation = await getRegisterSellerInValidation(estateForger, validator, params);
                     await callTransaction(estateForger.connect(manager).registerSellerIn(
                         params.zone,
                         params.account,
@@ -625,7 +515,7 @@ describe('2.2. EstateForger', async () => {
                     publicSaleDuration: 40 * DAY,
                 },
             };
-            const validation1 = await getRequestTokenizationValidation(fixture, params1);
+            const validation1 = await getRequestTokenizationValidation(estateForger, validator, params1);
             await callTransaction(estateForger.connect(manager).requestTokenization(                
                 params1.seller,
                 params1.estate,
@@ -661,7 +551,7 @@ describe('2.2. EstateForger', async () => {
                     publicSaleDuration: 60 * DAY,
                 },
             };
-            const validation2 = await getRequestTokenizationValidation(fixture, params2);
+            const validation2 = await getRequestTokenizationValidation(estateForger, validator, params2);
 
             await callTransaction(estateForger.connect(manager).requestTokenization(
                 params2.seller,
@@ -1083,8 +973,8 @@ describe('2.2. EstateForger', async () => {
             params: RegisterSellerInParams,
             error: string,
         ) {
-            const { estateForger } = fixture;
-            const validation = await getRegisterSellerInValidation(fixture, params);
+            const { estateForger, validator } = fixture;
+            const validation = await getRegisterSellerInValidation(estateForger, validator, params);
             await expect(estateForger.connect(signer).registerSellerIn(
                 params.zone,
                 params.account,
@@ -1099,8 +989,8 @@ describe('2.2. EstateForger', async () => {
             params: RegisterSellerInParams,
             error: string,
         ) {
-            const { estateForger } = fixture;
-            const validation = await getRegisterSellerInValidation(fixture, params);
+            const { estateForger, validator } = fixture;
+            const validation = await getRegisterSellerInValidation(estateForger, validator, params);
             await expect(estateForger.connect(signer).registerSellerIn(
                 params.zone,
                 params.account,
@@ -1113,7 +1003,7 @@ describe('2.2. EstateForger', async () => {
             const fixture = await beforeEstateForgerTest({
                 addZoneForExecutive: true,
             });
-            const { estateForger, manager, seller1, seller2, seller3, zone1 } = fixture;
+            const { estateForger, manager, seller1, seller2, seller3, zone1, validator } = fixture;
 
             // Tx1: Register seller1
             const params1 = {
@@ -1121,7 +1011,7 @@ describe('2.2. EstateForger', async () => {
                 account: seller1.address,
                 uri: "seller1_uri",
             }
-            const validation1 = await getRegisterSellerInValidation(fixture, params1);
+            const validation1 = await getRegisterSellerInValidation(estateForger, validator, params1);
 
             const tx1 = await estateForger.connect(manager).registerSellerIn(
                 params1.zone,
@@ -1143,7 +1033,7 @@ describe('2.2. EstateForger', async () => {
                 account: seller2.address,
                 uri: "seller2_uri",
             }
-            const validation2 = await getRegisterSellerInValidation(fixture, params2);
+            const validation2 = await getRegisterSellerInValidation(estateForger, validator, params2);
 
             const tx2 = await estateForger.connect(manager).registerSellerIn(
                 params2.zone,
@@ -1163,7 +1053,7 @@ describe('2.2. EstateForger', async () => {
                 account: seller1.address,
                 uri: "seller1_new_uri",
             }
-            const validation3 = await getRegisterSellerInValidation(fixture, params3);
+            const validation3 = await getRegisterSellerInValidation(estateForger, validator, params3);
 
             const tx3 = await estateForger.connect(manager).registerSellerIn(
                 params3.zone,
@@ -1185,11 +1075,11 @@ describe('2.2. EstateForger', async () => {
                 addZoneForExecutive: true,
             });
 
-            const { manager, estateForger } = fixture;
+            const { manager, estateForger, validator } = fixture;
 
             const { defaultParams } = await beforeRegisterSellerInTest(fixture);
 
-            const invalidValidation = await getRegisterSellerInInvalidValidation(fixture, defaultParams);
+            const invalidValidation = await getRegisterSellerInInvalidValidation(estateForger, validator, defaultParams);
             
             await expect(estateForger.connect(manager).registerSellerIn(
                 defaultParams.zone,
@@ -1349,8 +1239,8 @@ describe('2.2. EstateForger', async () => {
             data: RequestTokenizationParams,
             error: string,
         ) {
-            const { estateForger } = fixture;
-            const validation = await getRequestTokenizationValidation(fixture, data);
+            const { estateForger, validator } = fixture;
+            const validation = await getRequestTokenizationValidation(estateForger, validator, data);
             await expect(estateForger.connect(manager).requestTokenization(
                 data.seller,
                 data.estate,
@@ -1367,8 +1257,8 @@ describe('2.2. EstateForger', async () => {
             data: RequestTokenizationParams,
             error: string,
         ) {
-            const { estateForger } = fixture;
-            const validation = await getRequestTokenizationValidation(fixture, data);
+            const { estateForger, validator } = fixture;
+            const validation = await getRequestTokenizationValidation(estateForger, validator, data);
             await expect(estateForger.connect(manager).requestTokenization(
                 data.seller,
                 data.estate,
@@ -1384,8 +1274,8 @@ describe('2.2. EstateForger', async () => {
             manager: any,
             data: RequestTokenizationParams,
         ) {
-            const { estateForger } = fixture;
-            const validation = await getRequestTokenizationValidation(fixture, data);
+            const { estateForger, validator } = fixture;
+            const validation = await getRequestTokenizationValidation(estateForger, validator, data);
             await expect(estateForger.connect(manager).requestTokenization(
                 data.seller,
                 data.estate,
@@ -1403,12 +1293,12 @@ describe('2.2. EstateForger', async () => {
                 listSampleSellers: true,
                 addEstateForgerToVault: true,
             });
-            const { manager, estateForger, reserveVault, commissionToken, admin } = fixture;
+            const { manager, estateForger, reserveVault, commissionToken, admin, validator } = fixture;
 
             const defaultParams = await getDefaultParams(fixture);
 
             const data = defaultParams;
-            const validation = await getRequestTokenizationValidation(fixture, data);
+            const validation = await getRequestTokenizationValidation(estateForger, validator, data);
 
             const tx = await estateForger.connect(manager).requestTokenization(
                 data.seller,
@@ -1496,10 +1386,10 @@ describe('2.2. EstateForger', async () => {
                 addEstateForgerToVault: true,
             });
 
-            const { manager, estateForger } = fixture;
+            const { manager, estateForger, validator } = fixture;
 
             const defaultParams = await getDefaultParams(fixture);
-            const invalidValidation = await getRequestTokenizationInvalidValidation(fixture, defaultParams);
+            const invalidValidation = await getRequestTokenizationInvalidValidation(estateForger, validator, defaultParams);
             await expect(estateForger.connect(manager).requestTokenization(
                 defaultParams.seller,
                 defaultParams.estate,
@@ -1929,8 +1819,8 @@ describe('2.2. EstateForger', async () => {
             params: UpdateRequestURIParams,
             error: string
         ) {
-            const { estateForger } = fixture;
-            const validation = await getUpdateRequestURIValidation(fixture, params);
+            const { estateForger, validator } = fixture;
+            const validation = await getUpdateRequestURIValidation(estateForger, validator, params);
             await expect(estateForger.connect(signer).updateRequestURI(
                 params.requestId,
                 params.uri,
@@ -1944,8 +1834,8 @@ describe('2.2. EstateForger', async () => {
             params: UpdateRequestURIParams,
             error: string
         ) {
-            const { estateForger } = fixture;
-            const validation = await getUpdateRequestURIValidation(fixture, params);
+            const { estateForger, validator } = fixture;
+            const validation = await getUpdateRequestURIValidation(estateForger, validator, params);
             await expect(estateForger.connect(signer).updateRequestURI(
                 params.requestId,
                 params.uri,
@@ -1961,7 +1851,7 @@ describe('2.2. EstateForger', async () => {
                 addSampleRequests: true,
                 addEstateForgerToVault: true,
             });
-            const { moderator, manager, estateForger } = fixture;
+            const { moderator, manager, estateForger, validator } = fixture;
 
             // Tx1: by manager
             const params1 = {
@@ -1969,7 +1859,7 @@ describe('2.2. EstateForger', async () => {
                 uri: 'new_uri_1',
             }
     
-            const validation1 = await getUpdateRequestURIValidation(fixture, params1);
+            const validation1 = await getUpdateRequestURIValidation(estateForger, validator, params1);
 
             const tx1 = await estateForger.connect(manager).updateRequestURI(
                 params1.requestId,
@@ -1992,7 +1882,7 @@ describe('2.2. EstateForger', async () => {
                 uri: 'new_uri_2',
             }
 
-            const validation2 = await getUpdateRequestURIValidation(fixture, params2);
+            const validation2 = await getUpdateRequestURIValidation(estateForger, validator, params2);
 
             const tx2 = await estateForger.connect(moderator).updateRequestURI(
                 params2.requestId,
@@ -2018,10 +1908,10 @@ describe('2.2. EstateForger', async () => {
                 addSampleRequests: true,
                 addEstateForgerToVault: true,
             });
-            const { manager, estateForger } = fixture;
+            const { manager, estateForger, validator } = fixture;
             
             const { defaultParams } = await beforeUpdateRequestURI(fixture);
-            const invalidValidation = await getUpdateRequestURIInvalidValidation(fixture, defaultParams);
+            const invalidValidation = await getUpdateRequestURIInvalidValidation(estateForger, validator, defaultParams);
 
             await expect(estateForger.connect(manager).updateRequestURI(
                 defaultParams.requestId,
@@ -3376,7 +3266,7 @@ describe('2.2. EstateForger', async () => {
             deposits: any[],
             hasCommissionReceiver: boolean,
         ) {
-            const { admin, admins, zone1, deployer, manager, estateForger, currencies: _currencies, seller1, estateToken, feeReceiver, commissionToken, priceWatcher, commissionReceiver, reserveVault } = fixture;
+            const { admin, admins, zone1, deployer, manager, estateForger, currencies: _currencies, seller1, estateToken, feeReceiver, commissionToken, priceWatcher, commissionReceiver, reserveVault, validator } = fixture;
             const decimals = LandInitialization.ESTATE_TOKEN_Decimals;
             const currencies = _currencies.slice();
 
@@ -3462,7 +3352,7 @@ describe('2.2. EstateForger', async () => {
                 }
             }
 
-            const validation = await getRequestTokenizationValidation(fixture, params);
+            const validation = await getRequestTokenizationValidation(estateForger, validator, params);
 
             await callTransaction(estateForger.connect(manager).requestTokenization(
                 params.seller,
@@ -4320,7 +4210,7 @@ describe('2.2. EstateForger', async () => {
                 addEstateForgerToVault: true,
                 fundERC20ForManagers: true,
             });
-            const {estateForger, zone1, manager, commissionReceiver, depositor1, deployer, admin, admins, currencies} = fixture;
+            const {estateForger, zone1, manager, commissionReceiver, depositor1, deployer, admin, admins, currencies, validator} = fixture;
             const baseTimestamp = await time.latest();
 
             await callEstateForger_UpdateBaseUnitPriceRange(
@@ -4338,7 +4228,7 @@ describe('2.2. EstateForger', async () => {
                 account: failReceiver.address,
                 uri: "failReceiver_uri",
             };
-            const registerValidation = await getRegisterSellerInValidation(fixture, registerParams);
+            const registerValidation = await getRegisterSellerInValidation(estateForger, validator, registerParams);
 
             await callTransaction(estateForger.connect(manager).registerSellerIn(
                 registerParams.zone,
@@ -4374,7 +4264,7 @@ describe('2.2. EstateForger', async () => {
                     publicSaleDuration: 40 * DAY,
                 }
             };
-            const requestValidation = await getRequestTokenizationValidation(fixture, requestParams);
+            const requestValidation = await getRequestTokenizationValidation(estateForger, validator, requestParams);
 
             const receipt = await callTransaction(estateForger.connect(manager).requestTokenization(
                 requestParams.seller,
@@ -4427,7 +4317,7 @@ describe('2.2. EstateForger', async () => {
                 fundERC20ForManagers: true,
                 addEstateForgerToVault: true,
             });
-            const {estateForger, zone1, manager, depositor1, deployer, admin, admins, seller1} = fixture;
+            const {estateForger, zone1, manager, depositor1, deployer, admin, admins, seller1, validator} = fixture;
             const baseTimestamp = await time.latest();
 
             await callEstateForger_UpdateBaseUnitPriceRange(
@@ -4467,7 +4357,7 @@ describe('2.2. EstateForger', async () => {
                     publicSaleDuration: 40 * DAY,
                 }
             };
-            const requestValidation = await getRequestTokenizationValidation(fixture, requestParams);
+            const requestValidation = await getRequestTokenizationValidation(estateForger, validator, requestParams);
 
             const receipt = await callTransaction(estateForger.connect(manager).requestTokenization(
                 requestParams.seller,

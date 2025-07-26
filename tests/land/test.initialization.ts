@@ -20,4 +20,7 @@ export const Initialization = {
     ESTATE_TOKEN_BaseURI: 'EstateToken_TestURI',
     ESTATE_TOKEN_RoyaltyRate: parseEther("0.0003"),
     ESTATE_TOKEN_Decimals: 18,
+
+    // Estate Liquidator
+    ESTATE_LIQUIDATOR_FeeRate: parseEther("0.000000001"),
 }

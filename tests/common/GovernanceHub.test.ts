@@ -10,12 +10,10 @@ import {
     FailReceiver,
     Reentrancy,
 } from '@typechain-types';
-import { callTransaction, getSignatures, getValidationMessage, prepareERC20, prepareNativeToken, randomWallet, testReentrancy } from '@utils/blockchain';
+import { callTransaction, getSignatures, prepareERC20, prepareNativeToken, testReentrancy } from '@utils/blockchain';
 import { Constant } from '@tests/test.constant';
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
-import { deployMockValidatable } from '@utils/deployments/mock/mockValidatable';
-import { Validation } from '@utils/models/Validation';
 import { deployGovernanceHub } from '@utils/deployments/common/governanceHub';
 import { ProposalRule, ProposalState, ProposalVerdict, ProposalVoteOption } from '@utils/models/Proposal';
 import { BigNumber, Contract, Wallet } from 'ethers';
@@ -28,8 +26,10 @@ import { deployCurrency } from '@utils/deployments/common/currency';
 import { deployFailReceiver } from '@utils/deployments/mocks/failReceiver';
 import { deployReentrancyERC20 } from '@utils/deployments/mocks/mockReentrancy/reentrancyERC20';
 import { deployReentrancy } from '@utils/deployments/mocks/mockReentrancy/reentrancy';
+import { ProposeParams, AdmitParams, DisqualifyParams, UpdateExecutionParams, ConcludeExecutionParams } from '@utils/models/GovernanceHub';
+import { getProposeValidation, getAdmitValidation, getDisqualifyValidation, getConcludeExecutionValidation, getProposeInvalidValidation, getAdmitInvalidValidation, getDisqualifyInvalidValidation, getUpdateExecutionValidation, getUpdateExecutionInvalidValidation, getConcludeExecutionInvalidValidation } from '@utils/validation/GovernanceHub';
 
-interface GovernanceHubFixture {
+export interface GovernanceHubFixture {
     admin: Admin;
     governanceHub: GovernanceHub;
     governor: MockContract<Governor>;
@@ -54,224 +54,17 @@ interface GovernanceHubFixture {
     zone: any;
 }
 
-interface ProposeParams {
-    governor: string;
-    tokenId: number;
-    operator: string;
-    uuid: string;
-    rule: ProposalRule;
-    quorumRate: BigNumber;
-    duration: number;
-    admissionExpiry: number;
-}
-
-interface AdmitParams {
-    proposalId: number;
-    contentURI: string;
-    stateURI: string;
-    currency: string;
-}
-
-interface DisqualifyParams {
-    proposalId: number;
-    contentURI: string;
-    stateURI: string;
-}
-
-interface UpdateExecutionParams {
-    proposalId: number;
-    stateURI: string;
-}
-
-interface ConcludeExecutionParams {
-    proposalId: number;
-    stateURI: string;
-    isSuccessful: boolean;    
-}
-
-async function getProposeValidation(
-    fixture: GovernanceHubFixture,
-    operator: Wallet | Contract,
-    params: ProposeParams,
-): Promise<Validation> {
-    const { governanceHub, validator } = fixture;
-
-    const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
-
-    const content = ethers.utils.defaultAbiCoder.encode(
-        ["address", "uint256", "address", "bytes32", "address", "uint8", "uint256", "uint40", "uint40"],
-        [params.governor, params.tokenId, operator.address, params.uuid, params.operator, params.rule, params.quorumRate, params.duration, params.admissionExpiry]
-    );
-
-    const validation = await validator.getValidation(governanceHub, content, expiry);
-    return validation;
-}
-
-async function getProposeInvalidValidation(
-    fixture: GovernanceHubFixture,
-    operator: Wallet | Contract,
-    params: ProposeParams,
-): Promise<Validation> {
-    const { governanceHub, validator } = fixture;
-
-    const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
-
-    const content = ethers.utils.defaultAbiCoder.encode(
-        ["address", "uint256", "address", "bytes32", "address", "uint8", "uint256", "uint40", "uint40"],
-        [params.governor, params.tokenId, operator.address, params.uuid, params.operator, params.rule, params.quorumRate, params.duration, params.admissionExpiry]
-    );
-
-    const validation = await validator.getInvalidValidation(governanceHub, content, expiry);
-    return validation;
-}
-
-async function getAdmitValidation(
-    fixture: GovernanceHubFixture,
-    params: AdmitParams,
-): Promise<Validation> {
-    const { governanceHub, validator } = fixture;
-
-    const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
-
-    const content = ethers.utils.defaultAbiCoder.encode(
-        ["uint256", "string", "string", "address"],
-        [params.proposalId, params.contentURI, params.stateURI, params.currency]
-    );
-
-    const validation = await validator.getValidation(governanceHub, content, expiry);
-    return validation;
-}
-
-async function getAdmitInvalidValidation(
-    fixture: GovernanceHubFixture,
-    params: AdmitParams,
-): Promise<Validation> {
-    const { governanceHub, validator } = fixture;
-
-    const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
-
-    const content = ethers.utils.defaultAbiCoder.encode(
-        ["uint256", "string", "string", "address"],
-        [params.proposalId, params.contentURI, params.stateURI, params.currency]
-    );
-
-    const validation = await validator.getInvalidValidation(governanceHub, content, expiry);
-    return validation;
-}
-
-async function getDisqualifyValidation(
-    fixture: GovernanceHubFixture,
-    params: DisqualifyParams,
-): Promise<Validation> {
-    const { governanceHub, validator } = fixture;
-
-    const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
-
-    const content = ethers.utils.defaultAbiCoder.encode(
-        ["uint256", "string", "string"],
-        [params.proposalId, params.contentURI, params.stateURI]
-    );
-
-    const validation = await validator.getValidation(governanceHub, content, expiry);
-    return validation;
-}
-
-async function getDisqualifyInvalidValidation(
-    fixture: GovernanceHubFixture,
-    params: DisqualifyParams,
-): Promise<Validation> {
-    const { governanceHub, validator } = fixture;
-
-    const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
-
-    const content = ethers.utils.defaultAbiCoder.encode(
-        ["uint256", "string", "string"],
-        [params.proposalId, params.contentURI, params.stateURI]
-    );
-
-    const validation = await validator.getInvalidValidation(governanceHub, content, expiry);
-    return validation;
-}
-
-async function getUpdateExecutionValidation(
-    fixture: GovernanceHubFixture,
-    params: UpdateExecutionParams,
-): Promise<Validation> {
-    const { governanceHub, validator } = fixture;
-
-    const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
-
-    const content = ethers.utils.defaultAbiCoder.encode(
-        ["uint256", "string"],
-        [params.proposalId, params.stateURI]
-    );
-
-    const validation = await validator.getValidation(governanceHub, content, expiry);
-    return validation;
-}
-
-async function getUpdateExecutionInvalidValidation(
-    fixture: GovernanceHubFixture,
-    params: UpdateExecutionParams,
-): Promise<Validation> {
-    const { governanceHub, validator } = fixture;
-
-    const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
-
-    const content = ethers.utils.defaultAbiCoder.encode(
-        ["uint256", "string"],
-        [params.proposalId, params.stateURI]
-    );
-
-    const validation = await validator.getInvalidValidation(governanceHub, content, expiry);
-    return validation;
-}
-
-async function getConcludeExecutionValidation(
-    fixture: GovernanceHubFixture,
-    params: ConcludeExecutionParams,
-): Promise<Validation> {
-    const { governanceHub, validator } = fixture;
-
-    const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
-
-    const content = ethers.utils.defaultAbiCoder.encode(
-        ["uint256", "string", "bool"],
-        [params.proposalId, params.stateURI, params.isSuccessful]
-    );
-
-    const validation = await validator.getValidation(governanceHub, content, expiry);
-    return validation;
-}
-
-async function getConcludeExecutionInvalidValidation(
-    fixture: GovernanceHubFixture,
-    params: ConcludeExecutionParams,
-): Promise<Validation> {
-    const { governanceHub, validator } = fixture;
-
-    const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
-
-    const content = ethers.utils.defaultAbiCoder.encode(
-        ["uint256", "string", "bool"],
-        [params.proposalId, params.stateURI, params.isSuccessful]
-    );
-
-    const validation = await validator.getInvalidValidation(governanceHub, content, expiry);
-    return validation;
-}
-
 async function testReentrancy_GovernanceHub(
     fixture: GovernanceHubFixture,
     reentrancyContract: Contract,
     assertion: any,
 ) {
-    const { proposer2, governor, operator2, governanceHub } = fixture;
+    const { proposer2, governor, operator2, governanceHub, validator } = fixture;
     
     let timestamp = await time.latest() + 10;
     const proposeParams = {
         governor: governor.address,
-        tokenId: 2,
+        tokenId: ethers.BigNumber.from(2),
         operator: operator2.address,
         uuid: ethers.utils.formatBytes32String("uuid_2"),
         rule: ProposalRule.DisapprovalBeyondQuorum,
@@ -279,7 +72,7 @@ async function testReentrancy_GovernanceHub(
         duration: 3000,
         admissionExpiry: timestamp + 4000,
     }
-    const proposeValidation = await getProposeValidation(fixture, proposer2, proposeParams);
+    const proposeValidation = await getProposeValidation(governanceHub, validator, proposer2, proposeParams);
 
     let data = [
         governanceHub.interface.encodeFunctionData("propose", [
@@ -411,6 +204,7 @@ describe('1.6. GovernanceHub', async () => {
             reentrancyERC20,
             failReceiver,
             deployer,
+            validator,
         } = fixture;
         const fee = await governanceHub.fee();
 
@@ -468,7 +262,7 @@ describe('1.6. GovernanceHub', async () => {
         if (addSampleProposals) {
             const params1 = {
                 governor: governor.address,
-                tokenId: 1,
+                tokenId: ethers.BigNumber.from(1),
                 operator: useFailReceiverOperator ? failReceiver.address : operator1.address,
                 uuid: ethers.utils.formatBytes32String("uuid_1"),
                 rule: ProposalRule.ApprovalBeyondQuorum,
@@ -476,7 +270,7 @@ describe('1.6. GovernanceHub', async () => {
                 duration: 1000,
                 admissionExpiry: timestamp + 2000,
             }
-            const validation1 = await getProposeValidation(fixture, proposer1, params1);
+            const validation1 = await getProposeValidation(governanceHub, validator, proposer1, params1);
 
             await time.setNextBlockTimestamp(timestamp);
             await callTransaction(governanceHub.connect(proposer1).propose(
@@ -496,7 +290,7 @@ describe('1.6. GovernanceHub', async () => {
 
             const params2 = {
                 governor: governor.address,
-                tokenId: 2,
+                tokenId: ethers.BigNumber.from(2),
                 operator: operator2.address,
                 uuid: ethers.utils.formatBytes32String("uuid_2"),
                 rule: ProposalRule.DisapprovalBeyondQuorum,
@@ -504,7 +298,7 @@ describe('1.6. GovernanceHub', async () => {
                 duration: 3000,
                 admissionExpiry: timestamp + 4000,
             }
-            const validation2 = await getProposeValidation(fixture, proposer2, params2);
+            const validation2 = await getProposeValidation(governanceHub, validator, proposer2, params2);
 
             await time.setNextBlockTimestamp(timestamp);
             await callTransaction(governanceHub.connect(proposer2).propose(
@@ -528,7 +322,7 @@ describe('1.6. GovernanceHub', async () => {
                 stateURI: "state_uri_1",
                 currency: ethers.constants.AddressZero,
             }
-            const validation1 = await getAdmitValidation(fixture, params1);
+            const validation1 = await getAdmitValidation(governanceHub, validator, params1);
 
             await callTransaction(governanceHub.connect(manager).admit(
                 params1.proposalId,
@@ -544,7 +338,7 @@ describe('1.6. GovernanceHub', async () => {
                 stateURI: "state_uri_2",
                 currency: useReentrancyERC20 ? reentrancyERC20.address : currencies[0].address,
             }
-            const validation2 = await getAdmitValidation(fixture, params2);
+            const validation2 = await getAdmitValidation(governanceHub, validator, params2);
 
             await callTransaction(governanceHub.connect(manager).admit(
                 params2.proposalId,
@@ -561,7 +355,7 @@ describe('1.6. GovernanceHub', async () => {
                 contentURI: "metadata_uri_1",
                 stateURI: "state_uri_1",
             }
-            const validation1 = await getDisqualifyValidation(fixture, params1);
+            const validation1 = await getDisqualifyValidation(governanceHub, validator, params1);
 
             await callTransaction(governanceHub.connect(moderator).disqualify(
                 params1.proposalId,
@@ -575,7 +369,7 @@ describe('1.6. GovernanceHub', async () => {
                 contentURI: "metadata_uri_2",
                 stateURI: "state_uri_2",
             }
-            const validation2 = await getDisqualifyValidation(fixture, params2);
+            const validation2 = await getDisqualifyValidation(governanceHub, validator, params2);
 
             await callTransaction(governanceHub.connect(moderator).disqualify(
                 params2.proposalId,
@@ -667,7 +461,7 @@ describe('1.6. GovernanceHub', async () => {
                 stateURI: "state_uri_1",
                 isSuccessful: true,
             }
-            const validation1 = await getConcludeExecutionValidation(fixture, params1);
+            const validation1 = await getConcludeExecutionValidation(governanceHub, validator, params1);
 
             await callTransaction(governanceHub.connect(manager).concludeExecution(
                 params1.proposalId,
@@ -681,7 +475,7 @@ describe('1.6. GovernanceHub', async () => {
                 stateURI: "state_uri_2",
                 isSuccessful: true,
             }
-            const validation2 = await getConcludeExecutionValidation(fixture, params2);
+            const validation2 = await getConcludeExecutionValidation(governanceHub, validator, params2);
 
             await callTransaction(governanceHub.connect(manager).concludeExecution(
                 params2.proposalId,
@@ -697,7 +491,7 @@ describe('1.6. GovernanceHub', async () => {
                 stateURI: "state_uri_1",
                 isSuccessful: false,
             }
-            const validation1 = await getConcludeExecutionValidation(fixture, params1);
+            const validation1 = await getConcludeExecutionValidation(governanceHub, validator, params1);
             
             await callTransaction(governanceHub.connect(manager).concludeExecution(
                 params1.proposalId,
@@ -711,7 +505,7 @@ describe('1.6. GovernanceHub', async () => {
                 stateURI: "state_uri_2",
                 isSuccessful: false,
             }
-            const validation2 = await getConcludeExecutionValidation(fixture, params2);
+            const validation2 = await getConcludeExecutionValidation(governanceHub, validator, params2);
             await callTransaction(governanceHub.connect(manager).concludeExecution(
                 params2.proposalId,
                 params2.stateURI,
@@ -782,14 +576,14 @@ describe('1.6. GovernanceHub', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
             });
-            const { governanceHub, governor, operator1, proposer1 } = fixture;
+            const { governanceHub, governor, operator1, proposer1, validator } = fixture;
 
             let timestamp = await time.latest() + 10;
 
             const fee = await governanceHub.fee();
             const params = {
                 governor: governor.address,
-                tokenId: 1,
+                tokenId: ethers.BigNumber.from(1),
                 operator: operator1.address,
                 uuid: ethers.utils.formatBytes32String("uuid_1"),
                 rule: ProposalRule.ApprovalBeyondQuorum,
@@ -797,7 +591,7 @@ describe('1.6. GovernanceHub', async () => {
                 duration: 1000,
                 admissionExpiry: timestamp + 2000,
             }
-            const validation = await getProposeValidation(fixture, proposer1, params);
+            const validation = await getProposeValidation(governanceHub, validator, proposer1, params);
             await callTransaction(governanceHub.connect(proposer1).propose(
                 params.governor,
                 params.tokenId,
@@ -1194,8 +988,8 @@ describe('1.6. GovernanceHub', async () => {
             signer: Wallet,
             error: string,
         ) {
-            const { governanceHub } = fixture;
-            const validation = await getProposeValidation(fixture, signer, params);
+            const { governanceHub, validator } = fixture;
+            const validation = await getProposeValidation(governanceHub, validator, signer, params);
 
             await expect(governanceHub.connect(signer).propose(
                 params.governor,
@@ -1216,8 +1010,8 @@ describe('1.6. GovernanceHub', async () => {
             signer: Wallet,
             error: string,
         ) {
-            const { governanceHub } = fixture;
-            const validation = await getProposeValidation(fixture, signer, params);
+            const { governanceHub, validator } = fixture;
+            const validation = await getProposeValidation(governanceHub, validator, signer, params);
 
             await expect(governanceHub.connect(signer).propose(
                 params.governor,
@@ -1237,7 +1031,7 @@ describe('1.6. GovernanceHub', async () => {
             const { governor, operator1 } = fixture;
             const defaultParams = {
                 governor: governor.address,
-                tokenId: 1,
+                tokenId: ethers.BigNumber.from(1),
                 operator: operator1.address,
                 uuid: ethers.utils.formatBytes32String("uuid_1"),
                 rule: ProposalRule.ApprovalBeyondQuorum,
@@ -1252,7 +1046,7 @@ describe('1.6. GovernanceHub', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
             });
-            const { governanceHub, governor, operator1, operator2, proposer1, proposer2 } = fixture;
+            const { governanceHub, governor, operator1, operator2, proposer1, proposer2, validator } = fixture;
             
             const fee = await governanceHub.fee();
             let timestamp = await time.latest() + 10;
@@ -1263,7 +1057,7 @@ describe('1.6. GovernanceHub', async () => {
 
             const params1 = {
                 governor: governor.address,
-                tokenId: 1,
+                tokenId: ethers.BigNumber.from(1),
                 operator: operator1.address,
                 uuid: ethers.utils.formatBytes32String("uuid_1"),
                 rule: ProposalRule.ApprovalBeyondQuorum,
@@ -1271,7 +1065,7 @@ describe('1.6. GovernanceHub', async () => {
                 duration: 1000,
                 admissionExpiry: timestamp + 2000,
             }
-            const validation1 = await getProposeValidation(fixture, proposer1, params1);
+            const validation1 = await getProposeValidation(governanceHub, validator, proposer1, params1);
 
             await time.setNextBlockTimestamp(timestamp);
             const tx1 = await governanceHub.connect(proposer1).propose(
@@ -1331,7 +1125,7 @@ describe('1.6. GovernanceHub', async () => {
 
             const params2 = {
                 governor: governor.address,
-                tokenId: 1,
+                tokenId: ethers.BigNumber.from(1),
                 operator: operator2.address,
                 uuid: ethers.utils.formatBytes32String("uuid_2"),
                 rule: ProposalRule.DisapprovalBeyondQuorum,
@@ -1339,7 +1133,7 @@ describe('1.6. GovernanceHub', async () => {
                 duration: 3000,
                 admissionExpiry: timestamp + 4000,
             }
-            const validation2 = await getProposeValidation(fixture, proposer2, params2);
+            const validation2 = await getProposeValidation(governanceHub, validator, proposer2, params2);
 
             await time.setNextBlockTimestamp(timestamp);
             const tx2 = await governanceHub.connect(proposer2).propose(
@@ -1397,12 +1191,12 @@ describe('1.6. GovernanceHub', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
             });
-            const { governanceHub, proposer1 } = fixture;
+            const { governanceHub, proposer1, validator } = fixture;
 
             let timestamp = await time.latest() + 10;
             const { defaultParams } = await beforeProposeTest(fixture);
 
-            const validation = await getProposeInvalidValidation(fixture, proposer1, defaultParams);
+            const validation = await getProposeInvalidValidation(governanceHub, validator, proposer1, defaultParams);
 
             await time.setNextBlockTimestamp(timestamp);
             await expect(governanceHub.connect(proposer1).propose(
@@ -1474,13 +1268,13 @@ describe('1.6. GovernanceHub', async () => {
             await time.setNextBlockTimestamp(timestamp);
             await expectRevertWithCustomError(
                 fixture,
-                { ...defaultParams, tokenId: 0 },
+                { ...defaultParams, tokenId: ethers.BigNumber.from(0) },
                 proposer1,
                 'UnavailableToken',
             );
             await expectRevertWithCustomError(
                 fixture,
-                { ...defaultParams, tokenId: 100 },
+                { ...defaultParams, tokenId: ethers.BigNumber.from(100) },
                 proposer1,
                 'UnavailableToken',
             );
@@ -1526,7 +1320,7 @@ describe('1.6. GovernanceHub', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
             });
-            const { failReceiver, governanceHub} = fixture;
+            const { failReceiver, governanceHub, validator } = fixture;
 
             const fee = await governanceHub.fee();
 
@@ -1534,7 +1328,7 @@ describe('1.6. GovernanceHub', async () => {
 
             const { defaultParams } = await beforeProposeTest(fixture);
 
-            const validation = await getProposeValidation(fixture, failReceiver, defaultParams);
+            const validation = await getProposeValidation(governanceHub, validator, failReceiver, defaultParams);
             await expect(failReceiver.call(
                 governanceHub.address,
                 governanceHub.interface.encodeFunctionData('propose', [
@@ -1556,7 +1350,7 @@ describe('1.6. GovernanceHub', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
             });
-            const { proposer1, reentrancyERC20, governanceHub, deployer, governor, operator2 } = fixture;
+            const { proposer1, reentrancyERC20, governanceHub, deployer, governor, operator2, validator } = fixture;
 
             let timestamp = await time.latest() + 10;
             await time.setNextBlockTimestamp(timestamp);
@@ -1565,7 +1359,7 @@ describe('1.6. GovernanceHub', async () => {
             
             const reentrancy = await deployReentrancy(deployer.address) as Reentrancy;
             
-            const validation = await getProposeValidation(fixture, reentrancy, defaultParams);
+            const validation = await getProposeValidation(governanceHub, validator, reentrancy, defaultParams);
 
             const fee = await governanceHub.fee();
                         
@@ -1610,8 +1404,8 @@ describe('1.6. GovernanceHub', async () => {
             signer: Wallet,
             error: string,
         ) {
-            const { governanceHub } = fixture;
-            const validation = await getAdmitValidation(fixture, params);
+            const { governanceHub, validator } = fixture;
+            const validation = await getAdmitValidation(governanceHub, validator, params);
             await expect(governanceHub.connect(signer).admit(
                 params.proposalId,
                 params.contentURI,
@@ -1627,8 +1421,8 @@ describe('1.6. GovernanceHub', async () => {
             signer: Wallet,
             error: string,
         ) {
-            const { governanceHub } = fixture;
-            const validation = await getAdmitValidation(fixture, params);
+            const { governanceHub, validator } = fixture;
+            const validation = await getAdmitValidation(governanceHub, validator, params);
             await expect(governanceHub.connect(signer).admit(
                 params.proposalId,
                 params.contentURI,
@@ -1643,7 +1437,7 @@ describe('1.6. GovernanceHub', async () => {
                 initGovernorTokens: true,
                 addSampleProposals: true,
             });
-            const { governanceHub, governor, manager, moderator, currencies } = fixture;
+            const { governanceHub, governor, manager, moderator, currencies, validator } = fixture;
 
             // Tx1: Sent by manager
             const params1 = {
@@ -1652,7 +1446,7 @@ describe('1.6. GovernanceHub', async () => {
                 stateURI: "state_uri_1",
                 currency: ethers.constants.AddressZero,
             }
-            const validation1 = await getAdmitValidation(fixture, params1);
+            const validation1 = await getAdmitValidation(governanceHub, validator, params1);
 
             let timestamp = await time.latest() + 10;
             await time.setNextBlockTimestamp(timestamp);
@@ -1698,7 +1492,7 @@ describe('1.6. GovernanceHub', async () => {
                 stateURI: "state_uri_2",
                 currency: currencies[0].address,
             }
-            const validation2 = await getAdmitValidation(fixture, params2);
+            const validation2 = await getAdmitValidation(governanceHub, validator, params2);
 
             timestamp += 10;
             await time.setNextBlockTimestamp(timestamp);
@@ -1743,11 +1537,11 @@ describe('1.6. GovernanceHub', async () => {
                 initGovernorTokens: true,
                 addSampleProposals: true,
             });
-            const { governanceHub, manager } = fixture;
+            const { governanceHub, manager, validator } = fixture;
 
             const { defaultParams } = await beforeAdmitTest(fixture);
             
-            const validation = await getAdmitInvalidValidation(fixture, defaultParams);
+            const validation = await getAdmitInvalidValidation(governanceHub, validator, defaultParams);
             await expect(governanceHub.connect(manager).admit(
                 defaultParams.proposalId,
                 defaultParams.contentURI,
@@ -2060,8 +1854,8 @@ describe('1.6. GovernanceHub', async () => {
             signer: Wallet,
             error: string,
         ) {
-            const { governanceHub } = fixture;
-            const validation = await getDisqualifyValidation(fixture, params);
+            const { governanceHub, validator } = fixture;
+            const validation = await getDisqualifyValidation(governanceHub, validator, params);
             await expect(governanceHub.connect(signer).disqualify(
                 params.proposalId,
                 params.contentURI,
@@ -2076,8 +1870,8 @@ describe('1.6. GovernanceHub', async () => {
             signer: Wallet,
             error: string,
         ) {
-            const { governanceHub } = fixture;
-            const validation = await getDisqualifyValidation(fixture, params);
+            const { governanceHub, validator } = fixture;
+            const validation = await getDisqualifyValidation(governanceHub, validator, params);
             await expect(governanceHub.connect(signer).disqualify(
                 params.proposalId,
                 params.contentURI,
@@ -2091,14 +1885,14 @@ describe('1.6. GovernanceHub', async () => {
                 initGovernorTokens: true,
                 addSampleProposals: true,
             });
-            const { governanceHub, manager, moderator } = fixture;
+            const { governanceHub, manager, moderator, validator } = fixture;
 
             const params1 = {
                 proposalId: 1,
                 contentURI: 'metadata_uri_1',
                 stateURI: 'state_uri_1',
             };
-            const validation1 = await getDisqualifyValidation(fixture, params1);
+            const validation1 = await getDisqualifyValidation(governanceHub, validator, params1);
 
             // Tx1: Disqualify by manager
             const tx1 = await governanceHub.connect(manager).disqualify(
@@ -2123,7 +1917,7 @@ describe('1.6. GovernanceHub', async () => {
                 contentURI: 'metadata_uri_2',
                 stateURI: 'state_uri_2',
             };
-            const validation2 = await getDisqualifyValidation(fixture, params2);
+            const validation2 = await getDisqualifyValidation(governanceHub, validator, params2);
 
             // Tx2: Disqualify by moderator
             const tx2 = await governanceHub.connect(moderator).disqualify(
@@ -2150,14 +1944,14 @@ describe('1.6. GovernanceHub', async () => {
                 addSampleProposals: true,
                 admitSampleProposals: true,
             });
-            const { governanceHub, manager } = fixture;
+            const { governanceHub, manager, validator } = fixture;
 
             const params = {
                 proposalId: 1,
                 contentURI: 'metadata_uri_1',
                 stateURI: 'state_uri_1',
             };
-            const validation = await getDisqualifyValidation(fixture, params);
+            const validation = await getDisqualifyValidation(governanceHub, validator, params);
 
             const tx = await governanceHub.connect(manager).disqualify(
                 params.proposalId,
@@ -2182,10 +1976,10 @@ describe('1.6. GovernanceHub', async () => {
                 initGovernorTokens: true,
                 addSampleProposals: true,
             });
-            const { governanceHub, manager } = fixture;
+            const { governanceHub, manager, validator } = fixture;
 
             const { defaultParams } = await beforeDisqualifyTest(fixture);
-            const validation = await getDisqualifyInvalidValidation(fixture, defaultParams);
+            const validation = await getDisqualifyInvalidValidation(governanceHub, validator, defaultParams);
 
             await expect(governanceHub.connect(manager).disqualify(
                 defaultParams.proposalId,
@@ -4072,8 +3866,8 @@ describe('1.6. GovernanceHub', async () => {
             params: UpdateExecutionParams,
             error: string
         ) {
-            const { governanceHub } = fixture;
-            const validation = await getUpdateExecutionValidation(fixture, params);
+            const { governanceHub, validator } = fixture;
+            const validation = await getUpdateExecutionValidation(governanceHub, validator, params);
             await expect(governanceHub.connect(operator).updateExecution(
                 params.proposalId,
                 params.stateURI,
@@ -4087,8 +3881,8 @@ describe('1.6. GovernanceHub', async () => {
             params: UpdateExecutionParams,
             error: string
         ) {
-            const { governanceHub } = fixture;
-            const validation = await getUpdateExecutionValidation(fixture, params);
+            const { governanceHub, validator } = fixture;
+            const validation = await getUpdateExecutionValidation(governanceHub, validator, params);
             await expect(governanceHub.connect(operator).updateExecution(
                 params.proposalId,
                 params.stateURI,
@@ -4106,14 +3900,14 @@ describe('1.6. GovernanceHub', async () => {
                 confirmExecutionSampleProposals: true,
             });
 
-            const { governanceHub, operator1, operator2 } = fixture;
+            const { governanceHub, operator1, operator2, validator } = fixture;
 
             // Tx1: Operator 1
             const params1 = {
                 proposalId: 1,
                 stateURI: "updated_state_uri_1",
             }
-            const validation1 = await getUpdateExecutionValidation(fixture, params1);
+            const validation1 = await getUpdateExecutionValidation(governanceHub, validator, params1);
 
             const tx1 = await governanceHub.connect(operator1).updateExecution(params1.proposalId, params1.stateURI, validation1);
             await tx1.wait();
@@ -4129,7 +3923,7 @@ describe('1.6. GovernanceHub', async () => {
                 proposalId: 2,
                 stateURI: "updated_state_uri_2",
             }
-            const validation2 = await getUpdateExecutionValidation(fixture, params2);
+            const validation2 = await getUpdateExecutionValidation(governanceHub, validator, params2);
 
             const tx2 = await governanceHub.connect(operator2).updateExecution(params2.proposalId, params2.stateURI, validation2);
             await tx2.wait();
@@ -4232,10 +4026,10 @@ describe('1.6. GovernanceHub', async () => {
                 confirmExecutionSampleProposals: true,
             });
 
-            const { governanceHub, operator1 } = fixture;
+            const { governanceHub, operator1, validator } = fixture;
 
             const { defaultParams } = await beforeUpdateExecutionTest(fixture);
-            const validation = await getUpdateExecutionInvalidValidation(fixture, defaultParams);
+            const validation = await getUpdateExecutionInvalidValidation(governanceHub, validator, defaultParams);
 
             await expect(governanceHub.connect(operator1).updateExecution(
                 defaultParams.proposalId,
@@ -4381,8 +4175,8 @@ describe('1.6. GovernanceHub', async () => {
             params: ConcludeExecutionParams,
             error: string
         ) {
-            const { governanceHub } = fixture;
-            const validation = await getConcludeExecutionValidation(fixture, params);
+            const { governanceHub, validator } = fixture;
+            const validation = await getConcludeExecutionValidation(governanceHub, validator, params);
             await expect(governanceHub.connect(operator).concludeExecution(
                 params.proposalId,
                 params.stateURI,
@@ -4397,8 +4191,8 @@ describe('1.6. GovernanceHub', async () => {
             params: ConcludeExecutionParams,
             error: string
         ) {
-            const { governanceHub } = fixture;
-            const validation = await getConcludeExecutionValidation(fixture, params);
+            const { governanceHub, validator } = fixture;
+            const validation = await getConcludeExecutionValidation(governanceHub, validator, params);
             await expect(governanceHub.connect(operator).concludeExecution(
                 params.proposalId,
                 params.stateURI,
@@ -4416,7 +4210,7 @@ describe('1.6. GovernanceHub', async () => {
                 confirmExecutionSampleProposals: true,
             });
 
-            const { governanceHub, manager } = fixture;
+            const { governanceHub, manager, validator } = fixture;
 
             // Tx1: Conclude execution succeeded
             const params1 = {
@@ -4424,7 +4218,7 @@ describe('1.6. GovernanceHub', async () => {
                 stateURI: "concluded_state_uri_1",
                 isSuccessful: true,
             }
-            const validation1 = await getConcludeExecutionValidation(fixture, params1);
+            const validation1 = await getConcludeExecutionValidation(governanceHub, validator, params1);
 
             const tx1 = await governanceHub.connect(manager).concludeExecution(params1.proposalId, params1.stateURI, params1.isSuccessful, validation1);
             await tx1.wait();
@@ -4445,7 +4239,7 @@ describe('1.6. GovernanceHub', async () => {
                 stateURI: "concluded_state_uri_2",
                 isSuccessful: false,
             }
-            const validation2 = await getConcludeExecutionValidation(fixture, params2);
+            const validation2 = await getConcludeExecutionValidation(governanceHub, validator, params2);
 
             const tx2 = await governanceHub.connect(manager).concludeExecution(params2.proposalId, params2.stateURI, params2.isSuccessful, validation2);
             await tx2.wait();
@@ -4546,10 +4340,10 @@ describe('1.6. GovernanceHub', async () => {
                 confirmExecutionSampleProposals: true,
             });
 
-            const { governanceHub, manager } = fixture;
+            const { governanceHub, manager, validator } = fixture;
 
             const { defaultParams } = await beforeConcludeExecutionTest(fixture);
-            const validation = await getConcludeExecutionInvalidValidation(fixture, defaultParams);
+            const validation = await getConcludeExecutionInvalidValidation(governanceHub, validator, defaultParams);
 
             await expect(governanceHub.connect(manager).concludeExecution(
                 defaultParams.proposalId,

@@ -55,3 +55,27 @@ export interface RequestAgenda {
     privateSaleEndsAt: number;
     publicSaleEndsAt: number;
 };
+
+export interface RegisterSellerInParams {
+    zone: string;
+    account: string;
+    uri: string;
+}
+
+export interface RequestTokenizationParams {
+    seller: string;
+    estate: RequestEstateInput;
+    quota: RequestQuotaInput;
+    quote: RequestQuoteInput;
+    agenda: RequestAgendaInput;
+}
+
+export interface UpdateRequestURIParams {
+    requestId: BigNumber;
+    uri: string;
+}
+
+export interface UpdateRequestAgendaParams {
+    requestId: BigNumber;
+    agenda: RequestAgendaInput;
+}
