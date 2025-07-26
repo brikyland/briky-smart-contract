@@ -38,7 +38,7 @@ interface PromotionTokenFixture {
     minter3: any;
 }
 
-describe('17. PromotionToken', async () => {
+describe('5.2. PromotionToken', async () => {
     async function promotionTokenFixture(): Promise<PromotionTokenFixture> {
         const accounts = await ethers.getSigners();
         const deployer = accounts[0];
@@ -112,8 +112,8 @@ describe('17. PromotionToken', async () => {
         }
     }
 
-    describe('17.1. initialize(address, string, string, uint256, uint256)', async () => {
-        it('17.1.1. Deploy successfully', async () => {
+    describe('5.2.1. initialize(address, string, string, uint256, uint256)', async () => {
+        it('5.2.1.1. Deploy successfully', async () => {
             const { deployer, admin } = await beforePromotionTokenTest();
 
             const PromotionToken = await ethers.getContractFactory('PromotionToken', deployer);
@@ -151,7 +151,7 @@ describe('17. PromotionToken', async () => {
                 .emit(promotionToken, 'RoyaltyRateUpdate').withArgs(Initialization.PROMOTION_TOKEN_RoyaltyRate);
         });
 
-        it('17.1.2. Deploy unsuccessfully with invalid royalty rate', async () => {
+        it('5.2.1.2. Deploy unsuccessfully with invalid royalty rate', async () => {
             const { deployer, admin } = await beforePromotionTokenTest();
 
             const PromotionToken = await ethers.getContractFactory('PromotionToken', deployer);
@@ -166,8 +166,8 @@ describe('17. PromotionToken', async () => {
         });
     });
 
-    describe('17.2. updateFee(uint256, bytes[])', async () => {
-        it('17.2.1. updateFee successfully', async () => {
+    describe('5.2.2. updateFee(uint256, bytes[])', async () => {
+        it('5.2.2.1. updateFee successfully', async () => {
             const { promotionToken, admin, admins } = await beforePromotionTokenTest();
 
             const fee = await promotionToken.fee();
@@ -185,7 +185,7 @@ describe('17. PromotionToken', async () => {
             expect(await promotionToken.fee()).to.equal(newFee);
         });
 
-        it('17.2.2. updateFee unsuccessfully with invalid signature', async () => {
+        it('5.2.2.2. updateFee unsuccessfully with invalid signature', async () => {
             const { promotionToken, admin, admins } = await beforePromotionTokenTest();
 
             const fee = await promotionToken.fee();
@@ -202,8 +202,8 @@ describe('17. PromotionToken', async () => {
         });
     });
 
-    describe('17.3. updateRoyaltyRate(uint256, bytes[])', async () => {
-        it('17.3.1. updateRoyaltyRate successfully with valid signatures', async () => {
+    describe('5.2.3. updateRoyaltyRate(uint256, bytes[])', async () => {
+        it('5.2.3.1. updateRoyaltyRate successfully with valid signatures', async () => {
             const { promotionToken, admin, admins } = await beforePromotionTokenTest();
 
             const message = ethers.utils.defaultAbiCoder.encode(
@@ -225,7 +225,7 @@ describe('17. PromotionToken', async () => {
             expect(royaltyRate.decimals).to.equal(Constant.COMMON_RATE_DECIMALS);
         });
 
-        it('17.3.2. updateRoyaltyRate unsuccessfully with invalid signatures', async () => {
+        it('5.2.3.2. updateRoyaltyRate unsuccessfully with invalid signatures', async () => {
             const { promotionToken, admin, admins } = await beforePromotionTokenTest();
 
             const message = ethers.utils.defaultAbiCoder.encode(
@@ -240,7 +240,7 @@ describe('17. PromotionToken', async () => {
             )).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('17.3.3. updateRoyaltyRate unsuccessfully with invalid rate', async () => {
+        it('5.2.3.3. updateRoyaltyRate unsuccessfully with invalid rate', async () => {
             const { promotionToken, admin, admins } = await beforePromotionTokenTest();
 
             let message = ethers.utils.defaultAbiCoder.encode(
@@ -256,8 +256,8 @@ describe('17. PromotionToken', async () => {
         });
     });
 
-    describe('17.4. withdraw(address, address[], uint256[], bytes[])', async () => {
-        it('17.4.1. Withdraw native tokens successfully', async () => {
+    describe('5.2.4. withdraw(address, address[], uint256[], bytes[])', async () => {
+        it('5.2.4.1. Withdraw native tokens successfully', async () => {
             const { deployer, admins, admin, promotionToken } = await beforePromotionTokenTest();
 
             let receiver = randomWallet();
@@ -319,7 +319,7 @@ describe('17. PromotionToken', async () => {
             expect(balance).to.equal(5000);
         });
 
-        it('17.4.2. Withdraw ERC-20 tokens successfully', async () => {
+        it('5.2.4.2. Withdraw ERC-20 tokens successfully', async () => {
             const { admins, admin, promotionToken, currency1, currency2 } = await beforePromotionTokenTest();
 
             let receiver = randomWallet();
@@ -352,7 +352,7 @@ describe('17. PromotionToken', async () => {
             expect(await currency2.balanceOf(receiver.address)).to.equal(ethers.constants.MaxUint256);
         });
 
-        it('17.4.3. Withdraw token successfully multiple times in the same tx', async () => {
+        it('5.2.4.3. Withdraw token successfully multiple times in the same tx', async () => {
             const { deployer, admins, admin, promotionToken, currency1, currency2 } = await beforePromotionTokenTest();
 
             let receiver = randomWallet();
@@ -396,7 +396,7 @@ describe('17. PromotionToken', async () => {
             expect(await currency2.balanceOf(receiver.address)).to.equal(800);
         });
 
-        it('17.4.4. Withdraw unsuccessfully with invalid signatures', async () => {
+        it('5.2.4.4. Withdraw unsuccessfully with invalid signatures', async () => {
             const { deployer, admins, admin, promotionToken } = await beforePromotionTokenTest();
 
             const message = ethers.utils.defaultAbiCoder.encode(
@@ -413,7 +413,7 @@ describe('17. PromotionToken', async () => {
             )).to.be.revertedWithCustomError(promotionToken, 'FailedVerification');
         });
 
-        it('17.4.5. Withdraw unsuccessfully with insufficient native tokens', async () => {
+        it('5.2.4.5. Withdraw unsuccessfully with insufficient native tokens', async () => {
             const { deployer, admins, admin, promotionToken } = await beforePromotionTokenTest();
 
             const message = ethers.utils.defaultAbiCoder.encode(
@@ -430,7 +430,7 @@ describe('17. PromotionToken', async () => {
             )).to.be.revertedWithCustomError(promotionToken, 'FailedTransfer');
         })
 
-        it('17.4.6. Withdraw unsuccessfully with insufficient ERC20 tokens', async () => {
+        it('5.2.4.6. Withdraw unsuccessfully with insufficient ERC20 tokens', async () => {
             const { deployer, admins, admin, promotionToken, currency1, currency2 } = await beforePromotionTokenTest();
 
             const message = ethers.utils.defaultAbiCoder.encode(
@@ -447,7 +447,7 @@ describe('17. PromotionToken', async () => {
             )).to.be.revertedWith('ERC20: transfer amount exceeds balance');
         })
 
-        it('17.4.7. withdraw unsuccessfully when native token receiving failed', async () => {
+        it('5.2.4.7. withdraw unsuccessfully when native token receiving failed', async () => {
             const { deployer, admins, admin, promotionToken } = await beforePromotionTokenTest();
 
             const failReceiver = await deployFailReceiver(deployer, true);
@@ -471,7 +471,7 @@ describe('17. PromotionToken', async () => {
             )).to.be.revertedWithCustomError(promotionToken, 'FailedTransfer');
         });
 
-        it('17.4.8. withdraw unsuccessfully when the contract is reentered', async () => {
+        it('5.2.4.8. withdraw unsuccessfully when the contract is reentered', async () => {
             const { deployer, admins, admin, promotionToken } = await beforePromotionTokenTest();
 
             const reentrancyERC20 = await deployReentrancyERC20(deployer);
@@ -510,8 +510,8 @@ describe('17. PromotionToken', async () => {
         });
     });
 
-    describe('17.5. getContent(uint256)', async () => {
-        it('17.5.1. return successfully with valid content id', async () => {
+    describe('5.2.5. getContent(uint256)', async () => {
+        it('5.2.5.1. return successfully with valid content id', async () => {
             const { promotionToken, admin, admins } = await beforePromotionTokenTest({
                 listSampleContents: true,
             });
@@ -521,7 +521,7 @@ describe('17. PromotionToken', async () => {
             await expect(promotionToken.getContent(3)).to.not.be.reverted;
         });
 
-        it('17.5.2. revert with invalid content id', async () => {
+        it('5.2.5.2. revert with invalid content id', async () => {
             const { promotionToken, admin, admins } = await beforePromotionTokenTest({
                 listSampleContents: true,
             });
@@ -533,8 +533,8 @@ describe('17. PromotionToken', async () => {
         });
     });
 
-    describe('17.6. createContents(string[], uint40[], uint40[], bytes[])', async () => {
-        it('17.6.1. create contents successfully', async () => {
+    describe('5.2.6. createContents(string[], uint40[], uint40[], bytes[])', async () => {
+        it('5.2.6.1. create contents successfully', async () => {
             const { promotionToken, admin, admins } = await beforePromotionTokenTest();
 
             const currentTimestamp = await time.latest();
@@ -585,7 +585,7 @@ describe('17. PromotionToken', async () => {
             expect(content3.endAt).to.equal(startAt3 + duration3);
         });
 
-        it('17.6.2. create contents unsuccessfully with invalid signatures', async () => {
+        it('5.2.6.2. create contents unsuccessfully with invalid signatures', async () => {
             const { promotionToken, admin, admins } = await beforePromotionTokenTest();
 
             const currentTimestamp = await time.latest();
@@ -624,7 +624,7 @@ describe('17. PromotionToken', async () => {
                 .to.be.revertedWithCustomError(promotionToken, customError);
         }
 
-        it('17.6.3. create contents unsuccessfully with invalid input', async () => {
+        it('5.2.6.3. create contents unsuccessfully with invalid input', async () => {
             const fixture = await beforePromotionTokenTest();
             
             const currentTimestamp = await time.latest();
@@ -644,10 +644,26 @@ describe('17. PromotionToken', async () => {
             await testRevert(fixture, uris, startAts.slice(0, 2), durations, 'InvalidInput');
             await testRevert(fixture, uris, startAts, durations.slice(0, 2), 'InvalidInput');
         });
+
+        it('5.2.6.4. create contents unsuccessfully when it start before block.timestamp', async () => {
+            const fixture = await beforePromotionTokenTest();
+            
+            let timestamp = await time.latest() + 10;
+            await time.setNextBlockTimestamp(timestamp);
+
+            const startAt1 = timestamp - 1;
+            const duration1 = 200;
+
+            const uris = ["testing_uri_1"];
+            const startAts = [startAt1];
+            const durations = [duration1];
+            
+            await testRevert(fixture, uris, startAts, durations, 'InvalidTimestamp');
+        });
     });
 
-    describe('17.7. updateContentURIs(uint256[],string[], bytes[])', async () => {
-        it('17.7.1. update content uris successfully', async () => {
+    describe('5.2.7. updateContentURIs(uint256[],string[], bytes[])', async () => {
+        it('5.2.7.1. update content uris successfully', async () => {
             const { promotionToken, admin, admins } = await beforePromotionTokenTest({
                 listSampleContents: true,
             });
@@ -675,7 +691,7 @@ describe('17. PromotionToken', async () => {
             expect((await promotionToken.getContent(3)).uri).to.equal("testing_uri_3");
         });
 
-        it('17.7.2. update content uris unsuccessfully with invalid signatures', async () => {
+        it('5.2.7.2. update content uris unsuccessfully with invalid signatures', async () => {
             const { promotionToken, admin, admins } = await beforePromotionTokenTest({
                 listSampleContents: true,
             });
@@ -706,7 +722,7 @@ describe('17. PromotionToken', async () => {
                 .to.be.revertedWithCustomError(promotionToken, customError);
         }
 
-        it('17.7.3. update content uris unsuccessfully with invalid input', async () => {
+        it('5.2.7.3. update content uris unsuccessfully with invalid input', async () => {
             const fixture = await beforePromotionTokenTest({
                 listSampleContents: true,
             });
@@ -717,7 +733,7 @@ describe('17. PromotionToken', async () => {
             await testRevert(fixture, contentIds, uris, 'InvalidInput');
         });
 
-        it('17.7.4. update content uris unsuccessfully with invalid content id', async () => {
+        it('5.2.7.4. update content uris unsuccessfully with invalid content id', async () => {
             const fixture = await beforePromotionTokenTest({
                 listSampleContents: true,
             });
@@ -728,7 +744,7 @@ describe('17. PromotionToken', async () => {
             await testRevert(fixture, contentIds, uris, 'InvalidContentId');
         });
 
-        it('17.7.5. update content uris unsuccessfully with already started content', async () => {
+        it('5.2.7.5. update content uris unsuccessfully with already started content', async () => {
             const fixture = await beforePromotionTokenTest({
                 listSampleContents: true,
             });
@@ -744,8 +760,8 @@ describe('17. PromotionToken', async () => {
         });
     });
 
-    describe('17.8. cancelContents(uint256, bytes[])', async () => {
-        it('17.8.1. cancel contents successfully', async () => {
+    describe('5.2.8. cancelContents(uint256, bytes[])', async () => {
+        it('5.2.8.1. cancel contents successfully', async () => {
             const { promotionToken, admin, admins } = await beforePromotionTokenTest({
                 listSampleContents: true,
             });
@@ -764,25 +780,25 @@ describe('17. PromotionToken', async () => {
 
             let message = ethers.utils.defaultAbiCoder.encode(
                 ["address", "string", "uint256[]"],
-                [promotionToken.address, "cancelContents", [1, 2]]
+                [promotionToken.address, "cancelContents", [2, 3]]
             );
             let signatures = await getSignatures(message, admins, await admin.nonce());
 
-            const tx = await promotionToken.cancelContents([1, 2], signatures);
+            const tx = await promotionToken.cancelContents([2, 3], signatures);
             await tx.wait();
 
             await expect(tx).to
                 .emit(promotionToken, 'ContentCancellation')
-                .withArgs(1)
+                .withArgs(2)
                 .emit(promotionToken, 'ContentCancellation')
-                .withArgs(2);
+                .withArgs(3);
 
             expect(await promotionToken.contentNumber()).to.equal(3);
 
             const content1 = await promotionToken.getContent(1);
             expect(content1.uri).to.equal("testing_uri_1");
             expect(content1.startAt).to.equal(startAt1);
-            expect(content1.endAt).to.equal(cancelAt);
+            expect(content1.endAt).to.equal(endAt1);
 
             const content2 = await promotionToken.getContent(2);
             expect(content2.uri).to.equal("testing_uri_2");
@@ -792,86 +808,86 @@ describe('17. PromotionToken', async () => {
             const content3 = await promotionToken.getContent(3);
             expect(content3.uri).to.equal("testing_uri_3");
             expect(content3.startAt).to.equal(startAt3);
-            expect(content3.endAt).to.equal(endAt3);
+            expect(content3.endAt).to.equal(cancelAt);
         });
 
-        it('17.8.2. cancel contents unsuccessfully with invalid signatures', async () => {
+        it('5.2.8.2. cancel contents unsuccessfully with invalid signatures', async () => {
             const { promotionToken, admin, admins } = await beforePromotionTokenTest({
                 listSampleContents: true,
             });
 
             const cancelAt = (await promotionToken.getContent(1)).startAt + 50;
             await time.setNextBlockTimestamp(cancelAt);
-
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "uint256[]"],
-                [promotionToken.address, "cancelContents", [1, 2]]
-            );
-            let invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
-
-            await expect(promotionToken.cancelContents([1, 2], invalidSignatures))
-                .to.be.revertedWithCustomError(promotionToken, 'FailedVerification');
-        });
-
-        it('17.8.3. revert with invalid content id', async () => {
-            const { promotionToken, admin, admins } = await beforePromotionTokenTest({
-                listSampleContents: true,
-            });
-
-            const cancelAt = (await promotionToken.getContent(1)).startAt + 50;
-            await time.setNextBlockTimestamp(cancelAt);
-
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "uint256[]"],
-                [promotionToken.address, "cancelContents", [1, 2, 0]]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await expect(promotionToken.cancelContents([1, 2, 0], signatures))
-                .to.be.revertedWithCustomError(promotionToken, 'InvalidContentId');
-        });
-
-        it('17.8.4. cancel contents unsuccessfully with ended events', async () => {
-            const { promotionToken, admin, admins } = await beforePromotionTokenTest({
-                listSampleContents: true,
-            });
-
-            const cancelAt = (await promotionToken.getContent(1)).endAt;
-            await time.setNextBlockTimestamp(cancelAt);
-
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "uint256[]"],
-                [promotionToken.address, "cancelContents", [1, 2]]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await expect(promotionToken.cancelContents([1, 2], signatures))
-                .to.be.revertedWithCustomError(promotionToken, 'AlreadyEnded');
-        });
-
-        it('17.8.5. cancel contents unsuccessfully with already cancelled content', async () => {
-            const { promotionToken, admin, admins } = await beforePromotionTokenTest({
-                listSampleContents: true,
-            });
-
-            const cancelAt = (await promotionToken.getContent(1)).startAt + 50;
-            await time.setNextBlockTimestamp(cancelAt);
-
-            await callPromotionToken_CancelContents(promotionToken, admins, [1, 2], await admin.nonce());
 
             let message = ethers.utils.defaultAbiCoder.encode(
                 ["address", "string", "uint256[]"],
                 [promotionToken.address, "cancelContents", [2, 3]]
             );
+            let invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+
+            await expect(promotionToken.cancelContents([2, 3], invalidSignatures))
+                .to.be.revertedWithCustomError(promotionToken, 'FailedVerification');
+        });
+
+        it('5.2.8.3. revert with invalid content id', async () => {
+            const { promotionToken, admin, admins } = await beforePromotionTokenTest({
+                listSampleContents: true,
+            });
+
+            const cancelAt = (await promotionToken.getContent(1)).startAt + 50;
+            await time.setNextBlockTimestamp(cancelAt);
+
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string", "uint256[]"],
+                [promotionToken.address, "cancelContents", [2, 3, 0]]
+            );
             let signatures = await getSignatures(message, admins, await admin.nonce());
 
-            await expect(promotionToken.cancelContents([2, 3], signatures))
-                .to.be.revertedWithCustomError(promotionToken, 'AlreadyEnded');
+            await expect(promotionToken.cancelContents([2, 3, 0], signatures))
+                .to.be.revertedWithCustomError(promotionToken, 'InvalidContentId');
+        });
+
+        it('5.2.8.4. cancel contents unsuccessfully with started events', async () => {
+            const { promotionToken, admin, admins } = await beforePromotionTokenTest({
+                listSampleContents: true,
+            });
+
+            const cancelAt = (await promotionToken.getContent(1)).startAt + 50;
+            await time.setNextBlockTimestamp(cancelAt);
+
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string", "uint256[]"],
+                [promotionToken.address, "cancelContents", [1]]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(promotionToken.cancelContents([1], signatures))
+                .to.be.revertedWithCustomError(promotionToken, 'AlreadyStarted');
+        });
+
+        it('5.2.8.5. cancel contents successfully with already cancelled content', async () => {
+            const { promotionToken, admin, admins } = await beforePromotionTokenTest({
+                listSampleContents: true,
+            });
+
+            const cancelAt = (await promotionToken.getContent(1)).startAt + 50;
+            await time.setNextBlockTimestamp(cancelAt);
+
+            await callPromotionToken_CancelContents(promotionToken, admins, [2, 3], await admin.nonce());
+
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string", "uint256[]"],
+                [promotionToken.address, "cancelContents", [3]]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(promotionToken.cancelContents([3], signatures))
+                .to.be.not.reverted;            
         });
     });
 
-    describe('17.9. mint(uint256, uint256)', async () => {
-        it('17.9.1. mint successfully', async () => {
+    describe('5.2.9. mint(uint256, uint256)', async () => {
+        it('5.2.9.1. mint successfully', async () => {
             const { promotionToken, minter1, minter2 } = await beforePromotionTokenTest({
                 listSampleContents: true,
             });
@@ -972,7 +988,7 @@ describe('17. PromotionToken', async () => {
             expect(await ethers.provider.getBalance(promotionToken.address)).to.equal(initPromotionTokenBalance.add(fee.mul(amount1 + amount2 + amount3)));
         });
 
-        it('17.9.2. mint successfully when paused', async () => {
+        it('5.2.9.2. mint successfully when paused', async () => {
             const { promotionToken, minter1 } = await beforePromotionTokenTest({
                 listSampleContents: true,
                 pause: true,
@@ -986,7 +1002,7 @@ describe('17. PromotionToken', async () => {
                 .to.be.revertedWith('Pausable: paused');
         });
 
-        it('17.9.3. mint unsuccessfully with invalid amount', async () => {
+        it('5.2.9.3. mint unsuccessfully with invalid amount', async () => {
             const { promotionToken, minter1 } = await beforePromotionTokenTest({
                 listSampleContents: true,
             });
@@ -998,7 +1014,7 @@ describe('17. PromotionToken', async () => {
                 .to.be.revertedWithCustomError(promotionToken, 'InvalidInput');
         });
 
-        it('17.9.4. mint unsuccessfully with invalid content id', async () => {
+        it('5.2.9.4. mint unsuccessfully with invalid content id', async () => {
             const { promotionToken, minter1 } = await beforePromotionTokenTest({
                 listSampleContents: true,
             });
@@ -1013,7 +1029,7 @@ describe('17. PromotionToken', async () => {
                 .to.be.revertedWithCustomError(promotionToken, 'InvalidContentId');
         });
 
-        it('17.9.5. mint unsuccessfully with unopened content', async () => {
+        it('5.2.9.5. mint unsuccessfully with unopened content', async () => {
             const { promotionToken, minter1 } = await beforePromotionTokenTest({
                 listSampleContents: true,
             });
@@ -1025,7 +1041,7 @@ describe('17. PromotionToken', async () => {
                 .to.be.revertedWithCustomError(promotionToken, 'NotOpened');
         });
 
-        it('17.9.6. mint unsuccessfully with ended content', async () => {
+        it('5.2.9.6. mint unsuccessfully with ended content', async () => {
             const { promotionToken, minter1 } = await beforePromotionTokenTest({
                 listSampleContents: true,
             });
@@ -1037,7 +1053,7 @@ describe('17. PromotionToken', async () => {
                 .to.be.revertedWithCustomError(promotionToken, 'AlreadyEnded');
         }); 
 
-        it('17.9.7. mint unsuccessfully with insufficient value', async () => {
+        it('5.2.9.7. mint unsuccessfully with insufficient value', async () => {
             const { promotionToken, minter1 } = await beforePromotionTokenTest({
                 listSampleContents: true,
             });
@@ -1050,8 +1066,8 @@ describe('17. PromotionToken', async () => {
         });
     });
 
-    describe('17.10. supportsInterface(bytes4)', async () => {
-        it('17.10.1. return true for appropriate interface', async () => {
+    describe('5.2.10. supportsInterface(bytes4)', async () => {
+        it('5.2.10.1. return true for appropriate interface', async () => {
             const { promotionToken } = await beforePromotionTokenTest();
 
             const IERC4906Upgradeable = IERC4906Upgradeable__factory.createInterface();

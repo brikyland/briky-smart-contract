@@ -30,13 +30,13 @@
 4.6. Treasury (DONE)
 
 5. Lucra
-5.1. PassportToken
-5.2. PromotionToken
+5.1. PassportToken (DONE)
+5.2. PromotionToken (DONE)
 
 6. Lux
-6.1. ERC721Marketplace
-6.2. EstateMarketplace
-6.3. MortgageMarketplace
+6.1. ERC721Marketplace (DONE)
+6.2. EstateMarketplace (DONE)
+6.3. MortgageMarketplace (DONE)
 
 7. Launch
 7.1. PrestigePad

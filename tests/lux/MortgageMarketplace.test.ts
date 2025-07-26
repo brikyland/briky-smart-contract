@@ -87,7 +87,7 @@ async function testReentrancy_MortgageMarketplace(
     );
 }
 
-describe('15. MortgageMarketplace', async () => {
+describe('6.3. MortgageMarketplace', async () => {
     async function mortgageMarketplaceFixture(): Promise<MortgageMarketplaceFixture> {
         const accounts = await ethers.getSigners();
         const deployer = accounts[0];
@@ -304,8 +304,8 @@ describe('15. MortgageMarketplace', async () => {
         }
     }
 
-    describe('15.1. initialize(address, address, address, address)', async () => {
-        it('15.1.1. Deploy successfully', async () => {
+    describe('6.3.1. initialize(address, address, address, address)', async () => {
+        it('6.3.1.1. Deploy successfully', async () => {
             const { mortgageMarketplace, admin, commissionToken, mortgageToken } = await beforeMortgageMarketplaceTest();
 
             expect(await mortgageMarketplace.offerNumber()).to.equal(0);
@@ -316,8 +316,8 @@ describe('15. MortgageMarketplace', async () => {
         });
     });
 
-    describe('15.2. getOffer(uint256)', async () => {
-        it('15.2.1. return successfully', async () => {
+    describe('6.3.2. getOffer(uint256)', async () => {
+        it('6.3.2.1. return successfully', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
@@ -329,7 +329,7 @@ describe('15. MortgageMarketplace', async () => {
             expect(await mortgageMarketplace.getOffer(2)).to.not.be.reverted;
         });
 
-        it('15.2.2. revert with invalid offer id', async () => {
+        it('6.3.2.2. revert with invalid offer id', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
@@ -346,8 +346,8 @@ describe('15. MortgageMarketplace', async () => {
         });
     });
     
-    describe('15.3. list(uint256, uint256, address)', async () => {
-        it('15.3.1. list token successfully', async () => {
+    describe('6.3.3. list(uint256, uint256, address)', async () => {
+        it('6.3.3.1. list token successfully', async () => {
             const { mortgageMarketplace, mortgageToken, currency, seller1, seller2 } = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
@@ -385,7 +385,7 @@ describe('15. MortgageMarketplace', async () => {
             expect(offer.seller).to.equal(seller2.address);
         });
 
-        it('15.3.2. list token unsuccessfully when paused', async () => {
+        it('6.3.3.2. list token unsuccessfully when paused', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
@@ -397,7 +397,7 @@ describe('15. MortgageMarketplace', async () => {
                 .to.be.revertedWith('Pausable: paused');
         });
 
-        it('15.3.3. list token unsuccessfully with invalid token id', async () => {
+        it('6.3.3.3. list token unsuccessfully with invalid token id', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
@@ -411,7 +411,7 @@ describe('15. MortgageMarketplace', async () => {
                 .to.be.revertedWith('ERC721: invalid token ID');
         });
 
-        it('15.3.4. list token unsuccessfully when not token owner', async () => {
+        it('6.3.3.4. list token unsuccessfully when not token owner', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
@@ -422,7 +422,7 @@ describe('15. MortgageMarketplace', async () => {
                 .to.be.revertedWithCustomError(mortgageMarketplace, 'InvalidTokenId');
         });
 
-        it('15.3.5. list token unsuccessfully with zero unit price', async () => {
+        it('6.3.3.5. list token unsuccessfully with zero unit price', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
@@ -433,7 +433,7 @@ describe('15. MortgageMarketplace', async () => {
                 .to.be.revertedWithCustomError(mortgageMarketplace, 'InvalidPrice');
         });
 
-        it('15.3.6. list token unsuccessfully with invalid currency', async () => {
+        it('6.3.3.6. list token unsuccessfully with invalid currency', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleMortgageToken: true,
             });
@@ -444,157 +444,176 @@ describe('15. MortgageMarketplace', async () => {
         });
     });
 
-    describe('15.4. buy(uint256)', async () => {
-        async function testBuyOffer(
-            fixture: MortgageMarketplaceFixture,
-            mockCurrencyExclusiveRate: BigNumber,
-            mortgageTokenRoyaltyRate: BigNumber,
-            commissionRate: BigNumber,
-            isERC20: boolean,
-            isExclusive: boolean,
-            price: BigNumber,
-            hasCommissionReceiver: boolean,
-        ) {
-            const { deployer, estateToken, commissionToken, mortgageToken, mortgageMarketplace, borrower1, seller1, buyer1, feeReceiver, admins, admin, commissionReceiver } = fixture;
+    async function testBuyOffer(
+        fixture: MortgageMarketplaceFixture,
+        mockCurrencyExclusiveRate: BigNumber,
+        mortgageTokenRoyaltyRate: BigNumber,
+        commissionRate: BigNumber,
+        isERC20: boolean,
+        isExclusive: boolean,
+        price: BigNumber,
+        isSafeBuy: boolean,
+    ) {
+        const hasCommissionReceiver = true;
+        
+        const { deployer, estateToken, commissionToken, mortgageToken, mortgageMarketplace, borrower1, seller1, buyer1, feeReceiver, admins, admin, commissionReceiver } = fixture;
 
-            await callMortgageToken_UpdateRoyaltyRate(mortgageToken, admins, mortgageTokenRoyaltyRate, await admin.nonce());
-            commissionToken.setVariable("commissionRate", commissionRate);
-            
-            const currentEstateId = (await estateToken.estateNumber()).add(1);
-            const currentTokenId = (await mortgageToken.loanNumber()).add(1);
-            const currentOfferId = (await mortgageMarketplace.offerNumber()).add(1);
+        await callMortgageToken_UpdateRoyaltyRate(mortgageToken, admins, mortgageTokenRoyaltyRate, await admin.nonce());
+        commissionToken.setVariable("commissionRate", commissionRate);
+        
+        const currentEstateId = (await estateToken.estateNumber()).add(1);
+        const currentTokenId = (await mortgageToken.loanNumber()).add(1);
+        const currentOfferId = (await mortgageMarketplace.offerNumber()).add(1);
 
-            let newCurrency: Currency | undefined;
-            let newCurrencyAddress: string;
-            if (isERC20) {
-                newCurrency = await deployCurrency(
-                    deployer.address,
-                    `NewMockCurrency_${currentOfferId}`,
-                    `NMC_${currentOfferId}`
-                ) as Currency;
-                newCurrencyAddress = newCurrency.address;
+        let newCurrency: Currency | undefined;
+        let newCurrencyAddress: string;
+        if (isERC20) {
+            newCurrency = await deployCurrency(
+                deployer.address,
+                `NewMockCurrency_${currentOfferId}`,
+                `NMC_${currentOfferId}`
+            ) as Currency;
+            newCurrencyAddress = newCurrency.address;
 
-                await callTransaction(newCurrency.setExclusiveDiscount(mockCurrencyExclusiveRate, Constant.COMMON_RATE_DECIMALS));
-            } else {
-                newCurrencyAddress = ethers.constants.AddressZero;
-            }
+            await callTransaction(newCurrency.setExclusiveDiscount(mockCurrencyExclusiveRate, Constant.COMMON_RATE_DECIMALS));
+        } else {
+            newCurrencyAddress = ethers.constants.AddressZero;
+        }
 
-            const commissionReceiverAddress = hasCommissionReceiver ? commissionReceiver.address : ethers.constants.AddressZero;
+        const commissionReceiverAddress = hasCommissionReceiver ? commissionReceiver.address : ethers.constants.AddressZero;
 
-            await callAdmin_UpdateCurrencyRegistries(
-                admin,
-                admins,
-                [newCurrencyAddress],
-                [true],
-                [isExclusive],
-                await admin.nonce(),
-            );
+        await callAdmin_UpdateCurrencyRegistries(
+            admin,
+            admins,
+            [newCurrencyAddress],
+            [true],
+            [isExclusive],
+            await admin.nonce(),
+        );
 
-            let currentTimestamp = await time.latest();
+        let currentTimestamp = await time.latest();
 
-            const borrower = borrower1;
-            const seller = seller1;
-            const buyer = buyer1;
+        const borrower = borrower1;
+        const seller = seller1;
+        const buyer = buyer1;
 
-            if (hasCommissionReceiver) {
-                await callTransaction(estateToken.call(commissionToken.address, commissionToken.interface.encodeFunctionData('mint', [commissionReceiverAddress, currentEstateId])));
-                await estateToken.setVariable("estateNumber", currentEstateId);
-            }
+        if (hasCommissionReceiver) {
+            await callTransaction(estateToken.call(commissionToken.address, commissionToken.interface.encodeFunctionData('mint', [commissionReceiverAddress, currentEstateId])));
+            await estateToken.setVariable("estateNumber", currentEstateId);
+        }
 
-            await callTransaction(mortgageToken.addLoan(
+        await callTransaction(mortgageToken.addLoan(
+            currentEstateId,
+            150_000,
+            10e5,
+            11e5,
+            newCurrencyAddress,
+            currentTimestamp + 1000,
+            LoanState.Supplied,
+            borrower.address,
+            seller.address,
+        ));
+        await callTransaction(mortgageToken.mint(seller.address, currentTokenId));
+
+        await callTransaction(mortgageMarketplace.connect(seller).list(
+            currentTokenId,
+            price,
+            newCurrencyAddress,
+        ));
+        await callTransaction(mortgageToken.connect(seller).setApprovalForAll(mortgageMarketplace.address, true));
+
+        let royaltyReceiver = feeReceiver.address;
+        let royaltyAmount = price.mul(mortgageTokenRoyaltyRate).div(Constant.COMMON_RATE_MAX_FRACTION);
+        if (isExclusive) {
+            royaltyAmount = royaltyAmount.sub(royaltyAmount.mul(mockCurrencyExclusiveRate).div(Constant.COMMON_RATE_MAX_FRACTION));
+        }
+        let commissionAmount = ethers.BigNumber.from(0);
+        if (hasCommissionReceiver) {
+            commissionAmount = royaltyAmount.mul(commissionRate).div(Constant.COMMON_RATE_MAX_FRACTION);
+        }
+
+        let total = price.add(royaltyAmount);
+
+        let ethValue = ethers.BigNumber.from(0);
+        await prepareNativeToken(ethers.provider, deployer, [buyer], ethers.utils.parseEther("1.0"));
+        if (isERC20) {
+            await prepareERC20(newCurrency!, [buyer], [mortgageMarketplace], total);
+        } else {
+            ethValue = total;
+            await prepareNativeToken(ethers.provider, deployer, [buyer], total);
+        }
+
+        let initBuyerBalance = await getBalance(ethers.provider, buyer.address, newCurrency);
+        let initSellerBalance = await getBalance(ethers.provider, seller.address, newCurrency);
+        let initFeeReceiverBalance = await getBalance(ethers.provider, feeReceiver.address, newCurrency);
+        let initCommissionReceiverBalance = await getBalance(ethers.provider, commissionReceiverAddress, newCurrency);
+
+        let tx;
+        if (isSafeBuy) {
+            tx = await mortgageMarketplace.connect(buyer).safeBuy(
+                currentOfferId,
                 currentEstateId,
-                150_000,
-                10e5,
-                11e5,
-                newCurrencyAddress,
-                currentTimestamp + 1000,
-                LoanState.Supplied,
-                borrower.address,
-                seller.address,
-            ));
-            await callTransaction(mortgageToken.mint(seller.address, currentTokenId));
-
-            await callTransaction(mortgageMarketplace.connect(seller).list(
-                currentTokenId,
-                price,
-                newCurrencyAddress,
-            ));
-            await callTransaction(mortgageToken.connect(seller).setApprovalForAll(mortgageMarketplace.address, true));
-
-            let royaltyReceiver = feeReceiver.address;
-            let royaltyAmount = price.mul(mortgageTokenRoyaltyRate).div(Constant.COMMON_RATE_MAX_FRACTION);
-            if (isExclusive) {
-                royaltyAmount = royaltyAmount.sub(royaltyAmount.mul(mockCurrencyExclusiveRate).div(Constant.COMMON_RATE_MAX_FRACTION));
-            }
-            let commissionAmount = ethers.BigNumber.from(0);
-            if (hasCommissionReceiver) {
-                commissionAmount = royaltyAmount.mul(commissionRate).div(Constant.COMMON_RATE_MAX_FRACTION);
-            }
-
-            let total = price.add(royaltyAmount);
-
-            let ethValue = ethers.BigNumber.from(0);
-            await prepareNativeToken(ethers.provider, deployer, [buyer], ethers.utils.parseEther("1.0"));
-            if (isERC20) {
-                await prepareERC20(newCurrency!, [buyer], [mortgageMarketplace], total);
-            } else {
-                ethValue = total;
-                await prepareNativeToken(ethers.provider, deployer, [buyer], total);
-            }
-
-            let initBuyerBalance = await getBalance(ethers.provider, buyer.address, newCurrency);
-            let initSellerBalance = await getBalance(ethers.provider, seller.address, newCurrency);
-            let initFeeReceiverBalance = await getBalance(ethers.provider, feeReceiver.address, newCurrency);
-            let initCommissionReceiverBalance = await getBalance(ethers.provider, commissionReceiverAddress, newCurrency);
-
-            let tx = await mortgageMarketplace.connect(buyer).buy(
+                { value: ethValue }
+            );
+        } else {
+            tx = await mortgageMarketplace.connect(buyer).buy(
                 currentOfferId,
                 { value: ethValue }
             );
-            const receipt = await tx.wait();
+        }
+        const receipt = await tx.wait();
 
-            let expectedBuyerBalance = initBuyerBalance.sub(total);
-            let expectedSellerBalance = initSellerBalance.add(price);
-            let expectedFeeReceiverBalance = initFeeReceiverBalance.add(royaltyAmount.sub(commissionAmount));
-            let expectedCommissionReceiverBalance = initCommissionReceiverBalance.add(commissionAmount);
+        let expectedBuyerBalance = initBuyerBalance.sub(total);
+        let expectedSellerBalance = initSellerBalance.add(price);
+        let expectedFeeReceiverBalance = initFeeReceiverBalance.add(royaltyAmount.sub(commissionAmount));
+        let expectedCommissionReceiverBalance = initCommissionReceiverBalance.add(commissionAmount);
 
-            if (!isERC20) {
-                const gasFee = receipt.gasUsed.mul(receipt.effectiveGasPrice);
-                expectedBuyerBalance = expectedBuyerBalance.sub(gasFee);
-            }
-
-            await expect(tx).to
-                .emit(mortgageMarketplace, 'OfferSale')
-                .withArgs(currentOfferId, buyer.address, royaltyReceiver, royaltyAmount, commissionReceiverAddress, commissionAmount);
-
-            let offer = await mortgageMarketplace.getOffer(currentOfferId);
-            expect(offer.tokenId).to.equal(currentTokenId);
-            expect(offer.price).to.equal(price);
-            expect(offer.currency).to.equal(newCurrencyAddress);
-            expect(offer.state).to.equal(MortgageMarketplaceOfferState.Sold);
-            expect(offer.seller).to.equal(seller.address);
-
-            expect(await getBalance(ethers.provider, buyer.address, newCurrency)).to.equal(expectedBuyerBalance);
-            expect(await getBalance(ethers.provider, seller.address, newCurrency)).to.equal(expectedSellerBalance);
-            expect(await getBalance(ethers.provider, feeReceiver.address, newCurrency)).to.equal(expectedFeeReceiverBalance);
-            if (hasCommissionReceiver) {
-                expect(await getBalance(ethers.provider, commissionReceiverAddress, newCurrency)).to.equal(expectedCommissionReceiverBalance);
-            }
-            expect(await mortgageToken.ownerOf(currentTokenId)).to.equal(buyer.address);
-
-            let walletsToReset = [seller, buyer, feeReceiver];
-            if (hasCommissionReceiver) {
-                walletsToReset.push(commissionReceiver);
-            }
-            if (isERC20) {
-                await resetERC20(newCurrency!, walletsToReset);
-            } else {
-                await resetNativeToken(ethers.provider, walletsToReset);
-                await prepareNativeToken(ethers.provider, deployer, [seller, buyer], ethers.utils.parseEther("1.0"));
-            }
+        if (!isERC20) {
+            const gasFee = receipt.gasUsed.mul(receipt.effectiveGasPrice);
+            expectedBuyerBalance = expectedBuyerBalance.sub(gasFee);
         }
 
-        it('15.4.1. buy token successfully in native and erc20 token', async () => {
+        await expect(tx).to.emit(mortgageMarketplace, 'CommissionDispatch').withArgs(
+            commissionReceiverAddress,
+            commissionAmount,
+            newCurrencyAddress,
+        );
+        await expect(tx).to.emit(mortgageMarketplace, 'OfferSale').withArgs(
+            currentOfferId,
+            buyer.address,
+            royaltyReceiver,
+            royaltyAmount,
+        );
+
+        let offer = await mortgageMarketplace.getOffer(currentOfferId);
+        expect(offer.tokenId).to.equal(currentTokenId);
+        expect(offer.price).to.equal(price);
+        expect(offer.currency).to.equal(newCurrencyAddress);
+        expect(offer.state).to.equal(MortgageMarketplaceOfferState.Sold);
+        expect(offer.seller).to.equal(seller.address);
+
+        expect(await getBalance(ethers.provider, buyer.address, newCurrency)).to.equal(expectedBuyerBalance);
+        expect(await getBalance(ethers.provider, seller.address, newCurrency)).to.equal(expectedSellerBalance);
+        expect(await getBalance(ethers.provider, feeReceiver.address, newCurrency)).to.equal(expectedFeeReceiverBalance);
+        if (hasCommissionReceiver) {
+            expect(await getBalance(ethers.provider, commissionReceiverAddress, newCurrency)).to.equal(expectedCommissionReceiverBalance);
+        }
+        expect(await mortgageToken.ownerOf(currentTokenId)).to.equal(buyer.address);
+
+        let walletsToReset = [seller, buyer, feeReceiver];
+        if (hasCommissionReceiver) {
+            walletsToReset.push(commissionReceiver);
+        }
+        if (isERC20) {
+            await resetERC20(newCurrency!, walletsToReset);
+        } else {
+            await resetNativeToken(ethers.provider, walletsToReset);
+            await prepareNativeToken(ethers.provider, deployer, [seller, buyer], ethers.utils.parseEther("1.0"));
+        }
+    }
+
+    describe('6.3.4. buy(uint256)', async () => {
+        it('6.3.4.1. buy token successfully in native and erc20 token', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
@@ -620,11 +639,11 @@ describe('15. MortgageMarketplace', async () => {
                 true,
                 false,
                 ethers.BigNumber.from(500000),
-                true,
+                false,
             );
         });
 
-        it('15.4.2. buy token successfully in all native/erc20 and exclusive/non-exclusive combinations', async () => {
+        it('6.3.4.2. buy token successfully in all native/erc20 and exclusive/non-exclusive combinations', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
@@ -644,13 +663,13 @@ describe('15. MortgageMarketplace', async () => {
                         isERC20,
                         isExclusive,
                         ethers.BigNumber.from(200000),
-                        true,
+                        false,
                     )
                 }
             }
         });
 
-        it('15.4.3. buy token successfully with very large amount in all native/erc20 and exclusive/non-exclusive combinations', async () => {
+        it('6.3.4.3. buy token successfully with very large amount in all native/erc20 and exclusive/non-exclusive combinations', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
@@ -670,13 +689,13 @@ describe('15. MortgageMarketplace', async () => {
                         isERC20,
                         isExclusive,
                         price,
-                        true,
+                        false,
                     )
                 }
             }
         });
 
-        it('15.4.4. buy token unsuccessfully when paused', async () => {
+        it('6.3.4.4. buy token unsuccessfully when paused', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
@@ -689,7 +708,7 @@ describe('15. MortgageMarketplace', async () => {
                 .to.be.revertedWith("Pausable: paused");
         });
 
-        it('15.4.5. buy token unsuccessfully with invalid offer id', async () => {
+        it('6.3.4.5. buy token unsuccessfully with invalid offer id', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
@@ -704,7 +723,7 @@ describe('15. MortgageMarketplace', async () => {
                 .to.be.revertedWithCustomError(mortgageMarketplace, "InvalidOfferId");
         });
 
-        it('15.4.6. buy token unsuccessfully when seller buy their own token', async () => {
+        it('6.3.4.6. buy token unsuccessfully when seller buy their own token', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
@@ -719,7 +738,7 @@ describe('15. MortgageMarketplace', async () => {
                 .to.be.revertedWithCustomError(mortgageMarketplace, "InvalidBuying");
         });
 
-        it('15.4.7. buy token unsuccessfully when offer is not selling', async () => {
+        it('6.3.4.7. buy token unsuccessfully when offer is not selling', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
@@ -733,7 +752,7 @@ describe('15. MortgageMarketplace', async () => {
                 .to.be.revertedWithCustomError(mortgageMarketplace, "InvalidBuying");
         });
 
-        it('15.4.8. buy token unsuccessfully with insufficient native token', async () => {
+        it('6.3.4.8. buy token unsuccessfully with insufficient native token', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
@@ -742,10 +761,10 @@ describe('15. MortgageMarketplace', async () => {
             const { mortgageMarketplace, buyer1 } = fixture;
 
             await expect(mortgageMarketplace.connect(buyer1).buy(1))
-                .to.be.revertedWithCustomError(mortgageMarketplace, "InsufficientValue");
+                .to.be.revertedWithCustomError(mortgageMarketplace, "FailedTransfer");
         });
 
-        it('15.4.9. buy token unsuccessfully when native token transfer to seller failed', async () => {
+        it('6.3.4.9. buy token unsuccessfully when native token transfer to seller failed', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
@@ -771,7 +790,7 @@ describe('15. MortgageMarketplace', async () => {
                 .to.be.revertedWithCustomError(mortgageMarketplace, "FailedTransfer");
         });
 
-        it('15.4.10. buy token unsuccessfully when native token transfer to royalty receiver failed', async () => {
+        it('6.3.4.10. buy token unsuccessfully when native token transfer to royalty receiver failed', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
@@ -788,7 +807,7 @@ describe('15. MortgageMarketplace', async () => {
                 .to.be.revertedWithCustomError(mortgageMarketplace, "FailedTransfer");
         });
 
-        it('15.4.11. buy token unsuccessfully when refund to sender failed', async () => {
+        it('6.3.4.11. buy token unsuccessfully when refund to sender failed', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
@@ -805,7 +824,7 @@ describe('15. MortgageMarketplace', async () => {
                 .to.be.revertedWithCustomError(mortgageMarketplace, "FailedRefund");
         });
 
-        it('15.4.12. buy token unsuccessfully when this contract is reentered', async () => {
+        it('6.3.4.12. buy token unsuccessfully when this contract is reentered', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
@@ -837,24 +856,38 @@ describe('15. MortgageMarketplace', async () => {
         });
     });
 
-    describe('15.5. safeBuy(uint256, uint256)', async () => {
-        it('15.5.1. buy token successfully', async () => {
+    describe('6.3.5. safeBuy(uint256, uint256)', async () => {
+        it('6.3.5.1. buy token successfully', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
-                listSampleOffers: true,
-                fundERC20ForBuyers: true,
             });
-            const { mortgageMarketplace, buyer1, buyer2 } = fixture;
+            const { mockCurrencyExclusiveRate } = fixture;
+    
+            await testBuyOffer(
+                fixture,
+                mockCurrencyExclusiveRate,
+                LendInitialization.MORTGAGE_TOKEN_RoyaltyRate,
+                LandInitialization.COMMISSION_TOKEN_CommissionRate,
+                false,
+                false,
+                ethers.BigNumber.from(200000),
+                true,
+            );
 
-            await expect(mortgageMarketplace.connect(buyer2).safeBuy(1, 1, { value: 1e9 }))
-                .to.not.be.reverted;
-
-            await expect(mortgageMarketplace.connect(buyer1).safeBuy(2, 2, { value: 1e9 }))
-                .to.not.be.reverted;
+            await testBuyOffer(
+                fixture,
+                mockCurrencyExclusiveRate,
+                LendInitialization.MORTGAGE_TOKEN_RoyaltyRate,
+                LandInitialization.COMMISSION_TOKEN_CommissionRate,
+                true,
+                false,
+                ethers.BigNumber.from(500000),
+                true,
+            );
         });
 
-        it('15.5.2. buy token unsuccessfully with invalid offer id', async () => {
+        it('6.3.5.2. buy token unsuccessfully with invalid offer id', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
@@ -869,7 +902,7 @@ describe('15. MortgageMarketplace', async () => {
                 .to.be.revertedWithCustomError(mortgageMarketplace, "InvalidOfferId");
         });
 
-        it('15.5.3. buy token unsuccessfully with invalid anchor', async () => {
+        it('6.3.5.3. buy token unsuccessfully with invalid anchor', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
@@ -885,8 +918,8 @@ describe('15. MortgageMarketplace', async () => {
         });
     });
 
-    describe('15.6. cancelOffer(uint256)', async () => {
-        it('15.6.1. cancel offer successfully by seller', async () => {
+    describe('6.3.6. cancelOffer(uint256)', async () => {
+        it('6.3.6.1. cancel offer successfully by seller', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
@@ -906,7 +939,7 @@ describe('15. MortgageMarketplace', async () => {
                 .withArgs(1);
         });
 
-        it('15.6.2. cancel offer successfully by manager', async () => {
+        it('6.3.6.2. cancel offer successfully by manager', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
@@ -925,7 +958,7 @@ describe('15. MortgageMarketplace', async () => {
                 .withArgs(1);
         });
 
-        it('15.6.3. cancel offer unsuccessfully with invalid offer id', async () => {
+        it('6.3.6.3. cancel offer unsuccessfully with invalid offer id', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
@@ -940,7 +973,7 @@ describe('15. MortgageMarketplace', async () => {
                 .to.be.revertedWithCustomError(mortgageMarketplace, "InvalidOfferId");
         });
 
-        it('15.6.4. cancel offer unsuccessfully by unauthorized user', async () => {
+        it('6.3.6.4. cancel offer unsuccessfully by unauthorized user', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
@@ -956,7 +989,7 @@ describe('15. MortgageMarketplace', async () => {
                 .to.be.revertedWithCustomError(mortgageMarketplace, "Unauthorized");
         });
 
-        it('15.6.5. cancel offer unsuccessfully when offer is already cancelled', async () => {
+        it('6.3.6.5. cancel offer unsuccessfully when offer is already cancelled', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
@@ -970,7 +1003,7 @@ describe('15. MortgageMarketplace', async () => {
                 .to.be.revertedWithCustomError(mortgageMarketplace, "InvalidCancelling");
         });
 
-        it('15.6.6. cancel offer unsuccessfully when offer is sold out', async () => {
+        it('6.3.6.6. cancel offer unsuccessfully when offer is sold out', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
