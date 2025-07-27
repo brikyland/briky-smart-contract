@@ -43,6 +43,7 @@ import {
     callEstateToken_UpdateCommissionToken,
     callEstateToken_Pause,
     callEstateToken_AuthorizeTokenizers,
+    callEstateToken_AuthorizeExtractors,
 } from '@utils/callWithSignatures/estateToken';
 import { BigNumber, BigNumberish, Contract, Wallet } from 'ethers';
 import { randomInt } from 'crypto';
@@ -66,7 +67,7 @@ import { Rate } from '@utils/models/Common';
 import { MockValidator } from '@utils/mockValidator';
 import { deployMockEstateForger } from '@utils/deployments/mocks/mockEstateForger';
 import { getRequestExtractionInvalidValidation, getRequestExtractionValidation } from '@utils/validation/EstateLiquidator';
-import { ProposalRule } from '@utils/models/Proposal';
+import { ProposalRule, ProposalState } from '@utils/models/Proposal';
 import { getRegisterSellerInValidation } from '@utils/validation/EstateForger';
 import { deployReentrancyERC20 } from '@utils/deployments/mocks/mockReentrancy/reentrancyERC20';
 import { RequestExtractionParams } from '@utils/models/EstateLiquidator';
@@ -96,7 +97,7 @@ interface EstateLiquidatorFixture {
     moderator: any;
     user: any;
     operator1: any, operator2: any, operator3: any;
-    commissionReceiver: any;
+    commissionReceiver1: any, commissionReceiver2: any;
     
     zone1: string, zone2: string;
 }
@@ -157,7 +158,10 @@ export async function applyDiscount(
 ) {
     const isExclusive = currency ? await admin.isExclusiveCurrency(currency.address) : false;
     if (isExclusive) {
-        const exclusiveRate = currency ? await currency.exclusiveDiscount() : ethers.BigNumber.from(0);
+        const exclusiveRate = currency ? (await currency.exclusiveDiscount()).value : ethers.BigNumber.from(0);
+        console.log("exclusiveRate", exclusiveRate);
+        console.log("feeAmount", feeAmount);
+        console.log("remain", remain(feeAmount, exclusiveRate));
         return remain(feeAmount, exclusiveRate);
     }
     return feeAmount;
@@ -209,7 +213,8 @@ describe('2.3. EstateLiquidator', async () => {
         const operator1 = accounts[Constant.ADMIN_NUMBER + 4];
         const operator2 = accounts[Constant.ADMIN_NUMBER + 5];
         const operator3 = accounts[Constant.ADMIN_NUMBER + 6];
-        const commissionReceiver = accounts[Constant.ADMIN_NUMBER + 7];
+        const commissionReceiver1 = accounts[Constant.ADMIN_NUMBER + 7];
+        const commissionReceiver2 = accounts[Constant.ADMIN_NUMBER + 8];
 
         const adminAddresses: string[] = admins.map(signer => signer.address);
         const admin = await deployAdmin(
@@ -353,7 +358,8 @@ describe('2.3. EstateLiquidator', async () => {
             operator1,
             operator2,
             operator3,
-            commissionReceiver,
+            commissionReceiver1,
+            commissionReceiver2,
             zone1,
             zone2,
             failReceiver,
@@ -362,8 +368,10 @@ describe('2.3. EstateLiquidator', async () => {
     };
 
     async function beforeEstateLiquidatorTest({
+        skipAuthorizeExtractor = false,
         skipAuthorizeGovernor = false,
         skipPrepareERC20ForOperators = false,
+        listSampleExtractionRequests = false,
         pause = false,
     } = {}): Promise<EstateLiquidatorFixture> {
         const fixture = await loadFixture(estateLiquidatorFixture);
@@ -380,19 +388,29 @@ describe('2.3. EstateLiquidator', async () => {
             currencies,
             nativePriceFeed,
             currencyPriceFeed,
-            commissionReceiver,
-            zone1,
-            zone2,
-            operator1,
-            operator2,
-            operator3,
+            commissionReceiver1,
+            commissionReceiver2,
+            zone1, zone2,
+            operator1, operator2, operator3,
             deployer,
             estateForger,
             failReceiver,
             reentrancyERC20,
+            validator,
         } = fixture;
 
         let timestamp = await time.latest();
+
+        const fee = await governanceHub.fee();
+
+        await callAdmin_UpdateCurrencyRegistries(
+            admin,
+            admins,
+            [ethers.constants.AddressZero, currencies[0].address, currencies[1].address, currencies[2].address],
+            [true, true, true, false],
+            [false, false, true, true],
+            await admin.nonce(),
+        );
 
         await callAdmin_DeclareZones(
             admin,
@@ -445,7 +463,7 @@ describe('2.3. EstateLiquidator', async () => {
                 10,
                 "Token1_URI",
                 timestamp + 1e9,
-                commissionReceiver.address,
+                commissionReceiver1.address,
             ])
         ));
 
@@ -457,7 +475,7 @@ describe('2.3. EstateLiquidator', async () => {
                 10,
                 "Token2_URI",
                 timestamp + 1e9,
-                commissionReceiver.address,
+                commissionReceiver2.address,
             ])
         ));
 
@@ -471,6 +489,16 @@ describe('2.3. EstateLiquidator', async () => {
             );
         }
 
+        if (!skipAuthorizeExtractor) {
+            await callEstateToken_AuthorizeExtractors(
+                estateToken,
+                admins,
+                [estateLiquidator.address],
+                true,
+                await admin.nonce(),
+            );
+        }
+
         await prepareNativeToken(
             ethers.provider,
             deployer,
@@ -479,17 +507,75 @@ describe('2.3. EstateLiquidator', async () => {
         );
 
         if (!skipPrepareERC20ForOperators) {
-            await prepareERC20(
-                currencies[0],
-                [operator1, operator2],
-                [estateLiquidator],
-                ethers.utils.parseEther("1000000000"),
+            for (const currency of currencies) {
+                await prepareERC20(
+                    currency,
+                    [operator1, operator2],
+                    [estateLiquidator],
+                    ethers.utils.parseEther("1000000000"),
+                );
+            }
+        }
+
+        if (listSampleExtractionRequests) {
+            timestamp += 100;
+            await time.setNextBlockTimestamp(timestamp);
+            
+            const params1: RequestExtractionParams = {
+                estateId: BigNumber.from(1),
+                value: ethers.utils.parseEther('100'),
+                currency: ethers.constants.AddressZero,
+                uuid: ethers.utils.formatBytes32String("uuid_1"),
+            };
+            const validation1 = await getRequestExtractionValidation(
+                estateToken as any,
+                estateLiquidator as any,
+                governanceHub as any,
+                validator,
+                timestamp,
+                operator1,
+                params1,
             );
+            await callTransaction(estateLiquidator.connect(operator1).requestExtraction(
+                params1.estateId,
+                params1.value,
+                params1.currency,
+                params1.uuid,
+                validation1,
+                { value: params1.value.add(fee) },
+            ));
+
+            timestamp += 10;
+            await time.setNextBlockTimestamp(timestamp);
+
+            const params2: RequestExtractionParams = {
+                estateId: BigNumber.from(2),
+                value: ethers.utils.parseEther('200'),
+                currency: currencies[0].address,
+                uuid: ethers.utils.formatBytes32String("uuid_2"),
+            };
+            const validation2 = await getRequestExtractionValidation(
+                estateToken as any,
+                estateLiquidator as any,
+                governanceHub as any,
+                validator,
+                timestamp,
+                operator2,
+                params2,
+            );
+            await callTransaction(estateLiquidator.connect(operator2).requestExtraction(
+                params2.estateId,
+                params2.value,
+                params2.currency,
+                params2.uuid,
+                validation2,
+                { value: fee },
+            ));
         }
 
         if (pause) {
             await callEstateLiquidator_Pause(estateLiquidator, admins, await admin.nonce());
-        }        
+        }
 
         return fixture;
     }
@@ -589,20 +675,20 @@ describe('2.3. EstateLiquidator', async () => {
         });
     });
 
-    describe.only('2.3.3. requestExtraction(uint256, uint256, address, bytes32, (uint256, uint256, bytes32))', async () => {
+    describe('2.3.3. requestExtraction(uint256, uint256, address, bytes32, (uint256, uint256, bytes32))', async () => {
         async function expectRevertWithCustomError(
             fixture: EstateLiquidatorFixture,
             params: RequestExtractionParams,
             signer: Wallet,
+            timestamp: number,
             errorContract: Contract,
             error: string,
             value: BigNumber,
         ) {
             const { estateLiquidator, validator, estateToken, governanceHub } = fixture;
 
-            let timestamp = await time.latest() + 10;
             await time.setNextBlockTimestamp(timestamp);
-            
+
             const validation = await getRequestExtractionValidation(
                 estateToken as any,
                 estateLiquidator as any,
@@ -627,13 +713,11 @@ describe('2.3. EstateLiquidator', async () => {
             fixture: EstateLiquidatorFixture,
             params: RequestExtractionParams,
             signer: Wallet,
+            timestamp: number,
             error: string,
             value?: BigNumber,
         ) {
             const { estateLiquidator, validator, estateToken, governanceHub } = fixture;
-            
-            let timestamp = await time.latest() + 10;
-            await time.setNextBlockTimestamp(timestamp);
             
             const validation = await getRequestExtractionValidation(
                 estateToken as any,
@@ -659,12 +743,10 @@ describe('2.3. EstateLiquidator', async () => {
             fixture: EstateLiquidatorFixture,
             params: RequestExtractionParams,
             signer: Wallet,
+            timestamp: number,
             value?: BigNumber,
         ) {
             const { estateLiquidator, validator, estateToken, governanceHub } = fixture;
-            
-            let timestamp = await time.latest() + 10;
-            await time.setNextBlockTimestamp(timestamp);
             
             const validation = await getRequestExtractionValidation(
                 estateToken as any,
@@ -1012,16 +1094,19 @@ describe('2.3. EstateLiquidator', async () => {
             const { defaultParams } = await beforeRequestExtractionTest(fixture);
             const fee = await governanceHub.fee();
 
+            let timestamp = await time.latest() + 10;
+
             await expectRevertWith(
                 fixture,
                 defaultParams,
                 operator1,
+                timestamp,
                 'Pausable: paused',
                 defaultParams.value.add(fee),
             );
         });
 
-        it.only('2.3.3.3. request extraction unsuccessfully when the contract is reentered', async () => {
+        it('2.3.3.3. request extraction unsuccessfully when the contract is reentered', async () => {
             const fixture = await beforeEstateLiquidatorTest();
 
             const { estateLiquidator, reentrancyERC20, operator1, estateToken, governanceHub, validator } = fixture;
@@ -1101,24 +1186,23 @@ describe('2.3. EstateLiquidator', async () => {
 
             const fee = await governanceHub.fee();
             
-            const expireAt = (await estateToken.getEstate(defaultParams.estateId)).expireAt;
-            await time.setNextBlockTimestamp(expireAt);
+            let expireAt = (await estateToken.getEstate(defaultParams.estateId)).expireAt;
 
             await expectRevertWithCustomError(
                 fixture,
                 defaultParams,
                 operator1,
+                expireAt,
                 estateLiquidator,
                 'UnavailableEstate',
                 defaultParams.value.add(fee),
             )
 
-            await time.setNextBlockTimestamp(expireAt + 10);
-
             await expectRevertWithCustomError(
                 fixture,
                 defaultParams,
                 operator1,
+                expireAt + 10,
                 estateLiquidator,
                 'UnavailableEstate',
                 defaultParams.value.add(fee),
@@ -1135,11 +1219,14 @@ describe('2.3. EstateLiquidator', async () => {
             const fee = await governanceHub.fee();
 
             await callTransaction(estateToken.connect(manager).deprecateEstate(defaultParams.estateId));
+            
+            let timestamp = await time.latest() + 10;
 
             await expectRevertWithCustomError(
                 fixture,
                 defaultParams,
                 operator1,
+                timestamp,
                 estateLiquidator,
                 'UnavailableEstate',
                 defaultParams.value.add(fee),
@@ -1155,10 +1242,13 @@ describe('2.3. EstateLiquidator', async () => {
 
             const fee = await governanceHub.fee();
 
+            let timestamp = await time.latest() + 10;
+
             await expectRevertWithCustomError(
                 fixture,
                 { ...defaultParams, value: ethers.constants.Zero },
                 operator1,
+                timestamp,
                 estateLiquidator,
                 'InvalidInput',
                 fee,
@@ -1172,10 +1262,13 @@ describe('2.3. EstateLiquidator', async () => {
 
             const { defaultParams } = await beforeRequestExtractionTest(fixture);
 
+            let timestamp = await time.latest() + 10;
+
             await expectRevertWithCustomError(
                 fixture,
                 defaultParams,
                 operator1,
+                timestamp,
                 estateLiquidator,
                 'InsufficientValue',
                 ethers.constants.Zero,
@@ -1185,6 +1278,7 @@ describe('2.3. EstateLiquidator', async () => {
                 fixture,
                 { ...defaultParams, currency: currencies[0].address },
                 operator1,
+                timestamp,
                 estateLiquidator,
                 'InsufficientValue',
                 ethers.constants.Zero,
@@ -1205,10 +1299,13 @@ describe('2.3. EstateLiquidator', async () => {
             const currency = currencies[0];
             await currency.mint(operator1.address, ethers.utils.parseEther('1000000000'));
 
+            let timestamp = await time.latest() + 10;
+
             await expectRevertWith(
                 fixture,
                 { ...defaultParams, currency: currencies[0].address },
                 operator1,
+                timestamp,
                 'ERC20: insufficient allowance',
                 fee,
             )
@@ -1228,10 +1325,13 @@ describe('2.3. EstateLiquidator', async () => {
             const currency = currencies[0];
             await currency.connect(operator1).approve(estateLiquidator.address, ethers.constants.MaxUint256);
 
+            let timestamp = await time.latest() + 10;
+
             await expectRevertWith(
                 fixture,
                 { ...defaultParams, currency: currencies[0].address },
                 operator1,
+                timestamp,
                 'ERC20: transfer amount exceeds balance',
                 fee,
             )
@@ -1283,10 +1383,13 @@ describe('2.3. EstateLiquidator', async () => {
 
             const fee = await governanceHub.fee();
 
+            let timestamp = await time.latest() + 10;
+
             await expectRevertWithCustomError(
                 fixture,
                 { ...defaultParams, estateId: BigNumber.from(0) },
                 operator1,
+                timestamp,
                 estateLiquidator as any,
                 "UnavailableEstate",
                 defaultParams.value.add(fee),
@@ -1295,6 +1398,7 @@ describe('2.3. EstateLiquidator', async () => {
                 fixture,
                 { ...defaultParams, estateId: BigNumber.from(100) },
                 operator1,
+                timestamp,
                 estateLiquidator as any,
                 "UnavailableEstate",
                 defaultParams.value.add(fee),
@@ -1312,10 +1416,13 @@ describe('2.3. EstateLiquidator', async () => {
 
             const fee = await governanceHub.fee();
 
+            let timestamp = await time.latest() + 10;
+
             await expectRevertWithCustomError(
                 fixture,
                 defaultParams,
                 operator1,
+                timestamp,
                 governanceHub as any,
                 "InvalidGovernor",
                 defaultParams.value.add(fee),
@@ -1325,7 +1432,306 @@ describe('2.3. EstateLiquidator', async () => {
 
     describe('2.3.4. conclude(uint256)', async () => {
         it('2.3.4.1. conclude successfully with successfully executed proposal', async () => {
+            const fixture = await beforeEstateLiquidatorTest({
+                listSampleExtractionRequests: true,
+            });
 
+            const { admin, operator1, operator2, governanceHub, estateLiquidator, commissionToken, estateToken, commissionReceiver1, commissionReceiver2, feeReceiver, dividendHub, currencies } = fixture;
+
+            let timestamp = await time.latest() + 10;
+            await time.setNextBlockTimestamp(timestamp);
+
+            const feeRate = await estateLiquidator.getFeeRate();
+
+            // Tx1: Conclude request with native token
+            governanceHub.getProposalState.whenCalledWith(1).returns(ProposalState.SuccessfulExecuted);
+            const estateId1 = 1;
+            const requestId1 = 1;
+            const totalVote1 = await estateToken.totalSupply(estateId1);
+
+            let operator1InitNativeBalance = await ethers.provider.getBalance(operator1.address);
+            let estateLiquidatorInitNativeBalance = await ethers.provider.getBalance(estateLiquidator.address);
+            let dividendHubInitNativeBalance = await ethers.provider.getBalance(dividendHub.address);
+            let commissionReceiver1InitNativeBalance = await ethers.provider.getBalance(commissionReceiver1.address);
+            let feeReceiverInitNativeBalance = await ethers.provider.getBalance(feeReceiver.address);
+
+            const value1 = (await estateLiquidator.getRequest(requestId1)).value;
+
+            const feeAmount1 = await applyDiscount(
+                admin,
+                scale(value1, feeRate),
+                null,
+            );
+            const commissionAmount1 = (await commissionToken.commissionInfo(1, feeAmount1))[1];
+
+            const tx1 = await estateLiquidator.connect(operator1).conclude(requestId1);
+            const receipt1 = await tx1.wait();
+            const gasFee1 = receipt1.gasUsed.mul(receipt1.effectiveGasPrice);
+
+            await expect(tx1).to.emit(estateToken, 'EstateExtraction').withArgs(
+                estateId1,
+                requestId1
+            );
+            await expect(tx1).to.emit(estateLiquidator, 'CommissionDispatch').withArgs(
+                commissionReceiver1.address,
+                commissionAmount1,
+                ethers.constants.AddressZero
+            );
+            await expect(tx1).to.emit(estateLiquidator, 'RequestApproval').withArgs(
+                requestId1,
+                feeAmount1,
+            );
+            
+            const estate1 = await estateToken.getEstate(estateId1);
+            expect(estate1.deprecateAt).to.equal(timestamp);
+
+            expect(await ethers.provider.getBalance(operator1.address)).to.equal(
+                operator1InitNativeBalance.sub(gasFee1)
+            );
+            expect(await ethers.provider.getBalance(estateLiquidator.address)).to.equal(
+                estateLiquidatorInitNativeBalance.sub(value1)
+            );
+            expect(await ethers.provider.getBalance(dividendHub.address)).to.equal(
+                dividendHubInitNativeBalance.add(value1.sub(feeAmount1))
+            );
+            expect(await ethers.provider.getBalance(commissionReceiver1.address)).to.equal(
+                commissionReceiver1InitNativeBalance.add(commissionAmount1)
+            );
+            expect(await ethers.provider.getBalance(feeReceiver.address)).to.equal(
+                feeReceiverInitNativeBalance.add(feeAmount1.sub(commissionAmount1))
+            );
+
+            const dividend1 = await dividendHub.getDividend(1);
+            expect(dividend1.tokenId).to.equal(estateId1);
+            expect(dividend1.remainWeight).to.equal(totalVote1);
+            expect(dividend1.remainValue).to.equal(value1.sub(feeAmount1));
+            expect(dividend1.currency).to.equal(ethers.constants.AddressZero);
+            expect(dividend1.at(4)).to.equal(timestamp);
+            expect(dividend1.governor).to.equal(estateToken.address);
+
+            // Tx2: Conclude request with ERC20 non-exclusive token
+            governanceHub.getProposalState.whenCalledWith(2).returns(ProposalState.SuccessfulExecuted);
+            const requestId2 = 2;
+            const estateId2 = 2;
+            const totalVote2 = await estateToken.totalSupply(estateId2);
+
+            timestamp += 10;
+            await time.setNextBlockTimestamp(timestamp);
+
+            let operator2InitNativeBalance = await ethers.provider.getBalance(operator2.address);
+            estateLiquidatorInitNativeBalance = await ethers.provider.getBalance(estateLiquidator.address);
+            dividendHubInitNativeBalance = await ethers.provider.getBalance(dividendHub.address);
+            let commissionReceiver2InitNativeBalance = await ethers.provider.getBalance(commissionReceiver2.address);
+            feeReceiverInitNativeBalance = await ethers.provider.getBalance(feeReceiver.address);
+
+            const currency = currencies[0];
+            let operator2InitERC20Balance = await currency.balanceOf(operator2.address);
+            let estateLiquidatorInitERC20Balance = await currency.balanceOf(estateLiquidator.address);
+            let dividendHubInitERC20Balance = await currency.balanceOf(dividendHub.address);
+            let commissionReceiver2InitERC20Balance = await currency.balanceOf(commissionReceiver2.address);
+            let feeReceiverInitERC20Balance = await currency.balanceOf(feeReceiver.address);
+
+            const value2 = (await estateLiquidator.getRequest(requestId2)).value;
+
+            const feeAmount2 = await applyDiscount(
+                admin,
+                scale(value2, feeRate),
+                currency,
+            );
+            const commissionAmount2 = (await commissionToken.commissionInfo(2, feeAmount2))[1];
+
+            const tx2 = await estateLiquidator.connect(operator2).conclude(requestId2);
+            const receipt2 = await tx2.wait();
+            const gasFee2 = receipt2.gasUsed.mul(receipt2.effectiveGasPrice);
+
+            await expect(tx2).to.emit(estateToken, 'EstateExtraction').withArgs(
+                estateId2,
+                requestId2
+            );
+            await expect(tx2).to.emit(estateLiquidator, 'CommissionDispatch').withArgs(
+                commissionReceiver2.address,
+                commissionAmount2,
+                currency.address
+            );
+            await expect(tx2).to.emit(estateLiquidator, 'RequestApproval').withArgs(
+                requestId2,
+                feeAmount2,
+            );
+            
+            const estate2 = await estateToken.getEstate(estateId2);
+            expect(estate2.deprecateAt).to.equal(timestamp);
+
+            expect(await ethers.provider.getBalance(operator2.address)).to.equal(
+                operator2InitNativeBalance.sub(gasFee2)
+            );
+            expect(await ethers.provider.getBalance(estateLiquidator.address)).to.equal(
+                estateLiquidatorInitNativeBalance
+            );
+            expect(await ethers.provider.getBalance(dividendHub.address)).to.equal(
+                dividendHubInitNativeBalance
+            );
+            expect(await ethers.provider.getBalance(commissionReceiver2.address)).to.equal(
+                commissionReceiver2InitNativeBalance
+            );
+            expect(await ethers.provider.getBalance(feeReceiver.address)).to.equal(
+                feeReceiverInitNativeBalance
+            );
+
+            expect(await currency.balanceOf(operator2.address)).to.equal(
+                operator2InitERC20Balance
+            );
+            expect(await currency.balanceOf(estateLiquidator.address)).to.equal(
+                estateLiquidatorInitERC20Balance.sub(value2)
+            );
+            expect(await currency.balanceOf(dividendHub.address)).to.equal(
+                dividendHubInitERC20Balance.add(value2.sub(feeAmount2))
+            );
+            expect(await currency.balanceOf(commissionReceiver2.address)).to.equal(
+                commissionReceiver2InitERC20Balance.add(commissionAmount2)
+            );
+            expect(await currency.balanceOf(feeReceiver.address)).to.equal(
+                feeReceiverInitERC20Balance.add(feeAmount2.sub(commissionAmount2))
+            );
+
+            const dividend2 = await dividendHub.getDividend(2);
+            expect(dividend2.tokenId).to.equal(estateId2);
+            expect(dividend2.remainWeight).to.equal(totalVote2);
+            expect(dividend2.remainValue).to.equal(value2.sub(feeAmount2));
+            expect(dividend2.currency).to.equal(currency.address);
+            expect(dividend2.at(4)).to.equal(timestamp);
+            expect(dividend2.governor).to.equal(estateToken.address);
+
+            governanceHub.getProposalState.reset();
+        });
+
+        it.only('2.3.4.2. conclude successfully with successfully executed proposal with ERC20 exclusive token', async () => {
+            const fixture = await beforeEstateLiquidatorTest();
+
+            const { admin, operator2, governanceHub, estateLiquidator, commissionToken, estateToken, commissionReceiver2, feeReceiver, dividendHub, currencies, validator } = fixture;
+
+            const currency = currencies[1];
+            const feeRate = await estateLiquidator.getFeeRate();
+            const fee = await governanceHub.fee();
+            
+            let timestamp = await time.latest() + 100;
+            await time.setNextBlockTimestamp(timestamp);
+
+            const params: RequestExtractionParams = {
+                estateId: BigNumber.from(2),
+                value: ethers.utils.parseEther('200'),
+                currency: currency.address,
+                uuid: ethers.utils.formatBytes32String("uuid_2"),
+            };
+            const validation = await getRequestExtractionValidation(
+                estateToken as any,
+                estateLiquidator as any,
+                governanceHub as any,
+                validator,
+                timestamp,
+                operator2,
+                params,
+            );
+            await callTransaction(estateLiquidator.connect(operator2).requestExtraction(
+                params.estateId,
+                params.value,
+                params.currency,
+                params.uuid,
+                validation,
+                { value: fee },
+            ));
+
+            timestamp += 10;
+            await time.setNextBlockTimestamp(timestamp);
+
+            // Tx1: Conclude request with ERC20 exclusive token
+            governanceHub.getProposalState.whenCalledWith(1).returns(ProposalState.SuccessfulExecuted);
+            const requestId = 1;
+            const estateId = 2;
+            const totalVote = await estateToken.totalSupply(estateId);
+
+            let operator2InitNativeBalance = await ethers.provider.getBalance(operator2.address);
+            let estateLiquidatorInitNativeBalance = await ethers.provider.getBalance(estateLiquidator.address);
+            let dividendHubInitNativeBalance = await ethers.provider.getBalance(dividendHub.address);
+            let commissionReceiver2InitNativeBalance = await ethers.provider.getBalance(commissionReceiver2.address);
+            let feeReceiverInitNativeBalance = await ethers.provider.getBalance(feeReceiver.address);
+
+            let operator2InitERC20Balance = await currency.balanceOf(operator2.address);
+            let estateLiquidatorInitERC20Balance = await currency.balanceOf(estateLiquidator.address);
+            let dividendHubInitERC20Balance = await currency.balanceOf(dividendHub.address);
+            let commissionReceiver2InitERC20Balance = await currency.balanceOf(commissionReceiver2.address);
+            let feeReceiverInitERC20Balance = await currency.balanceOf(feeReceiver.address);
+
+            const value = (await estateLiquidator.getRequest(requestId)).value;
+
+            const feeAmount = await applyDiscount(
+                admin,
+                scale(value, feeRate),
+                currency,
+            );
+            const commissionAmount = (await commissionToken.commissionInfo(2, feeAmount))[1];
+
+            const tx = await estateLiquidator.connect(operator2).conclude(requestId);
+            const receipt = await tx.wait();
+            const gasFee = receipt.gasUsed.mul(receipt.effectiveGasPrice);
+
+            await expect(tx).to.emit(estateToken, 'EstateExtraction').withArgs(
+                estateId,
+                requestId
+            );
+            await expect(tx).to.emit(estateLiquidator, 'RequestApproval').withArgs(
+                requestId,
+                feeAmount,
+            );
+            await expect(tx).to.emit(estateLiquidator, 'CommissionDispatch').withArgs(
+                commissionReceiver2.address,
+                commissionAmount,
+                currency.address
+            );
+            
+            const estate = await estateToken.getEstate(estateId);
+            expect(estate.deprecateAt).to.equal(timestamp);
+
+            expect(await ethers.provider.getBalance(operator2.address)).to.equal(
+                operator2InitNativeBalance.sub(gasFee)
+            );
+            expect(await ethers.provider.getBalance(estateLiquidator.address)).to.equal(
+                estateLiquidatorInitNativeBalance
+            );
+            expect(await ethers.provider.getBalance(dividendHub.address)).to.equal(
+                dividendHubInitNativeBalance
+            );
+            expect(await ethers.provider.getBalance(commissionReceiver2.address)).to.equal(
+                commissionReceiver2InitNativeBalance
+            );
+            expect(await ethers.provider.getBalance(feeReceiver.address)).to.equal(
+                feeReceiverInitNativeBalance
+            );
+
+            expect(await currency.balanceOf(operator2.address)).to.equal(
+                operator2InitERC20Balance
+            );
+            expect(await currency.balanceOf(estateLiquidator.address)).to.equal(
+                estateLiquidatorInitERC20Balance.sub(value)
+            );
+            expect(await currency.balanceOf(dividendHub.address)).to.equal(
+                dividendHubInitERC20Balance.add(value.sub(feeAmount))
+            );
+            expect(await currency.balanceOf(commissionReceiver2.address)).to.equal(
+                commissionReceiver2InitERC20Balance.add(commissionAmount)
+            );
+            expect(await currency.balanceOf(feeReceiver.address)).to.equal(
+                feeReceiverInitERC20Balance.add(feeAmount.sub(commissionAmount))
+            );
+
+            const dividend = await dividendHub.getDividend(1);
+            expect(dividend.tokenId).to.equal(estateId);
+            expect(dividend.remainWeight).to.equal(totalVote);
+            expect(dividend.remainValue).to.equal(value.sub(feeAmount));
+            expect(dividend.currency).to.equal(currency.address);
+            expect(dividend.at(4)).to.equal(timestamp);
+            expect(dividend.governor).to.equal(estateToken.address);
+
+            governanceHub.getProposalState.reset();
         });
 
         it('2.3.4.2. conclude successfully with disqualified proposal', async () => {

@@ -97,3 +97,23 @@ export async function callEstateToken_AuthorizeTokenizers(
         signatures
     ));
 }
+
+export async function callEstateToken_AuthorizeExtractors(
+    estateToken: EstateToken | MockContract<EstateToken>,
+    admins: any[],
+    extractors: string[],
+    isExtractor: boolean,
+    nonce: BigNumberish
+) {
+    const message = ethers.utils.defaultAbiCoder.encode(
+        ["address", "string", "address[]", "bool"],
+        [estateToken.address, "authorizeExtractors", extractors, isExtractor]
+    );
+    const signatures = await getSignatures(message, admins, nonce);
+
+    await callTransaction(estateToken.authorizeExtractors(
+        extractors,
+        isExtractor,
+        signatures
+    ));
+}

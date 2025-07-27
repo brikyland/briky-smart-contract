@@ -35,8 +35,6 @@ export async function getRequestExtractionValidation(
         duration: Constant.ESTATE_LIQUIDATOR_VOTING_DURATION,
         admissionExpiry: timestamp + Constant.ESTATE_LIQUIDATOR_ADMISSION_DURATION,
     };
-    console.log("proposeParams", proposeParams);
-    console.log("estateLiquidator", estateLiquidator.address);
 
     return await getProposeValidation(governanceHub, validator, estateLiquidator, proposeParams);
 }
