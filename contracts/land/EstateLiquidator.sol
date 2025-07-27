@@ -25,8 +25,6 @@ import {EstateLiquidatorStorage} from "./storages/EstateLiquidatorStorage.sol";
 
 import {CommissionDispatchable} from "./utilities/CommissionDispatchable.sol";
 
-import "hardhat/console.sol";
-
 contract EstateLiquidator is
 EstateLiquidatorStorage,
 Administrable,
@@ -196,7 +194,6 @@ ReentrancyGuardUpgradeable {
                 value.scale(feeRate, CommonConstant.RATE_MAX_FRACTION),
                 currency
             );
-
 
             if (currency == address(0)) {
                 IDividendHub(dividendHub).issueDividend{value: value - feeAmount}(
