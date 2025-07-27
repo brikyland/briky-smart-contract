@@ -167,7 +167,7 @@ Validatable {
         IAdmin(admin).verifyAdminSignatures(
             abi.encode(
                 address(this),
-                "authorizeExtractor",
+                "authorizeExtractors",
                 _accounts,
                 _isExtractor
             ),

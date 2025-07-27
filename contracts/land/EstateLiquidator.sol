@@ -120,6 +120,9 @@ ReentrancyGuardUpgradeable {
         if (!estateTokenContract.isAvailable(_estateId)) {
             revert UnavailableEstate();
         }
+        if (!IAdmin(admin).isAvailableCurrency(_currency)) {
+            revert InvalidCurrency();
+        }
 
         if (_value == 0) {
             revert InvalidInput();
@@ -180,14 +183,12 @@ ReentrancyGuardUpgradeable {
         }
 
         IEstateToken estateTokenContract = IEstateToken(estateToken);
-        if (estateTokenContract.isAvailable(estateId)) {
+        if (!estateTokenContract.isAvailable(estateId)) {
             revert UnavailableEstate();
         }
 
         ProposalState state = IGovernanceHub(governanceHub).getProposalState(request.proposalId);
         if (state == ProposalState.SuccessfulExecuted) {
-            estateTokenContract.extractEstate(estateId, _requestId);
-
             uint256 value = request.value;
             address currency = request.currency;
 
@@ -195,6 +196,27 @@ ReentrancyGuardUpgradeable {
                 value.scale(feeRate, CommonConstant.RATE_MAX_FRACTION),
                 currency
             );
+
+
+            if (currency == address(0)) {
+                IDividendHub(dividendHub).issueDividend{value: value - feeAmount}(
+                    estateToken,
+                    estateId,
+                    value - feeAmount,
+                    currency
+                );
+            } else {
+                address dividendHubAddress = dividendHub;
+                CurrencyHandler.allowERC20(currency, dividendHubAddress, value - feeAmount);
+                IDividendHub(dividendHubAddress).issueDividend(
+                    estateToken,
+                    estateId,
+                    value - feeAmount,
+                    currency
+                );
+            }
+
+            estateTokenContract.extractEstate(estateId, _requestId);
 
             uint256 commissionAmount = _dispatchCommission(
                 estateId,
@@ -204,22 +226,8 @@ ReentrancyGuardUpgradeable {
 
             if (currency == address(0)) {
                 CurrencyHandler.sendNative(feeReceiver, feeAmount - commissionAmount);
-                IDividendHub(dividendHub).issueDividend{value: value - feeAmount}(
-                    address(this),
-                    estateId,
-                    value - feeAmount,
-                    currency
-                );
             } else {
-                address dividendHubAddress = dividendHub;
                 CurrencyHandler.sendCurrency(currency, feeReceiver, feeAmount - commissionAmount);
-                CurrencyHandler.allowERC20(currency, dividendHubAddress, value - feeAmount);
-                IDividendHub(dividendHubAddress).issueDividend(
-                    address(this),
-                    estateId,
-                    value - feeAmount,
-                    currency
-                );
             }
 
             emit RequestApproval(_requestId, feeAmount);
