@@ -15,7 +15,7 @@
 2. Land
 2.1. CommissionToken (DONE)
 2.2. EstateForger (DONE)
-2.3. EstateLiquidator 
+2.3. EstateLiquidator (DONE)
 2.4. EstateToken
 
 3. Lend

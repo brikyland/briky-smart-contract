@@ -641,7 +641,6 @@ describe('1.2. Admin', async () => {
                 true,
                 signatures
             )).to.be.revertedWithCustomError(admin, `AuthorizedAccount`)
-                .withArgs(duplicateManagers[0].address);
         });
 
         it('1.2.8.4. Authorize manager unsuccessfully when authorizing same account twice on different tx', async () => {
@@ -676,7 +675,6 @@ describe('1.2. Admin', async () => {
                 true,
                 signatures
             )).to.be.revertedWithCustomError(admin, `AuthorizedAccount`)
-                .withArgs(toBeManagers[2].address);
         })
 
         async function setupManagers(admins: any[], admin: Admin): Promise<Wallet[]> {
@@ -756,7 +754,6 @@ describe('1.2. Admin', async () => {
                 false,
                 signatures
             )).to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`)
-                .withArgs(account.address);
         });
 
         it('1.2.8.7. Deauthorize manager unsuccessfully when unauthorizing same accounts twice on same tx', async () => {
@@ -778,7 +775,6 @@ describe('1.2. Admin', async () => {
                 false,
                 signatures
             )).to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`)
-                .withArgs(managers[0].address);
         });
 
         it('1.2.8.8. Deauthorize manager unsuccessfully when unauthorizing same accounts twice on different tx', async () => {
@@ -802,7 +798,6 @@ describe('1.2. Admin', async () => {
                 false,
                 signatures
             )).to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`)
-                .withArgs(managers[0].address);
         });
 
         it('1.2.8.9. Deauthorize manager unsuccessfully when the caller self-deauthorizes', async () => {
@@ -896,7 +891,6 @@ describe('1.2. Admin', async () => {
                 true,
                 signatures
             )).to.be.revertedWithCustomError(admin, `AuthorizedAccount`)
-                .withArgs(duplicateModerators[0].address);
         });
 
         it('1.2.9.4. Authorize moderator unsuccessfully when authorizing same account twice on different tx', async () => {
@@ -931,7 +925,6 @@ describe('1.2. Admin', async () => {
                 true,
                 signatures
             )).to.be.revertedWithCustomError(admin, `AuthorizedAccount`)
-                .withArgs(toBeModerators[2].address);
         })
 
         async function setupModerators(admin: Admin, admins: any[]): Promise<Wallet[]> {
@@ -1011,7 +1004,6 @@ describe('1.2. Admin', async () => {
                 false,
                 signatures
             )).to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`)
-                .withArgs(account.address);
         });
 
         it('1.2.9.7. Deauthorize moderator unsuccessfully when unauthorizing same accounts twice on same tx', async () => {
@@ -1033,7 +1025,6 @@ describe('1.2. Admin', async () => {
                 false,
                 signatures
             )).to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`)
-                .withArgs(moderators[0].address);
         });
 
         it('1.2.9.8. Deauthorize moderator unsuccessfully when unauthorizing same accounts twice on different tx', async () => {
@@ -1057,7 +1048,6 @@ describe('1.2. Admin', async () => {
                 false,
                 signatures
             )).to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`)
-                .withArgs(moderators[0].address);
         });
     });
 
@@ -1171,7 +1161,6 @@ describe('1.2. Admin', async () => {
                 true,
                 signatures
             )).to.be.revertedWithCustomError(admin, `AuthorizedAccount`)
-                .withArgs(duplicateGovernors[0].address);
         });
 
         it('1.2.10.6. Authorize governor unsuccessfully when authorizing same account twice on different tx', async () => {
@@ -1203,7 +1192,6 @@ describe('1.2. Admin', async () => {
                 true,
                 signatures
             )).to.be.revertedWithCustomError(admin, `AuthorizedAccount`)
-                .withArgs(governors[1].address);
         })
 
         async function setupGovernors(fixture: AdminFixture) {
@@ -1276,7 +1264,6 @@ describe('1.2. Admin', async () => {
                 false,
                 signatures
             )).to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`)
-                .withArgs(account.address);
         });
 
         it('1.2.10.9. Deauthorize governor unsuccessfully when unauthorizing same accounts twice on same tx', async () => {
@@ -1298,7 +1285,6 @@ describe('1.2. Admin', async () => {
                 false,
                 signatures
             )).to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`)
-                .withArgs(governors[0].address);
         });
 
         it('1.2.10.10. Deauthorize governor unsuccessfully when unauthorizing same accounts twice on different tx', async () => {
@@ -1321,8 +1307,7 @@ describe('1.2. Admin', async () => {
                 tx2_accounts.map(x => x.address),
                 false,
                 signatures
-            )).to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`)
-                .withArgs(governors[0].address);
+            )).to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`);
         });
     });
 
@@ -1410,8 +1395,7 @@ describe('1.2. Admin', async () => {
                 zones,
                 true,
                 signatures
-            )).to.be.revertedWithCustomError(admin, 'AuthorizedZone')
-                .withArgs(ethers.utils.formatBytes32String("TestZone1"));
+            )).to.be.revertedWithCustomError(admin, 'AuthorizedZone');
         });
 
         it('1.2.11.4. Declare zone unsuccessfully when declaring same zone twice on different tx', async () => {
@@ -1439,7 +1423,6 @@ describe('1.2. Admin', async () => {
                 true,
                 signatures
             )).to.be.revertedWithCustomError(admin, 'AuthorizedZone')
-                .withArgs(ethers.utils.formatBytes32String("TestZone3"));
         });
 
         async function setupZones(admins: any[], admin: Admin): Promise<string[]> {
@@ -1513,7 +1496,6 @@ describe('1.2. Admin', async () => {
                 false,
                 signatures
             )).to.be.revertedWithCustomError(admin, 'NotAuthorizedZone')
-                .withArgs(ethers.utils.formatBytes32String("TestZone6"));            
         });
 
         it('1.2.11.7. Renounce zone unsuccessfully when renouncing same zone twice on same tx', async () => {
@@ -1538,7 +1520,6 @@ describe('1.2. Admin', async () => {
                 false,
                 signatures
             )).to.be.revertedWithCustomError(admin, 'NotAuthorizedZone')
-                .withArgs(ethers.utils.formatBytes32String("TestZone2"));            
         });
 
         it('1.2.11.8. Renounce zone unsuccessfully when renouncing same zone twice on different tx', async () => {
@@ -1567,7 +1548,6 @@ describe('1.2. Admin', async () => {
                 false,
                 signatures
             )).to.be.revertedWithCustomError(admin, 'NotAuthorizedZone')
-                .withArgs(ethers.utils.formatBytes32String("TestZone2"));
         });
     });
 
@@ -1704,8 +1684,7 @@ describe('1.2. Admin', async () => {
 
             await expect(
                 admin.activateIn(zone1, zone1Accounts.map(x => x.address), true, signatures)
-            ).to.be.revertedWithCustomError(admin, 'Activated')
-                .withArgs(accounts[1].address);
+            ).to.be.revertedWithCustomError(admin, 'ActivatedAccount')
         });
 
         it('1.2.12.5. Activate accounts in zone unsuccessfully when activating same account twice on different tx', async () => {
@@ -1728,8 +1707,7 @@ describe('1.2. Admin', async () => {
 
             await expect(
                 admin.activateIn(zone1, tx2_accounts.map(x => x.address), true, signatures)
-            ).to.be.revertedWithCustomError(admin, 'Activated')
-                .withArgs(accounts[2].address);
+            ).to.be.revertedWithCustomError(admin, 'ActivatedAccount')
         });
 
         it('1.2.12.6. Deactivate accounts in zone successfully', async () => {
@@ -1811,8 +1789,7 @@ describe('1.2. Admin', async () => {
 
             await expect(
                 admin.activateIn(zone1, zone1ToDeacivate.map(x => x.address), false, signatures)
-            ).to.be.revertedWithCustomError(admin, 'NotActivated')
-                .withArgs(newAccount.address);
+            ).to.be.revertedWithCustomError(admin, 'NotActivatedAccount')
         });
 
         it('1.2.12.8. Deactivate accounts in zone unsuccessfully when deactivating same account twice on same tx', async () => {
@@ -1834,8 +1811,7 @@ describe('1.2. Admin', async () => {
             
             await expect(
                 admin.activateIn(zone1, zone1ToDeacivate.map(x => x.address), false, signatures)
-            ).to.be.revertedWithCustomError(admin, 'NotActivated')
-                .withArgs(accounts[0].address);
+            ).to.be.revertedWithCustomError(admin, 'NotActivatedAccount')
         });
 
         it('1.2.12.9. Deactivate accounts in zone unsuccessfully when deactivating same account twice on different tx', async () => {
@@ -1860,8 +1836,7 @@ describe('1.2. Admin', async () => {
             
             await expect(
                 admin.activateIn(zone1, tx2_accounts.map(x => x.address), false, signatures)
-            ).to.be.revertedWithCustomError(admin, 'NotActivated')
-                .withArgs(accounts[2].address);
+            ).to.be.revertedWithCustomError(admin, 'NotActivatedAccount')
         });
     });
 

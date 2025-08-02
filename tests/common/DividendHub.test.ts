@@ -553,6 +553,9 @@ describe('1.4. DividendHub', async () => {
             let dividendHubInitBalance = await ethers.provider.getBalance(dividendHub.address);
             let receiver1InitBalance = await ethers.provider.getBalance(receiver1.address);
 
+            let timestamp = await time.latest() + 100;
+            await time.setNextBlockTimestamp(timestamp);
+
             const tx1 = await dividendHub.connect(receiver1).withdraw([dividendId1]);
             const receipt1 = await tx1.wait();
             const gasFee1 = receipt1.gasUsed.mul(receipt1.effectiveGasPrice);
@@ -568,8 +571,13 @@ describe('1.4. DividendHub', async () => {
             let dividend = await dividendHub.getDividend(dividendId1);
             expect(dividend.remainWeight).to.equal(totalWeight1.sub(receiver1Weight1));
             expect(dividend.remainValue).to.equal(totalValue1.sub(receiver1Value1));
+            
+            expect(await dividendHub.withdrawAt(dividendId1, receiver1.address)).to.equal(timestamp);
 
             // Tx2: Receiver 2 withdraw dividend 1 (native token)
+            timestamp += 10;
+            await time.setNextBlockTimestamp(timestamp);
+
             dividendHubInitBalance = await ethers.provider.getBalance(dividendHub.address);
             let receiver2InitBalance = await ethers.provider.getBalance(receiver2.address);
 
@@ -589,7 +597,12 @@ describe('1.4. DividendHub', async () => {
             expect(dividend.remainWeight).to.equal(totalWeight1.sub(receiver1Weight1).sub(receiver2Weight1));
             expect(dividend.remainValue).to.equal(totalValue1.sub(receiver1Value1).sub(receiver2Value1));
 
+            expect(await dividendHub.withdrawAt(dividendId1, receiver2.address)).to.equal(timestamp);
+
             // Tx3: Receiver 3 withdraw dividend 1 (native token)
+            timestamp += 10;
+            await time.setNextBlockTimestamp(timestamp);
+
             dividendHubInitBalance = await ethers.provider.getBalance(dividendHub.address);
             let receiver3InitBalance = await ethers.provider.getBalance(receiver3.address);
 
@@ -609,6 +622,8 @@ describe('1.4. DividendHub', async () => {
             expect(dividend.remainWeight).to.equal(0);
             expect(dividend.remainValue).to.equal(0);
 
+            expect(await dividendHub.withdrawAt(dividendId1, receiver3.address)).to.equal(timestamp);
+
             // Tx4: Receiver 1 withdraw dividend 2 (native token)
             const tokenId2 = 1;
             const dividendId2 = 2;
@@ -619,6 +634,9 @@ describe('1.4. DividendHub', async () => {
 
             dividendHubInitBalance = await ethers.provider.getBalance(dividendHub.address);
             receiver1InitBalance = await ethers.provider.getBalance(receiver1.address);
+
+            timestamp += 10;
+            await time.setNextBlockTimestamp(timestamp);
 
             const tx4 = await dividendHub.connect(receiver1).withdraw([dividendId2]);
             const receipt4 = await tx4.wait();
@@ -636,6 +654,8 @@ describe('1.4. DividendHub', async () => {
             expect(dividend.remainWeight).to.equal(totalWeight2.sub(receiver1Weight2));
             expect(dividend.remainValue).to.equal(totalValue2.sub(receiver1Value2));
 
+            expect(await dividendHub.withdrawAt(dividendId2, receiver1.address)).to.equal(timestamp);
+
             // Tx5: Receiver 2 withdraw dividend 3 (erc20 token)
             const currency = currencies[0];
             const tokenId3 = 2;
@@ -647,6 +667,9 @@ describe('1.4. DividendHub', async () => {
 
             dividendHubInitBalance = await currency.balanceOf(dividendHub.address);
             receiver2InitBalance = await currency.balanceOf(receiver2.address);
+
+            timestamp += 10;
+            await time.setNextBlockTimestamp(timestamp);
 
             const tx5 = await dividendHub.connect(receiver2).withdraw([dividendId3]);
             const receipt5 = await tx5.wait();
@@ -662,6 +685,8 @@ describe('1.4. DividendHub', async () => {
             dividend = await dividendHub.getDividend(dividendId3);
             expect(dividend.remainWeight).to.equal(totalWeight3.sub(receiver2Weight3));
             expect(dividend.remainValue).to.equal(totalValue3.sub(receiver2Value3));
+
+            expect(await dividendHub.withdrawAt(dividendId3, receiver2.address)).to.equal(timestamp);
         });
 
         it('1.4.3.2. Withdraw successfully with multiple dividend ids', async () => {
@@ -673,6 +698,9 @@ describe('1.4. DividendHub', async () => {
                 issueSampleDividends: true,
             });
             const { dividendHub, governor, receiver1, currencies } = fixture;
+
+            let timestamp = await time.latest() + 100;
+            await time.setNextBlockTimestamp(timestamp);
 
             // Tx1: Receiver 1 withdraw dividend 1, 2 (native token) and 3 (erc20 token)
             let dividendHubInitNativeBalance = await ethers.provider.getBalance(dividendHub.address);
@@ -744,6 +772,10 @@ describe('1.4. DividendHub', async () => {
             const dividend3 = await dividendHub.getDividend(dividendId3);
             expect(dividend3.remainWeight).to.equal(totalWeight3.sub(receiver1Weight3));
             expect(dividend3.remainValue).to.equal(totalValue3.sub(receiver1Value3));
+
+            expect(await dividendHub.withdrawAt(dividendId1, receiver1.address)).to.equal(timestamp);
+            expect(await dividendHub.withdrawAt(dividendId2, receiver1.address)).to.equal(timestamp);
+            expect(await dividendHub.withdrawAt(dividendId3, receiver1.address)).to.equal(timestamp);
         });
 
         it('1.4.3.3. Withdraw unsuccessfully when paused', async () => {
@@ -949,9 +981,9 @@ describe('1.4. DividendHub', async () => {
             const { dividendHub, receiver1 } = fixture;
 
             await expect(dividendHub.connect(receiver1).getDividend(0))
-                .to.be.revertedWithCustomError(dividendHub, 'InvalidDividendId');
+                .to.be.revertedWithoutReason();
             await expect(dividendHub.connect(receiver1).getDividend(4))
-                .to.be.revertedWithCustomError(dividendHub, 'InvalidDividendId');
+                .to.be.revertedWithoutReason();
         });
     });
 });

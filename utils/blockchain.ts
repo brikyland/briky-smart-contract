@@ -1,5 +1,6 @@
 import { BigNumberish, ethers, Wallet } from 'ethers';
 import { JsonRpcProvider } from '@ethersproject/providers';
+import { time } from '@nomicfoundation/hardhat-network-helpers';
 
 export function parseEther(x: string) {
     const decimalStr = Number(x).toLocaleString("fullwide", {
@@ -10,6 +11,14 @@ export function parseEther(x: string) {
 }
 
 export async function callTransaction(tx: Promise<ethers.ContractTransaction>): Promise<ethers.ContractReceipt> {
+    return await ((await tx).wait());
+}
+
+export async function callTransactionAtTimestamp(
+    tx: Promise<ethers.ContractTransaction>,
+    timestamp: number,
+): Promise<ethers.ContractReceipt> {
+    await time.setNextBlockTimestamp(timestamp);
     return await ((await tx).wait());
 }
 
