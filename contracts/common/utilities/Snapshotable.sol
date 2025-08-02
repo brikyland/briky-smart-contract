@@ -10,7 +10,7 @@ contract Snapshotable is ISnapshot {
             return 0;
         }
         uint256 low = 0;
-        uint256 pivot;
+        uint256 pivot = type(uint256).max;
         while (low < high) {
             uint256 mid = (low + high) >> 1;
             if (snapshots[mid].timestamp <= _at) {
@@ -20,6 +20,6 @@ contract Snapshotable is ISnapshot {
                 high = mid;
             }
         }
-        return snapshots[pivot].value;
+        return pivot == type(uint256).max ? 0 : snapshots[pivot].value;
     }
 }
