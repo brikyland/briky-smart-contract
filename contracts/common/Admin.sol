@@ -179,7 +179,7 @@ Initializable {
         );
 
         if (_isManager) {
-            for (uint256 i; i < _accounts.length; i++) {
+            for (uint256 i; i < _accounts.length; ++i) {
                 if (isManager[_accounts[i]]) {
                     revert AuthorizedAccount();
                 }
@@ -187,7 +187,7 @@ Initializable {
                 emit ManagerAuthorization(_accounts[i]);
             }
         } else {
-            for (uint256 i; i < _accounts.length; i++) {
+            for (uint256 i; i < _accounts.length; ++i) {
                 if (!isManager[_accounts[i]]) {
                     revert NotAuthorizedAccount();
                 }
@@ -216,7 +216,7 @@ Initializable {
         );
 
         if (_isModerator) {
-            for (uint256 i; i < _accounts.length; i++) {
+            for (uint256 i; i < _accounts.length; ++i) {
                 if (isModerator[_accounts[i]]) {
                     revert AuthorizedAccount();
                 }
@@ -224,7 +224,7 @@ Initializable {
                 emit ModeratorAuthorization(_accounts[i]);
             }
         } else {
-            for (uint256 i; i < _accounts.length; i++) {
+            for (uint256 i; i < _accounts.length; ++i) {
                 if (!isModerator[_accounts[i]]) {
                     revert NotAuthorizedAccount();
                 }
@@ -250,7 +250,7 @@ Initializable {
         );
 
         if (_isGovernor) {
-            for (uint256 i; i < _accounts.length; i++) {
+            for (uint256 i; i < _accounts.length; ++i) {
                 if (isGovernor[_accounts[i]]) {
                     revert AuthorizedAccount();
                 }
@@ -261,7 +261,7 @@ Initializable {
                 emit GovernorAuthorization(_accounts[i]);
             }
         } else {
-            for (uint256 i; i < _accounts.length; i++) {
+            for (uint256 i; i < _accounts.length; ++i) {
                 if (!isGovernor[_accounts[i]]) {
                     revert NotAuthorizedAccount();
                 }
@@ -287,7 +287,7 @@ Initializable {
         );
 
         if (_isZone) {
-            for (uint256 i; i < _zones.length; i++) {
+            for (uint256 i; i < _zones.length; ++i) {
                 if (isZone[_zones[i]]) {
                     revert AuthorizedZone();
                 }
@@ -295,7 +295,7 @@ Initializable {
                 emit ZoneAnnouncement(_zones[i]);
             }
         } else {
-            for (uint256 i; i < _zones.length; i++) {
+            for (uint256 i; i < _zones.length; ++i) {
                 if (!isZone[_zones[i]]) {
                     revert NotAuthorizedZone();
                 }
@@ -327,7 +327,7 @@ Initializable {
         }
 
         if (_isActive) {
-            for (uint256 i; i < _accounts.length; i++) {
+            for (uint256 i; i < _accounts.length; ++i) {
                 if (isActiveIn[_zone][_accounts[i]]) {
                     revert ActivatedAccount();
                 }
@@ -335,7 +335,7 @@ Initializable {
                 emit Activation(_zone, _accounts[i]);
             }
         } else {
-            for (uint256 i; i < _accounts.length; i++) {
+            for (uint256 i; i < _accounts.length; ++i) {
                 if (!isActiveIn[_zone][_accounts[i]]) {
                     revert NotActivatedAccount();
                 }
@@ -386,7 +386,7 @@ Initializable {
             revert InvalidInput();
         }
 
-        for (uint256 i; i < _currencies.length; i++) {
+        for (uint256 i; i < _currencies.length; ++i) {
             currencyRegistries[_currencies[i]] = CurrencyRegistry(
                 0,
                 0,

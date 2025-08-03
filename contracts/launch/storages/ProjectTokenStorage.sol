@@ -6,6 +6,8 @@ import {IProjectToken} from "../interfaces/IProjectToken.sol";
 abstract contract ProjectTokenStorage is IProjectToken {
     mapping(uint256 => mapping(address => Snapshot[])) internal balanceSnapshots;
 
+    mapping(bytes32 => mapping(address => string)) public initiatorURI;
+
     mapping(uint256 => mapping(address => uint256)) public withdrawAt;
 
     mapping(uint256 => Snapshot[]) internal totalSupplySnapshots;

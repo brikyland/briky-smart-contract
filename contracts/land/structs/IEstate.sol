@@ -9,5 +9,6 @@ interface IEstate {
         uint40 tokenizeAt;
         uint40 expireAt;
         uint40 deprecateAt;
+        address custodian;
     }
 }

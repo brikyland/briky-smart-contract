@@ -28,9 +28,6 @@ IEstateTokenizer {
     event Whitelist(address indexed account);
     event Unwhitelist(address indexed account);
 
-    event SellerRegistration(bytes32 indexed zone, address indexed account);
-    event SellerDeregistration(bytes32 indexed zone, address indexed account);
-
     event NewRequest(
         uint256 indexed requestId,
         uint256 indexed cashbackFundId,
@@ -71,10 +68,11 @@ IEstateTokenizer {
     );
 
     error AlreadyCancelled();
+    error AlreadyConfirmed();
     error AlreadyHadDeposit();
-    error AlreadyTokenized();
     error AlreadyWithdrawn();
     error InvalidCommissionReceiver();
+    error InvalidConfirming();
     error InvalidDepositing();
     error InvalidRequestId();
     error InvalidUnitPrice();
@@ -90,6 +88,8 @@ IEstateTokenizer {
     error WhitelistedAccount();
 
     function feeReceiver() external view returns (address feeReceiver);
+    function priceWatcher() external view returns (address priceWatcher);
+    function reserveVault() external view returns (address reserveVault);
 
     function getFeeRate() external view returns (Rate memory rate);
 
@@ -98,17 +98,13 @@ IEstateTokenizer {
 
     function requestNumber() external view returns (uint256 requestNumber);
 
-    function isSellerIn(bytes32 zone, address account) external view returns (bool isActive);
-
     function deposits(uint256 requestId, address depositor) external view returns (uint256 deposit);
     function withdrawAt(uint256 requestId, address account) external view returns (uint256 withdrawAt);
 
     function getRequest(uint256 requestId) external view returns (EstateForgerRequest memory request);
 
-    function registerSellerIn(bytes32 zone, address account, bool isSeller) external;
-
     function requestTokenization(
-        address seller,
+        address requester,
         EstateForgerRequestEstateInput calldata estate,
         EstateForgerRequestQuotaInput calldata quota,
         EstateForgerRequestQuoteInput calldata quote,

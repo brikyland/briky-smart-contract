@@ -50,6 +50,7 @@ interface IEstateForgerRequest {
         uint40 saleStartsAt;
         uint40 privateSaleEndsAt;
         uint40 publicSaleEndsAt;
+        uint40 confirmAt;
     }
 
     struct EstateForgerRequestAgendaInput {
@@ -63,6 +64,6 @@ interface IEstateForgerRequest {
         EstateForgerRequestQuota quota;
         EstateForgerRequestQuote quote;
         EstateForgerRequestAgenda agenda;
-        address seller;
+        address requester;
     }
 }
