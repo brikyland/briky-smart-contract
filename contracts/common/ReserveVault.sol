@@ -60,7 +60,7 @@ ReentrancyGuardUpgradeable {
         );
 
         if (_isProvider) {
-            for (uint256 i; i < _accounts.length; i++) {
+            for (uint256 i; i < _accounts.length; ++i) {
                 if (isProvider[_accounts[i]]) {
                     revert AuthorizedAccount();
                 }
@@ -68,7 +68,7 @@ ReentrancyGuardUpgradeable {
                 emit ProviderAuthorization(_accounts[i]);
             }
         } else {
-            for (uint256 i; i < _accounts.length; i++) {
+            for (uint256 i; i < _accounts.length; ++i) {
                 if (!isProvider[_accounts[i]]) {
                     revert NotAuthorizedAccount();
                 }
@@ -88,7 +88,7 @@ ReentrancyGuardUpgradeable {
         return funds[_fundId].isSufficient;
     }
 
-    function requestFund(
+    function openFund(
         address _mainCurrency,
         uint256 _mainDenomination,
         address[] calldata _extraCurrencies,
@@ -112,7 +112,7 @@ ReentrancyGuardUpgradeable {
         fund.mainCurrency = _mainCurrency;
         fund.mainDenomination = _mainDenomination;
 
-        for (uint256 i; i < _extraCurrencies.length; i++) {
+        for (uint256 i; i < _extraCurrencies.length; ++i) {
             if (!adminContract.isAvailableCurrency(_extraCurrencies[i])) {
                 revert InvalidCurrency();
             }
@@ -125,7 +125,7 @@ ReentrancyGuardUpgradeable {
 
         fund.provider = msg.sender;
 
-        emit FundInitiation(
+        emit NewFund(
             fundId,
             msg.sender,
             _mainCurrency,
@@ -168,7 +168,7 @@ ReentrancyGuardUpgradeable {
                 }
             }
 
-            for (uint256 i; i < fund.extraCurrencies.length; i++) {
+            for (uint256 i; i < fund.extraCurrencies.length; ++i) {
                 if (fund.extraCurrencies[i] == address(0)) {
                     totalNative += fund.extraDenominations[i] * fund.totalQuantity;
                 } else {
@@ -206,7 +206,7 @@ ReentrancyGuardUpgradeable {
             _receiver,
             fund.mainDenomination * _quantity
         );
-        for (uint256 i; i < fund.extraCurrencies.length; i++) {
+        for (uint256 i; i < fund.extraCurrencies.length; ++i) {
             CurrencyHandler.sendCurrency(
                 fund.extraCurrencies[i],
                 _receiver,

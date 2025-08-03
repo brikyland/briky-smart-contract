@@ -27,11 +27,18 @@ IERC1155MetadataURIUpgradeable {
     event LaunchpadAuthorization(address indexed account);
     event LaunchpadDeauthorization(address indexed account);
 
+    event InitiatorRegistration(
+        bytes32 indexed zone,
+        address indexed initiator,
+        string uri
+    );
+
     event NewToken(
         uint256 indexed tokenId,
         bytes32 indexed zone,
         uint256 indexed launchId,
-        address launchpad
+        address launchpad,
+        address initiator
     );
 
     event ProjectDeprecation(uint256 indexed projectId);
@@ -42,12 +49,12 @@ IERC1155MetadataURIUpgradeable {
         address commissionReceiver
     );
 
-    error AlreadyTokenized();
     error AlreadyWithdrawn();
     error InvalidCommissionReceiver();
     error InvalidLaunchpad(address account);
     error InvalidProjectId();
     error InvalidTokenizing();
+    error InvalidURI();
     error InvalidWithdrawing();
     error NothingToTokenize();
 
@@ -59,13 +66,25 @@ IERC1155MetadataURIUpgradeable {
 
     function isLaunchpad(address account) external view returns (bool isLaunchpad);
 
+    function initiatorURI(bytes32 zone, address account) external view returns (string memory uri);
+    function isInitiatorIn(bytes32 zone, address account) external view returns (bool isInitiator);
+
     function getProject(uint256 projectId) external view returns (Project memory project);
+    function zoneOf(uint256 projectId) external view returns (bytes32 zone);
 
     function withdrawAt(uint256 projectId, address account) external view returns (uint256 withdrawAt);
+
+    function registerInitiator(
+        bytes32 zone,
+        address initiator,
+        string calldata uri,
+        Validation calldata validation
+    ) external;
 
     function launchProject(
         bytes32 zone,
         uint256 launchId,
+        address initiator,
         string calldata uri
     ) external returns (uint256 projectId);
     function mint(uint256 _projectId, uint256 _amount) external;
@@ -76,5 +95,8 @@ IERC1155MetadataURIUpgradeable {
         string calldata _uri,
         Validation calldata _validation
     ) external;
-    function tokenizeProject(uint256 _projectId) external;
+    function tokenizeProject(
+        uint256 _projectId,
+        address _commissionReceiver
+    ) external returns (uint256 estateId);
 }

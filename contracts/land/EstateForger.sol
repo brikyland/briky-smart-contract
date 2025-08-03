@@ -146,7 +146,7 @@ ReentrancyGuardUpgradeable {
         );
 
         if (_isWhitelisted) {
-            for (uint256 i; i < _accounts.length; i++) {
+            for (uint256 i; i < _accounts.length; ++i) {
                 if (isWhitelisted[_accounts[i]]) {
                     revert WhitelistedAccount();
                 }
@@ -154,37 +154,13 @@ ReentrancyGuardUpgradeable {
                 emit Whitelist(_accounts[i]);
             }
         } else {
-            for (uint256 i; i < _accounts.length; i++) {
+            for (uint256 i; i < _accounts.length; ++i) {
                 if (!isWhitelisted[_accounts[i]]) {
                     revert NotWhitelistedAccount();
                 }
                 isWhitelisted[_accounts[i]] = false;
                 emit Unwhitelist(_accounts[i]);
             }
-        }
-    }
-
-    function registerSellerIn(
-        bytes32 _zone,
-        address _account,
-        bool _isSeller
-    ) external onlyManager {
-        if (!IAdmin(admin).getZoneEligibility(_zone, msg.sender)) {
-            revert Unauthorized();
-        }
-
-        if (_isSeller) {
-            if (isSellerIn[_zone][_account]) {
-                revert RegisteredAccount();
-            }
-            isSellerIn[_zone][_account] = true;
-            emit SellerRegistration(_zone, _account);
-        } else {
-            if (!isSellerIn[_zone][_account]) {
-                revert NotRegisteredAccount();
-            }
-            isSellerIn[_zone][_account] = false;
-            emit SellerDeregistration(_zone, _account);
         }
     }
 
@@ -198,7 +174,7 @@ ReentrancyGuardUpgradeable {
     }
 
     function requestTokenization(
-        address _seller,
+        address _requester,
         EstateForgerRequestEstateInput calldata _estate,
         EstateForgerRequestQuotaInput calldata _quota,
         EstateForgerRequestQuoteInput calldata _quote,
@@ -224,8 +200,11 @@ ReentrancyGuardUpgradeable {
             revert InvalidTimestamp();
         }
 
-        if (!isSellerIn[_estate.zone][_seller]
-            || _quota.minSellingQuantity > _quota.maxSellingQuantity
+        if (!IEstateToken(estateToken).isCustodianIn(_estate.zone, _requester)) {
+            revert NotRegisteredCustodian();
+        }
+
+        if (_quota.minSellingQuantity > _quota.maxSellingQuantity
             || _quota.maxSellingQuantity > _quota.totalQuantity
             || _quote.cashbackThreshold > _quota.totalQuantity
             || _quote.cashbackBaseRate > CommonConstant.RATE_MAX_FRACTION
@@ -247,7 +226,11 @@ ReentrancyGuardUpgradeable {
             if (_quote.cashbackThreshold != 0) {
                 revert InvalidInput();
             }
-            cashbackFundId = IReserveVault(reserveVault).requestFund(
+        } else {
+            if (_quote.cashbackThreshold == 0) {
+                revert InvalidInput();
+            }
+            cashbackFundId = IReserveVault(reserveVault).openFund(
                 _quote.currency,
                 (feeDenomination - commissionDenomination)
                     .scale(_quote.cashbackBaseRate, CommonConstant.RATE_MAX_FRACTION),
@@ -281,15 +264,16 @@ ReentrancyGuardUpgradeable {
             EstateForgerRequestAgenda(
                 _agenda.saleStartsAt,
                 _agenda.saleStartsAt + _agenda.privateSaleDuration,
-                _agenda.saleStartsAt + _agenda.privateSaleDuration + _agenda.publicSaleDuration
+                _agenda.saleStartsAt + _agenda.privateSaleDuration + _agenda.publicSaleDuration,
+                0
             ),
-            _seller
+            _requester
         );
 
         emit NewRequest(
             requestId,
             cashbackFundId,
-            _seller,
+            _requester,
             _estate,
             _quota,
             _quote,
@@ -310,8 +294,8 @@ ReentrancyGuardUpgradeable {
             revert Unauthorized();
         }
 
-        if (requests[_requestId].estate.estateId != 0) {
-            revert AlreadyTokenized();
+        if (requests[_requestId].agenda.confirmAt != 0) {
+            revert AlreadyConfirmed();
         }
         if (requests[_requestId].quota.totalQuantity == 0) {
             revert AlreadyCancelled();
@@ -332,8 +316,8 @@ ReentrancyGuardUpgradeable {
             revert Unauthorized();
         }
 
-        if (request.estate.estateId != 0) {
-            revert AlreadyTokenized();
+        if (request.agenda.confirmAt != 0) {
+            revert AlreadyConfirmed();
         }
         if (request.quota.totalQuantity == 0) {
             revert AlreadyCancelled();
@@ -356,23 +340,6 @@ ReentrancyGuardUpgradeable {
         emit RequestAgendaUpdate(_requestId, _agenda);
     }
 
-    function deposit(uint256 _requestId, uint256 _quantity)
-    external payable validRequest(_requestId) returns (uint256) {
-        return _deposit(_requestId, _quantity);
-    }
-
-    function safeDeposit(
-        uint256 _requestId,
-        uint256 _quantity,
-        bytes32 _anchor
-    ) external payable validRequest(_requestId) returns (uint256) {
-        if (_anchor != keccak256(bytes(requests[_requestId].estate.uri))) {
-            revert BadAnchor();
-        }
-
-        return _deposit(_requestId, _quantity);
-    }
-
     function cancel(uint256 _requestId) external validRequest(_requestId) onlyManager whenNotPaused {
         EstateForgerRequest storage request = requests[_requestId];
         if (!IAdmin(admin).getZoneEligibility(request.estate.zone, msg.sender)) {
@@ -381,8 +348,8 @@ ReentrancyGuardUpgradeable {
         if (request.quota.totalQuantity == 0) {
             revert AlreadyCancelled();
         }
-        if (request.estate.estateId != 0) {
-            revert AlreadyTokenized();
+        if (request.agenda.confirmAt != 0) {
+            revert AlreadyConfirmed();
         }
         request.quota.totalQuantity = 0;
         emit RequestCancellation(_requestId);
@@ -400,8 +367,12 @@ ReentrancyGuardUpgradeable {
             revert Unauthorized();
         }
 
-        if (request.estate.estateId != 0) {
-            revert AlreadyTokenized();
+        if (block.timestamp < request.agenda.saleStartsAt) {
+            revert InvalidConfirming();
+        }
+
+        if (request.agenda.confirmAt != 0) {
+            revert AlreadyConfirmed();
         }
 
         uint256 totalQuantity = request.quota.totalQuantity;
@@ -422,6 +393,7 @@ ReentrancyGuardUpgradeable {
         if (publicSaleEndsAt > block.timestamp) {
             request.agenda.publicSaleEndsAt = uint40(block.timestamp);
         }
+        request.agenda.confirmAt = uint40(block.timestamp);
 
         IEstateToken estateTokenContract = IEstateToken(estateToken);
         uint256 unit = 10 ** estateTokenContract.decimals();
@@ -431,25 +403,24 @@ ReentrancyGuardUpgradeable {
             _requestId,
             request.estate.uri,
             request.estate.expireAt,
+            request.requester,
             _commissionReceiver
         );
         request.estate.estateId = estateId;
 
-        address seller = request.seller;
-        unchecked {
-            estateTokenContract.safeTransferFrom(
-                address(this),
-                request.seller,
-                estateId,
-                (request.quota.totalQuantity - soldQuantity) * unit,
-                ""
-            );
-        }
+        address requester = request.requester;
+        estateTokenContract.safeTransferFrom(
+            address(this),
+            request.requester,
+            estateId,
+            (request.quota.totalQuantity - soldQuantity) * unit,
+            ""
+        );
 
         address currency = request.quote.currency;
         uint256 value = soldQuantity * request.quote.unitPrice;
         uint256 feeAmount = soldQuantity * request.quote.feeDenomination;
-        CurrencyHandler.sendCurrency(currency, seller, value - feeAmount);
+        CurrencyHandler.sendCurrency(currency, requester, value - feeAmount);
 
         uint256 commissionAmount = soldQuantity * request.quote.commissionDenomination;
         CurrencyHandler.sendCurrency(currency,_commissionReceiver, commissionAmount);
@@ -460,7 +431,7 @@ ReentrancyGuardUpgradeable {
             currency
         );
 
-        uint256 cashbackBaseAmount = _provideCashbackFund(request.quote.cashbackFundId);        
+        uint256 cashbackBaseAmount = _provideCashbackFund(request.quote.cashbackFundId);
         CurrencyHandler.sendCurrency(
             currency,
             feeReceiver,
@@ -480,11 +451,28 @@ ReentrancyGuardUpgradeable {
         return estateId;
     }
 
+    function deposit(uint256 _requestId, uint256 _quantity)
+    external payable validRequest(_requestId) returns (uint256) {
+        return _deposit(_requestId, _quantity);
+    }
+
+    function safeDeposit(
+        uint256 _requestId,
+        uint256 _quantity,
+        bytes32 _anchor
+    ) external payable validRequest(_requestId) returns (uint256) {
+        if (_anchor != keccak256(bytes(requests[_requestId].estate.uri))) {
+            revert BadAnchor();
+        }
+
+        return _deposit(_requestId, _quantity);
+    }
+
     function withdrawDeposit(uint256 _requestId)
     external nonReentrant validRequest(_requestId) whenNotPaused returns (uint256) {
         EstateForgerRequest storage request = requests[_requestId];
-        if (request.estate.estateId != 0) {
-            revert AlreadyTokenized();
+        if (request.agenda.confirmAt != 0) {
+            revert AlreadyConfirmed();
         }
 
         if (request.quota.totalQuantity != 0) {
@@ -524,7 +512,7 @@ ReentrancyGuardUpgradeable {
         EstateForgerRequest storage request = requests[_requestId];
         uint256 estateId = request.estate.estateId;
         if (estateId == 0) {
-            revert InvalidWithdrawing();
+            revert NotTokenized();
         }
         if (withdrawAt[_requestId][msg.sender] > 0) {
             revert AlreadyWithdrawn();
@@ -566,14 +554,18 @@ ReentrancyGuardUpgradeable {
     }
 
     function allocationOfAt(
-        uint256 _tokenizationId,
         address _account,
+        uint256 _tokenizationId,
         uint256 _at
     ) external view validRequest(_tokenizationId) returns (uint256) {
+        if (_at > block.timestamp) {
+            revert InvalidTimestamp();
+        }
+        if (requests[_tokenizationId].estate.estateId == 0) {
+            revert NotTokenized();
+        }
         uint256 withdrawAt = withdrawAt[_tokenizationId][_account];
-        return requests[_tokenizationId].estate.estateId != 0
-            && _at >= requests[_tokenizationId].agenda.publicSaleEndsAt
-            && (withdrawAt == 0 || _at < withdrawAt)
+        return _at >= requests[_tokenizationId].agenda.confirmAt && (withdrawAt == 0 || _at < withdrawAt)
             ? deposits[_tokenizationId][_account] * 10 ** IEstateToken(estateToken).decimals()
             : 0;
     }
@@ -584,8 +576,8 @@ ReentrancyGuardUpgradeable {
         if (request.quota.totalQuantity == 0) {
             revert AlreadyCancelled();
         }
-        if (request.estate.estateId != 0) {
-            revert AlreadyTokenized();
+        if (request.agenda.confirmAt != 0) {
+            revert AlreadyConfirmed();
         }
         if (request.agenda.saleStartsAt > block.timestamp
             || request.agenda.privateSaleEndsAt > block.timestamp && !isWhitelisted[msg.sender]

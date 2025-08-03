@@ -138,7 +138,7 @@ Validatable {
         );
 
         if (_isTokenizer) {
-            for (uint256 i; i < _accounts.length; i++) {
+            for (uint256 i; i < _accounts.length; ++i) {
                 if (isTokenizer[_accounts[i]]) {
                     revert AuthorizedAccount();
                 }
@@ -149,7 +149,7 @@ Validatable {
                 emit TokenizerAuthorization(_accounts[i]);
             }
         } else {
-            for (uint256 i; i < _accounts.length; i++) {
+            for (uint256 i; i < _accounts.length; ++i) {
                 if (!isTokenizer[_accounts[i]]) {
                     revert NotAuthorizedAccount();
                 }
@@ -175,7 +175,7 @@ Validatable {
         );
 
         if (_isExtractor) {
-            for (uint256 i; i < _accounts.length; i++) {
+            for (uint256 i; i < _accounts.length; ++i) {
                 if (isExtractor[_accounts[i]]) {
                     revert AuthorizedAccount();
                 }
@@ -183,7 +183,7 @@ Validatable {
                 emit ExtractorAuthorization(_accounts[i]);
             }
         } else {
-            for (uint256 i; i < _accounts.length; i++) {
+            for (uint256 i; i < _accounts.length; ++i) {
                 if (!isExtractor[_accounts[i]]) {
                     revert NotAuthorizedAccount();
                 }
@@ -191,6 +191,34 @@ Validatable {
                 emit ExtractorDeauthorization(_accounts[i]);
             }
         }
+    }
+
+    function registerCustodian(
+        bytes32 _zone,
+        address _custodian,
+        string calldata _uri,
+        Validation calldata _validation
+    ) external onlyManager {
+        if (!IAdmin(admin).getZoneEligibility(_zone, msg.sender)) {
+            revert Unauthorized();
+        }
+
+        _validate(abi.encode(_uri), _validation);
+
+        if (bytes(_uri).length == 0) {
+            revert InvalidURI();
+        }
+
+        custodianURI[_zone][_custodian] = _uri;
+        emit CustodianRegistration(
+            _zone,
+            _custodian,
+            _uri
+        );
+    }
+
+    function isCustodianIn(bytes32 _zone, address _account) public view returns (bool) {
+        return bytes(custodianURI[_zone][_account]).length!= 0;
     }
 
     function getEstate(uint256 _estateId) external view returns (Estate memory) {
@@ -211,6 +239,7 @@ Validatable {
         uint256 _tokenizationId,
         string calldata _uri,
         uint40 _expireAt,
+        address _custodian,
         address _commissionReceiver
     ) external whenNotPaused returns (uint256) {
         if (!isTokenizer[msg.sender]) {
@@ -225,6 +254,10 @@ Validatable {
             revert InvalidTimestamp();
         }
 
+        if (!isCustodianIn(_zone, _custodian)) {
+            revert InvalidCustodian();
+        }
+
         uint256 estateId = ++estateNumber;
         estates[estateId] = Estate(
             _zone,
@@ -232,7 +265,8 @@ Validatable {
             msg.sender,
             uint40(block.timestamp),
             _expireAt,
-            CommonConstant.INFINITE_TIMESTAMP
+            CommonConstant.INFINITE_TIMESTAMP,
+            _custodian
         );
         _mint(msg.sender, estateId, _totalSupply, "");
         _setURI(estateId, _uri);
@@ -281,6 +315,15 @@ Validatable {
         _setURI(_estateId, _uri);
     }
 
+    function updateEstateCustodian(uint256 _estateId, address _custodian)
+    external validEstate(_estateId) onlyManager onlyEligibleZone(_estateId) whenNotPaused {
+        if (!isCustodianIn(estates[_estateId].zone, _custodian)) {
+            revert InvalidCustodian();
+        }
+        estates[_estateId].custodian = _custodian;
+        emit EstateCustodianUpdate(_estateId, _custodian);
+    }
+
     function extractEstate(uint256 _estateId, uint256 _extractionId)
     external validEstate(_estateId) whenNotPaused {
         if (!isExtractor[msg.sender]) {
@@ -321,19 +364,21 @@ Validatable {
         if (!exists(_estateId)) {
             revert InvalidEstateId();
         }
+        Estate storage estate = estates[_estateId];
         if (_at > block.timestamp
-            || _at > estates[_estateId].deprecateAt
-            || _at >= estates[_estateId].expireAt) {
+            || _at < estate.tokenizeAt
+            || _at > estate.deprecateAt
+            || _at >= estate.expireAt) {
             revert InvalidTimestamp();
         }
-        if (_account == estates[_estateId].tokenizer) {
+        if (_account == estate.tokenizer) {
             return 0;
         }
 
         return _snapshotAt(balanceSnapshots[_estateId][_account], _at)
-            + IEstateTokenizer(estates[_estateId].tokenizer).allocationOfAt(
-                estates[_estateId].tokenizationId,
+            + IEstateTokenizer(estate.tokenizer).allocationOfAt(
                 _account,
+                estate.tokenizationId,
                 _at
             );
     }
@@ -356,12 +401,14 @@ Validatable {
             revert InvalidEstateId();
         }
 
-        return _at > block.timestamp
+        if (_at > block.timestamp
             || _at < estates[_estateId].tokenizeAt
             || _at > estates[_estateId].deprecateAt
-            || _at >= estates[_estateId].expireAt
-            ? 0
-            : totalSupply(_estateId);
+            || _at >= estates[_estateId].expireAt) {
+            revert InvalidTimestamp();
+        }
+
+        return totalSupply(_estateId);
     }
 
     function supportsInterface(bytes4 _interfaceId) public view override(
@@ -388,7 +435,7 @@ Validatable {
         ERC1155SupplyUpgradeable
     ) {
         super._beforeTokenTransfer(_operator, _from, _to, _estateIds, _amounts, _data);
-        for (uint256 i; i < _estateIds.length; i++) {
+        for (uint256 i; i < _estateIds.length; ++i) {
             require(
                 estates[_estateIds[i]].deprecateAt == CommonConstant.INFINITE_TIMESTAMP
                     && estates[_estateIds[i]].expireAt > block.timestamp,
@@ -407,7 +454,7 @@ Validatable {
     ) internal override {
         super._afterTokenTransfer(_operator, _from, _to, _estateIds, _amounts, _data);
         uint256 timestamp = block.timestamp;
-        for (uint256 i; i < _estateIds.length; i++) {
+        for (uint256 i; i < _estateIds.length; ++i) {
             uint256 estateId = _estateIds[i];
             if (_from != address(0)) {
                 balanceSnapshots[estateId][_from].push(Snapshot(balanceOf(_from, estateId), timestamp));

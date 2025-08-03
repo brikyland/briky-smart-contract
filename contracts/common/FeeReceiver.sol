@@ -48,7 +48,7 @@ ReentrancyGuardUpgradeable {
             revert InvalidInput();
         }
 
-        for (uint256 i; i < _currencies.length; i++) {
+        for (uint256 i; i < _currencies.length; ++i) {
             CurrencyHandler.sendCurrency(_currencies[i], _receiver, _values[i]);
 
             emit Withdrawal(_receiver, _currencies[i], _values[i]);

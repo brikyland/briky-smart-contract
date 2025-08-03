@@ -7,7 +7,8 @@ interface IProject {
         uint256 estateId;
         uint256 launchId;
         address launchpad;
-        uint40 launchAt;
+        uint40 tokenizeAt;
         uint40 deprecateAt;
+        address initiator;
     }
 }

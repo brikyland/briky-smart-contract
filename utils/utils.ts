@@ -51,7 +51,7 @@ export function randomBigNumber(min: ethers.BigNumber, max: ethers.BigNumber): e
 export function getInterfaceID(contractInterface: ethers.utils.Interface) {
     let interfaceID: ethers.BigNumber = ethers.constants.Zero;
     const functions: string[] = Object.keys(contractInterface.functions);
-    for (let i = 0; i < functions.length; i++) {
+    for (let i = 0; i < functions.length; ++i) {
         interfaceID = interfaceID.xor(contractInterface.getSighash(functions[i]));
     }
 
@@ -86,7 +86,7 @@ export function randomArrayWithSum(
 
     // Generate n-1 random points between 0 and remainingSum
     const points: ethers.BigNumber[] = [];
-    for (let i = 0; i < n - 1; i++) {
+    for (let i = 0; i < n - 1; ++i) {
         points.push(randomBigNumber(ethers.constants.Zero, remainingSum));
     }
 
@@ -96,7 +96,7 @@ export function randomArrayWithSum(
     // Use differences between consecutive points to generate array
     const result: ethers.BigNumber[] = new Array(n);
     result[0] = points[0].add(min);
-    for (let i = 1; i < n - 1; i++) {
+    for (let i = 1; i < n - 1; ++i) {
         result[i] = points[i].sub(points[i - 1]).add(min);
     }
     result[n - 1] = remainingSum.sub(points[n - 2]).add(min);

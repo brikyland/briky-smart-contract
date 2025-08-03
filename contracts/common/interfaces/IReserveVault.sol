@@ -11,7 +11,7 @@ ICommon {
     event ProviderAuthorization(address indexed account);
     event ProviderDeauthorization(address indexed account);
 
-    event FundInitiation(
+    event NewFund(
         uint256 indexed fundId,
         address indexed provider,
         address mainCurrency,
@@ -19,6 +19,7 @@ ICommon {
         address[] extraCurrencies,
         uint256[] extraDenominations
     );
+
     event FundExpansion(uint256 indexed fundId, uint256 quantity);
     event FundProvision(uint256 indexed fundId);
     event FundWithdrawal(
@@ -39,7 +40,7 @@ ICommon {
     function getFund(uint256 fundId) external view returns (Fund memory fund);
     function isFundSufficient(uint256 fundId) external view returns (bool isSufficient);
 
-    function requestFund(
+    function openFund(
         address mainCurrency,
         uint256 mainDenomination,
         address[] calldata extraCurrencies,

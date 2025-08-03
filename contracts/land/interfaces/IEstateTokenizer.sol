@@ -14,11 +14,15 @@ IEstateTokenReceiver {
         uint256 amount
     );
 
+    error AlreadyTokenized();
+    error NotRegisteredCustodian();
+    error NotTokenized();
+
     function isTokenized(uint256 tokenizationId) external view returns (bool isTokenized);
 
     function allocationOfAt(
-        uint256 tokenizationId,
         address account,
+        uint256 tokenizationId,
         uint256 at
     ) external view returns (uint256 allocation);
 
