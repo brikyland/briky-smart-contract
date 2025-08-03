@@ -177,6 +177,8 @@ describe('2.1. CommissionToken', async () => {
             expect(royaltyRate.value).to.equal(LandInitialization.COMMISSION_TOKEN_RoyaltyRate);
             expect(royaltyRate.decimals).to.equal(Constant.COMMON_RATE_DECIMALS);
 
+            expect(await commissionToken.totalSupply()).to.equal(0);
+
             const tx = commissionToken.deployTransaction;
             await expect(tx).to
                 .emit(commissionToken, 'BaseURIUpdate').withArgs(LandInitialization.COMMISSION_TOKEN_BaseURI)
@@ -357,6 +359,8 @@ describe('2.1. CommissionToken', async () => {
                 .emit(commissionToken, 'NewToken')
                 .withArgs(1, receiver1.address);
 
+            expect(await commissionToken.totalSupply()).to.equal(1);
+
             expect(await commissionToken.ownerOf(1)).to.equal(receiver1.address);
             expect(await commissionToken.tokenURI(1)).to.equal(LandInitialization.COMMISSION_TOKEN_BaseURI);
 
@@ -368,6 +372,8 @@ describe('2.1. CommissionToken', async () => {
             await expect(tx).to
                 .emit(commissionToken, 'NewToken')
                 .withArgs(2, receiver2.address);
+
+            expect(await commissionToken.totalSupply()).to.equal(2);
 
             expect(await commissionToken.ownerOf(2)).to.equal(receiver2.address);
             expect(await commissionToken.tokenURI(2)).to.equal(LandInitialization.COMMISSION_TOKEN_BaseURI);

@@ -33,19 +33,19 @@ export async function callReserveVault_Unpause(
     await callTransaction(reserveVault.unpause(signatures));
 }
 
-export async function callReserveVault_AuthorizeInitiator(
+export async function callReserveVault_AuthorizeProvider(
     reserveVault: ReserveVault | MockContract<ReserveVault>,
     admins: any[],
     accounts: any[],
-    isInitiator: boolean,
+    isProvider: boolean,
     nonce: BigNumberish
 ) {
     let message = ethers.utils.defaultAbiCoder.encode(
         ["address", "string", "address[]", "bool"],
-        [reserveVault.address, "authorizeInitiator", accounts, isInitiator]
+        [reserveVault.address, "authorizeProvider", accounts, isProvider]
     );
 
     let signatures = await getSignatures(message, admins, nonce);
 
-    await callTransaction(reserveVault.authorizeInitiator(accounts, isInitiator, signatures));
+    await callTransaction(reserveVault.authorizeProvider(accounts, isProvider, signatures));
 }

@@ -5,6 +5,6 @@ import { Revert } from "../lib/Revert.sol";
 
 import { ProxyCaller } from "./common/ProxyCaller.sol";
 
-contract MockInitiator is ProxyCaller {
+contract MockProvider is ProxyCaller {
     receive() external payable {}
 }
