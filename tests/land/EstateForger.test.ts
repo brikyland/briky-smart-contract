@@ -157,7 +157,7 @@ export async function getCashbackBaseDenomination(
     );
 }
 
-describe.only('2.2. EstateForger', async () => {
+describe('2.2. EstateForger', async () => {
     async function estateForgerFixture(): Promise<EstateForgerFixture> {
         const accounts = await ethers.getSigners();
         const deployer = accounts[0];
@@ -3766,7 +3766,7 @@ describe.only('2.2. EstateForger', async () => {
             }
         }
 
-        it.only('2.2.14.1. confirm tokenization successfully (small test)', async () => {
+        it('2.2.14.1. confirm tokenization successfully (small test)', async () => {
             const fixture = await beforeEstateForgerTest({
                 addZoneForExecutive: true,
                 listSampleSellers: true,
@@ -3832,7 +3832,7 @@ describe.only('2.2. EstateForger', async () => {
             );
         });
 
-        it.only('2.2.14.2. confirm tokenization successfully with duplicated currency', async () => {
+        it('2.2.14.2. confirm tokenization successfully with duplicated currency', async () => {
             const fixture = await beforeEstateForgerTest({
                 addZoneForExecutive: true,
                 listSampleSellers: true,
@@ -3898,7 +3898,7 @@ describe.only('2.2. EstateForger', async () => {
             );
         });
 
-        it.only('2.2.14.3. confirm tokenization successfully with no cashback currency', async () => {
+        it('2.2.14.3. confirm tokenization successfully with no cashback currency', async () => {
             const fixture = await beforeEstateForgerTest({
                 addZoneForExecutive: true,
                 listSampleSellers: true,
@@ -3964,7 +3964,7 @@ describe.only('2.2. EstateForger', async () => {
             );
         });
 
-        it.only('2.2.14.4. confirm tokenization successfully with different native/erc20 and exclusive/non-exclusive combinations', async () => {
+        it('2.2.14.4. confirm tokenization successfully with different native/erc20 and exclusive/non-exclusive combinations', async () => {
             const fixture = await beforeEstateForgerTest({
                 addZoneForExecutive: true,
                 listSampleSellers: true,
@@ -4013,7 +4013,7 @@ describe.only('2.2. EstateForger', async () => {
             }
         });
 
-        it.only('2.2.14.5. confirm tokenization successfully with very large deposition', async () => {
+        it('2.2.14.5. confirm tokenization successfully with very large deposition', async () => {
             const fixture = await beforeEstateForgerTest({
                 addZoneForExecutive: true,
                 listSampleSellers: true,
@@ -4060,7 +4060,7 @@ describe.only('2.2. EstateForger', async () => {
             }
         });
 
-        it.only('2.2.14.6. confirm tokenization successfully in 100 random test cases', async () => {
+        it('2.2.14.6. confirm tokenization successfully in 100 random test cases', async () => {
             const fixture = await beforeEstateForgerTest({
                 addZoneForExecutive: true,
                 listSampleSellers: true,

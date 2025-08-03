@@ -428,7 +428,7 @@ describe('4.1. Auction', async () => {
                 endAt,
                 vestingDuration,
                 signatures,
-            )).to.be.revertedWithCustomError(auction, 'Started');
+            )).to.be.revertedWithCustomError(auction, 'AlreadyStarted');
         });
     });
     
@@ -524,7 +524,7 @@ describe('4.1. Auction', async () => {
             await time.setNextBlockTimestamp(await auction.endAt());
 
             const amount = ethers.utils.parseEther('100');
-            await expect(auction.connect(depositor1).deposit(amount)).to.be.revertedWithCustomError(auction, 'Ended');
+            await expect(auction.connect(depositor1).deposit(amount)).to.be.revertedWithCustomError(auction, 'AlreadyEnded');
         });
 
         it('4.1.4.5. deposit unsuccessfully when contract is reentered', async () => {

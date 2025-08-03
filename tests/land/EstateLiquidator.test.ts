@@ -1274,7 +1274,18 @@ describe('2.3. EstateLiquidator', async () => {
             )
         });
 
-        it('2.3.4.7. request extraction unsuccessfully with zero value', async () => {
+
+        it('2.3.4.7. request extraction unsuccessfully with invalid currency', async () => {
+            const fixture = await beforeEstateLiquidatorTest();
+
+            const { operator1, governanceHub, estateLiquidator } = fixture;
+
+            const { defaultParams } = await beforeRequestExtractionTest(fixture);
+
+            const fee = await governanceHub.fee();
+        })
+
+        it('2.3.4.8. request extraction unsuccessfully with unavailable currency', async () => {
             const fixture = await beforeEstateLiquidatorTest();
 
             const { operator1, governanceHub, estateLiquidator } = fixture;
@@ -1285,18 +1296,20 @@ describe('2.3. EstateLiquidator', async () => {
 
             let timestamp = await time.latest() + 10;
 
+            const invalidCurrency = randomWallet();
+
             await expectRevertWithCustomError(
                 fixture,
-                { ...defaultParams, value: ethers.constants.Zero },
+                { ...defaultParams, currency: invalidCurrency.address },
                 operator1,
                 timestamp,
                 estateLiquidator,
-                'InvalidInput',
+                'InvalidCurrency',
                 fee,
             )
         });
 
-        it('2.3.4.8. request extraction unsuccessfully with insufficient native token', async () => {
+        it('2.3.4.9. request extraction unsuccessfully with insufficient native token', async () => {
             const fixture = await beforeEstateLiquidatorTest();
 
             const { operator1, currencies, estateLiquidator } = fixture;
@@ -1326,7 +1339,7 @@ describe('2.3. EstateLiquidator', async () => {
             )
         });
 
-        it('2.3.4.9. request extraction unsuccessfully with insufficient erc20 allowance', async () => {
+        it('2.3.4.10. request extraction unsuccessfully with insufficient erc20 allowance', async () => {
             const fixture = await beforeEstateLiquidatorTest({
                 skipPrepareERC20ForOperators: true,
             });
@@ -1352,7 +1365,7 @@ describe('2.3. EstateLiquidator', async () => {
             )
         });
 
-        it('2.3.4.10. request extraction unsuccessfully with insufficient erc20 balance', async () => {
+        it('2.3.4.11. request extraction unsuccessfully with insufficient erc20 balance', async () => {
             const fixture = await beforeEstateLiquidatorTest({
                 skipPrepareERC20ForOperators: true,
             });
@@ -1378,7 +1391,7 @@ describe('2.3. EstateLiquidator', async () => {
             )
         });
 
-        it('2.3.4.11. request extraction unsuccessfully when refund to operator failed', async () => {
+        it('2.3.4.12. request extraction unsuccessfully when refund to operator failed', async () => {
             const fixture = await beforeEstateLiquidatorTest();
 
             const { governanceHub, failReceiver, estateLiquidator, validator, estateToken } = fixture;
@@ -1415,7 +1428,7 @@ describe('2.3. EstateLiquidator', async () => {
             )).to.be.revertedWithCustomError(estateLiquidator, "FailedRefund");
         });
 
-        it('2.3.4.12. request extraction unsuccessfully when the estate is not tokenized', async () => {
+        it('2.3.4.13. request extraction unsuccessfully when the estate is not tokenized', async () => {
             const fixture = await beforeEstateLiquidatorTest();
 
             const { operator1, governanceHub, estateLiquidator } = fixture;
@@ -1446,7 +1459,7 @@ describe('2.3. EstateLiquidator', async () => {
             )
         });
 
-        it('2.3.4.13. request extraction unsuccessfully when estate token is not authorized as governor', async () => {
+        it('2.3.4.14. request extraction unsuccessfully when estate token is not authorized as governor', async () => {
             const fixture = await beforeEstateLiquidatorTest({
                 skipAuthorizeGovernor: true,
             });

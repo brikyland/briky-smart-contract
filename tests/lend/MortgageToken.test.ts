@@ -1018,6 +1018,8 @@ describe('3.1. MortgageToken', async () => {
                 await prepareNativeToken(ethers.provider, deployer, [lender], principal);
             }
 
+            let currentTotalSupply = await mortgageToken.totalSupply();
+
             let initBorrowerBalance = await getBalance(ethers.provider, borrower.address, newCurrency);
             let initLenderBalance = await getBalance(ethers.provider, lender.address, newCurrency);
             let initFeeReceiverBalance = await getBalance(ethers.provider, feeReceiver.address, newCurrency);
@@ -1064,6 +1066,8 @@ describe('3.1. MortgageToken', async () => {
             expect(loan.state).to.equal(LoanState.Supplied);
             expect(loan.borrower).to.equal(borrower.address);
             expect(loan.lender).to.equal(lender.address);
+
+            expect(await mortgageToken.totalSupply()).to.equal(currentTotalSupply.add(1));
 
             expect(await getBalance(ethers.provider, borrower.address, newCurrency)).to.equal(expectedBorrowerBalance);
             expect(await getBalance(ethers.provider, lender.address, newCurrency)).to.equal(expectedLenderBalance);
@@ -1501,6 +1505,7 @@ describe('3.1. MortgageToken', async () => {
             let borrower1NativeBalance = await ethers.provider.getBalance(borrower1.address);
             let borrower1Balance = await estateToken.balanceOf(borrower1.address, 1);
             let mortgageTokenBalance = await estateToken.balanceOf(mortgageToken.address, 1);
+            let currentTotalSupply = await mortgageToken.totalSupply();
 
             let tx = await mortgageToken.connect(borrower1).repay(1, { value: 1e9 });
             let receipt = await tx.wait();
@@ -1522,6 +1527,8 @@ describe('3.1. MortgageToken', async () => {
             expect(loan.lender).to.equal(lender1.address);
 
             expect(await mortgageToken.balanceOf(borrower1.address)).to.equal(0);
+
+            expect(await mortgageToken.totalSupply()).to.equal(currentTotalSupply.sub(1));
 
             expect(await estateToken.balanceOf(borrower1.address, 1)).to.equal(borrower1Balance.add(150_000));
             expect(await estateToken.balanceOf(mortgageToken.address, 1)).to.equal(mortgageTokenBalance.sub(150_000));
@@ -1561,6 +1568,7 @@ describe('3.1. MortgageToken', async () => {
             expect(loan.lender).to.equal(lender2.address);
 
             expect(await mortgageToken.balanceOf(borrower2.address)).to.equal(0);
+            expect(await mortgageToken.totalSupply()).to.equal(currentTotalSupply.sub(2));
 
             expect(await estateToken.balanceOf(borrower2.address, 2)).to.equal(borrower2Balance.add(200));
             expect(await estateToken.balanceOf(mortgageToken.address, 2)).to.equal(mortgageTokenBalance.sub(200));
@@ -1816,6 +1824,7 @@ describe('3.1. MortgageToken', async () => {
 
             let lender1Balance = await estateToken.balanceOf(lender1.address, 1);
             let mortgageContractBalance = await estateToken.balanceOf(mortgageToken.address, 1);
+            let currentTotalSupply = await mortgageToken.totalSupply();
 
             const due1 = (await mortgageToken.getLoan(1)).due;
             await time.setNextBlockTimestamp(due1);
@@ -1839,6 +1848,8 @@ describe('3.1. MortgageToken', async () => {
             expect(loan.lender).to.equal(lender1.address);
 
             expect(await mortgageToken.balanceOf(lender1.address)).to.equal(0);
+
+            expect(await mortgageToken.totalSupply()).to.equal(currentTotalSupply.sub(1));
 
             expect(await estateToken.balanceOf(lender1.address, 1)).to.equal(lender1Balance.add(150_000));
             expect(await estateToken.balanceOf(mortgageToken.address, 1)).to.equal(mortgageContractBalance.sub(150_000));
@@ -1875,6 +1886,8 @@ describe('3.1. MortgageToken', async () => {
             expect(loan.lender).to.equal(lender2.address);
 
             expect(await mortgageToken.balanceOf(lender2.address)).to.equal(0);
+
+            expect(await mortgageToken.totalSupply()).to.equal(currentTotalSupply.sub(2));
 
             expect(await estateToken.balanceOf(lender2.address, 2)).to.equal(lender2Balance);
             expect(await estateToken.balanceOf(mortgageTokenOwner.address, 2)).to.equal(mortgageTokenOwnerBalance.add(200));
