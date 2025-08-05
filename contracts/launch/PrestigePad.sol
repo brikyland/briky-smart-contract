@@ -396,6 +396,8 @@ ReentrancyGuardUpgradeable {
 
         launch.currentIndex = currentIndex - 1;
 
+        launch.roundIds[currentIndex] = roundId;
+
         emit LaunchCurrentRoundCancellation(_launchId, roundId);
 
         return (currentIndex, roundId);

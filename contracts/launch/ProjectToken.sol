@@ -270,9 +270,6 @@ ReentrancyGuardUpgradeable {
 
         Project storage project = projects[_projectId];
         bytes32 zone = project.zone;
-        if (!IAdmin(admin).getZoneEligibility(zone, msg.sender)) {
-            revert Unauthorized();
-        }
 
         IEstateToken estateTokenContract = IEstateToken(estateToken);
         if (!estateTokenContract.isCustodianIn(zone, project.initiator)) {
@@ -303,6 +300,7 @@ ReentrancyGuardUpgradeable {
             _commissionReceiver
         );
         project.estateId = estateId;
+        project.tokenizeAt = uint40(block.timestamp);
 
         emit ProjectTokenization(
             _projectId,
