@@ -1,11 +1,10 @@
 import { BigNumber, BigNumberish } from "ethers";
 import { ethers, upgrades } from "hardhat";
 
-export async function deployEstateForger(
+export async function deployMockPrestigePad(
     signer: any,
     adminAddress: string,
-    estateTokenAddress: string,
-    commissionTokenAddress: string,
+    projectTokenAddress: string,
     priceWatcherAddress: string,
     feeReceiverAddress: string,
     reserveVaultAddress: string,
@@ -14,13 +13,12 @@ export async function deployEstateForger(
     baseMaxUnitPrice: BigNumber,
     feeRate: BigNumber,
 ) {
-    const EstateForger = await ethers.getContractFactory('EstateForger', signer);
-    const estateForger = await upgrades.deployProxy(
-        EstateForger,
+    const MockPrestigePad = await ethers.getContractFactory('MockPrestigePad', signer);
+    const mockPrestigePad = await upgrades.deployProxy(
+        MockPrestigePad,
         [
             adminAddress,
-            estateTokenAddress,
-            commissionTokenAddress,
+            projectTokenAddress,
             priceWatcherAddress,
             feeReceiverAddress,
             reserveVaultAddress,
@@ -30,6 +28,6 @@ export async function deployEstateForger(
             feeRate,
         ]
     );
-    await estateForger.deployed();
-    return estateForger;
+    await mockPrestigePad.deployed();
+    return mockPrestigePad;
 }
