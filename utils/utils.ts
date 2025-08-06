@@ -185,8 +185,14 @@ export function getAddressShortString(address: string): string {
 }
 
 export function structToObject(struct: any): any {
+    if (!struct || typeof struct !== 'object' || struct instanceof ethers.BigNumber) {
+        return struct;
+    }
+
     // Only keep named keys, ignore numeric keys
     return Object.fromEntries(
-      Object.entries(struct).filter(([key]) => isNaN(Number(key)))
+      Object.entries(struct)
+        .filter(([key]) => isNaN(Number(key)))
+        .map(([key, value]) => [key, structToObject(value)])
     );
 }
