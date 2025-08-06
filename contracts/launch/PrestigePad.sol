@@ -161,7 +161,7 @@ ReentrancyGuardUpgradeable {
         string calldata _launchURI,
         uint256 _initialQuantity,
         Validation calldata _validation
-    ) external onlyExecutive whenNotPaused returns (uint256) {
+    ) external nonReentrant onlyExecutive whenNotPaused returns (uint256) {
         _validate(
             abi.encode(
                 _projectURI,
