@@ -146,7 +146,7 @@ describe('1.6. GovernanceHub', async () => {
             Constant.GOVERNANCE_HUB_FEE,
         ) as GovernanceHub;
 
-        const failReceiver = await deployFailReceiver(deployer.address, false) as FailReceiver;
+        const failReceiver = await deployFailReceiver(deployer.address, false, false) as FailReceiver;
         const reentrancyERC20 = await deployReentrancyERC20(deployer.address) as ReentrancyERC20;
 
         return {

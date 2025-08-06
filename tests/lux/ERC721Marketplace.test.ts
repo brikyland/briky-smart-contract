@@ -762,7 +762,7 @@ describe('6.1. ERC721Marketplace', async () => {
             });
             const { erc721Marketplace, seller1, buyer1, deployer, feeReceiverCollection } = fixture;
             
-            const failReceiver = await deployFailReceiver(deployer, true);
+            const failReceiver = await deployFailReceiver(deployer, true, false);
 
             await callTransaction(feeReceiverCollection.connect(seller1).transferFrom(
                 seller1.address,
@@ -790,7 +790,7 @@ describe('6.1. ERC721Marketplace', async () => {
             });
             const { erc721Marketplace, buyer1, deployer, feeReceiverCollection } = fixture;
 
-            const failReceiver = await deployFailReceiver(deployer, true);
+            const failReceiver = await deployFailReceiver(deployer, true, false);
             await callTransaction(feeReceiverCollection.updateRoyaltyReceiver(failReceiver.address));
 
             await expect(erc721Marketplace.connect(buyer1).buy(1, { value: 1e9 }))
@@ -806,7 +806,7 @@ describe('6.1. ERC721Marketplace', async () => {
             });
             const { erc721Marketplace, deployer } = fixture;
 
-            const failReceiver = await deployFailReceiver(deployer, true);
+            const failReceiver = await deployFailReceiver(deployer, true, false);
             
             let data = erc721Marketplace.interface.encodeFunctionData("buy", [1]);
 

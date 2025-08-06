@@ -84,7 +84,7 @@ describe('1.4. DividendHub', async () => {
 
         const reentrancyERC20 = await deployReentrancyERC20(deployer) as ReentrancyERC20;
 
-        const failReceiver = await deployFailReceiver(deployer, false) as FailReceiver;
+        const failReceiver = await deployFailReceiver(deployer, false, false) as FailReceiver;
 
         const dividendHub = await deployDividendHub(deployer.address, admin.address) as DividendHub;
 
@@ -481,7 +481,7 @@ describe('1.4. DividendHub', async () => {
 
             const { deployer, dividendHub, governor } = fixture;
 
-            const failReceiver = await deployFailReceiver(deployer.address, false);
+            const failReceiver = await deployFailReceiver(deployer.address, false, false);
             await prepareNativeToken(ethers.provider, deployer, [failReceiver], ethers.utils.parseEther('10000'));
             await callTransaction(failReceiver.activate(true));
 

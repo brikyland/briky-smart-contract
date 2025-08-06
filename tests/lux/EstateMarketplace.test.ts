@@ -1156,7 +1156,7 @@ describe('6.2. EstateMarketplace', async () => {
             });
             const { estateMarketplace, seller1, buyer1, deployer, estateToken } = fixture;
             
-            const failReceiver = await deployFailReceiver(deployer, true);
+            const failReceiver = await deployFailReceiver(deployer, true, false);
 
             await callTransaction(estateToken.connect(seller1).safeTransferFrom(
                 seller1.address,
@@ -1186,7 +1186,7 @@ describe('6.2. EstateMarketplace', async () => {
             });
             const { estateMarketplace, seller1, buyer1, deployer, estateToken } = fixture;
 
-            const failReceiver = await deployFailReceiver(deployer, true);
+            const failReceiver = await deployFailReceiver(deployer, true, false);
 
             await estateToken.updateFeeReceiver(failReceiver.address);
 
@@ -1201,7 +1201,7 @@ describe('6.2. EstateMarketplace', async () => {
             });
             const { estateMarketplace, seller1, buyer1, deployer, estateToken, commissionToken, commissionReceiver } = fixture;
 
-            const failReceiver = await deployFailReceiver(deployer, true);
+            const failReceiver = await deployFailReceiver(deployer, true, false);
 
             await callTransaction(commissionToken.connect(commissionReceiver).transferFrom(
                 commissionReceiver.address,
@@ -1233,7 +1233,7 @@ describe('6.2. EstateMarketplace', async () => {
             });
             const { estateMarketplace, deployer } = fixture;
 
-            const failReceiver = await deployFailReceiver(deployer, true);
+            const failReceiver = await deployFailReceiver(deployer, true, false);
 
             let data = estateMarketplace.interface.encodeFunctionData("buy(uint256,uint256)", [1, 100_000]);
 

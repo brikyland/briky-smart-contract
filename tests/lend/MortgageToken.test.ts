@@ -1353,7 +1353,7 @@ describe('3.1. MortgageToken', async () => {
             });
             const { mortgageToken, lender1, deployer, estateToken } = fixture;
 
-            const failReceiver = await deployFailReceiver(deployer, true);
+            const failReceiver = await deployFailReceiver(deployer, true, false);
 
             await callTransaction(estateToken.mint(failReceiver.address, 1, 200_000));
             await callTransaction(estateToken.setApprovalForAll(mortgageToken.address, true));
@@ -1372,7 +1372,7 @@ describe('3.1. MortgageToken', async () => {
             });
             const { mortgageToken, borrower2, lender1, deployer, estateToken, commissionToken, commissionReceiver } = fixture;
 
-            const failReceiver = await deployFailReceiver(deployer, true);
+            const failReceiver = await deployFailReceiver(deployer, true, false);
 
             await callTransaction(mortgageToken.connect(borrower2).borrow(
                 2,
@@ -1401,7 +1401,7 @@ describe('3.1. MortgageToken', async () => {
                 listSampleLoan: true,
             });
             const { mortgageToken, deployer } = fixture;
-            const failReceiver = await deployFailReceiver(deployer, true);
+            const failReceiver = await deployFailReceiver(deployer, true, false);
 
             let data = mortgageToken.interface.encodeFunctionData("lend", [1]);
 
@@ -1725,7 +1725,7 @@ describe('3.1. MortgageToken', async () => {
             });
             const { mortgageToken, borrower1, deployer } = fixture;
 
-            const failReceiver = await deployFailReceiver(deployer, true);
+            const failReceiver = await deployFailReceiver(deployer, true, false);
 
             const principal = (await mortgageToken.getLoan(1)).principal;
 

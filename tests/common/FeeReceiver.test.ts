@@ -301,7 +301,7 @@ describe('1.5. FeeReceiver', async () => {
         it('1.5.2.7. withdraw unsuccessfully when native token receiving failed', async () => {
             const { deployer, admins, admin, feeReceiver } = await setupBeforeTest();
 
-            const failReceiver = await deployFailReceiver(deployer, true);
+            const failReceiver = await deployFailReceiver(deployer, true, false);
 
             await callTransaction(deployer.sendTransaction({
                 to: feeReceiver.address,

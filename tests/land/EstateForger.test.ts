@@ -3159,7 +3159,7 @@ describe('2.2. EstateForger', async () => {
             });
             const { deployer, estateForger } = fixture;
 
-            const failReceiver = await deployFailReceiver(deployer, true);
+            const failReceiver = await deployFailReceiver(deployer, true, false);
 
             const message = estateForger.interface.encodeFunctionData('deposit', [1, 2]);
 
@@ -4459,7 +4459,7 @@ describe('2.2. EstateForger', async () => {
                 await admin.nonce()
             );
 
-            const failReceiver = await deployFailReceiver(deployer, true);
+            const failReceiver = await deployFailReceiver(deployer, true, false);
 
             await callTransaction(estateForger.connect(manager).registerSellerIn(
                 zone1,
@@ -4530,7 +4530,7 @@ describe('2.2. EstateForger', async () => {
             });
             const {estateForger, manager, commissionReceiver, deployer} = fixture;
 
-            const failReceiver = await deployFailReceiver(deployer, true);
+            const failReceiver = await deployFailReceiver(deployer, true, false);
 
             await callTransaction(estateForger.setFeeReceiver(failReceiver.address));
 
@@ -4558,7 +4558,7 @@ describe('2.2. EstateForger', async () => {
                 await admin.nonce()
             );
 
-            const failReceiver = await deployFailReceiver(deployer, true);
+            const failReceiver = await deployFailReceiver(deployer, true, false);
 
             const requestParams = {
                 seller: seller1.address,
@@ -4903,7 +4903,7 @@ describe('2.2. EstateForger', async () => {
 
             const request = await estateForger.getRequest(1);
 
-            const failedReceiver = await deployFailReceiver(deployer, true);
+            const failedReceiver = await deployFailReceiver(deployer, true, false);
 
             let message = estateForger.interface.encodeFunctionData("deposit", [1, 5]);
 

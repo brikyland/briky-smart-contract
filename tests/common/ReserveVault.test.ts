@@ -1108,7 +1108,7 @@ describe('1.8. ReserveVault', async () => {
                 fundProvider: true,
             });
 
-            const failReceiver = await deployFailReceiver(deployer, false);
+            const failReceiver = await deployFailReceiver(deployer, false, false);
 
             await callReserveVault_AuthorizeProvider(
                 reserveVault,

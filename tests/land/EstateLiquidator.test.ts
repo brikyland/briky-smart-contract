@@ -334,7 +334,7 @@ describe('2.3. EstateLiquidator', async () => {
         const zone1 = ethers.utils.formatBytes32String("TestZone1");
         const zone2 = ethers.utils.formatBytes32String("TestZone2");
         
-        const failReceiver = await deployFailReceiver(deployer.address, false) as FailReceiver;
+        const failReceiver = await deployFailReceiver(deployer.address, false, false) as FailReceiver;
         const reentrancyERC20 = await deployReentrancyERC20(deployer.address) as ReentrancyERC20;
 
         return {

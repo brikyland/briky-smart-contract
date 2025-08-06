@@ -771,7 +771,7 @@ describe('6.3. MortgageMarketplace', async () => {
             });
             const { mortgageMarketplace, seller1, buyer1, deployer, mortgageToken } = fixture;
             
-            const failReceiver = await deployFailReceiver(deployer, true);
+            const failReceiver = await deployFailReceiver(deployer, true, false);
 
             await callTransaction(mortgageToken.connect(seller1).transferFrom(
                 seller1.address,
@@ -799,7 +799,7 @@ describe('6.3. MortgageMarketplace', async () => {
             });
             const { mortgageMarketplace, buyer1, deployer, mortgageToken } = fixture;
 
-            const failReceiver = await deployFailReceiver(deployer, true);
+            const failReceiver = await deployFailReceiver(deployer, true, false);
 
             mortgageToken.setVariable("feeReceiver", failReceiver.address);
 
@@ -816,7 +816,7 @@ describe('6.3. MortgageMarketplace', async () => {
             });
             const { mortgageMarketplace, deployer } = fixture;
 
-            const failReceiver = await deployFailReceiver(deployer, true);
+            const failReceiver = await deployFailReceiver(deployer, true, false);
 
             let data = mortgageMarketplace.interface.encodeFunctionData("buy", [1]);
 

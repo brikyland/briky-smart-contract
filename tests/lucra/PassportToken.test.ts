@@ -497,7 +497,7 @@ describe('5.1. PassportToken', async () => {
         it('5.1.5.7. withdraw unsuccessfully when native token receiving failed', async () => {
             const { deployer, admins, admin, passportToken } = await beforePassportTokenTest();
 
-            const failReceiver = await deployFailReceiver(deployer, true);
+            const failReceiver = await deployFailReceiver(deployer, true, false);
 
             await callTransaction(deployer.sendTransaction({
                 to: passportToken.address,

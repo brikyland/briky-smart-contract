@@ -450,7 +450,7 @@ describe('5.2. PromotionToken', async () => {
         it('5.2.4.7. withdraw unsuccessfully when native token receiving failed', async () => {
             const { deployer, admins, admin, promotionToken } = await beforePromotionTokenTest();
 
-            const failReceiver = await deployFailReceiver(deployer, true);
+            const failReceiver = await deployFailReceiver(deployer, true, false);
 
             await callTransaction(deployer.sendTransaction({
                 to: promotionToken.address,
