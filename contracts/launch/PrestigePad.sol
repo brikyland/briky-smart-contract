@@ -183,6 +183,7 @@ ReentrancyGuardUpgradeable {
         uint256 launchId = ++launchNumber;
         PrestigePadLaunch storage launch = launches[launchId];
         launch.uri = _launchURI;
+        launch.initiator = _initiator;
 
         IProjectToken projectTokenContract = IProjectToken(projectToken);
         uint256 projectId = projectTokenContract.launchProject(
@@ -600,7 +601,7 @@ ReentrancyGuardUpgradeable {
         IProjectToken projectTokenContract = IProjectToken(projectToken);
         uint256 unit = 10 ** projectTokenContract.decimals();
 
-        uint256 quantity = deposits[_launchId][msg.sender];
+        uint256 quantity = deposits[roundId][msg.sender];
         uint256 amount = quantity * unit;
 
         projectTokenContract.safeTransferFrom(
@@ -646,14 +647,14 @@ ReentrancyGuardUpgradeable {
         for (uint256 i = 0; i < currentIndex; ++i) {
             uint256 roundId = launch.roundIds[i];
             uint256 withdrawAt = withdrawAt[roundId][_account];
-            if (_at >= rounds[roundId].agenda.confirmAt && (withdrawAt != 0 || _at < withdrawAt)) {
+            if (_at >= rounds[roundId].agenda.confirmAt && (withdrawAt == 0 || _at < withdrawAt)) {
                 allocation += deposits[roundId][_account];
             }
         }
         if (rounds[launch.roundIds[currentIndex]].agenda.confirmAt != 0) {
             uint256 roundId = launch.roundIds[currentIndex];
             uint256 withdrawAt = withdrawAt[roundId][_account];
-            if (_at >= rounds[roundId].agenda.confirmAt && (withdrawAt != 0 || _at < withdrawAt)) {
+            if (_at >= rounds[roundId].agenda.confirmAt && (withdrawAt == 0 || _at < withdrawAt)) {
                 allocation += deposits[roundId][_account];
             }
         }
@@ -729,12 +730,13 @@ ReentrancyGuardUpgradeable {
         uint256 value = _quantity * round.quote.unitPrice;
         CurrencyHandler.receiveCurrency(round.quote.currency, value);
 
+        uint256 oldDeposit = deposits[roundId][msg.sender];
+        uint256 newDeposit = oldDeposit + _quantity;
+        deposits[roundId][msg.sender] = newDeposit;
+
         uint256 cashbackFundId = round.quote.cashbackFundId;
         if (cashbackFundId != 0) {
             uint256 cashbackThreshold = round.quote.cashbackThreshold;
-            uint256 oldDeposit = deposits[_launchId][msg.sender];
-            uint256 newDeposit = oldDeposit + _quantity;
-            deposits[_launchId][msg.sender] = newDeposit;
 
             if (oldDeposit >= cashbackThreshold) {
                 IReserveVault(reserveVault).expandFund(
