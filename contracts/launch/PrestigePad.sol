@@ -234,6 +234,10 @@ ReentrancyGuardUpgradeable {
             revert AlreadyFinalized();
         }
 
+        if (_index >= launch.roundIds.length) {
+            revert InvalidInput();
+        }
+
         if (rounds[launch.roundIds[_index]].agenda.raiseStartsAt != 0) {
             revert AlreadyInitiated();
         }

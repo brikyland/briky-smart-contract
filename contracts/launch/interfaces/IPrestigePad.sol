@@ -39,7 +39,7 @@ IProjectLaunchpad {
     );
     event NewRound(
         uint256 indexed roundId,
-        uint256 indexed projectId,
+        uint256 indexed launchId,
         string uri,
         PrestigePadRoundQuotaInput quota,
         PrestigePadRoundQuoteInput quote
