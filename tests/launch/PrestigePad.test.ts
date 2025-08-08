@@ -413,6 +413,7 @@ describe.only('7.1. PrestigePad', async () => {
         confirmSecondRound = false,
         doAllSecondFound = false,
         finalizeLaunch = false,
+        cancelFirstRound = false,
         pause = false,
     } = {}): Promise<PrestigePadFixture> {
         const fixture = await loadFixture(prestigePadFixture);
@@ -823,6 +824,11 @@ describe.only('7.1. PrestigePad', async () => {
                 { value: ethers.utils.parseEther('10') }
             ));
             await callTransaction(prestigePad.connect(initiator2).confirmCurrentRound(2));
+        }
+
+        if (cancelFirstRound) {
+            await callTransaction(prestigePad.connect(initiator1).cancelCurrentRound(1));
+            await callTransaction(prestigePad.connect(initiator2).cancelCurrentRound(2));
         }
 
         if (raiseSecondRound || doAllSecondFound) {
@@ -2118,7 +2124,21 @@ describe.only('7.1. PrestigePad', async () => {
         });
 
         it('7.1.8.5. update round unsuccessfully when launch is finalized', async () => {
-            // TODO: Implement  
+            const fixture = await beforePrestigePadTest({
+                addSampleLaunch: true,
+                addSampleRounds: true,
+                doAllFirstFound: true,
+                doAllSecondFound: true,
+                finalizeLaunch: true,
+            });
+
+            const { prestigePad, initiator1 } = fixture;
+
+            const { defaultParams } = await beforeUpdateRoundsTest(fixture);
+
+            await expectUpdateRounds(fixture, defaultParams, initiator1, async (tx) => {
+                await expect(tx).to.be.revertedWithCustomError(prestigePad, 'AlreadyFinalized');
+            });
         });
 
         it('7.1.8.6. update round unsuccessfully when removing round number is greater than launch total round number', async () => {
@@ -2151,24 +2171,39 @@ describe.only('7.1. PrestigePad', async () => {
         });
 
         it('7.1.8.7. update round unsuccessfully when current round is removed', async () => {
-            // TODO: Implement
+            const fixture = await beforePrestigePadTest({
+                addSampleLaunch: true,
+                addSampleRounds: true,
+                raiseFirstRound: true,
+            });
 
-            // const fixture = await beforePrestigePadTest({
-            //     addSampleLaunch: true,
-            //     addSampleRounds: true,
-            // });
+            const { prestigePad, initiator1 } = fixture;
 
-            // const { prestigePad, initiator1 } = fixture;
+            const { defaultParams } = await beforeUpdateRoundsTest(fixture);            
 
-            // const { defaultParams } = await beforeUpdateRoundsTest(fixture);            
+            const params1 = {
+                ...defaultParams,
+                removedRoundNumber: BigNumber.from(2),
+            };
+            await expectUpdateRounds(fixture, params1, initiator1, async (tx) => {
+                await expect(tx).to.be.revertedWithCustomError(prestigePad, 'InvalidRemoving');
+            });
+            
+            const params2 = {
+                ...defaultParams,
+                removedRoundNumber: BigNumber.from(3),
+            };
+            await expectUpdateRounds(fixture, params2, initiator1, async (tx) => {
+                await expect(tx).to.be.revertedWithCustomError(prestigePad, 'InvalidRemoving');
+            });
 
-            // const params1 = {
-            //     ...defaultParams,
-            //     removedRoundNumber: BigNumber.from(3),
-            // };
-            // await expectUpdateRounds(fixture, params1, initiator1, async (tx) => {
-            //     await expect(tx).to.be.revertedWithCustomError(prestigePad, 'InvalidRemoving');
-            // });
+            const params3 = {
+                ...defaultParams,
+                removedRoundNumber: BigNumber.from(1),
+            };
+            await expectUpdateRounds(fixture, params3, initiator1, async (tx) => {
+                await expect(tx).to.not.be.reverted;
+            });
         });
 
         it('7.1.8.8. update round unsuccessfully with invalid round validation', async () => {
@@ -2410,6 +2445,8 @@ describe.only('7.1. PrestigePad', async () => {
             await tx1.wait();
 
             const cashbackFundId1 = initFundNumber.add(1);
+            const mainDenomination = feeDenomination.mul(params1.cashbackBaseRate).div(Constant.COMMON_RATE_MAX_FRACTION);
+
             await expect(tx1).to.emit(prestigePad, 'LaunchNextRoundInitiation').withArgs(
                 params1.launchId,
                 roundId1,
@@ -2417,8 +2454,14 @@ describe.only('7.1. PrestigePad', async () => {
                 params1.raiseStartsAt,
                 params1.raiseDuration,
             );
-
-            const mainDenomination = feeDenomination.mul(params1.cashbackBaseRate).div(Constant.COMMON_RATE_MAX_FRACTION);
+            await expect(tx1).to.emit(reserveVault, 'NewFund').withArgs(
+                cashbackFundId1,
+                prestigePad.address,
+                ethers.constants.AddressZero,
+                mainDenomination,
+                params1.cashbackCurrencies,
+                params1.cashbackDenominations,
+            );
 
             expect(await reserveVault.fundNumber()).to.equal(initFundNumber.add(1));
 
@@ -2455,6 +2498,8 @@ describe.only('7.1. PrestigePad', async () => {
             await tx2.wait();
 
             const cashbackFundId2 = initFundNumber.add(2);
+            const mainDenomination2 = feeDenomination2.mul(params2.cashbackBaseRate).div(Constant.COMMON_RATE_MAX_FRACTION);
+
             await expect(tx2).to.emit(prestigePad, 'LaunchNextRoundInitiation').withArgs(
                 params2.launchId,
                 roundId2,
@@ -2462,8 +2507,14 @@ describe.only('7.1. PrestigePad', async () => {
                 params2.raiseStartsAt,
                 params2.raiseDuration,
             );
-
-            const mainDenomination2 = feeDenomination2.mul(params2.cashbackBaseRate).div(Constant.COMMON_RATE_MAX_FRACTION);
+            await expect(tx2).to.emit(reserveVault, 'NewFund').withArgs(
+                cashbackFundId2,
+                prestigePad.address,
+                currencies[0].address,
+                mainDenomination2,
+                params2.cashbackCurrencies,
+                params2.cashbackDenominations,
+            );
 
             expect(await reserveVault.fundNumber()).to.equal(initFundNumber.add(2));
 
@@ -2737,7 +2788,21 @@ describe.only('7.1. PrestigePad', async () => {
         });
 
         it('7.1.9.11. raise next round unsuccessfully when launch is finalized', async () => {
-            // TODO: implement this test
+            const fixture = await beforePrestigePadTest({
+                addSampleLaunch: true,
+                addSampleRounds: true,
+                doAllFirstFound: true,
+                doAllSecondFound: true,
+                finalizeLaunch: true,
+            });
+
+            const { prestigePad, initiator1 } = fixture;
+
+            const { defaultParams } = await beforeRaiseNextRoundTest(fixture);
+
+            await expectRaiseNextRound(fixture, defaultParams, initiator1, async (tx) => {
+                await expect(tx).to.be.revertedWithCustomError(prestigePad, 'AlreadyFinalized');
+            });
         });
 
         it('7.1.9.12. raise next round unsuccessfully when current round is not confirmed', async () => {
@@ -2907,23 +2972,74 @@ describe.only('7.1. PrestigePad', async () => {
         });
 
         it('7.1.10.2. cancel current round unsuccessfully with invalid launch id', async () => {
+            const fixture = await beforePrestigePadTest();
 
+            const { prestigePad, initiator1 } = fixture;
+
+            await expect(prestigePad.connect(initiator1).cancelCurrentRound(1))
+                .to.be.revertedWithCustomError(prestigePad, 'InvalidLaunchId');
         });
 
         it('7.1.10.3. cancel current round unsuccessfully when sender is not launch initiator', async () => {
+            const fixture = await beforePrestigePadTest({
+                addSampleLaunch: true,
+                addSampleRounds: true,
+                raiseFirstRound: true,
+            });
 
+            const { prestigePad, manager, initiator1 } = fixture;
+
+            // By manager
+            await expect(prestigePad.connect(manager).cancelCurrentRound(1))
+                .to.be.revertedWithCustomError(prestigePad, 'Unauthorized');
+
+            // By wrong initiator
+            await expect(prestigePad.connect(initiator1).cancelCurrentRound(2))
+                .to.be.revertedWithCustomError(prestigePad, 'Unauthorized');
         });
 
         it('7.1.10.4. cancel current round unsuccessfully when paused', async () => {
+            const fixture = await beforePrestigePadTest({
+                addSampleLaunch: true,
+                addSampleRounds: true,
+                raiseFirstRound: true,
+                pause: true,
+            });
 
+            const { prestigePad, manager, initiator1 } = fixture;
+
+            await expect(prestigePad.connect(initiator1).cancelCurrentRound(1))
+                .to.be.revertedWith('Pausable: paused');
         });
 
         it('7.1.10.5. cancel current round unsuccessfully when launch is finalized', async () => {
+            const fixture = await beforePrestigePadTest({
+                addSampleLaunch: true,
+                addSampleRounds: true,
+                doAllFirstFound: true,
+                doAllSecondFound: true,
+                finalizeLaunch: true,
+            });
 
+            const { prestigePad, initiator1 } = fixture;
+
+            await expect(prestigePad.connect(initiator1).cancelCurrentRound(1))
+                .to.be.revertedWithCustomError(prestigePad, 'AlreadyFinalized');
         });
 
         it('7.1.10.6. cancel current round unsuccessfully when current round is confirmed', async () => {
+            const fixture = await beforePrestigePadTest({
+                addSampleLaunch: true,
+                addSampleRounds: true,
+                raiseFirstRound: true,
+                depositFirstRound: true,
+                confirmFirstRound: true,
+            });
 
+            const { prestigePad, initiator1 } = fixture;
+
+            await expect(prestigePad.connect(initiator1).cancelCurrentRound(1))
+                .to.be.revertedWithCustomError(prestigePad, 'AlreadyConfirmed');
         });
     });
 
@@ -2985,6 +3101,9 @@ describe.only('7.1. PrestigePad', async () => {
                 value,
                 feeAmount,
                 cashbackBaseAmount
+            );
+            await expect(tx).to.emit(reserveVault, 'FundProvision').withArgs(
+                fundId,
             );
 
             const roundAfter = await prestigePad.getRound(roundId);
@@ -3098,6 +3217,9 @@ describe.only('7.1. PrestigePad', async () => {
                 value,
                 feeAmount,
                 cashbackBaseAmount
+            );
+            await expect(tx).to.emit(reserveVault, 'FundProvision').withArgs(
+                fundId,
             );
 
             const roundAfter = await prestigePad.getRound(roundId);
@@ -3751,31 +3873,110 @@ describe.only('7.1. PrestigePad', async () => {
 
     describe('7.1.12. finalize(uint256)', async () => {
         it('7.1.12.1. finalize launch successfully', async () => {
+            const fixture = await beforePrestigePadTest({
+                addSampleLaunch: true,
+                addSampleRounds: true,
+                doAllFirstFound: true,
+                doAllSecondFound: true,
+            });
 
+            const { prestigePad, initiator1 } = fixture;
+
+            const launchId = 1;
+
+            const tx = await prestigePad.connect(initiator1).finalize(launchId);
+            await expect(tx).to.emit(prestigePad, 'LaunchFinalization').withArgs(launchId);
+
+            const launchAfter = await prestigePad.getLaunch(launchId);
+            expect(launchAfter.isFinalized).to.be.true;
         });
 
         it('7.1.12.2. finalize launch unsuccessfully with invalid launch id', async () => {
+            const fixture = await beforePrestigePadTest();
 
+            const { prestigePad, initiator1 } = fixture;
+
+            await expect(prestigePad.connect(initiator1).finalize(0))
+                .to.be.revertedWithCustomError(prestigePad, 'InvalidLaunchId');
+
+            await expect(prestigePad.connect(initiator1).finalize(100))
+                .to.be.revertedWithCustomError(prestigePad, 'InvalidLaunchId');
         });
 
         it('7.1.12.3. finalize launch unsuccessfully when sender is not launch initiator', async () => {
+            const fixture = await beforePrestigePadTest({
+                addSampleLaunch: true,
+                addSampleRounds: true,
+                doAllFirstFound: true,
+                doAllSecondFound: true,
+            });
 
+            const { prestigePad, manager, initiator1 } = fixture;
+
+            // By manager
+            await expect(prestigePad.connect(manager).finalize(1))
+                .to.be.revertedWithCustomError(prestigePad, 'Unauthorized');
+
+            // By wrong initiator
+            await expect(prestigePad.connect(initiator1).finalize(2))
+                .to.be.revertedWithCustomError(prestigePad, 'Unauthorized');
         });
 
         it('7.1.12.4. finalize launch unsuccessfully when paused', async () => {
+            const fixture = await beforePrestigePadTest({
+                addSampleLaunch: true,
+                addSampleRounds: true,
+                doAllFirstFound: true,
+                doAllSecondFound: true,
+                pause: true,
+            });
 
+            const { prestigePad, initiator1 } = fixture;
+
+            await expect(prestigePad.connect(initiator1).finalize(1))
+                .to.be.revertedWith('Pausable: paused');
         });
 
-        it('7.1.12.5. finalize launch unsuccessfully when launch is finalized', async () => {
+        it('7.1.12.5. finalize launch unsuccessfully when launch is already finalized', async () => {
+            const fixture = await beforePrestigePadTest({
+                addSampleLaunch: true,
+                addSampleRounds: true,
+                doAllFirstFound: true,
+                doAllSecondFound: true,
+                finalizeLaunch: true,
+            });
 
+            const { prestigePad, initiator1 } = fixture;
+
+            await expect(prestigePad.connect(initiator1).finalize(1))
+                .to.be.revertedWithCustomError(prestigePad, 'AlreadyFinalized');
         });
         
         it('7.1.12.6. finalize launch unsuccessfully when there are more round to raise', async () => {
+            const fixture = await beforePrestigePadTest({
+                addSampleLaunch: true,
+                addSampleRounds: true,
+                doAllFirstFound: true,
+            });
 
+            const { prestigePad, initiator1 } = fixture;
+
+            await expect(prestigePad.connect(initiator1).finalize(1))
+                .to.be.revertedWithCustomError(prestigePad, 'InvalidFinalizing');
         });
 
         it('7.1.12.7. finalize launch unsuccessfully when current round is not confirmed', async () => {
+            const fixture = await beforePrestigePadTest({
+                addSampleLaunch: true,
+                addSampleRounds: true,
+                doAllFirstFound: true,
+                raiseSecondRound: true,
+            });
 
+            const { prestigePad, initiator1 } = fixture;
+
+            await expect(prestigePad.connect(initiator1).finalize(1))
+                .to.be.revertedWithCustomError(prestigePad, 'InvalidFinalizing');
         });
     });
 
@@ -3820,6 +4021,7 @@ describe.only('7.1. PrestigePad', async () => {
                 quantity1,
                 value1
             );
+            await expect(tx1).to.not.emit(reserveVault, 'FundExpansion');
 
             expect(await ethers.provider.getBalance(depositor1.address)).to.equal(
                 initDepositor1NativeBalance.sub(gasFee1).sub(value1)
@@ -3857,6 +4059,7 @@ describe.only('7.1. PrestigePad', async () => {
                 quantity2,
                 value2
             );
+            await expect(tx2).to.not.emit(prestigePad, 'FundExpansion');
 
             expect(await ethers.provider.getBalance(depositor2.address)).to.equal(
                 initDepositor2NativeBalance.sub(gasFee2).sub(value2)
@@ -3894,6 +4097,10 @@ describe.only('7.1. PrestigePad', async () => {
                 depositor1.address,
                 quantity3,
                 value3
+            );
+            await expect(tx3).to.emit(reserveVault, 'FundExpansion').withArgs(
+                fundId,
+                quantity1 + quantity3,
             );
 
             expect(await ethers.provider.getBalance(depositor1.address)).to.equal(
@@ -3933,6 +4140,10 @@ describe.only('7.1. PrestigePad', async () => {
                 quantity4,
                 value4
             );
+            await expect(tx4).to.emit(reserveVault, 'FundExpansion').withArgs(
+                fundId,
+                quantity4,
+            );
 
             expect(await ethers.provider.getBalance(depositor1.address)).to.equal(
                 initDepositor1NativeBalance.sub(gasFee4).sub(value4)
@@ -3969,6 +4180,10 @@ describe.only('7.1. PrestigePad', async () => {
                 depositor3.address,
                 quantity5,
                 value5
+            );
+            await expect(tx5).to.emit(reserveVault, 'FundExpansion').withArgs(
+                fundId,
+                quantity5,
             );
 
             expect(await ethers.provider.getBalance(depositor3.address)).to.equal(
@@ -4093,7 +4308,21 @@ describe.only('7.1. PrestigePad', async () => {
         });
 
         it('7.1.13.6. deposit current round unsuccessfully when launch is finalized', async () => {
-            // TODO: Implement this test
+            const fixture = await beforePrestigePadTest({
+                addSampleLaunch: true,
+                addSampleRounds: true,
+                doAllFirstFound: true,
+                doAllSecondFound: true,
+                finalizeLaunch: true,
+            });
+
+            const { prestigePad, depositor1 } = fixture;
+
+            await expect(prestigePad.connect(depositor1).depositCurrentRound(
+                1,
+                5,
+                { value: ethers.utils.parseEther('100') }
+            )).to.be.revertedWithCustomError(prestigePad, 'AlreadyFinalized');
         });
 
         it('7.1.13.7. deposit current round unsuccessfully when current round is confirmed', async () => {
@@ -4324,85 +4553,755 @@ describe.only('7.1. PrestigePad', async () => {
 
     describe('7.1.15. withdrawDeposit(uint256)', async () => {
         it('7.1.15.1. withdraw deposit successfully', async () => {
+            const fixture = await beforePrestigePadTest({
+                addSampleLaunch: true,
+                addSampleRounds: true,
+                raiseFirstRound: true,
+                depositFirstRound: true,
+            });
 
+            const { prestigePad, depositor1, depositor2, currencies, initiator1, initiator2 } = fixture;
+
+            const oldRoundId1 = (await prestigePad.getLaunch(1)).roundIds[1];
+            const oldRound1 = await prestigePad.getRound(oldRoundId1);
+            
+            const oldRoundId2 = (await prestigePad.getLaunch(2)).roundIds[1];
+            const oldRound2 = await prestigePad.getRound(oldRoundId2);
+
+            await callTransaction(prestigePad.connect(initiator1).cancelCurrentRound(1));
+            await callTransaction(prestigePad.connect(initiator2).cancelCurrentRound(2));
+            
+            // Tx1: Depositor1 withdraw deposit from launch 1 (native token)
+            const quantity1 = await prestigePad.deposits(oldRoundId1, depositor1.address);
+            const value1 = oldRound1.quote.unitPrice.mul(quantity1);
+
+            const initDepositor1NativeBalance = await ethers.provider.getBalance(depositor1.address);
+            const initPrestigePadNativeBalance = await ethers.provider.getBalance(prestigePad.address);
+
+            const tx1 = await prestigePad.connect(depositor1).withdrawDeposit(oldRoundId1);
+            const receipt1 = await tx1.wait();
+            const gasFee1 = receipt1.gasUsed.mul(receipt1.effectiveGasPrice);
+
+            await expect(tx1).to.emit(prestigePad, 'DepositWithdrawal').withArgs(
+                oldRoundId1,
+                depositor1.address,
+                quantity1,
+                value1
+            );
+
+            expect(await prestigePad.deposits(oldRoundId1, depositor1.address)).to.equal(0);
+
+            expect(await ethers.provider.getBalance(depositor1.address)).to.equal(
+                initDepositor1NativeBalance.sub(gasFee1).add(value1)
+            );
+            expect(await ethers.provider.getBalance(prestigePad.address)).to.equal(
+                initPrestigePadNativeBalance.sub(value1)
+            );
+
+            // Tx2: Depositor2 withdraw deposit from launch 2 (erc20 token)
+            const currency = currencies[0];
+
+            const initDepositor2ERC20Balance = await currency.balanceOf(depositor2.address);
+            const initPrestigePadERC20Balance = await currency.balanceOf(prestigePad.address);
+
+            const quantity2 = await prestigePad.deposits(oldRoundId2, depositor2.address);
+            const value2 = oldRound2.quote.unitPrice.mul(quantity2);
+
+            const tx2 = await prestigePad.connect(depositor2).withdrawDeposit(oldRoundId2);
+
+            await expect(tx2).to.emit(prestigePad, 'DepositWithdrawal').withArgs(
+                oldRoundId2,
+                depositor2.address,
+                quantity2,
+                value2
+            );
+
+            expect(await prestigePad.deposits(oldRoundId2, depositor2.address)).to.equal(0);
+
+            expect(await currency.balanceOf(depositor2.address)).to.equal(
+                initDepositor2ERC20Balance.add(value2)
+            );
+            expect(await currency.balanceOf(prestigePad.address)).to.equal(
+                initPrestigePadERC20Balance.sub(value2)
+            );
         });
 
         it('7.1.15.2. withdraw deposit unsuccessfully when contract is reentered', async () => {
+            const fixture = await beforePrestigePadTest({
+                addSampleLaunch: true,
+                addSampleRounds: true,
+                raiseFirstRound: true,
+                depositFirstRound: true,
+                useReentrancyERC20: true,
+            });
 
+            const { prestigePad, reentrancyERC20, depositor1, initiator2 } = fixture;
+
+            const launchId = 2;
+            const oldRoundId2 = (await prestigePad.getLaunch(launchId)).roundIds[1];
+            
+            await callTransaction(prestigePad.connect(initiator2).cancelCurrentRound(launchId));
+
+            await testReentrancy_prestigePad(
+                fixture,
+                reentrancyERC20,
+                async (timestamp: number) => {
+                    await expect(prestigePad.connect(depositor1).withdrawDeposit(oldRoundId2))
+                        .to.be.revertedWith('ReentrancyGuard: reentrant call');
+                }
+            );
         });
 
         it('7.1.15.3. withdraw deposit unsuccessfully with invalid round id', async () => {
+            const fixture = await beforePrestigePadTest();
+            
+            const { prestigePad, depositor1 } = fixture;
 
+            await expect(prestigePad.connect(depositor1).withdrawDeposit(0))
+                .to.be.revertedWithCustomError(prestigePad, 'InvalidRoundId');
+
+            await expect(prestigePad.connect(depositor1).withdrawDeposit(100))
+                .to.be.revertedWithCustomError(prestigePad, 'InvalidRoundId');
         });
 
         it('7.1.15.4. withdraw deposit unsuccessfully when paused', async () => {
+            const fixture = await beforePrestigePadTest({
+                addSampleLaunch: true,
+                addSampleRounds: true,
+                raiseFirstRound: true,
+                depositFirstRound: true,
+            });
 
+            const { prestigePad, depositor1, initiator1, admin, admins } = fixture;
+
+            const oldRoundId = (await prestigePad.getLaunch(1)).roundIds[1];
+
+            await callTransaction(prestigePad.connect(initiator1).cancelCurrentRound(1));
+
+            await callPrestigePad_Pause(prestigePad, admins, await admin.nonce());
+
+            await expect(prestigePad.connect(depositor1).withdrawDeposit(oldRoundId))
+                .to.be.revertedWith('Pausable: paused'); 
         });
 
         it('7.1.15.5. withdraw deposit unsuccessfully when round is confirmed', async () => {
+            const fixture = await beforePrestigePadTest({
+                addSampleLaunch: true,
+                addSampleRounds: true,
+                raiseFirstRound: true,
+                depositFirstRound: true,
+                confirmFirstRound: true,
+            });
 
+            const { prestigePad, depositor1 } = fixture;
+
+            const roundId = (await prestigePad.getLaunch(1)).roundIds[1];
+
+            await expect(prestigePad.connect(depositor1).withdrawDeposit(roundId))
+                .to.be.revertedWithCustomError(prestigePad, 'AlreadyConfirmed');
         });
 
         it('7.1.15.6. withdraw deposit unsuccessfully when raising is not ended', async () => {
-        
+            const fixture = await beforePrestigePadTest({
+                addSampleLaunch: true,
+                addSampleRounds: true,
+                raiseFirstRound: true,
+                depositFirstRound: true,
+            });
+
+            const { prestigePad, depositor1 } = fixture;
+
+            const roundId = (await prestigePad.getLaunch(1)).roundIds[1];
+            const round = await prestigePad.getRound(roundId);
+            let timestamp = round.agenda.raiseEndsAt;
+            
+            await time.setNextBlockTimestamp(timestamp - 1);
+            await expect(prestigePad.connect(depositor1).withdrawDeposit(roundId))
+                .to.be.revertedWithCustomError(prestigePad, 'StillRaising');
         });
 
-        it('7.1.15.7. withdraw deposit unsuccessfully when confirm time limit is not overdue', async () => {
+        it('7.1.15.7. withdraw deposit unsuccessfully when sold quantity is enough and confirm time limit is not overdue', async () => {
+            const fixture = await beforePrestigePadTest({
+                addSampleLaunch: true,
+                addSampleRounds: true,
+                raiseFirstRound: true,
+                depositFirstRound: true,
+            });
 
+            const { prestigePad, depositor1 } = fixture;
+
+            const roundId = (await prestigePad.getLaunch(1)).roundIds[1];
+            const round = await prestigePad.getRound(roundId);
+            const confirmDue = round.agenda.raiseEndsAt + Constant.PRESTIGE_PAD_RAISE_CONFIRMATION_TIME_LIMIT;
+
+            await time.setNextBlockTimestamp(confirmDue - 5);
+            await expect(prestigePad.connect(depositor1).withdrawDeposit(roundId))
+                .to.be.revertedWithCustomError(prestigePad, 'InvalidWithdrawing');
         });
 
-        it('7.1.15.8. withdraw deposit unsuccessfully when not deposited', async () => {
+        it('7.1.15.7. withdraw deposit successfully when confirm time limit is overdue', async () => {
+            const fixture = await beforePrestigePadTest({
+                addSampleLaunch: true,
+                addSampleRounds: true,
+                raiseFirstRound: true,
+                depositFirstRound: true,
+            });
 
+            const { prestigePad, depositor1 } = fixture;
+
+            const roundId = (await prestigePad.getLaunch(1)).roundIds[1];
+            const round = await prestigePad.getRound(roundId);
+            const confirmDue = round.agenda.raiseEndsAt + Constant.PRESTIGE_PAD_RAISE_CONFIRMATION_TIME_LIMIT;
+
+            await time.setNextBlockTimestamp(confirmDue);
+            await expect(prestigePad.connect(depositor1).withdrawDeposit(roundId))
+                .to.not.be.reverted;
         });
 
-        it('7.1.15.9. withdraw deposit unsuccessfully when already withdrawn', async () => {
+        it('7.1.15.8. withdraw deposit successfully when sold quantity is not enough', async () => {
+            const fixture = await beforePrestigePadTest({
+                addSampleLaunch: true,
+                addSampleRounds: true,
+                raiseFirstRound: true,
+            });
 
+            const { prestigePad, depositor1 } = fixture;
+            
+            const launchId = 1;
+            const roundId = (await prestigePad.getLaunch(launchId)).roundIds[1];
+            const round = await prestigePad.getRound(roundId);
+            let timestamp = round.agenda.raiseStartsAt;
+            await time.setNextBlockTimestamp(timestamp);
+
+            const quantity = round.quota.minSellingQuantity.sub(1);
+
+            await callTransaction(prestigePad.connect(depositor1).depositCurrentRound(
+                launchId,
+                quantity,
+                { value: round.quote.unitPrice.mul(quantity) }
+            ));
+
+            await time.setNextBlockTimestamp(round.agenda.raiseEndsAt);
+
+            await expect(prestigePad.connect(depositor1).withdrawDeposit(roundId))
+                .to.not.be.reverted;
         });
 
-        it('7.1.15.10. withdraw deposit unsuccessfully when sending native token to user failed', async () => {
+        it('7.1.15.9. withdraw deposit unsuccessfully when not deposited', async () => {
+            const fixture = await beforePrestigePadTest({
+                addSampleLaunch: true,
+                addSampleRounds: true,
+                raiseFirstRound: true,
+            });
 
+            const { prestigePad, depositor1, initiator1 } = fixture;
+
+            const roundId = (await prestigePad.getLaunch(1)).roundIds[1];
+
+            await callTransaction(prestigePad.connect(initiator1).cancelCurrentRound(1));
+
+            await expect(prestigePad.connect(depositor1).withdrawDeposit(roundId))
+                .to.be.revertedWithCustomError(prestigePad, 'NothingToWithdraw');
+        });
+
+        it('7.1.15.10. withdraw deposit unsuccessfully when already withdrawn', async () => {
+            const fixture = await beforePrestigePadTest({
+                addSampleLaunch: true,
+                addSampleRounds: true,
+                raiseFirstRound: true,
+                depositFirstRound: true,
+            });
+
+            const { prestigePad, depositor1, initiator1 } = fixture;
+
+            const roundId = (await prestigePad.getLaunch(1)).roundIds[1];
+
+            await callTransaction(prestigePad.connect(initiator1).cancelCurrentRound(1));
+
+            await callTransaction(prestigePad.connect(depositor1).withdrawDeposit(roundId));
+
+            await expect(prestigePad.connect(depositor1).withdrawDeposit(roundId))
+                .to.be.revertedWithCustomError(prestigePad, 'NothingToWithdraw');
+        });
+
+        it('7.1.15.11. withdraw deposit unsuccessfully when sending native token to user failed', async () => {
+            const fixture = await beforePrestigePadTest({
+                addSampleLaunch: true,
+                addSampleRounds: true,
+                raiseFirstRound: true,
+            });
+
+            const { prestigePad, initiator1, failReceiver, deployer } = fixture;
+
+            await prepareNativeToken(
+                ethers.provider,
+                deployer,
+                [failReceiver],
+                ethers.utils.parseEther('1000'),
+            );
+
+            const launchId = 1;
+            const roundId = (await prestigePad.getLaunch(launchId)).roundIds[1];
+            const round = await prestigePad.getRound(roundId);
+            let timestamp = round.agenda.raiseStartsAt;
+            await time.setNextBlockTimestamp(timestamp);
+
+            const quantity = 10;
+
+            await callTransaction(failReceiver.call(
+                prestigePad.address,
+                prestigePad.interface.encodeFunctionData('depositCurrentRound', [
+                    launchId,
+                    quantity,
+                ]),
+                { value: round.quote.unitPrice.mul(quantity) }
+            ));
+
+            await callTransaction(prestigePad.connect(initiator1).cancelCurrentRound(1));
+
+            await callTransaction(failReceiver.activate(true));
+
+            await expect(failReceiver.call(
+                prestigePad.address,
+                prestigePad.interface.encodeFunctionData('withdrawDeposit', [roundId])
+            )).to.be.revertedWithCustomError(prestigePad, 'FailedTransfer');
         });
     });
 
     describe('7.1.16. withdrawProjectToken(uint256, uint256)', async () => {
-        it('7.1.16.1. withdraw project token successfully', async () => {
+        it('7.1.16.1. withdraw project token successfully with native token when qualified for cashback', async () => {
+            const fixture = await beforePrestigePadTest({
+                addSampleLaunch: true,
+                addSampleRounds: true,
+                doAllFirstFound: true,
+                doAllSecondFound: true,
+            });
 
+            const { prestigePad, depositor3, projectToken, reserveVault, currencies } = fixture;
+
+            const launchId = 1;
+            const index = 1;
+            const roundId = (await prestigePad.getLaunch(launchId)).roundIds[index];
+            const fundId = (await prestigePad.getRound(roundId)).quote.cashbackFundId;
+            const fund = await reserveVault.getFund(fundId);
+
+            let timestamp = await time.latest() + 100;
+            await time.setNextBlockTimestamp(timestamp);
+
+            const quantity = await prestigePad.deposits(roundId, depositor3.address);
+            const unit = BigNumber.from(10).pow(await projectToken.decimals());
+            const amount = quantity.mul(unit);
+
+            const mainCashback = fund.mainDenomination.mul(quantity);
+            const currency0Cashback = fund.extraDenominations[0].mul(quantity);
+            const currency1Cashback = fund.extraDenominations[1].mul(quantity);
+
+            const initDepositor3ProjectBalance = await projectToken.balanceOf(depositor3.address, launchId);
+            const initPrestigePadProjectBalance = await projectToken.balanceOf(prestigePad.address, launchId);
+
+            const initDepositor3NativeBalance = await ethers.provider.getBalance(depositor3.address);
+            const initPrestigePadNativeBalance = await ethers.provider.getBalance(prestigePad.address);
+            const initReserveVaultNativeBalance = await ethers.provider.getBalance(reserveVault.address);
+            
+            const initDepositor3Currency0Balance = await currencies[0].balanceOf(depositor3.address);
+            const initPrestigePadCurrency0Balance = await currencies[0].balanceOf(prestigePad.address);
+            const initReserveVaultCurrency0Balance = await currencies[0].balanceOf(reserveVault.address);
+
+            const initDepositor3Currency1Balance = await currencies[1].balanceOf(depositor3.address);
+            const initPrestigePadCurrency1Balance = await currencies[1].balanceOf(prestigePad.address);
+            const initReserveVaultCurrency1Balance = await currencies[1].balanceOf(reserveVault.address);
+
+            const tx = await prestigePad.connect(depositor3).withdrawProjectToken(launchId, index);
+            const receipt = await tx.wait();
+            const gasFee = receipt.gasUsed.mul(receipt.effectiveGasPrice);
+
+            await expect(tx).to.emit(prestigePad, 'ProjectTokenWithdrawal').withArgs(
+                launchId,
+                roundId,
+                depositor3.address,
+                amount
+            );
+
+            expect(await prestigePad.deposits(roundId, depositor3.address)).to.equal(quantity);
+            expect(await prestigePad.withdrawAt(roundId, depositor3.address)).to.equal(timestamp);
+
+            expect(await projectToken.balanceOf(depositor3.address, launchId)).to.equal(
+                initDepositor3ProjectBalance.add(amount)
+            );
+            expect(await projectToken.balanceOf(prestigePad.address, launchId)).to.equal(
+                initPrestigePadProjectBalance.sub(amount)
+            );
+
+            expect(await ethers.provider.getBalance(depositor3.address)).to.equal(
+                initDepositor3NativeBalance.sub(gasFee).add(mainCashback)
+            );
+            expect(await ethers.provider.getBalance(prestigePad.address)).to.equal(
+                initPrestigePadNativeBalance
+            );
+            expect(await ethers.provider.getBalance(reserveVault.address)).to.equal(
+                initReserveVaultNativeBalance.sub(mainCashback)
+            );
+
+            expect(await currencies[0].balanceOf(depositor3.address)).to.equal(
+                initDepositor3Currency0Balance.add(currency0Cashback)
+            );
+            expect(await currencies[0].balanceOf(prestigePad.address)).to.equal(
+                initPrestigePadCurrency0Balance
+            );
+            expect(await currencies[0].balanceOf(reserveVault.address)).to.equal(
+                initReserveVaultCurrency0Balance.sub(currency0Cashback)
+            );
+
+            expect(await currencies[1].balanceOf(depositor3.address)).to.equal(
+                initDepositor3Currency1Balance.add(currency1Cashback)
+            );
+            expect(await currencies[1].balanceOf(prestigePad.address)).to.equal(
+                initPrestigePadCurrency1Balance
+            );
+            expect(await currencies[1].balanceOf(reserveVault.address)).to.equal(
+                initReserveVaultCurrency1Balance.sub(currency1Cashback)
+            );
         });
 
-        it('7.1.16.2. withdraw project token successfully without cashback', async () => {
+        it('7.1.16.2. withdraw project token successfully with native token when not qualified for cashback', async () => {
+            const fixture = await beforePrestigePadTest({
+                addSampleLaunch: true,
+                addSampleRounds: true,
+                doAllFirstFound: true,
+                doAllSecondFound: true,
+            });
 
+            const { prestigePad, depositor1, projectToken, reserveVault, currencies } = fixture;
+
+            const launchId = 1;
+            const index = 1;
+            const roundId = (await prestigePad.getLaunch(launchId)).roundIds[index];
+            const fundId = (await prestigePad.getRound(roundId)).quote.cashbackFundId;
+            const fund = await reserveVault.getFund(fundId);
+
+            let timestamp = await time.latest() + 100;
+            await time.setNextBlockTimestamp(timestamp);
+
+            const quantity = await prestigePad.deposits(roundId, depositor1.address);
+            const unit = BigNumber.from(10).pow(await projectToken.decimals());
+            const amount = quantity.mul(unit);
+
+            const initDepositor1ProjectBalance = await projectToken.balanceOf(depositor1.address, launchId);
+            const initPrestigePadProjectBalance = await projectToken.balanceOf(prestigePad.address, launchId);
+
+            const initDepositor1NativeBalance = await ethers.provider.getBalance(depositor1.address);
+            const initPrestigePadNativeBalance = await ethers.provider.getBalance(prestigePad.address);
+            const initReserveVaultNativeBalance = await ethers.provider.getBalance(reserveVault.address);
+            
+            const initDepositor1Currency0Balance = await currencies[0].balanceOf(depositor1.address);
+            const initPrestigePadCurrency0Balance = await currencies[0].balanceOf(prestigePad.address);
+            const initReserveVaultCurrency0Balance = await currencies[0].balanceOf(reserveVault.address);
+
+            const initDepositor1Currency1Balance = await currencies[1].balanceOf(depositor1.address);
+            const initPrestigePadCurrency1Balance = await currencies[1].balanceOf(prestigePad.address);
+            const initReserveVaultCurrency1Balance = await currencies[1].balanceOf(reserveVault.address);
+
+            const tx = await prestigePad.connect(depositor1).withdrawProjectToken(launchId, index);
+            const receipt = await tx.wait();
+            const gasFee = receipt.gasUsed.mul(receipt.effectiveGasPrice);
+
+            await expect(tx).to.emit(prestigePad, 'ProjectTokenWithdrawal').withArgs(
+                launchId,
+                roundId,
+                depositor1.address,
+                amount
+            );
+
+            expect(await prestigePad.deposits(roundId, depositor1.address)).to.equal(quantity);
+            expect(await prestigePad.withdrawAt(roundId, depositor1.address)).to.equal(timestamp);
+
+            expect(await projectToken.balanceOf(depositor1.address, launchId)).to.equal(
+                initDepositor1ProjectBalance.add(amount)
+            );
+            expect(await projectToken.balanceOf(prestigePad.address, launchId)).to.equal(
+                initPrestigePadProjectBalance.sub(amount)
+            );
+
+            expect(await ethers.provider.getBalance(depositor1.address)).to.equal(
+                initDepositor1NativeBalance.sub(gasFee)
+            );
+            expect(await ethers.provider.getBalance(prestigePad.address)).to.equal(
+                initPrestigePadNativeBalance
+            );
+            expect(await ethers.provider.getBalance(reserveVault.address)).to.equal(
+                initReserveVaultNativeBalance
+            );
+
+            expect(await currencies[0].balanceOf(depositor1.address)).to.equal(
+                initDepositor1Currency0Balance
+            );
+            expect(await currencies[0].balanceOf(prestigePad.address)).to.equal(
+                initPrestigePadCurrency0Balance
+            );
+            expect(await currencies[0].balanceOf(reserveVault.address)).to.equal(
+                initReserveVaultCurrency0Balance
+            );
+
+            expect(await currencies[1].balanceOf(depositor1.address)).to.equal(
+                initDepositor1Currency1Balance
+            );
+            expect(await currencies[1].balanceOf(prestigePad.address)).to.equal(
+                initPrestigePadCurrency1Balance
+            );
+            expect(await currencies[1].balanceOf(reserveVault.address)).to.equal(
+                initReserveVaultCurrency1Balance
+            );
         });
 
-        it('7.1.16.3. withdraw zero project token when user not deposited', async () => {
+        it('7.1.16.3. withdraw project token successfully with erc20 without cashback', async () => {
+            const fixture = await beforePrestigePadTest({
+                addSampleLaunch: true,
+                addSampleRounds: true,
+                doAllFirstFound: true,
+                doAllSecondFound: true,
+            });
 
+            const { prestigePad, depositor1, projectToken, reserveVault, currencies } = fixture;    
+
+            const launchId = 2;
+            const index = 1;
+            const roundId = (await prestigePad.getLaunch(launchId)).roundIds[index];
+
+            let timestamp = await time.latest() + 100;
+            await time.setNextBlockTimestamp(timestamp);
+
+            const quantity = await prestigePad.deposits(roundId, depositor1.address);
+            const unit = BigNumber.from(10).pow(await projectToken.decimals());
+            const amount = quantity.mul(unit);
+
+            const initDepositor1ProjectBalance = await projectToken.balanceOf(depositor1.address, launchId);
+            const initPrestigePadProjectBalance = await projectToken.balanceOf(prestigePad.address, launchId);
+
+            const initDepositor1NativeBalance = await ethers.provider.getBalance(depositor1.address);
+            const initPrestigePadNativeBalance = await ethers.provider.getBalance(prestigePad.address);
+            const initReserveVaultNativeBalance = await ethers.provider.getBalance(reserveVault.address);
+            
+            const initDepositor1Currency0Balance = await currencies[0].balanceOf(depositor1.address);
+            const initPrestigePadCurrency0Balance = await currencies[0].balanceOf(prestigePad.address);
+            const initReserveVaultCurrency0Balance = await currencies[0].balanceOf(reserveVault.address);
+
+            const tx = await prestigePad.connect(depositor1).withdrawProjectToken(launchId, index);
+            const receipt = await tx.wait();
+            const gasFee = receipt.gasUsed.mul(receipt.effectiveGasPrice);
+
+            await expect(tx).to.emit(prestigePad, 'ProjectTokenWithdrawal').withArgs(
+                launchId,
+                roundId,
+                depositor1.address,
+                amount
+            );
+
+            expect(await prestigePad.deposits(roundId, depositor1.address)).to.equal(quantity);
+            expect(await prestigePad.withdrawAt(roundId, depositor1.address)).to.equal(timestamp);
+
+            expect(await projectToken.balanceOf(depositor1.address, launchId)).to.equal(
+                initDepositor1ProjectBalance.add(amount)
+            );
+            expect(await projectToken.balanceOf(prestigePad.address, launchId)).to.equal(
+                initPrestigePadProjectBalance.sub(amount)
+            );
+
+            expect(await ethers.provider.getBalance(depositor1.address)).to.equal(
+                initDepositor1NativeBalance.sub(gasFee)
+            );
+            expect(await ethers.provider.getBalance(prestigePad.address)).to.equal(
+                initPrestigePadNativeBalance
+            );
+            expect(await ethers.provider.getBalance(reserveVault.address)).to.equal(
+                initReserveVaultNativeBalance
+            );
+
+            expect(await currencies[0].balanceOf(depositor1.address)).to.equal(
+                initDepositor1Currency0Balance
+            );
+            expect(await currencies[0].balanceOf(prestigePad.address)).to.equal(
+                initPrestigePadCurrency0Balance
+            );
+            expect(await currencies[0].balanceOf(reserveVault.address)).to.equal(
+                initReserveVaultCurrency0Balance
+            );
         });
 
-        it('7.1.16.4. withdraw project token unsuccessfully when contract is reentered', async () => {
+        it('7.1.16.4. withdraw zero project token when user not deposited', async () => {
+            const fixture = await beforePrestigePadTest({
+                addSampleLaunch: true,
+                addSampleRounds: true,
+                doAllFirstFound: true,
+            });
 
+            const { prestigePad, initiator2, projectToken, reserveVault } = fixture;
+
+            const launchId = 1;
+            const index = 1;
+
+            let timestamp = await time.latest() + 100;
+            await time.setNextBlockTimestamp(timestamp);
+
+            const roundId = (await prestigePad.getLaunch(launchId)).roundIds[index];
+
+            const initInitiator2ProjectBalance = await projectToken.balanceOf(initiator2.address, launchId);
+            const initPrestigePadProjectBalance = await projectToken.balanceOf(prestigePad.address, launchId);
+
+            const initInitiator2NativeBalance = await ethers.provider.getBalance(initiator2.address);
+            const initPrestigePadNativeBalance = await ethers.provider.getBalance(prestigePad.address);
+            const initReserveVaultNativeBalance = await ethers.provider.getBalance(reserveVault.address);
+            
+            const tx = await prestigePad.connect(initiator2).withdrawProjectToken(launchId, index);
+            const receipt = await tx.wait();
+            const gasFee = receipt.gasUsed.mul(receipt.effectiveGasPrice);
+
+            await expect(tx).to.emit(prestigePad, 'ProjectTokenWithdrawal').withArgs(
+                launchId,
+                roundId,
+                initiator2.address,
+                0
+            );
+
+            expect(await prestigePad.deposits(roundId, initiator2.address)).to.equal(0);
+            expect(await prestigePad.withdrawAt(roundId, initiator2.address)).to.equal(timestamp);
+
+            expect(await projectToken.balanceOf(initiator2.address, launchId)).to.equal(
+                initInitiator2ProjectBalance
+            );
+            expect(await projectToken.balanceOf(prestigePad.address, launchId)).to.equal(
+                initPrestigePadProjectBalance
+            );
+
+            expect(await ethers.provider.getBalance(initiator2.address)).to.equal(
+                initInitiator2NativeBalance.sub(gasFee)
+            );
+            expect(await ethers.provider.getBalance(prestigePad.address)).to.equal(
+                initPrestigePadNativeBalance
+            );
+            expect(await ethers.provider.getBalance(reserveVault.address)).to.equal(
+                initReserveVaultNativeBalance
+            );
         });
 
-        it('7.1.16.5. withdraw project token unsuccessfully with invalid launch id', async () => {
+        it('7.1.16.5. withdraw project token unsuccessfully when contract is reentered', async () => {
+            const fixture = await beforePrestigePadTest({
+                addSampleLaunch: true,
+                addSampleRounds: true,
+                doAllFirstFound: true,
+                useReentrancyERC20: true,
+            });
 
+            const { prestigePad, depositor3, reentrancyERC20 } = fixture;
+
+            const launchId = 1;
+            const index = 1;
+
+            await testReentrancy_prestigePad(
+                fixture,
+                reentrancyERC20,
+                async (timestamp: number) => {
+                    await expect(prestigePad.connect(depositor3).withdrawProjectToken(launchId, index))
+                        .to.be.revertedWith('ReentrancyGuard: reentrant call');
+                }
+            );
         });
 
-        it('7.1.16.6. withdraw project token unsuccessfully when paused', async () => {
+        it('7.1.16.6. withdraw project token unsuccessfully with invalid launch id', async () => {
+            const fixture = await beforePrestigePadTest();
 
+            const { prestigePad, depositor1 } = fixture;
+
+            await expect(prestigePad.connect(depositor1).withdrawProjectToken(0, 1))
+                .to.be.revertedWithCustomError(prestigePad, 'InvalidLaunchId');
+
+            await expect(prestigePad.connect(depositor1).withdrawProjectToken(1, 0))
+                .to.be.revertedWithCustomError(prestigePad, 'InvalidLaunchId');
         });
 
-        it('7.1.16.7. withdraw project token unsuccessfully with invalid round index', async () => {
+        it('7.1.16.7. withdraw project token unsuccessfully when paused', async () => {
+            const fixture = await beforePrestigePadTest({
+                addSampleLaunch: true,
+                addSampleRounds: true,
+                doAllFirstFound: true,
+                pause: true,
+            });
 
+            const { prestigePad, depositor1 } = fixture;
+
+            await expect(prestigePad.connect(depositor1).withdrawProjectToken(1, 1))
+                .to.be.revertedWith('Pausable: paused');
         });
 
-        it('7.1.16.8. withdraw project token unsuccessfully when round is not confirmed', async () => {
+        it('7.1.16.8. withdraw project token unsuccessfully with invalid round index', async () => {
+            const fixture = await beforePrestigePadTest({
+                addSampleLaunch: true,
+                addSampleRounds: true,
+                doAllFirstFound: true,
+            });
 
+            const { prestigePad, depositor1 } = fixture;
+
+            const currentIndex = (await prestigePad.getLaunch(1)).currentIndex;
+
+            await expect(prestigePad.connect(depositor1).withdrawProjectToken(1, currentIndex.add(1)))
+                .to.be.revertedWithCustomError(prestigePad, 'InvalidInput');
         });
 
-        it('7.1.16.9. withdraw project token unsuccessfully when user already withdrawn project token', async () => {
+        it('7.1.16.9. withdraw project token unsuccessfully when round is not confirmed', async () => {
+            const fixture = await beforePrestigePadTest({
+                addSampleLaunch: true,
+                addSampleRounds: true,
+                raiseFirstRound: true,
+                depositFirstRound: true,
+            });
 
+            const { prestigePad, depositor1 } = fixture;
+
+            const launchId = 1;
+            const index = 1;
+
+            await expect(prestigePad.connect(depositor1).withdrawProjectToken(launchId, index))
+                .to.be.revertedWithCustomError(prestigePad, 'NotConfirmed');
         });
 
-        it('7.1.16.10. withdraw project token unsuccessfully when withdraw fund failed', async () => {
+        it('7.1.16.10. withdraw project token unsuccessfully when user already withdrawn project token', async () => {
+            const fixture = await beforePrestigePadTest({
+                addSampleLaunch: true,
+                addSampleRounds: true,
+                doAllFirstFound: true,
+            });
 
+            const { prestigePad, depositor1 } = fixture;
+
+            const launchId = 1;
+            const index = 1;
+
+            await callTransaction(prestigePad.connect(depositor1).withdrawProjectToken(launchId, index));
+
+            await expect(prestigePad.connect(depositor1).withdrawProjectToken(launchId, index))
+                .to.be.revertedWithCustomError(prestigePad, 'AlreadyWithdrawn');
+        });
+
+        it('7.1.16.11. withdraw project token unsuccessfully when withdraw fund failed', async () => {
+            const fixture = await beforePrestigePadTest({
+                addSampleLaunch: true,
+                addSampleRounds: true,
+                doAllFirstFound: true,
+            });
+
+            const { prestigePad, depositor3, admins, admin, reserveVault } = fixture;
+
+            await callReserveVault_Pause(
+                reserveVault,
+                admins,
+                await admin.nonce(),
+            );
+
+            const launchId = 1;
+            const index = 1;
+
+            await expect(prestigePad.connect(depositor3).withdrawProjectToken(launchId, index))
+                .to.be.revertedWith('Pausable: paused');
         });
     });
 
