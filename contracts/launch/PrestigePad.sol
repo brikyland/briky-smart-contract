@@ -562,7 +562,7 @@ ReentrancyGuardUpgradeable {
 
         uint256 roundId = launch.roundIds[_index];
         PrestigePadRound storage round = rounds[roundId];
-        if (round.agenda.confirmAt != 0) {
+        if (round.agenda.confirmAt == 0) {
             revert NotConfirmed();
         }
 
