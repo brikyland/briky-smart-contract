@@ -70,3 +70,13 @@ export interface UpdateRoundsParams {
     removedRoundNumber: BigNumber;
     addedRounds: PrestigePadRoundInput[];
 }
+
+export interface RaiseNextRoundParams {
+    launchId: BigNumber;
+    cashbackThreshold: BigNumber;
+    cashbackBaseRate: BigNumber;
+    cashbackCurrencies: string[];
+    cashbackDenominations: BigNumber[];
+    raiseStartsAt: number;
+    raiseDuration: number;
+}

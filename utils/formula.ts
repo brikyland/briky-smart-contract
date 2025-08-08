@@ -1,6 +1,7 @@
-import { ethers } from "ethers";
+import { BigNumber, Contract, ethers } from "ethers";
 import { Constant } from "@utils/constant";
 import { Rate } from "@utils/models/Common";
+import { Admin } from "@typechain-types";
 
 export function getStakingFee(
     liquidity: ethers.BigNumber,
@@ -31,4 +32,18 @@ export function scale(
     Rate: Rate,
 ): ethers.BigNumber {
     return value.mul(Rate.value).div(ethers.BigNumber.from(10).pow(Rate.decimals));
+}
+
+
+export async function applyDiscount(
+    admin: Admin,
+    feeAmount: BigNumber,
+    currency: Contract | null,
+) {
+    const isExclusive = currency ? await admin.isExclusiveCurrency(currency.address) : false;
+    if (isExclusive) {
+        const exclusiveRate = currency ? (await currency.exclusiveDiscount()).value : ethers.BigNumber.from(0);
+        return remain(feeAmount, exclusiveRate);
+    }
+    return feeAmount;
 }

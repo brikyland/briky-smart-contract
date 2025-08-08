@@ -22,7 +22,7 @@ import {
     FailReceiver,
     ReentrancyERC20,
 } from '@typechain-types';
-import { callTransaction, getBalance, getSignatures, parseEther, prepareERC20, prepareNativeToken, randomWallet, resetERC20, resetNativeToken, testReentrancy } from '@utils/blockchain';
+import { applyDiscount, callTransaction, getBalance, getSignatures, parseEther, prepareERC20, prepareNativeToken, randomWallet, resetERC20, resetNativeToken, testReentrancy } from '@utils/blockchain';
 import { Constant, DAY } from '@tests/test.constant';
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
@@ -149,22 +149,6 @@ async function testReentrancy_estateLiquidator(
     ));
     
     await assertion(timestamp);
-}
-
-export async function applyDiscount(
-    admin: Admin,
-    feeAmount: BigNumber,
-    currency: Contract | null,
-) {
-    const isExclusive = currency ? await admin.isExclusiveCurrency(currency.address) : false;
-    if (isExclusive) {
-        const exclusiveRate = currency ? (await currency.exclusiveDiscount()).value : ethers.BigNumber.from(0);
-        console.log("exclusiveRate", exclusiveRate);
-        console.log("feeAmount", feeAmount);
-        console.log("remain", remain(feeAmount, exclusiveRate));
-        return remain(feeAmount, exclusiveRate);
-    }
-    return feeAmount;
 }
 
 export async function getFeeDenomination(
