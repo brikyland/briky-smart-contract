@@ -51,7 +51,6 @@ contract ReentrancyExclusiveERC20 is ERC20Upgradeable, ProxyCaller {
     }
 
     function exclusiveDiscount() external returns (IRate.Rate memory) {
-        console.log("exclusiveDiscount");
         _reentrancy();
         return IRate.Rate(0, 0);
     }
