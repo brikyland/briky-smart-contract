@@ -6,6 +6,7 @@ import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/se
 import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol";
 import {IERC1155Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC1155Upgradeable.sol";
 import {IERC1155MetadataURIUpgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC1155MetadataURIUpgradeable.sol";
+import {IERC1155ReceiverUpgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC1155ReceiverUpgradeable.sol";
 import {ERC1155Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
 import {ERC1155PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/extensions/ERC1155PausableUpgradeable.sol";
 import {ERC1155SupplyUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/extensions/ERC1155SupplyUpgradeable.sol";
@@ -27,6 +28,7 @@ import {Validatable} from "../common/utilities/Validatable.sol";
 import {IEstateToken} from "../land/interfaces/IEstateToken.sol";
 
 import {EstateTokenizer} from "../land/utilities/EstateTokenizer.sol";
+import {EstateTokenReceiver} from "../land/utilities/EstateTokenReceiver.sol";
 
 import {ProjectTokenConstant} from "./constants/ProjectTokenConstant.sol";
 
@@ -355,7 +357,7 @@ ReentrancyGuardUpgradeable {
     }
 
     function zoneOf(uint256 _projectId) public view returns (bytes32) {
-        if (!exists(_projectId)) {
+        if (_projectId == 0 || _projectId > projectNumber) {
             revert InvalidProjectId();
         }
         return projects[_projectId].zone;
@@ -500,5 +502,29 @@ ReentrancyGuardUpgradeable {
 
     function _royaltyReceiver() internal view override returns (address) {
         return feeReceiver;
+    }
+
+    function onERC1155Received(
+        address,
+        address,
+        uint256,
+        uint256,
+        bytes calldata
+    ) public virtual override(EstateTokenReceiver, IERC1155ReceiverUpgradeable) returns (bytes4) {
+        return msg.sender == this.estateToken() || msg.sender == address(this)
+            ? this.onERC1155Received.selector 
+            : bytes4(0);
+    }
+
+    function onERC1155BatchReceived(
+        address,
+        address,
+        uint256[] calldata,
+        uint256[] calldata,
+        bytes calldata
+    ) public virtual override(EstateTokenReceiver, IERC1155ReceiverUpgradeable) returns (bytes4) {
+        return msg.sender == this.estateToken() || msg.sender == address(this)
+            ? this.onERC1155BatchReceived.selector
+            : bytes4(0);
     }
 }
