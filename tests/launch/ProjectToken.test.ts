@@ -59,6 +59,13 @@ import { getUpdateEstateURIValidation } from '@utils/validation/EstateToken';
 import { Initialization as LaunchInitialization } from '@tests/launch/test.initialization';
 import { Initialization as LandInitialization } from '@tests/land/test.initialization';
 import { callProjectToken_AuthorizeLaunchpads, callProjectToken_Pause } from '@utils/callWithSignatures/projectToken';
+import { LaunchProjectParams, MintParams, RegisterInitiatorParams, UpdateProjectURIParams } from '@utils/models/ProjectToken';
+import { getInitiateLaunchValidation } from '@utils/validation/PrestigePad';
+import { getRegisterInitiatorInvalidValidation, getRegisterInitiatorValidation, getUpdateProjectURIInvalidValidation, getUpdateProjectURIValidation } from '@utils/validation/ProjectToken';
+import { ContractTransaction } from 'ethers';
+import { getLaunchProjectTx, getMintTx, getRegisterInitiatorTx, getUpdateProjectURITx } from '@utils/transaction/ProjectToken';
+import { getRegisterCustodianTx } from '@utils/transaction/EstateToken';
+import { callEstateToken_AuthorizeTokenizers, callEstateToken_UpdateCommissionToken } from '@utils/callWithSignatures/estateToken';
 
 interface ProjectTokenFixture {
     admin: Admin;
@@ -69,6 +76,7 @@ interface ProjectTokenFixture {
     estateToken: MockContract<MockEstateToken>;
     projectToken: MockProjectToken;
     prestigePad: MockContract<MockPrestigePad>;
+    commissionToken: CommissionToken;
     validator: MockValidator;
 
     deployer: any;
@@ -80,7 +88,9 @@ interface ProjectTokenFixture {
     commissionReceiver: any;
     depositor1: any, depositor2: any, depositor3: any;
     depositors: any[];
-    zone: string;
+    zone1: string, zone2: string;
+    initiator1: any, initiator2: any;
+    initiators: any[];
 
     launchpads: any[];
 }
@@ -88,6 +98,11 @@ interface ProjectTokenFixture {
 describe('2.4. ProjectToken', async () => {
     afterEach(async () => {
         await ethers.provider.send("evm_setAutomine", [true]);
+        
+        const fixture = await beforeProjectTokenTest();
+        const { prestigePad } = fixture;
+
+        prestigePad.isFinalized.reset();
     });
 
     async function projectTokenFixture(): Promise<ProjectTokenFixture> {
@@ -104,7 +119,10 @@ describe('2.4. ProjectToken', async () => {
         const depositor1 = accounts[Constant.ADMIN_NUMBER + 8];
         const depositor2 = accounts[Constant.ADMIN_NUMBER + 9];
         const depositor3 = accounts[Constant.ADMIN_NUMBER + 10];        
-        const depositors = [depositor1, depositor2, depositor3];        
+        const depositors = [depositor1, depositor2, depositor3];
+        const initiator1 = accounts[Constant.ADMIN_NUMBER + 11];
+        const initiator2 = accounts[Constant.ADMIN_NUMBER + 12];
+        const initiators = [initiator1, initiator2];
 
         const adminAddresses: string[] = admins.map(signer => signer.address);
         const admin = await deployAdmin(
@@ -149,6 +167,25 @@ describe('2.4. ProjectToken', async () => {
             LandInitialization.ESTATE_TOKEN_RoyaltyRate,
         ));
 
+        const commissionToken = await deployCommissionToken(
+            deployer,
+            admin.address,
+            estateToken.address,
+            feeReceiver.address,
+            LandInitialization.COMMISSION_TOKEN_Name,
+            LandInitialization.COMMISSION_TOKEN_Symbol,
+            LandInitialization.COMMISSION_TOKEN_BaseURI,
+            LandInitialization.COMMISSION_TOKEN_CommissionRate,
+            LandInitialization.COMMISSION_TOKEN_RoyaltyRate,
+        ) as CommissionToken;
+
+        await callEstateToken_UpdateCommissionToken(
+            estateToken as any,
+            admins,
+            commissionToken.address,
+            await admin.nonce()
+        );
+
         const projectToken = await deployMockProjectToken(
             deployer.address,
             admin.address,
@@ -180,7 +217,8 @@ describe('2.4. ProjectToken', async () => {
         const prestigePad = launchpads[0];
         launchpads = launchpads.slice(1);
 
-        const zone = ethers.utils.formatBytes32String("TestZone");
+        const zone1 = ethers.utils.formatBytes32String("TestZone1");
+        const zone2 = ethers.utils.formatBytes32String("TestZone2");
 
         return {
             admin,
@@ -188,6 +226,7 @@ describe('2.4. ProjectToken', async () => {
             priceWatcher,
             currency,
             reserveVault,
+            commissionToken,
             estateToken,
             projectToken,
             prestigePad,
@@ -203,37 +242,68 @@ describe('2.4. ProjectToken', async () => {
             depositor2,
             depositor3,
             depositors,
-            zone,
+            initiator1,
+            initiator2,
+            initiators,
+            zone1,
+            zone2,
             validator,
             launchpads,
         };
     };
 
     async function beforeProjectTokenTest({
-        authorizePrestigePad = false,
+        skipAuthorizeLaunchpad = false,
+        skipAuthorizeExecutive = false,
+        skipAddProjectTokenAsTokenizer = false,
+        skipAddZoneForExecutive = false,
+        skipAddInitiatorAsEstateCustodian = false,
         addSampleProjects = false,
+        deprecateProjects = false,
+        mintProjectTokenForDepositor = false,
+        tokenizeProject = false,
         pause = false,
     } = {}): Promise<ProjectTokenFixture> {
         const fixture = await loadFixture(projectTokenFixture);
-        const { admin, admins, manager, moderator, estateToken, projectToken, prestigePad, zone } = fixture;
-
-        await callAdmin_AuthorizeManagers(
+        const {
             admin,
             admins,
-            [manager.address],
-            true,
-            await fixture.admin.nonce()
-        );
+            manager,
+            moderator,
+            estateToken,
+            projectToken,
+            prestigePad,
+            zone1,
+            zone2,
+            initiator1,
+            initiator2,
+            validator,
+            depositor1,
+            depositor2,
+            depositor3,
+            commissionToken,
+            commissionReceiver,
+        } = fixture;
 
-        await callAdmin_AuthorizeModerators(
-            admin,
-            admins,
-            [moderator.address],
-            true,
-            await fixture.admin.nonce()
-        );
+        if (!skipAuthorizeExecutive) {
+            await callAdmin_AuthorizeManagers(
+                admin,
+                admins,
+                [manager.address],
+                true,
+                await fixture.admin.nonce()
+            );
 
-        if (authorizePrestigePad) {
+            await callAdmin_AuthorizeModerators(
+                admin,
+                admins,
+                [moderator.address],
+                true,
+                await fixture.admin.nonce()
+            );
+        }
+
+        if (!skipAuthorizeLaunchpad) {
             await callProjectToken_AuthorizeLaunchpads(
                 projectToken as any,
                 admins,
@@ -246,24 +316,138 @@ describe('2.4. ProjectToken', async () => {
         await callAdmin_DeclareZones(
             admin,
             admins,
-            [zone],
+            [zone1, zone2],
             true,
-            await fixture.admin.nonce()
+            await admin.nonce()
         );
 
-        await callAdmin_ActivateIn(
-            admin,
-            admins,
-            zone,
-            [manager.address],
-            true,
-            await fixture.admin.nonce()
-        );
+        if (!skipAddProjectTokenAsTokenizer) {
+            await callEstateToken_AuthorizeTokenizers(
+                estateToken as any,
+                admins,
+                [projectToken.address],
+                true,
+                await admin.nonce()
+            );
+        }
+
+        if (!skipAddZoneForExecutive) {
+            await callAdmin_ActivateIn(
+                admin,
+                admins,
+                zone1,
+                [manager.address, moderator.address],
+                true,
+                await fixture.admin.nonce()
+            );
+            await callAdmin_ActivateIn(
+                admin,
+                admins,
+                zone2,
+                [manager.address, moderator.address],
+                true,
+                await fixture.admin.nonce()
+            );
+        }
 
         const baseTimestamp = await time.latest() + 1000;
 
-        if (addSampleProjects) {
+        if (!skipAddInitiatorAsEstateCustodian) {
+            await callTransaction(getRegisterCustodianTx(estateToken as any, validator, manager, {
+                zone: zone1,
+                custodian: initiator1.address,
+                uri: 'initiator1_uri',
+            }));
+            await callTransaction(getRegisterCustodianTx(estateToken as any, validator, manager, {
+                zone: zone2,
+                custodian: initiator2.address,
+                uri: 'initiator2_uri',
+            }));
+        }
 
+        if (addSampleProjects) {
+            await callTransaction(prestigePad.call(
+                projectToken.address,
+                projectToken.interface.encodeFunctionData('launchProject', [
+                    zone1,
+                    1,
+                    initiator1.address,
+                    "initiator1_uri"
+                ])
+            ));
+            await callTransaction(prestigePad.call(
+                projectToken.address,
+                projectToken.interface.encodeFunctionData('launchProject', [
+                    zone2,
+                    2,
+                    initiator2.address,
+                    "initiator2_uri"
+                ])
+            ));
+        }
+
+        if (mintProjectTokenForDepositor) {
+            await callTransaction(getMintTx(projectToken as any, prestigePad, {
+                projectId: BigNumber.from(1),
+                amount: BigNumber.from(1000),
+            }));
+            await callTransaction(getMintTx(projectToken as any, prestigePad, {
+                projectId: BigNumber.from(2),
+                amount: BigNumber.from(100),
+            }));
+
+            const data = [
+                {
+                    projectId: 1,
+                    amount: 200,
+                    to: depositor1.address,
+                },
+                {
+                    projectId: 1,
+                    amount: 300,
+                    to: depositor2.address,
+                },
+                {
+                    projectId: 1,
+                    amount: 500,
+                    to: depositor3.address,
+                },
+                {
+                    projectId: 2,
+                    amount: 20,
+                    to: depositor1.address,
+                },
+                {
+                    projectId: 2,
+                    amount: 30,
+                    to: depositor2.address,
+                },
+                {
+                    projectId: 2,
+                    amount: 50,
+                    to: depositor3.address,
+                }
+            ]
+            for (const item of data) {
+                await callTransaction(prestigePad.transfer(
+                    item.to,
+                    item.projectId,
+                    item.amount,
+                ));
+            }
+        }
+
+        if (deprecateProjects) {
+            await callTransaction(projectToken.connect(manager).deprecateProject(1));
+            await callTransaction(projectToken.connect(manager).deprecateProject(2));
+        }
+
+        if (tokenizeProject) {
+            prestigePad.isFinalized.whenCalledWith(1).returns(true);
+            prestigePad.isFinalized.whenCalledWith(2).returns(true);
+
+            await callTransaction(projectToken.connect(manager).tokenizeProject(1, commissionReceiver.address));
+            await callTransaction(projectToken.connect(manager).tokenizeProject(2, commissionReceiver.address));
         }
 
         if (pause) {
@@ -324,7 +508,6 @@ describe('2.4. ProjectToken', async () => {
     describe('2.4.2. updateBaseURI(string, bytes[])', async () => {
         it('2.4.2.1. updateBaseURI successfully with valid signatures', async () => {
             const { projectToken, admin, admins } = await beforeProjectTokenTest({
-                authorizePrestigePad: true,
                 addSampleProjects: true,        
             });
 
@@ -341,8 +524,8 @@ describe('2.4. ProjectToken', async () => {
                 .emit(projectToken, 'BaseURIUpdate')
                 .withArgs("NewBaseURI:");
 
-            expect(await projectToken.uri(1)).to.equal("NewBaseURI:Token1_URI");
-            expect(await projectToken.uri(2)).to.equal("NewBaseURI:Token2_URI");
+            expect(await projectToken.uri(1)).to.equal("NewBaseURI:initiator1_uri");
+            expect(await projectToken.uri(2)).to.equal("NewBaseURI:initiator2_uri");
         });
 
         it('2.4.2.2. updateBaseURI unsuccessfully with invalid signatures', async () => {
@@ -434,15 +617,15 @@ describe('2.4. ProjectToken', async () => {
             );
             await tx.wait();
 
-            for (const tokenizer of toBeLaunchpads) {
+            for (const launchpad of toBeLaunchpads) {
                 await expect(tx).to
-                    .emit(projectToken, 'TokenizerAuthorization')
-                    .withArgs(tokenizer.address);
+                    .emit(projectToken, 'LaunchpadAuthorization')
+                    .withArgs(launchpad.address);
             }
 
-            for (const tokenizer of launchpads) {
-                const isLaunchpad = await projectToken.isLaunchpad(tokenizer.address);
-                if (toBeLaunchpads.includes(tokenizer)) {
+            for (const launchpad of launchpads) {
+                const isLaunchpad = await projectToken.isLaunchpad(launchpad.address);
+                if (toBeLaunchpads.includes(launchpad)) {
                     expect(isLaunchpad).to.be.true;
                 } else {
                     expect(isLaunchpad).to.be.false;
@@ -450,7 +633,7 @@ describe('2.4. ProjectToken', async () => {
             }
         });
 
-        it('2.4.5.2. Authorize tokenizer unsuccessfully with invalid signatures', async () => {
+        it('2.4.5.2. Authorize launchpad unsuccessfully with invalid signatures', async () => {
             const { projectToken, admin, admins, launchpads } = await beforeProjectTokenTest();
 
             const toBeLaunchpads = launchpads.slice(0, 3);
@@ -468,43 +651,43 @@ describe('2.4. ProjectToken', async () => {
             )).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('2.4.5.3. Authorize tokenizer reverted without reason with EOA address', async () => {
+        it('2.4.5.3. Authorize launchpad reverted without reason with EOA address', async () => {
             const { projectToken, admin, admins } = await beforeProjectTokenTest();
 
-            const invalidTokenizer = randomWallet();
+            const invalidLaunchpad = randomWallet();
 
             const message = ethers.utils.defaultAbiCoder.encode(
                 ['address', 'string', 'address[]', 'bool'],
-                [projectToken.address, 'authorizeLaunchpads', [invalidTokenizer.address], true]
+                [projectToken.address, 'authorizeLaunchpads', [invalidLaunchpad.address], true]
             );
             const signatures = await getSignatures(message, admins, await admin.nonce());
 
             await expect(projectToken.authorizeLaunchpads(
-                [invalidTokenizer.address],
+                [invalidLaunchpad.address],
                 true,
                 signatures
-            )).to.be.revertedWithCustomError(projectToken, 'InvalidTokenizer');
+            )).to.be.revertedWithCustomError(projectToken, 'InvalidLaunchpad');
         })
 
-        it('2.4.5.4. Authorize tokenizer reverted with contract not supporting ProjectTokenizer interface', async () => {
+        it('2.4.5.4. Authorize launchpad reverted with contract not supporting ProjectLaunchpad interface', async () => {
             const { projectToken, admin, admins } = await beforeProjectTokenTest();
 
-            const invalidTokenizer = projectToken;
+            const invalidLaunchpad = projectToken;
 
             const message = ethers.utils.defaultAbiCoder.encode(
                 ['address', 'string', 'address[]', 'bool'],
-                [projectToken.address, 'authorizeLaunchpads', [invalidTokenizer.address], true]
+                [projectToken.address, 'authorizeLaunchpads', [invalidLaunchpad.address], true]
             );
             const signatures = await getSignatures(message, admins, await admin.nonce());
 
             await expect(projectToken.authorizeLaunchpads(
-                [invalidTokenizer.address],
+                [invalidLaunchpad.address],
                 true,
                 signatures
-            )).to.be.revertedWithCustomError(projectToken, 'InvalidTokenizer');
+            )).to.be.revertedWithCustomError(projectToken, 'InvalidLaunchpad');
         })
 
-        it('2.4.5.5. Authorize tokenizer unsuccessfully when authorizing same account twice on same tx', async () => {
+        it('2.4.5.5. Authorize launchpad unsuccessfully when authorizing same account twice on same tx', async () => {
             const { projectToken, admin, admins, launchpads } = await beforeProjectTokenTest();
 
             const duplicateLaunchpads = [launchpads[0], launchpads[1], launchpads[2], launchpads[0]];
@@ -522,7 +705,7 @@ describe('2.4. ProjectToken', async () => {
             )).to.be.revertedWithCustomError(projectToken, `AuthorizedAccount`)
         });
 
-        it('2.4.5.6. Authorize tokenizer unsuccessfully when authorizing same account twice on different tx', async () => {
+        it('2.4.5.6. Authorize launchpad unsuccessfully when authorizing same account twice on different tx', async () => {
             const { projectToken, admin, admins, launchpads } = await beforeProjectTokenTest();
 
             const tx1Launchpads = launchpads.slice(0, 3);
@@ -564,7 +747,7 @@ describe('2.4. ProjectToken', async () => {
             );
         }
 
-        it('2.4.5.7. Deauthorize tokenizer successfully', async () => {
+        it('2.4.5.7. Deauthorize launchpad successfully', async () => {
             const { projectToken, admin, admins, launchpads } = await beforeProjectTokenTest();
 
             await setupLaunchpads(projectToken, admin, admins, launchpads);
@@ -584,15 +767,15 @@ describe('2.4. ProjectToken', async () => {
             );
             await tx.wait();
 
-            for (const tokenizer of toDeauth) {
+            for (const launchpad of toDeauth) {
                 await expect(tx).to
-                    .emit(projectToken, 'TokenizerDeauthorization')
-                    .withArgs(tokenizer.address);
+                    .emit(projectToken, 'LaunchpadDeauthorization')
+                    .withArgs(launchpad.address);
             }
 
-            for (const tokenizer of launchpads) {
-                const isLaunchpad = await projectToken.isLaunchpad(tokenizer.address);
-                if (toDeauth.includes(tokenizer)) {
+            for (const launchpad of launchpads) {
+                const isLaunchpad = await projectToken.isLaunchpad(launchpad.address);
+                if (toDeauth.includes(launchpad)) {
                     expect(isLaunchpad).to.be.false;
                 } else {
                     expect(isLaunchpad).to.be.true;
@@ -600,7 +783,7 @@ describe('2.4. ProjectToken', async () => {
             }            
         });
 
-        it('2.4.5.8. Deauthorize tokenizer unsuccessfully with unauthorized account', async () => {
+        it('2.4.5.8. Deauthorize launchpad unsuccessfully with unauthorized account', async () => {
             const { projectToken, admin, admins, launchpads } = await beforeProjectTokenTest();
 
             await setupLaunchpads(projectToken, admin, admins, launchpads);
@@ -621,7 +804,7 @@ describe('2.4. ProjectToken', async () => {
             )).to.be.revertedWithCustomError(projectToken, `NotAuthorizedAccount`)
         });
 
-        it('2.4.5.9. Deauthorize tokenizer unsuccessfully when unauthorizing same accounts twice on same tx', async () => {
+        it('2.4.5.9. Deauthorize launchpad unsuccessfully when unauthorizing same accounts twice on same tx', async () => {
             const { projectToken, admin, admins, launchpads } = await beforeProjectTokenTest();
 
             await setupLaunchpads(projectToken, admin, admins, launchpads);
@@ -641,7 +824,7 @@ describe('2.4. ProjectToken', async () => {
             )).to.be.revertedWithCustomError(projectToken, `NotAuthorizedAccount`)
         });
 
-        it('2.4.5.10. Deauthorize tokenizer unsuccessfully when unauthorizing same accounts twice on different tx', async () => {
+        it('2.4.5.10. Deauthorize launchpad unsuccessfully when unauthorizing same accounts twice on different tx', async () => {
             const { projectToken, admin, admins, launchpads } = await beforeProjectTokenTest();
 
             await setupLaunchpads(projectToken, admin, admins, launchpads);
@@ -670,217 +853,1011 @@ describe('2.4. ProjectToken', async () => {
         });
     });
 
-    describe('2.4.6. registerInitiator(bytes32, address, string, (uint256, uint256, bytes))', async () => {
-        it('2.4.6.1. register initiator successfully', async () => {
+    describe('2.4.6. registerInitiator(bytes32, address, string, (uint256, uint256, bytes))', async () => {        
+        async function beforeRegisterInitiatorTest(fixture: ProjectTokenFixture): Promise<{
+            defaultParams: RegisterInitiatorParams,
+        }> {
+            const { zone1, initiator1 } = fixture;
 
+            const defaultParams: RegisterInitiatorParams = {
+                zone: zone1,
+                initiator: initiator1.address,
+                uri: "initiator_uri",
+            }
+
+            return { defaultParams }
+        }
+
+        async function getRegisterInitiatorWithInvalidValidationTx(
+            projectToken: MockProjectToken,
+            validator: MockValidator,
+            deployer: any,
+            params: RegisterInitiatorParams
+        ): Promise<ContractTransaction> {
+
+            const validation = await getRegisterInitiatorInvalidValidation(
+                projectToken,
+                validator,
+                params
+            );
+
+            const tx = projectToken.connect(deployer).registerInitiator(
+                params.zone,
+                params.initiator,
+                params.uri,
+                validation
+            );
+
+            return tx;            
+        }
+
+        it('2.4.6.1. register initiator successfully', async () => {
+            const fixture = await beforeProjectTokenTest();
+            const { projectToken, manager, validator } = fixture;
+
+            const { defaultParams: params } = await beforeRegisterInitiatorTest(fixture);
+
+            const tx = await getRegisterInitiatorTx(projectToken, validator, manager, params);
+            await tx.wait();
+
+            await expect(tx).to.emit(projectToken, 'InitiatorRegistration').withArgs(
+                params.zone,
+                params.initiator,
+                params.uri
+            );
+            expect(await projectToken.initiatorURI(params.zone, params.initiator)).to.equal(params.uri);
         });
 
         it('2.4.6.2. register initiator unsuccessfully by non-manager', async () => {
+            const fixture = await beforeProjectTokenTest();
+            const { projectToken, moderator, user, validator } = fixture;
 
+            const { defaultParams: params } = await beforeRegisterInitiatorTest(fixture);
+
+            // By moderator
+            await expect(getRegisterInitiatorTx(projectToken, validator, moderator, params))
+                .to.be.revertedWithCustomError(projectToken, `Unauthorized`);
+
+            // By user
+            await expect(getRegisterInitiatorTx(projectToken, validator, user, params))
+                .to.be.revertedWithCustomError(projectToken, `Unauthorized`);
         });
 
         it('2.4.6.3. register initiator unsuccessfully with inactive zone', async () => {
+            const fixture = await beforeProjectTokenTest();
+            const { projectToken, manager, admin, admins, zone1, validator } = fixture;
 
+            await callAdmin_DeclareZones(
+                admin,
+                admins,
+                [zone1],
+                false,
+                await admin.nonce()
+            );
+
+            const { defaultParams: params } = await beforeRegisterInitiatorTest(fixture);
+
+            await expect(getRegisterInitiatorTx(projectToken, validator, manager, params))
+                .to.be.revertedWithCustomError(projectToken, `Unauthorized`);
         });
 
         it('2.4.6.4. register initiator unsuccessfully with inactive manager in zone', async () => {
+            const fixture = await beforeProjectTokenTest({
+                skipAddZoneForExecutive: true,
+            });
+            const { projectToken, manager, validator } = fixture;
 
+            const { defaultParams: params } = await beforeRegisterInitiatorTest(fixture);
+
+            await expect(getRegisterInitiatorTx(projectToken, validator, manager, params))
+                .to.be.revertedWithCustomError(projectToken, `Unauthorized`);
         });
 
         it('2.4.6.5. register initiator unsuccessfully with invalid validation', async () => {
+            const fixture = await beforeProjectTokenTest();
+            const { projectToken, manager, validator } = fixture;
 
+            const { defaultParams: params } = await beforeRegisterInitiatorTest(fixture);
+
+            await expect(getRegisterInitiatorWithInvalidValidationTx(projectToken, validator, manager, params))
+                .to.be.revertedWithCustomError(projectToken, `InvalidSignature`);
         });
 
         it('2.4.6.6. register initiator unsuccessfully with invalid uri', async () => {
+            const fixture = await beforeProjectTokenTest();
+            const { projectToken, manager, validator } = fixture;
 
+            const { defaultParams } = await beforeRegisterInitiatorTest(fixture);
+            const params = {
+                ...defaultParams,
+                uri: "",
+            }
+
+            await expect(getRegisterInitiatorTx(projectToken, validator, manager, params))
+                .to.be.revertedWithCustomError(projectToken, `InvalidURI`);
         });
     });
 
     describe('2.4.7. isInitiatorIn(bytes32, address)', async () => {
         it('2.4.7.1. return correct value', async () => {
-            
+            const fixture = await beforeProjectTokenTest();
+            const { projectToken, manager, initiator1, initiator2, zone1, zone2, validator } = fixture;
+
+            const params: RegisterInitiatorParams = {
+                zone: zone1,
+                initiator: initiator1.address,
+                uri: "initiator_uri",
+            }
+
+            await callTransaction(getRegisterInitiatorTx(projectToken, validator, manager, params));
+
+            expect(await projectToken.isInitiatorIn(zone1, initiator1.address)).to.be.true;
+            expect(await projectToken.isInitiatorIn(zone1, initiator2.address)).to.be.false;
+            expect(await projectToken.isInitiatorIn(zone2, initiator1.address)).to.be.false;
+            expect(await projectToken.isInitiatorIn(zone2, initiator2.address)).to.be.false;
         });
     });
 
     describe('2.4.8. getProject(uint256)', async () => {
-        it('2.4.8.1. return correct project', async () => {
-            
+        it('2.4.8.1. return with valid project id', async () => {
+            const fixture = await beforeProjectTokenTest({
+                addSampleProjects: true,
+            });
+            const { projectToken } = fixture;
+
+            await expect(projectToken.getProject(1)).to.not.be.reverted;
+            await expect(projectToken.getProject(2)).to.not.be.reverted;
         });
 
         it('2.4.8.2. revert with invalid project id', async () => {
+            const fixture = await beforeProjectTokenTest();
+            const { projectToken } = fixture;
 
+            await expect(projectToken.getProject(0))
+                .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
+            await expect(projectToken.getProject(100))
+                .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
         });
     });
 
     describe('2.4.9. isAvailable(uint256)', async () => {
         it('2.4.9.1. return true for undeprecated project', async () => {
-            
+            const fixture = await beforeProjectTokenTest({
+                addSampleProjects: true,
+            });
+            const { projectToken } = fixture;
+
+            expect(await projectToken.isAvailable(1)).to.be.true;
+            expect(await projectToken.isAvailable(2)).to.be.true;
         });
 
         it('2.4.9.2. return false for deprecated project', async () => {
+            const fixture = await beforeProjectTokenTest({
+                addSampleProjects: true,
+            });
+            const { projectToken, manager } = fixture;
 
+            await callTransaction(projectToken.connect(manager).deprecateProject(1));
+            await callTransaction(projectToken.connect(manager).deprecateProject(2));
+
+            expect(await projectToken.isAvailable(1)).to.be.false;
+            expect(await projectToken.isAvailable(2)).to.be.false;
         });
     });
 
     describe('2.4.10. launchProject(bytes32, uint256, address, string)', async () => {
-        it('2.4.10.1. launch project successfully', async () => {
+        async function beforeLaunchProjectTest(fixture: ProjectTokenFixture): Promise<{
+            defaultParams: LaunchProjectParams,
+        }> {
+            const { zone1, initiator1 } = fixture;
 
+            const defaultParams: LaunchProjectParams = {
+                zone: zone1,
+                launchId: BigNumber.from(10),
+                initiator: initiator1.address,
+                uri: "project_uri",
+            }
+
+            return { defaultParams }
+        }
+
+        it('2.4.10.1. launch project successfully', async () => {
+            const fixture = await beforeProjectTokenTest();
+
+            const { projectToken, prestigePad, zone1, initiator1 } = fixture;
+
+            const currentProjectNumber = await projectToken.projectNumber();
+
+            // Tx1: Launch project 1
+            const params1: LaunchProjectParams = {
+                zone: zone1,
+                launchId: BigNumber.from(10),
+                initiator: initiator1.address,
+                uri: "project_uri",
+            };
+
+            let timestamp = await time.latest() + 1000;
+            await time.setNextBlockTimestamp(timestamp);
+
+            const tx1 = await getLaunchProjectTx(projectToken, prestigePad, params1);
+            await tx1.wait();
+
+            const projectId1 = currentProjectNumber.add(1);
+
+            await expect(tx1).to.emit(projectToken, 'NewToken').withArgs(
+                projectId1,
+                params1.zone,
+                params1.launchId,
+                prestigePad.address,
+                params1.initiator
+            );
+
+            const project1 = await projectToken.getProject(projectId1);
+            expect(project1.zone).to.equal(params1.zone);
+            expect(project1.estateId).to.equal(0);
+            expect(project1.launchId).to.equal(params1.launchId);
+            expect(project1.launchpad).to.equal(prestigePad.address);
+            expect(project1.tokenizeAt).to.equal(timestamp);
+            expect(project1.deprecateAt).to.equal(Constant.COMMON_INFINITE_TIMESTAMP);
+            expect(project1.initiator).to.equal(params1.initiator);
+
+            expect(await projectToken.projectNumber()).to.equal(projectId1);
+            expect(await projectToken.uri(projectId1)).to.equal(LaunchInitialization.PROJECT_TOKEN_BaseURI + params1.uri);
+
+            // Tx2: Launch project 2
+            const params2: LaunchProjectParams = {
+                zone: zone1,
+                launchId: BigNumber.from(20),
+                initiator: initiator1.address,
+                uri: "project_uri",
+            };
+
+            timestamp += 10;
+            await time.setNextBlockTimestamp(timestamp);
+
+            const tx2 = await getLaunchProjectTx(projectToken, prestigePad, params2);
+            await tx2.wait();
+
+            const projectId2 = currentProjectNumber.add(2);
+
+            await expect(tx2).to.emit(projectToken, 'NewToken').withArgs(
+                projectId2,
+                params2.zone,
+                params2.launchId,
+                prestigePad.address,
+                params2.initiator
+            );
+
+            const project2 = await projectToken.getProject(projectId2);
+            expect(project2.zone).to.equal(params2.zone);
+            expect(project2.estateId).to.equal(0);
+            expect(project2.launchId).to.equal(params2.launchId);
+            expect(project2.launchpad).to.equal(prestigePad.address);
+            expect(project2.tokenizeAt).to.equal(timestamp);
+            expect(project2.deprecateAt).to.equal(Constant.COMMON_INFINITE_TIMESTAMP);
+            expect(project2.initiator).to.equal(params2.initiator);
+
+            expect(await projectToken.projectNumber()).to.equal(projectId2);
+            expect(await projectToken.uri(projectId2)).to.equal(LaunchInitialization.PROJECT_TOKEN_BaseURI + params2.uri);
         });
 
         it('2.4.10.2. launch project unsuccessfully when paused', async () => {
+            const fixture = await beforeProjectTokenTest({
+                pause: true,
+            });
+            const { projectToken, prestigePad } = fixture;
 
+            const { defaultParams: params } = await beforeLaunchProjectTest(fixture);
+
+            await expect(getLaunchProjectTx(projectToken, prestigePad, params))
+                .to.be.revertedWith(`Pausable: paused`);
         });
 
         it('2.4.10.3. launch project unsuccessfully by non-launchpad sender', async () => {
+            const fixture = await beforeProjectTokenTest({
+                skipAuthorizeLaunchpad: true,
+            });
+            const { projectToken, prestigePad } = fixture;
 
+            const { defaultParams: params } = await beforeLaunchProjectTest(fixture);
+
+            await expect(getLaunchProjectTx(projectToken, prestigePad, params))
+                .to.be.revertedWithCustomError(projectToken, `Unauthorized`);
         });
 
         it('2.4.10.4. launch project unsuccessfully when zone is inactive', async () => {
+            const fixture = await beforeProjectTokenTest();
+            const { projectToken, prestigePad, zone1, admin, admins } = fixture;
 
+            await callAdmin_DeclareZones(
+                admin,
+                admins,
+                [zone1],
+                false,
+                await admin.nonce()
+            );
+
+            const { defaultParams: params } = await beforeLaunchProjectTest(fixture);
+
+            await expect(getLaunchProjectTx(projectToken, prestigePad, params))
+                .to.be.revertedWithCustomError(projectToken, `InvalidInput`);
         });
     });
 
     describe('2.4.11. mint(uint256, uint256)', async () => {
         it('2.4.11.1. mint project token successfully', async () => {
-            
+            const fixture = await beforeProjectTokenTest({
+                addSampleProjects: true,
+            });
+            const { projectToken, prestigePad } = fixture;
+
+            // Tx1: Mint project 1
+            const params1: MintParams = {
+                projectId: BigNumber.from(1),
+                amount: BigNumber.from(100),
+            }
+
+            const tx1 = await getMintTx(projectToken, prestigePad, params1);
+
+            await expect(tx1).to.emit(projectToken, 'TransferSingle').withArgs(
+                prestigePad.address,
+                ethers.constants.AddressZero,
+                prestigePad.address,
+                params1.projectId,
+                params1.amount
+            );
+
+            expect(await projectToken.balanceOf(prestigePad.address, 1)).to.equal(params1.amount);
+            expect(await projectToken.balanceOf(prestigePad.address, 2)).to.equal(0);
+
+            // Tx2: Mint project 2
+            const params2: MintParams = {
+                projectId: BigNumber.from(2),
+                amount: BigNumber.from(200),
+            }
+
+            const tx2 = await getMintTx(projectToken, prestigePad, params2);
+
+            await expect(tx2).to.emit(projectToken, 'TransferSingle').withArgs(
+                prestigePad.address,
+                ethers.constants.AddressZero,
+                prestigePad.address,
+                params2.projectId,
+                params2.amount
+            );
+
+            expect(await projectToken.balanceOf(prestigePad.address, 1)).to.equal(params1.amount);
+            expect(await projectToken.balanceOf(prestigePad.address, 2)).to.equal(params2.amount);
+
+            // Tx3: Mint project 1 again
+            const params3: MintParams = {
+                projectId: BigNumber.from(1),
+                amount: BigNumber.from(100),
+            }
+
+            const tx3 = await getMintTx(projectToken, prestigePad, params3);
+
+            await expect(tx3).to.emit(projectToken, 'TransferSingle').withArgs(
+                prestigePad.address,
+                ethers.constants.AddressZero,
+                prestigePad.address,
+                params3.projectId,
+                params3.amount
+            );
+
+            expect(await projectToken.balanceOf(prestigePad.address, 1)).to.equal(params1.amount.add(params3.amount));
+            expect(await projectToken.balanceOf(prestigePad.address, 2)).to.equal(params2.amount);
         });
 
         it('2.4.11.2. mint unsuccessfully with invalid project id', async () => {
+            const fixture = await beforeProjectTokenTest();
+            const { projectToken, prestigePad } = fixture;
 
+            const params1: MintParams = {
+                projectId: BigNumber.from(0),
+                amount: BigNumber.from(100),
+            }
+            await expect(getMintTx(projectToken, prestigePad, params1))
+                .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
+
+            const params2: MintParams = {
+                projectId: BigNumber.from(100),
+                amount: BigNumber.from(100),
+            }
+            await expect(getMintTx(projectToken, prestigePad, params2))
+                .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
         });
 
         it('2.4.11.3. mint unsuccessfully with deprecated project', async () => {
+            const fixture = await beforeProjectTokenTest({
+                addSampleProjects: true,
+                deprecateProjects: true,
+            });
+            const { projectToken, prestigePad } = fixture;
 
+            const params: MintParams = {
+                projectId: BigNumber.from(1),
+                amount: BigNumber.from(100),
+            }
+            await expect(getMintTx(projectToken, prestigePad, params))
+                .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
         });
 
         it('2.4.11.4. mint unsuccessfully when when sender is not project\'s launchpad', async () => {
+            const fixture = await beforeProjectTokenTest({
+                addSampleProjects: true,
+            });
+            const { projectToken, manager } = fixture;
 
+            const params: MintParams = {
+                projectId: BigNumber.from(1),
+                amount: BigNumber.from(100),
+            }
+            await expect(projectToken.connect(manager).mint(params.projectId, params.amount))
+                .to.be.revertedWithCustomError(projectToken, `Unauthorized`);
         });
 
         it('2.4.11.5. mint unsuccessfully when paused', async () => {
+            const fixture = await beforeProjectTokenTest({
+                addSampleProjects: true,
+                pause: true,
+            });
+            const { projectToken, prestigePad } = fixture;
 
+            const params: MintParams = {
+                projectId: BigNumber.from(1),
+                amount: BigNumber.from(100),
+            }
+            await expect(getMintTx(projectToken, prestigePad, params))
+                .to.be.revertedWith(`Pausable: paused`);
         });
     });
 
     describe('2.4.12. deprecateProject(uint256)', async () => {
         it('2.4.12.1. deprecate project successfully', async () => {
+            const fixture = await beforeProjectTokenTest({
+                addSampleProjects: true,
+            });
+            const { projectToken, manager } = fixture;
 
+            let timestamp = await time.latest() + 1000;
+            await time.setNextBlockTimestamp(timestamp);
+            
+            const tx = await projectToken.connect(manager).deprecateProject(1);
+            await tx.wait();
+
+            await expect(tx).to.emit(projectToken, 'ProjectDeprecation').withArgs(1);
+
+            const project = await projectToken.getProject(1);
+            expect(project.deprecateAt).to.equal(timestamp);
         });
 
         it('2.4.12.2. deprecate project unsuccessfully with invalid project id', async () => {
+            const fixture = await beforeProjectTokenTest();
+            const { projectToken, manager } = fixture;
 
+            await expect(projectToken.connect(manager).deprecateProject(0))
+                .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
+
+            await expect(projectToken.connect(manager).deprecateProject(100))
+                .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
         });
 
         it('2.4.12.3. deprecate project unsuccessfully with already deprecated project', async () => {
+            const fixture = await beforeProjectTokenTest({
+                addSampleProjects: true,
+                deprecateProjects: true,
+            });
+            const { projectToken, manager } = fixture;
 
+            await expect(projectToken.connect(manager).deprecateProject(1))
+                .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
+
+            await expect(projectToken.connect(manager).deprecateProject(2))
+                .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
         });
 
         it('2.4.12.4. deprecate project unsuccessfully with non-manager sender', async () => {
+            const fixture = await beforeProjectTokenTest({
+                addSampleProjects: true,
+            });
+            const { projectToken, moderator, user } = fixture;
 
+            // By moderator
+            await expect(projectToken.connect(moderator).deprecateProject(1))
+                .to.be.revertedWithCustomError(projectToken, `Unauthorized`);
+
+            // By user
+            await expect(projectToken.connect(user).deprecateProject(1))
+                .to.be.revertedWithCustomError(projectToken, `Unauthorized`);
         });
 
         it('2.4.12.5. deprecate project unsuccessfully with inactive zone', async () => {
+            const fixture = await beforeProjectTokenTest({
+                addSampleProjects: true,
+            });
+            const { projectToken, manager, admin, admins, zone1 } = fixture;
 
+            await callAdmin_DeclareZones(
+                admin,
+                admins,
+                [zone1],
+                false,
+                await admin.nonce()
+            );
+
+            await expect(projectToken.connect(manager).deprecateProject(1))
+                .to.be.revertedWithCustomError(projectToken, `Unauthorized`);
         });
 
         it('2.4.12.6. deprecate project unsuccessfully with inactive manager in zone', async () => {
+            const fixture = await beforeProjectTokenTest({
+                skipAddZoneForExecutive: true,
+                addSampleProjects: true,
+            });
+            const { projectToken, manager } = fixture;
 
+            await expect(projectToken.connect(manager).deprecateProject(1))
+                .to.be.revertedWithCustomError(projectToken, `Unauthorized`);
         });
     
         it('2.4.12.7. deprecate project unsuccessfully when paused', async () => {
+            const fixture = await beforeProjectTokenTest({
+                addSampleProjects: true,
+                pause: true,
+            });
+            const { projectToken, manager } = fixture;
 
+            await expect(projectToken.connect(manager).deprecateProject(1))
+                .to.be.revertedWith(`Pausable: paused`);
         });
     });
 
     describe('2.4.13. updateProjectURI(uint256, string, (uint256, uint256, bytes))', async () => {
-        it('2.4.13.1. update project uri successfully', async () => {
+        async function getUpdateProjectURIWithInvalidValidationTx(
+            projectToken: MockProjectToken,
+            validator: MockValidator,
+            deployer: any,
+            params: UpdateProjectURIParams
+        ): Promise<ContractTransaction> {
+            const validation = await getUpdateProjectURIInvalidValidation(
+                projectToken,
+                validator,
+                params
+            );
+            const tx = projectToken.connect(deployer).updateProjectURI(
+                params.projectId,
+                params.uri,
+                validation
+            );
 
+            return tx;
+        }
+
+        it('2.4.13.1. update project uri successfully', async () => {
+            const fixture = await beforeProjectTokenTest({
+                addSampleProjects: true,
+            });
+            const { projectToken, manager, validator } = fixture;
+
+            const params: UpdateProjectURIParams = {
+                projectId: BigNumber.from(1),
+                uri: 'new_project_uri_1',
+            }
+
+            const tx = await getUpdateProjectURITx(projectToken, validator, manager, params);
+            await tx.wait();
+
+            await expect(tx).to.emit(projectToken, 'URI').withArgs(
+                LaunchInitialization.PROJECT_TOKEN_BaseURI + params.uri,
+                1,
+            );
+
+            expect(await projectToken.uri(1)).to.equal(LaunchInitialization.PROJECT_TOKEN_BaseURI + params.uri);
         });
 
         it('2.4.13.2. update project uri unsuccessfully with invalid project id', async () => {
+            const fixture = await beforeProjectTokenTest();
+            const { projectToken, manager, validator } = fixture;
 
+            const params: UpdateProjectURIParams = {
+                projectId: BigNumber.from(0),
+                uri: 'new_project_uri_1',
+            }
+            await expect(getUpdateProjectURITx(projectToken, validator, manager, params))
+                .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
+
+            const params2: UpdateProjectURIParams = {
+                projectId: BigNumber.from(100),
+                uri: 'new_project_uri_1',
+            }
+            await expect(getUpdateProjectURITx(projectToken, validator, manager, params2))
+                .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
         });
 
         it('2.4.13.3. update project uri unsuccessfully with already deprecated project', async () => {
+            const fixture = await beforeProjectTokenTest({
+                addSampleProjects: true,
+                deprecateProjects: true,
+            });
+            const { projectToken, manager, validator } = fixture;
 
+            const params: UpdateProjectURIParams = {
+                projectId: BigNumber.from(1),
+                uri: 'new_project_uri_1',
+            }
+            await expect(getUpdateProjectURITx(projectToken, validator, manager, params))
+                .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
         });
 
         it('2.4.13.4. update project uri unsuccessfully with non-manager sender', async () => {
+            const fixture = await beforeProjectTokenTest({
+                addSampleProjects: true,
+            });
+            const { projectToken, moderator, user, validator } = fixture;
 
+            const params: UpdateProjectURIParams = {
+                projectId: BigNumber.from(1),
+                uri: 'new_project_uri_1',
+            }
+            
+            // By moderator
+            await expect(getUpdateProjectURITx(projectToken, validator, moderator, params))
+                .to.be.revertedWithCustomError(projectToken, `Unauthorized`);
+
+            // By user
+            await expect(getUpdateProjectURITx(projectToken, validator, user, params))
+                .to.be.revertedWithCustomError(projectToken, `Unauthorized`);
         });
 
         it('2.4.13.5. update project uri unsuccessfully with inactive zone', async () => {
+            const fixture = await beforeProjectTokenTest({
+                addSampleProjects: true,
+            });
+            const { projectToken, manager, admin, admins, zone1, validator } = fixture;
 
+            await callAdmin_DeclareZones(
+                admin,
+                admins,
+                [zone1],
+                false,
+                await admin.nonce()
+            );
+
+            const params: UpdateProjectURIParams = {
+                projectId: BigNumber.from(1),
+                uri: 'new_project_uri_1',
+            }
+            await expect(getUpdateProjectURITx(projectToken, validator, manager, params))
+                .to.be.revertedWithCustomError(projectToken, `Unauthorized`);
         });
 
         it('2.4.13.6. update project uri unsuccessfully with inactive manager in zone', async () => {
+            const fixture = await beforeProjectTokenTest({
+                skipAddZoneForExecutive: true,
+                addSampleProjects: true,
+            });
+            const { projectToken, manager, validator } = fixture;
 
+            const params: UpdateProjectURIParams = {
+                projectId: BigNumber.from(1),
+                uri: 'new_project_uri_1',
+            }
+            await expect(getUpdateProjectURITx(projectToken, validator, manager, params))
+                .to.be.revertedWithCustomError(projectToken, `Unauthorized`);
         });
     
         it('2.4.13.7. update project uri unsuccessfully when paused', async () => {
+            const fixture = await beforeProjectTokenTest({
+                addSampleProjects: true,
+                pause: true,
+            });
+            const { projectToken, manager, validator } = fixture;
 
+            const params: UpdateProjectURIParams = {
+                projectId: BigNumber.from(1),
+                uri: 'new_project_uri_1',
+            }
+            await expect(getUpdateProjectURITx(projectToken, validator, manager, params))
+                .to.be.revertedWith(`Pausable: paused`);
         });
 
         it('2.4.13.8. update project uri unsuccessfully with invalid validation', async () => {
+            const fixture = await beforeProjectTokenTest({
+                addSampleProjects: true,
+            });
+            const { projectToken, manager, validator } = fixture;
 
+            const params: UpdateProjectURIParams = {
+                projectId: BigNumber.from(1),
+                uri: 'new_project_uri_1',
+            }
+            await expect(getUpdateProjectURIWithInvalidValidationTx(projectToken, validator, manager, params))
+                .to.be.revertedWithCustomError(projectToken, `InvalidSignature`);
         });
     });
 
     describe('2.4.14. tokenizeProject(uint256, address)', async () => {
         it('2.4.14.1. tokenize project successfully', async () => {
+            const fixture = await beforeProjectTokenTest({
+                addSampleProjects: true,
+                mintProjectTokenForDepositor: true,
+            });
+            const { prestigePad, projectToken, manager, commissionReceiver, commissionToken, estateToken, zone1, zone2, initiator1, initiator2 } = fixture;
 
+            const currentEstateNumber = await estateToken.estateNumber();
+
+            // Tx1: Tokenize project 1
+            let timestamp = await time.latest() + 1000;
+            await time.setNextBlockTimestamp(timestamp);
+
+            const projectId1 = 1;
+            const estateId1 = currentEstateNumber.add(1);
+            const supply1 = await projectToken.totalSupply(1);
+            const uri1 = await projectToken.uri(1);
+
+            prestigePad.isFinalized.whenCalledWith(projectId1).returns(true);
+
+            const tx1 = await projectToken.connect(manager).tokenizeProject(1, commissionReceiver.address);
+            await tx1.wait();
+
+            await expect(tx1).to.emit(projectToken, 'ProjectTokenization').withArgs(
+                projectId1,
+                estateId1,
+                supply1,
+                commissionReceiver.address
+            );
+
+            await expect(tx1).to.emit(estateToken, 'NewToken').withArgs(
+                estateId1,
+                zone1,
+                projectId1,
+                projectToken.address,
+                Constant.COMMON_INFINITE_TIMESTAMP
+            );
+
+            const project1 = await projectToken.getProject(projectId1);
+            expect(project1.estateId).to.equal(estateId1);
+            expect(project1.tokenizeAt).to.equal(timestamp);
+
+            const estate1 = await estateToken.getEstate(estateId1);
+            expect(estate1.zone).to.equal(zone1);
+            expect(estate1.tokenizationId).to.equal(projectId1);
+            expect(estate1.tokenizer).to.equal(projectToken.address);
+            expect(estate1.tokenizeAt).to.equal(timestamp);
+            expect(estate1.expireAt).to.equal(Constant.COMMON_INFINITE_TIMESTAMP);
+            expect(estate1.custodian).to.equal(initiator1.address);
+            expect(estate1.deprecateAt).to.equal(Constant.COMMON_INFINITE_TIMESTAMP);
+
+            expect(await commissionToken.ownerOf(estateId1)).to.equal(commissionReceiver.address);
+
+            expect(await estateToken.balanceOf(projectToken.address, estateId1)).to.equal(supply1);
+
+            expect(await estateToken.uri(estateId1)).to.equal(LandInitialization.ESTATE_TOKEN_BaseURI + uri1);
+
+            // Tx2: Tokenize project 2
+            timestamp += 10;
+            await time.setNextBlockTimestamp(timestamp);
+
+            const projectId2 = 2;
+            const estateId2 = currentEstateNumber.add(2);
+            const supply2 = await projectToken.totalSupply(2);
+            const uri2 = await projectToken.uri(2);
+            
+            prestigePad.isFinalized.whenCalledWith(projectId2).returns(true);
+
+            const tx2 = await projectToken.connect(manager).tokenizeProject(2, commissionReceiver.address);
+            await tx2.wait();
+
+            await expect(tx2).to.emit(projectToken, 'ProjectTokenization').withArgs(
+                projectId2,
+                estateId2,
+                supply2,
+                commissionReceiver.address
+            );
+            await expect(tx2).to.emit(estateToken, 'NewToken').withArgs(
+                estateId2,
+                zone2,
+                projectId2,
+                projectToken.address,
+                Constant.COMMON_INFINITE_TIMESTAMP
+            );
+
+            const project2 = await projectToken.getProject(projectId2);
+            expect(project2.estateId).to.equal(estateId2);
+            expect(project2.tokenizeAt).to.equal(timestamp);
+
+            const estate2 = await estateToken.getEstate(estateId2);
+            expect(estate2.zone).to.equal(zone2);
+            expect(estate2.tokenizationId).to.equal(projectId2);
+            expect(estate2.tokenizer).to.equal(projectToken.address);
+            expect(estate2.tokenizeAt).to.equal(timestamp);
+            expect(estate2.expireAt).to.equal(Constant.COMMON_INFINITE_TIMESTAMP);
+            expect(estate2.custodian).to.equal(initiator2.address);
+            expect(estate2.deprecateAt).to.equal(Constant.COMMON_INFINITE_TIMESTAMP);
+
+            expect(await commissionToken.ownerOf(estateId2)).to.equal(commissionReceiver.address);
+
+            expect(await estateToken.balanceOf(projectToken.address, estateId2)).to.equal(supply2);
+
+            expect(await estateToken.uri(estateId2)).to.equal(LandInitialization.ESTATE_TOKEN_BaseURI + uri2);            
         });
 
-        it('2.4.14.2. tokenize project unsuccessfully when contract is reentered', async () => {
+        it('2.4.14.2. tokenize project unsuccessfully with invalid project id', async () => {
+            const fixture = await beforeProjectTokenTest();
+            const { projectToken, manager, commissionReceiver } = fixture;
 
+            await expect(projectToken.connect(manager).tokenizeProject(0, commissionReceiver.address))
+                .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
+
+            await expect(projectToken.connect(manager).tokenizeProject(100, commissionReceiver.address))
+                .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
         });
 
-        it('2.4.14.3. tokenize project unsuccessfully with invalid project id', async () => {
+        it('2.4.14.3. tokenize project unsuccessfully with deprecated project', async () => {
+            const fixture = await beforeProjectTokenTest({
+                addSampleProjects: true,
+                mintProjectTokenForDepositor: true,
+                deprecateProjects: true,
+            });
+            const { prestigePad, projectToken, manager, commissionReceiver } = fixture;
 
+            prestigePad.isFinalized.whenCalledWith(1).returns(true);
+
+            await expect(projectToken.connect(manager).tokenizeProject(1, commissionReceiver.address))
+                .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
         });
 
-        it('2.4.14.4. tokenize project unsuccessfully with deprecated project', async () => {
+        it('2.4.14.4. tokenize project unsuccessfully by non-manager', async () => {
+            const fixture = await beforeProjectTokenTest({
+                addSampleProjects: true,
+                mintProjectTokenForDepositor: true,
+            });
+            const { prestigePad, projectToken, moderator, user, commissionReceiver } = fixture;
 
+            prestigePad.isFinalized.whenCalledWith(1).returns(true);
+
+            // By moderator
+            await expect(projectToken.connect(moderator).tokenizeProject(1, commissionReceiver.address))
+                .to.be.revertedWithCustomError(projectToken, `Unauthorized`);
+
+            // By user
+            await expect(projectToken.connect(user).tokenizeProject(1, commissionReceiver.address))
+                .to.be.revertedWithCustomError(projectToken, `Unauthorized`);
         });
 
-        it('2.4.14.5. tokenize project unsuccessfully by non-manager', async () => {
+        it('2.4.14.5. tokenize project unsuccessfully with inactive zone', async () => {
+            const fixture = await beforeProjectTokenTest({
+                addSampleProjects: true,
+                mintProjectTokenForDepositor: true,
+            });
+            const { prestigePad, projectToken, manager, admin, admins, zone1, commissionReceiver } = fixture;
 
-        });
+            prestigePad.isFinalized.whenCalledWith(1).returns(true);
 
-        it('2.4.14.6. tokenize project unsuccessfully with inactive zone', async () => {
+            await callAdmin_DeclareZones(
+                admin,
+                admins,
+                [zone1],
+                false,
+                await admin.nonce()
+            );
 
+            await expect(projectToken.connect(manager).tokenizeProject(1, commissionReceiver.address))
+                .to.be.revertedWithCustomError(projectToken, `Unauthorized`);
         });
         
-        it('2.4.14.7. tokenize project unsuccessfully with inactive manager in zone', async () => {
+        it('2.4.14.6. tokenize project unsuccessfully with inactive manager in zone', async () => {
+            const fixture = await beforeProjectTokenTest({
+                addSampleProjects: true,
+                mintProjectTokenForDepositor: true,
+            });
+            const { prestigePad, projectToken, manager, admin, admins, zone1, commissionReceiver } = fixture;
 
+            await callAdmin_ActivateIn(
+                admin,
+                admins,
+                zone1,
+                [manager.address],
+                false,
+                await admin.nonce()
+            );
+
+            prestigePad.isFinalized.whenCalledWith(1).returns(true);
+
+            await expect(projectToken.connect(manager).tokenizeProject(1, commissionReceiver.address))
+                .to.be.revertedWithCustomError(projectToken, `Unauthorized`);
         });
 
-        it('2.4.14.8. tokenize project unsuccessfully when paused', async () => {
+        it('2.4.14.7. tokenize project unsuccessfully when paused', async () => {
+            const fixture = await beforeProjectTokenTest({
+                addSampleProjects: true,
+                mintProjectTokenForDepositor: true,
+                pause: true,
+            });
+            const { prestigePad, projectToken, manager, commissionReceiver } = fixture;
 
+            prestigePad.isFinalized.whenCalledWith(1).returns(true);
+
+            await expect(projectToken.connect(manager).tokenizeProject(1, commissionReceiver.address))
+                .to.be.revertedWith(`Pausable: paused`);
         });
 
-        it('2.4.14.9. tokenize project unsuccessfully with invalid commission receiver', async () => {
+        it('2.4.14.8. tokenize project unsuccessfully with invalid commission receiver', async () => {
+            const fixture = await beforeProjectTokenTest({
+                addSampleProjects: true,
+                mintProjectTokenForDepositor: true,
+            });
+            const { prestigePad, projectToken, manager } = fixture;
 
+            prestigePad.isFinalized.whenCalledWith(1).returns(true);
+
+            await expect(projectToken.connect(manager).tokenizeProject(1, ethers.constants.AddressZero))
+                .to.be.revertedWithCustomError(projectToken, `InvalidCommissionReceiver`);
         });
 
-        it('2.4.14.10. tokenize project unsuccessfully when project initiator is not registered as custodian in project zone', async () => {
+        it('2.4.14.9. tokenize project unsuccessfully when project initiator is not registered as custodian in zone', async () => {
+            const fixture = await beforeProjectTokenTest({
+                skipAddInitiatorAsEstateCustodian: true,
+                addSampleProjects: true,
+                mintProjectTokenForDepositor: true,
+            });
+            const { prestigePad, projectToken, manager, commissionReceiver } = fixture;
 
+            prestigePad.isFinalized.whenCalledWith(1).returns(true);
+
+            await expect(projectToken.connect(manager).tokenizeProject(1, commissionReceiver.address))
+                .to.be.revertedWithCustomError(projectToken, `NotRegisteredCustodian`);
         });
 
-        it('2.4.14.11. tokenize project unsuccessfully when project is already tokenized', async () => {
+        it('2.4.14.10. tokenize project unsuccessfully when project is already tokenized', async () => {
+            const fixture = await beforeProjectTokenTest({
+                addSampleProjects: true,
+                mintProjectTokenForDepositor: true,
+                tokenizeProject: true,
+            });
+            const { projectToken, manager, commissionReceiver } = fixture;
 
+            await expect(projectToken.connect(manager).tokenizeProject(1, commissionReceiver.address))
+                .to.be.revertedWithCustomError(projectToken, `AlreadyTokenized`);
         });
 
-        it('2.4.14.12. tokenize project unsuccessfully with zero total supply', async () => {
+        it('2.4.14.11. tokenize project unsuccessfully with zero total supply', async () => {
+            const fixture = await beforeProjectTokenTest({
+                addSampleProjects: true,
+            });
+            const { prestigePad, projectToken, manager, commissionReceiver } = fixture;
 
+            prestigePad.isFinalized.whenCalledWith(1).returns(true);
+
+            await expect(projectToken.connect(manager).tokenizeProject(1, commissionReceiver.address))
+                .to.be.revertedWithCustomError(projectToken, `NothingToTokenize`);
         });
 
-        it('2.4.14.13. tokenize project unsuccessfully when project is not finalized', async () => {
+        it('2.4.14.12. tokenize project unsuccessfully when project is not finalized', async () => {
+            const fixture = await beforeProjectTokenTest({
+                addSampleProjects: true,
+                mintProjectTokenForDepositor: true,
+            });
+            const { projectToken, manager, commissionReceiver } = fixture;
 
+            await expect(projectToken.connect(manager).tokenizeProject(1, commissionReceiver.address))
+                .to.be.revertedWithCustomError(projectToken, `InvalidTokenizing`);
         });
         
-        it('2.4.14.14. tokenize project unsuccessfully when tokenize estate failed', async () => {
+        it('2.4.14.13. tokenize project unsuccessfully when tokenize estate failed', async () => {
             // ProjectToken is not registered as tokenizer in estate token
+            const fixture = await beforeProjectTokenTest({
+                skipAddProjectTokenAsTokenizer: true,
+                addSampleProjects: true,
+                mintProjectTokenForDepositor: true,
+            });
+            const { prestigePad, estateToken, projectToken, manager, commissionReceiver } = fixture;
+
+            prestigePad.isFinalized.whenCalledWith(1).returns(true);
+
+            await expect(projectToken.connect(manager).tokenizeProject(1, commissionReceiver.address))
+                .to.be.revertedWithCustomError(estateToken, `Unauthorized`);
         });
     });
 

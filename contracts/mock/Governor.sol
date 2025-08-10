@@ -56,6 +56,10 @@ ERC1155SupplyUpgradeable {
         return exists(_tokenId);
     }
     
+    function isVotePowerAvailable(uint256 _tokenId) public view returns (bool) {
+        return exists(_tokenId);
+    }
+
     function balanceOf(address _account, uint256 _tokenId)
     public view override(ERC1155Upgradeable) returns (uint256) {
         return super.balanceOf(_account, _tokenId);

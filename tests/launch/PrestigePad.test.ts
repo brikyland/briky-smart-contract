@@ -250,7 +250,7 @@ export async function getCashbackBaseDenomination(
     );
 }
 
-describe.only('7.1. PrestigePad', async () => {
+describe('7.1. PrestigePad', async () => {
     async function prestigePadFixture(): Promise<PrestigePadFixture> {
         const accounts = await ethers.getSigners();
         const deployer = accounts[0];
@@ -1087,26 +1087,52 @@ describe.only('7.1. PrestigePad', async () => {
     describe('7.1.4. getLaunch(uint256)', async () => {
         it('7.1.4.1. return correct launch with valid launch id', async () => {
             const fixture = await beforePrestigePadTest({
-                addSampleLaunch: true,
+                addSampleLaunch: true,                
             });
 
-            const { prestigePad, manager, validator, initiator1, zone1, initiator2, zone2 } = fixture;
-            
-            
+            const { prestigePad } = fixture;
+
+            await expect(prestigePad.getLaunch(1)).to.not.be.reverted;
+            await expect(prestigePad.getLaunch(2)).to.not.be.reverted;
         });
 
         it('7.1.4.2. revert with invalid launch id', async () => {
+            const fixture = await beforePrestigePadTest();
 
+            const { prestigePad } = fixture;
+
+            await expect(prestigePad.getLaunch(0))
+                .to.be.revertedWithCustomError(prestigePad, 'InvalidLaunchId');
+            await expect(prestigePad.getLaunch(100))
+                .to.be.revertedWithCustomError(prestigePad, 'InvalidLaunchId');
         });
     });
 
     describe('7.1.5. getRound(uint256)', async () => {
         it('7.1.5.1. return correct round with valid round id', async () => {
+            const fixture = await beforePrestigePadTest({
+                addSampleLaunch: true,
+                addSampleRounds: true,
+            });
 
+            const { prestigePad, currencies } = fixture;
+
+            const roundId1 = (await prestigePad.getLaunch(1)).roundIds[1];
+            await expect(prestigePad.getRound(roundId1)).to.not.be.reverted;
+
+            const roundId2 = (await prestigePad.getLaunch(2)).roundIds[1];
+            await expect(prestigePad.getRound(roundId2)).to.not.be.reverted;
         });
 
         it('7.1.5.2. revert with invalid round id', async () => {
+            const fixture = await beforePrestigePadTest();
 
+            const { prestigePad } = fixture;
+
+            await expect(prestigePad.getRound(0))
+                .to.be.revertedWithCustomError(prestigePad, 'InvalidRoundId');
+            await expect(prestigePad.getRound(100))
+                .to.be.revertedWithCustomError(prestigePad, 'InvalidRoundId');
         });
     });
 
@@ -1232,7 +1258,7 @@ describe.only('7.1. PrestigePad', async () => {
                 zone: zone2,
                 projectURI: 'project_uri_2',
                 launchURI: 'launch_uri_2',
-                initialQuantity: BigNumber.from(1),
+                initialQuantity: BigNumber.from(0),
             }
 
             const validation2 = await getInitiateLaunchValidation(prestigePad, validator, params2);

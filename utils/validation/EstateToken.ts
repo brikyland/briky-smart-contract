@@ -3,7 +3,7 @@ import { time } from "@nomicfoundation/hardhat-network-helpers";
 
 import { MockValidator } from "@utils/mockValidator";
 
-import { UpdateEstateURIParams } from "@utils/models/EstateToken";
+import { RegisterCustodianParams, UpdateEstateURIParams } from "@utils/models/EstateToken";
 
 export async function getUpdateEstateURIValidation(
     estateToken: Contract,
@@ -28,6 +28,36 @@ export async function getUpdateEstateURIInvalidValidation(
     const content = ethers.utils.defaultAbiCoder.encode(
         ["uint256", "string"],
         [params.estateId, params.uri]
+    );
+    const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
+
+    const validation = await validator.getInvalidValidation(estateToken, content, expiry);
+    return validation;
+}
+
+export async function getRegisterCustodianValidation(
+    estateToken: Contract,
+    validator: MockValidator,
+    params: RegisterCustodianParams
+) {
+    const content = ethers.utils.defaultAbiCoder.encode(
+        ["string"],
+        [params.uri]
+    );
+    const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
+
+    const validation = await validator.getValidation(estateToken, content, expiry);
+    return validation;
+}
+
+export async function getRegisterCustodianInvalidValidation(
+    estateToken: Contract,
+    validator: MockValidator,
+    params: RegisterCustodianParams
+) {
+    const content = ethers.utils.defaultAbiCoder.encode(
+        ["string"],
+        [params.uri]
     );
     const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
 

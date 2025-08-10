@@ -6,3 +6,9 @@ export interface UpdateEstateURIParams {
     estateId: BigNumber;
     uri: string;
 }
+
+export interface RegisterCustodianParams {
+    zone: string;
+    custodian: string;
+    uri: string;
+}
