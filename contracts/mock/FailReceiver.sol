@@ -28,6 +28,10 @@ ProxyCaller {
     function activate(bool _isActive) external {
         isActive = _isActive;
     }
+
+    function activateRejectERC1155(bool _isActiveRejectERC1155) external {
+        isActiveRejectERC1155 = _isActiveRejectERC1155;
+    }
     
     function onERC1155Received(
         address,

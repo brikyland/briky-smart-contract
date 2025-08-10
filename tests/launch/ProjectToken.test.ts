@@ -26,6 +26,8 @@ import {
     MockProjectToken,
     MockEstateToken__factory,
     MockPrestigePad__factory,
+    ReentrancyERC1155Receiver,
+    FailReceiver,
 } from '@typechain-types';
 import { callTransaction, callTransactionAtTimestamp, getSignatures, randomWallet } from '@utils/blockchain';
 import { Constant } from '@tests/test.constant';
@@ -45,7 +47,7 @@ import {
     callAdmin_AuthorizeModerators,
     callAdmin_DeclareZones,
 } from '@utils/callWithSignatures/admin';
-import { BigNumber } from 'ethers';
+import { BigNumber, Contract } from 'ethers';
 import { randomInt } from 'crypto';
 import { getBytes4Hex, getInterfaceID, randomBigNumber } from '@utils/utils';
 import { OrderedMap } from '@utils/utils';
@@ -66,6 +68,8 @@ import { ContractTransaction } from 'ethers';
 import { getLaunchProjectTx, getMintTx, getRegisterInitiatorTx, getUpdateProjectURITx } from '@utils/transaction/ProjectToken';
 import { getRegisterCustodianTx } from '@utils/transaction/EstateToken';
 import { callEstateToken_AuthorizeTokenizers, callEstateToken_UpdateCommissionToken } from '@utils/callWithSignatures/estateToken';
+import { deployReentrancyERC1155Receiver } from '@utils/deployments/mocks/mockReentrancy/reentrancyERC1155Receiver';
+import { deployFailReceiver } from '@utils/deployments/mocks/failReceiver';
 
 interface ProjectTokenFixture {
     admin: Admin;
@@ -78,6 +82,9 @@ interface ProjectTokenFixture {
     prestigePad: MockContract<MockPrestigePad>;
     commissionToken: CommissionToken;
     validator: MockValidator;
+    
+    reentrancyERC1155Receiver: ReentrancyERC1155Receiver;
+    failReceiver: FailReceiver;
 
     deployer: any;
     admins: any[];
@@ -95,6 +102,40 @@ interface ProjectTokenFixture {
     launchpads: any[];
 }
 
+async function testReentrancy_projectToken(
+    fixture: ProjectTokenFixture,
+    reentrancyContract: Contract,
+    assertion: any,
+) {
+    const { projectToken, commissionReceiver } = fixture;
+
+    let timestamp = await time.latest();
+
+    // tokenizeProject
+    await callTransaction(reentrancyContract.updateReentrancyPlan(
+        projectToken.address,
+        projectToken.interface.encodeFunctionData("tokenizeProject", [
+            1,
+            commissionReceiver.address,
+        ])
+    ));
+
+    await assertion(timestamp);
+
+    // withdrawEstateToken
+    timestamp += 10;
+
+    await callTransaction(reentrancyContract.updateReentrancyPlan(
+        projectToken.address,
+        projectToken.interface.encodeFunctionData("withdrawEstateToken", [
+            1,
+        ])
+    ));
+
+    await assertion(timestamp);
+}
+
+
 describe('2.4. ProjectToken', async () => {
     afterEach(async () => {
         await ethers.provider.send("evm_setAutomine", [true]);
@@ -103,6 +144,7 @@ describe('2.4. ProjectToken', async () => {
         const { prestigePad } = fixture;
 
         prestigePad.isFinalized.reset();
+        prestigePad.allocationOfAt.reset();
     });
 
     async function projectTokenFixture(): Promise<ProjectTokenFixture> {
@@ -220,6 +262,9 @@ describe('2.4. ProjectToken', async () => {
         const zone1 = ethers.utils.formatBytes32String("TestZone1");
         const zone2 = ethers.utils.formatBytes32String("TestZone2");
 
+        const reentrancyERC1155Receiver = await deployReentrancyERC1155Receiver(deployer.address) as ReentrancyERC1155Receiver;
+        const failReceiver = await deployFailReceiver(deployer.address, false, false) as FailReceiver;
+
         return {
             admin,
             feeReceiver,
@@ -249,6 +294,8 @@ describe('2.4. ProjectToken', async () => {
             zone2,
             validator,
             launchpads,
+            reentrancyERC1155Receiver,
+            failReceiver,
         };
     };
 
@@ -258,6 +305,8 @@ describe('2.4. ProjectToken', async () => {
         skipAddProjectTokenAsTokenizer = false,
         skipAddZoneForExecutive = false,
         skipAddInitiatorAsEstateCustodian = false,
+        useReentrancyERC1155ReceiverAsDepositor = false,
+        useFailReceiverAsDepositor = false,
         addSampleProjects = false,
         deprecateProjects = false,
         mintProjectTokenForDepositor = false,
@@ -278,12 +327,21 @@ describe('2.4. ProjectToken', async () => {
             initiator1,
             initiator2,
             validator,
-            depositor1,
-            depositor2,
-            depositor3,
             commissionToken,
             commissionReceiver,
+            depositor2,
+            depositor3,
+            reentrancyERC1155Receiver,
+            failReceiver,
         } = fixture;
+
+        let depositor1 = fixture.depositor1;
+        if (useReentrancyERC1155ReceiverAsDepositor) {
+            depositor1 = reentrancyERC1155Receiver;
+        }
+        if (useFailReceiverAsDepositor) {
+            depositor1 = failReceiver;
+        }
 
         if (!skipAuthorizeExecutive) {
             await callAdmin_AuthorizeManagers(
@@ -437,17 +495,17 @@ describe('2.4. ProjectToken', async () => {
             }
         }
 
-        if (deprecateProjects) {
-            await callTransaction(projectToken.connect(manager).deprecateProject(1));
-            await callTransaction(projectToken.connect(manager).deprecateProject(2));
-        }
-
         if (tokenizeProject) {
             prestigePad.isFinalized.whenCalledWith(1).returns(true);
             prestigePad.isFinalized.whenCalledWith(2).returns(true);
 
             await callTransaction(projectToken.connect(manager).tokenizeProject(1, commissionReceiver.address));
             await callTransaction(projectToken.connect(manager).tokenizeProject(2, commissionReceiver.address));
+        }
+
+        if (deprecateProjects) {
+            await callTransaction(projectToken.connect(manager).deprecateProject(1));
+            await callTransaction(projectToken.connect(manager).deprecateProject(2));
         }
 
         if (pause) {
@@ -458,7 +516,10 @@ describe('2.4. ProjectToken', async () => {
             );
         }
 
-        return fixture;
+        return {
+            ...fixture,
+            depositor1,
+        };
     }
 
     describe('2.4.1. initialize(address, address, string, uint256)', async () => {
@@ -1863,96 +1924,483 @@ describe('2.4. ProjectToken', async () => {
 
     describe('2.4.15. withdrawEstateToken(uint256)', async () => {
         it('2.4.15.1. withdraw estate token successfully', async () => {
+            const fixture = await beforeProjectTokenTest({
+                addSampleProjects: true,
+                mintProjectTokenForDepositor: true,
+                tokenizeProject: true,
+            });
+            const { projectToken, estateToken, depositor1, depositor2 } = fixture;
 
+            // Tx1: Depositor1 withdraw from project 1
+            let amount1 = await projectToken.balanceOf(depositor1.address, 1);
+            let initDepositor1EstateBalance = await estateToken.balanceOf(depositor1.address, 1);
+            let initProjectTokenProjectBalance = await projectToken.balanceOf(projectToken.address, 1);
+            let initProjectTokenEstateBalance = await estateToken.balanceOf(projectToken.address, 1);
+
+            const tx1 = await projectToken.connect(depositor1).withdrawEstateToken(1);
+            await tx1.wait();
+            
+            await expect(tx1).to.emit(projectToken, 'EstateTokenWithdrawal').withArgs(
+                1,
+                depositor1.address,
+                amount1
+            );
+
+            expect(await projectToken.balanceOf(depositor1.address, 1)).to.equal(0);
+            expect(await estateToken.balanceOf(depositor1.address, 1)).to.equal(
+                initDepositor1EstateBalance.add(amount1)
+            );
+
+            expect(await projectToken.balanceOf(projectToken.address, 1)).to.equal(
+                initProjectTokenProjectBalance.add(amount1)
+            );
+            expect(await estateToken.balanceOf(projectToken.address, 1)).to.equal(
+                initProjectTokenEstateBalance.sub(amount1)
+            );
+
+            // New project token transfer to depositor1
+            const amount2 = await projectToken.balanceOf(depositor2.address, 1);
+            await callTransaction(projectToken.connect(depositor2).safeTransferFrom(
+                depositor2.address,
+                depositor1.address,
+                1,
+                amount2,
+                "0x"
+            ));
+
+            // Tx2: Depositor1 withdraw extra estate token from project 1
+            initDepositor1EstateBalance = await estateToken.balanceOf(depositor1.address, 1);
+            initProjectTokenProjectBalance = await projectToken.balanceOf(projectToken.address, 1);
+            initProjectTokenEstateBalance = await estateToken.balanceOf(projectToken.address, 1);
+
+            const tx2 = await projectToken.connect(depositor1).withdrawEstateToken(1);
+            await tx2.wait();
+
+            await expect(tx2).to.emit(projectToken, 'EstateTokenWithdrawal').withArgs(
+                1,
+                depositor1.address,
+                amount2
+            );
+
+            expect(await projectToken.balanceOf(depositor1.address, 1)).to.equal(0);
+            expect(await estateToken.balanceOf(depositor1.address, 1)).to.equal(
+                initDepositor1EstateBalance.add(amount2)
+            );
+
+            expect(await projectToken.balanceOf(projectToken.address, 1)).to.equal(
+                initProjectTokenProjectBalance.add(amount2)
+            );
+            expect(await estateToken.balanceOf(projectToken.address, 1)).to.equal(
+                initProjectTokenEstateBalance.sub(amount2)
+            );
         });
 
         it('2.4.15.2. withdraw zero estate token when user has zero project token balance', async () => {
+            const fixture = await beforeProjectTokenTest({
+                addSampleProjects: true,
+                mintProjectTokenForDepositor: true,
+                tokenizeProject: true,
+            });
+            const { projectToken, estateToken, initiator2 } = fixture;
 
+            const tx = await projectToken.connect(initiator2).withdrawEstateToken(1);
+            await tx.wait();
+
+            await expect(tx).to.emit(projectToken, 'EstateTokenWithdrawal').withArgs(
+                1,
+                initiator2.address,
+                0
+            );
+
+            expect(await projectToken.balanceOf(initiator2.address, 1)).to.equal(0);
+            expect(await estateToken.balanceOf(initiator2.address, 1)).to.equal(0);
         });
 
         it('2.4.15.3. withdraw estate token unsuccessfully when contract is reentered', async () => {
+            const fixture = await beforeProjectTokenTest({                
+                useReentrancyERC1155ReceiverAsDepositor: true,
+                addSampleProjects: true,
+                mintProjectTokenForDepositor: true,
+                tokenizeProject: true,
+            });
+            const { projectToken, reentrancyERC1155Receiver } = fixture;
 
+            await testReentrancy_projectToken(
+                fixture,
+                reentrancyERC1155Receiver,
+                async (timestamp: number) => {
+                    await expect(reentrancyERC1155Receiver.call(
+                        projectToken.address,
+                        projectToken.interface.encodeFunctionData("withdrawEstateToken", [1]),
+                    )).to.be.revertedWith(`ReentrancyGuard: reentrant call`);
+                }
+            );
         });
 
         it('2.4.15.4. withdraw estate token unsuccessfully with invalid project id', async () => {
+            const fixture = await beforeProjectTokenTest();
+            
+            const { projectToken, depositor1 } = fixture;
 
+            await expect(projectToken.connect(depositor1).withdrawEstateToken(0))
+                .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
+
+            await expect(projectToken.connect(depositor1).withdrawEstateToken(100))
+                .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
         });
         
         it('2.4.15.5. withdraw estate token unsuccessfully when project is deprecated', async () => {
+            const fixture = await beforeProjectTokenTest({
+                addSampleProjects: true,
+                mintProjectTokenForDepositor: true,
+                tokenizeProject: true,
+                deprecateProjects: true,
+            });
+            const { projectToken, depositor1 } = fixture;
 
+            await expect(projectToken.connect(depositor1).withdrawEstateToken(1))
+                .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
         });
 
         it('2.4.15.6. withdraw estate token unsuccessfully when paused', async () => {
+            const fixture = await beforeProjectTokenTest({
+                addSampleProjects: true,
+                mintProjectTokenForDepositor: true,
+                tokenizeProject: true,
+                pause: true,
+            });
+            const { projectToken, depositor1 } = fixture;
 
+            await expect(projectToken.connect(depositor1).withdrawEstateToken(1))
+                .to.be.revertedWith(`Pausable: paused`);
         });
 
         it('2.4.15.7. withdraw estate token unsuccessfully when project is not tokenized', async () => {
+            const fixture = await beforeProjectTokenTest({
+                addSampleProjects: true,
+                mintProjectTokenForDepositor: true,
+            });
+            const { projectToken, depositor1 } = fixture;
 
+            await expect(projectToken.connect(depositor1).withdrawEstateToken(1))
+                .to.be.revertedWithCustomError(projectToken, `InvalidWithdrawing`);
         });
 
-        it('2.4.15.8. withdraw estate token unsuccessfully when user already withdrawn', async () => {
+        it('2.4.15.8. withdraw estate token unsuccessfully when transfer erc1155 failed', async () => {
+            const fixture = await beforeProjectTokenTest({
+                addSampleProjects: true,
+                mintProjectTokenForDepositor: true,
+                tokenizeProject: true,
+                useFailReceiverAsDepositor: true,
+            });
+            const { projectToken, failReceiver } = fixture;
 
-        });
+            await callTransaction(failReceiver.activateRejectERC1155(true));
 
-        it('2.4.15.9. withdraw estate token unsuccessfully when transfer erc1155 failed', async () => {
-
+            await expect(failReceiver.call(
+                projectToken.address,
+                projectToken.interface.encodeFunctionData("withdrawEstateToken", [1]),
+            )).to.be.revertedWith(`Fail`);
         });
     });
 
     describe('2.4.16. isTokenized(uint256)', async () => {
         it('2.4.16.1. return true for tokenized project', async () => {
-            
+            const fixture = await beforeProjectTokenTest({
+                addSampleProjects: true,
+                mintProjectTokenForDepositor: true,
+                tokenizeProject: true,
+            });
+            const { projectToken } = fixture;
+
+            expect(await projectToken.isTokenized(1)).to.equal(true);
+            expect(await projectToken.isTokenized(2)).to.equal(true);
         });
 
         it('2.4.16.2. return false for untokenized project', async () => {
+            const fixture = await beforeProjectTokenTest({
+                addSampleProjects: true,
+                mintProjectTokenForDepositor: true,
+            });
+            const { projectToken } = fixture;
 
+            expect(await projectToken.isTokenized(1)).to.equal(false);
+            expect(await projectToken.isTokenized(2)).to.equal(false);
         });
     });
 
     describe('2.4.17. zoneOf(uint256)', async () => {
         it('2.4.17.1. return correct zone', async () => {
+            const fixture = await beforeProjectTokenTest({
+                addSampleProjects: true,
+            });
+            const { projectToken, zone1, zone2 } = fixture;
 
+            expect(await projectToken.zoneOf(1)).to.equal(zone1);
+            expect(await projectToken.zoneOf(2)).to.equal(zone2);
         });
 
         it('2.4.17.2. revert with invalid project id', async () => {
+            const fixture = await beforeProjectTokenTest();
+            const { projectToken, depositor1 } = fixture;
 
+            await expect(projectToken.connect(depositor1).zoneOf(0))
+                .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
+
+            await expect(projectToken.connect(depositor1).zoneOf(100))
+                .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
         });
     });
 
     describe('2.4.18. balanceOf(address, uint256)', async () => {
         it('2.4.18.1. return correct project token balance', async () => {
+            const fixture = await beforeProjectTokenTest({
+                addSampleProjects: true,
+                mintProjectTokenForDepositor: true,
+                tokenizeProject: true,
+            });
+            const { projectToken, depositor1, depositor2, depositor3 } = fixture;
 
+            expect(await projectToken.balanceOf(depositor1.address, 1)).to.equal(200);
+            expect(await projectToken.balanceOf(depositor2.address, 1)).to.equal(300);
+            expect(await projectToken.balanceOf(depositor3.address, 1)).to.equal(500);
+            
+            expect(await projectToken.balanceOf(depositor1.address, 2)).to.equal(20);
+            expect(await projectToken.balanceOf(depositor2.address, 2)).to.equal(30);
+            expect(await projectToken.balanceOf(depositor3.address, 2)).to.equal(50);
         });
 
-        it('2.4.18.2. return zero for deprecated project', async () => {
+        it('2.4.18.2. return zero for invalid project id', async () => {
+            const fixture = await beforeProjectTokenTest({
+                addSampleProjects: true,
+                mintProjectTokenForDepositor: true,
+                tokenizeProject: true,
+            });
 
+            const { projectToken, depositor1 } = fixture;
+
+            expect(await projectToken.balanceOf(depositor1.address, 0)).to.equal(0);
+            expect(await projectToken.balanceOf(depositor1.address, 100)).to.equal(0);
+        });
+
+        it('2.4.18.3. return zero for deprecated project', async () => {
+            const fixture = await beforeProjectTokenTest({
+                addSampleProjects: true,
+                mintProjectTokenForDepositor: true,
+                tokenizeProject: true,
+                deprecateProjects: true,
+            });
+            const { projectToken, depositor1, depositor2 } = fixture;
+
+            expect(await projectToken.balanceOf(depositor1.address, 1)).to.equal(0);
+            expect(await projectToken.balanceOf(depositor1.address, 1)).to.equal(0);
+            expect(await projectToken.balanceOf(depositor1.address, 1)).to.equal(0);
+            
+            expect(await projectToken.balanceOf(depositor2.address, 2)).to.equal(0);
+            expect(await projectToken.balanceOf(depositor2.address, 2)).to.equal(0);
+            expect(await projectToken.balanceOf(depositor2.address, 2)).to.equal(0);
         });
     });
 
     describe('2.4.19. balanceOfAt(address, uint256, uint256)', () => {
         it('2.4.19.1. return correct project token balance', async () => {
+            const fixture = await beforeProjectTokenTest({
+                addSampleProjects: true,
+                mintProjectTokenForDepositor: true,
+                tokenizeProject: true,
+            });
+            const { projectToken, depositor1, depositor2, depositor3 } = fixture;
 
+            const timestamp = await time.latest();
+
+            expect(await projectToken.balanceOfAt(depositor1.address, 1, timestamp)).to.equal(200);
+            expect(await projectToken.balanceOfAt(depositor2.address, 1, timestamp)).to.equal(300);
+            expect(await projectToken.balanceOfAt(depositor3.address, 1, timestamp)).to.equal(500);
+            
+            expect(await projectToken.balanceOfAt(depositor1.address, 2, timestamp)).to.equal(20);
+            expect(await projectToken.balanceOfAt(depositor2.address, 2, timestamp)).to.equal(30);
+            expect(await projectToken.balanceOfAt(depositor3.address, 2, timestamp)).to.equal(50);
         });
 
         it('2.4.19.2. return correct project token balance in random tests', async () => {
+            const fixture = await beforeProjectTokenTest({
+                addSampleProjects: true,
+            });
+            const { projectToken, prestigePad, depositors } = fixture
+            
+            prestigePad.allocationOfAt.returns(1234);
 
+            const amounts = [];
+            for (let i = 0; i < 3; ++i) {
+                const amount = ethers.BigNumber.from(randomInt(10_000, 30_000));
+                amounts.push(amount);
+            }
+
+            const totalAmount = amounts.reduce((a, b) => a.add(b), ethers.BigNumber.from(0));
+
+            const projectId = BigNumber.from(1);
+            await callTransaction(getMintTx(projectToken as any, prestigePad, {
+                projectId,
+                amount: totalAmount,
+            }));
+
+            const baseTimestamp = await time.latest() + 1000;
+            let currentTimestamp = baseTimestamp + 10;
+            
+            await ethers.provider.send("evm_setAutomine", [false]);
+
+            const snapshots = [];
+            for (let i = 0; i < 3; ++i) {
+                snapshots.push(new OrderedMap<number, BigNumber>(ethers.BigNumber.from(0)));
+            }
+
+            await time.setNextBlockTimestamp(currentTimestamp);
+
+            const txs = [];
+            for (let i = 0; i < 3; ++i) {
+                const tx = await prestigePad.transfer(depositors[i].address, projectId, amounts[i]);
+                txs.push(tx);
+            }
+
+            await ethers.provider.send("evm_mine", []);
+
+            const receipts = await Promise.all(txs.map(tx => tx.wait()));
+            for (const [i, receipt] of receipts.entries()) {
+                const timestamp = (await ethers.provider.getBlock(receipt.blockNumber!)).timestamp;
+                snapshots[i].set(timestamp, snapshots[i].get(timestamp).add(amounts[i]));
+            }
+
+            for (let iter = 0; iter < 20; ++iter) {
+                const initBalances: BigNumber[] = [];
+                for (let i = 0; i < 3; ++i) {
+                    initBalances.push(await projectToken.balanceOf(depositors[i].address, projectId));
+                }
+
+                let balances = [...initBalances];
+                const txCount = 10;
+                const txs = [];
+                const records = [];
+
+                for (let i_tx = 0; i_tx < txCount; ++i_tx) {
+                    let from = randomInt(0, 3);
+                    let to = randomInt(0, 3);
+                    if (from == to) { --i_tx; continue }
+
+                    if (balances[from].eq(0)) { --i_tx; continue }
+
+                    const amount = randomBigNumber(ethers.BigNumber.from(1), balances[from]);
+
+                    const tx = await projectToken.connect(depositors[from]).safeTransferFrom(
+                        depositors[from].address,
+                        depositors[to].address,
+                        projectId,
+                        amount,
+                        ethers.utils.formatBytes32String(""),
+                        { gasLimit: 1e6 },
+                    );
+                    txs.push(tx);
+
+                    balances[from] = balances[from].sub(amount);
+                    balances[to] = balances[to].add(amount);
+                    records.push({ from, to, amount });
+                }
+
+                await ethers.provider.send("evm_mine", []);
+
+                const receipts = await Promise.all(txs.map(tx => tx.wait()));
+                balances = [...initBalances];
+                for (const [i, receipt] of receipts.entries()) {
+                    const { from, to, amount } = records[i];
+                    const timestamp = (await ethers.provider.getBlock(receipt.blockNumber!)).timestamp;
+
+                    balances[from] = balances[from].sub(amount);
+                    balances[to] = balances[to].add(amount);
+
+                    snapshots[from].set(timestamp, balances[from]);
+                    snapshots[to].set(timestamp, balances[to]);
+                }
+
+                const lastTimestamp = (await ethers.provider.getBlock('latest')).timestamp;
+                for (let deltaT = -1; deltaT <= lastTimestamp - currentTimestamp; ++deltaT) {
+                    const t = currentTimestamp + deltaT;
+                    for (let i = 0; i < 3; ++i) {
+                        const expectedBalance = snapshots[i].get(t);
+                        const actualBalance = await projectToken.balanceOfAt(depositors[i].address, projectId, t);
+                        expect(actualBalance).to.equal(expectedBalance);
+                    }
+                }
+            }
+
+            const lastTimestamp = (await ethers.provider.getBlock('latest')).timestamp;
+            currentTimestamp = lastTimestamp;
         });
 
         it('2.4.19.3. revert with invalid project id', async () => {
+            const fixture = await beforeProjectTokenTest();
+            const { projectToken, depositor1 } = fixture;
 
+            let timestamp = await time.latest();
+
+            await expect(projectToken.balanceOfAt(depositor1.address, 0, timestamp))
+                .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
+
+            await expect(projectToken.balanceOfAt(depositor1.address, 100, timestamp))
+                .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
         });
 
         it('2.4.19.4. revert with timestamp after current timestamp', async () => {
+            const fixture = await beforeProjectTokenTest({
+                addSampleProjects: true,
+                mintProjectTokenForDepositor: true,
+                tokenizeProject: true,
+            });
+            const { projectToken, depositor1 } = fixture;
 
+            let timestamp = await time.latest();
+
+            await expect(projectToken.balanceOfAt(depositor1.address, 1, timestamp - 1))
+                .to.be.not.reverted;
+            await expect(projectToken.balanceOfAt(depositor1.address, 1, timestamp))
+                .to.be.not.reverted;
+            await expect(projectToken.balanceOfAt(depositor1.address, 1, timestamp + 1))
+                .to.be.revertedWithCustomError(projectToken, `InvalidTimestamp`);
         });
 
         it('2.4.19.5. revert with timestamp after deprecation', async () => {
+            const fixture = await beforeProjectTokenTest({
+                addSampleProjects: true,
+                mintProjectTokenForDepositor: true,
+                tokenizeProject: true,
+                deprecateProjects: true,
+            });
+            const { projectToken, depositor1 } = fixture;
 
+            let deprecateAt = (await projectToken.getProject(1)).deprecateAt;
+
+            await expect(projectToken.balanceOfAt(depositor1.address, 1, deprecateAt - 1))
+                .to.be.not.reverted;
+            await expect(projectToken.balanceOfAt(depositor1.address, 1, deprecateAt))
+                .to.be.not.reverted;
+            await expect(projectToken.balanceOfAt(depositor1.address, 1, deprecateAt + 1))
+                .to.be.revertedWithCustomError(projectToken, `InvalidTimestamp`);
         });
     });
 
     describe('2.4.20. allocationOfAt(address, uint256, uint256)', () => {
+        it('2.4.20.1. return correct allocation for existing project', async () => {
+            const fixture = await beforeProjectTokenTest({
+                addSampleProjects: true,
+                mintProjectTokenForDepositor: true,
+                tokenizeProject: true,
+            });
+            const { projectToken, prestigePad, depositors } = fixture
+            
+            prestigePad.allocationOfAt.whenCalledWith(depositors[0].address, 1, 100).returns(100);
+        });
 
+        it('2.4.20.2. revert with invalid project id', async () => {
+
+        });
     });
 
     describe('2.4.21. voteOfAt(address, uint256, uint256)', () => {
