@@ -186,7 +186,7 @@ ReentrancyGuardUpgradeable {
     }
 
     function getProject(uint256 _projectId) external view returns (Project memory) {
-        if (!exists(_projectId)) {
+        if (_projectId == 0 || _projectId > projectNumber) {
             revert InvalidProjectId();
         }
         return projects[_projectId];
@@ -194,6 +194,10 @@ ReentrancyGuardUpgradeable {
 
     function isAvailable(uint256 _projectId) public view returns (bool) {
         return projects[_projectId].deprecateAt == CommonConstant.INFINITE_TIMESTAMP;
+    }
+
+    function isVotePowerAvailable(uint256) public pure returns (bool) {
+        return false;
     }
 
     function launchProject(
@@ -319,17 +323,20 @@ ReentrancyGuardUpgradeable {
         if (estateId == 0) {
             revert InvalidWithdrawing();
         }
-        if (withdrawAt[_projectId][msg.sender] > 0) {
-            revert AlreadyWithdrawn();
-        }
 
-        withdrawAt[_projectId][msg.sender] = block.timestamp;
+        uint256 amount = balanceOf(msg.sender, _projectId);        
 
-        uint256 amount = balanceOf(msg.sender, _projectId);
         IEstateToken(estateToken).safeTransferFrom(
             address(this),
             msg.sender,
             estateId,
+            amount,
+            ""
+        );
+        safeTransferFrom(
+            msg.sender,
+            address(this),
+            _projectId,
             amount,
             ""
         );
@@ -384,9 +391,9 @@ ReentrancyGuardUpgradeable {
         if (project.estateId == 0) {
             revert NotTokenized();
         }
-        uint256 withdrawAt = withdrawAt[_tokenizationId][_account];
-        return _at >= project.tokenizeAt && (withdrawAt == 0 || _at < withdrawAt)
+        return _at >= project.tokenizeAt
             ? IProjectLaunchpad(project.launchpad).allocationOfAt(_account, project.launchId, _at)
+              + balanceOfAt(_account, _tokenizationId, _at)
             : 0;
     }
 
