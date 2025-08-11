@@ -54,6 +54,7 @@ export interface RequestAgenda {
     saleStartsAt: number;
     privateSaleEndsAt: number;
     publicSaleEndsAt: number;
+    confirmAt: number;
 };
 
 export interface RegisterSellerInParams {
@@ -63,7 +64,7 @@ export interface RegisterSellerInParams {
 }
 
 export interface RequestTokenizationParams {
-    seller: string;
+    requester: string;
     estate: RequestEstateInput;
     quota: RequestQuotaInput;
     quote: RequestQuoteInput;

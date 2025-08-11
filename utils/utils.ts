@@ -184,9 +184,20 @@ export function getAddressShortString(address: string): string {
     return address.slice(0, 6) + "..." + address.slice(-4);
 }
 
+export function isPureArray(arr: any): boolean {
+    const hasObjectProps = Object.keys(arr).some(
+        key => isNaN(Number(key)) // Any key that isn't a numeric index
+    );
+    return !hasObjectProps;
+}      
+
 export function structToObject(struct: any): any {
     if (!struct || typeof struct !== 'object' || struct instanceof ethers.BigNumber) {
         return struct;
+    }
+
+    if (struct instanceof Array && isPureArray(struct)) {
+        return struct.map(item => structToObject(item));
     }
 
     // Only keep named keys, ignore numeric keys

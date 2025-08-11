@@ -93,7 +93,7 @@ interface EstateTokenFixture {
     extractors: any[];
 }
 
-describe.only('2.4. EstateToken', async () => {
+describe('2.4. EstateToken', async () => {
     afterEach(async () => {
         await ethers.provider.send("evm_setAutomine", [true]);
     });
