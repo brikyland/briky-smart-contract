@@ -146,7 +146,7 @@ describe('1.8. ReserveVault', async () => {
             await callTransaction(providers[0].call(
                 reserveVault.address,
                 reserveVault.interface.encodeFunctionData(
-                    'requestFund',
+                    'openFund',
                     [
                         mainCurrency,
                         mainDenomination,
@@ -435,7 +435,7 @@ describe('1.8. ReserveVault', async () => {
         });
     });
 
-    describe('1.8.3. requestFund(address, uint256, address[], uint256[])', async () => {
+    describe('1.8.3. openFund(address, uint256, address[], uint256[])', async () => {
         it('1.8.3.1. initiate fund successfully', async () => {
             const { reserveVault, providers, currencies } = await beforeReserveVaultTest({
                 authorizeProviders: true,
@@ -451,7 +451,7 @@ describe('1.8. ReserveVault', async () => {
             const subDenominations1 = [200, 400, 800];
 
             const callData1 = reserveVault.interface.encodeFunctionData(
-                'requestFund',
+                'openFund',
                 [
                     mainCurrencyAddress1,
                     mainDenomination1,
@@ -465,7 +465,7 @@ describe('1.8. ReserveVault', async () => {
             const fundId1 = 1;
 
             await expect(tx1).to
-                .emit(reserveVault, 'FundInitiation')
+                .emit(reserveVault, 'NewFund')
                 .withArgs(
                     fundId1,
                     provider.address,
@@ -494,7 +494,7 @@ describe('1.8. ReserveVault', async () => {
             const subDenominations2 = [3200, 6400, 12800];
 
             const callData2 = reserveVault.interface.encodeFunctionData(
-                'requestFund',
+                'openFund',
                 [
                     mainCurrencyAddress2,
                     mainDenomination2,
@@ -508,7 +508,7 @@ describe('1.8. ReserveVault', async () => {
             const fundId2 = 2;
 
             await expect(tx2).to
-                .emit(reserveVault, 'FundInitiation')
+                .emit(reserveVault, 'NewFund')
                 .withArgs(
                     fundId2,
                     provider.address,
@@ -544,7 +544,7 @@ describe('1.8. ReserveVault', async () => {
             const subDenominations = [100, 200, 400];
 
             const callData = reserveVault.interface.encodeFunctionData(
-                'requestFund',
+                'openFund',
                 [
                     mainCurrencyAddress,
                     mainDenomination,
@@ -558,7 +558,7 @@ describe('1.8. ReserveVault', async () => {
             const fundId = 1;
 
             await expect(tx).to
-                .emit(reserveVault, 'FundInitiation')
+                .emit(reserveVault, 'NewFund')
                 .withArgs(
                     fundId,
                     provider.address,
@@ -595,7 +595,7 @@ describe('1.8. ReserveVault', async () => {
             const subDenominations = [200, 400, 800];
 
             const callData = reserveVault.interface.encodeFunctionData(
-                'requestFund',
+                'openFund',
                 [
                     mainCurrencyAddress,
                     mainDenomination,
@@ -618,7 +618,7 @@ describe('1.8. ReserveVault', async () => {
             const subCurrencyAddresses = [currencies[1].address, currencies[2].address, ethers.constants.AddressZero];
             const subDenominations = [200, 400, 800];
 
-            await expect(reserveVault.requestFund(
+            await expect(reserveVault.openFund(
                 mainCurrencyAddress,
                 mainDenomination,
                 subCurrencyAddresses,
@@ -640,7 +640,7 @@ describe('1.8. ReserveVault', async () => {
             const subDenominations = [200, 400];
             
             const callData = reserveVault.interface.encodeFunctionData(
-                'requestFund',
+                'openFund',
                 [
                     mainCurrencyAddress,
                     mainDenomination,
@@ -666,7 +666,7 @@ describe('1.8. ReserveVault', async () => {
             const subDenominations = [200, 400, 800];
 
             const callData = reserveVault.interface.encodeFunctionData(
-                'requestFund',
+                'openFund',
                 [
                     mainCurrencyAddress,
                     mainDenomination,
@@ -692,7 +692,7 @@ describe('1.8. ReserveVault', async () => {
             const subDenominations = [200, 400, 800];
 
             const callData = reserveVault.interface.encodeFunctionData(
-                'requestFund',
+                'openFund',
                 [
                     mainCurrencyAddress,
                     mainDenomination,
@@ -718,7 +718,7 @@ describe('1.8. ReserveVault', async () => {
             const subDenominations = [200, 400, 0];
 
             const callData = reserveVault.interface.encodeFunctionData(
-                'requestFund',
+                'openFund',
                 [
                     mainCurrencyAddress,
                     mainDenomination,
@@ -1125,7 +1125,7 @@ describe('1.8. ReserveVault', async () => {
             await callTransaction(failReceiver.call(
                 reserveVault.address,
                 reserveVault.interface.encodeFunctionData(
-                    'requestFund',
+                    'openFund',
                     [
                         mainCurrency,
                         mainDenomination,

@@ -99,6 +99,12 @@ async function testReentrancy_GovernanceHub(
 }
 
 describe('1.6. GovernanceHub', async () => {
+    afterEach(async () => {
+        const fixture = await loadFixture(governanceHubFixture);
+        const { governor } = fixture;
+        governor.isVotePowerAvailable.reset();
+    });
+
     async function governanceHubFixture(): Promise<GovernanceHubFixture> {
         const accounts = await ethers.getSigners();
         const deployer = accounts[0];
@@ -1270,13 +1276,13 @@ describe('1.6. GovernanceHub', async () => {
                 fixture,
                 { ...defaultParams, tokenId: ethers.BigNumber.from(0) },
                 proposer1,
-                'UnavailableToken',
+                'UnavailableVotePowerToken',
             );
             await expectRevertWithCustomError(
                 fixture,
                 { ...defaultParams, tokenId: ethers.BigNumber.from(100) },
                 proposer1,
-                'UnavailableToken',
+                'UnavailableVotePowerToken',
             );
         });
 
@@ -1471,7 +1477,6 @@ describe('1.6. GovernanceHub', async () => {
                 params1.stateURI,
                 totalWeight1,
                 quorum1,
-                timestamp,
                 params1.currency,
             );
             
@@ -1752,17 +1757,15 @@ describe('1.6. GovernanceHub', async () => {
             });
             const { governor, manager } = fixture;
 
-            governor.isAvailable.whenCalledWith(1).returns(false);
+            governor.isVotePowerAvailable.whenCalledWith(1).returns(false);
 
             const { defaultParams } = await beforeAdmitTest(fixture);
             await expectRevertWithCustomError(
                 fixture,
                 { ...defaultParams, proposalId: 1 },
                 manager,
-                'UnavailableToken',
+                'UnavailableVotePowerToken',
             );
-
-            governor.isAvailable.reset();
         });
 
         it('1.6.7.13. admit unsuccessfully when zone is not active', async () => {
@@ -2434,15 +2437,13 @@ describe('1.6. GovernanceHub', async () => {
             });
             const { governanceHub, voter1, governor } = fixture;
 
-            governor.isAvailable.whenCalledWith(1).returns(false);
-            governor.isAvailable.whenCalledWith(2).returns(false);
+            governor.isVotePowerAvailable.whenCalledWith(1).returns(false);
+            governor.isVotePowerAvailable.whenCalledWith(2).returns(false);
 
             await expect(governanceHub.connect(voter1).vote(1, ProposalVoteOption.Approval))
-                .to.be.revertedWithCustomError(governanceHub, 'UnavailableToken');
+                .to.be.revertedWithCustomError(governanceHub, 'UnavailableVotePowerToken');
             await expect(governanceHub.connect(voter1).vote(2, ProposalVoteOption.Disapproval))
-                .to.be.revertedWithCustomError(governanceHub, 'UnavailableToken');
-
-            governor.isAvailable.reset();
+                .to.be.revertedWithCustomError(governanceHub, 'UnavailableVotePowerToken');
         });
 
         it('1.6.9.12. vote unsuccessfully when sender has no vote power', async () => {
@@ -3481,12 +3482,10 @@ describe('1.6. GovernanceHub', async () => {
 
             const { governanceHub, manager, governor } = fixture;
 
-            governor.isAvailable.whenCalledWith(1).returns(false);
+            governor.isVotePowerAvailable.whenCalledWith(1).returns(false);
 
             await expect(governanceHub.connect(manager).confirmExecution(1))
-                .to.be.revertedWithCustomError(governanceHub, 'UnavailableToken');
-
-            governor.isAvailable.reset();            
+                .to.be.revertedWithCustomError(governanceHub, 'UnavailableVotePowerToken');
         });
 
         it('1.6.14.7. confirm execution unsuccessfully with inactive zone', async () => {
