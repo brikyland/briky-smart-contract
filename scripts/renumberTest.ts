@@ -5,7 +5,7 @@ import { globSync } from "glob";
 function renumberTest(filePath: string, outputPath: string) {
     let file = fs.readFileSync(filePath, "utf8");
 
-    const testNumberPattern = new RegExp(`describe(\\.only)?\\(["']([0-9]+)\\.`, 'g');
+    const testNumberPattern = new RegExp(`describe(\\.only)?\\(["']([0-9]+.[0-9a-z]+)\\.`, 'g');
     const testNumberMatch = testNumberPattern.exec(file);
     if (!testNumberMatch) {
         throw new Error("Test number not found");
@@ -44,7 +44,11 @@ function renumberTest(filePath: string, outputPath: string) {
     fs.writeFileSync(outputPath, file, "utf8");
 }
 
-function printInterfaceIds() {
+function renumberTests() {
+    // const input = "tests/common/admin.test.ts"
+    // const output = "tests/common/admin.renumbered.test.ts"
+    // renumberTest(input, output);
+
     const testFiles = globSync("tests/**/*.test.ts");
 
     for (const file of testFiles) {
@@ -52,4 +56,4 @@ function printInterfaceIds() {
     }
 }
 
-printInterfaceIds(); 
+renumberTests(); 

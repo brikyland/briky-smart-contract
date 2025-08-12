@@ -726,7 +726,7 @@ describe('1.6. GovernanceHub', async () => {
             expect(await governanceHub.getProposalVerdict(2)).to.equal(ProposalVerdict.Failed);
         });
 
-        it('1.6.4.8. return passed verdict with enough approval votes for approval beyond quorum rule', async () => {
+        it('1.6.4.7. return passed verdict with enough approval votes for approval beyond quorum rule', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
                 addSampleProposals: true,
@@ -806,7 +806,7 @@ describe('1.6. GovernanceHub', async () => {
             expect(await governanceHub.getProposalVerdict(2)).to.equal(ProposalVerdict.Failed);
         });
 
-        it('1.6.4.11. return passed verdict with enough approval votes for disapproval beyond quorum rule', async () => {
+        it('1.6.4.12. return passed verdict with enough approval votes for disapproval beyond quorum rule', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
                 addSampleProposals: true,
@@ -821,7 +821,7 @@ describe('1.6. GovernanceHub', async () => {
             expect(await governanceHub.getProposalVerdict(2)).to.equal(ProposalVerdict.Passed);
         });
 
-        it('1.6.4.12. return failed verdict with not enough disapproval votes after due for disapproval beyond quorum rule', async () => {
+        it('1.6.4.13. return failed verdict with not enough disapproval votes after due for disapproval beyond quorum rule', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
                 addSampleProposals: true,
@@ -837,7 +837,7 @@ describe('1.6. GovernanceHub', async () => {
             expect(await governanceHub.getProposalVerdict(2)).to.equal(ProposalVerdict.Passed);
         });
 
-        it('1.6.4.13. return unsettled verdict with not enough disapproval votes before due for disapproval beyond quorum rule', async () => {
+        it('1.6.4.14. return unsettled verdict with not enough disapproval votes before due for disapproval beyond quorum rule', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
                 addSampleProposals: true,
@@ -850,7 +850,7 @@ describe('1.6. GovernanceHub', async () => {
             expect(await governanceHub.getProposalVerdict(2)).to.equal(ProposalVerdict.Unsettled);
         });
 
-        it('1.6.4.14. revert with invalid proposal id', async () => {
+        it('1.6.4.15. revert with invalid proposal id', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
             });
@@ -1626,7 +1626,7 @@ describe('1.6. GovernanceHub', async () => {
             );
         });
 
-        it('1.6.7.6. admit unsuccessfully with executing proposal', async () => {
+        it('1.6.7.7. admit unsuccessfully with executing proposal', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
                 addSampleProposals: true,
@@ -1645,7 +1645,7 @@ describe('1.6. GovernanceHub', async () => {
             );
         });
 
-        it('1.6.7.7. admit unsuccessfully with successfully executed proposal', async () => {
+        it('1.6.7.8. admit unsuccessfully with successfully executed proposal', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
                 addSampleProposals: true,
@@ -1665,7 +1665,7 @@ describe('1.6. GovernanceHub', async () => {
             );
         });
 
-        it('1.6.7.8. admit unsuccessfully with unsuccessfully executed proposal', async () => {
+        it('1.6.7.9. admit unsuccessfully with unsuccessfully executed proposal', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
                 addSampleProposals: true,
@@ -1685,7 +1685,7 @@ describe('1.6. GovernanceHub', async () => {
             );
         });
 
-        it('1.6.7.9. admit unsuccessfully with disqualified proposal', async () => {
+        it('1.6.7.10. admit unsuccessfully with disqualified proposal', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
                 addSampleProposals: true,
@@ -1702,7 +1702,7 @@ describe('1.6. GovernanceHub', async () => {
             );
         });
 
-        it('1.6.7.10. admit unsuccessfully with rejected proposal', async () => {
+        it('1.6.7.11. admit unsuccessfully with rejected proposal', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
                 addSampleProposals: true,
@@ -1720,7 +1720,7 @@ describe('1.6. GovernanceHub', async () => {
             );
         });
 
-        it('1.6.7.11. admit unsuccessfully with admission expired proposal', async () => {
+        it('1.6.7.12. admit unsuccessfully with admission expired proposal', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
                 addSampleProposals: true,
@@ -1749,7 +1749,7 @@ describe('1.6. GovernanceHub', async () => {
             );
         });
 
-        it('1.6.7.12. admit unsuccessfully with no longer available token id', async () => {
+        it('1.6.7.13. admit unsuccessfully with no longer available token id', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
                 addSampleProposals: true,
@@ -1767,7 +1767,7 @@ describe('1.6. GovernanceHub', async () => {
             );
         });
 
-        it('1.6.7.13. admit unsuccessfully when zone is not active', async () => {
+        it('1.6.7.14. admit unsuccessfully when zone is not active', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
                 addSampleProposals: true,
@@ -1791,7 +1791,7 @@ describe('1.6. GovernanceHub', async () => {
             );
         });
 
-        it('1.6.7.14. admit unsuccessfully when sender is not active in zone', async () => {
+        it('1.6.7.15. admit unsuccessfully when sender is not active in zone', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
                 addSampleProposals: true,
@@ -1816,7 +1816,7 @@ describe('1.6. GovernanceHub', async () => {
             );
         });
         
-        it('1.6.7.15. admit unsuccessfully when token have zero total vote power', async () => {
+        it('1.6.7.16. admit unsuccessfully when token have zero total vote power', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
                 addSampleProposals: true,
@@ -2445,7 +2445,7 @@ describe('1.6. GovernanceHub', async () => {
                 .to.be.revertedWithCustomError(governanceHub, 'UnavailableVotePowerToken');
         });
 
-        it('1.6.9.12. vote unsuccessfully when sender has no vote power', async () => {
+        it('1.6.9.13. vote unsuccessfully when sender has no vote power', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
                 addSampleProposals: true,
@@ -2457,7 +2457,7 @@ describe('1.6. GovernanceHub', async () => {
                 .to.be.revertedWithCustomError(governanceHub, 'NoVotingPower');
         });
 
-        it('1.6.9.13. vote unsuccessfully when sum of vote exceed total vote power', async () => {
+        it('1.6.9.14. vote unsuccessfully when sum of vote exceed total vote power', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
                 addSampleProposals: true,
@@ -3253,7 +3253,7 @@ describe('1.6. GovernanceHub', async () => {
                 .to.be.revertedWithCustomError(governanceHub, 'InvalidWithdrawing');
         });
 
-        it('1.6.13.11. withdraw budget contribution unsuccessfully when proposal is voting and execution confirmation is not overdue', async () => {
+        it('1.6.13.10. withdraw budget contribution unsuccessfully when proposal is voting and execution confirmation is not overdue', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
                 addSampleProposals: true,
@@ -3268,7 +3268,7 @@ describe('1.6. GovernanceHub', async () => {
                 .to.be.revertedWithCustomError(governanceHub, 'InvalidWithdrawing');
         });
 
-        it('1.6.13.12. withdraw budget contribution unsuccessfully when sender did not contribute', async () => {
+        it('1.6.13.11. withdraw budget contribution unsuccessfully when sender did not contribute', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
                 addSampleProposals: true,
@@ -3283,7 +3283,7 @@ describe('1.6. GovernanceHub', async () => {
                 .to.be.revertedWithCustomError(governanceHub, 'NothingToWithdraw');
         });
         
-        it('1.6.13.13. withdraw budget contribution unsuccessfully when sender already withdrawn contribution', async () => {
+        it('1.6.13.12. withdraw budget contribution unsuccessfully when sender already withdrawn contribution', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
                 addSampleProposals: true,
@@ -3300,7 +3300,7 @@ describe('1.6. GovernanceHub', async () => {
                 .to.be.revertedWithCustomError(governanceHub, 'NothingToWithdraw');            
         });
         
-        it('1.6.13.14. withdraw budget contribution unsuccessfully when sending native token failed', async () => {
+        it('1.6.13.13. withdraw budget contribution unsuccessfully when sending native token failed', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
                 addSampleProposals: true,
@@ -3403,7 +3403,7 @@ describe('1.6. GovernanceHub', async () => {
             expect(proposal1.state).to.equal(ProposalState.Executing);
         });
 
-        it('1.6.14.2. confirm execution unsuccessfully with invalid proposal id', async () => {
+        it('1.6.14.3. confirm execution unsuccessfully with invalid proposal id', async () => {
             const fixture = await beforeGovernanceHubTest();
 
             const { governanceHub, manager } = fixture;
@@ -3414,7 +3414,7 @@ describe('1.6. GovernanceHub', async () => {
                 .to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
         });
 
-        it('1.6.14.3. confirm execution unsuccessfully when paused', async () => {
+        it('1.6.14.4. confirm execution unsuccessfully when paused', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
                 addSampleProposals: true,
@@ -3430,7 +3430,7 @@ describe('1.6. GovernanceHub', async () => {
                 .to.be.revertedWith('Pausable: paused');
         });
 
-        it('1.6.14.4. confirm execution unsuccessfully when contract is reentered', async () => {
+        it('1.6.14.5. confirm execution unsuccessfully when contract is reentered', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
                 addSampleProposals: true,
@@ -3452,7 +3452,7 @@ describe('1.6. GovernanceHub', async () => {
             )
         });
 
-        it('1.6.14.5. confirm execution unsuccessfully with unauthorized sender', async () => {
+        it('1.6.14.6. confirm execution unsuccessfully with unauthorized sender', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
                 addSampleProposals: true,
@@ -3470,7 +3470,7 @@ describe('1.6. GovernanceHub', async () => {
                 .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
         });
 
-        it('1.6.14.6. confirm execution unsuccessfully with unavailable token', async () => {
+        it('1.6.14.7. confirm execution unsuccessfully with unavailable token', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
                 addSampleProposals: true,
@@ -3487,7 +3487,7 @@ describe('1.6. GovernanceHub', async () => {
                 .to.be.revertedWithCustomError(governanceHub, 'UnavailableVotePowerToken');
         });
 
-        it('1.6.14.7. confirm execution unsuccessfully with inactive zone', async () => {
+        it('1.6.14.8. confirm execution unsuccessfully with inactive zone', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
                 addSampleProposals: true,
@@ -3510,7 +3510,7 @@ describe('1.6. GovernanceHub', async () => {
                 .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
         });
 
-        it('1.6.14.8. confirm execution unsuccessfully when sender is inactive in zone', async () => {
+        it('1.6.14.9. confirm execution unsuccessfully when sender is inactive in zone', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
                 addSampleProposals: true,
@@ -3534,7 +3534,7 @@ describe('1.6. GovernanceHub', async () => {
                 .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
         });
 
-        it('1.6.14.9. confirm execution unsuccessfully when proposal is pending', async () => {
+        it('1.6.14.10. confirm execution unsuccessfully when proposal is pending', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
                 addSampleProposals: true,
@@ -3546,7 +3546,7 @@ describe('1.6. GovernanceHub', async () => {
                 .to.be.revertedWithCustomError(governanceHub, 'InvalidConfirming');
         });
 
-        it('1.6.14.10. confirm execution unsuccessfully when proposal is executing', async () => {
+        it('1.6.14.11. confirm execution unsuccessfully when proposal is executing', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
                 addSampleProposals: true,
@@ -3562,7 +3562,7 @@ describe('1.6. GovernanceHub', async () => {
                 .to.be.revertedWithCustomError(governanceHub, 'InvalidConfirming');
         });
 
-        it('1.6.14.11. confirm execution unsuccessfully when proposal is successfully executed', async () => {
+        it('1.6.14.12. confirm execution unsuccessfully when proposal is successfully executed', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
                 addSampleProposals: true,
@@ -3579,7 +3579,7 @@ describe('1.6. GovernanceHub', async () => {
                 .to.be.revertedWithCustomError(governanceHub, 'InvalidConfirming');
         });
 
-        it('1.6.14.12. confirm execution unsuccessfully when proposal is unsuccessfully executed', async () => {
+        it('1.6.14.13. confirm execution unsuccessfully when proposal is unsuccessfully executed', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
                 addSampleProposals: true,
@@ -3596,7 +3596,7 @@ describe('1.6. GovernanceHub', async () => {
                 .to.be.revertedWithCustomError(governanceHub, 'InvalidConfirming');
         });
         
-        it('1.6.14.13. confirm execution unsuccessfully when proposal is disqualified', async () => {
+        it('1.6.14.14. confirm execution unsuccessfully when proposal is disqualified', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
                 addSampleProposals: true,
@@ -3609,7 +3609,7 @@ describe('1.6. GovernanceHub', async () => {
                 .to.be.revertedWithCustomError(governanceHub, 'InvalidConfirming');
         });
         
-        it('1.6.14.14. confirm execution unsuccessfully when proposal is rejected', async () => {
+        it('1.6.14.15. confirm execution unsuccessfully when proposal is rejected', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
                 addSampleProposals: true,
@@ -3623,7 +3623,7 @@ describe('1.6. GovernanceHub', async () => {
                 .to.be.revertedWithCustomError(governanceHub, "InvalidConfirming");
         });
         
-        it('1.6.14.14. confirm execution unsuccessfully when execution confirmation is overdue', async () => {
+        it('1.6.14.16. confirm execution unsuccessfully when execution confirmation is overdue', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
                 addSampleProposals: true,
@@ -3641,7 +3641,7 @@ describe('1.6. GovernanceHub', async () => {
                 .to.be.revertedWithCustomError(governanceHub, "InvalidConfirming");
         });
 
-        it('1.6.14.15. confirm execution unsuccessfully with failed proposal', async () => {
+        it('1.6.14.17. confirm execution unsuccessfully with failed proposal', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
                 addSampleProposals: true,
@@ -3656,7 +3656,7 @@ describe('1.6. GovernanceHub', async () => {
                 .to.be.revertedWithCustomError(governanceHub, "InvalidConfirming");
         });
 
-        it('1.6.14.16. confirm execution unsuccessfully with unsettled proposal', async () => {
+        it('1.6.14.18. confirm execution unsuccessfully with unsettled proposal', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
                 addSampleProposals: true,
@@ -3670,7 +3670,7 @@ describe('1.6. GovernanceHub', async () => {
                 .to.be.revertedWithCustomError(governanceHub, "InvalidConfirming");
         });
        
-        it('1.6.14.17. confirm execution unsuccessfully when transfer to operator failed', async () => {
+        it('1.6.14.19. confirm execution unsuccessfully when transfer to operator failed', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
                 addSampleProposals: true,

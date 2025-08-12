@@ -4776,7 +4776,7 @@ describe('7.1. PrestigePad', async () => {
                 .to.be.revertedWithCustomError(prestigePad, 'InvalidWithdrawing');
         });
 
-        it('7.1.15.7. withdraw deposit successfully when confirm time limit is overdue', async () => {
+        it('7.1.15.8. withdraw deposit successfully when confirm time limit is overdue', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -4795,7 +4795,7 @@ describe('7.1. PrestigePad', async () => {
                 .to.not.be.reverted;
         });
 
-        it('7.1.15.8. withdraw deposit successfully when sold quantity is not enough', async () => {
+        it('7.1.15.9. withdraw deposit successfully when sold quantity is not enough', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -4824,7 +4824,7 @@ describe('7.1. PrestigePad', async () => {
                 .to.not.be.reverted;
         });
 
-        it('7.1.15.9. withdraw deposit unsuccessfully when not deposited', async () => {
+        it('7.1.15.10. withdraw deposit unsuccessfully when not deposited', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -4841,7 +4841,7 @@ describe('7.1. PrestigePad', async () => {
                 .to.be.revertedWithCustomError(prestigePad, 'NothingToWithdraw');
         });
 
-        it('7.1.15.10. withdraw deposit unsuccessfully when already withdrawn', async () => {
+        it('7.1.15.11. withdraw deposit unsuccessfully when already withdrawn', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -4861,7 +4861,7 @@ describe('7.1. PrestigePad', async () => {
                 .to.be.revertedWithCustomError(prestigePad, 'NothingToWithdraw');
         });
 
-        it('7.1.15.11. withdraw deposit unsuccessfully when sending native token to user failed', async () => {
+        it('7.1.15.12. withdraw deposit unsuccessfully when sending native token to user failed', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
