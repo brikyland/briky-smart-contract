@@ -93,7 +93,7 @@ ERC1155SupplyUpgradeable {
         return super.totalSupply(_tokenId);
     }
 
-    function totalVoteAt(uint256 _tokenId, uint256 _at) external view returns (uint256) {
+    function totalVoteAt(uint256 _tokenId, uint256) external view returns (uint256) {
         if (!exists(_tokenId)) {
             revert InvalidTokenId();
         }

@@ -1522,7 +1522,6 @@ describe('1.6. GovernanceHub', async () => {
                 params2.stateURI,
                 totalWeight2,
                 quorum2,
-                timestamp,
                 params2.currency,
             );
             

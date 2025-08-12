@@ -37,6 +37,7 @@
 6.1. ERC721Marketplace (DONE)
 6.2. EstateMarketplace (DONE)
 6.3. MortgageMarketplace (DONE)
+6.4. ProjectMarketplace
 
 7. Launch
 7.1. PrestigePad

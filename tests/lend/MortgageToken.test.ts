@@ -31,6 +31,7 @@ import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 import { MockContract, smock } from '@defi-wonderland/smock';
 
 import {
+    callAdmin_ActivateIn,
     callAdmin_AuthorizeManagers,
     callAdmin_AuthorizeModerators,
     callAdmin_DeclareZones,
@@ -50,6 +51,8 @@ import { Initialization as LendInitialization } from '@tests/lend/test.initializ
 import { deployReserveVault } from '@utils/deployments/common/reserveVault';
 import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
 import { MockValidator } from '@utils/mockValidator';
+import { getRegisterCustodianTx } from '@utils/transaction/EstateToken';
+import { RegisterCustodianParams } from '@utils/models/EstateToken';
 
 
 async function testReentrancy_mortgageToken(
@@ -92,6 +95,8 @@ interface MortgageTokenFixture {
     lender2: any;
     borrower1: any;
     borrower2: any;
+    custodian1: any;
+    custodian2: any;
     manager: any;
     moderator: any;
     commissionReceiver: any;
@@ -114,7 +119,9 @@ describe('3.1. MortgageToken', async () => {
         const moderator = accounts[Constant.ADMIN_NUMBER + 6];
         const commissionReceiver = accounts[Constant.ADMIN_NUMBER + 7];
         const mortgageTokenOwner = accounts[Constant.ADMIN_NUMBER + 8];
-        
+        const custodian1 = accounts[Constant.ADMIN_NUMBER + 9];
+        const custodian2 = accounts[Constant.ADMIN_NUMBER + 10];
+
         const adminAddresses: string[] = admins.map(signer => signer.address);
         const admin = await deployAdmin(
             deployer.address,
@@ -220,6 +227,8 @@ describe('3.1. MortgageToken', async () => {
             lender2,
             borrower1,
             borrower2,
+            custodian1,
+            custodian2,
             mockCurrencyExclusiveRate,
             commissionReceiver,
             mortgageTokenOwner,
@@ -235,7 +244,7 @@ describe('3.1. MortgageToken', async () => {
     } = {}): Promise<MortgageTokenFixture> {
         const fixture = await loadFixture(mortgageTokenFixture);
 
-        const { admin, admins, currency, estateToken, feeReceiver, commissionToken, mortgageToken, borrower1, borrower2, lender1, lender2, estateForger, manager, moderator, commissionReceiver } = fixture;
+        const { admin, admins, currency, estateToken, feeReceiver, commissionToken, mortgageToken, borrower1, borrower2, lender1, lender2, estateForger, manager, moderator, commissionReceiver, custodian1, custodian2, validator } = fixture;
 
         await callAdmin_AuthorizeManagers(
             admin,
@@ -261,6 +270,15 @@ describe('3.1. MortgageToken', async () => {
             await fixture.admin.nonce()
         );
 
+        await callAdmin_ActivateIn(
+            admin,
+            admins,
+            ethers.utils.formatBytes32String("TestZone"),
+            [manager.address, moderator.address],
+            true,
+            await admin.nonce(),
+        );
+
         await callEstateToken_AuthorizeTokenizers(
             estateToken,
             admins,
@@ -275,6 +293,15 @@ describe('3.1. MortgageToken', async () => {
             commissionToken.address,
             await admin.nonce()
         );
+
+        for (const custodian of [custodian1, custodian2]) {
+            const params: RegisterCustodianParams = {
+                zone: ethers.utils.formatBytes32String("TestZone"),
+                custodian: custodian.address,
+                uri: "TestURI",
+            };
+            await callTransaction(getRegisterCustodianTx(estateToken as any, validator, manager, params))
+        }
 
         let currentTimestamp = await time.latest();
 
@@ -309,6 +336,7 @@ describe('3.1. MortgageToken', async () => {
                 10,
                 "Token1_URI",
                 currentTimestamp + 1e8,
+                custodian1.address,
                 commissionReceiver.address,
             ]));
             await estateForger.call(estateToken.address, estateToken.interface.encodeFunctionData('tokenizeEstate', [
@@ -317,6 +345,7 @@ describe('3.1. MortgageToken', async () => {
                 10,
                 "Token2_URI",
                 currentTimestamp + 2e8,
+                custodian2.address,
                 commissionReceiver.address,
             ]));
 
@@ -926,7 +955,7 @@ describe('3.1. MortgageToken', async () => {
             repayment: BigNumber,
             hasCommissionReceiver: boolean,
         ) {
-            const { mortgageToken, admin, admins, currency, commissionToken, deployer, estateToken, estateForger, borrower1, lender1, feeReceiver, commissionReceiver } = fixture;
+            const { mortgageToken, admin, admins, currency, commissionToken, deployer, estateToken, estateForger, borrower1, lender1, feeReceiver, commissionReceiver, custodian1 } = fixture;
 
             const currentLoanId = (await mortgageToken.loanNumber()).add(1);
             const currentTokenizationId = 0 // Does not matter
@@ -971,6 +1000,7 @@ describe('3.1. MortgageToken', async () => {
                 currentTokenizationId,
                 "TestURI",
                 currentTimestamp + 1e9,
+                custodian1.address,
                 commissionReceiverAddress,
             ])));
 

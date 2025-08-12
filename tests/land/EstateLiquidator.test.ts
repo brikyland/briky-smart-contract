@@ -22,7 +22,8 @@ import {
     FailReceiver,
     ReentrancyERC20,
 } from '@typechain-types';
-import { applyDiscount, callTransaction, getBalance, getSignatures, parseEther, prepareERC20, prepareNativeToken, randomWallet, resetERC20, resetNativeToken, testReentrancy } from '@utils/blockchain';
+import { callTransaction, getBalance, getSignatures, parseEther, prepareERC20, prepareNativeToken, randomWallet, resetERC20, resetNativeToken, testReentrancy } from '@utils/blockchain';
+import { applyDiscount } from '@utils/formula';
 import { Constant, DAY } from '@tests/test.constant';
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
@@ -71,6 +72,8 @@ import { ProposalRule, ProposalState } from '@utils/models/Proposal';
 import { getRegisterSellerInValidation } from '@utils/validation/EstateForger';
 import { deployReentrancyERC20 } from '@utils/deployments/mocks/mockReentrancy/reentrancyERC20';
 import { RequestExtractionParams } from '@utils/models/EstateLiquidator';
+import { RegisterCustodianParams } from '@utils/models/EstateToken';
+import { getRegisterCustodianTx } from '@utils/transaction/EstateToken';
 
 chai.use(smock.matchers);
 
@@ -98,6 +101,7 @@ interface EstateLiquidatorFixture {
     user: any;
     operator1: any, operator2: any, operator3: any;
     commissionReceiver1: any, commissionReceiver2: any;
+    custodian1: any, custodian2: any;
     
     zone1: string, zone2: string;
 }
@@ -199,6 +203,8 @@ describe('2.3. EstateLiquidator', async () => {
         const operator3 = accounts[Constant.ADMIN_NUMBER + 6];
         const commissionReceiver1 = accounts[Constant.ADMIN_NUMBER + 7];
         const commissionReceiver2 = accounts[Constant.ADMIN_NUMBER + 8];
+        const custodian1 = accounts[Constant.ADMIN_NUMBER + 9];
+        const custodian2 = accounts[Constant.ADMIN_NUMBER + 10];
 
         const adminAddresses: string[] = admins.map(signer => signer.address);
         const admin = await deployAdmin(
@@ -344,6 +350,8 @@ describe('2.3. EstateLiquidator', async () => {
             operator3,
             commissionReceiver1,
             commissionReceiver2,
+            custodian1,
+            custodian2,
             zone1,
             zone2,
             failReceiver,
@@ -372,8 +380,8 @@ describe('2.3. EstateLiquidator', async () => {
             dividendHub,
             nativePriceFeed,
             currencyPriceFeed,
-            commissionReceiver1,
-            commissionReceiver2,
+            commissionReceiver1, commissionReceiver2,
+            custodian1, custodian2,
             zone1, zone2,
             operator1, operator2, operator3,
             deployer,
@@ -454,6 +462,17 @@ describe('2.3. EstateLiquidator', async () => {
             await admin.nonce()
         );
 
+        for (const zone of [zone1, zone2]) {
+            for (const custodian of [custodian1, custodian2]) {
+                const params: RegisterCustodianParams = {
+                    zone,
+                    custodian: custodian.address,
+                    uri: "TestURI",
+                };
+                await callTransaction(getRegisterCustodianTx(estateToken as any, validator, manager, params))
+            }
+        }
+
         await callTransaction(estateForger.call(
             estateToken.address,
             estateToken.interface.encodeFunctionData("tokenizeEstate", [
@@ -462,6 +481,7 @@ describe('2.3. EstateLiquidator', async () => {
                 10,
                 "Token1_URI",
                 timestamp + 1e9,
+                custodian1.address,
                 commissionReceiver1.address,
             ])
         ));
@@ -474,6 +494,7 @@ describe('2.3. EstateLiquidator', async () => {
                 10,
                 "Token2_URI",
                 timestamp + 1e9,
+                custodian2.address,
                 commissionReceiver2.address,
             ])
         ));

@@ -25,7 +25,13 @@ import {
     Airdrop,
     PriceWatcher,
     ReserveVault,
-    ERC721Marketplace
+    ERC721Marketplace,
+    DividendHub,
+    GovernanceHub,
+    EstateLiquidator,
+    ProjectToken,
+    PrestigePad,
+    ProjectMarketplace
 } from '@typechain-types';
 import { deployTreasury } from '@utils/deployments/land/treasury';
 import { deployAdmin } from '@utils/deployments/common/admin';
@@ -47,36 +53,64 @@ import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { Initialization as LandInitialization } from '@tests/land/test.initialization';
 import { Initialization as LendInitialization } from '@tests/lend/test.initialization';
 import { Initialization as LucraInitialization } from '@tests/lucra/test.initialization';
+import { Initialization as LiquidityInitialization } from '@tests/liquidity/test.initialization';
+import { Initialization as LaunchInitialization } from '@tests/launch/test.initialization';
 import { deployPassportToken } from '@utils/deployments/lucra/passportToken';
 import { deployPromotionToken } from '@utils/deployments/lucra/promotionToken';
 import { deployAirdrop } from '@utils/deployments/lucra/airdrop';
 import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
 import { deployReserveVault } from '@utils/deployments/common/reserveVault';
+import { MockValidator } from '@utils/mockValidator';
+import { deployDividendHub } from '@utils/deployments/common/dividendHub';
+import { deployGovernanceHub } from '@utils/deployments/common/governanceHub';
+import { deployEstateLiquidator } from '@utils/deployments/land/estateLiquidator';
+import { deployProjectToken } from '@utils/deployments/launch/projectToken';
+import { deployPrestigePad } from '@utils/deployments/launch/prestigePad';
+import { deployProjectMarketplace } from '@utils/deployments/lux/projectMarketplace';
 
 interface CommonFixture {
     deployer: any;
     admins: any[];
 
+    // Common
     admin: Admin;
+    airdrop: Airdrop;
+    dividendHub: DividendHub;
     feeReceiver: FeeReceiver;
+    governanceHub: GovernanceHub;
     priceWatcher: PriceWatcher;
     reserveVault: ReserveVault;
+
+    // Land
+    commissionToken: CommissionToken;
     estateToken: EstateToken;
     estateForger: EstateForger;
-    estateMarketplace: EstateMarketplace;
-    commissionToken: CommissionToken;
-    erc721Marketplace: ERC721Marketplace;
+    estateLiquidator: EstateLiquidator;
+    
+    // Lend
+    mortgageToken: MortgageToken;
+    
+    // Liquidity
     treasury: Treasury;
     primaryToken: PrimaryToken;
     stakeToken: StakeToken;
     distributor: Distributor;
     dripDistributor: Driptributor;
     auction: Auction;
-    mortgageToken: MortgageToken;
-    mortgageMarketplace: MortgageMarketplace;
+    
+    // Lucra
     passportToken: PassportToken;
     promotionToken: PromotionToken;
-    airdrop: Airdrop;
+
+    // Lux
+    estateMarketplace: EstateMarketplace;
+    erc721Marketplace: ERC721Marketplace;
+    mortgageMarketplace: MortgageMarketplace;
+    projectMarketplace: ProjectMarketplace;
+    
+    // Launch
+    projectToken: ProjectToken;
+    prestigePad: PrestigePad;
 }
 
 
@@ -86,9 +120,13 @@ describe('1.1. Inspect', async () => {
         const deployer = accounts[0];
         const admins = [];
         for (let i = 1; i <= Constant.ADMIN_NUMBER; ++i) admins.push(accounts[i]);
+        const validatorWallet = accounts[Constant.ADMIN_NUMBER + 1];
         
         const adminAddresses: string[] = admins.map(signer => signer.address);
 
+        const validator = new MockValidator(validatorWallet as any);
+
+        // Common
         const admin = await deployAdmin(
             deployer.address,
             adminAddresses[0],
@@ -98,11 +136,22 @@ describe('1.1. Inspect', async () => {
             adminAddresses[4],
         ) as Admin;
 
-
         const feeReceiver = await deployFeeReceiver(
             deployer.address,
             admin.address,
         ) as FeeReceiver;
+
+        const dividendHub = await deployDividendHub(
+            deployer,
+            admin.address,
+        ) as DividendHub;
+
+        const governanceHub = await deployGovernanceHub(
+            deployer,
+            admin.address,
+            validator.getAddress(),
+            Constant.GOVERNANCE_HUB_FEE,
+        ) as GovernanceHub;
 
         const priceWatcher = await deployPriceWatcher(
             deployer,
@@ -114,10 +163,14 @@ describe('1.1. Inspect', async () => {
             admin.address,
         ) as ReserveVault;
 
+        const airdrop = await deployAirdrop(deployer) as Airdrop;
+
+        // Land
         const estateToken = await deployEstateToken(
             deployer.address,
             admin.address,
             feeReceiver.address,
+            validator.getAddress(),
             LandInitialization.ESTATE_TOKEN_BaseURI,
             LandInitialization.ESTATE_TOKEN_RoyaltyRate,
         ) as MockEstateToken;        
@@ -142,24 +195,39 @@ describe('1.1. Inspect', async () => {
             priceWatcher.address,
             feeReceiver.address,
             reserveVault.address,
-            LandInitialization.ESTATE_FORGER_FeeRate,
+            validator.getAddress(),
             LandInitialization.ESTATE_FORGER_BaseMinUnitPrice,
-            LandInitialization.ESTATE_FORGER_BaseMaxUnitPrice
+            LandInitialization.ESTATE_FORGER_BaseMaxUnitPrice,
+            LandInitialization.ESTATE_FORGER_FeeRate,
         ) as MockEstateForger;
-  
-        const estateMarketplace = await deployEstateMarketplace(
-            deployer.address,
+
+        const estateLiquidator = await deployEstateLiquidator(
+            deployer,
             admin.address,
             estateToken.address,
             commissionToken.address,
-        ) as EstateMarketplace;
-
-        const erc721Marketplace = await deployERC721Marketplace(
+            governanceHub.address,
+            dividendHub.address,
+            feeReceiver.address,
+            validator.getAddress(),
+            LandInitialization.ESTATE_LIQUIDATOR_FeeRate,
+        ) as EstateLiquidator;
+  
+        // Lend
+        const mortgageToken = await deployMortgageToken(
             deployer,
             admin.address,
+            estateToken.address,
+            commissionToken.address,
             feeReceiver.address,
-        ) as ERC721Marketplace;
+            LendInitialization.MORTGAGE_TOKEN_Name,
+            LendInitialization.MORTGAGE_TOKEN_Symbol,
+            LendInitialization.MORTGAGE_TOKEN_BaseURI,
+            LendInitialization.MORTGAGE_TOKEN_RoyaltyRate,
+            LendInitialization.MORTGAGE_TOKEN_FeeRate,
+        ) as MortgageToken;
 
+        // Liquidity
         const currency = await deployCurrency(
             deployer,
             'MockCurrency',
@@ -169,9 +237,9 @@ describe('1.1. Inspect', async () => {
         const primaryToken = await deployPrimaryToken(
             deployer,
             admin.address,
-            LandInitialization.PRIMARY_TOKEN_Name,
-            LandInitialization.PRIMARY_TOKEN_Symbol,
-            LandInitialization.PRIMARY_TOKEN_LiquidationUnlockedAt
+            LiquidityInitialization.PRIMARY_TOKEN_Name,
+            LiquidityInitialization.PRIMARY_TOKEN_Symbol,
+            LiquidityInitialization.PRIMARY_TOKEN_LiquidationUnlockedAt
         ) as PrimaryToken;
 
         const treasury = await deployTreasury(
@@ -185,8 +253,8 @@ describe('1.1. Inspect', async () => {
             deployer,
             admin.address,
             primaryToken.address,
-            LandInitialization.STAKE_TOKEN_Name_1,
-            LandInitialization.STAKE_TOKEN_Symbol_1,
+            LiquidityInitialization.STAKE_TOKEN_Name_1,
+            LiquidityInitialization.STAKE_TOKEN_Symbol_1,
         ) as StakeToken;
 
         const distributor = await deployDistributor(
@@ -209,26 +277,7 @@ describe('1.1. Inspect', async () => {
             primaryToken.address,
         ) as Auction;
 
-        const mortgageToken = await deployMortgageToken(
-            deployer,
-            admin.address,
-            estateToken.address,
-            commissionToken.address,
-            feeReceiver.address,
-            LendInitialization.MORTGAGE_TOKEN_Name,
-            LendInitialization.MORTGAGE_TOKEN_Symbol,
-            LendInitialization.MORTGAGE_TOKEN_BaseURI,
-            LendInitialization.MORTGAGE_TOKEN_RoyaltyRate,
-            LendInitialization.MORTGAGE_TOKEN_FeeRate,
-        ) as MortgageToken;
-
-        const mortgageMarketplace = await deployMortgageMarketplace(
-            deployer,
-            admin.address,
-            feeReceiver.address,
-            mortgageToken.address,
-        ) as MortgageMarketplace;
-
+        // Launch
         const passportToken = await deployPassportToken(
             deployer,
             admin.address,
@@ -248,59 +297,153 @@ describe('1.1. Inspect', async () => {
             LucraInitialization.PROMOTION_TOKEN_RoyaltyRate,
         ) as PromotionToken;
 
-        const airdrop = await deployAirdrop(deployer) as Airdrop;
+        // Launch
+        const projectToken = await deployProjectToken(
+            deployer,
+            admin.address,
+            estateToken.address,
+            feeReceiver.address,
+            validator.getAddress(),
+            LaunchInitialization.PROJECT_TOKEN_BaseURI,
+            LaunchInitialization.PROJECT_TOKEN_RoyaltyRate,
+        ) as ProjectToken;
+
+        const prestigePad = await deployPrestigePad(
+            deployer,
+            admin.address,
+            projectToken.address,
+            priceWatcher.address,
+            feeReceiver.address,
+            reserveVault.address,
+            validator.getAddress(),
+            LaunchInitialization.PRESTIGE_PAD_BaseMinUnitPrice,
+            LaunchInitialization.PRESTIGE_PAD_BaseMaxUnitPrice,
+            LaunchInitialization.PRESTIGE_PAD_FeeRate,
+        ) as PrestigePad;
+
+        // Lux
+        const estateMarketplace = await deployEstateMarketplace(
+            deployer.address,
+            admin.address,
+            estateToken.address,
+            commissionToken.address,
+        ) as EstateMarketplace;
+
+        const erc721Marketplace = await deployERC721Marketplace(
+            deployer,
+            admin.address,
+            feeReceiver.address,
+        ) as ERC721Marketplace;
+
+        const mortgageMarketplace = await deployMortgageMarketplace(
+            deployer,
+            admin.address,
+            feeReceiver.address,
+            mortgageToken.address,
+        ) as MortgageMarketplace;
+
+        const projectMarketplace = await deployProjectMarketplace(
+            deployer,
+            admin.address,
+            projectToken.address,
+        ) as ProjectMarketplace;
 
         return {
             deployer,
             admins,
             admin,
+            airdrop,
+            dividendHub,
             feeReceiver,
+            governanceHub,
             priceWatcher,
             reserveVault,
             estateToken,
-            estateForger,
-            estateMarketplace,
             commissionToken,
-            erc721Marketplace,
+            estateForger,
+            estateLiquidator,
+            mortgageToken,
             treasury,
             primaryToken,
             stakeToken,
             distributor,
             dripDistributor,
             auction,
-            mortgageToken,
-            mortgageMarketplace,
             passportToken,
             promotionToken,
-            airdrop,
+            projectToken,
+            prestigePad,
+            estateMarketplace,
+            erc721Marketplace,
+            mortgageMarketplace,
+            projectMarketplace,
         }
     }
 
     describe('1.1.1. version', async () => {
         it('1.1.1.1. Return correct version for each contract', async () => {
             const fixture = await loadFixture(commonFixture);
-            const { admin, feeReceiver, priceWatcher, reserveVault, estateForger, estateToken, estateMarketplace, commissionToken, erc721Marketplace, treasury, primaryToken, stakeToken, distributor, dripDistributor, auction, mortgageToken, mortgageMarketplace, passportToken, promotionToken, airdrop } = fixture;
+            const {
+                admin,
+                feeReceiver,
+                dividendHub,
+                governanceHub,
+                priceWatcher,
+                reserveVault,
+                airdrop,
+                commissionToken,
+                estateForger,
+                estateLiquidator,
+                estateToken,
+                mortgageToken,
+                treasury,
+                primaryToken,
+                stakeToken,
+                distributor,
+                dripDistributor,
+                auction,
+                passportToken,
+                promotionToken,
+                estateMarketplace,
+                erc721Marketplace,
+                mortgageMarketplace,
+                projectMarketplace,
+                prestigePad,
+                projectToken,
+            } = fixture;
 
             expect(await admin.version()).to.equal('v1.1.1');
             expect(await feeReceiver.version()).to.equal('v1.1.1');
             expect(await priceWatcher.version()).to.equal('v1.1.1');
             expect(await reserveVault.version()).to.equal('v1.1.1');
+            expect(await airdrop.version()).to.equal('v1.1.1');
+            expect(await dividendHub.version()).to.equal('v1.1.1');
+            expect(await governanceHub.version()).to.equal('v1.1.1');
+
+            expect(await mortgageToken.version()).to.equal('v1.1.1');
+
             expect(await estateToken.version()).to.equal('v1.1.1');
             expect(await estateForger.version()).to.equal('v1.1.1');
-            expect(await estateMarketplace.version()).to.equal('v1.1.1');
             expect(await commissionToken.version()).to.equal('v1.1.1');
-            expect(await erc721Marketplace.version()).to.equal('v1.1.1');
+            expect(await estateLiquidator.version()).to.equal('v1.1.1');
+
             expect(await treasury.version()).to.equal('v1.1.1');
             expect(await primaryToken.version()).to.equal('v1.1.1');
             expect(await stakeToken.version()).to.equal('v1.1.1');
             expect(await distributor.version()).to.equal('v1.1.1');
             expect(await dripDistributor.version()).to.equal('v1.1.1');
             expect(await auction.version()).to.equal('v1.1.1');
-            expect(await mortgageToken.version()).to.equal('v1.1.1');
-            expect(await mortgageMarketplace.version()).to.equal('v1.1.1');
+
             expect(await passportToken.version()).to.equal('v1.1.1');
             expect(await promotionToken.version()).to.equal('v1.1.1');
-            expect(await airdrop.version()).to.equal('v1.1.1');
+
+            expect(await estateMarketplace.version()).to.equal('v1.1.1');
+            expect(await erc721Marketplace.version()).to.equal('v1.1.1');
+            expect(await mortgageMarketplace.version()).to.equal('v1.1.1');
+            expect(await projectMarketplace.version()).to.equal('v1.1.1');
+
+            expect(await projectToken.version()).to.equal('v1.1.1');
+            expect(await prestigePad.version()).to.equal('v1.1.1');
         });
     });
 
@@ -331,28 +474,68 @@ describe('1.1. Inspect', async () => {
             }
 
             const fixture = await loadFixture(commonFixture);
-            const { admin, feeReceiver, priceWatcher, reserveVault, estateToken, estateForger, estateMarketplace, commissionToken, erc721Marketplace, treasury, primaryToken, stakeToken, distributor, dripDistributor, auction, mortgageToken, mortgageMarketplace, passportToken, promotionToken, airdrop } = fixture;
+            const {
+                admin,
+                feeReceiver,
+                dividendHub,
+                governanceHub,
+                priceWatcher,
+                reserveVault,
+                airdrop,
+                commissionToken,
+                estateForger,
+                estateLiquidator,
+                estateToken,
+                mortgageToken,
+                treasury,
+                primaryToken,
+                stakeToken,
+                distributor,
+                dripDistributor,
+                auction,
+                passportToken,
+                promotionToken,
+                estateMarketplace,
+                erc721Marketplace,
+                mortgageMarketplace,
+                projectMarketplace,
+                prestigePad,
+                projectToken,
+            } = fixture;
 
             await testReceiveNotExecuteAnyCode(admin, 28223);
+            
             await testReceiveNotExecuteAnyCode(feeReceiver, 28228);
             await testReceiveNotExecuteAnyCode(priceWatcher, 28233);
-            await testReceiveNotExecuteAnyCode(reserveVault, 28228);
-            await testReceiveNotExecuteAnyCode(estateToken, 28223);
-            await testReceiveNotExecuteAnyCode(estateForger, 28228);
-            await testReceiveNotExecuteAnyCode(estateMarketplace, 28223);
+            await testReceiveNotExecuteAnyCode(reserveVault, 28223);
+            await testReceiveNotExecuteAnyCode(airdrop, 28241);
+            await testReceiveNotExecuteAnyCode(dividendHub, 28241);
+            await testReceiveNotExecuteAnyCode(governanceHub, 28223);
+
             await testReceiveNotExecuteAnyCode(commissionToken, 28228);
-            await testReceiveNotExecuteAnyCode(erc721Marketplace, 28223);
+            await testReceiveNotExecuteAnyCode(estateToken, 28223);
+            await testReceiveNotExecuteAnyCode(estateForger, 28223);
+            await testReceiveNotExecuteAnyCode(estateLiquidator, 28228);
+
+            await testReceiveNotExecuteAnyCode(mortgageToken, 28228);
+
             await testReceiveNotExecuteAnyCode(treasury, 28236);
             await testReceiveNotExecuteAnyCode(primaryToken, 28228);
             await testReceiveNotExecuteAnyCode(stakeToken, 28228);
             await testReceiveNotExecuteAnyCode(distributor, 28228);
             await testReceiveNotExecuteAnyCode(dripDistributor, 28228);
             await testReceiveNotExecuteAnyCode(auction, 28241);
-            await testReceiveNotExecuteAnyCode(mortgageToken, 28228);
-            await testReceiveNotExecuteAnyCode(mortgageMarketplace, 28236);
+
             await testReceiveNotExecuteAnyCode(passportToken, 28228);
             await testReceiveNotExecuteAnyCode(promotionToken, 28228);
-            await testReceiveNotExecuteAnyCode(airdrop, 28241);
+
+            await testReceiveNotExecuteAnyCode(estateMarketplace, 28228);
+            await testReceiveNotExecuteAnyCode(erc721Marketplace, 28223);
+            await testReceiveNotExecuteAnyCode(mortgageMarketplace, 28236);
+            await testReceiveNotExecuteAnyCode(projectMarketplace, 28241);
+
+            await testReceiveNotExecuteAnyCode(projectToken, 28223);
+            await testReceiveNotExecuteAnyCode(prestigePad, 28223);
         });
     });
 });

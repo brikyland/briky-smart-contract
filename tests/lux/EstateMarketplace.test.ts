@@ -24,6 +24,7 @@ import { EstateMarketplaceOfferState } from '@utils/models/enums';
 import { MockContract, smock } from '@defi-wonderland/smock';
 
 import {
+    callAdmin_ActivateIn,
     callAdmin_AuthorizeManagers,
     callAdmin_AuthorizeModerators,
     callAdmin_DeclareZones,
@@ -43,6 +44,8 @@ import { Initialization as LandInitialization } from '@tests/land/test.initializ
 import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
 import { deployReserveVault } from '@utils/deployments/common/reserveVault';
 import { MockValidator } from '@utils/mockValidator';
+import { RegisterCustodianParams } from '@utils/models/EstateToken';
+import { getRegisterCustodianTx } from '@utils/transaction/EstateToken';
 
 interface EstateMarketplaceFixture {
     admin: Admin;
@@ -62,6 +65,8 @@ interface EstateMarketplaceFixture {
     seller2: any;
     buyer1: any;
     buyer2: any;
+    custodian1: any;
+    custodian2: any;
     commissionReceiver: any;
     manager: any;
     moderator: any;
@@ -102,6 +107,8 @@ describe('6.2. EstateMarketplace', async () => {
         const commissionReceiver = accounts[Constant.ADMIN_NUMBER + 5];
         const manager = accounts[Constant.ADMIN_NUMBER + 6];
         const moderator = accounts[Constant.ADMIN_NUMBER + 7];
+        const custodian1 = accounts[Constant.ADMIN_NUMBER + 8];
+        const custodian2 = accounts[Constant.ADMIN_NUMBER + 9];
 
         const adminAddresses: string[] = admins.map(signer => signer.address);
         const admin = await deployAdmin(
@@ -201,6 +208,8 @@ describe('6.2. EstateMarketplace', async () => {
             seller2,
             buyer1,
             buyer2,
+            custodian1,
+            custodian2,
             commissionReceiver,
             manager,
             moderator,
@@ -217,7 +226,7 @@ describe('6.2. EstateMarketplace', async () => {
     } = {}): Promise<EstateMarketplaceFixture> {
         const fixture = await loadFixture(estateMarketplaceFixture);
 
-        const { admin, admins, currency, estateToken, commissionToken, estateMarketplace, seller1, seller2, buyer1, buyer2, estateForger, commissionReceiver, manager, moderator } = fixture;
+        const { admin, admins, currency, estateToken, commissionToken, estateMarketplace, seller1, seller2, buyer1, buyer2, estateForger, commissionReceiver, manager, moderator, custodian1, custodian2, validator } = fixture;
 
         await callAdmin_DeclareZones(
             admin,
@@ -255,6 +264,24 @@ describe('6.2. EstateMarketplace', async () => {
             await admin.nonce(),
         );
 
+        await callAdmin_ActivateIn(
+            admin,
+            admins,
+            ethers.utils.formatBytes32String("TestZone"),
+            [manager.address, moderator.address],
+            true,
+            await admin.nonce(),
+        );
+
+        for (const custodian of [custodian1, custodian2]) {
+            const params: RegisterCustodianParams = {
+                zone: ethers.utils.formatBytes32String("TestZone"),
+                custodian: custodian.address,
+                uri: "TestURI",
+            };
+            await callTransaction(getRegisterCustodianTx(estateToken as any, validator, manager, params))
+        }
+
         let currentTimestamp = await time.latest();
         
         if (listSampleCurrencies) {
@@ -278,6 +305,7 @@ describe('6.2. EstateMarketplace', async () => {
                 10,
                 "Token1_URI",
                 currentTimestamp + 1e8,
+                custodian1.address,
                 commissionReceiver.address,
             ]));
 
@@ -287,6 +315,7 @@ describe('6.2. EstateMarketplace', async () => {
                 10,
                 "Token2_URI",
                 currentTimestamp + 2e8,
+                custodian2.address,
                 commissionReceiver.address,
             ]));
 
@@ -545,7 +574,7 @@ describe('6.2. EstateMarketplace', async () => {
         isSafeBuy: boolean,
     ) {
         const hasCommissionReceiver = true;
-        const { deployer, estateForger, estateToken, estateMarketplace, feeReceiver, commissionToken, commissionReceiver, admins, admin } = fixture;
+        const { deployer, estateForger, estateToken, estateMarketplace, feeReceiver, commissionToken, commissionReceiver, admins, admin, custodian1 } = fixture;
         const decimals = Constant.ESTATE_TOKEN_MAX_DECIMALS;
 
         await callEstateToken_UpdateRoyaltyRate(estateToken, admins, estateTokenRoyaltyRate, await admin.nonce());
@@ -588,6 +617,7 @@ describe('6.2. EstateMarketplace', async () => {
             0,
             `Token_${currentEstateId}`,
             currentTimestamp + 1e8,
+            custodian1.address,
             commissionReceiverAddress,
         ])));
         await callTransaction(estateToken.mint(seller.address, currentEstateId, initialAmount));
