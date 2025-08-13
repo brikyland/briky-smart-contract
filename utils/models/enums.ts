@@ -28,6 +28,13 @@ export enum MortgageMarketplaceOfferState {
     Cancelled
 }
 
+export enum ProjectMarketplaceOfferState {
+    Nil,
+    Selling,
+    Sold,
+    Cancelled
+}
+
 export enum StakeTokenOperation {
     Stake,
     Unstake,

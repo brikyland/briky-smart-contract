@@ -65,7 +65,7 @@ import { LaunchProjectParams, MintParams, RegisterInitiatorParams, UpdateProject
 import { getInitiateLaunchValidation } from '@utils/validation/PrestigePad';
 import { getRegisterInitiatorInvalidValidation, getRegisterInitiatorValidation, getUpdateProjectURIInvalidValidation, getUpdateProjectURIValidation } from '@utils/validation/ProjectToken';
 import { ContractTransaction } from 'ethers';
-import { getLaunchProjectTx, getMintTx, getRegisterInitiatorTx, getUpdateProjectURITx } from '@utils/transaction/ProjectToken';
+import { getCallLaunchProjectTx, getCallMintTx, getRegisterInitiatorTx, getUpdateProjectURITx } from '@utils/transaction/ProjectToken';
 import { getRegisterCustodianTx } from '@utils/transaction/EstateToken';
 import { callEstateToken_AuthorizeTokenizers, callEstateToken_UpdateCommissionToken } from '@utils/callWithSignatures/estateToken';
 import { deployReentrancyERC1155Receiver } from '@utils/deployments/mocks/mockReentrancy/reentrancyERC1155Receiver';
@@ -442,11 +442,11 @@ describe('7.2. ProjectToken', async () => {
         }
 
         if (mintProjectTokenForDepositor) {
-            await callTransaction(getMintTx(projectToken as any, prestigePad, {
+            await callTransaction(getCallMintTx(projectToken as any, prestigePad, {
                 projectId: BigNumber.from(1),
                 amount: BigNumber.from(1000),
             }));
-            await callTransaction(getMintTx(projectToken as any, prestigePad, {
+            await callTransaction(getCallMintTx(projectToken as any, prestigePad, {
                 projectId: BigNumber.from(2),
                 amount: BigNumber.from(100),
             }));
@@ -1144,7 +1144,7 @@ describe('7.2. ProjectToken', async () => {
             let timestamp = await time.latest() + 1000;
             await time.setNextBlockTimestamp(timestamp);
 
-            const tx1 = await getLaunchProjectTx(projectToken, prestigePad, params1);
+            const tx1 = await getCallLaunchProjectTx(projectToken, prestigePad, params1);
             await tx1.wait();
 
             const projectId1 = currentProjectNumber.add(1);
@@ -1180,7 +1180,7 @@ describe('7.2. ProjectToken', async () => {
             timestamp += 10;
             await time.setNextBlockTimestamp(timestamp);
 
-            const tx2 = await getLaunchProjectTx(projectToken, prestigePad, params2);
+            const tx2 = await getCallLaunchProjectTx(projectToken, prestigePad, params2);
             await tx2.wait();
 
             const projectId2 = currentProjectNumber.add(2);
@@ -1214,7 +1214,7 @@ describe('7.2. ProjectToken', async () => {
 
             const { defaultParams: params } = await beforeLaunchProjectTest(fixture);
 
-            await expect(getLaunchProjectTx(projectToken, prestigePad, params))
+            await expect(getCallLaunchProjectTx(projectToken, prestigePad, params))
                 .to.be.revertedWith(`Pausable: paused`);
         });
 
@@ -1226,7 +1226,7 @@ describe('7.2. ProjectToken', async () => {
 
             const { defaultParams: params } = await beforeLaunchProjectTest(fixture);
 
-            await expect(getLaunchProjectTx(projectToken, prestigePad, params))
+            await expect(getCallLaunchProjectTx(projectToken, prestigePad, params))
                 .to.be.revertedWithCustomError(projectToken, `Unauthorized`);
         });
 
@@ -1244,7 +1244,7 @@ describe('7.2. ProjectToken', async () => {
 
             const { defaultParams: params } = await beforeLaunchProjectTest(fixture);
 
-            await expect(getLaunchProjectTx(projectToken, prestigePad, params))
+            await expect(getCallLaunchProjectTx(projectToken, prestigePad, params))
                 .to.be.revertedWithCustomError(projectToken, `InvalidInput`);
         });
     });
@@ -1262,7 +1262,7 @@ describe('7.2. ProjectToken', async () => {
                 amount: BigNumber.from(100),
             }
 
-            const tx1 = await getMintTx(projectToken, prestigePad, params1);
+            const tx1 = await getCallMintTx(projectToken, prestigePad, params1);
 
             await expect(tx1).to.emit(projectToken, 'TransferSingle').withArgs(
                 prestigePad.address,
@@ -1281,7 +1281,7 @@ describe('7.2. ProjectToken', async () => {
                 amount: BigNumber.from(200),
             }
 
-            const tx2 = await getMintTx(projectToken, prestigePad, params2);
+            const tx2 = await getCallMintTx(projectToken, prestigePad, params2);
 
             await expect(tx2).to.emit(projectToken, 'TransferSingle').withArgs(
                 prestigePad.address,
@@ -1300,7 +1300,7 @@ describe('7.2. ProjectToken', async () => {
                 amount: BigNumber.from(100),
             }
 
-            const tx3 = await getMintTx(projectToken, prestigePad, params3);
+            const tx3 = await getCallMintTx(projectToken, prestigePad, params3);
 
             await expect(tx3).to.emit(projectToken, 'TransferSingle').withArgs(
                 prestigePad.address,
@@ -1322,14 +1322,14 @@ describe('7.2. ProjectToken', async () => {
                 projectId: BigNumber.from(0),
                 amount: BigNumber.from(100),
             }
-            await expect(getMintTx(projectToken, prestigePad, params1))
+            await expect(getCallMintTx(projectToken, prestigePad, params1))
                 .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
 
             const params2: MintParams = {
                 projectId: BigNumber.from(100),
                 amount: BigNumber.from(100),
             }
-            await expect(getMintTx(projectToken, prestigePad, params2))
+            await expect(getCallMintTx(projectToken, prestigePad, params2))
                 .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
         });
 
@@ -1344,7 +1344,7 @@ describe('7.2. ProjectToken', async () => {
                 projectId: BigNumber.from(1),
                 amount: BigNumber.from(100),
             }
-            await expect(getMintTx(projectToken, prestigePad, params))
+            await expect(getCallMintTx(projectToken, prestigePad, params))
                 .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
         });
 
@@ -1373,7 +1373,7 @@ describe('7.2. ProjectToken', async () => {
                 projectId: BigNumber.from(1),
                 amount: BigNumber.from(100),
             }
-            await expect(getMintTx(projectToken, prestigePad, params))
+            await expect(getCallMintTx(projectToken, prestigePad, params))
                 .to.be.revertedWith(`Pausable: paused`);
         });
     });
@@ -2259,7 +2259,7 @@ describe('7.2. ProjectToken', async () => {
             const totalAmount = amounts.reduce((a, b) => a.add(b), ethers.BigNumber.from(0));
 
             const projectId = BigNumber.from(1);
-            await callTransaction(getMintTx(projectToken as any, prestigePad, {
+            await callTransaction(getCallMintTx(projectToken as any, prestigePad, {
                 projectId,
                 amount: totalAmount,
             }));
@@ -2449,7 +2449,7 @@ describe('7.2. ProjectToken', async () => {
                 }
             }
 
-            await callTransaction(getMintTx(projectToken as any, prestigePad, {
+            await callTransaction(getCallMintTx(projectToken as any, prestigePad, {
                 projectId,
                 amount: BigNumber.from(1000),
             }));

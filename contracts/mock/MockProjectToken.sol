@@ -6,4 +6,11 @@ import { Revert } from "../lib/Revert.sol";
 import { ProxyCaller } from "./common/ProxyCaller.sol";
 
 contract MockProjectToken is ProjectToken, ProxyCaller {
+    function updateFeeReceiver(address _feeReceiver) external {
+        feeReceiver = _feeReceiver;
+    }
+
+    function mintTo(address to, uint256 projectId, uint256 amount) external {
+        _mint(to, projectId, amount, "");
+    }
 }

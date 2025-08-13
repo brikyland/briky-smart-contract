@@ -26,7 +26,7 @@ export async function getRegisterInitiatorTx(
     return tx;            
 }
 
-export async function getLaunchProjectTx(
+export async function getCallLaunchProjectTx(
     projectToken: MockProjectToken,
     launchpad: any,
     params: LaunchProjectParams
@@ -44,12 +44,12 @@ export async function getLaunchProjectTx(
     return tx;
 }
 
-export async function getMintTx(
+export async function getCallMintTx(
     projectToken: MockProjectToken,
-    prestigePad: any,
+    launchpad: any,
     params: MintParams
 ): Promise<ContractTransaction> {
-    const tx = prestigePad.call(
+    const tx = launchpad.call(
         projectToken.address,
         projectToken.interface.encodeFunctionData('mint', [
             params.projectId,

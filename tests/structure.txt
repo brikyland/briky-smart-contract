@@ -16,7 +16,7 @@
 2.1. CommissionToken (DONE)
 2.2. EstateForger (DONE)
 2.3. EstateLiquidator (DONE)
-2.4. EstateToken
+2.4. EstateToken (DONE)
 
 3. Lend
 3.1. MortgageToken (DONE)
@@ -40,6 +40,5 @@
 6.4. ProjectMarketplace
 
 7. Launch
-7.1. PrestigePad
-7.2. ProjectToken
-
+7.1. PrestigePad (DONE)
+7.2. ProjectToken (DONE)
