@@ -1,4 +1,4 @@
-import { Treasury } from "../../typechain-types";
+import { Treasury } from "@typechain-types";
 import { getSignatures } from "../blockchain";
 import { ethers } from "hardhat";
 import { callTransaction } from "../blockchain";

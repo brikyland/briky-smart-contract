@@ -1,4 +1,4 @@
-import { PrimaryToken } from "../../typechain-types";
+import { PrimaryToken } from "@typechain-types";
 import { getSignatures } from "../blockchain";
 import { ethers } from "hardhat";
 import { callTransaction } from "../blockchain";

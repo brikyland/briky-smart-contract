@@ -1,7 +1,7 @@
 import { LedgerSigner } from '@anders-t/ethers-ledger';
 import assert from 'assert';
 import { ethers, network, upgrades } from 'hardhat';
-import { deployPriceWatcher } from '../../../utils/deployments/common/priceWatcher';
+import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
 
 async function deployOrUpgradePriceWatcher() {
     const config = network.config as any;

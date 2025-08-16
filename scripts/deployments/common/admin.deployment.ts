@@ -1,7 +1,7 @@
 import { LedgerSigner } from '@anders-t/ethers-ledger';
 import assert from 'assert';
 import { ethers, network, upgrades } from 'hardhat';
-import { deployAdmin } from '../../../utils/deployments/common/admin';
+import { deployAdmin } from '@utils/deployments/common/admin';
 
 async function deployOrUpgradeAdmin() {
     const config = network.config as any;

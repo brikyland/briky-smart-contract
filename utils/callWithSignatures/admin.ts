@@ -1,4 +1,4 @@
-import { Admin } from "../../typechain-types";
+import { Admin } from "@typechain-types";
 import { ethers } from "hardhat";
 import { callTransaction } from "../blockchain";
 import { getSignatures } from "../blockchain";

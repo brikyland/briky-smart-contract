@@ -1,7 +1,7 @@
 import { LedgerSigner } from '@anders-t/ethers-ledger';
 import assert from 'assert';
 import { ethers, network, upgrades } from 'hardhat';
-import { deployEstateLiquidator } from '../../../utils/deployments/land/estateLiquidator';
+import { deployEstateLiquidator } from '@utils/deployments/land/estateLiquidator';
 import { Initialization } from './initialization';
 
 async function deployOrUpgradeEstateLiquidator() {

@@ -1,7 +1,7 @@
 import { LedgerSigner } from '@anders-t/ethers-ledger';
 import assert from 'assert';
 import { ethers, network, upgrades } from 'hardhat';
-import { deployGovernanceHub } from '../../../utils/deployments/common/governanceHub';
+import { deployGovernanceHub } from '@utils/deployments/common/governanceHub';
 import { Initialization } from "./initialization";
 
 async function deployOrUpgradeGovernanceHub() {

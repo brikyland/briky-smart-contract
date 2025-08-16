@@ -1,7 +1,7 @@
 import { LedgerSigner } from '@anders-t/ethers-ledger';
 import assert from 'assert';
 import { ethers, network, upgrades } from 'hardhat';
-import { deployCommissionToken } from '../../../utils/deployments/land/commissionToken';
+import { deployCommissionToken } from '@utils/deployments/land/commissionToken';
 import { Initialization } from './initialization';
 
 async function deployOrUpgradeCommissionToken() {

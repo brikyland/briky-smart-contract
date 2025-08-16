@@ -1,6 +1,6 @@
 import assert from 'assert';
 import { ethers, network, upgrades } from 'hardhat';
-import { deployStakeToken } from '../../../../utils/deployments/liquidity/stakeToken';
+import { deployStakeToken } from '@utils/deployments/liquidity/stakeToken';
 
 export async function deployOrUpgradeStakeToken(
     signer: any,

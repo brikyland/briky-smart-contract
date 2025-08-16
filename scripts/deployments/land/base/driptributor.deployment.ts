@@ -1,7 +1,7 @@
 import assert from 'assert';
 import { BigNumber } from 'ethers';
 import { ethers, network, upgrades } from 'hardhat';
-import { deployDriptributor } from '../../../../utils/deployments/liquidity/driptributor';
+import { deployDriptributor } from '@utils/deployments/liquidity/driptributor';
 
 export async function deployOrUpgradeDriptributor(
     signer: any,

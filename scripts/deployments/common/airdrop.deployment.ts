@@ -1,6 +1,6 @@
 import { LedgerSigner } from '@anders-t/ethers-ledger';
 import { ethers, network, upgrades } from 'hardhat';
-import { deployAirdrop } from '../../../utils/deployments/lucra/airdrop';
+import { deployAirdrop } from '@utils/deployments/common/airdrop';
 
 async function deployOrUpgradeAirdrop() {
     const config = network.config as any;

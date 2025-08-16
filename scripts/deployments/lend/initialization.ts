@@ -1,4 +1,4 @@
-import { parseEther } from "../../../utils/blockchain";
+import { parseEther } from "@utils/blockchain";
 
 export const Initialization = {
     // Mortgage Token

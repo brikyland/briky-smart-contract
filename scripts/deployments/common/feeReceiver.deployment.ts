@@ -1,7 +1,7 @@
 import { LedgerSigner } from '@anders-t/ethers-ledger';
 import assert from 'assert';
 import { ethers, network, upgrades } from 'hardhat';
-import { deployFeeReceiver } from '../../../utils/deployments/common/feeReceiver';
+import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
 
 async function deployOrUpgradeFeeReceiver() {
     const config = network.config as any;
