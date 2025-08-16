@@ -1,4 +1,4 @@
-import { CommissionMarketplace } from "../../typechain-types";
+import { CommissionMarketplace } from "@typechain-types";
 import { callTransaction } from "../blockchain";
 import { getSignatures } from "../blockchain";
 import { ethers } from "hardhat";

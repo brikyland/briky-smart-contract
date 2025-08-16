@@ -1,6 +1,6 @@
 import { LedgerSigner } from '@anders-t/ethers-ledger';
 import { ethers, network } from 'hardhat';
-import { Constant } from '../../../../utils/constant';
+import { Constant } from '@utils/constant';
 import { deployOrUpgradeDriptributor } from '../base/driptributor.deployment';
 
 async function deployOrUpgradeBackerRoundDistributor() {

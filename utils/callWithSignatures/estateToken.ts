@@ -1,4 +1,4 @@
-import { EstateToken } from "../../typechain-types";
+import { EstateToken } from "@typechain-types";
 import { getSignatures } from "../blockchain";
 import { ethers } from "hardhat";
 import { callTransaction } from "../blockchain";

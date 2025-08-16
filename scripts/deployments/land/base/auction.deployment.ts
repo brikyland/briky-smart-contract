@@ -1,6 +1,6 @@
 import assert from 'assert';
 import { ethers, network, upgrades } from 'hardhat';
-import { deployAuction } from '../../../../utils/deployments/land/auction';
+import { deployAuction } from '@utils/deployments/liquidity/auction';
 
 export async function deployOrUpgradeAuction(
     signer: any,

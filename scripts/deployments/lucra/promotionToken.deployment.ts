@@ -1,7 +1,7 @@
 import { LedgerSigner } from '@anders-t/ethers-ledger';
 import assert from 'assert';
 import { ethers, network, upgrades } from 'hardhat';
-import { deployPromotionToken } from '../../../utils/deployments/lucra/promotionToken';
+import { deployPromotionToken } from '@utils/deployments/lucra/promotionToken';
 import { Initialization } from './initialization';
 
 async function deployOrUpgradePromotionToken() {

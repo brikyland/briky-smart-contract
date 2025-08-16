@@ -1,7 +1,7 @@
 import { LedgerSigner } from '@anders-t/ethers-ledger';
 import assert from 'assert';
 import { ethers, network, upgrades } from 'hardhat';
-import { deployDividendHub } from '../../../utils/deployments/common/dividendHub';
+import { deployDividendHub } from '@utils/deployments/common/dividendHub';
 
 async function deployOrUpgradeDividendHub() {
     const config = network.config as any;

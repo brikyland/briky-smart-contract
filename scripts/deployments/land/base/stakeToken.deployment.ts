@@ -1,6 +1,6 @@
 import assert from 'assert';
 import { ethers, network, upgrades } from 'hardhat';
-import { deployStateToken } from '../../../../utils/deployments/land/stateToken';
+import { deployStakeToken } from '@utils/deployments/liquidity/stakeToken';
 
 export async function deployOrUpgradeStakeToken(
     signer: any,
@@ -32,7 +32,7 @@ export async function deployOrUpgradeStakeToken(
                 `Missing ${networkName}_PRIMARY_TOKEN_ADDRESS from environment variables!`
             );
 
-            const stakeToken = await deployStateToken(
+            const stakeToken = await deployStakeToken(
                 signer,
                 adminAddress,
                 primaryTokenAddress,
