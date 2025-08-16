@@ -10,8 +10,8 @@ import {
 import { callTransaction, getSignatures, prepareERC20, prepareNativeToken } from '@utils/blockchain';
 import { Constant } from '@tests/test.constant';
 import { deployAdmin } from '@utils/deployments/common/admin';
-import { deployCurrency } from '@utils/deployments/common/currency';
-import { deployReentrancyERC20 } from '@utils/deployments/mocks/mockReentrancy/reentrancyERC20';
+import { deployCurrency } from '@utils/deployments/mock/currency';
+import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { randomWallet } from '@utils/blockchain';
 import { MockContract, smock } from '@defi-wonderland/smock';
@@ -19,8 +19,8 @@ import { MockContract, smock } from '@defi-wonderland/smock';
 import { callAdmin_UpdateCurrencyRegistries } from '@utils/callWithSignatures/admin';
 import { BigNumber } from 'ethers';
 import { callReserveVault_AuthorizeProvider, callReserveVault_Pause } from '@utils/callWithSignatures/reserveVault';
-import { deployMockProvider } from '@utils/deployments/mocks/mockProvider';
-import { deployFailReceiver } from '@utils/deployments/mocks/failReceiver';
+import { deployMockProvider } from '@utils/deployments/mock/mockProvider';
+import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 
 interface ReserveVaultFixture {
     admin: Admin;

@@ -10,8 +10,8 @@ import {
 } from '@typechain-types';
 import { Constant } from '@tests/test.constant';
 import { deployAdmin } from '@utils/deployments/common/admin';
-import { deployCurrency } from '@utils/deployments/common/currency';
-import { deployReentrancyERC20 } from '@utils/deployments/mocks/mockReentrancy/reentrancyERC20';
+import { deployCurrency } from '@utils/deployments/mock/currency';
+import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
 import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 import { deployDividendHub } from '@utils/deployments/common/dividendHub';
 import { callDividendHub_Pause } from '@utils/callWithSignatures/dividendHub';
@@ -20,7 +20,7 @@ import { expect } from 'chai';
 import { callTransaction, prepareERC20, prepareNativeToken } from '@utils/blockchain';
 import { deployGovernor } from '@utils/deployments/common/governor';
 import { BigNumber } from 'ethers';
-import { deployFailReceiver } from '@utils/deployments/mocks/failReceiver';
+import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { MockContract, smock } from '@defi-wonderland/smock';
 import { expectEqualWithErrorMargin } from '@utils/testHelper';
 

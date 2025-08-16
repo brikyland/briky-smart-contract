@@ -25,7 +25,7 @@ import { callTransaction, getBalance, getSignatures, prepareERC20, prepareNative
 import { Constant } from '@tests/test.constant';
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
-import { deployCurrency } from '@utils/deployments/common/currency';
+import { deployCurrency } from '@utils/deployments/mock/currency';
 import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 
 import { MockContract, smock } from '@defi-wonderland/smock';
@@ -42,9 +42,9 @@ import { getBytes4Hex, getInterfaceID, randomBigNumber } from '@utils/utils';
 import { deployMortgageToken } from '@utils/deployments/lend/mortgageToken';
 import { callEstateToken_AuthorizeTokenizers, callEstateToken_UpdateCommissionToken } from '@utils/callWithSignatures/estateToken';
 import { callMortgageToken_Pause, callMortgageToken_UpdateFeeRate } from '@utils/callWithSignatures/mortgageToken';
-import { deployFailReceiver } from '@utils/deployments/mocks/failReceiver';
-import { deployReentrancyERC1155Holder } from '@utils/deployments/mocks/mockReentrancy/reentrancyERC1155Holder';
-import { deployReentrancy } from '@utils/deployments/mocks/mockReentrancy/reentrancy';
+import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
+import { deployReentrancyERC1155Holder } from '@utils/deployments/mock/mockReentrancy/reentrancyERC1155Holder';
+import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
 import { LoanState } from '@utils/models/enums';
 import { Initialization as LandInitialization } from '@tests/land/test.initialization';
 import { Initialization as LendInitialization } from '@tests/lend/test.initialization';

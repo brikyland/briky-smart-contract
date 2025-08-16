@@ -26,7 +26,7 @@ import { callTransaction, callTransactionAtTimestamp, getBalance, getSignatures,
 import { Constant, DAY } from '@tests/test.constant';
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
-import { deployCurrency } from '@utils/deployments/common/currency';
+import { deployCurrency } from '@utils/deployments/mock/currency';
 import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 
 import { MockContract, smock } from '@defi-wonderland/smock';
@@ -50,12 +50,12 @@ import { OrderedMap } from '@utils/utils';
 import { deployEstateForger } from '@utils/deployments/land/estateForger';
 import { addCurrencyToAdminAndPriceWatcher } from '@utils/callWithSignatures/common';
 import { callEstateForger_Pause, callEstateForger_UpdateBaseUnitPriceRange, callEstateForger_UpdateFeeRate, callEstateForger_Whitelist } from '@utils/callWithSignatures/estateForger';
-import { deployMockPriceFeed } from '@utils/deployments/mocks/mockPriceFeed';
-import { deployFailReceiver } from '@utils/deployments/mocks/failReceiver';
-import { deployReentrancy } from '@utils/deployments/mocks/mockReentrancy/reentrancy';
+import { deployMockPriceFeed } from '@utils/deployments/mock/mockPriceFeed';
+import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
+import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
 import { deployEstateToken } from '@utils/deployments/land/estateToken';
-import { deployMockEstateForger } from '@utils/deployments/mocks/mockEstateForger';
-import { deployReentrancyERC1155Holder } from '@utils/deployments/mocks/mockReentrancy/reentrancyERC1155Holder';
+import { deployMockEstateForger } from '@utils/deployments/mock/mockEstateForger';
+import { deployReentrancyERC1155Holder } from '@utils/deployments/mock/mockReentrancy/reentrancyERC1155Holder';
 import { request } from 'http';
 import { Initialization as LandInitialization } from '@tests/land/test.initialization';
 import { Initialization as LaunchInitialization } from '@tests/launch/test.initialization';
@@ -67,16 +67,16 @@ import { Rate } from '@utils/models/Common';
 import { MockValidator } from '@utils/mockValidator';
 import { RegisterSellerInParams, RequestTokenizationParams, UpdateRequestURIParams, UpdateRequestAgendaParams } from '@utils/models/EstateForger';
 import { getRegisterSellerInValidation, getRequestTokenizationValidation, getRegisterSellerInInvalidValidation, getRequestTokenizationInvalidValidation, getUpdateRequestURIValidation, getUpdateRequestURIInvalidValidation } from '@utils/validation/EstateForger';
-import { deployMockPrestigePad } from '@utils/deployments/mocks/mockPrestigePad';
+import { deployMockPrestigePad } from '@utils/deployments/mock/mockPrestigePad';
 import { callPrestigePad_Pause } from '@utils/callWithSignatures/prestigePad';
 import { InitiateLaunchParams, RaiseNextRoundParams, UpdateRoundParams, UpdateRoundsParams } from '@utils/models/PrestigePad';
 import { getInitiateLaunchInvalidValidation, getInitiateLaunchValidation, getUpdateRoundInvalidValidation, getUpdateRoundsInvalidValidation, getUpdateRoundsValidation, getUpdateRoundValidation } from '@utils/validation/PrestigePad';
 import { RegisterInitiatorParams } from '@utils/models/ProjectToken';
 import { getRegisterInitiatorValidation } from '@utils/validation/ProjectToken';
 import { callProjectToken_AuthorizeLaunchpads, callProjectToken_Pause } from '@utils/callWithSignatures/projectToken';
-import { deployReentrancyERC1155Receiver } from '@utils/deployments/mocks/mockReentrancy/reentrancyERC1155Receiver';
-import { deployReentrancyExclusiveERC20 } from '@utils/deployments/mocks/mockReentrancy/reentrancyExclusiveERC20';
-import { deployReentrancyERC20 } from '@utils/deployments/mocks/mockReentrancy/reentrancyERC20';
+import { deployReentrancyERC1155Receiver } from '@utils/deployments/mock/mockReentrancy/reentrancyERC1155Receiver';
+import { deployReentrancyExclusiveERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyExclusiveERC20';
+import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
 
 chai.use(smock.matchers);
 

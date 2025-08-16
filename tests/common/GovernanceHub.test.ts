@@ -22,10 +22,10 @@ import { callAdmin_ActivateIn, callAdmin_AuthorizeGovernor, callAdmin_AuthorizeM
 import { callGovernanceHub_Pause } from '@utils/callWithSignatures/governanceHub';
 import { MockValidator } from '@utils/mockValidator';
 import { scale } from '@utils/utils';
-import { deployCurrency } from '@utils/deployments/common/currency';
-import { deployFailReceiver } from '@utils/deployments/mocks/failReceiver';
-import { deployReentrancyERC20 } from '@utils/deployments/mocks/mockReentrancy/reentrancyERC20';
-import { deployReentrancy } from '@utils/deployments/mocks/mockReentrancy/reentrancy';
+import { deployCurrency } from '@utils/deployments/mock/currency';
+import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
+import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
+import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
 import { ProposeParams, AdmitParams, DisqualifyParams, UpdateExecutionParams, ConcludeExecutionParams } from '@utils/models/GovernanceHub';
 import { getProposeValidation, getAdmitValidation, getDisqualifyValidation, getConcludeExecutionValidation, getProposeInvalidValidation, getAdmitInvalidValidation, getDisqualifyInvalidValidation, getUpdateExecutionValidation, getUpdateExecutionInvalidValidation, getConcludeExecutionInvalidValidation } from '@utils/validation/GovernanceHub';
 

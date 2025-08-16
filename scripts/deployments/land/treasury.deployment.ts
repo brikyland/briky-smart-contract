@@ -1,7 +1,7 @@
 import { LedgerSigner } from '@anders-t/ethers-ledger';
 import assert from 'assert';
 import { ethers, network, upgrades } from 'hardhat';
-import { deployTreasury } from '../../../utils/deployments/land/treasury';
+import { deployTreasury } from '../../../utils/deployments/liquidity/treasury';
 
 async function deployOrUpgradeTreasury() {
     const config = network.config as any;

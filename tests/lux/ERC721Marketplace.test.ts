@@ -12,7 +12,7 @@ import { callTransaction, getBalance, prepareERC20, prepareNativeToken, randomWa
 import { Constant } from '@tests/test.constant';
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
-import { deployCurrency } from '@utils/deployments/common/currency';
+import { deployCurrency } from '@utils/deployments/mock/currency';
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 
 import { MockContract, smock } from '@defi-wonderland/smock';
@@ -24,11 +24,11 @@ import {
     callAdmin_UpdateCurrencyRegistries,
 } from '@utils/callWithSignatures/admin';
 import { BigNumber, Contract, Wallet } from 'ethers';
-import { deployERC721Marketplace } from '@utils/deployments/common/erc721Marketplace';
+import { deployERC721Marketplace } from '@utils/deployments/lux/erc721Marketplace';
 import { ERC721MarketplaceOfferState } from '@utils/models/enums';
 import { callERC721Marketplace_Pause } from '@utils/callWithSignatures/erc721Marketplace';
-import { deployFailReceiver } from '@utils/deployments/mocks/failReceiver';
-import { deployReentrancy } from '@utils/deployments/mocks/mockReentrancy/reentrancy';
+import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
+import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
 import { remain } from '@utils/formula';
 
 interface ERC721MarketplaceFixture {

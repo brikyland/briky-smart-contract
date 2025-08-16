@@ -21,9 +21,9 @@ import { getBytes4Hex, getInterfaceID } from '@utils/utils';
 import { Initialization } from './test.initialization';
 import { callPromotionToken_CancelContents, callPromotionToken_CreateContents, callPromotionToken_Pause } from '@utils/callWithSignatures/promotionToken';
 import { deployPromotionToken } from '@utils/deployments/lucra/promotionToken';
-import { deployFailReceiver } from '@utils/deployments/mocks/failReceiver';
-import { deployReentrancyERC20 } from '@utils/deployments/mocks/mockReentrancy/reentrancyERC20';
-import { deployCurrency } from '@utils/deployments/common/currency';
+import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
+import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
+import { deployCurrency } from '@utils/deployments/mock/currency';
 
 interface PromotionTokenFixture {
     admin: Admin;

@@ -10,13 +10,13 @@ import {
 import { callTransaction, getSignatures, randomWallet } from '@utils/blockchain';
 import { Constant } from '@tests/test.constant';
 import { deployAdmin } from '@utils/deployments/common/admin';
-import { deployCurrency } from '@utils/deployments/common/currency';
+import { deployCurrency } from '@utils/deployments/mock/currency';
 import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 
 import { smock } from '@defi-wonderland/smock';
 
 import { addCurrencyToAdminAndPriceWatcher } from '@utils/callWithSignatures/common';
-import { deployMockPriceFeed } from '@utils/deployments/mocks/mockPriceFeed';
+import { deployMockPriceFeed } from '@utils/deployments/mock/mockPriceFeed';
 import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
 
 chai.use(smock.matchers);

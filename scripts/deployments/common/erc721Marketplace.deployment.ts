@@ -1,7 +1,7 @@
 import { LedgerSigner } from '@anders-t/ethers-ledger';
 import assert from 'assert';
 import { ethers, network, upgrades } from 'hardhat';
-import { deployERC721Marketplace } from '../../../utils/deployments/common/erc721Marketplace';
+import { deployERC721Marketplace } from '../../../utils/deployments/lux/erc721Marketplace';
 
 async function deployOrUpgradeERC721Marketplace() {
     const config = network.config as any;

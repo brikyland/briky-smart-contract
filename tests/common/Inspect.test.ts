@@ -33,22 +33,22 @@ import {
     PrestigePad,
     ProjectMarketplace
 } from '@typechain-types';
-import { deployTreasury } from '@utils/deployments/land/treasury';
+import { deployTreasury } from '@utils/deployments/liquidity/treasury';
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
 import { deployEstateToken } from '@utils/deployments/land/estateToken';
 import { deployCommissionToken } from '@utils/deployments/land/commissionToken';
-import { deployERC721Marketplace } from '@utils/deployments/common/erc721Marketplace';
+import { deployERC721Marketplace } from '@utils/deployments/lux/erc721Marketplace';
 import { deployMortgageToken } from '@utils/deployments/lend/mortgageToken';
 import { deployEstateForger } from '@utils/deployments/land/estateForger';
-import { deployEstateMarketplace } from '@utils/deployments/land/estateMarketplace';
-import { deployCurrency } from '@utils/deployments/common/currency';
-import { deployPrimaryToken } from '@utils/deployments/land/primaryToken';
-import { deployStakeToken } from '@utils/deployments/land/stakeToken';
-import { deployDistributor } from '@utils/deployments/land/distributor';
-import { deployDriptributor } from '@utils/deployments/land/driptributor';
-import { deployAuction } from '@utils/deployments/land/auction';
-import { deployMortgageMarketplace } from '@utils/deployments/lend/mortgageMarketplace';
+import { deployEstateMarketplace } from '@utils/deployments/lux/estateMarketplace';
+import { deployCurrency } from '@utils/deployments/mock/currency';
+import { deployPrimaryToken } from '@utils/deployments/liquidity/primaryToken';
+import { deployStakeToken } from '@utils/deployments/liquidity/stakeToken';
+import { deployDistributor } from '@utils/deployments/liquidity/distributor';
+import { deployDriptributor } from '@utils/deployments/liquidity/driptributor';
+import { deployAuction } from '@utils/deployments/liquidity/auction';
+import { deployMortgageMarketplace } from '@utils/deployments/lux/mortgageMarketplace';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { Initialization as LandInitialization } from '@tests/land/test.initialization';
 import { Initialization as LendInitialization } from '@tests/lend/test.initialization';

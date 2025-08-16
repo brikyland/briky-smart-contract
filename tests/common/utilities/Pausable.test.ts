@@ -8,7 +8,7 @@ import { callTransaction, getSignatures } from '@utils/blockchain';
 import { Constant } from '@tests/test.constant';
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-import { deployMockPausable } from '@utils/deployments/mocks/mockPausable';
+import { deployMockPausable } from '@utils/deployments/mock/mockPausable';
 
 interface PausableFixture {
     admin: Admin;

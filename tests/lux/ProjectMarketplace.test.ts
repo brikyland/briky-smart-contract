@@ -17,7 +17,7 @@ import { callTransaction, getBalance, prepareERC20, prepareNativeToken, resetERC
 import { Constant } from '@tests/test.constant';
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
-import { deployCurrency } from '@utils/deployments/common/currency';
+import { deployCurrency } from '@utils/deployments/mock/currency';
 import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 import { ProjectMarketplaceOfferState } from '@utils/models/enums';
 import { MockContract, smock } from '@defi-wonderland/smock';
@@ -36,9 +36,9 @@ import { OrderedMap } from '@utils/utils';
 import { deployProjectMarketplace } from '@utils/deployments/lux/projectMarketplace';
 import { callEstateToken_AuthorizeTokenizers, callEstateToken_UpdateCommissionToken, callEstateToken_UpdateRoyaltyRate } from '@utils/callWithSignatures/estateToken';
 import { callProjectMarketplace_Pause } from '@utils/callWithSignatures/projectMarketplace';
-import { deployFailReceiver } from '@utils/deployments/mocks/failReceiver';
-import { deployReentrancyERC1155Holder } from '@utils/deployments/mocks/mockReentrancy/reentrancyERC1155Holder';
-import { deployReentrancy } from '@utils/deployments/mocks/mockReentrancy/reentrancy';
+import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
+import { deployReentrancyERC1155Holder } from '@utils/deployments/mock/mockReentrancy/reentrancyERC1155Holder';
+import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
 import { Initialization as LandInitialization } from '@tests/land/test.initialization';
 import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
 import { deployReserveVault } from '@utils/deployments/common/reserveVault';
@@ -48,7 +48,7 @@ import { getRegisterCustodianTx } from '@utils/transaction/EstateToken';
 import { Initialization as LaunchInitialization } from '@tests/launch/test.initialization';
 import { callProjectToken_AuthorizeLaunchpads, callProjectToken_UpdateRoyaltyRate } from '@utils/callWithSignatures/projectToken';
 import { getCallLaunchProjectTx, getCallMintTx } from '@utils/transaction/ProjectToken';
-import { deployMockPrestigePad } from '@utils/deployments/mocks/mockPrestigePad';
+import { deployMockPrestigePad } from '@utils/deployments/mock/mockPrestigePad';
 
 interface ProjectMarketplaceFixture {
     admin: Admin;

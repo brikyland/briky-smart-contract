@@ -15,7 +15,7 @@ import {
 } from '@utils/callWithSignatures/admin';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { smock } from '@defi-wonderland/smock';
-import { deployCurrency } from '@utils/deployments/common/currency';
+import { deployCurrency } from '@utils/deployments/mock/currency';
 
 interface AdminFixture {
     deployer: any;

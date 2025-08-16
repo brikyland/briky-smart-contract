@@ -5,10 +5,10 @@ import { getSignatures, prepareERC20 } from '@utils/blockchain';
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { Constant } from '@tests/test.constant';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
-import { deployCurrency } from '@utils/deployments/common/currency';
-import { deployTreasury } from '@utils/deployments/land/treasury';
+import { deployCurrency } from '@utils/deployments/mock/currency';
+import { deployTreasury } from '@utils/deployments/liquidity/treasury';
 import { callTreasury_Pause } from '@utils/callWithSignatures/treasury';
-import { deployMockPrimaryToken } from '@utils/deployments/mocks/mockPrimaryToken';
+import { deployMockPrimaryToken } from '@utils/deployments/mock/mockPrimaryToken';
 import { Initialization as LiquidityInitialization } from '@tests/liquidity/test.initialization';
 
 interface TreasuryFixture {

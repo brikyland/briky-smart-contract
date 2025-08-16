@@ -16,7 +16,7 @@ import { callTransaction, prepareERC20, prepareNativeToken, resetERC20, resetNat
 import { Constant } from '@tests/test.constant';
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
-import { deployCurrency } from '@utils/deployments/common/currency';
+import { deployCurrency } from '@utils/deployments/mock/currency';
 import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 
 import { MockContract, smock } from '@defi-wonderland/smock';
@@ -32,14 +32,14 @@ import { randomInt } from 'crypto';
 import { getInterfaceID, randomBigNumber } from '@utils/utils';
 import { OrderedMap } from '@utils/utils';
 import { deployMortgageToken } from '@utils/deployments/lend/mortgageToken';
-import { deployMortgageMarketplace } from '@utils/deployments/lend/mortgageMarketplace';
+import { deployMortgageMarketplace } from '@utils/deployments/lux/mortgageMarketplace';
 import { callMortgageMarketplace_Pause } from '@utils/callWithSignatures/mortgageMarketplace';
 import { Contract } from 'ethers';
 import { LoanState, MortgageMarketplaceOfferState } from '@utils/models/enums';
 import { callMortgageToken_UpdateRoyaltyRate } from '@utils/callWithSignatures/mortgageToken';
 import { getBalance } from '@utils/blockchain';
-import { deployFailReceiver } from '@utils/deployments/mocks/failReceiver';
-import { deployReentrancy } from '@utils/deployments/mocks/mockReentrancy/reentrancy';
+import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
+import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
 import { Initialization as LandInitialization } from '@tests/land/test.initialization';
 import { Initialization as LendInitialization } from '@tests/lend/test.initialization';
 import { MockValidator } from '@utils/mockValidator';

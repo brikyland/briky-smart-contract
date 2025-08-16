@@ -22,10 +22,10 @@ import { Contract } from 'ethers';
 import { getBytes4Hex, getInterfaceID } from '@utils/utils';
 import { Initialization } from './test.initialization';
 import { callPassportToken_Pause } from '@utils/callWithSignatures/passportToken';
-import { deployReentrancy } from '@utils/deployments/mocks/mockReentrancy/reentrancy';
-import { deployCurrency } from '@utils/deployments/common/currency';
-import { deployFailReceiver } from '@utils/deployments/mocks/failReceiver';
-import { deployReentrancyERC20 } from '@utils/deployments/mocks/mockReentrancy/reentrancyERC20';
+import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
+import { deployCurrency } from '@utils/deployments/mock/currency';
+import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
+import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
 
 interface PassportTokenFixture {
     admin: Admin;

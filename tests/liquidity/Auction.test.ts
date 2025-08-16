@@ -5,15 +5,15 @@ import { callTransaction, getSignatures, prepareERC20, testReentrancy } from '@u
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { Constant } from '@tests/test.constant';
 import { loadFixture, time } from '@nomicfoundation/hardhat-network-helpers';
-import { deployCurrency } from '@utils/deployments/common/currency';
-import { deployPrimaryToken } from '@utils/deployments/land/primaryToken';
-import { deployStakeToken } from '@utils/deployments/land/stakeToken';
+import { deployCurrency } from '@utils/deployments/mock/currency';
+import { deployPrimaryToken } from '@utils/deployments/liquidity/primaryToken';
+import { deployStakeToken } from '@utils/deployments/liquidity/stakeToken';
 import { Initialization as LiquidityInitialization } from '@tests/liquidity/test.initialization';
-import { deployAuction } from '@utils/deployments/land/auction';
+import { deployAuction } from '@utils/deployments/liquidity/auction';
 import { callAuction_Pause, callAuction_StartAuction, callAuction_UpdateStakeTokens } from '@utils/callWithSignatures/auction';
 import { callPrimaryToken_UnlockForPublicSale, callPrimaryToken_UpdateStakeTokens, callPrimaryToken_UpdateTreasury } from '@utils/callWithSignatures/primary';
 import { MockContract, smock } from '@defi-wonderland/smock';
-import { deployReentrancyERC20 } from '@utils/deployments/mocks/mockReentrancy/reentrancyERC20';
+import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
 import { Contract } from 'ethers';
 
 interface AuctionFixture {

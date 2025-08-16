@@ -1,7 +1,7 @@
 import { LedgerSigner } from '@anders-t/ethers-ledger';
 import assert from 'assert';
 import { ethers, network, upgrades } from 'hardhat';
-import { deployEstateMarketplace } from '../../../utils/deployments/land/estateMarketplace';
+import { deployEstateMarketplace } from '../../../utils/deployments/lux/estateMarketplace';
 
 async function deployOrUpgradeEstateMarketplace() {
     const config = network.config as any;

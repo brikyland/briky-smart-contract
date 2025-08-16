@@ -6,11 +6,11 @@ import { getSignatures } from '@utils/blockchain';
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { Constant } from '@tests/test.constant';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
-import { deployCurrency } from '@utils/deployments/common/currency';
-import { deployPrimaryToken } from '@utils/deployments/land/primaryToken';
-import { deployTreasury } from '@utils/deployments/land/treasury';
+import { deployCurrency } from '@utils/deployments/mock/currency';
+import { deployPrimaryToken } from '@utils/deployments/liquidity/primaryToken';
+import { deployTreasury } from '@utils/deployments/liquidity/treasury';
 import { Initialization as LiquidityInitialization } from '@tests/liquidity/test.initialization';
-import { deployDistributor } from '@utils/deployments/land/distributor';
+import { deployDistributor } from '@utils/deployments/liquidity/distributor';
 import { callPrimaryToken_UnlockForCoreTeam } from '@utils/callWithSignatures/primary';
 
 interface DistributorFixture {

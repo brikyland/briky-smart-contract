@@ -33,13 +33,13 @@ import { callTransaction, callTransactionAtTimestamp, getSignatures, randomWalle
 import { Constant } from '@tests/test.constant';
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
-import { deployCurrency } from '@utils/deployments/common/currency';
-import { deployMockEstateToken } from '@utils/deployments/mocks/mockEstateToken';
+import { deployCurrency } from '@utils/deployments/mock/currency';
+import { deployMockEstateToken } from '@utils/deployments/mock/mockEstateToken';
 import { deployCommissionToken } from '@utils/deployments/land/commissionToken';
 import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 
 import { MockContract, smock } from '@defi-wonderland/smock';
-import { deployMockProjectToken } from '@utils/deployments/mocks/mockProjectToken';
+import { deployMockProjectToken } from '@utils/deployments/mock/mockProjectToken';
 
 import {
     callAdmin_ActivateIn,
@@ -68,8 +68,8 @@ import { ContractTransaction } from 'ethers';
 import { getCallLaunchProjectTx, getCallMintTx, getRegisterInitiatorTx, getUpdateProjectURITx } from '@utils/transaction/ProjectToken';
 import { getRegisterCustodianTx } from '@utils/transaction/EstateToken';
 import { callEstateToken_AuthorizeTokenizers, callEstateToken_UpdateCommissionToken } from '@utils/callWithSignatures/estateToken';
-import { deployReentrancyERC1155Receiver } from '@utils/deployments/mocks/mockReentrancy/reentrancyERC1155Receiver';
-import { deployFailReceiver } from '@utils/deployments/mocks/failReceiver';
+import { deployReentrancyERC1155Receiver } from '@utils/deployments/mock/mockReentrancy/reentrancyERC1155Receiver';
+import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 
 interface ProjectTokenFixture {
     admin: Admin;
