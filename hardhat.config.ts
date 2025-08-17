@@ -5,7 +5,8 @@ import '@nomicfoundation/hardhat-toolbox';
 import '@nomicfoundation/hardhat-network-helpers';
 import '@nomiclabs/hardhat-solhint';
 import '@openzeppelin/hardhat-upgrades';
-import 'hardhat-contract-sizer'
+import 'hardhat-contract-sizer';
+import 'tsconfig-paths/register';
 
 function getNetworkEnvVariable(
     networkName: string,
