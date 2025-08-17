@@ -10,7 +10,7 @@ import {
 import { callTransaction, getSignatures, randomWallet } from '@utils/blockchain';
 import { Constant } from '@tests/test.constant';
 import { deployAdmin } from '@utils/deployments/common/admin';
-import { deployCurrency } from '@utils/deployments/mock/currency';
+import { deployCurrency } from '@utils/deployments/common/currency';
 import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 
 import { smock } from '@defi-wonderland/smock';

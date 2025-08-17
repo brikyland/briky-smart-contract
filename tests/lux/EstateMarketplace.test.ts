@@ -18,7 +18,7 @@ import { callTransaction, getBalance, prepareERC20, prepareNativeToken, resetERC
 import { Constant } from '@tests/test.constant';
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
-import { deployCurrency } from '@utils/deployments/mock/currency';
+import { deployCurrency } from '@utils/deployments/common/currency';
 import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 import { EstateMarketplaceOfferState } from '@utils/models/enums';
 import { MockContract, smock } from '@defi-wonderland/smock';

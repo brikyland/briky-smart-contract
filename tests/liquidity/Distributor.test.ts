@@ -6,7 +6,7 @@ import { getSignatures } from '@utils/blockchain';
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { Constant } from '@tests/test.constant';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
-import { deployCurrency } from '@utils/deployments/mock/currency';
+import { deployCurrency } from '@utils/deployments/common/currency';
 import { deployPrimaryToken } from '@utils/deployments/liquidity/primaryToken';
 import { deployTreasury } from '@utils/deployments/liquidity/treasury';
 import { Initialization as LiquidityInitialization } from '@tests/liquidity/test.initialization';

@@ -10,7 +10,7 @@ import {
 } from '@typechain-types';
 import { Constant } from '@tests/test.constant';
 import { deployAdmin } from '@utils/deployments/common/admin';
-import { deployCurrency } from '@utils/deployments/mock/currency';
+import { deployCurrency } from '@utils/deployments/common/currency';
 import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
 import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 import { deployDividendHub } from '@utils/deployments/common/dividendHub';

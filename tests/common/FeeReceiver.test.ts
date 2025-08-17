@@ -9,7 +9,7 @@ import { callTransaction, getSignatures, randomWallet } from '@utils/blockchain'
 import { Constant } from '@tests/test.constant';
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
-import { deployCurrency } from '@utils/deployments/mock/currency';
+import { deployCurrency } from '@utils/deployments/common/currency';
 import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';

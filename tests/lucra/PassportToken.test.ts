@@ -23,7 +23,7 @@ import { getBytes4Hex, getInterfaceID } from '@utils/utils';
 import { Initialization } from './test.initialization';
 import { callPassportToken_Pause } from '@utils/callWithSignatures/passportToken';
 import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
-import { deployCurrency } from '@utils/deployments/mock/currency';
+import { deployCurrency } from '@utils/deployments/common/currency';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
 

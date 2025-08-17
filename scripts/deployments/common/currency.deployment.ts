@@ -1,5 +1,5 @@
 import { ethers, network, upgrades } from 'hardhat';
-import { deployCurrency } from '@utils/deployments/mock/currency';
+import { deployCurrency } from '@utils/deployments/common/currency';
 
 async function deployOrUpgradeCurrency() {
     const config = network.config as any;

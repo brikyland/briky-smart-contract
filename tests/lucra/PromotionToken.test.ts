@@ -23,7 +23,7 @@ import { callPromotionToken_CancelContents, callPromotionToken_CreateContents, c
 import { deployPromotionToken } from '@utils/deployments/lucra/promotionToken';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
-import { deployCurrency } from '@utils/deployments/mock/currency';
+import { deployCurrency } from '@utils/deployments/common/currency';
 
 interface PromotionTokenFixture {
     admin: Admin;

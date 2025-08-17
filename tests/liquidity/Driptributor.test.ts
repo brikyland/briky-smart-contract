@@ -6,7 +6,7 @@ import { callTransaction, getSignatures, prepareERC20, testReentrancy } from '@u
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { Constant } from '@tests/test.constant';
 import { loadFixture, time } from '@nomicfoundation/hardhat-network-helpers';
-import { deployCurrency } from '@utils/deployments/mock/currency';
+import { deployCurrency } from '@utils/deployments/common/currency';
 import { deployTreasury } from '@utils/deployments/liquidity/treasury';
 import { deployDriptributor } from '@utils/deployments/liquidity/driptributor';
 import { callDriptributor_DistributeTokensWithDuration, callDriptributor_DistributeTokensWithTimestamp, callDriptributor_Pause, callDriptributor_UpdateStakeTokens } from '@utils/callWithSignatures/driptributor';

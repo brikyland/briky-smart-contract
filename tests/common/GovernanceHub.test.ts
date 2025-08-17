@@ -22,7 +22,7 @@ import { callAdmin_ActivateIn, callAdmin_AuthorizeGovernor, callAdmin_AuthorizeM
 import { callGovernanceHub_Pause } from '@utils/callWithSignatures/governanceHub';
 import { MockValidator } from '@utils/mockValidator';
 import { scale } from '@utils/utils';
-import { deployCurrency } from '@utils/deployments/mock/currency';
+import { deployCurrency } from '@utils/deployments/common/currency';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
 import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';

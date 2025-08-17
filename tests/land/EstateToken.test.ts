@@ -27,7 +27,7 @@ import { callTransaction, callTransactionAtTimestamp, getSignatures, randomWalle
 import { Constant } from '@tests/test.constant';
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
-import { deployCurrency } from '@utils/deployments/mock/currency';
+import { deployCurrency } from '@utils/deployments/common/currency';
 import { deployMockEstateToken } from '@utils/deployments/mock/mockEstateToken';
 import { deployCommissionToken } from '@utils/deployments/land/commissionToken';
 import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";

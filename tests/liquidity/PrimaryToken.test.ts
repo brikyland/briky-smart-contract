@@ -5,7 +5,7 @@ import { callTransaction, getSignatures, prepareERC20 } from '@utils/blockchain'
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { Constant } from '@tests/test.constant';
 import { loadFixture, time } from '@nomicfoundation/hardhat-network-helpers';
-import { deployCurrency } from '@utils/deployments/mock/currency';
+import { deployCurrency } from '@utils/deployments/common/currency';
 import {
     callPrimaryToken_Pause,
     callPrimaryToken_UnlockForBackerRound,

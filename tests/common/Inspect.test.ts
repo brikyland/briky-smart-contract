@@ -42,7 +42,7 @@ import { deployERC721Marketplace } from '@utils/deployments/lux/erc721Marketplac
 import { deployMortgageToken } from '@utils/deployments/lend/mortgageToken';
 import { deployEstateForger } from '@utils/deployments/land/estateForger';
 import { deployEstateMarketplace } from '@utils/deployments/lux/estateMarketplace';
-import { deployCurrency } from '@utils/deployments/mock/currency';
+import { deployCurrency } from '@utils/deployments/common/currency';
 import { deployPrimaryToken } from '@utils/deployments/liquidity/primaryToken';
 import { deployStakeToken } from '@utils/deployments/liquidity/stakeToken';
 import { deployDistributor } from '@utils/deployments/liquidity/distributor';
