@@ -80,7 +80,7 @@ IValidatable {
     error NoVotingPower();
     error Overdue();
     error Timeout();
-    error UnavailableVotePowerToken();
+    error UnavailableToken();
 
     function fee() external view returns (uint256 fee);
     function proposalNumber() external view returns (uint256 proposalNumber);

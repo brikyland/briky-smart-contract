@@ -132,8 +132,8 @@ ReentrancyGuardUpgradeable {
             revert InvalidGovernor();
         }
 
-        if (!IGovernor(_governor).isVotePowerAvailable(_tokenId)) {
-            revert UnavailableVotePowerToken();
+        if (!IGovernor(_governor).isAvailable(_tokenId)) {
+            revert UnavailableToken();
         }
 
         if (_quorumRate > CommonConstant.RATE_MAX_FRACTION) {
@@ -206,8 +206,8 @@ ReentrancyGuardUpgradeable {
 
         IGovernor governorContract = IGovernor(proposal.governor);
         uint256 tokenId = proposal.tokenId;
-        if (!governorContract.isVotePowerAvailable(tokenId)) {
-            revert UnavailableVotePowerToken();
+        if (!governorContract.isAvailable(tokenId)) {
+            revert UnavailableToken();
         }
 
         IAdmin adminContract = IAdmin(admin);
@@ -349,8 +349,8 @@ ReentrancyGuardUpgradeable {
         Proposal storage proposal = proposals[_proposalId];
         uint256 tokenId = proposal.tokenId;
         IGovernor governorContract = IGovernor(proposal.governor);
-        if (!governorContract.isVotePowerAvailable(tokenId)) {
-            revert UnavailableVotePowerToken();
+        if (!governorContract.isAvailable(tokenId)) {
+            revert UnavailableToken();
         }
 
         if (!IAdmin(admin).getZoneEligibility(governorContract.zoneOf(tokenId), msg.sender)) {
@@ -423,8 +423,8 @@ ReentrancyGuardUpgradeable {
         Proposal storage proposal = proposals[_proposalId];
         uint256 tokenId = proposal.tokenId;
         IGovernor governorContract = IGovernor(proposal.governor);
-        if (!governorContract.isVotePowerAvailable(tokenId)) {
-            revert UnavailableVotePowerToken();
+        if (!governorContract.isAvailable(tokenId)) {
+            revert UnavailableToken();
         }
 
         if (!IAdmin(admin).getZoneEligibility(governorContract.zoneOf(tokenId), msg.sender)) {
@@ -502,8 +502,8 @@ ReentrancyGuardUpgradeable {
 
         uint256 tokenId = proposal.tokenId;
         IGovernor governorContract = IGovernor(proposal.governor);
-        if (!governorContract.isVotePowerAvailable(tokenId)) {
-            revert UnavailableVotePowerToken();
+        if (!governorContract.isAvailable(tokenId)) {
+            revert UnavailableToken();
         }
 
         uint256 weight = governorContract.voteOfAt(
