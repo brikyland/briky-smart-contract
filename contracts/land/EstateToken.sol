@@ -233,10 +233,6 @@ Validatable {
             && estates[_estateId].expireAt > block.timestamp;
     }
 
-    function isVotePowerAvailable(uint256 _estateId) public view returns (bool) {
-        return isAvailable(_estateId);
-    }
-
     function tokenizeEstate(
         uint256 _totalSupply,
         bytes32 _zone,
