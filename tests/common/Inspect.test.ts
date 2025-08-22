@@ -57,7 +57,7 @@ import { Initialization as LiquidityInitialization } from '@tests/liquidity/test
 import { Initialization as LaunchInitialization } from '@tests/launch/test.initialization';
 import { deployPassportToken } from '@utils/deployments/lucra/passportToken';
 import { deployPromotionToken } from '@utils/deployments/lucra/promotionToken';
-import { deployAirdrop } from '@utils/deployments/lucra/airdrop';
+import { deployAirdrop } from '@utils/deployments/common/airdrop';
 import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
 import { deployReserveVault } from '@utils/deployments/common/reserveVault';
 import { MockValidator } from '@utils/mockValidator';

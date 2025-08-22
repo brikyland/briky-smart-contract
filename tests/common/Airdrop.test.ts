@@ -5,7 +5,7 @@ import {
     Airdrop,
 } from '@typechain-types';
 import { prepareERC20, prepareNativeToken, resetNativeToken } from '@utils/blockchain';
-import { deployAirdrop } from '@utils/deployments/lucra/airdrop';
+import { deployAirdrop } from '@utils/deployments/common/airdrop';
 import { deployCurrency } from '@utils/deployments/common/currency';
 
 interface AirdropFixture {

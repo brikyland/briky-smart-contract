@@ -97,7 +97,7 @@ async function testReentrancy_Marketplace(
     );
 }
 
-describe.only('6.4. ProjectMarketplace', async () => {
+describe('6.4. ProjectMarketplace', async () => {
     async function projectMarketplaceFixture(): Promise<ProjectMarketplaceFixture> {
         const accounts = await ethers.getSigners();
         const deployer = accounts[0];

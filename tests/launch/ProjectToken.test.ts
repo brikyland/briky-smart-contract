@@ -1086,7 +1086,7 @@ describe('7.2. ProjectToken', async () => {
     });
 
     describe('7.2.8. isAvailable(uint256)', async () => {
-        it('7.2.8.1. return true for undeprecated project', async () => {
+        it('7.2.8.1. return true for undeprecated project and untokenized project', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
             });
@@ -1104,6 +1104,18 @@ describe('7.2. ProjectToken', async () => {
 
             await callTransaction(projectToken.connect(manager).deprecateProject(1));
             await callTransaction(projectToken.connect(manager).deprecateProject(2));
+
+            expect(await projectToken.isAvailable(1)).to.be.false;
+            expect(await projectToken.isAvailable(2)).to.be.false;
+        });
+
+        it('7.2.8.3. return false for tokenized project', async () => {
+            const fixture = await beforeProjectTokenTest({
+                addSampleProjects: true,
+                mintProjectTokenForDepositor: true,
+                tokenizeProject: true,
+            });
+            const { projectToken, manager } = fixture;
 
             expect(await projectToken.isAvailable(1)).to.be.false;
             expect(await projectToken.isAvailable(2)).to.be.false;
