@@ -196,7 +196,7 @@ ReentrancyGuardUpgradeable {
 
     function isAvailable(uint256 _projectId) public view returns (bool) {
         return projects[_projectId].deprecateAt == CommonConstant.INFINITE_TIMESTAMP
-            && projects[_projectId].tokenizeAt == 0;
+            && projects[_projectId].estateId == 0;
     }
 
     function launchProject(
