@@ -1,11 +1,11 @@
-import { CommissionMarketplace } from "@typechain-types";
+import { CommissionToken } from "@typechain-types";
 import { callTransaction } from "../blockchain";
 import { getSignatures } from "../blockchain";
 import { ethers } from "hardhat";
 import { BigNumberish } from "ethers";
 
 export async function callCommissionToken_Pause(
-    commissionToken: CommissionMarketplace,
+    commissionToken: CommissionToken,
     admins: any[],
     nonce: BigNumberish
 ) {
@@ -19,7 +19,7 @@ export async function callCommissionToken_Pause(
 }
 
 export async function callCommissionToken_Unpause(
-    commissionToken: CommissionMarketplace,
+    commissionToken: CommissionToken,
     admins: any[],
     nonce: BigNumberish
 ) {
