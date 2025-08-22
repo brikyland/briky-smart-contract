@@ -2557,32 +2557,473 @@ describe('7.2. ProjectToken', async () => {
     });
 
     describe('7.2.20. voteOfAt(address, uint256, uint256)', () => {
-        // TODO: Low-priority for now
+        it('7.2.20.1. return correct vote for available project', async () => {
+            const fixture = await beforeProjectTokenTest({
+                addSampleProjects: true,
+            });
+            const { prestigePad, projectToken, depositor1, depositor2 } = fixture;
+
+            const baseTimestamp = await time.latest() + 1000;
+
+            const projectId1 = 1;
+            const launchId1 = (await projectToken.getProject(projectId1)).launchId;
+
+            const projectId2 = 2;
+            const launchId2 = (await projectToken.getProject(projectId2)).launchId;
+
+            // Depositor 1, estate 1
+            await callTransactionAtTimestamp(
+                projectToken.mintTo(depositor1.address, projectId1, 10_000),
+                baseTimestamp,
+            );
+            await time.increaseTo(baseTimestamp + 10);
+
+            prestigePad.allocationOfAt.whenCalledWith(depositor1.address, launchId1, baseTimestamp - 1).returns(20_000);
+            prestigePad.allocationOfAt.whenCalledWith(depositor1.address, launchId1, baseTimestamp).returns(20_000);
+            prestigePad.allocationOfAt.whenCalledWith(depositor1.address, launchId1, baseTimestamp + 10).returns(20_000);
+
+            expect(await projectToken.voteOfAt(depositor1.address, projectId1, baseTimestamp - 1)).to.equal(20_000);
+            expect(await projectToken.voteOfAt(depositor1.address, projectId1, baseTimestamp)).to.equal(30_000);
+            expect(await projectToken.voteOfAt(depositor1.address, projectId1, baseTimestamp + 10)).to.equal(30_000);
+
+            // Depositor 1, estate 2
+            await callTransactionAtTimestamp(
+                projectToken.mintTo(depositor1.address, projectId2, 40_000),
+                baseTimestamp + 20,
+            );
+            await time.increaseTo(baseTimestamp + 30);
+
+            prestigePad.allocationOfAt.whenCalledWith(depositor1.address, launchId2, baseTimestamp + 19).returns(80_000);
+            prestigePad.allocationOfAt.whenCalledWith(depositor1.address, launchId2, baseTimestamp + 20).returns(80_000);
+            prestigePad.allocationOfAt.whenCalledWith(depositor1.address, launchId2, baseTimestamp + 30).returns(80_000);
+
+            expect(await projectToken.voteOfAt(depositor1.address, projectId2, baseTimestamp + 19)).to.equal(80_000);
+            expect(await projectToken.voteOfAt(depositor1.address, projectId2, baseTimestamp + 20)).to.equal(120_000);
+            expect(await projectToken.voteOfAt(depositor1.address, projectId2, baseTimestamp + 30)).to.equal(120_000);
+
+            // Depositor 2, estate 1
+            await callTransactionAtTimestamp(
+                projectToken.mintTo(depositor2.address, projectId1, 160_000),
+                baseTimestamp + 40,
+            );
+            await time.increaseTo(baseTimestamp + 50);
+
+            prestigePad.allocationOfAt.whenCalledWith(depositor2.address, launchId1, baseTimestamp + 39).returns(320_000);
+            prestigePad.allocationOfAt.whenCalledWith(depositor2.address, launchId1, baseTimestamp + 40).returns(320_000);
+            prestigePad.allocationOfAt.whenCalledWith(depositor2.address, launchId1, baseTimestamp + 50).returns(320_000);
+
+            expect(await projectToken.voteOfAt(depositor2.address, projectId1, baseTimestamp + 39)).to.equal(320_000);
+            expect(await projectToken.voteOfAt(depositor2.address, projectId1, baseTimestamp + 40)).to.equal(480_000);
+            expect(await projectToken.voteOfAt(depositor2.address, projectId1, baseTimestamp + 50)).to.equal(480_000);
+        });
+        
+        it('7.2.20.2. revert with invalid project id', async () => {
+            const fixture = await beforeProjectTokenTest();
+            const { projectToken, depositor1 } = fixture;
+
+            let timestamp = await time.latest();
+
+            await expect(projectToken.voteOfAt(depositor1.address, 0, timestamp))
+                .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
+
+            await expect(projectToken.voteOfAt(depositor1.address, 100, timestamp))
+                .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
+        });
+
+        it('7.2.20.3. revert with timestamp after current timestamp', async () => {
+            const fixture = await beforeProjectTokenTest({
+                addSampleProjects: true,
+            });
+            const { prestigePad, projectToken, depositor1 } = fixture;
+
+            await callTransaction(projectToken.mintTo(depositor1.address, 1, 10_000));
+
+            let timestamp = await time.latest();
+
+            prestigePad.allocationOfAt.returns(0);
+
+            await expect(projectToken.voteOfAt(depositor1.address, 1, timestamp - 1))
+                .to.be.not.reverted;
+            await expect(projectToken.voteOfAt(depositor1.address, 1, timestamp))
+                .to.be.not.reverted;
+            await expect(projectToken.voteOfAt(depositor1.address, 1, timestamp + 1))
+                .to.be.revertedWithCustomError(projectToken, `InvalidTimestamp`);
+        });
+
+        it('7.2.20.4. revert with timestamp after deprecation', async () => {
+            const fixture = await beforeProjectTokenTest({
+                addSampleProjects: true,
+            });
+            const { prestigePad, projectToken, depositor1, manager } = fixture;
+
+            await callTransaction(projectToken.mintTo(depositor1.address, 1, 10_000));
+
+            let timestamp = await time.latest() + 10;
+
+            prestigePad.allocationOfAt.returns(0);
+
+            await callTransactionAtTimestamp(
+                projectToken.connect(manager).deprecateProject(1),
+                timestamp,
+            );
+
+            await time.increaseTo(timestamp + 5);
+
+            await expect(projectToken.voteOfAt(depositor1.address, 1, timestamp - 1))
+                .to.be.not.reverted;
+            await expect(projectToken.voteOfAt(depositor1.address, 1, timestamp))
+                .to.be.not.reverted;
+            await expect(projectToken.voteOfAt(depositor1.address, 1, timestamp + 1))
+                .to.be.revertedWithCustomError(projectToken, `InvalidTimestamp`);
+        });
+
+        it('7.2.20.5. return 0 for project\'s launchpad contract', async () => {
+            const fixture = await beforeProjectTokenTest({
+                addSampleProjects: true,
+            });
+            const { prestigePad, projectToken } = fixture;
+
+            const baseTimestamp = await time.latest() + 1000;
+
+            const projectId1 = 1;
+            const launchId1 = (await projectToken.getProject(projectId1)).launchId;
+
+            await callTransactionAtTimestamp(
+                projectToken.mintTo(prestigePad.address, projectId1, 10_000),
+                baseTimestamp,
+            );
+            await time.increaseTo(baseTimestamp + 10);
+
+            prestigePad.allocationOfAt.whenCalledWith(prestigePad.address, launchId1, baseTimestamp).returns(20_000);
+            prestigePad.allocationOfAt.whenCalledWith(prestigePad.address, launchId1, baseTimestamp + 10).returns(20_000);
+
+            expect(await projectToken.voteOfAt(prestigePad.address, projectId1, baseTimestamp)).to.equal(0);
+            expect(await projectToken.voteOfAt(prestigePad.address, projectId1, baseTimestamp + 10)).to.equal(0);
+        });
     });
 
     describe('7.2.21. totalVoteAt(uint256, uint256)', () => {
-        // TODO: Low-priority for now
-        // it('7.2.21.1. return correct total vote for existing project', async () => {
-        // });
+        it('7.2.21.1. return correct total vote for existing project', async () => {
+            const fixture = await beforeProjectTokenTest({
+                addSampleProjects: true,
+            });
+            const { projectToken, depositor1, depositor2 } = fixture;
 
-        // it('7.2.21.2. revert with invalid project id', async () => {
+            const projectId1 = 1;
+            const projectId2 = 2;
+            let minted1 = false;
+            let minted2 = false;
 
-        // });
+            const expectedTotalVote1 = new OrderedMap<number, BigNumber>(ethers.BigNumber.from(0));
+            const expectedTotalVote2 = new OrderedMap<number, BigNumber>(ethers.BigNumber.from(0));
+            expectedTotalVote1.set(0, BigNumber.from(0));
+            expectedTotalVote2.set(0, BigNumber.from(0));
 
-        // it('7.2.21.3. return 0 with timestamp after current timestamp', async () => {
+            const timePivots = new Set<number>();
+            function addTimePivot(timestamp: number) {
+                if (timestamp > 0) {
+                    timePivots.add(timestamp - 1);
+                }
+                timePivots.add(timestamp);
+                timePivots.add(timestamp + 1);
+            }
 
-        // });
+            async function assertCorrectAllocation(currentTimestamp: number) {
+                for (const timestamp of timePivots) {
+                    if (timestamp > currentTimestamp) {
+                        break;
+                    }
+                    if (minted1) {
+                        expect(await projectToken.totalVoteAt(projectId1, timestamp))
+                            .to.equal(expectedTotalVote1.get(timestamp));
+                    }
+                    if (minted2) {
+                        expect(await projectToken.totalVoteAt(projectId2, timestamp))
+                            .to.equal(expectedTotalVote2.get(timestamp));
+                    }
+                }
+            }
+            
+            let timestamp = await time.latest() + 100;
 
-        // it('7.2.21.4. return 0 with timestamp before tokenize', async () => {
+            // Mint project 1
+            await callTransactionAtTimestamp(
+                projectToken.mintTo(depositor1.address, projectId1, 10_000),
+                timestamp,
+            );
+            expectedTotalVote1.set(timestamp, BigNumber.from(10_000));
+            minted1 = true;
 
-        // });
+            addTimePivot(timestamp);
+            await time.increaseTo(timestamp + 5);
+            await assertCorrectAllocation(timestamp);
+            
+            // Mint project 2
+            timestamp += 10;
 
-        // it('7.2.21.5. return 0 with timestamp after deprecation', async () => {
+            await callTransactionAtTimestamp(
+                projectToken.mintTo(depositor2.address, projectId2, 20_000),
+                timestamp,
+            );
+            expectedTotalVote2.set(timestamp, BigNumber.from(20_000));
+            minted2 = true;
 
-        // });
+            addTimePivot(timestamp);
+            await time.increaseTo(timestamp + 5);
+            await assertCorrectAllocation(timestamp);
 
-        // it('7.2.21.6. return total vote of each voteOfAt', async () => {
+            // Transfer project 1 to depositor 2
+            timestamp += 10;
 
-        // });
+            await callTransactionAtTimestamp(
+                projectToken.connect(depositor1).safeTransferFrom(
+                    depositor1.address,
+                    depositor2.address,
+                    projectId1,
+                    5_000,
+                    "0x",
+                ),
+                timestamp,
+            );
+
+            addTimePivot(timestamp);
+            await time.increaseTo(timestamp + 5);
+            await assertCorrectAllocation(timestamp);
+            
+            // Mint project 1 again
+            timestamp += 10;
+
+            await callTransactionAtTimestamp(
+                projectToken.mintTo(depositor2.address, projectId1, 40_000),
+                timestamp,
+            );
+            expectedTotalVote1.set(timestamp, BigNumber.from(50_000));
+
+            addTimePivot(timestamp);
+            await time.increaseTo(timestamp + 5);
+            await assertCorrectAllocation(timestamp);
+
+            // Mint project 2 again
+            timestamp += 10;
+
+            await callTransactionAtTimestamp(
+                projectToken.mintTo(depositor2.address, projectId2, 80_000),
+                timestamp,
+            );
+            expectedTotalVote2.set(timestamp, BigNumber.from(100_000));
+
+            addTimePivot(timestamp);
+            await time.increaseTo(timestamp + 5);
+            await assertCorrectAllocation(timestamp);
+
+            // Transfer project 2 to depositor 1
+            timestamp += 10;
+
+            await callTransactionAtTimestamp(
+                projectToken.connect(depositor2).safeTransferFrom(
+                    depositor2.address,
+                    depositor1.address,
+                    projectId2,
+                    2_000,
+                    "0x",
+                ),
+                timestamp,
+            );
+            
+            addTimePivot(timestamp);
+            await time.increaseTo(timestamp + 5);
+            await assertCorrectAllocation(timestamp);
+        });
+
+        it('7.2.21.2. revert with invalid project id', async () => {
+            const fixture = await beforeProjectTokenTest();
+            const { projectToken, depositor1 } = fixture;
+
+            let timestamp = await time.latest();
+
+            await expect(projectToken.totalVoteAt(0, timestamp))
+                .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
+
+            await expect(projectToken.totalVoteAt(100, timestamp))
+                .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
+        });
+
+        it('7.2.21.3. revert with timestamp after current timestamp', async () => {
+            const fixture = await beforeProjectTokenTest({
+                addSampleProjects: true,
+            });
+            const { prestigePad, projectToken, depositor1 } = fixture;
+
+            await callTransaction(projectToken.mintTo(depositor1.address, 1, 10_000));
+
+            let timestamp = await time.latest();
+
+            prestigePad.allocationOfAt.returns(0);
+
+            await expect(projectToken.totalVoteAt(1, timestamp - 1))
+                .to.be.not.reverted;
+            await expect(projectToken.totalVoteAt(1, timestamp))
+                .to.be.not.reverted;
+            await expect(projectToken.totalVoteAt(1, timestamp + 1))
+                .to.be.revertedWithCustomError(projectToken, `InvalidTimestamp`);
+        });
+
+        it('7.2.21.4. revert with timestamp before tokenize', async () => {
+            const fixture = await beforeProjectTokenTest({
+                addSampleProjects: true,
+            });
+            const { prestigePad, projectToken, depositor1 } = fixture;
+
+            await callTransaction(projectToken.mintTo(depositor1.address, 1, 10_000));
+
+            let timestamp = (await projectToken.getProject(1)).tokenizeAt;
+
+            prestigePad.allocationOfAt.returns(0);
+
+            await expect(projectToken.totalVoteAt(1, timestamp - 1))
+                .to.be.revertedWithCustomError(projectToken, `InvalidTimestamp`);
+            await expect(projectToken.totalVoteAt(1, timestamp))
+                .to.be.not.reverted;
+            await expect(projectToken.totalVoteAt(1, timestamp + 1))
+                .to.be.not.reverted;
+        });
+
+        it('7.2.21.5. revert with timestamp after deprecation', async () => {
+            const fixture = await beforeProjectTokenTest({
+                addSampleProjects: true,
+            });
+            const { prestigePad, projectToken, depositor1 } = fixture;
+
+            await callTransaction(projectToken.mintTo(depositor1.address, 1, 10_000));
+
+            let timestamp = (await projectToken.getProject(1)).deprecateAt;
+
+            await time.increaseTo(timestamp + 5);
+
+            prestigePad.allocationOfAt.returns(0);
+
+            await expect(projectToken.totalVoteAt(1, timestamp - 1))
+                .to.be.not.reverted;
+            await expect(projectToken.totalVoteAt(1, timestamp))
+                .to.be.not.reverted;
+            await expect(projectToken.totalVoteAt(1, timestamp + 1))
+                .to.be.revertedWithCustomError(projectToken, `InvalidTimestamp`);
+        });
+
+        it('7.2.21.6. returned total vote should be the sum of voteOfAt', async () => {
+            const fixture = await beforeProjectTokenTest({
+                addSampleProjects: true,
+            });
+            const { prestigePad, projectToken, depositor1, depositor2 } = fixture;
+
+            const projectId = 1;
+
+            prestigePad.allocationOfAt.returns(0);
+
+            const timePivots = new Set<number>();
+            function addTimePivot(timestamp: number) {
+                if (timestamp > 0) {
+                    timePivots.add(timestamp - 1);
+                }
+                timePivots.add(timestamp);
+                timePivots.add(timestamp + 1);
+            }
+
+            async function assertCorrectAllocation(currentTimestamp: number) {
+                for (const timestamp of timePivots) {
+                    if (timestamp > currentTimestamp) {
+                        break;
+                    }
+                    const totalVote = await projectToken.totalVoteAt(projectId, timestamp);
+                    const depositor1Vote = await projectToken.voteOfAt(depositor1.address, projectId, timestamp);
+                    const depositor2Vote = await projectToken.voteOfAt(depositor2.address, projectId, timestamp);
+                    expect(totalVote).to.equal(depositor1Vote.add(depositor2Vote));
+                }
+            }
+            
+            let timestamp = await time.latest() + 100;
+
+            // Mint for depositor 1
+            await callTransactionAtTimestamp(
+                projectToken.mintTo(depositor1.address, projectId, 10_000),
+                timestamp,
+            );
+
+            addTimePivot(timestamp);
+            await time.increaseTo(timestamp + 5);
+            await assertCorrectAllocation(timestamp);
+            
+            // Mint for depositor 2
+            timestamp += 10;
+
+            await callTransactionAtTimestamp(
+                projectToken.mintTo(depositor2.address, projectId, 20_000),
+                timestamp,
+            );
+
+            addTimePivot(timestamp);
+            await time.increaseTo(timestamp + 5);
+            await assertCorrectAllocation(timestamp);
+
+            // Transfer from depositor 1 to depositor 2
+            timestamp += 10;
+
+            await callTransactionAtTimestamp(
+                projectToken.connect(depositor1).safeTransferFrom(
+                    depositor1.address,
+                    depositor2.address,
+                    projectId,
+                    5_000,
+                    "0x",
+                ),
+                timestamp,
+            );
+
+            addTimePivot(timestamp);
+            await time.increaseTo(timestamp + 5);
+            await assertCorrectAllocation(timestamp);
+            
+            // Mint for depositor 1 again
+            timestamp += 10;
+
+            await callTransactionAtTimestamp(
+                projectToken.mintTo(depositor2.address, projectId, 40_000),
+                timestamp,
+            );
+
+            addTimePivot(timestamp);
+            await time.increaseTo(timestamp + 5);
+            await assertCorrectAllocation(timestamp);
+
+            // Mint for depositor 2 again
+            timestamp += 10;
+
+            await callTransactionAtTimestamp(
+                projectToken.mintTo(depositor2.address, projectId, 80_000),
+                timestamp,
+            );
+
+            addTimePivot(timestamp);
+            await time.increaseTo(timestamp + 5);
+            await assertCorrectAllocation(timestamp);
+
+            // Transfer from depositor 2 to depositor 1
+            timestamp += 10;
+
+            await callTransactionAtTimestamp(
+                projectToken.connect(depositor2).safeTransferFrom(
+                    depositor2.address,
+                    depositor1.address,
+                    projectId,
+                    2_000,
+                    "0x",
+                ),
+                timestamp,
+            );
+            
+            addTimePivot(timestamp);
+            await time.increaseTo(timestamp + 5);
+            await assertCorrectAllocation(timestamp);
+        });
     });
 });
