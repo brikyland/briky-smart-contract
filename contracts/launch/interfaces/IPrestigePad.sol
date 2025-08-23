@@ -2,7 +2,6 @@
 pragma solidity ^0.8.20;
 
 import {IFund} from "../../common/structs/IFund.sol";
-import {IRate} from "../../common/structs/IRate.sol";
 import {IValidatable} from "../../common/interfaces/IValidatable.sol";
 
 import {IPrestigePadLaunch} from "../structs/IPrestigePadLaunch.sol";
@@ -14,11 +13,8 @@ interface IPrestigePad is
 IPrestigePadLaunch,
 IPrestigePadRound,
 IFund,
-IRate,
 IValidatable,
 IProjectLaunchpad {
-    event FeeRateUpdate(uint256 newValue);
-
     event BaseUnitPriceRangeUpdate(
         uint256 baseMinUnitPrice,
         uint256 baseMaxUnitPrice
@@ -35,7 +31,8 @@ IProjectLaunchpad {
         uint256 indexed projectId,
         address indexed initiator,
         string uri,
-        uint256 initialQuantity
+        uint256 initialQuantity,
+        Rate feeRate
     );
     event NewRound(
         uint256 indexed roundId,
@@ -45,12 +42,6 @@ IProjectLaunchpad {
         PrestigePadRoundQuoteInput quote
     );
 
-    event RoundUpdate(
-        uint256 indexed launchId,
-        uint256 indexed roundId,
-        uint256 index,
-        PrestigePadRoundInput round
-    );
     event LaunchCurrentRoundCancellation(
         uint256 indexed launchId,
         uint256 indexed roundId
@@ -70,6 +61,16 @@ IProjectLaunchpad {
         uint256 indexed cashbackFundId,
         uint40 raiseStartsAt,
         uint40 raiseEndsAt
+    );
+    event LaunchRoundUpdate(
+        uint256 indexed launchId,
+        uint256 indexed roundId,
+        uint256 index,
+        PrestigePadRoundInput round
+    );
+    event LaunchURIUpdate(
+        uint256 indexed launchId,
+        string launchURI
     );
 
     event Deposit(
@@ -114,8 +115,6 @@ IProjectLaunchpad {
     function priceWatcher() external view returns (address priceWatcher);
     function reserveVault() external view returns (address reserveVault);
 
-    function getFeeRate() external view returns (Rate memory rate);
-
     function baseMinUnitPrice() external view returns (uint256 baseMinUnitPrice);
     function baseMaxUnitPrice() external view returns (uint256 baseMaxUnitPrice);
 
@@ -134,9 +133,15 @@ IProjectLaunchpad {
         string calldata projectURI,
         string calldata launchURI,
         uint256 initialQuantity,
+        uint256 feeRate,
         Validation calldata validation
     ) external returns (uint256);
 
+    function updateLaunchURI(
+        uint256 launchId,
+        string calldata launchURI,
+        Validation calldata validation
+    ) external;
     function updateRound(
         uint256 launchId,
         uint256 index,

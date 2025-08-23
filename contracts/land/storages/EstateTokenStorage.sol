@@ -8,6 +8,8 @@ abstract contract EstateTokenStorage is IEstateToken {
 
     mapping(bytes32 => mapping(address => string)) public custodianURI;
 
+    mapping(bytes32 => uint256) internal zoneRoyaltyRates;
+
     mapping(uint256 => Estate) internal estates;
 
     mapping(address => bool) public isExtractor;

@@ -173,7 +173,7 @@ ReentrancyGuardUpgradeable {
 
         IProjectToken projectTokenContract = IProjectToken(projectToken);
         uint256 tokenId = offer.tokenId;
-        uint256 value = offer.unitPrice.scale(Rate(_amount, projectTokenContract.decimals()));
+        uint256 value = offer.unitPrice.scale(_amount, 10 ** projectTokenContract.decimals());
         (
             address royaltyReceiver,
             uint256 royaltyAmount

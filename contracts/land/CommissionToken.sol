@@ -15,6 +15,7 @@ import {IRoyaltyRateProposer} from "../common/interfaces/IRoyaltyRateProposer.so
 
 import {CommonConstant} from "../common/constants/CommonConstant.sol";
 
+import {Administrable} from "../common/utilities/Administrable.sol";
 import {Pausable} from "../common/utilities/Pausable.sol";
 import {RoyaltyRateProposer} from "../common/utilities/RoyaltyRateProposer.sol";
 
@@ -25,6 +26,7 @@ import {CommissionTokenStorage} from "./storages/CommissionTokenStorage.sol";
 contract CommissionToken is
 CommissionTokenStorage,
 ERC721PausableUpgradeable,
+Administrable,
 Pausable,
 RoyaltyRateProposer,
 ReentrancyGuardUpgradeable {
@@ -41,17 +43,12 @@ ReentrancyGuardUpgradeable {
         string calldata _name,
         string calldata _symbol,
         string calldata _uri,
-        uint256 _commissionRate,
         uint256 _royaltyRate
     ) external initializer {
-        require(_commissionRate <= CommonConstant.RATE_MAX_FRACTION);
-
         __ERC721_init(_name, _symbol);
         __ERC721Pausable_init();
 
         __ReentrancyGuard_init();
-
-        __RoyaltyRateProposer_init(_royaltyRate);
 
         admin = _admin;
         estateToken = _estateToken;
@@ -60,8 +57,8 @@ ReentrancyGuardUpgradeable {
         baseURI = _uri;
         emit BaseURIUpdate(_uri);
 
-        commissionRate = _commissionRate;
-        emit CommissionRateUpdate(_commissionRate);
+        royaltyRate = _royaltyRate;
+        emit RoyaltyRateUpdate(Rate(_royaltyRate, CommonConstant.RATE_DECIMALS));
     }
 
     function version() external pure returns (string memory) {
@@ -86,27 +83,146 @@ ReentrancyGuardUpgradeable {
         emit BatchMetadataUpdate(1, IEstateToken(estateToken).estateNumber());
     }
 
-    function getCommissionRate() public view returns (Rate memory) {
-        return Rate(commissionRate, CommonConstant.RATE_DECIMALS);
+    function updateRoyaltyRate(
+        uint256 _royaltyRate,
+        bytes[] calldata _signatures
+    ) external {
+        IAdmin(this.admin()).verifyAdminSignatures(
+            abi.encode(
+                address(this),
+                "updateRoyaltyRate",
+                _royaltyRate
+            ),
+            _signatures
+        );
+        if (_royaltyRate > CommonConstant.RATE_MAX_FRACTION) {
+            revert InvalidRate();
+        }
+        royaltyRate = _royaltyRate;
+        emit RoyaltyRateUpdate(Rate(_royaltyRate, CommonConstant.RATE_DECIMALS));
+    }
+
+    function getBrokerRegistry(bytes32 _zone, address _broker) external view returns (BrokerRegistry memory) {
+        if (!IAdmin(admin).isZone(_zone)) {
+            revert InvalidZone();
+        }
+        return brokerRegistries[_zone][_broker];
+    }
+
+    function isBrokerIn(bytes32 _zone, address _broker) external view returns (bool) {
+        if (!IAdmin(admin).isZone(_zone)) {
+            revert InvalidZone();
+        }
+
+        return brokerRegistries[_zone][_broker].expireAt > block.timestamp;
+    }
+
+    function getCommissionRate(uint256 _tokenId) public view returns (Rate memory) {
+        return commissionRates[_tokenId];
     }
 
     function commissionInfo(uint256 _tokenId, uint256 _value) external view returns (address, uint256) {
         address receiver = _ownerOf(_tokenId);
         return receiver != address(0)
-            ? (receiver, _value.scale(getCommissionRate()))
+            ? (receiver, _value.scale(getCommissionRate(_tokenId)))
             : (address(0), 0);
     }
 
-    function mint(address _account, uint256 _tokenId) external {
-        if (msg.sender != estateToken) {
+    function registerBroker(
+        bytes32 _zone,
+        address _broker,
+        uint256 _commissionRate,
+        uint40 _duration
+    ) external onlyManager {
+        if (!IAdmin(admin).getZoneEligibility(_zone, msg.sender)) {
+            revert Unauthorized();
+        }
+
+        if (_commissionRate > CommonConstant.RATE_MAX_FRACTION) {
+            revert InvalidRate();
+        }
+
+        if (_duration == 0) {
+            revert InvalidInput();
+        }
+
+        if (brokerRegistries[_zone][_broker].expireAt > block.timestamp) {
+            revert NotExpired();
+        }
+
+        Rate memory rate = Rate(_commissionRate, CommonConstant.RATE_DECIMALS);
+
+        brokerRegistries[_zone][_broker] = BrokerRegistry(
+            rate,
+            uint40(block.timestamp + _duration)
+        );
+
+        emit BrokerRegistryUpdate(
+            _zone,
+            _broker,
+            rate,
+            uint40(block.timestamp + _duration)
+        );
+    }
+
+    function extendBrokerExpiration(
+        bytes32 _zone,
+        address _broker,
+        uint40 _duration
+    ) external onlyManager {
+        if (!IAdmin(admin).getZoneEligibility(_zone, msg.sender)) {
+            revert Unauthorized();
+        }
+
+        if (_duration == 0) {
+            revert InvalidInput();
+        }
+
+        uint40 expireAt = brokerRegistries[_zone][_broker].expireAt;
+        if (expireAt > block.timestamp) {
+            revert AlreadyExpired();
+        }
+
+        brokerRegistries[_zone][_broker].expireAt = expireAt + _duration;
+
+        emit BrokerRegistryUpdate(
+            _zone,
+            _broker,
+            brokerRegistries[_zone][_broker].commissionRate,
+            uint40(block.timestamp + _duration)
+        );
+    }
+
+    function mint(
+        bytes32 _zone,
+        address _broker,
+        uint256 _tokenId
+    ) external {
+        address estateTokenAddress = estateToken;
+        if (msg.sender != estateTokenAddress) {
             revert Unauthorized();
         }
         if (_exists(_tokenId)) {
             revert AlreadyMinted();
         }
 
-        _mint(_account, _tokenId);
-        emit NewToken(_tokenId, _account);
+        if (!IAdmin(admin).isZone(_zone)) {
+            revert InvalidZone();
+        }
+
+        BrokerRegistry storage brokerRegistry = brokerRegistries[_zone][_broker];
+        if (brokerRegistry.expireAt > block.timestamp) {
+            revert InvalidBroker();
+        }
+
+        commissionRates[_tokenId] = brokerRegistry.commissionRate;
+        _mint(_broker, _tokenId);
+
+        emit NewToken(
+            _tokenId,
+            _zone,
+            _broker
+        );
     }
 
     function tokenURI(uint256) public view override(
@@ -114,6 +230,10 @@ ReentrancyGuardUpgradeable {
         ERC721Upgradeable
     ) returns (string memory) {
         return baseURI;
+    }
+
+    function getRoyaltyRate(uint256) external view returns (Rate memory) {
+        return Rate(royaltyRate, CommonConstant.RATE_DECIMALS);
     }
 
     function supportsInterface(bytes4 _interfaceId) public view override(

@@ -53,11 +53,8 @@ ReentrancyGuardUpgradeable {
         address _governanceHub,
         address _dividendHub,
         address _feeReceiver,
-        address _validator,
-        uint256 _feeRate
+        address _validator
     ) external initializer {
-        require(_feeRate <= CommonConstant.RATE_MAX_FRACTION);
-
         __Pausable_init();
         __ReentrancyGuard_init();
 
@@ -70,36 +67,10 @@ ReentrancyGuardUpgradeable {
         governanceHub = _governanceHub;
         dividendHub = _dividendHub;
         feeReceiver = _feeReceiver;
-
-        feeRate = _feeRate;
-        emit FeeRateUpdate(_feeRate);
     }
 
     function version() external pure returns (string memory) {
         return VERSION;
-    }
-
-    function updateFeeRate(
-        uint256 _feeRate,
-        bytes[] calldata _signatures
-    ) external {
-        IAdmin(admin).verifyAdminSignatures(
-            abi.encode(
-                address(this),
-                "updateFeeRate",
-                _feeRate
-            ),
-            _signatures
-        );
-        if (_feeRate > CommonConstant.RATE_MAX_FRACTION) {
-            revert InvalidRate();
-        }
-        feeRate = _feeRate;
-        emit FeeRateUpdate(_feeRate);
-    }
-
-    function getFeeRate() public view returns (Rate memory) {
-        return Rate(feeRate, CommonConstant.RATE_DECIMALS);
     }
 
     function getRequest(uint256 _requestId)
@@ -111,6 +82,7 @@ ReentrancyGuardUpgradeable {
         uint256 _estateId,
         uint256 _value,
         address _currency,
+        uint256 _feeRate,
         bytes32 _uuid,
         Validation calldata _validation
     ) external payable nonReentrant whenNotPaused returns (uint256) {
@@ -151,12 +123,15 @@ ReentrancyGuardUpgradeable {
             _validation
         );
 
+        Rate memory rate = Rate(_feeRate, CommonConstant.RATE_DECIMALS);
+
         uint256 requestId = ++requestNumber;
         requests[requestId] = EstateLiquidatorRequest(
             _estateId,
             proposalId,
             _value,
             _currency,
+            rate,
             msg.sender
         );
 
@@ -166,7 +141,8 @@ ReentrancyGuardUpgradeable {
             proposalId,
             msg.sender,
             _value,
-            _currency
+            _currency,
+            rate
         );
 
         return requestId;
@@ -191,7 +167,7 @@ ReentrancyGuardUpgradeable {
             address currency = request.currency;
 
             uint256 feeAmount = _applyDiscount(
-                value.scale(feeRate, CommonConstant.RATE_MAX_FRACTION),
+                value.scale(request.feeRate),
                 currency
             );
 

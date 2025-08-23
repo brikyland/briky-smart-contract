@@ -43,7 +43,8 @@ ReentrancyGuardUpgradeable {
         address _admin,
         address _primaryToken,
         string calldata _name,
-        string calldata _symbol
+        string calldata _symbol,
+        uint256 _feeRate
     ) external initializer {
         __ERC20_init(_name, _symbol);
         __ERC20Pausable_init();
@@ -55,6 +56,9 @@ ReentrancyGuardUpgradeable {
         primaryToken = _primaryToken;
 
         interestAccumulation = FixedMath.ONE;
+
+        feeRate = _feeRate;
+        emit FeeRateUpdate(Rate(_feeRate, CommonConstant.RATE_DECIMALS));
     }
 
     function version() external pure returns (string memory) {
@@ -100,7 +104,7 @@ ReentrancyGuardUpgradeable {
             revert InvalidRate();
         }
         feeRate = _feeRate;
-        emit FeeRateUpdate(_feeRate);
+        emit FeeRateUpdate(Rate(_feeRate, CommonConstant.RATE_DECIMALS));
     }
 
     function getFeeRate() external view returns (Rate memory) {

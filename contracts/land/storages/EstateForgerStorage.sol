@@ -18,8 +18,6 @@ abstract contract EstateForgerStorage is IEstateForger {
     uint256 public baseMinUnitPrice;
     uint256 public baseMaxUnitPrice;
 
-    uint256 internal feeRate;
-
     address public admin;
     address public estateToken;
     address public feeReceiver;

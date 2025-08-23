@@ -12,20 +12,12 @@ IRate,
 ICommon {
     event DefaultRateUpdate(
         address indexed currency,
-        uint256 rateValue,
-        uint8 rateDecimals
+        Rate rate
     );
     event PriceFeedUpdate(
         address indexed currency,
         address feed,
         uint40 heartbeat
-    );
-
-    event UnitPriceValidation(
-        uint256 unitPrice,
-        address currency,
-        uint256 rateValue,
-        uint8 rateDecimals
     );
 
     error InvalidPriceFeedData();

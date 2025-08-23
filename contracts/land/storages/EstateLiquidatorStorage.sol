@@ -10,8 +10,6 @@ abstract contract EstateLiquidatorStorage is IEstateLiquidator {
 
     uint256 public requestNumber;
 
-    uint256 internal feeRate;
-
     address public admin;
     address public dividendHub;
     address public estateToken;

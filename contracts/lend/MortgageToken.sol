@@ -72,7 +72,6 @@ ReentrancyGuardUpgradeable {
         __ReentrancyGuard_init();
 
         __CommissionDispatchable_init(_commissionToken);
-        __RoyaltyRateProposer_init(_royaltyRate);
 
         admin = _admin;
         estateToken = _estateToken;
@@ -82,7 +81,7 @@ ReentrancyGuardUpgradeable {
         emit BaseURIUpdate(_uri);
 
         feeRate = _feeRate;
-        emit FeeRateUpdate(_feeRate);
+        emit FeeRateUpdate(Rate(_feeRate, CommonConstant.RATE_DECIMALS));
     }
 
     function version() external pure returns (string memory) {
@@ -123,7 +122,7 @@ ReentrancyGuardUpgradeable {
             revert InvalidRate();
         }
         feeRate = _feeRate;
-        emit FeeRateUpdate(_feeRate);
+        emit FeeRateUpdate(Rate(_feeRate, CommonConstant.RATE_DECIMALS));
     }
 
     function getFeeRate() external view returns (Rate memory) {
@@ -252,6 +251,11 @@ ReentrancyGuardUpgradeable {
         ERC721Upgradeable
     ) returns (string memory) {
         return baseURI;
+    }
+
+    function getRoyaltyRate(uint256 _tokenId) external view returns (Rate memory) {
+        _requireMinted(_tokenId);
+        return IEstateToken(estateToken).getRoyaltyRate(loans[_tokenId].estateId);
     }
 
     function supportsInterface(bytes4 _interfaceId) public view override(

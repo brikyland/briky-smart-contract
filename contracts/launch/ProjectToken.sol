@@ -37,12 +37,15 @@ import {IProjectToken} from "./interfaces/IProjectToken.sol";
 
 import {ProjectTokenStorage} from "./storages/ProjectTokenStorage.sol";
 
+import {ProjectTokenReceiver} from "./utilities/ProjectTokenReceiver.sol";
+
 contract ProjectToken is
 ProjectTokenStorage,
 ERC1155PausableUpgradeable,
 ERC1155SupplyUpgradeable,
 ERC1155URIStorageUpgradeable,
 EstateTokenizer,
+ProjectTokenReceiver,
 Pausable,
 RoyaltyRateProposer,
 Snapshotable,
@@ -80,15 +83,13 @@ ReentrancyGuardUpgradeable {
         address _estateToken,
         address _feeReceiver,
         address _validator,
-        string calldata _uri,
-        uint256 _royaltyRate
+        string calldata _uri
     ) external initializer {
         __ERC1155Pausable_init();
 
         __ReentrancyGuard_init();
 
         __Validatable_init(_validator);
-        __RoyaltyRateProposer_init(_royaltyRate);
 
         admin = _admin;
         estateToken = _estateToken;
@@ -157,6 +158,35 @@ ReentrancyGuardUpgradeable {
                 emit LaunchpadDeauthorization(_accounts[i]);
             }
         }
+    }
+
+    function updateZoneRoyaltyRate(
+        bytes32 _zone,
+        uint256 _royaltyRate,
+        bytes[] calldata _signatures
+    ) external {
+        IAdmin(this.admin()).verifyAdminSignatures(
+            abi.encode(
+                address(this),
+                "updateZoneRoyaltyRate",
+                _zone,
+                _royaltyRate
+            ),
+            _signatures
+        );
+        if (!IAdmin(admin).isZone(_zone)) {
+            revert InvalidZone();
+        }
+
+        if (_royaltyRate > CommonConstant.RATE_MAX_FRACTION) {
+            revert InvalidRate();
+        }
+        zoneRoyaltyRates[_zone] = _royaltyRate;
+        emit ZoneRoyaltyRateUpdate(_zone, Rate(_royaltyRate, CommonConstant.RATE_DECIMALS));
+    }
+
+    function getZoneRoyaltyRate(bytes32 _zone) external view returns (Rate memory) {
+        return Rate(zoneRoyaltyRates[_zone], CommonConstant.RATE_DECIMALS);
     }
 
     function registerInitiator(
@@ -323,7 +353,7 @@ ReentrancyGuardUpgradeable {
             revert InvalidWithdrawing();
         }
 
-        uint256 amount = balanceOf(msg.sender, _projectId);        
+        uint256 amount = balanceOf(msg.sender, _projectId);
 
         IEstateToken(estateToken).safeTransferFrom(
             address(this),
@@ -368,7 +398,7 @@ ReentrancyGuardUpgradeable {
     }
 
     function balanceOfAt(address _account, uint256 _projectId, uint256 _at) public view returns (uint256) {
-        if (!exists(_projectId)) {
+        if (_projectId == 0 || _projectId > projectNumber) {
             revert InvalidProjectId();
         }
         if (_at > block.timestamp || _at > projects[_projectId].deprecateAt) {
@@ -401,7 +431,7 @@ ReentrancyGuardUpgradeable {
         uint256 _projectId,
         uint256 _at
     ) external view returns (uint256) {
-        if (!exists(_projectId)) {
+        if (_projectId == 0 || _projectId > projectNumber) {
             revert InvalidProjectId();
         }
         Project storage project = projects[_projectId];
@@ -434,7 +464,7 @@ ReentrancyGuardUpgradeable {
     }
 
     function totalVoteAt(uint256 _projectId, uint256 _at) external view returns (uint256) {
-        if (!exists(_projectId)) {
+        if (_projectId == 0 || _projectId > projectNumber) {
             revert InvalidProjectId();
         }
 
@@ -447,14 +477,81 @@ ReentrancyGuardUpgradeable {
         return _snapshotAt(totalSupplySnapshots[_projectId], _at);
     }
 
+    function getRoyaltyRate(uint256 _tokenId) validProject(_tokenId) external view returns (Rate memory) {
+        return Rate(zoneRoyaltyRates[projects[_tokenId].zone], CommonConstant.RATE_DECIMALS);
+    }
+
     function supportsInterface(bytes4 _interfaceId) public view virtual override(
         IERC165Upgradeable,
         EstateTokenizer,
+        ProjectTokenReceiver,
         RoyaltyRateProposer,
         ERC1155Upgradeable
     ) returns (bool) {
         return _interfaceId == type(IProjectToken).interfaceId
             || super.supportsInterface(_interfaceId);
+    }
+
+    function projectToken() external view returns (address) {
+        return address(this);
+    }
+
+    function onERC1155Received(
+        address _operator,
+        address _from,
+        uint256 _id,
+        uint256 _value,
+        bytes calldata _data
+    ) public virtual override(
+        IERC1155ReceiverUpgradeable,
+        EstateTokenReceiver,
+        ProjectTokenReceiver
+    ) returns (bytes4) {
+        return EstateTokenReceiver.onERC1155Received(
+                _operator,
+                _from,
+                _id,
+                _value,
+                _data
+            ) == this.onERC1155Received.selector
+            || ProjectTokenReceiver.onERC1155Received(
+                _operator,
+                _from,
+                _id,
+                _value,
+                _data
+            ) == this.onERC1155Received.selector
+            ? this.onERC1155Received.selector
+            : bytes4(0);
+    }
+
+    function onERC1155BatchReceived(
+        address _operator,
+        address _from,
+        uint256[] calldata _ids,
+        uint256[] calldata _values,
+        bytes calldata _data
+    ) public virtual override(
+        IERC1155ReceiverUpgradeable,
+        EstateTokenReceiver,
+        ProjectTokenReceiver
+    ) returns (bytes4) {
+        return EstateTokenReceiver.onERC1155BatchReceived(
+                _operator,
+                _from,
+                _ids,
+                _values,
+                _data
+            ) == this.onERC1155BatchReceived.selector
+            || ProjectTokenReceiver.onERC1155BatchReceived(
+                _operator,
+                _from,
+                _ids,
+                _values,
+                _data
+            ) == this.onERC1155BatchReceived.selector
+            ? this.onERC1155Received.selector
+            : bytes4(0);
     }
 
     function _beforeTokenTransfer(
@@ -499,29 +596,5 @@ ReentrancyGuardUpgradeable {
 
     function _royaltyReceiver() internal view override returns (address) {
         return feeReceiver;
-    }
-
-    function onERC1155Received(
-        address,
-        address,
-        uint256,
-        uint256,
-        bytes calldata
-    ) public virtual override(EstateTokenReceiver, IERC1155ReceiverUpgradeable) returns (bytes4) {
-        return msg.sender == this.estateToken() || msg.sender == address(this)
-            ? this.onERC1155Received.selector 
-            : bytes4(0);
-    }
-
-    function onERC1155BatchReceived(
-        address,
-        address,
-        uint256[] calldata,
-        uint256[] calldata,
-        bytes calldata
-    ) public virtual override(EstateTokenReceiver, IERC1155ReceiverUpgradeable) returns (bytes4) {
-        return msg.sender == this.estateToken() || msg.sender == address(this)
-            ? this.onERC1155BatchReceived.selector
-            : bytes4(0);
     }
 }

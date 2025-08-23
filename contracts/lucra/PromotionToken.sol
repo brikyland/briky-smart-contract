@@ -45,12 +45,13 @@ ReentrancyGuardUpgradeable {
 
         __ReentrancyGuard_init();
 
-        __RoyaltyRateProposer_init(_royaltyRate);
-
         admin = _admin;
 
         fee = _fee;
         emit FeeUpdate(_fee);
+
+        royaltyRate = _royaltyRate;
+        emit RoyaltyRateUpdate(Rate(_royaltyRate, CommonConstant.RATE_DECIMALS));
     }
 
     function version() external pure returns (string memory) {
@@ -71,6 +72,25 @@ ReentrancyGuardUpgradeable {
         );
         fee = _fee;
         emit FeeUpdate(_fee);
+    }
+
+    function updateRoyaltyRate(
+        uint256 _royaltyRate,
+        bytes[] calldata _signatures
+    ) external {
+        IAdmin(this.admin()).verifyAdminSignatures(
+            abi.encode(
+                address(this),
+                "updateRoyaltyRate",
+                _royaltyRate
+            ),
+            _signatures
+        );
+        if (_royaltyRate > CommonConstant.RATE_MAX_FRACTION) {
+            revert InvalidRate();
+        }
+        royaltyRate = _royaltyRate;
+        emit RoyaltyRateUpdate(Rate(_royaltyRate, CommonConstant.RATE_DECIMALS));
     }
 
     function withdraw(
@@ -257,6 +277,10 @@ ReentrancyGuardUpgradeable {
         ERC721Upgradeable
     ) returns (string memory) {
         return contents[tokenContents[_tokenId]].uri;
+    }
+
+    function getRoyaltyRate(uint256) external view returns (Rate memory) {
+        return Rate(royaltyRate, CommonConstant.RATE_DECIMALS);
     }
 
     function supportsInterface(bytes4 _interfaceId) public view override(

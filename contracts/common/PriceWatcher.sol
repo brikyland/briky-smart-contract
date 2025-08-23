@@ -72,8 +72,7 @@ Administrable {
 
     function updateDefaultRates(
         address[] calldata _currencies,
-        uint256[] calldata _values,
-        uint8[] calldata _decimals,
+        Rate[] calldata _rates,
         bytes[] calldata _signatures
     ) external {
         IAdmin(admin).verifyAdminSignatures(
@@ -81,27 +80,23 @@ Administrable {
                 address(this),
                 "updateDefaultRates",
                 _currencies,
-                _values,
-                _decimals
+                _rates
             ),
             _signatures
         );
 
-        if (_currencies.length != _values.length
-            || _currencies.length != _decimals.length) {
+        if (_currencies.length != _rates.length) {
             revert InvalidInput();
         }
 
         for(uint256 i; i < _currencies.length; ++i) {
-            if (_decimals[i] > CommonConstant.RATE_DECIMALS) {
+            if (_rates[i].decimals > CommonConstant.RATE_DECIMALS) {
                 revert InvalidInput();
             }
-
-            defaultRates[_currencies[i]] = Rate(_values[i], _decimals[i]);
+            defaultRates[_currencies[i]] = _rates[i];
             emit DefaultRateUpdate(
                 _currencies[i],
-                _values[i],
-                _decimals[i]
+                _rates[i]
             );
         }
     }

@@ -16,8 +16,6 @@ abstract contract PrestigePadStorage is IPrestigePad {
     uint256 public baseMinUnitPrice;
     uint256 public baseMaxUnitPrice;
 
-    uint256 internal feeRate;
-
     address public admin;
     address public projectToken;
     address public feeReceiver;

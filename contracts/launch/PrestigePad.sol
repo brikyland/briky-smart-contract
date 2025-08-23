@@ -86,32 +86,10 @@ ReentrancyGuardUpgradeable {
         baseMinUnitPrice = _baseMinUnitPrice;
         baseMaxUnitPrice = _baseMaxUnitPrice;
         emit BaseUnitPriceRangeUpdate(_baseMinUnitPrice, _baseMaxUnitPrice);
-
-        feeRate = _feeRate;
-        emit FeeRateUpdate(_feeRate);
     }
 
     function version() external pure returns (string memory) {
         return VERSION;
-    }
-
-    function updateFeeRate(
-        uint256 _feeRate,
-        bytes[] calldata _signatures
-    ) external {
-        IAdmin(admin).verifyAdminSignatures(
-            abi.encode(
-                address(this),
-                "updateFeeRate",
-                _feeRate
-            ),
-            _signatures
-        );
-        if (_feeRate > CommonConstant.RATE_MAX_FRACTION) {
-            revert InvalidRate();
-        }
-        feeRate = _feeRate;
-        emit FeeRateUpdate(_feeRate);
     }
 
     function updateBaseUnitPriceRange(
@@ -140,10 +118,6 @@ ReentrancyGuardUpgradeable {
         );
     }
 
-    function getFeeRate() public view returns (Rate memory) {
-        return Rate(feeRate, CommonConstant.RATE_DECIMALS);
-    }
-
     function getLaunch(uint256 _launchId)
     external view validLaunch(_launchId) returns (PrestigePadLaunch memory) {
         return launches[_launchId];
@@ -160,6 +134,7 @@ ReentrancyGuardUpgradeable {
         string calldata _projectURI,
         string calldata _launchURI,
         uint256 _initialQuantity,
+        uint256 _feeRate,
         Validation calldata _validation
     ) external nonReentrant onlyExecutive whenNotPaused returns (uint256) {
         _validate(
@@ -182,6 +157,9 @@ ReentrancyGuardUpgradeable {
         PrestigePadLaunch storage launch = launches[launchId];
         launch.uri = _launchURI;
         launch.initiator = _initiator;
+
+        Rate memory rate = Rate(_feeRate, CommonConstant.RATE_DECIMALS);
+        launch.feeRate = rate;
 
         IProjectToken projectTokenContract = IProjectToken(projectToken);
         uint256 projectId = projectTokenContract.launchProject(
@@ -216,10 +194,26 @@ ReentrancyGuardUpgradeable {
             projectId,
             _initiator,
             _launchURI,
-            _initialQuantity
+            _initialQuantity,
+            rate
         );
 
         return launchId;
+    }
+
+    function updateLaunchURI(
+        uint256 _launchId,
+        string calldata _uri,
+        Validation calldata _validation
+    ) external validLaunch(_launchId) onlyInitiator(_launchId) whenNotPaused {
+        _validate(abi.encode(_uri), _validation);
+
+        if (launches[_launchId].isFinalized) {
+            revert AlreadyFinalized();
+        }
+
+        launches[_launchId].uri = _uri;
+        emit LaunchURIUpdate(_launchId, _uri);
     }
 
     function updateRound(
@@ -243,7 +237,7 @@ ReentrancyGuardUpgradeable {
         uint256 roundId = _newRound(_launchId, _round);
         launch.roundIds[_index] = roundId;
 
-        emit RoundUpdate(
+        emit LaunchRoundUpdate(
             _launchId,
             roundId,
             _index,
@@ -283,7 +277,7 @@ ReentrancyGuardUpgradeable {
             uint256 roundId = _newRound(_launchId, _addedRounds[i]);
             roundIds.push(roundId);
 
-            emit RoundUpdate(
+            emit LaunchRoundUpdate(
                 _launchId,
                 roundId,
                 index++,
@@ -334,9 +328,10 @@ ReentrancyGuardUpgradeable {
         uint256 unitPrice = round.quote.unitPrice;
         address currency = round.quote.currency;
         uint256 feeDenomination = _applyDiscount(
-            unitPrice.scale(feeRate, CommonConstant.RATE_MAX_FRACTION),
+            unitPrice.scale(launch.feeRate),
             currency
         );
+        round.quote.feeDenomination = feeDenomination;
 
         uint256 cashbackFundId;
         if (_cashbackBaseRate == 0 && _cashbackCurrencies.length == 0) {
@@ -354,10 +349,8 @@ ReentrancyGuardUpgradeable {
                 _cashbackDenominations
             );
         }
-
         round.quote.cashbackThreshold = _cashbackThreshold;
         round.quote.cashbackFundId = cashbackFundId;
-        round.quote.feeDenomination = feeDenomination;
 
         round.agenda.raiseStartsAt = _raiseStartsAt;
         round.agenda.raiseEndsAt = _raiseStartsAt + _raiseDuration;
@@ -460,9 +453,8 @@ ReentrancyGuardUpgradeable {
         uint256 feeAmount = soldQuantity * round.quote.feeDenomination;
         CurrencyHandler.sendCurrency(currency, initiator, value - feeAmount);
 
-        uint256 cashbackFundId = round.quote.cashbackFundId;
-        uint256 cashbackBaseAmount = _provideCashbackFund(cashbackFundId);
-
+        uint256 cashbackBaseAmount = _provideCashbackFund(round.quote.cashbackFundId);
+        
         CurrencyHandler.sendCurrency(
             currency,
             feeReceiver,
@@ -736,7 +728,8 @@ ReentrancyGuardUpgradeable {
         return value;
     }
 
-    function _provideCashbackFund(uint256 _cashbackFundId) internal returns (uint256 cashbackBaseAmount) {
+    function _provideCashbackFund(uint256 _cashbackFundId) internal returns (uint256) {
+        uint256 cashbackBaseAmount;
         if (_cashbackFundId != 0) {
             address reserveVaultAddress = reserveVault;
             Fund memory fund = IReserveVault(reserveVaultAddress).getFund(_cashbackFundId);
@@ -755,11 +748,10 @@ ReentrancyGuardUpgradeable {
                 CurrencyHandler.receiveNative(totalNative);
 
                 if (fund.mainDenomination != 0) {
-                    cashbackBaseAmount = fund.mainDenomination * fund.totalQuantity;
                     if (fund.mainCurrency == address(0)) {
-                        totalNative += cashbackBaseAmount;
+                        totalNative += fund.mainDenomination * fund.totalQuantity;
                     } else {
-                        CurrencyHandler.allowERC20(fund.mainCurrency, reserveVaultAddress, cashbackBaseAmount);
+                        CurrencyHandler.allowERC20(fund.mainCurrency, reserveVaultAddress, fund.mainDenomination * fund.totalQuantity);
                     }
                 }
             }
@@ -768,5 +760,6 @@ ReentrancyGuardUpgradeable {
         } else {
             CurrencyHandler.receiveNative(0);
         }
+        return cashbackBaseAmount;
     }
 }

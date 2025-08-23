@@ -14,6 +14,8 @@ abstract contract ProjectTokenStorage is IProjectToken {
 
     mapping(uint256 => Project) internal projects;
 
+    mapping(bytes32 => uint256) internal zoneRoyaltyRates;
+
     mapping(address => bool) public isLaunchpad;
 
     uint256 public projectNumber;

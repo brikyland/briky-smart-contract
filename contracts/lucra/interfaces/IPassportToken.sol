@@ -14,6 +14,7 @@ IERC4906Upgradeable,
 IERC721MetadataUpgradeable {
     event BaseURIUpdate(string newValue);
     event FeeUpdate(uint256 newValue);
+    event RoyaltyRateUpdate(Rate newValue);
 
     event NewToken(uint256 indexed tokenId, address indexed owner);
 

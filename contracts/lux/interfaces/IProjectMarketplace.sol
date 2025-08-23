@@ -3,13 +3,10 @@ pragma solidity ^0.8.20;
 
 import {ICommon} from "../../common/interfaces/ICommon.sol";
 
-import {IRate} from "../../common/structs/IRate.sol";
-
 import {IProject} from "../../launch/structs/IProject.sol";
 
 interface IProjectMarketplace is
 IProject,
-IRate,
 ICommon {
     enum OfferState {
         Nil,

@@ -12,7 +12,6 @@ import {IReserveVault} from "../common/interfaces/IReserveVault.sol";
 
 import {CommonConstant} from "../common/constants/CommonConstant.sol";
 
-import {Discountable} from "../common/utilities/Discountable.sol";
 import {Pausable} from "../common/utilities/Pausable.sol";
 import {Validatable} from "../common/utilities/Validatable.sol";
 
@@ -23,6 +22,8 @@ import {IEstateToken} from "./interfaces/IEstateToken.sol";
 
 import {EstateForgerStorage} from "./storages/EstateForgerStorage.sol";
 
+import {IBrokerRegistry} from "./structs/IBrokerRegistry.sol";
+
 import {CommissionDispatchable} from "./utilities/CommissionDispatchable.sol";
 import {EstateTokenizer} from "./utilities/EstateTokenizer.sol";
 
@@ -30,7 +31,6 @@ contract EstateForger is
 EstateForgerStorage,
 EstateTokenizer,
 CommissionDispatchable,
-Discountable,
 Pausable,
 Validatable,
 ReentrancyGuardUpgradeable {
@@ -56,11 +56,8 @@ ReentrancyGuardUpgradeable {
         address _reserveVault,
         address _validator,
         uint256 _baseMinUnitPrice,
-        uint256 _baseMaxUnitPrice,
-        uint256 _feeRate
+        uint256 _baseMaxUnitPrice
     ) external initializer {
-        require(_feeRate <= CommonConstant.RATE_MAX_FRACTION);
-
         __Pausable_init();
         __ReentrancyGuard_init();
 
@@ -76,32 +73,10 @@ ReentrancyGuardUpgradeable {
         baseMinUnitPrice = _baseMinUnitPrice;
         baseMaxUnitPrice = _baseMaxUnitPrice;
         emit BaseUnitPriceRangeUpdate(_baseMinUnitPrice, _baseMaxUnitPrice);
-
-        feeRate = _feeRate;
-        emit FeeRateUpdate(_feeRate);
     }
 
     function version() external pure returns (string memory) {
         return VERSION;
-    }
-
-    function updateFeeRate(
-        uint256 _feeRate,
-        bytes[] calldata _signatures
-    ) external {
-        IAdmin(admin).verifyAdminSignatures(
-            abi.encode(
-                address(this),
-                "updateFeeRate",
-                _feeRate
-            ),
-            _signatures
-        );
-        if (_feeRate > CommonConstant.RATE_MAX_FRACTION) {
-            revert InvalidRate();
-        }
-        feeRate = _feeRate;
-        emit FeeRateUpdate(_feeRate);
     }
 
     function updateBaseUnitPriceRange(
@@ -164,10 +139,6 @@ ReentrancyGuardUpgradeable {
         }
     }
 
-    function getFeeRate() public view returns (Rate memory) {
-        return Rate(feeRate, CommonConstant.RATE_DECIMALS);
-    }
-
     function getRequest(uint256 _requestId)
     external view validRequest(_requestId) returns (EstateForgerRequest memory) {
         return requests[_requestId];
@@ -214,12 +185,17 @@ ReentrancyGuardUpgradeable {
             revert InvalidInput();
         }
 
-        uint256 feeDenomination = _applyDiscount(
-            _quote.unitPrice.scale(feeRate, CommonConstant.RATE_MAX_FRACTION),
-            _quote.currency
-        );
-        uint256 commissionDenomination = feeDenomination
-            .scale(ICommissionToken(commissionToken).getCommissionRate());
+        IBrokerRegistry.BrokerRegistry memory brokerRegistry = ICommissionToken(commissionToken).getBrokerRegistry(_estate.zone, _quote.broker);
+
+        if (brokerRegistry.expireAt
+            < _agenda.saleStartsAt
+                + _agenda.privateSaleDuration
+                + _agenda.publicSaleDuration
+                + EstateForgerConstant.SALE_CONFIRMATION_TIME_LIMIT) {
+            revert InvalidBroker();
+        }
+
+        uint256 commissionDenomination = _quote.feeDenomination.scale(brokerRegistry.commissionRate);
 
         uint256 cashbackFundId;
         if (_quote.cashbackBaseRate == 0 && _quote.cashbackCurrencies.length == 0) {
@@ -232,7 +208,7 @@ ReentrancyGuardUpgradeable {
             }
             cashbackFundId = IReserveVault(reserveVault).openFund(
                 _quote.currency,
-                (feeDenomination - commissionDenomination)
+                (_quote.feeDenomination - commissionDenomination)
                     .scale(_quote.cashbackBaseRate, CommonConstant.RATE_MAX_FRACTION),
                 _quote.cashbackCurrencies,
                 _quote.cashbackDenominations
@@ -258,8 +234,9 @@ ReentrancyGuardUpgradeable {
                 _quote.currency,
                 _quote.cashbackThreshold,
                 cashbackFundId,
-                feeDenomination,
-                commissionDenomination
+                _quote.feeDenomination,
+                commissionDenomination,
+                _quote.broker
             ),
             EstateForgerRequestAgenda(
                 _agenda.saleStartsAt,
@@ -404,7 +381,7 @@ ReentrancyGuardUpgradeable {
             request.estate.uri,
             request.estate.expireAt,
             request.requester,
-            _commissionReceiver
+            request.quote.broker
         );
         request.estate.estateId = estateId;
 
@@ -625,7 +602,8 @@ ReentrancyGuardUpgradeable {
         return value;
     }
 
-    function _provideCashbackFund(uint256 _cashbackFundId) internal returns (uint256 cashbackBaseAmount) {
+    function _provideCashbackFund(uint256 _cashbackFundId) internal returns (uint256) {
+        uint256 cashbackBaseAmount;
         if (_cashbackFundId != 0) {
             address reserveVaultAddress = reserveVault;
             Fund memory fund = IReserveVault(reserveVaultAddress).getFund(_cashbackFundId);
@@ -657,5 +635,6 @@ ReentrancyGuardUpgradeable {
         } else {
             CurrencyHandler.receiveNative(0);
         }
+        return cashbackBaseAmount;
     }
 }
