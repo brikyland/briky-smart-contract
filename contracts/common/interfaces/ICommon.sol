@@ -11,6 +11,7 @@ interface ICommon {
     error InvalidInput();
     error InvalidTimestamp();
     error InvalidUpdating();
+    error InvalidZone();
     error NotAuthorizedAccount();
     error Unauthorized();
 

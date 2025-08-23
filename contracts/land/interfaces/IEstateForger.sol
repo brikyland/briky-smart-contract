@@ -18,8 +18,6 @@ IRate,
 ICommissionDispatchable,
 IValidatable,
 IEstateTokenizer {
-    event FeeRateUpdate(uint256 newValue);
-
     event BaseUnitPriceRangeUpdate(
         uint256 baseMinUnitPrice,
         uint256 baseMaxUnitPrice
@@ -71,6 +69,7 @@ IEstateTokenizer {
     error AlreadyConfirmed();
     error AlreadyHadDeposit();
     error AlreadyWithdrawn();
+    error InvalidBroker();
     error InvalidCommissionReceiver();
     error InvalidConfirming();
     error InvalidDepositing();
@@ -90,8 +89,6 @@ IEstateTokenizer {
     function feeReceiver() external view returns (address feeReceiver);
     function priceWatcher() external view returns (address priceWatcher);
     function reserveVault() external view returns (address reserveVault);
-
-    function getFeeRate() external view returns (Rate memory rate);
 
     function baseMinUnitPrice() external view returns (uint256 baseMinUnitPrice);
     function baseMaxUnitPrice() external view returns (uint256 baseMaxUnitPrice);

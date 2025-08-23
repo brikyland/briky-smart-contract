@@ -13,7 +13,5 @@ IRate,
 ICommon,
 IERC165Upgradeable,
 IERC2981Upgradeable {
-    event RoyaltyRateUpdate(uint256 newValue);
-
-    function getRoyaltyRate() external view returns (Rate memory rate);
+    function getRoyaltyRate(uint256 tokenId) external view returns (Rate memory rate);
 }

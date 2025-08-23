@@ -64,13 +64,11 @@ Validatable {
         address _admin,
         address _feeReceiver,
         address _validator,
-        string calldata _uri,
-        uint256 _royaltyRate
+        string calldata _uri
     ) external initializer {
         __ERC1155Pausable_init();
 
         __Validatable_init(_validator);
-        __RoyaltyRateProposer_init(_royaltyRate);
 
         admin = _admin;
         feeReceiver = _feeReceiver;
@@ -193,6 +191,50 @@ Validatable {
         }
     }
 
+    function updateZoneRoyaltyRate(
+        bytes32 _zone,
+        uint256 _royaltyRate,
+        bytes[] calldata _signatures
+    ) external {
+        IAdmin(this.admin()).verifyAdminSignatures(
+            abi.encode(
+                address(this),
+                "updateZoneRoyaltyRate",
+                _zone,
+                _royaltyRate
+            ),
+            _signatures
+        );
+        if (!IAdmin(admin).isZone(_zone)) {
+            revert InvalidZone();
+        }
+
+        if (_royaltyRate > CommonConstant.RATE_MAX_FRACTION) {
+            revert InvalidRate();
+        }
+        zoneRoyaltyRates[_zone] = _royaltyRate;
+        emit ZoneRoyaltyRateUpdate(_zone, _royaltyRate);
+    }
+
+    function getZoneRoyaltyRate(bytes32 _zone) external view returns (Rate memory) {
+        return Rate(zoneRoyaltyRates[_zone], CommonConstant.RATE_DECIMALS);
+    }
+    function isCustodianIn(bytes32 _zone, address _account) public view returns (bool) {
+        return bytes(custodianURI[_zone][_account]).length!= 0;
+    }
+
+    function getEstate(uint256 _estateId) external view returns (Estate memory) {
+        if (!exists(_estateId)) {
+            revert InvalidEstateId();
+        }
+        return estates[_estateId];
+    }
+
+    function isAvailable(uint256 _estateId) public view returns (bool) {
+        return estates[_estateId].deprecateAt == CommonConstant.INFINITE_TIMESTAMP
+            && estates[_estateId].expireAt > block.timestamp;
+    }
+
     function registerCustodian(
         bytes32 _zone,
         address _custodian,
@@ -217,22 +259,6 @@ Validatable {
         );
     }
 
-    function isCustodianIn(bytes32 _zone, address _account) public view returns (bool) {
-        return bytes(custodianURI[_zone][_account]).length!= 0;
-    }
-
-    function getEstate(uint256 _estateId) external view returns (Estate memory) {
-        if (!exists(_estateId)) {
-            revert InvalidEstateId();
-        }
-        return estates[_estateId];
-    }
-
-    function isAvailable(uint256 _estateId) public view returns (bool) {
-        return estates[_estateId].deprecateAt == CommonConstant.INFINITE_TIMESTAMP
-            && estates[_estateId].expireAt > block.timestamp;
-    }
-
     function tokenizeEstate(
         uint256 _totalSupply,
         bytes32 _zone,
@@ -240,7 +266,7 @@ Validatable {
         string calldata _uri,
         uint40 _expireAt,
         address _custodian,
-        address _commissionReceiver
+        address _broker
     ) external whenNotPaused returns (uint256) {
         if (!isTokenizer[msg.sender]) {
             revert Unauthorized();
@@ -272,7 +298,8 @@ Validatable {
         _setURI(estateId, _uri);
 
         ICommissionToken(commissionToken).mint(
-            _commissionReceiver,
+            _zone,
+            _broker,
             estateId
         );
 
@@ -409,6 +436,10 @@ Validatable {
         }
 
         return totalSupply(_estateId);
+    }
+
+    function getRoyaltyRate(uint256 _tokenId) validEstate(_tokenId) external view returns (Rate memory) {
+        return Rate(zoneRoyaltyRates[estates[_tokenId].zone], CommonConstant.RATE_DECIMALS);
     }
 
     function supportsInterface(bytes4 _interfaceId) public view override(

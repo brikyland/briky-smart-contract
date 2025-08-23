@@ -21,7 +21,7 @@ IERC4906Upgradeable,
 IERC721MetadataUpgradeable {
     event BaseURIUpdate(string newValue);
 
-    event FeeRateUpdate(uint256 newValue);
+    event FeeRateUpdate(Rate feeRate);
 
     event NewToken(
         uint256 indexed tokenId,
@@ -47,7 +47,6 @@ IERC721MetadataUpgradeable {
     );
     event LoanRepayment(uint256 indexed loanId);
 
-    error AlreadySettled();
     error InvalidCancelling();
     error InvalidEstateId();
     error InvalidForeclosing();

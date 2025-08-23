@@ -15,6 +15,8 @@ abstract contract PromotionTokenStorage is IPromotionToken {
 
     uint256 public fee;
 
+    uint256 internal royaltyRate;
+
     address public admin;
     // deprecated
     address public feeReceiver;

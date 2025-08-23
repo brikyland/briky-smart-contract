@@ -24,6 +24,8 @@ IRoyaltyRateProposer,
 IERC1155MetadataURIUpgradeable {
     event BaseURIUpdate(string newValue);
 
+    event ZoneRoyaltyRateUpdate(bytes32 indexed zone, Rate newValue);
+
     event LaunchpadAuthorization(address indexed account);
     event LaunchpadDeauthorization(address indexed account);
 
@@ -65,6 +67,8 @@ IERC1155MetadataURIUpgradeable {
     function projectNumber() external view returns (uint256 projectNumber);
 
     function isLaunchpad(address account) external view returns (bool isLaunchpad);
+
+    function getZoneRoyaltyRate(bytes32 zone) external view returns (Rate memory royaltyRate);
 
     function initiatorURI(bytes32 zone, address account) external view returns (string memory uri);
     function isInitiatorIn(bytes32 zone, address account) external view returns (bool isInitiator);

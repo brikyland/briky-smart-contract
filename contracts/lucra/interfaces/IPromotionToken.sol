@@ -16,6 +16,7 @@ IRoyaltyRateProposer,
 IERC4906Upgradeable,
 IERC721MetadataUpgradeable {
     event FeeUpdate(uint256 newValue);
+    event RoyaltyRateUpdate(Rate newValue);
 
     event NewContent(
         uint256 indexed contentId,

@@ -23,6 +23,8 @@ IERC1155MetadataURIUpgradeable {
 
     event BaseURIUpdate(string newValue);
 
+    event ZoneRoyaltyRateUpdate(bytes32 indexed zone, uint256 newValue);
+
     event TokenizerAuthorization(address indexed account);
     event TokenizerDeauthorization(address indexed account);
 
@@ -59,6 +61,11 @@ IERC1155MetadataURIUpgradeable {
 
     function estateNumber() external view returns (uint256 tokenNumber);
 
+    function isTokenizer(address account) external view returns (bool isTokenizer);
+    function isExtractor(address account) external view returns (bool isExtractor);
+
+    function getZoneRoyaltyRate(bytes32 _zone) external view returns (Rate memory royaltyRate);
+
     function custodianURI(bytes32 zone, address account) external view returns (string memory uri);
     function isCustodianIn(bytes32 zone, address account) external view returns (bool isCustodian);
 
@@ -82,7 +89,7 @@ IERC1155MetadataURIUpgradeable {
         string calldata uri,
         uint40 expireAt,
         address custodian,
-        address commissionReceiver
+        address broker
     ) external returns (uint256 estateId);
 
     function deprecateEstate(uint256 estateId) external;

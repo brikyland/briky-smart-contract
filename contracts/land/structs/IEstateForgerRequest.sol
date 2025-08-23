@@ -35,6 +35,7 @@ interface IEstateForgerRequest {
         uint256 cashbackFundId;
         uint256 feeDenomination;
         uint256 commissionDenomination;
+        address broker;
     }
 
     struct EstateForgerRequestQuoteInput {
@@ -44,6 +45,8 @@ interface IEstateForgerRequest {
         uint256 cashbackBaseRate;
         address[] cashbackCurrencies;
         uint256[] cashbackDenominations;
+        uint256 feeDenomination;
+        address broker;
     }
 
     struct EstateForgerRequestAgenda {
