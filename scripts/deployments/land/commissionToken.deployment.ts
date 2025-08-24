@@ -45,7 +45,6 @@ async function deployOrUpgradeCommissionToken() {
                 Initialization.COMMISSION_TOKEN_Name,
                 Initialization.COMMISSION_TOKEN_Symbol,
                 Initialization.COMMISSION_TOKEN_BaseURI,
-                Initialization.COMMISSION_TOKEN_CommissionRate,
                 Initialization.COMMISSION_TOKEN_RoyaltyRate,
             );
             console.log(`Contract CommissionToken has been deployed to address ${commissionToken.address}`);

@@ -4,3 +4,12 @@ export interface Rate {
     value: BigNumber;
     decimals: number;
 };
+
+export const RATE_SCHEMA = {
+    type: "tuple[]",
+    name: "rates",
+    components: [
+        { name: "value", type: 'uint256' },
+        { name: "decimals", type: 'uint8' },
+    ]
+} as any;

@@ -7,7 +7,6 @@ export async function deployEstateToken(
     feeReceiverAddress: string,
     validatorAddress: string,
     baseURI: string,
-    royaltyRate: BigNumber,
 ) {
     const EstateToken = await ethers.getContractFactory('EstateToken', signer);
 
@@ -18,7 +17,6 @@ export async function deployEstateToken(
             feeReceiverAddress,
             validatorAddress,
             baseURI,
-            royaltyRate,
         ]
     );
     await estateToken.deployed();

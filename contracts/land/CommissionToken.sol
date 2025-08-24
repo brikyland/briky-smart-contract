@@ -179,7 +179,7 @@ ReentrancyGuardUpgradeable {
         }
 
         uint40 expireAt = brokerRegistries[_zone][_broker].expireAt;
-        if (expireAt > block.timestamp) {
+        if (expireAt <= block.timestamp) {
             revert AlreadyExpired();
         }
 
@@ -189,7 +189,7 @@ ReentrancyGuardUpgradeable {
             _zone,
             _broker,
             brokerRegistries[_zone][_broker].commissionRate,
-            uint40(block.timestamp + _duration)
+            expireAt + _duration
         );
     }
 
@@ -211,7 +211,7 @@ ReentrancyGuardUpgradeable {
         }
 
         BrokerRegistry storage brokerRegistry = brokerRegistries[_zone][_broker];
-        if (brokerRegistry.expireAt > block.timestamp) {
+        if (brokerRegistry.expireAt <= block.timestamp) {
             revert InvalidBroker();
         }
 
