@@ -66,7 +66,6 @@ async function deployOrUpgradeEstateForger() {
                 feeReceiverAddress,
                 reserveVaultAddress,
                 estateForgerValidatorAddress,
-                Initialization.ESTATE_FORGER_FeeRate,
                 Initialization.ESTATE_FORGER_BaseMinUnitPrice,
                 Initialization.ESTATE_FORGER_BaseMaxUnitPrice
             );
