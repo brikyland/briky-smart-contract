@@ -109,7 +109,6 @@ async function deployAll() {
         estateToken.address,
         commissionToken.address,
         feeReceiver.address,
-        LandInitialization.ESTATE_FORGER_FeeRate,
         LandInitialization.ESTATE_FORGER_BaseMinUnitPrice,
         LandInitialization.ESTATE_FORGER_BaseMaxUnitPrice
     ) as EstateForger;
