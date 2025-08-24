@@ -13,6 +13,7 @@ import {RoyaltyRateProposer} from "../common/utilities/RoyaltyRateProposer.sol";
 contract RoyaltyCollection is ERC721Upgradeable, RoyaltyRateProposer {
     address public admin;
     address public royaltyReceiver;
+    uint256 public royaltyRate;
     uint256 public tokenNumber;
 
     string constant private VERSION = "v1.1.1";
@@ -58,7 +59,7 @@ contract RoyaltyCollection is ERC721Upgradeable, RoyaltyRateProposer {
         return super.supportsInterface(_interfaceId);
     }
 
-    function getRoyaltyRate() public view override returns (Rate memory rate) {
+    function getRoyaltyRate(uint256) public view override returns (Rate memory rate) {
         return Rate(royaltyRate, CommonConstant.RATE_DECIMALS);
     }
 

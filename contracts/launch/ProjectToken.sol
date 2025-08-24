@@ -597,28 +597,4 @@ ReentrancyGuardUpgradeable {
     function _royaltyReceiver() internal view override returns (address) {
         return feeReceiver;
     }
-
-    function onERC1155Received(
-        address,
-        address,
-        uint256,
-        uint256,
-        bytes calldata
-    ) public virtual override(EstateTokenReceiver, IERC1155ReceiverUpgradeable) returns (bytes4) {
-        return msg.sender == this.estateToken() || msg.sender == address(this)
-            ? this.onERC1155Received.selector 
-            : bytes4(0);
-    }
-
-    function onERC1155BatchReceived(
-        address,
-        address,
-        uint256[] calldata,
-        uint256[] calldata,
-        bytes calldata
-    ) public virtual override(EstateTokenReceiver, IERC1155ReceiverUpgradeable) returns (bytes4) {
-        return msg.sender == this.estateToken() || msg.sender == address(this)
-            ? this.onERC1155BatchReceived.selector
-            : bytes4(0);
-    }
 }
