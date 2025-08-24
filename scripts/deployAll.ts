@@ -78,7 +78,6 @@ async function deployAll() {
         admin.address,
         feeReceiver.address,
         LandInitialization.ESTATE_TOKEN_BaseURI,
-        LandInitialization.ESTATE_TOKEN_RoyaltyRate,
     ) as EstateToken;
     console.log(`${networkName}_ESTATE_TOKEN_ADDRESS=${estateToken.address}`);
 
@@ -91,7 +90,6 @@ async function deployAll() {
         LandInitialization.COMMISSION_TOKEN_Name,
         LandInitialization.COMMISSION_TOKEN_Symbol,
         LandInitialization.COMMISSION_TOKEN_BaseURI,
-        LandInitialization.COMMISSION_TOKEN_CommissionRate,
         LandInitialization.COMMISSION_TOKEN_RoyaltyRate,
     ) as CommissionToken;
     console.log(`${networkName}_COMMISSION_TOKEN_ADDRESS=${commissionToken.address}`);

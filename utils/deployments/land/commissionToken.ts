@@ -9,7 +9,6 @@ export async function deployCommissionToken(
     name: string,
     symbol: string,
     baseURI: string,
-    commissionRate: BigNumber,
     royaltyRate: BigNumber,
 ) {
     const CommissionToken = await ethers.getContractFactory('CommissionToken', signer);
@@ -23,7 +22,6 @@ export async function deployCommissionToken(
             name,
             symbol,
             baseURI,
-            commissionRate,
             royaltyRate
         ]
     );

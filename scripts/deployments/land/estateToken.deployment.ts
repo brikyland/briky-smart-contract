@@ -43,7 +43,6 @@ async function deployOrUpgradeEstateToken() {
                 feeReceiverAddress,
                 estateTokenValidatorAddress,
                 Initialization.ESTATE_TOKEN_BaseURI,
-                Initialization.ESTATE_TOKEN_RoyaltyRate,
             );
             console.log(`Contract EstateToken has been deployed to address ${estateToken.address}`);
 
