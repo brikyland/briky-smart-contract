@@ -35,6 +35,10 @@ IEstateTokenizer {
         EstateForgerRequestQuoteInput quote,
         EstateForgerRequestAgendaInput agenda
     );
+
+    event RequestWhitelist(uint256 indexed requestId, address indexed account);
+    event RequestUnwhitelist(uint256 indexed requestId, address indexed account);
+
     event RequestCancellation(uint256 indexed requestId);
     event RequestConfirmation(
         uint256 indexed requestId,
@@ -119,6 +123,11 @@ IEstateTokenizer {
     ) external;
     function updateRequestAgenda(uint256 requestId, EstateForgerRequestAgendaInput calldata agenda) external;
     function withdrawDeposit(uint256 requestId) external returns (uint256 value);
+    function whitelistFor(
+        uint256 requestId,
+        address[] calldata accounts,
+        bool isWhitelisted
+    ) external;
 
     function safeDeposit(
         uint256 requestId,
