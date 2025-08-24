@@ -164,7 +164,6 @@ describe('3.1. MortgageToken', async () => {
             feeReceiver.address,
             validator.getAddress(),
             LandInitialization.ESTATE_TOKEN_BaseURI,
-            LandInitialization.ESTATE_TOKEN_RoyaltyRate,
         ));   
 
         const MockCommissionTokenFactory = await smock.mock<CommissionToken__factory>('CommissionToken');
@@ -176,7 +175,6 @@ describe('3.1. MortgageToken', async () => {
             LandInitialization.COMMISSION_TOKEN_Name,
             LandInitialization.COMMISSION_TOKEN_Symbol,
             LandInitialization.COMMISSION_TOKEN_BaseURI,
-            LandInitialization.COMMISSION_TOKEN_CommissionRate,
             LandInitialization.COMMISSION_TOKEN_RoyaltyRate,
         ));
 
@@ -192,7 +190,6 @@ describe('3.1. MortgageToken', async () => {
             validator.getAddress(),
             LandInitialization.ESTATE_FORGER_BaseMinUnitPrice,
             LandInitialization.ESTATE_FORGER_BaseMaxUnitPrice,
-            LandInitialization.ESTATE_FORGER_FeeRate,
         ));
 
         const mortgageToken = await deployMortgageToken(

@@ -247,7 +247,6 @@ describe('2.3. EstateLiquidator', async () => {
             feeReceiver.address,
             validator.getAddress(),
             LandInitialization.ESTATE_TOKEN_BaseURI,
-            LandInitialization.ESTATE_TOKEN_RoyaltyRate,
         ));
 
         const SmockCommissionTokenFactory = await smock.mock('CommissionToken') as any;
@@ -259,7 +258,6 @@ describe('2.3. EstateLiquidator', async () => {
             LandInitialization.COMMISSION_TOKEN_Name,
             LandInitialization.COMMISSION_TOKEN_Symbol,
             LandInitialization.COMMISSION_TOKEN_BaseURI,
-            LandInitialization.COMMISSION_TOKEN_CommissionRate,
             LandInitialization.COMMISSION_TOKEN_RoyaltyRate,
         ));
 
@@ -306,7 +304,6 @@ describe('2.3. EstateLiquidator', async () => {
             validator.getAddress(),
             LandInitialization.ESTATE_FORGER_BaseMinUnitPrice,
             LandInitialization.ESTATE_FORGER_BaseMaxUnitPrice,
-            LandInitialization.ESTATE_FORGER_FeeRate,
         ) as MockEstateForger;
 
         const estateLiquidator = await deployMockEstateLiquidator(

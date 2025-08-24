@@ -196,7 +196,6 @@ describe('2.4. EstateToken', async () => {
                 validator.getAddress(),
                 LandInitialization.ESTATE_FORGER_BaseMinUnitPrice,
                 LandInitialization.ESTATE_FORGER_BaseMaxUnitPrice,
-                LandInitialization.ESTATE_FORGER_FeeRate,
             ));
             tokenizers.push(mockEstateForger);
         }

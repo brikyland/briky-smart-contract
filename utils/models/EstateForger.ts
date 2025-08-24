@@ -33,6 +33,8 @@ export interface RequestQuoteInput {
     cashbackBaseRate: BigNumber;
     cashbackCurrencies: string[];
     cashbackDenominations: BigNumber[];
+    feeDenomination: BigNumber;
+    broker: string;
 };
 
 export interface RequestQuote {
@@ -42,6 +44,7 @@ export interface RequestQuote {
     cashbackFundId: BigNumber;
     feeDenomination: BigNumber;
     commissionDenomination: BigNumber;
+    broker: string;
 };
 
 export interface RequestAgendaInput {

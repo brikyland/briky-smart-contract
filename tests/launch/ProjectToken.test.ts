@@ -206,7 +206,6 @@ describe('7.2. ProjectToken', async () => {
             feeReceiver.address,
             validator.getAddress(),
             LandInitialization.ESTATE_TOKEN_BaseURI,
-            LandInitialization.ESTATE_TOKEN_RoyaltyRate,
         ));
 
         const commissionToken = await deployCommissionToken(

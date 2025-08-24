@@ -153,7 +153,6 @@ describe('6.2. EstateMarketplace', async () => {
             feeReceiver.address,
             validator.getAddress(),
             LandInitialization.ESTATE_TOKEN_BaseURI,
-            LandInitialization.ESTATE_TOKEN_RoyaltyRate,
         ));        
 
         const SmockCommissionTokenFactory = await smock.mock<CommissionToken__factory>('CommissionToken');
@@ -165,7 +164,6 @@ describe('6.2. EstateMarketplace', async () => {
             LandInitialization.COMMISSION_TOKEN_Name,
             LandInitialization.COMMISSION_TOKEN_Symbol,
             LandInitialization.COMMISSION_TOKEN_BaseURI,
-            LandInitialization.COMMISSION_TOKEN_CommissionRate,
             LandInitialization.COMMISSION_TOKEN_RoyaltyRate,
         ));
 
@@ -181,7 +179,6 @@ describe('6.2. EstateMarketplace', async () => {
             validator.getAddress(),
             LandInitialization.ESTATE_FORGER_BaseMinUnitPrice,
             LandInitialization.ESTATE_FORGER_BaseMaxUnitPrice,
-            LandInitialization.ESTATE_FORGER_FeeRate,
         ));
 
         const estateMarketplace = await deployEstateMarketplace(

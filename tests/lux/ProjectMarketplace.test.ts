@@ -156,7 +156,6 @@ describe('6.4. ProjectMarketplace', async () => {
             feeReceiver.address,
             validator.getAddress(),
             LandInitialization.ESTATE_TOKEN_BaseURI,
-            LandInitialization.ESTATE_TOKEN_RoyaltyRate,
         ));        
 
         const SmockProjectTokenFactory = await smock.mock<MockProjectToken__factory>('MockProjectToken');

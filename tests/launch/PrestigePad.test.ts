@@ -311,7 +311,6 @@ describe('7.1. PrestigePad', async () => {
             feeReceiver.address,
             validator.getAddress(),
             LandInitialization.ESTATE_TOKEN_BaseURI,
-            LandInitialization.ESTATE_TOKEN_RoyaltyRate,
         ));
         
         const MockProjectTokenFactory = await smock.mock('ProjectToken') as any;

@@ -196,7 +196,6 @@ describe('1.1. Inspect', async () => {
             validator.getAddress(),
             LandInitialization.ESTATE_FORGER_BaseMinUnitPrice,
             LandInitialization.ESTATE_FORGER_BaseMaxUnitPrice,
-            LandInitialization.ESTATE_FORGER_FeeRate,
         ) as MockEstateForger;
 
         const estateLiquidator = await deployEstateLiquidator(
