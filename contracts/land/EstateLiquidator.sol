@@ -80,13 +80,18 @@ ReentrancyGuardUpgradeable {
 
     function requestExtraction(
         uint256 _estateId,
+        address _buyer,
         uint256 _value,
         address _currency,
         uint256 _feeRate,
         bytes32 _uuid,
         Validation calldata _validation
-    ) external payable nonReentrant whenNotPaused returns (uint256) {
+    ) external payable onlyManager nonReentrant whenNotPaused returns (uint256) {
         IEstateToken estateTokenContract = IEstateToken(estateToken);
+        if (IAdmin(admin).getZoneEligibility(estateTokenContract.zoneOf(_estateId), msg.sender)) {
+            revert Unauthorized();
+        }
+
         if (!estateTokenContract.isAvailable(_estateId)) {
             revert UnavailableEstate();
         }
@@ -112,7 +117,7 @@ ReentrancyGuardUpgradeable {
         }(
             estateToken,
             _estateId,
-            msg.sender,
+            _buyer,
             _uuid,
             ProposalRule.ApprovalBeyondQuorum,
             estateTokenContract.getEstate(_estateId).tokenizeAt + EstateLiquidatorConstant.UNANIMOUS_GUARD_DURATION > block.timestamp
@@ -132,14 +137,14 @@ ReentrancyGuardUpgradeable {
             _value,
             _currency,
             rate,
-            msg.sender
+            _buyer
         );
 
         emit NewRequest(
             requestId,
             _estateId,
             proposalId,
-            msg.sender,
+            _buyer,
             _value,
             _currency,
             rate
