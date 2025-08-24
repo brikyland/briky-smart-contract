@@ -1179,7 +1179,7 @@ describe('6.4. ProjectMarketplace', async () => {
                 .to.be.revertedWithCustomError(projectMarketplace, "FailedTransfer");
         });
 
-        it('6.4.5.14. buy token unsuccessfully when refund to sender failed', async () => {
+        it('6.4.5.13. buy token unsuccessfully when refund to sender failed', async () => {
             const fixture = await beforeProjectMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleProjectToken: true,
@@ -1196,7 +1196,7 @@ describe('6.4. ProjectMarketplace', async () => {
                 .to.be.revertedWithCustomError(projectMarketplace, "FailedRefund");
         });
 
-        it('6.4.5.15. buy token unsuccessfully when this contract is reentered', async () => {
+        it('6.4.5.14. buy token unsuccessfully when this contract is reentered', async () => {
             const fixture = await beforeProjectMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleProjectToken: true,
