@@ -1,10 +1,10 @@
-import { Admin, EstateForger, EstateToken, PriceWatcher } from "../../typechain-types";
-import { BigNumberish } from "ethers";
+import { Admin, PriceWatcher } from "../../typechain-types";
 import { callAdmin_UpdateCurrencyRegistries } from "./admin";
 import { 
     callPriceWatcher_UpdateDefaultRates,
     callPriceWatcher_UpdatePriceFeeds
 } from "./priceWatcher";
+import { Rate } from "@utils/models/Common";
 
 export async function addCurrencyToAdminAndPriceWatcher(
     admin: Admin,
@@ -15,8 +15,7 @@ export async function addCurrencyToAdminAndPriceWatcher(
     isExclusive: boolean[],
     priceFeeds: string[],
     heartbeats: number[],
-    defaultValues: number[],
-    defaultDecimals: number[],
+    defaultRates: Rate[],
 ) {
     await callAdmin_UpdateCurrencyRegistries(
         admin,
@@ -38,8 +37,7 @@ export async function addCurrencyToAdminAndPriceWatcher(
         priceWatcher,
         admins,
         currencyAddresses,
-        defaultValues,
-        defaultDecimals,
+        defaultRates,
         await admin.nonce()
     );
 }

@@ -12,12 +12,14 @@ import { Constant } from '@tests/test.constant';
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { deployCurrency } from '@utils/deployments/common/currency';
 import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
-
+import { BigNumber } from 'ethers';
 import { smock } from '@defi-wonderland/smock';
 
 import { addCurrencyToAdminAndPriceWatcher } from '@utils/callWithSignatures/common';
 import { deployMockPriceFeed } from '@utils/deployments/mock/mockPriceFeed';
 import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
+import { Rate, RATE_SCHEMA } from '@utils/models/Common';
+import { structToObject } from '@utils/utils';
 
 chai.use(smock.matchers);
 
@@ -99,8 +101,7 @@ describe('1.7. PriceWatcher', async () => {
                 [false],
                 [nativePriceFeed.address],
                 [3600],
-                [10000_000],
-                [3],
+                [{ value: BigNumber.from(10000_000), decimals: 3 }],
             );
             
             await addCurrencyToAdminAndPriceWatcher(
@@ -112,8 +113,7 @@ describe('1.7. PriceWatcher', async () => {
                 [true],
                 [currencyPriceFeed.address],
                 [24 * 3600],
-                [50_000],
-                [3],
+                [{ value: BigNumber.from(50_000), decimals: 3 }],
             );
         }
 
@@ -253,31 +253,34 @@ describe('1.7. PriceWatcher', async () => {
             for (let i = 0; i < 5; ++i) {
                 currencyAddresses.push(ethers.utils.computeAddress(ethers.utils.id(`currency_${i}`)));
             }
-            const values = [10, 20_0, 30_00, 40_000, 50_0000];
-            const decimals = [0, 1, 2, 3, 4];
+            const rates = [
+                { value: BigNumber.from(10), decimals: 0 },
+                { value: BigNumber.from(20_0), decimals: 1 },
+                { value: BigNumber.from(30_00), decimals: 2 },
+                { value: BigNumber.from(40_000), decimals: 3 },
+                { value: BigNumber.from(50_0000), decimals: 4 },
+            ];
 
             const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'uint256[]', 'uint8[]'],
-                [priceWatcher.address, 'updateDefaultRates', currencyAddresses, values, decimals]
+                ['address', 'string', 'address[]', RATE_SCHEMA],
+                [priceWatcher.address, 'updateDefaultRates', currencyAddresses, rates]
             );
             const signatures = await getSignatures(message, admins, await admin.nonce());
 
             const tx = await priceWatcher.updateDefaultRates(
                 currencyAddresses,
-                values,
-                decimals,
+                rates,
                 signatures
             );
-            await tx.wait();
+            const receipt = await tx.wait();
 
             for (let i = 0; i < currencyAddresses.length; ++i) {
-                await expect(tx).to
-                    .emit(priceWatcher, 'DefaultRateUpdate')
-                    .withArgs(currencyAddresses[i], values[i], decimals[i]);
+                const event = receipt.events?.filter(event => event.event === 'DefaultRateUpdate')[i]!.args!;
+                expect(event.currency).to.equal(currencyAddresses[i]);
+                expect(structToObject(event.rate)).to.deep.equal(rates[i]);
                     
                 const defaultRate = await priceWatcher.getDefaultRate(currencyAddresses[i]);
-                expect(defaultRate.value).to.equal(values[i]);
-                expect(defaultRate.decimals).to.equal(decimals[i]);
+                expect(structToObject(defaultRate)).to.deep.equal(rates[i]);
             }
         });
 
@@ -287,19 +290,23 @@ describe('1.7. PriceWatcher', async () => {
             for (let i = 0; i < 5; ++i) {
                 currencyAddresses.push(ethers.utils.computeAddress(ethers.utils.id(`currency_${i}`)));
             }
-            const values = [10, 20_0, 30_00, 40_000, 50_0000];
-            const decimals = [0, 1, 2, 3, 4];
+            const rates = [
+                { value: BigNumber.from(10), decimals: 0 },
+                { value: BigNumber.from(20_0), decimals: 1 },
+                { value: BigNumber.from(30_00), decimals: 2 },
+                { value: BigNumber.from(40_000), decimals: 3 },
+                { value: BigNumber.from(50_0000), decimals: 4 },
+            ];
 
             const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'uint256[]', 'uint8[]'],
-                [priceWatcher.address, 'updateDefaultRates', currencyAddresses, values, decimals]
+                ['address', 'string', 'address[]', RATE_SCHEMA],
+                [priceWatcher.address, 'updateDefaultRates', currencyAddresses, rates]
             );
             const invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
 
             await expect(priceWatcher.updateDefaultRates(
                 currencyAddresses,
-                values,
-                decimals,
+                rates,
                 invalidSignatures
             )).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
@@ -310,19 +317,23 @@ describe('1.7. PriceWatcher', async () => {
             for (let i = 0; i < 5; ++i) {
                 currencyAddresses.push(ethers.utils.computeAddress(ethers.utils.id(`currency_${i}`)));
             }
-            const values = [10, 20_0, 30_00, 40_000, 50_0000];
-            const decimals = [0, 1, 19, 3, 4];
+            const rates = [
+                { value: BigNumber.from(10), decimals: 0 },
+                { value: BigNumber.from(20_0), decimals: 1 },
+                { value: BigNumber.from(30_00), decimals: 19 },
+                { value: BigNumber.from(40_000), decimals: 3 },
+                { value: BigNumber.from(50_0000), decimals: 4 },
+            ];
 
             const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'uint256[]', 'uint8[]'],
-                [priceWatcher.address, 'updateDefaultRates', currencyAddresses, values, decimals]
+                ['address', 'string', 'address[]', RATE_SCHEMA],
+                [priceWatcher.address, 'updateDefaultRates', currencyAddresses, rates]
             );
             const signatures = await getSignatures(message, admins, await admin.nonce());
 
             await expect(priceWatcher.updateDefaultRates(
                 currencyAddresses,
-                values,
-                decimals,
+                rates,
                 signatures
             )).to.be.revertedWithCustomError(priceWatcher, 'InvalidInput');
         });
@@ -330,17 +341,16 @@ describe('1.7. PriceWatcher', async () => {
         it('1.7.3.4. updateDefaultRates unsuccessfully with conflicting params length', async () => {
             const { admin, admins, priceWatcher } = await beforePriceWatcherTest({});
 
-            async function testForInvalidInput(currencyAddresses: string[], values: number[], decimals: number[]) {
+            async function testForInvalidInput(currencyAddresses: string[], rates: Rate[]) {
                 const message = ethers.utils.defaultAbiCoder.encode(
-                    ['address', 'string', 'address[]', 'uint256[]', 'uint8[]'],
-                    [priceWatcher.address, 'updateDefaultRates', currencyAddresses, values, decimals]
+                    ['address', 'string', 'address[]', RATE_SCHEMA],
+                    [priceWatcher.address, 'updateDefaultRates', currencyAddresses, rates]
                 );
                 const signatures = await getSignatures(message, admins, await admin.nonce());
     
                 await expect(priceWatcher.updateDefaultRates(
                     currencyAddresses,
-                    values,
-                    decimals,
+                    rates,
                     signatures
                 )).to.be.revertedWithCustomError(priceWatcher, 'InvalidInput');
             }
@@ -349,12 +359,16 @@ describe('1.7. PriceWatcher', async () => {
             for (let i = 0; i < 5; ++i) {
                 currencyAddresses.push(ethers.utils.computeAddress(ethers.utils.id(`currency_${i}`)));
             }
-            const values = [10, 20_0, 30_00, 40_000, 50_0000];
-            const decimals = [0, 1, 2, 3, 4];
+            const rates = [
+                { value: BigNumber.from(10), decimals: 0 },
+                { value: BigNumber.from(20_0), decimals: 1 },
+                { value: BigNumber.from(30_00), decimals: 2 },
+                { value: BigNumber.from(40_000), decimals: 3 },
+                { value: BigNumber.from(50_0000), decimals: 4 },
+            ];
 
-            await testForInvalidInput(currencyAddresses.slice(0, 4), values, decimals);
-            await testForInvalidInput(currencyAddresses, values.slice(0, 4), decimals);
-            await testForInvalidInput(currencyAddresses, values, decimals.slice(0, 4));
+            await testForInvalidInput(currencyAddresses.slice(0, 4), rates);
+            await testForInvalidInput(currencyAddresses, rates.slice(0, 4));
         });
     });
 
@@ -405,8 +419,7 @@ describe('1.7. PriceWatcher', async () => {
                 [false],
                 [ethers.constants.AddressZero],
                 [3600],
-                [2_0000],
-                [4]
+                [{ value: BigNumber.from(2_0000), decimals: 4 }],
             );
 
             const unitPrice = 200;
@@ -442,8 +455,7 @@ describe('1.7. PriceWatcher', async () => {
                 [false],
                 [ethers.constants.AddressZero],
                 [3600],
-                [100_000],
-                [3]
+                [{ value: BigNumber.from(100_000), decimals: 3 }],
             );
 
             await expect(priceWatcher.isPriceInRange(
@@ -470,8 +482,7 @@ describe('1.7. PriceWatcher', async () => {
                 [false],
                 [ethers.constants.AddressZero],
                 [3600],
-                [0],
-                [0]
+                [{ value: BigNumber.from(0), decimals: 0 }],
             );
 
             await expect(priceWatcher.isPriceInRange(
@@ -520,8 +531,7 @@ describe('1.7. PriceWatcher', async () => {
                 [false],
                 [nativePriceFeed.address],
                 [3600],
-                [10000_000],
-                [3],
+                [{ value: BigNumber.from(10000_000), decimals: 3 }],
             );
             
             await addCurrencyToAdminAndPriceWatcher(
@@ -533,8 +543,7 @@ describe('1.7. PriceWatcher', async () => {
                 [true],
                 [currencyPriceFeed.address],
                 [24 * 3600],
-                [50_000],
-                [3],
+                [{ value: BigNumber.from(50_000), decimals: 3 }],
             );
 
             await expect(priceWatcher.isPriceInRange(

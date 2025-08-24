@@ -217,7 +217,6 @@ describe('7.2. ProjectToken', async () => {
             LandInitialization.COMMISSION_TOKEN_Name,
             LandInitialization.COMMISSION_TOKEN_Symbol,
             LandInitialization.COMMISSION_TOKEN_BaseURI,
-            LandInitialization.COMMISSION_TOKEN_CommissionRate,
             LandInitialization.COMMISSION_TOKEN_RoyaltyRate,
         ) as CommissionToken;
 

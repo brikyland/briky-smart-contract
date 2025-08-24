@@ -6,7 +6,6 @@ export const Initialization = {
     COMMISSION_TOKEN_Name: 'Briky Commission',
     COMMISSION_TOKEN_Symbol: 'COMIKY',
     COMMISSION_TOKEN_BaseURI: 'CommissionToken_TestURI',
-    COMMISSION_TOKEN_CommissionRate: parseEther("0.4"),
     COMMISSION_TOKEN_RoyaltyRate: parseEther("0.06"),
 
     // Estate Forger

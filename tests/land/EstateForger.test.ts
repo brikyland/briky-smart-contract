@@ -358,8 +358,7 @@ describe('2.2. EstateForger', async () => {
                 [false],
                 [nativePriceFeed.address],
                 [3600],
-                [10000_000],
-                [3],
+                [{ value: BigNumber.from(10000_000), decimals: 3 }],
             );
             
             await addCurrencyToAdminAndPriceWatcher(
@@ -371,8 +370,7 @@ describe('2.2. EstateForger', async () => {
                 [true],
                 [currencyPriceFeed.address],
                 [24 * 3600],
-                [50_000],
-                [3],
+                [{ value: BigNumber.from(50_000), decimals: 3 }],
             );
 
             await callAdmin_UpdateCurrencyRegistries(
@@ -3183,8 +3181,7 @@ describe('2.2. EstateForger', async () => {
                 [isExclusive],
                 [ethers.constants.AddressZero],
                 [100],
-                [100],
-                [0],
+                [{ value: BigNumber.from(100), decimals: 0 }],
             );
 
             await time.setNextBlockTimestamp(timestamp);

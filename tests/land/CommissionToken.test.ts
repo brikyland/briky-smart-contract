@@ -14,22 +14,29 @@ import {
     ICommon__factory,
     IERC721MetadataUpgradeable__factory,
 } from '@typechain-types';
-import { callTransaction, getSignatures } from '@utils/blockchain';
+import { callTransaction, callTransactionAtTimestamp, getSignatures } from '@utils/blockchain';
 import { Constant } from '@tests/test.constant';
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
 import { deployCurrency } from '@utils/deployments/common/currency';
 import { deployMockEstateToken } from '@utils/deployments/mock/mockEstateToken';
 import { deployCommissionToken } from '@utils/deployments/land/commissionToken';
-import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
+import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 
 import {
     getBytes4Hex,
     getInterfaceID,
+    scale,
+    scaleRate,
+    structToObject,
 } from '@utils/utils';
 import { Initialization as LandInitialization } from '@tests/land/test.initialization';
 import { callCommissionToken_Pause } from '@utils/callWithSignatures/commissionToken';
 import { MockValidator } from '@utils/mockValidator';
+import { callAdmin_ActivateIn, callAdmin_AuthorizeManagers, callAdmin_AuthorizeModerators, callAdmin_DeclareZones } from '@utils/callWithSignatures/admin';
+import { getExtendBrokerExpirationTx, getMintTx, getRegisterBrokerTx } from '@utils/transaction/CommissionToken';
+import { ExtendBrokerExpirationParams, MintParams, RegisterBrokerParams } from '@utils/models/CommissionToken';
+import { BigNumber } from 'ethers';
 
 interface CommissionTokenFixture {
     admin: Admin;
@@ -41,8 +48,12 @@ interface CommissionTokenFixture {
 
     deployer: any;
     admins: any[];
-    receiver1: any;
-    receiver2: any;
+    manager: any;
+    moderator: any;
+    user: any;
+    broker1: any, broker2: any;
+
+    zone1: string, zone2: string;
 }
 
 describe('2.1. CommissionToken', async () => {
@@ -51,8 +62,11 @@ describe('2.1. CommissionToken', async () => {
         const deployer = accounts[0];
         const admins = [];
         for (let i = 1; i <= Constant.ADMIN_NUMBER; ++i) admins.push(accounts[i]);
-        const receiver1 = accounts[Constant.ADMIN_NUMBER + 1];
-        const receiver2 = accounts[Constant.ADMIN_NUMBER + 2];
+        const manager = accounts[Constant.ADMIN_NUMBER + 1];
+        const moderator = accounts[Constant.ADMIN_NUMBER + 2];
+        const user = accounts[Constant.ADMIN_NUMBER + 3];
+        const broker1 = accounts[Constant.ADMIN_NUMBER + 4];
+        const broker2 = accounts[Constant.ADMIN_NUMBER + 5];
         
         const adminAddresses: string[] = admins.map(signer => signer.address);
         const admin = await deployAdmin(
@@ -83,7 +97,6 @@ describe('2.1. CommissionToken', async () => {
             feeReceiver.address,
             validator.getAddress(),
             LandInitialization.ESTATE_TOKEN_BaseURI,
-            LandInitialization.ESTATE_TOKEN_RoyaltyRate,
         ) as MockEstateToken;        
 
         const commissionToken = await deployCommissionToken(
@@ -94,9 +107,11 @@ describe('2.1. CommissionToken', async () => {
             LandInitialization.COMMISSION_TOKEN_Name,
             LandInitialization.COMMISSION_TOKEN_Symbol,
             LandInitialization.COMMISSION_TOKEN_BaseURI,
-            LandInitialization.COMMISSION_TOKEN_CommissionRate,
             LandInitialization.COMMISSION_TOKEN_RoyaltyRate,
         ) as CommissionToken;
+
+        const zone1 = ethers.utils.keccak256(ethers.utils.toUtf8Bytes('TestZone1'));
+        const zone2 = ethers.utils.keccak256(ethers.utils.toUtf8Bytes('TestZone2'));
 
         return {
             admin,
@@ -107,27 +122,104 @@ describe('2.1. CommissionToken', async () => {
             validator,
             deployer,
             admins,
-            receiver1,
-            receiver2,
+            manager,
+            moderator,
+            user,
+            broker1,
+            broker2,
+            zone1,
+            zone2,
         };
     };
 
     async function beforeCommissionTokenTest({
+        skipActivateExecutiveInZone = false,
+        registerSampleBrokers = false,
         mintSampleTokens = false,
         pause = false,
     } = {}): Promise<CommissionTokenFixture> {
         const fixture = await loadFixture(commissionTokenFixture);
-        const { admin, admins, commissionToken, estateToken, receiver1, receiver2 } = fixture;
+        const { admin, admins, commissionToken, estateToken, manager, moderator, broker1, broker2, zone1, zone2 } = fixture;
 
-        if (mintSampleTokens) {
-            await callTransaction(estateToken.call(
-                commissionToken.address, 
-                commissionToken.interface.encodeFunctionData('mint', [receiver1.address, 1])
+        await callAdmin_AuthorizeManagers(
+            admin,
+            admins,
+            [manager.address],
+            true,
+            await admin.nonce(),
+        )
+        await callAdmin_AuthorizeModerators(
+            admin,
+            admins,
+            [moderator.address],
+            true,
+            await admin.nonce(),
+        )
+
+        await callAdmin_DeclareZones(
+            admin,
+            admins,
+            [zone1, zone2],
+            true,
+            await admin.nonce(),
+        )
+
+        if (!skipActivateExecutiveInZone) {
+            for (const zone of [zone1, zone2]) {
+                await callAdmin_ActivateIn(
+                    admin,
+                    admins,
+                    zone,
+                    [manager.address, moderator.address],
+                    true,
+                    await admin.nonce(),
+                )
+            }
+        }
+
+        if (registerSampleBrokers) {
+            await callTransaction(getRegisterBrokerTx(
+                commissionToken,
+                manager,
+                {
+                    zone: zone1,
+                    broker: broker1.address,
+                    commissionRate: ethers.utils.parseEther('0.1'),
+                    duration: 1e9,
+                },                
             ));
 
-            await callTransaction(estateToken.call(
-                commissionToken.address, 
-                commissionToken.interface.encodeFunctionData('mint', [receiver2.address, 2])
+            await callTransaction(getRegisterBrokerTx(
+                commissionToken,
+                manager,
+                {
+                    zone: zone2,
+                    broker: broker2.address,
+                    commissionRate: ethers.utils.parseEther('0.2'),
+                    duration: 1e9,
+                },                
+            ));
+        }
+
+        if (mintSampleTokens) {
+            await callTransaction(getMintTx(
+                commissionToken,
+                estateToken,
+                {
+                    zone: zone1,
+                    broker: broker1.address,
+                    tokenId: ethers.BigNumber.from(1),
+                },
+            ));
+
+            await callTransaction(getMintTx(
+                commissionToken,
+                estateToken,
+                {
+                    zone: zone2,
+                    broker: broker2.address,
+                    tokenId: ethers.BigNumber.from(2),
+                },
             ));
         }
 
@@ -159,7 +251,6 @@ describe('2.1. CommissionToken', async () => {
                     LandInitialization.COMMISSION_TOKEN_Name,
                     LandInitialization.COMMISSION_TOKEN_Symbol,
                     LandInitialization.COMMISSION_TOKEN_BaseURI,
-                    LandInitialization.COMMISSION_TOKEN_CommissionRate,
                     LandInitialization.COMMISSION_TOKEN_RoyaltyRate,
                 ]
             );
@@ -168,10 +259,6 @@ describe('2.1. CommissionToken', async () => {
             expect(await commissionToken.admin()).to.equal(admin.address);
             expect(await commissionToken.estateToken()).to.equal(estateToken.address);
             expect(await commissionToken.feeReceiver()).to.equal(feeReceiver.address);
-
-            const commissionRate = await commissionToken.getCommissionRate();
-            expect(commissionRate.value).to.equal(LandInitialization.COMMISSION_TOKEN_CommissionRate);
-            expect(commissionRate.decimals).to.equal(Constant.COMMON_RATE_DECIMALS);
 
             const royaltyRate = await commissionToken.getRoyaltyRate();
             expect(royaltyRate.value).to.equal(LandInitialization.COMMISSION_TOKEN_RoyaltyRate);
@@ -182,11 +269,10 @@ describe('2.1. CommissionToken', async () => {
             const tx = commissionToken.deployTransaction;
             await expect(tx).to
                 .emit(commissionToken, 'BaseURIUpdate').withArgs(LandInitialization.COMMISSION_TOKEN_BaseURI)
-                .emit(commissionToken, 'CommissionRateUpdate').withArgs(LandInitialization.COMMISSION_TOKEN_CommissionRate)
                 .emit(commissionToken, 'RoyaltyRateUpdate').withArgs(LandInitialization.COMMISSION_TOKEN_RoyaltyRate);
         });
 
-        it('2.1.1.2. Deploy unsuccessfully with invalid commission rate', async () => {
+        it('2.1.1.2. Deploy unsuccessfully with invalid royalty rate', async () => {
             const { deployer, admin, estateToken, feeReceiver } = await beforeCommissionTokenTest();
 
             const CommissionToken = await ethers.getContractFactory('CommissionToken', deployer);
@@ -198,24 +284,6 @@ describe('2.1. CommissionToken', async () => {
                 LandInitialization.COMMISSION_TOKEN_Name,
                 LandInitialization.COMMISSION_TOKEN_Symbol,
                 LandInitialization.COMMISSION_TOKEN_BaseURI,
-                Constant.COMMON_RATE_MAX_FRACTION.add(1),
-                LandInitialization.COMMISSION_TOKEN_RoyaltyRate,
-            ])).to.be.reverted;
-        });
-
-        it('2.1.1.3. Deploy unsuccessfully with invalid royalty rate', async () => {
-            const { deployer, admin, estateToken, feeReceiver } = await beforeCommissionTokenTest();
-
-            const CommissionToken = await ethers.getContractFactory('CommissionToken', deployer);
-
-            await expect(upgrades.deployProxy(CommissionToken, [
-                admin.address,
-                estateToken.address,
-                feeReceiver.address,
-                LandInitialization.COMMISSION_TOKEN_Name,
-                LandInitialization.COMMISSION_TOKEN_Symbol,
-                LandInitialization.COMMISSION_TOKEN_BaseURI,
-                LandInitialization.COMMISSION_TOKEN_CommissionRate,
                 Constant.COMMON_RATE_MAX_FRACTION.add(1),
             ])).to.be.reverted;
         });
@@ -276,7 +344,7 @@ describe('2.1. CommissionToken', async () => {
                 .emit(commissionToken, 'RoyaltyRateUpdate')
                 .withArgs(ethers.utils.parseEther('0.2'));
 
-            const royaltyRate = await commissionToken.getRoyaltyRate();
+            const royaltyRate = await commissionToken.getRoyaltyRate(0);
             expect(royaltyRate.value).to.equal(ethers.utils.parseEther('0.2'));
             expect(royaltyRate.decimals).to.equal(Constant.COMMON_RATE_DECIMALS);
         });
@@ -312,25 +380,172 @@ describe('2.1. CommissionToken', async () => {
         });
     });
 
+    describe('2.1.4. getBrokerRegistry(bytes32, address)', async () => {
+        it('2.1.4.1. return correct broker registry for registered broker', async () => {
+            const { commissionToken, broker1, zone1, manager } = await beforeCommissionTokenTest();
+
+            let timestamp = await time.latest() + 100;
+
+            await callTransactionAtTimestamp(
+                getRegisterBrokerTx(
+                    commissionToken,
+                    manager,
+                    {
+                        zone: zone1,
+                        broker: broker1.address,
+                        commissionRate: ethers.utils.parseEther('0.1'),
+                        duration: 1e9,
+                    },                
+                ),
+                timestamp,
+            );
+
+            const brokerRegistry = await commissionToken.getBrokerRegistry(zone1, broker1.address);
+            expect(brokerRegistry.expireAt).to.equal(timestamp + 1e9);
+            expect(structToObject(brokerRegistry.commissionRate)).to.deep.equal({
+                value: ethers.utils.parseEther('0.1'),
+                decimals: Constant.COMMON_RATE_DECIMALS,
+            });
+        });
+
+        it('2.1.4.2. return default value for unregistered broker', async () => {
+            const { commissionToken, broker1, zone1 } = await beforeCommissionTokenTest();
+
+            const brokerRegistry = await commissionToken.getBrokerRegistry(zone1, broker1.address);
+            expect(brokerRegistry.expireAt).to.equal(0);
+            expect(structToObject(brokerRegistry.commissionRate)).to.deep.equal({
+                value: ethers.constants.Zero,
+                decimals: 0,
+            });
+        });
+
+        it('2.1.4.3. revert with invalid zone', async () => {
+            const { commissionToken, broker1, zone1, admin, admins } = await beforeCommissionTokenTest({
+                registerSampleBrokers: true,
+            });
+
+            await callAdmin_DeclareZones(
+                admin,
+                admins,
+                [zone1],
+                false,
+                await admin.nonce(),
+            )
+
+            await expect(commissionToken.getBrokerRegistry(zone1, broker1.address))
+                .to.be.revertedWithCustomError(commissionToken, 'InvalidZone');
+        });
+    });
+
+    describe('2.1.5. getCommissionRate(uint256)', async () => {
+        it('2.1.5.1. return correct commission rate of minted tokens', async () => {
+            const { commissionToken } = await beforeCommissionTokenTest({
+                registerSampleBrokers: true,
+                mintSampleTokens: true,
+            });
+
+            const commissionRate1 = await commissionToken.getCommissionRate(1);
+            expect(structToObject(commissionRate1)).to.deep.equal({
+                value: ethers.utils.parseEther("0.1"),
+                decimals: Constant.COMMON_RATE_DECIMALS,
+            });
+
+            const commissionRate2 = await commissionToken.getCommissionRate(2);
+            expect(structToObject(commissionRate2)).to.deep.equal({
+                value: ethers.utils.parseEther("0.2"),
+                decimals: Constant.COMMON_RATE_DECIMALS,
+            });
+        });
+
+        it('2.1.5.2. return default value for unminted token', async () => {
+            const { commissionToken } = await beforeCommissionTokenTest();
+
+            const commissionRate1 = await commissionToken.getCommissionRate(0);
+            expect(structToObject(commissionRate1)).to.deep.equal({
+                value: ethers.constants.Zero,
+                decimals: 0,
+            });
+
+            const commissionRate2 = await commissionToken.getCommissionRate(100);
+            expect(structToObject(commissionRate2)).to.deep.equal({
+                value: ethers.constants.Zero,
+                decimals: 0,
+            });
+        });
+    });
+
+    describe('2.1.5. isBrokerIn(bytes32, address)', async () => {
+        it('2.1.5.1. return true for registered broker', async () => {
+            const { commissionToken, broker1, broker2, zone1, zone2 } = await beforeCommissionTokenTest({
+                registerSampleBrokers: true,
+            });
+
+            expect(await commissionToken.isBrokerIn(zone1, broker1.address)).to.equal(true);
+            expect(await commissionToken.isBrokerIn(zone2, broker2.address)).to.equal(true);
+        });
+
+        it('2.1.5.2. return false for unregistered broker', async () => {
+            const { commissionToken, broker1, broker2, zone1, zone2 } = await beforeCommissionTokenTest();
+
+            expect(await commissionToken.isBrokerIn(zone1, broker1.address)).to.equal(false);
+            expect(await commissionToken.isBrokerIn(zone2, broker2.address)).to.equal(false);
+        });
+
+        it('2.1.5.3. return false for expired broker', async () => {
+            const { commissionToken, broker1, broker2, zone1, zone2 } = await beforeCommissionTokenTest({
+                registerSampleBrokers: true,
+            });
+
+            let timestamp = (await commissionToken.getBrokerRegistry(zone1, broker1.address)).expireAt;
+            await time.increaseTo(timestamp);
+
+            expect(await commissionToken.isBrokerIn(zone1, broker1.address)).to.equal(false);
+
+            timestamp = (await commissionToken.getBrokerRegistry(zone2, broker2.address)).expireAt;
+            await time.increaseTo(timestamp);
+
+            expect(await commissionToken.isBrokerIn(zone2, broker2.address)).to.equal(false);
+        });
+
+        it('2.1.5.4. revert with invalid zone', async () => {
+            const { commissionToken, broker1, zone1, admin, admins } = await beforeCommissionTokenTest({
+                registerSampleBrokers: true,
+            });
+
+            await callAdmin_DeclareZones(
+                admin,
+                admins,
+                [zone1],
+                false,
+                await admin.nonce(),
+            )
+
+            await expect(commissionToken.isBrokerIn(zone1, broker1.address))
+                .to.be.revertedWithCustomError(commissionToken, 'InvalidZone');
+        });
+    });
+
     describe('2.1.4. commissionInfo(uint256, uint256)', async() => {
         it('2.1.4.1. return correct commission info for minted token', async () => {
-            const { commissionToken, receiver1, receiver2 } = await beforeCommissionTokenTest({
+            const { commissionToken, broker1, broker2 } = await beforeCommissionTokenTest({
+                registerSampleBrokers: true,
                 mintSampleTokens: true,
             });
 
             const value1 = ethers.utils.parseEther('100');
             const commissionInfo1 = await commissionToken.commissionInfo(1, value1);
-            expect(commissionInfo1[0]).to.equal(receiver1.address);
-            expect(commissionInfo1[1]).to.equal(value1.mul(LandInitialization.COMMISSION_TOKEN_CommissionRate).div(Constant.COMMON_RATE_MAX_FRACTION));
+            expect(commissionInfo1[0]).to.equal(broker1.address);
+            expect(commissionInfo1[1]).to.equal(value1.mul(ethers.utils.parseEther("0.1")).div(Constant.COMMON_RATE_MAX_FRACTION));
 
             const value2 = ethers.utils.parseEther('20');
             const commissionInfo2 = await commissionToken.commissionInfo(2, value2);
-            expect(commissionInfo2[0]).to.equal(receiver2.address);
-            expect(commissionInfo2[1]).to.equal(value2.mul(LandInitialization.COMMISSION_TOKEN_CommissionRate).div(Constant.COMMON_RATE_MAX_FRACTION));
+            expect(commissionInfo2[0]).to.equal(broker2.address);
+            expect(commissionInfo2[1]).to.equal(value2.mul(ethers.utils.parseEther("0.2")).div(Constant.COMMON_RATE_MAX_FRACTION));
         });
 
         it('2.1.4.2. return default value info for unminted token', async () => {
-            const { commissionToken, receiver1, receiver2 } = await beforeCommissionTokenTest({
+            const { commissionToken } = await beforeCommissionTokenTest({
+                registerSampleBrokers: true,
                 mintSampleTokens: true,
             });
 
@@ -346,60 +561,608 @@ describe('2.1. CommissionToken', async () => {
         });
     });
 
-    describe('2.1.5. mint(address, uint256)', async () => {
-        it('2.1.5.1. mint successfully by estateToken contract', async () => {
-            const { estateToken, commissionToken, receiver1, receiver2 } = await beforeCommissionTokenTest();
+    describe('2.1.5. registerBroker(bytes32, address, uint256, uint40)', async () => {
+        async function beforeRegisterBrokerTest(fixture: CommissionTokenFixture): Promise<{
+            defaultParams: RegisterBrokerParams,
+        }> {
+            const { zone1, broker1 } = fixture;
 
-            let tx = await estateToken.call(commissionToken.address, commissionToken.interface.encodeFunctionData('mint', [
-                receiver1.address,
-                1,
-            ]));
-            await tx.wait();
-            await expect(tx).to
-                .emit(commissionToken, 'NewToken')
-                .withArgs(1, receiver1.address);
+            const params: RegisterBrokerParams = {
+                zone: zone1,
+                broker: broker1.address,
+                commissionRate: ethers.utils.parseEther('0.1'),
+                duration: 1e9,
+            }
+
+            return {
+                defaultParams: params,
+            }
+        }
+
+        it('2.1.5.1. register broker successfully by manager', async () => {
+            const fixture = await beforeCommissionTokenTest();
+
+            const { commissionToken, manager, zone1, zone2, broker1, broker2 } = fixture;
+            
+            // Register broker 1 in zone 1
+            let timestamp = await time.latest() + 100;
+            const params1: RegisterBrokerParams = {
+                zone: zone1,
+                broker: broker1.address,
+                commissionRate: ethers.utils.parseEther('0.1'),
+                duration: 1e9,
+            }
+
+            await time.setNextBlockTimestamp(timestamp);
+            const tx1 = await getRegisterBrokerTx(commissionToken, manager, params1);
+            const receipt1 = await tx1.wait();
+
+            const expectedRate1 = {
+                value: params1.commissionRate,
+                decimals: Constant.COMMON_RATE_DECIMALS,
+            }
+
+            const eventArgs1 = receipt1.events?.find(e => e.event === 'BrokerRegistryUpdate')!.args!;
+            expect(eventArgs1.zone).to.equal(params1.zone);
+            expect(eventArgs1.broker).to.equal(params1.broker);
+            expect(structToObject(eventArgs1.commissionRate)).to.deep.equal(expectedRate1);
+            expect(eventArgs1.expireAt).to.equal(timestamp + params1.duration);
+
+            const brokerRegistry1 = await commissionToken.getBrokerRegistry(zone1, broker1.address);
+            expect(brokerRegistry1.expireAt).to.equal(timestamp + params1.duration);
+            expect(structToObject(brokerRegistry1.commissionRate)).to.deep.equal(expectedRate1);
+
+            // Register broker 1 in zone 2
+            timestamp += 10;
+            const params2: RegisterBrokerParams = {
+                zone: zone2,
+                broker: broker1.address,
+                commissionRate: ethers.utils.parseEther('0.2'),
+                duration: 2e9,
+            }
+            
+            await time.setNextBlockTimestamp(timestamp);
+            const tx2 = await getRegisterBrokerTx(commissionToken, manager, params2);
+            const receipt2 = await tx2.wait();
+
+            const expectedRate2 = {
+                value: params2.commissionRate,
+                decimals: Constant.COMMON_RATE_DECIMALS,
+            }
+
+            const eventArgs2 = receipt2.events?.find(e => e.event === 'BrokerRegistryUpdate')!.args!;
+            expect(eventArgs2.zone).to.equal(params2.zone);
+            expect(eventArgs2.broker).to.equal(params2.broker);
+            expect(structToObject(eventArgs2.commissionRate)).to.deep.equal(expectedRate2);
+            expect(eventArgs2.expireAt).to.equal(timestamp + params2.duration);
+
+            const brokerRegistry2 = await commissionToken.getBrokerRegistry(zone2, broker1.address);
+            expect(brokerRegistry2.expireAt).to.equal(timestamp + params2.duration);
+            expect(structToObject(brokerRegistry2.commissionRate)).to.deep.equal(expectedRate2);
+
+            // Register broker 2 in zone 1
+            timestamp += 10;
+            const params3: RegisterBrokerParams = {
+                zone: zone1,
+                broker: broker2.address,
+                commissionRate: ethers.utils.parseEther('0.3'),
+                duration: 3e9,
+            }
+
+            await time.setNextBlockTimestamp(timestamp);
+            const tx3 = await getRegisterBrokerTx(commissionToken, manager, params3);
+            const receipt3 = await tx3.wait();
+
+            const expectedRate3 = {
+                value: params3.commissionRate,
+                decimals: Constant.COMMON_RATE_DECIMALS,
+            }
+
+            const eventArgs3 = receipt3.events?.find(e => e.event === 'BrokerRegistryUpdate')!.args!;
+            expect(eventArgs3.zone).to.equal(params3.zone);
+            expect(eventArgs3.broker).to.equal(params3.broker);
+            expect(structToObject(eventArgs3.commissionRate)).to.deep.equal(expectedRate3);
+            expect(eventArgs3.expireAt).to.equal(timestamp + params3.duration);
+
+            const brokerRegistry3 = await commissionToken.getBrokerRegistry(zone1, broker2.address);
+            expect(brokerRegistry3.expireAt).to.equal(timestamp + params3.duration);
+            expect(structToObject(brokerRegistry3.commissionRate)).to.deep.equal(expectedRate3);
+        });
+
+        it('2.1.5.2. register broker successfully when broker is expired', async () => {
+            const fixture = await beforeCommissionTokenTest({
+                registerSampleBrokers: true,
+            });
+
+            const { commissionToken, manager, zone1, broker1 } = fixture;
+
+            const params: RegisterBrokerParams = {
+                zone: zone1,
+                broker: broker1.address,
+                commissionRate: ethers.utils.parseEther('0.11'),
+                duration: 1e9 + 10,
+            }
+
+            let timestamp = (await commissionToken.getBrokerRegistry(zone1, broker1.address)).expireAt + 10;
+            await time.setNextBlockTimestamp(timestamp);
+
+            const tx = await getRegisterBrokerTx(commissionToken, manager, params);
+            const receipt = await tx.wait();
+
+            const expectedRate = {
+                value: params.commissionRate,
+                decimals: Constant.COMMON_RATE_DECIMALS,
+            }
+
+            const eventArgs = receipt.events?.find(e => e.event === 'BrokerRegistryUpdate')!.args!;
+            expect(eventArgs.zone).to.equal(params.zone);
+            expect(eventArgs.broker).to.equal(params.broker);
+            expect(structToObject(eventArgs.commissionRate)).to.deep.equal(expectedRate);
+            expect(eventArgs.expireAt).to.equal(timestamp + params.duration);
+
+            const brokerRegistry = await commissionToken.getBrokerRegistry(zone1, broker1.address);
+            expect(brokerRegistry.expireAt).to.equal(timestamp + params.duration);
+            expect(structToObject(brokerRegistry.commissionRate)).to.deep.equal(expectedRate);
+        });
+
+        it('2.1.5.3. register broker unsuccessfully by non-manager', async () => {
+            const fixture = await beforeCommissionTokenTest();
+
+            const { commissionToken, moderator, user } = fixture;
+
+            const { defaultParams: params } = await beforeRegisterBrokerTest(fixture);
+            
+            await expect(getRegisterBrokerTx(commissionToken, moderator, params))
+                .to.be.revertedWithCustomError(commissionToken, 'Unauthorized');
+
+            await expect(getRegisterBrokerTx(commissionToken, user, params))
+                .to.be.revertedWithCustomError(commissionToken, 'Unauthorized');
+        });
+
+        it('2.1.5.4. register broker unsuccessfully with inactive zone', async () => {
+            const fixture = await beforeCommissionTokenTest();
+
+            const { commissionToken, manager, zone1, admin, admins } = fixture;
+
+            await callAdmin_DeclareZones(
+                admin,
+                admins,
+                [zone1],
+                false,
+                await admin.nonce(),
+            )
+
+            const { defaultParams: params } = await beforeRegisterBrokerTest(fixture);
+
+            await expect(getRegisterBrokerTx(commissionToken, manager, params))
+                .to.be.revertedWithCustomError(commissionToken, 'Unauthorized');
+        });
+
+        it('2.1.5.5. register broker unsuccessfully by inactive manager in zone', async () => {
+            const fixture = await beforeCommissionTokenTest();
+
+            const { commissionToken, manager, zone1, admin, admins } = fixture;
+
+            await callAdmin_ActivateIn(
+                admin,
+                admins,
+                zone1,
+                [manager.address],
+                false,
+                await admin.nonce(),
+            )
+
+            const { defaultParams: params } = await beforeRegisterBrokerTest(fixture);
+
+            await expect(getRegisterBrokerTx(commissionToken, manager, params))
+                .to.be.revertedWithCustomError(commissionToken, 'Unauthorized');
+        });
+
+        it('2.1.5.6. register broker unsuccessfully with invalid commission rate', async () => {
+            const fixture = await beforeCommissionTokenTest();
+
+            const { commissionToken, manager } = fixture;
+
+            const { defaultParams } = await beforeRegisterBrokerTest(fixture);
+
+            const params = {
+                ...defaultParams,
+                commissionRate: Constant.COMMON_RATE_MAX_FRACTION.add(1),
+            }
+            await expect(getRegisterBrokerTx(commissionToken, manager, params))
+                .to.be.revertedWithCustomError(commissionToken, 'InvalidRate');
+        });
+
+        it('2.1.5.7. register broker unsuccessfully with invalid duration', async () => {
+            const fixture = await beforeCommissionTokenTest();
+
+            const { commissionToken, manager } = fixture;
+
+            const { defaultParams } = await beforeRegisterBrokerTest(fixture);
+
+            const params = {
+                ...defaultParams,
+                duration: 0,
+            }
+
+            await expect(getRegisterBrokerTx(commissionToken, manager, params))
+                .to.be.revertedWithCustomError(commissionToken, 'InvalidInput');
+        });
+
+        it('2.1.5.8. register broker unsuccessfully when broker is not expired', async () => {
+            const fixture = await beforeCommissionTokenTest({
+                registerSampleBrokers: true,
+            });
+
+            const { commissionToken, manager } = fixture;
+
+            const { defaultParams: params } = await beforeRegisterBrokerTest(fixture);
+
+            await expect(getRegisterBrokerTx(commissionToken, manager, params))
+                .to.be.revertedWithCustomError(commissionToken, 'NotExpired');
+        });
+    });
+
+    describe('2.1.6. extendBrokerExpiration(bytes32, address, uint40)', async () => {
+        async function beforeExtendBrokerExpirationTest(fixture: CommissionTokenFixture): Promise<{
+            defaultParams: ExtendBrokerExpirationParams,
+        }> {
+            const { zone1, broker1 } = fixture;
+
+            const params: ExtendBrokerExpirationParams = {
+                zone: zone1,
+                broker: broker1.address,
+                duration: 1e9,
+            }
+
+            return {
+                defaultParams: params,
+            }
+        }
+
+        it('2.1.6.1. extend broker expiration successfully by manager', async () => {
+            const fixture = await beforeCommissionTokenTest({
+                registerSampleBrokers: true,
+            });
+
+            const { commissionToken, manager, zone1, broker1 } = fixture;
+
+            const brokerRegistryBefore = await commissionToken.getBrokerRegistry(zone1, broker1.address);
+            const expireAt = brokerRegistryBefore.expireAt;
+            let timestamp = expireAt - 10;
+            
+            const commissionRate = brokerRegistryBefore.commissionRate;
+            const params: ExtendBrokerExpirationParams = {
+                zone: zone1,
+                broker: broker1.address,
+                duration: 1e9,
+            }
+            
+            await time.setNextBlockTimestamp(timestamp);
+            const tx = await getExtendBrokerExpirationTx(commissionToken, manager, params);
+            const receipt = await tx.wait();
+
+            const eventArgs = receipt.events?.find(e => e.event === 'BrokerRegistryUpdate')!.args!;
+            expect(eventArgs.zone).to.equal(params.zone);
+            expect(eventArgs.broker).to.equal(params.broker);
+            expect(structToObject(eventArgs.commissionRate)).to.deep.equal(structToObject(commissionRate));
+            expect(eventArgs.expireAt).to.equal(expireAt + params.duration);
+            
+            const brokerRegistry = await commissionToken.getBrokerRegistry(zone1, broker1.address);
+            expect(brokerRegistry.expireAt).to.equal(expireAt + params.duration);            
+        });
+
+        it('2.1.6.2. extend broker expiration unsuccessfully by non-manager', async () => {
+            const fixture = await beforeCommissionTokenTest();
+
+            const { commissionToken, moderator, user } = fixture;
+
+            const { defaultParams: params } = await beforeExtendBrokerExpirationTest(fixture);
+
+            await expect(getExtendBrokerExpirationTx(commissionToken, moderator, params))
+                .to.be.revertedWithCustomError(commissionToken, 'Unauthorized');
+
+            await expect(getExtendBrokerExpirationTx(commissionToken, user, params))
+                .to.be.revertedWithCustomError(commissionToken, 'Unauthorized');
+        });
+
+        it('2.1.6.3. extend broker expiration unsuccessfully with inactive zone', async () => {
+            const fixture = await beforeCommissionTokenTest();
+
+            const { commissionToken, manager, zone1, admin, admins } = fixture;
+
+            await callAdmin_DeclareZones(
+                admin,
+                admins,
+                [zone1],
+                false,
+                await admin.nonce(),
+            )
+
+            const { defaultParams: params } = await beforeExtendBrokerExpirationTest(fixture);
+
+            await expect(getExtendBrokerExpirationTx(commissionToken, manager, params))
+                .to.be.revertedWithCustomError(commissionToken, 'Unauthorized');
+        });
+
+        it('2.1.6.4. extend broker expiration unsuccessfully by inactive manager in zone', async () => {
+            const fixture = await beforeCommissionTokenTest();
+
+            const { commissionToken, manager, zone1, admin, admins } = fixture;
+
+            await callAdmin_ActivateIn(
+                admin,
+                admins,
+                zone1,
+                [manager.address],
+                false,
+                await admin.nonce(),
+            )
+
+            const { defaultParams: params } = await beforeExtendBrokerExpirationTest(fixture);
+
+            await expect(getExtendBrokerExpirationTx(commissionToken, manager, params))
+                .to.be.revertedWithCustomError(commissionToken, 'Unauthorized');
+        });
+
+        it('2.1.6.5. extend broker expiration unsuccessfully with invalid duration', async () => {
+            const fixture = await beforeCommissionTokenTest();
+
+            const { commissionToken, manager } = fixture;
+
+            const { defaultParams } = await beforeExtendBrokerExpirationTest(fixture);
+            
+            const params = {
+                ...defaultParams,
+                duration: 0,
+            }
+            await expect(getExtendBrokerExpirationTx(commissionToken, manager, params))
+                .to.be.revertedWithCustomError(commissionToken, 'InvalidInput');
+        });
+
+        it('2.1.6.6. extend broker expiration unsuccessfully when broker is expired', async () => {
+            const fixture = await beforeCommissionTokenTest({
+                registerSampleBrokers: true,
+            });
+
+            const { commissionToken, manager, zone1, broker1 } = fixture;
+
+            const brokerRegistryBefore = await commissionToken.getBrokerRegistry(zone1, broker1.address);
+
+            const { defaultParams: params } = await beforeExtendBrokerExpirationTest(fixture);
+
+            // At expired timestamp
+            let timestamp = brokerRegistryBefore.expireAt;
+            await time.setNextBlockTimestamp(timestamp);
+
+            await expect(getExtendBrokerExpirationTx(commissionToken, manager, params))
+                .to.be.revertedWithCustomError(commissionToken, 'AlreadyExpired');
+
+            // After expired timestamp
+            timestamp += 10;
+            await time.setNextBlockTimestamp(timestamp);
+
+            await expect(getExtendBrokerExpirationTx(commissionToken, manager, params))
+                .to.be.revertedWithCustomError(commissionToken, 'AlreadyExpired');
+        });
+    });
+
+    describe('2.1.7. mint(bytes32, address, uint256)', async () => {
+        async function beforeMintTest(fixture: CommissionTokenFixture): Promise<{
+            defaultParams: MintParams,
+        }> {
+            const { zone1, broker1 } = fixture;
+
+            const params: MintParams = {
+                zone: zone1,
+                broker: broker1.address,
+                tokenId: BigNumber.from(1),
+            }
+
+            return {
+                defaultParams: params,
+            }
+        }
+
+        it('2.1.7.1. mint successfully by estateToken contract', async () => {
+            const { estateToken, commissionToken, zone1, zone2, broker1, broker2 } = await beforeCommissionTokenTest({
+                registerSampleBrokers: true,
+            });
+
+            // Mint for broker 1 in zone 1
+            const tx1 = await getMintTx(commissionToken, estateToken, {
+                zone: zone1,
+                broker: broker1.address,
+                tokenId: BigNumber.from(1),
+            });
+            await tx1.wait();
+            await expect(tx1).to.emit(commissionToken, 'NewToken').withArgs(
+                BigNumber.from(1),
+                zone1,
+                broker1.address
+            );
+
+            const commissionRate1 = (await commissionToken.getBrokerRegistry(zone1, broker1.address)).commissionRate;
 
             expect(await commissionToken.totalSupply()).to.equal(1);
 
-            expect(await commissionToken.ownerOf(1)).to.equal(receiver1.address);
+            expect(await commissionToken.ownerOf(1)).to.equal(broker1.address);
             expect(await commissionToken.tokenURI(1)).to.equal(LandInitialization.COMMISSION_TOKEN_BaseURI);
 
-            tx = await estateToken.call(commissionToken.address, commissionToken.interface.encodeFunctionData('mint', [
-                receiver2.address,
-                2,
-            ]));
-            await tx.wait();
-            await expect(tx).to
-                .emit(commissionToken, 'NewToken')
-                .withArgs(2, receiver2.address);
+            expect(structToObject(await commissionToken.getCommissionRate(1))).to.deep.equal(
+                structToObject(commissionRate1)
+            );
+
+            // Mint for broker 2 in zone 2
+            const commissionRate2 = (await commissionToken.getBrokerRegistry(zone2, broker2.address)).commissionRate;
+
+            const tx2 = await getMintTx(commissionToken, estateToken, {
+                zone: zone2,
+                broker: broker2.address,
+                tokenId: BigNumber.from(2),
+            });
+            await tx2.wait();
+            await expect(tx2).to.emit(commissionToken, 'NewToken').withArgs(
+                BigNumber.from(2),
+                zone2,
+                broker2.address
+            );
 
             expect(await commissionToken.totalSupply()).to.equal(2);
 
-            expect(await commissionToken.ownerOf(2)).to.equal(receiver2.address);
+            expect(await commissionToken.ownerOf(2)).to.equal(broker2.address);
             expect(await commissionToken.tokenURI(2)).to.equal(LandInitialization.COMMISSION_TOKEN_BaseURI);
+
+            expect(structToObject(await commissionToken.getCommissionRate(2))).to.deep.equal(
+                structToObject(commissionRate2)
+            );
         });
 
-        it('2.1.5.2. mint unsuccessfully by unauthorized sender', async () => {
-            const { commissionToken, receiver1, receiver2 } = await beforeCommissionTokenTest();
+        it('2.1.7.2. mint unsuccessfully when sender is not estateToken contract', async () => {
+            const fixture = await beforeCommissionTokenTest({
+                registerSampleBrokers: true,
+            });
 
-            await expect(commissionToken.mint(receiver1.address, 1))
-                .to.be.revertedWithCustomError(commissionToken, 'Unauthorized');
-            await expect(commissionToken.mint(receiver2.address, 2))
-                .to.be.revertedWithCustomError(commissionToken, 'Unauthorized');
+            const { commissionToken, manager, moderator, user } = fixture;
+
+            const { defaultParams: params } = await beforeMintTest(fixture);
+
+            await expect(commissionToken.connect(manager).mint(
+                params.zone,
+                params.broker,
+                params.tokenId
+            )).to.be.revertedWithCustomError(commissionToken, 'Unauthorized');
+
+            await expect(commissionToken.connect(moderator).mint(
+                params.zone,
+                params.broker,
+                params.tokenId
+            )).to.be.revertedWithCustomError(commissionToken, 'Unauthorized');
+
+            await expect(commissionToken.connect(user).mint(
+                params.zone,
+                params.broker,
+                params.tokenId
+            )).to.be.revertedWithCustomError(commissionToken, 'Unauthorized');
         });
 
-        it('2.1.5.3. mint unsuccessfully when already minted', async () => {
-            const { estateToken, commissionToken, receiver1, receiver2 } = await beforeCommissionTokenTest();
+        it('2.1.7.3. mint unsuccessfully when already minted', async () => {
+            const fixture = await beforeCommissionTokenTest({
+                registerSampleBrokers: true,
+            });
 
-            await callTransaction(estateToken.call(commissionToken.address, commissionToken.interface.encodeFunctionData('mint', [
-                receiver1.address,
-                1,
-            ])));
+            const { commissionToken, estateToken, zone1, zone2, broker1, broker2 } = fixture;
 
-            await expect(estateToken.call(commissionToken.address, commissionToken.interface.encodeFunctionData('mint', [
-                receiver2.address,
-                1,
-            ]))).to.be.revertedWithCustomError(commissionToken, 'AlreadyMinted');
+            const params1: MintParams = {
+                zone: zone1,
+                broker: broker1.address,
+                tokenId: BigNumber.from(1),
+            }
+            await callTransaction(getMintTx(commissionToken, estateToken, params1));
+            await expect(getMintTx(commissionToken, estateToken, params1))
+                .to.be.revertedWithCustomError(commissionToken, 'AlreadyMinted');
+
+            const params2: MintParams = {
+                zone: zone2,
+                broker: broker2.address,
+                tokenId: BigNumber.from(2),
+            }
+            await callTransaction(getMintTx(commissionToken, estateToken, params2));
+            await expect(getMintTx(commissionToken, estateToken, params2))
+                .to.be.revertedWithCustomError(commissionToken, 'AlreadyMinted');
+        });
+
+        it('2.1.7.4. mint unsuccessfully when zone is inactive', async () => {
+            const fixture = await beforeCommissionTokenTest({
+                registerSampleBrokers: true,
+            });
+
+            const { commissionToken, estateToken, admin, admins } = fixture;
+
+            const { defaultParams: params } = await beforeMintTest(fixture);
+
+            await callAdmin_DeclareZones(
+                admin,
+                admins,
+                [params.zone],
+                false,
+                await admin.nonce(),
+            )
+
+            await expect(getMintTx(commissionToken, estateToken, params))
+                .to.be.revertedWithCustomError(commissionToken, 'InvalidZone');
+        });
+
+        it('2.1.7.5. mint unsuccessfully when broker not registered', async () => {
+            const fixture = await beforeCommissionTokenTest();
+
+            const { commissionToken, estateToken } = fixture;
+
+            const { defaultParams: params } = await beforeMintTest(fixture);
+
+            await expect(getMintTx(commissionToken, estateToken, params))
+                .to.be.revertedWithCustomError(commissionToken, 'InvalidBroker');
+        });
+
+        it('2.1.7.6. mint unsuccessfully when broker is expired', async () => {
+            const fixture = await beforeCommissionTokenTest({
+                registerSampleBrokers: true,
+            });
+
+            const { commissionToken, estateToken } = fixture;
+
+            const { defaultParams: params } = await beforeMintTest(fixture);
+
+            let timestamp = (await commissionToken.getBrokerRegistry(params.zone, params.broker)).expireAt;
+            await time.setNextBlockTimestamp(timestamp);
+
+            await expect(getMintTx(commissionToken, estateToken, params))
+                .to.be.revertedWithCustomError(commissionToken, 'InvalidBroker');
+        });
+    });
+
+    describe('2.1.7. getRoyaltyRate(uint256)', async () => {
+        it('2.1.7.1. return fixed royalty rate for all token', async () => {
+            const { commissionToken } = await beforeCommissionTokenTest({
+                registerSampleBrokers: true,
+                mintSampleTokens: true,
+            });
+
+            const royaltyRate = {
+                value: LandInitialization.COMMISSION_TOKEN_RoyaltyRate,
+                decimals: Constant.COMMON_RATE_DECIMALS,
+            }
+
+            expect(structToObject(await commissionToken.getRoyaltyRate(1))).to.deep.equal(
+                royaltyRate
+            );
+            expect(structToObject(await commissionToken.getRoyaltyRate(2))).to.deep.equal(
+                royaltyRate
+            );
+        });
+    });
+
+    describe('2.1.7. royaltyInfo(uint256, uint256)', async () => {
+        it('2.1.7.1. return correct royalty info', async () => {
+            const { commissionToken, feeReceiver } = await beforeCommissionTokenTest({
+                registerSampleBrokers: true,
+                mintSampleTokens: true,
+            });
+
+            const royaltyRate = {
+                value: LandInitialization.COMMISSION_TOKEN_RoyaltyRate,
+                decimals: Constant.COMMON_RATE_DECIMALS,
+            }
+            
+            const value1 = ethers.utils.parseEther("100");
+            const royaltyInfo = await commissionToken.royaltyInfo(1, value1);
+            expect(royaltyInfo[0]).to.deep.equal(feeReceiver.address);
+            expect(royaltyInfo[1]).to.deep.equal(scaleRate(value1, royaltyRate));
+
+            const value2 = ethers.utils.parseEther("20");
+            const royaltyInfo2 = await commissionToken.royaltyInfo(2, value2);
+            expect(royaltyInfo2[0]).to.deep.equal(feeReceiver.address);
+            expect(royaltyInfo2[1]).to.deep.equal(scaleRate(value2, royaltyRate));
         });
     });
 
