@@ -12,7 +12,6 @@ export async function deployEstateForger(
     validatorAddress: string,
     baseMinUnitPrice: BigNumber,
     baseMaxUnitPrice: BigNumber,
-    feeRate: BigNumber,
 ) {
     const EstateForger = await ethers.getContractFactory('EstateForger', signer);
     const estateForger = await upgrades.deployProxy(
@@ -27,7 +26,6 @@ export async function deployEstateForger(
             validatorAddress,
             baseMinUnitPrice,
             baseMaxUnitPrice,
-            feeRate,
         ]
     );
     await estateForger.deployed();
