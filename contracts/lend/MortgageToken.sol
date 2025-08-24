@@ -60,11 +60,9 @@ ReentrancyGuardUpgradeable {
         string calldata _name,
         string calldata _symbol,
         string calldata _uri,
-        uint256 _feeRate,
-        uint256 _royaltyRate
+        uint256 _feeRate
     ) external initializer {
         require(_feeRate <= CommonConstant.RATE_MAX_FRACTION);
-        require(_royaltyRate <= CommonConstant.RATE_MAX_FRACTION);
 
         __ERC721_init(_name, _symbol);
         __ERC721Pausable_init();

@@ -32,6 +32,7 @@ IValidatable {
 
     function requestExtraction(
         uint256 estateId,
+        address buyer,
         uint256 value,
         address currency,
         uint256 feeRate,
