@@ -45,6 +45,13 @@ ReentrancyGuardUpgradeable {
         _;
     }
 
+    modifier onlyEligibleZone(uint256 _requestId) {
+        if (!IAdmin(admin).getZoneEligibility(requests[_requestId].estate.zone, msg.sender)) {
+            revert Unauthorized();
+        }
+        _;
+    }
+
     receive() external payable {}
 
     function initialize(
@@ -260,6 +267,30 @@ ReentrancyGuardUpgradeable {
         return requestId;
     }
 
+    function whitelistFor(
+        uint256 _requestId,
+        address[] calldata _accounts,
+        bool _isWhitelisted
+    ) external validRequest(_requestId) onlyExecutive onlyEligibleZone(_requestId) {
+        if (_isWhitelisted) {
+            for (uint256 i; i < _accounts.length; ++i) {
+                if (isWhitelistedFor[_requestId][_accounts[i]]) {
+                    revert WhitelistedAccount();
+                }
+                isWhitelistedFor[_requestId][_accounts[i]] = true;
+                emit RequestWhitelist(_requestId, _accounts[i]);
+            }
+        } else {
+            for (uint256 i; i < _accounts.length; ++i) {
+                if (!isWhitelistedFor[_requestId][_accounts[i]]) {
+                    revert NotWhitelistedAccount();
+                }
+                isWhitelistedFor[_requestId][_accounts[i]] = false;
+                emit RequestUnwhitelist(_requestId, _accounts[i]);
+            }
+        }
+    }
+
     function updateRequestURI(
         uint256 _requestId,
         string calldata _uri,
@@ -286,13 +317,8 @@ ReentrancyGuardUpgradeable {
     function updateRequestAgenda(
         uint256 _requestId,
         EstateForgerRequestAgendaInput calldata _agenda
-    ) external validRequest(_requestId) onlyExecutive whenNotPaused {
+    ) external validRequest(_requestId) onlyExecutive onlyEligibleZone(_requestId) whenNotPaused {
         EstateForgerRequest storage request = requests[_requestId];
-
-        if (!IAdmin(admin).getZoneEligibility(request.estate.zone, msg.sender)) {
-            revert Unauthorized();
-        }
-
         if (request.agenda.confirmAt != 0) {
             revert AlreadyConfirmed();
         }
@@ -317,11 +343,9 @@ ReentrancyGuardUpgradeable {
         emit RequestAgendaUpdate(_requestId, _agenda);
     }
 
-    function cancel(uint256 _requestId) external validRequest(_requestId) onlyManager whenNotPaused {
+    function cancel(uint256 _requestId)
+    external validRequest(_requestId) onlyManager onlyEligibleZone(_requestId) whenNotPaused {
         EstateForgerRequest storage request = requests[_requestId];
-        if (!IAdmin(admin).getZoneEligibility(request.estate.zone, msg.sender)) {
-            revert Unauthorized();
-        }
         if (request.quota.totalQuantity == 0) {
             revert AlreadyCancelled();
         }
@@ -333,17 +357,12 @@ ReentrancyGuardUpgradeable {
     }
 
     function confirm(uint256 _requestId, address _commissionReceiver)
-    external payable validRequest(_requestId) nonReentrant onlyManager whenNotPaused returns (uint256) {
+    external payable validRequest(_requestId) nonReentrant onlyManager onlyEligibleZone(_requestId) whenNotPaused returns (uint256) {
         if (_commissionReceiver == address(0)) {
             revert InvalidCommissionReceiver();
         }
 
         EstateForgerRequest storage request = requests[_requestId];
-        bytes32 zone = request.estate.zone;
-        if (!IAdmin(admin).getZoneEligibility(zone, msg.sender)) {
-            revert Unauthorized();
-        }
-
         if (block.timestamp < request.agenda.saleStartsAt) {
             revert InvalidConfirming();
         }
@@ -376,7 +395,7 @@ ReentrancyGuardUpgradeable {
         uint256 unit = 10 ** estateTokenContract.decimals();
         uint256 estateId = estateTokenContract.tokenizeEstate(
             totalQuantity * unit,
-            zone,
+            request.estate.zone,
             _requestId,
             request.estate.uri,
             request.estate.expireAt,
@@ -557,7 +576,9 @@ ReentrancyGuardUpgradeable {
             revert AlreadyConfirmed();
         }
         if (request.agenda.saleStartsAt > block.timestamp
-            || request.agenda.privateSaleEndsAt > block.timestamp && !isWhitelisted[msg.sender]
+            || (request.agenda.privateSaleEndsAt > block.timestamp
+                && !isWhitelisted[msg.sender]
+                && !isWhitelistedFor[_requestId][msg.sender])
             || request.agenda.publicSaleEndsAt <= block.timestamp) {
             revert InvalidDepositing();
         }
