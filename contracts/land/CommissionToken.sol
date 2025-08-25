@@ -102,19 +102,14 @@ ReentrancyGuardUpgradeable {
         emit RoyaltyRateUpdate(Rate(_royaltyRate, CommonConstant.RATE_DECIMALS));
     }
 
-    function getBrokerRegistry(bytes32 _zone, address _broker) external view returns (BrokerRegistry memory) {
+    function getBrokerCommissionRate(bytes32 _zone, address _broker) external view returns (Rate memory) {
         if (!IAdmin(admin).isZone(_zone)) {
             revert InvalidZone();
         }
-        return brokerRegistries[_zone][_broker];
-    }
-
-    function isBrokerIn(bytes32 _zone, address _broker) external view returns (bool) {
-        if (!IAdmin(admin).isZone(_zone)) {
-            revert InvalidZone();
+        if (isActiveIn[_zone][_broker]) {
+            revert NotActive();
         }
-
-        return brokerRegistries[_zone][_broker].expireAt > block.timestamp;
+        return brokerCommissionRates[_zone][_broker];
     }
 
     function getCommissionRate(uint256 _tokenId) public view returns (Rate memory) {
@@ -131,8 +126,7 @@ ReentrancyGuardUpgradeable {
     function registerBroker(
         bytes32 _zone,
         address _broker,
-        uint256 _commissionRate,
-        uint40 _duration
+        uint256 _commissionRate
     ) external onlyManager {
         if (!IAdmin(admin).getZoneEligibility(_zone, msg.sender)) {
             revert Unauthorized();
@@ -142,55 +136,36 @@ ReentrancyGuardUpgradeable {
             revert InvalidRate();
         }
 
-        if (_duration == 0) {
-            revert InvalidInput();
-        }
-
-        if (brokerRegistries[_zone][_broker].expireAt > block.timestamp) {
-            revert NotExpired();
-        }
-
         Rate memory rate = Rate(_commissionRate, CommonConstant.RATE_DECIMALS);
 
-        brokerRegistries[_zone][_broker] = BrokerRegistry(
-            rate,
-            uint40(block.timestamp + _duration)
-        );
+        if (brokerCommissionRates[_zone][_broker].value != 0) {
+            revert AlreadyRegistered();
+        }
+        isActiveIn[_zone][_broker] = true;
 
-        emit BrokerRegistryUpdate(
+        emit BrokerRegistration(
             _zone,
             _broker,
-            rate,
-            uint40(block.timestamp + _duration)
+            rate
         );
     }
 
-    function extendBrokerExpiration(
+    function activateBroker(
         bytes32 _zone,
         address _broker,
-        uint40 _duration
+        bool _isActive
     ) external onlyManager {
         if (!IAdmin(admin).getZoneEligibility(_zone, msg.sender)) {
             revert Unauthorized();
         }
 
-        if (_duration == 0) {
-            revert InvalidInput();
+        isActiveIn[_zone][_broker] = _isActive;
+
+        if (_isActive) {
+            emit BrokerActivation(_zone, _broker);
+        } else {
+            emit BrokerDeactivation(_zone, _broker);
         }
-
-        uint40 expireAt = brokerRegistries[_zone][_broker].expireAt;
-        if (expireAt <= block.timestamp) {
-            revert AlreadyExpired();
-        }
-
-        brokerRegistries[_zone][_broker].expireAt = expireAt + _duration;
-
-        emit BrokerRegistryUpdate(
-            _zone,
-            _broker,
-            brokerRegistries[_zone][_broker].commissionRate,
-            expireAt + _duration
-        );
     }
 
     function mint(
@@ -210,12 +185,11 @@ ReentrancyGuardUpgradeable {
             revert InvalidZone();
         }
 
-        BrokerRegistry storage brokerRegistry = brokerRegistries[_zone][_broker];
-        if (brokerRegistry.expireAt <= block.timestamp) {
+        if (!isActiveIn[_zone][_broker]) {
             revert InvalidBroker();
         }
 
-        commissionRates[_tokenId] = brokerRegistry.commissionRate;
+        commissionRates[_tokenId] = brokerCommissionRates[_zone][_broker];
         _mint(_broker, _tokenId);
 
         emit NewToken(
