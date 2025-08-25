@@ -46,7 +46,6 @@ IEstateTokenizer {
         uint256 soldQuantity,
         uint256 value,
         uint256 feeAmount,
-        address commissionReceiver,
         uint256 cashbackBaseAmount
     );
 
@@ -114,7 +113,7 @@ IEstateTokenizer {
     ) external returns (uint256 requestId);
 
     function cancel(uint256 requestId) external;
-    function confirm(uint256 requestId, address commissionReceiver) external payable returns (uint256 estateId);
+    function confirm(uint256 requestId) external payable returns (uint256 estateId);
     function deposit(uint256 requestId, uint256 quantity) external payable returns (uint256 value);
     function updateRequestURI(
         uint256 requestId,

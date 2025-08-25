@@ -7,23 +7,21 @@ import {IERC4906Upgradeable} from "@openzeppelin/contracts-upgradeable/interface
 import {ICommon} from "../../common/interfaces/ICommon.sol";
 import {IRoyaltyRateProposer} from "../../common/interfaces/IRoyaltyRateProposer.sol";
 
-import {IBrokerRegistry} from "../structs/IBrokerRegistry.sol";
-
 interface ICommissionToken is
 ICommon,
-IBrokerRegistry,
 IRoyaltyRateProposer,
 IERC4906Upgradeable,
 IERC721MetadataUpgradeable {
     event BaseURIUpdate(string newValue);
     event RoyaltyRateUpdate(Rate newValue);
 
-    event BrokerRegistryUpdate(
+    event BrokerRegistration(
         bytes32 indexed zone,
         address indexed broker,
-        Rate commissionRate,
-        uint40 expireAt
+        Rate commissionRate
     );
+    event BrokerActivation(bytes32 indexed zone, address indexed broker);
+    event BrokerDeactivation(bytes32 indexed zone, address indexed broker);
 
     event NewToken(
         uint256 indexed tokenId,
@@ -31,20 +29,18 @@ IERC721MetadataUpgradeable {
         address indexed broker
     );
 
-    error AlreadyExpired();
     error AlreadyMinted();
+    error AlreadyRegistered();
     error InvalidBroker();
-    error NotExpired();
+    error NotActive();
 
     function estateToken() external view returns (address estateToken);
     function feeReceiver() external view returns (address feeReceiver);
 
     function totalSupply() external view returns (uint256 totalSupply);
 
-    function getBrokerRegistry(bytes32 zone, address broker)
-    external view returns (BrokerRegistry memory brokerRegistry);
-
-    function isBrokerIn(bytes32 zone, address broker) external view returns (bool isBroker);
+    function getBrokerCommissionRate(bytes32 zone, address broker) external view returns (Rate memory rate);
+    function isActiveIn(bytes32 zone, address broker) external view returns (bool isBroker);
 
     function getCommissionRate(uint256 tokenId) external view returns (Rate memory rate);
 
@@ -54,8 +50,12 @@ IERC721MetadataUpgradeable {
     function registerBroker(
         bytes32 zone,
         address broker,
-        uint256 commissionRate,
-        uint40 duration
+        uint256 commissionRate
+    ) external;
+    function activateBroker(
+        bytes32 zone,
+        address broker,
+        bool isActive
     ) external;
 
     function mint(
