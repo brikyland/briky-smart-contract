@@ -4,7 +4,7 @@ import { MockValidator } from '@utils/mockValidator';
 import { RequestExtractionParams } from '@utils/models/EstateLiquidator';
 import { ProposeParams } from '@utils/models/GovernanceHub';
 import { ProposalRule } from '@utils/models/Proposal';
-import { BigNumber, Contract, Wallet } from 'ethers';
+import { BigNumber } from 'ethers';
 import { getProposeInvalidValidation, getProposeValidation } from './GovernanceHub';
 
 export async function getRequestExtractionValidation(
@@ -13,7 +13,6 @@ export async function getRequestExtractionValidation(
     governanceHub: GovernanceHub,
     validator: MockValidator,
     timestamp: number,
-    operator: Wallet | Contract,
     params: RequestExtractionParams
 ) {
     let quorumRate;
@@ -28,7 +27,7 @@ export async function getRequestExtractionValidation(
     const proposeParams: ProposeParams = {
         governor: estateToken.address,
         tokenId: params.estateId,
-        operator: operator.address,
+        operator: params.buyer,
         uuid: params.uuid,
         rule: ProposalRule.ApprovalBeyondQuorum,
         quorumRate: quorumRate,
@@ -45,7 +44,6 @@ export async function getRequestExtractionInvalidValidation(
     governanceHub: GovernanceHub,
     validator: MockValidator,
     timestamp: number,
-    operator: Wallet | Contract,
     params: RequestExtractionParams
 ) {
     const quorumRate = ((await estateToken.getEstate(params.estateId)).tokenizeAt + Constant.ESTATE_LIQUIDATOR_UNANIMOUS_GUARD_DURATION > timestamp)
@@ -55,7 +53,7 @@ export async function getRequestExtractionInvalidValidation(
     const proposeParams: ProposeParams = {
         governor: estateToken.address,
         tokenId: params.estateId,
-        operator: operator.address,
+        operator: params.buyer,
         uuid: params.uuid,
         rule: ProposalRule.ApprovalBeyondQuorum,
         quorumRate: quorumRate,

@@ -26,11 +26,11 @@ import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 import {
     getBytes4Hex,
     getInterfaceID,
-    scale,
-    scaleRate,
     structToObject,
     getEventsFromReceipt,
 } from '@utils/utils';
+import { scale } from "@utils/formula";
+import { scaleRate } from "@utils/formula";
 import { Initialization as LandInitialization } from '@tests/land/test.initialization';
 import { callCommissionToken_Pause } from '@utils/callWithSignatures/commissionToken';
 import { MockValidator } from '@utils/mockValidator';

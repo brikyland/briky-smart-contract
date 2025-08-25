@@ -207,7 +207,6 @@ describe('1.1. Inspect', async () => {
             dividendHub.address,
             feeReceiver.address,
             validator.getAddress(),
-            LandInitialization.ESTATE_LIQUIDATOR_FeeRate,
         ) as EstateLiquidator;
   
         // Lend

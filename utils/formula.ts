@@ -27,13 +27,16 @@ export function getCashbackBaseDenomination(
     return remain(unitPrice, commissionRate).mul(cashbackBaseRate).div(Constant.COMMON_RATE_MAX_FRACTION);
 }
 
-export function scale(
+export function scale(value: ethers.BigNumber, rate_value: ethers.BigNumberish, rate_decimals: number): ethers.BigNumber {
+    return value.mul(rate_value).div(ethers.BigNumber.from(10).pow(rate_decimals));
+}
+
+export function scaleRate(
     value: ethers.BigNumber,
     Rate: Rate,
 ): ethers.BigNumber {
     return value.mul(Rate.value).div(ethers.BigNumber.from(10).pow(Rate.decimals));
 }
-
 
 export async function applyDiscount(
     admin: Admin,

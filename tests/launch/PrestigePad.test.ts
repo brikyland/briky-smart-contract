@@ -60,7 +60,7 @@ import { request } from 'http';
 import { Initialization as LandInitialization } from '@tests/land/test.initialization';
 import { Initialization as LaunchInitialization } from '@tests/launch/test.initialization';
 import { callReserveVault_AuthorizeProvider, callReserveVault_Pause } from '@utils/callWithSignatures/reserveVault';
-import { applyDiscount, remain, scale } from '@utils/formula';
+import { applyDiscount, remain, scaleRate } from '@utils/formula';
 import { RequestQuote, RequestAgenda, RequestEstate, RequestQuota } from '@utils/models/EstateForger';
 import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
 import { Rate } from '@utils/models/Common';
@@ -224,7 +224,7 @@ export async function getFeeDenomination(
 ) {
     return applyDiscount(
         admin,
-        scale(_unitPrice, await prestigePad.getFeeRate()),
+        scaleRate(_unitPrice, await prestigePad.getFeeRate()),
         currency,
     )
 }
@@ -233,7 +233,7 @@ export async function getCommissionDenomination(
     commissionToken: CommissionToken,
     feeDenomination: BigNumber,
 ) {
-    return scale(
+    return scaleRate(
         feeDenomination,
         await commissionToken.getCommissionRate(),
     )
@@ -244,7 +244,7 @@ export async function getCashbackBaseDenomination(
     commissionDenomination: BigNumber,
     cashbackBaseRate: Rate,
 ) {
-    return scale(
+    return scaleRate(
         feeDenomination.sub(commissionDenomination),
         cashbackBaseRate,
     );

@@ -40,7 +40,8 @@ import {
 } from '@utils/callWithSignatures/estateToken';
 import { BigNumber, BigNumberish, Contract, ContractTransaction, Wallet } from 'ethers';
 import { randomInt } from 'crypto';
-import { getBytes4Hex, getInterfaceID, randomBigNumber, scaleRate, structToObject } from '@utils/utils';
+import { getBytes4Hex, getInterfaceID, randomBigNumber, structToObject } from '@utils/utils';
+import { scaleRate } from "@utils/formula";
 import { OrderedMap } from '@utils/utils';
 import { deployEstateForger } from '@utils/deployments/land/estateForger';
 import { addCurrencyToAdminAndPriceWatcher } from '@utils/callWithSignatures/common';
@@ -54,7 +55,7 @@ import { deployReentrancyERC1155Holder } from '@utils/deployments/mock/mockReent
 import { request } from 'http';
 import { Initialization as LandInitialization } from '@tests/land/test.initialization';
 import { callReserveVault_AuthorizeProvider } from '@utils/callWithSignatures/reserveVault';
-import { remain, scale } from '@utils/formula';
+import { remain, scaleRate } from '@utils/formula';
 import { RequestQuote, RequestAgenda, RequestEstate, RequestQuota } from '@utils/models/EstateForger';
 import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
 import { Rate } from '@utils/models/Common';
@@ -132,13 +133,13 @@ export async function getCashbackBaseDenomination(
     commissionDenomination: BigNumber,
     cashbackBaseRate: Rate,
 ) {
-    return scale(
+    return scaleRate(
         feeDenomination.sub(commissionDenomination),
         cashbackBaseRate,
     );
 }
 
-describe.only('2.2. EstateForger', async () => {
+describe('2.2. EstateForger', async () => {
     async function estateForgerFixture(): Promise<EstateForgerFixture> {
         const accounts = await ethers.getSigners();
         const deployer = accounts[0];

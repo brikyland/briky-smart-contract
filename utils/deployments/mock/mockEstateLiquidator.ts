@@ -10,7 +10,6 @@ export async function deployMockEstateLiquidator(
     dividendHubAddress: string,
     feeReceiverAddress: string,
     validatorAddress: string,
-    feeRate: BigNumberish,
 ) {
     const MockEstateLiquidator = await ethers.getContractFactory('MockEstateLiquidator', signer);
     const mockEstateLiquidator = await upgrades.deployProxy(
@@ -23,7 +22,6 @@ export async function deployMockEstateLiquidator(
             dividendHubAddress,
             feeReceiverAddress,
             validatorAddress,
-            feeRate,
         ]
     );
     await mockEstateLiquidator.deployed();

@@ -39,7 +39,7 @@ export async function getCallTokenizeEstateTx(
             params.uri,
             params.expireAt,
             params.custodian,
-            params.commissionReceiverAddress,
+            params.broker,
         ])
     );
     return tx;

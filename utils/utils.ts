@@ -1,5 +1,4 @@
 import { ethers } from "ethers";
-import { Rate } from "./models/Common";
 
 export function nextPermutation(nums: number[]): boolean {
     let k = -1;
@@ -156,14 +155,6 @@ export class OrderedMap<int, V> {
             }
         }
     }
-}
-
-export function scale(value: ethers.BigNumber, rate_value: ethers.BigNumberish, rate_decimals: number): ethers.BigNumber {
-    return value.mul(rate_value).div(ethers.BigNumber.from(10).pow(rate_decimals));
-}
-
-export function scaleRate(value: ethers.BigNumber, rate: Rate): ethers.BigNumber {
-    return value.mul(rate.value).div(ethers.BigNumber.from(10).pow(rate.decimals));
 }
 
 export function shuffle(array: any[]) {

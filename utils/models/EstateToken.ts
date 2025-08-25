@@ -14,13 +14,13 @@ export interface RegisterCustodianParams {
 }
 
 export interface TokenizeEstateParams {
-    totalSupply: number;
+    totalSupply: BigNumber;
     zone: string;
     tokenizationId: number;
     uri: string;
     expireAt: number;
     custodian: string;
-    commissionReceiverAddress: string;
+    broker: string;
 }
 
 export interface UpdateEstateURIParams {

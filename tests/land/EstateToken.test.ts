@@ -215,7 +215,6 @@ describe('2.4. EstateToken', async () => {
                 dividendHub.address,
                 feeReceiver.address,
                 validator.getAddress(),
-                LandInitialization.ESTATE_LIQUIDATOR_FeeRate,
             ));
             extractors.push(mockEstateLiquidator);
         }
