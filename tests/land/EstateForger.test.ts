@@ -138,7 +138,7 @@ export async function getCashbackBaseDenomination(
     );
 }
 
-describe('2.2. EstateForger', async () => {
+describe.only('2.2. EstateForger', async () => {
     async function estateForgerFixture(): Promise<EstateForgerFixture> {
         const accounts = await ethers.getSigners();
         const deployer = accounts[0];
@@ -320,6 +320,7 @@ describe('2.2. EstateForger', async () => {
             depositor1,
             depositor2,
             depositor3,
+            depositors,
             reserveVault,
             deployer,
             validator,
@@ -541,6 +542,16 @@ describe('2.2. EstateForger', async () => {
             }
 
             await callTransaction(getRequestTokenizationTx(estateForger, validator, manager, params2));
+        }
+
+        if (whitelistDepositorsForRequests) {
+            for (const requestId of [1, 2]) {
+                await callTransaction(estateForger.connect(manager).whitelistFor(
+                    requestId,
+                    depositors.map(x => x.address),
+                    true,
+                ));
+            }
         }
 
         if (addDepositions) {
@@ -864,6 +875,7 @@ describe('2.2. EstateForger', async () => {
                 listSampleCurrencies: true,
                 addZoneForExecutive: true,
                 listSampleCustodians: true,
+                registerBrokers: true,
                 addSampleRequests: true,
                 addEstateForgerToVault: true,
             });
@@ -878,6 +890,7 @@ describe('2.2. EstateForger', async () => {
                 listSampleCurrencies: true,
                 addZoneForExecutive: true,
                 listSampleCustodians: true,
+                registerBrokers: true,
                 addSampleRequests: true,
                 addEstateForgerToVault: true,
             });
@@ -1402,7 +1415,6 @@ describe('2.2. EstateForger', async () => {
                 listSampleCustodians: true,
                 addEstateForgerToVault: true,
                 registerBrokers: true,
-                registerSampleBrokers: true,
             });
 
             const { manager, estateForger, validator } = fixture;
@@ -1629,7 +1641,7 @@ describe('2.2. EstateForger', async () => {
         });
     });
 
-    describe.only('2.2.7. whitelistFor(uint256, address[], bool)', async () => {
+    describe('2.2.7. whitelistFor(uint256, address[], bool)', async () => {
         it('2.2.7.1. Whitelist user for request successfully', async () => {
             const fixture = await beforeEstateForgerTest({
                 listSampleCurrencies: true,
@@ -1990,6 +2002,7 @@ describe('2.2. EstateForger', async () => {
                 listSampleCustodians: true,
                 addSampleRequests: true,
                 addEstateForgerToVault: true,
+                registerBrokers: true,
             });
             const { moderator, manager, estateForger, validator } = fixture;
 
@@ -2035,6 +2048,7 @@ describe('2.2. EstateForger', async () => {
                 listSampleCustodians: true,
                 addSampleRequests: true,
                 addEstateForgerToVault: true,
+                registerBrokers: true,
             });
             const { manager, estateForger, validator } = fixture;
             
@@ -2055,6 +2069,7 @@ describe('2.2. EstateForger', async () => {
                 listSampleCustodians: true,
                 addSampleRequests: true,
                 addEstateForgerToVault: true,
+                registerBrokers: true,
             });
             const { user, estateForger, validator } = fixture;
             const { defaultParams } = await beforeUpdateRequestURI(fixture);
@@ -2070,6 +2085,7 @@ describe('2.2. EstateForger', async () => {
                 listSampleCustodians: true,
                 addSampleRequests: true,
                 addEstateForgerToVault: true,
+                registerBrokers: true,
             });
             const { manager, estateForger, validator } = fixture;
             const { defaultParams } = await beforeUpdateRequestURI(fixture);
@@ -2096,6 +2112,7 @@ describe('2.2. EstateForger', async () => {
                 listSampleCustodians: true,
                 addSampleRequests: true,
                 addEstateForgerToVault: true,
+                registerBrokers: true,
             });
             const { manager, estateForger, validator } = fixture;
             const { defaultParams } = await beforeUpdateRequestURI(fixture);
@@ -2113,6 +2130,7 @@ describe('2.2. EstateForger', async () => {
                 listSampleCustodians: true,
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
+                registerBrokers: true,
                 addDepositions: true,
                 confirmRequests: true,
                 addEstateForgerToVault: true,
@@ -2132,6 +2150,7 @@ describe('2.2. EstateForger', async () => {
                 listSampleCustodians: true,
                 addSampleRequests: true,
                 addEstateForgerToVault: true,
+                registerBrokers: true,
             });
             const { manager, estateForger, admin, admins, validator } = fixture;
             const { defaultParams } = await beforeUpdateRequestURI(fixture);
@@ -2156,6 +2175,7 @@ describe('2.2. EstateForger', async () => {
                 listSampleCustodians: true,
                 addSampleRequests: true,
                 addEstateForgerToVault: true,
+                registerBrokers: true,
             });
             const { manager, estateForger, admin, admins, validator } = fixture;
             const { defaultParams } = await beforeUpdateRequestURI(fixture);
@@ -2198,6 +2218,7 @@ describe('2.2. EstateForger', async () => {
                 listSampleCustodians: true,
                 addSampleRequests: true,
                 addEstateForgerToVault: true,
+                registerBrokers: true,
             });
             const { manager, estateForger } = fixture;
             
@@ -2229,6 +2250,7 @@ describe('2.2. EstateForger', async () => {
                 listSampleCustodians: true,
                 addSampleRequests: true,
                 addEstateForgerToVault: true,
+                registerBrokers: true,
             });
             const { manager, estateForger } = fixture;
 
@@ -2303,6 +2325,7 @@ describe('2.2. EstateForger', async () => {
                 listSampleCustodians: true,
                 addSampleRequests: true,
                 addEstateForgerToVault: true,
+                registerBrokers: true,
                 pause: true,
             });
             const { manager, estateForger } = fixture;
@@ -2319,6 +2342,7 @@ describe('2.2. EstateForger', async () => {
                 listSampleCustodians: true,
                 addSampleRequests: true,
                 addEstateForgerToVault: true,
+                registerBrokers: true,
             });
             const { user, estateForger } = fixture;
             const defaultParams = await getDefaultParams(fixture);
@@ -2337,6 +2361,7 @@ describe('2.2. EstateForger', async () => {
                 listSampleCustodians: true,
                 addSampleRequests: true,
                 addEstateForgerToVault: true,
+                registerBrokers: true,
             });
             const { manager, estateForger } = fixture;
             const defaultParams = await getDefaultParams(fixture);
@@ -2363,6 +2388,7 @@ describe('2.2. EstateForger', async () => {
                 listSampleCustodians: true,
                 addSampleRequests: true,
                 addEstateForgerToVault: true,
+                registerBrokers: true,
             });
             const { manager, estateForger } = fixture;
             const defaultParams = await getDefaultParams(fixture);
@@ -2378,6 +2404,7 @@ describe('2.2. EstateForger', async () => {
                 listSampleCurrencies: true,
                 addZoneForExecutive: true,
                 listSampleCustodians: true,
+                registerBrokers: true,
                 addSampleRequests: true,
                 addDepositions: true,
                 confirmRequests: true,
@@ -2401,6 +2428,7 @@ describe('2.2. EstateForger', async () => {
                 addDepositions: true,
                 fundERC20ForDepositors: true,
                 addEstateForgerToVault: true,
+                registerBrokers: true,
             });
             const { manager, estateForger } = fixture;
             const defaultParams = await getDefaultParams(fixture);
@@ -2409,13 +2437,14 @@ describe('2.2. EstateForger', async () => {
                 .to.be.revertedWithCustomError(estateForger, 'AlreadyHadDeposit');
         }); 
 
-        it('2.2.8.9. update tokenization request agenda unsuccessfully by inactive zone', async () => {
+        it('2.2.8.9. update tokenization request agenda unsuccessfully with inactive zone', async () => {
             const fixture = await beforeEstateForgerTest({
                 listSampleCurrencies: true,
                 addZoneForExecutive: true,
                 listSampleCustodians: true,
                 addSampleRequests: true,
                 addEstateForgerToVault: true,
+                registerBrokers: true,
             });
             const { admin, admins, moderator, manager, estateForger } = fixture;
             const defaultParams = await getDefaultParams(fixture);
@@ -2442,6 +2471,7 @@ describe('2.2. EstateForger', async () => {
                 listSampleCustodians: true,
                 addSampleRequests: true,
                 addEstateForgerToVault: true,
+                registerBrokers: true,
             });
             const { admin, admins, moderator, manager, estateForger } = fixture;
             const defaultParams = await getDefaultParams(fixture);
@@ -2469,6 +2499,7 @@ describe('2.2. EstateForger', async () => {
                 listSampleCustodians: true,
                 addSampleRequests: true,
                 addEstateForgerToVault: true,
+                registerBrokers: true,
             });
 
             const { manager, estateForger } = fixture;
@@ -2533,19 +2564,14 @@ describe('2.2. EstateForger', async () => {
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addEstateForgerToVault: true,
+                whitelistDepositors: true,
+                whitelistDepositorsForRequests: true,
+                registerBrokers: true,
             });
-            const { admin, admins, estateForger, depositor1, depositor2, reserveVault } = fixture;
+            const { estateForger, depositor1, depositor2, depositors, reserveVault } = fixture;
 
             let initBalance1 = await ethers.provider.getBalance(depositor1.address);
             let initBalance2 = await ethers.provider.getBalance(depositor2.address);
-
-            await callEstateForger_Whitelist(
-                estateForger,
-                admins,
-                [depositor1.address],
-                true,
-                await admin.nonce()
-            )
 
             // During private sale
             // Fund not expanded
@@ -2677,6 +2703,9 @@ describe('2.2. EstateForger', async () => {
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addEstateForgerToVault: true,
+                registerBrokers: true,
+                whitelistDepositors: true,
+                whitelistDepositorsForRequests: true,
             });
             const { admin, admins, manager, estateForger, depositor1, depositor2, currencies } = fixture;
             const currency = currencies[0];
@@ -2687,14 +2716,6 @@ describe('2.2. EstateForger', async () => {
             const requestId = 2;
 
             // During private sale
-            await callEstateForger_Whitelist(
-                estateForger,
-                admins,
-                [depositor1.address],
-                true,
-                await admin.nonce()
-            )
-
             let value1 = (await estateForger.getRequest(requestId)).quote.unitPrice.mul(100);
 
             let saleStartsAt = (await estateForger.getRequest(requestId)).agenda.saleStartsAt;
@@ -2761,19 +2782,14 @@ describe('2.2. EstateForger', async () => {
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addEstateForgerToVault: true,
+                registerBrokers: true,
+                whitelistDepositors: true,
+                whitelistDepositorsForRequests: true,
             });
-            const { admin, admins, estateForger, depositor1, depositor2, reserveVault } = fixture;
+            const { estateForger, depositor1, depositor2 } = fixture;
 
             let initBalance1 = await ethers.provider.getBalance(depositor1.address);
             let initBalance2 = await ethers.provider.getBalance(depositor2.address);
-
-            await callEstateForger_Whitelist(
-                estateForger,
-                admins,
-                [depositor1.address],
-                true,
-                await admin.nonce()
-            )
 
             // During private sale
             const requestId = 1;
@@ -2840,13 +2856,15 @@ describe('2.2. EstateForger', async () => {
                 listSampleCurrencies: true,
                 addZoneForExecutive: true,
                 whitelistDepositors: true,
+                whitelistDepositorsForRequests: true,
                 listSampleCustodians: true,
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
+                registerBrokers: true,
                 pause: true,
                 addEstateForgerToVault: true,
             });
-            const { manager, estateForger, depositor1 } = fixture;
+            const { estateForger, depositor1 } = fixture;
 
             let saleStartsAt = Math.max(
                 (await estateForger.getRequest(1)).agenda.saleStartsAt,
@@ -2867,13 +2885,15 @@ describe('2.2. EstateForger', async () => {
             const fixture = await beforeEstateForgerTest({
                 listSampleCurrencies: true,
                 addZoneForExecutive: true,
-                whitelistDepositors: true,
                 listSampleCustodians: true,
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addEstateForgerToVault: true,
+                registerBrokers: true,
+                whitelistDepositors: true,
+                whitelistDepositorsForRequests: true,
             });
-            const { manager, estateForger, depositor1 } = fixture;
+            const { estateForger, depositor1 } = fixture;
 
             await expect(estateForger.connect(depositor1).deposit(
                 0, 2,
@@ -2889,10 +2909,12 @@ describe('2.2. EstateForger', async () => {
                 listSampleCurrencies: true,
                 addZoneForExecutive: true,
                 whitelistDepositors: true,
+                whitelistDepositorsForRequests: true,
                 listSampleCustodians: true,
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addEstateForgerToVault: true,
+                registerBrokers: true,
             });
             const { manager, estateForger, depositor1 } = fixture;
 
@@ -2923,11 +2945,12 @@ describe('2.2. EstateForger', async () => {
             )).to.be.revertedWithCustomError(estateForger, "AlreadyCancelled");
         });
 
-        it('2.2.9.7. deposit tokenization unsuccessfully with confirm request', async () => {
+        it('2.2.9.7. deposit tokenization unsuccessfully with confirmed request', async () => {
             const fixture = await beforeEstateForgerTest({
                 listSampleCurrencies: true,
                 addZoneForExecutive: true,
                 whitelistDepositors: true,
+                whitelistDepositorsForRequests: true,
                 listSampleCustodians: true,
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
@@ -2935,6 +2958,7 @@ describe('2.2. EstateForger', async () => {
                 confirmRequests: true,
                 addEstateForgerToVault: true,
                 fundERC20ForManagers: true,
+                registerBrokers: true,
             });
             const { manager, estateForger, depositor1 } = fixture;
 
@@ -2955,16 +2979,10 @@ describe('2.2. EstateForger', async () => {
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addEstateForgerToVault: true,
+                whitelistDepositors: true,
+                registerBrokers: true,
             });
-            const { admin, admins, estateForger, depositor1 } = fixture;
-
-            await callEstateForger_Whitelist(
-                estateForger,
-                admins,
-                [depositor1.address],
-                true,
-                await admin.nonce(),
-            )
+            const { estateForger, depositor1 } = fixture;
 
             await expect(estateForger.connect(depositor1).deposit(
                 1, 2, { value: ethers.utils.parseEther('100') },
@@ -2986,8 +3004,38 @@ describe('2.2. EstateForger', async () => {
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addEstateForgerToVault: true,
+                whitelistDepositorsForRequests: true,
+                registerBrokers: true,
             });
-            const { manager, estateForger, depositor1 } = fixture;
+            const { estateForger, depositor1 } = fixture;
+
+            let saleStartsAt = (await estateForger.getRequest(1)).agenda.saleStartsAt;
+            await time.setNextBlockTimestamp(saleStartsAt);
+
+            await expect(estateForger.connect(depositor1).deposit(
+                1, 2, { value: ethers.utils.parseEther('100') },
+            )).to.be.revertedWithCustomError(estateForger, "InvalidDepositing");
+
+            const privateSaleEndsAt = (await estateForger.getRequest(1)).agenda.privateSaleEndsAt;
+            await time.setNextBlockTimestamp(privateSaleEndsAt - 1);
+
+            await expect(estateForger.connect(depositor1).deposit(
+                1, 2, { value: ethers.utils.parseEther('100') },
+            )).to.be.revertedWithCustomError(estateForger, "InvalidDepositing");
+        });
+
+        it('2.2.9.9. deposit tokenization unsuccessfully by unwhitelisted for request account before public sale start', async () => {
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleCustodians: true,
+                addSampleRequests: true,
+                fundERC20ForDepositors: true,
+                addEstateForgerToVault: true,
+                whitelistDepositors: true,
+                registerBrokers: true,
+            });
+            const { estateForger, depositor1 } = fixture;
 
             let saleStartsAt = (await estateForger.getRequest(1)).agenda.saleStartsAt;
             await time.setNextBlockTimestamp(saleStartsAt);
@@ -3009,10 +3057,12 @@ describe('2.2. EstateForger', async () => {
                 listSampleCurrencies: true,
                 addZoneForExecutive: true,
                 whitelistDepositors: true,
+                whitelistDepositorsForRequests: true,
                 listSampleCustodians: true,
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addEstateForgerToVault: true,
+                registerBrokers: true,
             });
             const { manager, estateForger, depositor1 } = fixture;
 
@@ -3047,7 +3097,9 @@ describe('2.2. EstateForger', async () => {
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 whitelistDepositors: true,
+                whitelistDepositorsForRequests: true,
                 addEstateForgerToVault: true,
+                registerBrokers: true,
             });
             const { manager, estateForger, depositor1, depositor2 } = fixture;
 
@@ -3078,10 +3130,12 @@ describe('2.2. EstateForger', async () => {
                 listSampleCurrencies: true,
                 addZoneForExecutive: true,
                 whitelistDepositors: true,
+                whitelistDepositorsForRequests: true,
                 listSampleCustodians: true,
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addEstateForgerToVault: true,
+                registerBrokers: true,
             });
             const { estateForger, depositor1 } = fixture;
 
@@ -3098,9 +3152,11 @@ describe('2.2. EstateForger', async () => {
                 listSampleCurrencies: true,
                 addZoneForExecutive: true,
                 whitelistDepositors: true,
+                whitelistDepositorsForRequests: true,
                 listSampleCustodians: true,
                 addSampleRequests: true,
                 addEstateForgerToVault: true,
+                registerBrokers: true,
             });
             const { estateForger, depositor1 } = fixture;
 
@@ -3117,10 +3173,12 @@ describe('2.2. EstateForger', async () => {
                 listSampleCurrencies: true,
                 addZoneForExecutive: true,
                 whitelistDepositors: true,
+                whitelistDepositorsForRequests: true,
                 listSampleCustodians: true,
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addEstateForgerToVault: true,
+                registerBrokers: true,
             });
             const { deployer, estateForger } = fixture;
 
@@ -3143,6 +3201,7 @@ describe('2.2. EstateForger', async () => {
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addEstateForgerToVault: true,
+                registerBrokers: true,
             });
             const { deployer, estateForger } = fixture;
 
@@ -3176,18 +3235,13 @@ describe('2.2. EstateForger', async () => {
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addEstateForgerToVault: true,
+                whitelistDepositors: true,
+                whitelistDepositorsForRequests: true,
+                registerBrokers: true,
             });
-            const { admin, admins, manager, estateForger, depositor1, depositor2 } = fixture;
+            const { estateForger, depositor1 } = fixture;
 
             // During private sale
-            await callEstateForger_Whitelist(
-                estateForger,
-                admins,
-                [depositor1.address],
-                true,
-                await admin.nonce()
-            )
-
             const initBalance1 = await ethers.provider.getBalance(depositor1.address);
             const amount1 = 2;
             const requestId = 1;
@@ -3230,8 +3284,9 @@ describe('2.2. EstateForger', async () => {
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addEstateForgerToVault: true,
+                registerBrokers: true,
             });
-            const { manager, estateForger, depositor1 } = fixture;
+            const { estateForger, depositor1 } = fixture;
 
             await expect(estateForger.connect(depositor1).safeDeposit(
                 0, 2, ethers.utils.solidityKeccak256(["string"], [""])
@@ -3251,8 +3306,9 @@ describe('2.2. EstateForger', async () => {
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addEstateForgerToVault: true,
+                registerBrokers: true,
             });
-            const { manager, estateForger, depositor1 } = fixture;
+            const { estateForger, depositor1 } = fixture;
 
             await expect(estateForger.connect(depositor1).safeDeposit(
                 1, 2, ethers.utils.solidityKeccak256(["string"], ["bad anchor"])
@@ -3270,6 +3326,7 @@ describe('2.2. EstateForger', async () => {
                 listSampleCurrencies: true,
                 addZoneForExecutive: true,
                 listSampleCustodians: true,
+                registerBrokers: true,
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addEstateForgerToVault: true,
@@ -3295,6 +3352,7 @@ describe('2.2. EstateForger', async () => {
                 listSampleCurrencies: true,
                 addZoneForExecutive: true,
                 listSampleCustodians: true,
+                registerBrokers: true,
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addEstateForgerToVault: true,
@@ -3313,6 +3371,7 @@ describe('2.2. EstateForger', async () => {
                 listSampleCurrencies: true,
                 addZoneForExecutive: true,
                 listSampleCustodians: true,
+                registerBrokers: true,
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addEstateForgerToVault: true,
@@ -3331,6 +3390,7 @@ describe('2.2. EstateForger', async () => {
                 listSampleCurrencies: true,
                 addZoneForExecutive: true,
                 listSampleCustodians: true,
+                registerBrokers: true,
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addEstateForgerToVault: true,
@@ -3350,6 +3410,7 @@ describe('2.2. EstateForger', async () => {
                 listSampleCurrencies: true,
                 addZoneForExecutive: true,
                 listSampleCustodians: true,
+                registerBrokers: true,
                 addSampleRequests: true,
                 addEstateForgerToVault: true,
             });
@@ -3373,6 +3434,7 @@ describe('2.2. EstateForger', async () => {
                 listSampleCurrencies: true,
                 addZoneForExecutive: true,
                 listSampleCustodians: true,
+                registerBrokers: true,
                 addSampleRequests: true,
                 addEstateForgerToVault: true,
             });
@@ -3397,6 +3459,7 @@ describe('2.2. EstateForger', async () => {
                 listSampleCurrencies: true,
                 addZoneForExecutive: true,
                 listSampleCustodians: true,
+                registerBrokers: true,
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addEstateForgerToVault: true,
@@ -3417,6 +3480,7 @@ describe('2.2. EstateForger', async () => {
                 listSampleCurrencies: true,
                 addZoneForExecutive: true,
                 listSampleCustodians: true,
+                registerBrokers: true,
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addDepositions: true,
@@ -3435,9 +3499,8 @@ describe('2.2. EstateForger', async () => {
         async function testConfirmTokenization(
             currentRequestId: number,
             fixture: EstateForgerFixture,
-            feeRate: BigNumber,
+            feeDenomination: BigNumber,
             exclusiveRate: BigNumber,
-            commissionRate: BigNumber,
             currency: Currency | null,
             isERC20: boolean,
             isExclusive: boolean,
@@ -3450,9 +3513,11 @@ describe('2.2. EstateForger', async () => {
             cashbackCurrencies: string[],
             cashbackDenominations: BigNumber[],
             deposits: any[],
-            hasCommissionReceiver: boolean,
+            broker: any,
+            brokerCommissionRate: BigNumber,
+            commissionReceiver: any,
         ) {
-            const { admin, admins, zone1, deployer, manager, estateForger, currencies: _currencies, custodian1, estateToken, feeReceiver, commissionToken, priceWatcher, commissionReceiver, reserveVault, validator } = fixture;
+            const { admin, admins, zone1, deployer, manager, estateForger, currencies: _currencies, custodian1, estateToken, feeReceiver, commissionToken, priceWatcher, reserveVault, validator } = fixture;
             const decimals = LandInitialization.ESTATE_TOKEN_Decimals;
             const currencies = _currencies.slice();
 
@@ -3482,8 +3547,6 @@ describe('2.2. EstateForger', async () => {
                 }
             }
 
-            const commissionReceiverAddress = hasCommissionReceiver ? commissionReceiver.address : ethers.constants.AddressZero;
-
             const currentEstateId = currentRequestId;
 
             const allCashbackCurrencies = [newCurrencyAddress, ...cashbackCurrencies];
@@ -3508,6 +3571,13 @@ describe('2.2. EstateForger', async () => {
                 [{ value: BigNumber.from(100), decimals: 0 }],
             );
 
+            await callTransaction(getRegisterBrokerTx(commissionToken as any, manager, {
+                zone: zone,
+                broker: broker.address,
+                commissionRate: brokerCommissionRate,
+                duration: 100 * DAY,
+            }));
+
             await time.setNextBlockTimestamp(timestamp);
 
             const params = {
@@ -3529,6 +3599,8 @@ describe('2.2. EstateForger', async () => {
                     cashbackBaseRate: cashbackBaseRate,
                     cashbackCurrencies: cashbackCurrencies,
                     cashbackDenominations: cashbackDenominations,
+                    feeDenomination: feeDenomination,
+                    broker: broker.address,
                 },
                 agenda: {
                     saleStartsAt: timestamp + 10,
@@ -3551,10 +3623,6 @@ describe('2.2. EstateForger', async () => {
             timestamp += 10 + 20 * DAY;
             await time.setNextBlockTimestamp(timestamp);
 
-            await callEstateForger_UpdateFeeRate(estateForger, admins, feeRate, await admin.nonce());
-
-            commissionToken.setVariable("commissionRate", commissionRate);
-
             for (const record of deposits) {
                 const value = record.depositedValue.mul(unitPrice);
                 let ethValue = ethers.BigNumber.from(0);
@@ -3573,10 +3641,7 @@ describe('2.2. EstateForger', async () => {
                 ));
             }
             
-            const walletToReset = [custodian, feeReceiver];
-            if (hasCommissionReceiver) {
-                walletToReset.push(commissionReceiver);
-            }
+            const walletToReset = [custodian, feeReceiver, commissionReceiver];
 
             if (isERC20) {
                 await resetERC20(newCurrency!, walletToReset);
@@ -3637,7 +3702,7 @@ describe('2.2. EstateForger', async () => {
             
             const tx = await estateForger.connect(manager).confirm(
                 currentRequestId,
-                commissionReceiverAddress,
+                commissionReceiver.address,
                 { value: confirmValue }
             );
             const receipt = await tx.wait();
@@ -3653,7 +3718,7 @@ describe('2.2. EstateForger', async () => {
             let commissionAmount = ethers.BigNumber.from(soldQuantity).mul(request.quote.commissionDenomination);
 
             await expect(tx).to.emit(estateForger, 'CommissionDispatch').withArgs(
-                commissionReceiverAddress,
+                commissionReceiver.address,
                 commissionAmount,
                 request.quote.currency,
             )
@@ -3664,7 +3729,7 @@ describe('2.2. EstateForger', async () => {
                 soldQuantity,
                 value,
                 fee,
-                commissionReceiverAddress,
+                commissionReceiver.address,
                 cashbackBaseAmount,
             )
 
@@ -3684,7 +3749,7 @@ describe('2.2. EstateForger', async () => {
                 request.estate.uri,
                 request.estate.expireAt,
                 custodian.address,
-                commissionReceiverAddress,
+                request.quote.broker,
             );
 
             for(let i = 0; i < allCashbackCurrencies.length; ++i) {
@@ -3707,16 +3772,12 @@ describe('2.2. EstateForger', async () => {
             if (isERC20) {
                 expect(await newCurrency!.balanceOf(custodian.address)).to.equal(value.sub(fee));
                 expect(await newCurrency!.balanceOf(feeReceiver.address)).to.equal(fee.sub(commissionAmount).sub(cashbackBaseAmount));
-                if (commissionReceiverAddress !== ethers.constants.AddressZero) {
-                    expect(await newCurrency!.balanceOf(commissionReceiverAddress)).to.equal(commissionAmount);
-                }
+                expect(await newCurrency!.balanceOf(commissionReceiver.address)).to.equal(commissionAmount);
                 
             } else {
                 expect(await ethers.provider.getBalance(custodian.address)).to.equal(value.sub(fee));
                 expect(await ethers.provider.getBalance(feeReceiver.address)).to.equal(fee.sub(commissionAmount).sub(cashbackBaseAmount));
-                if (commissionReceiverAddress !== ethers.constants.AddressZero) {
-                    expect(await ethers.provider.getBalance(commissionReceiverAddress)).to.equal(commissionAmount);
-                }
+                expect(await ethers.provider.getBalance(commissionReceiver.address)).to.equal(commissionAmount);
             }
 
             expect(await estateToken.balanceOf(custodian.address, currentEstateId)).to.equal(
@@ -3726,11 +3787,10 @@ describe('2.2. EstateForger', async () => {
                 soldQuantity.mul(ethers.BigNumber.from(10).pow(decimals))
             );
 
-            if (commissionReceiverAddress !== ethers.constants.AddressZero) {
-                expect(await commissionToken.ownerOf(currentEstateId)).to.equal(commissionReceiverAddress);
-            } else {
-                expect(await commissionToken.ownerOf(currentEstateId)).to.equal(ethers.constants.AddressZero);
-            }
+            expect(await commissionToken.ownerOf(currentEstateId)).to.equal(broker.address);
+
+            let expireAt = (await commissionToken.getBrokerRegistry(zone, broker.address)).expireAt;
+            await time.increaseTo(expireAt + 1);
         }
 
         it('2.2.12.1. confirm tokenization successfully (small test)', async () => {
@@ -3739,7 +3799,7 @@ describe('2.2. EstateForger', async () => {
                 listSampleCustodians: true,
                 addEstateForgerToVault: true,
             });
-            const {estateForger, admin, admins, depositor1, depositor2, depositor3, commissionToken, currencies} = fixture;
+            const {estateForger, admin, admins, depositor1, depositor2, depositor3, commissionToken, currencies, commissionReceiver, broker1, broker2} = fixture;
         
             await callEstateForger_UpdateBaseUnitPriceRange(
                 estateForger,
@@ -3753,9 +3813,8 @@ describe('2.2. EstateForger', async () => {
             await testConfirmTokenization(
                 1,
                 fixture,
-                LandInitialization.ESTATE_FORGER_FeeRate,
+                ethers.utils.parseEther("0.02"),
                 ethers.utils.parseEther("0.3"),
-                (await commissionToken.getCommissionRate()).value,
                 null,
                 false,
                 false,
@@ -3773,16 +3832,17 @@ describe('2.2. EstateForger', async () => {
                     { depositor: depositor2, depositedValue: ethers.BigNumber.from(4) },
                     { depositor: depositor3, depositedValue: ethers.BigNumber.from(8) },
                 ],
-                true,
+                broker1,
+                ethers.utils.parseEther("0.1"),
+                commissionReceiver,
             );
 
             // ERC20 as main currency, native token as extra currency
             await testConfirmTokenization(
                 2,
                 fixture,
-                LandInitialization.ESTATE_FORGER_FeeRate,
+                ethers.utils.parseEther("0.002"),
                 ethers.utils.parseEther("0.3"),
-                (await fixture.commissionToken.getCommissionRate()).value,
                 currencies[1],
                 true,
                 true,
@@ -3795,7 +3855,9 @@ describe('2.2. EstateForger', async () => {
                 [currencies[1].address, ethers.constants.AddressZero],
                 [ethers.utils.parseEther('0.01'), ethers.utils.parseEther('0.02')],                
                 [{ depositor: depositor1, depositedValue: ethers.BigNumber.from(1000) }],
-                true,
+                broker2,
+                ethers.utils.parseEther("0.2"),
+                commissionReceiver,
             );
         });
 
@@ -3805,7 +3867,7 @@ describe('2.2. EstateForger', async () => {
                 listSampleCustodians: true,
                 addEstateForgerToVault: true,
             });
-            const {estateForger, admin, admins, depositor1, depositor2, depositor3, commissionToken, currencies} = fixture;
+            const {estateForger, admin, admins, depositor1, depositor2, depositor3, commissionToken, currencies, commissionReceiver, broker1, broker2} = fixture;
         
             await callEstateForger_UpdateBaseUnitPriceRange(
                 estateForger,
@@ -3819,9 +3881,8 @@ describe('2.2. EstateForger', async () => {
             await testConfirmTokenization(
                 1,
                 fixture,
-                LandInitialization.ESTATE_FORGER_FeeRate,
+                ethers.utils.parseEther("0.02"),
                 ethers.utils.parseEther("0.3"),
-                (await commissionToken.getCommissionRate()).value,
                 null,
                 false,
                 false,
@@ -3839,16 +3900,17 @@ describe('2.2. EstateForger', async () => {
                     { depositor: depositor2, depositedValue: ethers.BigNumber.from(4) },
                     { depositor: depositor3, depositedValue: ethers.BigNumber.from(8) },
                 ],
-                true,
+                broker1,
+                ethers.utils.parseEther("0.1"),
+                commissionReceiver,
             );
 
             // ERC20 as main currency, native token as extra currency
             await testConfirmTokenization(
                 2,
                 fixture,
-                LandInitialization.ESTATE_FORGER_FeeRate,
+                ethers.utils.parseEther("0.006"),
                 ethers.utils.parseEther("0.3"),
-                (await fixture.commissionToken.getCommissionRate()).value,
                 currencies[0],
                 true,
                 true,
@@ -3861,7 +3923,9 @@ describe('2.2. EstateForger', async () => {
                 [ethers.constants.AddressZero, currencies[0].address],
                 [ethers.utils.parseEther('0.01'), ethers.utils.parseEther('0.02')],                
                 [{ depositor: fixture.depositor1, depositedValue: ethers.BigNumber.from(1000) }],
-                true,
+                broker2,
+                ethers.utils.parseEther("0.2"),
+                commissionReceiver,
             );
         });
 
@@ -3871,7 +3935,7 @@ describe('2.2. EstateForger', async () => {
                 listSampleCustodians: true,
                 addEstateForgerToVault: true,
             });
-            const {estateForger, admin, admins, depositor1, depositor2, depositor3, commissionToken, currencies} = fixture;
+            const {estateForger, admin, admins, depositor1, depositor2, depositor3, commissionToken, currencies, commissionReceiver, broker1, broker2} = fixture;
         
             await callEstateForger_UpdateBaseUnitPriceRange(
                 estateForger,
@@ -3885,9 +3949,8 @@ describe('2.2. EstateForger', async () => {
             await testConfirmTokenization(
                 1,
                 fixture,
-                LandInitialization.ESTATE_FORGER_FeeRate,
+                ethers.utils.parseEther("0.02"),
                 ethers.utils.parseEther("0.3"),
-                (await commissionToken.getCommissionRate()).value,
                 null,
                 false,
                 false,
@@ -3905,16 +3968,17 @@ describe('2.2. EstateForger', async () => {
                     { depositor: depositor2, depositedValue: ethers.BigNumber.from(4) },
                     { depositor: depositor3, depositedValue: ethers.BigNumber.from(8) },
                 ],
-                true,
+                broker1,
+                ethers.utils.parseEther("0.1"),
+                commissionReceiver,
             );
 
             // ERC20 as main currency, native token as extra currency
             await testConfirmTokenization(
                 2,
                 fixture,
-                LandInitialization.ESTATE_FORGER_FeeRate,
+                ethers.utils.parseEther("0.006"),
                 ethers.utils.parseEther("0.3"),
-                (await fixture.commissionToken.getCommissionRate()).value,
                 currencies[0],
                 true,
                 true,
@@ -3927,7 +3991,9 @@ describe('2.2. EstateForger', async () => {
                 [],
                 [],                
                 [{ depositor: fixture.depositor1, depositedValue: ethers.BigNumber.from(1000) }],
-                true,
+                broker2,
+                ethers.utils.parseEther("0.2"),
+                commissionReceiver,
             );
         });
 
@@ -3937,7 +4003,7 @@ describe('2.2. EstateForger', async () => {
                 listSampleCustodians: true,
                 addEstateForgerToVault: true,
             });
-            const {estateForger, admin, admins, depositor1, depositor2, depositor3, commissionToken, currencies} = fixture;
+            const {estateForger, admin, admins, depositor1, depositor2, depositor3, commissionToken, currencies, commissionReceiver, broker1, broker2} = fixture;
         
             await callEstateForger_UpdateBaseUnitPriceRange(
                 estateForger,
@@ -3954,9 +4020,8 @@ describe('2.2. EstateForger', async () => {
                     await testConfirmTokenization(
                         ++currentRequestId,
                         fixture,
-                        LandInitialization.ESTATE_FORGER_FeeRate,
+                        ethers.utils.parseEther("0.02"),
                         ethers.utils.parseEther("0.3"),
-                        (await commissionToken.getCommissionRate()).value,
                         null,
                         isERC20,
                         isExclusive,
@@ -3974,7 +4039,9 @@ describe('2.2. EstateForger', async () => {
                             { depositor: depositor2, depositedValue: ethers.BigNumber.from(4) },
                             { depositor: depositor3, depositedValue: ethers.BigNumber.from(8) },
                         ],
-                        true,
+                        broker1,
+                        ethers.utils.parseEther("0.1"),
+                        commissionReceiver,
                     );
                 }
             }
@@ -3986,7 +4053,7 @@ describe('2.2. EstateForger', async () => {
                 listSampleCustodians: true,
                 addEstateForgerToVault: true,
             });
-            const {estateForger, admin, admins, depositor1, currencies} = fixture;
+            const {estateForger, admin, admins, depositor1, currencies, commissionReceiver, broker1} = fixture;
         
             await callEstateForger_UpdateBaseUnitPriceRange(
                 estateForger,
@@ -4004,8 +4071,7 @@ describe('2.2. EstateForger', async () => {
                     await testConfirmTokenization(
                         ++currentRequestId,
                         fixture,
-                        ethers.utils.parseEther("0.9"),
-                        ethers.utils.parseEther("0.9"),
+                        ethers.BigNumber.from(0),
                         ethers.utils.parseEther("0.9"),
                         null,
                         isERC20,
@@ -4021,7 +4087,9 @@ describe('2.2. EstateForger', async () => {
                         [
                             { depositor: depositor1, depositedValue: ethers.BigNumber.from(2).pow(255).div(Constant.COMMON_RATE_MAX_FRACTION) },
                         ],
-                        true,
+                        broker1,
+                        ethers.utils.parseEther("0.9"),
+                        commissionReceiver,
                     );
                 }
             }
@@ -4033,7 +4101,7 @@ describe('2.2. EstateForger', async () => {
                 listSampleCustodians: true,
                 addEstateForgerToVault: true,
             });
-            const {estateForger, admin, admins, depositor1, commissionToken, currencies} = fixture;
+            const {estateForger, admin, admins, depositor1, commissionToken, currencies, broker1, commissionReceiver } = fixture;
         
             await callEstateForger_UpdateBaseUnitPriceRange(
                 estateForger,
@@ -4074,9 +4142,8 @@ describe('2.2. EstateForger', async () => {
                 await testConfirmTokenization(
                     ++currentRequestId,
                     fixture,
-                    feeRate,
+                    unitPrice.mul(feeRate).div(Constant.COMMON_RATE_MAX_FRACTION),
                     exclusiveRate,
-                    commissionRate,
                     null,
                     isERC20,
                     isExclusive,
@@ -4089,8 +4156,10 @@ describe('2.2. EstateForger', async () => {
                     [currencies[0].address, currencies[1].address, ethers.constants.AddressZero],
                     [ethers.utils.parseEther('0.01'), ethers.utils.parseEther('0.02'), ethers.utils.parseEther('0.04')],                
                     deposits,
-                    hasCommissionReceiver,
-                );
+                    broker1,
+                    commissionRate,
+                    commissionReceiver,
+                );                
             }
         });
 
@@ -4103,6 +4172,7 @@ describe('2.2. EstateForger', async () => {
                 fundERC20ForDepositors: true,
                 addDepositions: true,
                 addEstateForgerToVault: true,
+                registerBrokers: true,
             });
             
             const {admin, admins, estateForger, user, moderator, commissionReceiver, currencies} = fixture;
@@ -4144,6 +4214,7 @@ describe('2.2. EstateForger', async () => {
                 fundERC20ForDepositors: true,
                 addDepositions: true,
                 addEstateForgerToVault: true,
+                registerBrokers: true,
                 fundERC20ForManagers: true,
             });
             const {estateForger, manager, commissionReceiver} = fixture;
@@ -4162,6 +4233,7 @@ describe('2.2. EstateForger', async () => {
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
                 listSampleCustodians: true,
+                registerBrokers: true,
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addDepositions: true,
@@ -4185,6 +4257,7 @@ describe('2.2. EstateForger', async () => {
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
                 listSampleCustodians: true,
+                registerBrokers: true,
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addDepositions: true,
@@ -4201,6 +4274,7 @@ describe('2.2. EstateForger', async () => {
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
                 listSampleCustodians: true,
+                registerBrokers: true,
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addDepositions: true,
@@ -4228,6 +4302,7 @@ describe('2.2. EstateForger', async () => {
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
                 listSampleCustodians: true,
+                registerBrokers: true,
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addDepositions: true,
@@ -4256,6 +4331,7 @@ describe('2.2. EstateForger', async () => {
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
                 listSampleCustodians: true,
+                registerBrokers: true,
                 addSampleRequests: true,
                 addEstateForgerToVault: true,
                 fundERC20ForManagers: true,
@@ -4272,6 +4348,7 @@ describe('2.2. EstateForger', async () => {
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
                 listSampleCustodians: true,
+                registerBrokers: true,
                 addSampleRequests: true,
                 addEstateForgerToVault: true,
                 fundERC20ForManagers: true,
@@ -4301,6 +4378,7 @@ describe('2.2. EstateForger', async () => {
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
                 listSampleCustodians: true,
+                registerBrokers: true,
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addDepositions: true,
@@ -4324,6 +4402,7 @@ describe('2.2. EstateForger', async () => {
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
                 listSampleCustodians: true,
+                registerBrokers: true,
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addDepositions: true,
@@ -4350,6 +4429,7 @@ describe('2.2. EstateForger', async () => {
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
                 listSampleCustodians: true,
+                registerBrokers: true,
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addDepositions: true,
@@ -4374,6 +4454,7 @@ describe('2.2. EstateForger', async () => {
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
                 listSampleCustodians: true,
+                registerBrokers: true,
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addEstateForgerToVault: true,
@@ -4399,6 +4480,7 @@ describe('2.2. EstateForger', async () => {
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
                 listSampleCustodians: true,
+                registerBrokers: true,
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addDepositions: true,
@@ -4417,6 +4499,7 @@ describe('2.2. EstateForger', async () => {
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
                 listSampleCustodians: true,
+                registerBrokers: true,
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addDepositions: true,
@@ -4434,10 +4517,11 @@ describe('2.2. EstateForger', async () => {
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
                 listSampleCustodians: true,
+                registerBrokers: true,
                 addEstateForgerToVault: true,
                 fundERC20ForManagers: true,
             });
-            const {estateForger, estateToken, zone1, manager, commissionReceiver, depositor1, deployer, admin, admins, currencies, validator} = fixture;
+            const {estateForger, estateToken, zone1, manager, commissionReceiver, depositor1, deployer, admin, admins, currencies, validator, broker1} = fixture;
             const baseTimestamp = await time.latest();
 
             await callEstateForger_UpdateBaseUnitPriceRange(
@@ -4475,6 +4559,8 @@ describe('2.2. EstateForger', async () => {
                     cashbackBaseRate: ethers.utils.parseEther("0.01"),
                     cashbackCurrencies: [],
                     cashbackDenominations: [],
+                    feeDenomination: ethers.BigNumber.from(100000),
+                    broker: broker1.address,
                 },
                 agenda: {
                     saleStartsAt: baseTimestamp + 10,
@@ -4510,6 +4596,7 @@ describe('2.2. EstateForger', async () => {
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
                 listSampleCustodians: true,
+                registerBrokers: true,
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addDepositions: true,
@@ -4532,10 +4619,11 @@ describe('2.2. EstateForger', async () => {
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
                 listSampleCustodians: true,
+                registerBrokers: true,
                 fundERC20ForManagers: true,
                 addEstateForgerToVault: true,
             });
-            const {estateForger, zone1, manager, depositor1, deployer, admin, admins, custodian1, validator} = fixture;
+            const {estateForger, zone1, manager, depositor1, deployer, admin, admins, custodian1, validator, broker1} = fixture;
             const baseTimestamp = await time.latest();
 
             await callEstateForger_UpdateBaseUnitPriceRange(
@@ -4567,6 +4655,8 @@ describe('2.2. EstateForger', async () => {
                     cashbackBaseRate: ethers.utils.parseEther("0.01"),
                     cashbackCurrencies: [],
                     cashbackDenominations: [],
+                    feeDenomination: ethers.BigNumber.from(100000),
+                    broker: broker1.address,
                 },
                 agenda: {
                     saleStartsAt: baseTimestamp + 10,
@@ -4593,6 +4683,7 @@ describe('2.2. EstateForger', async () => {
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
                 listSampleCustodians: true,
+                registerBrokers: true,
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addDepositions: true,
@@ -4631,6 +4722,7 @@ describe('2.2. EstateForger', async () => {
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
                 listSampleCustodians: true,
+                registerBrokers: true,
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addDepositions: true,
@@ -4684,6 +4776,7 @@ describe('2.2. EstateForger', async () => {
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
                 listSampleCustodians: true,
+                registerBrokers: true,
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addEstateForgerToVault: true,
@@ -4716,6 +4809,7 @@ describe('2.2. EstateForger', async () => {
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
                 listSampleCustodians: true,
+                registerBrokers: true,
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addDepositions: true,
@@ -4740,6 +4834,7 @@ describe('2.2. EstateForger', async () => {
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
                 listSampleCustodians: true,
+                registerBrokers: true,
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addDepositions: true,
@@ -4759,6 +4854,7 @@ describe('2.2. EstateForger', async () => {
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
                 listSampleCustodians: true,
+                registerBrokers: true,
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addDepositions: true,
@@ -4780,6 +4876,7 @@ describe('2.2. EstateForger', async () => {
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
                 listSampleCustodians: true,
+                registerBrokers: true,
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addDepositions: true,
@@ -4800,6 +4897,7 @@ describe('2.2. EstateForger', async () => {
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
                 listSampleCustodians: true,
+                registerBrokers: true,
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addDepositions: true,
@@ -4818,6 +4916,7 @@ describe('2.2. EstateForger', async () => {
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
                 listSampleCustodians: true,
+                registerBrokers: true,
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addDepositions: true,
@@ -4842,6 +4941,7 @@ describe('2.2. EstateForger', async () => {
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
                 listSampleCustodians: true,
+                registerBrokers: true,
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addDepositions: true,
@@ -4872,6 +4972,7 @@ describe('2.2. EstateForger', async () => {
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
                 listSampleCustodians: true,
+                registerBrokers: true,
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addDepositions: true,
@@ -4900,6 +5001,7 @@ describe('2.2. EstateForger', async () => {
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
                 listSampleCustodians: true,
+                registerBrokers: true,
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addDepositions: true,
@@ -4935,6 +5037,7 @@ describe('2.2. EstateForger', async () => {
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
                 listSampleCustodians: true,
+                registerBrokers: true,
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addDepositions: true,
@@ -5153,6 +5256,7 @@ describe('2.2. EstateForger', async () => {
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
                 listSampleCustodians: true,
+                registerBrokers: true,
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addDepositions: true,
@@ -5234,6 +5338,7 @@ describe('2.2. EstateForger', async () => {
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
                 listSampleCustodians: true,
+                registerBrokers: true,
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addDepositions: true,
@@ -5256,6 +5361,7 @@ describe('2.2. EstateForger', async () => {
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
                 listSampleCustodians: true,
+                registerBrokers: true,
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addDepositions: true,
@@ -5276,6 +5382,7 @@ describe('2.2. EstateForger', async () => {
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
                 listSampleCustodians: true,
+                registerBrokers: true,
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addDepositions: true,
@@ -5293,6 +5400,7 @@ describe('2.2. EstateForger', async () => {
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
                 listSampleCustodians: true,
+                registerBrokers: true,
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addDepositions: true,
@@ -5326,6 +5434,7 @@ describe('2.2. EstateForger', async () => {
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
                 listSampleCustodians: true,
+                registerBrokers: true,
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addDepositions: true,
@@ -5393,6 +5502,7 @@ describe('2.2. EstateForger', async () => {
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
                 listSampleCustodians: true,
+                registerBrokers: true,
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addDepositions: true,
@@ -5439,6 +5549,7 @@ describe('2.2. EstateForger', async () => {
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
                 listSampleCustodians: true,
+                registerBrokers: true,
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addDepositions: true,
@@ -5461,6 +5572,7 @@ describe('2.2. EstateForger', async () => {
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
                 listSampleCustodians: true,
+                registerBrokers: true,
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addDepositions: true,
@@ -5488,6 +5600,7 @@ describe('2.2. EstateForger', async () => {
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
                 listSampleCustodians: true,
+                registerBrokers: true,
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addDepositions: true,
@@ -5507,6 +5620,7 @@ describe('2.2. EstateForger', async () => {
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
                 listSampleCustodians: true,
+                registerBrokers: true,
                 addSampleRequests: true,
                 fundERC20ForDepositors: true,
                 addDepositions: true,
