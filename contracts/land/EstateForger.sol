@@ -577,8 +577,8 @@ ReentrancyGuardUpgradeable {
         }
         if (request.agenda.saleStartsAt > block.timestamp
             || (request.agenda.privateSaleEndsAt > block.timestamp
-                && !isWhitelisted[msg.sender]
-                && !isWhitelistedFor[_requestId][msg.sender])
+                && (!isWhitelisted[msg.sender]
+                || !isWhitelistedFor[_requestId][msg.sender]))
             || request.agenda.publicSaleEndsAt <= block.timestamp) {
             revert InvalidDepositing();
         }
