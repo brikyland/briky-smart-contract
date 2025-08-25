@@ -10,7 +10,6 @@ export async function deployEstateLiquidator(
     dividendHubAddress: string,
     feeReceiverAddress: string,
     estateLiquidatorValidatorAddress: string,
-    feeRate: BigNumber,
 ) {
     const EstateLiquidator = await ethers.getContractFactory('EstateLiquidator', signer);
     const estateLiquidator = await upgrades.deployProxy(
@@ -23,7 +22,6 @@ export async function deployEstateLiquidator(
             dividendHubAddress,
             feeReceiverAddress,
             estateLiquidatorValidatorAddress,
-            feeRate,
         ]
     );
     await estateLiquidator.deployed();

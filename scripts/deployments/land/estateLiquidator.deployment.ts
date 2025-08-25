@@ -66,7 +66,6 @@ async function deployOrUpgradeEstateLiquidator() {
                 dividendHubAddress,
                 feeReceiverAddress,
                 estateLiquidatorValidatorAddress,
-                Initialization.ESTATE_LIQUIDATOR_FeeRate,
             );
             console.log(`Contract EstateLiquidator has been deployed to address ${estateLiquidator.address}`);
 

@@ -63,7 +63,6 @@ ReentrancyGuardUpgradeable {
 
         admin = _admin;
         estateToken = _estateToken;
-        commissionToken = _commissionToken;
         governanceHub = _governanceHub;
         dividendHub = _dividendHub;
         feeReceiver = _feeReceiver;
@@ -88,7 +87,7 @@ ReentrancyGuardUpgradeable {
         Validation calldata _validation
     ) external payable onlyManager nonReentrant whenNotPaused returns (uint256) {
         IEstateToken estateTokenContract = IEstateToken(estateToken);
-        if (IAdmin(admin).getZoneEligibility(estateTokenContract.zoneOf(_estateId), msg.sender)) {
+        if (!IAdmin(admin).getZoneEligibility(estateTokenContract.zoneOf(_estateId), msg.sender)) {
             revert Unauthorized();
         }
 
