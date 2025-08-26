@@ -748,10 +748,11 @@ ReentrancyGuardUpgradeable {
                 CurrencyHandler.receiveNative(totalNative);
 
                 if (fund.mainDenomination != 0) {
+                    cashbackBaseAmount = fund.mainDenomination * fund.quantity;
                     if (fund.mainCurrency == address(0)) {
-                        totalNative += fund.mainDenomination * fund.quantity;
+                        totalNative += cashbackBaseAmount;
                     } else {
-                        CurrencyHandler.allowERC20(fund.mainCurrency, reserveVaultAddress, fund.mainDenomination * fund.quantity);
+                        CurrencyHandler.allowERC20(fund.mainCurrency, reserveVaultAddress, cashbackBaseAmount);
                     }
                 }
             }
