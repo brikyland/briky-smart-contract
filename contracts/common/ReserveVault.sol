@@ -156,25 +156,25 @@ ReentrancyGuardUpgradeable {
         }
 
         uint256 totalNative;
-        if (fund.totalQuantity != 0) {
+        if (fund.quantity != 0) {
             if (fund.mainDenomination != 0) {
                 if (fund.mainCurrency == address(0)) {
-                    totalNative += fund.mainDenomination * fund.totalQuantity;
+                    totalNative += fund.mainDenomination * fund.quantity;
                 } else {
                     CurrencyHandler.receiveERC20(
                         fund.mainCurrency,
-                        fund.mainDenomination * fund.totalQuantity
+                        fund.mainDenomination * fund.quantity
                     );
                 }
             }
 
             for (uint256 i; i < fund.extraCurrencies.length; ++i) {
                 if (fund.extraCurrencies[i] == address(0)) {
-                    totalNative += fund.extraDenominations[i] * fund.totalQuantity;
+                    totalNative += fund.extraDenominations[i] * fund.quantity;
                 } else {
                     CurrencyHandler.receiveERC20(
                         fund.extraCurrencies[i],
-                        fund.extraDenominations[i] * fund.totalQuantity
+                        fund.extraDenominations[i] * fund.quantity
                     );
                 }
             }
@@ -193,7 +193,7 @@ ReentrancyGuardUpgradeable {
         uint256 _quantity
     ) external nonReentrant validFund(_fundId) onlyProvider(_fundId) whenNotPaused {
         Fund memory fund = funds[_fundId];
-        if (fund.isSufficient == false || _quantity > fund.totalQuantity) {
+        if (fund.isSufficient == false || _quantity > fund.quantity) {
             revert InsufficientFunds();
         }
 
