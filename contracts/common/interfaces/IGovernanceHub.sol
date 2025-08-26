@@ -42,6 +42,7 @@ IValidatable {
         address indexed contributor,
         uint256 value
     );
+    event ProposalConfirmation(uint256 indexed proposalId);
     event ProposalDisqualification(
         uint256 indexed proposalId,
         string contentURI,
@@ -59,7 +60,6 @@ IValidatable {
         string resultURI,
         bool isSuccessful
     );
-    event ProposalExecutionConfirmation(uint256 indexed proposalId);
     event ProposalExecutionRejection(uint256 indexed proposalId);
     event ProposalExecutionUpdate(uint256 indexed proposalId, string stateURI);
 
@@ -111,6 +111,7 @@ IValidatable {
         address currency,
         Validation calldata signature
     ) external;
+    function confirm(uint256 proposalId) external;
     function contributeBudget(uint256 proposalId, uint256 value) external payable;
     function disqualify(
         uint256 proposalId,
@@ -127,7 +128,6 @@ IValidatable {
         bool isSuccessful,
         Validation calldata validation
     ) external;
-    function confirmExecution(uint256 proposalId) external;
     function rejectExecution(uint256 proposalId) external;
     function updateExecution(
         uint256 proposalId,

@@ -95,7 +95,7 @@ ReentrancyGuardUpgradeable {
     function getProposalState(uint256 _proposalId)
     external view validProposal(_proposalId) returns (ProposalState) {
         if (proposals[_proposalId].state == ProposalState.Voting
-            && proposals[_proposalId].due + GovernanceHubConstant.EXECUTION_CONFIRMATION_TIME_LIMIT <= block.timestamp) {
+            && proposals[_proposalId].due + GovernanceHubConstant.VOTE_CONFIRMATION_TIME_LIMIT <= block.timestamp) {
             return ProposalState.Disqualified;
         }
 
@@ -323,7 +323,7 @@ ReentrancyGuardUpgradeable {
     external nonReentrant validProposal(_proposalId) whenNotPaused returns (uint256) {
         Proposal storage proposal = proposals[_proposalId];
         ProposalState state = proposal.state;
-        if (!(state == ProposalState.Voting && proposal.due + GovernanceHubConstant.EXECUTION_CONFIRMATION_TIME_LIMIT <= block.timestamp)
+        if (!(state == ProposalState.Voting && proposal.due + GovernanceHubConstant.VOTE_CONFIRMATION_TIME_LIMIT <= block.timestamp)
             && _votingVerdict(proposal) != ProposalVerdict.Failed) {
             revert InvalidWithdrawing();
         }
@@ -344,7 +344,7 @@ ReentrancyGuardUpgradeable {
         return contribution;
     }
 
-    function confirmExecution(uint256 _proposalId)
+    function confirm(uint256 _proposalId)
     external nonReentrant validProposal(_proposalId) onlyManager whenNotPaused {
         Proposal storage proposal = proposals[_proposalId];
         uint256 tokenId = proposal.tokenId;
@@ -358,7 +358,7 @@ ReentrancyGuardUpgradeable {
         }
 
         if (proposal.state != ProposalState.Voting
-            || proposal.due + GovernanceHubConstant.EXECUTION_CONFIRMATION_TIME_LIMIT <= block.timestamp
+            || proposal.due + GovernanceHubConstant.VOTE_CONFIRMATION_TIME_LIMIT <= block.timestamp
             || _votingVerdict(proposal) != ProposalVerdict.Passed) {
             revert InvalidConfirming();
         }
@@ -366,7 +366,7 @@ ReentrancyGuardUpgradeable {
         proposal.state = ProposalState.Executing;
         CurrencyHandler.sendCurrency(proposal.currency, proposal.operator, proposal.budget);
 
-        emit ProposalExecutionConfirmation(_proposalId);
+        emit ProposalConfirmation(_proposalId);
     }
 
     function rejectExecution(uint256 _proposalId)
@@ -549,7 +549,7 @@ ReentrancyGuardUpgradeable {
             revert InvalidContributing();
         }
 
-        if (proposal.due + GovernanceHubConstant.EXECUTION_CONFIRMATION_TIME_LIMIT <= block.timestamp) {
+        if (proposal.due + GovernanceHubConstant.VOTE_CONFIRMATION_TIME_LIMIT <= block.timestamp) {
             revert Overdue();
         }
 

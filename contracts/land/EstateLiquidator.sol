@@ -122,7 +122,7 @@ ReentrancyGuardUpgradeable {
             estateTokenContract.getEstate(_estateId).tokenizeAt + EstateLiquidatorConstant.UNANIMOUS_GUARD_DURATION > block.timestamp
                 ? EstateLiquidatorConstant.UNANIMOUS_QUORUM_RATE
                 : EstateLiquidatorConstant.MAJORITY_QUORUM_RATE,
-            uint40(EstateLiquidatorConstant.VOTING_DURATION),
+            uint40(EstateLiquidatorConstant.VOTE_DURATION),
             uint40(block.timestamp) + uint40(EstateLiquidatorConstant.ADMISSION_DURATION),
             _validation
         );

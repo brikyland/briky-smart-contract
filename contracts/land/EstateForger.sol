@@ -22,8 +22,6 @@ import {IEstateToken} from "./interfaces/IEstateToken.sol";
 
 import {EstateForgerStorage} from "./storages/EstateForgerStorage.sol";
 
-import {IBrokerRegistry} from "./structs/IBrokerRegistry.sol";
-
 import {CommissionDispatchable} from "./utilities/CommissionDispatchable.sol";
 import {EstateTokenizer} from "./utilities/EstateTokenizer.sol";
 
@@ -192,17 +190,8 @@ ReentrancyGuardUpgradeable {
             revert InvalidInput();
         }
 
-        IBrokerRegistry.BrokerRegistry memory brokerRegistry = ICommissionToken(commissionToken).getBrokerRegistry(_estate.zone, _quote.broker);
-
-        if (brokerRegistry.expireAt
-            < _agenda.saleStartsAt
-                + _agenda.privateSaleDuration
-                + _agenda.publicSaleDuration
-                + EstateForgerConstant.SALE_CONFIRMATION_TIME_LIMIT) {
-            revert InvalidBroker();
-        }
-
-        uint256 commissionDenomination = _quote.feeDenomination.scale(brokerRegistry.commissionRate);
+        uint256 commissionDenomination = _quote.feeDenomination
+            .scale(ICommissionToken(commissionToken).getBrokerCommissionRate(_estate.zone, _quote.broker));
 
         uint256 cashbackFundId;
         if (_quote.cashbackBaseRate == 0 && _quote.cashbackCurrencies.length == 0) {
@@ -333,8 +322,15 @@ ReentrancyGuardUpgradeable {
             revert InvalidInput();
         }
 
-        if (request.agenda.saleStartsAt > block.timestamp) {
-            request.agenda.saleStartsAt = _agenda.saleStartsAt;
+        if (_agenda.saleStartsAt != 0) {
+            if (request.agenda.saleStartsAt > block.timestamp) {
+                if (_agenda.saleStartsAt <= block.timestamp) {
+                    revert InvalidTimestamp();
+                }
+                request.agenda.saleStartsAt = _agenda.saleStartsAt;
+            } else {
+                revert InvalidInput();
+            }
         }
 
         request.agenda.privateSaleEndsAt = _agenda.saleStartsAt + _agenda.privateSaleDuration;
@@ -356,12 +352,8 @@ ReentrancyGuardUpgradeable {
         emit RequestCancellation(_requestId);
     }
 
-    function confirm(uint256 _requestId, address _commissionReceiver)
+    function confirm(uint256 _requestId)
     external payable validRequest(_requestId) nonReentrant onlyManager onlyEligibleZone(_requestId) whenNotPaused returns (uint256) {
-        if (_commissionReceiver == address(0)) {
-            revert InvalidCommissionReceiver();
-        }
-
         EstateForgerRequest storage request = requests[_requestId];
         if (block.timestamp < request.agenda.saleStartsAt) {
             revert InvalidConfirming();
@@ -419,10 +411,11 @@ ReentrancyGuardUpgradeable {
         CurrencyHandler.sendCurrency(currency, requester, value - feeAmount);
 
         uint256 commissionAmount = soldQuantity * request.quote.commissionDenomination;
-        CurrencyHandler.sendCurrency(currency,_commissionReceiver, commissionAmount);
+        address broker = request.quote.broker;
+        CurrencyHandler.sendCurrency(currency,broker, commissionAmount);
 
         emit CommissionDispatch(
-            _commissionReceiver,
+            broker,
             commissionAmount,
             currency
         );
@@ -440,7 +433,6 @@ ReentrancyGuardUpgradeable {
             soldQuantity,
             value,
             feeAmount,
-            _commissionReceiver,
             cashbackBaseAmount
         );
 
