@@ -735,13 +735,13 @@ ReentrancyGuardUpgradeable {
             Fund memory fund = IReserveVault(reserveVaultAddress).getFund(_cashbackFundId);
 
             uint256 totalNative;
-            if (fund.totalQuantity != 0) {
+            if (fund.quantity != 0) {
                 for (uint256 i; i < fund.extraCurrencies.length; ++i) {
                     if (fund.extraCurrencies[i] == address(0)) {
-                        totalNative += fund.extraDenominations[i] * fund.totalQuantity;
+                        totalNative += fund.extraDenominations[i] * fund.quantity;
                     } else {
-                        CurrencyHandler.receiveERC20(fund.extraCurrencies[i], fund.extraDenominations[i] * fund.totalQuantity);
-                        CurrencyHandler.allowERC20(fund.extraCurrencies[i], reserveVaultAddress, fund.extraDenominations[i] * fund.totalQuantity);
+                        CurrencyHandler.receiveERC20(fund.extraCurrencies[i], fund.extraDenominations[i] * fund.quantity);
+                        CurrencyHandler.allowERC20(fund.extraCurrencies[i], reserveVaultAddress, fund.extraDenominations[i] * fund.quantity);
                     }
                 }
 
@@ -749,9 +749,9 @@ ReentrancyGuardUpgradeable {
 
                 if (fund.mainDenomination != 0) {
                     if (fund.mainCurrency == address(0)) {
-                        totalNative += fund.mainDenomination * fund.totalQuantity;
+                        totalNative += fund.mainDenomination * fund.quantity;
                     } else {
-                        CurrencyHandler.allowERC20(fund.mainCurrency, reserveVaultAddress, fund.mainDenomination * fund.totalQuantity);
+                        CurrencyHandler.allowERC20(fund.mainCurrency, reserveVaultAddress, fund.mainDenomination * fund.quantity);
                     }
                 }
             }
