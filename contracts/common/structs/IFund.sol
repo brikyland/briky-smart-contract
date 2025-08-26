@@ -7,7 +7,7 @@ interface IFund {
         uint256[] extraDenominations;
         address mainCurrency;
         uint256 mainDenomination;
-        uint256 totalQuantity;
+        uint256 quantity;
         address provider;
         bool isSufficient;
     }

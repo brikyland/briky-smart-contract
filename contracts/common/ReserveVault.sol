@@ -143,7 +143,7 @@ ReentrancyGuardUpgradeable {
             revert AlreadyProvided();
         }
 
-        funds[_fundId].totalQuantity += _quantity;
+        funds[_fundId].quantity += _quantity;
 
         emit FundExpansion(_fundId, _quantity);
     }
@@ -198,7 +198,7 @@ ReentrancyGuardUpgradeable {
         }
 
         unchecked {
-            funds[_fundId].totalQuantity -= _quantity;
+            funds[_fundId].quantity -= _quantity;
         }
 
         CurrencyHandler.sendCurrency(
