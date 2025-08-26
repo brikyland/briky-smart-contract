@@ -182,7 +182,7 @@ export async function getCashbackBaseDenomination(
     );
 }
 
-describe.only('2.3. EstateLiquidator', async () => {
+describe('2.3. EstateLiquidator', async () => {
     async function estateLiquidatorFixture(): Promise<EstateLiquidatorFixture> {
         const accounts = await ethers.getSigners();
         const deployer = accounts[0];
@@ -447,13 +447,11 @@ describe.only('2.3. EstateLiquidator', async () => {
             zone: zone1,
             broker: broker1.address,
             commissionRate: ethers.utils.parseEther('0.1'),
-            duration: 1e9,
         }));
         await callTransaction(getRegisterBrokerTx(commissionToken as any, manager, {
             zone: zone2,
             broker: broker2.address,
             commissionRate: ethers.utils.parseEther('0.2'),
-            duration: 1e9,
         }));
 
         await callEstateToken_AuthorizeTokenizers(

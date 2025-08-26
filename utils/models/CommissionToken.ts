@@ -4,13 +4,12 @@ export interface RegisterBrokerParams {
     zone: string;
     broker: string;
     commissionRate: BigNumber;
-    duration: number;
 }
 
-export interface ExtendBrokerExpirationParams {
+export interface ActivateBrokerParams {
     zone: string;
     broker: string;
-    duration: number;
+    isActive: boolean;
 }
 
 export interface MintParams {

@@ -189,7 +189,7 @@ describe('1.8. ReserveVault', async () => {
         }
 
         if (provideFunds) {
-            const initTotalQuantity = (await reserveVault.getFund(1)).totalQuantity;
+            const initTotalQuantity = (await reserveVault.getFund(1)).quantity;
             const nativeDenomination = 400;
             await callTransaction(providers[0].call(
                 reserveVault.address,
@@ -482,7 +482,7 @@ describe('1.8. ReserveVault', async () => {
             expect(fund1.mainDenomination).to.equal(mainDenomination1);
             expect(fund1.extraCurrencies).to.deep.equal(subCurrencyAddresses1);
             expect(fund1.extraDenominations).to.deep.equal(subDenominations1);
-            expect(fund1.totalQuantity).to.equal(0);
+            expect(fund1.quantity).to.equal(0);
             expect(fund1.provider).to.equal(provider.address);
             expect(fund1.isSufficient).to.equal(false);
 
@@ -525,7 +525,7 @@ describe('1.8. ReserveVault', async () => {
             expect(fund2.mainDenomination).to.equal(mainDenomination2);
             expect(fund2.extraCurrencies).to.deep.equal(subCurrencyAddresses2);
             expect(fund2.extraDenominations).to.deep.equal(subDenominations2);
-            expect(fund2.totalQuantity).to.equal(0);
+            expect(fund2.quantity).to.equal(0);
             expect(fund2.provider).to.equal(provider.address);
             expect(fund2.isSufficient).to.equal(false);
         });
@@ -575,7 +575,7 @@ describe('1.8. ReserveVault', async () => {
             expect(fund.mainDenomination).to.equal(mainDenomination);
             expect(fund.extraCurrencies).to.deep.equal(subCurrencyAddresses);
             expect(fund.extraDenominations).to.deep.equal(subDenominations);
-            expect(fund.totalQuantity).to.equal(0);
+            expect(fund.quantity).to.equal(0);
             expect(fund.provider).to.equal(provider.address);
             expect(fund.isSufficient).to.equal(false);
         });
@@ -745,7 +745,7 @@ describe('1.8. ReserveVault', async () => {
             const fundId = 1;
 
             const deployerInitNativeBalance = await ethers.provider.getBalance(deployer.address);
-            const initTotalQuantity = (await reserveVault.getFund(fundId)).totalQuantity;
+            const initTotalQuantity = (await reserveVault.getFund(fundId)).quantity;
             const expansionQuantity1 = 2000;
             const expansionQuantity2 = 3000;
             const callData1 = reserveVault.interface.encodeFunctionData(
@@ -765,7 +765,7 @@ describe('1.8. ReserveVault', async () => {
 
             const newFund1 = await reserveVault.getFund(fundId);
             expect(await ethers.provider.getBalance(deployer.address)).to.equal(deployerInitNativeBalance.sub(gasFee1));
-            expect(newFund1.totalQuantity).to.equal(initTotalQuantity.add(expansionQuantity1));
+            expect(newFund1.quantity).to.equal(initTotalQuantity.add(expansionQuantity1));
 
             const callData2 = reserveVault.interface.encodeFunctionData(
                 'expandFund',
@@ -783,7 +783,7 @@ describe('1.8. ReserveVault', async () => {
 
             const newFund2 = await reserveVault.getFund(fundId);
             expect(await ethers.provider.getBalance(deployer.address)).to.equal(deployerInitNativeBalance.sub(gasFee1).sub(gasFee2));
-            expect(newFund2.totalQuantity).to.equal(initTotalQuantity.add(expansionQuantity1).add(expansionQuantity2));
+            expect(newFund2.quantity).to.equal(initTotalQuantity.add(expansionQuantity1).add(expansionQuantity2));
         });
 
         it('1.8.4.2. expand fund unsuccessfully with invalid fund id', async () => {
@@ -896,7 +896,7 @@ describe('1.8. ReserveVault', async () => {
             const provider = providers[0];
             
             const fundId = 1;
-            const initTotalQuantity = (await reserveVault.getFund(fundId)).totalQuantity;
+            const initTotalQuantity = (await reserveVault.getFund(fundId)).quantity;
 
             const currency0Denomination = 100;
             const currency1Denomination = 200;
@@ -927,7 +927,7 @@ describe('1.8. ReserveVault', async () => {
             expect(await currencies[2].balanceOf(provider.address)).to.equal(providerInitCurrency2Balance);
 
             const fund = await reserveVault.getFund(fundId);
-            expect(fund.totalQuantity).to.equal(initTotalQuantity);
+            expect(fund.quantity).to.equal(initTotalQuantity);
             expect(fund.isSufficient).to.equal(true);
         });
 
@@ -943,7 +943,7 @@ describe('1.8. ReserveVault', async () => {
             const provider = providers[0];
             
             const fundId = 1;
-            const initTotalQuantity = (await reserveVault.getFund(fundId)).totalQuantity;
+            const initTotalQuantity = (await reserveVault.getFund(fundId)).quantity;
 
             const currency0Denomination = 100;
             const currency1Denomination = 200;
@@ -974,7 +974,7 @@ describe('1.8. ReserveVault', async () => {
             expect(await currencies[2].balanceOf(provider.address)).to.equal(providerInitCurrency2Balance);
 
             const fund = await reserveVault.getFund(fundId);
-            expect(fund.totalQuantity).to.equal(initTotalQuantity);
+            expect(fund.quantity).to.equal(initTotalQuantity);
             expect(fund.isSufficient).to.equal(true);
         });
 
@@ -1062,7 +1062,7 @@ describe('1.8. ReserveVault', async () => {
             const provider = providers[0];
             
             const fundId = 1;
-            const initTotalQuantity = (await reserveVault.getFund(fundId)).totalQuantity;
+            const initTotalQuantity = (await reserveVault.getFund(fundId)).quantity;
             const nativeDenomination = 400;
 
             const callData = reserveVault.interface.encodeFunctionData(
@@ -1090,7 +1090,7 @@ describe('1.8. ReserveVault', async () => {
             const provider = providers[0];
             
             const fundId = 1;
-            const initTotalQuantity = (await reserveVault.getFund(fundId)).totalQuantity;
+            const initTotalQuantity = (await reserveVault.getFund(fundId)).quantity;
             const nativeDenomination = 400;
             const callData = reserveVault.interface.encodeFunctionData(
                 'provideFund',
@@ -1145,7 +1145,7 @@ describe('1.8. ReserveVault', async () => {
             await callTransaction(failReceiver.activate(true));
 
             const fundId = 2;
-            const initTotalQuantity = (await reserveVault.getFund(fundId)).totalQuantity;
+            const initTotalQuantity = (await reserveVault.getFund(fundId)).quantity;
             const nativeDenomination = 400;
 
             const callData = reserveVault.interface.encodeFunctionData(
@@ -1170,7 +1170,7 @@ describe('1.8. ReserveVault', async () => {
             const provider = providers[0];
             
             const fundId = 1;
-            const initTotalQuantity = (await reserveVault.getFund(fundId)).totalQuantity;
+            const initTotalQuantity = (await reserveVault.getFund(fundId)).quantity;
             const nativeDenomination = 400;
 
             const callData = reserveVault.interface.encodeFunctionData(
@@ -1349,7 +1349,7 @@ describe('1.8. ReserveVault', async () => {
             });
             const provider = providers[0];
             const fundId = 1;
-            const withdrawalQuantity = (await reserveVault.getFund(fundId)).totalQuantity.add(100);
+            const withdrawalQuantity = (await reserveVault.getFund(fundId)).quantity.add(100);
             const callData = reserveVault.interface.encodeFunctionData(
                 'withdrawFund',
                 [fundId, withdrawer1.address, withdrawalQuantity],

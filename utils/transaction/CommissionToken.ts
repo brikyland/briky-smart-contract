@@ -1,5 +1,5 @@
 import { CommissionToken, ProxyCaller } from "@typechain-types";
-import { ExtendBrokerExpirationParams, MintParams, RegisterBrokerParams } from "@utils/models/CommissionToken";
+import { ActivateBrokerParams, MintParams, RegisterBrokerParams } from "@utils/models/CommissionToken";
 import { ContractTransaction } from "ethers";
 
 export async function getRegisterBrokerTx(
@@ -11,19 +11,18 @@ export async function getRegisterBrokerTx(
         params.zone,
         params.broker,
         params.commissionRate,
-        params.duration,
     );
 }
 
-export async function getExtendBrokerExpirationTx(
+export async function getActivateBrokerTx(
     commissionToken: CommissionToken,
     deployer: any,
-    params: ExtendBrokerExpirationParams
+    params: ActivateBrokerParams
 ): Promise<ContractTransaction> {
-    return commissionToken.connect(deployer).extendBrokerExpiration(
+    return commissionToken.connect(deployer).activateBroker(
         params.zone,
         params.broker,
-        params.duration,
+        params.isActive,
     );
 }
 
