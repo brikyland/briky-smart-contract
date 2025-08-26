@@ -106,7 +106,7 @@ ReentrancyGuardUpgradeable {
         if (!IAdmin(admin).isZone(_zone)) {
             revert InvalidZone();
         }
-        if (isActiveIn[_zone][_broker]) {
+        if (!isActiveIn[_zone][_broker]) {
             revert NotActive();
         }
         return brokerCommissionRates[_zone][_broker];
@@ -142,6 +142,7 @@ ReentrancyGuardUpgradeable {
             revert AlreadyRegistered();
         }
         isActiveIn[_zone][_broker] = true;
+        brokerCommissionRates[_zone][_broker] = rate;
 
         emit BrokerRegistration(
             _zone,

@@ -190,6 +190,10 @@ ReentrancyGuardUpgradeable {
             revert InvalidInput();
         }
 
+        if (!ICommissionToken(commissionToken).isActiveIn(_estate.zone, _quote.broker)) {
+            revert InvalidBroker();
+        }
+
         uint256 commissionDenomination = _quote.feeDenomination
             .scale(ICommissionToken(commissionToken).getBrokerCommissionRate(_estate.zone, _quote.broker));
 
@@ -322,19 +326,23 @@ ReentrancyGuardUpgradeable {
             revert InvalidInput();
         }
 
+        uint40 saleStartsAt;
         if (_agenda.saleStartsAt != 0) {
             if (request.agenda.saleStartsAt > block.timestamp) {
                 if (_agenda.saleStartsAt <= block.timestamp) {
                     revert InvalidTimestamp();
                 }
                 request.agenda.saleStartsAt = _agenda.saleStartsAt;
+                saleStartsAt = _agenda.saleStartsAt;
             } else {
                 revert InvalidInput();
             }
+        } else {
+            saleStartsAt = request.agenda.saleStartsAt;
         }
 
-        request.agenda.privateSaleEndsAt = _agenda.saleStartsAt + _agenda.privateSaleDuration;
-        request.agenda.publicSaleEndsAt = _agenda.saleStartsAt + _agenda.privateSaleDuration + _agenda.publicSaleDuration;
+        request.agenda.privateSaleEndsAt = saleStartsAt + _agenda.privateSaleDuration;
+        request.agenda.publicSaleEndsAt = saleStartsAt + _agenda.privateSaleDuration + _agenda.publicSaleDuration;
 
         emit RequestAgendaUpdate(_requestId, _agenda);
     }
