@@ -244,7 +244,7 @@ export async function getCashbackBaseDenomination(
     );
 }
 
-describe.only('7.1. PrestigePad', async () => {
+describe('7.1. PrestigePad', async () => {
     async function prestigePadFixture(): Promise<PrestigePadFixture> {
         const accounts = await ethers.getSigners();
         const deployer = accounts[0];
@@ -845,8 +845,8 @@ describe.only('7.1. PrestigePad', async () => {
         });
     });
 
-    describe('7.1.3. updateBaseUnitPriceRange(uint256, uint256, bytes[])', async () => {
-        it('7.1.3.1. updateBaseUnitPriceRange successfully with valid signatures', async () => {
+    describe('7.1.2. updateBaseUnitPriceRange(uint256, uint256, bytes[])', async () => {
+        it('7.1.2.1. updateBaseUnitPriceRange successfully with valid signatures', async () => {
             const { admin, admins, prestigePad } = await beforePrestigePadTest({});
             
             const baseMinUnitPrice = 20;
@@ -873,7 +873,7 @@ describe.only('7.1. PrestigePad', async () => {
             expect(await prestigePad.baseMaxUnitPrice()).to.equal(baseMaxUnitPrice);
         });
 
-        it('7.1.3.2. updateBaseUnitPriceRange unsuccessfully with invalid signatures', async () => {
+        it('7.1.2.2. updateBaseUnitPriceRange unsuccessfully with invalid signatures', async () => {
             const { admin, admins, prestigePad } = await beforePrestigePadTest({});
             const baseMinUnitPrice = 20;
             const baseMaxUnitPrice = 100;
@@ -891,7 +891,7 @@ describe.only('7.1. PrestigePad', async () => {
             )).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('7.1.3.3. updateBaseUnitPriceRange unsuccessfully with invalid price range', async () => {
+        it('7.1.2.3. updateBaseUnitPriceRange unsuccessfully with invalid price range', async () => {
             const { admin, admins, prestigePad } = await beforePrestigePadTest({});
             const baseMinUnitPrice = 101;
             const baseMaxUnitPrice = 100;
@@ -910,8 +910,8 @@ describe.only('7.1. PrestigePad', async () => {
         });
     });
 
-    describe('7.1.4. getLaunch(uint256)', async () => {
-        it('7.1.4.1. return correct launch with valid launch id', async () => {
+    describe('7.1.3. getLaunch(uint256)', async () => {
+        it('7.1.3.1. return correct launch with valid launch id', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,                
             });
@@ -922,7 +922,7 @@ describe.only('7.1. PrestigePad', async () => {
             await expect(prestigePad.getLaunch(2)).to.not.be.reverted;
         });
 
-        it('7.1.4.2. revert with invalid launch id', async () => {
+        it('7.1.3.2. revert with invalid launch id', async () => {
             const fixture = await beforePrestigePadTest();
 
             const { prestigePad } = fixture;
@@ -934,8 +934,8 @@ describe.only('7.1. PrestigePad', async () => {
         });
     });
 
-    describe('7.1.5. getRound(uint256)', async () => {
-        it('7.1.5.1. return correct round with valid round id', async () => {
+    describe('7.1.4. getRound(uint256)', async () => {
+        it('7.1.4.1. return correct round with valid round id', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -950,7 +950,7 @@ describe.only('7.1. PrestigePad', async () => {
             await expect(prestigePad.getRound(roundId2)).to.not.be.reverted;
         });
 
-        it('7.1.5.2. revert with invalid round id', async () => {
+        it('7.1.4.2. revert with invalid round id', async () => {
             const fixture = await beforePrestigePadTest();
 
             const { prestigePad } = fixture;
@@ -962,7 +962,7 @@ describe.only('7.1. PrestigePad', async () => {
         });
     });
 
-    describe('7.1.6. initiateLaunch(address, bytes32, string, string, uint256, (uint256, uint256, bytes))', async () => {
+    describe('7.1.5. initiateLaunch(address, bytes32, string, string, uint256, (uint256, uint256, bytes))', async () => {
         async function beforeInitiateLaunchTest(fixture: PrestigePadFixture): Promise<{
             defaultParams: InitiateLaunchParams,
         }> {
@@ -980,7 +980,7 @@ describe.only('7.1. PrestigePad', async () => {
             return { defaultParams };
         }
 
-        it('7.1.6.1. initiate launch successfully', async () => {
+        it('7.1.5.1. initiate launch successfully', async () => {
             const fixture = await beforePrestigePadTest({});
 
             const { prestigePad, validator, projectToken, manager, moderator, initiator1, zone1, initiator2, zone2 } = fixture;
@@ -1146,7 +1146,7 @@ describe.only('7.1. PrestigePad', async () => {
             expect(await projectToken.balanceOf(params2.initiator, projectId2)).to.equal(initiatorInitBalance2.add(initialAmount2));            
         });
 
-        it('7.1.6.2. initiate launch unsuccessfully when contract is reentered', async () => {
+        it('7.1.5.2. initiate launch unsuccessfully when contract is reentered', async () => {
             const fixture = await beforePrestigePadTest();
 
             const { prestigePad, validator, manager, zone1, deployer, projectToken } = fixture;
@@ -1190,7 +1190,7 @@ describe.only('7.1. PrestigePad', async () => {
             );
         });
 
-        it('7.1.6.3. initiate launch unsuccessfully by non-executive account', async () => {
+        it('7.1.5.3. initiate launch unsuccessfully by non-executive account', async () => {
             const fixture = await beforePrestigePadTest();
 
             const { prestigePad, user, validator } = fixture;
@@ -1201,7 +1201,7 @@ describe.only('7.1. PrestigePad', async () => {
                 .to.be.revertedWithCustomError(prestigePad, 'Unauthorized');
         });
 
-        it('7.1.6.4. initiate launch unsuccessfully when paused', async () => {
+        it('7.1.5.4. initiate launch unsuccessfully when paused', async () => {
             const fixture = await beforePrestigePadTest({
                 pause: true,
             });
@@ -1213,7 +1213,7 @@ describe.only('7.1. PrestigePad', async () => {
                 .to.be.revertedWith('Pausable: paused');
         });
 
-        it('7.1.6.5. initiate launch unsuccessfully with invalid validation', async () => {
+        it('7.1.5.5. initiate launch unsuccessfully with invalid validation', async () => {
             const fixture = await beforePrestigePadTest();
 
             const { prestigePad, manager, validator } = fixture;
@@ -1233,7 +1233,7 @@ describe.only('7.1. PrestigePad', async () => {
             )).to.be.revertedWithCustomError(prestigePad, 'InvalidSignature');
         });
 
-        it('7.1.6.6. initiate launch unsuccessfully with inactive zone', async () => {
+        it('7.1.5.6. initiate launch unsuccessfully with inactive zone', async () => {
             const fixture = await beforePrestigePadTest();
 
             const { admin, admins, prestigePad, manager, validator } = fixture;
@@ -1253,7 +1253,7 @@ describe.only('7.1. PrestigePad', async () => {
             
         });
 
-        it('7.1.6.7. initiate launch unsuccessfully when sender is not authorized in zone', async () => {
+        it('7.1.5.7. initiate launch unsuccessfully when sender is not authorized in zone', async () => {
             const fixture = await beforePrestigePadTest();
 
             const { admin, admins, prestigePad, manager, validator } = fixture;
@@ -1273,7 +1273,7 @@ describe.only('7.1. PrestigePad', async () => {
                 .to.be.revertedWithCustomError(prestigePad, 'Unauthorized');
         });
 
-        it('7.1.6.8. initiate launch unsuccessfully when initiator is not registered in zone', async () => {
+        it('7.1.5.8. initiate launch unsuccessfully when initiator is not registered in zone', async () => {
             const fixture = await beforePrestigePadTest({
                 skipAuthorizeInitiators: true,
             });
@@ -1286,7 +1286,7 @@ describe.only('7.1. PrestigePad', async () => {
                 .to.be.revertedWithCustomError(prestigePad, 'NotRegisteredInitiator');
         });
 
-        it('7.1.6.9. initiate launch unsuccessfully when launching project failed', async () => {
+        it('7.1.5.9. initiate launch unsuccessfully when launching project failed', async () => {
             const fixture = await beforePrestigePadTest();
 
             const { admin, manager, projectToken, admins, validator, prestigePad } = fixture;
@@ -1303,7 +1303,7 @@ describe.only('7.1. PrestigePad', async () => {
                 .to.be.revertedWith('Pausable: paused');
         });
 
-        it('7.1.6.10. initiate launch unsuccessfully when initiator cannot receive erc1155', async () => {
+        it('7.1.5.10. initiate launch unsuccessfully when initiator cannot receive erc1155', async () => {
             const fixture = await beforePrestigePadTest();
 
             const { prestigePad, manager, deployer, projectToken, validator, zone1 } = fixture;
@@ -1331,7 +1331,7 @@ describe.only('7.1. PrestigePad', async () => {
         });
     });
 
-    describe.only('7.1.7. updateLaunchURI(uint256, string, (uint256, uint256, bytes))', async () => {
+    describe('7.1.6. updateLaunchURI(uint256, string, (uint256, uint256, bytes))', async () => {
         async function beforeUpdateLaunchURITest(fixture: PrestigePadFixture): Promise<{
             defaultParams: UpdateLaunchURIParams,
         }> {
@@ -1343,7 +1343,7 @@ describe.only('7.1. PrestigePad', async () => {
             return { defaultParams }
         }
 
-        it('7.1.7.1. update launch uri successfully', async () => {
+        it('7.1.6.1. update launch uri successfully', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
             });
@@ -1373,7 +1373,7 @@ describe.only('7.1. PrestigePad', async () => {
             expect(launch2.uri).to.equal(params2.uri);
         });
 
-        it('7.1.7.2. update launch uri unsuccessfully with invalid launch id', async () => {
+        it('7.1.6.2. update launch uri unsuccessfully with invalid launch id', async () => {
             const fixture = await beforePrestigePadTest();
 
             const { prestigePad, manager, validator } = fixture;
@@ -1394,7 +1394,7 @@ describe.only('7.1. PrestigePad', async () => {
                 .to.be.revertedWithCustomError(prestigePad, 'InvalidLaunchId');
         });
 
-        it('7.1.7.3. update launch uri unsuccessfully when sender is not launch initiator', async () => {
+        it('7.1.6.3. update launch uri unsuccessfully when sender is not launch initiator', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
             });
@@ -1412,7 +1412,7 @@ describe.only('7.1. PrestigePad', async () => {
                 .to.be.revertedWithCustomError(prestigePad, 'Unauthorized');
         });
 
-        it('7.1.7.4. update launch uri unsuccessfully when paused', async () => {
+        it('7.1.6.4. update launch uri unsuccessfully when paused', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 pause: true,
@@ -1426,7 +1426,7 @@ describe.only('7.1. PrestigePad', async () => {
                 .to.be.revertedWith('Pausable: paused');
         });
 
-        it.only('7.1.7.5. update launch uri unsuccessfully with invalid validation', async () => {
+        it('7.1.6.5. update launch uri unsuccessfully with invalid validation', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
             });
@@ -1443,7 +1443,7 @@ describe.only('7.1. PrestigePad', async () => {
             )).to.be.revertedWithCustomError(prestigePad, 'InvalidSignature');
         });
 
-        it('7.1.7.6. update launch uri unsuccessfully when launch is finalized', async () => {
+        it('7.1.6.6. update launch uri unsuccessfully when launch is finalized', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -1461,7 +1461,7 @@ describe.only('7.1. PrestigePad', async () => {
         });
     });
 
-    describe.only('7.1.7. updateRound(uint256, uint256, (string, (uint256, uint256, uint256), (uint256, address), (uint256, uint256, bytes)))', async () => {
+    describe('7.1.7. updateRound(uint256, uint256, (string, (uint256, uint256, uint256), (uint256, address), (uint256, uint256, bytes)))', async () => {
         async function beforeUpdateRoundTest(fixture: PrestigePadFixture): Promise<{
             defaultParams: UpdateRoundParams,
         }> {
@@ -1512,22 +1512,31 @@ describe.only('7.1. PrestigePad', async () => {
                 roundWithValidation
             );
 
-            const receipt = await tx.wait();
-
             const roundId = currentRoundNumber.add(1);
 
-            const newRoundEvent = receipt.events!.find(log => log.event === 'NewRound')!;
-            expect(newRoundEvent.args!.roundId).to.equal(roundId);
-            expect(newRoundEvent.args!.launchId).to.equal(params.launchId);
-            expect(newRoundEvent.args!.uri).to.equal(params.round.uri);
-            expect(structToObject(newRoundEvent.args!.quota)).to.deep.equal(params.round.quota);
-            expect(structToObject(newRoundEvent.args!.quote)).to.deep.equal(params.round.quote);
+            await expect(tx).to.emit(prestigePad, 'NewRound').withArgs(
+                roundId,
+                params.launchId,
+                params.round.uri,
+                (quota: any) => {
+                    expect(structToObject(quota)).to.deep.equal(params.round.quota);
+                    return true;
+                },
+                (quote: any) => {
+                    expect(structToObject(quote)).to.deep.equal(params.round.quote);
+                    return true;
+                }
+            );
 
-            const roundUpdateEvent = receipt.events!.find(log => log.event === 'LaunchRoundUpdate')!;
-            expect(roundUpdateEvent.args!.launchId).to.equal(params.launchId);
-            expect(roundUpdateEvent.args!.roundId).to.equal(roundId);
-            expect(roundUpdateEvent.args!.index).to.equal(params.index);
-            expect(structToObject(roundUpdateEvent.args!.round)).to.deep.equal(roundWithValidation);
+            await expect(tx).to.emit(prestigePad, 'LaunchRoundUpdate').withArgs(
+                params.launchId,
+                roundId,
+                params.index,
+                (round: any) => {
+                    expect(structToObject(round)).to.deep.equal(roundWithValidation);
+                    return true;
+                }
+            );
 
             const launch = await prestigePad.getLaunch(params.launchId);
 
@@ -1858,21 +1867,32 @@ describe.only('7.1. PrestigePad', async () => {
                 params1.removedRoundNumber,
                 roundsWithValidations1,
             );
-            const receipt1 = await tx1.wait();
+            await tx1.wait();
 
             for(let i = 0; i < params1.addedRounds.length; i++) {
-                const roundUpdateEvent = receipt1.events!.filter(event => event.event === 'LaunchRoundUpdate')[i]!;
-                expect(roundUpdateEvent.args!.launchId).to.equal(params1.launchId);
-                expect(roundUpdateEvent.args!.roundId).to.equal(currentRoundNumber1.add(i+1));
-                expect(roundUpdateEvent.args!.index).to.equal(startIndex1 + i);
-                expect(structToObject(roundUpdateEvent.args!.round)).to.deep.equal(roundsWithValidations1[i]);
+                await expect(tx1).to.emit(prestigePad, 'LaunchRoundUpdate').withArgs(
+                    params1.launchId,
+                    currentRoundNumber1.add(i+1),
+                    startIndex1 + i,
+                    (round: any) => {
+                        expect(structToObject(round)).to.deep.equal(roundsWithValidations1[i]);
+                        return true;
+                    }
+                );
 
-                const newRoundEvent = receipt1.events!.filter(event => event.event === 'NewRound')[i]!;
-                expect(newRoundEvent.args!.roundId).to.equal(currentRoundNumber1.add(i+1));
-                expect(newRoundEvent.args!.launchId).to.equal(params1.launchId);
-                expect(newRoundEvent.args!.uri).to.equal(params1.addedRounds[i].uri);
-                expect(structToObject(newRoundEvent.args!.quota)).to.deep.equal(params1.addedRounds[i].quota);
-                expect(structToObject(newRoundEvent.args!.quote)).to.deep.equal(params1.addedRounds[i].quote);
+                await expect(tx1).to.emit(prestigePad, 'NewRound').withArgs(
+                    currentRoundNumber1.add(i+1),
+                    params1.launchId,
+                    params1.addedRounds[i].uri,
+                    (quota: any) => {
+                        expect(structToObject(quota)).to.deep.equal(params1.addedRounds[i].quota);
+                        return true;
+                    },
+                    (quote: any) => {
+                        expect(structToObject(quote)).to.deep.equal(params1.addedRounds[i].quote);
+                        return true;
+                    }
+                );
             }
 
             const launch1 = await prestigePad.getLaunch(params1.launchId);
