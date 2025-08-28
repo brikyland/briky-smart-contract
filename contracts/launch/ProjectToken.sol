@@ -56,7 +56,7 @@ ReentrancyGuardUpgradeable {
     string constant private VERSION = "v1.1.1";
 
     modifier validProject(uint256 _projectId) {
-        if (!isAvailable(_projectId)) {
+        if (projects[_projectId].deprecateAt != CommonConstant.INFINITE_TIMESTAMP) {
             revert InvalidProjectId();
         }
         _;
