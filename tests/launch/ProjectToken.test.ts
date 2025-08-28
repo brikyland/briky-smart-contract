@@ -49,7 +49,7 @@ import {
 } from '@utils/callWithSignatures/admin';
 import { BigNumber, Contract } from 'ethers';
 import { randomInt } from 'crypto';
-import { getBytes4Hex, getInterfaceID, randomBigNumber } from '@utils/utils';
+import { getBytes4Hex, getInterfaceID, randomBigNumber, structToObject } from '@utils/utils';
 import { OrderedMap } from '@utils/utils';
 import { deployReserveVault } from '@utils/deployments/common/reserveVault';
 import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
@@ -70,6 +70,7 @@ import { getRegisterCustodianTx } from '@utils/transaction/EstateToken';
 import { callEstateToken_AuthorizeTokenizers, callEstateToken_UpdateCommissionToken } from '@utils/callWithSignatures/estateToken';
 import { deployReentrancyERC1155Receiver } from '@utils/deployments/mock/mockReentrancy/reentrancyERC1155Receiver';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
+import { getRegisterBrokerTx } from '@utils/transaction/CommissionToken';
 
 interface ProjectTokenFixture {
     admin: Admin;
@@ -92,7 +93,7 @@ interface ProjectTokenFixture {
     moderator: any;
     user: any;
     requester1: any, requester2: any;
-    commissionReceiver: any;
+    broker1: any, broker2: any;
     depositor1: any, depositor2: any, depositor3: any;
     depositors: any[];
     zone1: string, zone2: string;
@@ -107,7 +108,7 @@ async function testReentrancy_projectToken(
     reentrancyContract: Contract,
     assertion: any,
 ) {
-    const { projectToken, commissionReceiver } = fixture;
+    const { projectToken, broker1 } = fixture;
 
     let timestamp = await time.latest();
 
@@ -116,7 +117,7 @@ async function testReentrancy_projectToken(
         projectToken.address,
         projectToken.interface.encodeFunctionData("tokenizeProject", [
             1,
-            commissionReceiver.address,
+            broker1.address,
         ])
     ));
 
@@ -157,13 +158,14 @@ describe('7.2. ProjectToken', async () => {
         const moderator = accounts[Constant.ADMIN_NUMBER + 4];
         const requester1 = accounts[Constant.ADMIN_NUMBER + 5];
         const requester2 = accounts[Constant.ADMIN_NUMBER + 6];
-        const commissionReceiver = accounts[Constant.ADMIN_NUMBER + 7];
-        const depositor1 = accounts[Constant.ADMIN_NUMBER + 8];
-        const depositor2 = accounts[Constant.ADMIN_NUMBER + 9];
-        const depositor3 = accounts[Constant.ADMIN_NUMBER + 10];        
+        const broker1 = accounts[Constant.ADMIN_NUMBER + 7];
+        const broker2 = accounts[Constant.ADMIN_NUMBER + 8];
+        const depositor1 = accounts[Constant.ADMIN_NUMBER + 9];
+        const depositor2 = accounts[Constant.ADMIN_NUMBER + 10];
+        const depositor3 = accounts[Constant.ADMIN_NUMBER + 11];        
         const depositors = [depositor1, depositor2, depositor3];
-        const initiator1 = accounts[Constant.ADMIN_NUMBER + 11];
-        const initiator2 = accounts[Constant.ADMIN_NUMBER + 12];
+        const initiator1 = accounts[Constant.ADMIN_NUMBER + 12];
+        const initiator2 = accounts[Constant.ADMIN_NUMBER + 13];
         const initiators = [initiator1, initiator2];
 
         const adminAddresses: string[] = admins.map(signer => signer.address);
@@ -233,7 +235,6 @@ describe('7.2. ProjectToken', async () => {
             feeReceiver.address,
             validator.getAddress(),
             LaunchInitialization.PROJECT_TOKEN_BaseURI,
-            LaunchInitialization.PROJECT_TOKEN_RoyaltyRate,
         ) as MockProjectToken;
 
         const MockPrestigePadFactory = await smock.mock<MockPrestigePad__factory>('MockPrestigePad');
@@ -279,7 +280,8 @@ describe('7.2. ProjectToken', async () => {
             user,
             requester1,
             requester2,
-            commissionReceiver,
+            broker1,
+            broker2,
             depositor1,
             depositor2,
             depositor3,
@@ -301,6 +303,7 @@ describe('7.2. ProjectToken', async () => {
         skipAuthorizeExecutive = false,
         skipAddProjectTokenAsTokenizer = false,
         skipAddInitiatorAsEstateCustodian = false,
+        skipRegisterBroker = false,
         useReentrancyERC1155ReceiverAsDepositor = false,
         useFailReceiverAsDepositor = false,
         addSampleProjects = false,
@@ -324,7 +327,8 @@ describe('7.2. ProjectToken', async () => {
             initiator2,
             validator,
             commissionToken,
-            commissionReceiver,
+            broker1,
+            broker2,
             depositor2,
             depositor3,
             reentrancyERC1155Receiver,
@@ -401,6 +405,19 @@ describe('7.2. ProjectToken', async () => {
             true,
             await fixture.admin.nonce()
         );
+
+        if (!skipRegisterBroker) {
+            await callTransaction(getRegisterBrokerTx(commissionToken as any, manager, {
+                zone: zone1,
+                broker: broker1.address,
+                commissionRate: ethers.utils.parseEther('0.1'),
+            }));
+            await callTransaction(getRegisterBrokerTx(commissionToken as any, manager, {
+                zone: zone2,
+                broker: broker2.address,
+                commissionRate: ethers.utils.parseEther('0.2'),
+            }));
+        }
 
         const baseTimestamp = await time.latest() + 1000;
 
@@ -493,8 +510,8 @@ describe('7.2. ProjectToken', async () => {
             prestigePad.isFinalized.whenCalledWith(1).returns(true);
             prestigePad.isFinalized.whenCalledWith(2).returns(true);
 
-            await callTransaction(projectToken.connect(manager).tokenizeProject(1, commissionReceiver.address));
-            await callTransaction(projectToken.connect(manager).tokenizeProject(2, commissionReceiver.address));
+            await callTransaction(projectToken.connect(manager).tokenizeProject(1, broker1.address));
+            await callTransaction(projectToken.connect(manager).tokenizeProject(2, broker2.address));
         }
 
         if (deprecateProjects) {
@@ -524,9 +541,6 @@ describe('7.2. ProjectToken', async () => {
             await expect(tx).to.emit(projectToken, 'BaseURIUpdate').withArgs(
                 LaunchInitialization.PROJECT_TOKEN_BaseURI
             );
-            await expect(tx).to.emit(projectToken, 'RoyaltyRateUpdate').withArgs(
-                LaunchInitialization.PROJECT_TOKEN_RoyaltyRate
-            );
 
             expect(await projectToken.paused()).to.equal(false);
 
@@ -535,28 +549,10 @@ describe('7.2. ProjectToken', async () => {
             expect(await projectToken.admin()).to.equal(admin.address);
             expect(await projectToken.estateToken()).to.equal(estateToken.address);
             expect(await projectToken.feeReceiver()).to.equal(feeReceiver.address);
-            
-            const royaltyRate = await projectToken.getRoyaltyRate();
-            expect(royaltyRate.value).to.equal(LaunchInitialization.PROJECT_TOKEN_RoyaltyRate);
-            expect(royaltyRate.decimals).to.equal(Constant.COMMON_RATE_DECIMALS);
-            
+
             expect(await projectToken.validator()).to.equal(validator.getAddress());
 
             expect(await projectToken.decimals()).to.equal(Constant.PROJECT_TOKEN_MAX_DECIMALS);
-        });
-
-        it('7.2.1.2. revert with invalid rate', async () => {
-            const { admin, feeReceiver, validator, estateToken } = await beforeProjectTokenTest();
-            const ProjectToken = await ethers.getContractFactory("ProjectToken");
-
-            await expect(upgrades.deployProxy(ProjectToken, [
-                admin.address,
-                estateToken.address,
-                feeReceiver.address,
-                validator.getAddress(),
-                LaunchInitialization.PROJECT_TOKEN_BaseURI,
-                Constant.COMMON_RATE_MAX_FRACTION.add(1),
-            ])).to.be.reverted;
         });
     });
 
@@ -599,59 +595,128 @@ describe('7.2. ProjectToken', async () => {
         });
     });
 
-    describe('7.2.3. updateRoyaltyRate(uint256, bytes[])', async () => {
-        it('7.2.3.1. updateRoyaltyRate successfully with valid signatures', async () => {
-            const { projectToken, admin, admins } = await beforeProjectTokenTest();
+    describe('7.2.3. updateZoneRoyaltyRate(uint256, bytes[])', async () => {
+        it('7.2.3.1. updateZoneRoyaltyRate successfully with valid signatures', async () => {
+            const fixture = await beforeProjectTokenTest();
+            const { projectToken, admin, admins, zone1, zone2 } = fixture;
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "uint256"],
-                [projectToken.address, "updateRoyaltyRate", ethers.utils.parseEther('0.2')]
+            const rate1 = ethers.utils.parseEther('0.2');
+            const message1 = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string", "bytes32", "uint256"],
+                [projectToken.address, "updateZoneRoyaltyRate", zone1, rate1]
             );
 
-            const signatures = await getSignatures(message, admins, await admin.nonce());
+            const signatures1 = await getSignatures(message1, admins, await admin.nonce());
 
-            const tx = await projectToken.updateRoyaltyRate(ethers.utils.parseEther('0.2'), signatures);
-            await tx.wait();
+            const tx1 = await projectToken.updateZoneRoyaltyRate(zone1, rate1, signatures1);
+            await tx1.wait();
 
-            await expect(tx).to
-                .emit(projectToken, 'RoyaltyRateUpdate')
-                .withArgs(ethers.utils.parseEther('0.2'));
+            await expect(tx1).to.emit(projectToken, 'ZoneRoyaltyRateUpdate').withArgs(
+                zone1,
+                (rate: any) => {
+                    expect(structToObject(rate)).to.deep.equal({
+                        value: rate1,
+                        decimals: Constant.COMMON_RATE_DECIMALS,
+                    });
+                    return true;
+                }
+            );
 
-            const royaltyRate = await projectToken.getRoyaltyRate();
-            expect(royaltyRate.value).to.equal(ethers.utils.parseEther('0.2'));
-            expect(royaltyRate.decimals).to.equal(Constant.COMMON_RATE_DECIMALS);
+            expect(structToObject(await projectToken.getZoneRoyaltyRate(zone1))).to.deep.equal({
+                value: rate1,
+                decimals: Constant.COMMON_RATE_DECIMALS,
+            });
+
+            const rate2 = ethers.utils.parseEther('0.3');
+            const message2 = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string", "bytes32", "uint256"],
+                [projectToken.address, "updateZoneRoyaltyRate", zone2, rate2]
+            );
+            const signatures2 = await getSignatures(message2, admins, await admin.nonce());
+
+            const tx2 = await projectToken.updateZoneRoyaltyRate(zone2, rate2, signatures2);
+            await tx2.wait();
+
+            await expect(tx2).to.emit(projectToken, 'ZoneRoyaltyRateUpdate').withArgs(
+                zone2,
+                (rate: any) => {
+                    expect(structToObject(rate)).to.deep.equal({
+                        value: rate2,
+                        decimals: Constant.COMMON_RATE_DECIMALS,
+                    });
+                    return true;
+                }
+            );
+
+            expect(structToObject(await projectToken.getZoneRoyaltyRate(zone2))).to.deep.equal({
+                value: rate2,
+                decimals: Constant.COMMON_RATE_DECIMALS,
+            });
         });
 
-        it('7.2.3.2. updateRoyaltyRate unsuccessfully with invalid signatures', async () => {
-            const { projectToken, admin, admins } = await beforeProjectTokenTest();
+        it('7.2.3.2. updateZoneRoyaltyRate unsuccessfully with invalid signatures', async () => {
+            const fixture = await beforeProjectTokenTest();
+            const { projectToken, admin, admins, zone1 } = fixture;
 
             const message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "uint256"],
-                [projectToken.address, "updateRoyaltyRate", ethers.utils.parseEther('0.2')]
+                ["address", "string", "bytes32", "uint256"],
+                [projectToken.address, "updateZoneRoyaltyRate", zone1, ethers.utils.parseEther('0.2')]
             );
             const invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
 
-            await expect(projectToken.updateRoyaltyRate(
+            await expect(projectToken.updateZoneRoyaltyRate(
+                zone1,
                 ethers.utils.parseEther('0.2'),
                 invalidSignatures
             )).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('7.2.3.3. updateRoyaltyRate unsuccessfully with invalid rate', async () => {
-            const { projectToken, admin, admins } = await beforeProjectTokenTest();
+        it('7.2.3.3. updateZoneRoyaltyRate unsuccessfully with invalid rate', async () => {
+            const fixture = await beforeProjectTokenTest();
+            const { projectToken, admin, admins, zone1 } = fixture;
 
+            const rate = Constant.COMMON_RATE_MAX_FRACTION.add(1);
             let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "uint256"],
-                [projectToken.address, "updateRoyaltyRate", Constant.COMMON_RATE_MAX_FRACTION.add(1)]
+                ["address", "string", "bytes32", "uint256"],
+                [projectToken.address, "updateZoneRoyaltyRate", zone1, rate]
             );
             const signatures = await getSignatures(message, admins, await admin.nonce());
 
-            await expect(projectToken.updateRoyaltyRate(
-                Constant.COMMON_RATE_MAX_FRACTION.add(1),
+            await expect(projectToken.updateZoneRoyaltyRate(
+                zone1,
+                rate,
                 signatures
             )).to.be.revertedWithCustomError(projectToken, 'InvalidRate');
         });
+
+        it('7.2.3.4. updateZoneRoyaltyRate unsuccessfully with invalid zone', async () => {
+            const fixture = await beforeProjectTokenTest();
+            const { projectToken, admin, admins, zone1 } = fixture;
+
+            await callAdmin_DeclareZones(
+                admin,
+                admins,
+                [zone1],
+                false,
+                await admin.nonce()
+            );
+
+            const rate = ethers.utils.parseEther('0.2');
+
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string", "bytes32", "uint256"],
+                [projectToken.address, "updateZoneRoyaltyRate", zone1, rate]
+            );
+            const signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(projectToken.updateZoneRoyaltyRate(
+                zone1,
+                rate,
+                signatures
+            )).to.be.revertedWithCustomError(projectToken, 'InvalidZone');
+        });
     });
+
 
     describe('7.2.4. authorizeLaunchpads(address[], bool, bytes[])', async () => {
         it('7.2.4.1. Authorize launchpads successfully with valid signatures', async () => {
@@ -760,7 +825,7 @@ describe('7.2. ProjectToken', async () => {
             )).to.be.revertedWithCustomError(projectToken, `AuthorizedAccount`)
         });
 
-        it('7.2.4.6. Authorize launchpad unsuccessfully when authorizing same account twice on different tx', async () => {
+        it('7.7.2.3. Authorize launchpad unsuccessfully when authorizing same account twice on different tx', async () => {
             const { projectToken, admin, admins, launchpads } = await beforeProjectTokenTest();
 
             const tx1Launchpads = launchpads.slice(0, 3);
@@ -1673,7 +1738,7 @@ describe('7.2. ProjectToken', async () => {
                 addSampleProjects: true,
                 mintProjectTokenForDepositor: true,
             });
-            const { prestigePad, projectToken, manager, commissionReceiver, commissionToken, estateToken, zone1, zone2, initiator1, initiator2 } = fixture;
+            const { prestigePad, projectToken, manager, broker1, broker2, commissionToken, estateToken, zone1, zone2, initiator1, initiator2 } = fixture;
 
             const currentEstateNumber = await estateToken.estateNumber();
 
@@ -1688,14 +1753,14 @@ describe('7.2. ProjectToken', async () => {
 
             prestigePad.isFinalized.whenCalledWith(projectId1).returns(true);
 
-            const tx1 = await projectToken.connect(manager).tokenizeProject(1, commissionReceiver.address);
+            const tx1 = await projectToken.connect(manager).tokenizeProject(1, broker1.address);
             await tx1.wait();
 
             await expect(tx1).to.emit(projectToken, 'ProjectTokenization').withArgs(
                 projectId1,
                 estateId1,
                 supply1,
-                commissionReceiver.address
+                broker1.address
             );
 
             await expect(tx1).to.emit(estateToken, 'NewToken').withArgs(
@@ -1719,7 +1784,7 @@ describe('7.2. ProjectToken', async () => {
             expect(estate1.custodian).to.equal(initiator1.address);
             expect(estate1.deprecateAt).to.equal(Constant.COMMON_INFINITE_TIMESTAMP);
 
-            expect(await commissionToken.ownerOf(estateId1)).to.equal(commissionReceiver.address);
+            expect(await commissionToken.ownerOf(estateId1)).to.equal(broker1.address);
 
             expect(await estateToken.balanceOf(projectToken.address, estateId1)).to.equal(supply1);
 
@@ -1736,14 +1801,14 @@ describe('7.2. ProjectToken', async () => {
             
             prestigePad.isFinalized.whenCalledWith(projectId2).returns(true);
 
-            const tx2 = await projectToken.connect(manager).tokenizeProject(2, commissionReceiver.address);
+            const tx2 = await projectToken.connect(manager).tokenizeProject(2, broker2.address);
             await tx2.wait();
 
             await expect(tx2).to.emit(projectToken, 'ProjectTokenization').withArgs(
                 projectId2,
                 estateId2,
                 supply2,
-                commissionReceiver.address
+                broker2.address
             );
             await expect(tx2).to.emit(estateToken, 'NewToken').withArgs(
                 estateId2,
@@ -1766,7 +1831,7 @@ describe('7.2. ProjectToken', async () => {
             expect(estate2.custodian).to.equal(initiator2.address);
             expect(estate2.deprecateAt).to.equal(Constant.COMMON_INFINITE_TIMESTAMP);
 
-            expect(await commissionToken.ownerOf(estateId2)).to.equal(commissionReceiver.address);
+            expect(await commissionToken.ownerOf(estateId2)).to.equal(broker2.address);
 
             expect(await estateToken.balanceOf(projectToken.address, estateId2)).to.equal(supply2);
 
@@ -1775,12 +1840,12 @@ describe('7.2. ProjectToken', async () => {
 
         it('7.2.13.2. tokenize project unsuccessfully with invalid project id', async () => {
             const fixture = await beforeProjectTokenTest();
-            const { projectToken, manager, commissionReceiver } = fixture;
+            const { projectToken, manager, broker1 } = fixture;
 
-            await expect(projectToken.connect(manager).tokenizeProject(0, commissionReceiver.address))
+            await expect(projectToken.connect(manager).tokenizeProject(0, broker1.address))
                 .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
 
-            await expect(projectToken.connect(manager).tokenizeProject(100, commissionReceiver.address))
+            await expect(projectToken.connect(manager).tokenizeProject(100, broker1.address))
                 .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
         });
 
@@ -1790,11 +1855,11 @@ describe('7.2. ProjectToken', async () => {
                 mintProjectTokenForDepositor: true,
                 deprecateProjects: true,
             });
-            const { prestigePad, projectToken, manager, commissionReceiver } = fixture;
+            const { prestigePad, projectToken, manager, broker1 } = fixture;
 
             prestigePad.isFinalized.whenCalledWith(1).returns(true);
 
-            await expect(projectToken.connect(manager).tokenizeProject(1, commissionReceiver.address))
+            await expect(projectToken.connect(manager).tokenizeProject(1, broker1.address))
                 .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
         });
 
@@ -1803,16 +1868,16 @@ describe('7.2. ProjectToken', async () => {
                 addSampleProjects: true,
                 mintProjectTokenForDepositor: true,
             });
-            const { prestigePad, projectToken, moderator, user, commissionReceiver } = fixture;
+            const { prestigePad, projectToken, moderator, user, broker1 } = fixture;
 
             prestigePad.isFinalized.whenCalledWith(1).returns(true);
 
             // By moderator
-            await expect(projectToken.connect(moderator).tokenizeProject(1, commissionReceiver.address))
+            await expect(projectToken.connect(moderator).tokenizeProject(1, broker1.address))
                 .to.be.revertedWithCustomError(projectToken, `Unauthorized`);
 
             // By user
-            await expect(projectToken.connect(user).tokenizeProject(1, commissionReceiver.address))
+            await expect(projectToken.connect(user).tokenizeProject(1, broker1.address))
                 .to.be.revertedWithCustomError(projectToken, `Unauthorized`);
         });
 
@@ -1821,7 +1886,7 @@ describe('7.2. ProjectToken', async () => {
                 addSampleProjects: true,
                 mintProjectTokenForDepositor: true,
             });
-            const { prestigePad, projectToken, manager, admin, admins, zone1, commissionReceiver } = fixture;
+            const { prestigePad, projectToken, manager, admin, admins, zone1, broker1 } = fixture;
 
             prestigePad.isFinalized.whenCalledWith(1).returns(true);
 
@@ -1833,7 +1898,7 @@ describe('7.2. ProjectToken', async () => {
                 await admin.nonce()
             );
 
-            await expect(projectToken.connect(manager).tokenizeProject(1, commissionReceiver.address))
+            await expect(projectToken.connect(manager).tokenizeProject(1, broker1.address))
                 .to.be.revertedWithCustomError(projectToken, `Unauthorized`);
         });
         
@@ -1842,7 +1907,7 @@ describe('7.2. ProjectToken', async () => {
                 addSampleProjects: true,
                 mintProjectTokenForDepositor: true,
             });
-            const { prestigePad, projectToken, manager, admin, admins, zone1, commissionReceiver } = fixture;
+            const { prestigePad, projectToken, manager, admin, admins, zone1, broker1 } = fixture;
 
             await callAdmin_ActivateIn(
                 admin,
@@ -1855,7 +1920,7 @@ describe('7.2. ProjectToken', async () => {
 
             prestigePad.isFinalized.whenCalledWith(1).returns(true);
 
-            await expect(projectToken.connect(manager).tokenizeProject(1, commissionReceiver.address))
+            await expect(projectToken.connect(manager).tokenizeProject(1, broker1.address))
                 .to.be.revertedWithCustomError(projectToken, `Unauthorized`);
         });
 
@@ -1865,11 +1930,11 @@ describe('7.2. ProjectToken', async () => {
                 mintProjectTokenForDepositor: true,
                 pause: true,
             });
-            const { prestigePad, projectToken, manager, commissionReceiver } = fixture;
+            const { prestigePad, projectToken, manager, broker1 } = fixture;
 
             prestigePad.isFinalized.whenCalledWith(1).returns(true);
 
-            await expect(projectToken.connect(manager).tokenizeProject(1, commissionReceiver.address))
+            await expect(projectToken.connect(manager).tokenizeProject(1, broker1.address))
                 .to.be.revertedWith(`Pausable: paused`);
         });
 
@@ -1892,11 +1957,11 @@ describe('7.2. ProjectToken', async () => {
                 addSampleProjects: true,
                 mintProjectTokenForDepositor: true,
             });
-            const { prestigePad, projectToken, manager, commissionReceiver } = fixture;
+            const { prestigePad, projectToken, manager, broker1 } = fixture;
 
             prestigePad.isFinalized.whenCalledWith(1).returns(true);
 
-            await expect(projectToken.connect(manager).tokenizeProject(1, commissionReceiver.address))
+            await expect(projectToken.connect(manager).tokenizeProject(1, broker1.address))
                 .to.be.revertedWithCustomError(projectToken, `NotRegisteredCustodian`);
         });
 
@@ -1906,9 +1971,9 @@ describe('7.2. ProjectToken', async () => {
                 mintProjectTokenForDepositor: true,
                 tokenizeProject: true,
             });
-            const { projectToken, manager, commissionReceiver } = fixture;
+            const { projectToken, manager, broker1 } = fixture;
 
-            await expect(projectToken.connect(manager).tokenizeProject(1, commissionReceiver.address))
+            await expect(projectToken.connect(manager).tokenizeProject(1, broker1.address))
                 .to.be.revertedWithCustomError(projectToken, `AlreadyTokenized`);
         });
 
@@ -1916,11 +1981,11 @@ describe('7.2. ProjectToken', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
             });
-            const { prestigePad, projectToken, manager, commissionReceiver } = fixture;
+            const { prestigePad, projectToken, manager, broker1 } = fixture;
 
             prestigePad.isFinalized.whenCalledWith(1).returns(true);
 
-            await expect(projectToken.connect(manager).tokenizeProject(1, commissionReceiver.address))
+            await expect(projectToken.connect(manager).tokenizeProject(1, broker1.address))
                 .to.be.revertedWithCustomError(projectToken, `NothingToTokenize`);
         });
 
@@ -1929,9 +1994,9 @@ describe('7.2. ProjectToken', async () => {
                 addSampleProjects: true,
                 mintProjectTokenForDepositor: true,
             });
-            const { projectToken, manager, commissionReceiver } = fixture;
+            const { projectToken, manager, broker1 } = fixture;
 
-            await expect(projectToken.connect(manager).tokenizeProject(1, commissionReceiver.address))
+            await expect(projectToken.connect(manager).tokenizeProject(1, broker1.address))
                 .to.be.revertedWithCustomError(projectToken, `InvalidTokenizing`);
         });
         
@@ -1942,11 +2007,11 @@ describe('7.2. ProjectToken', async () => {
                 addSampleProjects: true,
                 mintProjectTokenForDepositor: true,
             });
-            const { prestigePad, estateToken, projectToken, manager, commissionReceiver } = fixture;
+            const { prestigePad, estateToken, projectToken, manager, broker1 } = fixture;
 
             prestigePad.isFinalized.whenCalledWith(1).returns(true);
 
-            await expect(projectToken.connect(manager).tokenizeProject(1, commissionReceiver.address))
+            await expect(projectToken.connect(manager).tokenizeProject(1, broker1.address))
                 .to.be.revertedWithCustomError(estateToken, `Unauthorized`);
         });
     });
@@ -2421,7 +2486,7 @@ describe('7.2. ProjectToken', async () => {
                 addSampleProjects: true,
             });
             
-            const { projectToken, prestigePad, depositors, manager, commissionReceiver } = fixture
+            const { projectToken, prestigePad, depositors, manager, broker1 } = fixture
 
             const projectId = BigNumber.from(1);
             const depositor = depositors[0];
@@ -2495,7 +2560,7 @@ describe('7.2. ProjectToken', async () => {
             timestamp += 10;
             const tokenizeAt = timestamp;
             await callTransactionAtTimestamp(
-                projectToken.connect(manager).tokenizeProject(projectId, commissionReceiver.address),
+                projectToken.connect(manager).tokenizeProject(projectId, broker1.address),
                 timestamp,
             );
 

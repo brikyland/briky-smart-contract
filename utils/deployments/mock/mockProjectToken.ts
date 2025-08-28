@@ -8,7 +8,6 @@ export async function deployMockProjectToken(
     feeReceiverAddress: string,
     validatorAddress: string,
     baseURI: string,
-    royaltyRate: BigNumber,
 ) {
     const MockProjectToken = await ethers.getContractFactory('MockProjectToken', signer);
 
@@ -20,7 +19,6 @@ export async function deployMockProjectToken(
             feeReceiverAddress,
             validatorAddress,
             baseURI,
-            royaltyRate,
         ]
     );
     await mockProjectToken.deployed();
