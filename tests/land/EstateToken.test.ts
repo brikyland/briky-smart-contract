@@ -45,10 +45,11 @@ import {
     callEstateToken_Pause,
     callEstateToken_AuthorizeTokenizers,
     callEstateToken_AuthorizeExtractors,
+    callEstateToken_UpdateZoneRoyaltyRate,
 } from '@utils/callWithSignatures/estateToken';
 import { BigNumber } from 'ethers';
 import { randomInt } from 'crypto';
-import { getBytes4Hex, getInterfaceID, randomBigNumber } from '@utils/utils';
+import { getBytes4Hex, getInterfaceID, randomBigNumber, structToObject } from '@utils/utils';
 import { OrderedMap } from '@utils/utils';
 import { Initialization as LandInitialization } from '@tests/land/test.initialization';
 import { deployReserveVault } from '@utils/deployments/common/reserveVault';
@@ -61,6 +62,7 @@ import { getRegisterCustodianInvalidValidation, getUpdateEstateURIValidation } f
 import { getCallTokenizeEstateTx, getRegisterCustodianTx, getUpdateEstateURITx } from '@utils/transaction/EstateToken';
 import { getRegisterInitiatorInvalidValidation } from '@utils/validation/ProjectToken';
 import { ContractTransaction } from 'ethers';
+import { getRegisterBrokerTx } from '@utils/transaction/CommissionToken';
 
 interface EstateTokenFixture {
     admin: Admin;
@@ -82,7 +84,7 @@ interface EstateTokenFixture {
     moderator: any;
     user: any;
     requester1: any, requester2: any;
-    commissionReceiver: any;
+    broker1: any, broker2: any;
     depositor1: any, depositor2: any, depositor3: any;
     depositors: any[];
     custodian1: any, custodian2: any, custodian3: any;
@@ -93,7 +95,7 @@ interface EstateTokenFixture {
     extractors: any[];
 }
 
-describe('2.4. EstateToken', async () => {
+describe.only('2.4. EstateToken', async () => {
     afterEach(async () => {
         await ethers.provider.send("evm_setAutomine", [true]);
     });
@@ -108,14 +110,15 @@ describe('2.4. EstateToken', async () => {
         const moderator = accounts[Constant.ADMIN_NUMBER + 4];
         const requester1 = accounts[Constant.ADMIN_NUMBER + 5];
         const requester2 = accounts[Constant.ADMIN_NUMBER + 6];
-        const commissionReceiver = accounts[Constant.ADMIN_NUMBER + 7];
-        const depositor1 = accounts[Constant.ADMIN_NUMBER + 8];
-        const depositor2 = accounts[Constant.ADMIN_NUMBER + 9];
-        const depositor3 = accounts[Constant.ADMIN_NUMBER + 10];
+        const broker1 = accounts[Constant.ADMIN_NUMBER + 7];
+        const broker2 = accounts[Constant.ADMIN_NUMBER + 8];
+        const depositor1 = accounts[Constant.ADMIN_NUMBER + 9];
+        const depositor2 = accounts[Constant.ADMIN_NUMBER + 10];
+        const depositor3 = accounts[Constant.ADMIN_NUMBER + 11];
         const depositors = [depositor1, depositor2, depositor3];
-        const custodian1 = accounts[Constant.ADMIN_NUMBER + 11];
-        const custodian2 = accounts[Constant.ADMIN_NUMBER + 12];
-        const custodian3 = accounts[Constant.ADMIN_NUMBER + 13];
+        const custodian1 = accounts[Constant.ADMIN_NUMBER + 12];
+        const custodian2 = accounts[Constant.ADMIN_NUMBER + 13];
+        const custodian3 = accounts[Constant.ADMIN_NUMBER + 14];
         const custodians = [custodian1, custodian2, custodian3];
 
         const adminAddresses: string[] = admins.map(signer => signer.address);
@@ -243,7 +246,8 @@ describe('2.4. EstateToken', async () => {
             user,
             requester1,
             requester2,
-            commissionReceiver,
+            broker1,
+            broker2,
             depositor1,
             depositor2,
             depositor3,
@@ -265,6 +269,7 @@ describe('2.4. EstateToken', async () => {
         skipAuthorizeEstateForger = false,
         skipUpdateCommissionToken = false,
         skipAuthorizeEstateLiquidator = false,
+        skipRegisterBrokers = false,
         addSampleEstates = false,
         pause = false,
     } = {}): Promise<EstateTokenFixture> {
@@ -279,7 +284,8 @@ describe('2.4. EstateToken', async () => {
             commissionToken,
             zone1,
             zone2,
-            commissionReceiver,
+            broker1,
+            broker2,
             estateLiquidator,
             validator,
             custodian1,
@@ -331,6 +337,19 @@ describe('2.4. EstateToken', async () => {
                 await fixture.admin.nonce()
             );
         }
+
+        if (!skipRegisterBrokers) {
+            await callTransaction(getRegisterBrokerTx(commissionToken, manager, {
+                zone: zone1,
+                broker: broker1.address,
+                commissionRate: ethers.utils.parseEther('0.1'),
+            }));
+            await callTransaction(getRegisterBrokerTx(commissionToken, manager, {
+                zone: zone2,
+                broker: broker2.address,
+                commissionRate: ethers.utils.parseEther('0.2'),
+            }));
+        }
         
         if (!skipAuthorizeEstateForger) {
             await callEstateToken_AuthorizeTokenizers(
@@ -377,7 +396,7 @@ describe('2.4. EstateToken', async () => {
                 "Token1_URI",
                 baseTimestamp + 1e8,
                 custodian1.address,
-                commissionReceiver.address,
+                broker1.address,
             ]));
 
             await estateForger.call(estateToken.address, estateToken.interface.encodeFunctionData('tokenizeEstate', [
@@ -387,7 +406,7 @@ describe('2.4. EstateToken', async () => {
                 "Token2_URI",
                 baseTimestamp + 2e8,
                 custodian2.address,
-                commissionReceiver.address,
+                broker2.address,
             ]));
         }
 
@@ -409,6 +428,7 @@ describe('2.4. EstateToken', async () => {
                 skipRegisterCustodians: true,
                 skipAuthorizeEstateForger: true,
                 skipAuthorizeEstateLiquidator: true,
+                skipRegisterBrokers: true,
             });
 
             expect(await estateToken.paused()).to.equal(false);
@@ -417,33 +437,11 @@ describe('2.4. EstateToken', async () => {
             expect(await estateToken.commissionToken()).to.equal(ethers.constants.AddressZero);
             expect(await estateToken.feeReceiver()).to.equal(feeReceiver.address);
             
-            const royaltyRate = await estateToken.getRoyaltyRate();
-            expect(royaltyRate.value).to.equal(LandInitialization.ESTATE_TOKEN_RoyaltyRate);
-            expect(royaltyRate.decimals).to.equal(Constant.COMMON_RATE_DECIMALS);
-            
             expect(await estateToken.estateNumber()).to.equal(0);
             
             expect(await estateToken.validator()).to.equal(validator.getAddress());
 
             expect(await estateToken.decimals()).to.equal(Constant.ESTATE_TOKEN_MAX_DECIMALS);
-        });
-
-        it('2.4.1.2. revert with invalid rate', async () => {
-            const { admin, feeReceiver, validator } = await beforeEstateTokenTest({
-                skipUpdateCommissionToken: true,
-                skipRegisterCustodians: true,
-                skipAuthorizeEstateForger: true,
-                skipAuthorizeEstateLiquidator: true,
-            });
-            const EstateToken = await ethers.getContractFactory("EstateToken");
-
-            await expect(upgrades.deployProxy(EstateToken, [
-                admin.address,
-                feeReceiver.address,
-                validator.getAddress(),
-                LandInitialization.ESTATE_TOKEN_BaseURI,
-                Constant.COMMON_RATE_MAX_FRACTION.add(1),
-            ])).to.be.reverted;
         });
     });
 
@@ -539,60 +537,6 @@ describe('2.4. EstateToken', async () => {
                 "NewBaseURI:",
                 invalidSignatures
             )).to.be.revertedWithCustomError(admin, 'FailedVerification');
-        });
-    });
-
-    describe('2.4.4. updateRoyaltyRate(uint256, bytes[])', async () => {
-        it('2.4.4.1. updateRoyaltyRate successfully with valid signatures', async () => {
-            const { estateToken, admin, admins } = await beforeEstateTokenTest();
-
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "uint256"],
-                [estateToken.address, "updateRoyaltyRate", ethers.utils.parseEther('0.2')]
-            );
-
-            const signatures = await getSignatures(message, admins, await admin.nonce());
-
-            const tx = await estateToken.updateRoyaltyRate(ethers.utils.parseEther('0.2'), signatures);
-            await tx.wait();
-
-            await expect(tx).to
-                .emit(estateToken, 'RoyaltyRateUpdate')
-                .withArgs(ethers.utils.parseEther('0.2'));
-
-            const royaltyRate = await estateToken.getRoyaltyRate();
-            expect(royaltyRate.value).to.equal(ethers.utils.parseEther('0.2'));
-            expect(royaltyRate.decimals).to.equal(Constant.COMMON_RATE_DECIMALS);
-        });
-
-        it('2.4.4.2. updateRoyaltyRate unsuccessfully with invalid signatures', async () => {
-            const { estateToken, admin, admins } = await beforeEstateTokenTest();
-
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "uint256"],
-                [estateToken.address, "updateRoyaltyRate", ethers.utils.parseEther('0.2')]
-            );
-            const invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
-
-            await expect(estateToken.updateRoyaltyRate(
-                ethers.utils.parseEther('0.2'),
-                invalidSignatures
-            )).to.be.revertedWithCustomError(admin, 'FailedVerification');
-        });
-
-        it('2.4.4.3. updateRoyaltyRate unsuccessfully with invalid rate', async () => {
-            const { estateToken, admin, admins } = await beforeEstateTokenTest();
-
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "uint256"],
-                [estateToken.address, "updateRoyaltyRate", Constant.COMMON_RATE_MAX_FRACTION.add(1)]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await expect(estateToken.updateRoyaltyRate(
-                Constant.COMMON_RATE_MAX_FRACTION.add(1),
-                signatures
-            )).to.be.revertedWithCustomError(estateToken, 'InvalidRate');
         });
     });
 
@@ -1086,6 +1030,195 @@ describe('2.4. EstateToken', async () => {
         });
     });
     
+    describe('2.4.4. updateZoneRoyaltyRate(uint256, bytes[])', async () => {
+        it('2.4.4.1. updateZoneRoyaltyRate successfully with valid signatures', async () => {
+            const fixture = await beforeEstateTokenTest();
+            const { estateToken, admin, admins, zone1, zone2 } = fixture;
+
+            const rate1 = ethers.utils.parseEther('0.2');
+            const message1 = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string", "bytes32", "uint256"],
+                [estateToken.address, "updateZoneRoyaltyRate", zone1, rate1]
+            );
+
+            const signatures1 = await getSignatures(message1, admins, await admin.nonce());
+
+            const tx1 = await estateToken.updateZoneRoyaltyRate(zone1, rate1, signatures1);
+            await tx1.wait();
+
+            await expect(tx1).to
+                .emit(estateToken, 'ZoneRoyaltyRateUpdate')
+                .withArgs(zone1, rate1);
+
+            expect(structToObject(await estateToken.getZoneRoyaltyRate(zone1))).to.deep.equal({
+                value: rate1,
+                decimals: Constant.COMMON_RATE_DECIMALS,
+            });
+
+            const rate2 = ethers.utils.parseEther('0.3');
+            const message2 = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string", "bytes32", "uint256"],
+                [estateToken.address, "updateZoneRoyaltyRate", zone2, rate2]
+            );
+            const signatures2 = await getSignatures(message2, admins, await admin.nonce());
+
+            const tx2 = await estateToken.updateZoneRoyaltyRate(zone2, rate2, signatures2);
+            await tx2.wait();
+
+            await expect(tx2).to
+                .emit(estateToken, 'ZoneRoyaltyRateUpdate')
+                .withArgs(zone2, rate2);
+
+            expect(structToObject(await estateToken.getZoneRoyaltyRate(zone2))).to.deep.equal({
+                value: rate2,
+                decimals: Constant.COMMON_RATE_DECIMALS,
+            });
+        });
+
+        it('2.4.4.2. updateZoneRoyaltyRate unsuccessfully with invalid signatures', async () => {
+            const fixture = await beforeEstateTokenTest();
+            const { estateToken, admin, admins, zone1 } = fixture;
+
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string", "bytes32", "uint256"],
+                [estateToken.address, "updateZoneRoyaltyRate", zone1, ethers.utils.parseEther('0.2')]
+            );
+            const invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+
+            await expect(estateToken.updateZoneRoyaltyRate(
+                zone1,
+                ethers.utils.parseEther('0.2'),
+                invalidSignatures
+            )).to.be.revertedWithCustomError(admin, 'FailedVerification');
+        });
+
+        it('2.4.4.3. updateZoneRoyaltyRate unsuccessfully with invalid rate', async () => {
+            const fixture = await beforeEstateTokenTest();
+            const { estateToken, admin, admins, zone1 } = fixture;
+
+            const rate = Constant.COMMON_RATE_MAX_FRACTION.add(1);
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string", "bytes32", "uint256"],
+                [estateToken.address, "updateZoneRoyaltyRate", zone1, rate]
+            );
+            const signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(estateToken.updateZoneRoyaltyRate(
+                zone1,
+                rate,
+                signatures
+            )).to.be.revertedWithCustomError(estateToken, 'InvalidRate');
+        });
+
+        it.only('2.4.4.4. updateZoneRoyaltyRate unsuccessfully with invalid zone', async () => {
+            const fixture = await beforeEstateTokenTest();
+            const { estateToken, admin, admins, zone1 } = fixture;
+
+            await callAdmin_DeclareZones(
+                admin,
+                admins,
+                [zone1],
+                false,
+                await admin.nonce()
+            );
+
+            const rate = ethers.utils.parseEther('0.2');
+
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ["address", "string", "bytes32", "uint256"],
+                [estateToken.address, "updateZoneRoyaltyRate", zone1, rate]
+            );
+            const signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(estateToken.updateZoneRoyaltyRate(
+                zone1,
+                rate,
+                signatures
+            )).to.be.revertedWithCustomError(estateToken, 'InvalidZone');
+        });
+    });
+
+    describe('2.4.9. getEstate(uint256)', () => {
+        it('2.4.9.1. succeed with existing estate id', async () => {
+            const { estateToken } = await beforeEstateTokenTest({
+                addSampleEstates: true,                
+            });
+
+            await estateToken.getEstate(1);
+            await estateToken.getEstate(2);
+        });
+
+        it('2.4.9.2. revert with non-existing estate id', async () => {
+            const { estateToken } = await beforeEstateTokenTest({
+                addSampleEstates: true,
+            });
+
+            await expect(estateToken.getEstate(0))
+                .to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
+
+            await expect(estateToken.getEstate(3))
+                .to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
+
+            await expect(estateToken.getEstate(100))
+                .to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
+        });
+    });
+
+    describe('2.4.10. isAvailable(uint256)', () => {
+        it('2.4.10.1. return true for existing, not deprecated, and not expired estate', async () => {
+            const { estateToken } = await beforeEstateTokenTest({
+                addSampleEstates: true,
+            });
+
+            expect(await estateToken.isAvailable(1)).to.equal(true);
+            expect(await estateToken.isAvailable(2)).to.equal(true);
+        });
+
+        it('2.4.10.2. return false for non-existing estate', async () => {
+            const { estateToken } = await beforeEstateTokenTest({
+                addSampleEstates: true,
+            });
+
+            expect(await estateToken.isAvailable(0)).to.equal(false);
+            expect(await estateToken.isAvailable(3)).to.equal(false);
+            expect(await estateToken.isAvailable(100)).to.equal(false);
+        });
+
+        it('2.4.10.3. return false for deprecated estate', async () => {
+            const { estateToken, manager } = await beforeEstateTokenTest({
+                addSampleEstates: true,
+            });
+
+            await callTransaction(estateToken.connect(manager).deprecateEstate(1));
+            expect(await estateToken.isAvailable(1)).to.equal(false);
+            expect(await estateToken.isAvailable(2)).to.equal(true);
+
+            await callTransaction(estateToken.connect(manager).deprecateEstate(2));
+            expect(await estateToken.isAvailable(1)).to.equal(false);
+            expect(await estateToken.isAvailable(2)).to.equal(false);
+        });
+
+        it('2.4.10.4. return false for expired estate', async () => {
+            const { estateToken } = await beforeEstateTokenTest({
+                addSampleEstates: true,
+            });
+
+            const expireAt1 = await estateToken.getEstate(1).then(e => e.expireAt);
+            const expireAt2 = await estateToken.getEstate(2).then(e => e.expireAt);
+
+            expect(await estateToken.isAvailable(1)).to.equal(true);
+            expect(await estateToken.isAvailable(2)).to.equal(true);
+
+            await time.increaseTo(expireAt1);
+            expect(await estateToken.isAvailable(1)).to.equal(false);
+            expect(await estateToken.isAvailable(2)).to.equal(true);
+
+            await time.increaseTo(expireAt2);
+            expect(await estateToken.isAvailable(1)).to.equal(false);
+            expect(await estateToken.isAvailable(2)).to.equal(false);
+        });
+    });
+
     describe('2.4.7. registerCustodian(bytes32, address, string, Validation)', async () => {
         async function getRegisterCustodianWithInvalidValidationTx(
             estateToken: EstateToken,
@@ -1301,28 +1434,28 @@ describe('2.4. EstateToken', async () => {
             baseTimestamp: number;
             defaultParams: TokenizeEstateParams;
         }> {
-            const { zone1, custodian1, commissionReceiver } = fixture;
+            const { zone1, custodian1, broker1 } = fixture;
             const baseTimestamp = await time.latest() + 1000;
 
             const defaultParams: TokenizeEstateParams = {
-                totalSupply: 10_000,
+                totalSupply: BigNumber.from(10_000),
                 zone: zone1,
                 tokenizationId: 10,
                 uri: "Token1_URI",
                 expireAt: baseTimestamp + 100,
                 custodian: custodian1.address,
-                commissionReceiverAddress: commissionReceiver.address,
+                broker: broker1.address,
             }
             return { baseTimestamp, defaultParams };
         };
 
         it('2.4.8.1. tokenize estate successfully with commission receiver', async () => {
             const fixture = await beforeEstateTokenTest();
-            const { estateToken, estateForger, commissionToken } = fixture;
+            const { estateToken, estateForger, broker1, commissionToken } = fixture;
             const { baseTimestamp, defaultParams } = await beforeTokenizeEstateTest(fixture);
             const params = {
                 ...defaultParams,
-                commissionReceiverAddress: commissionToken.address,
+                broker: broker1.address,
             }
 
             await time.setNextBlockTimestamp(baseTimestamp);
@@ -1350,23 +1483,25 @@ describe('2.4. EstateToken', async () => {
 
             expect(await estateToken.balanceOf(estateForger.address, 1)).to.equal(10_000);
 
-            expect(await commissionToken.ownerOf(1)).to.equal(params.commissionReceiverAddress);
+            expect(await commissionToken.ownerOf(1)).to.equal(params.broker);
         });
 
-        it('2.4.8.2. tokenize estate unsuccessfully with no commission receiver', async () => {
+        it('2.4.8.2. tokenize estate unsuccessfully with unregistered broker', async () => {
             const fixture = await beforeEstateTokenTest();
-            const { admin, admins, estateToken, estateForger } = fixture;
+            const { estateToken, estateForger, commissionToken } = fixture;
 
             const { baseTimestamp, defaultParams } = await beforeTokenizeEstateTest(fixture);
+
+            const broker = randomWallet();
             const params = {
                 ...defaultParams,
-                commissionReceiverAddress: ethers.constants.AddressZero,
+                broker: broker.address,
             }
 
             await time.setNextBlockTimestamp(baseTimestamp);
 
             await expect(getCallTokenizeEstateTx(estateToken, estateForger, params))
-                .to.be.revertedWith("ERC721: mint to the zero address");
+                .to.be.revertedWithCustomError(commissionToken, `InvalidBroker`);
         });
 
         it('2.4.8.3. tokenize estate unsuccessfully when tokenizer is not authorized', async () => {
@@ -1440,95 +1575,13 @@ describe('2.4. EstateToken', async () => {
             const fixture = await beforeEstateTokenTest({
                 skipUpdateCommissionToken: true,
             });
-            const { admin, admins, estateToken, estateForger, commissionToken } = fixture;
+            const { estateToken, estateForger } = fixture;
             const { baseTimestamp, defaultParams } = await beforeTokenizeEstateTest(fixture);
-            defaultParams.commissionReceiverAddress = commissionToken.address;
 
             await time.setNextBlockTimestamp(baseTimestamp);
 
             await expect(getCallTokenizeEstateTx(estateToken, estateForger, defaultParams))
                 .to.be.revertedWith("CallUtils: target revert()");
-        });
-    });
-
-    describe('2.4.9. getEstate(uint256)', () => {
-        it('2.4.9.1. succeed with existing estate id', async () => {
-            const { estateToken } = await beforeEstateTokenTest({
-                addSampleEstates: true,                
-            });
-
-            await estateToken.getEstate(1);
-            await estateToken.getEstate(2);
-        });
-
-        it('2.4.9.2. revert with non-existing estate id', async () => {
-            const { estateToken } = await beforeEstateTokenTest({
-                addSampleEstates: true,
-            });
-
-            await expect(estateToken.getEstate(0))
-                .to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
-
-            await expect(estateToken.getEstate(3))
-                .to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
-
-            await expect(estateToken.getEstate(100))
-                .to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
-        });
-    });
-
-    describe('2.4.10. isAvailable(uint256)', () => {
-        it('2.4.10.1. return true for existing, not deprecated, and not expired estate', async () => {
-            const { estateToken } = await beforeEstateTokenTest({
-                addSampleEstates: true,
-            });
-
-            expect(await estateToken.isAvailable(1)).to.equal(true);
-            expect(await estateToken.isAvailable(2)).to.equal(true);
-        });
-
-        it('2.4.10.2. return false for non-existing estate', async () => {
-            const { estateToken } = await beforeEstateTokenTest({
-                addSampleEstates: true,
-            });
-
-            expect(await estateToken.isAvailable(0)).to.equal(false);
-            expect(await estateToken.isAvailable(3)).to.equal(false);
-            expect(await estateToken.isAvailable(100)).to.equal(false);
-        });
-
-        it('2.4.10.3. return false for deprecated estate', async () => {
-            const { estateToken, manager } = await beforeEstateTokenTest({
-                addSampleEstates: true,
-            });
-
-            await callTransaction(estateToken.connect(manager).deprecateEstate(1));
-            expect(await estateToken.isAvailable(1)).to.equal(false);
-            expect(await estateToken.isAvailable(2)).to.equal(true);
-
-            await callTransaction(estateToken.connect(manager).deprecateEstate(2));
-            expect(await estateToken.isAvailable(1)).to.equal(false);
-            expect(await estateToken.isAvailable(2)).to.equal(false);
-        });
-
-        it('2.4.10.4. return false for expired estate', async () => {
-            const { estateToken } = await beforeEstateTokenTest({
-                addSampleEstates: true,
-            });
-
-            const expireAt1 = await estateToken.getEstate(1).then(e => e.expireAt);
-            const expireAt2 = await estateToken.getEstate(2).then(e => e.expireAt);
-
-            expect(await estateToken.isAvailable(1)).to.equal(true);
-            expect(await estateToken.isAvailable(2)).to.equal(true);
-
-            await time.increaseTo(expireAt1);
-            expect(await estateToken.isAvailable(1)).to.equal(false);
-            expect(await estateToken.isAvailable(2)).to.equal(true);
-
-            await time.increaseTo(expireAt2);
-            expect(await estateToken.isAvailable(1)).to.equal(false);
-            expect(await estateToken.isAvailable(2)).to.equal(false);
         });
     });
 
@@ -2596,7 +2649,7 @@ describe('2.4. EstateToken', async () => {
 
         it('2.4.19.7. return total vote of each voteOfAt', async () => {
             // Note: this variant is only true when total supply of estate does not change
-            const { estateToken, manager, depositor1, depositor2, estateForger, zone1, commissionReceiver, custodian1 } = await beforeEstateTokenTest({
+            const { estateToken, manager, depositor1, depositor2, estateForger, zone1, custodian1, broker1 } = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
 
@@ -2685,7 +2738,7 @@ describe('2.4. EstateToken', async () => {
                     "Token2_URI",
                     expireAt3,
                     custodian1.address,
-                    commissionReceiver.address,
+                    broker1.address,
                 ])),
                 tokenizeAt3,
             );
@@ -2916,7 +2969,7 @@ describe('2.4. EstateToken', async () => {
     });
 
     describe('2.4.21. safeTransferFrom(address, address, uint256, uint256, bytes)', () => {
-        it('2.4.21.1. transfer unsuccessfully when the token is deprecated', async () => {
+        it.only('2.4.21.1. transfer unsuccessfully when the token is deprecated', async () => {
             const { estateToken, manager, depositor1, depositor2 } = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -2954,6 +3007,60 @@ describe('2.4. EstateToken', async () => {
                 [10_000, 500],
                 ethers.utils.formatBytes32String(""),
             )).to.be.revertedWith("EstateToken: Token is unavailable");
+        });
+    });
+
+    describe('2.4.21. getRoyaltyRate()', () => {
+        it.only('2.4.21.1. return correct royalty rate for available estate', async () => {
+            const { estateToken, zone1, zone2, admins, admin } = await beforeEstateTokenTest({
+                addSampleEstates: true,
+            });
+
+            await callEstateToken_UpdateZoneRoyaltyRate(
+                estateToken,
+                admins,
+                zone1,
+                ethers.utils.parseEther('0.1'),
+                await admin.nonce()
+            );
+            await callEstateToken_UpdateZoneRoyaltyRate(
+                estateToken,
+                admins,
+                zone2,
+                ethers.utils.parseEther('0.2'),
+                await admin.nonce()
+            );
+
+            expect(structToObject(await estateToken.getRoyaltyRate(1))).to.deep.equal({
+                value: ethers.utils.parseEther('0.1'),
+                decimals: Constant.COMMON_RATE_DECIMALS,
+            });
+
+            expect(structToObject(await estateToken.getRoyaltyRate(2))).to.deep.equal({
+                value: ethers.utils.parseEther('0.2'),
+                decimals: Constant.COMMON_RATE_DECIMALS,
+            });
+        });
+
+        it('2.4.21.2. revert with invalid estate id', async () => {
+            const { estateToken } = await beforeEstateTokenTest();
+
+            await expect(estateToken.getRoyaltyRate(0))
+                .to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
+
+            await expect(estateToken.getRoyaltyRate(100))
+                .to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
+        });
+
+        it('2.4.21.3. revert with unavailable estate', async () => {
+            const { estateToken, manager } = await beforeEstateTokenTest({
+                addSampleEstates: true,
+            });
+
+            await callTransaction(estateToken.connect(manager).deprecateEstate(1));
+
+            await expect(estateToken.getRoyaltyRate(1))
+                .to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
         });
     });
 

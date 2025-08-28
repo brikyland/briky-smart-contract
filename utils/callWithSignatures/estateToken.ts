@@ -63,19 +63,20 @@ export async function callEstateToken_UpdateBaseURI(
     await callTransaction(estateToken.updateBaseURI(baseURI, signatures));
 }
 
-export async function callEstateToken_UpdateRoyaltyRate(
+export async function callEstateToken_UpdateZoneRoyaltyRate(
     estateToken: EstateToken | MockContract<EstateToken>,
     admins: any[],
-    royaltyRate: BigNumberish,
+    zone: string,
+    rate: BigNumberish,
     nonce: BigNumberish
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "uint256"],
-        [estateToken.address, "updateRoyaltyRate", royaltyRate]
+        ["address", "string", "bytes32", "uint256"],
+        [estateToken.address, "updateZoneRoyaltyRate", zone, rate]
     );
     const signatures = await getSignatures(message, admins, nonce);
 
-    await callTransaction(estateToken.updateRoyaltyRate(royaltyRate, signatures));
+    await callTransaction(estateToken.updateZoneRoyaltyRate(zone, rate, signatures));
 }
 
 export async function callEstateToken_AuthorizeTokenizers(
