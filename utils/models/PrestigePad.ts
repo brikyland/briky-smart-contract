@@ -56,6 +56,7 @@ export interface InitiateLaunchParams {
     zone: string;
     projectURI: string;
     launchURI: string;
+    feeRate: BigNumber;
     initialQuantity: BigNumber;
 }
 
@@ -79,4 +80,9 @@ export interface RaiseNextRoundParams {
     cashbackDenominations: BigNumber[];
     raiseStartsAt: number;
     raiseDuration: number;
+}
+
+export interface UpdateLaunchURIParams {
+    launchId: BigNumber;
+    uri: string;
 }

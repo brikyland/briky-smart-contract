@@ -249,7 +249,6 @@ describe('7.2. ProjectToken', async () => {
                 validator.getAddress(),
                 LaunchInitialization.PRESTIGE_PAD_BaseMinUnitPrice,
                 LaunchInitialization.PRESTIGE_PAD_BaseMaxUnitPrice,
-                LaunchInitialization.PRESTIGE_PAD_FeeRate,
             ));
             launchpads.push(mockPrestigePad);
         }

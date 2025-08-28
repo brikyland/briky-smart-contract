@@ -11,7 +11,6 @@ export async function deployMockPrestigePad(
     validatorAddress: string,
     baseMinUnitPrice: BigNumber,
     baseMaxUnitPrice: BigNumber,
-    feeRate: BigNumber,
 ) {
     const MockPrestigePad = await ethers.getContractFactory('MockPrestigePad', signer);
     const mockPrestigePad = await upgrades.deployProxy(
@@ -25,7 +24,6 @@ export async function deployMockPrestigePad(
             validatorAddress,
             baseMinUnitPrice,
             baseMaxUnitPrice,
-            feeRate,
         ]
     );
     await mockPrestigePad.deployed();

@@ -1,6 +1,6 @@
 import { time } from "@nomicfoundation/hardhat-network-helpers";
 import { MockValidator } from "@utils/mockValidator";
-import { InitiateLaunchParams, UpdateRoundParams, UpdateRoundsParams } from "@utils/models/PrestigePad";
+import { InitiateLaunchParams, UpdateLaunchURIParams, UpdateRoundParams, UpdateRoundsParams } from "@utils/models/PrestigePad";
 import { Contract } from "ethers";
 import { ethers } from 'hardhat';
 
@@ -99,4 +99,34 @@ export async function getUpdateRoundsInvalidValidation(
         validations.push(validation);
     }
     return validations;
+}
+
+export async function getUpdateLaunchURIValidation(
+    prestigePad: Contract,
+    validator: MockValidator,
+    params: UpdateLaunchURIParams
+) {
+    const content = ethers.utils.defaultAbiCoder.encode(
+        ["string"],
+        [params.uri]
+    );
+    const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
+
+    const validation = await validator.getValidation(prestigePad, content, expiry);
+    return validation;
+}
+
+export async function getUpdateLaunchURIInvalidValidation(
+    prestigePad: Contract,
+    validator: MockValidator,
+    params: UpdateLaunchURIParams
+) {
+    const content = ethers.utils.defaultAbiCoder.encode(
+        ["string"],
+        [params.uri]
+    );
+    const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
+
+    const validation = await validator.getInvalidValidation(prestigePad, content, expiry);
+    return validation;
 }

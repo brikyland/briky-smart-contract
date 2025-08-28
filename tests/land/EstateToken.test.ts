@@ -95,7 +95,7 @@ interface EstateTokenFixture {
     extractors: any[];
 }
 
-describe.only('2.4. EstateToken', async () => {
+describe('2.4. EstateToken', async () => {
     afterEach(async () => {
         await ethers.provider.send("evm_setAutomine", [true]);
     });
@@ -1110,7 +1110,7 @@ describe.only('2.4. EstateToken', async () => {
             )).to.be.revertedWithCustomError(estateToken, 'InvalidRate');
         });
 
-        it.only('2.4.6.4. updateZoneRoyaltyRate unsuccessfully with invalid zone', async () => {
+        it('2.4.6.4. updateZoneRoyaltyRate unsuccessfully with invalid zone', async () => {
             const fixture = await beforeEstateTokenTest();
             const { estateToken, admin, admins, zone1 } = fixture;
 
@@ -2969,7 +2969,7 @@ describe.only('2.4. EstateToken', async () => {
     });
 
     describe('2.4.21. safeTransferFrom(address, address, uint256, uint256, bytes)', () => {
-        it.only('2.4.21.1. transfer unsuccessfully when the token is deprecated', async () => {
+        it('2.4.21.1. transfer unsuccessfully when the token is deprecated', async () => {
             const { estateToken, manager, depositor1, depositor2 } = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -3011,7 +3011,7 @@ describe.only('2.4. EstateToken', async () => {
     });
 
     describe('2.4.22. getRoyaltyRate()', () => {
-        it.only('2.4.22.1. return correct royalty rate for available estate', async () => {
+        it('2.4.22.1. return correct royalty rate for available estate', async () => {
             const { estateToken, zone1, zone2, admins, admin } = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });

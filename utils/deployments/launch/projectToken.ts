@@ -8,7 +8,6 @@ export async function deployProjectToken(
     feeReceiverAddress: string,
     validatorAddress: string,
     baseURI: string,
-    royaltyRate: BigNumber,
 ) {
     const ProjectToken = await ethers.getContractFactory('ProjectToken', signer);
 
@@ -20,7 +19,6 @@ export async function deployProjectToken(
             feeReceiverAddress,
             validatorAddress,
             baseURI,
-            royaltyRate,
         ]
     );
     await projectToken.deployed();

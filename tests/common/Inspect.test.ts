@@ -301,7 +301,6 @@ describe('1.1. Inspect', async () => {
             feeReceiver.address,
             validator.getAddress(),
             LaunchInitialization.PROJECT_TOKEN_BaseURI,
-            LaunchInitialization.PROJECT_TOKEN_RoyaltyRate,
         ) as ProjectToken;
 
         const prestigePad = await deployPrestigePad(
@@ -314,7 +313,6 @@ describe('1.1. Inspect', async () => {
             validator.getAddress(),
             LaunchInitialization.PRESTIGE_PAD_BaseMinUnitPrice,
             LaunchInitialization.PRESTIGE_PAD_BaseMaxUnitPrice,
-            LaunchInitialization.PRESTIGE_PAD_FeeRate,
         ) as PrestigePad;
 
         // Lux

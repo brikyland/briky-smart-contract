@@ -166,7 +166,6 @@ describe('6.4. ProjectMarketplace', async () => {
             feeReceiver.address,
             validator.getAddress(),
             LaunchInitialization.PROJECT_TOKEN_BaseURI,
-            LaunchInitialization.PROJECT_TOKEN_RoyaltyRate,
         ));
 
         const prestigePad = await deployMockPrestigePad(
@@ -179,7 +178,6 @@ describe('6.4. ProjectMarketplace', async () => {
             validator.getAddress(),
             LaunchInitialization.PRESTIGE_PAD_BaseMinUnitPrice,
             LaunchInitialization.PRESTIGE_PAD_BaseMaxUnitPrice,
-            LaunchInitialization.PRESTIGE_PAD_FeeRate,
         ) as MockPrestigePad;
 
         const projectMarketplace = await deployProjectMarketplace(
