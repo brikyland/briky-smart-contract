@@ -67,11 +67,8 @@ ReentrancyGuardUpgradeable {
         address _reserveVault,
         address _validator,
         uint256 _baseMinUnitPrice,
-        uint256 _baseMaxUnitPrice,
-        uint256 _feeRate
+        uint256 _baseMaxUnitPrice
     ) external initializer {
-        require(_feeRate <= CommonConstant.RATE_MAX_FRACTION);
-
         __Pausable_init();
         __ReentrancyGuard_init();
 
