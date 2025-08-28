@@ -540,8 +540,8 @@ describe.only('2.4. EstateToken', async () => {
         });
     });
 
-    describe('2.4.5. authorizeTokenizers(address[], bool, bytes[])', async () => {
-        it('2.4.5.1. Authorize tokenizers successfully with valid signatures', async () => {
+    describe('2.4.4. authorizeTokenizers(address[], bool, bytes[])', async () => {
+        it('2.4.4.1. Authorize tokenizers successfully with valid signatures', async () => {
             const { estateToken, admin, admins, tokenizers } = await beforeEstateTokenTest({
                 skipAuthorizeEstateForger: true,
             });
@@ -577,7 +577,7 @@ describe.only('2.4. EstateToken', async () => {
             }
         });
 
-        it('2.4.5.2. Authorize tokenizer unsuccessfully with invalid signatures', async () => {
+        it('2.4.4.2. Authorize tokenizer unsuccessfully with invalid signatures', async () => {
             const { estateToken, admin, admins, tokenizers } = await beforeEstateTokenTest({
                 skipAuthorizeEstateForger: true,
             });
@@ -597,7 +597,7 @@ describe.only('2.4. EstateToken', async () => {
             )).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('2.4.5.3. Authorize tokenizer reverted without reason with EOA address', async () => {
+        it('2.4.4.3. Authorize tokenizer reverted without reason with EOA address', async () => {
             const { estateToken, admin, admins } = await beforeEstateTokenTest({
                 skipAuthorizeEstateForger: true,
             });
@@ -617,7 +617,7 @@ describe.only('2.4. EstateToken', async () => {
             )).to.be.revertedWithCustomError(estateToken, 'InvalidTokenizer');
         })
 
-        it('2.4.5.4. Authorize tokenizer reverted with contract not supporting EstateTokenizer interface', async () => {
+        it('2.4.4.4. Authorize tokenizer reverted with contract not supporting EstateTokenizer interface', async () => {
             const { estateToken, admin, admins } = await beforeEstateTokenTest({
                 skipAuthorizeEstateForger: true,
             });
@@ -637,7 +637,7 @@ describe.only('2.4. EstateToken', async () => {
             )).to.be.revertedWithCustomError(estateToken, 'InvalidTokenizer');
         })
 
-        it('2.4.5.5. Authorize tokenizer unsuccessfully when authorizing same account twice on same tx', async () => {
+        it('2.4.4.5. Authorize tokenizer unsuccessfully when authorizing same account twice on same tx', async () => {
             const { estateToken, admin, admins, tokenizers } = await beforeEstateTokenTest({
                 skipAuthorizeEstateForger: true,
             });
@@ -657,7 +657,7 @@ describe.only('2.4. EstateToken', async () => {
             )).to.be.revertedWithCustomError(estateToken, `AuthorizedAccount`)
         });
 
-        it('2.4.5.6. Authorize tokenizer unsuccessfully when authorizing same account twice on different tx', async () => {
+        it('2.4.4.6. Authorize tokenizer unsuccessfully when authorizing same account twice on different tx', async () => {
             const { estateToken, admin, admins, tokenizers } = await beforeEstateTokenTest({
                 skipAuthorizeEstateForger: true,
             });
@@ -701,7 +701,7 @@ describe.only('2.4. EstateToken', async () => {
             );
         }
 
-        it('2.4.5.7. Deauthorize tokenizer successfully', async () => {
+        it('2.4.4.7. Deauthorize tokenizer successfully', async () => {
             const { estateToken, admin, admins, tokenizers } = await beforeEstateTokenTest({
                 skipAuthorizeEstateForger: true,
             });
@@ -739,7 +739,7 @@ describe.only('2.4. EstateToken', async () => {
             }            
         });
 
-        it('2.4.5.8. Deauthorize tokenizer unsuccessfully with unauthorized account', async () => {
+        it('2.4.4.8. Deauthorize tokenizer unsuccessfully with unauthorized account', async () => {
             const { estateToken, admin, admins, tokenizers } = await beforeEstateTokenTest({
                 skipAuthorizeEstateForger: true,
             });
@@ -762,7 +762,7 @@ describe.only('2.4. EstateToken', async () => {
             )).to.be.revertedWithCustomError(estateToken, `NotAuthorizedAccount`)
         });
 
-        it('2.4.5.9. Deauthorize tokenizer unsuccessfully when unauthorizing same accounts twice on same tx', async () => {
+        it('2.4.4.9. Deauthorize tokenizer unsuccessfully when unauthorizing same accounts twice on same tx', async () => {
             const { estateToken, admin, admins, tokenizers } = await beforeEstateTokenTest();
 
             await setupTokenizers(estateToken, admin, admins, tokenizers);
@@ -782,7 +782,7 @@ describe.only('2.4. EstateToken', async () => {
             )).to.be.revertedWithCustomError(estateToken, `NotAuthorizedAccount`)
         });
 
-        it('2.4.5.10. Deauthorize tokenizer unsuccessfully when unauthorizing same accounts twice on different tx', async () => {
+        it('2.4.4.10. Deauthorize tokenizer unsuccessfully when unauthorizing same accounts twice on different tx', async () => {
             const { estateToken, admin, admins, tokenizers } = await beforeEstateTokenTest();
 
             await setupTokenizers(estateToken, admin, admins, tokenizers);
@@ -811,8 +811,8 @@ describe.only('2.4. EstateToken', async () => {
         });
     });
 
-    describe('2.4.6. authorizeExtractors(address[], bool, bytes[])', async () => {
-        it('2.4.6.1. Authorize extractors successfully with valid signatures', async () => {
+    describe('2.4.5. authorizeExtractors(address[], bool, bytes[])', async () => {
+        it('2.4.5.1. Authorize extractors successfully with valid signatures', async () => {
             const { estateToken, admin, admins, extractors } = await beforeEstateTokenTest();
 
             const toBeExtractors = extractors.slice(0, 3);
@@ -846,7 +846,7 @@ describe.only('2.4. EstateToken', async () => {
             }
         });
 
-        it('2.4.6.2. Authorize extractor unsuccessfully with invalid signatures', async () => {
+        it('2.4.5.2. Authorize extractor unsuccessfully with invalid signatures', async () => {
             const { estateToken, admin, admins, extractors } = await beforeEstateTokenTest();
 
             const toBeExtractors = extractors.slice(0, 3);
@@ -864,7 +864,7 @@ describe.only('2.4. EstateToken', async () => {
             )).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('2.4.6.3. Authorize extractor unsuccessfully when authorizing same account twice on same tx', async () => {
+        it('2.4.5.3. Authorize extractor unsuccessfully when authorizing same account twice on same tx', async () => {
             const { estateToken, admin, admins, extractors } = await beforeEstateTokenTest();
 
             const duplicateExtractors = [extractors[0], extractors[1], extractors[2], extractors[0]];
@@ -882,7 +882,7 @@ describe.only('2.4. EstateToken', async () => {
             )).to.be.revertedWithCustomError(estateToken, `AuthorizedAccount`)
         });
 
-        it('2.4.6.4. Authorize extractor unsuccessfully when authorizing same account twice on different tx', async () => {
+        it('2.4.5.4. Authorize extractor unsuccessfully when authorizing same account twice on different tx', async () => {
             const { estateToken, admin, admins, extractors } = await beforeEstateTokenTest();
 
             const tx1Extractors = extractors.slice(0, 3);
@@ -924,7 +924,7 @@ describe.only('2.4. EstateToken', async () => {
             );
         }
 
-        it('2.4.6.5. Deauthorize extractor successfully', async () => {
+        it('2.4.5.5. Deauthorize extractor successfully', async () => {
             const { estateToken, admin, admins, extractors } = await beforeEstateTokenTest();
 
             await setupExtractors(estateToken, admin, admins, extractors);
@@ -960,7 +960,7 @@ describe.only('2.4. EstateToken', async () => {
             }            
         });
 
-        it('2.4.6.6. Deauthorize extractor unsuccessfully with unauthorized account', async () => {
+        it('2.4.5.6. Deauthorize extractor unsuccessfully with unauthorized account', async () => {
             const { estateToken, admin, admins, extractors } = await beforeEstateTokenTest();
 
             await setupExtractors(estateToken, admin, admins, extractors);
@@ -981,7 +981,7 @@ describe.only('2.4. EstateToken', async () => {
             )).to.be.revertedWithCustomError(estateToken, `NotAuthorizedAccount`)
         });
 
-        it('2.4.6.7. Deauthorize extractor unsuccessfully when unauthorizing same accounts twice on same tx', async () => {
+        it('2.4.5.7. Deauthorize extractor unsuccessfully when unauthorizing same accounts twice on same tx', async () => {
             const { estateToken, admin, admins, extractors } = await beforeEstateTokenTest();
 
             await setupExtractors(estateToken, admin, admins, extractors);
@@ -1001,7 +1001,7 @@ describe.only('2.4. EstateToken', async () => {
             )).to.be.revertedWithCustomError(estateToken, `NotAuthorizedAccount`)
         });
 
-        it('2.4.6.8. Deauthorize extractor unsuccessfully when unauthorizing same accounts twice on different tx', async () => {
+        it('2.4.5.8. Deauthorize extractor unsuccessfully when unauthorizing same accounts twice on different tx', async () => {
             const { estateToken, admin, admins, extractors } = await beforeEstateTokenTest();
 
             await setupExtractors(estateToken, admin, admins, extractors);
@@ -1030,8 +1030,8 @@ describe.only('2.4. EstateToken', async () => {
         });
     });
     
-    describe('2.4.4. updateZoneRoyaltyRate(uint256, bytes[])', async () => {
-        it('2.4.4.1. updateZoneRoyaltyRate successfully with valid signatures', async () => {
+    describe('2.4.6. updateZoneRoyaltyRate(uint256, bytes[])', async () => {
+        it('2.4.6.1. updateZoneRoyaltyRate successfully with valid signatures', async () => {
             const fixture = await beforeEstateTokenTest();
             const { estateToken, admin, admins, zone1, zone2 } = fixture;
 
@@ -1075,7 +1075,7 @@ describe.only('2.4. EstateToken', async () => {
             });
         });
 
-        it('2.4.4.2. updateZoneRoyaltyRate unsuccessfully with invalid signatures', async () => {
+        it('2.4.6.2. updateZoneRoyaltyRate unsuccessfully with invalid signatures', async () => {
             const fixture = await beforeEstateTokenTest();
             const { estateToken, admin, admins, zone1 } = fixture;
 
@@ -1092,7 +1092,7 @@ describe.only('2.4. EstateToken', async () => {
             )).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('2.4.4.3. updateZoneRoyaltyRate unsuccessfully with invalid rate', async () => {
+        it('2.4.6.3. updateZoneRoyaltyRate unsuccessfully with invalid rate', async () => {
             const fixture = await beforeEstateTokenTest();
             const { estateToken, admin, admins, zone1 } = fixture;
 
@@ -1110,7 +1110,7 @@ describe.only('2.4. EstateToken', async () => {
             )).to.be.revertedWithCustomError(estateToken, 'InvalidRate');
         });
 
-        it.only('2.4.4.4. updateZoneRoyaltyRate unsuccessfully with invalid zone', async () => {
+        it.only('2.4.6.4. updateZoneRoyaltyRate unsuccessfully with invalid zone', async () => {
             const fixture = await beforeEstateTokenTest();
             const { estateToken, admin, admins, zone1 } = fixture;
 
@@ -1138,8 +1138,8 @@ describe.only('2.4. EstateToken', async () => {
         });
     });
 
-    describe('2.4.9. getEstate(uint256)', () => {
-        it('2.4.9.1. succeed with existing estate id', async () => {
+    describe('2.4.7. getEstate(uint256)', () => {
+        it('2.4.7.1. succeed with existing estate id', async () => {
             const { estateToken } = await beforeEstateTokenTest({
                 addSampleEstates: true,                
             });
@@ -1148,7 +1148,7 @@ describe.only('2.4. EstateToken', async () => {
             await estateToken.getEstate(2);
         });
 
-        it('2.4.9.2. revert with non-existing estate id', async () => {
+        it('2.4.7.2. revert with non-existing estate id', async () => {
             const { estateToken } = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -1164,8 +1164,8 @@ describe.only('2.4. EstateToken', async () => {
         });
     });
 
-    describe('2.4.10. isAvailable(uint256)', () => {
-        it('2.4.10.1. return true for existing, not deprecated, and not expired estate', async () => {
+    describe('2.4.8. isAvailable(uint256)', () => {
+        it('2.4.8.1. return true for existing, not deprecated, and not expired estate', async () => {
             const { estateToken } = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -1174,7 +1174,7 @@ describe.only('2.4. EstateToken', async () => {
             expect(await estateToken.isAvailable(2)).to.equal(true);
         });
 
-        it('2.4.10.2. return false for non-existing estate', async () => {
+        it('2.4.8.2. return false for non-existing estate', async () => {
             const { estateToken } = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -1184,7 +1184,7 @@ describe.only('2.4. EstateToken', async () => {
             expect(await estateToken.isAvailable(100)).to.equal(false);
         });
 
-        it('2.4.10.3. return false for deprecated estate', async () => {
+        it('2.4.8.3. return false for deprecated estate', async () => {
             const { estateToken, manager } = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -1198,7 +1198,7 @@ describe.only('2.4. EstateToken', async () => {
             expect(await estateToken.isAvailable(2)).to.equal(false);
         });
 
-        it('2.4.10.4. return false for expired estate', async () => {
+        it('2.4.8.4. return false for expired estate', async () => {
             const { estateToken } = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -1219,7 +1219,7 @@ describe.only('2.4. EstateToken', async () => {
         });
     });
 
-    describe('2.4.7. registerCustodian(bytes32, address, string, Validation)', async () => {
+    describe('2.4.9. registerCustodian(bytes32, address, string, Validation)', async () => {
         async function getRegisterCustodianWithInvalidValidationTx(
             estateToken: EstateToken,
             validator: MockValidator,
@@ -1255,7 +1255,7 @@ describe.only('2.4. EstateToken', async () => {
             return { defaultParams };
         }
 
-        it('2.4.7.1. Register custodian successfully with valid signatures', async () => {
+        it('2.4.9.1. Register custodian successfully with valid signatures', async () => {
             const { estateToken, manager, custodian1, custodian2, zone1, zone2, validator } = await beforeEstateTokenTest({
                 skipRegisterCustodians: true,
             });
@@ -1324,7 +1324,7 @@ describe.only('2.4. EstateToken', async () => {
             expect(await estateToken.isCustodianIn(zone2, custodian1.address)).to.be.true;
         });
 
-        it('2.4.7.2. Register custodian unsuccessfully by non-manager', async () => {
+        it('2.4.9.2. Register custodian unsuccessfully by non-manager', async () => {
             const fixture = await beforeEstateTokenTest({
                 skipRegisterCustodians: true,
             });
@@ -1341,7 +1341,7 @@ describe.only('2.4. EstateToken', async () => {
                 .to.be.revertedWithCustomError(estateToken, `Unauthorized`)
         });
 
-        it('2.4.7.3. Register custodian unsuccessfully with inactive zone', async () => {
+        it('2.4.9.3. Register custodian unsuccessfully with inactive zone', async () => {
             const fixture = await beforeEstateTokenTest({
                 skipRegisterCustodians: true,
             });
@@ -1361,7 +1361,7 @@ describe.only('2.4. EstateToken', async () => {
                 .to.be.revertedWithCustomError(estateToken, `Unauthorized`)                
         });
 
-        it('2.4.7.4. Register custodian unsuccessfully by inactive manager in zone', async () => {
+        it('2.4.9.4. Register custodian unsuccessfully by inactive manager in zone', async () => {
             const fixture = await beforeEstateTokenTest({
                 skipRegisterCustodians: true,
             });
@@ -1381,7 +1381,7 @@ describe.only('2.4. EstateToken', async () => {
                 .to.be.revertedWithCustomError(estateToken, `Unauthorized`)           
         });
 
-        it('2.4.7.5. Register custodian successfully when registering same account twice', async () => {
+        it('2.4.9.5. Register custodian successfully when registering same account twice', async () => {
             const fixture = await beforeEstateTokenTest({
                 skipRegisterCustodians: true,
             });
@@ -1400,7 +1400,7 @@ describe.only('2.4. EstateToken', async () => {
             expect(await estateToken.custodianURI(defaultParams.zone, defaultParams.custodian)).to.equal(params2.uri);
         });
 
-        it('2.4.7.6. Register custodian unsuccessfully with invalid validation', async () => {
+        it('2.4.9.6. Register custodian unsuccessfully with invalid validation', async () => {
             const fixture = await beforeEstateTokenTest({
                 skipRegisterCustodians: true,
             });
@@ -1412,7 +1412,7 @@ describe.only('2.4. EstateToken', async () => {
                 .to.be.revertedWithCustomError(estateToken, `InvalidSignature`);
         });
 
-        it('2.4.7.7. Register custodian unsuccessfully with invalid uri', async () => {
+        it('2.4.9.7. Register custodian unsuccessfully with invalid uri', async () => {
             const fixture = await beforeEstateTokenTest({
                 skipRegisterCustodians: true,
             });
@@ -1429,7 +1429,7 @@ describe.only('2.4. EstateToken', async () => {
         });
     });
 
-    describe('2.4.8. tokenizeEstate(uint256, bytes32, uint256, string, uint40, uint8, address)', async () => {
+    describe('2.4.10. tokenizeEstate(uint256, bytes32, uint256, string, uint40, uint8, address)', async () => {
         async function beforeTokenizeEstateTest(fixture: EstateTokenFixture): Promise<{
             baseTimestamp: number;
             defaultParams: TokenizeEstateParams;
@@ -1449,7 +1449,7 @@ describe.only('2.4. EstateToken', async () => {
             return { baseTimestamp, defaultParams };
         };
 
-        it('2.4.8.1. tokenize estate successfully with commission receiver', async () => {
+        it('2.4.10.1. tokenize estate successfully with commission receiver', async () => {
             const fixture = await beforeEstateTokenTest();
             const { estateToken, estateForger, broker1, commissionToken } = fixture;
             const { baseTimestamp, defaultParams } = await beforeTokenizeEstateTest(fixture);
@@ -1486,7 +1486,7 @@ describe.only('2.4. EstateToken', async () => {
             expect(await commissionToken.ownerOf(1)).to.equal(params.broker);
         });
 
-        it('2.4.8.2. tokenize estate unsuccessfully with unregistered broker', async () => {
+        it('2.4.10.2. tokenize estate unsuccessfully with unregistered broker', async () => {
             const fixture = await beforeEstateTokenTest();
             const { estateToken, estateForger, commissionToken } = fixture;
 
@@ -1504,7 +1504,7 @@ describe.only('2.4. EstateToken', async () => {
                 .to.be.revertedWithCustomError(commissionToken, `InvalidBroker`);
         });
 
-        it('2.4.8.3. tokenize estate unsuccessfully when tokenizer is not authorized', async () => {
+        it('2.4.10.3. tokenize estate unsuccessfully when tokenizer is not authorized', async () => {
             const fixture = await beforeEstateTokenTest({
                 skipAuthorizeEstateForger: true,
             });
@@ -1517,7 +1517,7 @@ describe.only('2.4. EstateToken', async () => {
                 .to.be.revertedWithCustomError(estateToken, `Unauthorized`);
         });
 
-        it('2.4.8.4. tokenize estate unsuccessfully when zone is not declared', async () => {
+        it('2.4.10.4. tokenize estate unsuccessfully when zone is not declared', async () => {
             const fixture = await beforeEstateTokenTest();
             const { admin, admins, estateToken, estateForger } = fixture;
             const { baseTimestamp, defaultParams } = await beforeTokenizeEstateTest(fixture);
@@ -1536,7 +1536,7 @@ describe.only('2.4. EstateToken', async () => {
                 .to.be.revertedWithCustomError(estateToken, `InvalidInput`);
         });
 
-        it('2.4.8.5. tokenize estate unsuccessfully with expired estate', async () => {
+        it('2.4.10.5. tokenize estate unsuccessfully with expired estate', async () => {
             const fixture = await beforeEstateTokenTest();
             const { admin, admins, estateToken, estateForger } = fixture;
             const { baseTimestamp, defaultParams } = await beforeTokenizeEstateTest(fixture);
@@ -1558,7 +1558,7 @@ describe.only('2.4. EstateToken', async () => {
                 .to.be.revertedWithCustomError(estateToken, `InvalidTimestamp`);
         });
 
-        it('2.4.8.6. tokenize estate unsuccessfully when custodian is not registered', async () => {
+        it('2.4.10.6. tokenize estate unsuccessfully when custodian is not registered', async () => {
             const fixture = await beforeEstateTokenTest({
                 skipRegisterCustodians: true,
             });
@@ -1571,7 +1571,7 @@ describe.only('2.4. EstateToken', async () => {
                 .to.be.revertedWithCustomError(estateToken, `InvalidCustodian`);
         })
 
-        it('2.4.8.7. tokenize estate unsuccessfully when commission token is not set', async () => {
+        it('2.4.10.7. tokenize estate unsuccessfully when commission token is not set', async () => {
             const fixture = await beforeEstateTokenTest({
                 skipUpdateCommissionToken: true,
             });
@@ -3010,8 +3010,8 @@ describe.only('2.4. EstateToken', async () => {
         });
     });
 
-    describe('2.4.21. getRoyaltyRate()', () => {
-        it.only('2.4.21.1. return correct royalty rate for available estate', async () => {
+    describe('2.4.22. getRoyaltyRate()', () => {
+        it.only('2.4.22.1. return correct royalty rate for available estate', async () => {
             const { estateToken, zone1, zone2, admins, admin } = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -3042,7 +3042,7 @@ describe.only('2.4. EstateToken', async () => {
             });
         });
 
-        it('2.4.21.2. revert with invalid estate id', async () => {
+        it('2.4.22.2. revert with invalid estate id', async () => {
             const { estateToken } = await beforeEstateTokenTest();
 
             await expect(estateToken.getRoyaltyRate(0))
@@ -3052,7 +3052,7 @@ describe.only('2.4. EstateToken', async () => {
                 .to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
         });
 
-        it('2.4.21.3. revert with unavailable estate', async () => {
+        it('2.4.22.3. revert with unavailable estate', async () => {
             const { estateToken, manager } = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -3064,8 +3064,8 @@ describe.only('2.4. EstateToken', async () => {
         });
     });
 
-    describe('2.4.22. supportsInterface(bytes4)', () => {
-        it('2.4.22.1. return true for appropriate interface', async () => {
+    describe('2.4.23. supportsInterface(bytes4)', () => {
+        it('2.4.23.1. return true for appropriate interface', async () => {
             const fixture = await beforeEstateTokenTest();
             const { estateToken } = fixture;
 

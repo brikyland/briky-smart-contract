@@ -466,8 +466,8 @@ describe('2.1. CommissionToken', async () => {
         });
     });
 
-    describe('2.1.7. commissionInfo(uint256, uint256)', async() => {
-        it('2.1.7.1. return correct commission info for minted token', async () => {
+    describe('2.1.6. commissionInfo(uint256, uint256)', async() => {
+        it('2.1.6.1. return correct commission info for minted token', async () => {
             const { commissionToken, broker1, broker2 } = await beforeCommissionTokenTest({
                 registerSampleBrokers: true,
                 mintSampleTokens: true,
@@ -484,7 +484,7 @@ describe('2.1. CommissionToken', async () => {
             expect(commissionInfo2[1]).to.equal(value2.mul(ethers.utils.parseEther("0.2")).div(Constant.COMMON_RATE_MAX_FRACTION));
         });
 
-        it('2.1.7.2. return default value info for unminted token', async () => {
+        it('2.1.6.2. return default value info for unminted token', async () => {
             const { commissionToken } = await beforeCommissionTokenTest({
                 registerSampleBrokers: true,
                 mintSampleTokens: true,
@@ -502,7 +502,7 @@ describe('2.1. CommissionToken', async () => {
         });
     });
 
-    describe('2.1.8. registerBroker(bytes32, address, uint256)', async () => {
+    describe('2.1.7. registerBroker(bytes32, address, uint256)', async () => {
         async function beforeRegisterBrokerTest(fixture: CommissionTokenFixture): Promise<{
             defaultParams: RegisterBrokerParams,
         }> {
@@ -519,7 +519,7 @@ describe('2.1. CommissionToken', async () => {
             }
         }
 
-        it('2.1.8.1. register broker successfully by manager', async () => {
+        it('2.1.7.1. register broker successfully by manager', async () => {
             const fixture = await beforeCommissionTokenTest();
 
             const { commissionToken, manager, zone1, zone2, broker1, broker2 } = fixture;
@@ -600,7 +600,7 @@ describe('2.1. CommissionToken', async () => {
             expect(structToObject(brokerCommissionRate3)).to.deep.equal(expectedRate3);
         });
 
-        it('2.1.8.3. register broker unsuccessfully by non-manager', async () => {
+        it('2.1.7.2. register broker unsuccessfully by non-manager', async () => {
             const fixture = await beforeCommissionTokenTest();
 
             const { commissionToken, moderator, user } = fixture;
@@ -614,7 +614,7 @@ describe('2.1. CommissionToken', async () => {
                 .to.be.revertedWithCustomError(commissionToken, 'Unauthorized');
         });
 
-        it('2.1.8.4. register broker unsuccessfully with inactive zone', async () => {
+        it('2.1.7.3. register broker unsuccessfully with inactive zone', async () => {
             const fixture = await beforeCommissionTokenTest();
 
             const { commissionToken, manager, zone1, admin, admins } = fixture;
@@ -633,7 +633,7 @@ describe('2.1. CommissionToken', async () => {
                 .to.be.revertedWithCustomError(commissionToken, 'Unauthorized');
         });
 
-        it('2.1.8.5. register broker unsuccessfully by inactive manager in zone', async () => {
+        it('2.1.7.4. register broker unsuccessfully by inactive manager in zone', async () => {
             const fixture = await beforeCommissionTokenTest();
 
             const { commissionToken, manager, zone1, admin, admins } = fixture;
@@ -653,7 +653,7 @@ describe('2.1. CommissionToken', async () => {
                 .to.be.revertedWithCustomError(commissionToken, 'Unauthorized');
         });
 
-        it('2.1.8.6. register broker unsuccessfully with invalid commission rate', async () => {
+        it('2.1.7.5. register broker unsuccessfully with invalid commission rate', async () => {
             const fixture = await beforeCommissionTokenTest();
 
             const { commissionToken, manager } = fixture;
@@ -668,7 +668,7 @@ describe('2.1. CommissionToken', async () => {
                 .to.be.revertedWithCustomError(commissionToken, 'InvalidRate');
         });
 
-        it('2.1.8.8. register broker unsuccessfully when broker is already registered', async () => {
+        it('2.1.7.6. register broker unsuccessfully when broker is already registered', async () => {
             const fixture = await beforeCommissionTokenTest({
                 registerSampleBrokers: true,
             });
@@ -682,7 +682,7 @@ describe('2.1. CommissionToken', async () => {
         });
     });
 
-    describe('2.1.9. activateBroker(bytes32, address, bool)', async () => {
+    describe('2.1.8. activateBroker(bytes32, address, bool)', async () => {
         async function beforeActivateBrokerTest(fixture: CommissionTokenFixture): Promise<{
             defaultParams: ActivateBrokerParams,
         }> {
@@ -699,7 +699,7 @@ describe('2.1. CommissionToken', async () => {
             }
         }
 
-        it('2.1.9.1. deactivate/activate broker successfully by manager', async () => {
+        it('2.1.8.1. deactivate/activate broker successfully by manager', async () => {
             const fixture = await beforeCommissionTokenTest({
                 registerSampleBrokers: true,
             });
@@ -743,7 +743,7 @@ describe('2.1. CommissionToken', async () => {
             expect(await commissionToken.isActiveIn(zone2, broker2.address)).to.equal(true);
         });
 
-        it('2.1.9.2. activate broker unsuccessfully by non-manager', async () => {
+        it('2.1.8.2. activate broker unsuccessfully by non-manager', async () => {
             const fixture = await beforeCommissionTokenTest();
 
             const { commissionToken, moderator, user } = fixture;
@@ -757,7 +757,7 @@ describe('2.1. CommissionToken', async () => {
                 .to.be.revertedWithCustomError(commissionToken, 'Unauthorized');
         });
 
-        it('2.1.9.3. activate broker unsuccessfully with inactive zone', async () => {
+        it('2.1.8.3. activate broker unsuccessfully with inactive zone', async () => {
             const fixture = await beforeCommissionTokenTest();
 
             const { commissionToken, manager, zone1, admin, admins } = fixture;
@@ -776,7 +776,7 @@ describe('2.1. CommissionToken', async () => {
                 .to.be.revertedWithCustomError(commissionToken, 'Unauthorized');
         });
 
-        it('2.1.9.4. activate broker unsuccessfully by inactive manager in zone', async () => {
+        it('2.1.8.4. activate broker unsuccessfully by inactive manager in zone', async () => {
             const fixture = await beforeCommissionTokenTest();
 
             const { commissionToken, manager, zone1, admin, admins } = fixture;
@@ -797,7 +797,7 @@ describe('2.1. CommissionToken', async () => {
         });
     });
 
-    describe('2.1.10. mint(bytes32, address, uint256)', async () => {
+    describe('2.1.9. mint(bytes32, address, uint256)', async () => {
         async function beforeMintTest(fixture: CommissionTokenFixture): Promise<{
             defaultParams: MintParams,
         }> {
@@ -814,7 +814,7 @@ describe('2.1. CommissionToken', async () => {
             }
         }
 
-        it('2.1.10.1. mint successfully by estateToken contract', async () => {
+        it('2.1.9.1. mint successfully by estateToken contract', async () => {
             const { estateToken, commissionToken, zone1, zone2, broker1, broker2 } = await beforeCommissionTokenTest({
                 registerSampleBrokers: true,
             });
@@ -868,7 +868,7 @@ describe('2.1. CommissionToken', async () => {
             );
         });
 
-        it('2.1.10.2. mint unsuccessfully when sender is not estateToken contract', async () => {
+        it('2.1.9.2. mint unsuccessfully when sender is not estateToken contract', async () => {
             const fixture = await beforeCommissionTokenTest({
                 registerSampleBrokers: true,
             });
@@ -896,7 +896,7 @@ describe('2.1. CommissionToken', async () => {
             )).to.be.revertedWithCustomError(commissionToken, 'Unauthorized');
         });
 
-        it('2.1.10.3. mint unsuccessfully when already minted', async () => {
+        it('2.1.9.3. mint unsuccessfully when already minted', async () => {
             const fixture = await beforeCommissionTokenTest({
                 registerSampleBrokers: true,
             });
@@ -922,7 +922,7 @@ describe('2.1. CommissionToken', async () => {
                 .to.be.revertedWithCustomError(commissionToken, 'AlreadyMinted');
         });
 
-        it('2.1.10.4. mint unsuccessfully when zone is inactive', async () => {
+        it('2.1.9.4. mint unsuccessfully when zone is inactive', async () => {
             const fixture = await beforeCommissionTokenTest({
                 registerSampleBrokers: true,
             });
@@ -943,7 +943,7 @@ describe('2.1. CommissionToken', async () => {
                 .to.be.revertedWithCustomError(commissionToken, 'InvalidZone');
         });
 
-        it('2.1.10.5. mint unsuccessfully when broker not registered', async () => {
+        it('2.1.9.5. mint unsuccessfully when broker not registered', async () => {
             const fixture = await beforeCommissionTokenTest();
 
             const { commissionToken, estateToken } = fixture;
@@ -954,7 +954,7 @@ describe('2.1. CommissionToken', async () => {
                 .to.be.revertedWithCustomError(commissionToken, 'InvalidBroker');
         });
 
-        it('2.1.10.6. mint unsuccessfully when broker is deactivated', async () => {
+        it('2.1.9.6. mint unsuccessfully when broker is deactivated', async () => {
             const fixture = await beforeCommissionTokenTest({
                 registerSampleBrokers: true,
             });
@@ -974,8 +974,8 @@ describe('2.1. CommissionToken', async () => {
         });
     });
 
-    describe('2.1.11. getRoyaltyRate(uint256)', async () => {
-        it('2.1.11.1. return fixed royalty rate for all token', async () => {
+    describe('2.1.10. getRoyaltyRate(uint256)', async () => {
+        it('2.1.10.1. return fixed royalty rate for all token', async () => {
             const { commissionToken } = await beforeCommissionTokenTest({
                 registerSampleBrokers: true,
                 mintSampleTokens: true,
@@ -995,8 +995,8 @@ describe('2.1. CommissionToken', async () => {
         });
     });
 
-    describe('2.1.12. royaltyInfo(uint256, uint256)', async () => {
-        it('2.1.12.1. return correct royalty info', async () => {
+    describe('2.1.11. royaltyInfo(uint256, uint256)', async () => {
+        it('2.1.11.1. return correct royalty info', async () => {
             const { commissionToken, feeReceiver } = await beforeCommissionTokenTest({
                 registerSampleBrokers: true,
                 mintSampleTokens: true,
@@ -1019,8 +1019,8 @@ describe('2.1. CommissionToken', async () => {
         });
     });
 
-    describe('2.1.13. supportsInterface(bytes4)', async () => {
-        it('2.1.13.1. return true for appropriate interface', async () => {
+    describe('2.1.12. supportsInterface(bytes4)', async () => {
+        it('2.1.12.1. return true for appropriate interface', async () => {
             const { commissionToken } = await beforeCommissionTokenTest();
 
             const IERC4906Upgradeable = IERC4906Upgradeable__factory.createInterface();
