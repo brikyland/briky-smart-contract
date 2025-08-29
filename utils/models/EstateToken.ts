@@ -16,7 +16,7 @@ export interface RegisterCustodianParams {
 export interface TokenizeEstateParams {
     totalSupply: BigNumber;
     zone: string;
-    tokenizationId: number;
+    tokenizationId: BigNumber;
     uri: string;
     expireAt: number;
     custodian: string;

@@ -14,7 +14,7 @@ import {
     PriceWatcher,
     ReserveVault,
 } from '@typechain-types';
-import { callTransaction, getBalance, prepareERC20, prepareNativeToken, resetERC20, resetNativeToken, testReentrancy } from '@utils/blockchain';
+import { callTransaction, getBalance, prepareERC20, prepareNativeToken, randomWallet, resetERC20, resetNativeToken, testReentrancy } from '@utils/blockchain';
 import { Constant } from '@tests/test.constant';
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
@@ -35,7 +35,7 @@ import { randomInt } from 'crypto';
 import { getInterfaceID, randomArrayWithSum, randomBigNumber } from '@utils/utils';
 import { OrderedMap } from '@utils/utils';
 import { deployEstateMarketplace } from '@utils/deployments/lux/estateMarketplace';
-import { callEstateToken_AuthorizeTokenizers, callEstateToken_UpdateCommissionToken, callEstateToken_UpdateRoyaltyRate } from '@utils/callWithSignatures/estateToken';
+import { callEstateToken_AuthorizeTokenizers, callEstateToken_UpdateCommissionToken, callEstateToken_UpdateZoneRoyaltyRate } from '@utils/callWithSignatures/estateToken';
 import { callEstateMarketplace_Pause } from '@utils/callWithSignatures/estateMarketplace';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployReentrancyERC1155Holder } from '@utils/deployments/mock/mockReentrancy/reentrancyERC1155Holder';
@@ -45,7 +45,8 @@ import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
 import { deployReserveVault } from '@utils/deployments/common/reserveVault';
 import { MockValidator } from '@utils/mockValidator';
 import { RegisterCustodianParams } from '@utils/models/EstateToken';
-import { getRegisterCustodianTx } from '@utils/transaction/EstateToken';
+import { getCallTokenizeEstateTx, getRegisterCustodianTx } from '@utils/transaction/EstateToken';
+import { getRegisterBrokerTx } from '@utils/transaction/CommissionToken';
 
 interface EstateMarketplaceFixture {
     admin: Admin;
@@ -67,9 +68,12 @@ interface EstateMarketplaceFixture {
     buyer2: any;
     custodian1: any;
     custodian2: any;
-    commissionReceiver: any;
+    broker1: any;
+    broker2: any;
     manager: any;
     moderator: any;
+    zone1: any;
+    zone2: any;
     mockCurrencyExclusiveRate: BigNumber;
 }
 
@@ -104,11 +108,12 @@ describe('6.2. EstateMarketplace', async () => {
         const seller2 = accounts[Constant.ADMIN_NUMBER + 2];
         const buyer1 = accounts[Constant.ADMIN_NUMBER + 3];
         const buyer2 = accounts[Constant.ADMIN_NUMBER + 4];
-        const commissionReceiver = accounts[Constant.ADMIN_NUMBER + 5];
-        const manager = accounts[Constant.ADMIN_NUMBER + 6];
-        const moderator = accounts[Constant.ADMIN_NUMBER + 7];
-        const custodian1 = accounts[Constant.ADMIN_NUMBER + 8];
-        const custodian2 = accounts[Constant.ADMIN_NUMBER + 9];
+        const broker1 = accounts[Constant.ADMIN_NUMBER + 5];
+        const broker2 = accounts[Constant.ADMIN_NUMBER + 6];
+        const manager = accounts[Constant.ADMIN_NUMBER + 7];
+        const moderator = accounts[Constant.ADMIN_NUMBER + 8];
+        const custodian1 = accounts[Constant.ADMIN_NUMBER + 9];
+        const custodian2 = accounts[Constant.ADMIN_NUMBER + 10];
 
         const adminAddresses: string[] = admins.map(signer => signer.address);
         const admin = await deployAdmin(
@@ -188,6 +193,9 @@ describe('6.2. EstateMarketplace', async () => {
             commissionToken.address,
         ) as EstateMarketplace;
 
+        const zone1 = ethers.utils.formatBytes32String("TestZone1");
+        const zone2 = ethers.utils.formatBytes32String("TestZone2");
+
         return {
             admin,
             feeReceiver,
@@ -207,9 +215,12 @@ describe('6.2. EstateMarketplace', async () => {
             buyer2,
             custodian1,
             custodian2,
-            commissionReceiver,
+            broker1,
+            broker2,
             manager,
             moderator,
+            zone1,
+            zone2,
             mockCurrencyExclusiveRate,
         };
     };
@@ -223,12 +234,12 @@ describe('6.2. EstateMarketplace', async () => {
     } = {}): Promise<EstateMarketplaceFixture> {
         const fixture = await loadFixture(estateMarketplaceFixture);
 
-        const { admin, admins, currency, estateToken, commissionToken, estateMarketplace, seller1, seller2, buyer1, buyer2, estateForger, commissionReceiver, manager, moderator, custodian1, custodian2, validator } = fixture;
+        const { admin, admins, currency, estateToken, commissionToken, estateMarketplace, seller1, seller2, buyer1, buyer2, estateForger, manager, moderator, custodian1, custodian2, broker1, broker2, zone1, zone2, validator } = fixture;
 
         await callAdmin_DeclareZones(
             admin,
             admins,
-            [ethers.utils.formatBytes32String("TestZone")],
+            [zone1, zone2],
             true,
             await admin.nonce(),
         );
@@ -261,23 +272,38 @@ describe('6.2. EstateMarketplace', async () => {
             await admin.nonce(),
         );
 
-        await callAdmin_ActivateIn(
-            admin,
-            admins,
-            ethers.utils.formatBytes32String("TestZone"),
-            [manager.address, moderator.address],
-            true,
-            await admin.nonce(),
-        );
-
-        for (const custodian of [custodian1, custodian2]) {
-            const params: RegisterCustodianParams = {
-                zone: ethers.utils.formatBytes32String("TestZone"),
-                custodian: custodian.address,
-                uri: "TestURI",
-            };
-            await callTransaction(getRegisterCustodianTx(estateToken as any, validator, manager, params))
+        for (const zone of [zone1, zone2]) {
+            await callAdmin_ActivateIn(
+                admin,
+                admins,
+                zone,
+                [manager.address, moderator.address],
+                true,
+                await admin.nonce(),
+            );
         }
+
+        for (const zone of [zone1, zone2]) {
+            for (const custodian of [custodian1, custodian2]) {
+                const params: RegisterCustodianParams = {
+                    zone,
+                    custodian: custodian.address,
+                    uri: "TestURI",
+                };
+                await callTransaction(getRegisterCustodianTx(estateToken as any, validator, manager, params))
+            }
+        }
+
+        await callTransaction(getRegisterBrokerTx(commissionToken as any, manager, {
+            zone: zone1,
+            broker: broker1.address,
+            commissionRate: ethers.utils.parseEther("0.1"),
+        }));
+        await callTransaction(getRegisterBrokerTx(commissionToken as any, manager, {
+            zone: zone2,
+            broker: broker2.address,
+            commissionRate: ethers.utils.parseEther("0.2"),
+        }));
 
         let currentTimestamp = await time.latest();
         
@@ -296,25 +322,25 @@ describe('6.2. EstateMarketplace', async () => {
 
             await time.setNextBlockTimestamp(currentTimestamp);
 
-            await estateForger.call(estateToken.address, estateToken.interface.encodeFunctionData('tokenizeEstate', [
-                0,
-                ethers.utils.formatBytes32String("TestZone"),
-                10,
-                "Token1_URI",
-                currentTimestamp + 1e8,
-                custodian1.address,
-                commissionReceiver.address,
-            ]));
+            await callTransaction(getCallTokenizeEstateTx(estateToken as any, estateForger, {
+                totalSupply: BigNumber.from(0),
+                zone: zone1,
+                tokenizationId: BigNumber.from(10),
+                uri: "Token1_URI",
+                expireAt: currentTimestamp + 1e8,
+                custodian: custodian1.address,
+                broker: broker1.address,
+            }))
 
-            await estateForger.call(estateToken.address, estateToken.interface.encodeFunctionData('tokenizeEstate', [
-                0,
-                ethers.utils.formatBytes32String("TestZone"),
-                10,
-                "Token2_URI",
-                currentTimestamp + 2e8,
-                custodian2.address,
-                commissionReceiver.address,
-            ]));
+            await callTransaction(getCallTokenizeEstateTx(estateToken as any, estateForger, {
+                totalSupply: BigNumber.from(0),
+                zone: zone2,
+                tokenizationId: BigNumber.from(10),
+                uri: "Token2_URI",
+                expireAt: currentTimestamp + 2e8,
+                custodian: custodian2.address,
+                broker: broker2.address,
+            }))
 
             estateToken.isAvailable.whenCalledWith(1).returns(true);
             estateToken.isAvailable.whenCalledWith(2).returns(true);
@@ -570,16 +596,28 @@ describe('6.2. EstateMarketplace', async () => {
         isDivisible: boolean,
         isSafeBuy: boolean,
     ) {
-        const hasCommissionReceiver = true;
-        const { deployer, estateForger, estateToken, estateMarketplace, feeReceiver, commissionToken, commissionReceiver, admins, admin, custodian1 } = fixture;
+        const { deployer, estateForger, estateToken, estateMarketplace, feeReceiver, commissionToken, zone1, admins, admin, custodian1, manager } = fixture;
         const decimals = Constant.ESTATE_TOKEN_MAX_DECIMALS;
 
-        await callEstateToken_UpdateRoyaltyRate(estateToken, admins, estateTokenRoyaltyRate, await admin.nonce());
+        const zone = zone1;
+        const broker = randomWallet();
+
+        await callEstateToken_UpdateZoneRoyaltyRate(
+            estateToken as any,
+            admins,
+            zone,
+            estateTokenRoyaltyRate,
+            await admin.nonce()
+        );
 
         const currentEstateId = (await estateToken.estateNumber()).add(1);
         const currentOfferId = (await estateMarketplace.offerNumber()).add(1);
 
-        commissionToken.setVariable("commissionRate", commissionRate);
+        await callTransaction(getRegisterBrokerTx(commissionToken as any, manager, {
+            zone,
+            broker: broker.address,
+            commissionRate,
+        }));
 
         let newCurrency: Currency | undefined;
         let newCurrencyAddress: string;
@@ -595,7 +633,6 @@ describe('6.2. EstateMarketplace', async () => {
         } else {
             newCurrencyAddress = ethers.constants.AddressZero;
         }
-        let commissionReceiverAddress = (hasCommissionReceiver) ? commissionReceiver.address : ethers.constants.AddressZero;
 
         await callAdmin_UpdateCurrencyRegistries(
             admin,
@@ -608,15 +645,16 @@ describe('6.2. EstateMarketplace', async () => {
 
         let currentTimestamp = await time.latest();
 
-        await callTransaction(estateForger.call(estateToken.address, estateToken.interface.encodeFunctionData("tokenizeEstate", [
-            0,
-            ethers.utils.formatBytes32String("TestZone"),
-            0,
-            `Token_${currentEstateId}`,
-            currentTimestamp + 1e8,
-            custodian1.address,
-            commissionReceiverAddress,
-        ])));
+        await callTransaction(getCallTokenizeEstateTx(estateToken as any, estateForger, {
+            totalSupply: BigNumber.from(0),
+            zone,
+            tokenizationId: BigNumber.from(0),
+            uri: `Token_${currentEstateId}`,
+            expireAt: currentTimestamp + 1e8,
+            custodian: custodian1.address,
+            broker: broker.address,
+        }));
+
         await callTransaction(estateToken.mint(seller.address, currentEstateId, initialAmount));
 
         await callTransaction(estateMarketplace.connect(seller).list(
@@ -634,15 +672,11 @@ describe('6.2. EstateMarketplace', async () => {
             const amount = ogAmount || offerAmount.sub(totalSold);
 
             let value = amount.mul(unitPrice).div(ethers.BigNumber.from(10).pow(decimals));
-            let royaltyReceiver = feeReceiver.address;
             let royaltyAmount = value.mul(estateTokenRoyaltyRate).div(Constant.COMMON_RATE_MAX_FRACTION);
             if (isExclusive) {
                 royaltyAmount = royaltyAmount.sub(royaltyAmount.mul(mockCurrencyExclusiveRate).div(Constant.COMMON_RATE_MAX_FRACTION));
             }
-            let commissionAmount = ethers.BigNumber.from(0);
-            if (hasCommissionReceiver) {
-                commissionAmount = royaltyAmount.mul(commissionRate).div(Constant.COMMON_RATE_MAX_FRACTION);
-            }
+            let commissionAmount = royaltyAmount.mul(commissionRate).div(Constant.COMMON_RATE_MAX_FRACTION);
             let total = value.add(royaltyAmount);
 
             let ethValue = ethers.BigNumber.from(0);
@@ -659,7 +693,7 @@ describe('6.2. EstateMarketplace', async () => {
             let initBuyerBalance = await getBalance(ethers.provider, buyer.address, newCurrency);
             let initSellerBalance = await getBalance(ethers.provider, seller.address, newCurrency);
             let initFeeReceiverBalance = await getBalance(ethers.provider, feeReceiver.address, newCurrency);
-            let initCommissionReceiverBalance = await getBalance(ethers.provider, commissionReceiverAddress, newCurrency);
+            let initBrokerBalance = await getBalance(ethers.provider, broker.address, newCurrency);
 
             let tx;
             if (ogAmount === null) {
@@ -696,7 +730,7 @@ describe('6.2. EstateMarketplace', async () => {
             let expectedBuyerBalance = initBuyerBalance.sub(total);
             let expectedSellerBalance = initSellerBalance.add(value);
             let expectedFeeReceiverBalance = initFeeReceiverBalance.add(royaltyAmount.sub(commissionAmount));
-            let expectedCommissionReceiverBalance = initCommissionReceiverBalance.add(commissionAmount);
+            let expectedBrokerBalance = initBrokerBalance.add(commissionAmount);
 
             if (!isERC20) {
                 const gasFee = receipt.gasUsed.mul(receipt.effectiveGasPrice);
@@ -704,7 +738,7 @@ describe('6.2. EstateMarketplace', async () => {
             }
 
             await expect(tx).to.emit(estateMarketplace, 'CommissionDispatch').withArgs(
-                commissionReceiverAddress,
+                broker.address,
                 commissionAmount,
                 newCurrencyAddress,
             );
@@ -734,17 +768,12 @@ describe('6.2. EstateMarketplace', async () => {
             expect(await getBalance(ethers.provider, buyer.address, newCurrency)).to.equal(expectedBuyerBalance);
             expect(await getBalance(ethers.provider, seller.address, newCurrency)).to.equal(expectedSellerBalance);
             expect(await getBalance(ethers.provider, feeReceiver.address, newCurrency)).to.equal(expectedFeeReceiverBalance);
-            if (hasCommissionReceiver) {
-                expect(await getBalance(ethers.provider, commissionReceiverAddress, newCurrency)).to.equal(expectedCommissionReceiverBalance);
-            }
+            expect(await getBalance(ethers.provider, broker.address, newCurrency)).to.equal(expectedBrokerBalance);
 
             expect(await estateToken.balanceOf(seller.address, currentEstateId)).to.equal(initialAmount.sub(totalSold));
             expect(await estateToken.balanceOf(buyer.address, currentEstateId)).to.equal(totalBoughtOfBuyer);
 
-            let walletsToReset = [seller, buyer, feeReceiver];
-            if (hasCommissionReceiver) {
-                walletsToReset.push(commissionReceiver);
-            }
+            let walletsToReset = [seller, buyer, feeReceiver, broker];
             if (isERC20) {
                 await resetERC20(newCurrency!, walletsToReset);
             } else {
@@ -770,7 +799,7 @@ describe('6.2. EstateMarketplace', async () => {
                     await testBuyOffer(
                         fixture,
                         mockCurrencyExclusiveRate,
-                        LandInitialization.COMMISSION_TOKEN_CommissionRate,
+                        ethers.utils.parseEther("0.1"),
                         LandInitialization.ESTATE_TOKEN_RoyaltyRate,
                         isERC20,
                         isExclusive,
@@ -829,7 +858,7 @@ describe('6.2. EstateMarketplace', async () => {
             await testBuyOffer(
                 fixture,
                 mockCurrencyExclusiveRate,
-                LandInitialization.COMMISSION_TOKEN_CommissionRate,
+                ethers.utils.parseEther("0.1"),
                 LandInitialization.ESTATE_TOKEN_RoyaltyRate,
                 false,
                 false,
@@ -845,7 +874,7 @@ describe('6.2. EstateMarketplace', async () => {
             await testBuyOffer(
                 fixture,
                 mockCurrencyExclusiveRate,
-                LandInitialization.COMMISSION_TOKEN_CommissionRate,
+                ethers.utils.parseEther("0.1"),
                 LandInitialization.ESTATE_TOKEN_RoyaltyRate,
                 true,
                 true,
@@ -947,7 +976,7 @@ describe('6.2. EstateMarketplace', async () => {
                     await testBuyOffer(
                         fixture,
                         mockCurrencyExclusiveRate,
-                        LandInitialization.COMMISSION_TOKEN_CommissionRate,
+                        ethers.utils.parseEther("0.1"),
                         LandInitialization.ESTATE_TOKEN_RoyaltyRate,
                         isERC20,
                         isExclusive,
@@ -1173,7 +1202,7 @@ describe('6.2. EstateMarketplace', async () => {
             const { estateMarketplace, buyer1 } = fixture;
 
             await expect(estateMarketplace.connect(buyer1)["buy(uint256,uint256)"](1, 100_000))
-                .to.be.revertedWithCustomError(estateMarketplace, "FailedTransfer");
+                .to.be.revertedWithCustomError(estateMarketplace, "InsufficientValue");
         });
 
         it('6.2.5.11. buy token unsuccessfully when native token transfer to seller failed', async () => {
@@ -1221,17 +1250,17 @@ describe('6.2. EstateMarketplace', async () => {
                 .to.be.revertedWithCustomError(estateMarketplace, "FailedTransfer");
         });
 
-        it('6.2.5.13. buy token unsuccessfully when native token transfer to commission receiver failed', async () => {
+        it('6.2.5.13. buy token unsuccessfully when native token transfer to broker failed', async () => {
             const fixture = await beforeEstateMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleEstateToken: true,
             });
-            const { estateMarketplace, seller1, buyer1, deployer, estateToken, commissionToken, commissionReceiver } = fixture;
+            const { estateMarketplace, seller1, buyer1, deployer, estateToken, commissionToken, broker2 } = fixture;
 
             const failReceiver = await deployFailReceiver(deployer, true, false);
 
-            await callTransaction(commissionToken.connect(commissionReceiver).transferFrom(
-                commissionReceiver.address,
+            await callTransaction(commissionToken.connect(broker2).transferFrom(
+                broker2.address,
                 failReceiver.address,
                 2,
             ));
@@ -1312,7 +1341,7 @@ describe('6.2. EstateMarketplace', async () => {
                     await testBuyOffer(
                         fixture,
                         mockCurrencyExclusiveRate,
-                        LandInitialization.COMMISSION_TOKEN_CommissionRate,
+                        ethers.utils.parseEther("0.1"),
                         LandInitialization.ESTATE_TOKEN_RoyaltyRate,
                         isERC20,
                         isExclusive,
@@ -1377,7 +1406,7 @@ describe('6.2. EstateMarketplace', async () => {
                     await testBuyOffer(
                         fixture,
                         mockCurrencyExclusiveRate,
-                        LandInitialization.COMMISSION_TOKEN_CommissionRate,
+                        ethers.utils.parseEther("0.1"),
                         LandInitialization.ESTATE_TOKEN_RoyaltyRate,
                         isERC20,
                         isExclusive,

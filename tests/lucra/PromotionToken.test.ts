@@ -17,7 +17,7 @@ import { Constant } from '@tests/test.constant';
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 
-import { getBytes4Hex, getInterfaceID } from '@utils/utils';
+import { getBytes4Hex, getInterfaceID, structToObject } from '@utils/utils';
 import { Initialization } from './test.initialization';
 import { callPromotionToken_CancelContents, callPromotionToken_CreateContents, callPromotionToken_Pause } from '@utils/callWithSignatures/promotionToken';
 import { deployPromotionToken } from '@utils/deployments/lucra/promotionToken';
@@ -141,14 +141,22 @@ describe('5.2. PromotionToken', async () => {
             const fee = await promotionToken.fee();
             expect(fee).to.equal(Initialization.PROMOTION_TOKEN_Fee);
 
-            const royaltyRate = await promotionToken.getRoyaltyRate();
+            const royaltyRate = await promotionToken.getRoyaltyRate(0);
             expect(royaltyRate.value).to.equal(Initialization.PROMOTION_TOKEN_RoyaltyRate);
             expect(royaltyRate.decimals).to.equal(Constant.COMMON_RATE_DECIMALS);
 
             const tx = promotionToken.deployTransaction;
             await expect(tx).to
                 .emit(promotionToken, 'FeeUpdate').withArgs(Initialization.PROMOTION_TOKEN_Fee)
-                .emit(promotionToken, 'RoyaltyRateUpdate').withArgs(Initialization.PROMOTION_TOKEN_RoyaltyRate);
+                .emit(promotionToken, 'RoyaltyRateUpdate').withArgs(
+                    (rate: any) => {
+                        expect(structToObject(rate)).to.deep.equal({
+                            value: Initialization.PROMOTION_TOKEN_RoyaltyRate,
+                            decimals: Constant.COMMON_RATE_DECIMALS,
+                        });
+                        return true;
+                    }
+                );
         });
 
         it('5.2.1.2. Deploy unsuccessfully with invalid royalty rate', async () => {
@@ -218,9 +226,17 @@ describe('5.2. PromotionToken', async () => {
 
             await expect(tx).to
                 .emit(promotionToken, 'RoyaltyRateUpdate')
-                .withArgs(ethers.utils.parseEther('0.2'));
+                .withArgs(
+                    (rate: any) => {
+                        expect(structToObject(rate)).to.deep.equal({
+                            value: ethers.utils.parseEther('0.2'),
+                            decimals: Constant.COMMON_RATE_DECIMALS,
+                        });
+                        return true;
+                    }
+                );
 
-            const royaltyRate = await promotionToken.getRoyaltyRate();
+            const royaltyRate = await promotionToken.getRoyaltyRate(0);
             expect(royaltyRate.value).to.equal(ethers.utils.parseEther('0.2'));
             expect(royaltyRate.decimals).to.equal(Constant.COMMON_RATE_DECIMALS);
         });

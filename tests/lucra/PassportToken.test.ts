@@ -19,13 +19,14 @@ import { deployPassportToken } from '@utils/deployments/lucra/passportToken';
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 
 import { Contract } from 'ethers';
-import { getBytes4Hex, getInterfaceID } from '@utils/utils';
+import { getBytes4Hex, getInterfaceID, structToObject } from '@utils/utils';
 import { Initialization } from './test.initialization';
 import { callPassportToken_Pause } from '@utils/callWithSignatures/passportToken';
 import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
 import { deployCurrency } from '@utils/deployments/common/currency';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
+import { Rate } from '@utils/models/Common';
 
 interface PassportTokenFixture {
     admin: Admin;
@@ -146,7 +147,7 @@ describe('5.1. PassportToken', async () => {
             const fee = await passportToken.fee();
             expect(fee).to.equal(Initialization.PASSPORT_TOKEN_Fee);
 
-            const royaltyRate = await passportToken.getRoyaltyRate();
+            const royaltyRate = await passportToken.getRoyaltyRate(0);
             expect(royaltyRate.value).to.equal(Initialization.PASSPORT_TOKEN_RoyaltyRate);
             expect(royaltyRate.decimals).to.equal(Constant.COMMON_RATE_DECIMALS);
 
@@ -154,7 +155,15 @@ describe('5.1. PassportToken', async () => {
             await expect(tx).to
                 .emit(passportToken, 'BaseURIUpdate').withArgs(Initialization.PASSPORT_TOKEN_BaseURI)
                 .emit(passportToken, 'FeeUpdate').withArgs(Initialization.PASSPORT_TOKEN_Fee)
-                .emit(passportToken, 'RoyaltyRateUpdate').withArgs(Initialization.PASSPORT_TOKEN_RoyaltyRate);
+                .emit(passportToken, 'RoyaltyRateUpdate').withArgs(
+                    (rate: any) => {
+                        expect(structToObject(rate)).to.deep.equal({
+                            value: Initialization.PASSPORT_TOKEN_RoyaltyRate,
+                            decimals: Constant.COMMON_RATE_DECIMALS,
+                        });
+                        return true;
+                    }
+                );
         });
 
         it('5.1.1.2. Deploy unsuccessfully with invalid royalty rate', async () => {
@@ -265,9 +274,17 @@ describe('5.1. PassportToken', async () => {
 
             await expect(tx).to
                 .emit(passportToken, 'RoyaltyRateUpdate')
-                .withArgs(ethers.utils.parseEther('0.2'));
+                .withArgs(
+                    (rate: any) => {
+                        expect(structToObject(rate)).to.deep.equal({
+                            value: ethers.utils.parseEther('0.2'),
+                            decimals: Constant.COMMON_RATE_DECIMALS,
+                        });
+                        return true;
+                    }
+                );
 
-            const royaltyRate = await passportToken.getRoyaltyRate();
+            const royaltyRate = await passportToken.getRoyaltyRate(0);
             expect(royaltyRate.value).to.equal(ethers.utils.parseEther('0.2'));
             expect(royaltyRate.decimals).to.equal(Constant.COMMON_RATE_DECIMALS);
         });
