@@ -143,7 +143,6 @@ async function deployAll() {
         LendInitialization.MORTGAGE_TOKEN_Symbol,
         LendInitialization.MORTGAGE_TOKEN_BaseURI,
         LendInitialization.MORTGAGE_TOKEN_FeeRate,
-        LendInitialization.MORTGAGE_TOKEN_RoyaltyRate,
     ) as MortgageToken;
     console.log(`${networkName}_MORTGAGE_TOKEN_ADDRESS=${mortgageToken.address}`);
 

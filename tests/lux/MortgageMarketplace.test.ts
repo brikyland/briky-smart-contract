@@ -11,8 +11,12 @@ import {
     MockEstateToken__factory,
     MockMortgageToken__factory,
     CommissionToken__factory,
+    EstateForger,
+    ReserveVault,
+    PriceWatcher,
+    MockEstateForger,
 } from '@typechain-types';
-import { callTransaction, prepareERC20, prepareNativeToken, resetERC20, resetNativeToken, testReentrancy } from '@utils/blockchain';
+import { callTransaction, prepareERC20, prepareNativeToken, randomWallet, resetERC20, resetNativeToken, testReentrancy } from '@utils/blockchain';
 import { Constant } from '@tests/test.constant';
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
@@ -26,6 +30,7 @@ import {
     callAdmin_AuthorizeManagers,
     callAdmin_AuthorizeModerators,
     callAdmin_UpdateCurrencyRegistries,
+    callAdmin_ActivateIn,
 } from '@utils/callWithSignatures/admin';
 import { BigNumber } from 'ethers';
 import { randomInt } from 'crypto';
@@ -36,22 +41,30 @@ import { deployMortgageMarketplace } from '@utils/deployments/lux/mortgageMarket
 import { callMortgageMarketplace_Pause } from '@utils/callWithSignatures/mortgageMarketplace';
 import { Contract } from 'ethers';
 import { LoanState, MortgageMarketplaceOfferState } from '@utils/models/enums';
-import { callMortgageToken_UpdateRoyaltyRate } from '@utils/callWithSignatures/mortgageToken';
 import { getBalance } from '@utils/blockchain';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
 import { Initialization as LandInitialization } from '@tests/land/test.initialization';
 import { Initialization as LendInitialization } from '@tests/lend/test.initialization';
 import { MockValidator } from '@utils/mockValidator';
+import { getRegisterBrokerTx } from '@utils/transaction/CommissionToken';
+import { getCallTokenizeEstateTx, getRegisterCustodianTx } from '@utils/transaction/EstateToken';
+import { deployEstateForger } from '@utils/deployments/land/estateForger';
+import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
+import { deployReserveVault } from '@utils/deployments/common/reserveVault';
+import { RegisterCustodianParams } from '@utils/models/EstateToken';
+import { deployMockEstateForger } from '@utils/deployments/mock/mockEstateForger';
+import { callEstateToken_AuthorizeTokenizers, callEstateToken_UpdateCommissionToken, callEstateToken_UpdateZoneRoyaltyRate } from '@utils/callWithSignatures/estateToken';
 
 interface MortgageMarketplaceFixture {
     admin: Admin;
     feeReceiver: FeeReceiver;
     currency: Currency;
+    estateForger: MockEstateForger;
     estateToken: MockContract<MockEstateToken>;
     commissionToken: MockContract<CommissionToken>;
     mortgageToken: MockContract<MockMortgageToken>;
-    mortgageMarketplace: MortgageMarketplace;
+    mortgageMarketplace: MortgageMarketplace;    
     validator: MockValidator;
 
     deployer: any;
@@ -62,10 +75,16 @@ interface MortgageMarketplaceFixture {
     seller2: any;
     buyer1: any;
     buyer2: any;
+    broker1: any;
+    broker2: any;
+    custodian1: any;
+    custodian2: any;
     manager: any;
     moderator: any;
-    commissionReceiver: any;
     mockCurrencyExclusiveRate: BigNumber;
+
+    zone1: string;
+    zone2: string;
 }
 
 async function testReentrancy_MortgageMarketplace(
@@ -99,9 +118,12 @@ describe('6.3. MortgageMarketplace', async () => {
         const seller2 = accounts[Constant.ADMIN_NUMBER + 4];
         const buyer1 = accounts[Constant.ADMIN_NUMBER + 5];
         const buyer2 = accounts[Constant.ADMIN_NUMBER + 6];
-        const manager = accounts[Constant.ADMIN_NUMBER + 7];
-        const moderator = accounts[Constant.ADMIN_NUMBER + 8];
-        const commissionReceiver = accounts[Constant.ADMIN_NUMBER + 9];
+        const broker1 = accounts[Constant.ADMIN_NUMBER + 7];
+        const broker2 = accounts[Constant.ADMIN_NUMBER + 8];
+        const custodian1 = accounts[Constant.ADMIN_NUMBER + 9];
+        const custodian2 = accounts[Constant.ADMIN_NUMBER + 10];
+        const manager = accounts[Constant.ADMIN_NUMBER + 11];
+        const moderator = accounts[Constant.ADMIN_NUMBER + 12];
 
         const adminAddresses: string[] = admins.map(signer => signer.address);
         const admin = await deployAdmin(
@@ -117,6 +139,16 @@ describe('6.3. MortgageMarketplace', async () => {
             deployer.address,
             admin.address
         ) as FeeReceiver;
+
+        const priceWatcher = await deployPriceWatcher(
+            deployer.address,
+            admin.address
+        ) as PriceWatcher;
+
+        const reserveVault = await deployReserveVault(
+            deployer.address,
+            admin.address
+        ) as ReserveVault;
 
         const validator = new MockValidator(deployer as any);
 
@@ -149,6 +181,19 @@ describe('6.3. MortgageMarketplace', async () => {
             LandInitialization.COMMISSION_TOKEN_RoyaltyRate,
         ));
 
+        const estateForger = await deployMockEstateForger(
+            deployer,
+            admin.address,
+            estateToken.address,
+            commissionToken.address,
+            priceWatcher.address,
+            feeReceiver.address,
+            reserveVault.address,
+            validator.getAddress(),
+            LandInitialization.ESTATE_FORGER_BaseMinUnitPrice,
+            LandInitialization.ESTATE_FORGER_BaseMaxUnitPrice,
+        ) as MockEstateForger;
+
         const SmockMortgageTokenFactory = await smock.mock<MockMortgageToken__factory>('MockMortgageToken');
         const mortgageToken = await SmockMortgageTokenFactory.deploy();
         await callTransaction(mortgageToken.initialize(
@@ -160,7 +205,6 @@ describe('6.3. MortgageMarketplace', async () => {
             LendInitialization.MORTGAGE_TOKEN_Symbol,
             LendInitialization.MORTGAGE_TOKEN_BaseURI,
             LendInitialization.MORTGAGE_TOKEN_FeeRate,
-            LendInitialization.MORTGAGE_TOKEN_RoyaltyRate,
         ));
 
         const mortgageMarketplace = await deployMortgageMarketplace(
@@ -170,10 +214,21 @@ describe('6.3. MortgageMarketplace', async () => {
             commissionToken.address,
         ) as MortgageMarketplace;
 
+        await callEstateToken_UpdateCommissionToken(
+            estateToken,
+            admins,
+            commissionToken.address,
+            await admin.nonce()
+        );
+
+        const zone1 = ethers.utils.formatBytes32String("TestZone1");
+        const zone2 = ethers.utils.formatBytes32String("TestZone2");
+
         return {
             admin,
             feeReceiver,
             currency,
+            estateForger,
             estateToken,
             commissionToken,
             mortgageToken,
@@ -187,10 +242,15 @@ describe('6.3. MortgageMarketplace', async () => {
             seller2,
             buyer1,
             buyer2,
+            broker1,
+            broker2,
+            custodian1,
+            custodian2,
             manager,
             moderator,
-            commissionReceiver,
             mockCurrencyExclusiveRate,
+            zone1,
+            zone2,
         };
     };
 
@@ -202,14 +262,38 @@ describe('6.3. MortgageMarketplace', async () => {
         pause = false,
     } = {}): Promise<MortgageMarketplaceFixture> {
         const fixture = await loadFixture(mortgageMarketplaceFixture);
-        const { admin, admins, currency, estateToken, commissionToken, mortgageToken, mortgageMarketplace, borrower1, borrower2, seller1, seller2, buyer1, buyer2, manager, moderator, commissionReceiver } = fixture;
+        const {
+            admin,
+            admins,
+            currency,
+            estateForger,
+            estateToken,
+            commissionToken,
+            mortgageToken,
+            mortgageMarketplace,
+            borrower1,
+            borrower2,
+            seller1,
+            seller2,
+            buyer1,
+            buyer2,
+            broker1,
+            broker2,
+            custodian1,
+            custodian2,
+            manager,
+            moderator,
+            validator,
+            zone1,
+            zone2
+        } = fixture;
 
         let currentTimestamp = await time.latest();
 
         await callAdmin_DeclareZones(
             admin,
             admins,
-            [ethers.utils.formatBytes32String("TestZone")],
+            [zone1, zone2],
             true,
             await admin.nonce(),
         );
@@ -228,6 +312,25 @@ describe('6.3. MortgageMarketplace', async () => {
             await admin.nonce(),
         )
 
+        for(const zone of [zone1, zone2]) {
+            await callAdmin_ActivateIn(
+                admin,
+                admins,
+                zone,
+                [manager.address, moderator.address],
+                true,
+                await admin.nonce(),
+            );
+        }
+
+        await callEstateToken_AuthorizeTokenizers(
+            estateToken,
+            admins,
+            [estateForger.address],
+            true,
+            await admin.nonce()
+        );
+
         if (listSampleCurrencies) {
             await callAdmin_UpdateCurrencyRegistries(
                 admin,
@@ -239,16 +342,47 @@ describe('6.3. MortgageMarketplace', async () => {
             );
         }
 
+        for (const zone of [zone1, zone2]) {
+            for (const custodian of [custodian1, custodian2]) {
+                const params: RegisterCustodianParams = {
+                    zone,
+                    custodian: custodian.address,
+                    uri: "TestURI",
+                };
+                await callTransaction(getRegisterCustodianTx(estateToken as any, validator, manager, params))
+            }
+        }
+
+        await callTransaction(getRegisterBrokerTx(commissionToken as any, manager, {
+            zone: zone1,
+            broker: broker1.address,
+            commissionRate: ethers.utils.parseEther("0.1"),
+        }));
+        await callTransaction(getRegisterBrokerTx(commissionToken as any, manager, {
+            zone: zone2,
+            broker: broker2.address,
+            commissionRate: ethers.utils.parseEther("0.2"),
+        }));
+
         if (listSampleMortgageToken) {
-            await callTransaction(estateToken.call(
-                commissionToken.address,
-                commissionToken.interface.encodeFunctionData('mint', [commissionReceiver.address, 1])
-            ));
-            await callTransaction(estateToken.call(
-                commissionToken.address,
-                commissionToken.interface.encodeFunctionData('mint', [commissionReceiver.address, 2])
-            ));
-            await estateToken.setVariable("estateNumber", 2);
+            await callTransaction(getCallTokenizeEstateTx(estateToken as any, estateForger, {
+                totalSupply: BigNumber.from(10_000),
+                zone: zone1,
+                tokenizationId: BigNumber.from(10),
+                uri: "Token1_URI",
+                expireAt: currentTimestamp + 1e8,
+                custodian: custodian1.address,
+                broker: broker1.address,
+            }));
+            await callTransaction(getCallTokenizeEstateTx(estateToken as any, estateForger, {
+                totalSupply: BigNumber.from(10_000),
+                zone: zone2,
+                tokenizationId: BigNumber.from(10),
+                uri: "Token2_URI",
+                expireAt: currentTimestamp + 2e8,
+                custodian: custodian2.address,
+                broker: broker2.address,
+            }));
 
             await callTransaction(mortgageToken.addLoan(
                 1,
@@ -452,16 +586,27 @@ describe('6.3. MortgageMarketplace', async () => {
         price: BigNumber,
         isSafeBuy: boolean,
     ) {
-        const hasCommissionReceiver = true;
+        const { deployer, estateToken, commissionToken, mortgageToken, mortgageMarketplace, borrower1, seller1, buyer1, feeReceiver, admins, admin, zone1, custodian1, manager, estateForger } = fixture;
         
-        const { deployer, estateToken, commissionToken, mortgageToken, mortgageMarketplace, borrower1, seller1, buyer1, feeReceiver, admins, admin, commissionReceiver } = fixture;
-
-        await callMortgageToken_UpdateRoyaltyRate(mortgageToken, admins, mortgageTokenRoyaltyRate, await admin.nonce());
-        commissionToken.setVariable("commissionRate", commissionRate);
-        
+        const broker = randomWallet();
+        const zone = zone1;
         const currentEstateId = (await estateToken.estateNumber()).add(1);
         const currentTokenId = (await mortgageToken.loanNumber()).add(1);
         const currentOfferId = (await mortgageMarketplace.offerNumber()).add(1);
+
+        await callEstateToken_UpdateZoneRoyaltyRate(
+            estateToken,
+            admins,
+            zone,
+            mortgageTokenRoyaltyRate,
+            await admin.nonce()
+        );
+
+        await callTransaction(getRegisterBrokerTx(commissionToken as any, manager, {
+            zone,
+            broker: broker.address,
+            commissionRate,
+        }));
 
         let newCurrency: Currency | undefined;
         let newCurrencyAddress: string;
@@ -478,8 +623,6 @@ describe('6.3. MortgageMarketplace', async () => {
             newCurrencyAddress = ethers.constants.AddressZero;
         }
 
-        const commissionReceiverAddress = hasCommissionReceiver ? commissionReceiver.address : ethers.constants.AddressZero;
-
         await callAdmin_UpdateCurrencyRegistries(
             admin,
             admins,
@@ -495,10 +638,16 @@ describe('6.3. MortgageMarketplace', async () => {
         const seller = seller1;
         const buyer = buyer1;
 
-        if (hasCommissionReceiver) {
-            await callTransaction(estateToken.call(commissionToken.address, commissionToken.interface.encodeFunctionData('mint', [commissionReceiverAddress, currentEstateId])));
-            await estateToken.setVariable("estateNumber", currentEstateId);
-        }
+        await callTransaction(getCallTokenizeEstateTx(estateToken as any, estateForger, {
+            totalSupply: BigNumber.from(10_000),
+            zone,
+            tokenizationId: BigNumber.from(10),
+            uri: "Token1_URI",
+            expireAt: currentTimestamp + 1e8,
+            custodian: custodian1.address,
+            broker: broker.address,
+        }));
+
 
         await callTransaction(mortgageToken.addLoan(
             currentEstateId,
@@ -525,10 +674,7 @@ describe('6.3. MortgageMarketplace', async () => {
         if (isExclusive) {
             royaltyAmount = royaltyAmount.sub(royaltyAmount.mul(mockCurrencyExclusiveRate).div(Constant.COMMON_RATE_MAX_FRACTION));
         }
-        let commissionAmount = ethers.BigNumber.from(0);
-        if (hasCommissionReceiver) {
-            commissionAmount = royaltyAmount.mul(commissionRate).div(Constant.COMMON_RATE_MAX_FRACTION);
-        }
+        let commissionAmount = royaltyAmount.mul(commissionRate).div(Constant.COMMON_RATE_MAX_FRACTION);
 
         let total = price.add(royaltyAmount);
 
@@ -544,7 +690,7 @@ describe('6.3. MortgageMarketplace', async () => {
         let initBuyerBalance = await getBalance(ethers.provider, buyer.address, newCurrency);
         let initSellerBalance = await getBalance(ethers.provider, seller.address, newCurrency);
         let initFeeReceiverBalance = await getBalance(ethers.provider, feeReceiver.address, newCurrency);
-        let initCommissionReceiverBalance = await getBalance(ethers.provider, commissionReceiverAddress, newCurrency);
+        let initBrokerBalance = await getBalance(ethers.provider, broker.address, newCurrency);
 
         let tx;
         if (isSafeBuy) {
@@ -564,7 +710,7 @@ describe('6.3. MortgageMarketplace', async () => {
         let expectedBuyerBalance = initBuyerBalance.sub(total);
         let expectedSellerBalance = initSellerBalance.add(price);
         let expectedFeeReceiverBalance = initFeeReceiverBalance.add(royaltyAmount.sub(commissionAmount));
-        let expectedCommissionReceiverBalance = initCommissionReceiverBalance.add(commissionAmount);
+        let expectedBrokerBalance = initBrokerBalance.add(commissionAmount);
 
         if (!isERC20) {
             const gasFee = receipt.gasUsed.mul(receipt.effectiveGasPrice);
@@ -572,7 +718,7 @@ describe('6.3. MortgageMarketplace', async () => {
         }
 
         await expect(tx).to.emit(mortgageMarketplace, 'CommissionDispatch').withArgs(
-            commissionReceiverAddress,
+            broker.address,
             commissionAmount,
             newCurrencyAddress,
         );
@@ -593,15 +739,11 @@ describe('6.3. MortgageMarketplace', async () => {
         expect(await getBalance(ethers.provider, buyer.address, newCurrency)).to.equal(expectedBuyerBalance);
         expect(await getBalance(ethers.provider, seller.address, newCurrency)).to.equal(expectedSellerBalance);
         expect(await getBalance(ethers.provider, feeReceiver.address, newCurrency)).to.equal(expectedFeeReceiverBalance);
-        if (hasCommissionReceiver) {
-            expect(await getBalance(ethers.provider, commissionReceiverAddress, newCurrency)).to.equal(expectedCommissionReceiverBalance);
-        }
+        expect(await getBalance(ethers.provider, broker.address, newCurrency)).to.equal(expectedBrokerBalance);
+
         expect(await mortgageToken.ownerOf(currentTokenId)).to.equal(buyer.address);
 
-        let walletsToReset = [seller, buyer, feeReceiver];
-        if (hasCommissionReceiver) {
-            walletsToReset.push(commissionReceiver);
-        }
+        let walletsToReset = [seller, buyer, feeReceiver, broker];
         if (isERC20) {
             await resetERC20(newCurrency!, walletsToReset);
         } else {
@@ -622,7 +764,7 @@ describe('6.3. MortgageMarketplace', async () => {
                 fixture,
                 mockCurrencyExclusiveRate,
                 LendInitialization.MORTGAGE_TOKEN_RoyaltyRate,
-                LandInitialization.COMMISSION_TOKEN_CommissionRate,
+                ethers.utils.parseEther("0.1"),
                 false,
                 false,
                 ethers.BigNumber.from(200000),
@@ -633,7 +775,7 @@ describe('6.3. MortgageMarketplace', async () => {
                 fixture,
                 mockCurrencyExclusiveRate,
                 LendInitialization.MORTGAGE_TOKEN_RoyaltyRate,
-                LandInitialization.COMMISSION_TOKEN_CommissionRate,
+                ethers.utils.parseEther("0.1"),
                 true,
                 false,
                 ethers.BigNumber.from(500000),
@@ -657,7 +799,7 @@ describe('6.3. MortgageMarketplace', async () => {
                         fixture,
                         mockCurrencyExclusiveRate,
                         LendInitialization.MORTGAGE_TOKEN_RoyaltyRate,
-                        LandInitialization.COMMISSION_TOKEN_CommissionRate,
+                        ethers.utils.parseEther("0.1"),
                         isERC20,
                         isExclusive,
                         ethers.BigNumber.from(200000),
@@ -759,7 +901,7 @@ describe('6.3. MortgageMarketplace', async () => {
             const { mortgageMarketplace, buyer1 } = fixture;
 
             await expect(mortgageMarketplace.connect(buyer1).buy(1))
-                .to.be.revertedWithCustomError(mortgageMarketplace, "FailedTransfer");
+                .to.be.revertedWithCustomError(mortgageMarketplace, "InsufficientValue");
         });
 
         it('6.3.4.9. buy token unsuccessfully when native token transfer to seller failed', async () => {
@@ -866,7 +1008,7 @@ describe('6.3. MortgageMarketplace', async () => {
                 fixture,
                 mockCurrencyExclusiveRate,
                 LendInitialization.MORTGAGE_TOKEN_RoyaltyRate,
-                LandInitialization.COMMISSION_TOKEN_CommissionRate,
+                ethers.utils.parseEther("0.1"),
                 false,
                 false,
                 ethers.BigNumber.from(200000),
@@ -877,7 +1019,7 @@ describe('6.3. MortgageMarketplace', async () => {
                 fixture,
                 mockCurrencyExclusiveRate,
                 LendInitialization.MORTGAGE_TOKEN_RoyaltyRate,
-                LandInitialization.COMMISSION_TOKEN_CommissionRate,
+                ethers.utils.parseEther("0.1"),
                 true,
                 false,
                 ethers.BigNumber.from(500000),

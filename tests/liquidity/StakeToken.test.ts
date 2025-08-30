@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { ethers } from 'hardhat';
+import { ethers, upgrades } from 'hardhat';
 import { Admin, Currency, MockPrimaryToken, MockPrimaryToken__factory, MockStakeToken, MockStakeToken__factory, Treasury } from '@typechain-types';
 import { callTransaction, getSignatures, prepareERC20 } from '@utils/blockchain';
 import { deployAdmin } from '@utils/deployments/common/admin';
@@ -14,7 +14,7 @@ import { MockContract, smock } from '@defi-wonderland/smock';
 import { getStakingFee } from '@utils/formula';
 import { expectBetween, expectEqualWithErrorMargin } from '@utils/testHelper';
 import { BigNumber, Wallet } from 'ethers';
-import { randomArrayWithSum, randomBigNumber, randomInt, shuffle } from '@utils/utils';
+import { randomArrayWithSum, randomBigNumber, randomInt, shuffle, structToObject } from '@utils/utils';
 import { StakeTokenOperation } from '@utils/models/enums';
 import { Initialization as LiquidityInitialization } from '@tests/liquidity/test.initialization';
 
@@ -77,6 +77,7 @@ describe('4.5. StakeToken', async () => {
             primaryToken.address,
             LiquidityInitialization.STAKE_TOKEN_Name_1,
             LiquidityInitialization.STAKE_TOKEN_Symbol_1,
+            LiquidityInitialization.STAKE_TOKEN_FeeRate,
         ));
 
         const stakeToken2 = await SmockStakeTokenFactory.deploy();
@@ -85,6 +86,7 @@ describe('4.5. StakeToken', async () => {
             primaryToken.address,
             LiquidityInitialization.STAKE_TOKEN_Name_2,
             LiquidityInitialization.STAKE_TOKEN_Symbol_2,
+            LiquidityInitialization.STAKE_TOKEN_FeeRate,
         ));
 
         const stakeToken3 = await SmockStakeTokenFactory.deploy();
@@ -93,6 +95,7 @@ describe('4.5. StakeToken', async () => {
             primaryToken.address,
             LiquidityInitialization.STAKE_TOKEN_Name_3,
             LiquidityInitialization.STAKE_TOKEN_Symbol_3,
+            LiquidityInitialization.STAKE_TOKEN_FeeRate,
         ));
 
         await callPrimaryToken_UpdateStakeTokens(
@@ -217,9 +220,20 @@ describe('4.5. StakeToken', async () => {
 
     describe('4.5.1. initialize(address, address, address)', async () => {
         it('4.5.1.1. Deploy successfully', async () => {
-            const { admin, primaryToken, stakeToken1, stakeToken2, stakeToken3 } = await setupBeforeTest();
+            const { admin, primaryToken } = await setupBeforeTest();
 
             // StakeToken1
+            const stakeToken1 = await upgrades.deployProxy(
+                await ethers.getContractFactory('MockStakeToken'),
+                [
+                    admin.address,
+                    primaryToken.address,
+                    LiquidityInitialization.STAKE_TOKEN_Name_1,
+                    LiquidityInitialization.STAKE_TOKEN_Symbol_1,
+                    LiquidityInitialization.STAKE_TOKEN_FeeRate,
+                ]
+            ) as MockStakeToken;
+
             expect(await stakeToken1.name()).to.equal(LiquidityInitialization.STAKE_TOKEN_Name_1);
             expect(await stakeToken1.symbol()).to.equal(LiquidityInitialization.STAKE_TOKEN_Symbol_1);            
 
@@ -227,14 +241,38 @@ describe('4.5. StakeToken', async () => {
             expect(await stakeToken1.lastRewardFetch()).to.equal(0);
 
             const feeRate1 = await stakeToken1.getFeeRate();
-            expect(feeRate1.value).to.equal(0);
-            expect(feeRate1.decimals).to.equal(Constant.COMMON_RATE_DECIMALS);
+            expect(structToObject(feeRate1)).to.deep.equal({
+                value: LiquidityInitialization.STAKE_TOKEN_FeeRate,
+                decimals: Constant.COMMON_RATE_DECIMALS,
+            });
 
             expect(await stakeToken1.admin()).to.equal(admin.address);
             expect(await stakeToken1.primaryToken()).to.equal(primaryToken.address);
             expect(await stakeToken1.successor()).to.equal(ethers.constants.AddressZero);
 
+            const tx1 = stakeToken1.deployTransaction;
+            await expect(tx1).to.emit(stakeToken1, 'FeeRateUpdate').withArgs(
+                (rate: any) => {
+                    expect(structToObject(rate)).to.deep.equal({
+                        value: LiquidityInitialization.STAKE_TOKEN_FeeRate,
+                        decimals: Constant.COMMON_RATE_DECIMALS,
+                    });
+                    return true;
+                }
+            );
+
             // StakeToken2
+            const stakeToken2 = await upgrades.deployProxy(
+                await ethers.getContractFactory('MockStakeToken'),
+                [
+                    admin.address,
+                    primaryToken.address,
+                    LiquidityInitialization.STAKE_TOKEN_Name_2,
+                    LiquidityInitialization.STAKE_TOKEN_Symbol_2,
+                    LiquidityInitialization.STAKE_TOKEN_FeeRate,
+                ]
+            ) as MockStakeToken;
+
             expect(await stakeToken2.name()).to.equal(LiquidityInitialization.STAKE_TOKEN_Name_2);
             expect(await stakeToken2.symbol()).to.equal(LiquidityInitialization.STAKE_TOKEN_Symbol_2);
 
@@ -242,14 +280,38 @@ describe('4.5. StakeToken', async () => {
             expect(await stakeToken2.lastRewardFetch()).to.equal(0);
 
             const feeRate2 = await stakeToken2.getFeeRate();
-            expect(feeRate2.value).to.equal(0);
-            expect(feeRate2.decimals).to.equal(Constant.COMMON_RATE_DECIMALS);
+            expect(structToObject(feeRate2)).to.deep.equal({
+                value: LiquidityInitialization.STAKE_TOKEN_FeeRate,
+                decimals: Constant.COMMON_RATE_DECIMALS,
+            });
 
             expect(await stakeToken2.admin()).to.equal(admin.address);
             expect(await stakeToken2.primaryToken()).to.equal(primaryToken.address);
             expect(await stakeToken2.successor()).to.equal(ethers.constants.AddressZero);
 
+            const tx2 = stakeToken2.deployTransaction;
+            await expect(tx2).to.emit(stakeToken2, 'FeeRateUpdate').withArgs(
+                (rate: any) => {
+                    expect(structToObject(rate)).to.deep.equal({
+                        value: LiquidityInitialization.STAKE_TOKEN_FeeRate,
+                        decimals: Constant.COMMON_RATE_DECIMALS,
+                    });
+                    return true;
+                }
+            );
+
             // StakeToken3
+            const stakeToken3 = await upgrades.deployProxy(
+                await ethers.getContractFactory('MockStakeToken'),
+                [
+                    admin.address,
+                    primaryToken.address,
+                    LiquidityInitialization.STAKE_TOKEN_Name_3,
+                    LiquidityInitialization.STAKE_TOKEN_Symbol_3,
+                    LiquidityInitialization.STAKE_TOKEN_FeeRate,
+                ]
+            ) as MockStakeToken;
+
             expect(await stakeToken3.name()).to.equal(LiquidityInitialization.STAKE_TOKEN_Name_3);
             expect(await stakeToken3.symbol()).to.equal(LiquidityInitialization.STAKE_TOKEN_Symbol_3);
 
@@ -257,12 +319,25 @@ describe('4.5. StakeToken', async () => {
             expect(await stakeToken3.lastRewardFetch()).to.equal(0);
 
             const feeRate3 = await stakeToken3.getFeeRate();
-            expect(feeRate3.value).to.equal(0);
-            expect(feeRate3.decimals).to.equal(Constant.COMMON_RATE_DECIMALS);
+            expect(structToObject(feeRate3)).to.deep.equal({
+                value: LiquidityInitialization.STAKE_TOKEN_FeeRate,
+                decimals: Constant.COMMON_RATE_DECIMALS,
+            });
 
             expect(await stakeToken3.admin()).to.equal(admin.address);
             expect(await stakeToken3.primaryToken()).to.equal(primaryToken.address);
             expect(await stakeToken3.successor()).to.equal(ethers.constants.AddressZero);
+
+            const tx3 = stakeToken3.deployTransaction;
+            await expect(tx3).to.emit(stakeToken3, 'FeeRateUpdate').withArgs(
+                (rate: any) => {
+                    expect(structToObject(rate)).to.deep.equal({
+                        value: LiquidityInitialization.STAKE_TOKEN_FeeRate,
+                        decimals: Constant.COMMON_RATE_DECIMALS,
+                    });
+                    return true;
+                }
+            );
         });
     });
 
@@ -327,23 +402,32 @@ describe('4.5. StakeToken', async () => {
         it('4.5.3.1. updateFeeRate successfully with valid signatures', async () => {
             const { admin, admins, stakeToken1 } = await setupBeforeTest();
 
+            const rateValue = ethers.utils.parseEther('0.2');
             const message = ethers.utils.defaultAbiCoder.encode(
                 ["address", "string", "uint256"],
-                [stakeToken1.address, "updateFeeRate", ethers.utils.parseEther('0.2')]
+                [stakeToken1.address, "updateFeeRate", rateValue]
             );
 
             const signatures = await getSignatures(message, admins, await admin.nonce());
 
-            const tx = await stakeToken1.updateFeeRate(ethers.utils.parseEther('0.2'), signatures);
+            const tx = await stakeToken1.updateFeeRate(rateValue, signatures);
             await tx.wait();
 
-            await expect(tx).to
-                .emit(stakeToken1, 'FeeRateUpdate')
-                .withArgs(ethers.utils.parseEther('0.2'));
+            await expect(tx).to.emit(stakeToken1, 'FeeRateUpdate').withArgs(
+                (rate: any) => {
+                    expect(structToObject(rate)).to.deep.equal({
+                        value: rateValue,
+                        decimals: Constant.COMMON_RATE_DECIMALS,
+                    });
+                    return true;
+                }
+            );
 
             const feeRate = await stakeToken1.getFeeRate();
-            expect(feeRate.value).to.equal(ethers.utils.parseEther('0.2'));
-            expect(feeRate.decimals).to.equal(Constant.COMMON_RATE_DECIMALS);
+            expect(structToObject(feeRate)).to.deep.equal({
+                value: rateValue,
+                decimals: Constant.COMMON_RATE_DECIMALS,
+            });
         });
 
         it('4.5.3.2. updateFeeRate unsuccessfully with invalid signatures', async () => {

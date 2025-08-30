@@ -21,7 +21,7 @@ import {
     PriceWatcher,
     ReserveVault,
 } from '@typechain-types';
-import { callTransaction, getBalance, getSignatures, prepareERC20, prepareNativeToken, resetERC20, resetNativeToken, testReentrancy } from '@utils/blockchain';
+import { callTransaction, getBalance, getSignatures, prepareERC20, prepareNativeToken, randomWallet, resetERC20, resetNativeToken, testReentrancy } from '@utils/blockchain';
 import { Constant } from '@tests/test.constant';
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
@@ -38,9 +38,9 @@ import {
     callAdmin_UpdateCurrencyRegistries,
 } from '@utils/callWithSignatures/admin';
 import { BigNumber, Contract } from 'ethers';
-import { getBytes4Hex, getInterfaceID, randomBigNumber } from '@utils/utils';
+import { getBytes4Hex, getInterfaceID, randomBigNumber, structToObject } from '@utils/utils';
 import { deployMortgageToken } from '@utils/deployments/lend/mortgageToken';
-import { callEstateToken_AuthorizeTokenizers, callEstateToken_UpdateCommissionToken } from '@utils/callWithSignatures/estateToken';
+import { callEstateToken_AuthorizeTokenizers, callEstateToken_UpdateCommissionToken, callEstateToken_UpdateZoneRoyaltyRate } from '@utils/callWithSignatures/estateToken';
 import { callMortgageToken_Pause, callMortgageToken_UpdateFeeRate } from '@utils/callWithSignatures/mortgageToken';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployReentrancyERC1155Holder } from '@utils/deployments/mock/mockReentrancy/reentrancyERC1155Holder';
@@ -51,8 +51,9 @@ import { Initialization as LendInitialization } from '@tests/lend/test.initializ
 import { deployReserveVault } from '@utils/deployments/common/reserveVault';
 import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
 import { MockValidator } from '@utils/mockValidator';
-import { getRegisterCustodianTx } from '@utils/transaction/EstateToken';
+import { getCallTokenizeEstateTx, getRegisterCustodianTx } from '@utils/transaction/EstateToken';
 import { RegisterCustodianParams } from '@utils/models/EstateToken';
+import { getRegisterBrokerTx } from '@utils/transaction/CommissionToken';
 
 
 async function testReentrancy_mortgageToken(
@@ -97,10 +98,14 @@ interface MortgageTokenFixture {
     borrower2: any;
     custodian1: any;
     custodian2: any;
+    broker1: any;
+    broker2: any;
     manager: any;
     moderator: any;
-    commissionReceiver: any;
     mortgageTokenOwner: any;
+
+    zone1: string;
+    zone2: string;
 
     mockCurrencyExclusiveRate: BigNumber;
 }
@@ -117,10 +122,11 @@ describe('3.1. MortgageToken', async () => {
         const borrower2 = accounts[Constant.ADMIN_NUMBER + 4];
         const manager = accounts[Constant.ADMIN_NUMBER + 5];
         const moderator = accounts[Constant.ADMIN_NUMBER + 6];
-        const commissionReceiver = accounts[Constant.ADMIN_NUMBER + 7];
         const mortgageTokenOwner = accounts[Constant.ADMIN_NUMBER + 8];
         const custodian1 = accounts[Constant.ADMIN_NUMBER + 9];
         const custodian2 = accounts[Constant.ADMIN_NUMBER + 10];
+        const broker1 = accounts[Constant.ADMIN_NUMBER + 11];
+        const broker2 = accounts[Constant.ADMIN_NUMBER + 12];
 
         const adminAddresses: string[] = admins.map(signer => signer.address);
         const admin = await deployAdmin(
@@ -202,8 +208,10 @@ describe('3.1. MortgageToken', async () => {
             LendInitialization.MORTGAGE_TOKEN_Symbol,
             LendInitialization.MORTGAGE_TOKEN_BaseURI,
             LendInitialization.MORTGAGE_TOKEN_FeeRate,
-            LendInitialization.MORTGAGE_TOKEN_RoyaltyRate,
         ) as MortgageToken;
+
+        const zone1 = ethers.utils.formatBytes32String("TestZone1");
+        const zone2 = ethers.utils.formatBytes32String("TestZone2");
 
         return {
             admin,
@@ -226,9 +234,12 @@ describe('3.1. MortgageToken', async () => {
             borrower2,
             custodian1,
             custodian2,
+            broker1,
+            broker2,
             mockCurrencyExclusiveRate,
-            commissionReceiver,
             mortgageTokenOwner,
+            zone1,
+            zone2,
         };
     };
 
@@ -241,7 +252,28 @@ describe('3.1. MortgageToken', async () => {
     } = {}): Promise<MortgageTokenFixture> {
         const fixture = await loadFixture(mortgageTokenFixture);
 
-        const { admin, admins, currency, estateToken, feeReceiver, commissionToken, mortgageToken, borrower1, borrower2, lender1, lender2, estateForger, manager, moderator, commissionReceiver, custodian1, custodian2, validator } = fixture;
+        const {
+            admin,
+            admins,
+            currency,
+            estateToken,
+            commissionToken,
+            mortgageToken,
+            borrower1,
+            borrower2,
+            lender1,
+            lender2,
+            broker1,
+            broker2,
+            estateForger,
+            manager,
+            moderator,
+            custodian1,
+            custodian2,
+            validator,
+            zone1,
+            zone2 
+        } = fixture;
 
         await callAdmin_AuthorizeManagers(
             admin,
@@ -262,19 +294,21 @@ describe('3.1. MortgageToken', async () => {
         await callAdmin_DeclareZones(
             admin,
             admins,
-            [ethers.utils.formatBytes32String("TestZone")],
+            [zone1, zone2],
             true,
             await fixture.admin.nonce()
         );
 
-        await callAdmin_ActivateIn(
-            admin,
-            admins,
-            ethers.utils.formatBytes32String("TestZone"),
-            [manager.address, moderator.address],
-            true,
-            await admin.nonce(),
-        );
+        for (const zone of [zone1, zone2]) {
+            await callAdmin_ActivateIn(
+                admin,
+                admins,
+                zone,
+                [manager.address, moderator.address],
+                true,
+                await admin.nonce(),
+            );
+        }
 
         await callEstateToken_AuthorizeTokenizers(
             estateToken,
@@ -291,14 +325,27 @@ describe('3.1. MortgageToken', async () => {
             await admin.nonce()
         );
 
-        for (const custodian of [custodian1, custodian2]) {
-            const params: RegisterCustodianParams = {
-                zone: ethers.utils.formatBytes32String("TestZone"),
-                custodian: custodian.address,
-                uri: "TestURI",
-            };
-            await callTransaction(getRegisterCustodianTx(estateToken as any, validator, manager, params))
+        for (const zone of [zone1, zone2]) {
+            for (const custodian of [custodian1, custodian2]) {
+                const params: RegisterCustodianParams = {
+                    zone,
+                    custodian: custodian.address,
+                    uri: "TestURI",
+                };
+                await callTransaction(getRegisterCustodianTx(estateToken as any, validator, manager, params))
+            }
         }
+
+        await callTransaction(getRegisterBrokerTx(commissionToken as any, manager, {
+            zone: zone1,
+            broker: broker1.address,
+            commissionRate: ethers.utils.parseEther('0.1'),
+        }));
+        await callTransaction(getRegisterBrokerTx(commissionToken as any, manager, {
+            zone: zone2,
+            broker: broker2.address,
+            commissionRate: ethers.utils.parseEther('0.2'),
+        }));
 
         let currentTimestamp = await time.latest();
 
@@ -327,24 +374,24 @@ describe('3.1. MortgageToken', async () => {
 
             await time.setNextBlockTimestamp(currentTimestamp);
 
-            await estateForger.call(estateToken.address, estateToken.interface.encodeFunctionData('tokenizeEstate', [
-                10_000,
-                ethers.utils.formatBytes32String("TestZone"),
-                10,
-                "Token1_URI",
-                currentTimestamp + 1e8,
-                custodian1.address,
-                commissionReceiver.address,
-            ]));
-            await estateForger.call(estateToken.address, estateToken.interface.encodeFunctionData('tokenizeEstate', [
-                10_000,
-                ethers.utils.formatBytes32String("TestZone"),
-                10,
-                "Token2_URI",
-                currentTimestamp + 2e8,
-                custodian2.address,
-                commissionReceiver.address,
-            ]));
+            await callTransaction(getCallTokenizeEstateTx(estateToken as any, estateForger, {
+                totalSupply: BigNumber.from(10_000),
+                zone: zone1,
+                tokenizationId: BigNumber.from(10),
+                uri: "Token1_URI",
+                expireAt: currentTimestamp + 1e8,
+                custodian: custodian1.address,
+                broker: broker1.address,
+            }));
+            await callTransaction(getCallTokenizeEstateTx(estateToken as any, estateForger, {
+                totalSupply: BigNumber.from(10_000),
+                zone: zone2,
+                tokenizationId: BigNumber.from(10),
+                uri: "Token2_URI",
+                expireAt: currentTimestamp + 2e8,
+                custodian: custodian2.address,
+                broker: broker2.address,
+            }));
 
             estateToken.isAvailable.whenCalledWith(1).returns(true);
             estateToken.isAvailable.whenCalledWith(2).returns(true);
@@ -410,22 +457,27 @@ describe('3.1. MortgageToken', async () => {
 
     describe('3.1.1. initialize(address, address, address, address, string, string, string, uint256, uint256)', async () => {
         it('3.1.1.1. Deploy successfully', async () => {
-            const { deployer, admin, estateToken, feeReceiver, commissionToken, mortgageToken } = await beforeMortgageTokenTest();
+            const { admin, estateToken, feeReceiver, commissionToken, mortgageToken } = await beforeMortgageTokenTest();
 
             const tx = mortgageToken.deployTransaction;
             await expect(tx).to.emit(mortgageToken, "BaseURIUpdate").withArgs(LendInitialization.MORTGAGE_TOKEN_BaseURI);
-            await expect(tx).to.emit(mortgageToken, "FeeRateUpdate").withArgs(LendInitialization.MORTGAGE_TOKEN_FeeRate);
-            await expect(tx).to.emit(mortgageToken, "RoyaltyRateUpdate").withArgs(LendInitialization.MORTGAGE_TOKEN_RoyaltyRate);
+            await expect(tx).to.emit(mortgageToken, "FeeRateUpdate").withArgs(
+                (rate: any) => {
+                    expect(structToObject(rate)).to.deep.equal({
+                        value: LendInitialization.MORTGAGE_TOKEN_FeeRate,
+                        decimals: Constant.COMMON_RATE_DECIMALS,
+                    });
+                    return true;
+                }
+            );
 
             expect(await mortgageToken.loanNumber()).to.equal(0);
 
             const feeRate = await mortgageToken.getFeeRate();
-            expect(feeRate.value).to.equal(LendInitialization.MORTGAGE_TOKEN_FeeRate);
-            expect(feeRate.decimals).to.equal(Constant.COMMON_RATE_DECIMALS);
-
-            const royaltyRate = await mortgageToken.getRoyaltyRate();
-            expect(royaltyRate.value).to.equal(LendInitialization.MORTGAGE_TOKEN_RoyaltyRate);
-            expect(royaltyRate.decimals).to.equal(Constant.COMMON_RATE_DECIMALS);
+            expect(structToObject(feeRate)).to.deep.equal({
+                value: LendInitialization.MORTGAGE_TOKEN_FeeRate,
+                decimals: Constant.COMMON_RATE_DECIMALS,
+            });
 
             expect(await mortgageToken.admin()).to.equal(admin.address);
             expect(await mortgageToken.estateToken()).to.equal(estateToken.address);
@@ -447,25 +499,6 @@ describe('3.1. MortgageToken', async () => {
                 LendInitialization.MORTGAGE_TOKEN_Name,
                 LendInitialization.MORTGAGE_TOKEN_Symbol,
                 LendInitialization.MORTGAGE_TOKEN_BaseURI,
-                Constant.COMMON_RATE_MAX_FRACTION.add(1),
-                LendInitialization.MORTGAGE_TOKEN_RoyaltyRate,
-            ])).to.be.reverted;
-        });
-
-        it('3.1.1.3. Deploy unsuccessfully with invalid royalty rate', async () => {
-            const { deployer, admin, estateToken, feeReceiver, commissionToken } = await beforeMortgageTokenTest();
-
-            const MortgageToken = await ethers.getContractFactory('MortgageToken', deployer);
-
-            await expect(upgrades.deployProxy(MortgageToken, [
-                admin.address,
-                estateToken.address,
-                commissionToken.address,
-                feeReceiver.address,
-                LendInitialization.MORTGAGE_TOKEN_Name,
-                LendInitialization.MORTGAGE_TOKEN_Symbol,
-                LendInitialization.MORTGAGE_TOKEN_BaseURI,
-                LendInitialization.MORTGAGE_TOKEN_FeeRate,
                 Constant.COMMON_RATE_MAX_FRACTION.add(1),
             ])).to.be.reverted;
         });
@@ -508,81 +541,39 @@ describe('3.1. MortgageToken', async () => {
         });
     });
 
-    describe('3.1.3. updateRoyaltyRate(uint256, bytes[])', async () => {
-        it('3.1.3.1. updateRoyaltyRate successfully with valid signatures', async () => {
-            const { mortgageToken, admin, admins } = await beforeMortgageTokenTest({});
-
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "uint256"],
-                [mortgageToken.address, "updateRoyaltyRate", ethers.utils.parseEther('0.2')]
-            );
-
-            const signatures = await getSignatures(message, admins, await admin.nonce());
-
-            const tx = await mortgageToken.updateRoyaltyRate(ethers.utils.parseEther('0.2'), signatures);
-            await tx.wait();
-
-            await expect(tx).to
-                .emit(mortgageToken, 'RoyaltyRateUpdate')
-                .withArgs(ethers.utils.parseEther('0.2'));
-
-            const royaltyRate = await mortgageToken.getRoyaltyRate();
-            expect(royaltyRate.value).to.equal(ethers.utils.parseEther('0.2'));
-            expect(royaltyRate.decimals).to.equal(Constant.COMMON_RATE_DECIMALS);
-        });
-
-        it('3.1.3.2. updateRoyaltyRate unsuccessfully with invalid signatures', async () => {
-            const { mortgageToken, admin, admins } = await beforeMortgageTokenTest({});
-
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "uint256"],
-                [mortgageToken.address, "updateRoyaltyRate", ethers.utils.parseEther('0.2')]
-            );
-            const invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
-
-            await expect(mortgageToken.updateRoyaltyRate(
-                ethers.utils.parseEther('0.2'),
-                invalidSignatures
-            )).to.be.revertedWithCustomError(admin, 'FailedVerification');
-        });
-
-        it('3.1.3.3. updateRoyaltyRate unsuccessfully with invalid rate', async () => {
-            const { mortgageToken, admin, admins } = await beforeMortgageTokenTest({});
-
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "uint256"],
-                [mortgageToken.address, "updateRoyaltyRate", Constant.COMMON_RATE_MAX_FRACTION.add(1)]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await expect(mortgageToken.updateRoyaltyRate(
-                Constant.COMMON_RATE_MAX_FRACTION.add(1),
-                signatures
-            )).to.be.revertedWithCustomError(mortgageToken, 'InvalidRate');
-        });
-    });
-
     describe('3.1.4. updateFeeRate(uint256, bytes[])', async () => {
         it('3.1.4.1. updateFeeRate successfully with valid signatures', async () => {
             const { mortgageToken, admin, admins } = await beforeMortgageTokenTest({});
 
+            const rateValue = ethers.utils.parseEther('0.2');
+
             const message = ethers.utils.defaultAbiCoder.encode(
                 ["address", "string", "uint256"],
-                [mortgageToken.address, "updateFeeRate", ethers.utils.parseEther('0.2')]
+                [mortgageToken.address, "updateFeeRate", rateValue]
             );
 
             const signatures = await getSignatures(message, admins, await admin.nonce());
 
-            const tx = await mortgageToken.updateFeeRate(ethers.utils.parseEther('0.2'), signatures);
+            const tx = await mortgageToken.updateFeeRate(rateValue, signatures);
             await tx.wait();
 
             await expect(tx).to
                 .emit(mortgageToken, 'FeeRateUpdate')
-                .withArgs(ethers.utils.parseEther('0.2'));
+                .withArgs(
+                    (rate: any) => {
+                        expect(structToObject(rate)).to.deep.equal({
+                            value: rateValue,
+                            decimals: Constant.COMMON_RATE_DECIMALS,
+                        });
+                        return true;
+                    }
+                );
 
             const feeRate = await mortgageToken.getFeeRate();
-            expect(feeRate.value).to.equal(ethers.utils.parseEther('0.2'));
-            expect(feeRate.decimals).to.equal(Constant.COMMON_RATE_DECIMALS);
+            expect(structToObject(feeRate)).to.deep.equal({
+                value: rateValue,
+                decimals: Constant.COMMON_RATE_DECIMALS,
+            });
         });
 
         it('3.1.4.2. updateFeeRate unsuccessfully with invalid signatures', async () => {
@@ -950,20 +941,23 @@ describe('3.1. MortgageToken', async () => {
             mortgageAmount: BigNumber,
             principal: BigNumber,
             repayment: BigNumber,
-            hasCommissionReceiver: boolean,
         ) {
-            const { mortgageToken, admin, admins, currency, commissionToken, deployer, estateToken, estateForger, borrower1, lender1, feeReceiver, commissionReceiver, custodian1 } = fixture;
+            const { mortgageToken, admin, admins, commissionToken, deployer, estateToken, estateForger, borrower1, lender1, feeReceiver, custodian1, manager, zone1 } = fixture;
 
             const currentLoanId = (await mortgageToken.loanNumber()).add(1);
             const currentTokenizationId = 0 // Does not matter
-            const zone = ethers.utils.formatBytes32String("TestZone");
-            const commissionReceiverAddress = hasCommissionReceiver ? commissionReceiver.address : ethers.constants.AddressZero;
+            const zone = zone1;
             const borrower = borrower1;
             const lender = lender1;
+            const broker = randomWallet();
             
             await callMortgageToken_UpdateFeeRate(mortgageToken, admins, mortgageTokenFeeRate, await admin.nonce());
-            await commissionToken.setVariable("commissionRate", commissionTokenRate);
-            
+
+            await callTransaction(getRegisterBrokerTx(commissionToken as any, manager, {
+                zone,
+                broker: broker.address,
+                commissionRate: commissionTokenRate,
+            }));
 
             let newCurrency: Currency | undefined;
             let newCurrencyAddress: string;
@@ -998,7 +992,7 @@ describe('3.1. MortgageToken', async () => {
                 "TestURI",
                 currentTimestamp + 1e9,
                 custodian1.address,
-                commissionReceiverAddress,
+                broker.address,
             ])));
 
             const currentEstateId = await estateToken.estateNumber();
@@ -1006,10 +1000,7 @@ describe('3.1. MortgageToken', async () => {
             await callTransaction(estateToken.mint(borrower.address, currentEstateId, initialAmount));
             await callTransaction(estateToken.connect(borrower).setApprovalForAll(mortgageToken.address, true));
 
-            const walletsToReset = [feeReceiver];
-            if (hasCommissionReceiver) {
-                walletsToReset.push(commissionReceiver);
-            }
+            const walletsToReset = [feeReceiver, broker];
             if (isERC20) {
                 await resetERC20(newCurrency!, walletsToReset);
             } else {
@@ -1031,10 +1022,7 @@ describe('3.1. MortgageToken', async () => {
             if (isExclusive) {
                 fee = fee.sub(fee.mul(currencyExclusiveRate).div(Constant.COMMON_RATE_MAX_FRACTION));
             }
-            let commissionAmount = ethers.BigNumber.from(0);
-            if (hasCommissionReceiver) {
-                commissionAmount = fee.mul(commissionTokenRate).div(Constant.COMMON_RATE_MAX_FRACTION);
-            }
+            let commissionAmount = fee.mul(commissionTokenRate).div(Constant.COMMON_RATE_MAX_FRACTION);
 
             let ethValue = ethers.BigNumber.from(0);
             await prepareNativeToken(ethers.provider, deployer, [lender], ethers.utils.parseEther("1.0"));
@@ -1050,7 +1038,7 @@ describe('3.1. MortgageToken', async () => {
             let initBorrowerBalance = await getBalance(ethers.provider, borrower.address, newCurrency);
             let initLenderBalance = await getBalance(ethers.provider, lender.address, newCurrency);
             let initFeeReceiverBalance = await getBalance(ethers.provider, feeReceiver.address, newCurrency);
-            let initCommissionReceiverBalance = await getBalance(ethers.provider,commissionReceiverAddress, newCurrency);
+            let initBrokerBalance = await getBalance(ethers.provider, broker.address, newCurrency);
 
             currentTimestamp += 100;
             await time.setNextBlockTimestamp(currentTimestamp);
@@ -1064,7 +1052,7 @@ describe('3.1. MortgageToken', async () => {
             let expectedBorrowerBalance = initBorrowerBalance.add(principal).sub(fee);
             let expectedLenderBalance = initLenderBalance.sub(principal);
             let expectedFeeReceiverBalance = initFeeReceiverBalance.add(fee.sub(commissionAmount));
-            let expectedCommissionReceiverBalance = initCommissionReceiverBalance.add(commissionAmount);
+            let expectedBrokerBalance = initBrokerBalance.add(commissionAmount);
 
             if (!isERC20) {
                 const gasFee = receipt.gasUsed.mul(receipt.effectiveGasPrice);
@@ -1078,7 +1066,7 @@ describe('3.1. MortgageToken', async () => {
                 fee,
             );
             await expect(tx).to.emit(mortgageToken, 'CommissionDispatch').withArgs(
-                commissionReceiverAddress,
+                broker.address,
                 commissionAmount,
                 newCurrencyAddress
             );
@@ -1099,9 +1087,7 @@ describe('3.1. MortgageToken', async () => {
             expect(await getBalance(ethers.provider, borrower.address, newCurrency)).to.equal(expectedBorrowerBalance);
             expect(await getBalance(ethers.provider, lender.address, newCurrency)).to.equal(expectedLenderBalance);
             expect(await getBalance(ethers.provider, feeReceiver.address, newCurrency)).to.equal(expectedFeeReceiverBalance);
-            if (hasCommissionReceiver) {
-                expect(await getBalance(ethers.provider, commissionReceiverAddress, newCurrency)).to.equal(expectedCommissionReceiverBalance);
-            }
+            expect(await getBalance(ethers.provider, broker.address, newCurrency)).to.equal(expectedBrokerBalance);
 
             expect(await estateToken.balanceOf(borrower.address, currentEstateId)).to.equal(initialAmount.sub(mortgageAmount));
             expect(await estateToken.balanceOf(mortgageToken.address, currentEstateId)).to.equal(mortgageAmount);
@@ -1109,9 +1095,9 @@ describe('3.1. MortgageToken', async () => {
             expect(await mortgageToken.ownerOf(currentLoanId)).to.equal(lender.address);
 
             if (isERC20) {
-                await resetERC20(newCurrency!, [borrower, lender, feeReceiver, commissionReceiver]);
+                await resetERC20(newCurrency!, [borrower, lender, feeReceiver, broker]);
             } else {
-                await resetNativeToken(ethers.provider, [borrower, lender, feeReceiver, commissionReceiver]);
+                await resetNativeToken(ethers.provider, [borrower, lender, feeReceiver, broker]);
                 await prepareNativeToken(ethers.provider, deployer, [borrower, lender], ethers.utils.parseEther("1.0"));
             }
         }
@@ -1121,7 +1107,7 @@ describe('3.1. MortgageToken', async () => {
             await testLend(
                 fixture,
                 fixture.mockCurrencyExclusiveRate,
-                LandInitialization.COMMISSION_TOKEN_RoyaltyRate,
+                ethers.utils.parseEther('0.1'),
                 LendInitialization.MORTGAGE_TOKEN_FeeRate,
                 false,
                 false,
@@ -1129,13 +1115,12 @@ describe('3.1. MortgageToken', async () => {
                 ethers.BigNumber.from(150_000),
                 ethers.BigNumber.from(10e5),
                 ethers.BigNumber.from(11e5),
-                true,
             )
 
             await testLend(
                 fixture,
                 fixture.mockCurrencyExclusiveRate,
-                LandInitialization.COMMISSION_TOKEN_RoyaltyRate,
+                ethers.utils.parseEther('0.1'),
                 LendInitialization.MORTGAGE_TOKEN_FeeRate,
                 true,
                 true,
@@ -1143,7 +1128,6 @@ describe('3.1. MortgageToken', async () => {
                 ethers.BigNumber.from(200),
                 ethers.BigNumber.from(100000),
                 ethers.BigNumber.from(110000),
-                true,
             )
         });
 
@@ -1157,7 +1141,7 @@ describe('3.1. MortgageToken', async () => {
                     await testLend(
                         fixture,
                         fixture.mockCurrencyExclusiveRate,
-                        LandInitialization.COMMISSION_TOKEN_RoyaltyRate,
+                        ethers.utils.parseEther('0.1'),
                         LendInitialization.MORTGAGE_TOKEN_FeeRate,
                         isERC20,
                         isExclusive,
@@ -1165,7 +1149,6 @@ describe('3.1. MortgageToken', async () => {
                         ethers.BigNumber.from(150_000),
                         ethers.BigNumber.from(10e5),
                         ethers.BigNumber.from(11e5),
-                        true,
                     )
                 }
             }
@@ -1192,7 +1175,6 @@ describe('3.1. MortgageToken', async () => {
                         amount,
                         principal,
                         repayment,
-                        true,
                     )
                 }
             }
@@ -1201,7 +1183,6 @@ describe('3.1. MortgageToken', async () => {
         it('3.1.7.4. lend successfully in 100 random test cases', async () => {
             const fixture = await beforeMortgageTokenTest({});
             for (let testcase = 0; testcase < 100; testcase++) {
-                const hasCommissionReceiver = true;
                 const isERC20 = Math.random() < 0.5;
                 const isExclusive = Math.random() < 0.5;
                 const feeRate = randomBigNumber(ethers.constants.Zero, ethers.utils.parseEther("1.0"));
@@ -1244,7 +1225,6 @@ describe('3.1. MortgageToken', async () => {
                     mortgageAmount,
                     principal,
                     repayment,
-                    hasCommissionReceiver,
                 );
             }
         });
@@ -1397,7 +1377,7 @@ describe('3.1. MortgageToken', async () => {
                 listSampleCurrencies: true,
                 listEstateToken: true,
             });
-            const { mortgageToken, borrower2, lender1, deployer, estateToken, commissionToken, commissionReceiver } = fixture;
+            const { mortgageToken, borrower2, lender1, deployer, estateToken, commissionToken, broker2 } = fixture;
 
             const failReceiver = await deployFailReceiver(deployer, true, false);
 
@@ -1411,8 +1391,8 @@ describe('3.1. MortgageToken', async () => {
             ));
             await callTransaction(estateToken.connect(borrower2).setApprovalForAll(mortgageToken.address, true));
             
-            await callTransaction(commissionToken.connect(commissionReceiver).transferFrom(
-                commissionReceiver.address,
+            await callTransaction(commissionToken.connect(broker2).transferFrom(
+                broker2.address,
                 failReceiver.address,
                 2,
             ));
@@ -2029,15 +2009,124 @@ describe('3.1. MortgageToken', async () => {
 
     describe('3.1.12. royaltyInfo(uint256, uint256)', () => {
         it('3.1.12.1. return correct royalty info', async () => {
-            const fixture = await beforeMortgageTokenTest();
-            const { mortgageToken, feeReceiver } = fixture;
+            const fixture = await beforeMortgageTokenTest({
+                listSampleCurrencies: true,
+                listEstateToken: true,
+                listSampleLoan: true,
+                listSampleLending: true,
+            });
+            const { mortgageToken, feeReceiver, estateToken, admin, admins, zone1, zone2 } = fixture;
+
+            const zone1RoyaltyRate = ethers.utils.parseEther('0.1');
+            const zone2RoyaltyRate = ethers.utils.parseEther('0.2');
+            
+            await callEstateToken_UpdateZoneRoyaltyRate(
+                estateToken,
+                admins,
+                zone1,
+                zone1RoyaltyRate,
+                await admin.nonce(),
+            );
+            
+            await callEstateToken_UpdateZoneRoyaltyRate(
+                estateToken,
+                admins,
+                zone2,
+                zone2RoyaltyRate,
+                await admin.nonce(),
+            );
 
             const salePrice = ethers.BigNumber.from(1e6);
             
-            const royaltyInfo = await mortgageToken.royaltyInfo(1, salePrice);
-            const royaltyFee = salePrice.mul(LendInitialization.MORTGAGE_TOKEN_RoyaltyRate).div(Constant.COMMON_RATE_MAX_FRACTION);
-            expect(royaltyInfo[0]).to.equal(feeReceiver.address);
-            expect(royaltyInfo[1]).to.equal(royaltyFee);
+            const royaltyInfo1 = await mortgageToken.royaltyInfo(1, salePrice);
+            const royaltyFee1 = salePrice.mul(zone1RoyaltyRate).div(Constant.COMMON_RATE_MAX_FRACTION);
+            expect(royaltyInfo1[0]).to.equal(feeReceiver.address);
+            expect(royaltyInfo1[1]).to.equal(royaltyFee1);
+
+            const royaltyInfo2 = await mortgageToken.royaltyInfo(2, salePrice);
+            const royaltyFee2 = salePrice.mul(zone2RoyaltyRate).div(Constant.COMMON_RATE_MAX_FRACTION);
+            expect(royaltyInfo2[0]).to.equal(feeReceiver.address);
+            expect(royaltyInfo2[1]).to.equal(royaltyFee2);
+        });
+
+        it('3.1.12.2. revert with invalid token id', async () => {
+            const fixture = await beforeMortgageTokenTest({
+                listSampleCurrencies: true,
+                listEstateToken: true,
+                listSampleLoan: true,
+            });
+            const { mortgageToken } = fixture;
+
+            const salePrice = ethers.utils.parseEther('10');
+
+            await expect(mortgageToken.royaltyInfo(0, salePrice))
+                .to.be.revertedWith("ERC721: invalid token ID");
+            await expect(mortgageToken.royaltyInfo(100, salePrice))
+                .to.be.revertedWith("ERC721: invalid token ID");
+
+            await expect(mortgageToken.royaltyInfo(1, salePrice))
+                .to.be.revertedWith("ERC721: invalid token ID");
+            await expect(mortgageToken.royaltyInfo(2, salePrice))
+                .to.be.revertedWith("ERC721: invalid token ID");
+        });
+    });
+
+    describe('3.1.12. getRoyaltyRate(uint256)', () => {
+        it('3.1.12.1. return correct royalty rate', async () => {
+            const fixture = await beforeMortgageTokenTest({
+                listSampleCurrencies: true,
+                listEstateToken: true,
+                listSampleLoan: true,
+                listSampleLending: true,
+            });
+            const { mortgageToken, estateToken, admin, admins, zone1, zone2 } = fixture;
+           
+            const zone1RoyaltyRate = ethers.utils.parseEther('0.1');
+            const zone2RoyaltyRate = ethers.utils.parseEther('0.2');
+            
+            await callEstateToken_UpdateZoneRoyaltyRate(
+                estateToken,
+                admins,
+                zone1,
+                zone1RoyaltyRate,
+                await admin.nonce(),
+            );
+            
+            await callEstateToken_UpdateZoneRoyaltyRate(
+                estateToken,
+                admins,
+                zone2,
+                zone2RoyaltyRate,
+                await admin.nonce(),
+            );
+
+            expect(structToObject(await mortgageToken.getRoyaltyRate(1))).to.deep.equal({
+                value: zone1RoyaltyRate,
+                decimals: Constant.COMMON_RATE_DECIMALS,
+            });
+            expect(structToObject(await mortgageToken.getRoyaltyRate(2))).to.deep.equal({
+                value: zone2RoyaltyRate,
+                decimals: Constant.COMMON_RATE_DECIMALS,
+            });
+        });
+
+        it('3.1.12.2. revert with invalid token id', async () => {
+            const fixture = await beforeMortgageTokenTest({
+                listSampleCurrencies: true,
+                listEstateToken: true,
+                listSampleLoan: true,
+            });
+            const { mortgageToken } = fixture;
+
+            await expect(mortgageToken.getRoyaltyRate(0))
+                .to.be.revertedWith("ERC721: invalid token ID");
+            await expect(mortgageToken.getRoyaltyRate(100))
+                .to.be.revertedWith("ERC721: invalid token ID");
+
+            await expect(mortgageToken.getRoyaltyRate(1))
+                .to.be.revertedWith("ERC721: invalid token ID");
+            await expect(mortgageToken.getRoyaltyRate(2))
+                .to.be.revertedWith("ERC721: invalid token ID");
         });
     });
 

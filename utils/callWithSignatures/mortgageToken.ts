@@ -48,21 +48,6 @@ export async function callMortgageToken_UpdateBaseURI(
     await callTransaction(mortgageToken.updateBaseURI(baseURI, signatures));
 }
 
-export async function callMortgageToken_UpdateRoyaltyRate(
-    mortgageToken: MortgageToken | MockContract<MortgageToken>,
-    admins: any[],
-    royaltyRate: BigNumberish,
-    nonce: BigNumberish
-) {
-    const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "uint256"],
-        [mortgageToken.address, "updateRoyaltyRate", royaltyRate]
-    );
-    const signatures = await getSignatures(message, admins, nonce);
-
-    await callTransaction(mortgageToken.updateRoyaltyRate(royaltyRate, signatures));
-}
-
 export async function callMortgageToken_UpdateFeeRate(
     mortgageToken: MortgageToken | MockContract<MortgageToken>,
     admins: any[],
