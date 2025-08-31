@@ -31,6 +31,13 @@ export const Constant = {
     ESTATE_LIQUIDATOR_ADMISSION_DURATION: 30 * DAY,
     ESTATE_LIQUIDATOR_VOTING_DURATION: 30 * DAY,
 
+    // Project Token
+    PROJECT_TOKEN_MAX_DECIMALS: 18,
+
+    // Prestige Pad
+    PRESTIGE_PAD_RAISE_MINIMUM_DURATION: 7 * DAY,
+    PRESTIGE_PAD_RAISE_CONFIRMATION_TIME_LIMIT: 30 * DAY,
+
     // Primary Token
     PRIMARY_TOKEN_BASE_DISCOUNT: parseEther("0.15"),
 
@@ -57,4 +64,7 @@ export const Constant = {
 
     // Treasury
     TREASURY_OPERATION_FUND_RATE: parseEther("0.2"),
+
+    // Governance Hub
+    GOVERNANCE_HUB_CONFIRMATION_TIME_LIMIT: 30 * DAY
 }

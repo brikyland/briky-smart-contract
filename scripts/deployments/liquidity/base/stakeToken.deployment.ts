@@ -1,6 +1,7 @@
 import assert from 'assert';
 import { ethers, network, upgrades } from 'hardhat';
 import { deployStakeToken } from '@utils/deployments/liquidity/stakeToken';
+import { Initialization } from '../initialization';
 
 export async function deployOrUpgradeStakeToken(
     signer: any,
@@ -38,6 +39,7 @@ export async function deployOrUpgradeStakeToken(
                 primaryTokenAddress,
                 name,
                 symbol,
+                Initialization.STAKE_TOKEN_FeeRate,
             );
             console.log(`Contract StakeToken has been deployed to address ${stakeToken.address}`);
 
