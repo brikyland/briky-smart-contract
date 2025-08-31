@@ -98,6 +98,7 @@ describe('4.3. Driptributor', async () => {
             primaryToken.address,
             LiquidityInitialization.STAKE_TOKEN_Name_1,
             LiquidityInitialization.STAKE_TOKEN_Symbol_1,
+            LiquidityInitialization.STAKE_TOKEN_FeeRate,
         ));
 
         const SmockStakeTokenFactory2 = await smock.mock('StakeToken') as any;
@@ -107,6 +108,7 @@ describe('4.3. Driptributor', async () => {
             primaryToken.address,
             LiquidityInitialization.STAKE_TOKEN_Name_2,
             LiquidityInitialization.STAKE_TOKEN_Symbol_2,
+            LiquidityInitialization.STAKE_TOKEN_FeeRate,
         ));
 
         const SmockStakeTokenFactory3 = await smock.mock('StakeToken') as any;
@@ -116,6 +118,7 @@ describe('4.3. Driptributor', async () => {
             primaryToken.address,
             LiquidityInitialization.STAKE_TOKEN_Name_3,
             LiquidityInitialization.STAKE_TOKEN_Symbol_3,
+            LiquidityInitialization.STAKE_TOKEN_FeeRate,
         ));
 
         const totalAmount = ethers.utils.parseEther('1000');

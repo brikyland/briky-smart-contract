@@ -35,7 +35,7 @@ export const Constant = {
     PROJECT_TOKEN_MAX_DECIMALS: 18,
 
     // Prestige Pad
-    PRESTIGE_PAD_RAISE_MINIMUM_DURATION: 10 * DAY,
+    PRESTIGE_PAD_RAISE_MINIMUM_DURATION: 7 * DAY,
     PRESTIGE_PAD_RAISE_CONFIRMATION_TIME_LIMIT: 30 * DAY,
 
     // Primary Token
@@ -67,5 +67,4 @@ export const Constant = {
 
     // Governance Hub
     GOVERNANCE_HUB_CONFIRMATION_TIME_LIMIT: 30 * DAY,
-    GOVERNANCE_HUB_FEE: parseEther("0.001"),
 }

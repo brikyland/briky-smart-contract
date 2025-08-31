@@ -48,19 +48,20 @@ export async function callProjectToken_UpdateBaseURI(
     await callTransaction(projectToken.updateBaseURI(baseURI, signatures));
 }
 
-export async function callProjectToken_UpdateRoyaltyRate(
+export async function callProjectToken_UpdateZoneRoyaltyRate(
     projectToken: ProjectToken | MockContract<ProjectToken>,
     admins: any[],
+    zone: string,
     royaltyRate: BigNumberish,
     nonce: BigNumberish
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "uint256"],
-        [projectToken.address, "updateRoyaltyRate", royaltyRate]
+        ["address", "string", "bytes32", "uint256"],
+        [projectToken.address, "updateZoneRoyaltyRate", zone, royaltyRate]
     );
     const signatures = await getSignatures(message, admins, nonce);
 
-    await callTransaction(projectToken.updateRoyaltyRate(royaltyRate, signatures));
+    await callTransaction(projectToken.updateZoneRoyaltyRate(zone, royaltyRate, signatures));
 }
 
 export async function callProjectToken_AuthorizeLaunchpads(

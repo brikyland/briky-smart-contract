@@ -12,6 +12,7 @@ import {
 } from '@typechain-types';
 import { callTransaction, getSignatures, prepareERC20, prepareNativeToken, testReentrancy } from '@utils/blockchain';
 import { Constant } from '@tests/test.constant';
+import { Initialization as CommonInitialization } from '@tests/common/initialization';
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 import { deployGovernanceHub } from '@utils/deployments/common/governanceHub';
@@ -87,7 +88,7 @@ async function testReentrancy_GovernanceHub(
             proposeValidation,
         ]),
         governanceHub.interface.encodeFunctionData("withdrawBudgetContribution", [1]),
-        governanceHub.interface.encodeFunctionData("confirmExecution", [1]),
+        governanceHub.interface.encodeFunctionData("confirm", [1]),
     ];
 
     await testReentrancy(
@@ -149,7 +150,7 @@ describe('1.6. GovernanceHub', async () => {
             deployer,
             admin.address,
             validator.getAddress(),
-            Constant.GOVERNANCE_HUB_FEE,
+            CommonInitialization.GOVERNANCE_HUB_Fee,
         ) as GovernanceHub;
 
         const failReceiver = await deployFailReceiver(deployer.address, false, false) as FailReceiver;
@@ -444,11 +445,11 @@ describe('1.6. GovernanceHub', async () => {
         if (confirmExecutionSampleProposals) {
             timestamp = (await governanceHub.getProposal(1)).due;
             await time.setNextBlockTimestamp(timestamp);
-            await callTransaction(governanceHub.connect(manager).confirmExecution(1));
+            await callTransaction(governanceHub.connect(manager).confirm(1));
 
             timestamp = (await governanceHub.getProposal(2)).due;
             await time.setNextBlockTimestamp(timestamp);
-            await callTransaction(governanceHub.connect(manager).confirmExecution(2));            
+            await callTransaction(governanceHub.connect(manager).confirm(2));            
         }
 
         if (rejectExecutionSampleProposals) {
@@ -533,11 +534,11 @@ describe('1.6. GovernanceHub', async () => {
 
             const tx = governanceHub.deployTransaction;
             await expect(tx).to
-                .emit(governanceHub, 'FeeUpdate').withArgs(Constant.GOVERNANCE_HUB_FEE);
+                .emit(governanceHub, 'FeeUpdate').withArgs(CommonInitialization.GOVERNANCE_HUB_Fee);
 
             expect(await governanceHub.admin()).to.equal(admin.address);
             expect(await governanceHub.validator()).to.equal(validator.getAddress());
-            expect(await governanceHub.fee()).to.equal(Constant.GOVERNANCE_HUB_FEE);
+            expect(await governanceHub.fee()).to.equal(CommonInitialization.GOVERNANCE_HUB_Fee);
         });
     });
 
@@ -3321,7 +3322,7 @@ describe('1.6. GovernanceHub', async () => {
         });
     });
 
-    describe('1.6.14. confirmExecution(uint256)', async () => {
+    describe('1.6.14. confirm(uint256)', async () => {
         it('1.6.14.1. confirm execution successfully', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
@@ -3340,11 +3341,11 @@ describe('1.6. GovernanceHub', async () => {
 
             const budget1 = (await governanceHub.getProposal(1)).budget;
 
-            const tx1 = await governanceHub.connect(manager).confirmExecution(1);
+            const tx1 = await governanceHub.connect(manager).confirm(1);
             const receipt1 = await tx1.wait();
             const gasFee1 = receipt1.gasUsed.mul(receipt1.effectiveGasPrice);
 
-            await expect(tx1).to.emit(governanceHub, 'ProposalExecutionConfirmation').withArgs(1);
+            await expect(tx1).to.emit(governanceHub, 'ProposalConfirmation').withArgs(1);
 
             expect(await ethers.provider.getBalance(manager.address)).to.equal(initManagerNativeBalance.sub(gasFee1));
             expect(await ethers.provider.getBalance(operator1.address)).to.equal(initOperator1NativeBalance.add(budget1));
@@ -3361,10 +3362,10 @@ describe('1.6. GovernanceHub', async () => {
 
             const budget2 = (await governanceHub.getProposal(2)).budget;
             
-            const tx2 = await governanceHub.connect(manager).confirmExecution(2);
+            const tx2 = await governanceHub.connect(manager).confirm(2);
             await tx2.wait();
 
-            await expect(tx2).to.emit(governanceHub, 'ProposalExecutionConfirmation').withArgs(2);
+            await expect(tx2).to.emit(governanceHub, 'ProposalConfirmation').withArgs(2);
 
             expect(await currency.balanceOf(manager.address)).to.equal(initManagerERC20Balance);
             expect(await currency.balanceOf(operator2.address)).to.equal(initOperator2ERC20Balance.add(budget2));
@@ -3389,11 +3390,11 @@ describe('1.6. GovernanceHub', async () => {
             let initGovernanceHubNativeBalance = await ethers.provider.getBalance(governanceHub.address);
             let initOperator1NativeBalance = await ethers.provider.getBalance(operator1.address);
 
-            const tx1 = await governanceHub.connect(manager).confirmExecution(1);
+            const tx1 = await governanceHub.connect(manager).confirm(1);
             const receipt1 = await tx1.wait();
             const gasFee1 = receipt1.gasUsed.mul(receipt1.effectiveGasPrice);
 
-            await expect(tx1).to.emit(governanceHub, 'ProposalExecutionConfirmation').withArgs(1);
+            await expect(tx1).to.emit(governanceHub, 'ProposalConfirmation').withArgs(1);
 
             expect(await ethers.provider.getBalance(manager.address)).to.equal(initManagerNativeBalance.sub(gasFee1));
             expect(await ethers.provider.getBalance(operator1.address)).to.equal(initOperator1NativeBalance);
@@ -3408,9 +3409,9 @@ describe('1.6. GovernanceHub', async () => {
 
             const { governanceHub, manager } = fixture;
 
-            await expect(governanceHub.connect(manager).confirmExecution(0))
+            await expect(governanceHub.connect(manager).confirm(0))
                 .to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
-            await expect(governanceHub.connect(manager).confirmExecution(100))
+            await expect(governanceHub.connect(manager).confirm(100))
                 .to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
         });
 
@@ -3426,7 +3427,7 @@ describe('1.6. GovernanceHub', async () => {
 
             const { governanceHub, manager } = fixture;
 
-            await expect(governanceHub.connect(manager).confirmExecution(1))
+            await expect(governanceHub.connect(manager).confirm(1))
                 .to.be.revertedWith('Pausable: paused');
         });
 
@@ -3446,7 +3447,7 @@ describe('1.6. GovernanceHub', async () => {
                 fixture,
                 reentrancyERC20,
                 async () => {
-                    await expect(governanceHub.connect(manager).confirmExecution(2))
+                    await expect(governanceHub.connect(manager).confirm(2))
                         .to.be.revertedWith("ReentrancyGuard: reentrant call");
                 }
             )
@@ -3463,10 +3464,10 @@ describe('1.6. GovernanceHub', async () => {
 
             const { governanceHub, moderator, operator1 } = fixture;
 
-            await expect(governanceHub.connect(moderator).confirmExecution(1))
+            await expect(governanceHub.connect(moderator).confirm(1))
                 .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
 
-            await expect(governanceHub.connect(operator1).confirmExecution(1))
+            await expect(governanceHub.connect(operator1).confirm(1))
                 .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
         });
 
@@ -3483,7 +3484,7 @@ describe('1.6. GovernanceHub', async () => {
 
             governor.isAvailable.whenCalledWith(1).returns(false);
 
-            await expect(governanceHub.connect(manager).confirmExecution(1))
+            await expect(governanceHub.connect(manager).confirm(1))
                 .to.be.revertedWithCustomError(governanceHub, 'UnavailableToken');
         });
 
@@ -3506,7 +3507,7 @@ describe('1.6. GovernanceHub', async () => {
                 await admin.nonce(),
             )
 
-            await expect(governanceHub.connect(manager).confirmExecution(1))
+            await expect(governanceHub.connect(manager).confirm(1))
                 .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
         });
 
@@ -3530,7 +3531,7 @@ describe('1.6. GovernanceHub', async () => {
                 await admin.nonce(),
             );
 
-            await expect(governanceHub.connect(manager).confirmExecution(1))
+            await expect(governanceHub.connect(manager).confirm(1))
                 .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
         });
 
@@ -3542,7 +3543,7 @@ describe('1.6. GovernanceHub', async () => {
 
             const { governanceHub, manager } = fixture;
 
-            await expect(governanceHub.connect(manager).confirmExecution(1))
+            await expect(governanceHub.connect(manager).confirm(1))
                 .to.be.revertedWithCustomError(governanceHub, 'InvalidConfirming');
         });
 
@@ -3558,7 +3559,7 @@ describe('1.6. GovernanceHub', async () => {
 
             const { governanceHub, manager } = fixture;
 
-            await expect(governanceHub.connect(manager).confirmExecution(1))
+            await expect(governanceHub.connect(manager).confirm(1))
                 .to.be.revertedWithCustomError(governanceHub, 'InvalidConfirming');
         });
 
@@ -3575,7 +3576,7 @@ describe('1.6. GovernanceHub', async () => {
 
             const { governanceHub, manager } = fixture;
 
-            await expect(governanceHub.connect(manager).confirmExecution(1))
+            await expect(governanceHub.connect(manager).confirm(1))
                 .to.be.revertedWithCustomError(governanceHub, 'InvalidConfirming');
         });
 
@@ -3592,7 +3593,7 @@ describe('1.6. GovernanceHub', async () => {
 
             const { governanceHub, manager } = fixture;
 
-            await expect(governanceHub.connect(manager).confirmExecution(1))
+            await expect(governanceHub.connect(manager).confirm(1))
                 .to.be.revertedWithCustomError(governanceHub, 'InvalidConfirming');
         });
         
@@ -3605,7 +3606,7 @@ describe('1.6. GovernanceHub', async () => {
 
             const { governanceHub, manager } = fixture;
 
-            await expect(governanceHub.connect(manager).confirmExecution(1))
+            await expect(governanceHub.connect(manager).confirm(1))
                 .to.be.revertedWithCustomError(governanceHub, 'InvalidConfirming');
         });
         
@@ -3619,7 +3620,7 @@ describe('1.6. GovernanceHub', async () => {
 
             const { governanceHub, manager } = fixture;
 
-            await expect(governanceHub.connect(manager).confirmExecution(1))
+            await expect(governanceHub.connect(manager).confirm(1))
                 .to.be.revertedWithCustomError(governanceHub, "InvalidConfirming");
         });
         
@@ -3637,7 +3638,7 @@ describe('1.6. GovernanceHub', async () => {
             let timestamp = (await governanceHub.getProposal(1)).due + Constant.GOVERNANCE_HUB_CONFIRMATION_TIME_LIMIT;
             await time.setNextBlockTimestamp(timestamp);
 
-            await expect(governanceHub.connect(manager).confirmExecution(1))
+            await expect(governanceHub.connect(manager).confirm(1))
                 .to.be.revertedWithCustomError(governanceHub, "InvalidConfirming");
         });
 
@@ -3652,7 +3653,7 @@ describe('1.6. GovernanceHub', async () => {
 
             const { governanceHub, manager } = fixture;
 
-            await expect(governanceHub.connect(manager).confirmExecution(1))
+            await expect(governanceHub.connect(manager).confirm(1))
                 .to.be.revertedWithCustomError(governanceHub, "InvalidConfirming");
         });
 
@@ -3666,7 +3667,7 @@ describe('1.6. GovernanceHub', async () => {
 
             const { governanceHub, manager } = fixture;
 
-            await expect(governanceHub.connect(manager).confirmExecution(1))
+            await expect(governanceHub.connect(manager).confirm(1))
                 .to.be.revertedWithCustomError(governanceHub, "InvalidConfirming");
         });
        
@@ -3684,7 +3685,7 @@ describe('1.6. GovernanceHub', async () => {
 
             await callTransaction(failReceiver.activate(true));
 
-            await expect(governanceHub.connect(manager).confirmExecution(1))
+            await expect(governanceHub.connect(manager).confirm(1))
                 .to.be.revertedWithCustomError(governanceHub, "FailedTransfer");
         });
     });

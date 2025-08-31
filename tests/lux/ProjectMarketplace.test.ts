@@ -34,7 +34,7 @@ import { randomInt } from 'crypto';
 import { getInterfaceID, randomArrayWithSum, randomBigNumber } from '@utils/utils';
 import { OrderedMap } from '@utils/utils';
 import { deployProjectMarketplace } from '@utils/deployments/lux/projectMarketplace';
-import { callEstateToken_AuthorizeTokenizers, callEstateToken_UpdateCommissionToken, callEstateToken_UpdateRoyaltyRate } from '@utils/callWithSignatures/estateToken';
+import { callEstateToken_AuthorizeTokenizers, callEstateToken_UpdateCommissionToken } from '@utils/callWithSignatures/estateToken';
 import { callProjectMarketplace_Pause } from '@utils/callWithSignatures/projectMarketplace';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployReentrancyERC1155Holder } from '@utils/deployments/mock/mockReentrancy/reentrancyERC1155Holder';
@@ -46,7 +46,7 @@ import { MockValidator } from '@utils/mockValidator';
 import { RegisterCustodianParams } from '@utils/models/EstateToken';
 import { getRegisterCustodianTx } from '@utils/transaction/EstateToken';
 import { Initialization as LaunchInitialization } from '@tests/launch/test.initialization';
-import { callProjectToken_AuthorizeLaunchpads, callProjectToken_UpdateRoyaltyRate } from '@utils/callWithSignatures/projectToken';
+import { callProjectToken_AuthorizeLaunchpads, callProjectToken_UpdateZoneRoyaltyRate } from '@utils/callWithSignatures/projectToken';
 import { getCallLaunchProjectTx, getCallMintTx } from '@utils/transaction/ProjectToken';
 import { deployMockPrestigePad } from '@utils/deployments/mock/mockPrestigePad';
 
@@ -74,6 +74,8 @@ interface ProjectMarketplaceFixture {
     manager: any;
     moderator: any;
     mockCurrencyExclusiveRate: BigNumber;
+    zone1: string;
+    zone2: string;
 }
 
 async function testReentrancy_Marketplace(
@@ -186,6 +188,9 @@ describe('6.4. ProjectMarketplace', async () => {
             projectToken.address,
         ) as ProjectMarketplace;
 
+        const zone1 = ethers.utils.formatBytes32String("TestZone1");
+        const zone2 = ethers.utils.formatBytes32String("TestZone2");
+
         return {
             admin,
             feeReceiver,
@@ -209,6 +214,8 @@ describe('6.4. ProjectMarketplace', async () => {
             manager,
             moderator,
             mockCurrencyExclusiveRate,
+            zone1,
+            zone2,
         };
     };
 
@@ -238,13 +245,15 @@ describe('6.4. ProjectMarketplace', async () => {
             moderator,
             initiator1,
             initiator2,
-            validator
+            validator,
+            zone1,
+            zone2,
         } = fixture;
 
         await callAdmin_DeclareZones(
             admin,
             admins,
-            [ethers.utils.formatBytes32String("TestZone")],
+            [zone1, zone2],
             true,
             await admin.nonce(),
         );
@@ -271,14 +280,16 @@ describe('6.4. ProjectMarketplace', async () => {
             await admin.nonce()
         );
 
-        await callAdmin_ActivateIn(
-            admin,
-            admins,
-            ethers.utils.formatBytes32String("TestZone"),
-            [manager.address, moderator.address],
-            true,
-            await admin.nonce(),
-        );
+        for (const zone of [zone1, zone2]) {
+            await callAdmin_ActivateIn(
+                admin,
+                admins,
+                zone,
+                [manager.address, moderator.address],
+                true,
+                await admin.nonce(),
+            );
+        }
 
         let currentTimestamp = await time.latest();
         
@@ -298,14 +309,14 @@ describe('6.4. ProjectMarketplace', async () => {
             await time.setNextBlockTimestamp(currentTimestamp);
 
             await callTransaction(getCallLaunchProjectTx(projectToken as any, prestigePad, {
-                zone: ethers.utils.formatBytes32String("TestZone"),
+                zone: zone1,
                 launchId: BigNumber.from(10),
                 initiator: initiator1.address,
                 uri: "Token1_URI",
             }));
 
             await callTransaction(getCallLaunchProjectTx(projectToken as any, prestigePad, {
-                zone: ethers.utils.formatBytes32String("TestZone"),
+                zone: zone2,
                 launchId: BigNumber.from(20),
                 initiator: initiator2.address,
                 uri: "Token2_URI",
@@ -558,10 +569,18 @@ describe('6.4. ProjectMarketplace', async () => {
         isDivisible: boolean,
         isSafeBuy: boolean,
     ) {
-        const { deployer, prestigePad, projectToken, projectMarketplace, feeReceiver, commissionReceiver, admins, admin, initiator1 } = fixture;
+        const { deployer, prestigePad, projectToken, projectMarketplace, feeReceiver, admins, admin, initiator1, zone1 } = fixture;
         const decimals = Constant.PROJECT_TOKEN_MAX_DECIMALS;
 
-        await callProjectToken_UpdateRoyaltyRate(projectToken, admins, projectTokenRoyaltyRate, await admin.nonce());
+        const zone = zone1;
+
+        await callProjectToken_UpdateZoneRoyaltyRate(
+            projectToken,
+            admins,
+            zone,
+            projectTokenRoyaltyRate,
+            await admin.nonce()
+        );
 
         const currentProjectId = (await projectToken.projectNumber()).add(1);
         const currentOfferId = (await projectMarketplace.offerNumber()).add(1);
@@ -593,7 +612,7 @@ describe('6.4. ProjectMarketplace', async () => {
         let currentTimestamp = await time.latest();
 
         await callTransaction(getCallLaunchProjectTx(projectToken as any, prestigePad, {
-            zone: ethers.utils.formatBytes32String("TestZone"),
+            zone: zone,
             launchId: BigNumber.from(0),
             initiator: initiator1.address,
             uri: "Token1_URI",

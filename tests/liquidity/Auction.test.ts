@@ -97,6 +97,7 @@ describe('4.1. Auction', async () => {
             primaryToken.address,
             LiquidityInitialization.STAKE_TOKEN_Name_1,
             LiquidityInitialization.STAKE_TOKEN_Symbol_1,
+            LiquidityInitialization.STAKE_TOKEN_FeeRate,
         ) as StakeToken;
 
         const stakeToken2 = await deployStakeToken(
@@ -105,6 +106,7 @@ describe('4.1. Auction', async () => {
             primaryToken.address,
             LiquidityInitialization.STAKE_TOKEN_Name_2,
             LiquidityInitialization.STAKE_TOKEN_Symbol_2,
+            LiquidityInitialization.STAKE_TOKEN_FeeRate,
         ) as StakeToken;
 
         const stakeToken3 = await deployStakeToken(
@@ -113,6 +115,7 @@ describe('4.1. Auction', async () => {
             primaryToken.address,
             LiquidityInitialization.STAKE_TOKEN_Name_3,
             LiquidityInitialization.STAKE_TOKEN_Symbol_3,
+            LiquidityInitialization.STAKE_TOKEN_FeeRate,
         ) as StakeToken;
 
         const auction = await deployAuction(

@@ -38,6 +38,14 @@ interface PrimaryTokenFixture {
 }
 
 describe('4.4. PrimaryToken', async () => {
+    afterEach(async () => {
+        const { stakeToken1, stakeToken2, stakeToken3 } = await setupBeforeTest();
+
+        stakeToken1.totalSupply.reset();
+        stakeToken2.totalSupply.reset();
+        stakeToken3.totalSupply.reset();
+    });
+
     async function primaryTokenFixture(): Promise<PrimaryTokenFixture> {
         const accounts = await ethers.getSigners();
         const deployer = accounts[0];
@@ -88,6 +96,7 @@ describe('4.4. PrimaryToken', async () => {
             primaryToken.address,
             LiquidityInitialization.STAKE_TOKEN_Name_1,
             LiquidityInitialization.STAKE_TOKEN_Symbol_1,
+            LiquidityInitialization.STAKE_TOKEN_FeeRate,
         ));
 
         const SmockStakeTokenFactory2 = await smock.mock('MockStakeToken') as any;
@@ -97,6 +106,7 @@ describe('4.4. PrimaryToken', async () => {
             primaryToken.address,
             LiquidityInitialization.STAKE_TOKEN_Name_2,
             LiquidityInitialization.STAKE_TOKEN_Symbol_2,
+            LiquidityInitialization.STAKE_TOKEN_FeeRate,
         ));
 
         const SmockStakeTokenFactory3 = await smock.mock('MockStakeToken') as any;
@@ -106,6 +116,7 @@ describe('4.4. PrimaryToken', async () => {
             primaryToken.address,
             LiquidityInitialization.STAKE_TOKEN_Name_3,
             LiquidityInitialization.STAKE_TOKEN_Symbol_3,
+            LiquidityInitialization.STAKE_TOKEN_FeeRate,
         ));
         
         return {

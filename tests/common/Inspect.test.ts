@@ -219,7 +219,6 @@ describe('1.1. Inspect', async () => {
             LendInitialization.MORTGAGE_TOKEN_Name,
             LendInitialization.MORTGAGE_TOKEN_Symbol,
             LendInitialization.MORTGAGE_TOKEN_BaseURI,
-            LendInitialization.MORTGAGE_TOKEN_RoyaltyRate,
             LendInitialization.MORTGAGE_TOKEN_FeeRate,
         ) as MortgageToken;
 
@@ -251,6 +250,7 @@ describe('1.1. Inspect', async () => {
             primaryToken.address,
             LiquidityInitialization.STAKE_TOKEN_Name_1,
             LiquidityInitialization.STAKE_TOKEN_Symbol_1,
+            LiquidityInitialization.STAKE_TOKEN_FeeRate,
         ) as StakeToken;
 
         const distributor = await deployDistributor(
@@ -500,7 +500,7 @@ describe('1.1. Inspect', async () => {
             await testReceiveNotExecuteAnyCode(admin, 28223);
             
             await testReceiveNotExecuteAnyCode(feeReceiver, 28228);
-            await testReceiveNotExecuteAnyCode(priceWatcher, 28233);
+            await testReceiveNotExecuteAnyCode(priceWatcher, 28228);
             await testReceiveNotExecuteAnyCode(reserveVault, 28223);
             await testReceiveNotExecuteAnyCode(airdrop, 28241);
             await testReceiveNotExecuteAnyCode(dividendHub, 28241);
