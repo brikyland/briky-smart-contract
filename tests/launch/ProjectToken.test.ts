@@ -867,7 +867,7 @@ describe('7.2. ProjectToken', async () => {
             );
         }
 
-        it('7.2.4.7. Deauthorize launchpad successfully', async () => {
+        it('7.2.4.6. Deauthorize launchpad successfully', async () => {
             const { projectToken, admin, admins, launchpads } = await beforeProjectTokenTest();
 
             await setupLaunchpads(projectToken, admin, admins, launchpads);
@@ -903,7 +903,7 @@ describe('7.2. ProjectToken', async () => {
             }            
         });
 
-        it('7.2.4.8. Deauthorize launchpad unsuccessfully with unauthorized account', async () => {
+        it('7.2.4.7. Deauthorize launchpad unsuccessfully with unauthorized account', async () => {
             const { projectToken, admin, admins, launchpads } = await beforeProjectTokenTest();
 
             await setupLaunchpads(projectToken, admin, admins, launchpads);
@@ -924,7 +924,7 @@ describe('7.2. ProjectToken', async () => {
             )).to.be.revertedWithCustomError(projectToken, `NotAuthorizedAccount`)
         });
 
-        it('7.2.4.9. Deauthorize launchpad unsuccessfully when unauthorizing same accounts twice on same tx', async () => {
+        it('7.2.4.8. Deauthorize launchpad unsuccessfully when unauthorizing same accounts twice on same tx', async () => {
             const { projectToken, admin, admins, launchpads } = await beforeProjectTokenTest();
 
             await setupLaunchpads(projectToken, admin, admins, launchpads);
@@ -944,7 +944,7 @@ describe('7.2. ProjectToken', async () => {
             )).to.be.revertedWithCustomError(projectToken, `NotAuthorizedAccount`)
         });
 
-        it('7.2.4.10. Deauthorize launchpad unsuccessfully when unauthorizing same accounts twice on different tx', async () => {
+        it('7.2.4.9. Deauthorize launchpad unsuccessfully when unauthorizing same accounts twice on different tx', async () => {
             const { projectToken, admin, admins, launchpads } = await beforeProjectTokenTest();
 
             await setupLaunchpads(projectToken, admin, admins, launchpads);
