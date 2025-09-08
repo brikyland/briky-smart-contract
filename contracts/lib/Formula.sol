@@ -22,6 +22,10 @@ library Formula {
         );
     }
 
+    function mul(IRate.Rate memory a, IRate.Rate memory b) internal pure returns (IRate.Rate memory) {
+        return IRate.Rate(scale(a.value, b), a.decimals);
+    }
+
     function remain(uint256 _value, uint256 _numerator, uint256 _denominator) internal pure returns (uint256) {
         return _value - scale(_value, _numerator, _denominator);
     }

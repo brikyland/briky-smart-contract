@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-interface ILoan {
-    enum LoanState {
+interface IMortgage {
+    enum MortgageState {
         Nil,
         Pending,
         Supplied,
@@ -11,14 +11,14 @@ interface ILoan {
         Cancelled
     }
 
-    struct Loan {
-        uint256 estateId;
-        uint256 mortgageAmount;
+    struct Mortgage {
+        uint256 tokenId;
+        uint256 amount;
         uint256 principal;
         uint256 repayment;
         address currency;
         uint40 due;
-        LoanState state;
+        MortgageState state;
         address borrower;
         address lender;
     }
