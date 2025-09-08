@@ -3,10 +3,10 @@ pragma solidity ^0.8.20;
 
 import {ICommon} from "../../common/interfaces/ICommon.sol";
 
-import {ILoan} from "../../lend/structs/ILoan.sol";
+import {IMortgage} from "../../lend/structs/IMortgage.sol";
 
 interface IMortgageMarketplace is
-ILoan,
+IMortgage,
 ICommon {
     enum OfferState {
         Nil,
@@ -16,6 +16,7 @@ ICommon {
     }
 
     struct Offer {
+        address collection;
         uint256 tokenId;
         uint256 price;
         address currency;
@@ -23,9 +24,10 @@ ICommon {
         address seller;
     }
     event NewOffer(
+        address indexed collection,
         uint256 indexed offerId,
         uint256 indexed tokenId,
-        address indexed seller,
+        address seller,
         uint256 price,
         address currency
     );
@@ -39,18 +41,18 @@ ICommon {
 
     error InvalidBuying();
     error InvalidCancelling();
+    error InvalidCollection();
     error InvalidTokenId();
     error InvalidOfferId();
     error InvalidPrice();
-    error UnavailableLoan();
-
-    function mortgageToken() external view returns (address mortgageToken);
+    error UnavailableMortgage();
 
     function offerNumber() external view returns (uint256 offerNumber);
 
     function getOffer(uint256 offerId) external view returns (Offer memory offer);
 
     function list(
+        address collection,
         uint256 tokenId,
         uint256 price,
         address currency

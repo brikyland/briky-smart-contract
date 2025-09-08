@@ -2,26 +2,24 @@
 pragma solidity ^0.8.20;
 
 import {IERC721MetadataUpgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC721MetadataUpgradeable.sol";
-import {IERC1155ReceiverUpgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC1155ReceiverUpgradeable.sol";
+import {IERC2981Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
 import {IERC4906Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC4906Upgradeable.sol";
 
 import {ICommon} from "../../common/interfaces/ICommon.sol";
-import {IRoyaltyRateProposer} from "../../common/interfaces/IRoyaltyRateProposer.sol";
 
-import {IEstateTokenReceiver} from "../../land/interfaces/IEstateTokenReceiver.sol";
+import {IRate} from "../../common/structs/IRate.sol";
 
-import {ILoan} from "../structs/ILoan.sol";
+import {IMortgage} from "../structs/IMortgage.sol";
 
 interface IMortgageToken is
-ILoan,
+IMortgage,
 ICommon,
-IEstateTokenReceiver,
-IRoyaltyRateProposer,
+IERC2981Upgradeable,
 IERC4906Upgradeable,
 IERC721MetadataUpgradeable {
     event BaseURIUpdate(string newValue);
 
-    event FeeRateUpdate(Rate feeRate);
+    event FeeRateUpdate(IRate.Rate rate);
 
     event NewToken(
         uint256 indexed tokenId,
@@ -30,29 +28,28 @@ IERC721MetadataUpgradeable {
         uint256 feeAmount
     );
 
-    event NewLoan(
-        uint256 indexed loanId,
-        uint256 indexed estateId,
+    event NewMortgage(
+        uint256 indexed mortgageId,
+        uint256 indexed tokenId,
         address indexed borrower,
-        uint256 mortgageAmount,
+        uint256 amount,
         uint256 principal,
         uint256 repayment,
         address currency,
         uint40 duration
     );
-    event LoanCancellation(uint256 indexed loanId);
-    event LoanForeclosure(
-        uint256 indexed loanId,
+    event MortgageCancellation(uint256 indexed mortgageId);
+    event MortgageForeclosure(
+        uint256 indexed mortgageId,
         address indexed receiver
     );
-    event LoanRepayment(uint256 indexed loanId);
+    event MortgageRepayment(uint256 indexed mortgageId);
 
     error InvalidCancelling();
-    error InvalidEstateId();
+    error InvalidTokenId();
     error InvalidForeclosing();
-    error InvalidMortgageAmount();
     error InvalidLending();
-    error InvalidLoanId();
+    error InvalidMortgageId();
     error InvalidPrincipal();
     error InvalidRepaying();
     error InvalidRepayment();
@@ -62,26 +59,17 @@ IERC721MetadataUpgradeable {
 
     function totalSupply() external view returns (uint256 totalSupply);
 
-    function getFeeRate() external view returns (Rate memory rate);
+    function getFeeRate() external view returns (IRate.Rate memory rate);
 
-    function loanNumber() external view returns (uint256 loanNumber);
+    function mortgageNumber() external view returns (uint256 mortgageNumber);
 
-    function getLoan(uint256 loanId) external view returns (Loan memory loan);
+    function getMortgage(uint256 mortgageId) external view returns (Mortgage memory mortgage);
 
-    function borrow(
-        uint256 estateId,
-        uint256 mortgageAmount,
-        uint256 principal,
-        uint256 repayment,
-        address currency,
-        uint40 duration
-    ) external returns (uint256 loanId);
+    function lend(uint256 mortgageId) external payable returns (uint256 value);
+    function repay(uint256 mortgageId) external payable;
+    function foreclose(uint256 mortgageId) external;
+    function cancel(uint256 mortgageId) external;
 
-    function lend(uint256 loanId) external payable returns (uint256 value);
-    function repay(uint256 loanId) external payable;
-    function foreclose(uint256 loanId) external;
-    function cancel(uint256 loanId) external;
-
-    function safeLend(uint256 loanId, uint256 anchor) external payable returns (uint256 value);
-    function safeRepay(uint256 loanId, uint256 anchor) external payable;
+    function safeLend(uint256 mortgageId, uint256 anchor) external payable returns (uint256 value);
+    function safeRepay(uint256 mortgageId, uint256 anchor) external payable;
 }
