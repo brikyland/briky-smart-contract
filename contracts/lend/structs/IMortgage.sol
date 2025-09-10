@@ -12,10 +12,9 @@ interface IMortgage {
     }
 
     struct Mortgage {
-        uint256 tokenId;
-        uint256 amount;
         uint256 principal;
         uint256 repayment;
+        uint256 fee;
         address currency;
         uint40 due;
         MortgageState state;

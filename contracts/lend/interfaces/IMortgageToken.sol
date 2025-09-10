@@ -13,28 +13,27 @@ import {IMortgage} from "../structs/IMortgage.sol";
 
 interface IMortgageToken is
 IMortgage,
+IRate,
 ICommon,
+IERC721MetadataUpgradeable,
 IERC2981Upgradeable,
-IERC4906Upgradeable,
-IERC721MetadataUpgradeable {
+IERC4906Upgradeable {
     event BaseURIUpdate(string newValue);
 
-    event FeeRateUpdate(IRate.Rate rate);
+    event FeeRateUpdate(Rate newRate);
 
     event NewToken(
         uint256 indexed tokenId,
         address indexed lender,
-        uint40 due,
-        uint256 feeAmount
+        uint40 due
     );
 
     event NewMortgage(
         uint256 indexed mortgageId,
-        uint256 indexed tokenId,
         address indexed borrower,
-        uint256 amount,
         uint256 principal,
         uint256 repayment,
+        uint256 fee,
         address currency,
         uint40 duration
     );
@@ -46,6 +45,7 @@ IERC721MetadataUpgradeable {
     event MortgageRepayment(uint256 indexed mortgageId);
 
     error InvalidCancelling();
+    error InvalidCollateral();
     error InvalidTokenId();
     error InvalidForeclosing();
     error InvalidLending();
@@ -65,10 +65,10 @@ IERC721MetadataUpgradeable {
 
     function getMortgage(uint256 mortgageId) external view returns (Mortgage memory mortgage);
 
+    function cancel(uint256 mortgageId) external;
+    function foreclose(uint256 mortgageId) external;
     function lend(uint256 mortgageId) external payable returns (uint256 value);
     function repay(uint256 mortgageId) external payable;
-    function foreclose(uint256 mortgageId) external;
-    function cancel(uint256 mortgageId) external;
 
     function safeLend(uint256 mortgageId, uint256 anchor) external payable returns (uint256 value);
     function safeRepay(uint256 mortgageId, uint256 anchor) external payable;

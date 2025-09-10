@@ -1,22 +1,30 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {IERC2981Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
+import {IERC721Collateral} from "../structs/IERC721Collateral.sol";
 
-import {IRate} from "../../common/structs/IRate.sol";
+import {IMortgageToken} from "./IMortgageToken.sol";
 
-interface IERC721MortgageToken is IRate {
-    event CollateralWhitelist(address collateral);
-    event CollateralUnwhitelist(address collateral);
+interface IERC721MortgageToken is
+IERC721Collateral,
+IMortgageToken {
+    event CollateralRegistration(address collateral);
+    event CollateralDeregistration(address collateral);
 
-    error WhitelistedCollateral();
-    error NotWhitelistedCollateral();
+    event Collateral(
+        address indexed token,
+        uint256 indexed tokenId
+    );
 
-    error InvalidCollateral();
-    error NotTokenOwner();
+    error NotRegisteredCollateral();
+    error RegisteredCollateral();
+
+    function isCollateral(address token) external view returns (bool isCollateral);
+
+    function getCollateral(uint256 mortgageId) external view returns (ERC721Collateral memory collateral);
 
     function borrow(
-        address collateral,
+        address token,
         uint256 tokenId,
         uint256 principal,
         uint256 repayment,
