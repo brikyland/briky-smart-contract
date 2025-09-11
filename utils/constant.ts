@@ -17,7 +17,7 @@ export const Constant = {
 
     // Estate Token
     ESTATE_TOKEN_CONFIRMATION_TIME_LIMIT: 30 * DAY,
-    ESTATE_TOKEN_MAX_DECIMALS: 18,
+    ESTATE_TOKEN_TOKEN_DECIMALS: 18,
 
     // Estate Forger
     ESTATE_FORGER_MINIMUM_SALE_DURATION: 30 * DAY,
