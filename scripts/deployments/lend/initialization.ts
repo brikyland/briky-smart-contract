@@ -1,21 +1,22 @@
 import { parseEther } from "@utils/blockchain";
 
+// Deployment constants template
 export const Initialization = {
     // Mortgage Token
-    ESTATE_MORTGAGE_TOKEN_Name: 'Briky Mortgage',
-    ESTATE_MORTGAGE_TOKEN_Symbol: 'MORTY',
+    ESTATE_MORTGAGE_TOKEN_Name: '',
+    ESTATE_MORTGAGE_TOKEN_Symbol: '',
     ESTATE_MORTGAGE_TOKEN_BaseURI: '',
-    ESTATE_MORTGAGE_TOKEN_FeeRate: parseEther("0.02"),
+    ESTATE_MORTGAGE_TOKEN_FeeRate: parseEther("0"),
 
     // Project Mortgage Token
-    PROJECT_MORTGAGE_TOKEN_Name: 'Project Briky Mortgage',
-    PROJECT_MORTGAGE_TOKEN_Symbol: 'PMORTY',
+    PROJECT_MORTGAGE_TOKEN_Name: '',
+    PROJECT_MORTGAGE_TOKEN_Symbol: '',
     PROJECT_MORTGAGE_TOKEN_BaseURI: '',
-    PROJECT_MORTGAGE_TOKEN_FeeRate: parseEther("0.02"),
+    PROJECT_MORTGAGE_TOKEN_FeeRate: parseEther("0"),
 
     // ERC721 Mortgage Token
-    ERC721_MORTGAGE_TOKEN_Name: 'ERC721 Briky Mortgage',
-    ERC721_MORTGAGE_TOKEN_Symbol: 'EMORTY',
+    ERC721_MORTGAGE_TOKEN_Name: '',
+    ERC721_MORTGAGE_TOKEN_Symbol: '',
     ERC721_MORTGAGE_TOKEN_BaseURI: '',
-    ERC721_MORTGAGE_TOKEN_FeeRate: parseEther("0.02"),
+    ERC721_MORTGAGE_TOKEN_FeeRate: parseEther("0"),
 }
