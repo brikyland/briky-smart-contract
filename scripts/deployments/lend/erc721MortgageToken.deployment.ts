@@ -41,10 +41,10 @@ async function deployOrUpgradeERC721MortgageToken() {
                 signer,
                 adminAddress,
                 feeReceiverAddress,
-                Initialization.MORTGAGE_TOKEN_Name,
-                Initialization.MORTGAGE_TOKEN_Symbol,
-                Initialization.MORTGAGE_TOKEN_BaseURI,
-                Initialization.MORTGAGE_TOKEN_FeeRate,
+                Initialization.ERC721_MORTGAGE_TOKEN_Name,
+                Initialization.ERC721_MORTGAGE_TOKEN_Symbol,
+                Initialization.ERC721_MORTGAGE_TOKEN_BaseURI,
+                Initialization.ERC721_MORTGAGE_TOKEN_FeeRate,
             );
             console.log(`Contract ERC721MortgageToken has been deployed to address ${erc721MortgageToken.address}`);
 

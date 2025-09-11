@@ -47,10 +47,10 @@ async function deployOrUpgradeProjectMortgageToken() {
                 adminAddress,
                 projectTokenAddress,
                 feeReceiverAddress,
-                Initialization.MORTGAGE_TOKEN_Name,
-                Initialization.MORTGAGE_TOKEN_Symbol,
-                Initialization.MORTGAGE_TOKEN_BaseURI,
-                Initialization.MORTGAGE_TOKEN_FeeRate,
+                Initialization.PROJECT_MORTGAGE_TOKEN_Name,
+                Initialization.PROJECT_MORTGAGE_TOKEN_Symbol,
+                Initialization.PROJECT_MORTGAGE_TOKEN_BaseURI,
+                Initialization.PROJECT_MORTGAGE_TOKEN_FeeRate,
             );
             console.log(`Contract ProjectMortgageToken has been deployed to address ${projectMortgageToken.address}`);
 

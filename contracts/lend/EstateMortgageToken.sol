@@ -61,11 +61,11 @@ CommissionDispatchable {
         uint40 _duration
     ) external onlyAvailableCurrency(_currency) whenNotPaused returns (uint256) {
         IEstateToken estateTokenContract = IEstateToken(estateToken);
-        if (_amount == 0) {
-            revert InvalidAmount();
-        }
         if (!estateTokenContract.isAvailable(_estateId)) {
             revert InvalidTokenId();
+        }
+        if (_amount == 0) {
+            revert InvalidAmount();
         }
         if (_amount > estateTokenContract.balanceOf(msg.sender, _estateId)) {
             revert InvalidCollateral();
