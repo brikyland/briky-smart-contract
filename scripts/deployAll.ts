@@ -138,10 +138,10 @@ async function deployAll() {
         admin.address,
         estateToken.address,
         feeReceiver.address,
-        LendInitialization.MORTGAGE_TOKEN_Name,
-        LendInitialization.MORTGAGE_TOKEN_Symbol,
-        LendInitialization.MORTGAGE_TOKEN_BaseURI,
-        LendInitialization.MORTGAGE_TOKEN_FeeRate,
+        LendInitialization.ESTATE_MORTGAGE_TOKEN_Name,
+        LendInitialization.ESTATE_MORTGAGE_TOKEN_Symbol,
+        LendInitialization.ESTATE_MORTGAGE_TOKEN_BaseURI,
+        LendInitialization.ESTATE_MORTGAGE_TOKEN_FeeRate,
     ) as MortgageToken;
     console.log(`${networkName}_MORTGAGE_TOKEN_ADDRESS=${mortgageToken.address}`);
 

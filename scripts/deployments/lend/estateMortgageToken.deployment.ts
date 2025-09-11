@@ -47,10 +47,10 @@ async function deployOrUpgradeEstateMortgageToken() {
                 adminAddress,
                 estateTokenAddress,
                 feeReceiverAddress,
-                Initialization.MORTGAGE_TOKEN_Name,
-                Initialization.MORTGAGE_TOKEN_Symbol,
-                Initialization.MORTGAGE_TOKEN_BaseURI,
-                Initialization.MORTGAGE_TOKEN_FeeRate,
+                Initialization.ESTATE_MORTGAGE_TOKEN_Name,
+                Initialization.ESTATE_MORTGAGE_TOKEN_Symbol,
+                Initialization.ESTATE_MORTGAGE_TOKEN_BaseURI,
+                Initialization.ESTATE_MORTGAGE_TOKEN_FeeRate,
             );
             console.log(`Contract EstateMortgageToken has been deployed to address ${estateMortgageToken.address}`);
 
