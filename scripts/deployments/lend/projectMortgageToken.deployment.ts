@@ -1,24 +1,24 @@
 import { LedgerSigner } from '@anders-t/ethers-ledger';
 import assert from 'assert';
 import { ethers, network, upgrades } from 'hardhat';
-import { deployMortgageToken } from '@utils/deployments/lend/mortgageToken';
+import { deployProjectMortgageToken } from '@utils/deployments/lend/projectMortgageToken';
 import { Initialization } from './initialization';
 
-async function deployOrUpgradeMortgageToken() {
+async function deployOrUpgradeProjectMortgageToken() {
     const config = network.config as any;
     const networkName = network.name.toUpperCase();
     const signer = networkName == 'MAINNET'
         ? new LedgerSigner(ethers.provider)
         : (await ethers.getSigners())[0];
-    const MortgageToken = await ethers.getContractFactory('MortgageToken', signer);
-    const mortgageTokenAddress = config.mortgageTokenAddress ?
+    const ProjectMortgageToken = await ethers.getContractFactory('ProjectMortgageToken', signer);
+    const projectMortgageTokenAddress = config.projectMortgageTokenAddress ?
         await (async () => {
             await upgrades.upgradeProxy(
-                config.mortgageTokenAddress,
-                MortgageToken,
+                config.projectMortgageTokenAddress,
+                ProjectMortgageToken,
             );
-            console.log(`Contract MortgageToken has been updated to address ${config.mortgageTokenAddress}`);
-            return config.mortgageTokenAddress;
+            console.log(`Contract ProjectMortgageToken has been updated to address ${config.mortgageTokenAddress}`);
+            return config.projectMortgageTokenAddress;
         })() :
         await (async () => {
             const adminAddress = config.adminAddress;
@@ -26,10 +26,10 @@ async function deployOrUpgradeMortgageToken() {
                 adminAddress,
                 `Missing ${networkName}_ADMIN_ADDRESS from environment variables!`
             );
-            const estateTokenAddress = config.estateTokenAddress;
+            const projectTokenAddress = config.projectTokenAddress;
             assert.ok(
-                estateTokenAddress,
-                `Missing ${networkName}_ESTATE_TOKEN_ADDRESS from environment variables!`
+                projectTokenAddress,
+                `Missing ${networkName}_PROJECT_TOKEN_ADDRESS from environment variables!`
             );
             const commissionTokenAddress = config.commissionTokenAddress;
             assert.ok(
@@ -42,26 +42,24 @@ async function deployOrUpgradeMortgageToken() {
                 `Missing ${networkName}_FEE_RECEIVER_ADDRESS from environment variables!`
             );
 
-            const mortgageToken = await deployMortgageToken(
+            const projectMortgageToken = await deployProjectMortgageToken(
                 signer,
                 adminAddress,
-                estateTokenAddress,
-                commissionTokenAddress,
+                projectTokenAddress,
                 feeReceiverAddress,
                 Initialization.MORTGAGE_TOKEN_Name,
                 Initialization.MORTGAGE_TOKEN_Symbol,
                 Initialization.MORTGAGE_TOKEN_BaseURI,
                 Initialization.MORTGAGE_TOKEN_FeeRate,
-                Initialization.MORTGAGE_TOKEN_RoyaltyRate,
             );
-            console.log(`Contract MortgageToken has been deployed to address ${mortgageToken.address}`);
+            console.log(`Contract ProjectMortgageToken has been deployed to address ${projectMortgageToken.address}`);
 
-            return mortgageToken.address;
+            return projectMortgageToken.address;
         })();
-    console.log(`${networkName}_MORTGAGE_TOKEN_ADDRESS=${mortgageTokenAddress}`);
+    console.log(`${networkName}_MORTGAGE_TOKEN_ADDRESS=${projectMortgageTokenAddress}`);
 }
 
-deployOrUpgradeMortgageToken()
+deployOrUpgradeProjectMortgageToken()
     .then(() => process.exit(0))
     .catch((error) => {
         console.error(error);
