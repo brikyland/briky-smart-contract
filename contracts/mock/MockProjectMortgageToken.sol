@@ -1,0 +1,37 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+import { ProjectMortgageToken } from "../lend/ProjectMortgageToken.sol";
+import { Revert } from "../lib/Revert.sol";
+import { ProxyCaller } from "./common/ProxyCaller.sol";
+
+contract MockProjectMortgageToken is ProjectMortgageToken, ProxyCaller {
+    function mint(address to, uint256 _mortgageId) external {
+        _mint(to, _mortgageId);
+    }
+
+    function addMortgage(
+        uint256 amount,
+        uint256 principal,
+        uint256 repayment,
+        address currency,
+        uint40 due,
+        MortgageState state,
+        address borrower,
+        address lender,
+        ProjectCollateral memory collateral
+    ) external {
+        mortgages[++mortgageNumber] = Mortgage(
+            amount,
+            principal,
+            repayment,
+            currency,
+            due,
+            state,
+            borrower,
+            lender
+        );
+
+        collaterals[++mortgageNumber] = collateral;
+    }
+}

@@ -1,4 +1,4 @@
-export enum LoanState {
+export enum MortgageState {
     Nil,
     Pending,
     Supplied,

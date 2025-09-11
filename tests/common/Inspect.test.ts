@@ -39,7 +39,7 @@ import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
 import { deployEstateToken } from '@utils/deployments/land/estateToken';
 import { deployCommissionToken } from '@utils/deployments/land/commissionToken';
 import { deployERC721Marketplace } from '@utils/deployments/lux/erc721Marketplace';
-import { deployMortgageToken } from '@utils/deployments/lend/mortgageToken';
+import { deployEstateMortgageToken } from '@utils/deployments/lend/estateMortgageToken';
 import { deployEstateForger } from '@utils/deployments/land/estateForger';
 import { deployEstateMarketplace } from '@utils/deployments/lux/estateMarketplace';
 import { deployCurrency } from '@utils/deployments/common/currency';
@@ -210,11 +210,10 @@ describe('1.1. Inspect', async () => {
         ) as EstateLiquidator;
   
         // Lend
-        const mortgageToken = await deployMortgageToken(
+        const mortgageToken = await deployEstateMortgageToken(
             deployer,
             admin.address,
             estateToken.address,
-            commissionToken.address,
             feeReceiver.address,
             LendInitialization.MORTGAGE_TOKEN_Name,
             LendInitialization.MORTGAGE_TOKEN_Symbol,

@@ -1,64 +1,64 @@
-import { MortgageToken } from "@typechain-types";
+import { EstateMortgageToken } from "@typechain-types";
 import { callTransaction } from "../blockchain";
 import { getSignatures } from "../blockchain";
 import { ethers } from "hardhat";
 import { BigNumberish } from "ethers";
 import { MockContract } from "@defi-wonderland/smock";
 
-export async function callMortgageToken_Pause(
-    mortgageToken: MortgageToken | MockContract<MortgageToken>,
+export async function callEstateMortgageToken_Pause(
+    estateMortgageToken: EstateMortgageToken | MockContract<EstateMortgageToken>,
     admins: any[],
     nonce: BigNumberish
 ) {
     let message = ethers.utils.defaultAbiCoder.encode(
         ["address", "string"],
-        [mortgageToken.address, "pause"]
+        [estateMortgageToken.address, "pause"]
     );
     let signatures = await getSignatures(message, admins, nonce);
 
-    await callTransaction(mortgageToken.pause(signatures));
+    await callTransaction(estateMortgageToken.pause(signatures));
 }
 
-export async function callMortgageToken_Unpause(
-    mortgageToken: MortgageToken | MockContract<MortgageToken>,
+export async function callEstateMortgageToken_Unpause(
+    estateMortgageToken: EstateMortgageToken | MockContract<EstateMortgageToken>,
     admins: any[],
     nonce: BigNumberish
 ) {
     let message = ethers.utils.defaultAbiCoder.encode(
         ["address", "string"],
-        [mortgageToken.address, "unpause"]
+        [estateMortgageToken.address, "unpause"]
     );
     let signatures = await getSignatures(message, admins, nonce);
 
-    await callTransaction(mortgageToken.unpause(signatures));
+    await callTransaction(estateMortgageToken.unpause(signatures));
 }
 
-export async function callMortgageToken_UpdateBaseURI(
-    mortgageToken: MortgageToken | MockContract<MortgageToken>,
+export async function callEstateMortgageToken_UpdateBaseURI(
+    estateMortgageToken: EstateMortgageToken | MockContract<EstateMortgageToken>,
     admins: any[],
     baseURI: string,
     nonce: BigNumberish
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
         ["address", "string", "string"],
-        [mortgageToken.address, "updateBaseURI", baseURI]
+        [estateMortgageToken.address, "updateBaseURI", baseURI]
     );
     const signatures = await getSignatures(message, admins, nonce);
 
-    await callTransaction(mortgageToken.updateBaseURI(baseURI, signatures));
+    await callTransaction(estateMortgageToken.updateBaseURI(baseURI, signatures));
 }
 
-export async function callMortgageToken_UpdateFeeRate(
-    mortgageToken: MortgageToken | MockContract<MortgageToken>,
+export async function callEstateMortgageToken_UpdateFeeRate(
+    estateMortgageToken: EstateMortgageToken | MockContract<EstateMortgageToken>,
     admins: any[],
     feeRate: BigNumberish,
     nonce: BigNumberish
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
         ["address", "string", "uint256"],
-        [mortgageToken.address, "updateFeeRate", feeRate]
+        [estateMortgageToken.address, "updateFeeRate", feeRate]
     );
     const signatures = await getSignatures(message, admins, nonce);
 
-    await callTransaction(mortgageToken.updateFeeRate(feeRate, signatures));
+    await callTransaction(estateMortgageToken.updateFeeRate(feeRate, signatures));
 }

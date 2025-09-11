@@ -3345,7 +3345,7 @@ describe('2.2. EstateForger', async () => {
             )).to.be.revertedWithCustomError(estateForger, "InvalidRequestId");
         });
 
-        it('2.2.10.3. deposit tokenization unsuccessfully with bad anchor', async () => {
+        it('2.2.10.3. deposit tokenization unsuccessfully with invalid anchor', async () => {
             const fixture = await beforeEstateForgerTest({
                 listSampleCurrencies: true,
                 addZoneForExecutive: true,
@@ -3359,11 +3359,11 @@ describe('2.2. EstateForger', async () => {
             const { estateForger, depositor1 } = fixture;
 
             await expect(estateForger.connect(depositor1).safeDeposit(
-                1, 2, ethers.utils.solidityKeccak256(["string"], ["bad anchor"])
+                1, 2, ethers.utils.solidityKeccak256(["string"], ["invalid anchor"])
             )).to.be.revertedWithCustomError(estateForger, "BadAnchor");
 
             await expect(estateForger.connect(depositor1).safeDeposit(
-                2, 2, ethers.utils.solidityKeccak256(["string"], ["bad anchor"])
+                2, 2, ethers.utils.solidityKeccak256(["string"], ["invalid anchor"])
             )).to.be.revertedWithCustomError(estateForger, "BadAnchor");
         });
     });

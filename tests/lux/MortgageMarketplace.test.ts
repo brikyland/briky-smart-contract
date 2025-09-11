@@ -36,11 +36,11 @@ import { BigNumber } from 'ethers';
 import { randomInt } from 'crypto';
 import { getInterfaceID, randomBigNumber } from '@utils/utils';
 import { OrderedMap } from '@utils/utils';
-import { deployMortgageToken } from '@utils/deployments/lend/mortgageToken';
+import { deployEstateMortgageToken } from '@utils/deployments/lend/estateMortgageToken';
 import { deployMortgageMarketplace } from '@utils/deployments/lux/mortgageMarketplace';
 import { callMortgageMarketplace_Pause } from '@utils/callWithSignatures/mortgageMarketplace';
 import { Contract } from 'ethers';
-import { LoanState, MortgageMarketplaceOfferState } from '@utils/models/enums';
+import { MortgageState, MortgageMarketplaceOfferState } from '@utils/models/enums';
 import { getBalance } from '@utils/blockchain';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
@@ -64,7 +64,7 @@ interface MortgageMarketplaceFixture {
     estateToken: MockContract<MockEstateToken>;
     commissionToken: MockContract<CommissionToken>;
     mortgageToken: MockContract<MockMortgageToken>;
-    mortgageMarketplace: MortgageMarketplace;    
+    mortgageMarketplace: MortgageMarketplace;
     validator: MockValidator;
 
     deployer: any;
@@ -384,25 +384,25 @@ describe('6.3. MortgageMarketplace', async () => {
                 broker: broker2.address,
             }));
 
-            await callTransaction(mortgageToken.addLoan(
+            await callTransaction(mortgageToken.addMortgage(
                 1,
                 150_000,
                 10e5,
                 11e5,
                 ethers.constants.AddressZero,
                 currentTimestamp + 1000,
-                LoanState.Supplied,
+                MortgageState.Supplied,
                 borrower1.address,
                 seller1.address,
             ));
-            await callTransaction(mortgageToken.addLoan(
+            await callTransaction(mortgageToken.addMortgage(
                 2,
                 200,
                 100000,
                 110000,
                 ethers.constants.AddressZero,
                 currentTimestamp + 1100,
-                LoanState.Supplied,
+                MortgageState.Supplied,
                 borrower2.address,
                 seller2.address,
             ));
@@ -591,7 +591,7 @@ describe('6.3. MortgageMarketplace', async () => {
         const broker = randomWallet();
         const zone = zone1;
         const currentEstateId = (await estateToken.estateNumber()).add(1);
-        const currentTokenId = (await mortgageToken.loanNumber()).add(1);
+        const currentTokenId = (await mortgageToken.mortgageNumber()).add(1);
         const currentOfferId = (await mortgageMarketplace.offerNumber()).add(1);
 
         await callEstateToken_UpdateZoneRoyaltyRate(
@@ -649,14 +649,14 @@ describe('6.3. MortgageMarketplace', async () => {
         }));
 
 
-        await callTransaction(mortgageToken.addLoan(
+        await callTransaction(mortgageToken.addMortgage(
             currentEstateId,
             150_000,
             10e5,
             11e5,
             newCurrencyAddress,
             currentTimestamp + 1000,
-            LoanState.Supplied,
+            MortgageState.Supplied,
             borrower.address,
             seller.address,
         ));

@@ -63,6 +63,7 @@ import { getCallTokenizeEstateTx, getRegisterCustodianTx, getUpdateEstateURITx }
 import { getRegisterInitiatorInvalidValidation } from '@utils/validation/ProjectToken';
 import { ContractTransaction } from 'ethers';
 import { getRegisterBrokerTx } from '@utils/transaction/CommissionToken';
+import { Initialization as CommonInitialization } from '@tests/common/test.initialization';
 
 interface EstateTokenFixture {
     admin: Admin;
@@ -177,7 +178,7 @@ describe('2.4. EstateToken', async () => {
             deployer.address,
             admin.address,
             validator.getAddress(),
-            Constant.GOVERNANCE_HUB_FEE,
+            CommonInitialization.GOVERNANCE_HUB_Fee,
         ) as GovernanceHub;
 
         const dividendHub = await deployDividendHub(
@@ -1440,7 +1441,7 @@ describe('2.4. EstateToken', async () => {
             const defaultParams: TokenizeEstateParams = {
                 totalSupply: BigNumber.from(10_000),
                 zone: zone1,
-                tokenizationId: 10,
+                tokenizationId: BigNumber.from(10),
                 uri: "Token1_URI",
                 expireAt: baseTimestamp + 100,
                 custodian: custodian1.address,

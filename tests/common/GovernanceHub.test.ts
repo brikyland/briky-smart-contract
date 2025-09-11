@@ -12,7 +12,7 @@ import {
 } from '@typechain-types';
 import { callTransaction, getSignatures, prepareERC20, prepareNativeToken, testReentrancy } from '@utils/blockchain';
 import { Constant } from '@tests/test.constant';
-import { Initialization as CommonInitialization } from '@tests/common/initialization';
+import { Initialization as CommonInitialization } from '@tests/common/test.initialization';
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 import { deployGovernanceHub } from '@utils/deployments/common/governanceHub';
