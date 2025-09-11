@@ -15,7 +15,6 @@ import {
     IEstateTokenReceiver__factory,
     IERC1155ReceiverUpgradeable__factory,
     ICommon__factory,
-    IRoyaltyRateProposer__factory,
     IERC721MetadataUpgradeable__factory,
     IERC721Upgradeable__factory,
     PriceWatcher,
@@ -115,7 +114,7 @@ interface EstateMortgageTokenFixture {
     mockCurrencyExclusiveRate: BigNumber;
 }
 
-describe.only('3.1. EstateMortgageToken', async () => {
+describe('3.1. EstateMortgageToken', async () => {
     async function estateMortgageTokenFixture(): Promise<EstateMortgageTokenFixture> {
         const accounts = await ethers.getSigners();
         const deployer = accounts[0];
@@ -215,10 +214,10 @@ describe.only('3.1. EstateMortgageToken', async () => {
             admin.address,
             estateToken.address,
             feeReceiver.address,
-            LendInitialization.MORTGAGE_TOKEN_Name,
-            LendInitialization.MORTGAGE_TOKEN_Symbol,
-            LendInitialization.MORTGAGE_TOKEN_BaseURI,
-            LendInitialization.MORTGAGE_TOKEN_FeeRate,
+            LendInitialization.ESTATE_MORTGAGE_TOKEN_Name,
+            LendInitialization.ESTATE_MORTGAGE_TOKEN_Symbol,
+            LendInitialization.ESTATE_MORTGAGE_TOKEN_BaseURI,
+            LendInitialization.ESTATE_MORTGAGE_TOKEN_FeeRate,
         ) as EstateMortgageToken;
 
         const zone1 = ethers.utils.formatBytes32String("TestZone1");
@@ -414,24 +413,24 @@ describe.only('3.1. EstateMortgageToken', async () => {
         }
 
         if (listSampleMortgage) {
-            await callTransaction(estateMortgageToken.connect(borrower1).borrow(
-                1,
-                150_000,
-                10e5,
-                11e5,
-                ethers.constants.AddressZero,
-                1000
-            ));
+            await callTransaction(getEstateBorrowTx(estateMortgageToken, borrower1, {
+                estateId: BigNumber.from(1),
+                amount: BigNumber.from(150_000),
+                principal: BigNumber.from(10e5),
+                repayment: BigNumber.from(11e5),
+                currency: ethers.constants.AddressZero,
+                duration: BigNumber.from(1000),
+            }));
             await callTransaction(estateToken.connect(borrower1).setApprovalForAll(estateMortgageToken.address, true));
-    
-            await callTransaction(estateMortgageToken.connect(borrower2).borrow(
-                2,
-                200,
-                100000,
-                110000,
-                currency.address,
-                1000
-            ));
+
+            await callTransaction(getEstateBorrowTx(estateMortgageToken, borrower2, {
+                estateId: BigNumber.from(2),
+                amount: BigNumber.from(200),
+                principal: BigNumber.from(100000),
+                repayment: BigNumber.from(110000),
+                currency: currency.address,
+                duration: BigNumber.from(1000),
+            }));    
             await callTransaction(estateToken.connect(borrower2).setApprovalForAll(estateMortgageToken.address, true));
             
             await prepareERC20(
@@ -470,11 +469,11 @@ describe.only('3.1. EstateMortgageToken', async () => {
             const { admin, estateToken, feeReceiver, commissionToken, estateMortgageToken } = await beforeEstateMortgageTokenTest();
 
             const tx = estateMortgageToken.deployTransaction;
-            await expect(tx).to.emit(estateMortgageToken, "BaseURIUpdate").withArgs(LendInitialization.MORTGAGE_TOKEN_BaseURI);
+            await expect(tx).to.emit(estateMortgageToken, "BaseURIUpdate").withArgs(LendInitialization.ESTATE_MORTGAGE_TOKEN_BaseURI);
             await expect(tx).to.emit(estateMortgageToken, "FeeRateUpdate").withArgs(
                 (rate: any) => {
                     expect(structToObject(rate)).to.deep.equal({
-                        value: LendInitialization.MORTGAGE_TOKEN_FeeRate,
+                        value: LendInitialization.ESTATE_MORTGAGE_TOKEN_FeeRate,
                         decimals: Constant.COMMON_RATE_DECIMALS,
                     });
                     return true;
@@ -485,7 +484,7 @@ describe.only('3.1. EstateMortgageToken', async () => {
 
             const feeRate = await estateMortgageToken.getFeeRate();
             expect(structToObject(feeRate)).to.deep.equal({
-                value: LendInitialization.MORTGAGE_TOKEN_FeeRate,
+                value: LendInitialization.ESTATE_MORTGAGE_TOKEN_FeeRate,
                 decimals: Constant.COMMON_RATE_DECIMALS,
             });
 
@@ -505,9 +504,9 @@ describe.only('3.1. EstateMortgageToken', async () => {
                 admin.address,
                 estateToken.address,
                 feeReceiver.address,
-                LendInitialization.MORTGAGE_TOKEN_Name,
-                LendInitialization.MORTGAGE_TOKEN_Symbol,
-                LendInitialization.MORTGAGE_TOKEN_BaseURI,
+                LendInitialization.ESTATE_MORTGAGE_TOKEN_Name,
+                LendInitialization.ESTATE_MORTGAGE_TOKEN_Symbol,
+                LendInitialization.ESTATE_MORTGAGE_TOKEN_BaseURI,
                 Constant.COMMON_RATE_MAX_FRACTION.add(1),
             ])).to.be.reverted;
         });
@@ -1089,10 +1088,6 @@ describe.only('3.1. EstateMortgageToken', async () => {
                 await prepareNativeToken(ethers.provider, deployer, [lender], principal);
             }
 
-            // console.log("prepare principal:", principal);
-            // console.log("prepare fee`:", fee);
-            // console.log("prepare commissionAmount:", commissionAmount);
-
             let currentTotalSupply = await estateMortgageToken.totalSupply();
 
             let initBorrowerBalance = await getBalance(ethers.provider, borrower.address, newCurrency);
@@ -1157,24 +1152,24 @@ describe.only('3.1. EstateMortgageToken', async () => {
 
         it('3.1.6.1. lend successfully in native and erc20 token', async () => {
             const fixture = await beforeEstateMortgageTokenTest();
-            // await testLend(
-            //     fixture,
-            //     fixture.mockCurrencyExclusiveRate,
-            //     ethers.utils.parseEther('0.1'),
-            //     LendInitialization.MORTGAGE_TOKEN_FeeRate,
-            //     false,
-            //     false,
-            //     ethers.BigNumber.from(200_000),
-            //     ethers.BigNumber.from(150_000),
-            //     ethers.BigNumber.from(10e5),
-            //     ethers.BigNumber.from(11e5),
-            // )
+            await testLend(
+                fixture,
+                fixture.mockCurrencyExclusiveRate,
+                ethers.utils.parseEther('0.1'),
+                LendInitialization.ESTATE_MORTGAGE_TOKEN_FeeRate,
+                false,
+                false,
+                ethers.BigNumber.from(200_000),
+                ethers.BigNumber.from(150_000),
+                ethers.BigNumber.from(10e5),
+                ethers.BigNumber.from(11e5),
+            )
 
             await testLend(
                 fixture,
                 fixture.mockCurrencyExclusiveRate,
                 ethers.utils.parseEther('0.1'),
-                LendInitialization.MORTGAGE_TOKEN_FeeRate,
+                LendInitialization.ESTATE_MORTGAGE_TOKEN_FeeRate,
                 true,
                 true,
                 ethers.BigNumber.from(300),
@@ -1195,7 +1190,7 @@ describe.only('3.1. EstateMortgageToken', async () => {
                         fixture,
                         fixture.mockCurrencyExclusiveRate,
                         ethers.utils.parseEther('0.1'),
-                        LendInitialization.MORTGAGE_TOKEN_FeeRate,
+                        LendInitialization.ESTATE_MORTGAGE_TOKEN_FeeRate,
                         isERC20,
                         isExclusive,
                         ethers.BigNumber.from(200_000),

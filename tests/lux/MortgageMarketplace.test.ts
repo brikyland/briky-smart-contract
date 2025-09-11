@@ -201,10 +201,10 @@ describe('6.3. MortgageMarketplace', async () => {
             estateToken.address,
             commissionToken.address,
             feeReceiver.address,
-            LendInitialization.MORTGAGE_TOKEN_Name,
-            LendInitialization.MORTGAGE_TOKEN_Symbol,
-            LendInitialization.MORTGAGE_TOKEN_BaseURI,
-            LendInitialization.MORTGAGE_TOKEN_FeeRate,
+            LendInitialization.ESTATE_MORTGAGE_TOKEN_Name,
+            LendInitialization.ESTATE_MORTGAGE_TOKEN_Symbol,
+            LendInitialization.ESTATE_MORTGAGE_TOKEN_BaseURI,
+            LendInitialization.ESTATE_MORTGAGE_TOKEN_FeeRate,
         ));
 
         const mortgageMarketplace = await deployMortgageMarketplace(
@@ -763,7 +763,7 @@ describe('6.3. MortgageMarketplace', async () => {
             await testBuyOffer(
                 fixture,
                 mockCurrencyExclusiveRate,
-                LendInitialization.MORTGAGE_TOKEN_RoyaltyRate,
+                LendInitialization.ESTATE_MORTGAGE_TOKEN_RoyaltyRate,
                 ethers.utils.parseEther("0.1"),
                 false,
                 false,
@@ -774,7 +774,7 @@ describe('6.3. MortgageMarketplace', async () => {
             await testBuyOffer(
                 fixture,
                 mockCurrencyExclusiveRate,
-                LendInitialization.MORTGAGE_TOKEN_RoyaltyRate,
+                LendInitialization.ESTATE_MORTGAGE_TOKEN_RoyaltyRate,
                 ethers.utils.parseEther("0.1"),
                 true,
                 false,
@@ -798,7 +798,7 @@ describe('6.3. MortgageMarketplace', async () => {
                     await testBuyOffer(
                         fixture,
                         mockCurrencyExclusiveRate,
-                        LendInitialization.MORTGAGE_TOKEN_RoyaltyRate,
+                        LendInitialization.ESTATE_MORTGAGE_TOKEN_RoyaltyRate,
                         ethers.utils.parseEther("0.1"),
                         isERC20,
                         isExclusive,
@@ -1007,7 +1007,7 @@ describe('6.3. MortgageMarketplace', async () => {
             await testBuyOffer(
                 fixture,
                 mockCurrencyExclusiveRate,
-                LendInitialization.MORTGAGE_TOKEN_RoyaltyRate,
+                LendInitialization.ESTATE_MORTGAGE_TOKEN_RoyaltyRate,
                 ethers.utils.parseEther("0.1"),
                 false,
                 false,
@@ -1018,7 +1018,7 @@ describe('6.3. MortgageMarketplace', async () => {
             await testBuyOffer(
                 fixture,
                 mockCurrencyExclusiveRate,
-                LendInitialization.MORTGAGE_TOKEN_RoyaltyRate,
+                LendInitialization.ESTATE_MORTGAGE_TOKEN_RoyaltyRate,
                 ethers.utils.parseEther("0.1"),
                 true,
                 false,

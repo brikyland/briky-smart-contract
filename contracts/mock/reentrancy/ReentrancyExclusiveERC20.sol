@@ -35,8 +35,6 @@ contract ReentrancyExclusiveERC20 is ERC20Upgradeable, ProxyCaller {
 
     function _reentrancy() internal returns (bool) {
         if (reentrancyTarget != address(0)) {
-            // console.log("reentrancyTarget", reentrancyTarget);
-            // console.logBytes(reentrancyData);
             (bool success, bytes memory res) = reentrancyTarget.call{value: msg.value}(reentrancyData);
             if (!success) {
                 Revert.revertFromReturnedData(res);
