@@ -209,7 +209,6 @@ ReentrancyGuardUpgradeable {
     }
 
     function _borrow(
-        uint256 _mortgageId,
         uint256 _principal,
         uint256 _repayment,
         address _currency,
@@ -227,7 +226,8 @@ ReentrancyGuardUpgradeable {
             _currency
         );
         
-        mortgages[_mortgageId] = Mortgage(
+        uint256 mortgageId = ++mortgageNumber;
+        mortgages[mortgageId] = Mortgage(
             _principal,
             _repayment,
             fee,
@@ -238,14 +238,8 @@ ReentrancyGuardUpgradeable {
             address(0)
         );
 
-        _transferCollateral(
-            _mortgageId,
-            msg.sender,
-            address(this)
-        );
-
         emit NewMortgage(
-            _mortgageId,
+            mortgageId,
             msg.sender,
             _principal,
             _repayment,
@@ -254,7 +248,7 @@ ReentrancyGuardUpgradeable {
             _duration
         );
 
-        return _mortgageId;
+        return mortgageId;
     }
 
     function _lend(uint256 _mortgageId) internal nonReentrant whenNotPaused returns (uint40) {
@@ -266,10 +260,9 @@ ReentrancyGuardUpgradeable {
 
         address currency = mortgage.currency;
         uint256 principal = mortgage.principal;
-        if (currency == address(0)) {
-            CurrencyHandler.receiveNative(principal);
-        }
-        CurrencyHandler.forwardMoreCurrency(
+
+        CurrencyHandler.receiveCurrency(currency, principal);
+        CurrencyHandler.sendCurrency(
             currency,
             mortgage.borrower,
             principal - mortgage.fee
@@ -325,7 +318,7 @@ ReentrancyGuardUpgradeable {
     }
 
     function _chargeFee(uint256 _mortgageId) internal virtual {
-        CurrencyHandler.forwardMoreCurrency(
+        CurrencyHandler.sendCurrency(
             mortgages[_mortgageId].currency,
             feeReceiver,
             mortgages[_mortgageId].fee

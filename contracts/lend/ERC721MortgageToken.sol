@@ -95,19 +95,25 @@ MortgageToken {
             revert InvalidCollateral();
         }
 
-        uint256 mortgageId = ++mortgageNumber;
-        collaterals[mortgageId] = ERC721Collateral(
-            _token,
-            _tokenId
-        );
-
-        return _borrow(
-            mortgageId,
+        uint256 mortgageId = _borrow(
             _principal,
             _repayment,
             _currency,
             _duration
         );
+
+        collaterals[mortgageId] = ERC721Collateral(
+            _token,
+            _tokenId
+        );
+
+        _transferCollateral(
+            mortgageId,
+            msg.sender,
+            address(this)
+        );
+
+        return mortgageId;
     }
 
     function royaltyInfo(uint256 _tokenId, uint256 _price) external view override returns (address, uint256) {
