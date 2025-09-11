@@ -76,4 +76,12 @@ library CurrencyHandler {
             forwardERC20(_currency, _receiver, _value);
         }
     }
+
+    function forwardMoreCurrency(address _currency, address _receiver, uint256 _value) internal {
+        if (_currency == address(0)) {
+            sendNative(_receiver, _value);
+        } else {
+            forwardERC20(_currency, _receiver, _value);
+        }
+    }
 }

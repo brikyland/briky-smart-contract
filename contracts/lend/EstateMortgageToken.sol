@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol";
+import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC20Upgradeable.sol";
 
 import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
 
@@ -60,13 +61,22 @@ CommissionDispatchable {
         uint40 _duration
     ) external onlyAvailableCurrency(_currency) whenNotPaused returns (uint256) {
         IEstateToken estateTokenContract = IEstateToken(estateToken);
+        if (_amount == 0) {
+            revert InvalidAmount();
+        }
         if (!estateTokenContract.isAvailable(_estateId)) {
             revert InvalidTokenId();
         }
         if (_amount > estateTokenContract.balanceOf(msg.sender, _estateId)) {
             revert InvalidCollateral();
         }
+        uint256 mortgageId = ++mortgageNumber;
+        collaterals[mortgageId] = EstateCollateral(
+            _estateId,
+            _amount
+        );
         return _borrow(
+            mortgageId,
             _principal,
             _repayment,
             _currency,
@@ -110,8 +120,7 @@ CommissionDispatchable {
             fee,
             currency
         );
-
-        CurrencyHandler.sendCurrency(
+        CurrencyHandler.forwardMoreCurrency(
             currency,
             feeReceiver,
             fee - commission
