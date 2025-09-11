@@ -11,6 +11,8 @@ interface IEstateMortgageToken is
 IEstateCollateral,
 IEstateTokenReceiver,
 IMortgageToken {
+    error InvalidAmount();
+
     function getCollateral(uint256 mortgageId) external view returns (EstateCollateral memory collateral);
 
     function borrow(

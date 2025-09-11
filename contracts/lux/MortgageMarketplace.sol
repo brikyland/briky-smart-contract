@@ -20,6 +20,7 @@ import {ICommissionToken} from "../land/interfaces/ICommissionToken.sol";
 import {CommissionDispatchable} from "../land/utilities/CommissionDispatchable.sol";
 
 import {IMortgageToken} from "../lend/interfaces/IMortgageToken.sol";
+import {IEstateMortgageToken} from "../lend/interfaces/IEstateMortgageToken.sol";
 
 import {MortgageMarketplaceStorage} from "../lux/storages/MortgageMarketplaceStorage.sol";
 
@@ -165,11 +166,15 @@ ReentrancyGuardUpgradeable {
 
         address currency = offer.currency;
         royaltyAmount = _applyDiscount(royaltyAmount, currency);
-        uint256 commissionAmount = _forwardCommission(
-            tokenId,
-            royaltyAmount,
-            currency
-        );
+
+        uint256 commissionAmount;
+        if (!collection.supportsInterface(type(IEstateMortgageToken).interfaceId)) {
+            commissionAmount = _forwardCommission(
+                offer.tokenId,
+                royaltyAmount,
+                currency
+            );
+        }
 
         if (currency == address(0)) {
             CurrencyHandler.receiveNative(price + royaltyAmount);

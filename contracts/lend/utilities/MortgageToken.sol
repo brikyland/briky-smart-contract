@@ -7,6 +7,7 @@ import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/se
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import {ERC721PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721PausableUpgradeable.sol";
 import {ERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
+import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC20Upgradeable.sol";
 
 import {CurrencyHandler} from "../../lib/CurrencyHandler.sol";
 import {Formula} from "../../lib/Formula.sol";
@@ -208,6 +209,7 @@ ReentrancyGuardUpgradeable {
     }
 
     function _borrow(
+        uint256 _mortgageId,
         uint256 _principal,
         uint256 _repayment,
         address _currency,
@@ -224,9 +226,8 @@ ReentrancyGuardUpgradeable {
             _principal.scale(feeRate, CommonConstant.RATE_MAX_FRACTION),
             _currency
         );
-
-        uint256 mortgageId = ++mortgageNumber;
-        mortgages[mortgageId] = Mortgage(
+        
+        mortgages[_mortgageId] = Mortgage(
             _principal,
             _repayment,
             fee,
@@ -238,13 +239,13 @@ ReentrancyGuardUpgradeable {
         );
 
         _transferCollateral(
-            mortgageId,
+            _mortgageId,
             msg.sender,
             address(this)
         );
 
         emit NewMortgage(
-            mortgageId,
+            _mortgageId,
             msg.sender,
             _principal,
             _repayment,
@@ -253,16 +254,26 @@ ReentrancyGuardUpgradeable {
             _duration
         );
 
-        return mortgageId;
+        return _mortgageId;
     }
 
     function _lend(uint256 _mortgageId) internal nonReentrant whenNotPaused returns (uint40) {
         Mortgage storage mortgage = mortgages[_mortgageId];
-        address borrower = mortgage.borrower;
 
         if (msg.sender == mortgage.borrower || mortgage.state != MortgageState.Pending) {
             revert InvalidLending();
         }
+
+        address currency = mortgage.currency;
+        uint256 principal = mortgage.principal;
+        if (currency == address(0)) {
+            CurrencyHandler.receiveNative(principal);
+        }
+        CurrencyHandler.forwardMoreCurrency(
+            currency,
+            mortgage.borrower,
+            principal - mortgage.fee
+        );
 
         _chargeFee(_mortgageId);
 
@@ -298,9 +309,11 @@ ReentrancyGuardUpgradeable {
 
         mortgage.state = MortgageState.Repaid;
 
+        address owner = ownerOf(_mortgageId);
+
         _burn(_mortgageId);
 
-        CurrencyHandler.forwardCurrency(mortgage.currency, ownerOf(_mortgageId), mortgage.repayment);
+        CurrencyHandler.forwardCurrency(mortgage.currency, owner, mortgage.repayment);        
 
         _transferCollateral(
             _mortgageId,
@@ -312,7 +325,7 @@ ReentrancyGuardUpgradeable {
     }
 
     function _chargeFee(uint256 _mortgageId) internal virtual {
-        CurrencyHandler.sendCurrency(
+        CurrencyHandler.forwardMoreCurrency(
             mortgages[_mortgageId].currency,
             feeReceiver,
             mortgages[_mortgageId].fee
@@ -324,5 +337,4 @@ ReentrancyGuardUpgradeable {
         address _from,
         address _to
     ) internal virtual;
-
 }

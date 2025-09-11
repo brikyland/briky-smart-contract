@@ -63,7 +63,13 @@ ProjectTokenReceiver {
         if (_amount > projectTokenContract.balanceOf(msg.sender, _projectId)) {
             revert InvalidCollateral();
         }
+        uint256 mortgageId = ++mortgageNumber;
+        collaterals[mortgageId] = ProjectCollateral(
+            _projectId,
+            _amount
+        );
         return _borrow(
+            mortgageId,
             _principal,
             _repayment,
             _currency,

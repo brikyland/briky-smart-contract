@@ -43,11 +43,7 @@ Initializable {
         address receiver;
         (receiver, commission) = ICommissionToken(commissionToken).commissionInfo(_estateId, _value);
 
-        if (_currency == address(0)) {
-            CurrencyHandler.sendNative(receiver, commission);
-        } else {
-            CurrencyHandler.forwardERC20(_currency, receiver, commission);
-        }
+        CurrencyHandler.forwardMoreCurrency(_currency, receiver, commission);
 
         emit CommissionDispatch(
             receiver,

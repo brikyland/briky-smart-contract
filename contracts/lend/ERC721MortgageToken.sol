@@ -95,7 +95,14 @@ MortgageToken {
             revert InvalidCollateral();
         }
 
+        uint256 mortgageId = ++mortgageNumber;
+        collaterals[mortgageId] = ERC721Collateral(
+            _token,
+            _tokenId
+        );
+
         return _borrow(
+            mortgageId,
             _principal,
             _repayment,
             _currency,
