@@ -10,7 +10,7 @@ import { Initialization as LendInitialization } from './deployments/lend/initial
 import { deployEstateForger } from '@utils/deployments/land/estateForger';
 import { deployEstateMarketplace } from '@utils/deployments/lux/estateMarketplace';
 import { deployCommissionToken } from '@utils/deployments/land/commissionToken';
-import { deployMortgageToken } from '@utils/deployments/lend/mortgageToken';
+import { deployEstateMortgageToken } from '@utils/deployments/lend/estateMortgageToken';
 import { deployMortgageMarketplace } from '@utils/deployments/lux/mortgageMarketplace';
 import { deployMockPriceFeed } from '@utils/deployments/mock/mockPriceFeed';
 import { callAdmin_UpdateCurrencyRegistries } from '@utils/callWithSignatures/admin';
@@ -133,11 +133,10 @@ async function deployAll() {
     console.log(`${networkName}_ESTATE_MARKETPLACE_ADDRESS=${estateMarketplace.address}`);
 
     // Deploy mortgage token
-    const mortgageToken = await deployMortgageToken(
+    const mortgageToken = await deployEstateMortgageToken(
         signer,
         admin.address,
         estateToken.address,
-        commissionToken.address,
         feeReceiver.address,
         LendInitialization.MORTGAGE_TOKEN_Name,
         LendInitialization.MORTGAGE_TOKEN_Symbol,

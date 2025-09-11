@@ -25,11 +25,6 @@ async function deployOrUpgradeMortgageMarketplace() {
                 adminAddress,
                 `Missing ${networkName}_ADMIN_ADDRESS from environment variables!`
             );
-            const mortgageTokenAddress = config.mortgageTokenAddress;
-            assert.ok(
-                mortgageTokenAddress,
-                `Missing ${networkName}_MORTGAGE_TOKEN_ADDRESS from environment variables!`
-            );
             const commissionTokenAddress = config.commissionTokenAddress;
             assert.ok(
                 commissionTokenAddress,
@@ -39,7 +34,6 @@ async function deployOrUpgradeMortgageMarketplace() {
             const mortgageMarketplace = await deployMortgageMarketplace(
                 signer,
                 adminAddress,
-                mortgageTokenAddress,
                 commissionTokenAddress
             );
             console.log(`Contract MortgageMarketplace has been deployed to address ${mortgageMarketplace.address}`);
