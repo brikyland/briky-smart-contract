@@ -205,23 +205,19 @@ ReentrancyGuardUpgradeable {
         address currency = offer.currency;
         royaltyAmount = _applyDiscount(royaltyAmount, currency);
 
+        CurrencyHandler.receiveCurrency(currency, price + royaltyAmount);
+
         uint256 commissionAmount;
         if (!collection.supportsInterface(type(IEstateMortgageToken).interfaceId)) {
-            commissionAmount = _forwardCommission(
+            commissionAmount = _dispatchCommission(
                 offer.tokenId,
                 royaltyAmount,
                 currency
             );
         }
 
-        if (currency == address(0)) {
-            CurrencyHandler.receiveNative(price + royaltyAmount);
-            CurrencyHandler.sendNative(seller, price);
-            CurrencyHandler.sendNative(royaltyReceiver, royaltyAmount - commissionAmount);
-        } else {
-            CurrencyHandler.forwardERC20(currency, seller, price);
-            CurrencyHandler.forwardERC20(currency, royaltyReceiver, royaltyAmount - commissionAmount);
-        }
+        CurrencyHandler.sendCurrency(currency, seller, price);
+        CurrencyHandler.sendCurrency(currency, royaltyReceiver, royaltyAmount - commissionAmount);
 
         offer.state = OfferState.Sold;
         mortgageTokenContract.safeTransferFrom(

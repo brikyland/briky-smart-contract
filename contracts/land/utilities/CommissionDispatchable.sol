@@ -34,23 +34,4 @@ Initializable {
 
         return commission;
     }
-
-    function _forwardCommission(
-        uint256 _estateId,
-        uint256 _value,
-        address _currency
-    ) internal returns (uint256 commission) {
-        address receiver;
-        (receiver, commission) = ICommissionToken(commissionToken).commissionInfo(_estateId, _value);
-
-        CurrencyHandler.forwardMoreCurrency(_currency, receiver, commission);
-
-        emit CommissionDispatch(
-            receiver,
-            commission,
-            _currency
-        );
-
-        return commission;
-    }
 }

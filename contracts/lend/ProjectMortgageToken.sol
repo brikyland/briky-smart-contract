@@ -66,18 +66,26 @@ ProjectTokenReceiver {
         if (_amount > projectTokenContract.balanceOf(msg.sender, _projectId)) {
             revert InvalidCollateral();
         }
-        uint256 mortgageId = ++mortgageNumber;
-        collaterals[mortgageId] = ProjectCollateral(
-            _projectId,
-            _amount
-        );
-        return _borrow(
-            mortgageId,
+        
+        uint256 mortgageId = _borrow(
             _principal,
             _repayment,
             _currency,
             _duration
         );
+
+        collaterals[mortgageId] = ProjectCollateral(
+            _projectId,
+            _amount
+        );
+
+        _transferCollateral(
+            mortgageId,
+            msg.sender,
+            address(this)
+        );
+
+        return mortgageId;
     }
 
     function supportsInterface(bytes4 _interfaceId) public view override(

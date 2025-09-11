@@ -190,20 +190,16 @@ ReentrancyGuardUpgradeable {
 
         address currency = offer.currency;
         royaltyAmount = _applyDiscount(royaltyAmount, currency);
-        uint256 commissionAmount = _forwardCommission(
+        
+        CurrencyHandler.receiveCurrency(currency, value + royaltyAmount);
+        uint256 commissionAmount = _dispatchCommission(
             tokenId,
             royaltyAmount,
             currency
         );
 
-        if (currency == address(0)) {
-            CurrencyHandler.receiveNative(value + royaltyAmount);
-            CurrencyHandler.sendNative(seller, value);
-            CurrencyHandler.sendNative(royaltyReceiver, royaltyAmount - commissionAmount);
-        } else {
-            CurrencyHandler.forwardERC20(currency, seller, value);
-            CurrencyHandler.forwardERC20(currency, royaltyReceiver, royaltyAmount - commissionAmount);
-        }
+        CurrencyHandler.sendCurrency(currency, seller, value);
+        CurrencyHandler.sendCurrency(currency, royaltyReceiver, royaltyAmount - commissionAmount);
 
         offer.soldAmount = newSoldAmount;
         if (newSoldAmount == sellingAmount) {

@@ -70,18 +70,26 @@ CommissionDispatchable {
         if (_amount > estateTokenContract.balanceOf(msg.sender, _estateId)) {
             revert InvalidCollateral();
         }
-        uint256 mortgageId = ++mortgageNumber;
-        collaterals[mortgageId] = EstateCollateral(
-            _estateId,
-            _amount
-        );
-        return _borrow(
-            mortgageId,
+
+        uint256 mortgageId = _borrow(
             _principal,
             _repayment,
             _currency,
             _duration
         );
+        
+        collaterals[mortgageId] = EstateCollateral(
+            _estateId,
+            _amount
+        );
+
+        _transferCollateral(
+            mortgageId,
+            msg.sender,
+            address(this)
+        );
+
+        return mortgageId;
     }
 
     function supportsInterface(bytes4 _interfaceId) public view override(
@@ -115,12 +123,12 @@ CommissionDispatchable {
     function _chargeFee(uint256 _mortgageId) internal override {
         address currency = mortgages[_mortgageId].currency;
         uint256 fee = mortgages[_mortgageId].fee;
-        uint256 commission = _forwardCommission(
+        uint256 commission = _dispatchCommission(
             collaterals[_mortgageId].estateId,
             fee,
             currency
         );
-        CurrencyHandler.forwardMoreCurrency(
+        CurrencyHandler.sendCurrency(
             currency,
             feeReceiver,
             fee - commission
