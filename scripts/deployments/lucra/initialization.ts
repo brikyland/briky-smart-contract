@@ -1,24 +1,17 @@
-import { network } from "hardhat";
 import { parseEther } from "@utils/blockchain";
 
+// Deployment constants template
 export const Initialization = {
     // Promotion Token
-    PROMOTION_TOKEN_Name: 'Briky Lucra',
-    PROMOTION_TOKEN_Symbol: 'LUCKY',
-    PROMOTION_TOKEN_Fee: {
-        testnet: parseEther("3e-10"),
-        mainnet: parseEther("0.0008"),
-    }[network.name] || parseEther("3e-10"),
-    PROMOTION_TOKEN_RoyaltyRate: parseEther("0.06"),
-
+    PROMOTION_TOKEN_Name: '',
+    PROMOTION_TOKEN_Symbol: '',
+    PROMOTION_TOKEN_Fee: parseEther("0"),
+    PROMOTION_TOKEN_RoyaltyRate: parseEther("0"),
 
     // Passport Token
-    PASSPORT_TOKEN_Name: 'Briky Passport',
-    PASSPORT_TOKEN_Symbol: 'PASSY',
-    PASSPORT_TOKEN_BaseURI: 'https://ipfs.brikyland.com/ipfs/bafkreictdogny4njivduqvg46spds2wl6nd5ygerkbcfcwtg7tzecsfjaq',
-    PASSPORT_TOKEN_Fee:  {
-        testnet: parseEther("15e-7"),
-        mainnet: parseEther("0.016"),
-    }[network.name] || parseEther("15e-7"),
-    PASSPORT_TOKEN_RoyaltyRate: parseEther("0.06"),
+    PASSPORT_TOKEN_Name: '',
+    PASSPORT_TOKEN_Symbol: '',
+    PASSPORT_TOKEN_BaseURI: '',
+    PASSPORT_TOKEN_Fee: parseEther("0"),
+    PASSPORT_TOKEN_RoyaltyRate: parseEther("0"),
 }

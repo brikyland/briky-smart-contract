@@ -48,7 +48,7 @@ async function deployOrUpgradeProjectToken() {
                 feeReceiverAddress,
                 estateTokenAddress,
                 projectTokenValidatorAddress,
-                Initialization.PRESTIGE_TOKEN_BaseURI,
+                Initialization.PROJECT_TOKEN_BaseURI,
             );
             console.log(`Contract ProjectToken has been deployed to address ${projectToken.address}`);
 
