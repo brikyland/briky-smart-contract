@@ -6,6 +6,8 @@ import {IMortgageMarketplace} from "../../lux/interfaces/IMortgageMarketplace.so
 abstract contract MortgageMarketplaceStorage is IMortgageMarketplace {
     mapping(uint256 => Offer) internal offers;
 
+    mapping(address => bool) public isCollection;
+
     uint256 public offerNumber;
 
     address public admin;
