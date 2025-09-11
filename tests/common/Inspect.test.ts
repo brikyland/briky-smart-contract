@@ -67,6 +67,7 @@ import { deployEstateLiquidator } from '@utils/deployments/land/estateLiquidator
 import { deployProjectToken } from '@utils/deployments/launch/projectToken';
 import { deployPrestigePad } from '@utils/deployments/launch/prestigePad';
 import { deployProjectMarketplace } from '@utils/deployments/lux/projectMarketplace';
+import { Initialization as CommonInitialization } from '@tests/common/test.initialization';
 
 interface CommonFixture {
     deployer: any;
@@ -150,7 +151,7 @@ describe('1.1. Inspect', async () => {
             deployer,
             admin.address,
             validator.getAddress(),
-            Constant.GOVERNANCE_HUB_FEE,
+            CommonInitialization.GOVERNANCE_HUB_Fee,
         ) as GovernanceHub;
 
         const priceWatcher = await deployPriceWatcher(

@@ -76,6 +76,7 @@ import { RegisterCustodianParams } from '@utils/models/EstateToken';
 import { getCallTokenizeEstateTx, getRegisterCustodianTx } from '@utils/transaction/EstateToken';
 import { getRequestExtractionTx } from '@utils/transaction/EstateLiquidator';
 import { getRegisterBrokerTx } from '@utils/transaction/CommissionToken';
+import { Initialization as CommonInitialization } from '@tests/common/test.initialization';
 
 chai.use(smock.matchers);
 
@@ -266,7 +267,7 @@ describe('2.3. EstateLiquidator', async () => {
         await callTransaction(governanceHub.initialize(
             admin.address,
             validator.getAddress(),
-            Constant.GOVERNANCE_HUB_FEE,
+            CommonInitialization.GOVERNANCE_HUB_Fee,
         ));
         
         const SmockDividendHubFactory = await smock.mock('DividendHub') as any;

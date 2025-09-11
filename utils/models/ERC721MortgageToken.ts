@@ -4,3 +4,12 @@ export interface ERC721Collateral {
     token: string;
     tokenId: BigNumber;
 }
+
+export interface ERC721BorrowParams {
+    token: string;
+    tokenId: BigNumber;
+    principal: BigNumber;
+    repayment: BigNumber;
+    currency: string;
+    duration: BigNumber;
+}

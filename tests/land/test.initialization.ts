@@ -12,13 +12,10 @@ export const Initialization = {
     ESTATE_FORGER_FeeRate: parseEther("0.001"),
     ESTATE_FORGER_BaseMinUnitPrice: parseEther("100"),
     ESTATE_FORGER_BaseMaxUnitPrice: parseEther(String(1_000)),
-    ESTATE_FORGER_MinimumSaleDuration: 30 * DAY,
-    ESTATE_FORGER_ConfirmationTimeLimit: 30 * DAY,
 
     // Estate Token
     ESTATE_TOKEN_BaseURI: 'EstateToken_TestURI',
     ESTATE_TOKEN_RoyaltyRate: parseEther("0.0003"),
-    ESTATE_TOKEN_Decimals: 18,
 
     // Estate Liquidator
     ESTATE_LIQUIDATOR_FeeRate: parseEther("0.000000001"),

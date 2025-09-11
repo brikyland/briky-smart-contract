@@ -442,7 +442,7 @@ describe('2.4. EstateToken', async () => {
             
             expect(await estateToken.validator()).to.equal(validator.getAddress());
 
-            expect(await estateToken.decimals()).to.equal(Constant.ESTATE_TOKEN_MAX_DECIMALS);
+            expect(await estateToken.decimals()).to.equal(Constant.ESTATE_TOKEN_TOKEN_DECIMALS)
         });
     });
 

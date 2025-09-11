@@ -3565,7 +3565,7 @@ describe('2.2. EstateForger', async () => {
             brokerCommissionRate: BigNumber,
         ) {
             const { admin, admins, zone1, deployer, manager, estateForger, currencies: _currencies, custodian1, estateToken, feeReceiver, commissionToken, priceWatcher, reserveVault, validator } = fixture;
-            const decimals = LandInitialization.ESTATE_TOKEN_Decimals;
+            const decimals = Constant.ESTATE_TOKEN_TOKEN_DECIMALS;
             const currencies = _currencies.slice();
 
             let timestamp = await time.latest() + 1000;
@@ -4155,7 +4155,7 @@ describe('2.2. EstateForger', async () => {
                 const feeRate = randomBigNumber(ethers.BigNumber.from(0), Constant.COMMON_RATE_MAX_FRACTION);
                 const exclusiveRate = randomBigNumber(ethers.BigNumber.from(0), Constant.COMMON_RATE_MAX_FRACTION);
                 const commissionRate = randomBigNumber(ethers.BigNumber.from(0), Constant.COMMON_RATE_MAX_FRACTION);
-                const decimals = LandInitialization.ESTATE_TOKEN_Decimals;
+                const decimals = Constant.ESTATE_TOKEN_TOKEN_DECIMALS;
 
                 const randomNums = []
                 for (let i = 0; i < 3; ++i) {
@@ -5019,7 +5019,7 @@ describe('2.2. EstateForger', async () => {
             const fund1 = await reserveVault.getFund(request1.quote.cashbackFundId);
             const fund2 = await reserveVault.getFund(request2.quote.cashbackFundId);
 
-            const unit = BigNumber.from(10).pow(LandInitialization.ESTATE_TOKEN_Decimals);
+            const unit = BigNumber.from(10).pow(Constant.ESTATE_TOKEN_TOKEN_DECIMALS);
             
             const request1TotalQuantity = request1.quota.soldQuantity;
             const request1TotalAmount = request1TotalQuantity.mul(unit);
@@ -5237,7 +5237,7 @@ describe('2.2. EstateForger', async () => {
             const request1 = await estateForger.getRequest(1);
             const request2 = await estateForger.getRequest(2);
 
-            const unit = BigNumber.from(10).pow(LandInitialization.ESTATE_TOKEN_Decimals);
+            const unit = BigNumber.from(10).pow(Constant.ESTATE_TOKEN_TOKEN_DECIMALS);
             
             const request1TotalQuantity = request1.quota.soldQuantity;
             const request1TotalAmount = request1TotalQuantity.mul(unit);

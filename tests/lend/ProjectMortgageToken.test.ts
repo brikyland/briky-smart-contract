@@ -323,20 +323,11 @@ describe('3.2. ProjectMortgageToken', async () => {
             await callAdmin_UpdateCurrencyRegistries(
                 admin,
                 admins,
-                [ethers.constants.AddressZero],
-                [true],
-                [false],
-                await admin.nonce()
-            );
-            
-            await callAdmin_UpdateCurrencyRegistries(
-                admin,
-                admins,
-                [currency.address],
-                [true],
-                [true],
-                await admin.nonce()
-            );
+                [ethers.constants.AddressZero, currency.address],
+                [true, true],
+                [false, true],
+                await admin.nonce(),
+            );            
         }
 
         if (listProjectToken) {
@@ -593,12 +584,12 @@ describe('3.2. ProjectMortgageToken', async () => {
             }
         }
 
-        it('3.2.4.1. create mortgage successfully', async () => {
+        it.only('3.2.4.1. create mortgage successfully', async () => {
             const fixture = await beforeProjectMortgageTokenTest({
                 listSampleCurrencies: true,
                 listProjectToken: true,
             });
-            const { projectMortgageToken, admin, borrower1, borrower2, currency } = fixture;
+            const { projectMortgageToken, admin, borrower1, borrower2, currency, projectToken } = fixture;
 
             const params1: ProjectBorrowParams = {
                 projectId: BigNumber.from(1),
@@ -609,6 +600,9 @@ describe('3.2. ProjectMortgageToken', async () => {
                 duration: BigNumber.from(1000),
             }
 
+            let initBorrower1Project1Balance = await projectToken.balanceOf(borrower1.address, 1);
+            let initProjectMortgageTokenProject1Balance = await projectToken.balanceOf(projectMortgageToken.address, 1);
+
             const tx1 = await getProjectBorrowTx(projectMortgageToken, borrower1, params1);
             await tx1.wait();
             
@@ -616,7 +610,7 @@ describe('3.2. ProjectMortgageToken', async () => {
             const fee1 = scaleRate(mortgage1.principal, await projectMortgageToken.getFeeRate());
 
             await expect(tx1).to.emit(projectMortgageToken, 'NewMortgage').withArgs(
-                params1.projectId,
+                1,
                 borrower1.address,
                 params1.principal,
                 params1.repayment,
@@ -640,6 +634,9 @@ describe('3.2. ProjectMortgageToken', async () => {
             expect(mortgage1.borrower).to.equal(borrower1.address);
             expect(mortgage1.lender).to.equal(ethers.constants.AddressZero);
 
+            expect(await projectToken.balanceOf(borrower1.address, 1)).to.equal(initBorrower1Project1Balance.sub(params1.amount));
+            expect(await projectToken.balanceOf(projectMortgageToken.address, 1)).to.equal(initProjectMortgageTokenProject1Balance.add(params1.amount));
+
             const params2: ProjectBorrowParams = {
                 projectId: BigNumber.from(2),
                 amount: BigNumber.from(200),
@@ -648,6 +645,9 @@ describe('3.2. ProjectMortgageToken', async () => {
                 currency: currency.address,
                 duration: BigNumber.from(1000),
             }
+
+            let initBorrower2Project2Balance = await projectToken.balanceOf(borrower2.address, 2);
+            let initProjectMortgageTokenProject2Balance = await projectToken.balanceOf(projectMortgageToken.address, 2);
 
             const tx2 = await getProjectBorrowTx(projectMortgageToken, borrower2, params2);
             await tx2.wait();
@@ -660,7 +660,7 @@ describe('3.2. ProjectMortgageToken', async () => {
             );
 
             await expect(tx2).to.emit(projectMortgageToken, 'NewMortgage').withArgs(
-                params2.projectId,
+                2,
                 borrower2.address,
                 params2.principal,
                 params2.repayment,
@@ -683,6 +683,9 @@ describe('3.2. ProjectMortgageToken', async () => {
             expect(mortgage2.state).to.equal(MortgageState.Pending);
             expect(mortgage2.borrower).to.equal(borrower2.address);
             expect(mortgage2.lender).to.equal(ethers.constants.AddressZero);
+
+            expect(await projectToken.balanceOf(borrower2.address, 2)).to.equal(initBorrower2Project2Balance.sub(params2.amount));
+            expect(await projectToken.balanceOf(projectMortgageToken.address, 2)).to.equal(initProjectMortgageTokenProject2Balance.add(params2.amount));
         });
 
         it('3.2.4.2. create mortgage unsuccessfully when paused', async () => {

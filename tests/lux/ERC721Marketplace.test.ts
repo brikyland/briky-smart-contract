@@ -20,7 +20,6 @@ import { MockContract, smock } from '@defi-wonderland/smock';
 import {
     callAdmin_AuthorizeManagers,
     callAdmin_AuthorizeModerators,
-    callAdmin_DeclareZones,
     callAdmin_UpdateCurrencyRegistries,
 } from '@utils/callWithSignatures/admin';
 import { BigNumber, Contract, Wallet } from 'ethers';
@@ -160,13 +159,6 @@ describe('6.1. ERC721Marketplace', async () => {
 
         const { admin, admins, currency, erc721Marketplace, seller1, seller2, buyer1, buyer2, manager, moderator, feeReceiverCollection, otherCollection } = fixture;
 
-        await callAdmin_DeclareZones(
-            admin,
-            admins,
-            [ethers.utils.formatBytes32String("TestZone")],
-            true,
-            await admin.nonce(),
-        );
         await callAdmin_AuthorizeManagers(
             admin,
             admins,

@@ -357,19 +357,10 @@ describe('3.1. EstateMortgageToken', async () => {
             await callAdmin_UpdateCurrencyRegistries(
                 admin,
                 admins,
-                [ethers.constants.AddressZero],
-                [true],
-                [false],
-                await admin.nonce()
-            );
-            
-            await callAdmin_UpdateCurrencyRegistries(
-                admin,
-                admins,
-                [currency.address],
-                [true],
-                [true],
-                await admin.nonce()
+                [ethers.constants.AddressZero, currency.address],
+                [true, true],
+                [false, true],
+                await admin.nonce(),
             );
         }
 
@@ -634,12 +625,12 @@ describe('3.1. EstateMortgageToken', async () => {
             }
         }
 
-        it('3.1.4.1. create mortgage successfully', async () => {
+        it.only('3.1.4.1. create mortgage successfully', async () => {
             const fixture = await beforeEstateMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,
             });
-            const { estateMortgageToken, admin, borrower1, borrower2, currency } = fixture;
+            const { estateMortgageToken, admin, borrower1, borrower2, currency, estateToken } = fixture;
 
             const params1: EstateBorrowParams = {
                 estateId: BigNumber.from(1),
@@ -650,6 +641,9 @@ describe('3.1. EstateMortgageToken', async () => {
                 duration: BigNumber.from(1000),
             }
 
+            let initBorrower1Estate1Balance = await estateToken.balanceOf(borrower1.address, 1);
+            let initEstateMortgageTokenEstate1Balance = await estateToken.balanceOf(estateMortgageToken.address, 1);
+
             const tx1 = await getEstateBorrowTx(estateMortgageToken, borrower1, params1);
             await tx1.wait();
             
@@ -657,7 +651,7 @@ describe('3.1. EstateMortgageToken', async () => {
             const fee1 = scaleRate(mortgage1.principal, await estateMortgageToken.getFeeRate());
 
             await expect(tx1).to.emit(estateMortgageToken, 'NewMortgage').withArgs(
-                params1.estateId,
+                1,
                 borrower1.address,
                 params1.principal,
                 params1.repayment,
@@ -681,6 +675,9 @@ describe('3.1. EstateMortgageToken', async () => {
             expect(mortgage1.borrower).to.equal(borrower1.address);
             expect(mortgage1.lender).to.equal(ethers.constants.AddressZero);
 
+            expect(await estateToken.balanceOf(borrower1.address, 1)).to.equal(initBorrower1Estate1Balance.sub(params1.amount));
+            expect(await estateToken.balanceOf(estateMortgageToken.address, 1)).to.equal(initEstateMortgageTokenEstate1Balance.add(params1.amount));
+
             const params2: EstateBorrowParams = {
                 estateId: BigNumber.from(2),
                 amount: BigNumber.from(200),
@@ -689,6 +686,9 @@ describe('3.1. EstateMortgageToken', async () => {
                 currency: currency.address,
                 duration: BigNumber.from(1000),
             }
+
+            let initBorrower2Estate2Balance = await estateToken.balanceOf(borrower2.address, 2);
+            let initEstateMortgageTokenEstate2Balance = await estateToken.balanceOf(estateMortgageToken.address, 2);
 
             const tx2 = await getEstateBorrowTx(estateMortgageToken, borrower2, params2);
             await tx2.wait();
@@ -701,7 +701,7 @@ describe('3.1. EstateMortgageToken', async () => {
             );
 
             await expect(tx2).to.emit(estateMortgageToken, 'NewMortgage').withArgs(
-                params2.estateId,
+                2,
                 borrower2.address,
                 params2.principal,
                 params2.repayment,
@@ -724,6 +724,9 @@ describe('3.1. EstateMortgageToken', async () => {
             expect(mortgage2.state).to.equal(MortgageState.Pending);
             expect(mortgage2.borrower).to.equal(borrower2.address);
             expect(mortgage2.lender).to.equal(ethers.constants.AddressZero);
+
+            expect(await estateToken.balanceOf(borrower2.address, 2)).to.equal(initBorrower2Estate2Balance.sub(params2.amount));
+            expect(await estateToken.balanceOf(estateMortgageToken.address, 2)).to.equal(initEstateMortgageTokenEstate2Balance.add(params2.amount));
         });
 
         it('3.1.4.2. create mortgage unsuccessfully when paused', async () => {
