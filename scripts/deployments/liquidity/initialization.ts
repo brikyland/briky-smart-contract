@@ -10,12 +10,13 @@ export const Initialization = {
     // Stake Token
     STAKE_TOKEN_Name_1: '',
     STAKE_TOKEN_Symbol_1: '',
+    STAKE_TOKEN_FeeRate_1: parseEther("0"),
 
     STAKE_TOKEN_Name_2: '',
     STAKE_TOKEN_Symbol_2: '',
+    STAKE_TOKEN_FeeRate_2: parseEther("0"),
 
     STAKE_TOKEN_Name_3: '',
     STAKE_TOKEN_Symbol_3: '',
-
-    STAKE_TOKEN_FeeRate: parseEther("0"),
+    STAKE_TOKEN_FeeRate_3: parseEther("0"),
 }

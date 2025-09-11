@@ -14,6 +14,7 @@ async function deployOrUpgradeStakeToken3() {
         3,
         Initialization.STAKE_TOKEN_Name_3,
         Initialization.STAKE_TOKEN_Symbol_3,
+        Initialization.STAKE_TOKEN_FeeRate_3,
     );
 
     console.log(`${networkName}_STAKE_TOKEN_3_ADDRESS=${stakeToken3Address}`);
