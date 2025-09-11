@@ -62,7 +62,6 @@ async function deployOrUpgradePrestigePad() {
                 prestigePadValidatorAddress,
                 Initialization.PRESTIGE_PAD_BaseMinUnitPrice,
                 Initialization.PRESTIGE_PAD_BaseMaxUnitPrice,
-                Initialization.PRESTIGE_PAD_FeeRate,
             );
             console.log(`Contract PrestigePad has been deployed to address ${prestigePad.address}`);
 

@@ -11,7 +11,6 @@ export async function deployPrestigePad(
     validatorAddress: string,
     baseMinUnitPrice: BigNumber,
     baseMaxUnitPrice: BigNumber,
-    feeRate: BigNumber,
 ) {
     const PrestigePad = await ethers.getContractFactory('PrestigePad', signer);
     const prestigePad = await upgrades.deployProxy(
@@ -25,7 +24,6 @@ export async function deployPrestigePad(
             validatorAddress,
             baseMinUnitPrice,
             baseMaxUnitPrice,
-            feeRate,
         ]
     );
     await prestigePad.deployed();

@@ -1,12 +1,14 @@
 import assert from 'assert';
 import { ethers, network, upgrades } from 'hardhat';
 import { deployStakeToken } from '@utils/deployments/liquidity/stakeToken';
+import { BigNumber } from 'ethers';
 
 export async function deployOrUpgradeStakeToken(
     signer: any,
     stakeTokenIndex: number,
     name: string,
     symbol: string,
+    feeRate: BigNumber,
 ) {
     const config = network.config as any;
     const networkName = network.name.toUpperCase();
@@ -38,6 +40,7 @@ export async function deployOrUpgradeStakeToken(
                 primaryTokenAddress,
                 name,
                 symbol,
+                feeRate,
             );
             console.log(`Contract StakeToken has been deployed to address ${stakeToken.address}`);
 

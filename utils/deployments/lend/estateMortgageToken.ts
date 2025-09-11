@@ -10,7 +10,6 @@ export async function deployEstateMortgageToken(
     symbol: string,
     baseURI: string,
     feeRate: BigNumber,
-    royaltyRate: BigNumber,
 ) {
     const EstateMortgageToken = await ethers.getContractFactory('EstateMortgageToken', signer);
     const estateMortgageToken = await upgrades.deployProxy(
@@ -23,7 +22,6 @@ export async function deployEstateMortgageToken(
             symbol,
             baseURI,
             feeRate,
-            royaltyRate,
         ]
     );
     await estateMortgageToken.deployed();
