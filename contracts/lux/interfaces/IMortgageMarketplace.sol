@@ -23,6 +23,10 @@ ICommon {
         OfferState state;
         address seller;
     }
+
+    event CollectionRegistration(address indexed collection);
+    event CollectionDeregistration(address indexed collection);
+
     event NewOffer(
         address indexed collection,
         uint256 indexed offerId,
@@ -38,6 +42,9 @@ ICommon {
         address royaltyReceiver,
         uint256 royaltyAmount
     );
+
+    error NotRegisteredCollection();
+    error RegisteredCollection();
 
     error InvalidBuying();
     error InvalidCancelling();

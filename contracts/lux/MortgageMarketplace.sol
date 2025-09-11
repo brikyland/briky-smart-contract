@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import {ERC165CheckerUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
+import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 
 import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
 import {Formula} from "../lib/Formula.sol";
@@ -66,13 +67,50 @@ ReentrancyGuardUpgradeable {
         return offers[_offerId];
     }
 
+    function registerCollections(
+        address[] calldata _collections,
+        bool _isCollection,
+        bytes[] calldata _signatures
+    ) external {
+        IAdmin(admin).verifyAdminSignatures(
+            abi.encode(
+                address(this),
+                "registerCollections",
+                _collections,
+                _isCollection
+            ),
+            _signatures
+        );
+
+        if (_isCollection) {
+            for (uint256 i; i < _collections.length; ++i) {
+                if (_collections[i].supportsInterface(type(IMortgageToken).interfaceId)) {
+                    revert InvalidCollection();
+                }
+                if (isCollection[_collections[i]]) {
+                    revert RegisteredCollection();
+                }
+                isCollection[_collections[i]] = true;
+                emit CollectionRegistration(_collections[i]);
+            } 
+        } else {
+            for (uint256 i; i < _collections.length; ++i) {
+                if (!isCollection[_collections[i]]) {
+                    revert NotRegisteredCollection();
+                }
+                isCollection[_collections[i]] = true;
+                emit CollectionDeregistration(_collections[i]);
+            } 
+        }
+    }
+
     function list(
         address _collection,
         uint256 _tokenId,
         uint256 _price,
         address _currency
     ) external onlyAvailableCurrency(_currency) whenNotPaused returns (uint256) {
-        if (!_collection.supportsInterface(type(IMortgageToken).interfaceId)) {
+        if (!isCollection[_collection]) {
             revert InvalidCollection();
         }
 

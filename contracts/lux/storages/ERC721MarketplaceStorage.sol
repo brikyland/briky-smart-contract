@@ -6,6 +6,8 @@ import {IERC721Marketplace} from "../../lux/interfaces/IERC721Marketplace.sol";
 abstract contract ERC721MarketplaceStorage is IERC721Marketplace {
     mapping(uint256 => Offer) internal offers;
 
+    mapping(address => bool) public isCollection;
+
     address public admin;
     address public feeReceiver;
     uint256 public offerNumber;

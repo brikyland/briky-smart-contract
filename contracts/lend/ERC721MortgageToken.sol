@@ -43,7 +43,7 @@ MortgageToken {
 
     function registerCollaterals(
         address[] calldata _tokens,
-        bool _isCollaterals,
+        bool _isCollateral,
         bytes[] calldata _signatures
     ) external {
         IAdmin(admin).verifyAdminSignatures(
@@ -51,12 +51,12 @@ MortgageToken {
                 address(this),
                 "registerCollaterals",
                 _tokens,
-                _isCollaterals
+                _isCollateral
             ),
             _signatures
         );
 
-        if (_isCollaterals) {
+        if (_isCollateral) {
             for (uint256 i; i < _tokens.length; ++i) {
                 if (_tokens[i] == address(this) ||
                     !_tokens[i].supportsInterface(type(IERC721Upgradeable).interfaceId)) {
@@ -91,7 +91,7 @@ MortgageToken {
         address _currency,
         uint40 _duration
     ) external returns (uint256) {
-        if (IERC721Upgradeable(_token).ownerOf(_tokenId) != msg.sender) {
+        if (!isCollateral[_token] || IERC721Upgradeable(_token).ownerOf(_tokenId) != msg.sender) {
             revert InvalidCollateral();
         }
 
