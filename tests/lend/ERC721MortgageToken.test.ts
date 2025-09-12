@@ -26,10 +26,8 @@ import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 import { MockContract, smock } from '@defi-wonderland/smock';
 
 import {
-    callAdmin_ActivateIn,
     callAdmin_AuthorizeManagers,
     callAdmin_AuthorizeModerators,
-    callAdmin_DeclareZones,
     callAdmin_UpdateCurrencyRegistries,
 } from '@utils/callWithSignatures/admin';
 import { BigNumber, Contract, Wallet } from 'ethers';

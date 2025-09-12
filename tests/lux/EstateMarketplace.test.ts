@@ -27,7 +27,7 @@ import {
     callAdmin_ActivateIn,
     callAdmin_AuthorizeManagers,
     callAdmin_AuthorizeModerators,
-    callAdmin_DeclareZones,
+    callAdmin_DeclareZone,
     callAdmin_UpdateCurrencyRegistries,
 } from '@utils/callWithSignatures/admin';
 import { BigNumber, Contract, Wallet } from 'ethers';
@@ -236,13 +236,14 @@ describe('6.2. EstateMarketplace', async () => {
 
         const { admin, admins, currency, estateToken, commissionToken, estateMarketplace, seller1, seller2, buyer1, buyer2, estateForger, manager, moderator, custodian1, custodian2, broker1, broker2, zone1, zone2, validator } = fixture;
 
-        await callAdmin_DeclareZones(
-            admin,
-            admins,
-            [zone1, zone2],
-            true,
-            await admin.nonce(),
-        );
+        for (const zone of [zone1, zone2]) {
+            await callAdmin_DeclareZone(
+                admin,
+                admins,
+                zone,
+                await admin.nonce(),
+            );
+        }
         await callAdmin_AuthorizeManagers(
             admin,
             admins,

@@ -35,7 +35,7 @@ import {
     callAdmin_ActivateIn,
     callAdmin_AuthorizeManagers,
     callAdmin_AuthorizeModerators,
-    callAdmin_DeclareZones,
+    callAdmin_DeclareZone,
     callAdmin_UpdateCurrencyRegistries,
 } from '@utils/callWithSignatures/admin';
 import { BigNumber, Contract } from 'ethers';
@@ -302,13 +302,14 @@ describe('3.1. EstateMortgageToken', async () => {
             await admin.nonce()
         );
 
-        await callAdmin_DeclareZones(
-            admin,
-            admins,
-            [zone1, zone2],
-            true,
-            await fixture.admin.nonce()
-        );
+        for (const zone of [zone1, zone2]) {
+            await callAdmin_DeclareZone(
+                admin,
+                admins,
+                zone,
+                await fixture.admin.nonce()
+            );
+        }
 
         for (const zone of [zone1, zone2]) {
             await callAdmin_ActivateIn(
@@ -625,7 +626,7 @@ describe('3.1. EstateMortgageToken', async () => {
             }
         }
 
-        it.only('3.1.4.1. create mortgage successfully', async () => {
+        it('3.1.4.1. create mortgage successfully', async () => {
             const fixture = await beforeEstateMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,

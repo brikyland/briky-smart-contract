@@ -26,7 +26,7 @@ import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 import { MockContract, smock } from '@defi-wonderland/smock';
 
 import {
-    callAdmin_DeclareZones,
+    callAdmin_DeclareZone,
     callAdmin_AuthorizeManagers,
     callAdmin_AuthorizeModerators,
     callAdmin_UpdateCurrencyRegistries,
@@ -290,13 +290,14 @@ describe('6.3. MortgageMarketplace', async () => {
 
         let currentTimestamp = await time.latest();
 
-        await callAdmin_DeclareZones(
-            admin,
-            admins,
-            [zone1, zone2],
-            true,
-            await admin.nonce(),
-        );
+        for (const zone of [zone1, zone2]) {
+            await callAdmin_DeclareZone(
+                admin,
+                admins,
+                zone,
+                await admin.nonce(),
+            );
+        }
         await callAdmin_AuthorizeManagers(
             admin,
             admins,

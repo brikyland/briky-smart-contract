@@ -1,6 +1,6 @@
 import { time } from '@nomicfoundation/hardhat-network-helpers';
 import { MockValidator } from '@utils/mockValidator';
-import { ProposeParams, AdmitParams, DisqualifyParams, UpdateExecutionParams, ConcludeExecutionParams } from '@utils/models/GovernanceHub';
+import { ProposeParams, AdmitParams, DisqualifyParams, LogExecutionParams, ConcludeExecutionParams } from '@utils/models/GovernanceHub';
 import { Validation } from '@utils/models/Validation';
 import { Wallet, Contract } from 'ethers';
 import { ethers } from 'hardhat';
@@ -48,7 +48,7 @@ export async function getAdmitValidation(
 
     const content = ethers.utils.defaultAbiCoder.encode(
         ["uint256", "string", "string", "address"],
-        [params.proposalId, params.contentURI, params.stateURI, params.currency]
+        [params.proposalId, params.contextURI, params.reviewURI, params.currency]
     );
 
     const validation = await validator.getValidation(governanceHub, content, expiry);
@@ -64,7 +64,7 @@ export async function getAdmitInvalidValidation(
 
     const content = ethers.utils.defaultAbiCoder.encode(
         ["uint256", "string", "string", "address"],
-        [params.proposalId, params.contentURI, params.stateURI, params.currency]
+        [params.proposalId, params.contextURI, params.reviewURI, params.currency]
     );
 
     const validation = await validator.getInvalidValidation(governanceHub, content, expiry);
@@ -80,7 +80,7 @@ export async function getDisqualifyValidation(
 
     const content = ethers.utils.defaultAbiCoder.encode(
         ["uint256", "string", "string"],
-        [params.proposalId, params.contentURI, params.stateURI]
+        [params.proposalId, params.contextURI, params.reviewURI]
     );
 
     const validation = await validator.getValidation(governanceHub, content, expiry);
@@ -96,39 +96,39 @@ export async function getDisqualifyInvalidValidation(
 
     const content = ethers.utils.defaultAbiCoder.encode(
         ["uint256", "string", "string"],
-        [params.proposalId, params.contentURI, params.stateURI]
+        [params.proposalId, params.contextURI, params.reviewURI]
     );
 
     const validation = await validator.getInvalidValidation(governanceHub, content, expiry);
     return validation;
 }
 
-export async function getUpdateExecutionValidation(
+export async function getLogExecutionValidation(
     governanceHub: Contract,
     validator: MockValidator,
-    params: UpdateExecutionParams
+    params: LogExecutionParams
 ): Promise<Validation> {
     const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
 
     const content = ethers.utils.defaultAbiCoder.encode(
         ["uint256", "string"],
-        [params.proposalId, params.stateURI]
+        [params.proposalId, params.logURI]
     );
 
     const validation = await validator.getValidation(governanceHub, content, expiry);
     return validation;
 }
 
-export async function getUpdateExecutionInvalidValidation(
+export async function getLogExecutionInvalidValidation(
     governanceHub: Contract,
     validator: MockValidator,
-    params: UpdateExecutionParams
+    params: LogExecutionParams
 ): Promise<Validation> {
     const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
 
     const content = ethers.utils.defaultAbiCoder.encode(
         ["uint256", "string"],
-        [params.proposalId, params.stateURI]
+        [params.proposalId, params.logURI]
     );
 
     const validation = await validator.getInvalidValidation(governanceHub, content, expiry);
@@ -144,7 +144,7 @@ export async function getConcludeExecutionValidation(
 
     const content = ethers.utils.defaultAbiCoder.encode(
         ["uint256", "string", "bool"],
-        [params.proposalId, params.stateURI, params.isSuccessful]
+        [params.proposalId, params.logURI, params.isSuccessful]
     );
 
     const validation = await validator.getValidation(governanceHub, content, expiry);
@@ -160,7 +160,7 @@ export async function getConcludeExecutionInvalidValidation(
 
     const content = ethers.utils.defaultAbiCoder.encode(
         ["uint256", "string", "bool"],
-        [params.proposalId, params.stateURI, params.isSuccessful]
+        [params.proposalId, params.logURI, params.isSuccessful]
     );
 
     const validation = await validator.getInvalidValidation(governanceHub, content, expiry);

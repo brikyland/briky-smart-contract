@@ -11,7 +11,7 @@ import {
     callAdmin_AuthorizeGovernor,
     callAdmin_AuthorizeManagers,
     callAdmin_AuthorizeModerators,
-    callAdmin_DeclareZones
+    callAdmin_DeclareZone
 } from '@utils/callWithSignatures/admin';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { smock } from '@defi-wonderland/smock';
@@ -25,6 +25,8 @@ interface AdminFixture {
     manager: any;
     moderator: any;
     user: any;
+
+    zone1: string, zone2: string, zone3: string, zone4: string, zone5: string;
 }
 
 describe('1.2. Admin', async () => {
@@ -54,6 +56,12 @@ describe('1.2. Admin', async () => {
             governors.push(governor);
         }
 
+        const zone1 = ethers.utils.formatBytes32String("TestZone1");
+        const zone2 = ethers.utils.formatBytes32String("TestZone2");
+        const zone3 = ethers.utils.formatBytes32String("TestZone3");
+        const zone4 = ethers.utils.formatBytes32String("TestZone4");
+        const zone5 = ethers.utils.formatBytes32String("TestZone5");
+
         return {
             deployer,
             admins,
@@ -62,6 +70,11 @@ describe('1.2. Admin', async () => {
             manager,
             moderator,
             user,
+            zone1,
+            zone2,
+            zone3,
+            zone4,
+            zone5,
         };
     };
 
@@ -1312,242 +1325,85 @@ describe('1.2. Admin', async () => {
     });
 
 
-    describe('1.2.11. declareZones(bytes32[], bool, bytes[])', async () => {
+    describe('1.2.11. declareZone(bytes32[], bytes[])', async () => {
         it('1.2.11.1. Declare zone successfully', async () => {
             const fixture = await setupBeforeTest();
-            const { admins, admin } = fixture;            
+            const { admins, admin, zone1, zone3 } = fixture;            
 
-            const zones = [
-                ethers.utils.formatBytes32String("TestZone1"),
-                ethers.utils.formatBytes32String("TestZone2"), 
-                ethers.utils.formatBytes32String("TestZone3"),
-                ethers.utils.formatBytes32String("TestZone4"),
-                ethers.utils.formatBytes32String("TestZone5"),
-            ];
-
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'bytes32[]', 'bool'],
-                [admin.address, 'declareZones', zones, true]
+            const message1 = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'bytes32'],
+                [admin.address, 'declareZone', zone1]
             );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
+            const signatures1 = await getSignatures(message1, admins, await admin.nonce());
             
-            const tx = await admin.declareZones(
-                zones,
-                true,
-                signatures
+            const tx1 = await admin.declareZone(
+                zone1,
+                signatures1
             );
-            await tx.wait();
+            await tx1.wait();
             
-            for(const zone of zones) {
-                await expect(tx).to
-                    .emit(admin, 'ZoneAnnouncement')
-                    .withArgs(zone);
-            }
+            await expect(tx1).to
+                .emit(admin, 'ZoneDeclaration')
+                .withArgs(zone1);
 
-            for (let i = 0; i < zones.length; ++i) {
-                const isZone = await admin.isZone(zones[i]);
-                expect(isZone).to.be.true;
-            }
+            expect(await admin.isZone(zone1)).to.be.true;
+
+            const message2 = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'bytes32'],
+                [admin.address, 'declareZone', zone3]
+            );
+            const signatures2 = await getSignatures(message2, admins, await admin.nonce());
+            
+            const tx2 = await admin.declareZone(
+                zone3,
+                signatures2
+            );
+            await tx2.wait();
+            
+            await expect(tx2).to
+                .emit(admin, 'ZoneDeclaration')
+                .withArgs(zone3);
+
+            expect(await admin.isZone(zone3)).to.be.true;
         });
 
         it('1.2.11.2. Declare zone unsuccessfully with invalid signatures', async () => {
             const fixture = await setupBeforeTest();
-            const { admins, admin } = fixture;            
-
-            const zones = [
-                ethers.utils.formatBytes32String("TestZone1"),
-                ethers.utils.formatBytes32String("TestZone2"), 
-                ethers.utils.formatBytes32String("TestZone3"),
-                ethers.utils.formatBytes32String("TestZone4"),
-                ethers.utils.formatBytes32String("TestZone5"),
-            ];
+            const { admins, admin, zone1 } = fixture;            
 
             const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'bytes32[]', 'bool'],
-                [admin.address, 'declareZones', zones, true]
+                ['address', 'string', 'bytes32'],
+                [admin.address, 'declareZone', zone1]
             );
             const signatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
             
-            await expect(admin.declareZones(
-                zones,
-                true,
+            await expect(admin.declareZone(
+                zone1,
                 signatures
             )).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('1.2.11.3. Declare zone unsuccessfully when declaring same zone twice on same tx', async () => {
+        it('1.2.11.3. Declare zone unsuccessfully when declaring same zone twice', async () => {
             const fixture = await setupBeforeTest();
-            const { admins, admin } = fixture;            
+            const { admins, admin, zone1 } = fixture;            
 
-            const zones = [
-                ethers.utils.formatBytes32String("TestZone1"),
-                ethers.utils.formatBytes32String("TestZone2"), 
-                ethers.utils.formatBytes32String("TestZone1"),
-            ];
-
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'bytes32[]', 'bool'],
-                [admin.address, 'declareZones', zones, true]
+            await callAdmin_DeclareZone(
+                admin,
+                admins,
+                zone1,
+                await admin.nonce()
             );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
-            
-            await expect(admin.declareZones(
-                zones,
-                true,
-                signatures
-            )).to.be.revertedWithCustomError(admin, 'AuthorizedZone');
-        });
 
-        it('1.2.11.4. Declare zone unsuccessfully when declaring same zone twice on different tx', async () => {
-            const fixture = await setupBeforeTest();
-            const { admins, admin } = fixture;            
-
-            let zones = [
-                ethers.utils.formatBytes32String("TestZone1"),
-                ethers.utils.formatBytes32String("TestZone2"), 
-                ethers.utils.formatBytes32String("TestZone3"),
-            ];
-            await callAdmin_DeclareZones(admin, admins, zones, true, await admin.nonce());
-
-            zones = [
-                ethers.utils.formatBytes32String("TestZone3"),
-            ];
             const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'bytes32[]', 'bool'],
-                [admin.address, 'declareZones', zones, true]
+                ['address', 'string', 'bytes32'],
+                [admin.address, 'declareZone', zone1]
             );
             const signatures = await getSignatures(message, admins, await admin.nonce());
 
-            await expect(admin.declareZones(
-                zones,
-                true,
+            await expect(admin.declareZone(
+                zone1,
                 signatures
             )).to.be.revertedWithCustomError(admin, 'AuthorizedZone')
-        });
-
-        async function setupZones(admins: any[], admin: Admin): Promise<string[]> {
-            const announcedZones = [
-                ethers.utils.formatBytes32String("TestZone1"),
-                ethers.utils.formatBytes32String("TestZone2"), 
-                ethers.utils.formatBytes32String("TestZone3"),
-                ethers.utils.formatBytes32String("TestZone4"),
-                ethers.utils.formatBytes32String("TestZone5"),
-            ];
-            await callAdmin_DeclareZones(admin, admins, announcedZones, true, await admin.nonce());
-            return announcedZones;
-        }
-        
-        it('1.2.11.5. Renounce zone successfully', async () => {
-            const fixture = await setupBeforeTest();
-            const { admins, admin } = fixture;            
-
-            const announcedZones = await setupZones(admins, admin);
-
-            const toRenounceZones = [
-                ethers.utils.formatBytes32String("TestZone2"),
-                ethers.utils.formatBytes32String("TestZone5"), 
-            ];
-            const remainingZones = announcedZones.filter(zone => !toRenounceZones.includes(zone));
-
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'bytes32[]', 'bool'],
-                [admin.address, 'declareZones', toRenounceZones, false]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
-            
-            const tx = await admin.declareZones(
-                toRenounceZones,
-                false,
-                signatures
-            );
-            await tx.wait();
-            
-            for(const zone of toRenounceZones) {
-                await expect(tx).to
-                    .emit(admin, 'ZoneRenouncement')
-                    .withArgs(zone);
-            }
-
-            for(const zone of toRenounceZones) {
-                expect(await admin.isZone(zone)).to.be.false;
-            }
-            for(const zone of remainingZones) {
-                expect(await admin.isZone(zone)).to.be.true;
-            }
-        });
-
-        it('1.2.11.6. Renounce zone unsuccessfully with unauthorized zone', async () => {
-            const fixture = await setupBeforeTest();
-            const { admins, admin } = fixture;            
-
-            await setupZones(admins, admin);
-
-            const toRenounceZones = [
-                ethers.utils.formatBytes32String("TestZone6"),
-            ];
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'bytes32[]', 'bool'],
-                [admin.address, 'declareZones', toRenounceZones, false]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await expect(admin.declareZones(
-                toRenounceZones,
-                false,
-                signatures
-            )).to.be.revertedWithCustomError(admin, 'NotAuthorizedZone')
-        });
-
-        it('1.2.11.7. Renounce zone unsuccessfully when renouncing same zone twice on same tx', async () => {
-            const fixture = await setupBeforeTest();
-            const { admins, admin } = fixture;            
-
-            await setupZones(admins, admin);
-
-            const toRenounceZones = [
-                ethers.utils.formatBytes32String("TestZone2"),
-                ethers.utils.formatBytes32String("TestZone3"),
-                ethers.utils.formatBytes32String("TestZone2"),
-            ];
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'bytes32[]', 'bool'],
-                [admin.address, 'declareZones', toRenounceZones, false]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
-            
-            await expect(admin.declareZones(
-                toRenounceZones,
-                false,
-                signatures
-            )).to.be.revertedWithCustomError(admin, 'NotAuthorizedZone')
-        });
-
-        it('1.2.11.8. Renounce zone unsuccessfully when renouncing same zone twice on different tx', async () => {
-            const fixture = await setupBeforeTest();
-            const { admins, admin } = fixture;            
-
-            await setupZones(admins, admin);
-
-            const tx1_zones = [
-                ethers.utils.formatBytes32String("TestZone2"),
-                ethers.utils.formatBytes32String("TestZone3"),
-            ];
-            await callAdmin_DeclareZones(admin, admins, tx1_zones, false, await admin.nonce());
-            
-            const tx2_zones = [
-                ethers.utils.formatBytes32String("TestZone2"),
-            ];
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'bytes32[]', 'bool'],
-                [admin.address, 'declareZones', tx2_zones, false]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await expect(admin.declareZones(
-                tx2_zones,
-                false,
-                signatures
-            )).to.be.revertedWithCustomError(admin, 'NotAuthorizedZone')
         });
     });
 
@@ -1577,7 +1433,8 @@ describe('1.2. Admin', async () => {
 
             const { zone1, zone2, accounts } = await setupAccounts(admins, admin);
 
-            await callAdmin_DeclareZones(admin, admins, [zone1, zone2], true, await admin.nonce());
+            await callAdmin_DeclareZone(admin, admins, zone1, await admin.nonce());
+            await callAdmin_DeclareZone(admin, admins, zone2, await admin.nonce());
 
             const zone1Accounts = [accounts[0], accounts[2], accounts[4]];
             const zone2Accounts = [accounts[0], accounts[1], accounts[3]];
@@ -1631,7 +1488,7 @@ describe('1.2. Admin', async () => {
             const { admins, admin } = fixture;            
 
             const { zone1, accounts } = await setupAccounts(admins, admin);
-            await callAdmin_DeclareZones(admin, admins, [zone1], true, await admin.nonce());
+            await callAdmin_DeclareZone(admin, admins, zone1, await admin.nonce());
 
             const zone1Accounts = [accounts[0], accounts[1]];
 
@@ -1672,7 +1529,7 @@ describe('1.2. Admin', async () => {
             const { admins, admin } = fixture;            
 
             const { zone1, accounts } = await setupAccounts(admins, admin);
-            await callAdmin_DeclareZones(admin, admins, [zone1], true, await admin.nonce());
+            await callAdmin_DeclareZone(admin, admins, zone1, await admin.nonce());
 
             const zone1Accounts = [accounts[0], accounts[1], accounts[2], accounts[1]];
 
@@ -1692,7 +1549,7 @@ describe('1.2. Admin', async () => {
             const { admins, admin } = fixture;            
 
             const { zone1, accounts } = await setupAccounts(admins, admin);
-            await callAdmin_DeclareZones(admin, admins, [zone1], true, await admin.nonce());
+            await callAdmin_DeclareZone(admin, admins, zone1, await admin.nonce());
 
             const tx1_accounts = [accounts[0], accounts[1], accounts[2]];
             await callAdmin_ActivateIn(admin, admins, zone1, tx1_accounts.map(x => x.address), true, await admin.nonce());
@@ -1716,7 +1573,8 @@ describe('1.2. Admin', async () => {
 
             const { zone1, zone2, accounts } = await setupAccounts(admins, admin);
 
-            await callAdmin_DeclareZones(admin, admins, [zone1, zone2], true, await admin.nonce());
+            await callAdmin_DeclareZone(admin, admins, zone1, await admin.nonce());
+            await callAdmin_DeclareZone(admin, admins, zone2, await admin.nonce());
             await setupActivateIn(admin, admins, [zone1, zone2], accounts);
 
             const zone1ToDeacivate = [accounts[0], accounts[2], accounts[4]];
@@ -1775,7 +1633,8 @@ describe('1.2. Admin', async () => {
 
             const { zone1, zone2, accounts } = await setupAccounts(admins, admin);
 
-            await callAdmin_DeclareZones(admin, admins, [zone1, zone2], true, await admin.nonce());
+            await callAdmin_DeclareZone(admin, admins, zone1, await admin.nonce());
+            await callAdmin_DeclareZone(admin, admins, zone2, await admin.nonce());
             await setupActivateIn(admin, admins, [zone1, zone2], accounts);
 
             const newAccount = randomWallet();
@@ -1798,7 +1657,8 @@ describe('1.2. Admin', async () => {
 
             const { zone1, zone2, accounts } = await setupAccounts(admins, admin);
 
-            await callAdmin_DeclareZones(admin, admins, [zone1, zone2], true, await admin.nonce());
+            await callAdmin_DeclareZone(admin, admins, zone1, await admin.nonce());
+            await callAdmin_DeclareZone(admin, admins, zone2, await admin.nonce());
             await setupActivateIn(admin, admins, [zone1, zone2], accounts);
 
             const zone1ToDeacivate = [accounts[0], accounts[1], accounts[2], accounts[0]];
@@ -1820,7 +1680,8 @@ describe('1.2. Admin', async () => {
 
             const { zone1, zone2, accounts } = await setupAccounts(admins, admin);
 
-            await callAdmin_DeclareZones(admin, admins, [zone1, zone2], true, await admin.nonce());
+            await callAdmin_DeclareZone(admin, admins, zone1, await admin.nonce());
+            await callAdmin_DeclareZone(admin, admins, zone2, await admin.nonce());
             await setupActivateIn(admin, admins, [zone1, zone2], accounts);
 
             let tx1_accounts = [accounts[0], accounts[1], accounts[2]];
@@ -1837,35 +1698,6 @@ describe('1.2. Admin', async () => {
             await expect(
                 admin.activateIn(zone1, tx2_accounts.map(x => x.address), false, signatures)
             ).to.be.revertedWithCustomError(admin, 'NotActivatedAccount')
-        });
-    });
-
-    describe('1.2.13. getZoneEligibility(bytes32, address)', async () => {
-        it('1.2.13.1. Return correct zone eligibility', async () => {
-            const fixture = await setupBeforeTest();
-            const { admins, admin } = fixture;            
-
-            const account1 = randomWallet();
-            const zone1 = ethers.utils.formatBytes32String("TestZone1");
-            await callAdmin_DeclareZones(admin, admins, [zone1], true, await admin.nonce());
-            await callAdmin_ActivateIn(admin, admins, zone1, [account1.address], true, await admin.nonce());
-            expect(await admin.getZoneEligibility(zone1, account1.address)).to.be.true;
-
-            const account2 = randomWallet();
-            const zone2 = ethers.utils.formatBytes32String("TestZone2");
-            await callAdmin_DeclareZones(admin, admins, [zone2], true, await admin.nonce());
-            expect(await admin.getZoneEligibility(zone2, account2.address)).to.be.false;
-
-            const account3 = randomWallet();
-            const zone3 = ethers.utils.formatBytes32String("TestZone3");
-            await callAdmin_DeclareZones(admin, admins, [zone3], true, await admin.nonce());
-            await callAdmin_ActivateIn(admin, admins, zone3, [account3.address], true, await admin.nonce());
-            await callAdmin_DeclareZones(admin, admins, [zone3], false, await admin.nonce());
-            expect(await admin.getZoneEligibility(zone3, account3.address)).to.be.false;
-
-            const account4 = randomWallet();
-            const zone4 = ethers.utils.formatBytes32String("TestZone4");
-            expect(await admin.getZoneEligibility(zone4, account4.address)).to.be.false;
         });
     });
 

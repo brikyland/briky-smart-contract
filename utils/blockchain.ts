@@ -1,6 +1,7 @@
 import { BigNumberish, ethers, Wallet } from 'ethers';
 import { JsonRpcProvider } from '@ethersproject/providers';
 import { time } from '@nomicfoundation/hardhat-network-helpers';
+import { expect } from 'chai';
 
 export function parseEther(x: string) {
     const decimalStr = Number(x).toLocaleString("fullwide", {
@@ -148,4 +149,18 @@ export function getValidationMessage(
         ["address", "bytes", "uint256", "uint256"],
         [validatable.address, data, nonce, expiry]
     );
+}
+
+export async function expectRevertWithModifierCustomError(
+    contract: ethers.Contract,
+    query: Promise<any>,
+    errorName: string,
+) {
+    try {
+        expect(await query).to.revertedWithCustomError(contract, errorName);
+    } catch (error: any) {
+        const customErrorBytes4 = error.error.data.data;
+        const customError = contract.interface.parseError(customErrorBytes4);
+        expect(customError.name).to.equal(errorName);
+    }
 }

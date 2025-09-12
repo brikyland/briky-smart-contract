@@ -35,7 +35,7 @@ import {
     callAdmin_ActivateIn,
     callAdmin_AuthorizeManagers,
     callAdmin_AuthorizeModerators,
-    callAdmin_DeclareZones,
+    callAdmin_DeclareZone,
     callAdmin_UpdateCurrencyRegistries,
 } from '@utils/callWithSignatures/admin';
 import {
@@ -390,6 +390,7 @@ describe('7.1. PrestigePad', async () => {
         skipAddZoneForExecutive = false,
         skipFundERC20ForDepositors = false,
         skipFundERC20ForInitiators = false,
+        skipDeclareZone = false,
         useExclusiveReentrantCurrency = false,
         useReentrancyERC20 = false,
         useFailReceiverAsInitiator = false,
@@ -526,35 +527,37 @@ describe('7.1. PrestigePad', async () => {
             );
         }
 
-        await callAdmin_DeclareZones(
-            admin,
-            admins,
-            [zone1, zone2],
-            true,
-            await admin.nonce()
-        );
+        if (!skipDeclareZone) {
+            for (const zone of [zone1, zone2]) {
+                await callAdmin_DeclareZone(
+                    admin,
+                    admins,
+                    zone,
+                    await admin.nonce()
+                );
+            }
 
+            if (!skipAddZoneForExecutive) {
+                await callAdmin_ActivateIn(
+                    admin,
+                    admins,
+                    zone1,
+                    [manager.address, moderator.address],
+                    true,
+                    await admin.nonce()
+                );
+                await callAdmin_ActivateIn(
+                    admin,
+                    admins,
+                    zone2,
+                    [manager.address, moderator.address],
+                    true,
+                    await admin.nonce()
+                );
+            }
+        }
 
         let timestamp = await time.latest() + 1000;
-
-        if (!skipAddZoneForExecutive) {
-            await callAdmin_ActivateIn(
-                admin,
-                admins,
-                zone1,
-                [manager.address, moderator.address],
-                true,
-                await admin.nonce()
-            );
-            await callAdmin_ActivateIn(
-                admin,
-                admins,
-                zone2,
-                [manager.address, moderator.address],
-                true,
-                await admin.nonce()
-            );
-        }
 
         if (!skipAuthorizeLaunchpad) {
             await callProjectToken_AuthorizeLaunchpads(
@@ -1234,19 +1237,13 @@ describe('7.1. PrestigePad', async () => {
         });
 
         it('7.1.5.6. initiate launch unsuccessfully with inactive zone', async () => {
-            const fixture = await beforePrestigePadTest();
+            const fixture = await beforePrestigePadTest({
+                skipDeclareZone: true,
+            });
 
-            const { admin, admins, prestigePad, manager, validator } = fixture;
+            const { prestigePad, manager, validator } = fixture;
 
             const { defaultParams } = await beforeInitiateLaunchTest(fixture);
-
-            await callAdmin_DeclareZones(
-                admin,
-                admins,
-                [defaultParams.zone],
-                false,
-                await admin.nonce()
-            );
 
             await expect(getInitiateLaunchTx(prestigePad, validator, manager, defaultParams))
                 .to.be.revertedWithCustomError(prestigePad, 'Unauthorized');

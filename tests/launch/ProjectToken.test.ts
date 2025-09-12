@@ -45,7 +45,7 @@ import {
     callAdmin_ActivateIn,
     callAdmin_AuthorizeManagers,
     callAdmin_AuthorizeModerators,
-    callAdmin_DeclareZones,
+    callAdmin_DeclareZone,
 } from '@utils/callWithSignatures/admin';
 import { BigNumber, Contract } from 'ethers';
 import { randomInt } from 'crypto';
@@ -304,6 +304,7 @@ describe('7.2. ProjectToken', async () => {
         skipAddProjectTokenAsTokenizer = false,
         skipAddInitiatorAsEstateCustodian = false,
         skipRegisterBroker = false,
+        skipDeclareZone = false,
         useReentrancyERC1155ReceiverAsDepositor = false,
         useFailReceiverAsDepositor = false,
         addSampleProjects = false,
@@ -371,13 +372,16 @@ describe('7.2. ProjectToken', async () => {
             );
         }
 
-        await callAdmin_DeclareZones(
-            admin,
-            admins,
-            [zone1, zone2],
-            true,
-            await admin.nonce()
-        );
+        if (!skipDeclareZone) {
+            for (const zone of [zone1, zone2]) {
+                await callAdmin_DeclareZone(
+                    admin,
+                    admins,
+                    zone,
+                    await admin.nonce()
+                );
+            }
+        }
 
         if (!skipAddProjectTokenAsTokenizer) {
             await callEstateToken_AuthorizeTokenizers(
@@ -690,16 +694,10 @@ describe('7.2. ProjectToken', async () => {
         });
 
         it('7.2.3.4. updateZoneRoyaltyRate unsuccessfully with invalid zone', async () => {
-            const fixture = await beforeProjectTokenTest();
+            const fixture = await beforeProjectTokenTest({
+                skipDeclareZone: true,
+            });
             const { projectToken, admin, admins, zone1 } = fixture;
-
-            await callAdmin_DeclareZones(
-                admin,
-                admins,
-                [zone1],
-                false,
-                await admin.nonce()
-            );
 
             const rate = ethers.utils.parseEther('0.2');
 
@@ -1044,16 +1042,10 @@ describe('7.2. ProjectToken', async () => {
         });
 
         it('7.2.5.3. register initiator unsuccessfully with inactive zone', async () => {
-            const fixture = await beforeProjectTokenTest();
-            const { projectToken, manager, admin, admins, zone1, validator } = fixture;
-
-            await callAdmin_DeclareZones(
-                admin,
-                admins,
-                [zone1],
-                false,
-                await admin.nonce()
-            );
+            const fixture = await beforeProjectTokenTest({
+                skipDeclareZone: true,
+            });
+            const { projectToken, manager, validator } = fixture;
 
             const { defaultParams: params } = await beforeRegisterInitiatorTest(fixture);
 
@@ -1062,7 +1054,9 @@ describe('7.2. ProjectToken', async () => {
         });
 
         it('7.2.5.4. register initiator unsuccessfully with inactive manager in zone', async () => {
-            const fixture = await beforeProjectTokenTest();
+            const fixture = await beforeProjectTokenTest({
+                skipDeclareZone: true,
+            });
             const { projectToken, manager, admin, admins, validator } = fixture;
 
             const { defaultParams: params } = await beforeRegisterInitiatorTest(fixture);
@@ -1305,16 +1299,10 @@ describe('7.2. ProjectToken', async () => {
         });
 
         it('7.2.9.4. launch project unsuccessfully when zone is inactive', async () => {
-            const fixture = await beforeProjectTokenTest();
-            const { projectToken, prestigePad, zone1, admin, admins } = fixture;
-
-            await callAdmin_DeclareZones(
-                admin,
-                admins,
-                [zone1],
-                false,
-                await admin.nonce()
-            );
+            const fixture = await beforeProjectTokenTest({
+                skipDeclareZone: true,
+            });
+            const { projectToken, prestigePad } = fixture;
 
             const { defaultParams: params } = await beforeLaunchProjectTest(fixture);
 
@@ -1514,16 +1502,9 @@ describe('7.2. ProjectToken', async () => {
         it('7.2.11.5. deprecate project unsuccessfully with inactive zone', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
+                skipDeclareZone: true,
             });
-            const { projectToken, manager, admin, admins, zone1 } = fixture;
-
-            await callAdmin_DeclareZones(
-                admin,
-                admins,
-                [zone1],
-                false,
-                await admin.nonce()
-            );
+            const { projectToken, manager } = fixture;
 
             await expect(projectToken.connect(manager).deprecateProject(1))
                 .to.be.revertedWithCustomError(projectToken, `Unauthorized`);
@@ -1660,16 +1641,9 @@ describe('7.2. ProjectToken', async () => {
         it('7.2.12.5. update project uri unsuccessfully with inactive zone', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
+                skipDeclareZone: true,
             });
-            const { projectToken, manager, admin, admins, zone1, validator } = fixture;
-
-            await callAdmin_DeclareZones(
-                admin,
-                admins,
-                [zone1],
-                false,
-                await admin.nonce()
-            );
+            const { projectToken, manager, validator } = fixture;
 
             const params: UpdateProjectURIParams = {
                 projectId: BigNumber.from(1),
@@ -1885,18 +1859,11 @@ describe('7.2. ProjectToken', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
                 mintProjectTokenForDepositor: true,
+                skipDeclareZone: true,
             });
             const { prestigePad, projectToken, manager, admin, admins, zone1, broker1 } = fixture;
 
             prestigePad.isFinalized.whenCalledWith(1).returns(true);
-
-            await callAdmin_DeclareZones(
-                admin,
-                admins,
-                [zone1],
-                false,
-                await admin.nonce()
-            );
 
             await expect(projectToken.connect(manager).tokenizeProject(1, broker1.address))
                 .to.be.revertedWithCustomError(projectToken, `Unauthorized`);
@@ -2618,7 +2585,7 @@ describe('7.2. ProjectToken', async () => {
         });
     });
 
-    describe('7.2.20. voteOfAt(address, uint256, uint256)', () => {
+    describe('7.2.20. equityOfAt(address, uint256, uint256)', () => {
         it('7.2.20.1. return correct vote for available project', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
@@ -2644,9 +2611,9 @@ describe('7.2. ProjectToken', async () => {
             prestigePad.allocationOfAt.whenCalledWith(depositor1.address, launchId1, baseTimestamp).returns(20_000);
             prestigePad.allocationOfAt.whenCalledWith(depositor1.address, launchId1, baseTimestamp + 10).returns(20_000);
 
-            expect(await projectToken.voteOfAt(depositor1.address, projectId1, baseTimestamp - 1)).to.equal(20_000);
-            expect(await projectToken.voteOfAt(depositor1.address, projectId1, baseTimestamp)).to.equal(30_000);
-            expect(await projectToken.voteOfAt(depositor1.address, projectId1, baseTimestamp + 10)).to.equal(30_000);
+            expect(await projectToken.equityOfAt(depositor1.address, projectId1, baseTimestamp - 1)).to.equal(20_000);
+            expect(await projectToken.equityOfAt(depositor1.address, projectId1, baseTimestamp)).to.equal(30_000);
+            expect(await projectToken.equityOfAt(depositor1.address, projectId1, baseTimestamp + 10)).to.equal(30_000);
 
             // Depositor 1, estate 2
             await callTransactionAtTimestamp(
@@ -2659,9 +2626,9 @@ describe('7.2. ProjectToken', async () => {
             prestigePad.allocationOfAt.whenCalledWith(depositor1.address, launchId2, baseTimestamp + 20).returns(80_000);
             prestigePad.allocationOfAt.whenCalledWith(depositor1.address, launchId2, baseTimestamp + 30).returns(80_000);
 
-            expect(await projectToken.voteOfAt(depositor1.address, projectId2, baseTimestamp + 19)).to.equal(80_000);
-            expect(await projectToken.voteOfAt(depositor1.address, projectId2, baseTimestamp + 20)).to.equal(120_000);
-            expect(await projectToken.voteOfAt(depositor1.address, projectId2, baseTimestamp + 30)).to.equal(120_000);
+            expect(await projectToken.equityOfAt(depositor1.address, projectId2, baseTimestamp + 19)).to.equal(80_000);
+            expect(await projectToken.equityOfAt(depositor1.address, projectId2, baseTimestamp + 20)).to.equal(120_000);
+            expect(await projectToken.equityOfAt(depositor1.address, projectId2, baseTimestamp + 30)).to.equal(120_000);
 
             // Depositor 2, estate 1
             await callTransactionAtTimestamp(
@@ -2674,9 +2641,9 @@ describe('7.2. ProjectToken', async () => {
             prestigePad.allocationOfAt.whenCalledWith(depositor2.address, launchId1, baseTimestamp + 40).returns(320_000);
             prestigePad.allocationOfAt.whenCalledWith(depositor2.address, launchId1, baseTimestamp + 50).returns(320_000);
 
-            expect(await projectToken.voteOfAt(depositor2.address, projectId1, baseTimestamp + 39)).to.equal(320_000);
-            expect(await projectToken.voteOfAt(depositor2.address, projectId1, baseTimestamp + 40)).to.equal(480_000);
-            expect(await projectToken.voteOfAt(depositor2.address, projectId1, baseTimestamp + 50)).to.equal(480_000);
+            expect(await projectToken.equityOfAt(depositor2.address, projectId1, baseTimestamp + 39)).to.equal(320_000);
+            expect(await projectToken.equityOfAt(depositor2.address, projectId1, baseTimestamp + 40)).to.equal(480_000);
+            expect(await projectToken.equityOfAt(depositor2.address, projectId1, baseTimestamp + 50)).to.equal(480_000);
         });
         
         it('7.2.20.2. revert with invalid project id', async () => {
@@ -2685,10 +2652,10 @@ describe('7.2. ProjectToken', async () => {
 
             let timestamp = await time.latest();
 
-            await expect(projectToken.voteOfAt(depositor1.address, 0, timestamp))
+            await expect(projectToken.equityOfAt(depositor1.address, 0, timestamp))
                 .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
 
-            await expect(projectToken.voteOfAt(depositor1.address, 100, timestamp))
+            await expect(projectToken.equityOfAt(depositor1.address, 100, timestamp))
                 .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
         });
 
@@ -2704,11 +2671,11 @@ describe('7.2. ProjectToken', async () => {
 
             prestigePad.allocationOfAt.returns(0);
 
-            await expect(projectToken.voteOfAt(depositor1.address, 1, timestamp - 1))
+            await expect(projectToken.equityOfAt(depositor1.address, 1, timestamp - 1))
                 .to.be.not.reverted;
-            await expect(projectToken.voteOfAt(depositor1.address, 1, timestamp))
+            await expect(projectToken.equityOfAt(depositor1.address, 1, timestamp))
                 .to.be.not.reverted;
-            await expect(projectToken.voteOfAt(depositor1.address, 1, timestamp + 1))
+            await expect(projectToken.equityOfAt(depositor1.address, 1, timestamp + 1))
                 .to.be.revertedWithCustomError(projectToken, `InvalidTimestamp`);
         });
 
@@ -2731,11 +2698,11 @@ describe('7.2. ProjectToken', async () => {
 
             await time.increaseTo(timestamp + 5);
 
-            await expect(projectToken.voteOfAt(depositor1.address, 1, timestamp - 1))
+            await expect(projectToken.equityOfAt(depositor1.address, 1, timestamp - 1))
                 .to.be.not.reverted;
-            await expect(projectToken.voteOfAt(depositor1.address, 1, timestamp))
+            await expect(projectToken.equityOfAt(depositor1.address, 1, timestamp))
                 .to.be.not.reverted;
-            await expect(projectToken.voteOfAt(depositor1.address, 1, timestamp + 1))
+            await expect(projectToken.equityOfAt(depositor1.address, 1, timestamp + 1))
                 .to.be.revertedWithCustomError(projectToken, `InvalidTimestamp`);
         });
 
@@ -2759,12 +2726,12 @@ describe('7.2. ProjectToken', async () => {
             prestigePad.allocationOfAt.whenCalledWith(prestigePad.address, launchId1, baseTimestamp).returns(20_000);
             prestigePad.allocationOfAt.whenCalledWith(prestigePad.address, launchId1, baseTimestamp + 10).returns(20_000);
 
-            expect(await projectToken.voteOfAt(prestigePad.address, projectId1, baseTimestamp)).to.equal(0);
-            expect(await projectToken.voteOfAt(prestigePad.address, projectId1, baseTimestamp + 10)).to.equal(0);
+            expect(await projectToken.equityOfAt(prestigePad.address, projectId1, baseTimestamp)).to.equal(0);
+            expect(await projectToken.equityOfAt(prestigePad.address, projectId1, baseTimestamp + 10)).to.equal(0);
         });
     });
 
-    describe('7.2.21. totalVoteAt(uint256, uint256)', () => {
+    describe('7.2.21. totalEquityAt(uint256, uint256)', () => {
         it('7.2.21.1. return correct total vote for existing project', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
@@ -2796,11 +2763,11 @@ describe('7.2. ProjectToken', async () => {
                         break;
                     }
                     if (minted1) {
-                        expect(await projectToken.totalVoteAt(projectId1, timestamp))
+                        expect(await projectToken.totalEquityAt(projectId1, timestamp))
                             .to.equal(expectedTotalVote1.get(timestamp));
                     }
                     if (minted2) {
-                        expect(await projectToken.totalVoteAt(projectId2, timestamp))
+                        expect(await projectToken.totalEquityAt(projectId2, timestamp))
                             .to.equal(expectedTotalVote2.get(timestamp));
                     }
                 }
@@ -2903,10 +2870,10 @@ describe('7.2. ProjectToken', async () => {
 
             let timestamp = await time.latest();
 
-            await expect(projectToken.totalVoteAt(0, timestamp))
+            await expect(projectToken.totalEquityAt(0, timestamp))
                 .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
 
-            await expect(projectToken.totalVoteAt(100, timestamp))
+            await expect(projectToken.totalEquityAt(100, timestamp))
                 .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
         });
 
@@ -2922,11 +2889,11 @@ describe('7.2. ProjectToken', async () => {
 
             prestigePad.allocationOfAt.returns(0);
 
-            await expect(projectToken.totalVoteAt(1, timestamp - 1))
+            await expect(projectToken.totalEquityAt(1, timestamp - 1))
                 .to.be.not.reverted;
-            await expect(projectToken.totalVoteAt(1, timestamp))
+            await expect(projectToken.totalEquityAt(1, timestamp))
                 .to.be.not.reverted;
-            await expect(projectToken.totalVoteAt(1, timestamp + 1))
+            await expect(projectToken.totalEquityAt(1, timestamp + 1))
                 .to.be.revertedWithCustomError(projectToken, `InvalidTimestamp`);
         });
 
@@ -2942,11 +2909,11 @@ describe('7.2. ProjectToken', async () => {
 
             prestigePad.allocationOfAt.returns(0);
 
-            await expect(projectToken.totalVoteAt(1, timestamp - 1))
+            await expect(projectToken.totalEquityAt(1, timestamp - 1))
                 .to.be.revertedWithCustomError(projectToken, `InvalidTimestamp`);
-            await expect(projectToken.totalVoteAt(1, timestamp))
+            await expect(projectToken.totalEquityAt(1, timestamp))
                 .to.be.not.reverted;
-            await expect(projectToken.totalVoteAt(1, timestamp + 1))
+            await expect(projectToken.totalEquityAt(1, timestamp + 1))
                 .to.be.not.reverted;
         });
 
@@ -2964,15 +2931,15 @@ describe('7.2. ProjectToken', async () => {
 
             prestigePad.allocationOfAt.returns(0);
 
-            await expect(projectToken.totalVoteAt(1, timestamp - 1))
+            await expect(projectToken.totalEquityAt(1, timestamp - 1))
                 .to.be.not.reverted;
-            await expect(projectToken.totalVoteAt(1, timestamp))
+            await expect(projectToken.totalEquityAt(1, timestamp))
                 .to.be.not.reverted;
-            await expect(projectToken.totalVoteAt(1, timestamp + 1))
+            await expect(projectToken.totalEquityAt(1, timestamp + 1))
                 .to.be.revertedWithCustomError(projectToken, `InvalidTimestamp`);
         });
 
-        it('7.2.21.6. returned total vote should be the sum of voteOfAt', async () => {
+        it('7.2.21.6. returned total vote should be the sum of equityOfAt', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
             });
@@ -2996,9 +2963,9 @@ describe('7.2. ProjectToken', async () => {
                     if (timestamp > currentTimestamp) {
                         break;
                     }
-                    const totalVote = await projectToken.totalVoteAt(projectId, timestamp);
-                    const depositor1Vote = await projectToken.voteOfAt(depositor1.address, projectId, timestamp);
-                    const depositor2Vote = await projectToken.voteOfAt(depositor2.address, projectId, timestamp);
+                    const totalVote = await projectToken.totalEquityAt(projectId, timestamp);
+                    const depositor1Vote = await projectToken.equityOfAt(depositor1.address, projectId, timestamp);
+                    const depositor2Vote = await projectToken.equityOfAt(depositor2.address, projectId, timestamp);
                     expect(totalVote).to.equal(depositor1Vote.add(depositor2Vote));
                 }
             }

@@ -34,7 +34,7 @@ import { scaleRate } from "@utils/formula";
 import { Initialization as LandInitialization } from '@tests/land/test.initialization';
 import { callCommissionToken_Pause } from '@utils/callWithSignatures/commissionToken';
 import { MockValidator } from '@utils/mockValidator';
-import { callAdmin_ActivateIn, callAdmin_AuthorizeManagers, callAdmin_AuthorizeModerators, callAdmin_DeclareZones } from '@utils/callWithSignatures/admin';
+import { callAdmin_ActivateIn, callAdmin_AuthorizeManagers, callAdmin_AuthorizeModerators, callAdmin_DeclareZone } from '@utils/callWithSignatures/admin';
 import { getActivateBrokerTx, getMintTx, getRegisterBrokerTx } from '@utils/transaction/CommissionToken';
 import { ActivateBrokerParams, MintParams, RegisterBrokerParams } from '@utils/models/CommissionToken';
 import { BigNumber } from 'ethers';
@@ -135,6 +135,7 @@ describe('2.1. CommissionToken', async () => {
     };
 
     async function beforeCommissionTokenTest({
+        skipDeclareZone = false,
         skipActivateExecutiveInZone = false,
         registerSampleBrokers = false,
         mintSampleTokens = false,
@@ -158,24 +159,27 @@ describe('2.1. CommissionToken', async () => {
             await admin.nonce(),
         )
 
-        await callAdmin_DeclareZones(
-            admin,
-            admins,
-            [zone1, zone2],
-            true,
-            await admin.nonce(),
-        )
-
-        if (!skipActivateExecutiveInZone) {
+        if (!skipDeclareZone) {
             for (const zone of [zone1, zone2]) {
-                await callAdmin_ActivateIn(
+                await callAdmin_DeclareZone(
                     admin,
                     admins,
                     zone,
-                    [manager.address, moderator.address],
-                    true,
                     await admin.nonce(),
                 )
+            }
+
+            if (!skipActivateExecutiveInZone) {
+                for (const zone of [zone1, zone2]) {
+                    await callAdmin_ActivateIn(
+                        admin,
+                        admins,
+                        zone,
+                        [manager.address, moderator.address],
+                        true,
+                        await admin.nonce(),
+                    )
+                }
             }
         }
 
@@ -399,15 +403,8 @@ describe('2.1. CommissionToken', async () => {
         it('2.1.4.2. revert with invalid zone', async () => {
             const { commissionToken, broker1, zone1, admin, admins } = await beforeCommissionTokenTest({
                 registerSampleBrokers: true,
+                skipDeclareZone: true,
             });
-
-            await callAdmin_DeclareZones(
-                admin,
-                admins,
-                [zone1],
-                false,
-                await admin.nonce(),
-            )
 
             await expect(commissionToken.getBrokerCommissionRate(zone1, broker1.address))
                 .to.be.revertedWithCustomError(commissionToken, 'InvalidZone');
@@ -615,17 +612,11 @@ describe('2.1. CommissionToken', async () => {
         });
 
         it('2.1.7.3. register broker unsuccessfully with inactive zone', async () => {
-            const fixture = await beforeCommissionTokenTest();
+            const fixture = await beforeCommissionTokenTest({
+                skipDeclareZone: true,
+            });
 
             const { commissionToken, manager, zone1, admin, admins } = fixture;
-
-            await callAdmin_DeclareZones(
-                admin,
-                admins,
-                [zone1],
-                false,
-                await admin.nonce(),
-            )
 
             const { defaultParams: params } = await beforeRegisterBrokerTest(fixture);
 
@@ -758,17 +749,11 @@ describe('2.1. CommissionToken', async () => {
         });
 
         it('2.1.8.3. activate broker unsuccessfully with inactive zone', async () => {
-            const fixture = await beforeCommissionTokenTest();
+            const fixture = await beforeCommissionTokenTest({
+                skipDeclareZone: true,
+            });
 
             const { commissionToken, manager, zone1, admin, admins } = fixture;
-
-            await callAdmin_DeclareZones(
-                admin,
-                admins,
-                [zone1],
-                false,
-                await admin.nonce(),
-            )
 
             const { defaultParams: params } = await beforeActivateBrokerTest(fixture);
 
@@ -925,19 +910,12 @@ describe('2.1. CommissionToken', async () => {
         it('2.1.9.4. mint unsuccessfully when zone is inactive', async () => {
             const fixture = await beforeCommissionTokenTest({
                 registerSampleBrokers: true,
+                skipDeclareZone: true,
             });
 
             const { commissionToken, estateToken, admin, admins } = fixture;
 
             const { defaultParams: params } = await beforeMintTest(fixture);
-
-            await callAdmin_DeclareZones(
-                admin,
-                admins,
-                [params.zone],
-                false,
-                await admin.nonce(),
-            )
 
             await expect(getMintTx(commissionToken, estateToken, params))
                 .to.be.revertedWithCustomError(commissionToken, 'InvalidZone');

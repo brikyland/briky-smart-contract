@@ -30,7 +30,7 @@ import {
     callAdmin_ActivateIn,
     callAdmin_AuthorizeManagers,
     callAdmin_AuthorizeModerators,
-    callAdmin_DeclareZones,
+    callAdmin_DeclareZone,
     callAdmin_UpdateCurrencyRegistries,
 } from '@utils/callWithSignatures/admin';
 import {
@@ -285,6 +285,7 @@ describe('2.2. EstateForger', async () => {
     };
 
     async function beforeEstateForgerTest({
+        skipDeclareZone = false,
         registerBrokers = false,
         listSampleCurrencies = false,
         fundERC20ForDepositors = false,
@@ -403,13 +404,16 @@ describe('2.2. EstateForger', async () => {
             );
         }
 
-        await callAdmin_DeclareZones(
-            admin,
-            admins,
-            [zone1, zone2],
-            true,
-            await admin.nonce()
-        );
+        if (!skipDeclareZone) {
+            for (const zone of [zone1, zone2]) {
+                await callAdmin_DeclareZone(
+                    admin,
+                    admins,
+                    zone,
+                    await admin.nonce()
+                );
+            }
+        }
 
         await callEstateToken_AuthorizeTokenizers(
             estateToken,
@@ -1197,17 +1201,10 @@ describe('2.2. EstateForger', async () => {
                 listSampleCustodians: true,
                 addEstateForgerToVault: true,
                 registerBrokers: true,
+                skipDeclareZone: true,
             });
 
             const { admin, admins, moderator, manager, zone1, estateForger, validator } = fixture;
-
-            await callAdmin_DeclareZones(
-                admin,
-                admins,
-                [zone1],
-                false,
-                await admin.nonce()
-            );
 
             const defaultParams = await getDefaultParams(fixture);
 
@@ -1759,16 +1756,9 @@ describe('2.2. EstateForger', async () => {
                 addEstateForgerToVault: true,
                 registerBrokers: true,                
                 addSampleRequests: true,
+                skipDeclareZone: true,
             });
             const { admins, admin, estateForger, user, depositor1, depositor2, zone1 } = fixture;
-
-            await callAdmin_DeclareZones(
-                admin,
-                admins,
-                [zone1],
-                false,
-                await admin.nonce(),
-            );
 
             await expect(estateForger.connect(user).whitelistFor(
                 1,
@@ -2160,18 +2150,10 @@ describe('2.2. EstateForger', async () => {
                 addSampleRequests: true,
                 addEstateForgerToVault: true,
                 registerBrokers: true,
+                skipDeclareZone: true,
             });
             const { manager, estateForger, admin, admins, validator } = fixture;
             const { defaultParams } = await beforeUpdateRequestURI(fixture);
-
-            const zone = (await estateForger.getRequest(defaultParams.requestId)).estate.zone;
-            await callAdmin_DeclareZones(
-                admin,
-                admins,
-                [zone],
-                false,
-                await admin.nonce()
-            );
 
             await expect(getUpdateRequestURITx(estateForger, validator, manager, defaultParams))
                 .to.be.revertedWithCustomError(estateForger, 'Unauthorized');
@@ -2423,18 +2405,10 @@ describe('2.2. EstateForger', async () => {
                 addSampleRequests: true,
                 addEstateForgerToVault: true,
                 registerBrokers: true,
+                skipDeclareZone: true,
             });
             const { admin, admins, moderator, manager, estateForger } = fixture;
             const defaultParams = await getDefaultParams(fixture);
-
-            const zone = (await estateForger.getRequest(defaultParams.requestId)).estate.zone;
-            await callAdmin_DeclareZones(
-                admin,
-                admins,
-                [zone],
-                false,
-                await admin.nonce()
-            );
 
             await expect(getUpdateRequestAgendaTx(estateForger, moderator, defaultParams))
                 .to.be.revertedWithCustomError(estateForger, 'Unauthorized');
@@ -3461,17 +3435,9 @@ describe('2.2. EstateForger', async () => {
                 registerBrokers: true,
                 addSampleRequests: true,
                 addEstateForgerToVault: true,
+                skipDeclareZone: true,
             });
             const { manager, estateForger, admin, admins } = fixture;
-
-            const zone = (await estateForger.getRequest(1)).estate.zone;
-            await callAdmin_DeclareZones(
-                admin,
-                admins,
-                [zone],
-                false,
-                await admin.nonce()
-            );
 
             await expect(estateForger.connect(manager).cancel(1))
                 .to.be.revertedWithCustomError(estateForger, "Unauthorized");
@@ -4298,17 +4264,9 @@ describe('2.2. EstateForger', async () => {
                 addDepositions: true,
                 addEstateForgerToVault: true,
                 fundERC20ForManagers: true,
+                skipDeclareZone: true,
             });
             const {estateForger, manager, admin, admins} = fixture;
-
-            const zone = (await estateForger.getRequest(1)).estate.zone;
-            await callAdmin_DeclareZones(
-                admin,
-                admins,
-                [zone],
-                false,
-                await admin.nonce()
-            );
 
             await expect(estateForger.connect(manager).confirm(
                 1, { value: ethers.utils.parseEther("1000") }

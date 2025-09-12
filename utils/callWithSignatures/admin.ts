@@ -155,22 +155,20 @@ export async function callAdmin_AuthorizeGovernor(
     ));
 }
 
-export async function callAdmin_DeclareZones(
+export async function callAdmin_DeclareZone(
     admin: Admin | MockContract<Admin>,
     admins: any[],
-    zones: string[],
-    isZone: boolean,
+    zone: string,
     nonce: BigNumberish
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "bytes32[]", "bool"],
-        [admin.address, "declareZones", zones, isZone]
+        ["address", "string", "bytes32"],
+        [admin.address, "declareZone", zone]
     );
     const signatures = await getSignatures(message, admins, nonce);
 
-    await callTransaction(admin.declareZones(
-        zones,
-        isZone,
+    await callTransaction(admin.declareZone(
+        zone,
         signatures
     ));
 }

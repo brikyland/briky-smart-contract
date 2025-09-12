@@ -14,25 +14,25 @@ export interface ProposeParams {
 
 export interface AdmitParams {
     proposalId: number;
-    contentURI: string;
-    stateURI: string;
+    contextURI: string;
+    reviewURI: string;
     currency: string;
 }
 
 export interface DisqualifyParams {
     proposalId: number;
-    contentURI: string;
-    stateURI: string;
+    contextURI: string;
+    reviewURI: string;
 }
 
-export interface UpdateExecutionParams {
+export interface LogExecutionParams {
     proposalId: number;
-    stateURI: string;
+    logURI: string;
 }
 
 export interface ConcludeExecutionParams {
     proposalId: number;
-    stateURI: string;
+    logURI: string;
     isSuccessful: boolean;
 }
 

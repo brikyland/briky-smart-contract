@@ -37,7 +37,7 @@ import {
     callAdmin_AuthorizeGovernor,
     callAdmin_AuthorizeManagers,
     callAdmin_AuthorizeModerators,
-    callAdmin_DeclareZones,
+    callAdmin_DeclareZone,
     callAdmin_UpdateCurrencyRegistries,
 } from '@utils/callWithSignatures/admin';
 import {
@@ -352,6 +352,7 @@ describe('2.3. EstateLiquidator', async () => {
     async function beforeEstateLiquidatorTest({
         skipAuthorizeExtractor = false,
         skipAuthorizeGovernor = false,
+        skipDeclareZone = false,
         skipPrepareERC20ForOperators: skipPrepareERC20ForManager = false,
         listSampleExtractionRequests = false,
         useReentrancyERC20 = false,
@@ -409,13 +410,16 @@ describe('2.3. EstateLiquidator', async () => {
             await admin.nonce(),
         );
 
-        await callAdmin_DeclareZones(
-            admin,
-            admins,
-            [zone1, zone2],
-            true,
-            await admin.nonce(),
-        );
+        if (!skipDeclareZone) {
+            for (const zone of [zone1, zone2]) {
+                await callAdmin_DeclareZone(
+                    admin,
+                    admins,
+                    zone,
+                    await admin.nonce(),
+                );
+            }
+        }
 
         await callAdmin_AuthorizeManagers(
             admin,
@@ -477,7 +481,7 @@ describe('2.3. EstateLiquidator', async () => {
         await callTransaction(getCallTokenizeEstateTx(estateToken as any, estateForger, {
             totalSupply: ethers.utils.parseEther('100'),
             zone: zone1,
-            tokenizationId: 10,
+            tokenizationId: BigNumber.from(10),
             uri: "Token1_URI",
             expireAt: timestamp + 1e9,
             custodian: custodian1.address,
@@ -487,7 +491,7 @@ describe('2.3. EstateLiquidator', async () => {
         await callTransaction(getCallTokenizeEstateTx(estateToken as any, estateForger, {
             totalSupply: ethers.utils.parseEther('200'),
             zone: zone2,
-            tokenizationId: 10,
+            tokenizationId: BigNumber.from(10),
             uri: "Token2_URI",
             expireAt: timestamp + 1e9,
             custodian: custodian2.address,
@@ -1092,19 +1096,13 @@ describe('2.3. EstateLiquidator', async () => {
         });
 
         it('2.3.3.5. request extraction unsuccessfully with inactive zone', async () => {
-            const fixture = await beforeEstateLiquidatorTest();
+            const fixture = await beforeEstateLiquidatorTest({
+                skipDeclareZone: true,
+            });
 
-            const { admin, admins, zone1, estateLiquidator, manager, estateToken, governanceHub, validator } = fixture;
+            const { estateLiquidator, manager, estateToken, governanceHub, validator } = fixture;
 
             const { defaultParams } = await beforeRequestExtractionTest(fixture);
-
-            await callAdmin_DeclareZones(
-                admin as any,
-                admins,
-                [zone1],
-                false,
-                await admin.nonce(),
-            )
 
             const fee = await governanceHub.fee();
 
