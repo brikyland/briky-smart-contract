@@ -257,15 +257,15 @@ describe('2.1. CommissionToken', async () => {
             expect(await commissionToken.totalSupply()).to.equal(0);
 
             const tx = commissionToken.deployTransaction;
-            const receipt = await tx.wait();
             await expect(tx).to
-                .emit(commissionToken, 'BaseURIUpdate').withArgs(LandInitialization.COMMISSION_TOKEN_BaseURI);
-            
-            const royaltyRateEvent = getEventsFromReceipt(commissionToken, receipt, 'RoyaltyRateUpdate')[0];
-            expect(structToObject(royaltyRateEvent.args!.newValue)).to.deep.equal({
-                value: LandInitialization.COMMISSION_TOKEN_RoyaltyRate,
-                decimals: Constant.COMMON_RATE_DECIMALS,
-            });
+                .emit(commissionToken, 'BaseURIUpdate').withArgs(LandInitialization.COMMISSION_TOKEN_BaseURI)
+                .emit(commissionToken, 'RoyaltyRateUpdate').withArgs((rate: any) => {
+                    expect(structToObject(rate)).to.deep.equal({
+                        value: LandInitialization.COMMISSION_TOKEN_RoyaltyRate,
+                        decimals: Constant.COMMON_RATE_DECIMALS,
+                    });
+                    return true;
+                });
         });
 
         it('2.1.1.2. Deploy unsuccessfully with invalid royalty rate', async () => {
@@ -287,7 +287,10 @@ describe('2.1. CommissionToken', async () => {
 
     describe('2.1.2. updateBaseURI(string, bytes[])', async () => {
         it('2.1.2.1. updateBaseURI successfully with valid signatures', async () => {
-            const { commissionToken, admin, admins } = await beforeCommissionTokenTest({});
+            const { commissionToken, admin, admins } = await beforeCommissionTokenTest({
+                registerSampleBrokers: true,
+                mintSampleTokens: true,
+            });
 
             const message = ethers.utils.defaultAbiCoder.encode(
                 ["address", "string", "string"],
@@ -302,12 +305,15 @@ describe('2.1. CommissionToken', async () => {
                 .emit(commissionToken, 'BaseURIUpdate')
                 .withArgs("NewBaseURI:");
 
-            expect(await commissionToken.tokenURI(1)).to.equal("NewBaseURI:");
-            expect(await commissionToken.tokenURI(2)).to.equal("NewBaseURI:");
+            expect(await commissionToken.tokenURI(1)).to.equal("NewBaseURI:1");
+            expect(await commissionToken.tokenURI(2)).to.equal("NewBaseURI:2");
         });
 
         it('2.1.2.2. updateBaseURI unsuccessfully with invalid signatures', async () => {
-            const { commissionToken, admin, admins } = await beforeCommissionTokenTest({});
+            const { commissionToken, admin, admins } = await beforeCommissionTokenTest({
+                registerSampleBrokers: true,
+                mintSampleTokens: true,
+            });
 
             const message = ethers.utils.defaultAbiCoder.encode(
                 ["address", "string", "string"],
@@ -334,17 +340,22 @@ describe('2.1. CommissionToken', async () => {
             const signatures = await getSignatures(message, admins, await admin.nonce());
 
             const tx = await commissionToken.updateRoyaltyRate(ethers.utils.parseEther('0.2'), signatures);
-            const receipt = await tx.wait();
+            await tx.wait();
 
-            const event = receipt.events?.find(e => e.event === 'RoyaltyRateUpdate')!;
-            expect(structToObject(event.args!.newValue)).to.deep.equal({
+            await expect(tx).to
+                .emit(commissionToken, 'RoyaltyRateUpdate').withArgs((rate: any) => {
+                    expect(structToObject(rate)).to.deep.equal({
+                        value: ethers.utils.parseEther('0.2'),
+                        decimals: Constant.COMMON_RATE_DECIMALS,
+                    });
+                    return true;
+                });
+
+            const royaltyRate = await commissionToken.getRoyaltyRate(0);
+            expect(structToObject(royaltyRate)).to.deep.equal({
                 value: ethers.utils.parseEther('0.2'),
                 decimals: Constant.COMMON_RATE_DECIMALS,
             });
-
-            const royaltyRate = await commissionToken.getRoyaltyRate(0);
-            expect(royaltyRate.value).to.equal(ethers.utils.parseEther('0.2'));
-            expect(royaltyRate.decimals).to.equal(Constant.COMMON_RATE_DECIMALS);
         });
 
         it('2.1.3.2. updateRoyaltyRate unsuccessfully with invalid signatures', async () => {
@@ -401,12 +412,12 @@ describe('2.1. CommissionToken', async () => {
         });
 
         it('2.1.4.2. revert with invalid zone', async () => {
-            const { commissionToken, broker1, zone1, admin, admins } = await beforeCommissionTokenTest({
+            const { commissionToken, broker1 } = await beforeCommissionTokenTest({
                 registerSampleBrokers: true,
-                skipDeclareZone: true,
             });
 
-            await expect(commissionToken.getBrokerCommissionRate(zone1, broker1.address))
+            const invalidZone = ethers.utils.formatBytes32String('InvalidZone');
+            await expect(commissionToken.getBrokerCommissionRate(invalidZone, broker1.address))
                 .to.be.revertedWithCustomError(commissionToken, 'InvalidZone');
         });
 
@@ -822,7 +833,7 @@ describe('2.1. CommissionToken', async () => {
             expect(await commissionToken.totalSupply()).to.equal(1);
 
             expect(await commissionToken.ownerOf(1)).to.equal(broker1.address);
-            expect(await commissionToken.tokenURI(1)).to.equal(LandInitialization.COMMISSION_TOKEN_BaseURI);
+            expect(await commissionToken.tokenURI(1)).to.equal(LandInitialization.COMMISSION_TOKEN_BaseURI + "1");
 
             expect(structToObject(await commissionToken.getCommissionRate(1))).to.deep.equal(
                 structToObject(commissionRate1)
@@ -846,7 +857,7 @@ describe('2.1. CommissionToken', async () => {
             expect(await commissionToken.totalSupply()).to.equal(2);
 
             expect(await commissionToken.ownerOf(2)).to.equal(broker2.address);
-            expect(await commissionToken.tokenURI(2)).to.equal(LandInitialization.COMMISSION_TOKEN_BaseURI);
+            expect(await commissionToken.tokenURI(2)).to.equal(LandInitialization.COMMISSION_TOKEN_BaseURI + "2");
 
             expect(structToObject(await commissionToken.getCommissionRate(2))).to.deep.equal(
                 structToObject(commissionRate2)
@@ -909,13 +920,18 @@ describe('2.1. CommissionToken', async () => {
 
         it('2.1.9.4. mint unsuccessfully when zone is inactive', async () => {
             const fixture = await beforeCommissionTokenTest({
-                registerSampleBrokers: true,
-                skipDeclareZone: true,
+                registerSampleBrokers: true
             });
 
-            const { commissionToken, estateToken, admin, admins } = fixture;
+            const { commissionToken, estateToken } = fixture;
 
-            const { defaultParams: params } = await beforeMintTest(fixture);
+            const { defaultParams } = await beforeMintTest(fixture);
+
+            const invalidZone = ethers.utils.formatBytes32String('InvalidZone');
+            const params: MintParams = {
+                ...defaultParams,
+                zone: invalidZone,
+            }
 
             await expect(getMintTx(commissionToken, estateToken, params))
                 .to.be.revertedWithCustomError(commissionToken, 'InvalidZone');
