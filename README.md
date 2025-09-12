@@ -1,5 +1,3 @@
-# Briky Smart Contracts
-
 <p align="center">
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://brikycapital.com/images/logo-with-text-white.svg">
@@ -14,7 +12,7 @@ BrikyLand provides an all-in-one solution for tokenized real estate assets. This
 
 ### Our Products
 
-- **[Briky Land](https://brikyland.com/)**: Invest in a transparent marketplace of tokenized real estate properties backed by institutional custodians. Start investing with as little as $100.
+- **[Briky Land](https://brikyland.com/)**: Invest in a transparent marketplace of tokenized real estate properties backed by institutional custodians.
 - **[Briky Lend](https://testnet.brikylend.com/)**: Access flexible loans using your tokenized assets as collateral and unlock the power of mortgage-backed NFTs. Lend and earn competitive returns.
 - **Briky Launch** *(coming soon)*: A streamlined platform for tokenizing properties, making real estate investment accessible to a global audience and unlocking new opportunities for property owners. 
 
