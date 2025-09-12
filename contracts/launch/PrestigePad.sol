@@ -9,8 +9,6 @@ import {Formula} from "../lib/Formula.sol";
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 import {IPriceWatcher} from "../common/interfaces/IPriceWatcher.sol";
 
-import {Formula} from "../lib/Formula.sol";
-
 import {CommonConstant} from "../common/constants/CommonConstant.sol";
 
 import {IReserveVault} from "../common/interfaces/IReserveVault.sol";
