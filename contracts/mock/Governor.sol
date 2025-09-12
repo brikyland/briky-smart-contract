@@ -57,7 +57,10 @@ ERC1155SupplyUpgradeable {
     }
     
     function balanceOf(address _account, uint256 _tokenId)
-    public view override(ERC1155Upgradeable) returns (uint256) {
+    public view override(
+        ERC1155Upgradeable,
+        IERC1155Upgradeable
+    ) returns (uint256) {
         return super.balanceOf(_account, _tokenId);
     }
 
@@ -89,14 +92,14 @@ ERC1155SupplyUpgradeable {
         return super.totalSupply(_tokenId);
     }
 
-    function totalVoteAt(uint256 _tokenId, uint256) external view returns (uint256) {
+    function totalEquityAt(uint256 _tokenId, uint256) external view returns (uint256) {
         if (!exists(_tokenId)) {
             revert InvalidTokenId();
         }
         return totalSupply(_tokenId);
     }
 
-    function voteOfAt(address _account, uint256 _tokenId, uint256 _at) external view returns (uint256) {
+    function equityOfAt(address _account, uint256 _tokenId, uint256 _at) external view returns (uint256) {
         if (!exists(_tokenId)) {
             revert InvalidTokenId();
         }
