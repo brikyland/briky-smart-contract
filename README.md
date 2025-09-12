@@ -1,76 +1,121 @@
+# Briky Smart Contracts
+
+<p align="center">
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="img/logo-night.svg">
-  <source media="(prefers-color-scheme: light)" srcset="img/logo-day.svg">
-  <img alt="Briky Capital black logo (in light color mode) or white logo (in dark color mode)." src="https://user-images.githubusercontent.com/25423296/163456779-a8556205-d0a5-45e2-ac17-42d089e3c3f8.png">
+  <source media="(prefers-color-scheme: dark)" srcset="https://brikycapital.com/images/logo-with-text-white.svg">
+  <source media="(prefers-color-scheme: light)" srcset="https://brikycapital.com/images/logo-with-text-black.svg">
+  <img alt="Briky Capital logo" width="300">
 </picture>
+</p>
 
----
+## Overview
 
-BrikyLand provides all-in-one solution for tokenized assets. Our products:
-- [Briky Land](https://brikyland.com/): Invest in a transparent market of tokenized real, proven estates backed by institutional custodians. Start with as fews as $100.
-- [Briky Lend](https://testnet.brikylend.com/): Access flexible loans using your tokenized asset and unlock the power of mortgage-backed NFT. Lend and earn money.
-- Briky Launch (coming soon): A streamlined platform to tokenize properties, making real estate investment accessible to a global audience and unlocking new opportunities.
+BrikyLand provides an all-in-one solution for tokenized real estate assets. This repository contains the core smart contracts powering the BrikyLand ecosystem.
 
-This repo contains the core smart contracts for the BrikyLand system. 
+### Our Products
 
-## Setup
+- **[Briky Land](https://brikyland.com/)**: Invest in a transparent marketplace of tokenized real estate properties backed by institutional custodians. Start investing with as little as $100.
+- **[Briky Lend](https://testnet.brikylend.com/)**: Access flexible loans using your tokenized assets as collateral and unlock the power of mortgage-backed NFTs. Lend and earn competitive returns.
+- **Briky Launch** *(coming soon)*: A streamlined platform for tokenizing properties, making real estate investment accessible to a global audience and unlocking new opportunities for property owners. 
 
-Step 1: After cloning the repo, run:
+## Getting Started
 
-``` 
-npm install
-```
+### Prerequisites
 
-Step 2: Create the environment (`.env`) file from the template `.env.example`. Fill in the RPC endpoints for staging / testnet / main as mentioned in [RPC Endpoints](#rpc_endpoints).
+- Node.js (v16 or higher)
+- npm or yarn package manager
+- Git
 
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/brikyland/briky-smart-contract
+   cd briky-smart-contract
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
 
 ## Compilation
 
-To compile the contracts, run:
+Compile all smart contracts:
 
-``` 
+```bash
 npx hardhat compile
 ```
 
-## Deployment on local node
+## Local Development
 
-Step 1: Start local hardhat node
+### 1. Start Local Network
 
-```
+Launch a local Hardhat network:
+
+```bash
 npx hardhat node
 ```
 
-Step 2: Fill the required contract / validator addresses in `.env`, and the required deployment constants in the `scripts/deployments/<app_name>/initialization.ts`. Check the contract deployment scripts in `scripts/deployments` to know the required addresses and deployment constants that need to be filled in.
+This will start a local blockchain with pre-funded accounts.
 
-Step 3: Run the deploy script:
+### 2. Environment Configuration
 
+1. Create an environment file from the template:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Fill in the required contract and validator addresses in `.env`
+
+3. Configure deployment constants in `scripts/deployments/<app_name>/initialization.ts`
+
+> **Note**: Check the deployment scripts in `scripts/deployments/` to understand which addresses and constants are required.
+
+### 3. Deploy Contracts
+
+Deploy specific contracts using the following pattern:
+
+```bash
+npm run deploy<ContractName>:local
 ```
-npm run deploy<contract_name>:local
-```
 
-For example:
-- To deploy `Admin.sol`, fill in `LOCAL_ADMIN_1_ADDRESS` to `LOCAL_ADMIN_5_ADDRESS` (use the first account provided by hardhat local node), then run `npm run deployAdmin:local`
-- To deploy `FeeReceiver.sol`, fill in `LOCAL_ADMIN_ADDRESS`, then run `npm run deployFeeReceiver:local`
+**Examples:**
 
-## Unit testing
+- **Admin Contract**: 
+  - Fill `LOCAL_ADMIN_1_ADDRESS` through `LOCAL_ADMIN_5_ADDRESS` in `.env` (use accounts from local node)
+  - Run: `npm run deployAdmin:local`
 
-To perform unit testing, run:
+- **FeeReceiver Contract**:
+  - Fill `LOCAL_ADMIN_ADDRESS` in `.env`
+  - Run: `npm run deployFeeReceiver:local`
 
-```
+## Testing
+
+Run the complete test suite:
+
+```bash
 npx hardhat test
 ```
 
-## <a name="rpc_endpoints"></a>RPC Endpoints
+For specific test files:
 
-Our smart contracts are ran on [Binance Smart Chain (BSC)](https://www.bnbchain.org/en/bnb-smart-chain).
+```bash
+npx hardhat test test/YourTestFile.test.ts
+```
+
+## Project Structure
 
 ```
-STAGING_URL=https://bsc-testnet-dataseed.bnbchain.org
-STAGING_CHAIN_ID=97
-
-TESTNET_URL=https://bsc-testnet-dataseed.bnbchain.org
-TESTNET_CHAIN_ID=97
-
-MAINNET_URL=https://bsc-dataseed.binance.org/
-MAINNET_CHAIN_ID=56
+contracts/
+├── common/         # Core shared contracts and utilities
+├── land/           # Estate tokenization (Briky Land)
+├── launch/         # Project funding and tokenization (Briky Launch)
+├── lend/           # Token lending, mortgage (Briky Lend)
+├── lib/            # Utility libraries and helpers
+├── liquidity/      # Primary token and staking tokens
+├── lucra/          # Tokens for airdrop campaign
+└── lux/            # Token marketplaces
 ```
+
+
