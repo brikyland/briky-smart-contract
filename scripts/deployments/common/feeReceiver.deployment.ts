@@ -5,7 +5,7 @@ import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
 
 async function deployOrUpgradeFeeReceiver() {
     const config = network.config as any;
-    const networkName = network.name.toUpperCase();
+    const networkName = network.name == 'localhost' ? 'LOCAL' : network.name.toUpperCase();
     const signer = networkName == 'MAINNET'
         ? new LedgerSigner(ethers.provider)
         : (await ethers.getSigners())[0];

@@ -20,7 +20,7 @@ import { callEstateToken_AuthorizeTokenizers, callEstateToken_UpdateCommissionTo
 
 async function deployAll() {
     const config = network.config as any;
-    const networkName = network.name.toUpperCase();
+    const networkName = network.name == 'localhost' ? 'LOCAL' : network.name.toUpperCase();
     const signer = networkName == 'MAINNET'
         ? new LedgerSigner(ethers.provider)
         : (await ethers.getSigners())[0];

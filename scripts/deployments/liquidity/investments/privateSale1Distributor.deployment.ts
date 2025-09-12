@@ -4,7 +4,7 @@ import { Constant } from '@utils/constant';
 import { deployOrUpgradeDriptributor } from '../base/driptributor.deployment';
 
 async function deployOrUpgradePrivateSale1Distributor() {
-    const networkName = network.name.toUpperCase();
+    const networkName = network.name == 'localhost' ? 'LOCAL' : network.name.toUpperCase();
     const signer = networkName == 'MAINNET'
         ? new LedgerSigner(ethers.provider)
         : (await ethers.getSigners())[0];

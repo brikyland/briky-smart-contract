@@ -7,7 +7,7 @@ export async function deployOrUpgradeDistributor(
     roundName: string
 ) {
     const config = network.config as any;
-    const networkName = network.name.toUpperCase();
+    const networkName = network.name == 'localhost' ? 'LOCAL' : network.name.toUpperCase();
     const Distributor = await ethers.getContractFactory('Distributor', signer);
     return config[`${roundName}DistributorAddress`] ?
         await (async () => {
