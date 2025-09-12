@@ -9,7 +9,8 @@ import {IDividendHub} from "../interfaces/IDividendHub.sol";
  *
  *  @notice Storage contract for contract `DividendHub`.
  */
-abstract contract DividendHubStorage is IDividendHub {
+abstract contract DividendHubStorage is
+IDividendHub {
     /// @dev    withdrawAt[dividendId][account]
     mapping(uint256 => mapping(address => uint256)) public withdrawAt;
 

@@ -40,5 +40,7 @@ IValidatable {
         Validation calldata validation
     ) external payable returns (uint256 requestId);
 
-    function conclude(uint256 requestId) external returns (bool isSuccessful);
+    function conclude(
+        uint256 requestId
+    ) external returns (bool isSuccessful);
 }

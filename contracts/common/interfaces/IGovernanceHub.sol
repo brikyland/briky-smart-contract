@@ -75,7 +75,7 @@ IValidatable {
      *  @param  contextURI          URI of proposal context.
      *  @param  reviewURI           URI of review detail.
      *  @param  totalWeight         Total weight of the asset at the admission timestamp.
-     *  @param  quorum              Quorum to determine verdict calculated from the initiated quorum rate and the total weight..
+     *  @param  quorum              Quorum to determine verdict calculated from the initiated quorum rate and the total weight.
      *  @param  currency            Budget currency address.
      *
      *  @dev    The checksum of data from the `contextURI` should match `uuid`. Contract cannot validate this but defects are
@@ -272,7 +272,10 @@ IValidatable {
      *  @param  account         EVM address.
      *  @return contribution    Budget contribution of the account.
      */
-    function contributions(uint256 proposalId, address account) external view returns (uint256 contribution);
+    function contributions(
+        uint256 proposalId,
+        address account
+    ) external view returns (uint256 contribution);
 
     /**
      *          Name            Description
@@ -280,7 +283,10 @@ IValidatable {
      *  @param  account         EVM address.
      *  @return option          Vote option of the account.
      */
-    function voteOptions(uint256 proposalId, address account) external view returns (ProposalVoteOption option);
+    function voteOptions(
+        uint256 proposalId,
+        address account
+    ) external view returns (ProposalVoteOption option);
 
     /* --- Command --- */
     /**
@@ -484,7 +490,9 @@ IValidatable {
      *
      *  @dev    Permission: proposal's operator.
      */
-    function rejectExecution(uint256 proposalId) external;
+    function rejectExecution(
+        uint256 proposalId
+    ) external;
 
     /* --- Safe Command --- */
     /**

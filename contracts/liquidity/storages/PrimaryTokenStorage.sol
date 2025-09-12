@@ -1,9 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+/// contracts/liquidity/interfaces/
 import {IPrimaryToken} from "../../liquidity/interfaces/IPrimaryToken.sol";
 
-abstract contract PrimaryTokenStorage is IPrimaryToken {
+/**
+ *  @author Briky Team
+ *
+ *  @notice Storage contract for contract `PrimaryToken`.
+ */
+abstract contract PrimaryTokenStorage is
+IPrimaryToken {
     uint256 public backerRoundContribution;
     uint256 public externalTreasuryContribution;
     uint256 public marketMakerContribution;

@@ -1,9 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+/// contracts/liquidity/interfaces/
 import {IStakeToken} from "../../liquidity/interfaces/IStakeToken.sol";
 
-abstract contract StakeTokenStorage is IStakeToken {
+/**
+ *  @author Briky Team
+ *
+ *  @notice Storage contract for contract `StakeToken`.
+ */
+abstract contract StakeTokenStorage is
+IStakeToken {
+    /// @dev    weights[account]
     mapping(address => uint256) internal weights;
 
     uint256 public lastRewardFetch;

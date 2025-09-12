@@ -1,9 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+/// contracts/land/interfaces/
 import {ICommissionDispatchable} from "../interfaces/ICommissionDispatchable.sol";
 
-abstract contract CommissionDispatchableStorage is ICommissionDispatchable {
+/**
+ *  @author Briky Team
+ *
+ *  @notice Storage contract for contract `CommissionDispatchable`.
+ */
+abstract contract CommissionDispatchableStorage is
+ICommissionDispatchable {
     address public commissionToken;
 
     uint256[50] private __gap;

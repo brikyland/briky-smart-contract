@@ -1,11 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+/// contracts/land/interfaces/
 import {IEstateLiquidator} from "../interfaces/IEstateLiquidator.sol";
 
-abstract contract EstateLiquidatorStorage is IEstateLiquidator {
-    mapping(uint256 => mapping(address => uint256)) public withdrawAt;
-
+/**
+ *  @author Briky Team
+ *
+ *  @notice Storage contract for contract `EstateLiquidator`.
+ */
+abstract contract EstateLiquidatorStorage is
+IEstateLiquidator {
+    /// @dev    requests[requestId]
     mapping(uint256 => EstateLiquidatorRequest) internal requests;
 
     uint256 public requestNumber;

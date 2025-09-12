@@ -9,7 +9,8 @@ import {IValidatable} from "../interfaces/IValidatable.sol";
  *
  *  @notice Storage contract for contract `Validatable`.
  */
-abstract contract ValidatableStorage is IValidatable {
+abstract contract ValidatableStorage is 
+IValidatable {
     /// @dev    isNonceUsed[nonce]
     mapping(uint256 => bool) public isNonceUsed;
 

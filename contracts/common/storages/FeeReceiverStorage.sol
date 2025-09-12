@@ -9,7 +9,8 @@ import {IFeeReceiver} from "../interfaces/IFeeReceiver.sol";
  *
  *  @notice Storage contract for contract `FeeReceiver`.
  */
-abstract contract FeeReceiverStorage is IFeeReceiver {
+abstract contract FeeReceiverStorage is
+IFeeReceiver {
     address public admin;
 
     uint256[50] private __gap;

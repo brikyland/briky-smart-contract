@@ -52,7 +52,6 @@ IERC1155MetadataURIUpgradeable {
         address broker
     );
 
-    error AlreadyWithdrawn();
     error InvalidLaunchpad(address account);
     error InvalidProjectId();
     error InvalidTokenizing();
@@ -75,8 +74,6 @@ IERC1155MetadataURIUpgradeable {
 
     function getProject(uint256 projectId) external view returns (Project memory project);
     function zoneOf(uint256 projectId) external view returns (bytes32 zone);
-
-    function withdrawAt(uint256 projectId, address account) external view returns (uint256 withdrawAt);
 
     function registerInitiator(
         bytes32 zone,

@@ -9,7 +9,8 @@ import {IReserveVault} from "../interfaces/IReserveVault.sol";
  *
  *  @notice Storage contract for contract `ReserveVault`.
  */
-abstract contract ReserveVaultStorage is IReserveVault {
+abstract contract ReserveVaultStorage is
+IReserveVault {
     /// @dev    isProvider[account]
     mapping(address => bool) public isProvider;
 

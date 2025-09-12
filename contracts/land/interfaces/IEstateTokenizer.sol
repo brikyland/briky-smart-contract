@@ -18,7 +18,9 @@ IEstateTokenReceiver {
     error NotRegisteredCustodian();
     error NotTokenized();
 
-    function isTokenized(uint256 tokenizationId) external view returns (bool isTokenized);
+    function isTokenized(
+        uint256 tokenizationId
+    ) external view returns (bool isTokenized);
 
     function allocationOfAt(
         address account,
@@ -26,5 +28,7 @@ IEstateTokenReceiver {
         uint256 at
     ) external view returns (uint256 allocation);
 
-    function withdrawEstateToken(uint256 tokenizationId) external returns (uint256 amount);
+    function withdrawEstateToken(
+        uint256 tokenizationId
+    ) external returns (uint256 amount);
 }

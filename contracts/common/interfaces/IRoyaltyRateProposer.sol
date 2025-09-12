@@ -29,5 +29,7 @@ IERC2981Upgradeable {
      *  @param  tokenId     Asset identifier.
      *  @return rate        Royalty rate of the asset.
      */
-    function getRoyaltyRate(uint256 tokenId) external view returns (Rate memory rate);
+    function getRoyaltyRate(
+        uint256 tokenId
+    ) external view returns (Rate memory rate);
 }

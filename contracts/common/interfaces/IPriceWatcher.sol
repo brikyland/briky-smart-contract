@@ -62,14 +62,18 @@ ICommon {
      *  @param  currency    Proposal identifier.
      *  @return rate        Default conversion rate of the currency.
      */
-    function getDefaultRate(address currency) external view returns (Rate memory rate);
+    function getDefaultRate(
+        address currency
+    ) external view returns (Rate memory rate);
 
     /**
      *          Name        Description
      *  @param  currency    Proposal identifier.
      *  @return priceFeed   Price Feed configuration of the currency.
      */
-    function getPriceFeed(address currency) external view returns (DataFeed memory priceFeed);
+    function getPriceFeed(
+        address currency
+    ) external view returns (DataFeed memory priceFeed);
 
 
     /**

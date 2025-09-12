@@ -117,7 +117,9 @@ ICommon {
      *  @param  account     EVM address.
      *  @return isProvider  Whether the account is authorized to be provider.
      */
-    function isProvider(address account) external view returns (bool isProvider);
+    function isProvider(
+        address account
+    ) external view returns (bool isProvider);
 
 
     /**
@@ -125,14 +127,18 @@ ICommon {
      *  @param  fundId          Fund identifier.
      *  @return fund            Configuration and reserves of the fund.
      */
-    function getFund(uint256 fundId) external view returns (Fund memory fund);
+    function getFund(
+        uint256 fundId
+    ) external view returns (Fund memory fund);
 
     /**
      *          Name            Description
      *  @param  fundId          Fund identifier.
      *  @return isSufficient    Whether the fund is provided sufficiently for the current quantity.
      */
-    function isFundSufficient(uint256 fundId) external view returns (bool isSufficient);
+    function isFundSufficient(
+        uint256 fundId
+    ) external view returns (bool isSufficient);
 
     /** ===== COMMAND ===== **/
     /**
@@ -174,7 +180,9 @@ ICommon {
      *
      *  @dev    Permission: providers.
      */
-    function provideFund(uint256 fundId) external payable;
+    function provideFund(
+        uint256 fundId
+    ) external payable;
     /**
      *  @notice Withdraw value from a fund to a receiver.
      *

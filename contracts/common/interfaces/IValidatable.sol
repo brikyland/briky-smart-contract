@@ -44,5 +44,7 @@ IValidation {
      *  @param  nonce       Number used once combined with the message to prevent replay attacks.
      *  @param  isUsed      Whether the nonce has already been used.
      */
-    function isNonceUsed(uint256 nonce) external view returns (bool isUsed);
+    function isNonceUsed(
+        uint256 nonce
+    ) external view returns (bool isUsed);
 }

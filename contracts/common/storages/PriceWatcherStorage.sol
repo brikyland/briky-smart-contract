@@ -9,7 +9,8 @@ import {IPriceWatcher} from "../interfaces/IPriceWatcher.sol";
  *
  *  @notice Storage contract for contract `PriceWatcher`.
  */
-abstract contract PriceWatcherStorage is IPriceWatcher {
+abstract contract PriceWatcherStorage is
+IPriceWatcher {
     /// @dev    priceFeeds[currency]
     mapping(address => DataFeed) internal priceFeeds;
 

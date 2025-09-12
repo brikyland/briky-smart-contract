@@ -1,10 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+/// contracts/liquidity/interfaces/
 import {IAuction} from "../../liquidity/interfaces/IAuction.sol";
 
-abstract contract AuctionStorage is IAuction {
+/**
+ *  @author Briky Team
+ *
+ *  @notice Storage contract for contract `Auction`.
+ */
+abstract contract AuctionStorage is
+IAuction {
+    /// @dev    deposits[account]
     mapping(address => uint256) public deposits;
+
+    /// @dev    withdrawnAmount[account]
     mapping(address => uint256) public withdrawnAmount;
 
     uint256 public totalToken;

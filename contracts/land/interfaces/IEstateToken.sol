@@ -62,19 +62,41 @@ IERC1155MetadataURIUpgradeable {
 
     function estateNumber() external view returns (uint256 tokenNumber);
 
-    function isTokenizer(address account) external view returns (bool isTokenizer);
-    function isExtractor(address account) external view returns (bool isExtractor);
+    function isTokenizer(
+        address account
+    ) external view returns (bool isTokenizer);
+    function isExtractor(
+        address account
+    ) external view returns (bool isExtractor);
 
-    function getZoneRoyaltyRate(bytes32 _zone) external view returns (Rate memory royaltyRate);
+    function getZoneRoyaltyRate(
+        bytes32 _zone
+    ) external view returns (Rate memory royaltyRate);
 
-    function custodianURI(bytes32 zone, address account) external view returns (string memory uri);
-    function isCustodianIn(bytes32 zone, address account) external view returns (bool isCustodian);
+    function custodianURI(
+        bytes32 zone,
+        address account
+    ) external view returns (string memory uri);
+    function isCustodianIn(
+        bytes32 zone,
+        address account
+    ) external view returns (bool isCustodian);
 
-    function balanceOfAt(address account, uint256 tokenId, uint256 at) external view returns (uint256 balance);
-    function totalSupply(uint256 tokenId) external view returns (uint256 totalSupply);
+    function balanceOfAt(
+        address account,
+        uint256 tokenId,
+        uint256 at
+    ) external view returns (uint256 balance);
+    function totalSupply(
+        uint256 tokenId
+    ) external view returns (uint256 totalSupply);
 
-    function getEstate(uint256 estateId) external view returns (Estate memory tokenInfo);
-    function zoneOf(uint256 estateId) external view returns (bytes32 zone);
+    function getEstate(
+        uint256 estateId
+    ) external view returns (Estate memory tokenInfo);
+    function zoneOf(
+        uint256 estateId
+    ) external view returns (bytes32 zone);
 
     function registerCustodian(
         bytes32 zone,
@@ -93,13 +115,24 @@ IERC1155MetadataURIUpgradeable {
         address broker
     ) external returns (uint256 estateId);
 
-    function deprecateEstate(uint256 estateId) external;
-    function extendEstateExpiration(uint256 estateId, uint40 expireAt) external;
-    function updateEstateCustodian(uint256 estateId, address custodian) external;
+    function deprecateEstate(
+        uint256 estateId
+    ) external;
+    function extendEstateExpiration(
+        uint256 estateId,
+        uint40 expireAt
+    ) external;
+    function updateEstateCustodian(
+        uint256 estateId,
+        address custodian
+    ) external;
     function updateEstateURI(
         uint256 estateId,
         string calldata uri,
         Validation calldata validation
     ) external;
-    function extractEstate(uint256 requestId, uint256 extractionId) external;
+    function extractEstate(
+        uint256 requestId,
+        uint256 extractionId
+    ) external;
 }

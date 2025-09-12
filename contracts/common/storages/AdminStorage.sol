@@ -9,7 +9,8 @@ import {IAdmin} from "../interfaces/IAdmin.sol";
  *
  *  @notice Storage contract for contract `Admin`.
  */
-abstract contract AdminStorage is IAdmin {
+abstract contract AdminStorage is
+IAdmin {
     // deprecated
     mapping(address => uint256) private currencyUnitPriceLimits;
 

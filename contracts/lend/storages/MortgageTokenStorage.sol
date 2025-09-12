@@ -1,9 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+/// contracts/lend/interfaces/
 import {IMortgageToken} from "../interfaces/IMortgageToken.sol";
 
-abstract contract MortgageTokenStorage is IMortgageToken {
+/**
+ *  @author Briky Team
+ *
+ *  @notice Storage contract for contract `MortgageToken`.
+ */
+abstract contract MortgageTokenStorage is
+IMortgageToken {
+    /// @dev    mortgages[mortgageId]
     mapping(uint256 => Mortgage) internal mortgages;
     
     string internal baseURI;

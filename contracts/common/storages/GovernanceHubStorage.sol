@@ -9,7 +9,8 @@ import {IGovernanceHub} from "../interfaces/IGovernanceHub.sol";
  *
  *  @notice Storage contract for contract `GovernanceHub`.
  */
-abstract contract GovernanceHubStorage is IGovernanceHub {
+abstract contract GovernanceHubStorage is
+IGovernanceHub {
     /// @dev    contributions[proposalId][account]
     mapping(uint256 => mapping(address => uint256)) public contributions;
 

@@ -1,18 +1,36 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+/// contracts/land/interfaces/
 import {IEstateToken} from "../interfaces/IEstateToken.sol";
 
-abstract contract EstateTokenStorage is IEstateToken {
+/**
+ *  @author Briky Team
+ *
+ *  @notice Storage contract for contract `EstateToken`.
+ */
+abstract contract EstateTokenStorage is
+IEstateToken {
+    /// @dev    balanceSnapshots[estateId][account]
     mapping(uint256 => mapping(address => Uint256Snapshot[])) internal balanceSnapshots;
 
+
+    /// @dev    custodianURI[zone][account]
     mapping(bytes32 => mapping(address => string)) public custodianURI;
 
+
+    /// @dev    zoneRoyaltyRates[zone]
     mapping(bytes32 => uint256) internal zoneRoyaltyRates;
 
+
+    /// @dev    estates[estateId]
     mapping(uint256 => Estate) internal estates;
 
+
+    /// @dev    isExtractor[account]
     mapping(address => bool) public isExtractor;
+
+    /// @dev    isTokenizer[account]
     mapping(address => bool) public isTokenizer;
 
     uint256 public estateNumber;

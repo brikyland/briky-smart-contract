@@ -1,11 +1,21 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+/// contracts/lend/interfaces/
 import {IERC721MortgageToken} from "../interfaces/IERC721MortgageToken.sol";
 
-abstract contract ERC721MortgageTokenStorage is IERC721MortgageToken {
+/**
+ *  @author Briky Team
+ *
+ *  @notice Storage contract for contract `ERC721MortgageToken`.
+ */
+abstract contract ERC721MortgageTokenStorage is
+IERC721MortgageToken {
+    /// @dev    collaterals[mortgageId]
     mapping(uint256 => ERC721Collateral) internal collaterals;
 
+
+    /// @dev    isCollateral[token]
     mapping(address => bool) public isCollateral;
 
     uint256[50] private __gap;
