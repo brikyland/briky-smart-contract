@@ -154,9 +154,10 @@ ReentrancyGuardUpgradeable {
         EstateForgerRequestEstateInput calldata _estate,
         EstateForgerRequestQuotaInput calldata _quota,
         EstateForgerRequestQuoteInput calldata _quote,
-        EstateForgerRequestAgendaInput calldata _agenda
+        EstateForgerRequestAgendaInput calldata _agenda,
+        Validation calldata _validation
     ) external nonReentrant onlyExecutive whenNotPaused returns (uint256) {
-        _validate(abi.encode(_estate.uri), _estate.validation);
+        _validate(abi.encode(_estate.uri), _validation);
 
         if (!IAdmin(admin).isActiveIn(_estate.zone, msg.sender)) {
             revert Unauthorized();

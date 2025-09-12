@@ -115,7 +115,8 @@ IEstateTokenizer {
         EstateForgerRequestEstateInput calldata estate,
         EstateForgerRequestQuotaInput calldata quota,
         EstateForgerRequestQuoteInput calldata quote,
-        EstateForgerRequestAgendaInput calldata agenda
+        EstateForgerRequestAgendaInput calldata agenda,
+        Validation calldata validation
     ) external returns (uint256 requestId);
 
     function cancel(
