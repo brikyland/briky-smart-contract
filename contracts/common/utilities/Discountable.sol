@@ -1,19 +1,42 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {Formula} from "../../lib/Formula.sol";
-
-import {IAdmin} from "../../common/interfaces/IAdmin.sol";
-import {ICommon} from "../../common/interfaces/ICommon.sol";
-
+/// contracts/common/interfaces/
+import {IAdmin} from "../interfaces/IAdmin.sol";
+import {ICommon} from "../interfaces/ICommon.sol";
 import {IExclusiveToken} from "../interfaces/IExclusiveToken.sol";
 
-abstract contract Discountable is ICommon {
+/// contracts/common/utilities/
+import {Formula} from "./Formula.sol";
+
+/**
+ *  @author Briky Team
+ *
+ *  @notice Utility contract that applies discounting to payments made in exclusive tokens.
+ *
+ *  @dev    ERC-20 tokens are identified by their contract addresses.
+ *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
+ */
+abstract contract Discountable is
+ICommon {
+    /** ===== LIBRARY ===== **/
     using Formula for uint256;
 
-    function _applyDiscount(uint256 _fee, address _currency) internal view returns (uint256) {
+
+    /** ===== FUNCTION ===== **/
+    /**
+     *          Name                Description
+     *  @param  _value              Original value.
+     *  @param  _currency           Currency address.
+     *  @return _discountedValue    Value after subtracting exclusive discount if applicable.
+     */
+    function _applyDiscount(
+        uint256 _value,
+        address _currency
+    ) internal view returns (uint256 _discountedValue) {
+        ///  @notice Only exclusive tokens registered in the `Admin` contract can grant exclusive discount.
         return IAdmin(this.admin()).isExclusiveCurrency(_currency)
-            ? _fee.remain(IExclusiveToken(_currency).exclusiveDiscount())
-            : _fee;
+            ? _value.remain(IExclusiveToken(_currency).exclusiveDiscount())
+            : _value;
     }
 }

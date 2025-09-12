@@ -3,9 +3,9 @@ pragma solidity ^0.8.20;
 
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
-import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
-import {Formula} from "../lib/Formula.sol";
-import {Signature} from "../lib/Signature.sol";
+import {CurrencyHandler} from "./utilities/CurrencyHandler.sol";
+import {Formula} from "./utilities/Formula.sol";
+import {Signature} from "./utilities/Signature.sol";
 
 import {CommonConstant} from "./constants/CommonConstant.sol";
 import {GovernanceHubConstant} from "./constants/GovernanceHubConstant.sol";
@@ -68,7 +68,7 @@ ReentrancyGuardUpgradeable {
 
     function updateFee(
         uint256 _fee,
-        bytes[] calldata _signature
+        bytes[] calldata _signatures
     ) external {
         IAdmin(admin).verifyAdminSignatures(
             abi.encode(
@@ -76,7 +76,7 @@ ReentrancyGuardUpgradeable {
                 "updateFee",
                 _fee
             ),
-            _signature
+            _signatures
         );
         fee = _fee;
         emit FeeUpdate(_fee);
@@ -111,8 +111,8 @@ ReentrancyGuardUpgradeable {
         uint256 _quorumRate,
         uint40 _duration,
         uint40 _admissionExpiry,
-        Validation calldata _signature
-    ) external payable nonReentrant whenNotPaused returns (uint256) {
+        Validation calldata _validation
+    ) external payable nonReentrant onlyGovernor(_governor) whenNotPaused returns (uint256) {
         _validate(
             abi.encode(
                 _governor,
@@ -125,12 +125,8 @@ ReentrancyGuardUpgradeable {
                 _duration,
                 _admissionExpiry
             ),
-            _signature
+            _validation
         );
-
-        if (!IAdmin(admin).isGovernor(_governor)) {
-            revert InvalidGovernor();
-        }
 
         if (!IGovernor(_governor).isAvailable(_tokenId)) {
             revert UnavailableToken();
@@ -161,7 +157,6 @@ ReentrancyGuardUpgradeable {
 
         proposal.state = ProposalState.Pending;
 
-
         emit NewProposal(
             _governor,
             proposalId,
@@ -183,7 +178,7 @@ ReentrancyGuardUpgradeable {
         string calldata _contextURI,
         string calldata _reviewURI,
         address _currency,
-        Validation calldata _signature
+        Validation calldata _validation
     ) external validProposal(_proposalId) onlyExecutive whenNotPaused {
         _validate(
             abi.encode(
@@ -192,7 +187,7 @@ ReentrancyGuardUpgradeable {
                 _reviewURI,
                 _currency
             ),
-            _signature
+            _validation
         );
 
         Proposal storage proposal = proposals[_proposalId];
@@ -456,7 +451,7 @@ ReentrancyGuardUpgradeable {
         );
     }
 
-    function _votingVerdict(Proposal storage _proposal) private view returns (ProposalVerdict) {
+    function _votingVerdict(Proposal storage _proposal) internal view returns (ProposalVerdict) {
         ProposalState state = _proposal.state;
         if (state == ProposalState.Nil
             || state == ProposalState.Pending) {
@@ -497,7 +492,7 @@ ReentrancyGuardUpgradeable {
         }
     }
 
-    function _vote(uint256 _proposalId, ProposalVoteOption _voteOption) private whenNotPaused returns (uint256) {
+    function _vote(uint256 _proposalId, ProposalVoteOption _voteOption) internal whenNotPaused returns (uint256) {
         Proposal storage proposal = proposals[_proposalId];
         if (proposal.state != ProposalState.Voting) {
             revert InvalidVoting();
@@ -553,7 +548,7 @@ ReentrancyGuardUpgradeable {
     }
 
     function _contributeBudget(uint256 _proposalId, uint256 _value)
-    private nonReentrant whenNotPaused {
+    internal nonReentrant whenNotPaused {
         Proposal storage proposal = proposals[_proposalId];
         ProposalState state = proposal.state;
         if (state != ProposalState.Voting) {

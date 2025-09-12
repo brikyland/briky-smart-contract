@@ -5,7 +5,7 @@ import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interf
 
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-import {Formula} from "../lib/Formula.sol";
+import {Formula} from "./utilities/Formula.sol";
 
 import {CommonConstant} from "./constants/CommonConstant.sol";
 

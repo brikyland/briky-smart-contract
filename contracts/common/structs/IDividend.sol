@@ -31,7 +31,7 @@ interface IDividend {
         uint40 at;
 
         /// @notice Governor contract address.
-        /// @dev    This contract must support `IGovernor` interface.
+        /// @dev    This contract must support interface `IGovernor`.
         address governor;
     }
 }

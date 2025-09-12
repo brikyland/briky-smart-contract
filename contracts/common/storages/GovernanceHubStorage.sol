@@ -11,15 +11,17 @@ import {IGovernanceHub} from "../interfaces/IGovernanceHub.sol";
  */
 abstract contract GovernanceHubStorage is
 IGovernanceHub {
-    /// @dev    contributions[proposalId][account]
-    mapping(uint256 => mapping(address => uint256)) public contributions;
-
     /// @dev    voteOptions[proposalId][account]
     mapping(uint256 => mapping(address => ProposalVoteOption)) public voteOptions;
 
 
+    /// @dev    contributions[proposalId][account]
+    mapping(uint256 => mapping(address => uint256)) public contributions;
+
+
     /// @dev    proposals[proposalId]
     mapping(uint256 => Proposal) internal proposals;
+
 
     uint256 public fee;
 

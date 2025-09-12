@@ -11,11 +11,11 @@ import {IReserveVault} from "../interfaces/IReserveVault.sol";
  */
 abstract contract ReserveVaultStorage is
 IReserveVault {
-    /// @dev    isProvider[account]
-    mapping(address => bool) public isProvider;
-
     /// @dev    funds[fundId]
     mapping(uint256 => Fund) internal funds;
+
+    /// @dev    isProvider[account]
+    mapping(address => bool) public isProvider;
 
     uint256 public fundNumber;
 

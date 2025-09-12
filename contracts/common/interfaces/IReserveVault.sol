@@ -63,6 +63,7 @@ ICommon {
         uint256[] extraDenominations
     );
 
+
     /**
      *  @notice Emitted when a fund is expanded.
      *
@@ -81,7 +82,9 @@ ICommon {
      *          Name                Description
      *  @param  fundId              Fund identifier.
      */
-    event FundProvision(uint256 indexed fundId);
+    event FundProvision(
+        uint256 indexed fundId
+    );
 
     /**
      *  @notice Emitted when value is withdrawn from a fund.
@@ -97,11 +100,13 @@ ICommon {
         uint256 quantity
     );
 
+
     /** ===== ERROR ===== **/
     error AlreadyProvided();
     error InvalidDenomination();
     error InvalidExpanding();
     error InvalidFundId();
+
 
     /** ===== FUNCTION ===== **/
     /* --- Query --- */
@@ -140,6 +145,7 @@ ICommon {
         uint256 fundId
     ) external view returns (bool isSufficient);
 
+
     /** ===== COMMAND ===== **/
     /**
      *  @notice Open a new fund.
@@ -172,6 +178,7 @@ ICommon {
         uint256 fundId,
         uint256 quantity
     ) external;
+
     /**
      *  @notice Provide sufficiently to a fund.
      *

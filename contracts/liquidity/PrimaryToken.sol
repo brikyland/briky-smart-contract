@@ -8,8 +8,8 @@ import {ERC20CappedUpgradeable} from "@openzeppelin/contracts-upgradeable/token/
 import {ERC20PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PausableUpgradeable.sol";
 import {ERC20PermitUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
 
-import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
-import {Formula} from "../lib/Formula.sol";
+import {CurrencyHandler} from "../common/utilities/CurrencyHandler.sol";
+import {Formula} from "../common/utilities/Formula.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 

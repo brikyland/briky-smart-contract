@@ -9,7 +9,7 @@ import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/se
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import {ERC721PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721PausableUpgradeable.sol";
 
-import {Formula} from "../lib/Formula.sol";
+import {Formula} from "../common/utilities/Formula.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 import {IRoyaltyRateProposer} from "../common/interfaces/IRoyaltyRateProposer.sol";

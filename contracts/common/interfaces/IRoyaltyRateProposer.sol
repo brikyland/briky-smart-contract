@@ -14,8 +14,8 @@ import {ICommon} from "./ICommon.sol";
  *  @author Briky Team
  *
  *  @notice Interface for contract `RoyaltyRateProposer`.
- *  @notice A `RoyaltyRateProposer` contract evaluates royalty payment for each asset as a fraction of the price, according to
- *          a royalty rate.
+ *  @notice A `RoyaltyRateProposer` contract is an ERC-2981 contract that always announces royalty payment as a predefined
+ *          fraction of the price, according to a royalty rate on each asset.
  */
 interface IRoyaltyRateProposer is
 IRate,

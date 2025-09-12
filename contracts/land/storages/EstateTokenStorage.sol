@@ -19,12 +19,12 @@ IEstateToken {
     mapping(bytes32 => mapping(address => string)) public custodianURI;
 
 
-    /// @dev    zoneRoyaltyRates[zone]
-    mapping(bytes32 => uint256) internal zoneRoyaltyRates;
-
-
     /// @dev    estates[estateId]
     mapping(uint256 => Estate) internal estates;
+
+
+    /// @dev    zoneRoyaltyRates[zone]
+    mapping(bytes32 => uint256) internal zoneRoyaltyRates;
 
 
     /// @dev    isExtractor[account]

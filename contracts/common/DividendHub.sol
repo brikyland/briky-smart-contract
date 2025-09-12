@@ -3,8 +3,8 @@ pragma solidity ^0.8.20;
 
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
-import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
-import {Formula} from "../lib/Formula.sol";
+import {CurrencyHandler} from "./utilities/CurrencyHandler.sol";
+import {Formula} from "./utilities/Formula.sol";
 
 import {IAdmin} from "./interfaces/IAdmin.sol";
 import {IGovernor} from "./interfaces/IGovernor.sol";
@@ -56,11 +56,7 @@ ReentrancyGuardUpgradeable {
         uint256 _value,
         address _currency,
         string calldata _data
-    ) external payable nonReentrant onlyAvailableCurrency(_currency) whenNotPaused returns (uint256) {
-        IAdmin adminContract = IAdmin(admin);
-        if (!adminContract.isGovernor(_governor)) {
-            revert InvalidGovernor();
-        }
+    ) external payable nonReentrant onlyAvailableCurrency(_currency) onlyGovernor(_governor) whenNotPaused returns (uint256) {
         if (!IGovernor(_governor).isAvailable(_tokenId)) {
             revert InvalidTokenId();
         }

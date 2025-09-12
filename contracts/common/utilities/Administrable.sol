@@ -1,10 +1,24 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+/// contracts/common/interfaces/
 import {IAdmin} from "../interfaces/IAdmin.sol";
 import {ICommon} from "../interfaces/ICommon.sol";
 
-abstract contract Administrable is ICommon {
+/**
+ *  @author Briky Team
+ *
+ *  @notice Utility contract that provides modifiers to query administrative information from the `Admin` contract.
+ *
+ *  @dev    ERC-20 tokens are identified by their contract addresses.
+ *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
+ */
+abstract contract Administrable is
+ICommon {
+    /** ===== MODIFIER ===== **/
+    /**
+     *  @notice Assert that the sender is authorized to be manager.
+     */
     modifier onlyManager() {
         if (!IAdmin(this.admin()).isManager(msg.sender)) {
             revert Unauthorized();
@@ -12,6 +26,9 @@ abstract contract Administrable is ICommon {
         _;
     }
 
+    /**
+     *  @notice Assert that the sender is authorized to be manager or moderator.
+     */
     modifier onlyExecutive() {
         if (!IAdmin(this.admin()).isExecutive(msg.sender)) {
             revert Unauthorized();
@@ -19,7 +36,30 @@ abstract contract Administrable is ICommon {
         _;
     }
 
-    modifier onlyAvailableCurrency(address _currency) {
+    /**
+     *  @notice Assert that an address is authorized to be governor.
+     *
+     *          Name        Description
+     *  @param  _account    EVM address.
+     */
+    modifier onlyGovernor(
+        address _account
+    ) {
+        if (!IAdmin(this.admin()).isGovernor(_account)) {
+            revert Unauthorized();
+        }
+        _;
+    }
+
+    /**
+     *  @notice Assert that a currency is interactable within the system.
+     *
+     *          Name        Description
+     *  @param  _currency   Currency address.
+     */
+    modifier onlyAvailableCurrency(
+        address _currency
+    ) {
         if (!IAdmin(this.admin()).isAvailableCurrency(_currency)) {
             revert InvalidCurrency();
         }

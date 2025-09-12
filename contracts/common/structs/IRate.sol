@@ -19,6 +19,7 @@ interface IRate {
         uint8 decimals;
     }
 
+
     /** ===== ERROR ===== **/
     error InvalidRate();
 }

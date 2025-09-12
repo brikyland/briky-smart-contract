@@ -93,9 +93,6 @@ IAssetToken {
     function getEstate(
         uint256 estateId
     ) external view returns (Estate memory tokenInfo);
-    function zoneOf(
-        uint256 estateId
-    ) external view returns (bytes32 zone);
 
     function registerCustodian(
         bytes32 zone,

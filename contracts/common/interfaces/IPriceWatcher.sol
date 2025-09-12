@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+/// contracts/common/interfaces/
+import {ICommon} from "./ICommon.sol";
+
 /// contracts/common/structs/
 import {IDataFeed} from "../structs/IDataFeed.sol";
 import {IRate} from "../structs/IRate.sol";
-
-/// contracts/common/interfaces/
-import {ICommon} from "./ICommon.sol";
 
 /**
  *  @author Briky Team
@@ -50,10 +50,12 @@ ICommon {
         uint40 heartbeat
     );
 
+
     /** ===== ERROR ===== **/
     error InvalidPriceFeedData();
     error MissingCurrencyRate();
     error StalePriceFeed();
+
 
     /** ===== FUNCTION ===== **/
     /* --- Query --- */

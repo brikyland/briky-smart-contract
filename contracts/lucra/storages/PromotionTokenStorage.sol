@@ -30,8 +30,6 @@ IPromotionToken {
     uint256 internal royaltyRate;
 
     address public admin;
-    // deprecated
-    address public feeReceiver;
 
     uint256[50] private __gap;
 }

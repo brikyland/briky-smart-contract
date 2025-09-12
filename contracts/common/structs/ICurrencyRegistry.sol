@@ -15,10 +15,10 @@ interface ICurrencyRegistry {
      *  @notice Interaction configuration of a cryptocurrency, including both native coin and ERC-20 tokens.
      */
     struct CurrencyRegistry {
-        /// @dev    DEPRECATED
+        /// @dev    DEPRECATED!
         uint256 minUnitPrice;
 
-        /// @dev    DEPRECATED
+        /// @dev    DEPRECATED!
         uint256 maxUnitPrice;
 
         /// @notice Whether the currency is interactable within the system.

@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol";
 import {IERC2981Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
 
-import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
+import {CurrencyHandler} from "../common/utilities/CurrencyHandler.sol";
 
 import {CommonConstant} from "../common/constants/CommonConstant.sol";
 

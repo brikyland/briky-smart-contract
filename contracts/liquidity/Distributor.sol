@@ -6,7 +6,7 @@ import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/se
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 
-import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
+import {CurrencyHandler} from "../common/utilities/CurrencyHandler.sol";
 
 import {DistributorStorage} from "../liquidity/storages/DistributorStorage.sol";
 

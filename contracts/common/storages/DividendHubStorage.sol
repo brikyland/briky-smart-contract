@@ -18,6 +18,7 @@ IDividendHub {
     /// @dev    dividends[dividendId]
     mapping(uint256 => Dividend) internal dividends;
 
+
     uint256 public dividendNumber;
 
     address public admin;

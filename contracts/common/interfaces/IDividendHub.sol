@@ -58,11 +58,13 @@ ICommon {
         uint256 value
     );
 
+
     /** ===== ERROR ===== **/
     error AlreadyWithdrawn();
     error InvalidDividendId();
     error InvalidTokenId();
     error InvalidWithdrawing();
+
 
     /** ===== FUNCTION ===== **/
     /* --- Query --- */
@@ -91,6 +93,7 @@ ICommon {
         uint256 dividendId,
         address withdrawer
     ) external view returns (uint256 withdrawAt);
+
 
     /* --- Command --- */
     /**

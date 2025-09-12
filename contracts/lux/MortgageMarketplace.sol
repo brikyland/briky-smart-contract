@@ -4,8 +4,8 @@ pragma solidity ^0.8.20;
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import {ERC165CheckerUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 
-import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
-import {Formula} from "../lib/Formula.sol";
+import {CurrencyHandler} from "../common/utilities/CurrencyHandler.sol";
+import {Formula} from "../common/utilities/Formula.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 

@@ -9,7 +9,7 @@ import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/se
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import {ERC721PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721PausableUpgradeable.sol";
 
-import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
+import {CurrencyHandler} from "../common/utilities/CurrencyHandler.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 
@@ -61,7 +61,7 @@ ReentrancyGuardUpgradeable {
 
     function updateFee(
         uint256 _fee,
-        bytes[] calldata _signature
+        bytes[] calldata _signatures
     ) external {
         IAdmin(admin).verifyAdminSignatures(
             abi.encode(
@@ -69,7 +69,7 @@ ReentrancyGuardUpgradeable {
                 "updateFee",
                 _fee
             ),
-            _signature
+            _signatures
         );
         fee = _fee;
         emit FeeUpdate(_fee);
@@ -131,7 +131,7 @@ ReentrancyGuardUpgradeable {
         string[] calldata _uris,
         uint40[] calldata _startAts,
         uint40[] calldata _durations,
-        bytes[] calldata _signature
+        bytes[] calldata _signatures
     ) external {
         IAdmin(admin).verifyAdminSignatures(
             abi.encode(
@@ -141,7 +141,7 @@ ReentrancyGuardUpgradeable {
                 _startAts,
                 _durations
             ),
-            _signature
+            _signatures
         );
 
         if (_uris.length != _startAts.length
@@ -204,7 +204,7 @@ ReentrancyGuardUpgradeable {
 
     function cancelContents(
         uint256[] calldata _contentIds,
-        bytes[] calldata _signature
+        bytes[] calldata _signatures
     ) external {
         IAdmin(admin).verifyAdminSignatures(
             abi.encode(
@@ -212,7 +212,7 @@ ReentrancyGuardUpgradeable {
                 "cancelContents",
                 _contentIds
             ),
-            _signature
+            _signatures
         );
 
         uint256 n = contentNumber;

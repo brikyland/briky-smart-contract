@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-
 import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol";
 import {IERC1155Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC1155Upgradeable.sol";
 import {IERC1155MetadataURIUpgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC1155MetadataURIUpgradeable.sol";
@@ -13,6 +11,7 @@ import {ERC1155PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/to
 import {ERC1155SupplyUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/extensions/ERC1155SupplyUpgradeable.sol";
 import {ERC1155URIStorageUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/extensions/ERC1155URIStorageUpgradeable.sol";
 import {ERC165CheckerUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 import {IAssetToken} from "../common/interfaces/IAssetToken.sol";
@@ -24,7 +23,7 @@ import {CommonConstant} from "../common/constants/CommonConstant.sol";
 import {Administrable} from "../common/utilities/Administrable.sol";
 import {Pausable} from "../common/utilities/Pausable.sol";
 import {RoyaltyRateProposer} from "../common/utilities/RoyaltyRateProposer.sol";
-import {Snapshotable} from "../common/utilities/Snapshotable.sol";
+import {SnapshotSearcher} from "../common/utilities/SnapshotSearcher.sol";
 import {Validatable} from "../common/utilities/Validatable.sol";
 
 import {IEstateToken} from "../land/interfaces/IEstateToken.sol";
@@ -50,10 +49,10 @@ ProjectTokenReceiver,
 Administrable,
 Pausable,
 RoyaltyRateProposer,
-Snapshotable,
 Validatable,
 ReentrancyGuardUpgradeable {
     using ERC165CheckerUpgradeable for address;
+    using SnapshotSearcher for Uint256Snapshot[];
 
     string constant private VERSION = "v1.2.1";
 
@@ -402,7 +401,7 @@ ReentrancyGuardUpgradeable {
             revert InvalidTimestamp();
         }
 
-        return _snapshotAt(balanceSnapshots[_projectId][_account], _at);
+        return balanceSnapshots[_projectId][_account].getValueAt(_at);
     }
 
     function allocationOfAt(
@@ -439,7 +438,7 @@ ReentrancyGuardUpgradeable {
             return 0;
         }
 
-        return _snapshotAt(balanceSnapshots[_projectId][_account], _at)
+        return balanceSnapshots[_projectId][_account].getValueAt(_at)
             + IProjectLaunchpad(project.launchpad).allocationOfAt(
                 _account,
                 project.launchId,
@@ -474,7 +473,7 @@ ReentrancyGuardUpgradeable {
             revert InvalidTimestamp();
         }
 
-        return _snapshotAt(totalSupplySnapshots[_projectId], _at);
+        return totalSupplySnapshots[_projectId].getValueAt(_at);
     }
 
     function getRoyaltyRate(uint256 _tokenId) validProject(_tokenId) external view returns (Rate memory) {

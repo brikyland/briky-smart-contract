@@ -20,7 +20,7 @@ import {CommonConstant} from "../common/constants/CommonConstant.sol";
 import {Administrable} from "../common/utilities/Administrable.sol";
 import {Pausable} from "../common/utilities/Pausable.sol";
 import {RoyaltyRateProposer} from "../common/utilities/RoyaltyRateProposer.sol";
-import {Snapshotable} from "../common/utilities/Snapshotable.sol";
+import {SnapshotSearcher} from "../common/utilities/SnapshotSearcher.sol";
 import {Validatable} from "../common/utilities/Validatable.sol";
 
 import {EstateTokenConstant} from "./constants/EstateTokenConstant.sol";
@@ -39,9 +39,9 @@ ERC1155URIStorageUpgradeable,
 Administrable,
 Pausable,
 RoyaltyRateProposer,
-Snapshotable,
 Validatable {
     using ERC165CheckerUpgradeable for address;
+    using SnapshotSearcher for Uint256Snapshot[];
 
     string constant private VERSION = "v1.2.1";
 
@@ -386,7 +386,7 @@ Validatable {
             revert InvalidTimestamp();
         }
 
-        return _snapshotAt(balanceSnapshots[_estateId][_account], _at);
+        return balanceSnapshots[_estateId][_account].getValueAt(_at);
     }
 
     function equityOfAt(address _account, uint256 _estateId, uint256 _at) external view returns (uint256) {
@@ -404,7 +404,7 @@ Validatable {
             return 0;
         }
 
-        return _snapshotAt(balanceSnapshots[_estateId][_account], _at)
+        return balanceSnapshots[_estateId][_account].getValueAt(_at)
             + IEstateTokenizer(estate.tokenizer).allocationOfAt(
                 _account,
                 estate.tokenizationId,

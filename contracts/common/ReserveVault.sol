@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
-import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
+import {CurrencyHandler} from "./utilities/CurrencyHandler.sol";
 
 import {IAdmin} from "./interfaces/IAdmin.sol";
 

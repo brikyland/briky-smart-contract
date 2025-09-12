@@ -17,6 +17,7 @@ IPriceWatcher {
     /// @dev    defaultRates[currency]
     mapping(address => Rate) internal defaultRates;
 
+
     address public admin;
 
     uint256[50] private __gap;

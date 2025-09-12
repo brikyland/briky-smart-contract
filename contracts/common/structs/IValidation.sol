@@ -21,10 +21,11 @@ interface IValidation {
         uint256 expiry;
 
         /// @notice Signature over the validation data.
-        /// @dev    Pseudo code of signature for a set of `data`, `nonce` and `expiry`:
+        /// @dev    Pseudo code of signature for a set of `data`, `nonce` and `expiry`, applied in a certain contract:
         ///         ```
         ///         signature = ethSign(abi.encodePacked(
         ///             abi.encode(
+        ///                 <contractAddress>,
         ///                 data,
         ///                 nonce,
         ///                 expiry

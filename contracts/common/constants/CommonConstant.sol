@@ -13,6 +13,7 @@ library CommonConstant {
     ///         the infinite timestamp.
     uint40 internal constant INFINITE_TIMESTAMP = type(uint40).max;
 
+
     /* --- Rate --- */
     /// @notice Rate denominator is `10 ** RATE_DECIMALS`.
     uint8 internal constant RATE_DECIMALS = 18;
