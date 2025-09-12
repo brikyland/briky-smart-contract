@@ -47,9 +47,6 @@ interface IEstateForgerRequest is IValidation {
         /// @notice URI of estate metadata.
         string uri;
 
-        /// @notice Validation information for `uri`.
-        Validation validation;
-
         /// @notice When the limited term of estate ownership expires.
         /// @dev    `type(uint40).max` represents unlimited ownership term.
         uint40 expireAt;

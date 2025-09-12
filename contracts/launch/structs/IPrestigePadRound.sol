@@ -121,13 +121,13 @@ interface IPrestigePadRound is IValidation {
         /// @notice URI of round information.
         string uri;
 
-        /// @notice Validation information for `uri`.
-        Validation validation;
-
         /// @notice Volume configuration and progress.
         PrestigePadRoundQuotaInput quota;
 
         /// @notice Price configuration.
         PrestigePadRoundQuoteInput quote;
+
+        /// @notice Validation information for `uri`.
+        Validation validation;
     }
 }
