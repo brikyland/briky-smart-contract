@@ -1,11 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+/// contracts/common/interfaces/
 import {IAdmin} from "../interfaces/IAdmin.sol";
 
-abstract contract AdminStorage is IAdmin {
+/**
+ *  @author Briky Team
+ *
+ *  @notice Storage contract for contract `Admin`.
+ */
+abstract contract AdminStorage is
+IAdmin {
     // deprecated
     mapping(address => uint256) private currencyUnitPriceLimits;
+
+    /// @dev    isManager[account]
     mapping(address => bool) public isManager;
 
     uint256 public nonce;
@@ -16,13 +25,21 @@ abstract contract AdminStorage is IAdmin {
     address public admin4;
     address public admin5;
 
+    /// @dev    isModerator[account]
     mapping(address => bool) public isModerator;
-    
+
+    /// @dev    currencyRegistries[currency]
     mapping(address => CurrencyRegistry) internal currencyRegistries;
 
+
+    /// @dev    isZone[zone]
     mapping(bytes32 => bool) public isZone;
+
+    /// @dev    isActiveIn[zone][account]
     mapping(bytes32 => mapping(address => bool)) public isActiveIn;
 
+
+    /// @dev    isGovernor[account]
     mapping(address => bool) public isGovernor;
 
     uint256[45] private __gap;

@@ -3,7 +3,7 @@ import { deployCurrency } from '@utils/deployments/common/currency';
 
 async function deployOrUpgradeCurrency() {
     const config = network.config as any;
-    const networkName = network.name.toUpperCase();
+    const networkName = network.name == 'localhost' ? 'LOCAL' : network.name.toUpperCase();
     const signer = (await ethers.getSigners())[0];
     const Currency = await ethers.getContractFactory('Currency', signer);
     const currencyAddress = config.currencyAddress ?

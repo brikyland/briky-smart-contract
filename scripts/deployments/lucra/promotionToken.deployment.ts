@@ -6,7 +6,7 @@ import { Initialization } from './initialization';
 
 async function deployOrUpgradePromotionToken() {
     const config = network.config as any;
-    const networkName = network.name.toUpperCase();
+    const networkName = network.name == 'localhost' ? 'LOCAL' : network.name.toUpperCase();
     const signer = networkName == 'MAINNET'
         ? new LedgerSigner(ethers.provider)
         : (await ethers.getSigners())[0];

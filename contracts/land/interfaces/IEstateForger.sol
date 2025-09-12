@@ -45,7 +45,7 @@ IEstateTokenizer {
         uint256 indexed estateId,
         uint256 soldQuantity,
         uint256 value,
-        uint256 feeAmount,
+        uint256 fee,
         uint256 cashbackBaseAmount
     );
 
@@ -73,7 +73,6 @@ IEstateTokenizer {
     error AlreadyHadDeposit();
     error AlreadyWithdrawn();
     error InvalidBroker();
-    error InvalidCommissionReceiver();
     error InvalidConfirming();
     error InvalidDepositing();
     error InvalidRequestId();
@@ -98,30 +97,49 @@ IEstateTokenizer {
 
     function requestNumber() external view returns (uint256 requestNumber);
 
-    function deposits(uint256 requestId, address depositor) external view returns (uint256 deposit);
-    function withdrawAt(uint256 requestId, address account) external view returns (uint256 withdrawAt);
+    function deposits(
+        uint256 requestId,
+        address depositor
+    ) external view returns (uint256 deposit);
+    function withdrawAt(
+        uint256 requestId,
+        address account
+    ) external view returns (uint256 withdrawAt);
 
-    function getRequest(uint256 requestId) external view returns (EstateForgerRequest memory request);
+    function getRequest(
+        uint256 requestId
+    ) external view returns (EstateForgerRequest memory request);
 
     function requestTokenization(
         address requester,
         EstateForgerRequestEstateInput calldata estate,
         EstateForgerRequestQuotaInput calldata quota,
         EstateForgerRequestQuoteInput calldata quote,
-        EstateForgerRequestAgendaInput calldata agenda,
-        Validation calldata validation
+        EstateForgerRequestAgendaInput calldata agenda
     ) external returns (uint256 requestId);
 
-    function cancel(uint256 requestId) external;
-    function confirm(uint256 requestId) external payable returns (uint256 estateId);
-    function deposit(uint256 requestId, uint256 quantity) external payable returns (uint256 value);
+    function cancel(
+        uint256 requestId
+    ) external;
+    function confirm(
+        uint256 requestId
+    ) external payable returns (uint256 estateId);
+    function deposit(
+        uint256 requestId,
+        uint256 quantity
+    ) external payable returns (uint256 value);
     function updateRequestURI(
         uint256 requestId,
         string calldata uri,
         Validation calldata validation
     ) external;
-    function updateRequestAgenda(uint256 requestId, EstateForgerRequestAgendaInput calldata agenda) external;
-    function withdrawDeposit(uint256 requestId) external returns (uint256 value);
+    function updateRequestAgenda(
+        uint256 requestId,
+        EstateForgerRequestAgendaInput calldata agenda
+    ) external;
+    function withdrawDeposit(
+        uint256 requestId
+    ) external returns (uint256 value);
     function whitelistFor(
         uint256 requestId,
         address[] calldata accounts,

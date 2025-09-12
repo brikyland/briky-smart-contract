@@ -1,18 +1,31 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+/// contracts/land/interfaces/
 import {IEstateForger} from "../interfaces/IEstateForger.sol";
 
-abstract contract EstateForgerStorage is IEstateForger {
-    mapping(bytes32 => mapping(address => bool)) public isSellerIn;
-
+/**
+ *  @author Briky Team
+ *
+ *  @notice Storage contract for contract `EstateForger`.
+ */
+abstract contract EstateForgerStorage is
+IEstateForger {
+    /// @dev    deposits[requestId][account]
     mapping(uint256 => mapping(address => uint256)) public deposits;
+
+    /// @dev    withdrawAt[requestId][account]
     mapping(uint256 => mapping(address => uint256)) public withdrawAt;
 
+
+    /// @dev    isWhitelistedFor[requestId][account]
     mapping(uint256 => mapping(address => bool)) public isWhitelistedFor;
 
+    /// @dev    isWhitelisted[account]
     mapping(address => bool) public isWhitelisted;
 
+
+    /// @dev    requests[requestId]
     mapping(uint256 => EstateForgerRequest) internal requests;
 
     uint256 public requestNumber;

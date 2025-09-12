@@ -11,9 +11,9 @@ import {IExclusiveToken} from "../interfaces/IExclusiveToken.sol";
 abstract contract Discountable is ICommon {
     using Formula for uint256;
 
-    function _applyDiscount(uint256 _feeAmount, address _currency) internal view returns (uint256) {
+    function _applyDiscount(uint256 _fee, address _currency) internal view returns (uint256) {
         return IAdmin(this.admin()).isExclusiveCurrency(_currency)
-            ? _feeAmount.remain(IExclusiveToken(_currency).exclusiveDiscount())
-            : _feeAmount;
+            ? _fee.remain(IExclusiveToken(_currency).exclusiveDiscount())
+            : _fee;
     }
 }

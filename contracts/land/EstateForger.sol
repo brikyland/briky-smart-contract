@@ -34,7 +34,7 @@ Validatable,
 ReentrancyGuardUpgradeable {
     using Formula for uint256;
 
-    string constant private VERSION = "v1.1.1";
+    string constant private VERSION = "v1.2.1";
 
     modifier validRequest(uint256 _requestId) {
         if (_requestId == 0 || _requestId > requestNumber) {
@@ -43,8 +43,8 @@ ReentrancyGuardUpgradeable {
         _;
     }
 
-    modifier onlyEligibleZone(uint256 _requestId) {
-        if (!IAdmin(admin).getZoneEligibility(requests[_requestId].estate.zone, msg.sender)) {
+    modifier onlyActiveInZoneOf(uint256 _requestId) {
+        if (!IAdmin(admin).isActiveIn(requests[_requestId].estate.zone, msg.sender)) {
             revert Unauthorized();
         }
         _;
@@ -154,12 +154,11 @@ ReentrancyGuardUpgradeable {
         EstateForgerRequestEstateInput calldata _estate,
         EstateForgerRequestQuotaInput calldata _quota,
         EstateForgerRequestQuoteInput calldata _quote,
-        EstateForgerRequestAgendaInput calldata _agenda,
-        Validation calldata _validation
+        EstateForgerRequestAgendaInput calldata _agenda
     ) external nonReentrant onlyExecutive whenNotPaused returns (uint256) {
-        _validate(abi.encode(_estate.uri), _validation);
+        _validate(abi.encode(_estate.uri), _estate.validation);
 
-        if (!IAdmin(admin).getZoneEligibility(_estate.zone, msg.sender)) {
+        if (!IAdmin(admin).isActiveIn(_estate.zone, msg.sender)) {
             revert Unauthorized();
         }
 
@@ -264,7 +263,7 @@ ReentrancyGuardUpgradeable {
         uint256 _requestId,
         address[] calldata _accounts,
         bool _isWhitelisted
-    ) external validRequest(_requestId) onlyExecutive onlyEligibleZone(_requestId) {
+    ) external validRequest(_requestId) onlyExecutive onlyActiveInZoneOf(_requestId) {
         if (_isWhitelisted) {
             for (uint256 i; i < _accounts.length; ++i) {
                 if (isWhitelistedFor[_requestId][_accounts[i]]) {
@@ -291,7 +290,7 @@ ReentrancyGuardUpgradeable {
     ) external validRequest(_requestId) onlyExecutive whenNotPaused {
         _validate(abi.encode(_uri), _validation);
 
-        if (!IAdmin(admin).getZoneEligibility(requests[_requestId].estate.zone, msg.sender)) {
+        if (!IAdmin(admin).isActiveIn(requests[_requestId].estate.zone, msg.sender)) {
             revert Unauthorized();
         }
 
@@ -310,7 +309,7 @@ ReentrancyGuardUpgradeable {
     function updateRequestAgenda(
         uint256 _requestId,
         EstateForgerRequestAgendaInput calldata _agenda
-    ) external validRequest(_requestId) onlyExecutive onlyEligibleZone(_requestId) whenNotPaused {
+    ) external validRequest(_requestId) onlyExecutive onlyActiveInZoneOf(_requestId) whenNotPaused {
         EstateForgerRequest storage request = requests[_requestId];
         if (request.agenda.confirmAt != 0) {
             revert AlreadyConfirmed();
@@ -348,7 +347,7 @@ ReentrancyGuardUpgradeable {
     }
 
     function cancel(uint256 _requestId)
-    external validRequest(_requestId) onlyManager onlyEligibleZone(_requestId) whenNotPaused {
+    external validRequest(_requestId) onlyManager onlyActiveInZoneOf(_requestId) whenNotPaused {
         EstateForgerRequest storage request = requests[_requestId];
         if (request.quota.totalQuantity == 0) {
             revert AlreadyCancelled();
@@ -361,7 +360,7 @@ ReentrancyGuardUpgradeable {
     }
 
     function confirm(uint256 _requestId)
-    external payable validRequest(_requestId) nonReentrant onlyManager onlyEligibleZone(_requestId) whenNotPaused returns (uint256) {
+    external payable validRequest(_requestId) nonReentrant onlyManager onlyActiveInZoneOf(_requestId) whenNotPaused returns (uint256) {
         EstateForgerRequest storage request = requests[_requestId];
         if (block.timestamp < request.agenda.saleStartsAt) {
             revert InvalidConfirming();
@@ -415,16 +414,16 @@ ReentrancyGuardUpgradeable {
 
         address currency = request.quote.currency;
         uint256 value = soldQuantity * request.quote.unitPrice;
-        uint256 feeAmount = soldQuantity * request.quote.feeDenomination;
-        CurrencyHandler.sendCurrency(currency, requester, value - feeAmount);
+        uint256 fee = soldQuantity * request.quote.feeDenomination;
+        CurrencyHandler.sendCurrency(currency, requester, value - fee);
 
-        uint256 commissionAmount = soldQuantity * request.quote.commissionDenomination;
+        uint256 commission = soldQuantity * request.quote.commissionDenomination;
         address broker = request.quote.broker;
-        CurrencyHandler.sendCurrency(currency,broker, commissionAmount);
+        CurrencyHandler.sendCurrency(currency,broker, commission);
 
         emit CommissionDispatch(
             broker,
-            commissionAmount,
+            commission,
             currency
         );
         
@@ -432,7 +431,7 @@ ReentrancyGuardUpgradeable {
         CurrencyHandler.sendCurrency(
             currency,
             feeReceiver,
-            feeAmount - commissionAmount - cashbackBaseAmount
+            fee - commission - cashbackBaseAmount
         );
 
         emit RequestConfirmation(
@@ -440,7 +439,7 @@ ReentrancyGuardUpgradeable {
             estateId,
             soldQuantity,
             value,
-            feeAmount,
+            fee,
             cashbackBaseAmount
         );
 

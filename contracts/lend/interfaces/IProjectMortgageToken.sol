@@ -11,8 +11,6 @@ interface IProjectMortgageToken is
 IProjectCollateral,
 IProjectTokenReceiver ,
 IMortgageToken {
-    error InvalidAmount();
-
     function getCollateral(uint256 mortgageId) external view returns (ProjectCollateral memory collateral);
 
     function borrow(

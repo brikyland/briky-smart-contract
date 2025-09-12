@@ -36,7 +36,7 @@ Validatable,
 ReentrancyGuardUpgradeable {
     using Formula for uint256;
 
-    string constant private VERSION = "v1.1.1";
+    string constant private VERSION = "v1.2.1";
 
     modifier validLaunch(uint256 _launchId) {
         if (_launchId == 0 || _launchId > launchNumber) {
@@ -144,7 +144,7 @@ ReentrancyGuardUpgradeable {
             _validation
         );
 
-        if (!IAdmin(admin).getZoneEligibility(_zone, msg.sender)) {
+        if (!IAdmin(admin).isActiveIn(_zone, msg.sender)) {
             revert Unauthorized();
         }
 
@@ -382,8 +382,8 @@ ReentrancyGuardUpgradeable {
         PrestigePadRound storage newRound = rounds[roundId];
         newRound.uri = round.uri;
         newRound.quota.totalQuantity = round.quota.totalQuantity;
-        newRound.quota.minSellingQuantity = round.quota.minSellingQuantity;
-        newRound.quota.maxSellingQuantity = round.quota.maxSellingQuantity;
+        newRound.quota.minRaisingQuantity = round.quota.minRaisingQuantity;
+        newRound.quota.maxRaisingQuantity = round.quota.maxRaisingQuantity;
         newRound.quote.unitPrice = round.quote.unitPrice;
         newRound.quote.currency = round.quote.currency;
 
@@ -421,8 +421,8 @@ ReentrancyGuardUpgradeable {
             revert Timeout();
         }
 
-        uint256 soldQuantity = round.quota.soldQuantity;
-        if (soldQuantity < round.quota.minSellingQuantity) {
+        uint256 soldQuantity = round.quota.raisedQuantity;
+        if (soldQuantity < round.quota.minRaisingQuantity) {
             revert NotEnoughSoldQuantity();
         }
 
@@ -449,15 +449,15 @@ ReentrancyGuardUpgradeable {
 
         address currency = round.quote.currency;
         uint256 value = soldQuantity * round.quote.unitPrice;
-        uint256 feeAmount = soldQuantity * round.quote.feeDenomination;
-        CurrencyHandler.sendCurrency(currency, initiator, value - feeAmount);
+        uint256 fee = soldQuantity * round.quote.feeDenomination;
+        CurrencyHandler.sendCurrency(currency, initiator, value - fee);
 
         uint256 cashbackBaseAmount = _provideCashbackFund(round.quote.cashbackFundId);
         
         CurrencyHandler.sendCurrency(
             currency,
             feeReceiver,
-            feeAmount - cashbackBaseAmount
+            fee - cashbackBaseAmount
         );
 
         emit LaunchCurrentRoundConfirmation(
@@ -465,7 +465,7 @@ ReentrancyGuardUpgradeable {
             roundId,
             soldQuantity,
             value,
-            feeAmount,
+            fee,
             cashbackBaseAmount
         );
 
@@ -488,12 +488,12 @@ ReentrancyGuardUpgradeable {
         emit LaunchFinalization(_launchId);
     }
 
-    function depositCurrentRound(uint256 _launchId, uint256 _quantity)
+    function contributeCurrentRound(uint256 _launchId, uint256 _quantity)
     external payable validLaunch(_launchId) returns (uint256) {
-        return _depositCurrentRound(_launchId, _quantity);
+        return _contributeCurrentRound(_launchId, _quantity);
     }
 
-    function safeDepositCurrentRound(
+    function safeContributeCurrentRound(
         uint256 _launchId,
         uint256 _quantity,
         bytes32 _anchor
@@ -502,10 +502,10 @@ ReentrancyGuardUpgradeable {
             revert BadAnchor();
         }
 
-        return _depositCurrentRound(_launchId, _quantity);
+        return _contributeCurrentRound(_launchId, _quantity);
     }
 
-    function withdrawDeposit(uint256 _roundId)
+    function withdrawContribution(uint256 _roundId)
     external nonReentrant validRound(_roundId) whenNotPaused returns (uint256) {
         PrestigePadRound storage round = rounds[_roundId];
         if (round.agenda.confirmAt != 0) {
@@ -518,23 +518,23 @@ ReentrancyGuardUpgradeable {
                 revert StillRaising();
             }
             if (raiseEndsAt + PrestigePadConstant.RAISE_CONFIRMATION_TIME_LIMIT > block.timestamp
-                && round.quota.soldQuantity >= round.quota.minSellingQuantity) {
+                && round.quota.raisedQuantity >= round.quota.minRaisingQuantity) {
                 revert InvalidWithdrawing();
             }
         }
 
-        uint256 quantity = deposits[_roundId][msg.sender];
+        uint256 quantity = contributions[_roundId][msg.sender];
         if (quantity == 0) {
             revert NothingToWithdraw();
         }
         address currency = round.quote.currency;
         uint256 value = quantity * round.quote.unitPrice;
 
-        deposits[_roundId][msg.sender] = 0;
+        contributions[_roundId][msg.sender] = 0;
 
         CurrencyHandler.sendCurrency(currency, msg.sender, value);
 
-        emit DepositWithdrawal(
+        emit ContributionWithdrawal(
             _roundId,
             msg.sender,
             quantity,
@@ -566,7 +566,7 @@ ReentrancyGuardUpgradeable {
         IProjectToken projectTokenContract = IProjectToken(projectToken);
         uint256 unit = 10 ** projectTokenContract.decimals();
 
-        uint256 quantity = deposits[roundId][msg.sender];
+        uint256 quantity = contributions[roundId][msg.sender];
         uint256 amount = quantity * unit;
 
         projectTokenContract.safeTransferFrom(
@@ -613,14 +613,14 @@ ReentrancyGuardUpgradeable {
             uint256 roundId = launch.roundIds[i];
             uint256 withdrawAt = withdrawAt[roundId][_account];
             if (_at >= rounds[roundId].agenda.confirmAt && (withdrawAt == 0 || _at < withdrawAt)) {
-                allocation += deposits[roundId][_account];
+                allocation += contributions[roundId][_account];
             }
         }
         if (rounds[launch.roundIds[currentIndex]].agenda.confirmAt != 0) {
             uint256 roundId = launch.roundIds[currentIndex];
             uint256 withdrawAt = withdrawAt[roundId][_account];
             if (_at >= rounds[roundId].agenda.confirmAt && (withdrawAt == 0 || _at < withdrawAt)) {
-                allocation += deposits[roundId][_account];
+                allocation += contributions[roundId][_account];
             }
         }
 
@@ -642,8 +642,8 @@ ReentrancyGuardUpgradeable {
             revert InvalidUnitPrice();
         }
 
-        if (_round.quota.minSellingQuantity > _round.quota.maxSellingQuantity
-            || _round.quota.maxSellingQuantity > _round.quota.totalQuantity) {
+        if (_round.quota.minRaisingQuantity > _round.quota.maxRaisingQuantity
+            || _round.quota.maxRaisingQuantity > _round.quota.totalQuantity) {
             revert InvalidInput();
         }
 
@@ -652,8 +652,8 @@ ReentrancyGuardUpgradeable {
         PrestigePadRound storage round = rounds[roundId];
         round.uri = _round.uri;
         round.quota.totalQuantity = _round.quota.totalQuantity;
-        round.quota.minSellingQuantity = _round.quota.minSellingQuantity;
-        round.quota.maxSellingQuantity = _round.quota.maxSellingQuantity;
+        round.quota.minRaisingQuantity = _round.quota.minRaisingQuantity;
+        round.quota.maxRaisingQuantity = _round.quota.maxRaisingQuantity;
         round.quote.unitPrice = _round.quote.unitPrice;
         round.quote.currency = _round.quote.currency;
 
@@ -668,7 +668,7 @@ ReentrancyGuardUpgradeable {
         return roundId;
     }
 
-    function _depositCurrentRound(uint256 _launchId, uint256 _quantity)
+    function _contributeCurrentRound(uint256 _launchId, uint256 _quantity)
     internal nonReentrant whenNotPaused returns (uint256) {
         PrestigePadLaunch storage launch = launches[_launchId];
         if (launch.isFinalized) {
@@ -683,40 +683,40 @@ ReentrancyGuardUpgradeable {
         }
         if (round.agenda.raiseStartsAt > block.timestamp
             || round.agenda.raiseEndsAt <= block.timestamp) {
-            revert InvalidDepositing();
+            revert InvalidContributing();
         }
 
-        uint256 newSoldQuantity = round.quota.soldQuantity + _quantity;
-        if (newSoldQuantity > round.quota.maxSellingQuantity) {
-            revert MaxSellingQuantityExceeded();
+        uint256 newSoldQuantity = round.quota.raisedQuantity + _quantity;
+        if (newSoldQuantity > round.quota.maxRaisingQuantity) {
+            revert MaxRaisingQuantityExceeded();
         }
-        round.quota.soldQuantity = newSoldQuantity;
+        round.quota.raisedQuantity = newSoldQuantity;
 
         uint256 value = _quantity * round.quote.unitPrice;
         CurrencyHandler.receiveCurrency(round.quote.currency, value);
 
-        uint256 oldDeposit = deposits[roundId][msg.sender];
-        uint256 newDeposit = oldDeposit + _quantity;
-        deposits[roundId][msg.sender] = newDeposit;
+        uint256 oldContribution = contributions[roundId][msg.sender];
+        uint256 newContribution = oldContribution + _quantity;
+        contributions[roundId][msg.sender] = newContribution;
 
         uint256 cashbackFundId = round.quote.cashbackFundId;
         if (cashbackFundId != 0) {
             uint256 cashbackThreshold = round.quote.cashbackThreshold;
 
-            if (oldDeposit >= cashbackThreshold) {
+            if (oldContribution >= cashbackThreshold) {
                 IReserveVault(reserveVault).expandFund(
                     cashbackFundId,
                     _quantity
                 );
-            } else if (newDeposit >= cashbackThreshold) {
+            } else if (newContribution >= cashbackThreshold) {
                 IReserveVault(reserveVault).expandFund(
                     cashbackFundId,
-                    newDeposit
+                    newContribution
                 );
             }
         }
 
-        emit Deposit(
+        emit Contribution(
             _launchId,
             roundId,
             msg.sender,
@@ -747,11 +747,10 @@ ReentrancyGuardUpgradeable {
                 CurrencyHandler.receiveNative(totalNative);
 
                 if (fund.mainDenomination != 0) {
-                    cashbackBaseAmount = fund.mainDenomination * fund.quantity;
                     if (fund.mainCurrency == address(0)) {
-                        totalNative += cashbackBaseAmount;
+                        totalNative += fund.mainDenomination * fund.quantity;
                     } else {
-                        CurrencyHandler.allowERC20(fund.mainCurrency, reserveVaultAddress, cashbackBaseAmount);
+                        CurrencyHandler.allowERC20(fund.mainCurrency, reserveVaultAddress, fund.mainDenomination * fund.quantity);
                     }
                 }
             }

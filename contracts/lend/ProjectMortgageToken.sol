@@ -61,7 +61,7 @@ ProjectTokenReceiver {
             revert InvalidTokenId();
         }
         if (_amount == 0) {
-            revert InvalidAmount();
+            revert InvalidInput();
         }
         if (_amount > projectTokenContract.balanceOf(msg.sender, _projectId)) {
             revert InvalidCollateral();

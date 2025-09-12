@@ -18,7 +18,7 @@ AdminStorage,
 Initializable {
     using ERC165CheckerUpgradeable for address;
 
-    string constant private VERSION = "v1.1.1";
+    string constant private VERSION = "v1.2.1";
 
     receive() external payable {}
 
@@ -271,38 +271,24 @@ Initializable {
         }
     }
 
-    function declareZones(
-        bytes32[] calldata _zones,
-        bool _isZone,
+    function declareZone(
+        bytes32 _zone,
         bytes[] calldata _signatures
     ) external {
         verifyAdminSignatures(
             abi.encode(
                 address(this),
-                "declareZones",
-                _zones,
-                _isZone
+                "declareZone",
+                _zone
             ),
             _signatures
         );
 
-        if (_isZone) {
-            for (uint256 i; i < _zones.length; ++i) {
-                if (isZone[_zones[i]]) {
-                    revert AuthorizedZone();
-                }
-                isZone[_zones[i]] = true;
-                emit ZoneAnnouncement(_zones[i]);
-            }
-        } else {
-            for (uint256 i; i < _zones.length; ++i) {
-                if (!isZone[_zones[i]]) {
-                    revert NotAuthorizedZone();
-                }
-                isZone[_zones[i]] = false;
-                emit ZoneRenouncement(_zones[i]);
-            }
+        if (isZone[_zone]) {
+            revert AuthorizedZone();
         }
+        isZone[_zone] = true;
+        emit ZoneDeclaration(_zone);
     }
 
     function activateIn(
@@ -351,10 +337,6 @@ Initializable {
 
     function getCurrencyRegistry(address _currency) external view returns (CurrencyRegistry memory) {
         return currencyRegistries[_currency];
-    }
-
-    function getZoneEligibility(bytes32 _zone, address _account) external view returns (bool) {
-        return isZone[_zone] && isActiveIn[_zone][_account];
     }
 
     function isAvailableCurrency(address _currency) external view returns (bool) {

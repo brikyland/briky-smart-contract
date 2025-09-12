@@ -15,7 +15,7 @@ contract ReserveVault is
 ReserveVaultStorage,
 Pausable,
 ReentrancyGuardUpgradeable {
-    string constant private VERSION = "v1.1.1";
+    string constant private VERSION = "v1.2.1";
 
     modifier validFund(uint256 _fundId) {
         if (_fundId == 0 || _fundId > fundNumber) {

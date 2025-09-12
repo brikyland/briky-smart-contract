@@ -1,7 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+/**
+ *  @author Briky Team
+ *
+ *  @notice Interface for standard contract administered by the `Admin` contract.
+ */
 interface ICommon {
+    /** ===== ERROR ===== **/
     error AuthorizedAccount();
     error BadAnchor();
     error FailedVerification();
@@ -15,7 +21,18 @@ interface ICommon {
     error NotAuthorizedAccount();
     error Unauthorized();
 
-    function version() external pure returns (string memory version);
-
+    /** ===== FUNCTION ===== **/
+    /* --- Dependency --- */
+    /**
+     *          Name        Description
+     *  @return admin       `Admin` contract address.
+     */
     function admin() external view returns (address admin);
+
+    /* --- Query --- */
+    /**
+     *          Name        Description
+     *  @return version     Version of implementation.
+     */
+    function version() external pure returns (string memory version);
 }

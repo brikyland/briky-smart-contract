@@ -32,7 +32,7 @@ RoyaltyRateProposer,
 ReentrancyGuardUpgradeable {
     using Formula for uint256;
 
-    string constant private VERSION = "v1.1.1";
+    string constant private VERSION = "v1.2.1";
 
     receive() external payable {}
 
@@ -130,7 +130,7 @@ ReentrancyGuardUpgradeable {
         address _broker,
         uint256 _commissionRate
     ) external onlyManager {
-        if (!IAdmin(admin).getZoneEligibility(_zone, msg.sender)) {
+        if (!IAdmin(admin).isActiveIn(_zone, msg.sender)) {
             revert Unauthorized();
         }
 
@@ -158,7 +158,7 @@ ReentrancyGuardUpgradeable {
         address _broker,
         bool _isActive
     ) external onlyManager {
-        if (!IAdmin(admin).getZoneEligibility(_zone, msg.sender)) {
+        if (!IAdmin(admin).isActiveIn(_zone, msg.sender)) {
             revert Unauthorized();
         }
 
@@ -202,11 +202,11 @@ ReentrancyGuardUpgradeable {
         );
     }
 
-    function tokenURI(uint256) public view override(
+    function tokenURI(uint256 _tokenId) public view override(
         IERC721MetadataUpgradeable,
         ERC721Upgradeable
     ) returns (string memory) {
-        return baseURI;
+        return super.tokenURI(_tokenId);
     }
 
     function getRoyaltyRate(uint256) external view returns (Rate memory) {
@@ -220,6 +220,10 @@ ReentrancyGuardUpgradeable {
     ) returns (bool) {
         return _interfaceId == type(IERC4906Upgradeable).interfaceId
             || super.supportsInterface(_interfaceId);
+    }
+
+    function _baseURI() internal override view returns (string memory) {
+        return baseURI;
     }
 
     function _mint(address _to, uint256 _tokenId) internal override {

@@ -35,7 +35,7 @@ Validatable,
 ReentrancyGuardUpgradeable {
     using Formula for uint256;
 
-    string constant private VERSION = "v1.1.1";
+    string constant private VERSION = "v1.2.1";
 
     modifier validRequest(uint256 _requestId) {
         if (_requestId == 0 || _requestId > requestNumber) {
@@ -87,7 +87,7 @@ ReentrancyGuardUpgradeable {
         Validation calldata _validation
     ) external payable onlyManager nonReentrant whenNotPaused returns (uint256) {
         IEstateToken estateTokenContract = IEstateToken(estateToken);
-        if (!IAdmin(admin).getZoneEligibility(estateTokenContract.zoneOf(_estateId), msg.sender)) {
+        if (!IAdmin(admin).isActiveIn(estateTokenContract.zoneOf(_estateId), msg.sender)) {
             revert Unauthorized();
         }
 
@@ -170,44 +170,46 @@ ReentrancyGuardUpgradeable {
             uint256 value = request.value;
             address currency = request.currency;
 
-            uint256 feeAmount = _applyDiscount(
+            uint256 fee = _applyDiscount(
                 value.scale(request.feeRate),
                 currency
             );
 
             if (currency == address(0)) {
-                IDividendHub(dividendHub).issueDividend{value: value - feeAmount}(
+                IDividendHub(dividendHub).issueDividend{value: value - fee}(
                     estateToken,
                     estateId,
-                    value - feeAmount,
-                    currency
+                    value - fee,
+                    currency,
+                    "Extraction"
                 );
             } else {
                 address dividendHubAddress = dividendHub;
-                CurrencyHandler.allowERC20(currency, dividendHubAddress, value - feeAmount);
+                CurrencyHandler.allowERC20(currency, dividendHubAddress, value - fee);
                 IDividendHub(dividendHubAddress).issueDividend(
                     estateToken,
                     estateId,
-                    value - feeAmount,
-                    currency
+                    value - fee,
+                    currency,
+                    "Extraction"
                 );
             }
 
             estateTokenContract.extractEstate(estateId, _requestId);
 
-            uint256 commissionAmount = _dispatchCommission(
+            uint256 commission = _dispatchCommission(
                 estateId,
-                feeAmount,
+                fee,
                 currency
             );
 
             if (currency == address(0)) {
-                CurrencyHandler.sendNative(feeReceiver, feeAmount - commissionAmount);
+                CurrencyHandler.sendNative(feeReceiver, fee - commission);
             } else {
-                CurrencyHandler.sendCurrency(currency, feeReceiver, feeAmount - commissionAmount);
+                CurrencyHandler.sendCurrency(currency, feeReceiver, fee - commission);
             }
 
-            emit RequestApproval(_requestId, feeAmount);
+            emit RequestApproval(_requestId, fee);
 
             return true;
         }

@@ -11,7 +11,7 @@ export async function deployOrUpgradeStakeToken(
     feeRate: BigNumber,
 ) {
     const config = network.config as any;
-    const networkName = network.name.toUpperCase();
+    const networkName = network.name == 'localhost' ? 'LOCAL' : network.name.toUpperCase();
     const StakeToken = await ethers.getContractFactory('StakeToken', signer);
     return config[`stakeToken${stakeTokenIndex}Address`] ?
         await (async () => {

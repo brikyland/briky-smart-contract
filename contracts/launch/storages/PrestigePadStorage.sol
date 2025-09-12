@@ -1,13 +1,27 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+/// contracts/launch/interfaces/
 import {IPrestigePad} from "../interfaces/IPrestigePad.sol";
 
-abstract contract PrestigePadStorage is IPrestigePad {
-    mapping(uint256 => mapping(address => uint256)) public deposits;
+/**
+ *  @author Briky Team
+ *
+ *  @notice Storage contract for contract `PrestigePad`.
+ */
+abstract contract PrestigePadStorage is
+IPrestigePad {
+    /// @dev    contributions[roundId][account]
+    mapping(uint256 => mapping(address => uint256)) public contributions;
+
+    /// @dev    withdrawAt[roundId][account]
     mapping(uint256 => mapping(address => uint256)) public withdrawAt;
 
+
+    /// @dev    launches[launchId]
     mapping(uint256 => PrestigePadLaunch) internal launches;
+
+    /// @dev    rounds[roundId]
     mapping(uint256 => PrestigePadRound) internal rounds;
 
     uint256 public launchNumber;

@@ -1,9 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+/// contracts/lend/interfaces/
 import {IEstateMortgageToken} from "../interfaces/IEstateMortgageToken.sol";
 
-abstract contract EstateMortgageTokenStorage is IEstateMortgageToken {
+/**
+ *  @author Briky Team
+ *
+ *  @notice Storage contract for contract `EstateMortgageToken`.
+ */
+abstract contract EstateMortgageTokenStorage is
+IEstateMortgageToken {
+    /// @dev    collaterals[mortgageId]
     mapping(uint256 => EstateCollateral) internal collaterals;
 
     address public estateToken;

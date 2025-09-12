@@ -1,16 +1,59 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+/// contracts/common/structs/
 import {IFund} from "../structs/IFund.sol";
 
+/// contracts/common/interfaces/
 import {ICommon} from "./ICommon.sol";
 
+/**
+ *  @author Briky Team
+ *
+ *  @notice Interface for contract `ReserveVault`.
+ *  @notice The `ReserveVault` contracts allows providers to open cryptocurrency reserve fund and withdraw them on demand.
+ *
+ *  @dev    The fund is determined by a `quantity` value and denominations for each currency.
+ *  @dev    Provision or withdrawal operations must specify a `quantity` to indicate equivalent values, calculated by
+ *          multiplying with predefined denomination of each currency.
+ *  @dev    The fund need to specify a main currency, other extras are optional.
+ */
 interface IReserveVault is
 IFund,
 ICommon {
-    event ProviderAuthorization(address indexed account);
-    event ProviderDeauthorization(address indexed account);
+    /** ===== EVENT ===== **/
+    /**
+     *  @notice Emitted when an address is authorized to be provider.
+     *
+     *          Name        Description
+     *  @param  account     Authorized address.
+     */
+    event ProviderAuthorization(
+        address indexed account
+    );
 
+    /**
+     *  @notice Emitted when a provider is deauthorized.
+     *
+     *          Name        Description
+     *  @param  account     Authorized address.
+     */
+    event ProviderDeauthorization(
+        address indexed account
+    );
+
+
+    /**
+     *  @notice Emitted when a fund is opened.
+     *
+     *          Name                Description
+     *  @param  fundId              Fund identifier.
+     *  @param  provider            Provider address.
+     *  @param  mainCurrency        Main currency address.
+     *  @param  mainDenomination    Main currency denomination.
+     *  @param  extraCurrencies     Extra currency addresses.
+     *  @param  extraDenominations  Extra currency denominations.
+     */
     event NewFund(
         uint256 indexed fundId,
         address indexed provider,
@@ -20,26 +63,95 @@ ICommon {
         uint256[] extraDenominations
     );
 
-    event FundExpansion(uint256 indexed fundId, uint256 quantity);
+    /**
+     *  @notice Emitted when a fund is expanded.
+     *
+     *          Name                Description
+     *  @param  fundId              Fund identifier.
+     *  @param  quantity            Expanded quantity.
+     */
+    event FundExpansion(
+        uint256 indexed fundId,
+        uint256 quantity
+    );
+
+    /**
+     *  @notice Emitted when a fund is fully provided.
+     *
+     *          Name                Description
+     *  @param  fundId              Fund identifier.
+     */
     event FundProvision(uint256 indexed fundId);
+
+    /**
+     *  @notice Emitted when value is withdrawn from a fund.
+     *
+     *          Name                Description
+     *  @param  fundId              Fund identifier.
+     *  @param  receiver            Receiver address.
+     *  @param  quantity            Withdrawn quantity.
+     */
     event FundWithdrawal(
         uint256 indexed fundId,
         address indexed receiver,
         uint256 quantity
     );
 
+    /** ===== ERROR ===== **/
     error AlreadyProvided();
     error InvalidDenomination();
     error InvalidExpanding();
     error InvalidFundId();
 
+    /** ===== FUNCTION ===== **/
+    /* --- Query --- */
+    /**
+     *          Name        Description
+     *  @return fundNumber  Number of funds.
+     */
     function fundNumber() external view returns (uint256 fundNumber);
 
-    function isProvider(address account) external view returns (bool isProvider);
 
-    function getFund(uint256 fundId) external view returns (Fund memory fund);
-    function isFundSufficient(uint256 fundId) external view returns (bool isSufficient);
+    /**
+     *          Name        Description
+     *  @param  account     EVM address.
+     *  @return isProvider  Whether the account is authorized to be provider.
+     */
+    function isProvider(
+        address account
+    ) external view returns (bool isProvider);
 
+
+    /**
+     *          Name            Description
+     *  @param  fundId          Fund identifier.
+     *  @return fund            Configuration and reserves of the fund.
+     */
+    function getFund(
+        uint256 fundId
+    ) external view returns (Fund memory fund);
+
+    /**
+     *          Name            Description
+     *  @param  fundId          Fund identifier.
+     *  @return isSufficient    Whether the fund is provided sufficiently for the current quantity.
+     */
+    function isFundSufficient(
+        uint256 fundId
+    ) external view returns (bool isSufficient);
+
+    /** ===== COMMAND ===== **/
+    /**
+     *  @notice Open a new fund.
+     *
+     *          Name                Description
+     *  @param  mainCurrency        Main currency address.
+     *  @param  mainDenomination    Main currency denomination.
+     *  @param  extraCurrencies     Extra currency addresses.
+     *  @param  extraDenominations  Extra currency denominations.
+     *
+     *  @dev    Permission: providers.
+     */
     function openFund(
         address mainCurrency,
         uint256 mainDenomination,
@@ -47,11 +159,40 @@ ICommon {
         uint256[] calldata extraDenominations
     ) external returns (uint256 fundId);
 
+    /**
+     *  @notice Expand a fund.
+     *
+     *          Name                Description
+     *  @param  fundId              Fund identifier.
+     *  @param  quantity            Expanded quantity.
+     *
+     *  @dev    Permission: providers.
+     */
     function expandFund(
         uint256 fundId,
         uint256 quantity
     ) external;
-    function provideFund(uint256 fundId) external payable;
+    /**
+     *  @notice Provide sufficiently to a fund.
+     *
+     *          Name                Description
+     *  @param  fundId              Fund identifier.
+     *
+     *  @dev    Permission: providers.
+     */
+    function provideFund(
+        uint256 fundId
+    ) external payable;
+    /**
+     *  @notice Withdraw value from a fund to a receiver.
+     *
+     *          Name                Description
+     *  @param  fundId              Fund identifier.
+     *  @param  receiver            Receiver address.
+     *  @param  quantity            Withdrawn quantity.
+     *
+     *  @dev    Permission: providers.
+     */
     function withdrawFund(
         uint256 fundId,
         address receiver,

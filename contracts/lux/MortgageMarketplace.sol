@@ -3,7 +3,6 @@ pragma solidity ^0.8.20;
 
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import {ERC165CheckerUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
-import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 
 import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
 import {Formula} from "../lib/Formula.sol";
@@ -20,6 +19,7 @@ import {ICommissionToken} from "../land/interfaces/ICommissionToken.sol";
 
 import {CommissionDispatchable} from "../land/utilities/CommissionDispatchable.sol";
 
+import {IEstateMortgageToken} from "../lend/interfaces/IEstateMortgageToken.sol";
 import {IMortgageToken} from "../lend/interfaces/IMortgageToken.sol";
 import {IEstateMortgageToken} from "../lend/interfaces/IEstateMortgageToken.sol";
 
@@ -34,8 +34,8 @@ Pausable,
 ReentrancyGuardUpgradeable {
     using Formula for uint256;
     using ERC165CheckerUpgradeable for address;
-    
-    string constant private VERSION = "v1.1.1";
+
+    string constant private VERSION = "v1.2.1";
 
     modifier validOffer(uint256 _offerId) {
         if (_offerId == 0 || _offerId > offerNumber) {
@@ -92,7 +92,7 @@ ReentrancyGuardUpgradeable {
                 }
                 isCollection[_collections[i]] = true;
                 emit CollectionRegistration(_collections[i]);
-            } 
+            }
         } else {
             for (uint256 i; i < _collections.length; ++i) {
                 if (!isCollection[_collections[i]]) {
@@ -100,7 +100,7 @@ ReentrancyGuardUpgradeable {
                 }
                 isCollection[_collections[i]] = true;
                 emit CollectionDeregistration(_collections[i]);
-            } 
+            }
         }
     }
 
@@ -199,25 +199,25 @@ ReentrancyGuardUpgradeable {
         uint256 price = offer.price;
         (
             address royaltyReceiver,
-            uint256 royaltyAmount
+            uint256 royalty
         ) = mortgageTokenContract.royaltyInfo(tokenId, price);
 
         address currency = offer.currency;
-        royaltyAmount = _applyDiscount(royaltyAmount, currency);
+        royalty = _applyDiscount(royalty, currency);
 
-        CurrencyHandler.receiveCurrency(currency, price + royaltyAmount);
+        CurrencyHandler.receiveCurrency(currency, price + royalty);
 
-        uint256 commissionAmount;
-        if (!collection.supportsInterface(type(IEstateMortgageToken).interfaceId)) {
-            commissionAmount = _dispatchCommission(
+        uint256 commission;
+        if (collection.supportsInterface(type(IEstateMortgageToken).interfaceId)) {
+            commission = _dispatchCommission(
                 offer.tokenId,
-                royaltyAmount,
+                royalty,
                 currency
             );
         }
 
         CurrencyHandler.sendCurrency(currency, seller, price);
-        CurrencyHandler.sendCurrency(currency, royaltyReceiver, royaltyAmount - commissionAmount);
+        CurrencyHandler.sendCurrency(currency, royaltyReceiver, royalty - commission);
 
         offer.state = OfferState.Sold;
         mortgageTokenContract.safeTransferFrom(
@@ -231,10 +231,10 @@ ReentrancyGuardUpgradeable {
             _offerId,
             msg.sender,
             royaltyReceiver,
-            royaltyAmount
+            royalty
         );
 
-        return price + royaltyAmount;
+        return price + royalty;
     }
 
 }

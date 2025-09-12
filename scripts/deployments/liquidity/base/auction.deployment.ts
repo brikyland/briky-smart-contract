@@ -7,7 +7,7 @@ export async function deployOrUpgradeAuction(
     roundName: string,
 ) {
     const config = network.config as any;
-    const networkName = network.name.toUpperCase();
+    const networkName = network.name == 'localhost' ? 'LOCAL' : network.name.toUpperCase();
     const Auction = await ethers.getContractFactory('Auction', signer);
     return config[`${roundName}AuctionAddress`] ?
         await (async () => {

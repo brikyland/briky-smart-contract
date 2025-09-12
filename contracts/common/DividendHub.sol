@@ -21,7 +21,7 @@ Pausable,
 ReentrancyGuardUpgradeable {
     using Formula for uint256;
 
-    string constant private VERSION = "v1.1.1";
+    string constant private VERSION = "v1.2.1";
 
     modifier validDividend(uint256 _dividendId) {
         if (_dividendId == 0 || _dividendId > dividendNumber) {
@@ -54,7 +54,8 @@ ReentrancyGuardUpgradeable {
         address _governor,
         uint256 _tokenId,
         uint256 _value,
-        address _currency
+        address _currency,
+        string calldata _data
     ) external payable nonReentrant onlyAvailableCurrency(_currency) whenNotPaused returns (uint256) {
         IAdmin adminContract = IAdmin(admin);
         if (!adminContract.isGovernor(_governor)) {
@@ -70,7 +71,7 @@ ReentrancyGuardUpgradeable {
 
         CurrencyHandler.receiveCurrency(_currency, _value);
 
-        uint256 totalWeight = IGovernor(_governor).totalVoteAt(_tokenId, block.timestamp);
+        uint256 totalWeight = IGovernor(_governor).totalEquityAt(_tokenId, block.timestamp);
 
         uint256 dividendId = ++dividendNumber;
         dividends[dividendId] = Dividend(
@@ -88,7 +89,8 @@ ReentrancyGuardUpgradeable {
             msg.sender,
             totalWeight,
             _value,
-            _currency
+            _currency,
+            _data
         );
 
         return dividendId;
@@ -106,7 +108,7 @@ ReentrancyGuardUpgradeable {
 
             Dividend storage dividend = dividends[_dividendIds[i]];
 
-            uint256 weight = IGovernor(dividend.governor).voteOfAt(
+            uint256 weight = IGovernor(dividend.governor).equityOfAt(
                 msg.sender,
                 dividend.tokenId,
                 dividend.at

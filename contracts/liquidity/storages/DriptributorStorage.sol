@@ -1,9 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+/// contracts/liquidity/interfaces/
 import {IDriptributor} from "../../liquidity/interfaces/IDriptributor.sol";
 
-abstract contract DriptributorStorage is IDriptributor {
+/**
+ *  @author Briky Team
+ *
+ *  @notice Storage contract for contract `Driptributor`.
+ */
+abstract contract DriptributorStorage is
+IDriptributor {
+    /// @dev    distributions[distributionId]
     mapping(uint256 => Distribution) internal distributions;
 
     uint256 public distributionNumber;

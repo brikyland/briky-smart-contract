@@ -42,7 +42,7 @@ Snapshotable,
 Validatable {
     using ERC165CheckerUpgradeable for address;
 
-    string constant private VERSION = "v1.1.1";
+    string constant private VERSION = "v1.2.1";
 
     modifier validEstate(uint256 _estateId) {
         if (!isAvailable(_estateId)) {
@@ -51,8 +51,8 @@ Validatable {
         _;
     }
 
-    modifier onlyEligibleZone(uint256 _estateId) {
-        if (!IAdmin(admin).getZoneEligibility(estates[_estateId].zone, msg.sender)) {
+    modifier onlyActiveInZoneOf(uint256 _estateId) {
+        if (!IAdmin(admin).isActiveIn(estates[_estateId].zone, msg.sender)) {
             revert Unauthorized();
         }
         _;
@@ -213,7 +213,7 @@ Validatable {
             revert InvalidRate();
         }
         zoneRoyaltyRates[_zone] = _royaltyRate;
-        emit ZoneRoyaltyRateUpdate(_zone, _royaltyRate);
+        emit ZoneRoyaltyRateUpdate(_zone, Rate(_royaltyRate, CommonConstant.RATE_DECIMALS));
     }
 
     function getZoneRoyaltyRate(bytes32 _zone) external view returns (Rate memory) {
@@ -241,7 +241,7 @@ Validatable {
         string calldata _uri,
         Validation calldata _validation
     ) external onlyManager {
-        if (!IAdmin(admin).getZoneEligibility(_zone, msg.sender)) {
+        if (!IAdmin(admin).isActiveIn(_zone, msg.sender)) {
             revert Unauthorized();
         }
 
@@ -308,6 +308,7 @@ Validatable {
             _zone,
             _tokenizationId,
             msg.sender,
+            _custodian,
             _expireAt
         );
 
@@ -315,13 +316,13 @@ Validatable {
     }
 
     function deprecateEstate(uint256 _estateId)
-    external validEstate(_estateId) onlyManager onlyEligibleZone(_estateId) whenNotPaused {
+    external validEstate(_estateId) onlyManager onlyActiveInZoneOf(_estateId) whenNotPaused {
         estates[_estateId].deprecateAt = uint40(block.timestamp);
         emit EstateDeprecation(_estateId);
     }
 
     function extendEstateExpiration(uint256 _estateId, uint40 _expireAt)
-    external validEstate(_estateId) onlyManager onlyEligibleZone(_estateId) whenNotPaused {
+    external validEstate(_estateId) onlyManager onlyActiveInZoneOf(_estateId) whenNotPaused {
         if (_expireAt <= block.timestamp) {
             revert InvalidTimestamp();
         }
@@ -333,7 +334,7 @@ Validatable {
         uint256 _estateId,
         string calldata _uri,
         Validation calldata _validation
-    ) external validEstate(_estateId) onlyManager onlyEligibleZone(_estateId) whenNotPaused {
+    ) external validEstate(_estateId) onlyManager onlyActiveInZoneOf(_estateId) whenNotPaused {
         _validate(
             abi.encode(_estateId, _uri),
             _validation
@@ -343,7 +344,7 @@ Validatable {
     }
 
     function updateEstateCustodian(uint256 _estateId, address _custodian)
-    external validEstate(_estateId) onlyManager onlyEligibleZone(_estateId) whenNotPaused {
+    external validEstate(_estateId) onlyManager onlyActiveInZoneOf(_estateId) whenNotPaused {
         if (!isCustodianIn(estates[_estateId].zone, _custodian)) {
             revert InvalidCustodian();
         }
@@ -387,7 +388,7 @@ Validatable {
         return _snapshotAt(balanceSnapshots[_estateId][_account], _at);
     }
 
-    function voteOfAt(address _account, uint256 _estateId, uint256 _at) external view returns (uint256) {
+    function equityOfAt(address _account, uint256 _estateId, uint256 _at) external view returns (uint256) {
         if (!exists(_estateId)) {
             revert InvalidEstateId();
         }
@@ -423,7 +424,7 @@ Validatable {
         return super.totalSupply(_estateId);
     }
 
-    function totalVoteAt(uint256 _estateId, uint256 _at) external view returns (uint256) {
+    function totalEquityAt(uint256 _estateId, uint256 _at) external view returns (uint256) {
         if (!exists(_estateId)) {
             revert InvalidEstateId();
         }
@@ -488,10 +489,10 @@ Validatable {
         for (uint256 i; i < _estateIds.length; ++i) {
             uint256 estateId = _estateIds[i];
             if (_from != address(0)) {
-                balanceSnapshots[estateId][_from].push(Snapshot(balanceOf(_from, estateId), timestamp));
+                balanceSnapshots[estateId][_from].push(Uint256Snapshot(balanceOf(_from, estateId), timestamp));
             }
             if (_to != address(0)) {
-                balanceSnapshots[estateId][_to].push(Snapshot(balanceOf(_to, estateId), timestamp));
+                balanceSnapshots[estateId][_to].push(Uint256Snapshot(balanceOf(_to, estateId), timestamp));
             }
         }
     }

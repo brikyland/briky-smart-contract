@@ -1,9 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+/// contracts/lucra/interfaces/
 import {IPassportToken} from "../interfaces/IPassportToken.sol";
 
-abstract contract PassportTokenStorage is IPassportToken {
+/**
+ *  @author Briky Team
+ *
+ *  @notice Storage contract for contract `PassportToken`.
+ */
+abstract contract PassportTokenStorage is
+IPassportToken {
+    /// @dev    hasMinted[account]
     mapping(address => bool) public hasMinted;
 
     string internal baseURI;

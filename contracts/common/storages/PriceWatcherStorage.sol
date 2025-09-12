@@ -1,10 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+/// contracts/common/interfaces/
 import {IPriceWatcher} from "../interfaces/IPriceWatcher.sol";
 
-abstract contract PriceWatcherStorage is IPriceWatcher {
-    mapping(address => PriceFeed) internal priceFeeds;
+/**
+ *  @author Briky Team
+ *
+ *  @notice Storage contract for contract `PriceWatcher`.
+ */
+abstract contract PriceWatcherStorage is
+IPriceWatcher {
+    /// @dev    priceFeeds[currency]
+    mapping(address => DataFeed) internal priceFeeds;
+
+    /// @dev    defaultRates[currency]
     mapping(address => Rate) internal defaultRates;
 
     address public admin;

@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import {ISnapshot} from "../structs/ISnapshot.sol";
 
 contract Snapshotable is ISnapshot {
-    function _snapshotAt(Snapshot[] storage snapshots, uint256 _at) internal view returns (uint256) {
+    function _snapshotAt(Uint256Snapshot[] storage snapshots, uint256 _at) internal view returns (uint256) {
         uint256 high = snapshots.length;
         if (high == 0) {
             return 0;

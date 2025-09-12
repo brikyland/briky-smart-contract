@@ -53,7 +53,7 @@ Validatable,
 ReentrancyGuardUpgradeable {
     using ERC165CheckerUpgradeable for address;
 
-    string constant private VERSION = "v1.1.1";
+    string constant private VERSION = "v1.2.1";
 
     modifier validProject(uint256 _projectId) {
         if (projects[_projectId].deprecateAt != CommonConstant.INFINITE_TIMESTAMP) {
@@ -69,8 +69,8 @@ ReentrancyGuardUpgradeable {
         _;
     }
 
-    modifier onlyEligibleZone(uint256 _projectId) {
-        if (!IAdmin(admin).getZoneEligibility(projects[_projectId].zone, msg.sender)) {
+    modifier onlyActiveInZoneOf(uint256 _projectId) {
+        if (!IAdmin(admin).isActiveIn(projects[_projectId].zone, msg.sender)) {
             revert Unauthorized();
         }
         _;
@@ -195,7 +195,7 @@ ReentrancyGuardUpgradeable {
         string calldata _uri,
         Validation calldata _validation
     ) external onlyManager {
-        if (!IAdmin(admin).getZoneEligibility(_zone, msg.sender)) {
+        if (!IAdmin(admin).isActiveIn(_zone, msg.sender)) {
             revert Unauthorized();
         }
 
@@ -245,8 +245,8 @@ ReentrancyGuardUpgradeable {
 
         uint256 projectId = ++projectNumber;
         projects[projectId] = Project(
-            _zone,
             0,
+            _zone,
             _launchId,
             msg.sender,
             uint40(block.timestamp),
@@ -277,7 +277,7 @@ ReentrancyGuardUpgradeable {
     }
 
     function deprecateProject(uint256 _projectId)
-    external validProject(_projectId) onlyManager onlyEligibleZone(_projectId) whenNotPaused {
+    external validProject(_projectId) onlyManager onlyActiveInZoneOf(_projectId) whenNotPaused {
         projects[_projectId].deprecateAt = uint40(block.timestamp);
         emit ProjectDeprecation(_projectId);
     }
@@ -286,7 +286,7 @@ ReentrancyGuardUpgradeable {
         uint256 _projectId,
         string calldata _uri,
         Validation calldata _validation
-    ) external validProject(_projectId) onlyManager onlyEligibleZone(_projectId) whenNotPaused {
+    ) external validProject(_projectId) onlyManager onlyActiveInZoneOf(_projectId) whenNotPaused {
         _validate(
             abi.encode(_projectId, _uri),
             _validation
@@ -295,19 +295,13 @@ ReentrancyGuardUpgradeable {
         _setURI(_projectId, _uri);
     }
 
-    function tokenizeProject(uint256 _projectId, address _commissionReceiver)
-    external nonReentrant validProject(_projectId) onlyManager onlyEligibleZone(_projectId) whenNotPaused returns (uint256) {
-        if (_commissionReceiver == address(0)) {
-            revert InvalidCommissionReceiver();
-        }
-
+    function tokenizeProject(
+        uint256 _projectId,
+        address _custodian,
+        address _broker
+    ) external nonReentrant validProject(_projectId) onlyManager onlyActiveInZoneOf(_projectId) whenNotPaused returns (uint256) {
         Project storage project = projects[_projectId];
         bytes32 zone = project.zone;
-
-        IEstateToken estateTokenContract = IEstateToken(estateToken);
-        if (!estateTokenContract.isCustodianIn(zone, project.initiator)) {
-            revert NotRegisteredCustodian();
-        }
 
         if (project.estateId != 0) {
             revert AlreadyTokenized();
@@ -329,8 +323,8 @@ ReentrancyGuardUpgradeable {
             _projectId,
             uri(_projectId),
             CommonConstant.INFINITE_TIMESTAMP,
-            project.initiator,
-            _commissionReceiver
+            _custodian,
+            _broker
         );
         project.estateId = estateId;
         project.tokenizeAt = uint40(block.timestamp);
@@ -339,7 +333,8 @@ ReentrancyGuardUpgradeable {
             _projectId,
             estateId,
             supply,
-            _commissionReceiver
+            _custodian,
+            _broker
         );
 
         return estateId;
@@ -426,7 +421,7 @@ ReentrancyGuardUpgradeable {
             : 0;
     }
 
-    function voteOfAt(
+    function equityOfAt(
         address _account,
         uint256 _projectId,
         uint256 _at
@@ -463,7 +458,7 @@ ReentrancyGuardUpgradeable {
         return super.totalSupply(_projectId);
     }
 
-    function totalVoteAt(uint256 _projectId, uint256 _at) external view returns (uint256) {
+    function totalEquityAt(uint256 _projectId, uint256 _at) external view returns (uint256) {
         if (_projectId == 0 || _projectId > projectNumber) {
             revert InvalidProjectId();
         }
@@ -582,14 +577,14 @@ ReentrancyGuardUpgradeable {
         for (uint256 i; i < _ids.length; ++i) {
             uint256 tokenId = _ids[i];
             if (_from != address(0)) {
-                balanceSnapshots[tokenId][_from].push(Snapshot(balanceOf(_from, tokenId), timestamp));
+                balanceSnapshots[tokenId][_from].push(Uint256Snapshot(balanceOf(_from, tokenId), timestamp));
             } else {
-                totalSupplySnapshots[tokenId].push(Snapshot(totalSupply(tokenId), timestamp));
+                totalSupplySnapshots[tokenId].push(Uint256Snapshot(totalSupply(tokenId), timestamp));
             }
             if (_to != address(0)) {
-                balanceSnapshots[tokenId][_to].push(Snapshot(balanceOf(_to, tokenId), timestamp));
+                balanceSnapshots[tokenId][_to].push(Uint256Snapshot(balanceOf(_to, tokenId), timestamp));
             } else {
-                totalSupplySnapshots[tokenId].push(Snapshot(totalSupply(tokenId), timestamp));
+                totalSupplySnapshots[tokenId].push(Uint256Snapshot(totalSupply(tokenId), timestamp));
             }
         }
     }

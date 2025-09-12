@@ -7,7 +7,6 @@ import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/se
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import {ERC721PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721PausableUpgradeable.sol";
 import {ERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
-import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC20Upgradeable.sol";
 
 import {CurrencyHandler} from "../../lib/CurrencyHandler.sol";
 import {Formula} from "../../lib/Formula.sol";
@@ -225,7 +224,6 @@ ReentrancyGuardUpgradeable {
             _principal.scale(feeRate, CommonConstant.RATE_MAX_FRACTION),
             _currency
         );
-        
         uint256 mortgageId = ++mortgageNumber;
         mortgages[mortgageId] = Mortgage(
             _principal,
@@ -306,7 +304,11 @@ ReentrancyGuardUpgradeable {
 
         _burn(_mortgageId);
 
-        CurrencyHandler.forwardCurrency(mortgage.currency, owner, mortgage.repayment);        
+        CurrencyHandler.forwardCurrency(
+            mortgage.currency,
+            owner,
+            mortgage.repayment
+        );
 
         _transferCollateral(
             _mortgageId,

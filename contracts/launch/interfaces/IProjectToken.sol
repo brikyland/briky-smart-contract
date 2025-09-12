@@ -19,8 +19,8 @@ IProject,
 ISnapshot,
 IValidatable,
 IEstateTokenReceiver,
-IGovernor,
 IRoyaltyRateProposer,
+IGovernor,
 IERC1155MetadataURIUpgradeable {
     event BaseURIUpdate(string newValue);
 
@@ -48,11 +48,10 @@ IERC1155MetadataURIUpgradeable {
         uint256 indexed projectId,
         uint256 indexed estateId,
         uint256 totalSupply,
-        address commissionReceiver
+        address custodian,
+        address broker
     );
 
-    error AlreadyWithdrawn();
-    error InvalidCommissionReceiver();
     error InvalidLaunchpad(address account);
     error InvalidProjectId();
     error InvalidTokenizing();
@@ -75,8 +74,6 @@ IERC1155MetadataURIUpgradeable {
 
     function getProject(uint256 projectId) external view returns (Project memory project);
     function zoneOf(uint256 projectId) external view returns (bytes32 zone);
-
-    function withdrawAt(uint256 projectId, address account) external view returns (uint256 withdrawAt);
 
     function registerInitiator(
         bytes32 zone,
@@ -101,6 +98,7 @@ IERC1155MetadataURIUpgradeable {
     ) external;
     function tokenizeProject(
         uint256 _projectId,
-        address _commissionReceiver
+        address _custodian,
+        address _broker
     ) external returns (uint256 estateId);
 }

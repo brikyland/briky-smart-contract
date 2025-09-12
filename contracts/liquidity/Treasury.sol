@@ -22,7 +22,7 @@ Pausable,
 ReentrancyGuardUpgradeable {
     using Formula for uint256;
 
-    string constant private VERSION = "v1.1.1";
+    string constant private VERSION = "v1.2.1";
 
     receive() external payable {}
 
@@ -86,11 +86,11 @@ ReentrancyGuardUpgradeable {
     function provideLiquidity(uint256 _value) external nonReentrant whenNotPaused {
         CurrencyHandler.receiveERC20(currency, _value);
 
-        uint256 feeAmount = _value.scale(TreasuryConstant.OPERATION_FUND_RATE, CommonConstant.RATE_MAX_FRACTION);
+        uint256 fee = _value.scale(TreasuryConstant.OPERATION_FUND_RATE, CommonConstant.RATE_MAX_FRACTION);
 
-        operationFund += feeAmount;
-        liquidity += _value - feeAmount;
+        operationFund += fee;
+        liquidity += _value - fee;
 
-        emit LiquidityProvision(msg.sender, _value, feeAmount);
+        emit LiquidityProvision(msg.sender, _value, fee);
     }
 }

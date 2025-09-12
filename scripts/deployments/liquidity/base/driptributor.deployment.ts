@@ -9,7 +9,7 @@ export async function deployOrUpgradeDriptributor(
     totalAmount: BigNumber,
 ) {
     const config = network.config as any;
-    const networkName = network.name.toUpperCase();
+    const networkName = network.name == 'localhost' ? 'LOCAL' : network.name.toUpperCase();
     const Driptributor = await ethers.getContractFactory('Driptributor', signer);
     return config[`${roundName}DistributorAddress`] ?
         await (async () => {

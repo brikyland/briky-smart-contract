@@ -20,9 +20,6 @@ IProjectLaunchpad {
         uint256 baseMaxUnitPrice
     );
 
-    event Whitelist(address indexed account);
-    event Unwhitelist(address indexed account);
-
     event InitiatorRegistration(bytes32 indexed zone, address indexed account);
     event InitiatorDeregistration(bytes32 indexed zone, address indexed account);
 
@@ -51,7 +48,7 @@ IProjectLaunchpad {
         uint256 indexed roundId,
         uint256 soldQuantity,
         uint256 value,
-        uint256 feeAmount,
+        uint256 fee,
         uint256 cashbackBaseAmount
     );
     event LaunchFinalization(uint256 launchId);
@@ -73,16 +70,16 @@ IProjectLaunchpad {
         string launchURI
     );
 
-    event Deposit(
+    event Contribution(
         uint256 indexed launchId,
         uint256 indexed roundId,
-        address indexed depositor,
+        address indexed contributor,
         uint256 quantity,
         uint256 value
     );
-    event DepositWithdrawal(
+    event ContributionWithdrawal(
         uint256 indexed roundId,
-        address indexed depositor,
+        address indexed contributor,
         uint256 quantity,
         uint256 value
     );
@@ -92,7 +89,7 @@ IProjectLaunchpad {
     error AlreadyWithdrawn();
     error InvalidCancelling();
     error InvalidConfirming();
-    error InvalidDepositing();
+    error InvalidContributing();
     error InvalidFinalizing();
     error InvalidInitiating();
     error InvalidRemoving();
@@ -100,7 +97,7 @@ IProjectLaunchpad {
     error InvalidRoundId();
     error InvalidUnitPrice();
     error InvalidWithdrawing();
-    error MaxSellingQuantityExceeded();
+    error MaxRaisingQuantityExceeded();
     error NoRoundToInitiate();
     error NotConfirmed();
     error NotEnoughSoldQuantity();
@@ -121,7 +118,7 @@ IProjectLaunchpad {
     function launchNumber() external view returns (uint256 launchNumber);
     function roundNumber() external view returns (uint256 roundNumber);
 
-    function deposits(uint256 roundId, address depositor) external view returns (uint256 deposit);
+    function contributions(uint256 roundId, address account) external view returns (uint256 contribution);
     function withdrawAt(uint256 roundId, address account) external view returns (uint256 withdrawAt);
 
     function getLaunch(uint256 launchId) external view returns (PrestigePadLaunch memory launch);
@@ -167,10 +164,10 @@ IProjectLaunchpad {
         uint40 raiseDuration
     ) external returns (uint256 index);
 
-    function depositCurrentRound(uint256 launchId, uint256 quantity) external payable returns (uint256 value);
-    function withdrawDeposit(uint256 roundId) external returns (uint256 value);
+    function contributeCurrentRound(uint256 launchId, uint256 quantity) external payable returns (uint256 value);
+    function withdrawContribution(uint256 roundId) external returns (uint256 value);
     
-    function safeDepositCurrentRound(
+    function safeContributeCurrentRound(
         uint256 launchId,
         uint256 quantity,
         bytes32 anchor
