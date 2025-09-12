@@ -1,8 +1,10 @@
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="img/logo-day.svg">
-  <source media="(prefers-color-scheme: light)" srcset="img/logo-night.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="img/logo-night.svg">
+  <source media="(prefers-color-scheme: light)" srcset="img/logo-day.svg">
   <img alt="Briky Capital black logo (in light color mode) or white logo (in dark color mode)." src="https://user-images.githubusercontent.com/25423296/163456779-a8556205-d0a5-45e2-ac17-42d089e3c3f8.png">
 </picture>
+
+---
 
 BrikyLand provides all-in-one solution for tokenized assets. Our products:
 - [Briky Land](https://brikyland.com/): Invest in a transparent market of tokenized real, proven estates backed by institutional custodians. Start with as fews as $100.
