@@ -4,13 +4,13 @@ pragma solidity ^0.8.20;
 import {IProjectToken} from "../interfaces/IProjectToken.sol";
 
 abstract contract ProjectTokenStorage is IProjectToken {
-    mapping(uint256 => mapping(address => Snapshot[])) internal balanceSnapshots;
+    mapping(uint256 => mapping(address => Uint256Snapshot[])) internal balanceSnapshots;
 
     mapping(bytes32 => mapping(address => string)) public initiatorURI;
 
     mapping(uint256 => mapping(address => uint256)) public withdrawAt;
 
-    mapping(uint256 => Snapshot[]) internal totalSupplySnapshots;
+    mapping(uint256 => Uint256Snapshot[]) internal totalSupplySnapshots;
 
     mapping(uint256 => Project) internal projects;
 

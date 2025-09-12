@@ -11,7 +11,7 @@ interface ITreasury is ICommon {
     event LiquidityProvision(
         address indexed provider,
         uint256 value,
-        uint256 feeAmount
+        uint256 fee
     );
     event LiquidityWithdrawal(
         address indexed withdrawer,

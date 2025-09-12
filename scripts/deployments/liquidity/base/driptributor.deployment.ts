@@ -11,6 +11,7 @@ export async function deployOrUpgradeDriptributor(
     const config = network.config as any;
     const networkName = network.name.toUpperCase();
     const Driptributor = await ethers.getContractFactory('Driptributor', signer);
+    Driptributor.interface.parseLog
     return config[`${roundName}DistributorAddress`] ?
         await (async () => {
             await upgrades.upgradeProxy(

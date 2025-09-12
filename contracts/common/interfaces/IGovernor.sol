@@ -1,21 +1,57 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol";
+/// @openzeppelin/contracts-upgradeable/
+import {IERC1155Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC1155Upgradeable.sol";
 
-interface IGovernor is IERC165Upgradeable {
-    function isAvailable(uint256 _tokenId) external view returns (bool isAvailable);
+/**
+ *  @author Briky Team
+ *
+ *  @notice Interface for ERC-1155 tokens governing RWAs.
+ *  @notice A governor contract securitize assets and support querying equities of holders at timestamps in the past.
+ */
+interface IGovernor is
+IERC1155Upgradeable  {
+    /** ===== FUNCTION ===== **/
+    /**
+     *          Name            Description
+     *  @param  tokenId         Asset identifier.
+     *  @return isAvailable     Whether the asset is available.
+     */
+    function isAvailable(
+        uint256 tokenId
+    ) external view returns (bool isAvailable);
 
-    function zoneOf(uint256 _tokenId) external view returns (bytes32 zone);
+    /**
+     *          Name            Description
+     *  @param  tokenId         Asset identifier.
+     *  @return zone            Zone code of the asset.
+     */
+    function zoneOf(
+        uint256 tokenId
+    ) external view returns (bytes32 zone);
 
-    function totalVoteAt(
-        uint256 _tokenId,
-        uint256 _at
-    ) external view returns (uint256 totalVotePower);
+    /**
+     *          Name            Description
+     *  @param  tokenId         Asset identifier.
+     *  @param  at              Reference timestamp.
+     *  @return totalEquity     Total equity in the asset at the reference timestamp.
+     */
+    function totalEquityAt(
+        uint256 tokenId,
+        uint256 at
+    ) external view returns (uint256 totalEquity);
 
-    function voteOfAt(
-        address _account,
-        uint256 _tokenId,
-        uint256 _at
-    ) external view returns (uint256 votePower);
+    /**
+     *          Name            Description
+     *  @param  account         EVM address.
+     *  @param  tokenId         Asset identifier.
+     *  @param  at              Reference timestamp.
+     *  @return equity          Equity of the account in the asset at the reference timestamp.
+     */
+    function equityOfAt(
+        address account,
+        uint256 tokenId,
+        uint256 at
+    ) external view returns (uint256 equity);
 }

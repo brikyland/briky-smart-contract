@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import {IPrestigePad} from "../interfaces/IPrestigePad.sol";
 
 abstract contract PrestigePadStorage is IPrestigePad {
-    mapping(uint256 => mapping(address => uint256)) public deposits;
+    mapping(uint256 => mapping(address => uint256)) public contributions;
     mapping(uint256 => mapping(address => uint256)) public withdrawAt;
 
     mapping(uint256 => PrestigePadLaunch) internal launches;

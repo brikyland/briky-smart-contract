@@ -35,7 +35,7 @@ ReentrancyGuardUpgradeable {
     using FixedMath for uint256;
     using Formula for uint256;
 
-    string constant private VERSION = "v1.1.1";
+    string constant private VERSION = "v1.2.1";
 
     receive() external payable {}
 
@@ -142,7 +142,7 @@ ReentrancyGuardUpgradeable {
         address primaryTokenAddress = primaryToken;
         if (IPrimaryToken(primaryTokenAddress).isStakeRewardingCulminated()) {
             ITreasury treasuryContract = ITreasury(IPrimaryToken(primaryToken).treasury());
-            uint256 feeAmount = _stakingFee(
+            uint256 fee = _stakingFee(
                 treasuryContract.liquidity(),
                 _value,
                 IPrimaryToken(primaryTokenAddress).totalSupply(),
@@ -150,9 +150,9 @@ ReentrancyGuardUpgradeable {
             );
 
             address currency = treasuryContract.currency();
-            CurrencyHandler.receiveERC20(currency, feeAmount);
-            CurrencyHandler.allowERC20(currency, primaryTokenAddress, feeAmount);
-            IPrimaryToken(primaryTokenAddress).contributeLiquidityFromStakeToken(feeAmount, address(this));
+            CurrencyHandler.receiveERC20(currency, fee);
+            CurrencyHandler.allowERC20(currency, primaryTokenAddress, fee);
+            IPrimaryToken(primaryTokenAddress).contributeLiquidityFromStakeToken(fee, address(this));
         }
 
         CurrencyHandler.receiveERC20(primaryTokenAddress, _value);

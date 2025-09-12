@@ -29,7 +29,7 @@ Administrable,
 Pausable,
 RoyaltyRateProposer,
 ReentrancyGuardUpgradeable {
-    string constant private VERSION = "v1.1.1";
+    string constant private VERSION = "v1.2.1";
 
     receive() external payable {}
 

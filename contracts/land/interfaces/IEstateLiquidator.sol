@@ -22,7 +22,7 @@ IValidatable {
         address currency,
         Rate feeRate
     );
-    event RequestApproval(uint256 indexed requestId, uint256 feeAmount);
+    event RequestApproval(uint256 indexed requestId, uint256 fee);
     event RequestDisapproval(uint256 indexed requestId);
 
     error AlreadyCancelled();

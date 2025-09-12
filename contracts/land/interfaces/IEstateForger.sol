@@ -45,7 +45,7 @@ IEstateTokenizer {
         uint256 indexed estateId,
         uint256 soldQuantity,
         uint256 value,
-        uint256 feeAmount,
+        uint256 fee,
         uint256 cashbackBaseAmount
     );
 
@@ -73,7 +73,6 @@ IEstateTokenizer {
     error AlreadyHadDeposit();
     error AlreadyWithdrawn();
     error InvalidBroker();
-    error InvalidCommissionReceiver();
     error InvalidConfirming();
     error InvalidDepositing();
     error InvalidRequestId();
@@ -108,8 +107,7 @@ IEstateTokenizer {
         EstateForgerRequestEstateInput calldata estate,
         EstateForgerRequestQuotaInput calldata quota,
         EstateForgerRequestQuoteInput calldata quote,
-        EstateForgerRequestAgendaInput calldata agenda,
-        Validation calldata validation
+        EstateForgerRequestAgendaInput calldata agenda
     ) external returns (uint256 requestId);
 
     function cancel(uint256 requestId) external;

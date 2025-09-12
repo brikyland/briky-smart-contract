@@ -28,7 +28,7 @@ ReentrancyGuardUpgradeable {
     using CurrencyHandler for uint256;
     using Formula for uint256;
 
-    string constant private VERSION = "v1.1.1";
+    string constant private VERSION = "v1.2.1";
 
     modifier validProposal(uint256 _proposalId) {
         if (_proposalId == 0 || _proposalId > proposalNumber) {
@@ -180,16 +180,16 @@ ReentrancyGuardUpgradeable {
 
     function admit(
         uint256 _proposalId,
-        string calldata _contentURI,
-        string calldata _stateURI,
+        string calldata _contextURI,
+        string calldata _reviewURI,
         address _currency,
         Validation calldata _signature
     ) external validProposal(_proposalId) onlyExecutive whenNotPaused {
         _validate(
             abi.encode(
                 _proposalId,
-                _contentURI,
-                _stateURI,
+                _contextURI,
+                _reviewURI,
                 _currency
             ),
             _signature
@@ -211,11 +211,11 @@ ReentrancyGuardUpgradeable {
         }
 
         IAdmin adminContract = IAdmin(admin);
-        if (!adminContract.getZoneEligibility(governorContract.zoneOf(tokenId), msg.sender)) {
+        if (!adminContract.isActiveIn(governorContract.zoneOf(tokenId), msg.sender)) {
             revert Unauthorized();
         }
 
-        uint256 totalWeight = IGovernor(proposal.governor).totalVoteAt(tokenId, block.timestamp);
+        uint256 totalWeight = IGovernor(proposal.governor).totalEquityAt(tokenId, block.timestamp);
         if (totalWeight == 0) {
             revert NoVotingPower();
         }
@@ -225,8 +225,8 @@ ReentrancyGuardUpgradeable {
             CommonConstant.RATE_MAX_FRACTION
         );
 
-        proposal.contentURI = _contentURI;
-        proposal.stateURI = _stateURI;
+        proposal.contextURI = _contextURI;
+        proposal.logURI = _reviewURI;
         proposal.totalWeight = totalWeight;
         proposal.quorum = quorum;
         proposal.timePivot = uint40(block.timestamp);
@@ -236,8 +236,8 @@ ReentrancyGuardUpgradeable {
 
         emit ProposalAdmission(
             _proposalId,
-            _contentURI,
-            _stateURI,
+            _contextURI,
+            _reviewURI,
             totalWeight,
             quorum,
             _currency
@@ -246,21 +246,21 @@ ReentrancyGuardUpgradeable {
 
     function disqualify(
         uint256 _proposalId,
-        string calldata _contentURI,
-        string calldata _stateURI,
+        string calldata _contextURI,
+        string calldata _reviewURI,
         Validation calldata _validation
     ) external validProposal(_proposalId) whenNotPaused {
         _validate(
             abi.encode(
                 _proposalId,
-                _contentURI,
-                _stateURI
+                _contextURI,
+                _reviewURI
             ),
             _validation
         );
 
         Proposal storage proposal = proposals[_proposalId];
-        if (!IAdmin(admin).getZoneEligibility(
+        if (!IAdmin(admin).isActiveIn(
             IGovernor(proposal.governor).zoneOf(proposal.tokenId),
             msg.sender
         )) {
@@ -274,14 +274,14 @@ ReentrancyGuardUpgradeable {
             revert InvalidDisqualifying();
         }
 
-        proposal.contentURI = _contentURI;
-        proposal.stateURI = _stateURI;
+        proposal.contextURI = _contextURI;
+        proposal.logURI = _reviewURI;
         proposal.state = ProposalState.Disqualified;
 
         emit ProposalDisqualification(
             _proposalId,
-            _contentURI,
-            _stateURI
+            _contextURI,
+            _reviewURI
         );
     }
 
@@ -345,7 +345,7 @@ ReentrancyGuardUpgradeable {
     }
 
     function confirm(uint256 _proposalId)
-    external nonReentrant validProposal(_proposalId) onlyManager whenNotPaused {
+    external nonReentrant validProposal(_proposalId) onlyManager whenNotPaused returns (uint256) {
         Proposal storage proposal = proposals[_proposalId];
         uint256 tokenId = proposal.tokenId;
         IGovernor governorContract = IGovernor(proposal.governor);
@@ -353,7 +353,7 @@ ReentrancyGuardUpgradeable {
             revert UnavailableToken();
         }
 
-        if (!IAdmin(admin).getZoneEligibility(governorContract.zoneOf(tokenId), msg.sender)) {
+        if (!IAdmin(admin).isActiveIn(governorContract.zoneOf(tokenId), msg.sender)) {
             revert Unauthorized();
         }
 
@@ -364,9 +364,20 @@ ReentrancyGuardUpgradeable {
         }
 
         proposal.state = ProposalState.Executing;
-        CurrencyHandler.sendCurrency(proposal.currency, proposal.operator, proposal.budget);
 
-        emit ProposalConfirmation(_proposalId);
+        uint256 budget = proposal.budget;
+        CurrencyHandler.sendCurrency(
+            proposal.currency,
+            proposal.operator,
+            budget
+        );
+
+        emit ProposalConfirmation(
+            _proposalId,
+            budget
+        );
+
+        return budget;
     }
 
     function rejectExecution(uint256 _proposalId)
@@ -383,15 +394,15 @@ ReentrancyGuardUpgradeable {
         emit ProposalExecutionRejection(_proposalId);
     }
 
-    function updateExecution(
+    function logExecution(
         uint256 _proposalId,
-        string calldata _stateURI,
+        string calldata _logURI,
         Validation calldata _validation
     ) external validProposal(_proposalId) onlyOperator(_proposalId) whenNotPaused {
         _validate(
             abi.encode(
                 _proposalId,
-                _stateURI
+                _logURI
             ),
             _validation
         );
@@ -400,21 +411,21 @@ ReentrancyGuardUpgradeable {
             revert InvalidUpdating();
         }
 
-        proposals[_proposalId].stateURI = _stateURI;
+        proposals[_proposalId].logURI = _logURI;
 
-        emit ProposalExecutionUpdate(_proposalId, _stateURI);
+        emit ProposalExecutionLog(_proposalId, _logURI);
     }
 
     function concludeExecution(
         uint256 _proposalId,
-        string calldata _stateURI,
+        string calldata _logURI,
         bool _isSuccessful,
         Validation calldata _validation
     ) external validProposal(_proposalId) onlyManager whenNotPaused {
         _validate(
             abi.encode(
                 _proposalId,
-                _stateURI,
+                _logURI,
                 _isSuccessful
             ),
             _validation
@@ -427,7 +438,7 @@ ReentrancyGuardUpgradeable {
             revert UnavailableToken();
         }
 
-        if (!IAdmin(admin).getZoneEligibility(governorContract.zoneOf(tokenId), msg.sender)) {
+        if (!IAdmin(admin).isActiveIn(governorContract.zoneOf(tokenId), msg.sender)) {
             revert Unauthorized();
         }
 
@@ -435,12 +446,12 @@ ReentrancyGuardUpgradeable {
             revert InvalidConcluding();
         }
 
-        proposal.stateURI = _stateURI;
+        proposal.logURI = _logURI;
         proposal.state = _isSuccessful ? ProposalState.SuccessfulExecuted : ProposalState.UnsuccessfulExecuted;
 
         emit ProposalExecutionConclusion(
             _proposalId,
-            _stateURI,
+            _logURI,
             _isSuccessful
         );
     }
@@ -506,7 +517,7 @@ ReentrancyGuardUpgradeable {
             revert UnavailableToken();
         }
 
-        uint256 weight = governorContract.voteOfAt(
+        uint256 weight = governorContract.equityOfAt(
             msg.sender,
             tokenId,
             proposal.timePivot

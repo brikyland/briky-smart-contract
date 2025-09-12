@@ -7,7 +7,7 @@ import {IExclusiveToken} from "../../common/interfaces/IExclusiveToken.sol";
 interface IStakeToken is
 ICommon,
 IExclusiveToken {
-    event FeeRateUpdate(Rate newValue);
+    event FeeRateUpdate(Rate newRate);
 
     event RewardFetch(uint256 value);
     event Promotion(address indexed account, uint256 value);

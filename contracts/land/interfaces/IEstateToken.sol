@@ -16,14 +16,14 @@ interface IEstateToken is
 IEstate,
 ISnapshot,
 IValidatable,
-IGovernor,
 IRoyaltyRateProposer,
+IGovernor,
 IERC1155MetadataURIUpgradeable {
     event CommissionTokenUpdate(address newAddress);
 
     event BaseURIUpdate(string newValue);
 
-    event ZoneRoyaltyRateUpdate(bytes32 indexed zone, uint256 newValue);
+    event ZoneRoyaltyRateUpdate(bytes32 indexed zone, Rate newRate);
 
     event TokenizerAuthorization(address indexed account);
     event TokenizerDeauthorization(address indexed account);
@@ -42,6 +42,7 @@ IERC1155MetadataURIUpgradeable {
         bytes32 indexed zone,
         uint256 indexed tokenizationId,
         address tokenizer,
+        address custodian,
         uint40 expireAt
     );
     event EstateCustodianUpdate(uint256 indexed estateId, address indexed custodian);

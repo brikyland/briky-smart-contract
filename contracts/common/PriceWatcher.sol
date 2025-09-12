@@ -21,7 +21,7 @@ Initializable,
 Administrable {
     using Formula for uint256;
 
-    string constant private VERSION = "v1.1.1";
+    string constant private VERSION = "v1.2.1";
 
     receive() external payable {}
 
@@ -58,7 +58,7 @@ Administrable {
         for(uint256 i; i < _currencies.length; ++i) {
             if (_heartbeats[i] == 0) revert InvalidInput();
 
-            priceFeeds[_currencies[i]] = PriceFeed(
+            priceFeeds[_currencies[i]] = DataFeed(
                 _feeds[i],
                 _heartbeats[i]
             );
@@ -101,7 +101,7 @@ Administrable {
         }
     }
 
-    function getPriceFeed(address _currency) external view returns (PriceFeed memory) {
+    function getPriceFeed(address _currency) external view returns (DataFeed memory) {
         return priceFeeds[_currency];
     }
 

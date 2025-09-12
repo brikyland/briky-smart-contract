@@ -13,7 +13,7 @@ IRoyaltyRateProposer,
 IERC4906Upgradeable,
 IERC721MetadataUpgradeable {
     event BaseURIUpdate(string newValue);
-    event RoyaltyRateUpdate(Rate newValue);
+    event RoyaltyRateUpdate(Rate newRate);
 
     event BrokerRegistration(
         bytes32 indexed zone,
@@ -45,7 +45,7 @@ IERC721MetadataUpgradeable {
     function getCommissionRate(uint256 tokenId) external view returns (Rate memory rate);
 
     function commissionInfo(uint256 tokenId, uint256 value)
-    external view returns (address receiver, uint256 commissionAmount);
+    external view returns (address receiver, uint256 commission);
 
     function registerBroker(
         bytes32 zone,

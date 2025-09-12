@@ -36,7 +36,7 @@ interface IERC721Marketplace is ICommon {
         uint256 indexed offerId,
         address indexed buyer,
         address royaltyReceiver,
-        uint256 royaltyAmount
+        uint256 royalty
     );
     
     error NotRegisteredCollection();

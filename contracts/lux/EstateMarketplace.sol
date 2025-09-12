@@ -30,7 +30,7 @@ Pausable,
 ReentrancyGuardUpgradeable {
     using Formula for uint256;
 
-    string constant private VERSION = "v1.1.1";
+    string constant private VERSION = "v1.2.1";
 
     modifier validOffer(uint256 _offerId) {
         if (_offerId == 0 || _offerId > offerNumber) {
@@ -185,21 +185,21 @@ ReentrancyGuardUpgradeable {
         uint256 value = offer.unitPrice.scale(_amount, 10 ** estateTokenContract.decimals());
         (
             address royaltyReceiver,
-            uint256 royaltyAmount
+            uint256 royalty
         ) = estateTokenContract.royaltyInfo(tokenId, value);
 
         address currency = offer.currency;
-        royaltyAmount = _applyDiscount(royaltyAmount, currency);
-        
-        CurrencyHandler.receiveCurrency(currency, value + royaltyAmount);
-        uint256 commissionAmount = _dispatchCommission(
+        royalty = _applyDiscount(royalty, currency);
+
+        CurrencyHandler.receiveCurrency(currency, value + royalty);
+        uint256 commission = _dispatchCommission(
             tokenId,
-            royaltyAmount,
+            royalty,
             currency
         );
 
         CurrencyHandler.sendCurrency(currency, seller, value);
-        CurrencyHandler.sendCurrency(currency, royaltyReceiver, royaltyAmount - commissionAmount);
+        CurrencyHandler.sendCurrency(currency, royaltyReceiver, royalty - commission);
 
         offer.soldAmount = newSoldAmount;
         if (newSoldAmount == sellingAmount) {
@@ -220,6 +220,6 @@ ReentrancyGuardUpgradeable {
             value
         );
 
-        return value + royaltyAmount;
+        return value + royalty;
     }
 }

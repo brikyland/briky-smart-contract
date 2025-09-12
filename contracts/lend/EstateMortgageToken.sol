@@ -2,7 +2,6 @@
 pragma solidity ^0.8.20;
 
 import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol";
-import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC20Upgradeable.sol";
 
 import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
 
@@ -65,7 +64,7 @@ CommissionDispatchable {
             revert InvalidTokenId();
         }
         if (_amount == 0) {
-            revert InvalidAmount();
+            revert InvalidInput();
         }
         if (_amount > estateTokenContract.balanceOf(msg.sender, _estateId)) {
             revert InvalidCollateral();

@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import {IEstateToken} from "../interfaces/IEstateToken.sol";
 
 abstract contract EstateTokenStorage is IEstateToken {
-    mapping(uint256 => mapping(address => Snapshot[])) internal balanceSnapshots;
+    mapping(uint256 => mapping(address => Uint256Snapshot[])) internal balanceSnapshots;
 
     mapping(bytes32 => mapping(address => string)) public custodianURI;
 

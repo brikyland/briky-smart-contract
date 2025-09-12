@@ -29,7 +29,7 @@ ReentrancyGuardUpgradeable {
     using ERC165CheckerUpgradeable for address;
     using Formula for uint256;
 
-    string private constant VERSION = "v1.1.1";
+    string private constant VERSION = "v1.2.1";
 
     modifier validOffer(uint256 _offerId) {
         if (_offerId == 0 || _offerId > offerNumber) {
@@ -180,28 +180,28 @@ ReentrancyGuardUpgradeable {
         address currency = offer.currency;
 
         address royaltyReceiver;
-        uint256 royaltyAmount;
+        uint256 royalty;
         if (collection.supportsInterface(type(IERC2981Upgradeable).interfaceId)) {
-            (royaltyReceiver, royaltyAmount) = IERC2981Upgradeable(collection)
+            (royaltyReceiver, royalty) = IERC2981Upgradeable(collection)
                 .royaltyInfo(tokenId, price);
 
             if (royaltyReceiver == feeReceiver) {
-                royaltyAmount = _applyDiscount(royaltyAmount, currency);
+                royalty = _applyDiscount(royalty, currency);
             }
         }
 
         if (currency == address(0)) {
-            CurrencyHandler.receiveNative(price + royaltyAmount);
+            CurrencyHandler.receiveNative(price + royalty);
             CurrencyHandler.sendNative(seller, price);
             if (royaltyReceiver != address(0)) {
-                CurrencyHandler.sendNative(royaltyReceiver, royaltyAmount);
+                CurrencyHandler.sendNative(royaltyReceiver, royalty);
             }
         } else {
             CurrencyHandler.forwardERC20(currency, seller, price);
             CurrencyHandler.forwardERC20(
                 currency,
                 royaltyReceiver,
-                royaltyAmount
+                royalty
             );
         }
 
@@ -213,8 +213,8 @@ ReentrancyGuardUpgradeable {
             ""
         );
 
-        emit OfferSale(_offerId, msg.sender, royaltyReceiver, royaltyAmount);
+        emit OfferSale(_offerId, msg.sender, royaltyReceiver, royalty);
 
-        return price + royaltyAmount;
+        return price + royalty;
     }
 }
