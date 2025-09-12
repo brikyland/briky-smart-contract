@@ -12,8 +12,6 @@ import {Formula} from "../lib/Formula.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 
-import {CommonConstant} from "../common/constants/CommonConstant.sol";
-
 import {Administrable} from "../common/utilities/Administrable.sol";
 import {Discountable} from "../common/utilities/Discountable.sol";
 import {Pausable} from "../common/utilities/Pausable.sol";
@@ -43,7 +41,7 @@ ReentrancyGuardUpgradeable {
     function initialize(
         address _admin,
         address _feeReceiver
-    ) external initializer {
+    ) public initializer {
         __Pausable_init();
         __ReentrancyGuard_init();
 
@@ -77,8 +75,7 @@ ReentrancyGuardUpgradeable {
 
         if (_isCollection) {
             for (uint256 i; i < _collections.length; ++i) {
-                if (_collections[i] == address(this) ||
-                    !_collections[i].supportsInterface(type(IERC721Upgradeable).interfaceId)) {
+                if (!_validCollection(_collections[i])) {
                     revert InvalidCollection();
                 }
                 if (isCollection[_collections[i]]) {
@@ -104,16 +101,28 @@ ReentrancyGuardUpgradeable {
         uint256 _price,
         address _currency
     ) external onlyAvailableCurrency(_currency) whenNotPaused returns (uint256) {
+        if (_price == 0) {
+            revert InvalidPrice();
+        }
+
         if (!isCollection[_collection]) {
             revert InvalidCollection();
         }
-
-        if (IERC721Upgradeable(_collection).ownerOf(_tokenId) != msg.sender) {
+        
+        if (IERC721Upgradeable(_collection).ownerOf(_tokenId) != msg.sender
+            || _validToken(_collection, _tokenId)) {
             revert InvalidTokenId();
         }
 
-        if (_price == 0) {
-            revert InvalidPrice();
+        address royaltyReceiver;
+        uint256 royalty;
+        if (_collection.supportsInterface(type(IERC2981Upgradeable).interfaceId)) {
+            (royaltyReceiver, royalty) = IERC2981Upgradeable(_collection)
+                .royaltyInfo(_tokenId, _price);
+
+            if (royaltyReceiver == feeReceiver) {
+                royalty = _applyDiscount(royalty, _currency);
+            }
         }
 
         uint256 offerId = ++offerNumber;
@@ -122,9 +131,11 @@ ReentrancyGuardUpgradeable {
             _collection,
             _tokenId,
             _price,
+            royalty,
             _currency,
             OfferState.Selling,
-            msg.sender
+            msg.sender,
+            royaltyReceiver
         );
 
         emit NewOffer(
@@ -133,7 +144,9 @@ ReentrancyGuardUpgradeable {
             _tokenId,
             msg.sender,
             _price,
-            _currency
+            royalty,
+            _currency,
+            royaltyReceiver
         );
 
         return offerId;
@@ -168,42 +181,30 @@ ReentrancyGuardUpgradeable {
     function _buy(uint256 _offerId) private nonReentrant whenNotPaused returns (uint256) {
         Offer storage offer = offers[_offerId];
 
-        address seller = offer.seller;
         address collection = offer.collection;
+        if (!isCollection[collection]) {
+            revert InvalidCollection();
+        }        
 
+        address seller = offer.seller;
         if (msg.sender == seller || offer.state != OfferState.Selling) {
             revert InvalidBuying();
+        }
+
+        if (!_validToken(collection, offer.tokenId)) {
+            revert InvalidTokenId();
         }
 
         uint256 tokenId = offer.tokenId;
         uint256 price = offer.price;
         address currency = offer.currency;
+        address royaltyReceiver = offer.royaltyReceiver;
+        uint256 royalty = offer.royalty;
 
-        address royaltyReceiver;
-        uint256 royalty;
-        if (collection.supportsInterface(type(IERC2981Upgradeable).interfaceId)) {
-            (royaltyReceiver, royalty) = IERC2981Upgradeable(collection)
-                .royaltyInfo(tokenId, price);
+        CurrencyHandler.receiveCurrency(currency, price + royalty);
+        CurrencyHandler.sendCurrency(currency, seller, price);
 
-            if (royaltyReceiver == feeReceiver) {
-                royalty = _applyDiscount(royalty, currency);
-            }
-        }
-
-        if (currency == address(0)) {
-            CurrencyHandler.receiveNative(price + royalty);
-            CurrencyHandler.sendNative(seller, price);
-            if (royaltyReceiver != address(0)) {
-                CurrencyHandler.sendNative(royaltyReceiver, royalty);
-            }
-        } else {
-            CurrencyHandler.forwardERC20(currency, seller, price);
-            CurrencyHandler.forwardERC20(
-                currency,
-                royaltyReceiver,
-                royalty
-            );
-        }
+        _chargeRoyalty(_offerId);
 
         offer.state = OfferState.Sold;
         IERC721Upgradeable(collection).safeTransferFrom(
@@ -216,5 +217,30 @@ ReentrancyGuardUpgradeable {
         emit OfferSale(_offerId, msg.sender, royaltyReceiver, royalty);
 
         return price + royalty;
+    }
+
+    function _validCollection(
+        address _collection
+    ) internal virtual view returns (bool) {
+        return _collection != address(this)
+            && _collection.supportsInterface(type(IERC721Upgradeable).interfaceId);
+    }
+    
+    function _validToken(
+        address,
+        uint256
+    ) internal virtual view returns (bool) {
+        return true;
+    }
+
+    function _chargeRoyalty(
+        uint256 _offerId
+    ) internal virtual {
+        Offer storage offer = offers[_offerId];
+        CurrencyHandler.sendCurrency(
+            offer.currency,
+            offer.royaltyReceiver,
+            offer.royalty
+        );
     }
 }

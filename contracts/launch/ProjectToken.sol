@@ -7,6 +7,7 @@ import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces
 import {IERC1155Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC1155Upgradeable.sol";
 import {IERC1155MetadataURIUpgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC1155MetadataURIUpgradeable.sol";
 import {IERC1155ReceiverUpgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC1155ReceiverUpgradeable.sol";
+import {IERC2981Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
 import {ERC1155Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
 import {ERC1155PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/extensions/ERC1155PausableUpgradeable.sol";
 import {ERC1155SupplyUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/extensions/ERC1155SupplyUpgradeable.sol";
@@ -14,6 +15,7 @@ import {ERC1155URIStorageUpgradeable} from "@openzeppelin/contracts-upgradeable/
 import {ERC165CheckerUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
+import {IAssetToken} from "../common/interfaces/IAssetToken.sol";
 import {IGovernor} from "../common/interfaces/IGovernor.sol";
 import {IRoyaltyRateProposer} from "../common/interfaces/IRoyaltyRateProposer.sol";
 
@@ -27,7 +29,6 @@ import {Validatable} from "../common/utilities/Validatable.sol";
 
 import {IEstateToken} from "../land/interfaces/IEstateToken.sol";
 
-import {EstateTokenizer} from "../land/utilities/EstateTokenizer.sol";
 import {EstateTokenReceiver} from "../land/utilities/EstateTokenReceiver.sol";
 
 import {ProjectTokenConstant} from "./constants/ProjectTokenConstant.sol";
@@ -44,8 +45,9 @@ ProjectTokenStorage,
 ERC1155PausableUpgradeable,
 ERC1155SupplyUpgradeable,
 ERC1155URIStorageUpgradeable,
-EstateTokenizer,
+EstateTokenReceiver,
 ProjectTokenReceiver,
+Administrable,
 Pausable,
 RoyaltyRateProposer,
 Snapshotable,
@@ -454,7 +456,10 @@ ReentrancyGuardUpgradeable {
     }
 
     function totalSupply(uint256 _projectId)
-    public view override returns (uint256) {
+    public view override (
+        ERC1155SupplyUpgradeable,
+        IAssetToken
+    ) returns (uint256) {
         return super.totalSupply(_projectId);
     }
 
@@ -478,12 +483,11 @@ ReentrancyGuardUpgradeable {
 
     function supportsInterface(bytes4 _interfaceId) public view virtual override(
         IERC165Upgradeable,
-        EstateTokenizer,
-        ProjectTokenReceiver,
-        RoyaltyRateProposer,
         ERC1155Upgradeable
     ) returns (bool) {
         return _interfaceId == type(IProjectToken).interfaceId
+            || _interfaceId == type(IERC2981Upgradeable).interfaceId
+            || _interfaceId == type(IERC1155MetadataURIUpgradeable).interfaceId
             || super.supportsInterface(_interfaceId);
     }
 
@@ -497,7 +501,7 @@ ReentrancyGuardUpgradeable {
         uint256 _id,
         uint256 _value,
         bytes calldata _data
-    ) public virtual override(
+    ) public virtual override (
         IERC1155ReceiverUpgradeable,
         EstateTokenReceiver,
         ProjectTokenReceiver

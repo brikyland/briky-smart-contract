@@ -13,21 +13,26 @@ import {CommonConstant} from "../common/constants/CommonConstant.sol";
 
 import {IReserveVault} from "../common/interfaces/IReserveVault.sol";
 
+import {Administrable} from "../common/utilities/Administrable.sol";
 import {Discountable} from "../common/utilities/Discountable.sol";
 import {Pausable} from "../common/utilities/Pausable.sol";
 import {Validatable} from "../common/utilities/Validatable.sol";
 
 import {PrestigePadConstant} from "./constants/PrestigePadConstant.sol";
 
+import {IPrestigePad} from "./interfaces/IPrestigePad.sol";
 import {IProjectToken} from "./interfaces/IProjectToken.sol";
+import {IProjectLaunchpad} from "./interfaces/IProjectLaunchpad.sol";
+import {IProjectTokenReceiver} from "./interfaces/IProjectTokenReceiver.sol";
 
 import {PrestigePadStorage} from "./storages/PrestigePadStorage.sol";
 
-import {ProjectLaunchpad} from "./utilities/ProjectLaunchpad.sol";
+import {ProjectTokenReceiver} from "./utilities/ProjectTokenReceiver.sol";
 
 contract PrestigePad is
 PrestigePadStorage,
-ProjectLaunchpad,
+ProjectTokenReceiver,
+Administrable,
 Discountable,
 Pausable,
 Validatable,
@@ -759,4 +764,13 @@ ReentrancyGuardUpgradeable {
         }
         return cashbackBaseAmount;
     }
+
+    function supportsInterface(
+        bytes4 _interfaceId
+    ) public view virtual override returns (bool) {
+        return _interfaceId == type(IPrestigePad).interfaceId
+            || _interfaceId == type(IProjectLaunchpad).interfaceId
+            || _interfaceId == type(IProjectTokenReceiver).interfaceId;
+    }
+
 }

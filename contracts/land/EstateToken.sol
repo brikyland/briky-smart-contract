@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol";
 import {IERC1155Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC1155Upgradeable.sol";
 import {IERC1155MetadataURIUpgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC1155MetadataURIUpgradeable.sol";
+import {IERC2981Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
 import {ERC1155Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
 import {ERC1155PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/extensions/ERC1155PausableUpgradeable.sol";
 import {ERC1155SupplyUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/extensions/ERC1155SupplyUpgradeable.sol";
@@ -445,11 +446,10 @@ Validatable {
 
     function supportsInterface(bytes4 _interfaceId) public view override(
         IERC165Upgradeable,
-        ERC1155Upgradeable,
-        RoyaltyRateProposer
+        ERC1155Upgradeable
     ) returns (bool) {
         return _interfaceId == type(IGovernor).interfaceId
-            || RoyaltyRateProposer.supportsInterface(_interfaceId)
+            || _interfaceId == type(IERC2981Upgradeable).interfaceId
             || ERC1155Upgradeable.supportsInterface(_interfaceId)
             || super.supportsInterface(_interfaceId);
     }

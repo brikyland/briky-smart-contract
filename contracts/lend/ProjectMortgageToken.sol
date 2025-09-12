@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol";
+import {IERC2981Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
 
 import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
 
@@ -10,6 +11,10 @@ import {CommonConstant} from "../common/constants/CommonConstant.sol";
 import {ICommissionToken} from "../land/interfaces/ICommissionToken.sol";
 
 import {IProjectToken} from "../launch/interfaces/IProjectToken.sol";
+import {IProjectTokenReceiver} from "../launch/interfaces/IProjectTokenReceiver.sol";
+
+import {IProjectMortgageToken} from "./interfaces/IProjectMortgageToken.sol";
+import {IMortgageToken} from "./interfaces/IMortgageToken.sol";
 
 import {ProjectTokenReceiver} from "../launch/utilities/ProjectTokenReceiver.sol";
 
@@ -89,11 +94,14 @@ ProjectTokenReceiver {
     }
 
     function supportsInterface(bytes4 _interfaceId) public view override(
-    IERC165Upgradeable,
-    ProjectTokenReceiver,
-    MortgageToken
+        IERC165Upgradeable,
+        MortgageToken
     ) returns (bool) {
-        return super.supportsInterface(_interfaceId);
+        return _interfaceId == type(IProjectMortgageToken).interfaceId
+            || _interfaceId == type(IMortgageToken).interfaceId
+            || _interfaceId == type(IProjectTokenReceiver).interfaceId
+            || _interfaceId == type(IERC2981Upgradeable).interfaceId
+            || super.supportsInterface(_interfaceId);
     }
 
     function royaltyInfo(uint256 _tokenId, uint256 _price) external view override returns (address, uint256) {

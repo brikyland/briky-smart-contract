@@ -11,16 +11,5 @@ import {IMortgageMarketplace} from "../../lux/interfaces/IMortgageMarketplace.so
  */
 abstract contract MortgageMarketplaceStorage is
 IMortgageMarketplace {
-    /// @dev    offers[offerId]
-    mapping(uint256 => Offer) internal offers;
-
-
-    /// @dev    isCollection[collection]
-    mapping(address => bool) public isCollection;
-
-    uint256 public offerNumber;
-
-    address public admin;
-
     uint256[50] private __gap;
 }

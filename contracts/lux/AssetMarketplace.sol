@@ -2,26 +2,27 @@
 pragma solidity ^0.8.20;
 
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import {ERC165CheckerUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 
 import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
 import {Formula} from "../lib/Formula.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
+import {IAssetToken} from "../common/interfaces/IAssetToken.sol";
 
 import {Administrable} from "../common/utilities/Administrable.sol";
 import {Discountable} from "../common/utilities/Discountable.sol";
 import {Pausable} from "../common/utilities/Pausable.sol";
 
-import {IProjectToken} from "../launch/interfaces/IProjectToken.sol";
+import {AssetMarketplaceStorage} from "../lux/storages/AssetMarketplaceStorage.sol";
 
-import {ProjectMarketplaceStorage} from "../lux/storages/ProjectMarketplaceStorage.sol";
-
-contract ProjectMarketplace is
-ProjectMarketplaceStorage,
+contract AssetMarketplace is
+AssetMarketplaceStorage,
 Administrable,
 Discountable,
 Pausable,
 ReentrancyGuardUpgradeable {
+    using ERC165CheckerUpgradeable for address;
     using Formula for uint256;
 
     string constant private VERSION = "v1.2.1";
@@ -37,13 +38,13 @@ ReentrancyGuardUpgradeable {
 
     function initialize(
         address _admin,
-        address _projectToken
-    ) external initializer {
+        address _collection
+    ) public initializer {
         __Pausable_init();
         __ReentrancyGuard_init();
 
         admin = _admin;
-        projectToken = _projectToken;
+        collection = _collection;
     }
 
     function version() external pure returns (string memory) {
@@ -62,8 +63,8 @@ ReentrancyGuardUpgradeable {
         address _currency,
         bool _isDivisible
     ) external onlyAvailableCurrency(_currency) whenNotPaused returns (uint256) {
-        IProjectToken projectTokenContract = IProjectToken(projectToken);
-        if (!projectTokenContract.isAvailable(_tokenId)) {
+        IAssetToken assetContract = IAssetToken(collection);
+        if (!assetContract.isAvailable(_tokenId)) {
             revert InvalidTokenId();
         }
 
@@ -72,9 +73,15 @@ ReentrancyGuardUpgradeable {
         }
 
         if (_sellingAmount == 0
-            || _sellingAmount > projectTokenContract.balanceOf(msg.sender, _tokenId)) {
+            || _sellingAmount > assetContract.balanceOf(msg.sender, _tokenId)) {
             revert InvalidSellingAmount();
         }
+
+        (
+            address royaltyReceiver,
+            uint256 royaltyDenomination
+        ) = assetContract.royaltyInfo(_tokenId, _unitPrice);
+        royaltyDenomination = _applyDiscount(royaltyDenomination, _currency);
 
         uint256 offerId = ++offerNumber;
 
@@ -83,10 +90,12 @@ ReentrancyGuardUpgradeable {
             _sellingAmount,
             0,
             _unitPrice,
+            royaltyDenomination,
             _currency,
             _isDivisible,
             OfferState.Selling,
-            msg.sender
+            msg.sender,
+            royaltyReceiver
         );
 
         emit NewOffer(
@@ -95,8 +104,10 @@ ReentrancyGuardUpgradeable {
             msg.sender,
             _sellingAmount,
             _unitPrice,
+            royaltyDenomination,
             _currency,
-            _isDivisible
+            _isDivisible,
+            royaltyReceiver
         );
 
         return offerId;
@@ -152,8 +163,10 @@ ReentrancyGuardUpgradeable {
         emit OfferCancellation(_offerId);
     }
 
-    function _buy(uint256 _offerId, uint256 _amount)
-    internal nonReentrant whenNotPaused returns (uint256) {
+    function _buy(
+        uint256 _offerId,
+        uint256 _amount
+    ) internal nonReentrant whenNotPaused returns (uint256) {
         if (_amount == 0) {
             revert InvalidAmount();
         }
@@ -171,30 +184,23 @@ ReentrancyGuardUpgradeable {
             revert NotEnoughTokensToSell();
         }
 
-        IProjectToken projectTokenContract = IProjectToken(projectToken);
+        IAssetToken assetContract = IAssetToken(collection);
         uint256 tokenId = offer.tokenId;
-        uint256 value = offer.unitPrice.scale(_amount, 10 ** projectTokenContract.decimals());
-        (
-            address royaltyReceiver,
-            uint256 royalty
-        ) = projectTokenContract.royaltyInfo(tokenId, value);
-
+        uint256 value = offer.unitPrice.scale(_amount, 10 ** assetContract.decimals());
+        uint256 royalty = offer.royaltyDenomination.scale(_amount, 10 ** assetContract.decimals());
+        
         address currency = offer.currency;
-        royalty = _applyDiscount(royalty, currency);
-        if (currency == address(0)) {
-            CurrencyHandler.receiveNative(value + royalty);
-            CurrencyHandler.sendNative(seller, value);
-            CurrencyHandler.sendNative(royaltyReceiver, royalty);
-        } else {
-            CurrencyHandler.forwardERC20(currency, seller, value);
-            CurrencyHandler.forwardERC20(currency, royaltyReceiver, royalty);
-        }
+
+        CurrencyHandler.receiveCurrency(currency, value + royalty);
+        CurrencyHandler.sendCurrency(currency, seller, value);
+
+        _chargeRoyalty(_offerId, royalty);
 
         offer.soldAmount = newSoldAmount;
         if (newSoldAmount == sellingAmount) {
             offer.state = OfferState.Sold;
         }
-        projectTokenContract.safeTransferFrom(
+        assetContract.safeTransferFrom(
             seller,
             msg.sender,
             tokenId,
@@ -210,5 +216,17 @@ ReentrancyGuardUpgradeable {
         );
 
         return value + royalty;
+    }
+
+    function _chargeRoyalty(
+        uint256 _offerId,
+        uint256 _royalty
+    ) internal virtual {
+        Offer storage offer = offers[_offerId];
+        CurrencyHandler.sendCurrency(
+            offer.currency,
+            offer.royaltyReceiver,
+            _royalty
+        );
     }
 }

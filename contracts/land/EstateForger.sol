@@ -12,6 +12,7 @@ import {IReserveVault} from "../common/interfaces/IReserveVault.sol";
 
 import {CommonConstant} from "../common/constants/CommonConstant.sol";
 
+import {Administrable} from "../common/utilities/Administrable.sol";
 import {Pausable} from "../common/utilities/Pausable.sol";
 import {Validatable} from "../common/utilities/Validatable.sol";
 
@@ -19,16 +20,20 @@ import {EstateForgerConstant} from "./constants/EstateForgerConstant.sol";
 
 import {ICommissionToken} from "./interfaces/ICommissionToken.sol";
 import {IEstateToken} from "./interfaces/IEstateToken.sol";
+import {IEstateForger} from "./interfaces/IEstateForger.sol";
+import {IEstateTokenizer} from "./interfaces/IEstateTokenizer.sol";
+import {IEstateTokenReceiver} from "./interfaces/IEstateTokenReceiver.sol";
+import {EstateTokenReceiver} from "./utilities/EstateTokenReceiver.sol";
 
 import {EstateForgerStorage} from "./storages/EstateForgerStorage.sol";
 
 import {CommissionDispatchable} from "./utilities/CommissionDispatchable.sol";
-import {EstateTokenizer} from "./utilities/EstateTokenizer.sol";
 
 contract EstateForger is
 EstateForgerStorage,
-EstateTokenizer,
 CommissionDispatchable,
+EstateTokenReceiver,
+Administrable,
 Pausable,
 Validatable,
 ReentrancyGuardUpgradeable {
@@ -657,5 +662,13 @@ ReentrancyGuardUpgradeable {
             CurrencyHandler.receiveNative(0);
         }
         return cashbackBaseAmount;
+    }
+
+    function supportsInterface(
+        bytes4 _interfaceId
+    ) public view virtual override returns (bool) {
+        return _interfaceId == type(IEstateForger).interfaceId
+            || _interfaceId == type(IEstateTokenizer).interfaceId
+            || _interfaceId == type(IEstateTokenReceiver).interfaceId;
     }
 }

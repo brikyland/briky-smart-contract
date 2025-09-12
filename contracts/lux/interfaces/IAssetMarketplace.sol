@@ -3,10 +3,7 @@ pragma solidity ^0.8.20;
 
 import {ICommon} from "../../common/interfaces/ICommon.sol";
 
-import {IProject} from "../../launch/structs/IProject.sol";
-
-interface IProjectMarketplace is
-IProject,
+interface IAssetMarketplace is
 ICommon {
     enum OfferState {
         Nil,
@@ -20,10 +17,12 @@ ICommon {
         uint256 sellingAmount;
         uint256 soldAmount;
         uint256 unitPrice;
+        uint256 royaltyDenomination;
         address currency;
         bool isDivisible;
         OfferState state;
         address seller;
+        address royaltyReceiver;
     }
 
     event NewOffer(
@@ -32,8 +31,10 @@ ICommon {
         address indexed seller,
         uint256 sellingAmount,
         uint256 unitPrice,
+        uint256 royaltyDenomination,
         address currency,
-        bool isDivisible
+        bool isDivisible,
+        address royaltyReceiver
     );
     event OfferCancellation(uint256 indexed offerId);
     event OfferSale(
@@ -53,7 +54,7 @@ ICommon {
     error NotDivisible();
     error NotEnoughTokensToSell();
 
-    function projectToken() external view returns (address projectToken);
+    function collection() external view returns (address collection);
 
     function offerNumber() external view returns (uint256 offerNumber);
 

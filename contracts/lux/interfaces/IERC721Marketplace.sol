@@ -15,9 +15,11 @@ interface IERC721Marketplace is ICommon {
         address collection;
         uint256 tokenId;
         uint256 price;
+        uint256 royalty;
         address currency;
         OfferState state;
         address seller;
+        address royaltyReceiver;
     }
 
     event CollectionRegistration(address indexed collection);
@@ -29,7 +31,9 @@ interface IERC721Marketplace is ICommon {
         uint256 indexed tokenId,
         address seller,
         uint256 price,
-        address currency
+        uint256 royalty,
+        address currency,
+        address royaltyReceiver
     );
     event OfferCancellation(uint256 indexed offerId);
     event OfferSale(
