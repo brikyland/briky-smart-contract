@@ -1,10 +1,26 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+/**
+ *  @author Briky Team
+ *
+ *  @notice Interface for struct `Content`.
+ */
 interface IContent {
+    /** ===== STRUCT ===== **/
+    /**
+     *  @notice Content information.
+     * 
+     *  @dev    Each token is associated with a content.
+     */
     struct Content {
+        /// @notice URI of content metadata.
         string uri;
+
+        /// @notice Start timestamp of allowed minting period.
         uint40 startAt;
+
+        /// @notice End timestamp of allowed minting period.
         uint40 endAt;
     }
 }

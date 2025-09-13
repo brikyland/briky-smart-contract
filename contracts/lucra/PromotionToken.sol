@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+/// @openzeppelin/contracts-upgradeable/
 import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol";
 import {IERC721MetadataUpgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC721MetadataUpgradeable.sol";
 import {IERC2981Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
@@ -9,18 +10,24 @@ import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/se
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import {ERC721PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721PausableUpgradeable.sol";
 
+/// contracts/common/utilities/
 import {CurrencyHandler} from "../common/utilities/CurrencyHandler.sol";
 
+/// contracts/common/interfaces/
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 
+/// contracts/common/constants/
 import {CommonConstant} from "../common/constants/CommonConstant.sol";
 
+/// contracts/common/utilities/
 import {Administrable} from "../common/utilities/Administrable.sol";
 import {Pausable} from "../common/utilities/Pausable.sol";
 import {RoyaltyRateProposer} from "../common/utilities/RoyaltyRateProposer.sol";
 
+/// contracts/lucra/interfaces/
 import {IPromotionToken} from "./interfaces/IPromotionToken.sol";
 
+/// contracts/lucra/storages/
 import {PromotionTokenStorage} from "./storages/PromotionTokenStorage.sol";
 
 contract PromotionToken is
@@ -30,13 +37,30 @@ Administrable,
 Pausable,
 RoyaltyRateProposer,
 ReentrancyGuardUpgradeable {
+    /** ===== CONSTANT ===== **/
     string constant private VERSION = "v1.2.1";
 
+
+    /** ===== FUNCTION ===== **/
+    /* --- Special --- */
     /**
      *  @notice Executed on a call to the contract with empty calldata.
      */
     receive() external payable {}
 
+    /**
+     *          Name       Description
+     *  @return version    Version of implementation.
+     */
+    function version() external pure returns (string memory) {
+        return VERSION;
+    }
+
+
+    /* --- Initializer --- */
+    /**
+     *  @notice Invoked after deployment for initialization, serving as a constructor.
+     */
     function initialize(
         address _admin,
         string calldata _name,
@@ -44,13 +68,16 @@ ReentrancyGuardUpgradeable {
         uint256 _fee,
         uint256 _royaltyRate
     ) external initializer {
+        /// @dev    Inherited initializer.
         __ERC721_init(_name, _symbol);
         __ERC721Pausable_init();
 
         __ReentrancyGuard_init();
 
+        /// @dev    Dependency
         admin = _admin;
 
+        /// @dev    Configuration
         fee = _fee;
         emit FeeUpdate(_fee);
 
@@ -58,10 +85,8 @@ ReentrancyGuardUpgradeable {
         emit RoyaltyRateUpdate(Rate(_royaltyRate, CommonConstant.RATE_DECIMALS));
     }
 
-    function version() external pure returns (string memory) {
-        return VERSION;
-    }
 
+    /* --- Administration --- */
     /**
      *  @notice Update minting fee.
      *
@@ -150,13 +175,6 @@ ReentrancyGuardUpgradeable {
         for (uint256 i; i < _currencies.length; ++i) {
             CurrencyHandler.sendCurrency(_currencies[i], _receiver, _values[i]);
         }
-    }
-
-    function getContent(uint256 _contentId) public view returns (Content memory) {
-        if (_contentId == 0 || _contentId > contentNumber) {
-            revert InvalidContentId();
-        }
-        return contents[_contentId];
     }
 
     /**
@@ -291,8 +309,37 @@ ReentrancyGuardUpgradeable {
         }
     }
 
-    function mint(uint256 _contentId, uint256 _amount)
-    external payable nonReentrant whenNotPaused returns (uint256, uint256) {
+
+    /* --- Query --- */
+    /**
+     *          Name          Description
+     *  @param  _contentId    Content identifier.
+     * 
+     *  @return content       Information of the content.
+     */
+    function getContent(
+        uint256 _contentId
+    ) public view returns (Content memory) {
+        if (_contentId == 0 || _contentId > contentNumber) {
+            revert InvalidContentId();
+        }
+        return contents[_contentId];
+    }
+
+
+    /**
+     *  @notice Mint tokens of a content.
+     *
+     *          Name            Description
+     *  @param  _contentId      Content identifier.
+     *  @param  _amount         Number of tokens to mint.
+     *  @return firstTokenId    First token identifier of the minted tokens.
+     *  @return lastTokenId     Last token identifier of the minted tokens.
+     */
+    function mint(
+        uint256 _contentId,
+        uint256 _amount
+    ) external payable nonReentrant whenNotPaused returns (uint256, uint256) {
         if (_amount == 0) {
             revert InvalidInput();
         }
@@ -335,6 +382,12 @@ ReentrancyGuardUpgradeable {
         return (firstTokenId, lastTokenId);
     }
 
+    /**
+     *          Name            Description
+     *  @param  _tokenId        Token identifier.
+     * 
+     *  @return Token URI.
+     */
     function tokenURI(uint256 _tokenId) public view override(
         IERC721MetadataUpgradeable,
         ERC721Upgradeable
@@ -342,11 +395,28 @@ ReentrancyGuardUpgradeable {
         return contents[tokenContents[_tokenId]].uri;
     }
 
-    function getRoyaltyRate(uint256) external view returns (Rate memory) {
+    /**
+     *          Name        Description
+     *  @param  _tokenId    Token identifier.
+     * 
+     *  @return rate        Royalty rate of the token.
+     */
+    function getRoyaltyRate(
+        uint256 _tokenId
+    ) external view returns (Rate memory) {
         return Rate(royaltyRate, CommonConstant.RATE_DECIMALS);
     }
 
-    function supportsInterface(bytes4 _interfaceId) public view override(
+    /* --- Interface --- */
+    /**
+     *          Name            Description
+     *  @param  _interfaceId    Interface identifier.
+     * 
+     *  @return Whether the contract implements the interface.
+     */
+    function supportsInterface(
+        bytes4 _interfaceId
+    ) public view override(
         IERC165Upgradeable,
         ERC721Upgradeable
     ) returns (bool) {
@@ -355,6 +425,10 @@ ReentrancyGuardUpgradeable {
             || super.supportsInterface(_interfaceId);
     }
 
+    /**
+     *          Name       Description
+     *  @return address    Royalty receiver address.
+     */
     function _royaltyReceiver() internal view override returns (address) {
         return address(this);
     }
