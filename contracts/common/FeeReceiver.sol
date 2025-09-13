@@ -27,6 +27,17 @@ ReentrancyGuardUpgradeable {
         return VERSION;
     }
 
+    /**
+     *  @notice Withdraw cryptocurrency from the contract.
+     *
+     *          Name            Description
+     *  @param  _receiver       Receiver address.
+     *  @param  _currencies     Array of currency addresses to withdraw.
+     *  @param  _values         Array of withdraw values.
+     *  @param  _signatures     Array of admin signatures.
+     * 
+     *  @dev    TODO
+     */
     function withdraw(
         address _receiver,
         address[] calldata _currencies,

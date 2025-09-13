@@ -108,6 +108,15 @@ ReentrancyGuardUpgradeable {
         return ProjectTokenConstant.TOKEN_DECIMALS;
     }
 
+    /**
+     *  @notice Update base URI.
+     *
+     *          Name            Description
+     *  @param  _uri            New base URI.
+     *  @param  _signatures     Array of admin signatures.
+     * 
+     *  @dev    Administrative configurations.
+     */
     function updateBaseURI(
         string calldata _uri,
         bytes[] calldata _signatures
@@ -124,6 +133,16 @@ ReentrancyGuardUpgradeable {
         emit BaseURIUpdate(_uri);
     }
 
+    /**
+     *  @notice Authorize or deauthorize accounts to be project token launchpads.
+     *
+     *          Name            Description
+     *  @param  _accounts       Array of account addresses to authorize or deauthorize.
+     *  @param  _isLaunchpad    Whether the operation is authorize or deauthorize.
+     *  @param  _signatures     Array of admin signatures.
+     * 
+     *  @dev    Administrative configurations.
+     */
     function authorizeLaunchpads(
         address[] calldata _accounts,
         bool _isLaunchpad,
@@ -161,6 +180,16 @@ ReentrancyGuardUpgradeable {
         }
     }
 
+    /**
+     *  @notice Update royalty rate for a zone.
+     *
+     *          Name            Description
+     *  @param  _zone           Zone code.
+     *  @param  _royaltyRate    New royalty rate.
+     *  @param  _signatures     Array of admin signatures.
+     * 
+     *  @dev    Administrative configurations.
+     */
     function updateZoneRoyaltyRate(
         bytes32 _zone,
         uint256 _royaltyRate,

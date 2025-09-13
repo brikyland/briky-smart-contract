@@ -71,6 +71,15 @@ ReentrancyGuardUpgradeable {
         return VERSION;
     }
 
+    /**
+     *  @notice Update treasury.
+     *
+     *          Name            Description
+     *  @param  _treasury       New treasury address.
+     *  @param  _signatures     Array of admin signatures.
+     * 
+     *  @dev    Administrative configurations.
+     */
     function updateTreasury(
         address _treasury,
         bytes[] calldata _signatures
@@ -90,6 +99,17 @@ ReentrancyGuardUpgradeable {
         emit TreasuryUpdate(_treasury);
     }
 
+    /**
+     *  @notice Update stake token addresses.
+     *
+     *          Name            Description
+     *  @param  _stakeToken1    New stake token address 1.
+     *  @param  _stakeToken2    New stake token address 2.
+     *  @param  _stakeToken3    New stake token address 3.
+     *  @param  _signatures     Array of admin signatures.
+     * 
+     *  @dev    Administrative configurations.
+     */
     function updateStakeTokens(
         address _stakeToken1,
         address _stakeToken2,
@@ -136,6 +156,15 @@ ReentrancyGuardUpgradeable {
         revert Unauthorized();
     }
 
+    /**
+     *  @notice Unlock tokens for backer round to a receiver.
+     *
+     *          Name            Description
+     *  @param  _receiver       Receiver address.
+     *  @param  _signatures     Array of admin signatures.
+     * 
+     *  @dev    TODO
+     */
     function unlockForBackerRound(
         address _receiver,
         bytes[] calldata _signatures
@@ -163,6 +192,15 @@ ReentrancyGuardUpgradeable {
         emit BackerRoundTokensUnlock();
     }
 
+    /**
+     *  @notice Unlock tokens for seed round to a receiver.
+     *
+     *          Name            Description
+     *  @param  _receiver       Receiver address.
+     *  @param  _signatures     Array of admin signatures.
+     * 
+     *  @dev    TODO
+     */
     function unlockForSeedRound(
         address _receiver,
         bytes[] calldata _signatures
@@ -190,6 +228,15 @@ ReentrancyGuardUpgradeable {
         emit SeedRoundTokensUnlock();
     }
 
+    /**
+     *  @notice Unlock tokens for private sale 1 to a receiver.
+     *
+     *          Name            Description
+     *  @param  _receiver       Receiver address.
+     *  @param  _signatures     Array of admin signatures.
+     * 
+     *  @dev    TODO
+     */
     function unlockForPrivateSale1(
         address _receiver,
         bytes[] calldata _signatures
@@ -217,6 +264,15 @@ ReentrancyGuardUpgradeable {
         emit PrivateSale1TokensUnlock();
     }
 
+    /**
+     *  @notice Unlock tokens for private sale 2 to a receiver.
+     *
+     *          Name            Description
+     *  @param  _receiver       Receiver address.
+     *  @param  _signatures     Array of admin signatures.
+     * 
+     *  @dev    TODO
+     */
     function unlockForPrivateSale2(
         address _receiver,
         bytes[] calldata _signatures
@@ -245,6 +301,15 @@ ReentrancyGuardUpgradeable {
         emit PrivateSale2TokensUnlock();
     }
 
+    /**
+     *  @notice Unlock tokens for public sale to a receiver.
+     *
+     *          Name            Description
+     *  @param  _receiver       Receiver address.
+     *  @param  _signatures     Array of admin signatures.
+     * 
+     *  @dev    TODO
+     */
     function unlockForPublicSale(
         address _receiver,
         bytes[] calldata _signatures
@@ -272,6 +337,15 @@ ReentrancyGuardUpgradeable {
         emit PublicSaleTokensUnlock();
     }
 
+    /**
+     *  @notice Unlock tokens for core team to a receiver.
+     *
+     *          Name            Description
+     *  @param  _receiver       Receiver address.
+     *  @param  _signatures     Array of admin signatures.
+     * 
+     *  @dev    TODO
+     */
     function unlockForCoreTeam(
         address _receiver,
         bytes[] calldata _signatures
@@ -299,6 +373,15 @@ ReentrancyGuardUpgradeable {
         emit CoreTeamTokensUnlock();
     }
 
+    /**
+     *  @notice Unlock tokens for market maker to a receiver.
+     *
+     *          Name            Description
+     *  @param  _receiver       Receiver address.
+     *  @param  _signatures     Array of admin signatures.
+     * 
+     *  @dev    TODO
+     */
     function unlockForMarketMaker(
         address _receiver,
         bytes[] calldata _signatures
@@ -326,6 +409,15 @@ ReentrancyGuardUpgradeable {
         emit MarketMakerTokensUnlock();
     }
 
+    /**
+     *  @notice Unlock tokens for external treasury to a receiver.
+     *
+     *          Name            Description
+     *  @param  _receiver       Receiver address.
+     *  @param  _signatures     Array of admin signatures.
+     * 
+     *  @dev    TODO
+     */
     function unlockForExternalTreasury(
         address _receiver,
         bytes[] calldata _signatures
@@ -353,6 +445,14 @@ ReentrancyGuardUpgradeable {
         emit ExternalTreasuryTokensUnlock();
     }
 
+    /**
+     *  @notice Contribute liquidity from backer round.
+     *
+     *          Name          Description
+     *  @param  _liquidity    Amount to contribute.
+     * 
+     *  @dev    TODO
+     */
     function contributeLiquidityFromBackerRound(uint256 _liquidity) external nonReentrant {
         _contributeLiquidity(_liquidity);
 
@@ -363,6 +463,14 @@ ReentrancyGuardUpgradeable {
         emit LiquidityContributionFromBackerRound(_liquidity);
     }
 
+    /**
+     *  @notice Contribute liquidity from seed round.
+     *
+     *          Name          Description
+     *  @param  _liquidity    Amount to contribute.
+     * 
+     *  @dev    TODO
+     */
     function contributeLiquidityFromSeedRound(uint256 _liquidity) external nonReentrant {
         _contributeLiquidity(_liquidity);
 
@@ -373,6 +481,14 @@ ReentrancyGuardUpgradeable {
         emit LiquidityContributionFromSeedRound(_liquidity);
     }
 
+    /**
+     *  @notice Contribute liquidity from private sale 1.
+     *
+     *          Name          Description
+     *  @param  _liquidity    Amount to contribute.
+     * 
+     *  @dev    TODO
+     */
     function contributeLiquidityFromPrivateSale1(uint256 _liquidity) external nonReentrant {
         _contributeLiquidity(_liquidity);
 
@@ -383,6 +499,14 @@ ReentrancyGuardUpgradeable {
         emit LiquidityContributionFromPrivateSale1(_liquidity);
     }
 
+    /**
+     *  @notice Contribute liquidity from private sale 2.
+     *
+     *          Name          Description
+     *  @param  _liquidity    Amount to contribute.
+     * 
+     *  @dev    TODO
+     */
     function contributeLiquidityFromPrivateSale2(uint256 _liquidity) external nonReentrant {
         _contributeLiquidity(_liquidity);
 
@@ -393,6 +517,14 @@ ReentrancyGuardUpgradeable {
         emit LiquidityContributionFromPrivateSale2(_liquidity);
     }
 
+    /**
+     *  @notice Contribute liquidity from public sale.
+     *
+     *          Name          Description
+     *  @param  _liquidity    Amount to contribute.
+     * 
+     *  @dev    TODO
+     */
     function contributeLiquidityFromPublicSale(uint256 _liquidity) external nonReentrant {
         _contributeLiquidity(_liquidity);
 
@@ -403,6 +535,14 @@ ReentrancyGuardUpgradeable {
         emit LiquidityContributionFromPublicSale(_liquidity);
     }
 
+    /**
+     *  @notice Contribute liquidity from market maker.
+     *
+     *          Name          Description
+     *  @param  _liquidity    Amount to contribute.
+     * 
+     *  @dev    TODO
+     */
     function contributeLiquidityFromMarketMaker(uint256 _liquidity) external nonReentrant {
         _contributeLiquidity(_liquidity);
 
@@ -413,6 +553,14 @@ ReentrancyGuardUpgradeable {
         emit LiquidityContributionFromMarketMaker(_liquidity);
     }
 
+    /**
+     *  @notice Contribute liquidity from external treasury.
+     *
+     *          Name          Description
+     *  @param  _liquidity    Amount to contribute.
+     * 
+     *  @dev    TODO
+     */
     function contributeLiquidityFromExternalTreasury(uint256 _liquidity) external nonReentrant {
         _contributeLiquidity(_liquidity);
 
@@ -423,6 +571,15 @@ ReentrancyGuardUpgradeable {
         emit LiquidityContributionFromExternalTreasury(_liquidity);
     }
 
+    /**
+     *  @notice Contribute liquidity from stake token.
+     *
+     *          Name          Description
+     *  @param  _liquidity    Amount to contribute.
+     *  @param  _stakeToken   Stake token address.
+     * 
+     *  @dev    TODO
+     */
     function contributeLiquidityFromStakeToken(uint256 _liquidity, address _stakeToken) external nonReentrant {
         _contributeLiquidity(_liquidity);
 

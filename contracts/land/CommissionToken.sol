@@ -66,6 +66,15 @@ ReentrancyGuardUpgradeable {
         return VERSION;
     }
 
+    /**
+     *  @notice Update base URI.
+     *
+     *          Name            Description
+     *  @param  _uri            New base URI.
+     *  @param  _signatures     Array of admin signatures.
+     * 
+     *  @dev    Administrative configurations.
+     */
     function updateBaseURI(
         string calldata _uri,
         bytes[] calldata _signatures
@@ -84,6 +93,15 @@ ReentrancyGuardUpgradeable {
         emit BatchMetadataUpdate(1, IEstateToken(estateToken).estateNumber());
     }
 
+    /**
+     *  @notice Update royalty rate.
+     *
+     *          Name            Description
+     *  @param  _royaltyRate    New royalty rate.
+     *  @param  _signatures     Array of admin signatures.
+     * 
+     *  @dev    Administrative configurations.
+     */
     function updateRoyaltyRate(
         uint256 _royaltyRate,
         bytes[] calldata _signatures

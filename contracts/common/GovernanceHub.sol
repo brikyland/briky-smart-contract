@@ -66,6 +66,15 @@ ReentrancyGuardUpgradeable {
         return VERSION;
     }
 
+    /**
+     *  @notice Update proposal fee.
+     *
+     *          Name           Description
+     *  @param  _fee           New proposal fee.
+     *  @param  _signatures    Array of admin signatures.
+     *
+     *  @dev    Administrative configurations.
+     */
     function updateFee(
         uint256 _fee,
         bytes[] calldata _signatures

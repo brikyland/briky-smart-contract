@@ -89,6 +89,16 @@ ReentrancyGuardUpgradeable {
         return VERSION;
     }
 
+    /**
+     *  @notice Update allowed price range for an estate token unit.
+     *
+     *          Name            Description
+     *  @param  _baseMinUnitPrice    New minimum allowed price.
+     *  @param  _baseMaxUnitPrice    New maximum allowed price.
+     *  @param  _signatures          Array of admin signatures.
+     * 
+     *  @dev    Administrative configurations.
+     */
     function updateBaseUnitPriceRange(
         uint256 _baseMinUnitPrice,
         uint256 _baseMaxUnitPrice,
@@ -115,6 +125,16 @@ ReentrancyGuardUpgradeable {
         );
     }
 
+    /**
+     *  @notice Whitelist or unwhitelist accounts for private sale.
+     *
+     *          Name               Description
+     *  @param  _accounts          Array of account addresses to whitelist or unwhitelist.
+     *  @param  _isWhitelisted     Whether the operation is whitelist or unwhitelist.
+     *  @param  _signatures        Array of admin signatures.
+     * 
+     *  @dev    Administrative configurations.
+     */
     function whitelist(
         address[] calldata _accounts,
         bool _isWhitelisted,

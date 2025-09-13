@@ -43,6 +43,14 @@ ReentrancyGuardUpgradeable {
         return VERSION;
     }
 
+    /**
+     *  @notice Withdraw operation fund to an operator.
+     *
+     *          Name            Description
+     *  @param  _value          Amount to withdraw.
+     *  @param  _operator       Operator address.
+     *  @param  _signatures     Array of admin signatures.
+     */
     function withdrawOperationFund(
         uint256 _value,
         address _operator,

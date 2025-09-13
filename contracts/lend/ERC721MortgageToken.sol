@@ -41,6 +41,16 @@ MortgageToken {
         );
     }
 
+    /**
+     *  @notice Register or deregister tokens as collaterals.
+     *
+     *          Name             Description
+     *  @param  _tokens          Array of token addresses to register or deregister.
+     *  @param  _isCollateral    Whether the operation is register or deregister.
+     *  @param  _signatures      Array of admin signatures.
+     * 
+     *  @dev    Administrative configurations.
+     */
     function registerCollaterals(
         address[] calldata _tokens,
         bool _isCollateral,

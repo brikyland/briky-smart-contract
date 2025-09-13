@@ -33,6 +33,17 @@ Administrable {
         return VERSION;
     }
 
+    /**
+     *  @notice Update price feeds.
+     *
+     *          Name            Description
+     *  @param  _currencies     Array of currency addresses.
+     *  @param  _feeds          Array of new price feed addresses.
+     *  @param  _heartbeats     Array of new heartbeats.
+     *  @param  _signatures     Array of admin signatures.
+     * 
+     *  @dev    Administrative configurations.
+     */
     function updatePriceFeeds(
         address[] calldata _currencies,
         address[] calldata _feeds,
@@ -70,6 +81,16 @@ Administrable {
         }
     }
 
+    /**
+     *  @notice Update default rates.
+     *
+     *          Name            Description
+     *  @param  _currencies     Array of currency addresses.
+     *  @param  _rates          Array of new default rates.
+     *  @param  _signatures     Array of admin signatures.
+     * 
+     *  @dev    Administrative configurations.
+     */
     function updateDefaultRates(
         address[] calldata _currencies,
         Rate[] calldata _rates,

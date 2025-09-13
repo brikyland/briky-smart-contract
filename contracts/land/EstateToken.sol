@@ -86,6 +86,15 @@ Validatable {
         return EstateTokenConstant.TOKEN_DECIMALS;
     }
 
+    /**
+     *  @notice Update commission token address.
+     *
+     *          Name                Description
+     *  @param  _commissionToken    New commission token address.
+     *  @param  _signatures         Array of admin signatures.
+     * 
+     *  @dev    Administrative configurations.
+     */
     function updateCommissionToken(
         address _commissionToken,
         bytes[] calldata _signatures
@@ -105,6 +114,15 @@ Validatable {
         emit CommissionTokenUpdate(_commissionToken);
     }
 
+    /**
+     *  @notice Update base URI.
+     *
+     *          Name            Description
+     *  @param  _uri            New base URI.
+     *  @param  _signatures     Array of admin signatures.
+     * 
+     *  @dev    Administrative configurations.
+     */
     function updateBaseURI(
         string calldata _uri,
         bytes[] calldata _signatures
@@ -121,6 +139,16 @@ Validatable {
         emit BaseURIUpdate(_uri);
     }
 
+    /**
+     *  @notice Authorize or deauthorize accounts to be tokenizers.
+     *
+     *          Name            Description
+     *  @param  _accounts       Array of account addresses to authorize or deauthorize.
+     *  @param  _isTokenizer    Whether the operation is authorize or deauthorize.
+     *  @param  _signatures     Array of admin signatures.
+     * 
+     *  @dev    Administrative configurations.
+     */
     function authorizeTokenizers(
         address[] calldata _accounts,
         bool _isTokenizer,
@@ -158,6 +186,16 @@ Validatable {
         }
     }
 
+    /**
+     *  @notice Authorize or deauthorize accounts to be extractors.
+     *
+     *          Name            Description
+     *  @param  _accounts       Array of account addresses to authorize or deauthorize.
+     *  @param  _isExtractor    Whether the operation is authorize or deauthorize.
+     *  @param  _signatures     Array of admin signatures.
+     * 
+     *  @dev    Administrative configurations.
+     */
     function authorizeExtractors(
         address[] calldata _accounts,
         bool _isExtractor,
@@ -192,6 +230,16 @@ Validatable {
         }
     }
 
+    /**
+     *  @notice Update royalty rate for a zone.
+     *
+     *          Name            Description
+     *  @param  _zone           Zone code.
+     *  @param  _royaltyRate    New royalty rate.
+     *  @param  _signatures     Array of admin signatures.
+     * 
+     *  @dev    Administrative configurations.
+     */
     function updateZoneRoyaltyRate(
         bytes32 _zone,
         uint256 _royaltyRate,

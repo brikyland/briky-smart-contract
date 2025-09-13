@@ -42,6 +42,17 @@ ReentrancyGuardUpgradeable {
         return VERSION;
     }
 
+    /**
+     *  @notice Update stake token addresses.
+     *
+     *          Name            Description
+     *  @param  _stakeToken1    New stake token address 1.
+     *  @param  _stakeToken2    New stake token address 2.
+     *  @param  _stakeToken3    New stake token address 3.
+     *  @param  _signatures     Array of admin signatures.
+     * 
+     *  @dev    Administrative configurations.
+     */
     function updateStakeTokens(
         address _stakeToken1,
         address _stakeToken2,
@@ -75,6 +86,16 @@ ReentrancyGuardUpgradeable {
         );
     }
 
+    /**
+     *  @notice Start the auction.
+     *
+     *          Name                Description
+     *  @param  _endAt              End timestamp.
+     *  @param  _vestingDuration    Vesting duration.
+     *  @param  _signatures         Array of admin signatures.
+     * 
+     *  @dev    TODO
+     */
     function startAuction(
         uint256 _endAt,
         uint256 _vestingDuration,

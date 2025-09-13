@@ -44,6 +44,16 @@ ReentrancyGuardUpgradeable {
         return VERSION;
     }
 
+    /**
+     *  @notice Authorize or deauthorize accounts to be providers.
+     *
+     *          Name            Description
+     *  @param  _accounts     Array of account addresses to authorize or deauthorize.
+     *  @param  _isProvider   Whether the operation is authorize or deauthorize.
+     *  @param  _signatures   Array of admin signatures.
+     * 
+     *  @dev    Administrative configurations.
+     */
     function authorizeProvider(
         address[] calldata _accounts,
         bool _isProvider,

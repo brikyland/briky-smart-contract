@@ -94,6 +94,16 @@ ReentrancyGuardUpgradeable {
         return VERSION;
     }
 
+    /**
+     *  @notice Update allowed price range for a project token unit.
+     *
+     *          Name                 Description
+     *  @param  _baseMinUnitPrice    New minimum allowed price.
+     *  @param  _baseMaxUnitPrice    New maximum allowed price.
+     *  @param  _signatures          Array of admin signatures.
+     * 
+     *  @dev    Administrative configurations.
+     */
     function updateBaseUnitPriceRange(
         uint256 _baseMinUnitPrice,
         uint256 _baseMaxUnitPrice,

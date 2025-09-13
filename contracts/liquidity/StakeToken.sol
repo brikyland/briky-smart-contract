@@ -65,6 +65,16 @@ ReentrancyGuardUpgradeable {
         return VERSION;
     }
 
+    /**
+     *  @notice Initialize stake token rewarding.
+     *
+     *          Name                       Description
+     *  @param  _initialLastRewardFetch    Initial last reward fetch.
+     *  @param  _successor                 Successor address.
+     *  @param  _signatures                Array of admin signatures.
+     * 
+     *  @dev    TODO
+     */
     function initializeRewarding(
         uint256 _initialLastRewardFetch,
         address _successor,
@@ -88,6 +98,15 @@ ReentrancyGuardUpgradeable {
         successor = _successor;
     }
 
+    /**
+     *  @notice Update fee rate.
+     *
+     *          Name            Description
+     *  @param  _feeRate        New fee rate.
+     *  @param  _signatures     Array of admin signatures.
+     * 
+     *  @dev    Administrative configurations.
+     */
     function updateFeeRate(
         uint256 _feeRate,
         bytes[] calldata _signatures

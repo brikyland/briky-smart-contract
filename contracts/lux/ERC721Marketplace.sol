@@ -58,6 +58,16 @@ ReentrancyGuardUpgradeable {
         return offers[_offerId];
     }
 
+    /**
+     *  @notice Register or deregister collections.
+     *
+     *          Name            Description
+     *  @param  _collections    Array of collection addresses.
+     *  @param  _isCollection   Whether the operation is register or deregister.
+     *  @param  _signatures     Array of admin signatures.
+     * 
+     *  @dev    Administrative configurations.
+     */
     function registerCollections(
         address[] calldata _collections,
         bool _isCollection,

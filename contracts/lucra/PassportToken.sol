@@ -61,6 +61,15 @@ ReentrancyGuardUpgradeable {
         return VERSION;
     }
 
+    /**
+     *  @notice Update base URI.
+     *
+     *          Name            Description
+     *  @param  _uri            New base URI.
+     *  @param  _signatures     Array of admin signatures.
+     * 
+     *  @dev    Administrative configurations.
+     */
     function updateBaseURI(
         string calldata _uri,
         bytes[] calldata _signatures
@@ -79,6 +88,15 @@ ReentrancyGuardUpgradeable {
         emit BatchMetadataUpdate(1, tokenNumber);
     }
 
+    /**
+     *  @notice Update minting fee.
+     *
+     *          Name            Description
+     *  @param  _fee            New minting fee.
+     *  @param  _signatures     Array of admin signatures.
+     * 
+     *  @dev    Administrative configurations.
+     */
     function updateFee(
         uint256 _fee,
         bytes[] calldata _signatures
@@ -95,6 +113,15 @@ ReentrancyGuardUpgradeable {
         emit FeeUpdate(_fee);
     }
 
+    /**
+     *  @notice Update royalty rate.
+     *
+     *          Name            Description
+     *  @param  _royaltyRate    New royalty rate.
+     *  @param  _signatures     Array of admin signatures.
+     * 
+     *  @dev    Administrative configurations.
+     */
     function updateRoyaltyRate(
         uint256 _royaltyRate,
         bytes[] calldata _signatures
@@ -114,6 +141,15 @@ ReentrancyGuardUpgradeable {
         emit RoyaltyRateUpdate(Rate(_royaltyRate, CommonConstant.RATE_DECIMALS));
     }
 
+    /**
+     *  @notice Withdraw cryptocurrency from the contract to a receiver.
+     *
+     *          Name            Description
+     *  @param  _receiver       Receiver address.
+     *  @param  _currencies     Array of currency addresses to withdraw.
+     *  @param  _values         Array of withdraw values.
+     *  @param  _signatures     Array of admin signatures.
+     */
     function withdraw(
         address _receiver,
         address[] calldata _currencies,
