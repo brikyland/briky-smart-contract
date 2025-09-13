@@ -14,7 +14,7 @@ import {ICommon} from "../../common/interfaces/ICommon.sol";
  *  @notice The `AssetMarketplace` contract hosts a marketplace for a specific asset token.
  *
  *  @dev    The asset token must support interface `IAssetToken`.
- *  @dev    All amounts are expressed in absolute units. Scale these values by `10 ** IAssetToken.decimals()` to obtain
+ *  @dev    TODO: All amounts are expressed in absolute units. Scale these values by `10 ** IAssetToken.decimals()` to obtain
  *          the correct amounts under the `IAssetToken` convention.
  *  @dev    ERC-20 tokens are identified by their contract addresses.
  *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
