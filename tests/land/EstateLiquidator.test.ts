@@ -556,7 +556,7 @@ describe('2.3. EstateLiquidator', async () => {
                 params1,
                 manager,
                 timestamp,
-                params1.value.add(fee)
+                { value: params1.value.add(fee) }
             ));
 
             timestamp += 10;
@@ -578,7 +578,7 @@ describe('2.3. EstateLiquidator', async () => {
                 params2,
                 manager,
                 timestamp,
-                params2.value.add(fee)
+                { value: params2.value.add(fee) }
             ));
         }
 
@@ -654,7 +654,7 @@ describe('2.3. EstateLiquidator', async () => {
                 params,
                 signer,
                 timestamp,
-                value
+                { value }
             )).to.be.revertedWithCustomError(errorContract, error);
         }
 
@@ -678,7 +678,7 @@ describe('2.3. EstateLiquidator', async () => {
                 params,
                 signer,
                 timestamp,
-                value
+                { value }
             )).to.be.revertedWith(error);
         }
 
@@ -730,7 +730,7 @@ describe('2.3. EstateLiquidator', async () => {
                 params1,
                 manager,
                 timestamp,
-                params1.value.add(governanceFee)
+                { value: params1.value.add(governanceFee) }
             );
             const receipt1 = await tx1.wait();
             const gasFee1 = receipt1.gasUsed.mul(receipt1.effectiveGasPrice);
@@ -802,7 +802,7 @@ describe('2.3. EstateLiquidator', async () => {
                 params2,
                 manager,
                 timestamp,
-                params2.value.add(governanceFee).add(ethers.utils.parseEther('1'))
+                { value: params2.value.add(governanceFee).add(ethers.utils.parseEther('1')) }
             );
             const receipt2 = await tx2.wait();
             const gasFee2 = receipt2.gasUsed.mul(receipt2.effectiveGasPrice);
@@ -878,7 +878,7 @@ describe('2.3. EstateLiquidator', async () => {
                 params3,
                 manager,
                 timestamp,
-                params3.value.add(governanceFee)
+                { value: params3.value.add(governanceFee) }
             );
             const receipt3 = await tx3.wait();
             const gasFee3 = receipt3.gasUsed.mul(receipt3.effectiveGasPrice);
@@ -957,7 +957,7 @@ describe('2.3. EstateLiquidator', async () => {
                 params4,
                 manager,
                 timestamp,
-                governanceFee.add(ethers.utils.parseEther('1')),
+                { value: governanceFee.add(ethers.utils.parseEther('1')) },
             );
             const receipt4 = await tx4.wait();
             const gasFee4 = receipt4.gasUsed.mul(receipt4.effectiveGasPrice);
@@ -1053,7 +1053,7 @@ describe('2.3. EstateLiquidator', async () => {
                         params,
                         manager,
                         timestamp,
-                        params.value.add(fee),
+                        { value: params.value.add(fee) },
                     )).to.be.revertedWith('ReentrancyGuard: reentrant call');
                 }
             );
@@ -1078,7 +1078,7 @@ describe('2.3. EstateLiquidator', async () => {
                 defaultParams,
                 moderator,
                 timestamp,
-                defaultParams.value.add(fee),
+                { value: defaultParams.value.add(fee) },
             )).to.be.revertedWithCustomError(estateLiquidator, 'Unauthorized');
 
             // By user
@@ -1091,7 +1091,7 @@ describe('2.3. EstateLiquidator', async () => {
                 defaultParams,
                 user,
                 timestamp,
-                defaultParams.value.add(fee),
+                { value: defaultParams.value.add(fee) },
             )).to.be.revertedWithCustomError(estateLiquidator, 'Unauthorized');
         });
 
@@ -1115,7 +1115,7 @@ describe('2.3. EstateLiquidator', async () => {
                 defaultParams,
                 manager,
                 timestamp,
-                defaultParams.value.add(fee),
+                { value: defaultParams.value.add(fee) },
             )).to.be.revertedWithCustomError(estateLiquidator, 'Unauthorized');
         });
 
@@ -1146,7 +1146,7 @@ describe('2.3. EstateLiquidator', async () => {
                 defaultParams,
                 manager,
                 timestamp,
-                defaultParams.value.add(fee),
+                { value: defaultParams.value.add(fee) },
             )).to.be.revertedWithCustomError(estateLiquidator, 'Unauthorized');
         });
 
@@ -1608,7 +1608,7 @@ describe('2.3. EstateLiquidator', async () => {
                 params,
                 manager,
                 timestamp,
-                fee,
+                { value: fee },
             ));
 
             timestamp += 10;

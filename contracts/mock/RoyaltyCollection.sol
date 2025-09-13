@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol";
+import {IERC2981Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 
 import {CommonConstant} from "../common/constants/CommonConstant.sol";
@@ -53,10 +54,11 @@ contract RoyaltyCollection is ERC721Upgradeable, RoyaltyRateProposer {
     }
 
     function supportsInterface(bytes4 _interfaceId) public view override(
-        RoyaltyRateProposer,
+        IERC165Upgradeable,
         ERC721Upgradeable
     ) returns (bool) {
-        return super.supportsInterface(_interfaceId);
+        return _interfaceId == type(IERC2981Upgradeable).interfaceId
+            || super.supportsInterface(_interfaceId);
     }
 
     function getRoyaltyRate(uint256) public view override returns (Rate memory rate) {

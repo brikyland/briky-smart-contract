@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import { ERC721MortgageToken } from "../lend/ERC721MortgageToken.sol";
-import { Revert } from "../lib/Revert.sol";
+import { Revert } from "../common/utilities/Revert.sol";
 import { ProxyCaller } from "./common/ProxyCaller.sol";
 
 contract MockERC721MortgageToken is ERC721MortgageToken, ProxyCaller {

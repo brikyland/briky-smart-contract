@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import { ProjectToken } from "../launch/ProjectToken.sol";
-import { Revert } from "../lib/Revert.sol";
+import { Revert } from "../common/utilities/Revert.sol";
 import { ProxyCaller } from "./common/ProxyCaller.sol";
 
 contract MockProjectToken is ProjectToken, ProxyCaller {

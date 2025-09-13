@@ -16,7 +16,7 @@ import {
     PriceWatcher,
     MockEstateForger,
 } from '@typechain-types';
-import { callTransaction, prepareERC20, prepareNativeToken, randomWallet, resetERC20, resetNativeToken, testReentrancy } from '@utils/blockchain';
+import { callTransaction, expectRevertWithModifierCustomError, prepareERC20, prepareNativeToken, randomWallet, resetERC20, resetNativeToken, testReentrancy } from '@utils/blockchain';
 import { Constant } from '@tests/test.constant';
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
@@ -470,12 +470,16 @@ describe('6.3. MortgageMarketplace', async () => {
             });
             const { mortgageMarketplace } = fixture;
 
-            // TODO: Why it doesn't revert with InvalidOfferId custom error?
-
-            await expect(mortgageMarketplace.getOffer(0))
-                .to.be.revertedWithoutReason();
-            await expect(mortgageMarketplace.getOffer(3))
-                .to.be.revertedWithoutReason();
+            await expectRevertWithModifierCustomError(
+                mortgageMarketplace,
+                mortgageMarketplace.getOffer(0),
+                'InvalidOfferId'
+            );
+            await expectRevertWithModifierCustomError(
+                mortgageMarketplace,
+                mortgageMarketplace.getOffer(3),
+                'InvalidOfferId'
+            );
         });
     });
     

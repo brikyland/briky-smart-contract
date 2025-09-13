@@ -21,6 +21,11 @@ import {
     ReentrancyERC20,
     ReentrancyExclusiveERC20,
     FailReceiver,
+    IProjectTokenReceiver__factory,
+    IProjectLaunchpad__factory,
+    IERC165Upgradeable__factory,
+    IValidatable__factory,
+    IPrestigePad__factory,
 } from '@typechain-types';
 import { callTransaction, callTransactionAtTimestamp, getBalance, getSignatures, prepareERC20, prepareNativeToken, randomWallet, resetERC20, resetNativeToken, testReentrancy } from '@utils/blockchain';
 import { Constant, DAY } from '@tests/test.constant';
@@ -5484,6 +5489,32 @@ describe('7.1. PrestigePad', async () => {
                 .to.not.be.reverted;
             await expect(prestigePad.allocationOfAt(depositor1.address, 1, timestamp + 1))
                 .to.be.revertedWithCustomError(prestigePad, 'InvalidTimestamp');
+        });
+    });
+
+
+    describe('7.1.18. supportsInterface(bytes4)', () => {
+        it('7.1.18.1. return true for appropriate interface', async () => {
+            const fixture = await beforePrestigePadTest();
+            const { prestigePad } = fixture;
+
+            const ICommon = ICommon__factory.createInterface();
+            const IERC1155ReceiverUpgradeable = IERC1155ReceiverUpgradeable__factory.createInterface();
+            const IProjectTokenReceiver = IProjectTokenReceiver__factory.createInterface();
+            const IProjectLaunchpad = IProjectLaunchpad__factory.createInterface();
+            const IERC165Upgradeable = IERC165Upgradeable__factory.createInterface();
+            const IPrestigePad = IPrestigePad__factory.createInterface();
+            const IValidatable = IValidatable__factory.createInterface();
+
+            const IPrestigePadInterfaceId = getInterfaceID(IPrestigePad, [IValidatable, IProjectLaunchpad])
+            const IProjectTokenReceiverInterfaceId = getInterfaceID(IProjectTokenReceiver, [IERC1155ReceiverUpgradeable])
+            const IProjectLaunchpadInterfaceId = getInterfaceID(IProjectLaunchpad, [ICommon, IProjectTokenReceiver])
+            const IERC165UpgradeableInterfaceId = getInterfaceID(IERC165Upgradeable, []);
+
+            expect(await prestigePad.supportsInterface(getBytes4Hex(IPrestigePadInterfaceId))).to.equal(true);
+            expect(await prestigePad.supportsInterface(getBytes4Hex(IProjectTokenReceiverInterfaceId))).to.equal(true);
+            expect(await prestigePad.supportsInterface(getBytes4Hex(IProjectLaunchpadInterfaceId))).to.equal(true);
+            expect(await prestigePad.supportsInterface(getBytes4Hex(IERC165UpgradeableInterfaceId))).to.equal(true);
         });
     });
 });

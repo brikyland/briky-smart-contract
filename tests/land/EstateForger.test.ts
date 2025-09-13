@@ -16,6 +16,10 @@ import {
     IERC1155ReceiverUpgradeable__factory,
     ReserveVault,
     PriceWatcher,
+    IERC165Upgradeable__factory,
+    IEstateForger__factory,
+    ICommissionDispatchable__factory,
+    IValidatable__factory,
 } from '@typechain-types';
 import { callTransaction, callTransactionAtTimestamp, getBalance, getSignatures, prepareERC20, prepareNativeToken, randomWallet, resetERC20, resetNativeToken, testReentrancy } from '@utils/blockchain';
 import { Constant, DAY } from '@tests/test.constant';
@@ -139,7 +143,7 @@ export async function getCashbackBaseDenomination(
     );
 }
 
-describe.only('2.2. EstateForger', async () => {
+describe('2.2. EstateForger', async () => {
     async function estateForgerFixture(): Promise<EstateForgerFixture> {
         const accounts = await ethers.getSigners();
         const deployer = accounts[0];
@@ -5459,12 +5463,20 @@ describe.only('2.2. EstateForger', async () => {
             const IERC1155ReceiverUpgradeable = IERC1155ReceiverUpgradeable__factory.createInterface();
             const IEstateTokenReceiver = IEstateTokenReceiver__factory.createInterface();
             const IEstateTokenizer = IEstateTokenizer__factory.createInterface();
+            const IERC165Upgradeable = IERC165Upgradeable__factory.createInterface();
+            const IEstateForger = IEstateForger__factory.createInterface();
+            const IValidatable = IValidatable__factory.createInterface();
+            const ICommissionDispatchable = ICommissionDispatchable__factory.createInterface();
 
+            const IEstateForgerInterfaceId = getInterfaceID(IEstateForger, [ICommon, IValidatable, ICommissionDispatchable, IEstateTokenizer])
             const IEstateTokenReceiverInterfaceId = getInterfaceID(IEstateTokenReceiver, [IERC1155ReceiverUpgradeable])
             const IEstateTokenizerInterfaceId = getInterfaceID(IEstateTokenizer, [ICommon, IEstateTokenReceiver])
+            const IERC165UpgradeableInterfaceId = getInterfaceID(IERC165Upgradeable, []);
 
+            expect(await estateForger.supportsInterface(getBytes4Hex(IEstateForgerInterfaceId))).to.equal(true);
             expect(await estateForger.supportsInterface(getBytes4Hex(IEstateTokenReceiverInterfaceId))).to.equal(true);
             expect(await estateForger.supportsInterface(getBytes4Hex(IEstateTokenizerInterfaceId))).to.equal(true);
+            expect(await estateForger.supportsInterface(getBytes4Hex(IERC165UpgradeableInterfaceId))).to.equal(true);
         });
     });
 });

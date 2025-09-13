@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-import {Revert} from "../../lib/Revert.sol";
+import {Revert} from "../../common/utilities/Revert.sol";
 import {ProxyCaller} from "../common/ProxyCaller.sol";
 import {IRate} from "../../common/structs/IRate.sol";
 

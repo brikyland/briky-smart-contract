@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import {ERC1155HolderUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
 
-import {Revert} from "../../lib/Revert.sol";
+import {Revert} from "../../common/utilities/Revert.sol";
 import {ProxyCaller} from "./../common/ProxyCaller.sol";
 
 contract ReentrancyERC1155Holder is ERC1155HolderUpgradeable, ProxyCaller {

@@ -5,7 +5,7 @@ import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC2
 import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 
 import { PrimaryToken } from "../liquidity/PrimaryToken.sol";
-import { Revert } from "../lib/Revert.sol";
+import { Revert } from "../common/utilities/Revert.sol";
 
 contract MockPrimaryToken is PrimaryToken {
     function burn(address _from, uint256 _amount) external {

@@ -7,7 +7,7 @@ import {
     MockPriceFeed,
     PriceWatcher,
 } from '@typechain-types';
-import { callTransaction, getSignatures, randomWallet } from '@utils/blockchain';
+import { callTransaction, expectRevertWithModifierCustomError, getSignatures, randomWallet } from '@utils/blockchain';
 import { Constant } from '@tests/test.constant';
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { deployCurrency } from '@utils/deployments/common/currency';
@@ -458,12 +458,16 @@ describe('1.7. PriceWatcher', async () => {
                 [{ value: BigNumber.from(100_000), decimals: 3 }],
             );
 
-            await expect(priceWatcher.isPriceInRange(
-                unavailableCurrency.address,
-                1000,
-                100 * 1000,
-                100 * 1000,
-            )).to.be.revertedWithoutReason();
+            await expectRevertWithModifierCustomError(
+                priceWatcher,
+                priceWatcher.isPriceInRange(
+                    unavailableCurrency.address,
+                    1000,
+                    100 * 1000,
+                    100 * 1000,
+                ),
+                'InvalidCurrency'
+            );
         });
 
         it('1.7.4.4. revert when currency rate is missing', async () => {

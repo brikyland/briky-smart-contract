@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import { StakeToken } from "../liquidity/StakeToken.sol";
-import { Revert } from "../lib/Revert.sol";
+import { Revert } from "../common/utilities/Revert.sol";
 
 contract MockStakeToken is StakeToken {
     function call(address _to, bytes calldata _data) external {

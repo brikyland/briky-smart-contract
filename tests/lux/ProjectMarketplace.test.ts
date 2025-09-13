@@ -13,7 +13,7 @@ import {
     MockProjectToken,
     MockProjectToken__factory,
 } from '@typechain-types';
-import { callTransaction, getBalance, prepareERC20, prepareNativeToken, resetERC20, resetNativeToken, testReentrancy } from '@utils/blockchain';
+import { callTransaction, expectRevertWithModifierCustomError, getBalance, prepareERC20, prepareNativeToken, resetERC20, resetNativeToken, testReentrancy } from '@utils/blockchain';
 import { Constant } from '@tests/test.constant';
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
@@ -400,13 +400,16 @@ describe('6.4. ProjectMarketplace', async () => {
                 listSampleOffers: true,
             });
 
-            // TODO: Why it doesn't revert with InvalidOfferId custom error?
-
-            await expect(projectMarketplace.getOffer(0))
-                .to.be.revertedWithoutReason();
-
-            await expect(projectMarketplace.getOffer(3))
-                .to.be.revertedWithoutReason();
+            await expectRevertWithModifierCustomError(
+                projectMarketplace,
+                projectMarketplace.getOffer(0),
+                'InvalidOfferId'
+            );
+            await expectRevertWithModifierCustomError(
+                projectMarketplace,
+                projectMarketplace.getOffer(3),
+                'InvalidOfferId'
+            );
         });
     });
 

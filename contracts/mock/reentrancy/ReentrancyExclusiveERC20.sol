@@ -7,7 +7,7 @@ import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20
 
 import {IExclusiveToken} from "../../common/interfaces/IExclusiveToken.sol";
 
-import {Revert} from "../../lib/Revert.sol";
+import {Revert} from "../../common/utilities/Revert.sol";
 import {ProxyCaller} from "../common/ProxyCaller.sol";
 
 import {IRate} from "../../common/structs/IRate.sol";

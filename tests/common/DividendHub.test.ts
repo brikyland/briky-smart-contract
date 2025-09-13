@@ -17,7 +17,7 @@ import { deployDividendHub } from '@utils/deployments/common/dividendHub';
 import { callDividendHub_Pause } from '@utils/callWithSignatures/dividendHub';
 import { callAdmin_AuthorizeGovernor, callAdmin_UpdateCurrencyRegistries } from '@utils/callWithSignatures/admin';
 import { expect } from 'chai';
-import { callTransaction, prepareERC20, prepareNativeToken } from '@utils/blockchain';
+import { callTransaction, expectRevertWithModifierCustomError, prepareERC20, prepareNativeToken } from '@utils/blockchain';
 import { deployGovernor } from '@utils/deployments/common/governor';
 import { BigNumber } from 'ethers';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
@@ -988,10 +988,16 @@ describe('1.4. DividendHub', async () => {
             });
             const { dividendHub, receiver1 } = fixture;
 
-            await expect(dividendHub.connect(receiver1).getDividend(0))
-                .to.be.revertedWithoutReason();
-            await expect(dividendHub.connect(receiver1).getDividend(4))
-                .to.be.revertedWithoutReason();
+            await expectRevertWithModifierCustomError(
+                dividendHub,
+                dividendHub.connect(receiver1).getDividend(0),
+                'InvalidDividendId'
+            );
+            await expectRevertWithModifierCustomError(
+                dividendHub,
+                dividendHub.connect(receiver1).getDividend(4),
+                'InvalidDividendId'
+            );
         });
     });
 });

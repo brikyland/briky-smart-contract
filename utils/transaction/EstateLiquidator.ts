@@ -1,4 +1,3 @@
-import { BigNumber } from "ethers";
 import { Wallet } from "ethers";
 import { RequestExtractionParams } from "../models/EstateLiquidator";
 import { EstateLiquidator, EstateToken, GovernanceHub } from "@typechain-types";
@@ -13,7 +12,7 @@ export async function getRequestExtractionTx(
     params: RequestExtractionParams,
     signer: Wallet,
     timestamp: number,
-    value: BigNumber,
+    txConfig = {},
 ) {
     const validation = await getRequestExtractionValidation(
         estateToken as any,
@@ -32,6 +31,6 @@ export async function getRequestExtractionTx(
         params.feeRate,
         params.uuid,
         validation,
-        { value: value }
+        txConfig,
     );
 }
