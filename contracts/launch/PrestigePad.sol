@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
 import {CurrencyHandler} from "../common/utilities/CurrencyHandler.sol";
@@ -780,7 +781,7 @@ ReentrancyGuardUpgradeable {
     ) public view virtual override returns (bool) {
         return _interfaceId == type(IPrestigePad).interfaceId
             || _interfaceId == type(IProjectLaunchpad).interfaceId
-            || _interfaceId == type(IProjectTokenReceiver).interfaceId;
+            || _interfaceId == type(IProjectTokenReceiver).interfaceId
+            || _interfaceId == type(IERC165Upgradeable).interfaceId;
     }
-
 }
