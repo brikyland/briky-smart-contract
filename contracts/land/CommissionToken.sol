@@ -35,6 +35,9 @@ ReentrancyGuardUpgradeable {
 
     string constant private VERSION = "v1.2.1";
 
+    /**
+     *  @notice Executed on a call to the contract with empty calldata.
+     */
     receive() external payable {}
 
     function initialize(
@@ -73,7 +76,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _uri            New base URI.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative configuration.
      */
     function updateBaseURI(
         string calldata _uri,
@@ -100,7 +103,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _royaltyRate    New royalty rate.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative configuration.
      */
     function updateRoyaltyRate(
         uint256 _royaltyRate,

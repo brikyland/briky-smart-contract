@@ -34,6 +34,9 @@ ReentrancyGuardUpgradeable {
 
     string constant private VERSION = "v1.2.1";
 
+    /**
+     *  @notice Executed on a call to the contract with empty calldata.
+     */
     receive() external payable {}
 
     function initialize(
@@ -72,13 +75,13 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Update treasury.
+     *  @notice Update the treasury contract.
      *
      *          Name            Description
-     *  @param  _treasury       New treasury address.
+     *  @param  _treasury       New treasury contract address.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative configuration.
      */
     function updateTreasury(
         address _treasury,
@@ -100,15 +103,15 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Update stake token addresses.
+     *  @notice Update stake token contracts.
      *
      *          Name            Description
-     *  @param  _stakeToken1    New stake token address 1.
-     *  @param  _stakeToken2    New stake token address 2.
-     *  @param  _stakeToken3    New stake token address 3.
+     *  @param  _stakeToken1    New the stake token #1 contract address.
+     *  @param  _stakeToken2    New the stake token #2 contract address.
+     *  @param  _stakeToken3    New the stake token #3 contract address.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative configuration.
      */
     function updateStakeTokens(
         address _stakeToken1,
@@ -157,23 +160,23 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Unlock tokens for backer round to a receiver.
+     *  @notice Unlock tokens allocated for Backer Round to a distributor.
      *
      *          Name            Description
-     *  @param  _receiver       Receiver address.
+     *  @param  _distributor    Distributor address.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    TODO
+     *  @dev    Administrative operation.
      */
     function unlockForBackerRound(
-        address _receiver,
+        address _distributor,
         bytes[] calldata _signatures
     ) external nonReentrant {
         IAdmin(admin).verifyAdminSignatures(
             abi.encode(
                 address(this),
                 "unlockForBackerRound",
-                _receiver
+                _distributor
             ),
             _signatures
         );
@@ -185,7 +188,7 @@ ReentrancyGuardUpgradeable {
 
         _transfer(
             address(this),
-            _receiver,
+            _distributor,
             PrimaryTokenConstant.BACKER_ROUND_ALLOCATION
         );
 
@@ -193,23 +196,23 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Unlock tokens for seed round to a receiver.
+     *  @notice Unlock tokens allocated for Seed Round to a distributor.
      *
      *          Name            Description
-     *  @param  _receiver       Receiver address.
+     *  @param  _distributor    Distributor address.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    TODO
+     *  @dev    Administrative operation.
      */
     function unlockForSeedRound(
-        address _receiver,
+        address _distributor,
         bytes[] calldata _signatures
     ) external nonReentrant {
         IAdmin(admin).verifyAdminSignatures(
             abi.encode(
                 address(this),
                 "unlockForSeedRound",
-                _receiver
+                _distributor
             ),
             _signatures
         );
@@ -221,7 +224,7 @@ ReentrancyGuardUpgradeable {
 
         _transfer(
             address(this),
-            _receiver,
+            _distributor,
             PrimaryTokenConstant.SEED_ROUND_ALLOCATION
         );
 
@@ -229,23 +232,23 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Unlock tokens for private sale 1 to a receiver.
+     *  @notice Unlock tokens allocated for Private Sale #1 to a distributor.
      *
      *          Name            Description
-     *  @param  _receiver       Receiver address.
+     *  @param  _distributor    Distributor address.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    TODO
+     *  @dev    Administrative operation.
      */
     function unlockForPrivateSale1(
-        address _receiver,
+        address _distributor,
         bytes[] calldata _signatures
     ) external nonReentrant {
         IAdmin(admin).verifyAdminSignatures(
             abi.encode(
                 address(this),
                 "unlockForPrivateSale1",
-                _receiver
+                _distributor
             ),
             _signatures
         );
@@ -257,7 +260,7 @@ ReentrancyGuardUpgradeable {
 
         _transfer(
             address(this),
-            _receiver,
+            _distributor,
             PrimaryTokenConstant.PRIVATE_SALE_1_ALLOCATION
         );
 
@@ -265,23 +268,23 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Unlock tokens for private sale 2 to a receiver.
+     *  @notice Unlock tokens allocated for Private Sale #2 to a distributor.
      *
      *          Name            Description
-     *  @param  _receiver       Receiver address.
+     *  @param  _distributor    Distributor address.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    TODO
+     *  @dev    Administrative operation.
      */
     function unlockForPrivateSale2(
-        address _receiver,
+        address _distributor,
         bytes[] calldata _signatures
     ) external nonReentrant {
         IAdmin(admin).verifyAdminSignatures(
             abi.encode(
                 address(this),
                 "unlockForPrivateSale2",
-                _receiver
+                _distributor
             ),
             _signatures
         );
@@ -294,7 +297,7 @@ ReentrancyGuardUpgradeable {
 
         _transfer(
             address(this),
-            _receiver,
+            _distributor,
             PrimaryTokenConstant.PRIVATE_SALE_2_ALLOCATION
         );
 
@@ -302,23 +305,23 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Unlock tokens for public sale to a receiver.
+     *  @notice Unlock tokens allocated for Public Sale to a distributor.
      *
      *          Name            Description
-     *  @param  _receiver       Receiver address.
+     *  @param  _distributor    Distributor address.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    TODO
+     *  @dev    Administrative operation.
      */
     function unlockForPublicSale(
-        address _receiver,
+        address _distributor,
         bytes[] calldata _signatures
     ) external nonReentrant {
         IAdmin(admin).verifyAdminSignatures(
             abi.encode(
                 address(this),
                 "unlockForPublicSale",
-                _receiver
+                _distributor
             ),
             _signatures
         );
@@ -330,7 +333,7 @@ ReentrancyGuardUpgradeable {
 
         _transfer(
             address(this),
-            _receiver,
+            _distributor,
             PrimaryTokenConstant.PUBLIC_SALE_ALLOCATION
         );
 
@@ -338,23 +341,23 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Unlock tokens for core team to a receiver.
+     *  @notice Unlock tokens allocated for Core Team to a distributor.
      *
      *          Name            Description
-     *  @param  _receiver       Receiver address.
+     *  @param  _distributor    Distributor address.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    TODO
+     *  @dev    Administrative operation.
      */
     function unlockForCoreTeam(
-        address _receiver,
+        address _distributor,
         bytes[] calldata _signatures
     ) external nonReentrant {
         IAdmin(admin).verifyAdminSignatures(
             abi.encode(
                 address(this),
                 "unlockForCoreTeam",
-                _receiver
+                _distributor
             ),
             _signatures
         );
@@ -366,7 +369,7 @@ ReentrancyGuardUpgradeable {
 
         _transfer(
             address(this),
-            _receiver,
+            _distributor,
             PrimaryTokenConstant.CORE_TEAM_ALLOCATION
         );
 
@@ -374,23 +377,23 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Unlock tokens for market maker to a receiver.
+     *  @notice Unlock tokens allocated for Market Maker to a distributor.
      *
      *          Name            Description
-     *  @param  _receiver       Receiver address.
+     *  @param  _distributor    Distributor address.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    TODO
+     *  @dev    Administrative operation.
      */
     function unlockForMarketMaker(
-        address _receiver,
+        address _distributor,
         bytes[] calldata _signatures
     ) external nonReentrant {
         IAdmin(admin).verifyAdminSignatures(
             abi.encode(
                 address(this),
                 "unlockForMarketMaker",
-                _receiver
+                _distributor
             ),
             _signatures
         );
@@ -402,7 +405,7 @@ ReentrancyGuardUpgradeable {
 
         _transfer(
             address(this),
-            _receiver,
+            _distributor,
             PrimaryTokenConstant.MARKET_MAKER_ALLOCATION
         );
 
@@ -410,23 +413,23 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Unlock tokens for external treasury to a receiver.
+     *  @notice Unlock tokens allocated for External Treasury to a distributor.
      *
      *          Name            Description
-     *  @param  _receiver       Receiver address.
+     *  @param  _distributor    Distributor address.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    TODO
+     *  @dev    Administrative operation.
      */
     function unlockForExternalTreasury(
-        address _receiver,
+        address _distributor,
         bytes[] calldata _signatures
     ) external nonReentrant {
         IAdmin(admin).verifyAdminSignatures(
             abi.encode(
                 address(this),
                 "unlockForExternalTreasury",
-                _receiver
+                _distributor
             ),
             _signatures
         );
@@ -438,7 +441,7 @@ ReentrancyGuardUpgradeable {
 
         _transfer(
             address(this),
-            _receiver,
+            _distributor,
             PrimaryTokenConstant.EXTERNAL_TREASURY_ALLOCATION
         );
 
@@ -446,12 +449,10 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Contribute liquidity from backer round.
+     *  @notice Contribute liquidity funded from Backer Round.
      *
      *          Name          Description
-     *  @param  _liquidity    Amount to contribute.
-     * 
-     *  @dev    TODO
+     *  @param  _liquidity    Contributed liquidity.
      */
     function contributeLiquidityFromBackerRound(uint256 _liquidity) external nonReentrant {
         _contributeLiquidity(_liquidity);
@@ -464,12 +465,10 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Contribute liquidity from seed round.
+     *  @notice Contribute liquidity funded from Seed Round.
      *
      *          Name          Description
-     *  @param  _liquidity    Amount to contribute.
-     * 
-     *  @dev    TODO
+     *  @param  _liquidity    Contributed liquidity.
      */
     function contributeLiquidityFromSeedRound(uint256 _liquidity) external nonReentrant {
         _contributeLiquidity(_liquidity);
@@ -482,12 +481,10 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Contribute liquidity from private sale 1.
+     *  @notice Contribute liquidity funded from Private Sale #1.
      *
      *          Name          Description
-     *  @param  _liquidity    Amount to contribute.
-     * 
-     *  @dev    TODO
+     *  @param  _liquidity    Contributed liquidity.
      */
     function contributeLiquidityFromPrivateSale1(uint256 _liquidity) external nonReentrant {
         _contributeLiquidity(_liquidity);
@@ -500,12 +497,10 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Contribute liquidity from private sale 2.
+     *  @notice Contribute liquidity funded from Private Sale #2.
      *
      *          Name          Description
-     *  @param  _liquidity    Amount to contribute.
-     * 
-     *  @dev    TODO
+     *  @param  _liquidity    Contributed liquidity.
      */
     function contributeLiquidityFromPrivateSale2(uint256 _liquidity) external nonReentrant {
         _contributeLiquidity(_liquidity);
@@ -518,12 +513,10 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Contribute liquidity from public sale.
+     *  @notice Contribute liquidity funded from Public Sale.
      *
      *          Name          Description
-     *  @param  _liquidity    Amount to contribute.
-     * 
-     *  @dev    TODO
+     *  @param  _liquidity    Contributed liquidity.
      */
     function contributeLiquidityFromPublicSale(uint256 _liquidity) external nonReentrant {
         _contributeLiquidity(_liquidity);
@@ -536,12 +529,10 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Contribute liquidity from market maker.
+     *  @notice Contribute liquidity funded from Market Maker.
      *
      *          Name          Description
-     *  @param  _liquidity    Amount to contribute.
-     * 
-     *  @dev    TODO
+     *  @param  _liquidity    Contributed liquidity.
      */
     function contributeLiquidityFromMarketMaker(uint256 _liquidity) external nonReentrant {
         _contributeLiquidity(_liquidity);
@@ -554,12 +545,10 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Contribute liquidity from external treasury.
+     *  @notice Contribute liquidity funded from External Treasury.
      *
      *          Name          Description
-     *  @param  _liquidity    Amount to contribute.
-     * 
-     *  @dev    TODO
+     *  @param  _liquidity    Contributed liquidity.
      */
     function contributeLiquidityFromExternalTreasury(uint256 _liquidity) external nonReentrant {
         _contributeLiquidity(_liquidity);
@@ -572,13 +561,11 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Contribute liquidity from stake token.
+     *  @notice Contribute liquidity funded from a stake token contract.
      *
      *          Name          Description
-     *  @param  _liquidity    Amount to contribute.
+     *  @param  _liquidity    Contributed liquidity.
      *  @param  _stakeToken   Stake token address.
-     * 
-     *  @dev    TODO
      */
     function contributeLiquidityFromStakeToken(uint256 _liquidity, address _stakeToken) external nonReentrant {
         _contributeLiquidity(_liquidity);

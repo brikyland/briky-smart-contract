@@ -25,7 +25,7 @@ ICurrencyRegistry {
      *          Name        Description
      *  @param  message     Message data bytes verified successfully.
      *  @param  nonce       Number used once combined with the message to prevent replay attacks.
-     *  @param  message     Array of admin signatures generated from the message and the current nonce of the contract.
+     *  @param  signatures  Array of admin signatures generated from the message and the current nonce of the contract.
      */
     event AdminSignaturesVerification(
         bytes message,
@@ -34,7 +34,7 @@ ICurrencyRegistry {
     );
 
     /**
-     *  @notice Emitted when admin #1 transfers administratorship to another address.
+     *  @notice Emitted when the admin #1 role is transferred to another address.
      *
      *          Name        Description
      *  @param  newAdmin1   New admin #1 address.
@@ -44,7 +44,7 @@ ICurrencyRegistry {
     );
 
     /**
-     *  @notice Emitted when admin #2 transfers administratorship to another address.
+     *  @notice Emitted when the admin #2 role is transferred to another address.
      *
      *          Name        Description
      *  @param  newAdmin2   New admin #2 address.
@@ -54,7 +54,7 @@ ICurrencyRegistry {
     );
 
     /**
-     *  @notice Emitted when admin #3 transfers administratorship to another address.
+     *  @notice Emitted when the admin #3 role is transferred to another address.
      *
      *          Name        Description
      *  @param  newAdmin3   New admin #3 address.
@@ -64,7 +64,7 @@ ICurrencyRegistry {
     );
 
     /**
-     *  @notice Emitted when admin #4 transfers administratorship to another address.
+     *  @notice Emitted when the admin #4 role is transferred to another address.
      *
      *          Name        Description
      *  @param  newAdmin4   New admin #4 address.
@@ -74,7 +74,7 @@ ICurrencyRegistry {
     );
 
     /**
-     *  @notice Emitted when admin #5 transfers administratorship to another address.
+     *  @notice Emitted when the admin #5 is transferred to another address.
      *
      *          Name        Description
      *  @param  newAdmin5   New admin #5 address.
@@ -122,7 +122,7 @@ ICurrencyRegistry {
 
     /* --- Manager --- */
     /**
-     *  @notice Emitted when an external owned address is authorized to be manager.
+     *  @notice Emitted when an external owned address is authorized as a manager.
      *
      *          Name        Description
      *  @param  account     Authorized EOA.
@@ -144,7 +144,7 @@ ICurrencyRegistry {
 
     /* --- Moderator --- */
     /**
-     *  @notice Emitted when an external owned address is authorized to be moderator.
+     *  @notice Emitted when an external owned address is authorized as a moderator.
      *
      *          Name        Description
      *  @param  account     Authorized EOA.
@@ -166,7 +166,7 @@ ICurrencyRegistry {
 
     /* --- Governor --- */
     /**
-     *  @notice Emitted when a contract is authorized to be governor.
+     *  @notice Emitted when a contract is authorized as governor contract.
      *
      *          Name        Description
      *  @param  account     Authorized contract address.
@@ -176,7 +176,7 @@ ICurrencyRegistry {
     );
 
     /**
-     *  @notice Emitted when a governor is deauthorized.
+     *  @notice Emitted when a governor contract is deauthorized.
      *
      *          Name        Description
      *  @param  account     Deauthorized contract address.
@@ -267,7 +267,7 @@ ICurrencyRegistry {
     /**
      *          Name            Description
      *  @param  account         EVM address.
-     *  @return isExecutive     Whether the account is authorized to be manager or moderator.
+     *  @return isExecutive     Whether the account is authorized as a manager or a moderator.
      */
     function isExecutive(
         address account
@@ -275,8 +275,8 @@ ICurrencyRegistry {
 
     /**
      *          Name            Description
-     *  @param  account         Contract address.
-     *  @return isGovernor      Whether the account is authorized to be governor.
+     *  @param  account         EVM address.
+     *  @return isGovernor      Whether the account is authorized as a governor.
      *
      *  @dev    This contract must support interface `IGovernor`.
      */
@@ -287,7 +287,7 @@ ICurrencyRegistry {
     /**
      *          Name            Description
      *  @param  account         EVM address.
-     *  @return isManager       Whether the account is authorized to be manager.
+     *  @return isManager       Whether the account is authorized as a manager.
      */
     function isManager(
         address account
@@ -296,7 +296,7 @@ ICurrencyRegistry {
     /**
      *          Name            Description
      *  @param  account         EVM address.
-     *  @return isModerator     Whether the account is authorized to be moderator.
+     *  @return isModerator     Whether the account is authorized as a moderator.
      */
     function isModerator(
         address account

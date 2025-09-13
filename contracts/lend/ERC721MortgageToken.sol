@@ -49,7 +49,7 @@ MortgageToken {
      *  @param  _isCollateral    Whether the operation is register or deregister.
      *  @param  _signatures      Array of admin signatures.
      * 
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative configuration.
      */
     function registerCollaterals(
         address[] calldata _tokens,

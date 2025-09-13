@@ -17,7 +17,7 @@ abstract contract Administrable is
 ICommon {
     /** ===== MODIFIER ===== **/
     /**
-     *  @notice Assert that the sender is authorized to be manager.
+     *  @notice Verify the sender is authorized as a manager.
      */
     modifier onlyManager() {
         if (!IAdmin(this.admin()).isManager(msg.sender)) {
@@ -27,7 +27,7 @@ ICommon {
     }
 
     /**
-     *  @notice Assert that the sender is authorized to be manager or moderator.
+     *  @notice Verify the sender is authorized as a manager or a moderator.
      */
     modifier onlyExecutive() {
         if (!IAdmin(this.admin()).isExecutive(msg.sender)) {
@@ -37,7 +37,7 @@ ICommon {
     }
 
     /**
-     *  @notice Assert that an address is authorized to be governor.
+     *  @notice Verify an address is authorized as a governor.
      *
      *          Name        Description
      *  @param  _account    EVM address.
@@ -52,7 +52,7 @@ ICommon {
     }
 
     /**
-     *  @notice Assert that a currency is interactable within the system.
+     *  @notice Verify a currency is interactable within the system.
      *
      *          Name        Description
      *  @param  _currency   Currency address.

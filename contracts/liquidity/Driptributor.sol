@@ -22,6 +22,9 @@ ReentrancyGuardUpgradeable {
 
     string constant private VERSION = "v1.2.1";
 
+    /**
+     *  @notice Executed on a call to the contract with empty calldata.
+     */
     receive() external payable {}
 
     function initialize(
@@ -43,15 +46,15 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Update stake token addresses.
+     *  @notice Update stake token contract addresses.
      *
      *          Name            Description
-     *  @param  _stakeToken1    New stake token address 1.
-     *  @param  _stakeToken2    New stake token address 2.
-     *  @param  _stakeToken3    New stake token address 3.
+     *  @param  _stakeToken1    New the stake token #1 contract address.
+     *  @param  _stakeToken2    New the stake token #2 contract address.
+     *  @param  _stakeToken3    New the stake token #3 contract address.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative configuration.
      */
     function updateStakeTokens(
         address _stakeToken1,
@@ -93,16 +96,16 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Distribute tokens to receivers with vesting duration.
+     *  @notice Distribute tokens to multiple receivers with vesting duration.
      *
      *          Name                Description
-     *  @param  _receivers          Array of receiver addresses.
-     *  @param  _amounts            Array of amounts to distribute to each receiver.
-     *  @param  _vestingDuration    Array of vesting durations for each receiver.
-     *  @param  _data               Array of notes.
+     *  @param  _receivers          Array of receiver addresses, respectively to each distribution.
+     *  @param  _amounts            Array of distributed amounts, respectively to each distribution.
+     *  @param  _vestingDuration    Array of vesting durations, respectively to each distribution.
+     *  @param  _data               Array of notes, respectively to each distribution.
      *  @param  _signatures         Array of admin signatures.
      * 
-     *  @dev    TODO
+     *  @dev    Administrative operation.
      */
     function distributeTokensWithDuration(
         address[] calldata _receivers,
@@ -157,16 +160,16 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Distribute tokens to receivers with vesting end timestamp.
+     *  @notice Distribute tokens to multiple receivers with vesting end timestamp.
      *
      *          Name            Description
-     *  @param  _receivers      Array of receiver addresses.
-     *  @param  _amounts        Array of amounts to distribute to each receiver.
-     *  @param  _endAts         Array of vesting end timestamps for each receiver.
-     *  @param  _data           Array of notes.
+     *  @param  _receivers      Array of receiver addresses, respectively to each distribution.
+     *  @param  _amounts        Array of distributed amounts, respectively to each distribution.
+     *  @param  _endAts         Array of vesting end timestamps, respectively to each distribution.
+     *  @param  _data           Array of notes, respectively to each distribution.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    TODO
+     *  @dev    Administrative operation.
      */
     function distributeTokensWithTimestamp(
         address[] calldata _receivers,

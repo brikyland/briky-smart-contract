@@ -45,5 +45,4 @@ IRoyaltyRateProposer {
      *  @return royaltyReceiver     Default royalty receiver address.
      */
     function _royaltyReceiver() internal view virtual returns (address royaltyReceiver);
-
 }

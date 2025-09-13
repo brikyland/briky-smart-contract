@@ -134,15 +134,15 @@ interface IProposal {
         /// @notice Assigned operator address.
         address operator;
 
-        /// @notice Time pivot of either the proposal is admitted or is no longer admittable.
-        /// @dev    In `Pending` state, `timePivot` indicates when the proposal is expired for admission but since the being
-        ///         admitted, `timePivot` snapshots the `block.timestamp` as reference for evaluating vote power.
-        uint40 timePivot;
-
         /// @notice Due of vote.
         /// @dev    In `Pending` state, `due` indicates vote duration but since being admitted, `due` is the timestamp of vote
         ///         closure.
         uint40 due;
+
+        /// @notice Time pivot of either the proposal is admitted or is no longer admittable.
+        /// @dev    In `Pending` state, `timePivot` indicates when the proposal is expired for admission but since the being
+        ///         admitted, `timePivot` snapshots the `block.timestamp` as reference for evaluating vote power.
+        uint40 timePivot;
 
         /// @notice Rule to determine verdict.
         ProposalRule rule;

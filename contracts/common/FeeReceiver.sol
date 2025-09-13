@@ -15,6 +15,9 @@ FeeReceiverStorage,
 ReentrancyGuardUpgradeable {
     string constant private VERSION = "v1.2.1";
 
+    /**
+     *  @notice Executed on a call to the contract with empty calldata.
+     */
     receive() external payable {}
 
     function initialize(address _admin) external initializer {
@@ -28,15 +31,15 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Withdraw cryptocurrency from the contract.
+     *  @notice Withdraw sufficient amounts in multiple cryptocurrencies from the contract to an address.
      *
      *          Name            Description
      *  @param  _receiver       Receiver address.
-     *  @param  _currencies     Array of currency addresses to withdraw.
-     *  @param  _values         Array of withdraw values.
+     *  @param  _currencies     Array of withdrawn currency addresses, respectively for each currency.
+     *  @param  _values         Array of withdrawn values, respectively for each currency.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    TODO
+     *  @dev    Administrative operation.
      */
     function withdraw(
         address _receiver,

@@ -62,6 +62,9 @@ ReentrancyGuardUpgradeable {
         _;
     }
 
+    /**
+     *  @notice Executed on a call to the contract with empty calldata.
+     */
     receive() external payable {}
 
     function initialize(
@@ -95,14 +98,14 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Update allowed price range for a project token unit.
+     *  @notice Update the acceptable range of unit price denominated in USD.
      *
      *          Name                 Description
-     *  @param  _baseMinUnitPrice    New minimum allowed price.
-     *  @param  _baseMaxUnitPrice    New maximum allowed price.
+     *  @param  _baseMinUnitPrice    New minimum unit price denominated in USD.
+     *  @param  _baseMaxUnitPrice    New maximum unit price denominated in USD.
      *  @param  _signatures          Array of admin signatures.
      * 
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative configuration.
      */
     function updateBaseUnitPriceRange(
         uint256 _baseMinUnitPrice,

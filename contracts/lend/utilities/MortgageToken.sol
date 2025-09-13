@@ -42,6 +42,9 @@ ReentrancyGuardUpgradeable {
         _;
     }
 
+    /**
+     *  @notice Executed on a call to the contract with empty calldata.
+     */
     receive() external payable {}
 
     function __MortgageToken_init(
@@ -80,7 +83,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _uri            New base URI.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative configuration.
      */
     function updateBaseURI(
         string calldata _uri,
@@ -107,7 +110,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _feeRate        New fee rate.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative configuration.
      */
     function updateFeeRate(
         uint256 _feeRate,

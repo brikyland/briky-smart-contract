@@ -1,35 +1,66 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+/// @openzeppelin/contracts-upgradeable/
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
-import {CurrencyHandler} from "./utilities/CurrencyHandler.sol";
-import {Formula} from "./utilities/Formula.sol";
-import {Signature} from "./utilities/Signature.sol";
-
+/// contracts/common/constants/
 import {CommonConstant} from "./constants/CommonConstant.sol";
 import {GovernanceHubConstant} from "./constants/GovernanceHubConstant.sol";
 
+/// contracts/common/interfaces/
 import {IAdmin} from "./interfaces/IAdmin.sol";
 import {IGovernor} from "./interfaces/IGovernor.sol";
 
+/// contracts/common/storages/
 import {GovernanceHubStorage} from "./storages/GovernanceHubStorage.sol";
 
+/// contracts/common/utilities/
 import {Administrable} from "./utilities/Administrable.sol";
+import {CurrencyHandler} from "./utilities/CurrencyHandler.sol";
+import {Formula} from "./utilities/Formula.sol";
 import {Pausable} from "./utilities/Pausable.sol";
+import {Signature} from "./utilities/Signature.sol";
 import {Validatable} from "./utilities/Validatable.sol";
 
+/**
+ *  @author Briky Team
+ *
+ *  @notice The `GovernanceHub` contract conducts voting among holders of an asset from governor contracts to decide on
+ *          proposals that affects the asset.
+ *
+ *  @dev    Any current holder of the asset, with client-side support, can propose by submitting a full proper context to the
+ *          server-side and forwarding only its checksum to the contract as the UUID of the new proposal. Authorized executives
+ *          will later verify the feasibility of the proposal within a given expiration to either admit or disqualify it
+ *          accordingly. During this process, the full context is uploaded to a public database (e.g., IPFS), and the link is
+ *          submitted to be the URI of proposal context. This approach protects the database from external attacks as well as
+ *          ensures proposals remains validatable and user-oriented.
+ *  @dev    Implementation involves server-side support.
+ *  @dev    ERC-20 tokens are identified by their contract addresses.
+ *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
+ */
 contract GovernanceHub is
 GovernanceHubStorage,
 Administrable,
 Pausable,
 Validatable,
 ReentrancyGuardUpgradeable {
+    /** ===== LIBRARY ===== **/
     using CurrencyHandler for uint256;
     using Formula for uint256;
 
+
+    /** ===== CONSTANT ===== **/
     string constant private VERSION = "v1.2.1";
 
+
+    /** ===== MODIFIER ===== **/
+    /**
+     *  @notice Verify a valid proposal.
+     *
+     *          Name            Description
+     *  @param  _proposalId     Proposal Identifier.
+     */
     modifier validProposal(uint256 _proposalId) {
         if (_proposalId == 0 || _proposalId > proposalNumber) {
             revert InvalidProposalId();
@@ -44,36 +75,56 @@ ReentrancyGuardUpgradeable {
         _;
     }
 
+
+    /** ===== FUNCTION ===== **/
+    /* --- Special --- */
+    /**
+     *  @notice Executed on a call to the contract with empty calldata.
+     */
     receive() external payable {}
 
+    /**
+     *          Name        Description
+     *  @return version     Version of implementation.
+     */
+    function version() external pure returns (string memory) {
+        return VERSION;
+    }
+
+
+    /* --- Initializer --- */
+    /**
+     *  @notice Invoked after deployment for initialization, serving as a constructor.
+     */
     function initialize(
         address _admin,
         address _validator,
         uint256 _fee
     ) external initializer {
+        /// @dev    Inherited initializer.
         __Pausable_init();
         __ReentrancyGuard_init();
 
         __Validatable_init(_validator);
 
+        /// @dev    Dependency
         admin = _admin;
 
+        /// @dev    Configuration
         fee = _fee;
         emit FeeUpdate(_fee);
     }
 
-    function version() external pure returns (string memory) {
-        return VERSION;
-    }
 
+    /* --- Administration --- */
     /**
      *  @notice Update proposal fee.
      *
-     *          Name           Description
-     *  @param  _fee           New proposal fee.
-     *  @param  _signatures    Array of admin signatures.
+     *          Name            Description
+     *  @param  _fee            New proposal fee.
+     *  @param  _signatures     Array of admin signatures.
      *
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative configuration.
      */
     function updateFee(
         uint256 _fee,
@@ -87,22 +138,38 @@ ReentrancyGuardUpgradeable {
             ),
             _signatures
         );
+
         fee = _fee;
         emit FeeUpdate(_fee);
     }
 
-    function getProposal(uint256 _proposalId)
-    external view validProposal(_proposalId) returns (Proposal memory) {
+
+    /* --- Query --- */
+    /**
+     *          Name            Description
+     *  @param  _proposalId     Proposal identifier.
+     *
+     *  @return Information and progress of the proposal.
+     */
+    function getProposal(
+        uint256 _proposalId
+    ) external view
+    validProposal(_proposalId)
+    returns (Proposal memory) {
         return proposals[_proposalId];
     }
 
-    function getProposalVerdict(uint256 _proposalId)
-    external view validProposal(_proposalId) returns (ProposalVerdict) {
-        return _votingVerdict(proposals[_proposalId]);
-    }
-
-    function getProposalState(uint256 _proposalId)
-    external view validProposal(_proposalId) returns (ProposalState) {
+    /**
+     *          Name            Description
+     *  @param  _proposalId     Proposal identifier.
+     *
+     *  @return State of the proposal.
+     */
+    function getProposalState(
+        uint256 _proposalId
+    ) external view
+    validProposal(_proposalId)
+    returns (ProposalState) {
         if (proposals[_proposalId].state == ProposalState.Voting
             && proposals[_proposalId].due + GovernanceHubConstant.VOTE_CONFIRMATION_TIME_LIMIT <= block.timestamp) {
             return ProposalState.Disqualified;
@@ -111,6 +178,49 @@ ReentrancyGuardUpgradeable {
         return proposals[_proposalId].state;
     }
 
+    /**
+     *          Name            Description
+     *  @param  _proposalId     Proposal identifier.
+     *
+     *  @return Verdict of the proposal.
+     */
+    function getProposalVerdict(
+        uint256 _proposalId
+    ) external view
+    validProposal(_proposalId)
+    returns (ProposalVerdict) {
+        return _votingVerdict(proposals[_proposalId]);
+    }
+
+
+    /* --- Command --- */
+    /**
+     *  @notice Propose a new operation on an asset from a governor contract.
+     *
+     *          Name                Description
+     *  @param  _governor           Governor contract address.
+     *  @param  _tokenId            Asset identifier from the governor contract.
+     *  @param  _operator           Assigned operator address.
+     *  @param  _uuid               Checksum of proposal context.
+     *  @param  _rule               Rule to determine verdict.
+     *  @param  _rule               Rule to determine verdict.
+     *  @param  _quorumRate         Fraction of total weight for quorum.
+     *  @param  _duration           Voting duration.
+     *  @param  _admissionExpiry    Expiration for moderators to admit the proposal.
+     *  @param  _validation         Validation package from the validator.
+     *
+     *  @return New proposal identifier.
+     *
+     *  @dev    Any current holder of the asset, with client-side support, can propose by submitting a full proper context to
+     *          the server-side and forwarding only its checksum to the contract as the UUID of the new proposal. Authorized
+     *          executives will later verify the feasibility of the proposal within a given expiration to either admit or
+     *          disqualify it accordingly. During this process, the full context is uploaded to a public database (e.g., IPFS),
+     *          and the link is submitted to be the URI of proposal context. This approach protects the database from external
+     *          attacks as well as ensures proposals remains validatable and user-oriented.
+     *  @dev    Through the validation mechanism, the server-side determines `uuid`, `quorumRate`, `duration` and
+     *          `admissionExpiry` based on the specific supported type of proposal and its context. Operators are also required
+     *          to be pre-registered on the server-side to ensure proper assignments.
+     */
     function propose(
         address _governor,
         uint256 _tokenId,
@@ -121,7 +231,11 @@ ReentrancyGuardUpgradeable {
         uint40 _duration,
         uint40 _admissionExpiry,
         Validation calldata _validation
-    ) external payable nonReentrant onlyGovernor(_governor) whenNotPaused returns (uint256) {
+    ) external payable
+    nonReentrant
+    onlyGovernor(_governor)
+    whenNotPaused
+    returns (uint256) {
         _validate(
             abi.encode(
                 _governor,
@@ -161,7 +275,12 @@ ReentrancyGuardUpgradeable {
         proposal.operator = _operator;
         proposal.rule = _rule;
         proposal.quorum = _quorumRate;
+
+        /// @dev    In `Pending` state, `due` indicates vote duration but since being admitted, `due` is the timestamp of vote
+        ///         closure.
         proposal.due = _duration;
+        /// @dev    In `Pending` state, `timePivot` indicates when the proposal is expired for admission but since the being
+        ///         admitted, `timePivot` snapshots the `block.timestamp` as reference for evaluating vote power.
         proposal.timePivot = _admissionExpiry;
 
         proposal.state = ProposalState.Pending;
@@ -182,13 +301,29 @@ ReentrancyGuardUpgradeable {
         return proposalId;
     }
 
+    /**
+     *  @notice Admit an executable proposal after review.
+     *
+     *          Name            Description
+     *  @param  _proposalId     Proposal identifier.
+     *  @param  _contextURI     URI of proposal context.
+     *  @param  _reviewURI      URI of review detail.
+     *  @param  _currency       Budget currency address.
+     *  @param  _validation     Validation package from the validator.
+     *
+     *  @dev    Permission: managers.
+     *  @dev    As the proposal has only set `uuid` before admission, `contextURI` must be provided when admitting.
+     */
     function admit(
         uint256 _proposalId,
         string calldata _contextURI,
         string calldata _reviewURI,
         address _currency,
         Validation calldata _validation
-    ) external validProposal(_proposalId) onlyExecutive whenNotPaused {
+    ) external
+    whenNotPaused
+    onlyExecutive
+    validProposal(_proposalId) {
         _validate(
             abi.encode(
                 _proposalId,

@@ -23,7 +23,7 @@ IFund,
 ICommon {
     /** ===== EVENT ===== **/
     /**
-     *  @notice Emitted when an address is authorized to be provider.
+     *  @notice Emitted when an address is authorized as a provider.
      *
      *          Name        Description
      *  @param  account     Authorized address.
@@ -120,7 +120,7 @@ ICommon {
     /**
      *          Name        Description
      *  @param  account     EVM address.
-     *  @return isProvider  Whether the account is authorized to be provider.
+     *  @return isProvider  Whether the account is authorized as a provider.
      */
     function isProvider(
         address account
@@ -191,7 +191,7 @@ ICommon {
         uint256 fundId
     ) external payable;
     /**
-     *  @notice Withdraw value from a fund to a receiver.
+     *  @notice Withdraw value from a fund to an address.
      *
      *          Name                Description
      *  @param  fundId              Fund identifier.

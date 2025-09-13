@@ -6,6 +6,9 @@ import {CurrencyHandler} from "./utilities/CurrencyHandler.sol";
 contract Airdrop {
     string constant private VERSION = "v1.2.1";
 
+    /**
+     *  @notice Executed on a call to the contract with empty calldata.
+     */
     receive() external payable {}
 
     function version() external pure returns (string memory) {

@@ -55,6 +55,9 @@ ReentrancyGuardUpgradeable {
         _;
     }
 
+    /**
+     *  @notice Executed on a call to the contract with empty calldata.
+     */
     receive() external payable {}
 
     function initialize(
@@ -90,14 +93,14 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Update allowed price range for an estate token unit.
+     *  @notice Update the acceptable range of unit price denominated in USD.
      *
-     *          Name            Description
-     *  @param  _baseMinUnitPrice    New minimum allowed price.
-     *  @param  _baseMaxUnitPrice    New maximum allowed price.
-     *  @param  _signatures          Array of admin signatures.
+     *          Name                Description
+     *  @param  _baseMinUnitPrice   New minimum unit price denominated in USD.
+     *  @param  _baseMaxUnitPrice   New maximum unit price denominated in USD.
+     *  @param  _signatures         Array of admin signatures.
      * 
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative configuration.
      */
     function updateBaseUnitPriceRange(
         uint256 _baseMinUnitPrice,
@@ -126,14 +129,14 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Whitelist or unwhitelist accounts for private sale.
+     *  @notice Whitelist or unwhitelist addresses to participate in the private sale.
      *
      *          Name               Description
-     *  @param  _accounts          Array of account addresses to whitelist or unwhitelist.
+     *  @param  _accounts          Array of EVM addresses.
      *  @param  _isWhitelisted     Whether the operation is whitelist or unwhitelist.
      *  @param  _signatures        Array of admin signatures.
      * 
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative configuration.
      */
     function whitelist(
         address[] calldata _accounts,

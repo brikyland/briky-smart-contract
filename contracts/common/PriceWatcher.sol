@@ -23,6 +23,9 @@ Administrable {
 
     string constant private VERSION = "v1.2.1";
 
+    /**
+     *  @notice Executed on a call to the contract with empty calldata.
+     */
     receive() external payable {}
 
     function initialize(address _admin) external initializer {
@@ -34,15 +37,15 @@ Administrable {
     }
 
     /**
-     *  @notice Update price feeds.
+     *  @notice Update price feeds of multiple currencies.
      *
      *          Name            Description
-     *  @param  _currencies     Array of currency addresses.
-     *  @param  _feeds          Array of new price feed addresses.
-     *  @param  _heartbeats     Array of new heartbeats.
+     *  @param  _currencies     Array of updated currency addresses.
+     *  @param  _feeds          Array of new Price Feed addresses, respectively for each currency.
+     *  @param  _heartbeats     Array of new allowed latencies, respectively for each currency.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative configuration.
      */
     function updatePriceFeeds(
         address[] calldata _currencies,
@@ -82,14 +85,14 @@ Administrable {
     }
 
     /**
-     *  @notice Update default rates.
+     *  @notice Update default conversion rates of multiple currencies.
      *
      *          Name            Description
-     *  @param  _currencies     Array of currency addresses.
-     *  @param  _rates          Array of new default rates.
+     *  @param  _currencies     Array of updated currency addresses.
+     *  @param  _rates          Array of new default conversion rates, respectively for each currency.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative configuration.
      */
     function updateDefaultRates(
         address[] calldata _currencies,

@@ -60,7 +60,7 @@ library CurrencyHandler {
     }
 
     /**
-     *  @notice Transfer an amount of native coin from sender to an address.
+     *  @notice Transfer an amount of native coin from the sender to an address.
      *
      *          Name        Description
      *  @param  _receiver   Receiver address.
@@ -108,7 +108,7 @@ library CurrencyHandler {
     }
 
     /**
-     *  @notice Approve a new amount of ERC-20 token for an address.
+     *  @notice Approve a new amount of ERC-20 token for a spender.
      *
      *          Name        Description
      *  @param  _currency   Token address.

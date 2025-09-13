@@ -24,6 +24,7 @@ abstract contract Validatable is
 ValidatableStorage,
 Initializable {
     /** ===== FUNCTION ===== **/
+    /* --- Initializer --- */
     /**
      *  @notice Initialize for contract `Validatable`.
      *
@@ -36,14 +37,16 @@ Initializable {
         validator = _validator;
     }
 
+
+    /* --- Administration --- */
     /**
      *  @notice Update validator.
      *
      *          Name            Description
-     *  @param  _validator      Validator address.
+     *  @param  _validator      New validator address.
      *  @param  _signatures     Array of admin signatures.
      *
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative configuration.
      */
     function updateValidator(
         address _validator,
@@ -61,6 +64,8 @@ Initializable {
         emit ValidatorUpdate(_validator);
     }
 
+
+    /* --- Helper --- */
     /**
      *  @notice Validate a data.
      *

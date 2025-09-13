@@ -24,6 +24,9 @@ ReentrancyGuardUpgradeable {
 
     string constant private VERSION = "v1.2.1";
 
+    /**
+     *  @notice Executed on a call to the contract with empty calldata.
+     */
     receive() external payable {}
 
     function initialize(
@@ -44,7 +47,7 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Withdraw operation fund to an operator.
+     *  @notice Withdraw from the operation fund to an operator.
      *
      *          Name            Description
      *  @param  _value          Amount to withdraw.

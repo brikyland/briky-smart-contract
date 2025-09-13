@@ -32,6 +32,9 @@ RoyaltyRateProposer,
 ReentrancyGuardUpgradeable {
     string constant private VERSION = "v1.2.1";
 
+    /**
+     *  @notice Executed on a call to the contract with empty calldata.
+     */
     receive() external payable {}
 
     function initialize(
@@ -66,7 +69,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _fee            New minting fee.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative configuration.
      */
     function updateFee(
         uint256 _fee,
@@ -91,7 +94,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _royaltyRate    New royalty rate.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative configuration.
      */
     function updateRoyaltyRate(
         uint256 _royaltyRate,
@@ -113,13 +116,15 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Withdraw cryptocurrency from the contract to a receiver.
+     *  @notice Withdraw sufficient amounts in multiple cryptocurrencies from the contract to an address.
      *
      *          Name            Description
      *  @param  _receiver       Receiver address.
-     *  @param  _currencies     Array of currency addresses to withdraw.
-     *  @param  _values         Array of withdraw values.
+     *  @param  _currencies     Array of withdrawn currency addresses.
+     *  @param  _values         Array of withdraw values, respectively to each currency.
      *  @param  _signatures     Array of admin signatures.
+     *
+     *  @dev    Administrative operation.
      */
     function withdraw(
         address _receiver,
@@ -158,12 +163,12 @@ ReentrancyGuardUpgradeable {
      *  @notice Create new contents.
      *
      *          Name           Description
-     *  @param  _uris          Array of content URIs.
-     *  @param  _startAts      Array of start timestamps.
-     *  @param  _durations     Array of durations.
+     *  @param  _uris          Array of content URIs, respectively to each content.
+     *  @param  _startAts      Array of start timestamps, respectively to each content.
+     *  @param  _durations     Array of durations, respectively to each content.
      *  @param  _signatures    Array of admin signatures.
      * 
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative operation.
      */
     function createContents(
         string[] calldata _uris,
@@ -208,14 +213,14 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Update content URIs.
+     *  @notice Update URI of multiple contents.
      *
      *          Name           Description
-     *  @param  _contentIds    Array of content IDs.
-     *  @param  _uris          Array of new content URIs.
+     *  @param  _contentIds    Array of content identifiers.
+     *  @param  _uris          Array of new URIs, respectively for each content.
      *  @param  _signatures    Array of admin signatures.
      * 
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative operation.
      */
     function updateContentURIs(
         uint256[] calldata _contentIds,
@@ -251,13 +256,13 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Cancel contents.
+     *  @notice Cancel multiple contents.
      *
      *          Name           Description
-     *  @param  _contentIds    Array of content IDs.
+     *  @param  _contentIds    Array of content identifiers.
      *  @param  _signatures    Array of admin signatures.
      * 
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative operation.
      */
     function cancelContents(
         uint256[] calldata _contentIds,

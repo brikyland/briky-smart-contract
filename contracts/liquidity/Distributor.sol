@@ -15,6 +15,9 @@ DistributorStorage,
 ReentrancyGuardUpgradeable {
     string constant private VERSION = "v1.2.1";
 
+    /**
+     *  @notice Executed on a call to the contract with empty calldata.
+     */
     receive() external payable {}
 
     function initialize(
@@ -34,15 +37,15 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Distribute tokens to receivers.
+     *  @notice Distribute tokens to multiple receivers.
      *
      *          Name            Description
      *  @param  _receivers      Array of receiver addresses.
-     *  @param  _amounts        Array of amounts to distribute to each receiver.
+     *  @param  _amounts        Array of distributed amount, respectively to each receiver.
      *  @param  _data           Note.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative configuration.
      */
     function distributeToken(
         address[] calldata _receivers,

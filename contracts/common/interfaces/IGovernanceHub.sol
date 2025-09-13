@@ -30,6 +30,7 @@ IProposal,
 ICommon,
 IValidatable {
     /** ===== EVENT ===== **/
+    /* --- Configuration --- */
     /**
      *  @notice Emitted when proposal fee is updated.
      *
@@ -39,6 +40,7 @@ IValidatable {
     event FeeUpdate(uint256 newValue);
 
 
+    /* --- Proposal --- */
     /**
      *  @notice Emitted when a new proposal is submitted.
      *
@@ -131,7 +133,6 @@ IValidatable {
         uint256 budget
     );
 
-
     /**
      *  @notice Emitted when a proposal is disqualified.
      *
@@ -169,6 +170,7 @@ IValidatable {
     );
 
 
+    /* --- Proposal Execution --- */
     /**
      *  @notice Emitted when the execution of a proposal is concluded.
      *

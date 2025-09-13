@@ -25,6 +25,9 @@ ReentrancyGuardUpgradeable {
 
     string constant private VERSION = "v1.2.1";
 
+    /**
+     *  @notice Executed on a call to the contract with empty calldata.
+     */
     receive() external payable {}
 
     function initialize(
@@ -43,15 +46,15 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Update stake token addresses.
+     *  @notice Update stake token contracts.
      *
      *          Name            Description
-     *  @param  _stakeToken1    New stake token address 1.
-     *  @param  _stakeToken2    New stake token address 2.
-     *  @param  _stakeToken3    New stake token address 3.
+     *  @param  _stakeToken1    New the stake token #1 contract address.
+     *  @param  _stakeToken2    New the stake token #2 contract address.
+     *  @param  _stakeToken3    New the stake token #3 contract address.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative configuration.
      */
     function updateStakeTokens(
         address _stakeToken1,
@@ -94,7 +97,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _vestingDuration    Vesting duration.
      *  @param  _signatures         Array of admin signatures.
      * 
-     *  @dev    TODO
+     *  @dev    Administrative operation.
      */
     function startAuction(
         uint256 _endAt,

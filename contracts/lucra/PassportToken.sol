@@ -30,6 +30,9 @@ RoyaltyRateProposer,
 ReentrancyGuardUpgradeable {
     string constant private VERSION = "v1.2.1";
 
+    /**
+     *  @notice Executed on a call to the contract with empty calldata.
+     */
     receive() external payable {}
 
     function initialize(
@@ -68,7 +71,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _uri            New base URI.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative configuration.
      */
     function updateBaseURI(
         string calldata _uri,
@@ -95,7 +98,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _fee            New minting fee.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative configuration.
      */
     function updateFee(
         uint256 _fee,
@@ -120,7 +123,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _royaltyRate    New royalty rate.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative configuration.
      */
     function updateRoyaltyRate(
         uint256 _royaltyRate,
@@ -142,13 +145,15 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Withdraw cryptocurrency from the contract to a receiver.
+     *  @notice Withdraw sufficient amounts in multiple cryptocurrencies from the contract to an address.
      *
      *          Name            Description
      *  @param  _receiver       Receiver address.
-     *  @param  _currencies     Array of currency addresses to withdraw.
-     *  @param  _values         Array of withdraw values.
+     *  @param  _currencies     Array of withdrawn currency addresses.
+     *  @param  _values         Array of withdraw values, respectively to each currency.
      *  @param  _signatures     Array of admin signatures.
+     *
+     *  @dev    Administrative operation.
      */
     function withdraw(
         address _receiver,

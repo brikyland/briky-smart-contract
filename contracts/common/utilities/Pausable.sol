@@ -25,7 +25,7 @@ PausableUpgradeable {
      *          Name            Description
      *  @param  _signatures     Array of admin signatures.
      *
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative configuration.
      */
     function pause(
         bytes[] calldata _signatures
@@ -45,7 +45,7 @@ PausableUpgradeable {
      *          Name            Description
      *  @param  _signatures     Array of admin signatures.
      *
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative configuration.
      */
     function unpause(
         bytes[] calldata _signatures

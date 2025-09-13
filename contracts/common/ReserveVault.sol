@@ -31,6 +31,9 @@ ReentrancyGuardUpgradeable {
         _;
     }
 
+    /**
+     *  @notice Executed on a call to the contract with empty calldata.
+     */
     receive() external payable {}
 
     function initialize(address _admin) external initializer {
@@ -45,14 +48,14 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Authorize or deauthorize accounts to be providers.
+     *  @notice Authorize or deauthorize addresses as providers.
      *
      *          Name            Description
-     *  @param  _accounts     Array of account addresses to authorize or deauthorize.
-     *  @param  _isProvider   Whether the operation is authorize or deauthorize.
-     *  @param  _signatures   Array of admin signatures.
+     *  @param  _accounts       Array of EVM addresses.
+     *  @param  _isProvider     Whether the operation is authorization or deauthorization.
+     *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative configuration.
      */
     function authorizeProvider(
         address[] calldata _accounts,

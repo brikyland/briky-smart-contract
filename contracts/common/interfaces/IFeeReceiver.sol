@@ -18,7 +18,7 @@ interface IFeeReceiver is
 ICommon {
     /** ===== EVENT ===== **/
     /**
-     *  @notice Emitted when a sufficient amount of cryptocurrency is withdrawn from the contract to a receiver.
+     *  @notice Emitted when a sufficient amount of cryptocurrency is withdrawn from the contract to an address.
      *
      *          Name        Description
      *  @param  receiver    Receiver address.

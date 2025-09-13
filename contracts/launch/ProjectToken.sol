@@ -77,6 +77,9 @@ ReentrancyGuardUpgradeable {
         _;
     }
 
+    /**
+     *  @notice Executed on a call to the contract with empty calldata.
+     */
     receive() external payable {}
 
     function initialize(
@@ -115,7 +118,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _uri            New base URI.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative configuration.
      */
     function updateBaseURI(
         string calldata _uri,
@@ -134,14 +137,14 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Authorize or deauthorize accounts to be project token launchpads.
+     *  @notice Authorize or deauthorize contract addresses as launchpads.
      *
      *          Name            Description
-     *  @param  _accounts       Array of account addresses to authorize or deauthorize.
-     *  @param  _isLaunchpad    Whether the operation is authorize or deauthorize.
+     *  @param  _accounts       Array of contract addresses.
+     *  @param  _isLaunchpad    Whether the operation is authorization or deauthorization.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative configuration.
      */
     function authorizeLaunchpads(
         address[] calldata _accounts,
@@ -188,7 +191,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _royaltyRate    New royalty rate.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative configuration.
      */
     function updateZoneRoyaltyRate(
         bytes32 _zone,

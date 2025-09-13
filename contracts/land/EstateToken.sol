@@ -59,6 +59,9 @@ Validatable {
         _;
     }
 
+    /**
+     *  @notice Executed on a call to the contract with empty calldata.
+     */
     receive() external payable {}
 
     function initialize(
@@ -87,13 +90,13 @@ Validatable {
     }
 
     /**
-     *  @notice Update commission token address.
+     *  @notice Update the commission token contract.
      *
      *          Name                Description
-     *  @param  _commissionToken    New commission token address.
+     *  @param  _commissionToken    New commission token contract address.
      *  @param  _signatures         Array of admin signatures.
      * 
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative configuration.
      */
     function updateCommissionToken(
         address _commissionToken,
@@ -121,7 +124,7 @@ Validatable {
      *  @param  _uri            New base URI.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative configuration.
      */
     function updateBaseURI(
         string calldata _uri,
@@ -140,14 +143,14 @@ Validatable {
     }
 
     /**
-     *  @notice Authorize or deauthorize accounts to be tokenizers.
+     *  @notice Authorize or deauthorize contract addresses as tokenizers.
      *
      *          Name            Description
-     *  @param  _accounts       Array of account addresses to authorize or deauthorize.
-     *  @param  _isTokenizer    Whether the operation is authorize or deauthorize.
+     *  @param  _accounts       Array of contract addresses.
+     *  @param  _isTokenizer    Whether the operation is authorization or deauthorization.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative configuration.
      */
     function authorizeTokenizers(
         address[] calldata _accounts,
@@ -187,14 +190,14 @@ Validatable {
     }
 
     /**
-     *  @notice Authorize or deauthorize accounts to be extractors.
+     *  @notice Authorize or deauthorize contract addresses as extractors.
      *
      *          Name            Description
-     *  @param  _accounts       Array of account addresses to authorize or deauthorize.
-     *  @param  _isExtractor    Whether the operation is authorize or deauthorize.
+     *  @param  _accounts       Array of contract addresses.
+     *  @param  _isExtractor    Whether the operation is authorization or deauthorization.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative configuration.
      */
     function authorizeExtractors(
         address[] calldata _accounts,
@@ -231,14 +234,14 @@ Validatable {
     }
 
     /**
-     *  @notice Update royalty rate for a zone.
+     *  @notice Update royalty rate of a zone.
      *
      *          Name            Description
      *  @param  _zone           Zone code.
      *  @param  _royaltyRate    New royalty rate.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative configuration.
      */
     function updateZoneRoyaltyRate(
         bytes32 _zone,

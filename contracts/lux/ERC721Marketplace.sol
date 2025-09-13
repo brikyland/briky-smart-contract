@@ -36,6 +36,9 @@ ReentrancyGuardUpgradeable {
         _;
     }
 
+    /**
+     *  @notice Executed on a call to the contract with empty calldata.
+     */
     receive() external payable {}
 
     function initialize(
@@ -59,14 +62,14 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Register or deregister collections.
+     *  @notice Register or deregister multiple collections.
      *
      *          Name            Description
-     *  @param  _collections    Array of collection addresses.
-     *  @param  _isCollection   Whether the operation is register or deregister.
+     *  @param  _collections    Array of contract addresses.
+     *  @param  _isCollection   Whether the operation is registration or deregistration.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative configuration.
      */
     function registerCollections(
         address[] calldata _collections,
@@ -188,7 +191,7 @@ ReentrancyGuardUpgradeable {
         emit OfferCancellation(_offerId);
     }
 
-    function _buy(uint256 _offerId) private nonReentrant whenNotPaused returns (uint256) {
+    function _buy(uint256 _offerId) internal nonReentrant whenNotPaused returns (uint256) {
         Offer storage offer = offers[_offerId];
 
         address collection = offer.collection;

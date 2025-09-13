@@ -20,10 +20,10 @@ library PrimaryTokenConstant {
     /// @notice Allocation of Backer Round.
     uint256 internal constant BACKER_ROUND_ALLOCATION = 100_000_000 ether;
 
-    /// @notice Allocation of Private Sale 1.
+    /// @notice Allocation of Private Sale #1.
     uint256 internal constant PRIVATE_SALE_1_ALLOCATION = 30_000_000 ether;
 
-    /// @notice Allocation of Private Sale 2.
+    /// @notice Allocation of Private Sale #2.
     uint256 internal constant PRIVATE_SALE_2_ALLOCATION = 50_000_000 ether;
 
     /// @notice Allocation of Public Sale.

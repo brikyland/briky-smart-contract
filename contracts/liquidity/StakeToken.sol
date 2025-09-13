@@ -37,6 +37,9 @@ ReentrancyGuardUpgradeable {
 
     string constant private VERSION = "v1.2.1";
 
+    /**
+     *  @notice Executed on a call to the contract with empty calldata.
+     */
     receive() external payable {}
 
     function initialize(
@@ -66,14 +69,14 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Initialize stake token rewarding.
+     *  @notice Initialize rewarding.
      *
      *          Name                       Description
-     *  @param  _initialLastRewardFetch    Initial last reward fetch.
-     *  @param  _successor                 Successor address.
+     *  @param  _initialLastRewardFetch    Initial last reward fetch timestamp.
+     *  @param  _successor                 Successor contract address.
      *  @param  _signatures                Array of admin signatures.
      * 
-     *  @dev    TODO
+     *  @dev    Administrative operation.
      */
     function initializeRewarding(
         uint256 _initialLastRewardFetch,
@@ -105,7 +108,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _feeRate        New fee rate.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative configuration.
      */
     function updateFeeRate(
         uint256 _feeRate,
