@@ -19,6 +19,7 @@ interface IExclusiveToken is
 IRate,
 IERC20MetadataUpgradeable,
 IERC20PermitUpgradeable {
+    /** ===== FUNCTION ===== **/
     /**
      *          Name    Description
      *  @return rate    Discount rate for exclusive token.

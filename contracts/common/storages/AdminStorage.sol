@@ -11,11 +11,13 @@ import {IAdmin} from "../interfaces/IAdmin.sol";
  */
 abstract contract AdminStorage is
 IAdmin {
-    // deprecated
+    /// @dev    DEPRECATED!
     mapping(address => uint256) private currencyUnitPriceLimits;
+
 
     /// @dev    isManager[account]
     mapping(address => bool) public isManager;
+
 
     uint256 public nonce;
 
@@ -28,6 +30,7 @@ IAdmin {
     /// @dev    isModerator[account]
     mapping(address => bool) public isModerator;
 
+
     /// @dev    currencyRegistries[currency]
     mapping(address => CurrencyRegistry) internal currencyRegistries;
 
@@ -35,12 +38,14 @@ IAdmin {
     /// @dev    isZone[zone]
     mapping(bytes32 => bool) public isZone;
 
+
     /// @dev    isActiveIn[zone][account]
     mapping(bytes32 => mapping(address => bool)) public isActiveIn;
 
 
     /// @dev    isGovernor[account]
     mapping(address => bool) public isGovernor;
+
 
     uint256[45] private __gap;
 }

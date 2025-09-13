@@ -7,9 +7,9 @@ import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/
 import {ERC20PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PausableUpgradeable.sol";
 import {ERC20PermitUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
 
-import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
-import {FixedMath} from "../lib/FixedMath.sol";
-import {Formula} from "../lib/Formula.sol";
+import {CurrencyHandler} from "../common/utilities/CurrencyHandler.sol";
+import {FixedMath} from "../common/utilities/FixedMath.sol";
+import {Formula} from "../common/utilities/Formula.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 
@@ -65,6 +65,16 @@ ReentrancyGuardUpgradeable {
         return VERSION;
     }
 
+    /**
+     *  @notice Initialize stake token rewarding.
+     *
+     *          Name                       Description
+     *  @param  _initialLastRewardFetch    Initial last reward fetch.
+     *  @param  _successor                 Successor address.
+     *  @param  _signatures                Array of admin signatures.
+     * 
+     *  @dev    TODO
+     */
     function initializeRewarding(
         uint256 _initialLastRewardFetch,
         address _successor,
@@ -88,6 +98,15 @@ ReentrancyGuardUpgradeable {
         successor = _successor;
     }
 
+    /**
+     *  @notice Update fee rate.
+     *
+     *          Name            Description
+     *  @param  _feeRate        New fee rate.
+     *  @param  _signatures     Array of admin signatures.
+     * 
+     *  @dev    Administrative configurations.
+     */
     function updateFeeRate(
         uint256 _feeRate,
         bytes[] calldata _signatures

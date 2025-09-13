@@ -25,12 +25,16 @@ IValidation {
      *          Name        Description
      *  @param  newAddress  New validator address.
      */
-    event ValidatorUpdate(address newAddress);
+    event ValidatorUpdate(
+        address newAddress
+    );
+
 
     /** ===== ERROR ===== **/
     error ValidationExpired();
     error InvalidNonce();
     error InvalidSignature();
+
 
     /** ===== FUNCTION ===== **/
     /**

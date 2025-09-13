@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import {IERC1155MetadataURIUpgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC1155MetadataURIUpgradeable.sol";
 
-import {IGovernor} from "../../common/interfaces/IGovernor.sol";
+import {IAssetToken} from "../../common/interfaces/IAssetToken.sol";
 import {IRoyaltyRateProposer} from "../../common/interfaces/IRoyaltyRateProposer.sol";
 import {IValidatable} from "../../common/interfaces/IValidatable.sol";
 
@@ -11,6 +11,7 @@ import {ISnapshot} from "../../common/structs/ISnapshot.sol";
 import {IValidation} from "../../common/structs/IValidation.sol";
 
 import {IEstateTokenReceiver} from "../../land/interfaces/IEstateTokenReceiver.sol";
+import {IEstateTokenizer} from "../../land/interfaces/IEstateTokenizer.sol";
 
 import {IProject} from "../structs/IProject.sol";
 
@@ -18,10 +19,9 @@ interface IProjectToken is
 IProject,
 ISnapshot,
 IValidatable,
-IEstateTokenReceiver,
+IEstateTokenizer,
 IRoyaltyRateProposer,
-IGovernor,
-IERC1155MetadataURIUpgradeable {
+IAssetToken {
     event BaseURIUpdate(string newValue);
 
     event ZoneRoyaltyRateUpdate(bytes32 indexed zone, Rate newValue);

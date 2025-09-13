@@ -21,6 +21,7 @@ interface ICommon {
     error NotAuthorizedAccount();
     error Unauthorized();
 
+
     /** ===== FUNCTION ===== **/
     /* --- Dependency --- */
     /**
@@ -28,6 +29,7 @@ interface ICommon {
      *  @return admin       `Admin` contract address.
      */
     function admin() external view returns (address admin);
+
 
     /* --- Query --- */
     /**

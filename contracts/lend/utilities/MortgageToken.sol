@@ -8,8 +8,8 @@ import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC72
 import {ERC721PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721PausableUpgradeable.sol";
 import {ERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 
-import {CurrencyHandler} from "../../lib/CurrencyHandler.sol";
-import {Formula} from "../../lib/Formula.sol";
+import {CurrencyHandler} from "../../common/utilities/CurrencyHandler.sol";
+import {Formula} from "../../common/utilities/Formula.sol";
 
 import {CommonConstant} from "../../common/constants/CommonConstant.sol";
 
@@ -73,6 +73,15 @@ ReentrancyGuardUpgradeable {
         return VERSION;
     }
 
+    /**
+     *  @notice Update base URI.
+     *
+     *          Name            Description
+     *  @param  _uri            New base URI.
+     *  @param  _signatures     Array of admin signatures.
+     * 
+     *  @dev    Administrative configurations.
+     */
     function updateBaseURI(
         string calldata _uri,
         bytes[] calldata _signatures
@@ -91,9 +100,18 @@ ReentrancyGuardUpgradeable {
         emit BatchMetadataUpdate(1, mortgageNumber);
     }
 
+    /**
+     *  @notice Update fee rate.
+     *
+     *          Name            Description
+     *  @param  _feeRate        New fee rate.
+     *  @param  _signatures     Array of admin signatures.
+     * 
+     *  @dev    Administrative configurations.
+     */
     function updateFeeRate(
         uint256 _feeRate,
-        bytes[] calldata _signature
+        bytes[] calldata _signatures
     ) external {
         IAdmin(admin).verifyAdminSignatures(
             abi.encode(
@@ -101,7 +119,7 @@ ReentrancyGuardUpgradeable {
                 "updateFeeRate",
                 _feeRate
             ),
-            _signature
+            _signatures
         );
         if (_feeRate > CommonConstant.RATE_MAX_FRACTION) {
             revert InvalidRate();

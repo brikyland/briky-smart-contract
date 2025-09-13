@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-/// contracts/lib/external/
-import {MulDiv} from "./external/MulDiv.sol";
+/// contracts/common/externals/
+import {MulDiv} from "../externals/MulDiv.sol";
 
 /**
  *  @author Briky Team

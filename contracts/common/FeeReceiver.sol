@@ -3,8 +3,8 @@ pragma solidity ^0.8.20;
 
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
-import {Signature} from "../lib/Signature.sol";
-import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
+import {Signature} from "./utilities/Signature.sol";
+import {CurrencyHandler} from "./utilities/CurrencyHandler.sol";
 
 import {IAdmin} from "./interfaces/IAdmin.sol";
 
@@ -27,6 +27,17 @@ ReentrancyGuardUpgradeable {
         return VERSION;
     }
 
+    /**
+     *  @notice Withdraw cryptocurrency from the contract.
+     *
+     *          Name            Description
+     *  @param  _receiver       Receiver address.
+     *  @param  _currencies     Array of currency addresses to withdraw.
+     *  @param  _values         Array of withdraw values.
+     *  @param  _signatures     Array of admin signatures.
+     * 
+     *  @dev    TODO
+     */
     function withdraw(
         address _receiver,
         address[] calldata _currencies,

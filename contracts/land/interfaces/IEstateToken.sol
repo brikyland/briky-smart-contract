@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import {IERC1155MetadataURIUpgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC1155MetadataURIUpgradeable.sol";
 
-import {IGovernor} from "../../common/interfaces/IGovernor.sol";
+import {IAssetToken} from "../../common/interfaces/IAssetToken.sol";
 import {IRoyaltyRateProposer} from "../../common/interfaces/IRoyaltyRateProposer.sol";
 import {IValidatable} from "../../common/interfaces/IValidatable.sol";
 
@@ -17,8 +17,7 @@ IEstate,
 ISnapshot,
 IValidatable,
 IRoyaltyRateProposer,
-IGovernor,
-IERC1155MetadataURIUpgradeable {
+IAssetToken {
     event CommissionTokenUpdate(address newAddress);
 
     event BaseURIUpdate(string newValue);
@@ -94,9 +93,6 @@ IERC1155MetadataURIUpgradeable {
     function getEstate(
         uint256 estateId
     ) external view returns (Estate memory tokenInfo);
-    function zoneOf(
-        uint256 estateId
-    ) external view returns (bytes32 zone);
 
     function registerCustodian(
         bytes32 zone,

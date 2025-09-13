@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
+import {CurrencyHandler} from "./utilities/CurrencyHandler.sol";
 
 contract Airdrop {
     string constant private VERSION = "v1.2.1";

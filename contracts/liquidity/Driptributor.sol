@@ -3,8 +3,8 @@ pragma solidity ^0.8.20;
 
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
-import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
-import {Formula} from "../lib/Formula.sol";
+import {CurrencyHandler} from "../common/utilities/CurrencyHandler.sol";
+import {Formula} from "../common/utilities/Formula.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 
@@ -42,6 +42,17 @@ ReentrancyGuardUpgradeable {
         return VERSION;
     }
 
+    /**
+     *  @notice Update stake token addresses.
+     *
+     *          Name            Description
+     *  @param  _stakeToken1    New stake token address 1.
+     *  @param  _stakeToken2    New stake token address 2.
+     *  @param  _stakeToken3    New stake token address 3.
+     *  @param  _signatures     Array of admin signatures.
+     * 
+     *  @dev    Administrative configurations.
+     */
     function updateStakeTokens(
         address _stakeToken1,
         address _stakeToken2,
@@ -81,6 +92,18 @@ ReentrancyGuardUpgradeable {
         return distributions[_distributionId];
     }
 
+    /**
+     *  @notice Distribute tokens to receivers with vesting duration.
+     *
+     *          Name                Description
+     *  @param  _receivers          Array of receiver addresses.
+     *  @param  _amounts            Array of amounts to distribute to each receiver.
+     *  @param  _vestingDuration    Array of vesting durations for each receiver.
+     *  @param  _data               Array of notes.
+     *  @param  _signatures         Array of admin signatures.
+     * 
+     *  @dev    TODO
+     */
     function distributeTokensWithDuration(
         address[] calldata _receivers,
         uint256[] calldata _amounts,
@@ -133,6 +156,18 @@ ReentrancyGuardUpgradeable {
         }
     }
 
+    /**
+     *  @notice Distribute tokens to receivers with vesting end timestamp.
+     *
+     *          Name            Description
+     *  @param  _receivers      Array of receiver addresses.
+     *  @param  _amounts        Array of amounts to distribute to each receiver.
+     *  @param  _endAts         Array of vesting end timestamps for each receiver.
+     *  @param  _data           Array of notes.
+     *  @param  _signatures     Array of admin signatures.
+     * 
+     *  @dev    TODO
+     */
     function distributeTokensWithTimestamp(
         address[] calldata _receivers,
         uint256[] calldata _amounts,

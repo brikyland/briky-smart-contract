@@ -38,6 +38,7 @@ IValidatable {
      */
     event FeeUpdate(uint256 newValue);
 
+
     /**
      *  @notice Emitted when a new proposal is submitted.
      *
@@ -204,6 +205,7 @@ IValidatable {
         string logURI
     );
 
+
     /** ===== ERROR ===== **/
     error AlreadyVoted();
     error ConflictedQuorum();
@@ -223,6 +225,7 @@ IValidatable {
     error Overdue();
     error Timeout();
     error UnavailableToken();
+
 
     /** ===== FUNCTION ===== **/
     /* --- Query --- */
@@ -265,6 +268,7 @@ IValidatable {
     function getProposalVerdict(
         uint256 proposalId
     ) external view returns (ProposalVerdict verdict);
+
 
     /**
      *          Name            Description
@@ -493,6 +497,7 @@ IValidatable {
     function rejectExecution(
         uint256 proposalId
     ) external;
+
 
     /* --- Safe Command --- */
     /**

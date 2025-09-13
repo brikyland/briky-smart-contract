@@ -83,6 +83,7 @@ ICurrencyRegistry {
         address newAdmin5
     );
 
+
     /* --- Zone --- */
     /**
      *  @notice Emitted when a new zone is declared.
@@ -118,6 +119,7 @@ ICurrencyRegistry {
         address indexed account
     );
 
+
     /* --- Manager --- */
     /**
      *  @notice Emitted when an external owned address is authorized to be manager.
@@ -138,6 +140,7 @@ ICurrencyRegistry {
     event ManagerDeauthorization(
         address indexed account
     );
+
 
     /* --- Moderator --- */
     /**
@@ -160,6 +163,7 @@ ICurrencyRegistry {
         address indexed account
     );
 
+
     /* --- Governor --- */
     /**
      *  @notice Emitted when a contract is authorized to be governor.
@@ -181,6 +185,7 @@ ICurrencyRegistry {
         address indexed account
     );
 
+
     /* --- Currency --- */
     /**
      *  @notice Emitted when the registry of a currency is updated.
@@ -196,6 +201,7 @@ ICurrencyRegistry {
         bool isExclusive
     );
 
+
     /** ===== ERROR ===== **/
     error ActivatedAccount();
     error AuthorizedAccount();
@@ -209,6 +215,7 @@ ICurrencyRegistry {
     error NotAuthorizedAccount();
     error NotAuthorizedZone();
     error Unauthorized();
+
 
     /** ===== FUNCTION ===== **/
     /* --- Query --- */
@@ -271,7 +278,7 @@ ICurrencyRegistry {
      *  @param  account         Contract address.
      *  @return isGovernor      Whether the account is authorized to be governor.
      *
-     *  @dev    Contract `account` must support `IGovernor` interface.
+     *  @dev    This contract must support interface `IGovernor`.
      */
     function isGovernor(
         address account
@@ -345,6 +352,7 @@ ICurrencyRegistry {
         bytes32 zone,
         address account
     ) external view returns (bool isActive);
+
 
     /* --- Command --- */
     /**

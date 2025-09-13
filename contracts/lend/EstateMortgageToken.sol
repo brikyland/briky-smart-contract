@@ -2,15 +2,20 @@
 pragma solidity ^0.8.20;
 
 import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol";
+import {IERC2981Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
 
-import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
+import {CurrencyHandler} from "../common/utilities/CurrencyHandler.sol";
 
 import {CommonConstant} from "../common/constants/CommonConstant.sol";
 
 import {ICommissionToken} from "../land/interfaces/ICommissionToken.sol";
 import {IEstateToken} from "../land/interfaces/IEstateToken.sol";
+import {IEstateTokenReceiver} from "../land/interfaces/IEstateTokenReceiver.sol";
 
 import {CommissionDispatchable} from "../land/utilities/CommissionDispatchable.sol";
+
+import {IEstateMortgageToken} from "./interfaces/IEstateMortgageToken.sol";
+import {IMortgageToken} from "./interfaces/IMortgageToken.sol";
 
 import {MortgageToken} from "./utilities/MortgageToken.sol";
 
@@ -93,10 +98,13 @@ CommissionDispatchable {
 
     function supportsInterface(bytes4 _interfaceId) public view override(
         IERC165Upgradeable,
-        EstateTokenReceiver,
         MortgageToken
     ) returns (bool) {
-        return super.supportsInterface(_interfaceId);
+        return _interfaceId == type(IEstateMortgageToken).interfaceId
+            || _interfaceId == type(IMortgageToken).interfaceId
+            || _interfaceId == type(IEstateTokenReceiver).interfaceId
+            || _interfaceId == type(IERC2981Upgradeable).interfaceId
+            || super.supportsInterface(_interfaceId);
     }
 
     function royaltyInfo(uint256 _tokenId, uint256 _price) external view override returns (address, uint256) {

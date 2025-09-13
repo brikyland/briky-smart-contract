@@ -3,8 +3,8 @@ pragma solidity ^0.8.20;
 
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
-import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
-import {Formula} from "../lib/Formula.sol";
+import {CurrencyHandler} from "../common/utilities/CurrencyHandler.sol";
+import {Formula} from "../common/utilities/Formula.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 import {IPriceWatcher} from "../common/interfaces/IPriceWatcher.sol";
@@ -13,21 +13,26 @@ import {CommonConstant} from "../common/constants/CommonConstant.sol";
 
 import {IReserveVault} from "../common/interfaces/IReserveVault.sol";
 
+import {Administrable} from "../common/utilities/Administrable.sol";
 import {Discountable} from "../common/utilities/Discountable.sol";
 import {Pausable} from "../common/utilities/Pausable.sol";
 import {Validatable} from "../common/utilities/Validatable.sol";
 
 import {PrestigePadConstant} from "./constants/PrestigePadConstant.sol";
 
+import {IPrestigePad} from "./interfaces/IPrestigePad.sol";
 import {IProjectToken} from "./interfaces/IProjectToken.sol";
+import {IProjectLaunchpad} from "./interfaces/IProjectLaunchpad.sol";
+import {IProjectTokenReceiver} from "./interfaces/IProjectTokenReceiver.sol";
 
 import {PrestigePadStorage} from "./storages/PrestigePadStorage.sol";
 
-import {ProjectLaunchpad} from "./utilities/ProjectLaunchpad.sol";
+import {ProjectTokenReceiver} from "./utilities/ProjectTokenReceiver.sol";
 
 contract PrestigePad is
 PrestigePadStorage,
-ProjectLaunchpad,
+ProjectTokenReceiver,
+Administrable,
 Discountable,
 Pausable,
 Validatable,
@@ -89,6 +94,16 @@ ReentrancyGuardUpgradeable {
         return VERSION;
     }
 
+    /**
+     *  @notice Update allowed price range for a project token unit.
+     *
+     *          Name                 Description
+     *  @param  _baseMinUnitPrice    New minimum allowed price.
+     *  @param  _baseMaxUnitPrice    New maximum allowed price.
+     *  @param  _signatures          Array of admin signatures.
+     * 
+     *  @dev    Administrative configurations.
+     */
     function updateBaseUnitPriceRange(
         uint256 _baseMinUnitPrice,
         uint256 _baseMaxUnitPrice,
@@ -759,4 +774,13 @@ ReentrancyGuardUpgradeable {
         }
         return cashbackBaseAmount;
     }
+
+    function supportsInterface(
+        bytes4 _interfaceId
+    ) public view virtual override returns (bool) {
+        return _interfaceId == type(IPrestigePad).interfaceId
+            || _interfaceId == type(IProjectLaunchpad).interfaceId
+            || _interfaceId == type(IProjectTokenReceiver).interfaceId;
+    }
+
 }

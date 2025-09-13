@@ -3,12 +3,13 @@ pragma solidity ^0.8.20;
 
 import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol";
 import {IERC721MetadataUpgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC721MetadataUpgradeable.sol";
+import {IERC2981Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
 import {IERC4906Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC4906Upgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import {ERC721PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721PausableUpgradeable.sol";
 
-import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
+import {CurrencyHandler} from "../common/utilities/CurrencyHandler.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 
@@ -62,6 +63,15 @@ ReentrancyGuardUpgradeable {
         return VERSION;
     }
 
+    /**
+     *  @notice Update base URI.
+     *
+     *          Name            Description
+     *  @param  _uri            New base URI.
+     *  @param  _signatures     Array of admin signatures.
+     * 
+     *  @dev    Administrative configurations.
+     */
     function updateBaseURI(
         string calldata _uri,
         bytes[] calldata _signatures
@@ -80,9 +90,18 @@ ReentrancyGuardUpgradeable {
         emit BatchMetadataUpdate(1, tokenNumber);
     }
 
+    /**
+     *  @notice Update minting fee.
+     *
+     *          Name            Description
+     *  @param  _fee            New minting fee.
+     *  @param  _signatures     Array of admin signatures.
+     * 
+     *  @dev    Administrative configurations.
+     */
     function updateFee(
         uint256 _fee,
-        bytes[] calldata _signature
+        bytes[] calldata _signatures
     ) external {
         IAdmin(admin).verifyAdminSignatures(
             abi.encode(
@@ -90,12 +109,21 @@ ReentrancyGuardUpgradeable {
                 "updateFee",
                 _fee
             ),
-            _signature
+            _signatures
         );
         fee = _fee;
         emit FeeUpdate(_fee);
     }
 
+    /**
+     *  @notice Update royalty rate.
+     *
+     *          Name            Description
+     *  @param  _royaltyRate    New royalty rate.
+     *  @param  _signatures     Array of admin signatures.
+     * 
+     *  @dev    Administrative configurations.
+     */
     function updateRoyaltyRate(
         uint256 _royaltyRate,
         bytes[] calldata _signatures
@@ -115,6 +143,15 @@ ReentrancyGuardUpgradeable {
         emit RoyaltyRateUpdate(Rate(_royaltyRate, CommonConstant.RATE_DECIMALS));
     }
 
+    /**
+     *  @notice Withdraw cryptocurrency from the contract to a receiver.
+     *
+     *          Name            Description
+     *  @param  _receiver       Receiver address.
+     *  @param  _currencies     Array of currency addresses to withdraw.
+     *  @param  _values         Array of withdraw values.
+     *  @param  _signatures     Array of admin signatures.
+     */
     function withdraw(
         address _receiver,
         address[] calldata _currencies,
@@ -175,11 +212,10 @@ ReentrancyGuardUpgradeable {
 
     function supportsInterface(bytes4 _interfaceId) public view override(
         IERC165Upgradeable,
-        RoyaltyRateProposer,
         ERC721Upgradeable
     ) returns (bool) {
         return _interfaceId == type(IERC4906Upgradeable).interfaceId
-            || RoyaltyRateProposer.supportsInterface(_interfaceId)
+            || _interfaceId == type(IERC2981Upgradeable).interfaceId
             || super.supportsInterface(_interfaceId);
     }
 

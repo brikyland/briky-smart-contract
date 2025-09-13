@@ -6,7 +6,7 @@ import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces
 import {IERC2981Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
 import {ERC165CheckerUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 
-import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
+import {CurrencyHandler} from "../common/utilities/CurrencyHandler.sol";
 
 import {CommonConstant} from "../common/constants/CommonConstant.sol";
 
@@ -41,6 +41,16 @@ MortgageToken {
         );
     }
 
+    /**
+     *  @notice Register or deregister tokens as collaterals.
+     *
+     *          Name             Description
+     *  @param  _tokens          Array of token addresses to register or deregister.
+     *  @param  _isCollateral    Whether the operation is register or deregister.
+     *  @param  _signatures      Array of admin signatures.
+     * 
+     *  @dev    Administrative configurations.
+     */
     function registerCollaterals(
         address[] calldata _tokens,
         bool _isCollateral,

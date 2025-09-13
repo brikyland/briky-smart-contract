@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol";
 import {IERC1155Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC1155Upgradeable.sol";
 import {IERC1155MetadataURIUpgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC1155MetadataURIUpgradeable.sol";
+import {IERC2981Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
 import {ERC1155Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
 import {ERC1155PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/extensions/ERC1155PausableUpgradeable.sol";
 import {ERC1155SupplyUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/extensions/ERC1155SupplyUpgradeable.sol";
@@ -19,7 +20,7 @@ import {CommonConstant} from "../common/constants/CommonConstant.sol";
 import {Administrable} from "../common/utilities/Administrable.sol";
 import {Pausable} from "../common/utilities/Pausable.sol";
 import {RoyaltyRateProposer} from "../common/utilities/RoyaltyRateProposer.sol";
-import {Snapshotable} from "../common/utilities/Snapshotable.sol";
+import {SnapshotSearcher} from "../common/utilities/SnapshotSearcher.sol";
 import {Validatable} from "../common/utilities/Validatable.sol";
 
 import {EstateTokenConstant} from "./constants/EstateTokenConstant.sol";
@@ -38,9 +39,9 @@ ERC1155URIStorageUpgradeable,
 Administrable,
 Pausable,
 RoyaltyRateProposer,
-Snapshotable,
 Validatable {
     using ERC165CheckerUpgradeable for address;
+    using SnapshotSearcher for Uint256Snapshot[];
 
     string constant private VERSION = "v1.2.1";
 
@@ -85,6 +86,15 @@ Validatable {
         return EstateTokenConstant.TOKEN_DECIMALS;
     }
 
+    /**
+     *  @notice Update commission token address.
+     *
+     *          Name                Description
+     *  @param  _commissionToken    New commission token address.
+     *  @param  _signatures         Array of admin signatures.
+     * 
+     *  @dev    Administrative configurations.
+     */
     function updateCommissionToken(
         address _commissionToken,
         bytes[] calldata _signatures
@@ -104,6 +114,15 @@ Validatable {
         emit CommissionTokenUpdate(_commissionToken);
     }
 
+    /**
+     *  @notice Update base URI.
+     *
+     *          Name            Description
+     *  @param  _uri            New base URI.
+     *  @param  _signatures     Array of admin signatures.
+     * 
+     *  @dev    Administrative configurations.
+     */
     function updateBaseURI(
         string calldata _uri,
         bytes[] calldata _signatures
@@ -120,6 +139,16 @@ Validatable {
         emit BaseURIUpdate(_uri);
     }
 
+    /**
+     *  @notice Authorize or deauthorize accounts to be tokenizers.
+     *
+     *          Name            Description
+     *  @param  _accounts       Array of account addresses to authorize or deauthorize.
+     *  @param  _isTokenizer    Whether the operation is authorize or deauthorize.
+     *  @param  _signatures     Array of admin signatures.
+     * 
+     *  @dev    Administrative configurations.
+     */
     function authorizeTokenizers(
         address[] calldata _accounts,
         bool _isTokenizer,
@@ -157,6 +186,16 @@ Validatable {
         }
     }
 
+    /**
+     *  @notice Authorize or deauthorize accounts to be extractors.
+     *
+     *          Name            Description
+     *  @param  _accounts       Array of account addresses to authorize or deauthorize.
+     *  @param  _isExtractor    Whether the operation is authorize or deauthorize.
+     *  @param  _signatures     Array of admin signatures.
+     * 
+     *  @dev    Administrative configurations.
+     */
     function authorizeExtractors(
         address[] calldata _accounts,
         bool _isExtractor,
@@ -191,6 +230,16 @@ Validatable {
         }
     }
 
+    /**
+     *  @notice Update royalty rate for a zone.
+     *
+     *          Name            Description
+     *  @param  _zone           Zone code.
+     *  @param  _royaltyRate    New royalty rate.
+     *  @param  _signatures     Array of admin signatures.
+     * 
+     *  @dev    Administrative configurations.
+     */
     function updateZoneRoyaltyRate(
         bytes32 _zone,
         uint256 _royaltyRate,
@@ -385,7 +434,7 @@ Validatable {
             revert InvalidTimestamp();
         }
 
-        return _snapshotAt(balanceSnapshots[_estateId][_account], _at);
+        return balanceSnapshots[_estateId][_account].getValueAt(_at);
     }
 
     function equityOfAt(address _account, uint256 _estateId, uint256 _at) external view returns (uint256) {
@@ -403,7 +452,7 @@ Validatable {
             return 0;
         }
 
-        return _snapshotAt(balanceSnapshots[_estateId][_account], _at)
+        return balanceSnapshots[_estateId][_account].getValueAt(_at)
             + IEstateTokenizer(estate.tokenizer).allocationOfAt(
                 _account,
                 estate.tokenizationId,
@@ -445,11 +494,10 @@ Validatable {
 
     function supportsInterface(bytes4 _interfaceId) public view override(
         IERC165Upgradeable,
-        ERC1155Upgradeable,
-        RoyaltyRateProposer
+        ERC1155Upgradeable
     ) returns (bool) {
         return _interfaceId == type(IGovernor).interfaceId
-            || RoyaltyRateProposer.supportsInterface(_interfaceId)
+            || _interfaceId == type(IERC2981Upgradeable).interfaceId
             || ERC1155Upgradeable.supportsInterface(_interfaceId)
             || super.supportsInterface(_interfaceId);
     }

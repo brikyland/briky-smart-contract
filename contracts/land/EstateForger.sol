@@ -3,8 +3,8 @@ pragma solidity ^0.8.20;
 
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
-import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
-import {Formula} from "../lib/Formula.sol";
+import {CurrencyHandler} from "../common/utilities/CurrencyHandler.sol";
+import {Formula} from "../common/utilities/Formula.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 import {IPriceWatcher} from "../common/interfaces/IPriceWatcher.sol";
@@ -12,6 +12,7 @@ import {IReserveVault} from "../common/interfaces/IReserveVault.sol";
 
 import {CommonConstant} from "../common/constants/CommonConstant.sol";
 
+import {Administrable} from "../common/utilities/Administrable.sol";
 import {Pausable} from "../common/utilities/Pausable.sol";
 import {Validatable} from "../common/utilities/Validatable.sol";
 
@@ -19,16 +20,20 @@ import {EstateForgerConstant} from "./constants/EstateForgerConstant.sol";
 
 import {ICommissionToken} from "./interfaces/ICommissionToken.sol";
 import {IEstateToken} from "./interfaces/IEstateToken.sol";
+import {IEstateForger} from "./interfaces/IEstateForger.sol";
+import {IEstateTokenizer} from "./interfaces/IEstateTokenizer.sol";
+import {IEstateTokenReceiver} from "./interfaces/IEstateTokenReceiver.sol";
+import {EstateTokenReceiver} from "./utilities/EstateTokenReceiver.sol";
 
 import {EstateForgerStorage} from "./storages/EstateForgerStorage.sol";
 
 import {CommissionDispatchable} from "./utilities/CommissionDispatchable.sol";
-import {EstateTokenizer} from "./utilities/EstateTokenizer.sol";
 
 contract EstateForger is
 EstateForgerStorage,
-EstateTokenizer,
 CommissionDispatchable,
+EstateTokenReceiver,
+Administrable,
 Pausable,
 Validatable,
 ReentrancyGuardUpgradeable {
@@ -84,6 +89,16 @@ ReentrancyGuardUpgradeable {
         return VERSION;
     }
 
+    /**
+     *  @notice Update allowed price range for an estate token unit.
+     *
+     *          Name            Description
+     *  @param  _baseMinUnitPrice    New minimum allowed price.
+     *  @param  _baseMaxUnitPrice    New maximum allowed price.
+     *  @param  _signatures          Array of admin signatures.
+     * 
+     *  @dev    Administrative configurations.
+     */
     function updateBaseUnitPriceRange(
         uint256 _baseMinUnitPrice,
         uint256 _baseMaxUnitPrice,
@@ -110,6 +125,16 @@ ReentrancyGuardUpgradeable {
         );
     }
 
+    /**
+     *  @notice Whitelist or unwhitelist accounts for private sale.
+     *
+     *          Name               Description
+     *  @param  _accounts          Array of account addresses to whitelist or unwhitelist.
+     *  @param  _isWhitelisted     Whether the operation is whitelist or unwhitelist.
+     *  @param  _signatures        Array of admin signatures.
+     * 
+     *  @dev    Administrative configurations.
+     */
     function whitelist(
         address[] calldata _accounts,
         bool _isWhitelisted,
@@ -657,5 +682,13 @@ ReentrancyGuardUpgradeable {
             CurrencyHandler.receiveNative(0);
         }
         return cashbackBaseAmount;
+    }
+
+    function supportsInterface(
+        bytes4 _interfaceId
+    ) public view virtual override returns (bool) {
+        return _interfaceId == type(IEstateForger).interfaceId
+            || _interfaceId == type(IEstateTokenizer).interfaceId
+            || _interfaceId == type(IEstateTokenReceiver).interfaceId;
     }
 }

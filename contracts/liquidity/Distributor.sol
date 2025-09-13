@@ -6,7 +6,7 @@ import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/se
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 
-import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
+import {CurrencyHandler} from "../common/utilities/CurrencyHandler.sol";
 
 import {DistributorStorage} from "../liquidity/storages/DistributorStorage.sol";
 
@@ -33,6 +33,17 @@ ReentrancyGuardUpgradeable {
         return VERSION;
     }
 
+    /**
+     *  @notice Distribute tokens to receivers.
+     *
+     *          Name            Description
+     *  @param  _receivers      Array of receiver addresses.
+     *  @param  _amounts        Array of amounts to distribute to each receiver.
+     *  @param  _data           Note.
+     *  @param  _signatures     Array of admin signatures.
+     * 
+     *  @dev    Administrative configurations.
+     */
     function distributeToken(
         address[] calldata _receivers,
         uint256[] calldata _amounts,

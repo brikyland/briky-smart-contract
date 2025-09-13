@@ -1,28 +1,53 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+/// @openzeppelin/contracts-upgradeable/
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-import {Signature} from "../../lib/Signature.sol";
-
-import {CommonConstant} from "../constants/CommonConstant.sol";
-
+/// contracts/common/interfaces/
 import {IAdmin} from "../interfaces/IAdmin.sol";
 
+/// contracts/common/storages/
 import {ValidatableStorage} from "../storages/ValidatableStorage.sol";
 
+/// contracts/common/utilities/
+import {Signature} from "./Signature.sol";
+
+/**
+ *  @author Briky Team
+ *
+ *  @notice The `Validatable` contracts relies on a trusted validator to verify data that is difficult to process on-chain.
+ *
+ *  @dev    Implementation involves server-side support.
+ */
 abstract contract Validatable is
 ValidatableStorage,
 Initializable {
+    /** ===== FUNCTION ===== **/
+    /**
+     *  @notice Initialize for contract `Validatable`.
+     *
+     *          Name            Description
+     *  @param  _validator      Validator address.
+     */
     function __Validatable_init(
         address _validator
     ) internal onlyInitializing {
         validator = _validator;
     }
 
+    /**
+     *  @notice Update validator.
+     *
+     *          Name            Description
+     *  @param  _validator      Validator address.
+     *  @param  _signatures     Array of admin signatures.
+     *
+     *  @dev    Administrative configurations.
+     */
     function updateValidator(
         address _validator,
-        bytes[] calldata _signature
+        bytes[] calldata _signatures
     ) external {
         IAdmin(this.admin()).verifyAdminSignatures(
             abi.encode(
@@ -30,12 +55,21 @@ Initializable {
                 "updateValidator",
                 _validator
             ),
-            _signature
+            _signatures
         );
         validator = _validator;
         emit ValidatorUpdate(_validator);
     }
 
+    /**
+     *  @notice Validate a data.
+     *
+     *          Name            Description
+     *  @param  _data           Validated data.
+     *  @param  _validation     Validation package from the validator.
+     *
+     *  @dev    Revert on validation failure.
+     */
     function _validate(
         bytes memory _data,
         Validation calldata _validation
@@ -52,7 +86,12 @@ Initializable {
 
         if (!Signature.verify(
             validator,
-            abi.encode(address(this), _data, _validation.nonce, _validation.expiry),
+            abi.encode(
+                address(this),
+                _data,
+                _validation.nonce,
+                _validation.expiry
+            ),
             _validation.nonce,
             _validation.signature)
         ) {

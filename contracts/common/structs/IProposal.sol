@@ -82,6 +82,7 @@ interface IProposal {
         Failed
     }
 
+
     /** ===== STRUCT ===== **/
     /**
      *  @notice A proposal will be executed on an asset by an assigned operator if approved through votes by its holders.
@@ -107,7 +108,7 @@ interface IProposal {
         string logURI;
 
         /// @notice Governor contract address.
-        /// @dev    This contract must support `IGovernor` interface.
+        /// @dev    This contract must support interface `IGovernor`.
         address governor;
 
         /// @notice Asset identifier from the governor contract.

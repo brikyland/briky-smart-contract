@@ -4,8 +4,8 @@ pragma solidity ^0.8.20;
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC20Upgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
-import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
-import {Formula} from "../lib/Formula.sol";
+import {CurrencyHandler} from "../common/utilities/CurrencyHandler.sol";
+import {Formula} from "../common/utilities/Formula.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 
@@ -42,6 +42,17 @@ ReentrancyGuardUpgradeable {
         return VERSION;
     }
 
+    /**
+     *  @notice Update stake token addresses.
+     *
+     *          Name            Description
+     *  @param  _stakeToken1    New stake token address 1.
+     *  @param  _stakeToken2    New stake token address 2.
+     *  @param  _stakeToken3    New stake token address 3.
+     *  @param  _signatures     Array of admin signatures.
+     * 
+     *  @dev    Administrative configurations.
+     */
     function updateStakeTokens(
         address _stakeToken1,
         address _stakeToken2,
@@ -75,6 +86,16 @@ ReentrancyGuardUpgradeable {
         );
     }
 
+    /**
+     *  @notice Start the auction.
+     *
+     *          Name                Description
+     *  @param  _endAt              End timestamp.
+     *  @param  _vestingDuration    Vesting duration.
+     *  @param  _signatures         Array of admin signatures.
+     * 
+     *  @dev    TODO
+     */
     function startAuction(
         uint256 _endAt,
         uint256 _vestingDuration,

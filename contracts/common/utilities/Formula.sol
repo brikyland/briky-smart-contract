@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-/// contracts/common/structs/
-import {IRate} from "../common/structs/IRate.sol";
+/// contracts/common/externals/
+import {MulDiv} from "../externals/MulDiv.sol";
 
-/// contracts/lib/external/
-import {MulDiv} from "./external/MulDiv.sol";
+/// contracts/common/structs/
+import {IRate} from "../structs/IRate.sol";
 
 /**
  *  @author Briky Team

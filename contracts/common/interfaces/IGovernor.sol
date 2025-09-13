@@ -7,8 +7,9 @@ import {IERC1155Upgradeable} from "@openzeppelin/contracts-upgradeable/interface
 /**
  *  @author Briky Team
  *
- *  @notice Interface for ERC-1155 tokens governing RWAs.
- *  @notice A governor contract securitize assets and support querying equities of holders at timestamps in the past.
+ *  @notice Interface for an ERC-1155 contract that governs a co-held asset.
+ *  @notice A governor contract digitizes shared holdings and supports querying holder equity for governance decisions or
+ *          dividend distributions.
  */
 interface IGovernor is
 IERC1155Upgradeable  {

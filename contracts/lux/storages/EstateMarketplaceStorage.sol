@@ -11,13 +11,5 @@ import {IEstateMarketplace} from "../../lux/interfaces/IEstateMarketplace.sol";
  */
 abstract contract EstateMarketplaceStorage is
 IEstateMarketplace {
-    /// @dev    offers[offerId]
-    mapping(uint256 => Offer) internal offers;
-
-    uint256 public offerNumber;
-
-    address public admin;
-    address public estateToken;
-
     uint256[50] private __gap;
 }

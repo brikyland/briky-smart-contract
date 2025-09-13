@@ -6,67 +6,6 @@ import {ICommon} from "../../common/interfaces/ICommon.sol";
 import {IMortgage} from "../../lend/structs/IMortgage.sol";
 
 interface IMortgageMarketplace is
-IMortgage,
-ICommon {
-    enum OfferState {
-        Nil,
-        Selling,
-        Sold,
-        Cancelled
-    }
-
-    struct Offer {
-        address collection;
-        uint256 tokenId;
-        uint256 price;
-        address currency;
-        OfferState state;
-        address seller;
-    }
-
-    event CollectionRegistration(address indexed collection);
-    event CollectionDeregistration(address indexed collection);
-
-    event NewOffer(
-        address indexed collection,
-        uint256 indexed offerId,
-        uint256 indexed tokenId,
-        address seller,
-        uint256 price,
-        address currency
-    );
-    event OfferCancellation(uint256 indexed offerId);
-    event OfferSale(
-        uint256 indexed offerId,
-        address indexed buyer,
-        address royaltyReceiver,
-        uint256 royalty
-    );
-
-    error NotRegisteredCollection();
-    error RegisteredCollection();
-
-    error InvalidBuying();
-    error InvalidCancelling();
-    error InvalidCollection();
-    error InvalidTokenId();
-    error InvalidOfferId();
-    error InvalidPrice();
+IMortgage {
     error UnavailableMortgage();
-
-    function offerNumber() external view returns (uint256 offerNumber);
-
-    function getOffer(uint256 offerId) external view returns (Offer memory offer);
-
-    function list(
-        address collection,
-        uint256 tokenId,
-        uint256 price,
-        address currency
-    ) external returns (uint256 offerId);
-
-    function buy(uint256 offerId) external payable returns (uint256 price);
-    function cancel(uint256 offerId) external;
-
-    function safeBuy(uint256 offerId, uint256 anchor) external payable returns (uint256 price);
 }

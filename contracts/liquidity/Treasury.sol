@@ -3,8 +3,8 @@ pragma solidity ^0.8.20;
 
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
-import {CurrencyHandler} from "../lib/CurrencyHandler.sol";
-import {Formula} from "../lib/Formula.sol";
+import {CurrencyHandler} from "../common/utilities/CurrencyHandler.sol";
+import {Formula} from "../common/utilities/Formula.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 
@@ -43,6 +43,14 @@ ReentrancyGuardUpgradeable {
         return VERSION;
     }
 
+    /**
+     *  @notice Withdraw operation fund to an operator.
+     *
+     *          Name            Description
+     *  @param  _value          Amount to withdraw.
+     *  @param  _operator       Operator address.
+     *  @param  _signatures     Array of admin signatures.
+     */
     function withdrawOperationFund(
         uint256 _value,
         address _operator,

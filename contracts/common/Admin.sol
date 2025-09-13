@@ -5,7 +5,7 @@ import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {ERC165CheckerUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 
-import {Signature} from "../lib/Signature.sol";
+import {Signature} from "./utilities/Signature.sol";
 
 import {IGovernor} from "./interfaces/IGovernor.sol";
 

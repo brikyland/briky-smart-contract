@@ -3,12 +3,13 @@ pragma solidity ^0.8.20;
 
 import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol";
 import {IERC721MetadataUpgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC721MetadataUpgradeable.sol";
+import {IERC2981Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
 import {IERC4906Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC4906Upgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import {ERC721PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721PausableUpgradeable.sol";
 
-import {Formula} from "../lib/Formula.sol";
+import {Formula} from "../common/utilities/Formula.sol";
 
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 import {IRoyaltyRateProposer} from "../common/interfaces/IRoyaltyRateProposer.sol";
@@ -67,6 +68,15 @@ ReentrancyGuardUpgradeable {
         return VERSION;
     }
 
+    /**
+     *  @notice Update base URI.
+     *
+     *          Name            Description
+     *  @param  _uri            New base URI.
+     *  @param  _signatures     Array of admin signatures.
+     * 
+     *  @dev    Administrative configurations.
+     */
     function updateBaseURI(
         string calldata _uri,
         bytes[] calldata _signatures
@@ -85,6 +95,15 @@ ReentrancyGuardUpgradeable {
         emit BatchMetadataUpdate(1, IEstateToken(estateToken).estateNumber());
     }
 
+    /**
+     *  @notice Update royalty rate.
+     *
+     *          Name            Description
+     *  @param  _royaltyRate    New royalty rate.
+     *  @param  _signatures     Array of admin signatures.
+     * 
+     *  @dev    Administrative configurations.
+     */
     function updateRoyaltyRate(
         uint256 _royaltyRate,
         bytes[] calldata _signatures
@@ -215,10 +234,10 @@ ReentrancyGuardUpgradeable {
 
     function supportsInterface(bytes4 _interfaceId) public view override(
         IERC165Upgradeable,
-        RoyaltyRateProposer,
         ERC721Upgradeable
     ) returns (bool) {
         return _interfaceId == type(IERC4906Upgradeable).interfaceId
+            || _interfaceId == type(IERC2981Upgradeable).interfaceId
             || super.supportsInterface(_interfaceId);
     }
 
