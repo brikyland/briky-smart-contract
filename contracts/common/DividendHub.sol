@@ -59,7 +59,7 @@ ReentrancyGuardUpgradeable {
         uint256 _value,
         address _currency,
         string calldata _data
-    ) external payable nonReentrant onlyAvailableCurrency(_currency) onlyGovernor(_governor) whenNotPaused returns (uint256) {
+    ) external payable nonReentrant onlyAvailableCurrency(_currency) validGovernor(_governor) whenNotPaused returns (uint256) {
         if (!IGovernor(_governor).isAvailable(_tokenId)) {
             revert InvalidTokenId();
         }

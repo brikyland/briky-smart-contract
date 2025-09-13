@@ -257,6 +257,13 @@ ReentrancyGuardUpgradeable {
         return projects[_projectId];
     }
 
+    function getRepresentative(uint256 _projectId) external view returns (address) {
+        if (_projectId == 0 || _projectId > projectNumber) {
+            revert InvalidProjectId();
+        }
+        return projects[_projectId].initiator;
+    }
+
     function isAvailable(uint256 _projectId) public view returns (bool) {
         return projects[_projectId].deprecateAt == CommonConstant.INFINITE_TIMESTAMP
             && projects[_projectId].estateId == 0;

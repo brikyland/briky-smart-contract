@@ -20,6 +20,7 @@ IRate,
 IERC20MetadataUpgradeable,
 IERC20PermitUpgradeable {
     /** ===== FUNCTION ===== **/
+    /* --- Query --- */
     /**
      *          Name    Description
      *  @return rate    Discount rate for exclusive token.

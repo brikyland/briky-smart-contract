@@ -17,7 +17,6 @@ IAssetMarketplace {
     uint256 public offerNumber;
 
     address public admin;
-
     address public collection;
 
     uint256[50] private __gap;

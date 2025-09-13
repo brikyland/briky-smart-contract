@@ -13,9 +13,7 @@ import {ICommon} from "../../common/interfaces/ICommon.sol";
  *  @notice Interface for contract `AssetMarketplace`.
  *  @notice The `AssetMarketplace` contract hosts a marketplace for a specific asset token.
  *
- *  @dev    The asset token must support interface `IAssetToken`.
- *  @dev    TODO: All amounts are expressed in absolute units. Scale these values by `10 ** IAssetToken.decimals()` to obtain
- *          the correct amounts under the `IAssetToken` convention.
+ *  @dev    Each unit of asset token is scaled by `10 ** IAssetToken(collection).decimals()` following the convention of `IAssetToken`.
  *  @dev    ERC-20 tokens are identified by their contract addresses.
  *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
  */
@@ -24,28 +22,28 @@ IOfferState,
 ICommon {
     /** ===== STRUCT ===== **/
     /**
-     *  @notice An offer for asset tokens.
+     *  @notice An offer to sell an amount of asset tokens.
      */
     struct Offer {
-        /// @notice Token identifier.
+        /// @notice Asset identifier.
         uint256 tokenId;
 
-        /// @notice Amount of tokens to sell.
+        /// @notice Amount of tokens to be sold.
         uint256 sellingAmount;
 
-        /// @notice Amount of tokens sold.
+        /// @notice Amount of tokens that has been bought.
         uint256 soldAmount;
 
-        /// @notice Selling price per token.
+        /// @notice Sale value of each token.
         uint256 unitPrice;
 
         /// @notice Royalty charged on each token.
         uint256 royaltyDenomination;
 
-        /// @notice Selling currency address.
+        /// @notice Sale currency address.
         address currency;
 
-        /// @notice Whether the offer is sold in parts.
+        /// @notice Whether the offer can be bought partially.
         bool isDivisible;
 
         /// @notice Current state.
@@ -54,25 +52,25 @@ ICommon {
         /// @notice Seller address.
         address seller;
 
-        /// @notice Receiver of the royalty.
+        /// @notice Royalty receiver address.
         address royaltyReceiver;
     }
 
 
     /** ===== EVENT ===== **/
     /**
-     *  @notice Emitted when a new offer is submitted.
+     *  @notice Emitted when a new offer is listed.
      *
      *          Name                   Description
      *  @param  offerId                Offer identifier.
-     *  @param  tokenId                Token identifier.
+     *  @param  tokenId                Asset identifier.
      *  @param  seller                 Seller address.
-     *  @param  sellingAmount          Amount of tokens to sell.
-     *  @param  unitPrice              Selling price per token.
+     *  @param  sellingAmount          Amount of tokens to be sold.
+     *  @param  unitPrice              Sale value of each token.
      *  @param  royaltyDenomination    Royalty charged on each token.
-     *  @param  currency               Selling currency address.
-     *  @param  isDivisible            Whether the offer is sold in parts.
-     *  @param  royaltyReceiver        Receiver of the royalty.
+     *  @param  royaltyReceiver        Royalty receiver address.
+     *  @param  currency               Sale currency address.
+     *  @param  isDivisible            Whether the offer can be bought partially.
      */
     event NewOffer(
         uint256 indexed offerId,
@@ -81,10 +79,11 @@ ICommon {
         uint256 sellingAmount,
         uint256 unitPrice,
         uint256 royaltyDenomination,
+        address royaltyReceiver,
         address currency,
-        bool isDivisible,
-        address royaltyReceiver
+        bool isDivisible
     );
+
 
     /**
      *  @notice Emitted when an offer is cancelled.
@@ -95,13 +94,13 @@ ICommon {
     event OfferCancellation(uint256 indexed offerId);
 
     /**
-     *  @notice Emitted when an offer is sold.
+     *  @notice Emitted when an offer is sold, partially or fully.
      *
      *          Name        Description
      *  @param  offerId     Offer identifier.
      *  @param  buyer       Buyer address.
-     *  @param  amount      Amount of tokens sold.
-     *  @param  value       Selling price.
+     *  @param  amount      Sale amount.
+     *  @param  value       Sale price.
      */
     event OfferSale(
         uint256 indexed offerId,
@@ -124,23 +123,27 @@ ICommon {
 
 
     /** ===== FUNCTION ===== **/
-    /* --- Query --- */
+    /* --- Dependency --- */
     /**
-     *          Name          Description
-     *  @return collection    Asset token address.
+     *          Name            Description
+     *  @return collection      Asset token address.
+     *
+     *  @dev    The asset token must support interface `IAssetToken`.
      */
     function collection() external view returns (address collection);
 
+
+    /* --- Query --- */
     /**
-     *          Name           Description
-     *  @return offerNumber    Number of offers.
+     *          Name            Description
+     *  @return offerNumber     Number of offers.
      */
     function offerNumber() external view returns (uint256 offerNumber);
 
     /**
-     *          Name       Description
-     *  @param  offerId    Offer identifier.
-     *  @return offer      Information and progress of the offer.
+     *          Name            Description
+     *  @param  offerId         Offer identifier.
+     *  @return offer           Information and progress of the offer.
      */
     function getOffer(
         uint256 offerId
@@ -150,12 +153,14 @@ ICommon {
     /* --- Command --- */
     /**
      *          Name             Description
-     *  @param  tokenId          Token identifier.
-     *  @param  sellingAmount    Amount of tokens to sell.
-     *  @param  unitPrice        Selling price per token.
-     *  @param  currency         Selling currency address.
-     *  @param  isDivisible      Whether the offer is sold in parts.
+     *  @param  tokenId          Asset identifier.
+     *  @param  sellingAmount    Amount of tokens to be sold.
+     *  @param  unitPrice        Sale value of each token.
+     *  @param  currency         Sale currency address.
+     *  @param  isDivisible      Whether the offer can be sold partially.
      *  @return offerId          New offer identifier.
+     *
+     *  @dev    Must set approval for the contract to transfer asset tokens of the seller before listing.
      */
     function list(
         uint256 tokenId,
@@ -170,28 +175,24 @@ ICommon {
      *
      *          Name       Description
      *  @param  offerId    Offer identifier.
-     *  @return price      Selling price including royalty.
-     * 
-     *  @dev    Seller cannot buy their own offer.
+     *  @return value      Sum of sale price and royalty.
      */
     function buy(
         uint256 offerId
-    ) external payable returns (uint256 price);
+    ) external payable returns (uint256 value);
 
     /**
      *  @notice Buy a part of the offer.
      *
      *          Name       Description
      *  @param  offerId    Offer identifier.
-     *  @param  amount     Amount of tokens to buy.
-     *  @return price      Selling price including royalty.
-     * 
-     *  @dev    Seller cannot buy their own offer.
+     *  @param  amount     Amount of tokens to be bought.
+     *  @return value      Sum of sale price and royalty.
      */
     function buy(
         uint256 offerId,
         uint256 amount
-    ) external payable returns (uint256 price);
+    ) external payable returns (uint256 value);
 
     /**
      *  @notice Cancel an offer.
@@ -199,7 +200,9 @@ ICommon {
      *          Name       Description
      *  @param  offerId    Offer identifier.
      * 
-     *  @dev    Permission: managers or offer owner.
+     *  @dev    Permission:
+     *          - Seller of the offer.
+     *          - Managers: disqualify defected offers only.
      */
     function cancel(
         uint256 offerId
@@ -211,26 +214,30 @@ ICommon {
      *
      *          Name       Description
      *  @param  offerId    Offer identifier.
-     *  @param  anchor     Token identifier of the offer.
-     *  @return price      Selling price including royalty.
+     *  @param  anchor     `tokenId` of the offer.
+     *  @return value      Sum of sale price and royalty.
+     *
+     *  @dev    Anchor enforces consistency between the contract and the client-side.
      */
     function safeBuy(
         uint256 offerId,
         uint256 anchor
-    ) external payable returns (uint256 price);
+    ) external payable returns (uint256 value);
 
     /**
      *  @notice Buy a part of the offer.
      *
      *          Name       Description
      *  @param  offerId    Offer identifier.
-     *  @param  amount     Amount of tokens to buy.
-     *  @param  anchor     Token identifier of the offer.
-     *  @return price      Selling price including royalty.
+     *  @param  amount     Amount of tokens to be bought.
+     *  @param  anchor     `tokenId` of the offer.
+     *  @return value      Sum of sale price and royalty.
+     *
+     *  @dev    Anchor enforces consistency between the contract and the client-side.
      */
     function safeBuy(
         uint256 offerId,
         uint256 amount,
         uint256 anchor
-    ) external payable returns (uint256 price);
+    ) external payable returns (uint256 value);
 }

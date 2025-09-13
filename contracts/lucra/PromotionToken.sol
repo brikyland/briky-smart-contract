@@ -350,7 +350,7 @@ ReentrancyGuardUpgradeable {
 
         Content storage content = contents[_contentId];
 
-        if (content.startAt > block.timestamp)  {
+        if (content.startAt > block.timestamp) {
             revert NotOpened();
         }
 

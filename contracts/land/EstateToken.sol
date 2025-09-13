@@ -276,10 +276,17 @@ Validatable {
     }
 
     function getEstate(uint256 _estateId) external view returns (Estate memory) {
-        if (!exists(_estateId)) {
+        if (_estateId == 0 || _estateId > estateNumber) {
             revert InvalidEstateId();
         }
         return estates[_estateId];
+    }
+
+    function getRepresentative(uint256 _estateId) external view returns (address) {
+        if (_estateId == 0 || _estateId > estateNumber) {
+            revert InvalidEstateId();
+        }
+        return estates[_estateId].custodian;
     }
 
     function isAvailable(uint256 _estateId) public view returns (bool) {

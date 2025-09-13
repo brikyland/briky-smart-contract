@@ -42,7 +42,7 @@ ICommon {
      *          Name        Description
      *  @param  _account    EVM address.
      */
-    modifier onlyGovernor(
+    modifier validGovernor(
         address _account
     ) {
         if (!IAdmin(this.admin()).isGovernor(_account)) {

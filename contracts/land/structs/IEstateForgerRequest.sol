@@ -90,7 +90,7 @@ interface IEstateForgerRequest is IValidation {
      *  @notice Price configuration.
      */
     struct EstateForgerRequestQuote {
-        /// @notice Value of each token deposited.
+        /// @notice Value of each token.
         uint256 unitPrice;
 
         /// @notice Deposit currency address.
@@ -100,7 +100,7 @@ interface IEstateForgerRequest is IValidation {
         uint256 cashbackThreshold;
 
         /// @notice Fund identifier for cashback.
-        /// @dev    Using `IFund.Fund` whose `mainCurrency` is assigned with the above `currency`.
+        /// @dev    Using `IFund.Fund` whose `mainCurrency` is set to `currency`.
         uint256 cashbackFundId;
 
         /// @notice Fee charged on each token.

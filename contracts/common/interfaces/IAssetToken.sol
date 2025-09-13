@@ -20,6 +20,7 @@ IGovernor,
 IERC1155MetadataURIUpgradeable,
 IERC2981Upgradeable {
     /** ===== FUNCTION ===== **/
+    /* --- Query --- */
     /**
      *          Name            Description
      *  @return decimals        Token decimals.

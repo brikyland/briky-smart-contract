@@ -147,6 +147,7 @@ ICommon {
 
 
     /** ===== COMMAND ===== **/
+    /* --- Command --- */
     /**
      *  @notice Open a new fund.
      *
@@ -156,7 +157,7 @@ ICommon {
      *  @param  extraCurrencies     Extra currency addresses.
      *  @param  extraDenominations  Extra currency denominations.
      *
-     *  @dev    Permission: providers.
+     *  @dev    Permission: Providers.
      */
     function openFund(
         address mainCurrency,
@@ -172,7 +173,7 @@ ICommon {
      *  @param  fundId              Fund identifier.
      *  @param  quantity            Expanded quantity.
      *
-     *  @dev    Permission: providers.
+     *  @dev    Permission: Provider of the fund.
      */
     function expandFund(
         uint256 fundId,
@@ -185,7 +186,7 @@ ICommon {
      *          Name                Description
      *  @param  fundId              Fund identifier.
      *
-     *  @dev    Permission: providers.
+     *  @dev    Permission: Provider of the fund.
      */
     function provideFund(
         uint256 fundId
@@ -198,7 +199,7 @@ ICommon {
      *  @param  receiver            Receiver address.
      *  @param  quantity            Withdrawn quantity.
      *
-     *  @dev    Permission: providers.
+     *  @dev    Permission: Provider of the fund.
      */
     function withdrawFund(
         uint256 fundId,

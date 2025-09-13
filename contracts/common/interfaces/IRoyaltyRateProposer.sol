@@ -22,6 +22,7 @@ IRate,
 ICommon,
 IERC2981Upgradeable {
     /** ===== FUNCTION ===== **/
+    /* --- Query --- */
     /**
      *          Name        Description
      *  @param  tokenId     Asset identifier.

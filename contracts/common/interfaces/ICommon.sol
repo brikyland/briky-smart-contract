@@ -23,15 +23,17 @@ interface ICommon {
 
 
     /** ===== FUNCTION ===== **/
-    /**
-     *          Name        Description
-     *  @return admin       `Admin` contract address.
-     */
-    function admin() external view returns (address admin);
-
+    /* --- Special --- */
     /**
      *          Name        Description
      *  @return version     Version of implementation.
      */
     function version() external pure returns (string memory version);
+
+    /* --- Dependency --- */
+    /**
+     *          Name        Description
+     *  @return admin       `Admin` contract address.
+     */
+    function admin() external view returns (address admin);
 }

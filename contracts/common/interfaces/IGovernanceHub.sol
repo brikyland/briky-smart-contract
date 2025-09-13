@@ -61,8 +61,8 @@ IValidatable {
         uint256 indexed proposalId,
         address indexed proposer,
         uint256 tokenId,
-        bytes32 uuid,
         address operator,
+        bytes32 uuid,
         ProposalRule rule,
         uint256 quorumRate,
         uint40 duration,
@@ -88,9 +88,9 @@ IValidatable {
         uint256 indexed proposalId,
         string contextURI,
         string reviewURI,
+        address currency,
         uint256 totalWeight,
-        uint256 quorum,
-        address currency
+        uint256 quorum
     );
 
     /**
@@ -196,11 +196,11 @@ IValidatable {
     );
 
     /**
-     *  @notice Emitted when execution progress for a proposal is updated.
+     *  @notice Emitted when execution progress of a proposal is updated.
      *
      *          Name                Description
      *  @param  proposalId          Proposal identifier.
-     *  @param  logURI              URI of description about the progress of execution.
+     *  @param  logURI              URI of execution progress log.
      */
     event ProposalExecutionLog(
         uint256 indexed proposalId,
@@ -287,12 +287,12 @@ IValidatable {
      *          Name            Description
      *  @param  proposalId      Proposal identifier.
      *  @param  account         EVM address.
-     *  @return option          Vote option of the account.
+     *  @return voteOption      Vote option of the account.
      */
     function voteOptions(
         uint256 proposalId,
         address account
-    ) external view returns (ProposalVoteOption option);
+    ) external view returns (ProposalVoteOption voteOption);
 
     /* --- Command --- */
     /**
@@ -303,7 +303,6 @@ IValidatable {
      *  @param  tokenId             Asset identifier from the governor contract.
      *  @param  operator            Assigned operator address.
      *  @param  uuid                Checksum of proposal context.
-     *  @param  rule                Rule to determine verdict.
      *  @param  rule                Rule to determine verdict.
      *  @param  quorumRate          Fraction of total weight for quorum.
      *  @param  duration            Voting duration.
@@ -332,7 +331,7 @@ IValidatable {
      *              quorumRate,
      *              duration,
      *              admissionExpiry
-     *          )
+     *          );
      *          ```
      */
     function propose(
@@ -349,7 +348,8 @@ IValidatable {
 
 
     /**
-     *  @notice Admit an executable proposal after review.
+     *  @notice Admit an executable proposal after review practicability.
+     *  @notice Admit only if the proposal is in `Pending` state and before admission time limit expires.
      *
      *          Name            Description
      *  @param  proposalId      Proposal identifier.
@@ -358,7 +358,7 @@ IValidatable {
      *  @param  currency        Budget currency address.
      *  @param  validation      Validation package from the validator.
      *
-     *  @dev    Permission: managers.
+     *  @dev    Permissions: Asset representative of the proposal.
      *  @dev    As the proposal has only set `uuid` before admission, `contextURI` must be provided when admitting.
      *  @dev    Validation data:
      *          ```
@@ -366,7 +366,7 @@ IValidatable {
      *              contextURI,
      *              reviewURI,
      *              currency
-     *          )
+     *          );
      *          ```
      */
     function admit(
@@ -379,12 +379,14 @@ IValidatable {
 
     /**
      *  @notice Confirm a proposal to be executed.
+     *  @notice Confirm only if the proposal is approved and before the confirmation time limit expires.
+     *  @notice On proposal confirmation, the budget is transferred to the operator.
      *
      *          Name            Description
      *  @param  proposalId      Proposal identifier.
      *  @return budget          Contributed budget for execution.
      *
-     *  @dev    Permission: managers.
+     *  @dev    Permission: Managers.
      */
     function confirm(
         uint256 proposalId
@@ -392,6 +394,7 @@ IValidatable {
 
     /**
      *  @notice Contribute to the budget of a proposal.
+     *  @notice Contribute only before the proposal is confirmed or the confirmation time limit expires.
      *
      *          Name            Description
      *  @param  proposalId      Proposal identifier.
@@ -403,7 +406,8 @@ IValidatable {
     ) external payable;
 
     /**
-     *  @notice Disqualify an inexecutable proposal after review.
+     *  @notice Disqualify an inexecutable proposal after review practicability.
+     *  @notice Disqualify only if the proposal is in `Pending` or `Voting` state and before the vote closes.
      *
      *          Name            Description
      *  @param  proposalId      Proposal identifier.
@@ -411,7 +415,10 @@ IValidatable {
      *  @param  reviewURI       URI of review detail.
      *  @param  validation      Validation package from the validator.
      *
-     *  @dev    Permission: managers.
+     *
+     *  @dev    Permission:
+     *          - Asset representative of the proposal: during `Pending` state.
+     *          - Managers: during `Pending` and `Voting` state.
      *  @dev    As the proposal has only set `uuid` before disqualification, `contextURI` must be provided when disqualifying.
      */
     function disqualify(
@@ -423,19 +430,22 @@ IValidatable {
 
     /**
      *  @notice Vote on a proposal.
+     *  @notice Vote only if the proposal is in `Voting` state and before the vote closes.
      *
      *          Name            Description
      *  @param  proposalId      Proposal identifier.
-     *  @param  option          Vote option.
+     *  @param  voteOption      Vote option.
      *  @return weight          Vote power.
      */
     function vote(
         uint256 proposalId,
-        ProposalVoteOption option
+        ProposalVoteOption voteOption
     ) external returns (uint256 weight);
 
     /**
-     *  @notice Withdraw contribution from a proposal which is either disqualified or rejected.
+     *  @notice Withdraw contribution from a proposal which cannot be executed.
+     *  @notice Withdraw only if the proposal is either disapproved, disqualified or rejected, or after confirmation time limit
+     *          expires.
      *
      *          Name            Description
      *  @param  proposalId      Proposal identifier.
@@ -455,10 +465,10 @@ IValidatable {
      *  @param  isSuccessful    Whether the execution has succeeded.
      *  @param  validation      Validation package from the validator.
      *
-     *  @dev    Permission: proposal's operators.
+     *  @dev    Permission: Operator of the proposal.
      *  @dev    Validation data:
      *          ```
-     *          data = abi.encode(resultURI)
+     *          data = abi.encode(resultURI);
      *          ```
      */
     function concludeExecution(
@@ -470,16 +480,17 @@ IValidatable {
 
     /**
      *  @notice Update a proposal about the progress of execution.
+     *  @notice Update only if the proposal is in `Executing` state.
      *
      *          Name            Description
      *  @param  proposalId      Proposal identifier.
-     *  @param  logURI          URI of description about the progress of execution.
+     *  @param  logURI          URI of execution progress log.
      *  @param  validation      Validation package from the validator.
      *
-     *  @dev    Permission: managers.
+     *  @dev    Permission: Operator of the proposal.
      *  @dev    Validation data:
      *          ```
-     *          data = abi.encode(logURI)
+     *          data = abi.encode(logURI);
      *          ```
      */
     function logExecution(
@@ -494,36 +505,42 @@ IValidatable {
      *          Name            Description
      *  @param  proposalId      Proposal identifier.
      *
-     *  @dev    Permission: proposal's operator.
+     *  @dev    Permission: Operator of the proposal.
      */
     function rejectExecution(
         uint256 proposalId
     ) external;
 
 
-    /* --- Safe Command --- */
+    /* --- Safe --- */
     /**
      *  @notice Vote on a proposal.
+     *  @notice Vote only if the proposal is in `Voting` state and before the vote closes.
      *
      *          Name        Description
      *  @param  proposalId  Proposal identifier.
-     *  @param  option      Vote option.
+     *  @param  voteOption  Vote option.
      *  @param  anchor      `uuid` of the proposal.
      *  @return weight      Vote power.
+     *
+     *  @dev    Anchor enforces consistency between the contract and the client-side.
      */
     function safeVote(
         uint256 proposalId,
-        ProposalVoteOption option,
+        ProposalVoteOption voteOption,
         bytes32 anchor
     ) external returns (uint256 weight);
 
     /**
      *  @notice Contribute to the budget of a proposal.
+     *  @notice Contribute only before the proposal is confirmed or the confirmation time limit expires.
      *
      *          Name        Description
      *  @param  proposalId  Proposal identifier.
      *  @param  value       Contributed value.
      *  @param  anchor      `uuid` of the proposal.
+     *
+     *  @dev    Anchor enforces consistency between the contract and the client-side.
      */
     function safeContributeBudget(
         uint256 proposalId,

@@ -38,7 +38,7 @@ Initializable {
     }
 
 
-    /* --- Administration --- */
+    /* --- Administrative --- */
     /**
      *  @notice Update validator.
      *

@@ -56,7 +56,7 @@ interface IPrestigePadRound is IValidation {
      *  @notice Price configuration.
      */
     struct PrestigePadRoundQuote {
-        /// @notice Value of each token contributed.
+        /// @notice Value of each token.
         uint256 unitPrice;
 
         /// @notice Contribution currency address.
@@ -66,7 +66,7 @@ interface IPrestigePadRound is IValidation {
         uint256 cashbackThreshold;
 
         /// @notice Fund identifier for cashback.
-        /// @dev    Using `IFund.Fund` whose `mainCurrency` is assigned with the above `currency`.
+        /// @dev    Using `IFund.Fund` whose `mainCurrency` is set to `currency`.
         uint256 cashbackFundId;
 
         /// @notice Fee charged on each token.
@@ -78,7 +78,7 @@ interface IPrestigePadRound is IValidation {
      *  @notice Initialization input for `PrestigePadRoundQuote`.
      */
     struct PrestigePadRoundQuoteInput {
-        /// @notice Value of each token contributed.
+        /// @notice Value of each token.
         uint256 unitPrice;
 
         /// @notice Contribution currency address.

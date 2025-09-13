@@ -25,7 +25,7 @@ library CurrencyHandler {
     /** ===== FUNCTION ===== **/
     /* --- Native Coin --- */
     /**
-     *  @notice Transfer an amount of native coin from this contract to an address.
+     *  @notice Transfer an amount of native coin from the contract to an address.
      *
      *          Name        Description
      *  @param  _receiver   Receiver address.
@@ -39,7 +39,7 @@ library CurrencyHandler {
     }
 
     /**
-     *  @notice Transfer an amount of native coin from sender to this contract.
+     *  @notice Transfer an amount of native coin from sender to the contract.
      *
      *          Name        Description
      *  @param  _value      Amount of native coin.
@@ -73,7 +73,7 @@ library CurrencyHandler {
 
     /* --- ERC-20 Token --- */
     /**
-     *  @notice Transfer an amount of ERC-20 token from this contract to an address.
+     *  @notice Transfer an amount of ERC-20 token from the contract to an address.
      *
      *          Name        Description
      *  @param  _currency   Token address.
@@ -85,7 +85,7 @@ library CurrencyHandler {
     }
 
     /**
-     *  @notice Transfer an amount of ERC-20 token from sender to this contract.
+     *  @notice Transfer an amount of ERC-20 token from sender to the contract.
      *
      *          Name        Description
      *  @param  _currency   Token address.
@@ -121,7 +121,7 @@ library CurrencyHandler {
 
     /* --- General Cryptocurrency --- */
     /**
-     *  @notice Transfer an amount of either ERC-20 token or native coin from this contract to an address.
+     *  @notice Transfer an amount of either ERC-20 token or native coin from the contract to an address.
      *
      *          Name        Description
      *  @param  _currency   Token address or zero address.

@@ -104,7 +104,7 @@ interface IProposal {
         ///         detectable. Checksum algorithm must be declared in the context.
         string contextURI;
 
-        /// @notice URI of description about the progress of execution.
+        /// @notice URI of progress logs.
         string logURI;
 
         /// @notice Governor contract address.
@@ -123,9 +123,9 @@ interface IProposal {
         /// @notice Total weight voted by disapproving holders with their voting power at the admission timestamp.
         uint256 disapprovalWeight;
 
-        /// @notice Quorum to determine verdict.
-        /// @dev    In `Pending` state, `quorum` is a fraction value but since being admitted, the `totalWeight` is determined
-        ///         so `quorum` is converted to vote metric.
+        /// @notice Quorum threshold to determine verdict.
+        /// @dev    In `Pending` state, `quorum` is a fractional rate.
+        /// @dev    After the proposal is admitted, `quorum` is converted to weight as `totalWeight` is determined.
         uint256 quorum;
 
         /// @notice Proposer address.
@@ -135,13 +135,14 @@ interface IProposal {
         address operator;
 
         /// @notice Due of vote.
-        /// @dev    In `Pending` state, `due` indicates vote duration but since being admitted, `due` is the timestamp of vote
-        ///         closure.
+        /// @dev    In `Pending` state, `due` is the vote duration.
+        /// @dev    After the proposal is admitted, `due` is set to the vote closure timestamp.
         uint40 due;
 
-        /// @notice Time pivot of either the proposal is admitted or is no longer admittable.
-        /// @dev    In `Pending` state, `timePivot` indicates when the proposal is expired for admission but since the being
-        ///         admitted, `timePivot` snapshots the `block.timestamp` as reference for evaluating vote power.
+        /// @notice Time pivot of admission.
+        /// @dev    In `Pending` state, `timePivot` is the admission expiration timestamp.
+        /// @dev    After the proposal is admitted, `timePivot` is set to the admission timestamp, used as reference for
+        ///         evaluating vote power.
         uint40 timePivot;
 
         /// @notice Rule to determine verdict.
