@@ -698,7 +698,7 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Withdraw estate tokens after request confirmation.
+     *  @notice TODO: Withdraw the estate tokens from a confirmed request.
      *
      *          Name                Description
      *  @param  _requestId          Request identifier.

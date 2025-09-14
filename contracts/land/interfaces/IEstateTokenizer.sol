@@ -52,7 +52,6 @@ IEstateTokenReceiver {
         uint256 tokenizationId
     ) external view returns (bool isTokenized);
 
-    /* --- Command --- */
     /**
      *  @notice TODO: Check the allocation of a request at a specific timestamp.
      *
@@ -69,13 +68,15 @@ IEstateTokenReceiver {
         uint256 at
     ) external view returns (uint256 allocation);
 
+
+    /* --- Command --- */
     /**
-     *  @notice TODO: Withdraw the deposition of a request.
+     *  @notice TODO: Withdraw the estate tokens from a confirmed request.
      *
      *          Name            Description
      *  @param  tokenizationId  Tokenization request identifier.
      *
-     *  @return amount          Withdrawn amount.
+     *  @return amount          Estate tokens amount.
      */
     function withdrawEstateToken(
         uint256 tokenizationId

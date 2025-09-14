@@ -11,7 +11,8 @@ import {IERC1155ReceiverUpgradeable} from "@openzeppelin/contracts-upgradeable/i
  * 
  *  @notice TODO:
  */
-interface IEstateTokenReceiver is IERC1155ReceiverUpgradeable {
+interface IEstateTokenReceiver is
+IERC1155ReceiverUpgradeable {
     /** ===== FUNCTION ===== **/
     /**
      *          Name            Description
