@@ -1,43 +1,86 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
+/// @openzepplin/contracts-upgradeable/
 import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {ERC165CheckerUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 
-import {Signature} from "./utilities/Signature.sol";
-
-import {IGovernor} from "./interfaces/IGovernor.sol";
-
+/// contracts/common/constants/
 import {AdminConstant} from "./constants/AdminConstant.sol";
 
+/// contracts/common/interfaces/
+import {IGovernor} from "./interfaces/IGovernor.sol";
+
+/// contracts/common/storages/
 import {AdminStorage} from "./storages/AdminStorage.sol";
 
+/// contracts/common/utilities/
+import {Signature} from "./utilities/Signature.sol";
+
+/**
+ *  @author Briky Team
+ *
+ *  @notice A single `Admin` contract is responsible for governing the entire system with a designated group of administrator
+ *          addresses. Any global configurations of contracts within the system must be verified by their signatures. This
+ *          contract also maintains authorization registries and common configurations applied across the system.
+ *
+ *  @dev    ERC-20 tokens are identified by their contract addresses.
+ *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
+ */
 contract Admin is
 AdminStorage,
 Initializable {
+    /** ===== LIBRARY ===== **/
     using ERC165CheckerUpgradeable for address;
 
+
+    /** ===== CONSTANT ===== **/
     string constant private VERSION = "v1.2.1";
 
+
+    /** ===== FUNCTION ===== **/
+    /* --- Standard --- */
     /**
      *  @notice Executed on a call to the contract with empty calldata.
      */
     receive() external payable {}
 
+    /**
+     *  @return Version of implementation.
+     */
+    function version() external pure returns (string memory) {
+        return VERSION;
+    }
+
+
+    /* --- Initialization --- */
+    /**
+     *  @notice Invoked for initialization after deployment, serving as the contract constructor.
+     *
+     *          Name            Description
+     *  @param  _admin1         Admin #1 address.
+     *  @param  _admin2         Admin #2 address.
+     *  @param  _admin3         Admin #3 address.
+     *  @param  _admin4         Admin #4 address.
+     *  @param  _admin5         Admin #5 address.
+     */
     function initialize(
         address _admin1,
         address _admin2,
         address _admin3,
         address _admin4,
         address _admin5
-    ) external initializer {
+    ) external
+    initializer {
+        /// Configuration
         admin1 = _admin1;
         admin2 = _admin2;
         admin3 = _admin3;
         admin4 = _admin4;
         admin5 = _admin5;
 
+        /// Authorization
         isManager[msg.sender] = true;
         isManager[admin1] = true;
         isManager[admin2] = true;
@@ -46,17 +89,10 @@ Initializable {
         isManager[admin5] = true;
     }
 
+    /* --- Administration --- */
     /**
-     *          Name        Description
-     *  @return version     Version of implementation.
-     */
-    function version() external pure returns (string memory) {
-        return VERSION;
-    }
-
-    /**
-     *  @notice Verify whether message and a set of signatures conform admin addresses and the current nonce of the contract.
-     *  @notice After successful verification, the contract nonce is incremented by 1 for the next message.
+     *  @notice Verify a message and a set of signatures conform admin addresses and the current nonce of the contract.
+     *  @notice After successful verification, the nonce is incremented by 1 for the next message.
      *
      *          Name        Description
      *  @param  _message     Receiver address.
@@ -234,6 +270,7 @@ Initializable {
         emit Administration5Transfer(_admin5);
     }
 
+
     /**
      *  @notice Authorize or deauthorize addresses as managers.
      *
@@ -263,6 +300,9 @@ Initializable {
             for (uint256 i; i < _accounts.length; ++i) {
                 if (isManager[_accounts[i]]) {
                     revert AuthorizedAccount();
+                }
+                if (AddressUpgradeable.isContract(_accounts[i])) {
+                    revert NotExternalOwnedAccount();
                 }
                 isManager[_accounts[i]] = true;
                 emit ManagerAuthorization(_accounts[i]);
@@ -310,6 +350,9 @@ Initializable {
             for (uint256 i; i < _accounts.length; ++i) {
                 if (isModerator[_accounts[i]]) {
                     revert AuthorizedAccount();
+                }
+                if (AddressUpgradeable.isContract(_accounts[i])) {
+                    revert NotExternalOwnedAccount();
                 }
                 isModerator[_accounts[i]] = true;
                 emit ModeratorAuthorization(_accounts[i]);
@@ -371,6 +414,7 @@ Initializable {
             }
         }
     }
+
 
     /**
      *  @notice Declare a new zone.
@@ -452,21 +496,6 @@ Initializable {
         }
     }
 
-    function isExecutive(address _account) external view returns (bool) {
-        return isModerator[_account] || isManager[_account];
-    }
-
-    function getCurrencyRegistry(address _currency) external view returns (CurrencyRegistry memory) {
-        return currencyRegistries[_currency];
-    }
-
-    function isAvailableCurrency(address _currency) external view returns (bool) {
-        return currencyRegistries[_currency].isAvailable;
-    }
-
-    function isExclusiveCurrency(address _currency) external view returns (bool) {
-        return currencyRegistries[_currency].isExclusive;
-    }
 
     /**
      *  @notice Update the registries of multiple currencies.
@@ -476,7 +505,7 @@ Initializable {
      *  @param  _isAvailable    Whether the currency is interactable within the system, respectively for each currency.
      *  @param  _isExclusive    Whether the currency grants exclusive privileges within the system, respectively for each currency.
      *  @param  _signatures     Array of admin signatures.
-     * 
+     *
      *  @dev    Administrative configuration.
      */
     function updateCurrencyRegistries(
@@ -513,5 +542,56 @@ Initializable {
                 _isExclusive[i]
             );
         }
+    }
+
+    /* --- Query --- */
+    /**
+     *          Name            Description
+     *  @param  _account        EVM address.
+     *
+     *  @return Whether the account is authorized as a manager or a moderator.
+     */
+    function isExecutive(
+        address _account
+    ) external view returns (bool) {
+        return isModerator[_account] || isManager[_account];
+    }
+
+    /**
+     *          Name                Description
+     *  @param  _currency           Currency address.
+     *
+     *  @return Interaction configuration of the currency.
+     */
+    function getCurrencyRegistry(
+        address _currency
+    ) external view returns (CurrencyRegistry memory) {
+        return currencyRegistries[_currency];
+    }
+
+    /**
+     *          Name                Description
+     *  @param  _currency           Currency address.
+     *
+     *  @return Whether the currency is interactable within the system.
+     *
+     *  @dev    Cryptocurrencies require authorization to be interactable to prevent unknown deceptive codes.
+     */
+    function isAvailableCurrency(
+        address _currency
+    ) external view returns (bool) {
+        return currencyRegistries[_currency].isAvailable;
+    }
+
+    /**
+     *          Name                Description
+     *  @param  _currency           Currency address.
+     *
+     *  @return Whether the currency grants exclusive privileges within the system.
+     */
+    function isExclusiveCurrency(
+        address _currency
+    ) external view returns (bool) {
+        return currencyRegistries[_currency].isExclusive;
     }
 }

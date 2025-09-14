@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
 /// @openzeppelin/contracts-upgradeable/
@@ -12,7 +12,7 @@ import {ECDSAUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/crypto
 library Signature {
     /** ===== FUNCTION ===== **/
     /**
-     *  @notice Verify whether a signature is signed by a specific address with anticipated message and nonce.
+     *  @notice Verify a signature is signed by a specific address with anticipated message and nonce.
      *
      *          Name        Description
      *  @param  _signer     Expected signer address.

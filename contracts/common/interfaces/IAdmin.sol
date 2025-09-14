@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
 /// contracts/common/structs/
@@ -214,18 +214,19 @@ ICurrencyRegistry {
     error NotActivatedAccount();
     error NotAuthorizedAccount();
     error NotAuthorizedZone();
+    error NotExternalOwnedAccount();
     error Unauthorized();
 
 
     /** ===== FUNCTION ===== **/
-    /* --- Query --- */
+    /* --- Default --- */
     /**
-     *          Name        Description
-     *  @return version     Version of implementation.
+     *  @return Version of implementation.
      */
     function version() external pure returns (string memory version);
 
 
+    /* --- Query --- */
     /**
      *          Name        Description
      *  @return admin1      Admin #1 address.
@@ -356,8 +357,8 @@ ICurrencyRegistry {
 
     /* --- Command --- */
     /**
-     *  @notice Verify whether message and a set of signatures conform admin addresses and the current nonce of the contract.
-     *  @notice After successful verification, the contract nonce is incremented by 1 for the next message.
+     *  @notice Verify a message and a set of signatures conform admin addresses and the current nonce of the contract.
+     *  @notice After successful verification, the nonce is incremented by 1 for the next message.
      *
      *          Name        Description
      *  @param  message     Receiver address.

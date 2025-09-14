@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
 /// contracts/common/structs/
@@ -35,7 +35,7 @@ IValidatable {
      *  @notice Emitted when proposal fee is updated.
      *
      *          Name        Description
-     *  @param  newValue    New proposal fee.
+     *  @param  newValue    New proposal fee charged in native coin.
      */
     event FeeUpdate(uint256 newValue);
 

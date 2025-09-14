@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
 /// @openzeppelin/contracts-upgradeable/
@@ -104,24 +104,28 @@ ReentrancyGuardUpgradeable {
 
 
     /** ===== FUNCTION ===== **/
-    /* --- Special --- */
+    /* --- Standard --- */
     /**
      *  @notice Executed on a call to the contract with empty calldata.
      */
     receive() external payable {}
 
     /**
-     *          Name        Description
-     *  @return version     Version of implementation.
+     *  @return Version of implementation.
      */
     function version() external pure returns (string memory) {
         return VERSION;
     }
 
 
-    /* --- Initializer --- */
+    /* --- Initialization --- */
     /**
-     *  @notice Invoked after deployment for initialization, serving as constructor.
+     *  @notice Invoked for initialization after deployment, serving as the contract constructor.
+     *
+     *          Name            Description
+     *  @param  _admin          Receiver address.
+     *  @param  _validator      Validator address.
+     *  @param  _fee            Proposal fee charged in native coin.
      */
     function initialize(
         address _admin,
@@ -144,12 +148,12 @@ ReentrancyGuardUpgradeable {
     }
 
 
-    /* --- Administrative --- */
+    /* --- Administration --- */
     /**
      *  @notice Update proposal fee.
      *
      *          Name            Description
-     *  @param  _fee            New proposal fee.
+     *  @param  _fee            New proposal fee charged in native coin.
      *  @param  _signatures     Array of admin signatures.
      *
      *  @dev    Administrative configuration.

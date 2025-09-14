@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
 /**
@@ -23,10 +23,9 @@ interface ICommon {
 
 
     /** ===== FUNCTION ===== **/
-    /* --- Special --- */
+    /* --- Standard --- */
     /**
-     *          Name        Description
-     *  @return version     Version of implementation.
+     *  @return Version of implementation.
      */
     function version() external pure returns (string memory version);
 
