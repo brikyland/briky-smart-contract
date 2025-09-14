@@ -106,7 +106,7 @@ ReentrancyGuardUpgradeable {
      *  @notice Helper function to initialize the dependencies of the contract.
      *
      *          Name           Description
-     *  @param  _admin         Admin contract address.
+     *  @param  _admin         `Admin` contract address.
      *  @param  _collection    Asset token contract address.
      * 
      *  @dev    The asset token must support interface `IAssetToken`.

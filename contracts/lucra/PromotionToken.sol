@@ -426,7 +426,7 @@ ReentrancyGuardUpgradeable {
         return Rate(royaltyRate, CommonConstant.RATE_DECIMALS);
     }
 
-    /* --- Interface --- */
+    /* --- Override --- */
     /**
      *          Name            Description
      *  @param  _interfaceId    Interface identifier.

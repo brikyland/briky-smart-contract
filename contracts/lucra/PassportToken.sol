@@ -285,7 +285,7 @@ ReentrancyGuardUpgradeable {
     }
 
 
-    /* --- Interface --- */
+    /* --- Override --- */
     /**
      *          Name            Description
      *  @param  _interfaceId    Interface identifier.

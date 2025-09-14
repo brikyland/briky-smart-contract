@@ -1,29 +1,39 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+/// @openzeppelin/contracts-upgradeable/
 import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol";
 import {IERC721MetadataUpgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC721MetadataUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import {ERC721PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721PausableUpgradeable.sol";
-import {ERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 
+/// contracts/common/utilities/
 import {CurrencyHandler} from "../../common/utilities/CurrencyHandler.sol";
 import {Formula} from "../../common/utilities/Formula.sol";
 
+/// contracts/common/constants/
 import {CommonConstant} from "../../common/constants/CommonConstant.sol";
 
+/// contracts/common/interfaces/
 import {IAdmin} from "../../common/interfaces/IAdmin.sol";
-import {IRoyaltyRateProposer} from "../../common/interfaces/IRoyaltyRateProposer.sol";
 
+/// contracts/common/utilities/
 import {Administrable} from "../../common/utilities/Administrable.sol";
 import {Discountable} from "../../common/utilities/Discountable.sol";
 import {Pausable} from "../../common/utilities/Pausable.sol";
 
+/// contracts/lend/interfaces/
 import {IMortgageToken} from "../interfaces/IMortgageToken.sol";
 
+/// contracts/lend/storages/
 import {MortgageTokenStorage} from "../storages/MortgageTokenStorage.sol";
 
+/**
+ *  @author Briky Team
+ *
+ *  @notice A `MortgageToken` contract is an ERC-721 contract that facilitates mortgage-based borrowing and issues tokens representing mortgages.
+ */
 abstract contract MortgageToken is
 MortgageTokenStorage,
 ERC721PausableUpgradeable,
@@ -31,22 +41,47 @@ Administrable,
 Discountable,
 Pausable,
 ReentrancyGuardUpgradeable {
+    /** ===== LIBRARY ===== **/
     using Formula for uint256;
 
-    string constant private VERSION = "v1.2.1";
 
-    modifier validMortgage(uint256 _mortgageId) {
+    /** ===== MODIFIER ===== **/
+    /**
+     *  @notice Verify a mortgage identifier is valid.
+     *
+     *          Name           Description
+     *  @param  _mortgageId    Mortgage identifier.
+     */
+    modifier validMortgage(
+        uint256 _mortgageId
+    ) {
         if (_mortgageId == 0 || _mortgageId > mortgageNumber) {
             revert InvalidMortgageId();
         }
         _;
     }
 
+
+    /** ===== FUNCTION ===== **/
+    /* --- Special --- */
     /**
      *  @notice Executed on a call to the contract with empty calldata.
      */
     receive() external payable {}
 
+
+    /* --- Initializer --- */
+    /**
+     *  @notice Helper function to initialize the contract.
+     *
+     *          Name            Description
+     *  @param  _admin          `Admin` contract address.
+     *  @param  _feeReceiver    `FeeReceiver` contract address.
+     *  @param  _name           Token name.
+     *  @param  _symbol         Token symbol.
+     *  @param  _uri            Token base URI.
+     *  @param  _feeRate        Fee rate.
+     */
     function __MortgageToken_init(
         address _admin,
         address _feeReceiver,
@@ -54,26 +89,26 @@ ReentrancyGuardUpgradeable {
         string calldata _symbol,
         string calldata _uri,
         uint256 _feeRate
-    ) internal onlyInitializing {
+    ) internal
+    onlyInitializing {
         require(_feeRate <= CommonConstant.RATE_MAX_FRACTION);
 
+        /// Initializer.
         __ERC721_init(_name, _symbol);
         __ERC721Pausable_init();
 
         __ReentrancyGuard_init();
 
+        /// Dependency.
         admin = _admin;
         feeReceiver = _feeReceiver;
 
+        /// Configuration.
         baseURI = _uri;
         emit BaseURIUpdate(_uri);
 
         feeRate = _feeRate;
         emit FeeRateUpdate(Rate(_feeRate, CommonConstant.RATE_DECIMALS));
-    }
-
-    function version() external pure returns (string memory) {
-        return VERSION;
     }
 
     /**
@@ -131,16 +166,48 @@ ReentrancyGuardUpgradeable {
         emit FeeRateUpdate(Rate(_feeRate, CommonConstant.RATE_DECIMALS));
     }
 
+
+    /* --- Query --- */
+    /**
+     *  @return Fee rate.
+     */
     function getFeeRate() external view returns (Rate memory) {
         return Rate(feeRate, CommonConstant.RATE_DECIMALS);
     }
 
-    function getMortgage(uint256 _mortgageId)
-    external view validMortgage(_mortgageId) returns (Mortgage memory) {
+    /**
+     *          Name           Description
+     *  @param  _mortgageId    Mortgage identifier.
+     * 
+     *  @return Information and progress of the mortgage.
+     */
+    function getMortgage(
+        uint256 _mortgageId
+    ) external view
+    validMortgage(_mortgageId)
+    returns (Mortgage memory) {
         return mortgages[_mortgageId];
     }
 
-    function cancel(uint256 _mortgageId) external validMortgage(_mortgageId) {
+
+    /* --- Command --- */
+    /**
+     *  @notice Cancel a mortgage.
+     *  @notice Cancel only if the mortgage is in the `Pending` state.
+     *
+     *          Name           Description
+     *  @param  _mortgageId    Mortgage identifier.
+     * 
+     *  @dev    Permission:
+     *          - Borrower of the mortgage.
+     *          - Managers: disqualify defected mortgages only.
+     */
+    function cancel(
+        uint256 _mortgageId
+    ) external
+    whenNotPaused
+    nonReentrant
+    validMortgage(_mortgageId) {
         Mortgage storage mortgage = mortgages[_mortgageId];
         if (msg.sender != mortgage.borrower && !IAdmin(admin).isManager(msg.sender)) {
             revert Unauthorized();
@@ -154,11 +221,41 @@ ReentrancyGuardUpgradeable {
         emit MortgageCancellation(_mortgageId);
     }
 
-    function lend(uint256 _mortgageId) external payable validMortgage(_mortgageId) returns (uint256) {
+    /**
+     *  @notice Lend a mortgage.
+     *  @notice Lend only if the mortgage is in the `Pending` state.
+     *
+     *          Name           Description
+     *  @param  _mortgageId    Mortgage identifier.
+     * 
+     *  @return Repayment due timestamp.
+     */
+    function lend(
+        uint256 _mortgageId
+    ) external payable
+    validMortgage(_mortgageId)
+    returns (uint40) {
         return _lend(_mortgageId);
     }
 
-    function safeLend(uint256 _mortgageId, uint256 _anchor) external payable validMortgage(_mortgageId) returns (uint256) {
+    /**
+     *  @notice Lend a mortgage.
+     *  @notice Lend only if the mortgage is in the `Pending` state.
+     *
+     *          Name           Description
+     *  @param  _mortgageId    Mortgage identifier.
+     *  @param  _anchor        `principal` of the mortgage.
+     * 
+     *  @return Repayment due timestamp.
+     * 
+     *  @dev    Anchor enforces consistency between the contract and the client-side.
+     */
+    function safeLend(
+        uint256 _mortgageId,
+        uint256 _anchor
+    ) external payable
+    validMortgage(_mortgageId)
+    returns (uint40) {
         if (_anchor != mortgages[_mortgageId].principal) {
             revert BadAnchor();
         }
@@ -166,11 +263,40 @@ ReentrancyGuardUpgradeable {
         return _lend(_mortgageId);
     }
 
-    function repay(uint256 _mortgageId) external payable validMortgage(_mortgageId) {
+    /**
+     *  @notice Repay a mortgage.
+     *  @notice Repay only if the mortgage is in the `Supplied` state and repayment is not overdue.
+     *
+     *          Name           Description
+     *  @param  _mortgageId    Mortgage identifier.
+     * 
+     *  @dev    Permission: Borrower of the mortgage.
+     */
+    function repay(
+        uint256 _mortgageId
+    ) external payable
+    validMortgage(_mortgageId) {
         _repay(_mortgageId);
     }
 
-    function safeRepay(uint256 _mortgageId, uint256 _anchor) external payable validMortgage(_mortgageId) {
+
+    /**
+     *  @notice Repay a mortgage.
+     *  @notice Repay only if the mortgage is in the `Supplied` state and repayment is not overdue.
+     *
+     *          Name           Description
+     *  @param  _mortgageId    Mortgage identifier.
+     *  @param  _anchor        `repayment` of the mortgage.
+     * 
+     *  @dev    Permission: Borrower of the mortgage.
+     * 
+     *  @dev    Anchor enforces consistency between the contract and the client-side.
+     */
+    function safeRepay(
+        uint256 _mortgageId,
+        uint256 _anchor
+    ) external payable
+    validMortgage(_mortgageId) {
         if (_anchor != mortgages[_mortgageId].repayment) {
             revert BadAnchor();
         }
@@ -178,7 +304,21 @@ ReentrancyGuardUpgradeable {
         _repay(_mortgageId);
     }
 
-    function foreclose(uint256 _mortgageId) external nonReentrant validMortgage(_mortgageId) whenNotPaused {
+    /**
+     *  @notice Foreclose a mortgage.
+     *  @notice Foreclose only if the mortgage is in the `Supplied` state and repayment is overdue.
+     *
+     *          Name           Description
+     *  @param  _mortgageId    Mortgage identifier.
+     * 
+     *  @dev    The collateral is transferred to the mortgage token owner.
+     */
+    function foreclose(
+        uint256 _mortgageId
+    ) external
+    whenNotPaused
+    nonReentrant
+    validMortgage(_mortgageId) {
         Mortgage storage mortgage = mortgages[_mortgageId];
         if (mortgage.due > block.timestamp
             || mortgage.state != MortgageState.Supplied) {
@@ -200,13 +340,27 @@ ReentrancyGuardUpgradeable {
         emit MortgageForeclosure(_mortgageId, receiver);
     }
 
-    function tokenURI(uint256 _tokenId) public view override(
+    /**
+     *          Name           Description
+     *  @param  _tokenId       Token identifier.
+     * 
+     *  @return Token URI.
+     */
+    function tokenURI(
+        uint256 _tokenId
+    ) public view override(
         IERC721MetadataUpgradeable,
         ERC721Upgradeable
     ) returns (string memory) {
         return super.tokenURI(_tokenId);
     }
 
+    /**
+     *          Name            Description
+     *  @param  _interfaceId    Interface identifier.
+     * 
+     *  @return Whether the contract supports the interface.
+     */
     function supportsInterface(bytes4 _interfaceId) public view virtual override(
         IERC165Upgradeable,
         ERC721Upgradeable
@@ -214,26 +368,57 @@ ReentrancyGuardUpgradeable {
         return _interfaceId == type(IMortgageToken).interfaceId || super.supportsInterface(_interfaceId);
     }
 
+    /* --- Internal --- */
+
+    /**
+     *  @return Base URI.
+     */
     function _baseURI() internal override view returns (string memory) {
         return baseURI;
     }
 
+    /**
+     *  @notice Mint a token.
+     *
+     *          Name           Description
+     *  @param  _to            Receiver address.
+     *  @param  _tokenId       Token identifier.
+     */
     function _mint(address _to, uint256 _tokenId) internal override {
         totalSupply++;
         super._mint(_to, _tokenId);
     }
 
+    /**
+     *  @notice Burn a token.
+     *
+     *          Name           Description
+     *  @param  _tokenId       Token identifier.
+     */
     function _burn(uint256 _tokenId) internal override {
         totalSupply--;
         super._burn(_tokenId);
     }
 
+    /**
+     *  @notice List a new mortgage.
+     *
+     *          Name           Description
+     *  @param  _principal     Principal value.
+     *  @param  _repayment     Repayment value.
+     *  @param  _currency      Loan currency address.
+     *  @param  _duration      Repayment duration.
+     * 
+     *  @return New mortgage identifier.
+     * 
+     *  @dev    Must set approval for the contract to transfer collateral tokens of the borrower before listing.
+     */
     function _borrow(
         uint256 _principal,
         uint256 _repayment,
         address _currency,
         uint40 _duration
-    ) internal onlyAvailableCurrency(_currency) whenNotPaused returns (uint256) {
+    ) internal returns (uint256) {
         if (_principal == 0) {
             revert InvalidPrincipal();
         }
@@ -271,7 +456,22 @@ ReentrancyGuardUpgradeable {
         return mortgageId;
     }
 
-    function _lend(uint256 _mortgageId) internal nonReentrant whenNotPaused returns (uint40) {
+
+    /**
+     *  @notice Lend a mortgage.
+     *  @notice Lend only if the mortgage is in the `Pending` state.
+     *
+     *          Name           Description
+     *  @param  _mortgageId    Mortgage identifier.
+     * 
+     *  @return Repayment due timestamp.
+     */
+    function _lend(
+        uint256 _mortgageId
+    ) internal
+    whenNotPaused
+    nonReentrant
+    returns (uint40) {
         Mortgage storage mortgage = mortgages[_mortgageId];
 
         if (msg.sender == mortgage.borrower || mortgage.state != MortgageState.Pending) {
@@ -306,7 +506,20 @@ ReentrancyGuardUpgradeable {
         return due;
     }
 
-    function _repay(uint256 _mortgageId) internal nonReentrant whenNotPaused {
+    /**
+     *  @notice Repay a mortgage.
+     *  @notice Repay only if the mortgage is in the `Supplied` state and repayment is not overdue.
+     *
+     *          Name           Description
+     *  @param  _mortgageId    Mortgage identifier.
+     * 
+     *  @dev    Permission: Borrower of the mortgage.
+     */
+    function _repay(
+        uint256 _mortgageId
+    ) internal
+    whenNotPaused
+    nonReentrant {
         Mortgage storage mortgage = mortgages[_mortgageId];
         if (msg.sender != mortgage.borrower) {
             revert Unauthorized();
@@ -339,6 +552,12 @@ ReentrancyGuardUpgradeable {
         emit MortgageRepayment(_mortgageId);
     }
 
+    /**
+     *  @notice Charge fee.
+     *
+     *          Name           Description
+     *  @param  _mortgageId    Mortgage identifier.
+     */
     function _chargeFee(uint256 _mortgageId) internal virtual {
         CurrencyHandler.sendCurrency(
             mortgages[_mortgageId].currency,
@@ -347,6 +566,14 @@ ReentrancyGuardUpgradeable {
         );
     }
 
+    /**
+     *  @notice Transfer collateral of a mortgage.
+     *
+     *          Name           Description
+     *  @param  _mortgageId    Mortgage identifier.
+     *  @param  _from          Sender address.
+     *  @param  _to            Receiver address.
+     */
     function _transferCollateral(
         uint256 _mortgageId,
         address _from,
