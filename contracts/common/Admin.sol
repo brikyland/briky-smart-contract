@@ -2,7 +2,6 @@
 pragma solidity ^0.8.20;
 
 /// @openzepplin/contracts-upgradeable/
-import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {ERC165CheckerUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 
@@ -88,6 +87,7 @@ Initializable {
         isManager[admin4] = true;
         isManager[admin5] = true;
     }
+
 
     /* --- Administration --- */
     /**
@@ -301,9 +301,6 @@ Initializable {
                 if (isManager[_accounts[i]]) {
                     revert AuthorizedAccount();
                 }
-                if (AddressUpgradeable.isContract(_accounts[i])) {
-                    revert NotExternalOwnedAccount();
-                }
                 isManager[_accounts[i]] = true;
                 emit ManagerAuthorization(_accounts[i]);
             }
@@ -350,9 +347,6 @@ Initializable {
             for (uint256 i; i < _accounts.length; ++i) {
                 if (isModerator[_accounts[i]]) {
                     revert AuthorizedAccount();
-                }
-                if (AddressUpgradeable.isContract(_accounts[i])) {
-                    revert NotExternalOwnedAccount();
                 }
                 isModerator[_accounts[i]] = true;
                 emit ModeratorAuthorization(_accounts[i]);
@@ -543,6 +537,7 @@ Initializable {
             );
         }
     }
+
 
     /* --- Query --- */
     /**

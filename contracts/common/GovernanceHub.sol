@@ -801,7 +801,17 @@ ReentrancyGuardUpgradeable {
         );
     }
 
-    function _votingVerdict(Proposal storage _proposal) internal view returns (ProposalVerdict) {
+
+    /**
+     *  TODO:
+     *          Name            Description
+     *  @param  _proposal       Proposal.
+     *
+     *  @return Verdict of the proposal.
+     */
+    function _votingVerdict(
+        Proposal storage _proposal
+    ) internal view returns (ProposalVerdict) {
         ProposalState state = _proposal.state;
         if (state == ProposalState.Nil
             || state == ProposalState.Pending) {

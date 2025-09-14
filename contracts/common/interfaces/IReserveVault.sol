@@ -156,6 +156,8 @@ ICommon {
      *  @param  mainDenomination    Main currency denomination.
      *  @param  extraCurrencies     Extra currency addresses.
      *  @param  extraDenominations  Extra currency denominations.
+     * 
+     *  @return fundId              New fund identifier.
      *
      *  @dev    Permission: Providers.
      */

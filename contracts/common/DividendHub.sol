@@ -1,65 +1,138 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
+/// @openzeppelin/contracts-upgradeable/
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
+/// contracts/common/utilities/
 import {CurrencyHandler} from "./utilities/CurrencyHandler.sol";
 import {Formula} from "./utilities/Formula.sol";
 
-import {IAdmin} from "./interfaces/IAdmin.sol";
+/// contracts/common/interfaces/
 import {IGovernor} from "./interfaces/IGovernor.sol";
 
+/// contracts/common/storages/
 import {DividendHubStorage} from "./storages/DividendHubStorage.sol";
 
+/// contracts/common/utilities/
 import {Administrable} from "./utilities/Administrable.sol";
 import {Pausable} from "./utilities/Pausable.sol";
 
+
+/**
+ *  @author Briky Team
+ *
+ *  @notice Implementation of contract `DividendHub`.
+ *  @notice The `DividendHub` contract collects incomes associated to assets from governor contracts and distribute them
+ *          among asset holders.
+ * 
+ *  @dev    ERC-20 tokens are identified by their contract addresses.
+ *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
+ */
 contract DividendHub is
 DividendHubStorage,
 Administrable,
 Pausable,
 ReentrancyGuardUpgradeable {
+    /** ===== LIBRARY ===== **/
     using Formula for uint256;
 
+
+    /** ===== CONSTANT ===== **/
     string constant private VERSION = "v1.2.1";
 
-    modifier validDividend(uint256 _dividendId) {
+
+    /** ===== MODIFIER ===== **/
+    /**
+     *  @notice Verify a valid dividend.
+     *
+     *          Name            Description
+     *  @param  _dividendId     Dividend identifier.
+     */
+    modifier validDividend(
+        uint256 _dividendId
+    ) {
         if (_dividendId == 0 || _dividendId > dividendNumber) {
             revert InvalidDividendId();
         }
         _;
     }
 
+
+    /** ===== FUNCTION ===== **/
+    /* --- Standard --- */
     /**
      *  @notice Executed on a call to the contract with empty calldata.
      */
     receive() external payable {}
 
+
+    /* --- Initialization --- */
+    /**
+     *  @notice Invoked for initialization after deployment, serving as the contract constructor.
+     *
+     *          Name            Description
+     *  @param  _admin          `Admin` contract address.
+     */
     function initialize(
         address _admin
-    ) external initializer {
+    ) external
+    initializer {
+        /// Initializer
         __Pausable_init();
         __ReentrancyGuard_init();
 
+        /// Dependency
         admin = _admin;
     }
 
+    /**
+     *  @return Version of implementation.
+     */
     function version() external pure returns (string memory) {
         return VERSION;
     }
 
-    function getDividend(uint256 _dividendId)
-    external view validDividend(_dividendId) returns (Dividend memory) {
+    /* --- Query --- */
+    /**
+     *          Name            Description
+     *  @param  _dividendId     Dividend identifier.
+     * 
+     *  @return Information and progress of the dividend package.
+     */
+    function getDividend(
+        uint256 _dividendId
+    ) external view
+    validDividend(_dividendId)
+    returns (Dividend memory) {
         return dividends[_dividendId];
     }
 
+
+    /* --- Command --- */
+    /**
+     *  @notice Issue a new dividend package for an asset from a governor contract.
+     *
+     *          Name            Description
+     *  @param  _governor       Governor contract address.
+     *  @param  _tokenId        Asset identifier from the governor contract.
+     *  @param  _value          Total dividend value.
+     *  @param  _currency       Dividend currency address.
+     *  @param  _data           Issuance note.
+     *  @return dividendId      New dividend identifier.
+     */
     function issueDividend(
         address _governor,
         uint256 _tokenId,
         uint256 _value,
         address _currency,
         string calldata _data
-    ) external payable nonReentrant onlyAvailableCurrency(_currency) validGovernor(_governor) whenNotPaused returns (uint256) {
+    ) external payable
+    whenNotPaused
+    nonReentrant
+    onlyAvailableCurrency(_currency)
+    validGovernor(_governor)
+    returns (uint256) {
         if (!IGovernor(_governor).isAvailable(_tokenId)) {
             revert InvalidTokenId();
         }
@@ -95,8 +168,18 @@ ReentrancyGuardUpgradeable {
         return dividendId;
     }
 
-    function withdraw(uint256[] calldata _dividendIds)
-    external nonReentrant whenNotPaused {
+
+    /**
+     *  @notice Withdraw entitled portions of the sender from multiple dividend packages.
+     *
+     *          Name            Description
+     *  @param  _dividendIds    Array of dividend identifiers to withdraw.
+     */
+    function withdraw(
+        uint256[] calldata _dividendIds
+    ) external
+    whenNotPaused 
+    nonReentrant {
         for (uint256 i; i < _dividendIds.length; ++i) {
             if (_dividendIds[i] == 0 || _dividendIds[i] > dividendNumber) {
                 revert InvalidDividendId();

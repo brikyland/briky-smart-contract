@@ -219,9 +219,9 @@ ICurrencyRegistry {
 
 
     /** ===== FUNCTION ===== **/
-    /* --- Default --- */
+    /* --- Standard --- */
     /**
-     *  @return Version of implementation.
+     *  @return version     Version of implementation.
      */
     function version() external pure returns (string memory version);
 

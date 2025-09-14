@@ -41,27 +41,27 @@ contract Airdrop {
      *  @param  _currency   airdrop currency.
      */
     function airdrop(
-        address[] calldata _receiver,
+        address[] calldata _receivers,
         uint256[] calldata _amounts,
         address _currency
     ) external payable {
-        require(_receiver.length == _amounts.length, "invalid input");
+        require(_receivers.length == _amounts.length, "invalid input");
         uint256 total;
-        for (uint256 i; i < _receiver.length; ++i) {
-            require(_receiver[i] != address(0), "invalid address");
+        for (uint256 i; i < _receivers.length; ++i) {
+            require(_receivers[i] != address(0), "invalid address");
             require(_amounts[i] > 0, "invalid amount");
             total += _amounts[i];
         }
 
         if (_currency == address(0)) {
             CurrencyHandler.receiveNative(total);
-            for (uint256 i; i < _receiver.length; ++i) {
-                CurrencyHandler.sendNative(_receiver[i], _amounts[i]);
+            for (uint256 i; i < _receivers.length; ++i) {
+                CurrencyHandler.sendNative(_receivers[i], _amounts[i]);
             }
         } else {
             CurrencyHandler.receiveERC20(_currency, total);
-            for (uint256 i; i < _receiver.length; ++i) {
-                CurrencyHandler.sendERC20(_currency, _receiver[i], _amounts[i]);
+            for (uint256 i; i < _receivers.length; ++i) {
+                CurrencyHandler.sendERC20(_currency, _receivers[i], _amounts[i]);
             }
         }
     }

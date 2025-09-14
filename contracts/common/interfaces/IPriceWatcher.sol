@@ -80,7 +80,7 @@ ICommon {
 
     /**
      *          Name        Description
-     *  @param  currency    Proposal identifier.
+     *  @param  currency    Currency address.
      *  @param  price       Price denominated in the currency.
      *  @param  lowerBound  Lower price bound denominated in USD.
      *  @param  upperBound  Upper price bound denominated in USD.

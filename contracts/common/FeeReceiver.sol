@@ -1,35 +1,70 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
+/// @openzeppelin/contracts-upgradeable/
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
-import {Signature} from "./utilities/Signature.sol";
+/// contracts/common/utilities/
 import {CurrencyHandler} from "./utilities/CurrencyHandler.sol";
 
+/// contracts/common/interfaces/
 import {IAdmin} from "./interfaces/IAdmin.sol";
 
+/// contracts/common/storages/
 import {FeeReceiverStorage} from "./storages/FeeReceiverStorage.sol";
 
+/**
+ *  @author Briky Team
+ *
+ *  @notice Implementation of contract `FeeReceiver`.
+ *  @notice The `FeeReceiver` contract passively receives and hold fee from operators within the system until withdrawn on
+ *          demands of admins.
+ * 
+ *  @dev    ERC-20 tokens are identified by their contract addresses.
+ *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
+ */
 contract FeeReceiver is
 FeeReceiverStorage,
 ReentrancyGuardUpgradeable {
+    /** ===== CONSTANT ===== **/
     string constant private VERSION = "v1.2.1";
 
+
+    /** ===== FUNCTION ===== **/
+    /* --- Standard --- */
     /**
      *  @notice Executed on a call to the contract with empty calldata.
      */
     receive() external payable {}
 
-    function initialize(address _admin) external initializer {
-        __ReentrancyGuard_init();
-
-        admin = _admin;
-    }
-
+    /**
+     *  @return Version of implementation.
+     */
     function version() external pure returns (string memory) {
         return VERSION;
     }
 
+
+    /* --- Initialization --- */
+    /**
+     *  @notice Invoked for initialization after deployment, serving as the contract constructor.
+     *
+     *          Name            Description
+     *  @param  _admin          `Admin` contract address.
+     */
+    function initialize(
+        address _admin
+    ) external
+    initializer {
+        /// Initializer
+        __ReentrancyGuard_init();
+
+        /// Dependency
+        admin = _admin;
+    }
+
+
+    /* --- Administration --- */
     /**
      *  @notice Withdraw sufficient amounts in multiple cryptocurrencies from the contract to an address.
      *
@@ -46,7 +81,8 @@ ReentrancyGuardUpgradeable {
         address[] calldata _currencies,
         uint256[] calldata _values,
         bytes[] calldata _signatures
-    ) external nonReentrant {
+    ) external
+    nonReentrant {
         IAdmin(admin).verifyAdminSignatures(
             abi.encode(
                 address(this),
@@ -67,6 +103,5 @@ ReentrancyGuardUpgradeable {
 
             emit Withdrawal(_receiver, _currencies[i], _values[i]);
         }
-
     }
 }

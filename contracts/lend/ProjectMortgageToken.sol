@@ -38,7 +38,7 @@ ProjectTokenReceiver {
     
 
     /** ===== FUNCTION ===== **/
-    /* --- Initializer --- */
+    /* --- Initialization --- */
     /**
      *  @notice Invoked for initialization after deployment, serving as the contract constructor.
      * 
@@ -74,7 +74,7 @@ ProjectTokenReceiver {
     }
 
 
-    /* --- Special --- */
+    /* --- Standard --- */
     /**
      *          Name       Description
      *  @return version    Version of implementation.

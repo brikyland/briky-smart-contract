@@ -44,7 +44,7 @@ CommissionDispatchable {
 
 
     /** ===== FUNCTION ===== **/
-    /* --- Initializer --- */
+    /* --- Initialization --- */
     /**
      *  @notice Invoked for initialization after deployment, serving as the contract constructor.
      * 
@@ -82,7 +82,7 @@ CommissionDispatchable {
     }
 
 
-    /* --- Special --- */
+    /* --- Standard --- */
     /**
      *          Name       Description
      *  @return version    Version of implementation.

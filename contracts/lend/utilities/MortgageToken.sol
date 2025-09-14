@@ -63,14 +63,14 @@ ReentrancyGuardUpgradeable {
 
 
     /** ===== FUNCTION ===== **/
-    /* --- Special --- */
+    /* --- Standard --- */
     /**
      *  @notice Executed on a call to the contract with empty calldata.
      */
     receive() external payable {}
 
 
-    /* --- Initializer --- */
+    /* --- Initialization --- */
     /**
      *  @notice Helper function to initialize the contract.
      *

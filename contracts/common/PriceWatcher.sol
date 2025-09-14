@@ -1,41 +1,78 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
+/// @chainlink/contracts/
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 
+/// @openzeppelin/contracts-upgradeable/
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
+/// contracts/common/utilities/
 import {Formula} from "./utilities/Formula.sol";
 
+/// contracts/common/constants/
 import {CommonConstant} from "./constants/CommonConstant.sol";
 
+/// contracts/common/interfaces/
 import {IAdmin} from "./interfaces/IAdmin.sol";
 
+/// contracts/common/storages/
 import {PriceWatcherStorage} from "./storages/PriceWatcherStorage.sol";
 
+/// contracts/common/utilities/
 import {Administrable} from "./utilities/Administrable.sol";
 
+/**
+ *  @author Briky Team
+ *
+ *  @notice Implementation of contract `PriceWatcher`.
+ *  @notice The `PriceWatcher` contract provides conversion rates between cryptocurrencies and USD. The conversion rates are
+ *          collected from Price Feed. Tokens that has no Price Feed will be set a default conversion rate.
+ * 
+ *  @dev    Document for Price Feed: https://docs.chain.link/data-feeds/price-feeds
+ *  @dev    ERC-20 tokens are identified by their contract addresses.
+ *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
+ */
 contract PriceWatcher is
 PriceWatcherStorage,
 Initializable,
 Administrable {
+    /** ===== LIBRARY ===== **/
     using Formula for uint256;
 
+
+    /** ===== CONSTANT ===== **/
     string constant private VERSION = "v1.2.1";
 
+
+    /** ===== FUNCTION ===== **/
+    /* --- Standard --- */
     /**
      *  @notice Executed on a call to the contract with empty calldata.
      */
     receive() external payable {}
 
-    function initialize(address _admin) external initializer {
-        admin = _admin;
-    }
-
+    /**
+     *  @return Version of implementation.
+     */
     function version() external pure returns (string memory) {
         return VERSION;
     }
 
+
+    /* --- Initialization --- */
+    /**
+     *  @notice Invoked for initialization after deployment, serving as the contract constructor.
+     *
+     *          Name            Description
+     *  @param  _admin          `Admin` contract address.
+     */
+    function initialize(address _admin) external initializer {
+        admin = _admin;
+    }
+
+
+    /* --- Administration --- */
     /**
      *  @notice Update price feeds of multiple currencies.
      *
@@ -125,20 +162,49 @@ Administrable {
         }
     }
 
-    function getPriceFeed(address _currency) external view returns (DataFeed memory) {
+
+    /* --- Query --- */
+    /**
+     *          Name            Description
+     *  @param  _currency       Currency address.
+     *
+     *  @return Price Feed configuration of the currency.
+     */
+    function getPriceFeed(
+        address _currency
+    ) external view returns (DataFeed memory) {
         return priceFeeds[_currency];
     }
 
-    function getDefaultRate(address _currency) external view returns (Rate memory) {
+    /**
+     *          Name            Description
+     *  @param  _currency       Currency address.
+     *
+     *  @return Default conversion rate of the currency.
+     */
+    function getDefaultRate(
+        address _currency
+    ) external view returns (Rate memory) {
         return defaultRates[_currency];
     }
 
+    /**
+     *          Name            Description
+     *  @param  _currency       Currency address.
+     *  @param  _price          Price denominated in the currency.
+     *  @param  _lowerBound     Lower price bound denominated in USD.
+     *  @param  _upperBound     Upper price bound denominated in USD.
+     *
+     *  @return Whether the price denominated in USD is in range of `[lowerBound, upperBound]`.
+     */
     function isPriceInRange(
         address _currency,
         uint256 _price,
         uint256 _lowerBound,
         uint256 _upperBound
-    ) external view onlyAvailableCurrency(_currency) returns (bool) {
+    ) external view
+    onlyAvailableCurrency(_currency)
+    returns (bool) {
         address feed = priceFeeds[_currency].feed;
 
         Rate memory rate;
