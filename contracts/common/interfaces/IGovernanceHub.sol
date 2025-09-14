@@ -512,7 +512,7 @@ IValidatable {
     ) external;
 
 
-    /* --- Safe --- */
+    /* --- Safeguard --- */
     /**
      *  @notice Vote on a proposal.
      *  @notice Vote only if the proposal is in `Voting` state and before the vote closes.

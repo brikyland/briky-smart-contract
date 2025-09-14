@@ -180,7 +180,7 @@ ICommon {
         uint256 offerId
     ) external;
 
-    /* --- Safe Command --- */
+    /* --- Safeguard --- */
     /**
      *  @notice Buy an offer.
      *  @notice Buy only if the offer is in `Selling` state.

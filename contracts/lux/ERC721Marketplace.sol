@@ -307,7 +307,7 @@ ReentrancyGuardUpgradeable {
     }
 
 
-    /* --- Safe Command --- */
+    /* --- Safeguard --- */
     /**
      *  @notice Buy an offer.
      *  @notice Buy only if the offer is in `Selling` state.
