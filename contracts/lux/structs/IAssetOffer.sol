@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-/// contracts/lux/enums/
-import {IOfferState} from "../enums/IOfferState.sol";
+/// contracts/lux/structs/
+import {IOfferState} from "../structs/IOfferState.sol";
 
 /**
  *  @author Briky Team
