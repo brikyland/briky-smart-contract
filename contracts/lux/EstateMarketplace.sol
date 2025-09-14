@@ -1,22 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-/// @openzeppelin/contracts-upgradeable/
-import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-
 /// contracts/common/utilities/
 import {CurrencyHandler} from "../common/utilities/CurrencyHandler.sol";
 import {Formula} from "../common/utilities/Formula.sol";
-
-/// contracts/common/interfaces/
-import {IAdmin} from "../common/interfaces/IAdmin.sol";
-
-/// contracts/common/constants/
-import {CommonConstant} from "../common/constants/CommonConstant.sol";
-
-/// contracts/land/interfaces/
-import {ICommissionToken} from "../land/interfaces/ICommissionToken.sol";
-import {IEstateToken} from "../land/interfaces/IEstateToken.sol";
 
 /// contracts/land/utilities/
 import {CommissionDispatchable} from "../land/utilities/CommissionDispatchable.sol";
@@ -52,7 +39,12 @@ CommissionDispatchable {
     /** ===== FUNCTION ===== **/
     /* --- Initializer --- */
     /**
-     *  @notice Invoked after deployment for initialization, serving as a constructor.
+     *  @notice Invoked for initialization after deployment, serving as the contract constructor.
+     * 
+     *          Name                Description
+     *  @param  _admin              `Admin` contract address.
+     *  @param  _estateToken        `EstateToken` contract address.
+     *  @param  _commissionToken    `CommissionToken` contract address.
      */
     function initialize(
         address _admin,
@@ -60,13 +52,13 @@ CommissionDispatchable {
         address _commissionToken
     ) external
     initializer {
-        /// @dev    Inherited initializer.
+        /// Initializer.
         __Pausable_init();
         __ReentrancyGuard_init();
 
         __CommissionDispatchable_init(_commissionToken);
 
-        /// @dev    Dependency.
+        /// Dependency.
         __AssetMarketplace_init(_admin, _estateToken);        
     }
 

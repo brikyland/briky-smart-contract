@@ -25,7 +25,7 @@ ICommon {
      *  @notice Emitted when a collection is registered.
      * 
      *          Name          Description
-     *  @param  collection    Collection address.
+     *  @param  collection    Collection contract address.
      */
     event CollectionRegistration(
         address indexed collection
@@ -35,7 +35,7 @@ ICommon {
      *  @notice Emitted when a collection is deregistered.
      *
      *          Name          Description
-     *  @param  collection    Collection address.
+     *  @param  collection    Collection contract address.
      */
     event CollectionDeregistration(
         address indexed collection
@@ -47,7 +47,7 @@ ICommon {
      *  @notice Emitted when a new offer is listed.
      *
      *          Name               Description
-     *  @param  collection         Token collection address.
+     *  @param  collection         Token collection contract address.
      *  @param  offerId            Offer identifier.
      *  @param  tokenId            Token identifier.
      *  @param  seller             Seller address.
@@ -127,7 +127,7 @@ ICommon {
      *  @notice List a new offer for an ERC721 token.
      *
      *          Name          Description
-     *  @param  collection    Token collection address.
+     *  @param  collection    Token collection contract address.
      *  @param  tokenId       Token identifier.
      *  @param  price         Sale value.
      *  @param  currency      Sale currency address.

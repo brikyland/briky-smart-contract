@@ -2,32 +2,12 @@
 pragma solidity ^0.8.20;
 
 /// @openzeppelin/contracts-upgradeable/
-import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import {ERC165CheckerUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
-
-/// contracts/common/utilities/
-import {CurrencyHandler} from "../common/utilities/CurrencyHandler.sol";
-import {Formula} from "../common/utilities/Formula.sol";
-
-/// contracts/common/interfaces/
-import {IAdmin} from "../common/interfaces/IAdmin.sol";
-
-/// contracts/common/constants/
-import {CommonConstant} from "../common/constants/CommonConstant.sol";
-
-/// contracts/common/utilities/
-import {Administrable} from "../common/utilities/Administrable.sol";
-import {Discountable} from "../common/utilities/Discountable.sol";
-import {Pausable} from "../common/utilities/Pausable.sol";
-
-/// contracts/land/interfaces/
-import {ICommissionToken} from "../land/interfaces/ICommissionToken.sol";
 
 /// contracts/land/utilities/
 import {CommissionDispatchable} from "../land/utilities/CommissionDispatchable.sol";
 
 /// contracts/lend/interfaces/
-import {IEstateMortgageToken} from "../lend/interfaces/IEstateMortgageToken.sol";
 import {IMortgageToken} from "../lend/interfaces/IMortgageToken.sol";
 
 /// contracts/lux/storages/
@@ -58,7 +38,7 @@ CommissionDispatchable {
     /* --- Helper --- */
     /**
      *          Name           Description
-     *  @param  _collection    Collection address.
+     *  @param  _collection    Collection contract address.
      * 
      *  @return Whether the collection is supported by the marketplace.
      * 
@@ -72,7 +52,7 @@ CommissionDispatchable {
     
     /**
      *          Name           Description
-     *  @param  _collection    Collection address.
+     *  @param  _collection    Collection contract address.
      *  @param  _tokenId       Token identifier.
      * 
      *  @return Whether the mortgage token is valid for sale.

@@ -81,18 +81,24 @@ ReentrancyGuardUpgradeable {
 
     /* --- Initializer --- */
     /**
-     *  @notice Invoked after deployment for initialization, serving as a constructor.
+     *  @notice Invoked for initialization after deployment, serving as the contract constructor.
+     * 
+     *          Name           Description
+     *  @param  _admin         `Admin` contract address.
+     *  @param  _collection    Asset token contract address.
+     * 
+     *  @dev    The asset token must support interface `IAssetToken`.
      */
     function initialize(
         address _admin,
         address _collection
     ) public
     initializer {
-        /// @dev    Inherited initializer.
+        /// Initializer.
         __Pausable_init();
         __ReentrancyGuard_init();
 
-        /// @dev    Dependency.
+        /// Dependency.
         __AssetMarketplace_init(_admin, _collection);
     }
 
@@ -100,8 +106,8 @@ ReentrancyGuardUpgradeable {
      *  @notice Helper function to initialize the dependencies of the contract.
      *
      *          Name           Description
-     *  @param  _admin         Admin address.
-     *  @param  _collection    Asset token address.
+     *  @param  _admin         Admin contract address.
+     *  @param  _collection    Asset token contract address.
      * 
      *  @dev    The asset token must support interface `IAssetToken`.
      */

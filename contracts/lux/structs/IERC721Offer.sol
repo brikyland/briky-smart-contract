@@ -16,7 +16,7 @@ IOfferState {
      *  @notice An offer to sell an ERC721 token.
      */
     struct ERC721Offer {
-        /// @notice Token collection address.
+        /// @notice Token collection contract address.
         /// @dev    The collection must support interface `IERC721Upgradeable`.
         address collection;
 

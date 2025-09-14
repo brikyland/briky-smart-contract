@@ -67,7 +67,7 @@ ReentrancyGuardUpgradeable {
      *  @notice Invoked for initialization after deployment, serving as the contract constructor.
      * 
      *          Name            Description
-     *  @param  _admin          Admin contract address.
+     *  @param  _admin          `Admin` contract address.
      *  @param  _name           Token name.
      *  @param  _symbol         Token symbol.
      *  @param  _uri            Token base URI.

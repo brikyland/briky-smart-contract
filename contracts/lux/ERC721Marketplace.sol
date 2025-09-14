@@ -2,7 +2,6 @@
 pragma solidity ^0.8.20;
 
 /// @openzeppelin/contracts-upgradeable/
-import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol";
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC721Upgradeable.sol";
 import {IERC2981Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
 import {ERC165CheckerUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
@@ -82,18 +81,22 @@ ReentrancyGuardUpgradeable {
 
     /* --- Initializer --- */
     /**
-     *  @notice Invoked after deployment for initialization, serving as a constructor.
+     *  @notice Invoked for initialization after deployment, serving as the contract constructor.
+     * 
+     *          Name            Description
+     *  @param  _admin          `Admin` contract address.
+     *  @param  _feeReceiver    `FeeReceiver` contract address.
      */
     function initialize(
         address _admin,
         address _feeReceiver
     ) public
     initializer {
-        /// @dev    Inherited initializer.
+        /// Initializer.
         __Pausable_init();
         __ReentrancyGuard_init();
 
-        /// @dev    Dependency
+        /// Dependency
         __ERC721Marketplace_init(_admin, _feeReceiver);
     }
 
@@ -101,8 +104,8 @@ ReentrancyGuardUpgradeable {
      *  @notice Helper function to initialize the dependencies of the contract.
      *
      *          Name            Description
-     *  @param  _admin          Admin address.
-     *  @param  _feeReceiver    Fee receiver address.
+     *  @param  _admin          `Admin` contract address.
+     *  @param  _feeReceiver    `FeeReceiver` contract address.
      */
     function __ERC721Marketplace_init(
         address _admin,
@@ -112,6 +115,7 @@ ReentrancyGuardUpgradeable {
         admin = _admin;
         feeReceiver = _feeReceiver;
     }
+
 
     /* --- Administration --- */
     /**
@@ -183,7 +187,7 @@ ReentrancyGuardUpgradeable {
      *  @notice List a new offer for an ERC721 token.
      *
      *          Name           Description
-     *  @param  _collection    Token collection address.
+     *  @param  _collection    Token collection contract address.
      *  @param  _tokenId       Token identifier.
      *  @param  _price         Sale price.
      *  @param  _currency      Sale currency address.
@@ -393,7 +397,7 @@ ReentrancyGuardUpgradeable {
 
     /**
      *          Name           Description
-     *  @param  _collection    Collection address.
+     *  @param  _collection    Collection contract address.
      * 
      *  @return Whether the collection is supported by the marketplace.
      */
@@ -406,7 +410,7 @@ ReentrancyGuardUpgradeable {
     
     /**
      *          Name           Description
-     *  @param  _collection    Collection address.
+     *  @param  _collection    Collection contract address.
      *  @param  _tokenId       Token identifier.
      * 
      *  @return Whether the token is valid for sale.

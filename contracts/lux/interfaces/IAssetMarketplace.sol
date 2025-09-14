@@ -93,7 +93,7 @@ ICommon {
     /* --- Dependency --- */
     /**
      *          Name            Description
-     *  @return collection      Asset token address.
+     *  @return collection      Asset token contract address.
      *
      *  @dev    The asset token must support interface `IAssetToken`.
      */
