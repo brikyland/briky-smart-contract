@@ -21,7 +21,7 @@ interface IDividend {
         /// @notice Remain weight that hasn't been withdrawn.
         uint256 remainWeight;
 
-        /// @notice Remain value that hasn't been.
+        /// @notice Remain value that hasn't been withdrawn.
         uint256 remainValue;
 
         /// @notice Dividend currency address.

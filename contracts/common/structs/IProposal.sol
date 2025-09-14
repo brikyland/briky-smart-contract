@@ -75,10 +75,10 @@ interface IProposal {
         /// @notice Not determined.
         Unsettled,
 
-        /// @notice Passed due to the proposal rule.
+        /// @notice Passed according to the proposal rule.
         Passed,
 
-        /// @notice Failed due to the proposal rule.
+        /// @notice Failed according to the proposal rule.
         Failed
     }
 
