@@ -381,7 +381,7 @@ IAssetToken {
      *
      *          Name            Description
      *  @param  estateId        Estate identifier.
-     *  @param  uri             New URI of estate metadata.
+     *  @param  uri             New estate metadata URI.
      *  @param  validation      Validation package from the validator.
      *
      *  @dev    Validation data:

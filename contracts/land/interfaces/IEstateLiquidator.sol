@@ -80,7 +80,7 @@ IValidatable {
     /** ===== FUNCTION ===== **/
     /* --- Command --- */
     /**
-     *  @notice TODO: Create estate extraction request.
+     *  @notice TODO: Create estate extraction request by submitting a proposal to `GovernanceHub`.
      *
      *          Name            Description
      *  @param  estateId        Estate identifier.
