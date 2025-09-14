@@ -24,12 +24,17 @@ import {Administrable} from "../common/utilities/Administrable.sol";
 import {Pausable} from "../common/utilities/Pausable.sol";
 import {RoyaltyRateProposer} from "../common/utilities/RoyaltyRateProposer.sol";
 
-/// contracts/lucra/interfaces/
-import {IPromotionToken} from "./interfaces/IPromotionToken.sol";
-
 /// contracts/lucra/storages/
 import {PromotionTokenStorage} from "./storages/PromotionTokenStorage.sol";
 
+/**
+ *  @author Briky Team
+ *
+ *  @notice Implementation of contract `PromotionToken`.
+ *  @notice The promotion token is an ERC-721 token that represents airdrop tokens minted by users during airdrop campaigns.
+ * 
+ *  @dev    Minting fee is charged to protect the contract from DoS attacks.
+ */
 contract PromotionToken is
 PromotionTokenStorage,
 ERC721PausableUpgradeable,
@@ -59,7 +64,14 @@ ReentrancyGuardUpgradeable {
 
     /* --- Initializer --- */
     /**
-     *  @notice Invoked after deployment for initialization, serving as a constructor.
+     *  @notice Invoked for initialization after deployment, serving as the contract constructor.
+     * 
+     *          Name            Description
+     *  @param  _admin          Admin contract address.
+     *  @param  _name           Token name.
+     *  @param  _symbol         Token symbol.
+     *  @param  _fee            Minting fee.
+     *  @param  _royaltyRate    Royalty rate.
      */
     function initialize(
         address _admin,
@@ -67,17 +79,18 @@ ReentrancyGuardUpgradeable {
         string calldata _symbol,
         uint256 _fee,
         uint256 _royaltyRate
-    ) external initializer {
-        /// @dev    Inherited initializer.
+    ) external
+    initializer {
+        /// Initializer.
         __ERC721_init(_name, _symbol);
         __ERC721Pausable_init();
 
         __ReentrancyGuard_init();
 
-        /// @dev    Dependency
+        /// Dependency
         admin = _admin;
 
-        /// @dev    Configuration
+        /// Configuration
         fee = _fee;
         emit FeeUpdate(_fee);
 
@@ -156,7 +169,8 @@ ReentrancyGuardUpgradeable {
         address[] calldata _currencies,
         uint256[] calldata _values,
         bytes[] calldata _signatures
-    ) external nonReentrant {
+    ) external
+    nonReentrant {
         IAdmin(admin).verifyAdminSignatures(
             abi.encode(
                 address(this),
@@ -339,7 +353,10 @@ ReentrancyGuardUpgradeable {
     function mint(
         uint256 _contentId,
         uint256 _amount
-    ) external payable nonReentrant whenNotPaused returns (uint256, uint256) {
+    ) external payable
+    nonReentrant
+    whenNotPaused
+    returns (uint256, uint256) {
         if (_amount == 0) {
             revert InvalidInput();
         }
@@ -383,12 +400,14 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *          Name            Description
-     *  @param  _tokenId        Token identifier.
+     *          Name        Description
+     *  @param  _tokenId    Token identifier.
      * 
      *  @return Token URI.
      */
-    function tokenURI(uint256 _tokenId) public view override(
+    function tokenURI(
+        uint256 _tokenId
+    ) public view override(
         IERC721MetadataUpgradeable,
         ERC721Upgradeable
     ) returns (string memory) {

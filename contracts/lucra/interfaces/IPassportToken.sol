@@ -13,11 +13,11 @@ import {IRoyaltyRateProposer} from "../../common/interfaces/IRoyaltyRateProposer
  *  @author Briky Team
  *
  *  @notice Interface for contract `PassportToken`.
- *  @notice The `PassportToken` contract is an ERC-721 token that represents a special pass that multiplies users' total points
+ *  @notice The `PassportToken` contract is an ERC-721 token representing a special pass that grant priveleges to owners
  *          during airdrop campaigns.
  * 
  *  @dev    The passport token can only be minted once per account.
- *  @dev    Minting fee is charged to protect the system from DoS attacks.
+ *  @dev    Minting fee is charged to protect the contract from DoS attacks.
  */
 interface IPassportToken is
 ICommon,
@@ -100,6 +100,8 @@ IERC721MetadataUpgradeable {
      * 
      *          Name       Description
      *  @return tokenId    Minted token identifier.
+     * 
+     *  @dev    The passport token can only be minted once per account.
      */
     function mint() external payable returns (uint256 tokenId);
 }

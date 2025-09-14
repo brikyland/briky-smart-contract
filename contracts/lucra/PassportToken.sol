@@ -23,9 +23,6 @@ import {CommonConstant} from "../common/constants/CommonConstant.sol";
 import {Pausable} from "../common/utilities/Pausable.sol";
 import {RoyaltyRateProposer} from "../common/utilities/RoyaltyRateProposer.sol";
 
-/// contracts/lucra/interfaces/
-import {IPassportToken} from "./interfaces/IPassportToken.sol";
-
 /// contracts/lucra/storages/
 import {PassportTokenStorage} from "./storages/PassportTokenStorage.sol";
 
@@ -33,11 +30,11 @@ import {PassportTokenStorage} from "./storages/PassportTokenStorage.sol";
  *  @author Briky Team
  *
  *  @notice Implementation of contract `PassportToken`.
- * 
- *  @dev    The passport token is an ERC-721 token that represents a special pass that multiplies users' total points
+ *  @notice The `PassportToken` contract is an ERC-721 token representing a special pass that grant priveleges to owners
  *          during airdrop campaigns.
+ * 
  *  @dev    The passport token can only be minted once per account.
- *  @dev    Minting fee is charged to protect the system from DoS attacks.
+ *  @dev    Minting fee is charged to protect the contract from DoS attacks.
  */
 contract PassportToken is
 PassportTokenStorage,
@@ -67,7 +64,15 @@ ReentrancyGuardUpgradeable {
 
     /* --- Initializer --- */
     /**
-     *  @notice Invoked after deployment for initialization, serving as a constructor.
+     *  @notice Invoked for initialization after deployment, serving as the contract constructor.
+     * 
+     *          Name            Description
+     *  @param  _admin          Admin contract address.
+     *  @param  _name           Token name.
+     *  @param  _symbol         Token symbol.
+     *  @param  _uri            Token base URI.
+     *  @param  _fee            Minting fee.
+     *  @param  _royaltyRate    Royalty rate.
      */
     function initialize(
         address _admin,
@@ -76,17 +81,18 @@ ReentrancyGuardUpgradeable {
         string calldata _uri,
         uint256 _fee,
         uint256 _royaltyRate
-    ) external initializer {
-        /// @dev    Inherited initializer.
+    ) external
+    initializer {
+        /// Initializer.
         __ERC721_init(_name, _symbol);
         __ERC721Pausable_init();
 
         __ReentrancyGuard_init();
 
-        /// @dev    Dependency
+        /// Dependency
         admin = _admin;
 
-        /// @dev    Configuration
+        /// Configuration
         baseURI = _uri;
         emit BaseURIUpdate(_uri);
 
@@ -195,7 +201,8 @@ ReentrancyGuardUpgradeable {
         address[] calldata _currencies,
         uint256[] calldata _values,
         bytes[] calldata _signatures
-    ) external nonReentrant {
+    ) external
+    nonReentrant {
         IAdmin(admin).verifyAdminSignatures(
             abi.encode(
                 address(this),
@@ -219,8 +226,8 @@ ReentrancyGuardUpgradeable {
 
     /* --- Query --- */
     /**
-     *          Name            Description
-     *  @param  _tokenId        Token identifier.
+     *          Name        Description
+     *  @param  _tokenId    Token identifier.
      * 
      *  @return Token URI.
      */
@@ -235,7 +242,7 @@ ReentrancyGuardUpgradeable {
 
     /**
      *          Name        Description
-     *  @param  _tokenId     Token identifier.
+     *  @param  _tokenId    Token identifier.
      * 
      *  @return rate        Royalty rate of the token.
      */
@@ -250,8 +257,13 @@ ReentrancyGuardUpgradeable {
      *
      *          Name        Description
      *  @return tokenId     Minted token identifier.
+     * 
+     *  @dev    The passport token can only be minted once per account.
      */
-    function mint() external payable nonReentrant whenNotPaused returns (uint256) {
+    function mint() external payable
+    nonReentrant
+    whenNotPaused
+    returns (uint256) {
         if (hasMinted[msg.sender]) {
             revert AlreadyMinted();
         }
@@ -280,7 +292,9 @@ ReentrancyGuardUpgradeable {
      * 
      *  @return Whether the contract implements the interface.
      */
-    function supportsInterface(bytes4 _interfaceId) public view override(
+    function supportsInterface(
+        bytes4 _interfaceId
+    ) public view override(
         IERC165Upgradeable,
         ERC721Upgradeable
     ) returns (bool) {

@@ -16,11 +16,9 @@ import {IContent} from "../structs/IContent.sol";
  *  @author Briky Team
  *
  *  @notice Interface for contract `PromotionToken`.
+ *  @notice The promotion token is an ERC-721 token that represents airdrop tokens minted by users during airdrop campaigns.
  * 
- *  @dev    The promotion token is an ERC-721 token that represents airdrop tokens minted by users to increase their score
- *          during airdrop campaigns.
- *  @dev    Each token is associated with a content.
- *  @dev    Minting fee is charged to protect the system from DoS attacks.
+ *  @dev    Minting fee is charged to protect the contract from DoS attacks.
  */
 interface IPromotionToken is
 IContent,
@@ -35,7 +33,9 @@ IERC721MetadataUpgradeable {
      *          Name        Description
      *  @param  newValue    New minting fee.
      */
-    event FeeUpdate(uint256 newValue);
+    event FeeUpdate(
+        uint256 newValue
+    );
 
     /**
      *  @notice Emitted when the royalty rate is updated.
@@ -43,7 +43,9 @@ IERC721MetadataUpgradeable {
      *          Name       Description
      *  @param  newRate    New royalty rate.
      */
-    event RoyaltyRateUpdate(Rate newRate);
+    event RoyaltyRateUpdate(
+        Rate newRate
+    );
 
     /**
      *  @notice Emitted when a new content is created.
@@ -76,9 +78,12 @@ IERC721MetadataUpgradeable {
      * 
      *          Name         Description
      *  @param  contentId    Content identifier.
-     *  @param  uri          Content URI.
+     *  @param  uri          New content URI.
      */
-    event ContentURIUpdate(uint256 indexed contentId, string uri);
+    event ContentURIUpdate(
+        uint256 indexed contentId,
+        string uri
+    );
 
     /**
      *  @notice Emitted when a new token is minted.

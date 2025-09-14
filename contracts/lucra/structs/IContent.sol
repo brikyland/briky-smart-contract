@@ -10,8 +10,6 @@ interface IContent {
     /** ===== STRUCT ===== **/
     /**
      *  @notice Content information.
-     * 
-     *  @dev    Each token is associated with a content.
      */
     struct Content {
         /// @notice URI of content metadata.
