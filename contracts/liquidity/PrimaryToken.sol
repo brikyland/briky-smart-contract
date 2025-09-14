@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
+/// @openzeppelin/contracts-upgradeable/
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC20Upgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
@@ -8,21 +9,34 @@ import {ERC20CappedUpgradeable} from "@openzeppelin/contracts-upgradeable/token/
 import {ERC20PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PausableUpgradeable.sol";
 import {ERC20PermitUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
 
-import {CurrencyHandler} from "../common/utilities/CurrencyHandler.sol";
-import {Formula} from "../common/utilities/Formula.sol";
-
-import {IAdmin} from "../common/interfaces/IAdmin.sol";
-
+/// contracts/common/constants/
 import {CommonConstant} from "../common/constants/CommonConstant.sol";
 
+/// contracts/common/interfaces/
+import {IAdmin} from "../common/interfaces/IAdmin.sol";
+
+/// contracts/common/utilities/
+import {CurrencyHandler} from "../common/utilities/CurrencyHandler.sol";
+import {Formula} from "../common/utilities/Formula.sol";
 import {Pausable} from "../common/utilities/Pausable.sol";
 
+/// contracts/liquidity/constants/
 import {PrimaryTokenConstant} from "./constants/PrimaryTokenConstant.sol";
 
+/// contracts/liquidity/interfaces/
 import {ITreasury} from "../liquidity/interfaces/ITreasury.sol";
 
+/// contracts/liquidity/storages/
 import {PrimaryTokenStorage} from "../liquidity/storages/PrimaryTokenStorage.sol";
 
+/**
+ *  @author Briky Team
+ *
+ *  @notice TODO: The `PrimaryToken` contract is the primary ERC-20 token of the Briky ecosystem.
+ *
+ *  @dev    ERC-20 tokens are identified by their contract addresses.
+ *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
+ */
 contract PrimaryToken is
 PrimaryTokenStorage,
 ERC20CappedUpgradeable,
@@ -30,21 +44,47 @@ ERC20PausableUpgradeable,
 ERC20PermitUpgradeable,
 Pausable,
 ReentrancyGuardUpgradeable {
+    /** ===== LIBRARY ===== **/
     using Formula for uint256;
 
+
+    /** ===== CONSTANT ===== **/
     string constant private VERSION = "v1.2.1";
 
+
+    /** ===== FUNCTION ===== **/
+    /* --- Standard --- */
     /**
      *  @notice Executed on a call to the contract with empty calldata.
      */
     receive() external payable {}
 
+    /**
+     *  @return Version of implementation.
+     */
+    function version() external pure returns (string memory) {
+        return VERSION;
+    }
+
+
+    /* --- Initialization --- */
+    /**
+     *  @notice Invoked for initialization after deployment, serving as the contract constructor.
+     *
+     *          Name                        Description
+     *  @param  _admin                      `Admin` contract address.
+     *  @param  _name                       Token name.
+     *  @param  _symbol                     Token symbol.
+     *  @param  _liquidationUnlockedAt      Timestamp to unlock liquidation.
+     */
     function initialize(
         address _admin,
         string calldata _name,
         string calldata _symbol,
         uint256 _liquidationUnlockedAt
-    ) external initializer {
+    ) external
+    initializer {
+        /// Initializer
         __ERC20_init(_name, _symbol);
         __ERC20Capped_init(PrimaryTokenConstant.MAX_SUPPLY);
         __ERC20Pausable_init();
@@ -52,7 +92,10 @@ ReentrancyGuardUpgradeable {
 
         __ReentrancyGuard_init();
 
+        /// Dependency
         admin = _admin;
+
+        /// Configuration
         liquidationUnlockedAt = _liquidationUnlockedAt;
 
         unchecked {
@@ -70,10 +113,8 @@ ReentrancyGuardUpgradeable {
         }
     }
 
-    function version() external pure returns (string memory) {
-        return VERSION;
-    }
 
+    /* --- Administration --- */
     /**
      *  @notice Update the treasury contract.
      *
@@ -106,9 +147,9 @@ ReentrancyGuardUpgradeable {
      *  @notice Update stake token contracts.
      *
      *          Name            Description
-     *  @param  _stakeToken1    New the stake token #1 contract address.
-     *  @param  _stakeToken2    New the stake token #2 contract address.
-     *  @param  _stakeToken3    New the stake token #3 contract address.
+     *  @param  _stakeToken1    New stake token #1 contract address.
+     *  @param  _stakeToken2    New stake token #2 contract address.
+     *  @param  _stakeToken3    New stake token #3 contract address.
      *  @param  _signatures     Array of admin signatures.
      * 
      *  @dev    Administrative configuration.
@@ -146,12 +187,22 @@ ReentrancyGuardUpgradeable {
         );
     }
 
+
+    /* --- Query --- */
+    /**
+     *  @return Total amount of tokens staked across all stake token contracts.
+     */
     function totalStake() public view returns (uint256) {
         return (stakeToken1 != address(0) ? IERC20Upgradeable(stakeToken1).totalSupply() : 0)
             + (stakeToken2 != address(0) ? IERC20Upgradeable(stakeToken2).totalSupply() : 0)
             + (stakeToken3 != address(0) ? IERC20Upgradeable(stakeToken3).totalSupply() : 0);
     }
 
+    /**
+     *  @return Whether stake rewarding has reached its culminating wave for the calling stake token contract.
+     *
+     *  @dev    Permission: Stake token contracts only.
+     */
     function isStakeRewardingCulminated() external view returns (bool) {
         if (msg.sender == stakeToken1) return stakeToken1Waves >= PrimaryTokenConstant.STAKE_1_CULMINATING_WAVE;
         if (msg.sender == stakeToken2) return stakeToken2Waves >= PrimaryTokenConstant.STAKE_2_CULMINATING_WAVE;
@@ -159,6 +210,8 @@ ReentrancyGuardUpgradeable {
         revert Unauthorized();
     }
 
+
+    /* --- Command --- */
     /**
      *  @notice Unlock tokens allocated for Backer Round to a distributor.
      *
@@ -171,7 +224,8 @@ ReentrancyGuardUpgradeable {
     function unlockForBackerRound(
         address _distributor,
         bytes[] calldata _signatures
-    ) external nonReentrant {
+    ) external
+    nonReentrant {
         IAdmin(admin).verifyAdminSignatures(
             abi.encode(
                 address(this),
@@ -207,7 +261,8 @@ ReentrancyGuardUpgradeable {
     function unlockForSeedRound(
         address _distributor,
         bytes[] calldata _signatures
-    ) external nonReentrant {
+    ) external
+    nonReentrant {
         IAdmin(admin).verifyAdminSignatures(
             abi.encode(
                 address(this),
@@ -243,7 +298,8 @@ ReentrancyGuardUpgradeable {
     function unlockForPrivateSale1(
         address _distributor,
         bytes[] calldata _signatures
-    ) external nonReentrant {
+    ) external
+    nonReentrant {
         IAdmin(admin).verifyAdminSignatures(
             abi.encode(
                 address(this),
@@ -279,7 +335,8 @@ ReentrancyGuardUpgradeable {
     function unlockForPrivateSale2(
         address _distributor,
         bytes[] calldata _signatures
-    ) external nonReentrant {
+    ) external
+    nonReentrant {
         IAdmin(admin).verifyAdminSignatures(
             abi.encode(
                 address(this),
@@ -316,7 +373,8 @@ ReentrancyGuardUpgradeable {
     function unlockForPublicSale(
         address _distributor,
         bytes[] calldata _signatures
-    ) external nonReentrant {
+    ) external
+    nonReentrant {
         IAdmin(admin).verifyAdminSignatures(
             abi.encode(
                 address(this),
@@ -352,7 +410,8 @@ ReentrancyGuardUpgradeable {
     function unlockForCoreTeam(
         address _distributor,
         bytes[] calldata _signatures
-    ) external nonReentrant {
+    ) external
+    nonReentrant {
         IAdmin(admin).verifyAdminSignatures(
             abi.encode(
                 address(this),
@@ -388,7 +447,8 @@ ReentrancyGuardUpgradeable {
     function unlockForMarketMaker(
         address _distributor,
         bytes[] calldata _signatures
-    ) external nonReentrant {
+    ) external
+    nonReentrant {
         IAdmin(admin).verifyAdminSignatures(
             abi.encode(
                 address(this),
@@ -424,7 +484,8 @@ ReentrancyGuardUpgradeable {
     function unlockForExternalTreasury(
         address _distributor,
         bytes[] calldata _signatures
-    ) external nonReentrant {
+    ) external
+    nonReentrant {
         IAdmin(admin).verifyAdminSignatures(
             abi.encode(
                 address(this),
@@ -454,7 +515,10 @@ ReentrancyGuardUpgradeable {
      *          Name          Description
      *  @param  _liquidity    Contributed liquidity.
      */
-    function contributeLiquidityFromBackerRound(uint256 _liquidity) external nonReentrant {
+    function contributeLiquidityFromBackerRound(
+        uint256 _liquidity
+    ) external
+    nonReentrant {
         _contributeLiquidity(_liquidity);
 
         unchecked {
@@ -470,7 +534,10 @@ ReentrancyGuardUpgradeable {
      *          Name          Description
      *  @param  _liquidity    Contributed liquidity.
      */
-    function contributeLiquidityFromSeedRound(uint256 _liquidity) external nonReentrant {
+    function contributeLiquidityFromSeedRound(
+        uint256 _liquidity
+    ) external
+    nonReentrant {
         _contributeLiquidity(_liquidity);
 
         unchecked {
@@ -486,7 +553,10 @@ ReentrancyGuardUpgradeable {
      *          Name          Description
      *  @param  _liquidity    Contributed liquidity.
      */
-    function contributeLiquidityFromPrivateSale1(uint256 _liquidity) external nonReentrant {
+    function contributeLiquidityFromPrivateSale1(
+        uint256 _liquidity
+    ) external
+    nonReentrant {
         _contributeLiquidity(_liquidity);
 
         unchecked {
@@ -502,7 +572,10 @@ ReentrancyGuardUpgradeable {
      *          Name          Description
      *  @param  _liquidity    Contributed liquidity.
      */
-    function contributeLiquidityFromPrivateSale2(uint256 _liquidity) external nonReentrant {
+    function contributeLiquidityFromPrivateSale2(
+        uint256 _liquidity
+    ) external
+    nonReentrant {
         _contributeLiquidity(_liquidity);
 
         unchecked {
@@ -518,7 +591,10 @@ ReentrancyGuardUpgradeable {
      *          Name          Description
      *  @param  _liquidity    Contributed liquidity.
      */
-    function contributeLiquidityFromPublicSale(uint256 _liquidity) external nonReentrant {
+    function contributeLiquidityFromPublicSale(
+        uint256 _liquidity
+    ) external
+    nonReentrant {
         _contributeLiquidity(_liquidity);
 
         unchecked {
@@ -534,7 +610,10 @@ ReentrancyGuardUpgradeable {
      *          Name          Description
      *  @param  _liquidity    Contributed liquidity.
      */
-    function contributeLiquidityFromMarketMaker(uint256 _liquidity) external nonReentrant {
+    function contributeLiquidityFromMarketMaker(
+        uint256 _liquidity
+    ) external
+    nonReentrant {
         _contributeLiquidity(_liquidity);
 
         unchecked {
@@ -550,7 +629,10 @@ ReentrancyGuardUpgradeable {
      *          Name          Description
      *  @param  _liquidity    Contributed liquidity.
      */
-    function contributeLiquidityFromExternalTreasury(uint256 _liquidity) external nonReentrant {
+    function contributeLiquidityFromExternalTreasury(
+        uint256 _liquidity
+    ) external
+    nonReentrant {
         _contributeLiquidity(_liquidity);
 
         unchecked {
@@ -567,7 +649,11 @@ ReentrancyGuardUpgradeable {
      *  @param  _liquidity    Contributed liquidity.
      *  @param  _stakeToken   Stake token address.
      */
-    function contributeLiquidityFromStakeToken(uint256 _liquidity, address _stakeToken) external nonReentrant {
+    function contributeLiquidityFromStakeToken(
+        uint256 _liquidity,
+        address _stakeToken
+    ) external
+    nonReentrant {
         _contributeLiquidity(_liquidity);
 
         unchecked {
@@ -584,6 +670,15 @@ ReentrancyGuardUpgradeable {
         }
     }
 
+    /**
+     *  @notice Mint reward tokens for stake token contracts based on their wave progression.
+     *
+     *  @return Amount of tokens minted as reward.
+     *
+     *  @dev    Permission: Stake token contracts only.
+     *  @dev    Each stake token contract has different reward amounts and culminating waves.
+     *  @dev    Stake token #3 has dynamic rewards based on remaining supply.
+     */
     function mintForStake() external returns (uint256) {
         if (msg.sender == stakeToken1) {
             if (stakeToken1Waves == PrimaryTokenConstant.STAKE_1_CULMINATING_WAVE) {
@@ -634,7 +729,23 @@ ReentrancyGuardUpgradeable {
         }
     }
 
-    function liquidate(uint256 _amount) external nonReentrant whenNotPaused returns (uint256) {
+    /**
+     *  @notice Exchange tokens for proportional liquidity from the treasury.
+     *
+     *          Name            Description
+     *  @param  _amount         Amount of tokens to liquidate.
+     *
+     *  @return Liquidity amount received from treasury.
+     *
+     *  @dev    Liquidation is only available after the specified unlock timestamp.
+     *  @dev    The liquidity amount is calculated proportionally based on total supply.
+     */
+    function liquidate(
+        uint256 _amount
+    ) external
+    whenNotPaused
+    nonReentrant
+    returns (uint256) {
         if (liquidationUnlockedAt > block.timestamp) {
             revert BeingLocked();
         }
@@ -651,6 +762,12 @@ ReentrancyGuardUpgradeable {
         return liquidity;
     }
 
+    /**
+     *  @return rate            Exclusive discount rate for holders based on total stake and supply.
+     *
+     *  @dev    The discount rate is calculated using base discount scaled by the ratio of
+     *          total stake plus total supply to total supply.
+     */
     function exclusiveDiscount() external view returns (Rate memory rate) {
         return Rate(
             PrimaryTokenConstant.BASE_DISCOUNT.scale(totalStake() + totalSupply(), totalSupply()),
@@ -658,17 +775,53 @@ ReentrancyGuardUpgradeable {
         );
     }
 
-    function _beforeTokenTransfer(address _from, address _to, uint256 _amount)
-    internal override(ERC20Upgradeable, ERC20PausableUpgradeable) {
+
+    /* --- Helper --- */
+    /**
+     *  @notice Hook called before any token transfer.
+     *
+     *          Name            Description
+     *  @param  _from           Sender address.
+     *  @param  _to             Receiver address.
+     *  @param  _amount         Transfer amount.
+     *
+     *  @dev    Overrides both ERC20Upgradeable and ERC20PausableUpgradeable.
+     */
+    function _beforeTokenTransfer(
+        address _from,
+        address _to,
+        uint256 _amount
+    ) internal
+    override(ERC20Upgradeable, ERC20PausableUpgradeable) {
         super._beforeTokenTransfer(_from, _to, _amount);
     }
 
-    function _mint(address _account, uint256 _amount)
-    internal override(ERC20Upgradeable, ERC20CappedUpgradeable) {
+    /**
+     *  @notice Internal mint function.
+     *
+     *          Name            Description
+     *  @param  _account        Recipient address.
+     *  @param  _amount         Amount to mint.
+     */
+    function _mint(
+        address _account,
+        uint256 _amount
+    ) internal
+    override(ERC20Upgradeable, ERC20CappedUpgradeable) {
         super._mint(_account, _amount);
     }
 
-    function _contributeLiquidity(uint256 _liquidity) internal {
+    /**
+     *  @notice Internal function to contribute liquidity to the treasury.
+     *
+     *          Name            Description
+     *  @param  _liquidity      Amount of liquidity to contribute.
+     *
+     *  @dev    Receives currency from sender and provides it to the treasury contract.
+     */
+    function _contributeLiquidity(
+        uint256 _liquidity
+    ) internal {
         address treasuryAddress = treasury;
 
         address currency = ITreasury(treasuryAddress).currency();
