@@ -60,7 +60,9 @@ CommissionDispatchable {
      *          Name           Description
      *  @param  _collection    Collection address.
      * 
-     *  @return Whether the collection is accepted by the mortgage marketplace.
+     *  @return Whether the collection is supported by the marketplace.
+     * 
+     *  @dev    The collection must support interface `IMortgageToken`.
      */
     function _validCollection(
         address _collection
@@ -73,7 +75,7 @@ CommissionDispatchable {
      *  @param  _collection    Collection address.
      *  @param  _tokenId       Token identifier.
      * 
-     *  @return Whether the mortgage token is available for purchase.
+     *  @return Whether the mortgage token is valid for sale.
      */
     function _validToken(
         address _collection,

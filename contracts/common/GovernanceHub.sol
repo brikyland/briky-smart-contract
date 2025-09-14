@@ -61,7 +61,9 @@ ReentrancyGuardUpgradeable {
      *          Name            Description
      *  @param  _proposalId     Proposal Identifier.
      */
-    modifier validProposal(uint256 _proposalId) {
+    modifier validProposal(
+        uint256 _proposalId
+    ) {
         if (_proposalId == 0
             || _proposalId > proposalNumber) {
             revert InvalidProposalId();
@@ -75,7 +77,9 @@ ReentrancyGuardUpgradeable {
      *          Name            Description
      *  @param  _proposalId     Proposal Identifier.
      */
-    modifier onlyOperator(uint256 _proposalId) {
+    modifier onlyOperator(
+        uint256 _proposalId
+    ) {
         if (msg.sender != proposals[_proposalId].operator) {
             revert Unauthorized();
         }
@@ -88,7 +92,9 @@ ReentrancyGuardUpgradeable {
      *          Name            Description
      *  @param  _proposalId     Proposal Identifier.
      */
-    modifier onlyRepresentative(uint256 _proposalId) {
+    modifier onlyRepresentative(
+        uint256 _proposalId
+    ) {
         Proposal storage proposal = proposals[_proposalId];
         if (msg.sender != IGovernor(proposal.governor).getRepresentative(proposal.tokenId)) {
             revert Unauthorized();
@@ -740,10 +746,10 @@ ReentrancyGuardUpgradeable {
      *  @notice Conclude the execution of a proposal.
      *
      *          Name            Description
-     *  @param  proposalId      Proposal identifier.
-     *  @param  resultURI       URI of final execution result.
-     *  @param  isSuccessful    Whether the execution has succeeded.
-     *  @param  validation      Validation package from the validator.
+     *  @param  _proposalId      Proposal identifier.
+     *  @param  _resultURI       URI of final execution result.
+     *  @param  _isSuccessful    Whether the execution has succeeded.
+     *  @param  _validation      Validation package from the validator.
      *
      *  @dev    Permission: Asset representative of the proposal.
      *  @dev    Validation data:
@@ -753,7 +759,7 @@ ReentrancyGuardUpgradeable {
      */
     function concludeExecution(
         uint256 _proposalId,
-        string calldata _logURI,
+        string calldata _resultURI,
         bool _isSuccessful,
         Validation calldata _validation
     ) external
@@ -765,7 +771,7 @@ ReentrancyGuardUpgradeable {
         _validate(
             abi.encode(
                 _proposalId,
-                _logURI,
+                _resultURI,
                 _isSuccessful
             ),
             _validation
@@ -781,12 +787,12 @@ ReentrancyGuardUpgradeable {
             revert InvalidConcluding();
         }
 
-        proposal.logURI = _logURI;
+        proposal.logURI = _resultURI;
         proposal.state = _isSuccessful ? ProposalState.SuccessfulExecuted : ProposalState.UnsuccessfulExecuted;
 
         emit ProposalExecutionConclusion(
             _proposalId,
-            _logURI,
+            _resultURI,
             _isSuccessful
         );
     }

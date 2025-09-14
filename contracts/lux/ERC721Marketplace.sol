@@ -87,16 +87,31 @@ ReentrancyGuardUpgradeable {
     function initialize(
         address _admin,
         address _feeReceiver
-    ) public initializer {
+    ) public
+    initializer {
         /// @dev    Inherited initializer.
         __Pausable_init();
         __ReentrancyGuard_init();
 
         /// @dev    Dependency
+        __ERC721Marketplace_init(_admin, _feeReceiver);
+    }
+
+    /**
+     *  @notice Helper function to initialize the dependencies of the contract.
+     *
+     *          Name            Description
+     *  @param  _admin          Admin address.
+     *  @param  _feeReceiver    Fee receiver address.
+     */
+    function __ERC721Marketplace_init(
+        address _admin,
+        address _feeReceiver
+    ) internal
+    onlyInitializing {
         admin = _admin;
         feeReceiver = _feeReceiver;
     }
-
 
     /* --- Administration --- */
     /**
@@ -140,7 +155,7 @@ ReentrancyGuardUpgradeable {
                 if (!isCollection[_collections[i]]) {
                     revert NotRegisteredCollection();
                 }
-                isCollection[_collections[i]] = true;
+                isCollection[_collections[i]] = false;
                 emit CollectionDeregistration(_collections[i]);
             } 
         }
@@ -157,7 +172,9 @@ ReentrancyGuardUpgradeable {
      */
     function getOffer(
         uint256 _offerId
-    ) external view validOffer(_offerId) returns (Offer memory) {
+    ) external view
+    validOffer(_offerId)
+    returns (ERC721Offer memory) {
         return offers[_offerId];
     }
 
@@ -168,17 +185,24 @@ ReentrancyGuardUpgradeable {
      *          Name           Description
      *  @param  _collection    Token collection address.
      *  @param  _tokenId       Token identifier.
-     *  @param  _price         Selling price.
-     *  @param  _currency      Selling currency address.
+     *  @param  _price         Sale price.
+     *  @param  _currency      Sale currency address.
      * 
      *  @return New offer identifier.
+     * 
+     *  @dev    The collection must support interface `IERC721Upgradeable`.
+     *  @dev    Must set approval for the contract to transfer the ERC721 token of the seller before listing.
      */
     function list(
         address _collection,
         uint256 _tokenId,
         uint256 _price,
         address _currency
-    ) external onlyAvailableCurrency(_currency) whenNotPaused returns (uint256) {
+    ) external
+    whenNotPaused
+    nonReentrant
+    onlyAvailableCurrency(_currency)
+    returns (uint256) {
         if (_price == 0) {
             revert InvalidPrice();
         }
@@ -205,7 +229,7 @@ ReentrancyGuardUpgradeable {
 
         uint256 offerId = ++offerNumber;
 
-        offers[offerId] = Offer(
+        offers[offerId] = ERC721Offer(
             _collection,
             _tokenId,
             _price,
@@ -223,8 +247,8 @@ ReentrancyGuardUpgradeable {
             msg.sender,
             _price,
             royalty,
-            _currency,
-            royaltyReceiver
+            royaltyReceiver,
+            _currency
         );
 
         return offerId;
@@ -232,30 +256,40 @@ ReentrancyGuardUpgradeable {
 
     /**
      *  @notice Buy an offer.
+     *  @notice Buy only if the offer is in `Selling` state.
      *
      *          Name        Description
      *  @param  _offerId    Offer identifier.
      * 
-     *  @return Buying price including royalty.
+     *  @return Sum of sale price and royalty.
      */
     function buy(
         uint256 _offerId
-    ) external payable validOffer(_offerId) returns (uint256) {
+    ) external payable
+    whenNotPaused
+    validOffer(_offerId)
+    returns (uint256) {
         return _buy(_offerId);
     }
 
     /**
      *  @notice Cancel an offer.
+     *  @notice Cancel only if the offer is in `Selling` state.
      *
      *          Name        Description
      *  @param  _offerId    Offer identifier.
      * 
-     *  @dev    Permission: managers or offer owner.
+     *  @dev    Permission:
+     *          - Seller of the offer.
+     *          - Managers: disqualify defected offers only.
      */
     function cancel(
         uint256 _offerId
-    ) external validOffer(_offerId) whenNotPaused {
-        Offer storage offer = offers[_offerId];
+    ) external
+    whenNotPaused
+    nonReentrant
+    validOffer(_offerId) {
+        ERC721Offer storage offer = offers[_offerId];
         if (msg.sender != offer.seller && !IAdmin(admin).isManager(msg.sender)) {
             revert Unauthorized();
         }
@@ -272,17 +306,23 @@ ReentrancyGuardUpgradeable {
     /* --- Safe Command --- */
     /**
      *  @notice Buy an offer.
+     *  @notice Buy only if the offer is in `Selling` state.
      *
      *          Name        Description
      *  @param  _offerId    Offer identifier.
-     *  @param  _anchor     Token identifier of the offer.
+     *  @param  _anchor     `tokenId` of the offer.
      * 
-     *  @return Buying price including royalty.
+     *  @return Sum of sale price and royalty.
+     * 
+     *  @dev    Anchor enforces consistency between the contract and the client-side.
      */
     function safeBuy(
         uint256 _offerId,
         uint256 _anchor
-    ) external payable validOffer(_offerId) returns (uint256) {
+    ) external payable
+    whenNotPaused
+    validOffer(_offerId)
+    returns (uint256) {
         if (_anchor != offers[_offerId].tokenId) {
             revert BadAnchor();
         }
@@ -293,16 +333,20 @@ ReentrancyGuardUpgradeable {
     /* --- Helper --- */
     /**
      *  @notice Buy an offer.
+     *  @notice Buy only if the offer is in `Selling` state.
      *
      *          Name        Description
      *  @param  _offerId    Offer identifier.
      * 
-     *  @return Buying price including royalty.
+     *  @return Sum of sale price and royalty.
      */
     function _buy(
         uint256 _offerId
-    ) internal nonReentrant whenNotPaused returns (uint256) {
-        Offer storage offer = offers[_offerId];
+    ) internal
+    nonReentrant
+    whenNotPaused
+    returns (uint256) {
+        ERC721Offer storage offer = offers[_offerId];
 
         address collection = offer.collection;
         if (!isCollection[collection]) {
@@ -337,7 +381,12 @@ ReentrancyGuardUpgradeable {
             ""
         );
 
-        emit OfferSale(_offerId, msg.sender, royaltyReceiver, royalty);
+        emit OfferSale(
+            _offerId,
+            msg.sender,
+            royaltyReceiver,
+            royalty
+        );
 
         return price + royalty;
     }
@@ -346,7 +395,7 @@ ReentrancyGuardUpgradeable {
      *          Name           Description
      *  @param  _collection    Collection address.
      * 
-     *  @return Whether the collection is accepted by the marketplace.
+     *  @return Whether the collection is supported by the marketplace.
      */
     function _validCollection(
         address _collection
@@ -360,7 +409,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _collection    Collection address.
      *  @param  _tokenId       Token identifier.
      * 
-     *  @return Whether the token is available for purchase.
+     *  @return Whether the token is valid for sale.
      */
     function _validToken(
         address _collection,
@@ -378,7 +427,7 @@ ReentrancyGuardUpgradeable {
     function _chargeRoyalty(
         uint256 _offerId
     ) internal virtual {
-        Offer storage offer = offers[_offerId];
+        ERC721Offer storage offer = offers[_offerId];
         CurrencyHandler.sendCurrency(
             offer.currency,
             offer.royaltyReceiver,

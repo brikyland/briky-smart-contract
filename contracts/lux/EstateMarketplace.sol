@@ -33,11 +33,9 @@ import {AssetMarketplace} from "../lux/AssetMarketplace.sol";
  *  @notice Implementation of contract `EstateMarketplace`.
  *  @notice The `EstateMarketplace` contract hosts a marketplace for estate tokens.
  * 
- *  @dev    TODO: All amounts are expressed in absolute units. Scale these values by `10 ** estateToken.decimals()` to obtain
- *          the correct amounts under the `estateToken` convention.
+ *  @dev    Each unit of asset token is scaled by `10 ** IAssetToken(collection).decimals()` following the convention of `IAssetToken`.
  *  @dev    ERC-20 tokens are identified by their contract addresses.
  *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
-
  */
 contract EstateMarketplace is
 EstateMarketplaceStorage,
@@ -54,18 +52,24 @@ CommissionDispatchable {
     /** ===== FUNCTION ===== **/
     /* --- Initializer --- */
     /**
-     *  @notice Initialize the contract.
+     *  @notice Invoked after deployment for initialization, serving as a constructor.
      */
     function initialize(
         address _admin,
         address _estateToken,
         address _commissionToken
-    ) external initializer {
+    ) external
+    initializer {
         /// @dev    Inherited initializer.
-        super.initialize(_admin, _estateToken);
-        
+        __Pausable_init();
+        __ReentrancyGuard_init();
+
         __CommissionDispatchable_init(_commissionToken);
+
+        /// @dev    Dependency.
+        __AssetMarketplace_init(_admin, _estateToken);        
     }
+
 
     /* --- Helper --- */
     /**
@@ -79,7 +83,7 @@ CommissionDispatchable {
         uint256 _offerId,
         uint256 _royalty
     ) internal override {
-        Offer storage offer = offers[_offerId];
+        AssetOffer storage offer = offers[_offerId];
         address royaltyReceiver = offer.royaltyReceiver;
         address currency = offer.currency;
 

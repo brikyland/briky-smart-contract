@@ -25,11 +25,9 @@ import {AssetMarketplaceStorage} from "../lux/storages/AssetMarketplaceStorage.s
  *  @author Briky Team
  *
  *  @notice Implementation of contract `AssetMarketplace`.
- *  @notice The `AssetMarketplace` contract hosts a marketplace for asset tokens.
-
- *  @dev    The asset token must support interface `IAssetToken`.
- *  @dev    TODO: All amounts are expressed in absolute units. Scale these values by `10 ** IAssetToken.decimals()` to obtain
- *          the correct amounts under the `IAssetToken` convention.
+ *  @notice The `AssetMarketplace` contract hosts a marketplace for a specific asset token.
+ * 
+ *  @dev    Each unit of asset token is scaled by `10 ** IAssetToken(collection).decimals()` following the convention of `IAssetToken`.
  *  @dev    ERC-20 tokens are identified by their contract addresses.
  *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
  */
@@ -55,7 +53,9 @@ ReentrancyGuardUpgradeable {
      *          Name        Description
      *  @param  _offerId    Offer identifier.
      */
-    modifier validOffer(uint256 _offerId) {
+    modifier validOffer(
+        uint256 _offerId
+    ) {
         if (_offerId == 0 || _offerId > offerNumber) {
             revert InvalidOfferId();
         }
@@ -86,15 +86,34 @@ ReentrancyGuardUpgradeable {
     function initialize(
         address _admin,
         address _collection
-    ) public initializer {
+    ) public
+    initializer {
         /// @dev    Inherited initializer.
         __Pausable_init();
         __ReentrancyGuard_init();
 
-        /// @dev    Dependency
+        /// @dev    Dependency.
+        __AssetMarketplace_init(_admin, _collection);
+    }
+
+    /**
+     *  @notice Helper function to initialize the dependencies of the contract.
+     *
+     *          Name           Description
+     *  @param  _admin         Admin address.
+     *  @param  _collection    Asset token address.
+     * 
+     *  @dev    The asset token must support interface `IAssetToken`.
+     */
+    function __AssetMarketplace_init(
+        address _admin,
+        address _collection
+    ) internal
+    onlyInitializing {
         admin = _admin;
         collection = _collection;
     }
+
 
     /* --- Query --- */
     /**
@@ -105,8 +124,11 @@ ReentrancyGuardUpgradeable {
      * 
      *  @return Information and progress of the offer.
      */
-    function getOffer(uint256 _offerId)
-    external view validOffer(_offerId) returns (Offer memory) {
+    function getOffer(
+        uint256 _offerId
+    ) external view
+    validOffer(_offerId)
+    returns (AssetOffer memory) {
         return offers[_offerId];
     }
 
@@ -114,14 +136,16 @@ ReentrancyGuardUpgradeable {
     /**
      *  @notice List a new offer for asset tokens.
      *
-     *          Name           Description
-     *  @param  _tokenId       Token identifier.
-     *  @param  _sellingAmount Amount of tokens to sell.
-     *  @param  _unitPrice     Selling price per token.
-     *  @param  _currency      Selling currency address.
-     *  @param  _isDivisible   Whether the offer is sold in parts.
+     *          Name              Description
+     *  @param  _tokenId          Token identifier.
+     *  @param  _sellingAmount    Amount of tokens to be sold.
+     *  @param  _unitPrice        Sale value of each token.
+     *  @param  _currency         Sale currency address.
+     *  @param  _isDivisible      Whether the offer can be sold partially.
      * 
      *  @return New offer identifier.
+     * 
+     *  @dev    Must set approval for the contract to transfer asset tokens of the seller before listing.
      */
     function list(
         uint256 _tokenId,
@@ -129,7 +153,11 @@ ReentrancyGuardUpgradeable {
         uint256 _unitPrice,
         address _currency,
         bool _isDivisible
-    ) external onlyAvailableCurrency(_currency) whenNotPaused returns (uint256) {
+    ) external
+    whenNotPaused
+    nonReentrant
+    onlyAvailableCurrency(_currency)
+    returns (uint256) {
         IAssetToken assetContract = IAssetToken(collection);
         if (!assetContract.isAvailable(_tokenId)) {
             revert InvalidTokenId();
@@ -152,7 +180,7 @@ ReentrancyGuardUpgradeable {
 
         uint256 offerId = ++offerNumber;
 
-        offers[offerId] = Offer(
+        offers[offerId] = AssetOffer(
             _tokenId,
             _sellingAmount,
             0,
@@ -171,9 +199,9 @@ ReentrancyGuardUpgradeable {
             msg.sender,
             _sellingAmount,
             _unitPrice,
-            royaltyDenomination,
             _currency,
             _isDivisible,
+            royaltyDenomination,
             royaltyReceiver
         );
 
@@ -182,31 +210,39 @@ ReentrancyGuardUpgradeable {
 
     /**
      *  @notice Buy an offer.
+     *  @notice Buy only if the offer is in `Selling` state.
      *
      *          Name        Description
      *  @param  _offerId    Offer identifier.
      * 
-     *  @return Selling price including royalty.
+     *  @return Sum of sale price and royalty.
      */
     function buy(
         uint256 _offerId
-    ) external payable validOffer(_offerId) returns (uint256) {
+    ) external payable
+    whenNotPaused
+    validOffer(_offerId)
+    returns (uint256) {
         return _buy(_offerId, offers[_offerId].sellingAmount - offers[_offerId].soldAmount);
     }
 
     /**
      *  @notice Buy a part of the offer.
+     *  @notice Buy only if the offer is in `Selling` state.
      *
      *          Name        Description
      *  @param  _offerId    Offer identifier.
      *  @param  _amount     Amount of tokens to buy.
      * 
-     *  @return Selling price including royalty.
+     *  @return Sum of sale price and royalty.
      */
     function buy(
         uint256 _offerId,
         uint256 _amount
-    ) external payable validOffer(_offerId) returns (uint256) {
+    ) external payable
+    whenNotPaused
+    validOffer(_offerId)
+    returns (uint256) {
         if (!offers[_offerId].isDivisible) {
             revert NotDivisible();
         }
@@ -216,16 +252,22 @@ ReentrancyGuardUpgradeable {
 
     /**
      *  @notice Cancel an offer.
-     *
+     *  @notice Cancel only if the offer is in `Selling` state.
+     * 
      *          Name        Description
      *  @param  _offerId    Offer identifier.
      * 
-     *  @dev    Permission: managers or offer owner.
+     *  @dev    Permission:
+     *          - Seller of the offer.
+     *          - Managers: disqualify defected offers only.
      */
     function cancel(
         uint256 _offerId
-    ) external nonReentrant validOffer(_offerId) whenNotPaused {
-        Offer storage offer = offers[_offerId];
+    ) external
+    whenNotPaused
+    nonReentrant
+    validOffer(_offerId) {
+        AssetOffer storage offer = offers[_offerId];
         if (msg.sender != offer.seller && !IAdmin(admin).isManager(msg.sender)) {
             revert Unauthorized();
         }
@@ -242,17 +284,23 @@ ReentrancyGuardUpgradeable {
     /* --- Safe Command --- */
     /**
      *  @notice Buy an offer.
+     *  @notice Buy only if the offer is in `Selling` state.
      *
      *          Name        Description
      *  @param  _offerId    Offer identifier.
-     *  @param  _anchor     Token identifier of the offer.
+     *  @param  _anchor     `tokenId` of the offer.
      * 
-     *  @return Selling price including royalty.
+     *  @return Sum of sale price and royalty.
+     * 
+     *  @dev    Anchor enforces consistency between the contract and the client-side.
      */
     function safeBuy(
         uint256 _offerId,
         uint256 _anchor
-    ) external payable validOffer(_offerId) returns (uint256) {
+    ) external payable
+    whenNotPaused
+    validOffer(_offerId)
+    returns (uint256) {
         if (_anchor != offers[_offerId].tokenId) {
             revert BadAnchor();
         }
@@ -262,19 +310,25 @@ ReentrancyGuardUpgradeable {
 
     /**
      *  @notice Buy a part of the offer.
+     *  @notice Buy only if the offer is in `Selling` state.
      *
      *          Name        Description
      *  @param  _offerId    Offer identifier.
      *  @param  _amount     Amount of tokens to buy.
-     *  @param  _anchor     Token identifier of the offer.
+     *  @param  _anchor     `tokenId` of the offer.
      * 
-     *  @return Selling price including royalty.
+     *  @return Sum of sale price and royalty.
+     * 
+     *  @dev    Anchor enforces consistency between the contract and the client-side.
      */
     function safeBuy(
         uint256 _offerId,
         uint256 _amount,
         uint256 _anchor
-    ) external payable validOffer(_offerId) returns (uint256) {
+    ) external payable
+    whenNotPaused
+    validOffer(_offerId)
+    returns (uint256) {
         if (_anchor != offers[_offerId].tokenId) {
             revert BadAnchor();
         }
@@ -290,22 +344,26 @@ ReentrancyGuardUpgradeable {
     /* --- Helper --- */
     /**
      *  @notice Buy an offer.
+     *  @notice Buy only if the offer is in `Selling` state.
      *
      *          Name        Description
      *  @param  _offerId    Offer identifier.
-     *  @param  _amount     Amount of tokens to buy.
+     *  @param  _amount     Amount of tokens to be bought.
      * 
-     *  @return Selling price including royalty.
+     *  @return Sum of sale price and royalty.
      */
     function _buy(
         uint256 _offerId,
         uint256 _amount
-    ) internal nonReentrant whenNotPaused returns (uint256) {
+    ) internal
+    nonReentrant
+    whenNotPaused
+    returns (uint256) {
         if (_amount == 0) {
             revert InvalidAmount();
         }
 
-        Offer storage offer = offers[_offerId];
+        AssetOffer storage offer = offers[_offerId];
         if (msg.sender == offer.seller
             || offer.state != OfferState.Selling) {
             revert InvalidBuying();
@@ -346,7 +404,9 @@ ReentrancyGuardUpgradeable {
             _offerId,
             msg.sender,
             _amount,
-            value
+            value,
+            royalty,
+            offer.royaltyReceiver
         );
 
         return value + royalty;
@@ -363,7 +423,7 @@ ReentrancyGuardUpgradeable {
         uint256 _offerId,
         uint256 _royalty
     ) internal virtual {
-        Offer storage offer = offers[_offerId];
+        AssetOffer storage offer = offers[_offerId];
         CurrencyHandler.sendCurrency(
             offer.currency,
             offer.royaltyReceiver,

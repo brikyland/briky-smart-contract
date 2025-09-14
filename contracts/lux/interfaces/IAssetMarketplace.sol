@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 /// contracts/lux/enums/
-import {IOfferState} from "../enums/IOfferState.sol";
+import {IAssetOffer} from "../structs/IAssetOffer.sol";
 
 /// contracts/common/interfaces/
 import {ICommon} from "../../common/interfaces/ICommon.sol";
@@ -18,45 +18,8 @@ import {ICommon} from "../../common/interfaces/ICommon.sol";
  *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
  */
 interface IAssetMarketplace is
-IOfferState,
+IAssetOffer,
 ICommon {
-    /** ===== STRUCT ===== **/
-    /**
-     *  @notice An offer to sell an amount of asset tokens.
-     */
-    struct Offer {
-        /// @notice Asset identifier.
-        uint256 tokenId;
-
-        /// @notice Amount of tokens to be sold.
-        uint256 sellingAmount;
-
-        /// @notice Amount of tokens that has been bought.
-        uint256 soldAmount;
-
-        /// @notice Sale value of each token.
-        uint256 unitPrice;
-
-        /// @notice Royalty charged on each token.
-        uint256 royaltyDenomination;
-
-        /// @notice Sale currency address.
-        address currency;
-
-        /// @notice Whether the offer can be bought partially.
-        bool isDivisible;
-
-        /// @notice Current state.
-        OfferState state;
-
-        /// @notice Seller address.
-        address seller;
-
-        /// @notice Royalty receiver address.
-        address royaltyReceiver;
-    }
-
-
     /** ===== EVENT ===== **/
     /**
      *  @notice Emitted when a new offer is listed.
@@ -67,10 +30,10 @@ ICommon {
      *  @param  seller                 Seller address.
      *  @param  sellingAmount          Amount of tokens to be sold.
      *  @param  unitPrice              Sale value of each token.
-     *  @param  royaltyDenomination    Royalty charged on each token.
-     *  @param  royaltyReceiver        Royalty receiver address.
      *  @param  currency               Sale currency address.
      *  @param  isDivisible            Whether the offer can be bought partially.
+     *  @param  royaltyDenomination    Royalty charged on each token.
+     *  @param  royaltyReceiver        Royalty receiver address.
      */
     event NewOffer(
         uint256 indexed offerId,
@@ -78,10 +41,10 @@ ICommon {
         address indexed seller,
         uint256 sellingAmount,
         uint256 unitPrice,
-        uint256 royaltyDenomination,
-        address royaltyReceiver,
         address currency,
-        bool isDivisible
+        bool isDivisible,
+        uint256 royaltyDenomination,
+        address royaltyReceiver
     );
 
 
@@ -96,17 +59,21 @@ ICommon {
     /**
      *  @notice Emitted when an offer is sold, partially or fully.
      *
-     *          Name        Description
-     *  @param  offerId     Offer identifier.
-     *  @param  buyer       Buyer address.
-     *  @param  amount      Sale amount.
-     *  @param  value       Sale price.
+     *          Name               Description
+     *  @param  offerId            Offer identifier.
+     *  @param  buyer              Buyer address.
+     *  @param  amount             Sale amount.
+     *  @param  value              Sale price.
+     *  @param  royalty            Royalty.
+     *  @param  royaltyReceiver    Royalty receiver address.
      */
     event OfferSale(
         uint256 indexed offerId,
         address indexed buyer,
         uint256 amount,
-        uint256 value
+        uint256 value,
+        uint256 royalty,
+        address royaltyReceiver
     );
 
 
@@ -147,11 +114,13 @@ ICommon {
      */
     function getOffer(
         uint256 offerId
-    ) external view returns (Offer memory offer);
+    ) external view returns (AssetOffer memory offer);
 
 
     /* --- Command --- */
     /**
+     *  @notice List a new offer for asset tokens.
+     *
      *          Name             Description
      *  @param  tokenId          Asset identifier.
      *  @param  sellingAmount    Amount of tokens to be sold.
@@ -172,6 +141,7 @@ ICommon {
 
     /**
      *  @notice Buy an offer.
+     *  @notice Buy only if the offer is in `Selling` state.
      *
      *          Name       Description
      *  @param  offerId    Offer identifier.
@@ -183,6 +153,7 @@ ICommon {
 
     /**
      *  @notice Buy a part of the offer.
+     *  @notice Buy only if the offer is in `Selling` state.
      *
      *          Name       Description
      *  @param  offerId    Offer identifier.
@@ -196,7 +167,8 @@ ICommon {
 
     /**
      *  @notice Cancel an offer.
-     *
+     *  @notice Cancel only if the offer is in `Selling` state.
+     *  
      *          Name       Description
      *  @param  offerId    Offer identifier.
      * 
@@ -211,6 +183,7 @@ ICommon {
     /* --- Safe Command --- */
     /**
      *  @notice Buy an offer.
+     *  @notice Buy only if the offer is in `Selling` state.
      *
      *          Name       Description
      *  @param  offerId    Offer identifier.
@@ -226,6 +199,7 @@ ICommon {
 
     /**
      *  @notice Buy a part of the offer.
+     *  @notice Buy only if the offer is in `Selling` state.
      *
      *          Name       Description
      *  @param  offerId    Offer identifier.

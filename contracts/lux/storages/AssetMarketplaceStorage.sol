@@ -12,7 +12,7 @@ import {IAssetMarketplace} from "../../lux/interfaces/IAssetMarketplace.sol";
 abstract contract AssetMarketplaceStorage is
 IAssetMarketplace {
     /// @dev    offers[offerId]
-    mapping(uint256 => Offer) internal offers;
+    mapping(uint256 => AssetOffer) internal offers;
 
     uint256 public offerNumber;
 
