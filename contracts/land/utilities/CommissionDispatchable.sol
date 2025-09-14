@@ -9,13 +9,35 @@ import {ICommissionToken} from "../interfaces/ICommissionToken.sol";
 
 import {CommissionDispatchableStorage} from "../storages/CommissionDispatchableStorage.sol";
 
+/**
+ *  @author Briky Team
+ *
+ *  @notice TODO: A `CommissionDispatchable` contract dispatches commissions to the receiver corresponding to the commission token.
+ */
 abstract contract CommissionDispatchable is
 CommissionDispatchableStorage,
 Initializable {
+    /** ===== FUNCTION ===== **/
+    /* --- Helper --- */
+    /**
+     *  @notice Initialize the dependencies.
+     *
+     *          Name                Description
+     *  @param  _commissionToken    `CommissionToken` contract address.
+     */
     function __CommissionDispatchable_init(address _commissionToken) internal onlyInitializing {
         commissionToken = _commissionToken;
     }
 
+
+    /**
+     *  @notice Dispatch a commission to the receiver corresponding to the commission token.
+     *
+     *          Name         Description
+     *  @param  _estateId    Estate token identifier.
+     *  @param  _value       Commission value.
+     *  @param  _currency    Currency address.
+     */
     function _dispatchCommission(
         uint256 _estateId,
         uint256 _value,

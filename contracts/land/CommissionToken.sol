@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
+/// @openzeppelin/contracts-upgradeable/
 import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol";
 import {IERC721MetadataUpgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC721MetadataUpgradeable.sol";
 import {IERC2981Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
@@ -9,21 +10,33 @@ import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/se
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import {ERC721PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721PausableUpgradeable.sol";
 
+/// contracts/common/utilities/
 import {Formula} from "../common/utilities/Formula.sol";
 
+/// contracts/common/interfaces/
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
-import {IRoyaltyRateProposer} from "../common/interfaces/IRoyaltyRateProposer.sol";
 
+/// contracts/common/constants/
 import {CommonConstant} from "../common/constants/CommonConstant.sol";
 
+/// contracts/common/utilities/
 import {Administrable} from "../common/utilities/Administrable.sol";
 import {Pausable} from "../common/utilities/Pausable.sol";
 import {RoyaltyRateProposer} from "../common/utilities/RoyaltyRateProposer.sol";
 
+/// contracts/land/interfaces/
 import {IEstateToken} from "./interfaces/IEstateToken.sol";
 
+/// contracts/land/storages/
 import {CommissionTokenStorage} from "./storages/CommissionTokenStorage.sol";
 
+/**
+ *  @author Briky Team
+ *
+ *  @notice Implementation of contract `CommissionToken`.
+ * 
+ *  @notice TODO:
+ */
 contract CommissionToken is
 CommissionTokenStorage,
 ERC721PausableUpgradeable,
@@ -31,15 +44,43 @@ Administrable,
 Pausable,
 RoyaltyRateProposer,
 ReentrancyGuardUpgradeable {
+    /** ===== LIBRARY ===== **/
     using Formula for uint256;
 
+
+    /** ===== CONSTANT ===== **/
     string constant private VERSION = "v1.2.1";
 
+
+    /** ===== FUNCTION ===== **/
+    /* --- Standard --- */
     /**
      *  @notice Executed on a call to the contract with empty calldata.
      */
     receive() external payable {}
 
+    /**
+     *          Name       Description
+     *  @return version    Version of implementation.
+     */
+    function version() external pure returns (string memory) {
+        return VERSION;
+    }
+
+
+    /* --- Initialization --- */
+    /**
+     *  @notice Invoked for initialization after deployment, serving as the contract constructor.
+     *
+     *          Name            Description
+     *  @param  _admin          `Admin` contract address.
+     *  @param  _estateToken    `EstateToken` contract address.
+     *  @param  _feeReceiver    `FeeReceiver` contract address.
+     *  @param  _name           Token name.
+     *  @param  _symbol         Token symbol.
+     *  @param  _uri            Token base URI.
+     *  @param  _royaltyRate    Royalty rate.
+     */
     function initialize(
         address _admin,
         address _estateToken,
@@ -48,16 +89,20 @@ ReentrancyGuardUpgradeable {
         string calldata _symbol,
         string calldata _uri,
         uint256 _royaltyRate
-    ) external initializer {
+    ) external
+    initializer {
+        /// Initializer.
         __ERC721_init(_name, _symbol);
         __ERC721Pausable_init();
 
         __ReentrancyGuard_init();
 
+        /// Dependency
         admin = _admin;
         estateToken = _estateToken;
         feeReceiver = _feeReceiver;
 
+        /// Configuration
         baseURI = _uri;
         emit BaseURIUpdate(_uri);
 
@@ -65,10 +110,8 @@ ReentrancyGuardUpgradeable {
         emit RoyaltyRateUpdate(Rate(_royaltyRate, CommonConstant.RATE_DECIMALS));
     }
 
-    function version() external pure returns (string memory) {
-        return VERSION;
-    }
 
+    /* --- Administration --- */
     /**
      *  @notice Update base URI.
      *
@@ -124,7 +167,18 @@ ReentrancyGuardUpgradeable {
         emit RoyaltyRateUpdate(Rate(_royaltyRate, CommonConstant.RATE_DECIMALS));
     }
 
-    function getBrokerCommissionRate(bytes32 _zone, address _broker) external view returns (Rate memory) {
+
+    /* --- Query --- */
+    /**
+     *          Name           Description
+     *  @param  _zone          Zone code.
+     *  @param  _broker        Broker address.
+     *  @return rate           Commission rate of the broker in the zone.
+     */
+    function getBrokerCommissionRate(
+        bytes32 _zone,
+        address _broker
+    ) external view returns (Rate memory) {
         if (!IAdmin(admin).isZone(_zone)) {
             revert InvalidZone();
         }
@@ -134,10 +188,24 @@ ReentrancyGuardUpgradeable {
         return brokerCommissionRates[_zone][_broker];
     }
 
-    function getCommissionRate(uint256 _tokenId) public view returns (Rate memory) {
+    /**
+     *          Name           Description
+     *  @param  _tokenId       Token identifier.
+     *  @return rate           Commission rate of the token.
+     */
+    function getCommissionRate(
+        uint256 _tokenId
+    ) public view returns (Rate memory) {
         return commissionRates[_tokenId];
     }
 
+    /**
+     *          Name           Description
+     *  @param  _tokenId       Token identifier.
+     *  @param  _value         Value.
+     *  @return receiver       Commission receiver address.
+     *  @return commission     Commission value.
+     */
     function commissionInfo(uint256 _tokenId, uint256 _value) external view returns (address, uint256) {
         address receiver = _ownerOf(_tokenId);
         return receiver != address(0)
@@ -145,11 +213,23 @@ ReentrancyGuardUpgradeable {
             : (address(0), 0);
     }
 
+
+    /* --- Command --- */
+    /**
+     *  @notice Register a broker in a zone.
+     *
+     *          Name            Description
+     *  @param  _zone           Zone code.
+     *  @param  _broker         Broker address.
+     *  @param  _commissionRate Commission rate.
+     */
     function registerBroker(
         bytes32 _zone,
         address _broker,
         uint256 _commissionRate
-    ) external onlyManager {
+    ) external
+    whenNotPaused
+    onlyManager {
         if (!IAdmin(admin).isActiveIn(_zone, msg.sender)) {
             revert Unauthorized();
         }
@@ -173,11 +253,21 @@ ReentrancyGuardUpgradeable {
         );
     }
 
+    /**
+     *  @notice Activate a broker in a zone.
+     *
+     *          Name            Description
+     *  @param  _zone           Zone code.
+     *  @param  _broker         Broker address.
+     *  @param  _isActive       Whether the broker is active.
+     */
     function activateBroker(
         bytes32 _zone,
         address _broker,
         bool _isActive
-    ) external onlyManager {
+    ) external
+    whenNotPaused
+    onlyManager {
         if (!IAdmin(admin).isActiveIn(_zone, msg.sender)) {
             revert Unauthorized();
         }
@@ -191,11 +281,21 @@ ReentrancyGuardUpgradeable {
         }
     }
 
+    /**
+     *  @notice Mint a commission token.
+     *
+     *          Name            Description
+     *  @param  _zone           Zone code.
+     *  @param  _broker         Broker address.
+     *  @param  _tokenId        Minted token identifier.
+     */
     function mint(
         bytes32 _zone,
         address _broker,
         uint256 _tokenId
-    ) external {
+    ) external
+    whenNotPaused 
+    onlyManager {
         address estateTokenAddress = estateToken;
         if (msg.sender != estateTokenAddress) {
             revert Unauthorized();
@@ -222,18 +322,45 @@ ReentrancyGuardUpgradeable {
         );
     }
 
-    function tokenURI(uint256 _tokenId) public view override(
+
+    /* --- Override --- */
+    /**
+     *          Name            Description
+     *  @param  _tokenId        Token identifier.
+     * 
+     *  @return Token URI.
+     */
+    function tokenURI(
+        uint256 _tokenId
+    ) public view override(
         IERC721MetadataUpgradeable,
         ERC721Upgradeable
     ) returns (string memory) {
         return super.tokenURI(_tokenId);
     }
 
-    function getRoyaltyRate(uint256) external view returns (Rate memory) {
+    /**
+     *          Name            Description
+     *  @param  _tokenId        Token identifier.
+     * 
+     *  @return Royalty rate of the token.
+     */
+    function getRoyaltyRate(
+        uint256 _tokenId
+    ) external view returns (Rate memory) {
         return Rate(royaltyRate, CommonConstant.RATE_DECIMALS);
     }
 
-    function supportsInterface(bytes4 _interfaceId) public view override(
+
+    /**
+     *          Name            Description
+     *  @param  _interfaceId    Interface identifier.
+     * 
+     *  @return Whether the contract implements the interface.
+     */
+    function supportsInterface(
+        bytes4 _interfaceId
+    ) public view override(
         IERC165Upgradeable,
         ERC721Upgradeable
     ) returns (bool) {
@@ -242,15 +369,30 @@ ReentrancyGuardUpgradeable {
             || super.supportsInterface(_interfaceId);
     }
 
+
+    /* --- Helper --- */
+    /**
+     *  @return Base URI.
+     */
     function _baseURI() internal override view returns (string memory) {
         return baseURI;
     }
 
+    /**
+     *  @notice Mint a token.
+     * 
+     *          Name            Description
+     *  @param  _to             To address.
+     *  @param  _tokenId        Token identifier.
+     */
     function _mint(address _to, uint256 _tokenId) internal override {
         totalSupply++;
         super._mint(_to, _tokenId);
     }
 
+    /**
+     *  @return Royalty receiver address.
+     */
     function _royaltyReceiver() internal view override returns (address) {
         return feeReceiver;
     }

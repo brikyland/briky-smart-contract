@@ -39,8 +39,8 @@ ReentrancyGuardUpgradeable {
     /**
      *  @notice Verify a valid fund.
      *
-     *          Name            Description
-     *  @param  _fundId         Fund identifier.
+     *          Name       ßDescription
+     *  @param  _fundId    Fund identifier.
      */
     modifier validFund(
         uint256 _fundId
@@ -54,8 +54,8 @@ ReentrancyGuardUpgradeable {
     /**
      *  @notice Verify the sender is the provider of a fund.
      *
-     *          Name            Description
-     *  @param  _fundId         Fund identifier.
+     *          Name       Description
+     *  @param  _fundId    Fund identifier.
      */
     modifier onlyProvider(
         uint256 _fundId
@@ -86,8 +86,8 @@ ReentrancyGuardUpgradeable {
     /**
      *  @notice Invoked for initialization after deployment, serving as the contract constructor.
      *
-     *          Name            Description
-     *  @param  _admin          `Admin` contract address.
+     *          Name      Description
+     *  @param  _admin    Admin` contract address.
      */
     function initialize(
         address _admin
@@ -106,10 +106,10 @@ ReentrancyGuardUpgradeable {
     /**
      *  @notice Authorize or deauthorize addresses as providers.
      *
-     *          Name            Description
-     *  @param  _accounts       Array of EVM addresses.
-     *  @param  _isProvider     Whether the operation is authorization or deauthorization.
-     *  @param  _signatures     Array of admin signatures.
+     *          Name           Description
+     *  @param  _accounts      Array of EVM addresses.
+     *  @param  _isProvider    Whether the operation is authorization or deauthorization.
+     *  @param  _signatures    Array of admin signatures.
      * 
      *  @dev    Administrative configuration.
      */
@@ -152,8 +152,8 @@ ReentrancyGuardUpgradeable {
     /**
      *  @notice Get a fund.
      *
-     *          Name            Description
-     *  @param  _fundId         Fund identifier.
+     *          Name       Description
+     *  @param  _fundId    Fund identifier.
      * 
      *  @return Fund configuration and reserves.
      */
@@ -167,8 +167,8 @@ ReentrancyGuardUpgradeable {
     /**
      *  @notice Check if a fund is sufficient.
      *
-     *          Name            Description
-     *  @param  _fundId         Fund identifier.
+     *          Name       Description
+     *  @param  _fundId    Fund identifier.
      *
      *  @return Whether the fund is provided sufficiently for the current quantity.
      */
@@ -184,11 +184,11 @@ ReentrancyGuardUpgradeable {
     /**
      *  @notice Open a new fund.
      *
-     *          Name            Description
-     *  @param  _mainCurrency        Main currency address.
-     *  @param  _mainDenomination    Main currency denomination.
-     *  @param  _extraCurrencies     Extra currency addresses.
-     *  @param  _extraDenominations  Extra currency denominations.
+     *          Name                   Description
+     *  @param  _mainCurrency          Main currency address.
+     *  @param  _mainDenomination      Main currency denomination.
+     *  @param  _extraCurrencies       Extra currency addresses.
+     *  @param  _extraDenominations    Extra currency denominations.
      *
      *  @return New fund identifier.
      * 
@@ -248,9 +248,9 @@ ReentrancyGuardUpgradeable {
     /**
      *  @notice Expand a fund.
      *
-     *          Name            Description
-     *  @param  _fundId         Fund identifier.
-     *  @param  _quantity       Expanded quantity.
+     *          Name                  Description
+     *  @param  _fundId               Fund identifier.
+     *  @param  _quantity             Expanded quantity.
      * 
      *  @dev    Permission: Provider of the fund.
      */
@@ -273,8 +273,8 @@ ReentrancyGuardUpgradeable {
     /**
      *  @notice Provide sufficiently to a fund.
      *
-     *          Name            Description
-     *  @param  _fundId         Fund identifier.
+     *          Name                 Description
+     *  @param  _fundId              Fund identifier.
      * 
      *  @dev    Permission: Provider of the fund.
      */
@@ -325,10 +325,10 @@ ReentrancyGuardUpgradeable {
     /**
      *  @notice Withdraw from a fund.
      *
-     *          Name            Description
-     *  @param  _fundId         Fund identifier.
-     *  @param  _receiver       Receiver address.
-     *  @param  _quantity       Withdrawn quantity.
+     *          Name                 Description
+     *  @param  _fundId              Fund identifier.
+     *  @param  _receiver            Receiver address.
+     *  @param  _quantity            Withdrawn quantity.
      * 
      *  @dev    Permission: Provider of the fund.
      */
