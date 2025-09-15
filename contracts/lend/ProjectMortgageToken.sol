@@ -24,8 +24,6 @@ import {MortgageToken} from "./utilities/MortgageToken.sol";
 
 /**
  *  @author Briky Team
- * 
- *  @notice Implementation of contract `ProjectMortgageToken`.
  *
  *  @notice A `ProjectMortgageToken` contract is an ERC-721 contract that facilitates mortgage-based borrowing backed by project token collaterals and issues tokens representing mortgages.
  */
@@ -74,7 +72,7 @@ ProjectTokenReceiver {
     }
 
 
-    /* --- Standard --- */
+    /* --- Common --- */
     /**
      *          Name       Description
      *  @return version    Version of implementation.
@@ -167,7 +165,7 @@ ProjectTokenReceiver {
      *          Name            Description
      *  @param  _interfaceId    Interface identifier.
      * 
-     *  @return Whether the contract supports the interface.
+     *  @return Whether this contract supports the interface.
      */
     function supportsInterface(
         bytes4 _interfaceId

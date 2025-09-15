@@ -24,7 +24,6 @@ import {AssetMarketplaceStorage} from "../lux/storages/AssetMarketplaceStorage.s
 /**
  *  @author Briky Team
  *
- *  @notice Implementation of contract `AssetMarketplace`.
  *  @notice The `AssetMarketplace` contract hosts a marketplace for a specific asset token.
  * 
  *  @dev    Each unit of asset token is scaled by `10 ** IAssetToken(collection).decimals()` following the convention of `IAssetToken`.
@@ -64,9 +63,9 @@ ReentrancyGuardUpgradeable {
 
 
     /** ===== FUNCTION ===== **/
-    /* --- Standard --- */
+    /* --- Common --- */
     /**
-     *  @notice Executed on a call to the contract with empty calldata.
+     *  @notice Executed on a call to this contract with empty calldata.
      */
     receive() external payable {}
 
@@ -150,7 +149,7 @@ ReentrancyGuardUpgradeable {
      * 
      *  @return New offer identifier.
      * 
-     *  @dev    Must set approval for the contract to transfer asset tokens of the seller before listing.
+     *  @dev    Must set approval for this contract to transfer asset tokens of the seller before listing.
      */
     function list(
         uint256 _tokenId,
@@ -286,7 +285,7 @@ ReentrancyGuardUpgradeable {
     }
 
 
-    /* --- Safeguard --- */
+    /* --- Safe Command --- */
     /**
      *  @notice Buy an offer.
      *  @notice Buy only if the offer is in `Selling` state.
@@ -297,7 +296,7 @@ ReentrancyGuardUpgradeable {
      * 
      *  @return Sum of sale price and royalty.
      * 
-     *  @dev    Anchor enforces consistency between the contract and the client-side.
+     *  @dev    Anchor enforces consistency between this contract and the client-side.
      */
     function safeBuy(
         uint256 _offerId,
@@ -324,7 +323,7 @@ ReentrancyGuardUpgradeable {
      * 
      *  @return Sum of sale price and royalty.
      * 
-     *  @dev    Anchor enforces consistency between the contract and the client-side.
+     *  @dev    Anchor enforces consistency between this contract and the client-side.
      */
     function safeBuy(
         uint256 _offerId,

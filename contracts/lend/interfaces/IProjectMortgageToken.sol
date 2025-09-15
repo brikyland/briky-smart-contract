@@ -63,7 +63,7 @@ IMortgageToken {
      *  @param  duration     Repayment duration.
      *  @return mortgageId   New mortgage identifier.
      * 
-     *  @dev    Must set approval for the contract to transfer collateral tokens of the borrower before listing.
+     *  @dev    Must set approval for this contract to transfer collateral tokens of the borrower before listing.
      */
     function borrow(
         uint256 projectId,

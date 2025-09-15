@@ -27,6 +27,8 @@ IAdmin {
     address public admin4;
     address public admin5;
 
+
+    /** ===== UPGRADE ===== **/
     /// @dev    isModerator[account]
     mapping(address => bool) public isModerator;
 

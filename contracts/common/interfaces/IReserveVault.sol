@@ -23,7 +23,7 @@ IFund,
 ICommon {
     /** ===== EVENT ===== **/
     /**
-     *  @notice Emitted when an address is authorized as a provider.
+     *  @notice Emitted when an account is authorized as a provider.
      *
      *          Name        Description
      *  @param  account     Authorized address.
@@ -51,8 +51,8 @@ ICommon {
      *  @param  provider            Provider address.
      *  @param  mainCurrency        Main currency address.
      *  @param  mainDenomination    Main currency denomination.
-     *  @param  extraCurrencies     Extra currency addresses.
-     *  @param  extraDenominations  Extra currency denominations.
+     *  @param  extraCurrencies     Array of extra currency addresses.
+     *  @param  extraDenominations  Array of extra currency denominations, respectively to each extra currency.
      */
     event NewFund(
         uint256 indexed fundId,
@@ -109,14 +109,7 @@ ICommon {
 
 
     /** ===== FUNCTION ===== **/
-    /* --- Query --- */
-    /**
-     *          Name        Description
-     *  @return fundNumber  Number of funds.
-     */
-    function fundNumber() external view returns (uint256 fundNumber);
-
-
+    /* --- Configuration --- */
     /**
      *          Name        Description
      *  @param  account     EVM address.
@@ -125,6 +118,14 @@ ICommon {
     function isProvider(
         address account
     ) external view returns (bool isProvider);
+
+
+    /* --- Query --- */
+    /**
+     *          Name        Description
+     *  @return fundNumber  Number of funds.
+     */
+    function fundNumber() external view returns (uint256 fundNumber);
 
 
     /**
@@ -145,7 +146,6 @@ ICommon {
         uint256 fundId
     ) external view returns (bool isSufficient);
 
-
     /** ===== COMMAND ===== **/
     /* --- Command --- */
     /**
@@ -154,8 +154,8 @@ ICommon {
      *          Name                Description
      *  @param  mainCurrency        Main currency address.
      *  @param  mainDenomination    Main currency denomination.
-     *  @param  extraCurrencies     Extra currency addresses.
-     *  @param  extraDenominations  Extra currency denominations.
+     *  @param  extraCurrencies     Array of extra currency addresses.
+     *  @param  extraDenominations  Array of extra currency denominations, respectively to each extra currency.
      * 
      *  @return fundId              New fund identifier.
      *
@@ -194,7 +194,7 @@ ICommon {
         uint256 fundId
     ) external payable;
     /**
-     *  @notice Withdraw value from a fund to an address.
+     *  @notice Withdraw value from a fund to an account.
      *
      *          Name                Description
      *  @param  fundId              Fund identifier.

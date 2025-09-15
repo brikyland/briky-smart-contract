@@ -19,7 +19,6 @@ import {ERC721Marketplace} from "./ERC721Marketplace.sol";
 /**
  *  @author Briky Team
  *
- *  @notice Implementation of contract `MortgageMarketplace`.
  *  @notice The `MortgageMarketplace` contract hosts a marketplace for mortgage tokens.
  */
 contract MortgageMarketplace is

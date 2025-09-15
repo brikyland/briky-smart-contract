@@ -147,7 +147,7 @@ IERC721MetadataUpgradeable {
     /**
      *          Name           Description
      *  @param  tokenId        Token identifier.
-     *  @return rate           Commission rate of the token.
+     *  @return rate           Commission rate of the token identifier.
      */
     function getCommissionRate(
         uint256 tokenId

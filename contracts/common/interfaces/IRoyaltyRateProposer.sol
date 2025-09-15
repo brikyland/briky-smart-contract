@@ -15,7 +15,7 @@ import {ICommon} from "./ICommon.sol";
  *
  *  @notice Interface for contract `RoyaltyRateProposer`.
  *  @notice A `RoyaltyRateProposer` contract is an ERC-2981 contract that always announces royalty payment as a predefined
- *          fraction of the price, according to a royalty rate on each asset.
+ *          fraction of the price, according to a royalty rate on each token identifier.
  */
 interface IRoyaltyRateProposer is
 IRate,
@@ -25,8 +25,8 @@ IERC2981Upgradeable {
     /* --- Query --- */
     /**
      *          Name        Description
-     *  @param  tokenId     Asset identifier.
-     *  @return rate        Royalty rate of the asset.
+     *  @param  tokenId     Token identifier.
+     *  @return rate        Royalty rate of the token identifier.
      */
     function getRoyaltyRate(
         uint256 tokenId

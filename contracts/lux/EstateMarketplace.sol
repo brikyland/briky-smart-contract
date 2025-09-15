@@ -17,7 +17,6 @@ import {AssetMarketplace} from "../lux/AssetMarketplace.sol";
 /**
  *  @author Briky Team
  *
- *  @notice Implementation of contract `EstateMarketplace`.
  *  @notice The `EstateMarketplace` contract hosts a marketplace for estate tokens.
  * 
  *  @dev    Each unit of asset token is scaled by `10 ** IAssetToken(collection).decimals()` following the convention of `IAssetToken`.

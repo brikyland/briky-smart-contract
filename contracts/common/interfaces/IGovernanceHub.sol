@@ -73,13 +73,13 @@ IValidatable {
     /**
      *  @notice Emitted when a proposal is admitted.
      *
-     *          Name                Description
-     *  @param  proposalId          Proposal identifier.
-     *  @param  contextURI          URI of proposal context.
-     *  @param  reviewURI           URI of review detail.
-     *  @param  totalWeight         Total weight of the asset at the admission timestamp.
-     *  @param  quorum              Quorum to determine verdict calculated from the initiated quorum rate and the total weight.
-     *  @param  currency            Budget currency address.
+     *          Name            Description
+     *  @param  proposalId      Proposal identifier.
+     *  @param  contextURI      URI of proposal context.
+     *  @param  reviewURI       URI of review detail.
+     *  @param  totalWeight     Total weight of the asset at the admission timestamp.
+     *  @param  quorum          Quorum to determine verdict calculated from the initiated quorum rate and the total weight.
+     *  @param  currency        Budget currency address.
      *
      *  @dev    The checksum of data from the `contextURI` should match `uuid`. Contract cannot validate this but defects are
      *          detectable. Checksum algorithm must be declared in the context.
@@ -96,10 +96,10 @@ IValidatable {
     /**
      *  @notice Emitted when the budget of a proposal is contributed.
      *
-     *          Name                Description
-     *  @param  proposalId          Proposal identifier.
-     *  @param  contributor         Contributor address.
-     *  @param  value               Contributed value.
+     *          Name            Description
+     *  @param  proposalId      Proposal identifier.
+     *  @param  contributor     Contributor address.
+     *  @param  value           Contributed value.
      */
     event ProposalBudgetContribution(
         uint256 indexed proposalId,
@@ -110,10 +110,10 @@ IValidatable {
     /**
      *  @notice Emitted when the budget of a proposal has a contributor withdrawn the contribution.
      *
-     *          Name                Description
-     *  @param  proposalId          Proposal identifier.
-     *  @param  contributor         Contributor address.
-     *  @param  value               Withdrawn value.
+     *          Name            Description
+     *  @param  proposalId      Proposal identifier.
+     *  @param  contributor     Contributor address.
+     *  @param  value           Withdrawn value.
      */
     event ProposalBudgetContributionWithdrawal(
         uint256 indexed proposalId,
@@ -124,9 +124,9 @@ IValidatable {
     /**
      *  @notice Emitted when a proposal is confirmed to be executed.
      *
-     *          Name                Description
-     *  @param  proposalId          Proposal identifier.
-     *  @param  budget              Contributed budget for execution.
+     *          Name            Description
+     *  @param  proposalId      Proposal identifier.
+     *  @param  budget          Contributed budget for execution.
      */
     event ProposalConfirmation(
         uint256 indexed proposalId,
@@ -136,10 +136,10 @@ IValidatable {
     /**
      *  @notice Emitted when a proposal is disqualified.
      *
-     *          Name                Description
-     *  @param  proposalId          Proposal identifier.
-     *  @param  contextURI          URI of proposal context.
-     *  @param  reviewURI           URI of review detail.
+     *          Name            Description
+     *  @param  proposalId      Proposal identifier.
+     *  @param  contextURI      URI of proposal context.
+     *  @param  reviewURI       URI of review detail.
      *
      *  @dev    The checksum of data from the `contextURI` should match `uuid`. Contract cannot validate this but defects are
      *          detectable. Checksum algorithm must be declared in the context.
@@ -153,11 +153,11 @@ IValidatable {
     /**
      *  @notice Emitted when a proposal receives a vote.
      *
-     *          Name                Description
-     *  @param  proposalId          Proposal identifier.
-     *  @param  voter               Voter address.
-     *  @param  voteOption          Vote option.
-     *  @param  weight              Vote power at the admission timestamp.
+     *          Name            Description
+     *  @param  proposalId      Proposal identifier.
+     *  @param  voter           Voter address.
+     *  @param  voteOption      Vote option.
+     *  @param  weight          Vote power at the admission timestamp.
      *
      *  @dev    The checksum of data from the `contextURI` should match `uuid`. Contract cannot validate this but defects are
      *          detectable. Checksum algorithm must be declared in the context.
@@ -174,10 +174,10 @@ IValidatable {
     /**
      *  @notice Emitted when the execution of a proposal is concluded.
      *
-     *          Name                Description
-     *  @param  proposalId          Proposal identifier.
-     *  @param  resultURI           URI of final execution result.
-     *  @param  isSuccessful        Whether the execution has succeeded.
+     *          Name            Description
+     *  @param  proposalId      Proposal identifier.
+     *  @param  resultURI       URI of final execution result.
+     *  @param  isSuccessful    Whether the execution has succeeded.
      */
     event ProposalExecutionConclusion(
         uint256 indexed proposalId,
@@ -188,8 +188,8 @@ IValidatable {
     /**
      *  @notice Emitted when the execution of a proposal is rejected.
      *
-     *          Name                Description
-     *  @param  proposalId          Proposal identifier.
+     *          Name            Description
+     *  @param  proposalId      Proposal identifier.
      */
     event ProposalExecutionRejection(
         uint256 indexed proposalId
@@ -198,9 +198,9 @@ IValidatable {
     /**
      *  @notice Emitted when execution progress of a proposal is updated.
      *
-     *          Name                Description
-     *  @param  proposalId          Proposal identifier.
-     *  @param  logURI              URI of execution progress log.
+     *          Name            Description
+     *  @param  proposalId      Proposal identifier.
+     *  @param  logURI          URI of execution progress log.
      */
     event ProposalExecutionLog(
         uint256 indexed proposalId,
@@ -230,13 +230,15 @@ IValidatable {
 
 
     /** ===== FUNCTION ===== **/
-    /* --- Query --- */
+    /* --- Configuration --- */
     /**
      *          Name            Description
      *  @return fee             Proposal fee charged in native coin.
      */
     function fee() external view returns (uint256 fee);
 
+
+    /* --- Query --- */
     /**
      *          Name            Description
      *  @return proposalNumber  Number of proposals.
@@ -311,7 +313,7 @@ IValidatable {
      *  @return proposalId          New proposal identifier.
      *
      *  @dev    Any current holder of the asset, with client-side support, can propose by submitting a full proper context to
-     *          the server-side and forwarding only its checksum to the contract as the UUID of the new proposal. Authorized
+     *          the server-side and forwarding only its checksum to this contract as the UUID of the new proposal. Authorized
      *          executives will later verify the feasibility of the proposal within a given expiration to either admit or
      *          disqualify it accordingly. During this process, the full context is uploaded to a public database (e.g., IPFS),
      *          and the link is submitted to be the URI of proposal context. This approach protects the database from external
@@ -458,6 +460,7 @@ IValidatable {
 
     /**
      *  @notice Conclude the execution of a proposal.
+     *  @notice Conclude only if the proposal is in `Executing` state.
      *
      *          Name            Description
      *  @param  proposalId      Proposal identifier.
@@ -501,6 +504,7 @@ IValidatable {
 
     /**
      *  @notice Reject to execute a proposal.
+     *  @notice Reject only if the proposal is in `Voting` state.
      *
      *          Name            Description
      *  @param  proposalId      Proposal identifier.
@@ -512,7 +516,7 @@ IValidatable {
     ) external;
 
 
-    /* --- Safeguard --- */
+    /* --- Safe Command --- */
     /**
      *  @notice Vote on a proposal.
      *  @notice Vote only if the proposal is in `Voting` state and before the vote closes.
@@ -523,7 +527,7 @@ IValidatable {
      *  @param  anchor      `uuid` of the proposal.
      *  @return weight      Vote power.
      *
-     *  @dev    Anchor enforces consistency between the contract and the client-side.
+     *  @dev    Anchor enforces consistency between this contract and the client-side.
      */
     function safeVote(
         uint256 proposalId,
@@ -540,7 +544,7 @@ IValidatable {
      *  @param  value       Contributed value.
      *  @param  anchor      `uuid` of the proposal.
      *
-     *  @dev    Anchor enforces consistency between the contract and the client-side.
+     *  @dev    Anchor enforces consistency between this contract and the client-side.
      */
     function safeContributeBudget(
         uint256 proposalId,

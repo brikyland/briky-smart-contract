@@ -18,6 +18,6 @@ library CommonConstant {
     /// @notice Rate denominator is `10 ** RATE_DECIMALS`.
     uint8 internal constant RATE_DECIMALS = 18;
 
-    /// @notice A rate represents a fraction of an arbitrary value so it cannot be greater than 1.
+    /// @notice A rate representing a fraction of an arbitrary value cannot exceed 1.0.
     uint256 internal constant RATE_MAX_FRACTION = 10 ** RATE_DECIMALS;
 }

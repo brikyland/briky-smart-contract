@@ -67,7 +67,7 @@ ReentrancyGuardUpgradeable {
     /** ===== FUNCTION ===== **/
     /* --- Standard --- */
     /**
-     *  @notice Executed on a call to the contract with empty calldata.
+     *  @notice Executed on a call to this contract with empty calldata.
      */
     receive() external payable {}
 
@@ -228,7 +228,7 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Stake primary tokens into the contract to receive stake tokens with interest accumulation.
+     *  @notice Stake primary tokens into this contract to receive stake tokens with interest accumulation.
      *
      *          Name        Description
      *  @param  _account    Account address that will receive the stake tokens.

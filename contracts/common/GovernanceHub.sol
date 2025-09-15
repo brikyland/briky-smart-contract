@@ -104,9 +104,9 @@ ReentrancyGuardUpgradeable {
 
 
     /** ===== FUNCTION ===== **/
-    /* --- Standard --- */
+    /* --- Common --- */
     /**
-     *  @notice Executed on a call to the contract with empty calldata.
+     *  @notice Executed on a call to this contract with empty calldata.
      */
     receive() external payable {}
 
@@ -243,7 +243,7 @@ ReentrancyGuardUpgradeable {
      *  @return New proposal identifier.
      *
      *  @dev    Any current holder of the asset, with client-side support, can propose by submitting a full proper context to
-     *          the server-side and forwarding only its checksum to the contract as the UUID of the new proposal. Authorized
+     *          the server-side and forwarding only its checksum to this contract as the UUID of the new proposal. Authorized
      *          executives will later verify the feasibility of the proposal within a given expiration to either admit or
      *          disqualify it accordingly. During this process, the full context is uploaded to a public database (e.g., IPFS),
      *          and the link is submitted to be the URI of proposal context. This approach protects the database from external
@@ -512,7 +512,7 @@ ReentrancyGuardUpgradeable {
      *
      *  @return Vote power.
      *
-     *  @dev    Anchor enforces consistency between the contract and the client-side.
+     *  @dev    Anchor enforces consistency between this contract and the client-side.
      */
     function safeVote(
         uint256 _proposalId,
@@ -555,7 +555,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _value              Contributed value.
      *  @param  _anchor             `uuid` of the proposal.
      *
-     *  @dev    Anchor enforces consistency between the contract and the client-side.
+     *  @dev    Anchor enforces consistency between this contract and the client-side.
      */
     function safeContributeBudget(
         uint256 _proposalId,
@@ -748,6 +748,7 @@ ReentrancyGuardUpgradeable {
 
     /**
      *  @notice Conclude the execution of a proposal.
+     *  @notice Conclude only if the proposal is in `Executing` state.
      *
      *          Name            Description
      *  @param  _proposalId      Proposal identifier.
@@ -803,7 +804,8 @@ ReentrancyGuardUpgradeable {
 
 
     /**
-     *  TODO:
+     *  @notice Evaluate the verdict of the vote of a proposal
+     *
      *          Name            Description
      *  @param  _proposal       Proposal.
      *
@@ -813,15 +815,20 @@ ReentrancyGuardUpgradeable {
         Proposal storage _proposal
     ) internal view returns (ProposalVerdict) {
         ProposalState state = _proposal.state;
+        /// @dev    The proposal has not been admitted for vote yet.
         if (state == ProposalState.Nil
             || state == ProposalState.Pending) {
             return ProposalVerdict.Unsettled;
         }
+
+        /// @dev    The proposal has been confirmed to be executed.
         if (state == ProposalState.Executing
             || state == ProposalState.SuccessfulExecuted
             || state == ProposalState.UnsuccessfulExecuted) {
             return ProposalVerdict.Passed;
         }
+
+        /// @dev    The proposal can never be executed.
         if (state == ProposalState.Disqualified
             || state == ProposalState.Rejected) {
             return ProposalVerdict.Failed;
@@ -830,22 +837,32 @@ ReentrancyGuardUpgradeable {
         ProposalRule rule = _proposal.rule;
         uint256 quorum = _proposal.quorum;
         if (rule == ProposalRule.ApprovalBeyondQuorum) {
+            /// @dev    Meet the quorum.
             if (_proposal.approvalWeight >= quorum) {
                 return ProposalVerdict.Passed;
             }
+
+            /// @dev    Not enough unvoted weight to meet the quorum.
             if (_proposal.disapprovalWeight > _proposal.totalWeight - quorum) {
                 return ProposalVerdict.Failed;
             }
+
+            /// @dev    Only determined after due.
             return _proposal.due <= block.timestamp
                 ? ProposalVerdict.Failed
                 : ProposalVerdict.Unsettled;
         } else {
+            /// @dev    Meet the quorum.
             if (_proposal.disapprovalWeight >= quorum) {
                 return ProposalVerdict.Failed;
             }
+
+            /// @dev    Not enough unvoted weight to meet the quorum.
             if (_proposal.approvalWeight > _proposal.totalWeight - quorum) {
                 return ProposalVerdict.Passed;
             }
+
+            /// @dev    Only determined after due.
             return _proposal.due <= block.timestamp
                 ? ProposalVerdict.Passed
                 : ProposalVerdict.Unsettled;

@@ -6,6 +6,7 @@ import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interf
 
 /// @openzeppelin/contracts-upgradeable/
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {ERC165CheckerUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 
 /// contracts/common/utilities/
 import {Formula} from "./utilities/Formula.sol";
@@ -25,7 +26,6 @@ import {Administrable} from "./utilities/Administrable.sol";
 /**
  *  @author Briky Team
  *
- *  @notice Implementation of contract `PriceWatcher`.
  *  @notice The `PriceWatcher` contract provides conversion rates between cryptocurrencies and USD. The conversion rates are
  *          collected from Price Feed. Tokens that has no Price Feed will be set a default conversion rate.
  * 
@@ -38,6 +38,7 @@ PriceWatcherStorage,
 Initializable,
 Administrable {
     /** ===== LIBRARY ===== **/
+    using ERC165CheckerUpgradeable for address;
     using Formula for uint256;
 
 
@@ -46,9 +47,9 @@ Administrable {
 
 
     /** ===== FUNCTION ===== **/
-    /* --- Standard --- */
+    /* --- Common --- */
     /**
-     *  @notice Executed on a call to the contract with empty calldata.
+     *  @notice Executed on a call to this contract with empty calldata.
      */
     receive() external payable {}
 
@@ -78,11 +79,12 @@ Administrable {
      *
      *          Name            Description
      *  @param  _currencies     Array of updated currency addresses.
-     *  @param  _feeds          Array of new Price Feed addresses, respectively for each currency.
-     *  @param  _heartbeats     Array of new allowed latencies, respectively for each currency.
+     *  @param  _feeds          Array of new Price Feed contract addresses, respectively for each currency.
+     *  @param  _heartbeats     Array of new acceptable latencies, respectively for each currency.
      *  @param  _signatures     Array of admin signatures.
      * 
      *  @dev    Administrative configuration.
+     *  @dev    Price Feed contracts must support interface `AggregatorV3Interface`.
      */
     function updatePriceFeeds(
         address[] calldata _currencies,
@@ -107,8 +109,12 @@ Administrable {
         }
 
         for(uint256 i; i < _currencies.length; ++i) {
-            if (_heartbeats[i] == 0) revert InvalidInput();
-
+            if (_heartbeats[i] == 0) {
+                revert InvalidInput();
+            }
+            if (!_feeds[i].supportsInterface(type(AggregatorV3Interface).interfaceId)) {
+                revert InvalidDataFeed();
+            }
             priceFeeds[_currencies[i]] = DataFeed(
                 _feeds[i],
                 _heartbeats[i]

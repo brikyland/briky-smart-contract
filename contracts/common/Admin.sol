@@ -39,9 +39,9 @@ Initializable {
 
 
     /** ===== FUNCTION ===== **/
-    /* --- Standard --- */
+    /* --- Common --- */
     /**
-     *  @notice Executed on a call to the contract with empty calldata.
+     *  @notice Executed on a call to this contract with empty calldata.
      */
     receive() external payable {}
 
@@ -91,12 +91,12 @@ Initializable {
 
     /* --- Administration --- */
     /**
-     *  @notice Verify a message and a set of signatures conform admin addresses and the current nonce of the contract.
+     *  @notice Verify a message and a set of signatures conform admin addresses and the current nonce of this contract.
      *  @notice After successful verification, the nonce is incremented by 1 for the next message.
      *
-     *          Name        Description
-     *  @param  _message     Receiver address.
-     *  @param  _signatures  Array of admin signatures.
+     *          Name            Description
+     *  @param  _message        Message bytes to verify.
+     *  @param  _signatures     Array of admin signatures.
      *
      *  @dev    Only transactions whose original sender is a manager can request verification.
      *  @dev    Pseudo code of signature for `_message` and `nonce`:

@@ -22,7 +22,6 @@ import {Pausable} from "./utilities/Pausable.sol";
 /**
  *  @author Briky Team
  *
- *  @notice Implementation of contract `DividendHub`.
  *  @notice The `DividendHub` contract collects incomes associated to assets from governor contracts and distribute them
  *          among asset holders.
  * 
@@ -60,9 +59,9 @@ ReentrancyGuardUpgradeable {
 
 
     /** ===== FUNCTION ===== **/
-    /* --- Standard --- */
+    /* --- Common --- */
     /**
-     *  @notice Executed on a call to the contract with empty calldata.
+     *  @notice Executed on a call to this contract with empty calldata.
      */
     receive() external payable {}
 

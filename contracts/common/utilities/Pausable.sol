@@ -29,7 +29,8 @@ PausableUpgradeable {
      */
     function pause(
         bytes[] calldata _signatures
-    ) external whenNotPaused {
+    ) external
+    whenNotPaused {
         IAdmin(this.admin()).verifyAdminSignatures(
             abi.encode(address(this), "pause"),
             _signatures
@@ -37,9 +38,8 @@ PausableUpgradeable {
         _pause();
     }
 
-    /** ===== FUNCTION ===== **/
     /**
-     *  @notice Unpaused contract.
+     *  @notice Unpause contract.
      *  @notice After maintenance completes.
      *
      *          Name            Description
@@ -49,7 +49,8 @@ PausableUpgradeable {
      */
     function unpause(
         bytes[] calldata _signatures
-    ) external whenPaused {
+    ) external
+    whenPaused {
         IAdmin(this.admin()).verifyAdminSignatures(
             abi.encode(address(this), "unpause"),
             _signatures

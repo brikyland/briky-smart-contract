@@ -18,7 +18,6 @@ import {ERC721MortgageTokenStorage} from "./storages/ERC721MortgageTokenStorage.
 /**
  *  @author Briky Team
  * 
- *  @notice Implementation of contract `ERC721MortgageToken`.
  *
  *  @notice A `ERC721MortgageToken` contract is an ERC-721 contract that facilitates mortgage-based borrowing backed by ERC-721 token collaterals and issues tokens representing mortgages.
  */
@@ -66,7 +65,7 @@ MortgageToken {
     }
 
 
-    /* --- Standard --- */
+    /* --- Common --- */
     /**
      *          Name       Description
      *  @return version    Version of implementation.
@@ -157,7 +156,7 @@ MortgageToken {
      *  @return mortgageId    New mortgage identifier.
      * 
      *  @dev    The collection must support interface `IERC721Upgradeable`.
-     *  @dev    Must set approval for the contract to transfer collateral tokens of the borrower before listing.
+     *  @dev    Must set approval for this contract to transfer collateral tokens of the borrower before listing.
      */
     function borrow(
         address _token,

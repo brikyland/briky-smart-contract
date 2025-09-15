@@ -37,7 +37,7 @@ ICommon {
     }
 
     /**
-     *  @notice Verify an address is authorized as a governor.
+     *  @notice Verify an account is authorized as a governor.
      *
      *          Name        Description
      *  @param  _account    EVM address.

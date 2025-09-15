@@ -23,7 +23,7 @@ import {IProject} from "../structs/IProject.sol";
 /**
  *  @author Briky Team
  *
- *  @notice TODO: The `IProjectToken` interface defines the contract for managing tokenized projects launched through 
+ *  @notice TODO: The `IProjectToken` interface defines this contract for managing tokenized projects launched through
  *          authorized launchpad contracts within the Briky ecosystem.
  *
  *  @dev    Implementation involves server-side support for validation mechanisms.

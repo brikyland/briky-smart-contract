@@ -42,7 +42,7 @@ ICommon {
      *          Name        Description
      *  @param  currency    Currency address.
      *  @param  feed        Price Feed contract.
-     *  @param  heartbeat   Allowed latency.
+     *  @param  heartbeat   Acceptable latency.
      */
     event PriceFeedUpdate(
         address indexed currency,

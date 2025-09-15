@@ -33,8 +33,6 @@ import {CommissionTokenStorage} from "./storages/CommissionTokenStorage.sol";
 /**
  *  @author Briky Team
  *
- *  @notice Implementation of contract `CommissionToken`.
- * 
  *  @notice TODO:
  */
 contract CommissionToken is
@@ -53,9 +51,9 @@ ReentrancyGuardUpgradeable {
 
 
     /** ===== FUNCTION ===== **/
-    /* --- Standard --- */
+    /* --- Common --- */
     /**
-     *  @notice Executed on a call to the contract with empty calldata.
+     *  @notice Executed on a call to this contract with empty calldata.
      */
     receive() external payable {}
 
@@ -191,7 +189,7 @@ ReentrancyGuardUpgradeable {
     /**
      *          Name           Description
      *  @param  _tokenId       Token identifier.
-     *  @return rate           Commission rate of the token.
+     *  @return rate           Commission rate of the token identifier.
      */
     function getCommissionRate(
         uint256 _tokenId
@@ -356,7 +354,7 @@ ReentrancyGuardUpgradeable {
      *          Name            Description
      *  @param  _interfaceId    Interface identifier.
      * 
-     *  @return Whether the contract implements the interface.
+     *  @return Whether this contract implements the interface.
      */
     function supportsInterface(
         bytes4 _interfaceId

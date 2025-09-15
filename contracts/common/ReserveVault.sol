@@ -19,7 +19,6 @@ import {ReserveVaultStorage} from "./storages/ReserveVaultStorage.sol";
 /**
  *  @author Briky Team
  *
- *  @notice Implementation of contract `ReserveVault`.
  *  @notice The `ReserveVault` contracts allows providers to open cryptocurrency reserve fund and withdraw them on demand.
  * 
  *  @dev    The fund is determined by a `quantity` value and denominations for each currency.
@@ -68,9 +67,9 @@ ReentrancyGuardUpgradeable {
 
 
     /** ===== FUNCTION ===== **/
-    /* --- Standard --- */
+    /* --- Common --- */
     /**
-     *  @notice Executed on a call to the contract with empty calldata.
+     *  @notice Executed on a call to this contract with empty calldata.
      */
     receive() external payable {}
 

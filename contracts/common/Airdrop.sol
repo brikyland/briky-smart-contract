@@ -17,9 +17,9 @@ contract Airdrop {
     string constant private VERSION = "v1.2.1";
 
 
-    /* --- Standard --- */
+    /* --- Common --- */
     /**
-     *  @notice Executed on a call to the contract with empty calldata.
+     *  @notice Executed on a call to this contract with empty calldata.
      */
     receive() external payable {}
 

@@ -116,7 +116,7 @@ ReentrancyGuardUpgradeable {
     /** ===== FUNCTION ===== **/
     /* --- Standard --- */
     /**
-     *  @notice Executed on a call to the contract with empty calldata.
+     *  @notice Executed on a call to this contract with empty calldata.
      */
     receive() external payable {}
 
@@ -835,7 +835,7 @@ ReentrancyGuardUpgradeable {
      *
      *  @return value           Value of the contribution.
      *
-     *  @dev    Anchor enforces consistency between the contract and the client-side.
+     *  @dev    Anchor enforces consistency between this contract and the client-side.
      *  @dev    Contribution currency is determined by the round configuration.
      */
     function safeContributeCurrentRound(

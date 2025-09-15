@@ -230,7 +230,7 @@ IERC4906Upgradeable {
     ) external;
 
 
-    /* --- Safeguard --- */
+    /* --- Safe Command --- */
     /**
      *  @notice Lend a mortgage.
      *  @notice Lend only if the mortgage is in the `Pending` state.
@@ -240,7 +240,7 @@ IERC4906Upgradeable {
      *  @param  anchor        `principal` of the mortgage.
      *  @return due           Repayment due timestamp.
      *
-     *  @dev    Anchor enforces consistency between the contract and the client-side.
+     *  @dev    Anchor enforces consistency between this contract and the client-side.
      */
     function safeLend(
         uint256 mortgageId,
@@ -255,7 +255,7 @@ IERC4906Upgradeable {
      *  @param  mortgageId    Mortgage identifier.
      *  @param  anchor        `repayment` of the mortgage.
      *
-     *  @dev    Anchor enforces consistency between the contract and the client-side.
+     *  @dev    Anchor enforces consistency between this contract and the client-side.
      */
     function safeRepay(
         uint256 mortgageId,

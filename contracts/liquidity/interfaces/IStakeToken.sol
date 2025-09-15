@@ -62,7 +62,7 @@ IExclusiveToken {
     );
 
     /**
-     *  @notice Emitted when primary tokens are staked into the contract.
+     *  @notice Emitted when primary tokens are staked into this contract.
      *
      *          Name        Description
      *  @param  account     Account address receiving the stake tokens.
@@ -113,7 +113,7 @@ IExclusiveToken {
 
     /**
      *          Name    Description
-     *  @return rate    Current fee rate.
+     *  @return rate    Current staking fee rate.
      */
     function getFeeRate() external view returns (Rate memory rate);
 
@@ -141,7 +141,7 @@ IExclusiveToken {
     ) external;
 
     /**
-     *  @notice Stake primary tokens into the contract to receive stake tokens with interest accumulation.
+     *  @notice Stake primary tokens into this contract to receive stake tokens with interest accumulation.
      *
      *          Name        Description
      *  @param  account     Account address that will receive the stake tokens.

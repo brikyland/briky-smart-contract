@@ -208,7 +208,6 @@ IEstateTokenizer {
     error MaxSellingQuantityExceeded();
     error NotEnoughSoldQuantity();
     error NothingToWithdraw();
-    error NotRegisteredAccount();
     error NotWhitelistedAccount();
     error RegisteredAccount();
     error StillSelling();
@@ -403,7 +402,7 @@ IEstateTokenizer {
     ) external;
 
 
-    /* --- Safeguard --- */
+    /* --- Safe Command --- */
     /**
      *  @notice TODO: Safe deposit to buy tokens.
      * 
@@ -414,7 +413,7 @@ IEstateTokenizer {
      * 
      *  @return value            Sale value.
      * 
-     *  @dev    Anchor enforces consistency between the contract and the client-side.
+     *  @dev    Anchor enforces consistency between this contract and the client-side.
      */
     function safeDeposit(
         uint256 requestId,

@@ -62,7 +62,7 @@ interface IPrestigePadRound is IValidation {
         /// @notice Contribution currency address.
         address currency;
 
-        /// @notice Minimum contributed quantity of an address to receive cashback.
+        /// @notice Minimum contributed quantity of an account to receive cashback.
         uint256 cashbackThreshold;
 
         /// @notice Fund identifier for cashback.

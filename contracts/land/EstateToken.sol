@@ -24,7 +24,7 @@ import {IRoyaltyRateProposer} from "../common/interfaces/IRoyaltyRateProposer.so
 import {Administrable} from "../common/utilities/Administrable.sol";
 import {Pausable} from "../common/utilities/Pausable.sol";
 import {RoyaltyRateProposer} from "../common/utilities/RoyaltyRateProposer.sol";
-import {SnapshotSearcher} from "../common/utilities/SnapshotSearcher.sol";
+import {SnapshotHandler} from "../common/utilities/SnapshotHandler.sol";
 import {Validatable} from "../common/utilities/Validatable.sol";
 
 /// contracts/land/constants/
@@ -62,7 +62,7 @@ RoyaltyRateProposer,
 Validatable {
     /** ===== LIBRARY ===== **/
     using ERC165CheckerUpgradeable for address;
-    using SnapshotSearcher for Uint256Snapshot[];
+    using SnapshotHandler for Uint256Snapshot[];
 
 
     /** ===== CONSTANT ===== **/
@@ -101,9 +101,9 @@ Validatable {
     }
 
     /** ===== FUNCTION ===== **/
-    /* --- Standard --- */
+    /* --- Common --- */
     /**
-     *  @notice Executed on a call to the contract with empty calldata.
+     *  @notice Executed on a call to this contract with empty calldata.
      */
     receive() external payable {}
 

@@ -55,7 +55,7 @@ ReentrancyGuardUpgradeable {
     /** ===== FUNCTION ===== **/
     /* --- Standard --- */
     /**
-     *  @notice Executed on a call to the contract with empty calldata.
+     *  @notice Executed on a call to this contract with empty calldata.
      */
     receive() external payable {}
 
@@ -817,7 +817,7 @@ ReentrancyGuardUpgradeable {
      *          Name            Description
      *  @param  _liquidity      Amount of liquidity to contribute.
      *
-     *  @dev    Receives currency from sender and provides it to the treasury contract.
+     *  @dev    Receives currency from the sender and provides it to the treasury contract.
      */
     function _contributeLiquidity(
         uint256 _liquidity

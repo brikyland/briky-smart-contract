@@ -96,7 +96,7 @@ interface IEstateForgerRequest is IValidation {
         /// @notice Deposit currency address.
         address currency;
 
-        /// @notice Minimum deposited quantity of an address to receive cashback.
+        /// @notice Minimum deposited quantity of an account to receive cashback.
         uint256 cashbackThreshold;
 
         /// @notice Fund identifier for cashback.
@@ -125,7 +125,7 @@ interface IEstateForgerRequest is IValidation {
         /// @notice Deposit currency address.
         address currency;
 
-        /// @notice Minimum deposited quantity of an address to receive cashback.
+        /// @notice Minimum deposited quantity of an account to receive cashback.
         uint256 cashbackThreshold;
 
         /// @notice Fraction of deposit to cashback.

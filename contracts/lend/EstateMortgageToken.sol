@@ -30,7 +30,6 @@ import {EstateMortgageTokenStorage} from "./storages/EstateMortgageTokenStorage.
 /**
  *  @author Briky Team
  * 
- *  @notice Implementation of contract `EstateMortgageToken`.
  *
  *  @notice A `EstateMortgageToken` contract is an ERC-721 contract that facilitates mortgage-based borrowing backed by estate token collaterals and issues tokens representing mortgages.
  */
@@ -82,7 +81,7 @@ CommissionDispatchable {
     }
 
 
-    /* --- Standard --- */
+    /* --- Common --- */
     /**
      *          Name       Description
      *  @return version    Version of implementation.
@@ -178,7 +177,7 @@ CommissionDispatchable {
      *          Name            Description
      *  @param  _interfaceId    Interface identifier.
      * 
-     *  @return Whether the contract supports the interface.
+     *  @return Whether this contract supports the interface.
      */
     function supportsInterface(
         bytes4 _interfaceId

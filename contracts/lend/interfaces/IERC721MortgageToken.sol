@@ -96,7 +96,7 @@ IMortgageToken {
      *  @return mortgageId      New mortgage identifier.
      * 
      *  @dev    The collection must support interface `IERC721Upgradeable`.
-     *  @dev    Must set approval for the contract to transfer collateral tokens of the borrower before listing.
+     *  @dev    Must set approval for this contract to transfer collateral tokens of the borrower before listing.
      */
     function borrow(
         address token,

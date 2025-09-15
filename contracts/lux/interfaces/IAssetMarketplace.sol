@@ -129,7 +129,7 @@ ICommon {
      *  @param  isDivisible      Whether the offer can be sold partially.
      *  @return offerId          New offer identifier.
      *
-     *  @dev    Must set approval for the contract to transfer asset tokens of the seller before listing.
+     *  @dev    Must set approval for this contract to transfer asset tokens of the seller before listing.
      */
     function list(
         uint256 tokenId,
@@ -180,7 +180,7 @@ ICommon {
         uint256 offerId
     ) external;
 
-    /* --- Safeguard --- */
+    /* --- Safe Command --- */
     /**
      *  @notice Buy an offer.
      *  @notice Buy only if the offer is in `Selling` state.
@@ -190,7 +190,7 @@ ICommon {
      *  @param  anchor     `tokenId` of the offer.
      *  @return value      Sum of sale price and royalty.
      *
-     *  @dev    Anchor enforces consistency between the contract and the client-side.
+     *  @dev    Anchor enforces consistency between this contract and the client-side.
      */
     function safeBuy(
         uint256 offerId,
@@ -207,7 +207,7 @@ ICommon {
      *  @param  anchor     `tokenId` of the offer.
      *  @return value      Sum of sale price and royalty.
      *
-     *  @dev    Anchor enforces consistency between the contract and the client-side.
+     *  @dev    Anchor enforces consistency between this contract and the client-side.
      */
     function safeBuy(
         uint256 offerId,

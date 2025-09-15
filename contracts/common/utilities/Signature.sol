@@ -17,7 +17,7 @@ library Signature {
      *          Name        Description
      *  @param  _signer     Expected signer address.
      *  @param  _message    Anticipated message bytes.
-     *  @param  _nonce      Nonce.
+     *  @param  _nonce      Number used once combined with the message to prevent replay attacks.
      *  @param  _signature  65-byte ECDSA signature.
      *
      *  @return Whether `_signature` is signed by `_signer` for data `_message` and `_nonce`.

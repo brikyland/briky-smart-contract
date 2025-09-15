@@ -43,8 +43,7 @@ import {CommissionDispatchable} from "./utilities/CommissionDispatchable.sol";
 /**
  *  @author Briky Team
  *
- *  @notice Implementation of contract `EstateForger`.
- * 
+ *
  *  @notice TODO:
  */
 contract EstateForger is
@@ -94,9 +93,9 @@ ReentrancyGuardUpgradeable {
 
 
     /** ===== FUNCTION ===== **/
-    /* --- Standard --- */
+    /* --- Common --- */
     /**
-     *  @notice Executed on a call to the contract with empty calldata.
+     *  @notice Executed on a call to this contract with empty calldata.
      */
     receive() external payable {}
 
@@ -625,7 +624,7 @@ ReentrancyGuardUpgradeable {
     }
 
 
-    /* --- Safeguard --- */
+    /* --- Safe Command --- */
     /**
      *  @notice Safe deposit to purchase tokens in a tokenization request.
      *
@@ -636,7 +635,7 @@ ReentrancyGuardUpgradeable {
      *
      *  @return Sale value paid.
      *
-     *  @dev    Anchor enforces consistency between the contract and the client-side.
+     *  @dev    Anchor enforces consistency between this contract and the client-side.
      */
     function safeDeposit(
         uint256 _requestId,
@@ -898,7 +897,7 @@ ReentrancyGuardUpgradeable {
      *          Name                Description
      *  @param  _interfaceId        Interface identifier to check.
      *
-     *  @return Whether the contract supports the specified interface.
+     *  @return Whether this contract supports the specified interface.
      */
     function supportsInterface(
         bytes4 _interfaceId

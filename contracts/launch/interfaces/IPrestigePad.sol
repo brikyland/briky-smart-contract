@@ -503,7 +503,7 @@ IProjectLaunchpad {
      *
      *  @return value Value of the contribution.
      *
-     *  @dev    Anchor enforces consistency between the contract and the client-side.
+     *  @dev    Anchor enforces consistency between this contract and the client-side.
      *  @dev    Contribution currency is determined by the round configuration.
      */
     function safeContributeCurrentRound(

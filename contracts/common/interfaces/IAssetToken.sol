@@ -11,9 +11,9 @@ import {IGovernor} from "./IGovernor.sol";
 /**
  *  @author Briky Team
  *
- *  @notice Interface for an ERC-1155 contract that securitizes RWAs.
+ *  @notice Interface for ERC-1155 tokens that securitizes RWAs.
  *  @notice An asset token securitizes RWAs and represents share holdings in form of a class of ERC-1155 tokens.
- *  @notice Each unit of asset tokens is represented in scaled form by `10 ** decimals`.
+ *  @notice Each unit of asset tokens is represented in scaled form as `10 ** decimals`.
  */
 interface IAssetToken is
 IGovernor,
@@ -27,6 +27,17 @@ IERC2981Upgradeable {
      */
     function decimals() external view returns (uint8 decimals);
 
+
+    /**
+     *          Name            Description
+     *  @param  tokenId         Asset identifier.
+     *  @return totalSupply     Total supply of the asset at the reference timestamp.
+     */
+    function totalSupply(
+        uint256 tokenId
+    ) external view returns (uint256 totalSupply);
+
+
     /**
      *          Name            Description
      *  @param  account         EVM address.
@@ -39,13 +50,4 @@ IERC2981Upgradeable {
         uint256 tokenId,
         uint256 at
     ) external view returns (uint256 balance);
-
-    /**
-     *          Name            Description
-     *  @param  tokenId         Asset identifier.
-     *  @return totalSupply     Total supply of the account at the reference timestamp.
-     */
-    function totalSupply(
-        uint256 tokenId
-    ) external view returns (uint256 totalSupply);
 }

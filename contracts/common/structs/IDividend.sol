@@ -18,10 +18,10 @@ interface IDividend {
         /// @notice Asset identifier from the governor contract.
         uint256 tokenId;
 
-        /// @notice Remain weight that hasn't been withdrawn.
+        /// @notice Unwithdrawn weight.
         uint256 remainWeight;
 
-        /// @notice Remain value that hasn't been withdrawn.
+        /// @notice Unwithdrawn value.
         uint256 remainValue;
 
         /// @notice Dividend currency address.

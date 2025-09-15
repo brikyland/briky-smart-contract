@@ -30,7 +30,6 @@ import {PromotionTokenStorage} from "./storages/PromotionTokenStorage.sol";
 /**
  *  @author Briky Team
  *
- *  @notice Implementation of contract `PromotionToken`.
  *  @notice The promotion token is an ERC-721 token that represents airdrop tokens minted by users during airdrop campaigns.
  * 
  *  @dev    Minting fee is charged to protect the contract from DoS attacks.
@@ -47,9 +46,9 @@ ReentrancyGuardUpgradeable {
 
 
     /** ===== FUNCTION ===== **/
-    /* --- Standard --- */
+    /* --- Common --- */
     /**
-     *  @notice Executed on a call to the contract with empty calldata.
+     *  @notice Executed on a call to this contract with empty calldata.
      */
     receive() external payable {}
 
@@ -153,7 +152,7 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Withdraw sufficient amounts in multiple cryptocurrencies from the contract to an address.
+     *  @notice Withdraw sufficient amounts in multiple cryptocurrencies from this contract to an account.
      *
      *          Name            Description
      *  @param  _receiver       Receiver address.
@@ -417,7 +416,7 @@ ReentrancyGuardUpgradeable {
      *          Name        Description
      *  @param  _tokenId    Token identifier.
      * 
-     *  @return rate        Royalty rate of the token.
+     *  @return rate        Royalty rate of the token identifier.
      */
     function getRoyaltyRate(
         uint256 _tokenId
@@ -430,7 +429,7 @@ ReentrancyGuardUpgradeable {
      *          Name            Description
      *  @param  _interfaceId    Interface identifier.
      * 
-     *  @return Whether the contract implements the interface.
+     *  @return Whether this contract implements the interface.
      */
     function supportsInterface(
         bytes4 _interfaceId

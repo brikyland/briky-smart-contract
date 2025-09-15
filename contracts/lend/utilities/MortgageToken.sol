@@ -63,9 +63,9 @@ ReentrancyGuardUpgradeable {
 
 
     /** ===== FUNCTION ===== **/
-    /* --- Standard --- */
+    /* --- Common --- */
     /**
-     *  @notice Executed on a call to the contract with empty calldata.
+     *  @notice Executed on a call to this contract with empty calldata.
      */
     receive() external payable {}
 
@@ -248,7 +248,7 @@ ReentrancyGuardUpgradeable {
      * 
      *  @return Repayment due timestamp.
      * 
-     *  @dev    Anchor enforces consistency between the contract and the client-side.
+     *  @dev    Anchor enforces consistency between this contract and the client-side.
      */
     function safeLend(
         uint256 _mortgageId,
@@ -290,7 +290,7 @@ ReentrancyGuardUpgradeable {
      * 
      *  @dev    Permission: Borrower of the mortgage.
      * 
-     *  @dev    Anchor enforces consistency between the contract and the client-side.
+     *  @dev    Anchor enforces consistency between this contract and the client-side.
      */
     function safeRepay(
         uint256 _mortgageId,
@@ -359,7 +359,7 @@ ReentrancyGuardUpgradeable {
      *          Name            Description
      *  @param  _interfaceId    Interface identifier.
      * 
-     *  @return Whether the contract supports the interface.
+     *  @return Whether this contract supports the interface.
      */
     function supportsInterface(bytes4 _interfaceId) public view virtual override(
         IERC165Upgradeable,
@@ -411,7 +411,7 @@ ReentrancyGuardUpgradeable {
      * 
      *  @return New mortgage identifier.
      * 
-     *  @dev    Must set approval for the contract to transfer collateral tokens of the borrower before listing.
+     *  @dev    Must set approval for this contract to transfer collateral tokens of the borrower before listing.
      */
     function _borrow(
         uint256 _principal,

@@ -18,14 +18,14 @@ import {ICurrencyRegistry} from "../structs/ICurrencyRegistry.sol";
 interface IAdmin is
 ICurrencyRegistry {
     /** ===== EVENT ===== **/
-    /* --- Admin --- */
+    /* --- Verification --- */
     /**
      *  @notice Emitted when a message is successfully verified with the current nonce and a set of admin signatures.
      *
      *          Name        Description
-     *  @param  message     Message data bytes verified successfully.
+     *  @param  message     Message bytes verified successfully.
      *  @param  nonce       Number used once combined with the message to prevent replay attacks.
-     *  @param  signatures  Array of admin signatures generated from the message and the current nonce of the contract.
+     *  @param  signatures  Array of admin signatures generated from the message and the current nonce of this contract.
      */
     event AdminSignaturesVerification(
         bytes message,
@@ -33,6 +33,8 @@ ICurrencyRegistry {
         bytes[] signatures
     );
 
+
+    /* --- Admin --- */
     /**
      *  @notice Emitted when the admin #1 role is transferred to another address.
      *
@@ -96,11 +98,11 @@ ICurrencyRegistry {
     );
 
     /**
-     *  @notice Emitted when an external owned address is activated in a zone.
+     *  @notice Emitted when an account is activated in a zone.
      *
      *          Name        Description
      *  @param  zone        Zone code.
-     *  @param  account     Activated EOA.
+     *  @param  account     Activated address.
      */
     event Activation(
         bytes32 indexed zone,
@@ -108,11 +110,11 @@ ICurrencyRegistry {
     );
 
     /**
-     *  @notice Emitted when an external owned address is deactivated in a zone.
+     *  @notice Emitted when an account is deactivated in a zone.
      *
      *          Name        Description
      *  @param  zone        Zone code.
-     *  @param  account     Deactivated EOA.
+     *  @param  account     Deactivated address.
      */
     event Deactivation(
         bytes32 indexed zone,
@@ -122,10 +124,10 @@ ICurrencyRegistry {
 
     /* --- Manager --- */
     /**
-     *  @notice Emitted when an external owned address is authorized as a manager.
+     *  @notice Emitted when an account is authorized as a manager.
      *
      *          Name        Description
-     *  @param  account     Authorized EOA.
+     *  @param  account     Authorized address.
      */
     event ManagerAuthorization(
         address indexed account
@@ -135,7 +137,7 @@ ICurrencyRegistry {
      *  @notice Emitted when a manager is deauthorized.
      *
      *          Name        Description
-     *  @param  account     Deauthorized EOA.
+     *  @param  account     Deauthorized address.
      */
     event ManagerDeauthorization(
         address indexed account
@@ -144,10 +146,10 @@ ICurrencyRegistry {
 
     /* --- Moderator --- */
     /**
-     *  @notice Emitted when an external owned address is authorized as a moderator.
+     *  @notice Emitted when an account is authorized as a moderator.
      *
      *          Name        Description
-     *  @param  account     Authorized EOA.
+     *  @param  account     Authorized address.
      */
     event ModeratorAuthorization(
         address indexed account
@@ -157,7 +159,7 @@ ICurrencyRegistry {
      *  @notice Emitted when a moderator is deauthorized.
      *
      *          Name        Description
-     *  @param  account     Deauthorized EOA.
+     *  @param  account     Deauthorized address.
      */
     event ModeratorDeauthorization(
         address indexed account
@@ -214,13 +216,13 @@ ICurrencyRegistry {
     error NotActivatedAccount();
     error NotAuthorizedAccount();
     error NotAuthorizedZone();
-    error NotExternalOwnedAccount();
     error Unauthorized();
 
 
     /** ===== FUNCTION ===== **/
-    /* --- Standard --- */
+    /* --- Common --- */
     /**
+     *          Name        Description
      *  @return version     Version of implementation.
      */
     function version() external pure returns (string memory version);
@@ -228,39 +230,38 @@ ICurrencyRegistry {
 
     /* --- Query --- */
     /**
-     *          Name        Description
-     *  @return admin1      Admin #1 address.
+     *          Name    Description
+     *  @return admin1  Admin #1 address.
      */
     function admin1() external view returns (address admin1);
 
     /**
-     *          Name        Description
-     *  @return admin2      Admin #2 address.
+     *          Name    Description
+     *  @return admin2  Admin #2 address.
      */
     function admin2() external view returns (address admin2);
 
     /**
-     *          Name        Description
-     *  @return admin3      Admin #3 address.
+     *          Name    Description
+     *  @return admin3  Admin #3 address.
      */
     function admin3() external view returns (address admin3);
 
     /**
-     *          Name        Description
-     *  @return admin4      Admin #4 address.
+     *          Name    Description
+     *  @return admin4  Admin #4 address.
      */
     function admin4() external view returns (address admin4);
 
     /**
-     *          Name        Description
-     *  @return admin5      Admin #5 address.
+     *          Name    Description
+     *  @return admin5  Admin #5 address.
      */
     function admin5() external view returns (address admin5);
 
-
     /**
-     *          Name        Description
-     *  @return nonce       Number used once in the next verification to prevent replay attacks.
+     *          Name    Description
+     *  @return nonce   Number used once in the next verification.
      */
     function nonce() external view returns (uint256 nonce);
 
@@ -279,7 +280,7 @@ ICurrencyRegistry {
      *  @param  account         EVM address.
      *  @return isGovernor      Whether the account is authorized as a governor.
      *
-     *  @dev    This contract must support interface `IGovernor`.
+     *  @dev    The contract must support interface `IGovernor`.
      */
     function isGovernor(
         address account
@@ -344,10 +345,10 @@ ICurrencyRegistry {
 
 
     /**
-     *          Name            Description
-     *  @param  zone            Zone code.
-     *  @param  account         EVM address.
-     *  @return isActive        Whether the account is eligible in the zone.
+     *          Name        Description
+     *  @param  zone        Zone code.
+     *  @param  account     EVM address.
+     *  @return isActive    Whether the account is eligible in the zone.
      */
     function isActiveIn(
         bytes32 zone,
@@ -357,7 +358,7 @@ ICurrencyRegistry {
 
     /* --- Command --- */
     /**
-     *  @notice Verify a message and a set of signatures conform admin addresses and the current nonce of the contract.
+     *  @notice Verify an a message and a set of signatures conform admin addresses and the current nonce of this contract.
      *  @notice After successful verification, the nonce is incremented by 1 for the next message.
      *
      *          Name        Description

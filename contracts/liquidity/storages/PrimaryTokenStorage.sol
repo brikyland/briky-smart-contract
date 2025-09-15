@@ -35,6 +35,7 @@ IPrimaryToken {
     address private stakeToken;
     address public treasury;
 
+    /** ===== UPGRADE ===== **/
     uint256 public stakeToken1Waves;
     uint256 public stakeToken2Waves;
     uint256 public stakeToken3Waves;

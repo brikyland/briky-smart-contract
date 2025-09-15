@@ -7,7 +7,7 @@ import {IERC1155Upgradeable} from "@openzeppelin/contracts-upgradeable/interface
 /**
  *  @author Briky Team
  *
- *  @notice Interface for an ERC-1155 contract that governs a co-held asset.
+ *  @notice Interface for an ERC-1155 contract that governs RWAs.
  *  @notice A governor contract digitizes shared holdings and supports querying holder equity for governance decisions or
  *          dividend distributions. Each asset must have a representative address entitled to perform restricted operations
  *          that involve the real condition of the asset on the behalf of holders.
@@ -28,20 +28,21 @@ IERC1155Upgradeable {
     /**
      *          Name            Description
      *  @param  tokenId         Asset identifier.
+     *  @return zone            Representative of the asset.
+     */
+    function getRepresentative(
+        uint256 tokenId
+    ) external view returns (address);
+
+    /**
+     *          Name            Description
+     *  @param  tokenId         Asset identifier.
      *  @return zone            Zone code of the asset.
      */
     function zoneOf(
         uint256 tokenId
     ) external view returns (bytes32 zone);
 
-    /**
-     *          Name            Description
-     *  @param  tokenId         Asset identifier.
-     *  @return zone            Representative of the asset.
-     */
-    function getRepresentative(
-        uint256 tokenId
-    ) external view returns (address);
 
     /**
      *          Name            Description
@@ -53,6 +54,7 @@ IERC1155Upgradeable {
         uint256 tokenId,
         uint256 at
     ) external view returns (uint256 totalEquity);
+
 
     /**
      *          Name            Description

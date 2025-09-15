@@ -25,7 +25,6 @@ import {ERC721MarketplaceStorage} from "../lux/storages/ERC721MarketplaceStorage
 /**
  *  @author Briky Team
  *
- *  @notice Implementation of contract `ERC721Marketplace`.
  *  @notice The `ERC721Marketplace` contract hosts a marketplace for ERC721 tokens.
  * 
  *  @dev    ERC-20 tokens are identified by their contract addresses.
@@ -64,9 +63,9 @@ ReentrancyGuardUpgradeable {
 
 
     /** ===== FUNCTION ===== **/
-    /* --- Standard --- */
+    /* --- Common --- */
     /**
-     *  @notice Executed on a call to the contract with empty calldata.
+     *  @notice Executed on a call to this contract with empty calldata.
      */
     receive() external payable {}
 
@@ -194,7 +193,7 @@ ReentrancyGuardUpgradeable {
      *  @return New offer identifier.
      * 
      *  @dev    The collection must support interface `IERC721Upgradeable`.
-     *  @dev    Must set approval for the contract to transfer the ERC721 token of the seller before listing.
+     *  @dev    Must set approval for this contract to transfer the ERC721 token of the seller before listing.
      */
     function list(
         address _collection,
@@ -306,7 +305,7 @@ ReentrancyGuardUpgradeable {
     }
 
 
-    /* --- Safeguard --- */
+    /* --- Safe Command --- */
     /**
      *  @notice Buy an offer.
      *  @notice Buy only if the offer is in `Selling` state.
@@ -317,7 +316,7 @@ ReentrancyGuardUpgradeable {
      * 
      *  @return Sum of sale price and royalty.
      * 
-     *  @dev    Anchor enforces consistency between the contract and the client-side.
+     *  @dev    Anchor enforces consistency between this contract and the client-side.
      */
     function safeBuy(
         uint256 _offerId,

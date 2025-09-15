@@ -33,7 +33,8 @@ Initializable {
      */
     function __Validatable_init(
         address _validator
-    ) internal onlyInitializing {
+    ) internal
+    onlyInitializing {
         validator = _validator;
     }
 

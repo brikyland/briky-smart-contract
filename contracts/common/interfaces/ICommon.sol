@@ -23,8 +23,9 @@ interface ICommon {
 
 
     /** ===== FUNCTION ===== **/
-    /* --- Standard --- */
+    /* --- Common --- */
     /**
+     *          Name        Description
      *  @return version     Version of implementation.
      */
     function version() external pure returns (string memory version);

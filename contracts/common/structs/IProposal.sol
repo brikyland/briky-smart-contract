@@ -13,16 +13,16 @@ pragma solidity ^0.8.20;
 interface IProposal {
     /** ===== ENUM ===== **/
     /**
-     *  @notice Variants of vote option of an address for a proposal.
+     *  @notice Variants of vote option of an account for a proposal.
      */
     enum ProposalVoteOption {
         /// @notice Not voted.
         Nil,
 
-        /// @notice Agree with the proposal.
+        /// @notice Vote in favor of executing the proposal.
         Approval,
 
-        /// @notice Disagree with the proposal.
+        /// @notice Vote against executing the proposal.
         Disapproval
     }
 
@@ -61,7 +61,7 @@ interface IProposal {
         /// @notice Operator executed the proposal unsuccessfully.
         UnsuccessfulExecuted,
 
-        /// @notice Executives of the system disqualified the proposal.
+        /// @notice Disqualified due to the proposal is inexecutable.
         Disqualified,
 
         /// @notice Operator rejected executing the proposal.
@@ -89,7 +89,7 @@ interface IProposal {
      *  @notice The proposal might require a budget to execute, which should be suggested in the context and contributed by
      *          holders under their own arrangements.
      *  @dev    Any current holder of the asset, with client-side support, can propose by submitting a full proper context to
-     *          the server-side and forwarding only its checksum to the contract as the UUID of the new proposal. Authorized
+     *          the server-side and forwarding only its checksum to this contract as the UUID of the new proposal. Authorized
      *          executives will later verify the feasibility of the proposal within a given expiration to either admit or
      *          disqualify it accordingly. During this process, the full context is uploaded to a public database (e.g., IPFS),
      *          and the link is submitted to be the URI of proposal context. This approach protects the database from external

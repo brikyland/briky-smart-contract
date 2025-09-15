@@ -16,7 +16,6 @@ import {FeeReceiverStorage} from "./storages/FeeReceiverStorage.sol";
 /**
  *  @author Briky Team
  *
- *  @notice Implementation of contract `FeeReceiver`.
  *  @notice The `FeeReceiver` contract passively receives and hold fee from operators within the system until withdrawn on
  *          demands of admins.
  * 
@@ -31,9 +30,9 @@ ReentrancyGuardUpgradeable {
 
 
     /** ===== FUNCTION ===== **/
-    /* --- Standard --- */
+    /* --- Common --- */
     /**
-     *  @notice Executed on a call to the contract with empty calldata.
+     *  @notice Executed on a call to this contract with empty calldata.
      */
     receive() external payable {}
 
@@ -66,7 +65,7 @@ ReentrancyGuardUpgradeable {
 
     /* --- Administration --- */
     /**
-     *  @notice Withdraw sufficient amounts in multiple cryptocurrencies from the contract to an address.
+     *  @notice Withdraw sufficient amounts in multiple cryptocurrencies from this contract to an account.
      *
      *          Name            Description
      *  @param  _receiver       Receiver address.
