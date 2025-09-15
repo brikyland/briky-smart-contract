@@ -31,11 +31,6 @@ async function deployOrUpgradeEstateMortgageToken() {
                 estateTokenAddress,
                 `Missing ${networkName}_ESTATE_TOKEN_ADDRESS from environment variables!`
             );
-            const commissionTokenAddress = config.commissionTokenAddress;
-            assert.ok(
-                commissionTokenAddress,
-                `Missing ${networkName}_COMMISSION_TOKEN_ADDRESS from environment variables!`
-            );
             const feeReceiverAddress = config.feeReceiverAddress;
             assert.ok(
                 feeReceiverAddress,
@@ -56,7 +51,7 @@ async function deployOrUpgradeEstateMortgageToken() {
 
             return estateMortgageToken.address;
         })();
-    console.log(`${networkName}_MORTGAGE_TOKEN_ADDRESS=${estateMortgageTokenAddress}`);
+    console.log(`${networkName}_ESTATE_MORTGAGE_TOKEN_ADDRESS=${estateMortgageTokenAddress}`);
 }
 
 deployOrUpgradeEstateMortgageToken()

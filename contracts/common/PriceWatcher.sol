@@ -212,7 +212,6 @@ ReentrancyGuardUpgradeable {
         uint256 _lowerBound,
         uint256 _upperBound
     ) external view
-    nonReentrant
     onlyAvailableCurrency(_currency)
     returns (bool) {
         address feed = priceFeeds[_currency].feed;
