@@ -9,7 +9,7 @@ async function deployOrUpgradeProjectMarketplace() {
         : (await ethers.getSigners())[0];
     const projectMarketplaceAddress = await deployOrUpgradeAssetMarketplace(
         signer,
-        'ProjectToken',
+        'projectToken',
         'PROJECT_TOKEN',
         'Project',
     );
