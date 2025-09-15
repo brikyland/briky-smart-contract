@@ -5,7 +5,7 @@ pragma solidity ^0.8.20;
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 
 /// @openzeppelin/contracts-upgradeable/
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import {ERC165CheckerUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 
 /// contracts/common/utilities/
@@ -35,8 +35,8 @@ import {Administrable} from "./utilities/Administrable.sol";
  */
 contract PriceWatcher is
 PriceWatcherStorage,
-Initializable,
-Administrable {
+Administrable,
+ReentrancyGuardUpgradeable {
     /** ===== LIBRARY ===== **/
     using ERC165CheckerUpgradeable for address;
     using Formula for uint256;
@@ -68,7 +68,10 @@ Administrable {
      *          Name            Description
      *  @param  _admin          `Admin` contract address.
      */
-    function initialize(address _admin) external initializer {
+    function initialize(
+        address _admin
+    ) external
+    initializer {
         admin = _admin;
     }
 
@@ -209,6 +212,7 @@ Administrable {
         uint256 _lowerBound,
         uint256 _upperBound
     ) external view
+    nonReentrant
     onlyAvailableCurrency(_currency)
     returns (bool) {
         address feed = priceFeeds[_currency].feed;

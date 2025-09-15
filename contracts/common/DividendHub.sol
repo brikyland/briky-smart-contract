@@ -4,10 +4,6 @@ pragma solidity ^0.8.20;
 /// @openzeppelin/contracts-upgradeable/
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
-/// contracts/common/utilities/
-import {CurrencyHandler} from "./utilities/CurrencyHandler.sol";
-import {Formula} from "./utilities/Formula.sol";
-
 /// contracts/common/interfaces/
 import {IGovernor} from "./interfaces/IGovernor.sol";
 
@@ -16,6 +12,8 @@ import {DividendHubStorage} from "./storages/DividendHubStorage.sol";
 
 /// contracts/common/utilities/
 import {Administrable} from "./utilities/Administrable.sol";
+import {CurrencyHandler} from "./utilities/CurrencyHandler.sol";
+import {Formula} from "./utilities/Formula.sol";
 import {Pausable} from "./utilities/Pausable.sol";
 
 
@@ -65,6 +63,13 @@ ReentrancyGuardUpgradeable {
      */
     receive() external payable {}
 
+    /**
+     *  @return Version of implementation.
+     */
+    function version() external pure returns (string memory) {
+        return VERSION;
+    }
+
 
     /* --- Initialization --- */
     /**
@@ -85,12 +90,6 @@ ReentrancyGuardUpgradeable {
         admin = _admin;
     }
 
-    /**
-     *  @return Version of implementation.
-     */
-    function version() external pure returns (string memory) {
-        return VERSION;
-    }
 
     /* --- Query --- */
     /**

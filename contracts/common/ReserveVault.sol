@@ -4,13 +4,11 @@ pragma solidity ^0.8.20;
 /// @openzeppelin/contracts-upgradeable/
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
-/// contracts/common/utilities/
-import {CurrencyHandler} from "./utilities/CurrencyHandler.sol";
-
 /// contracts/common/interfaces/
 import {IAdmin} from "./interfaces/IAdmin.sol";
 
 /// contracts/common/utilities/
+import {CurrencyHandler} from "./utilities/CurrencyHandler.sol";
 import {Pausable} from "./utilities/Pausable.sol";
 
 /// contracts/common/storages/

@@ -552,6 +552,7 @@ Initializable {
         return isModerator[_account] || isManager[_account];
     }
 
+
     /**
      *          Name                Description
      *  @param  _currency           Currency address.
