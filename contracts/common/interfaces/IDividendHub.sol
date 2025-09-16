@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
 /// contracts/common/structs/
@@ -11,8 +11,8 @@ import {ICommon} from "./ICommon.sol";
  *  @author Briky Team
  *
  *  @notice Interface for contract `DividendHub`.
- *  @notice The `DividendHub` contract collects incomes associated to assets from governor contracts and distribute them
- *          among asset holders.
+ *  @notice The `DividendHub` contract collects incomes associated to assets from governor contracts and distribute them among
+ *          asset holders.
  *
  *  @dev    ERC-20 tokens are identified by their contract addresses.
  *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
@@ -45,7 +45,7 @@ ICommon {
 
 
     /**
-     *  @notice Emitted when value is withdrawn from a dividend package  by an entitled receiver.
+     *  @notice Emitted when value is withdrawn from a dividend package by an entitled receiver.
      *
      *          Name            Description
      *  @param  dividendId      Dividend identifier.
@@ -74,20 +74,22 @@ ICommon {
      */
     function dividendNumber() external view returns (uint256 dividendNumber);
 
+
     /**
-     *          Name        Description
-     *  @param  dividendId  Dividend identifier.
-     *  @return dividend    Information and progress of the dividend package.
+     *          Name            Description
+     *  @param  dividendId      Dividend identifier.
+     *  @return dividend        Information and progress of the dividend package.
      */
     function getDividend(
         uint256 dividendId
     ) external view returns (Dividend memory dividend);
 
+
     /**
-     *          Name        Description
-     *  @param  dividendId  Dividend identifier.
-     *  @param  withdrawer  Withdrawer address.
-     *  @return withdrawAt  Withdrawal timestamp.
+     *          Name            Description
+     *  @param  dividendId      Dividend identifier.
+     *  @param  withdrawer      Withdrawer address.
+     *  @return withdrawAt      Withdrawal timestamp.
      */
     function withdrawAt(
         uint256 dividendId,
@@ -99,13 +101,13 @@ ICommon {
     /**
      *  @notice Issue a new dividend package for an asset from a governor contract.
      *
-     *          Name        Description
-     *  @param  governor    Governor contract address.
-     *  @param  tokenId     Asset identifier from the governor contract.
-     *  @param  value       Total dividend value.
-     *  @param  currency    Dividend currency address.
-     *  @param  data        Issuance note.
-     *  @return dividendId  New dividend identifier.
+     *          Name            Description
+     *  @param  governor        Governor contract address.
+     *  @param  tokenId         Asset identifier from the governor contract.
+     *  @param  value           Total dividend value.
+     *  @param  currency        Dividend currency address.
+     *  @param  data            Issuance note.
+     *  @return dividendId      New dividend identifier.
      */
     function issueDividend(
         address governor,
@@ -118,8 +120,8 @@ ICommon {
     /**
      *  @notice Withdraw entitled portions of the sender from multiple dividend packages.
      *
-     *          Name        Description
-     *  @param  dividendIds Array of dividend identifiers to withdraw.
+     *          Name            Description
+     *  @param  dividendIds     Array of dividend identifiers to withdraw.
      */
     function withdraw(
         uint256[] calldata dividendIds

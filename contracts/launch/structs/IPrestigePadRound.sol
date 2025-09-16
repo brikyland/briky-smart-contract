@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
 /// contracts/common/structs/
@@ -56,17 +56,17 @@ interface IPrestigePadRound is IValidation {
      *  @notice Price configuration.
      */
     struct PrestigePadRoundQuote {
-        /// @notice Value of each token contributed.
+        /// @notice Value of each token.
         uint256 unitPrice;
 
         /// @notice Contribution currency address.
         address currency;
 
-        /// @notice Minimum contributed quantity of an address to receive cashback.
+        /// @notice Minimum contributed quantity of an account to receive cashback.
         uint256 cashbackThreshold;
 
         /// @notice Fund identifier for cashback.
-        /// @dev    Using `IFund.Fund` whose `mainCurrency` is assigned with the above `currency`.
+        /// @dev    Using `IFund.Fund` whose `mainCurrency` is set to `currency`.
         uint256 cashbackFundId;
 
         /// @notice Fee charged on each token.
@@ -78,7 +78,7 @@ interface IPrestigePadRound is IValidation {
      *  @notice Initialization input for `PrestigePadRoundQuote`.
      */
     struct PrestigePadRoundQuoteInput {
-        /// @notice Value of each token contributed.
+        /// @notice Value of each token.
         uint256 unitPrice;
 
         /// @notice Contribution currency address.

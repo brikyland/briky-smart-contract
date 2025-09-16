@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
 /**
@@ -7,19 +7,20 @@ pragma solidity ^0.8.20;
  *  @notice Interface for struct `Rate`.
  */
 interface IRate {
+    /** ===== ERROR ===== **/
+    error InvalidRate();
+
     /** ===== STRUCT ===== **/
     /**
-     *  @notice Record of an unsigned decimal rate value.
+     *  @notice Representation of an unsigned rational rate.
      */
     struct Rate {
         /// @notice Integer value of the rate scaled with `decimals` digits.
+        /// @dev    Rate numerator in fraction is `value`.
         uint256 value;
 
         /// @notice Number of fractional digits used to interpret `value`.
+        /// @dev    Rate denominator in fraction is `10 ** decimals`.
         uint8 decimals;
     }
-
-
-    /** ===== ERROR ===== **/
-    error InvalidRate();
 }

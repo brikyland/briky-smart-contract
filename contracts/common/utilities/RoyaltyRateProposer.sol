@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
 /// contracts/common/interfaces/
@@ -24,8 +24,8 @@ IRoyaltyRateProposer {
      *          Name                Description
      *  @param  _tokenId            Token identifier.
      *  @param  _price              Reference value to derive the royalty.
-     *  @return royaltyReceiver     Royalty receiver address for the token.
-     *  @return royalty             Royalty derived for the token.
+     *  @return royaltyReceiver     Royalty receiver address for the token identifier.
+     *  @return royalty             Royalty derived for the token identifier.
      */
     function royaltyInfo(
         uint256 _tokenId,
@@ -45,5 +45,4 @@ IRoyaltyRateProposer {
      *  @return royaltyReceiver     Default royalty receiver address.
      */
     function _royaltyReceiver() internal view virtual returns (address royaltyReceiver);
-
 }

@@ -26,11 +26,6 @@ async function deployOrUpgradeERC721MortgageToken() {
                 adminAddress,
                 `Missing ${networkName}_ADMIN_ADDRESS from environment variables!`
             );
-            const commissionTokenAddress = config.commissionTokenAddress;
-            assert.ok(
-                commissionTokenAddress,
-                `Missing ${networkName}_COMMISSION_TOKEN_ADDRESS from environment variables!`
-            );
             const feeReceiverAddress = config.feeReceiverAddress;
             assert.ok(
                 feeReceiverAddress,
@@ -50,7 +45,7 @@ async function deployOrUpgradeERC721MortgageToken() {
 
             return erc721MortgageToken.address;
         })();
-    console.log(`${networkName}_MORTGAGE_TOKEN_ADDRESS=${erc721MortgageTokenAddress}`);
+    console.log(`${networkName}_ERC721_MORTGAGE_TOKEN_ADDRESS=${erc721MortgageTokenAddress}`);
 }
 
 deployOrUpgradeERC721MortgageToken()

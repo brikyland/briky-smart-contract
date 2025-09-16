@@ -26,15 +26,15 @@ async function deployOrUpgradeProjectToken() {
                 adminAddress,
                 `Missing ${networkName}_ADMIN_ADDRESS from environment variables!`
             );
-            const feeReceiverAddress = config.feeReceiverAddress;
-            assert.ok(
-                feeReceiverAddress,
-                `Missing ${networkName}_FEE_RECEIVER_ADDRESS from environment variables!`
-            );
             const estateTokenAddress = config.estateTokenAddress;
             assert.ok(
                 estateTokenAddress,
                 `Missing ${networkName}_ESTATE_TOKEN_ADDRESS from environment variables!`
+            );
+            const feeReceiverAddress = config.feeReceiverAddress;
+            assert.ok(
+                feeReceiverAddress,
+                `Missing ${networkName}_FEE_RECEIVER_ADDRESS from environment variables!`
             );
             const projectTokenValidatorAddress = config.projectTokenValidatorAddress;
             assert.ok(
@@ -45,8 +45,8 @@ async function deployOrUpgradeProjectToken() {
             const projectToken = await deployProjectToken(
                 signer,
                 adminAddress,
-                feeReceiverAddress,
                 estateTokenAddress,
+                feeReceiverAddress,
                 projectTokenValidatorAddress,
                 Initialization.PROJECT_TOKEN_BaseURI,
             );

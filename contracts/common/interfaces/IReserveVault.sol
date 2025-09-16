@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
 /// contracts/common/structs/
@@ -23,7 +23,7 @@ IFund,
 ICommon {
     /** ===== EVENT ===== **/
     /**
-     *  @notice Emitted when an address is authorized to be provider.
+     *  @notice Emitted when an account is authorized as a provider.
      *
      *          Name        Description
      *  @param  account     Authorized address.
@@ -51,8 +51,8 @@ ICommon {
      *  @param  provider            Provider address.
      *  @param  mainCurrency        Main currency address.
      *  @param  mainDenomination    Main currency denomination.
-     *  @param  extraCurrencies     Extra currency addresses.
-     *  @param  extraDenominations  Extra currency denominations.
+     *  @param  extraCurrencies     Array of extra currency addresses.
+     *  @param  extraDenominations  Array of extra currency denominations, respectively to each extra currency.
      */
     event NewFund(
         uint256 indexed fundId,
@@ -109,22 +109,23 @@ ICommon {
 
 
     /** ===== FUNCTION ===== **/
+    /* --- Configuration --- */
+    /**
+     *          Name        Description
+     *  @param  account     EVM address.
+     *  @return isProvider  Whether the account is authorized as a provider.
+     */
+    function isProvider(
+        address account
+    ) external view returns (bool isProvider);
+
+
     /* --- Query --- */
     /**
      *          Name        Description
      *  @return fundNumber  Number of funds.
      */
     function fundNumber() external view returns (uint256 fundNumber);
-
-
-    /**
-     *          Name        Description
-     *  @param  account     EVM address.
-     *  @return isProvider  Whether the account is authorized to be provider.
-     */
-    function isProvider(
-        address account
-    ) external view returns (bool isProvider);
 
 
     /**
@@ -145,18 +146,20 @@ ICommon {
         uint256 fundId
     ) external view returns (bool isSufficient);
 
-
     /** ===== COMMAND ===== **/
+    /* --- Command --- */
     /**
      *  @notice Open a new fund.
      *
      *          Name                Description
      *  @param  mainCurrency        Main currency address.
      *  @param  mainDenomination    Main currency denomination.
-     *  @param  extraCurrencies     Extra currency addresses.
-     *  @param  extraDenominations  Extra currency denominations.
+     *  @param  extraCurrencies     Array of extra currency addresses.
+     *  @param  extraDenominations  Array of extra currency denominations, respectively to each extra currency.
+     * 
+     *  @return fundId              New fund identifier.
      *
-     *  @dev    Permission: providers.
+     *  @dev    Permission: Providers.
      */
     function openFund(
         address mainCurrency,
@@ -172,7 +175,7 @@ ICommon {
      *  @param  fundId              Fund identifier.
      *  @param  quantity            Expanded quantity.
      *
-     *  @dev    Permission: providers.
+     *  @dev    Permission: Provider of the fund.
      */
     function expandFund(
         uint256 fundId,
@@ -185,20 +188,20 @@ ICommon {
      *          Name                Description
      *  @param  fundId              Fund identifier.
      *
-     *  @dev    Permission: providers.
+     *  @dev    Permission: Provider of the fund.
      */
     function provideFund(
         uint256 fundId
     ) external payable;
     /**
-     *  @notice Withdraw value from a fund to a receiver.
+     *  @notice Withdraw value from a fund to an account.
      *
      *          Name                Description
      *  @param  fundId              Fund identifier.
      *  @param  receiver            Receiver address.
      *  @param  quantity            Withdrawn quantity.
      *
-     *  @dev    Permission: providers.
+     *  @dev    Permission: Provider of the fund.
      */
     function withdrawFund(
         uint256 fundId,

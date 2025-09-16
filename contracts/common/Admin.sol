@@ -1,40 +1,85 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol";
+/// @openzepplin/contracts-upgradeable/
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {ERC165CheckerUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 
-import {Signature} from "./utilities/Signature.sol";
-
-import {IGovernor} from "./interfaces/IGovernor.sol";
-
+/// contracts/common/constants/
 import {AdminConstant} from "./constants/AdminConstant.sol";
 
+/// contracts/common/interfaces/
+import {IGovernor} from "./interfaces/IGovernor.sol";
+
+/// contracts/common/storages/
 import {AdminStorage} from "./storages/AdminStorage.sol";
 
+/// contracts/common/utilities/
+import {Signature} from "./utilities/Signature.sol";
+
+/**
+ *  @author Briky Team
+ *
+ *  @notice A single `Admin` contract is responsible for governing the entire system with a designated group of administrator
+ *          addresses. Any global configurations of contracts within the system must be verified by their signatures. This
+ *          contract also maintains authorization registries and common configurations applied across the system.
+ *
+ *  @dev    ERC-20 tokens are identified by their contract addresses.
+ *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
+ */
 contract Admin is
 AdminStorage,
 Initializable {
+    /** ===== LIBRARY ===== **/
     using ERC165CheckerUpgradeable for address;
 
+
+    /** ===== CONSTANT ===== **/
     string constant private VERSION = "v1.2.1";
 
+
+    /** ===== FUNCTION ===== **/
+    /* --- Common --- */
+    /**
+     *  @notice Executed on a call to this contract with empty calldata.
+     */
     receive() external payable {}
 
+    /**
+     *  @return Version of implementation.
+     */
+    function version() external pure returns (string memory) {
+        return VERSION;
+    }
+
+
+    /* --- Initialization --- */
+    /**
+     *  @notice Invoked for initialization after deployment, serving as the contract constructor.
+     *
+     *          Name            Description
+     *  @param  _admin1         Admin #1 address.
+     *  @param  _admin2         Admin #2 address.
+     *  @param  _admin3         Admin #3 address.
+     *  @param  _admin4         Admin #4 address.
+     *  @param  _admin5         Admin #5 address.
+     */
     function initialize(
         address _admin1,
         address _admin2,
         address _admin3,
         address _admin4,
         address _admin5
-    ) external initializer {
+    ) external
+    initializer {
+        /// Configuration
         admin1 = _admin1;
         admin2 = _admin2;
         admin3 = _admin3;
         admin4 = _admin4;
         admin5 = _admin5;
 
+        /// Authorization
         isManager[msg.sender] = true;
         isManager[admin1] = true;
         isManager[admin2] = true;
@@ -43,10 +88,27 @@ Initializable {
         isManager[admin5] = true;
     }
 
-    function version() external pure returns (string memory) {
-        return VERSION;
-    }
 
+    /* --- Administration --- */
+    /**
+     *  @notice Verify a message and a set of signatures conform admin addresses and the current nonce of this contract.
+     *  @notice After successful verification, the nonce is incremented by 1 for the next message.
+     *
+     *          Name            Description
+     *  @param  _message        Message bytes to verify.
+     *  @param  _signatures     Array of admin signatures.
+     *
+     *  @dev    Only transactions whose original sender is a manager can request verification.
+     *  @dev    Pseudo code of signature for `_message` and `nonce`:
+     *          ```
+     *          signature = ethSign(
+     *              keccak256(abi.encodePacked(
+     *                  _message,
+     *                  nonce
+     *              ))
+     *          );
+     *          ```
+     */
     function verifyAdminSignatures(
         bytes memory _message,
         bytes[] calldata _signatures
@@ -78,6 +140,15 @@ Initializable {
         );
     }
 
+    /**
+     *  @notice Transfer admin #1 role to another address.
+     *
+     *          Name           Description
+     *  @param  _admin1        New admin #1 address.
+     *  @param  _signatures    Array of admin signatures.
+     * 
+     *  @dev    Administrative operation.
+     */
     function transferAdministration1(
         address _admin1,
         bytes[] calldata _signatures
@@ -95,6 +166,15 @@ Initializable {
         emit Administration1Transfer(_admin1);
     }
 
+    /**
+     *  @notice Transfer admin #2 role to another address.
+     *
+     *          Name           Description
+     *  @param  _admin2        New admin #2 address.
+     *  @param  _signatures    Array of admin signatures.
+     * 
+     *  @dev    Administrative operation.
+     */
     function transferAdministration2(
         address _admin2,
         bytes[] calldata _signatures
@@ -112,6 +192,15 @@ Initializable {
         emit Administration2Transfer(_admin2);
     }
 
+    /**
+     *  @notice Transfer admin #3 role to another address.
+     *
+     *          Name           Description
+     *  @param  _admin3        New admin #3 address.
+     *  @param  _signatures    Array of admin signatures.
+     * 
+     *  @dev    Administrative operation.
+     */
     function transferAdministration3(
         address _admin3,
         bytes[] calldata _signatures
@@ -129,6 +218,15 @@ Initializable {
         emit Administration3Transfer(_admin3);
     }
 
+    /**
+     *  @notice Transfer admin #4 role to another address.
+     *
+     *          Name           Description
+     *  @param  _admin4        New admin #4 address.
+     *  @param  _signatures    Array of admin signatures.
+     * 
+     *  @dev    Administrative operation.
+     */
     function transferAdministration4(
         address _admin4,
         bytes[] calldata _signatures
@@ -146,6 +244,15 @@ Initializable {
         emit Administration4Transfer(_admin4);
     }
 
+    /**
+     *  @notice Transfer admin #5 role to another address.
+     *
+     *          Name           Description
+     *  @param  _admin5        New admin #5 address.
+     *  @param  _signatures    Array of admin signatures.
+     * 
+     *  @dev    Administrative operation.
+     */
     function transferAdministration5(
         address _admin5,
         bytes[] calldata _signatures
@@ -163,6 +270,17 @@ Initializable {
         emit Administration5Transfer(_admin5);
     }
 
+
+    /**
+     *  @notice Authorize or deauthorize addresses as managers.
+     *
+     *          Name           Description
+     *  @param  _accounts      Array of EVM addresses.
+     *  @param  _isManager     Whether the operation is authorization or deauthorization.
+     *  @param  _signatures    Array of admin signatures.
+     * 
+     *  @dev    Administrative configuration.
+     */
     function authorizeManagers(
         address[] calldata _accounts,
         bool _isManager,
@@ -200,6 +318,16 @@ Initializable {
         }
     }
 
+    /**
+     *  @notice Authorize or deauthorize addresses as moderators.
+     *
+     *          Name           Description
+     *  @param  _accounts      Array of EVM addresses.
+     *  @param  _isModerator   Whether the operation is authorization or deauthorization.
+     *  @param  _signatures    Array of admin signatures.
+     * 
+     *  @dev    Administrative configuration.
+     */
     function authorizeModerators(
         address[] calldata _accounts,
         bool _isModerator,
@@ -234,6 +362,16 @@ Initializable {
         }
     }
 
+    /**
+     *  @notice Authorize or deauthorize contract addresses as governors.
+     *
+     *          Name           Description
+     *  @param  _accounts      Array of contract addresses.
+     *  @param  _isGovernor    Whether the operation is authorization or deauthorization.
+     *  @param  _signatures    Array of admin signatures.
+     * 
+     *  @dev    Administrative configuration.
+     */
     function authorizeGovernor(
         address[] calldata _accounts,
         bool _isGovernor,
@@ -271,6 +409,16 @@ Initializable {
         }
     }
 
+
+    /**
+     *  @notice Declare a new zone.
+     *
+     *          Name           Description
+     *  @param  _zone          Zone code.
+     *  @param  _signatures    Array of admin signatures.
+     * 
+     *  @dev    Administrative configuration.
+     */
     function declareZone(
         bytes32 _zone,
         bytes[] calldata _signatures
@@ -291,6 +439,17 @@ Initializable {
         emit ZoneDeclaration(_zone);
     }
 
+    /**
+     *  @notice Activate or deactivate addresses in a zone.
+     *
+     *          Name           Description
+     *  @param  _zone          Zone code.
+     *  @param  _accounts      Array of EVM addresses.
+     *  @param  _isActive      Whether the operation is activation or deactivation.
+     *  @param  _signatures    Array of admin signatures.
+     * 
+     *  @dev    Administrative configuration.
+     */
     function activateIn(
         bytes32 _zone,
         address[] calldata _accounts,
@@ -331,22 +490,18 @@ Initializable {
         }
     }
 
-    function isExecutive(address _account) external view returns (bool) {
-        return isModerator[_account] || isManager[_account];
-    }
 
-    function getCurrencyRegistry(address _currency) external view returns (CurrencyRegistry memory) {
-        return currencyRegistries[_currency];
-    }
-
-    function isAvailableCurrency(address _currency) external view returns (bool) {
-        return currencyRegistries[_currency].isAvailable;
-    }
-
-    function isExclusiveCurrency(address _currency) external view returns (bool) {
-        return currencyRegistries[_currency].isExclusive;
-    }
-
+    /**
+     *  @notice Update the registries of multiple currencies.
+     *
+     *          Name            Description
+     *  @param  _currencies     Array of updated currency addresses.
+     *  @param  _isAvailable    Whether the currency is interactable within the system, respectively for each currency.
+     *  @param  _isExclusive    Whether the currency grants exclusive privileges within the system, respectively for each currency.
+     *  @param  _signatures     Array of admin signatures.
+     *
+     *  @dev    Administrative configuration.
+     */
     function updateCurrencyRegistries(
         address[] calldata _currencies,
         bool[] calldata _isAvailable,
@@ -381,5 +536,58 @@ Initializable {
                 _isExclusive[i]
             );
         }
+    }
+
+
+    /* --- Query --- */
+    /**
+     *          Name            Description
+     *  @param  _account        EVM address.
+     *
+     *  @return Whether the account is authorized as a manager or a moderator.
+     */
+    function isExecutive(
+        address _account
+    ) external view returns (bool) {
+        return isModerator[_account] || isManager[_account];
+    }
+
+
+    /**
+     *          Name                Description
+     *  @param  _currency           Currency address.
+     *
+     *  @return Interaction configuration of the currency.
+     */
+    function getCurrencyRegistry(
+        address _currency
+    ) external view returns (CurrencyRegistry memory) {
+        return currencyRegistries[_currency];
+    }
+
+    /**
+     *          Name                Description
+     *  @param  _currency           Currency address.
+     *
+     *  @return Whether the currency is interactable within the system.
+     *
+     *  @dev    Cryptocurrencies require authorization to be interactable to prevent unknown deceptive codes.
+     */
+    function isAvailableCurrency(
+        address _currency
+    ) external view returns (bool) {
+        return currencyRegistries[_currency].isAvailable;
+    }
+
+    /**
+     *          Name                Description
+     *  @param  _currency           Currency address.
+     *
+     *  @return Whether the currency grants exclusive privileges within the system.
+     */
+    function isExclusiveCurrency(
+        address _currency
+    ) external view returns (bool) {
+        return currencyRegistries[_currency].isExclusive;
     }
 }

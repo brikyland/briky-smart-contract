@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
+/// @openzeppelin/contracts-upgradeable/
 import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol";
 import {IERC1155Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC1155Upgradeable.sol";
 import {IERC1155MetadataURIUpgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC1155MetadataURIUpgradeable.sol";
@@ -11,26 +12,45 @@ import {ERC1155SupplyUpgradeable} from "@openzeppelin/contracts-upgradeable/toke
 import {ERC1155URIStorageUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/extensions/ERC1155URIStorageUpgradeable.sol";
 import {ERC165CheckerUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 
+/// contracts/common/constants/
+import {CommonConstant} from "../common/constants/CommonConstant.sol";
+
+/// contracts/common/interfaces/
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 import {IGovernor} from "../common/interfaces/IGovernor.sol";
 import {IRoyaltyRateProposer} from "../common/interfaces/IRoyaltyRateProposer.sol";
 
-import {CommonConstant} from "../common/constants/CommonConstant.sol";
-
+/// contracts/common/utilities/
 import {Administrable} from "../common/utilities/Administrable.sol";
 import {Pausable} from "../common/utilities/Pausable.sol";
 import {RoyaltyRateProposer} from "../common/utilities/RoyaltyRateProposer.sol";
-import {SnapshotSearcher} from "../common/utilities/SnapshotSearcher.sol";
+import {SnapshotHandler} from "../common/utilities/SnapshotHandler.sol";
 import {Validatable} from "../common/utilities/Validatable.sol";
 
+/// contracts/land/constants/
 import {EstateTokenConstant} from "./constants/EstateTokenConstant.sol";
 
+/// contracts/land/interfaces/
 import {ICommissionToken} from "./interfaces/ICommissionToken.sol";
 import {IEstateToken} from "./interfaces/IEstateToken.sol";
 import {IEstateTokenizer} from "./interfaces/IEstateTokenizer.sol";
 
+/// contracts/land/storages/
 import {EstateTokenStorage} from "./storages/EstateTokenStorage.sol";
 
+/**
+ *  @author Briky Team
+ *
+ *  @notice TODO: The `EstateToken` contract securitizes real-world estate assets into fungible ERC-1155 tokens, where each
+ *          token class represents fractional ownership of a specific tokenized estate.
+ *
+
+ *  @dev    Implementation involves server-side support.
+ *  @dev    ERC-20 tokens are identified by their contract addresses.
+ *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
+ *  @dev    Quantities are expressed in absolute units. Scale these values by `10 ** EstateToken.decimals()` to obtain
+ *          the correct amounts under the `EstateToken` convention.
+ */
 contract EstateToken is
 EstateTokenStorage,
 ERC1155PausableUpgradeable,
@@ -40,60 +60,102 @@ Administrable,
 Pausable,
 RoyaltyRateProposer,
 Validatable {
+    /** ===== LIBRARY ===== **/
     using ERC165CheckerUpgradeable for address;
-    using SnapshotSearcher for Uint256Snapshot[];
+    using SnapshotHandler for Uint256Snapshot[];
 
+
+    /** ===== CONSTANT ===== **/
     string constant private VERSION = "v1.2.1";
 
-    modifier validEstate(uint256 _estateId) {
+
+    /** ===== MODIFIER ===== **/
+    /**
+     *  @notice Verify a valid estate.
+     *
+     *          Name            Description
+     *  @param  _estateId       Estate identifier.
+     */
+    modifier validEstate(
+        uint256 _estateId
+    ) {
         if (!isAvailable(_estateId)) {
             revert InvalidEstateId();
         }
         _;
     }
 
-    modifier onlyActiveInZoneOf(uint256 _estateId) {
+    /**
+     *  @notice Verify the sender is active in the zone of the estate.
+     *
+     *          Name            Description
+     *  @param  _estateId       Estate identifier.
+     */
+    modifier onlyActiveInZoneOf(
+        uint256 _estateId
+    ) {
         if (!IAdmin(admin).isActiveIn(estates[_estateId].zone, msg.sender)) {
             revert Unauthorized();
         }
         _;
     }
 
+    /** ===== FUNCTION ===== **/
+    /* --- Common --- */
+    /**
+     *  @notice Executed on a call to this contract with empty calldata.
+     */
     receive() external payable {}
 
+    /**
+     *  @return Version of implementation.
+     */
+    function version() external pure returns (string memory) {
+        return VERSION;
+    }
+
+
+    /* --- Initialization --- */
+    /**
+     *  @notice Invoked for initialization after deployment, serving as the contract constructor.
+     *
+     *          Name            Description
+     *  @param  _admin          `Admin` contract address.
+     *  @param  _feeReceiver    `FeeReceiver` contract address.
+     *  @param  _validator      Validator address.
+     *  @param  _uri            Base URI.
+     */
     function initialize(
         address _admin,
         address _feeReceiver,
         address _validator,
         string calldata _uri
-    ) external initializer {
+    ) external
+    initializer {
+        /// Initializer
         __ERC1155Pausable_init();
 
         __Validatable_init(_validator);
 
+        /// Dependency
         admin = _admin;
         feeReceiver = _feeReceiver;
 
+        /// Configuration
         _setBaseURI(_uri);
         emit BaseURIUpdate(_uri);
     }
 
-    function version() external pure returns (string memory) {
-        return VERSION;
-    }
 
-    function decimals() external pure returns (uint8) {
-        return EstateTokenConstant.TOKEN_DECIMALS;
-    }
-
+    /* --- Administration --- */
     /**
      *  @notice Update commission token address.
      *
      *          Name                Description
-     *  @param  _commissionToken    New commission token address.
+     *  @param  _commissionToken    New commission token contract address.
      *  @param  _signatures         Array of admin signatures.
      * 
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative configuration.
      */
     function updateCommissionToken(
         address _commissionToken,
@@ -107,9 +169,11 @@ Validatable {
             ),
             _signatures
         );
+
         if (_commissionToken == address(0) || commissionToken != address(0)) {
             revert InvalidUpdating();
         }
+
         commissionToken = _commissionToken;
         emit CommissionTokenUpdate(_commissionToken);
     }
@@ -118,10 +182,10 @@ Validatable {
      *  @notice Update base URI.
      *
      *          Name            Description
-     *  @param  _uri            New base URI.
+     *  @param  _uri            New base URI value.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative configuration.
      */
     function updateBaseURI(
         string calldata _uri,
@@ -135,19 +199,20 @@ Validatable {
             ),
             _signatures
         );
+
         _setBaseURI(_uri);
         emit BaseURIUpdate(_uri);
     }
 
     /**
-     *  @notice Authorize or deauthorize accounts to be tokenizers.
+     *  @notice Authorize or deauthorize contract addresses as tokenizers.
      *
      *          Name            Description
-     *  @param  _accounts       Array of account addresses to authorize or deauthorize.
-     *  @param  _isTokenizer    Whether the operation is authorize or deauthorize.
+     *  @param  _accounts       Array of contract addresses.
+     *  @param  _isTokenizer    Whether the operation is authorization or deauthorization.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative configuration.
      */
     function authorizeTokenizers(
         address[] calldata _accounts,
@@ -187,14 +252,14 @@ Validatable {
     }
 
     /**
-     *  @notice Authorize or deauthorize accounts to be extractors.
+     *  @notice Authorize or deauthorize contract addresses as extractors.
      *
      *          Name            Description
-     *  @param  _accounts       Array of account addresses to authorize or deauthorize.
-     *  @param  _isExtractor    Whether the operation is authorize or deauthorize.
+     *  @param  _accounts       Array of contract addresses.
+     *  @param  _isExtractor    Whether the operation is authorization or deauthorization.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative configuration.
      */
     function authorizeExtractors(
         address[] calldata _accounts,
@@ -231,14 +296,14 @@ Validatable {
     }
 
     /**
-     *  @notice Update royalty rate for a zone.
+     *  @notice Update zone royalty rate.
      *
      *          Name            Description
      *  @param  _zone           Zone code.
-     *  @param  _royaltyRate    New royalty rate.
+     *  @param  _royaltyRate    New royalty rate for the zone.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative configuration.
      */
     function updateZoneRoyaltyRate(
         bytes32 _zone,
@@ -254,6 +319,7 @@ Validatable {
             ),
             _signatures
         );
+
         if (!IAdmin(admin).isZone(_zone)) {
             revert InvalidZone();
         }
@@ -261,35 +327,158 @@ Validatable {
         if (_royaltyRate > CommonConstant.RATE_MAX_FRACTION) {
             revert InvalidRate();
         }
+
         zoneRoyaltyRates[_zone] = _royaltyRate;
         emit ZoneRoyaltyRateUpdate(_zone, Rate(_royaltyRate, CommonConstant.RATE_DECIMALS));
     }
 
-    function getZoneRoyaltyRate(bytes32 _zone) external view returns (Rate memory) {
+    
+    /* --- Query --- */
+    /**
+     *          Name            Description
+     *  @return decimals        Token decimals.
+     */
+    function decimals() external pure returns (uint8) {
+        return EstateTokenConstant.TOKEN_DECIMALS;
+    }
+
+    /**
+     *          Name            Description
+     *  @param  _zone           Zone code.
+     *  @return royaltyRate     Royalty rate of the zone.
+     */
+    function getZoneRoyaltyRate(
+        bytes32 _zone
+    ) external view returns (Rate memory) {
         return Rate(zoneRoyaltyRates[_zone], CommonConstant.RATE_DECIMALS);
     }
-    function isCustodianIn(bytes32 _zone, address _account) public view returns (bool) {
-        return bytes(custodianURI[_zone][_account]).length!= 0;
+
+    /**
+     *          Name            Description
+     *  @param  zone            Zone code.
+     *  @param  account         EVM address.
+     *  @return isCustodian     Whether the account is a registered custodian in the zone.
+     */
+    function isCustodianIn(
+        bytes32 zone,
+        address account
+    ) public view returns (bool) {
+        return bytes(custodianURI[zone][account]).length != 0;
     }
 
-    function getEstate(uint256 _estateId) external view returns (Estate memory) {
-        if (!exists(_estateId)) {
+    /**
+     *          Name            Description
+     *  @param  account         EVM address.
+     *  @param  tokenId         Estate identifier.
+     *  @param  at              Reference timestamp.
+     *  @return balance         Balance of the account in the estate at the reference timestamp.
+     */
+    function balanceOfAt(
+        address account,
+        uint256 tokenId,
+        uint256 at
+    ) public view returns (uint256) {
+        if (!exists(tokenId)) {
             revert InvalidEstateId();
         }
-        return estates[_estateId];
+        if (at > block.timestamp
+            || at > estates[tokenId].deprecateAt
+            || at >= estates[tokenId].expireAt) {
+            revert InvalidTimestamp();
+        }
+
+        return balanceSnapshots[tokenId][account].getValueAt(at);
     }
 
+    /**
+     *          Name            Description
+     *  @param  tokenId         Estate identifier.
+     *  @return totalSupply     Total supply.
+     */
+    function totalSupply(
+        uint256 tokenId
+    ) public view override(
+        IEstateToken,
+        ERC1155SupplyUpgradeable
+    ) returns (uint256) {
+        return super.totalSupply(tokenId);
+    }
+
+    /**
+     *          Name            Description
+     *  @param  estateId        Estate identifier.
+     *  @return tokenInfo       Estate information.
+     */
+    function getEstate(
+        uint256 estateId
+    ) external view returns (Estate memory) {
+        if (estateId == 0 || estateId > estateNumber) {
+            revert InvalidEstateId();
+        }
+        return estates[estateId];
+    }
+
+    /**
+     *          Name            Description
+     *  @param  _estateId       Estate identifier.
+     *  @return representative  Representative address.
+     */
+    function getRepresentative(uint256 _estateId) external view returns (address) {
+        if (_estateId == 0 || _estateId > estateNumber) {
+            revert InvalidEstateId();
+        }
+        return estates[_estateId].custodian;
+    }
+
+    /**
+     *          Name            Description
+     *  @param  _estateId       Estate identifier.
+     *  @return isAvailable     Whether the estate is available.
+     */
     function isAvailable(uint256 _estateId) public view returns (bool) {
         return estates[_estateId].deprecateAt == CommonConstant.INFINITE_TIMESTAMP
             && estates[_estateId].expireAt > block.timestamp;
     }
 
+    /**
+     *          Name            Description
+     *  @param  _estateId       Estate identifier.
+     *  @return zone            Zone code.
+     */
+    function zoneOf(uint256 _estateId) external view returns (bytes32) {
+        if (!exists(_estateId)) {
+            revert InvalidEstateId();
+        }
+        return estates[_estateId].zone;
+    }
+
+
+    /* --- Command --- */
+    /**
+     *  @notice Register a custodian in a zone.
+     *
+     *          Name            Description
+     *  @param  _zone           Zone code.
+     *  @param  _custodian      Custodian address.
+     *  @param  _uri            URI of custodian information.
+     *  @param  _validation     Validation package from the validator.
+     *
+     *  @dev    Permissions: Managers.
+     *  @dev    Validation data:
+     *          ```
+     *          data = abi.encode(
+     *              uri
+     *          );
+     *          ```
+     */
     function registerCustodian(
         bytes32 _zone,
         address _custodian,
         string calldata _uri,
         Validation calldata _validation
-    ) external onlyManager {
+    ) external
+    whenNotPaused
+    onlyManager {
         if (!IAdmin(admin).isActiveIn(_zone, msg.sender)) {
             revert Unauthorized();
         }
@@ -308,6 +497,21 @@ Validatable {
         );
     }
 
+    /**
+     *  @notice Tokenize an estate.
+     *
+     *          Name                Description
+     *  @param  _totalSupply        Number of tokens to mint.
+     *  @param  _zone               Zone code.
+     *  @param  _tokenizationId     Tokenization request identifier.
+     *  @param  _uri                URI of estate metadata.
+     *  @param  _expireAt           Estate expiration timestamp.
+     *  @param  _custodian          Custodian address.
+     *  @param  _broker             Broker address to mint commission tokens.
+     *  @return estateId            New estate identifier.
+     *
+     *  @dev    Permissions: Authorized tokenizers.
+     */
     function tokenizeEstate(
         uint256 _totalSupply,
         bytes32 _zone,
@@ -316,7 +520,9 @@ Validatable {
         uint40 _expireAt,
         address _custodian,
         address _broker
-    ) external whenNotPaused returns (uint256) {
+    ) external
+    whenNotPaused
+    returns (uint256) {
         if (!isTokenizer[msg.sender]) {
             revert Unauthorized();
         }
@@ -364,26 +570,76 @@ Validatable {
         return estateId;
     }
 
-    function deprecateEstate(uint256 _estateId)
-    external validEstate(_estateId) onlyManager onlyActiveInZoneOf(_estateId) whenNotPaused {
+    /**
+     *  @notice Deprecate an estate by managers due to force majeure or extraction.
+     *
+     *          Name            Description
+     *  @param  _estateId       Estate identifier.
+     *
+     *  @dev    Permissions: Managers.
+     */
+    function deprecateEstate(
+        uint256 _estateId
+    ) external
+    whenNotPaused
+    onlyManager
+    validEstate(_estateId)
+    onlyActiveInZoneOf(_estateId) {
         estates[_estateId].deprecateAt = uint40(block.timestamp);
         emit EstateDeprecation(_estateId);
     }
 
-    function extendEstateExpiration(uint256 _estateId, uint40 _expireAt)
-    external validEstate(_estateId) onlyManager onlyActiveInZoneOf(_estateId) whenNotPaused {
+    /**
+     *  @notice Extend the expiration of estate.
+     *
+     *          Name            Description
+     *  @param  _estateId       Estate identifier.
+     *  @param  _expireAt       New expiration timestamp.
+     *
+     *  @dev    Permissions: Managers.
+     */
+    function extendEstateExpiration(
+        uint256 _estateId,
+        uint40 _expireAt
+    ) external
+    whenNotPaused
+    onlyManager
+    validEstate(_estateId)
+    onlyActiveInZoneOf(_estateId) {
         if (_expireAt <= block.timestamp) {
             revert InvalidTimestamp();
         }
+
         estates[_estateId].expireAt = _expireAt;
         emit EstateExpirationExtension(_estateId, _expireAt);
     }
 
+    /**
+     *  @notice Update the metadata URI of an estate.
+     *
+     *          Name            Description
+     *  @param  _estateId       Estate identifier.
+     *  @param  _uri            New URI of estate metadata.
+     *  @param  _validation     Validation package from the validator.
+     *
+     *  @dev    Permissions: Managers.
+     *  @dev    Validation data:
+     *          ```
+     *          data = abi.encode(
+     *              estateId,
+     *              uri
+     *          );
+     *          ```
+     */
     function updateEstateURI(
         uint256 _estateId,
         string calldata _uri,
         Validation calldata _validation
-    ) external validEstate(_estateId) onlyManager onlyActiveInZoneOf(_estateId) whenNotPaused {
+    ) external
+    whenNotPaused
+    onlyManager
+    validEstate(_estateId)
+    onlyActiveInZoneOf(_estateId) {
         _validate(
             abi.encode(_estateId, _uri),
             _validation
@@ -392,52 +648,84 @@ Validatable {
         _setURI(_estateId, _uri);
     }
 
-    function updateEstateCustodian(uint256 _estateId, address _custodian)
-    external validEstate(_estateId) onlyManager onlyActiveInZoneOf(_estateId) whenNotPaused {
+    /**
+     *  @notice Update the custodian of an estate.
+     *
+     *          Name            Description
+     *  @param  _estateId       Estate identifier.
+     *  @param  _custodian      New custodian address.
+     *
+     *  @dev    Permissions: Managers.
+     */
+    function updateEstateCustodian(
+        uint256 _estateId,
+        address _custodian
+    ) external
+    whenNotPaused
+    onlyManager
+    validEstate(_estateId)
+    onlyActiveInZoneOf(_estateId) {
         if (!isCustodianIn(estates[_estateId].zone, _custodian)) {
             revert InvalidCustodian();
         }
+
         estates[_estateId].custodian = _custodian;
         emit EstateCustodianUpdate(_estateId, _custodian);
     }
 
-    function extractEstate(uint256 _estateId, uint256 _extractionId)
-    external validEstate(_estateId) whenNotPaused {
+    /**
+     *  @notice Mark an estate as extracted.
+     *
+     *          Name            Description
+     *  @param  _estateId       Estate identifier.
+     *  @param  _extractionId   Extraction identifier.
+     *
+     *  @dev    Permissions: Authorized extractors.
+     */
+    function extractEstate(
+        uint256 _estateId,
+        uint256 _extractionId
+    ) external
+    whenNotPaused
+    validEstate(_estateId) {
         if (!isExtractor[msg.sender]) {
             revert Unauthorized();
         }
+
         estates[_estateId].deprecateAt = uint40(block.timestamp);
         emit EstateExtraction(_estateId, _extractionId);
     }
 
-    function zoneOf(uint256 _estateId) external view returns (bytes32) {
-        if (!exists(_estateId)) {
-            revert InvalidEstateId();
-        }
-        return estates[_estateId].zone;
-    }
-
-    function balanceOf(address _account, uint256 _estateId)
-    public view override(IERC1155Upgradeable, ERC1155Upgradeable) returns (uint256) {
+    /**
+     *          Name            Description
+     *  @param  _account        EVM address.
+     *  @param  _estateId       Estate identifier.
+     *  @return balance         Estate token balance of the account.
+     */
+    function balanceOf(
+        address _account,
+        uint256 _estateId
+    ) public view override(
+        IERC1155Upgradeable,
+        ERC1155Upgradeable
+    ) returns (uint256) {
         return estates[_estateId].deprecateAt != CommonConstant.INFINITE_TIMESTAMP || estates[_estateId].expireAt <= block.timestamp
             ? 0
             : super.balanceOf(_account, _estateId);
     }
 
-    function balanceOfAt(address _account, uint256 _estateId, uint256 _at) public view returns (uint256) {
-        if (!exists(_estateId)) {
-            revert InvalidEstateId();
-        }
-        if (_at > block.timestamp
-            || _at > estates[_estateId].deprecateAt
-            || _at >= estates[_estateId].expireAt) {
-            revert InvalidTimestamp();
-        }
-
-        return balanceSnapshots[_estateId][_account].getValueAt(_at);
-    }
-
-    function equityOfAt(address _account, uint256 _estateId, uint256 _at) external view returns (uint256) {
+    /**
+     *          Name            Description
+     *  @param  _account        EVM address.
+     *  @param  _estateId       Estate identifier.
+     *  @param  _at             Reference timestamp.
+     *  @return equity          Equity of the account in the estate at the reference timestamp.
+     */
+    function equityOfAt(
+        address _account,
+        uint256 _estateId,
+        uint256 _at
+    ) external view returns (uint256) {
         if (!exists(_estateId)) {
             revert InvalidEstateId();
         }
@@ -460,7 +748,14 @@ Validatable {
             );
     }
 
-    function uri(uint256 _estateId) public view override(
+    /**
+     *          Name            Description
+     *  @param  _estateId       Estate identifier.
+     *  @return uri             URI of estate metadata.
+     */
+    function uri(
+        uint256 _estateId
+    ) public view override (
         IERC1155MetadataURIUpgradeable,
         ERC1155Upgradeable,
         ERC1155URIStorageUpgradeable
@@ -468,12 +763,16 @@ Validatable {
         return super.uri(_estateId);
     }
 
-    function totalSupply(uint256 _estateId)
-    public view override(IEstateToken, ERC1155SupplyUpgradeable) returns (uint256) {
-        return super.totalSupply(_estateId);
-    }
-
-    function totalEquityAt(uint256 _estateId, uint256 _at) external view returns (uint256) {
+    /**
+     *          Name            Description
+     *  @param  _estateId       Estate identifier.
+     *  @param  _at             Reference timestamp.
+     *  @return totalEquity     Total equity at the reference timestamp.
+     */
+    function totalEquityAt(
+        uint256 _estateId,
+        uint256 _at
+    ) external view returns (uint256) {
         if (!exists(_estateId)) {
             revert InvalidEstateId();
         }
@@ -488,11 +787,27 @@ Validatable {
         return totalSupply(_estateId);
     }
 
-    function getRoyaltyRate(uint256 _tokenId) validEstate(_tokenId) external view returns (Rate memory) {
+    /**
+     *          Name            Description
+     *  @param  _tokenId        Estate identifier.
+     *  @return royaltyRate     Royalty rate of the estate.
+     */
+    function getRoyaltyRate(
+        uint256 _tokenId
+    ) external view
+    validEstate(_tokenId)
+    returns (Rate memory) {
         return Rate(zoneRoyaltyRates[estates[_tokenId].zone], CommonConstant.RATE_DECIMALS);
     }
 
-    function supportsInterface(bytes4 _interfaceId) public view override(
+    /**
+     *          Name            Description
+     *  @param  _interfaceId    Interface identifier.
+     *  @return isSupported     Whether the interface is supported.
+     */
+    function supportsInterface(
+        bytes4 _interfaceId
+    ) public view override(
         IERC165Upgradeable,
         ERC1155Upgradeable
     ) returns (bool) {
@@ -502,6 +817,18 @@ Validatable {
             || super.supportsInterface(_interfaceId);
     }
 
+    /* --- Helper --- */
+    /**
+     *  @notice TODO: Hook that is called before any token transfer.
+     *
+     *          Name            Description
+     *  @param  _operator       Operator address.
+     *  @param  _from           Source address.
+     *  @param  _to             Target address.
+     *  @param  _estateIds      Array of estate identifiers.
+     *  @param  _amounts        Array of amounts.
+     *  @param  _data           Additional data.
+     */
     function _beforeTokenTransfer(
         address _operator,
         address _from,
@@ -524,6 +851,17 @@ Validatable {
         }
     }
 
+    /**
+     *  @notice TODO: Hook that is called after any token transfer.
+     *
+     *          Name            Description
+     *  @param  _operator       Operator address.
+     *  @param  _from           Source address.
+     *  @param  _to             Target address.
+     *  @param  _estateIds      Array of estate identifiers.
+     *  @param  _amounts        Array of amounts.
+     *  @param  _data           Additional data.
+     */
     function _afterTokenTransfer(
         address _operator,
         address _from,
@@ -545,6 +883,9 @@ Validatable {
         }
     }
 
+    /**
+     *  @return Royalty receiver address.
+     */
     function _royaltyReceiver() internal view override returns (address) {
         return feeReceiver;
     }

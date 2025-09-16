@@ -1,57 +1,108 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
+/// @openzeppelin/contracts-upgradeable/
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
-import {CurrencyHandler} from "../common/utilities/CurrencyHandler.sol";
-import {Formula} from "../common/utilities/Formula.sol";
-
+/// contracts/common/interfaces/
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 
+/// contracts/common/utilities/
+import {CurrencyHandler} from "../common/utilities/CurrencyHandler.sol";
+import {Formula} from "../common/utilities/Formula.sol";
 import {Pausable} from "../common/utilities/Pausable.sol";
 
-import {IStakeToken} from "../liquidity/interfaces/IStakeToken.sol";
+/// contracts/liquidity/interfaces/
+import {IStakeToken} from "./interfaces/IStakeToken.sol";
 
-import {DriptributorStorage} from "../liquidity/storages/DriptributorStorage.sol";
+/// contracts/liquidity/storages/
+import {DriptributorStorage} from "./storages/DriptributorStorage.sol";
 
+/**
+ *  @author Briky Team
+ *
+ *  @notice The `Driptributor` contract manages token distribution with vesting schedules, allowing receivers to
+ *          withdraw vested tokens gradually or stake them directly into stake token contracts for enhanced benefits.
+ *
+ *  @dev    The contract creates distributions with specified total amounts, receivers, and vesting durations.
+ *          Each distribution has a unique identifier and tracks the withdrawn amount and staking status.
+ *          Receivers can withdraw vested tokens based on time progression or stake their entire remaining
+ *          allocation across multiple stake token contracts.
+ *  @dev    Distributions support flexible staking where receivers can choose how to allocate their tokens
+ *          between different stake token contracts, with any remaining amount automatically assigned to
+ *          the third stake token contract.
+ *  @dev    The contract maintains a total allocation limit to ensure distributed amounts do not exceed
+ *          the available token supply. Administrative operations are required to create new distributions.
+ *  @dev    ERC-20 tokens are identified by their contract addresses.
+ *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
+ */
 contract Driptributor is
 DriptributorStorage,
 Pausable,
 ReentrancyGuardUpgradeable {
+    /** ===== LIBRARY ===== **/
     using Formula for uint256;
 
+
+    /** ===== CONSTANT ===== **/
     string constant private VERSION = "v1.2.1";
 
+
+    /** ===== FUNCTION ===== **/
+    /* --- Standard --- */
+    /**
+     *  @notice Executed on a call to this contract with empty calldata.
+     */
     receive() external payable {}
 
-    function initialize(
-        address _admin,
-        address _primaryToken,
-        uint256 _totalAllocation
-    ) external initializer {
-        __Pausable_init();
-        __ReentrancyGuard_init();
-
-        admin = _admin;
-        primaryToken = _primaryToken;
-
-        totalAllocation = _totalAllocation;
-    }
-
+    /**
+     *  @return Version of implementation.
+     */
     function version() external pure returns (string memory) {
         return VERSION;
     }
 
+
+    /* --- Initialization --- */
     /**
-     *  @notice Update stake token addresses.
+     *  @notice Invoked for initialization after deployment, serving as the contract constructor.
+     *
+     *          Name                Description
+     *  @param  _admin              Admin contract address.
+     *  @param  _primaryToken       Primary token contract address.
+     *  @param  _totalAllocation    Total allocation limit for token distributions.
+     */
+    function initialize(
+        address _admin,
+        address _primaryToken,
+        uint256 _totalAllocation
+    ) external
+    initializer {
+        /// Initializer
+        __Pausable_init();
+        __ReentrancyGuard_init();
+
+        /// Dependency
+        admin = _admin;
+        primaryToken = _primaryToken;
+
+        /// Configuration
+        totalAllocation = _totalAllocation;
+    }
+
+
+    /* --- Administration --- */
+
+    /**
+     *  @notice Update stake token contract addresses.
      *
      *          Name            Description
-     *  @param  _stakeToken1    New stake token address 1.
-     *  @param  _stakeToken2    New stake token address 2.
-     *  @param  _stakeToken3    New stake token address 3.
+     *  @param  _stakeToken1    New stake token #1 contract address.
+     *  @param  _stakeToken2    New stake token #2 contract address.
+     *  @param  _stakeToken3    New stake token #3 contract address.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative configuration.
      */
     function updateStakeTokens(
         address _stakeToken1,
@@ -85,24 +136,17 @@ ReentrancyGuardUpgradeable {
         );
     }
 
-    function getDistribution(uint256 _distributionId) public view returns (Distribution memory) {
-        if (_distributionId == 0 || _distributionId > distributionNumber) {
-            revert InvalidDistributionId();
-        }
-        return distributions[_distributionId];
-    }
-
     /**
-     *  @notice Distribute tokens to receivers with vesting duration.
+     *  @notice Distribute tokens to multiple receivers with vesting duration.
      *
      *          Name                Description
-     *  @param  _receivers          Array of receiver addresses.
-     *  @param  _amounts            Array of amounts to distribute to each receiver.
-     *  @param  _vestingDuration    Array of vesting durations for each receiver.
-     *  @param  _data               Array of notes.
+     *  @param  _receivers          Array of receiver addresses, respectively to each distribution.
+     *  @param  _amounts            Array of distributed amounts, respectively to each distribution.
+     *  @param  _vestingDuration    Array of vesting durations, respectively to each distribution.
+     *  @param  _data               Array of notes, respectively to each distribution.
      *  @param  _signatures         Array of admin signatures.
      * 
-     *  @dev    TODO
+     *  @dev    Administrative operation.
      */
     function distributeTokensWithDuration(
         address[] calldata _receivers,
@@ -110,7 +154,8 @@ ReentrancyGuardUpgradeable {
         uint40[] calldata _vestingDuration,
         string[] calldata _data,
         bytes[] calldata _signatures
-    ) external nonReentrant {
+    ) external
+    nonReentrant {
         IAdmin(admin).verifyAdminSignatures(
             abi.encode(
                 address(this),
@@ -157,16 +202,16 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Distribute tokens to receivers with vesting end timestamp.
+     *  @notice Distribute tokens to multiple receivers with vesting end timestamp.
      *
      *          Name            Description
-     *  @param  _receivers      Array of receiver addresses.
-     *  @param  _amounts        Array of amounts to distribute to each receiver.
-     *  @param  _endAts         Array of vesting end timestamps for each receiver.
-     *  @param  _data           Array of notes.
+     *  @param  _receivers      Array of receiver addresses, respectively to each distribution.
+     *  @param  _amounts        Array of distributed amounts, respectively to each distribution.
+     *  @param  _endAts         Array of vesting end timestamps, respectively to each distribution.
+     *  @param  _data           Array of notes, respectively to each distribution.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    TODO
+     *  @dev    Administrative operation.
      */
     function distributeTokensWithTimestamp(
         address[] calldata _receivers,
@@ -174,7 +219,8 @@ ReentrancyGuardUpgradeable {
         uint40[] calldata _endAts,
         string[] calldata _data,
         bytes[] calldata _signatures
-    ) external nonReentrant {
+    ) external
+    nonReentrant {
         IAdmin(admin).verifyAdminSignatures(
             abi.encode(
                 address(this),
@@ -223,8 +269,44 @@ ReentrancyGuardUpgradeable {
         }
     }
 
-    function withdraw(uint256[] calldata _distributionIds)
-    external nonReentrant whenNotPaused returns (uint256) {
+
+    /* --- Query --- */
+    /**
+     *          Name            Description
+     *  @param  _distributionId Distribution identifier to query.
+     *
+     *  @return distribution    Distribution information including total amount, withdrawn amount, receiver address,
+     *                          distribution timestamp, vesting duration, and staking status.
+     */
+    function getDistribution(
+        uint256 _distributionId
+    ) public view returns (Distribution memory) {
+        if (_distributionId == 0 || _distributionId > distributionNumber) {
+            revert InvalidDistributionId();
+        }
+        return distributions[_distributionId];
+    }
+
+
+    /* --- Command --- */
+    /**
+     *  @notice Withdraw vested tokens from multiple distributions.
+     *
+     *          Name                Description
+     *  @param  _distributionIds    Array of distribution identifiers to withdraw from.
+     *
+     *  @return totalAmount         Total amount of tokens withdrawn from all distributions.
+     *
+     *  @dev    Only vested tokens based on time progression can be withdrawn.
+     *  @dev    Distributions must not have been staked and must belong to the caller.
+     *  @dev    Vesting is calculated based on the time elapsed since distribution start and vesting duration.
+     */
+    function withdraw(
+        uint256[] calldata _distributionIds
+    ) external
+    whenNotPaused
+    nonReentrant
+    returns (uint256) {
         uint256 totalAmount;
         uint256 n = distributionNumber;
         for (uint256 i; i < _distributionIds.length; ++i) {
@@ -260,11 +342,28 @@ ReentrancyGuardUpgradeable {
         return totalAmount;
     }
 
+    /**
+     *  @notice Stake tokens from multiple distributions across stake token contracts.
+     *
+     *          Name                Description
+     *  @param  _distributionIds    Array of distribution identifiers to stake from.
+     *  @param  _stake1             Amount to stake in stake token #1.
+     *  @param  _stake2             Amount to stake in stake token #2.
+     *
+     *  @return stake3              Amount automatically staked in stake token #3 (remaining allocation).
+     *
+     *  @dev    The remaining allocation after stake1 and stake2 is automatically staked in stake token #3.
+     *  @dev    Distributions must not have been previously staked and must belong to the caller.
+     *  @dev    Total available amount is the sum of (totalAmount - withdrawnAmount) for all specified distributions.
+     */
     function stake(
         uint256[] calldata _distributionIds,
         uint256 _stake1,
         uint256 _stake2
-    ) external nonReentrant whenNotPaused returns (uint256) {
+    ) external
+    whenNotPaused
+    nonReentrant
+    returns (uint256) {
         if (stakeToken1 == address(0) || stakeToken2 == address(0) || stakeToken3 == address(0)) {
             revert NotAssignedStakeTokens();
         }

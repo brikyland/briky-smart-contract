@@ -1,37 +1,77 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
+/// @openzeppelin/contracts-upgradeable/
 import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol";
 import {IERC721MetadataUpgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC721MetadataUpgradeable.sol";
 import {IERC2981Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
 import {IERC4906Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC4906Upgradeable.sol";
-import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import {ERC721PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721PausableUpgradeable.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
+/// contracts/common/utilities/
 import {CurrencyHandler} from "../common/utilities/CurrencyHandler.sol";
 
+/// contracts/common/interfaces/
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 
+/// contracts/common/constants/
 import {CommonConstant} from "../common/constants/CommonConstant.sol";
 
+/// contracts/common/utilities/
 import {Pausable} from "../common/utilities/Pausable.sol";
 import {RoyaltyRateProposer} from "../common/utilities/RoyaltyRateProposer.sol";
 
-import {IPassportToken} from "./interfaces/IPassportToken.sol";
-
+/// contracts/lucra/storages/
 import {PassportTokenStorage} from "./storages/PassportTokenStorage.sol";
 
+/**
+ *  @author Briky Team
+ *
+ *  @notice The `PassportToken` contract is an ERC-721 token representing a special pass that grant priveleges to owners
+ *          during airdrop campaigns.
+ * 
+ *  @dev    The passport token can only be minted once per account.
+ *  @dev    Minting fee is charged to protect the contract from DoS attacks.
+ */
 contract PassportToken is
 PassportTokenStorage,
 ERC721PausableUpgradeable,
 Pausable,
 RoyaltyRateProposer,
 ReentrancyGuardUpgradeable {
+    /** ===== CONSTANT ===== **/
     string constant private VERSION = "v1.2.1";
 
+
+    /** ===== FUNCTION ===== **/
+    /* --- Common --- */
+    /**
+     *  @notice Executed on a call to this contract with empty calldata.
+     */
     receive() external payable {}
 
+    /**
+     *  @return Version of implementation.
+     */
+    function version() external pure returns (string memory) {
+        return VERSION;
+    }
+
+
+    /* --- Initialization --- */
+    /**
+     *  @notice Invoked for initialization after deployment, serving as the contract constructor.
+     * 
+     *          Name            Description
+     *  @param  _admin          `Admin` contract address.
+     *  @param  _name           Token name.
+     *  @param  _symbol         Token symbol.
+     *  @param  _uri            Token base URI.
+     *  @param  _fee            Minting fee.
+     *  @param  _royaltyRate    Royalty rate.
+     */
     function initialize(
         address _admin,
         string calldata _name,
@@ -39,16 +79,20 @@ ReentrancyGuardUpgradeable {
         string calldata _uri,
         uint256 _fee,
         uint256 _royaltyRate
-    ) external initializer {
+    ) external
+    initializer {
         require(_royaltyRate <= CommonConstant.RATE_MAX_FRACTION);
         
+        /// Initializer.
         __ERC721_init(_name, _symbol);
         __ERC721Pausable_init();
 
         __ReentrancyGuard_init();
 
+        /// Dependency
         admin = _admin;
 
+        /// Configuration
         baseURI = _uri;
         emit BaseURIUpdate(_uri);
 
@@ -59,10 +103,8 @@ ReentrancyGuardUpgradeable {
         emit RoyaltyRateUpdate(Rate(_royaltyRate, CommonConstant.RATE_DECIMALS));
     }
 
-    function version() external pure returns (string memory) {
-        return VERSION;
-    }
 
+    /* --- Administration --- */
     /**
      *  @notice Update base URI.
      *
@@ -70,7 +112,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _uri            New base URI.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative configuration.
      */
     function updateBaseURI(
         string calldata _uri,
@@ -97,7 +139,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _fee            New minting fee.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative configuration.
      */
     function updateFee(
         uint256 _fee,
@@ -122,7 +164,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _royaltyRate    New royalty rate.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative configuration.
      */
     function updateRoyaltyRate(
         uint256 _royaltyRate,
@@ -144,20 +186,23 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Withdraw cryptocurrency from the contract to a receiver.
+     *  @notice Withdraw sufficient amounts in multiple cryptocurrencies from this contract to an account.
      *
      *          Name            Description
      *  @param  _receiver       Receiver address.
-     *  @param  _currencies     Array of currency addresses to withdraw.
-     *  @param  _values         Array of withdraw values.
+     *  @param  _currencies     Array of withdrawn currency addresses.
+     *  @param  _values         Array of withdraw values, respectively to each currency.
      *  @param  _signatures     Array of admin signatures.
+     *
+     *  @dev    Administrative operation.
      */
     function withdraw(
         address _receiver,
         address[] calldata _currencies,
         uint256[] calldata _values,
         bytes[] calldata _signatures
-    ) external nonReentrant {
+    ) external
+    nonReentrant {
         IAdmin(admin).verifyAdminSignatures(
             abi.encode(
                 address(this),
@@ -178,7 +223,47 @@ ReentrancyGuardUpgradeable {
         }
     }
 
-    function mint() external payable nonReentrant whenNotPaused returns (uint256) {
+
+    /* --- Query --- */
+    /**
+     *          Name        Description
+     *  @param  _tokenId    Token identifier.
+     * 
+     *  @return Token URI.
+     */
+    function tokenURI(
+        uint256 _tokenId
+    ) public view override(
+        IERC721MetadataUpgradeable,
+        ERC721Upgradeable
+    ) returns (string memory) {
+        return baseURI;
+    }
+
+    /**
+     *          Name        Description
+     *  @param  _tokenId    Token identifier.
+     * 
+     *  @return rate        Royalty rate of the token identifier.
+     */
+    function getRoyaltyRate(
+        uint256 _tokenId
+    ) external view returns (Rate memory) {
+        return Rate(royaltyRate, CommonConstant.RATE_DECIMALS);
+    }
+
+    /**
+     *  @notice Mint the passport token.
+     *
+     *          Name        Description
+     *  @return tokenId     Minted token identifier.
+     * 
+     *  @dev    The passport token can only be minted once per account.
+     */
+    function mint() external payable
+    nonReentrant
+    whenNotPaused
+    returns (uint256) {
         if (hasMinted[msg.sender]) {
             revert AlreadyMinted();
         }
@@ -199,18 +284,17 @@ ReentrancyGuardUpgradeable {
         }
     }
 
-    function tokenURI(uint256) public view override(
-        IERC721MetadataUpgradeable,
-        ERC721Upgradeable
-    ) returns (string memory) {
-        return baseURI;
-    }
 
-    function getRoyaltyRate(uint256) external view returns (Rate memory) {
-        return Rate(royaltyRate, CommonConstant.RATE_DECIMALS);
-    }
-
-    function supportsInterface(bytes4 _interfaceId) public view override(
+    /* --- Override --- */
+    /**
+     *          Name            Description
+     *  @param  _interfaceId    Interface identifier.
+     * 
+     *  @return Whether this contract implements the interface.
+     */
+    function supportsInterface(
+        bytes4 _interfaceId
+    ) public view override(
         IERC165Upgradeable,
         ERC721Upgradeable
     ) returns (bool) {
@@ -219,6 +303,12 @@ ReentrancyGuardUpgradeable {
             || super.supportsInterface(_interfaceId);
     }
 
+
+    /* --- Helper --- */
+    /**
+     *          Name       Description
+     *  @return address    Royalty receiver address.
+     */
     function _royaltyReceiver() internal view override returns (address) {
         return address(this);
     }

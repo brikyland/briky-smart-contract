@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
+/// @openzeppelin/contracts-upgradeable/
 import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol";
 import {IERC721MetadataUpgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC721MetadataUpgradeable.sol";
 import {IERC2981Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
@@ -9,20 +10,30 @@ import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/se
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import {ERC721PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721PausableUpgradeable.sol";
 
+/// contracts/common/utilities/
 import {CurrencyHandler} from "../common/utilities/CurrencyHandler.sol";
 
+/// contracts/common/interfaces/
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 
+/// contracts/common/constants/
 import {CommonConstant} from "../common/constants/CommonConstant.sol";
 
+/// contracts/common/utilities/
 import {Administrable} from "../common/utilities/Administrable.sol";
 import {Pausable} from "../common/utilities/Pausable.sol";
 import {RoyaltyRateProposer} from "../common/utilities/RoyaltyRateProposer.sol";
 
-import {IPromotionToken} from "./interfaces/IPromotionToken.sol";
-
+/// contracts/lucra/storages/
 import {PromotionTokenStorage} from "./storages/PromotionTokenStorage.sol";
 
+/**
+ *  @author Briky Team
+ *
+ *  @notice The promotion token is an ERC-721 token that represents airdrop tokens minted by users during airdrop campaigns.
+ * 
+ *  @dev    Minting fee is charged to protect the contract from DoS attacks.
+ */
 contract PromotionToken is
 PromotionTokenStorage,
 ERC721PausableUpgradeable,
@@ -30,26 +41,57 @@ Administrable,
 Pausable,
 RoyaltyRateProposer,
 ReentrancyGuardUpgradeable {
+    /** ===== CONSTANT ===== **/
     string constant private VERSION = "v1.2.1";
 
+
+    /** ===== FUNCTION ===== **/
+    /* --- Common --- */
+    /**
+     *  @notice Executed on a call to this contract with empty calldata.
+     */
     receive() external payable {}
 
+    /**
+     *  @return Version of implementation.
+     */
+    function version() external pure returns (string memory) {
+        return VERSION;
+    }
+
+
+    /* --- Initialization --- */
+    /**
+     *  @notice Invoked for initialization after deployment, serving as the contract constructor.
+     * 
+     *          Name            Description
+     *  @param  _admin          `Admin` contract address.
+     *  @param  _name           Token name.
+     *  @param  _symbol         Token symbol.
+     *  @param  _fee            Minting fee.
+     *  @param  _royaltyRate    Royalty rate.
+     */
     function initialize(
         address _admin,
         string calldata _name,
         string calldata _symbol,
         uint256 _fee,
         uint256 _royaltyRate
-    ) external initializer {
+    ) external
+    initializer {
+        /// Validation.
         require(_royaltyRate <= CommonConstant.RATE_MAX_FRACTION);
-        
+
+        /// Initializer.
         __ERC721_init(_name, _symbol);
         __ERC721Pausable_init();
 
         __ReentrancyGuard_init();
 
+        /// Dependency
         admin = _admin;
 
+        /// Configuration
         fee = _fee;
         emit FeeUpdate(_fee);
 
@@ -57,10 +99,8 @@ ReentrancyGuardUpgradeable {
         emit RoyaltyRateUpdate(Rate(_royaltyRate, CommonConstant.RATE_DECIMALS));
     }
 
-    function version() external pure returns (string memory) {
-        return VERSION;
-    }
 
+    /* --- Administration --- */
     /**
      *  @notice Update minting fee.
      *
@@ -68,7 +108,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _fee            New minting fee.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative configuration.
      */
     function updateFee(
         uint256 _fee,
@@ -93,7 +133,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _royaltyRate    New royalty rate.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative configuration.
      */
     function updateRoyaltyRate(
         uint256 _royaltyRate,
@@ -115,20 +155,23 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Withdraw cryptocurrency from the contract to a receiver.
+     *  @notice Withdraw sufficient amounts in multiple cryptocurrencies from this contract to an account.
      *
      *          Name            Description
      *  @param  _receiver       Receiver address.
-     *  @param  _currencies     Array of currency addresses to withdraw.
-     *  @param  _values         Array of withdraw values.
+     *  @param  _currencies     Array of withdrawn currency addresses.
+     *  @param  _values         Array of withdraw values, respectively to each currency.
      *  @param  _signatures     Array of admin signatures.
+     *
+     *  @dev    Administrative operation.
      */
     function withdraw(
         address _receiver,
         address[] calldata _currencies,
         uint256[] calldata _values,
         bytes[] calldata _signatures
-    ) external nonReentrant {
+    ) external
+    nonReentrant {
         IAdmin(admin).verifyAdminSignatures(
             abi.encode(
                 address(this),
@@ -149,23 +192,16 @@ ReentrancyGuardUpgradeable {
         }
     }
 
-    function getContent(uint256 _contentId) public view returns (Content memory) {
-        if (_contentId == 0 || _contentId > contentNumber) {
-            revert InvalidContentId();
-        }
-        return contents[_contentId];
-    }
-
     /**
      *  @notice Create new contents.
      *
      *          Name           Description
-     *  @param  _uris          Array of content URIs.
-     *  @param  _startAts      Array of start timestamps.
-     *  @param  _durations     Array of durations.
+     *  @param  _uris          Array of content URIs, respectively to each content.
+     *  @param  _startAts      Array of start timestamps, respectively to each content.
+     *  @param  _durations     Array of durations, respectively to each content.
      *  @param  _signatures    Array of admin signatures.
      * 
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative operation.
      */
     function createContents(
         string[] calldata _uris,
@@ -210,14 +246,14 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Update content URIs.
+     *  @notice Update URI of multiple contents.
      *
      *          Name           Description
-     *  @param  _contentIds    Array of content IDs.
-     *  @param  _uris          Array of new content URIs.
+     *  @param  _contentIds    Array of content identifiers.
+     *  @param  _uris          Array of new URIs, respectively for each content.
      *  @param  _signatures    Array of admin signatures.
      * 
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative operation.
      */
     function updateContentURIs(
         uint256[] calldata _contentIds,
@@ -253,13 +289,13 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Cancel contents.
+     *  @notice Cancel multiple contents.
      *
      *          Name           Description
-     *  @param  _contentIds    Array of content IDs.
+     *  @param  _contentIds    Array of content identifiers.
      *  @param  _signatures    Array of admin signatures.
      * 
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative operation.
      */
     function cancelContents(
         uint256[] calldata _contentIds,
@@ -288,8 +324,40 @@ ReentrancyGuardUpgradeable {
         }
     }
 
-    function mint(uint256 _contentId, uint256 _amount)
-    external payable nonReentrant whenNotPaused returns (uint256, uint256) {
+
+    /* --- Query --- */
+    /**
+     *          Name          Description
+     *  @param  _contentId    Content identifier.
+     * 
+     *  @return content       Information of the content.
+     */
+    function getContent(
+        uint256 _contentId
+    ) public view returns (Content memory) {
+        if (_contentId == 0 || _contentId > contentNumber) {
+            revert InvalidContentId();
+        }
+        return contents[_contentId];
+    }
+
+
+    /**
+     *  @notice Mint tokens of a content.
+     *
+     *          Name            Description
+     *  @param  _contentId      Content identifier.
+     *  @param  _amount         Number of tokens to mint.
+     *  @return firstTokenId    First token identifier of the minted tokens.
+     *  @return lastTokenId     Last token identifier of the minted tokens.
+     */
+    function mint(
+        uint256 _contentId,
+        uint256 _amount
+    ) external payable
+    nonReentrant
+    whenNotPaused
+    returns (uint256, uint256) {
         if (_amount == 0) {
             revert InvalidInput();
         }
@@ -300,7 +368,7 @@ ReentrancyGuardUpgradeable {
 
         Content storage content = contents[_contentId];
 
-        if (content.startAt > block.timestamp)  {
+        if (content.startAt > block.timestamp) {
             revert NotOpened();
         }
 
@@ -332,18 +400,43 @@ ReentrancyGuardUpgradeable {
         return (firstTokenId, lastTokenId);
     }
 
-    function tokenURI(uint256 _tokenId) public view override(
+    /**
+     *          Name        Description
+     *  @param  _tokenId    Token identifier.
+     * 
+     *  @return Token URI.
+     */
+    function tokenURI(
+        uint256 _tokenId
+    ) public view override(
         IERC721MetadataUpgradeable,
         ERC721Upgradeable
     ) returns (string memory) {
         return contents[tokenContents[_tokenId]].uri;
     }
 
-    function getRoyaltyRate(uint256) external view returns (Rate memory) {
+    /**
+     *          Name        Description
+     *  @param  _tokenId    Token identifier.
+     * 
+     *  @return rate        Royalty rate of the token identifier.
+     */
+    function getRoyaltyRate(
+        uint256 _tokenId
+    ) external view returns (Rate memory) {
         return Rate(royaltyRate, CommonConstant.RATE_DECIMALS);
     }
 
-    function supportsInterface(bytes4 _interfaceId) public view override(
+    /* --- Override --- */
+    /**
+     *          Name            Description
+     *  @param  _interfaceId    Interface identifier.
+     * 
+     *  @return Whether this contract implements the interface.
+     */
+    function supportsInterface(
+        bytes4 _interfaceId
+    ) public view override(
         IERC165Upgradeable,
         ERC721Upgradeable
     ) returns (bool) {
@@ -352,6 +445,10 @@ ReentrancyGuardUpgradeable {
             || super.supportsInterface(_interfaceId);
     }
 
+    /**
+     *          Name       Description
+     *  @return address    Royalty receiver address.
+     */
     function _royaltyReceiver() internal view override returns (address) {
         return address(this);
     }

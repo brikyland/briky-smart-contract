@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
 /**
@@ -7,6 +7,10 @@ pragma solidity ^0.8.20;
  *  @notice Interface for struct `DataFeed`.
  */
 interface IDataFeed {
+    /** ===== ERROR ===== **/
+    error InvalidDataFeed();
+
+
     /** ===== STRUCT ===== **/
     /**
      *  @notice Connection configuration of a Data Feed.
@@ -14,6 +18,7 @@ interface IDataFeed {
      */
     struct DataFeed {
         /// @notice Data Feed contract address.
+        /// @notice This contract must support interface `AggregatorV3Interface`.
         address feed;
 
         /// @notice Acceptable latency.

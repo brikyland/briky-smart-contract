@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
 /// contracts/common/interfaces/
@@ -14,8 +14,10 @@ IReserveVault {
     /// @dev    funds[fundId]
     mapping(uint256 => Fund) internal funds;
 
+
     /// @dev    isProvider[account]
     mapping(address => bool) public isProvider;
+
 
     uint256 public fundNumber;
 

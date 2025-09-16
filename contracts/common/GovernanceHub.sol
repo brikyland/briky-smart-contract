@@ -1,79 +1,162 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
+/// @openzeppelin/contracts-upgradeable/
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
-import {CurrencyHandler} from "./utilities/CurrencyHandler.sol";
-import {Formula} from "./utilities/Formula.sol";
-import {Signature} from "./utilities/Signature.sol";
-
+/// contracts/common/constants/
 import {CommonConstant} from "./constants/CommonConstant.sol";
 import {GovernanceHubConstant} from "./constants/GovernanceHubConstant.sol";
 
+/// contracts/common/interfaces/
 import {IAdmin} from "./interfaces/IAdmin.sol";
 import {IGovernor} from "./interfaces/IGovernor.sol";
 
+/// contracts/common/storages/
 import {GovernanceHubStorage} from "./storages/GovernanceHubStorage.sol";
 
+/// contracts/common/utilities/
 import {Administrable} from "./utilities/Administrable.sol";
+import {CurrencyHandler} from "./utilities/CurrencyHandler.sol";
+import {Formula} from "./utilities/Formula.sol";
 import {Pausable} from "./utilities/Pausable.sol";
+import {Signature} from "./utilities/Signature.sol";
 import {Validatable} from "./utilities/Validatable.sol";
 
+/**
+ *  @author Briky Team
+ *
+ *  @notice The `GovernanceHub` contract conducts voting among holders of an asset from governor contracts to decide on
+ *          proposals that affects the asset.
+ *
+ *  @dev    Any current holder of the asset, with client-side support, can propose by submitting a full proper context to the
+ *          server-side and forwarding only its checksum to the contract as the UUID of the new proposal. Authorized executives
+ *          will later verify the feasibility of the proposal within a given expiration to either admit or disqualify it
+ *          accordingly. During this process, the full context is uploaded to a public database (e.g., IPFS), and the link is
+ *          submitted to be the URI of proposal context. This approach protects the database from external attacks as well as
+ *          ensures proposals remains validatable and user-oriented.
+ *  @dev    Implementation involves server-side support.
+ *  @dev    ERC-20 tokens are identified by their contract addresses.
+ *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
+ */
 contract GovernanceHub is
 GovernanceHubStorage,
 Administrable,
 Pausable,
 Validatable,
 ReentrancyGuardUpgradeable {
+    /** ===== LIBRARY ===== **/
     using CurrencyHandler for uint256;
     using Formula for uint256;
 
+
+    /** ===== CONSTANT ===== **/
     string constant private VERSION = "v1.2.1";
 
-    modifier validProposal(uint256 _proposalId) {
-        if (_proposalId == 0 || _proposalId > proposalNumber) {
+
+    /** ===== MODIFIER ===== **/
+    /**
+     *  @notice Verify a valid proposal.
+     *
+     *          Name            Description
+     *  @param  _proposalId     Proposal Identifier.
+     */
+    modifier validProposal(
+        uint256 _proposalId
+    ) {
+        if (_proposalId == 0
+            || _proposalId > proposalNumber) {
             revert InvalidProposalId();
         }
         _;
     }
 
-    modifier onlyOperator(uint256 _proposalId) {
+    /**
+     *  @notice Verify the sender is the operator of a proposal.
+     *
+     *          Name            Description
+     *  @param  _proposalId     Proposal Identifier.
+     */
+    modifier onlyOperator(
+        uint256 _proposalId
+    ) {
         if (msg.sender != proposals[_proposalId].operator) {
             revert Unauthorized();
         }
         _;
     }
 
+    /**
+     *  @notice Verify the sender is the representative of the asset from of a proposal.
+     *
+     *          Name            Description
+     *  @param  _proposalId     Proposal Identifier.
+     */
+    modifier onlyRepresentative(
+        uint256 _proposalId
+    ) {
+        Proposal storage proposal = proposals[_proposalId];
+        if (msg.sender != IGovernor(proposal.governor).getRepresentative(proposal.tokenId)) {
+            revert Unauthorized();
+        }
+        _;
+    }
+
+
+    /** ===== FUNCTION ===== **/
+    /* --- Common --- */
+    /**
+     *  @notice Executed on a call to this contract with empty calldata.
+     */
     receive() external payable {}
 
+    /**
+     *  @return Version of implementation.
+     */
+    function version() external pure returns (string memory) {
+        return VERSION;
+    }
+
+
+    /* --- Initialization --- */
+    /**
+     *  @notice Invoked for initialization after deployment, serving as the contract constructor.
+     *
+     *          Name            Description
+     *  @param  _admin          Receiver address.
+     *  @param  _validator      Validator address.
+     *  @param  _fee            Proposal fee charged in native coin.
+     */
     function initialize(
         address _admin,
         address _validator,
         uint256 _fee
-    ) external initializer {
+    ) external
+    initializer {
+        /// Initializer
         __Pausable_init();
         __ReentrancyGuard_init();
 
         __Validatable_init(_validator);
 
+        /// Dependency
         admin = _admin;
 
+        /// Configuration
         fee = _fee;
         emit FeeUpdate(_fee);
     }
 
-    function version() external pure returns (string memory) {
-        return VERSION;
-    }
 
+    /* --- Administration --- */
     /**
      *  @notice Update proposal fee.
      *
-     *          Name           Description
-     *  @param  _fee           New proposal fee.
-     *  @param  _signatures    Array of admin signatures.
+     *          Name            Description
+     *  @param  _fee            New proposal fee charged in native coin.
+     *  @param  _signatures     Array of admin signatures.
      *
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative configuration.
      */
     function updateFee(
         uint256 _fee,
@@ -87,22 +170,38 @@ ReentrancyGuardUpgradeable {
             ),
             _signatures
         );
+
         fee = _fee;
         emit FeeUpdate(_fee);
     }
 
-    function getProposal(uint256 _proposalId)
-    external view validProposal(_proposalId) returns (Proposal memory) {
+
+    /* --- Query --- */
+    /**
+     *          Name            Description
+     *  @param  _proposalId     Proposal identifier.
+     *
+     *  @return Information and progress of the proposal.
+     */
+    function getProposal(
+        uint256 _proposalId
+    ) external view
+    validProposal(_proposalId)
+    returns (Proposal memory) {
         return proposals[_proposalId];
     }
 
-    function getProposalVerdict(uint256 _proposalId)
-    external view validProposal(_proposalId) returns (ProposalVerdict) {
-        return _votingVerdict(proposals[_proposalId]);
-    }
-
-    function getProposalState(uint256 _proposalId)
-    external view validProposal(_proposalId) returns (ProposalState) {
+    /**
+     *          Name            Description
+     *  @param  _proposalId     Proposal identifier.
+     *
+     *  @return State of the proposal.
+     */
+    function getProposalState(
+        uint256 _proposalId
+    ) external view
+    validProposal(_proposalId)
+    returns (ProposalState) {
         if (proposals[_proposalId].state == ProposalState.Voting
             && proposals[_proposalId].due + GovernanceHubConstant.VOTE_CONFIRMATION_TIME_LIMIT <= block.timestamp) {
             return ProposalState.Disqualified;
@@ -111,6 +210,48 @@ ReentrancyGuardUpgradeable {
         return proposals[_proposalId].state;
     }
 
+    /**
+     *          Name            Description
+     *  @param  _proposalId     Proposal identifier.
+     *
+     *  @return Verdict of the proposal.
+     */
+    function getProposalVerdict(
+        uint256 _proposalId
+    ) external view
+    validProposal(_proposalId)
+    returns (ProposalVerdict) {
+        return _votingVerdict(proposals[_proposalId]);
+    }
+
+
+    /* --- Command --- */
+    /**
+     *  @notice Propose a new operation on an asset from a governor contract.
+     *
+     *          Name                Description
+     *  @param  _governor           Governor contract address.
+     *  @param  _tokenId            Asset identifier from the governor contract.
+     *  @param  _operator           Assigned operator address.
+     *  @param  _uuid               Checksum of proposal context.
+     *  @param  _rule               Rule to determine verdict.
+     *  @param  _quorumRate         Fraction of total weight for quorum.
+     *  @param  _duration           Voting duration.
+     *  @param  _admissionExpiry    Expiration for moderators to admit the proposal.
+     *  @param  _validation         Validation package from the validator.
+     *
+     *  @return New proposal identifier.
+     *
+     *  @dev    Any current holder of the asset, with client-side support, can propose by submitting a full proper context to
+     *          the server-side and forwarding only its checksum to this contract as the UUID of the new proposal. Authorized
+     *          executives will later verify the feasibility of the proposal within a given expiration to either admit or
+     *          disqualify it accordingly. During this process, the full context is uploaded to a public database (e.g., IPFS),
+     *          and the link is submitted to be the URI of proposal context. This approach protects the database from external
+     *          attacks as well as ensures proposals remains validatable and user-oriented.
+     *  @dev    Through the validation mechanism, the server-side determines `uuid`, `quorumRate`, `duration` and
+     *          `admissionExpiry` based on the specific supported type of proposal and its context. Operators are also required
+     *          to be pre-registered on the server-side to ensure proper assignments.
+     */
     function propose(
         address _governor,
         uint256 _tokenId,
@@ -121,7 +262,11 @@ ReentrancyGuardUpgradeable {
         uint40 _duration,
         uint40 _admissionExpiry,
         Validation calldata _validation
-    ) external payable nonReentrant onlyGovernor(_governor) whenNotPaused returns (uint256) {
+    ) external payable
+    whenNotPaused
+    nonReentrant
+    validGovernor(_governor)
+    returns (uint256) {
         _validate(
             abi.encode(
                 _governor,
@@ -149,6 +294,7 @@ ReentrancyGuardUpgradeable {
             revert InvalidTimestamp();
         }
 
+        /// @dev    Fee is charged in native coin.
         CurrencyHandler.receiveNative(fee);
 
         uint256 proposalId = ++proposalNumber;
@@ -160,8 +306,11 @@ ReentrancyGuardUpgradeable {
         proposal.uuid = _uuid;
         proposal.operator = _operator;
         proposal.rule = _rule;
+        /// @dev    In `Pending` state, `quorum` is a fractional rate.
         proposal.quorum = _quorumRate;
+        /// @dev    In `Pending` state, `due` is set to the vote duration.
         proposal.due = _duration;
+        /// @dev    In `Pending` state, `timePivot` is set to the admission expiration timestamp.
         proposal.timePivot = _admissionExpiry;
 
         proposal.state = ProposalState.Pending;
@@ -171,8 +320,8 @@ ReentrancyGuardUpgradeable {
             proposalId,
             msg.sender,
             _tokenId,
-            _uuid,
             _operator,
+            _uuid,
             _rule,
             _quorumRate,
             _duration,
@@ -182,13 +331,32 @@ ReentrancyGuardUpgradeable {
         return proposalId;
     }
 
+    /**
+     *  @notice Admit an executable proposal after review practicability.
+     *  @notice Admit only if the proposal is in `Pending` state and before admission time limit expires.
+     *
+     *          Name                Description
+     *  @param  _proposalId         Proposal identifier.
+     *  @param  _contextURI         URI of proposal context.
+     *  @param  _reviewURI          URI of review detail.
+     *  @param  _currency           Budget currency address.
+     *  @param  _validation         Validation package from the validator.
+     *
+     *  @dev    Permissions: Asset representative of the proposal.
+     *  @dev    As the proposal has only set `uuid` before admission, `contextURI` must be provided when admitting.
+     */
     function admit(
         uint256 _proposalId,
         string calldata _contextURI,
         string calldata _reviewURI,
         address _currency,
         Validation calldata _validation
-    ) external validProposal(_proposalId) onlyExecutive whenNotPaused {
+    ) external
+    whenNotPaused
+    nonReentrant
+    validProposal(_proposalId)
+    validGovernor(proposals[_proposalId].governor)
+    onlyRepresentative(_proposalId) {
         _validate(
             abi.encode(
                 _proposalId,
@@ -214,46 +382,65 @@ ReentrancyGuardUpgradeable {
             revert UnavailableToken();
         }
 
-        IAdmin adminContract = IAdmin(admin);
-        if (!adminContract.isActiveIn(governorContract.zoneOf(tokenId), msg.sender)) {
-            revert Unauthorized();
-        }
-
+        /// @dev The voting power corresponds to equity at admission timestamp.
         uint256 totalWeight = IGovernor(proposal.governor).totalEquityAt(tokenId, block.timestamp);
         if (totalWeight == 0) {
             revert NoVotingPower();
         }
 
-        uint256 quorum = totalWeight.scale(
+        uint256 quorumWeight = totalWeight.scale(
             proposal.quorum,
             CommonConstant.RATE_MAX_FRACTION
         );
 
         proposal.contextURI = _contextURI;
+        /// @dev    Log the review detail.
         proposal.logURI = _reviewURI;
         proposal.totalWeight = totalWeight;
-        proposal.quorum = quorum;
+        /// @dev    `quorum` is converted to weight.
+        proposal.quorum = quorumWeight;
+        /// @dev    `timePivot` is altered by the admission timestamp.
         proposal.timePivot = uint40(block.timestamp);
-        proposal.state = ProposalState.Voting;
         proposal.currency = _currency;
+        /// @dev    `due` is altered by the vote closure timestamp.
         proposal.due += uint40(block.timestamp);
+
+        proposal.state = ProposalState.Voting;
 
         emit ProposalAdmission(
             _proposalId,
             _contextURI,
             _reviewURI,
+            _currency,
             totalWeight,
-            quorum,
-            _currency
+            quorumWeight
         );
     }
 
+    /**
+     *  @notice Disqualify an inexecutable proposal after review practicability.
+     *  @notice Disqualify only if the proposal is in `Pending` or `Voting` state and before the vote closes.
+     *
+     *          Name                Description
+     *  @param  _proposalId         Proposal identifier.
+     *  @param  _contextURI         URI of proposal context.
+     *  @param  _reviewURI          URI of review detail.
+     *  @param  _validation         Validation package from the validator.
+     *
+     *  @dev    Permission:
+     *          - Asset representative of the proposal: during `Pending` state.
+     *          - Managers: during `Pending` and `Voting` state.
+     *  @dev    As the proposal has only set `uuid` before disqualification, `contextURI` must be provided when disqualifying.
+     */
     function disqualify(
         uint256 _proposalId,
         string calldata _contextURI,
         string calldata _reviewURI,
         Validation calldata _validation
-    ) external validProposal(_proposalId) whenNotPaused {
+    ) external
+    whenNotPaused
+    nonReentrant
+    validProposal(_proposalId) {
         _validate(
             abi.encode(
                 _proposalId,
@@ -264,21 +451,26 @@ ReentrancyGuardUpgradeable {
         );
 
         Proposal storage proposal = proposals[_proposalId];
-        if (!IAdmin(admin).isActiveIn(
-            IGovernor(proposal.governor).zoneOf(proposal.tokenId),
-            msg.sender
-        )) {
-            revert Unauthorized();
-        }
+        IGovernor governorContract = IGovernor(proposal.governor);
 
         IAdmin adminContract = IAdmin(admin);
         ProposalState state = proposal.state;
-        if (!(state == ProposalState.Pending && adminContract.isExecutive(msg.sender))
-            && !(state == ProposalState.Voting && adminContract.isManager(msg.sender))) {
-            revert InvalidDisqualifying();
+        uint256 tokenId = proposal.tokenId;
+        if (!adminContract.isManager(msg.sender)
+            || !adminContract.isActiveIn(governorContract.zoneOf(tokenId), msg.sender)) {
+            if (state != ProposalState.Pending && state != ProposalState.Voting) {
+                revert Unauthorized();
+            }
+        } else if (msg.sender == governorContract.getRepresentative(tokenId)) {
+            if (state != ProposalState.Pending) {
+                revert Unauthorized();
+            }
+        } else {
+            revert Unauthorized();
         }
 
         proposal.contextURI = _contextURI;
+        /// @dev    Log the review detail.
         proposal.logURI = _reviewURI;
         proposal.state = ProposalState.Disqualified;
 
@@ -289,33 +481,89 @@ ReentrancyGuardUpgradeable {
         );
     }
 
-    function vote(uint256 _proposalId, ProposalVoteOption _option)
-    external validProposal(_proposalId) whenNotPaused returns (uint256) {
-        return _vote(_proposalId, _option);
+    /**
+     *  @notice Vote on a proposal.
+     *  @notice Vote only if the proposal is in `Voting` state and before the vote closes.
+     *
+     *          Name                Description
+     *  @param  _proposalId         Proposal identifier.
+     *  @param  _voteOption         Vote option.
+     *
+     *  @return Vote power.
+     */
+    function vote(
+        uint256 _proposalId,
+        ProposalVoteOption _voteOption
+    ) external
+    whenNotPaused
+    validProposal(_proposalId)
+    returns (uint256) {
+        return _vote(_proposalId, _voteOption);
     }
 
+    /**
+     *  @notice Vote on a proposal.
+     *  @notice Vote only if the proposal is in `Voting` state and before the vote closes.
+     *
+     *          Name                Description
+     *  @param  _proposalId         Proposal identifier.
+     *  @param  _voteOption         Vote option.
+     *  @param  _anchor             `uuid` of the proposal.
+     *
+     *  @return Vote power.
+     *
+     *  @dev    Anchor enforces consistency between this contract and the client-side.
+     */
     function safeVote(
         uint256 _proposalId,
-        ProposalVoteOption _option,
+        ProposalVoteOption _voteOption,
         bytes32 _anchor
-    ) external validProposal(_proposalId) whenNotPaused returns (uint256) {
+    ) external
+    whenNotPaused
+    validProposal(_proposalId)
+    returns (uint256) {
         if (_anchor != proposals[_proposalId].uuid) {
             revert BadAnchor();
         }
 
-        return _vote(_proposalId, _option);
+        return _vote(_proposalId, _voteOption);
     }
 
-    function contributeBudget(uint256 _proposalId, uint256 _value)
-    external payable validProposal(_proposalId) {
+    /**
+     *  @notice Contribute to the budget of a proposal.
+     *  @notice Contribute only before the proposal is confirmed or the confirmation time limit expires.
+     *
+     *          Name                Description
+     *  @param  _proposalId         Proposal identifier.
+     *  @param  _value              Contributed value.
+     */
+    function contributeBudget(
+        uint256 _proposalId,
+        uint256 _value
+    ) external payable
+    whenNotPaused
+    validProposal(_proposalId) {
         _contributeBudget(_proposalId, _value);
     }
 
+    /**
+     *  @notice Contribute to the budget of a proposal.
+     *  @notice Contribute only before the proposal is confirmed or the confirmation time limit expires.
+     *
+     *          Name                Description
+     *  @param  _proposalId         Proposal identifier.
+     *  @param  _value              Contributed value.
+     *  @param  _anchor             `uuid` of the proposal.
+     *
+     *  @dev    Anchor enforces consistency between this contract and the client-side.
+     */
     function safeContributeBudget(
         uint256 _proposalId,
         uint256 _value,
         bytes32 _anchor
-    ) external payable validProposal(_proposalId) {
+    ) external payable
+    whenNotPaused
+    validProposal(_proposalId) {
         if (_anchor != proposals[_proposalId].uuid) {
             revert BadAnchor();
         }
@@ -323,19 +571,36 @@ ReentrancyGuardUpgradeable {
         _contributeBudget(_proposalId, _value);
     }
 
-    function withdrawBudgetContribution(uint256 _proposalId)
-    external nonReentrant validProposal(_proposalId) whenNotPaused returns (uint256) {
+    /**
+     *  @notice Withdraw contribution from a proposal which cannot be executed.
+     *  @notice Withdraw only if the proposal is either disapproved, disqualified or rejected, or after confirmation time limit
+     *          expires.
+     *
+     *          Name                Description
+     *  @param  _proposalId         Proposal identifier.
+     *
+     *  @return Withdrawn value.
+     */
+    function withdrawBudgetContribution(
+        uint256 _proposalId
+    ) external
+    whenNotPaused
+    nonReentrant
+    validProposal(_proposalId)
+    returns (uint256) {
         Proposal storage proposal = proposals[_proposalId];
         ProposalState state = proposal.state;
-        if (!(state == ProposalState.Voting && proposal.due + GovernanceHubConstant.VOTE_CONFIRMATION_TIME_LIMIT <= block.timestamp)
+        if (!(state == ProposalState.Voting
+                && proposal.due + GovernanceHubConstant.VOTE_CONFIRMATION_TIME_LIMIT <= block.timestamp)
             && _votingVerdict(proposal) != ProposalVerdict.Failed) {
             revert InvalidWithdrawing();
         }
-        uint256 contribution = contributions[_proposalId][msg.sender];
 
+        uint256 contribution = contributions[_proposalId][msg.sender];
         if (contribution == 0) {
             revert NothingToWithdraw();
         }
+
         contributions[_proposalId][msg.sender] = 0;
         CurrencyHandler.sendCurrency(proposals[_proposalId].currency, msg.sender, contribution);
 
@@ -348,8 +613,27 @@ ReentrancyGuardUpgradeable {
         return contribution;
     }
 
-    function confirm(uint256 _proposalId)
-    external nonReentrant validProposal(_proposalId) onlyManager whenNotPaused returns (uint256) {
+    /**
+     *  @notice Confirm a proposal to be executed.
+     *  @notice Confirm only if the proposal is approved and before the confirmation time limit expires.
+     *  @notice On proposal confirmation, the budget is transferred to the operator.
+     *
+     *          Name                Description
+     *  @param  _proposalId         Proposal identifier.
+     *
+     *  @return Contributed budget for execution.
+     *
+     *  @dev    Permission: Managers.
+     */
+    function confirm(
+        uint256 _proposalId
+    ) external
+    whenNotPaused
+    nonReentrant
+    validProposal(_proposalId)
+    validGovernor(proposals[_proposalId].governor)
+    onlyManager
+    returns (uint256) {
         Proposal storage proposal = proposals[_proposalId];
         uint256 tokenId = proposal.tokenId;
         IGovernor governorContract = IGovernor(proposal.governor);
@@ -357,7 +641,8 @@ ReentrancyGuardUpgradeable {
             revert UnavailableToken();
         }
 
-        if (!IAdmin(admin).isActiveIn(governorContract.zoneOf(tokenId), msg.sender)) {
+        IAdmin adminContract = IAdmin(admin);
+        if (!adminContract.isActiveIn(governorContract.zoneOf(tokenId), msg.sender)) {
             revert Unauthorized();
         }
 
@@ -384,8 +669,21 @@ ReentrancyGuardUpgradeable {
         return budget;
     }
 
-    function rejectExecution(uint256 _proposalId)
-    external validProposal(_proposalId) onlyOperator(_proposalId) whenNotPaused {
+    /**
+     *  @notice Reject to execute a proposal.
+     *  @notice Reject only if the proposal is in `Voting` state.
+     *
+     *          Name                Description
+     *  @param  _proposalId         Proposal identifier.
+     *
+     *  @dev    Permission: Operator of the proposal.
+     */
+    function rejectExecution(
+        uint256 _proposalId
+    ) external
+    whenNotPaused
+    validProposal(_proposalId)
+    onlyOperator(_proposalId) {
         Proposal storage proposal = proposals[_proposalId];
         ProposalState state = proposal.state;
 
@@ -398,11 +696,31 @@ ReentrancyGuardUpgradeable {
         emit ProposalExecutionRejection(_proposalId);
     }
 
+    /**
+     *  @notice Update a proposal about the progress of execution.
+     *  @notice Update only if the proposal is in `Executing` state.
+     *
+     *          Name                Description
+     *  @param  _proposalId         Proposal identifier.
+     *  @param  _logURI             URI of execution progress log.
+     *  @param  _validation         Validation package from the validator.
+     *
+     *  @dev    Permission: Operator of the proposal.
+     *  @dev    Validation data:
+     *          ```
+     *          data = abi.encode(logURI);
+     *          ```
+     */
     function logExecution(
         uint256 _proposalId,
         string calldata _logURI,
         Validation calldata _validation
-    ) external validProposal(_proposalId) onlyOperator(_proposalId) whenNotPaused {
+    ) external
+    whenNotPaused
+    nonReentrant
+    validProposal(_proposalId)
+    validGovernor(proposals[_proposalId].governor)
+    onlyOperator(_proposalId) {
         _validate(
             abi.encode(
                 _proposalId,
@@ -411,25 +729,54 @@ ReentrancyGuardUpgradeable {
             _validation
         );
 
+        Proposal storage proposal = proposals[_proposalId];
+        if (!IGovernor(proposal.governor).isAvailable(proposal.tokenId)) {
+            revert UnavailableToken();
+        }
+
         if (proposals[_proposalId].state != ProposalState.Executing) {
             revert InvalidUpdating();
         }
 
         proposals[_proposalId].logURI = _logURI;
 
-        emit ProposalExecutionLog(_proposalId, _logURI);
+        emit ProposalExecutionLog(
+            _proposalId,
+            _logURI
+        );
     }
 
+    /**
+     *  @notice Conclude the execution of a proposal.
+     *  @notice Conclude only if the proposal is in `Executing` state.
+     *
+     *          Name            Description
+     *  @param  _proposalId      Proposal identifier.
+     *  @param  _resultURI       URI of final execution result.
+     *  @param  _isSuccessful    Whether the execution has succeeded.
+     *  @param  _validation      Validation package from the validator.
+     *
+     *  @dev    Permission: Asset representative of the proposal.
+     *  @dev    Validation data:
+     *          ```
+     *          data = abi.encode(resultURI);
+     *          ```
+     */
     function concludeExecution(
         uint256 _proposalId,
-        string calldata _logURI,
+        string calldata _resultURI,
         bool _isSuccessful,
         Validation calldata _validation
-    ) external validProposal(_proposalId) onlyManager whenNotPaused {
+    ) external
+    whenNotPaused
+    nonReentrant
+    validProposal(_proposalId)
+    validGovernor(proposals[_proposalId].governor)
+    onlyRepresentative(_proposalId) {
         _validate(
             abi.encode(
                 _proposalId,
-                _logURI,
+                _resultURI,
                 _isSuccessful
             ),
             _validation
@@ -437,40 +784,51 @@ ReentrancyGuardUpgradeable {
 
         Proposal storage proposal = proposals[_proposalId];
         uint256 tokenId = proposal.tokenId;
-        IGovernor governorContract = IGovernor(proposal.governor);
-        if (!governorContract.isAvailable(tokenId)) {
+        if (!IGovernor(proposal.governor).isAvailable(tokenId)) {
             revert UnavailableToken();
-        }
-
-        if (!IAdmin(admin).isActiveIn(governorContract.zoneOf(tokenId), msg.sender)) {
-            revert Unauthorized();
         }
 
         if (proposal.state != ProposalState.Executing) {
             revert InvalidConcluding();
         }
 
-        proposal.logURI = _logURI;
+        proposal.logURI = _resultURI;
         proposal.state = _isSuccessful ? ProposalState.SuccessfulExecuted : ProposalState.UnsuccessfulExecuted;
 
         emit ProposalExecutionConclusion(
             _proposalId,
-            _logURI,
+            _resultURI,
             _isSuccessful
         );
     }
 
-    function _votingVerdict(Proposal storage _proposal) internal view returns (ProposalVerdict) {
+
+    /**
+     *  @notice Evaluate the verdict of the vote of a proposal
+     *
+     *          Name            Description
+     *  @param  _proposal       Proposal.
+     *
+     *  @return Verdict of the proposal.
+     */
+    function _votingVerdict(
+        Proposal storage _proposal
+    ) internal view returns (ProposalVerdict) {
         ProposalState state = _proposal.state;
+        /// @dev    The proposal has not been admitted for vote yet.
         if (state == ProposalState.Nil
             || state == ProposalState.Pending) {
             return ProposalVerdict.Unsettled;
         }
+
+        /// @dev    The proposal has been confirmed to be executed.
         if (state == ProposalState.Executing
             || state == ProposalState.SuccessfulExecuted
             || state == ProposalState.UnsuccessfulExecuted) {
             return ProposalVerdict.Passed;
         }
+
+        /// @dev    The proposal can never be executed.
         if (state == ProposalState.Disqualified
             || state == ProposalState.Rejected) {
             return ProposalVerdict.Failed;
@@ -479,29 +837,57 @@ ReentrancyGuardUpgradeable {
         ProposalRule rule = _proposal.rule;
         uint256 quorum = _proposal.quorum;
         if (rule == ProposalRule.ApprovalBeyondQuorum) {
+            /// @dev    Meet the quorum.
             if (_proposal.approvalWeight >= quorum) {
                 return ProposalVerdict.Passed;
             }
+
+            /// @dev    Not enough unvoted weight to meet the quorum.
             if (_proposal.disapprovalWeight > _proposal.totalWeight - quorum) {
                 return ProposalVerdict.Failed;
             }
+
+            /// @dev    Only determined after due.
             return _proposal.due <= block.timestamp
                 ? ProposalVerdict.Failed
                 : ProposalVerdict.Unsettled;
         } else {
+            /// @dev    Meet the quorum.
             if (_proposal.disapprovalWeight >= quorum) {
                 return ProposalVerdict.Failed;
             }
+
+            /// @dev    Not enough unvoted weight to meet the quorum.
             if (_proposal.approvalWeight > _proposal.totalWeight - quorum) {
                 return ProposalVerdict.Passed;
             }
+
+            /// @dev    Only determined after due.
             return _proposal.due <= block.timestamp
                 ? ProposalVerdict.Passed
                 : ProposalVerdict.Unsettled;
         }
     }
 
-    function _vote(uint256 _proposalId, ProposalVoteOption _voteOption) internal whenNotPaused returns (uint256) {
+
+    /* --- Helper --- */
+    /**
+     *  @notice Vote on a proposal.
+     *  @notice Vote only if the proposal is in `Voting` state and before the vote closes.
+     *
+     *          Name                Description
+     *  @param  _proposalId         Proposal identifier.
+     *  @param  _voteOption         Vote option.
+     *
+     *  @return Vote power.
+     */
+    function _vote(
+        uint256 _proposalId,
+        ProposalVoteOption _voteOption
+    ) internal
+    nonReentrant
+    validGovernor(proposals[_proposalId].governor)
+    returns (uint256) {
         Proposal storage proposal = proposals[_proposalId];
         if (proposal.state != ProposalState.Voting) {
             revert InvalidVoting();
@@ -521,6 +907,7 @@ ReentrancyGuardUpgradeable {
             revert UnavailableToken();
         }
 
+        /// @dev The voting power corresponds to equity at admission timestamp.
         uint256 weight = governorContract.equityOfAt(
             msg.sender,
             tokenId,
@@ -534,12 +921,14 @@ ReentrancyGuardUpgradeable {
 
         if (_voteOption == ProposalVoteOption.Approval) {
             uint256 newWeight = proposal.approvalWeight + weight;
+            /// @dev    Absent vote is counted as disapproval.
             if (newWeight + proposal.disapprovalWeight > proposal.totalWeight) {
                 revert ConflictedWeight();
             }
             proposal.approvalWeight = newWeight;
         } else if (_voteOption == ProposalVoteOption.Disapproval) {
             uint256 newWeight = proposal.disapprovalWeight + weight;
+            /// @dev    Absent vote is counted as approval.
             if (newWeight + proposal.approvalWeight > proposal.totalWeight) {
                 revert ConflictedWeight();
             }
@@ -556,8 +945,20 @@ ReentrancyGuardUpgradeable {
         return weight;
     }
 
-    function _contributeBudget(uint256 _proposalId, uint256 _value)
-    internal nonReentrant whenNotPaused {
+    /**
+     *  @notice Contribute to the budget of a proposal.
+     *  @notice Contribute only before the proposal is confirmed or the confirmation time limit expires.
+     *
+     *          Name                Description
+     *  @param  _proposalId         Proposal identifier.
+     *  @param  _value              Contributed value.
+     */
+    function _contributeBudget(
+        uint256 _proposalId,
+        uint256 _value
+    ) internal
+    nonReentrant
+    validGovernor(proposals[_proposalId].governor) {
         Proposal storage proposal = proposals[_proposalId];
         ProposalState state = proposal.state;
         if (state != ProposalState.Voting) {
@@ -565,7 +966,7 @@ ReentrancyGuardUpgradeable {
         }
 
         if (proposal.due + GovernanceHubConstant.VOTE_CONFIRMATION_TIME_LIMIT <= block.timestamp) {
-            revert Overdue();
+            revert Timeout();
         }
 
         CurrencyHandler.receiveCurrency(proposal.currency, _value);

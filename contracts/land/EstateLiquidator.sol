@@ -1,30 +1,46 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
+/// @openzeppelin/contracts-upgradeable/
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
-import {CurrencyHandler} from "../common/utilities/CurrencyHandler.sol";
-import {Formula} from "../common/utilities/Formula.sol";
+/// contracts/common/constants/
+import {CommonConstant} from "../common/constants/CommonConstant.sol";
 
+/// contracts/common/interfaces/
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 import {IDividendHub} from "../common/interfaces/IDividendHub.sol";
 import {IGovernanceHub} from "../common/interfaces/IGovernanceHub.sol";
 
-import {CommonConstant} from "../common/constants/CommonConstant.sol";
-
+/// contracts/common/utilities/
 import {Administrable} from "../common/utilities/Administrable.sol";
+import {CurrencyHandler} from "../common/utilities/CurrencyHandler.sol";
 import {Discountable} from "../common/utilities/Discountable.sol";
+import {Formula} from "../common/utilities/Formula.sol";
 import {Pausable} from "../common/utilities/Pausable.sol";
 import {Validatable} from "../common/utilities/Validatable.sol";
 
+/// contracts/land/constants/
 import {EstateLiquidatorConstant} from "./constants/EstateLiquidatorConstant.sol";
 
+/// contracts/land/interfaces/
 import {IEstateToken} from "./interfaces/IEstateToken.sol";
 
+/// contracts/land/storages/
 import {EstateLiquidatorStorage} from "./storages/EstateLiquidatorStorage.sol";
 
+/// contracts/land/utilities/
 import {CommissionDispatchable} from "./utilities/CommissionDispatchable.sol";
 
+/**
+ *  @author Briky Team
+ *
+ *  @notice TODO: The `EstateLiquidator` contract facilitates the extraction of estates from `EstateToken`.
+ *
+ *  @dev    Implementation involves server-side support.
+ *  @dev    ERC-20 tokens are identified by their contract addresses.
+ *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
+ */
 contract EstateLiquidator is
 EstateLiquidatorStorage,
 Administrable,
@@ -33,19 +49,59 @@ Discountable,
 Pausable,
 Validatable,
 ReentrancyGuardUpgradeable {
+    /** ===== LIBRARY ===== **/
     using Formula for uint256;
 
+
+    /** ===== CONSTANT ===== **/
     string constant private VERSION = "v1.2.1";
 
-    modifier validRequest(uint256 _requestId) {
+
+    /** ===== MODIFIER ===== **/
+    /**
+     *  @notice Verify a valid extraction request.
+     *
+     *          Name            Description
+     *  @param  _requestId      Request identifier.
+     */
+    modifier validRequest(
+        uint256 _requestId
+    ) {
         if (_requestId == 0 || _requestId > requestNumber) {
             revert InvalidRequestId();
         }
         _;
     }
 
+
+    /** ===== FUNCTION ===== **/
+    /* --- Common --- */
+    /**
+     *  @notice Executed on a call to this contract with empty calldata.
+     */
     receive() external payable {}
 
+    /**
+     *  @return Version of implementation.
+     */
+    function version() external pure returns (string memory) {
+        return VERSION;
+    }
+
+
+    /* --- Initialization --- */
+    /**
+     *  @notice Invoked for initialization after deployment, serving as the contract constructor.
+     *
+     *          Name                Description
+     *  @param  _admin              `Admin` contract address.
+     *  @param  _estateToken        `EstateToken` contract address.
+     *  @param  _commissionToken    `CommissionToken` contract address.
+     *  @param  _governanceHub      `GovernanceHub` contract address.
+     *  @param  _dividendHub        `DividendHub` contract address.
+     *  @param  _feeReceiver        `FeeReceiver` contract address.
+     *  @param  _validator          Validator address.
+     */
     function initialize(
         address _admin,
         address _estateToken,
@@ -54,13 +110,16 @@ ReentrancyGuardUpgradeable {
         address _dividendHub,
         address _feeReceiver,
         address _validator
-    ) external initializer {
+    ) external
+    initializer {
+        /// Initializer.
         __Pausable_init();
         __ReentrancyGuard_init();
 
         __CommissionDispatchable_init(_commissionToken);
         __Validatable_init(_validator);
 
+        /// Dependency.
         admin = _admin;
         estateToken = _estateToken;
         governanceHub = _governanceHub;
@@ -68,15 +127,39 @@ ReentrancyGuardUpgradeable {
         feeReceiver = _feeReceiver;
     }
 
-    function version() external pure returns (string memory) {
-        return VERSION;
-    }
 
-    function getRequest(uint256 _requestId)
-    external view validRequest(_requestId) returns (EstateLiquidatorRequest memory) {
+    /* --- Query --- */
+    /**
+     *          Name            Description
+     *  @param  _requestId      Request identifier.
+     *
+     *  @return Information and progress of the extraction request.
+     */
+    function getRequest(
+        uint256 _requestId
+    ) external view
+    validRequest(_requestId)
+    returns (EstateLiquidatorRequest memory) {
         return requests[_requestId];
     }
 
+    /* --- Command --- */
+    /**
+     *  @notice TODO: Create estate extraction request by submitting a proposal to `GovernanceHub`
+     *
+     *          Name            Description
+     *  @param  _estateId       Estate identifier to be extracted.
+     *  @param  _buyer          Buyer address.
+     *  @param  _value          Sale value.
+     *  @param  _currency       Sale currency address.
+     *  @param  _feeRate        Fraction of the sold value charged as fee.
+     *  @param  _uuid           Checksum of request context.
+     *  @param  _validation     Validation package from the validator.
+     *
+     *  @return New request identifier.
+     *
+     *  @dev    Permission: Managers active in the zone of the estate.
+     */
     function requestExtraction(
         uint256 _estateId,
         address _buyer,
@@ -85,7 +168,12 @@ ReentrancyGuardUpgradeable {
         uint256 _feeRate,
         bytes32 _uuid,
         Validation calldata _validation
-    ) external payable onlyManager nonReentrant whenNotPaused returns (uint256) {
+    ) external
+    payable
+    whenNotPaused
+    nonReentrant
+    onlyManager
+    returns (uint256) {
         IEstateToken estateTokenContract = IEstateToken(estateToken);
         if (!IAdmin(admin).isActiveIn(estateTokenContract.zoneOf(_estateId), msg.sender)) {
             revert Unauthorized();
@@ -152,8 +240,20 @@ ReentrancyGuardUpgradeable {
         return requestId;
     }
 
+    /**
+     *  @notice TODO: Conclude an extraction request
+     *
+     *          Name            Description
+     *  @param  _requestId      Request identifier.
+     *
+     *  @return Whether the extraction was successful.
+     */
     function conclude(uint256 _requestId)
-    external nonReentrant validRequest(_requestId) whenNotPaused returns (bool) {
+    external
+    whenNotPaused
+    nonReentrant
+    validRequest(_requestId)
+    returns (bool) {
         EstateLiquidatorRequest storage request = requests[_requestId];
         uint256 estateId = request.estateId;
         if (estateId == 0) {

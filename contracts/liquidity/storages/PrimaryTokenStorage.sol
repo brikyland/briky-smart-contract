@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
 /// contracts/liquidity/interfaces/
@@ -35,6 +35,7 @@ IPrimaryToken {
     address private stakeToken;
     address public treasury;
 
+    /** ===== UPGRADE ===== **/
     uint256 public stakeToken1Waves;
     uint256 public stakeToken2Waves;
     uint256 public stakeToken3Waves;

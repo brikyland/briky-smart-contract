@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
 /// @openzeppelin/contracts-upgradeable/
@@ -24,6 +24,7 @@ abstract contract Validatable is
 ValidatableStorage,
 Initializable {
     /** ===== FUNCTION ===== **/
+    /* --- Initialization --- */
     /**
      *  @notice Initialize for contract `Validatable`.
      *
@@ -32,18 +33,21 @@ Initializable {
      */
     function __Validatable_init(
         address _validator
-    ) internal onlyInitializing {
+    ) internal
+    onlyInitializing {
         validator = _validator;
     }
 
+
+    /* --- Administration --- */
     /**
      *  @notice Update validator.
      *
      *          Name            Description
-     *  @param  _validator      Validator address.
+     *  @param  _validator      New validator address.
      *  @param  _signatures     Array of admin signatures.
      *
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative configuration.
      */
     function updateValidator(
         address _validator,
@@ -61,6 +65,8 @@ Initializable {
         emit ValidatorUpdate(_validator);
     }
 
+
+    /* --- Helper --- */
     /**
      *  @notice Validate a data.
      *

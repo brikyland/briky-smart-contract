@@ -1,8 +1,8 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-/// contracts/common/externals/
-import {MulDiv} from "../externals/MulDiv.sol";
+/// @openzeppelin/contracts-upgradeable/
+import {MathUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/math/MathUpgradeable.sol";
 
 /**
  *  @author Briky Team
@@ -30,7 +30,9 @@ library FixedMath {
      *
      *  @return Unsigned fixed-point representation of `_x`.
      */
-    function toFixed(uint256 _x) internal pure returns (uint256) {
+    function toFixed(
+        uint256 _x
+    ) internal pure returns (uint256) {
         return _x << 128;
     }
 
@@ -42,7 +44,9 @@ library FixedMath {
      *
      *  @return Unsigned integer part of `_x`.
      */
-    function toUint(uint256 _x) internal pure returns (uint256) {
+    function toUint(
+        uint256 _x
+    ) internal pure returns (uint256) {
         return _x >> 128;
     }
 
@@ -55,7 +59,10 @@ library FixedMath {
      *
      *  @return Unsigned fixed-point representation of `_a + _b`.
      */
-    function add(uint256 _a, uint256 _b) internal pure returns (uint256) {
+    function add(
+        uint256 _a,
+        uint256 _b
+    ) internal pure returns (uint256) {
         return _a + _b;
     }
 
@@ -68,9 +75,12 @@ library FixedMath {
      *
      *  @return Unsigned fixed-point representation of `_a - _b`.
      *
-     *  @dev    _a >= b.
+     *  @dev    `_a >= b`.
      */
-    function sub(uint256 _a, uint256 _b) internal pure returns (uint256) {
+    function sub(
+        uint256 _a,
+        uint256 _b
+    ) internal pure returns (uint256) {
         return _a - _b;
     }
 
@@ -83,8 +93,14 @@ library FixedMath {
      *
      *  @return Unsigned fixed-point representation of `_a * _b`.
      */
-    function mul(uint256 _a, uint256 _b) internal pure returns (uint256) {
-        return MulDiv.mulDiv(_a, _b, ONE);
+    function mul(
+        uint256 _a,
+        uint256 _b
+    ) internal pure returns (uint256) {
+        return MathUpgradeable.mulDiv(
+            _a, _b,
+            ONE
+        );
     }
 
     /**
@@ -96,9 +112,15 @@ library FixedMath {
      *
      *  @return Unsigned fixed-point representation of `_a / _b`.
      *
-     *  @dev    _b != 0.
+     *  @dev    `_b != 0`.
      */
-    function div(uint256 _a, uint256 _b) internal pure returns (uint256) {
-        return MulDiv.mulDiv(_a, ONE, _b);
+    function div(
+        uint256 _a,
+        uint256 _b
+    ) internal pure returns (uint256) {
+        return MathUpgradeable.mulDiv(
+            _a, ONE,
+            _b
+        );
     }
 }

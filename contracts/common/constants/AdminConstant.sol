@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
 /**
@@ -8,6 +8,6 @@ pragma solidity ^0.8.20;
  */
 library AdminConstant {
     /** ===== CONSTANT ===== **/
-    /// @notice Minimum number of correct signatures required for administrative verifications.
+    /// @notice Minimum number of correct admin signatures required for administrative verifications.
     uint256 internal constant SIGNATURE_VERIFICATION_QUORUM = 4;
 }

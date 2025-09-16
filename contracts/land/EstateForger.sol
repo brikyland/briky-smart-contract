@@ -1,24 +1,31 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
+/// @openzeppelin/contracts-upgradeable/
 import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
+/// contracts/common/utilities/
 import {CurrencyHandler} from "../common/utilities/CurrencyHandler.sol";
 import {Formula} from "../common/utilities/Formula.sol";
 
+/// contracts/common/interfaces/
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 import {IPriceWatcher} from "../common/interfaces/IPriceWatcher.sol";
 import {IReserveVault} from "../common/interfaces/IReserveVault.sol";
 
+/// contracts/common/constants/
 import {CommonConstant} from "../common/constants/CommonConstant.sol";
 
+/// contracts/common/utilities/
 import {Administrable} from "../common/utilities/Administrable.sol";
 import {Pausable} from "../common/utilities/Pausable.sol";
 import {Validatable} from "../common/utilities/Validatable.sol";
 
+/// contracts/land/constants/
 import {EstateForgerConstant} from "./constants/EstateForgerConstant.sol";
 
+/// contracts/land/interfaces/
 import {ICommissionToken} from "./interfaces/ICommissionToken.sol";
 import {IEstateToken} from "./interfaces/IEstateToken.sol";
 import {IEstateForger} from "./interfaces/IEstateForger.sol";
@@ -26,10 +33,19 @@ import {IEstateTokenizer} from "./interfaces/IEstateTokenizer.sol";
 import {IEstateTokenReceiver} from "./interfaces/IEstateTokenReceiver.sol";
 import {EstateTokenReceiver} from "./utilities/EstateTokenReceiver.sol";
 
+/// contracts/land/storages/
 import {EstateForgerStorage} from "./storages/EstateForgerStorage.sol";
 
+/// contracts/land/utilities/
 import {CommissionDispatchable} from "./utilities/CommissionDispatchable.sol";
 
+
+/**
+ *  @author Briky Team
+ *
+ *
+ *  @notice TODO:
+ */
 contract EstateForger is
 EstateForgerStorage,
 CommissionDispatchable,
@@ -38,17 +54,36 @@ Administrable,
 Pausable,
 Validatable,
 ReentrancyGuardUpgradeable {
+    /** ===== LIBRARY ===== **/
     using Formula for uint256;
 
+
+    /** ===== CONSTANT ===== **/
     string constant private VERSION = "v1.2.1";
 
-    modifier validRequest(uint256 _requestId) {
+
+    /** ===== MODIFIER ===== **/
+    /**
+     *  @notice Verify a valid tokenization request.
+     *
+     *          Name            Description
+     *  @param  _requestId      Request identifier.
+     */
+    modifier validRequest(
+        uint256 _requestId
+    ) {
         if (_requestId == 0 || _requestId > requestNumber) {
             revert InvalidRequestId();
         }
         _;
     }
 
+    /**
+     *  @notice Verify the sender is active in the tokenization request zone.
+     *
+     *          Name            Description
+     *  @param  _requestId      Request identifier.
+     */
     modifier onlyActiveInZoneOf(uint256 _requestId) {
         if (!IAdmin(admin).isActiveIn(requests[_requestId].estate.zone, msg.sender)) {
             revert Unauthorized();
@@ -56,8 +91,37 @@ ReentrancyGuardUpgradeable {
         _;
     }
 
+
+    /** ===== FUNCTION ===== **/
+    /* --- Common --- */
+    /**
+     *  @notice Executed on a call to this contract with empty calldata.
+     */
     receive() external payable {}
 
+    /**
+     *  @return Version of implementation.
+     */
+    function version() external pure returns (string memory) {
+        return VERSION;
+    }
+
+
+    /* --- Initialization --- */
+    /**
+     *  @notice Invoked for initialization after deployment, serving as the contract constructor.
+     *
+     *          Name                Description
+     *  @param  _admin              `Admin` contract address.
+     *  @param  _estateToken        `EstateToken` contract address.
+     *  @param  _commissionToken    `CommissionToken` contract address.
+     *  @param  _priceWatcher       `PriceWatcher` contract address.
+     *  @param  _feeReceiver        `FeeReceiver` contract address.
+     *  @param  _reserveVault       `ReserveVault` contract address.
+     *  @param  _validator          Validator address.
+     *  @param  _baseMinUnitPrice   Minimum unit price denominated in USD.
+     *  @param  _baseMaxUnitPrice   Maximum unit price denominated in USD.
+     */
     function initialize(
         address _admin,
         address _estateToken,
@@ -86,19 +150,17 @@ ReentrancyGuardUpgradeable {
         emit BaseUnitPriceRangeUpdate(_baseMinUnitPrice, _baseMaxUnitPrice);
     }
 
-    function version() external pure returns (string memory) {
-        return VERSION;
-    }
 
+    /* --- Administration --- */
     /**
-     *  @notice Update allowed price range for an estate token unit.
+     *  @notice Update the acceptable range of unit price denominated in USD.
      *
-     *          Name            Description
-     *  @param  _baseMinUnitPrice    New minimum allowed price.
-     *  @param  _baseMaxUnitPrice    New maximum allowed price.
-     *  @param  _signatures          Array of admin signatures.
+     *          Name                Description
+     *  @param  _baseMinUnitPrice   New minimum unit price denominated in USD.
+     *  @param  _baseMaxUnitPrice   New maximum unit price denominated in USD.
+     *  @param  _signatures         Array of admin signatures.
      * 
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative configuration.
      */
     function updateBaseUnitPriceRange(
         uint256 _baseMinUnitPrice,
@@ -127,14 +189,14 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Whitelist or unwhitelist accounts for private sale.
+     *  @notice Whitelist or unwhitelist addresses to participate in the private sale.
      *
      *          Name               Description
-     *  @param  _accounts          Array of account addresses to whitelist or unwhitelist.
+     *  @param  _accounts          Array of EVM addresses.
      *  @param  _isWhitelisted     Whether the operation is whitelist or unwhitelist.
      *  @param  _signatures        Array of admin signatures.
      * 
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative configuration.
      */
     function whitelist(
         address[] calldata _accounts,
@@ -170,11 +232,36 @@ ReentrancyGuardUpgradeable {
         }
     }
 
+
+    /* --- Query --- */
+    /**
+     *          Name            Description
+     *  @param  _requestId      Request identifier.
+     *
+     *  @return Information and details of the tokenization request.
+     */
     function getRequest(uint256 _requestId)
     external view validRequest(_requestId) returns (EstateForgerRequest memory) {
         return requests[_requestId];
     }
 
+
+    /* --- Command --- */
+    /**
+     *  @notice TODO:
+     *
+     *          Name                Description
+     *  @param  _requester          Requester address.
+     *  @param  _estate             Initialization input for `EstateForgerRequestEstate`.
+     *  @param  _quota              Initialization input for `EstateForgerRequestQuota`.
+     *  @param  _quote              Initialization input for `EstateForgerRequestQuote`.
+     *  @param  _agenda             Initialization input for `EstateForgerRequestAgenda`.
+     *  @param  _validation         Validation package from the validator.
+     *
+     *  @return New request identifier.
+     *
+     *  @dev    TODO:
+     */
     function requestTokenization(
         address _requester,
         EstateForgerRequestEstateInput calldata _estate,
@@ -286,6 +373,16 @@ ReentrancyGuardUpgradeable {
         return requestId;
     }
 
+    /**
+     *  @notice Whitelist or unwhitelist accounts for participation in the private sale of a specific request.
+     *
+     *          Name                Description
+     *  @param  _requestId          Request identifier.
+     *  @param  _accounts           Array of EVM addresses.
+     *  @param  _isWhitelisted      Whether the operation is whitelist or unwhitelist.
+     *
+     *  @dev    Permission: Executives active in the request zone.
+     */
     function whitelistFor(
         uint256 _requestId,
         address[] calldata _accounts,
@@ -310,6 +407,16 @@ ReentrancyGuardUpgradeable {
         }
     }
 
+    /**
+     *  @notice Update the metadata URI of a tokenization request.
+     *
+     *          Name                Description
+     *  @param  _requestId          Request identifier.
+     *  @param  _uri                New metadata URI.
+     *  @param  _validation         Validation package from the validator.
+     *
+     *  @dev    Permission: Executives active in the request zone.
+     */
     function updateRequestURI(
         uint256 _requestId,
         string calldata _uri,
@@ -333,6 +440,17 @@ ReentrancyGuardUpgradeable {
         emit RequestURIUpdate(_requestId, _uri);
     }
 
+    /**
+     *  @notice Update the agenda of a tokenization request.
+     *
+     *          Name                Description
+     *  @param  _requestId          Request identifier.
+     *  @param  _agenda             Initialization input for `EstateForgerRequestAgenda`.
+     *
+     *  @dev    Permission: Executives active in the request zone.
+     *  @dev    Updates are only allowed before request confirmation and before any deposits are made.
+     *          The combined sale duration must meet minimum requirements.
+     */
     function updateRequestAgenda(
         uint256 _requestId,
         EstateForgerRequestAgendaInput calldata _agenda
@@ -373,6 +491,14 @@ ReentrancyGuardUpgradeable {
         emit RequestAgendaUpdate(_requestId, _agenda);
     }
 
+    /**
+     *  @notice Cancel a tokenization request.
+     *
+     *          Name                Description
+     *  @param  _requestId          Request identifier.
+     *
+     *  @dev    Permission: Managers active in the request zone.
+     */
     function cancel(uint256 _requestId)
     external validRequest(_requestId) onlyManager onlyActiveInZoneOf(_requestId) whenNotPaused {
         EstateForgerRequest storage request = requests[_requestId];
@@ -386,6 +512,16 @@ ReentrancyGuardUpgradeable {
         emit RequestCancellation(_requestId);
     }
 
+    /**
+     *  @notice Confirm a tokenization request and create the estate token.
+     *
+     *          Name                Description
+     *  @param  _requestId          Request identifier.
+     *
+     *  @return New estate token identifier.
+     *
+     *  @dev    Permission: Managers active in the request zone.
+     */
     function confirm(uint256 _requestId)
     external payable validRequest(_requestId) nonReentrant onlyManager onlyActiveInZoneOf(_requestId) whenNotPaused returns (uint256) {
         EstateForgerRequest storage request = requests[_requestId];
@@ -473,11 +609,34 @@ ReentrancyGuardUpgradeable {
         return estateId;
     }
 
+    /**
+     *  @notice Deposit to purchase tokens in a tokenization request.
+     *
+     *          Name                Description
+     *  @param  _requestId          Request identifier.
+     *  @param  _quantity           Number of tokens to purchase.
+     *
+     *  @return Sale value.
+     */
     function deposit(uint256 _requestId, uint256 _quantity)
     external payable validRequest(_requestId) returns (uint256) {
         return _deposit(_requestId, _quantity);
     }
 
+
+    /* --- Safe Command --- */
+    /**
+     *  @notice Safe deposit to purchase tokens in a tokenization request.
+     *
+     *          Name                Description
+     *  @param  _requestId          Request identifier.
+     *  @param  _quantity           Number of tokens to purchase.
+     *  @param  _anchor             `estate.uri` of the request.
+     *
+     *  @return Sale value paid.
+     *
+     *  @dev    Anchor enforces consistency between this contract and the client-side.
+     */
     function safeDeposit(
         uint256 _requestId,
         uint256 _quantity,
@@ -490,6 +649,14 @@ ReentrancyGuardUpgradeable {
         return _deposit(_requestId, _quantity);
     }
 
+    /**
+     *  @notice Withdraw all deposited value of a tokenization request.
+     *
+     *          Name                Description
+     *  @param  _requestId          Request identifier.
+     *
+     *  @return Withdrawn value.
+     */
     function withdrawDeposit(uint256 _requestId)
     external nonReentrant validRequest(_requestId) whenNotPaused returns (uint256) {
         EstateForgerRequest storage request = requests[_requestId];
@@ -529,6 +696,14 @@ ReentrancyGuardUpgradeable {
         return value;
     }
 
+    /**
+     *  @notice TODO: Withdraw the estate tokens from a confirmed request.
+     *
+     *          Name                Description
+     *  @param  _requestId          Request identifier.
+     *
+     *  @return Amount of estate tokens withdrawn.
+     */
     function withdrawEstateToken(uint256 _requestId)
     external nonReentrant validRequest(_requestId) whenNotPaused returns (uint256) {
         EstateForgerRequest storage request = requests[_requestId];
@@ -571,10 +746,24 @@ ReentrancyGuardUpgradeable {
         return amount;
     }
 
+    /**
+     *          Name                    Description
+     *  @param  _tokenizationId         Tokenization identifier (request ID).
+     *
+     *  @return Whether the tokenization request has been confirmed and tokenized.
+     */
     function isTokenized(uint256 _tokenizationId) external view returns (bool) {
         return requests[_tokenizationId].estate.estateId != 0;
     }
 
+    /**
+     *          Name                    Description
+     *  @param  _account                Account address.
+     *  @param  _tokenizationId         Tokenization identifier (request ID).
+     *  @param  _at                     Timestamp to check allocation at.
+     *
+     *  @return Estate token allocation of the account at the specified timestamp.
+     */
     function allocationOfAt(
         address _account,
         uint256 _tokenizationId,
@@ -592,6 +781,17 @@ ReentrancyGuardUpgradeable {
             : 0;
     }
 
+
+    /* --- Helper --- */
+    /**
+     *  @notice Internal function to handle deposit processing.
+     *
+     *          Name                Description
+     *  @param  _requestId          Request identifier.
+     *  @param  _quantity           Number of tokens to purchase.
+     *
+     *  @return Sale value.
+     */
     function _deposit(uint256 _requestId, uint256 _quantity)
     internal nonReentrant whenNotPaused returns (uint256) {
         EstateForgerRequest storage request = requests[_requestId];
@@ -649,6 +849,14 @@ ReentrancyGuardUpgradeable {
         return value;
     }
 
+    /**
+     *  @notice Internal function to provide cashback fund resources.
+     *
+     *          Name                Description
+     *  @param  _cashbackFundId     Cashback fund identifier.
+     *
+     *  @return Main currency cashback amount.
+     */
     function _provideCashbackFund(uint256 _cashbackFundId) internal returns (uint256) {
         uint256 cashbackBaseAmount;
         if (_cashbackFundId != 0) {
@@ -685,6 +893,12 @@ ReentrancyGuardUpgradeable {
         return cashbackBaseAmount;
     }
 
+    /**
+     *          Name                Description
+     *  @param  _interfaceId        Interface identifier to check.
+     *
+     *  @return Whether this contract supports the specified interface.
+     */
     function supportsInterface(
         bytes4 _interfaceId
     ) public view virtual override returns (bool) {

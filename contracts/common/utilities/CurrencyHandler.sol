@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
 /// OpenZeppelin
@@ -25,13 +25,16 @@ library CurrencyHandler {
     /** ===== FUNCTION ===== **/
     /* --- Native Coin --- */
     /**
-     *  @notice Transfer an amount of native coin from this contract to an address.
+     *  @notice Transfer an amount of native coin from this contract to a receiver.
      *
      *          Name        Description
      *  @param  _receiver   Receiver address.
      *  @param  _value      Amount of native coin.
      */
-    function sendNative(address _receiver, uint256 _value) internal {
+    function sendNative(
+        address _receiver,
+        uint256 _value
+    ) internal {
         (bool success, ) = _receiver.call{value: _value}("");
         if (!success) {
             revert FailedTransfer();
@@ -39,12 +42,14 @@ library CurrencyHandler {
     }
 
     /**
-     *  @notice Transfer an amount of native coin from sender to this contract.
+     *  @notice Transfer an amount of native coin from the sender to this contract.
      *
      *          Name        Description
      *  @param  _value      Amount of native coin.
      */
-    function receiveNative(uint256 _value) internal {
+    function receiveNative(
+        uint256 _value
+    ) internal {
         if (_value > msg.value) {
             revert InsufficientValue();
         }
@@ -60,110 +65,167 @@ library CurrencyHandler {
     }
 
     /**
-     *  @notice Transfer an amount of native coin from sender to an address.
+     *  @notice Transfer an amount of native coin from the sender to a receiver.
      *
      *          Name        Description
      *  @param  _receiver   Receiver address.
      *  @param  _value      Amount of native coin.
      */
-    function forwardNative(address _receiver, uint256 _value) internal {
+    function forwardNative(
+        address _receiver,
+        uint256 _value
+    ) internal {
         receiveNative(_value);
-        sendNative(_receiver, _value);
+        sendNative(
+            _receiver,
+            _value
+        );
     }
 
     /* --- ERC-20 Token --- */
     /**
-     *  @notice Transfer an amount of ERC-20 token from this contract to an address.
+     *  @notice Transfer an amount of ERC-20 token from this contract to a receiver.
      *
      *          Name        Description
      *  @param  _currency   Token address.
      *  @param  _receiver   Receiver address.
      *  @param  _value      Amount of ERC-20 token.
      */
-    function sendERC20(address _currency, address _receiver, uint256 _value) internal {
+    function sendERC20(
+        address _currency,
+        address _receiver,
+        uint256 _value
+    ) internal {
         IERC20Upgradeable(_currency).safeTransfer(_receiver, _value);
     }
 
     /**
-     *  @notice Transfer an amount of ERC-20 token from sender to this contract.
+     *  @notice Transfer an amount of ERC-20 token from the sender to this contract.
      *
      *          Name        Description
      *  @param  _currency   Token address.
      *  @param  _value      Amount of ERC-20 token.
      */
-    function receiveERC20(address _currency, uint256 _value) internal {
-        IERC20Upgradeable(_currency).safeTransferFrom(msg.sender, address(this), _value);
+    function receiveERC20(
+        address _currency,
+        uint256 _value
+    ) internal {
+        IERC20Upgradeable(_currency).safeTransferFrom(
+            msg.sender,
+            address(this),
+            _value
+        );
     }
 
     /**
-     *  @notice Transfer an amount of ERC-20 token from sender to an address.
+     *  @notice Transfer an amount of ERC-20 token from the sender to a receiver.
      *
      *          Name        Description
      *  @param  _currency   Token address.
      *  @param  _receiver   Receiver address.
      *  @param  _value      Amount of ERC-20 token.
      */
-    function forwardERC20(address _currency, address _receiver, uint256 _value) internal {
-        IERC20Upgradeable(_currency).safeTransferFrom(msg.sender, _receiver, _value);
+    function forwardERC20(
+        address _currency,
+        address _receiver,
+        uint256 _value
+    ) internal {
+        IERC20Upgradeable(_currency).safeTransferFrom(
+            msg.sender,
+            _receiver,
+            _value
+        );
     }
 
     /**
-     *  @notice Approve a new amount of ERC-20 token for an address.
+     *  @notice Approve a new amount of ERC-20 token for a spender.
      *
      *          Name        Description
      *  @param  _currency   Token address.
      *  @param  _spender    Spender address.
      *  @param  _value      Amount of ERC-20 token.
      */
-    function allowERC20(address _currency, address _spender, uint256 _value) internal {
+    function allowERC20(
+        address _currency,
+        address _spender,
+        uint256 _value
+    ) internal {
         IERC20Upgradeable(_currency).safeIncreaseAllowance(_spender, _value);
     }
 
     /* --- General Cryptocurrency --- */
     /**
-     *  @notice Transfer an amount of either ERC-20 token or native coin from this contract to an address.
+     *  @notice Transfer an amount of either ERC-20 token or native coin from this contract to a receiver.
      *
      *          Name        Description
      *  @param  _currency   Token address or zero address.
      *  @param  _receiver   Receiver address.
      *  @param  _value      Amount of ERC-20 token or native coin.
      */
-    function sendCurrency(address _currency, address _receiver, uint256 _value) internal {
+    function sendCurrency(
+        address _currency,
+        address _receiver,
+        uint256 _value
+    ) internal {
         if (_currency == address(0)) {
-            sendNative(_receiver, _value);
+            sendNative(
+                _receiver,
+                _value
+            );
         } else {
-            sendERC20(_currency, _receiver, _value);
+            sendERC20(
+                _currency,
+                _receiver,
+                _value
+            );
         }
     }
 
     /**
-     *  @notice Transfer an amount of either ERC-20 token or native coin from sender to this address.
+     *  @notice Transfer an amount of either ERC-20 token or native coin from the sender to this contract.
      *
      *          Name        Description
      *  @param  _currency   Token address or zero address.
      *  @param  _value      Amount of ERC-20 token or native coin.
      */
-    function receiveCurrency(address _currency, uint256 _value) internal {
+    function receiveCurrency(
+        address _currency,
+        uint256 _value
+    ) internal {
         if (_currency == address(0)) {
             receiveNative(_value);
         } else {
-            receiveERC20(_currency, _value);
+            receiveERC20(
+                _currency,
+                _value
+            );
         }
     }
 
     /**
-     *  @notice Transfer an amount of either ERC-20 token or native coin from sender to an address.
+     *  @notice Transfer an amount of either ERC-20 token or native coin from the sender to a receiver.
      *
      *          Name        Description
      *  @param  _currency   Token address or zero address.
      *  @param  _receiver   Receiver address.
      *  @param  _value      Amount of ERC-20 token or native coin.
      */
-    function forwardCurrency(address _currency, address _receiver, uint256 _value) internal {
+    function forwardCurrency(
+        address _currency,
+        address _receiver,
+        uint256 _value
+    ) internal {
         if (_currency == address(0)) {
-            forwardNative(_receiver, _value);
+            forwardNative(
+                _receiver,
+                _value
+            );
         } else {
-            forwardERC20(_currency, _receiver, _value);
+            forwardERC20(
+                _currency,
+                _receiver,
+                _value
+            );
         }
     }
 }

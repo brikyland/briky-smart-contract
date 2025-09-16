@@ -1,30 +1,61 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
+/// contracts/lux/structs/
+import {IERC721Offer} from "../structs/IERC721Offer.sol";
+
+/// contracts/common/interfaces/
 import {ICommon} from "../../common/interfaces/ICommon.sol";
 
-interface IERC721Marketplace is ICommon {
-    enum OfferState {
-        Nil,
-        Selling,
-        Sold,
-        Cancelled
-    }
+/**
+ *  @author Briky Team
+ *
+ *  @notice Interface for contract `ERC721Marketplace`.
+ *  @notice The `ERC721Marketplace` contract hosts a marketplace for ERC721 tokens.
+ *
+ *  @dev    ERC-20 tokens are identified by their contract addresses.
+ *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
+ */
+interface IERC721Marketplace is
+IERC721Offer,
+ICommon {
+    /** ===== EVENT ===== **/
+    /* --- Configuration --- */
+    /**
+     *  @notice Emitted when a collection is registered.
+     * 
+     *          Name          Description
+     *  @param  collection    Collection contract address.
+     */
+    event CollectionRegistration(
+        address indexed collection
+    );
 
-    struct Offer {
-        address collection;
-        uint256 tokenId;
-        uint256 price;
-        uint256 royalty;
-        address currency;
-        OfferState state;
-        address seller;
-        address royaltyReceiver;
-    }
-
-    event CollectionRegistration(address indexed collection);
-    event CollectionDeregistration(address indexed collection);
+    /**
+     *  @notice Emitted when a collection is deregistered.
+     *
+     *          Name          Description
+     *  @param  collection    Collection contract address.
+     */
+    event CollectionDeregistration(
+        address indexed collection
+    );
     
+
+    /* --- Offer --- */
+    /**
+     *  @notice Emitted when a new offer is listed.
+     *
+     *          Name               Description
+     *  @param  collection         Token collection contract address.
+     *  @param  offerId            Offer identifier.
+     *  @param  tokenId            Token identifier.
+     *  @param  seller             Seller address.
+     *  @param  price              Sale value.
+     *  @param  royalty            Royalty charged on the offer.
+     *  @param  royaltyReceiver    Royalty receiver address.
+     *  @param  currency           Sale currency address.
+     */
     event NewOffer(
         address indexed collection,
         uint256 indexed offerId,
@@ -32,17 +63,37 @@ interface IERC721Marketplace is ICommon {
         address seller,
         uint256 price,
         uint256 royalty,
-        address currency,
-        address royaltyReceiver
+        address royaltyReceiver,
+        address currency
     );
-    event OfferCancellation(uint256 indexed offerId);
+
+    /**
+     *  @notice Emitted when an offer is cancelled.
+     *
+     *          Name        Description
+     *  @param  offerId     Offer identifier.
+     */
+    event OfferCancellation(
+        uint256 indexed offerId
+    );
+
+    /**
+     *  @notice Emitted when an offer is sold.
+     *
+     *          Name               Description
+     *  @param  offerId            Offer identifier.
+     *  @param  buyer              Buyer address.
+     *  @param  royaltyReceiver    Royalty receiver address.
+     *  @param  royalty            Royalty charged on the offer.
+     */
     event OfferSale(
         uint256 indexed offerId,
         address indexed buyer,
         address royaltyReceiver,
         uint256 royalty
     );
-    
+
+    /** ===== ERROR ===== **/
     error NotRegisteredCollection();
     error RegisteredCollection();
 
@@ -54,10 +105,37 @@ interface IERC721Marketplace is ICommon {
     error InvalidPrice();
     error Overdue();
 
+    /** ===== FUNCTION ===== **/
+    /* --- Query --- */
+    /**
+     *          Name            Description
+     *  @return offerNumber     Number of offers.
+     */
     function offerNumber() external view returns (uint256 offerNumber);
 
-    function getOffer(uint256 offerId) external view returns (Offer memory offer);
+    /**
+     *          Name            Description
+     *  @param  offerId         Offer identifier.
+     *  @return offer           Information and progress of the offer.
+     */
+    function getOffer(
+        uint256 offerId
+    ) external view returns (ERC721Offer memory offer);
 
+    /* --- Command --- */
+    /**
+     *  @notice List a new offer for an ERC721 token.
+     *
+     *          Name          Description
+     *  @param  collection    Token collection contract address.
+     *  @param  tokenId       Token identifier.
+     *  @param  price         Sale value.
+     *  @param  currency      Sale currency address.
+     *  @return offerId       New offer identifier.
+     * 
+     *  @dev    The collection must support interface `IERC721Upgradeable`.
+     *  @dev    Must set approval for this contract to transfer the ERC721 token of the seller before listing.
+     */
     function list(
         address collection,
         uint256 tokenId,
@@ -65,8 +143,48 @@ interface IERC721Marketplace is ICommon {
         address currency
     ) external returns (uint256 offerId);
 
-    function buy(uint256 offerId) external payable returns (uint256 price);
-    function cancel(uint256 offerId) external;
+    /**
+     *  @notice Buy an offer.
+     *  @notice Buy only if the offer is in `Selling` state.
+     *
+     *          Name        Description
+     *  @param  offerId     Offer identifier.
+     *  @return value       Sum of sale price and royalty.
+     */
+    function buy(
+        uint256 offerId
+    ) external payable returns (uint256 value);
 
-    function safeBuy(uint256 offerId, uint256 anchor) external payable returns (uint256 price);
+    /**
+     *  @notice Cancel an offer.
+     *  @notice Cancel only if the offer is in `Selling` state.
+     *
+     *          Name        Description
+     *  @param  offerId     Offer identifier.
+     * 
+     *  @dev    Permission:
+     *          - Seller of the offer.
+     *          - Managers: disqualify defected offers only.
+     */
+    function cancel(
+        uint256 offerId
+    ) external;
+
+
+    /* --- Safe Command --- */
+    /**
+     *  @notice Buy an offer.
+     *  @notice Buy only if the offer is in `Selling` state.
+     *
+     *          Name        Description
+     *  @param  offerId     Offer identifier.
+     *  @param  anchor      `tokenId` of the offer.
+     *  @return value       Sum of sale price and royalty.
+     * 
+     *  @dev    Anchor enforces consistency between this contract and the client-side.
+     */
+    function safeBuy(
+        uint256 offerId,
+        uint256 anchor
+    ) external payable returns (uint256 value);
 }

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
@@ -34,17 +34,16 @@ contract MockPriceFeed is AggregatorV3Interface, Initializable {
     }
 
     function getRoundData(uint80 _roundId)
-        external
-        view
-        override
-        returns (
-            uint80,
-            int256 _answer,
-            uint256 _startedAt,
-            uint256 _updatedAt,
-            uint80 _answeredInRound
-        )
-    {
+    external
+    pure
+    override
+    returns (
+        uint80,
+        int256 _answer,
+        uint256 _startedAt,
+        uint256 _updatedAt,
+        uint80 _answeredInRound
+    ) {
         return (
             _roundId,
             answer,
@@ -55,17 +54,16 @@ contract MockPriceFeed is AggregatorV3Interface, Initializable {
     }
 
     function latestRoundData()
-        external
-        view
-        override
-        returns (
-            uint80 _roundId,
-            int256 _answer,
-            uint256 _startedAt,
-            uint256 _updatedAt,
-            uint80 _answeredInRound
-        )
-    {
+    external
+    pure
+    override
+    returns (
+        uint80 _roundId,
+        int256 _answer,
+        uint256 _startedAt,
+        uint256 _updatedAt,
+        uint80 _answeredInRound
+    ) {
         return (
             roundId,
             answer,

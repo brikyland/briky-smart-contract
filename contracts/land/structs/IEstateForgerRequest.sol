@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
 /// contracts/common/structs/
@@ -90,17 +90,17 @@ interface IEstateForgerRequest is IValidation {
      *  @notice Price configuration.
      */
     struct EstateForgerRequestQuote {
-        /// @notice Value of each token deposited.
+        /// @notice Value of each token.
         uint256 unitPrice;
 
         /// @notice Deposit currency address.
         address currency;
 
-        /// @notice Minimum deposited quantity of an address to receive cashback.
+        /// @notice Minimum deposited quantity of an account to receive cashback.
         uint256 cashbackThreshold;
 
         /// @notice Fund identifier for cashback.
-        /// @dev    Using `IFund.Fund` whose `mainCurrency` is assigned with the above `currency`.
+        /// @dev    Using `IFund.Fund` whose `mainCurrency` is set to `currency`.
         uint256 cashbackFundId;
 
         /// @notice Fee charged on each token.
@@ -125,7 +125,7 @@ interface IEstateForgerRequest is IValidation {
         /// @notice Deposit currency address.
         address currency;
 
-        /// @notice Minimum deposited quantity of an address to receive cashback.
+        /// @notice Minimum deposited quantity of an account to receive cashback.
         uint256 cashbackThreshold;
 
         /// @notice Fraction of deposit to cashback.

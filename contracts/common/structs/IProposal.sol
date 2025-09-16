@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
 /**
@@ -13,16 +13,16 @@ pragma solidity ^0.8.20;
 interface IProposal {
     /** ===== ENUM ===== **/
     /**
-     *  @notice Variants of vote option of an address for a proposal.
+     *  @notice Variants of vote option of an account for a proposal.
      */
     enum ProposalVoteOption {
         /// @notice Not voted.
         Nil,
 
-        /// @notice Agree with the proposal.
+        /// @notice Vote in favor of executing the proposal.
         Approval,
 
-        /// @notice Disagree with the proposal.
+        /// @notice Vote against executing the proposal.
         Disapproval
     }
 
@@ -61,7 +61,7 @@ interface IProposal {
         /// @notice Operator executed the proposal unsuccessfully.
         UnsuccessfulExecuted,
 
-        /// @notice Executives of the system disqualified the proposal.
+        /// @notice Disqualified due to the proposal is inexecutable.
         Disqualified,
 
         /// @notice Operator rejected executing the proposal.
@@ -75,10 +75,10 @@ interface IProposal {
         /// @notice Not determined.
         Unsettled,
 
-        /// @notice Passed due to the proposal rule.
+        /// @notice Passed according to the proposal rule.
         Passed,
 
-        /// @notice Failed due to the proposal rule.
+        /// @notice Failed according to the proposal rule.
         Failed
     }
 
@@ -89,7 +89,7 @@ interface IProposal {
      *  @notice The proposal might require a budget to execute, which should be suggested in the context and contributed by
      *          holders under their own arrangements.
      *  @dev    Any current holder of the asset, with client-side support, can propose by submitting a full proper context to
-     *          the server-side and forwarding only its checksum to the contract as the UUID of the new proposal. Authorized
+     *          the server-side and forwarding only its checksum to this contract as the UUID of the new proposal. Authorized
      *          executives will later verify the feasibility of the proposal within a given expiration to either admit or
      *          disqualify it accordingly. During this process, the full context is uploaded to a public database (e.g., IPFS),
      *          and the link is submitted to be the URI of proposal context. This approach protects the database from external
@@ -104,7 +104,7 @@ interface IProposal {
         ///         detectable. Checksum algorithm must be declared in the context.
         string contextURI;
 
-        /// @notice URI of description about the progress of execution.
+        /// @notice URI of progress logs.
         string logURI;
 
         /// @notice Governor contract address.
@@ -123,9 +123,9 @@ interface IProposal {
         /// @notice Total weight voted by disapproving holders with their voting power at the admission timestamp.
         uint256 disapprovalWeight;
 
-        /// @notice Quorum to determine verdict.
-        /// @dev    In `Pending` state, `quorum` is a fraction value but since being admitted, the `totalWeight` is determined
-        ///         so `quorum` is converted to vote metric.
+        /// @notice Quorum threshold to determine verdict.
+        /// @dev    In `Pending` state, `quorum` is a fractional rate.
+        /// @dev    After the proposal is admitted, `quorum` is converted to weight as `totalWeight` is determined.
         uint256 quorum;
 
         /// @notice Proposer address.
@@ -134,15 +134,16 @@ interface IProposal {
         /// @notice Assigned operator address.
         address operator;
 
-        /// @notice Time pivot of either the proposal is admitted or is no longer admittable.
-        /// @dev    In `Pending` state, `timePivot` indicates when the proposal is expired for admission but since the being
-        ///         admitted, `timePivot` snapshots the `block.timestamp` as reference for evaluating vote power.
-        uint40 timePivot;
-
         /// @notice Due of vote.
-        /// @dev    In `Pending` state, `due` indicates vote duration but since being admitted, `due` is the timestamp of vote
-        ///         closure.
+        /// @dev    In `Pending` state, `due` is the vote duration.
+        /// @dev    After the proposal is admitted, `due` is set to the vote closure timestamp.
         uint40 due;
+
+        /// @notice Time pivot of admission.
+        /// @dev    In `Pending` state, `timePivot` is the admission expiration timestamp.
+        /// @dev    After the proposal is admitted, `timePivot` is set to the admission timestamp, used as reference for
+        ///         evaluating vote power.
+        uint40 timePivot;
 
         /// @notice Rule to determine verdict.
         ProposalRule rule;

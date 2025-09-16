@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
 /// @openzeppelin/contracts-upgradeable/
@@ -20,6 +20,7 @@ IRate,
 IERC20MetadataUpgradeable,
 IERC20PermitUpgradeable {
     /** ===== FUNCTION ===== **/
+    /* --- Query --- */
     /**
      *          Name    Description
      *  @return rate    Discount rate for exclusive token.

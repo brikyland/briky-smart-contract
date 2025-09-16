@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
 /// contracts/common/interfaces/
@@ -42,7 +42,7 @@ ICommon {
      *          Name        Description
      *  @param  currency    Currency address.
      *  @param  feed        Price Feed contract.
-     *  @param  heartbeat   Allowed latency.
+     *  @param  heartbeat   Acceptable latency.
      */
     event PriceFeedUpdate(
         address indexed currency,
@@ -80,7 +80,7 @@ ICommon {
 
     /**
      *          Name        Description
-     *  @param  currency    Proposal identifier.
+     *  @param  currency    Currency address.
      *  @param  price       Price denominated in the currency.
      *  @param  lowerBound  Lower price bound denominated in USD.
      *  @param  upperBound  Upper price bound denominated in USD.

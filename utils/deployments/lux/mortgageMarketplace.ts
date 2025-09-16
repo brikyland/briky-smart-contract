@@ -3,7 +3,7 @@ import { ethers, upgrades } from "hardhat";
 export async function deployMortgageMarketplace(
     signer: any,
     adminAddress: string,
-    commissionTokenAddress: string
+    feeReceiverAddress: string
 ) {
     const MortgageMarketplace = await ethers.getContractFactory('MortgageMarketplace', signer);
 
@@ -11,7 +11,7 @@ export async function deployMortgageMarketplace(
         MortgageMarketplace,
         [
             adminAddress,
-            commissionTokenAddress
+            feeReceiverAddress
         ]
     );
     await mortgageMarketplace.deployed();

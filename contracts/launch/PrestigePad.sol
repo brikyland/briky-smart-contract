@@ -1,34 +1,54 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
+/// @openzeppelin/contracts-upgradeable/
 import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
-import {CurrencyHandler} from "../common/utilities/CurrencyHandler.sol";
-import {Formula} from "../common/utilities/Formula.sol";
-
-import {IAdmin} from "../common/interfaces/IAdmin.sol";
-import {IPriceWatcher} from "../common/interfaces/IPriceWatcher.sol";
-
+/// contracts/common/constants/
 import {CommonConstant} from "../common/constants/CommonConstant.sol";
 
+/// contracts/common/interfaces/
+import {IAdmin} from "../common/interfaces/IAdmin.sol";
+import {IPriceWatcher} from "../common/interfaces/IPriceWatcher.sol";
 import {IReserveVault} from "../common/interfaces/IReserveVault.sol";
 
+/// contracts/common/utilities/
 import {Administrable} from "../common/utilities/Administrable.sol";
+import {CurrencyHandler} from "../common/utilities/CurrencyHandler.sol";
 import {Discountable} from "../common/utilities/Discountable.sol";
+import {Formula} from "../common/utilities/Formula.sol";
 import {Pausable} from "../common/utilities/Pausable.sol";
 import {Validatable} from "../common/utilities/Validatable.sol";
 
+/// contracts/launch/constants/
 import {PrestigePadConstant} from "./constants/PrestigePadConstant.sol";
 
+/// contracts/launch/interfaces/
 import {IPrestigePad} from "./interfaces/IPrestigePad.sol";
 import {IProjectToken} from "./interfaces/IProjectToken.sol";
 import {IProjectLaunchpad} from "./interfaces/IProjectLaunchpad.sol";
 import {IProjectTokenReceiver} from "./interfaces/IProjectTokenReceiver.sol";
 
+/// contracts/launch/storages/
 import {PrestigePadStorage} from "./storages/PrestigePadStorage.sol";
 
+/// contracts/launch/utilities/
 import {ProjectTokenReceiver} from "./utilities/ProjectTokenReceiver.sol";
+
+/**
+ *  @author Briky Team
+ *
+ *  @notice TODO: The `PrestigePad` contract conducts capital raising campaigns for real estate projects through multiple
+ *          rounds of token sales, enabling contributors to receive `ProjectToken` as referenced distribution for
+ *          future benefit returning.
+ *
+ *  @dev    Implementation involves server-side support for validation mechanisms and price monitoring.
+ *  @dev    ERC-20 tokens are identified by their contract addresses.
+ *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
+ *  @dev    Quantities are expressed in absolute units. Scale these values by `10 ** ProjectToken.decimals()` to obtain
+ *          the correct amounts under the `ProjectToken` convention.
+ */
 
 contract PrestigePad is
 PrestigePadStorage,
@@ -38,33 +58,90 @@ Discountable,
 Pausable,
 Validatable,
 ReentrancyGuardUpgradeable {
+    /** ===== LIBRARY ===== **/
     using Formula for uint256;
 
+
+    /** ===== CONSTANT ===== **/
     string constant private VERSION = "v1.2.1";
 
-    modifier validLaunch(uint256 _launchId) {
+
+    /** ===== MODIFIER ===== **/
+    /**
+     *  @notice Verify a valid launch.
+     *
+     *          Name            Description
+     *  @param  _launchId       Launch identifier.
+     */
+    modifier validLaunch(
+        uint256 _launchId
+    ) {
         if (_launchId == 0 || _launchId > launchNumber) {
             revert InvalidLaunchId();
         }
         _;
     }
 
-    modifier validRound(uint256 _roundId) {
+    /**
+     *  @notice Verify a valid round.
+     *
+     *          Name            Description
+     *  @param  _roundId        Round identifier.
+     */
+    modifier validRound(
+        uint256 _roundId
+    ) {
         if (_roundId == 0 || _roundId > roundNumber) {
             revert InvalidRoundId();
         }
         _;
     }
 
-    modifier onlyInitiator(uint256 _launchId) {
+    /**
+     *  @notice Verify the sender is the initiator of a launch.
+     *
+     *          Name            Description
+     *  @param  _launchId       Launch identifier.
+     */
+    modifier onlyInitiator(
+        uint256 _launchId
+    ) {
         if (msg.sender != launches[_launchId].initiator) {
             revert Unauthorized();
         }
         _;
     }
 
+
+    /** ===== FUNCTION ===== **/
+    /* --- Standard --- */
+    /**
+     *  @notice Executed on a call to this contract with empty calldata.
+     */
     receive() external payable {}
 
+    /**
+     *  @return Version of implementation.
+     */
+    function version() external pure returns (string memory) {
+        return VERSION;
+    }
+
+
+    /* --- Initialization --- */
+    /**
+     *  @notice Invoked for initialization after deployment, serving as the contract constructor.
+     *
+     *          Name                Description
+     *  @param  _admin              `Admin` contract address.
+     *  @param  _projectToken       `ProjectToken` contract address.
+     *  @param  _priceWatcher       `PriceWatcher` contract address.
+     *  @param  _feeReceiver        `FeeReceiver` contract address.
+     *  @param  _reserveVault       `ReserveVault` contract address.
+     *  @param  _validator          Validator address.
+     *  @param  _baseMinUnitPrice   Minimum unit price denominated in USD.
+     *  @param  _baseMaxUnitPrice   Maximum unit price denominated in USD.
+     */
     function initialize(
         address _admin,
         address _projectToken,
@@ -74,36 +151,40 @@ ReentrancyGuardUpgradeable {
         address _validator,
         uint256 _baseMinUnitPrice,
         uint256 _baseMaxUnitPrice
-    ) external initializer {
+    ) external
+    initializer {
+        /// Initializer
         __Pausable_init();
         __ReentrancyGuard_init();
-
         __Validatable_init(_validator);
 
+        /// Dependency
         admin = _admin;
         projectToken = _projectToken;
         priceWatcher = _priceWatcher;
         feeReceiver = _feeReceiver;
         reserveVault = _reserveVault;
 
+        /// Configuration
         baseMinUnitPrice = _baseMinUnitPrice;
         baseMaxUnitPrice = _baseMaxUnitPrice;
-        emit BaseUnitPriceRangeUpdate(_baseMinUnitPrice, _baseMaxUnitPrice);
+        emit BaseUnitPriceRangeUpdate(
+            _baseMinUnitPrice,
+            _baseMaxUnitPrice
+        );
     }
 
-    function version() external pure returns (string memory) {
-        return VERSION;
-    }
 
+    /* --- Administration --- */
     /**
-     *  @notice Update allowed price range for a project token unit.
+     *  @notice Update the acceptable range of unit price denominated in USD.
      *
-     *          Name                 Description
-     *  @param  _baseMinUnitPrice    New minimum allowed price.
-     *  @param  _baseMaxUnitPrice    New maximum allowed price.
-     *  @param  _signatures          Array of admin signatures.
+     *          Name                Description
+     *  @param  _baseMinUnitPrice   New minimum unit price denominated in USD.
+     *  @param  _baseMaxUnitPrice   New maximum unit price denominated in USD.
+     *  @param  _signatures         Array of admin signatures.
      * 
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative configuration.
      */
     function updateBaseUnitPriceRange(
         uint256 _baseMinUnitPrice,
@@ -131,16 +212,120 @@ ReentrancyGuardUpgradeable {
         );
     }
 
-    function getLaunch(uint256 _launchId)
-    external view validLaunch(_launchId) returns (PrestigePadLaunch memory) {
+
+    /* --- Query --- */
+    /**
+     *          Name            Description
+     *  @param  _launchId       Launch identifier.
+     *
+     *  @return launch          Information and progress of the launch.
+     */
+    function getLaunch(
+        uint256 _launchId
+    ) external view
+    validLaunch(_launchId)
+    returns (PrestigePadLaunch memory) {
         return launches[_launchId];
     }
 
-    function getRound(uint256 _roundId)
-    external view validRound(_roundId) returns (PrestigePadRound memory) {
+    /**
+     *          Name            Description
+     *  @param  _roundId        Round identifier.
+     *
+     *  @return round           Information and progress of the round.
+     */
+    function getRound(
+        uint256 _roundId
+    ) external view
+    validRound(_roundId)
+    returns (PrestigePadRound memory) {
         return rounds[_roundId];
     }
 
+    /**
+     *          Name            Description
+     *  @param  _launchId       Launch identifier.
+     *
+     *  @return isFinalized     Whether the launch is finalized.
+     */
+    function isFinalized(
+        uint256 _launchId
+    ) external view returns (bool) {
+        return launches[_launchId].isFinalized;
+    }
+
+    /**
+     *          Name            Description
+     *  @param  _account        Account address.
+     *  @param  _launchId       Launch identifier.
+     *  @param  _at             Reference timestamp.
+     *
+     *  @return allocation      Allocation of the account at the reference timestamp.
+     */
+    function allocationOfAt(
+        address _account,
+        uint256 _launchId,
+        uint256 _at
+    ) external view
+    validLaunch(_launchId)
+    returns (uint256) {
+        if (_at > block.timestamp) {
+            revert InvalidTimestamp();
+        }
+        uint256 allocation = 0;
+        PrestigePadLaunch storage launch = launches[_launchId];
+        uint256 currentIndex = launch.currentIndex;
+        for (uint256 i = 0; i < currentIndex; ++i) {
+            uint256 roundId = launch.roundIds[i];
+            uint256 withdrawAt = withdrawAt[roundId][_account];
+            if (_at >= rounds[roundId].agenda.confirmAt && (withdrawAt == 0 || _at < withdrawAt)) {
+                allocation += contributions[roundId][_account];
+            }
+        }
+        if (rounds[launch.roundIds[currentIndex]].agenda.confirmAt != 0) {
+            uint256 roundId = launch.roundIds[currentIndex];
+            uint256 withdrawAt = withdrawAt[roundId][_account];
+            if (_at >= rounds[roundId].agenda.confirmAt && (withdrawAt == 0 || _at < withdrawAt)) {
+                allocation += contributions[roundId][_account];
+            }
+        }
+
+        return allocation * 10 ** IProjectToken(projectToken).decimals();
+    }
+
+    /**
+     *          Name            Description
+     *  @param  _interfaceId    Interface identifier.
+     *
+     *  @return isSupported     Whether the interface is supported.
+     */
+    function supportsInterface(
+        bytes4 _interfaceId
+    ) public view virtual override returns (bool) {
+        return _interfaceId == type(IPrestigePad).interfaceId
+            || _interfaceId == type(IProjectLaunchpad).interfaceId
+            || _interfaceId == type(IProjectTokenReceiver).interfaceId
+            || _interfaceId == type(IERC165Upgradeable).interfaceId;
+    }
+
+
+    /* --- Command --- */
+    /**
+     *  @notice TODO: Initiate a new launch.
+     *
+     *          Name                Description
+     *  @param  _initiator          Initiator address.
+     *  @param  _zone               Zone code.
+     *  @param  _projectURI         URI of project metadata.
+     *  @param  _launchURI          URI of launch metadata.
+     *  @param  _initialQuantity    Initial quantity of tokens to be minted.
+     *  @param  _feeRate            Fraction of the raised value charged as fee.
+     *  @param  _validation         Validation package from the validator.
+     *
+     *  @return launchId            New launch identifier.
+     *
+     *  @dev    Permission: Executives active in the zone.
+     */
     function initiateLaunch(
         address _initiator,
         bytes32 _zone,
@@ -149,7 +334,11 @@ ReentrancyGuardUpgradeable {
         uint256 _initialQuantity,
         uint256 _feeRate,
         Validation calldata _validation
-    ) external nonReentrant onlyExecutive whenNotPaused returns (uint256) {
+    ) external
+    whenNotPaused
+    nonReentrant
+    onlyExecutive
+    returns (uint256) {
         _validate(
             abi.encode(
                 _projectURI,
@@ -214,11 +403,24 @@ ReentrancyGuardUpgradeable {
         return launchId;
     }
 
+    /**
+     *  @notice Update the URI of a launch.
+     *
+     *          Name            Description
+     *  @param  _launchId       Launch identifier.
+     *  @param  _uri            New URI of launch metadata.
+     *  @param  _validation     Validation package from the validator.
+     *
+     *  @dev    Permission: Initiator of the launch.
+     */
     function updateLaunchURI(
         uint256 _launchId,
         string calldata _uri,
         Validation calldata _validation
-    ) external validLaunch(_launchId) onlyInitiator(_launchId) whenNotPaused {
+    ) external
+    whenNotPaused
+    validLaunch(_launchId)
+    onlyInitiator(_launchId) {
         _validate(abi.encode(_uri), _validation);
 
         if (launches[_launchId].isFinalized) {
@@ -226,14 +428,33 @@ ReentrancyGuardUpgradeable {
         }
 
         launches[_launchId].uri = _uri;
-        emit LaunchURIUpdate(_launchId, _uri);
+        emit LaunchURIUpdate(
+            _launchId,
+            _uri
+        );
     }
 
+    /**
+     *  @notice Update a specific round in a launch.
+     *
+     *          Name            Description
+     *  @param  _launchId       Launch identifier.
+     *  @param  _index          Index of the round.
+     *  @param  _round          New round configuration.
+     *
+     *  @return roundId         New round identifier.
+     *
+     *  @dev    Permission: Initiator of the launch.
+     */
     function updateRound(
         uint256 _launchId,
         uint256 _index,
         PrestigePadRoundInput calldata _round
-    ) external validLaunch(_launchId) onlyInitiator(_launchId) whenNotPaused returns (uint256) {
+    ) external
+    whenNotPaused
+    validLaunch(_launchId)
+    onlyInitiator(_launchId)
+    returns (uint256) {
         PrestigePadLaunch storage launch = launches[_launchId];
         if (launch.isFinalized) {
             revert AlreadyFinalized();
@@ -260,11 +481,27 @@ ReentrancyGuardUpgradeable {
         return roundId;
     }
 
+    /**
+     *  @notice TODO: Update multiple rounds in a launch by removing existing rounds and adding new ones.
+     *
+     *          Name                    Description
+     *  @param  _launchId               Launch identifier.
+     *  @param  _removedRoundNumber     Number of rounds to remove from the end.
+     *  @param  _addedRounds            Array of new rounds.
+     *
+     *  @return lastIndex               Starting index of the added rounds.
+     *
+     *  @dev    Permission: Initiator of the launch.
+     */
     function updateRounds(
         uint256 _launchId,
         uint256 _removedRoundNumber,
         PrestigePadRoundInput[] calldata _addedRounds
-    ) external validLaunch(_launchId) onlyInitiator(_launchId) whenNotPaused returns (uint256) {
+    ) external
+    whenNotPaused
+    validLaunch(_launchId)
+    onlyInitiator(_launchId)
+    returns (uint256) {
         PrestigePadLaunch storage launch = launches[_launchId];
         if (launch.isFinalized) {
             revert AlreadyFinalized();
@@ -301,6 +538,22 @@ ReentrancyGuardUpgradeable {
         return index;
     }
 
+    /**
+     *  @notice TODO: Initiate the next round.
+     *
+     *          Name                        Description
+     *  @param  _launchId                   Launch identifier.
+     *  @param  _cashbackThreshold          Minimum contributed quantity of an address to receive cashback.
+     *  @param  _cashbackBaseRate           Fraction of deposit to cashback.
+     *  @param  _cashbackCurrencies         Array of extra currency addresses for cashback.
+     *  @param  _cashbackDenominations      Array of extra denominations for cashback on each deposited token.
+     *  @param  _raiseStartsAt              When the raise starts.
+     *  @param  _raiseDuration              Duration of the raising period.
+     *
+     *  @return index                       Index of the initiated round.
+     *
+     *  @dev    Permission: Initiator of the launch.
+     */
     function raiseNextRound(
         uint256 _launchId,
         uint256 _cashbackThreshold,
@@ -309,7 +562,12 @@ ReentrancyGuardUpgradeable {
         uint256[] calldata _cashbackDenominations,
         uint40 _raiseStartsAt,
         uint40 _raiseDuration
-    ) external nonReentrant validLaunch(_launchId) onlyInitiator(_launchId) whenNotPaused returns (uint256) {
+    ) external
+    whenNotPaused
+    nonReentrant
+    validLaunch(_launchId)
+    onlyInitiator(_launchId)
+    returns (uint256) {
         if (_cashbackBaseRate > CommonConstant.RATE_MAX_FRACTION
             || _cashbackCurrencies.length != _cashbackDenominations.length
             || _raiseStartsAt < block.timestamp
@@ -379,8 +637,24 @@ ReentrancyGuardUpgradeable {
         return currentIndex;
     }
 
-    function cancelCurrentRound(uint256 _launchId)
-    external validLaunch(_launchId) onlyInitiator(_launchId) whenNotPaused returns (uint256, uint256) {
+    /**
+     *  @notice TODO: Cancel the current round of a launch.
+     *
+     *          Name            Description
+     *  @param  _launchId       Launch identifier.
+     *
+     *  @return index           Index of the cancelled round.
+     *  @return roundId         Round identifier of the cancelled round.
+     *
+     *  @dev    Permission: Initiator of the launch.
+     */
+    function cancelCurrentRound(
+        uint256 _launchId
+    ) external
+    whenNotPaused
+    validLaunch(_launchId)
+    onlyInitiator(_launchId)
+    returns (uint256, uint256) {
         PrestigePadLaunch storage launch = launches[_launchId];
         if (launch.isFinalized) {
             revert AlreadyFinalized();
@@ -412,8 +686,24 @@ ReentrancyGuardUpgradeable {
         return (currentIndex, roundId);
     }
 
-    function confirmCurrentRound(uint256 _launchId)
-    external payable nonReentrant validLaunch(_launchId) onlyInitiator(_launchId) whenNotPaused returns (uint256) {
+    /**
+     *  @notice TODO: Confirm the current round of a launch.
+     *
+     *          Name            Description
+     *  @param  _launchId       Launch identifier.
+     *
+     *  @return index           Index of the confirmed round.
+     *
+     *  @dev    Permission: Initiator of the launch.
+     */
+    function confirmCurrentRound(
+        uint256 _launchId
+    ) external payable
+    whenNotPaused
+    nonReentrant
+    validLaunch(_launchId)
+    onlyInitiator(_launchId)
+    returns (uint256) {
         PrestigePadLaunch storage launch = launches[_launchId];
         if (launch.isFinalized) {
             revert AlreadyFinalized();
@@ -486,7 +776,20 @@ ReentrancyGuardUpgradeable {
         return currentIndex;
     }
 
-    function finalize(uint256 _launchId) external validLaunch(_launchId) onlyInitiator(_launchId) whenNotPaused {
+    /**
+     *  @notice TODO: Finalize a launch.
+     *
+     *          Name            Description
+     *  @param  _launchId       Launch identifier.
+     *
+     *  @dev    Permission: Initiator of the launch.
+     */
+    function finalize(
+        uint256 _launchId
+    ) external
+    whenNotPaused
+    validLaunch(_launchId)
+    onlyInitiator(_launchId) {
         PrestigePadLaunch storage launch = launches[_launchId];
         if (launch.isFinalized) {
             revert AlreadyFinalized();
@@ -502,16 +805,46 @@ ReentrancyGuardUpgradeable {
         emit LaunchFinalization(_launchId);
     }
 
-    function contributeCurrentRound(uint256 _launchId, uint256 _quantity)
-    external payable validLaunch(_launchId) returns (uint256) {
+    /**
+     *  @notice Contribute to the current round of a launch.
+     *
+     *          Name            Description
+     *  @param  _launchId       Launch identifier.
+     *  @param  _quantity       Quantity of tokens to contribute for.
+     *
+     *  @return value           Value of the contribution.
+     *
+     *  @dev    Contribution currency is determined by the round configuration.
+     */
+    function contributeCurrentRound(
+        uint256 _launchId,
+        uint256 _quantity
+    ) external payable
+    validLaunch(_launchId)
+    returns (uint256) {
         return _contributeCurrentRound(_launchId, _quantity);
     }
 
+    /**
+     *  @notice Contribute to the current round of a launch with anchor verification.
+     *
+     *          Name            Description
+     *  @param  _launchId       Launch identifier.
+     *  @param  _quantity       Quantity of tokens to contribute for.
+     *  @param  _anchor         Launch identifier for verification consistency.
+     *
+     *  @return value           Value of the contribution.
+     *
+     *  @dev    Anchor enforces consistency between this contract and the client-side.
+     *  @dev    Contribution currency is determined by the round configuration.
+     */
     function safeContributeCurrentRound(
         uint256 _launchId,
         uint256 _quantity,
         bytes32 _anchor
-    ) external payable validLaunch(_launchId) returns (uint256) {
+    ) external payable
+    validLaunch(_launchId)
+    returns (uint256) {
         if (_anchor != keccak256(bytes(launches[_launchId].uri))) {
             revert BadAnchor();
         }
@@ -519,8 +852,21 @@ ReentrancyGuardUpgradeable {
         return _contributeCurrentRound(_launchId, _quantity);
     }
 
-    function withdrawContribution(uint256 _roundId)
-    external nonReentrant validRound(_roundId) whenNotPaused returns (uint256) {
+    /**
+     *  @notice TODO: Withdraw contribution from a cancelled round.
+     *
+     *          Name            Description
+     *  @param  _roundId        Round identifier.
+     *
+     *  @return value           Value of the withdrawn contribution.
+     */
+    function withdrawContribution(
+        uint256 _roundId
+    ) external
+    whenNotPaused
+    nonReentrant
+    validRound(_roundId)
+    returns (uint256) {
         PrestigePadRound storage round = rounds[_roundId];
         if (round.agenda.confirmAt != 0) {
             revert AlreadyConfirmed();
@@ -558,8 +904,23 @@ ReentrancyGuardUpgradeable {
         return value;
     }
 
-    function withdrawProjectToken(uint256 _launchId, uint256 _index)
-    external nonReentrant validLaunch(_launchId) whenNotPaused returns (uint256) {
+    /**
+     *  @notice TODO: Withdraw project tokens equivalent to contribution in a confirmed round.
+     *
+     *          Name            Description
+     *  @param  _launchId       Launch identifier.
+     *  @param  _index          Index of the round in the launch.
+     *
+     *  @return amount          Amount of project tokens withdrawn.
+     */
+    function withdrawProjectToken(
+        uint256 _launchId,
+        uint256 _index
+    ) external
+    whenNotPaused
+    nonReentrant
+    validLaunch(_launchId)
+    returns (uint256) {
         PrestigePadLaunch storage launch = launches[_launchId];
         if (_index > launch.currentIndex) {
             revert InvalidInput();
@@ -608,39 +969,17 @@ ReentrancyGuardUpgradeable {
         return amount;
     }
 
-    function isFinalized(uint256 _launchId) external view returns (bool) {
-        return launches[_launchId].isFinalized;
-    }
 
-    function allocationOfAt(
-        address _account,
-        uint256 _launchId,
-        uint256 _at
-    ) external view validLaunch(_launchId) returns (uint256) {
-        if (_at > block.timestamp) {
-            revert InvalidTimestamp();
-        }
-        uint256 allocation = 0;
-        PrestigePadLaunch storage launch = launches[_launchId];
-        uint256 currentIndex = launch.currentIndex;
-        for (uint256 i = 0; i < currentIndex; ++i) {
-            uint256 roundId = launch.roundIds[i];
-            uint256 withdrawAt = withdrawAt[roundId][_account];
-            if (_at >= rounds[roundId].agenda.confirmAt && (withdrawAt == 0 || _at < withdrawAt)) {
-                allocation += contributions[roundId][_account];
-            }
-        }
-        if (rounds[launch.roundIds[currentIndex]].agenda.confirmAt != 0) {
-            uint256 roundId = launch.roundIds[currentIndex];
-            uint256 withdrawAt = withdrawAt[roundId][_account];
-            if (_at >= rounds[roundId].agenda.confirmAt && (withdrawAt == 0 || _at < withdrawAt)) {
-                allocation += contributions[roundId][_account];
-            }
-        }
-
-        return allocation * 10 ** IProjectToken(projectToken).decimals();
-    }
-
+    /* --- Helper --- */
+    /**
+     *  @notice Create a new round for a launch.
+     *
+     *          Name            Description
+     *  @param  _launchId       Launch identifier.
+     *  @param  _round          Round configuration input.
+     *
+     *  @return roundId         New round identifier.
+     */
     function _newRound(
         uint256 _launchId,
         PrestigePadRoundInput calldata _round
@@ -682,8 +1021,22 @@ ReentrancyGuardUpgradeable {
         return roundId;
     }
 
-    function _contributeCurrentRound(uint256 _launchId, uint256 _quantity)
-    internal nonReentrant whenNotPaused returns (uint256) {
+    /**
+     *  @notice TODO: Handle contribution to the current round of a launch.
+     *
+     *          Name            Description
+     *  @param  _launchId       Launch identifier.
+     *  @param  _quantity       Quantity of tokens to contribute for.
+     *
+     *  @return value           Value of the contribution.
+     */
+    function _contributeCurrentRound(
+        uint256 _launchId,
+        uint256 _quantity
+    ) internal
+    whenNotPaused
+    nonReentrant
+    returns (uint256) {
         PrestigePadLaunch storage launch = launches[_launchId];
         if (launch.isFinalized) {
             revert AlreadyFinalized();
@@ -741,7 +1094,17 @@ ReentrancyGuardUpgradeable {
         return value;
     }
 
-    function _provideCashbackFund(uint256 _cashbackFundId) internal returns (uint256) {
+    /**
+     *  @notice Provide funds for cashback mechanism to the reserve vault.
+     *
+     *          Name                Description
+     *  @param  _cashbackFundId     Cashback fund identifier.
+     *
+     *  @return cashbackBaseAmount  Main currency cashback amount provided.
+     */
+    function _provideCashbackFund(
+        uint256 _cashbackFundId
+    ) internal returns (uint256) {
         uint256 cashbackBaseAmount;
         if (_cashbackFundId != 0) {
             address reserveVaultAddress = reserveVault;
@@ -761,10 +1124,11 @@ ReentrancyGuardUpgradeable {
                 CurrencyHandler.receiveNative(totalNative);
 
                 if (fund.mainDenomination != 0) {
+                    cashbackBaseAmount = fund.mainDenomination * fund.quantity;
                     if (fund.mainCurrency == address(0)) {
-                        totalNative += fund.mainDenomination * fund.quantity;
+                        totalNative += cashbackBaseAmount;
                     } else {
-                        CurrencyHandler.allowERC20(fund.mainCurrency, reserveVaultAddress, fund.mainDenomination * fund.quantity);
+                        CurrencyHandler.allowERC20(fund.mainCurrency, reserveVaultAddress, cashbackBaseAmount);
                     }
                 }
             }
@@ -774,14 +1138,5 @@ ReentrancyGuardUpgradeable {
             CurrencyHandler.receiveNative(0);
         }
         return cashbackBaseAmount;
-    }
-
-    function supportsInterface(
-        bytes4 _interfaceId
-    ) public view virtual override returns (bool) {
-        return _interfaceId == type(IPrestigePad).interfaceId
-            || _interfaceId == type(IProjectLaunchpad).interfaceId
-            || _interfaceId == type(IProjectTokenReceiver).interfaceId
-            || _interfaceId == type(IERC165Upgradeable).interfaceId;
     }
 }

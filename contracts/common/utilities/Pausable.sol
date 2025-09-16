@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
 /// @openzeppelin/contracts-upgradeable/
@@ -25,11 +25,12 @@ PausableUpgradeable {
      *          Name            Description
      *  @param  _signatures     Array of admin signatures.
      *
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative configuration.
      */
     function pause(
         bytes[] calldata _signatures
-    ) external whenNotPaused {
+    ) external
+    whenNotPaused {
         IAdmin(this.admin()).verifyAdminSignatures(
             abi.encode(address(this), "pause"),
             _signatures
@@ -37,19 +38,19 @@ PausableUpgradeable {
         _pause();
     }
 
-    /** ===== FUNCTION ===== **/
     /**
-     *  @notice Unpaused contract.
+     *  @notice Unpause contract.
      *  @notice After maintenance completes.
      *
      *          Name            Description
      *  @param  _signatures     Array of admin signatures.
      *
-     *  @dev    Administrative configurations.
+     *  @dev    Administrative configuration.
      */
     function unpause(
         bytes[] calldata _signatures
-    ) external whenPaused {
+    ) external
+    whenPaused {
         IAdmin(this.admin()).verifyAdminSignatures(
             abi.encode(address(this), "unpause"),
             _signatures

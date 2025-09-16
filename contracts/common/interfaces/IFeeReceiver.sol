@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
 /// contracts/common/interfaces/
@@ -18,7 +18,7 @@ interface IFeeReceiver is
 ICommon {
     /** ===== EVENT ===== **/
     /**
-     *  @notice Emitted when a sufficient amount of cryptocurrency is withdrawn from the contract to a receiver.
+     *  @notice Emitted when a sufficient amount of cryptocurrency is withdrawn from this contract to an account.
      *
      *          Name        Description
      *  @param  receiver    Receiver address.

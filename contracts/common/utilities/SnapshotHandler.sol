@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
 /// contracts/common/structs/
@@ -7,20 +7,21 @@ import {ISnapshot} from "../structs/ISnapshot.sol";
 /**
  *  @author Briky Team
  *
- *  @notice Utility library to query a value at a specified timestamp from a time-ordered snapshot list.
+ *  @notice Utility library to query a mutable value at a specified timestamp from its time-ordered snapshot list.
  */
-library SnapshotSearcher {
+library SnapshotHandler {
     /** ===== FUNCTION ===== **/
     /**
      *          Name            Description
-     *  @param  _snapshots      Array of snapshots.
+     *  @param  _snapshots      Array of time-ordered snapshots of the mutable value.
      *  @param  _at             Reference timestamp.
-     *  @return value           Value at the reference timestamp.
+     *
+     *  @return Value at the reference timestamp.
      */
     function getValueAt(
         ISnapshot.Uint256Snapshot[] storage _snapshots,
         uint256 _at
-    ) internal view returns (uint256 value) {
+    ) internal view returns (uint256) {
         uint256 high = _snapshots.length;
         if (high == 0) {
             return 0;

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
 /**
@@ -19,18 +19,18 @@ interface IFund {
      *  @dev    The fund need to specify a main currency, other extras are optional.
      */
     struct Fund {
-        /// @notice Extra currency addresses.
-        address[] extraCurrencies;
-
-        /// @notice Extra currency denominations.
-        /// @dev    Must have same length as `extraCurrencies`.
-        uint256[] extraDenominations;
-
         /// @notice Main currency address.
         address mainCurrency;
 
         /// @notice Main currency denomination.
         uint256 mainDenomination;
+
+        /// @notice Array of extra currency addresses.
+        address[] extraCurrencies;
+
+        /// @notice Array of extra currency denominations, respectively to each extra currency.
+        /// @dev    Must have same length as `extraCurrencies`.
+        uint256[] extraDenominations;
 
         /// @notice Fund quantity.
         uint256 quantity;

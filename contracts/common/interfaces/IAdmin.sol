@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
 /// contracts/common/structs/
@@ -18,14 +18,14 @@ import {ICurrencyRegistry} from "../structs/ICurrencyRegistry.sol";
 interface IAdmin is
 ICurrencyRegistry {
     /** ===== EVENT ===== **/
-    /* --- Admin --- */
+    /* --- Verification --- */
     /**
      *  @notice Emitted when a message is successfully verified with the current nonce and a set of admin signatures.
      *
      *          Name        Description
-     *  @param  message     Message data bytes verified successfully.
+     *  @param  message     Message bytes verified successfully.
      *  @param  nonce       Number used once combined with the message to prevent replay attacks.
-     *  @param  message     Array of admin signatures generated from the message and the current nonce of the contract.
+     *  @param  signatures  Array of admin signatures generated from the message and the current nonce of this contract.
      */
     event AdminSignaturesVerification(
         bytes message,
@@ -33,8 +33,10 @@ ICurrencyRegistry {
         bytes[] signatures
     );
 
+
+    /* --- Admin --- */
     /**
-     *  @notice Emitted when admin #1 transfers administratorship to another address.
+     *  @notice Emitted when the admin #1 role is transferred to another address.
      *
      *          Name        Description
      *  @param  newAdmin1   New admin #1 address.
@@ -44,7 +46,7 @@ ICurrencyRegistry {
     );
 
     /**
-     *  @notice Emitted when admin #2 transfers administratorship to another address.
+     *  @notice Emitted when the admin #2 role is transferred to another address.
      *
      *          Name        Description
      *  @param  newAdmin2   New admin #2 address.
@@ -54,7 +56,7 @@ ICurrencyRegistry {
     );
 
     /**
-     *  @notice Emitted when admin #3 transfers administratorship to another address.
+     *  @notice Emitted when the admin #3 role is transferred to another address.
      *
      *          Name        Description
      *  @param  newAdmin3   New admin #3 address.
@@ -64,7 +66,7 @@ ICurrencyRegistry {
     );
 
     /**
-     *  @notice Emitted when admin #4 transfers administratorship to another address.
+     *  @notice Emitted when the admin #4 role is transferred to another address.
      *
      *          Name        Description
      *  @param  newAdmin4   New admin #4 address.
@@ -74,7 +76,7 @@ ICurrencyRegistry {
     );
 
     /**
-     *  @notice Emitted when admin #5 transfers administratorship to another address.
+     *  @notice Emitted when the admin #5 is transferred to another address.
      *
      *          Name        Description
      *  @param  newAdmin5   New admin #5 address.
@@ -96,11 +98,11 @@ ICurrencyRegistry {
     );
 
     /**
-     *  @notice Emitted when an external owned address is activated in a zone.
+     *  @notice Emitted when an account is activated in a zone.
      *
      *          Name        Description
      *  @param  zone        Zone code.
-     *  @param  account     Activated EOA.
+     *  @param  account     Activated address.
      */
     event Activation(
         bytes32 indexed zone,
@@ -108,11 +110,11 @@ ICurrencyRegistry {
     );
 
     /**
-     *  @notice Emitted when an external owned address is deactivated in a zone.
+     *  @notice Emitted when an account is deactivated in a zone.
      *
      *          Name        Description
      *  @param  zone        Zone code.
-     *  @param  account     Deactivated EOA.
+     *  @param  account     Deactivated address.
      */
     event Deactivation(
         bytes32 indexed zone,
@@ -122,10 +124,10 @@ ICurrencyRegistry {
 
     /* --- Manager --- */
     /**
-     *  @notice Emitted when an external owned address is authorized to be manager.
+     *  @notice Emitted when an account is authorized as a manager.
      *
      *          Name        Description
-     *  @param  account     Authorized EOA.
+     *  @param  account     Authorized address.
      */
     event ManagerAuthorization(
         address indexed account
@@ -135,7 +137,7 @@ ICurrencyRegistry {
      *  @notice Emitted when a manager is deauthorized.
      *
      *          Name        Description
-     *  @param  account     Deauthorized EOA.
+     *  @param  account     Deauthorized address.
      */
     event ManagerDeauthorization(
         address indexed account
@@ -144,10 +146,10 @@ ICurrencyRegistry {
 
     /* --- Moderator --- */
     /**
-     *  @notice Emitted when an external owned address is authorized to be moderator.
+     *  @notice Emitted when an account is authorized as a moderator.
      *
      *          Name        Description
-     *  @param  account     Authorized EOA.
+     *  @param  account     Authorized address.
      */
     event ModeratorAuthorization(
         address indexed account
@@ -157,7 +159,7 @@ ICurrencyRegistry {
      *  @notice Emitted when a moderator is deauthorized.
      *
      *          Name        Description
-     *  @param  account     Deauthorized EOA.
+     *  @param  account     Deauthorized address.
      */
     event ModeratorDeauthorization(
         address indexed account
@@ -166,7 +168,7 @@ ICurrencyRegistry {
 
     /* --- Governor --- */
     /**
-     *  @notice Emitted when a contract is authorized to be governor.
+     *  @notice Emitted when a contract is authorized as governor contract.
      *
      *          Name        Description
      *  @param  account     Authorized contract address.
@@ -176,7 +178,7 @@ ICurrencyRegistry {
     );
 
     /**
-     *  @notice Emitted when a governor is deauthorized.
+     *  @notice Emitted when a governor contract is deauthorized.
      *
      *          Name        Description
      *  @param  account     Deauthorized contract address.
@@ -218,7 +220,7 @@ ICurrencyRegistry {
 
 
     /** ===== FUNCTION ===== **/
-    /* --- Query --- */
+    /* --- Common --- */
     /**
      *          Name        Description
      *  @return version     Version of implementation.
@@ -226,40 +228,40 @@ ICurrencyRegistry {
     function version() external pure returns (string memory version);
 
 
+    /* --- Query --- */
     /**
-     *          Name        Description
-     *  @return admin1      Admin #1 address.
+     *          Name    Description
+     *  @return admin1  Admin #1 address.
      */
     function admin1() external view returns (address admin1);
 
     /**
-     *          Name        Description
-     *  @return admin2      Admin #2 address.
+     *          Name    Description
+     *  @return admin2  Admin #2 address.
      */
     function admin2() external view returns (address admin2);
 
     /**
-     *          Name        Description
-     *  @return admin3      Admin #3 address.
+     *          Name    Description
+     *  @return admin3  Admin #3 address.
      */
     function admin3() external view returns (address admin3);
 
     /**
-     *          Name        Description
-     *  @return admin4      Admin #4 address.
+     *          Name    Description
+     *  @return admin4  Admin #4 address.
      */
     function admin4() external view returns (address admin4);
 
     /**
-     *          Name        Description
-     *  @return admin5      Admin #5 address.
+     *          Name    Description
+     *  @return admin5  Admin #5 address.
      */
     function admin5() external view returns (address admin5);
 
-
     /**
-     *          Name        Description
-     *  @return nonce       Number used once in the next verification to prevent replay attacks.
+     *          Name    Description
+     *  @return nonce   Number used once in the next verification.
      */
     function nonce() external view returns (uint256 nonce);
 
@@ -267,7 +269,7 @@ ICurrencyRegistry {
     /**
      *          Name            Description
      *  @param  account         EVM address.
-     *  @return isExecutive     Whether the account is authorized to be manager or moderator.
+     *  @return isExecutive     Whether the account is authorized as a manager or a moderator.
      */
     function isExecutive(
         address account
@@ -275,10 +277,10 @@ ICurrencyRegistry {
 
     /**
      *          Name            Description
-     *  @param  account         Contract address.
-     *  @return isGovernor      Whether the account is authorized to be governor.
+     *  @param  account         EVM address.
+     *  @return isGovernor      Whether the account is authorized as a governor.
      *
-     *  @dev    This contract must support interface `IGovernor`.
+     *  @dev    The contract must support interface `IGovernor`.
      */
     function isGovernor(
         address account
@@ -287,7 +289,7 @@ ICurrencyRegistry {
     /**
      *          Name            Description
      *  @param  account         EVM address.
-     *  @return isManager       Whether the account is authorized to be manager.
+     *  @return isManager       Whether the account is authorized as a manager.
      */
     function isManager(
         address account
@@ -296,7 +298,7 @@ ICurrencyRegistry {
     /**
      *          Name            Description
      *  @param  account         EVM address.
-     *  @return isModerator     Whether the account is authorized to be moderator.
+     *  @return isModerator     Whether the account is authorized as a moderator.
      */
     function isModerator(
         address account
@@ -343,10 +345,10 @@ ICurrencyRegistry {
 
 
     /**
-     *          Name            Description
-     *  @param  zone            Zone code.
-     *  @param  account         EVM address.
-     *  @return isActive        Whether the account is eligible in the zone.
+     *          Name        Description
+     *  @param  zone        Zone code.
+     *  @param  account     EVM address.
+     *  @return isActive    Whether the account is eligible in the zone.
      */
     function isActiveIn(
         bytes32 zone,
@@ -356,8 +358,8 @@ ICurrencyRegistry {
 
     /* --- Command --- */
     /**
-     *  @notice Verify whether message and a set of signatures conform admin addresses and the current nonce of the contract.
-     *  @notice After successful verification, the contract nonce is incremented by 1 for the next message.
+     *  @notice Verify an a message and a set of signatures conform admin addresses and the current nonce of this contract.
+     *  @notice After successful verification, the nonce is incremented by 1 for the next message.
      *
      *          Name        Description
      *  @param  message     Receiver address.
