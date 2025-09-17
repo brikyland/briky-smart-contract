@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 /// @openzeppelin/contracts-upgradeable/
 import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol";
 import {IERC721MetadataUpgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC721MetadataUpgradeable.sol";
+import {IERC2981Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import {ERC721PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721PausableUpgradeable.sol";
@@ -204,7 +205,7 @@ ReentrancyGuardUpgradeable {
      */
     function cancel(
         uint256 _mortgageId
-    ) external
+    ) external virtual
     whenNotPaused
     nonReentrant
     validMortgage(_mortgageId) {
@@ -232,7 +233,7 @@ ReentrancyGuardUpgradeable {
      */
     function lend(
         uint256 _mortgageId
-    ) external payable
+    ) external payable virtual
     validMortgage(_mortgageId)
     returns (uint40) {
         return _lend(_mortgageId);
@@ -253,7 +254,7 @@ ReentrancyGuardUpgradeable {
     function safeLend(
         uint256 _mortgageId,
         uint256 _anchor
-    ) external payable
+    ) external payable virtual
     validMortgage(_mortgageId)
     returns (uint40) {
         if (_anchor != mortgages[_mortgageId].principal) {
@@ -274,7 +275,7 @@ ReentrancyGuardUpgradeable {
      */
     function repay(
         uint256 _mortgageId
-    ) external payable
+    ) external payable virtual
     validMortgage(_mortgageId) {
         _repay(_mortgageId);
     }
@@ -295,7 +296,7 @@ ReentrancyGuardUpgradeable {
     function safeRepay(
         uint256 _mortgageId,
         uint256 _anchor
-    ) external payable
+    ) external payable virtual
     validMortgage(_mortgageId) {
         if (_anchor != mortgages[_mortgageId].repayment) {
             revert BadAnchor();
@@ -315,7 +316,7 @@ ReentrancyGuardUpgradeable {
      */
     function foreclose(
         uint256 _mortgageId
-    ) external
+    ) external virtual
     whenNotPaused
     nonReentrant
     validMortgage(_mortgageId) {
@@ -365,7 +366,9 @@ ReentrancyGuardUpgradeable {
         IERC165Upgradeable,
         ERC721Upgradeable
     ) returns (bool) {
-        return _interfaceId == type(IMortgageToken).interfaceId || super.supportsInterface(_interfaceId);
+        return _interfaceId == type(IMortgageToken).interfaceId 
+            || _interfaceId == type(IERC2981Upgradeable).interfaceId
+            || super.supportsInterface(_interfaceId);
     }
 
     /* --- Internal --- */
