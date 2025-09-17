@@ -35,7 +35,7 @@ contract MockPriceFeed is AggregatorV3Interface, Initializable {
 
     function getRoundData(uint80 _roundId)
     external
-    pure
+    view
     override
     returns (
         uint80,
@@ -55,7 +55,7 @@ contract MockPriceFeed is AggregatorV3Interface, Initializable {
 
     function latestRoundData()
     external
-    pure
+    view
     override
     returns (
         uint80 _roundId,

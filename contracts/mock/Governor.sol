@@ -16,7 +16,8 @@ IGovernor,
 ERC1155Upgradeable,
 ERC1155SupplyUpgradeable {
     mapping(uint256 => mapping(address => Snapshot[])) internal balanceSnapshots;
-    mapping(uint256 => bytes32) zones;    
+    mapping(uint256 => bytes32) zones;
+    mapping(uint256 => address) custodians;
     address public admin;
 
     struct Snapshot {
@@ -39,6 +40,10 @@ ERC1155SupplyUpgradeable {
     function setZone(uint256 _tokenId, bytes32 _zone) external {
         zones[_tokenId] = _zone;
     }
+
+    function setCustodian(uint256 _tokenId, address _custodian) external {
+        custodians[_tokenId] = _custodian;
+    }
     
     function mint(uint256 _tokenId, uint256 _amount) external {
         _mint(msg.sender, _tokenId, _amount, "");
@@ -52,8 +57,12 @@ ERC1155SupplyUpgradeable {
         return zones[_tokenId];
     }
 
-    function isAvailable(uint256 _tokenId) public view returns (bool) {
+    function isAvailable(uint256 _tokenId) external view returns (bool) {
         return exists(_tokenId);
+    }
+
+    function getRepresentative(uint256 _tokenId) external view returns (address) {
+        return custodians[_tokenId];
     }
     
     function balanceOf(address _account, uint256 _tokenId)

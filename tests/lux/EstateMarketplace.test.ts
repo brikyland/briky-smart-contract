@@ -20,7 +20,7 @@ import { deployAdmin } from '@utils/deployments/common/admin';
 import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
 import { deployCurrency } from '@utils/deployments/common/currency';
 import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
-import { EstateMarketplaceOfferState } from '@utils/models/enums';
+import { OfferState } from '@utils/models/enums';
 import { MockContract, smock } from '@defi-wonderland/smock';
 
 import {
@@ -475,7 +475,7 @@ describe('6.2. EstateMarketplace', async () => {
             expect(offer.unitPrice).to.equal(ethers.utils.parseEther("100"));
             expect(offer.currency).to.equal(ethers.constants.AddressZero);
             expect(offer.isDivisible).to.equal(false);
-            expect(offer.state).to.equal(EstateMarketplaceOfferState.Selling);
+            expect(offer.state).to.equal(OfferState.Selling);
             expect(offer.seller).to.equal(seller1.address);
 
             tx = await estateMarketplace.connect(seller2).list(
@@ -508,7 +508,7 @@ describe('6.2. EstateMarketplace', async () => {
             expect(offer.unitPrice).to.equal(ethers.utils.parseEther("500000"));
             expect(offer.currency).to.equal(currency.address);
             expect(offer.isDivisible).to.equal(true);
-            expect(offer.state).to.equal(EstateMarketplaceOfferState.Selling);
+            expect(offer.state).to.equal(OfferState.Selling);
             expect(offer.seller).to.equal(seller2.address);
         });
 
@@ -766,7 +766,7 @@ describe('6.2. EstateMarketplace', async () => {
             expect(offer.unitPrice).to.equal(unitPrice);
             expect(offer.currency).to.equal(newCurrencyAddress);
             expect(offer.isDivisible).to.equal(isDivisible);
-            expect(offer.state).to.equal(totalSold.eq(offerAmount) ? EstateMarketplaceOfferState.Sold : EstateMarketplaceOfferState.Selling);
+            expect(offer.state).to.equal(totalSold.eq(offerAmount) ? OfferState.Sold : OfferState.Selling);
             expect(offer.seller).to.equal(seller.address);
 
             expect(await getBalance(ethers.provider, buyer.address, newCurrency)).to.equal(expectedBuyerBalance);
@@ -1476,7 +1476,7 @@ describe('6.2. EstateMarketplace', async () => {
             await tx.wait();
 
             const offer = await estateMarketplace.getOffer(1);
-            expect(offer.state).to.equal(EstateMarketplaceOfferState.Cancelled);
+            expect(offer.state).to.equal(OfferState.Cancelled);
 
             await expect(tx).to
                 .emit(estateMarketplace, "OfferCancellation")
@@ -1495,7 +1495,7 @@ describe('6.2. EstateMarketplace', async () => {
             await tx.wait();
 
             const offer = await estateMarketplace.getOffer(1);
-            expect(offer.state).to.equal(EstateMarketplaceOfferState.Cancelled);
+            expect(offer.state).to.equal(OfferState.Cancelled);
 
             await expect(tx).to
                 .emit(estateMarketplace, "OfferCancellation")

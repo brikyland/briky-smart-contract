@@ -31,7 +31,7 @@ import {
     EstateLiquidator,
     ProjectToken,
     PrestigePad,
-    ProjectMarketplace
+    AssetMarketplace
 } from '@typechain-types';
 import { deployTreasury } from '@utils/deployments/liquidity/treasury';
 import { deployAdmin } from '@utils/deployments/common/admin';
@@ -66,7 +66,7 @@ import { deployGovernanceHub } from '@utils/deployments/common/governanceHub';
 import { deployEstateLiquidator } from '@utils/deployments/land/estateLiquidator';
 import { deployProjectToken } from '@utils/deployments/launch/projectToken';
 import { deployPrestigePad } from '@utils/deployments/launch/prestigePad';
-import { deployProjectMarketplace } from '@utils/deployments/lux/projectMarketplace';
+import { deployAssetMarketplace } from '@utils/deployments/lux/assetMarketplace';
 import { Initialization as CommonInitialization } from '@tests/common/test.initialization';
 
 interface CommonFixture {
@@ -107,7 +107,7 @@ interface CommonFixture {
     estateMarketplace: EstateMarketplace;
     erc721Marketplace: ERC721Marketplace;
     mortgageMarketplace: MortgageMarketplace;
-    projectMarketplace: ProjectMarketplace;
+    assetMarketplace: AssetMarketplace;
     
     // Launch
     projectToken: ProjectToken;
@@ -333,14 +333,13 @@ describe('1.1. Inspect', async () => {
             deployer,
             admin.address,
             feeReceiver.address,
-            mortgageToken.address,
         ) as MortgageMarketplace;
 
-        const projectMarketplace = await deployProjectMarketplace(
+        const assetMarketplace = await deployAssetMarketplace(
             deployer,
             admin.address,
             projectToken.address,
-        ) as ProjectMarketplace;
+        ) as AssetMarketplace;
 
         return {
             deployer,
@@ -370,7 +369,7 @@ describe('1.1. Inspect', async () => {
             estateMarketplace,
             erc721Marketplace,
             mortgageMarketplace,
-            projectMarketplace,
+            assetMarketplace,
         }
     }
 
@@ -401,7 +400,7 @@ describe('1.1. Inspect', async () => {
                 estateMarketplace,
                 erc721Marketplace,
                 mortgageMarketplace,
-                projectMarketplace,
+                assetMarketplace,
                 prestigePad,
                 projectToken,
             } = fixture;
@@ -434,7 +433,7 @@ describe('1.1. Inspect', async () => {
             expect(await estateMarketplace.version()).to.equal('v1.1.1');
             expect(await erc721Marketplace.version()).to.equal('v1.1.1');
             expect(await mortgageMarketplace.version()).to.equal('v1.1.1');
-            expect(await projectMarketplace.version()).to.equal('v1.1.1');
+            expect(await assetMarketplace.version()).to.equal('v1.1.1');
 
             expect(await projectToken.version()).to.equal('v1.1.1');
             expect(await prestigePad.version()).to.equal('v1.1.1');
@@ -492,7 +491,7 @@ describe('1.1. Inspect', async () => {
                 estateMarketplace,
                 erc721Marketplace,
                 mortgageMarketplace,
-                projectMarketplace,
+                assetMarketplace,
                 prestigePad,
                 projectToken,
             } = fixture;
@@ -526,7 +525,7 @@ describe('1.1. Inspect', async () => {
             await testReceiveNotExecuteAnyCode(estateMarketplace, 28228);
             await testReceiveNotExecuteAnyCode(erc721Marketplace, 28223);
             await testReceiveNotExecuteAnyCode(mortgageMarketplace, 28236);
-            await testReceiveNotExecuteAnyCode(projectMarketplace, 28241);
+            await testReceiveNotExecuteAnyCode(assetMarketplace, 28241);
 
             await testReceiveNotExecuteAnyCode(projectToken, 28223);
             await testReceiveNotExecuteAnyCode(prestigePad, 28223);

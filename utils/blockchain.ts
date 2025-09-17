@@ -113,7 +113,7 @@ export async function resetERC20(
     }));
 }
 
-export async function getBalance(provider: JsonRpcProvider, address: string, currency: ethers.Contract | undefined) {
+export async function getBalance(provider: JsonRpcProvider, address: string, currency: ethers.Contract | null) {
     if (currency) {
         return await currency.balanceOf(address);
     }
@@ -159,8 +159,12 @@ export async function expectRevertWithModifierCustomError(
     try {
         expect(await query).to.revertedWithCustomError(contract, errorName);
     } catch (error: any) {
-        const customErrorBytes4 = error.error.data.data;
-        const customError = contract.interface.parseError(customErrorBytes4);
-        expect(customError.name).to.equal(errorName);
+        if ("errorName" in error) {
+            expect(error.errorName).to.equal(errorName);
+        } else {
+            const customErrorBytes4 = error.error.data.data;
+            const customError = contract.interface.parseError(customErrorBytes4);
+            expect(customError.name).to.equal(errorName);
+        }
     }
 }

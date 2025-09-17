@@ -2029,16 +2029,18 @@ describe('3.2. ProjectMortgageToken', async () => {
             const IERC721MetadataUpgradeable = IERC721MetadataUpgradeable__factory.createInterface();
             const IERC4906Upgradeable = IERC4906Upgradeable__factory.createInterface();
             const IMortgageToken = IMortgageToken__factory.createInterface();
-
+            
             const IERC165UpgradeableInterfaceId = getInterfaceID(IERC165Upgradeable, []);
             const IProjectTokenReceiverInterfaceId = getInterfaceID(IProjectTokenReceiver, [IERC1155ReceiverUpgradeable]);
             const IERC721MetadataUpgradeableInterfaceId = getInterfaceID(IERC721MetadataUpgradeable, [IERC721Upgradeable]);
             const IMortgageTokenInterfaceId = getInterfaceID(IMortgageToken, [ICommon, IERC721MetadataUpgradeable, IERC2981Upgradeable, IERC4906Upgradeable]);
+            const IERC2981UpgradeableInterfaceId = getInterfaceID(IERC2981Upgradeable, [IERC165Upgradeable]);
 
             expect(await projectMortgageToken.supportsInterface(getBytes4Hex(IERC165UpgradeableInterfaceId))).to.equal(true);
             expect(await projectMortgageToken.supportsInterface(getBytes4Hex(IProjectTokenReceiverInterfaceId))).to.equal(true);
             expect(await projectMortgageToken.supportsInterface(getBytes4Hex(IERC721MetadataUpgradeableInterfaceId))).to.equal(true);
             expect(await projectMortgageToken.supportsInterface(getBytes4Hex(IMortgageTokenInterfaceId))).to.equal(true);
+            expect(await projectMortgageToken.supportsInterface(getBytes4Hex(IERC2981UpgradeableInterfaceId))).to.equal(true);
         });
     });
 });

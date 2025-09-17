@@ -15,8 +15,12 @@ import {
     ReserveVault,
     PriceWatcher,
     MockEstateForger,
+    EstateMortgageToken,
+    ProjectMortgageToken,
+    ERC721MortgageToken,
+    ProxyCaller,
 } from '@typechain-types';
-import { callTransaction, expectRevertWithModifierCustomError, prepareERC20, prepareNativeToken, randomWallet, resetERC20, resetNativeToken, testReentrancy } from '@utils/blockchain';
+import { callTransaction, expectRevertWithModifierCustomError, getSignatures, prepareERC20, prepareNativeToken, randomWallet, resetERC20, resetNativeToken, testReentrancy } from '@utils/blockchain';
 import { Constant } from '@tests/test.constant';
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
@@ -38,9 +42,9 @@ import { getInterfaceID, randomBigNumber } from '@utils/utils';
 import { OrderedMap } from '@utils/utils';
 import { deployEstateMortgageToken } from '@utils/deployments/lend/estateMortgageToken';
 import { deployMortgageMarketplace } from '@utils/deployments/lux/mortgageMarketplace';
-import { callMortgageMarketplace_Pause } from '@utils/callWithSignatures/mortgageMarketplace';
+import { callMortgageMarketplace_Pause, callMortgageMarketplace_RegisterCollections } from '@utils/callWithSignatures/mortgageMarketplace';
 import { Contract } from 'ethers';
-import { MortgageState, MortgageMarketplaceOfferState } from '@utils/models/enums';
+import { MortgageState, OfferState } from '@utils/models/enums';
 import { getBalance } from '@utils/blockchain';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
@@ -55,17 +59,22 @@ import { deployReserveVault } from '@utils/deployments/common/reserveVault';
 import { RegisterCustodianParams } from '@utils/models/EstateToken';
 import { deployMockEstateForger } from '@utils/deployments/mock/mockEstateForger';
 import { callEstateToken_AuthorizeTokenizers, callEstateToken_UpdateCommissionToken, callEstateToken_UpdateZoneRoyaltyRate } from '@utils/callWithSignatures/estateToken';
+import { deployMockMortgageToken } from '@utils/deployments/mock/mockMortgageToken';
+import { ListParams } from '@utils/models/ERC721Marketplace';
+import { callERC721Marketplace_RegisterCollections } from '@utils/callWithSignatures/erc721Marketplace';
+import { getCallListTx, getListTx } from '@utils/transaction/ERC721Marketplace';
+import { deployERC721MortgageToken } from '@utils/deployments/lend/erc721MortgageToken';
+import { deployProjectMortgageToken } from '@utils/deployments/lend/projectMortgageToken';
+import { deployEstateToken } from '@utils/deployments/land/estateToken';
+import { applyDiscount } from '@utils/formula';
 
 interface MortgageMarketplaceFixture {
     admin: Admin;
     feeReceiver: FeeReceiver;
     currency: Currency;
-    estateForger: MockEstateForger;
-    estateToken: MockContract<MockEstateToken>;
-    commissionToken: MockContract<CommissionToken>;
-    mortgageToken: MockContract<MockMortgageToken>;
+    mortgageToken: MockMortgageToken;
     mortgageMarketplace: MortgageMarketplace;
-    validator: MockValidator;
+    collections: any[];
 
     deployer: any;
     admins: any[];
@@ -75,16 +84,10 @@ interface MortgageMarketplaceFixture {
     seller2: any;
     buyer1: any;
     buyer2: any;
-    broker1: any;
-    broker2: any;
-    custodian1: any;
-    custodian2: any;
     manager: any;
     moderator: any;
-    mockCurrencyExclusiveRate: BigNumber;
-
-    zone1: string;
-    zone2: string;
+    
+    failReceiver: any;
 }
 
 async function testReentrancy_MortgageMarketplace(
@@ -106,7 +109,7 @@ async function testReentrancy_MortgageMarketplace(
     );
 }
 
-describe('6.3. MortgageMarketplace', async () => {
+describe.only('6.3. MortgageMarketplace', async () => {
     async function mortgageMarketplaceFixture(): Promise<MortgageMarketplaceFixture> {
         const accounts = await ethers.getSigners();
         const deployer = accounts[0];
@@ -140,18 +143,6 @@ describe('6.3. MortgageMarketplace', async () => {
             admin.address
         ) as FeeReceiver;
 
-        const priceWatcher = await deployPriceWatcher(
-            deployer.address,
-            admin.address
-        ) as PriceWatcher;
-
-        const reserveVault = await deployReserveVault(
-            deployer.address,
-            admin.address
-        ) as ReserveVault;
-
-        const validator = new MockValidator(deployer as any);
-
         const currency = await deployCurrency(
             deployer.address,
             'MockCurrency',
@@ -160,17 +151,29 @@ describe('6.3. MortgageMarketplace', async () => {
         const mockCurrencyExclusiveRate = ethers.utils.parseEther("0.3");
         await callTransaction(currency.setExclusiveDiscount(mockCurrencyExclusiveRate, Constant.COMMON_RATE_DECIMALS));
 
-        const SmockEstateTokenFactory = await smock.mock<MockEstateToken__factory>("MockEstateToken");
-        const estateToken = await SmockEstateTokenFactory.deploy();
+        const mortgageToken = await deployMockMortgageToken(
+            deployer.address,
+            admin.address,
+            feeReceiver.address,
+            LendInitialization.ESTATE_MORTGAGE_TOKEN_Name,
+            LendInitialization.ESTATE_MORTGAGE_TOKEN_Symbol,
+            LendInitialization.ESTATE_MORTGAGE_TOKEN_BaseURI,
+            LendInitialization.ESTATE_MORTGAGE_TOKEN_FeeRate,
+        ) as MockMortgageToken;
+
+        const validator = new MockValidator(deployer as any);
+
+        const MockEstateTokenFactory = await smock.mock('MockEstateToken') as any;
+        const estateToken = await MockEstateTokenFactory.deploy();
         await callTransaction(estateToken.initialize(
             admin.address,
             feeReceiver.address,
             validator.getAddress(),
             LandInitialization.ESTATE_TOKEN_BaseURI,
-        ));
+        ));   
 
-        const SmockCommissionTokenFactory = await smock.mock<CommissionToken__factory>("CommissionToken");
-        const commissionToken = await SmockCommissionTokenFactory.deploy();
+        const MockCommissionTokenFactory = await smock.mock<CommissionToken__factory>('CommissionToken');
+        const commissionToken = await MockCommissionTokenFactory.deploy();
         await callTransaction(commissionToken.initialize(
             admin.address,
             estateToken.address,
@@ -180,40 +183,7 @@ describe('6.3. MortgageMarketplace', async () => {
             LandInitialization.COMMISSION_TOKEN_BaseURI,
             LandInitialization.COMMISSION_TOKEN_RoyaltyRate,
         ));
-
-        const estateForger = await deployMockEstateForger(
-            deployer,
-            admin.address,
-            estateToken.address,
-            commissionToken.address,
-            priceWatcher.address,
-            feeReceiver.address,
-            reserveVault.address,
-            validator.getAddress(),
-            LandInitialization.ESTATE_FORGER_BaseMinUnitPrice,
-            LandInitialization.ESTATE_FORGER_BaseMaxUnitPrice,
-        ) as MockEstateForger;
-
-        const SmockMortgageTokenFactory = await smock.mock<MockMortgageToken__factory>('MockMortgageToken');
-        const mortgageToken = await SmockMortgageTokenFactory.deploy();
-        await callTransaction(mortgageToken.initialize(
-            admin.address,
-            estateToken.address,
-            commissionToken.address,
-            feeReceiver.address,
-            LendInitialization.ESTATE_MORTGAGE_TOKEN_Name,
-            LendInitialization.ESTATE_MORTGAGE_TOKEN_Symbol,
-            LendInitialization.ESTATE_MORTGAGE_TOKEN_BaseURI,
-            LendInitialization.ESTATE_MORTGAGE_TOKEN_FeeRate,
-        ));
-
-        const mortgageMarketplace = await deployMortgageMarketplace(
-            deployer.address,
-            admin.address,
-            mortgageToken.address,
-            commissionToken.address,
-        ) as MortgageMarketplace;
-
+        
         await callEstateToken_UpdateCommissionToken(
             estateToken,
             admins,
@@ -221,19 +191,68 @@ describe('6.3. MortgageMarketplace', async () => {
             await admin.nonce()
         );
 
-        const zone1 = ethers.utils.formatBytes32String("TestZone1");
-        const zone2 = ethers.utils.formatBytes32String("TestZone2");
+        const estateMortgageToken = await deployEstateMortgageToken(
+            deployer.address,
+            admin.address,
+            estateToken.address,
+            feeReceiver.address,
+            LendInitialization.ESTATE_MORTGAGE_TOKEN_Name,
+            LendInitialization.ESTATE_MORTGAGE_TOKEN_Symbol,
+            LendInitialization.ESTATE_MORTGAGE_TOKEN_BaseURI,
+            LendInitialization.ESTATE_MORTGAGE_TOKEN_FeeRate,
+        ) as EstateMortgageToken;
+
+        const fakeProjectToken = randomWallet();
+        const projectMortgageToken = await deployProjectMortgageToken(
+            deployer.address,
+            admin.address,
+            fakeProjectToken.address,
+            feeReceiver.address,
+            LendInitialization.PROJECT_MORTGAGE_TOKEN_Name,
+            LendInitialization.PROJECT_MORTGAGE_TOKEN_Symbol,
+            LendInitialization.PROJECT_MORTGAGE_TOKEN_BaseURI,
+            LendInitialization.PROJECT_MORTGAGE_TOKEN_FeeRate,
+        ) as ProjectMortgageToken;
+
+        const erc721MortgageToken = await deployERC721MortgageToken(
+            deployer.address,
+            admin.address,
+            feeReceiver.address,
+            LendInitialization.ERC721_MORTGAGE_TOKEN_Name,
+            LendInitialization.ERC721_MORTGAGE_TOKEN_Symbol,
+            LendInitialization.ERC721_MORTGAGE_TOKEN_BaseURI,
+            LendInitialization.ERC721_MORTGAGE_TOKEN_FeeRate,
+        ) as ERC721MortgageToken;
+
+        const collections = [estateMortgageToken, projectMortgageToken, erc721MortgageToken, mortgageToken];
+        while (collections.length < 5) {
+            const i = collections.length;
+            const collection = await deployMockMortgageToken(
+                deployer.address,
+                admin.address,
+                feeReceiver.address,
+                LendInitialization.ERC721_MORTGAGE_TOKEN_Name,
+                `TestCollection_${i}`,
+                `TC_${i}`,
+                LendInitialization.ERC721_MORTGAGE_TOKEN_FeeRate,
+            ) as ERC721MortgageToken;
+            collections.push(collection);
+        }
+
+        const mortgageMarketplace = await deployMortgageMarketplace(
+            deployer.address,
+            admin.address,
+            feeReceiver.address,
+        ) as MortgageMarketplace;
+
+        const failReceiver = await deployFailReceiver(deployer, false, false);
 
         return {
             admin,
             feeReceiver,
             currency,
-            estateForger,
-            estateToken,
-            commissionToken,
             mortgageToken,
             mortgageMarketplace,
-            validator,
             deployer,
             admins,
             borrower1,
@@ -242,22 +261,20 @@ describe('6.3. MortgageMarketplace', async () => {
             seller2,
             buyer1,
             buyer2,
-            broker1,
-            broker2,
-            custodian1,
-            custodian2,
             manager,
             moderator,
-            mockCurrencyExclusiveRate,
-            zone1,
-            zone2,
+            collections,
+            failReceiver,
         };
     };
 
     async function beforeMortgageMarketplaceTest({
+        skipRegisterCollection = false,
         listSampleCurrencies = false,
         listSampleMortgageToken = false,
         listSampleOffers = false,
+        initialMortgageState = MortgageState.Supplied,
+        useFailRoyaltyReceiver = false,
         fundERC20ForBuyers = false,
         pause = false,
     } = {}): Promise<MortgageMarketplaceFixture> {
@@ -266,9 +283,6 @@ describe('6.3. MortgageMarketplace', async () => {
             admin,
             admins,
             currency,
-            estateForger,
-            estateToken,
-            commissionToken,
             mortgageToken,
             mortgageMarketplace,
             borrower1,
@@ -277,27 +291,13 @@ describe('6.3. MortgageMarketplace', async () => {
             seller2,
             buyer1,
             buyer2,
-            broker1,
-            broker2,
-            custodian1,
-            custodian2,
             manager,
             moderator,
-            validator,
-            zone1,
-            zone2
+            failReceiver,
         } = fixture;
 
         let currentTimestamp = await time.latest();
 
-        for (const zone of [zone1, zone2]) {
-            await callAdmin_DeclareZone(
-                admin,
-                admins,
-                zone,
-                await admin.nonce(),
-            );
-        }
         await callAdmin_AuthorizeManagers(
             admin,
             admins,
@@ -311,26 +311,17 @@ describe('6.3. MortgageMarketplace', async () => {
             [moderator.address],
             true,
             await admin.nonce(),
-        )
+        );
 
-        for(const zone of [zone1, zone2]) {
-            await callAdmin_ActivateIn(
-                admin,
+        if (!skipRegisterCollection) {
+            await callERC721Marketplace_RegisterCollections(
+                mortgageMarketplace,
                 admins,
-                zone,
-                [manager.address, moderator.address],
+                [mortgageToken.address],
                 true,
                 await admin.nonce(),
             );
         }
-
-        await callEstateToken_AuthorizeTokenizers(
-            estateToken,
-            admins,
-            [estateForger.address],
-            true,
-            await admin.nonce()
-        );
 
         if (listSampleCurrencies) {
             await callAdmin_UpdateCurrencyRegistries(
@@ -343,67 +334,28 @@ describe('6.3. MortgageMarketplace', async () => {
             );
         }
 
-        for (const zone of [zone1, zone2]) {
-            for (const custodian of [custodian1, custodian2]) {
-                const params: RegisterCustodianParams = {
-                    zone,
-                    custodian: custodian.address,
-                    uri: "TestURI",
-                };
-                await callTransaction(getRegisterCustodianTx(estateToken as any, validator, manager, params))
-            }
+        if (useFailRoyaltyReceiver) {
+            await callTransaction(mortgageToken.updateFeeReceiver(failReceiver.address));
         }
 
-        await callTransaction(getRegisterBrokerTx(commissionToken as any, manager, {
-            zone: zone1,
-            broker: broker1.address,
-            commissionRate: ethers.utils.parseEther("0.1"),
-        }));
-        await callTransaction(getRegisterBrokerTx(commissionToken as any, manager, {
-            zone: zone2,
-            broker: broker2.address,
-            commissionRate: ethers.utils.parseEther("0.2"),
-        }));
-
         if (listSampleMortgageToken) {
-            await callTransaction(getCallTokenizeEstateTx(estateToken as any, estateForger, {
-                totalSupply: BigNumber.from(10_000),
-                zone: zone1,
-                tokenizationId: BigNumber.from(10),
-                uri: "Token1_URI",
-                expireAt: currentTimestamp + 1e8,
-                custodian: custodian1.address,
-                broker: broker1.address,
-            }));
-            await callTransaction(getCallTokenizeEstateTx(estateToken as any, estateForger, {
-                totalSupply: BigNumber.from(10_000),
-                zone: zone2,
-                tokenizationId: BigNumber.from(10),
-                uri: "Token2_URI",
-                expireAt: currentTimestamp + 2e8,
-                custodian: custodian2.address,
-                broker: broker2.address,
-            }));
-
             await callTransaction(mortgageToken.addMortgage(
-                1,
-                150_000,
                 10e5,
                 11e5,
+                200000,
                 ethers.constants.AddressZero,
                 currentTimestamp + 1000,
-                MortgageState.Supplied,
+                initialMortgageState,
                 borrower1.address,
                 seller1.address,
             ));
             await callTransaction(mortgageToken.addMortgage(
-                2,
-                200,
                 100000,
                 110000,
+                20000,
                 ethers.constants.AddressZero,
                 currentTimestamp + 1100,
-                MortgageState.Supplied,
+                initialMortgageState,
                 borrower2.address,
                 seller2.address,
             ));
@@ -413,8 +365,21 @@ describe('6.3. MortgageMarketplace', async () => {
         }
 
         if (listSampleOffers) {
-            await callTransaction(mortgageMarketplace.connect(seller1).list(1, 200000, ethers.constants.AddressZero));
-            await callTransaction(mortgageMarketplace.connect(seller2).list(2, 500000, currency.address));
+            const params1: ListParams = {
+                collection: mortgageToken.address,
+                tokenId: BigNumber.from(1),
+                price: BigNumber.from(200000),
+                currency: ethers.constants.AddressZero,
+            };
+            await callTransaction(getListTx(mortgageMarketplace, seller1, params1));
+
+            const params2: ListParams = {
+                collection: mortgageToken.address,
+                tokenId: BigNumber.from(2),
+                price: BigNumber.from(500000),
+                currency: currency.address,
+            }
+            await callTransaction(getListTx(mortgageMarketplace, seller2, params2));
 
             await callTransaction(mortgageToken.connect(seller1).setApprovalForAll(mortgageMarketplace.address, true));
             await callTransaction(mortgageToken.connect(seller2).setApprovalForAll(mortgageMarketplace.address, true));
@@ -439,13 +404,12 @@ describe('6.3. MortgageMarketplace', async () => {
 
     describe('6.3.1. initialize(address, address, address, address)', async () => {
         it('6.3.1.1. Deploy successfully', async () => {
-            const { mortgageMarketplace, admin, commissionToken, mortgageToken } = await beforeMortgageMarketplaceTest();
+            const { mortgageMarketplace, admin, feeReceiver } = await beforeMortgageMarketplaceTest();
 
             expect(await mortgageMarketplace.offerNumber()).to.equal(0);
 
             expect(await mortgageMarketplace.admin()).to.equal(admin.address);
-            expect(await mortgageMarketplace.commissionToken()).to.equal(commissionToken.address);
-            expect(await mortgageMarketplace.mortgageToken()).to.equal(mortgageToken.address);
+            expect(await mortgageMarketplace.feeReceiver()).to.equal(feeReceiver.address);
         });
     });
 
@@ -482,44 +446,374 @@ describe('6.3. MortgageMarketplace', async () => {
             );
         });
     });
+
+    describe('6.3.3. registerCollections(address[], bool, bytes[])', async () => {
+        it('6.3.3.1. Register collections successfully with valid signatures', async () => {
+            const { mortgageMarketplace, admin, admins, collections } = await beforeMortgageMarketplaceTest({
+                skipRegisterCollection: true,
+            });
+
+            const toBeCollections = collections.slice(0, 3);
+
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address[]', 'bool'],
+                [mortgageMarketplace.address, 'registerCollections', toBeCollections.map(x => x.address), true]
+            );
+            const signatures = await getSignatures(message, admins, await admin.nonce());
+
+            const tx = await mortgageMarketplace.registerCollections(
+                toBeCollections.map(x => x.address),
+                true,
+                signatures
+            );
+            await tx.wait();
+
+            for (const collection of toBeCollections) {
+                await expect(tx).to
+                    .emit(mortgageMarketplace, 'CollectionRegistration')
+                    .withArgs(collection.address);
+            }
+
+            for (const collection of collections) {
+                const isCollection = await mortgageMarketplace.isCollection(collection.address);
+                if (toBeCollections.includes(collection)) {
+                    expect(isCollection).to.be.true;
+                } else {
+                    expect(isCollection).to.be.false;
+                }
+            }
+        });
+
+        it('6.3.3.2. Register collections unsuccessfully with invalid signatures', async () => {
+            const { mortgageMarketplace, admin, admins, collections } = await beforeMortgageMarketplaceTest({
+                skipRegisterCollection: true,
+            });
+
+            const toBeCollections = collections.slice(0, 3);
+
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address[]', 'bool'],
+                [mortgageMarketplace.address, 'registerCollections', toBeCollections.map(x => x.address), true]
+            );
+            const invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+
+            await expect(mortgageMarketplace.registerCollections(
+                toBeCollections.map(x => x.address),
+                true,
+                invalidSignatures
+            )).to.be.revertedWithCustomError(admin, 'FailedVerification');
+        });
+
+        it('6.3.3.3. Register collections reverted without reason with EOA address', async () => {
+            const { mortgageMarketplace, admin, admins } = await beforeMortgageMarketplaceTest({
+                skipRegisterCollection: true,
+            });
+
+            const invalidCollection = randomWallet();
+
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address[]', 'bool'],
+                [mortgageMarketplace.address, 'registerCollections', [invalidCollection.address], true]
+            );
+            const signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(mortgageMarketplace.registerCollections(
+                [invalidCollection.address],
+                true,
+                signatures
+            )).to.be.revertedWithCustomError(mortgageMarketplace, 'InvalidCollection');
+        })
+
+        it('6.3.3.4. Authorize launchpad reverted with contract not supporting ProjectLaunchpad interface', async () => {
+            const { mortgageMarketplace, admin, admins } = await beforeMortgageMarketplaceTest({
+                skipRegisterCollection: true,
+            });
+
+            const invalidCollection = mortgageMarketplace;
+
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address[]', 'bool'],
+                [mortgageMarketplace.address, 'registerCollections', [invalidCollection.address], true]
+            );
+            const signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(mortgageMarketplace.registerCollections(
+                [invalidCollection.address],
+                true,
+                signatures
+            )).to.be.revertedWithCustomError(mortgageMarketplace, 'InvalidCollection');
+        })
+
+        it('6.3.3.5. Authorize launchpad unsuccessfully when authorizing same account twice on same tx', async () => {
+            const { mortgageMarketplace, admin, admins, collections } = await beforeMortgageMarketplaceTest({
+                skipRegisterCollection: true,
+            });
+
+            const duplicateCollections = [collections[0], collections[1], collections[2], collections[0]];
+
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address[]', 'bool'],
+                [mortgageMarketplace.address, 'registerCollections', duplicateCollections.map(x => x.address), true]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(mortgageMarketplace.registerCollections(
+                duplicateCollections.map(x => x.address),
+                true,
+                signatures
+            )).to.be.revertedWithCustomError(mortgageMarketplace, `RegisteredCollection`)
+        });
+
+        it('6.3.3.6. Authorize launchpad unsuccessfully when authorizing same account twice on different tx', async () => {
+            const { mortgageMarketplace, admin, admins, collections } = await beforeMortgageMarketplaceTest({
+                skipRegisterCollection: true,
+            });
+
+            const tx1Collections = collections.slice(0, 3);
+
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address[]', 'bool'],
+                [mortgageMarketplace.address, 'registerCollections', tx1Collections.map(x => x.address), true]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await callTransaction(mortgageMarketplace.registerCollections(
+                tx1Collections.map(x => x.address),
+                true,
+                signatures
+            ));
+
+            const tx2Collections = [collections[3], collections[2], collections[4]];
+
+            message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address[]', 'bool'],
+                [mortgageMarketplace.address, 'registerCollections', tx2Collections.map(x => x.address), true]
+            );
+            signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(mortgageMarketplace.registerCollections(
+                tx2Collections.map(x => x.address),
+                true,
+                signatures
+            )).to.be.revertedWithCustomError(mortgageMarketplace, `RegisteredCollection`)
+        })
+
+        async function setupCollections(mortgageMarketplace: MortgageMarketplace, admin: Admin, admins: any[], collections: any[]) {
+            await callMortgageMarketplace_RegisterCollections(
+                mortgageMarketplace as any,
+                admins,
+                collections.map(x => x.address),
+                true,
+                await admin.nonce(),
+            );
+        }
+
+        it('6.3.3.7. Deregister collections successfully', async () => {
+            const { mortgageMarketplace, admin, admins, collections } = await beforeMortgageMarketplaceTest({
+                skipRegisterCollection: true,
+            });
+
+            await setupCollections(mortgageMarketplace, admin, admins, collections);
+
+            const toDeregister = collections.slice(0, 2);
+
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address[]', 'bool'],
+                [mortgageMarketplace.address, 'registerCollections', toDeregister.map(x => x.address), false]
+            );
+            const signatures = await getSignatures(message, admins, await admin.nonce());
+
+            const tx = await mortgageMarketplace.registerCollections(
+                toDeregister.map(x => x.address),
+                false,
+                signatures
+            );
+            await tx.wait();
+
+            for (const collection of toDeregister) {
+                await expect(tx).to
+                    .emit(mortgageMarketplace, 'CollectionDeregistration')
+                    .withArgs(collection.address);
+            }
+
+            for (const collection of collections) {
+                const isCollection = await mortgageMarketplace.isCollection(collection.address);
+                if (toDeregister.includes(collection)) {
+                    expect(isCollection).to.be.false;
+                } else {
+                    expect(isCollection).to.be.true;
+                }
+            }            
+        });
+
+        it('6.3.3.8. Deregister collections unsuccessfully with unauthorized account', async () => {
+            const { mortgageMarketplace, admin, admins, collections } = await beforeMortgageMarketplaceTest({
+                skipRegisterCollection: true,
+            });
+
+            await setupCollections(mortgageMarketplace, admin, admins, collections);
+
+            const account = randomWallet();
+            const toDeauth = [collections[0], account];
+
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address[]', 'bool'],
+                [mortgageMarketplace.address, 'registerCollections', toDeauth.map(x => x.address), false]
+            );
+            const signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(mortgageMarketplace.registerCollections(
+                toDeauth.map(x => x.address),
+                false,
+                signatures
+            )).to.be.revertedWithCustomError(mortgageMarketplace, `NotRegisteredCollection`)
+        });
+
+        it('6.3.3.8. Deauthorize launchpad unsuccessfully when unauthorizing same accounts twice on same tx', async () => {
+            const { mortgageMarketplace, admin, admins, collections } = await beforeMortgageMarketplaceTest({
+                skipRegisterCollection: true,
+            });
+
+            await setupCollections(mortgageMarketplace, admin, admins, collections);
+
+            const toDeauth = collections.slice(0, 2).concat([collections[0]]);
+
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address[]', 'bool'],
+                [mortgageMarketplace.address, 'registerCollections', toDeauth.map(x => x.address), false]
+            );
+            const signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(mortgageMarketplace.registerCollections(
+                toDeauth.map(x => x.address),
+                false,
+                signatures
+            )).to.be.revertedWithCustomError(mortgageMarketplace, `NotRegisteredCollection`)
+        });
+
+        it('6.3.3.9. Deauthorize launchpad unsuccessfully when unauthorizing same accounts twice on different tx', async () => {
+            const { mortgageMarketplace, admin, admins, collections } = await beforeMortgageMarketplaceTest({
+                skipRegisterCollection: true,
+            });
+
+            await setupCollections(mortgageMarketplace, admin, admins, collections);
+
+            const tx1Accounts = collections.slice(0, 2);
+            await callMortgageMarketplace_RegisterCollections(
+                mortgageMarketplace as any,
+                admins,
+                tx1Accounts.map(x => x.address),
+                false,
+                await admin.nonce()
+            );
+
+            const tx2Accounts = [collections[0]];
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address[]', 'bool'],
+                [mortgageMarketplace.address, 'registerCollections', tx2Accounts.map(x => x.address), false]
+            );
+            const signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(mortgageMarketplace.registerCollections(
+                tx2Accounts.map(x => x.address),
+                false,
+                signatures
+            )).to.be.revertedWithCustomError(mortgageMarketplace, `NotRegisteredCollection`)
+        });
+    });
     
     describe('6.3.3. list(uint256, uint256, address)', async () => {
+        async function beforeListTest(fixture: MortgageMarketplaceFixture): Promise<{ defaultParams: ListParams }> {
+            const { mortgageToken } = fixture;
+            const defaultParams = {
+                collection: mortgageToken.address,
+                tokenId: BigNumber.from(1),
+                price: BigNumber.from(200000),
+                currency: ethers.constants.AddressZero,
+            }
+            return { defaultParams };
+        }
+
         it('6.3.3.1. list token successfully', async () => {
-            const { mortgageMarketplace, mortgageToken, currency, seller1, seller2 } = await beforeMortgageMarketplaceTest({
+            const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
             });
-            let tx = await mortgageMarketplace.connect(seller1).list(1, 200000, ethers.constants.AddressZero);
-            await tx.wait();
+            const { mortgageMarketplace, mortgageToken, seller1, feeReceiver, currency, seller2, admin } = fixture;
 
-            expect(tx).to
-                .emit(mortgageMarketplace, 'NewOffer')
-                .withArgs(1, 1, seller1.address, 200000, ethers.constants.AddressZero);
+            const params1: ListParams = {
+                collection: mortgageToken.address,
+                tokenId: BigNumber.from(1),
+                price: BigNumber.from(200000),
+                currency: ethers.constants.AddressZero,
+            };
+
+            const royalty1 = (await mortgageToken.royaltyInfo(params1.tokenId, params1.price))[1];
+            
+            const tx1 = await getListTx(mortgageMarketplace, seller1, params1);
+            await tx1.wait();
+
+            expect(tx1).to.emit(mortgageMarketplace, 'NewOffer').withArgs(
+                params1.collection,
+                1,
+                params1.tokenId,
+                seller1.address,
+                params1.price,
+                royalty1,
+                feeReceiver.address,
+                params1.currency
+            );
 
             expect(await mortgageMarketplace.offerNumber()).to.equal(1);
 
-            let offer = await mortgageMarketplace.getOffer(1);
-            expect(offer.tokenId).to.equal(1);
-            expect(offer.price).to.equal(200000);
-            expect(offer.currency).to.equal(ethers.constants.AddressZero);
-            expect(offer.state).to.equal(MortgageMarketplaceOfferState.Selling);
-            expect(offer.seller).to.equal(seller1.address);
+            const offer1 = await mortgageMarketplace.getOffer(1);
+            expect(offer1.collection).to.equal(params1.collection);
+            expect(offer1.tokenId).to.equal(params1.tokenId);
+            expect(offer1.price).to.equal(params1.price);
+            expect(offer1.royalty).to.equal(royalty1);
+            expect(offer1.currency).to.equal(params1.currency);
+            expect(offer1.state).to.equal(OfferState.Selling);
+            expect(offer1.seller).to.equal(seller1.address);
+            expect(offer1.royaltyReceiver).to.equal(feeReceiver.address);
 
-            tx = await mortgageMarketplace.connect(seller2).list(2, 500000, currency.address);
-            await tx.wait();
+            const params2: ListParams = {
+                collection: mortgageToken.address,
+                tokenId: BigNumber.from(2),
+                price: BigNumber.from(500000),
+                currency: currency.address,
+            };
 
-            expect(tx).to
-                .emit(mortgageMarketplace, 'NewOffer')
-                .withArgs(2, 2, seller2.address, 500000, currency.address);
+            const royalty2 = await applyDiscount(
+                admin,
+                (await mortgageToken.royaltyInfo(params2.tokenId, params2.price))[1],
+                currency
+            );
+
+            const tx2 = await getListTx(mortgageMarketplace, seller2, params2);
+            await tx2.wait();
+
+            expect(tx2).to.emit(mortgageMarketplace, 'NewOffer').withArgs(
+                params2.collection,
+                2,
+                params2.tokenId,
+                seller2.address,
+                params2.price,
+                royalty2,
+                feeReceiver.address,
+                params2.currency
+            );
 
             expect(await mortgageMarketplace.offerNumber()).to.equal(2);
 
-            offer = await mortgageMarketplace.getOffer(2);
-            expect(offer.tokenId).to.equal(2);
-            expect(offer.price).to.equal(500000);
-            expect(offer.currency).to.equal(currency.address);
-            expect(offer.state).to.equal(MortgageMarketplaceOfferState.Selling);
-            expect(offer.seller).to.equal(seller2.address);
+            const offer2 = await mortgageMarketplace.getOffer(2);
+            expect(offer2.collection).to.equal(params2.collection);
+            expect(offer2.tokenId).to.equal(params2.tokenId);
+            expect(offer2.price).to.equal(params2.price);
+            expect(offer2.royalty).to.equal(royalty2);
+            expect(offer2.currency).to.equal(params2.currency);
+            expect(offer2.state).to.equal(OfferState.Selling);
+            expect(offer2.seller).to.equal(seller2.address);
+            expect(offer2.royaltyReceiver).to.equal(feeReceiver.address);
         });
 
         it('6.3.3.2. list token unsuccessfully when paused', async () => {
@@ -530,7 +824,9 @@ describe('6.3. MortgageMarketplace', async () => {
             });
             const { mortgageMarketplace, seller1 } = fixture;
 
-            await expect(mortgageMarketplace.connect(seller1).list(1, 200000, ethers.constants.AddressZero))
+            const { defaultParams } = await beforeListTest(fixture);
+
+            await expect(getListTx(mortgageMarketplace, seller1, defaultParams))
                 .to.be.revertedWith('Pausable: paused');
         });
 
@@ -541,21 +837,89 @@ describe('6.3. MortgageMarketplace', async () => {
             });
             const { mortgageMarketplace, seller1 } = fixture;
 
-            await expect(mortgageMarketplace.connect(seller1).list(0, 200000, ethers.constants.AddressZero))
+            const { defaultParams } = await beforeListTest(fixture);
+
+            const params1: ListParams = {
+                ...defaultParams,
+                tokenId: BigNumber.from(0),
+            };
+            await expect(getListTx(mortgageMarketplace, seller1, params1))
                 .to.be.revertedWith('ERC721: invalid token ID');
 
-            await expect(mortgageMarketplace.connect(seller1).list(3, 200000, ethers.constants.AddressZero))
+            const params2: ListParams = {
+                ...defaultParams,
+                tokenId: BigNumber.from(3),
+            };    
+            await expect(getListTx(mortgageMarketplace, seller1, params2))
                 .to.be.revertedWith('ERC721: invalid token ID');
         });
 
-        it('6.3.3.4. list token unsuccessfully when not token owner', async () => {
+        it('6.3.3.4. list token unsuccessfully with unregistered collection', async () => {
+            const fixture = await beforeMortgageMarketplaceTest({
+                listSampleCurrencies: true,
+                listSampleMortgageToken: true,
+                skipRegisterCollection: true,
+            });
+            const { mortgageMarketplace, seller1 } = fixture;
+
+            const { defaultParams } = await beforeListTest(fixture);
+
+            await expect(getListTx(mortgageMarketplace, seller1, defaultParams))
+                .to.be.revertedWithCustomError(mortgageMarketplace, 'InvalidCollection');
+        });
+
+        it('6.3.3.4. list token unsuccessfully with pending mortgage', async () => {
+            const fixture = await beforeMortgageMarketplaceTest({
+                listSampleCurrencies: true,
+                listSampleMortgageToken: true,
+                initialMortgageState: MortgageState.Pending,
+            });
+            const { mortgageMarketplace, seller2 } = fixture;
+
+            const { defaultParams } = await beforeListTest(fixture);
+
+            await expect(getListTx(mortgageMarketplace, seller2, defaultParams))
+                .to.be.revertedWithCustomError(mortgageMarketplace, 'InvalidTokenId');
+        });
+
+        it('6.3.3.4. list token unsuccessfully with repaid mortgage', async () => {
+            const fixture = await beforeMortgageMarketplaceTest({
+                listSampleCurrencies: true,
+                listSampleMortgageToken: true,
+                initialMortgageState: MortgageState.Repaid,
+            });
+            const { mortgageMarketplace, seller2 } = fixture;
+
+            const { defaultParams } = await beforeListTest(fixture);
+                
+            await expect(getListTx(mortgageMarketplace, seller2, defaultParams))
+                .to.be.revertedWithCustomError(mortgageMarketplace, 'InvalidTokenId');
+        });
+
+        it('6.3.3.4. list token unsuccessfully with foreclosed mortgage', async () => {
+            const fixture = await beforeMortgageMarketplaceTest({
+                listSampleCurrencies: true,
+                listSampleMortgageToken: true,
+                initialMortgageState: MortgageState.Foreclosed,
+            });
+            const { mortgageMarketplace, seller2 } = fixture;
+
+            const { defaultParams } = await beforeListTest(fixture);
+                
+            await expect(getListTx(mortgageMarketplace, seller2, defaultParams))
+                .to.be.revertedWithCustomError(mortgageMarketplace, 'InvalidTokenId');
+        });
+
+        it('6.3.3.4. list token unsuccessfully by non token owner', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
             });
             const { mortgageMarketplace, seller2 } = fixture;
 
-            await expect(mortgageMarketplace.connect(seller2).list(1, 200000, ethers.constants.AddressZero))
+            const { defaultParams } = await beforeListTest(fixture);
+
+            await expect(getListTx(mortgageMarketplace, seller2, defaultParams))
                 .to.be.revertedWithCustomError(mortgageMarketplace, 'InvalidTokenId');
         });
 
@@ -566,7 +930,13 @@ describe('6.3. MortgageMarketplace', async () => {
             });
             const { mortgageMarketplace, seller1 } = fixture;
 
-            await expect(mortgageMarketplace.connect(seller1).list(1, 0, ethers.constants.AddressZero))
+            const { defaultParams } = await beforeListTest(fixture);
+
+            const params: ListParams = {
+                ...defaultParams,
+                price: BigNumber.from(0),
+            };
+            await expect(getListTx(mortgageMarketplace, seller1, params))
                 .to.be.revertedWithCustomError(mortgageMarketplace, 'InvalidPrice');
         });
 
@@ -576,7 +946,9 @@ describe('6.3. MortgageMarketplace', async () => {
             });
             const { mortgageMarketplace, seller1 } = fixture;
 
-            await expect(mortgageMarketplace.connect(seller1).list(1, 200000, ethers.constants.AddressZero))
+            const { defaultParams } = await beforeListTest(fixture);
+
+            await expect(getListTx(mortgageMarketplace, seller1, defaultParams))
                 .to.be.revertedWithCustomError(mortgageMarketplace, 'InvalidCurrency');
         });
     });
@@ -584,36 +956,28 @@ describe('6.3. MortgageMarketplace', async () => {
     async function testBuyOffer(
         fixture: MortgageMarketplaceFixture,
         mockCurrencyExclusiveRate: BigNumber,
-        mortgageTokenRoyaltyRate: BigNumber,
-        commissionRate: BigNumber,
         isERC20: boolean,
         isExclusive: boolean,
         price: BigNumber,
         isSafeBuy: boolean,
     ) {
-        const { deployer, estateToken, commissionToken, mortgageToken, mortgageMarketplace, borrower1, seller1, buyer1, feeReceiver, admins, admin, zone1, custodian1, manager, estateForger } = fixture;
+        const { deployer, mortgageMarketplace, borrower1, seller1, buyer1, feeReceiver, admins, admin, manager } = fixture;
         
+        const mortgageToken = await deployMockMortgageToken(
+            deployer.address,
+            admin.address,
+            feeReceiver.address,
+            LendInitialization.ERC721_MORTGAGE_TOKEN_Name,
+            `TestCollection`,
+            `TC`,
+            LendInitialization.ERC721_MORTGAGE_TOKEN_FeeRate,
+        ) as MockMortgageToken;
+
         const broker = randomWallet();
-        const zone = zone1;
-        const currentEstateId = (await estateToken.estateNumber()).add(1);
         const currentTokenId = (await mortgageToken.mortgageNumber()).add(1);
         const currentOfferId = (await mortgageMarketplace.offerNumber()).add(1);
 
-        await callEstateToken_UpdateZoneRoyaltyRate(
-            estateToken,
-            admins,
-            zone,
-            mortgageTokenRoyaltyRate,
-            await admin.nonce()
-        );
-
-        await callTransaction(getRegisterBrokerTx(commissionToken as any, manager, {
-            zone,
-            broker: broker.address,
-            commissionRate,
-        }));
-
-        let newCurrency: Currency | undefined;
+        let newCurrency: Currency | null = null;
         let newCurrencyAddress: string;
         if (isERC20) {
             newCurrency = await deployCurrency(
@@ -643,22 +1007,10 @@ describe('6.3. MortgageMarketplace', async () => {
         const seller = seller1;
         const buyer = buyer1;
 
-        await callTransaction(getCallTokenizeEstateTx(estateToken as any, estateForger, {
-            totalSupply: BigNumber.from(10_000),
-            zone,
-            tokenizationId: BigNumber.from(10),
-            uri: "Token1_URI",
-            expireAt: currentTimestamp + 1e8,
-            custodian: custodian1.address,
-            broker: broker.address,
-        }));
-
-
         await callTransaction(mortgageToken.addMortgage(
-            currentEstateId,
-            150_000,
             10e5,
             11e5,
+            200000,
             newCurrencyAddress,
             currentTimestamp + 1000,
             MortgageState.Supplied,
@@ -667,19 +1019,28 @@ describe('6.3. MortgageMarketplace', async () => {
         ));
         await callTransaction(mortgageToken.mint(seller.address, currentTokenId));
 
-        await callTransaction(mortgageMarketplace.connect(seller).list(
-            currentTokenId,
-            price,
-            newCurrencyAddress,
-        ));
+        await callMortgageMarketplace_RegisterCollections(
+            mortgageMarketplace,
+            admins,
+            [mortgageToken.address],
+            true,
+            await admin.nonce(),
+        )
+
+        const params: ListParams = {
+            collection: mortgageToken.address,
+            tokenId: currentTokenId,
+            price: price,
+            currency: newCurrencyAddress,
+        };
+        await callTransaction(getListTx(mortgageMarketplace, seller, params));
         await callTransaction(mortgageToken.connect(seller).setApprovalForAll(mortgageMarketplace.address, true));
 
         let royaltyReceiver = feeReceiver.address;
-        let royaltyAmount = price.mul(mortgageTokenRoyaltyRate).div(Constant.COMMON_RATE_MAX_FRACTION);
+        let royaltyAmount = (await mortgageToken.royaltyInfo(params.tokenId, params.price))[1];
         if (isExclusive) {
-            royaltyAmount = royaltyAmount.sub(royaltyAmount.mul(mockCurrencyExclusiveRate).div(Constant.COMMON_RATE_MAX_FRACTION));
+            royaltyAmount = await applyDiscount(admin, royaltyAmount, newCurrency);
         }
-        let commissionAmount = royaltyAmount.mul(commissionRate).div(Constant.COMMON_RATE_MAX_FRACTION);
 
         let total = price.add(royaltyAmount);
 
@@ -701,7 +1062,7 @@ describe('6.3. MortgageMarketplace', async () => {
         if (isSafeBuy) {
             tx = await mortgageMarketplace.connect(buyer).safeBuy(
                 currentOfferId,
-                currentEstateId,
+                currentTokenId,
                 { value: ethValue }
             );
         } else {
@@ -714,19 +1075,13 @@ describe('6.3. MortgageMarketplace', async () => {
 
         let expectedBuyerBalance = initBuyerBalance.sub(total);
         let expectedSellerBalance = initSellerBalance.add(price);
-        let expectedFeeReceiverBalance = initFeeReceiverBalance.add(royaltyAmount.sub(commissionAmount));
-        let expectedBrokerBalance = initBrokerBalance.add(commissionAmount);
+        let expectedFeeReceiverBalance = initFeeReceiverBalance.add(royaltyAmount);
 
         if (!isERC20) {
             const gasFee = receipt.gasUsed.mul(receipt.effectiveGasPrice);
             expectedBuyerBalance = expectedBuyerBalance.sub(gasFee);
         }
 
-        await expect(tx).to.emit(mortgageMarketplace, 'CommissionDispatch').withArgs(
-            broker.address,
-            commissionAmount,
-            newCurrencyAddress,
-        );
         await expect(tx).to.emit(mortgageMarketplace, 'OfferSale').withArgs(
             currentOfferId,
             buyer.address,
@@ -738,17 +1093,16 @@ describe('6.3. MortgageMarketplace', async () => {
         expect(offer.tokenId).to.equal(currentTokenId);
         expect(offer.price).to.equal(price);
         expect(offer.currency).to.equal(newCurrencyAddress);
-        expect(offer.state).to.equal(MortgageMarketplaceOfferState.Sold);
+        expect(offer.state).to.equal(OfferState.Sold);
         expect(offer.seller).to.equal(seller.address);
 
         expect(await getBalance(ethers.provider, buyer.address, newCurrency)).to.equal(expectedBuyerBalance);
         expect(await getBalance(ethers.provider, seller.address, newCurrency)).to.equal(expectedSellerBalance);
         expect(await getBalance(ethers.provider, feeReceiver.address, newCurrency)).to.equal(expectedFeeReceiverBalance);
-        expect(await getBalance(ethers.provider, broker.address, newCurrency)).to.equal(expectedBrokerBalance);
 
         expect(await mortgageToken.ownerOf(currentTokenId)).to.equal(buyer.address);
 
-        let walletsToReset = [seller, buyer, feeReceiver, broker];
+        let walletsToReset = [seller, buyer, feeReceiver];
         if (isERC20) {
             await resetERC20(newCurrency!, walletsToReset);
         } else {
@@ -763,13 +1117,10 @@ describe('6.3. MortgageMarketplace', async () => {
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
             });
-            const { mockCurrencyExclusiveRate } = fixture;
     
             await testBuyOffer(
                 fixture,
-                mockCurrencyExclusiveRate,
-                LendInitialization.ESTATE_MORTGAGE_TOKEN_RoyaltyRate,
-                ethers.utils.parseEther("0.1"),
+                ethers.utils.parseEther("0.2"),
                 false,
                 false,
                 ethers.BigNumber.from(200000),
@@ -778,9 +1129,7 @@ describe('6.3. MortgageMarketplace', async () => {
 
             await testBuyOffer(
                 fixture,
-                mockCurrencyExclusiveRate,
-                LendInitialization.ESTATE_MORTGAGE_TOKEN_RoyaltyRate,
-                ethers.utils.parseEther("0.1"),
+                ethers.utils.parseEther("0.2"),
                 true,
                 false,
                 ethers.BigNumber.from(500000),
@@ -793,7 +1142,6 @@ describe('6.3. MortgageMarketplace', async () => {
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
             });
-            const { mockCurrencyExclusiveRate } = fixture;
 
             for (const isERC20 of [false, true]) {
                 for (const isExclusive of [false, true]) {
@@ -802,9 +1150,7 @@ describe('6.3. MortgageMarketplace', async () => {
                     }
                     await testBuyOffer(
                         fixture,
-                        mockCurrencyExclusiveRate,
-                        LendInitialization.ESTATE_MORTGAGE_TOKEN_RoyaltyRate,
-                        ethers.utils.parseEther("0.1"),
+                        ethers.utils.parseEther("0.2"),
                         isERC20,
                         isExclusive,
                         ethers.BigNumber.from(200000),
@@ -828,8 +1174,6 @@ describe('6.3. MortgageMarketplace', async () => {
                     const price = ethers.BigNumber.from(2).pow(255);
                     await testBuyOffer(
                         fixture,
-                        ethers.utils.parseEther("0.99"),
-                        ethers.utils.parseEther("0.99"),
                         ethers.utils.parseEther("0.99"),
                         isERC20,
                         isExclusive,
@@ -897,6 +1241,34 @@ describe('6.3. MortgageMarketplace', async () => {
                 .to.be.revertedWithCustomError(mortgageMarketplace, "InvalidBuying");
         });
 
+        it('6.3.4.7. buy token unsuccessfully when mortgage is repaid', async () => {
+            const fixture = await beforeMortgageMarketplaceTest({
+                listSampleCurrencies: true,
+                listSampleMortgageToken: true,
+                listSampleOffers: true,
+            });
+            const { mortgageMarketplace, buyer1, borrower1, mortgageToken } = fixture;
+
+            await callTransaction(mortgageToken.connect(borrower1).repay(1));
+
+            await expect(mortgageMarketplace.connect(buyer1).buy(1, { value: 1e9 }))
+                .to.be.revertedWithCustomError(mortgageMarketplace, "InvalidTokenId");
+        });
+
+        it('6.3.4.7. buy token unsuccessfully when mortgage is foreclosed', async () => {
+            const fixture = await beforeMortgageMarketplaceTest({
+                listSampleCurrencies: true,
+                listSampleMortgageToken: true,
+                listSampleOffers: true,
+            });
+            const { mortgageMarketplace, buyer1, seller1, mortgageToken } = fixture;
+
+            await callTransaction(mortgageToken.connect(seller1).foreclose(1));
+
+            await expect(mortgageMarketplace.connect(buyer1).buy(1, { value: 1e9 }))
+                .to.be.revertedWithCustomError(mortgageMarketplace, "InvalidTokenId");
+        });
+
         it('6.3.4.8. buy token unsuccessfully with insufficient native token', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
@@ -924,12 +1296,21 @@ describe('6.3. MortgageMarketplace', async () => {
                 1,
             ));
 
-            let data = mortgageToken.interface.encodeFunctionData("setApprovalForAll", [mortgageMarketplace.address, true]);
-            await callTransaction(failReceiver.call(mortgageToken.address, data));
+            await callTransaction(failReceiver.call(
+                mortgageToken.address,
+                mortgageToken.interface.encodeFunctionData("setApprovalForAll", [mortgageMarketplace.address, true])
+            ));
 
-            data = mortgageMarketplace.interface.encodeFunctionData("list", [1, 200000, ethers.constants.AddressZero]);
-
-            await callTransaction(failReceiver.call(mortgageMarketplace.address, data));
+            await callTransaction(getCallListTx(
+                mortgageMarketplace, 
+                failReceiver as ProxyCaller, 
+                {
+                    collection: mortgageToken.address,
+                    tokenId: BigNumber.from(1),
+                    price: BigNumber.from(200000),
+                    currency: ethers.constants.AddressZero,
+                }
+            ));
 
             await expect(mortgageMarketplace.connect(buyer1).buy(1, { value: 1e9 }))
                 .to.be.revertedWithCustomError(mortgageMarketplace, "FailedTransfer");
@@ -941,12 +1322,11 @@ describe('6.3. MortgageMarketplace', async () => {
                 listSampleMortgageToken: true,
                 listSampleOffers: true,
                 fundERC20ForBuyers: true,
+                useFailRoyaltyReceiver: true,
             });
-            const { mortgageMarketplace, buyer1, deployer, mortgageToken } = fixture;
+            const { mortgageMarketplace, buyer1, failReceiver } = fixture;
 
-            const failReceiver = await deployFailReceiver(deployer, true, false);
-
-            mortgageToken.setVariable("feeReceiver", failReceiver.address);
+            await callTransaction(failReceiver.activate(true));
 
             await expect(mortgageMarketplace.connect(buyer1).buy(1, { value: 1e9 }))
                 .to.be.revertedWithCustomError(mortgageMarketplace, "FailedTransfer");
@@ -984,7 +1364,12 @@ describe('6.3. MortgageMarketplace', async () => {
                 1,
             ));
 
-            let data = mortgageMarketplace.interface.encodeFunctionData("list", [1, 200000, ethers.constants.AddressZero]);
+            let data = mortgageMarketplace.interface.encodeFunctionData("list", [
+                mortgageToken.address,
+                1,
+                200000,
+                ethers.constants.AddressZero,
+            ]);
             await callTransaction(reentrancy.call(mortgageMarketplace.address, data));
 
             data = mortgageToken.interface.encodeFunctionData("setApprovalForAll", [mortgageMarketplace.address, true]);
@@ -1007,13 +1392,10 @@ describe('6.3. MortgageMarketplace', async () => {
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,
             });
-            const { mockCurrencyExclusiveRate } = fixture;
-    
+            
             await testBuyOffer(
                 fixture,
-                mockCurrencyExclusiveRate,
-                LendInitialization.ESTATE_MORTGAGE_TOKEN_RoyaltyRate,
-                ethers.utils.parseEther("0.1"),
+                ethers.utils.parseEther("0.2"),
                 false,
                 false,
                 ethers.BigNumber.from(200000),
@@ -1022,9 +1404,7 @@ describe('6.3. MortgageMarketplace', async () => {
 
             await testBuyOffer(
                 fixture,
-                mockCurrencyExclusiveRate,
-                LendInitialization.ESTATE_MORTGAGE_TOKEN_RoyaltyRate,
-                ethers.utils.parseEther("0.1"),
+                ethers.utils.parseEther("0.2"),
                 true,
                 false,
                 ethers.BigNumber.from(500000),
@@ -1077,7 +1457,7 @@ describe('6.3. MortgageMarketplace', async () => {
             await tx.wait();
 
             const offer = await mortgageMarketplace.getOffer(1);
-            expect(offer.state).to.equal(MortgageMarketplaceOfferState.Cancelled);
+            expect(offer.state).to.equal(OfferState.Cancelled);
 
             await expect(tx).to
                 .emit(mortgageMarketplace, "OfferCancellation")
@@ -1096,7 +1476,7 @@ describe('6.3. MortgageMarketplace', async () => {
             await tx.wait();
 
             const offer = await mortgageMarketplace.getOffer(1);
-            expect(offer.state).to.equal(MortgageMarketplaceOfferState.Cancelled);
+            expect(offer.state).to.equal(OfferState.Cancelled);
 
             await expect(tx).to
                 .emit(mortgageMarketplace, "OfferCancellation")

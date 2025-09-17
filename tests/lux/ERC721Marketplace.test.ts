@@ -7,8 +7,10 @@ import {
     ERC721Marketplace,
     RoyaltyCollection,
     RoyaltyCollection__factory,
+    Collection__factory,
+    ProxyCaller,
 } from '@typechain-types';
-import { callTransaction, getBalance, prepareERC20, prepareNativeToken, randomWallet, resetERC20, resetNativeToken, testReentrancy } from '@utils/blockchain';
+import { callTransaction, expectRevertWithModifierCustomError, getBalance, getSignatures, prepareERC20, prepareNativeToken, randomWallet, resetERC20, resetNativeToken, testReentrancy } from '@utils/blockchain';
 import { Constant } from '@tests/test.constant';
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
@@ -24,11 +26,13 @@ import {
 } from '@utils/callWithSignatures/admin';
 import { BigNumber, Contract, Wallet } from 'ethers';
 import { deployERC721Marketplace } from '@utils/deployments/lux/erc721Marketplace';
-import { ERC721MarketplaceOfferState } from '@utils/models/enums';
-import { callERC721Marketplace_Pause } from '@utils/callWithSignatures/erc721Marketplace';
+import { OfferState } from '@utils/models/enums';
+import { callERC721Marketplace_Pause, callERC721Marketplace_RegisterCollections } from '@utils/callWithSignatures/erc721Marketplace';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
-import { remain } from '@utils/formula';
+import { applyDiscount, remain } from '@utils/formula';
+import { ListParams } from '@utils/models/ERC721Marketplace';
+import { getCallListTx, getListTx } from '@utils/transaction/ERC721Marketplace';
 
 interface ERC721MarketplaceFixture {
     admin: Admin;
@@ -37,6 +41,7 @@ interface ERC721MarketplaceFixture {
     feeReceiverCollection: MockContract<RoyaltyCollection>;
     otherCollection: MockContract<RoyaltyCollection>;
     erc721Marketplace: ERC721Marketplace;
+    collections: any[];
 
     deployer: any;
     admins: any[];
@@ -47,6 +52,8 @@ interface ERC721MarketplaceFixture {
     buyer2: any;
     manager: any;
     moderator: any;
+
+    failReceiver: any;
 }
 
 async function testReentrancy_ERC721Marketplace(
@@ -115,6 +122,13 @@ describe('6.1. ERC721Marketplace', async () => {
             'OTC',
         );
 
+        const collections: any[] = [feeReceiverCollection, otherCollection];
+        while (collections.length < 5) {
+            const Collection = await ethers.getContractFactory("Collection");
+            const collection = await upgrades.deployProxy(Collection, ["TestCollection", "TC"]);
+            collections.push(collection);
+        }
+
         const currency = await deployCurrency(
             deployer.address,
             'MockCurrency',
@@ -129,6 +143,8 @@ describe('6.1. ERC721Marketplace', async () => {
             feeReceiver.address,
         ) as ERC721Marketplace;
 
+        const failReceiver = await deployFailReceiver(deployer, false, false);
+
         return {
             admin,
             feeReceiver,
@@ -136,6 +152,7 @@ describe('6.1. ERC721Marketplace', async () => {
             feeReceiverCollection,
             otherCollection,
             erc721Marketplace,
+            collections,
             deployer,
             admins,
             seller1,
@@ -145,19 +162,36 @@ describe('6.1. ERC721Marketplace', async () => {
             manager,
             moderator,
             royaltyReceiver,
+            failReceiver,
         };
     };
 
     async function beforeERC721MarketplaceTest({
+        skipRegisterCollection = false,
         listSampleCurrencies = false,
         listSampleCollectionTokens = false,
         listSampleOffers = false,
+        useFailRoyaltyReceiver = false,
         fundERC20ForBuyers = false,
         pause = false,
     } = {}): Promise<ERC721MarketplaceFixture> {
         const fixture = await loadFixture(erc721MarketplaceFixture);
 
-        const { admin, admins, currency, erc721Marketplace, seller1, seller2, buyer1, buyer2, manager, moderator, feeReceiverCollection, otherCollection } = fixture;
+        const {
+            admin,
+            admins,
+            currency,
+            erc721Marketplace,
+            seller1,
+            seller2,
+            buyer1,
+            buyer2,
+            manager,
+            moderator,
+            feeReceiverCollection,
+            otherCollection,
+            failReceiver,
+        } = fixture;
 
         await callAdmin_AuthorizeManagers(
             admin,
@@ -173,6 +207,16 @@ describe('6.1. ERC721Marketplace', async () => {
             true,
             await admin.nonce(),
         )
+
+        if (!skipRegisterCollection) {
+            await callERC721Marketplace_RegisterCollections(
+                erc721Marketplace,
+                admins,
+                [feeReceiverCollection.address, otherCollection.address],
+                true,
+                await admin.nonce()
+            );
+        }
 
         if (listSampleCurrencies) {
             await callAdmin_UpdateCurrencyRegistries(
@@ -193,6 +237,10 @@ describe('6.1. ERC721Marketplace', async () => {
                 await callTransaction(collection.connect(seller1).setApprovalForAll(erc721Marketplace.address, true));
                 await callTransaction(collection.connect(seller2).setApprovalForAll(erc721Marketplace.address, true));
             }
+        }
+
+        if (useFailRoyaltyReceiver) {
+            await callTransaction(feeReceiverCollection.updateRoyaltyReceiver(failReceiver.address));
         }
 
         if (listSampleOffers) {
@@ -250,66 +298,476 @@ describe('6.1. ERC721Marketplace', async () => {
             });
             const { erc721Marketplace } = fixture;
 
-            await expect(erc721Marketplace.getOffer(0))
-                .to.be.revertedWithCustomError(erc721Marketplace, 'InvalidOfferId');
-            await expect(erc721Marketplace.getOffer(3))
-                .to.be.revertedWithCustomError(erc721Marketplace, 'InvalidOfferId');
+            await expectRevertWithModifierCustomError(
+                erc721Marketplace,
+                erc721Marketplace.getOffer(0),
+                'InvalidOfferId'
+            );
+            await expectRevertWithModifierCustomError(
+                erc721Marketplace,
+                erc721Marketplace.getOffer(3),
+                'InvalidOfferId'
+            );
+        });
+    });
+
+    describe('6.1.3. registerCollections(address[], bool, bytes[])', async () => {
+        it('6.1.3.1. Register collections successfully with valid signatures', async () => {
+            const { erc721Marketplace, admin, admins, collections } = await beforeERC721MarketplaceTest({
+                skipRegisterCollection: true,
+            });
+
+            const toBeCollections = collections.slice(0, 3);
+
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address[]', 'bool'],
+                [erc721Marketplace.address, 'registerCollections', toBeCollections.map(x => x.address), true]
+            );
+            const signatures = await getSignatures(message, admins, await admin.nonce());
+
+            const tx = await erc721Marketplace.registerCollections(
+                toBeCollections.map(x => x.address),
+                true,
+                signatures
+            );
+            await tx.wait();
+
+            for (const collection of toBeCollections) {
+                await expect(tx).to
+                    .emit(erc721Marketplace, 'CollectionRegistration')
+                    .withArgs(collection.address);
+            }
+
+            for (const collection of collections) {
+                const isCollection = await erc721Marketplace.isCollection(collection.address);
+                if (toBeCollections.includes(collection)) {
+                    expect(isCollection).to.be.true;
+                } else {
+                    expect(isCollection).to.be.false;
+                }
+            }
+        });
+
+        it('6.1.3.2. Register collections unsuccessfully with invalid signatures', async () => {
+            const { erc721Marketplace, admin, admins, collections } = await beforeERC721MarketplaceTest({
+                skipRegisterCollection: true,
+            });
+
+            const toBeCollections = collections.slice(0, 3);
+
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address[]', 'bool'],
+                [erc721Marketplace.address, 'registerCollections', toBeCollections.map(x => x.address), true]
+            );
+            const invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+
+            await expect(erc721Marketplace.registerCollections(
+                toBeCollections.map(x => x.address),
+                true,
+                invalidSignatures
+            )).to.be.revertedWithCustomError(admin, 'FailedVerification');
+        });
+
+        it('6.1.3.3. Register collections reverted without reason with EOA address', async () => {
+            const { erc721Marketplace, admin, admins } = await beforeERC721MarketplaceTest({
+                skipRegisterCollection: true,
+            });
+
+            const invalidCollection = randomWallet();
+
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address[]', 'bool'],
+                [erc721Marketplace.address, 'registerCollections', [invalidCollection.address], true]
+            );
+            const signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(erc721Marketplace.registerCollections(
+                [invalidCollection.address],
+                true,
+                signatures
+            )).to.be.revertedWithCustomError(erc721Marketplace, 'InvalidCollection');
+        })
+
+        it('6.1.3.4. Authorize launchpad reverted with contract not supporting ProjectLaunchpad interface', async () => {
+            const { erc721Marketplace, admin, admins } = await beforeERC721MarketplaceTest({
+                skipRegisterCollection: true,
+            });
+
+            const invalidCollection = erc721Marketplace;
+
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address[]', 'bool'],
+                [erc721Marketplace.address, 'registerCollections', [invalidCollection.address], true]
+            );
+            const signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(erc721Marketplace.registerCollections(
+                [invalidCollection.address],
+                true,
+                signatures
+            )).to.be.revertedWithCustomError(erc721Marketplace, 'InvalidCollection');
+        })
+
+        it('6.1.3.5. Authorize launchpad unsuccessfully when authorizing same account twice on same tx', async () => {
+            const { erc721Marketplace, admin, admins, collections } = await beforeERC721MarketplaceTest({
+                skipRegisterCollection: true,
+            });
+
+            const duplicateCollections = [collections[0], collections[1], collections[2], collections[0]];
+
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address[]', 'bool'],
+                [erc721Marketplace.address, 'registerCollections', duplicateCollections.map(x => x.address), true]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(erc721Marketplace.registerCollections(
+                duplicateCollections.map(x => x.address),
+                true,
+                signatures
+            )).to.be.revertedWithCustomError(erc721Marketplace, `RegisteredCollection`)
+        });
+
+        it('6.1.3.6. Authorize launchpad unsuccessfully when authorizing same account twice on different tx', async () => {
+            const { erc721Marketplace, admin, admins, collections } = await beforeERC721MarketplaceTest({
+                skipRegisterCollection: true,
+            });
+
+            const tx1Collections = collections.slice(0, 3);
+
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address[]', 'bool'],
+                [erc721Marketplace.address, 'registerCollections', tx1Collections.map(x => x.address), true]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await callTransaction(erc721Marketplace.registerCollections(
+                tx1Collections.map(x => x.address),
+                true,
+                signatures
+            ));
+
+            const tx2Collections = [collections[3], collections[2], collections[4]];
+
+            message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address[]', 'bool'],
+                [erc721Marketplace.address, 'registerCollections', tx2Collections.map(x => x.address), true]
+            );
+            signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(erc721Marketplace.registerCollections(
+                tx2Collections.map(x => x.address),
+                true,
+                signatures
+            )).to.be.revertedWithCustomError(erc721Marketplace, `RegisteredCollection`)
+        })
+
+        async function setupCollections(erc721Marketplace: ERC721Marketplace, admin: Admin, admins: any[], collections: any[]) {
+            await callERC721Marketplace_RegisterCollections(
+                erc721Marketplace as any,
+                admins,
+                collections.map(x => x.address),
+                true,
+                await admin.nonce(),
+            );
+        }
+
+        it('6.1.3.7. Deregister collections successfully', async () => {
+            const { erc721Marketplace, admin, admins, collections } = await beforeERC721MarketplaceTest({
+                skipRegisterCollection: true,
+            });
+
+            await setupCollections(erc721Marketplace, admin, admins, collections);
+
+            const toDeregister = collections.slice(0, 2);
+
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address[]', 'bool'],
+                [erc721Marketplace.address, 'registerCollections', toDeregister.map(x => x.address), false]
+            );
+            const signatures = await getSignatures(message, admins, await admin.nonce());
+
+            const tx = await erc721Marketplace.registerCollections(
+                toDeregister.map(x => x.address),
+                false,
+                signatures
+            );
+            await tx.wait();
+
+            for (const collection of toDeregister) {
+                await expect(tx).to
+                    .emit(erc721Marketplace, 'CollectionDeregistration')
+                    .withArgs(collection.address);
+            }
+
+            for (const collection of collections) {
+                const isCollection = await erc721Marketplace.isCollection(collection.address);
+                if (toDeregister.includes(collection)) {
+                    expect(isCollection).to.be.false;
+                } else {
+                    expect(isCollection).to.be.true;
+                }
+            }            
+        });
+
+        it('6.1.3.8. Deregister collections unsuccessfully with unauthorized account', async () => {
+            const { erc721Marketplace, admin, admins, collections } = await beforeERC721MarketplaceTest({
+                skipRegisterCollection: true,
+            });
+
+            await setupCollections(erc721Marketplace, admin, admins, collections);
+
+            const account = randomWallet();
+            const toDeauth = [collections[0], account];
+
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address[]', 'bool'],
+                [erc721Marketplace.address, 'registerCollections', toDeauth.map(x => x.address), false]
+            );
+            const signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(erc721Marketplace.registerCollections(
+                toDeauth.map(x => x.address),
+                false,
+                signatures
+            )).to.be.revertedWithCustomError(erc721Marketplace, `NotRegisteredCollection`)
+        });
+
+        it('6.1.3.8. Deauthorize launchpad unsuccessfully when unauthorizing same accounts twice on same tx', async () => {
+            const { erc721Marketplace, admin, admins, collections } = await beforeERC721MarketplaceTest({
+                skipRegisterCollection: true,
+            });
+
+            await setupCollections(erc721Marketplace, admin, admins, collections);
+
+            const toDeauth = collections.slice(0, 2).concat([collections[0]]);
+
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address[]', 'bool'],
+                [erc721Marketplace.address, 'registerCollections', toDeauth.map(x => x.address), false]
+            );
+            const signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(erc721Marketplace.registerCollections(
+                toDeauth.map(x => x.address),
+                false,
+                signatures
+            )).to.be.revertedWithCustomError(erc721Marketplace, `NotRegisteredCollection`)
+        });
+
+        it('6.1.3.9. Deauthorize launchpad unsuccessfully when unauthorizing same accounts twice on different tx', async () => {
+            const { erc721Marketplace, admin, admins, collections } = await beforeERC721MarketplaceTest({
+                skipRegisterCollection: true,
+            });
+
+            await setupCollections(erc721Marketplace, admin, admins, collections);
+
+            const tx1Accounts = collections.slice(0, 2);
+            await callERC721Marketplace_RegisterCollections(
+                erc721Marketplace as any,
+                admins,
+                tx1Accounts.map(x => x.address),
+                false,
+                await admin.nonce()
+            );
+
+            const tx2Accounts = [collections[0]];
+            const message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address[]', 'bool'],
+                [erc721Marketplace.address, 'registerCollections', tx2Accounts.map(x => x.address), false]
+            );
+            const signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(erc721Marketplace.registerCollections(
+                tx2Accounts.map(x => x.address),
+                false,
+                signatures
+            )).to.be.revertedWithCustomError(erc721Marketplace, `NotRegisteredCollection`)
         });
     });
 
     describe('6.1.3. list(address, uint256, uint256, address)', async () => {
         it('6.1.3.1. list token successfully', async () => {
-            const { erc721Marketplace, feeReceiverCollection, otherCollection, currency, seller1, seller2 } = await beforeERC721MarketplaceTest({
+            const fixture = await beforeERC721MarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleCollectionTokens: true,
             });
-            let tx = await erc721Marketplace.connect(seller1).list(feeReceiverCollection.address, 1, 200000, ethers.constants.AddressZero);
-            await tx.wait();
+            const { erc721Marketplace, feeReceiverCollection, otherCollection, currency, seller1, seller2, feeReceiver, royaltyReceiver, admin } = fixture;
 
-            expect(tx).to
-                .emit(erc721Marketplace, 'NewOffer')
-                .withArgs(
-                    feeReceiverCollection.address,
-                    1,
-                    1,
-                    seller1.address,
-                    200000,
-                    ethers.constants.AddressZero
-                );
+            // Tx1: FeeReceiverCollection, native currency
+            const params1: ListParams = {
+                collection: feeReceiverCollection.address,
+                tokenId: BigNumber.from(1),
+                price: BigNumber.from(200000),
+                currency: ethers.constants.AddressZero,
+            };
+
+            const royalty1 = (await feeReceiverCollection.royaltyInfo(params1.tokenId, params1.price))[1];
+
+            const tx1 = await getListTx(erc721Marketplace, seller1, params1);
+            await tx1.wait();
+
+            expect(tx1).to.emit(erc721Marketplace, 'NewOffer').withArgs(
+                params1.collection,
+                1,
+                params1.tokenId,
+                seller1.address,
+                params1.price,
+                royalty1,
+                feeReceiver.address,
+                params1.currency
+            );
 
             expect(await erc721Marketplace.offerNumber()).to.equal(1);
 
-            let offer = await erc721Marketplace.getOffer(1);
-            expect(offer.collection).to.equal(feeReceiverCollection.address);
-            expect(offer.tokenId).to.equal(1);
-            expect(offer.price).to.equal(200000);
-            expect(offer.currency).to.equal(ethers.constants.AddressZero);
-            expect(offer.state).to.equal(ERC721MarketplaceOfferState.Selling);
-            expect(offer.seller).to.equal(seller1.address);
+            const offer1 = await erc721Marketplace.getOffer(1);
+            expect(offer1.collection).to.equal(params1.collection);
+            expect(offer1.tokenId).to.equal(params1.tokenId);
+            expect(offer1.price).to.equal(params1.price);
+            expect(offer1.royalty).to.equal(royalty1);
+            expect(offer1.currency).to.equal(params1.currency);
+            expect(offer1.state).to.equal(OfferState.Selling);
+            expect(offer1.seller).to.equal(seller1.address);
+            expect(offer1.royaltyReceiver).to.equal(feeReceiver.address);
 
-            tx = await erc721Marketplace.connect(seller2).list(otherCollection.address, 2, 500000, currency.address);
-            await tx.wait();
+            // Tx2: OtherCollection, exclusive currency
+            const params2: ListParams = {
+                collection: otherCollection.address,
+                tokenId: BigNumber.from(2),
+                price: BigNumber.from(500000),
+                currency: currency.address,
+            };
 
-            expect(tx).to
-                .emit(erc721Marketplace, 'NewOffer')
-                .withArgs(
-                    otherCollection.address,
-                    2,
-                    2,
-                    seller2.address,
-                    500000,
-                    currency.address
-                );
+            const royalty2 = (await otherCollection.royaltyInfo(params2.tokenId, params2.price))[1];
+
+            const tx2 = await getListTx(erc721Marketplace, seller2, params2);
+            await tx2.wait();
+
+            expect(tx2).to.emit(erc721Marketplace, 'NewOffer').withArgs(
+                params2.collection,
+                2,
+                params2.tokenId,
+                seller2.address,
+                params2.price,
+                royalty2,
+                royaltyReceiver.address,
+                params2.currency
+            );
 
             expect(await erc721Marketplace.offerNumber()).to.equal(2);
 
-            offer = await erc721Marketplace.getOffer(2);
-            expect(offer.collection).to.equal(otherCollection.address);
-            expect(offer.tokenId).to.equal(2);
-            expect(offer.price).to.equal(500000);
-            expect(offer.currency).to.equal(currency.address);
-            expect(offer.state).to.equal(ERC721MarketplaceOfferState.Selling);
-            expect(offer.seller).to.equal(seller2.address);
+            const offer2 = await erc721Marketplace.getOffer(2);
+            expect(offer2.collection).to.equal(params2.collection);
+            expect(offer2.tokenId).to.equal(params2.tokenId);
+            expect(offer2.price).to.equal(params2.price);
+            expect(offer2.royalty).to.equal(royalty2);
+            expect(offer2.currency).to.equal(params2.currency);
+            expect(offer2.state).to.equal(OfferState.Selling);
+            expect(offer2.seller).to.equal(seller2.address);
+            expect(offer2.royaltyReceiver).to.equal(royaltyReceiver.address);
+
+            // Tx3: FeeReceiverCollection, exclusive currency
+            const params3: ListParams = {
+                collection: feeReceiverCollection.address,
+                tokenId: BigNumber.from(1),
+                price: BigNumber.from(200000),
+                currency: currency.address,
+            };
+
+            let royalty3 = (await feeReceiverCollection.royaltyInfo(params3.tokenId, params3.price))[1];
+            royalty3 = await applyDiscount(admin, royalty3, currency);
+            
+            const tx3 = await getListTx(
+                erc721Marketplace,
+                seller1,
+                params3
+            );
+            await tx3.wait();
+
+            expect(tx3).to.emit(erc721Marketplace, 'NewOffer').withArgs(
+                params3.collection,
+                1,
+                params3.tokenId,
+                seller1.address,
+                params3.price,
+                royalty3,
+                feeReceiver.address,
+                params3.currency
+            );
+
+            expect(await erc721Marketplace.offerNumber()).to.equal(3);
+
+            const offer3 = await erc721Marketplace.getOffer(3);
+            expect(offer3.collection).to.equal(params3.collection);
+            expect(offer3.tokenId).to.equal(params3.tokenId);
+            expect(offer3.price).to.equal(params3.price);
+            expect(offer3.royalty).to.equal(royalty3);
+            expect(offer3.currency).to.equal(params3.currency);
+            expect(offer3.state).to.equal(OfferState.Selling);
+            expect(offer3.seller).to.equal(seller1.address);
+            expect(offer3.royaltyReceiver).to.equal(feeReceiver.address);
+        });
+
+        it('6.1.3.1. list token successfully when collection does not support ERC2981', async () => {
+            const fixture = await beforeERC721MarketplaceTest({
+                listSampleCurrencies: true,
+                listSampleCollectionTokens: true,
+            });
+            const { erc721Marketplace, seller1, admin, admins } = fixture;
+
+            const CollectionFactory = await ethers.getContractFactory("Collection");
+            const collection = await upgrades.deployProxy(CollectionFactory, ["TestCollection", "TC"]);
+
+            await callTransaction(collection.mint(seller1.address, 1));
+            await callTransaction(collection.connect(seller1).setApprovalForAll(
+                erc721Marketplace.address,
+                true
+            ));
+
+            await callERC721Marketplace_RegisterCollections(
+                erc721Marketplace,
+                admins,
+                [collection.address],
+                true,
+                await admin.nonce(),
+            );
+            
+            const params: ListParams = {
+                collection: collection.address,
+                tokenId: BigNumber.from(1),
+                price: BigNumber.from(200000),
+                currency: ethers.constants.AddressZero,
+            };
+
+            const tx = await getListTx(
+                erc721Marketplace,
+                seller1,
+                params
+            );
+            await tx.wait();
+
+            expect(tx).to.emit(erc721Marketplace, 'NewOffer').withArgs(
+                params.collection,
+                1,
+                params.tokenId,
+                seller1.address,
+                params.price,
+                ethers.BigNumber.from(0),
+                ethers.constants.AddressZero,
+                params.currency
+            );
+
+            expect(await erc721Marketplace.offerNumber()).to.equal(1);
+
+            const offer = await erc721Marketplace.getOffer(1);
+            expect(offer.collection).to.equal(params.collection);
+            expect(offer.tokenId).to.equal(params.tokenId);
+            expect(offer.price).to.equal(params.price);
+            expect(offer.royalty).to.equal(ethers.BigNumber.from(0));
+            expect(offer.currency).to.equal(params.currency);
+            expect(offer.state).to.equal(OfferState.Selling);
+            expect(offer.seller).to.equal(seller1.address);
+            expect(offer.royaltyReceiver).to.equal(ethers.constants.AddressZero);
         });
 
         it('6.1.3.2. list token unsuccessfully when paused', async () => {
@@ -324,10 +782,11 @@ describe('6.1. ERC721Marketplace', async () => {
                 .to.be.revertedWith('Pausable: paused');
         });
 
-        it('6.1.3.3. list token unsuccessfully with invalid collection', async () => {
+        it('6.1.3.3. list token unsuccessfully with unregistered collection', async () => {
             const fixture = await beforeERC721MarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleCollectionTokens: true,
+                skipRegisterCollection: true,
             });
             const { erc721Marketplace, seller1 } = fixture;
 
@@ -350,7 +809,7 @@ describe('6.1. ERC721Marketplace', async () => {
                 .to.be.revertedWith('ERC721: invalid token ID');
         });
 
-        it('6.1.3.5. list token unsuccessfully when not token owner', async () => {
+        it('6.1.3.5. list token unsuccessfully by non token owner', async () => {
             const fixture = await beforeERC721MarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleCollectionTokens: true,
@@ -414,10 +873,18 @@ describe('6.1. ERC721Marketplace', async () => {
             collection = await upgrades.deployProxy(CollectionFactory, ["TestCollection", "TC"]);
         }
 
+        await callERC721Marketplace_RegisterCollections(
+            erc721Marketplace,
+            admins,
+            [collection.address],
+            true,
+            await admin.nonce(),
+        );
+
         const currentTokenId = (await collection.tokenNumber()).add(1);
         const currentOfferId = (await erc721Marketplace.offerNumber()).add(1);
 
-        let newCurrency: Currency | undefined;
+        let newCurrency: Currency | null = null;
         let newCurrencyAddress: string;
         if (isERC20) {
             newCurrency = await deployCurrency(
@@ -510,7 +977,7 @@ describe('6.1. ERC721Marketplace', async () => {
         expect(offer.tokenId).to.equal(currentTokenId);
         expect(offer.price).to.equal(price);
         expect(offer.currency).to.equal(newCurrencyAddress);
-        expect(offer.state).to.equal(ERC721MarketplaceOfferState.Sold);
+        expect(offer.state).to.equal(OfferState.Sold);
         expect(offer.seller).to.equal(seller.address);
 
         expect(await getBalance(ethers.provider, buyer.address, newCurrency)).to.equal(expectedBuyerBalance);
@@ -685,6 +1152,26 @@ describe('6.1. ERC721Marketplace', async () => {
                 .to.be.revertedWithCustomError(erc721Marketplace, "InvalidOfferId");
         });
 
+        it('6.1.4.5. buy token unsuccessfully when collection is deregistered', async () => {
+            const fixture = await beforeERC721MarketplaceTest({
+                listSampleCurrencies: true,
+                listSampleCollectionTokens: true,
+                listSampleOffers: true,
+            });
+            const { erc721Marketplace, buyer1, admins, admin, feeReceiverCollection } = fixture;
+
+            await callERC721Marketplace_RegisterCollections(
+                erc721Marketplace,
+                admins,
+                [feeReceiverCollection.address],
+                false,
+                await admin.nonce(),
+            )
+
+            await expect(erc721Marketplace.connect(buyer1).buy(1, { value: 1e9 }))
+                .to.be.revertedWithCustomError(erc721Marketplace, "InvalidCollection");
+        });
+
         it('6.1.4.6. buy token unsuccessfully when seller buy their own token', async () => {
             const fixture = await beforeERC721MarketplaceTest({
                 listSampleCurrencies: true,
@@ -762,12 +1249,20 @@ describe('6.1. ERC721Marketplace', async () => {
                 1,
             ));
 
-            let data = feeReceiverCollection.interface.encodeFunctionData("setApprovalForAll", [erc721Marketplace.address, true]);
-            await callTransaction(failReceiver.call(feeReceiverCollection.address, data));
+            await callTransaction(failReceiver.call(
+                feeReceiverCollection.address,
+                feeReceiverCollection.interface.encodeFunctionData("setApprovalForAll", [
+                    erc721Marketplace.address,
+                    true
+                ])
+            ));
 
-            data = erc721Marketplace.interface.encodeFunctionData("list", [feeReceiverCollection.address, 1, 200000, ethers.constants.AddressZero]);
-
-            await callTransaction(failReceiver.call(erc721Marketplace.address, data));
+            await callTransaction(getCallListTx(erc721Marketplace, failReceiver as ProxyCaller, {
+                collection: feeReceiverCollection.address,
+                tokenId: BigNumber.from(1),
+                price: BigNumber.from(200000),
+                currency: ethers.constants.AddressZero
+            }));
 
             await expect(erc721Marketplace.connect(buyer1).buy(1, { value: 1e9 }))
                 .to.be.revertedWithCustomError(erc721Marketplace, "FailedTransfer");
@@ -779,11 +1274,11 @@ describe('6.1. ERC721Marketplace', async () => {
                 listSampleCollectionTokens: true,
                 listSampleOffers: true,
                 fundERC20ForBuyers: true,
+                useFailRoyaltyReceiver: true,
             });
-            const { erc721Marketplace, buyer1, deployer, feeReceiverCollection } = fixture;
+            const { erc721Marketplace, buyer1, failReceiver } = fixture;
 
-            const failReceiver = await deployFailReceiver(deployer, true, false);
-            await callTransaction(feeReceiverCollection.updateRoyaltyReceiver(failReceiver.address));
+            await callTransaction(failReceiver.activate(true));
 
             await expect(erc721Marketplace.connect(buyer1).buy(1, { value: 1e9 }))
                 .to.be.revertedWithCustomError(erc721Marketplace, "FailedTransfer");
@@ -796,11 +1291,12 @@ describe('6.1. ERC721Marketplace', async () => {
                 listSampleOffers: true,
                 fundERC20ForBuyers: true,
             });
-            const { erc721Marketplace, deployer } = fixture;
 
-            const failReceiver = await deployFailReceiver(deployer, true, false);
+            const { erc721Marketplace, failReceiver } = fixture;
             
             let data = erc721Marketplace.interface.encodeFunctionData("buy", [1]);
+
+            await callTransaction(failReceiver.activate(true));
 
             await expect(failReceiver.call(erc721Marketplace.address, data, { value: 1e9 }))
                 .to.be.revertedWithCustomError(erc721Marketplace, "FailedRefund");
@@ -816,11 +1312,20 @@ describe('6.1. ERC721Marketplace', async () => {
 
             await callTransaction(feeReceiverCollection.mint(reentrancy.address, 1));
 
-            let data = erc721Marketplace.interface.encodeFunctionData("list", [feeReceiverCollection.address, 1, 200000, ethers.constants.AddressZero]);
-            await callTransaction(reentrancy.call(erc721Marketplace.address, data));
-
-            data = feeReceiverCollection.interface.encodeFunctionData("setApprovalForAll", [erc721Marketplace.address, true]);
-            await callTransaction(reentrancy.call(feeReceiverCollection.address, data));
+            await callTransaction(getCallListTx(erc721Marketplace, reentrancy as ProxyCaller, {
+                collection: feeReceiverCollection.address,
+                tokenId: BigNumber.from(1),
+                price: BigNumber.from(200000),
+                currency: ethers.constants.AddressZero
+            }));
+            
+            await callTransaction(reentrancy.call(
+                feeReceiverCollection.address,
+                feeReceiverCollection.interface.encodeFunctionData("setApprovalForAll", [
+                    erc721Marketplace.address,
+                    true
+                ])
+            ));
 
             await testReentrancy_ERC721Marketplace(
                 erc721Marketplace,
@@ -838,7 +1343,7 @@ describe('6.1. ERC721Marketplace', async () => {
                 listSampleCurrencies: true,
                 listSampleCollectionTokens: true,
             });
-            const { feeReceiverCollection, feeReceiver, royaltyReceiver, otherCollection } = fixture;
+            const { feeReceiver, royaltyReceiver } = fixture;
     
             await testBuyOffer(
                 fixture,
@@ -914,7 +1419,7 @@ describe('6.1. ERC721Marketplace', async () => {
             await tx.wait();
 
             const offer = await erc721Marketplace.getOffer(1);
-            expect(offer.state).to.equal(ERC721MarketplaceOfferState.Cancelled);
+            expect(offer.state).to.equal(OfferState.Cancelled);
 
             await expect(tx).to
                 .emit(erc721Marketplace, "OfferCancellation")
@@ -933,7 +1438,7 @@ describe('6.1. ERC721Marketplace', async () => {
             await tx.wait();
 
             const offer = await erc721Marketplace.getOffer(1);
-            expect(offer.state).to.equal(ERC721MarketplaceOfferState.Cancelled);
+            expect(offer.state).to.equal(OfferState.Cancelled);
 
             await expect(tx).to
                 .emit(erc721Marketplace, "OfferCancellation")

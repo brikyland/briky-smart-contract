@@ -2154,10 +2154,12 @@ describe('3.2. ERC721MortgageToken', async () => {
             const IERC165UpgradeableInterfaceId = getInterfaceID(IERC165Upgradeable, []);
             const IERC721MetadataUpgradeableInterfaceId = getInterfaceID(IERC721MetadataUpgradeable, [IERC721Upgradeable]);
             const IMortgageTokenInterfaceId = getInterfaceID(IMortgageToken, [ICommon, IERC721MetadataUpgradeable, IERC2981Upgradeable, IERC4906Upgradeable]);
+            const IERC2981UpgradeableInterfaceId = getInterfaceID(IERC2981Upgradeable, [IERC165Upgradeable]);
 
             expect(await erc721MortgageToken.supportsInterface(getBytes4Hex(IERC165UpgradeableInterfaceId))).to.equal(true);
             expect(await erc721MortgageToken.supportsInterface(getBytes4Hex(IERC721MetadataUpgradeableInterfaceId))).to.equal(true);
             expect(await erc721MortgageToken.supportsInterface(getBytes4Hex(IMortgageTokenInterfaceId))).to.equal(true);
+            expect(await erc721MortgageToken.supportsInterface(getBytes4Hex(IERC2981UpgradeableInterfaceId))).to.equal(true);
         });
     });
 });
