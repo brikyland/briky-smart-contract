@@ -68,7 +68,7 @@ ReentrancyGuardUpgradeable {
 
     /** ===== MODIFIER ===== **/
     /**
-     *  @notice Verify a valid launch.
+     *  @notice Verify a valid launch identifier.
      *
      *          Name            Description
      *  @param  _launchId       Launch identifier.
@@ -83,7 +83,7 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Verify a valid round.
+     *  @notice Verify a valid round identifier.
      *
      *          Name            Description
      *  @param  _roundId        Round identifier.
@@ -98,7 +98,7 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Verify the sender is the initiator of a launch.
+     *  @notice Verify the message sender is the initiator of a launch.
      *
      *          Name            Description
      *  @param  _launchId       Launch identifier.
@@ -184,7 +184,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _baseMaxUnitPrice   New maximum unit price denominated in USD.
      *  @param  _signatures         Array of admin signatures.
      * 
-     *  @dev    Administrative configuration.
+     *  @dev    Administrative operator.
      */
     function updateBaseUnitPriceRange(
         uint256 _baseMinUnitPrice,
@@ -324,7 +324,7 @@ ReentrancyGuardUpgradeable {
      *
      *  @return launchId            New launch identifier.
      *
-     *  @dev    Permission: Executives active in the zone.
+     *  @dev    Permission: Executives active in the zone of the estate.
      */
     function initiateLaunch(
         address _initiator,

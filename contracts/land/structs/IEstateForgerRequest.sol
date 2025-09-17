@@ -22,17 +22,17 @@ interface IEstateForgerRequest is IValidation {
      *  @notice Estate information to be tokenized.
      */
     struct EstateForgerRequestEstate {
-        /// @notice `EstateToken` identifier to be minted from the request.
+        /// @notice Estate identifier tokenized from the request.
         /// @dev    Remains 0 until tokenization succeeds.
         uint256 estateId;
 
-        /// @notice Management zone.
+        /// @notice Management zone code.
         bytes32 zone;
 
         /// @notice URI of estate metadata.
         string uri;
 
-        /// @notice When the limited term of estate ownership expires.
+        /// @notice When the limited term of estate ownership has expired.
         /// @dev    `type(uint40).max` represents unlimited ownership term.
         uint40 expireAt;
     }
@@ -41,13 +41,13 @@ interface IEstateForgerRequest is IValidation {
      *  @notice Initialization input for `EstateForgerRequestEstate`.
      */
     struct EstateForgerRequestEstateInput {
-        /// @notice Management zone.
+        /// @notice Management zone code.
         bytes32 zone;
 
         /// @notice URI of estate metadata.
         string uri;
 
-        /// @notice When the limited term of estate ownership expires.
+        /// @notice When the limited term of estate ownership has expired.
         /// @dev    `type(uint40).max` represents unlimited ownership term.
         uint40 expireAt;
     }
@@ -65,7 +65,7 @@ interface IEstateForgerRequest is IValidation {
         /// @notice Maximum quantity that the requester is willing to sell.
         uint256 maxSellingQuantity;
 
-        /// @notice Quantity that has been deposited.
+        /// @notice Total deposited quantity.
         /// @notice The remaining quantity (if any) will be transferred to the requester after confirmation.
         uint256 soldQuantity;
     }
@@ -119,7 +119,7 @@ interface IEstateForgerRequest is IValidation {
      *  @notice Initialization input for `EstateForgerRequestQuote`.
      */
     struct EstateForgerRequestQuoteInput {
-        /// @notice Deposit value for each token to be minted.
+        /// @notice Deposit value for each token.
         uint256 unitPrice;
 
         /// @notice Deposit currency address.
@@ -190,6 +190,16 @@ interface IEstateForgerRequest is IValidation {
     /**
      *  @notice A request of `EstateForger` for tokenizing an estate into a new class of `EstateToken` via a
      *          deposited-based fixed-price sale.
+     *
+     *  @dev    Phases of a request:
+     *          - Pending: block.timestamp < agenda.saleStartsAt
+     *          - Private Sale: agenda.saleStartsAt <= block.timestamp < agenda.privateSaleEndsAt
+     *          - Public Sale: agenda.privateSaleEndsAt <= block.timestamp <= agenda.publicSaleEndsAt
+     *          - Formalities Finalization: agenda.publicSaleEndsAt
+     *                                          <= block.timestamp
+     *                                          < agenda.publicSaleEndsAt + EstateForgerConstant.SALE_CONFIRMATION_TIME_LIMIT
+     *          - Cancelled: quote.totalSupply = 0
+     *          - Tokenized: estate.estateId != 0
      */
     struct EstateForgerRequest {
         /// @notice Estate information to be tokenized.

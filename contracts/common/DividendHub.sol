@@ -41,7 +41,7 @@ ReentrancyGuardUpgradeable {
 
     /** ===== MODIFIER ===== **/
     /**
-     *  @notice Verify a valid dividend.
+     *  @notice Verify a valid dividend identifier.
      *
      *          Name            Description
      *  @param  _dividendId     Dividend identifier.
@@ -111,13 +111,13 @@ ReentrancyGuardUpgradeable {
     /**
      *  @notice Issue a new dividend package for an asset from a governor contract.
      *
-     *          Name            Description
-     *  @param  _governor       Governor contract address.
-     *  @param  _tokenId        Asset identifier from the governor contract.
-     *  @param  _value          Total dividend value.
-     *  @param  _currency       Dividend currency address.
-     *  @param  _data           Issuance note.
-     *  @return dividendId      New dividend identifier.
+     *          Name        Description
+     *  @param  _governor   Governor contract address.
+     *  @param  _tokenId    Asset identifier from the governor contract.
+     *  @param  _value      Total dividend value.
+     *  @param  _currency   Dividend currency address.
+     *  @param  _data       Issuance note.
+     *  @return dividendId  New dividend identifier.
      */
     function issueDividend(
         address _governor,
@@ -139,7 +139,10 @@ ReentrancyGuardUpgradeable {
             revert InvalidInput();
         }
 
-        CurrencyHandler.receiveCurrency(_currency, _value);
+        CurrencyHandler.receiveCurrency(
+            _currency,
+            _value
+        );
 
         uint256 totalWeight = IGovernor(_governor).totalEquityAt(_tokenId, block.timestamp);
 
@@ -168,7 +171,7 @@ ReentrancyGuardUpgradeable {
 
 
     /**
-     *  @notice Withdraw entitled portions of the sender from multiple dividend packages.
+     *  @notice Withdraw entitled portions of the message sender from multiple dividend packages.
      *
      *          Name            Description
      *  @param  _dividendIds    Array of dividend identifiers to withdraw.
@@ -209,7 +212,11 @@ ReentrancyGuardUpgradeable {
             dividend.remainValue -= value;
             withdrawAt[_dividendIds[i]][msg.sender] = block.timestamp;
 
-            CurrencyHandler.sendCurrency(dividend.currency, msg.sender, value);
+            CurrencyHandler.sendCurrency(
+                dividend.currency,
+                msg.sender,
+                value
+            );
 
             emit Withdrawal(
                 _dividendIds[i],

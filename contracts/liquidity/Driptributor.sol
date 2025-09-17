@@ -94,7 +94,7 @@ ReentrancyGuardUpgradeable {
     /* --- Administration --- */
 
     /**
-     *  @notice Update stake token contract addresses.
+     *  @notice Update stake token contracts.
      *
      *          Name            Description
      *  @param  _stakeToken1    New stake token #1 contract address.
@@ -102,7 +102,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _stakeToken3    New stake token #3 contract address.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configuration.
+     *  @dev    Administrative operator.
      */
     function updateStakeTokens(
         address _stakeToken1,
@@ -146,7 +146,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _data               Array of notes, respectively to each distribution.
      *  @param  _signatures         Array of admin signatures.
      * 
-     *  @dev    Administrative operation.
+     *  @dev    Administrative operator.
      */
     function distributeTokensWithDuration(
         address[] calldata _receivers,
@@ -211,7 +211,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _data           Array of notes, respectively to each distribution.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative operation.
+     *  @dev    Administrative operator.
      */
     function distributeTokensWithTimestamp(
         address[] calldata _receivers,

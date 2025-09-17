@@ -12,7 +12,7 @@ import {Formula} from "./Formula.sol";
 /**
  *  @author Briky Team
  *
- *  @notice Utility contract that applies discounting to payments made in exclusive tokens.
+ *  @notice A `Discountable` contract applies discounting to payments made in exclusive tokens.
  *
  *  @dev    ERC-20 tokens are identified by their contract addresses.
  *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
@@ -24,6 +24,7 @@ ICommon {
 
 
     /** ===== FUNCTION ===== **/
+    /* --- Helper --- */
     /**
      *          Name                Description
      *  @param  _value              Original value.

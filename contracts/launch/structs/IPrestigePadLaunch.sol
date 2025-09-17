@@ -17,7 +17,7 @@ interface IPrestigePadLaunch is IRate {
      *          class of `ProjectToken` to contributors as referenced distribution for future benefit returning.
      */
     struct PrestigePadLaunch {
-        /// @notice `ProjectToken` identifier to be minted from this launch.
+        /// @notice Project identifier.
         uint256 projectId;
 
         /// @notice URI of project metadata.

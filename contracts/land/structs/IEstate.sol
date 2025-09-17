@@ -10,13 +10,13 @@ interface IEstate {
     /** ===== STRUCT ===== **/
 
     /**
-     *  @notice Estate information that has been tokenized.
+     *  @notice Estate information.
      */
     struct Estate {
-        /// @notice Management zone.
+        /// @notice Management zone code.
         bytes32 zone;
 
-        /// @notice Reference identifier from the tokenizer contract.
+        /// @notice Tokenization identifier from the tokenizer contract.
         uint256 tokenizationId;
 
         /// @notice Tokenizer contract address.
@@ -25,15 +25,15 @@ interface IEstate {
         /// @notice Tokenization timestamp.
         uint40 tokenizeAt;
 
-        /// @notice When the limited term of estate ownership expires.
+        /// @notice When the limited term of estate ownership has expired.
         /// @dev    `type(uint40).max` represents unlimited ownership term.
         uint40 expireAt;
 
-        /// @notice When the estate is deprecated by either managers due to force majeure or extraction.
+        /// @notice When the estate is deprecated due to force majeure or extraction.
         /// @dev    `type(uint40).max` represents estate availability (not deprecated).
         uint40 deprecateAt;
 
-        /// @notice Custodian address.
+        /// @notice Assigned custodian address.
         /// @notice This address belongs to an official disclosed third party custodian agent, registered in the zone
         ///         to hold custody of the estate on behalf of holders.
         address custodian;

@@ -59,7 +59,7 @@ ReentrancyGuardUpgradeable {
 
     /** ===== MODIFIER ===== **/
     /**
-     *  @notice Verify a valid extraction request.
+     *  @notice Verify a valid request identifier.
      *
      *          Name            Description
      *  @param  _requestId      Request identifier.
@@ -167,12 +167,12 @@ ReentrancyGuardUpgradeable {
         address _currency,
         uint256 _feeRate,
         bytes32 _uuid,
+        uint40 _admissionExpiry,
         Validation calldata _validation
-    ) external
-    payable
+    ) external payable
     whenNotPaused
     nonReentrant
-    onlyManager
+    onlyExecutive
     returns (uint256) {
         IEstateToken estateTokenContract = IEstateToken(estateToken);
         if (!IAdmin(admin).isActiveIn(estateTokenContract.zoneOf(_estateId), msg.sender)) {
@@ -211,7 +211,7 @@ ReentrancyGuardUpgradeable {
                 ? EstateLiquidatorConstant.UNANIMOUS_QUORUM_RATE
                 : EstateLiquidatorConstant.MAJORITY_QUORUM_RATE,
             uint40(EstateLiquidatorConstant.VOTE_DURATION),
-            uint40(block.timestamp) + uint40(EstateLiquidatorConstant.ADMISSION_DURATION),
+            _admissionExpiry,
             _validation
         );
 
@@ -281,7 +281,7 @@ ReentrancyGuardUpgradeable {
                     estateId,
                     value - fee,
                     currency,
-                    "Extraction"
+                    EstateLiquidatorConstant.DIVIDEND_ISSUANCE_DATA
                 );
             } else {
                 address dividendHubAddress = dividendHub;
@@ -291,7 +291,7 @@ ReentrancyGuardUpgradeable {
                     estateId,
                     value - fee,
                     currency,
-                    "Extraction"
+                    EstateLiquidatorConstant.DIVIDEND_ISSUANCE_DATA
                 );
             }
 

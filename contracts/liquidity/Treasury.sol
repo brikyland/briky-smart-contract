@@ -100,7 +100,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _operator       Operator address that received the funds.
      *  @param  _signatures     Array of admin signatures.
      *
-     *  @dev    Administrative operation.
+     *  @dev    Administrative operator.
      */
     function withdrawOperationFund(
         uint256 _value,

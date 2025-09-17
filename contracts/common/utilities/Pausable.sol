@@ -18,6 +18,7 @@ abstract contract Pausable is
 ICommon,
 PausableUpgradeable {
     /** ===== FUNCTION ===== **/
+    /* --- Administration --- */
     /**
      *  @notice Pause contract.
      *  @notice For maintenance only.
@@ -25,7 +26,7 @@ PausableUpgradeable {
      *          Name            Description
      *  @param  _signatures     Array of admin signatures.
      *
-     *  @dev    Administrative configuration.
+     *  @dev    Administrative operator.
      */
     function pause(
         bytes[] calldata _signatures
@@ -35,6 +36,7 @@ PausableUpgradeable {
             abi.encode(address(this), "pause"),
             _signatures
         );
+
         _pause();
     }
 
@@ -45,7 +47,7 @@ PausableUpgradeable {
      *          Name            Description
      *  @param  _signatures     Array of admin signatures.
      *
-     *  @dev    Administrative configuration.
+     *  @dev    Administrative operator.
      */
     function unpause(
         bytes[] calldata _signatures
@@ -55,6 +57,7 @@ PausableUpgradeable {
             abi.encode(address(this), "unpause"),
             _signatures
         );
+
         _unpause();
     }
 }

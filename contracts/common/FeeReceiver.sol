@@ -16,8 +16,8 @@ import {FeeReceiverStorage} from "./storages/FeeReceiverStorage.sol";
 /**
  *  @author Briky Team
  *
- *  @notice The `FeeReceiver` contract passively receives and hold fee from operators within the system until withdrawn on
- *          demands of admins.
+ *  @notice The `FeeReceiver` contract passively receives and holds fee from operators within the system until being withdrawn
+ *          on demands of admins.
  * 
  *  @dev    ERC-20 tokens are identified by their contract addresses.
  *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
@@ -48,8 +48,8 @@ ReentrancyGuardUpgradeable {
     /**
      *  @notice Invoked for initialization after deployment, serving as the contract constructor.
      *
-     *          Name            Description
-     *  @param  _admin          `Admin` contract address.
+     *          Name    Description
+     *  @param  _admin  `Admin` contract address.
      */
     function initialize(
         address _admin
@@ -69,11 +69,11 @@ ReentrancyGuardUpgradeable {
      *
      *          Name            Description
      *  @param  _receiver       Receiver address.
-     *  @param  _currencies     Array of withdrawn currency addresses, respectively for each currency.
-     *  @param  _values         Array of withdrawn values, respectively for each currency.
+     *  @param  _currencies     Array of withdrawn currency addresses, respectively to each currency.
+     *  @param  _values         Array of withdrawn values, respectively to each currency.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative operation.
+     *  @dev    Administrative operator.
      */
     function withdraw(
         address _receiver,
@@ -98,9 +98,17 @@ ReentrancyGuardUpgradeable {
         }
 
         for (uint256 i; i < _currencies.length; ++i) {
-            CurrencyHandler.sendCurrency(_currencies[i], _receiver, _values[i]);
+            CurrencyHandler.sendCurrency(
+                _currencies[i],
+                _receiver,
+                _values[i]
+            );
 
-            emit Withdrawal(_receiver, _currencies[i], _values[i]);
+            emit Withdrawal(
+                _receiver,
+                _currencies[i],
+                _values[i]
+            );
         }
     }
 }

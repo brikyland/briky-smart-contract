@@ -8,7 +8,7 @@ import {ICommon} from "../interfaces/ICommon.sol";
 /**
  *  @author Briky Team
  *
- *  @notice Utility contract that provides modifiers to query administrative information from the `Admin` contract.
+ *  @notice A `Administrable` contract need to query administrative information from the `Admin` contract for its operations.
  *
  *  @dev    ERC-20 tokens are identified by their contract addresses.
  *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
@@ -17,7 +17,7 @@ abstract contract Administrable is
 ICommon {
     /** ===== MODIFIER ===== **/
     /**
-     *  @notice Verify the sender is authorized as a manager.
+     *  @notice Verify the message sender is an authorized manager.
      */
     modifier onlyManager() {
         if (!IAdmin(this.admin()).isManager(msg.sender)) {
@@ -27,7 +27,7 @@ ICommon {
     }
 
     /**
-     *  @notice Verify the sender is authorized as a manager or a moderator.
+     *  @notice Verify the message sender is an authorized manager or an authorized moderator.
      */
     modifier onlyExecutive() {
         if (!IAdmin(this.admin()).isExecutive(msg.sender)) {
@@ -37,7 +37,7 @@ ICommon {
     }
 
     /**
-     *  @notice Verify an account is authorized as a governor.
+     *  @notice Verify an account is an authorized governor contract.
      *
      *          Name        Description
      *  @param  _account    EVM address.

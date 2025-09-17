@@ -113,13 +113,13 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Update base URI.
+     *  @notice Update the base URI.
      *
      *          Name            Description
      *  @param  _uri            New base URI.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configuration.
+     *  @dev    Administrative operator.
      */
     function updateBaseURI(
         string calldata _uri,
@@ -140,13 +140,13 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Update fee rate.
+     *  @notice Update the fee rate.
      *
      *          Name            Description
      *  @param  _feeRate        New fee rate.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configuration.
+     *  @dev    Administrative operator.
      */
     function updateFeeRate(
         uint256 _feeRate,

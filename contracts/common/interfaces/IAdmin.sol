@@ -168,7 +168,7 @@ ICurrencyRegistry {
 
     /* --- Governor --- */
     /**
-     *  @notice Emitted when a contract is authorized as governor contract.
+     *  @notice Emitted when a contract is authorized as a governor contract.
      *
      *          Name        Description
      *  @param  account     Authorized contract address.
@@ -269,7 +269,7 @@ ICurrencyRegistry {
     /**
      *          Name            Description
      *  @param  account         EVM address.
-     *  @return isExecutive     Whether the account is authorized as a manager or a moderator.
+     *  @return isExecutive     Whether the account is an authorized manager or an authorized moderator.
      */
     function isExecutive(
         address account
@@ -278,7 +278,7 @@ ICurrencyRegistry {
     /**
      *          Name            Description
      *  @param  account         EVM address.
-     *  @return isGovernor      Whether the account is authorized as a governor.
+     *  @return isGovernor      Whether the account is an authorized governor contract.
      *
      *  @dev    The contract must support interface `IGovernor`.
      */
@@ -289,7 +289,7 @@ ICurrencyRegistry {
     /**
      *          Name            Description
      *  @param  account         EVM address.
-     *  @return isManager       Whether the account is authorized as a manager.
+     *  @return isManager       Whether the account is an authorized manager.
      */
     function isManager(
         address account
@@ -298,7 +298,7 @@ ICurrencyRegistry {
     /**
      *          Name            Description
      *  @param  account         EVM address.
-     *  @return isModerator     Whether the account is authorized as a moderator.
+     *  @return isModerator     Whether the account is an authorized moderator.
      */
     function isModerator(
         address account
@@ -358,19 +358,19 @@ ICurrencyRegistry {
 
     /* --- Command --- */
     /**
-     *  @notice Verify an a message and a set of signatures conform admin addresses and the current nonce of this contract.
+     *  @notice Verify a message and a set of signatures conform admin addresses and the current nonce of this contract.
      *  @notice After successful verification, the nonce is incremented by 1 for the next message.
      *
      *          Name        Description
-     *  @param  message     Receiver address.
+     *  @param  message     Message bytes to verify.
      *  @param  signatures  Array of admin signatures.
      *
      *  @dev    Only transactions whose original sender is a manager can request verification.
-     *  @dev    Pseudo code of signature for `message` and `nonce`:
+     *  @dev    Pseudo code of signature for `_message` and `nonce`:
      *          ```
      *          signature = ethSign(
      *              keccak256(abi.encodePacked(
-     *                  message,
+     *                  _message,
      *                  nonce
      *              ))
      *          );

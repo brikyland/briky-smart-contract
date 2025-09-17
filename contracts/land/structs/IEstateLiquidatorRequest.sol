@@ -21,7 +21,7 @@ interface IEstateLiquidatorRequest is IRate {
      *  @notice Proceeds from the sale will be shared among holders proportionally to their balances.
      */
     struct EstateLiquidatorRequest {
-        /// @notice Estate identifier to be extracted.
+        /// @notice Estate identifier.
         uint256 estateId;
 
         /// @notice Proposal identifier for holders to vote on the deal.

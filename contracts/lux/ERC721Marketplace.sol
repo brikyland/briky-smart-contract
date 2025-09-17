@@ -49,7 +49,7 @@ ReentrancyGuardUpgradeable {
 
     /** ===== MODIFIER ===== **/
     /**
-     *  @notice Verify a valid offer.
+     *  @notice Verify a valid offer identifier.
      *
      *          Name        Description
      *  @param  _offerId    Offer identifier.
@@ -126,7 +126,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _isCollection    Whether the operation is registration or deregistration.
      *  @param  _signatures      Array of admin signatures.
      * 
-     *  @dev    Administrative configuration.
+     *  @dev    Administrative operator.
      */
     function registerCollections(
         address[] calldata _collections,

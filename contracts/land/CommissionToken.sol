@@ -10,9 +10,6 @@ import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/se
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import {ERC721PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721PausableUpgradeable.sol";
 
-/// contracts/common/utilities/
-import {Formula} from "../common/utilities/Formula.sol";
-
 /// contracts/common/interfaces/
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 
@@ -21,6 +18,7 @@ import {CommonConstant} from "../common/constants/CommonConstant.sol";
 
 /// contracts/common/utilities/
 import {Administrable} from "../common/utilities/Administrable.sol";
+import {Formula} from "../common/utilities/Formula.sol";
 import {Pausable} from "../common/utilities/Pausable.sol";
 import {RoyaltyRateProposer} from "../common/utilities/RoyaltyRateProposer.sol";
 
@@ -33,7 +31,9 @@ import {CommissionTokenStorage} from "./storages/CommissionTokenStorage.sol";
 /**
  *  @author Briky Team
  *
- *  @notice TODO:
+ *  @notice The `CommissionToken` contract is codependent with the `EstateToken` contract. For each newly tokenized estate,
+ *          it will issue a unique corresponding token that represents the commission fraction shareable to its owner from
+ *          incomes of designated operators involving the estate.
  */
 contract CommissionToken is
 CommissionTokenStorage,
@@ -58,8 +58,7 @@ ReentrancyGuardUpgradeable {
     receive() external payable {}
 
     /**
-     *          Name       Description
-     *  @return version    Version of implementation.
+     *  @return Version of implementation.
      */
     function version() external pure returns (string memory) {
         return VERSION;
@@ -113,13 +112,13 @@ ReentrancyGuardUpgradeable {
 
     /* --- Administration --- */
     /**
-     *  @notice Update base URI.
+     *  @notice Update the base URI.
      *
      *          Name            Description
      *  @param  _uri            New base URI.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configuration.
+     *  @dev    Administrative operator.
      */
     function updateBaseURI(
         string calldata _uri,
@@ -133,6 +132,7 @@ ReentrancyGuardUpgradeable {
             ),
             _signatures
         );
+
         baseURI = _uri;
 
         emit BaseURIUpdate(_uri);
@@ -140,13 +140,13 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Update royalty rate.
+     *  @notice Update the default royalty rate.
      *
      *          Name            Description
      *  @param  _royaltyRate    New royalty rate.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configuration.
+     *  @dev    Administrative operator.
      */
     function updateRoyaltyRate(
         uint256 _royaltyRate,
@@ -160,20 +160,36 @@ ReentrancyGuardUpgradeable {
             ),
             _signatures
         );
+
         if (_royaltyRate > CommonConstant.RATE_MAX_FRACTION) {
             revert InvalidRate();
         }
         royaltyRate = _royaltyRate;
+
         emit RoyaltyRateUpdate(Rate(_royaltyRate, CommonConstant.RATE_DECIMALS));
     }
 
 
     /* --- Query --- */
     /**
-     *          Name           Description
-     *  @param  _zone          Zone code.
-     *  @param  _broker        Broker address.
-     *  @return rate           Commission rate of the broker in the zone.
+     *          Name        Description
+     *  @param  _tokenId    Token identifier.
+     *
+     *  @return Commission rate of the token identifier.
+     */
+    function getCommissionRate(
+        uint256 _tokenId
+    ) public view returns (Rate memory) {
+        return commissionRates[_tokenId];
+    }
+
+
+    /**
+     *          Name        Description
+     *  @param  _zone       Zone code.
+     *  @param  _broker     Broker address.
+     *
+     *  @return Commission rate of the broker in the zone.
      */
     function getBrokerCommissionRate(
         bytes32 _zone,
@@ -188,25 +204,19 @@ ReentrancyGuardUpgradeable {
         return brokerCommissionRates[_zone][_broker];
     }
 
-    /**
-     *          Name           Description
-     *  @param  _tokenId       Token identifier.
-     *  @return rate           Commission rate of the token identifier.
-     */
-    function getCommissionRate(
-        uint256 _tokenId
-    ) public view returns (Rate memory) {
-        return commissionRates[_tokenId];
-    }
 
     /**
-     *          Name           Description
-     *  @param  _tokenId       Token identifier.
-     *  @param  _value         Value.
-     *  @return receiver       Commission receiver address.
-     *  @return commission     Commission value.
+     *          Name        Description
+     *  @param  _tokenId    Token identifier.
+     *  @param  _value      Value.
+     *
+     *  @return Commission receiver address.
+     *  @return Commission value.
      */
-    function commissionInfo(uint256 _tokenId, uint256 _value) external view returns (address, uint256) {
+    function commissionInfo(
+        uint256 _tokenId,
+        uint256 _value
+    ) external view returns (address, uint256) {
         address receiver = _ownerOf(_tokenId);
         return receiver != address(0)
             ? (receiver, _value.scale(getCommissionRate(_tokenId)))
@@ -218,10 +228,12 @@ ReentrancyGuardUpgradeable {
     /**
      *  @notice Register a broker in a zone.
      *
-     *          Name            Description
-     *  @param  _zone           Zone code.
-     *  @param  _broker         Broker address.
-     *  @param  _commissionRate Commission rate.
+     *          Name                Description
+     *  @param  _zone               Zone code.
+     *  @param  _broker             Broker address.
+     *  @param  _commissionRate     Commission rate.
+     *
+     *  @dev    Permission: Managers in the zone.
      */
     function registerBroker(
         bytes32 _zone,
@@ -254,12 +266,14 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Activate a broker in a zone.
+     *  @notice Activate or deactivate a broker in a zone.
      *
      *          Name            Description
      *  @param  _zone           Zone code.
      *  @param  _broker         Broker address.
-     *  @param  _isActive       Whether the broker is active.
+     *  @param  _isActive       Whether the operation is activating or deactivating.
+     *
+     *  @dev    Permission: Managers in the zone.
      */
     function activateBroker(
         bytes32 _zone,
@@ -281,13 +295,14 @@ ReentrancyGuardUpgradeable {
         }
     }
 
+
     /**
      *  @notice Mint a commission token.
      *
-     *          Name            Description
-     *  @param  _zone           Zone code.
-     *  @param  _broker         Broker address.
-     *  @param  _tokenId        Minted token identifier.
+     *          Name        Description
+     *  @param  _zone       Zone code.
+     *  @param  _broker     Associated broker address.
+     *  @param  _tokenId    Token identifier to be minted.
      */
     function mint(
         bytes32 _zone,
@@ -312,57 +327,60 @@ ReentrancyGuardUpgradeable {
             revert InvalidBroker();
         }
 
-        commissionRates[_tokenId] = brokerCommissionRates[_zone][_broker];
+        Rate memory rate = brokerCommissionRates[_zone][_broker];
+        commissionRates[_tokenId] = rate;
         _mint(_broker, _tokenId);
 
         emit NewToken(
             _tokenId,
             _zone,
-            _broker
+            _broker,
+            rate
         );
     }
 
 
-    /* --- Override --- */
     /**
      *          Name            Description
      *  @param  _tokenId        Token identifier.
-     * 
+     *
+     *  @return Royalty rate of the token identifier.
+     */
+    function getRoyaltyRate(
+        uint256 _tokenId
+    ) external view returns (Rate memory) {
+        return Rate(
+            royaltyRate,
+            CommonConstant.RATE_DECIMALS
+        );
+    }
+
+    /**
+     *          Name            Description
+     *  @param  _tokenId        Token identifier.
+     *
      *  @return Token URI.
      */
     function tokenURI(
         uint256 _tokenId
     ) public view override(
-        IERC721MetadataUpgradeable,
-        ERC721Upgradeable
+    IERC721MetadataUpgradeable,
+    ERC721Upgradeable
     ) returns (string memory) {
         return super.tokenURI(_tokenId);
     }
 
     /**
      *          Name            Description
-     *  @param  _tokenId        Token identifier.
-     * 
-     *  @return Royalty rate of the token.
-     */
-    function getRoyaltyRate(
-        uint256 _tokenId
-    ) external view returns (Rate memory) {
-        return Rate(royaltyRate, CommonConstant.RATE_DECIMALS);
-    }
-
-
-    /**
-     *          Name            Description
      *  @param  _interfaceId    Interface identifier.
-     * 
+     *
      *  @return Whether this contract implements the interface.
      */
     function supportsInterface(
         bytes4 _interfaceId
     ) public view override(
-        IERC165Upgradeable,
-        ERC721Upgradeable
+    IERC165Upgradeable,
+    ERC721Upgradeable
     ) returns (bool) {
         return _interfaceId == type(IERC4906Upgradeable).interfaceId
             || _interfaceId == type(IERC2981Upgradeable).interfaceId

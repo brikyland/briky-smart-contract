@@ -4,7 +4,9 @@ pragma solidity ^0.8.20;
 /**
  *  @author Briky Team
  *
- *  @notice TODO: A `CommissionDispatchable` contract dispatches commissions to the receiver corresponding to the commission token.
+ *  @notice Interface for contract `CommissionDispatchable`.
+ *  @notice A `CommissionDispatchable` contract allows sharing a portion of incomes as affiliate commission, according to the
+ *          commission token.
  */
 interface ICommissionDispatchable {
     /** ===== EVENT ===== **/
@@ -26,10 +28,8 @@ interface ICommissionDispatchable {
     /** ===== FUNCTION ===== **/
     /* --- Dependency --- */
     /**
-     *  @notice Get the commission token contract address.
-     *
      *          Name               Description
-     *  @return commissionToken    Commission token contract address.
+     *  @return commissionToken    `CommissionToken` contract address.
      */
     function commissionToken() external view returns (address commissionToken);
 }

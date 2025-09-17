@@ -122,7 +122,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _treasury       New treasury contract address.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configuration.
+     *  @dev    Administrative operator.
      */
     function updateTreasury(
         address _treasury,
@@ -152,7 +152,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _stakeToken3    New stake token #3 contract address.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configuration.
+     *  @dev    Administrative operator.
      */
     function updateStakeTokens(
         address _stakeToken1,
@@ -219,7 +219,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _distributor    Distributor address.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative operation.
+     *  @dev    Administrative operator.
      */
     function unlockForBackerRound(
         address _distributor,
@@ -256,7 +256,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _distributor    Distributor address.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative operation.
+     *  @dev    Administrative operator.
      */
     function unlockForSeedRound(
         address _distributor,
@@ -293,7 +293,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _distributor    Distributor address.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative operation.
+     *  @dev    Administrative operator.
      */
     function unlockForPrivateSale1(
         address _distributor,
@@ -330,7 +330,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _distributor    Distributor address.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative operation.
+     *  @dev    Administrative operator.
      */
     function unlockForPrivateSale2(
         address _distributor,
@@ -368,7 +368,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _distributor    Distributor address.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative operation.
+     *  @dev    Administrative operator.
      */
     function unlockForPublicSale(
         address _distributor,
@@ -405,7 +405,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _distributor    Distributor address.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative operation.
+     *  @dev    Administrative operator.
      */
     function unlockForCoreTeam(
         address _distributor,
@@ -442,7 +442,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _distributor    Distributor address.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative operation.
+     *  @dev    Administrative operator.
      */
     function unlockForMarketMaker(
         address _distributor,
@@ -479,7 +479,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _distributor    Distributor address.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative operation.
+     *  @dev    Administrative operator.
      */
     function unlockForExternalTreasury(
         address _distributor,
@@ -817,7 +817,7 @@ ReentrancyGuardUpgradeable {
      *          Name            Description
      *  @param  _liquidity      Amount of liquidity to contribute.
      *
-     *  @dev    Receives currency from the sender and provides it to the treasury contract.
+     *  @dev    Receives currency from the message sender and provides it to the treasury contract.
      */
     function _contributeLiquidity(
         uint256 _liquidity

@@ -12,15 +12,15 @@ import {IValidatable} from "./IValidatable.sol";
  *  @author Briky Team
  *
  *  @notice Interface for contract `GovernanceHub`.
- *  @notice The `GovernanceHub` contract conducts voting among holders of an asset from governor contracts to decide on
+ *  @notice The `GovernanceHub` contract facilitates voting among holders of an asset from governor contracts to decide on
  *          proposals that affects the asset.
  *
- *  @dev    Any current holder of the asset, with client-side support, can propose by submitting a full proper context to the
- *          server-side and forwarding only its checksum to the contract as the UUID of the new proposal. Authorized executives
- *          will later verify the feasibility of the proposal within a given expiration to either admit or disqualify it
- *          accordingly. During this process, the full context is uploaded to a public database (e.g., IPFS), and the link is
- *          submitted to be the URI of proposal context. This approach protects the database from external attacks as well as
- *          ensures proposals remains validatable and user-oriented.
+ *  @dev    With client-side support, accounts can propose by submitting a full proper context to the server-side and
+ *          forwarding only its checksum to the contract as the UUID of the new proposal. Authorized executives will later
+ *          verify the feasibility of the proposal within a given expiration to either admit or disqualify it accordingly.
+ *          During this process, the full context is uploaded to a public database (e.g., IPFS), and the link is submitted to
+ *          be the URI of proposal context. This approach protects the database from external attacks as well as ensures
+ *          proposals remains validatable and user-oriented.
  *  @dev    Implementation involves server-side support.
  *  @dev    ERC-20 tokens are identified by their contract addresses.
  *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
@@ -32,10 +32,10 @@ IValidatable {
     /** ===== EVENT ===== **/
     /* --- Configuration --- */
     /**
-     *  @notice Emitted when proposal fee is updated.
+     *  @notice Emitted when proposing fee is updated.
      *
      *          Name        Description
-     *  @param  newValue    New proposal fee charged in native coin.
+     *  @param  newValue    New proposing fee charged in native coin.
      */
     event FeeUpdate(uint256 newValue);
 
@@ -233,7 +233,7 @@ IValidatable {
     /* --- Configuration --- */
     /**
      *          Name            Description
-     *  @return fee             Proposal fee charged in native coin.
+     *  @return fee             Proposing fee charged in native coin.
      */
     function fee() external view returns (uint256 fee);
 
@@ -351,7 +351,7 @@ IValidatable {
 
     /**
      *  @notice Admit an executable proposal after review practicability.
-     *  @notice Admit only if the proposal is in `Pending` state and before admission time limit expires.
+     *  @notice Admit only if the proposal is in `Pending` state and before admission time limit has expired.
      *
      *          Name            Description
      *  @param  proposalId      Proposal identifier.
@@ -365,6 +365,7 @@ IValidatable {
      *  @dev    Validation data:
      *          ```
      *          data = abi.encode(
+     *              proposalId,
      *              contextURI,
      *              reviewURI,
      *              currency
@@ -381,14 +382,14 @@ IValidatable {
 
     /**
      *  @notice Confirm a proposal to be executed.
-     *  @notice Confirm only if the proposal is approved and before the confirmation time limit expires.
+     *  @notice Confirm only if the proposal is approved and before the confirmation time limit has expired.
      *  @notice On proposal confirmation, the budget is transferred to the operator.
      *
      *          Name            Description
      *  @param  proposalId      Proposal identifier.
      *  @return budget          Contributed budget for execution.
      *
-     *  @dev    Permission: Managers.
+     *  @dev    Permission: Managers active in the zone of the asset.
      */
     function confirm(
         uint256 proposalId
@@ -396,7 +397,7 @@ IValidatable {
 
     /**
      *  @notice Contribute to the budget of a proposal.
-     *  @notice Contribute only before the proposal is confirmed or the confirmation time limit expires.
+     *  @notice Contribute only before the proposal is confirmed or the confirmation time limit has expired.
      *
      *          Name            Description
      *  @param  proposalId      Proposal identifier.
@@ -445,9 +446,9 @@ IValidatable {
     ) external returns (uint256 weight);
 
     /**
-     *  @notice Withdraw contribution from a proposal which cannot be executed.
+     *  @notice Withdraw contribution from a proposal which can no longer be executed.
      *  @notice Withdraw only if the proposal is either disapproved, disqualified or rejected, or after confirmation time limit
-     *          expires.
+     *          has expired.
      *
      *          Name            Description
      *  @param  proposalId      Proposal identifier.
@@ -459,19 +460,23 @@ IValidatable {
 
 
     /**
-     *  @notice Conclude the execution of a proposal.
+     *  @notice Conclude the execution of a proposal as either successful or unsuccessful.
      *  @notice Conclude only if the proposal is in `Executing` state.
      *
      *          Name            Description
      *  @param  proposalId      Proposal identifier.
-     *  @param  resultURI       URI of final execution result.
+     *  @param  resultURI       URI of execution result.
      *  @param  isSuccessful    Whether the execution has succeeded.
      *  @param  validation      Validation package from the validator.
      *
      *  @dev    Permission: Operator of the proposal.
      *  @dev    Validation data:
      *          ```
-     *          data = abi.encode(resultURI);
+     *          data = abi.encode(
+     *              proposalId,
+     *              resultURI,
+     *              isSuccessful
+     *          );
      *          ```
      */
     function concludeExecution(
@@ -493,7 +498,10 @@ IValidatable {
      *  @dev    Permission: Operator of the proposal.
      *  @dev    Validation data:
      *          ```
-     *          data = abi.encode(logURI);
+     *          data = abi.encode(
+     *              proposalId,
+     *              logURI
+     *          );
      *          ```
      */
     function logExecution(
@@ -537,7 +545,7 @@ IValidatable {
 
     /**
      *  @notice Contribute to the budget of a proposal.
-     *  @notice Contribute only before the proposal is confirmed or the confirmation time limit expires.
+     *  @notice Contribute only before the proposal is confirmed or the confirmation time limit has expired.
      *
      *          Name        Description
      *  @param  proposalId  Proposal identifier.

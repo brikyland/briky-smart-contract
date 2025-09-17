@@ -15,6 +15,7 @@ interface ICommon {
     error InvalidCurrency();
     error InvalidGovernor();
     error InvalidInput();
+    error InvalidSignatureNumber();
     error InvalidTimestamp();
     error InvalidUpdating();
     error InvalidZone();

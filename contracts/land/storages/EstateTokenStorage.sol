@@ -16,7 +16,7 @@ IEstateToken {
 
 
     /// @dev    custodianURI[zone][account]
-    mapping(bytes32 => mapping(address => string)) public custodianURI;
+    mapping(bytes32 => mapping(address => string)) public custodianURIs;
 
 
     /// @dev    estates[estateId]
@@ -32,6 +32,7 @@ IEstateToken {
 
     /// @dev    isTokenizer[account]
     mapping(address => bool) public isTokenizer;
+
 
     uint256 public estateNumber;
 

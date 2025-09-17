@@ -89,7 +89,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _data           Note or description for the distribution operation.
      *  @param  _signatures     Array of admin signatures.
      *
-     *  @dev    Administrative configuration.
+     *  @dev    Administrative operator.
      *  @dev    Each distribution is tracked per receiver address, maintaining a cumulative record
      *          of all tokens distributed to each account over time. Distribution operations are
      *          subject to available token balance verification.

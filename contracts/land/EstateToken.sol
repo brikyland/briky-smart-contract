@@ -17,6 +17,7 @@ import {CommonConstant} from "../common/constants/CommonConstant.sol";
 
 /// contracts/common/interfaces/
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
+import {IAssetToken} from "../common/interfaces/IAssetToken.sol";
 import {IGovernor} from "../common/interfaces/IGovernor.sol";
 import {IRoyaltyRateProposer} from "../common/interfaces/IRoyaltyRateProposer.sol";
 
@@ -41,15 +42,13 @@ import {EstateTokenStorage} from "./storages/EstateTokenStorage.sol";
 /**
  *  @author Briky Team
  *
- *  @notice TODO: The `EstateToken` contract securitizes real-world estate assets into fungible ERC-1155 tokens, where each
- *          token class represents fractional ownership of a specific tokenized estate.
+ *  @notice The `EstateToken` contract securitizes real-world estate assets into classes of fungible ERC-1155 tokens, where
+ *          each class represents fractional ownership of a specific tokenized estate. Official disclosed third party custodian
+ *          agents are registered in the zone to actively provide estates to tokenize and escrows those assets on behalf of
+ *          holders after successful tokenization.
  *
-
+ *  @dev    Each unit of estate tokens is represented in scaled form as `10 ** decimals()`.
  *  @dev    Implementation involves server-side support.
- *  @dev    ERC-20 tokens are identified by their contract addresses.
- *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
- *  @dev    Quantities are expressed in absolute units. Scale these values by `10 ** EstateToken.decimals()` to obtain
- *          the correct amounts under the `EstateToken` convention.
  */
 contract EstateToken is
 EstateTokenStorage,
@@ -71,7 +70,7 @@ Validatable {
 
     /** ===== MODIFIER ===== **/
     /**
-     *  @notice Verify a valid estate.
+     *  @notice Verify a valid estate identifier.
      *
      *          Name            Description
      *  @param  _estateId       Estate identifier.
@@ -86,7 +85,7 @@ Validatable {
     }
 
     /**
-     *  @notice Verify the sender is active in the zone of the estate.
+     *  @notice Verify the message sender is active in the zone of the estate.
      *
      *          Name            Description
      *  @param  _estateId       Estate identifier.
@@ -149,13 +148,13 @@ Validatable {
 
     /* --- Administration --- */
     /**
-     *  @notice Update commission token address.
+     *  @notice Update the commission token address.
      *
      *          Name                Description
      *  @param  _commissionToken    New commission token contract address.
      *  @param  _signatures         Array of admin signatures.
      * 
-     *  @dev    Administrative configuration.
+     *  @dev    Administrative operator.
      */
     function updateCommissionToken(
         address _commissionToken,
@@ -175,17 +174,16 @@ Validatable {
         }
 
         commissionToken = _commissionToken;
-        emit CommissionTokenUpdate(_commissionToken);
     }
 
     /**
-     *  @notice Update base URI.
+     *  @notice Update the base URI.
      *
      *          Name            Description
-     *  @param  _uri            New base URI value.
+     *  @param  _uri            New base URI.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configuration.
+     *  @dev    Administrative operator.
      */
     function updateBaseURI(
         string calldata _uri,
@@ -209,10 +207,10 @@ Validatable {
      *
      *          Name            Description
      *  @param  _accounts       Array of contract addresses.
-     *  @param  _isTokenizer    Whether the operation is authorization or deauthorization.
+     *  @param  _isTokenizer    This whether the operation is authorizing or deauthorizing.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configuration.
+     *  @dev    Administrative operator.
      */
     function authorizeTokenizers(
         address[] calldata _accounts,
@@ -235,7 +233,7 @@ Validatable {
                     revert AuthorizedAccount();
                 }
                 if (!_accounts[i].supportsInterface(type(IEstateTokenizer).interfaceId)) {
-                    revert InvalidTokenizer(_accounts[i]);
+                    revert InvalidTokenizer();
                 }
                 isTokenizer[_accounts[i]] = true;
                 emit TokenizerAuthorization(_accounts[i]);
@@ -256,10 +254,10 @@ Validatable {
      *
      *          Name            Description
      *  @param  _accounts       Array of contract addresses.
-     *  @param  _isExtractor    Whether the operation is authorization or deauthorization.
+     *  @param  _isExtractor    This whether the operation is authorizing or deauthorizing.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configuration.
+     *  @dev    Administrative operator.
      */
     function authorizeExtractors(
         address[] calldata _accounts,
@@ -296,14 +294,14 @@ Validatable {
     }
 
     /**
-     *  @notice Update zone royalty rate.
+     *  @notice Update the royalty rate of a zone.
      *
      *          Name            Description
      *  @param  _zone           Zone code.
      *  @param  _royaltyRate    New royalty rate for the zone.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configuration.
+     *  @dev    Administrative operator.
      */
     function updateZoneRoyaltyRate(
         bytes32 _zone,
@@ -363,7 +361,7 @@ Validatable {
         bytes32 zone,
         address account
     ) public view returns (bool) {
-        return bytes(custodianURI[zone][account]).length != 0;
+        return bytes(custodianURIs[zone][account]).length != 0;
     }
 
     /**
@@ -398,7 +396,7 @@ Validatable {
     function totalSupply(
         uint256 tokenId
     ) public view override(
-        IEstateToken,
+        IAssetToken,
         ERC1155SupplyUpgradeable
     ) returns (uint256) {
         return super.totalSupply(tokenId);
@@ -464,12 +462,6 @@ Validatable {
      *  @param  _validation     Validation package from the validator.
      *
      *  @dev    Permissions: Managers.
-     *  @dev    Validation data:
-     *          ```
-     *          data = abi.encode(
-     *              uri
-     *          );
-     *          ```
      */
     function registerCustodian(
         bytes32 _zone,
@@ -489,7 +481,7 @@ Validatable {
             revert InvalidURI();
         }
 
-        custodianURI[_zone][_custodian] = _uri;
+        custodianURIs[_zone][_custodian] = _uri;
         emit CustodianRegistration(
             _zone,
             _custodian,
@@ -571,25 +563,6 @@ Validatable {
     }
 
     /**
-     *  @notice Deprecate an estate by managers due to force majeure or extraction.
-     *
-     *          Name            Description
-     *  @param  _estateId       Estate identifier.
-     *
-     *  @dev    Permissions: Managers.
-     */
-    function deprecateEstate(
-        uint256 _estateId
-    ) external
-    whenNotPaused
-    onlyManager
-    validEstate(_estateId)
-    onlyActiveInZoneOf(_estateId) {
-        estates[_estateId].deprecateAt = uint40(block.timestamp);
-        emit EstateDeprecation(_estateId);
-    }
-
-    /**
      *  @notice Extend the expiration of estate.
      *
      *          Name            Description
@@ -598,14 +571,19 @@ Validatable {
      *
      *  @dev    Permissions: Managers.
      */
-    function extendEstateExpiration(
+    function safeExtendEstateExpiration(
         uint256 _estateId,
-        uint40 _expireAt
+        uint40 _expireAt,
+        bytes32 _anchor
     ) external
     whenNotPaused
     onlyManager
     validEstate(_estateId)
     onlyActiveInZoneOf(_estateId) {
+        if (_anchor != keccak256(bytes(uri(_estateId)))) {
+            revert BadAnchor();
+        }
+
         if (_expireAt <= block.timestamp) {
             revert InvalidTimestamp();
         }
@@ -615,7 +593,7 @@ Validatable {
     }
 
     /**
-     *  @notice Update the metadata URI of an estate.
+     *  @notice Update the URI of an estate.
      *
      *          Name            Description
      *  @param  _estateId       Estate identifier.
@@ -623,23 +601,21 @@ Validatable {
      *  @param  _validation     Validation package from the validator.
      *
      *  @dev    Permissions: Managers.
-     *  @dev    Validation data:
-     *          ```
-     *          data = abi.encode(
-     *              estateId,
-     *              uri
-     *          );
-     *          ```
      */
-    function updateEstateURI(
+    function safeUpdateEstateURI(
         uint256 _estateId,
         string calldata _uri,
-        Validation calldata _validation
+        Validation calldata _validation,
+        bytes32 _anchor
     ) external
     whenNotPaused
     onlyManager
     validEstate(_estateId)
     onlyActiveInZoneOf(_estateId) {
+        if (_anchor != keccak256(bytes(uri(_estateId)))) {
+            revert BadAnchor();
+        }
+
         _validate(
             abi.encode(_estateId, _uri),
             _validation
@@ -657,14 +633,19 @@ Validatable {
      *
      *  @dev    Permissions: Managers.
      */
-    function updateEstateCustodian(
+    function safeUpdateEstateCustodian(
         uint256 _estateId,
-        address _custodian
+        address _custodian,
+        bytes32 _anchor
     ) external
     whenNotPaused
     onlyManager
     validEstate(_estateId)
     onlyActiveInZoneOf(_estateId) {
+        if (_anchor != keccak256(bytes(uri(_estateId)))) {
+            revert BadAnchor();
+        }
+
         if (!isCustodianIn(estates[_estateId].zone, _custodian)) {
             revert InvalidCustodian();
         }
@@ -712,6 +693,37 @@ Validatable {
         return estates[_estateId].deprecateAt != CommonConstant.INFINITE_TIMESTAMP || estates[_estateId].expireAt <= block.timestamp
             ? 0
             : super.balanceOf(_account, _estateId);
+    }
+
+    /**
+     *  @notice Deprecate an estate by managers due to force majeure or extraction.
+     *
+     *          Name        Description
+     *  @param  _estateId   Estate identifier.
+     *  @param  _data       Deprecation note.
+     *  @param  _anchor     `uri` of the estate.
+     *
+     *  @dev    Permissions: Managers.
+     *  @dev    Anchor enforces consistency between this contract and the client-side.
+     */
+    function safeDeprecateEstate(
+        uint256 _estateId,
+        string calldata _data,
+        bytes32 _anchor
+    ) external
+    whenNotPaused
+    onlyManager
+    validEstate(_estateId)
+    onlyActiveInZoneOf(_estateId) {
+        if (_anchor != keccak256(bytes(uri(_estateId)))) {
+            revert BadAnchor();
+        }
+
+        estates[_estateId].deprecateAt = uint40(block.timestamp);
+        emit EstateDeprecation(
+            _estateId,
+            _data
+        );
     }
 
     /**

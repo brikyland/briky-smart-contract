@@ -58,11 +58,11 @@ Initializable {
      *  @notice Invoked for initialization after deployment, serving as the contract constructor.
      *
      *          Name            Description
-     *  @param  _admin1         Admin #1 address.
-     *  @param  _admin2         Admin #2 address.
-     *  @param  _admin3         Admin #3 address.
-     *  @param  _admin4         Admin #4 address.
-     *  @param  _admin5         Admin #5 address.
+     *  @param  _admin1     Admin #1 address.
+     *  @param  _admin2     Admin #2 address.
+     *  @param  _admin3     Admin #3 address.
+     *  @param  _admin4     Admin #4 address.
+     *  @param  _admin5     Admin #5 address.
      */
     function initialize(
         address _admin1,
@@ -147,7 +147,7 @@ Initializable {
      *  @param  _admin1        New admin #1 address.
      *  @param  _signatures    Array of admin signatures.
      * 
-     *  @dev    Administrative operation.
+     *  @dev    Administrative operator.
      */
     function transferAdministration1(
         address _admin1,
@@ -173,7 +173,7 @@ Initializable {
      *  @param  _admin2        New admin #2 address.
      *  @param  _signatures    Array of admin signatures.
      * 
-     *  @dev    Administrative operation.
+     *  @dev    Administrative operator.
      */
     function transferAdministration2(
         address _admin2,
@@ -199,7 +199,7 @@ Initializable {
      *  @param  _admin3        New admin #3 address.
      *  @param  _signatures    Array of admin signatures.
      * 
-     *  @dev    Administrative operation.
+     *  @dev    Administrative operator.
      */
     function transferAdministration3(
         address _admin3,
@@ -225,7 +225,7 @@ Initializable {
      *  @param  _admin4        New admin #4 address.
      *  @param  _signatures    Array of admin signatures.
      * 
-     *  @dev    Administrative operation.
+     *  @dev    Administrative operator.
      */
     function transferAdministration4(
         address _admin4,
@@ -251,7 +251,7 @@ Initializable {
      *  @param  _admin5        New admin #5 address.
      *  @param  _signatures    Array of admin signatures.
      * 
-     *  @dev    Administrative operation.
+     *  @dev    Administrative operator.
      */
     function transferAdministration5(
         address _admin5,
@@ -276,10 +276,10 @@ Initializable {
      *
      *          Name           Description
      *  @param  _accounts      Array of EVM addresses.
-     *  @param  _isManager     Whether the operation is authorization or deauthorization.
+     *  @param  _isManager     This whether the operation is authorizing or deauthorizing.
      *  @param  _signatures    Array of admin signatures.
      * 
-     *  @dev    Administrative configuration.
+     *  @dev    Administrative operator.
      */
     function authorizeManagers(
         address[] calldata _accounts,
@@ -323,10 +323,10 @@ Initializable {
      *
      *          Name           Description
      *  @param  _accounts      Array of EVM addresses.
-     *  @param  _isModerator   Whether the operation is authorization or deauthorization.
+     *  @param  _isModerator   This whether the operation is authorizing or deauthorizing.
      *  @param  _signatures    Array of admin signatures.
      * 
-     *  @dev    Administrative configuration.
+     *  @dev    Administrative operator.
      */
     function authorizeModerators(
         address[] calldata _accounts,
@@ -367,10 +367,10 @@ Initializable {
      *
      *          Name           Description
      *  @param  _accounts      Array of contract addresses.
-     *  @param  _isGovernor    Whether the operation is authorization or deauthorization.
+     *  @param  _isGovernor    This whether the operation is authorizing or deauthorizing.
      *  @param  _signatures    Array of admin signatures.
      * 
-     *  @dev    Administrative configuration.
+     *  @dev    Administrative operator.
      */
     function authorizeGovernor(
         address[] calldata _accounts,
@@ -417,7 +417,7 @@ Initializable {
      *  @param  _zone          Zone code.
      *  @param  _signatures    Array of admin signatures.
      * 
-     *  @dev    Administrative configuration.
+     *  @dev    Administrative operator.
      */
     function declareZone(
         bytes32 _zone,
@@ -445,10 +445,10 @@ Initializable {
      *          Name           Description
      *  @param  _zone          Zone code.
      *  @param  _accounts      Array of EVM addresses.
-     *  @param  _isActive      Whether the operation is activation or deactivation.
+     *  @param  _isActive      Whether the operation is activating or deactivating.
      *  @param  _signatures    Array of admin signatures.
      * 
-     *  @dev    Administrative configuration.
+     *  @dev    Administrative operator.
      */
     function activateIn(
         bytes32 _zone,
@@ -477,7 +477,10 @@ Initializable {
                     revert ActivatedAccount();
                 }
                 isActiveIn[_zone][_accounts[i]] = true;
-                emit Activation(_zone, _accounts[i]);
+                emit Activation(
+                    _zone,
+                    _accounts[i]
+                );
             }
         } else {
             for (uint256 i; i < _accounts.length; ++i) {
@@ -485,7 +488,10 @@ Initializable {
                     revert NotActivatedAccount();
                 }
                 isActiveIn[_zone][_accounts[i]] = false;
-                emit Deactivation(_zone, _accounts[i]);
+                emit Deactivation(
+                    _zone,
+                    _accounts[i]
+                );
             }
         }
     }
@@ -500,7 +506,7 @@ Initializable {
      *  @param  _isExclusive    Whether the currency grants exclusive privileges within the system, respectively for each currency.
      *  @param  _signatures     Array of admin signatures.
      *
-     *  @dev    Administrative configuration.
+     *  @dev    Administrative operator.
      */
     function updateCurrencyRegistries(
         address[] calldata _currencies,
@@ -518,6 +524,7 @@ Initializable {
             ),
             _signatures
         );
+
         if (_currencies.length != _isAvailable.length
             || _currencies.length != _isExclusive.length) {
             revert InvalidInput();
@@ -541,10 +548,10 @@ Initializable {
 
     /* --- Query --- */
     /**
-     *          Name            Description
-     *  @param  _account        EVM address.
+     *          Name        Description
+     *  @param  _account    EVM address.
      *
-     *  @return Whether the account is authorized as a manager or a moderator.
+     *  @return Whether the account is an authorized manager or an authorized moderator.
      */
     function isExecutive(
         address _account
@@ -554,8 +561,8 @@ Initializable {
 
 
     /**
-     *          Name                Description
-     *  @param  _currency           Currency address.
+     *          Name        Description
+     *  @param  _currency   Currency address.
      *
      *  @return Interaction configuration of the currency.
      */
@@ -566,8 +573,8 @@ Initializable {
     }
 
     /**
-     *          Name                Description
-     *  @param  _currency           Currency address.
+     *          Name        Description
+     *  @param  _currency   Currency address.
      *
      *  @return Whether the currency is interactable within the system.
      *
@@ -580,8 +587,8 @@ Initializable {
     }
 
     /**
-     *          Name                Description
-     *  @param  _currency           Currency address.
+     *          Name        Description
+     *  @param  _currency   Currency address.
      *
      *  @return Whether the currency grants exclusive privileges within the system.
      */

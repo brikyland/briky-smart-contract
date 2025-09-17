@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-/// OpenZeppelin
+/// @openzeppelin/contracts-upgradeable/
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC20Upgradeable.sol";
 import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
@@ -42,7 +42,7 @@ library CurrencyHandler {
     }
 
     /**
-     *  @notice Transfer an amount of native coin from the sender to this contract.
+     *  @notice Transfer an amount of native coin from the message sender to this contract.
      *
      *          Name        Description
      *  @param  _value      Amount of native coin.
@@ -65,7 +65,7 @@ library CurrencyHandler {
     }
 
     /**
-     *  @notice Transfer an amount of native coin from the sender to a receiver.
+     *  @notice Transfer an amount of native coin from the message sender to a receiver.
      *
      *          Name        Description
      *  @param  _receiver   Receiver address.
@@ -100,7 +100,7 @@ library CurrencyHandler {
     }
 
     /**
-     *  @notice Transfer an amount of ERC-20 token from the sender to this contract.
+     *  @notice Transfer an amount of ERC-20 token from the message sender to this contract.
      *
      *          Name        Description
      *  @param  _currency   Token address.
@@ -118,7 +118,7 @@ library CurrencyHandler {
     }
 
     /**
-     *  @notice Transfer an amount of ERC-20 token from the sender to a receiver.
+     *  @notice Transfer an amount of ERC-20 token from the message sender to a receiver.
      *
      *          Name        Description
      *  @param  _currency   Token address.
@@ -182,7 +182,7 @@ library CurrencyHandler {
     }
 
     /**
-     *  @notice Transfer an amount of either ERC-20 token or native coin from the sender to this contract.
+     *  @notice Transfer an amount of either ERC-20 token or native coin from the message sender to this contract.
      *
      *          Name        Description
      *  @param  _currency   Token address or zero address.
@@ -203,7 +203,7 @@ library CurrencyHandler {
     }
 
     /**
-     *  @notice Transfer an amount of either ERC-20 token or native coin from the sender to a receiver.
+     *  @notice Transfer an amount of either ERC-20 token or native coin from the message sender to a receiver.
      *
      *          Name        Description
      *  @param  _currency   Token address or zero address.

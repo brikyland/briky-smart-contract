@@ -16,7 +16,7 @@ import {Signature} from "./Signature.sol";
 /**
  *  @author Briky Team
  *
- *  @notice The `Validatable` contracts relies on a trusted validator to verify data that is difficult to process on-chain.
+ *  @notice A `Validatable` contract relies on a trusted validator to verify data that is difficult to process on-chain.
  *
  *  @dev    Implementation involves server-side support.
  */
@@ -26,10 +26,10 @@ Initializable {
     /** ===== FUNCTION ===== **/
     /* --- Initialization --- */
     /**
-     *  @notice Initialize for contract `Validatable`.
+     *  @notice Initialize `Validatable`.
      *
-     *          Name            Description
-     *  @param  _validator      Validator address.
+     *          Name        Description
+     *  @param  _validator  Validator address.
      */
     function __Validatable_init(
         address _validator
@@ -41,13 +41,13 @@ Initializable {
 
     /* --- Administration --- */
     /**
-     *  @notice Update validator.
+     *  @notice Update the validator.
      *
      *          Name            Description
      *  @param  _validator      New validator address.
      *  @param  _signatures     Array of admin signatures.
      *
-     *  @dev    Administrative configuration.
+     *  @dev    Administrative operator.
      */
     function updateValidator(
         address _validator,
@@ -61,6 +61,7 @@ Initializable {
             ),
             _signatures
         );
+
         validator = _validator;
         emit ValidatorUpdate(_validator);
     }

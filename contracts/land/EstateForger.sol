@@ -5,10 +5,6 @@ pragma solidity ^0.8.20;
 import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
-/// contracts/common/utilities/
-import {CurrencyHandler} from "../common/utilities/CurrencyHandler.sol";
-import {Formula} from "../common/utilities/Formula.sol";
-
 /// contracts/common/interfaces/
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 import {IPriceWatcher} from "../common/interfaces/IPriceWatcher.sol";
@@ -19,6 +15,8 @@ import {CommonConstant} from "../common/constants/CommonConstant.sol";
 
 /// contracts/common/utilities/
 import {Administrable} from "../common/utilities/Administrable.sol";
+import {CurrencyHandler} from "../common/utilities/CurrencyHandler.sol";
+import {Formula} from "../common/utilities/Formula.sol";
 import {Pausable} from "../common/utilities/Pausable.sol";
 import {Validatable} from "../common/utilities/Validatable.sol";
 
@@ -31,20 +29,32 @@ import {IEstateToken} from "./interfaces/IEstateToken.sol";
 import {IEstateForger} from "./interfaces/IEstateForger.sol";
 import {IEstateTokenizer} from "./interfaces/IEstateTokenizer.sol";
 import {IEstateTokenReceiver} from "./interfaces/IEstateTokenReceiver.sol";
-import {EstateTokenReceiver} from "./utilities/EstateTokenReceiver.sol";
 
 /// contracts/land/storages/
 import {EstateForgerStorage} from "./storages/EstateForgerStorage.sol";
 
 /// contracts/land/utilities/
 import {CommissionDispatchable} from "./utilities/CommissionDispatchable.sol";
-
+import {EstateTokenReceiver} from "./utilities/EstateTokenReceiver.sol";
 
 /**
  *  @author Briky Team
  *
+ *  @notice The `EstateForger` contract facilitates the tokenization of real estate through community sales. Authorized
+ *          custodians select estates and submit tokenization requests. During the sale period, accounts may deposit into these
+ *          requests according to the sale configuration. If the deposits of a request reach the liquidation threshold before
+ *          the sale concludes, the custodian is granted a limited time window to complete the required administrative
+ *          procedures in compliance with local regulations. Tokenization is finalized only if the custodian fulfills these
+ *          obligations within the allotted timeframe. In that case, the deposit is transferred to the custodian for
+ *          settlement, and depositors may redeem their corresponding portion of a newly class of estate token. Otherwise,
+ *          depositors are entitled to withdraw their deposits, and the tokenization attempt is deemed unsuccessful.
  *
- *  @notice TODO:
+ *  @dev    Each unit of estate token is scaled by `10 ** IAssetToken(estateToken()).decimals()` following the convention of
+ *          interface `IAssetToken`.
+ *  @dev    Implementation involves server-side support.
+ *  @dev    ERC-20 tokens are identified by their contract addresses.
+ *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
+
  */
 contract EstateForger is
 EstateForgerStorage,
@@ -64,7 +74,7 @@ ReentrancyGuardUpgradeable {
 
     /** ===== MODIFIER ===== **/
     /**
-     *  @notice Verify a valid tokenization request.
+     *  @notice Verify a valid request identifier.
      *
      *          Name            Description
      *  @param  _requestId      Request identifier.
@@ -79,12 +89,14 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Verify the sender is active in the tokenization request zone.
+     *  @notice Verify the message sender is active in the zone of the estate of the request.
      *
      *          Name            Description
      *  @param  _requestId      Request identifier.
      */
-    modifier onlyActiveInZoneOf(uint256 _requestId) {
+    modifier onlyActiveInZoneOf(
+        uint256 _requestId
+    ) {
         if (!IAdmin(admin).isActiveIn(requests[_requestId].estate.zone, msg.sender)) {
             revert Unauthorized();
         }
@@ -132,22 +144,29 @@ ReentrancyGuardUpgradeable {
         address _validator,
         uint256 _baseMinUnitPrice,
         uint256 _baseMaxUnitPrice
-    ) external initializer {
+    ) external
+    initializer {
+        /// Initializer
         __Pausable_init();
         __ReentrancyGuard_init();
 
         __CommissionDispatchable_init(_commissionToken);
         __Validatable_init(_validator);
 
+        /// Dependency
         admin = _admin;
         estateToken = _estateToken;
         priceWatcher = _priceWatcher;
         feeReceiver = _feeReceiver;
         reserveVault = _reserveVault;
 
+        /// Configuration
         baseMinUnitPrice = _baseMinUnitPrice;
         baseMaxUnitPrice = _baseMaxUnitPrice;
-        emit BaseUnitPriceRangeUpdate(_baseMinUnitPrice, _baseMaxUnitPrice);
+        emit BaseUnitPriceRangeUpdate(
+            _baseMinUnitPrice,
+            _baseMaxUnitPrice
+        );
     }
 
 
@@ -160,7 +179,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _baseMaxUnitPrice   New maximum unit price denominated in USD.
      *  @param  _signatures         Array of admin signatures.
      * 
-     *  @dev    Administrative configuration.
+     *  @dev    Administrative operator.
      */
     function updateBaseUnitPriceRange(
         uint256 _baseMinUnitPrice,
@@ -189,14 +208,14 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Whitelist or unwhitelist addresses to participate in the private sale.
+     *  @notice Whitelist or unwhitelist globally multiple addresses for private sales.
      *
-     *          Name               Description
-     *  @param  _accounts          Array of EVM addresses.
-     *  @param  _isWhitelisted     Whether the operation is whitelist or unwhitelist.
-     *  @param  _signatures        Array of admin signatures.
+     *          Name                Description
+     *  @param  _accounts           Array of EVM addresses.
+     *  @param  _isWhitelisted      Whether the operation is whitelisting or unwhitelisting.
+     *  @param  _signatures         Array of admin signatures.
      * 
-     *  @dev    Administrative configuration.
+     *  @dev    Administrative operator.
      */
     function whitelist(
         address[] calldata _accounts,
@@ -238,29 +257,43 @@ ReentrancyGuardUpgradeable {
      *          Name            Description
      *  @param  _requestId      Request identifier.
      *
-     *  @return Information and details of the tokenization request.
+     *  @return Information and progress of the request.
+     *
+     *  @dev    Phases of a request:
+     *          - Pending: block.timestamp < agenda.saleStartsAt
+     *          - Private Sale: agenda.saleStartsAt <= block.timestamp < agenda.privateSaleEndsAt
+     *          - Public Sale: agenda.privateSaleEndsAt <= block.timestamp <= agenda.publicSaleEndsAt
+     *          - Formalities Finalization: agenda.publicSaleEndsAt
+     *                                          <= block.timestamp
+     *                                          < agenda.publicSaleEndsAt + EstateForgerConstant.SALE_CONFIRMATION_TIME_LIMIT
+     *          - Cancelled: quote.totalSupply = 0
+     *          - Tokenized: estate.estateId != 0
      */
-    function getRequest(uint256 _requestId)
-    external view validRequest(_requestId) returns (EstateForgerRequest memory) {
+    function getRequest(
+        uint256 _requestId
+    ) external view
+    validRequest(_requestId)
+    returns (EstateForgerRequest memory) {
         return requests[_requestId];
     }
 
 
     /* --- Command --- */
     /**
-     *  @notice TODO:
+     *  @notice Request a new estate to be tokenized.
      *
-     *          Name                Description
-     *  @param  _requester          Requester address.
-     *  @param  _estate             Initialization input for `EstateForgerRequestEstate`.
-     *  @param  _quota              Initialization input for `EstateForgerRequestQuota`.
-     *  @param  _quote              Initialization input for `EstateForgerRequestQuote`.
-     *  @param  _agenda             Initialization input for `EstateForgerRequestAgenda`.
-     *  @param  _validation         Validation package from the validator.
+     *          Name            Description
+     *  @param  _requester      Requester address.
+     *  @param  _estate         Initialization input for `EstateForgerRequestEstate` of the request.
+     *  @param  _quota          Initialization input for `EstateForgerRequestQuota` of the request.
+     *  @param  _quote          Initialization input for `EstateForgerRequestQuote` of the request.
+     *  @param  _agenda         Initialization input for `EstateForgerRequestAgenda` of the request.
+     *  @param  _validation     Validation package from the validator.
      *
      *  @return New request identifier.
      *
-     *  @dev    TODO:
+     *  @dev    Permission: Executives active in the zone of the estate.
+     *  @dev    Total sale duration must be no less than `EstateForgerConstant.SALE_MINIMUM_DURATION`.
      */
     function requestTokenization(
         address _requester,
@@ -269,8 +302,18 @@ ReentrancyGuardUpgradeable {
         EstateForgerRequestQuoteInput calldata _quote,
         EstateForgerRequestAgendaInput calldata _agenda,
         Validation calldata _validation
-    ) external nonReentrant onlyExecutive whenNotPaused returns (uint256) {
-        _validate(abi.encode(_estate.uri), _validation);
+    ) external
+    whenNotPaused
+    nonReentrant
+    onlyExecutive
+    returns (uint256) {
+        _validate(
+            abi.encode(
+                _requester,
+                _estate.uri
+            ),
+            _validation
+        );
 
         if (!IAdmin(admin).isActiveIn(_estate.zone, msg.sender)) {
             revert Unauthorized();
@@ -319,6 +362,7 @@ ReentrancyGuardUpgradeable {
             if (_quote.cashbackThreshold == 0) {
                 revert InvalidInput();
             }
+            /// @dev    Open a cashback fund.
             cashbackFundId = IReserveVault(reserveVault).openFund(
                 _quote.currency,
                 (_quote.feeDenomination - commissionDenomination)
@@ -375,26 +419,38 @@ ReentrancyGuardUpgradeable {
 
     /**
      *  @notice Whitelist or unwhitelist accounts for participation in the private sale of a specific request.
+     *  @notice Whitelist only before the private sale ends.
      *
-     *          Name                Description
-     *  @param  _requestId          Request identifier.
-     *  @param  _accounts           Array of EVM addresses.
-     *  @param  _isWhitelisted      Whether the operation is whitelist or unwhitelist.
+     *          Name            Description
+     *  @param  _requestId      Request identifier.
+     *  @param  _accounts       Array of EVM addresses.
+     *  @param  _isWhitelisted  Whether the operation is whitelisting or unwhitelisting.
      *
-     *  @dev    Permission: Executives active in the request zone.
+     *  @dev    Permission: Executives active in the zone of the estate.
      */
     function whitelistFor(
         uint256 _requestId,
         address[] calldata _accounts,
         bool _isWhitelisted
-    ) external validRequest(_requestId) onlyExecutive onlyActiveInZoneOf(_requestId) {
+    ) external
+    whenNotPaused
+    validRequest(_requestId)
+    onlyExecutive
+    onlyActiveInZoneOf(_requestId) {
+        if (block.timestamp >= requests[_requestId].agenda.privateSaleEndsAt) {
+            revert InvalidWhitelisting();
+        }
+
         if (_isWhitelisted) {
             for (uint256 i; i < _accounts.length; ++i) {
                 if (isWhitelistedFor[_requestId][_accounts[i]]) {
                     revert WhitelistedAccount();
                 }
                 isWhitelistedFor[_requestId][_accounts[i]] = true;
-                emit RequestWhitelist(_requestId, _accounts[i]);
+                emit RequestWhitelist(
+                    _requestId,
+                    _accounts[i]
+                );
             }
         } else {
             for (uint256 i; i < _accounts.length; ++i) {
@@ -402,31 +458,35 @@ ReentrancyGuardUpgradeable {
                     revert NotWhitelistedAccount();
                 }
                 isWhitelistedFor[_requestId][_accounts[i]] = false;
-                emit RequestUnwhitelist(_requestId, _accounts[i]);
+                emit RequestUnwhitelist(
+                    _requestId,
+                    _accounts[i]
+                );
             }
         }
     }
 
     /**
-     *  @notice Update the metadata URI of a tokenization request.
+     *  @notice Update the URI of a request.
+     *  @notice Update only before the request is either confirmed or cancelled.
      *
-     *          Name                Description
-     *  @param  _requestId          Request identifier.
-     *  @param  _uri                New metadata URI.
-     *  @param  _validation         Validation package from the validator.
+     *          Name            Description
+     *  @param  _requestId      Request identifier.
+     *  @param  _uri            New URI of estate metadata.
+     *  @param  _validation     Validation package from the validator.
      *
-     *  @dev    Permission: Executives active in the request zone.
+     *  @dev    Permission: Executives active in the zone of the estate.
      */
-    function updateRequestURI(
+    function updateRequestEstateURI(
         uint256 _requestId,
         string calldata _uri,
         Validation calldata _validation
-    ) external validRequest(_requestId) onlyExecutive whenNotPaused {
+    ) external
+    whenNotPaused
+    validRequest(_requestId)
+    onlyExecutive
+    onlyActiveInZoneOf(_requestId) {
         _validate(abi.encode(_uri), _validation);
-
-        if (!IAdmin(admin).isActiveIn(requests[_requestId].estate.zone, msg.sender)) {
-            revert Unauthorized();
-        }
 
         if (requests[_requestId].agenda.confirmAt != 0) {
             revert AlreadyConfirmed();
@@ -437,24 +497,33 @@ ReentrancyGuardUpgradeable {
 
         requests[_requestId].estate.uri = _uri;
 
-        emit RequestURIUpdate(_requestId, _uri);
+        emit RequestEstateURIUpdate(
+            _requestId,
+            _uri
+        );
     }
 
     /**
-     *  @notice Update the agenda of a tokenization request.
+     *  @notice Update the agenda of a request.
+     *  @notice Update only before any account deposits.
      *
-     *          Name                Description
-     *  @param  _requestId          Request identifier.
-     *  @param  _agenda             Initialization input for `EstateForgerRequestAgenda`.
+     *          Name            Description
+     *  @param  _requestId      Request identifier.
+     *  @param  _agenda         Initialization input for `EstateForgerRequestAgenda`.
      *
-     *  @dev    Permission: Executives active in the request zone.
-     *  @dev    Updates are only allowed before request confirmation and before any deposits are made.
-     *          The combined sale duration must meet minimum requirements.
+     *  @dev    Permission: Executives active in the zone of the estate.
+     *  @dev    Total sale duration must be no less than `EstateForgerConstant.SALE_MINIMUM_DURATION`.
+     *  @dev    Can only update `saleStartsAt` before the sale actually starts. If its corresponding input is 0, the timestamp
+     *          remains unchanged.
      */
     function updateRequestAgenda(
         uint256 _requestId,
         EstateForgerRequestAgendaInput calldata _agenda
-    ) external validRequest(_requestId) onlyExecutive onlyActiveInZoneOf(_requestId) whenNotPaused {
+    ) external
+    whenNotPaused
+    validRequest(_requestId)
+    onlyExecutive
+    onlyActiveInZoneOf(_requestId) {
         EstateForgerRequest storage request = requests[_requestId];
         if (request.agenda.confirmAt != 0) {
             revert AlreadyConfirmed();
@@ -488,19 +557,28 @@ ReentrancyGuardUpgradeable {
         request.agenda.privateSaleEndsAt = saleStartsAt + _agenda.privateSaleDuration;
         request.agenda.publicSaleEndsAt = saleStartsAt + _agenda.privateSaleDuration + _agenda.publicSaleDuration;
 
-        emit RequestAgendaUpdate(_requestId, _agenda);
+        emit RequestAgendaUpdate(
+            _requestId,
+            _agenda
+        );
     }
 
     /**
-     *  @notice Cancel a tokenization request.
+     *  @notice Cancel a request.
+     *  @notice Cancel only before the request is either confirmed or cancelled.
      *
-     *          Name                Description
-     *  @param  _requestId          Request identifier.
+     *          Name            Description
+     *  @param  _requestId      Request identifier.
      *
-     *  @dev    Permission: Managers active in the request zone.
+     *  @dev    Permission: Managers active in the zone of the estate.
      */
-    function cancel(uint256 _requestId)
-    external validRequest(_requestId) onlyManager onlyActiveInZoneOf(_requestId) whenNotPaused {
+    function cancel(
+        uint256 _requestId
+    ) external
+    whenNotPaused
+    validRequest(_requestId)
+    onlyManager
+    onlyActiveInZoneOf(_requestId) {
         EstateForgerRequest storage request = requests[_requestId];
         if (request.quota.totalQuantity == 0) {
             revert AlreadyCancelled();
@@ -508,23 +586,85 @@ ReentrancyGuardUpgradeable {
         if (request.agenda.confirmAt != 0) {
             revert AlreadyConfirmed();
         }
+
+        /// @dev    Cancelled request: quota.totalQuantity = 0
         request.quota.totalQuantity = 0;
         emit RequestCancellation(_requestId);
     }
 
     /**
-     *  @notice Confirm a tokenization request and create the estate token.
+     *  @notice Deposit to purchase tokens in a request.
+     *  @notice Deposit only during sale period. Only accounts whitelisted globally or specifically for the request can deposit during the private sale.
      *
-     *          Name                Description
-     *  @param  _requestId          Request identifier.
+     *          Name            Description
+     *  @param  _requestId      Request identifier.
+     *  @param  _quantity       Deposited quantity.
+     *
+     *  @return Deposited value.
+     */
+    function deposit(uint256 _requestId, uint256 _quantity)
+    external payable
+    validRequest(_requestId)
+    returns (uint256) {
+        return _deposit(_requestId, _quantity);
+    }
+
+    /**
+     *  @notice Deposit to a request.
+     *  @notice Deposit only during sale period. Only accounts whitelisted globally or specifically for the request can deposit during the private sale.
+     *
+     *          Name            Description
+     *  @param  _requestId      Request identifier.
+     *  @param  _quantity       Deposited quantity.
+     *  @param  _anchor         Keccak256 hash of `estate.uri` of the request.
+     *
+     *  @return Deposited value.
+     *
+     *  @dev    Anchor enforces consistency between this contract and the client-side.
+     */
+    function safeDeposit(
+        uint256 _requestId,
+        uint256 _quantity,
+        bytes32 _anchor
+    ) external payable
+    validRequest(_requestId)
+    returns (uint256) {
+        if (_anchor != keccak256(bytes(requests[_requestId].estate.uri))) {
+            revert BadAnchor();
+        }
+
+        return _deposit(_requestId, _quantity);
+    }
+
+
+    /**
+     *  @notice Confirm a request and create the estate token.
+     *  @notice Confirm only if the request has achieved at least minimum selling quantity deposited (even if the sale period
+     *          has not yet ended) and before the confirmation time limit has expired.
+     *  @notice The message sender must provide sufficient extra-currency amounts for the cashback fund.
+     *
+     *          Name            Description
+     *  @param  _requestId      Request identifier.
+     *  @param  _anchor         Keccak256 hash of `estate.uri` of the request.
      *
      *  @return New estate token identifier.
      *
-     *  @dev    Permission: Managers active in the request zone.
+     *  @dev    Permission: Managers active in the zone of the estate.
      */
-    function confirm(uint256 _requestId)
-    external payable validRequest(_requestId) nonReentrant onlyManager onlyActiveInZoneOf(_requestId) whenNotPaused returns (uint256) {
+    function safeConfirm(
+        uint256 _requestId,
+        bytes32 _anchor
+    ) external payable
+    whenNotPaused
+    nonReentrant
+    validRequest(_requestId)
+    onlyManager
+    onlyActiveInZoneOf(_requestId) returns (uint256) {
         EstateForgerRequest storage request = requests[_requestId];
+        if (_anchor != keccak256(bytes(request.estate.uri))) {
+            revert BadAnchor();
+        }
+
         if (block.timestamp < request.agenda.saleStartsAt) {
             revert InvalidConfirming();
         }
@@ -548,12 +688,18 @@ ReentrancyGuardUpgradeable {
             revert NotEnoughSoldQuantity();
         }
 
+        /// @dev    If confirming before the anticipated due, `privateSaleEndsAt` and `publicSaleEndsAt` will be overwritten
+        ///         with the current timestamp.
+        if (request.agenda.privateSaleEndsAt > block.timestamp) {
+            request.agenda.privateSaleEndsAt = uint40(block.timestamp);
+        }
         if (publicSaleEndsAt > block.timestamp) {
             request.agenda.publicSaleEndsAt = uint40(block.timestamp);
         }
         request.agenda.confirmAt = uint40(block.timestamp);
 
         IEstateToken estateTokenContract = IEstateToken(estateToken);
+        /// @dev    Scale with decimals.
         uint256 unit = 10 ** estateTokenContract.decimals();
         uint256 estateId = estateTokenContract.tokenizeEstate(
             totalQuantity * unit,
@@ -566,6 +712,7 @@ ReentrancyGuardUpgradeable {
         );
         request.estate.estateId = estateId;
 
+        /// @dev    Transfer unsold tokens to the requester.
         address requester = request.requester;
         estateTokenContract.safeTransferFrom(
             address(this),
@@ -578,18 +725,29 @@ ReentrancyGuardUpgradeable {
         address currency = request.quote.currency;
         uint256 value = soldQuantity * request.quote.unitPrice;
         uint256 fee = soldQuantity * request.quote.feeDenomination;
-        CurrencyHandler.sendCurrency(currency, requester, value - fee);
+        /// @dev    Transfer total deposit minus tokenizing fee to the requester.
+        CurrencyHandler.sendCurrency(
+            currency,
+            requester,
+            value - fee
+        );
 
         uint256 commission = soldQuantity * request.quote.commissionDenomination;
         address broker = request.quote.broker;
-        CurrencyHandler.sendCurrency(currency,broker, commission);
+        /// @dev    Transfer commission derived from the tokenization fee to the associated broker.
+        CurrencyHandler.sendCurrency(
+            currency,
+            broker,
+            commission
+        );
 
         emit CommissionDispatch(
             broker,
             commission,
             currency
         );
-        
+
+        /// @dev Provide the cashback fund sufficiently
         uint256 cashbackBaseAmount = _provideCashbackFund(request.quote.cashbackFundId);
         CurrencyHandler.sendCurrency(
             currency,
@@ -609,56 +767,24 @@ ReentrancyGuardUpgradeable {
         return estateId;
     }
 
-    /**
-     *  @notice Deposit to purchase tokens in a tokenization request.
-     *
-     *          Name                Description
-     *  @param  _requestId          Request identifier.
-     *  @param  _quantity           Number of tokens to purchase.
-     *
-     *  @return Sale value.
-     */
-    function deposit(uint256 _requestId, uint256 _quantity)
-    external payable validRequest(_requestId) returns (uint256) {
-        return _deposit(_requestId, _quantity);
-    }
-
-
-    /* --- Safe Command --- */
-    /**
-     *  @notice Safe deposit to purchase tokens in a tokenization request.
-     *
-     *          Name                Description
-     *  @param  _requestId          Request identifier.
-     *  @param  _quantity           Number of tokens to purchase.
-     *  @param  _anchor             `estate.uri` of the request.
-     *
-     *  @return Sale value paid.
-     *
-     *  @dev    Anchor enforces consistency between this contract and the client-side.
-     */
-    function safeDeposit(
-        uint256 _requestId,
-        uint256 _quantity,
-        bytes32 _anchor
-    ) external payable validRequest(_requestId) returns (uint256) {
-        if (_anchor != keccak256(bytes(requests[_requestId].estate.uri))) {
-            revert BadAnchor();
-        }
-
-        return _deposit(_requestId, _quantity);
-    }
 
     /**
-     *  @notice Withdraw all deposited value of a tokenization request.
+     *  @notice Withdraw the deposit of the message sender from a request which can no longer be confirmed.
+     *  @notice Withdraw only when the request is cancelled or the sale ends without enough sold quantity or the confirmation
+     *          time limit has expired.
      *
-     *          Name                Description
-     *  @param  _requestId          Request identifier.
+     *          Name            Description
+     *  @param  _requestId      Request identifier.
      *
      *  @return Withdrawn value.
      */
-    function withdrawDeposit(uint256 _requestId)
-    external nonReentrant validRequest(_requestId) whenNotPaused returns (uint256) {
+    function withdrawDeposit(
+        uint256 _requestId
+    ) external
+    whenNotPaused
+    nonReentrant
+    validRequest(_requestId)
+    returns (uint256) {
         EstateForgerRequest storage request = requests[_requestId];
         if (request.agenda.confirmAt != 0) {
             revert AlreadyConfirmed();
@@ -684,7 +810,11 @@ ReentrancyGuardUpgradeable {
 
         deposits[_requestId][msg.sender] = 0;
 
-        CurrencyHandler.sendCurrency(currency, msg.sender, value);
+        CurrencyHandler.sendCurrency(
+            currency,
+            msg.sender,
+            value
+        );
 
         emit DepositWithdrawal(
             _requestId,
@@ -697,15 +827,22 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice TODO: Withdraw the estate tokens from a confirmed request.
+     *  @notice Withdraw the allocation of the message sender from a tokenization.
+     *  @notice Withdraw only after the request is confirmed.
+     *  @notice Also receive corresponding cashback.
      *
-     *          Name                Description
-     *  @param  _requestId          Request identifier.
+     *          Name            Description
+     *  @param  _requestId      Request identifier.
      *
-     *  @return Amount of estate tokens withdrawn.
+     *  @return Withdrawn amount.
      */
-    function withdrawEstateToken(uint256 _requestId)
-    external nonReentrant validRequest(_requestId) whenNotPaused returns (uint256) {
+    function withdrawEstateToken(
+        uint256 _requestId
+    ) external
+    whenNotPaused
+    nonReentrant
+    validRequest(_requestId)
+    returns (uint256) {
         EstateForgerRequest storage request = requests[_requestId];
         uint256 estateId = request.estate.estateId;
         if (estateId == 0) {
@@ -730,6 +867,7 @@ ReentrancyGuardUpgradeable {
             ""
         );
 
+        /// @dev    Receive cashback.
         uint256 cashbackFundId = request.quote.cashbackFundId;
         if (cashbackFundId != 0) {
             if (quantity >= request.quote.cashbackThreshold) {
@@ -747,53 +885,79 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *          Name                    Description
-     *  @param  _tokenizationId         Tokenization identifier (request ID).
+     *          Name            Description
+     *  @param  _requestId      Request identifier.
      *
-     *  @return Whether the tokenization request has been confirmed and tokenized.
+     *  @return Whether the request has been confirmed and tokenized.
      */
-    function isTokenized(uint256 _tokenizationId) external view returns (bool) {
-        return requests[_tokenizationId].estate.estateId != 0;
+    function isTokenized(
+        uint256 _requestId
+    ) external view returns (bool) {
+        return requests[_requestId].estate.estateId != 0;
     }
 
     /**
-     *          Name                    Description
-     *  @param  _account                Account address.
-     *  @param  _tokenizationId         Tokenization identifier (request ID).
-     *  @param  _at                     Timestamp to check allocation at.
+     *          Name            Description
+     *  @param  _account        Account address.
+     *  @param  _requestId      Request identifier.
+     *  @param  _at             Reference timestamp.
      *
-     *  @return Estate token allocation of the account at the specified timestamp.
+     *  @return Allocation of the account at the reference timestamp.
      */
     function allocationOfAt(
         address _account,
-        uint256 _tokenizationId,
+        uint256 _requestId,
         uint256 _at
-    ) external view validRequest(_tokenizationId) returns (uint256) {
+    ) external view
+    validRequest(_requestId)
+    returns (uint256) {
         if (_at > block.timestamp) {
             revert InvalidTimestamp();
         }
-        if (requests[_tokenizationId].estate.estateId == 0) {
+        if (requests[_requestId].estate.estateId == 0) {
             revert NotTokenized();
         }
-        uint256 withdrawAt = withdrawAt[_tokenizationId][_account];
-        return _at >= requests[_tokenizationId].agenda.confirmAt && (withdrawAt == 0 || _at < withdrawAt)
-            ? deposits[_tokenizationId][_account] * 10 ** IEstateToken(estateToken).decimals()
+        uint256 withdrawAt = withdrawAt[_requestId][_account];
+        /// @dev    Allocated tokens of the message sender only remains in this contract after the tokenization and before the
+        ///         withdrawal.
+        return _at >= requests[_requestId].agenda.confirmAt && (withdrawAt == 0 || _at < withdrawAt)
+            ? deposits[_requestId][_account] * 10 ** IEstateToken(estateToken).decimals()
             : 0;
+    }
+
+    /**
+     *          Name                Description
+     *  @param  _interfaceId        Interface identifier.
+     *
+     *  @return Whether this contract supports the interface.
+     */
+    function supportsInterface(
+        bytes4 _interfaceId
+    ) public view virtual override returns (bool) {
+        return _interfaceId == type(IEstateForger).interfaceId
+            || _interfaceId == type(IEstateTokenizer).interfaceId
+            || _interfaceId == type(IEstateTokenReceiver).interfaceId
+            || _interfaceId == type(IERC165Upgradeable).interfaceId;
     }
 
 
     /* --- Helper --- */
     /**
-     *  @notice Internal function to handle deposit processing.
+     *  @notice Deposit to a request.
+     *  @notice Deposit only during sale period. Only accounts whitelisted globally or specifically for the request can deposit during the private sale.
      *
-     *          Name                Description
-     *  @param  _requestId          Request identifier.
-     *  @param  _quantity           Number of tokens to purchase.
+     *          Name            Description
+     *  @param  _requestId      Request identifier.
+     *  @param  _quantity       Deposited quantity.
      *
-     *  @return Sale value.
+     *  @return Deposited value.
      */
-    function _deposit(uint256 _requestId, uint256 _quantity)
-    internal nonReentrant whenNotPaused returns (uint256) {
+    function _deposit(
+        uint256 _requestId,
+        uint256 _quantity
+    ) internal
+    nonReentrant
+    returns (uint256) {
         EstateForgerRequest storage request = requests[_requestId];
         if (request.quota.totalQuantity == 0) {
             revert AlreadyCancelled();
@@ -816,7 +980,10 @@ ReentrancyGuardUpgradeable {
         request.quota.soldQuantity = newSoldQuantity;
 
         uint256 value = _quantity * request.quote.unitPrice;
-        CurrencyHandler.receiveCurrency(request.quote.currency, value);
+        CurrencyHandler.receiveCurrency(
+            request.quote.currency,
+            value
+        );
 
         uint256 oldDeposit = deposits[_requestId][msg.sender];
         uint256 newDeposit = oldDeposit + _quantity;
@@ -826,6 +993,7 @@ ReentrancyGuardUpgradeable {
         if (cashbackFundId != 0) {
             uint256 cashbackThreshold = request.quote.cashbackThreshold;
 
+            /// @dev    Expand the cashback fund if deposited quantity of the message sender meets the cashback threshold.
             if (oldDeposit >= cashbackThreshold) {
                 IReserveVault(reserveVault).expandFund(
                     cashbackFundId,
@@ -850,14 +1018,17 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Internal function to provide cashback fund resources.
+     *  @notice Provide cashback fund in the main currency, using a sufficient portion of the tokenization fee and in other
+     *          extras, using amounts forwarded from the message sender.
      *
      *          Name                Description
      *  @param  _cashbackFundId     Cashback fund identifier.
      *
      *  @return Main currency cashback amount.
      */
-    function _provideCashbackFund(uint256 _cashbackFundId) internal returns (uint256) {
+    function _provideCashbackFund(
+        uint256 _cashbackFundId
+    ) internal returns (uint256) {
         uint256 cashbackBaseAmount;
         if (_cashbackFundId != 0) {
             address reserveVaultAddress = reserveVault;
@@ -891,20 +1062,5 @@ ReentrancyGuardUpgradeable {
             CurrencyHandler.receiveNative(0);
         }
         return cashbackBaseAmount;
-    }
-
-    /**
-     *          Name                Description
-     *  @param  _interfaceId        Interface identifier to check.
-     *
-     *  @return Whether this contract supports the specified interface.
-     */
-    function supportsInterface(
-        bytes4 _interfaceId
-    ) public view virtual override returns (bool) {
-        return _interfaceId == type(IEstateForger).interfaceId
-            || _interfaceId == type(IEstateTokenizer).interfaceId
-            || _interfaceId == type(IEstateTokenReceiver).interfaceId
-            || _interfaceId == type(IERC165Upgradeable).interfaceId;
     }
 }

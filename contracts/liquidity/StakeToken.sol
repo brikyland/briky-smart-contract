@@ -127,7 +127,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _successor                  Successor contract address.
      *  @param  _signatures                 Array of admin signatures.
      * 
-     *  @dev    Administrative operation.
+     *  @dev    Administrative operator.
      */
     function initializeRewarding(
         uint256 _initialLastRewardFetch,
@@ -153,13 +153,13 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Update fee rate.
+     *  @notice Update the staking fee rate.
      *
      *          Name            Description
-     *  @param  _feeRate        New fee rate.
+     *  @param  _feeRate        New staking fee rate.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configuration.
+     *  @dev    Administrative operator.
      */
     function updateFeeRate(
         uint256 _feeRate,

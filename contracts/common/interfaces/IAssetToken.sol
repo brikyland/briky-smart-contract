@@ -12,8 +12,9 @@ import {IGovernor} from "./IGovernor.sol";
  *  @author Briky Team
  *
  *  @notice Interface for ERC-1155 tokens that securitizes RWAs.
- *  @notice An asset token securitizes RWAs and represents share holdings in form of a class of ERC-1155 tokens.
- *  @notice Each unit of asset tokens is represented in scaled form as `10 ** decimals`.
+ *  @notice An `IAssetToken` contract securitizes RWAs and represents share holdings in form of a class of ERC-1155 tokens.
+ *
+ *  @dev    Each unit of asset tokens is represented in scaled form as `10 ** decimals()`.
  */
 interface IAssetToken is
 IGovernor,

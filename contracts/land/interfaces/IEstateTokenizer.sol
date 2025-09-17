@@ -11,16 +11,17 @@ import {IEstateTokenReceiver} from "./IEstateTokenReceiver.sol";
 /**
  *  @author Briky Team
  *
- *  @notice Interface for contract `EstateTokenizer`.
+ *  @notice Interface for tokenizer contracts of `EstateToken`.
  * 
- *  @notice TODO:
+ *  @notice An `IEstateTokenizer` contract may instruct `EstateToken` to securitize a real estate into a new class of tokens
+ *          and receive them for subsequent distribution to holders.
  */
 interface IEstateTokenizer is
 ICommon,
 IEstateTokenReceiver {
     /** ===== EVENT ===== **/
     /**
-     *  @notice TODO: Emitted when the deposition of a request is withdrawn.
+     *  @notice Emitted when a holder withdraw their allocation from a tokenization.
      *
      *          Name            Description
      *  @param  tokenizationId  Tokenization identifier.
@@ -44,20 +45,18 @@ IEstateTokenReceiver {
     /* --- Query --- */
     /**
      *          Name            Description
-     *  @param  tokenizationId  Tokenization request identifier.
+     *  @param  tokenizationId  Tokenization identifier.
      *
-     *  @return isTokenized     Whether the request is tokenized.
+     *  @return isTokenized     Whether the tokenization has succeeded.
      */
     function isTokenized(
         uint256 tokenizationId
     ) external view returns (bool isTokenized);
 
     /**
-     *  @notice TODO: Check the allocation of a request at a specific timestamp.
-     *
      *          Name            Description
      *  @param  account         Account address.
-     *  @param  tokenizationId  Tokenization request identifier.
+     *  @param  tokenizationId  Tokenization identifier.
      *  @param  at              Reference timestamp.
      *
      *  @return allocation      Allocation of the account at the reference timestamp.
@@ -71,12 +70,11 @@ IEstateTokenReceiver {
 
     /* --- Command --- */
     /**
-     *  @notice TODO: Withdraw the estate tokens from a confirmed request.
+     *  @notice Withdraw the allocation of the message sender from a tokenization.
      *
      *          Name            Description
-     *  @param  tokenizationId  Tokenization request identifier.
-     *
-     *  @return amount          Estate tokens amount.
+     *  @param  tokenizationId  Tokenization identifier.
+     *  @return amount          Withdrawn amount.
      */
     function withdrawEstateToken(
         uint256 tokenizationId
