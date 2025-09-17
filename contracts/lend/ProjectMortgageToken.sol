@@ -174,9 +174,7 @@ ProjectTokenReceiver {
         MortgageToken
     ) returns (bool) {
         return _interfaceId == type(IProjectMortgageToken).interfaceId
-            || _interfaceId == type(IMortgageToken).interfaceId
             || _interfaceId == type(IProjectTokenReceiver).interfaceId
-            || _interfaceId == type(IERC2981Upgradeable).interfaceId
             || super.supportsInterface(_interfaceId);
     }
 

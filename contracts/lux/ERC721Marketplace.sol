@@ -30,6 +30,8 @@ import {ERC721MarketplaceStorage} from "../lux/storages/ERC721MarketplaceStorage
  *  @dev    ERC-20 tokens are identified by their contract addresses.
  *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
  */
+import "hardhat/console.sol";
+
 contract ERC721Marketplace is
 ERC721MarketplaceStorage,
 Administrable,
@@ -214,7 +216,7 @@ ReentrancyGuardUpgradeable {
         }
         
         if (IERC721Upgradeable(_collection).ownerOf(_tokenId) != msg.sender
-            || _validToken(_collection, _tokenId)) {
+            || !_validToken(_collection, _tokenId)) {
             revert InvalidTokenId();
         }
 

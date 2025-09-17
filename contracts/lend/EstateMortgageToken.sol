@@ -186,9 +186,7 @@ CommissionDispatchable {
         MortgageToken
     ) returns (bool) {
         return _interfaceId == type(IEstateMortgageToken).interfaceId
-            || _interfaceId == type(IMortgageToken).interfaceId
             || _interfaceId == type(IEstateTokenReceiver).interfaceId
-            || _interfaceId == type(IERC2981Upgradeable).interfaceId
             || super.supportsInterface(_interfaceId);
     }
 
