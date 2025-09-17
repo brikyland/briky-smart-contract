@@ -4,7 +4,7 @@ import { getSignatures } from "../blockchain";
 import { ethers } from "hardhat";
 import { BigNumberish } from "ethers";
 
-export async function callASSETMarketplace_Pause(
+export async function callAssetMarketplace_Pause(
     assetMarketplace: AssetMarketplace,
     admins: any[],
     nonce: BigNumberish
@@ -18,7 +18,7 @@ export async function callASSETMarketplace_Pause(
     await callTransaction(assetMarketplace.pause(signatures));
 }
 
-export async function callASSETMarketplace_Unpause(
+export async function callAssetMarketplace_Unpause(
     assetMarketplace: AssetMarketplace,
     admins: any[],
     nonce: BigNumberish

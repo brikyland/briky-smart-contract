@@ -12,6 +12,8 @@ import {
     MockPrestigePad,
     MockProjectToken,
     MockProjectToken__factory,
+    ProxyCaller,
+    FailReceiver,
 } from '@typechain-types';
 import { callTransaction, expectRevertWithModifierCustomError, getBalance, prepareERC20, prepareNativeToken, resetERC20, resetNativeToken, testReentrancy } from '@utils/blockchain';
 import { Constant } from '@tests/test.constant';
@@ -49,6 +51,9 @@ import { Initialization as LaunchInitialization } from '@tests/launch/test.initi
 import { callProjectToken_AuthorizeLaunchpads, callProjectToken_UpdateZoneRoyaltyRate } from '@utils/callWithSignatures/projectToken';
 import { getCallLaunchProjectTx, getCallMintTx } from '@utils/transaction/ProjectToken';
 import { deployMockPrestigePad } from '@utils/deployments/mock/mockPrestigePad';
+import { getCallListTx, getListTx } from '@utils/transaction/AssetMarketplace';
+import { ListParams } from '@utils/models/AssetMarketplace';
+import { applyDiscount } from '@utils/formula';
 
 interface AssetMarketplaceFixture {
     admin: Admin;
@@ -76,6 +81,8 @@ interface AssetMarketplaceFixture {
     mockCurrencyExclusiveRate: BigNumber;
     zone1: string;
     zone2: string;
+
+    failReceiver: any;
 }
 
 async function testReentrancy_Marketplace(
@@ -100,6 +107,12 @@ async function testReentrancy_Marketplace(
 }
 
 describe('6.4. AssetMarketplace', async () => {
+    afterEach(async () => {
+        const fixture = await loadFixture(assetMarketplaceFixture);
+        const { projectToken } = fixture;
+        projectToken.isAvailable.reset();
+    });
+
     async function assetMarketplaceFixture(): Promise<AssetMarketplaceFixture> {
         const accounts = await ethers.getSigners();
         const deployer = accounts[0];
@@ -191,6 +204,8 @@ describe('6.4. AssetMarketplace', async () => {
         const zone1 = ethers.utils.formatBytes32String("TestZone1");
         const zone2 = ethers.utils.formatBytes32String("TestZone2");
 
+        const failReceiver = await deployFailReceiver(deployer.address, false, false) as FailReceiver;
+
         return {
             admin,
             feeReceiver,
@@ -216,6 +231,7 @@ describe('6.4. AssetMarketplace', async () => {
             mockCurrencyExclusiveRate,
             zone1,
             zone2,
+            failReceiver,
         };
     };
 
@@ -224,6 +240,7 @@ describe('6.4. AssetMarketplace', async () => {
         listSampleProjectToken = false,
         listSampleOffers = false,
         fundERC20ForBuyers = false,
+        useFailRoyaltyReceiver = false,
         pause = false,
     } = {}): Promise<AssetMarketplaceFixture> {
         const fixture = await loadFixture(assetMarketplaceFixture);
@@ -248,6 +265,7 @@ describe('6.4. AssetMarketplace', async () => {
             validator,
             zone1,
             zone2,
+            failReceiver,
         } = fixture;
 
         for (const zone of [zone1, zone2]) {
@@ -304,6 +322,11 @@ describe('6.4. AssetMarketplace', async () => {
                 await admin.nonce(),
             );
         }
+
+        if (useFailRoyaltyReceiver) {
+            await callTransaction(projectToken.updateFeeReceiver(failReceiver.address));
+        }
+
         if (listSampleProjectToken) {
             currentTimestamp += 1000;
 
@@ -330,12 +353,23 @@ describe('6.4. AssetMarketplace', async () => {
         }
 
         if (listSampleOffers) {
-            await callTransaction(assetMarketplace.connect(seller1).list(
-                1, 150_000, ethers.utils.parseEther("100"), ethers.constants.AddressZero, true
-            ));
-            await callTransaction(assetMarketplace.connect(seller2).list(
-                2, 200, ethers.utils.parseEther("500000"), currency.address, true
-            ));
+            const params1: ListParams = {
+                tokenId: BigNumber.from(1),
+                sellingAmount: BigNumber.from(150_000),
+                unitPrice: ethers.utils.parseEther("100"),
+                currency: ethers.constants.AddressZero,
+                isDivisible: true,
+            };
+            await callTransaction(getListTx(assetMarketplace, seller1, params1));
+
+            const params2: ListParams = {
+                tokenId: BigNumber.from(2),
+                sellingAmount: BigNumber.from(200),
+                unitPrice: ethers.utils.parseEther("500000"),
+                currency: currency.address,
+                isDivisible: true,
+            };
+            await callTransaction(getListTx(assetMarketplace, seller2, params2));
 
             await callTransaction(projectToken.connect(seller1).setApprovalForAll(assetMarketplace.address, true));
             await callTransaction(projectToken.connect(seller2).setApprovalForAll(assetMarketplace.address, true));
@@ -369,9 +403,8 @@ describe('6.4. AssetMarketplace', async () => {
             const adminAddress = await assetMarketplace.admin();
             expect(adminAddress).to.equal(admin.address);
 
-            const projectTokenAddress = await assetMarketplace.projectToken();
+            const projectTokenAddress = await assetMarketplace.collection();
             expect(projectTokenAddress).to.equal(projectToken.address);
-
 
             const offerNumber = await assetMarketplace.offerNumber();
             expect(offerNumber).to.equal(0);
@@ -380,7 +413,7 @@ describe('6.4. AssetMarketplace', async () => {
 
     describe('6.4.2. getOffer(uint256)', async () => {
         it('6.4.2.1. return successfully with valid offer id', async () => {
-            const { assetMarketplace, projectToken, currency, seller1, seller2 } = await beforeAssetMarketplaceTest({
+            const { assetMarketplace } = await beforeAssetMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleProjectToken: true,
                 listSampleOffers: true,
@@ -414,76 +447,101 @@ describe('6.4. AssetMarketplace', async () => {
     });
 
     describe('6.4.3. list(uint256, uint256, uint256, address, bool)', async () => {
+        async function beforeListTest(fixture: AssetMarketplaceFixture): Promise<
+            { defaultParams: ListParams }
+        > {
+            const defaultParams = {
+                tokenId: BigNumber.from(1),
+                sellingAmount: BigNumber.from(150_000),
+                unitPrice: ethers.utils.parseEther("100"),
+                currency: ethers.constants.AddressZero,
+                isDivisible: false,
+            }
+            return { defaultParams };
+        }
+
         it('6.4.3.1. list token successfully', async () => {
-            const { assetMarketplace, projectToken, currency, seller1, seller2 } = await beforeAssetMarketplaceTest({
+            const { assetMarketplace, projectToken, currency, seller1, seller2, feeReceiver } = await beforeAssetMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleProjectToken: true,
             });
-            let tx = await assetMarketplace.connect(seller1).list(
-                1,
-                150_000,
-                ethers.utils.parseEther("100"),
-                ethers.constants.AddressZero,
-                false
-            );
-            await tx.wait();
 
-            expect(tx).to
-                .emit(assetMarketplace, 'NewOffer')
-                .withArgs(
-                    1,
-                    1,
-                    seller1.address,
-                    150_000,
-                    ethers.utils.parseEther("100"),
-                    ethers.constants.AddressZero,
-                    false
-                );
+            const params1: ListParams = {
+                tokenId: BigNumber.from(1),
+                sellingAmount: BigNumber.from(150_000),
+                unitPrice: ethers.utils.parseEther("100"),
+                currency: ethers.constants.AddressZero,
+                isDivisible: false,
+            };
+            const tx1 = await getListTx(assetMarketplace, seller1, params1);
+            await tx1.wait();
+
+            const royaltyDenomination1 = (await projectToken.royaltyInfo(params1.tokenId, params1.unitPrice))[1];
+
+            expect(tx1).to.emit(assetMarketplace, 'NewOffer').withArgs(
+                1,
+                params1.tokenId,
+                seller1.address,
+                params1.sellingAmount,
+                params1.unitPrice,
+                params1.currency,
+                params1.isDivisible,
+                royaltyDenomination1,
+                feeReceiver.address
+            );
 
             expect(await assetMarketplace.offerNumber()).to.equal(1);
 
-            let offer = await assetMarketplace.getOffer(1);
-            expect(offer.tokenId).to.equal(1);
-            expect(offer.sellingAmount).to.equal(150_000);
-            expect(offer.soldAmount).to.equal(0);
-            expect(offer.unitPrice).to.equal(ethers.utils.parseEther("100"));
-            expect(offer.currency).to.equal(ethers.constants.AddressZero);
-            expect(offer.isDivisible).to.equal(false);
-            expect(offer.state).to.equal(OfferState.Selling);
-            expect(offer.seller).to.equal(seller1.address);
+            const offer1 = await assetMarketplace.getOffer(1);
+            expect(offer1.tokenId).to.equal(params1.tokenId);
+            expect(offer1.sellingAmount).to.equal(params1.sellingAmount);
+            expect(offer1.soldAmount).to.equal(0);
+            expect(offer1.unitPrice).to.equal(params1.unitPrice);
+            expect(offer1.royaltyDenomination).to.equal(royaltyDenomination1);
+            expect(offer1.currency).to.equal(params1.currency);
+            expect(offer1.isDivisible).to.equal(params1.isDivisible);
+            expect(offer1.state).to.equal(OfferState.Selling);
+            expect(offer1.seller).to.equal(seller1.address);
+            expect(offer1.royaltyReceiver).to.equal(feeReceiver.address);
 
-            tx = await assetMarketplace.connect(seller2).list(
+            const params2: ListParams = {
+                tokenId: BigNumber.from(2),
+                sellingAmount: BigNumber.from(200),
+                unitPrice: ethers.utils.parseEther("500000"),
+                currency: currency.address,
+                isDivisible: true,
+            };
+
+            const tx2 = await getListTx(assetMarketplace, seller2, params2);
+            await tx2.wait();
+
+            const royaltyDenomination2 = (await projectToken.royaltyInfo(params2.tokenId, params2.unitPrice))[1];
+
+            expect(tx2).to.emit(assetMarketplace, 'NewOffer').withArgs(
                 2,
-                200,
-                ethers.utils.parseEther("500000"),
-                currency.address,
-                true
+                params2.tokenId,
+                seller2.address,
+                params2.sellingAmount,
+                params2.unitPrice,
+                params2.currency,
+                params2.isDivisible,
+                royaltyDenomination2,
+                feeReceiver.address
             );
-            await tx.wait();
-
-            expect(tx).to
-                .emit(assetMarketplace, 'NewOffer')
-                .withArgs(
-                    2,
-                    2,
-                    seller2.address,
-                    200,
-                    ethers.utils.parseEther("500000"),
-                    currency.address,
-                    true
-                );
 
             expect(await assetMarketplace.offerNumber()).to.equal(2);
 
-            offer = await assetMarketplace.getOffer(2);
-            expect(offer.tokenId).to.equal(2);
-            expect(offer.sellingAmount).to.equal(200);
-            expect(offer.soldAmount).to.equal(0);
-            expect(offer.unitPrice).to.equal(ethers.utils.parseEther("500000"));
-            expect(offer.currency).to.equal(currency.address);
-            expect(offer.isDivisible).to.equal(true);
-            expect(offer.state).to.equal(OfferState.Selling);
-            expect(offer.seller).to.equal(seller2.address);
+            const offer2 = await assetMarketplace.getOffer(2);
+            expect(offer2.tokenId).to.equal(params2.tokenId);
+            expect(offer2.sellingAmount).to.equal(params2.sellingAmount);
+            expect(offer2.soldAmount).to.equal(0);
+            expect(offer2.unitPrice).to.equal(params2.unitPrice);
+            expect(offer2.royaltyDenomination).to.equal(royaltyDenomination2);
+            expect(offer2.currency).to.equal(params2.currency);
+            expect(offer2.isDivisible).to.equal(params2.isDivisible);
+            expect(offer2.state).to.equal(OfferState.Selling);
+            expect(offer2.seller).to.equal(seller2.address);
+            expect(offer2.royaltyReceiver).to.equal(feeReceiver.address);
         });
 
         it('6.4.3.2. list token unsuccessfully when paused', async () => {
@@ -494,7 +552,9 @@ describe('6.4. AssetMarketplace', async () => {
             });
             const { assetMarketplace, seller1 } = fixture;
 
-            await expect(assetMarketplace.connect(seller1).list(1, 100, 1000, ethers.constants.AddressZero, false))
+            const { defaultParams } = await beforeListTest(fixture);
+
+            await expect(getListTx(assetMarketplace, seller1, defaultParams))
                 .to.be.revertedWith('Pausable: paused');
         });
 
@@ -505,11 +565,36 @@ describe('6.4. AssetMarketplace', async () => {
             });
             const { assetMarketplace, seller1 } = fixture;
 
-            await expect(assetMarketplace.connect(seller1).list(0, 100, 1000, ethers.constants.AddressZero, false))
+            const { defaultParams } = await beforeListTest(fixture);
+
+            const params1: ListParams = {
+                ...defaultParams,
+                tokenId: BigNumber.from(0),
+            };
+            await expect(getListTx(assetMarketplace, seller1, params1))
                 .to.be.revertedWithCustomError(assetMarketplace, 'InvalidTokenId');
 
-            await expect(assetMarketplace.connect(seller1).list(3, 100, 1000, ethers.constants.AddressZero, false))
+            const params2: ListParams = {
+                ...defaultParams,
+                tokenId: BigNumber.from(3),
+            };
+            await expect(getListTx(assetMarketplace, seller1, params2))
                 .to.be.revertedWithCustomError(assetMarketplace, 'InvalidTokenId');
+        });
+
+        it('6.4.3.4. list token unsuccessfully when token is not available', async () => {
+            const fixture = await beforeAssetMarketplaceTest({
+                listSampleCurrencies: true,
+                listSampleProjectToken: true,
+            });
+            const { assetMarketplace, seller2, projectToken } = fixture;
+
+            projectToken.isAvailable.whenCalledWith(1).returns(false);
+
+            const { defaultParams } = await beforeListTest(fixture);
+
+            await expect(getListTx(assetMarketplace, seller2, defaultParams))
+                .to.be.revertedWithCustomError(assetMarketplace, 'InvalidTokenId');``
         });
 
         it('6.4.3.4. list token unsuccessfully with zero unit price', async () => {
@@ -519,7 +604,13 @@ describe('6.4. AssetMarketplace', async () => {
             });
             const { assetMarketplace, seller1 } = fixture;
 
-            await expect(assetMarketplace.connect(seller1).list(1, 100, 0, ethers.constants.AddressZero, false))
+            const { defaultParams } = await beforeListTest(fixture);
+
+            const params: ListParams = {
+                ...defaultParams,
+                unitPrice: BigNumber.from(0),
+            };
+            await expect(getListTx(assetMarketplace, seller1, params))
                 .to.be.revertedWithCustomError(assetMarketplace, 'InvalidUnitPrice');
         });
 
@@ -529,7 +620,9 @@ describe('6.4. AssetMarketplace', async () => {
             });
             const { assetMarketplace, seller1 } = fixture;
 
-            await expect(assetMarketplace.connect(seller1).list(1, 100, 1000, ethers.constants.AddressZero, false))
+            const { defaultParams } = await beforeListTest(fixture);
+            
+            await expect(getListTx(assetMarketplace, seller1, defaultParams))
                 .to.be.revertedWithCustomError(assetMarketplace, 'InvalidCurrency');
         });
 
@@ -540,7 +633,13 @@ describe('6.4. AssetMarketplace', async () => {
             });
             const { assetMarketplace, seller1 } = fixture;
 
-            await expect(assetMarketplace.connect(seller1).list(1, 0, 1000, ethers.constants.AddressZero, false))
+            const { defaultParams } = await beforeListTest(fixture);
+
+            const params: ListParams = {
+                ...defaultParams,
+                sellingAmount: BigNumber.from(0),
+            };
+            await expect(getListTx(assetMarketplace, seller1, params))
                 .to.be.revertedWithCustomError(assetMarketplace, 'InvalidSellingAmount');
         });
 
@@ -551,7 +650,13 @@ describe('6.4. AssetMarketplace', async () => {
             });
             const { assetMarketplace, seller1 } = fixture;
 
-            await expect(assetMarketplace.connect(seller1).list(1, 200_001, 1000, ethers.constants.AddressZero, false))
+            const { defaultParams } = await beforeListTest(fixture);
+
+            const params: ListParams = {
+                ...defaultParams,
+                sellingAmount: BigNumber.from(200_001),
+            };
+            await expect(getListTx(assetMarketplace, seller1, params))
                 .to.be.revertedWithCustomError(assetMarketplace, 'InvalidSellingAmount');
         });
     });
@@ -589,7 +694,7 @@ describe('6.4. AssetMarketplace', async () => {
         const currentProjectId = (await projectToken.projectNumber()).add(1);
         const currentOfferId = (await assetMarketplace.offerNumber()).add(1);
 
-        let newCurrency: Currency | undefined;
+        let newCurrency: Currency | null = null;
         let newCurrencyAddress: string;
         if (isERC20) {
             newCurrency = await deployCurrency(
@@ -613,8 +718,6 @@ describe('6.4. AssetMarketplace', async () => {
             await admin.nonce(),
         );
 
-        let currentTimestamp = await time.latest();
-
         await callTransaction(getCallLaunchProjectTx(projectToken as any, prestigePad, {
             zone: zone,
             launchId: BigNumber.from(0),
@@ -624,13 +727,14 @@ describe('6.4. AssetMarketplace', async () => {
 
         await callTransaction(projectToken.mintTo(seller.address, currentProjectId, initialAmount));
         
-        await callTransaction(assetMarketplace.connect(seller).list(
-            currentProjectId,
-            offerAmount,
-            unitPrice,
-            newCurrencyAddress,
-            isDivisible,
-        ));
+        const params: ListParams = {
+            tokenId: currentProjectId,
+            sellingAmount: offerAmount,
+            unitPrice: unitPrice,
+            currency: newCurrencyAddress,
+            isDivisible: isDivisible,
+        };
+        await callTransaction(getListTx(assetMarketplace, seller, params));
 
         let totalSold = ethers.BigNumber.from(0);
         let totalBought = new Map<string, BigNumber>();
@@ -639,12 +743,14 @@ describe('6.4. AssetMarketplace', async () => {
             const amount = ogAmount || offerAmount.sub(totalSold);
 
             let value = amount.mul(unitPrice).div(ethers.BigNumber.from(10).pow(decimals));
-            let royaltyReceiver = feeReceiver.address;
-            let royaltyAmount = value.mul(projectTokenRoyaltyRate).div(Constant.COMMON_RATE_MAX_FRACTION);
-            if (isExclusive) {
-                royaltyAmount = royaltyAmount.sub(royaltyAmount.mul(mockCurrencyExclusiveRate).div(Constant.COMMON_RATE_MAX_FRACTION));
-            }
+
+            let [royaltyReceiver, royaltyDenomination] = await projectToken.royaltyInfo(currentProjectId, unitPrice);
+            royaltyDenomination = await applyDiscount(admin, royaltyDenomination, newCurrency);
+            
+            const royaltyAmount = royaltyDenomination.mul(amount).div(ethers.BigNumber.from(10).pow(decimals));
+
             let commissionAmount = ethers.BigNumber.from(0);
+
             let total = value.add(royaltyAmount);
 
             let ethValue = ethers.BigNumber.from(0);
@@ -708,6 +814,8 @@ describe('6.4. AssetMarketplace', async () => {
                 buyer.address,
                 amount,
                 value,
+                royaltyAmount,
+                royaltyReceiver
             );
             
             totalSold = totalSold.add(amount);
@@ -715,7 +823,7 @@ describe('6.4. AssetMarketplace', async () => {
             let totalBoughtOfBuyer = (totalBought.get(buyer.address) || ethers.BigNumber.from(0)).add(amount);
             totalBought.set(buyer.address, totalBoughtOfBuyer);
 
-            let offer = await assetMarketplace.getOffer(currentOfferId);
+            const offer = await assetMarketplace.getOffer(currentOfferId);
             expect(offer.tokenId).to.equal(currentProjectId);
             expect(offer.sellingAmount).to.equal(offerAmount);
             expect(offer.soldAmount).to.equal(totalSold);
@@ -758,7 +866,7 @@ describe('6.4. AssetMarketplace', async () => {
                     await testBuyOffer(
                         fixture,
                         mockCurrencyExclusiveRate,
-                        LaunchInitialization.PROJECT_TOKEN_RoyaltyRate,
+                        ethers.utils.parseEther("0.1"),
                         isERC20,
                         isExclusive,
                         ethers.BigNumber.from(200_000),
@@ -815,7 +923,7 @@ describe('6.4. AssetMarketplace', async () => {
             await testBuyOffer(
                 fixture,
                 mockCurrencyExclusiveRate,
-                LaunchInitialization.PROJECT_TOKEN_RoyaltyRate,
+                ethers.utils.parseEther("0.1"),
                 false,
                 false,
                 ethers.BigNumber.from(200_000),
@@ -830,7 +938,7 @@ describe('6.4. AssetMarketplace', async () => {
             await testBuyOffer(
                 fixture,
                 mockCurrencyExclusiveRate,
-                LaunchInitialization.PROJECT_TOKEN_RoyaltyRate,
+                ethers.utils.parseEther("0.1"),
                 true,
                 true,
                 ethers.BigNumber.from(300),
@@ -929,7 +1037,7 @@ describe('6.4. AssetMarketplace', async () => {
                     await testBuyOffer(
                         fixture,
                         mockCurrencyExclusiveRate,
-                        LaunchInitialization.PROJECT_TOKEN_RoyaltyRate,
+                        ethers.utils.parseEther("0.1"),
                         isERC20,
                         isExclusive,
                         ethers.BigNumber.from(200_000),
@@ -1077,6 +1185,21 @@ describe('6.4. AssetMarketplace', async () => {
                 .to.be.revertedWithCustomError(assetMarketplace, "InvalidOfferId");
         });
 
+        it('6.4.5.6. buy token unsuccessfully when token is not available', async () => {
+            const fixture = await beforeAssetMarketplaceTest({
+                listSampleCurrencies: true,
+                listSampleProjectToken: true,
+                listSampleOffers: true,
+                fundERC20ForBuyers: true,
+            });
+            const { assetMarketplace, buyer1, projectToken } = fixture;
+
+            projectToken.isAvailable.whenCalledWith(1).returns(false);
+
+            await expect(assetMarketplace.connect(buyer1)["buy(uint256,uint256)"](1, 100_000, { value: 1e9 }))
+                .to.be.revertedWithCustomError(assetMarketplace, "InvalidTokenId");
+        });
+
         it('6.4.5.6. buy token unsuccessfully when seller buy their own token', async () => {
             const fixture = await beforeAssetMarketplaceTest({
                 listSampleCurrencies: true,
@@ -1117,9 +1240,14 @@ describe('6.4. AssetMarketplace', async () => {
             });
             const { assetMarketplace, seller1, buyer1 } = fixture;
             
-            await callTransaction(assetMarketplace.connect(seller1).list(
-                1, 50_000, ethers.utils.parseEther("100"), ethers.constants.AddressZero, false
-            ));
+            const listParams: ListParams = {
+                tokenId: BigNumber.from(1),
+                sellingAmount: BigNumber.from(50_000),
+                unitPrice: ethers.utils.parseEther("100"),
+                currency: ethers.constants.AddressZero,
+                isDivisible: false,
+            };
+            await callTransaction(getListTx(assetMarketplace, seller1, listParams));
 
             const offerId = await assetMarketplace.offerNumber();
 
@@ -1159,9 +1287,7 @@ describe('6.4. AssetMarketplace', async () => {
                 listSampleCurrencies: true,
                 listSampleProjectToken: true,
             });
-            const { assetMarketplace, seller1, buyer1, deployer, projectToken } = fixture;
-            
-            const failReceiver = await deployFailReceiver(deployer, true, false);
+            const { assetMarketplace, seller1, buyer1, projectToken, failReceiver } = fixture;
 
             await callTransaction(projectToken.connect(seller1).safeTransferFrom(
                 seller1.address,
@@ -1171,12 +1297,24 @@ describe('6.4. AssetMarketplace', async () => {
                 ethers.utils.toUtf8Bytes("TestToken_1")
             ));
 
-            let data = projectToken.interface.encodeFunctionData("setApprovalForAll", [assetMarketplace.address, true]);
-            await callTransaction(failReceiver.call(projectToken.address, data));
+            await callTransaction(failReceiver.call(
+                projectToken.address,
+                projectToken.interface.encodeFunctionData("setApprovalForAll", [
+                    assetMarketplace.address,
+                    true
+                ])
+            ));
 
-            data = assetMarketplace.interface.encodeFunctionData("list", [1, 100_000, 1000, ethers.constants.AddressZero, true]);
-
-            await callTransaction(failReceiver.call(assetMarketplace.address, data));
+            const params: ListParams = {
+                tokenId: BigNumber.from(1),
+                sellingAmount: BigNumber.from(100_000),
+                unitPrice: BigNumber.from(1000),
+                currency: ethers.constants.AddressZero,
+                isDivisible: true,
+            };
+            await callTransaction(getCallListTx(assetMarketplace, failReceiver as ProxyCaller, params));
+            
+            await callTransaction(failReceiver.activate(true));
 
             await expect(assetMarketplace.connect(buyer1)["buy(uint256,uint256)"](1, 100_000, { value: 1e9 }))
                 .to.be.revertedWithCustomError(assetMarketplace, "FailedTransfer");
@@ -1188,12 +1326,11 @@ describe('6.4. AssetMarketplace', async () => {
                 listSampleProjectToken: true,
                 listSampleOffers: true,
                 fundERC20ForBuyers: true,
+                useFailRoyaltyReceiver: true,
             });
-            const { assetMarketplace, seller1, buyer1, deployer, projectToken } = fixture;
+            const { assetMarketplace, buyer1, failReceiver } = fixture;
 
-            const failReceiver = await deployFailReceiver(deployer, true, false);
-
-            await callTransaction(projectToken.updateFeeReceiver(failReceiver.address));
+            await callTransaction(failReceiver.activate(true));
 
             await expect(assetMarketplace.connect(buyer1)["buy(uint256,uint256)"](1, 100_000, { value: 1e9 }))
                 .to.be.revertedWithCustomError(assetMarketplace, "FailedTransfer");
@@ -1227,11 +1364,22 @@ describe('6.4. AssetMarketplace', async () => {
 
             await callTransaction(projectToken.mintTo(reentrancy.address, 1, 100_000));
 
-            let data = assetMarketplace.interface.encodeFunctionData("list", [1, 100_000, 1000, ethers.constants.AddressZero, true]);
-            await callTransaction(reentrancy.call(assetMarketplace.address, data));
+            const params: ListParams = {
+                tokenId: BigNumber.from(1),
+                sellingAmount: BigNumber.from(100_000),
+                unitPrice: BigNumber.from(1000),
+                currency: ethers.constants.AddressZero,
+                isDivisible: true,
+            };
+            await callTransaction(getCallListTx(assetMarketplace, reentrancy as ProxyCaller, params));
 
-            data = projectToken.interface.encodeFunctionData("setApprovalForAll", [assetMarketplace.address, true]);
-            await callTransaction(reentrancy.call(projectToken.address, data));
+            await callTransaction(reentrancy.call(
+                projectToken.address,
+                projectToken.interface.encodeFunctionData("setApprovalForAll", [
+                    assetMarketplace.address,
+                    true
+                ])
+            ));
 
             await testReentrancy_Marketplace(
                 assetMarketplace,
@@ -1260,7 +1408,7 @@ describe('6.4. AssetMarketplace', async () => {
                     await testBuyOffer(
                         fixture,
                         mockCurrencyExclusiveRate,
-                        LaunchInitialization.PROJECT_TOKEN_RoyaltyRate,
+                        ethers.utils.parseEther("0.1"),
                         isERC20,
                         isExclusive,
                         ethers.BigNumber.from(200_000),
@@ -1324,7 +1472,7 @@ describe('6.4. AssetMarketplace', async () => {
                     await testBuyOffer(
                         fixture,
                         mockCurrencyExclusiveRate,
-                        LaunchInitialization.PROJECT_TOKEN_RoyaltyRate,
+                        ethers.utils.parseEther("0.1"),
                         isERC20,
                         isExclusive,
                         ethers.BigNumber.from(200_000),

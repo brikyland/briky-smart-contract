@@ -109,7 +109,7 @@ async function testReentrancy_MortgageMarketplace(
     );
 }
 
-describe.only('6.3. MortgageMarketplace', async () => {
+describe('6.3. MortgageMarketplace', async () => {
     async function mortgageMarketplaceFixture(): Promise<MortgageMarketplaceFixture> {
         const accounts = await ethers.getSigners();
         const deployer = accounts[0];
