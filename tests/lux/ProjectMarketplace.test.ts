@@ -35,7 +35,7 @@ import { BigNumber, Contract, Wallet } from 'ethers';
 import { randomInt } from 'crypto';
 import { getInterfaceID, randomArrayWithSum, randomBigNumber } from '@utils/utils';
 import { OrderedMap } from '@utils/utils';
-import { deployAssetMarketplace } from '@utils/deployments/lux/assetMarketplace';
+import { deployProjectMarketplace } from '@utils/deployments/lux/projectMarketplace';
 import { callEstateToken_AuthorizeTokenizers, callEstateToken_UpdateCommissionToken } from '@utils/callWithSignatures/estateToken';
 import { callAssetMarketplace_Pause } from '@utils/callWithSignatures/assetMarketplace';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
@@ -195,7 +195,7 @@ describe('6.4. AssetMarketplace', async () => {
             LaunchInitialization.PRESTIGE_PAD_BaseMaxUnitPrice,
         ) as MockPrestigePad;
 
-        const assetMarketplace = await deployAssetMarketplace(
+        const assetMarketplace = await deployProjectMarketplace(
             deployer.address,
             admin.address,
             projectToken.address,
