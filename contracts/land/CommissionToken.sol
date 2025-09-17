@@ -307,8 +307,7 @@ ReentrancyGuardUpgradeable {
         address _broker,
         uint256 _tokenId
     ) external
-    whenNotPaused 
-    onlyManager {
+    whenNotPaused {
         address estateTokenAddress = estateToken;
         if (msg.sender != estateTokenAddress) {
             revert Unauthorized();

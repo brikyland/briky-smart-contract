@@ -12,7 +12,7 @@ import {CommissionDispatchable} from "../land/utilities/CommissionDispatchable.s
 import {EstateMarketplaceStorage} from "../lux/storages/EstateMarketplaceStorage.sol";
 
 /// contracts/lux/contracts/
-import {AssetMarketplace} from "../lux/AssetMarketplace.sol";
+import {AssetMarketplace} from "../lux/utilities/AssetMarketplace.sol";
 
 /**
  *  @author Briky Team
@@ -80,7 +80,7 @@ CommissionDispatchable {
         address currency = offer.currency;
 
         uint256 commission = _dispatchCommission(
-            _offerId,
+            offer.tokenId,
             _royalty,
             currency
         );

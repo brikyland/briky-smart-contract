@@ -6,20 +6,20 @@ import {ERC165CheckerUpgradeable} from "@openzeppelin/contracts-upgradeable/util
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
 /// contracts/common/utilities/
-import {CurrencyHandler} from "../common/utilities/CurrencyHandler.sol";
-import {Formula} from "../common/utilities/Formula.sol";
+import {CurrencyHandler} from "../../common/utilities/CurrencyHandler.sol";
+import {Formula} from "../../common/utilities/Formula.sol";
 
 /// contracts/common/interfaces/
-import {IAdmin} from "../common/interfaces/IAdmin.sol";
-import {IAssetToken} from "../common/interfaces/IAssetToken.sol";
+import {IAdmin} from "../../common/interfaces/IAdmin.sol";
+import {IAssetToken} from "../../common/interfaces/IAssetToken.sol";
 
 /// contracts/common/utilities/
-import {Administrable} from "../common/utilities/Administrable.sol";
-import {Discountable} from "../common/utilities/Discountable.sol";
-import {Pausable} from "../common/utilities/Pausable.sol";
+import {Administrable} from "../../common/utilities/Administrable.sol";
+import {Discountable} from "../../common/utilities/Discountable.sol";
+import {Pausable} from "../../common/utilities/Pausable.sol";
 
 /// contracts/lux/storages/
-import {AssetMarketplaceStorage} from "../lux/storages/AssetMarketplaceStorage.sol";
+import {AssetMarketplaceStorage} from "../../lux/storages/AssetMarketplaceStorage.sol";
 
 /**
  *  @author Briky Team
@@ -31,7 +31,7 @@ import {AssetMarketplaceStorage} from "../lux/storages/AssetMarketplaceStorage.s
  *  @dev    ERC-20 tokens are identified by their contract addresses.
  *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
  */
-contract AssetMarketplace is
+abstract contract AssetMarketplace is
 AssetMarketplaceStorage,
 Administrable,
 Discountable,
@@ -79,28 +79,6 @@ ReentrancyGuardUpgradeable {
 
 
     /* --- Initialization --- */
-    /**
-     *  @notice Invoked for initialization after deployment, serving as the contract constructor.
-     * 
-     *          Name           Description
-     *  @param  _admin         `Admin` contract address.
-     *  @param  _collection    Asset token contract address.
-     * 
-     *  @dev    The asset token must support interface `IAssetToken`.
-     */
-    function initialize(
-        address _admin,
-        address _collection
-    ) public
-    initializer {
-        /// Initializer.
-        __Pausable_init();
-        __ReentrancyGuard_init();
-
-        /// Dependency.
-        __AssetMarketplace_init(_admin, _collection);
-    }
-
     /**
      *  @notice Helper function to initialize the dependencies of the contract.
      *
@@ -364,11 +342,17 @@ ReentrancyGuardUpgradeable {
     nonReentrant
     whenNotPaused
     returns (uint256) {
+        AssetOffer storage offer = offers[_offerId];
+        IAssetToken assetContract = IAssetToken(collection);
+        uint256 tokenId = offer.tokenId;
+        if (!assetContract.isAvailable(tokenId)) {
+            revert InvalidTokenId();
+        }
+
         if (_amount == 0) {
             revert InvalidAmount();
         }
 
-        AssetOffer storage offer = offers[_offerId];
         if (msg.sender == offer.seller
             || offer.state != OfferState.Selling) {
             revert InvalidBuying();
@@ -381,8 +365,6 @@ ReentrancyGuardUpgradeable {
             revert NotEnoughTokensToSell();
         }
 
-        IAssetToken assetContract = IAssetToken(collection);
-        uint256 tokenId = offer.tokenId;
         uint256 value = offer.unitPrice.scale(_amount, 10 ** assetContract.decimals());
         uint256 royalty = offer.royaltyDenomination.scale(_amount, 10 ** assetContract.decimals());
         
