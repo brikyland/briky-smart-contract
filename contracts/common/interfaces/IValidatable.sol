@@ -11,7 +11,7 @@ import {ICommon} from "./ICommon.sol";
  *  @author Briky Team
  *
  *  @notice Interface for contract `Validatable`.
- *  @notice The `Validatable` contracts relies on a trusted validator to verify data that is difficult to process on-chain.
+ *  @notice A `Validatable` contract relies on a trusted validator to verify data that is difficult to process on-chain.
  *
  *  @dev    Implementation involves server-side support.
  */

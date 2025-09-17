@@ -1,33 +1,32 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
+/// @openzeppelin/contracts-upgradeable
 import {IERC1155MetadataURIUpgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC1155MetadataURIUpgradeable.sol";
 
+/// contracts/common/interfaces/
 import {IAssetToken} from "../../common/interfaces/IAssetToken.sol";
 import {IRoyaltyRateProposer} from "../../common/interfaces/IRoyaltyRateProposer.sol";
 import {IValidatable} from "../../common/interfaces/IValidatable.sol";
 
+/// contracts/common/structs/
 import {ISnapshot} from "../../common/structs/ISnapshot.sol";
 import {IValidation} from "../../common/structs/IValidation.sol";
 
+/// contracts/land/structs/
 import {IEstate} from "../structs/IEstate.sol";
 
 /**
  *  @author Briky Team
  *
  *  @notice Interface for contract `EstateToken`.
- *  @notice The `EstateToken` contract securitizes real-world estate assets into fungible ERC-1155 tokens, where each
- *          token class represents fractional ownership of a specific tokenized estate.
+ *  @notice The `EstateToken` contract securitizes real-world estate assets into classes of fungible ERC-1155 tokens, where
+ *          each class represents fractional ownership of a specific tokenized estate. Official disclosed third party custodian
+ *          agents are registered in the zone to actively provide estates to tokenize and escrows those assets on behalf of
+ *          holders after successful tokenization.
  *
- *  @dev    Estate information that has been tokenized includes management zones, custodian arrangements, and ownership
- *          terms. Custodian addresses belong to official disclosed third party custodian agents, registered in the zone
- *          to hold custody of the estate on behalf of holders.
- * 
+ *  @dev    Each unit of estate tokens is represented in scaled form as `10 ** decimals()`.
  *  @dev    Implementation involves server-side support.
- *  @dev    ERC-20 tokens are identified by their contract addresses.
- *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
- *  @dev    Quantities are expressed in absolute units. Scale these values by `10 ** EstateToken.decimals()` to obtain
- *          the correct amounts under the `EstateToken` convention.
  */
 interface IEstateToken is
 IEstate,
@@ -36,77 +35,82 @@ IValidatable,
 IRoyaltyRateProposer,
 IAssetToken {
     /** ===== EVENT ===== **/
-    /**
-     *  @notice Emitted when the commission token address is updated.
-     *
-     *          Name            Description
-     *  @param  newAddress      New commission token address.
-     */
-    event CommissionTokenUpdate(
-        address newAddress
-    );
-
+    /* --- Configuration --- */
     /**
      *  @notice Emitted when base URI is updated.
      *
-     *          Name            Description
-     *  @param  newValue        New base URI value.
+     *          Name        Description
+     *  @param  newValue    New base URI.
      */
     event BaseURIUpdate(
         string newValue
     );
 
     /**
-     *  @notice Emitted when zone royalty rate is updated.
+     *  @notice Emitted when the royalty rate of a zone is updated.
      *
-     *          Name            Description
-     *  @param  zone            Zone code.
-     *  @param  newRate         New royalty rate for the zone.
+     *          Name        Description
+     *  @param  zone        Zone code.
+     *  @param  newRate     New royalty rate of the zone.
      */
     event ZoneRoyaltyRateUpdate(
         bytes32 indexed zone,
         Rate newRate
     );
 
+
+    /* --- Tokenizer --- */
     /**
-     *  @notice Emitted when a tokenizer is authorized.
+     *  @notice Emitted when a contract is authorized as a tokenizer contract.
      *
-     *          Name            Description
-     *  @param  account         Tokenizer address.
+     *          Name        Description
+     *  @param  account     Authorized contract address.
      */
-    event TokenizerAuthorization(address indexed account);
+    event TokenizerAuthorization(
+        address indexed account
+    );
 
     /**
-     *  @notice Emitted when a tokenizer is deauthorized.
+     *  @notice Emitted when a contract is deauthorized as a tokenizer contract.
      *
-     *          Name            Description
-     *  @param  account         Tokenizer address.
+     *          Name        Description
+     *  @param  account     Deauthorized contract address.
      */
-    event TokenizerDeauthorization(address indexed account);
+    event TokenizerDeauthorization(
+        address indexed account
+    );
+
+
+    /* --- Extractor --- */
+    /**
+     *  @notice Emitted when a contract is authorized as a extractor contract.
+     *
+     *          Name        Description
+     *  @param  account     Authorized contract address.
+     */
+    event ExtractorAuthorization(
+        address indexed account
+    );
 
     /**
-     *  @notice Emitted when an extractor is authorized.
+     *  @notice Emitted when a contract is deauthorized as an extractor contract.
      *
-     *          Name            Description
-     *  @param  account         Extractor address.
+     *          Name        Description
+     *  @param  account     Deauthorized contract address.
      */
-    event ExtractorAuthorization(address indexed account);
+    event ExtractorDeauthorization(
+        address indexed account
+    );
 
-    /**
-     *  @notice Emitted when an extractor is deauthorized.
-     *
-     *          Name            Description
-     *  @param  account         Extractor address.
-     */
-    event ExtractorDeauthorization(address indexed account);
 
+    /* --- Custodian --- */
     /**
      *  @notice Emitted when a custodian is registered in a zone.
      *
-     *          Name            Description
-     *  @param  zone            Zone code.
-     *  @param  custodian       Custodian address.
-     *  @param  uri             URI of custodian information.
+     *          Name        Description
+     *  @param  zone        Zone code.
+     *  @param  custodian   Custodian address.
+     *  @param  uri         URI of custodian information.
      */
     event CustodianRegistration(
         bytes32 indexed zone,
@@ -114,16 +118,18 @@ IAssetToken {
         string uri
     );
 
+
+    /* --- Estate --- */
     /**
-     *  @notice Emitted when a new estate token is minted.
+     *  @notice Emitted when a new class of estate token is minted.
      *
-     *          Name                Description
-     *  @param  tokenId             Estate identifier.
-     *  @param  zone                Zone code.
-     *  @param  tokenizationId      Tokenization request identifier.
-     *  @param  tokenizer           Tokenizer contract address.
-     *  @param  custodian           Custodian address.
-     *  @param  expireAt            Estate expiration timestamp.
+     *          Name            Description
+     *  @param  tokenId         Estate identifier.
+     *  @param  zone            Zone code.
+     *  @param  tokenizationId  Tokenization request identifier.
+     *  @param  tokenizer       Tokenizer contract address.
+     *  @param  custodian       Custodian address.
+     *  @param  expireAt        Estate expiration timestamp.
      */
     event NewToken(
         uint256 indexed tokenId,
@@ -134,9 +140,8 @@ IAssetToken {
         uint40 expireAt
     );
 
-    /* --- Estate Management --- */
     /**
-     *  @notice Emitted when an estate custodian is updated.
+     *  @notice Emitted when the custodian of an estate is updated.
      *
      *          Name            Description
      *  @param  estateId        Estate identifier.
@@ -148,17 +153,19 @@ IAssetToken {
     );
 
     /**
-     *  @notice Emitted when an estate is deprecated by managers due to force majeure or extraction.
+     *  @notice Emitted when an estate is deprecated due to force majeure or extraction.
      *
      *          Name            Description
      *  @param  estateId        Estate identifier.
+     *  @param  data            Deprecation note.
      */
     event EstateDeprecation(
-        uint256 indexed estateId
+        uint256 indexed estateId,
+        string data
     );
 
     /**
-     *  @notice Emitted when an estate expiration is extended.
+     *  @notice Emitted when expiration of an estate is extended.
      *
      *          Name            Description
      *  @param  estateId        Estate identifier.
@@ -181,52 +188,59 @@ IAssetToken {
         uint256 indexed extractionId
     );
 
+
     /** ===== ERROR ===== **/
     error InvalidCustodian();
     error InvalidEstateId();
     error InvalidURI();
-    error InvalidTokenizer(address account);
+    error InvalidTokenizer();
 
 
     /** ===== FUNCTION ===== **/
-    /* --- Query --- */
-    /**
-     *          Name            Description
-     *  @return decimals        Token decimals.
-     */
-    function decimals() external view returns (uint8 decimals);
-
+    /* --- Dependency --- */
     /**
      *          Name                Description
-     *  @return commissionToken     Commission token contract address.
+     *  @return commissionToken     `CommissionToken` contract address.
      */
     function commissionToken() external view returns (address commissionToken);
 
     /**
-     *          Name            Description
-     *  @return feeReceiver     Fee receiver address.
+     *          Name                Description
+     *  @return feeReceiver         `FeeReceiver` contract address.
      */
     function feeReceiver() external view returns (address feeReceiver);
 
+
+    /* --- Query --- */
     /**
      *          Name            Description
-     *  @return tokenNumber     Number of estate tokens minted.
+     *  @return estateNumber    Number of estates.
      */
-    function estateNumber() external view returns (uint256 tokenNumber);
+    function estateNumber() external view returns (uint256 estateNumber);
+
+    /**
+     *          Name            Description
+     *  @param  estateId        Estate identifier.
+     *  @return tokenInfo       Estate information.
+     */
+    function getEstate(
+        uint256 estateId
+    ) external view returns (Estate memory tokenInfo);
+
+
+    /**
+     *          Name            Description
+     *  @param  zone            Zone code.
+     *  @return royaltyRate     Royalty rate of the zone.
+     */
+    function getZoneRoyaltyRate(
+        bytes32 zone
+    ) external view returns (Rate memory royaltyRate);
 
     /**
      *          Name            Description
      *  @param  account         EVM address.
-     *  @return isTokenizer     Whether the account is an authorized tokenizer.
-     */
-    function isTokenizer(
-        address account
-    ) external view returns (bool isTokenizer);
-
-    /**
-     *          Name            Description
-     *  @param  account         EVM address.
-     *  @return isExtractor     Whether the account is an authorized extractor.
+     *  @return isExtractor     Whether the account is an authorized extractor contract.
      */
     function isExtractor(
         address account
@@ -234,12 +248,13 @@ IAssetToken {
 
     /**
      *          Name            Description
-     *  @param  _zone           Zone code.
-     *  @return royaltyRate     Royalty rate of the zone.
+     *  @param  account         EVM address.
+     *  @return isTokenizer     Whether the account is an authorized tokenizer contract.
      */
-    function getZoneRoyaltyRate(
-        bytes32 _zone
-    ) external view returns (Rate memory royaltyRate);
+    function isTokenizer(
+        address account
+    ) external view returns (bool isTokenizer);
+
 
     /**
      *          Name            Description
@@ -247,7 +262,7 @@ IAssetToken {
      *  @param  account         EVM address.
      *  @return uri             URI of custodian information.
      */
-    function custodianURI(
+    function custodianURIs(
         bytes32 zone,
         address account
     ) external view returns (string memory uri);
@@ -263,41 +278,9 @@ IAssetToken {
         address account
     ) external view returns (bool isCustodian);
 
-    /**
-     *          Name            Description
-     *  @param  account         EVM address.
-     *  @param  tokenId         Estate identifier.
-     *  @param  at              Reference timestamp.
-     *  @return balance         Balance of the account in the estate at the reference timestamp.
-     */
-    function balanceOfAt(
-        address account,
-        uint256 tokenId,
-        uint256 at
-    ) external view returns (uint256 balance);
-
-    /**
-     *          Name            Description
-     *  @param  tokenId         Estate identifier.
-     *  @return totalSupply     Total supply.
-     */
-    function totalSupply(
-        uint256 tokenId
-    ) external view returns (uint256 totalSupply);
-
-    /**
-     *          Name            Description
-     *  @param  estateId        Estate identifier.
-     *  @return tokenInfo       Estate information.
-     */
-    function getEstate(
-        uint256 estateId
-    ) external view returns (Estate memory tokenInfo);
-
-
     /* --- Command --- */
     /**
-     *  @notice TODO: Register a custodian in a zone
+     *  @notice Register a custodian in a zone.
      *
      *          Name            Description
      *  @param  zone            Zone code.
@@ -305,11 +288,10 @@ IAssetToken {
      *  @param  uri             URI of custodian information.
      *  @param  validation      Validation package from the validator.
      *
+     *  @dev    Permission: Managers active in the zone.
      *  @dev    Validation data:
      *          ```
-     *          data = abi.encode(
-     *              uri
-     *          );
+     *          data = abi.encode(uri);
      *          ```
      */
     function registerCustodian(
@@ -319,18 +301,21 @@ IAssetToken {
         Validation calldata validation
     ) external;
 
+
     /**
-     *  @notice TODO: Tokenize an estate
+     *  @notice Tokenize an estate into a new class of token.
      *
      *          Name                Description
-     *  @param  totalSupply         Number of tokens to mint.
+     *  @param  totalSupply         Number of tokens.
      *  @param  zone                Zone code.
-     *  @param  tokenizationId      Tokenization request identifier.
+     *  @param  tokenizationId      Tokenization identifier from the tokenizer contract.
      *  @param  uri                 URI of estate metadata.
      *  @param  expireAt            Estate expiration timestamp.
-     *  @param  custodian           Custodian address.
-     *  @param  broker              Broker address to mint commission tokens.
+     *  @param  custodian           Assigned custodian address.
+     *  @param  broker              Associated broker address.
      *  @return estateId            New estate identifier.
+     *
+     *  @dev    Permission: Tokenizers.
      */
     function tokenizeEstate(
         uint256 totalSupply,
@@ -343,47 +328,82 @@ IAssetToken {
     ) external returns (uint256 estateId);
 
     /**
-     *  @notice TODO: Deprecate an estate by managers due to force majeure or extraction.
+     *  @notice Extract an estate.
      *
      *          Name            Description
      *  @param  estateId        Estate identifier.
-     */
-    function deprecateEstate(
-        uint256 estateId
-    ) external;
-
-    /**
-     *  @notice TODO: Extend the expiration of estate.
+     *  @param  extractionId    Extraction identifier.
      *
-     *          Name            Description
-     *  @param  estateId        Estate identifier.
-     *  @param  expireAt        New expiration timestamp.
+     *  @dev    Permission: Extractors.
      */
-    function extendEstateExpiration(
+    function extractEstate(
         uint256 estateId,
-        uint40 expireAt
+        uint256 extractionId
     ) external;
 
+
+    /* --- Safe Command --- */
     /**
-     *  @notice TODO: Update the custodian of an estate.
+     *  @notice Deprecate an estate.
      *
-     *          Name            Description
-     *  @param  estateId        Estate identifier.
-     *  @param  custodian       New custodian address.
+     *          Name        Description
+     *  @param  estateId    Estate identifier.
+     *  @param  data        Deprecation note.
+     *  @param  anchor      Keccak256 hash of `uri` of the estate.
+     *
+     *  @notice Permission: Managers active in the zone of the estate.
+     *  @dev    Anchor enforces consistency between this contract and the client-side.
      */
-    function updateEstateCustodian(
+    function safeDeprecateEstate(
         uint256 estateId,
-        address custodian
+        string calldata data,
+        bytes32 anchor
     ) external;
 
     /**
-     *  @notice TODO: Update the metadata URI of an estate.
+     *  @notice Extend the expiration of an estate.
      *
-     *          Name            Description
-     *  @param  estateId        Estate identifier.
-     *  @param  uri             New estate metadata URI.
-     *  @param  validation      Validation package from the validator.
+     *          Name        Description
+     *  @param  estateId    Estate identifier.
+     *  @param  expireAt    New expiration timestamp.
+     *  @param  anchor      Keccak256 hash of `uri` of the estate.
      *
+     *  @notice Permission: Managers active in the zone of the estate.
+     *  @dev    Anchor enforces consistency between this contract and the client-side.
+     */
+    function safeExtendEstateExpiration(
+        uint256 estateId,
+        uint40 expireAt,
+        bytes32 anchor
+    ) external;
+
+    /**
+     *  @notice Update the custodian of an estate.
+     *
+     *          Name        Description
+     *  @param  estateId    Estate identifier.
+     *  @param  custodian   New custodian address.
+     *  @param  anchor      Keccak256 hash of `uri` of the estate.
+     *
+     *  @notice Permission: Managers active in the zone of the estate.
+     *  @dev    Anchor enforces consistency between this contract and the client-side.
+     */
+    function safeUpdateEstateCustodian(
+        uint256 estateId,
+        address custodian,
+        bytes32 anchor
+    ) external;
+
+    /**
+     *  @notice Update the URI of an estate.
+     *
+     *          Name        Description
+     *  @param  estateId    Estate identifier.
+     *  @param  uri         New URI of estate metadata.
+     *  @param  validation  Validation package from the validator.
+     *  @param  anchor      Keccak256 hash of `uri` of the estate.
+     *
+     *  @notice Permission: Managers active in the zone of the estate.
      *  @dev    Validation data:
      *          ```
      *          data = abi.encode(
@@ -391,22 +411,12 @@ IAssetToken {
      *              uri
      *          );
      *          ```
+     *  @dev    Anchor enforces consistency between this contract and the client-side.
      */
-    function updateEstateURI(
+    function safeUpdateEstateURI(
         uint256 estateId,
         string calldata uri,
-        Validation calldata validation
-    ) external;
-
-    /**
-     *  @notice TODO: Mark an estate as extracted.
-     *
-     *          Name            Description
-     *  @param  requestId       Tokenization request identifier.
-     *  @param  extractionId    Extraction identifier.
-     */
-    function extractEstate(
-        uint256 requestId,
-        uint256 extractionId
+        Validation calldata validation,
+        bytes32 anchor
     ) external;
 }

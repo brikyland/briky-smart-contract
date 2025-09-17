@@ -113,7 +113,7 @@ ICommon {
     /**
      *          Name        Description
      *  @param  account     EVM address.
-     *  @return isProvider  Whether the account is authorized as a provider.
+     *  @return isProvider  Whether the account is an authorized provider.
      */
     function isProvider(
         address account

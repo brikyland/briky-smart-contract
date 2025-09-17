@@ -81,7 +81,7 @@ ReentrancyGuardUpgradeable {
 
     /** ===== MODIFIER ===== **/
     /**
-     *  @notice Verify a valid project.
+     *  @notice Verify a valid project identifier.
      *
      *          Name            Description
      *  @param  _projectId      Project identifier.
@@ -96,7 +96,7 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Verify the sender is the launchpad of a project.
+     *  @notice Verify the message sender is the launchpad of a project.
      *
      *          Name            Description
      *  @param  _projectId      Project identifier.
@@ -111,7 +111,7 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Verify the sender is active in the zone of a project.
+     *  @notice Verify the message sender is active in the zone of a project.
      *
      *          Name            Description
      *  @param  _projectId      Project identifier.
@@ -459,13 +459,13 @@ ReentrancyGuardUpgradeable {
 
     /* --- Administration --- */
     /**
-     *  @notice Update base URI.
+     *  @notice Update the base URI.
      *
      *          Name            Description
      *  @param  _uri            New base URI.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configuration.
+     *  @dev    Administrative operator.
      */
     function updateBaseURI(
         string calldata _uri,
@@ -488,10 +488,10 @@ ReentrancyGuardUpgradeable {
      *
      *          Name            Description
      *  @param  _accounts       Array of contract addresses.
-     *  @param  _isLaunchpad    Whether the operation is authorization or deauthorization.
+     *  @param  _isLaunchpad    This whether the operation is authorizing or deauthorizing.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configuration.
+     *  @dev    Administrative operator.
      */
     function authorizeLaunchpads(
         address[] calldata _accounts,
@@ -531,14 +531,14 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Update royalty rate for a zone.
+     *  @notice Update the royalty rate for a zone.
      *
      *          Name            Description
      *  @param  _zone           Zone code.
      *  @param  _royaltyRate    New royalty rate.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configuration.
+     *  @dev    Administrative operator.
      */
     function updateZoneRoyaltyRate(
         bytes32 _zone,
@@ -579,7 +579,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _uri            URI containing initiator information.
      *  @param  _validation     Validation package from the validator.
      *
-     *  @dev    Permission: Managers.
+     *  @dev    Permission: Managers active in the zone of the project.
      */
     function registerInitiator(
         bytes32 _zone,
@@ -688,7 +688,7 @@ ReentrancyGuardUpgradeable {
      *          Name            Description
      *  @param  _projectId      Project identifier.
      *
-     *  @dev    Permission: Managers active in the project zone.
+     *  @dev    Permission: Managers active in the zone of the project.
      */
     function deprecateProject(
         uint256 _projectId
@@ -709,7 +709,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _uri            New URI containing project information.
      *  @param  _validation     Validation package from the validator.
      *
-     *  @dev    Permission: Managers active in the project zone.
+     *  @dev    Permission: Managers active in the zone of the project.
      */
     function updateProjectURI(
         uint256 _projectId,
@@ -738,7 +738,7 @@ ReentrancyGuardUpgradeable {
      *
      *  @return estateId        Estate token identifier created from tokenization.
      *
-     *  @dev    Permission: Managers active in the project zone.
+     *  @dev    Permission: Managers active in the zone of the project.
      */
     function tokenizeProject(
         uint256 _projectId,

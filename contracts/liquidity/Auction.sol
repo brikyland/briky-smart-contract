@@ -87,7 +87,7 @@ ReentrancyGuardUpgradeable {
 
     /* --- Administration --- */
     /**
-     *  @notice Update stake token contract addresses.
+     *  @notice Update stake token contracts.
      *
      *          Name            Description
      *  @param  _stakeToken1    New stake token #1 contract address.
@@ -95,7 +95,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _stakeToken3    New stake token #3 contract address.
      *  @param  _signatures     Array of admin signatures.
      *
-     *  @dev    Administrative configuration.
+     *  @dev    Administrative operator.
      */
     function updateStakeTokens(
         address _stakeToken1,
@@ -138,7 +138,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _vestingDuration    Duration over which tokens are vested after auction ends.
      *  @param  _signatures         Array of admin signatures.
      *
-     *  @dev    Administrative operation.
+     *  @dev    Administrative operator.
      */
     function startAuction(
         uint256 _endAt,

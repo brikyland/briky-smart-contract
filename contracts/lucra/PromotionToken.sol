@@ -99,13 +99,13 @@ ReentrancyGuardUpgradeable {
 
     /* --- Administration --- */
     /**
-     *  @notice Update minting fee.
+     *  @notice Update the minting fee.
      *
      *          Name            Description
      *  @param  _fee            New minting fee.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configuration.
+     *  @dev    Administrative operator.
      */
     function updateFee(
         uint256 _fee,
@@ -124,13 +124,13 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Update royalty rate.
+     *  @notice Update the royalty rate.
      *
      *          Name            Description
      *  @param  _royaltyRate    New royalty rate.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configuration.
+     *  @dev    Administrative operator.
      */
     function updateRoyaltyRate(
         uint256 _royaltyRate,
@@ -157,10 +157,10 @@ ReentrancyGuardUpgradeable {
      *          Name            Description
      *  @param  _receiver       Receiver address.
      *  @param  _currencies     Array of withdrawn currency addresses.
-     *  @param  _values         Array of withdraw values, respectively to each currency.
+     *  @param  _values         Array of withdrawn values, respectively to each currency.
      *  @param  _signatures     Array of admin signatures.
      *
-     *  @dev    Administrative operation.
+     *  @dev    Administrative operator.
      */
     function withdraw(
         address _receiver,
@@ -198,7 +198,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _durations     Array of durations, respectively to each content.
      *  @param  _signatures    Array of admin signatures.
      * 
-     *  @dev    Administrative operation.
+     *  @dev    Administrative operator.
      */
     function createContents(
         string[] calldata _uris,
@@ -243,14 +243,14 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Update URI of multiple contents.
+     *  @notice Update URIs of multiple contents.
      *
      *          Name           Description
      *  @param  _contentIds    Array of content identifiers.
      *  @param  _uris          Array of new URIs, respectively for each content.
      *  @param  _signatures    Array of admin signatures.
      * 
-     *  @dev    Administrative operation.
+     *  @dev    Administrative operator.
      */
     function updateContentURIs(
         uint256[] calldata _contentIds,
@@ -292,7 +292,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _contentIds    Array of content identifiers.
      *  @param  _signatures    Array of admin signatures.
      * 
-     *  @dev    Administrative operation.
+     *  @dev    Administrative operator.
      */
     function cancelContents(
         uint256[] calldata _contentIds,

@@ -22,6 +22,7 @@ ICommissionToken {
     /// @dev    commissionRates[tokenId]
     mapping(uint256 => Rate) internal commissionRates;
 
+
     string internal baseURI;
 
     uint256 internal royaltyRate;

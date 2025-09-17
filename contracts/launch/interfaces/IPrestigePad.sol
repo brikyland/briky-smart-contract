@@ -121,16 +121,16 @@ IProjectLaunchpad {
      *          Name                    Description
      *  @param  launchId                Launch identifier.
      *  @param  roundId                 Round identifier.
-     *  @param  soldQuantity            Sold quantity.
-     *  @param  value                   Total sale value.
+     *  @param  raisedQuantity          Total raised quantity.
+     *  @param  contribution            Total contribution.
      *  @param  fee                     Fee charged on the sale value.
      *  @param  cashbackBaseAmount      Main currency cashback amount.
      */
     event LaunchCurrentRoundConfirmation(
         uint256 indexed launchId,
         uint256 indexed roundId,
-        uint256 soldQuantity,
-        uint256 value,
+        uint256 raisedQuantity,
+        uint256 contribution,
         uint256 fee,
         uint256 cashbackBaseAmount
     );
@@ -345,7 +345,7 @@ IProjectLaunchpad {
      *
      *  @return New launch identifier.
      *
-     *  @dev    Permission: Executives active in the zone.
+     *  @dev    Permission: Executives active in the zone of the estate.
      */
     function initiateLaunch(
         address initiator,

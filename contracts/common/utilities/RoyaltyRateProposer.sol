@@ -21,17 +21,17 @@ IRoyaltyRateProposer {
 
     /** ===== FUNCTION ===== **/
     /**
-     *          Name                Description
-     *  @param  _tokenId            Token identifier.
-     *  @param  _price              Reference value to derive the royalty.
-     *  @return royaltyReceiver     Royalty receiver address for the token identifier.
-     *  @return royalty             Royalty derived for the token identifier.
+     *          Name        Description
+     *  @param  _tokenId    Token identifier.
+     *  @param  _price      Reference value to derive the royalty.
+     *  @return receiver    Royalty receiver address.
+     *  @return royalty     Royalty corresponding to the price.
      */
     function royaltyInfo(
         uint256 _tokenId,
         uint256 _price
     ) external view returns (
-        address royaltyReceiver,
+        address receiver,
         uint256 royalty
     ) {
         return (
@@ -39,6 +39,7 @@ IRoyaltyRateProposer {
             _price.scale(this.getRoyaltyRate(_tokenId))
         );
     }
+
 
     /**
      *          Name                Description

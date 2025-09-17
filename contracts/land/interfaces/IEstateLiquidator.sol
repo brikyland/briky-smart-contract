@@ -1,11 +1,14 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
+/// contracts/common/interfaces/
 import {IValidatable} from "../../common/interfaces/IValidatable.sol";
-
-import {IEstateLiquidatorRequest} from "../structs/IEstateLiquidatorRequest.sol";
 import {IProposal} from "../../common/structs/IProposal.sol";
 
+/// contracts/land/structs/
+import {IEstateLiquidatorRequest} from "../structs/IEstateLiquidatorRequest.sol";
+
+/// contracts/land/interfaces/
 import {ICommissionDispatchable} from "./ICommissionDispatchable.sol";
 
 /**
@@ -13,7 +16,13 @@ import {ICommissionDispatchable} from "./ICommissionDispatchable.sol";
  *
  *  @notice Interface for contract `EstateLiquidator`.
  * 
- *  @notice TODO: The `EstateLiquidator` contract facilitates the extraction of estates from `EstateToken`.
+ *  @notice The `EstateLiquidator` contract facilitates the extraction of real estate through approved liquidations. Official
+ *          disclosed accounts, who is legally qualified to own the estate, can offer to buy the entire asset with a specific
+ *          value and the deal is voted to proceed. If the deal is approved, the associated custodian is grant a limited time
+ *          window to complete the required administrative procedures in compliance with local regulations. Liquidation is
+ *          finalized only if the custodian fulfills these obligations within the allotted timeframe. In that case, the
+ *          proceeds are distributed to holders as the ultimate dividends, and then the corresponding class of estate token
+ *          be deprecated permanently.
  *
  *  @dev    Implementation involves server-side support.
  *  @dev    ERC-20 tokens are identified by their contract addresses.
@@ -25,6 +34,7 @@ IProposal,
 ICommissionDispatchable,
 IValidatable {
     /** ===== EVENT ===== **/
+    /* --- Request --- */
     /**
      *  @notice Emitted when a new extraction request is submitted.
      *
@@ -33,9 +43,9 @@ IValidatable {
      *  @param  estateId        Estate identifier.
      *  @param  proposalId      Proposal identifier.
      *  @param  buyer           Buyer address.
-     *  @param  value           Sale value.
-     *  @param  currency        Sale currency address.
-     *  @param  feeRate         Extraction fee.
+     *  @param  value           Offered value.
+     *  @param  currency        Currency address.
+     *  @param  feeRate         Fraction of offered value charged as fee.
      */
     event NewRequest(
         uint256 indexed requestId,
@@ -52,7 +62,7 @@ IValidatable {
      *
      *          Name            Description
      *  @param  requestId       Request identifier.
-     *  @param  fee             Extraction fee.
+     *  @param  fee             Extracting fee.
      */
     event RequestApproval(
         uint256 indexed requestId,
@@ -78,9 +88,54 @@ IValidatable {
 
 
     /** ===== FUNCTION ===== **/
+    /* --- Dependency --- */
+    /**
+     *          Name            Description
+     *  @return dividendHub     `DividendHub` contract address.
+     */
+    function dividendHub() external view returns (address dividendHub);
+
+    /**
+     *          Name            Description
+     *  @return estateToken     `EstateToken` contract address.
+     */
+    function estateToken() external view returns (address estateToken);
+
+    /**
+     *          Name            Description
+     *  @return feeReceiver     `FeeReceiver` contract address.
+     */
+    function feeReceiver() external view returns (address feeReceiver);
+
+    /**
+     *          Name            Description
+     *  @return governanceHub   `GovernanceHub` contract address.
+     */
+    function governanceHub() external view returns (address governanceHub);
+
+
+    /* --- Query --- */
+    /**
+    *          Name             Description
+    *  @return requestNumber    Number of requests.
+     */
+    function requestNumber() external view returns (uint256 requestNumber);
+
+    /**
+     *          Name            Description
+     *  @param  _requestId      Request identifier.
+     *  @return request         Information and progress of the extraction request.
+     */
+    function getRequest(
+        uint256 _requestId
+    ) external view returns (EstateLiquidatorRequest memory request);
+
+
     /* --- Command --- */
     /**
-     *  @notice TODO: Create estate extraction request by submitting a proposal to `GovernanceHub`.
+     *  @notice Request an estate to be extracted.
+     *  @notice To prevent deceptive manipulation, the approval quorum to liquidate is initially set at 100% during the first
+     *          year and reduced to 75% thereafter.
      *
      *          Name            Description
      *  @param  estateId        Estate identifier.
@@ -92,12 +147,26 @@ IValidatable {
      *  @param  validation      Validation package from the validator.
      *  @return requestId       New request identifier.
      *
+     *  @dev    Permission: Executives active in the zone of the estate.
+     *  @dev    Through the validation mechanism, the server-side determines `uuid` and `admissionExpiry` based on the specific
+     *          supported type of proposal and its context. Operators are also required to be pre-registered on the server-side
+     *          to ensure proper assignments.
+     *  @dev    `uuid`, `admissionExpiry`, and `validation` are used for proposing in `GovernanceHub`.
      *  @dev    Validation data:
      *          ```
      *          data = abi.encode(
-     *              TODO:
+     *              estateToken(),
+     *              estateId,
+     *              address(this),
+     *              uuid,
+     *              buyer,
+     *              ProposalRule.ApprovalBeyondQuorum,
+     *              quorumRate,
+     *              EstateLiquidatorConstant.VOTE_DURATION,
+     *              admissionExpiry
      *          );
      *          ```
+     *          Note: `quorumRate` is 100% in the first year after tokenization and 75% thereafter.
      */
     function requestExtraction(
         uint256 estateId,
@@ -106,15 +175,17 @@ IValidatable {
         address currency,
         uint256 feeRate,
         bytes32 uuid,
+        uint40 admissionExpiry,
         Validation calldata validation
     ) external payable returns (uint256 requestId);
 
     /**
-     *  @notice TODO: Conclude an extraction request
+     *  @notice Conclude a request according to the result of the proposal.
+     *  @notice The class of estate token to be extract will be deprecated.
      *
      *          Name            Description
      *  @param  requestId       Request identifier.
-     *  @return isSuccessful    Whether the extraction was successful.
+     *  @return isSuccessful    Whether the extraction has succeeded.
      */
     function conclude(
         uint256 requestId

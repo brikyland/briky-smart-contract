@@ -9,7 +9,7 @@ import {IERC1155ReceiverUpgradeable} from "@openzeppelin/contracts-upgradeable/i
  *
  *  @notice Interface for contract `EstateTokenReceiver`.
  * 
- *  @notice TODO:
+ *  @notice A `EstateTokenReceiver` contract accepts ERC-1155 income tokens from a specific `EstateToken` contract.
  */
 interface IEstateTokenReceiver is
 IERC1155ReceiverUpgradeable {

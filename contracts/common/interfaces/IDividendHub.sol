@@ -118,7 +118,7 @@ ICommon {
     ) external payable returns (uint256 dividendId);
 
     /**
-     *  @notice Withdraw entitled portions of the sender from multiple dividend packages.
+     *  @notice Withdraw entitled portions of the message sender from multiple dividend packages.
      *
      *          Name            Description
      *  @param  dividendIds     Array of dividend identifiers to withdraw.

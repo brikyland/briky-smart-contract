@@ -65,8 +65,8 @@ ReentrancyGuardUpgradeable {
     /**
      *  @notice Invoked for initialization after deployment, serving as the contract constructor.
      *
-     *          Name            Description
-     *  @param  _admin          `Admin` contract address.
+     *          Name    Description
+     *  @param  _admin  `Admin` contract address.
      */
     function initialize(
         address _admin
@@ -86,7 +86,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _heartbeats     Array of new acceptable latencies, respectively for each currency.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configuration.
+     *  @dev    Administrative operator.
      *  @dev    Price Feed contracts must support interface `AggregatorV3Interface`.
      */
     function updatePriceFeeds(
@@ -138,7 +138,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _rates          Array of new default conversion rates, respectively for each currency.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configuration.
+     *  @dev    Administrative operator.
      */
     function updateDefaultRates(
         address[] calldata _currencies,

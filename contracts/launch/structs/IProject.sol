@@ -17,10 +17,10 @@ interface IProject {
         /// @dev    Remains 0 until tokenization succeeds.
         uint256 estateId;
 
-        /// @notice Management zone.
+        /// @notice Management zone code.
         bytes32 zone;
 
-        /// @notice Reference identifier from the launchpad contract.
+        /// @notice Launch identifier from the launchpad contract.
         uint256 launchId;
 
         /// @notice Launchpad contract address.
@@ -29,7 +29,7 @@ interface IProject {
         /// @notice Tokenization timestamp.
         uint40 tokenizeAt;
 
-        /// @notice When the estate is deprecated by managers due to force majeure.
+        /// @notice When the estate is deprecated due to force majeure.
         /// @dev    `type(uint40).max` represents estate availability (not deprecated).
         uint40 deprecateAt;
 

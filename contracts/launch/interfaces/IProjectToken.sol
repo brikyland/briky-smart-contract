@@ -42,7 +42,7 @@ IAssetToken {
      *  @notice Emitted when the base URI is updated.
      *
      *          Name            Description
-     *  @param  newValue        New base URI value.
+     *  @param  newValue        New base URI.
      */
     event BaseURIUpdate(
         string newValue
@@ -71,7 +71,7 @@ IAssetToken {
     );
 
     /**
-     *  @notice Emitted when a contract address is deauthorized as a launchpad.
+     *  @notice Emitted when a contract is deauthorized as a launchpad.
      *
      *          Name            Description
      *  @param  account         Deauthorized launchpad contract address.
@@ -100,7 +100,7 @@ IAssetToken {
      *          Name            Description
      *  @param  tokenId         Project token identifier.
      *  @param  zone            Zone code.
-     *  @param  launchId        Reference identifier from the launchpad contract.
+     *  @param  launchId        Launch identifier from the launchpad contract.
      *  @param  launchpad       Launchpad contract address.
      *  @param  initiator       Initiator address.
      */
@@ -113,7 +113,7 @@ IAssetToken {
     );
 
     /**
-     *  @notice Emitted when a project is deprecated by managers.
+     *  @notice Emitted when a project is deprecated due to force majeure.
      *
      *          Name            Description
      *  @param  projectId       Project identifier.
@@ -254,7 +254,7 @@ IAssetToken {
      *
      *          Name            Description
      *  @param  zone            Zone code.
-     *  @param  launchId        Reference identifier from the launchpad contract.
+     *  @param  launchId        Launch identifier from the launchpad contract.
      *  @param  initiator       Initiator address for the project.
      *  @param  uri             URI containing project information.
      *

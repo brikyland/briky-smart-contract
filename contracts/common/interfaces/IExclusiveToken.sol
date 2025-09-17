@@ -12,8 +12,8 @@ import {IRate} from "../structs/IRate.sol";
  *  @author Briky Team
  *
  *  @notice Interface for exclusive ERC-20 tokens of the system.
- *  @notice An ERC-20 token shall provides a discount rate applied when it is used as the currency of fee charged in operators
- *          within the system.
+ *  @notice An `IExclusiveToken` contract provides a discount rate applied when it is used as the currency of fee charged in
+ *          operators within the system.
  */
 interface IExclusiveToken is
 IRate,

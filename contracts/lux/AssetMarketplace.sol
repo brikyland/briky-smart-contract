@@ -26,7 +26,8 @@ import {AssetMarketplaceStorage} from "../lux/storages/AssetMarketplaceStorage.s
  *
  *  @notice The `AssetMarketplace` contract hosts a marketplace for a specific asset token.
  * 
- *  @dev    Each unit of asset token is scaled by `10 ** IAssetToken(collection).decimals()` following the convention of `IAssetToken`.
+ *  @dev    Each unit of asset token is scaled by `10 ** IAssetToken(collection).decimals()` following the convention of
+ *          interface `IAssetToken`.
  *  @dev    ERC-20 tokens are identified by their contract addresses.
  *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
  */
@@ -47,7 +48,7 @@ ReentrancyGuardUpgradeable {
 
     /** ===== MODIFIER ===== **/
     /**
-     *  @notice Verify a valid offer.
+     *  @notice Verify a valid offer identifier.
      *
      *          Name        Description
      *  @param  _offerId    Offer identifier.

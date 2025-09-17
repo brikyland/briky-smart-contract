@@ -13,8 +13,9 @@ import {IRoyaltyRateProposer} from "../../common/interfaces/IRoyaltyRateProposer
  *  @author Briky Team
  *
  *  @notice Interface for contract `CommissionToken`.
- * 
- *  @notice TODO:
+ *  @notice The `CommissionToken` contract is codependent with the `EstateToken` contract. For each newly tokenized estate,
+ *          it will issue a unique corresponding token that represents the commission fraction shareable to its owner from
+ *          incomes of designated operators involving the estate.
  */
 interface ICommissionToken is
 ICommon,
@@ -22,11 +23,12 @@ IRoyaltyRateProposer,
 IERC4906Upgradeable,
 IERC721MetadataUpgradeable {
     /** ===== EVENT ===== **/
+    /* --- Configuration --- */
     /**
      *  @notice Emitted when the base URI is updated.
      *
-     *          Name              Description
-     *  @param  newValue          New base URI.
+     *          Name        Description
+     *  @param  newValue    New base URI.
      */
     event BaseURIUpdate(
         string newValue
@@ -35,20 +37,22 @@ IERC721MetadataUpgradeable {
     /**
      *  @notice Emitted when the royalty rate is updated.
      *
-     *          Name              Description
-     *  @param  newRate           New royalty rate.
+     *          Name        Description
+     *  @param  newRate     New royalty rate.
      */
     event RoyaltyRateUpdate(
         Rate newRate
     );
 
+
+    /* --- Broker --- */
     /**
-     *  @notice Emitted when an broker is registered in a zone.
+     *  @notice Emitted when a broker is registered in a zone.
      *
-     *          Name              Description
-     *  @param  zone              Zone code.
-     *  @param  broker            Broker address.
-     *  @param  commissionRate    Commission rate.
+     *          Name            Description
+     *  @param  zone            Zone code.
+     *  @param  broker          Broker address.
+     *  @param  commissionRate  Commission rate.
      */
     event BrokerRegistration(
         bytes32 indexed zone,
@@ -59,9 +63,9 @@ IERC721MetadataUpgradeable {
     /**
      *  @notice Emitted when a broker is activated in a zone.
      * 
-     *          Name              Description
-     *  @param  zone              Zone code.
-     *  @param  broker            Broker address.
+     *          Name            Description
+     *  @param  zone            Zone code.
+     *  @param  broker          Broker address.
      */
     event BrokerActivation(
         bytes32 indexed zone,
@@ -71,27 +75,30 @@ IERC721MetadataUpgradeable {
     /**
      *  @notice Emitted when a broker is deactivated in a zone.
      *
-     *          Name              Description
-     *  @param  zone              Zone code.
-     *  @param  broker            Broker address.
+     *          Name            Description
+     *  @param  zone            Zone code.
+     *  @param  broker          Broker address.
      */
     event BrokerDeactivation(
         bytes32 indexed zone,
         address indexed broker
     );
 
+
+    /* --- Commission --- */
     /**
      *  @notice Emitted when a new commission token is minted.
      *
-     *          Name              Description
-     *  @param  tokenId           Token identifier.
-     *  @param  zone              Zone code.
-     *  @param  broker            Token owner address
+     *          Name            Description
+     *  @param  tokenId         Token identifier.
+     *  @param  zone            Zone code.
+     *  @param  broker          Original broker address.
      */
     event NewToken(
         uint256 indexed tokenId,
         bytes32 indexed zone,
-        address indexed broker
+        address indexed broker,
+        Rate rate
     );
 
 
@@ -105,28 +112,39 @@ IERC721MetadataUpgradeable {
     /* ===== FUNCTION ===== **/
     /* --- Dependency --- */
     /**
-     *          Name           Description
-     *  @return estateToken    Estate token contract address.
+     *          Name            Description
+     *  @return estateToken     `EstateToken` contract address.
      */
     function estateToken() external view returns (address estateToken);
 
     /**
-     *          Name           Description
-     *  @return feeReceiver    Fee receiver contract address.
+     *          Name            Description
+     *  @return feeReceiver     `FeeReceiver` contract address.
      */
     function feeReceiver() external view returns (address feeReceiver);
 
     /**
-     *          Name           Description
-     *  @return totalSupply    Total supply of the commission tokens.
+     *          Name            Description
+     *  @return totalSupply     Total supply of the token.
      */
     function totalSupply() external view returns (uint256 totalSupply);
 
+
     /**
-     *          Name           Description
-     *  @param  zone           Zone code.
-     *  @param  broker         Broker address.
-     *  @return rate           Commission rate of the broker in the zone.
+     *          Name            Description
+     *  @param  tokenId         Token identifier.
+     *  @return rate            Commission rate of the token identifier.
+     */
+    function getCommissionRate(
+        uint256 tokenId
+    ) external view returns (Rate memory rate);
+
+
+    /**
+     *          Name            Description
+     *  @param  zone            Zone code.
+     *  @param  broker          Broker address.
+     *  @return rate            Commission rate of the broker in the zone.
      */
     function getBrokerCommissionRate(
         bytes32 zone,
@@ -134,10 +152,10 @@ IERC721MetadataUpgradeable {
     ) external view returns (Rate memory rate);
 
     /**
-     *          Name           Description
-     *  @param  zone           Zone code.
-     *  @param  broker         Broker address.
-     *  @return isBroker       Whether the broker is active in the zone.
+     *          Name            Description
+     *  @param  zone            Zone code.
+     *  @param  broker          Broker address.
+     *  @return isBroker        Whether the broker is eligible in the zone.
      */
     function isActiveIn(
         bytes32 zone,
@@ -145,33 +163,30 @@ IERC721MetadataUpgradeable {
     ) external view returns (bool isBroker);
 
     /**
-     *          Name           Description
-     *  @param  tokenId        Token identifier.
-     *  @return rate           Commission rate of the token identifier.
-     */
-    function getCommissionRate(
-        uint256 tokenId
-    ) external view returns (Rate memory rate);
-
-    /**
-     *          Name           Description
-     *  @param  tokenId        Token identifier.
-     *  @param  value          Value.
-     *  @return receiver       Commission receiver address.
-     *  @return commission     Commission value.
+     *          Name            Description
+     *  @param  tokenId         Token identifier.
+     *  @param  value           Value.
+     *  @return receiver        Commission receiver address.
+     *  @return commission      Commission corresponding to the value.
      */
     function commissionInfo(
         uint256 tokenId,
         uint256 value
-    ) external view returns (address receiver, uint256 commission);
+    ) external view returns (
+        address receiver,
+        uint256 commission
+    );
+
 
     /**
      *  @notice Register a broker in a zone.
      *
-     *          Name           Description
-     *  @param  zone           Zone code.
-     *  @param  broker         Broker address.
-     *  @param  commissionRate Commission rate.
+     *          Name            Description
+     *  @param  zone            Zone code.
+     *  @param  broker          Broker address.
+     *  @param  commissionRate  Commission rate.
+     *
+     *  @dev    Permission: Managers in the zone.
      */
     function registerBroker(
         bytes32 zone,
@@ -180,12 +195,14 @@ IERC721MetadataUpgradeable {
     ) external;
 
     /**
-     *  @notice Activate a broker in a zone.
+     *  @notice Activate or deactivate a broker in a zone.
      *
-     *          Name           Description
-     *  @param  zone           Zone code.
-     *  @param  broker         Broker address.
-     *  @param  isActive       Whether the broker is active.
+     *          Name            Description
+     *  @param  zone            Zone code.
+     *  @param  broker          Broker address.
+     *  @param  isActive        Whether the operation is activating or deactivating.
+     *
+     *  @dev    Permission: Managers in the zone.
      */
     function activateBroker(
         bytes32 zone,
@@ -196,10 +213,10 @@ IERC721MetadataUpgradeable {
     /**
      *  @notice Mint a commission token.
      *
-     *          Name           Description
-     *  @param  zone           Zone code.
-     *  @param  broker         Broker address.
-     *  @param  tokenId        Minted token identifier.
+     *          Name            Description
+     *  @param  zone            Zone code.
+     *  @param  broker          Broker address.
+     *  @param  tokenId         Minted token identifier.
      */
     function mint(
         bytes32 zone,

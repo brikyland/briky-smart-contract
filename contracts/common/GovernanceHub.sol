@@ -26,15 +26,15 @@ import {Validatable} from "./utilities/Validatable.sol";
 /**
  *  @author Briky Team
  *
- *  @notice The `GovernanceHub` contract conducts voting among holders of an asset from governor contracts to decide on
+ *  @notice The `GovernanceHub` contract facilitates voting among holders of an asset from governor contracts to decide on
  *          proposals that affects the asset.
  *
- *  @dev    Any current holder of the asset, with client-side support, can propose by submitting a full proper context to the
- *          server-side and forwarding only its checksum to the contract as the UUID of the new proposal. Authorized executives
- *          will later verify the feasibility of the proposal within a given expiration to either admit or disqualify it
- *          accordingly. During this process, the full context is uploaded to a public database (e.g., IPFS), and the link is
- *          submitted to be the URI of proposal context. This approach protects the database from external attacks as well as
- *          ensures proposals remains validatable and user-oriented.
+ *  @dev    With client-side support, accounts can propose by submitting a full proper context to the server-side and
+ *          forwarding only its checksum to the contract as the UUID of the new proposal. Authorized executives will later
+ *          verify the feasibility of the proposal within a given expiration to either admit or disqualify it accordingly.
+ *          During this process, the full context is uploaded to a public database (e.g., IPFS), and the link is submitted to
+ *          be the URI of proposal context. This approach protects the database from external attacks as well as ensures
+ *          proposals remains validatable and user-oriented.
  *  @dev    Implementation involves server-side support.
  *  @dev    ERC-20 tokens are identified by their contract addresses.
  *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
@@ -56,7 +56,7 @@ ReentrancyGuardUpgradeable {
 
     /** ===== MODIFIER ===== **/
     /**
-     *  @notice Verify a valid proposal.
+     *  @notice Verify a valid proposal identifier.
      *
      *          Name            Description
      *  @param  _proposalId     Proposal Identifier.
@@ -72,7 +72,7 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Verify the sender is the operator of a proposal.
+     *  @notice Verify the message sender is the operator of a proposal.
      *
      *          Name            Description
      *  @param  _proposalId     Proposal Identifier.
@@ -87,7 +87,7 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Verify the sender is the representative of the asset from of a proposal.
+     *  @notice Verify the message sender is the representative of the asset from of a proposal.
      *
      *          Name            Description
      *  @param  _proposalId     Proposal Identifier.
@@ -122,10 +122,10 @@ ReentrancyGuardUpgradeable {
     /**
      *  @notice Invoked for initialization after deployment, serving as the contract constructor.
      *
-     *          Name            Description
-     *  @param  _admin          Receiver address.
-     *  @param  _validator      Validator address.
-     *  @param  _fee            Proposal fee charged in native coin.
+     *          Name        Description
+     *  @param  _admin      `Admin` contract address.
+     *  @param  _validator  Validator address.
+     *  @param  _fee        Proposing fee charged in native coin.
      */
     function initialize(
         address _admin,
@@ -150,13 +150,13 @@ ReentrancyGuardUpgradeable {
 
     /* --- Administration --- */
     /**
-     *  @notice Update proposal fee.
+     *  @notice Update the proposing fee.
      *
      *          Name            Description
-     *  @param  _fee            New proposal fee charged in native coin.
+     *  @param  _fee            New proposing fee charged in native coin.
      *  @param  _signatures     Array of admin signatures.
      *
-     *  @dev    Administrative configuration.
+     *  @dev    Administrative operator.
      */
     function updateFee(
         uint256 _fee,
@@ -294,7 +294,7 @@ ReentrancyGuardUpgradeable {
             revert InvalidTimestamp();
         }
 
-        /// @dev    Fee is charged in native coin.
+        /// @dev    Proposing fee is charged in native coin.
         CurrencyHandler.receiveNative(fee);
 
         uint256 proposalId = ++proposalNumber;
@@ -333,7 +333,7 @@ ReentrancyGuardUpgradeable {
 
     /**
      *  @notice Admit an executable proposal after review practicability.
-     *  @notice Admit only if the proposal is in `Pending` state and before admission time limit expires.
+     *  @notice Admit only if the proposal is in `Pending` state and before admission time limit has expired.
      *
      *          Name                Description
      *  @param  _proposalId         Proposal identifier.
@@ -419,7 +419,13 @@ ReentrancyGuardUpgradeable {
 
     /**
      *  @notice Disqualify an inexecutable proposal after review practicability.
-     *  @notice Disqualify only if the proposal is in `Pending` or `Voting` state and before the vote closes.
+     *  @notice Disqualify only if the proposal is in `Pending` or `Voting` state and befo
+     *  @dev    Any current holder of the asset, with client-side support, can propose by submitting a full proper context to the
+     *          server-side and forwarding only its checksum to the contract as the UUID of the new proposal. Authorized executives
+     *          will later verify the feasibility of the proposal within a given expiration to either admit or disqualify it
+     *          accordingly. During this process, the full context is uploaded to a public database (e.g., IPFS), and the link is
+     *          submitted to be the URI of proposal context. This approach protects the database from external attacks as well as
+     *          ensures proposals remains validatable and user-oriented.re the vote closes.
      *
      *          Name                Description
      *  @param  _proposalId         Proposal identifier.
@@ -531,7 +537,7 @@ ReentrancyGuardUpgradeable {
 
     /**
      *  @notice Contribute to the budget of a proposal.
-     *  @notice Contribute only before the proposal is confirmed or the confirmation time limit expires.
+     *  @notice Contribute only before the proposal is confirmed or the confirmation time limit has expired.
      *
      *          Name                Description
      *  @param  _proposalId         Proposal identifier.
@@ -548,7 +554,7 @@ ReentrancyGuardUpgradeable {
 
     /**
      *  @notice Contribute to the budget of a proposal.
-     *  @notice Contribute only before the proposal is confirmed or the confirmation time limit expires.
+     *  @notice Contribute only before the proposal is confirmed or the confirmation time limit has expired.
      *
      *          Name                Description
      *  @param  _proposalId         Proposal identifier.
@@ -572,9 +578,9 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Withdraw contribution from a proposal which cannot be executed.
+     *  @notice Withdraw contribution from a proposal which can no longer be executed.
      *  @notice Withdraw only if the proposal is either disapproved, disqualified or rejected, or after confirmation time limit
-     *          expires.
+     *          has expired.
      *
      *          Name                Description
      *  @param  _proposalId         Proposal identifier.
@@ -602,7 +608,11 @@ ReentrancyGuardUpgradeable {
         }
 
         contributions[_proposalId][msg.sender] = 0;
-        CurrencyHandler.sendCurrency(proposals[_proposalId].currency, msg.sender, contribution);
+        CurrencyHandler.sendCurrency(
+            proposals[_proposalId].currency,
+            msg.sender,
+            contribution
+        );
 
         emit ProposalBudgetContributionWithdrawal(
             _proposalId,
@@ -615,7 +625,7 @@ ReentrancyGuardUpgradeable {
 
     /**
      *  @notice Confirm a proposal to be executed.
-     *  @notice Confirm only if the proposal is approved and before the confirmation time limit expires.
+     *  @notice Confirm only if the proposal is approved and before the confirmation time limit has expired.
      *  @notice On proposal confirmation, the budget is transferred to the operator.
      *
      *          Name                Description
@@ -623,7 +633,7 @@ ReentrancyGuardUpgradeable {
      *
      *  @return Contributed budget for execution.
      *
-     *  @dev    Permission: Managers.
+     *  @dev    Permission: Managers active in the zone of the asset.
      */
     function confirm(
         uint256 _proposalId
@@ -706,10 +716,6 @@ ReentrancyGuardUpgradeable {
      *  @param  _validation         Validation package from the validator.
      *
      *  @dev    Permission: Operator of the proposal.
-     *  @dev    Validation data:
-     *          ```
-     *          data = abi.encode(logURI);
-     *          ```
      */
     function logExecution(
         uint256 _proposalId,
@@ -752,15 +758,11 @@ ReentrancyGuardUpgradeable {
      *
      *          Name            Description
      *  @param  _proposalId      Proposal identifier.
-     *  @param  _resultURI       URI of final execution result.
+     *  @param  _resultURI       URI of execution result.
      *  @param  _isSuccessful    Whether the execution has succeeded.
      *  @param  _validation      Validation package from the validator.
      *
      *  @dev    Permission: Asset representative of the proposal.
-     *  @dev    Validation data:
-     *          ```
-     *          data = abi.encode(resultURI);
-     *          ```
      */
     function concludeExecution(
         uint256 _proposalId,
@@ -947,7 +949,7 @@ ReentrancyGuardUpgradeable {
 
     /**
      *  @notice Contribute to the budget of a proposal.
-     *  @notice Contribute only before the proposal is confirmed or the confirmation time limit expires.
+     *  @notice Contribute only before the proposal is confirmed or the confirmation time limit has expired.
      *
      *          Name                Description
      *  @param  _proposalId         Proposal identifier.

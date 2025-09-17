@@ -104,13 +104,13 @@ ReentrancyGuardUpgradeable {
 
     /* --- Administration --- */
     /**
-     *  @notice Update base URI.
+     *  @notice Update the base URI.
      *
      *          Name            Description
      *  @param  _uri            New base URI.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configuration.
+     *  @dev    Administrative operator.
      */
     function updateBaseURI(
         string calldata _uri,
@@ -131,13 +131,13 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Update minting fee.
+     *  @notice Update the minting fee.
      *
      *          Name            Description
      *  @param  _fee            New minting fee.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configuration.
+     *  @dev    Administrative operator.
      */
     function updateFee(
         uint256 _fee,
@@ -156,13 +156,13 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Update royalty rate.
+     *  @notice Update the default royalty rate.
      *
      *          Name            Description
      *  @param  _royaltyRate    New royalty rate.
      *  @param  _signatures     Array of admin signatures.
      * 
-     *  @dev    Administrative configuration.
+     *  @dev    Administrative operator.
      */
     function updateRoyaltyRate(
         uint256 _royaltyRate,
@@ -192,7 +192,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _values         Array of withdraw values, respectively to each currency.
      *  @param  _signatures     Array of admin signatures.
      *
-     *  @dev    Administrative operation.
+     *  @dev    Administrative operator.
      */
     function withdraw(
         address _receiver,

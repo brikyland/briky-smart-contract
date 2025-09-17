@@ -21,12 +21,14 @@ IEstateForger {
     /// @dev    isWhitelistedFor[requestId][account]
     mapping(uint256 => mapping(address => bool)) public isWhitelistedFor;
 
-    /// @dev    isWhitelisted[account]
-    mapping(address => bool) public isWhitelisted;
-
 
     /// @dev    requests[requestId]
     mapping(uint256 => EstateForgerRequest) internal requests;
+
+
+    /// @dev    isWhitelisted[account]
+    mapping(address => bool) public isWhitelisted;
+
 
     uint256 public requestNumber;
 
