@@ -31,7 +31,7 @@ ICommon {
      *  @param  totalWeight     Current total weight of all holders of the asset.
      *  @param  value           Total dividend value.
      *  @param  currency        Dividend currency address.
-     *  @param  data            Issuance note.
+     *  @param  note            Issuance note.
      */
     event NewDividend(
         address indexed governor,
@@ -40,7 +40,7 @@ ICommon {
         uint256 totalWeight,
         uint256 value,
         address currency,
-        string data
+        string note
     );
 
 
@@ -106,15 +106,16 @@ ICommon {
      *  @param  tokenId         Asset identifier from the governor contract.
      *  @param  value           Total dividend value.
      *  @param  currency        Dividend currency address.
-     *  @param  data            Issuance note.
+     *  @param  note            Issuance note.
      *  @return dividendId      New dividend identifier.
+     *
      */
     function issueDividend(
         address governor,
         uint256 tokenId,
         uint256 value,
         address currency,
-        string calldata data
+        string calldata note
     ) external payable returns (uint256 dividendId);
 
     /**

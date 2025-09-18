@@ -266,8 +266,8 @@ ReentrancyGuardUpgradeable {
      *          - Formalities Finalization: agenda.publicSaleEndsAt
      *                                          <= block.timestamp
      *                                          < agenda.publicSaleEndsAt + EstateForgerConstant.SALE_CONFIRMATION_TIME_LIMIT
+     *          - Tokenized: estate.estateId > 0
      *          - Cancelled: quote.totalSupply = 0
-     *          - Tokenized: estate.estateId != 0
      */
     function getRequest(
         uint256 _requestId
@@ -587,7 +587,7 @@ ReentrancyGuardUpgradeable {
             revert AlreadyConfirmed();
         }
 
-        /// @dev    Cancelled request: quota.totalQuantity = 0
+        /// @dev    Cancelled request: quota.totalQuantity = 0.
         request.quota.totalQuantity = 0;
         emit RequestCancellation(_requestId);
     }
@@ -696,6 +696,7 @@ ReentrancyGuardUpgradeable {
         if (publicSaleEndsAt > block.timestamp) {
             request.agenda.publicSaleEndsAt = uint40(block.timestamp);
         }
+        /// @dev    Tokenized request:  agenda.confirmAt > 0
         request.agenda.confirmAt = uint40(block.timestamp);
 
         IEstateToken estateTokenContract = IEstateToken(estateToken);
@@ -747,7 +748,7 @@ ReentrancyGuardUpgradeable {
             currency
         );
 
-        /// @dev Provide the cashback fund sufficiently
+        /// @dev    Provide the cashback fund sufficiently.
         uint256 cashbackBaseAmount = _provideCashbackFund(request.quote.cashbackFundId);
         CurrencyHandler.sendCurrency(
             currency,

@@ -382,7 +382,7 @@ ReentrancyGuardUpgradeable {
             revert UnavailableToken();
         }
 
-        /// @dev The voting power corresponds to equity at admission timestamp.
+        /// @dev    The voting power corresponds to equity at admission timestamp.
         uint256 totalWeight = IGovernor(proposal.governor).totalEquityAt(tokenId, block.timestamp);
         if (totalWeight == 0) {
             revert NoVotingPower();

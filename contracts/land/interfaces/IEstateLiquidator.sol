@@ -21,7 +21,7 @@ import {ICommissionDispatchable} from "./ICommissionDispatchable.sol";
  *          value and the deal is voted to proceed. If the deal is approved, the associated custodian is grant a limited time
  *          window to complete the required administrative procedures in compliance with local regulations. Liquidation is
  *          finalized only if the custodian fulfills these obligations within the allotted timeframe. In that case, the
- *          proceeds are distributed to holders as the ultimate dividends, and then the corresponding class of estate token
+ *          proceeds are distributed to holders as the ultimate dividend, and then the corresponding class of estate token will
  *          be deprecated permanently.
  *
  *  @dev    Implementation involves server-side support.
@@ -135,13 +135,13 @@ IValidatable {
     /**
      *  @notice Request an estate to be extracted.
      *  @notice To prevent deceptive manipulation, the approval quorum to liquidate is initially set at 100% during the first
-     *          year and reduced to 75% thereafter.
+     *          year of estate and reduced to 75% thereafter.
      *
      *          Name            Description
      *  @param  estateId        Estate identifier.
      *  @param  buyer           Buyer address.
-     *  @param  value           Sale value.
-     *  @param  currency        Sale currency address.
+     *  @param  value           Liquidation value.
+     *  @param  currency        Liquidation currency address.
      *  @param  feeRate         Fraction of the sold value charged as fee.
      *  @param  uuid            Checksum of request context.
      *  @param  validation      Validation package from the validator.
@@ -166,7 +166,7 @@ IValidatable {
      *              admissionExpiry
      *          );
      *          ```
-     *          Note: `quorumRate` is 100% in the first year after tokenization and 75% thereafter.
+     *          Note: `quorumRate` is 100% in the first year of estate after tokenization and 75% thereafter.
      */
     function requestExtraction(
         uint256 estateId,

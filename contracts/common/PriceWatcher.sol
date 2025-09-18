@@ -115,7 +115,7 @@ ReentrancyGuardUpgradeable {
             if (_heartbeats[i] == 0) {
                 revert InvalidInput();
             }
-            if (!_feeds[i].supportsInterface(type(AggregatorV3Interface).interfaceId)) {
+            if (_feeds[i] != address(0) && !_feeds[i].supportsInterface(type(AggregatorV3Interface).interfaceId)) {
                 revert InvalidDataFeed();
             }
             priceFeeds[_currencies[i]] = DataFeed(

@@ -33,7 +33,7 @@ interface IEstateLiquidatorRequest is IRate {
         /// @notice Sale currency address.
         address currency;
 
-        /// @notice Fraction of the sold value charged as fee.
+        /// @notice Fraction of the sale value charged as fee.
         Rate feeRate;
 
         /// @notice Buyer address.

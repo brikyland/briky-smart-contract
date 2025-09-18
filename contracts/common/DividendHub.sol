@@ -116,7 +116,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _tokenId    Asset identifier from the governor contract.
      *  @param  _value      Total dividend value.
      *  @param  _currency   Dividend currency address.
-     *  @param  _data       Issuance note.
+     *  @param  _note       Issuance note.
      *  @return dividendId  New dividend identifier.
      */
     function issueDividend(
@@ -124,7 +124,7 @@ ReentrancyGuardUpgradeable {
         uint256 _tokenId,
         uint256 _value,
         address _currency,
-        string calldata _data
+        string calldata _note
     ) external payable
     whenNotPaused
     nonReentrant
@@ -163,7 +163,7 @@ ReentrancyGuardUpgradeable {
             totalWeight,
             _value,
             _currency,
-            _data
+            _note
         );
 
         return dividendId;
