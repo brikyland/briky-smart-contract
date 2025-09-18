@@ -23,12 +23,15 @@ import {IProject} from "../structs/IProject.sol";
 /**
  *  @author Briky Team
  *
- *  @notice TODO: The `IProjectToken` interface defines this contract for managing tokenized projects launched through
- *          authorized launchpad contracts within the Briky ecosystem.
+ *  @notice Interface for contract `ProjectToken`.
+ *  @notice The `ProjectToken` contract securitizes real-world estate projects into classes of fungible ERC-1155 tokens, where
+ *          each token class represents fractional credits for contributions to a project. Officially disclosed third-party
+ *          organizations are registered as initiators in designated zones to actively initiate a project they're developing
+ *          through a launchpad, serving as reference for future investment benefit distributions. Finalized estate projects
+ *          that satisfy the required conditions may be tokenized into `EstateToken` at the discretion of the initiator.
  *
- *  @dev    Implementation involves server-side support for validation mechanisms.
- *  @dev    ERC-1155 tokens are used to represent fractional ownership of projects.
- *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
+ *  @dev    Each unit of estate tokens is represented in scaled form as `10 ** decimals()`.
+ *  @dev    Implementation involves server-side support.
  */
 interface IProjectToken is
 IProject,
@@ -38,6 +41,7 @@ IEstateTokenizer,
 IRoyaltyRateProposer,
 IAssetToken {
     /** ===== EVENT ===== **/
+    /* --- Configuration --- */
     /**
      *  @notice Emitted when the base URI is updated.
      *
@@ -60,33 +64,37 @@ IAssetToken {
         Rate newValue
     );
 
+
+    /* --- Launchpad --- */
     /**
-     *  @notice Emitted when a contract address is authorized as a launchpad.
+     *  @notice Emitted when a contract address is authorized as a launchpad contract.
      *
      *          Name            Description
-     *  @param  account         Authorized launchpad contract address.
+     *  @param  account         Authorized contract address.
      */
     event LaunchpadAuthorization(
         address indexed account
     );
 
     /**
-     *  @notice Emitted when a contract is deauthorized as a launchpad.
+     *  @notice Emitted when a contract is deauthorized as a launchpad contract.
      *
      *          Name            Description
-     *  @param  account         Deauthorized launchpad contract address.
+     *  @param  account         Deauthorized contract address.
      */
     event LaunchpadDeauthorization(
         address indexed account
     );
 
+
+    /* --- Initiator --- */
     /**
      *  @notice Emitted when an initiator is registered in a zone.
      *
      *          Name            Description
      *  @param  zone            Zone code.
      *  @param  initiator       Initiator address.
-     *  @param  uri             Initiator information URI.
+     *  @param  uri             URI of initiator information.
      */
     event InitiatorRegistration(
         bytes32 indexed zone,
@@ -94,11 +102,13 @@ IAssetToken {
         string uri
     );
 
+
+    /* --- Project --- */
     /**
      *  @notice Emitted when a new project token is launched.
      *
      *          Name            Description
-     *  @param  tokenId         Project token identifier.
+     *  @param  tokenId         Project identifier.
      *  @param  zone            Zone code.
      *  @param  launchId        Launch identifier from the launchpad contract.
      *  @param  launchpad       Launchpad contract address.
@@ -112,14 +122,17 @@ IAssetToken {
         address initiator
     );
 
+
     /**
      *  @notice Emitted when a project is deprecated due to force majeure.
      *
      *          Name            Description
      *  @param  projectId       Project identifier.
+     *  @param  note            Deprecation note.
      */
     event ProjectDeprecation(
-        uint256 indexed projectId
+        uint256 indexed projectId,
+        string note
     );
 
     /**
@@ -127,8 +140,8 @@ IAssetToken {
      *
      *          Name            Description
      *  @param  projectId       Project identifier.
-     *  @param  estateId        Estate token identifier created from tokenization.
-     *  @param  totalSupply     Total supply of project tokens tokenized.
+     *  @param  estateId        Estate token identifier tokenized from this project.
+     *  @param  totalSupply     Total supply of the token.
      *  @param  custodian       Custodian address for the estate.
      *  @param  broker          Broker address for the estate.
      */
@@ -151,37 +164,45 @@ IAssetToken {
 
 
     /** ===== FUNCTION ===== **/
-    /* --- Query --- */
+    /* --- Dependency --- */
     /**
-     *  @return decimals        Number of decimal places for project tokens.
-     */
-    function decimals() external view returns (uint8 decimals);
-
-    /**
-     *  @return feeReceiver     Address that receives fees and royalties.
+     *          Name            Description
+     *  @return feeReceiver     `FeeReceiver` contract address.
      */
     function feeReceiver() external view returns (address feeReceiver);
 
+
+    /* --- Query --- */
     /**
-     *  @return projectNumber   Total number of projects launched.
+     *          Name            Description
+     *  @return projectNumber   Number of projects.
      */
     function projectNumber() external view returns (uint256 projectNumber);
 
+
     /**
      *          Name            Description
-     *  @param  account         Contract address to check.
-     *
-     *  @return isLaunchpad     Whether the address is an authorized launchpad.
+     *  @param  projectId       Project identifier.
+     *  @return project         Project information.
      */
-    function isLaunchpad(
-        address account
-    ) external view returns (bool isLaunchpad);
+    function getProject(
+        uint256 projectId
+    ) external view returns (Project memory project);
+
+    /**
+     *          Name            Description
+     *  @param  projectId       Project identifier.
+     *  @return zone            Zone code of the project.
+     */
+    function zoneOf(
+        uint256 projectId
+    ) external view returns (bytes32 zone);
+
 
     /**
      *          Name            Description
      *  @param  zone            Zone code.
-     *
-     *  @return royaltyRate     Royalty rate configuration for the zone.
+     *  @return royaltyRate     Royalty rate of the zone.
      */
     function getZoneRoyaltyRate(
         bytes32 zone
@@ -189,10 +210,19 @@ IAssetToken {
 
     /**
      *          Name            Description
+     *  @param  account         EVM address.
+     *  @return isLaunchpad     Whether the account is an authorized launchpad.
+     */
+    function isLaunchpad(
+        address account
+    ) external view returns (bool isLaunchpad);
+
+
+    /**
+     *          Name            Description
      *  @param  zone            Zone code.
      *  @param  account         Initiator address.
-     *
-     *  @return uri             URI containing initiator information.
+     *  @return uri             URI of initiator information.
      */
     function initiatorURI(
         bytes32 zone,
@@ -203,44 +233,25 @@ IAssetToken {
      *          Name            Description
      *  @param  zone            Zone code.
      *  @param  account         Address to check.
-     *
-     *  @return isInitiator     Whether the address is a registered initiator in the zone.
+     *  @return isInitiator     Whether the account is a registered initiator in the zone.
      */
     function isInitiatorIn(
         bytes32 zone,
         address account
     ) external view returns (bool isInitiator);
 
-    /**
-     *          Name            Description
-     *  @param  projectId       Project identifier.
-     *
-     *  @return project         Project information.
-     */
-    function getProject(
-        uint256 projectId
-    ) external view returns (Project memory project);
-
-    /**
-     *          Name            Description
-     *  @param  projectId       Project identifier.
-     *
-     *  @return zone            Zone code of the project.
-     */
-    function zoneOf(
-        uint256 projectId
-    ) external view returns (bytes32 zone);
-
 
     /* --- Command --- */
     /**
      *  @notice Register an initiator in a zone.
      *
-     *          Name            Description
-     *  @param  zone            Zone code.
-     *  @param  initiator       Initiator address to register.
-     *  @param  uri             URI containing initiator information.
-     *  @param  validation      Validation package from the validator.
+     *          Name        Description
+     *  @param  zone        Zone code.
+     *  @param  initiator   Initiator address.
+     *  @param  uri         URI of initiator information.
+     *  @param  validation  Validation package from the validator.
+     *
+     *  @dev    Permission: Managers active in the zone.
      */
     function registerInitiator(
         bytes32 zone,
@@ -249,16 +260,18 @@ IAssetToken {
         Validation calldata validation
     ) external;
 
+
     /**
-     *  @notice TODO: Launch a new project token from an authorized launchpad.
+     *  @notice Launch a project associated with a new class of token.
      *
-     *          Name            Description
-     *  @param  zone            Zone code.
-     *  @param  launchId        Launch identifier from the launchpad contract.
-     *  @param  initiator       Initiator address for the project.
-     *  @param  uri             URI containing project information.
+     *          Name        Description
+     *  @param  zone        Zone code.
+     *  @param  launchId    Launch identifier from the launchpad contract.
+     *  @param  initiator   Initiator address for the project.
+     *  @param  uri         URI containing project information.
+     *  @return projectId   New project identifier.
      *
-     *  @return projectId       New project identifier.
+     *  @dev    Permission: Launchpads.
      */
     function launchProject(
         bytes32 zone,
@@ -268,54 +281,73 @@ IAssetToken {
     ) external returns (uint256 projectId);
 
     /**
-     *  @notice TODO: Mint project tokens to the launchpad contract.
+     *  @notice Mint new tokens for a project.
      *
-     *          Name            Description
-     *  @param  _projectId      Project identifier.
-     *  @param  _amount         Amount of tokens to mint.
+     *          Name        Description
+     *  @param  projectId   Project identifier.
+     *  @param  amount      Minted amount.
+     *
+     *  @dev    Permission: Launchpad of the project.
      */
     function mint(
-        uint256 _projectId,
-        uint256 _amount
+        uint256 projectId,
+        uint256 amount
+    ) external;
+
+
+    /* --- Safe Command --- */
+    /**
+     *  @notice Deprecate a project due to force majeure.
+     *
+     *          Name        Description
+     *  @param  projectId   Project identifier.
+     *  @param  anchor      Keccak256 hash of `uri` of the estate.
+     *
+     *  @dev    Permission: Managers active in the zone of the project.
+     *  @dev    Anchor enforces consistency between this contract and the client-side.
+    */
+    function safeDeprecateProject(
+        uint256 projectId,
+        bytes32 anchor
     ) external;
 
     /**
-     *  @notice TODO: Deprecate a project due to force majeure.
+     *  @notice Tokenize an legitimate estate project into a new class of estate token.
+     *  @notice Tokenize only if the project has been finalized.
      *
-     *          Name            Description
-     *  @param  _projectId      Project identifier.
+     *          Name        Description
+     *  @param  projectId   Project identifier.
+     *  @param  custodian   Custodian address for the estate.
+     *  @param  broker      Broker address for the estate.
+     *  @param  anchor      Keccak256 hash of `uri` of the project.
+     *  @return estateId    Estate identifier tokenized from the project.
+     *
+     *  @dev    Permission: Managers active in the zone of the project.
+     *  @dev    Anchor enforces consistency between this contract and the client-side.
      */
-    function deprecateProject(
-        uint256 _projectId
-    ) external;
+    function safeTokenizeProject(
+        uint256 projectId,
+        address custodian,
+        address broker,
+        bytes32 anchor
+    ) external returns (uint256 estateId);
 
     /**
-     *  @notice TODO: Update the URI of a project.
+     *  @notice Update the URI of metadata of a project.
      *
-     *          Name            Description
-     *  @param  _projectId      Project identifier.
-     *  @param  _uri            New URI containing project information.
-     *  @param  _validation     Validation package from the validator.
+     *          Name        Description
+     *  @param  projectId   Project identifier.
+     *  @param  uri         URI of project metadata.
+     *  @param  validation  Validation package from the validator.
+     *  @param  anchor      Keccak256 hash of `uri` of the project.
+     *
+     *  @dev    Permission: Managers active in the zone of the project.
+     *  @dev    Anchor enforces consistency between this contract and the client-side.
      */
     function updateProjectURI(
-        uint256 _projectId,
-        string calldata _uri,
-        Validation calldata _validation
+        uint256 projectId,
+        string calldata uri,
+        Validation calldata validation,
+        bytes32 anchor
     ) external;
-
-    /**
-     *  @notice TODO: Tokenize a project into an estate token after successful fundraising.
-     *
-     *          Name            Description
-     *  @param  _projectId      Project identifier.
-     *  @param  _custodian      Custodian address for the estate.
-     *  @param  _broker         Broker address for the estate.
-     *
-     *  @return estateId        Estate token identifier created from tokenization.
-     */
-    function tokenizeProject(
-        uint256 _projectId,
-        address _custodian,
-        address _broker
-    ) external returns (uint256 estateId);
 }

@@ -14,10 +14,9 @@ import {IRate} from "../../common/structs/IRate.sol";
  */
 interface IEstateLiquidatorRequest is IRate {
     /** ===== STRUCT ===== **/
-
     /**
-     *  @notice A request for `EstateLiquidator` to extract an estate from `EstateToken` via selling the asset to a
-     *          legitimate estate buyer.
+     *  @notice A request for `EstateLiquidator` to extract an estate from `EstateToken` by selling the asset to a legitimate
+     *          estate buyer.
      *  @notice Proceeds from the sale will be shared among holders proportionally to their balances.
      */
     struct EstateLiquidatorRequest {

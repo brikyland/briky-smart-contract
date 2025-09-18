@@ -34,6 +34,7 @@ IProjectToken {
     /// @dev    isLaunchpad[account]
     mapping(address => bool) public isLaunchpad;
 
+
     uint256 public projectNumber;
 
     address public admin;

@@ -40,7 +40,7 @@ IProjectTokenReceiver {
      *  @param  _operator    Operator address.
      *  @param  _from        Sender address.
      *  @param  _ids         List of token identifiers.
-     *  @param  _values      List of amounts, respectively to each token.
+     *  @param  _values      List of amounts, respective to each token.
      *  @param  _data        Additional data.
      * 
      *  @return bytes4(0) if the token is not from the `ProjectToken`, otherwise the selector of the `onERC1155BatchReceived` function.

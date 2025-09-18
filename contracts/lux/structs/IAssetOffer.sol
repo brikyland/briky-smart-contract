@@ -25,7 +25,7 @@ IOfferState {
         /// @notice Amount of tokens that has been bought.
         uint256 soldAmount;
 
-        /// @notice Sale value of each token.
+        /// @notice Sale value of each token unit.
         uint256 unitPrice;
 
         /// @notice Royalty charged on each token.

@@ -85,7 +85,7 @@ ReentrancyGuardUpgradeable {
      *
      *          Name            Description
      *  @param  _receivers      Array of receiver addresses.
-     *  @param  _amounts        Array of distributed amount, respectively to each receiver.
+     *  @param  _amounts        Array of distributed amount, respective to each receiver.
      *  @param  _note           Note or description for the distribution operation.
      *  @param  _signatures     Array of admin signatures.
      *

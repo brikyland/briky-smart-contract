@@ -157,7 +157,7 @@ ReentrancyGuardUpgradeable {
      *          Name            Description
      *  @param  _receiver       Receiver address.
      *  @param  _currencies     Array of withdrawn currency addresses.
-     *  @param  _values         Array of withdrawn values, respectively to each currency.
+     *  @param  _values         Array of withdrawn values, respective to each currency.
      *  @param  _signatures     Array of admin signatures.
      *
      *  @dev    Administrative operator.
@@ -193,9 +193,9 @@ ReentrancyGuardUpgradeable {
      *  @notice Create new contents.
      *
      *          Name           Description
-     *  @param  _uris          Array of content URIs, respectively to each content.
-     *  @param  _startAts      Array of start timestamps, respectively to each content.
-     *  @param  _durations     Array of durations, respectively to each content.
+     *  @param  _uris          Array of content URIs, respective to each content.
+     *  @param  _startAts      Array of start timestamps, respective to each content.
+     *  @param  _durations     Array of durations, respective to each content.
      *  @param  _signatures    Array of admin signatures.
      * 
      *  @dev    Administrative operator.

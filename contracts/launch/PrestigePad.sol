@@ -49,7 +49,6 @@ import {ProjectTokenReceiver} from "./utilities/ProjectTokenReceiver.sol";
  *  @dev    Quantities are expressed in absolute units. Scale these values by `10 ** ProjectToken.decimals()` to obtain
  *          the correct amounts under the `ProjectToken` convention.
  */
-
 contract PrestigePad is
 PrestigePadStorage,
 ProjectTokenReceiver,
@@ -246,7 +245,7 @@ ReentrancyGuardUpgradeable {
      *          Name            Description
      *  @param  _launchId       Launch identifier.
      *
-     *  @return isFinalized     Whether the launch is finalized.
+     *  @return isFinalized     Whether the launch has been finalized.
      */
     function isFinalized(
         uint256 _launchId
@@ -404,11 +403,11 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Update the URI of a launch.
+     *  @notice Update the URI of information of a launch.
      *
      *          Name            Description
      *  @param  _launchId       Launch identifier.
-     *  @param  _uri            New URI of launch metadata.
+     *  @param  _uri            New URI of launch information.
      *  @param  _validation     Validation package from the validator.
      *
      *  @dev    Permission: Initiator of the launch.
@@ -959,9 +958,14 @@ ReentrancyGuardUpgradeable {
             }
         }
 
+        emit LaunchRoundTokenWithdrawal(
+            roundId,
+            msg.sender,
+            amount
+        );
+
         emit ProjectTokenWithdrawal(
             _launchId,
-            roundId,
             msg.sender,
             amount
         );

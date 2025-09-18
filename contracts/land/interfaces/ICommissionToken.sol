@@ -123,6 +123,8 @@ IERC721MetadataUpgradeable {
      */
     function feeReceiver() external view returns (address feeReceiver);
 
+
+    /* --- Query --- */
     /**
      *          Name            Description
      *  @return totalSupply     Total supply of the token.

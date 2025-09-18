@@ -52,7 +52,7 @@ ICommon {
      *  @param  mainCurrency        Main currency address.
      *  @param  mainDenomination    Main currency denomination.
      *  @param  extraCurrencies     Array of extra currency addresses.
-     *  @param  extraDenominations  Array of extra currency denominations, respectively to each extra currency.
+     *  @param  extraDenominations  Array of extra currency denominations, respective to each extra currency.
      */
     event NewFund(
         uint256 indexed fundId,
@@ -155,7 +155,7 @@ ICommon {
      *  @param  mainCurrency        Main currency address.
      *  @param  mainDenomination    Main currency denomination.
      *  @param  extraCurrencies     Array of extra currency addresses.
-     *  @param  extraDenominations  Array of extra currency denominations, respectively to each extra currency.
+     *  @param  extraDenominations  Array of extra currency denominations, respective to each extra currency.
      * 
      *  @return fundId              New fund identifier.
      *

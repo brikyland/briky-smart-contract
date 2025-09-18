@@ -42,10 +42,10 @@ import {EstateTokenStorage} from "./storages/EstateTokenStorage.sol";
 /**
  *  @author Briky Team
  *
- *  @notice The `EstateToken` contract securitizes real-world estate assets into classes of fungible ERC-1155 tokens, where
- *          each class represents fractional ownership of a specific tokenized estate. Official disclosed third party custodian
- *          agents are registered in the zone to actively provide estates to tokenize and escrows those assets on behalf of
- *          holders after successful tokenization.
+ *  @notice The `EstateToken` contract securitizes real-world estates into classes of fungible ERC-1155 tokens, where each
+ *          token class represents fractional ownership of a specific tokenized estate. Official disclosed third party
+ *          agents are registered as custodians in designated zones to actively provide estates to tokenize and escrows those
+ *          assets on behalf of holders after successful tokenization.
  *
  *  @dev    Each unit of estate tokens is represented in scaled form as `10 ** decimals()`.
  *  @dev    Implementation involves server-side support.
@@ -151,7 +151,7 @@ Validatable {
      *  @notice Update the commission token address.
      *
      *          Name                Description
-     *  @param  _commissionToken    New commission token contract address.
+     *  @param  _commissionToken    New `CommissionToken` contract address.
      *  @param  _signatures         Array of admin signatures.
      * 
      *  @dev    Administrative operator.
@@ -453,7 +453,7 @@ Validatable {
      *          Name            Description
      *  @param  _estateId       Estate identifier.
      *
-     *  @return Management zone code.
+     *  @return Zone code of the estate.
      */
     function zoneOf(
         uint256 _estateId
@@ -598,7 +598,14 @@ Validatable {
             revert Unauthorized();
         }
 
-        _validate(abi.encode(_uri), _validation);
+        _validate(
+            abi.encode(
+                _zone,
+                _custodian,
+                _uri
+            ),
+            _validation
+        );
 
         if (bytes(_uri).length == 0) {
             revert InvalidURI();
@@ -611,6 +618,7 @@ Validatable {
             _uri
         );
     }
+
 
     /**
      *  @notice Tokenize an estate.
@@ -690,9 +698,9 @@ Validatable {
     /**
      *  @notice Extract an estate.
      *
-     *          Name            Description
-     *  @param  _estateId       Estate identifier.
-     *  @param  _extractionId   Extraction identifier.
+     *          Name                Description
+     *  @param  _estateId           Estate identifier.
+     *  @param  _extractionId       Extraction identifier.
      *
      *  @dev    Permissions: Authorized extractors.
      */
@@ -742,7 +750,7 @@ Validatable {
     }
 
     /**
-     *  @notice Update the URI of an estate.
+     *  @notice Update the URI of metadata of an estate.
      *
      *          Name            Description
      *  @param  _estateId       Estate identifier.
@@ -852,7 +860,7 @@ Validatable {
      *  @param  _from           Source address.
      *  @param  _to             Target address.
      *  @param  _estateIds      Array of estate identifiers.
-     *  @param  _amounts        Array of transferred amounts, respectively to each estate identifier.
+     *  @param  _amounts        Array of transferred amounts, respective to each estate identifier.
      *  @param  _data           Additional data.
      */
     function _beforeTokenTransfer(
@@ -886,7 +894,7 @@ Validatable {
      *  @param  _from           Source address.
      *  @param  _to             Target address.
      *  @param  _estateIds      Array of estate identifiers.
-     *  @param  _amounts        Array of transferred amounts, respectively to each estate identifier.
+     *  @param  _amounts        Array of transferred amounts, respective to each estate identifier.
      *  @param  _data           Additional data.
      */
     function _afterTokenTransfer(

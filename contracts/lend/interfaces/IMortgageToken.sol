@@ -139,7 +139,6 @@ IERC4906Upgradeable {
 
     /* ===== FUNCTION ===== **/
     /* --- Query --- */
-
     /**
      *          Name              Description
      *  @return feeReceiver       Fee receiver address.

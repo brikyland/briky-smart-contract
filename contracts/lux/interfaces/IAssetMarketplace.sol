@@ -29,7 +29,7 @@ ICommon {
      *  @param  tokenId                Asset identifier.
      *  @param  seller                 Seller address.
      *  @param  sellingAmount          Amount of tokens to be sold.
-     *  @param  unitPrice              Sale value of each token.
+     *  @param  unitPrice              Sale value of each token unit.
      *  @param  currency               Sale currency address.
      *  @param  isDivisible            Whether the offer can be bought partially.
      *  @param  royaltyDenomination    Royalty charged on each token.
@@ -124,7 +124,7 @@ ICommon {
      *          Name             Description
      *  @param  tokenId          Asset identifier.
      *  @param  sellingAmount    Amount of tokens to be sold.
-     *  @param  unitPrice        Sale value of each token.
+     *  @param  unitPrice        Sale value of each token unit.
      *  @param  currency         Sale currency address.
      *  @param  isDivisible      Whether the offer can be sold partially.
      *  @return offerId          New offer identifier.

@@ -118,7 +118,6 @@ ReentrancyGuardUpgradeable {
 
 
     /* --- Administration --- */
-
     /**
      *  @notice Initialize rewarding.
      *

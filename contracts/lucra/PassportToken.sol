@@ -189,7 +189,7 @@ ReentrancyGuardUpgradeable {
      *          Name            Description
      *  @param  _receiver       Receiver address.
      *  @param  _currencies     Array of withdrawn currency addresses.
-     *  @param  _values         Array of withdraw values, respectively to each currency.
+     *  @param  _values         Array of withdraw values, respective to each currency.
      *  @param  _signatures     Array of admin signatures.
      *
      *  @dev    Administrative operator.

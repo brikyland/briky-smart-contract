@@ -372,7 +372,6 @@ ReentrancyGuardUpgradeable {
     }
 
     /* --- Internal --- */
-
     /**
      *  @return Base URI.
      */

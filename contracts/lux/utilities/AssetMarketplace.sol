@@ -122,7 +122,7 @@ ReentrancyGuardUpgradeable {
      *          Name              Description
      *  @param  _tokenId          Token identifier.
      *  @param  _sellingAmount    Amount of tokens to be sold.
-     *  @param  _unitPrice        Sale value of each token.
+     *  @param  _unitPrice        Sale value of each token unit.
      *  @param  _currency         Sale currency address.
      *  @param  _isDivisible      Whether the offer can be sold partially.
      * 
