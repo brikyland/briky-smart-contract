@@ -7,7 +7,7 @@ import {Validatable} from "../common/utilities/Validatable.sol";
 contract MockValidatable is Validatable {
     address public admin;
 
-    string constant public VERSION = "v1.1.1";
+    string constant public VERSION = "v1.2.1";
 
     function initialize(
         address _admin,

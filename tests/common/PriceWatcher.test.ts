@@ -19,7 +19,7 @@ import { addCurrencyToAdminAndPriceWatcher } from '@utils/callWithSignatures/com
 import { deployMockPriceFeed } from '@utils/deployments/mock/mockPriceFeed';
 import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
 import { Rate, RATE_SCHEMA } from '@utils/models/Common';
-import { structToObject } from '@utils/utils';
+import { randomBigNumber, randomInt, structToObject } from '@utils/utils';
 
 chai.use(smock.matchers);
 
@@ -29,12 +29,13 @@ interface PriceWatcherFixture {
     priceWatcher: PriceWatcher;
     nativePriceFeed: MockPriceFeed;
     currencyPriceFeed: MockPriceFeed;
+    priceFeeds: MockPriceFeed[];
     
     deployer: any;
     admins: any[];
 }
 
-describe('1.7. PriceWatcher', async () => {
+describe.only('1.7. PriceWatcher', async () => {
     async function priceWatcherFixture(): Promise<PriceWatcherFixture> {
         const accounts = await ethers.getSigners();
         const deployer = accounts[0];
@@ -59,6 +60,12 @@ describe('1.7. PriceWatcher', async () => {
         const nativePriceFeed = await deployMockPriceFeed(deployer.address, 0, 0) as MockPriceFeed;
         const currencyPriceFeed = await deployMockPriceFeed(deployer.address, 0, 0) as MockPriceFeed;
         
+        const priceFeeds = [];
+        while (priceFeeds.length < 5) {
+            const priceFeed = await deployMockPriceFeed(deployer.address, 0, 0) as MockPriceFeed;
+            priceFeeds.push(priceFeed);
+        }
+
         const priceWatcher = await deployPriceWatcher(
             deployer.address,
             admin.address
@@ -70,6 +77,7 @@ describe('1.7. PriceWatcher', async () => {
             priceWatcher,
             nativePriceFeed,
             currencyPriceFeed,
+            priceFeeds,
             deployer,
             admins,
         };
@@ -86,12 +94,22 @@ describe('1.7. PriceWatcher', async () => {
             priceWatcher,
             nativePriceFeed,
             currencyPriceFeed,
+            priceFeeds,
         } = fixture;
+
 
         if (listSampleCurrencies) {
             await callTransaction(nativePriceFeed.updateData(1000_00000000, 8));
             await callTransaction(currencyPriceFeed.updateData(5_00000000, 8));
-
+            for (let i = 2; i < priceFeeds.length; ++i) {
+                const decimals = randomInt(0, 18);
+                const value = randomBigNumber(
+                    BigNumber.from(10).pow(decimals).mul(100),
+                    BigNumber.from(10).pow(decimals + 1).mul(100)
+                );
+                await callTransaction(priceFeeds[i].updateData(value, decimals));
+            }
+    
             await addCurrencyToAdminAndPriceWatcher(
                 admin,
                 priceWatcher,
@@ -130,125 +148,129 @@ describe('1.7. PriceWatcher', async () => {
 
     describe('1.7.2. updatePriceFeeds(uint256, uint256, bytes[])', async () => {
         it('1.7.2.1. updatePriceFeeds successfully with valid signatures', async () => {
-            const { admin, admins, priceWatcher } = await beforePriceWatcherTest();
+            const { admin, admins, priceWatcher, priceFeeds } = await beforePriceWatcherTest();
+
+            const priceFeedAddresses = priceFeeds.map(priceFeed => priceFeed.address);
             
             const currencyAddresses = [];
-            const priceFeeds = [];
             for (let i = 0; i < 5; ++i) {
                 currencyAddresses.push(ethers.utils.computeAddress(ethers.utils.id(`currency_${i}`)));
-                priceFeeds.push(ethers.utils.computeAddress(ethers.utils.id(`priceFeed_${i}`)));
             }
             const heartbeats = [40, 50, 60, 70, 80];
 
             const message = ethers.utils.defaultAbiCoder.encode(
                 ['address', 'string', 'address[]', 'address[]', 'uint40[]'],
-                [priceWatcher.address, 'updatePriceFeeds', currencyAddresses, priceFeeds, heartbeats]
+                [priceWatcher.address, 'updatePriceFeeds', currencyAddresses, priceFeedAddresses, heartbeats]
             );
             const signatures = await getSignatures(message, admins, await admin.nonce());
 
             const tx = await priceWatcher.updatePriceFeeds(
                 currencyAddresses,
-                priceFeeds,
+                priceFeedAddresses,
                 heartbeats,
                 signatures
             );
             await tx.wait();
 
             for (let i = 0; i < currencyAddresses.length; ++i) {
-                await expect(tx).to
-                    .emit(priceWatcher, 'PriceFeedUpdate')
-                    .withArgs(currencyAddresses[i], priceFeeds[i], heartbeats[i]);
+                await expect(tx).to.emit(priceWatcher, 'PriceFeedUpdate').withArgs(
+                    currencyAddresses[i],
+                    priceFeedAddresses[i],
+                    heartbeats[i]
+                );
                     
                 const priceFeed = await priceWatcher.getPriceFeed(currencyAddresses[i]);
-                expect(priceFeed.feed).to.equal(priceFeeds[i]);
+                expect(priceFeed.feed).to.equal(priceFeedAddresses[i]);
                 expect(priceFeed.heartbeat).to.equal(heartbeats[i]);
             }
         });
 
         it('1.7.2.2. updatePriceFeeds unsuccessfully with invalid signatures', async () => {
-            const { admin, admins, priceWatcher } = await beforePriceWatcherTest({});
+            const { admin, admins, priceWatcher, priceFeeds } = await beforePriceWatcherTest();
+            const priceFeedAddresses = priceFeeds.map(priceFeed => priceFeed.address);
+
             const currencyAddresses = [];
-            const priceFeeds = [];
             for (let i = 0; i < 5; ++i) {
                 currencyAddresses.push(ethers.utils.computeAddress(ethers.utils.id(`currency_${i}`)));
-                priceFeeds.push(ethers.utils.computeAddress(ethers.utils.id(`priceFeed_${i}`)));
             }
             const heartbeats = [40, 50, 60, 70, 80];
 
             const message = ethers.utils.defaultAbiCoder.encode(
                 ['address', 'string', 'address[]', 'address[]', 'uint40[]'],
-                [priceWatcher.address, 'updatePriceFeeds', currencyAddresses, priceFeeds, heartbeats]
+                [priceWatcher.address, 'updatePriceFeeds', currencyAddresses, priceFeedAddresses, heartbeats]
             );
             const invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
 
             await expect(priceWatcher.updatePriceFeeds(
                 currencyAddresses,
-                priceFeeds,
+                priceFeedAddresses,
                 heartbeats,
                 invalidSignatures
             )).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
         it('1.7.2.3. updatePriceFeeds unsuccessfully with invalid heartbeat', async () => {
-            const { admin, admins, priceWatcher } = await beforePriceWatcherTest({});
+            const { admin, admins, priceWatcher, priceFeeds } = await beforePriceWatcherTest();
+
+            const priceFeedAddresses = priceFeeds.map(priceFeed => priceFeed.address);
             const currencyAddresses = [];
-            const priceFeeds = [];
             for (let i = 0; i < 5; ++i) {
                 currencyAddresses.push(ethers.utils.computeAddress(ethers.utils.id(`currency_${i}`)));
-                priceFeeds.push(ethers.utils.computeAddress(ethers.utils.id(`priceFeed_${i}`)));
             }
             const heartbeats = [40, 50, 0, 70, 80];
 
             const message = ethers.utils.defaultAbiCoder.encode(
                 ['address', 'string', 'address[]', 'address[]', 'uint40[]'],
-                [priceWatcher.address, 'updatePriceFeeds', currencyAddresses, priceFeeds, heartbeats]
+                [priceWatcher.address, 'updatePriceFeeds', currencyAddresses, priceFeedAddresses, heartbeats]
             );
             const signatures = await getSignatures(message, admins, await admin.nonce());
 
             await expect(priceWatcher.updatePriceFeeds(
                 currencyAddresses,
-                priceFeeds,
+                priceFeedAddresses,
                 heartbeats,
                 signatures
             )).to.be.revertedWithCustomError(priceWatcher, 'InvalidInput');
         });
 
         it('1.7.2.4. updatePriceFeeds unsuccessfully with conflicting params length', async () => {
-            const { admin, admins, priceWatcher } = await beforePriceWatcherTest({});
+            const { admin, admins, priceWatcher, priceFeeds } = await beforePriceWatcherTest();
+            
+            const priceFeedAddresses = priceFeeds.map(priceFeed => priceFeed.address);
 
-            async function testForInvalidInput(currencyAddresses: string[], priceFeeds: string[], heartbeats: number[]) {
+            async function testForInvalidInput(currencyAddresses: string[], priceFeedAddresses: string[], heartbeats: number[]) {
                 const message = ethers.utils.defaultAbiCoder.encode(
                     ['address', 'string', 'address[]', 'address[]', 'uint40[]'],
-                    [priceWatcher.address, 'updatePriceFeeds', currencyAddresses, priceFeeds, heartbeats]
+                    [priceWatcher.address, 'updatePriceFeeds', currencyAddresses, priceFeedAddresses, heartbeats]
                 );
                 const signatures = await getSignatures(message, admins, await admin.nonce());
     
                 await expect(priceWatcher.updatePriceFeeds(
                     currencyAddresses,
-                    priceFeeds,
+                    priceFeedAddresses,
                     heartbeats,
                     signatures
                 )).to.be.revertedWithCustomError(priceWatcher, 'InvalidInput');
             }
 
+
             const currencyAddresses = [];
-            const priceFeeds = [];
             for (let i = 0; i < 5; ++i) {
                 currencyAddresses.push(ethers.utils.computeAddress(ethers.utils.id(`currency_${i}`)));
-                priceFeeds.push(ethers.utils.computeAddress(ethers.utils.id(`priceFeed_${i}`)));
+
             }
             const heartbeats = [40, 50, 60, 70, 80];
 
-            await testForInvalidInput(currencyAddresses.slice(0, 4), priceFeeds, heartbeats);
-            await testForInvalidInput(currencyAddresses, priceFeeds.slice(0, 4), heartbeats);
-            await testForInvalidInput(currencyAddresses, priceFeeds, heartbeats.slice(0, 4));
+            await testForInvalidInput(currencyAddresses.slice(0, 4), priceFeedAddresses, heartbeats);
+            await testForInvalidInput(currencyAddresses, priceFeedAddresses.slice(0, 4), heartbeats);
+            await testForInvalidInput(currencyAddresses, priceFeedAddresses, heartbeats.slice(0, 4));
         });
     });
 
     describe('1.7.3. updateDefaultRates(address[], uint256[], uint8[], bytes[])', async () => {
         it('1.7.3.1. updateDefaultRates successfully with valid signatures', async () => {
             const { admin, admins, priceWatcher } = await beforePriceWatcherTest();
-            
+
             const currencyAddresses = [];
             for (let i = 0; i < 5; ++i) {
                 currencyAddresses.push(ethers.utils.computeAddress(ethers.utils.id(`currency_${i}`)));

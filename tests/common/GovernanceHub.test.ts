@@ -51,6 +51,8 @@ export interface GovernanceHubFixture {
     voter1: any;
     voter2: any;
     voter3: any;
+    custodian1: any;
+    custodian2: any;
     manager: any;
     moderator: any;
     zone: any;
@@ -124,8 +126,10 @@ describe('1.6. GovernanceHub', async () => {
         const voter1 = accounts[Constant.ADMIN_NUMBER + 8];
         const voter2 = accounts[Constant.ADMIN_NUMBER + 9];
         const voter3 = accounts[Constant.ADMIN_NUMBER + 10];
-        const manager = accounts[Constant.ADMIN_NUMBER + 11];
-        const moderator = accounts[Constant.ADMIN_NUMBER + 12];
+        const custodian1 = accounts[Constant.ADMIN_NUMBER + 11];
+        const custodian2 = accounts[Constant.ADMIN_NUMBER + 12];
+        const manager = accounts[Constant.ADMIN_NUMBER + 13];
+        const moderator = accounts[Constant.ADMIN_NUMBER + 14];
 
         const zone = ethers.utils.formatBytes32String("TestZone");
 
@@ -175,6 +179,8 @@ describe('1.6. GovernanceHub', async () => {
             voter1,
             voter2,
             voter3,
+            custodian1,
+            custodian2,
             manager,
             moderator,
             zone,
@@ -209,6 +215,7 @@ describe('1.6. GovernanceHub', async () => {
             voter1, voter2, voter3, 
             proposer1, proposer2, 
             operator1, operator2, 
+            custodian1, custodian2,
             manager, moderator,
             zone,
             currencies,
@@ -262,11 +269,13 @@ describe('1.6. GovernanceHub', async () => {
 
         if (initGovernorTokens) {
             await callTransaction(governor.setZone(1, zone));
+            await callTransaction(governor.setCustodian(1, custodian1.address));
             await callTransaction(governor.connect(voter1).mint(1, ethers.utils.parseEther('2')));
             await callTransaction(governor.connect(voter2).mint(1, ethers.utils.parseEther('3')));
             await callTransaction(governor.connect(voter3).mint(1, ethers.utils.parseEther('5')));
 
             await callTransaction(governor.setZone(2, zone));
+            await callTransaction(governor.setCustodian(2, custodian2.address));
             await callTransaction(governor.connect(voter1).mint(2, ethers.utils.parseEther('100')));
             await callTransaction(governor.connect(voter2).mint(2, ethers.utils.parseEther('300')));
         }
@@ -324,7 +333,7 @@ describe('1.6. GovernanceHub', async () => {
                 reviewURI: "state_uri_1",
                 currency: ethers.constants.AddressZero,
             }
-            await callTransaction(getAdmitTx(governanceHub, validator, manager, params1));
+            await callTransaction(getAdmitTx(governanceHub, validator, custodian1, params1));
 
             const params2 = {
                 proposalId: 2,
@@ -332,7 +341,7 @@ describe('1.6. GovernanceHub', async () => {
                 reviewURI: "state_uri_2",
                 currency: useReentrancyERC20 ? reentrancyERC20.address : currencies[0].address,
             }
-            await callTransaction(getAdmitTx(governanceHub, validator, manager, params2));
+            await callTransaction(getAdmitTx(governanceHub, validator, custodian2, params2));
         }
 
         if (disqualifySampleProposals) {
@@ -341,14 +350,14 @@ describe('1.6. GovernanceHub', async () => {
                 contextURI: "metadata_uri_1",
                 reviewURI: "state_uri_1",
             }
-            await callTransaction(getDisqualifyTx(governanceHub, validator, moderator, params1));
+            await callTransaction(getDisqualifyTx(governanceHub, validator, manager, params1));
 
             const params2: DisqualifyParams = {
                 proposalId: 2,
                 contextURI: "metadata_uri_2",
                 reviewURI: "state_uri_2",
             }
-            await callTransaction(getDisqualifyTx(governanceHub, validator, moderator, params2));
+            await callTransaction(getDisqualifyTx(governanceHub, validator, manager, params2));
         }
 
         await prepareERC20(
@@ -433,14 +442,14 @@ describe('1.6. GovernanceHub', async () => {
                 logURI: "state_uri_1",
                 isSuccessful: true,
             }
-            await callTransaction(getConcludeExecutionTx(governanceHub, validator, manager, params1));
+            await callTransaction(getConcludeExecutionTx(governanceHub, validator, custodian1, params1));
 
             const params2: ConcludeExecutionParams = {
                 proposalId: 2,
                 logURI: "state_uri_2",
                 isSuccessful: true,
             }
-            await callTransaction(getConcludeExecutionTx(governanceHub, validator, manager, params2));
+            await callTransaction(getConcludeExecutionTx(governanceHub, validator, custodian2, params2));
         }
 
         if (concludeExecutionFailedSampleProposals) {
@@ -449,14 +458,14 @@ describe('1.6. GovernanceHub', async () => {
                 logURI: "state_uri_1",
                 isSuccessful: false,
             }
-            await callTransaction(getConcludeExecutionTx(governanceHub, validator, manager, params1));
+            await callTransaction(getConcludeExecutionTx(governanceHub, validator, custodian1, params1));
             
             const params2: ConcludeExecutionParams = {
                 proposalId: 2,
                 logURI: "state_uri_2",
                 isSuccessful: false,
             }
-            await callTransaction(getConcludeExecutionTx(governanceHub, validator, manager, params2));            
+            await callTransaction(getConcludeExecutionTx(governanceHub, validator, custodian2, params2));            
         }
 
         if (pause) {
@@ -989,8 +998,8 @@ describe('1.6. GovernanceHub', async () => {
                 1,
                 proposer1.address,
                 params1.tokenId,
-                params1.uuid,
                 params1.operator,
+                params1.uuid,
                 params1.rule,
                 params1.quorumRate,
                 params1.duration,
@@ -1051,8 +1060,8 @@ describe('1.6. GovernanceHub', async () => {
                 2,
                 proposer2.address,
                 params2.tokenId,
-                params2.uuid,
                 params2.operator,
+                params2.uuid,
                 params2.rule,
                 params2.quorumRate,
                 params2.duration,
@@ -1145,10 +1154,10 @@ describe('1.6. GovernanceHub', async () => {
 
             await time.setNextBlockTimestamp(timestamp);
             await expect(getProposeTx(governanceHub, validator, proposer1, defaultParams, { value: fee }))
-                .to.be.revertedWithCustomError(governanceHub, 'InvalidGovernor');
+                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
         });
 
-        it('1.6.6.5. propose unsuccessfully with unavailable token id', async () => {
+        it('1.6.6.5. propose unsuccessfully with unavailable token', async () => {
             const fixture = await beforeGovernanceHubTest({
             });
             const { governanceHub, proposer1, validator } = fixture;
@@ -1271,9 +1280,9 @@ describe('1.6. GovernanceHub', async () => {
                 initGovernorTokens: true,
                 addSampleProposals: true,
             });
-            const { governanceHub, governor, manager, moderator, currencies, validator } = fixture;
+            const { governanceHub, governor, custodian1, custodian2, currencies, validator } = fixture;
 
-            // Tx1: Sent by manager
+            // Tx1: Sent by custodian
             const params1: AdmitParams = {
                 proposalId: 1,
                 contextURI: "metadata_uri_1",
@@ -1290,15 +1299,15 @@ describe('1.6. GovernanceHub', async () => {
             const quorum1 = scale(totalWeight1, quorumRate1, Constant.COMMON_RATE_DECIMALS);
             const due1 = (await governanceHub.getProposal(params1.proposalId)).due;
             
-            const tx1 = await getAdmitTx(governanceHub, validator, manager, params1);
+            const tx1 = await getAdmitTx(governanceHub, validator, custodian1, params1);
 
             await expect(tx1).to.emit(governanceHub, 'ProposalAdmission').withArgs(
                 params1.proposalId,                
                 params1.contextURI,
                 params1.reviewURI,
+                params1.currency,
                 totalWeight1,
                 quorum1,
-                params1.currency,
             );
             
             const proposal1 = await governanceHub.getProposal(params1.proposalId);
@@ -1328,15 +1337,15 @@ describe('1.6. GovernanceHub', async () => {
             const quorum2 = scale(totalWeight2, quorumRate2, Constant.COMMON_RATE_DECIMALS);
             const due2 = (await governanceHub.getProposal(params2.proposalId)).due;
 
-            const tx2 = await getAdmitTx(governanceHub, validator, moderator, params2);
+            const tx2 = await getAdmitTx(governanceHub, validator, custodian2, params2);
 
             await expect(tx2).to.emit(governanceHub, 'ProposalAdmission').withArgs(
                 params2.proposalId,                
                 params2.contextURI,
                 params2.reviewURI,
+                params2.currency,
                 totalWeight2,
                 quorum2,
-                params2.currency,
             );
             
             const proposal2 = await governanceHub.getProposal(params2.proposalId);
@@ -1355,12 +1364,12 @@ describe('1.6. GovernanceHub', async () => {
                 initGovernorTokens: true,
                 addSampleProposals: true,
             });
-            const { governanceHub, manager, validator } = fixture;
+            const { governanceHub, custodian1, validator } = fixture;
 
             const { defaultParams } = await beforeAdmitTest(fixture);
             
             const validation = await getAdmitInvalidValidation(governanceHub, validator, defaultParams);
-            await expect(governanceHub.connect(manager).admit(
+            await expect(governanceHub.connect(custodian1).admit(
                 defaultParams.proposalId,
                 defaultParams.contextURI,
                 defaultParams.reviewURI,
@@ -1373,21 +1382,21 @@ describe('1.6. GovernanceHub', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
             });
-            const { governanceHub, manager, validator } = fixture;
+            const { governanceHub, custodian1, custodian2, validator } = fixture;
 
             const { defaultParams } = await beforeAdmitTest(fixture);
             const params1: AdmitParams = {
                 ...defaultParams,
                 proposalId: 0,
             }
-            await expect(getAdmitTx(governanceHub, validator, manager, params1))
+            await expect(getAdmitTx(governanceHub, validator, custodian1, params1))
                 .to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
 
             const params2: AdmitParams = {
                 ...defaultParams,
                 proposalId: 100,
             }
-            await expect(getAdmitTx(governanceHub, validator, manager, params2))
+            await expect(getAdmitTx(governanceHub, validator, custodian2, params2))
                 .to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
         });
 
@@ -1396,11 +1405,22 @@ describe('1.6. GovernanceHub', async () => {
                 initGovernorTokens: true,
                 addSampleProposals: true,
             });
-            const { governanceHub, proposer1, validator } = fixture;
+            const { governanceHub, operator1, custodian2, validator, manager, moderator } = fixture;
 
             const { defaultParams } = await beforeAdmitTest(fixture);
-            await expect(getAdmitTx(governanceHub, validator, proposer1, defaultParams))
+            // Operator
+            await expect(getAdmitTx(governanceHub, validator, operator1, defaultParams))
                 .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
+            // Wrong custodian
+            await expect(getAdmitTx(governanceHub, validator, custodian2, defaultParams))
+                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
+            // Manager
+            await expect(getAdmitTx(governanceHub, validator, manager, defaultParams))
+                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
+            // Moderator
+            await expect(getAdmitTx(governanceHub, validator, moderator, defaultParams))
+                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
+
         });
 
         it('1.6.7.5. admit unsuccessfully when paused', async () => {
@@ -1409,10 +1429,10 @@ describe('1.6. GovernanceHub', async () => {
                 addSampleProposals: true,
                 pause: true,
             });
-            const { governanceHub, manager, validator } = fixture;
+            const { governanceHub, custodian1, validator } = fixture;
 
             const { defaultParams } = await beforeAdmitTest(fixture);
-            await expect(getAdmitTx(governanceHub, validator, manager, defaultParams))
+            await expect(getAdmitTx(governanceHub, validator, custodian1, defaultParams))
                 .to.be.revertedWith('Pausable: paused');
         });
 
@@ -1422,10 +1442,10 @@ describe('1.6. GovernanceHub', async () => {
                 addSampleProposals: true,
                 admitSampleProposals: true,
             });
-            const { governanceHub, manager, validator } = fixture;
+            const { governanceHub, validator, custodian1 } = fixture;
 
             const { defaultParams } = await beforeAdmitTest(fixture);
-            await expect(getAdmitTx(governanceHub, validator, manager, defaultParams))
+            await expect(getAdmitTx(governanceHub, validator, custodian1, defaultParams))
                 .to.be.revertedWithCustomError(governanceHub, 'InvalidAdmitting');
         });
 
@@ -1437,10 +1457,10 @@ describe('1.6. GovernanceHub', async () => {
                 voteApprovalSampleProposals: true,
                 confirmExecutionSampleProposals: true,
             });
-            const { governanceHub, manager, validator } = fixture;
+            const { governanceHub, validator, custodian1 } = fixture;
 
             const { defaultParams } = await beforeAdmitTest(fixture);
-            await expect(getAdmitTx(governanceHub, validator, manager, defaultParams))
+            await expect(getAdmitTx(governanceHub, validator, custodian1, defaultParams))
                 .to.be.revertedWithCustomError(governanceHub, 'InvalidAdmitting');
         });
 
@@ -1453,10 +1473,10 @@ describe('1.6. GovernanceHub', async () => {
                 confirmExecutionSampleProposals: true,
                 concludeExecutionSucceededSampleProposals: true,
             });
-            const { governanceHub, manager, validator } = fixture;
+            const { governanceHub, custodian1, validator } = fixture;
             
             const { defaultParams } = await beforeAdmitTest(fixture);
-            await expect(getAdmitTx(governanceHub, validator, manager, defaultParams))
+            await expect(getAdmitTx(governanceHub, validator, custodian1, defaultParams))
                 .to.be.revertedWithCustomError(governanceHub, 'InvalidAdmitting');
         });
 
@@ -1469,10 +1489,10 @@ describe('1.6. GovernanceHub', async () => {
                 confirmExecutionSampleProposals: true,
                 concludeExecutionFailedSampleProposals: true,
             });
-            const { governanceHub, manager, validator } = fixture;
+            const { governanceHub, validator, custodian1 } = fixture;
             
             const { defaultParams } = await beforeAdmitTest(fixture);
-            await expect(getAdmitTx(governanceHub, validator, manager, defaultParams))
+            await expect(getAdmitTx(governanceHub, validator, custodian1, defaultParams))
                 .to.be.revertedWithCustomError(governanceHub, 'InvalidAdmitting');
         });
 
@@ -1482,10 +1502,10 @@ describe('1.6. GovernanceHub', async () => {
                 addSampleProposals: true,
                 disqualifySampleProposals: true,
             });
-            const { governanceHub, manager, validator } = fixture;
+            const { governanceHub, validator, custodian1 } = fixture;
             
             const { defaultParams } = await beforeAdmitTest(fixture);
-            await expect(getAdmitTx(governanceHub, validator, manager, defaultParams))
+            await expect(getAdmitTx(governanceHub, validator, custodian1, defaultParams))
                 .to.be.revertedWithCustomError(governanceHub, 'InvalidAdmitting');
         });
 
@@ -1496,10 +1516,10 @@ describe('1.6. GovernanceHub', async () => {
                 admitSampleProposals: true,
                 rejectExecutionSampleProposals: true,
             });
-            const { governanceHub, manager, validator } = fixture;
+            const { governanceHub, validator, custodian1 } = fixture;
             
             const { defaultParams } = await beforeAdmitTest(fixture);
-            await expect(getAdmitTx(governanceHub, validator, manager, defaultParams))
+            await expect(getAdmitTx(governanceHub, validator, custodian1, defaultParams))
                 .to.be.revertedWithCustomError(governanceHub, 'InvalidAdmitting');
         });
 
@@ -1508,7 +1528,7 @@ describe('1.6. GovernanceHub', async () => {
                 initGovernorTokens: true,
                 addSampleProposals: true,
             });
-            const { governanceHub, manager, validator } = fixture;
+            const { governanceHub, custodian1, custodian2, validator } = fixture;
 
             const timePivot1 = (await governanceHub.getProposal(1)).timePivot;
             await time.setNextBlockTimestamp(timePivot1);
@@ -1518,7 +1538,7 @@ describe('1.6. GovernanceHub', async () => {
                 ...defaultParams,
                 proposalId: 1,
             }
-            await expect(getAdmitTx(governanceHub, validator, manager, params1))
+            await expect(getAdmitTx(governanceHub, validator, custodian1, params1))
                 .to.be.revertedWithCustomError(governanceHub, 'Timeout');
 
             const timePivot2 = (await governanceHub.getProposal(2)).timePivot;
@@ -1528,64 +1548,30 @@ describe('1.6. GovernanceHub', async () => {
                 ...defaultParams,
                 proposalId: 2,
             }
-            await expect(getAdmitTx(governanceHub, validator, manager, params2))
+            await expect(getAdmitTx(governanceHub, validator, custodian2, params2))
                 .to.be.revertedWithCustomError(governanceHub, 'Timeout');
         });
 
-        it('1.6.7.13. admit unsuccessfully with no longer available token id', async () => {
+        it('1.6.7.13. admit unsuccessfully with no longer available token', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
                 addSampleProposals: true,
             });
-            const { governanceHub, governor, manager, validator } = fixture;
+            const { governanceHub, governor, custodian1, validator } = fixture;
 
             governor.isAvailable.whenCalledWith(1).returns(false);
 
             const { defaultParams } = await beforeAdmitTest(fixture);
-            await expect(getAdmitTx(governanceHub, validator, manager, defaultParams))
+            await expect(getAdmitTx(governanceHub, validator, custodian1, defaultParams))
                 .to.be.revertedWithCustomError(governanceHub, 'UnavailableToken');                
         });
 
-        it('1.6.7.14. admit unsuccessfully when zone is not active', async () => {
-            const fixture = await beforeGovernanceHubTest({
-                initGovernorTokens: true,
-                addSampleProposals: true,
-                skipDeclareZone: true,
-            });
-            const { governanceHub, manager, validator } = fixture;
-
-            const { defaultParams } = await beforeAdmitTest(fixture);
-            await expect(getAdmitTx(governanceHub, validator, manager, defaultParams))
-                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
-        });
-
-        it('1.6.7.15. admit unsuccessfully when sender is not active in zone', async () => {
-            const fixture = await beforeGovernanceHubTest({
-                initGovernorTokens: true,
-                addSampleProposals: true,
-            });
-            const { admin, admins, manager, zone, governanceHub, validator } = fixture;
-
-            await callAdmin_ActivateIn(
-                admin,
-                admins,
-                zone,
-                [manager.address],
-                false,
-                await admin.nonce(),
-            );
-
-            const { defaultParams } = await beforeAdmitTest(fixture);
-            await expect(getAdmitTx(governanceHub, validator, manager, defaultParams))
-                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
-        });
-        
         it('1.6.7.16. admit unsuccessfully when token have zero total vote power', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
                 addSampleProposals: true,
             });
-            const { governanceHub, governor, manager, validator } = fixture;
+            const { governanceHub, governor, custodian1, validator } = fixture;
 
             let timestamp = await time.latest() + 10;
             await time.setNextBlockTimestamp(timestamp);
@@ -1593,7 +1579,7 @@ describe('1.6. GovernanceHub', async () => {
             governor.totalEquityAt.whenCalledWith(1, timestamp).returns(0);
 
             const { defaultParams } = await beforeAdmitTest(fixture);
-            await expect(getAdmitTx(governanceHub, validator, manager, defaultParams))
+            await expect(getAdmitTx(governanceHub, validator, custodian1, defaultParams))
                 .to.be.revertedWithCustomError(governanceHub, 'NoVotingPower');
         });
     });
@@ -1608,19 +1594,18 @@ describe('1.6. GovernanceHub', async () => {
             return { defaultParams };
         }
 
-        it('1.6.8.1. disqualify pending proposal successfully', async () => {
+        it('1.6.8.1. disqualify pending proposal successfully by manager or representative during pending state', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
                 addSampleProposals: true,
             });
-            const { governanceHub, manager, moderator, validator } = fixture;
+            const { governanceHub, manager, custodian2, validator } = fixture;
 
             const params1: DisqualifyParams = {
                 proposalId: 1,
                 contextURI: 'metadata_uri_1',
                 reviewURI: 'state_uri_1',
             };
-            const validation1 = await getDisqualifyValidation(governanceHub, validator, params1);
 
             // Tx1: Disqualify by manager
             const tx1 = await getDisqualifyTx(governanceHub, validator, manager, params1);
@@ -1640,10 +1625,9 @@ describe('1.6. GovernanceHub', async () => {
                 contextURI: 'metadata_uri_2',
                 reviewURI: 'state_uri_2',
             };
-            const validation2 = await getDisqualifyValidation(governanceHub, validator, params2);
 
-            // Tx2: Disqualify by moderator
-            const tx2 = await getDisqualifyTx(governanceHub, validator, moderator, params2);
+            // Tx2: Disqualify by custodian
+            const tx2 = await getDisqualifyTx(governanceHub, validator, custodian2, params2);
             await expect(tx2).to.emit(governanceHub, 'ProposalDisqualification').withArgs(
                 params2.proposalId,
                 params2.contextURI,
@@ -1656,7 +1640,7 @@ describe('1.6. GovernanceHub', async () => {
             expect(proposal2.state).to.equal(ProposalState.Disqualified);
         });
 
-        it('1.6.8.2. disqualify voting proposal successfully', async () => {
+        it('1.6.8.2. disqualify voting proposal successfully by manager during voting state', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
                 addSampleProposals: true,
@@ -1669,7 +1653,6 @@ describe('1.6. GovernanceHub', async () => {
                 contextURI: 'metadata_uri_1',
                 reviewURI: 'state_uri_1',
             };
-            const validation = await getDisqualifyValidation(governanceHub, validator, params);
 
             const tx = await getDisqualifyTx(governanceHub, validator, manager, params);
             await expect(tx).to.emit(governanceHub, 'ProposalDisqualification').withArgs(
@@ -1758,16 +1741,22 @@ describe('1.6. GovernanceHub', async () => {
                 .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
         });
 
-        it('1.6.8.7. disqualify unsuccessfully by non-executive for pending proposal', async () => {
+        it('1.6.8.7. disqualify unsuccessfully by unauthorized sender for pending proposal', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
                 addSampleProposals: true,
             });
-            const { operator1, governanceHub, validator } = fixture;
+            const { governanceHub, validator, moderator, operator1, custodian2 } = fixture;
 
             const { defaultParams } = await beforeDisqualifyTest(fixture);
+
+            await expect(getDisqualifyTx(governanceHub, validator, moderator, defaultParams))
+                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
             await expect(getDisqualifyTx(governanceHub, validator, operator1, defaultParams))
-                .to.be.revertedWithCustomError(governanceHub, 'InvalidDisqualifying');
+                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
+            // Wrong custodian
+            await expect(getDisqualifyTx(governanceHub, validator, custodian2, defaultParams))
+                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
         });
 
         it('1.6.8.8. disqualify unsuccessfully by non-mananger for voting proposal', async () => {
@@ -1776,13 +1765,15 @@ describe('1.6. GovernanceHub', async () => {
                 addSampleProposals: true,
                 admitSampleProposals: true,                
             });
-            const { moderator, operator1, governanceHub, validator } = fixture;
+            const { governanceHub, validator, moderator, custodian1, operator1 } = fixture;
 
             const { defaultParams } = await beforeDisqualifyTest(fixture);
             await expect(getDisqualifyTx(governanceHub, validator, moderator, defaultParams))
-                .to.be.revertedWithCustomError(governanceHub, 'InvalidDisqualifying');
+                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
+            await expect(getDisqualifyTx(governanceHub, validator, custodian1, defaultParams))
+                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
             await expect(getDisqualifyTx(governanceHub, validator, operator1, defaultParams))
-                .to.be.revertedWithCustomError(governanceHub, 'InvalidDisqualifying');
+                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
         });
         
         it('1.6.8.9. disqualify unsuccessfully with executing proposal', async () => {
@@ -1793,11 +1784,17 @@ describe('1.6. GovernanceHub', async () => {
                 voteApprovalSampleProposals: true,
                 confirmExecutionSampleProposals: true,
             });
-            const { manager, governanceHub, validator } = fixture;
+            const { governanceHub, validator, manager, moderator, custodian1, operator1 } = fixture;
 
             const { defaultParams } = await beforeDisqualifyTest(fixture);
             await expect(getDisqualifyTx(governanceHub, validator, manager, defaultParams))
-                .to.be.revertedWithCustomError(governanceHub, 'InvalidDisqualifying');
+                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
+            await expect(getDisqualifyTx(governanceHub, validator, moderator, defaultParams))
+                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
+            await expect(getDisqualifyTx(governanceHub, validator, custodian1, defaultParams))
+                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
+            await expect(getDisqualifyTx(governanceHub, validator, operator1, defaultParams))
+                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
         });
 
         it('1.6.8.10. disqualify unsuccessfully with successfully executed proposal', async () => {
@@ -1809,11 +1806,17 @@ describe('1.6. GovernanceHub', async () => {
                 confirmExecutionSampleProposals: true,
                 concludeExecutionSucceededSampleProposals: true,
             });
-            const { manager, governanceHub, validator } = fixture;
+            const { governanceHub, validator, manager, moderator, custodian1, operator1 } = fixture;
 
             const { defaultParams } = await beforeDisqualifyTest(fixture);
             await expect(getDisqualifyTx(governanceHub, validator, manager, defaultParams))
-                .to.be.revertedWithCustomError(governanceHub, 'InvalidDisqualifying');
+                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
+            await expect(getDisqualifyTx(governanceHub, validator, moderator, defaultParams))
+                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
+            await expect(getDisqualifyTx(governanceHub, validator, custodian1, defaultParams))
+                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
+            await expect(getDisqualifyTx(governanceHub, validator, operator1, defaultParams))
+                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
         });
 
         it('1.6.8.11. disqualify unsuccessfully with unsuccessfully executed proposal', async () => {
@@ -1825,11 +1828,17 @@ describe('1.6. GovernanceHub', async () => {
                 confirmExecutionSampleProposals: true,
                 concludeExecutionFailedSampleProposals: true,
             });
-            const { manager, governanceHub, validator } = fixture;
+            const { governanceHub, validator, manager, moderator, custodian1, operator1 } = fixture;
 
             const { defaultParams } = await beforeDisqualifyTest(fixture);
             await expect(getDisqualifyTx(governanceHub, validator, manager, defaultParams))
-                .to.be.revertedWithCustomError(governanceHub, 'InvalidDisqualifying');
+                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
+            await expect(getDisqualifyTx(governanceHub, validator, moderator, defaultParams))
+                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
+            await expect(getDisqualifyTx(governanceHub, validator, custodian1, defaultParams))
+                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
+            await expect(getDisqualifyTx(governanceHub, validator, operator1, defaultParams))
+                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
         });
 
         it('1.6.8.12. disqualify unsuccessfully with disqualified proposal', async () => {
@@ -1838,11 +1847,17 @@ describe('1.6. GovernanceHub', async () => {
                 addSampleProposals: true,
                 disqualifySampleProposals: true,
             });
-            const { manager, governanceHub, validator } = fixture;
+            const { governanceHub, validator, manager, moderator, custodian1, operator1 } = fixture;
 
             const { defaultParams } = await beforeDisqualifyTest(fixture);
             await expect(getDisqualifyTx(governanceHub, validator, manager, defaultParams))
-                .to.be.revertedWithCustomError(governanceHub, 'InvalidDisqualifying');
+                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
+            await expect(getDisqualifyTx(governanceHub, validator, moderator, defaultParams))
+                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
+            await expect(getDisqualifyTx(governanceHub, validator, custodian1, defaultParams))
+                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
+            await expect(getDisqualifyTx(governanceHub, validator, operator1, defaultParams))
+                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
         });
 
         it('1.6.8.13. disqualify unsuccessfully with rejected proposal', async () => {
@@ -1852,11 +1867,17 @@ describe('1.6. GovernanceHub', async () => {
                 admitSampleProposals: true,
                 rejectExecutionSampleProposals: true,
             });
-            const { manager, governanceHub, validator } = fixture;
+            const { governanceHub, validator, manager, moderator, custodian1, operator1 } = fixture;
 
             const { defaultParams } = await beforeDisqualifyTest(fixture);
             await expect(getDisqualifyTx(governanceHub, validator, manager, defaultParams))
-                .to.be.revertedWithCustomError(governanceHub, 'InvalidDisqualifying');
+                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
+            await expect(getDisqualifyTx(governanceHub, validator, moderator, defaultParams))
+                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
+            await expect(getDisqualifyTx(governanceHub, validator, custodian1, defaultParams))
+                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
+            await expect(getDisqualifyTx(governanceHub, validator, operator1, defaultParams))
+                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
         });
     });
 
@@ -2093,7 +2114,7 @@ describe('1.6. GovernanceHub', async () => {
                 .to.be.revertedWithCustomError(governanceHub, 'AlreadyVoted');
         });
 
-        it('1.6.9.12. vote unsuccessfully when token is unavailable', async () => {
+        it('1.6.9.12. vote unsuccessfully with no longer available token', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
                 addSampleProposals: true,
@@ -2601,7 +2622,7 @@ describe('1.6. GovernanceHub', async () => {
                 1,
                 ethers.utils.parseEther("1"),
                 { value: ethers.utils.parseEther("1") },
-            )).to.be.revertedWithCustomError(governanceHub, 'Overdue');
+            )).to.be.revertedWithCustomError(governanceHub, 'Timeout');
 
             timestamp += 10;
             await time.setNextBlockTimestamp(timestamp);
@@ -2609,7 +2630,7 @@ describe('1.6. GovernanceHub', async () => {
                 1,
                 ethers.utils.parseEther("1"),
                 { value: ethers.utils.parseEther("1") },
-            )).to.be.revertedWithCustomError(governanceHub, 'Overdue');
+            )).to.be.revertedWithCustomError(governanceHub, 'Timeout');
         });
 
         it('1.6.11.11. contribute budget unsuccessfully when contract is reentered', async () => {
@@ -3135,16 +3156,17 @@ describe('1.6. GovernanceHub', async () => {
                 contributeBudgetSampleProposals: true,
             });
 
-            const { governanceHub, moderator, operator1 } = fixture;
+            const { governanceHub, moderator, operator1, custodian1 } = fixture;
 
             await expect(governanceHub.connect(moderator).confirm(1))
                 .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
-
             await expect(governanceHub.connect(operator1).confirm(1))
+                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
+            await expect(governanceHub.connect(custodian1).confirm(1))
                 .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
         });
 
-        it('1.6.14.7. confirm execution unsuccessfully with unavailable token', async () => {
+        it('1.6.14.7. confirm execution unsuccessfully with no longer available token', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
                 addSampleProposals: true,
@@ -3246,7 +3268,7 @@ describe('1.6. GovernanceHub', async () => {
             await expect(governanceHub.connect(manager).confirm(1))
                 .to.be.revertedWithCustomError(governanceHub, 'InvalidConfirming');
         });
-        
+
         it('1.6.14.14. confirm execution unsuccessfully when proposal is disqualified', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
@@ -3399,12 +3421,15 @@ describe('1.6. GovernanceHub', async () => {
                 admitSampleProposals: true,
             });
 
-            const { governanceHub, moderator, manager, operator1, operator2 } = fixture;
+            const { governanceHub, moderator, manager, custodian1, operator1, operator2 } = fixture;
 
             await expect(governanceHub.connect(moderator).rejectExecution(1))
                 .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
             await expect(governanceHub.connect(manager).rejectExecution(1))
                 .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
+            await expect(governanceHub.connect(custodian1).rejectExecution(1))
+                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
+            // Wrong operator
             await expect(governanceHub.connect(operator2).rejectExecution(1))
                 .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
             await expect(governanceHub.connect(operator1).rejectExecution(2))
@@ -3491,11 +3516,9 @@ describe('1.6. GovernanceHub', async () => {
                 rejectExecutionSampleProposals: true,
             });
 
-            const { governanceHub, operator1, operator2 } = fixture;
+            const { governanceHub, operator1 } = fixture;
 
             await expect(governanceHub.connect(operator1).rejectExecution(1))
-                .to.be.revertedWithCustomError(governanceHub, 'InvalidRejecting');
-            await expect(governanceHub.connect(operator2).rejectExecution(2))
                 .to.be.revertedWithCustomError(governanceHub, 'InvalidRejecting');
         });
     });
@@ -3648,13 +3671,32 @@ describe('1.6. GovernanceHub', async () => {
             )).to.be.revertedWithCustomError(governanceHub, 'InvalidSignature');
         });
 
+        it('1.6.16.6. update execution unsuccessfully with no longer available token', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                initGovernorTokens: true,
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteApprovalSampleProposals: true,
+                confirmExecutionSampleProposals: true,
+            });
+            
+            const { operator1, governanceHub, validator, governor } = fixture;
+
+            const { defaultParams } = await beforeLogExecutionTest(fixture);
+
+            governor.isAvailable.whenCalledWith(1).returns(false);
+
+            await expect(getLogExecutionTx(governanceHub, validator, operator1, defaultParams))
+                .to.be.revertedWithCustomError(governanceHub, 'UnavailableToken');
+        });
+
         it('1.6.16.6. update execution unsuccessfully when proposal is pending', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
                 addSampleProposals: true,
             });
 
-            const { operator1, governanceHub, validator } = fixture;
+            const { governanceHub, validator, operator1 } = fixture;
 
             const { defaultParams } = await beforeLogExecutionTest(fixture);
 
@@ -3669,7 +3711,7 @@ describe('1.6. GovernanceHub', async () => {
                 admitSampleProposals: true,
             });
 
-            const { operator1, governanceHub, validator } = fixture;
+            const { governanceHub, validator, operator1 } = fixture;
 
             const { defaultParams } = await beforeLogExecutionTest(fixture);
 
@@ -3687,7 +3729,7 @@ describe('1.6. GovernanceHub', async () => {
                 concludeExecutionSucceededSampleProposals: true,
             });
 
-            const { operator1, governanceHub, validator } = fixture;
+            const { governanceHub, validator, operator1 } = fixture;
 
             const { defaultParams } = await beforeLogExecutionTest(fixture);
 
@@ -3705,7 +3747,7 @@ describe('1.6. GovernanceHub', async () => {
                 concludeExecutionFailedSampleProposals: true,
             });
 
-            const { operator1, governanceHub, validator } = fixture;
+            const { governanceHub, validator, operator1 } = fixture;
 
             const { defaultParams } = await beforeLogExecutionTest(fixture);
 
@@ -3720,7 +3762,7 @@ describe('1.6. GovernanceHub', async () => {
                 disqualifySampleProposals: true,
             });
 
-            const { operator1, governanceHub, validator } = fixture;
+            const { governanceHub, validator, operator1 } = fixture;
 
             const { defaultParams } = await beforeLogExecutionTest(fixture);
 
@@ -3736,7 +3778,7 @@ describe('1.6. GovernanceHub', async () => {
                 rejectExecutionSampleProposals: true,
             });
 
-            const { operator1, governanceHub, validator } = fixture;
+            const { governanceHub, validator, operator1 } = fixture;
 
             const { defaultParams } = await beforeLogExecutionTest(fixture);
 
@@ -3764,7 +3806,7 @@ describe('1.6. GovernanceHub', async () => {
                 confirmExecutionSampleProposals: true,
             });
 
-            const { governanceHub, manager, validator } = fixture;
+            const { governanceHub, validator, custodian1, custodian2 } = fixture;
 
             // Tx1: Conclude execution succeeded
             const params1: ConcludeExecutionParams = {
@@ -3773,7 +3815,7 @@ describe('1.6. GovernanceHub', async () => {
                 isSuccessful: true,
             }
 
-            const tx1 = await getConcludeExecutionTx(governanceHub, validator, manager, params1);
+            const tx1 = await getConcludeExecutionTx(governanceHub, validator, custodian1, params1);
             await tx1.wait();
 
             await expect(tx1).to.emit(governanceHub, 'ProposalExecutionConclusion').withArgs(
@@ -3793,7 +3835,7 @@ describe('1.6. GovernanceHub', async () => {
                 isSuccessful: false,
             }
 
-            const tx2 = await getConcludeExecutionTx(governanceHub, validator, manager, params2);
+            const tx2 = await getConcludeExecutionTx(governanceHub, validator, custodian2, params2);
             await tx2.wait();
 
             await expect(tx2).to.emit(governanceHub, 'ProposalExecutionConclusion').withArgs(
@@ -3810,7 +3852,7 @@ describe('1.6. GovernanceHub', async () => {
         it('1.6.17.2. conclude execution unsuccessfully with invalid proposal id', async () => {
             const fixture = await beforeGovernanceHubTest();
 
-            const { manager, governanceHub, validator } = fixture;
+            const { governanceHub, validator, custodian1 } = fixture;
 
             const { defaultParams } = await beforeConcludeExecutionTest(fixture);
 
@@ -3818,14 +3860,14 @@ describe('1.6. GovernanceHub', async () => {
                 ...defaultParams,
                 proposalId: 0,
             }
-            await expect(getConcludeExecutionTx(governanceHub, validator, manager, params1))
+            await expect(getConcludeExecutionTx(governanceHub, validator, custodian1, params1))
                 .to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
 
             const params2: ConcludeExecutionParams = {
                 ...defaultParams,
                 proposalId: 100,
             }
-            await expect(getConcludeExecutionTx(governanceHub, validator, manager, params2))
+            await expect(getConcludeExecutionTx(governanceHub, validator, custodian1, params2))
                 .to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
         });
 
@@ -3839,11 +3881,11 @@ describe('1.6. GovernanceHub', async () => {
                 pause: true,
             });
 
-            const { manager, governanceHub, validator } = fixture;
+            const { governanceHub, validator, custodian1 } = fixture;
 
             const { defaultParams } = await beforeConcludeExecutionTest(fixture);
             
-            await expect(getConcludeExecutionTx(governanceHub, validator, manager, defaultParams))
+            await expect(getConcludeExecutionTx(governanceHub, validator, custodian1, defaultParams))
                 .to.be.revertedWith('Pausable: paused');
         });
 
@@ -3856,10 +3898,12 @@ describe('1.6. GovernanceHub', async () => {
                 confirmExecutionSampleProposals: true,
             });
 
-            const { moderator, operator1, operator2, governanceHub, validator } = fixture;
+            const { moderator, manager, custodian1, custodian2, governanceHub, validator } = fixture;
 
             const { defaultParams } = await beforeConcludeExecutionTest(fixture);
 
+            await expect(getConcludeExecutionTx(governanceHub, validator, manager, defaultParams))
+                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
             await expect(getConcludeExecutionTx(governanceHub, validator, moderator, defaultParams))
                 .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
 
@@ -3867,14 +3911,14 @@ describe('1.6. GovernanceHub', async () => {
                 ...defaultParams,
                 proposalId: 1,
             }
-            await expect(getConcludeExecutionTx(governanceHub, validator, operator1, params1))
-                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
+            await expect(getConcludeExecutionTx(governanceHub, validator, custodian2, params1))
+            .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
 
             const params2: ConcludeExecutionParams = {
                 ...defaultParams,
                 proposalId: 2,
             }
-            await expect(getConcludeExecutionTx(governanceHub, validator, operator2, params2))
+            await expect(getConcludeExecutionTx(governanceHub, validator, custodian1, params2))
                 .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
         });
 
@@ -3887,12 +3931,12 @@ describe('1.6. GovernanceHub', async () => {
                 confirmExecutionSampleProposals: true,
             });
 
-            const { governanceHub, manager, validator } = fixture;
+            const { governanceHub, validator, custodian1 } = fixture;
 
             const { defaultParams } = await beforeConcludeExecutionTest(fixture);
             const validation = await getConcludeExecutionInvalidValidation(governanceHub, validator, defaultParams);
 
-            await expect(governanceHub.connect(manager).concludeExecution(
+            await expect(governanceHub.connect(custodian1).concludeExecution(
                 defaultParams.proposalId,
                 defaultParams.logURI,
                 defaultParams.isSuccessful,
@@ -3900,7 +3944,7 @@ describe('1.6. GovernanceHub', async () => {
             )).to.be.revertedWithCustomError(governanceHub, 'InvalidSignature');
         });
 
-        it('1.6.17.7. conclude execution unsuccessfully when sender is inactive in zone', async () => {
+        it('1.6.17.6. conclude execution unsuccessfully with no longer available token', async () => {
             const fixture = await beforeGovernanceHubTest({
                 initGovernorTokens: true,
                 addSampleProposals: true,
@@ -3909,21 +3953,14 @@ describe('1.6. GovernanceHub', async () => {
                 confirmExecutionSampleProposals: true,
             });
 
-            const { admin, admins, zone, manager, governanceHub, validator } = fixture;
+            const { governanceHub, validator, governor, custodian1 } = fixture;
 
             const { defaultParams } = await beforeConcludeExecutionTest(fixture);
 
-            await callAdmin_ActivateIn(
-                admin,
-                admins,
-                zone,
-                [manager.address],
-                false,
-                await admin.nonce(),
-            );
+            governor.isAvailable.whenCalledWith(1).returns(false);
 
-            await expect(getConcludeExecutionTx(governanceHub, validator, manager, defaultParams))
-                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
+            await expect(getConcludeExecutionTx(governanceHub, validator, custodian1, defaultParams))
+                .to.be.revertedWithCustomError(governanceHub, 'UnavailableToken');
         });
 
         it('1.6.17.8. conclude execution unsuccessfully when proposal is pending', async () => {
@@ -3932,11 +3969,11 @@ describe('1.6. GovernanceHub', async () => {
                 addSampleProposals: true,
             });
 
-            const { manager, governanceHub, validator } = fixture;
+            const { governanceHub, validator, custodian1 } = fixture;
 
             const { defaultParams } = await beforeConcludeExecutionTest(fixture);
 
-            await expect(getConcludeExecutionTx(governanceHub, validator, manager, defaultParams))
+            await expect(getConcludeExecutionTx(governanceHub, validator, custodian1, defaultParams))
                 .to.be.revertedWithCustomError(governanceHub, 'InvalidConcluding');
         });
         
@@ -3947,11 +3984,11 @@ describe('1.6. GovernanceHub', async () => {
                 admitSampleProposals: true,
             });
 
-            const { manager, governanceHub, validator } = fixture;
+            const { governanceHub, validator, custodian1 } = fixture;
 
             const { defaultParams } = await beforeConcludeExecutionTest(fixture);
             
-            await expect(getConcludeExecutionTx(governanceHub, validator, manager, defaultParams))
+            await expect(getConcludeExecutionTx(governanceHub, validator, custodian1, defaultParams))
                 .to.be.revertedWithCustomError(governanceHub, 'InvalidConcluding');
         });
 
@@ -3965,11 +4002,11 @@ describe('1.6. GovernanceHub', async () => {
                 concludeExecutionSucceededSampleProposals: true,
             });
 
-            const { manager, governanceHub, validator } = fixture;
+            const { governanceHub, validator, custodian1 } = fixture;
 
             const { defaultParams } = await beforeConcludeExecutionTest(fixture);
 
-            await expect(getConcludeExecutionTx(governanceHub, validator, manager, defaultParams))
+            await expect(getConcludeExecutionTx(governanceHub, validator, custodian1, defaultParams))
                 .to.be.revertedWithCustomError(governanceHub, 'InvalidConcluding');
         });
 
@@ -3983,11 +4020,11 @@ describe('1.6. GovernanceHub', async () => {
                 concludeExecutionFailedSampleProposals: true,
             });
 
-            const { manager, governanceHub, validator } = fixture;
+            const { governanceHub, validator, custodian1 } = fixture;
 
             const { defaultParams } = await beforeConcludeExecutionTest(fixture);
             
-            await expect(getConcludeExecutionTx(governanceHub, validator, manager, defaultParams))
+            await expect(getConcludeExecutionTx(governanceHub, validator, custodian1, defaultParams))
                 .to.be.revertedWithCustomError(governanceHub, 'InvalidConcluding');
         });
         
@@ -3998,11 +4035,11 @@ describe('1.6. GovernanceHub', async () => {
                 disqualifySampleProposals: true,
             });
 
-            const { manager, governanceHub, validator } = fixture;
+            const { governanceHub, validator, custodian1 } = fixture;
 
             const { defaultParams } = await beforeConcludeExecutionTest(fixture);
             
-            await expect(getConcludeExecutionTx(governanceHub, validator, manager, defaultParams))
+            await expect(getConcludeExecutionTx(governanceHub, validator, custodian1, defaultParams))
                 .to.be.revertedWithCustomError(governanceHub, 'InvalidConcluding');
         });
 
@@ -4014,11 +4051,11 @@ describe('1.6. GovernanceHub', async () => {
                 rejectExecutionSampleProposals: true,
             });
 
-            const { manager, governanceHub, validator } = fixture;
+            const { governanceHub, validator, custodian1 } = fixture;
 
             const { defaultParams } = await beforeConcludeExecutionTest(fixture);
 
-            await expect(getConcludeExecutionTx(governanceHub, validator, manager, defaultParams))
+            await expect(getConcludeExecutionTx(governanceHub, validator, custodian1, defaultParams))
                 .to.be.revertedWithCustomError(governanceHub, 'InvalidConcluding');
         });
     });

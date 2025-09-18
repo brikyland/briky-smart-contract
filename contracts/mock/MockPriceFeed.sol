@@ -1,10 +1,15 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
+import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol";
+
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-contract MockPriceFeed is AggregatorV3Interface, Initializable {
+contract MockPriceFeed is 
+AggregatorV3Interface,
+Initializable,
+IERC165Upgradeable {
     int256 private answer;
     uint80 private roundId;
     uint256 private startedAt;
@@ -85,5 +90,12 @@ contract MockPriceFeed is AggregatorV3Interface, Initializable {
     function updateData(int256 _newAnswer, uint8 _newDecimals) external {
         answer = _newAnswer;
         decimals = _newDecimals;
+    }
+
+    function supportsInterface(bytes4 _interfaceId) public pure override(
+        IERC165Upgradeable
+    ) returns (bool) {
+        return _interfaceId == type(AggregatorV3Interface).interfaceId
+            || _interfaceId == type(IERC165Upgradeable).interfaceId;
     }
 } 

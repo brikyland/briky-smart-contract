@@ -17,7 +17,7 @@ contract RoyaltyCollection is ERC721Upgradeable, RoyaltyRateProposer {
     uint256 public royaltyRate;
     uint256 public tokenNumber;
 
-    string constant private VERSION = "v1.1.1";
+    string constant private VERSION = "v1.2.1";
 
     function initialize(
         address _admin,

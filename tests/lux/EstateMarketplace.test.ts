@@ -105,7 +105,7 @@ async function testReentrancy_Marketplace(
     );
 }
 
-describe.only('6.2. EstateMarketplace', async () => {
+describe('6.2. EstateMarketplace', async () => {
     afterEach(async () => {
         const fixture = await loadFixture(estateMarketplaceFixture);
         const { estateToken } = fixture;
@@ -1382,7 +1382,7 @@ describe.only('6.2. EstateMarketplace', async () => {
                 .to.be.revertedWithCustomError(estateMarketplace, "FailedTransfer");
         });
 
-        it.only('6.2.5.12. buy token unsuccessfully when native token transfer to royalty receiver failed', async () => {
+        it('6.2.5.12. buy token unsuccessfully when native token transfer to royalty receiver failed', async () => {
             const fixture = await beforeEstateMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleEstateToken: true,

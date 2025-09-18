@@ -379,7 +379,7 @@ describe('1.4. DividendHub', async () => {
             const { defaultParams } = await beforeIssueDividendTest(fixture);
             
             await expect(getIssueDividendTx(dividendHub, issuer1, defaultParams, defaultParams.value))
-                .to.be.revertedWithCustomError(dividendHub, 'InvalidGovernor');
+                .to.be.revertedWithCustomError(dividendHub, 'Unauthorized');
         });
 
         it('1.4.2.4. Issue dividend unsuccessfully with invalid token id', async () => {

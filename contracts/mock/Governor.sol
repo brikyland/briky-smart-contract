@@ -29,7 +29,7 @@ ERC1155SupplyUpgradeable {
 
     using Formula for uint256;
 
-    string constant private VERSION = "v1.1.1";
+    string constant private VERSION = "v1.2.1";
 
     receive() external payable {}
 

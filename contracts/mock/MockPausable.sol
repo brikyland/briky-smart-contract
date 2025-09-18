@@ -9,7 +9,7 @@ import {IAdmin} from "../common/interfaces/IAdmin.sol";
 contract MockPausable is Pausable {
     address public admin;
 
-    string constant private VERSION = "v1.1.1";
+    string constant private VERSION = "v1.2.1";
 
     function initialize(address _admin) external initializer {
         admin = _admin;
