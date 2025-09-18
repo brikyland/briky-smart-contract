@@ -5,17 +5,15 @@ pragma solidity ^0.8.20;
 import {ERC165CheckerUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
-/// contracts/common/utilities/
-import {CurrencyHandler} from "../../common/utilities/CurrencyHandler.sol";
-import {Formula} from "../../common/utilities/Formula.sol";
-
 /// contracts/common/interfaces/
 import {IAdmin} from "../../common/interfaces/IAdmin.sol";
 import {IAssetToken} from "../../common/interfaces/IAssetToken.sol";
 
 /// contracts/common/utilities/
 import {Administrable} from "../../common/utilities/Administrable.sol";
+import {CurrencyHandler} from "../../common/utilities/CurrencyHandler.sol";
 import {Discountable} from "../../common/utilities/Discountable.sol";
+import {Formula} from "../../common/utilities/Formula.sol";
 import {Pausable} from "../../common/utilities/Pausable.sol";
 
 /// contracts/lux/storages/
@@ -24,7 +22,7 @@ import {AssetMarketplaceStorage} from "../../lux/storages/AssetMarketplaceStorag
 /**
  *  @author Briky Team
  *
- *  @notice The `AssetMarketplace` contract hosts a marketplace for a specific asset token.
+ *  @notice An `AssetMarketplace` contract hosts a marketplace for a specific asset token.
  * 
  *  @dev    Each unit of asset token is scaled by `10 ** IAssetToken(collection).decimals()` following the convention of
  *          interface `IAssetToken`.
@@ -80,11 +78,11 @@ ReentrancyGuardUpgradeable {
 
     /* --- Initialization --- */
     /**
-     *  @notice Helper function to initialize the dependencies of the contract.
+     *  @notice Initialize "AssetMarketplace".
      *
      *          Name           Description
      *  @param  _admin         `Admin` contract address.
-     *  @param  _collection    Asset token contract address.
+     *  @param  _collection    `IAssetToken` contract address.
      * 
      *  @dev    The asset token must support interface `IAssetToken`.
      */
@@ -115,21 +113,22 @@ ReentrancyGuardUpgradeable {
         return offers[_offerId];
     }
 
+
     /* --- Command --- */
     /**
-     *  @notice List a new offer for asset tokens.
+     *  @notice List a new offer of asset tokens.
      *
      *          Name              Description
-     *  @param  _tokenId          Token identifier.
-     *  @param  _sellingAmount    Amount of tokens to be sold.
+     *  @param  _tokenId          Asset identifier.
+     *  @param  _sellingAmount    Selling amount.
      *  @param  _unitPrice        Sale value of each token unit.
      *  @param  _currency         Sale currency address.
      *  @param  _isDivisible      Whether the offer can be sold partially.
      * 
      *  @return New offer identifier.
      * 
-     *  @dev    Approval must be granted for this contract to transfer collateral before borrowing. A mortgage can only be
-     *          lent while approval remains active.
+     *  @dev    Approval must be granted for this contract to transfer asset tokens before listing. An offer can only be
+     *          sold while approval remains active.
      */
     function list(
         uint256 _tokenId,
@@ -272,7 +271,7 @@ ReentrancyGuardUpgradeable {
      *
      *          Name        Description
      *  @param  _offerId    Offer identifier.
-     *  @param  _anchor     `tokenId` of the offer.
+     *  @param  _anchor     `unitPrice * sellingAmount` of the offer.
      * 
      *  @return Sum of sale price and royalty.
      * 
@@ -285,7 +284,7 @@ ReentrancyGuardUpgradeable {
     whenNotPaused
     validOffer(_offerId)
     returns (uint256) {
-        if (_anchor != offers[_offerId].tokenId) {
+        if (_anchor != offers[_offerId].unitPrice * offers[_offerId].sellingAmount) {
             revert BadAnchor();
         }
 
@@ -401,11 +400,11 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Charge royalty.
+     *  @notice Charge royalty on an offer.
      *
      *          Name        Description
      *  @param  _offerId    Offer identifier.
-     *  @param  _royalty    Royalty.
+     *  @param  _royalty    Charged royalty.
      */
     function _chargeRoyalty(
         uint256 _offerId,

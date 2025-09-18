@@ -209,7 +209,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _value      Value.
      *
      *  @return Commission receiver address.
-     *  @return Commission value.
+     *  @return Commission derived from the value.
      */
     function commissionInfo(
         uint256 _tokenId,

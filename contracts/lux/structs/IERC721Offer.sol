@@ -26,7 +26,7 @@ IOfferState {
         /// @notice Sale value.
         uint256 price;
 
-        /// @notice Royalty charged on the offer.
+        /// @notice Royalty derived from the sale value.
         uint256 royalty;
 
         /// @notice Sale currency address.

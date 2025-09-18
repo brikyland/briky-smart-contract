@@ -65,11 +65,11 @@ CommissionDispatchable {
 
     /* --- Helper --- */
     /**
-     *  @notice Charge royalty.
+     *  @notice Charge royalty on an offer.
      *
      *          Name        Description
      *  @param  _offerId    Offer identifier.
-     *  @param  _royalty    Royalty.
+     *  @param  _royalty    Charged royalty.
      */
     function _chargeRoyalty(
         uint256 _offerId,
@@ -79,6 +79,7 @@ CommissionDispatchable {
         address royaltyReceiver = offer.royaltyReceiver;
         address currency = offer.currency;
 
+        /// @dev    Transfer commission derived from the charged royalty to the associated broker.
         uint256 commission = _dispatchCommission(
             offer.tokenId,
             _royalty,

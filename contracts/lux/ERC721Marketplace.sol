@@ -25,7 +25,7 @@ import {ERC721MarketplaceStorage} from "../lux/storages/ERC721MarketplaceStorage
 /**
  *  @author Briky Team
  *
- *  @notice The `ERC721Marketplace` contract hosts a marketplace for ERC721 tokens.
+ *  @notice An `ERC721Marketplace` contract hosts a marketplace for ERC-721 tokens.
  * 
  *  @dev    ERC-20 tokens are identified by their contract addresses.
  *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
@@ -182,7 +182,7 @@ ReentrancyGuardUpgradeable {
 
     /* --- Command --- */
     /**
-     *  @notice List a new offer for an ERC721 token.
+     *  @notice List a new offer of an ERC721 token.
      *
      *          Name           Description
      *  @param  _collection    Token collection contract address.

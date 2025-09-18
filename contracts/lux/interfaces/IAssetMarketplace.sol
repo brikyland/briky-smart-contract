@@ -11,7 +11,7 @@ import {ICommon} from "../../common/interfaces/ICommon.sol";
  *  @author Briky Team
  *
  *  @notice Interface for contract `AssetMarketplace`.
- *  @notice The `AssetMarketplace` contract hosts a marketplace for a specific asset token.
+ *  @notice An `AssetMarketplace` contract hosts a marketplace for a specific asset token.
  *
  *  @dev    Each unit of asset token is scaled by `10 ** IAssetToken(collection).decimals()` following the convention of `IAssetToken`.
  *  @dev    ERC-20 tokens are identified by their contract addresses.
@@ -21,6 +21,7 @@ interface IAssetMarketplace is
 IAssetOffer,
 ICommon {
     /** ===== EVENT ===== **/
+    /* --- Offer --- */
     /**
      *  @notice Emitted when a new offer is listed.
      *
@@ -28,7 +29,7 @@ ICommon {
      *  @param  offerId                Offer identifier.
      *  @param  tokenId                Asset identifier.
      *  @param  seller                 Seller address.
-     *  @param  sellingAmount          Amount of tokens to be sold.
+     *  @param  sellingAmount          Selling amount.
      *  @param  unitPrice              Sale value of each token unit.
      *  @param  currency               Sale currency address.
      *  @param  isDivisible            Whether the offer can be bought partially.
@@ -54,7 +55,9 @@ ICommon {
      *          Name        Description
      *  @param  offerId     Offer identifier.
      */
-    event OfferCancellation(uint256 indexed offerId);
+    event OfferCancellation(
+        uint256 indexed offerId
+    );
 
     /**
      *  @notice Emitted when an offer is sold, partially or fully.
@@ -63,8 +66,8 @@ ICommon {
      *  @param  offerId            Offer identifier.
      *  @param  buyer              Buyer address.
      *  @param  amount             Sale amount.
-     *  @param  value              Sale price.
-     *  @param  royalty            Royalty.
+     *  @param  value              Sale value.
+     *  @param  royalty            Royalty derived from the sale value.
      *  @param  royaltyReceiver    Royalty receiver address.
      */
     event OfferSale(
@@ -93,7 +96,7 @@ ICommon {
     /* --- Dependency --- */
     /**
      *          Name            Description
-     *  @return collection      Asset token contract address.
+     *  @return collection      `IAssetToken` contract address.
      *
      *  @dev    The asset token must support interface `IAssetToken`.
      */
@@ -119,18 +122,18 @@ ICommon {
 
     /* --- Command --- */
     /**
-     *  @notice List a new offer for asset tokens.
+     *  @notice List a new offer of asset tokens.
      *
      *          Name             Description
      *  @param  tokenId          Asset identifier.
-     *  @param  sellingAmount    Amount of tokens to be sold.
+     *  @param  sellingAmount    Selling amount.
      *  @param  unitPrice        Sale value of each token unit.
      *  @param  currency         Sale currency address.
      *  @param  isDivisible      Whether the offer can be sold partially.
      *  @return offerId          New offer identifier.
      *
-     *  @dev    Approval must be granted for this contract to transfer collateral before borrowing. A mortgage can only be
-     *          lent while approval remains active.
+     *  @dev    Approval must be granted for this contract to transfer asset tokens before listing. An offer can only be
+     *          sold while approval remains active.
      */
     function list(
         uint256 tokenId,
@@ -180,6 +183,7 @@ ICommon {
     function cancel(
         uint256 offerId
     ) external;
+
 
     /* --- Safe Command --- */
     /**

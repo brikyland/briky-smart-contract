@@ -201,10 +201,10 @@ CommissionDispatchable {
     /**
      *          Name            Description
      *  @param  _tokenId        Token identifier.
-     *  @param  _price          Price.
+     *  @param  _price          Reference value.
      * 
-     *  @return address         Royalty receiver address.
-     *  @return uint256         Royalty.
+     *  @return receiver        Royalty receiver address.
+     *  @return royalty         Royalty derived from the reference value.
      */
     function royaltyInfo(
         uint256 _tokenId,
