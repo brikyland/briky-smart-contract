@@ -462,8 +462,8 @@ ReentrancyGuardUpgradeable {
         IAdmin adminContract = IAdmin(admin);
         ProposalState state = proposal.state;
         uint256 tokenId = proposal.tokenId;
-        if (!adminContract.isManager(msg.sender)
-            || !adminContract.isActiveIn(governorContract.zoneOf(tokenId), msg.sender)) {
+        if (adminContract.isManager(msg.sender)
+            && adminContract.isActiveIn(governorContract.zoneOf(tokenId), msg.sender)) {
             if (state != ProposalState.Pending && state != ProposalState.Voting) {
                 revert Unauthorized();
             }
