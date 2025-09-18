@@ -19,8 +19,12 @@ import {IMortgage} from "../structs/IMortgage.sol";
  *  @author Briky Team
  *
  *  @notice Interface for contract `MortgageToken`.
+ *  @notice A `MortgageToken` contract facilitates peer-to-peer lending secured by crypto collateral. Each provided mortgage
+ *          is tokenized into an ERC-721 token, whose owner has the right to receive repayments from the borrower or foreclose
+ *          on the collateral from the contract once overdue.
  * 
- *  @notice A `MortgageToken` contract is an ERC-721 contract that facilitates mortgage-based borrowing and issues tokens representing mortgages.
+ *  @dev    ERC-20 tokens are identified by their contract addresses.
+ *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
  */
 interface IMortgageToken is
 IMortgage,
@@ -42,14 +46,15 @@ IERC4906Upgradeable {
     );
 
     /**
-     *  @notice Emitted when the fee rate is updated.
+     *  @notice Emitted when the mortgaging fee rate is updated.
      *
      *          Name        Description
-     *  @param  newRate     New fee rate.
+     *  @param  newRate     New mortgaging fee rate.
      */
     event FeeRateUpdate(
         Rate newRate
     );
+
 
     /* --- Mortgage --- */
     /**
@@ -61,7 +66,6 @@ IERC4906Upgradeable {
      *  @param  due         Token expiration date.
      * 
      *  @dev    The token is minted when a mortgage is supplied, and burned upon repayment or foreclosure.
-     *  @dev    The token is expired on the repayment due timestamp.
      */
     event NewToken(
         uint256 indexed tokenId,
@@ -77,9 +81,9 @@ IERC4906Upgradeable {
      *  @param  borrower      Borrower address.
      *  @param  principal     Principal value.
      *  @param  repayment     Repayment value.
-     *  @param  fee           Fee.
-     *  @param  currency      Loan currency address.
-     *  @param  duration      Repayment duration.
+     *  @param  fee           Mortgaging fee.
+     *  @param  currency      Currency address.
+     *  @param  duration      Borrowing duration.
      */
     event NewMortgage(
         uint256 indexed mortgageId,
@@ -138,24 +142,28 @@ IERC4906Upgradeable {
 
 
     /* ===== FUNCTION ===== **/
-    /* --- Query --- */
+    /* --- Dependency --- */
     /**
      *          Name              Description
-     *  @return feeReceiver       Fee receiver address.
+     *  @return feeReceiver       `FeeReceiver` contract address.
      */
     function feeReceiver() external view returns (address feeReceiver);
 
+
+    /* --- Query --- */
     /**
      *          Name              Description
-     *  @return totalSupply       Total mortgage tokens supply.
+     *  @return totalSupply       Total supply of mortgage tokens.
      */
     function totalSupply() external view returns (uint256 totalSupply);
 
+
     /**
      *          Name              Description
-     *  @return rate              Fee rate.
+     *  @return rate              Mortgaging fee rate.
      */
     function getFeeRate() external view returns (IRate.Rate memory rate);
+
 
     /**
      *          Name              Description
@@ -166,7 +174,7 @@ IERC4906Upgradeable {
     /**
      *          Name              Description
      *  @param  mortgageId        Mortgage identifier.
-     *  @return mortgage          Information and progress of the mortgage.
+     *  @return mortgage          Configuration and progress of the mortgage.
      */
     function getMortgage(
         uint256 mortgageId
@@ -176,7 +184,7 @@ IERC4906Upgradeable {
     /* --- Command --- */
     /**
      *  @notice Cancel a mortgage.
-     *  @notice Cancel only if the mortgage is in the `Pending` state.
+     *  @notice Cancel only if the mortgage is in `Pending` state.
      * 
      *          Name          Description
      *  @param  mortgageId    Mortgage identifier.
@@ -191,11 +199,11 @@ IERC4906Upgradeable {
 
     /**
      *  @notice Lend a mortgage.
-     *  @notice Lend only if the mortgage is in the `Pending` state.
+     *  @notice Lend only if the mortgage is in `Pending` state.
      * 
      *          Name          Description
      *  @param  mortgageId    Mortgage identifier.
-     *  @return due           Repayment due timestamp.
+     *  @return due           Maturity timestamp.
      */
     function lend(
         uint256 mortgageId
@@ -204,7 +212,7 @@ IERC4906Upgradeable {
 
     /**
      *  @notice Repay a mortgage.
-     *  @notice Repay only if the mortgage is in the `Supplied` state and repayment is not overdue.
+     *  @notice Repay only if the mortgage is in `Supplied` state and not overdue.
      * 
      *          Name          Description
      *  @param  mortgageId    Mortgage identifier.
@@ -216,13 +224,13 @@ IERC4906Upgradeable {
     ) external payable;
 
     /**
-     *  @notice Foreclose a mortgage.
-     *  @notice Foreclose only if the mortgage is in the `Supplied` state and repayment is overdue.
+     *  @notice Foreclose on the collateral of a mortgage.
+     *  @notice Foreclose only if the mortgage is overdue.
      * 
      *          Name          Description
      *  @param  mortgageId    Mortgage identifier.
      * 
-     *  @dev    The collateral is transferred to the mortgage token owner.
+     *  @dev    The collateral is transferred to the mortgage token owner and the token is burned.
      */
     function foreclose(
         uint256 mortgageId
@@ -232,12 +240,12 @@ IERC4906Upgradeable {
     /* --- Safe Command --- */
     /**
      *  @notice Lend a mortgage.
-     *  @notice Lend only if the mortgage is in the `Pending` state.
+     *  @notice Lend only if the mortgage is in `Pending` state.
      * 
      *          Name          Description
      *  @param  mortgageId    Mortgage identifier.
      *  @param  anchor        `principal` of the mortgage.
-     *  @return due           Repayment due timestamp.
+     *  @return due           Maturity timestamp.
      *
      *  @dev    Anchor enforces consistency between this contract and the client-side.
      */
@@ -248,12 +256,13 @@ IERC4906Upgradeable {
 
     /**
      *  @notice Repay a mortgage.
-     *  @notice Repay only if the mortgage is in the `Supplied` state and repayment is not overdue.
+     *  @notice Repay only if the mortgage is in `Supplied` state and not overdue.
      * 
      *          Name          Description
      *  @param  mortgageId    Mortgage identifier.
      *  @param  anchor        `repayment` of the mortgage.
      *
+     *  @dev    Permission: Borrower of the mortgage.
      *  @dev    Anchor enforces consistency between this contract and the client-side.
      */
     function safeRepay(

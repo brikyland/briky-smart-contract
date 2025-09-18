@@ -105,7 +105,7 @@ ReentrancyGuardUpgradeable {
      *          Name        Description
      *  @param  _offerId    Offer identifier.
      * 
-     *  @return Information and progress of the offer.
+     *  @return Configuration and progress of the offer.
      */
     function getOffer(
         uint256 _offerId
@@ -128,7 +128,8 @@ ReentrancyGuardUpgradeable {
      * 
      *  @return New offer identifier.
      * 
-     *  @dev    Must set approval for this contract to transfer asset tokens of the seller before listing.
+     *  @dev    Approval must be granted for this contract to transfer collateral before borrowing. A mortgage can only be
+     *          lent while approval remains active.
      */
     function list(
         uint256 _tokenId,

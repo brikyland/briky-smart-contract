@@ -257,7 +257,7 @@ ReentrancyGuardUpgradeable {
      *          Name            Description
      *  @param  _requestId      Request identifier.
      *
-     *  @return Information and progress of the request.
+     *  @return Configuration and progress of the request.
      *
      *  @dev    Phases of a request:
      *          - Pending: block.timestamp < agenda.saleStartsAt

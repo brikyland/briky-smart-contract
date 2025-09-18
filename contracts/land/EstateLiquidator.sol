@@ -139,7 +139,7 @@ ReentrancyGuardUpgradeable {
      *          Name            Description
      *  @param  _requestId      Request identifier.
      *
-     *  @return Information and progress of the extraction request.
+     *  @return Configuration and progress of the extraction request.
      */
     function getRequest(
         uint256 _requestId

@@ -110,7 +110,7 @@ ICommon {
     /**
      *          Name            Description
      *  @param  offerId         Offer identifier.
-     *  @return offer           Information and progress of the offer.
+     *  @return offer           Configuration and progress of the offer.
      */
     function getOffer(
         uint256 offerId
@@ -129,7 +129,8 @@ ICommon {
      *  @param  isDivisible      Whether the offer can be sold partially.
      *  @return offerId          New offer identifier.
      *
-     *  @dev    Must set approval for this contract to transfer asset tokens of the seller before listing.
+     *  @dev    Approval must be granted for this contract to transfer collateral before borrowing. A mortgage can only be
+     *          lent while approval remains active.
      */
     function list(
         uint256 tokenId,

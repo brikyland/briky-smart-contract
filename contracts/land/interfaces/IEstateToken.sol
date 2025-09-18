@@ -237,6 +237,7 @@ IAssetToken {
         bytes32 zone
     ) external view returns (Rate memory royaltyRate);
 
+
     /**
      *          Name            Description
      *  @param  account         EVM address.
@@ -277,6 +278,7 @@ IAssetToken {
         bytes32 zone,
         address account
     ) external view returns (bool isCustodian);
+
 
     /* --- Command --- */
     /**

@@ -75,7 +75,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _feeReceiver    `FeeReceiver` contract address.
      *  @param  _name           Token name.
      *  @param  _symbol         Token symbol.
-     *  @param  _uri            Token base URI.
+     *  @param  _uri            Base URI.
      *  @param  _royaltyRate    Royalty rate.
      */
     function initialize(

@@ -217,7 +217,7 @@ ReentrancyGuardUpgradeable {
      *          Name            Description
      *  @param  _launchId       Launch identifier.
      *
-     *  @return launch          Information and progress of the launch.
+     *  @return launch          Configuration and progress of the launch.
      */
     function getLaunch(
         uint256 _launchId
@@ -231,7 +231,7 @@ ReentrancyGuardUpgradeable {
      *          Name            Description
      *  @param  _roundId        Round identifier.
      *
-     *  @return round           Information and progress of the round.
+     *  @return round           Configuration and progress of the round.
      */
     function getRound(
         uint256 _roundId

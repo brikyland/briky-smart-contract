@@ -9,10 +9,6 @@ import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/se
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import {ERC721PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721PausableUpgradeable.sol";
 
-/// contracts/common/utilities/
-import {CurrencyHandler} from "../../common/utilities/CurrencyHandler.sol";
-import {Formula} from "../../common/utilities/Formula.sol";
-
 /// contracts/common/constants/
 import {CommonConstant} from "../../common/constants/CommonConstant.sol";
 
@@ -21,7 +17,9 @@ import {IAdmin} from "../../common/interfaces/IAdmin.sol";
 
 /// contracts/common/utilities/
 import {Administrable} from "../../common/utilities/Administrable.sol";
+import {CurrencyHandler} from "../../common/utilities/CurrencyHandler.sol";
 import {Discountable} from "../../common/utilities/Discountable.sol";
+import {Formula} from "../../common/utilities/Formula.sol";
 import {Pausable} from "../../common/utilities/Pausable.sol";
 
 /// contracts/lend/interfaces/
@@ -33,7 +31,12 @@ import {MortgageTokenStorage} from "../storages/MortgageTokenStorage.sol";
 /**
  *  @author Briky Team
  *
- *  @notice A `MortgageToken` contract is an ERC-721 contract that facilitates mortgage-based borrowing and issues tokens representing mortgages.
+ *  @notice A `MortgageToken` contract facilitates peer-to-peer lending secured by crypto collateral. Each provided mortgage
+ *          is tokenized into an ERC-721 token, whose owner has the right to receive repayments from the borrower or foreclose
+ *          on the collateral from the contract once overdue.
+ * 
+ *  @dev    ERC-20 tokens are identified by their contract addresses.
+ *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
  */
 abstract contract MortgageToken is
 MortgageTokenStorage,
@@ -73,15 +76,15 @@ ReentrancyGuardUpgradeable {
 
     /* --- Initialization --- */
     /**
-     *  @notice Helper function to initialize the contract.
+     *  @notice Initialize `MortgageToken`.
      *
      *          Name            Description
      *  @param  _admin          `Admin` contract address.
      *  @param  _feeReceiver    `FeeReceiver` contract address.
      *  @param  _name           Token name.
      *  @param  _symbol         Token symbol.
-     *  @param  _uri            Token base URI.
-     *  @param  _feeRate        Fee rate.
+     *  @param  _uri            Base URI.
+     *  @param  _feeRate        Mortgaging fee rate.
      */
     function __MortgageToken_init(
         address _admin,
@@ -140,10 +143,10 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Update the fee rate.
+     *  @notice Update the mortgaging fee rate.
      *
      *          Name            Description
-     *  @param  _feeRate        New fee rate.
+     *  @param  _feeRate        New mortgaging fee rate.
      *  @param  _signatures     Array of admin signatures.
      * 
      *  @dev    Administrative operator.
@@ -170,7 +173,7 @@ ReentrancyGuardUpgradeable {
 
     /* --- Query --- */
     /**
-     *  @return Fee rate.
+     *  @return Mortgaging fee rate.
      */
     function getFeeRate() external view returns (Rate memory) {
         return Rate(feeRate, CommonConstant.RATE_DECIMALS);
@@ -180,7 +183,7 @@ ReentrancyGuardUpgradeable {
      *          Name           Description
      *  @param  _mortgageId    Mortgage identifier.
      * 
-     *  @return Information and progress of the mortgage.
+     *  @return Configuration and progress of the mortgage.
      */
     function getMortgage(
         uint256 _mortgageId
@@ -194,8 +197,8 @@ ReentrancyGuardUpgradeable {
     /* --- Command --- */
     /**
      *  @notice Cancel a mortgage.
-     *  @notice Cancel only if the mortgage is in the `Pending` state.
-     *
+     *  @notice Cancel only if the mortgage is in `Pending` state.
+     * 
      *          Name           Description
      *  @param  _mortgageId    Mortgage identifier.
      * 
@@ -207,7 +210,6 @@ ReentrancyGuardUpgradeable {
         uint256 _mortgageId
     ) external virtual
     whenNotPaused
-    nonReentrant
     validMortgage(_mortgageId) {
         Mortgage storage mortgage = mortgages[_mortgageId];
         if (msg.sender != mortgage.borrower && !IAdmin(admin).isManager(msg.sender)) {
@@ -224,12 +226,12 @@ ReentrancyGuardUpgradeable {
 
     /**
      *  @notice Lend a mortgage.
-     *  @notice Lend only if the mortgage is in the `Pending` state.
-     *
+     *  @notice Lend only if the mortgage is in `Pending` state.
+     * 
      *          Name           Description
      *  @param  _mortgageId    Mortgage identifier.
      * 
-     *  @return Repayment due timestamp.
+     *  @return Maturity timestamp.
      */
     function lend(
         uint256 _mortgageId
@@ -241,13 +243,13 @@ ReentrancyGuardUpgradeable {
 
     /**
      *  @notice Lend a mortgage.
-     *  @notice Lend only if the mortgage is in the `Pending` state.
+     *  @notice Lend only if the mortgage is in `Pending` state.
      *
      *          Name           Description
      *  @param  _mortgageId    Mortgage identifier.
      *  @param  _anchor        `principal` of the mortgage.
      * 
-     *  @return Repayment due timestamp.
+     *  @return Maturity timestamp.
      * 
      *  @dev    Anchor enforces consistency between this contract and the client-side.
      */
@@ -266,7 +268,7 @@ ReentrancyGuardUpgradeable {
 
     /**
      *  @notice Repay a mortgage.
-     *  @notice Repay only if the mortgage is in the `Supplied` state and repayment is not overdue.
+     *  @notice Repay only if the mortgage is in `Supplied` state and not overdue.
      *
      *          Name           Description
      *  @param  _mortgageId    Mortgage identifier.
@@ -283,14 +285,13 @@ ReentrancyGuardUpgradeable {
 
     /**
      *  @notice Repay a mortgage.
-     *  @notice Repay only if the mortgage is in the `Supplied` state and repayment is not overdue.
+     *  @notice Repay only if the mortgage is in `Supplied` state and not overdue.
      *
      *          Name           Description
      *  @param  _mortgageId    Mortgage identifier.
      *  @param  _anchor        `repayment` of the mortgage.
      * 
      *  @dev    Permission: Borrower of the mortgage.
-     * 
      *  @dev    Anchor enforces consistency between this contract and the client-side.
      */
     function safeRepay(
@@ -306,8 +307,8 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Foreclose a mortgage.
-     *  @notice Foreclose only if the mortgage is in the `Supplied` state and repayment is overdue.
+     *  @notice Foreclose on the collateral of a mortgage.
+     *  @notice Foreclose only if the mortgage is overdue.
      *
      *          Name           Description
      *  @param  _mortgageId    Mortgage identifier.
@@ -330,6 +331,7 @@ ReentrancyGuardUpgradeable {
 
         mortgage.state = MortgageState.Foreclosed;
 
+        /// @dev    The corresponding token is burned when the mortgage is foreclosed.
         _burn(_mortgageId);
 
         _transferCollateral(
@@ -408,12 +410,13 @@ ReentrancyGuardUpgradeable {
      *          Name           Description
      *  @param  _principal     Principal value.
      *  @param  _repayment     Repayment value.
-     *  @param  _currency      Loan currency address.
-     *  @param  _duration      Repayment duration.
+     *  @param  _currency      Currency address.
+     *  @param  _duration      Borrowing duration.
      * 
      *  @return New mortgage identifier.
      * 
-     *  @dev    Must set approval for this contract to transfer collateral tokens of the borrower before listing.
+     *  @dev    Approval must be granted for this contract to transfer collateral before borrowing. A mortgage can only be
+     *          lent while approval remains active.
      */
     function _borrow(
         uint256 _principal,
@@ -461,7 +464,7 @@ ReentrancyGuardUpgradeable {
 
     /**
      *  @notice Lend a mortgage.
-     *  @notice Lend only if the mortgage is in the `Pending` state.
+     *  @notice Lend only if the mortgage is in `Pending` state.
      *
      *          Name           Description
      *  @param  _mortgageId    Mortgage identifier.
@@ -483,7 +486,10 @@ ReentrancyGuardUpgradeable {
         address currency = mortgage.currency;
         uint256 principal = mortgage.principal;
 
-        CurrencyHandler.receiveCurrency(currency, principal);
+        CurrencyHandler.receiveCurrency(
+            currency,
+            principal
+        );
         CurrencyHandler.sendCurrency(
             currency,
             mortgage.borrower,
@@ -493,10 +499,12 @@ ReentrancyGuardUpgradeable {
         _chargeFee(_mortgageId);
 
         uint40 due = mortgage.due + uint40(block.timestamp);
+        /// @dev    After being lent, `due` is set to the maturity timestamp.
         mortgage.due = due;
         mortgage.lender = msg.sender;
         mortgage.state = MortgageState.Supplied;
 
+        /// @dev    New token is minted when the mortgage is lent.
         _mint(msg.sender, _mortgageId);
 
         emit NewToken(
@@ -510,7 +518,7 @@ ReentrancyGuardUpgradeable {
 
     /**
      *  @notice Repay a mortgage.
-     *  @notice Repay only if the mortgage is in the `Supplied` state and repayment is not overdue.
+     *  @notice Repay only if the mortgage is in `Supplied` state and not overdue.
      *
      *          Name           Description
      *  @param  _mortgageId    Mortgage identifier.
@@ -537,6 +545,7 @@ ReentrancyGuardUpgradeable {
 
         mortgage.state = MortgageState.Repaid;
 
+        /// @dev    The corresponding token is burned when the mortgage is repaid.
         _burn(_mortgageId);
 
         CurrencyHandler.forwardCurrency(
@@ -555,7 +564,7 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Charge fee.
+     *  @notice Charge mortgaging fee.
      *
      *          Name           Description
      *  @param  _mortgageId    Mortgage identifier.
@@ -569,7 +578,7 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Transfer collateral of a mortgage.
+     *  @notice Transfer the collateral of a mortgage.
      *
      *          Name           Description
      *  @param  _mortgageId    Mortgage identifier.

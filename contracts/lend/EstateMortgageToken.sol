@@ -30,8 +30,12 @@ import {EstateMortgageTokenStorage} from "./storages/EstateMortgageTokenStorage.
 /**
  *  @author Briky Team
  * 
- *
- *  @notice A `EstateMortgageToken` contract is an ERC-721 contract that facilitates mortgage-based borrowing backed by estate token collaterals and issues tokens representing mortgages.
+ *  @notice A `IEstateMortgageToken` contract facilitates peer-to-peer lending secured by estate tokens as collateral. Each provided mortgage
+ *          is tokenized into an ERC-721 token, whose owner has the right to receive repayments from the borrower or foreclose
+ *          on the collateral from the contract once overdue.
+ * 
+ *  @dev    ERC-20 tokens are identified by their contract addresses.
+ *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
  */
 contract EstateMortgageToken is
 EstateMortgageTokenStorage,
@@ -53,8 +57,8 @@ CommissionDispatchable {
      *  @param  _feeReceiver   `FeeReceiver` contract address.
      *  @param  _name          Token name.
      *  @param  _symbol        Token symbol.
-     *  @param  _uri           Token base URI.
-     *  @param  _feeRate       Fee rate.
+     *  @param  _uri           Base URI.
+     *  @param  _feeRate       Mortgaging fee rate.
      */
     function initialize(
         address _admin,
@@ -109,17 +113,21 @@ CommissionDispatchable {
 
     /* --- Command --- */
     /**
-     *  @notice List a new mortgage backed by collateral from estate tokens.
+     *  @notice List a new mortgage offer with estate tokens as collateral.
      *
      *          Name          Description
      *  @param  _estateId     Estate identifier.
-     *  @param  _amount       Amount of estate tokens pledged as collateral.
+     *  @param  _amount       Collateral amount.
      *  @param  _principal    Principal value.
      *  @param  _repayment    Repayment value.
-     *  @param  _currency     Loan currency address.
-     *  @param  _duration     Repayment duration.
+     *  @param  _currency     Currency address.
+     *  @param  _duration     Borrowing duration.
      * 
      *  @return mortgageId    New mortgage identifier.
+     * 
+     *  @dev    Approval must be granted for this contract to transfer collateral before borrowing. A mortgage can only be
+     *          lent while approval remains active.
+     *  @dev    Collateral will be secured in the contract until the mortgage is either repaid, foreclosed, or cancelled.
      */
     function borrow(
         uint256 _estateId,
@@ -196,7 +204,7 @@ CommissionDispatchable {
      *  @param  _price          Price.
      * 
      *  @return address         Royalty receiver address.
-     *  @return uint256         Royalty amount.
+     *  @return uint256         Royalty.
      */
     function royaltyInfo(
         uint256 _tokenId,
@@ -210,7 +218,7 @@ CommissionDispatchable {
 
     /* --- Helper --- */
     /**
-     *  @notice Transfer collateral of a mortgage.
+     *  @notice Transfer the collateral of a mortgage.
      *
      *          Name           Description
      *  @param  _mortgageId    Mortgage identifier.
@@ -232,7 +240,7 @@ CommissionDispatchable {
     }
 
     /**
-     *  @notice Charge fee.
+     *  @notice Charge mortgaging fee.
      *
      *          Name           Description
      *  @param  _mortgageId    Mortgage identifier.

@@ -116,7 +116,7 @@ ICommon {
     /**
      *          Name            Description
      *  @param  offerId         Offer identifier.
-     *  @return offer           Information and progress of the offer.
+     *  @return offer           Configuration and progress of the offer.
      */
     function getOffer(
         uint256 offerId
@@ -134,7 +134,8 @@ ICommon {
      *  @return offerId       New offer identifier.
      * 
      *  @dev    The collection must support interface `IERC721Upgradeable`.
-     *  @dev    Must set approval for this contract to transfer the ERC721 token of the seller before listing.
+     *  @dev    Approval must be granted for this contract to transfer collateral before borrowing. A mortgage can only be
+     *          lent while approval remains active.
      */
     function list(
         address collection,

@@ -249,7 +249,7 @@ IValidatable {
     /**
      *          Name            Description
      *  @param  proposalId      Proposal identifier.
-     *  @return proposal        Information and progress of the proposal.
+     *  @return proposal        Configuration and progress of the proposal.
      */
     function getProposal(
         uint256 proposalId

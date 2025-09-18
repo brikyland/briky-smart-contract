@@ -78,7 +78,7 @@ ICommon {
     /**
      *          Name            Description
      *  @param  dividendId      Dividend identifier.
-     *  @return dividend        Information and progress of the dividend package.
+     *  @return dividend        Configuration and progress of the dividend package.
      */
     function getDividend(
         uint256 dividendId

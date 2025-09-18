@@ -68,7 +68,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _admin          `Admin` contract address.
      *  @param  _name           Token name.
      *  @param  _symbol         Token symbol.
-     *  @param  _uri            Token base URI.
+     *  @param  _uri            Base URI.
      *  @param  _fee            Minting fee.
      *  @param  _royaltyRate    Royalty rate.
      */

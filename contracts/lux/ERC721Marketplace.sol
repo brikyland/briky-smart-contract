@@ -170,7 +170,7 @@ ReentrancyGuardUpgradeable {
      *          Name        Description
      *  @param  _offerId    Offer identifier.
      * 
-     *  @return Information and progress of the offer.
+     *  @return Configuration and progress of the offer.
      */
     function getOffer(
         uint256 _offerId
@@ -193,7 +193,8 @@ ReentrancyGuardUpgradeable {
      *  @return New offer identifier.
      * 
      *  @dev    The collection must support interface `IERC721Upgradeable`.
-     *  @dev    Must set approval for this contract to transfer the ERC721 token of the seller before listing.
+     *  @dev    Approval must be granted for this contract to transfer collateral before borrowing. A mortgage can only be
+     *          lent while approval remains active.     
      */
     function list(
         address _collection,

@@ -284,7 +284,7 @@ IEstateTokenizer {
 
     /**
      *          Name            Description
-     *  @return request         Information and progress of the request.
+     *  @return request         Configuration and progress of the request.
      *
      *  @dev    Phases of a request:
      *          - Pending: block.timestamp < agenda.saleStartsAt
