@@ -293,8 +293,8 @@ IEstateTokenizer {
      *          - Formalities Finalization: agenda.publicSaleEndsAt
      *                                          <= block.timestamp
      *                                          < agenda.publicSaleEndsAt + EstateForgerConstant.SALE_CONFIRMATION_TIME_LIMIT
+     *          - Tokenized: agenda.confirmAt > 0
      *          - Cancelled: quota.totalQuantity = 0
-     *          - Tokenized: estate.estateId != 0
      */
     function getRequest(
         uint256 requestId

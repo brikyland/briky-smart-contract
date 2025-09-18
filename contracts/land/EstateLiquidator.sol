@@ -35,7 +35,13 @@ import {CommissionDispatchable} from "./utilities/CommissionDispatchable.sol";
 /**
  *  @author Briky Team
  *
- *  @notice TODO: The `EstateLiquidator` contract facilitates the extraction of estates from `EstateToken`.
+ *  @notice The `EstateLiquidator` contract facilitates the extraction of real estate through approved liquidations. Official
+ *          disclosed accounts, who is legally qualified to own the estate, can offer to buy the entire asset with a specific
+ *          value and the deal is voted to proceed. If the deal is approved, the associated custodian is grant a limited time
+ *          window to complete the required administrative procedures in compliance with local regulations. Liquidation is
+ *          finalized only if the custodian fulfills these obligations within the allotted timeframe. In that case, the
+ *          proceeds are distributed to holders as the ultimate dividend, and then the corresponding class of estate token will
+ *          be deprecated permanently.
  *
  *  @dev    Implementation involves server-side support.
  *  @dev    ERC-20 tokens are identified by their contract addresses.
@@ -145,20 +151,27 @@ ReentrancyGuardUpgradeable {
 
     /* --- Command --- */
     /**
-     *  @notice TODO: Create estate extraction request by submitting a proposal to `GovernanceHub`
+     *  @notice Request an estate to be extracted.
+     *  @notice To prevent deceptive manipulation, the approval quorum to liquidate is initially set at 100% during the first
+     *          year of estate and reduced to 75% thereafter.
+     *  @notice The message sender must provide sufficient liquidation value and proposing fee for `GovernanceHub`.
      *
      *          Name            Description
-     *  @param  _estateId       Estate identifier to be extracted.
+     *  @param  _estateId       Estate identifier.
      *  @param  _buyer          Buyer address.
-     *  @param  _value          Sale value.
-     *  @param  _currency       Sale currency address.
-     *  @param  _feeRate        Fraction of the sold value charged as fee.
+     *  @param  _value          Liquidation value.
+     *  @param  _currency       Liquidation currency address.
+     *  @param  _feeRate        Fraction of the liquidation value charged as fee.
      *  @param  _uuid           Checksum of request context.
      *  @param  _validation     Validation package from the validator.
      *
      *  @return New request identifier.
      *
-     *  @dev    Permission: Managers active in the zone of the estate.
+     *  @dev    Permission: Executives active in the zone of the estate.
+     *  @dev    Through the validation mechanism, the server-side determines `uuid` and `admissionExpiry` based on the specific
+     *          supported type of proposal and its context. Operators are also required to be pre-registered on the server-side
+     *          to ensure proper assignments.
+     *  @dev    `uuid`, `admissionExpiry`, and `validation` are used for proposing in `GovernanceHub`.
      */
     function requestExtraction(
         uint256 _estateId,
@@ -192,13 +205,18 @@ ReentrancyGuardUpgradeable {
 
         IGovernanceHub governanceHubContract = IGovernanceHub(governanceHub);
         uint256 fee = governanceHubContract.fee();
+        /// @dev    Collect the liquidation value for deposit and the proposing fee for proposal.
         if (_currency == address(0)) {
             CurrencyHandler.receiveNative(_value + fee);
         } else {
             CurrencyHandler.receiveNative(fee);
-            CurrencyHandler.receiveERC20(_currency, _value);
+            CurrencyHandler.receiveERC20(
+                _currency,
+                _value
+            );
         }
-        
+
+        /// @dev    Submit a proposal of liquidation to the governance hub.
         uint256 proposalId = governanceHubContract.propose{
             value: governanceHubContract.fee()
         }(
@@ -207,8 +225,11 @@ ReentrancyGuardUpgradeable {
             _buyer,
             _uuid,
             ProposalRule.ApprovalBeyondQuorum,
-            estateTokenContract.getEstate(_estateId).tokenizeAt + EstateLiquidatorConstant.UNANIMOUS_GUARD_DURATION > block.timestamp
+            estateTokenContract.getEstate(_estateId).tokenizeAt + EstateLiquidatorConstant.UNANIMOUS_GUARD_DURATION
+                > block.timestamp
+                /// @dev The approval quorum is 100% in the first year.
                 ? EstateLiquidatorConstant.UNANIMOUS_QUORUM_RATE
+                /// @dev The approval quorum is 75% thereafter.
                 : EstateLiquidatorConstant.MAJORITY_QUORUM_RATE,
             uint40(EstateLiquidatorConstant.VOTE_DURATION),
             _admissionExpiry,
@@ -241,12 +262,13 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice TODO: Conclude an extraction request
+     *  @notice Conclude a request according to the result of the proposal.
+     *  @notice The class of estate token to be extract will be deprecated.
      *
      *          Name            Description
      *  @param  _requestId      Request identifier.
      *
-     *  @return Whether the extraction was successful.
+     *  @return Whether the extraction has succeeded.
      */
     function conclude(uint256 _requestId)
     external
@@ -275,6 +297,7 @@ ReentrancyGuardUpgradeable {
                 currency
             );
 
+            /// @dev    Distribute the liquidation value minus extracting fee to holders as the ultimate dividend.
             if (currency == address(0)) {
                 IDividendHub(dividendHub).issueDividend{value: value - fee}(
                     estateToken,
@@ -285,7 +308,11 @@ ReentrancyGuardUpgradeable {
                 );
             } else {
                 address dividendHubAddress = dividendHub;
-                CurrencyHandler.allowERC20(currency, dividendHubAddress, value - fee);
+                CurrencyHandler.allowERC20(
+                    currency,
+                    dividendHubAddress,
+                    value - fee
+                );
                 IDividendHub(dividendHubAddress).issueDividend(
                     estateToken,
                     estateId,
@@ -297,6 +324,7 @@ ReentrancyGuardUpgradeable {
 
             estateTokenContract.extractEstate(estateId, _requestId);
 
+            /// @dev    The ultimate commission.
             uint256 commission = _dispatchCommission(
                 estateId,
                 fee,
@@ -304,9 +332,16 @@ ReentrancyGuardUpgradeable {
             );
 
             if (currency == address(0)) {
-                CurrencyHandler.sendNative(feeReceiver, fee - commission);
+                CurrencyHandler.sendNative(
+                    feeReceiver,
+                    fee - commission
+                );
             } else {
-                CurrencyHandler.sendCurrency(currency, feeReceiver, fee - commission);
+                CurrencyHandler.sendCurrency(
+                    currency,
+                    feeReceiver,
+                    fee - commission
+                );
             }
 
             emit RequestApproval(_requestId, fee);
@@ -318,6 +353,7 @@ ReentrancyGuardUpgradeable {
             || state == ProposalState.Rejected) {
             request.estateId = 0;
 
+            /// @dev    Refund the liquidation value to the buyer.
             CurrencyHandler.sendCurrency(
                 request.currency,
                 request.buyer,

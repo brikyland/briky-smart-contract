@@ -86,7 +86,7 @@ ReentrancyGuardUpgradeable {
      *          Name            Description
      *  @param  _receivers      Array of receiver addresses.
      *  @param  _amounts        Array of distributed amount, respectively to each receiver.
-     *  @param  _data           Note or description for the distribution operation.
+     *  @param  _note           Note or description for the distribution operation.
      *  @param  _signatures     Array of admin signatures.
      *
      *  @dev    Administrative operator.
@@ -97,7 +97,7 @@ ReentrancyGuardUpgradeable {
     function distributeToken(
         address[] calldata _receivers,
         uint256[] calldata _amounts,
-        string calldata _data,
+        string calldata _note,
         bytes[] calldata _signatures
     ) external
     nonReentrant {
@@ -107,7 +107,7 @@ ReentrancyGuardUpgradeable {
                 "distributeToken",
                 _receivers,
                 _amounts,
-                _data
+                _note
             ),
             _signatures
         );

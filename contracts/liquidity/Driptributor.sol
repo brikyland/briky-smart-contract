@@ -142,8 +142,8 @@ ReentrancyGuardUpgradeable {
      *          Name                Description
      *  @param  _receivers          Array of receiver addresses, respectively to each distribution.
      *  @param  _amounts            Array of distributed amounts, respectively to each distribution.
-     *  @param  _vestingDuration    Array of vesting durations, respectively to each distribution.
-     *  @param  _data               Array of notes, respectively to each distribution.
+     *  @param  _durations          Array of vesting durations, respectively to each distribution.
+     *  @param  _notes              Array of notes, respectively to each distribution.
      *  @param  _signatures         Array of admin signatures.
      * 
      *  @dev    Administrative operator.
@@ -151,8 +151,8 @@ ReentrancyGuardUpgradeable {
     function distributeTokensWithDuration(
         address[] calldata _receivers,
         uint256[] calldata _amounts,
-        uint40[] calldata _vestingDuration,
-        string[] calldata _data,
+        uint40[] calldata _durations,
+        string[] calldata _notes,
         bytes[] calldata _signatures
     ) external
     nonReentrant {
@@ -162,14 +162,14 @@ ReentrancyGuardUpgradeable {
                 "distributeTokensWithDuration",
                 _receivers,
                 _amounts,
-                _vestingDuration,
-                _data
+                _durations,
+                _notes
             ),
             _signatures
         );
         if (_receivers.length != _amounts.length
-            || _receivers.length != _vestingDuration.length
-            || _receivers.length != _data.length) {
+            || _receivers.length != _durations.length
+            || _receivers.length != _notes.length) {
             revert InvalidInput();
         }
 
@@ -185,7 +185,7 @@ ReentrancyGuardUpgradeable {
                     0,
                     _receivers[i],
                     uint40(block.timestamp),
-                    _vestingDuration[i],
+                    _durations[i],
                     false
                 );
 
@@ -193,9 +193,9 @@ ReentrancyGuardUpgradeable {
                     distributionId,
                     _receivers[i],
                     uint40(block.timestamp),
-                    _vestingDuration[i],
+                    _durations[i],
                     _amounts[i],
-                    _data[i]
+                    _notes[i]
                 );
             }
         }
@@ -208,7 +208,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _receivers      Array of receiver addresses, respectively to each distribution.
      *  @param  _amounts        Array of distributed amounts, respectively to each distribution.
      *  @param  _endAts         Array of vesting end timestamps, respectively to each distribution.
-     *  @param  _data           Array of notes, respectively to each distribution.
+     *  @param  _notes          Array of notes, respectively to each distribution.
      *  @param  _signatures     Array of admin signatures.
      * 
      *  @dev    Administrative operator.
@@ -217,7 +217,7 @@ ReentrancyGuardUpgradeable {
         address[] calldata _receivers,
         uint256[] calldata _amounts,
         uint40[] calldata _endAts,
-        string[] calldata _data,
+        string[] calldata _notes,
         bytes[] calldata _signatures
     ) external
     nonReentrant {
@@ -228,13 +228,13 @@ ReentrancyGuardUpgradeable {
                 _receivers,
                 _amounts,
                 _endAts,
-                _data
+                _notes
             ),
             _signatures
         );
         if (_receivers.length != _amounts.length
             || _receivers.length != _endAts.length
-            || _receivers.length != _data.length) {
+            || _receivers.length != _notes.length) {
             revert InvalidInput();
         }
 
@@ -263,7 +263,7 @@ ReentrancyGuardUpgradeable {
                     uint40(block.timestamp),
                     _endAts[i] - uint40(block.timestamp),
                     _amounts[i],
-                    _data[i]
+                    _notes[i]
                 );
             }
         }

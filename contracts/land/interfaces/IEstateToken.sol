@@ -157,11 +157,11 @@ IAssetToken {
      *
      *          Name            Description
      *  @param  estateId        Estate identifier.
-     *  @param  data            Deprecation note.
+     *  @param  note            Deprecation note.
      */
     event EstateDeprecation(
         uint256 indexed estateId,
-        string data
+        string note
     );
 
     /**
@@ -348,7 +348,7 @@ IAssetToken {
      *
      *          Name        Description
      *  @param  estateId    Estate identifier.
-     *  @param  data        Deprecation note.
+     *  @param  note        Deprecation note.
      *  @param  anchor      Keccak256 hash of `uri` of the estate.
      *
      *  @notice Permission: Managers active in the zone of the estate.
@@ -356,7 +356,7 @@ IAssetToken {
      */
     function safeDeprecateEstate(
         uint256 estateId,
-        string calldata data,
+        string calldata note,
         bytes32 anchor
     ) external;
 

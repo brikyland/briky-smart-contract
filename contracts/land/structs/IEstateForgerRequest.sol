@@ -198,8 +198,8 @@ interface IEstateForgerRequest is IValidation {
      *          - Formalities Finalization: agenda.publicSaleEndsAt
      *                                          <= block.timestamp
      *                                          < agenda.publicSaleEndsAt + EstateForgerConstant.SALE_CONFIRMATION_TIME_LIMIT
+     *          - Tokenized: agenda.confirmAt > 0
      *          - Cancelled: quote.totalSupply = 0
-     *          - Tokenized: estate.estateId != 0
      */
     struct EstateForgerRequest {
         /// @notice Estate information to be tokenized.
