@@ -686,18 +686,27 @@ ReentrancyGuardUpgradeable {
      *
      *          Name            Description
      *  @param  _projectId      Project identifier.
-     *
+     *  @param  _note           Deprecation note.
+     *  @param  _anchor         Keccak256 hash of `uri` of the project.
+     * 
      *  @dev    Permission: Managers active in the zone of the project.
+     *  @dev    Anchor enforces consistency between this contract and the client-side.
      */
-    function deprecateProject(
-        uint256 _projectId
+    function safeDeprecateProject(
+        uint256 _projectId,
+        string calldata _note,
+        bytes32 _anchor
     ) external
     whenNotPaused
     validProject(_projectId)
     onlyManager
     onlyActiveInZoneOf(_projectId) {
+        if (_anchor != keccak256(bytes(uri(_projectId)))) {
+            revert BadAnchor();
+        }
+
         projects[_projectId].deprecateAt = uint40(block.timestamp);
-        emit ProjectDeprecation(_projectId);
+        emit ProjectDeprecation(_projectId, _note);
     }
 
     /**
@@ -707,18 +716,24 @@ ReentrancyGuardUpgradeable {
      *  @param  _projectId      Project identifier.
      *  @param  _uri            URI of project metadata.
      *  @param  _validation     Validation package from the validator.
+     *  @param  _anchor         Keccak256 hash of `uri` of the project.
      *
      *  @dev    Permission: Managers active in the zone of the project.
      */
-    function updateProjectURI(
+    function safeUpdateProjectURI(
         uint256 _projectId,
         string calldata _uri,
-        Validation calldata _validation
+        Validation calldata _validation,
+        bytes32 _anchor
     ) external
     whenNotPaused
     validProject(_projectId)
     onlyManager
     onlyActiveInZoneOf(_projectId) {
+        if (_anchor != keccak256(bytes(uri(_projectId)))) {
+            revert BadAnchor();
+        }
+
         _validate(
             abi.encode(_projectId, _uri),
             _validation
@@ -734,15 +749,18 @@ ReentrancyGuardUpgradeable {
      *  @param  _projectId      Project identifier.
      *  @param  _custodian      Custodian address for the estate.
      *  @param  _broker         Broker address for the estate.
+     *  @param  _anchor         Keccak256 hash of `uri` of the project.
      *
      *  @return estateId        Estate token identifier created from tokenization.
      *
      *  @dev    Permission: Managers active in the zone of the project.
+     *  @dev    Anchor enforces consistency between this contract and the client-side.
      */
-    function tokenizeProject(
+    function safeTokenizeProject(
         uint256 _projectId,
         address _custodian,
-        address _broker
+        address _broker,
+        bytes32 _anchor
     ) external
     whenNotPaused
     nonReentrant
@@ -750,6 +768,10 @@ ReentrancyGuardUpgradeable {
     onlyManager
     onlyActiveInZoneOf(_projectId)
     returns (uint256) {
+        if (_anchor != keccak256(bytes(uri(_projectId)))) {
+            revert BadAnchor();
+        }
+
         Project storage project = projects[_projectId];
         bytes32 zone = project.zone;
 

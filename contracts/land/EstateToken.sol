@@ -569,6 +569,7 @@ Validatable {
     ) returns (bool) {
         return _interfaceId == type(IGovernor).interfaceId
         || _interfaceId == type(IERC2981Upgradeable).interfaceId
+        || _interfaceId == type(IRoyaltyRateProposer).interfaceId
         || ERC1155Upgradeable.supportsInterface(_interfaceId)
             || super.supportsInterface(_interfaceId);
     }

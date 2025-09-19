@@ -958,6 +958,7 @@ ReentrancyGuardUpgradeable {
             }
         }
 
+        // TODO: Is this still needed?
         emit LaunchRoundTokenWithdrawal(
             roundId,
             msg.sender,
@@ -966,6 +967,7 @@ ReentrancyGuardUpgradeable {
 
         emit ProjectTokenWithdrawal(
             _launchId,
+            roundId,
             msg.sender,
             amount
         );

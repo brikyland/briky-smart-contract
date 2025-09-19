@@ -177,9 +177,17 @@ IProjectLaunchpad {
         PrestigePadRoundInput round
     );
 
+    /**
+     *  @notice TODO: Emitted when a round in a launch is withdrawn.
+     *
+     *          Name        Description
+     *  @param  roundId     Round identifier.
+     *  @param  withdrawer  Withdrawer address.
+     *  @param  amount      Withdrawn amount.
+     */
     event LaunchRoundTokenWithdrawal(
         uint256 indexed roundId,
-        uint256 indexed withdrawer,
+        address indexed withdrawer,
         uint256 amount
     );
 
