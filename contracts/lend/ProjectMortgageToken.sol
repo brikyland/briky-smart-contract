@@ -25,7 +25,13 @@ import {MortgageToken} from "./utilities/MortgageToken.sol";
 /**
  *  @author Briky Team
  *
- *  @notice A `ProjectMortgageToken` contract is an ERC-721 contract that facilitates mortgage-based borrowing backed by project token collaterals and issues tokens representing mortgages.
+ *  @notice Interface for contract `IProjectMortgageToken`.
+ *  @notice A `IProjectMortgageToken` contract facilitates peer-to-peer lending secured by project tokens as collateral. Each provided mortgage
+ *          is tokenized into an ERC-721 token, whose owner has the right to receive repayments from the borrower or foreclose
+ *          on the collateral from the contract once overdue.
+ * 
+ *  @dev    ERC-20 tokens are identified by their contract addresses.
+ *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
  */
 contract ProjectMortgageToken is
 ProjectMortgageTokenStorage,
@@ -46,8 +52,8 @@ ProjectTokenReceiver {
      *  @param  _feeReceiver     `FeeReceiver` contract address.
      *  @param  _name            Token name.
      *  @param  _symbol          Token symbol.
-     *  @param  _uri             Token base URI.
-     *  @param  _feeRate         Fee rate.
+     *  @param  _uri             Base URI.
+     *  @param  _feeRate         Mortgaging fee rate.
      */
     function initialize(
         address _admin,
@@ -102,12 +108,17 @@ ProjectTokenReceiver {
     /**
      *          Name          Description
      *  @param  _projectId    Project identifier.
-     *  @param  _amount       Amount of project tokens pledged as collateral.
+     *  @param  _amount       Collateral amount.
      *  @param  _principal    Principal value.
      *  @param  _repayment    Repayment value.
-     *  @param  _currency     Loan currency address.
-     *  @param  _duration     Repayment duration.
+     *  @param  _currency     Currency address.
+     *  @param  _duration     Borrowing duration.
+     * 
      *  @return mortgageId    New mortgage identifier.
+     * 
+     *  @dev    Approval must be granted for this contract to transfer collateral before borrowing. A mortgage can only be
+     *          lent while approval remains active.
+     *  @dev    Collateral will be secured in the contract until the mortgage is either repaid, foreclosed, or cancelled.
      */
     function borrow(
         uint256 _projectId,
@@ -181,10 +192,10 @@ ProjectTokenReceiver {
     /**
      *          Name            Description
      *  @param  _tokenId        Token identifier.
-     *  @param  _price          Price.
+     *  @param  _price          Reference value.
      * 
-     *  @return Royalty receiver address.
-     *  @return Royalty amount.
+     *  @return receiver        Royalty receiver address.
+     *  @return royalty         Royalty derived from the reference value.
      */
     function royaltyInfo(
         uint256 _tokenId,
@@ -198,7 +209,7 @@ ProjectTokenReceiver {
 
     /* --- Helper --- */
     /**
-     *  @notice Transfer collateral of a mortgage.
+     *  @notice Transfer the collateral of a mortgage.
      *
      *          Name           Description
      *  @param  _mortgageId    Mortgage identifier.

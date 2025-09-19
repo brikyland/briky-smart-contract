@@ -25,7 +25,7 @@ import {ERC721MarketplaceStorage} from "../lux/storages/ERC721MarketplaceStorage
 /**
  *  @author Briky Team
  *
- *  @notice The `ERC721Marketplace` contract hosts a marketplace for ERC721 tokens.
+ *  @notice An `ERC721Marketplace` contract hosts a marketplace for ERC-721 tokens.
  * 
  *  @dev    ERC-20 tokens are identified by their contract addresses.
  *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
@@ -170,7 +170,7 @@ ReentrancyGuardUpgradeable {
      *          Name        Description
      *  @param  _offerId    Offer identifier.
      * 
-     *  @return Information and progress of the offer.
+     *  @return Configuration and progress of the offer.
      */
     function getOffer(
         uint256 _offerId
@@ -182,7 +182,7 @@ ReentrancyGuardUpgradeable {
 
     /* --- Command --- */
     /**
-     *  @notice List a new offer for an ERC721 token.
+     *  @notice List a new offer of an ERC721 token.
      *
      *          Name           Description
      *  @param  _collection    Token collection contract address.
@@ -193,7 +193,8 @@ ReentrancyGuardUpgradeable {
      *  @return New offer identifier.
      * 
      *  @dev    The collection must support interface `IERC721Upgradeable`.
-     *  @dev    Must set approval for this contract to transfer the ERC721 token of the seller before listing.
+     *  @dev    Approval must be granted for this contract to transfer collateral before borrowing. A mortgage can only be
+     *          lent while approval remains active.     
      */
     function list(
         address _collection,

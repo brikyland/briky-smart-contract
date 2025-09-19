@@ -19,13 +19,13 @@ IOfferState {
         /// @notice Asset identifier.
         uint256 tokenId;
 
-        /// @notice Amount of tokens to be sold.
+        /// @notice Selling amount.
         uint256 sellingAmount;
 
         /// @notice Amount of tokens that has been bought.
         uint256 soldAmount;
 
-        /// @notice Sale value of each token.
+        /// @notice Sale value of each token unit.
         uint256 unitPrice;
 
         /// @notice Royalty charged on each token.

@@ -11,10 +11,9 @@ import {IRate} from "../../common/structs/IRate.sol";
  */
 interface IPrestigePadLaunch is IRate {
     /** ===== STRUCT ===== **/
-
     /**
-     *  @notice A launch of `PrestigePad` for capital raise for a project and initial issuance of a new associated
-     *          class of `ProjectToken` to contributors as referenced distribution for future benefit returning.
+     *  @notice A launch of `PrestigePad` for capital raise for a project and initial issuance of a new associated class of
+     *          `ProjectToken` to contributors as referenced distribution for future benefit returning.
      */
     struct PrestigePadLaunch {
         /// @notice Project identifier.
@@ -27,20 +26,19 @@ interface IPrestigePadLaunch is IRate {
         /// @dev    This index represents the sequential order of rounds in the launch, starting from 0.
         uint256 currentIndex;
 
-        /// @notice Round identifiers array.
+        /// @notice Array of round identifiers.
         uint256[] roundIds;
 
         /// @notice Fraction of the raised value charged as fee, applied across all rounds.
         Rate feeRate;
 
         /// @notice Initiator address.
-        /// @notice This address belongs to a official disclosed third party organization, registered in the zone to
-        ///         raise fund for the project.
+        /// @notice This address belongs to a official disclosed third party organization, registered in the zone to raise
+        ///         fund for the project.
         address initiator;
 
         /// @notice Whether the launch completes capital raising.
-        /// @notice The launch can only be finalized after all rounds are confirmed, and no further rounds can be
-        ///         created.
+        /// @notice The launch can only be finalized after all rounds are confirmed and no further rounds can be created.
         bool isFinalized;
     }
 }

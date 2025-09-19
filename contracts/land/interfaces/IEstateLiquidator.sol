@@ -124,7 +124,7 @@ IValidatable {
     /**
      *          Name            Description
      *  @param  _requestId      Request identifier.
-     *  @return request         Information and progress of the extraction request.
+     *  @return request         Configuration and progress of the extraction request.
      */
     function getRequest(
         uint256 _requestId

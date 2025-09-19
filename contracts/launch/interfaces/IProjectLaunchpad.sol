@@ -11,22 +11,24 @@ import {IProjectTokenReceiver} from "./IProjectTokenReceiver.sol";
 /**
  *  @author Briky Team
  *
- *  @notice Interface for contract `ProjectLaunchpad`.
+ *  @notice Interface for launchpad contracts of `ProjectToken`.
  * 
- *  @notice TODO:
+ *  @notice An `IProjectLaunchpad` contract facilitates project fundraising through launches comprising multiple investment
+ *          rounds, accordingly instructs `EstateToken` to securitize a real estate into a new class of tokens and receive them
+ *          for subsequent distribution to investors.
  */
 interface IProjectLaunchpad is
 ICommon,
 IProjectTokenReceiver {
     /** ===== EVENT ===== **/
     /**
-     *  @notice Emitted when a project token is withdrawn.
+     *  @notice Emitted when an investor withdraw allocation from a launch.
      *
-     *          Name            Description
-     *  @param  launchId        Launch identifier.
-     *  @param  roundId         Round identifier.
-     *  @param  withdrawer      Withdrawer address.
-     *  @param  amount          Withdrawn amount.
+     *          Name        Description
+     *  @param  launchId    Launch identifier.
+     *  @param  roundId     Round identifier.
+     *  @param  withdrawer  Withdrawer address.
+     *  @param  amount      Withdrawn amount.
      */
     event ProjectTokenWithdrawal(
         uint256 indexed launchId,
@@ -35,30 +37,28 @@ IProjectTokenReceiver {
         uint256 amount
     );
 
+
     /** ===== ERROR ===== **/
     error AlreadyFinalized();
     error NotRegisteredInitiator();
+
 
     /** ===== FUNCTION ===== **/
     /* --- Query --- */
     /**
      *          Name            Description
      *  @param  launchId        Launch identifier.
-     * 
-     *  @return isFinalized     Whether the launch is finalized.
+     *  @return isFinalized     Whether the launch has settled.
      */
     function isFinalized(
         uint256 launchId
     ) external view returns (bool isFinalized);
 
     /**
-     *  @notice TODO: Check the allocation of a launch at a specific timestamp.
-     *
      *          Name            Description
-     *  @param  account         Account address.
+     *  @param  account         EVM address.
      *  @param  launchId        Launch identifier.
      *  @param  at              Reference timestamp.
-     *
      *  @return allocation      Allocation of the account at the reference timestamp.
      */
     function allocationOfAt(
@@ -67,14 +67,14 @@ IProjectTokenReceiver {
         uint256 at
     ) external view returns (uint256 allocation);
 
+    /* --- Command --- */
     /**
-     *  @notice TODO: Withdraw the project tokens from a round of a launch.
+     *  @notice Withdraw the allocation of the message sender from a launch.
      *
      *          Name            Description
      *  @param  launchId        Launch identifier.
-     *  @param  index           Index of the round to withdraw from.
-     *
-     *  @return amount          Project tokens amount.
+     *  @param  index           Round index in the launch.
+     *  @return amount          Withdrawn amount.
      */
     function withdrawProjectToken(
         uint256 launchId,

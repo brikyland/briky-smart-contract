@@ -37,7 +37,7 @@ contract Airdrop {
      *
      *          Name        Description
      *  @param  _receivers  Array of receiver addresses.
-     *  @param  _amounts    Array of airdrop amount, respectively to each receiver.
+     *  @param  _amounts    Array of airdrop amount, respective to each receiver.
      *  @param  _currency   airdrop currency.
      */
     function airdrop(

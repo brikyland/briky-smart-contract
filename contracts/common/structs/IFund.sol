@@ -28,7 +28,7 @@ interface IFund {
         /// @notice Array of extra currency addresses.
         address[] extraCurrencies;
 
-        /// @notice Array of extra currency denominations, respectively to each extra currency.
+        /// @notice Array of extra currency denominations, respective to each extra currency.
         /// @dev    Must have same length as `extraCurrencies`.
         uint256[] extraDenominations;
 

@@ -18,8 +18,12 @@ import {ERC721MortgageTokenStorage} from "./storages/ERC721MortgageTokenStorage.
 /**
  *  @author Briky Team
  * 
- *
- *  @notice A `ERC721MortgageToken` contract is an ERC-721 contract that facilitates mortgage-based borrowing backed by ERC-721 token collaterals and issues tokens representing mortgages.
+ *  @notice A `ERC721MortgageToken` contract facilitates peer-to-peer lending secured by ERC-721 tokens as collateral. Each provided mortgage
+ *          is tokenized into an ERC-721 token, whose owner has the right to receive repayments from the borrower or foreclose
+ *          on the collateral from the contract once overdue.
+ * 
+ *  @dev    ERC-20 tokens are identified by their contract addresses.
+ *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
  */
 contract ERC721MortgageToken is
 ERC721MortgageTokenStorage,
@@ -42,8 +46,8 @@ MortgageToken {
      *  @param  _feeReceiver    `FeeReceiver` contract address.
      *  @param  _name           Token name.
      *  @param  _symbol         Token symbol.
-     *  @param  _uri            Token base URI.
-     *  @param  _feeRate        Fee rate.
+     *  @param  _uri            Base URI.
+     *  @param  _feeRate        Mortgaging fee rate.
      */
     function initialize(
         address _admin,
@@ -77,10 +81,10 @@ MortgageToken {
 
     /* --- Administration --- */
     /**
-     *  @notice Register or deregister tokens as collaterals.
+     *  @notice Register or deregister collections as collaterals.
      *
      *          Name             Description
-     *  @param  _tokens          Array of token addresses to register or deregister.
+     *  @param  _tokens          Array of collection addresses to register or deregister.
      *  @param  _isCollateral    Whether the operation is register or deregister.
      *  @param  _signatures      Array of admin signatures.
      * 
@@ -143,20 +147,22 @@ MortgageToken {
 
     /* --- Command --- */
     /**
-     *  @notice List a new mortgage backed by collateral from a registered ERC-721 collection.
+     *  @notice List a new mortgage offer with an ERC-721 token as collateral.
      *
      *          Name          Description
-     *  @param  _token        Collateral collection contract address.
+     *  @param  _token        Collateral contract address.
      *  @param  _tokenId      Collateral token identifier.
      *  @param  _principal    Principal value.
      *  @param  _repayment    Repayment value.
-     *  @param  _currency     Loan currency address.
-     *  @param  _duration     Repayment duration.
+     *  @param  _currency     Currency address.
+     *  @param  _duration     Borrowing duration.
      * 
      *  @return mortgageId    New mortgage identifier.
      * 
      *  @dev    The collection must support interface `IERC721Upgradeable`.
-     *  @dev    Must set approval for this contract to transfer collateral tokens of the borrower before listing.
+     *  @dev    Approval must be granted for this contract to transfer collateral before borrowing. A mortgage can only be
+     *          lent while approval remains active.
+     *  @dev    Collateral will be secured in the contract until the mortgage is either repaid, foreclosed, or cancelled.
      */
     function borrow(
         address _token,
@@ -206,10 +212,10 @@ MortgageToken {
     /**
      *          Name        Description
      *  @param  _tokenId    Token identifier.
-     *  @param  _price      Price.
+     *  @param  _price      Reference value.
      * 
-     *  @return Royalty receiver address.
-     *  @return Royalty amount.
+     *  @return receiver    Royalty receiver address.
+     *  @return royalty     Royalty derived from the reference value.
      */
     function royaltyInfo(
         uint256 _tokenId,
@@ -230,7 +236,7 @@ MortgageToken {
 
     /* --- Helper --- */
     /**
-     *  @notice Transfer collateral of a mortgage.
+     *  @notice Transfer the collateral of a mortgage.
      *
      *          Name           Description
      *  @param  _mortgageId    Mortgage identifier.

@@ -181,7 +181,7 @@ ReentrancyGuardUpgradeable {
      *          Name            Description
      *  @param  _proposalId     Proposal identifier.
      *
-     *  @return Information and progress of the proposal.
+     *  @return Configuration and progress of the proposal.
      */
     function getProposal(
         uint256 _proposalId

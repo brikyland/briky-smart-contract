@@ -57,7 +57,6 @@ import {ProjectTokenReceiver} from "./utilities/ProjectTokenReceiver.sol";
  *  @dev    ERC-20 tokens are identified by their contract addresses.
  *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
  */
-
 contract ProjectToken is
 ProjectTokenStorage,
 ERC1155PausableUpgradeable,
@@ -201,7 +200,7 @@ ReentrancyGuardUpgradeable {
      *  @param  zone            Zone code.
      *  @param  account         Address to check.
      *
-     *  @return isInitiator     Whether the address is a registered initiator in the zone.
+     *  @return isInitiator     Whether the account is a registered initiator in the zone.
      */
     function isInitiatorIn(
         bytes32 zone,
@@ -702,11 +701,11 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Update the URI of a project.
+     *  @notice Update the URI of metadata of a project.
      *
      *          Name            Description
      *  @param  _projectId      Project identifier.
-     *  @param  _uri            New URI containing project information.
+     *  @param  _uri            URI of project metadata.
      *  @param  _validation     Validation package from the validator.
      *
      *  @dev    Permission: Managers active in the zone of the project.
@@ -906,7 +905,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _operator       Operator address.
      *  @param  _from           Sender address.
      *  @param  _ids            List of token identifiers.
-     *  @param  _values         List of amounts, respectively to each token.
+     *  @param  _values         List of amounts, respective to each token.
      *  @param  _data           Additional data.
      *
      *  @return TODO:
@@ -950,7 +949,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _from           Sender address.
      *  @param  _to             Receiver address.
      *  @param  _ids            List of token identifiers.
-     *  @param  _amounts        List of amounts, respectively to each token.
+     *  @param  _amounts        List of amounts, respective to each token.
      *  @param  _data           Additional data.
      */
     function _beforeTokenTransfer(
@@ -976,7 +975,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _from           Sender address.
      *  @param  _to             Receiver address.
      *  @param  _ids            List of token identifiers.
-     *  @param  _amounts        List of amounts, respectively to each token.
+     *  @param  _amounts        List of amounts, respective to each token.
      *  @param  _data           Additional data.
      */
     function _afterTokenTransfer(

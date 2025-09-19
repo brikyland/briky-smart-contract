@@ -44,7 +44,7 @@ Initializable {
      *
      *          Name        Description
      *  @param  _estateId   Estate token identifier.
-     *  @param  _value      Commission value.
+     *  @param  _value      Commission derived from the value.
      *  @param  _currency   Currency address.
      */
     function _dispatchCommission(

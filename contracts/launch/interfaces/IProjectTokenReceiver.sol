@@ -8,13 +8,14 @@ import {IERC1155ReceiverUpgradeable} from "@openzeppelin/contracts-upgradeable/i
  *
  *  @notice Interface for contract `ProjectTokenReceiver`.
  * 
- *  @notice TODO:
+ *  @notice A `ProjectTokenReceiver` contract always accepts ERC-1155 income tokens from the `ProjectToken` contract.
  */
 interface IProjectTokenReceiver is
 IERC1155ReceiverUpgradeable {
+    /** ===== FUNCTION ===== **/
     /**
      *          Name            Description
-     *  @return projectToken    Project token contract address.
+     *  @return projectToken    `ProjectToken` contract address.
      */
     function projectToken() external view returns (address projectToken);
 }

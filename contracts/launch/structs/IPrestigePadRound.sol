@@ -12,12 +12,11 @@ import {IValidation} from "../../common/structs/IValidation.sol";
  *  @dev    Implementation involves server-side support.
  *  @dev    ERC-20 tokens are identified by their contract addresses.
  *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
- *  @dev    Quantities are expressed in absolute units. Scale these values by `10 ** ProjectToken.decimals()` to obtain
- *          the correct amounts under the `ProjectToken` convention.
+ *  @dev    Quantities are expressed in absolute units. Scale these values by `10 ** ProjectToken.decimals()` to obtain the
+ *          correct amounts under the `ProjectToken` convention.
  */
 interface IPrestigePadRound is IValidation {
     /** ===== STRUCT ===== **/
-
     /**
      *  @notice Volume configuration and progress.
      */
@@ -31,7 +30,7 @@ interface IPrestigePadRound is IValidation {
         /// @notice Maximum quantity that the requester is willing to raise.
         uint256 maxRaisingQuantity;
 
-        /// @notice Quantity that has been contributed.
+        /// @notice Total contributed quantity.
         /// @notice The remaining quantity (if any) will be transferred to the initiator after confirmation.
         uint256 raisedQuantity;
     }
@@ -56,7 +55,7 @@ interface IPrestigePadRound is IValidation {
      *  @notice Price configuration.
      */
     struct PrestigePadRoundQuote {
-        /// @notice Value of each token.
+        /// @notice Value of each token unit.
         uint256 unitPrice;
 
         /// @notice Contribution currency address.
@@ -78,7 +77,7 @@ interface IPrestigePadRound is IValidation {
      *  @notice Initialization input for `PrestigePadRoundQuote`.
      */
     struct PrestigePadRoundQuoteInput {
-        /// @notice Value of each token.
+        /// @notice Value of each token unit.
         uint256 unitPrice;
 
         /// @notice Contribution currency address.
@@ -127,7 +126,7 @@ interface IPrestigePadRound is IValidation {
         /// @notice Price configuration.
         PrestigePadRoundQuoteInput quote;
 
-        /// @notice Validation information for `uri`.
+        /// @notice Validation package from the validator.
         Validation validation;
     }
 }

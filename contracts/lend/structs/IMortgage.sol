@@ -31,9 +31,10 @@ interface IMortgage {
         Cancelled
     }
 
+
     /** ===== STRUCT ===== **/
     /**
-     *  @notice A mortgage.
+     *  @notice Mortgage configuration and progress.
      */
     struct Mortgage {
         /// @notice Principal value.
@@ -42,13 +43,15 @@ interface IMortgage {
         /// @notice Repayment value.
         uint256 repayment;
 
-        /// @notice Fee.
+        /// @notice Mortgaging fee.
         uint256 fee;
 
-        /// @notice Loan currency address.
+        /// @notice Currency address.
         address currency;
 
-        /// @notice Repayment due date.
+        /// @notice Maturity timestamp.
+        /// @dev    In `Pending` state, `due` is the borrowing duration.
+        /// @dev    After the mortgage is lent, `due` is set to the maturity timestamp.
         uint40 due;
 
         /// @notice Current state.

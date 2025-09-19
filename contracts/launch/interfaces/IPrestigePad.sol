@@ -12,9 +12,9 @@ import {IProjectLaunchpad} from "./IProjectLaunchpad.sol";
 /**
  *  @author Briky Team
  *
- *  @notice TODO: The `PrestigePad` contract conducts capital raising campaigns for real estate projects through multiple
- *          rounds of token sales, enabling contributors to receive `ProjectToken` as referenced distribution for
- *          future benefit returning.
+ *  @notice Interface for contract `PrestigePad`.
+ *  @notice The `PrestigePad` contract facilitates the launch of real estate project through crowdfunding. Authorized
+ *          initiators
  *
  *  @dev    Implementation involves server-side support.
  *  @dev    ERC-20 tokens are identified by their contract addresses.
@@ -177,6 +177,12 @@ IProjectLaunchpad {
         PrestigePadRoundInput round
     );
 
+    event LaunchRoundTokenWithdrawal(
+        uint256 indexed roundId,
+        uint256 indexed withdrawer,
+        uint256 amount
+    );
+
     /**
      *  @notice Emitted when the URI of a launch is updated.
      *
@@ -314,7 +320,7 @@ IProjectLaunchpad {
      *          Name        Description
      *  @param  launchId    Launch identifier.
      *
-     *  @return launch Information and progress of the launch.
+     *  @return launch Configuration and progress of the launch.
      */
     function getLaunch(
         uint256 launchId
@@ -324,15 +330,16 @@ IProjectLaunchpad {
      *          Name        Description
      *  @param  roundId     Round identifier.
      *
-     *  @return round Information and progress of the round.
+     *  @return round Configuration and progress of the round.
      */
     function getRound(
         uint256 roundId
     ) external view returns (PrestigePadRound memory round);
 
+
     /* --- Command --- */
     /**
-     *  TODO: @notice TODO: Initiate a new launch.
+     *  @notice Initiate a new launch for an estate project.
      *
      *          Name                Description
      *  @param  initiator           Initiator address.
@@ -357,13 +364,14 @@ IProjectLaunchpad {
         Validation calldata validation
     ) external returns (uint256);
 
+
     /**
-     *  @notice Update the URI of a launch.
+     *  @notice Update the URI of information a launch.
      *
-     *          Name            Description
-     *  @param  launchId        Launch identifier.
-     *  @param  launchURI       New URI of launch metadata.
-     *  @param  validation      Validation package from the validator.
+     *          Name                    Description
+     *  @param  launchId                Launch identifier.
+     *  @param  launchURI               New URI of launch information.
+     *  @param  validation              Validation package from the validator.
      *
      *  @dev    Permission: Initiator of the launch.
      */
@@ -376,12 +384,11 @@ IProjectLaunchpad {
     /**
      *  @notice Update a specific round in a launch.
      *
-     *          Name        Description
-     *  @param  launchId    Launch identifier.
-     *  @param  index       Index of the round.
-     *  @param  round       New round configuration.
-     *
-     *  @return roundId     New round identifier.
+     *          Name                    Description
+     *  @param  launchId                Launch identifier.
+     *  @param  index                   Index of the round.
+     *  @param  round                   New round configuration.
+     *  @return roundId                 New round identifier.
      *
      *  @dev    Permission: Initiator of the launch.
      */
@@ -398,8 +405,7 @@ IProjectLaunchpad {
      *  @param  launchId                Launch identifier.
      *  @param  removedRoundNumber      Number of rounds to remove from the end.
      *  @param  addedRounds             Array of new rounds to add.
-     *
-     *  @return lastIndex Index of the last added round.
+     *  @return lastIndex               Index of the last added round.
      *
      *  @dev    Permission: Initiator of the launch.
      */
@@ -412,11 +418,10 @@ IProjectLaunchpad {
     /**
      *  @notice Cancel the current round of a launch.
      *
-     *          Name        Description
-     *  @param  launchId    Launch identifier.
-     *
-     *  @return index       Index of the cancelled round.
-     *  @return roundId     Round identifier of the cancelled round.
+     *          Name                    Description
+     *  @param  launchId                Launch identifier.
+     *  @return index                   Index of the cancelled round.
+     *  @return roundId                 Round identifier of the cancelled round.
      *
      *  @dev    Permission: Initiator of the launch.
      */
@@ -427,8 +432,8 @@ IProjectLaunchpad {
     /**
      *  @notice Confirm the current round of a launch and mint tokens to contributors.
      *
-     *          Name        Description
-     *  @param  launchId    Launch identifier.
+     *          Name                    Description
+     *  @param  launchId                Launch identifier.
      *
      *  @return index Index of the confirmed round.
      *
@@ -442,14 +447,14 @@ IProjectLaunchpad {
     /**
      *  @notice Initiate the next round for a launch with cashback configuration.
      *
-     *          Name                        Description
-     *  @param  launchId                    Launch identifier.
-     *  @param  cashbackThreshold           Minimum contributed quantity of an address to receive cashback.
-     *  @param  cashbackBaseRate            Base rate for cashback calculations.
-     *  @param  cashbackCurrencies          Array of currencies for cashback.
-     *  @param  cashbackDenominations       Array of denominations for each currency.
-     *  @param  raiseStartsAt               When the raise starts.
-     *  @param  raiseDuration               Duration of the raising period.
+     *          Name                    Description
+     *  @param  launchId                Launch identifier.
+     *  @param  cashbackThreshold       Minimum contributed quantity of an address to receive cashback.
+     *  @param  cashbackBaseRate        Base rate for cashback calculations.
+     *  @param  cashbackCurrencies      Array of currencies for cashback.
+     *  @param  cashbackDenominations   Array of denominations for each currency.
+     *  @param  raiseStartsAt           When the raise starts.
+     *  @param  raiseDuration           Duration of the raising period.
      *
      *  @return index Index of the initiated round.
      *
@@ -468,9 +473,9 @@ IProjectLaunchpad {
     /**
      *  @notice Contribute to the current round of a launch.
      *
-     *          Name        Description
-     *  @param  launchId    Launch identifier.
-     *  @param  quantity    Quantity of tokens to contribute for.
+     *          Name                    Description
+     *  @param  launchId                Launch identifier.
+     *  @param  quantity                Quantity of tokens to contribute for.
      *
      *  @return value Value of the contribution.
      *
@@ -484,10 +489,9 @@ IProjectLaunchpad {
     /**
      *  @notice Withdraw contribution from a cancelled round.
      *
-     *          Name        Description
-     *  @param  roundId     Round identifier.
-     *
-     *  @return value Value of the withdrawn contribution.
+     *          Name                    Description
+     *  @param  roundId                 Round identifier.
+     *  @return value                   Value of the withdrawn contribution.
      */
     function withdrawContribution(
         uint256 roundId
@@ -496,10 +500,10 @@ IProjectLaunchpad {
     /**
      *  @notice Contribute to the current round of a launch with anchor verification.
      *
-     *          Name        Description
-     *  @param  launchId    Launch identifier.
-     *  @param  quantity    Quantity of tokens to contribute for.
-     *  @param  anchor      Launch identifier for verification consistency.
+     *          Name                    Description
+     *  @param  launchId                Launch identifier.
+     *  @param  quantity                Quantity of tokens to contribute for.
+     *  @param  anchor                  Launch identifier for verification consistency.
      *
      *  @return value Value of the contribution.
      *
@@ -515,8 +519,8 @@ IProjectLaunchpad {
     /**
      *  @notice Finalize a launch to complete capital raising.
      *
-     *          Name        Description
-     *  @param  launchId    Launch identifier.
+     *          Name                    Description
+     *  @param  launchId                Launch identifier.
      *
      *  @dev    Permission: Initiator of the launch.
      *  @dev    The launch can only be finalized after all rounds are confirmed, and no further rounds can be created.

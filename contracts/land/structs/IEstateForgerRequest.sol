@@ -12,21 +12,20 @@ import {IValidation} from "../../common/structs/IValidation.sol";
  *  @dev    Implementation involves server-side support.
  *  @dev    ERC-20 tokens are identified by their contract addresses.
  *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
- *  @dev    Quantities are expressed in absolute units. Scale these values by `10 ** EstateToken.decimals()` to obtain
- *          the correct amounts under the `EstateToken` convention.
+ *  @dev    Quantities are expressed in absolute units. Scale these values by `10 ** EstateToken.decimals()` to obtain the
+ *          correct amounts under the `EstateToken` convention.
  */
 interface IEstateForgerRequest is IValidation {
     /** ===== STRUCT ===== **/
-
     /**
-     *  @notice Estate information to be tokenized.
+     *  @notice Estate information.
      */
     struct EstateForgerRequestEstate {
         /// @notice Estate identifier tokenized from the request.
         /// @dev    Remains 0 until tokenization succeeds.
         uint256 estateId;
 
-        /// @notice Management zone code.
+        /// @notice Zone code.
         bytes32 zone;
 
         /// @notice URI of estate metadata.
@@ -41,7 +40,7 @@ interface IEstateForgerRequest is IValidation {
      *  @notice Initialization input for `EstateForgerRequestEstate`.
      */
     struct EstateForgerRequestEstateInput {
-        /// @notice Management zone code.
+        /// @notice Zone code.
         bytes32 zone;
 
         /// @notice URI of estate metadata.
@@ -90,7 +89,7 @@ interface IEstateForgerRequest is IValidation {
      *  @notice Price configuration.
      */
     struct EstateForgerRequestQuote {
-        /// @notice Value of each token.
+        /// @notice Value of each token unit.
         uint256 unitPrice;
 
         /// @notice Deposit currency address.
@@ -119,7 +118,7 @@ interface IEstateForgerRequest is IValidation {
      *  @notice Initialization input for `EstateForgerRequestQuote`.
      */
     struct EstateForgerRequestQuoteInput {
-        /// @notice Deposit value for each token.
+        /// @notice Value of each token unit.
         uint256 unitPrice;
 
         /// @notice Deposit currency address.
@@ -134,7 +133,7 @@ interface IEstateForgerRequest is IValidation {
         /// @notice Array of extra currency addresses for cashback.
         address[] cashbackCurrencies;
 
-        /// @notice Array of extra denominations for cashback on each deposited token.
+        /// @notice Array of extra denominations for cashback, respective to each deposited token.
         uint256[] cashbackDenominations;
 
         /// @notice Fee charged on each token.
@@ -188,7 +187,7 @@ interface IEstateForgerRequest is IValidation {
     }
 
     /**
-     *  @notice A request of `EstateForger` for tokenizing an estate into a new class of `EstateToken` via a
+     *  @notice A request of `EstateForger` for tokenizing a real-world estate into a new class of `EstateToken` through a
      *          deposited-based fixed-price sale.
      *
      *  @dev    Phases of a request:
@@ -202,7 +201,7 @@ interface IEstateForgerRequest is IValidation {
      *          - Cancelled: quote.totalSupply = 0
      */
     struct EstateForgerRequest {
-        /// @notice Estate information to be tokenized.
+        /// @notice Estate information.
         EstateForgerRequestEstate estate;
 
         /// @notice Volume configuration and progress.
@@ -215,8 +214,8 @@ interface IEstateForgerRequest is IValidation {
         EstateForgerRequestAgenda agenda;
 
         /// @notice Requester address.
-        /// @notice This address belongs to an official disclosed third party custodian agent, registered in the zone
-        ///         to tokenize the estate and later initially hold custody of the estate on behalf of holders.
+        /// @notice This address belongs to an official disclosed third party custodian agent, registered in the zone to
+        ///         tokenize the estate and later initially hold custody of the estate on behalf of holders.
         address requester;
     }
 }

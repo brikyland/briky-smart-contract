@@ -15,7 +15,7 @@ interface ICommissionDispatchable {
      *
      *          Name        Description
      *  @param  receiver    Receiver address.
-     *  @param  value       Commission value.
+     *  @param  value       Commission derived from the value.
      *  @param  currency    Currency address.
      */
     event CommissionDispatch(

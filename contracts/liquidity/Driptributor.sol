@@ -92,7 +92,6 @@ ReentrancyGuardUpgradeable {
 
 
     /* --- Administration --- */
-
     /**
      *  @notice Update stake token contracts.
      *
@@ -140,10 +139,10 @@ ReentrancyGuardUpgradeable {
      *  @notice Distribute tokens to multiple receivers with vesting duration.
      *
      *          Name                Description
-     *  @param  _receivers          Array of receiver addresses, respectively to each distribution.
-     *  @param  _amounts            Array of distributed amounts, respectively to each distribution.
-     *  @param  _durations          Array of vesting durations, respectively to each distribution.
-     *  @param  _notes              Array of notes, respectively to each distribution.
+     *  @param  _receivers          Array of receiver addresses, respective to each distribution.
+     *  @param  _amounts            Array of distributed amounts, respective to each distribution.
+     *  @param  _durations          Array of vesting durations, respective to each distribution.
+     *  @param  _notes              Array of notes, respective to each distribution.
      *  @param  _signatures         Array of admin signatures.
      * 
      *  @dev    Administrative operator.
@@ -205,10 +204,10 @@ ReentrancyGuardUpgradeable {
      *  @notice Distribute tokens to multiple receivers with vesting end timestamp.
      *
      *          Name            Description
-     *  @param  _receivers      Array of receiver addresses, respectively to each distribution.
-     *  @param  _amounts        Array of distributed amounts, respectively to each distribution.
-     *  @param  _endAts         Array of vesting end timestamps, respectively to each distribution.
-     *  @param  _notes          Array of notes, respectively to each distribution.
+     *  @param  _receivers      Array of receiver addresses, respective to each distribution.
+     *  @param  _amounts        Array of distributed amounts, respective to each distribution.
+     *  @param  _endAts         Array of vesting end timestamps, respective to each distribution.
+     *  @param  _notes          Array of notes, respective to each distribution.
      *  @param  _signatures     Array of admin signatures.
      * 
      *  @dev    Administrative operator.

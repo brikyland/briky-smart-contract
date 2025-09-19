@@ -11,41 +11,45 @@ import {IMortgageToken} from "./IMortgageToken.sol";
  *  @author Briky Team
  *
  *  @notice Interface for contract `ERC721MortgageToken`.
+ *  @notice A `ERC721MortgageToken` contract facilitates peer-to-peer lending secured by ERC-721 tokens as collateral. Each provided mortgage
+ *          is tokenized into an ERC-721 token, whose owner has the right to receive repayments from the borrower or foreclose
+ *          on the collateral from the contract once overdue.
  * 
- *  @notice A `ERC721MortgageToken` contract is an ERC-721 contract that facilitates mortgage-based borrowing backed by ERC-721 token collaterals and issues tokens representing mortgages.
- */
+ *  @dev    ERC-20 tokens are identified by their contract addresses.
+ *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
+ * */
 interface IERC721MortgageToken is
 IERC721Collateral,
 IMortgageToken {
     /** ===== EVENT ===== **/
     /* --- Configuration --- */
     /**
-     *  @notice Emitted when a collection is registered.
+     *  @notice Emitted when a collection is registered as a collateral contract.
      *
      *          Name          Description
-     *  @param  collateral    Collection contract address.
+     *  @param  collateral    Registered contract address.
      */
     event CollateralRegistration(
         address collateral
     );
 
     /**
-     *  @notice Emitted when a collection is deregistered.
+     *  @notice Emitted when a collection is deregistered as a collateral contract.
      *
      *          Name          Description
-     *  @param  collateral    Collection contract address.
+     *  @param  collateral    Deregistered contract address.
      */
     event CollateralDeregistration(
         address collateral
     );
 
     /**
-     *  @notice Emitted when a new collateral is assigned to a mortgage.
+     *  @notice Emitted when a new mortgage collateral is secured.
      *
      *          Name          Description
      *  @param  mortgageId    Mortgage identifier.
-     *  @param  token         Collateral contract address.
-     *  @param  tokenId       Collateral token identifier.
+     *  @param  token         New collateral contract address.
+     *  @param  tokenId       New collateral token identifier.
      */
     event NewCollateral(
         uint256 indexed mortgageId,
@@ -63,7 +67,7 @@ IMortgageToken {
     /* --- Query --- */
     /**
      *          Name            Description
-     *  @param  token           Collection contract address.
+     *  @param  token           Contract address.
      *  @return isCollateral    Whether the collection is registered.
      * 
      *  @dev    The collection must support interface `IERC721Upgradeable`.
@@ -84,19 +88,20 @@ IMortgageToken {
 
     /* --- Command --- */
     /**
-     *  @notice List a new mortgage backed by collateral from a registered ERC-721 collection.
+     *  @notice List a new mortgage offer with an ERC-721 token as collateral.
      * 
      *          Name            Description
-     *  @param  token           Collateral collection contract address.
+     *  @param  token           Collateral contract address.
      *  @param  tokenId         Collateral token identifier.
      *  @param  principal       Principal value.
      *  @param  repayment       Repayment value.
-     *  @param  currency        Loan currency address.
-     *  @param  duration        Repayment duration.
+     *  @param  currency        Currency address.
+     *  @param  duration        Borrowing duration.
      *  @return mortgageId      New mortgage identifier.
      * 
      *  @dev    The collection must support interface `IERC721Upgradeable`.
-     *  @dev    Must set approval for this contract to transfer collateral tokens of the borrower before listing.
+     *  @dev    Approval must be granted for this contract to transfer collateral before borrowing. A mortgage can only be
+     *          lent while approval remains active.
      */
     function borrow(
         address token,

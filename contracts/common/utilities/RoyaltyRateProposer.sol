@@ -23,9 +23,9 @@ IRoyaltyRateProposer {
     /**
      *          Name        Description
      *  @param  _tokenId    Token identifier.
-     *  @param  _price      Reference value to derive the royalty.
+     *  @param  _price      Reference value.
      *  @return receiver    Royalty receiver address.
-     *  @return royalty     Royalty corresponding to the price.
+     *  @return royalty     Royalty derived from the reference value.
      */
     function royaltyInfo(
         uint256 _tokenId,

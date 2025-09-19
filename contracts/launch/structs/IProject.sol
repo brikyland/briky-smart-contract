@@ -8,16 +8,15 @@ pragma solidity ^0.8.20;
  */
 interface IProject {
     /** ===== STRUCT ===== **/
-
     /**
-     *  @notice Project information that has been tokenized.
+     *  @notice Project information.
      */
     struct Project {
-        /// @notice `EstateToken` identifier tokenized from the request.
+        /// @notice Estate identifier tokenized from the request.
         /// @dev    Remains 0 until tokenization succeeds.
         uint256 estateId;
 
-        /// @notice Management zone code.
+        /// @notice Zone code.
         bytes32 zone;
 
         /// @notice Launch identifier from the launchpad contract.

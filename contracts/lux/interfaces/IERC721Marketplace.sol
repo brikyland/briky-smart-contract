@@ -11,7 +11,7 @@ import {ICommon} from "../../common/interfaces/ICommon.sol";
  *  @author Briky Team
  *
  *  @notice Interface for contract `ERC721Marketplace`.
- *  @notice The `ERC721Marketplace` contract hosts a marketplace for ERC721 tokens.
+ *  @notice An `ERC721Marketplace` contract hosts a marketplace for ERC-721 tokens.
  *
  *  @dev    ERC-20 tokens are identified by their contract addresses.
  *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
@@ -52,7 +52,7 @@ ICommon {
      *  @param  tokenId            Token identifier.
      *  @param  seller             Seller address.
      *  @param  price              Sale value.
-     *  @param  royalty            Royalty charged on the offer.
+     *  @param  royalty            Royalty derived from the sale value.
      *  @param  royaltyReceiver    Royalty receiver address.
      *  @param  currency           Sale currency address.
      */
@@ -84,7 +84,7 @@ ICommon {
      *  @param  offerId            Offer identifier.
      *  @param  buyer              Buyer address.
      *  @param  royaltyReceiver    Royalty receiver address.
-     *  @param  royalty            Royalty charged on the offer.
+     *  @param  royalty            Royalty derived from the sale value of the offer.
      */
     event OfferSale(
         uint256 indexed offerId,
@@ -116,7 +116,7 @@ ICommon {
     /**
      *          Name            Description
      *  @param  offerId         Offer identifier.
-     *  @return offer           Information and progress of the offer.
+     *  @return offer           Configuration and progress of the offer.
      */
     function getOffer(
         uint256 offerId
@@ -124,7 +124,7 @@ ICommon {
 
     /* --- Command --- */
     /**
-     *  @notice List a new offer for an ERC721 token.
+     *  @notice List a new offer of an ERC721 token.
      *
      *          Name          Description
      *  @param  collection    Token collection contract address.
@@ -134,7 +134,8 @@ ICommon {
      *  @return offerId       New offer identifier.
      * 
      *  @dev    The collection must support interface `IERC721Upgradeable`.
-     *  @dev    Must set approval for this contract to transfer the ERC721 token of the seller before listing.
+     *  @dev    Approval must be granted for this contract to transfer collateral before borrowing. A mortgage can only be
+     *          lent while approval remains active.
      */
     function list(
         address collection,

@@ -96,7 +96,7 @@ ReentrancyGuardUpgradeable {
      *          Name            Description
      *  @param  _dividendId     Dividend identifier.
      * 
-     *  @return Information and progress of the dividend package.
+     *  @return Configuration and progress of the dividend package.
      */
     function getDividend(
         uint256 _dividendId

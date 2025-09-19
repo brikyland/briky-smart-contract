@@ -20,10 +20,10 @@ import {IEstate} from "../structs/IEstate.sol";
  *  @author Briky Team
  *
  *  @notice Interface for contract `EstateToken`.
- *  @notice The `EstateToken` contract securitizes real-world estate assets into classes of fungible ERC-1155 tokens, where
- *          each class represents fractional ownership of a specific tokenized estate. Official disclosed third party custodian
- *          agents are registered in the zone to actively provide estates to tokenize and escrows those assets on behalf of
- *          holders after successful tokenization.
+ *  @notice The `EstateToken` contract securitizes real-world estates into classes of fungible ERC-1155 tokens, where each
+ *          token class represents fractional ownership of a specific tokenized estate. Official disclosed third party
+ *          agents are registered as custodians in designated zones to actively provide estates to tokenize and escrows those
+ *          assets on behalf of holders after successful tokenization.
  *
  *  @dev    Each unit of estate tokens is represented in scaled form as `10 ** decimals()`.
  *  @dev    Implementation involves server-side support.
@@ -126,7 +126,7 @@ IAssetToken {
      *          Name            Description
      *  @param  tokenId         Estate identifier.
      *  @param  zone            Zone code.
-     *  @param  tokenizationId  Tokenization request identifier.
+     *  @param  tokenizationId  Tokenization request identifier from the tokenizer contract.
      *  @param  tokenizer       Tokenizer contract address.
      *  @param  custodian       Custodian address.
      *  @param  expireAt        Estate expiration timestamp.
@@ -221,11 +221,11 @@ IAssetToken {
     /**
      *          Name            Description
      *  @param  estateId        Estate identifier.
-     *  @return tokenInfo       Estate information.
+     *  @return estate          Estate information.
      */
     function getEstate(
         uint256 estateId
-    ) external view returns (Estate memory tokenInfo);
+    ) external view returns (Estate memory estate);
 
 
     /**
@@ -236,6 +236,7 @@ IAssetToken {
     function getZoneRoyaltyRate(
         bytes32 zone
     ) external view returns (Rate memory royaltyRate);
+
 
     /**
      *          Name            Description
@@ -278,6 +279,7 @@ IAssetToken {
         address account
     ) external view returns (bool isCustodian);
 
+
     /* --- Command --- */
     /**
      *  @notice Register a custodian in a zone.
@@ -291,7 +293,11 @@ IAssetToken {
      *  @dev    Permission: Managers active in the zone.
      *  @dev    Validation data:
      *          ```
-     *          data = abi.encode(uri);
+     *          data = abi.encode(
+     *              zone,
+     *              custodian,
+     *              uri
+     *          );
      *          ```
      */
     function registerCustodian(
@@ -351,7 +357,7 @@ IAssetToken {
      *  @param  note        Deprecation note.
      *  @param  anchor      Keccak256 hash of `uri` of the estate.
      *
-     *  @notice Permission: Managers active in the zone of the estate.
+     *  @dev    Permission: Managers active in the zone of the estate.
      *  @dev    Anchor enforces consistency between this contract and the client-side.
      */
     function safeDeprecateEstate(
@@ -368,7 +374,7 @@ IAssetToken {
      *  @param  expireAt    New expiration timestamp.
      *  @param  anchor      Keccak256 hash of `uri` of the estate.
      *
-     *  @notice Permission: Managers active in the zone of the estate.
+     *  @dev    Permission: Managers active in the zone of the estate.
      *  @dev    Anchor enforces consistency between this contract and the client-side.
      */
     function safeExtendEstateExpiration(
@@ -385,7 +391,7 @@ IAssetToken {
      *  @param  custodian   New custodian address.
      *  @param  anchor      Keccak256 hash of `uri` of the estate.
      *
-     *  @notice Permission: Managers active in the zone of the estate.
+     *  @dev    Permission: Managers active in the zone of the estate.
      *  @dev    Anchor enforces consistency between this contract and the client-side.
      */
     function safeUpdateEstateCustodian(
@@ -395,7 +401,7 @@ IAssetToken {
     ) external;
 
     /**
-     *  @notice Update the URI of an estate.
+     *  @notice Update the URI of metadata of an estate.
      *
      *          Name        Description
      *  @param  estateId    Estate identifier.
@@ -403,7 +409,7 @@ IAssetToken {
      *  @param  validation  Validation package from the validator.
      *  @param  anchor      Keccak256 hash of `uri` of the estate.
      *
-     *  @notice Permission: Managers active in the zone of the estate.
+     *  @dev    Permission: Managers active in the zone of the estate.
      *  @dev    Validation data:
      *          ```
      *          data = abi.encode(

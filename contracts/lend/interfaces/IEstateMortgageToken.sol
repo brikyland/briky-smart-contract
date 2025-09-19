@@ -14,8 +14,12 @@ import {IMortgageToken} from "./IMortgageToken.sol";
  *  @author Briky Team
  *
  *  @notice Interface for contract `IEstateMortgageToken`.
+ *  @notice A `IEstateMortgageToken` contract facilitates peer-to-peer lending secured by estate tokens as collateral. Each provided mortgage
+ *          is tokenized into an ERC-721 token, whose owner has the right to receive repayments from the borrower or foreclose
+ *          on the collateral from the contract once overdue.
  * 
- *  @notice A `IEstateMortgageToken` contract is an ERC-721 contract that facilitates mortgage-based borrowing backed by estate token collaterals and issues tokens representing mortgages.
+ *  @dev    ERC-20 tokens are identified by their contract addresses.
+ *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
  */
 interface IEstateMortgageToken is
 IEstateCollateral,
@@ -23,12 +27,12 @@ IEstateTokenReceiver,
 IMortgageToken {
     /** ===== EVENT ===== **/
     /**
-     *  @notice Emitted when a new collateral is assigned to a mortgage.
+     *  @notice Emitted when a new mortgage collateral is secured.
      *
      *          Name          Description
      *  @param  mortgageId    Mortgage identifier.
      *  @param  estateId      Estate identifier.
-     *  @param  amount        Amount of estate tokens pledged as collateral.
+     *  @param  amount        Collateral amount.
      */
     event NewCollateral(
         uint256 indexed mortgageId,
@@ -51,18 +55,19 @@ IMortgageToken {
 
     /* --- Command --- */
     /**
-     *  @notice List a new mortgage backed by collateral from estate tokens.
+     *  @notice List a new mortgage offer with estate tokens as collateral.
      * 
      *          Name          Description
      *  @param  estateId      Estate identifier.
-     *  @param  amount        Amount of estate tokens pledged as collateral.
+     *  @param  amount        Collateral amount.
      *  @param  principal     Principal value.
      *  @param  repayment     Repayment value.
-     *  @param  currency      Loan currency address.
-     *  @param  duration      Repayment duration.
+     *  @param  currency      Currency address.
+     *  @param  duration      Borrowing duration.
      *  @return mortgageId    New mortgage identifier.
      * 
-     *  @dev    Must set approval for this contract to transfer collateral tokens of the borrower before listing.
+     *  @dev    Approval must be granted for this contract to transfer collateral before borrowing. A mortgage can only be
+     *          lent while approval remains active.
      */
     function borrow(
         uint256 estateId,

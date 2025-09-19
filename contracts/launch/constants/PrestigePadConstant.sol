@@ -8,10 +8,9 @@ pragma solidity ^0.8.20;
  */
 library PrestigePadConstant {
     /** ===== CONSTANT ===== **/
-
     /// @notice Minimum raise duration.
     uint256 internal constant RAISE_MINIMUM_DURATION = 7 days;
 
-    /// @notice Cannot confirm a round after time limit has expired after the raise ends.
+    /// @notice Cannot confirm a round once the time limit expires after the raise ends.
     uint256 internal constant RAISE_CONFIRMATION_TIME_LIMIT = 30 days;
 }

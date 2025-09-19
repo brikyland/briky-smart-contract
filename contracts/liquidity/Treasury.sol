@@ -91,7 +91,6 @@ ReentrancyGuardUpgradeable {
 
 
     /* --- Administration --- */
-
     /**
      *  @notice Withdraw from the operation fund to an operator.
      *

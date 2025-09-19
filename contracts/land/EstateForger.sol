@@ -257,7 +257,7 @@ ReentrancyGuardUpgradeable {
      *          Name            Description
      *  @param  _requestId      Request identifier.
      *
-     *  @return Information and progress of the request.
+     *  @return Configuration and progress of the request.
      *
      *  @dev    Phases of a request:
      *          - Pending: block.timestamp < agenda.saleStartsAt
@@ -467,7 +467,7 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Update the URI of a request.
+     *  @notice Update the URI of estate information of a request.
      *  @notice Update only before the request is either confirmed or cancelled.
      *
      *          Name            Description
@@ -771,7 +771,7 @@ ReentrancyGuardUpgradeable {
 
     /**
      *  @notice Withdraw the deposit of the message sender from a request which can no longer be confirmed.
-     *  @notice Withdraw only when the request is cancelled or the sale ends without enough sold quantity or the confirmation
+     *  @notice Withdraw only if the request is cancelled or the sale ends without enough sold quantity or the confirmation
      *          time limit has expired.
      *
      *          Name            Description

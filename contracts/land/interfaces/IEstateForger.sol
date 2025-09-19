@@ -284,7 +284,7 @@ IEstateTokenizer {
 
     /**
      *          Name            Description
-     *  @return request         Information and progress of the request.
+     *  @return request         Configuration and progress of the request.
      *
      *  @dev    Phases of a request:
      *          - Pending: block.timestamp < agenda.saleStartsAt
@@ -385,7 +385,7 @@ IEstateTokenizer {
     ) external payable returns (uint256 value);
 
     /**
-     *  @notice Update the estate URI of a request.
+     *  @notice Update the URI of estate information of a request.
      *  @notice Update only before the request is either confirmed or cancelled.
      *
      *          Name            Description
@@ -457,7 +457,8 @@ IEstateTokenizer {
     ) external returns (uint256 value);
 
 
-    /* --- Safe Command --- */ /**
+    /* --- Safe Command --- */
+    /**
      *  @notice Confirm a request to be tokenized.
      *  @notice Confirm only if the request has achieved at least minimum selling quantity deposited (even if the sale period
      *          has not yet ended) and before the confirmation time limit has expired.

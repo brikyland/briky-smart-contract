@@ -68,7 +68,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _admin          `Admin` contract address.
      *  @param  _name           Token name.
      *  @param  _symbol         Token symbol.
-     *  @param  _uri            Token base URI.
+     *  @param  _uri            Base URI.
      *  @param  _fee            Minting fee.
      *  @param  _royaltyRate    Royalty rate.
      */
@@ -191,7 +191,7 @@ ReentrancyGuardUpgradeable {
      *          Name            Description
      *  @param  _receiver       Receiver address.
      *  @param  _currencies     Array of withdrawn currency addresses.
-     *  @param  _values         Array of withdraw values, respectively to each currency.
+     *  @param  _values         Array of withdraw values, respective to each currency.
      *  @param  _signatures     Array of admin signatures.
      *
      *  @dev    Administrative operator.

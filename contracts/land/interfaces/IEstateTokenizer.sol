@@ -13,15 +13,15 @@ import {IEstateTokenReceiver} from "./IEstateTokenReceiver.sol";
  *
  *  @notice Interface for tokenizer contracts of `EstateToken`.
  * 
- *  @notice An `IEstateTokenizer` contract may instruct `EstateToken` to securitize a real estate into a new class of tokens
- *          and receive them for subsequent distribution to holders.
+ *  @notice An `IEstateTokenizer` contract instructs `EstateToken` to securitize a real estate into a new class of tokens and
+ *          receive them for subsequent distribution to holders.
  */
 interface IEstateTokenizer is
 ICommon,
 IEstateTokenReceiver {
     /** ===== EVENT ===== **/
     /**
-     *  @notice Emitted when a holder withdraw their allocation from a tokenization.
+     *  @notice Emitted when a holder withdraw allocation from a tokenization.
      *
      *          Name            Description
      *  @param  tokenizationId  Tokenization identifier.
@@ -46,7 +46,6 @@ IEstateTokenReceiver {
     /**
      *          Name            Description
      *  @param  tokenizationId  Tokenization identifier.
-     *
      *  @return isTokenized     Whether the tokenization has succeeded.
      */
     function isTokenized(
@@ -58,7 +57,6 @@ IEstateTokenReceiver {
      *  @param  account         Account address.
      *  @param  tokenizationId  Tokenization identifier.
      *  @param  at              Reference timestamp.
-     *
      *  @return allocation      Allocation of the account at the reference timestamp.
      */
     function allocationOfAt(
