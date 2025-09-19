@@ -435,7 +435,6 @@ ReentrancyGuardUpgradeable {
             _principal.scale(feeRate, CommonConstant.RATE_MAX_FRACTION),
             _currency
         );
-
         uint256 mortgageId = ++mortgageNumber;
         mortgages[mortgageId] = Mortgage(
             _principal,
@@ -545,12 +544,14 @@ ReentrancyGuardUpgradeable {
 
         mortgage.state = MortgageState.Repaid;
 
+        address owner = ownerOf(_mortgageId);
+
         /// @dev    The corresponding token is burned when the mortgage is repaid.
         _burn(_mortgageId);
 
         CurrencyHandler.forwardCurrency(
             mortgage.currency,
-            ownerOf(_mortgageId),
+            owner,
             mortgage.repayment
         );
 

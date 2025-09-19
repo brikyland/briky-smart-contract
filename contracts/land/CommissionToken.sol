@@ -88,6 +88,8 @@ ReentrancyGuardUpgradeable {
         uint256 _royaltyRate
     ) external
     initializer {
+        require(_royaltyRate <= CommonConstant.RATE_MAX_FRACTION);
+        
         /// Initializer.
         __ERC721_init(_name, _symbol);
         __ERC721Pausable_init();
