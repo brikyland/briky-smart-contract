@@ -301,13 +301,15 @@ IAssetToken {
      *
      *          Name        Description
      *  @param  projectId   Project identifier.
-     *  @param  anchor      Keccak256 hash of `uri` of the estate.
+     *  @param  note       Deprecation note.
+     *  @param  anchor      Keccak256 hash of `uri` of the project.
      *
      *  @dev    Permission: Managers active in the zone of the project.
      *  @dev    Anchor enforces consistency between this contract and the client-side.
     */
     function safeDeprecateProject(
         uint256 projectId,
+        string calldata note,
         bytes32 anchor
     ) external;
 
@@ -344,7 +346,7 @@ IAssetToken {
      *  @dev    Permission: Managers active in the zone of the project.
      *  @dev    Anchor enforces consistency between this contract and the client-side.
      */
-    function updateProjectURI(
+    function safeUpdateProjectURI(
         uint256 projectId,
         string calldata uri,
         Validation calldata validation,
