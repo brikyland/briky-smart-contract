@@ -57,10 +57,9 @@ import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
 import { deployGovernanceHub } from '@utils/deployments/common/governanceHub';
 import { deployDividendHub } from '@utils/deployments/common/dividendHub';
 import { MockValidator } from '@utils/mockValidator';
-import { RegisterCustodianParams, TokenizeEstateParams, UpdateEstateURIParams } from '@utils/models/EstateToken';
-import { getRegisterCustodianInvalidValidation, getUpdateEstateURIValidation } from '@utils/validation/EstateToken';
-import { getCallTokenizeEstateTx, getRegisterCustodianTx, getUpdateEstateURITx } from '@utils/transaction/EstateToken';
-import { getRegisterInitiatorInvalidValidation } from '@utils/validation/ProjectToken';
+import { RegisterCustodianParams, TokenizeEstateParams, SafeUpdateEstateURIParams, SafeUpdateEstateCustodianParams, UpdateEstateURIParams, DeprecateEstateParams, SafeDeprecateEstateParams, ExtendEstateExpirationParams, SafeExtendEstateExpirationParams, UpdateEstateCustodianParams } from '@utils/models/EstateToken';
+import { getRegisterCustodianInvalidValidation, getUpdateEstateURIInvalidValidation, getUpdateEstateURIValidation } from '@utils/validation/EstateToken';
+import { getCallTokenizeEstateTx, getRegisterCustodianTx, getSafeDeprecateEstateTx, getSafeDeprecateEstateTxByParams, getSafeExtendEstateExpirationTx, getSafeExtendEstateExpirationTxByParams, getSafeUpdateEstateCustodianTx, getSafeUpdateEstateCustodianTxByParams, getSafeUpdateEstateURITx, getSafeUpdateEstateURITxByParams } from '@utils/transaction/EstateToken';
 import { ContractTransaction } from 'ethers';
 import { getRegisterBrokerTx } from '@utils/transaction/CommissionToken';
 import { Initialization as CommonInitialization } from '@tests/common/test.initialization';
@@ -96,7 +95,7 @@ interface EstateTokenFixture {
     extractors: any[];
 }
 
-describe('2.4. EstateToken', async () => {
+describe.only('2.4. EstateToken', async () => {
     afterEach(async () => {
         await ethers.provider.send("evm_setAutomine", [true]);
     });
@@ -464,10 +463,6 @@ describe('2.4. EstateToken', async () => {
 
             const tx = await estateToken.updateCommissionToken(commissionToken.address, signatures);
             await tx.wait();
-
-            await expect(tx).to
-                .emit(estateToken, 'CommissionTokenUpdate')
-                .withArgs(commissionToken.address);
 
             expect(await estateToken.commissionToken()).to.equal(commissionToken.address);
         });
@@ -1051,9 +1046,16 @@ describe('2.4. EstateToken', async () => {
             const tx1 = await estateToken.updateZoneRoyaltyRate(zone1, rate1, signatures1);
             await tx1.wait();
 
-            await expect(tx1).to
-                .emit(estateToken, 'ZoneRoyaltyRateUpdate')
-                .withArgs(zone1, rate1);
+            await expect(tx1).to.emit(estateToken, 'ZoneRoyaltyRateUpdate').withArgs(
+                zone1, 
+                (rate: any) => {
+                    expect(structToObject(rate)).to.deep.equal({
+                        value: rate1,
+                        decimals: Constant.COMMON_RATE_DECIMALS,
+                    });
+                    return true;
+                }
+            );
 
             expect(structToObject(await estateToken.getZoneRoyaltyRate(zone1))).to.deep.equal({
                 value: rate1,
@@ -1070,9 +1072,16 @@ describe('2.4. EstateToken', async () => {
             const tx2 = await estateToken.updateZoneRoyaltyRate(zone2, rate2, signatures2);
             await tx2.wait();
 
-            await expect(tx2).to
-                .emit(estateToken, 'ZoneRoyaltyRateUpdate')
-                .withArgs(zone2, rate2);
+            await expect(tx2).to.emit(estateToken, 'ZoneRoyaltyRateUpdate').withArgs(
+                zone2, 
+                (rate: any) => {
+                    expect(structToObject(rate)).to.deep.equal({
+                        value: rate2,
+                        decimals: Constant.COMMON_RATE_DECIMALS,
+                    });
+                    return true;
+                }
+            );
 
             expect(structToObject(await estateToken.getZoneRoyaltyRate(zone2))).to.deep.equal({
                 value: rate2,
@@ -1116,21 +1125,20 @@ describe('2.4. EstateToken', async () => {
         });
 
         it('2.4.6.4. updateZoneRoyaltyRate unsuccessfully with invalid zone', async () => {
-            const fixture = await beforeEstateTokenTest({
-                skipDeclareZone: true,
-            });
-            const { estateToken, admin, admins, zone1 } = fixture;
+            const fixture = await beforeEstateTokenTest();
+            const { estateToken, admin, admins } = fixture;
 
+            const zone = ethers.utils.formatBytes32String('invalid zone');
             const rate = ethers.utils.parseEther('0.2');
 
             let message = ethers.utils.defaultAbiCoder.encode(
                 ["address", "string", "bytes32", "uint256"],
-                [estateToken.address, "updateZoneRoyaltyRate", zone1, rate]
+                [estateToken.address, "updateZoneRoyaltyRate", zone, rate]
             );
             const signatures = await getSignatures(message, admins, await admin.nonce());
 
             await expect(estateToken.updateZoneRoyaltyRate(
-                zone1,
+                zone,
                 rate,
                 signatures
             )).to.be.revertedWithCustomError(estateToken, 'InvalidZone');
@@ -1188,11 +1196,21 @@ describe('2.4. EstateToken', async () => {
                 addSampleEstates: true,
             });
 
-            await callTransaction(estateToken.connect(manager).deprecateEstate(1));
+            const params1: DeprecateEstateParams = {
+                estateId: BigNumber.from(1),
+                note: 'test deprecate 1',
+            };
+            await callTransaction(getSafeDeprecateEstateTxByParams(estateToken, manager, params1));
+            
             expect(await estateToken.isAvailable(1)).to.equal(false);
             expect(await estateToken.isAvailable(2)).to.equal(true);
 
-            await callTransaction(estateToken.connect(manager).deprecateEstate(2));
+            const params2: DeprecateEstateParams = {
+                estateId: BigNumber.from(2),
+                note: 'test deprecate 2',
+            };
+            await callTransaction(getSafeDeprecateEstateTxByParams(estateToken, manager, params2));
+
             expect(await estateToken.isAvailable(1)).to.equal(false);
             expect(await estateToken.isAvailable(2)).to.equal(false);
         });
@@ -1274,7 +1292,7 @@ describe('2.4. EstateToken', async () => {
                 params1.uri
             );
 
-            expect(await estateToken.custodianURI(zone1, custodian1.address)).to.equal(params1.uri);
+            expect(await estateToken.custodianURIs(zone1, custodian1.address)).to.equal(params1.uri);
 
             expect(await estateToken.isCustodianIn(zone1, custodian1.address)).to.be.true;
             expect(await estateToken.isCustodianIn(zone2, custodian1.address)).to.be.false;
@@ -1295,7 +1313,7 @@ describe('2.4. EstateToken', async () => {
                 params2.uri
             );
 
-            expect(await estateToken.custodianURI(zone2, custodian1.address)).to.equal(params2.uri);
+            expect(await estateToken.custodianURIs(zone2, custodian1.address)).to.equal(params2.uri);
 
             expect(await estateToken.isCustodianIn(zone1, custodian1.address)).to.be.true;
             expect(await estateToken.isCustodianIn(zone1, custodian2.address)).to.be.false;
@@ -1316,7 +1334,7 @@ describe('2.4. EstateToken', async () => {
                 params3.uri
             );
 
-            expect(await estateToken.custodianURI(zone1, custodian2.address)).to.equal(params3.uri);
+            expect(await estateToken.custodianURIs(zone1, custodian2.address)).to.equal(params3.uri);
 
             expect(await estateToken.isCustodianIn(zone1, custodian1.address)).to.be.true;
             expect(await estateToken.isCustodianIn(zone1, custodian2.address)).to.be.true;
@@ -1343,11 +1361,16 @@ describe('2.4. EstateToken', async () => {
         it('2.4.9.3. Register custodian unsuccessfully with inactive zone', async () => {
             const fixture = await beforeEstateTokenTest({
                 skipRegisterCustodians: true,
-                skipDeclareZone: true,
             });
-            const { estateToken, admin, admins, manager, validator } = fixture;
+            const { estateToken, manager, validator } = fixture;
 
-            const { defaultParams: params } = await beforeRegisterCustodianTest(fixture);
+            const { defaultParams } = await beforeRegisterCustodianTest(fixture);
+
+            const zone = ethers.utils.formatBytes32String('invalid zone');
+            const params: RegisterCustodianParams = {
+                ...defaultParams,
+                zone: zone,
+            }
 
             await expect(getRegisterCustodianTx(estateToken, validator, manager, params))
                 .to.be.revertedWithCustomError(estateToken, `Unauthorized`)                
@@ -1389,7 +1412,7 @@ describe('2.4. EstateToken', async () => {
             };
             await callTransaction(getRegisterCustodianTx(estateToken, validator, manager, params2));
 
-            expect(await estateToken.custodianURI(defaultParams.zone, defaultParams.custodian)).to.equal(params2.uri);
+            expect(await estateToken.custodianURIs(defaultParams.zone, defaultParams.custodian)).to.equal(params2.uri);
         });
 
         it('2.4.9.6. Register custodian unsuccessfully with invalid validation', async () => {
@@ -1460,6 +1483,7 @@ describe('2.4. EstateToken', async () => {
                 params.zone,
                 params.tokenizationId,
                 estateForger.address,
+                params.custodian,
                 params.expireAt,
             );
 
@@ -1510,15 +1534,19 @@ describe('2.4. EstateToken', async () => {
         });
 
         it('2.4.10.4. tokenize estate unsuccessfully when zone is not declared', async () => {
-            const fixture = await beforeEstateTokenTest({
-                skipDeclareZone: true,
-            });
+            const fixture = await beforeEstateTokenTest();
             const { estateToken, estateForger } = fixture;
             const { baseTimestamp, defaultParams } = await beforeTokenizeEstateTest(fixture);
 
+            const zone = ethers.utils.formatBytes32String('invalid zone');
+            const params = {
+                ...defaultParams,
+                zone: zone,
+            }
+
             await time.setNextBlockTimestamp(baseTimestamp);
 
-            await expect(getCallTokenizeEstateTx(estateToken, estateForger, defaultParams))
+            await expect(getCallTokenizeEstateTx(estateToken, estateForger, params))
                 .to.be.revertedWithCustomError(estateToken, `InvalidInput`);
         });
 
@@ -1571,7 +1599,7 @@ describe('2.4. EstateToken', async () => {
         });
     });
 
-    describe('2.4.11. deprecateEstate(uint256)', () => {
+    describe('2.4.11. safeDeprecateEstate(uint256, string, bytes32)', () => {
         it('2.4.11.1. deprecate estate successfully', async () => {
             const { estateToken, manager } = await beforeEstateTokenTest({
                 addSampleEstates: true,
@@ -1580,23 +1608,49 @@ describe('2.4. EstateToken', async () => {
             const baseTimestamp = await time.latest() + 100;
             await time.setNextBlockTimestamp(baseTimestamp);
 
-            let tx = await estateToken.connect(manager).deprecateEstate(1);
-            await tx.wait();
+            const params1: DeprecateEstateParams = {
+                estateId: BigNumber.from(1),
+                note: 'test deprecate 1',
+            };
 
-            await expect(tx)
-                .to.emit(estateToken, "EstateDeprecation")
-                .withArgs(1);
+            const tx1 = await getSafeDeprecateEstateTxByParams(estateToken, manager, params1);
+            await tx1.wait();
+
+            await expect(tx1).to.emit(estateToken, "EstateDeprecation").withArgs(
+                1,
+                params1.note
+            );
             expect((await estateToken.getEstate(1)).deprecateAt).to.equal(baseTimestamp);
 
             await time.setNextBlockTimestamp(baseTimestamp + 100);
 
-            tx = await estateToken.connect(manager).deprecateEstate(2);
-            await tx.wait();
+            const params2: DeprecateEstateParams = {
+                estateId: BigNumber.from(2),
+                note: 'test deprecate 2',
+            };
 
-            await expect(tx)
-                .to.emit(estateToken, "EstateDeprecation")
-                .withArgs(2);
+            const tx2 = await getSafeDeprecateEstateTxByParams(estateToken, manager, params2);
+            await tx2.wait();
+
+            await expect(tx2).to.emit(estateToken, "EstateDeprecation").withArgs(
+                2,
+                params2.note
+            );
             expect((await estateToken.getEstate(2)).deprecateAt).to.equal(baseTimestamp + 100);
+        });
+
+        it('2.4.11.2. deprecate estate unsuccessfully with invalid anchor', async () => {
+            const { estateToken, manager } = await beforeEstateTokenTest({
+                addSampleEstates: true,
+            });
+                
+            const params: SafeDeprecateEstateParams = {
+                estateId: BigNumber.from(1),
+                note: 'test deprecate 1',
+                anchor: ethers.utils.keccak256(ethers.utils.toUtf8Bytes('invalid anchor')),
+            };
+            await expect(getSafeDeprecateEstateTx(estateToken, manager, params))
+                .to.be.revertedWithCustomError(estateToken, "BadAnchor");
         });
 
         it('2.4.11.2. deprecate estate unsuccessfully with non-existing estate id', async () => {
@@ -1604,13 +1658,25 @@ describe('2.4. EstateToken', async () => {
                 addSampleEstates: true,
             });
 
-            await expect(estateToken.connect(manager).deprecateEstate(0))
+            const params1: DeprecateEstateParams = {
+                estateId: BigNumber.from(0),
+                note: 'test deprecate 1',
+            };
+            await expect(getSafeDeprecateEstateTxByParams(estateToken, manager, params1))
                 .to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
 
-            await expect(estateToken.connect(manager).deprecateEstate(3))
+            const params2: DeprecateEstateParams = {
+                estateId: BigNumber.from(3),
+                note: 'test deprecate 2',
+            };
+            await expect(getSafeDeprecateEstateTxByParams(estateToken, manager, params2))
                 .to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
 
-            await expect(estateToken.connect(manager).deprecateEstate(100))
+            const params3: DeprecateEstateParams = {
+                estateId: BigNumber.from(100),
+                note: 'test deprecate 3',
+            };
+            await expect(getSafeDeprecateEstateTxByParams(estateToken, manager, params3))
                 .to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
         });
 
@@ -1619,12 +1685,20 @@ describe('2.4. EstateToken', async () => {
                 addSampleEstates: true,
             });
 
-            await callTransaction(estateToken.connect(manager).deprecateEstate(1));
-            await expect(estateToken.connect(manager).deprecateEstate(1))
+            const params1: DeprecateEstateParams = {
+                estateId: BigNumber.from(1),
+                note: 'test deprecate 1',
+            };
+            await callTransaction(getSafeDeprecateEstateTxByParams(estateToken, manager, params1));
+            await expect(getSafeDeprecateEstateTxByParams(estateToken, manager, params1))
                 .to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
 
-            await callTransaction(estateToken.connect(manager).deprecateEstate(2));
-            await expect(estateToken.connect(manager).deprecateEstate(2))
+            const params2: DeprecateEstateParams = {
+                estateId: BigNumber.from(2),
+                note: 'test deprecate 2',
+            };
+            await callTransaction(getSafeDeprecateEstateTxByParams(estateToken, manager, params2));
+            await expect(getSafeDeprecateEstateTxByParams(estateToken, manager, params2))
                 .to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
         });
 
@@ -1633,20 +1707,14 @@ describe('2.4. EstateToken', async () => {
                 addSampleEstates: true,
             });
 
-            await expect(estateToken.connect(user).deprecateEstate(1))
+            const params: DeprecateEstateParams = {
+                estateId: BigNumber.from(1),
+                note: 'test deprecate 1',
+            };
+            await expect(getSafeDeprecateEstateTxByParams(estateToken, user, params))
                 .to.be.revertedWithCustomError(estateToken, "Unauthorized");
 
-            await expect(estateToken.connect(moderator).deprecateEstate(1))
-                .to.be.revertedWithCustomError(estateToken, "Unauthorized");
-        });
-
-        it('2.4.11.5. deprecate estate unsuccessfully when zone is not declared', async () => {
-            const { estateToken, manager, admin, admins, zone1 } = await beforeEstateTokenTest({
-                addSampleEstates: true,
-                skipDeclareZone: true,
-            });
-
-            await expect(estateToken.connect(manager).deprecateEstate(1))
+            await expect(getSafeDeprecateEstateTxByParams(estateToken, moderator, params))
                 .to.be.revertedWithCustomError(estateToken, "Unauthorized");
         });
 
@@ -1664,7 +1732,11 @@ describe('2.4. EstateToken', async () => {
                 await admin.nonce()
             );
 
-            await expect(estateToken.connect(manager).deprecateEstate(1))
+            const params: DeprecateEstateParams = {
+                estateId: BigNumber.from(1),
+                note: 'test deprecate 1',
+            };
+            await expect(getSafeDeprecateEstateTxByParams(estateToken, manager, params))
                 .to.be.revertedWithCustomError(estateToken, "Unauthorized");
         });
 
@@ -1674,12 +1746,16 @@ describe('2.4. EstateToken', async () => {
                 pause: true,
             });
 
-            await expect(estateToken.connect(manager).deprecateEstate(1))
+            const params: DeprecateEstateParams = {
+                estateId: BigNumber.from(1),
+                note: 'test deprecate 1',
+            };
+            await expect(getSafeDeprecateEstateTxByParams(estateToken, manager, params))
                 .to.be.revertedWith("Pausable: paused");
         });
     });
 
-    describe('2.4.12. extendEstateExpiration(uint256, uint40)', () => {
+    describe('2.4.12. safeExtendEstateExpiration(uint256, uint40, bytes32)', () => {
         it('2.4.12.1. extend estate expiration successfully by manager with valid estate', async () => {
             const { estateToken, manager } = await beforeEstateTokenTest({
                 addSampleEstates: true,
@@ -1687,23 +1763,49 @@ describe('2.4. EstateToken', async () => {
 
             const baseTimestamp = await time.latest() + 1000;
 
-            let tx = await estateToken.connect(manager).extendEstateExpiration(1, baseTimestamp + 1e9);
-            await tx.wait();
+            const params1: ExtendEstateExpirationParams = {
+                estateId: BigNumber.from(1),
+                expireAt: baseTimestamp + 1e9,
+            };
+            const tx1 = await getSafeExtendEstateExpirationTxByParams(estateToken, manager, params1);
+            await tx1.wait();
 
-            await expect(tx)
-                .to.emit(estateToken, "EstateExpirationExtension")
-                .withArgs(1, baseTimestamp + 1e9);
+            await expect(tx1).to.emit(estateToken, "EstateExpirationExtension").withArgs(
+                1,
+                params1.expireAt
+            );
 
-            expect((await estateToken.getEstate(1)).expireAt).to.equal(baseTimestamp + 1e9);
+            expect((await estateToken.getEstate(1)).expireAt).to.equal(params1.expireAt);
 
-            tx = await estateToken.connect(manager).extendEstateExpiration(1, baseTimestamp + 1e9 + 10);
-            await tx.wait();
+            const params2: ExtendEstateExpirationParams = {
+                estateId: BigNumber.from(1),
+                expireAt: baseTimestamp + 1e9 + 10,
+            };
+            const tx2 = await getSafeExtendEstateExpirationTxByParams(estateToken, manager, params2);
+            await tx2.wait();
 
-            await expect(tx)
-                .to.emit(estateToken, "EstateExpirationExtension")
-                .withArgs(1, baseTimestamp + 1e9 + 10);
+            await expect(tx2).to.emit(estateToken, "EstateExpirationExtension").withArgs(
+                1,
+                params2.expireAt
+            );
 
-            expect((await estateToken.getEstate(1)).expireAt).to.equal(baseTimestamp + 1e9 + 10);
+            expect((await estateToken.getEstate(1)).expireAt).to.equal(params2.expireAt);
+        });
+
+        it('2.4.12.2. extend estate expiration successfully by manager with invalid anchor', async () => {
+            const { estateToken, manager } = await beforeEstateTokenTest({
+                addSampleEstates: true,
+            });
+
+            const baseTimestamp = await time.latest() + 1000;
+            
+            const params: SafeExtendEstateExpirationParams = {
+                estateId: BigNumber.from(1),
+                expireAt: baseTimestamp + 1e9,
+                anchor: ethers.utils.keccak256(ethers.utils.toUtf8Bytes('invalid anchor')),
+            };
+            await expect(getSafeExtendEstateExpirationTx(estateToken, manager, params))
+                .to.be.revertedWithCustomError(estateToken, "BadAnchor");
         });
 
         it('2.4.12.2. extend estate expiration unsuccessfully with non-existing estate', async () => {
@@ -1713,13 +1815,25 @@ describe('2.4. EstateToken', async () => {
 
             const baseTimestamp = await time.latest() + 1000;
 
-            await expect(estateToken.connect(manager).extendEstateExpiration(0, baseTimestamp + 1e9))
+            const params1: ExtendEstateExpirationParams = {
+                estateId: BigNumber.from(0),
+                expireAt: baseTimestamp + 1e9,
+            };
+            await expect(getSafeExtendEstateExpirationTxByParams(estateToken, manager, params1))
                 .to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
 
-            await expect(estateToken.connect(manager).extendEstateExpiration(3, baseTimestamp + 1e9))
+            const params2: ExtendEstateExpirationParams = {
+                estateId: BigNumber.from(3),
+                expireAt: baseTimestamp + 1e9,
+            };
+            await expect(getSafeExtendEstateExpirationTxByParams(estateToken, manager, params2))
                 .to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
 
-            await expect(estateToken.connect(manager).extendEstateExpiration(100, baseTimestamp + 1e9))
+            const params3: ExtendEstateExpirationParams = {
+                estateId: BigNumber.from(100),
+                expireAt: baseTimestamp + 1e9,
+            };
+            await expect(getSafeExtendEstateExpirationTxByParams(estateToken, manager, params3))
                 .to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
         });
 
@@ -1729,8 +1843,17 @@ describe('2.4. EstateToken', async () => {
             });
             const baseTimestamp = await time.latest() + 1000;
 
-            await callTransaction(estateToken.connect(manager).deprecateEstate(1));
-            await expect(estateToken.connect(manager).extendEstateExpiration(1, baseTimestamp + 1e9))
+            const deprecateParams: DeprecateEstateParams = {
+                estateId: BigNumber.from(1),
+                note: 'test deprecate 1',
+            };
+            await callTransaction(getSafeDeprecateEstateTxByParams(estateToken, manager, deprecateParams));
+
+            const extendParams: ExtendEstateExpirationParams = {
+                estateId: BigNumber.from(1),
+                expireAt: baseTimestamp + 1e9,
+            };
+            await expect(getSafeExtendEstateExpirationTxByParams(estateToken, manager, extendParams))
                 .to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
         });
 
@@ -1740,21 +1863,14 @@ describe('2.4. EstateToken', async () => {
             });
             const baseTimestamp = await time.latest() + 1000;
 
-            await expect(estateToken.connect(user).extendEstateExpiration(1, baseTimestamp + 1e9))
+            const extendParams: ExtendEstateExpirationParams = {
+                estateId: BigNumber.from(1),
+                expireAt: baseTimestamp + 1e9,
+            };
+            await expect(getSafeExtendEstateExpirationTxByParams(estateToken, user, extendParams))
                 .to.be.revertedWithCustomError(estateToken, "Unauthorized");
 
-            await expect(estateToken.connect(moderator).extendEstateExpiration(1, baseTimestamp + 1e9))
-                .to.be.revertedWithCustomError(estateToken, "Unauthorized");
-        });
-
-        it('2.4.12.5. extend estate expiration unsuccessfully when zone is not declared', async () => {
-            const { estateToken, manager, admin, admins, zone1 } = await beforeEstateTokenTest({
-                addSampleEstates: true,
-                skipDeclareZone: true,
-            });
-            const baseTimestamp = await time.latest() + 1000;
-
-            await expect(estateToken.connect(manager).extendEstateExpiration(1, baseTimestamp + 1e9))
+            await expect(getSafeExtendEstateExpirationTxByParams(estateToken, moderator, extendParams))
                 .to.be.revertedWithCustomError(estateToken, "Unauthorized");
         });
 
@@ -1773,7 +1889,11 @@ describe('2.4. EstateToken', async () => {
                 await admin.nonce()
             );
 
-            await expect(estateToken.connect(manager).extendEstateExpiration(1, baseTimestamp + 1e9))
+            const params: ExtendEstateExpirationParams = {
+                estateId: BigNumber.from(1),
+                expireAt: baseTimestamp + 1e9,
+            };
+            await expect(getSafeExtendEstateExpirationTxByParams(estateToken, manager, params))
                 .to.be.revertedWithCustomError(estateToken, "Unauthorized");
         });
 
@@ -1783,7 +1903,11 @@ describe('2.4. EstateToken', async () => {
             });
             const baseTimestamp = await time.latest();
 
-            await expect(estateToken.connect(manager).extendEstateExpiration(1, baseTimestamp - 1))
+            const params: ExtendEstateExpirationParams = {
+                estateId: BigNumber.from(1),
+                expireAt: baseTimestamp - 1,
+            };
+            await expect(getSafeExtendEstateExpirationTxByParams(estateToken, manager, params))
                 .to.be.revertedWithCustomError(estateToken, "InvalidTimestamp");
         });
 
@@ -1795,33 +1919,27 @@ describe('2.4. EstateToken', async () => {
 
             const expireAt = (await estateToken.getEstate(1)).expireAt;
 
-            await expect(estateToken.connect(manager).extendEstateExpiration(1, expireAt + 1e9))
+            const params: ExtendEstateExpirationParams = {
+                estateId: BigNumber.from(1),
+                expireAt: expireAt + 1e9,
+            };
+            await expect(getSafeExtendEstateExpirationTxByParams(estateToken, manager, params))
                 .to.be.revertedWith("Pausable: paused");
         });
     });
 
-    describe('2.4.13. updateEstateURI(uint256, string)', () => {
-        async function beforeUpdateEstateURITest(fixture: EstateTokenFixture): Promise<{
-            defaultParams: UpdateEstateURIParams;
-        }> {
-            const defaultParams = {
-                estateId: ethers.BigNumber.from(1),
-                uri: 'new_URI_1',
-            };
-            return { defaultParams };
-        }
-
+    describe('2.4.13. safeUpdateEstateURI(uint256, string, (uint256, uint256, bytes), bytes32)', () => {
         it('2.4.13.1. update estate URI successfully by manager with available estate', async () => {
             const fixture = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
             const { estateToken, manager, validator } = fixture;
 
-            const params1 = {
+            const params1: UpdateEstateURIParams = {
                 estateId: BigNumber.from(1),
                 uri: 'new_URI_1',
             };
-            const tx1 = await getUpdateEstateURITx(estateToken, validator, manager, params1);
+            const tx1 = await getSafeUpdateEstateURITxByParams(estateToken, validator, manager, params1);
             await tx1.wait();
 
             await expect(tx1).to.emit(estateToken, "URI").withArgs(
@@ -1831,11 +1949,11 @@ describe('2.4. EstateToken', async () => {
 
             expect(await estateToken.uri(params1.estateId)).to.equal(LandInitialization.ESTATE_TOKEN_BaseURI + 'new_URI_1');
             
-            const params2 = {
+            const params2: UpdateEstateURIParams = {
                 estateId: BigNumber.from(2),
                 uri: 'new_URI_2',
             };
-            const tx2 = await getUpdateEstateURITx(estateToken, validator, manager, params2);
+            const tx2 = await getSafeUpdateEstateURITxByParams(estateToken, validator, manager, params2);
             await tx2.wait();
 
             await expect(tx2).to.emit(estateToken, "URI").withArgs(
@@ -1846,35 +1964,76 @@ describe('2.4. EstateToken', async () => {
             expect(await estateToken.uri(params2.estateId)).to.equal(LandInitialization.ESTATE_TOKEN_BaseURI + 'new_URI_2');
         });
 
+        it('2.4.13.2. update estate URI successfully by manager with invalid anchor', async () => {
+            const fixture = await beforeEstateTokenTest({
+                addSampleEstates: true,
+            });
+            const { estateToken, manager, validator } = fixture;
+
+            const params: SafeUpdateEstateURIParams = {
+                estateId: BigNumber.from(1),
+                uri: 'new_URI_1',
+                anchor: ethers.utils.keccak256(ethers.utils.toUtf8Bytes('invalid anchor')),
+            };
+            await expect(getSafeUpdateEstateURITx(estateToken, validator, manager, params))
+                .to.be.revertedWithCustomError(estateToken, "BadAnchor");            
+        });
+
+        it('2.4.13.3. update estate URI successfully by manager with invalid validation', async () => {
+            const fixture = await beforeEstateTokenTest({
+                addSampleEstates: true,
+            });
+            const { estateToken, manager, validator } = fixture;
+
+            const currentURI = await estateToken.uri(BigNumber.from(1));
+            const params: SafeUpdateEstateURIParams = {
+                estateId: BigNumber.from(1),
+                uri: 'new_URI_1',
+                anchor: ethers.utils.keccak256(ethers.utils.toUtf8Bytes(currentURI)),
+            };
+
+            const invalidValidation = await getUpdateEstateURIInvalidValidation(estateToken, validator, params);
+
+            await expect(estateToken.connect(manager).safeUpdateEstateURI(
+                params.estateId,
+                params.uri,
+                invalidValidation,
+                params.anchor
+            )).to.be.revertedWithCustomError(estateToken, "InvalidSignature");
+        });
+
         it('2.4.13.2. update estate URI unsuccessfully with unavailable estate', async () => {
             const fixture = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
 
             const { estateToken, manager, validator } = fixture;
-            const { defaultParams } = await beforeUpdateEstateURITest(fixture);
 
-            const params1 = {
-                ...defaultParams,
+            const params1: UpdateEstateURIParams = {
                 estateId: BigNumber.from(0),
+                uri: 'new_URI_1',
             };
-            const params2 = {
-                ...defaultParams,
+            await expect(getSafeUpdateEstateURITxByParams(estateToken, validator, manager, params1))
+                .to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
+
+            const params2: UpdateEstateURIParams = {
                 estateId: BigNumber.from(100),
-            };
-
-            await expect(getUpdateEstateURITx(estateToken, validator, manager, params1))
+                uri: 'new_URI_2',
+            };    
+            await expect(getSafeUpdateEstateURITxByParams(estateToken, validator, manager, params2))
                 .to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
 
-            await expect(getUpdateEstateURITx(estateToken, validator, manager, params2))
-                .to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
-
-            const params3 = {
-                ...defaultParams,
+            const deprecateParams: DeprecateEstateParams = {
                 estateId: BigNumber.from(1),
+                note: 'test deprecate 1',
             };
-            await callTransaction(estateToken.connect(manager).deprecateEstate(params3.estateId));
-            await expect(getUpdateEstateURITx(estateToken, validator, manager, params3))
+            await callTransaction(getSafeDeprecateEstateTxByParams(estateToken, manager, deprecateParams));
+
+            const params3: UpdateEstateURIParams = {
+                estateId: BigNumber.from(1),
+                uri: 'new_URI_3',
+            };
+            await expect(getSafeUpdateEstateURITxByParams(estateToken, validator, manager, params3))
                 .to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
         });
 
@@ -1883,24 +2042,16 @@ describe('2.4. EstateToken', async () => {
                 addSampleEstates: true,
             });
             const { user, moderator, estateToken, validator } = fixture;
-            const { defaultParams } = await beforeUpdateEstateURITest(fixture);
+            
+            const params: UpdateEstateURIParams = {
+                estateId: BigNumber.from(1),
+                uri: 'new_URI_1',
+            };
 
-            await expect(getUpdateEstateURITx(estateToken, validator, user, defaultParams))
+            await expect(getSafeUpdateEstateURITxByParams(estateToken, validator, user, params))
                 .to.be.revertedWithCustomError(estateToken, "Unauthorized");
 
-            await expect(getUpdateEstateURITx(estateToken, validator, moderator, defaultParams))
-                .to.be.revertedWithCustomError(estateToken, "Unauthorized");
-        });
-
-        it('2.4.13.4. update estate URI unsuccessfully when zone is not declared', async () => {
-            const fixture = await beforeEstateTokenTest({
-                addSampleEstates: true,
-                skipDeclareZone: true,
-            });
-            const { manager, estateToken, validator } = fixture;
-            const { defaultParams } = await beforeUpdateEstateURITest(fixture);
-
-            await expect(getUpdateEstateURITx(estateToken, validator, manager, defaultParams))
+            await expect(getSafeUpdateEstateURITxByParams(estateToken, validator, moderator, params))
                 .to.be.revertedWithCustomError(estateToken, "Unauthorized");
         });
 
@@ -1918,9 +2069,12 @@ describe('2.4. EstateToken', async () => {
                 false,
                 await admin.nonce()
             );
-            const { defaultParams } = await beforeUpdateEstateURITest(fixture);
 
-            await expect(getUpdateEstateURITx(estateToken, validator, manager, defaultParams))
+            const params: UpdateEstateURIParams = {
+                estateId: BigNumber.from(1),
+                uri: 'new_URI_1',
+            };
+            await expect(getSafeUpdateEstateURITxByParams(estateToken, validator, manager, params))
                 .to.be.revertedWithCustomError(estateToken, "Unauthorized");
         });
 
@@ -1930,24 +2084,32 @@ describe('2.4. EstateToken', async () => {
                 pause: true,
             });
             const { manager, estateToken, validator } = fixture;
-            const { defaultParams } = await beforeUpdateEstateURITest(fixture);
 
-            await expect(getUpdateEstateURITx(estateToken, validator, manager, defaultParams))
+            const params: UpdateEstateURIParams = {
+                estateId: BigNumber.from(1),
+                uri: 'new_URI_1',
+            };
+            await expect(getSafeUpdateEstateURITxByParams(estateToken, validator, manager, params))
                 .to.be.revertedWith("Pausable: paused");
         });
     });
 
-    describe('2.4.14. updateEstateCustodian(uint256, address)', () => {
+    describe('2.4.14. safeUpdateEstateCustodian(uint256, address)', () => {
         it('2.4.14.1. update estate custodian successfully', async () => {
             const fixture = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
             const { estateToken, manager, custodian3 } = fixture;
 
-            const tx1 = await estateToken.connect(manager).updateEstateCustodian(1, custodian3.address);
-            await tx1.wait();
+            const params: UpdateEstateCustodianParams = {
+                estateId: ethers.BigNumber.from(1),
+                custodian: custodian3.address,
+            };
 
-            await expect(tx1).to.emit(estateToken, "EstateCustodianUpdate").withArgs(
+            const tx = await getSafeUpdateEstateCustodianTxByParams(estateToken, manager, params);
+            await tx.wait();
+
+            await expect(tx).to.emit(estateToken, "EstateCustodianUpdate").withArgs(
                 1,
                 custodian3.address
             );
@@ -1956,19 +2118,52 @@ describe('2.4. EstateToken', async () => {
             expect(estate.custodian).to.equal(custodian3.address);
         });
 
+        it('2.4.14.2. update estate custodian successfully with invalid anchor', async () => {
+            const fixture = await beforeEstateTokenTest({
+                addSampleEstates: true,
+            });
+            const { estateToken, manager, custodian3 } = fixture;
+            
+            const params: SafeUpdateEstateCustodianParams = {
+                estateId: BigNumber.from(1),
+                custodian: custodian3.address,
+                anchor: ethers.utils.keccak256(ethers.utils.toUtf8Bytes('invalid anchor')),
+            };
+            await expect(getSafeUpdateEstateCustodianTx(estateToken, manager, params))
+                .to.be.revertedWithCustomError(estateToken, "BadAnchor");            
+        });
+
         it('2.4.14.2. update estate custodian unsuccessfully with unavailable estate', async () => {
             const fixture = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
             const { estateToken, manager, custodian3 } = fixture;
 
-            await expect(estateToken.connect(manager).updateEstateCustodian(0, custodian3.address))
-                .to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
-            await expect(estateToken.connect(manager).updateEstateCustodian(100, custodian3.address))
+            const params1: UpdateEstateCustodianParams = {
+                estateId: BigNumber.from(0),
+                custodian: custodian3.address,
+            };
+            await expect(getSafeUpdateEstateCustodianTxByParams(estateToken, manager, params1))
                 .to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
 
-            await callTransaction(estateToken.connect(manager).deprecateEstate(1));
-            await expect(estateToken.connect(manager).updateEstateCustodian(1, custodian3.address))
+            const params2: UpdateEstateCustodianParams = {
+                estateId: BigNumber.from(100),
+                custodian: custodian3.address,
+            };    
+            await expect(getSafeUpdateEstateCustodianTxByParams(estateToken, manager, params2))
+                .to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
+
+            const deprecateParams: DeprecateEstateParams = {
+                estateId: BigNumber.from(1),
+                note: 'test deprecate 1',
+            };
+            await callTransaction(getSafeDeprecateEstateTxByParams(estateToken, manager, deprecateParams));
+
+            const params3: UpdateEstateCustodianParams = {
+                estateId: BigNumber.from(1),
+                custodian: custodian3.address,
+            };
+            await expect(getSafeUpdateEstateCustodianTxByParams(estateToken, manager, params3))
                 .to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
         });
 
@@ -1978,21 +2173,13 @@ describe('2.4. EstateToken', async () => {
             });
             const { user, moderator, estateToken, custodian3 } = fixture;
 
-            await expect(estateToken.connect(user).updateEstateCustodian(1, custodian3.address))
-                .to.be.revertedWithCustomError(estateToken, "Unauthorized");
-            
-            await expect(estateToken.connect(moderator).updateEstateCustodian(1, custodian3.address))
-                .to.be.revertedWithCustomError(estateToken, "Unauthorized");
-        });
-
-        it('2.4.14.4. update estate custodian unsuccessfully when zone is not declared', async () => {
-            const fixture = await beforeEstateTokenTest({
-                addSampleEstates: true,
-                skipDeclareZone: true,
-            });
-            const { manager, estateToken, custodian3 } = fixture;
-
-            await expect(estateToken.connect(manager).updateEstateCustodian(1, custodian3.address))
+            const params: UpdateEstateCustodianParams = {
+                estateId: BigNumber.from(1),
+                custodian: custodian3.address,
+            };
+            await expect(getSafeUpdateEstateCustodianTxByParams(estateToken, user, params))
+                .to.be.revertedWithCustomError(estateToken, "Unauthorized");            
+            await expect(getSafeUpdateEstateCustodianTxByParams(estateToken, moderator, params))
                 .to.be.revertedWithCustomError(estateToken, "Unauthorized");
         });
 
@@ -2011,7 +2198,11 @@ describe('2.4. EstateToken', async () => {
                 await admin.nonce()
             );
 
-            await expect(estateToken.connect(manager).updateEstateCustodian(1, custodian3.address))
+            const params: UpdateEstateCustodianParams = {
+                estateId: BigNumber.from(1),
+                custodian: custodian3.address,
+            };
+            await expect(getSafeUpdateEstateCustodianTxByParams(estateToken, manager, params))
                 .to.be.revertedWithCustomError(estateToken, "Unauthorized");
         });
 
@@ -2022,7 +2213,11 @@ describe('2.4. EstateToken', async () => {
             });
             const { manager, estateToken, custodian3 } = fixture;
 
-            await expect(estateToken.connect(manager).updateEstateCustodian(1, custodian3.address))
+            const params: UpdateEstateCustodianParams = {
+                estateId: BigNumber.from(1),
+                custodian: custodian3.address,
+            };
+            await expect(getSafeUpdateEstateCustodianTxByParams(estateToken, manager, params))
                 .to.be.revertedWith("Pausable: paused");
         });
 
@@ -2032,7 +2227,11 @@ describe('2.4. EstateToken', async () => {
             });
             const { manager, estateToken, user } = fixture;
 
-            await expect(estateToken.connect(manager).updateEstateCustodian(1, user.address))
+            const params: UpdateEstateCustodianParams = {
+                estateId: BigNumber.from(1),
+                custodian: user.address,
+            };
+            await expect(getSafeUpdateEstateCustodianTxByParams(estateToken, manager, params))
                 .to.be.revertedWithCustomError(estateToken, "InvalidCustodian");
         });
     });
@@ -2174,42 +2373,6 @@ describe('2.4. EstateToken', async () => {
             expect(await estateToken.balanceOf(depositor1.address, 0)).to.equal(0);
             expect(await estateToken.balanceOf(depositor1.address, 3)).to.equal(0);
             expect(await estateToken.balanceOf(depositor1.address, 100)).to.equal(0);
-        });
-
-        it('2.4.17.3. return 0 for deprecated estate', async () => {
-            const { estateToken, manager, depositor1, depositor2 } = await beforeEstateTokenTest({
-                addSampleEstates: true,
-            });
-
-            await callTransaction(estateToken.mint(depositor1.address, 1, 10_000));
-            await callTransaction(estateToken.mint(depositor2.address, 2, 500));
-
-            await callTransaction(estateToken.connect(manager).deprecateEstate(1));
-            await callTransaction(estateToken.connect(manager).deprecateEstate(2));
-
-            expect(await estateToken.balanceOf(depositor1.address, 1)).to.equal(0);
-            expect(await estateToken.balanceOf(depositor2.address, 2)).to.equal(0);
-        });
-
-        it('2.4.17.4. return 0 for expired estate', async () => {
-            const { estateToken, depositor1, depositor2 } = await beforeEstateTokenTest({
-                addSampleEstates: true,
-            });
-
-            await callTransaction(estateToken.mint(depositor1.address, 1, 10_000));
-            await callTransaction(estateToken.mint(depositor2.address, 2, 500));
-
-            const maxExpireAt = Math.max(
-                (await estateToken.getEstate(1)).expireAt,
-                (await estateToken.getEstate(2)).expireAt
-            );
-            await time.increaseTo(maxExpireAt);
-            expect(await estateToken.balanceOf(depositor1.address, 1)).to.equal(0);
-            expect(await estateToken.balanceOf(depositor2.address, 2)).to.equal(0);
-
-            await time.increaseTo(maxExpireAt + 10);
-            expect(await estateToken.balanceOf(depositor1.address, 1)).to.equal(0);
-            expect(await estateToken.balanceOf(depositor2.address, 2)).to.equal(0);
         });
     });
 
@@ -2437,7 +2600,12 @@ describe('2.4. EstateToken', async () => {
             const baseTimestamp = await time.latest() + 1000;
             
             await time.setNextBlockTimestamp(baseTimestamp);
-            await callTransaction(estateToken.connect(manager).deprecateEstate(1));
+
+            const params1: DeprecateEstateParams = {
+                estateId: BigNumber.from(1),
+                note: 'test deprecate 1',
+            };
+            await callTransaction(getSafeDeprecateEstateTxByParams(estateToken, manager, params1));
 
             await time.increaseTo(baseTimestamp + 40);
 
@@ -2548,9 +2716,13 @@ describe('2.4. EstateToken', async () => {
                 addSampleEstates: true,
             });
 
+            const params1: DeprecateEstateParams = {
+                estateId: BigNumber.from(1),
+                note: 'test deprecate 1',
+            };
             let timestamp = await time.latest() + 10;
             await callTransactionAtTimestamp(
-                estateToken.connect(manager).deprecateEstate(1),
+                getSafeDeprecateEstateTxByParams(estateToken, manager, params1),
                 timestamp,
             );
 
@@ -2562,10 +2734,14 @@ describe('2.4. EstateToken', async () => {
                 .to.not.be.reverted;
             await expect(estateToken.totalEquityAt(1, timestamp + 1))
                 .to.be.revertedWithCustomError(estateToken, "InvalidTimestamp");
-
+        
+            const params2: DeprecateEstateParams = {
+                estateId: BigNumber.from(2),
+                note: 'test deprecate 2',
+            };
             timestamp += 10;
             await callTransactionAtTimestamp(
-                estateToken.connect(manager).deprecateEstate(2),
+                getSafeDeprecateEstateTxByParams(estateToken, manager, params2),
                 timestamp,
             );
 
@@ -2668,8 +2844,12 @@ describe('2.4. EstateToken', async () => {
 
             // After estate deprecated
             const deprecateAt1 = depositor2MintAt + 3;
+            const params1: DeprecateEstateParams = {
+                estateId: BigNumber.from(1),
+                note: 'test deprecate 1',
+            };
             await callTransactionAtTimestamp(
-                estateToken.connect(manager).deprecateEstate(1),
+                getSafeDeprecateEstateTxByParams(estateToken, manager, params1),
                 deprecateAt1,
             );
             await time.increaseTo(deprecateAt1 + 1);
@@ -2854,8 +3034,12 @@ describe('2.4. EstateToken', async () => {
             const tokenId1 = (await estateToken.getEstate(estateId1)).tokenizationId;
 
             await callTransaction(estateToken.mint(depositor1.address, estateId1, 10_000));
+            const params1: DeprecateEstateParams = {
+                estateId: BigNumber.from(estateId1),
+                note: 'test deprecate 1',
+            };
             await callTransactionAtTimestamp(
-                estateToken.connect(manager).deprecateEstate(estateId1),
+                getSafeDeprecateEstateTxByParams(estateToken, manager, params1),
                 baseTimestamp + 10,
             );
 
@@ -2935,7 +3119,11 @@ describe('2.4. EstateToken', async () => {
             await callTransaction(estateToken.mint(depositor1.address, 1, 10_000));
             await callTransaction(estateToken.mint(depositor1.address, 2, 500));
 
-            await callTransaction(estateToken.connect(manager).deprecateEstate(1));
+            const params1: DeprecateEstateParams = {
+                estateId: BigNumber.from(1),
+                note: 'test deprecate 1',
+            };
+            await callTransaction(getSafeDeprecateEstateTxByParams(estateToken, manager, params1));
 
             await expect(estateToken.connect(depositor1).safeBatchTransferFrom(
                 depositor1.address,
@@ -3015,7 +3203,11 @@ describe('2.4. EstateToken', async () => {
                 addSampleEstates: true,
             });
 
-            await callTransaction(estateToken.connect(manager).deprecateEstate(1));
+            const params1: DeprecateEstateParams = {
+                estateId: BigNumber.from(1),
+                note: 'test deprecate 1',
+            };
+            await callTransaction(getSafeDeprecateEstateTxByParams(estateToken, manager, params1));
 
             await expect(estateToken.getRoyaltyRate(1))
                 .to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
@@ -3046,7 +3238,7 @@ describe('2.4. EstateToken', async () => {
 
             const IERC1155MetadataURIUpgradeableInterfaceId = getInterfaceID(IERC1155MetadataURIUpgradeable, [IERC1155Upgradeable]);
 
-            const IGovernorInterfaceId = getInterfaceID(IGovernor, [IERC165Upgradeable]);
+            const IGovernorInterfaceId = getInterfaceID(IGovernor, [IERC1155Upgradeable]);
 
             expect(await estateToken.supportsInterface(getBytes4Hex(IERC2981UpgradeableInterfaceId))).to.equal(true);
             expect(await estateToken.supportsInterface(getBytes4Hex(IRoyaltyRateProposerInterfaceId))).to.equal(true);

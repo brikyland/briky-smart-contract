@@ -35,7 +35,7 @@ interface PriceWatcherFixture {
     admins: any[];
 }
 
-describe.only('1.7. PriceWatcher', async () => {
+describe('1.7. PriceWatcher', async () => {
     async function priceWatcherFixture(): Promise<PriceWatcherFixture> {
         const accounts = await ethers.getSigners();
         const deployer = accounts[0];

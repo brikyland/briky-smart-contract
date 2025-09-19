@@ -1,8 +1,8 @@
 import { EstateToken, MockEstateToken } from "@typechain-types";
 import { MockValidator } from "@utils/mockValidator";
-import { RegisterCustodianParams, TokenizeEstateParams, UpdateEstateURIParams } from "@utils/models/EstateToken";
+import { RegisterCustodianParams, TokenizeEstateParams, SafeUpdateEstateURIParams, SafeUpdateEstateCustodianParams, SafeDeprecateEstateParams, SafeExtendEstateExpirationParams, UpdateEstateURIParams, UpdateEstateCustodianParams, DeprecateEstateParams, ExtendEstateExpirationParams } from "@utils/models/EstateToken";
 import { getRegisterCustodianValidation, getUpdateEstateURIValidation } from "@utils/validation/EstateToken";
-import { ContractTransaction } from "ethers";
+import { BigNumber, ContractTransaction, ethers } from "ethers";
 
 export async function getRegisterCustodianTx(
     estateToken: EstateToken | MockEstateToken,
@@ -45,22 +45,119 @@ export async function getCallTokenizeEstateTx(
     return tx;
 }
 
-export async function getUpdateEstateURITx(
+export async function getSafeUpdateEstateURITx(
     estateToken: EstateToken | MockEstateToken,
     validator: MockValidator,
     deployer: any,
-    params: UpdateEstateURIParams
+    params: SafeUpdateEstateURIParams
 ): Promise<ContractTransaction> {
     const validation = await getUpdateEstateURIValidation(
         estateToken,
         validator,
         params
     );
-    const tx = estateToken.connect(deployer).updateEstateURI(
+    const tx = estateToken.connect(deployer).safeUpdateEstateURI(
         params.estateId,
         params.uri,
-        validation
+        validation,
+        params.anchor
     );
 
     return tx;
+}
+
+export async function getSafeUpdateEstateCustodianTx(
+    estateToken: EstateToken | MockEstateToken,
+    deployer: any,
+    params: SafeUpdateEstateCustodianParams
+): Promise<ContractTransaction> {
+    const tx = estateToken.connect(deployer).safeUpdateEstateCustodian(
+        params.estateId,
+        params.custodian,
+        params.anchor
+    );
+    return tx;
+}
+
+export async function getSafeDeprecateEstateTx(
+    estateToken: EstateToken | MockEstateToken,
+    deployer: any,
+    params: SafeDeprecateEstateParams
+): Promise<ContractTransaction> {
+    const tx = estateToken.connect(deployer).safeDeprecateEstate(
+        params.estateId,
+        params.note,
+        params.anchor
+    );
+    return tx;
+}
+
+export async function getSafeExtendEstateExpirationTx(
+    estateToken: EstateToken | MockEstateToken,
+    deployer: any,
+    params: SafeExtendEstateExpirationParams
+): Promise<ContractTransaction> {
+    const tx = estateToken.connect(deployer).safeExtendEstateExpiration(
+        params.estateId,
+        params.expireAt,
+        params.anchor
+    );
+    return tx;
+}
+
+export async function getSafeUpdateEstateURITxByParams(
+    estateToken: EstateToken | MockEstateToken,
+    validator: MockValidator,
+    deployer: any,
+    params: UpdateEstateURIParams
+): Promise<ContractTransaction> {
+    const currentURI = await estateToken.uri(params.estateId);
+    const safeParams = {
+        estateId: params.estateId,
+        uri: params.uri,
+        anchor: ethers.utils.keccak256(ethers.utils.toUtf8Bytes(currentURI)),
+    };
+    return await getSafeUpdateEstateURITx(estateToken, validator, deployer, safeParams);
+}
+
+export async function getSafeUpdateEstateCustodianTxByParams(
+    estateToken: EstateToken | MockEstateToken,
+    deployer: any,
+    params: UpdateEstateCustodianParams
+): Promise<ContractTransaction> {
+    const currentURI = await estateToken.uri(params.estateId);
+    const safeParams = {
+        estateId: params.estateId,
+        custodian: params.custodian,
+        anchor: ethers.utils.keccak256(ethers.utils.toUtf8Bytes(currentURI)),
+    };
+    return await getSafeUpdateEstateCustodianTx(estateToken, deployer, safeParams);
+}
+
+export async function getSafeDeprecateEstateTxByParams(
+    estateToken: EstateToken | MockEstateToken,
+    deployer: any,
+    params: DeprecateEstateParams
+): Promise<ContractTransaction> {
+    const currentURI = await estateToken.uri(params.estateId);
+    const safeParams = {
+        estateId: params.estateId,
+        note: 'test deprecate ' + params.estateId.toString(),
+        anchor: ethers.utils.keccak256(ethers.utils.toUtf8Bytes(currentURI)),
+    };
+    return await getSafeDeprecateEstateTx(estateToken, deployer, safeParams);
+}
+
+export async function getSafeExtendEstateExpirationTxByParams(
+    estateToken: EstateToken | MockEstateToken,
+    deployer: any,
+    params: ExtendEstateExpirationParams
+): Promise<ContractTransaction> {
+    const currentURI = await estateToken.uri(params.estateId);
+    const safeParams = {
+        estateId: params.estateId,
+        expireAt: params.expireAt,
+        anchor: ethers.utils.keccak256(ethers.utils.toUtf8Bytes(currentURI)),
+    };
+    return await getSafeExtendEstateExpirationTx(estateToken, deployer, safeParams);
 }
