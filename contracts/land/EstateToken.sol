@@ -394,7 +394,7 @@ Validatable {
      *          Name            Description
      *  @param  _tokenId        Estate identifier.
      *
-     *  @return Total supply of the token identifier.
+     *  @return Total supply of the token class.
      */
     function totalSupply(
         uint256 _tokenId

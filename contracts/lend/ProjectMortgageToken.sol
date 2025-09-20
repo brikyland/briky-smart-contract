@@ -10,7 +10,7 @@ import {IProjectToken} from "../launch/interfaces/IProjectToken.sol";
 import {IProjectTokenReceiver} from "../launch/interfaces/IProjectTokenReceiver.sol";
 
 /// contracts/lend/interfaces/
-import {IProjectMortgageToken} from "./interfaces/IProjectMortgageToken.sol";
+import {IAssetMortgageToken} from "./interfaces/IAssetMortgageToken.sol";
 import {IMortgageToken} from "./interfaces/IMortgageToken.sol";
 
 /// contracts/launch/utilities/
@@ -26,9 +26,9 @@ import {MortgageToken} from "./utilities/MortgageToken.sol";
  *  @author Briky Team
  *
  *  @notice Interface for contract `IProjectMortgageToken`.
- *  @notice A `IProjectMortgageToken` contract facilitates peer-to-peer lending secured by project tokens as collateral. Each provided mortgage
- *          is tokenized into an ERC-721 token, whose owner has the right to receive repayments from the borrower or foreclose
- *          on the collateral from the contract once overdue.
+ *  @notice A `IProjectMortgageToken` contract facilitates peer-to-peer lending secured by project tokens as collateral. Each
+ *          provided mortgage is tokenized into an ERC-721 token, whose owner has the right to receive repayments from the
+ *          borrower or foreclose on the collateral from the contract once overdue.
  * 
  *  @dev    ERC-20 tokens are identified by their contract addresses.
  *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
@@ -53,7 +53,7 @@ ProjectTokenReceiver {
      *  @param  _name            Token name.
      *  @param  _symbol          Token symbol.
      *  @param  _uri             Base URI.
-     *  @param  _feeRate         Mortgaging fee rate.
+     *  @param  _feeRate         Borrowing fee rate.
      */
     function initialize(
         address _admin,
@@ -99,8 +99,47 @@ ProjectTokenReceiver {
         uint256 _mortgageId
     ) external view
     validMortgage(_mortgageId)
-    returns (ProjectCollateral memory) {
+    returns (AssetCollateral memory) {
         return collaterals[_mortgageId];
+    }
+
+
+    /**
+     *          Name            Description
+     *  @param  _interfaceId    Interface identifier.
+     *
+     *  @return Whether this contract supports the interface.
+     */
+    function supportsInterface(
+        bytes4 _interfaceId
+    ) public view override(
+    IERC165Upgradeable,
+    MortgageToken
+    ) returns (bool) {
+        return _interfaceId == type(IAssetMortgageToken).interfaceId
+        || _interfaceId == type(IProjectTokenReceiver).interfaceId
+            || super.supportsInterface(_interfaceId);
+    }
+
+
+    /**
+     *          Name            Description
+     *  @param  _tokenId        Token identifier.
+     *  @param  _price          Reference value.
+     *
+     *  @return receiver        Royalty receiver address.
+     *  @return royalty         Royalty derived from the reference value.
+     */
+    function royaltyInfo(
+        uint256 _tokenId,
+        uint256 _price
+    ) external view override returns (address, uint256) {
+        _requireMinted(_tokenId);
+        ( , uint256 royalty) = IProjectToken(projectToken).royaltyInfo(
+            collaterals[_tokenId].tokenId,
+            _price
+        );
+        return (feeReceiver, royalty);
     }
 
 
@@ -150,7 +189,7 @@ ProjectTokenReceiver {
             _duration
         );
 
-        collaterals[mortgageId] = ProjectCollateral(
+        collaterals[mortgageId] = AssetCollateral(
             _projectId,
             _amount
         );
@@ -171,49 +210,14 @@ ProjectTokenReceiver {
     }
 
 
-    /* --- Override --- */
-    /**
-     *          Name            Description
-     *  @param  _interfaceId    Interface identifier.
-     * 
-     *  @return Whether this contract supports the interface.
-     */
-    function supportsInterface(
-        bytes4 _interfaceId
-    ) public view override(
-        IERC165Upgradeable,
-        MortgageToken
-    ) returns (bool) {
-        return _interfaceId == type(IProjectTokenReceiver).interfaceId
-            || super.supportsInterface(_interfaceId);
-    }
-
-    /**
-     *          Name            Description
-     *  @param  _tokenId        Token identifier.
-     *  @param  _price          Reference value.
-     * 
-     *  @return receiver        Royalty receiver address.
-     *  @return royalty         Royalty derived from the reference value.
-     */
-    function royaltyInfo(
-        uint256 _tokenId,
-        uint256 _price
-    ) external view override returns (address, uint256) {
-        _requireMinted(_tokenId);
-        ( , uint256 royalty) = IProjectToken(projectToken).royaltyInfo(collaterals[_tokenId].projectId, _price);
-        return (feeReceiver, royalty);
-    }
-
-
     /* --- Helper --- */
     /**
      *  @notice Transfer the collateral of a mortgage.
      *
-     *          Name           Description
-     *  @param  _mortgageId    Mortgage identifier.
-     *  @param  _from          Sender address.
-     *  @param  _to            Receiver address.
+     *          Name            Description
+     *  @param  _mortgageId     Mortgage identifier.
+     *  @param  _from           Sender address.
+     *  @param  _to             Receiver address.
      */
     function _transferCollateral(
         uint256 _mortgageId,
@@ -223,7 +227,7 @@ ProjectTokenReceiver {
         IProjectToken(projectToken).safeTransferFrom(
             _from,
             _to,
-            collaterals[_mortgageId].projectId,
+            collaterals[_mortgageId].tokenId,
             collaterals[_mortgageId].amount,
             ""
         );

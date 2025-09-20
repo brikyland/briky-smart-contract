@@ -326,7 +326,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _tokenizationId     Tokenization identifier.
      *  @param  _at                 Reference timestamp.
      *
-     *  @return allocation          Allocation of the account at the reference timestamp.
+     *  @return Allocation of the account at the reference timestamp.
      */
     function allocationOfAt(
         address _account,
@@ -354,7 +354,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _projectId      Project identifier.
      *  @param  _at             Reference timestamp.
      *
-     *  @return equity          Equity of the account at the reference timestamp.
+     *  @return  Equity of the account at the reference timestamp.
      */
     function equityOfAt(
         address _account,
@@ -384,7 +384,7 @@ ReentrancyGuardUpgradeable {
      *          Name            Description
      *  @param  _projectId      Project identifier.
      *
-     *  @return uri             URI of project metadata.
+     *  @return URI of project metadata.
      */
     function uri(
         uint256 _projectId
@@ -400,7 +400,7 @@ ReentrancyGuardUpgradeable {
      *          Name            Description
      *  @param  _projectId      Project identifier.
      *
-     *  @return totalSupply     Total supply of project tokens.
+     *  @return Total supply of the token class.
      */
     function totalSupply(
         uint256 _projectId
@@ -416,7 +416,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _projectId      Project identifier.
      *  @param  _at             Reference timestamp.
      *
-     *  @return totalEquity     Total equity at the reference timestamp.
+     *  @return Total equity at the reference timestamp.
      */
     function totalEquityAt(
         uint256 _projectId,
@@ -439,7 +439,7 @@ ReentrancyGuardUpgradeable {
      *          Name            Description
      *  @param  _tokenId        Token identifier.
      *
-     *  @return royaltyRate     Royalty rate for the project.
+     *  @return Royalty rate for the project.
      */
     function getRoyaltyRate(
         uint256 _tokenId
@@ -454,7 +454,7 @@ ReentrancyGuardUpgradeable {
      *          Name            Description
      *  @param  _projectId      Project identifier.
      *
-     *  @return isTokenized     Whether the project tokens is converted to estate tokens.
+     *  @return Whether the project tokens is converted to estate tokens.
      */
     function isTokenized(
         uint256 _projectId

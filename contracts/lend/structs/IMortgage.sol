@@ -15,26 +15,26 @@ interface IMortgage {
         /// @notice Not a mortgage.
         Nil,
 
-        /// @notice Mortgage is created, awaiting supply.
+        /// @notice Contract has secured the collateral. The borrower waits for a lender.
         Pending,
 
-        /// @notice Mortgage is supplied, awaiting either repayment or foreclosure.
+        /// @notice A lender has supplied the principal to the borrower and waits for either repayment or foreclosure.
         Supplied,
 
-        /// @notice Mortgage is repaid.
+        /// @notice The borrower has repaid the repayment to the lender and retrieve the collateral.
         Repaid,
 
-        /// @notice Mortgage is foreclosed.
+        /// @notice The lender has foreclosed on the collateral.
         Foreclosed,
 
-        /// @notice Mortgage is cancelled.
+        /// @notice Cancelled.
         Cancelled
     }
 
 
     /** ===== STRUCT ===== **/
     /**
-     *  @notice Mortgage configuration and progress.
+     *  @notice Mortgage information.
      */
     struct Mortgage {
         /// @notice Principal value.
@@ -43,13 +43,13 @@ interface IMortgage {
         /// @notice Repayment value.
         uint256 repayment;
 
-        /// @notice Mortgaging fee.
+        /// @notice Borrowing fee.
         uint256 fee;
 
         /// @notice Currency address.
         address currency;
 
-        /// @notice Maturity timestamp.
+        /// @notice Due of mortgage.
         /// @dev    In `Pending` state, `due` is the borrowing duration.
         /// @dev    After the mortgage is lent, `due` is set to the maturity timestamp.
         uint40 due;

@@ -12,7 +12,7 @@ import {IEstateMortgageToken} from "../interfaces/IEstateMortgageToken.sol";
 abstract contract EstateMortgageTokenStorage is
 IEstateMortgageToken {
     /// @dev    collaterals[mortgageId]
-    mapping(uint256 => EstateCollateral) internal collaterals;
+    mapping(uint256 => AssetCollateral) internal collaterals;
 
     address public estateToken;
 

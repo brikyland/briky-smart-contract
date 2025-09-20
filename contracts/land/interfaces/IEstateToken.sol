@@ -312,7 +312,7 @@ IAssetToken {
      *  @notice Tokenize an estate into a new class of token.
      *
      *          Name                Description
-     *  @param  totalSupply         Number of tokens.
+     *  @param  totalSupply         Number of tokens to mint.
      *  @param  zone                Zone code.
      *  @param  tokenizationId      Tokenization identifier from the tokenizer contract.
      *  @param  uri                 URI of estate metadata.

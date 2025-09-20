@@ -26,8 +26,8 @@ IMortgageToken {
     /**
      *  @notice Emitted when a collection is registered as a collateral contract.
      *
-     *          Name          Description
-     *  @param  collateral    Registered contract address.
+     *          Name        Description
+     *  @param  collateral  Registered contract address.
      */
     event CollateralRegistration(
         address collateral
@@ -36,20 +36,22 @@ IMortgageToken {
     /**
      *  @notice Emitted when a collection is deregistered as a collateral contract.
      *
-     *          Name          Description
-     *  @param  collateral    Deregistered contract address.
+     *          Name        Description
+     *  @param  collateral  Deregistered contract address.
      */
     event CollateralDeregistration(
         address collateral
     );
 
+
+    /* --- Collateral --- */
     /**
-     *  @notice Emitted when a new mortgage collateral is secured.
+     *  @notice Emitted when a new ERC-721 collateral is secured.
      *
-     *          Name          Description
-     *  @param  mortgageId    Mortgage identifier.
-     *  @param  token         New collateral contract address.
-     *  @param  tokenId       New collateral token identifier.
+     *          Name        Description
+     *  @param  mortgageId  Mortgage identifier.
+     *  @param  token       Collateral collection contract address.
+     *  @param  tokenId     Collateral token identifier.
      */
     event NewCollateral(
         uint256 indexed mortgageId,
@@ -99,9 +101,7 @@ IMortgageToken {
      *  @param  duration        Borrowing duration.
      *  @return mortgageId      New mortgage identifier.
      * 
-     *  @dev    The collection must support interface `IERC721Upgradeable`.
-     *  @dev    Approval must be granted for this contract to transfer collateral before borrowing. A mortgage can only be
-     *          lent while approval remains active.
+     *  @dev    Approval must be granted for this contract to secure the collateral before borrowing.
      */
     function borrow(
         address token,

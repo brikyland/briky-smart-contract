@@ -32,7 +32,7 @@ IERC2981Upgradeable {
     /**
      *          Name            Description
      *  @param  tokenId         Asset identifier.
-     *  @return totalSupply     Total supply of the asset at the reference timestamp.
+     *  @return totalSupply     Total supply of the token class.
      */
     function totalSupply(
         uint256 tokenId

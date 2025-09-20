@@ -340,13 +340,10 @@ ReentrancyGuardUpgradeable {
 
 
     /**
-     *          Name            Description
-     *  @param  _tokenId        Token identifier.
-     *
      *  @return Royalty rate of the token identifier.
      */
     function getRoyaltyRate(
-        uint256 _tokenId
+        uint256
     ) external view returns (Rate memory) {
         return Rate(
             royaltyRate,
@@ -389,7 +386,7 @@ ReentrancyGuardUpgradeable {
 
     /* --- Helper --- */
     /**
-     *  @return Base URI.
+     *  @return Prefix of all token URI.
      */
     function _baseURI() internal override view returns (string memory) {
         return baseURI;

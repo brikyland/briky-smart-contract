@@ -345,7 +345,7 @@ ReentrancyGuardUpgradeable {
 
     /**
      *          Name        Description
-     *  @return totalStake  Total supply of stake tokens.
+     *  @return totalStake  Total supply of the token.
      */
     function totalSupply()
     public view override(

@@ -12,7 +12,7 @@ import {IProjectMortgageToken} from "../interfaces/IProjectMortgageToken.sol";
 abstract contract ProjectMortgageTokenStorage is
 IProjectMortgageToken {
     /// @dev    collaterals[mortgageId]
-    mapping(uint256 => ProjectCollateral) internal collaterals;
+    mapping(uint256 => AssetCollateral) internal collaterals;
 
     address public projectToken;
 

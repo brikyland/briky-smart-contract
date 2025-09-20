@@ -103,7 +103,6 @@ ICommon {
     error InvalidTokenId();
     error InvalidOfferId();
     error InvalidPrice();
-    error Overdue();
 
     /** ===== FUNCTION ===== **/
     /* --- Query --- */
