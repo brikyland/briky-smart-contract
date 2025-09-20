@@ -772,14 +772,12 @@ ReentrancyGuardUpgradeable {
 
     /* --- Helper --- */
     /**
-     *  @notice Hook called before any token transfer.
+     *  @notice Hook to be called before any token transfer.
      *
      *          Name            Description
      *  @param  _from           Sender address.
      *  @param  _to             Receiver address.
      *  @param  _amount         Transfer amount.
-     *
-     *  @dev    Overrides both ERC20Upgradeable and ERC20PausableUpgradeable.
      */
     function _beforeTokenTransfer(
         address _from,

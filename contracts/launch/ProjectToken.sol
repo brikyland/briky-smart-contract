@@ -354,7 +354,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _projectId      Project identifier.
      *  @param  _at             Reference timestamp.
      *
-     *  @return  Equity of the account at the reference timestamp.
+     *  @return Equity of the account in the project at the reference timestamp.
      */
     function equityOfAt(
         address _account,
@@ -416,7 +416,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _projectId      Project identifier.
      *  @param  _at             Reference timestamp.
      *
-     *  @return Total equity at the reference timestamp.
+     *  @return Total equity in the project at the reference timestamp.
      */
     function totalEquityAt(
         uint256 _projectId,
@@ -439,7 +439,7 @@ ReentrancyGuardUpgradeable {
      *          Name            Description
      *  @param  _tokenId        Token identifier.
      *
-     *  @return Royalty rate for the project.
+     *  @return Royalty rate of the token identifier.
      */
     function getRoyaltyRate(
         uint256 _tokenId
@@ -728,7 +728,7 @@ ReentrancyGuardUpgradeable {
      *
      *  @return New project identifier.
      *
-     *  @dev    Permission: Authorized launchpads.
+     *  @dev    Permission: Launchpads.
      */
     function launchProject(
         bytes32 _zone,
@@ -987,8 +987,8 @@ ReentrancyGuardUpgradeable {
      *
      *          Name            Description
      *  @param  _operator       Operator address.
-     *  @param  _from           Source address.
-     *  @param  _to             Target address.
+     *  @param  _from           Sender address.
+     *  @param  _to             Receiver address.
      *  @param  _projectIds     Array of project identifiers.
      *  @param  _amounts        Array of transferred amounts, respective to each estate identifier.
      *  @param  _data           Additional data.
@@ -1013,8 +1013,8 @@ ReentrancyGuardUpgradeable {
      *
      *          Name            Description
      *  @param  _operator       Operator address.
-     *  @param  _from           Source address.
-     *  @param  _to             Target address.
+     *  @param  _from           Sender address.
+     *  @param  _to             Receiver address.
      *  @param  _projectIds     Array of project identifiers.
      *  @param  _amounts        Array of transferred amounts, respective to each estate identifier.
      *  @param  _data           Additional data.

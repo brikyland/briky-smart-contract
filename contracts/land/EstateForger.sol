@@ -47,11 +47,11 @@ import {EstateTokenReceiver} from "./utilities/EstateTokenReceiver.sol";
  *          the sale concludes, the custodian is granted a limited time window to complete the required administrative
  *          procedures in compliance with local regulations. Tokenization is finalized only if the custodian fulfills these
  *          obligations within the allotted timeframe. In that case, the deposit is transferred to the custodian for
- *          settlement, and depositors may redeem their corresponding portion of a newly class of estate token. Otherwise,
+ *          settlement, and depositors may redeem their corresponding portion of a new class of estate token. Otherwise,
  *          depositors are entitled to withdraw their deposits, and the tokenization attempt is deemed unsuccessful.
  *
- *  @dev    Each unit of estate token is scaled by `10 ** IAssetToken(estateToken()).decimals()` following the convention of
- *          interface `IAssetToken`.
+ *  @dev    Quantities are expressed in absolute units. Scale these values by `10 ** IAssetToken(estateToken()).decimals()` to obtain
+ *          the correct amounts under the `IAssetToken` convention.
  *  @dev    Implementation involves server-side support.
  *  @dev    ERC-20 tokens are identified by their contract addresses.
  *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
@@ -982,8 +982,8 @@ ReentrancyGuardUpgradeable {
         }
         if (request.agenda.saleStartsAt > block.timestamp
             || (request.agenda.privateSaleEndsAt > block.timestamp
-                && (!isWhitelisted[msg.sender]
-                || !isWhitelistedFor[_requestId][msg.sender]))
+                && !isWhitelisted[msg.sender]
+                && !isWhitelistedFor[_requestId][msg.sender])
             || request.agenda.publicSaleEndsAt <= block.timestamp) {
             revert InvalidDepositing();
         }

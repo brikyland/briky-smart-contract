@@ -24,8 +24,8 @@ import {IProjectLaunchpad} from "./IProjectLaunchpad.sol";
  *  @dev    Implementation involves server-side support.
  *  @dev    ERC-20 tokens are identified by their contract addresses.
  *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
- *  @dev    Quantities are expressed in absolute units. Scale these values by `10 ** ProjectToken.decimals()` to obtain
- *          the correct amounts under the `ProjectToken` convention.
+ *  @dev    Quantities are expressed in absolute units. Scale these values by `10 ** IAssetToken(projectToken()).decimals() ` to obtain
+ *          the correct amounts under the `IAssetToken` convention.
  */
 interface IPrestigePad is
 IPrestigePadLaunch,

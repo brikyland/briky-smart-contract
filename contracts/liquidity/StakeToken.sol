@@ -415,12 +415,12 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Hook called before token transfers with pausable functionality.
+     *  @notice Hook to be called before any token transfer.
      *
      *          Name        Description
-     *  @param  _from       Source account address.
-     *  @param  _to         Destination account address.
-     *  @param  _amount     Amount of tokens being transferred.
+     *  @param  _from       Sender address.
+     *  @param  _to         Receiver address.
+     *  @param  _amount         Transfer amount.
      */
     function _beforeTokenTransfer(
         address _from,

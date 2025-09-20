@@ -28,7 +28,7 @@ IERC1155Upgradeable {
     /**
      *          Name            Description
      *  @param  tokenId         Asset identifier.
-     *  @return zone            Representative of the asset.
+     *  @return zone            Representative address of the asset.
      */
     function getRepresentative(
         uint256 tokenId

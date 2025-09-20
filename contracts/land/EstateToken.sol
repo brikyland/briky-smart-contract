@@ -424,7 +424,7 @@ Validatable {
      *          Name            Description
      *  @param  _estateId       Estate identifier.
      *
-     *  @return Representative address.
+     *  @return Representative address of the estate.
      */
     function getRepresentative(
         uint256 _estateId
@@ -521,7 +521,7 @@ Validatable {
      *  @param  _estateId       Estate identifier.
      *  @param  _at             Reference timestamp.
      *
-     *  @return Total equity at the reference timestamp.
+     *  @return Total equity in the estate at the reference timestamp.
      */
     function totalEquityAt(
         uint256 _estateId,
@@ -546,7 +546,7 @@ Validatable {
      *          Name            Description
      *  @param  _tokenId        Estate identifier.
      *
-     *  @return Royalty rate of the estate.
+     *  @return Royalty rate of the token identifier.
      */
     function getRoyaltyRate(
         uint256 _tokenId
@@ -588,7 +588,7 @@ Validatable {
      *  @param  _uri            URI of custodian information.
      *  @param  _validation     Validation package from the validator.
      *
-     *  @dev    Permissions: Managers.
+     *  @dev    Permissions: Managers active in the zone.
      */
     function registerCustodian(
         bytes32 _zone,
@@ -625,20 +625,20 @@ Validatable {
 
 
     /**
-     *  @notice Tokenize an estate.
+     *  @notice Tokenize an estate into a new class of token.
      *
      *          Name                Description
      *  @param  _totalSupply        Number of tokens to mint.
      *  @param  _zone               Zone code.
-     *  @param  _tokenizationId     Tokenization request identifier.
+     *  @param  _tokenizationId     Tokenization identifier from the tokenizer contract.
      *  @param  _uri                URI of estate metadata.
      *  @param  _expireAt           Estate expiration timestamp.
-     *  @param  _custodian          Custodian address.
-     *  @param  _broker             Broker address to mint commission tokens.
+     *  @param  _custodian          Assigned custodian address.
+     *  @param  _broker             Associated broker address.
      *
      *  @return New estate identifier.
      *
-     *  @dev    Permissions: Authorized tokenizers.
+     *  @dev    Permissions: Tokenizers.
      */
     function tokenizeEstate(
         uint256 _totalSupply,
@@ -706,7 +706,7 @@ Validatable {
      *  @param  _estateId           Estate identifier.
      *  @param  _extractionId       Extraction identifier.
      *
-     *  @dev    Permissions: Authorized extractors.
+     *  @dev    Permissions: Extractors.
      */
     function extractEstate(
         uint256 _estateId,
@@ -723,103 +723,7 @@ Validatable {
     }
 
 
-    /**
-     *  @notice Extend the expiration of estate.
-     *
-     *          Name            Description
-     *  @param  _estateId       Estate identifier.
-     *  @param  _expireAt       New expiration timestamp.
-     *
-     *  @dev    Permissions: Managers.
-     */
-    function safeExtendEstateExpiration(
-        uint256 _estateId,
-        uint40 _expireAt,
-        bytes32 _anchor
-    ) external
-    whenNotPaused
-    onlyManager
-    validEstate(_estateId)
-    onlyActiveInZoneOf(_estateId) {
-        if (_anchor != keccak256(bytes(uri(_estateId)))) {
-            revert BadAnchor();
-        }
-
-        if (_expireAt <= block.timestamp) {
-            revert InvalidTimestamp();
-        }
-
-        estates[_estateId].expireAt = _expireAt;
-        emit EstateExpirationExtension(_estateId, _expireAt);
-    }
-
-    /**
-     *  @notice Update the URI of metadata of an estate.
-     *
-     *          Name            Description
-     *  @param  _estateId       Estate identifier.
-     *  @param  _uri            New URI of estate metadata.
-     *  @param  _validation     Validation package from the validator.
-     *
-     *  @dev    Permissions: Managers.
-     */
-    function safeUpdateEstateURI(
-        uint256 _estateId,
-        string calldata _uri,
-        Validation calldata _validation,
-        bytes32 _anchor
-    ) external
-    whenNotPaused
-    onlyManager
-    validEstate(_estateId)
-    onlyActiveInZoneOf(_estateId) {
-        if (_anchor != keccak256(bytes(uri(_estateId)))) {
-            revert BadAnchor();
-        }
-
-        _validate(
-            abi.encode(
-                _estateId,
-                _uri
-            ),
-            _validation
-        );
-
-        _setURI(_estateId, _uri);
-    }
-
-    /**
-     *  @notice Update the custodian of an estate.
-     *
-     *          Name            Description
-     *  @param  _estateId       Estate identifier.
-     *  @param  _custodian      New custodian address.
-     *  @param  _anchor     Keccak256 hash of `uri` of the estate.
-     *
-     *  @dev    Permissions: Managers active in the zone of the estate.
-     *  @dev    Anchor enforces consistency between this contract and the client-side.
-     */
-    function safeUpdateEstateCustodian(
-        uint256 _estateId,
-        address _custodian,
-        bytes32 _anchor
-    ) external
-    whenNotPaused
-    onlyManager
-    validEstate(_estateId)
-    onlyActiveInZoneOf(_estateId) {
-        if (_anchor != keccak256(bytes(uri(_estateId)))) {
-            revert BadAnchor();
-        }
-
-        if (!isCustodianIn(estates[_estateId].zone, _custodian)) {
-            revert InvalidCustodian();
-        }
-
-        estates[_estateId].custodian = _custodian;
-        emit EstateCustodianUpdate(_estateId, _custodian);
-    }
-
+    /* --- Safe Command --- */
     /**
      *  @notice Deprecate an estate by managers due to force majeure or extraction.
      *
@@ -851,6 +755,107 @@ Validatable {
         );
     }
 
+    /**
+     *  @notice Extend the expiration of an estate.
+     *
+     *          Name            Description
+     *  @param  _estateId       Estate identifier.
+     *  @param  _expireAt       New expiration timestamp.
+     *  @param  _anchor         Keccak256 hash of `uri` of the estate.
+     *
+     *  @dev    Permissions: Managers active in the zone of the estate.
+     *  @dev    Anchor enforces consistency between this contract and the client-side.
+     */
+    function safeExtendEstateExpiration(
+        uint256 _estateId,
+        uint40 _expireAt,
+        bytes32 _anchor
+    ) external
+    whenNotPaused
+    onlyManager
+    validEstate(_estateId)
+    onlyActiveInZoneOf(_estateId) {
+        if (_anchor != keccak256(bytes(uri(_estateId)))) {
+            revert BadAnchor();
+        }
+
+        if (_expireAt <= block.timestamp) {
+            revert InvalidTimestamp();
+        }
+
+        estates[_estateId].expireAt = _expireAt;
+        emit EstateExpirationExtension(_estateId, _expireAt);
+    }
+
+    /**
+     *  @notice Update the custodian of an estate.
+     *
+     *          Name            Description
+     *  @param  _estateId       Estate identifier.
+     *  @param  _custodian      New custodian address.
+     *  @param  _anchor         Keccak256 hash of `uri` of the estate.
+     *
+     *  @dev    Permissions: Managers active in the zone of the estate.
+     *  @dev    Anchor enforces consistency between this contract and the client-side.
+     */
+    function safeUpdateEstateCustodian(
+        uint256 _estateId,
+        address _custodian,
+        bytes32 _anchor
+    ) external
+    whenNotPaused
+    onlyManager
+    validEstate(_estateId)
+    onlyActiveInZoneOf(_estateId) {
+        if (_anchor != keccak256(bytes(uri(_estateId)))) {
+            revert BadAnchor();
+        }
+
+        if (!isCustodianIn(estates[_estateId].zone, _custodian)) {
+            revert InvalidCustodian();
+        }
+
+        estates[_estateId].custodian = _custodian;
+        emit EstateCustodianUpdate(_estateId, _custodian);
+    }
+
+    /**
+     *  @notice Update the URI of metadata of an estate.
+     *
+     *          Name            Description
+     *  @param  _estateId       Estate identifier.
+     *  @param  _uri            New URI of estate metadata.
+     *  @param  _validation     Validation package from the validator.
+     *  @param  _anchor         Keccak256 hash of `uri` of the estate.
+     *
+     *  @dev    Permissions: Managers active in the zone of the estate.
+     *  @dev    Anchor enforces consistency between this contract and the client-side.
+     */
+    function safeUpdateEstateURI(
+        uint256 _estateId,
+        string calldata _uri,
+        Validation calldata _validation,
+        bytes32 _anchor
+    ) external
+    whenNotPaused
+    onlyManager
+    validEstate(_estateId)
+    onlyActiveInZoneOf(_estateId) {
+        if (_anchor != keccak256(bytes(uri(_estateId)))) {
+            revert BadAnchor();
+        }
+
+        _validate(
+            abi.encode(
+                _estateId,
+                _uri
+            ),
+            _validation
+        );
+
+        _setURI(_estateId, _uri);
+    }
+
     /* --- Helper --- */
     /**
      *  @return Default royalty receiver address.
@@ -864,8 +869,8 @@ Validatable {
      *
      *          Name            Description
      *  @param  _operator       Operator address.
-     *  @param  _from           Source address.
-     *  @param  _to             Target address.
+     *  @param  _from           Sender address.
+     *  @param  _to             Receiver address.
      *  @param  _estateIds      Array of estate identifiers.
      *  @param  _amounts        Array of transferred amounts, respective to each estate identifier.
      *  @param  _data           Additional data.
@@ -898,8 +903,8 @@ Validatable {
      *
      *          Name            Description
      *  @param  _operator       Operator address.
-     *  @param  _from           Source address.
-     *  @param  _to             Target address.
+     *  @param  _from           Sender address.
+     *  @param  _to             Receiver address.
      *  @param  _estateIds      Array of estate identifiers.
      *  @param  _amounts        Array of transferred amounts, respective to each estate identifier.
      *  @param  _data           Additional data.

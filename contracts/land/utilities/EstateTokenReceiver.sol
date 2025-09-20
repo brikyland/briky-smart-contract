@@ -7,7 +7,7 @@ import {IEstateTokenReceiver} from "../interfaces/IEstateTokenReceiver.sol";
 /**
  *  @author Briky Team
  *
- *  @notice A `EstateTokenReceiver` contract accepts ERC-1155 income tokens from a specific `EstateToken` contract.
+ *  @notice A `EstateTokenReceiver` contract accepts ERC-1155 income tokens from the `EstateToken` contract.
  */
 abstract contract EstateTokenReceiver is
 IEstateTokenReceiver {

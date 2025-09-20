@@ -136,6 +136,7 @@ IValidatable {
      *  @notice Request an estate to be extracted.
      *  @notice To prevent deceptive manipulation, the approval quorum to liquidate is initially set at 100% during the first
      *          year of estate and reduced to 75% thereafter.
+     *  @notice The message sender must provide sufficient liquidation value and proposing fee for `GovernanceHub`.
      *
      *          Name            Description
      *  @param  estateId        Estate identifier.

@@ -46,8 +46,8 @@ import {ProjectTokenReceiver} from "./utilities/ProjectTokenReceiver.sol";
  *  @dev    Implementation involves server-side support.
  *  @dev    ERC-20 tokens are identified by their contract addresses.
  *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
- *  @dev    Quantities are expressed in absolute units. Scale these values by `10 ** ProjectToken.decimals()` to obtain
- *          the correct amounts under the `ProjectToken` convention.
+ *  @dev    Quantities are expressed in absolute units. Scale these values by `10 ** IAssetToken(projectToken()).decimals() ` to obtain
+ *          the correct amounts under the `IAssetToken` convention.
  */
 contract PrestigePad is
 PrestigePadStorage,
@@ -576,7 +576,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _cashbackThreshold          Minimum contributed quantity of an address to receive cashback.
      *  @param  _cashbackBaseRate           Fraction of deposit to cashback.
      *  @param  _cashbackCurrencies         Array of extra currency addresses for cashback.
-     *  @param  _cashbackDenominations      Array of extra denominations for cashback on each deposited token.
+     *  @param  _cashbackDenominations      Array of extra denominations for cashback, respective to each deposited token.
      *  @param  _raiseStartsAt              When the raise starts.
      *  @param  _raiseDuration              Duration of the raising period.
      *

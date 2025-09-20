@@ -12,8 +12,8 @@ import {IValidation} from "../../common/structs/IValidation.sol";
  *  @dev    Implementation involves server-side support.
  *  @dev    ERC-20 tokens are identified by their contract addresses.
  *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
- *  @dev    Quantities are expressed in absolute units. Scale these values by `10 ** EstateToken.decimals()` to obtain the
- *          correct amounts under the `EstateToken` convention.
+ *  @dev    Quantities are expressed in absolute units. Scale these values by `10 ** IAssetToken.decimals()` to obtain the
+ *          correct amounts under the `IAssetToken` convention.
  */
 interface IEstateForgerRequest is IValidation {
     /** ===== STRUCT ===== **/
@@ -189,7 +189,7 @@ interface IEstateForgerRequest is IValidation {
      *  @dev    Phases of a request:
      *          - Pending: block.timestamp < agenda.saleStartsAt
      *          - Private Sale: agenda.saleStartsAt <= block.timestamp < agenda.privateSaleEndsAt
-     *          - Public Sale: agenda.privateSaleEndsAt <= block.timestamp <= agenda.publicSaleEndsAt
+     *          - Public Sale: agenda.privateSaleEndsAt <= block.timestamp < agenda.publicSaleEndsAt
      *          - Awaiting Confirmation: agenda.publicSaleEndsAt
      *                                      <= block.timestamp
      *                                      < agenda.publicSaleEndsAt + EstateForgerConstant.SALE_CONFIRMATION_TIME_LIMIT

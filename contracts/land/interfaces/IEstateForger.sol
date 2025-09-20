@@ -25,11 +25,11 @@ import {IEstateTokenizer} from "./IEstateTokenizer.sol";
  *          the sale concludes, the custodian is granted a limited time window to complete the required administrative
  *          procedures in compliance with local regulations. Tokenization is finalized only if the custodian fulfills these
  *          obligations within the allotted timeframe. In that case, the deposit is transferred to the custodian for
- *          settlement, and depositors may redeem their corresponding portion of a newly class of estate token. Otherwise,
+ *          settlement, and depositors may redeem their corresponding portion of a new class of estate token. Otherwise,
  *          depositors are entitled to withdraw their deposits, and the tokenization attempt is deemed unsuccessful.
  *
- *  @dev    Each unit of estate token is scaled by `10 ** IAssetToken(estateToken()).decimals()` following the convention of
- *          interface `IAssetToken`.
+ *  @dev    Quantities are expressed in absolute units. Scale these values by `10 ** IAssetToken(estateToken()).decimals()` to obtain
+ *          the correct amounts under the `IAssetToken` convention.
  *  @dev    Implementation involves server-side support.
  *  @dev    ERC-20 tokens are identified by their contract addresses.
  *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
@@ -137,7 +137,9 @@ IEstateTokenizer {
      *          Name                Description
      *  @param  requestId           Request identifier.
      */
-    event RequestCancellation(uint256 indexed requestId);
+    event RequestCancellation(
+        uint256 indexed requestId
+    );
 
     /**
      *  @notice Emitted when a request is confirmed.
@@ -284,12 +286,14 @@ IEstateTokenizer {
 
     /**
      *          Name            Description
+     *  @param  requestId       Request identifier.
+     * 
      *  @return request         Configuration and progress of the request.
      *
      *  @dev    Phases of a request:
      *          - Pending: block.timestamp < agenda.saleStartsAt
      *          - Private Sale: agenda.saleStartsAt <= block.timestamp < agenda.privateSaleEndsAt
-     *          - Public Sale: agenda.privateSaleEndsAt <= block.timestamp <= agenda.publicSaleEndsAt
+     *          - Public Sale: agenda.privateSaleEndsAt <= block.timestamp < agenda.publicSaleEndsAt
      *          - Awaiting Confirmation: agenda.publicSaleEndsAt
      *                                      <= block.timestamp
      *                                      < agenda.publicSaleEndsAt + EstateForgerConstant.SALE_CONFIRMATION_TIME_LIMIT
@@ -356,7 +360,6 @@ IEstateTokenizer {
         Validation calldata validation
     ) external returns (uint256 requestId);
 
-
     /**
      *  @notice Cancel a request.
      *  @notice Cancel only before the request is either confirmed or cancelled.
@@ -390,10 +393,10 @@ IEstateTokenizer {
      *
      *          Name            Description
      *  @param  requestId       Request identifier.
-     *  @param  uri             URI of estate metadata.
+     *  @param  uri             New URI of estate metadata.
      *  @param  validation      Validation package from the validator.
      * 
-     *  @dev    Permission: Custodians from the estate token.
+     *  @dev    Permission: Executives active in the zone of the estate.
      *  @dev    Validation data:
      *          ```
      *          data = abi.encode(
@@ -414,7 +417,7 @@ IEstateTokenizer {
      *
      *          Name            Description
      *  @param  requestId       Request identifier.
-     *  @param  agenda          Initialization input for `EstateForgerRequestAgenda` of the request.
+     *  @param  agenda         Initialization input for `EstateForgerRequestAgenda`.
      *
      *  @dev    Permission: Executives active in the zone of the estate.
      *  @dev    Total sale duration must be no less than `EstateForgerConstant.SALE_MINIMUM_DURATION`.
@@ -427,7 +430,7 @@ IEstateTokenizer {
     ) external;
 
     /**
-     *  @notice Whitelist or unwhitelist multiple accounts for a request.
+     *  @notice Whitelist or unwhitelist accounts for participation in the private sale of a specific request.
      *  @notice Whitelist only before the private sale ends.
      *
      *          Name            Description
@@ -467,7 +470,7 @@ IEstateTokenizer {
      *          Name        Description
      *  @param  requestId   Request identifier.
      *  @param  anchor      Keccak256 hash of `estate.uri` of the request.
-     *  @return estateId    New estate identifier.
+     *  @return estateId    New estate token identifier.
      *
      *  @dev    Permission: Managers active in the zone of the estate.
      */
@@ -493,5 +496,4 @@ IEstateTokenizer {
         uint256 quantity,
         bytes32 anchor
     ) external payable returns (uint256 value);
-
 }

@@ -149,6 +149,7 @@ ReentrancyGuardUpgradeable {
         return requests[_requestId];
     }
 
+
     /* --- Command --- */
     /**
      *  @notice Request an estate to be extracted.

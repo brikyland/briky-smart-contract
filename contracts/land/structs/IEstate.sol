@@ -33,8 +33,8 @@ interface IEstate {
         uint40 deprecateAt;
 
         /// @notice Assigned custodian address.
-        /// @notice This address belongs to an official disclosed third party custodian agent, registered in the zone to hold
-        ///         custody of the estate on behalf of holders.
+        /// @notice This address belongs to an official disclosed third party custodian agent, registered in the zone to
+        ///         tokenize the estate and later initially hold custody of the estate on behalf of holders.
         address custodian;
     }
 }

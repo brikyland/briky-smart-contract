@@ -83,7 +83,7 @@ IAssetToken {
 
     /* --- Extractor --- */
     /**
-     *  @notice Emitted when a contract is authorized as a extractor contract.
+     *  @notice Emitted when a contract is authorized as an extractor contract.
      *
      *          Name        Description
      *  @param  account     Authorized contract address.
@@ -350,7 +350,7 @@ IAssetToken {
 
     /* --- Safe Command --- */
     /**
-     *  @notice Deprecate an estate.
+     *  @notice Deprecate an estate by managers due to force majeure or extraction.
      *
      *          Name        Description
      *  @param  estateId    Estate identifier.

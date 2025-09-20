@@ -93,6 +93,7 @@ IERC721MetadataUpgradeable {
      *  @param  tokenId         Token identifier.
      *  @param  zone            Zone code.
      *  @param  broker          Original broker address.
+     *  @param  rate            Commission rate.
      */
     event NewToken(
         uint256 indexed tokenId,
