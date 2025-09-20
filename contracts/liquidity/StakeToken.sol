@@ -362,7 +362,10 @@ ReentrancyGuardUpgradeable {
      */
     function balanceOf(
         address _account
-    ) public view override (IERC20Upgradeable, ERC20Upgradeable) returns (uint256) {
+    ) public view override(
+        IERC20Upgradeable,
+        ERC20Upgradeable
+    ) returns (uint256) {
         return _weightToToken(weights[_account], interestAccumulation);
     }
 

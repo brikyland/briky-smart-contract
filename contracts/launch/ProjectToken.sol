@@ -404,7 +404,7 @@ ReentrancyGuardUpgradeable {
      */
     function totalSupply(
         uint256 _projectId
-    ) public view override (
+    ) public view override(
         ERC1155SupplyUpgradeable,
         IAssetToken
     ) returns (uint256) {
@@ -498,7 +498,7 @@ ReentrancyGuardUpgradeable {
         uint256 _id,
         uint256 _value,
         bytes calldata _data
-    ) public virtual override (
+    ) public virtual override(
         IERC1155ReceiverUpgradeable,
         EstateTokenReceiver,
         ProjectTokenReceiver

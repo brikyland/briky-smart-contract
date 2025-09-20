@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 /// @openzeppelin/contracts-upgradeable/
 import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import {ERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 
 /// contracts/common/interfaces/
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
@@ -58,6 +59,7 @@ import {EstateTokenReceiver} from "./utilities/EstateTokenReceiver.sol";
  */
 contract EstateForger is
 EstateForgerStorage,
+ERC165Upgradeable,
 CommissionDispatchable,
 EstateTokenReceiver,
 Administrable,
@@ -941,10 +943,13 @@ ReentrancyGuardUpgradeable {
      */
     function supportsInterface(
         bytes4 _interfaceId
-    ) public view virtual override returns (bool) {
+    ) public view virtual override(
+        IERC165Upgradeable,
+        ERC165Upgradeable
+    ) returns (bool) {
         return _interfaceId == type(IEstateTokenizer).interfaceId
             || _interfaceId == type(IEstateTokenReceiver).interfaceId
-            || _interfaceId == type(IERC165Upgradeable).interfaceId;
+            || super.supportsInterface(_interfaceId);
     }
 
 

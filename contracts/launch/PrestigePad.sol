@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 /// @openzeppelin/contracts-upgradeable/
 import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import {ERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 
 /// contracts/common/constants/
 import {CommonConstant} from "../common/constants/CommonConstant.sol";
@@ -50,6 +51,7 @@ import {ProjectTokenReceiver} from "./utilities/ProjectTokenReceiver.sol";
  */
 contract PrestigePad is
 PrestigePadStorage,
+ERC165Upgradeable,
 ProjectTokenReceiver,
 Administrable,
 Discountable,
@@ -305,10 +307,13 @@ ReentrancyGuardUpgradeable {
      */
     function supportsInterface(
         bytes4 _interfaceId
-    ) public view virtual override returns (bool) {
+    ) public view virtual override(
+        IERC165Upgradeable,
+        ERC165Upgradeable
+    ) returns (bool) {
         return _interfaceId == type(IProjectLaunchpad).interfaceId
             || _interfaceId == type(IProjectTokenReceiver).interfaceId
-            || _interfaceId == type(IERC165Upgradeable).interfaceId;
+            || super.supportsInterface(_interfaceId);
     }
 
 

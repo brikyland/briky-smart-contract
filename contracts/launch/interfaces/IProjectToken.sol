@@ -309,6 +309,7 @@ IAssetToken {
      */
     function safeDeprecateProject(
         uint256 projectId,
+        string calldata data,
         bytes32 anchor
     ) external;
 

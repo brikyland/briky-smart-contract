@@ -508,7 +508,7 @@ Validatable {
      */
     function uri(
         uint256 _estateId
-    ) public view override (
+    ) public view override(
         IERC1155MetadataURIUpgradeable,
         ERC1155Upgradeable,
         ERC1155URIStorageUpgradeable
