@@ -60,15 +60,22 @@ This will start a local blockchain with pre-funded accounts.
 ### 2. Environment Configuration
 
 1. Create an environment file from the template:
-   ```bash
-   cp .env.example .env
-   ```
+```bash
+cp .env.example .env
+```
 
 2. Fill in the required contract and validator addresses in `.env`
 
-3. Configure deployment constants in `scripts/deployments/<app_name>/initialization.ts`
+### 3. Deployment Constants Configuration
 
-> **Note**: Check the deployment scripts in `scripts/deployments/` to understand which addresses and constants are required.
+1. Create a deployment constants file from the template in the corresponding directory:
+```bash
+cp scripts/deployments/<app_name>/initialization.sample.ts scripts/deployments/<app_name>/initialization.ts
+```
+
+2. Configure deployment constants in `scripts/deployments/<app_name>/initialization.ts`
+
+> **Note**: Check the deployment scripts in `scripts/deployments/` to understand which environment variables and deployment constants are required.
 
 ### 3. Deploy Contracts
 
