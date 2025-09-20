@@ -20,7 +20,7 @@ import {IValidatable} from "./IValidatable.sol";
  *          verify the feasibility of the proposal within a given expiration to either admit or disqualify it accordingly.
  *          During this process, the full context is uploaded to a public database (e.g., IPFS), and the link is submitted to
  *          be the URI of proposal context. This approach protects the database from external attacks as well as ensures
- *          proposals remains validatable and user-oriented.
+ *          proposals remain validatable and user-oriented.
  *  @dev    Implementation involves server-side support.
  *  @dev    ERC-20 tokens are identified by their contract addresses.
  *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
@@ -32,7 +32,7 @@ IValidatable {
     /** ===== EVENT ===== **/
     /* --- Configuration --- */
     /**
-     *  @notice Emitted when proposing fee is updated.
+     *  @notice Emitted when the proposing fee is updated.
      *
      *          Name        Description
      *  @param  newValue    New proposing fee charged in native coin.
@@ -317,7 +317,7 @@ IValidatable {
      *          executives will later verify the feasibility of the proposal within a given expiration to either admit or
      *          disqualify it accordingly. During this process, the full context is uploaded to a public database (e.g., IPFS),
      *          and the link is submitted to be the URI of proposal context. This approach protects the database from external
-     *          attacks as well as ensures proposals remains validatable and user-oriented.
+     *          attacks as well as ensures proposals remain validatable and user-oriented.
      *  @dev    Through the validation mechanism, the server-side determines `uuid`, `quorumRate`, `duration` and
      *          `admissionExpiry` based on the specific supported type of proposal and its context. Operators are also required
      *          to be pre-registered on the server-side to ensure proper assignments.

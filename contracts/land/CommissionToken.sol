@@ -67,7 +67,7 @@ ReentrancyGuardUpgradeable {
 
     /* --- Initialization --- */
     /**
-     *  @notice Invoked for initialization after deployment, serving as the contract constructor.
+     *  @notice Initialize the contract after deployment, serving as the constructor.
      *
      *          Name            Description
      *  @param  _admin          `Admin` contract address.
@@ -363,8 +363,8 @@ ReentrancyGuardUpgradeable {
     function tokenURI(
         uint256 _tokenId
     ) public view override(
-    IERC721MetadataUpgradeable,
-    ERC721Upgradeable
+        IERC721MetadataUpgradeable,
+        ERC721Upgradeable
     ) returns (string memory) {
         return super.tokenURI(_tokenId);
     }
@@ -378,11 +378,11 @@ ReentrancyGuardUpgradeable {
     function supportsInterface(
         bytes4 _interfaceId
     ) public view override(
-    IERC165Upgradeable,
-    ERC721Upgradeable
+        IERC165Upgradeable,
+        ERC721Upgradeable
     ) returns (bool) {
-        return _interfaceId == type(IERC4906Upgradeable).interfaceId
-            || _interfaceId == type(IERC2981Upgradeable).interfaceId
+        return _interfaceId == type(IERC2981Upgradeable).interfaceId
+            || _interfaceId == type(IERC4906Upgradeable).interfaceId
             || super.supportsInterface(_interfaceId);
     }
 

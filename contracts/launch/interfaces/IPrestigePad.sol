@@ -1,12 +1,17 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-import {IFund} from "../../common/structs/IFund.sol";
+/// contracts/common/interfaces/
 import {IValidatable} from "../../common/interfaces/IValidatable.sol";
 
+/// contracts/common/structs/
+import {IFund} from "../../common/structs/IFund.sol";
+
+/// contracts/launch/structs/
 import {IPrestigePadLaunch} from "../structs/IPrestigePadLaunch.sol";
 import {IPrestigePadRound} from "../structs/IPrestigePadRound.sol";
 
+/// contracts/launch/interfaces/
 import {IProjectLaunchpad} from "./IProjectLaunchpad.sol";
 
 /**
@@ -29,6 +34,7 @@ IFund,
 IValidatable,
 IProjectLaunchpad {
     /** ===== EVENT ===== **/
+    /* --- Configuration --- */
     /**
      *  @notice Emitted when the acceptable range of unit price denominated in USD is updated.
      *
@@ -41,6 +47,8 @@ IProjectLaunchpad {
         uint256 baseMaxUnitPrice
     );
 
+
+    /* --- Initiator --- */
     /**
      *  @notice Emitted when an initiator is registered in a zone.
      *
@@ -65,6 +73,8 @@ IProjectLaunchpad {
         address indexed account
     );
 
+
+    /* --- Launch --- */
     /**
      *  @notice Emitted when a new launch is initiated.
      *
@@ -72,9 +82,9 @@ IProjectLaunchpad {
      *  @param  launchId            Launch identifier.
      *  @param  projectId           Project identifier.
      *  @param  initiator           Initiator address.
-     *  @param  uri                 URI of launch metadata.
+     *  @param  uri                 URI of launch information.
      *  @param  initialQuantity     Initial quantity of tokens to be minted.
-     *  @param  feeRate             Fraction of the raised value charged as fee, applied across all rounds.
+     *  @param  feeRate             Fraction of raised value charged as fee, applied across all rounds.
      */
     event NewLaunch(
         uint256 indexed launchId,
@@ -85,15 +95,16 @@ IProjectLaunchpad {
         Rate feeRate
     );
 
+
     /**
      *  @notice Emitted when a new round is created for a launch.
      *
-     *          Name        Description
-     *  @param  roundId     Round identifier.
-     *  @param  launchId    Launch identifier.
-     *  @param  uri         URI of round metadata.
-     *  @param  quota       Initialization input for `PrestigePadRoundQuota`.
-     *  @param  quote       Initialization input for `PrestigePadRoundQuote`.
+     *          Name                Description
+     *  @param  roundId             Round identifier.
+     *  @param  launchId            Launch identifier.
+     *  @param  uri                 URI of round metadata.
+     *  @param  quota               Initialization input for `PrestigePadRoundQuota`.
+     *  @param  quote               Initialization input for `PrestigePadRoundQuote`.
      */
     event NewRound(
         uint256 indexed roundId,
@@ -103,12 +114,25 @@ IProjectLaunchpad {
         PrestigePadRoundQuoteInput quote
     );
 
+
+    /**
+     *  @notice Emitted when a round is appended to a launch.
+     *
+     *          Name                Description
+     *  @param  launchId            Launch identifier.
+     *  @param  roundId             Round identifier.
+     */
+    event LaunchRoundAppendage(
+        uint256 indexed launchId,
+        uint256 indexed roundId
+    );
+
     /**
      *  @notice Emitted when the current round of a launch is cancelled.
      *
-     *          Name        Description
-     *  @param  launchId    Launch identifier.
-     *  @param  roundId     Round identifier.
+     *          Name                Description
+     *  @param  launchId            Launch identifier.
+     *  @param  roundId             Round identifier.
      */
     event LaunchCurrentRoundCancellation(
         uint256 indexed launchId,
@@ -118,13 +142,13 @@ IProjectLaunchpad {
     /**
      *  @notice Emitted when the current round of a launch is confirmed.
      *
-     *          Name                    Description
-     *  @param  launchId                Launch identifier.
-     *  @param  roundId                 Round identifier.
-     *  @param  raisedQuantity          Total raised quantity.
-     *  @param  contribution            Total contribution.
-     *  @param  fee                     Fee charged on the sale value.
-     *  @param  cashbackBaseAmount      Main currency cashback amount.
+     *          Name                Description
+     *  @param  launchId            Launch identifier.
+     *  @param  roundId             Round identifier.
+     *  @param  raisedQuantity      Total raised quantity.
+     *  @param  contribution        Total contribution.
+     *  @param  fee                 Fee charged on the sale value.
+     *  @param  cashbackBaseAmount  Main currency cashback amount.
      */
     event LaunchCurrentRoundConfirmation(
         uint256 indexed launchId,
@@ -138,22 +162,36 @@ IProjectLaunchpad {
     /**
      *  @notice Emitted when a launch is finalized.
      *
-     *          Name        Description
-     *  @param  launchId    Launch identifier.
+     *          Name                    Description
+     *  @param  launchId                Launch identifier.
      */
     event LaunchFinalization(uint256 launchId);
 
     /**
-     *  @notice Emitted when the next round of a launch is initiated.
+     *  @notice Emitted when a launch gets its rounds removed from an index.
      *
-     *          Name                Description
-     *  @param  launchId            Launch identifier.
-     *  @param  roundId             Round identifier.
-     *  @param  cashbackFundId      Fund identifier for cashback.
-     *  @param  raiseStartsAt       When the raise starts.
-     *  @param  raiseEndsAt         When the raise ends.
+     *          Name                    Description
+     *  @param  launchId                Launch identifier.
+     *  @param  removedRoundNumber      Number of removed rounds.
+     *  @param  index                   Index of the first removed round.
      */
-    event LaunchNextRoundInitiation(
+    event LaunchRoundsRemoval(
+        uint256 launchId,
+        uint256 removedRoundNumber,
+        uint256 index
+    );
+
+    /**
+     *  @notice Emitted when the next round of a launch is scheduled.
+     *
+     *          Name                    Description
+     *  @param  launchId                Launch identifier.
+     *  @param  roundId                 Round identifier.
+     *  @param  cashbackFundId          Fund identifier for cashback.
+     *  @param  raiseStartsAt           When the raise starts.
+     *  @param  raiseEndsAt             When the raise ends.
+     */
+    event LaunchNextRoundSchedule(
         uint256 indexed launchId,
         uint256 indexed roundId,
         uint256 indexed cashbackFundId,
@@ -164,45 +202,31 @@ IProjectLaunchpad {
     /**
      *  @notice Emitted when a round in a launch is updated.
      *
-     *          Name        Description
-     *  @param  launchId    Launch identifier.
-     *  @param  roundId     Round identifier.
-     *  @param  index       Index of the round in the launch.
-     *  @param  round       Updated round configuration.
+     *          Name                    Description
+     *  @param  launchId                Launch identifier.
+     *  @param  roundId                 Round identifier.
+     *  @param  index                   Index of the round in the launch.
      */
     event LaunchRoundUpdate(
         uint256 indexed launchId,
         uint256 indexed roundId,
-        uint256 index,
-        PrestigePadRoundInput round
-    );
-
-    /**
-     *  @notice TODO: Emitted when a round in a launch is withdrawn.
-     *
-     *          Name        Description
-     *  @param  roundId     Round identifier.
-     *  @param  withdrawer  Withdrawer address.
-     *  @param  amount      Withdrawn amount.
-     */
-    event LaunchRoundTokenWithdrawal(
-        uint256 indexed roundId,
-        address indexed withdrawer,
-        uint256 amount
+        uint256 index
     );
 
     /**
      *  @notice Emitted when the URI of a launch is updated.
      *
-     *          Name        Description
-     *  @param  launchId    Launch identifier.
-     *  @param  launchURI   New URI of project metadata.
+     *          Name                    Description
+     *  @param  launchId                Launch identifier.
+     *  @param  launchURI               New URI of project metadata.
      */
     event LaunchURIUpdate(
         uint256 indexed launchId,
         string launchURI
     );
 
+
+    /* --- Contribution --- */
     /**
      *  @notice Emitted when a contribution is made to a round.
      *
@@ -240,15 +264,14 @@ IProjectLaunchpad {
 
     /** ===== ERROR ===== **/
     error AlreadyConfirmed();
-    error AlreadyInitiated();
     error AlreadyWithdrawn();
     error InvalidCancelling();
     error InvalidConfirming();
     error InvalidContributing();
     error InvalidFinalizing();
-    error InvalidInitiating();
-    error InvalidRemoving();
     error InvalidLaunchId();
+    error InvalidScheduling();
+    error InvalidRemoving();
     error InvalidRoundId();
     error InvalidUnitPrice();
     error InvalidWithdrawing();
@@ -264,71 +287,58 @@ IProjectLaunchpad {
     error Timeout();
 
     /** ===== FUNCTION ===== **/
-    /* --- Query --- */
+    /* --- Dependency --- */
     /**
-     *  @return feeReceiver Fee receiver contract address.
+     *          Name            Description
+     *  @return feeReceiver     `FeeReceiver` contract address.
      */
     function feeReceiver() external view returns (address feeReceiver);
 
     /**
-     *  @return priceWatcher Price watcher contract address.
+     *          Name            Description
+     *  @return priceWatcher    `PriceWatcher` contract address.
      */
     function priceWatcher() external view returns (address priceWatcher);
 
     /**
-     *  @return reserveVault Reserve vault contract address.
+     *          Name            Description
+     *  @return reserveVault    `ReserveVault` contract address.
      */
     function reserveVault() external view returns (address reserveVault);
 
+
+    /* --- Configuration --- */
     /**
-     *  @return baseMinUnitPrice Minimum unit price denominated in USD.
+     *          Name                Description
+     *  @return baseMinUnitPrice    Minimum unit price denominated in USD.
      */
     function baseMinUnitPrice() external view returns (uint256 baseMinUnitPrice);
 
     /**
-     *  @return baseMaxUnitPrice Maximum unit price denominated in USD.
+     *          Name                Description
+     *  @return baseMaxUnitPrice    Maximum unit price denominated in USD.
      */
     function baseMaxUnitPrice() external view returns (uint256 baseMaxUnitPrice);
 
+
+    /* --- Query --- */
     /**
-     *  @return launchNumber Total number of launches created.
+     *          Name            Description
+     *  @return launchNumber    Total number of launches created.
      */
     function launchNumber() external view returns (uint256 launchNumber);
 
     /**
-     *  @return roundNumber Total number of rounds created.
+     *          Name            Description
+     *  @return roundNumber     Total number of rounds created.
      */
     function roundNumber() external view returns (uint256 roundNumber);
 
-    /**
-     *          Name        Description
-     *  @param  roundId     Round identifier.
-     *  @param  account     Contributor address.
-     *
-     *  @return contribution Contribution amount of the account in the round.
-     */
-    function contributions(
-        uint256 roundId,
-        address account
-    ) external view returns (uint256 contribution);
-
-    /**
-     *          Name        Description
-     *  @param  roundId     Round identifier.
-     *  @param  account     Contributor address.
-     *
-     *  @return withdrawAt Timestamp when the account withdrew from the round.
-     */
-    function withdrawAt(
-        uint256 roundId,
-        address account
-    ) external view returns (uint256 withdrawAt);
 
     /**
      *          Name        Description
      *  @param  launchId    Launch identifier.
-     *
-     *  @return launch Configuration and progress of the launch.
+     *  @return launch      Configuration and rounds of the launch.
      */
     function getLaunch(
         uint256 launchId
@@ -337,12 +347,44 @@ IProjectLaunchpad {
     /**
      *          Name        Description
      *  @param  roundId     Round identifier.
+     *  @return round       Configuration and progress of the round.
      *
-     *  @return round Configuration and progress of the round.
+     *  @dev    Phases of a round:
+     *          - Unscheduled: agenda.raiseStartsAt = 0
+     *          - Scheduled: block.timestamp < agenda.raiseStartsAt
+     *          - Raise: agenda.raiseStartsAt <= block.timestamp < agenda.raiseEndsAt
+     *          - Awaiting Confirmation: agenda.raiseEndsAt
+     *                                      <= block.timestamp
+     *                                      < agenda.raiseEndsAt + PrestigePadConstant.RAISE_CONFIRMATION_TIME_LIMIT
+     *          - Confirmed: agenda.confirmedAt > 0
+     *          - Cancelled: quota.totalSupply = 0
      */
     function getRound(
         uint256 roundId
     ) external view returns (PrestigePadRound memory round);
+
+
+    /**
+     *          Name            Description
+     *  @param  roundId         Round identifier.
+     *  @param  account         EVM address.
+     *  @return quantity        Contributed quantity of the account in the round.
+     */
+    function contributions(
+        uint256 roundId,
+        address account
+    ) external view returns (uint256 quantity);
+
+    /**
+     *          Name            Description
+     *  @param  roundId         Round identifier.
+     *  @param  account         EVM address.
+     *  @return withdrawAt      Withdrawal timestamp of the account in the round.
+     */
+    function withdrawAt(
+        uint256 roundId,
+        address account
+    ) external view returns (uint256 withdrawAt);
 
 
     /* --- Command --- */
@@ -353,12 +395,11 @@ IProjectLaunchpad {
      *  @param  initiator           Initiator address.
      *  @param  zone                Zone code.
      *  @param  projectURI          URI of project metadata.
-     *  @param  launchURI           URI of launch metadata.
-     *  @param  initialQuantity     Initial quantity of tokens to be minted.
-     *  @param  feeRate             Fraction of the raised value charged as fee.
+     *  @param  launchURI           URI of launch information.
+     *  @param  initialQuantity     Initial quantity of tokens to be minted for the initiator.
+     *  @param  feeRate             Fraction of raised value charged as fee.
      *  @param  validation          Validation package from the validator.
-     *
-     *  @return New launch identifier.
+     *  @return launchId            New launch identifier.
      *
      *  @dev    Permission: Executives active in the zone of the estate.
      */
@@ -370,27 +411,35 @@ IProjectLaunchpad {
         uint256 initialQuantity,
         uint256 feeRate,
         Validation calldata validation
-    ) external returns (uint256);
+    ) external returns (uint256 launchId);
 
 
     /**
      *  @notice Update the URI of information a launch.
+     *  @notice Update only if the launch is not finalized.
      *
      *          Name                    Description
      *  @param  launchId                Launch identifier.
-     *  @param  launchURI               New URI of launch information.
+     *  @param  uri                     URI of launch information.
      *  @param  validation              Validation package from the validator.
      *
      *  @dev    Permission: Initiator of the launch.
+     *  @dev    Validation data:
+     *          ```
+     *          data = abi.encode(
+     *              _launchId,
+     *              _uri
+     *          );
      */
     function updateLaunchURI(
         uint256 launchId,
-        string calldata launchURI,
+        string calldata uri,
         Validation calldata validation
     ) external;
 
     /**
-     *  @notice Update a specific round in a launch.
+     *  @notice Update a round in a launch.
+     *  @notice Update only before the round is scheduled.
      *
      *          Name                    Description
      *  @param  launchId                Launch identifier.
@@ -399,6 +448,12 @@ IProjectLaunchpad {
      *  @return roundId                 New round identifier.
      *
      *  @dev    Permission: Initiator of the launch.
+     *  @dev    Validation data:
+     *          ```
+     *          data = abi.encode(
+     *              _launchId,
+     *              _uri
+     *          );
      */
     function updateRound(
         uint256 launchId,
@@ -407,7 +462,8 @@ IProjectLaunchpad {
     ) external returns (uint256 roundId);
 
     /**
-     *  @notice Update multiple rounds in a launch by removing existing rounds and adding new ones.
+     *  @notice Update multiple rounds in a launch by removing multiple rounds from the end and appending new ones.
+     *  @notice Update only with rounds that are not scheduled.
      *
      *          Name                    Description
      *  @param  launchId                Launch identifier.
@@ -425,11 +481,12 @@ IProjectLaunchpad {
 
     /**
      *  @notice Cancel the current round of a launch.
+     *  @notice Cancel only before the current round is confirmed.
      *
      *          Name                    Description
      *  @param  launchId                Launch identifier.
      *  @return index                   Index of the cancelled round.
-     *  @return roundId                 Round identifier of the cancelled round.
+     *  @return roundId                 New round identifier at the index.
      *
      *  @dev    Permission: Initiator of the launch.
      */
@@ -438,37 +495,22 @@ IProjectLaunchpad {
     ) external returns (uint256 index, uint256 roundId);
 
     /**
-     *  @notice Confirm the current round of a launch and mint tokens to contributors.
-     *
-     *          Name                    Description
-     *  @param  launchId                Launch identifier.
-     *
-     *  @return index Index of the confirmed round.
-     *
-     *  @dev    Permission: Initiator of the launch.
-     *  @dev    Fee is charged in native coin.
-     */
-    function confirmCurrentRound(
-        uint256 launchId
-    ) external payable returns (uint256 index);
-
-    /**
-     *  @notice Initiate the next round for a launch with cashback configuration.
+     *  @notice Schedule the next round for a launch with cashback configuration.
+     *  @notice Schedule only if the previous round has been confirmed.
      *
      *          Name                    Description
      *  @param  launchId                Launch identifier.
      *  @param  cashbackThreshold       Minimum contributed quantity of an address to receive cashback.
-     *  @param  cashbackBaseRate        Base rate for cashback calculations.
+     *  @param  cashbackBaseRate        Fraction of contribution to cashback.
      *  @param  cashbackCurrencies      Array of currencies for cashback.
-     *  @param  cashbackDenominations   Array of denominations for each currency.
-     *  @param  raiseStartsAt           When the raise starts.
-     *  @param  raiseDuration           Duration of the raising period.
-     *
-     *  @return index Index of the initiated round.
+     *  @param  cashbackDenominations   Array of denominations for cashback, respective to each currency.
+     *  @param  raiseStartsAt           Raise start timestamp.
+     *  @param  raiseDuration           Raise duration.
+     *  @return index                   Index of the scheduled round.
      *
      *  @dev    Permission: Initiator of the launch.
      */
-    function raiseNextRound(
+    function scheduleNextRound(
         uint256 launchId,
         uint256 cashbackThreshold,
         uint256 cashbackBaseRate,
@@ -478,16 +520,15 @@ IProjectLaunchpad {
         uint40 raiseDuration
     ) external returns (uint256 index);
 
+
     /**
      *  @notice Contribute to the current round of a launch.
+     *  @notice Contribute only during raise period.
      *
-     *          Name                    Description
-     *  @param  launchId                Launch identifier.
-     *  @param  quantity                Quantity of tokens to contribute for.
-     *
-     *  @return value Value of the contribution.
-     *
-     *  @dev    Contribution currency is determined by the round configuration.
+     *          Name        Description
+     *  @param  launchId    Launch identifier.
+     *  @param  quantity    Contributed quantity.
+     *  @return value       Contributed value.
      */
     function contributeCurrentRound(
         uint256 launchId,
@@ -495,28 +536,50 @@ IProjectLaunchpad {
     ) external payable returns (uint256 value);
 
     /**
-     *  @notice Withdraw contribution from a cancelled round.
+     *  @notice Withdraw contribution of the message sender from a round which can no longer be confirmed.
+     *  @notice Withdraw only when the round is cancelled or the raise ends without enough raised quantity or the confirmation
+     *          time limit has expired.
      *
-     *          Name                    Description
-     *  @param  roundId                 Round identifier.
-     *  @return value                   Value of the withdrawn contribution.
+     *          Name        Description
+     *  @param  roundId     Round identifier.
+     *  @return value       Withdrawn value.
      */
     function withdrawContribution(
         uint256 roundId
     ) external returns (uint256 value);
 
+
+    /* --- Safe Command --- */
+    /**
+     *  @notice Confirm the current round of a launch and mint tokens to contributors.
+     *  @notice Confirm only if the round has raised at least minimum quantity (even if the sale period has not yet ended) and
+     *          before the confirmation time limit has expired.
+     *  @notice The message sender must provide sufficient extra-currency amounts for the cashback fund.
+     *
+     *          Name        Description
+     *  @param  launchId    Launch identifier.
+     *  @param  anchor      Keccak256 hash of `uri` of the launch.
+     *  @return index       Index of the confirmed round.
+     *
+     *  @dev    Permission: Initiator of the launch.
+     *  @dev    Anchor enforces consistency between this contract and the client-side.
+     */
+    function safeConfirmCurrentRound(
+        uint256 launchId,
+        bytes32 anchor
+    ) external payable returns (uint256 index);
+
     /**
      *  @notice Contribute to the current round of a launch with anchor verification.
+     *  @notice Contribute only during raise period.
      *
-     *          Name                    Description
-     *  @param  launchId                Launch identifier.
-     *  @param  quantity                Quantity of tokens to contribute for.
-     *  @param  anchor                  Launch identifier for verification consistency.
-     *
-     *  @return value Value of the contribution.
+     *          Name        Description
+     *  @param  launchId    Launch identifier.
+     *  @param  quantity    Contributed quantity.
+     *  @param  anchor      Keccak256 hash of `uri` of the launch.
+     *  @return value       Contributed value.
      *
      *  @dev    Anchor enforces consistency between this contract and the client-side.
-     *  @dev    Contribution currency is determined by the round configuration.
      */
     function safeContributeCurrentRound(
         uint256 launchId,
@@ -525,15 +588,19 @@ IProjectLaunchpad {
     ) external payable returns (uint256 value);
 
     /**
-     *  @notice Finalize a launch to complete capital raising.
+     *  @notice Finalize a launch to finish capital raising.
+     *  @notice Finalize only when all rounds are confirmed.
      *
-     *          Name                    Description
-     *  @param  launchId                Launch identifier.
+     *          Name        Description
+     *  @param  launchId    Launch identifier.
+     *  @param  anchor      Keccak256 hash of `uri` of the launch.
      *
      *  @dev    Permission: Initiator of the launch.
      *  @dev    The launch can only be finalized after all rounds are confirmed, and no further rounds can be created.
+     *  @dev    Anchor enforces consistency between this contract and the client-side.
      */
-    function finalize(
-        uint256 launchId
+    function safeFinalize(
+        uint256 launchId,
+        bytes32 anchor
     ) external;
 }

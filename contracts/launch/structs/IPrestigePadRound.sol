@@ -116,6 +116,20 @@ interface IPrestigePadRound is IValidation {
         PrestigePadRoundAgenda agenda;
     }
 
+    /**
+     *  @notice A round in a launch of `PrestigePad` operating a phase of capital raising for a estate project that issues
+     *          new corresponding project token to be minted for contributors of the round.
+     *
+     *  @dev    Phases of a round:
+     *          - Unscheduled: agenda.raiseStartsAt = 0
+     *          - Scheduled: block.timestamp < agenda.raiseStartsAt
+     *          - Raise: agenda.raiseStartsAt <= block.timestamp < agenda.raiseEndsAt
+     *          - Awaiting Confirmation: agenda.raiseEndsAt
+     *                                      <= block.timestamp
+     *                                      < agenda.raiseEndsAt + PrestigePadConstant.RAISE_CONFIRMATION_TIME_LIMIT
+     *          - Confirmed: agenda.confirmedAt > 0
+     *          - Cancelled: quota.totalSupply = 0
+     */
     struct PrestigePadRoundInput {
         /// @notice URI of round information.
         string uri;

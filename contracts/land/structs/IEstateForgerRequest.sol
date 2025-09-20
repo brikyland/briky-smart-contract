@@ -22,7 +22,7 @@ interface IEstateForgerRequest is IValidation {
      */
     struct EstateForgerRequestEstate {
         /// @notice Estate identifier tokenized from the request.
-        /// @dev    Remains 0 until tokenization succeeds.
+        /// @dev    Remain 0 until tokenization succeeds.
         uint256 estateId;
 
         /// @notice Zone code.
@@ -175,14 +175,10 @@ interface IEstateForgerRequest is IValidation {
         /// @notice When the sale starts with the private sale.
         uint40 saleStartsAt;
 
-        /// @notice When the private sale ends and the public sale starts
-        /// @dev    If `saleStartsAt` is equal to `privateSaleEndsAt`, the private sale is not proceeded.
-        /// @dev    `privateSaleEndsAt >= saleStartsAt`.
+        /// @notice Private sale duration.
         uint40 privateSaleDuration;
 
-        /// @notice When the public sale ends.
-        /// @dev    If `privateSaleEndsAt` is equal to `publicSaleEndsAt), the public sale is not proceeded.
-        /// @dev    `publicSaleEndsAt >= privateSaleEndsAt`.
+        /// @notice Public sale duration.
         uint40 publicSaleDuration;
     }
 
@@ -194,11 +190,11 @@ interface IEstateForgerRequest is IValidation {
      *          - Pending: block.timestamp < agenda.saleStartsAt
      *          - Private Sale: agenda.saleStartsAt <= block.timestamp < agenda.privateSaleEndsAt
      *          - Public Sale: agenda.privateSaleEndsAt <= block.timestamp <= agenda.publicSaleEndsAt
-     *          - Formalities Finalization: agenda.publicSaleEndsAt
-     *                                          <= block.timestamp
-     *                                          < agenda.publicSaleEndsAt + EstateForgerConstant.SALE_CONFIRMATION_TIME_LIMIT
-     *          - Tokenized: agenda.confirmAt > 0
-     *          - Cancelled: quote.totalSupply = 0
+     *          - Awaiting Confirmation: agenda.publicSaleEndsAt
+     *                                      <= block.timestamp
+     *                                      < agenda.publicSaleEndsAt + EstateForgerConstant.SALE_CONFIRMATION_TIME_LIMIT
+     *          - Confirmed: estate.estateId > 0
+     *          - Cancelled: quota.totalSupply = 0
      */
     struct EstateForgerRequest {
         /// @notice Estate information.

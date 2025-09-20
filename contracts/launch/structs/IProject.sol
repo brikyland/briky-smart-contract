@@ -13,7 +13,7 @@ interface IProject {
      */
     struct Project {
         /// @notice Estate identifier tokenized from the request.
-        /// @dev    Remains 0 until tokenization succeeds.
+        /// @dev    Remain 0 until tokenization succeeds.
         uint256 estateId;
 
         /// @notice Zone code.

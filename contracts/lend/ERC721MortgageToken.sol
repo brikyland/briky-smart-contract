@@ -39,7 +39,7 @@ MortgageToken {
     /** ===== FUNCTION ===== **/
     /* --- Initialization --- */
     /**
-     *  @notice Invoked for initialization after deployment, serving as the contract constructor.
+     *  @notice Initialize the contract after deployment, serving as the constructor.
      * 
      *          Name            Description
      *  @param  _admin          `Admin` contract address.

@@ -19,7 +19,7 @@ IEstateTokenReceiver {
      *  @param  _value      Token amount.
      *  @param  _data       Additional data.
      * 
-     *  @return Selector of the `onERC1155Received` function if the message sender is the estate token.
+     *  @return Selector of the `onERC1155Received` function if the message sender is the estate token contract.
      */
     function onERC1155Received(
         address _operator,
@@ -39,7 +39,7 @@ IEstateTokenReceiver {
      *  @param  _values     List of token amounts, respective to each token identifier.
      *  @param  _data       Additional data.
      * 
-     *  @return Selector of the `onERC1155Received` function if the message sender is the estate token.
+     *  @return Selector of the `onERC1155Received` function if the message sender is the estate token contract.
      */
     function onERC1155BatchReceived(
         address _operator,

@@ -29,7 +29,7 @@ interface IPrestigePadLaunch is IRate {
         /// @notice Array of round identifiers.
         uint256[] roundIds;
 
-        /// @notice Fraction of the raised value charged as fee, applied across all rounds.
+        /// @notice Fraction of raised value charged as fee, applied for all rounds.
         Rate feeRate;
 
         /// @notice Initiator address.

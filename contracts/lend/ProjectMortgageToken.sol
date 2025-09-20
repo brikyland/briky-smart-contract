@@ -44,7 +44,7 @@ ProjectTokenReceiver {
     /** ===== FUNCTION ===== **/
     /* --- Initialization --- */
     /**
-     *  @notice Invoked for initialization after deployment, serving as the contract constructor.
+     *  @notice Initialize the contract after deployment, serving as the constructor.
      * 
      *          Name             Description
      *  @param  _admin           `Admin` contract address.
@@ -184,8 +184,7 @@ ProjectTokenReceiver {
         IERC165Upgradeable,
         MortgageToken
     ) returns (bool) {
-        return _interfaceId == type(IProjectMortgageToken).interfaceId
-            || _interfaceId == type(IProjectTokenReceiver).interfaceId
+        return _interfaceId == type(IProjectTokenReceiver).interfaceId
             || super.supportsInterface(_interfaceId);
     }
 

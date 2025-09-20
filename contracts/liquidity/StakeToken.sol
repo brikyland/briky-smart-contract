@@ -81,7 +81,7 @@ ReentrancyGuardUpgradeable {
 
     /* --- Initialization --- */
     /**
-     *  @notice Invoked for initialization after deployment, serving as the contract constructor.
+     *  @notice Initialize the contract after deployment, serving as the constructor.
      *
      *          Name            Description
      *  @param  _admin          `Admin` contract address.
@@ -348,7 +348,10 @@ ReentrancyGuardUpgradeable {
      *  @return totalStake  Total supply of stake tokens.
      */
     function totalSupply()
-    public view override(IERC20Upgradeable, ERC20Upgradeable) returns (uint256) {
+    public view override(
+        IERC20Upgradeable,
+        ERC20Upgradeable
+    ) returns (uint256) {
         return totalStake;
     }
 
@@ -420,7 +423,10 @@ ReentrancyGuardUpgradeable {
         address _from,
         address _to,
         uint256 _amount
-    ) internal override(ERC20Upgradeable, ERC20PausableUpgradeable) {
+    ) internal override(
+        ERC20Upgradeable,
+        ERC20PausableUpgradeable
+    ) {
         super._beforeTokenTransfer(_from, _to, _amount);
     }
 

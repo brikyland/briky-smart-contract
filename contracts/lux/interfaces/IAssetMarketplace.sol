@@ -199,7 +199,7 @@ ICommon {
      */
     function safeBuy(
         uint256 offerId,
-        uint256 anchor
+        bytes32 anchor
     ) external payable returns (uint256 value);
 
     /**
@@ -217,6 +217,6 @@ ICommon {
     function safeBuy(
         uint256 offerId,
         uint256 amount,
-        uint256 anchor
+        bytes32 anchor
     ) external payable returns (uint256 value);
 }

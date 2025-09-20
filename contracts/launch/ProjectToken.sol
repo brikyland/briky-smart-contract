@@ -50,12 +50,14 @@ import {ProjectTokenReceiver} from "./utilities/ProjectTokenReceiver.sol";
 /**
  *  @author Briky Team
  *
- *  @notice TODO: The `ProjectToken` contract manages tokenized projects launched through authorized launchpad contracts 
- *          within the Briky ecosystem.
- * 
- *  @dev    Implementation involves server-side support for validation mechanisms.
- *  @dev    ERC-20 tokens are identified by their contract addresses.
- *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
+ *  @notice The `ProjectToken` contract securitizes real-world estate projects into classes of fungible ERC-1155 tokens, where
+ *          each token class represents fractional credits for contributions to a project. Officially disclosed third-party
+ *          organizations are registered as initiators in designated zones to actively initiate a project they're developing
+ *          through a launchpad, serving as reference for future investment benefit distributions. Finalized estate projects
+ *          that satisfy the required conditions may be tokenized into `EstateToken` at the discretion of the initiator.
+ *
+ *  @dev    Each unit of estate tokens is represented in scaled form as `10 ** decimals()`.
+ *  @dev    Implementation involves server-side support.
  */
 contract ProjectToken is
 ProjectTokenStorage,
@@ -82,8 +84,8 @@ ReentrancyGuardUpgradeable {
     /**
      *  @notice Verify a valid project identifier.
      *
-     *          Name            Description
-     *  @param  _projectId      Project identifier.
+     *          Name        Description
+     *  @param  _projectId  Project identifier.
      */
     modifier validProject(
         uint256 _projectId
@@ -97,8 +99,8 @@ ReentrancyGuardUpgradeable {
     /**
      *  @notice Verify the message sender is the launchpad of a project.
      *
-     *          Name            Description
-     *  @param  _projectId      Project identifier.
+     *          Name        Description
+     *  @param  _projectId  Project identifier.
      */
     modifier onlyLaunchpad(
         uint256 _projectId
@@ -112,8 +114,8 @@ ReentrancyGuardUpgradeable {
     /**
      *  @notice Verify the message sender is active in the zone of a project.
      *
-     *          Name            Description
-     *  @param  _projectId      Project identifier.
+     *          Name        Description
+     *  @param  _projectId  Project identifier.
      */
     modifier onlyActiveInZoneOf(
         uint256 _projectId
@@ -142,7 +144,7 @@ ReentrancyGuardUpgradeable {
 
     /* --- Initialization --- */
     /**
-     *  @notice Invoked for initialization after deployment, serving as the contract constructor.
+     *  @notice Initialize the contract after deployment, serving as the constructor.
      *
      *          Name            Description
      *  @param  _admin          `Admin` contract address.
@@ -182,6 +184,15 @@ ReentrancyGuardUpgradeable {
     function decimals() external pure returns (uint8) {
         return ProjectTokenConstant.TOKEN_DECIMALS;
     }
+
+
+    /**
+     *  @return projectToken    Address of this contract.
+     */
+    function projectToken() external view returns (address) {
+        return address(this);
+    }
+
 
     /**
      *          Name            Description
@@ -433,7 +444,10 @@ ReentrancyGuardUpgradeable {
     function getRoyaltyRate(
         uint256 _tokenId
     ) validProject(_tokenId) external view returns (Rate memory) {
-        return Rate(zoneRoyaltyRates[projects[_tokenId].zone], CommonConstant.RATE_DECIMALS);
+        return Rate(
+            zoneRoyaltyRates[projects[_tokenId].zone],
+            CommonConstant.RATE_DECIMALS
+        );
     }
 
     /**
@@ -448,11 +462,103 @@ ReentrancyGuardUpgradeable {
         return projects[_projectId].estateId != 0;
     }
 
+
     /**
-     *  @return projectToken    Address of this contract.
+     *          Name            Description
+     *  @param  _interfaceId    Interface identifier.
+     *
+     *  @return Whether this contract supports the interface.
      */
-    function projectToken() external view returns (address) {
-        return address(this);
+    function supportsInterface(
+        bytes4 _interfaceId
+    ) public view virtual override(
+        IERC165Upgradeable,
+        ERC1155Upgradeable
+    ) returns (bool) {
+        return _interfaceId == type(IProjectToken).interfaceId
+            || _interfaceId == type(IERC2981Upgradeable).interfaceId
+            || _interfaceId == type(IERC1155MetadataURIUpgradeable).interfaceId
+            || super.supportsInterface(_interfaceId);
+    }
+
+    /**
+     *          Name        Description
+     *  @param  _operator   Operator address.
+     *  @param  _from       Sender address.
+     *  @param  _id         Token identifier.
+     *  @param  _value      Token amount.
+     *  @param  _data       Additional data.
+     *
+     *  @return Selector of the `onERC1155Received` function if the message sender is either the estate token contract or the
+     *          project token contract.
+     */
+    function onERC1155Received(
+        address _operator,
+        address _from,
+        uint256 _id,
+        uint256 _value,
+        bytes calldata _data
+    ) public virtual override (
+        IERC1155ReceiverUpgradeable,
+        EstateTokenReceiver,
+        ProjectTokenReceiver
+    ) returns (bytes4) {
+        return EstateTokenReceiver.onERC1155Received(
+            _operator,
+            _from,
+            _id,
+            _value,
+            _data
+        ) == this.onERC1155Received.selector
+        || ProjectTokenReceiver.onERC1155Received(
+            _operator,
+            _from,
+            _id,
+            _value,
+            _data
+        ) == this.onERC1155Received.selector
+            ? this.onERC1155Received.selector
+            : bytes4(0);
+    }
+
+    /**
+     *          Name        Description
+     *  @param  _operator   Operator address.
+     *  @param  _from       Sender address.
+     *  @param  _ids        List of token identifiers.
+     *  @param  _values     List of token amounts, respective to each token identifier.
+     *  @param  _data       Additional data.
+     *
+     *  @return Selector of the `onERC1155Received` function if the message sender is either the estate token contract or the
+     *          project token contract.
+     */
+    function onERC1155BatchReceived(
+        address _operator,
+        address _from,
+        uint256[] calldata _ids,
+        uint256[] calldata _values,
+        bytes calldata _data
+    ) public virtual override(
+        IERC1155ReceiverUpgradeable,
+        EstateTokenReceiver,
+        ProjectTokenReceiver
+    ) returns (bytes4) {
+        return EstateTokenReceiver.onERC1155BatchReceived(
+            _operator,
+            _from,
+            _ids,
+            _values,
+            _data
+        ) == this.onERC1155BatchReceived.selector
+        || ProjectTokenReceiver.onERC1155BatchReceived(
+            _operator,
+            _from,
+            _ids,
+            _values,
+            _data
+        ) == this.onERC1155BatchReceived.selector
+            ? this.onERC1155Received.selector
+            : bytes4(0);
     }
 
 
@@ -483,11 +589,49 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
+     *  @notice Update the royalty rate for a zone.
+     *
+     *          Name            Description
+     *  @param  _zone           Zone code.
+     *  @param  _royaltyRate    New royalty rate.
+     *  @param  _signatures     Array of admin signatures.
+     *
+     *  @dev    Administrative operator.
+     */
+    function updateZoneRoyaltyRate(
+        bytes32 _zone,
+        uint256 _royaltyRate,
+        bytes[] calldata _signatures
+    ) external {
+        IAdmin(this.admin()).verifyAdminSignatures(
+            abi.encode(
+                address(this),
+                "updateZoneRoyaltyRate",
+                _zone,
+                _royaltyRate
+            ),
+            _signatures
+        );
+        if (!IAdmin(admin).isZone(_zone)) {
+            revert InvalidZone();
+        }
+
+        if (_royaltyRate > CommonConstant.RATE_MAX_FRACTION) {
+            revert InvalidRate();
+        }
+        zoneRoyaltyRates[_zone] = _royaltyRate;
+        emit ZoneRoyaltyRateUpdate(
+            _zone,
+            Rate(_royaltyRate, CommonConstant.RATE_DECIMALS)
+        );
+    }
+
+    /**
      *  @notice Authorize or deauthorize contract addresses as launchpads.
      *
      *          Name            Description
      *  @param  _accounts       Array of contract addresses.
-     *  @param  _isLaunchpad    This whether the operation is authorizing or deauthorizing.
+     *  @param  _isLaunchpad    Whether the operation is authorizing or deauthorizing.
      *  @param  _signatures     Array of admin signatures.
      * 
      *  @dev    Administrative operator.
@@ -529,44 +673,6 @@ ReentrancyGuardUpgradeable {
         }
     }
 
-    /**
-     *  @notice Update the royalty rate for a zone.
-     *
-     *          Name            Description
-     *  @param  _zone           Zone code.
-     *  @param  _royaltyRate    New royalty rate.
-     *  @param  _signatures     Array of admin signatures.
-     * 
-     *  @dev    Administrative operator.
-     */
-    function updateZoneRoyaltyRate(
-        bytes32 _zone,
-        uint256 _royaltyRate,
-        bytes[] calldata _signatures
-    ) external {
-        IAdmin(this.admin()).verifyAdminSignatures(
-            abi.encode(
-                address(this),
-                "updateZoneRoyaltyRate",
-                _zone,
-                _royaltyRate
-            ),
-            _signatures
-        );
-        if (!IAdmin(admin).isZone(_zone)) {
-            revert InvalidZone();
-        }
-
-        if (_royaltyRate > CommonConstant.RATE_MAX_FRACTION) {
-            revert InvalidRate();
-        }
-        zoneRoyaltyRates[_zone] = _royaltyRate;
-        emit ZoneRoyaltyRateUpdate(
-            _zone,
-            Rate(_royaltyRate, CommonConstant.RATE_DECIMALS)
-        );
-    }
-
 
     /* --- Command --- */
     /**
@@ -591,7 +697,13 @@ ReentrancyGuardUpgradeable {
             revert Unauthorized();
         }
 
-        _validate(abi.encode(_uri), _validation);
+        _validate(
+            abi.encode(
+                    _initiator,
+                _uri
+            ),
+            _validation
+        );
 
         if (bytes(_uri).length == 0) {
             revert InvalidURI();
@@ -614,7 +726,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _initiator      Initiator address.
      *  @param  _uri            URI containing project information.
      *
-     *  @return projectId       New project identifier.
+     *  @return New project identifier.
      *
      *  @dev    Permission: Authorized launchpads.
      */
@@ -682,19 +794,67 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
+     *  @notice Withdraw estate tokens equivalent to project token holdings.
+     *
+     *          Name            Description
+     *  @param  _projectId      Project identifier.
+     *
+     *  @return amount          Amount of estate tokens withdrawn.
+     */
+    function withdrawEstateToken(
+        uint256 _projectId
+    ) external
+    whenNotPaused
+    nonReentrant
+    validProject(_projectId)
+    returns (uint256) {
+        Project storage project = projects[_projectId];
+        uint256 estateId = project.estateId;
+        if (estateId == 0) {
+            revert InvalidWithdrawing();
+        }
+
+        uint256 amount = balanceOf(msg.sender, _projectId);
+
+        IEstateToken(estateToken).safeTransferFrom(
+            address(this),
+            msg.sender,
+            estateId,
+            amount,
+            ""
+        );
+        safeTransferFrom(
+            msg.sender,
+            address(this),
+            _projectId,
+            amount,
+            ""
+        );
+
+        emit EstateTokenWithdrawal(
+            _projectId,
+            msg.sender,
+            amount
+        );
+
+        return amount;
+    }
+
+
+    /**
      *  @notice Deprecate a project due to force majeure.
      *
      *          Name            Description
      *  @param  _projectId      Project identifier.
-     *  @param  _note           Deprecation note.
-     *  @param  _anchor         Keccak256 hash of `uri` of the project.
-     * 
+     *  @param  _data           Deprecation note.
+     *  @param  _anchor         Keccak256 hash of `uri` of the estate.
+     *
      *  @dev    Permission: Managers active in the zone of the project.
      *  @dev    Anchor enforces consistency between this contract and the client-side.
      */
     function safeDeprecateProject(
         uint256 _projectId,
-        string calldata _note,
+        string calldata _data,
         bytes32 _anchor
     ) external
     whenNotPaused
@@ -706,7 +866,10 @@ ReentrancyGuardUpgradeable {
         }
 
         projects[_projectId].deprecateAt = uint40(block.timestamp);
-        emit ProjectDeprecation(_projectId, _note);
+        emit ProjectDeprecation(
+            _projectId,
+            _data
+        );
     }
 
     /**
@@ -719,6 +882,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _anchor         Keccak256 hash of `uri` of the project.
      *
      *  @dev    Permission: Managers active in the zone of the project.
+     *  @dev    Anchor enforces consistency between this contract and the client-side.
      */
     function safeUpdateProjectURI(
         uint256 _projectId,
@@ -735,7 +899,10 @@ ReentrancyGuardUpgradeable {
         }
 
         _validate(
-            abi.encode(_projectId, _uri),
+            abi.encode(
+                _projectId,
+                _uri
+            ),
             _validation
         );
 
@@ -743,7 +910,8 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Tokenize a project into an estate token after successful fundraising.
+     *  @notice Tokenize an legitimate estate project into a new class of estate token.
+     *  @notice Tokenize only if the project has been finalized.
      *
      *          Name            Description
      *  @param  _projectId      Project identifier.
@@ -751,7 +919,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _broker         Broker address for the estate.
      *  @param  _anchor         Keccak256 hash of `uri` of the project.
      *
-     *  @return estateId        Estate token identifier created from tokenization.
+     *  @return Estate identifier tokenized from the project.
      *
      *  @dev    Permission: Managers active in the zone of the project.
      *  @dev    Anchor enforces consistency between this contract and the client-side.
@@ -812,173 +980,24 @@ ReentrancyGuardUpgradeable {
         return estateId;
     }
 
-    /**
-     *  @notice Withdraw estate tokens equivalent to project token holdings.
-     *
-     *          Name            Description
-     *  @param  _projectId      Project identifier.
-     *
-     *  @return amount          Amount of estate tokens withdrawn.
-     */
-    function withdrawEstateToken(
-        uint256 _projectId
-    ) external
-    whenNotPaused
-    nonReentrant
-    validProject(_projectId)
-    returns (uint256) {
-        Project storage project = projects[_projectId];
-        uint256 estateId = project.estateId;
-        if (estateId == 0) {
-            revert InvalidWithdrawing();
-        }
-
-        uint256 amount = balanceOf(msg.sender, _projectId);
-
-        IEstateToken(estateToken).safeTransferFrom(
-            address(this),
-            msg.sender,
-            estateId,
-            amount,
-            ""
-        );
-        safeTransferFrom(
-            msg.sender,
-            address(this),
-            _projectId,
-            amount,
-            ""
-        );
-
-        emit EstateTokenWithdrawal(
-            _projectId,
-            msg.sender,
-            amount
-        );
-
-        return amount;
-    }
-
-
-    /* --- Interface Support --- */
-    /**
-     *          Name            Description
-     *  @param  _interfaceId    Interface identifier.
-     *
-     *  @return isSupported     Whether the interface is supported.
-     */
-    function supportsInterface(
-        bytes4 _interfaceId
-    ) public view virtual override(
-        IERC165Upgradeable,
-        ERC1155Upgradeable
-    ) returns (bool) {
-        return _interfaceId == type(IProjectToken).interfaceId
-            || _interfaceId == type(IERC2981Upgradeable).interfaceId
-            || _interfaceId == type(IERC1155MetadataURIUpgradeable).interfaceId
-            || super.supportsInterface(_interfaceId);
-    }
-
-    /**
-     *  @notice TODO:
-     *
-     *          Name            Description
-     *  @param  _operator       Operator address.
-     *  @param  _from           Sender address.
-     *  @param  _id             Token identifier.
-     *  @param  _value          Token amount.
-     *  @param  _data           Additional data.
-     *
-     *  @return TODO:
-     */
-    function onERC1155Received(
-        address _operator,
-        address _from,
-        uint256 _id,
-        uint256 _value,
-        bytes calldata _data
-    ) public virtual override (
-        IERC1155ReceiverUpgradeable,
-        EstateTokenReceiver,
-        ProjectTokenReceiver
-    ) returns (bytes4) {
-        return EstateTokenReceiver.onERC1155Received(
-                _operator,
-                _from,
-                _id,
-                _value,
-                _data
-            ) == this.onERC1155Received.selector
-            || ProjectTokenReceiver.onERC1155Received(
-                _operator,
-                _from,
-                _id,
-                _value,
-                _data
-            ) == this.onERC1155Received.selector
-            ? this.onERC1155Received.selector
-            : bytes4(0);
-    }
-
-    /**
-     *  @notice TODO:
-     *
-     *          Name            Description
-     *  @param  _operator       Operator address.
-     *  @param  _from           Sender address.
-     *  @param  _ids            List of token identifiers.
-     *  @param  _values         List of amounts, respective to each token.
-     *  @param  _data           Additional data.
-     *
-     *  @return TODO:
-     */
-    function onERC1155BatchReceived(
-        address _operator,
-        address _from,
-        uint256[] calldata _ids,
-        uint256[] calldata _values,
-        bytes calldata _data
-    ) public virtual override(
-        IERC1155ReceiverUpgradeable,
-        EstateTokenReceiver,
-        ProjectTokenReceiver
-    ) returns (bytes4) {
-        return EstateTokenReceiver.onERC1155BatchReceived(
-                _operator,
-                _from,
-                _ids,
-                _values,
-                _data
-            ) == this.onERC1155BatchReceived.selector
-            || ProjectTokenReceiver.onERC1155BatchReceived(
-                _operator,
-                _from,
-                _ids,
-                _values,
-                _data
-            ) == this.onERC1155BatchReceived.selector
-            ? this.onERC1155Received.selector
-            : bytes4(0);
-    }
-
 
     /* --- Helper --- */
     /**
-     *  @notice TODO: Hook that is called before any token transfer.
-     * 
+     *  @notice Hook to be called before any token transfer.
+     *
      *          Name            Description
      *  @param  _operator       Operator address.
-     *  @param  _from           Sender address.
-     *  @param  _to             Receiver address.
-     *  @param  _ids            List of token identifiers.
-     *  @param  _amounts        List of amounts, respective to each token.
+     *  @param  _from           Source address.
+     *  @param  _to             Target address.
+     *  @param  _projectIds     Array of project identifiers.
+     *  @param  _amounts        Array of transferred amounts, respective to each estate identifier.
      *  @param  _data           Additional data.
      */
     function _beforeTokenTransfer(
         address _operator,
         address _from,
         address _to,
-        uint256[] memory _ids,
+        uint256[] memory _projectIds,
         uint256[] memory _amounts,
         bytes memory _data
     ) internal override(
@@ -986,41 +1005,42 @@ ReentrancyGuardUpgradeable {
         ERC1155PausableUpgradeable,
         ERC1155SupplyUpgradeable
     ) {
-        super._beforeTokenTransfer(_operator, _from, _to, _ids, _amounts, _data);
+        super._beforeTokenTransfer(_operator, _from, _to, _projectIds, _amounts, _data);
     }
 
     /**
-     *  @notice TODO: Hook that is called after any token transfer.
+     *  @notice Hook to be called after any token transfer.
      *
      *          Name            Description
      *  @param  _operator       Operator address.
-     *  @param  _from           Sender address.
-     *  @param  _to             Receiver address.
-     *  @param  _ids            List of token identifiers.
-     *  @param  _amounts        List of amounts, respective to each token.
+     *  @param  _from           Source address.
+     *  @param  _to             Target address.
+     *  @param  _projectIds     Array of project identifiers.
+     *  @param  _amounts        Array of transferred amounts, respective to each estate identifier.
      *  @param  _data           Additional data.
      */
     function _afterTokenTransfer(
         address _operator,
         address _from,
         address _to,
-        uint256[] memory _ids,
+        uint256[] memory _projectIds,
         uint256[] memory _amounts,
         bytes memory _data
     ) internal override {
-        super._afterTokenTransfer(_operator, _from, _to, _ids, _amounts, _data);
+        super._afterTokenTransfer(_operator, _from, _to, _projectIds, _amounts, _data);
         uint256 timestamp = block.timestamp;
-        for (uint256 i; i < _ids.length; ++i) {
-            uint256 tokenId = _ids[i];
+        for (uint256 i; i < _projectIds.length; ++i) {
+            uint256 projectId = _projectIds[i];
+            /// @dev    Update snapshots.
             if (_from != address(0)) {
-                balanceSnapshots[tokenId][_from].push(Uint256Snapshot(balanceOf(_from, tokenId), timestamp));
+                balanceSnapshots[projectId][_from].push(Uint256Snapshot(balanceOf(_from, projectId), timestamp));
             } else {
-                totalSupplySnapshots[tokenId].push(Uint256Snapshot(totalSupply(tokenId), timestamp));
+                totalSupplySnapshots[projectId].push(Uint256Snapshot(totalSupply(projectId), timestamp));
             }
             if (_to != address(0)) {
-                balanceSnapshots[tokenId][_to].push(Uint256Snapshot(balanceOf(_to, tokenId), timestamp));
+                balanceSnapshots[projectId][_to].push(Uint256Snapshot(balanceOf(_to, projectId), timestamp));
             } else {
-                totalSupplySnapshots[tokenId].push(Uint256Snapshot(totalSupply(tokenId), timestamp));
+                totalSupplySnapshots[projectId].push(Uint256Snapshot(totalSupply(projectId), timestamp));
             }
         }
     }

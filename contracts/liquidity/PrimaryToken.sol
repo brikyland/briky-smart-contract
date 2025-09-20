@@ -69,7 +69,7 @@ ReentrancyGuardUpgradeable {
 
     /* --- Initialization --- */
     /**
-     *  @notice Invoked for initialization after deployment, serving as the contract constructor.
+     *  @notice Initialize the contract after deployment, serving as the constructor.
      *
      *          Name                        Description
      *  @param  _admin                      `Admin` contract address.
@@ -791,8 +791,10 @@ ReentrancyGuardUpgradeable {
         address _from,
         address _to,
         uint256 _amount
-    ) internal
-    override(ERC20Upgradeable, ERC20PausableUpgradeable) {
+    ) internal override(
+        ERC20Upgradeable,
+        ERC20PausableUpgradeable
+    ) {
         super._beforeTokenTransfer(_from, _to, _amount);
     }
 
@@ -806,8 +808,10 @@ ReentrancyGuardUpgradeable {
     function _mint(
         address _account,
         uint256 _amount
-    ) internal
-    override(ERC20Upgradeable, ERC20CappedUpgradeable) {
+    ) internal override(
+        ERC20Upgradeable,
+        ERC20CappedUpgradeable
+    ) {
         super._mint(_account, _amount);
     }
 

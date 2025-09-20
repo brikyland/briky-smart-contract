@@ -76,8 +76,8 @@ ReentrancyGuardUpgradeable {
     /**
      *  @notice Verify a valid request identifier.
      *
-     *          Name            Description
-     *  @param  _requestId      Request identifier.
+     *          Name        Description
+     *  @param  _requestId  Request identifier.
      */
     modifier validRequest(
         uint256 _requestId
@@ -91,8 +91,8 @@ ReentrancyGuardUpgradeable {
     /**
      *  @notice Verify the message sender is active in the zone of the estate of the request.
      *
-     *          Name            Description
-     *  @param  _requestId      Request identifier.
+     *          Name        Description
+     *  @param  _requestId  Request identifier.
      */
     modifier onlyActiveInZoneOf(
         uint256 _requestId
@@ -121,7 +121,7 @@ ReentrancyGuardUpgradeable {
 
     /* --- Initialization --- */
     /**
-     *  @notice Invoked for initialization after deployment, serving as the contract constructor.
+     *  @notice Initialize the contract after deployment, serving as the constructor.
      *
      *          Name                Description
      *  @param  _admin              `Admin` contract address.
@@ -263,11 +263,11 @@ ReentrancyGuardUpgradeable {
      *          - Pending: block.timestamp < agenda.saleStartsAt
      *          - Private Sale: agenda.saleStartsAt <= block.timestamp < agenda.privateSaleEndsAt
      *          - Public Sale: agenda.privateSaleEndsAt <= block.timestamp <= agenda.publicSaleEndsAt
-     *          - Formalities Finalization: agenda.publicSaleEndsAt
-     *                                          <= block.timestamp
-     *                                          < agenda.publicSaleEndsAt + EstateForgerConstant.SALE_CONFIRMATION_TIME_LIMIT
-     *          - Tokenized: estate.estateId > 0
-     *          - Cancelled: quote.totalSupply = 0
+     *          - Awaiting Confirmation: agenda.publicSaleEndsAt
+     *                                      <= block.timestamp
+     *                                      < agenda.publicSaleEndsAt + EstateForgerConstant.SALE_CONFIRMATION_TIME_LIMIT
+     *          - Confirmed: estate.estateId > 0
+     *          - Cancelled: quota.totalSupply = 0
      */
     function getRequest(
         uint256 _requestId
@@ -486,7 +486,13 @@ ReentrancyGuardUpgradeable {
     validRequest(_requestId)
     onlyExecutive
     onlyActiveInZoneOf(_requestId) {
-        _validate(abi.encode(_uri), _validation);
+        _validate(
+            abi.encode(
+                _requestId,
+                _uri
+            ),
+            _validation
+        );
 
         if (requests[_requestId].agenda.confirmAt != 0) {
             revert AlreadyConfirmed();
@@ -638,9 +644,9 @@ ReentrancyGuardUpgradeable {
 
 
     /**
-     *  @notice Confirm a request and create the estate token.
-     *  @notice Confirm only if the request has achieved at least minimum selling quantity deposited (even if the sale period
-     *          has not yet ended) and before the confirmation time limit has expired.
+     *  @notice Confirm a request to be tokenized.
+     *  @notice Confirm only if the request has sold at least minimum quantity (even if the sale period has not yet ended) and
+     *          before the confirmation time limit has expired.
      *  @notice The message sender must provide sufficient extra-currency amounts for the cashback fund.
      *
      *          Name            Description
@@ -688,7 +694,7 @@ ReentrancyGuardUpgradeable {
             revert NotEnoughSoldQuantity();
         }
 
-        /// @dev    If confirming before the anticipated due, `privateSaleEndsAt` and `publicSaleEndsAt` will be overwritten
+        /// @dev    If confirming before the anticipated due, `privateSaleEndsAt` and `publicSaleEndsAt` must be overwritten
         ///         with the current timestamp.
         if (request.agenda.privateSaleEndsAt > block.timestamp) {
             request.agenda.privateSaleEndsAt = uint40(block.timestamp);
@@ -696,11 +702,11 @@ ReentrancyGuardUpgradeable {
         if (publicSaleEndsAt > block.timestamp) {
             request.agenda.publicSaleEndsAt = uint40(block.timestamp);
         }
-        /// @dev    Tokenized request:  agenda.confirmAt > 0
+        /// @dev    Confirmed request:  agenda.confirmAt > 0
         request.agenda.confirmAt = uint40(block.timestamp);
 
         IEstateToken estateTokenContract = IEstateToken(estateToken);
-        /// @dev    Scale with decimals.
+        /// @dev    Scale with token decimals.
         uint256 unit = 10 ** estateTokenContract.decimals();
         uint256 estateId = estateTokenContract.tokenizeEstate(
             totalQuantity * unit,
@@ -713,7 +719,7 @@ ReentrancyGuardUpgradeable {
         );
         request.estate.estateId = estateId;
 
-        /// @dev    Transfer unsold tokens to the requester.
+        /// @dev    Transfer remain tokens to the requester.
         address requester = request.requester;
         estateTokenContract.safeTransferFrom(
             address(this),
@@ -726,7 +732,7 @@ ReentrancyGuardUpgradeable {
         address currency = request.quote.currency;
         uint256 value = soldQuantity * request.quote.unitPrice;
         uint256 fee = soldQuantity * request.quote.feeDenomination;
-        /// @dev    Transfer total deposit minus tokenizing fee to the requester.
+        /// @dev    Transfer total deposit minus fee to the requester.
         CurrencyHandler.sendCurrency(
             currency,
             requester,
@@ -750,6 +756,7 @@ ReentrancyGuardUpgradeable {
 
         /// @dev    Provide the cashback fund sufficiently.
         uint256 cashbackBaseAmount = _provideCashbackFund(request.quote.cashbackFundId);
+
         CurrencyHandler.sendCurrency(
             currency,
             feeReceiver,
@@ -919,7 +926,7 @@ ReentrancyGuardUpgradeable {
             revert NotTokenized();
         }
         uint256 withdrawAt = withdrawAt[_requestId][_account];
-        /// @dev    Allocated tokens of the message sender only remains in this contract after the tokenization and before the
+        /// @dev    Allocated tokens of the message sender only stays in this contract after the tokenization and before the
         ///         withdrawal.
         return _at >= requests[_requestId].agenda.confirmAt && (withdrawAt == 0 || _at < withdrawAt)
             ? deposits[_requestId][_account] * 10 ** IEstateToken(estateToken).decimals()
@@ -935,8 +942,7 @@ ReentrancyGuardUpgradeable {
     function supportsInterface(
         bytes4 _interfaceId
     ) public view virtual override returns (bool) {
-        return _interfaceId == type(IEstateForger).interfaceId
-            || _interfaceId == type(IEstateTokenizer).interfaceId
+        return _interfaceId == type(IEstateTokenizer).interfaceId
             || _interfaceId == type(IEstateTokenReceiver).interfaceId
             || _interfaceId == type(IERC165Upgradeable).interfaceId;
     }
@@ -945,7 +951,6 @@ ReentrancyGuardUpgradeable {
     /* --- Helper --- */
     /**
      *  @notice Deposit to a request.
-     *  @notice Deposit only during sale period. Only accounts whitelisted globally or specifically for the request can deposit during the private sale.
      *
      *          Name            Description
      *  @param  _requestId      Request identifier.

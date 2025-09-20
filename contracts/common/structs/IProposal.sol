@@ -93,7 +93,7 @@ interface IProposal {
      *          executives will later verify the feasibility of the proposal within a given expiration to either admit or
      *          disqualify it accordingly. During this process, the full context is uploaded to a public database (e.g., IPFS),
      *          and the link is submitted to be the URI of proposal context. This approach protects the database from external
-     *          attacks as well as ensures proposals remains validatable and user-oriented.
+     *          attacks as well as ensures proposals remain validatable and user-oriented.
      */
     struct Proposal {
         /// @notice Checksum of proposal context.

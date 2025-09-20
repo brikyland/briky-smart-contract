@@ -142,7 +142,7 @@ IValidatable {
      *  @param  buyer           Buyer address.
      *  @param  value           Liquidation value.
      *  @param  currency        Liquidation currency address.
-     *  @param  feeRate         Fraction of the sold value charged as fee.
+     *  @param  feeRate         Fraction of the liquidation value charged as fee.
      *  @param  uuid            Checksum of request context.
      *  @param  validation      Validation package from the validator.
      *  @return requestId       New request identifier.

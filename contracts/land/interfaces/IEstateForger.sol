@@ -290,11 +290,11 @@ IEstateTokenizer {
      *          - Pending: block.timestamp < agenda.saleStartsAt
      *          - Private Sale: agenda.saleStartsAt <= block.timestamp < agenda.privateSaleEndsAt
      *          - Public Sale: agenda.privateSaleEndsAt <= block.timestamp <= agenda.publicSaleEndsAt
-     *          - Formalities Finalization: agenda.publicSaleEndsAt
-     *                                          <= block.timestamp
-     *                                          < agenda.publicSaleEndsAt + EstateForgerConstant.SALE_CONFIRMATION_TIME_LIMIT
-     *          - Tokenized: agenda.confirmAt > 0
-     *          - Cancelled: quota.totalQuantity = 0
+     *          - Awaiting Confirmation: agenda.publicSaleEndsAt
+     *                                      <= block.timestamp
+     *                                      < agenda.publicSaleEndsAt + EstateForgerConstant.SALE_CONFIRMATION_TIME_LIMIT
+     *          - Confirmed: estate.estateId > 0
+     *          - Cancelled: quota.totalSupply = 0
      */
     function getRequest(
         uint256 requestId
@@ -305,18 +305,18 @@ IEstateTokenizer {
      *          Name            Description
      *  @param  requestId       Request identifier.
      *  @param  account         EVM address.
-     *  @return deposit         Deposited quantity of an account in a request.
+     *  @return quantity        Deposited quantity of the account in the request.
      */
     function deposits(
         uint256 requestId,
         address account
-    ) external view returns (uint256 deposit);
+    ) external view returns (uint256 quantity);
 
     /**
      *          Name            Description
      *  @param  requestId       Request identifier.
      *  @param  account         EVM address.
-     *  @return withdrawAt      Withdrawal timestamp.
+     *  @return withdrawAt      Withdrawal timestamp of the account in the request.
      */
     function withdrawAt(
         uint256 requestId,
@@ -460,8 +460,8 @@ IEstateTokenizer {
     /* --- Safe Command --- */
     /**
      *  @notice Confirm a request to be tokenized.
-     *  @notice Confirm only if the request has achieved at least minimum selling quantity deposited (even if the sale period
-     *          has not yet ended) and before the confirmation time limit has expired.
+     *  @notice Confirm only if the request has sold at least minimum quantity (even if the sale period has not yet ended) and
+     *          before the confirmation time limit has expired.
      *  @notice The message sender must provide sufficient extra-currency amounts for the cashback fund.
      *
      *          Name        Description

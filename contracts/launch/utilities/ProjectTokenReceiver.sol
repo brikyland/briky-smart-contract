@@ -7,21 +7,19 @@ import {IProjectTokenReceiver} from "../../launch/interfaces/IProjectTokenReceiv
 /**
  *  @author Briky Team
  *
- *  @notice TODO: A `ProjectTokenReceiver` contract is a `ERC1155Receiver` that rejects tokens not from the `ProjectToken`.
+ *  @notice A `ProjectTokenReceiver` contract always accepts ERC-1155 income tokens from the `ProjectToken` contract.
  */
 abstract contract ProjectTokenReceiver is
 IProjectTokenReceiver {
     /**
-     *  @notice TODO: Reject tokens not from the `ProjectToken`.
+     *          Name        Description
+     *  @param  _operator   Operator address.
+     *  @param  _from       Sender address.
+     *  @param  _id         Token identifier.
+     *  @param  _value      Token amount.
+     *  @param  _data       Additional data.
      *
-     *          Name            Description
-     *  @param  _operator    Operator address.
-     *  @param  _from        Sender address.
-     *  @param  _id          Token identifier.
-     *  @param  _value       Token amount.
-     *  @param  _data        Additional data.
-     * 
-     *  @return bytes4(0) if the token is not from the `ProjectToken`, otherwise the selector of the `onERC1155Received` function.
+     *  @return Selector of the `onERC1155Received` function if the message sender is the project token contract.
      */
     function onERC1155Received(
         address _operator,
@@ -34,16 +32,14 @@ IProjectTokenReceiver {
     }
 
     /**
-     *  @notice TODO: Reject tokens not from the `ProjectToken`.
+     *          Name        Description
+     *  @param  _operator   Operator address.
+     *  @param  _from       Sender address.
+     *  @param  _ids        List of token identifiers.
+     *  @param  _values     List of token amounts, respective to each token identifier.
+     *  @param  _data       Additional data.
      *
-     *          Name            Description
-     *  @param  _operator    Operator address.
-     *  @param  _from        Sender address.
-     *  @param  _ids         List of token identifiers.
-     *  @param  _values      List of amounts, respective to each token.
-     *  @param  _data        Additional data.
-     * 
-     *  @return bytes4(0) if the token is not from the `ProjectToken`, otherwise the selector of the `onERC1155BatchReceived` function.
+     *  @return Selector of the `onERC1155Received` function if the message sender is the project token contract.
      */
     function onERC1155BatchReceived(
         address _operator,

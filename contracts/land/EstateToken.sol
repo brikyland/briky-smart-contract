@@ -72,8 +72,8 @@ Validatable {
     /**
      *  @notice Verify a valid estate identifier.
      *
-     *          Name            Description
-     *  @param  _estateId       Estate identifier.
+     *          Name        Description
+     *  @param  _estateId   Estate identifier.
      */
     modifier validEstate(
         uint256 _estateId
@@ -87,8 +87,8 @@ Validatable {
     /**
      *  @notice Verify the message sender is active in the zone of the estate.
      *
-     *          Name            Description
-     *  @param  _estateId       Estate identifier.
+     *          Name        Description
+     *  @param  _estateId   Estate identifier.
      */
     modifier onlyActiveInZoneOf(
         uint256 _estateId
@@ -116,7 +116,7 @@ Validatable {
 
     /* --- Initialization --- */
     /**
-     *  @notice Invoked for initialization after deployment, serving as the contract constructor.
+     *  @notice Initialize the contract after deployment, serving as the constructor.
      *
      *          Name            Description
      *  @param  _admin          `Admin` contract address.
@@ -482,8 +482,8 @@ Validatable {
         }
         Estate storage estate = estates[_estateId];
         if (_at > block.timestamp
-        || _at < estate.tokenizeAt
-        || _at > estate.deprecateAt
+            || _at < estate.tokenizeAt
+            || _at > estate.deprecateAt
             || _at >= estate.expireAt) {
             revert InvalidTimestamp();
         }
@@ -491,6 +491,7 @@ Validatable {
             return 0;
         }
 
+        /// @dev    Equity includes unwithdrawn allocation in the tokenizer contract.
         return balanceSnapshots[_estateId][_account].getValueAt(_at)
             + IEstateTokenizer(estate.tokenizer).allocationOfAt(
                 _account,
@@ -552,7 +553,10 @@ Validatable {
     ) external view
     validEstate(_tokenId)
     returns (Rate memory) {
-        return Rate(zoneRoyaltyRates[estates[_tokenId].zone], CommonConstant.RATE_DECIMALS);
+        return Rate(
+            zoneRoyaltyRates[estates[_tokenId].zone],
+            CommonConstant.RATE_DECIMALS
+        );
     }
 
     /**
@@ -564,13 +568,12 @@ Validatable {
     function supportsInterface(
         bytes4 _interfaceId
     ) public view override(
-    IERC165Upgradeable,
-    ERC1155Upgradeable
+        IERC165Upgradeable,
+        ERC1155Upgradeable
     ) returns (bool) {
         return _interfaceId == type(IGovernor).interfaceId
-        || _interfaceId == type(IERC2981Upgradeable).interfaceId
-        || _interfaceId == type(IRoyaltyRateProposer).interfaceId
-        || ERC1155Upgradeable.supportsInterface(_interfaceId)
+            || _interfaceId == type(IAssetToken).interfaceId
+            || _interfaceId == type(IERC2981Upgradeable).interfaceId
             || super.supportsInterface(_interfaceId);
     }
 
@@ -775,7 +778,10 @@ Validatable {
         }
 
         _validate(
-            abi.encode(_estateId, _uri),
+            abi.encode(
+                _estateId,
+                _uri
+            ),
             _validation
         );
 

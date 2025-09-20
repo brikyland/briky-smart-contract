@@ -34,7 +34,7 @@ import {Validatable} from "./utilities/Validatable.sol";
  *          verify the feasibility of the proposal within a given expiration to either admit or disqualify it accordingly.
  *          During this process, the full context is uploaded to a public database (e.g., IPFS), and the link is submitted to
  *          be the URI of proposal context. This approach protects the database from external attacks as well as ensures
- *          proposals remains validatable and user-oriented.
+ *          proposals remain validatable and user-oriented.
  *  @dev    Implementation involves server-side support.
  *  @dev    ERC-20 tokens are identified by their contract addresses.
  *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
@@ -120,7 +120,7 @@ ReentrancyGuardUpgradeable {
 
     /* --- Initialization --- */
     /**
-     *  @notice Invoked for initialization after deployment, serving as the contract constructor.
+     *  @notice Initialize the contract after deployment, serving as the constructor.
      *
      *          Name        Description
      *  @param  _admin      `Admin` contract address.
@@ -247,7 +247,7 @@ ReentrancyGuardUpgradeable {
      *          executives will later verify the feasibility of the proposal within a given expiration to either admit or
      *          disqualify it accordingly. During this process, the full context is uploaded to a public database (e.g., IPFS),
      *          and the link is submitted to be the URI of proposal context. This approach protects the database from external
-     *          attacks as well as ensures proposals remains validatable and user-oriented.
+     *          attacks as well as ensures proposals remain validatable and user-oriented.
      *  @dev    Through the validation mechanism, the server-side determines `uuid`, `quorumRate`, `duration` and
      *          `admissionExpiry` based on the specific supported type of proposal and its context. Operators are also required
      *          to be pre-registered on the server-side to ensure proper assignments.
@@ -425,7 +425,7 @@ ReentrancyGuardUpgradeable {
      *          will later verify the feasibility of the proposal within a given expiration to either admit or disqualify it
      *          accordingly. During this process, the full context is uploaded to a public database (e.g., IPFS), and the link is
      *          submitted to be the URI of proposal context. This approach protects the database from external attacks as well as
-     *          ensures proposals remains validatable and user-oriented.re the vote closes.
+     *          ensures proposals remain validatable and user-oriented.re the vote closes.
      *
      *          Name                Description
      *  @param  _proposalId         Proposal identifier.
@@ -875,7 +875,6 @@ ReentrancyGuardUpgradeable {
     /* --- Helper --- */
     /**
      *  @notice Vote on a proposal.
-     *  @notice Vote only if the proposal is in `Voting` state and before the vote closes.
      *
      *          Name                Description
      *  @param  _proposalId         Proposal identifier.
@@ -949,7 +948,6 @@ ReentrancyGuardUpgradeable {
 
     /**
      *  @notice Contribute to the budget of a proposal.
-     *  @notice Contribute only before the proposal is confirmed or the confirmation time limit has expired.
      *
      *          Name                Description
      *  @param  _proposalId         Proposal identifier.
