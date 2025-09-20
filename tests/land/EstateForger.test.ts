@@ -59,15 +59,15 @@ import { request } from 'http';
 import { Initialization as LandInitialization } from '@tests/land/test.initialization';
 import { callReserveVault_AuthorizeProvider } from '@utils/callWithSignatures/reserveVault';
 import { remain, scaleRate } from '@utils/formula';
-import { RequestQuote, RequestAgenda, RequestEstate, RequestQuota } from '@utils/models/EstateForger';
+import { RequestQuote, RequestAgenda, RequestEstate, RequestQuota, SafeDepositParams, DepositParams, ConfirmParams } from '@utils/models/EstateForger';
 import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
 import { Rate } from '@utils/models/Common';
 import { MockValidator } from '@utils/mockValidator';
-import { RegisterSellerInParams, RequestTokenizationParams, UpdateRequestURIParams, UpdateRequestAgendaParams } from '@utils/models/EstateForger';
-import { getRegisterSellerInValidation, getRequestTokenizationValidation, getRegisterSellerInInvalidValidation, getRequestTokenizationInvalidValidation, getUpdateRequestURIValidation, getUpdateRequestURIInvalidValidation } from '@utils/validation/EstateForger';
+import { RegisterSellerInParams, RequestTokenizationParams, UpdateRequestEstateURIParams, UpdateRequestAgendaParams } from '@utils/models/EstateForger';
+import { getRegisterSellerInValidation, getRequestTokenizationValidation, getRegisterSellerInInvalidValidation, getRequestTokenizationInvalidValidation, getUpdateRequestEstateURIValidation, getUpdateRequestEstateURIInvalidValidation } from '@utils/validation/EstateForger';
 import { RegisterCustodianParams } from '@utils/models/EstateToken';
 import { getRegisterCustodianTx } from '@utils/transaction/EstateToken';
-import { getRequestTokenizationTx, getUpdateRequestAgendaTx, getUpdateRequestURITx } from '@utils/transaction/EstateForger';
+import { getRequestTokenizationTx, getSafeConfirmTx, getSafeConfirmTxByParams, getSafeDepositTx, getSafeDepositTxByParams, getUpdateRequestAgendaTx, getUpdateRequestEstateURITx } from '@utils/transaction/EstateForger';
 import { getActivateBrokerTx, getRegisterBrokerTx } from '@utils/transaction/CommissionToken';
 
 chai.use(smock.matchers);
@@ -108,7 +108,7 @@ async function testReentrancy_estateForger(
 ) {
     let data = [
         estateForger.interface.encodeFunctionData("deposit", [0, 0]),
-        estateForger.interface.encodeFunctionData("confirm", [0]),
+        estateForger.interface.encodeFunctionData("safeConfirm", [0, ethers.utils.keccak256(ethers.utils.toUtf8Bytes(""))]),
         estateForger.interface.encodeFunctionData("withdrawDeposit", [0]),
     ];
 
@@ -599,8 +599,25 @@ describe('2.2. EstateForger', async () => {
         }
 
         if (confirmRequests) {
-            await callTransaction(estateForger.connect(manager).confirm(1, {value: ethers.utils.parseEther('1000')}));
-            await callTransaction(estateForger.connect(manager).confirm(2, {value: ethers.utils.parseEther('1000')}));
+            const params1: ConfirmParams = {
+                requestId: BigNumber.from(1),
+            }
+            await callTransaction(getSafeConfirmTxByParams(
+                estateForger,
+                manager,
+                params1,
+                { value: ethers.utils.parseEther('1000') }
+            ));
+
+            const params2: ConfirmParams = {
+                requestId: BigNumber.from(2),
+            }
+            await callTransaction(getSafeConfirmTxByParams(
+                estateForger,
+                manager,
+                params2,
+                { value: ethers.utils.parseEther('1000')}
+            ));
         }
 
         if (pause) {
@@ -1964,10 +1981,10 @@ describe('2.2. EstateForger', async () => {
         });
     });
 
-    describe('2.2.7. updateRequestURI(uint256, string)', async () => {
-        async function beforeUpdateRequestURI(
+    describe('2.2.7. updateRequestEstateURI(uint256, string)', async () => {
+        async function beforeUpdateRequestEstateURI(
             fixture: EstateForgerFixture,
-        ): Promise<{ defaultParams: UpdateRequestURIParams }> {
+        ): Promise<{ defaultParams: UpdateRequestEstateURIParams }> {
             return {
                 defaultParams: {
                     requestId: BigNumber.from(1),
@@ -1993,10 +2010,10 @@ describe('2.2. EstateForger', async () => {
                 uri: 'new_uri_1',
             }
     
-            const tx1 = await getUpdateRequestURITx(estateForger, validator, manager, params1);
+            const tx1 = await getUpdateRequestEstateURITx(estateForger, validator, manager, params1);
             await tx1.wait();
 
-            await expect(tx1).to.emit(estateForger, 'RequestURIUpdate').withArgs(
+            await expect(tx1).to.emit(estateForger, 'RequestEstateURIUpdate').withArgs(
                 params1.requestId,
                 params1.uri,
             );
@@ -2010,10 +2027,10 @@ describe('2.2. EstateForger', async () => {
                 uri: 'new_uri_2',
             }
 
-            const tx2 = await getUpdateRequestURITx(estateForger, validator, moderator, params2);
+            const tx2 = await getUpdateRequestEstateURITx(estateForger, validator, moderator, params2);
             await tx2.wait();
 
-            await expect(tx2).to.emit(estateForger, 'RequestURIUpdate').withArgs(
+            await expect(tx2).to.emit(estateForger, 'RequestEstateURIUpdate').withArgs(
                 params2.requestId,
                 params2.uri,
             );
@@ -2033,10 +2050,10 @@ describe('2.2. EstateForger', async () => {
             });
             const { manager, estateForger, validator } = fixture;
             
-            const { defaultParams } = await beforeUpdateRequestURI(fixture);
-            const invalidValidation = await getUpdateRequestURIInvalidValidation(estateForger, validator, defaultParams);
+            const { defaultParams } = await beforeUpdateRequestEstateURI(fixture);
+            const invalidValidation = await getUpdateRequestEstateURIInvalidValidation(estateForger, validator, defaultParams);
 
-            await expect(estateForger.connect(manager).updateRequestURI(
+            await expect(estateForger.connect(manager).updateRequestEstateURI(
                 defaultParams.requestId,
                 defaultParams.uri,
                 invalidValidation,
@@ -2053,9 +2070,9 @@ describe('2.2. EstateForger', async () => {
                 registerBrokers: true,
             });
             const { user, estateForger, validator } = fixture;
-            const { defaultParams } = await beforeUpdateRequestURI(fixture);
+            const { defaultParams } = await beforeUpdateRequestEstateURI(fixture);
     
-            await expect(getUpdateRequestURITx(estateForger, validator, user, defaultParams))
+            await expect(getUpdateRequestEstateURITx(estateForger, validator, user, defaultParams))
                 .to.be.revertedWithCustomError(estateForger, 'Unauthorized');
         });
 
@@ -2069,20 +2086,20 @@ describe('2.2. EstateForger', async () => {
                 registerBrokers: true,
             });
             const { manager, estateForger, validator } = fixture;
-            const { defaultParams } = await beforeUpdateRequestURI(fixture);
+            const { defaultParams } = await beforeUpdateRequestEstateURI(fixture);
 
-            const params1: UpdateRequestURIParams = {
+            const params1: UpdateRequestEstateURIParams = {
                 ...defaultParams,
                 requestId: BigNumber.from(0),
             }
-            await expect(getUpdateRequestURITx(estateForger, validator, manager, params1))
+            await expect(getUpdateRequestEstateURITx(estateForger, validator, manager, params1))
                 .to.be.revertedWithCustomError(estateForger, 'InvalidRequestId');
 
-            const params2: UpdateRequestURIParams = {
+            const params2: UpdateRequestEstateURIParams = {
                 ...defaultParams,
                 requestId: BigNumber.from(100),
             }    
-            await expect(getUpdateRequestURITx(estateForger, validator, manager, params2))
+            await expect(getUpdateRequestEstateURITx(estateForger, validator, manager, params2))
                 .to.be.revertedWithCustomError(estateForger, 'InvalidRequestId');
         });
 
@@ -2096,11 +2113,11 @@ describe('2.2. EstateForger', async () => {
                 registerBrokers: true,
             });
             const { manager, estateForger, validator } = fixture;
-            const { defaultParams } = await beforeUpdateRequestURI(fixture);
+            const { defaultParams } = await beforeUpdateRequestEstateURI(fixture);
 
             await callTransaction(estateForger.connect(manager).cancel(defaultParams.requestId));
 
-            await expect(getUpdateRequestURITx(estateForger, validator, manager, defaultParams))
+            await expect(getUpdateRequestEstateURITx(estateForger, validator, manager, defaultParams))
                 .to.be.revertedWithCustomError(estateForger, 'AlreadyCancelled');
         });
 
@@ -2118,9 +2135,9 @@ describe('2.2. EstateForger', async () => {
                 fundERC20ForManagers: true,
             });
             const { manager, estateForger, validator } = fixture;
-            const { defaultParams } = await beforeUpdateRequestURI(fixture);
+            const { defaultParams } = await beforeUpdateRequestEstateURI(fixture);
 
-            await expect(getUpdateRequestURITx(estateForger, validator, manager, defaultParams))
+            await expect(getUpdateRequestEstateURITx(estateForger, validator, manager, defaultParams))
                 .to.be.revertedWithCustomError(estateForger, 'AlreadyConfirmed');
         });
 
@@ -2134,7 +2151,7 @@ describe('2.2. EstateForger', async () => {
                 registerBrokers: true,
             });
             const { manager, estateForger, admin, admins, validator } = fixture;
-            const { defaultParams } = await beforeUpdateRequestURI(fixture);
+            const { defaultParams } = await beforeUpdateRequestEstateURI(fixture);
 
             const zone = (await estateForger.getRequest(defaultParams.requestId)).estate.zone;
             await callAdmin_ActivateIn(
@@ -2146,7 +2163,7 @@ describe('2.2. EstateForger', async () => {
                 await admin.nonce()
             );
 
-            await expect(getUpdateRequestURITx(estateForger, validator, manager, defaultParams))
+            await expect(getUpdateRequestEstateURITx(estateForger, validator, manager, defaultParams))
                 .to.be.revertedWithCustomError(estateForger, 'Unauthorized');
         });
     });
@@ -3211,25 +3228,30 @@ describe('2.2. EstateForger', async () => {
 
             // During private sale
             const initBalance1 = await ethers.provider.getBalance(depositor1.address);
-            const amount1 = 2;
-            const requestId = 1;
-            let value1 = (await estateForger.getRequest(requestId)).quote.unitPrice.mul(amount1);
 
-            let saleStartsAt = (await estateForger.getRequest(requestId)).agenda.saleStartsAt;
+            const params: DepositParams = {
+                requestId: BigNumber.from(1),
+                quantity: BigNumber.from(2),
+            }
+            let value1 = (await estateForger.getRequest(params.requestId)).quote.unitPrice.mul(params.quantity);
+
+            let saleStartsAt = (await estateForger.getRequest(params.requestId)).agenda.saleStartsAt;
             await time.setNextBlockTimestamp(saleStartsAt);
 
-            const anchor = ethers.utils.solidityKeccak256(
-                ["string"],
-                [(await estateForger.getRequest(requestId)).estate.uri]
-            );
-            let tx = await estateForger.connect(depositor1).safeDeposit(
-                requestId, amount1, anchor, { value: value1.mul(10) }
+            let tx = await getSafeDepositTxByParams(
+                estateForger,
+                depositor1,
+                params,
+                { value: value1.mul(10) }
             );
             await tx.wait();
 
-            await expect(tx).to
-                .emit(estateForger, 'Deposit')
-                .withArgs(requestId, depositor1.address, amount1, value1);
+            await expect(tx).to.emit(estateForger, 'Deposit').withArgs(
+                params.requestId,
+                depositor1.address,
+                params.quantity,
+                value1
+            );
 
             let receipt = await tx.wait();
 
@@ -3238,9 +3260,9 @@ describe('2.2. EstateForger', async () => {
             );
             expect(await ethers.provider.getBalance(estateForger.address)).to.equal(value1);
 
-            let tokenizationRequest = await estateForger.getRequest(requestId);
-            expect(tokenizationRequest.quota.soldQuantity).to.equal(amount1);
-            expect(await estateForger.deposits(requestId, depositor1.address)).to.equal(amount1);
+            let tokenizationRequest = await estateForger.getRequest(params.requestId);
+            expect(tokenizationRequest.quota.soldQuantity).to.equal(params.quantity);
+            expect(await estateForger.deposits(params.requestId, depositor1.address)).to.equal(params.quantity);
         });
 
         it('2.2.10.2. deposit tokenization unsuccessfully with invalid request id', async () => {
@@ -3256,14 +3278,27 @@ describe('2.2. EstateForger', async () => {
             });
             const { estateForger, depositor1 } = fixture;
 
-            await expect(estateForger.connect(depositor1).safeDeposit(
-                0, 2, ethers.utils.solidityKeccak256(["string"], [""])
+            const params1: DepositParams = {
+                requestId: BigNumber.from(0),
+                quantity: BigNumber.from(2),
+            }
+            await expect(getSafeDepositTxByParams(
+                estateForger,
+                depositor1,
+                params1,
+                { value: ethers.utils.parseEther('100') }
             )).to.be.revertedWithCustomError(estateForger, "InvalidRequestId");
 
-            await expect(estateForger.connect(depositor1).safeDeposit(
-                100, 2, ethers.utils.solidityKeccak256(["string"], [""])
-            )).to.be.revertedWithCustomError(estateForger, "InvalidRequestId");
-        });
+            const params2: DepositParams = {
+                requestId: BigNumber.from(100),
+                quantity: BigNumber.from(2),
+            }
+            await expect(getSafeDepositTxByParams(
+                estateForger,
+                depositor1,
+                params2,
+                { value: ethers.utils.parseEther('100') }
+            )).to.be.revertedWithCustomError(estateForger, "InvalidRequestId");});
 
         it('2.2.10.3. deposit tokenization unsuccessfully with invalid anchor', async () => {
             const fixture = await beforeEstateForgerTest({
@@ -3278,13 +3313,53 @@ describe('2.2. EstateForger', async () => {
             });
             const { estateForger, depositor1 } = fixture;
 
-            await expect(estateForger.connect(depositor1).safeDeposit(
-                1, 2, ethers.utils.solidityKeccak256(["string"], ["invalid anchor"])
+            const params1: SafeDepositParams = {
+                requestId: BigNumber.from(1),
+                quantity: BigNumber.from(2),
+                anchor: ethers.utils.solidityKeccak256(["string"], ["invalid anchor"]),
+            }
+            await expect(getSafeDepositTx(
+                estateForger,
+                depositor1,
+                params1, { value: ethers.utils.parseEther('100') }
             )).to.be.revertedWithCustomError(estateForger, "BadAnchor");
 
-            await expect(estateForger.connect(depositor1).safeDeposit(
-                2, 2, ethers.utils.solidityKeccak256(["string"], ["invalid anchor"])
+            const params2: SafeDepositParams = {
+                requestId: BigNumber.from(2),
+                quantity: BigNumber.from(2),
+                anchor: ethers.utils.solidityKeccak256(["string"], ["invalid anchor"]),
+            }
+            await expect(getSafeDepositTx(
+                estateForger,
+                depositor1,
+                params2, { value: ethers.utils.parseEther('100') }
             )).to.be.revertedWithCustomError(estateForger, "BadAnchor");
+        });
+
+        it('2.2.10.4. deposit tokenization unsuccessfully when paused', async () => {
+            const fixture = await beforeEstateForgerTest({
+                listSampleCurrencies: true,
+                addZoneForExecutive: true,
+                listSampleCustodians: true,
+                addSampleRequests: true,
+                fundERC20ForDepositors: true,
+                addEstateForgerToVault: true,
+                whitelistDepositors: true,
+                whitelistDepositorsForRequests: true,
+                registerBrokers: true,
+            });
+            const { estateForger, depositor1 } = fixture;
+
+            const params1: DepositParams = {
+                requestId: BigNumber.from(0),
+                quantity: BigNumber.from(2),
+            }
+            await expect(getSafeDepositTxByParams(
+                estateForger,
+                depositor1,
+                params1,
+                { value: ethers.utils.parseEther('100') }
+            )).to.be.revertedWithCustomError(estateForger, "InvalidRequestId");
         });
     });
 
@@ -3439,7 +3514,7 @@ describe('2.2. EstateForger', async () => {
         });
     });
 
-    describe('2.2.12. confirm(uint256, address)', async () => {
+    describe('2.2.12. safeConfirm(uint256, address, bytes32)', async () => {
         async function testConfirmTokenization(
             currentRequestId: number,
             fixture: EstateForgerFixture,
@@ -3522,7 +3597,7 @@ describe('2.2. EstateForger', async () => {
 
             await time.setNextBlockTimestamp(timestamp);
 
-            const params = {
+            const requestParams = {
                 requester: custodian.address,
                 estate: {
                     zone: zone,
@@ -3551,7 +3626,7 @@ describe('2.2. EstateForger', async () => {
                 }
             }
 
-            await callTransaction(getRequestTokenizationTx(estateForger, validator, manager, params));
+            await callTransaction(getRequestTokenizationTx(estateForger, validator, manager, requestParams));
 
             timestamp += 10 + 20 * DAY;
             await time.setNextBlockTimestamp(timestamp);
@@ -3624,7 +3699,7 @@ describe('2.2. EstateForger', async () => {
 
             for(let i = 0; i < allCashbackCurrencies.length; ++i) {
                 const currencyAddress = allCashbackCurrencies[i];
-                const currencyContract = currencies.find(c => c.address === currencyAddress);
+                const currencyContract = currencies.find(c => c.address === currencyAddress) || null;
                 initManagerBalances.set(currencyAddress, await getBalance(ethers.provider, manager.address, currencyContract));
                 initVaultBalances.set(currencyAddress, await getBalance(ethers.provider, reserveVault.address, currencyContract));
                 initEstateForgerBalances.set(currencyAddress, await getBalance(ethers.provider, estateForger.address, currencyContract));
@@ -3633,9 +3708,11 @@ describe('2.2. EstateForger', async () => {
             timestamp += 100;
             await time.setNextBlockTimestamp(timestamp);
             
-            const tx = await estateForger.connect(manager).confirm(
-                currentRequestId,
-                { value: confirmValue }
+            const confirmParams: ConfirmParams = {
+                requestId: BigNumber.from(currentRequestId),
+            }
+            const tx = await getSafeConfirmTxByParams(
+                estateForger, manager, confirmParams, { value: confirmValue }
             );
             const receipt = await tx.wait();
             const gasFee = receipt.gasUsed.mul(receipt.effectiveGasPrice);;
@@ -3685,7 +3762,7 @@ describe('2.2. EstateForger', async () => {
 
             for(let i = 0; i < allCashbackCurrencies.length; ++i) {
                 const currencyAddress = allCashbackCurrencies[i];
-                const currencyContract = currencies.find(c => c.address === currencyAddress);
+                const currencyContract = currencies.find(c => c.address === currencyAddress) || null;
 
                 const vaultReceives = expectedVaultReceives.get(currencyAddress) || ethers.BigNumber.from(0);
                 expect(await getBalance(ethers.provider, reserveVault.address, currencyContract)).to.equal(initVaultBalances.get(currencyAddress)!.add(vaultReceives));
@@ -4118,12 +4195,24 @@ describe('2.2. EstateForger', async () => {
                 )    
             }
             
-            await expect(estateForger.connect(user).confirm(
-                1, { value: ethers.utils.parseEther("1000") }
+            const params1: ConfirmParams = {
+                requestId: BigNumber.from(1),
+            }
+            await expect(getSafeConfirmTxByParams(
+                estateForger,
+                user,
+                params1,
+                { value: ethers.utils.parseEther("1000")}
             )).to.be.revertedWithCustomError(estateForger, "Unauthorized");
 
-            await expect(estateForger.connect(moderator).confirm(
-                2, { value: ethers.utils.parseEther("1000") }
+            const params2: ConfirmParams = {
+                requestId: BigNumber.from(2),
+            }
+            await expect(getSafeConfirmTxByParams(
+                estateForger,
+                moderator,
+                params2,
+                { value: ethers.utils.parseEther("1000")}
             )).to.be.revertedWithCustomError(estateForger, "Unauthorized");
         });
 
@@ -4141,12 +4230,24 @@ describe('2.2. EstateForger', async () => {
             });
             const {estateForger, manager} = fixture;
             
-            await expect(estateForger.connect(manager).confirm(
-                0, { value: ethers.utils.parseEther("1000") }
+            const params1: ConfirmParams = {
+                requestId: BigNumber.from(0),
+            }
+            await expect(getSafeConfirmTxByParams(
+                estateForger,
+                manager,
+                params1,
+                { value: ethers.utils.parseEther("1000") }
             )).to.be.revertedWithCustomError(estateForger, "InvalidRequestId");
 
-            await expect(estateForger.connect(manager).confirm(
-                100, { value: ethers.utils.parseEther("1000") }
+            const params2: ConfirmParams = {
+                requestId: BigNumber.from(100),
+            }
+            await expect(getSafeConfirmTxByParams(
+                estateForger,
+                manager,
+                params2,
+                { value: ethers.utils.parseEther("1000") }
             )).to.be.revertedWithCustomError(estateForger, "InvalidRequestId");
         });
 
@@ -4166,11 +4267,24 @@ describe('2.2. EstateForger', async () => {
 
             await callEstateForger_Pause(estateForger, admins, await admin.nonce());
 
-            await expect(estateForger.connect(manager).confirm(
-                1, { value: ethers.utils.parseEther("1000") }
+            const params1: ConfirmParams = {
+                requestId: BigNumber.from(1),
+            }
+            await expect(getSafeConfirmTxByParams(
+                estateForger,
+                manager,
+                params1,
+                { value: ethers.utils.parseEther("1000") }
             )).to.be.revertedWith("Pausable: paused");
-            await expect(estateForger.connect(manager).confirm(
-                2, { value: ethers.utils.parseEther("1000") }
+
+            const params2: ConfirmParams = {
+                requestId: BigNumber.from(2),
+            }
+            await expect(getSafeConfirmTxByParams(
+                estateForger,
+                manager,
+                params2,
+                { value: ethers.utils.parseEther("1000") }
             )).to.be.revertedWith("Pausable: paused");
         });
 
@@ -4198,8 +4312,14 @@ describe('2.2. EstateForger', async () => {
                 await admin.nonce()
             );
 
-            await expect(estateForger.connect(manager).confirm(
-                1, { value: ethers.utils.parseEther("1000") }
+            const params1: ConfirmParams = {
+                requestId: BigNumber.from(1),
+            }
+            await expect(getSafeConfirmTxByParams(
+                estateForger,
+                manager,
+                params1,
+                { value: ethers.utils.parseEther("1000") }
             )).to.be.revertedWithCustomError(estateForger, "Unauthorized");
         });
 
@@ -4215,8 +4335,14 @@ describe('2.2. EstateForger', async () => {
             });
             const {estateForger, manager} = fixture;
 
-            await expect(estateForger.connect(manager).confirm(
-                1, { value: ethers.utils.parseEther("1000") }
+            const params1: ConfirmParams = {
+                requestId: BigNumber.from(1),
+            }
+            await expect(getSafeConfirmTxByParams(
+                estateForger,
+                manager,
+                params1,
+                { value: ethers.utils.parseEther("1000") }
             )).to.be.revertedWithCustomError(estateForger, "InvalidConfirming");
         });
 
@@ -4238,15 +4364,27 @@ describe('2.2. EstateForger', async () => {
             const saleStartsAt1 = (await estateForger.getRequest(1)).agenda.saleStartsAt;
             await time.setNextBlockTimestamp(saleStartsAt1);
 
-            await expect(estateForger.connect(manager).confirm(
-                1, { value: ethers.utils.parseEther("1000") }
+            const params1: ConfirmParams = {
+                requestId: BigNumber.from(1),
+            }
+            await expect(getSafeConfirmTxByParams(
+                estateForger,
+                manager,
+                params1,
+                { value: ethers.utils.parseEther("1000") }
             )).to.be.revertedWithCustomError(estateForger, "AlreadyCancelled");
 
             const saleStartsAt2 = (await estateForger.getRequest(2)).agenda.saleStartsAt;
             await time.setNextBlockTimestamp(saleStartsAt2);
 
-            await expect(estateForger.connect(manager).confirm(
-                2, { value: ethers.utils.parseEther("1000") }
+            const params2: ConfirmParams = {
+                requestId: BigNumber.from(2),
+            }
+            await expect(getSafeConfirmTxByParams(
+                estateForger,
+                manager,
+                params2,
+                { value: ethers.utils.parseEther("1000") }
             )).to.be.revertedWithCustomError(estateForger, "AlreadyCancelled");
         });
 
@@ -4265,12 +4403,24 @@ describe('2.2. EstateForger', async () => {
             });
             const {estateForger, manager} = fixture;
 
-            await expect(estateForger.connect(manager).confirm(
-                1, { value: ethers.utils.parseEther("1000") }
+            const params1: ConfirmParams = {
+                requestId: BigNumber.from(1),
+            }
+            await expect(getSafeConfirmTxByParams(
+                estateForger,
+                manager,
+                params1,
+                { value: ethers.utils.parseEther("1000") }
             )).to.be.revertedWithCustomError(estateForger, "AlreadyConfirmed");
 
-            await expect(estateForger.connect(manager).confirm(
-                2, { value: ethers.utils.parseEther("1000") }
+            const params2: ConfirmParams = {
+                requestId: BigNumber.from(2),
+            }
+            await expect(getSafeConfirmTxByParams(
+                estateForger,
+                manager,
+                params2,
+                { value: ethers.utils.parseEther("1000") }
             )).to.be.revertedWithCustomError(estateForger, "AlreadyConfirmed");
         });
 
@@ -4294,9 +4444,15 @@ describe('2.2. EstateForger', async () => {
             const publicSaleEndsAt = request.agenda.publicSaleEndsAt;
             await time.setNextBlockTimestamp(publicSaleEndsAt + confirmationTimeLimit - 1);
 
-            await callTransaction(estateForger.connect(manager).confirm(
-                1, { value: ethers.utils.parseEther("1000") }
-            ));
+            const params1: ConfirmParams = {
+                requestId: BigNumber.from(1),
+            }
+            await callTransaction(getSafeConfirmTxByParams(
+                estateForger,
+                manager,
+                params1,
+                { value: ethers.utils.parseEther("1000")})
+            );
 
             expect((await estateForger.getRequest(1)).agenda.publicSaleEndsAt).to.equal(publicSaleEndsAt);
         });
@@ -4321,8 +4477,14 @@ describe('2.2. EstateForger', async () => {
             const publicSaleEndsAt = request.agenda.publicSaleEndsAt;
             await time.setNextBlockTimestamp(publicSaleEndsAt + confirmationTimeLimit);
 
-            await expect(estateForger.connect(manager).confirm(
-                1, { value: ethers.utils.parseEther("1000") }
+            const params1: ConfirmParams = {
+                requestId: BigNumber.from(1),
+            }
+            await expect(getSafeConfirmTxByParams(
+                estateForger,
+                manager,
+                params1,
+                { value: ethers.utils.parseEther("1000") }
             )).to.be.revertedWithCustomError(estateForger, "Timeout");
         });
 
@@ -4347,8 +4509,14 @@ describe('2.2. EstateForger', async () => {
             await time.setNextBlockTimestamp(privateSaleEndsAt2);
             await callTransaction(estateForger.connect(depositor1).deposit(2, 199));
 
-            await expect(estateForger.connect(manager).confirm(
-                1, { value: ethers.utils.parseEther("1000") }
+            const params1: ConfirmParams = {
+                requestId: BigNumber.from(1),
+            }
+            await expect(getSafeConfirmTxByParams(
+                estateForger,
+                manager,
+                params1,
+                { value: ethers.utils.parseEther("1000") }
             )).to.be.revertedWithCustomError(estateForger, "NotEnoughSoldQuantity");
         });
 
@@ -4366,8 +4534,13 @@ describe('2.2. EstateForger', async () => {
             });
             const {estateForger, manager} = fixture;
 
-            await expect(estateForger.connect(manager).confirm(
-                2
+            const params2: ConfirmParams = {
+                requestId: BigNumber.from(2),
+            }
+            await expect(getSafeConfirmTxByParams(
+                estateForger,
+                manager,
+                params2
             )).to.be.revertedWithCustomError(estateForger, "InsufficientValue");            
         });
 
@@ -4384,8 +4557,14 @@ describe('2.2. EstateForger', async () => {
             });
             const {estateForger, manager} = fixture;
 
-            await expect(estateForger.connect(manager).confirm(
-                1, { value: ethers.utils.parseEther("1000") }
+            const params1: ConfirmParams = {
+                requestId: BigNumber.from(1),
+            }
+            await expect(getSafeConfirmTxByParams(
+                estateForger,
+                manager,
+                params1,
+                { value: ethers.utils.parseEther("1000") }
             )).to.be.revertedWith("ERC20: insufficient allowance");  
         });
 
@@ -4455,8 +4634,14 @@ describe('2.2. EstateForger', async () => {
 
             await callTransaction(estateForger.connect(depositor1).deposit(requestId, 10, { value: ethers.utils.parseEther("100") }));
 
-            await expect(estateForger.connect(manager).confirm(
-                requestId, { value: ethers.utils.parseEther("1000") }
+            const params1: ConfirmParams = {
+                requestId: BigNumber.from(requestId),
+            }
+            await expect(getSafeConfirmTxByParams(
+                estateForger,
+                manager,
+                params1,
+                { value: ethers.utils.parseEther("1000") }
             )).to.be.revertedWithCustomError(estateForger, "FailedTransfer");
         });
 
@@ -4478,8 +4663,14 @@ describe('2.2. EstateForger', async () => {
 
             await callTransaction(estateForger.setFeeReceiver(failReceiver.address));
 
-            await expect(estateForger.connect(manager).confirm(
-                1, { value: ethers.utils.parseEther("1000") }
+            const params1: ConfirmParams = {
+                requestId: BigNumber.from(1),
+            }
+            await expect(getSafeConfirmTxByParams(
+                estateForger,
+                manager,
+                params1,
+                { value: ethers.utils.parseEther("1000") }
             )).to.be.revertedWithCustomError(estateForger, "FailedTransfer");
         });
 
@@ -4500,8 +4691,14 @@ describe('2.2. EstateForger', async () => {
 
             await callTransaction(failReceiver.activate(true));
 
-            await expect(estateForger.connect(manager).confirm(
-                1, { value: ethers.utils.parseEther("1000") }
+            const params1: ConfirmParams = {
+                requestId: BigNumber.from(1),
+            }
+            await expect(getSafeConfirmTxByParams(
+                estateForger,
+                manager,
+                params1,
+                { value: ethers.utils.parseEther("1000") }
             )).to.be.revertedWithCustomError(estateForger, "FailedTransfer");
         });
 
@@ -4524,8 +4721,14 @@ describe('2.2. EstateForger', async () => {
                 estateForger,
                 reentrancy,
                 async () => {
-                    await expect(estateForger.connect(manager).confirm(
-                        1, { value: ethers.utils.parseEther("1000") }
+                    const params1: ConfirmParams = {
+                        requestId: BigNumber.from(1),
+                    }
+                    await expect(getSafeConfirmTxByParams(
+                        estateForger,
+                        manager,
+                        params1,
+                        { value: ethers.utils.parseEther("1000") }
                     )).to.be.revertedWithCustomError(estateForger, "FailedTransfer");
                 }
             );

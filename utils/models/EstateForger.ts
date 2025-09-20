@@ -74,7 +74,7 @@ export interface RequestTokenizationParams {
     agenda: RequestAgendaInput;
 }
 
-export interface UpdateRequestURIParams {
+export interface UpdateRequestEstateURIParams {
     requestId: BigNumber;
     uri: string;
 }
@@ -82,4 +82,24 @@ export interface UpdateRequestURIParams {
 export interface UpdateRequestAgendaParams {
     requestId: BigNumber;
     agenda: RequestAgendaInput;
+}
+
+export interface DepositParams {
+    requestId: BigNumber;
+    quantity: BigNumber;
+}
+
+export interface SafeDepositParams {
+    requestId: BigNumber;
+    quantity: BigNumber;
+    anchor: string;
+}
+
+export interface ConfirmParams {
+    requestId: BigNumber;
+}
+
+export interface SafeConfirmParams {
+    requestId: BigNumber;
+    anchor: string;
 }

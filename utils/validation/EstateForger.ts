@@ -1,6 +1,6 @@
 import { time } from "@nomicfoundation/hardhat-network-helpers";
 import { MockValidator } from "@utils/mockValidator";
-import { RegisterSellerInParams, RequestTokenizationParams, UpdateRequestURIParams } from '@utils/models/EstateForger';
+import { RegisterSellerInParams, RequestTokenizationParams, UpdateRequestEstateURIParams } from '@utils/models/EstateForger';
 import { Contract } from "ethers";
 import { ethers } from 'hardhat';
 
@@ -40,8 +40,8 @@ export async function getRequestTokenizationValidation(
     params: RequestTokenizationParams
 ) {
     const content = ethers.utils.defaultAbiCoder.encode(
-        ["string"],
-        [params.estate.uri]
+        ["address", "string"],
+        [params.requester, params.estate.uri]
     );
     const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
 
@@ -55,8 +55,8 @@ export async function getRequestTokenizationInvalidValidation(
     params: RequestTokenizationParams
 ) {
     const content = ethers.utils.defaultAbiCoder.encode(
-        ["string"],
-        [params.estate.uri]
+        ["address", "string"],
+        [params.requester, params.estate.uri]
     );
     const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
 
@@ -64,10 +64,10 @@ export async function getRequestTokenizationInvalidValidation(
     return validation;
 }
 
-export async function getUpdateRequestURIValidation(
+export async function getUpdateRequestEstateURIValidation(
     estateForger: Contract,
     validator: MockValidator,
-    params: UpdateRequestURIParams
+    params: UpdateRequestEstateURIParams
 ) {
     const content = ethers.utils.defaultAbiCoder.encode(
         ["string"],
@@ -78,10 +78,10 @@ export async function getUpdateRequestURIValidation(
     return validation;
 }
 
-export async function getUpdateRequestURIInvalidValidation(
+export async function getUpdateRequestEstateURIInvalidValidation(
     estateForger: Contract,
     validator: MockValidator,
-    params: UpdateRequestURIParams
+    params: UpdateRequestEstateURIParams
 ) {
     const content = ethers.utils.defaultAbiCoder.encode(
         ["string"],

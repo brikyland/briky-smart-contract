@@ -56,8 +56,8 @@ export async function getRegisterCustodianInvalidValidation(
     params: RegisterCustodianParams
 ) {
     const content = ethers.utils.defaultAbiCoder.encode(
-        ["string"],
-        [params.uri]
+        ["bytes32", "address", "string"],
+        [params.zone, params.custodian, params.uri]
     );
     const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
 

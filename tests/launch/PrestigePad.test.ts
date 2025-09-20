@@ -70,8 +70,8 @@ import { RequestQuote, RequestAgenda, RequestEstate, RequestQuota } from '@utils
 import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
 import { Rate } from '@utils/models/Common';
 import { MockValidator } from '@utils/mockValidator';
-import { RegisterSellerInParams, RequestTokenizationParams, UpdateRequestURIParams, UpdateRequestAgendaParams } from '@utils/models/EstateForger';
-import { getRegisterSellerInValidation, getRequestTokenizationValidation, getRegisterSellerInInvalidValidation, getRequestTokenizationInvalidValidation, getUpdateRequestURIValidation, getUpdateRequestURIInvalidValidation } from '@utils/validation/EstateForger';
+import { RegisterSellerInParams, RequestTokenizationParams, UpdateRequestEstateURIParams, UpdateRequestAgendaParams } from '@utils/models/EstateForger';
+import { getRegisterSellerInValidation, getRequestTokenizationValidation, getRegisterSellerInInvalidValidation, getRequestTokenizationInvalidValidation, getUpdateRequestEstateURIValidation, getUpdateRequestEstateURIInvalidValidation } from '@utils/validation/EstateForger';
 import { deployMockPrestigePad } from '@utils/deployments/mock/mockPrestigePad';
 import { callPrestigePad_Pause } from '@utils/callWithSignatures/prestigePad';
 import { InitiateLaunchParams, RaiseNextRoundParams, UpdateLaunchURIParams, UpdateRoundParams, UpdateRoundsParams } from '@utils/models/PrestigePad';

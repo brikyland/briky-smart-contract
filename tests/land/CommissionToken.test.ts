@@ -608,6 +608,19 @@ describe('2.1. CommissionToken', async () => {
             expect(structToObject(brokerCommissionRate3)).to.deep.equal(expectedRate3);
         });
 
+        it('2.1.7.2. register broker unsuccessfully when paused', async () => {
+            const fixture = await beforeCommissionTokenTest({
+                pause: true,
+            });
+
+            const { commissionToken, manager } = fixture;
+
+            const { defaultParams: params } = await beforeRegisterBrokerTest(fixture);
+
+            await expect(getRegisterBrokerTx(commissionToken, manager, params))
+                .to.be.revertedWith('Pausable: paused');
+        });
+
         it('2.1.7.2. register broker unsuccessfully by non-manager', async () => {
             const fixture = await beforeCommissionTokenTest();
 
@@ -745,6 +758,19 @@ describe('2.1. CommissionToken', async () => {
             expect(await commissionToken.isActiveIn(zone2, broker2.address)).to.equal(true);
         });
 
+        it('2.1.8.2. activate broker unsuccessfully when paused', async () => {
+            const fixture = await beforeCommissionTokenTest({
+                pause: true,
+            });
+
+            const { commissionToken, manager } = fixture;
+
+            const { defaultParams: params } = await beforeActivateBrokerTest(fixture);
+
+            await expect(getActivateBrokerTx(commissionToken, manager, params))
+                .to.be.revertedWith('Pausable: paused');
+        });
+
         it('2.1.8.2. activate broker unsuccessfully by non-manager', async () => {
             const fixture = await beforeCommissionTokenTest();
 
@@ -814,21 +840,29 @@ describe('2.1. CommissionToken', async () => {
             const { estateToken, commissionToken, zone1, zone2, broker1, broker2 } = await beforeCommissionTokenTest({
                 registerSampleBrokers: true,
             });
-
+            
             // Mint for broker 1 in zone 1
+            const commissionRate1 = await commissionToken.getBrokerCommissionRate(zone1, broker1.address);
+            
             const tx1 = await getMintTx(commissionToken, estateToken, {
                 zone: zone1,
                 broker: broker1.address,
                 tokenId: BigNumber.from(1),
             });
             await tx1.wait();
+
             await expect(tx1).to.emit(commissionToken, 'NewToken').withArgs(
                 BigNumber.from(1),
                 zone1,
-                broker1.address
+                broker1.address,
+                (rate: any) => {
+                    expect(structToObject(rate)).to.deep.equal({
+                        value: commissionRate1.value,
+                        decimals: Constant.COMMON_RATE_DECIMALS,
+                    });
+                    return true;
+                }
             );
-
-            const commissionRate1 = await commissionToken.getBrokerCommissionRate(zone1, broker1.address);
 
             expect(await commissionToken.totalSupply()).to.equal(1);
 
@@ -851,7 +885,14 @@ describe('2.1. CommissionToken', async () => {
             await expect(tx2).to.emit(commissionToken, 'NewToken').withArgs(
                 BigNumber.from(2),
                 zone2,
-                broker2.address
+                broker2.address,
+                (rate: any) => {
+                    expect(structToObject(rate)).to.deep.equal({
+                        value: commissionRate2.value,
+                        decimals: Constant.COMMON_RATE_DECIMALS,
+                    });
+                    return true;
+                }
             );
 
             expect(await commissionToken.totalSupply()).to.equal(2);
@@ -862,6 +903,19 @@ describe('2.1. CommissionToken', async () => {
             expect(structToObject(await commissionToken.getCommissionRate(2))).to.deep.equal(
                 structToObject(commissionRate2)
             );
+        });
+
+        it('2.1.9.2. mint unsuccessfully when paused', async () => {
+            const fixture = await beforeCommissionTokenTest({
+                pause: true,
+            });
+
+            const { commissionToken, manager, estateToken } = fixture;
+
+            const { defaultParams: params } = await beforeMintTest(fixture);
+
+            await expect(getMintTx(commissionToken, estateToken, params))
+                .to.be.revertedWith('Pausable: paused');
         });
 
         it('2.1.9.2. mint unsuccessfully when sender is not estateToken contract', async () => {
