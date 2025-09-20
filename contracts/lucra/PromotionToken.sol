@@ -77,7 +77,7 @@ ReentrancyGuardUpgradeable {
         uint256 _royaltyRate
     ) external
     initializer {
-        require(_royaltyRate <= CommonConstant.RATE_MAX_FRACTION);
+        require(_royaltyRate <= CommonConstant.RATE_MAX_SUBUNIT);
 
         /// Initializer.
         __ERC721_init(_name, _symbol);
@@ -144,7 +144,7 @@ ReentrancyGuardUpgradeable {
             ),
             _signatures
         );
-        if (_royaltyRate > CommonConstant.RATE_MAX_FRACTION) {
+        if (_royaltyRate > CommonConstant.RATE_MAX_SUBUNIT) {
             revert InvalidRate();
         }
         royaltyRate = _royaltyRate;

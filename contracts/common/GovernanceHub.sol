@@ -286,7 +286,7 @@ ReentrancyGuardUpgradeable {
             revert UnavailableToken();
         }
 
-        if (_quorumRate > CommonConstant.RATE_MAX_FRACTION) {
+        if (_quorumRate > CommonConstant.RATE_MAX_SUBUNIT) {
             revert InvalidInput();
         }
 
@@ -390,7 +390,7 @@ ReentrancyGuardUpgradeable {
 
         uint256 quorumWeight = totalWeight.scale(
             proposal.quorum,
-            CommonConstant.RATE_MAX_FRACTION
+            CommonConstant.RATE_MAX_SUBUNIT
         );
 
         proposal.contextURI = _contextURI;

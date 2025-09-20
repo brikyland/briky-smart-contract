@@ -19,5 +19,5 @@ library CommonConstant {
     uint8 internal constant RATE_DECIMALS = 18;
 
     /// @notice A rate representing a fraction of an arbitrary value cannot exceed 1.0.
-    uint256 internal constant RATE_MAX_FRACTION = 10 ** RATE_DECIMALS;
+    uint256 internal constant RATE_MAX_SUBUNIT = 10 ** RATE_DECIMALS;
 }

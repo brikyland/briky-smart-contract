@@ -96,7 +96,7 @@ ReentrancyGuardUpgradeable {
         uint256 _feeRate
     ) internal
     onlyInitializing {
-        require(_feeRate <= CommonConstant.RATE_MAX_FRACTION);
+        require(_feeRate <= CommonConstant.RATE_MAX_SUBUNIT);
 
         /// Initializer.
         __ERC721_init(_name, _symbol);
@@ -165,7 +165,7 @@ ReentrancyGuardUpgradeable {
             ),
             _signatures
         );
-        if (_feeRate > CommonConstant.RATE_MAX_FRACTION) {
+        if (_feeRate > CommonConstant.RATE_MAX_SUBUNIT) {
             revert InvalidRate();
         }
         feeRate = _feeRate;
@@ -444,7 +444,7 @@ ReentrancyGuardUpgradeable {
         }
 
         uint256 fee = _applyDiscount(
-            _principal.scale(feeRate, CommonConstant.RATE_MAX_FRACTION),
+            _principal.scale(feeRate, CommonConstant.RATE_MAX_SUBUNIT),
             _currency
         );
         uint256 mortgageId = ++mortgageNumber;

@@ -616,7 +616,7 @@ ReentrancyGuardUpgradeable {
             revert InvalidZone();
         }
 
-        if (_royaltyRate > CommonConstant.RATE_MAX_FRACTION) {
+        if (_royaltyRate > CommonConstant.RATE_MAX_SUBUNIT) {
             revert InvalidRate();
         }
         zoneRoyaltyRates[_zone] = _royaltyRate;

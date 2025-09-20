@@ -175,7 +175,7 @@ ReentrancyGuardUpgradeable {
     nonReentrant {
         CurrencyHandler.receiveERC20(currency, _value);
 
-        uint256 fee = _value.scale(TreasuryConstant.OPERATION_FUND_RATE, CommonConstant.RATE_MAX_FRACTION);
+        uint256 fee = _value.scale(TreasuryConstant.OPERATION_FUND_RATE, CommonConstant.RATE_MAX_SUBUNIT);
 
         operationFund += fee;
         liquidity += _value - fee;

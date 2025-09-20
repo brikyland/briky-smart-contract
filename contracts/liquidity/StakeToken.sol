@@ -172,7 +172,7 @@ ReentrancyGuardUpgradeable {
             ),
             _signatures
         );
-        if (_feeRate > CommonConstant.RATE_MAX_FRACTION) {
+        if (_feeRate > CommonConstant.RATE_MAX_SUBUNIT) {
             revert InvalidRate();
         }
         feeRate = _feeRate;
@@ -208,7 +208,7 @@ ReentrancyGuardUpgradeable {
                 revert OnCoolDown();
             }
             if (totalStake == 0) {
-                revert NoStakeholder();
+                revert NoStake();
             }
 
             uint256 reward = IPrimaryToken(primaryToken).mintForStake();
@@ -285,7 +285,7 @@ ReentrancyGuardUpgradeable {
     nonReentrant {
         address primaryTokenAddress = primaryToken;
         if (!IPrimaryToken(primaryTokenAddress).isStakeRewardingCulminated()) {
-            revert NotCompletedRewarding();
+            revert NotCulminated();
         }
 
         if (_value > balanceOf(msg.sender)) {
@@ -452,7 +452,7 @@ ReentrancyGuardUpgradeable {
     ) internal pure returns (uint256) {
         return _liquidity
             .scale(_value, _totalSupply)
-            .scale(_feeRate, CommonConstant.RATE_MAX_FRACTION);
+            .scale(_feeRate, CommonConstant.RATE_MAX_SUBUNIT);
     }
 
     /**

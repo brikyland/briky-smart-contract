@@ -9,17 +9,30 @@ import {IExclusiveToken} from "../../common/interfaces/IExclusiveToken.sol";
  *  @author Briky Team
  *
  *  @notice Interface for contract `StakeToken`.
- *  @notice The `StakeToken` contract is an exclusive ERC-20 token that allows holders to stake primary tokens
- *          to earn rewards and participate in the ecosystem with enhanced benefits and discounts.
+ *  @notice A `StakeToken` contract is an ERC-20 token representing a staking pool of `PrimaryToken` that accrues periodic
+ *          rewards. For each staked primary token, an equivalent amount of derived stake token is minted as a placeholder
+ *          balance, which increases as rewards are earned. Transferring stake tokens also transfers the underlying staked
+ *          value of primary token. After culmination of the pool, unstaking allows stakers to redeem the exact amount of
+ *          primary tokens.
+ *  @notice There are 3 staking pools with different configurations:
+ *          -   Staking pool #1: Culminates in wave  750, 2,000,000 tokens each wave.
+ *          -   Staking pool #2: Culminates in wave 1500, 3,000,000 tokens each wave.
+ *          -   Staking pool #3: Culminates in wave 2250, 4,000,000 tokens each wave.
+ *  @notice Each rewarding wave has 1-day cooldown and the reward is distributed among stakers in proportion to their balances.
+ *  @notice After all three staking pool have culminated, the staking pool #3 may still fetch new wave with the reward capped
+ *          at the lesser between its standard wave reward and the remaining mintable tokens to reach the maximum supply cap.
+ *  @notice Before a staking pool culminates, unstaking is prohibited, but stakers may promote their position into
+ *          higher-number staking pool. After culmination, unstaking is permitted while new staking incurs a fee that is
+ *          contributed to the treasury liquidity.
+ *  @notice Exclusive Discount: `15% + primaryDiscount * (globalStake - totalSupply) / (2 * globalStake)`.
+ *          Note:   `primaryDiscount` is the exclusive discount of the primary token.
+ *                  `globalStake` is the total tokens staked in 3 pools.
  *
- *  @dev    The contract manages staking of primary tokens with interest accumulation and reward distribution.
- *          Staked tokens earn rewards through periodic reward fetching from the primary token contract based
- *          on wave progression. Each stake token has different reward rates and culminating conditions.
- *  @dev    The token supports promotion functionality allowing holders to migrate their stake to successor
- *          stake token contracts for enhanced benefits. Unstaking is only available after reward distribution
- *          has been completed for the specific stake token.
- *  @dev    Staking fees may apply after reward distribution culmination to contribute liquidity to the treasury.
- *          The exclusive discount rate is calculated based on the stake proportion relative to global stakes.
+ *  @dev    Staking fee after culmination: `value / totalSupply * treasuryLiquidity * feeRate`.
+ *          Note:   `value` is the staking value that derives fee.
+ *                  `treasuryLiquidity` is the liquidity reserved in the treasury.
+ *                  `feeRate` is an admin-adjustable subunitary value.
+ *
  *  @dev    ERC-20 tokens are identified by their contract addresses.
  *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
  */
@@ -29,7 +42,7 @@ IExclusiveToken {
     /** ===== EVENT ===== **/
     /* --- Configuration --- */
     /**
-     *  @notice Emitted when staking fee rate is updated.
+     *  @notice Emitted when the staking fee rate is updated.
      *
      *          Name        Description
      *  @param  newRate     New fee rate.
@@ -89,10 +102,10 @@ IExclusiveToken {
     /** ===== ERROR ===== **/
     error AlreadyStartedRewarding();
     error InvalidPromoting();
-    error NoStakeholder();
+    error NoStake();
     error NoSuccessor();
     error NotStartedRewarding();
-    error NotCompletedRewarding();
+    error NotCulminated();
     error OnCoolDown();
 
 
@@ -122,7 +135,7 @@ IExclusiveToken {
     /**
      *  @notice Fetch reward tokens from the primary token contract based on wave progression.
      *
-     *  @dev    Rewards are distributed to stakeholders based on their proportional stake weight.
+     *  @dev    Rewards are distributed to stakers based on their proportional stake weight.
      *  @dev    Reward fetching may be subject to cooldown periods and wave limitations.
      */
     function fetchReward() external;

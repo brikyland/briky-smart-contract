@@ -598,7 +598,7 @@ ReentrancyGuardUpgradeable {
     validLaunch(_launchId)
     onlyInitiator(_launchId)
     returns (uint256) {
-        if (_cashbackBaseRate > CommonConstant.RATE_MAX_FRACTION
+        if (_cashbackBaseRate > CommonConstant.RATE_MAX_SUBUNIT
             || _cashbackCurrencies.length != _cashbackDenominations.length
             || _raiseStartsAt < block.timestamp
             || _raiseDuration < PrestigePadConstant.RAISE_MINIMUM_DURATION) {
@@ -646,7 +646,7 @@ ReentrancyGuardUpgradeable {
             /// @dev    Open a cashback fund.
             cashbackFundId = IReserveVault(reserveVault).openFund(
                 currency,
-                feeDenomination.scale(_cashbackBaseRate, CommonConstant.RATE_MAX_FRACTION),
+                feeDenomination.scale(_cashbackBaseRate, CommonConstant.RATE_MAX_SUBUNIT),
                 _cashbackCurrencies,
                 _cashbackDenominations
             );

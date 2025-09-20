@@ -140,7 +140,6 @@ ReentrancyGuardUpgradeable {
             revert InvalidUpdating();
         }
         treasury = _treasury;
-        emit TreasuryUpdate(_treasury);
     }
 
     /**
@@ -179,12 +178,6 @@ ReentrancyGuardUpgradeable {
         stakeToken1 = _stakeToken1;
         stakeToken2 = _stakeToken2;
         stakeToken3 = _stakeToken3;
-
-        emit StakeTokensUpdate(
-            _stakeToken1,
-            _stakeToken2,
-            _stakeToken3
-        );
     }
 
 
@@ -203,11 +196,11 @@ ReentrancyGuardUpgradeable {
      *
      *  @dev    Permission: Stake token contracts only.
      */
-    function isStakeRewardingCulminated() external view returns (bool) {
-        if (msg.sender == stakeToken1) return stakeToken1Waves >= PrimaryTokenConstant.STAKE_1_CULMINATING_WAVE;
-        if (msg.sender == stakeToken2) return stakeToken2Waves >= PrimaryTokenConstant.STAKE_2_CULMINATING_WAVE;
-        if (msg.sender == stakeToken3) return stakeToken3Waves >= PrimaryTokenConstant.STAKE_3_CULMINATING_WAVE;
-        revert Unauthorized();
+    function isStakeRewardingCulminated(address _stakeToken) external view returns (bool) {
+        if (_stakeToken == stakeToken1) return stakeToken1Waves >= PrimaryTokenConstant.STAKE_1_CULMINATING_WAVE;
+        if (_stakeToken == stakeToken2) return stakeToken2Waves >= PrimaryTokenConstant.STAKE_2_CULMINATING_WAVE;
+        if (_stakeToken == stakeToken3) return stakeToken3Waves >= PrimaryTokenConstant.STAKE_3_CULMINATING_WAVE;
+        revert InvalidStakeToken();
     }
 
 
@@ -650,22 +643,23 @@ ReentrancyGuardUpgradeable {
      *  @param  _stakeToken   Stake token address.
      */
     function contributeLiquidityFromStakeToken(
-        uint256 _liquidity,
-        address _stakeToken
+        uint256 _liquidity
     ) external
     nonReentrant {
         _contributeLiquidity(_liquidity);
 
         unchecked {
-            if (_stakeToken == stakeToken1) {
+            if (msg.sender == stakeToken1) {
                 stakeToken1Contribution += _liquidity;
                 emit LiquidityContributionFromStakeToken1(_liquidity);
-            } else if (_stakeToken == stakeToken2) {
+            } else if (msg.sender == stakeToken2) {
                 stakeToken2Contribution += _liquidity;
                 emit LiquidityContributionFromStakeToken2(_liquidity);
-            } else if (_stakeToken == stakeToken3) {
+            } else if (msg.sender == stakeToken3) {
                 stakeToken3Contribution += _liquidity;
                 emit LiquidityContributionFromStakeToken3(_liquidity);
+            } else {
+                revert Unauthorized();
             }
         }
     }
@@ -690,7 +684,7 @@ ReentrancyGuardUpgradeable {
 
             _mint(msg.sender, PrimaryTokenConstant.STAKE_1_WAVE_REWARD);
 
-            emit DailyStake1Mint(stakeToken1Waves, PrimaryTokenConstant.STAKE_1_WAVE_REWARD);
+            emit Stake1WaveReward(stakeToken1Waves, PrimaryTokenConstant.STAKE_1_WAVE_REWARD);
 
             return PrimaryTokenConstant.STAKE_1_WAVE_REWARD;
         } else if (msg.sender == stakeToken2) {
@@ -703,7 +697,7 @@ ReentrancyGuardUpgradeable {
 
             _mint(msg.sender, PrimaryTokenConstant.STAKE_2_WAVE_REWARD);
 
-            emit DailyStake2Mint(stakeToken2Waves, PrimaryTokenConstant.STAKE_2_WAVE_REWARD);
+            emit Stake2WaveReward(stakeToken2Waves, PrimaryTokenConstant.STAKE_2_WAVE_REWARD);
 
             return PrimaryTokenConstant.STAKE_2_WAVE_REWARD;
         } else if (msg.sender == stakeToken3) {

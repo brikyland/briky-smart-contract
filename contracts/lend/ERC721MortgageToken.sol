@@ -89,6 +89,7 @@ MortgageToken {
      *  @param  _signatures      Array of admin signatures.
      * 
      *  @dev    Administrative operator.
+     *  @dev    Collections must support interface `IERC721Upgradeable`.
      */
     function registerCollaterals(
         address[] calldata _tokens,

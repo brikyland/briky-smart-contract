@@ -341,7 +341,7 @@ ReentrancyGuardUpgradeable {
         if (_quota.minSellingQuantity > _quota.maxSellingQuantity
             || _quota.maxSellingQuantity > _quota.totalQuantity
             || _quote.cashbackThreshold > _quota.totalQuantity
-            || _quote.cashbackBaseRate > CommonConstant.RATE_MAX_FRACTION
+            || _quote.cashbackBaseRate > CommonConstant.RATE_MAX_SUBUNIT
             || _quote.cashbackCurrencies.length != _quote.cashbackDenominations.length
             || _agenda.saleStartsAt <= block.timestamp
             || _agenda.privateSaleDuration + _agenda.publicSaleDuration < EstateForgerConstant.SALE_MINIMUM_DURATION) {
@@ -368,7 +368,7 @@ ReentrancyGuardUpgradeable {
             cashbackFundId = IReserveVault(reserveVault).openFund(
                 _quote.currency,
                 (_quote.feeDenomination - commissionDenomination)
-                    .scale(_quote.cashbackBaseRate, CommonConstant.RATE_MAX_FRACTION),
+                    .scale(_quote.cashbackBaseRate, CommonConstant.RATE_MAX_SUBUNIT),
                 _quote.cashbackCurrencies,
                 _quote.cashbackDenominations
             );
