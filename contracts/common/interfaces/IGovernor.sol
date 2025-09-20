@@ -55,7 +55,6 @@ IERC1155Upgradeable {
         uint256 at
     ) external view returns (uint256 totalEquity);
 
-
     /**
      *          Name            Description
      *  @param  account         EVM address.

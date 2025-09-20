@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 /**
  *  @author Briky Team
  *
- *  @notice Interface for snapshot structs.
+ *  @notice Interface for struct `Snapshot`.
  */
 interface ISnapshot {
     /** ===== STRUCT ===== **/

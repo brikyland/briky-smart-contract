@@ -61,7 +61,7 @@ interface IProposal {
         /// @notice Operator executed the proposal unsuccessfully.
         UnsuccessfulExecuted,
 
-        /// @notice Disqualified due to the proposal is inexecutable.
+        /// @notice Disqualified as the proposal is inexecutable.
         Disqualified,
 
         /// @notice Operator rejected executing the proposal.

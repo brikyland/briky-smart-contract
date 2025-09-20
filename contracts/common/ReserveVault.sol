@@ -105,7 +105,7 @@ ReentrancyGuardUpgradeable {
      *
      *          Name           Description
      *  @param  _accounts      Array of EVM addresses.
-     *  @param  _isProvider    This whether the operation is authorizing or deauthorizing.
+     *  @param  _isProvider    Whether the operation is authorizing or deauthorizing.
      *  @param  _signatures    Array of admin signatures.
      * 
      *  @dev    Administrative operator.
@@ -177,11 +177,11 @@ ReentrancyGuardUpgradeable {
     /**
      *  @notice Open a new fund.
      *
-     *          Name                   Description
-     *  @param  _mainCurrency          Main currency address.
-     *  @param  _mainDenomination      Main currency denomination.
-     *  @param  _extraCurrencies       Extra currency addresses.
-     *  @param  _extraDenominations    Extra currency denominations.
+     *          Name                    Description
+     *  @param  _mainCurrency           Main currency address.
+     *  @param  _mainDenomination       Main currency denomination.
+     *  @param  _extraCurrencies        Array of extra currency addresses.
+     *  @param  _extraDenominations     Array of extra currency denominations, respective to each extra currency.
      *
      *  @return New fund identifier.
      * 
@@ -316,7 +316,7 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Withdraw from a fund.
+     *  @notice Withdraw value from a fund to an account.
      *
      *          Name                    Description
      *  @param  _fundId                 Fund identifier.

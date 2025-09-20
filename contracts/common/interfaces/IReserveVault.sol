@@ -22,6 +22,7 @@ interface IReserveVault is
 IFund,
 ICommon {
     /** ===== EVENT ===== **/
+    /* --- Provider --- */
     /**
      *  @notice Emitted when an account is authorized as a provider.
      *
@@ -36,15 +37,16 @@ ICommon {
      *  @notice Emitted when a provider is deauthorized.
      *
      *          Name        Description
-     *  @param  account     Authorized address.
+     *  @param  account     Deauthorized address.
      */
     event ProviderDeauthorization(
         address indexed account
     );
 
 
+    /* --- Fund --- */
     /**
-     *  @notice Emitted when a fund is opened.
+     *  @notice Emitted when a new fund is opened.
      *
      *          Name                Description
      *  @param  fundId              Fund identifier.
@@ -146,7 +148,7 @@ ICommon {
         uint256 fundId
     ) external view returns (bool isSufficient);
 
-    /** ===== COMMAND ===== **/
+
     /* --- Command --- */
     /**
      *  @notice Open a new fund.

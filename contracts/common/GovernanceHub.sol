@@ -237,7 +237,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _rule               Rule to determine verdict.
      *  @param  _quorumRate         Fraction of total weight for quorum.
      *  @param  _duration           Voting duration.
-     *  @param  _admissionExpiry    Expiration for moderators to admit the proposal.
+     *  @param  _admissionExpiry    Expiration for proposal adminssion.
      *  @param  _validation         Validation package from the validator.
      *
      *  @return New proposal identifier.
@@ -353,7 +353,6 @@ ReentrancyGuardUpgradeable {
         Validation calldata _validation
     ) external
     whenNotPaused
-    nonReentrant
     validProposal(_proposalId)
     validGovernor(proposals[_proposalId].governor)
     onlyRepresentative(_proposalId) {
@@ -383,7 +382,7 @@ ReentrancyGuardUpgradeable {
         }
 
         /// @dev    The voting power corresponds to equity at admission timestamp.
-        uint256 totalWeight = IGovernor(proposal.governor).totalEquityAt(tokenId, block.timestamp);
+        uint256 totalWeight = governorContract.totalEquityAt(tokenId, block.timestamp);
         if (totalWeight == 0) {
             revert NoVotingPower();
         }
@@ -399,10 +398,10 @@ ReentrancyGuardUpgradeable {
         proposal.totalWeight = totalWeight;
         /// @dev    `quorum` is converted to weight.
         proposal.quorum = quorumWeight;
-        /// @dev    `timePivot` is altered by the admission timestamp.
+        /// @dev    `timePivot` is set to the admission timestamp.
         proposal.timePivot = uint40(block.timestamp);
         proposal.currency = _currency;
-        /// @dev    `due` is altered by the vote closure timestamp.
+        /// @dev    `due` is set to the vote closure timestamp.
         proposal.due += uint40(block.timestamp);
 
         proposal.state = ProposalState.Voting;
@@ -419,13 +418,7 @@ ReentrancyGuardUpgradeable {
 
     /**
      *  @notice Disqualify an inexecutable proposal after review practicability.
-     *  @notice Disqualify only if the proposal is in `Pending` or `Voting` state and befo
-     *  @dev    Any current holder of the asset, with client-side support, can propose by submitting a full proper context to the
-     *          server-side and forwarding only its checksum to the contract as the UUID of the new proposal. Authorized executives
-     *          will later verify the feasibility of the proposal within a given expiration to either admit or disqualify it
-     *          accordingly. During this process, the full context is uploaded to a public database (e.g., IPFS), and the link is
-     *          submitted to be the URI of proposal context. This approach protects the database from external attacks as well as
-     *          ensures proposals remain validatable and user-oriented.re the vote closes.
+     *  @notice Disqualify only if the proposal is in `Pending` or `Voting` state and before the vote closes.
      *
      *          Name                Description
      *  @param  _proposalId         Proposal identifier.
@@ -445,7 +438,6 @@ ReentrancyGuardUpgradeable {
         Validation calldata _validation
     ) external
     whenNotPaused
-    nonReentrant
     validProposal(_proposalId) {
         _validate(
             abi.encode(
@@ -757,10 +749,10 @@ ReentrancyGuardUpgradeable {
      *  @notice Conclude only if the proposal is in `Executing` state.
      *
      *          Name            Description
-     *  @param  _proposalId      Proposal identifier.
-     *  @param  _resultURI       URI of execution result.
-     *  @param  _isSuccessful    Whether the execution has succeeded.
-     *  @param  _validation      Validation package from the validator.
+     *  @param  _proposalId     Proposal identifier.
+     *  @param  _resultURI      URI of execution result.
+     *  @param  _isSuccessful   Whether the execution has succeeded.
+     *  @param  _validation     Validation package from the validator.
      *
      *  @dev    Permission: Asset representative of the proposal.
      */
@@ -804,6 +796,8 @@ ReentrancyGuardUpgradeable {
         );
     }
 
+
+    /* --- Helper --- */
 
     /**
      *  @notice Evaluate the verdict of the vote of a proposal
@@ -870,9 +864,7 @@ ReentrancyGuardUpgradeable {
                 : ProposalVerdict.Unsettled;
         }
     }
-
-
-    /* --- Helper --- */
+    
     /**
      *  @notice Vote on a proposal.
      *
