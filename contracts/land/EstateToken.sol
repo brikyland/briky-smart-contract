@@ -631,7 +631,7 @@ Validatable {
      *  @param  _totalSupply        Number of tokens to mint.
      *  @param  _zone               Zone code.
      *  @param  _tokenizationId     Tokenization identifier from the tokenizer contract.
-     *  @param  _uri                URI of estate metadata.
+     *  @param  _uri                URI of estate information.
      *  @param  _expireAt           Estate expiration timestamp.
      *  @param  _custodian          Assigned custodian address.
      *  @param  _broker             Associated broker address.

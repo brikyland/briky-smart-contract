@@ -469,7 +469,7 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Update the URI of estate information of a request.
+     *  @notice Update the URI of estate metadata of a request.
      *  @notice Update only before the request is either confirmed or cancelled.
      *
      *          Name            Description
@@ -1039,7 +1039,7 @@ ReentrancyGuardUpgradeable {
      *          Name                Description
      *  @param  _cashbackFundId     Cashback fund identifier.
      *
-     *  @return Main currency cashback amount.
+     *  @return Main currency cashback value.
      */
     function _provideCashbackFund(
         uint256 _cashbackFundId

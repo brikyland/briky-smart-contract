@@ -179,7 +179,7 @@ ReentrancyGuardUpgradeable {
 
     /* --- Query --- */
     /**
-     *  @return decimals        Number of decimal places for project tokens.
+     *  @return decimals        Token decimals.
      */
     function decimals() external pure returns (uint8) {
         return ProjectTokenConstant.TOKEN_DECIMALS;
@@ -198,7 +198,7 @@ ReentrancyGuardUpgradeable {
      *          Name            Description
      *  @param  zone            Zone code.
      *
-     *  @return royaltyRate     Royalty rate configuration for the zone.
+     *  @return royaltyRate     Royalty rate of the zone.
      */
     function getZoneRoyaltyRate(
         bytes32 zone
@@ -209,7 +209,7 @@ ReentrancyGuardUpgradeable {
     /**
      *          Name            Description
      *  @param  zone            Zone code.
-     *  @param  account         Address to check.
+     *  @param  account         EVM address.
      *
      *  @return isInitiator     Whether the account is a registered initiator in the zone.
      */
@@ -303,7 +303,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _projectId      Project identifier.
      *  @param  _at             Reference timestamp.
      *
-     *  @return balance         Balance of the account at the reference timestamp.
+     *  @return balance         Balance of the account in the project at the reference timestamp.
      */
     function balanceOfAt(
         address _account,
@@ -589,7 +589,7 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Update the royalty rate for a zone.
+     *  @notice Update the royalty rate of a zone.
      *
      *          Name            Description
      *  @param  _zone           Zone code.
@@ -680,11 +680,11 @@ ReentrancyGuardUpgradeable {
      *
      *          Name            Description
      *  @param  _zone           Zone code.
-     *  @param  _initiator      Initiator address to register.
-     *  @param  _uri            URI containing initiator information.
+     *  @param  _initiator      Initiator address.
+     *  @param  _uri            URI of initiator information.
      *  @param  _validation     Validation package from the validator.
      *
-     *  @dev    Permission: Managers active in the zone of the project.
+     *  @dev    Permission: Managers active in the zone.
      */
     function registerInitiator(
         bytes32 _zone,
@@ -718,13 +718,13 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Launch a new project token from an authorized launchpad.
+     *  @notice Launch a project associated with a new class of token.
      *
      *          Name            Description
      *  @param  _zone           Zone code.
-     *  @param  _launchId       Launch identifier.
+     *  @param  _launchId       Launch identifier from the launchpad contract.
      *  @param  _initiator      Initiator address.
-     *  @param  _uri            URI containing project information.
+     *  @param  _uri            URI of project metadata.
      *
      *  @return New project identifier.
      *
@@ -770,11 +770,11 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Mint project tokens to the launchpad contract.
+     *  @notice Mint new tokens for a project.
      *
      *          Name            Description
      *  @param  _projectId      Project identifier.
-     *  @param  _amount         Amount of tokens to mint.
+     *  @param  _amount         Minted amount.
      *
      *  @dev    Permission: Launchpad of the project.
      */
@@ -794,8 +794,9 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Withdraw estate tokens equivalent to project token holdings.
-     *
+     *  @notice Withdraw the allocation of the message sender from a tokenization.
+     *  @notice Withdraw only if the project has been tokenized.
+     * 
      *          Name            Description
      *  @param  _projectId      Project identifier.
      *
@@ -877,7 +878,7 @@ ReentrancyGuardUpgradeable {
      *
      *          Name            Description
      *  @param  _projectId      Project identifier.
-     *  @param  _uri            URI of project metadata.
+     *  @param  _uri            New URI of project metadata.
      *  @param  _validation     Validation package from the validator.
      *  @param  _anchor         Keccak256 hash of `uri` of the project.
      *
@@ -915,8 +916,8 @@ ReentrancyGuardUpgradeable {
      *
      *          Name            Description
      *  @param  _projectId      Project identifier.
-     *  @param  _custodian      Custodian address for the estate.
-     *  @param  _broker         Broker address for the estate.
+     *  @param  _custodian      Assigned custodian address.
+     *  @param  _broker         Associated broker address.
      *  @param  _anchor         Keccak256 hash of `uri` of the project.
      *
      *  @return Estate identifier tokenized from the project.
@@ -1046,7 +1047,7 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @return feeReceiver     Address that receives royalty fees.
+     *  @return Default royalty receiver address.
      */
     function _royaltyReceiver() internal view override returns (address) {
         return feeReceiver;

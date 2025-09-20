@@ -449,8 +449,7 @@ ReentrancyGuardUpgradeable {
 
     /* --- Helper --- */
     /**
-     *          Name       Description
-     *  @return address    Royalty receiver address.
+     *  @return Default royalty receiver address.
      */
     function _royaltyReceiver() internal view override returns (address) {
         return address(this);

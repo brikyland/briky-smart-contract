@@ -103,7 +103,7 @@ interface IPrestigePadRound is IValidation {
      *  @notice Initialization input for `EstateForgerRequestAgenda`.
      */
     struct PrestigePadRound {
-        /// @notice URI of round information.
+        /// @notice URI of round metadata.
         string uri;
 
         /// @notice Volume configuration and progress.
@@ -131,7 +131,7 @@ interface IPrestigePadRound is IValidation {
      *          - Cancelled: quota.totalSupply = 0
      */
     struct PrestigePadRoundInput {
-        /// @notice URI of round information.
+        /// @notice URI of round metadata.
         string uri;
 
         /// @notice Volume configuration and progress.

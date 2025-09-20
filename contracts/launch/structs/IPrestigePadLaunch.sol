@@ -19,7 +19,7 @@ interface IPrestigePadLaunch is IRate {
         /// @notice Project identifier.
         uint256 projectId;
 
-        /// @notice URI of project metadata.
+        /// @notice URI of launch metadata.
         string uri;
 
         /// @notice Index of the current round that is being processed.

@@ -133,7 +133,8 @@ interface IEstateForgerRequest is IValidation {
         /// @notice Array of extra currency addresses for cashback.
         address[] cashbackCurrencies;
 
-        /// @notice Array of extra denominations for cashback, respective to each deposited token.
+        /// @notice Array of extra currency denominations, respective to each extra currency.
+        /// @dev    Must have same length as `cashbackCurrencies`.
         uint256[] cashbackDenominations;
 
         /// @notice Fee charged on each token.

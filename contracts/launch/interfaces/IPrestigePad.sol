@@ -82,7 +82,7 @@ IProjectLaunchpad {
      *  @param  launchId            Launch identifier.
      *  @param  projectId           Project identifier.
      *  @param  initiator           Initiator address.
-     *  @param  uri                 URI of launch information.
+     *  @param  uri                 URI of launch metadata.
      *  @param  initialQuantity     Initial quantity of tokens to be minted.
      *  @param  feeRate             Fraction of raised value charged as fee, applied across all rounds.
      */
@@ -145,10 +145,10 @@ IProjectLaunchpad {
      *          Name                Description
      *  @param  launchId            Launch identifier.
      *  @param  roundId             Round identifier.
-     *  @param  raisedQuantity      Total raised quantity.
-     *  @param  contribution        Total contribution.
-     *  @param  fee                 Fee charged on the sale value.
-     *  @param  cashbackBaseAmount  Main currency cashback amount.
+     *  @param  raisedQuantity      Total contributed quantity.
+     *  @param  contribution        Total contributed value.
+     *  @param  fee                 Tokenizing fee.
+     *  @param  cashbackBaseAmount  Fraction of total contribution.
      */
     event LaunchCurrentRoundConfirmation(
         uint256 indexed launchId,
@@ -206,7 +206,7 @@ IProjectLaunchpad {
      *
      *          Name                    Description
      *  @param  launchId                Launch identifier.
-     *  @param  roundId                 Round identifier.
+     *  @param  roundId                 New round identifier.
      *  @param  index                   Index of the round in the launch.
      */
     event LaunchRoundUpdate(
@@ -236,7 +236,7 @@ IProjectLaunchpad {
      *  @param  launchId        Launch identifier.
      *  @param  roundId         Round identifier.
      *  @param  contributor     Contributor address.
-     *  @param  quantity        Contributed quantity of tokens.
+     *  @param  quantity        Contributed quantity.
      *  @param  value           Contributed value.
      */
     event Contribution(
@@ -253,7 +253,7 @@ IProjectLaunchpad {
      *          Name            Description
      *  @param  roundId         Round identifier.
      *  @param  contributor     Contributor address.
-     *  @param  quantity        Withdrawn quantity of tokens.
+     *  @param  quantity        Withdrawn quantity.
      *  @param  value           Withdrawn value.
      */
     event ContributionWithdrawal(
@@ -287,6 +287,7 @@ IProjectLaunchpad {
     error RegisteredAccount();
     error StillRaising();
     error Timeout();
+
 
     /** ===== FUNCTION ===== **/
     /* --- Dependency --- */
@@ -397,9 +398,9 @@ IProjectLaunchpad {
      *  @param  initiator           Initiator address.
      *  @param  zone                Zone code.
      *  @param  projectURI          URI of project metadata.
-     *  @param  launchURI           URI of launch information.
+     *  @param  launchURI           URI of launch metadata.
      *  @param  initialQuantity     Initial quantity of tokens to be minted for the initiator.
-     *  @param  feeRate             Fraction of raised value charged as fee.
+     *  @param  feeRate             Fraction of raised value charged as fee, applied across all rounds.
      *  @param  validation          Validation package from the validator.
      *  @return launchId            New launch identifier.
      *
@@ -422,7 +423,7 @@ IProjectLaunchpad {
      *
      *          Name                    Description
      *  @param  launchId                Launch identifier.
-     *  @param  uri                     URI of launch information.
+     *  @param  uri                     URI of launch metadata.
      *  @param  validation              Validation package from the validator.
      *
      *  @dev    Permission: Initiator of the launch.
@@ -445,7 +446,7 @@ IProjectLaunchpad {
      *
      *          Name                    Description
      *  @param  launchId                Launch identifier.
-     *  @param  index                   Index of the round.
+     *  @param  index                   Index of the round in the launch.
      *  @param  round                   New round configuration.
      *  @return roundId                 New round identifier.
      *
@@ -470,7 +471,7 @@ IProjectLaunchpad {
      *          Name                    Description
      *  @param  launchId                Launch identifier.
      *  @param  removedRoundNumber      Number of rounds to remove from the end.
-     *  @param  addedRounds             Array of new rounds to add.
+     *  @param  addedRounds             Array of new rounds.
      *  @return lastIndex               Index of the last added round.
      *
      *  @dev    Permission: Initiator of the launch.
@@ -504,8 +505,8 @@ IProjectLaunchpad {
      *  @param  launchId                Launch identifier.
      *  @param  cashbackThreshold       Minimum contributed quantity of an address to receive cashback.
      *  @param  cashbackBaseRate        Fraction of contribution to cashback.
-     *  @param  cashbackCurrencies      Array of currencies for cashback.
-     *  @param  cashbackDenominations   Array of denominations for cashback, respective to each currency.
+     *  @param  cashbackCurrencies      Array of extra currency addresses for cashback.
+     *  @param  cashbackDenominations   Array of extra currency denominations, respective to each extra currency.
      *  @param  raiseStartsAt           Raise start timestamp.
      *  @param  raiseDuration           Raise duration.
      *  @return index                   Index of the scheduled round.

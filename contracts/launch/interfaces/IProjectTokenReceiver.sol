@@ -14,6 +14,7 @@ import {IERC1155ReceiverUpgradeable} from "@openzeppelin/contracts-upgradeable/i
 interface IProjectTokenReceiver is
 IERC1155ReceiverUpgradeable {
     /** ===== FUNCTION ===== **/
+    /* --- Dependency --- */
     /**
      *          Name            Description
      *  @return projectToken    `ProjectToken` contract address.

@@ -14,7 +14,7 @@ import {IERC1155ReceiverUpgradeable} from "@openzeppelin/contracts-upgradeable/i
 interface IEstateTokenReceiver is
 IERC1155ReceiverUpgradeable {
     /** ===== FUNCTION ===== **/
-    /* --- Query --- */
+    /* --- Dependency --- */
     /**
      *          Name            Description
      *  @return estateToken     `EstateToken` contract address.

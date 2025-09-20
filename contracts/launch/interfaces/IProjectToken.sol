@@ -141,7 +141,7 @@ IAssetToken {
      *          Name            Description
      *  @param  projectId       Project identifier.
      *  @param  estateId        Estate token identifier tokenized from this project.
-     *  @param  totalSupply     Total supply of the token.
+     *  @param  totalSupply     Total supply.
      *  @param  custodian       Custodian address for the estate.
      *  @param  broker          Broker address for the estate.
      */
@@ -165,6 +165,12 @@ IAssetToken {
 
     /** ===== FUNCTION ===== **/
     /* --- Dependency --- */
+    /**
+     *          Name            Description
+     *  @return estateToken     `EstateToken` contract address.
+     */
+    function estateToken() external view returns (address estateToken);
+
     /**
      *          Name            Description
      *  @return feeReceiver     `FeeReceiver` contract address.
@@ -268,7 +274,7 @@ IAssetToken {
      *  @param  zone        Zone code.
      *  @param  launchId    Launch identifier from the launchpad contract.
      *  @param  initiator   Initiator address for the project.
-     *  @param  uri         URI containing project information.
+     *  @param  uri         URI containing project metadata.
      *  @return projectId   New project identifier.
      *
      *  @dev    Permission: Launchpads.
@@ -319,8 +325,8 @@ IAssetToken {
      *
      *          Name        Description
      *  @param  projectId   Project identifier.
-     *  @param  custodian   Custodian address for the estate.
-     *  @param  broker      Broker address for the estate.
+     *  @param  custodian   Assigned custodian address.
+     *  @param  broker      Associated broker address.
      *  @param  anchor      Keccak256 hash of `uri` of the project.
      *  @return estateId    Estate identifier tokenized from the project.
      *
@@ -339,7 +345,7 @@ IAssetToken {
      *
      *          Name        Description
      *  @param  projectId   Project identifier.
-     *  @param  uri         URI of project metadata.
+     *  @param  uri         New URI of project metadata.
      *  @param  validation  Validation package from the validator.
      *  @param  anchor      Keccak256 hash of `uri` of the project.
      *

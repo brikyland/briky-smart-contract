@@ -150,7 +150,7 @@ IEstateTokenizer {
      *  @param  soldQuantity        Total deposited quantity.
      *  @param  value               Total deposited value.
      *  @param  fee                 Tokenizing fee.
-     *  @param  cashbackBaseAmount  Total cashback from deposit.
+     *  @param  cashbackBaseAmount  Fraction of total deposit.
      */
     event RequestConfirmation(
         uint256 indexed requestId,
@@ -388,7 +388,7 @@ IEstateTokenizer {
     ) external payable returns (uint256 value);
 
     /**
-     *  @notice Update the URI of estate information of a request.
+     *  @notice Update the URI of estate metadata of a request.
      *  @notice Update only before the request is either confirmed or cancelled.
      *
      *          Name            Description

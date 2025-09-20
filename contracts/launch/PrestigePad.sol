@@ -325,7 +325,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _initiator          Initiator address.
      *  @param  _zone               Zone code.
      *  @param  _projectURI         URI of project metadata.
-     *  @param  _launchURI          URI of launch information.
+     *  @param  _launchURI          URI of launch metadata.
      *  @param  _initialQuantity    Initial quantity of tokens to be minted for the initiator.
      *  @param  _feeRate            Fraction of raised value charged as fee, applied for all rounds.
      *  @param  _validation         Validation package from the validator.
@@ -421,7 +421,7 @@ ReentrancyGuardUpgradeable {
      *
      *          Name                    Description
      *  @param  _launchId               Launch identifier.
-     *  @param  _uri                    URI of launch information.
+     *  @param  _uri                    URI of launch metadata.
      *  @param  _validation             Validation package from the validator.
      *
      *  @dev    Permission: Initiator of the launch.
@@ -459,7 +459,7 @@ ReentrancyGuardUpgradeable {
      *
      *          Name            Description
      *  @param  _launchId       Launch identifier.
-     *  @param  _index          Index of the round.
+     *  @param  _index          Index of the round in the launch.
      *  @param  _round          New round configuration.
      *
      *  @return New round identifier.
@@ -502,13 +502,12 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Update multiple rounds in a launch by removing multiple rounds from the last backward and appending multiple
-     *          new rounds.
+     *  @notice Update multiple rounds in a launch by removing multiple rounds from the end and appending new ones.
      *  @notice Update only with rounds that are not scheduled.
      *
      *          Name                    Description
      *  @param  _launchId               Launch identifier.
-     *  @param  _removedRoundNumber     Number of rounds to remove from the last backward.
+     *  @param  _removedRoundNumber     Number of rounds to remove from the end.
      *  @param  _addedRounds            Array of new rounds.
      *
      *  @return Index of the last added round.
@@ -574,11 +573,11 @@ ReentrancyGuardUpgradeable {
      *          Name                        Description
      *  @param  _launchId                   Launch identifier.
      *  @param  _cashbackThreshold          Minimum contributed quantity of an address to receive cashback.
-     *  @param  _cashbackBaseRate           Fraction of deposit to cashback.
+     *  @param  _cashbackBaseRate           Fraction of contribution to cashback.
      *  @param  _cashbackCurrencies         Array of extra currency addresses for cashback.
-     *  @param  _cashbackDenominations      Array of extra denominations for cashback, respective to each deposited token.
-     *  @param  _raiseStartsAt              When the raise starts.
-     *  @param  _raiseDuration              Duration of the raising period.
+     *  @param  _cashbackDenominations      Array of extra currency denominations, respective to each extra currency.
+     *  @param  _raiseStartsAt              Raise start timestamp.
+     *  @param  _raiseDuration              Raise duration.
      *
      *  @return Index of the scheduled round.
      *
@@ -1179,7 +1178,7 @@ ReentrancyGuardUpgradeable {
      *          Name                Description
      *  @param  _cashbackFundId     Cashback fund identifier.
      *
-     *  @return Main currency cashback amount.
+     *  @return Main currency cashback value.
      */
     function _provideCashbackFund(
         uint256 _cashbackFundId

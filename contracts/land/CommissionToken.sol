@@ -405,7 +405,7 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @return Royalty receiver address.
+     *  @return Default royalty receiver address.
      */
     function _royaltyReceiver() internal view override returns (address) {
         return feeReceiver;
