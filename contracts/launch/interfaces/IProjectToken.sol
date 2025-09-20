@@ -140,10 +140,10 @@ IAssetToken {
      *
      *          Name            Description
      *  @param  projectId       Project identifier.
-     *  @param  estateId        Estate token identifier tokenized from this project.
+     *  @param  estateId        Estate token identifier.
      *  @param  totalSupply     Total supply.
-     *  @param  custodian       Custodian address for the estate.
-     *  @param  broker          Broker address for the estate.
+     *  @param  custodian       Custodian address.
+     *  @param  broker          Broker address.
      */
     event ProjectTokenization(
         uint256 indexed projectId,
