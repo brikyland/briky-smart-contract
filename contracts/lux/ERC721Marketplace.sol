@@ -7,16 +7,14 @@ import {IERC2981Upgradeable} from "@openzeppelin/contracts-upgradeable/interface
 import {ERC165CheckerUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
-/// contracts/common/utilities/
-import {CurrencyHandler} from "../common/utilities/CurrencyHandler.sol";
-import {Formula} from "../common/utilities/Formula.sol";
-
 /// contracts/common/interfaces/
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 
 /// contracts/common/utilities/
 import {Administrable} from "../common/utilities/Administrable.sol";
+import {CurrencyHandler} from "../common/utilities/CurrencyHandler.sol";
 import {Discountable} from "../common/utilities/Discountable.sol";
+import {Formula} from "../common/utilities/Formula.sol";
 import {Pausable} from "../common/utilities/Pausable.sol";
 
 /// contracts/lux/storages/

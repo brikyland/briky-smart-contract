@@ -10,9 +10,6 @@ import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC72
 import {ERC721PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721PausableUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
-/// contracts/common/utilities/
-import {CurrencyHandler} from "../common/utilities/CurrencyHandler.sol";
-
 /// contracts/common/interfaces/
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 
@@ -20,6 +17,7 @@ import {IAdmin} from "../common/interfaces/IAdmin.sol";
 import {CommonConstant} from "../common/constants/CommonConstant.sol";
 
 /// contracts/common/utilities/
+import {CurrencyHandler} from "../common/utilities/CurrencyHandler.sol";
 import {Pausable} from "../common/utilities/Pausable.sol";
 import {RoyaltyRateProposer} from "../common/utilities/RoyaltyRateProposer.sol";
 
