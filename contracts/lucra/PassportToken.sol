@@ -6,9 +6,9 @@ import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces
 import {IERC721MetadataUpgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC721MetadataUpgradeable.sol";
 import {IERC2981Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
 import {IERC4906Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC4906Upgradeable.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import {ERC721PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721PausableUpgradeable.sol";
-import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
 /// contracts/common/interfaces/
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
@@ -30,7 +30,7 @@ import {PassportTokenStorage} from "./storages/PassportTokenStorage.sol";
  *  @notice The `PassportToken` contract is an ERC-721 token representing a special pass that grant priveleges to owners
  *          during airdrop campaigns.
  * 
- *  @dev    The passport token can only be minted once per account.
+ *  @dev    Each account can only mint its passport token once.
  *  @dev    Minting fee is charged to protect the contract from DoS attacks.
  */
 contract PassportToken is
@@ -254,12 +254,12 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Mint the passport token.
+     *  @notice Mint the passport token of an account.
      *
      *          Name        Description
      *  @return tokenId     Minted token identifier.
      * 
-     *  @dev    The passport token can only be minted once per account.
+     *  @dev    Each account can only mint its passport token once.
      */
     function mint() external payable
     nonReentrant

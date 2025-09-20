@@ -16,7 +16,7 @@ import {IRoyaltyRateProposer} from "../../common/interfaces/IRoyaltyRateProposer
  *  @notice The `PassportToken` contract is an ERC-721 token representing a special pass that grant priveleges to owners
  *          during airdrop campaigns.
  * 
- *  @dev    The passport token can only be minted once per account.
+ *  @dev    Each account can only its passport token once.
  *  @dev    Minting fee is charged to protect the contract from DoS attacks.
  */
 interface IPassportToken is
@@ -46,21 +46,21 @@ IERC721MetadataUpgradeable {
     );
 
     /**
-     *  @notice Emitted when the royalty rate is updated.
+     *  @notice Emitted when the default royalty rate is updated.
      * 
-     *          Name       Description
-     *  @param  newRate    New royalty rate.
+     *          Name        Description
+     *  @param  newRate     New royalty rate.
      */
     event RoyaltyRateUpdate(
         Rate newRate
     );
 
     /**
-     *  @notice Emitted when a new token is minted.
+     *  @notice Emitted when a new passport token is minted.
      * 
-     *          Name       Description
-     *  @param  tokenId    Token identifier.
-     *  @param  owner      Owner address.
+     *          Name        Description
+     *  @param  tokenId     Token identifier.
+     *  @param  owner       Owner address.
      */
     event NewToken(
         uint256 indexed tokenId,
@@ -75,33 +75,34 @@ IERC721MetadataUpgradeable {
     /* ===== FUNCTION ===== **/
     /* --- Query --- */
     /**
-     *          Name           Description
-     *  @return tokenNumber    Number of tokens minted.
+     *          Name            Description
+     *  @return tokenNumber     Number of tokens minted.
      */
     function tokenNumber() external view returns (uint256 tokenNumber);
 
     /**
-     *          Name    Description
-     *  @return fee     Minting fee.
+     *          Name            Description
+     *  @return fee             Minting fee.
      */
     function fee() external view returns (uint256 fee);
 
     /**
-     *          Name         Description
-     *  @return hasMinted    Whether the account has minted the passport token.
+     *          Name            Description
+     *  @return hasMinted       Whether the account has minted its passport token.
      */
     function hasMinted(
         address account
     ) external view returns (bool hasMinted);
 
+
     /* --- Command --- */
     /**
-     *  @notice Mint the passport token.
+     *  @notice Mint the passport token of an account.
      * 
-     *          Name       Description
-     *  @return tokenId    Minted token identifier.
+     *          Name        Description
+     *  @return tokenId     Minted token identifier.
      * 
-     *  @dev    The passport token can only be minted once per account.
+     *  @dev    Each account can only mint its passport token once.
      */
     function mint() external payable returns (uint256 tokenId);
 }

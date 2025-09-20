@@ -38,7 +38,7 @@ IERC721MetadataUpgradeable {
     );
 
     /**
-     *  @notice Emitted when the royalty rate is updated.
+     *  @notice Emitted when the default royalty rate is updated.
      * 
      *          Name       Description
      *  @param  newRate    New royalty rate.
@@ -86,7 +86,7 @@ IERC721MetadataUpgradeable {
     );
 
     /**
-     *  @notice Emitted when a new token is minted.
+     *  @notice Emitted when a new promotion token is minted.
      * 
      *          Name         Description
      *  @param  tokenId      Token identifier.

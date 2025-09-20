@@ -37,7 +37,7 @@ IAssetToken {
     /** ===== EVENT ===== **/
     /* --- Configuration --- */
     /**
-     *  @notice Emitted when base URI is updated.
+     *  @notice Emitted when the base URI is updated.
      *
      *          Name        Description
      *  @param  newValue    New base URI.

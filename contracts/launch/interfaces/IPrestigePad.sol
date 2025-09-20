@@ -165,7 +165,9 @@ IProjectLaunchpad {
      *          Name                    Description
      *  @param  launchId                Launch identifier.
      */
-    event LaunchFinalization(uint256 launchId);
+    event LaunchFinalization(
+        uint256 indexed launchId
+    );
 
     /**
      *  @notice Emitted when a launch gets its rounds removed from an index.
@@ -176,7 +178,7 @@ IProjectLaunchpad {
      *  @param  index                   Index of the first removed round.
      */
     event LaunchRoundsRemoval(
-        uint256 launchId,
+        uint256 indexed launchId,
         uint256 removedRoundNumber,
         uint256 index
     );
