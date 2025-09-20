@@ -68,7 +68,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _symbol         Token symbol.
      *  @param  _uri            Base URI.
      *  @param  _fee            Minting fee.
-     *  @param  _royaltyRate    Royalty rate.
+     *  @param  _royaltyRate    Default royalty rate.
      */
     function initialize(
         address _admin,
@@ -262,8 +262,8 @@ ReentrancyGuardUpgradeable {
      *  @dev    Each account can only mint its passport token once.
      */
     function mint() external payable
-    nonReentrant
     whenNotPaused
+    nonReentrant
     returns (uint256) {
         if (hasMinted[msg.sender]) {
             revert AlreadyMinted();

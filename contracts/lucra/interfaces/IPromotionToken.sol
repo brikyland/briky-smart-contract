@@ -27,6 +27,7 @@ IRoyaltyRateProposer,
 IERC4906Upgradeable,
 IERC721MetadataUpgradeable {
     /** ===== EVENT ===== **/
+    /* --- Configuration --- */
     /**
      *  @notice Emitted when the minting fee is updated.
      * 
@@ -40,21 +41,23 @@ IERC721MetadataUpgradeable {
     /**
      *  @notice Emitted when the default royalty rate is updated.
      * 
-     *          Name       Description
-     *  @param  newRate    New royalty rate.
+     *          Name        Description
+     *  @param  newRate     New royalty rate.
      */
     event RoyaltyRateUpdate(
         Rate newRate
     );
 
+
+    /* --- Content --- */
     /**
      *  @notice Emitted when a new content is created.
      * 
-     *          Name         Description
-     *  @param  contentId    Content identifier.
-     *  @param  uri          Content URI.
-     *  @param  startAt      The starting timestamp of the allowed minting period.
-     *  @param  duration     The duration of the allowed minting period.
+     *          Name            Description
+     *  @param  contentId       Content identifier.
+     *  @param  uri             Content URI.
+     *  @param  startAt         The starting timestamp of the allowed minting period.
+     *  @param  duration        The duration of the allowed minting period.
      */
     event NewContent(
         uint256 indexed contentId,
@@ -66,8 +69,8 @@ IERC721MetadataUpgradeable {
     /**
      *  @notice Emitted when a content is cancelled.
      * 
-     *          Name         Description
-     *  @param  contentId    Content identifier.
+     *          Name            Description
+     *  @param  contentId       Content identifier.
      */
     event ContentCancellation(
         uint256 indexed contentId
@@ -76,9 +79,9 @@ IERC721MetadataUpgradeable {
     /**
      *  @notice Emitted when the URI of a content is updated.
      * 
-     *          Name         Description
-     *  @param  contentId    Content identifier.
-     *  @param  uri          New content URI.
+     *          Name            Description
+     *  @param  contentId       Content identifier.
+     *  @param  uri             New content URI.
      */
     event ContentURIUpdate(
         uint256 indexed contentId,
@@ -88,10 +91,10 @@ IERC721MetadataUpgradeable {
     /**
      *  @notice Emitted when a new promotion token is minted.
      * 
-     *          Name         Description
-     *  @param  tokenId      Token identifier.
-     *  @param  contentId    Content identifier associated with the token.
-     *  @param  owner        Owner address.
+     *          Name            Description
+     *  @param  tokenId         Token identifier.
+     *  @param  contentId       Content identifier associated with the token.
+     *  @param  owner           Owner address.
      */
     event NewToken(
         uint256 indexed tokenId,
@@ -106,40 +109,41 @@ IERC721MetadataUpgradeable {
     error InvalidContentId();
     error NotOpened();
 
+
     /* ===== FUNCTION ===== **/
     /* --- Query --- */
     /**
-     *          Name             Description
-     *  @return contentNumber    Number of contents.
+     *          Name            Description
+     *  @return contentNumber   Number of contents.
      */
     function contentNumber() external view returns (uint256 contentNumber);
 
     /**
-     *          Name           Description
-     *  @return tokenNumber    Number of tokens minted.
+     *          Name            Description
+     *  @return tokenNumber     Number of tokens minted.
      */
     function tokenNumber() external view returns (uint256 tokenNumber);
 
     /**
-     *          Name    Description
-     *  @return fee     Minting fee.
+     *          Name            Description
+     *  @return fee             Minting fee.
      */
     function fee() external view returns (uint256 fee);
 
     /**
-     *          Name         Description
-     *  @param  contentId    Content identifier.
-     *  @return content      Information of the content.
+     *          Name            Description
+     *  @param  contentId       Content identifier.
+     *  @return content         Content information.
      */
     function getContent(
         uint256 contentId
     ) external view returns (Content memory content);
 
     /**
-     *          Name         Description
-     *  @param  account      Account address.
-     *  @param  contentId    Content identifier.
-     *  @return count        Number of tokens of the content minted by the account.
+     *          Name            Description
+     *  @param  account         Account address.
+     *  @param  contentId       Content identifier.
+     *  @return count           Number of tokens of the content minted by the account.
      */
     function mintCounts(
         address account,

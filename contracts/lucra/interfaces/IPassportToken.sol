@@ -25,6 +25,7 @@ IRoyaltyRateProposer,
 IERC4906Upgradeable,
 IERC721MetadataUpgradeable {
     /** ===== EVENT ===== **/
+    /* --- Configuration --- */
     /**
      *  @notice Emitted when the base URI is updated.
      * 
@@ -55,6 +56,8 @@ IERC721MetadataUpgradeable {
         Rate newRate
     );
 
+
+    /* --- Passport --- */
     /**
      *  @notice Emitted when a new passport token is minted.
      * 

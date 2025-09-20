@@ -65,7 +65,7 @@ ReentrancyGuardUpgradeable {
 
 
     /** ===== FUNCTION ===== **/
-    /* --- Standard --- */
+    /* --- Common --- */
     /**
      *  @notice Executed on a call to this contract with empty calldata.
      */

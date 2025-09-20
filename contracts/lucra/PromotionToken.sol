@@ -67,7 +67,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _name           Token name.
      *  @param  _symbol         Token symbol.
      *  @param  _fee            Minting fee.
-     *  @param  _royaltyRate    Royalty rate.
+     *  @param  _royaltyRate    Default royalty rate.
      */
     function initialize(
         address _admin,
@@ -124,7 +124,7 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Update the royalty rate.
+     *  @notice Update the default royalty rate.
      *
      *          Name            Description
      *  @param  _royaltyRate    New royalty rate.
@@ -192,11 +192,11 @@ ReentrancyGuardUpgradeable {
     /**
      *  @notice Create new contents.
      *
-     *          Name           Description
-     *  @param  _uris          Array of content URIs, respective to each content.
-     *  @param  _startAts      Array of start timestamps, respective to each content.
-     *  @param  _durations     Array of durations, respective to each content.
-     *  @param  _signatures    Array of admin signatures.
+     *          Name            Description
+     *  @param  _uris           Array of content URIs, respective to each content.
+     *  @param  _startAts       Array of start timestamps, respective to each content.
+     *  @param  _durations      Array of durations, respective to each content.
+     *  @param  _signatures     Array of admin signatures.
      * 
      *  @dev    Administrative operator.
      */
@@ -245,10 +245,10 @@ ReentrancyGuardUpgradeable {
     /**
      *  @notice Update URIs of multiple contents.
      *
-     *          Name           Description
-     *  @param  _contentIds    Array of content identifiers.
-     *  @param  _uris          Array of new URIs, respectively for each content.
-     *  @param  _signatures    Array of admin signatures.
+     *          Name            Description
+     *  @param  _contentIds     Array of content identifiers.
+     *  @param  _uris           Array of new URIs, respectively for each content.
+     *  @param  _signatures     Array of admin signatures.
      * 
      *  @dev    Administrative operator.
      */
@@ -288,9 +288,9 @@ ReentrancyGuardUpgradeable {
     /**
      *  @notice Cancel multiple contents.
      *
-     *          Name           Description
-     *  @param  _contentIds    Array of content identifiers.
-     *  @param  _signatures    Array of admin signatures.
+     *          Name            Description
+     *  @param  _contentIds     Array of content identifiers.
+     *  @param  _signatures     Array of admin signatures.
      * 
      *  @dev    Administrative operator.
      */
@@ -324,10 +324,10 @@ ReentrancyGuardUpgradeable {
 
     /* --- Query --- */
     /**
-     *          Name          Description
-     *  @param  _contentId    Content identifier.
+     *          Name            Description
+     *  @param  _contentId      Content identifier.
      * 
-     *  @return content       Information of the content.
+     *  @return content         Content information.
      */
     function getContent(
         uint256 _contentId
@@ -352,8 +352,8 @@ ReentrancyGuardUpgradeable {
         uint256 _contentId,
         uint256 _amount
     ) external payable
-    nonReentrant
     whenNotPaused
+    nonReentrant
     returns (uint256, uint256) {
         if (_amount == 0) {
             revert InvalidInput();
@@ -427,6 +427,7 @@ ReentrancyGuardUpgradeable {
         );
     }
 
+
     /* --- Override --- */
     /**
      *          Name            Description
@@ -445,6 +446,8 @@ ReentrancyGuardUpgradeable {
             || super.supportsInterface(_interfaceId);
     }
 
+
+    /* --- Helper --- */
     /**
      *          Name       Description
      *  @return address    Royalty receiver address.

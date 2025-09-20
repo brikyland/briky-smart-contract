@@ -76,7 +76,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _name           Token name.
      *  @param  _symbol         Token symbol.
      *  @param  _uri            Base URI.
-     *  @param  _royaltyRate    Royalty rate.
+     *  @param  _royaltyRate    Default royalty rate.
      */
     function initialize(
         address _admin,
