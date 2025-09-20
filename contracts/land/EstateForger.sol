@@ -602,8 +602,11 @@ ReentrancyGuardUpgradeable {
      *
      *  @return Deposited value.
      */
-    function deposit(uint256 _requestId, uint256 _quantity)
-    external payable
+    function deposit(
+        uint256 _requestId,
+        uint256 _quantity
+    ) external payable
+    whenNotPaused
     validRequest(_requestId)
     returns (uint256) {
         return _deposit(_requestId, _quantity);
@@ -627,6 +630,7 @@ ReentrancyGuardUpgradeable {
         uint256 _quantity,
         bytes32 _anchor
     ) external payable
+    whenNotPaused
     validRequest(_requestId)
     returns (uint256) {
         if (_anchor != keccak256(bytes(requests[_requestId].estate.uri))) {
