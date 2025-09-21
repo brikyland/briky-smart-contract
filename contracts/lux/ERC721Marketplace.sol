@@ -414,15 +414,11 @@ ReentrancyGuardUpgradeable {
     }
     
     /**
-     *          Name            Description
-     *  @param  _collection     Collection contract address.
-     *  @param  _tokenId        Token identifier.
-     * 
      *  @return Whether the token is valid for sale.
      */
     function _validToken(
-        address _collection,
-        uint256 _tokenId
+        address,
+        uint256
     ) internal virtual view returns (bool) {
         return true;
     }

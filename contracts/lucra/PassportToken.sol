@@ -236,13 +236,10 @@ ReentrancyGuardUpgradeable {
 
     /* --- Query --- */
     /**
-     *          Name        Description
-     *  @param  _tokenId    Token identifier.
-     * 
      *  @return Royalty rate of the token identifier.
      */
     function getRoyaltyRate(
-        uint256 _tokenId
+        uint256
     ) external view returns (Rate memory) {
         return Rate(
             royaltyRate,
@@ -251,16 +248,13 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *          Name        Description
-     *  @param  _tokenId    Token identifier.
-     *
      *  @return Token URI.
      */
     function tokenURI(
-        uint256 _tokenId
+        uint256
     ) public view override(
-    IERC721MetadataUpgradeable,
-    ERC721Upgradeable
+        IERC721MetadataUpgradeable,
+        ERC721Upgradeable
     ) returns (string memory) {
         return baseURI;
     }

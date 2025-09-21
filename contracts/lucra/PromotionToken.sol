@@ -370,13 +370,10 @@ ReentrancyGuardUpgradeable {
 
 
     /**
-     *          Name        Description
-     *  @param  _tokenId    Token identifier.
-     *
      *  @return Royalty rate of the token identifier.
      */
     function getRoyaltyRate(
-        uint256 _tokenId
+        uint256
     ) external view returns (Rate memory) {
         return Rate(
             royaltyRate,
