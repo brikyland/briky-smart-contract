@@ -509,6 +509,8 @@ IExclusiveToken {
 
     /**
      *  @notice Mint reward tokens for the sending staking pool based on its wave progression.
+     *  @notice After all three staking pool have culminated, the staking pool #3 may still fetch new wave with the reward capped
+     *          at the lesser between its standard wave reward and the remaining mintable tokens to reach the maximum supply cap.
      *
      *          Name    Description
      *  @return reward  Staking reward.

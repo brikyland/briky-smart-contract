@@ -50,9 +50,9 @@ ReentrancyGuardUpgradeable {
      *  @notice Initialize the contract after deployment, serving as the constructor.
      *
      *          Name            Description
-     *  @param  _admin          Admin contract address.
-     *  @param  _primaryToken   Primary token contract address.
-     *  @param  _treasury       Treasury contract address.
+     *  @param  _admin          `Admin` contract address.
+     *  @param  _primaryToken   `PrimaryToken` contract address.
+     *  @param  _treasury       `Treasury` contract address.
      */
     function initialize(
         address _admin,
@@ -68,6 +68,7 @@ ReentrancyGuardUpgradeable {
         primaryToken = _primaryToken;
         treasury = _treasury;
     }
+
 
     /* --- Command --- */
     /**

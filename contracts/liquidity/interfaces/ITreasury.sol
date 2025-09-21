@@ -7,10 +7,12 @@ import {ICommon} from "../../common/interfaces/ICommon.sol";
 /**
  *  @author Briky Team
  *
- *  @notice Interface for contract `Treasury`.
  *  @notice The `Treasury` contract serves as a stablecoin reserve pool that backs the intrinsic value of `PrimaryToken` and
  *          facilitates token liquidation.
  *  @notice 20% of provided liquidity is allocated into the operation fund for sponsoring administrative expenses.
+ * 
+ *  @dev    ERC-20 tokens are identified by their contract addresses.
+ *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
  */
 interface ITreasury is ICommon {
     /** ===== EVENT ===== **/

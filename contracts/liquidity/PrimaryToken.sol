@@ -682,6 +682,8 @@ ReentrancyGuardUpgradeable {
      *
      *          Name          Description
      *  @param  _liquidity    Contributed liquidity.
+     * 
+     *  @dev    Permission: Staking pools.
      */
     function contributeLiquidityFromStakeToken(
         uint256 _liquidity

@@ -220,7 +220,7 @@ ReentrancyGuardUpgradeable {
      *          Name            Description
      *  @param  _account        EVM address.
      *
-     *  @return Stake of an account.
+     *  @return Stake of the account.
      */
     function balanceOf(
         address _account
@@ -308,9 +308,10 @@ ReentrancyGuardUpgradeable {
     nonReentrant {
         address primaryTokenAddress = primaryToken;
         /// @dev    Staking after culmination incurs a fee that is contributed to the treasury liquidity.
+        uint256 fee = 0;
         if (IPrimaryToken(primaryTokenAddress).isStakeRewardingCulminated(address(this))) {
             ITreasury treasuryContract = ITreasury(IPrimaryToken(primaryToken).treasury());
-            uint256 fee = _stakingFee(
+            fee = _stakingFee(
                 treasuryContract.liquidity(),
                 _value,
                 IPrimaryToken(primaryTokenAddress).totalSupply(),
@@ -345,7 +346,8 @@ ReentrancyGuardUpgradeable {
 
         emit Stake(
             _account,
-            _value
+            _value,
+            fee
         );
     }
 

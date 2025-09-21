@@ -47,6 +47,7 @@ IExclusiveToken {
         Rate newRate
     );
 
+
     /* --- Staking Operations --- */
     /**
      *  @notice Emitted when staking reward is fetched from the primary token contract.
@@ -72,14 +73,17 @@ IExclusiveToken {
 
     /**
      *  @notice Emitted when primary tokens are staked into stake tokens.
+     *  @notice After culmination, new staking incurs a fee that is contributed to the treasury liquidity.
      *
      *          Name        Description
      *  @param  account     Staker address.
      *  @param  value       Staked value.
+     *  @param  fee         Applicable staking fee
      */
     event Stake(
         address indexed account,
-        uint256 value
+        uint256 value,
+        uint256 fee
     );
 
     /**
@@ -156,11 +160,14 @@ IExclusiveToken {
 
     /**
      *  @notice Stake primary tokens into this contract to receive stake tokens with interest accumulation.
-     *  @notice Staking fees may apply after reward distribution culmination.
+     *  @notice Staking fee after culmination: `value / totalSupply * treasuryLiquidity * feeRate`.
+     *          Note:   `value` is the staking value that derives fee.
+     *                  `treasuryLiquidity` is the liquidity reserved in the treasury.
+     *                  `feeRate` is an admin-adjustable subunitary value.
      *
      *          Name        Description
-     *  @param  account     Staker address.
-     *  @param  value       Staked value.
+     *  @param  account    Staker address.
+     *  @param  value      Staked value.
      *
      *  @dev    The contract secures primary tokens and mints the exact amount of stake tokens to staker.
      */

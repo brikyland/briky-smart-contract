@@ -24,16 +24,10 @@ import {TreasuryStorage} from "./storages/TreasuryStorage.sol";
 /**
  *  @author Briky Team
  *
- *  @notice The `Treasury` contract serves as the central liquidity pool and operation fund manager for the
- *          ecosystem, handling currency deposits, liquidity provision, and fund withdrawals.
+ *  @notice The `Treasury` contract serves as a stablecoin reserve pool that backs the intrinsic value of `PrimaryToken` and
+ *          facilitates token liquidation.
+ *  @notice 20% of provided liquidity is allocated into the operation fund for sponsoring administrative expenses.
  *
- *  @dev    The contract manages two main pools: liquidity for token liquidation and operation fund for
- *          administrative expenses. When liquidity is provided, a portion is allocated to the operation
- *          fund based on a predefined rate, while the remainder becomes available liquidity.
- *  @dev    Liquidity withdrawal is restricted to the primary token contract for token liquidation operations.
- *          Operation fund withdrawals require administrative signatures and are used for ecosystem operations.
- *  @dev    The treasury integrates with various ecosystem components including primary token liquidation,
- *          staking fee contributions, and auction deposits to maintain ecosystem liquidity.
  *  @dev    ERC-20 tokens are identified by their contract addresses.
  *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
  */
@@ -69,9 +63,9 @@ ReentrancyGuardUpgradeable {
      *  @notice Initialize the contract after deployment, serving as the constructor.
      *
      *          Name            Description
-     *  @param  _admin          Admin contract address.
+     *  @param  _admin          `Admin` contract address.
      *  @param  _currency       Currency contract address used by the treasury.
-     *  @param  _primaryToken   Primary token contract address.
+     *  @param  _primaryToken   `PrimaryToken` contract address.
      */
     function initialize(
         address _admin,
@@ -141,11 +135,10 @@ ReentrancyGuardUpgradeable {
      *  @notice Withdraw liquidity from the treasury.
      *
      *          Name            Description
-     *  @param  _withdrawer     Address that will receive the withdrawn liquidity.
-     *  @param  _value          Amount of liquidity to withdraw.
+     *  @param  _withdrawer     Receiver address.
+     *  @param  _value          Withdrawn value.
      *
-     *  @dev    Permission: Primary token contract only.
-     *  @dev    Used primarily for token liquidation operations.
+     *  @dev    Permission: PrimaryToken.
      */
     function withdrawLiquidity(
         address _withdrawer,
@@ -174,13 +167,10 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Provide liquidity to the treasury with automatic operation fund allocation.
+     *  @notice Provide liquidity to the treasury.
      *
      *          Name        Description
-     *  @param  _value      Amount of currency to provide as liquidity.
-     *
-     *  @dev    A portion of the provided value is allocated to the operation fund based on a predefined rate.
-     *  @dev    The remaining amount becomes available liquidity for ecosystem operations.
+     *  @param  _value      Provided value.
      */
     function provideLiquidity(
         uint256 _value
