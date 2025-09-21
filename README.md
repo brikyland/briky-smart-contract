@@ -117,7 +117,6 @@ contracts/
 ├── land/           # Estate tokenization (Briky Land)
 ├── launch/         # Project funding and tokenization (Briky Launch)
 ├── lend/           # Token lending, mortgage (Briky Lend)
-├── lib/            # Utility libraries and helpers
 ├── liquidity/      # Primary token and staking tokens
 ├── lucra/          # Tokens for airdrop campaign
 └── lux/            # Token marketplaces
