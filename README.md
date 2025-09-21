@@ -77,7 +77,7 @@ cp scripts/deployments/<app_name>/initialization.sample.ts scripts/deployments/<
 
 > **Note**: Check the deployment scripts in `scripts/deployments/` to understand which environment variables and deployment constants are required.
 
-### 3. Deploy Contracts
+### 4. Deploy Contracts
 
 Deploy specific contracts using the following pattern:
 
@@ -121,5 +121,3 @@ contracts/
 ├── lucra/          # Tokens for airdrop campaign
 └── lux/            # Token marketplaces
 ```
-
-
