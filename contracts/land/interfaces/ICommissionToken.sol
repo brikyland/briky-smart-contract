@@ -38,7 +38,7 @@ IERC721MetadataUpgradeable {
      *  @notice Emitted when the default royalty rate is updated.
      *
      *          Name        Description
-     *  @param  newRate     New royalty rate.
+     *  @param  newRate     New default royalty rate.
      */
     event RoyaltyRateUpdate(
         Rate newRate

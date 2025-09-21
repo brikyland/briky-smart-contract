@@ -28,9 +28,9 @@ import {PromotionTokenStorage} from "./storages/PromotionTokenStorage.sol";
 /**
  *  @author Briky Team
  *
- *  @notice The promotion token is an ERC-721 token that represents airdrop tokens minted by users during airdrop campaigns.
- * 
- *  @dev    Minting fee is charged to protect the contract from DoS attacks.
+ *  @notice Interface for contract `PromotionToken`.
+ *  @notice The `PromotionToken` contract is an ERC-721 token issued exclusively for airdrop campaigns. It provides
+ *          limited-time content that grants its minter airdrop scores.
  */
 contract PromotionToken is
 PromotionTokenStorage,
@@ -130,7 +130,7 @@ ReentrancyGuardUpgradeable {
      *  @notice Update the default royalty rate.
      *
      *          Name            Description
-     *  @param  _royaltyRate    New royalty rate.
+     *  @param  _royaltyRate    New default royalty rate.
      *  @param  _signatures     Array of admin signatures.
      * 
      *  @dev    Administrative operator.
@@ -163,10 +163,11 @@ ReentrancyGuardUpgradeable {
      *          Name            Description
      *  @param  _receiver       Receiver address.
      *  @param  _currencies     Array of withdrawn currency addresses.
-     *  @param  _values         Array of withdrawn values, respective to each currency.
+     *  @param  _values         Array of withdraw values, respective to each currency.
      *  @param  _signatures     Array of admin signatures.
      *
      *  @dev    Administrative operator.
+     *  @dev    Used to withdraw fee and royalty.
      */
     function withdraw(
         address _receiver,
@@ -191,7 +192,11 @@ ReentrancyGuardUpgradeable {
         }
 
         for (uint256 i; i < _currencies.length; ++i) {
-            CurrencyHandler.sendCurrency(_currencies[i], _receiver, _values[i]);
+            CurrencyHandler.sendCurrency(
+                _currencies[i],
+                _receiver,
+                _values[i]
+            );
         }
     }
 
@@ -200,8 +205,8 @@ ReentrancyGuardUpgradeable {
      *
      *          Name            Description
      *  @param  _uris           Array of content URIs, respective to each content.
-     *  @param  _startAts       Array of start timestamps, respective to each content.
-     *  @param  _durations      Array of durations, respective to each content.
+     *  @param  _startAts       Array of start timestamps for minting, respective to each content.
+     *  @param  _durations      Array of mintable durations, respective to each content.
      *  @param  _signatures     Array of admin signatures.
      * 
      *  @dev    Administrative operator.
@@ -336,7 +341,7 @@ ReentrancyGuardUpgradeable {
      *          Name            Description
      *  @param  _contentId      Content identifier.
      * 
-     *  @return content         Content information.
+     *  @return Content information.
      */
     function getContent(
         uint256 _contentId
@@ -349,13 +354,64 @@ ReentrancyGuardUpgradeable {
 
 
     /**
+     *          Name        Description
+     *  @param  _tokenId    Token identifier.
+     *
+     *  @return Token URI.
+     */
+    function tokenURI(
+        uint256 _tokenId
+    ) public view override(
+        IERC721MetadataUpgradeable,
+        ERC721Upgradeable
+    ) returns (string memory) {
+        return contents[tokenContents[_tokenId]].uri;
+    }
+
+
+    /**
+     *          Name        Description
+     *  @param  _tokenId    Token identifier.
+     *
+     *  @return Royalty rate of the token identifier.
+     */
+    function getRoyaltyRate(
+        uint256 _tokenId
+    ) external view returns (Rate memory) {
+        return Rate(
+            royaltyRate,
+            CommonConstant.RATE_DECIMALS
+        );
+    }
+
+
+    /**
+     *          Name            Description
+     *  @param  _interfaceId    Interface identifier.
+     *
+     *  @return Whether this contract implements the interface.
+     */
+    function supportsInterface(
+        bytes4 _interfaceId
+    ) public view override(
+        IERC165Upgradeable,
+        ERC721Upgradeable
+    ) returns (bool) {
+        return _interfaceId == type(IERC2981Upgradeable).interfaceId
+            || _interfaceId == type(IERC4906Upgradeable).interfaceId
+            || super.supportsInterface(_interfaceId);
+    }
+
+
+    /**
      *  @notice Mint tokens of a content.
      *
      *          Name            Description
      *  @param  _contentId      Content identifier.
      *  @param  _amount         Number of tokens to mint.
-     *  @return firstTokenId    First token identifier of the minted tokens.
-     *  @return lastTokenId     Last token identifier of the minted tokens.
+     *
+     *  @return First token identifier of the minted tokens.
+     *  @return Last token identifier of the minted tokens.
      */
     function mint(
         uint256 _contentId,
@@ -404,55 +460,6 @@ ReentrancyGuardUpgradeable {
         }
 
         return (firstTokenId, lastTokenId);
-    }
-
-    /**
-     *          Name        Description
-     *  @param  _tokenId    Token identifier.
-     * 
-     *  @return Token URI.
-     */
-    function tokenURI(
-        uint256 _tokenId
-    ) public view override(
-        IERC721MetadataUpgradeable,
-        ERC721Upgradeable
-    ) returns (string memory) {
-        return contents[tokenContents[_tokenId]].uri;
-    }
-
-    /**
-     *          Name        Description
-     *  @param  _tokenId    Token identifier.
-     * 
-     *  @return rate        Royalty rate of the token identifier.
-     */
-    function getRoyaltyRate(
-        uint256 _tokenId
-    ) external view returns (Rate memory) {
-        return Rate(
-            royaltyRate,
-            CommonConstant.RATE_DECIMALS
-        );
-    }
-
-
-    /* --- Override --- */
-    /**
-     *          Name            Description
-     *  @param  _interfaceId    Interface identifier.
-     * 
-     *  @return Whether this contract implements the interface.
-     */
-    function supportsInterface(
-        bytes4 _interfaceId
-    ) public view override(
-        IERC165Upgradeable,
-        ERC721Upgradeable
-    ) returns (bool) {
-        return _interfaceId == type(IERC2981Upgradeable).interfaceId
-            || _interfaceId == type(IERC4906Upgradeable).interfaceId
-            || super.supportsInterface(_interfaceId);
     }
 
 

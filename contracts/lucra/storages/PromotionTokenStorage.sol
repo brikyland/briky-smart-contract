@@ -22,6 +22,7 @@ IPromotionToken {
     /// @dev    tokenContents[tokenId]
     mapping(uint256 => uint256) internal tokenContents;
 
+
     uint256 public contentNumber;
     uint256 public tokenNumber;
 

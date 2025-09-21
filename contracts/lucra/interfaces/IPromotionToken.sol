@@ -16,9 +16,8 @@ import {IContent} from "../structs/IContent.sol";
  *  @author Briky Team
  *
  *  @notice Interface for contract `PromotionToken`.
- *  @notice The promotion token is an ERC-721 token that represents airdrop tokens minted by users during airdrop campaigns.
- * 
- *  @dev    Minting fee is charged to protect the contract from DoS attacks.
+ *  @notice The `PromotionToken` contract is an ERC-721 token issued exclusively for airdrop campaigns. It provides
+ *          limited-time content that grants its minter airdrop scores.
  */
 interface IPromotionToken is
 IContent,
@@ -42,7 +41,7 @@ IERC721MetadataUpgradeable {
      *  @notice Emitted when the default royalty rate is updated.
      * 
      *          Name        Description
-     *  @param  newRate     New royalty rate.
+     *  @param  newRate     New default royalty rate.
      */
     event RoyaltyRateUpdate(
         Rate newRate
@@ -55,9 +54,9 @@ IERC721MetadataUpgradeable {
      * 
      *          Name            Description
      *  @param  contentId       Content identifier.
-     *  @param  uri             Content URI.
-     *  @param  startAt         The starting timestamp of the allowed minting period.
-     *  @param  duration        The duration of the allowed minting period.
+     *  @param  uri             URI of content metadata.
+     *  @param  startAt         Start timestamp for minting.
+     *  @param  duration        Mintable duration.
      */
     event NewContent(
         uint256 indexed contentId,
@@ -81,7 +80,7 @@ IERC721MetadataUpgradeable {
      * 
      *          Name            Description
      *  @param  contentId       Content identifier.
-     *  @param  uri             New content URI.
+     *  @param  uri             URI of content metadata.
      */
     event ContentURIUpdate(
         uint256 indexed contentId,
@@ -120,7 +119,7 @@ IERC721MetadataUpgradeable {
 
     /**
      *          Name            Description
-     *  @return tokenNumber     Number of tokens minted.
+     *  @return tokenNumber     Number of tokens.
      */
     function tokenNumber() external view returns (uint256 tokenNumber);
 
@@ -141,7 +140,7 @@ IERC721MetadataUpgradeable {
 
     /**
      *          Name            Description
-     *  @param  account         Account address.
+     *  @param  account         EVM address.
      *  @param  contentId       Content identifier.
      *  @return count           Number of tokens of the content minted by the account.
      */
@@ -158,8 +157,8 @@ IERC721MetadataUpgradeable {
      *          Name            Description
      *  @param  contentId       Content identifier.
      *  @param  amount          Number of tokens to mint.
-     *  @return firstTokenId    First token identifier of the minted tokens.
-     *  @return lastTokenId     Last token identifier of the minted tokens.
+     *  @return firstTokenId    First token identifier of minted tokens.
+     *  @return lastTokenId     Last token identifier of minted tokens.
      */
     function mint(
         uint256 contentId,

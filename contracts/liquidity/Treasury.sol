@@ -187,13 +187,20 @@ ReentrancyGuardUpgradeable {
     ) external
     whenNotPaused
     nonReentrant {
-        CurrencyHandler.receiveERC20(currency, _value);
+        CurrencyHandler.receiveERC20(
+            currency,
+            _value
+        );
 
         uint256 operationAllocation = _value.scale(TreasuryConstant.OPERATION_FUND_RATE, CommonConstant.RATE_MAX_SUBUNIT);
 
         operationFund += operationAllocation;
         liquidity += _value - operationAllocation;
 
-        emit LiquidityProvision(msg.sender, _value, operationAllocation);
+        emit LiquidityProvision(
+            msg.sender,
+            _value,
+            operationAllocation
+        );
     }
 }

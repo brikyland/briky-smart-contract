@@ -120,11 +120,11 @@ CommissionDispatchable {
     function supportsInterface(
         bytes4 _interfaceId
     ) public view override(
-    IERC165Upgradeable,
-    MortgageToken
+        IERC165Upgradeable,
+        MortgageToken
     ) returns (bool) {
         return _interfaceId == type(IAssetMortgageToken).interfaceId
-        || _interfaceId == type(IEstateTokenReceiver).interfaceId
+            || _interfaceId == type(IEstateTokenReceiver).interfaceId
             || super.supportsInterface(_interfaceId);
     }
 

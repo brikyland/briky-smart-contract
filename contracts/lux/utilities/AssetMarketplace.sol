@@ -383,8 +383,15 @@ ReentrancyGuardUpgradeable {
         
         address currency = offer.currency;
 
-        CurrencyHandler.receiveCurrency(currency, value + royalty);
-        CurrencyHandler.sendCurrency(currency, seller, value);
+        CurrencyHandler.receiveCurrency(
+            currency,
+            value + royalty
+        );
+        CurrencyHandler.sendCurrency(
+            currency,
+            seller,
+            value
+        );
 
         _chargeRoyalty(_offerId, royalty);
 

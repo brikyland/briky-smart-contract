@@ -105,7 +105,7 @@ IAssetToken {
 
     /* --- Project --- */
     /**
-     *  @notice Emitted when a new project token is launched.
+     *  @notice Emitted when a new class of project token is minted.
      *
      *          Name        Description
      *  @param  tokenId     Project identifier.

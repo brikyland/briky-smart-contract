@@ -27,11 +27,9 @@ import {PassportTokenStorage} from "./storages/PassportTokenStorage.sol";
 /**
  *  @author Briky Team
  *
- *  @notice The `PassportToken` contract is an ERC-721 token representing a special pass that grant priveleges to owners
- *          during airdrop campaigns.
- * 
- *  @dev    Each account can only mint its passport token once.
- *  @dev    Minting fee is charged to protect the contract from DoS attacks.
+ *  @notice Interface for contract `PassportToken`.
+ *  @notice The `PassportToken` contract is an ERC-721 token issued exclusively for airdrop campaigns. It grants its
+ *          minter airdrop privileges, and each account may mint only one passport.
  */
 contract PassportToken is
 PassportTokenStorage,
@@ -165,7 +163,7 @@ ReentrancyGuardUpgradeable {
      *  @notice Update the default royalty rate.
      *
      *          Name            Description
-     *  @param  _royaltyRate    New royalty rate.
+     *  @param  _royaltyRate    New default royalty rate.
      *  @param  _signatures     Array of admin signatures.
      * 
      *  @dev    Administrative operator.
@@ -202,6 +200,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _signatures     Array of admin signatures.
      *
      *  @dev    Administrative operator.
+     *  @dev    Used to withdraw fee and royalty.
      */
     function withdraw(
         address _receiver,
@@ -226,7 +225,11 @@ ReentrancyGuardUpgradeable {
         }
 
         for (uint256 i; i < _currencies.length; ++i) {
-            CurrencyHandler.sendCurrency(_currencies[i], _receiver, _values[i]);
+            CurrencyHandler.sendCurrency(
+                _currencies[i],
+                _receiver,
+                _values[i]
+            );
         }
     }
 
@@ -236,22 +239,7 @@ ReentrancyGuardUpgradeable {
      *          Name        Description
      *  @param  _tokenId    Token identifier.
      * 
-     *  @return Token URI.
-     */
-    function tokenURI(
-        uint256 _tokenId
-    ) public view override(
-        IERC721MetadataUpgradeable,
-        ERC721Upgradeable
-    ) returns (string memory) {
-        return baseURI;
-    }
-
-    /**
-     *          Name        Description
-     *  @param  _tokenId    Token identifier.
-     * 
-     *  @return rate        Royalty rate of the token identifier.
+     *  @return Royalty rate of the token identifier.
      */
     function getRoyaltyRate(
         uint256 _tokenId
@@ -263,12 +251,44 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Mint the passport token of an account.
-     *
      *          Name        Description
-     *  @return tokenId     Minted token identifier.
-     * 
-     *  @dev    Each account can only mint its passport token once.
+     *  @param  _tokenId    Token identifier.
+     *
+     *  @return Token URI.
+     */
+    function tokenURI(
+        uint256 _tokenId
+    ) public view override(
+    IERC721MetadataUpgradeable,
+    ERC721Upgradeable
+    ) returns (string memory) {
+        return baseURI;
+    }
+
+    /**
+     *          Name            Description
+     *  @param  _interfaceId    Interface identifier.
+     *
+     *  @return Whether this contract implements the interface.
+     */
+    function supportsInterface(
+        bytes4 _interfaceId
+    ) public view override(
+        IERC165Upgradeable,
+        ERC721Upgradeable
+    ) returns (bool) {
+        return _interfaceId == type(IERC2981Upgradeable).interfaceId
+            || _interfaceId == type(IERC4906Upgradeable).interfaceId
+            || super.supportsInterface(_interfaceId);
+    }
+
+
+    /* --- Command --- */
+    /**
+     *  @notice Mint the passport token to an account.
+     *  @notice Mint only once for each account.
+     *
+     *  @return Minted token identifier.
      */
     function mint() external payable
     whenNotPaused
@@ -293,26 +313,6 @@ ReentrancyGuardUpgradeable {
             return tokenId;
         }
     }
-
-
-    /* --- Override --- */
-    /**
-     *          Name            Description
-     *  @param  _interfaceId    Interface identifier.
-     * 
-     *  @return Whether this contract implements the interface.
-     */
-    function supportsInterface(
-        bytes4 _interfaceId
-    ) public view override(
-        IERC165Upgradeable,
-        ERC721Upgradeable
-    ) returns (bool) {
-        return _interfaceId == type(IERC2981Upgradeable).interfaceId
-            || _interfaceId == type(IERC4906Upgradeable).interfaceId
-            || super.supportsInterface(_interfaceId);
-    }
-
 
     /* --- Helper --- */
     /**

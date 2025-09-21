@@ -388,10 +388,7 @@ ReentrancyGuardUpgradeable {
             revert NoVotingPower();
         }
 
-        uint256 quorumWeight = totalWeight.scale(
-            proposal.quorum,
-            CommonConstant.RATE_MAX_SUBUNIT
-        );
+        uint256 quorumWeight = totalWeight.scale(proposal.quorum, CommonConstant.RATE_MAX_SUBUNIT);
 
         proposal.contextURI = _contextURI;
         /// @dev    Log the review detail.
@@ -961,7 +958,10 @@ ReentrancyGuardUpgradeable {
             revert Timeout();
         }
 
-        CurrencyHandler.receiveCurrency(proposal.currency, _value);
+        CurrencyHandler.receiveCurrency(
+            proposal.currency,
+            _value
+        );
 
         proposal.budget += _value;
         contributions[_proposalId][msg.sender] += _value;

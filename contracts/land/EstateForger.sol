@@ -1055,8 +1055,15 @@ ReentrancyGuardUpgradeable {
                     if (fund.extraCurrencies[i] == address(0)) {
                         totalNative += fund.extraDenominations[i] * fund.quantity;
                     } else {
-                        CurrencyHandler.receiveERC20(fund.extraCurrencies[i], fund.extraDenominations[i] * fund.quantity);
-                        CurrencyHandler.allowERC20(fund.extraCurrencies[i], reserveVaultAddress, fund.extraDenominations[i] * fund.quantity);
+                        CurrencyHandler.receiveERC20(
+                            fund.extraCurrencies[i],
+                            fund.extraDenominations[i] * fund.quantity
+                        );
+                        CurrencyHandler.allowERC20(
+                            fund.extraCurrencies[i],
+                            reserveVaultAddress,
+                            fund.extraDenominations[i] * fund.quantity
+                        );
                     }
                 }
 

@@ -9,16 +9,16 @@ pragma solidity ^0.8.20;
 interface IContent {
     /** ===== STRUCT ===== **/
     /**
-     *  @notice Content information.
+     *  @notice Content for `PromotionToken`.
      */
     struct Content {
         /// @notice URI of content metadata.
         string uri;
 
-        /// @notice Start timestamp of allowed minting period.
+        /// @notice Start timestamp for minting.
         uint40 startAt;
 
-        /// @notice End timestamp of allowed minting period.
+        /// @notice End timestamp for minting.
         uint40 endAt;
     }
 }

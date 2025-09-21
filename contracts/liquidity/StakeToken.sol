@@ -199,16 +199,14 @@ ReentrancyGuardUpgradeable {
 
     /* --- Query --- */
     /**
-     *          Name    Description
-     *  @return rate    Staking fee rate.
+     *  @return Staking fee rate.
      */
     function getFeeRate() external view returns (Rate memory) {
         return Rate(feeRate, CommonConstant.RATE_DECIMALS);
     }
 
     /**
-     *          Name            Description
-     *  @return totalSupply     Total supply of the token.
+     *  @return Total supply of the token.
      */
     function totalSupply()
     public view override(
@@ -221,7 +219,8 @@ ReentrancyGuardUpgradeable {
     /**
      *          Name            Description
      *  @param  _account        EVM address.
-     *  @return balance         Stake of an account.
+     *
+     *  @return Stake of an account.
      */
     function balanceOf(
         address _account
@@ -237,18 +236,17 @@ ReentrancyGuardUpgradeable {
      *          Note:   `primaryDiscount` is the exclusive discount of the primary token.
      *                  `globalStake` is the total tokens staked in 3 pools.
      *
-     *          Name    Description
-     *  @return rate    Discount rate for exclusive token.
+     *  @return Discount rate for exclusive token.
      */
-    function exclusiveDiscount() external view returns (Rate memory rate) {
+    function exclusiveDiscount() external view returns (Rate memory) {
         IPrimaryToken primaryTokenContract = IPrimaryToken(primaryToken);
         uint256 globalStake = primaryTokenContract.totalStake();
 
         Rate memory primaryDiscount = primaryTokenContract.exclusiveDiscount();
         return Rate(
             primaryDiscount.value
-            .scale(globalStake - totalStake, globalStake << 1)
-            .add(PrimaryTokenConstant.BASE_DISCOUNT),
+                .scale(globalStake - totalStake, globalStake << 1)
+                .add(PrimaryTokenConstant.BASE_DISCOUNT),
             primaryDiscount.decimals
         );
     }

@@ -149,7 +149,7 @@ ReentrancyGuardUpgradeable {
      *  @notice Update the default royalty rate.
      *
      *          Name            Description
-     *  @param  _royaltyRate    New royalty rate.
+     *  @param  _royaltyRate    New default royalty rate.
      *  @param  _signatures     Array of admin signatures.
      * 
      *  @dev    Administrative operator.

@@ -369,8 +369,15 @@ ReentrancyGuardUpgradeable {
         address royaltyReceiver = offer.royaltyReceiver;
         uint256 royalty = offer.royalty;
 
-        CurrencyHandler.receiveCurrency(currency, price + royalty);
-        CurrencyHandler.sendCurrency(currency, seller, price);
+        CurrencyHandler.receiveCurrency(
+            currency,
+            price + royalty
+        );
+        CurrencyHandler.sendCurrency(
+            currency,
+            seller,
+            price
+        );
 
         _chargeRoyalty(_offerId);
 

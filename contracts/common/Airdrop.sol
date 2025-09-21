@@ -62,7 +62,10 @@ contract Airdrop {
                 );
             }
         } else {
-            CurrencyHandler.receiveERC20(_currency, total);
+            CurrencyHandler.receiveERC20(
+                _currency,
+                total
+            );
             for (uint256 i; i < _receivers.length; ++i) {
                 CurrencyHandler.sendERC20(
                     _currency,

@@ -593,7 +593,7 @@ ReentrancyGuardUpgradeable {
      *
      *          Name            Description
      *  @param  _zone           Zone code.
-     *  @param  _royaltyRate    New royalty rate.
+     *  @param  _royaltyRate    New default royalty rate.
      *  @param  _signatures     Array of admin signatures.
      *
      *  @dev    Administrative operator.

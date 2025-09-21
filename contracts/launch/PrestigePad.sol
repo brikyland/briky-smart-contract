@@ -645,7 +645,8 @@ ReentrancyGuardUpgradeable {
             /// @dev    Open a cashback fund.
             cashbackFundId = IReserveVault(reserveVault).openFund(
                 currency,
-                feeDenomination.scale(_cashbackBaseRate, CommonConstant.RATE_MAX_SUBUNIT),
+                feeDenomination
+                    .scale(_cashbackBaseRate, CommonConstant.RATE_MAX_SUBUNIT),
                 _cashbackCurrencies,
                 _cashbackDenominations
             );
@@ -1141,7 +1142,10 @@ ReentrancyGuardUpgradeable {
         round.quota.raisedQuantity = newSoldQuantity;
 
         uint256 value = _quantity * round.quote.unitPrice;
-        CurrencyHandler.receiveCurrency(round.quote.currency, value);
+        CurrencyHandler.receiveCurrency(
+            round.quote.currency,
+            value
+        );
 
         uint256 oldContribution = contributions[roundId][msg.sender];
         uint256 newContribution = oldContribution + _quantity;
@@ -1198,8 +1202,15 @@ ReentrancyGuardUpgradeable {
                     if (fund.extraCurrencies[i] == address(0)) {
                         totalNative += fund.extraDenominations[i] * fund.quantity;
                     } else {
-                        CurrencyHandler.receiveERC20(fund.extraCurrencies[i], fund.extraDenominations[i] * fund.quantity);
-                        CurrencyHandler.allowERC20(fund.extraCurrencies[i], reserveVaultAddress, fund.extraDenominations[i] * fund.quantity);
+                        CurrencyHandler.receiveERC20(
+                            fund.extraCurrencies[i],
+                            fund.extraDenominations[i] * fund.quantity
+                        );
+                        CurrencyHandler.allowERC20(
+                            fund.extraCurrencies[i],
+                            reserveVaultAddress,
+                            fund.extraDenominations[i] * fund.quantity
+                        );
                     }
                 }
 

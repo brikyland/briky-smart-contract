@@ -86,6 +86,10 @@ CommissionDispatchable {
             currency
         );
 
-        CurrencyHandler.sendCurrency(currency, royaltyReceiver, _royalty - commission);
+        CurrencyHandler.sendCurrency(
+            currency,
+            royaltyReceiver,
+            _royalty - commission
+        );
     }
 }

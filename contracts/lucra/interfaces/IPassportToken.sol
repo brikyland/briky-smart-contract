@@ -13,11 +13,8 @@ import {IRoyaltyRateProposer} from "../../common/interfaces/IRoyaltyRateProposer
  *  @author Briky Team
  *
  *  @notice Interface for contract `PassportToken`.
- *  @notice The `PassportToken` contract is an ERC-721 token representing a special pass that grant priveleges to owners
- *          during airdrop campaigns.
- * 
- *  @dev    Each account can only its passport token once.
- *  @dev    Minting fee is charged to protect the contract from DoS attacks.
+ *  @notice The `PassportToken` contract is an ERC-721 token issued exclusively for airdrop campaigns. It grants its
+ *          minter airdrop privileges, and each account may mint only one passport.
  */
 interface IPassportToken is
 ICommon,
@@ -50,7 +47,7 @@ IERC721MetadataUpgradeable {
      *  @notice Emitted when the default royalty rate is updated.
      * 
      *          Name        Description
-     *  @param  newRate     New royalty rate.
+     *  @param  newRate     New default royalty rate.
      */
     event RoyaltyRateUpdate(
         Rate newRate
@@ -78,20 +75,22 @@ IERC721MetadataUpgradeable {
     /* ===== FUNCTION ===== **/
     /* --- Query --- */
     /**
-     *          Name            Description
-     *  @return tokenNumber     Number of tokens minted.
-     */
-    function tokenNumber() external view returns (uint256 tokenNumber);
-
-    /**
-     *          Name            Description
-     *  @return fee             Minting fee.
+     *          Name    Description
+     *  @return fee     Minting fee.
      */
     function fee() external view returns (uint256 fee);
 
+
     /**
      *          Name            Description
-     *  @return hasMinted       Whether the account has minted its passport token.
+     *  @return tokenNumber     Number of tokens.
+     */
+    function tokenNumber() external view returns (uint256 tokenNumber);
+
+
+    /**
+     *          Name        Description
+     *  @return hasMinted   Whether the account has minted passport.
      */
     function hasMinted(
         address account
@@ -100,12 +99,11 @@ IERC721MetadataUpgradeable {
 
     /* --- Command --- */
     /**
-     *  @notice Mint the passport token of an account.
+     *  @notice Mint the passport token to an account.
+     *  @notice Mint only once for each account.
      * 
      *          Name        Description
      *  @return tokenId     Minted token identifier.
-     * 
-     *  @dev    Each account can only mint its passport token once.
      */
     function mint() external payable returns (uint256 tokenId);
 }

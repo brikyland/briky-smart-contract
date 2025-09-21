@@ -336,8 +336,7 @@ Validatable {
     
     /* --- Query --- */
     /**
-     *          Name            Description
-     *  @return decimals        Token decimals.
+     *  @return Token decimals.
      */
     function decimals() external pure returns (uint8) {
         return EstateTokenConstant.TOKEN_DECIMALS;
@@ -346,7 +345,8 @@ Validatable {
     /**
      *          Name            Description
      *  @param  _zone           Zone code.
-     *  @return royaltyRate     Royalty rate of the zone.
+     *
+     *  @return Royalty rate of the zone.
      */
     function getZoneRoyaltyRate(
         bytes32 _zone
