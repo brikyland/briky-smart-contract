@@ -102,8 +102,8 @@ ReentrancyGuardUpgradeable {
      *  @dev    Administrative operator.
      */
     function withdrawOperationFund(
-        uint256 _value,
         address _operator,
+        uint256 _value,
         bytes[] calldata _signatures
     ) external
     nonReentrant {
@@ -111,8 +111,8 @@ ReentrancyGuardUpgradeable {
             abi.encode(
                 address(this),
                 "withdrawOperationFund",
-                _value,
-                _operator
+                _operator,
+                _value
             ),
             _signatures
         );
@@ -123,9 +123,16 @@ ReentrancyGuardUpgradeable {
         }
 
         operationFund = fund - _value;
-        CurrencyHandler.sendERC20(currency, _operator, _value);
+        CurrencyHandler.sendERC20(
+            currency,
+            _operator,
+            _value
+        );
 
-        emit OperationFundWithdrawal(_value, _operator);
+        emit OperationFundWithdrawal(
+            _operator,
+            _value
+        );
     }
 
 
@@ -154,9 +161,16 @@ ReentrancyGuardUpgradeable {
         }
 
         liquidity -= _value;
-        CurrencyHandler.sendERC20(currency, _withdrawer, _value);
+        CurrencyHandler.sendERC20(
+            currency,
+            _withdrawer,
+            _value
+        );
 
-        emit LiquidityWithdrawal(_withdrawer, _value);
+        emit LiquidityWithdrawal(
+            _withdrawer,
+            _value
+        );
     }
 
     /**
@@ -175,11 +189,11 @@ ReentrancyGuardUpgradeable {
     nonReentrant {
         CurrencyHandler.receiveERC20(currency, _value);
 
-        uint256 fee = _value.scale(TreasuryConstant.OPERATION_FUND_RATE, CommonConstant.RATE_MAX_SUBUNIT);
+        uint256 operationAllocation = _value.scale(TreasuryConstant.OPERATION_FUND_RATE, CommonConstant.RATE_MAX_SUBUNIT);
 
-        operationFund += fee;
-        liquidity += _value - fee;
+        operationFund += operationAllocation;
+        liquidity += _value - operationAllocation;
 
-        emit LiquidityProvision(msg.sender, _value, fee);
+        emit LiquidityProvision(msg.sender, _value, operationAllocation);
     }
 }

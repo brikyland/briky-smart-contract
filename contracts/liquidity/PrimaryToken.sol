@@ -32,10 +32,29 @@ import {PrimaryTokenStorage} from "../liquidity/storages/PrimaryTokenStorage.sol
 /**
  *  @author Briky Team
  *
- *  @notice TODO: The `PrimaryToken` contract is the primary ERC-20 token of the Briky ecosystem.
- *
- *  @dev    ERC-20 tokens are identified by their contract addresses.
- *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
+ *  @notice Interface for contract `PrimaryToken`.
+ *  @notice The `PrimaryToken` is an ERC-20 token circulating as the exclusive currency of the system.
+ *  @notice The maximum supply is 20,000,000,000 tokens.
+ *  @notice Tokens are distributed through 5 rounds:
+ *          -   Backer Round:         100,000,000 tokens
+ *          -   Seed Round:            50,000,000 tokens
+ *          -   Private Sale #1:       30,000,000 tokens
+ *          -   Private Sale #2:       50,000,000 tokens
+ *          -   Public Sale:          500,000,000 tokens
+ *  @notice Tokens are reserved in 3 funds:
+ *          -   Core Team:          1,000,000,000 tokens
+ *          -   Market Marker:      2,270,000,000 tokens
+ *          -   External Treasury:  1,000,000,000 tokens
+ *  @notice Tokens are periodically rewarded in 3 staking pools:
+ *          -   Staking pool #1:    Culminates in wave  750, 2,000,000 tokens each wave.
+ *          -   Staking pool #2:    Culminates in wave 1500, 3,000,000 tokens each wave.
+ *          -   Staking pool #3:    Culminates in wave 2250, 4,000,000 tokens each wave.
+ *  @notice After all three staking pool have culminated, the staking pool #3 may still fetch new wave with the reward capped
+ *          at the lesser between its standard wave reward and the remaining mintable tokens to reach the maximum supply cap.
+ *  @notice Token liquidation is backed by a stablecoin treasury. Holders may burn tokens to redeem value once liquidation is
+ *          unlocked.
+ *  @notice Exclusive Discount: `15% * (1 + globalStake/totalSupply)`.
+ *          Note:   `globalStake` is the total tokens staked in 3 pools.
  */
 contract PrimaryToken is
 PrimaryTokenStorage,
@@ -75,7 +94,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _admin                      `Admin` contract address.
      *  @param  _name                       Token name.
      *  @param  _symbol                     Token symbol.
-     *  @param  _liquidationUnlockedAt      Timestamp to unlock liquidation.
+     *  @param  _liquidationUnlockedAt      Liquidation unlock timestamp.
      */
     function initialize(
         address _admin,
@@ -98,17 +117,18 @@ ReentrancyGuardUpgradeable {
         /// Configuration
         liquidationUnlockedAt = _liquidationUnlockedAt;
 
+        /// @dev    Initially mint 5,000,000,000 tokens for 5 distribution rounds and 3 funds.
         unchecked {
             _mint(
                 address(this),
                 PrimaryTokenConstant.BACKER_ROUND_ALLOCATION
-                + PrimaryTokenConstant.CORE_TEAM_ALLOCATION
-                + PrimaryTokenConstant.EXTERNAL_TREASURY_ALLOCATION
-                + PrimaryTokenConstant.MARKET_MAKER_ALLOCATION
+                + PrimaryTokenConstant.SEED_ROUND_ALLOCATION
                 + PrimaryTokenConstant.PRIVATE_SALE_1_ALLOCATION
                 + PrimaryTokenConstant.PRIVATE_SALE_2_ALLOCATION
                 + PrimaryTokenConstant.PUBLIC_SALE_ALLOCATION
-                + PrimaryTokenConstant.SEED_ROUND_ALLOCATION
+                + PrimaryTokenConstant.CORE_TEAM_ALLOCATION
+                + PrimaryTokenConstant.MARKET_MAKER_ALLOCATION
+                + PrimaryTokenConstant.EXTERNAL_TREASURY_ALLOCATION
             );
         }
     }
@@ -119,7 +139,7 @@ ReentrancyGuardUpgradeable {
      *  @notice Update the treasury contract.
      *
      *          Name            Description
-     *  @param  _treasury       New treasury contract address.
+     *  @param  _treasury       `Treasury` contract address.
      *  @param  _signatures     Array of admin signatures.
      * 
      *  @dev    Administrative operator.
@@ -143,14 +163,14 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Update stake token contracts.
+     *  @notice Update staking pools contract.
      *
      *          Name            Description
-     *  @param  _stakeToken1    New stake token #1 contract address.
-     *  @param  _stakeToken2    New stake token #2 contract address.
-     *  @param  _stakeToken3    New stake token #3 contract address.
+     *  @param  _stakeToken1    `StakeToken` contract address #1.
+     *  @param  _stakeToken2    `StakeToken` contract address #2.
+     *  @param  _stakeToken3    `StakeToken` contract address #3.
      *  @param  _signatures     Array of admin signatures.
-     * 
+     *
      *  @dev    Administrative operator.
      */
     function updateStakeTokens(
@@ -180,33 +200,8 @@ ReentrancyGuardUpgradeable {
         stakeToken3 = _stakeToken3;
     }
 
-
-    /* --- Query --- */
     /**
-     *  @return Total amount of tokens staked across all stake token contracts.
-     */
-    function totalStake() public view returns (uint256) {
-        return (stakeToken1 != address(0) ? IERC20Upgradeable(stakeToken1).totalSupply() : 0)
-            + (stakeToken2 != address(0) ? IERC20Upgradeable(stakeToken2).totalSupply() : 0)
-            + (stakeToken3 != address(0) ? IERC20Upgradeable(stakeToken3).totalSupply() : 0);
-    }
-
-    /**
-     *  @return Whether stake rewarding has reached its culminating wave for the calling stake token contract.
-     *
-     *  @dev    Permission: Stake token contracts only.
-     */
-    function isStakeRewardingCulminated(address _stakeToken) external view returns (bool) {
-        if (_stakeToken == stakeToken1) return stakeToken1Waves >= PrimaryTokenConstant.STAKE_1_CULMINATING_WAVE;
-        if (_stakeToken == stakeToken2) return stakeToken2Waves >= PrimaryTokenConstant.STAKE_2_CULMINATING_WAVE;
-        if (_stakeToken == stakeToken3) return stakeToken3Waves >= PrimaryTokenConstant.STAKE_3_CULMINATING_WAVE;
-        revert InvalidStakeToken();
-    }
-
-
-    /* --- Command --- */
-    /**
-     *  @notice Unlock tokens allocated for Backer Round to a distributor.
+     *  @notice Unlock token allocation of the Backer Round to a distributor.
      *
      *          Name            Description
      *  @param  _distributor    Distributor address.
@@ -243,7 +238,7 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Unlock tokens allocated for Seed Round to a distributor.
+     *  @notice Unlock token allocation of the Seed Round to a distributor.
      *
      *          Name            Description
      *  @param  _distributor    Distributor address.
@@ -254,8 +249,7 @@ ReentrancyGuardUpgradeable {
     function unlockForSeedRound(
         address _distributor,
         bytes[] calldata _signatures
-    ) external
-    nonReentrant {
+    ) external {
         IAdmin(admin).verifyAdminSignatures(
             abi.encode(
                 address(this),
@@ -280,7 +274,7 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Unlock tokens allocated for Private Sale #1 to a distributor.
+     *  @notice Unlock token allocation of the Private Sale #1 to a distributor.
      *
      *          Name            Description
      *  @param  _distributor    Distributor address.
@@ -291,8 +285,7 @@ ReentrancyGuardUpgradeable {
     function unlockForPrivateSale1(
         address _distributor,
         bytes[] calldata _signatures
-    ) external
-    nonReentrant {
+    ) external {
         IAdmin(admin).verifyAdminSignatures(
             abi.encode(
                 address(this),
@@ -317,7 +310,7 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Unlock tokens allocated for Private Sale #2 to a distributor.
+     *  @notice Unlock token allocation of the Private Sale #2 to a distributor.
      *
      *          Name            Description
      *  @param  _distributor    Distributor address.
@@ -328,8 +321,7 @@ ReentrancyGuardUpgradeable {
     function unlockForPrivateSale2(
         address _distributor,
         bytes[] calldata _signatures
-    ) external
-    nonReentrant {
+    ) external {
         IAdmin(admin).verifyAdminSignatures(
             abi.encode(
                 address(this),
@@ -355,7 +347,7 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Unlock tokens allocated for Public Sale to a distributor.
+     *  @notice Unlock token allocation of the Public Sale to a distributor.
      *
      *          Name            Description
      *  @param  _distributor    Distributor address.
@@ -366,8 +358,7 @@ ReentrancyGuardUpgradeable {
     function unlockForPublicSale(
         address _distributor,
         bytes[] calldata _signatures
-    ) external
-    nonReentrant {
+    ) external {
         IAdmin(admin).verifyAdminSignatures(
             abi.encode(
                 address(this),
@@ -392,7 +383,7 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Unlock tokens allocated for Core Team to a distributor.
+     *  @notice Unlock token allocation of the Core Team to a distributor.
      *
      *          Name            Description
      *  @param  _distributor    Distributor address.
@@ -403,8 +394,7 @@ ReentrancyGuardUpgradeable {
     function unlockForCoreTeam(
         address _distributor,
         bytes[] calldata _signatures
-    ) external
-    nonReentrant {
+    ) external {
         IAdmin(admin).verifyAdminSignatures(
             abi.encode(
                 address(this),
@@ -429,7 +419,7 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Unlock tokens allocated for Market Maker to a distributor.
+     *  @notice Unlock token allocation of the Market Maker to a distributor.
      *
      *          Name            Description
      *  @param  _distributor    Distributor address.
@@ -440,8 +430,7 @@ ReentrancyGuardUpgradeable {
     function unlockForMarketMaker(
         address _distributor,
         bytes[] calldata _signatures
-    ) external
-    nonReentrant {
+    ) external {
         IAdmin(admin).verifyAdminSignatures(
             abi.encode(
                 address(this),
@@ -466,7 +455,7 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Unlock tokens allocated for External Treasury to a distributor.
+     *  @notice Unlock token allocation of the External Treasury to a distributor.
      *
      *          Name            Description
      *  @param  _distributor    Distributor address.
@@ -477,8 +466,7 @@ ReentrancyGuardUpgradeable {
     function unlockForExternalTreasury(
         address _distributor,
         bytes[] calldata _signatures
-    ) external
-    nonReentrant {
+    ) external {
         IAdmin(admin).verifyAdminSignatures(
             abi.encode(
                 address(this),
@@ -502,8 +490,34 @@ ReentrancyGuardUpgradeable {
         emit ExternalTreasuryTokensUnlock();
     }
 
+
+    /* --- Query --- */
     /**
-     *  @notice Contribute liquidity funded from Backer Round.
+     *  @return Total token amount staked in all staking pools.
+     */
+    function totalStake() public view returns (uint256) {
+        return (stakeToken1 != address(0) ? IERC20Upgradeable(stakeToken1).totalSupply() : 0)
+            + (stakeToken2 != address(0) ? IERC20Upgradeable(stakeToken2).totalSupply() : 0)
+            + (stakeToken3 != address(0) ? IERC20Upgradeable(stakeToken3).totalSupply() : 0);
+    }
+
+    /**
+     *          Name            Description
+     *  @param  _stakeToken     Staking pool contract address.
+     *
+     *  @return Whether the staking pool has culminated.
+     */
+    function isStakeRewardingCulminated(address _stakeToken) external view returns (bool) {
+        if (_stakeToken == stakeToken1) return stakeToken1Waves >= PrimaryTokenConstant.STAKE_1_CULMINATING_WAVE;
+        if (_stakeToken == stakeToken2) return stakeToken2Waves >= PrimaryTokenConstant.STAKE_2_CULMINATING_WAVE;
+        if (_stakeToken == stakeToken3) return stakeToken3Waves >= PrimaryTokenConstant.STAKE_3_CULMINATING_WAVE;
+        revert InvalidStakeToken();
+    }
+
+
+    /* --- Command --- */
+    /**
+     *  @notice Contribute liquidity funded from Backer Round to the treasury.
      *
      *          Name          Description
      *  @param  _liquidity    Contributed liquidity.
@@ -512,6 +526,10 @@ ReentrancyGuardUpgradeable {
         uint256 _liquidity
     ) external
     nonReentrant {
+        if (!backerRoundUnlocked) {
+            revert NotUnlocked();
+        }
+
         _contributeLiquidity(_liquidity);
 
         unchecked {
@@ -522,7 +540,7 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Contribute liquidity funded from Seed Round.
+     *  @notice Contribute liquidity funded from Seed Round to the treasury.
      *
      *          Name          Description
      *  @param  _liquidity    Contributed liquidity.
@@ -531,6 +549,10 @@ ReentrancyGuardUpgradeable {
         uint256 _liquidity
     ) external
     nonReentrant {
+        if (!seedRoundUnlocked) {
+            revert NotUnlocked();
+        }
+
         _contributeLiquidity(_liquidity);
 
         unchecked {
@@ -541,7 +563,7 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Contribute liquidity funded from Private Sale #1.
+     *  @notice Contribute liquidity funded from Private Sale #1 to the treasury.
      *
      *          Name          Description
      *  @param  _liquidity    Contributed liquidity.
@@ -550,6 +572,10 @@ ReentrancyGuardUpgradeable {
         uint256 _liquidity
     ) external
     nonReentrant {
+        if (!privateSale1Unlocked) {
+            revert NotUnlocked();
+        }
+
         _contributeLiquidity(_liquidity);
 
         unchecked {
@@ -560,7 +586,7 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Contribute liquidity funded from Private Sale #2.
+     *  @notice Contribute liquidity funded from Private Sale #2 to the treasury.
      *
      *          Name          Description
      *  @param  _liquidity    Contributed liquidity.
@@ -569,6 +595,10 @@ ReentrancyGuardUpgradeable {
         uint256 _liquidity
     ) external
     nonReentrant {
+        if (!privateSale2Unlocked) {
+            revert NotUnlocked();
+        }
+
         _contributeLiquidity(_liquidity);
 
         unchecked {
@@ -579,7 +609,7 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Contribute liquidity funded from Public Sale.
+     *  @notice Contribute liquidity funded from Public Sale to the treasury.
      *
      *          Name          Description
      *  @param  _liquidity    Contributed liquidity.
@@ -588,6 +618,10 @@ ReentrancyGuardUpgradeable {
         uint256 _liquidity
     ) external
     nonReentrant {
+        if (!publicSaleUnlocked) {
+            revert NotUnlocked();
+        }
+
         _contributeLiquidity(_liquidity);
 
         unchecked {
@@ -598,7 +632,7 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Contribute liquidity funded from Market Maker.
+     *  @notice Contribute liquidity funded from Market Maker to the treasury.
      *
      *          Name          Description
      *  @param  _liquidity    Contributed liquidity.
@@ -607,6 +641,10 @@ ReentrancyGuardUpgradeable {
         uint256 _liquidity
     ) external
     nonReentrant {
+        if (!marketMakerTokensUnlocked) {
+            revert NotUnlocked();
+        }
+
         _contributeLiquidity(_liquidity);
 
         unchecked {
@@ -617,7 +655,7 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Contribute liquidity funded from External Treasury.
+     *  @notice Contribute liquidity funded from External Treasury to the treasury.
      *
      *          Name          Description
      *  @param  _liquidity    Contributed liquidity.
@@ -626,6 +664,10 @@ ReentrancyGuardUpgradeable {
         uint256 _liquidity
     ) external
     nonReentrant {
+        if (!externalTreasuryTokensUnlocked) {
+            revert NotUnlocked();
+        }
+
         _contributeLiquidity(_liquidity);
 
         unchecked {
@@ -636,11 +678,10 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Contribute liquidity funded from a stake token contract.
+     *  @notice Contribute liquidity funded from a staking pool to the treasury.
      *
      *          Name          Description
      *  @param  _liquidity    Contributed liquidity.
-     *  @param  _stakeToken   Stake token address.
      */
     function contributeLiquidityFromStakeToken(
         uint256 _liquidity
@@ -659,19 +700,20 @@ ReentrancyGuardUpgradeable {
                 stakeToken3Contribution += _liquidity;
                 emit LiquidityContributionFromStakeToken3(_liquidity);
             } else {
-                revert Unauthorized();
+                revert InvalidStakeToken();
             }
         }
     }
 
+
     /**
-     *  @notice Mint reward tokens for stake token contracts based on their wave progression.
+     *  @notice Mint reward tokens for the sending staking pool based on its wave progression.
+     *  @notice After all three staking pool have culminated, the staking pool #3 may still fetch new wave with the reward capped
+     *          at the lesser between its standard wave reward and the remaining mintable tokens to reach the maximum supply cap.
      *
-     *  @return Amount of tokens minted as reward.
+     *  @return Staking reward.
      *
-     *  @dev    Permission: Stake token contracts only.
-     *  @dev    Each stake token contract has different reward amounts and culminating waves.
-     *  @dev    Stake token #3 has dynamic rewards based on remaining supply.
+     *  @dev    Permission: Staking pools.
      */
     function mintForStake() external returns (uint256) {
         if (msg.sender == stakeToken1) {
@@ -682,9 +724,15 @@ ReentrancyGuardUpgradeable {
                 stakeToken1Waves += 1;
             }
 
-            _mint(msg.sender, PrimaryTokenConstant.STAKE_1_WAVE_REWARD);
+            _mint(
+                msg.sender,
+                PrimaryTokenConstant.STAKE_1_WAVE_REWARD
+            );
 
-            emit Stake1WaveReward(stakeToken1Waves, PrimaryTokenConstant.STAKE_1_WAVE_REWARD);
+            emit Stake1WaveReward(
+                stakeToken1Waves,
+                PrimaryTokenConstant.STAKE_1_WAVE_REWARD
+            );
 
             return PrimaryTokenConstant.STAKE_1_WAVE_REWARD;
         } else if (msg.sender == stakeToken2) {
@@ -695,44 +743,58 @@ ReentrancyGuardUpgradeable {
                 stakeToken2Waves += 1;
             }
 
-            _mint(msg.sender, PrimaryTokenConstant.STAKE_2_WAVE_REWARD);
+            _mint(
+                msg.sender,
+                PrimaryTokenConstant.STAKE_2_WAVE_REWARD
+            );
 
-            emit Stake2WaveReward(stakeToken2Waves, PrimaryTokenConstant.STAKE_2_WAVE_REWARD);
+            emit Stake2WaveReward(
+                stakeToken2Waves,
+                PrimaryTokenConstant.STAKE_2_WAVE_REWARD
+            );
 
             return PrimaryTokenConstant.STAKE_2_WAVE_REWARD;
         } else if (msg.sender == stakeToken3) {
-            uint256 amount = PrimaryTokenConstant.MAX_SUPPLY - totalSupply();
-            if (amount == 0) {
+            uint256 reward = PrimaryTokenConstant.MAX_SUPPLY - totalSupply();
+            if (reward == 0) {
                 revert SupplyCapReached();
             }
+
             unchecked {
                 stakeToken3Waves += 1;
             }
 
-            amount = amount > PrimaryTokenConstant.STAKE_3_WAVE_REWARD
+            /// @dev    Reward is the lesser between standard wave reward and the remaining mintable tokens to reach the
+            ///         maximum supply cap.
+            reward = reward > PrimaryTokenConstant.STAKE_3_WAVE_REWARD
                 ? PrimaryTokenConstant.STAKE_3_WAVE_REWARD
-                : amount;
+                : reward;
 
-            _mint(msg.sender, amount);
+            _mint(
+                msg.sender,
+                reward
+            );
 
-            emit DailyStake3Mint(stakeToken3Waves, amount);
+            emit Stake3WaveReward(
+                stakeToken3Waves,
+                reward
+            );
 
-            return amount;
+            return reward;
         } else {
             revert Unauthorized();
         }
     }
 
+
     /**
-     *  @notice Exchange tokens for proportional liquidity from the treasury.
+     *  @notice Liquidate tokens for proportional liquidity from the treasury.
+     *  @notice Liquidate only after liquidation unlock timestamp.
      *
-     *          Name            Description
-     *  @param  _amount         Amount of tokens to liquidate.
+     *          Name        Description
+     *  @param  _amount     Liquidated token amount.
      *
-     *  @return Liquidity amount received from treasury.
-     *
-     *  @dev    Liquidation is only available after the specified unlock timestamp.
-     *  @dev    The liquidity amount is calculated proportionally based on total supply.
+     *  @return Liquidated value.
      */
     function liquidate(
         uint256 _amount
@@ -748,21 +810,30 @@ ReentrancyGuardUpgradeable {
 
         uint256 liquidity = treasuryContract.liquidity().scale(_amount, totalSupply());
 
-        treasuryContract.withdrawLiquidity(msg.sender, liquidity);
+        treasuryContract.withdrawLiquidity(
+            msg.sender,
+            liquidity
+        );
+
+        /// @dev    Burn liquidated tokens.
         _burn(msg.sender, _amount);
 
-        emit Liquidation(msg.sender, _amount, liquidity);
+        emit Liquidation(
+            msg.sender,
+            _amount,
+            liquidity
+        );
 
         return liquidity;
     }
 
     /**
-     *  @return rate            Exclusive discount rate for holders based on total stake and supply.
+     *  @notice Exclusive Discount: `15% * (1 + globalStake/totalSupply)`.
+     *          Note:   `globalStake` is the total tokens staked in 3 pools.
      *
-     *  @dev    The discount rate is calculated using base discount scaled by the ratio of
-     *          total stake plus total supply to total supply.
+     *  @return Discount rate for exclusive token.
      */
-    function exclusiveDiscount() external view returns (Rate memory rate) {
+    function exclusiveDiscount() external view returns (Rate memory) {
         return Rate(
             PrimaryTokenConstant.BASE_DISCOUNT.scale(totalStake() + totalSupply(), totalSupply()),
             CommonConstant.RATE_DECIMALS
@@ -772,30 +843,34 @@ ReentrancyGuardUpgradeable {
 
     /* --- Helper --- */
     /**
-     *  @notice Hook to be called before any token transfer.
+     *  @notice Contribute liquidity to the treasury.
      *
      *          Name            Description
-     *  @param  _from           Sender address.
-     *  @param  _to             Receiver address.
-     *  @param  _amount         Transfer amount.
+     *  @param  _liquidity      Contributed liquidity.
      */
-    function _beforeTokenTransfer(
-        address _from,
-        address _to,
-        uint256 _amount
-    ) internal override(
-        ERC20Upgradeable,
-        ERC20PausableUpgradeable
-    ) {
-        super._beforeTokenTransfer(_from, _to, _amount);
+    function _contributeLiquidity(
+        uint256 _liquidity
+    ) internal {
+        address treasuryAddress = treasury;
+        address currency = ITreasury(treasuryAddress).currency();
+        CurrencyHandler.receiveERC20(
+            currency,
+            _liquidity
+        );
+        CurrencyHandler.allowERC20(
+            currency,
+            treasuryAddress,
+            _liquidity
+        );
+        ITreasury(treasuryAddress).provideLiquidity(_liquidity);
     }
 
     /**
-     *  @notice Internal mint function.
+     *  @notice Mint new tokens to an account.
      *
      *          Name            Description
-     *  @param  _account        Recipient address.
-     *  @param  _amount         Amount to mint.
+     *  @param  _account        Receiver address.
+     *  @param  _amount         Minted amount.
      */
     function _mint(
         address _account,
@@ -808,22 +883,21 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Internal function to contribute liquidity to the treasury.
+     *  @notice Hook to be called before any token transfer.
      *
      *          Name            Description
-     *  @param  _liquidity      Amount of liquidity to contribute.
-     *
-     *  @dev    Receives currency from the message sender and provides it to the treasury contract.
+     *  @param  _from           Sender address.
+     *  @param  _to             Receiver address.
+     *  @param  _amount         Transferred amount.
      */
-    function _contributeLiquidity(
-        uint256 _liquidity
-    ) internal {
-        address treasuryAddress = treasury;
-
-        address currency = ITreasury(treasuryAddress).currency();
-        CurrencyHandler.receiveERC20(currency, _liquidity);
-
-        CurrencyHandler.allowERC20(currency, treasuryAddress, _liquidity);
-        ITreasury(treasuryAddress).provideLiquidity(_liquidity);
+    function _beforeTokenTransfer(
+        address _from,
+        address _to,
+        uint256 _amount
+    ) internal override(
+        ERC20Upgradeable,
+        ERC20PausableUpgradeable
+    ) {
+        super._beforeTokenTransfer(_from, _to, _amount);
     }
 }

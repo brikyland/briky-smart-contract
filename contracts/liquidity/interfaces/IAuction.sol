@@ -8,73 +8,53 @@ import {ICommon} from "../../common/interfaces/ICommon.sol";
  *  @author Briky Team
  *
  *  @notice Interface for contract `Auction`.
- *  @notice The `Auction` contract manages token distribution through a public auction mechanism where participants
- *          deposit currency to receive primary tokens with vesting schedules and staking options.
- *
- *  @dev    The auction allows participants to deposit currency during the auction period to receive an allocation
- *          of primary tokens proportional to their contribution. After the auction ends, participants can withdraw
- *          their allocated tokens with a vesting schedule or stake them directly into stake token contracts.
- *  @dev    Token allocation is calculated based on the participant's deposit proportion of the total deposits.
- *          Vesting allows gradual token release over time, while staking provides immediate utility in the ecosystem.
- *  @dev    The auction integrates with the treasury system to contribute liquidity from participant deposits.
- *  @dev    ERC-20 tokens are identified by their contract addresses.
- *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
+ *  @notice The `Auction` contract facilitates public distribution of `PrimaryToken`. Accounts can deposit to acquire tokens,
+ *          which are distributed proportionally to their deposit and can be withdrawn with a continuous vesting mechanism. All
+ *          the deposit will be contributed to the liquidity of the `Treasury`.
+ *  @notice Token allocations vest evenly on a per-second basis after the auction ends.
+ *  @notice When the staking pools are opened, accounts that have unwithdrawn allocation can stake all their remain tokens.
+ *  @notice Auction currency is the stablecoin currency of the treasury.
  */
 interface IAuction is ICommon {
     /** ===== EVENT ===== **/
-    /* --- Configuration --- */
+    /* --- Auction --- */
     /**
-     *  @notice Emitted when stake token contract addresses are updated.
-     *
-     *          Name            Description
-     *  @param  newAddress1     New stake token #1 contract address.
-     *  @param  newAddress2     New stake token #2 contract address.
-     *  @param  newAddress3     New stake token #3 contract address.
-     */
-    event StakeTokensUpdate(
-        address newAddress1,
-        address newAddress2,
-        address newAddress3
-    );
-
-    /* --- Auction Operations --- */
-    /**
-     *  @notice Emitted when a participant deposits currency into the auction.
+     *  @notice Emitted when an account deposits.
      *
      *          Name        Description
-     *  @param  account     Participant address.
-     *  @param  value       Amount of currency deposited.
+     *  @param  depositor   EVM address.
+     *  @param  value       Deposited value.
      */
     event Deposit(
-        address indexed account,
+        address indexed depositor,
         uint256 value
     );
 
     /**
-     *  @notice Emitted when a participant stakes their allocated tokens.
+     *  @notice Emitted when an account stakes unwithdrawn allocation.
      *
      *          Name        Description
-     *  @param  account     Participant address.
-     *  @param  stake1      Amount staked in stake token #1.
-     *  @param  stake2      Amount staked in stake token #2.
-     *  @param  stake3      Amount staked in stake token #3.
+     *  @param  staker      Staker address.
+     *  @param  stake1      Staked amount for staking pool #1.
+     *  @param  stake2      Staked amount for staking pool #2.
+     *  @param  stake3      Staked amount for staking pool #3.
      */
     event Stake(
-        address indexed account,
+        address indexed staker,
         uint256 stake1,
         uint256 stake2,
         uint256 stake3
     );
 
     /**
-     *  @notice Emitted when a participant withdraws their vested tokens.
+     *  @notice Emitted when an account withdraws vested allocation.
      *
      *          Name        Description
-     *  @param  account     Participant address.
-     *  @param  amount      Amount of tokens withdrawn.
+     *  @param  withdrawer  Withdrawer address.
+     *  @param  amount      Withdrawn amount.
      */
     event Withdrawal(
-        address indexed account,
+        address indexed withdrawer,
         uint256 amount
     );
 
@@ -91,27 +71,28 @@ interface IAuction is ICommon {
     /* --- Dependency --- */
     /**
      *          Name            Description
-     *  @return primaryToken    Primary token contract address.
+     *  @return primaryToken    `PrimaryToken` contract address.
      */
     function primaryToken() external view returns (address primaryToken);
 
     /**
      *          Name            Description
-     *  @return stakeToken1     Stake token #1 contract address.
+     *  @return stakeToken1     `StakeToken` contract address #1.
      */
     function stakeToken1() external view returns (address stakeToken1);
 
     /**
      *          Name            Description
-     *  @return stakeToken2     Stake token #2 contract address.
+     *  @return stakeToken2     `StakeToken` contract address #2.
      */
     function stakeToken2() external view returns (address stakeToken2);
 
     /**
      *          Name            Description
-     *  @return stakeToken3     Stake token #3 contract address.
+     *  @return stakeToken3     `StakeToken` contract address #3.
      */
     function stakeToken3() external view returns (address stakeToken3);
+
 
     /* --- Query --- */
     /**
@@ -120,29 +101,31 @@ interface IAuction is ICommon {
      */
     function endAt() external view returns (uint256 endAt);
 
+
     /**
      *          Name            Description
-     *  @return totalDeposit    Total amount of currency deposited by all participants.
+     *  @return totalDeposit    Total deposited value.
      */
     function totalDeposit() external view returns (uint256 totalDeposit);
 
     /**
-     *          Name        Description
-     *  @return totalToken  Total amount of primary tokens available for distribution.
+     *          Name            Description
+     *  @return totalToken      Total tokens to auction.
      */
     function totalToken() external view returns (uint256 totalToken);
 
+
     /**
      *          Name                Description
-     *  @return vestingDuration     Duration over which tokens are vested after auction ends.
+     *  @return vestingDuration     Vesting duration after the auction ends.
      */
     function vestingDuration() external view returns (uint256 vestingDuration);
 
+
     /**
      *          Name        Description
-     *  @param  account     Participant address.
-     *
-     *  @return deposit     Amount of currency deposited by the participant.
+     *  @param  account     EVM address.
+     *  @return deposit     Deposited value of the account.
      */
     function deposits(
         address account
@@ -150,9 +133,8 @@ interface IAuction is ICommon {
 
     /**
      *          Name        Description
-     *  @param  account     Participant address.
-     *
-     *  @return amount      Amount of tokens already withdrawn by the participant.
+     *  @param  account     EVM address.
+     *  @return amount      Withdrawn tokens of the account.
      */
     function withdrawnAmount(
         address account
@@ -160,9 +142,8 @@ interface IAuction is ICommon {
 
     /**
      *          Name        Description
-     *  @param  account     Participant address.
-     *
-     *  @return amount      Total token allocation for the participant based on their deposit proportion.
+     *  @param  account     EVM address.
+     *  @return amount      Tokens allocated in proportion to deposit of the account relative to all others.
      */
     function allocationOf(
         address account
@@ -171,29 +152,24 @@ interface IAuction is ICommon {
 
     /* --- Command --- */
     /**
-     *  @notice Deposit currency into the auction to receive token allocation.
+     *  @notice Deposit value into the auction.
+     *  @notice Deposit only before the auction ends.
      *
      *          Name        Description
-     *  @param  value       Amount of currency to deposit.
-     *
-     *  @dev    Deposits are only accepted during the auction period (before endAt).
-     *  @dev    Deposited currency is contributed to the treasury as liquidity.
+     *  @param  value       Deposited value.
      */
     function deposit(
         uint256 value
     ) external;
 
     /**
-     *  @notice Stake allocated tokens directly into stake token contracts.
+     *  @notice Stake unwithdrawn tokens to staking pools.
+     *  @notice Stake only when staking pools are opened and assigned.
      *
      *          Name        Description
-     *  @param  stake1      Amount to stake in stake token #1.
-     *  @param  stake2      Amount to stake in stake token #2.
-     *
-     *  @return stake3      Amount automatically staked in stake token #3 (remaining allocation).
-     *
-     *  @dev    Staking is only available after the auction ends.
-     *  @dev    The remaining allocation after stake1 and stake2 is automatically staked in stake token #3.
+     *  @param  stake1      Staked amount for staking pool #1.
+     *  @param  stake2      Staked amount for staking pool #2.
+     *  @return stake3      Staked amount for staking pool #3, which also is the remain tokens.
      */
     function stake(
         uint256 stake1,
@@ -201,12 +177,11 @@ interface IAuction is ICommon {
     ) external returns (uint256 stake3);
 
     /**
-     *  @notice Withdraw vested tokens from the participant's allocation.
+     *  @notice Withdraw vested tokens.
+     *  @notice Withdraw only after auction ends.
      *
-     *  @return amount      Amount of tokens withdrawn based on vesting schedule.
-     *
-     *  @dev    Withdrawal is only available after the auction ends.
-     *  @dev    Tokens are released gradually based on the vesting duration.
+     *          Name        Description
+     *  @return amount      Withdrawn amount.
      */
     function withdraw() external returns (uint256 amount);
 }

@@ -9,7 +9,7 @@ pragma solidity ^0.8.20;
 library PrimaryTokenConstant {
     /** ===== CONSTANT ===== **/
     /// @notice Base discount rate coefficient.
-    /// @dev    15%
+    /// @dev    Percentage: 15%
     uint256 internal constant BASE_DISCOUNT = 0.15 ether;
 
 

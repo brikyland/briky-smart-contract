@@ -17,6 +17,7 @@ IAuction {
     /// @dev    withdrawnAmount[account]
     mapping(address => uint256) public withdrawnAmount;
 
+
     uint256 public totalToken;
     uint256 public totalDeposit;
 

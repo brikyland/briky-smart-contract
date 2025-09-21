@@ -142,8 +142,8 @@ IAssetToken {
      *  @param  projectId       Project identifier.
      *  @param  estateId        Estate token identifier.
      *  @param  totalSupply     Total supply.
-     *  @param  custodian       Custodian address.
-     *  @param  broker          Broker address.
+     *  @param  custodian       Associated custodian address.
+     *  @param  broker          Associated broker address.
      */
     event ProjectTokenization(
         uint256 indexed projectId,
@@ -165,12 +165,6 @@ IAssetToken {
 
     /** ===== FUNCTION ===== **/
     /* --- Dependency --- */
-    /**
-     *          Name            Description
-     *  @return estateToken     `EstateToken` contract address.
-     */
-    function estateToken() external view returns (address estateToken);
-
     /**
      *          Name            Description
      *  @return feeReceiver     `FeeReceiver` contract address.
@@ -274,7 +268,7 @@ IAssetToken {
      *  @param  zone        Zone code.
      *  @param  launchId    Launch identifier from the launchpad contract.
      *  @param  initiator   Initiator address for the project.
-     *  @param  uri         URI containing project metadata.
+     *  @param  uri         URI of project metadata.
      *  @return projectId   New project identifier.
      *
      *  @dev    Permission: Launchpads.

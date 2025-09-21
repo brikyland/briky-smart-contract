@@ -24,8 +24,8 @@ import {IProjectLaunchpad} from "./IProjectLaunchpad.sol";
  *  @dev    Implementation involves server-side support.
  *  @dev    ERC-20 tokens are identified by their contract addresses.
  *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
- *  @dev    Quantities are expressed in absolute units. Scale these values by `10 ** IAssetToken(projectToken()).decimals() ` to obtain
- *          the correct amounts under the `IAssetToken` convention.
+ *  @dev    Quantities are expressed in absolute units. Scale these values by `10 ** IAssetToken(projectToken).decimals()` to
+ *          obtain the correct amounts under the `IAssetToken` convention.
  */
 interface IPrestigePad is
 IPrestigePadLaunch,
@@ -148,7 +148,7 @@ IProjectLaunchpad {
      *  @param  raisedQuantity      Total contributed quantity.
      *  @param  contribution        Total contributed value.
      *  @param  fee                 Tokenizing fee.
-     *  @param  cashbackBaseAmount  Fraction of total contribution.
+     *  @param  cashbackBaseAmount  Cashback derived from the contribution.
      */
     event LaunchCurrentRoundConfirmation(
         uint256 indexed launchId,
@@ -189,7 +189,7 @@ IProjectLaunchpad {
      *          Name                    Description
      *  @param  launchId                Launch identifier.
      *  @param  roundId                 Round identifier.
-     *  @param  cashbackFundId          Fund identifier for cashback.
+     *  @param  cashbackFundId          Cashback fund identifier.
      *  @param  raiseStartsAt           When the raise starts.
      *  @param  raiseEndsAt             When the raise ends.
      */
@@ -400,7 +400,7 @@ IProjectLaunchpad {
      *  @param  projectURI          URI of project metadata.
      *  @param  launchURI           URI of launch metadata.
      *  @param  initialQuantity     Initial quantity of tokens to be minted for the initiator.
-     *  @param  feeRate             Fraction of raised value charged as fee, applied across all rounds.
+     *  @param  feeRate             Fraction of raised value charged as fee, applied for all rounds.
      *  @param  validation          Validation package from the validator.
      *  @return launchId            New launch identifier.
      *
@@ -505,8 +505,8 @@ IProjectLaunchpad {
      *  @param  launchId                Launch identifier.
      *  @param  cashbackThreshold       Minimum contributed quantity of an address to receive cashback.
      *  @param  cashbackBaseRate        Fraction of contribution to cashback.
-     *  @param  cashbackCurrencies      Array of extra currency addresses for cashback.
-     *  @param  cashbackDenominations   Array of extra currency denominations, respective to each extra currency.
+     *  @param  cashbackCurrencies      Array of extra currency addresses to cashback.
+     *  @param  cashbackDenominations   Array of extra currency denominations to cashback, respective to each extra currency.
      *  @param  raiseStartsAt           Raise start timestamp.
      *  @param  raiseDuration           Raise duration.
      *  @return index                   Index of the scheduled round.

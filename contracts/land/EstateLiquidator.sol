@@ -345,7 +345,10 @@ ReentrancyGuardUpgradeable {
                 );
             }
 
-            emit RequestApproval(_requestId, fee);
+            emit RequestApproval(
+                _requestId,
+                fee
+            );
 
             return true;
         }

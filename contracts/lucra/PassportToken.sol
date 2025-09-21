@@ -98,7 +98,10 @@ ReentrancyGuardUpgradeable {
         emit FeeUpdate(_fee);
 
         royaltyRate = _royaltyRate;
-        emit RoyaltyRateUpdate(Rate(_royaltyRate, CommonConstant.RATE_DECIMALS));
+        emit RoyaltyRateUpdate(Rate(
+            _royaltyRate,
+            CommonConstant.RATE_DECIMALS
+        ));
     }
 
 
@@ -127,7 +130,10 @@ ReentrancyGuardUpgradeable {
         baseURI = _uri;
 
         emit BaseURIUpdate(_uri);
-        emit BatchMetadataUpdate(1, tokenNumber);
+        emit BatchMetadataUpdate(
+            1,
+            tokenNumber
+        );
     }
 
     /**
@@ -180,7 +186,10 @@ ReentrancyGuardUpgradeable {
             revert InvalidRate();
         }
         royaltyRate = _royaltyRate;
-        emit RoyaltyRateUpdate(Rate(_royaltyRate, CommonConstant.RATE_DECIMALS));
+        emit RoyaltyRateUpdate(Rate(
+            _royaltyRate,
+            CommonConstant.RATE_DECIMALS
+        ));
     }
 
     /**

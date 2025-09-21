@@ -56,12 +56,19 @@ contract Airdrop {
         if (_currency == address(0)) {
             CurrencyHandler.receiveNative(total);
             for (uint256 i; i < _receivers.length; ++i) {
-                CurrencyHandler.sendNative(_receivers[i], _amounts[i]);
+                CurrencyHandler.sendNative(
+                    _receivers[i],
+                    _amounts[i]
+                );
             }
         } else {
             CurrencyHandler.receiveERC20(_currency, total);
             for (uint256 i; i < _receivers.length; ++i) {
-                CurrencyHandler.sendERC20(_currency, _receivers[i], _amounts[i]);
+                CurrencyHandler.sendERC20(
+                    _currency,
+                    _receivers[i],
+                    _amounts[i]
+                );
             }
         }
     }

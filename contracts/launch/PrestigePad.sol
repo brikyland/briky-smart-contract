@@ -46,8 +46,8 @@ import {ProjectTokenReceiver} from "./utilities/ProjectTokenReceiver.sol";
  *  @dev    Implementation involves server-side support.
  *  @dev    ERC-20 tokens are identified by their contract addresses.
  *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
- *  @dev    Quantities are expressed in absolute units. Scale these values by `10 ** IAssetToken(projectToken()).decimals() ` to obtain
- *          the correct amounts under the `IAssetToken` convention.
+ *  @dev    Quantities are expressed in absolute units. Scale these values by `10 ** IAssetToken(projectToken).decimals()` to
+ *          obtain the correct amounts under the `IAssetToken` convention.
  */
 contract PrestigePad is
 PrestigePadStorage,
@@ -574,8 +574,8 @@ ReentrancyGuardUpgradeable {
      *  @param  _launchId                   Launch identifier.
      *  @param  _cashbackThreshold          Minimum contributed quantity of an address to receive cashback.
      *  @param  _cashbackBaseRate           Fraction of contribution to cashback.
-     *  @param  _cashbackCurrencies         Array of extra currency addresses for cashback.
-     *  @param  _cashbackDenominations      Array of extra currency denominations, respective to each extra currency.
+     *  @param  _cashbackCurrencies         Array of extra currency addresses to cashback.
+     *  @param  _cashbackDenominations      Array of extra currency denominations to cashback, respective to each extra currency.
      *  @param  _raiseStartsAt              Raise start timestamp.
      *  @param  _raiseDuration              Raise duration.
      *
@@ -962,7 +962,11 @@ ReentrancyGuardUpgradeable {
 
         contributions[_roundId][msg.sender] = 0;
 
-        CurrencyHandler.sendCurrency(currency, msg.sender, value);
+        CurrencyHandler.sendCurrency(
+            currency,
+            msg.sender,
+            value
+        );
 
         emit ContributionWithdrawal(
             _roundId,

@@ -237,7 +237,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _rule               Rule to determine verdict.
      *  @param  _quorumRate         Fraction of total weight for quorum.
      *  @param  _duration           Voting duration.
-     *  @param  _admissionExpiry    Expiration for proposal adminssion.
+     *  @param  _admissionExpiry    Expiration for proposal admission.
      *  @param  _validation         Validation package from the validator.
      *
      *  @return New proposal identifier.
@@ -353,6 +353,7 @@ ReentrancyGuardUpgradeable {
         Validation calldata _validation
     ) external
     whenNotPaused
+    nonReentrant
     validProposal(_proposalId)
     validGovernor(proposals[_proposalId].governor)
     onlyRepresentative(_proposalId) {
@@ -798,7 +799,6 @@ ReentrancyGuardUpgradeable {
 
 
     /* --- Helper --- */
-
     /**
      *  @notice Evaluate the verdict of the vote of a proposal
      *

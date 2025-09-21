@@ -54,7 +54,7 @@ IValidatable {
      *  @param  rule                Rule to determine verdict.
      *  @param  quorumRate          Fraction of total weight for quorum.
      *  @param  duration            Voting duration.
-     *  @param  admissionExpiry     Expiration for proposal adminssion.
+     *  @param  admissionExpiry     Expiration for proposal admission.
      */
     event NewProposal(
         address indexed governor,
@@ -306,7 +306,7 @@ IValidatable {
      *  @param  rule                Rule to determine verdict.
      *  @param  quorumRate          Fraction of total weight for quorum.
      *  @param  duration            Voting duration.
-     *  @param  admissionExpiry     Expiration for proposal adminssion.
+     *  @param  admissionExpiry     Expiration for proposal admission.
      *  @param  validation          Validation package from the validator.
      *  @return proposalId          New proposal identifier.
      *

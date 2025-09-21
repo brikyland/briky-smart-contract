@@ -770,7 +770,7 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Mint new tokens for a project.
+     *  @notice Mint new tokens for a project to the launchpad contract.
      *
      *          Name            Description
      *  @param  _projectId      Project identifier.

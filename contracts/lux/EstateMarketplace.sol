@@ -19,8 +19,8 @@ import {AssetMarketplace} from "../lux/utilities/AssetMarketplace.sol";
  *
  *  @notice The `EstateMarketplace` contract hosts a marketplace for estate tokens.
  * 
- *  @dev    Each unit of asset token is represented in scaled form as `10 ** IAssetToken(collection).decimals()` following the convention of
- *          interface `IAssetToken`.
+ *  @dev    Each unit of asset token is represented in scaled form as `10 ** IAssetToken(collection).decimals()` following the
+ *          convention of interface `IAssetToken`.
  *  @dev    ERC-20 tokens are identified by their contract addresses.
  *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
  */

@@ -106,7 +106,10 @@ ReentrancyGuardUpgradeable {
         emit BaseURIUpdate(_uri);
 
         royaltyRate = _royaltyRate;
-        emit RoyaltyRateUpdate(Rate(_royaltyRate, CommonConstant.RATE_DECIMALS));
+        emit RoyaltyRateUpdate(Rate(
+            _royaltyRate,
+            CommonConstant.RATE_DECIMALS
+        ));
     }
 
 
@@ -136,7 +139,10 @@ ReentrancyGuardUpgradeable {
         baseURI = _uri;
 
         emit BaseURIUpdate(_uri);
-        emit BatchMetadataUpdate(1, IEstateToken(estateToken).estateNumber());
+        emit BatchMetadataUpdate(
+            1,
+            IEstateToken(estateToken).estateNumber()
+        );
     }
 
     /**
@@ -166,7 +172,10 @@ ReentrancyGuardUpgradeable {
         }
         royaltyRate = _royaltyRate;
 
-        emit RoyaltyRateUpdate(Rate(_royaltyRate, CommonConstant.RATE_DECIMALS));
+        emit RoyaltyRateUpdate(Rate(
+            _royaltyRate,
+            CommonConstant.RATE_DECIMALS
+        ));
     }
 
 
@@ -289,9 +298,15 @@ ReentrancyGuardUpgradeable {
         isActiveIn[_zone][_broker] = _isActive;
 
         if (_isActive) {
-            emit BrokerActivation(_zone, _broker);
+            emit BrokerActivation(
+                _zone,
+                _broker
+            );
         } else {
-            emit BrokerDeactivation(_zone, _broker);
+            emit BrokerDeactivation(
+                _zone,
+                _broker
+            );
         }
     }
 

@@ -111,13 +111,13 @@ ReentrancyGuardUpgradeable {
     /**
      *  @notice Issue a new dividend package for an asset from a governor contract.
      *
-     *          Name            Description
-     *  @param  _governor       Governor contract address.
-     *  @param  _tokenId        Asset identifier from the governor contract.
-     *  @param  _value          Total dividend value.
-     *  @param  _currency       Dividend currency address.
-     *  @param  _note           Issuance note.
-     *  @return dividendId      New dividend identifier.
+     *          Name        Description
+     *  @param  _governor   Governor contract address.
+     *  @param  _tokenId    Asset identifier from the governor contract.
+     *  @param  _value      Total dividend value.
+     *  @param  _currency   Dividend currency address.
+     *  @param  _note       Issuance note.
+     *  @return dividendId  New dividend identifier.
      */
     function issueDividend(
         address _governor,

@@ -148,10 +148,10 @@ Validatable {
 
     /* --- Administration --- */
     /**
-     *  @notice Update the commission token address.
+     *  @notice Update the commission token contract.
      *
      *          Name                Description
-     *  @param  _commissionToken    New `CommissionToken` contract address.
+     *  @param  _commissionToken    `CommissionToken` contract address.
      *  @param  _signatures         Array of admin signatures.
      * 
      *  @dev    Administrative operator.
@@ -327,7 +327,10 @@ Validatable {
         }
 
         zoneRoyaltyRates[_zone] = _royaltyRate;
-        emit ZoneRoyaltyRateUpdate(_zone, Rate(_royaltyRate, CommonConstant.RATE_DECIMALS));
+        emit ZoneRoyaltyRateUpdate(
+            _zone,
+            Rate(_royaltyRate, CommonConstant.RATE_DECIMALS)
+        );
     }
 
     
@@ -719,7 +722,10 @@ Validatable {
         }
 
         estates[_estateId].deprecateAt = uint40(block.timestamp);
-        emit EstateExtraction(_estateId, _extractionId);
+        emit EstateExtraction(
+            _estateId,
+            _extractionId
+        );
     }
 
 
@@ -784,7 +790,10 @@ Validatable {
         }
 
         estates[_estateId].expireAt = _expireAt;
-        emit EstateExpirationExtension(_estateId, _expireAt);
+        emit EstateExpirationExtension(
+            _estateId,
+            _expireAt
+        );
     }
 
     /**
@@ -816,7 +825,10 @@ Validatable {
         }
 
         estates[_estateId].custodian = _custodian;
-        emit EstateCustodianUpdate(_estateId, _custodian);
+        emit EstateCustodianUpdate(
+            _estateId,
+            _custodian
+        );
     }
 
     /**

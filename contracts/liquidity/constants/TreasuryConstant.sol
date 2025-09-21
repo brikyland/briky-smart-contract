@@ -9,6 +9,6 @@ pragma solidity ^0.8.20;
 library TreasuryConstant {
     /** ===== CONSTANT ===== **/
     /// @notice Fraction from provided liquidity to fund system operations.
-    /// @dev    20%
+    /// @dev    Percentage: 20%
     uint256 internal constant OPERATION_FUND_RATE = 0.2 ether;
 }

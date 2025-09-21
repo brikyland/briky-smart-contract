@@ -316,7 +316,7 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Withdraw value from a fund to an account.
+     *  @notice Withdraw from a fund to an account.
      *
      *          Name                    Description
      *  @param  _fundId                 Fund identifier.

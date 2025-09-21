@@ -50,8 +50,8 @@ import {EstateTokenReceiver} from "./utilities/EstateTokenReceiver.sol";
  *          settlement, and depositors may redeem their corresponding portion of a new class of estate token. Otherwise,
  *          depositors are entitled to withdraw their deposits, and the tokenization attempt is deemed unsuccessful.
  *
- *  @dev    Quantities are expressed in absolute units. Scale these values by `10 ** IAssetToken(estateToken()).decimals()` to obtain
- *          the correct amounts under the `IAssetToken` convention.
+ *  @dev    Quantities are expressed in absolute units. Scale these values by `10 ** IAssetToken(estateToken).decimals()` to
+ *          obtain the correct amounts under the `IAssetToken` convention.
  *  @dev    Implementation involves server-side support.
  *  @dev    ERC-20 tokens are identified by their contract addresses.
  *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).

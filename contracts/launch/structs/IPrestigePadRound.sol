@@ -12,8 +12,8 @@ import {IValidation} from "../../common/structs/IValidation.sol";
  *  @dev    Implementation involves server-side support.
  *  @dev    ERC-20 tokens are identified by their contract addresses.
  *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
- *  @dev    Quantities are expressed in absolute units. Scale these values by `10 ** IAssetToken.decimals()` to obtain the
- *          correct amounts under the `IAssetToken` convention.
+ *  @dev    Quantities are expressed in absolute units. Scale these values by `10 ** IAssetToken(projectToken).decimals()` to
+ *          obtain the correct amounts under the `IAssetToken` convention.
  */
 interface IPrestigePadRound is IValidation {
     /** ===== STRUCT ===== **/
@@ -64,7 +64,7 @@ interface IPrestigePadRound is IValidation {
         /// @notice Minimum contributed quantity of an account to receive cashback.
         uint256 cashbackThreshold;
 
-        /// @notice Fund identifier for cashback.
+        /// @notice Cashback fund identifier.
         /// @dev    Using `IFund.Fund` whose `mainCurrency` is set to `currency`.
         uint256 cashbackFundId;
 

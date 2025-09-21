@@ -21,20 +21,16 @@ import {IExclusiveToken} from "../../common/interfaces/IExclusiveToken.sol";
  *  @notice Each rewarding wave has 1-day cooldown and the reward is distributed among stakers in proportion to their balances.
  *  @notice After all three staking pool have culminated, the staking pool #3 may still fetch new wave with the reward capped
  *          at the lesser between its standard wave reward and the remaining mintable tokens to reach the maximum supply cap.
- *  @notice Before a staking pool culminates, unstaking is prohibited, but stakers may promote their position into
- *          higher-number staking pool. After culmination, unstaking is permitted while new staking incurs a fee that is
+ *  @notice Before a staking pool culminates, unstaking is prohibited, but stakers may promote their position into the
+ *          successor staking pool. After culmination, unstaking is permitted while new staking incurs a fee that is
  *          contributed to the treasury liquidity.
  *  @notice Exclusive Discount: `15% + primaryDiscount * (globalStake - totalSupply) / (2 * globalStake)`.
  *          Note:   `primaryDiscount` is the exclusive discount of the primary token.
  *                  `globalStake` is the total tokens staked in 3 pools.
- *
- *  @dev    Staking fee after culmination: `value / totalSupply * treasuryLiquidity * feeRate`.
+ *  @notice Staking fee after culmination: `value / totalSupply * treasuryLiquidity * feeRate`.
  *          Note:   `value` is the staking value that derives fee.
  *                  `treasuryLiquidity` is the liquidity reserved in the treasury.
  *                  `feeRate` is an admin-adjustable subunitary value.
- *
- *  @dev    ERC-20 tokens are identified by their contract addresses.
- *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
  */
 interface IStakeToken is
 ICommon,
@@ -45,7 +41,7 @@ IExclusiveToken {
      *  @notice Emitted when the staking fee rate is updated.
      *
      *          Name        Description
-     *  @param  newRate     New fee rate.
+     *  @param  newRate     New staking fee rate.
      */
     event FeeRateUpdate(
         Rate newRate
@@ -53,20 +49,20 @@ IExclusiveToken {
 
     /* --- Staking Operations --- */
     /**
-     *  @notice Emitted when rewards are fetched from the primary token contract.
+     *  @notice Emitted when staking reward is fetched from the primary token contract.
      *
      *          Name        Description
-     *  @param  value       Amount of reward tokens fetched.
+     *  @param  value       Staking reward value.
      */
     event RewardFetch(
         uint256 value
     );
 
     /**
-     *  @notice Emitted when a holder promotes their stake to a successor stake token contract.
+     *  @notice Emitted when a staker promotes their stake to a successor staking pool contract.
      *
      *          Name        Description
-     *  @param  account     Holder address who performed the promotion.
+     *  @param  account     Staker address.
      *  @param  value       Amount of tokens promoted to successor contract.
      */
     event Promotion(
@@ -75,11 +71,11 @@ IExclusiveToken {
     );
 
     /**
-     *  @notice Emitted when primary tokens are staked into this contract.
+     *  @notice Emitted when primary tokens are staked into stake tokens.
      *
      *          Name        Description
-     *  @param  account     Account address receiving the stake tokens.
-     *  @param  value       Amount of primary tokens staked.
+     *  @param  account     Staker address.
+     *  @param  value       Staked value.
      */
     event Stake(
         address indexed account,
@@ -90,8 +86,8 @@ IExclusiveToken {
      *  @notice Emitted when stake tokens are unstaked back to primary tokens.
      *
      *          Name        Description
-     *  @param  account     Account address that unstaked tokens.
-     *  @param  value       Amount of primary tokens unstaked.
+     *  @param  account     Unstaker address.
+     *  @param  value       Unstaked value.
      */
     event Unstake(
         address indexed account,
@@ -113,41 +109,46 @@ IExclusiveToken {
     /* --- Dependency --- */
     /**
      *          Name            Description
-     *  @return primaryToken    Primary token contract address.
+     *  @return primaryToken    `PrimaryToken` contract address.
      */
     function primaryToken() external view returns (address primaryToken);
+
+    /**
+     *          Name            Description
+     *  @return successor       Successor `StakeToken` contract address.
+     */
+    function successor() external view returns (address successor);
+
 
     /* --- Query --- */
     /**
      *          Name        Description
-     *  @return timestamp   Timestamp of the last reward fetch operation.
+     *  @return timestamp   Last reward fetch timestamp.
      */
     function lastRewardFetch() external view returns (uint256 timestamp);
 
+
     /**
      *          Name    Description
-     *  @return rate    Current staking fee rate.
+     *  @return rate    Staking fee rate.
      */
     function getFeeRate() external view returns (Rate memory rate);
 
 
     /* --- Command --- */
     /**
-     *  @notice Fetch reward tokens from the primary token contract based on wave progression.
+     *  @notice Fetch reward tokens from the primary token contract based on the wave progression.
      *
-     *  @dev    Rewards are distributed to stakers based on their proportional stake weight.
      *  @dev    Reward fetching may be subject to cooldown periods and wave limitations.
      */
     function fetchReward() external;
 
     /**
      *  @notice Promote staked tokens to a successor stake token contract for enhanced benefits.
+     *  @notice Promote only if the successor address is assigned and before culmination.
      *
      *          Name        Description
-     *  @param  value       Amount of tokens to promote to successor contract.
-     *
-     *  @dev    Promotion is only available before reward distribution culmination.
-     *  @dev    A successor contract must be assigned for promotion to be possible.
+     *  @param  value       Promoted value.
      */
     function promote(
         uint256 value
@@ -155,13 +156,13 @@ IExclusiveToken {
 
     /**
      *  @notice Stake primary tokens into this contract to receive stake tokens with interest accumulation.
+     *  @notice Staking fees may apply after reward distribution culmination.
      *
      *          Name        Description
-     *  @param  account     Account address that will receive the stake tokens.
-     *  @param  value       Amount of primary tokens to stake.
+     *  @param  account     Staker address.
+     *  @param  value       Staked value.
      *
-     *  @dev    Staking fees may apply after reward distribution culmination.
-     *  @dev    Staked tokens earn interest through reward distribution waves.
+     *  @dev    The contract secures primary tokens and mints the exact amount of stake tokens to staker.
      */
     function stake(
         address account,
@@ -170,12 +171,12 @@ IExclusiveToken {
 
     /**
      *  @notice Unstake tokens back to primary tokens with accumulated interest.
+     *  @notice Unstake only after culmination.
      *
      *          Name        Description
-     *  @param  value       Amount of stake tokens to unstake.
+     *  @param  value       Unstaked value.
      *
-     *  @dev    Unstaking is only available after reward distribution has been completed.
-     *  @dev    The returned amount includes accumulated interest from rewards.
+     *  @dev    The contract returns primary tokens and burns the exact amount of stake tokens to the unstaker.
      */
     function unstake(
         uint256 value

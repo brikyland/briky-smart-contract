@@ -21,6 +21,7 @@ PausableUpgradeable {
     /* --- Administration --- */
     /**
      *  @notice Pause contract.
+     *  @notice For maintenance only.
      *
      *          Name            Description
      *  @param  _signatures     Array of admin signatures.
@@ -41,6 +42,7 @@ PausableUpgradeable {
 
     /**
      *  @notice Unpause contract.
+     *  @notice After maintenance completes.
      *
      *          Name            Description
      *  @param  _signatures     Array of admin signatures.

@@ -31,9 +31,6 @@ import {IExclusiveToken} from "../../common/interfaces/IExclusiveToken.sol";
  *          unlocked.
  *  @notice Exclusive Discount: `15% * (1 + globalStake/totalSupply)`.
  *          Note:   `globalStake` is the total tokens staked in 3 pools.
- *
- *  @dev    ERC-20 tokens are identified by their contract addresses.
- *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
  */
 interface IPrimaryToken is
 ICommon,
@@ -113,7 +110,7 @@ IExclusiveToken {
      *  @param  wave    Current wave number.
      *  @param  reward  Staking reward.
      */
-    event DailyStake3Mint(
+    event Stake3WaveReward(
         uint256 wave,
         uint256 reward
     );
@@ -242,6 +239,7 @@ IExclusiveToken {
     error AlreadyUnlockedTokens();
     error BeingLocked();
     error InvalidStakeToken();
+    error NotUnlocked();
     error SupplyCapReached();
 
 
@@ -526,7 +524,7 @@ IExclusiveToken {
      *
      *          Name        Description
      *  @param  amount      Liquidated token amount.
-     *  @return liquidity   Liquidation value.
+     *  @return liquidity   Liquidated value.
      */
     function liquidate(
         uint256 amount

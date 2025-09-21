@@ -93,7 +93,10 @@ ReentrancyGuardUpgradeable {
         emit FeeUpdate(_fee);
 
         royaltyRate = _royaltyRate;
-        emit RoyaltyRateUpdate(Rate(_royaltyRate, CommonConstant.RATE_DECIMALS));
+        emit RoyaltyRateUpdate(Rate(
+            _royaltyRate,
+            CommonConstant.RATE_DECIMALS
+        ));
     }
 
 
@@ -148,7 +151,10 @@ ReentrancyGuardUpgradeable {
             revert InvalidRate();
         }
         royaltyRate = _royaltyRate;
-        emit RoyaltyRateUpdate(Rate(_royaltyRate, CommonConstant.RATE_DECIMALS));
+        emit RoyaltyRateUpdate(Rate(
+            _royaltyRate,
+            CommonConstant.RATE_DECIMALS
+        ));
     }
 
     /**
@@ -281,7 +287,10 @@ ReentrancyGuardUpgradeable {
                 revert AlreadyStarted();
             }
             content.uri = _uris[i];
-            emit ContentURIUpdate(_contentIds[i], _uris[i]);
+            emit ContentURIUpdate(
+                _contentIds[i],
+                _uris[i]
+            );
         }
     }
 
