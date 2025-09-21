@@ -10,6 +10,9 @@ import {CommissionDispatchable} from "../land/utilities/CommissionDispatchable.s
 /// contracts/lend/interfaces/
 import {IMortgageToken} from "../lend/interfaces/IMortgageToken.sol";
 
+/// contracts/lend/structs/
+import {IMortgage} from "../lend/structs/IMortgage.sol";
+
 /// contracts/lux/contracts/
 import {ERC721Marketplace} from "./ERC721Marketplace.sol";
 
