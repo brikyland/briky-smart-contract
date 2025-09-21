@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-/// contracts/lux/storages/
-import {ProjectMarketplaceStorage} from "../lux/storages/ProjectMarketplaceStorage.sol";
-
 /// contracts/lux/contracts/
 import {AssetMarketplace} from "../lux/utilities/AssetMarketplace.sol";
 
@@ -18,16 +15,15 @@ import {AssetMarketplace} from "../lux/utilities/AssetMarketplace.sol";
  *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
  */
 contract ProjectMarketplace is
-ProjectMarketplaceStorage,
 AssetMarketplace {
     /** ===== FUNCTION ===== **/
     /* --- Initialization --- */
     /**
      *  @notice Initialize the contract after deployment, serving as the constructor.
      * 
-     *          Name                Description
-     *  @param  _admin              `Admin` contract address.
-     *  @param  _projectToken       `ProjectToken` contract address.
+     *          Name            Description
+     *  @param  _admin          `Admin` contract address.
+     *  @param  _projectToken   `ProjectToken` contract address.
      */
     function initialize(
         address _admin,

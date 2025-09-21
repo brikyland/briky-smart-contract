@@ -11,7 +11,7 @@ import {ICommon} from "../../common/interfaces/ICommon.sol";
  *  @author Briky Team
  *
  *  @notice Interface for contract `AssetMarketplace`.
- *  @notice An `AssetMarketplace` contract hosts a marketplace for a specific asset token.
+ *  @notice An `AssetMarketplace` contract hosts a marketplace for a specific `IAssetToken`.
  *
  *  @dev    Each unit of asset token is represented in scaled form as `10 ** IAssetToken(collection).decimals()` following the
  *          convention of `IAssetToken`.
@@ -26,16 +26,16 @@ ICommon {
     /**
      *  @notice Emitted when a new offer is listed.
      *
-     *          Name                   Description
-     *  @param  offerId                Offer identifier.
-     *  @param  tokenId                Asset identifier.
-     *  @param  seller                 Seller address.
-     *  @param  sellingAmount          Selling amount.
-     *  @param  unitPrice              Sale value of each token unit.
-     *  @param  currency               Sale currency address.
-     *  @param  isDivisible            Whether the offer can be bought partially.
-     *  @param  royaltyDenomination    Royalty charged on each token.
-     *  @param  royaltyReceiver        Royalty receiver address.
+     *          Name                    Description
+     *  @param  offerId                 Offer identifier.
+     *  @param  tokenId                 Asset identifier.
+     *  @param  seller                  Seller address.
+     *  @param  sellingAmount           Selling amount.
+     *  @param  unitPrice               Sale value of each token unit.
+     *  @param  currency                Sale currency address.
+     *  @param  isDivisible             Whether the offer can be bought partially.
+     *  @param  royaltyDenomination     Royalty charged on each token.
+     *  @param  royaltyReceiver         Royalty receiver address.
      */
     event NewOffer(
         uint256 indexed offerId,
@@ -53,8 +53,8 @@ ICommon {
     /**
      *  @notice Emitted when an offer is cancelled.
      *
-     *          Name        Description
-     *  @param  offerId     Offer identifier.
+     *          Name                Description
+     *  @param  offerId             Offer identifier.
      */
     event OfferCancellation(
         uint256 indexed offerId
@@ -63,13 +63,13 @@ ICommon {
     /**
      *  @notice Emitted when an offer is sold, partially or fully.
      *
-     *          Name               Description
-     *  @param  offerId            Offer identifier.
-     *  @param  buyer              Buyer address.
-     *  @param  amount             Sale amount.
-     *  @param  value              Sale value.
-     *  @param  royalty            Royalty derived from the sale value.
-     *  @param  royaltyReceiver    Royalty receiver address.
+     *          Name                Description
+     *  @param  offerId             Offer identifier.
+     *  @param  buyer               Buyer address.
+     *  @param  amount              Sale amount.
+     *  @param  value               Sale value.
+     *  @param  royalty             Royalty derived from the sale value.
+     *  @param  royaltyReceiver     Royalty receiver address.
      */
     event OfferSale(
         uint256 indexed offerId,
@@ -96,8 +96,8 @@ ICommon {
     /** ===== FUNCTION ===== **/
     /* --- Dependency --- */
     /**
-     *          Name            Description
-     *  @return collection      `IAssetToken` contract address.
+     *          Name        Description
+     *  @return collection  `IAssetToken` contract address.
      *
      *  @dev    The asset token must support interface `IAssetToken`.
      */
@@ -148,9 +148,9 @@ ICommon {
      *  @notice Buy an offer.
      *  @notice Buy only if the offer is in `Selling` state.
      *
-     *          Name       Description
-     *  @param  offerId    Offer identifier.
-     *  @return value      Sum of sale price and royalty.
+     *          Name            Description
+     *  @param  offerId         Offer identifier.
+     *  @return value           Sum of sale price and royalty.
      */
     function buy(
         uint256 offerId
@@ -160,10 +160,10 @@ ICommon {
      *  @notice Buy a part of the offer.
      *  @notice Buy only if the offer is in `Selling` state.
      *
-     *          Name       Description
-     *  @param  offerId    Offer identifier.
-     *  @param  amount     Amount of tokens to be bought.
-     *  @return value      Sum of sale price and royalty.
+     *          Name            Description
+     *  @param  offerId         Offer identifier.
+     *  @param  amount          Amount of tokens to be bought.
+     *  @return value           Sum of sale price and royalty.
      */
     function buy(
         uint256 offerId,
@@ -174,8 +174,8 @@ ICommon {
      *  @notice Cancel an offer.
      *  @notice Cancel only if the offer is in `Selling` state.
      *  
-     *          Name       Description
-     *  @param  offerId    Offer identifier.
+     *          Name            Description
+     *  @param  offerId         Offer identifier.
      * 
      *  @dev    Permission:
      *          - Seller of the offer.
@@ -191,10 +191,10 @@ ICommon {
      *  @notice Buy an offer.
      *  @notice Buy only if the offer is in `Selling` state.
      *
-     *          Name       Description
-     *  @param  offerId    Offer identifier.
-     *  @param  anchor     `tokenId` of the offer.
-     *  @return value      Sum of sale price and royalty.
+     *          Name        Description
+     *  @param  offerId     Offer identifier.
+     *  @param  anchor      `tokenId` of the offer.
+     *  @return value       Sum of sale price and royalty.
      *
      *  @dev    Anchor enforces consistency between this contract and the client-side.
      */
@@ -207,11 +207,11 @@ ICommon {
      *  @notice Buy a part of the offer.
      *  @notice Buy only if the offer is in `Selling` state.
      *
-     *          Name       Description
-     *  @param  offerId    Offer identifier.
-     *  @param  amount     Amount of tokens to be bought.
-     *  @param  anchor     `tokenId` of the offer.
-     *  @return value      Sum of sale price and royalty.
+     *          Name        Description
+     *  @param  offerId     Offer identifier.
+     *  @param  amount      Amount of tokens to be bought.
+     *  @param  anchor      `tokenId` of the offer.
+     *  @return value       Sum of sale price and royalty.
      *
      *  @dev    Anchor enforces consistency between this contract and the client-side.
      */

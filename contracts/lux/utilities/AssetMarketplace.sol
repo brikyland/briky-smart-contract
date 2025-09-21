@@ -22,10 +22,10 @@ import {AssetMarketplaceStorage} from "../../lux/storages/AssetMarketplaceStorag
 /**
  *  @author Briky Team
  *
- *  @notice An `AssetMarketplace` contract hosts a marketplace for a specific asset token.
- * 
+ *  @notice An `AssetMarketplace` contract hosts a marketplace for a specific `IAssetToken`.
+ *
  *  @dev    Each unit of asset token is represented in scaled form as `10 ** IAssetToken(collection).decimals()` following the
- *          convention of interface `IAssetToken`.
+ *          convention of `IAssetToken`.
  *  @dev    ERC-20 tokens are identified by their contract addresses.
  *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
  */
@@ -80,9 +80,9 @@ ReentrancyGuardUpgradeable {
     /**
      *  @notice Initialize "AssetMarketplace".
      *
-     *          Name           Description
-     *  @param  _admin         `Admin` contract address.
-     *  @param  _collection    `IAssetToken` contract address.
+     *          Name            Description
+     *  @param  _admin          `Admin` contract address.
+     *  @param  _collection     `IAssetToken` contract address.
      * 
      *  @dev    The asset token must support interface `IAssetToken`.
      */
@@ -118,12 +118,12 @@ ReentrancyGuardUpgradeable {
     /**
      *  @notice List a new offer of asset tokens.
      *
-     *          Name              Description
-     *  @param  _tokenId          Asset identifier.
-     *  @param  _sellingAmount    Selling amount.
-     *  @param  _unitPrice        Sale value of each token unit.
-     *  @param  _currency         Sale currency address.
-     *  @param  _isDivisible      Whether the offer can be sold partially.
+     *          Name            Description
+     *  @param  _tokenId        Asset identifier.
+     *  @param  _sellingAmount  Selling amount.
+     *  @param  _unitPrice      Sale value of each token unit.
+     *  @param  _currency       Sale currency address.
+     *  @param  _isDivisible    Whether the offer can be sold partially.
      * 
      *  @return New offer identifier.
      * 

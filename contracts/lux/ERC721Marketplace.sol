@@ -117,10 +117,10 @@ ReentrancyGuardUpgradeable {
     /**
      *  @notice Register or deregister multiple collections.
      *
-     *          Name             Description
-     *  @param  _collections     Array of contract addresses.
-     *  @param  _isCollection    Whether the operation is registration or deregistration.
-     *  @param  _signatures      Array of admin signatures.
+     *          Name            Description
+     *  @param  _collections    Array of contract addresses.
+     *  @param  _isCollection   Whether the operation is registration or deregistration.
+     *  @param  _signatures     Array of admin signatures.
      * 
      *  @dev    Administrative operator.
      */
@@ -182,11 +182,11 @@ ReentrancyGuardUpgradeable {
     /**
      *  @notice List a new offer of an ERC721 token.
      *
-     *          Name           Description
-     *  @param  _collection    Token collection contract address.
-     *  @param  _tokenId       Token identifier.
-     *  @param  _price         Sale price.
-     *  @param  _currency      Sale currency address.
+     *          Name            Description
+     *  @param  _collection     Token collection contract address.
+     *  @param  _tokenId        Token identifier.
+     *  @param  _price          Sale price.
+     *  @param  _currency       Sale currency address.
      * 
      *  @return New offer identifier.
      * 
@@ -259,8 +259,8 @@ ReentrancyGuardUpgradeable {
      *  @notice Buy an offer.
      *  @notice Buy only if the offer is in `Selling` state.
      *
-     *          Name        Description
-     *  @param  _offerId    Offer identifier.
+     *          Name            Description
+     *  @param  _offerId        Offer identifier.
      * 
      *  @return Sum of sale price and royalty.
      */
@@ -277,8 +277,8 @@ ReentrancyGuardUpgradeable {
      *  @notice Cancel an offer.
      *  @notice Cancel only if the offer is in `Selling` state.
      *
-     *          Name        Description
-     *  @param  _offerId    Offer identifier.
+     *          Name            Description
+     *  @param  _offerId        Offer identifier.
      * 
      *  @dev    Permission:
      *          - Seller of the offer.
@@ -331,6 +331,7 @@ ReentrancyGuardUpgradeable {
         return _buy(_offerId);
     }
 
+
     /* --- Helper --- */
     /**
      *  @notice Buy an offer.
@@ -338,7 +339,7 @@ ReentrancyGuardUpgradeable {
      *
      *          Name        Description
      *  @param  _offerId    Offer identifier.
-     * 
+     *
      *  @return Sum of sale price and royalty.
      */
     function _buy(
@@ -400,8 +401,8 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *          Name           Description
-     *  @param  _collection    Collection contract address.
+     *          Name            Description
+     *  @param  _collection     Collection contract address.
      * 
      *  @return Whether the collection is supported by the marketplace.
      */
@@ -413,9 +414,9 @@ ReentrancyGuardUpgradeable {
     }
     
     /**
-     *          Name           Description
-     *  @param  _collection    Collection contract address.
-     *  @param  _tokenId       Token identifier.
+     *          Name            Description
+     *  @param  _collection     Collection contract address.
+     *  @param  _tokenId        Token identifier.
      * 
      *  @return Whether the token is valid for sale.
      */
@@ -429,8 +430,8 @@ ReentrancyGuardUpgradeable {
     /**
      *  @notice Charge royalty on an offer.
      *
-     *          Name        Description
-     *  @param  _offerId    Offer identifier.
+     *          Name            Description
+     *  @param  _offerId        Offer identifier.
      */
     function _chargeRoyalty(
         uint256 _offerId

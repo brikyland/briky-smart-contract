@@ -15,7 +15,7 @@ interface IOfferState {
         /// @notice Not an offer.
         Nil,
 
-        /// @notice Offer is selling, awaiting purchase.
+        /// @notice Offer is selling, awaiting buyer.
         Selling,
 
         /// @notice Offer is sold.

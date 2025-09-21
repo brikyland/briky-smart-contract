@@ -8,12 +8,15 @@ import {IOfferState} from "../structs/IOfferState.sol";
  *  @author Briky Team
  *
  *  @notice Interface for struct `AssetOffer`.
+ *
+ *  @dev    ERC-20 tokens are identified by their contract addresses.
+ *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
  */
 interface IAssetOffer is
 IOfferState {
     /** ===== STRUCT ===== **/
     /**
-     *  @notice An offer to sell an amount of asset tokens.
+     *  @notice An offer to sell an amount of `IAssetToken`.
      */
     struct AssetOffer {
         /// @notice Asset identifier.
@@ -22,7 +25,7 @@ IOfferState {
         /// @notice Selling amount.
         uint256 sellingAmount;
 
-        /// @notice Amount of tokens that has been bought.
+        /// @notice Sold amount.
         uint256 soldAmount;
 
         /// @notice Sale value of each token unit.

@@ -8,15 +8,18 @@ import {IOfferState} from "../structs/IOfferState.sol";
  *  @author Briky Team
  *
  *  @notice Interface for struct `ERC721Offer`.
+ *
+ *  @dev    ERC-20 tokens are identified by their contract addresses.
+ *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
  */
 interface IERC721Offer is
 IOfferState {
     /** ===== STRUCT ===== **/
     /**
-     *  @notice An offer to sell an ERC721 token.
+     *  @notice An offer to sell an ERC-721 token.
      */
     struct ERC721Offer {
-        /// @notice Token collection contract address.
+        /// @notice Collection contract address.
         /// @dev    The collection must support interface `IERC721Upgradeable`.
         address collection;
 

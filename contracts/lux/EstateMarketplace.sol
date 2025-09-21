@@ -8,9 +8,6 @@ import {Formula} from "../common/utilities/Formula.sol";
 /// contracts/land/utilities/
 import {CommissionDispatchable} from "../land/utilities/CommissionDispatchable.sol";
 
-/// contracts/lux/storages/
-import {EstateMarketplaceStorage} from "../lux/storages/EstateMarketplaceStorage.sol";
-
 /// contracts/lux/contracts/
 import {AssetMarketplace} from "../lux/utilities/AssetMarketplace.sol";
 
@@ -25,7 +22,6 @@ import {AssetMarketplace} from "../lux/utilities/AssetMarketplace.sol";
  *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
  */
 contract EstateMarketplace is
-EstateMarketplaceStorage,
 AssetMarketplace,
 CommissionDispatchable {
     /** ===== LIBRARY ===== **/
