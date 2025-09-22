@@ -67,8 +67,8 @@ ReentrancyGuardUpgradeable {
     /**
      *  @notice Verify a valid request identifier.
      *
-     *          Name            Description
-     *  @param  _requestId      Request identifier.
+     *          Name        Description
+     *  @param  _requestId  Request identifier.
      */
     modifier validRequest(
         uint256 _requestId
@@ -97,7 +97,7 @@ ReentrancyGuardUpgradeable {
 
     /* --- Initialization --- */
     /**
-     *  @notice Invoked for initialization after deployment, serving as the contract constructor.
+     *  @notice Initialize the contract after deployment, serving as the constructor.
      *
      *          Name                Description
      *  @param  _admin              `Admin` contract address.
@@ -148,6 +148,7 @@ ReentrancyGuardUpgradeable {
     returns (EstateLiquidatorRequest memory) {
         return requests[_requestId];
     }
+
 
     /* --- Command --- */
     /**
@@ -344,7 +345,10 @@ ReentrancyGuardUpgradeable {
                 );
             }
 
-            emit RequestApproval(_requestId, fee);
+            emit RequestApproval(
+                _requestId,
+                fee
+            );
 
             return true;
         }

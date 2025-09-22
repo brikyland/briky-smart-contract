@@ -60,17 +60,24 @@ This will start a local blockchain with pre-funded accounts.
 ### 2. Environment Configuration
 
 1. Create an environment file from the template:
-   ```bash
-   cp .env.example .env
-   ```
+```bash
+cp .env.example .env
+```
 
 2. Fill in the required contract and validator addresses in `.env`
 
-3. Configure deployment constants in `scripts/deployments/<app_name>/initialization.ts`
+### 3. Deployment Constants Configuration
 
-> **Note**: Check the deployment scripts in `scripts/deployments/` to understand which addresses and constants are required.
+1. Create a deployment constants file from the template in the corresponding directory:
+```bash
+cp scripts/deployments/<app_name>/initialization.sample.ts scripts/deployments/<app_name>/initialization.ts
+```
 
-### 3. Deploy Contracts
+2. Configure deployment constants in `scripts/deployments/<app_name>/initialization.ts`
+
+> **Note**: Check the deployment scripts in `scripts/deployments/` to understand which environment variables and deployment constants are required.
+
+### 4. Deploy Contracts
 
 Deploy specific contracts using the following pattern:
 
@@ -110,10 +117,7 @@ contracts/
 ├── land/           # Estate tokenization (Briky Land)
 ├── launch/         # Project funding and tokenization (Briky Launch)
 ├── lend/           # Token lending, mortgage (Briky Lend)
-├── lib/            # Utility libraries and helpers
 ├── liquidity/      # Primary token and staking tokens
 ├── lucra/          # Tokens for airdrop campaign
 └── lux/            # Token marketplaces
 ```
-
-

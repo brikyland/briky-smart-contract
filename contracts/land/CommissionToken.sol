@@ -67,7 +67,7 @@ ReentrancyGuardUpgradeable {
 
     /* --- Initialization --- */
     /**
-     *  @notice Invoked for initialization after deployment, serving as the contract constructor.
+     *  @notice Initialize the contract after deployment, serving as the constructor.
      *
      *          Name            Description
      *  @param  _admin          `Admin` contract address.
@@ -76,7 +76,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _name           Token name.
      *  @param  _symbol         Token symbol.
      *  @param  _uri            Base URI.
-     *  @param  _royaltyRate    Royalty rate.
+     *  @param  _royaltyRate    Default royalty rate.
      */
     function initialize(
         address _admin,
@@ -88,7 +88,7 @@ ReentrancyGuardUpgradeable {
         uint256 _royaltyRate
     ) external
     initializer {
-        require(_royaltyRate <= CommonConstant.RATE_MAX_FRACTION);
+        require(_royaltyRate <= CommonConstant.RATE_MAX_SUBUNIT);
         
         /// Initializer.
         __ERC721_init(_name, _symbol);
@@ -106,7 +106,10 @@ ReentrancyGuardUpgradeable {
         emit BaseURIUpdate(_uri);
 
         royaltyRate = _royaltyRate;
-        emit RoyaltyRateUpdate(Rate(_royaltyRate, CommonConstant.RATE_DECIMALS));
+        emit RoyaltyRateUpdate(Rate(
+            _royaltyRate,
+            CommonConstant.RATE_DECIMALS
+        ));
     }
 
 
@@ -136,14 +139,17 @@ ReentrancyGuardUpgradeable {
         baseURI = _uri;
 
         emit BaseURIUpdate(_uri);
-        emit BatchMetadataUpdate(1, IEstateToken(estateToken).estateNumber());
+        emit BatchMetadataUpdate(
+            1,
+            IEstateToken(estateToken).estateNumber()
+        );
     }
 
     /**
      *  @notice Update the default royalty rate.
      *
      *          Name            Description
-     *  @param  _royaltyRate    New royalty rate.
+     *  @param  _royaltyRate    New default royalty rate.
      *  @param  _signatures     Array of admin signatures.
      * 
      *  @dev    Administrative operator.
@@ -161,12 +167,15 @@ ReentrancyGuardUpgradeable {
             _signatures
         );
 
-        if (_royaltyRate > CommonConstant.RATE_MAX_FRACTION) {
+        if (_royaltyRate > CommonConstant.RATE_MAX_SUBUNIT) {
             revert InvalidRate();
         }
         royaltyRate = _royaltyRate;
 
-        emit RoyaltyRateUpdate(Rate(_royaltyRate, CommonConstant.RATE_DECIMALS));
+        emit RoyaltyRateUpdate(Rate(
+            _royaltyRate,
+            CommonConstant.RATE_DECIMALS
+        ));
     }
 
 
@@ -246,7 +255,7 @@ ReentrancyGuardUpgradeable {
             revert Unauthorized();
         }
 
-        if (_commissionRate > CommonConstant.RATE_MAX_FRACTION) {
+        if (_commissionRate > CommonConstant.RATE_MAX_SUBUNIT) {
             revert InvalidRate();
         }
 
@@ -289,9 +298,15 @@ ReentrancyGuardUpgradeable {
         isActiveIn[_zone][_broker] = _isActive;
 
         if (_isActive) {
-            emit BrokerActivation(_zone, _broker);
+            emit BrokerActivation(
+                _zone,
+                _broker
+            );
         } else {
-            emit BrokerDeactivation(_zone, _broker);
+            emit BrokerDeactivation(
+                _zone,
+                _broker
+            );
         }
     }
 
@@ -340,13 +355,10 @@ ReentrancyGuardUpgradeable {
 
 
     /**
-     *          Name            Description
-     *  @param  _tokenId        Token identifier.
-     *
      *  @return Royalty rate of the token identifier.
      */
     function getRoyaltyRate(
-        uint256 _tokenId
+        uint256
     ) external view returns (Rate memory) {
         return Rate(
             royaltyRate,
@@ -363,8 +375,8 @@ ReentrancyGuardUpgradeable {
     function tokenURI(
         uint256 _tokenId
     ) public view override(
-    IERC721MetadataUpgradeable,
-    ERC721Upgradeable
+        IERC721MetadataUpgradeable,
+        ERC721Upgradeable
     ) returns (string memory) {
         return super.tokenURI(_tokenId);
     }
@@ -378,18 +390,18 @@ ReentrancyGuardUpgradeable {
     function supportsInterface(
         bytes4 _interfaceId
     ) public view override(
-    IERC165Upgradeable,
-    ERC721Upgradeable
+        IERC165Upgradeable,
+        ERC721Upgradeable
     ) returns (bool) {
-        return _interfaceId == type(IERC4906Upgradeable).interfaceId
-            || _interfaceId == type(IERC2981Upgradeable).interfaceId
+        return _interfaceId == type(IERC2981Upgradeable).interfaceId
+            || _interfaceId == type(IERC4906Upgradeable).interfaceId
             || super.supportsInterface(_interfaceId);
     }
 
 
     /* --- Helper --- */
     /**
-     *  @return Base URI.
+     *  @return Prefix of all token URI.
      */
     function _baseURI() internal override view returns (string memory) {
         return baseURI;
@@ -408,7 +420,7 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @return Royalty receiver address.
+     *  @return Default royalty receiver address.
      */
     function _royaltyReceiver() internal view override returns (address) {
         return feeReceiver;

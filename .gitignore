@@ -9,3 +9,4 @@
 .DS_Store
 .env
 .venv
+scripts/deployments/**/initialization.ts

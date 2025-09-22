@@ -12,8 +12,8 @@ import {IValidation} from "../../common/structs/IValidation.sol";
  *  @dev    Implementation involves server-side support.
  *  @dev    ERC-20 tokens are identified by their contract addresses.
  *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
- *  @dev    Quantities are expressed in absolute units. Scale these values by `10 ** ProjectToken.decimals()` to obtain the
- *          correct amounts under the `ProjectToken` convention.
+ *  @dev    Quantities are expressed in absolute units. Scale these values by `10 ** IAssetToken(projectToken).decimals()` to
+ *          obtain the correct amounts under the `IAssetToken` convention.
  */
 interface IPrestigePadRound is IValidation {
     /** ===== STRUCT ===== **/
@@ -64,7 +64,7 @@ interface IPrestigePadRound is IValidation {
         /// @notice Minimum contributed quantity of an account to receive cashback.
         uint256 cashbackThreshold;
 
-        /// @notice Fund identifier for cashback.
+        /// @notice Cashback fund identifier.
         /// @dev    Using `IFund.Fund` whose `mainCurrency` is set to `currency`.
         uint256 cashbackFundId;
 
@@ -103,7 +103,7 @@ interface IPrestigePadRound is IValidation {
      *  @notice Initialization input for `EstateForgerRequestAgenda`.
      */
     struct PrestigePadRound {
-        /// @notice URI of round information.
+        /// @notice URI of round metadata.
         string uri;
 
         /// @notice Volume configuration and progress.
@@ -116,8 +116,22 @@ interface IPrestigePadRound is IValidation {
         PrestigePadRoundAgenda agenda;
     }
 
+    /**
+     *  @notice A round in a launch of `PrestigePad` operating a phase of capital raising for a estate project that issues
+     *          new corresponding project token to be minted for contributors of the round.
+     *
+     *  @dev    Phases of a round:
+     *          - Unscheduled: agenda.raiseStartsAt = 0
+     *          - Scheduled: block.timestamp < agenda.raiseStartsAt
+     *          - Raise: agenda.raiseStartsAt <= block.timestamp < agenda.raiseEndsAt
+     *          - Awaiting Confirmation: agenda.raiseEndsAt
+     *                                      <= block.timestamp
+     *                                      < agenda.raiseEndsAt + PrestigePadConstant.RAISE_CONFIRMATION_TIME_LIMIT
+     *          - Confirmed: agenda.confirmedAt > 0
+     *          - Cancelled: quota.totalSupply = 0
+     */
     struct PrestigePadRoundInput {
-        /// @notice URI of round information.
+        /// @notice URI of round metadata.
         string uri;
 
         /// @notice Volume configuration and progress.

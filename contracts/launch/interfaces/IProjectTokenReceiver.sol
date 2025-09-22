@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
+/// @openzeppelin/contracts-upgradeable
 import {IERC1155ReceiverUpgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC1155ReceiverUpgradeable.sol";
 
 /**
@@ -13,6 +14,7 @@ import {IERC1155ReceiverUpgradeable} from "@openzeppelin/contracts-upgradeable/i
 interface IProjectTokenReceiver is
 IERC1155ReceiverUpgradeable {
     /** ===== FUNCTION ===== **/
+    /* --- Dependency --- */
     /**
      *          Name            Description
      *  @return projectToken    `ProjectToken` contract address.

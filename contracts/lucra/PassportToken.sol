@@ -6,12 +6,9 @@ import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces
 import {IERC721MetadataUpgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC721MetadataUpgradeable.sol";
 import {IERC2981Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
 import {IERC4906Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC4906Upgradeable.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import {ERC721PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721PausableUpgradeable.sol";
-import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-
-/// contracts/common/utilities/
-import {CurrencyHandler} from "../common/utilities/CurrencyHandler.sol";
 
 /// contracts/common/interfaces/
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
@@ -20,6 +17,7 @@ import {IAdmin} from "../common/interfaces/IAdmin.sol";
 import {CommonConstant} from "../common/constants/CommonConstant.sol";
 
 /// contracts/common/utilities/
+import {CurrencyHandler} from "../common/utilities/CurrencyHandler.sol";
 import {Pausable} from "../common/utilities/Pausable.sol";
 import {RoyaltyRateProposer} from "../common/utilities/RoyaltyRateProposer.sol";
 
@@ -29,11 +27,9 @@ import {PassportTokenStorage} from "./storages/PassportTokenStorage.sol";
 /**
  *  @author Briky Team
  *
- *  @notice The `PassportToken` contract is an ERC-721 token representing a special pass that grant priveleges to owners
- *          during airdrop campaigns.
- * 
- *  @dev    The passport token can only be minted once per account.
- *  @dev    Minting fee is charged to protect the contract from DoS attacks.
+ *  @notice Interface for contract `PassportToken`.
+ *  @notice The `PassportToken` contract is an ERC-721 token issued exclusively for airdrop campaigns. It grants its
+ *          minter airdrop privileges, and each account may mint only one passport.
  */
 contract PassportToken is
 PassportTokenStorage,
@@ -62,7 +58,7 @@ ReentrancyGuardUpgradeable {
 
     /* --- Initialization --- */
     /**
-     *  @notice Invoked for initialization after deployment, serving as the contract constructor.
+     *  @notice Initialize the contract after deployment, serving as the constructor.
      * 
      *          Name            Description
      *  @param  _admin          `Admin` contract address.
@@ -70,7 +66,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _symbol         Token symbol.
      *  @param  _uri            Base URI.
      *  @param  _fee            Minting fee.
-     *  @param  _royaltyRate    Royalty rate.
+     *  @param  _royaltyRate    Default royalty rate.
      */
     function initialize(
         address _admin,
@@ -81,7 +77,7 @@ ReentrancyGuardUpgradeable {
         uint256 _royaltyRate
     ) external
     initializer {
-        require(_royaltyRate <= CommonConstant.RATE_MAX_FRACTION);
+        require(_royaltyRate <= CommonConstant.RATE_MAX_SUBUNIT);
         
         /// Initializer.
         __ERC721_init(_name, _symbol);
@@ -100,7 +96,10 @@ ReentrancyGuardUpgradeable {
         emit FeeUpdate(_fee);
 
         royaltyRate = _royaltyRate;
-        emit RoyaltyRateUpdate(Rate(_royaltyRate, CommonConstant.RATE_DECIMALS));
+        emit RoyaltyRateUpdate(Rate(
+            _royaltyRate,
+            CommonConstant.RATE_DECIMALS
+        ));
     }
 
 
@@ -129,7 +128,10 @@ ReentrancyGuardUpgradeable {
         baseURI = _uri;
 
         emit BaseURIUpdate(_uri);
-        emit BatchMetadataUpdate(1, tokenNumber);
+        emit BatchMetadataUpdate(
+            1,
+            tokenNumber
+        );
     }
 
     /**
@@ -161,7 +163,7 @@ ReentrancyGuardUpgradeable {
      *  @notice Update the default royalty rate.
      *
      *          Name            Description
-     *  @param  _royaltyRate    New royalty rate.
+     *  @param  _royaltyRate    New default royalty rate.
      *  @param  _signatures     Array of admin signatures.
      * 
      *  @dev    Administrative operator.
@@ -178,11 +180,14 @@ ReentrancyGuardUpgradeable {
             ),
             _signatures
         );
-        if (_royaltyRate > CommonConstant.RATE_MAX_FRACTION) {
+        if (_royaltyRate > CommonConstant.RATE_MAX_SUBUNIT) {
             revert InvalidRate();
         }
         royaltyRate = _royaltyRate;
-        emit RoyaltyRateUpdate(Rate(_royaltyRate, CommonConstant.RATE_DECIMALS));
+        emit RoyaltyRateUpdate(Rate(
+            _royaltyRate,
+            CommonConstant.RATE_DECIMALS
+        ));
     }
 
     /**
@@ -195,6 +200,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _signatures     Array of admin signatures.
      *
      *  @dev    Administrative operator.
+     *  @dev    Used to withdraw fee and royalty.
      */
     function withdraw(
         address _receiver,
@@ -219,20 +225,33 @@ ReentrancyGuardUpgradeable {
         }
 
         for (uint256 i; i < _currencies.length; ++i) {
-            CurrencyHandler.sendCurrency(_currencies[i], _receiver, _values[i]);
+            CurrencyHandler.sendCurrency(
+                _currencies[i],
+                _receiver,
+                _values[i]
+            );
         }
     }
 
 
     /* --- Query --- */
     /**
-     *          Name        Description
-     *  @param  _tokenId    Token identifier.
-     * 
+     *  @return Royalty rate of the token identifier.
+     */
+    function getRoyaltyRate(
+        uint256
+    ) external view returns (Rate memory) {
+        return Rate(
+            royaltyRate,
+            CommonConstant.RATE_DECIMALS
+        );
+    }
+
+    /**
      *  @return Token URI.
      */
     function tokenURI(
-        uint256 _tokenId
+        uint256
     ) public view override(
         IERC721MetadataUpgradeable,
         ERC721Upgradeable
@@ -241,28 +260,33 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *          Name        Description
-     *  @param  _tokenId    Token identifier.
-     * 
-     *  @return rate        Royalty rate of the token identifier.
+     *          Name            Description
+     *  @param  _interfaceId    Interface identifier.
+     *
+     *  @return Whether this contract implements the interface.
      */
-    function getRoyaltyRate(
-        uint256 _tokenId
-    ) external view returns (Rate memory) {
-        return Rate(royaltyRate, CommonConstant.RATE_DECIMALS);
+    function supportsInterface(
+        bytes4 _interfaceId
+    ) public view override(
+        IERC165Upgradeable,
+        ERC721Upgradeable
+    ) returns (bool) {
+        return _interfaceId == type(IERC2981Upgradeable).interfaceId
+            || _interfaceId == type(IERC4906Upgradeable).interfaceId
+            || super.supportsInterface(_interfaceId);
     }
 
+
+    /* --- Command --- */
     /**
-     *  @notice Mint the passport token.
+     *  @notice Mint the passport token to an account.
+     *  @notice Mint only once for each account.
      *
-     *          Name        Description
-     *  @return tokenId     Minted token identifier.
-     * 
-     *  @dev    The passport token can only be minted once per account.
+     *  @return Minted token identifier.
      */
     function mint() external payable
-    nonReentrant
     whenNotPaused
+    nonReentrant
     returns (uint256) {
         if (hasMinted[msg.sender]) {
             revert AlreadyMinted();
@@ -284,30 +308,9 @@ ReentrancyGuardUpgradeable {
         }
     }
 
-
-    /* --- Override --- */
-    /**
-     *          Name            Description
-     *  @param  _interfaceId    Interface identifier.
-     * 
-     *  @return Whether this contract implements the interface.
-     */
-    function supportsInterface(
-        bytes4 _interfaceId
-    ) public view override(
-        IERC165Upgradeable,
-        ERC721Upgradeable
-    ) returns (bool) {
-        return _interfaceId == type(IERC4906Upgradeable).interfaceId
-            || _interfaceId == type(IERC2981Upgradeable).interfaceId
-            || super.supportsInterface(_interfaceId);
-    }
-
-
     /* --- Helper --- */
     /**
-     *          Name       Description
-     *  @return address    Royalty receiver address.
+     *  @return Default royalty receiver address.
      */
     function _royaltyReceiver() internal view override returns (address) {
         return address(this);

@@ -45,8 +45,8 @@ IAssetToken {
     /**
      *  @notice Emitted when the base URI is updated.
      *
-     *          Name            Description
-     *  @param  newValue        New base URI.
+     *          Name        Description
+     *  @param  newValue    New base URI.
      */
     event BaseURIUpdate(
         string newValue
@@ -55,9 +55,9 @@ IAssetToken {
     /**
      *  @notice Emitted when the royalty rate for a zone is updated.
      *
-     *          Name            Description
-     *  @param  zone            Zone code.
-     *  @param  newValue        New royalty rate value.
+     *          Name        Description
+     *  @param  zone        Zone code.
+     *  @param  newValue    New royalty rate value.
      */
     event ZoneRoyaltyRateUpdate(
         bytes32 indexed zone,
@@ -69,8 +69,8 @@ IAssetToken {
     /**
      *  @notice Emitted when a contract address is authorized as a launchpad contract.
      *
-     *          Name            Description
-     *  @param  account         Authorized contract address.
+     *          Name        Description
+     *  @param  account     Authorized contract address.
      */
     event LaunchpadAuthorization(
         address indexed account
@@ -79,8 +79,8 @@ IAssetToken {
     /**
      *  @notice Emitted when a contract is deauthorized as a launchpad contract.
      *
-     *          Name            Description
-     *  @param  account         Deauthorized contract address.
+     *          Name        Description
+     *  @param  account     Deauthorized contract address.
      */
     event LaunchpadDeauthorization(
         address indexed account
@@ -91,10 +91,10 @@ IAssetToken {
     /**
      *  @notice Emitted when an initiator is registered in a zone.
      *
-     *          Name            Description
-     *  @param  zone            Zone code.
-     *  @param  initiator       Initiator address.
-     *  @param  uri             URI of initiator information.
+     *          Name        Description
+     *  @param  zone        Zone code.
+     *  @param  initiator   Initiator address.
+     *  @param  uri         URI of initiator information.
      */
     event InitiatorRegistration(
         bytes32 indexed zone,
@@ -105,14 +105,14 @@ IAssetToken {
 
     /* --- Project --- */
     /**
-     *  @notice Emitted when a new project token is launched.
+     *  @notice Emitted when a new class of project token is minted.
      *
-     *          Name            Description
-     *  @param  tokenId         Project identifier.
-     *  @param  zone            Zone code.
-     *  @param  launchId        Launch identifier from the launchpad contract.
-     *  @param  launchpad       Launchpad contract address.
-     *  @param  initiator       Initiator address.
+     *          Name        Description
+     *  @param  tokenId     Project identifier.
+     *  @param  zone        Zone code.
+     *  @param  launchId    Launch identifier from the launchpad contract.
+     *  @param  launchpad   Launchpad contract address.
+     *  @param  initiator   Initiator address.
      */
     event NewToken(
         uint256 indexed tokenId,
@@ -140,10 +140,10 @@ IAssetToken {
      *
      *          Name            Description
      *  @param  projectId       Project identifier.
-     *  @param  estateId        Estate token identifier tokenized from this project.
-     *  @param  totalSupply     Total supply of the token.
-     *  @param  custodian       Custodian address for the estate.
-     *  @param  broker          Broker address for the estate.
+     *  @param  estateId        Estate token identifier.
+     *  @param  totalSupply     Total supply.
+     *  @param  custodian       Associated custodian address.
+     *  @param  broker          Associated broker address.
      */
     event ProjectTokenization(
         uint256 indexed projectId,
@@ -181,18 +181,18 @@ IAssetToken {
 
 
     /**
-     *          Name            Description
-     *  @param  projectId       Project identifier.
-     *  @return project         Project information.
+     *          Name        Description
+     *  @param  projectId   Project identifier.
+     *  @return project     Project information.
      */
     function getProject(
         uint256 projectId
     ) external view returns (Project memory project);
 
     /**
-     *          Name            Description
-     *  @param  projectId       Project identifier.
-     *  @return zone            Zone code of the project.
+     *          Name        Description
+     *  @param  projectId   Project identifier.
+     *  @return zone        Zone code of the project.
      */
     function zoneOf(
         uint256 projectId
@@ -268,7 +268,7 @@ IAssetToken {
      *  @param  zone        Zone code.
      *  @param  launchId    Launch identifier from the launchpad contract.
      *  @param  initiator   Initiator address for the project.
-     *  @param  uri         URI containing project information.
+     *  @param  uri         URI of project metadata.
      *  @return projectId   New project identifier.
      *
      *  @dev    Permission: Launchpads.
@@ -301,15 +301,15 @@ IAssetToken {
      *
      *          Name        Description
      *  @param  projectId   Project identifier.
-     *  @param  note       Deprecation note.
-     *  @param  anchor      Keccak256 hash of `uri` of the project.
+     *  @param  data        Deprecation note.
+     *  @param  anchor      Keccak256 hash of `uri` of the estate.
      *
      *  @dev    Permission: Managers active in the zone of the project.
      *  @dev    Anchor enforces consistency between this contract and the client-side.
-    */
+     */
     function safeDeprecateProject(
         uint256 projectId,
-        string calldata note,
+        string calldata data,
         bytes32 anchor
     ) external;
 
@@ -319,8 +319,8 @@ IAssetToken {
      *
      *          Name        Description
      *  @param  projectId   Project identifier.
-     *  @param  custodian   Custodian address for the estate.
-     *  @param  broker      Broker address for the estate.
+     *  @param  custodian   Assigned custodian address.
+     *  @param  broker      Associated broker address.
      *  @param  anchor      Keccak256 hash of `uri` of the project.
      *  @return estateId    Estate identifier tokenized from the project.
      *
@@ -339,12 +339,19 @@ IAssetToken {
      *
      *          Name        Description
      *  @param  projectId   Project identifier.
-     *  @param  uri         URI of project metadata.
+     *  @param  uri         New URI of project metadata.
      *  @param  validation  Validation package from the validator.
      *  @param  anchor      Keccak256 hash of `uri` of the project.
      *
      *  @dev    Permission: Managers active in the zone of the project.
      *  @dev    Anchor enforces consistency between this contract and the client-side.
+     *  @dev    Validation data:
+     *          ```
+     *          data = abi.encode(
+     *              projectId,
+     *              uri
+     *          );
+     *          ```
      */
     function safeUpdateProjectURI(
         uint256 projectId,

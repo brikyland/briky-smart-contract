@@ -46,7 +46,7 @@ ReentrancyGuardUpgradeable {
 
     /* --- Initialization --- */
     /**
-     *  @notice Invoked for initialization after deployment, serving as the contract constructor.
+     *  @notice Initialize the contract after deployment, serving as the constructor.
      *
      *          Name    Description
      *  @param  _admin  `Admin` contract address.
@@ -69,7 +69,7 @@ ReentrancyGuardUpgradeable {
      *
      *          Name            Description
      *  @param  _receiver       Receiver address.
-     *  @param  _currencies     Array of withdrawn currency addresses, respective to each currency.
+     *  @param  _currencies     Array of withdrawn currency addresses.
      *  @param  _values         Array of withdrawn values, respective to each currency.
      *  @param  _signatures     Array of admin signatures.
      * 

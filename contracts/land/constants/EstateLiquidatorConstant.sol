@@ -13,9 +13,11 @@ library EstateLiquidatorConstant {
     uint256 internal constant UNANIMOUS_GUARD_DURATION = 365 days;
 
     /// @notice Quorum threshold set at 100% for estate liquidation proposals within the guard period.
+    /// @dev    Percentage: 100%
     uint256 internal constant UNANIMOUS_QUORUM_RATE = 1 ether;
 
     /// @notice Quorum threshold reduced to 75% for estate liquidation proposals after the guard period.
+    /// @dev    Percentage: 75%
     uint256 internal constant MAJORITY_QUORUM_RATE = 0.75 ether;
 
 

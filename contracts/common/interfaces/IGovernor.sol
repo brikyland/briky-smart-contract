@@ -28,11 +28,11 @@ IERC1155Upgradeable {
     /**
      *          Name            Description
      *  @param  tokenId         Asset identifier.
-     *  @return zone            Representative of the asset.
+     *  @return representative  Representative address of the asset.
      */
     function getRepresentative(
         uint256 tokenId
-    ) external view returns (address);
+    ) external view returns (address representative);
 
     /**
      *          Name            Description
@@ -54,7 +54,6 @@ IERC1155Upgradeable {
         uint256 tokenId,
         uint256 at
     ) external view returns (uint256 totalEquity);
-
 
     /**
      *          Name            Description

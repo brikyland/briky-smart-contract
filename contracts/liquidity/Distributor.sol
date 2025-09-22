@@ -17,17 +17,7 @@ import {DistributorStorage} from "../liquidity/storages/DistributorStorage.sol";
 /**
  *  @author Briky Team
  *
- *  @notice The `Distributor` contract manages direct token distribution to multiple receivers through
- *          administrative operations, tracking the total amount distributed to each account.
- *
- *  @dev    The contract allows administrators to distribute primary tokens to multiple receivers
- *          in batch operations. Each distribution is tracked per receiver address, maintaining
- *          a cumulative record of all tokens distributed to each account over time.
- *  @dev    Distribution operations require administrative signatures and are subject to available
- *          token balance verification. The contract serves as a simple distribution mechanism
- *          without vesting or staking features.
- *  @dev    ERC-20 tokens are identified by their contract addresses.
- *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
+ *  @notice The `Distributor` contract facilitates direct distributions of `PrimaryToken`.
  */
 contract Distributor is
 DistributorStorage,
@@ -41,7 +31,7 @@ ReentrancyGuardUpgradeable {
 
 
     /** ===== FUNCTION ===== **/
-    /* --- Standard --- */
+    /* --- Common --- */
     /**
      *  @notice Executed on a call to this contract with empty calldata.
      */
@@ -57,12 +47,12 @@ ReentrancyGuardUpgradeable {
 
     /* --- Initialization --- */
     /**
-     *  @notice Invoked for initialization after deployment, serving as the contract constructor.
+     *  @notice Initialize the contract after deployment, serving as the constructor.
      *
      *          Name            Description
-     *  @param  _admin          Admin contract address.
-     *  @param  _primaryToken   Primary token contract address.
-     *  @param  _treasury       Treasury contract address.
+     *  @param  _admin          `Admin` contract address.
+     *  @param  _primaryToken   `PrimaryToken` contract address.
+     *  @param  _treasury       `Treasury` contract address.
      */
     function initialize(
         address _admin,
@@ -79,20 +69,18 @@ ReentrancyGuardUpgradeable {
         treasury = _treasury;
     }
 
+
     /* --- Command --- */
     /**
      *  @notice Distribute tokens to multiple receivers through administrative operations.
      *
      *          Name            Description
      *  @param  _receivers      Array of receiver addresses.
-     *  @param  _amounts        Array of distributed amount, respective to each receiver.
-     *  @param  _note           Note or description for the distribution operation.
+     *  @param  _amounts        Array of distributed amounts, respective to each receiver address.
+     *  @param  _note           Distribution note.
      *  @param  _signatures     Array of admin signatures.
      *
      *  @dev    Administrative operator.
-     *  @dev    Each distribution is tracked per receiver address, maintaining a cumulative record
-     *          of all tokens distributed to each account over time. Distribution operations are
-     *          subject to available token balance verification.
      */
     function distributeToken(
         address[] calldata _receivers,
@@ -121,7 +109,11 @@ ReentrancyGuardUpgradeable {
                 revert InsufficientFunds();
             }
 
-            CurrencyHandler.sendERC20(primaryTokenAddress, _receivers[i], _amounts[i]);
+            CurrencyHandler.sendERC20(
+                primaryTokenAddress,
+                _receivers[i],
+                _amounts[i]
+            );
 
             unchecked {
                 distributedTokens[_receivers[i]] += _amounts[i];

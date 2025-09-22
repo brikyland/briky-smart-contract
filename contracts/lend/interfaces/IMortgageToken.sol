@@ -19,7 +19,7 @@ import {IMortgage} from "../structs/IMortgage.sol";
  *  @author Briky Team
  *
  *  @notice Interface for contract `MortgageToken`.
- *  @notice A `MortgageToken` contract facilitates peer-to-peer lending secured by crypto collateral. Each provided mortgage
+ *  @notice A `MortgageToken` contract facilitates peer-to-peer lending secured by crypto collateral. Each mortgage being lent
  *          is tokenized into an ERC-721 token, whose owner has the right to receive repayments from the borrower or foreclose
  *          on the collateral from the contract once overdue.
  * 
@@ -46,10 +46,10 @@ IERC4906Upgradeable {
     );
 
     /**
-     *  @notice Emitted when the mortgaging fee rate is updated.
+     *  @notice Emitted when the borrowing fee rate is updated.
      *
      *          Name        Description
-     *  @param  newRate     New mortgaging fee rate.
+     *  @param  newRate     New borrowing fee rate.
      */
     event FeeRateUpdate(
         Rate newRate
@@ -61,11 +61,9 @@ IERC4906Upgradeable {
      *  @notice Emitted when a new mortgage token is minted.
      *
      *          Name        Description
-     *  @param  tokenId     Token identifier.
+     *  @param  tokenId     Mortgage identifier.
      *  @param  lender      Lender address.
-     *  @param  due         Token expiration date.
-     * 
-     *  @dev    The token is minted when a mortgage is supplied, and burned upon repayment or foreclosure.
+     *  @param  due         Maturity timestamp.
      */
     event NewToken(
         uint256 indexed tokenId,
@@ -74,16 +72,16 @@ IERC4906Upgradeable {
     );
 
     /**
-     *  @notice Emitted when a new mortgage is created.
+     *  @notice Emitted when a new mortgage is listed.
      *
-     *          Name          Description
-     *  @param  mortgageId    Mortgage identifier.
-     *  @param  borrower      Borrower address.
-     *  @param  principal     Principal value.
-     *  @param  repayment     Repayment value.
-     *  @param  fee           Mortgaging fee.
-     *  @param  currency      Currency address.
-     *  @param  duration      Borrowing duration.
+     *          Name        Description
+     *  @param  mortgageId  Mortgage identifier.
+     *  @param  borrower    Borrower address.
+     *  @param  principal   Principal value.
+     *  @param  repayment   Repayment value.
+     *  @param  fee         Borrowing fee.
+     *  @param  currency    Currency address.
+     *  @param  duration    Borrowing duration.
      */
     event NewMortgage(
         uint256 indexed mortgageId,
@@ -98,8 +96,8 @@ IERC4906Upgradeable {
     /**
      *  @notice Emitted when a mortgage is cancelled.
      *
-     *          Name          Description
-     *  @param  mortgageId    Mortgage identifier.
+     *          Name        Description
+     *  @param  mortgageId  Mortgage identifier.
      */
     event MortgageCancellation(
         uint256 indexed mortgageId
@@ -108,9 +106,9 @@ IERC4906Upgradeable {
     /**
      *  @notice Emitted when a mortgage is foreclosed.
      *
-     *          Name          Description
-     *  @param  mortgageId    Mortgage identifier.
-     *  @param  receiver      Collateral receiver address.
+     *          Name        Description
+     *  @param  mortgageId  Mortgage identifier.
+     *  @param  receiver    Collateral receiver address.
      */
     event MortgageForeclosure(
         uint256 indexed mortgageId,
@@ -120,8 +118,8 @@ IERC4906Upgradeable {
     /**
      *  @notice Emitted when a mortgage is repaid.
      *
-     *          Name          Description
-     *  @param  mortgageId    Mortgage identifier.
+     *          Name        Description
+     *  @param  mortgageId  Mortgage identifier.
      */
     event MortgageRepayment(
         uint256 indexed mortgageId
@@ -144,23 +142,23 @@ IERC4906Upgradeable {
     /* ===== FUNCTION ===== **/
     /* --- Dependency --- */
     /**
-     *          Name              Description
-     *  @return feeReceiver       `FeeReceiver` contract address.
+     *          Name            Description
+     *  @return feeReceiver     `FeeReceiver` contract address.
      */
     function feeReceiver() external view returns (address feeReceiver);
 
 
     /* --- Query --- */
     /**
-     *          Name              Description
-     *  @return totalSupply       Total supply of mortgage tokens.
+     *          Name            Description
+     *  @return totalSupply     Total supply of the token.
      */
     function totalSupply() external view returns (uint256 totalSupply);
 
 
     /**
-     *          Name              Description
-     *  @return rate              Mortgaging fee rate.
+     *          Name    Description
+     *  @return rate    Borrowing fee rate.
      */
     function getFeeRate() external view returns (IRate.Rate memory rate);
 
@@ -186,8 +184,8 @@ IERC4906Upgradeable {
      *  @notice Cancel a mortgage.
      *  @notice Cancel only if the mortgage is in `Pending` state.
      * 
-     *          Name          Description
-     *  @param  mortgageId    Mortgage identifier.
+     *          Name        Description
+     *  @param  mortgageId  Mortgage identifier.
      * 
      *  @dev    Permission:
      *          - Borrower of the mortgage.
@@ -200,10 +198,11 @@ IERC4906Upgradeable {
     /**
      *  @notice Lend a mortgage.
      *  @notice Lend only if the mortgage is in `Pending` state.
-     * 
-     *          Name          Description
-     *  @param  mortgageId    Mortgage identifier.
-     *  @return due           Maturity timestamp.
+     *  @notice Mint the token associated with the mortgage.
+     *
+     *          Name        Description
+     *  @param  mortgageId  Mortgage identifier.
+     *  @return due         Maturity timestamp.
      */
     function lend(
         uint256 mortgageId
@@ -213,9 +212,10 @@ IERC4906Upgradeable {
     /**
      *  @notice Repay a mortgage.
      *  @notice Repay only if the mortgage is in `Supplied` state and not overdue.
-     * 
-     *          Name          Description
-     *  @param  mortgageId    Mortgage identifier.
+     *  @notice Burn the token associated with the mortgage.
+     *
+     *          Name        Description
+     *  @param  mortgageId  Mortgage identifier.
      * 
      *  @dev    Permission: Borrower of the mortgage.
      */
@@ -226,9 +226,10 @@ IERC4906Upgradeable {
     /**
      *  @notice Foreclose on the collateral of a mortgage.
      *  @notice Foreclose only if the mortgage is overdue.
-     * 
-     *          Name          Description
-     *  @param  mortgageId    Mortgage identifier.
+     *  @notice Burn the token associated with the mortgage.
+     *
+     *          Name        Description
+     *  @param  mortgageId  Mortgage identifier.
      * 
      *  @dev    The collateral is transferred to the mortgage token owner and the token is burned.
      */
@@ -241,11 +242,12 @@ IERC4906Upgradeable {
     /**
      *  @notice Lend a mortgage.
      *  @notice Lend only if the mortgage is in `Pending` state.
-     * 
-     *          Name          Description
-     *  @param  mortgageId    Mortgage identifier.
-     *  @param  anchor        `principal` of the mortgage.
-     *  @return due           Maturity timestamp.
+     *  @notice Mint the token associated with the mortgage.
+     *
+     *          Name        Description
+     *  @param  mortgageId  Mortgage identifier.
+     *  @param  anchor      `principal` of the mortgage.
+     *  @return due         Maturity timestamp.
      *
      *  @dev    Anchor enforces consistency between this contract and the client-side.
      */
@@ -257,10 +259,11 @@ IERC4906Upgradeable {
     /**
      *  @notice Repay a mortgage.
      *  @notice Repay only if the mortgage is in `Supplied` state and not overdue.
-     * 
-     *          Name          Description
-     *  @param  mortgageId    Mortgage identifier.
-     *  @param  anchor        `repayment` of the mortgage.
+     *  @notice Burn the token associated with the mortgage.
+     *
+     *          Name        Description
+     *  @param  mortgageId  Mortgage identifier.
+     *  @param  anchor      `repayment` of the mortgage.
      *
      *  @dev    Permission: Borrower of the mortgage.
      *  @dev    Anchor enforces consistency between this contract and the client-side.

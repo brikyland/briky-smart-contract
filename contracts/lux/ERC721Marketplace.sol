@@ -4,19 +4,17 @@ pragma solidity ^0.8.20;
 /// @openzeppelin/contracts-upgradeable/
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC721Upgradeable.sol";
 import {IERC2981Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
-import {ERC165CheckerUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-
-/// contracts/common/utilities/
-import {CurrencyHandler} from "../common/utilities/CurrencyHandler.sol";
-import {Formula} from "../common/utilities/Formula.sol";
+import {ERC165CheckerUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 
 /// contracts/common/interfaces/
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 
 /// contracts/common/utilities/
 import {Administrable} from "../common/utilities/Administrable.sol";
+import {CurrencyHandler} from "../common/utilities/CurrencyHandler.sol";
 import {Discountable} from "../common/utilities/Discountable.sol";
+import {Formula} from "../common/utilities/Formula.sol";
 import {Pausable} from "../common/utilities/Pausable.sol";
 
 /// contracts/lux/storages/
@@ -79,7 +77,7 @@ ReentrancyGuardUpgradeable {
 
     /* --- Initialization --- */
     /**
-     *  @notice Invoked for initialization after deployment, serving as the contract constructor.
+     *  @notice Initialize the contract after deployment, serving as the constructor.
      * 
      *          Name            Description
      *  @param  _admin          `Admin` contract address.
@@ -119,10 +117,10 @@ ReentrancyGuardUpgradeable {
     /**
      *  @notice Register or deregister multiple collections.
      *
-     *          Name             Description
-     *  @param  _collections     Array of contract addresses.
-     *  @param  _isCollection    Whether the operation is registration or deregistration.
-     *  @param  _signatures      Array of admin signatures.
+     *          Name            Description
+     *  @param  _collections    Array of contract addresses.
+     *  @param  _isCollection   Whether the operation is registration or deregistration.
+     *  @param  _signatures     Array of admin signatures.
      * 
      *  @dev    Administrative operator.
      */
@@ -184,11 +182,11 @@ ReentrancyGuardUpgradeable {
     /**
      *  @notice List a new offer of an ERC721 token.
      *
-     *          Name           Description
-     *  @param  _collection    Token collection contract address.
-     *  @param  _tokenId       Token identifier.
-     *  @param  _price         Sale price.
-     *  @param  _currency      Sale currency address.
+     *          Name            Description
+     *  @param  _collection     Token collection contract address.
+     *  @param  _tokenId        Token identifier.
+     *  @param  _price          Sale price.
+     *  @param  _currency       Sale currency address.
      * 
      *  @return New offer identifier.
      * 
@@ -261,8 +259,8 @@ ReentrancyGuardUpgradeable {
      *  @notice Buy an offer.
      *  @notice Buy only if the offer is in `Selling` state.
      *
-     *          Name        Description
-     *  @param  _offerId    Offer identifier.
+     *          Name            Description
+     *  @param  _offerId        Offer identifier.
      * 
      *  @return Sum of sale price and royalty.
      */
@@ -279,8 +277,8 @@ ReentrancyGuardUpgradeable {
      *  @notice Cancel an offer.
      *  @notice Cancel only if the offer is in `Selling` state.
      *
-     *          Name        Description
-     *  @param  _offerId    Offer identifier.
+     *          Name            Description
+     *  @param  _offerId        Offer identifier.
      * 
      *  @dev    Permission:
      *          - Seller of the offer.
@@ -333,6 +331,7 @@ ReentrancyGuardUpgradeable {
         return _buy(_offerId);
     }
 
+
     /* --- Helper --- */
     /**
      *  @notice Buy an offer.
@@ -340,7 +339,7 @@ ReentrancyGuardUpgradeable {
      *
      *          Name        Description
      *  @param  _offerId    Offer identifier.
-     * 
+     *
      *  @return Sum of sale price and royalty.
      */
     function _buy(
@@ -371,8 +370,15 @@ ReentrancyGuardUpgradeable {
         address royaltyReceiver = offer.royaltyReceiver;
         uint256 royalty = offer.royalty;
 
-        CurrencyHandler.receiveCurrency(currency, price + royalty);
-        CurrencyHandler.sendCurrency(currency, seller, price);
+        CurrencyHandler.receiveCurrency(
+            currency,
+            price + royalty
+        );
+        CurrencyHandler.sendCurrency(
+            currency,
+            seller,
+            price
+        );
 
         _chargeRoyalty(_offerId);
 
@@ -395,8 +401,8 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *          Name           Description
-     *  @param  _collection    Collection contract address.
+     *          Name            Description
+     *  @param  _collection     Collection contract address.
      * 
      *  @return Whether the collection is supported by the marketplace.
      */
@@ -408,15 +414,11 @@ ReentrancyGuardUpgradeable {
     }
     
     /**
-     *          Name           Description
-     *  @param  _collection    Collection contract address.
-     *  @param  _tokenId       Token identifier.
-     * 
      *  @return Whether the token is valid for sale.
      */
     function _validToken(
-        address _collection,
-        uint256 _tokenId
+        address,
+        uint256
     ) internal virtual view returns (bool) {
         return true;
     }
@@ -424,8 +426,8 @@ ReentrancyGuardUpgradeable {
     /**
      *  @notice Charge royalty on an offer.
      *
-     *          Name        Description
-     *  @param  _offerId    Offer identifier.
+     *          Name            Description
+     *  @param  _offerId        Offer identifier.
      */
     function _chargeRoyalty(
         uint256 _offerId

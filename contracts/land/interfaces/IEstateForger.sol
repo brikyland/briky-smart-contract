@@ -25,11 +25,11 @@ import {IEstateTokenizer} from "./IEstateTokenizer.sol";
  *          the sale concludes, the custodian is granted a limited time window to complete the required administrative
  *          procedures in compliance with local regulations. Tokenization is finalized only if the custodian fulfills these
  *          obligations within the allotted timeframe. In that case, the deposit is transferred to the custodian for
- *          settlement, and depositors may redeem their corresponding portion of a newly class of estate token. Otherwise,
+ *          settlement, and depositors may redeem their corresponding portion of a new class of estate token. Otherwise,
  *          depositors are entitled to withdraw their deposits, and the tokenization attempt is deemed unsuccessful.
  *
- *  @dev    Each unit of estate token is scaled by `10 ** IAssetToken(estateToken()).decimals()` following the convention of
- *          interface `IAssetToken`.
+ *  @dev    Quantities are expressed in absolute units. Scale these values by `10 ** IAssetToken(estateToken).decimals()` to
+ *          obtain the correct amounts under the `IAssetToken` convention.
  *  @dev    Implementation involves server-side support.
  *  @dev    ERC-20 tokens are identified by their contract addresses.
  *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
@@ -137,7 +137,9 @@ IEstateTokenizer {
      *          Name                Description
      *  @param  requestId           Request identifier.
      */
-    event RequestCancellation(uint256 indexed requestId);
+    event RequestCancellation(
+        uint256 indexed requestId
+    );
 
     /**
      *  @notice Emitted when a request is confirmed.
@@ -148,7 +150,7 @@ IEstateTokenizer {
      *  @param  soldQuantity        Total deposited quantity.
      *  @param  value               Total deposited value.
      *  @param  fee                 Tokenizing fee.
-     *  @param  cashbackBaseAmount  Total cashback from deposit.
+     *  @param  cashbackBaseAmount  Cashback derived from deposit.
      */
     event RequestConfirmation(
         uint256 indexed requestId,
@@ -284,17 +286,19 @@ IEstateTokenizer {
 
     /**
      *          Name            Description
+     *  @param  requestId       Request identifier.
+     * 
      *  @return request         Configuration and progress of the request.
      *
      *  @dev    Phases of a request:
      *          - Pending: block.timestamp < agenda.saleStartsAt
      *          - Private Sale: agenda.saleStartsAt <= block.timestamp < agenda.privateSaleEndsAt
-     *          - Public Sale: agenda.privateSaleEndsAt <= block.timestamp <= agenda.publicSaleEndsAt
-     *          - Formalities Finalization: agenda.publicSaleEndsAt
-     *                                          <= block.timestamp
-     *                                          < agenda.publicSaleEndsAt + EstateForgerConstant.SALE_CONFIRMATION_TIME_LIMIT
-     *          - Tokenized: agenda.confirmAt > 0
-     *          - Cancelled: quota.totalQuantity = 0
+     *          - Public Sale: agenda.privateSaleEndsAt <= block.timestamp < agenda.publicSaleEndsAt
+     *          - Awaiting Confirmation: agenda.publicSaleEndsAt
+     *                                      <= block.timestamp
+     *                                      < agenda.publicSaleEndsAt + EstateForgerConstant.SALE_CONFIRMATION_TIME_LIMIT
+     *          - Confirmed: estate.estateId > 0
+     *          - Cancelled: quota.totalSupply = 0
      */
     function getRequest(
         uint256 requestId
@@ -305,18 +309,18 @@ IEstateTokenizer {
      *          Name            Description
      *  @param  requestId       Request identifier.
      *  @param  account         EVM address.
-     *  @return deposit         Deposited quantity of an account in a request.
+     *  @return quantity        Deposited quantity of the account in the request.
      */
     function deposits(
         uint256 requestId,
         address account
-    ) external view returns (uint256 deposit);
+    ) external view returns (uint256 quantity);
 
     /**
      *          Name            Description
      *  @param  requestId       Request identifier.
      *  @param  account         EVM address.
-     *  @return withdrawAt      Withdrawal timestamp.
+     *  @return withdrawAt      Withdrawal timestamp of the account in the request.
      */
     function withdrawAt(
         uint256 requestId,
@@ -356,7 +360,6 @@ IEstateTokenizer {
         Validation calldata validation
     ) external returns (uint256 requestId);
 
-
     /**
      *  @notice Cancel a request.
      *  @notice Cancel only before the request is either confirmed or cancelled.
@@ -385,15 +388,15 @@ IEstateTokenizer {
     ) external payable returns (uint256 value);
 
     /**
-     *  @notice Update the URI of estate information of a request.
+     *  @notice Update the URI of estate metadata of a request.
      *  @notice Update only before the request is either confirmed or cancelled.
      *
      *          Name            Description
      *  @param  requestId       Request identifier.
-     *  @param  uri             URI of estate metadata.
+     *  @param  uri             New URI of estate metadata.
      *  @param  validation      Validation package from the validator.
      * 
-     *  @dev    Permission: Custodians from the estate token.
+     *  @dev    Permission: Executives active in the zone of the estate.
      *  @dev    Validation data:
      *          ```
      *          data = abi.encode(
@@ -414,7 +417,7 @@ IEstateTokenizer {
      *
      *          Name            Description
      *  @param  requestId       Request identifier.
-     *  @param  agenda          Initialization input for `EstateForgerRequestAgenda` of the request.
+     *  @param  agenda         Initialization input for `EstateForgerRequestAgenda`.
      *
      *  @dev    Permission: Executives active in the zone of the estate.
      *  @dev    Total sale duration must be no less than `EstateForgerConstant.SALE_MINIMUM_DURATION`.
@@ -427,7 +430,7 @@ IEstateTokenizer {
     ) external;
 
     /**
-     *  @notice Whitelist or unwhitelist multiple accounts for a request.
+     *  @notice Whitelist or unwhitelist accounts for participation in the private sale of a specific request.
      *  @notice Whitelist only before the private sale ends.
      *
      *          Name            Description
@@ -460,14 +463,14 @@ IEstateTokenizer {
     /* --- Safe Command --- */
     /**
      *  @notice Confirm a request to be tokenized.
-     *  @notice Confirm only if the request has achieved at least minimum selling quantity deposited (even if the sale period
-     *          has not yet ended) and before the confirmation time limit has expired.
+     *  @notice Confirm only if the request has sold at least minimum quantity (even if the sale period has not yet ended) and
+     *          before the confirmation time limit has expired.
      *  @notice The message sender must provide sufficient extra-currency amounts for the cashback fund.
      *
      *          Name        Description
      *  @param  requestId   Request identifier.
      *  @param  anchor      Keccak256 hash of `estate.uri` of the request.
-     *  @return estateId    New estate identifier.
+     *  @return estateId    New estate token identifier.
      *
      *  @dev    Permission: Managers active in the zone of the estate.
      */
@@ -493,5 +496,4 @@ IEstateTokenizer {
         uint256 quantity,
         bytes32 anchor
     ) external payable returns (uint256 value);
-
 }

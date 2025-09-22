@@ -11,8 +11,8 @@ import {ICommon} from "./ICommon.sol";
  *  @author Briky Team
  *
  *  @notice Interface for contract `DividendHub`.
- *  @notice The `DividendHub` contract collects incomes associated to assets from governor contracts and distribute them among
- *          asset holders.
+ *  @notice The `DividendHub` contract collects incomes associated to assets from governor contracts and distribute them
+ *          among asset holders.
  *
  *  @dev    ERC-20 tokens are identified by their contract addresses.
  *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).

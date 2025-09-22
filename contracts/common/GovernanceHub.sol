@@ -34,7 +34,7 @@ import {Validatable} from "./utilities/Validatable.sol";
  *          verify the feasibility of the proposal within a given expiration to either admit or disqualify it accordingly.
  *          During this process, the full context is uploaded to a public database (e.g., IPFS), and the link is submitted to
  *          be the URI of proposal context. This approach protects the database from external attacks as well as ensures
- *          proposals remains validatable and user-oriented.
+ *          proposals remain validatable and user-oriented.
  *  @dev    Implementation involves server-side support.
  *  @dev    ERC-20 tokens are identified by their contract addresses.
  *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
@@ -120,7 +120,7 @@ ReentrancyGuardUpgradeable {
 
     /* --- Initialization --- */
     /**
-     *  @notice Invoked for initialization after deployment, serving as the contract constructor.
+     *  @notice Initialize the contract after deployment, serving as the constructor.
      *
      *          Name        Description
      *  @param  _admin      `Admin` contract address.
@@ -237,7 +237,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _rule               Rule to determine verdict.
      *  @param  _quorumRate         Fraction of total weight for quorum.
      *  @param  _duration           Voting duration.
-     *  @param  _admissionExpiry    Expiration for moderators to admit the proposal.
+     *  @param  _admissionExpiry    Expiration for proposal admission.
      *  @param  _validation         Validation package from the validator.
      *
      *  @return New proposal identifier.
@@ -247,7 +247,7 @@ ReentrancyGuardUpgradeable {
      *          executives will later verify the feasibility of the proposal within a given expiration to either admit or
      *          disqualify it accordingly. During this process, the full context is uploaded to a public database (e.g., IPFS),
      *          and the link is submitted to be the URI of proposal context. This approach protects the database from external
-     *          attacks as well as ensures proposals remains validatable and user-oriented.
+     *          attacks as well as ensures proposals remain validatable and user-oriented.
      *  @dev    Through the validation mechanism, the server-side determines `uuid`, `quorumRate`, `duration` and
      *          `admissionExpiry` based on the specific supported type of proposal and its context. Operators are also required
      *          to be pre-registered on the server-side to ensure proper assignments.
@@ -286,7 +286,7 @@ ReentrancyGuardUpgradeable {
             revert UnavailableToken();
         }
 
-        if (_quorumRate > CommonConstant.RATE_MAX_FRACTION) {
+        if (_quorumRate > CommonConstant.RATE_MAX_SUBUNIT) {
             revert InvalidInput();
         }
 
@@ -383,15 +383,12 @@ ReentrancyGuardUpgradeable {
         }
 
         /// @dev    The voting power corresponds to equity at admission timestamp.
-        uint256 totalWeight = IGovernor(proposal.governor).totalEquityAt(tokenId, block.timestamp);
+        uint256 totalWeight = governorContract.totalEquityAt(tokenId, block.timestamp);
         if (totalWeight == 0) {
             revert NoVotingPower();
         }
 
-        uint256 quorumWeight = totalWeight.scale(
-            proposal.quorum,
-            CommonConstant.RATE_MAX_FRACTION
-        );
+        uint256 quorumWeight = totalWeight.scale(proposal.quorum, CommonConstant.RATE_MAX_SUBUNIT);
 
         proposal.contextURI = _contextURI;
         /// @dev    Log the review detail.
@@ -399,10 +396,10 @@ ReentrancyGuardUpgradeable {
         proposal.totalWeight = totalWeight;
         /// @dev    `quorum` is converted to weight.
         proposal.quorum = quorumWeight;
-        /// @dev    `timePivot` is altered by the admission timestamp.
+        /// @dev    `timePivot` is set to the admission timestamp.
         proposal.timePivot = uint40(block.timestamp);
         proposal.currency = _currency;
-        /// @dev    `due` is altered by the vote closure timestamp.
+        /// @dev    `due` is set to the vote closure timestamp.
         proposal.due += uint40(block.timestamp);
 
         proposal.state = ProposalState.Voting;
@@ -419,13 +416,7 @@ ReentrancyGuardUpgradeable {
 
     /**
      *  @notice Disqualify an inexecutable proposal after review practicability.
-     *  @notice Disqualify only if the proposal is in `Pending` or `Voting` state and befo
-     *  @dev    Any current holder of the asset, with client-side support, can propose by submitting a full proper context to the
-     *          server-side and forwarding only its checksum to the contract as the UUID of the new proposal. Authorized executives
-     *          will later verify the feasibility of the proposal within a given expiration to either admit or disqualify it
-     *          accordingly. During this process, the full context is uploaded to a public database (e.g., IPFS), and the link is
-     *          submitted to be the URI of proposal context. This approach protects the database from external attacks as well as
-     *          ensures proposals remains validatable and user-oriented.re the vote closes.
+     *  @notice Disqualify only if the proposal is in `Pending` or `Voting` state and before the vote closes.
      *
      *          Name                Description
      *  @param  _proposalId         Proposal identifier.
@@ -445,7 +436,6 @@ ReentrancyGuardUpgradeable {
         Validation calldata _validation
     ) external
     whenNotPaused
-    nonReentrant
     validProposal(_proposalId) {
         _validate(
             abi.encode(
@@ -757,10 +747,10 @@ ReentrancyGuardUpgradeable {
      *  @notice Conclude only if the proposal is in `Executing` state.
      *
      *          Name            Description
-     *  @param  _proposalId      Proposal identifier.
-     *  @param  _resultURI       URI of execution result.
-     *  @param  _isSuccessful    Whether the execution has succeeded.
-     *  @param  _validation      Validation package from the validator.
+     *  @param  _proposalId     Proposal identifier.
+     *  @param  _resultURI      URI of execution result.
+     *  @param  _isSuccessful   Whether the execution has succeeded.
+     *  @param  _validation     Validation package from the validator.
      *
      *  @dev    Permission: Asset representative of the proposal.
      */
@@ -805,6 +795,7 @@ ReentrancyGuardUpgradeable {
     }
 
 
+    /* --- Helper --- */
     /**
      *  @notice Evaluate the verdict of the vote of a proposal
      *
@@ -870,12 +861,9 @@ ReentrancyGuardUpgradeable {
                 : ProposalVerdict.Unsettled;
         }
     }
-
-
-    /* --- Helper --- */
+    
     /**
      *  @notice Vote on a proposal.
-     *  @notice Vote only if the proposal is in `Voting` state and before the vote closes.
      *
      *          Name                Description
      *  @param  _proposalId         Proposal identifier.
@@ -949,7 +937,6 @@ ReentrancyGuardUpgradeable {
 
     /**
      *  @notice Contribute to the budget of a proposal.
-     *  @notice Contribute only before the proposal is confirmed or the confirmation time limit has expired.
      *
      *          Name                Description
      *  @param  _proposalId         Proposal identifier.
@@ -971,7 +958,10 @@ ReentrancyGuardUpgradeable {
             revert Timeout();
         }
 
-        CurrencyHandler.receiveCurrency(proposal.currency, _value);
+        CurrencyHandler.receiveCurrency(
+            proposal.currency,
+            _value
+        );
 
         proposal.budget += _value;
         contributions[_proposalId][msg.sender] += _value;

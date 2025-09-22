@@ -10,8 +10,8 @@ import {CommissionDispatchable} from "../land/utilities/CommissionDispatchable.s
 /// contracts/lend/interfaces/
 import {IMortgageToken} from "../lend/interfaces/IMortgageToken.sol";
 
-/// contracts/lux/storages/
-import {MortgageMarketplaceStorage} from "../lux/storages/MortgageMarketplaceStorage.sol";
+/// contracts/lend/structs/
+import {IMortgage} from "../lend/structs/IMortgage.sol";
 
 /// contracts/lux/contracts/
 import {ERC721Marketplace} from "./ERC721Marketplace.sol";
@@ -22,7 +22,7 @@ import {ERC721Marketplace} from "./ERC721Marketplace.sol";
  *  @notice The `MortgageMarketplace` contract hosts a marketplace for mortgage tokens.
  */
 contract MortgageMarketplace is
-MortgageMarketplaceStorage,
+IMortgage,
 ERC721Marketplace,
 CommissionDispatchable {
     /** ===== LIBRARY ===== **/
@@ -36,8 +36,8 @@ CommissionDispatchable {
     /** ===== FUNCTION ===== **/
     /* --- Helper --- */
     /**
-     *          Name           Description
-     *  @param  _collection    Collection contract address.
+     *          Name            Description
+     *  @param  _collection     Collection contract address.
      * 
      *  @return Whether the collection is supported by the marketplace.
      * 
@@ -50,9 +50,9 @@ CommissionDispatchable {
     }
     
     /**
-     *          Name           Description
-     *  @param  _collection    Collection contract address.
-     *  @param  _tokenId       Token identifier.
+     *          Name            Description
+     *  @param  _collection     Collection contract address.
+     *  @param  _tokenId        Token identifier.
      * 
      *  @return Whether the mortgage token is valid for sale.
      */

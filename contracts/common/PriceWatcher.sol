@@ -8,9 +8,6 @@ import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interf
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import {ERC165CheckerUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 
-/// contracts/common/utilities/
-import {Formula} from "./utilities/Formula.sol";
-
 /// contracts/common/constants/
 import {CommonConstant} from "./constants/CommonConstant.sol";
 
@@ -22,6 +19,7 @@ import {PriceWatcherStorage} from "./storages/PriceWatcherStorage.sol";
 
 /// contracts/common/utilities/
 import {Administrable} from "./utilities/Administrable.sol";
+import {Formula} from "./utilities/Formula.sol";
 
 /**
  *  @author Briky Team
@@ -63,7 +61,7 @@ ReentrancyGuardUpgradeable {
 
     /* --- Initialization --- */
     /**
-     *  @notice Invoked for initialization after deployment, serving as the contract constructor.
+     *  @notice Initialize the contract after deployment, serving as the constructor.
      *
      *          Name    Description
      *  @param  _admin  `Admin` contract address.

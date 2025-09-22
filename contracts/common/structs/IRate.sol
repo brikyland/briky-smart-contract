@@ -10,6 +10,7 @@ interface IRate {
     /** ===== ERROR ===== **/
     error InvalidRate();
 
+ 
     /** ===== STRUCT ===== **/
     /**
      *  @notice Representation of an unsigned rational rate.

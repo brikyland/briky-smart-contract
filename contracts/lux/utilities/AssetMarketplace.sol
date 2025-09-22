@@ -22,10 +22,10 @@ import {AssetMarketplaceStorage} from "../../lux/storages/AssetMarketplaceStorag
 /**
  *  @author Briky Team
  *
- *  @notice An `AssetMarketplace` contract hosts a marketplace for a specific asset token.
- * 
- *  @dev    Each unit of asset token is scaled by `10 ** IAssetToken(collection).decimals()` following the convention of
- *          interface `IAssetToken`.
+ *  @notice An `AssetMarketplace` contract hosts a marketplace for a specific `IAssetToken`.
+ *
+ *  @dev    Each unit of asset token is represented in scaled form as `10 ** IAssetToken(collection).decimals()` following the
+ *          convention of `IAssetToken`.
  *  @dev    ERC-20 tokens are identified by their contract addresses.
  *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
  */
@@ -80,9 +80,9 @@ ReentrancyGuardUpgradeable {
     /**
      *  @notice Initialize "AssetMarketplace".
      *
-     *          Name           Description
-     *  @param  _admin         `Admin` contract address.
-     *  @param  _collection    `IAssetToken` contract address.
+     *          Name            Description
+     *  @param  _admin          `Admin` contract address.
+     *  @param  _collection     `IAssetToken` contract address.
      * 
      *  @dev    The asset token must support interface `IAssetToken`.
      */
@@ -118,12 +118,12 @@ ReentrancyGuardUpgradeable {
     /**
      *  @notice List a new offer of asset tokens.
      *
-     *          Name              Description
-     *  @param  _tokenId          Asset identifier.
-     *  @param  _sellingAmount    Selling amount.
-     *  @param  _unitPrice        Sale value of each token unit.
-     *  @param  _currency         Sale currency address.
-     *  @param  _isDivisible      Whether the offer can be sold partially.
+     *          Name            Description
+     *  @param  _tokenId        Asset identifier.
+     *  @param  _sellingAmount  Selling amount.
+     *  @param  _unitPrice      Sale value of each token unit.
+     *  @param  _currency       Sale currency address.
+     *  @param  _isDivisible    Whether the offer can be sold partially.
      * 
      *  @return New offer identifier.
      * 
@@ -271,7 +271,7 @@ ReentrancyGuardUpgradeable {
      *
      *          Name        Description
      *  @param  _offerId    Offer identifier.
-     *  @param  _anchor     `unitPrice * sellingAmount` of the offer.
+     *  @param  _anchor     Keccak256 hash of token amount, `tokenId` and `unitPrice` of the offer.
      * 
      *  @return Sum of sale price and royalty.
      * 
@@ -279,16 +279,23 @@ ReentrancyGuardUpgradeable {
      */
     function safeBuy(
         uint256 _offerId,
-        uint256 _anchor
+        bytes32 _anchor
     ) external payable
     whenNotPaused
     validOffer(_offerId)
     returns (uint256) {
-        if (_anchor != offers[_offerId].unitPrice * offers[_offerId].sellingAmount) {
+        uint256 amount = offers[_offerId].sellingAmount - offers[_offerId].soldAmount;
+        if (_anchor != keccak256(
+        abi.encode(
+                amount,
+                offers[_offerId].tokenId,
+                offers[_offerId].unitPrice
+            )
+        )) {
             revert BadAnchor();
         }
 
-        return _buy(_offerId, offers[_offerId].sellingAmount - offers[_offerId].soldAmount);
+        return _buy(_offerId, amount);
     }
 
     /**
@@ -297,8 +304,8 @@ ReentrancyGuardUpgradeable {
      *
      *          Name        Description
      *  @param  _offerId    Offer identifier.
-     *  @param  _amount     Amount of tokens to buy.
-     *  @param  _anchor     `tokenId` of the offer.
+     *  @param  _amount     Token amount.
+     *  @param  _anchor     Keccak256 hash of token amount, `tokenId` and `unitPrice` of the offer.
      * 
      *  @return Sum of sale price and royalty.
      * 
@@ -307,12 +314,18 @@ ReentrancyGuardUpgradeable {
     function safeBuy(
         uint256 _offerId,
         uint256 _amount,
-        uint256 _anchor
+        bytes32 _anchor
     ) external payable
     whenNotPaused
     validOffer(_offerId)
     returns (uint256) {
-        if (_anchor != offers[_offerId].tokenId) {
+        if (_anchor != keccak256(
+            abi.encode(
+                _amount,
+                offers[_offerId].tokenId,
+                offers[_offerId].unitPrice
+            )
+        )) {
             revert BadAnchor();
         }
 
@@ -370,8 +383,15 @@ ReentrancyGuardUpgradeable {
         
         address currency = offer.currency;
 
-        CurrencyHandler.receiveCurrency(currency, value + royalty);
-        CurrencyHandler.sendCurrency(currency, seller, value);
+        CurrencyHandler.receiveCurrency(
+            currency,
+            value + royalty
+        );
+        CurrencyHandler.sendCurrency(
+            currency,
+            seller,
+            value
+        );
 
         _chargeRoyalty(_offerId, royalty);
 

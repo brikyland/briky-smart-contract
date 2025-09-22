@@ -8,9 +8,6 @@ import {Formula} from "../common/utilities/Formula.sol";
 /// contracts/land/utilities/
 import {CommissionDispatchable} from "../land/utilities/CommissionDispatchable.sol";
 
-/// contracts/lux/storages/
-import {EstateMarketplaceStorage} from "../lux/storages/EstateMarketplaceStorage.sol";
-
 /// contracts/lux/contracts/
 import {AssetMarketplace} from "../lux/utilities/AssetMarketplace.sol";
 
@@ -19,13 +16,12 @@ import {AssetMarketplace} from "../lux/utilities/AssetMarketplace.sol";
  *
  *  @notice The `EstateMarketplace` contract hosts a marketplace for estate tokens.
  * 
- *  @dev    Each unit of asset token is scaled by `10 ** IAssetToken(collection).decimals()` following the convention of
- *          interface `IAssetToken`.
+ *  @dev    Each unit of asset token is represented in scaled form as `10 ** IAssetToken(collection).decimals()` following the
+ *          convention of interface `IAssetToken`.
  *  @dev    ERC-20 tokens are identified by their contract addresses.
  *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
  */
 contract EstateMarketplace is
-EstateMarketplaceStorage,
 AssetMarketplace,
 CommissionDispatchable {
     /** ===== LIBRARY ===== **/
@@ -39,7 +35,7 @@ CommissionDispatchable {
     /** ===== FUNCTION ===== **/
     /* --- Initialization --- */
     /**
-     *  @notice Invoked for initialization after deployment, serving as the contract constructor.
+     *  @notice Initialize the contract after deployment, serving as the constructor.
      * 
      *          Name                Description
      *  @param  _admin              `Admin` contract address.
@@ -86,6 +82,10 @@ CommissionDispatchable {
             currency
         );
 
-        CurrencyHandler.sendCurrency(currency, royaltyReceiver, _royalty - commission);
+        CurrencyHandler.sendCurrency(
+            currency,
+            royaltyReceiver,
+            _royalty - commission
+        );
     }
 }

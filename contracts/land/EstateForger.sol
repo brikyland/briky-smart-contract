@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 /// @openzeppelin/contracts-upgradeable/
 import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import {ERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 
 /// contracts/common/interfaces/
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
@@ -46,11 +47,11 @@ import {EstateTokenReceiver} from "./utilities/EstateTokenReceiver.sol";
  *          the sale concludes, the custodian is granted a limited time window to complete the required administrative
  *          procedures in compliance with local regulations. Tokenization is finalized only if the custodian fulfills these
  *          obligations within the allotted timeframe. In that case, the deposit is transferred to the custodian for
- *          settlement, and depositors may redeem their corresponding portion of a newly class of estate token. Otherwise,
+ *          settlement, and depositors may redeem their corresponding portion of a new class of estate token. Otherwise,
  *          depositors are entitled to withdraw their deposits, and the tokenization attempt is deemed unsuccessful.
  *
- *  @dev    Each unit of estate token is scaled by `10 ** IAssetToken(estateToken()).decimals()` following the convention of
- *          interface `IAssetToken`.
+ *  @dev    Quantities are expressed in absolute units. Scale these values by `10 ** IAssetToken(estateToken).decimals()` to
+ *          obtain the correct amounts under the `IAssetToken` convention.
  *  @dev    Implementation involves server-side support.
  *  @dev    ERC-20 tokens are identified by their contract addresses.
  *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
@@ -58,6 +59,7 @@ import {EstateTokenReceiver} from "./utilities/EstateTokenReceiver.sol";
  */
 contract EstateForger is
 EstateForgerStorage,
+ERC165Upgradeable,
 CommissionDispatchable,
 EstateTokenReceiver,
 Administrable,
@@ -76,8 +78,8 @@ ReentrancyGuardUpgradeable {
     /**
      *  @notice Verify a valid request identifier.
      *
-     *          Name            Description
-     *  @param  _requestId      Request identifier.
+     *          Name        Description
+     *  @param  _requestId  Request identifier.
      */
     modifier validRequest(
         uint256 _requestId
@@ -91,8 +93,8 @@ ReentrancyGuardUpgradeable {
     /**
      *  @notice Verify the message sender is active in the zone of the estate of the request.
      *
-     *          Name            Description
-     *  @param  _requestId      Request identifier.
+     *          Name        Description
+     *  @param  _requestId  Request identifier.
      */
     modifier onlyActiveInZoneOf(
         uint256 _requestId
@@ -121,7 +123,7 @@ ReentrancyGuardUpgradeable {
 
     /* --- Initialization --- */
     /**
-     *  @notice Invoked for initialization after deployment, serving as the contract constructor.
+     *  @notice Initialize the contract after deployment, serving as the constructor.
      *
      *          Name                Description
      *  @param  _admin              `Admin` contract address.
@@ -263,11 +265,11 @@ ReentrancyGuardUpgradeable {
      *          - Pending: block.timestamp < agenda.saleStartsAt
      *          - Private Sale: agenda.saleStartsAt <= block.timestamp < agenda.privateSaleEndsAt
      *          - Public Sale: agenda.privateSaleEndsAt <= block.timestamp <= agenda.publicSaleEndsAt
-     *          - Formalities Finalization: agenda.publicSaleEndsAt
-     *                                          <= block.timestamp
-     *                                          < agenda.publicSaleEndsAt + EstateForgerConstant.SALE_CONFIRMATION_TIME_LIMIT
-     *          - Tokenized: estate.estateId > 0
-     *          - Cancelled: quote.totalSupply = 0
+     *          - Awaiting Confirmation: agenda.publicSaleEndsAt
+     *                                      <= block.timestamp
+     *                                      < agenda.publicSaleEndsAt + EstateForgerConstant.SALE_CONFIRMATION_TIME_LIMIT
+     *          - Confirmed: estate.estateId > 0
+     *          - Cancelled: quota.totalSupply = 0
      */
     function getRequest(
         uint256 _requestId
@@ -339,7 +341,7 @@ ReentrancyGuardUpgradeable {
         if (_quota.minSellingQuantity > _quota.maxSellingQuantity
             || _quota.maxSellingQuantity > _quota.totalQuantity
             || _quote.cashbackThreshold > _quota.totalQuantity
-            || _quote.cashbackBaseRate > CommonConstant.RATE_MAX_FRACTION
+            || _quote.cashbackBaseRate > CommonConstant.RATE_MAX_SUBUNIT
             || _quote.cashbackCurrencies.length != _quote.cashbackDenominations.length
             || _agenda.saleStartsAt <= block.timestamp
             || _agenda.privateSaleDuration + _agenda.publicSaleDuration < EstateForgerConstant.SALE_MINIMUM_DURATION) {
@@ -366,7 +368,7 @@ ReentrancyGuardUpgradeable {
             cashbackFundId = IReserveVault(reserveVault).openFund(
                 _quote.currency,
                 (_quote.feeDenomination - commissionDenomination)
-                    .scale(_quote.cashbackBaseRate, CommonConstant.RATE_MAX_FRACTION),
+                    .scale(_quote.cashbackBaseRate, CommonConstant.RATE_MAX_SUBUNIT),
                 _quote.cashbackCurrencies,
                 _quote.cashbackDenominations
             );
@@ -467,7 +469,7 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Update the URI of estate information of a request.
+     *  @notice Update the URI of estate metadata of a request.
      *  @notice Update only before the request is either confirmed or cancelled.
      *
      *          Name            Description
@@ -486,7 +488,13 @@ ReentrancyGuardUpgradeable {
     validRequest(_requestId)
     onlyExecutive
     onlyActiveInZoneOf(_requestId) {
-        _validate(abi.encode(_uri), _validation);
+        _validate(
+            abi.encode(
+                _requestId,
+                _uri
+            ),
+            _validation
+        );
 
         if (requests[_requestId].agenda.confirmAt != 0) {
             revert AlreadyConfirmed();
@@ -642,9 +650,9 @@ ReentrancyGuardUpgradeable {
 
 
     /**
-     *  @notice Confirm a request and create the estate token.
-     *  @notice Confirm only if the request has achieved at least minimum selling quantity deposited (even if the sale period
-     *          has not yet ended) and before the confirmation time limit has expired.
+     *  @notice Confirm a request to be tokenized.
+     *  @notice Confirm only if the request has sold at least minimum quantity (even if the sale period has not yet ended) and
+     *          before the confirmation time limit has expired.
      *  @notice The message sender must provide sufficient extra-currency amounts for the cashback fund.
      *
      *          Name            Description
@@ -692,7 +700,7 @@ ReentrancyGuardUpgradeable {
             revert NotEnoughSoldQuantity();
         }
 
-        /// @dev    If confirming before the anticipated due, `privateSaleEndsAt` and `publicSaleEndsAt` will be overwritten
+        /// @dev    If confirming before the anticipated due, `privateSaleEndsAt` and `publicSaleEndsAt` must be overwritten
         ///         with the current timestamp.
         if (request.agenda.privateSaleEndsAt > block.timestamp) {
             request.agenda.privateSaleEndsAt = uint40(block.timestamp);
@@ -700,11 +708,11 @@ ReentrancyGuardUpgradeable {
         if (publicSaleEndsAt > block.timestamp) {
             request.agenda.publicSaleEndsAt = uint40(block.timestamp);
         }
-        /// @dev    Tokenized request:  agenda.confirmAt > 0
+        /// @dev    Confirmed request:  agenda.confirmAt > 0
         request.agenda.confirmAt = uint40(block.timestamp);
 
         IEstateToken estateTokenContract = IEstateToken(estateToken);
-        /// @dev    Scale with decimals.
+        /// @dev    Scale with token decimals.
         uint256 unit = 10 ** estateTokenContract.decimals();
         uint256 estateId = estateTokenContract.tokenizeEstate(
             totalQuantity * unit,
@@ -717,7 +725,7 @@ ReentrancyGuardUpgradeable {
         );
         request.estate.estateId = estateId;
 
-        /// @dev    Transfer unsold tokens to the requester.
+        /// @dev    Transfer remain tokens to the requester.
         address requester = request.requester;
         estateTokenContract.safeTransferFrom(
             address(this),
@@ -730,7 +738,7 @@ ReentrancyGuardUpgradeable {
         address currency = request.quote.currency;
         uint256 value = soldQuantity * request.quote.unitPrice;
         uint256 fee = soldQuantity * request.quote.feeDenomination;
-        /// @dev    Transfer total deposit minus tokenizing fee to the requester.
+        /// @dev    Transfer total deposit minus fee to the requester.
         CurrencyHandler.sendCurrency(
             currency,
             requester,
@@ -754,6 +762,7 @@ ReentrancyGuardUpgradeable {
 
         /// @dev    Provide the cashback fund sufficiently.
         uint256 cashbackBaseAmount = _provideCashbackFund(request.quote.cashbackFundId);
+
         CurrencyHandler.sendCurrency(
             currency,
             feeReceiver,
@@ -923,7 +932,7 @@ ReentrancyGuardUpgradeable {
             revert NotTokenized();
         }
         uint256 withdrawAt = withdrawAt[_requestId][_account];
-        /// @dev    Allocated tokens of the message sender only remains in this contract after the tokenization and before the
+        /// @dev    Allocated tokens of the message sender only stays in this contract after the tokenization and before the
         ///         withdrawal.
         return _at >= requests[_requestId].agenda.confirmAt && (withdrawAt == 0 || _at < withdrawAt)
             ? deposits[_requestId][_account] * 10 ** IEstateToken(estateToken).decimals()
@@ -938,18 +947,19 @@ ReentrancyGuardUpgradeable {
      */
     function supportsInterface(
         bytes4 _interfaceId
-    ) public view virtual override returns (bool) {
-        return _interfaceId == type(IEstateForger).interfaceId
-            || _interfaceId == type(IEstateTokenizer).interfaceId
+    ) public view virtual override(
+        IERC165Upgradeable,
+        ERC165Upgradeable
+    ) returns (bool) {
+        return _interfaceId == type(IEstateTokenizer).interfaceId
             || _interfaceId == type(IEstateTokenReceiver).interfaceId
-            || _interfaceId == type(IERC165Upgradeable).interfaceId;
+            || super.supportsInterface(_interfaceId);
     }
 
 
     /* --- Helper --- */
     /**
      *  @notice Deposit to a request.
-     *  @notice Deposit only during sale period. Only accounts whitelisted globally or specifically for the request can deposit during the private sale.
      *
      *          Name            Description
      *  @param  _requestId      Request identifier.
@@ -1029,7 +1039,7 @@ ReentrancyGuardUpgradeable {
      *          Name                Description
      *  @param  _cashbackFundId     Cashback fund identifier.
      *
-     *  @return Main currency cashback amount.
+     *  @return Main currency cashback value.
      */
     function _provideCashbackFund(
         uint256 _cashbackFundId
@@ -1045,8 +1055,15 @@ ReentrancyGuardUpgradeable {
                     if (fund.extraCurrencies[i] == address(0)) {
                         totalNative += fund.extraDenominations[i] * fund.quantity;
                     } else {
-                        CurrencyHandler.receiveERC20(fund.extraCurrencies[i], fund.extraDenominations[i] * fund.quantity);
-                        CurrencyHandler.allowERC20(fund.extraCurrencies[i], reserveVaultAddress, fund.extraDenominations[i] * fund.quantity);
+                        CurrencyHandler.receiveERC20(
+                            fund.extraCurrencies[i],
+                            fund.extraDenominations[i] * fund.quantity
+                        );
+                        CurrencyHandler.allowERC20(
+                            fund.extraCurrencies[i],
+                            reserveVaultAddress,
+                            fund.extraDenominations[i] * fund.quantity
+                        );
                     }
                 }
 

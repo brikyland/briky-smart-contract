@@ -24,17 +24,12 @@ import {AuctionStorage} from "../liquidity/storages/AuctionStorage.sol";
 /**
  *  @author Briky Team
  *
- *  @notice The `Auction` contract manages token distribution through a public auction mechanism where participants
- *          deposit currency to receive primary tokens with vesting schedules and staking options.
- *
- *  @dev    The auction allows participants to deposit currency during the auction period to receive an allocation
- *          of primary tokens proportional to their contribution. After the auction ends, participants can withdraw
- *          their allocated tokens with a vesting schedule or stake them directly into stake token contracts.
- *  @dev    Token allocation is calculated based on the participant's deposit proportion of the total deposits.
- *          Vesting allows gradual token release over time, while staking provides immediate utility in the ecosystem.
- *  @dev    The auction integrates with the treasury system to contribute liquidity from participant deposits.
- *  @dev    ERC-20 tokens are identified by their contract addresses.
- *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
+ *  @notice The `Auction` contract facilitates public distribution of `PrimaryToken`. Accounts can deposit to acquire tokens,
+ *          which are distributed proportionally to their deposit and can be withdrawn with a continuous vesting mechanism. All
+ *          the deposit will be contributed to the liquidity of the `Treasury`.
+ *  @notice Token allocations vest evenly on a per-second basis after the auction ends
+ *  @notice When the staking pools are opened, accounts that have unwithdrawn allocation can stake all their remain tokens.
+ *  @notice Auction currency is the stablecoin currency of the treasury.
  */
 contract Auction is
 AuctionStorage,
@@ -49,7 +44,7 @@ ReentrancyGuardUpgradeable {
 
 
     /** ===== FUNCTION ===== **/
-    /* --- Standard --- */
+    /* --- Common --- */
     /**
      *  @notice Executed on a call to this contract with empty calldata.
      */
@@ -65,11 +60,11 @@ ReentrancyGuardUpgradeable {
 
     /* --- Initialization --- */
     /**
-     *  @notice Invoked for initialization after deployment, serving as the contract constructor.
+     *  @notice Initialize the contract after deployment, serving as the constructor.
      *
      *          Name            Description
-     *  @param  _admin          Admin contract address.
-     *  @param  _primaryToken   Primary token contract address.
+     *  @param  _admin          `Admin` contract address.
+     *  @param  _primaryToken   `PrimaryToken` contract address.
      */
     function initialize(
         address _admin,
@@ -85,14 +80,15 @@ ReentrancyGuardUpgradeable {
         primaryToken = _primaryToken;
     }
 
+
     /* --- Administration --- */
     /**
-     *  @notice Update stake token contracts.
+     *  @notice Update staking pools contract.
      *
      *          Name            Description
-     *  @param  _stakeToken1    New stake token #1 contract address.
-     *  @param  _stakeToken2    New stake token #2 contract address.
-     *  @param  _stakeToken3    New stake token #3 contract address.
+     *  @param  _stakeToken1    `StakeToken` contract address #1.
+     *  @param  _stakeToken2    `StakeToken` contract address #2.
+     *  @param  _stakeToken3    `StakeToken` contract address #3.
      *  @param  _signatures     Array of admin signatures.
      *
      *  @dev    Administrative operator.
@@ -122,20 +118,14 @@ ReentrancyGuardUpgradeable {
         stakeToken1 = _stakeToken1;
         stakeToken2 = _stakeToken2;
         stakeToken3 = _stakeToken3;
-
-        emit StakeTokensUpdate(
-            _stakeToken1,
-            _stakeToken2,
-            _stakeToken3
-        );
     }
 
     /**
-     *  @notice Start the auction with specified end time and vesting duration.
+     *  @notice Start the auction with specific end timestamp and vesting duration.
      *
      *          Name                Description
      *  @param  _endAt              Auction end timestamp.
-     *  @param  _vestingDuration    Duration over which tokens are vested after auction ends.
+     *  @param  _vestingDuration    Vesting duration.
      *  @param  _signatures         Array of admin signatures.
      *
      *  @dev    Administrative operator.
@@ -163,21 +153,37 @@ ReentrancyGuardUpgradeable {
             revert InvalidTimestamp();
         }
 
+        /// @dev    Must unlock tokens from `PrimaryToken` before starting auction.
         totalToken = IERC20Upgradeable(primaryToken).balanceOf(address(this));
 
         endAt = _endAt;
         vestingDuration = _vestingDuration;
     }
 
+
+    /* --- Query --- */
+    /**
+     *          Name        Description
+     *  @param  _account    EVM address.
+     *
+     *  @return Tokens allocated in proportion to deposit of the account relative to all others.
+     */
+    function allocationOf(
+        address _account
+    ) public view returns (uint256) {
+        return totalDeposit == 0
+            ? 0
+            : deposits[_account].scale(totalToken, totalDeposit);
+    }
+
+
     /* --- Command --- */
     /**
-     *  @notice Deposit currency into the auction to receive token allocation.
+     *  @notice Deposit value into the auction.
+     *  @notice Deposit only before the auction ends.
      *
      *          Name        Description
-     *  @param  _value      Amount of currency to deposit.
-     *
-     *  @dev    Deposits are only accepted during the auction period (before endAt).
-     *  @dev    Deposited currency is contributed to the treasury as liquidity.
+     *  @param  _value      Deposited value.
      */
     function deposit(
         uint256 _value
@@ -192,10 +198,18 @@ ReentrancyGuardUpgradeable {
         }
 
         address currency = ITreasury(IPrimaryToken(primaryToken).treasury()).currency();
-        CurrencyHandler.receiveERC20(currency, _value);
+        CurrencyHandler.receiveERC20(
+            currency,
+            _value
+        );
 
+        /// @dev    Contribute liquidity to the treasury.
         address primaryTokenAddress = primaryToken;
-        CurrencyHandler.allowERC20(currency, primaryTokenAddress, _value);
+        CurrencyHandler.allowERC20(
+            currency,
+            primaryTokenAddress,
+            _value
+        );
         IPrimaryToken(primaryTokenAddress).contributeLiquidityFromPublicSale(_value);
 
         unchecked {
@@ -209,30 +223,11 @@ ReentrancyGuardUpgradeable {
         );
     }
 
-    /* --- Query --- */
     /**
-     *  @notice Calculate the total token allocation for a participant based on their deposit proportion.
+     *  @notice Withdraw vested tokens.
+     *  @notice Withdraw only after auction ends.
      *
-     *          Name        Description
-     *  @param  _account    Participant address.
-     *
-     *  @return amount      Total token allocation for the participant.
-     */
-    function allocationOf(
-        address _account
-    ) public view returns (uint256) {
-        return totalDeposit == 0
-            ? 0
-            : deposits[_account].scale(totalToken, totalDeposit);
-    }
-
-    /**
-     *  @notice Withdraw vested tokens from the participant's allocation.
-     *
-     *  @return amount      Amount of tokens withdrawn based on vesting schedule.
-     *
-     *  @dev    Withdrawal is only available after the auction ends.
-     *  @dev    Tokens are released gradually based on the vesting duration.
+     *  @return Withdrawn amount.
      */
     function withdraw() external
     whenNotPaused
@@ -252,7 +247,11 @@ ReentrancyGuardUpgradeable {
 
         uint256 amount = vestedAmount - withdrawnAmount[msg.sender];
         withdrawnAmount[msg.sender] = vestedAmount;
-        CurrencyHandler.sendERC20(primaryToken, msg.sender, amount);
+        CurrencyHandler.sendERC20(
+            primaryToken,
+            msg.sender,
+            amount
+        );
 
         emit Withdrawal(
             msg.sender,
@@ -263,16 +262,14 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Stake allocated tokens directly into stake token contracts.
+     *  @notice Stake unwithdrawn tokens to staking pools.
+     *  @notice Stake only when staking pools are opened and assigned.
      *
      *          Name        Description
-     *  @param  _stake1     Amount to stake in stake token #1.
-     *  @param  _stake2     Amount to stake in stake token #2.
+     *  @param  _stake1     Staked amount for staking pool #1.
+     *  @param  _stake2     Staked amount for staking pool #2.
      *
-     *  @return stake3      Amount automatically staked in stake token #3 (remaining allocation).
-     *
-     *  @dev    Staking is only available after the auction ends.
-     *  @dev    The remaining allocation after stake1 and stake2 is automatically staked in stake token #3.
+     *  @return Staked amount for staking pool #3, which also is the remain tokens.
      */
     function stake(
         uint256 _stake1,

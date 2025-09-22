@@ -35,10 +35,10 @@ IERC721MetadataUpgradeable {
     );
 
     /**
-     *  @notice Emitted when the royalty rate is updated.
+     *  @notice Emitted when the default royalty rate is updated.
      *
      *          Name        Description
-     *  @param  newRate     New royalty rate.
+     *  @param  newRate     New default royalty rate.
      */
     event RoyaltyRateUpdate(
         Rate newRate
@@ -93,6 +93,7 @@ IERC721MetadataUpgradeable {
      *  @param  tokenId         Token identifier.
      *  @param  zone            Zone code.
      *  @param  broker          Original broker address.
+     *  @param  rate            Commission rate.
      */
     event NewToken(
         uint256 indexed tokenId,

@@ -21,20 +21,10 @@ import {DriptributorStorage} from "./storages/DriptributorStorage.sol";
 /**
  *  @author Briky Team
  *
- *  @notice The `Driptributor` contract manages token distribution with vesting schedules, allowing receivers to
- *          withdraw vested tokens gradually or stake them directly into stake token contracts for enhanced benefits.
- *
- *  @dev    The contract creates distributions with specified total amounts, receivers, and vesting durations.
- *          Each distribution has a unique identifier and tracks the withdrawn amount and staking status.
- *          Receivers can withdraw vested tokens based on time progression or stake their entire remaining
- *          allocation across multiple stake token contracts.
- *  @dev    Distributions support flexible staking where receivers can choose how to allocate their tokens
- *          between different stake token contracts, with any remaining amount automatically assigned to
- *          the third stake token contract.
- *  @dev    The contract maintains a total allocation limit to ensure distributed amounts do not exceed
- *          the available token supply. Administrative operations are required to create new distributions.
- *  @dev    ERC-20 tokens are identified by their contract addresses.
- *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
+ *  @notice Interface for contract `Driptributor`.
+ *  @notice The `Driptributor` contract facilitates distribution of `PrimaryToken` through a continuous vesting mechanism.
+ *  @notice Token allocations vest evenly on a per-second basis after distribution.
+ *  @notice When the staking pools are opened, accounts that have unwithdrawn allocation can stake all their remain tokens.
  */
 contract Driptributor is
 DriptributorStorage,
@@ -49,7 +39,7 @@ ReentrancyGuardUpgradeable {
 
 
     /** ===== FUNCTION ===== **/
-    /* --- Standard --- */
+    /* --- Common --- */
     /**
      *  @notice Executed on a call to this contract with empty calldata.
      */
@@ -65,12 +55,12 @@ ReentrancyGuardUpgradeable {
 
     /* --- Initialization --- */
     /**
-     *  @notice Invoked for initialization after deployment, serving as the contract constructor.
+     *  @notice Initialize the contract after deployment, serving as the constructor.
      *
      *          Name                Description
-     *  @param  _admin              Admin contract address.
-     *  @param  _primaryToken       Primary token contract address.
-     *  @param  _totalAllocation    Total allocation limit for token distributions.
+     *  @param  _admin              `Admin` contract address.
+     *  @param  _primaryToken       `PrimaryToken` contract address.
+     *  @param  _totalAllocation    Total tokens to distribute.
      */
     function initialize(
         address _admin,
@@ -93,14 +83,14 @@ ReentrancyGuardUpgradeable {
 
     /* --- Administration --- */
     /**
-     *  @notice Update stake token contracts.
+     *  @notice Update staking pools contract.
      *
      *          Name            Description
-     *  @param  _stakeToken1    New stake token #1 contract address.
-     *  @param  _stakeToken2    New stake token #2 contract address.
-     *  @param  _stakeToken3    New stake token #3 contract address.
+     *  @param  _stakeToken1    `StakeToken` contract address #1.
+     *  @param  _stakeToken2    `StakeToken` contract address #2.
+     *  @param  _stakeToken3    `StakeToken` contract address #3.
      *  @param  _signatures     Array of admin signatures.
-     * 
+     *
      *  @dev    Administrative operator.
      */
     function updateStakeTokens(
@@ -128,11 +118,6 @@ ReentrancyGuardUpgradeable {
         stakeToken1 = _stakeToken1;
         stakeToken2 = _stakeToken2;
         stakeToken3 = _stakeToken3;
-        emit StakeTokensUpdate(
-            _stakeToken1,
-            _stakeToken2,
-            _stakeToken3
-        );
     }
 
     /**
@@ -142,7 +127,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _receivers          Array of receiver addresses, respective to each distribution.
      *  @param  _amounts            Array of distributed amounts, respective to each distribution.
      *  @param  _durations          Array of vesting durations, respective to each distribution.
-     *  @param  _notes              Array of notes, respective to each distribution.
+     *  @param  _notes              Array of distribution notes, respective to each distribution.
      *  @param  _signatures         Array of admin signatures.
      * 
      *  @dev    Administrative operator.
@@ -207,7 +192,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _receivers      Array of receiver addresses, respective to each distribution.
      *  @param  _amounts        Array of distributed amounts, respective to each distribution.
      *  @param  _endAts         Array of vesting end timestamps, respective to each distribution.
-     *  @param  _notes          Array of notes, respective to each distribution.
+     *  @param  _notes          Array of distribution notes, respective to each distribution.
      *  @param  _signatures     Array of admin signatures.
      * 
      *  @dev    Administrative operator.
@@ -271,11 +256,10 @@ ReentrancyGuardUpgradeable {
 
     /* --- Query --- */
     /**
-     *          Name            Description
-     *  @param  _distributionId Distribution identifier to query.
-     *
-     *  @return distribution    Distribution information including total amount, withdrawn amount, receiver address,
-     *                          distribution timestamp, vesting duration, and staking status.
+     *          Name                Description
+     *  @param  _distributionId     Distribution identifier.
+
+     *  @return Distribution information.
      */
     function getDistribution(
         uint256 _distributionId
@@ -292,13 +276,9 @@ ReentrancyGuardUpgradeable {
      *  @notice Withdraw vested tokens from multiple distributions.
      *
      *          Name                Description
-     *  @param  _distributionIds    Array of distribution identifiers to withdraw from.
+     *  @param  _distributionIds    Array of distribution identifiers.
      *
-     *  @return totalAmount         Total amount of tokens withdrawn from all distributions.
-     *
-     *  @dev    Only vested tokens based on time progression can be withdrawn.
-     *  @dev    Distributions must not have been staked and must belong to the caller.
-     *  @dev    Vesting is calculated based on the time elapsed since distribution start and vesting duration.
+     *  @return Total withdrawn amounts.
      */
     function withdraw(
         uint256[] calldata _distributionIds
@@ -336,24 +316,25 @@ ReentrancyGuardUpgradeable {
             emit Withdrawal(_distributionIds[i], amount);
         }
 
-        CurrencyHandler.sendERC20(primaryToken,msg.sender, totalAmount);
+        CurrencyHandler.sendERC20(
+            primaryToken,
+            msg.sender,
+            totalAmount
+        );
 
         return totalAmount;
     }
 
     /**
-     *  @notice Stake tokens from multiple distributions across stake token contracts.
+     *  @notice Stake unwithdrawn tokens from multiple distributions to staking pools.
+     *  @notice Stake only when staking pools are opened and assigned.
      *
      *          Name                Description
-     *  @param  _distributionIds    Array of distribution identifiers to stake from.
-     *  @param  _stake1             Amount to stake in stake token #1.
-     *  @param  _stake2             Amount to stake in stake token #2.
+     *  @param  _distributionIds    Array of distribution identifiers.
+     *  @param  _stake1             Staked amount for staking pool #1.
+     *  @param  _stake2             Staked amount for staking pool #2.
      *
-     *  @return stake3              Amount automatically staked in stake token #3 (remaining allocation).
-     *
-     *  @dev    The remaining allocation after stake1 and stake2 is automatically staked in stake token #3.
-     *  @dev    Distributions must not have been previously staked and must belong to the caller.
-     *  @dev    Total available amount is the sum of (totalAmount - withdrawnAmount) for all specified distributions.
+     *  @return Staked amount for staking pool #3, which also is the remain tokens.
      */
     function stake(
         uint256[] calldata _distributionIds,

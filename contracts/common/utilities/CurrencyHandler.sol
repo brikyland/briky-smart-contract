@@ -17,10 +17,12 @@ library CurrencyHandler {
     /** ===== LIBRARY ===== **/
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
+
     /** ===== ERROR ===== **/
     error InsufficientValue();
     error FailedTransfer();
     error FailedRefund();
+
 
     /** ===== FUNCTION ===== **/
     /* --- Native Coin --- */

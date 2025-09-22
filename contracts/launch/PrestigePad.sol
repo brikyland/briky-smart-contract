@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 /// @openzeppelin/contracts-upgradeable/
 import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import {ERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 
 /// contracts/common/constants/
 import {CommonConstant} from "../common/constants/CommonConstant.sol";
@@ -39,18 +40,18 @@ import {ProjectTokenReceiver} from "./utilities/ProjectTokenReceiver.sol";
 /**
  *  @author Briky Team
  *
- *  @notice TODO: The `PrestigePad` contract conducts capital raising campaigns for real estate projects through multiple
- *          rounds of token sales, enabling contributors to receive `ProjectToken` as referenced distribution for
- *          future benefit returning.
+ *  @notice The `PrestigePad` contract facilitates the launch of real estate project through crowdfunding. Authorized
+ *          initiators
  *
- *  @dev    Implementation involves server-side support for validation mechanisms and price monitoring.
+ *  @dev    Implementation involves server-side support.
  *  @dev    ERC-20 tokens are identified by their contract addresses.
  *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
- *  @dev    Quantities are expressed in absolute units. Scale these values by `10 ** ProjectToken.decimals()` to obtain
- *          the correct amounts under the `ProjectToken` convention.
+ *  @dev    Quantities are expressed in absolute units. Scale these values by `10 ** IAssetToken(projectToken).decimals()` to
+ *          obtain the correct amounts under the `IAssetToken` convention.
  */
 contract PrestigePad is
 PrestigePadStorage,
+ERC165Upgradeable,
 ProjectTokenReceiver,
 Administrable,
 Discountable,
@@ -69,8 +70,8 @@ ReentrancyGuardUpgradeable {
     /**
      *  @notice Verify a valid launch identifier.
      *
-     *          Name            Description
-     *  @param  _launchId       Launch identifier.
+     *          Name        Description
+     *  @param  _launchId   Launch identifier.
      */
     modifier validLaunch(
         uint256 _launchId
@@ -84,8 +85,8 @@ ReentrancyGuardUpgradeable {
     /**
      *  @notice Verify a valid round identifier.
      *
-     *          Name            Description
-     *  @param  _roundId        Round identifier.
+     *          Name        Description
+     *  @param  _roundId    Round identifier.
      */
     modifier validRound(
         uint256 _roundId
@@ -99,8 +100,8 @@ ReentrancyGuardUpgradeable {
     /**
      *  @notice Verify the message sender is the initiator of a launch.
      *
-     *          Name            Description
-     *  @param  _launchId       Launch identifier.
+     *          Name        Description
+     *  @param  _launchId   Launch identifier.
      */
     modifier onlyInitiator(
         uint256 _launchId
@@ -113,7 +114,7 @@ ReentrancyGuardUpgradeable {
 
 
     /** ===== FUNCTION ===== **/
-    /* --- Standard --- */
+    /* --- Common --- */
     /**
      *  @notice Executed on a call to this contract with empty calldata.
      */
@@ -129,7 +130,7 @@ ReentrancyGuardUpgradeable {
 
     /* --- Initialization --- */
     /**
-     *  @notice Invoked for initialization after deployment, serving as the contract constructor.
+     *  @notice Initialize the contract after deployment, serving as the constructor.
      *
      *          Name                Description
      *  @param  _admin              `Admin` contract address.
@@ -217,7 +218,7 @@ ReentrancyGuardUpgradeable {
      *          Name            Description
      *  @param  _launchId       Launch identifier.
      *
-     *  @return launch          Configuration and progress of the launch.
+     *  @return Configuration and rounds of the launch.
      */
     function getLaunch(
         uint256 _launchId
@@ -231,7 +232,17 @@ ReentrancyGuardUpgradeable {
      *          Name            Description
      *  @param  _roundId        Round identifier.
      *
-     *  @return round           Configuration and progress of the round.
+     *  @return Configuration and progress of the round.
+     *
+     *  @dev    Phases of a round:
+     *          - Unscheduled: agenda.raiseStartsAt = 0
+     *          - Scheduled: block.timestamp < agenda.raiseStartsAt
+     *          - Raise: agenda.raiseStartsAt <= block.timestamp < agenda.raiseEndsAt
+     *          - Awaiting Confirmation: agenda.raiseEndsAt
+     *                                      <= block.timestamp
+     *                                      < agenda.raiseEndsAt + PrestigePadConstant.RAISE_CONFIRMATION_TIME_LIMIT
+     *          - Confirmed: agenda.confirmedAt > 0
+     *          - Cancelled: quota.totalSupply = 0
      */
     function getRound(
         uint256 _roundId
@@ -245,7 +256,7 @@ ReentrancyGuardUpgradeable {
      *          Name            Description
      *  @param  _launchId       Launch identifier.
      *
-     *  @return isFinalized     Whether the launch has been finalized.
+     *  @return Whether the launch has been finalized.
      */
     function isFinalized(
         uint256 _launchId
@@ -259,7 +270,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _launchId       Launch identifier.
      *  @param  _at             Reference timestamp.
      *
-     *  @return allocation      Allocation of the account at the reference timestamp.
+     *  @return Allocation of the account at the reference timestamp.
      */
     function allocationOfAt(
         address _account,
@@ -274,19 +285,15 @@ ReentrancyGuardUpgradeable {
         uint256 allocation = 0;
         PrestigePadLaunch storage launch = launches[_launchId];
         uint256 currentIndex = launch.currentIndex;
-        for (uint256 i = 0; i < currentIndex; ++i) {
+        /// @dev    Unwithdrawn tokens from previous rounds.
+        for (uint256 i = 0; i <= currentIndex; ++i) {
             uint256 roundId = launch.roundIds[i];
             uint256 withdrawAt = withdrawAt[roundId][_account];
-            if (_at >= rounds[roundId].agenda.confirmAt && (withdrawAt == 0 || _at < withdrawAt)) {
-                allocation += contributions[roundId][_account];
-            }
-        }
-        if (rounds[launch.roundIds[currentIndex]].agenda.confirmAt != 0) {
-            uint256 roundId = launch.roundIds[currentIndex];
-            uint256 withdrawAt = withdrawAt[roundId][_account];
-            if (_at >= rounds[roundId].agenda.confirmAt && (withdrawAt == 0 || _at < withdrawAt)) {
-                allocation += contributions[roundId][_account];
-            }
+            if (_at >= rounds[roundId].agenda.confirmAt) {
+                if (withdrawAt == 0 || _at < withdrawAt) {
+                    allocation += contributions[roundId][_account];
+                }
+            } else break;
         }
 
         return allocation * 10 ** IProjectToken(projectToken).decimals();
@@ -296,32 +303,34 @@ ReentrancyGuardUpgradeable {
      *          Name            Description
      *  @param  _interfaceId    Interface identifier.
      *
-     *  @return isSupported     Whether the interface is supported.
+     *  @return Whether the interface is supported.
      */
     function supportsInterface(
         bytes4 _interfaceId
-    ) public view virtual override returns (bool) {
-        return _interfaceId == type(IPrestigePad).interfaceId
-            || _interfaceId == type(IProjectLaunchpad).interfaceId
+    ) public view virtual override(
+        IERC165Upgradeable,
+        ERC165Upgradeable
+    ) returns (bool) {
+        return _interfaceId == type(IProjectLaunchpad).interfaceId
             || _interfaceId == type(IProjectTokenReceiver).interfaceId
-            || _interfaceId == type(IERC165Upgradeable).interfaceId;
+            || super.supportsInterface(_interfaceId);
     }
 
 
     /* --- Command --- */
     /**
-     *  @notice TODO: Initiate a new launch.
+     *  @notice Initiate a new launch for an estate project.
      *
      *          Name                Description
      *  @param  _initiator          Initiator address.
      *  @param  _zone               Zone code.
      *  @param  _projectURI         URI of project metadata.
      *  @param  _launchURI          URI of launch metadata.
-     *  @param  _initialQuantity    Initial quantity of tokens to be minted.
-     *  @param  _feeRate            Fraction of the raised value charged as fee.
+     *  @param  _initialQuantity    Initial quantity of tokens to be minted for the initiator.
+     *  @param  _feeRate            Fraction of raised value charged as fee, applied for all rounds.
      *  @param  _validation         Validation package from the validator.
      *
-     *  @return launchId            New launch identifier.
+     *  @return New launch identifier.
      *
      *  @dev    Permission: Executives active in the zone of the estate.
      */
@@ -363,6 +372,7 @@ ReentrancyGuardUpgradeable {
         launch.feeRate = rate;
 
         IProjectToken projectTokenContract = IProjectToken(projectToken);
+        /// @dev    Launch new project.
         uint256 projectId = projectTokenContract.launchProject(
             _zone,
             launchId,
@@ -371,6 +381,7 @@ ReentrancyGuardUpgradeable {
         );
         launch.projectId = projectId;
 
+        /// @dev    The first round of the launch is for the initial quantity.
         uint256 roundId = ++roundNumber;
         launch.roundIds.push(roundId);
 
@@ -381,6 +392,7 @@ ReentrancyGuardUpgradeable {
         if (_initialQuantity != 0) {
             uint256 initialAmount = _initialQuantity * 10 ** projectTokenContract.decimals();
             projectTokenContract.mint(projectId, initialAmount);
+            /// @dev    Transfer the initial quantity to the initiator.
             projectTokenContract.safeTransferFrom(
                 address(this),
                 _initiator,
@@ -402,13 +414,15 @@ ReentrancyGuardUpgradeable {
         return launchId;
     }
 
+
     /**
      *  @notice Update the URI of information of a launch.
+     *  @notice Update only if the launch is not finalized.
      *
-     *          Name            Description
-     *  @param  _launchId       Launch identifier.
-     *  @param  _uri            New URI of launch information.
-     *  @param  _validation     Validation package from the validator.
+     *          Name                    Description
+     *  @param  _launchId               Launch identifier.
+     *  @param  _uri                    URI of launch metadata.
+     *  @param  _validation             Validation package from the validator.
      *
      *  @dev    Permission: Initiator of the launch.
      */
@@ -420,7 +434,13 @@ ReentrancyGuardUpgradeable {
     whenNotPaused
     validLaunch(_launchId)
     onlyInitiator(_launchId) {
-        _validate(abi.encode(_uri), _validation);
+        _validate(
+            abi.encode(
+            _launchId,
+                _uri
+            ),
+            _validation
+        );
 
         if (launches[_launchId].isFinalized) {
             revert AlreadyFinalized();
@@ -434,14 +454,15 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Update a specific round in a launch.
+     *  @notice Update a round in a launch.
+     *  @notice Update only before the round is scheduled.
      *
      *          Name            Description
      *  @param  _launchId       Launch identifier.
-     *  @param  _index          Index of the round.
+     *  @param  _index          Index of the round in the launch.
      *  @param  _round          New round configuration.
      *
-     *  @return roundId         New round identifier.
+     *  @return New round identifier.
      *
      *  @dev    Permission: Initiator of the launch.
      */
@@ -464,31 +485,32 @@ ReentrancyGuardUpgradeable {
         }
 
         if (rounds[launch.roundIds[_index]].agenda.raiseStartsAt != 0) {
-            revert AlreadyInitiated();
+            revert InvalidUpdating();
         }
 
+        /// @dev    Replace the round identifier at the index with a new round.
         uint256 roundId = _newRound(_launchId, _round);
         launch.roundIds[_index] = roundId;
 
         emit LaunchRoundUpdate(
             _launchId,
             roundId,
-            _index,
-            _round
+            _index
         );
 
         return roundId;
     }
 
     /**
-     *  @notice TODO: Update multiple rounds in a launch by removing existing rounds and adding new ones.
+     *  @notice Update multiple rounds in a launch by removing multiple rounds from the end and appending new ones.
+     *  @notice Update only with rounds that are not scheduled.
      *
      *          Name                    Description
      *  @param  _launchId               Launch identifier.
      *  @param  _removedRoundNumber     Number of rounds to remove from the end.
      *  @param  _addedRounds            Array of new rounds.
      *
-     *  @return lastIndex               Starting index of the added rounds.
+     *  @return Index of the last added round.
      *
      *  @dev    Permission: Initiator of the launch.
      */
@@ -518,19 +540,26 @@ ReentrancyGuardUpgradeable {
             revert InvalidRemoving();
         }
 
+        /// @dev    Remove rounds from the last backward.
         for (uint256 i; i < _removedRoundNumber; ++i) {
             roundIds.pop();
         }
 
+        emit LaunchRoundsRemoval(
+            _launchId,
+            _removedRoundNumber,
+            index
+        );
+
+        /// @dev    Append new rounds.
         for (uint256 i; i < _addedRounds.length; ++i) {
+            /// @dev    Replace the round identifier at the index with a new one.
             uint256 roundId = _newRound(_launchId, _addedRounds[i]);
             roundIds.push(roundId);
 
-            emit LaunchRoundUpdate(
+            emit LaunchRoundAppendage(
                 _launchId,
-                roundId,
-                index++,
-                _addedRounds[i]
+                roundId
             );
         }
 
@@ -538,22 +567,23 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice TODO: Initiate the next round.
+     *  @notice Schedule the next round of a launch with cashback configuration.
+     *  @notice Schedule only if the previous round has been confirmed.
      *
      *          Name                        Description
      *  @param  _launchId                   Launch identifier.
      *  @param  _cashbackThreshold          Minimum contributed quantity of an address to receive cashback.
-     *  @param  _cashbackBaseRate           Fraction of deposit to cashback.
-     *  @param  _cashbackCurrencies         Array of extra currency addresses for cashback.
-     *  @param  _cashbackDenominations      Array of extra denominations for cashback on each deposited token.
-     *  @param  _raiseStartsAt              When the raise starts.
-     *  @param  _raiseDuration              Duration of the raising period.
+     *  @param  _cashbackBaseRate           Fraction of contribution to cashback.
+     *  @param  _cashbackCurrencies         Array of extra currency addresses to cashback.
+     *  @param  _cashbackDenominations      Array of extra currency denominations to cashback, respective to each extra currency.
+     *  @param  _raiseStartsAt              Raise start timestamp.
+     *  @param  _raiseDuration              Raise duration.
      *
-     *  @return index                       Index of the initiated round.
+     *  @return Index of the scheduled round.
      *
      *  @dev    Permission: Initiator of the launch.
      */
-    function raiseNextRound(
+    function scheduleNextRound(
         uint256 _launchId,
         uint256 _cashbackThreshold,
         uint256 _cashbackBaseRate,
@@ -567,7 +597,7 @@ ReentrancyGuardUpgradeable {
     validLaunch(_launchId)
     onlyInitiator(_launchId)
     returns (uint256) {
-        if (_cashbackBaseRate > CommonConstant.RATE_MAX_FRACTION
+        if (_cashbackBaseRate > CommonConstant.RATE_MAX_SUBUNIT
             || _cashbackCurrencies.length != _cashbackDenominations.length
             || _raiseStartsAt < block.timestamp
             || _raiseDuration < PrestigePadConstant.RAISE_MINIMUM_DURATION) {
@@ -581,7 +611,7 @@ ReentrancyGuardUpgradeable {
 
         uint256 currentIndex = launch.currentIndex;
         if (rounds[launch.roundIds[currentIndex]].agenda.confirmAt == 0) {
-            revert InvalidInitiating();
+            revert InvalidScheduling();
         }
 
         launch.currentIndex = ++currentIndex;
@@ -612,9 +642,11 @@ ReentrancyGuardUpgradeable {
             if (_cashbackThreshold == 0) {
                 revert InvalidInput();
             }
+            /// @dev    Open a cashback fund.
             cashbackFundId = IReserveVault(reserveVault).openFund(
                 currency,
-                feeDenomination.scale(_cashbackBaseRate, CommonConstant.RATE_MAX_FRACTION),
+                feeDenomination
+                    .scale(_cashbackBaseRate, CommonConstant.RATE_MAX_SUBUNIT),
                 _cashbackCurrencies,
                 _cashbackDenominations
             );
@@ -625,7 +657,7 @@ ReentrancyGuardUpgradeable {
         round.agenda.raiseStartsAt = _raiseStartsAt;
         round.agenda.raiseEndsAt = _raiseStartsAt + _raiseDuration;
 
-        emit LaunchNextRoundInitiation(
+        emit LaunchNextRoundSchedule(
             _launchId,
             roundId,
             cashbackFundId,
@@ -636,14 +668,15 @@ ReentrancyGuardUpgradeable {
         return currentIndex;
     }
 
-    /**
-     *  @notice TODO: Cancel the current round of a launch.
+    /**ones
+     *  @notice Cancel the current round of a launch.
+     *  @notice Cancel only before the current round is confirmed.
      *
-     *          Name            Description
-     *  @param  _launchId       Launch identifier.
+     *          Name                        Description
+     *  @param  _launchId                   Launch identifier.
      *
-     *  @return index           Index of the cancelled round.
-     *  @return roundId         Round identifier of the cancelled round.
+     *  @return Index of the cancelled round.
+     *  @return New round identifier at the index.
      *
      *  @dev    Permission: Initiator of the launch.
      */
@@ -665,6 +698,7 @@ ReentrancyGuardUpgradeable {
             revert AlreadyConfirmed();
         }
 
+        /// @dev    Duplicate the configuration of the cancelled round into a new one.
         uint256 roundId = ++roundNumber;
         PrestigePadRound storage newRound = rounds[roundId];
         newRound.uri = round.uri;
@@ -674,29 +708,39 @@ ReentrancyGuardUpgradeable {
         newRound.quote.unitPrice = round.quote.unitPrice;
         newRound.quote.currency = round.quote.currency;
 
+        /// @dev    Cancelled round: quota.totalQuantity = 0.
         round.quota.totalQuantity = 0;
 
         launch.currentIndex = currentIndex - 1;
 
         launch.roundIds[currentIndex] = roundId;
 
-        emit LaunchCurrentRoundCancellation(_launchId, roundId);
+        emit LaunchCurrentRoundCancellation(
+            _launchId,
+            roundId
+        );
 
         return (currentIndex, roundId);
     }
 
     /**
-     *  @notice TODO: Confirm the current round of a launch.
+     *  @notice Confirm the current round of a launch and mint tokens to contributors.
+     *  @notice Confirm only if the round has raised at least minimum quantity (even if the sale period has not yet ended) and
+     *          before the confirmation time limit has expired.
+     *  @notice The message sender must provide sufficient extra-currency amounts for the cashback fund.
      *
-     *          Name            Description
-     *  @param  _launchId       Launch identifier.
+     *          Name                        Description
+     *  @param  _launchId                   Launch identifier.
+     *  @param  _anchor                     Keccak256 hash of `uri` of the launch.
      *
-     *  @return index           Index of the confirmed round.
+     *  @return Index of the confirmed round.
      *
      *  @dev    Permission: Initiator of the launch.
+     *  @dev    Anchor enforces consistency between this contract and the client-side.
      */
-    function confirmCurrentRound(
-        uint256 _launchId
+    function safeConfirmCurrentRound(
+        uint256 _launchId,
+        bytes32 _anchor
     ) external payable
     whenNotPaused
     nonReentrant
@@ -704,6 +748,10 @@ ReentrancyGuardUpgradeable {
     onlyInitiator(_launchId)
     returns (uint256) {
         PrestigePadLaunch storage launch = launches[_launchId];
+        if (_anchor != keccak256(bytes(launch.uri))) {
+            revert BadAnchor();
+        }
+
         if (launch.isFinalized) {
             revert AlreadyFinalized();
         }
@@ -711,6 +759,7 @@ ReentrancyGuardUpgradeable {
         uint256 currentIndex = launch.currentIndex;
         uint256 roundId = launch.roundIds[currentIndex];
         PrestigePadRound storage round = rounds[roundId];
+
         if (block.timestamp < round.agenda.raiseStartsAt) {
             revert InvalidConfirming();
         }
@@ -729,18 +778,22 @@ ReentrancyGuardUpgradeable {
             revert NotEnoughSoldQuantity();
         }
 
+        /// @dev    If confirming before the anticipated due, `raiseEndsAt` must be overwrite with the current timestamp.
         if (raiseEndsAt > block.timestamp) {
             round.agenda.raiseEndsAt = uint40(block.timestamp);
         }
+        /// @dev    Confirmed round:  agenda.confirmAt > 0
         round.agenda.confirmAt = uint40(block.timestamp);
 
         IProjectToken projectTokenContract = IProjectToken(projectToken);
+        /// @dev    Scale with token decimals.
         uint256 unit = 10 ** projectTokenContract.decimals();
         projectTokenContract.mint(
             launch.projectId,
             round.quota.totalQuantity * unit
         );
 
+        /// @dev    Transfer remain tokens to the initiator.
         address initiator = launch.initiator;
         projectTokenContract.safeTransferFrom(
             address(this),
@@ -753,10 +806,16 @@ ReentrancyGuardUpgradeable {
         address currency = round.quote.currency;
         uint256 value = soldQuantity * round.quote.unitPrice;
         uint256 fee = soldQuantity * round.quote.feeDenomination;
-        CurrencyHandler.sendCurrency(currency, initiator, value - fee);
+        /// @dev    Transfer total contribution minus fee to the requester.
+        CurrencyHandler.sendCurrency(
+            currency,
+            initiator,
+            value - fee
+        );
 
+        /// @dev    Provide the cashback fund sufficiently.
         uint256 cashbackBaseAmount = _provideCashbackFund(round.quote.cashbackFundId);
-        
+
         CurrencyHandler.sendCurrency(
             currency,
             feeReceiver,
@@ -776,20 +835,29 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice TODO: Finalize a launch.
+     *  @notice Finalize a launch to finish capital raising.
+     *  @notice Finalize only when all rounds are confirmed.
      *
-     *          Name            Description
-     *  @param  _launchId       Launch identifier.
+     *          Name                        Description
+     *  @param  _launchId                   Launch identifier.
+     *  @param  _anchor                     Keccak256 hash of `uri` of the launch.
      *
      *  @dev    Permission: Initiator of the launch.
+     *  @dev    The launch can only be finalized after all rounds are confirmed, and no further rounds can be created.
+     *  @dev    Anchor enforces consistency between this contract and the client-side.
      */
-    function finalize(
-        uint256 _launchId
+    function safeFinalize(
+        uint256 _launchId,
+        bytes32 _anchor
     ) external
     whenNotPaused
     validLaunch(_launchId)
     onlyInitiator(_launchId) {
         PrestigePadLaunch storage launch = launches[_launchId];
+        if (_anchor != keccak256(bytes(launch.uri))) {
+            revert BadAnchor();
+        }
+
         if (launch.isFinalized) {
             revert AlreadyFinalized();
         }
@@ -804,21 +872,22 @@ ReentrancyGuardUpgradeable {
         emit LaunchFinalization(_launchId);
     }
 
+
     /**
      *  @notice Contribute to the current round of a launch.
+     *  @notice Contribute only during raise period.
      *
-     *          Name            Description
-     *  @param  _launchId       Launch identifier.
-     *  @param  _quantity       Quantity of tokens to contribute for.
+     *          Name        Description
+     *  @param  _launchId   Launch identifier.
+     *  @param  _quantity   Contributed quantity.
      *
-     *  @return value           Value of the contribution.
-     *
-     *  @dev    Contribution currency is determined by the round configuration.
+     *  @return Contributed value.
      */
     function contributeCurrentRound(
         uint256 _launchId,
         uint256 _quantity
     ) external payable
+    whenNotPaused
     validLaunch(_launchId)
     returns (uint256) {
         return _contributeCurrentRound(_launchId, _quantity);
@@ -826,22 +895,23 @@ ReentrancyGuardUpgradeable {
 
     /**
      *  @notice Contribute to the current round of a launch with anchor verification.
+     *  @notice Contribute only during raise period.
      *
-     *          Name            Description
-     *  @param  _launchId       Launch identifier.
-     *  @param  _quantity       Quantity of tokens to contribute for.
-     *  @param  _anchor         Launch identifier for verification consistency.
+     *          Name        Description
+     *  @param  _launchId   Launch identifier.
+     *  @param  _quantity   Contributed quantity.
+     *  @param  _anchor     Keccak256 hash of `uri` of the launch.
      *
-     *  @return value           Value of the contribution.
+     *  @return Contributed value.
      *
      *  @dev    Anchor enforces consistency between this contract and the client-side.
-     *  @dev    Contribution currency is determined by the round configuration.
      */
     function safeContributeCurrentRound(
         uint256 _launchId,
         uint256 _quantity,
         bytes32 _anchor
     ) external payable
+    whenNotPaused
     validLaunch(_launchId)
     returns (uint256) {
         if (_anchor != keccak256(bytes(launches[_launchId].uri))) {
@@ -852,12 +922,14 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice TODO: Withdraw contribution from a cancelled round.
+     *  @notice Withdraw contribution of the message sender from a round which can no longer be confirmed.
+     *  @notice Withdraw only when the round is cancelled or the raise ends without enough raised quantity or the confirmation
+     *          time limit has expired.
      *
-     *          Name            Description
-     *  @param  _roundId        Round identifier.
+     *          Name        Description
+     *  @param  _roundId    Round identifier.
      *
-     *  @return value           Value of the withdrawn contribution.
+     *  @return Withdrawn value.
      */
     function withdrawContribution(
         uint256 _roundId
@@ -891,7 +963,11 @@ ReentrancyGuardUpgradeable {
 
         contributions[_roundId][msg.sender] = 0;
 
-        CurrencyHandler.sendCurrency(currency, msg.sender, value);
+        CurrencyHandler.sendCurrency(
+            currency,
+            msg.sender,
+            value
+        );
 
         emit ContributionWithdrawal(
             _roundId,
@@ -904,13 +980,15 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice TODO: Withdraw project tokens equivalent to contribution in a confirmed round.
+     *  @notice Withdraw the allocation of the message sender from a round of a launch.
+     *  @notice Withdraw only after the round is confirmed.
+     *  @notice Also receive corresponding cashback.
      *
      *          Name            Description
      *  @param  _launchId       Launch identifier.
      *  @param  _index          Index of the round in the launch.
      *
-     *  @return amount          Amount of project tokens withdrawn.
+     *  @return Withdrawn amount.
      */
     function withdrawProjectToken(
         uint256 _launchId,
@@ -958,13 +1036,6 @@ ReentrancyGuardUpgradeable {
             }
         }
 
-        // TODO: Is this still needed?
-        emit LaunchRoundTokenWithdrawal(
-            roundId,
-            msg.sender,
-            amount
-        );
-
         emit ProjectTokenWithdrawal(
             _launchId,
             roundId,
@@ -978,19 +1049,25 @@ ReentrancyGuardUpgradeable {
 
     /* --- Helper --- */
     /**
-     *  @notice Create a new round for a launch.
+     *  @notice Create a new round.
      *
-     *          Name            Description
-     *  @param  _launchId       Launch identifier.
-     *  @param  _round          Round configuration input.
+     *          Name        Description
+     *  @param  _launchId   Launch identifier.
+     *  @param  _round      Round input.
      *
-     *  @return roundId         New round identifier.
+     *  @return New round identifier.
      */
     function _newRound(
         uint256 _launchId,
         PrestigePadRoundInput calldata _round
     ) internal returns (uint256) {
-        _validate(abi.encode(_round.uri), _round.validation);
+        _validate(
+            abi.encode(
+                _launchId,
+                _round.uri
+            ),
+            _round.validation
+        );
 
         if (!IPriceWatcher(priceWatcher).isPriceInRange(
             _round.quote.currency,
@@ -1028,19 +1105,18 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice TODO: Handle contribution to the current round of a launch.
+     *  @notice Contribute to the current round of a launch.
      *
-     *          Name            Description
-     *  @param  _launchId       Launch identifier.
-     *  @param  _quantity       Quantity of tokens to contribute for.
+     *          Name        Description
+     *  @param  _launchId   Launch identifier.
+     *  @param  _quantity   Contributed quantity.
      *
-     *  @return value           Value of the contribution.
+     *  @return Contributed value.
      */
     function _contributeCurrentRound(
         uint256 _launchId,
         uint256 _quantity
     ) internal
-    whenNotPaused
     nonReentrant
     returns (uint256) {
         PrestigePadLaunch storage launch = launches[_launchId];
@@ -1066,7 +1142,10 @@ ReentrancyGuardUpgradeable {
         round.quota.raisedQuantity = newSoldQuantity;
 
         uint256 value = _quantity * round.quote.unitPrice;
-        CurrencyHandler.receiveCurrency(round.quote.currency, value);
+        CurrencyHandler.receiveCurrency(
+            round.quote.currency,
+            value
+        );
 
         uint256 oldContribution = contributions[roundId][msg.sender];
         uint256 newContribution = oldContribution + _quantity;
@@ -1101,12 +1180,13 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Provide funds for cashback mechanism to the reserve vault.
+     *  @notice Provide cashback fund in the main currency, using a sufficient portion of the tokenization fee and in other
+     *          extras, using amounts forwarded from the message sender.
      *
      *          Name                Description
      *  @param  _cashbackFundId     Cashback fund identifier.
      *
-     *  @return cashbackBaseAmount  Main currency cashback amount provided.
+     *  @return Main currency cashback value.
      */
     function _provideCashbackFund(
         uint256 _cashbackFundId
@@ -1122,8 +1202,15 @@ ReentrancyGuardUpgradeable {
                     if (fund.extraCurrencies[i] == address(0)) {
                         totalNative += fund.extraDenominations[i] * fund.quantity;
                     } else {
-                        CurrencyHandler.receiveERC20(fund.extraCurrencies[i], fund.extraDenominations[i] * fund.quantity);
-                        CurrencyHandler.allowERC20(fund.extraCurrencies[i], reserveVaultAddress, fund.extraDenominations[i] * fund.quantity);
+                        CurrencyHandler.receiveERC20(
+                            fund.extraCurrencies[i],
+                            fund.extraDenominations[i] * fund.quantity
+                        );
+                        CurrencyHandler.allowERC20(
+                            fund.extraCurrencies[i],
+                            reserveVaultAddress,
+                            fund.extraDenominations[i] * fund.quantity
+                        );
                     }
                 }
 

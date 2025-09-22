@@ -19,7 +19,7 @@ interface IPrestigePadLaunch is IRate {
         /// @notice Project identifier.
         uint256 projectId;
 
-        /// @notice URI of project metadata.
+        /// @notice URI of launch information.
         string uri;
 
         /// @notice Index of the current round that is being processed.
@@ -29,7 +29,7 @@ interface IPrestigePadLaunch is IRate {
         /// @notice Array of round identifiers.
         uint256[] roundIds;
 
-        /// @notice Fraction of the raised value charged as fee, applied across all rounds.
+        /// @notice Fraction of raised value charged as fee, applied for all rounds.
         Rate feeRate;
 
         /// @notice Initiator address.

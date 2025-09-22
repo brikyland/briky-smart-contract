@@ -18,9 +18,9 @@ import {ERC721MortgageTokenStorage} from "./storages/ERC721MortgageTokenStorage.
 /**
  *  @author Briky Team
  * 
- *  @notice A `ERC721MortgageToken` contract facilitates peer-to-peer lending secured by ERC-721 tokens as collateral. Each provided mortgage
- *          is tokenized into an ERC-721 token, whose owner has the right to receive repayments from the borrower or foreclose
- *          on the collateral from the contract once overdue.
+ *  @notice A `ERC721MortgageToken` contract facilitates peer-to-peer lending secured by ERC-721 tokens as collateral. Each
+ *          provided mortgage is tokenized into an ERC-721 token, whose owner has the right to receive repayments from the
+ *          borrower or foreclose on the collateral from the contract once overdue.
  * 
  *  @dev    ERC-20 tokens are identified by their contract addresses.
  *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
@@ -39,7 +39,7 @@ MortgageToken {
     /** ===== FUNCTION ===== **/
     /* --- Initialization --- */
     /**
-     *  @notice Invoked for initialization after deployment, serving as the contract constructor.
+     *  @notice Initialize the contract after deployment, serving as the constructor.
      * 
      *          Name            Description
      *  @param  _admin          `Admin` contract address.
@@ -47,7 +47,7 @@ MortgageToken {
      *  @param  _name           Token name.
      *  @param  _symbol         Token symbol.
      *  @param  _uri            Base URI.
-     *  @param  _feeRate        Mortgaging fee rate.
+     *  @param  _feeRate        Borrowing fee rate.
      */
     function initialize(
         address _admin,
@@ -89,6 +89,7 @@ MortgageToken {
      *  @param  _signatures      Array of admin signatures.
      * 
      *  @dev    Administrative operator.
+     *  @dev    Collections must support interface `IERC721Upgradeable`.
      */
     function registerCollaterals(
         address[] calldata _tokens,
@@ -223,8 +224,8 @@ MortgageToken {
     ) external view override returns (address, uint256) {
         _requireMinted(_tokenId);
         ERC721Collateral memory collateral = collaterals[_tokenId];
-        if (collateral.token.supportsInterface(type(IERC2981Upgradeable).interfaceId)) {
-            ( , uint256 royalty) = IERC2981Upgradeable(collateral.token).royaltyInfo(
+        if (collateral.collection.supportsInterface(type(IERC2981Upgradeable).interfaceId)) {
+            ( , uint256 royalty) = IERC2981Upgradeable(collateral.collection).royaltyInfo(
                 collateral.tokenId,
                 _price
             );
@@ -248,7 +249,7 @@ MortgageToken {
         address _from,
         address _to
     ) internal override {
-        IERC721Upgradeable(collaterals[_mortgageId].token).safeTransferFrom(
+        IERC721Upgradeable(collaterals[_mortgageId].collection).safeTransferFrom(
             _from,
             _to,
             collaterals[_mortgageId].tokenId,

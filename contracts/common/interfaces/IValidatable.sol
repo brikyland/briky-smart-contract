@@ -37,6 +37,7 @@ IValidation {
 
 
     /** ===== FUNCTION ===== **/
+    /* --- Query --- */
     /**
      *          Name        Description
      *  @return validator   Validator address.

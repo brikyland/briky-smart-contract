@@ -10,9 +10,6 @@ import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/se
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import {ERC721PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721PausableUpgradeable.sol";
 
-/// contracts/common/utilities/
-import {CurrencyHandler} from "../common/utilities/CurrencyHandler.sol";
-
 /// contracts/common/interfaces/
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 
@@ -21,6 +18,7 @@ import {CommonConstant} from "../common/constants/CommonConstant.sol";
 
 /// contracts/common/utilities/
 import {Administrable} from "../common/utilities/Administrable.sol";
+import {CurrencyHandler} from "../common/utilities/CurrencyHandler.sol";
 import {Pausable} from "../common/utilities/Pausable.sol";
 import {RoyaltyRateProposer} from "../common/utilities/RoyaltyRateProposer.sol";
 
@@ -30,9 +28,9 @@ import {PromotionTokenStorage} from "./storages/PromotionTokenStorage.sol";
 /**
  *  @author Briky Team
  *
- *  @notice The promotion token is an ERC-721 token that represents airdrop tokens minted by users during airdrop campaigns.
- * 
- *  @dev    Minting fee is charged to protect the contract from DoS attacks.
+ *  @notice Interface for contract `PromotionToken`.
+ *  @notice The `PromotionToken` contract is an ERC-721 token issued exclusively for airdrop campaigns. It provides
+ *          limited-time content that grants its minter airdrop scores.
  */
 contract PromotionToken is
 PromotionTokenStorage,
@@ -62,14 +60,14 @@ ReentrancyGuardUpgradeable {
 
     /* --- Initialization --- */
     /**
-     *  @notice Invoked for initialization after deployment, serving as the contract constructor.
+     *  @notice Initialize the contract after deployment, serving as the constructor.
      * 
      *          Name            Description
      *  @param  _admin          `Admin` contract address.
      *  @param  _name           Token name.
      *  @param  _symbol         Token symbol.
      *  @param  _fee            Minting fee.
-     *  @param  _royaltyRate    Royalty rate.
+     *  @param  _royaltyRate    Default royalty rate.
      */
     function initialize(
         address _admin,
@@ -79,8 +77,7 @@ ReentrancyGuardUpgradeable {
         uint256 _royaltyRate
     ) external
     initializer {
-        /// Validation.
-        require(_royaltyRate <= CommonConstant.RATE_MAX_FRACTION);
+        require(_royaltyRate <= CommonConstant.RATE_MAX_SUBUNIT);
 
         /// Initializer.
         __ERC721_init(_name, _symbol);
@@ -96,7 +93,10 @@ ReentrancyGuardUpgradeable {
         emit FeeUpdate(_fee);
 
         royaltyRate = _royaltyRate;
-        emit RoyaltyRateUpdate(Rate(_royaltyRate, CommonConstant.RATE_DECIMALS));
+        emit RoyaltyRateUpdate(Rate(
+            _royaltyRate,
+            CommonConstant.RATE_DECIMALS
+        ));
     }
 
 
@@ -127,10 +127,10 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Update the royalty rate.
+     *  @notice Update the default royalty rate.
      *
      *          Name            Description
-     *  @param  _royaltyRate    New royalty rate.
+     *  @param  _royaltyRate    New default royalty rate.
      *  @param  _signatures     Array of admin signatures.
      * 
      *  @dev    Administrative operator.
@@ -147,11 +147,14 @@ ReentrancyGuardUpgradeable {
             ),
             _signatures
         );
-        if (_royaltyRate > CommonConstant.RATE_MAX_FRACTION) {
+        if (_royaltyRate > CommonConstant.RATE_MAX_SUBUNIT) {
             revert InvalidRate();
         }
         royaltyRate = _royaltyRate;
-        emit RoyaltyRateUpdate(Rate(_royaltyRate, CommonConstant.RATE_DECIMALS));
+        emit RoyaltyRateUpdate(Rate(
+            _royaltyRate,
+            CommonConstant.RATE_DECIMALS
+        ));
     }
 
     /**
@@ -160,10 +163,11 @@ ReentrancyGuardUpgradeable {
      *          Name            Description
      *  @param  _receiver       Receiver address.
      *  @param  _currencies     Array of withdrawn currency addresses.
-     *  @param  _values         Array of withdrawn values, respective to each currency.
+     *  @param  _values         Array of withdraw values, respective to each currency.
      *  @param  _signatures     Array of admin signatures.
      *
      *  @dev    Administrative operator.
+     *  @dev    Used to withdraw fee and royalty.
      */
     function withdraw(
         address _receiver,
@@ -188,18 +192,22 @@ ReentrancyGuardUpgradeable {
         }
 
         for (uint256 i; i < _currencies.length; ++i) {
-            CurrencyHandler.sendCurrency(_currencies[i], _receiver, _values[i]);
+            CurrencyHandler.sendCurrency(
+                _currencies[i],
+                _receiver,
+                _values[i]
+            );
         }
     }
 
     /**
      *  @notice Create new contents.
      *
-     *          Name           Description
-     *  @param  _uris          Array of content URIs, respective to each content.
-     *  @param  _startAts      Array of start timestamps, respective to each content.
-     *  @param  _durations     Array of durations, respective to each content.
-     *  @param  _signatures    Array of admin signatures.
+     *          Name            Description
+     *  @param  _uris           Array of content URIs, respective to each content.
+     *  @param  _startAts       Array of start timestamps for minting, respective to each content.
+     *  @param  _durations      Array of mintable durations, respective to each content.
+     *  @param  _signatures     Array of admin signatures.
      * 
      *  @dev    Administrative operator.
      */
@@ -248,10 +256,10 @@ ReentrancyGuardUpgradeable {
     /**
      *  @notice Update URIs of multiple contents.
      *
-     *          Name           Description
-     *  @param  _contentIds    Array of content identifiers.
-     *  @param  _uris          Array of new URIs, respectively for each content.
-     *  @param  _signatures    Array of admin signatures.
+     *          Name            Description
+     *  @param  _contentIds     Array of content identifiers.
+     *  @param  _uris           Array of new URIs, respectively for each content.
+     *  @param  _signatures     Array of admin signatures.
      * 
      *  @dev    Administrative operator.
      */
@@ -284,16 +292,19 @@ ReentrancyGuardUpgradeable {
                 revert AlreadyStarted();
             }
             content.uri = _uris[i];
-            emit ContentURIUpdate(_contentIds[i], _uris[i]);
+            emit ContentURIUpdate(
+                _contentIds[i],
+                _uris[i]
+            );
         }
     }
 
     /**
      *  @notice Cancel multiple contents.
      *
-     *          Name           Description
-     *  @param  _contentIds    Array of content identifiers.
-     *  @param  _signatures    Array of admin signatures.
+     *          Name            Description
+     *  @param  _contentIds     Array of content identifiers.
+     *  @param  _signatures     Array of admin signatures.
      * 
      *  @dev    Administrative operator.
      */
@@ -327,10 +338,10 @@ ReentrancyGuardUpgradeable {
 
     /* --- Query --- */
     /**
-     *          Name          Description
-     *  @param  _contentId    Content identifier.
+     *          Name            Description
+     *  @param  _contentId      Content identifier.
      * 
-     *  @return content       Information of the content.
+     *  @return Content information.
      */
     function getContent(
         uint256 _contentId
@@ -343,20 +354,68 @@ ReentrancyGuardUpgradeable {
 
 
     /**
+     *          Name        Description
+     *  @param  _tokenId    Token identifier.
+     *
+     *  @return Token URI.
+     */
+    function tokenURI(
+        uint256 _tokenId
+    ) public view override(
+        IERC721MetadataUpgradeable,
+        ERC721Upgradeable
+    ) returns (string memory) {
+        return contents[tokenContents[_tokenId]].uri;
+    }
+
+
+    /**
+     *  @return Royalty rate of the token identifier.
+     */
+    function getRoyaltyRate(
+        uint256
+    ) external view returns (Rate memory) {
+        return Rate(
+            royaltyRate,
+            CommonConstant.RATE_DECIMALS
+        );
+    }
+
+
+    /**
+     *          Name            Description
+     *  @param  _interfaceId    Interface identifier.
+     *
+     *  @return Whether this contract implements the interface.
+     */
+    function supportsInterface(
+        bytes4 _interfaceId
+    ) public view override(
+        IERC165Upgradeable,
+        ERC721Upgradeable
+    ) returns (bool) {
+        return _interfaceId == type(IERC2981Upgradeable).interfaceId
+            || _interfaceId == type(IERC4906Upgradeable).interfaceId
+            || super.supportsInterface(_interfaceId);
+    }
+
+
+    /**
      *  @notice Mint tokens of a content.
      *
      *          Name            Description
      *  @param  _contentId      Content identifier.
      *  @param  _amount         Number of tokens to mint.
-     *  @return firstTokenId    First token identifier of the minted tokens.
-     *  @return lastTokenId     Last token identifier of the minted tokens.
+     *
+     *  @return First token identifier of the minted tokens.
+     *  @return Last token identifier of the minted tokens.
      */
     function mint(
         uint256 _contentId,
         uint256 _amount
     ) external payable
-    nonReentrant
     whenNotPaused
+    nonReentrant
     returns (uint256, uint256) {
         if (_amount == 0) {
             revert InvalidInput();
@@ -400,54 +459,10 @@ ReentrancyGuardUpgradeable {
         return (firstTokenId, lastTokenId);
     }
 
-    /**
-     *          Name        Description
-     *  @param  _tokenId    Token identifier.
-     * 
-     *  @return Token URI.
-     */
-    function tokenURI(
-        uint256 _tokenId
-    ) public view override(
-        IERC721MetadataUpgradeable,
-        ERC721Upgradeable
-    ) returns (string memory) {
-        return contents[tokenContents[_tokenId]].uri;
-    }
 
+    /* --- Helper --- */
     /**
-     *          Name        Description
-     *  @param  _tokenId    Token identifier.
-     * 
-     *  @return rate        Royalty rate of the token identifier.
-     */
-    function getRoyaltyRate(
-        uint256 _tokenId
-    ) external view returns (Rate memory) {
-        return Rate(royaltyRate, CommonConstant.RATE_DECIMALS);
-    }
-
-    /* --- Override --- */
-    /**
-     *          Name            Description
-     *  @param  _interfaceId    Interface identifier.
-     * 
-     *  @return Whether this contract implements the interface.
-     */
-    function supportsInterface(
-        bytes4 _interfaceId
-    ) public view override(
-        IERC165Upgradeable,
-        ERC721Upgradeable
-    ) returns (bool) {
-        return _interfaceId == type(IERC4906Upgradeable).interfaceId
-            || _interfaceId == type(IERC2981Upgradeable).interfaceId
-            || super.supportsInterface(_interfaceId);
-    }
-
-    /**
-     *          Name       Description
-     *  @return address    Royalty receiver address.
+     *  @return Default royalty receiver address.
      */
     function _royaltyReceiver() internal view override returns (address) {
         return address(this);

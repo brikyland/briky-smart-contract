@@ -5,6 +5,7 @@ pragma solidity ^0.8.20;
 import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol";
 import {IERC721MetadataUpgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC721MetadataUpgradeable.sol";
 import {IERC2981Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
+import {IERC4906Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC4906Upgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import {ERC721PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721PausableUpgradeable.sol";
@@ -84,7 +85,7 @@ ReentrancyGuardUpgradeable {
      *  @param  _name           Token name.
      *  @param  _symbol         Token symbol.
      *  @param  _uri            Base URI.
-     *  @param  _feeRate        Mortgaging fee rate.
+     *  @param  _feeRate        Borrowing fee rate.
      */
     function __MortgageToken_init(
         address _admin,
@@ -95,7 +96,7 @@ ReentrancyGuardUpgradeable {
         uint256 _feeRate
     ) internal
     onlyInitializing {
-        require(_feeRate <= CommonConstant.RATE_MAX_FRACTION);
+        require(_feeRate <= CommonConstant.RATE_MAX_SUBUNIT);
 
         /// Initializer.
         __ERC721_init(_name, _symbol);
@@ -115,6 +116,7 @@ ReentrancyGuardUpgradeable {
         emit FeeRateUpdate(Rate(_feeRate, CommonConstant.RATE_DECIMALS));
     }
 
+    /* --- Administration --- */
     /**
      *  @notice Update the base URI.
      *
@@ -143,10 +145,10 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Update the mortgaging fee rate.
+     *  @notice Update the borrowing fee rate.
      *
      *          Name            Description
-     *  @param  _feeRate        New mortgaging fee rate.
+     *  @param  _feeRate        New borrowing fee rate.
      *  @param  _signatures     Array of admin signatures.
      * 
      *  @dev    Administrative operator.
@@ -163,7 +165,7 @@ ReentrancyGuardUpgradeable {
             ),
             _signatures
         );
-        if (_feeRate > CommonConstant.RATE_MAX_FRACTION) {
+        if (_feeRate > CommonConstant.RATE_MAX_SUBUNIT) {
             revert InvalidRate();
         }
         feeRate = _feeRate;
@@ -173,15 +175,15 @@ ReentrancyGuardUpgradeable {
 
     /* --- Query --- */
     /**
-     *  @return Mortgaging fee rate.
+     *  @return Borrowing fee rate.
      */
     function getFeeRate() external view returns (Rate memory) {
         return Rate(feeRate, CommonConstant.RATE_DECIMALS);
     }
 
     /**
-     *          Name           Description
-     *  @param  _mortgageId    Mortgage identifier.
+     *          Name            Description
+     *  @param  _mortgageId     Mortgage identifier.
      * 
      *  @return Configuration and progress of the mortgage.
      */
@@ -199,8 +201,8 @@ ReentrancyGuardUpgradeable {
      *  @notice Cancel a mortgage.
      *  @notice Cancel only if the mortgage is in `Pending` state.
      * 
-     *          Name           Description
-     *  @param  _mortgageId    Mortgage identifier.
+     *          Name            Description
+     *  @param  _mortgageId     Mortgage identifier.
      * 
      *  @dev    Permission:
      *          - Borrower of the mortgage.
@@ -227,9 +229,10 @@ ReentrancyGuardUpgradeable {
     /**
      *  @notice Lend a mortgage.
      *  @notice Lend only if the mortgage is in `Pending` state.
-     * 
-     *          Name           Description
-     *  @param  _mortgageId    Mortgage identifier.
+     *  @notice Mint new token associated with the mortgage.
+     *
+     *          Name            Description
+     *  @param  _mortgageId     Mortgage identifier.
      * 
      *  @return Maturity timestamp.
      */
@@ -244,10 +247,11 @@ ReentrancyGuardUpgradeable {
     /**
      *  @notice Lend a mortgage.
      *  @notice Lend only if the mortgage is in `Pending` state.
+     *  @notice Mint new token associated with the mortgage.
      *
-     *          Name           Description
-     *  @param  _mortgageId    Mortgage identifier.
-     *  @param  _anchor        `principal` of the mortgage.
+     *          Name            Description
+     *  @param  _mortgageId     Mortgage identifier.
+     *  @param  _anchor         `principal` of the mortgage.
      * 
      *  @return Maturity timestamp.
      * 
@@ -269,9 +273,10 @@ ReentrancyGuardUpgradeable {
     /**
      *  @notice Repay a mortgage.
      *  @notice Repay only if the mortgage is in `Supplied` state and not overdue.
+     *  @notice Burn the token associated with the mortgage.
      *
-     *          Name           Description
-     *  @param  _mortgageId    Mortgage identifier.
+     *          Name            Description
+     *  @param  _mortgageId     Mortgage identifier.
      * 
      *  @dev    Permission: Borrower of the mortgage.
      */
@@ -286,10 +291,11 @@ ReentrancyGuardUpgradeable {
     /**
      *  @notice Repay a mortgage.
      *  @notice Repay only if the mortgage is in `Supplied` state and not overdue.
+     *  @notice Burn the token associated with the mortgage.
      *
-     *          Name           Description
-     *  @param  _mortgageId    Mortgage identifier.
-     *  @param  _anchor        `repayment` of the mortgage.
+     *          Name            Description
+     *  @param  _mortgageId     Mortgage identifier.
+     *  @param  _anchor         `repayment` of the mortgage.
      * 
      *  @dev    Permission: Borrower of the mortgage.
      *  @dev    Anchor enforces consistency between this contract and the client-side.
@@ -309,9 +315,10 @@ ReentrancyGuardUpgradeable {
     /**
      *  @notice Foreclose on the collateral of a mortgage.
      *  @notice Foreclose only if the mortgage is overdue.
+     *  @notice Burn the token associated with the mortgage.
      *
-     *          Name           Description
-     *  @param  _mortgageId    Mortgage identifier.
+     *          Name            Description
+     *  @param  _mortgageId     Mortgage identifier.
      * 
      *  @dev    The collateral is transferred to the mortgage token owner.
      */
@@ -344,8 +351,8 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *          Name           Description
-     *  @param  _tokenId       Token identifier.
+     *          Name            Description
+     *  @param  _tokenId        Token identifier.
      * 
      *  @return Token URI.
      */
@@ -358,24 +365,29 @@ ReentrancyGuardUpgradeable {
         return super.tokenURI(_tokenId);
     }
 
+
     /**
      *          Name            Description
      *  @param  _interfaceId    Interface identifier.
      * 
      *  @return Whether this contract supports the interface.
      */
-    function supportsInterface(bytes4 _interfaceId) public view virtual override(
+    function supportsInterface(
+        bytes4 _interfaceId
+    ) public view virtual override(
         IERC165Upgradeable,
         ERC721Upgradeable
     ) returns (bool) {
         return _interfaceId == type(IMortgageToken).interfaceId 
             || _interfaceId == type(IERC2981Upgradeable).interfaceId
+            || _interfaceId == type(IERC4906Upgradeable).interfaceId
             || super.supportsInterface(_interfaceId);
     }
 
+
     /* --- Internal --- */
     /**
-     *  @return Base URI.
+     *  @return Prefix of all token URI.
      */
     function _baseURI() internal override view returns (string memory) {
         return baseURI;
@@ -384,9 +396,9 @@ ReentrancyGuardUpgradeable {
     /**
      *  @notice Mint a token.
      *
-     *          Name           Description
-     *  @param  _to            Receiver address.
-     *  @param  _tokenId       Token identifier.
+     *          Name            Description
+     *  @param  _to             Receiver address.
+     *  @param  _tokenId        Token identifier.
      */
     function _mint(address _to, uint256 _tokenId) internal override {
         totalSupply++;
@@ -396,8 +408,8 @@ ReentrancyGuardUpgradeable {
     /**
      *  @notice Burn a token.
      *
-     *          Name           Description
-     *  @param  _tokenId       Token identifier.
+     *          Name            Description
+     *  @param  _tokenId        Token identifier.
      */
     function _burn(uint256 _tokenId) internal override {
         totalSupply--;
@@ -407,11 +419,11 @@ ReentrancyGuardUpgradeable {
     /**
      *  @notice List a new mortgage.
      *
-     *          Name           Description
-     *  @param  _principal     Principal value.
-     *  @param  _repayment     Repayment value.
-     *  @param  _currency      Currency address.
-     *  @param  _duration      Borrowing duration.
+     *          Name            Description
+     *  @param  _principal      Principal value.
+     *  @param  _repayment      Repayment value.
+     *  @param  _currency       Currency address.
+     *  @param  _duration       Borrowing duration.
      * 
      *  @return New mortgage identifier.
      * 
@@ -432,7 +444,7 @@ ReentrancyGuardUpgradeable {
         }
 
         uint256 fee = _applyDiscount(
-            _principal.scale(feeRate, CommonConstant.RATE_MAX_FRACTION),
+            _principal.scale(feeRate, CommonConstant.RATE_MAX_SUBUNIT),
             _currency
         );
         uint256 mortgageId = ++mortgageNumber;
@@ -463,10 +475,10 @@ ReentrancyGuardUpgradeable {
 
     /**
      *  @notice Lend a mortgage.
-     *  @notice Lend only if the mortgage is in `Pending` state.
+     *  @notice Mint the token associated with the mortgage.
      *
-     *          Name           Description
-     *  @param  _mortgageId    Mortgage identifier.
+     *          Name            Description
+     *  @param  _mortgageId     Mortgage identifier.
      * 
      *  @return Repayment due timestamp.
      */
@@ -517,10 +529,10 @@ ReentrancyGuardUpgradeable {
 
     /**
      *  @notice Repay a mortgage.
-     *  @notice Repay only if the mortgage is in `Supplied` state and not overdue.
+     *  @notice Burn the token associated with the mortgage.
      *
-     *          Name           Description
-     *  @param  _mortgageId    Mortgage identifier.
+     *          Name            Description
+     *  @param  _mortgageId     Mortgage identifier.
      * 
      *  @dev    Permission: Borrower of the mortgage.
      */
@@ -565,10 +577,10 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Charge mortgaging fee.
+     *  @notice Charge borrowing fee.
      *
-     *          Name           Description
-     *  @param  _mortgageId    Mortgage identifier.
+     *          Name            Description
+     *  @param  _mortgageId     Mortgage identifier.
      */
     function _chargeFee(uint256 _mortgageId) internal virtual {
         CurrencyHandler.sendCurrency(
@@ -581,10 +593,10 @@ ReentrancyGuardUpgradeable {
     /**
      *  @notice Transfer the collateral of a mortgage.
      *
-     *          Name           Description
-     *  @param  _mortgageId    Mortgage identifier.
-     *  @param  _from          Sender address.
-     *  @param  _to            Receiver address.
+     *          Name            Description
+     *  @param  _mortgageId     Mortgage identifier.
+     *  @param  _from           Sender address.
+     *  @param  _to             Receiver address.
      */
     function _transferCollateral(
         uint256 _mortgageId,

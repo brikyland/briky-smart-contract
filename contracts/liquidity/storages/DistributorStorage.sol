@@ -15,9 +15,9 @@ IDistributor {
     address public primaryToken;
     address public treasury;
 
-
     /// @dev    distributedTokens[account]
     mapping(address => uint256) public distributedTokens;
+
 
     uint256[50] private __gap;
 }

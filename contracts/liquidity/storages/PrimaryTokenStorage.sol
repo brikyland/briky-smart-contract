@@ -31,8 +31,10 @@ IPrimaryToken {
     bool public seedRoundUnlocked;
 
     address public admin;
+
     /// @dev    DEPRECATED!
     address private stakeToken;
+
     address public treasury;
 
     /** ===== UPGRADE ===== **/

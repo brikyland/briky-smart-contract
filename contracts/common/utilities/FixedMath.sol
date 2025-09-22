@@ -9,7 +9,7 @@ import {MathUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/math/Ma
  *
  *  @notice Math library for unsigned 128.128 fixed-point arithmetic functions.
  *
- *  @dev    `Fixed`is a type of unsigned 128.128 fixed-point decimal, represented by an unsigned 256-bit value:
+ *  @dev    `Fixed` is a type of unsigned 128.128 fixed-point decimal, represented by an unsigned 256-bit value:
  *          -   The upper 128 bits store the integer part
  *          -   The lower 128 bits store the fractional part.
  */
@@ -17,9 +17,11 @@ library FixedMath {
     /** ===== ERROR ===== **/
     error DivisionByZero();
 
+
     /** ===== CONSTANT ===== **/
     /// @notice Fixed-point representation of 1 is 2**128.
     uint256 internal constant ONE = 0x100000000000000000000000000000000;
+
 
     /** ===== FUNCTION ===== **/
     /**

@@ -14,6 +14,7 @@ IDriptributor {
     /// @dev    distributions[distributionId]
     mapping(uint256 => Distribution) internal distributions;
 
+
     uint256 public distributionNumber;
 
     uint256 public totalAllocation;

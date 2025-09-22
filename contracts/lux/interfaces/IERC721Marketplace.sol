@@ -24,8 +24,8 @@ ICommon {
     /**
      *  @notice Emitted when a collection is registered.
      * 
-     *          Name          Description
-     *  @param  collection    Collection contract address.
+     *          Name        Description
+     *  @param  collection  Registered collection contract address.
      */
     event CollectionRegistration(
         address indexed collection
@@ -34,8 +34,8 @@ ICommon {
     /**
      *  @notice Emitted when a collection is deregistered.
      *
-     *          Name          Description
-     *  @param  collection    Collection contract address.
+     *          Name        Description
+     *  @param  collection  Deregistered collection contract address.
      */
     event CollectionDeregistration(
         address indexed collection
@@ -46,15 +46,15 @@ ICommon {
     /**
      *  @notice Emitted when a new offer is listed.
      *
-     *          Name               Description
-     *  @param  collection         Token collection contract address.
-     *  @param  offerId            Offer identifier.
-     *  @param  tokenId            Token identifier.
-     *  @param  seller             Seller address.
-     *  @param  price              Sale value.
-     *  @param  royalty            Royalty derived from the sale value.
-     *  @param  royaltyReceiver    Royalty receiver address.
-     *  @param  currency           Sale currency address.
+     *          Name                Description
+     *  @param  collection          Token collection contract address.
+     *  @param  offerId             Offer identifier.
+     *  @param  tokenId             Token identifier.
+     *  @param  seller              Seller address.
+     *  @param  price               Sale value.
+     *  @param  royalty             Royalty derived from the sale value.
+     *  @param  royaltyReceiver     Royalty receiver address.
+     *  @param  currency            Sale currency address.
      */
     event NewOffer(
         address indexed collection,
@@ -70,8 +70,8 @@ ICommon {
     /**
      *  @notice Emitted when an offer is cancelled.
      *
-     *          Name        Description
-     *  @param  offerId     Offer identifier.
+     *          Name                Description
+     *  @param  offerId             Offer identifier.
      */
     event OfferCancellation(
         uint256 indexed offerId
@@ -80,11 +80,11 @@ ICommon {
     /**
      *  @notice Emitted when an offer is sold.
      *
-     *          Name               Description
-     *  @param  offerId            Offer identifier.
-     *  @param  buyer              Buyer address.
-     *  @param  royaltyReceiver    Royalty receiver address.
-     *  @param  royalty            Royalty derived from the sale value of the offer.
+     *          Name                Description
+         *  @param  offerId         Offer identifier.
+     *  @param  buyer               Buyer address.
+     *  @param  royaltyReceiver     Royalty receiver address.
+     *  @param  royalty             Royalty derived from the sale value of the offer.
      */
     event OfferSale(
         uint256 indexed offerId,
@@ -94,16 +94,15 @@ ICommon {
     );
 
     /** ===== ERROR ===== **/
-    error NotRegisteredCollection();
-    error RegisteredCollection();
-
     error InvalidBuying();
     error InvalidCancelling();
     error InvalidCollection();
     error InvalidTokenId();
     error InvalidOfferId();
     error InvalidPrice();
-    error Overdue();
+    error NotRegisteredCollection();
+    error RegisteredCollection();
+
 
     /** ===== FUNCTION ===== **/
     /* --- Query --- */
@@ -122,18 +121,18 @@ ICommon {
         uint256 offerId
     ) external view returns (ERC721Offer memory offer);
 
+
     /* --- Command --- */
     /**
      *  @notice List a new offer of an ERC721 token.
      *
-     *          Name          Description
-     *  @param  collection    Token collection contract address.
-     *  @param  tokenId       Token identifier.
-     *  @param  price         Sale value.
-     *  @param  currency      Sale currency address.
-     *  @return offerId       New offer identifier.
+     *          Name        Description
+     *  @param  collection  Token collection contract address.
+     *  @param  tokenId     Token identifier.
+     *  @param  price       Sale value.
+     *  @param  currency    Sale currency address.
+     *  @return offerId     New offer identifier.
      * 
-     *  @dev    The collection must support interface `IERC721Upgradeable`.
      *  @dev    Approval must be granted for this contract to transfer collateral before borrowing. A mortgage can only be
      *          lent while approval remains active.
      */

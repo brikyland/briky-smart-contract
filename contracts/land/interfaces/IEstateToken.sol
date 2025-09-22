@@ -37,7 +37,7 @@ IAssetToken {
     /** ===== EVENT ===== **/
     /* --- Configuration --- */
     /**
-     *  @notice Emitted when base URI is updated.
+     *  @notice Emitted when the base URI is updated.
      *
      *          Name        Description
      *  @param  newValue    New base URI.
@@ -83,7 +83,7 @@ IAssetToken {
 
     /* --- Extractor --- */
     /**
-     *  @notice Emitted when a contract is authorized as a extractor contract.
+     *  @notice Emitted when a contract is authorized as an extractor contract.
      *
      *          Name        Description
      *  @param  account     Authorized contract address.
@@ -312,7 +312,7 @@ IAssetToken {
      *  @notice Tokenize an estate into a new class of token.
      *
      *          Name                Description
-     *  @param  totalSupply         Number of tokens.
+     *  @param  totalSupply         Number of tokens to mint.
      *  @param  zone                Zone code.
      *  @param  tokenizationId      Tokenization identifier from the tokenizer contract.
      *  @param  uri                 URI of estate metadata.
@@ -350,7 +350,7 @@ IAssetToken {
 
     /* --- Safe Command --- */
     /**
-     *  @notice Deprecate an estate.
+     *  @notice Deprecate an estate by managers due to force majeure or extraction.
      *
      *          Name        Description
      *  @param  estateId    Estate identifier.

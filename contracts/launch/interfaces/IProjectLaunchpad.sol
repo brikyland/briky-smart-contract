@@ -15,14 +15,14 @@ import {IProjectTokenReceiver} from "./IProjectTokenReceiver.sol";
  * 
  *  @notice An `IProjectLaunchpad` contract facilitates project fundraising through launches comprising multiple investment
  *          rounds, accordingly instructs `EstateToken` to securitize a real estate into a new class of tokens and receive them
- *          for subsequent distribution to investors.
+ *          for subsequent distribution to contributors.
  */
 interface IProjectLaunchpad is
 ICommon,
 IProjectTokenReceiver {
     /** ===== EVENT ===== **/
     /**
-     *  @notice Emitted when an investor withdraw allocation from a launch.
+     *  @notice Emitted when an contributor withdraw allocation from a launch.
      *
      *          Name        Description
      *  @param  launchId    Launch identifier.
@@ -69,11 +69,11 @@ IProjectTokenReceiver {
 
     /* --- Command --- */
     /**
-     *  @notice Withdraw the allocation of the message sender from a launch.
+     *  @notice Withdraw the allocation of the message sender from a round of a launch.
      *
      *          Name            Description
      *  @param  launchId        Launch identifier.
-     *  @param  index           Round index in the launch.
+     *  @param  index           Index of the round in the launch.
      *  @return amount          Withdrawn amount.
      */
     function withdrawProjectToken(

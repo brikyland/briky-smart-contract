@@ -20,7 +20,7 @@ import {IValidatable} from "./IValidatable.sol";
  *          verify the feasibility of the proposal within a given expiration to either admit or disqualify it accordingly.
  *          During this process, the full context is uploaded to a public database (e.g., IPFS), and the link is submitted to
  *          be the URI of proposal context. This approach protects the database from external attacks as well as ensures
- *          proposals remains validatable and user-oriented.
+ *          proposals remain validatable and user-oriented.
  *  @dev    Implementation involves server-side support.
  *  @dev    ERC-20 tokens are identified by their contract addresses.
  *          Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
@@ -32,7 +32,7 @@ IValidatable {
     /** ===== EVENT ===== **/
     /* --- Configuration --- */
     /**
-     *  @notice Emitted when proposing fee is updated.
+     *  @notice Emitted when the proposing fee is updated.
      *
      *          Name        Description
      *  @param  newValue    New proposing fee charged in native coin.
@@ -54,7 +54,7 @@ IValidatable {
      *  @param  rule                Rule to determine verdict.
      *  @param  quorumRate          Fraction of total weight for quorum.
      *  @param  duration            Voting duration.
-     *  @param  admissionExpiry     Expiration for moderators to admit the proposal.
+     *  @param  admissionExpiry     Expiration for proposal admission.
      */
     event NewProposal(
         address indexed governor,
@@ -108,7 +108,7 @@ IValidatable {
     );
 
     /**
-     *  @notice Emitted when the budget of a proposal has a contributor withdrawn the contribution.
+     *  @notice Emitted when the contribution of a contributor is withdrawn from the budget of a proposal.
      *
      *          Name            Description
      *  @param  proposalId      Proposal identifier.
@@ -158,9 +158,6 @@ IValidatable {
      *  @param  voter           Voter address.
      *  @param  voteOption      Vote option.
      *  @param  weight          Vote power at the admission timestamp.
-     *
-     *  @dev    The checksum of data from the `contextURI` should match `uuid`. Contract cannot validate this but defects are
-     *          detectable. Checksum algorithm must be declared in the context.
      */
     event ProposalVote(
         uint256 indexed proposalId,
@@ -176,7 +173,7 @@ IValidatable {
      *
      *          Name            Description
      *  @param  proposalId      Proposal identifier.
-     *  @param  resultURI       URI of final execution result.
+     *  @param  resultURI       URI of execution result.
      *  @param  isSuccessful    Whether the execution has succeeded.
      */
     event ProposalExecutionConclusion(
@@ -296,6 +293,7 @@ IValidatable {
         address account
     ) external view returns (ProposalVoteOption voteOption);
 
+
     /* --- Command --- */
     /**
      *  @notice Propose a new operation on an asset from a governor contract.
@@ -308,7 +306,7 @@ IValidatable {
      *  @param  rule                Rule to determine verdict.
      *  @param  quorumRate          Fraction of total weight for quorum.
      *  @param  duration            Voting duration.
-     *  @param  admissionExpiry     Expiration for moderators to admit the proposal.
+     *  @param  admissionExpiry     Expiration for proposal admission.
      *  @param  validation          Validation package from the validator.
      *  @return proposalId          New proposal identifier.
      *
@@ -317,7 +315,7 @@ IValidatable {
      *          executives will later verify the feasibility of the proposal within a given expiration to either admit or
      *          disqualify it accordingly. During this process, the full context is uploaded to a public database (e.g., IPFS),
      *          and the link is submitted to be the URI of proposal context. This approach protects the database from external
-     *          attacks as well as ensures proposals remains validatable and user-oriented.
+     *          attacks as well as ensures proposals remain validatable and user-oriented.
      *  @dev    Through the validation mechanism, the server-side determines `uuid`, `quorumRate`, `duration` and
      *          `admissionExpiry` based on the specific supported type of proposal and its context. Operators are also required
      *          to be pre-registered on the server-side to ensure proper assignments.
@@ -347,7 +345,6 @@ IValidatable {
         uint40 admissionExpiry,
         Validation calldata validation
     ) external payable returns (uint256 proposalId);
-
 
     /**
      *  @notice Admit an executable proposal after review practicability.
@@ -460,7 +457,7 @@ IValidatable {
 
 
     /**
-     *  @notice Conclude the execution of a proposal as either successful or unsuccessful.
+     *  @notice Conclude the execution of a proposal.
      *  @notice Conclude only if the proposal is in `Executing` state.
      *
      *          Name            Description
@@ -469,7 +466,7 @@ IValidatable {
      *  @param  isSuccessful    Whether the execution has succeeded.
      *  @param  validation      Validation package from the validator.
      *
-     *  @dev    Permission: Operator of the proposal.
+     *  @dev    Permission: Asset representative of the proposal.
      *  @dev    Validation data:
      *          ```
      *          data = abi.encode(
