@@ -9,7 +9,7 @@ pragma solidity ^0.8.20;
 interface ISnapshot {
     /** ===== STRUCT ===== **/
     /**
-     *  @notice Capture of a mutable value of type `uint256` at a specific timestamp.
+     *  @notice Capture of a mutable value of type `uint256` at a reference timestamp.
      */
     struct Uint256Snapshot {
         /// @notice Value at the reference timestamp.
