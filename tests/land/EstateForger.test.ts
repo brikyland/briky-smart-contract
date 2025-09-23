@@ -5667,16 +5667,11 @@ describe('2.2. EstateForger', async () => {
             const IEstateTokenReceiver = IEstateTokenReceiver__factory.createInterface();
             const IEstateTokenizer = IEstateTokenizer__factory.createInterface();
             const IERC165Upgradeable = IERC165Upgradeable__factory.createInterface();
-            const IEstateForger = IEstateForger__factory.createInterface();
-            const IValidatable = IValidatable__factory.createInterface();
-            const ICommissionDispatchable = ICommissionDispatchable__factory.createInterface();
 
-            const IEstateForgerInterfaceId = getInterfaceID(IEstateForger, [ICommon, IValidatable, ICommissionDispatchable, IEstateTokenizer])
             const IEstateTokenReceiverInterfaceId = getInterfaceID(IEstateTokenReceiver, [IERC1155ReceiverUpgradeable])
             const IEstateTokenizerInterfaceId = getInterfaceID(IEstateTokenizer, [ICommon, IEstateTokenReceiver])
             const IERC165UpgradeableInterfaceId = getInterfaceID(IERC165Upgradeable, []);
 
-            expect(await estateForger.supportsInterface(getBytes4Hex(IEstateForgerInterfaceId))).to.equal(true);
             expect(await estateForger.supportsInterface(getBytes4Hex(IEstateTokenReceiverInterfaceId))).to.equal(true);
             expect(await estateForger.supportsInterface(getBytes4Hex(IEstateTokenizerInterfaceId))).to.equal(true);
             expect(await estateForger.supportsInterface(getBytes4Hex(IERC165UpgradeableInterfaceId))).to.equal(true);

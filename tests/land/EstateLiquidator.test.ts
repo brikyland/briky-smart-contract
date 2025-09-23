@@ -72,8 +72,8 @@ import { ProposalRule, ProposalState } from '@utils/models/Proposal';
 import { getRegisterSellerInValidation } from '@utils/validation/EstateForger';
 import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
 import { RequestExtractionParams } from '@utils/models/EstateLiquidator';
-import { RegisterCustodianParams } from '@utils/models/EstateToken';
-import { getCallTokenizeEstateTx, getRegisterCustodianTx } from '@utils/transaction/EstateToken';
+import { DeprecateEstateParams, RegisterCustodianParams } from '@utils/models/EstateToken';
+import { getCallTokenizeEstateTx, getRegisterCustodianTx, getSafeDeprecateEstateTxByParams } from '@utils/transaction/EstateToken';
 import { getRequestExtractionTx } from '@utils/transaction/EstateLiquidator';
 import { getRegisterBrokerTx } from '@utils/transaction/CommissionToken';
 import { Initialization as CommonInitialization } from '@tests/common/test.initialization';
@@ -547,6 +547,7 @@ describe('2.3. EstateLiquidator', async () => {
                 currency: ethers.constants.AddressZero,
                 feeRate: ethers.utils.parseEther('0.1'),
                 uuid: ethers.utils.formatBytes32String("uuid_1"),
+                admissionExpiry: timestamp + 1e9,
             };
             await callTransaction(getRequestExtractionTx(
                 estateLiquidator as any,
@@ -569,6 +570,7 @@ describe('2.3. EstateLiquidator', async () => {
                 currency: currencies[0].address,
                 feeRate: ethers.utils.parseEther('0.2'),
                 uuid: ethers.utils.formatBytes32String("uuid_2"),
+                admissionExpiry: timestamp + 1e9,
             };
             await callTransaction(getRequestExtractionTx(
                 estateLiquidator as any,
@@ -686,6 +688,7 @@ describe('2.3. EstateLiquidator', async () => {
             defaultParams: RequestExtractionParams
         }> {
             const { operator1 } = fixture;
+            const timestamp = await time.latest();
             const defaultParams = {
                 estateId: BigNumber.from(1),
                 buyer: operator1.address,
@@ -693,14 +696,18 @@ describe('2.3. EstateLiquidator', async () => {
                 currency: ethers.constants.AddressZero,
                 feeRate: ethers.utils.parseEther('0.1'),
                 uuid: ethers.utils.formatBytes32String("uuid_1"),
-            }
+                admissionExpiry: timestamp + 1e9,
+            };
             return { defaultParams };
         }
 
         it('2.3.3.1. request extraction successfully', async () => {
-            const { estateLiquidator, estateToken, governanceHub, validator, operator1, operator2, currencies, manager } = await beforeEstateLiquidatorTest();
+            const { estateLiquidator, estateToken, governanceHub, validator, operator1, operator2, currencies, manager, moderator } = await beforeEstateLiquidatorTest();
 
             const governanceFee = await governanceHub.fee();
+
+            let timestamp = await time.latest() + 10;
+            await time.setNextBlockTimestamp(timestamp);
 
             // Tx1: Request extraction with native token before unanimous guard due, with just enough native token
             const params1 = {
@@ -710,10 +717,8 @@ describe('2.3. EstateLiquidator', async () => {
                 currency: ethers.constants.AddressZero,
                 feeRate: ethers.utils.parseEther('0.1'),
                 uuid: ethers.utils.formatBytes32String("uuid_1"),
-            }
-
-            let timestamp = await time.latest() + 10;
-            await time.setNextBlockTimestamp(timestamp);
+                admissionExpiry: timestamp + 1e9,
+            };
 
             const expectedRequestId1 = (await estateLiquidator.requestNumber()).add(1);
             const expectedProposalId1 = (await governanceHub.proposalNumber()).add(1);
@@ -768,13 +773,14 @@ describe('2.3. EstateLiquidator', async () => {
             expect(proposal1.rule).to.equal(ProposalRule.ApprovalBeyondQuorum);
             expect(proposal1.quorum).to.equal(Constant.ESTATE_LIQUIDATOR_UNANIMOUS_QUORUM_RATE);
             expect(proposal1.due).to.equal(Constant.ESTATE_LIQUIDATOR_VOTING_DURATION);
-            expect(proposal1.timePivot).to.equal(timestamp + Constant.ESTATE_LIQUIDATOR_VOTING_DURATION);
+            expect(proposal1.timePivot).to.equal(params1.admissionExpiry);
 
             expect(await ethers.provider.getBalance(manager.address)).to.equal(initManagerNativeBalance.sub(params1.value.add(governanceFee)).sub(gasFee1));
             expect(await ethers.provider.getBalance(estateLiquidator.address)).to.equal(initEstateLiquidatorNativeBalance.add(params1.value));
             expect(await ethers.provider.getBalance(governanceHub.address)).to.equal(initGovernanceHubNativeBalance.add(governanceFee));
             
             // Tx2: Request extraction with native token after unanimous guard due, with excess native token
+            // Also by moderator
             const params2 = {
                 estateId: BigNumber.from(1),
                 buyer: operator2.address,
@@ -782,7 +788,8 @@ describe('2.3. EstateLiquidator', async () => {
                 currency: ethers.constants.AddressZero,
                 feeRate: ethers.utils.parseEther('0.2'),
                 uuid: ethers.utils.formatBytes32String("uuid_2"),
-            }
+                admissionExpiry: timestamp + 1e9,
+            };
 
             timestamp = (await estateToken.getEstate(params2.estateId)).tokenizeAt + Constant.ESTATE_LIQUIDATOR_UNANIMOUS_GUARD_DURATION;
             await time.setNextBlockTimestamp(timestamp);
@@ -790,7 +797,7 @@ describe('2.3. EstateLiquidator', async () => {
             const expectedRequestId2 = (await estateLiquidator.requestNumber()).add(1);
             const expectedProposalId2 = (await governanceHub.proposalNumber()).add(1);
 
-            initManagerNativeBalance = await ethers.provider.getBalance(manager.address);
+            let initModeratorNativeBalance = await ethers.provider.getBalance(moderator.address);
             initEstateLiquidatorNativeBalance = await ethers.provider.getBalance(estateLiquidator.address);
             initGovernanceHubNativeBalance = await ethers.provider.getBalance(governanceHub.address);
 
@@ -800,7 +807,7 @@ describe('2.3. EstateLiquidator', async () => {
                 governanceHub as any,
                 validator,
                 params2,
-                manager,
+                moderator,
                 timestamp,
                 { value: params2.value.add(governanceFee).add(ethers.utils.parseEther('1')) }
             );
@@ -840,9 +847,9 @@ describe('2.3. EstateLiquidator', async () => {
             expect(proposal2.rule).to.equal(ProposalRule.ApprovalBeyondQuorum);
             expect(proposal2.quorum).to.equal(Constant.ESTATE_LIQUIDATOR_MAJORITY_QUORUM_RATE);
             expect(proposal2.due).to.equal(Constant.ESTATE_LIQUIDATOR_VOTING_DURATION);
-            expect(proposal2.timePivot).to.equal(timestamp + Constant.ESTATE_LIQUIDATOR_VOTING_DURATION);
+            expect(proposal2.timePivot).to.equal(params2.admissionExpiry);
             
-            expect(await ethers.provider.getBalance(manager.address)).to.equal(initManagerNativeBalance.sub(params2.value.add(governanceFee)).sub(gasFee2));
+            expect(await ethers.provider.getBalance(moderator.address)).to.equal(initModeratorNativeBalance.sub(params2.value.add(governanceFee)).sub(gasFee2));
             expect(await ethers.provider.getBalance(estateLiquidator.address)).to.equal(initEstateLiquidatorNativeBalance.add(params2.value));
             expect(await ethers.provider.getBalance(governanceHub.address)).to.equal(initGovernanceHubNativeBalance.add(governanceFee));
 
@@ -855,7 +862,8 @@ describe('2.3. EstateLiquidator', async () => {
                 currency: currency.address,
                 feeRate: ethers.utils.parseEther('0.3'),
                 uuid: ethers.utils.formatBytes32String("uuid_3"),
-            }
+                admissionExpiry: timestamp + 1e9,
+            };
 
             timestamp += 10;
             await time.setNextBlockTimestamp(timestamp);
@@ -916,7 +924,7 @@ describe('2.3. EstateLiquidator', async () => {
             expect(proposal3.rule).to.equal(ProposalRule.ApprovalBeyondQuorum);
             expect(proposal3.quorum).to.equal(Constant.ESTATE_LIQUIDATOR_MAJORITY_QUORUM_RATE);
             expect(proposal3.due).to.equal(Constant.ESTATE_LIQUIDATOR_VOTING_DURATION);
-            expect(proposal3.timePivot).to.equal(timestamp + Constant.ESTATE_LIQUIDATOR_VOTING_DURATION);
+            expect(proposal3.timePivot).to.equal(params3.admissionExpiry);
 
             expect(await currency.balanceOf(manager.address)).to.equal(initManagerCurrencyBalance.sub(params3.value));
             expect(await currency.balanceOf(estateLiquidator.address)).to.equal(initEstateLiquidatorCurrencyBalance.add(params3.value));
@@ -934,7 +942,8 @@ describe('2.3. EstateLiquidator', async () => {
                 currency: currency.address,
                 feeRate: ethers.utils.parseEther('0.4'),
                 uuid: ethers.utils.formatBytes32String("uuid_4"),
-            }
+                admissionExpiry: timestamp + 1e9,
+            };
 
             timestamp += 10;
             await time.setNextBlockTimestamp(timestamp);
@@ -995,7 +1004,7 @@ describe('2.3. EstateLiquidator', async () => {
             expect(proposal4.rule).to.equal(ProposalRule.ApprovalBeyondQuorum);
             expect(proposal4.quorum).to.equal(Constant.ESTATE_LIQUIDATOR_MAJORITY_QUORUM_RATE);
             expect(proposal4.due).to.equal(Constant.ESTATE_LIQUIDATOR_VOTING_DURATION);
-            expect(proposal4.timePivot).to.equal(timestamp + Constant.ESTATE_LIQUIDATOR_VOTING_DURATION);
+            expect(proposal4.timePivot).to.equal(params4.admissionExpiry);
 
             expect(await currency.balanceOf(manager.address)).to.equal(initManagerCurrencyBalance.sub(params4.value));
             expect(await currency.balanceOf(estateLiquidator.address)).to.equal(initEstateLiquidatorCurrencyBalance.add(params4.value));
@@ -1059,7 +1068,7 @@ describe('2.3. EstateLiquidator', async () => {
             );
         });
 
-        it('2.3.3.4. request extraction unsuccessfully by non-manager', async () => {
+        it('2.3.3.4. request extraction unsuccessfully by non-executive', async () => {
             const fixture = await beforeEstateLiquidatorTest();
 
             const { estateLiquidator, moderator, user, estateToken, governanceHub, validator } = fixture;
@@ -1068,20 +1077,8 @@ describe('2.3. EstateLiquidator', async () => {
 
             const fee = await governanceHub.fee();
 
-            // By moderator
-            let timestamp = await time.latest() + 10;
-            await expect(getRequestExtractionTx(
-                estateLiquidator as any,
-                estateToken as any,
-                governanceHub as any,
-                validator,
-                defaultParams,
-                moderator,
-                timestamp,
-                { value: defaultParams.value.add(fee) },
-            )).to.be.revertedWithCustomError(estateLiquidator, 'Unauthorized');
-
             // By user
+            let timestamp = await time.latest() + 10;
             timestamp += 10;
             await expect(getRequestExtractionTx(
                 estateLiquidator as any,
@@ -1090,30 +1087,6 @@ describe('2.3. EstateLiquidator', async () => {
                 validator,
                 defaultParams,
                 user,
-                timestamp,
-                { value: defaultParams.value.add(fee) },
-            )).to.be.revertedWithCustomError(estateLiquidator, 'Unauthorized');
-        });
-
-        it('2.3.3.5. request extraction unsuccessfully with inactive zone', async () => {
-            const fixture = await beforeEstateLiquidatorTest({
-                skipDeclareZone: true,
-            });
-
-            const { estateLiquidator, manager, estateToken, governanceHub, validator } = fixture;
-
-            const { defaultParams } = await beforeRequestExtractionTest(fixture);
-
-            const fee = await governanceHub.fee();
-
-            let timestamp = await time.latest() + 10;
-            await expect(getRequestExtractionTx(
-                estateLiquidator as any,
-                estateToken as any,
-                governanceHub as any,
-                validator,
-                defaultParams,
-                manager,
                 timestamp,
                 { value: defaultParams.value.add(fee) },
             )).to.be.revertedWithCustomError(estateLiquidator, 'Unauthorized');
@@ -1178,6 +1151,7 @@ describe('2.3. EstateLiquidator', async () => {
                 defaultParams.currency,
                 defaultParams.feeRate,
                 defaultParams.uuid,
+                defaultParams.admissionExpiry,
                 validation,
                 { value: defaultParams.value.add(fee) },
             )).to.be.revertedWithCustomError(governanceHub, 'InvalidSignature');
@@ -1224,7 +1198,11 @@ describe('2.3. EstateLiquidator', async () => {
 
             const fee = await governanceHub.fee();
 
-            await callTransaction(estateToken.connect(manager).deprecateEstate(defaultParams.estateId));
+            const deprecateParams: DeprecateEstateParams = {
+                estateId: defaultParams.estateId,
+                data: "deprecate",
+            };
+            await callTransaction(getSafeDeprecateEstateTxByParams(estateToken as any, manager, deprecateParams));
             
             let timestamp = await time.latest() + 10;
 
@@ -1364,8 +1342,12 @@ describe('2.3. EstateLiquidator', async () => {
             const { defaultParams } = await beforeRequestExtractionTest(fixture);
 
             const fee = await governanceHub.fee();
-
-            await callTransaction(estateToken.connect(manager).deprecateEstate(defaultParams.estateId));
+            
+            const deprecateParams: DeprecateEstateParams = {
+                estateId: defaultParams.estateId,
+                data: "deprecate",
+            };
+            await callTransaction(getSafeDeprecateEstateTxByParams(estateToken as any, manager, deprecateParams));
 
             let timestamp = await time.latest() + 100;
 
@@ -1399,7 +1381,7 @@ describe('2.3. EstateLiquidator', async () => {
                 manager,
                 timestamp,
                 governanceHub as any,
-                "InvalidGovernor",
+                "Unauthorized",
                 defaultParams.value.add(fee),
             )
         });
@@ -1456,6 +1438,15 @@ describe('2.3. EstateLiquidator', async () => {
             await expect(tx1).to.emit(estateLiquidator, 'RequestApproval').withArgs(
                 requestId1,
                 feeAmount1,
+            );
+            await expect(tx1).to.emit(dividendHub, 'NewDividend').withArgs(
+                estateToken.address,
+                estateId1,
+                estateLiquidator.address,
+                totalVote1,
+                value1.sub(feeAmount1),
+                ethers.constants.AddressZero,
+                Constant.ESTATE_LIQUIDATOR_DIVIDEND_ISSUANCE_DATA
             );
             
             const estate1 = await estateToken.getEstate(estateId1);
@@ -1533,7 +1524,16 @@ describe('2.3. EstateLiquidator', async () => {
                 requestId2,
                 feeAmount2,
             );
-            
+            await expect(tx2).to.emit(dividendHub, 'NewDividend').withArgs(
+                estateToken.address,
+                estateId2,
+                estateLiquidator.address,
+                totalVote2,
+                value2.sub(feeAmount2),
+                currency.address,
+                Constant.ESTATE_LIQUIDATOR_DIVIDEND_ISSUANCE_DATA
+            );
+
             const estate2 = await estateToken.getEstate(estateId2);
             expect(estate2.deprecateAt).to.equal(timestamp);
 
@@ -1598,6 +1598,7 @@ describe('2.3. EstateLiquidator', async () => {
                 value: ethers.utils.parseEther('200'),
                 currency: currency.address,
                 uuid: ethers.utils.formatBytes32String("uuid_2"),
+                admissionExpiry: timestamp + 1e9,
             };
 
             await callTransaction(getRequestExtractionTx(
@@ -1657,6 +1658,15 @@ describe('2.3. EstateLiquidator', async () => {
                 broker2.address,
                 commissionAmount,
                 currency.address
+            );
+            await expect(tx).to.emit(dividendHub, 'NewDividend').withArgs(
+                estateToken.address,
+                estateId,
+                estateLiquidator.address,
+                totalVote,
+                value.sub(feeAmount),
+                currency.address,
+                Constant.ESTATE_LIQUIDATOR_DIVIDEND_ISSUANCE_DATA
             );
             
             const estate = await estateToken.getEstate(estateId);
@@ -1894,7 +1904,11 @@ describe('2.3. EstateLiquidator', async () => {
 
             governanceHub.getProposalState.whenCalledWith(1).returns(ProposalState.SuccessfulExecuted);
 
-            await callTransaction(estateToken.connect(manager).deprecateEstate(1));
+            const deprecateParams: DeprecateEstateParams = {
+                estateId: BigNumber.from(1),
+                data: "deprecate",
+            };
+            await callTransaction(getSafeDeprecateEstateTxByParams(estateToken as any, manager, deprecateParams));
 
             await expect(estateLiquidator.connect(operator1).conclude(1))
                 .to.be.revertedWithCustomError(estateLiquidator, 'UnavailableEstate');
@@ -1961,7 +1975,7 @@ describe('2.3. EstateLiquidator', async () => {
             governanceHub.getProposalState.whenCalledWith(1).returns(ProposalState.SuccessfulExecuted);
 
             await expect(estateLiquidator.connect(operator1).conclude(1))
-                .to.be.revertedWithCustomError(dividendHub, 'InvalidGovernor');
+                .to.be.revertedWithCustomError(dividendHub, 'Unauthorized');
             
             governanceHub.getProposalState.reset();
         });

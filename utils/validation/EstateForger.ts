@@ -1,6 +1,6 @@
 import { time } from "@nomicfoundation/hardhat-network-helpers";
 import { MockValidator } from "@utils/mockValidator";
-import { RegisterSellerInParams, RequestTokenizationParams, UpdateRequestEstateURIParams } from '@utils/models/EstateForger';
+import { RegisterSellerInParams, RequestTokenizationParams, UpdateRequestEstateURIParams } from "@utils/models/EstateForger";
 import { Contract } from "ethers";
 import { ethers } from 'hardhat';
 
@@ -70,8 +70,8 @@ export async function getUpdateRequestEstateURIValidation(
     params: UpdateRequestEstateURIParams
 ) {
     const content = ethers.utils.defaultAbiCoder.encode(
-        ["string"],
-        [params.uri]
+        ["uint256", "string"],
+        [params.requestId, params.uri]
     );
     const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
     const validation = await validator.getValidation(estateForger, content, expiry);
@@ -84,8 +84,8 @@ export async function getUpdateRequestEstateURIInvalidValidation(
     params: UpdateRequestEstateURIParams
 ) {
     const content = ethers.utils.defaultAbiCoder.encode(
-        ["string"],
-        [params.uri]
+        ["uint256", "string"],
+        [params.requestId, params.uri]
     );
     const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
     const validation = await validator.getInvalidValidation(estateForger, content, expiry);

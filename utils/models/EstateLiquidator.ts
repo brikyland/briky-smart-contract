@@ -7,4 +7,5 @@ export interface RequestExtractionParams {
     currency: string;
     feeRate: BigNumber;
     uuid: string;
+    admissionExpiry: number;
 }

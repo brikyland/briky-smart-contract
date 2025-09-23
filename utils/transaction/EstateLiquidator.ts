@@ -30,6 +30,7 @@ export async function getRequestExtractionTx(
         params.currency,
         params.feeRate,
         params.uuid,
+        params.admissionExpiry,
         validation,
         txConfig,
     );

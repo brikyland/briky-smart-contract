@@ -2,7 +2,7 @@ import { EstateToken, MockEstateToken } from "@typechain-types";
 import { MockValidator } from "@utils/mockValidator";
 import { RegisterCustodianParams, TokenizeEstateParams, SafeUpdateEstateURIParams, SafeUpdateEstateCustodianParams, SafeDeprecateEstateParams, SafeExtendEstateExpirationParams, UpdateEstateURIParams, UpdateEstateCustodianParams, DeprecateEstateParams, ExtendEstateExpirationParams } from "@utils/models/EstateToken";
 import { getRegisterCustodianValidation, getUpdateEstateURIValidation } from "@utils/validation/EstateToken";
-import { BigNumber, ContractTransaction, ethers } from "ethers";
+import { ContractTransaction, ethers } from "ethers";
 
 export async function getRegisterCustodianTx(
     estateToken: EstateToken | MockEstateToken,
@@ -86,7 +86,7 @@ export async function getSafeDeprecateEstateTx(
 ): Promise<ContractTransaction> {
     const tx = estateToken.connect(deployer).safeDeprecateEstate(
         params.estateId,
-        params.note,
+        params.data,
         params.anchor
     );
     return tx;
@@ -140,9 +140,9 @@ export async function getSafeDeprecateEstateTxByParams(
     params: DeprecateEstateParams
 ): Promise<ContractTransaction> {
     const currentURI = await estateToken.uri(params.estateId);
-    const safeParams = {
+    const safeParams: SafeDeprecateEstateParams = {
         estateId: params.estateId,
-        note: 'test deprecate ' + params.estateId.toString(),
+        data: params.data,
         anchor: ethers.utils.keccak256(ethers.utils.toUtf8Bytes(currentURI)),
     };
     return await getSafeDeprecateEstateTx(estateToken, deployer, safeParams);

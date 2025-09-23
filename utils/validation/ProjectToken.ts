@@ -3,7 +3,7 @@ import { time } from "@nomicfoundation/hardhat-network-helpers";
 
 import { MockValidator } from "@utils/mockValidator";
 
-import { RegisterInitiatorParams, UpdateProjectURIParams } from "@utils/models/ProjectToken";
+import { RegisterInitiatorParams, SafeUpdateProjectURIParams, UpdateProjectURIParams } from "@utils/models/ProjectToken";
 
 export async function getRegisterInitiatorValidation(
     projectToken: Contract,
@@ -11,8 +11,8 @@ export async function getRegisterInitiatorValidation(
     params: RegisterInitiatorParams
 ) {
     const content = ethers.utils.defaultAbiCoder.encode(
-        ["string"],
-        [params.uri]
+        ["address", "string"],
+        [params.initiator, params.uri]
     );
     const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
 
@@ -26,8 +26,8 @@ export async function getRegisterInitiatorInvalidValidation(
     params: RegisterInitiatorParams
 ) {
     const content = ethers.utils.defaultAbiCoder.encode(
-        ["string"],
-        [params.uri]
+        ["address", "string"],
+        [params.initiator, params.uri]
     );
     const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
 
@@ -35,10 +35,10 @@ export async function getRegisterInitiatorInvalidValidation(
     return validation;
 }
 
-export async function getUpdateProjectURIValidation(
+export async function getSafeUpdateProjectURIValidation(
     projectToken: Contract,
     validator: MockValidator,
-    params: UpdateProjectURIParams
+    params: SafeUpdateProjectURIParams
 ) {
     const content = ethers.utils.defaultAbiCoder.encode(
         ["uint256", "string"],
@@ -50,10 +50,10 @@ export async function getUpdateProjectURIValidation(
     return validation;
 }
 
-export async function getUpdateProjectURIInvalidValidation(
+export async function getSafeUpdateProjectURIInvalidValidation(
     projectToken: Contract,
     validator: MockValidator,
-    params: UpdateProjectURIParams
+    params: SafeUpdateProjectURIParams
 ) {
     const content = ethers.utils.defaultAbiCoder.encode(
         ["uint256", "string"],

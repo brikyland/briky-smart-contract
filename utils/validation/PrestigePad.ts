@@ -40,8 +40,8 @@ export async function getUpdateRoundValidation(
     params: UpdateRoundParams
 ) {
     const content = ethers.utils.defaultAbiCoder.encode(
-        ["string"],
-        [params.round.uri]
+        ["uint256", "string"],
+        [params.launchId, params.round.uri]
     );
     const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
 
@@ -55,8 +55,8 @@ export async function getUpdateRoundInvalidValidation(
     params: UpdateRoundParams
 ) {
     const content = ethers.utils.defaultAbiCoder.encode(
-        ["string"],
-        [params.round.uri]
+        ["uint256", "string"],
+        [params.launchId, params.round.uri]
     );
     const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
 
@@ -72,8 +72,8 @@ export async function getUpdateRoundsValidation(
     const validations = [];
     for (const round of params.addedRounds) {
         const content = ethers.utils.defaultAbiCoder.encode(
-            ["string"],
-            [round.uri]
+            ["uint256", "string"],
+            [params.launchId, round.uri]
         );
         const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
         const validation = await validator.getValidation(prestigePad, content, expiry);
@@ -91,8 +91,8 @@ export async function getUpdateRoundsInvalidValidation(
     const validations = [];
     for (const round of params.addedRounds) {
         const content = ethers.utils.defaultAbiCoder.encode(
-            ["string"],
-            [round.uri]
+            ["uint256", "string"],
+            [params.launchId, round.uri]
         );
         const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
         const validation = await validator.getInvalidValidation(prestigePad, content, expiry);
@@ -107,8 +107,8 @@ export async function getUpdateLaunchURIValidation(
     params: UpdateLaunchURIParams
 ) {
     const content = ethers.utils.defaultAbiCoder.encode(
-        ["string"],
-        [params.uri]
+        ["uint256", "string"],
+        [params.launchId, params.uri]
     );
     const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
 
@@ -122,8 +122,8 @@ export async function getUpdateLaunchURIInvalidValidation(
     params: UpdateLaunchURIParams
 ) {
     const content = ethers.utils.defaultAbiCoder.encode(
-        ["string"],
-        [params.uri]
+        ["uint256", "string"],
+        [params.launchId, params.uri]
     );
     const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
 

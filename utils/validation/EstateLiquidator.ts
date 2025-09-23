@@ -32,7 +32,7 @@ export async function getRequestExtractionValidation(
         rule: ProposalRule.ApprovalBeyondQuorum,
         quorumRate: quorumRate,
         duration: Constant.ESTATE_LIQUIDATOR_VOTING_DURATION,
-        admissionExpiry: timestamp + Constant.ESTATE_LIQUIDATOR_ADMISSION_DURATION,
+        admissionExpiry: params.admissionExpiry,
     };
 
     return await getProposeValidation(governanceHub, validator, estateLiquidator, proposeParams);
@@ -58,7 +58,7 @@ export async function getRequestExtractionInvalidValidation(
         rule: ProposalRule.ApprovalBeyondQuorum,
         quorumRate: quorumRate,
         duration: Constant.ESTATE_LIQUIDATOR_VOTING_DURATION,
-        admissionExpiry: timestamp + Constant.ESTATE_LIQUIDATOR_ADMISSION_DURATION,
+        admissionExpiry: params.admissionExpiry,
     };
 
     return await getProposeInvalidValidation(governanceHub, validator, estateLiquidator, proposeParams);

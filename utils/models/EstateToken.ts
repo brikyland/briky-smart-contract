@@ -28,7 +28,7 @@ export interface UpdateEstateCustodianParams {
 
 export interface DeprecateEstateParams {
     estateId: BigNumber;
-    note: string;
+    data: string;
 }
 
 export interface ExtendEstateExpirationParams {
@@ -50,7 +50,7 @@ export interface SafeUpdateEstateCustodianParams {
 
 export interface SafeDeprecateEstateParams {
     estateId: BigNumber;
-    note: string;
+    data: string;
     anchor: string;
 }
 

@@ -1,5 +1,7 @@
-import { BigNumber } from "ethers";
+import { BigNumber, ethers } from "ethers";
 import { Validation } from "./Validation";
+import { MockPrestigePad } from "@typechain-types";
+import { PrestigePad } from "@typechain-types";
 
 export interface PrestigePadRoundInput {
     uri: string;
@@ -16,14 +18,14 @@ export interface PrestigePadRound {
 
 export interface PrestigePadRoundQuotaInput {
     totalQuantity: BigNumber;
-    minSellingQuantity: BigNumber;
-    maxSellingQuantity: BigNumber;
+    minRaisingQuantity: BigNumber;
+    maxRaisingQuantity: BigNumber;
 };
 
 export interface PrestigePadRoundQuota {
     totalQuantity: BigNumber;
-    minSellingQuantity: BigNumber;
-    maxSellingQuantity: BigNumber;
+    minRaisingQuantity: BigNumber;
+    maxRaisingQuantity: BigNumber;
     soldQuantity: BigNumber;
 };
 
@@ -72,7 +74,7 @@ export interface UpdateRoundsParams {
     addedRounds: PrestigePadRoundInput[];
 }
 
-export interface RaiseNextRoundParams {
+export interface ScheduleNextRoundParams {
     launchId: BigNumber;
     cashbackThreshold: BigNumber;
     cashbackBaseRate: BigNumber;
@@ -85,4 +87,46 @@ export interface RaiseNextRoundParams {
 export interface UpdateLaunchURIParams {
     launchId: BigNumber;
     uri: string;
+}
+
+export interface ConfirmCurrentRoundParams {
+    launchId: BigNumber;
+}
+
+export interface SafeConfirmCurrentRoundParams {
+    launchId: BigNumber;
+    anchor: string;
+}
+
+export interface FinalizeLaunchParams {
+    launchId: BigNumber;
+}
+
+export interface SafeFinalizeLaunchParams {
+    launchId: BigNumber;
+    anchor: string;
+}
+
+export async function getSafeConfirmCurrentRoundParams(
+    prestigePad: PrestigePad | MockPrestigePad,
+    params: ConfirmCurrentRoundParams
+): Promise<SafeConfirmCurrentRoundParams> {
+    const currentURI = (await prestigePad.getLaunch(params.launchId)).uri;
+    const safeParams: SafeConfirmCurrentRoundParams = {
+        ...params,
+        anchor: ethers.utils.keccak256(ethers.utils.toUtf8Bytes(currentURI)),
+    };
+    return safeParams;
+}
+
+export async function getSafeFinalizeLaunchParams(
+    prestigePad: PrestigePad | MockPrestigePad,
+    params: FinalizeLaunchParams
+): Promise<SafeFinalizeLaunchParams> {
+    const currentURI = (await prestigePad.getLaunch(params.launchId)).uri;
+    const safeParams: SafeFinalizeLaunchParams = {
+        ...params,
+        anchor: ethers.utils.keccak256(ethers.utils.toUtf8Bytes(currentURI)),
+    };
+    return safeParams;
 }

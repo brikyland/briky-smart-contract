@@ -19,7 +19,7 @@ contract MockProjectMortgageToken is ProjectMortgageToken, ProxyCaller {
         MortgageState state,
         address borrower,
         address lender,
-        ProjectCollateral memory collateral
+        AssetCollateral memory collateral
     ) external {
         mortgages[++mortgageNumber] = Mortgage(
             amount,

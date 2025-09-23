@@ -1,6 +1,6 @@
-import { EstateForger, MockEstateForger, MockPrestigePad, PrestigePad } from "@typechain-types";
+import { MockPrestigePad, PrestigePad, ProxyCaller } from "@typechain-types";
 import { MockValidator } from "@utils/mockValidator";
-import { InitiateLaunchParams, RaiseNextRoundParams, UpdateLaunchURIParams, UpdateRoundParams, UpdateRoundsParams } from "@utils/models/PrestigePad";
+import { InitiateLaunchParams, SafeConfirmCurrentRoundParams, SafeFinalizeLaunchParams, ScheduleNextRoundParams, UpdateLaunchURIParams, UpdateRoundParams, UpdateRoundsParams } from "@utils/models/PrestigePad";
 import { getInitiateLaunchValidation, getUpdateLaunchURIValidation, getUpdateRoundsValidation, getUpdateRoundValidation } from "@utils/validation/PrestigePad";
 import { ContractTransaction } from "ethers";
 
@@ -92,12 +92,12 @@ export async function getCallUpdateRoundsTx(
     );
 }
 
-export async function getRaiseNextRoundTx(
+export async function getScheduleNextRoundTx(
     prestigePad: PrestigePad | MockPrestigePad,
     deployer: any,
-    params: RaiseNextRoundParams
+    params: ScheduleNextRoundParams
 ): Promise<ContractTransaction> {
-    return prestigePad.connect(deployer).raiseNextRound(
+    return prestigePad.connect(deployer).scheduleNextRound(
         params.launchId,
         params.cashbackThreshold,
         params.cashbackBaseRate,
@@ -108,14 +108,14 @@ export async function getRaiseNextRoundTx(
     );
 }
 
-export async function getCallRaiseNextRoundTx(
+export async function getCallScheduleNextRoundTx(
     prestigePad: PrestigePad | MockPrestigePad,
     proxyCaller: any,
-    params: RaiseNextRoundParams
+    params: ScheduleNextRoundParams
 ): Promise<ContractTransaction> {
     return proxyCaller.call(
         prestigePad.address,
-        prestigePad.interface.encodeFunctionData('raiseNextRound', [
+        prestigePad.interface.encodeFunctionData('scheduleNextRound', [
             params.launchId,
             params.cashbackThreshold,
             params.cashbackBaseRate,
@@ -141,5 +141,50 @@ export async function getUpdateLaunchURITx(
         validation,
     );
 
+    return tx;
+}
+
+export async function getSafeConfirmCurrentRoundTx(
+    prestigePad: PrestigePad | MockPrestigePad,
+    deployer: any,
+    params: SafeConfirmCurrentRoundParams,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    const tx = prestigePad.connect(deployer).safeConfirmCurrentRound(
+        params.launchId,
+        params.anchor,
+        txConfig,
+    );
+    return tx;
+}
+
+export async function getCallSafeConfirmCurrentRoundTx(
+    prestigePad: PrestigePad | MockPrestigePad,
+    proxyCaller: ProxyCaller,
+    params: SafeConfirmCurrentRoundParams,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    const tx = proxyCaller.call(
+        prestigePad.address,
+        prestigePad.interface.encodeFunctionData('safeConfirmCurrentRound', [
+            params.launchId,
+            params.anchor,
+        ]),
+        txConfig,
+    );
+    return tx;
+}
+
+export async function getSafeFinalizeLaunchTx(
+    prestigePad: PrestigePad | MockPrestigePad,
+    deployer: any,
+    params: SafeFinalizeLaunchParams,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    const tx = prestigePad.connect(deployer).safeFinalize(
+        params.launchId,
+        params.anchor,
+        txConfig,
+    );
     return tx;
 }

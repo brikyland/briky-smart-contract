@@ -19,7 +19,7 @@ contract MockEstateMortgageToken is EstateMortgageToken, ProxyCaller {
         MortgageState state,
         address borrower,
         address lender,
-        EstateCollateral memory collateral
+        AssetCollateral memory collateral
     ) external {
         mortgages[++mortgageNumber] = Mortgage(
             amount,

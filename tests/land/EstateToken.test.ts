@@ -95,7 +95,7 @@ interface EstateTokenFixture {
     extractors: any[];
 }
 
-describe.only('2.4. EstateToken', async () => {
+describe('2.4. EstateToken', async () => {
     afterEach(async () => {
         await ethers.provider.send("evm_setAutomine", [true]);
     });
@@ -1198,7 +1198,7 @@ describe.only('2.4. EstateToken', async () => {
 
             const params1: DeprecateEstateParams = {
                 estateId: BigNumber.from(1),
-                note: 'test deprecate 1',
+                data: 'test deprecate 1',
             };
             await callTransaction(getSafeDeprecateEstateTxByParams(estateToken, manager, params1));
             
@@ -1207,7 +1207,7 @@ describe.only('2.4. EstateToken', async () => {
 
             const params2: DeprecateEstateParams = {
                 estateId: BigNumber.from(2),
-                note: 'test deprecate 2',
+                data: 'test deprecate 2',
             };
             await callTransaction(getSafeDeprecateEstateTxByParams(estateToken, manager, params2));
 
@@ -1610,7 +1610,7 @@ describe.only('2.4. EstateToken', async () => {
 
             const params1: DeprecateEstateParams = {
                 estateId: BigNumber.from(1),
-                note: 'test deprecate 1',
+                data: 'test deprecate 1',
             };
 
             const tx1 = await getSafeDeprecateEstateTxByParams(estateToken, manager, params1);
@@ -1618,7 +1618,7 @@ describe.only('2.4. EstateToken', async () => {
 
             await expect(tx1).to.emit(estateToken, "EstateDeprecation").withArgs(
                 1,
-                params1.note
+                params1.data
             );
             expect((await estateToken.getEstate(1)).deprecateAt).to.equal(baseTimestamp);
 
@@ -1626,7 +1626,7 @@ describe.only('2.4. EstateToken', async () => {
 
             const params2: DeprecateEstateParams = {
                 estateId: BigNumber.from(2),
-                note: 'test deprecate 2',
+                data: 'test deprecate 2',
             };
 
             const tx2 = await getSafeDeprecateEstateTxByParams(estateToken, manager, params2);
@@ -1634,7 +1634,7 @@ describe.only('2.4. EstateToken', async () => {
 
             await expect(tx2).to.emit(estateToken, "EstateDeprecation").withArgs(
                 2,
-                params2.note
+                params2.data
             );
             expect((await estateToken.getEstate(2)).deprecateAt).to.equal(baseTimestamp + 100);
         });
@@ -1646,7 +1646,7 @@ describe.only('2.4. EstateToken', async () => {
                 
             const params: SafeDeprecateEstateParams = {
                 estateId: BigNumber.from(1),
-                note: 'test deprecate 1',
+                data: 'test deprecate 1',
                 anchor: ethers.utils.keccak256(ethers.utils.toUtf8Bytes('invalid anchor')),
             };
             await expect(getSafeDeprecateEstateTx(estateToken, manager, params))
@@ -1660,21 +1660,21 @@ describe.only('2.4. EstateToken', async () => {
 
             const params1: DeprecateEstateParams = {
                 estateId: BigNumber.from(0),
-                note: 'test deprecate 1',
+                data: 'test deprecate 1',
             };
             await expect(getSafeDeprecateEstateTxByParams(estateToken, manager, params1))
                 .to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
 
             const params2: DeprecateEstateParams = {
                 estateId: BigNumber.from(3),
-                note: 'test deprecate 2',
+                data: 'test deprecate 2',
             };
             await expect(getSafeDeprecateEstateTxByParams(estateToken, manager, params2))
                 .to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
 
             const params3: DeprecateEstateParams = {
                 estateId: BigNumber.from(100),
-                note: 'test deprecate 3',
+                data: 'test deprecate 3',
             };
             await expect(getSafeDeprecateEstateTxByParams(estateToken, manager, params3))
                 .to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
@@ -1687,7 +1687,7 @@ describe.only('2.4. EstateToken', async () => {
 
             const params1: DeprecateEstateParams = {
                 estateId: BigNumber.from(1),
-                note: 'test deprecate 1',
+                data: 'test deprecate 1',
             };
             await callTransaction(getSafeDeprecateEstateTxByParams(estateToken, manager, params1));
             await expect(getSafeDeprecateEstateTxByParams(estateToken, manager, params1))
@@ -1695,7 +1695,7 @@ describe.only('2.4. EstateToken', async () => {
 
             const params2: DeprecateEstateParams = {
                 estateId: BigNumber.from(2),
-                note: 'test deprecate 2',
+                data: 'test deprecate 2',
             };
             await callTransaction(getSafeDeprecateEstateTxByParams(estateToken, manager, params2));
             await expect(getSafeDeprecateEstateTxByParams(estateToken, manager, params2))
@@ -1709,7 +1709,7 @@ describe.only('2.4. EstateToken', async () => {
 
             const params: DeprecateEstateParams = {
                 estateId: BigNumber.from(1),
-                note: 'test deprecate 1',
+                data: 'test deprecate 1',
             };
             await expect(getSafeDeprecateEstateTxByParams(estateToken, user, params))
                 .to.be.revertedWithCustomError(estateToken, "Unauthorized");
@@ -1734,7 +1734,7 @@ describe.only('2.4. EstateToken', async () => {
 
             const params: DeprecateEstateParams = {
                 estateId: BigNumber.from(1),
-                note: 'test deprecate 1',
+                data: 'test deprecate 1',
             };
             await expect(getSafeDeprecateEstateTxByParams(estateToken, manager, params))
                 .to.be.revertedWithCustomError(estateToken, "Unauthorized");
@@ -1748,7 +1748,7 @@ describe.only('2.4. EstateToken', async () => {
 
             const params: DeprecateEstateParams = {
                 estateId: BigNumber.from(1),
-                note: 'test deprecate 1',
+                data: 'test deprecate 1',
             };
             await expect(getSafeDeprecateEstateTxByParams(estateToken, manager, params))
                 .to.be.revertedWith("Pausable: paused");
@@ -1845,7 +1845,7 @@ describe.only('2.4. EstateToken', async () => {
 
             const deprecateParams: DeprecateEstateParams = {
                 estateId: BigNumber.from(1),
-                note: 'test deprecate 1',
+                data: 'test deprecate 1',
             };
             await callTransaction(getSafeDeprecateEstateTxByParams(estateToken, manager, deprecateParams));
 
@@ -2025,7 +2025,7 @@ describe.only('2.4. EstateToken', async () => {
 
             const deprecateParams: DeprecateEstateParams = {
                 estateId: BigNumber.from(1),
-                note: 'test deprecate 1',
+                data: 'test deprecate 1',
             };
             await callTransaction(getSafeDeprecateEstateTxByParams(estateToken, manager, deprecateParams));
 
@@ -2155,7 +2155,7 @@ describe.only('2.4. EstateToken', async () => {
 
             const deprecateParams: DeprecateEstateParams = {
                 estateId: BigNumber.from(1),
-                note: 'test deprecate 1',
+                data: 'test deprecate 1',
             };
             await callTransaction(getSafeDeprecateEstateTxByParams(estateToken, manager, deprecateParams));
 
@@ -2603,7 +2603,7 @@ describe.only('2.4. EstateToken', async () => {
 
             const params1: DeprecateEstateParams = {
                 estateId: BigNumber.from(1),
-                note: 'test deprecate 1',
+                data: 'test deprecate 1',
             };
             await callTransaction(getSafeDeprecateEstateTxByParams(estateToken, manager, params1));
 
@@ -2718,7 +2718,7 @@ describe.only('2.4. EstateToken', async () => {
 
             const params1: DeprecateEstateParams = {
                 estateId: BigNumber.from(1),
-                note: 'test deprecate 1',
+                data: 'test deprecate 1',
             };
             let timestamp = await time.latest() + 10;
             await callTransactionAtTimestamp(
@@ -2737,7 +2737,7 @@ describe.only('2.4. EstateToken', async () => {
         
             const params2: DeprecateEstateParams = {
                 estateId: BigNumber.from(2),
-                note: 'test deprecate 2',
+                data: 'test deprecate 2',
             };
             timestamp += 10;
             await callTransactionAtTimestamp(
@@ -2846,7 +2846,7 @@ describe.only('2.4. EstateToken', async () => {
             const deprecateAt1 = depositor2MintAt + 3;
             const params1: DeprecateEstateParams = {
                 estateId: BigNumber.from(1),
-                note: 'test deprecate 1',
+                data: 'test deprecate 1',
             };
             await callTransactionAtTimestamp(
                 getSafeDeprecateEstateTxByParams(estateToken, manager, params1),
@@ -3036,7 +3036,7 @@ describe.only('2.4. EstateToken', async () => {
             await callTransaction(estateToken.mint(depositor1.address, estateId1, 10_000));
             const params1: DeprecateEstateParams = {
                 estateId: BigNumber.from(estateId1),
-                note: 'test deprecate 1',
+                data: 'test deprecate 1',
             };
             await callTransactionAtTimestamp(
                 getSafeDeprecateEstateTxByParams(estateToken, manager, params1),
@@ -3121,7 +3121,7 @@ describe.only('2.4. EstateToken', async () => {
 
             const params1: DeprecateEstateParams = {
                 estateId: BigNumber.from(1),
-                note: 'test deprecate 1',
+                data: 'test deprecate 1',
             };
             await callTransaction(getSafeDeprecateEstateTxByParams(estateToken, manager, params1));
 
@@ -3205,7 +3205,7 @@ describe.only('2.4. EstateToken', async () => {
 
             const params1: DeprecateEstateParams = {
                 estateId: BigNumber.from(1),
-                note: 'test deprecate 1',
+                data: 'test deprecate 1',
             };
             await callTransaction(getSafeDeprecateEstateTxByParams(estateToken, manager, params1));
 
