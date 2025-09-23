@@ -14,12 +14,15 @@ import {ERC1155SupplyUpgradeable} from "@openzeppelin/contracts-upgradeable/toke
 import {ERC1155URIStorageUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/extensions/ERC1155URIStorageUpgradeable.sol";
 import {ERC165CheckerUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 
-/// contracts/common/constants/
 import {CommonConstant} from "../common/constants/CommonConstant.sol";
 
 /// contracts/common/interfaces/
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 import {IAssetToken} from "../common/interfaces/IAssetToken.sol";
+import {IEstateTokenizer} from "../land/interfaces/IEstateTokenizer.sol";
+import {IGovernor} from "../common/interfaces/IGovernor.sol";
+import {IRoyaltyRateProposer} from "../common/interfaces/IRoyaltyRateProposer.sol";
+
 
 /// contracts/common/utilities/
 import {Administrable} from "../common/utilities/Administrable.sol";
@@ -475,7 +478,10 @@ ReentrancyGuardUpgradeable {
         IERC165Upgradeable,
         ERC1155Upgradeable
     ) returns (bool) {
-        return _interfaceId == type(IProjectToken).interfaceId
+        return _interfaceId == type(IAssetToken).interfaceId
+            || _interfaceId == type(IGovernor).interfaceId
+            || _interfaceId == type(IEstateTokenizer).interfaceId
+            || _interfaceId == type(IRoyaltyRateProposer).interfaceId
             || _interfaceId == type(IERC2981Upgradeable).interfaceId
             || _interfaceId == type(IERC1155MetadataURIUpgradeable).interfaceId
             || super.supportsInterface(_interfaceId);

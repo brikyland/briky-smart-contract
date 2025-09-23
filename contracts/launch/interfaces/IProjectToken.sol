@@ -189,15 +189,6 @@ IAssetToken {
         uint256 projectId
     ) external view returns (Project memory project);
 
-    /**
-     *          Name        Description
-     *  @param  projectId   Project identifier.
-     *  @return zone        Zone code of the project.
-     */
-    function zoneOf(
-        uint256 projectId
-    ) external view returns (bytes32 zone);
-
 
     /**
      *          Name            Description
