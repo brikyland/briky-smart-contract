@@ -5,34 +5,6 @@ import { ethers } from "hardhat";
 import { BigNumberish } from "ethers";
 import { MockContract } from "@defi-wonderland/smock";
 
-export async function callPromotionToken_Pause(
-    promotionToken: PromotionToken | MockContract<PromotionToken>,
-    admins: any[],
-    nonce: BigNumberish
-) {
-    let message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string"],
-        [promotionToken.address, "pause"]
-    );
-    let signatures = await getSignatures(message, admins, nonce);
-
-    await callTransaction(promotionToken.pause(signatures));
-}
-
-export async function callPromotionToken_Unpause(
-    promotionToken: PromotionToken | MockContract<PromotionToken>,
-    admins: any[],
-    nonce: BigNumberish
-) {
-    let message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string"],
-        [promotionToken.address, "unpause"]
-    );
-    let signatures = await getSignatures(message, admins, nonce);
-
-    await callTransaction(promotionToken.unpause(signatures));
-}
-
 export async function callPromotionToken_CreateContents(
     promotionToken: PromotionToken | MockContract<PromotionToken>,
     admins: any[],

@@ -18,9 +18,10 @@ import { MockContract, smock } from '@defi-wonderland/smock';
 
 import { callAdmin_UpdateCurrencyRegistries } from '@utils/callWithSignatures/admin';
 import { BigNumber } from 'ethers';
-import { callReserveVault_AuthorizeProvider, callReserveVault_Pause } from '@utils/callWithSignatures/reserveVault';
+import { callReserveVault_AuthorizeProvider } from '@utils/callWithSignatures/reserveVault';
 import { deployMockProvider } from '@utils/deployments/mock/mockProvider';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
+import { callPausable_Pause } from '@utils/callWithSignatures/Pausable';
 
 interface ReserveVaultFixture {
     admin: Admin;
@@ -202,11 +203,7 @@ describe('1.8. ReserveVault', async () => {
         }
 
         if (pause) {
-            await callReserveVault_Pause(
-                reserveVault,
-                admins,
-                await admin.nonce(),
-            )
+            await callPausable_Pause(reserveVault as any, admins, admin)
         }
 
         return {

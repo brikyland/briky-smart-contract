@@ -5,34 +5,6 @@ import { callTransaction } from "../blockchain";
 import { BigNumberish } from "ethers";
 import { MockContract } from "@defi-wonderland/smock";
 
-export async function callEstateToken_Pause(
-    estateToken: EstateToken | MockContract<EstateToken>,
-    admins: any[],
-    nonce: BigNumberish
-) {
-    let message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string"],
-        [estateToken.address, "pause"]
-    );
-    let signatures = await getSignatures(message, admins, nonce);
-
-    await callTransaction(estateToken.pause(signatures));
-}
-
-export async function callEstateToken_Unpause(
-    estateToken: EstateToken | MockContract<EstateToken>,
-    admins: any[],
-    nonce: BigNumberish
-) {
-    let message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string"],
-        [estateToken.address, "unpause"]
-    );
-    let signatures = await getSignatures(message, admins, nonce);
-
-    await callTransaction(estateToken.unpause(signatures));
-}
-
 export async function callEstateToken_UpdateCommissionToken(
     estateToken: EstateToken | MockContract<EstateToken>,
     admins: any[],

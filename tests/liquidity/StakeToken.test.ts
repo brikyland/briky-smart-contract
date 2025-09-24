@@ -7,7 +7,7 @@ import { Constant } from '@tests/test.constant';
 import { loadFixture, time } from '@nomicfoundation/hardhat-network-helpers';
 import { deployCurrency } from '@utils/deployments/common/currency';
 import { deployTreasury } from '@utils/deployments/liquidity/treasury';
-import { callStakeToken_Pause, callStakeToken_UpdateFeeRate } from '@utils/callWithSignatures/stakeToken';
+import { callStakeToken_UpdateFeeRate } from '@utils/callWithSignatures/stakeToken';
 import { callStakeToken_InitializeRewarding } from '@utils/callWithSignatures/stakeToken';
 import { callPrimaryToken_UpdateStakeTokens, callPrimaryToken_UpdateTreasury } from '@utils/callWithSignatures/primary';
 import { MockContract, smock } from '@defi-wonderland/smock';
@@ -17,6 +17,7 @@ import { BigNumber, Wallet } from 'ethers';
 import { randomArrayWithSum, randomBigNumber, randomInt, shuffle, structToObject } from '@utils/utils';
 import { StakeTokenOperation } from '@utils/models/enums';
 import { Initialization as LiquidityInitialization } from '@tests/liquidity/test.initialization';
+import { callPausable_Pause } from '@utils/callWithSignatures/Pausable';
 
 interface StakeTokenFixture {
     deployer: any;
@@ -209,7 +210,7 @@ describe('4.5. StakeToken', async () => {
         }
 
         if (pause) {
-            await callStakeToken_Pause(stakeToken1, admins, await admin.nonce());
+            await callPausable_Pause(stakeToken1 as any, admins, admin);
         }
 
         return {

@@ -38,7 +38,6 @@ import { getInterfaceID, randomArrayWithSum, randomBigNumber } from '@utils/util
 import { OrderedMap } from '@utils/utils';
 import { deployEstateMarketplace } from '@utils/deployments/lux/estateMarketplace';
 import { callEstateToken_AuthorizeTokenizers, callEstateToken_UpdateCommissionToken, callEstateToken_UpdateZoneRoyaltyRate } from '@utils/callWithSignatures/estateToken';
-import { callEstateMarketplace_Pause } from '@utils/callWithSignatures/estateMarketplace';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployReentrancyERC1155Holder } from '@utils/deployments/mock/mockReentrancy/reentrancyERC1155Holder';
 import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
@@ -52,6 +51,7 @@ import { getRegisterBrokerTx } from '@utils/transaction/CommissionToken';
 import { ListParams } from '@utils/models/AssetMarketplace';
 import { getListTx } from '@utils/transaction/AssetMarketplace';
 import { applyDiscount } from '@utils/formula';
+import { callPausable_Pause } from '@utils/callWithSignatures/Pausable';
 
 interface EstateMarketplaceFixture {
     admin: Admin;
@@ -430,7 +430,7 @@ describe('6.2. EstateMarketplace', async () => {
         }
 
         if (pause) {
-            await callEstateMarketplace_Pause(estateMarketplace, admins, await admin.nonce());
+            await callPausable_Pause(estateMarketplace, admins, admin);
         }
 
         return {

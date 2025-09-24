@@ -1,99 +1,62 @@
-import { Driptributor } from "@typechain-types";
-import { getSignatures } from "../blockchain";
-import { ethers } from "hardhat";
+import { Admin, Driptributor } from "@typechain-types";
 import { callTransaction } from "../blockchain";
-import { BigNumberish } from "ethers";
-import { MockContract } from "@defi-wonderland/smock";
-
-export async function callDriptributor_Pause(
-    driptributor: Driptributor | MockContract<Driptributor>,
-    admins: any[],
-    nonce: BigNumberish
-) {
-    let message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string"],
-        [driptributor.address, "pause"]
-    );
-    let signatures = await getSignatures(message, admins, nonce);
-    
-    await callTransaction(driptributor.pause(signatures));
-}
-
-export async function callDriptributor_Unpause(
-    driptributor: Driptributor | MockContract<Driptributor>,
-    admins: any[],
-    nonce: BigNumberish
-) {
-    let message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string"],
-        [driptributor.address, "unpause"]
-    );
-    let signatures = await getSignatures(message, admins, nonce);
-
-    await callTransaction(driptributor.unpause(signatures));
-}
+import { 
+    DistributeTokensWithDurationParams,
+    DistributeTokensWithDurationParamsInput,
+    DistributeTokensWithTimestampParams,
+    DistributeTokensWithTimestampParamsInput,
+    UpdateStakeTokensParams,
+    UpdateStakeTokensParamsInput,
+} from "@utils/models/Driptributor";
+import {
+    getDistributeTokensWithDurationSignatures,
+    getDistributeTokensWithTimestampSignatures,
+    getUpdateStakeTokensSignatures,
+} from "@utils/signatures/Driptributor";
+import {
+    getDistributeTokensWithDurationTx,
+    getDistributeTokensWithTimestampTx,
+    getUpdateStakeTokensTx,
+} from "@utils/transaction/Driptributor";
 
 export async function callDriptributor_UpdateStakeTokens(
-    driptributor: Driptributor | MockContract<Driptributor>,
+    driptributor: Driptributor,
+    deployer: any,
     admins: any[],
-    stakeToken1: string,
-    stakeToken2: string,
-    stakeToken3: string,
-    nonce: BigNumberish
+    admin: Admin,
+    paramsInput: UpdateStakeTokensParamsInput,
 ) {
-    let message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "address", "address", "address"],
-        [driptributor.address, "updateStakeTokens", stakeToken1, stakeToken2, stakeToken3]
-    );
-    let signatures = await getSignatures(message, admins, nonce);
-
-    await callTransaction(driptributor.updateStakeTokens(stakeToken1, stakeToken2, stakeToken3, signatures));
+    const params: UpdateStakeTokensParams = {
+        ...paramsInput,
+        signatures: await getUpdateStakeTokensSignatures(driptributor, admins, admin, paramsInput),
+    };
+    await callTransaction(getUpdateStakeTokensTx(driptributor, deployer, params));
 }
 
 export async function callDriptributor_DistributeTokensWithDuration(
-    driptributor: Driptributor | MockContract<Driptributor>,
+    driptributor: Driptributor,
+    deployer: any,
     admins: any[],
-    receivers: string[],
-    amounts: BigNumberish[],
-    vestingDurations: BigNumberish[],
-    data: string[],
-    nonce: BigNumberish
+    admin: Admin,
+    paramsInput: DistributeTokensWithDurationParamsInput,
 ) {
-    const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "address[]", "uint256[]", "uint40[]", "string[]"],
-        [driptributor.address, "distributeTokensWithDuration", receivers, amounts, vestingDurations, data]
-    );
-    const signatures = await getSignatures(message, admins, nonce);
-
-    await callTransaction(driptributor.distributeTokensWithDuration(
-        receivers,
-        amounts,
-        vestingDurations,
-        data,
-        signatures
-    ));
+    const params: DistributeTokensWithDurationParams = {
+        ...paramsInput,
+        signatures: await getDistributeTokensWithDurationSignatures(driptributor, admins, admin, paramsInput),
+    };
+    await callTransaction(getDistributeTokensWithDurationTx(driptributor, deployer, params));
 }
 
 export async function callDriptributor_DistributeTokensWithTimestamp(
-    driptributor: Driptributor | MockContract<Driptributor>,
+    driptributor: Driptributor,
+    deployer: any,
     admins: any[],
-    receivers: string[],
-    amounts: BigNumberish[],
-    endAts: BigNumberish[],
-    data: string[],
-    nonce: BigNumberish
+    admin: Admin,
+    paramsInput: DistributeTokensWithTimestampParamsInput,
 ) {
-    const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "address[]", "uint256[]", "uint40[]", "string[]"],
-        [driptributor.address, "distributeTokensWithTimestamp", receivers, amounts, endAts, data]
-    );
-    const signatures = await getSignatures(message, admins, nonce);
-
-    await callTransaction(driptributor.distributeTokensWithTimestamp(
-        receivers,
-        amounts,
-        endAts,
-        data,
-        signatures
-    ));
+    const params: DistributeTokensWithTimestampParams = {
+        ...paramsInput,
+        signatures: await getDistributeTokensWithTimestampSignatures(driptributor, admins, admin, paramsInput),
+    };
+    await callTransaction(getDistributeTokensWithTimestampTx(driptributor, deployer, params));
 }

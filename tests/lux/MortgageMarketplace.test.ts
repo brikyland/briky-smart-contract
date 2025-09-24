@@ -42,7 +42,7 @@ import { getInterfaceID, randomBigNumber } from '@utils/utils';
 import { OrderedMap } from '@utils/utils';
 import { deployEstateMortgageToken } from '@utils/deployments/lend/estateMortgageToken';
 import { deployMortgageMarketplace } from '@utils/deployments/lux/mortgageMarketplace';
-import { callMortgageMarketplace_Pause, callMortgageMarketplace_RegisterCollections } from '@utils/callWithSignatures/mortgageMarketplace';
+import { callMortgageMarketplace_RegisterCollections } from '@utils/callWithSignatures/mortgageMarketplace';
 import { Contract } from 'ethers';
 import { MortgageState, OfferState } from '@utils/models/enums';
 import { getBalance } from '@utils/blockchain';
@@ -67,6 +67,7 @@ import { deployERC721MortgageToken } from '@utils/deployments/lend/erc721Mortgag
 import { deployProjectMortgageToken } from '@utils/deployments/lend/projectMortgageToken';
 import { deployEstateToken } from '@utils/deployments/land/estateToken';
 import { applyDiscount } from '@utils/formula';
+import { callPausable_Pause } from '@utils/callWithSignatures/Pausable';
 
 interface MortgageMarketplaceFixture {
     admin: Admin;
@@ -390,11 +391,7 @@ describe('6.3. MortgageMarketplace', async () => {
         }
 
         if (pause) {
-            await callMortgageMarketplace_Pause(
-                mortgageMarketplace,
-                admins,
-                await admin.nonce()
-            );
+            await callPausable_Pause(mortgageMarketplace, admins, admin);
         }
 
         return {

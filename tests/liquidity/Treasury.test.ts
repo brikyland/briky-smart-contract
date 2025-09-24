@@ -7,9 +7,9 @@ import { Constant } from '@tests/test.constant';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { deployCurrency } from '@utils/deployments/common/currency';
 import { deployTreasury } from '@utils/deployments/liquidity/treasury';
-import { callTreasury_Pause } from '@utils/callWithSignatures/treasury';
 import { deployMockPrimaryToken } from '@utils/deployments/mock/mockPrimaryToken';
 import { Initialization as LiquidityInitialization } from '@tests/liquidity/test.initialization';
+import { callPausable_Pause } from '@utils/callWithSignatures/Pausable';
 
 interface TreasuryFixture {
     deployer: any;
@@ -85,11 +85,7 @@ describe('4.6. Treasury', async () => {
         }
 
         if (pause) {
-            await callTreasury_Pause(
-                treasury,
-                admins,
-                await admin.nonce()
-            );
+            await callPausable_Pause(treasury, admins, admin);
         }
 
         return {

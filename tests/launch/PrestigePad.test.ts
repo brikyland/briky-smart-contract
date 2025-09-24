@@ -43,18 +43,12 @@ import {
     callAdmin_DeclareZone,
     callAdmin_UpdateCurrencyRegistries,
 } from '@utils/callWithSignatures/admin';
-import {
-    callEstateToken_UpdateCommissionToken,
-    callEstateToken_Pause,
-    callEstateToken_AuthorizeTokenizers,
-} from '@utils/callWithSignatures/estateToken';
 import { BigNumber, BigNumberish, Contract, Wallet } from 'ethers';
 import { randomInt } from 'crypto';
 import { getBytes4Hex, getInterfaceID, randomBigNumber, structToObject } from '@utils/utils';
 import { OrderedMap } from '@utils/utils';
 import { deployEstateForger } from '@utils/deployments/land/estateForger';
 import { addCurrencyToAdminAndPriceWatcher } from '@utils/callWithSignatures/common';
-import { callEstateForger_Pause, callEstateForger_UpdateBaseUnitPriceRange, callEstateForger_UpdateFeeRate, callEstateForger_Whitelist } from '@utils/callWithSignatures/estateForger';
 import { deployMockPriceFeed } from '@utils/deployments/mock/mockPriceFeed';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
@@ -64,7 +58,7 @@ import { deployReentrancyERC1155Holder } from '@utils/deployments/mock/mockReent
 import { request } from 'http';
 import { Initialization as LandInitialization } from '@tests/land/test.initialization';
 import { Initialization as LaunchInitialization } from '@tests/launch/test.initialization';
-import { callReserveVault_AuthorizeProvider, callReserveVault_Pause } from '@utils/callWithSignatures/reserveVault';
+import { callReserveVault_AuthorizeProvider } from '@utils/callWithSignatures/reserveVault';
 import { applyDiscount, remain, scaleRate } from '@utils/formula';
 import { RequestQuote, RequestAgenda, RequestEstate, RequestQuota } from '@utils/models/EstateForger';
 import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
@@ -73,16 +67,16 @@ import { MockValidator } from '@utils/mockValidator';
 import { RegisterSellerInParams, RequestTokenizationParams, UpdateRequestEstateURIParams, UpdateRequestAgendaParams } from '@utils/models/EstateForger';
 import { getRegisterSellerInValidation, getRequestTokenizationValidation, getRegisterSellerInInvalidValidation, getRequestTokenizationInvalidValidation, getUpdateRequestEstateURIValidation, getUpdateRequestEstateURIInvalidValidation } from '@utils/validation/EstateForger';
 import { deployMockPrestigePad } from '@utils/deployments/mock/mockPrestigePad';
-import { callPrestigePad_Pause } from '@utils/callWithSignatures/prestigePad';
 import { getSafeConfirmCurrentRoundParams, getSafeFinalizeLaunchParams, InitiateLaunchParams, SafeConfirmCurrentRoundParams, ScheduleNextRoundParams, UpdateLaunchURIParams, UpdateRoundParams, UpdateRoundsParams } from '@utils/models/PrestigePad';
 import { getInitiateLaunchInvalidValidation, getInitiateLaunchValidation, getUpdateLaunchURIInvalidValidation, getUpdateRoundInvalidValidation, getUpdateRoundsInvalidValidation, getUpdateRoundsValidation, getUpdateRoundValidation } from '@utils/validation/PrestigePad';
 import { RegisterInitiatorParams } from '@utils/models/ProjectToken';
 import { getRegisterInitiatorValidation } from '@utils/validation/ProjectToken';
-import { callProjectToken_AuthorizeLaunchpads, callProjectToken_Pause } from '@utils/callWithSignatures/projectToken';
+import { callProjectToken_AuthorizeLaunchpads } from '@utils/callWithSignatures/projectToken';
 import { deployReentrancyERC1155Receiver } from '@utils/deployments/mock/mockReentrancy/reentrancyERC1155Receiver';
 import { deployReentrancyExclusiveERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyExclusiveERC20';
 import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
 import { getCallSafeConfirmCurrentRoundTx, getCallScheduleNextRoundTx, getCallUpdateRoundsTx, getInitiateLaunchTx, getSafeConfirmCurrentRoundTx, getSafeFinalizeLaunchTx, getScheduleNextRoundTx, getUpdateLaunchURITx, getUpdateRoundsTx, getUpdateRoundTx } from '@utils/transaction/PrestigePad';
+import { callPausable_Pause } from '@utils/callWithSignatures/Pausable';
 
 chai.use(smock.matchers);
 
@@ -256,7 +250,7 @@ export async function getCashbackBaseDenomination(
     );
 }
 
-describe.only('7.1. PrestigePad', async () => {
+describe('7.1. PrestigePad', async () => {
     async function prestigePadFixture(): Promise<PrestigePadFixture> {
         const accounts = await ethers.getSigners();
         const deployer = accounts[0];
@@ -850,11 +844,7 @@ describe.only('7.1. PrestigePad', async () => {
         }
 
         if (pause) {
-            await callPrestigePad_Pause(
-                prestigePad,
-                admins,
-                await admin.nonce()
-            );
+            await callPausable_Pause(prestigePad, admins, admin);
         }
 
         return {
@@ -1332,11 +1322,7 @@ describe.only('7.1. PrestigePad', async () => {
 
             const { defaultParams } = await beforeInitiateLaunchTest(fixture);
 
-            await callProjectToken_Pause(
-                projectToken,
-                admins,
-                await admin.nonce()
-            );
+            await callPausable_Pause(projectToken as any, admins, admin);
 
             await expect(getInitiateLaunchTx(prestigePad, validator, manager, defaultParams))
                 .to.be.revertedWith('Pausable: paused');
@@ -3914,11 +3900,7 @@ describe.only('7.1. PrestigePad', async () => {
 
             const { prestigePad, initiator1, reserveVault, admin, admins } = fixture;
 
-            await callReserveVault_Pause(
-                reserveVault,
-                admins,
-                await admin.nonce(),
-            )
+            await callPausable_Pause(reserveVault as any, admins, admin);
 
             const params = await getSafeConfirmCurrentRoundParams(prestigePad, { launchId: BigNumber.from(1) });
             await expect(getSafeConfirmCurrentRoundTx(
@@ -4537,11 +4519,7 @@ describe.only('7.1. PrestigePad', async () => {
 
             const { prestigePad, depositor1, admin, admins, reserveVault } = fixture;
 
-            await callReserveVault_Pause(
-                reserveVault,
-                admins,
-                await admin.nonce(),
-            );
+            await callPausable_Pause(reserveVault as any, admins, admin);
 
             const roundId = (await prestigePad.getLaunch(1)).roundIds[1];
             const round = await prestigePad.getRound(roundId);
@@ -4780,7 +4758,7 @@ describe.only('7.1. PrestigePad', async () => {
 
             await callTransaction(prestigePad.connect(initiator1).cancelCurrentRound(1));
 
-            await callPrestigePad_Pause(prestigePad, admins, await admin.nonce());
+            await callPausable_Pause(prestigePad, admins, admin);
 
             await expect(prestigePad.connect(depositor1).withdrawContribution(oldRoundId))
                 .to.be.revertedWith('Pausable: paused'); 
@@ -5401,11 +5379,7 @@ describe.only('7.1. PrestigePad', async () => {
 
             const { prestigePad, depositor3, admins, admin, reserveVault } = fixture;
 
-            await callReserveVault_Pause(
-                reserveVault,
-                admins,
-                await admin.nonce(),
-            );
+            await callPausable_Pause(reserveVault as any, admins, admin);
 
             const launchId = 1;
             const index = 1;
@@ -5416,7 +5390,7 @@ describe.only('7.1. PrestigePad', async () => {
     });
 
     describe('7.1.17. allocationOfAt(uint256)', async () => {
-        it.only('7.1.17.1. return correct allocation', async () => {
+        it('7.1.17.1. return correct allocation', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -5646,7 +5620,7 @@ describe.only('7.1. PrestigePad', async () => {
 
 
     describe('7.1.18. supportsInterface(bytes4)', () => {
-        it.only('7.1.18.1. return true for appropriate interface', async () => {
+        it('7.1.18.1. return true for appropriate interface', async () => {
             const fixture = await beforePrestigePadTest();
             const { prestigePad } = fixture;
 

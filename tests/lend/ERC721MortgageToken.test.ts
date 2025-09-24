@@ -33,7 +33,7 @@ import {
 import { BigNumber, Contract, Wallet } from 'ethers';
 import { getBytes4Hex, getInterfaceID, randomBigNumber, structToObject } from '@utils/utils';
 import { deployERC721MortgageToken } from '@utils/deployments/lend/erc721MortgageToken';
-import { callERC721MortgageToken_Pause, callERC721MortgageToken_RegisterCollaterals, callERC721MortgageToken_UpdateFeeRate } from '@utils/callWithSignatures/erc721MortgageToken';
+import { callERC721MortgageToken_RegisterCollaterals, callERC721MortgageToken_UpdateFeeRate } from '@utils/callWithSignatures/erc721MortgageToken';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployReentrancyERC1155Holder } from '@utils/deployments/mock/mockReentrancy/reentrancyERC1155Holder';
 import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
@@ -42,6 +42,7 @@ import { Initialization as LendInitialization } from '@tests/lend/test.initializ
 import { applyDiscount, scaleRate } from '@utils/formula';
 import { ERC721BorrowParams } from '@utils/models/ERC721MortgageToken';
 import { getERC721BorrowTx } from '@utils/transaction/ERC721MortgageToken';
+import { callPausable_Pause } from '@utils/callWithSignatures/Pausable';
 
 
 async function testReentrancy_erc721MortgageToken(
@@ -307,11 +308,7 @@ describe('3.2. ERC721MortgageToken', async () => {
         }
 
         if (pause) {
-            await callERC721MortgageToken_Pause(
-                erc721MortgageToken,
-                admins,
-                await admin.nonce()
-            );
+            await callPausable_Pause(erc721MortgageToken, admins, admin);
         }
 
         return {
@@ -525,7 +522,7 @@ describe('3.2. ERC721MortgageToken', async () => {
             )).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('3.2.4.3. Register collaterals reverted without reason with EOA address', async () => {
+        it('3.2.4.3. Register collaterals unsuccessfully with EOA address', async () => {
             const { erc721MortgageToken, admin, admins } = await beforeERC721MortgageTokenTest();
 
             const invalidCollateral = randomWallet();
@@ -560,6 +557,24 @@ describe('3.2. ERC721MortgageToken', async () => {
                 signatures
             )).to.be.revertedWithCustomError(erc721MortgageToken, 'InvalidCollateral');
         })
+
+        it('3.2.4.5. Authorize launchpad unsuccessfully when authorizing itself', async () => {
+            const { erc721MortgageToken, admin, admins } = await beforeERC721MortgageTokenTest();
+
+            const toBeCollaterals = [erc721MortgageToken];
+
+            let message = ethers.utils.defaultAbiCoder.encode(
+                ['address', 'string', 'address[]', 'bool'],
+                [erc721MortgageToken.address, 'registerCollaterals', toBeCollaterals.map(x => x.address), true]
+            );
+            let signatures = await getSignatures(message, admins, await admin.nonce());
+
+            await expect(erc721MortgageToken.registerCollaterals(
+                toBeCollaterals.map(x => x.address),
+                true,
+                signatures
+            )).to.be.revertedWithCustomError(erc721MortgageToken, `InvalidCollateral`)
+        });
 
         it('3.2.4.5. Authorize launchpad unsuccessfully when authorizing same account twice on same tx', async () => {
             const { erc721MortgageToken, admin, admins, collaterals } = await beforeERC721MortgageTokenTest();
@@ -773,11 +788,16 @@ describe('3.2. ERC721MortgageToken', async () => {
                 params1.currency,
                 params1.duration
             );
+            await expect(tx1).to.emit(erc721MortgageToken, 'NewCollateral').withArgs(
+                1,
+                params1.token,
+                params1.tokenId
+            );
 
             expect(await erc721MortgageToken.mortgageNumber()).to.equal(1);
             
             const collateral1 = await erc721MortgageToken.getCollateral(1);
-            expect(collateral1.token).to.equal(params1.token);
+            expect(collateral1.collection).to.equal(params1.token);
             expect(collateral1.tokenId).to.equal(params1.tokenId);
 
             expect(mortgage1.principal).to.equal(params1.principal);
@@ -819,11 +839,16 @@ describe('3.2. ERC721MortgageToken', async () => {
                 params2.currency,
                 params2.duration
             );
+            await expect(tx2).to.emit(erc721MortgageToken, 'NewCollateral').withArgs(
+                2,
+                params2.token,
+                params2.tokenId
+            );
 
             expect(await erc721MortgageToken.mortgageNumber()).to.equal(2);
 
             const collateral2 = await erc721MortgageToken.getCollateral(2);
-            expect(collateral2.token).to.equal(params2.token);
+            expect(collateral2.collection).to.equal(params2.token);
             expect(collateral2.tokenId).to.equal(params2.tokenId);
 
             expect(mortgage2.principal).to.equal(params2.principal);
@@ -852,6 +877,19 @@ describe('3.2. ERC721MortgageToken', async () => {
                 .to.be.revertedWith('Pausable: paused');
         });
 
+        it('3.2.4.3. create mortgage unsuccessfully with unregistered collection', async () => {
+            const fixture = await beforeERC721MortgageTokenTest({
+                listSampleCurrencies: true,
+                skipRegisterCollaterals: true,
+            });
+            const { erc721MortgageToken, borrower1 } = fixture;
+
+            const { defaultParams } = await beforeBorrowTest(fixture);
+
+            await expect(getERC721BorrowTx(erc721MortgageToken, borrower1, defaultParams))
+                .to.be.revertedWithCustomError(erc721MortgageToken, 'InvalidCollateral');
+        });
+
         it('3.2.4.3. create mortgage unsuccessfully with invalid erc721 id', async () => {
             const fixture = await beforeERC721MortgageTokenTest({
                 listSampleCurrencies: true,
@@ -866,14 +904,14 @@ describe('3.2. ERC721MortgageToken', async () => {
                 tokenId: BigNumber.from(0),
             }
             await expect(getERC721BorrowTx(erc721MortgageToken, borrower1, params1))
-                .to.be.revertedWithCustomError(erc721MortgageToken, 'InvalidTokenId');
+                .to.be.revertedWith('ERC721: invalid token ID');
 
             const params2: ERC721BorrowParams = {
                 ...defaultParams,
                 tokenId: BigNumber.from(3),
             }
             await expect(getERC721BorrowTx(erc721MortgageToken, borrower1, params2))
-                .to.be.revertedWithCustomError(erc721MortgageToken, 'InvalidTokenId');
+                .to.be.revertedWith('ERC721: invalid token ID');
         });
 
         it('3.2.4.4. create mortgage unsuccessfully with invalid currency', async () => {
@@ -887,7 +925,7 @@ describe('3.2. ERC721MortgageToken', async () => {
                 .to.be.revertedWithCustomError(erc721MortgageToken, 'InvalidCurrency');
         });
 
-        it('3.2.4.5. create mortgage unsuccessfully with zero amount', async () => {
+        it('3.2.4.5. create mortgage unsuccessfully when borrower is not token owner', async () => {
             const fixture = await beforeERC721MortgageTokenTest({
                 listSampleCurrencies: true,
                 listSampleCollectionTokens: true,
@@ -1094,7 +1132,7 @@ describe('3.2. ERC721MortgageToken', async () => {
             const currentTokenId = (await collection.tokenNumber()).add(1);
             const currentMortgageId = (await erc721MortgageToken.mortgageNumber()).add(1);
     
-            let newCurrency: Currency | undefined;
+            let newCurrency: Currency | null = null;
             let newCurrencyAddress: string;
             if (isERC20) {
                 newCurrency = await deployCurrency(
@@ -1448,7 +1486,6 @@ describe('3.2. ERC721MortgageToken', async () => {
         it('3.2.6.13. lend unsuccessfully when native token transfer to borrower failed', async () => {
             const fixture = await beforeERC721MortgageTokenTest({
                 listSampleCurrencies: true,
-                listSampleCollectionTokens: true,
             });
             const { erc721MortgageToken, lender1, deployer, feeReceiverCollection } = fixture;
 
@@ -1492,7 +1529,6 @@ describe('3.2. ERC721MortgageToken', async () => {
         it('3.2.6.16. buy token unsuccessfully when borrower reenter this function', async () => {
             const fixture = await beforeERC721MortgageTokenTest({
                 listSampleCurrencies: true,
-                listSampleCollectionTokens: true,
             });
             const { erc721MortgageToken, deployer, feeReceiverCollection, lender1 } = fixture;
 
@@ -2066,12 +2102,12 @@ describe('3.2. ERC721MortgageToken', async () => {
             const salePrice = ethers.BigNumber.from(1e6);
             
             const royaltyInfo1 = await erc721MortgageToken.royaltyInfo(1, salePrice);
-            const royaltyFee1 = (await feeReceiverCollection.getRoyaltyRate(1, salePrice)).value;
+            const royaltyFee1 = (await feeReceiverCollection.royaltyInfo(1, salePrice))[1];
             expect(royaltyInfo1[0]).to.equal(feeReceiver.address);
             expect(royaltyInfo1[1]).to.equal(royaltyFee1);
 
             const royaltyInfo2 = await erc721MortgageToken.royaltyInfo(2, salePrice);
-            const royaltyFee2 = (await otherCollection.getRoyaltyRate(2, salePrice)).value;
+            const royaltyFee2 = (await otherCollection.royaltyInfo(2, salePrice))[1];
             expect(royaltyInfo2[0]).to.equal(feeReceiver.address);
             expect(royaltyInfo2[1]).to.equal(royaltyFee2);
         });

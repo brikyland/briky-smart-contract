@@ -5,33 +5,6 @@ import { callTransaction } from "../blockchain";
 import { BigNumberish } from "ethers";
 import { MockContract } from "@defi-wonderland/smock";
 
-export async function callPrimaryToken_Pause(
-    primaryToken: PrimaryToken | MockContract<PrimaryToken>,
-    admins: any[],
-    nonce: BigNumberish
-) {
-    let message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string"],
-        [primaryToken.address, "pause"]
-    );
-    let signatures = await getSignatures(message, admins, nonce);
-    
-    await callTransaction(primaryToken.pause(signatures));
-}
-
-export async function callPrimaryToken_Unpause(
-    primaryToken: PrimaryToken | MockContract<PrimaryToken>,
-    admins: any[],
-    nonce: BigNumberish
-) {
-    let message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string"],
-        [primaryToken.address, "unpause"]
-    );
-    let signatures = await getSignatures(message, admins, nonce);
-
-    await callTransaction(primaryToken.unpause(signatures));
-}
 
 export async function callPrimaryToken_UpdateTreasury(
     primaryToken: PrimaryToken | MockContract<PrimaryToken>,

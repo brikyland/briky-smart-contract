@@ -660,11 +660,16 @@ describe('3.1. EstateMortgageToken', async () => {
                 params1.currency,
                 params1.duration
             );
+            await expect(tx1).to.emit(estateMortgageToken, 'NewCollateral').withArgs(
+                1,
+                params1.estateId,
+                params1.amount
+            );
 
             expect(await estateMortgageToken.mortgageNumber()).to.equal(1);
             
             const collateral1 = await estateMortgageToken.getCollateral(1);
-            expect(collateral1.estateId).to.equal(params1.estateId);
+            expect(collateral1.tokenId).to.equal(params1.estateId);
             expect(collateral1.amount).to.equal(params1.amount);
 
             expect(mortgage1.principal).to.equal(params1.principal);
@@ -710,11 +715,16 @@ describe('3.1. EstateMortgageToken', async () => {
                 params2.currency,
                 params2.duration
             );
+            await expect(tx2).to.emit(estateMortgageToken, 'NewCollateral').withArgs(
+                2,
+                params2.estateId,
+                params2.amount
+            );
 
             expect(await estateMortgageToken.mortgageNumber()).to.equal(2);
 
             const collateral2 = await estateMortgageToken.getCollateral(2);
-            expect(collateral2.estateId).to.equal(params2.estateId);
+            expect(collateral2.tokenId).to.equal(params2.estateId);
             expect(collateral2.amount).to.equal(params2.amount);
 
             expect(mortgage2.principal).to.equal(params2.principal);
@@ -793,7 +803,7 @@ describe('3.1. EstateMortgageToken', async () => {
                 listSampleCurrencies: true,
                 listEstateToken: true,
             });
-            const { estateMortgageToken, estateToken, borrower1 } = fixture;
+            const { estateMortgageToken, borrower1 } = fixture;
             const { defaultParams } = await beforeBorrowTest(fixture);
 
             const params: EstateBorrowParams = {
@@ -801,7 +811,7 @@ describe('3.1. EstateMortgageToken', async () => {
                 amount: BigNumber.from(0),
             }
             await expect(getEstateBorrowTx(estateMortgageToken, borrower1, params))
-                .to.be.revertedWithCustomError(estateMortgageToken, 'InvalidAmount');
+                .to.be.revertedWithCustomError(estateMortgageToken, 'InvalidInput');
         });
 
         it('3.1.4.5. create mortgage unsuccessfully with amount more than balance', async () => {
@@ -1018,7 +1028,7 @@ describe('3.1. EstateMortgageToken', async () => {
                 commissionRate: commissionTokenRate,
             }));
 
-            let newCurrency: Currency | undefined;
+            let newCurrency: Currency | null = null;
             let newCurrencyAddress: string;
             if (isERC20) {
                 newCurrency = await deployCurrency(

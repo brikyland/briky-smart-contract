@@ -1,67 +1,33 @@
-import { Auction } from "../../typechain-types";
-import { ethers } from "hardhat";
+import { Admin, Auction } from "../../typechain-types";
 import { callTransaction } from "../blockchain";
-import { getSignatures } from "../blockchain";
-import { BigNumberish } from "ethers";
-import { MockContract } from "@defi-wonderland/smock";
-
-export async function callAuction_Pause(
-    auction: Auction | MockContract<Auction>,
-    admins: any[],
-    nonce: BigNumberish
-) {
-    let message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string"],
-        [auction.address, "pause"]
-    );
-    let signatures = await getSignatures(message, admins, nonce);
-    
-    await callTransaction(auction.pause(signatures));
-}
-
-export async function callAuction_Unpause(
-    auction: Auction | MockContract<Auction>,
-    admins: any[],
-    nonce: BigNumberish
-) {
-    let message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string"],
-        [auction.address, "unpause"]
-    );
-    let signatures = await getSignatures(message, admins, nonce);
-
-    await callTransaction(auction.unpause(signatures));
-}
+import { StartAuctionParams, StartAuctionParamsInput, UpdateStakeTokensParams, UpdateStakeTokensParamsInput } from "@utils/models/Auction";
+import { getStartAuctionSignatures, getUpdateStakeTokensSignatures } from "@utils/signatures/Auction";
+import { getStartAuctionTx, getUpdateStakeTokensTx } from "@utils/transaction/Auction";
 
 export async function callAuction_UpdateStakeTokens(
-    auction: Auction | MockContract<Auction>,
+    auction: Auction,
+    deployer: any,
     admins: any[],
-    stakeToken1: string,
-    stakeToken2: string,
-    stakeToken3: string,
-    nonce: BigNumberish
+    admin: Admin,
+    paramsInput: UpdateStakeTokensParamsInput,
 ) {
-    let message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "address", "address", "address"],
-        [auction.address, "updateStakeTokens", stakeToken1, stakeToken2, stakeToken3]
-    );
-    let signatures = await getSignatures(message, admins, nonce);
-
-    await callTransaction(auction.updateStakeTokens(stakeToken1, stakeToken2, stakeToken3, signatures));
+    const params: UpdateStakeTokensParams = {
+        ...paramsInput,
+        signatures: await getUpdateStakeTokensSignatures(auction, admins, admin, paramsInput),
+    };
+    await callTransaction(getUpdateStakeTokensTx(auction, deployer, params));
 }
 
 export async function callAuction_StartAuction(
-    auction: Auction | MockContract<Auction>,
+    auction: Auction,
+    deployer: any,
     admins: any[],
-    endAt: BigNumberish,
-    vestingDuration: BigNumberish,
-    nonce: BigNumberish
+    admin: Admin,
+    paramsInput: StartAuctionParamsInput,
 ) {
-    let message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "uint256", "uint256"],
-        [auction.address, "startAuction", endAt, vestingDuration]
-    );
-    let signatures = await getSignatures(message, admins, nonce);
-
-    await callTransaction(auction.startAuction(endAt, vestingDuration, signatures));
+    const params: StartAuctionParams = {
+        ...paramsInput,
+        signatures: await getStartAuctionSignatures(auction, admins, admin, paramsInput),
+    };
+    await callTransaction(getStartAuctionTx(auction, deployer, params));
 }

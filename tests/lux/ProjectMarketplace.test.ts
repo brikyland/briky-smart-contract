@@ -37,7 +37,6 @@ import { getInterfaceID, randomArrayWithSum, randomBigNumber } from '@utils/util
 import { OrderedMap } from '@utils/utils';
 import { deployProjectMarketplace } from '@utils/deployments/lux/projectMarketplace';
 import { callEstateToken_AuthorizeTokenizers, callEstateToken_UpdateCommissionToken } from '@utils/callWithSignatures/estateToken';
-import { callAssetMarketplace_Pause } from '@utils/callWithSignatures/assetMarketplace';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployReentrancyERC1155Holder } from '@utils/deployments/mock/mockReentrancy/reentrancyERC1155Holder';
 import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
@@ -54,6 +53,7 @@ import { deployMockPrestigePad } from '@utils/deployments/mock/mockPrestigePad';
 import { getCallListTx, getListTx } from '@utils/transaction/AssetMarketplace';
 import { ListParams } from '@utils/models/AssetMarketplace';
 import { applyDiscount } from '@utils/formula';
+import { callPausable_Pause } from '@utils/callWithSignatures/Pausable';
 
 interface AssetMarketplaceFixture {
     admin: Admin;
@@ -385,7 +385,7 @@ describe('6.4. AssetMarketplace', async () => {
         }
 
         if (pause) {
-            await callAssetMarketplace_Pause(assetMarketplace, admins, await admin.nonce());
+            await callPausable_Pause(assetMarketplace, admins, admin);
         }
 
         return {

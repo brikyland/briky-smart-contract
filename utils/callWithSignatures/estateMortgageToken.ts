@@ -5,34 +5,6 @@ import { ethers } from "hardhat";
 import { BigNumberish } from "ethers";
 import { MockContract } from "@defi-wonderland/smock";
 
-export async function callEstateMortgageToken_Pause(
-    estateMortgageToken: EstateMortgageToken | MockContract<EstateMortgageToken>,
-    admins: any[],
-    nonce: BigNumberish
-) {
-    let message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string"],
-        [estateMortgageToken.address, "pause"]
-    );
-    let signatures = await getSignatures(message, admins, nonce);
-
-    await callTransaction(estateMortgageToken.pause(signatures));
-}
-
-export async function callEstateMortgageToken_Unpause(
-    estateMortgageToken: EstateMortgageToken | MockContract<EstateMortgageToken>,
-    admins: any[],
-    nonce: BigNumberish
-) {
-    let message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string"],
-        [estateMortgageToken.address, "unpause"]
-    );
-    let signatures = await getSignatures(message, admins, nonce);
-
-    await callTransaction(estateMortgageToken.unpause(signatures));
-}
-
 export async function callEstateMortgageToken_UpdateBaseURI(
     estateMortgageToken: EstateMortgageToken | MockContract<EstateMortgageToken>,
     admins: any[],

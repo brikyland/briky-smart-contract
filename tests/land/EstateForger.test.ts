@@ -39,7 +39,6 @@ import {
 } from '@utils/callWithSignatures/admin';
 import {
     callEstateToken_UpdateCommissionToken,
-    callEstateToken_Pause,
     callEstateToken_AuthorizeTokenizers,
 } from '@utils/callWithSignatures/estateToken';
 import { BigNumber, BigNumberish, Contract, ContractTransaction, Wallet } from 'ethers';
@@ -48,7 +47,7 @@ import { getBytes4Hex, getInterfaceID, randomBigNumber, structToObject } from '@
 import { OrderedMap } from '@utils/utils';
 import { deployEstateForger } from '@utils/deployments/land/estateForger';
 import { addCurrencyToAdminAndPriceWatcher } from '@utils/callWithSignatures/common';
-import { callEstateForger_Pause, callEstateForger_UpdateBaseUnitPriceRange, callEstateForger_UpdateFeeRate, callEstateForger_Whitelist } from '@utils/callWithSignatures/estateForger';
+import { callEstateForger_UpdateBaseUnitPriceRange, callEstateForger_Whitelist } from '@utils/callWithSignatures/estateForger';
 import { deployMockPriceFeed } from '@utils/deployments/mock/mockPriceFeed';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
@@ -69,6 +68,7 @@ import { RegisterCustodianParams } from '@utils/models/EstateToken';
 import { getRegisterCustodianTx } from '@utils/transaction/EstateToken';
 import { getRequestTokenizationTx, getSafeConfirmTx, getSafeConfirmTxByParams, getSafeDepositTx, getSafeDepositTxByParams, getUpdateRequestAgendaTx, getUpdateRequestEstateURITx } from '@utils/transaction/EstateForger';
 import { getActivateBrokerTx, getRegisterBrokerTx } from '@utils/transaction/CommissionToken';
+import { callPausable_Pause } from '@utils/callWithSignatures/Pausable';
 
 chai.use(smock.matchers);
 
@@ -621,11 +621,7 @@ describe('2.2. EstateForger', async () => {
         }
 
         if (pause) {
-            await callEstateForger_Pause(
-                estateForger,
-                admins,
-                await admin.nonce()
-            );
+            await callPausable_Pause(estateForger, admins, admin);
         }
 
         return fixture;
@@ -4265,7 +4261,7 @@ describe('2.2. EstateForger', async () => {
             });
             const {estateForger, admin, admins, manager} = fixture;
 
-            await callEstateForger_Pause(estateForger, admins, await admin.nonce());
+            await callPausable_Pause(estateForger, admins, admin);
 
             const params1: ConfirmParams = {
                 requestId: BigNumber.from(1),

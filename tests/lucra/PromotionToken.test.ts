@@ -19,11 +19,12 @@ import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 
 import { getBytes4Hex, getInterfaceID, structToObject } from '@utils/utils';
 import { Initialization } from './test.initialization';
-import { callPromotionToken_CancelContents, callPromotionToken_CreateContents, callPromotionToken_Pause } from '@utils/callWithSignatures/promotionToken';
+import { callPromotionToken_CancelContents, callPromotionToken_CreateContents } from '@utils/callWithSignatures/promotionToken';
 import { deployPromotionToken } from '@utils/deployments/lucra/promotionToken';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
 import { deployCurrency } from '@utils/deployments/common/currency';
+import { callPausable_Pause } from '@utils/callWithSignatures/Pausable';
 
 interface PromotionTokenFixture {
     admin: Admin;
@@ -104,7 +105,7 @@ describe('5.2. PromotionToken', async () => {
         }
 
         if (pause) {
-            await callPromotionToken_Pause(promotionToken, admins, await admin.nonce());
+            await callPausable_Pause(promotionToken, admins, admin);
         }
 
         return {

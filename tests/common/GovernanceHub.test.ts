@@ -10,7 +10,15 @@ import {
     FailReceiver,
     Reentrancy,
 } from '@typechain-types';
-import { callTransaction, callTransactionAtTimestamp, expectRevertWithModifierCustomError, getSignatures, prepareERC20, prepareNativeToken, testReentrancy } from '@utils/blockchain';
+import {
+    callTransaction,
+    callTransactionAtTimestamp,
+    expectRevertWithModifierCustomError,
+    getSignatures,
+    prepareERC20,
+    prepareNativeToken,
+    testReentrancy
+} from '@utils/blockchain';
 import { Constant } from '@tests/test.constant';
 import { Initialization as CommonInitialization } from '@tests/common/test.initialization';
 import { deployAdmin } from '@utils/deployments/common/admin';
@@ -20,7 +28,6 @@ import { ProposalRule, ProposalState, ProposalVerdict, ProposalVoteOption } from
 import { BigNumber, Contract, Wallet } from 'ethers';
 import { MockContract, smock } from '@defi-wonderland/smock';
 import { callAdmin_ActivateIn, callAdmin_AuthorizeGovernor, callAdmin_AuthorizeManagers, callAdmin_AuthorizeModerators, callAdmin_DeclareZone } from '@utils/callWithSignatures/admin';
-import { callGovernanceHub_Pause } from '@utils/callWithSignatures/governanceHub';
 import { MockValidator } from '@utils/mockValidator';
 import { scale } from "@utils/formula";
 import { deployCurrency } from '@utils/deployments/common/currency';
@@ -28,8 +35,9 @@ import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
 import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
 import { ProposeParams, AdmitParams, DisqualifyParams, LogExecutionParams, ConcludeExecutionParams } from '@utils/models/GovernanceHub';
-import { getProposeValidation, getAdmitValidation, getDisqualifyValidation, getConcludeExecutionValidation, getProposeInvalidValidation, getAdmitInvalidValidation, getDisqualifyInvalidValidation, getLogExecutionValidation, getLogExecutionInvalidValidation, getConcludeExecutionInvalidValidation } from '@utils/validation/GovernanceHub';
+import { getProposeValidation, getProposeInvalidValidation, getAdmitInvalidValidation, getDisqualifyInvalidValidation, getLogExecutionValidation, getLogExecutionInvalidValidation, getConcludeExecutionInvalidValidation } from '@utils/validation/GovernanceHub';
 import { getAdmitTx, getCallProposeTx, getConcludeExecutionTx, getDisqualifyTx, getLogExecutionTx, getProposeTx } from '@utils/transaction/GovernanceHub';
+import { callPausable_Pause } from '@utils/callWithSignatures/Pausable';
 
 export interface GovernanceHubFixture {
     admin: Admin;
@@ -469,7 +477,7 @@ describe('1.6. GovernanceHub', async () => {
         }
 
         if (pause) {
-            await callGovernanceHub_Pause(governanceHub, admins, await admin.nonce());
+            await callPausable_Pause(governanceHub, admins, admin);
         }
 
         return fixture;

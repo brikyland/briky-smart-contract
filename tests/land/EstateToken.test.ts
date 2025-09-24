@@ -42,7 +42,6 @@ import {
 } from '@utils/callWithSignatures/admin';
 import {
     callEstateToken_UpdateCommissionToken,
-    callEstateToken_Pause,
     callEstateToken_AuthorizeTokenizers,
     callEstateToken_AuthorizeExtractors,
     callEstateToken_UpdateZoneRoyaltyRate,
@@ -63,6 +62,7 @@ import { getCallTokenizeEstateTx, getRegisterCustodianTx, getSafeDeprecateEstate
 import { ContractTransaction } from 'ethers';
 import { getRegisterBrokerTx } from '@utils/transaction/CommissionToken';
 import { Initialization as CommonInitialization } from '@tests/common/test.initialization';
+import { callPausable_Pause } from '@utils/callWithSignatures/Pausable';
 
 interface EstateTokenFixture {
     admin: Admin;
@@ -415,11 +415,7 @@ describe('2.4. EstateToken', async () => {
         }
 
         if (pause) {
-            await callEstateToken_Pause(
-                estateToken,
-                admins,
-                await fixture.admin.nonce()
-            );
+            await callPausable_Pause(estateToken, admins, admin);
         }
 
         return fixture;

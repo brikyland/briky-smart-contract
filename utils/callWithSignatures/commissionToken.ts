@@ -5,34 +5,6 @@ import { ethers } from "hardhat";
 import { BigNumberish } from "ethers";
 import { MockContract } from "@defi-wonderland/smock";
 
-export async function callCommissionToken_Pause(
-    commissionToken: CommissionToken | MockContract<CommissionToken>,
-    admins: any[],
-    nonce: BigNumberish
-) {
-    let message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string"],
-        [commissionToken.address, "pause"]
-    );
-    let signatures = await getSignatures(message, admins, nonce);
-
-    await callTransaction(commissionToken.pause(signatures));
-}
-
-export async function callCommissionToken_Unpause(
-    commissionToken: CommissionToken | MockContract<CommissionToken>,
-    admins: any[],
-    nonce: BigNumberish
-) {
-    let message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string"],
-        [commissionToken.address, "unpause"]
-    );
-    let signatures = await getSignatures(message, admins, nonce);
-
-    await callTransaction(commissionToken.unpause(signatures));
-}
-
 export async function callCommissionToken_UpdateRoyaltyRate(
     commissionToken: CommissionToken | MockContract<CommissionToken>,
     admins: any[],

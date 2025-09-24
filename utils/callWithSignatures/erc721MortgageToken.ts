@@ -5,34 +5,6 @@ import { ethers } from "hardhat";
 import { BigNumberish } from "ethers";
 import { MockContract } from "@defi-wonderland/smock";
 
-export async function callERC721MortgageToken_Pause(
-    erc721MortgageToken: ERC721MortgageToken | MockContract<ERC721MortgageToken>,
-    admins: any[],
-    nonce: BigNumberish
-) {
-    let message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string"],
-        [erc721MortgageToken.address, "pause"]
-    );
-    let signatures = await getSignatures(message, admins, nonce);
-
-    await callTransaction(erc721MortgageToken.pause(signatures));
-}
-
-export async function callERC721MortgageToken_Unpause(
-    erc721MortgageToken: ERC721MortgageToken | MockContract<ERC721MortgageToken>,
-    admins: any[],
-    nonce: BigNumberish
-) {
-    let message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string"],
-        [erc721MortgageToken.address, "unpause"]
-    );
-    let signatures = await getSignatures(message, admins, nonce);
-
-    await callTransaction(erc721MortgageToken.unpause(signatures));
-}
-
 export async function callERC721MortgageToken_UpdateBaseURI(
     erc721MortgageToken: ERC721MortgageToken | MockContract<ERC721MortgageToken>,
     admins: any[],
@@ -71,8 +43,8 @@ export async function callERC721MortgageToken_RegisterCollaterals(
     nonce: BigNumberish
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "bool", "bytes[]"],
-        [erc721MortgageToken.address, "registerCollaterals", isCollaterals, tokens]
+        ["address", "string", "address[]", "bool"],
+        [erc721MortgageToken.address, "registerCollaterals", tokens, isCollaterals]
     );
     const signatures = await getSignatures(message, admins, nonce);
 

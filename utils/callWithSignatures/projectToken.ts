@@ -5,34 +5,6 @@ import { callTransaction } from "../blockchain";
 import { BigNumberish } from "ethers";
 import { MockContract } from "@defi-wonderland/smock";
 
-export async function callProjectToken_Pause(
-    projectToken: ProjectToken | MockContract<ProjectToken>,
-    admins: any[],
-    nonce: BigNumberish
-) {
-    let message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string"],
-        [projectToken.address, "pause"]
-    );
-    let signatures = await getSignatures(message, admins, nonce);
-
-    await callTransaction(projectToken.pause(signatures));
-}
-
-export async function callProjectToken_Unpause(
-    projectToken: ProjectToken | MockContract<ProjectToken>,
-    admins: any[],
-    nonce: BigNumberish
-) {
-    let message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string"],
-        [projectToken.address, "unpause"]
-    );
-    let signatures = await getSignatures(message, admins, nonce);
-
-    await callTransaction(projectToken.unpause(signatures));
-}
-
 export async function callProjectToken_UpdateBaseURI(
     projectToken: ProjectToken | MockContract<ProjectToken>,
     admins: any[],

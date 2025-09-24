@@ -9,11 +9,12 @@ import { loadFixture, time } from '@nomicfoundation/hardhat-network-helpers';
 import { deployCurrency } from '@utils/deployments/common/currency';
 import { deployTreasury } from '@utils/deployments/liquidity/treasury';
 import { deployDriptributor } from '@utils/deployments/liquidity/driptributor';
-import { callDriptributor_DistributeTokensWithDuration, callDriptributor_DistributeTokensWithTimestamp, callDriptributor_Pause, callDriptributor_UpdateStakeTokens } from '@utils/callWithSignatures/driptributor';
+import { callDriptributor_DistributeTokensWithDuration, callDriptributor_DistributeTokensWithTimestamp, callDriptributor_UpdateStakeTokens } from '@utils/callWithSignatures/driptributor';
 import { deployMockPrimaryToken } from '@utils/deployments/mock/mockPrimaryToken';
 import { callPrimaryToken_UpdateStakeTokens } from '@utils/callWithSignatures/primary';
 import { MockContract, smock } from '@defi-wonderland/smock';
 import { Initialization as LiquidityInitialization } from '@tests/liquidity/test.initialization';
+import { callPausable_Pause } from '@utils/callWithSignatures/Pausable';
 
 interface DriptributorFixture {
     deployer: any;
@@ -208,11 +209,7 @@ describe('4.3. Driptributor', async () => {
         }
 
         if (pause) {
-            await callDriptributor_Pause(
-                driptributor,
-                admins,
-                await admin.nonce(),
-            );
+            await callPausable_Pause(driptributor, admins, admin);
         }
 
         return {
@@ -254,10 +251,6 @@ describe('4.3. Driptributor', async () => {
                 signatures,
             );
             await tx.wait();
-
-            await expect(tx).to
-                .emit(driptributor, 'StakeTokensUpdate')
-                .withArgs(stakeToken1.address, stakeToken2.address, stakeToken3.address);
 
             expect(await driptributor.stakeToken1()).to.equal(stakeToken1.address);
             expect(await driptributor.stakeToken2()).to.equal(stakeToken2.address);

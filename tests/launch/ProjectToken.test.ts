@@ -65,7 +65,7 @@ import { UpdateEstateURIParams } from '@utils/models/EstateToken';
 import { getUpdateEstateURIValidation } from '@utils/validation/EstateToken';
 import { Initialization as LaunchInitialization } from '@tests/launch/test.initialization';
 import { Initialization as LandInitialization } from '@tests/land/test.initialization';
-import { callProjectToken_AuthorizeLaunchpads, callProjectToken_Pause } from '@utils/callWithSignatures/projectToken';
+import { callProjectToken_AuthorizeLaunchpads } from '@utils/callWithSignatures/projectToken';
 import { DeprecateProjectParams, LaunchProjectParams, MintParams, RegisterInitiatorParams, SafeDeprecateProjectParams, SafeUpdateProjectURIParams, TokenizeProjectParams, UpdateProjectURIParams } from '@utils/models/ProjectToken';
 import { getInitiateLaunchValidation } from '@utils/validation/PrestigePad';
 import { getRegisterInitiatorInvalidValidation, getRegisterInitiatorValidation, getSafeUpdateProjectURIInvalidValidation, getSafeUpdateProjectURIValidation } from '@utils/validation/ProjectToken';
@@ -77,6 +77,7 @@ import { deployReentrancyERC1155Receiver } from '@utils/deployments/mock/mockRee
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { getRegisterBrokerTx } from '@utils/transaction/CommissionToken';
 import { IAssetTokenInterfaceId, IERC1155MetadataURIUpgradeableInterfaceId, IERC165UpgradeableInterfaceId, IERC2981UpgradeableInterfaceId, IEstateTokenizerInterfaceId, IGovernorInterfaceId, IRoyaltyRateProposerInterfaceId } from '@tests/interfaces';
+import { callPausable_Pause } from '@utils/callWithSignatures/Pausable';
 
 interface ProjectTokenFixture {
     admin: Admin;
@@ -555,11 +556,7 @@ describe('7.2. ProjectToken', async () => {
         }
 
         if (pause) {
-            await callProjectToken_Pause(
-                projectToken as any,
-                admins,
-                await fixture.admin.nonce()
-            );
+            await callPausable_Pause(projectToken, admins, admin);
         }
 
         return {

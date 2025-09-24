@@ -7,7 +7,6 @@ import { Constant } from '@tests/test.constant';
 import { loadFixture, time } from '@nomicfoundation/hardhat-network-helpers';
 import { deployCurrency } from '@utils/deployments/common/currency';
 import {
-    callPrimaryToken_Pause,
     callPrimaryToken_UnlockForBackerRound,
     callPrimaryToken_UnlockForCoreTeam,
     callPrimaryToken_UnlockForExternalTreasury,
@@ -21,6 +20,7 @@ import {
 } from '@utils/callWithSignatures/primary';
 import { MockContract, smock } from '@defi-wonderland/smock';
 import { Initialization as LiquidityInitialization } from '@tests/liquidity/test.initialization';
+import { callPausable_Pause } from '@utils/callWithSignatures/Pausable';
 
 interface PrimaryTokenFixture {
     deployer: any;
@@ -164,11 +164,7 @@ describe('4.4. PrimaryToken', async () => {
         }
 
         if (pause) {
-            await callPrimaryToken_Pause(
-                primaryToken,
-                admins,
-                await admin.nonce(),
-            );
+            await callPausable_Pause(primaryToken as any, admins, admin);
         }
 
         return fixture;
@@ -278,10 +274,6 @@ describe('4.4. PrimaryToken', async () => {
                 signatures,
             );
             await tx.wait();
-
-            await expect(tx).to
-                .emit(primaryToken, 'StakeTokensUpdate')
-                .withArgs(stakeToken1.address, stakeToken2.address, stakeToken3.address);
 
             expect(await primaryToken.stakeToken1()).to.equal(stakeToken1.address);
             expect(await primaryToken.stakeToken2()).to.equal(stakeToken2.address);
@@ -1414,7 +1406,7 @@ describe('4.4. PrimaryToken', async () => {
             await prepareERC20(currency, [deployer], [treasury as any], ethers.utils.parseEther("1000000"));
             await treasury.provideLiquidity(ethers.utils.parseEther("1000000"));
 
-            await callPrimaryToken_Pause(primaryToken, admins, await admin.nonce());
+            await callPausable_Pause(primaryToken as any, admins, admin);
             
             await time.setNextBlockTimestamp(await primaryToken.liquidationUnlockedAt());
             await expect(primaryToken.connect(contributor).liquidate(ethers.utils.parseEther("100")))

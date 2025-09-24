@@ -35,31 +35,3 @@ export async function callStakeToken_UpdateFeeRate(
     
     await callTransaction(stakeToken.updateFeeRate(feeRate, signatures));
 }
-
-export async function callStakeToken_Pause(
-    stakeToken: StakeToken | MockContract<StakeToken>,
-    admins: any[],
-    nonce: BigNumberish
-) {
-    let message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string"],
-        [stakeToken.address, "pause"]
-    );
-    let signatures = await getSignatures(message, admins, nonce);
-
-    await callTransaction(stakeToken.pause(signatures));
-}
-
-export async function callStakeToken_Unpause(
-    stakeToken: StakeToken | MockContract<StakeToken>,
-    admins: any[],
-    nonce: BigNumberish
-) {
-    let message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string"],
-        [stakeToken.address, "unpause"]
-    );
-    let signatures = await getSignatures(message, admins, nonce);
-
-    await callTransaction(stakeToken.unpause(signatures));
-}

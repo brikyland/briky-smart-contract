@@ -14,17 +14,27 @@ import { deployCurrency } from '@utils/deployments/common/currency';
 import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
 import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 import { deployDividendHub } from '@utils/deployments/common/dividendHub';
-import { callDividendHub_Pause } from '@utils/callWithSignatures/dividendHub';
-import { callAdmin_AuthorizeGovernor, callAdmin_UpdateCurrencyRegistries } from '@utils/callWithSignatures/admin';
+import { 
+    callAdmin_AuthorizeGovernor,
+    callAdmin_UpdateCurrencyRegistries,
+} from '@utils/callWithSignatures/admin';
 import { expect } from 'chai';
-import { callTransaction, expectRevertWithModifierCustomError, prepareERC20, prepareNativeToken } from '@utils/blockchain';
-import { deployGovernor } from '@utils/deployments/common/governor';
+import {
+    callTransaction,
+    expectRevertWithModifierCustomError,
+    prepareERC20,
+    prepareNativeToken,
+} from '@utils/blockchain';
 import { BigNumber } from 'ethers';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { MockContract, smock } from '@defi-wonderland/smock';
 import { expectEqualWithErrorMargin } from '@utils/testHelper';
 import { IssueDividendParams } from '@utils/models/DividendHub';
-import { getCallIssueDividendTx, getIssueDividendTx } from '@utils/transaction/DividendHub';
+import {
+    getCallIssueDividendTx,
+    getIssueDividendTx,
+} from '@utils/transaction/DividendHub';
+import { callPausable_Pause } from '@utils/callWithSignatures/Pausable';
 
 interface DividendHubFixture {
     admin: Admin;
@@ -210,11 +220,7 @@ describe('1.4. DividendHub', async () => {
         }
 
         if (pause) {
-            await callDividendHub_Pause(
-                dividendHub,
-                admins,
-                await admin.nonce(),
-            )
+            await callPausable_Pause(dividendHub, admins, admin)
         }
 
         return {

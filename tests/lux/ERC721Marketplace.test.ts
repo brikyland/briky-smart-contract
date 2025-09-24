@@ -27,12 +27,13 @@ import {
 import { BigNumber, Contract, Wallet } from 'ethers';
 import { deployERC721Marketplace } from '@utils/deployments/lux/erc721Marketplace';
 import { OfferState } from '@utils/models/enums';
-import { callERC721Marketplace_Pause, callERC721Marketplace_RegisterCollections } from '@utils/callWithSignatures/erc721Marketplace';
+import { callERC721Marketplace_RegisterCollections } from '@utils/callWithSignatures/erc721Marketplace';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
 import { applyDiscount, remain } from '@utils/formula';
 import { ListParams } from '@utils/models/ERC721Marketplace';
 import { getCallListTx, getListTx } from '@utils/transaction/ERC721Marketplace';
+import { callPausable_Pause } from '@utils/callWithSignatures/Pausable';
 
 interface ERC721MarketplaceFixture {
     admin: Admin;
@@ -253,11 +254,7 @@ describe('6.1. ERC721Marketplace', async () => {
         }
 
         if (pause) {
-            await callERC721Marketplace_Pause(
-                erc721Marketplace,
-                admins,
-                await admin.nonce()
-            );
+            await callPausable_Pause(erc721Marketplace, admins, admin);
         }
 
         return {

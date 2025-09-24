@@ -42,7 +42,6 @@ import {
 } from '@utils/callWithSignatures/admin';
 import {
     callEstateToken_UpdateCommissionToken,
-    callEstateToken_Pause,
     callEstateToken_AuthorizeTokenizers,
     callEstateToken_AuthorizeExtractors,
 } from '@utils/callWithSignatures/estateToken';
@@ -52,7 +51,6 @@ import { getBytes4Hex, getInterfaceID, randomBigNumber, structToObject } from '@
 import { OrderedMap } from '@utils/utils';
 import { deployEstateLiquidator } from '@utils/deployments/land/estateLiquidator';
 import { addCurrencyToAdminAndPriceWatcher } from '@utils/callWithSignatures/common';
-import { callEstateLiquidator_Pause } from '@utils/callWithSignatures/estateLiquidator';
 import { deployMockPriceFeed } from '@utils/deployments/mock/mockPriceFeed';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
@@ -77,6 +75,7 @@ import { getCallTokenizeEstateTx, getRegisterCustodianTx, getSafeDeprecateEstate
 import { getRequestExtractionTx } from '@utils/transaction/EstateLiquidator';
 import { getRegisterBrokerTx } from '@utils/transaction/CommissionToken';
 import { Initialization as CommonInitialization } from '@tests/common/test.initialization';
+import { callPausable_Pause } from '@utils/callWithSignatures/Pausable';
 
 chai.use(smock.matchers);
 
@@ -585,7 +584,7 @@ describe('2.3. EstateLiquidator', async () => {
         }
 
         if (pause) {
-            await callEstateLiquidator_Pause(estateLiquidator, admins, await admin.nonce());
+            await callPausable_Pause(estateLiquidator, admins, admin);
         }
 
         return fixture;

@@ -32,13 +32,13 @@ import {
 import { scale } from "@utils/formula";
 import { scaleRate } from "@utils/formula";
 import { Initialization as LandInitialization } from '@tests/land/test.initialization';
-import { callCommissionToken_Pause } from '@utils/callWithSignatures/commissionToken';
 import { MockValidator } from '@utils/mockValidator';
 import { callAdmin_ActivateIn, callAdmin_AuthorizeManagers, callAdmin_AuthorizeModerators, callAdmin_DeclareZone } from '@utils/callWithSignatures/admin';
 import { getActivateBrokerTx, getMintTx, getRegisterBrokerTx } from '@utils/transaction/CommissionToken';
 import { ActivateBrokerParams, MintParams, RegisterBrokerParams } from '@utils/models/CommissionToken';
 import { BigNumber } from 'ethers';
 import { TransactionReceipt } from '@ethersproject/abstract-provider';
+import { callPausable_Pause } from '@utils/callWithSignatures/Pausable';
 
 interface CommissionTokenFixture {
     admin: Admin;
@@ -228,11 +228,7 @@ describe('2.1. CommissionToken', async () => {
         }
 
         if (pause) {
-            await callCommissionToken_Pause(
-                commissionToken,
-                admins,
-                await admin.nonce(),
-            )
+            await callPausable_Pause(commissionToken, admins, admin)
         }
 
         return {

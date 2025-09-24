@@ -5,34 +5,6 @@ import { ethers } from "hardhat";
 import { BigNumberish } from "ethers";
 import { MockContract } from "@defi-wonderland/smock";
 
-export async function callProjectMortgageToken_Pause(
-    projectMortgageToken: ProjectMortgageToken | MockContract<ProjectMortgageToken>,
-    admins: any[],
-    nonce: BigNumberish
-) {
-    let message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string"],
-        [projectMortgageToken.address, "pause"]
-    );
-    let signatures = await getSignatures(message, admins, nonce);
-
-    await callTransaction(projectMortgageToken.pause(signatures));
-}
-
-export async function callProjectMortgageToken_Unpause(
-    projectMortgageToken: ProjectMortgageToken | MockContract<ProjectMortgageToken>,
-    admins: any[],
-    nonce: BigNumberish
-) {
-    let message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string"],
-        [projectMortgageToken.address, "unpause"]
-    );
-    let signatures = await getSignatures(message, admins, nonce);
-
-    await callTransaction(projectMortgageToken.unpause(signatures));
-}
-
 export async function callProjectMortgageToken_UpdateBaseURI(
     projectMortgageToken: ProjectMortgageToken | MockContract<ProjectMortgageToken>,
     admins: any[],

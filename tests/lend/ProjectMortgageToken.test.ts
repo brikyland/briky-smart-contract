@@ -619,11 +619,16 @@ describe('3.2. ProjectMortgageToken', async () => {
                 params1.currency,
                 params1.duration
             );
+            await expect(tx1).to.emit(projectMortgageToken, 'NewCollateral').withArgs(
+                1,
+                params1.projectId,
+                params1.amount
+            );
 
             expect(await projectMortgageToken.mortgageNumber()).to.equal(1);
             
             const collateral1 = await projectMortgageToken.getCollateral(1);
-            expect(collateral1.projectId).to.equal(params1.projectId);
+            expect(collateral1.tokenId).to.equal(params1.projectId);
             expect(collateral1.amount).to.equal(params1.amount);
 
             expect(mortgage1.principal).to.equal(params1.principal);
@@ -669,11 +674,16 @@ describe('3.2. ProjectMortgageToken', async () => {
                 params2.currency,
                 params2.duration
             );
+            await expect(tx2).to.emit(projectMortgageToken, 'NewCollateral').withArgs(
+                2,
+                params2.projectId,
+                params2.amount
+            );
 
             expect(await projectMortgageToken.mortgageNumber()).to.equal(2);
 
             const collateral2 = await projectMortgageToken.getCollateral(2);
-            expect(collateral2.projectId).to.equal(params2.projectId);
+            expect(collateral2.tokenId).to.equal(params2.projectId);
             expect(collateral2.amount).to.equal(params2.amount);
 
             expect(mortgage2.principal).to.equal(params2.principal);
@@ -752,7 +762,7 @@ describe('3.2. ProjectMortgageToken', async () => {
                 listSampleCurrencies: true,
                 listProjectToken: true,
             });
-            const { projectMortgageToken, projectToken, borrower1 } = fixture;
+            const { projectMortgageToken, borrower1 } = fixture;
             const { defaultParams } = await beforeBorrowTest(fixture);
 
             const params: ProjectBorrowParams = {
@@ -760,7 +770,7 @@ describe('3.2. ProjectMortgageToken', async () => {
                 amount: BigNumber.from(0),
             }
             await expect(getProjectBorrowTx(projectMortgageToken, borrower1, params))
-                .to.be.revertedWithCustomError(projectMortgageToken, 'InvalidAmount');
+                .to.be.revertedWithCustomError(projectMortgageToken, 'InvalidInput');
         });
 
         it('3.2.4.5. create mortgage unsuccessfully with amount more than balance', async () => {
@@ -969,7 +979,7 @@ describe('3.2. ProjectMortgageToken', async () => {
             
             await callProjectMortgageToken_UpdateFeeRate(projectMortgageToken, admins, projectMortgageTokenFeeRate, await admin.nonce());
 
-            let newCurrency: Currency | undefined;
+            let newCurrency: Currency | null = null;
             let newCurrencyAddress: string;
             if (isERC20) {
                 newCurrency = await deployCurrency(

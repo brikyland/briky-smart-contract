@@ -21,12 +21,12 @@ import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { Contract } from 'ethers';
 import { getBytes4Hex, getInterfaceID, structToObject } from '@utils/utils';
 import { Initialization } from './test.initialization';
-import { callPassportToken_Pause } from '@utils/callWithSignatures/passportToken';
 import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
 import { deployCurrency } from '@utils/deployments/common/currency';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
 import { Rate } from '@utils/models/Common';
+import { callPausable_Pause } from '@utils/callWithSignatures/Pausable';
 
 interface PassportTokenFixture {
     admin: Admin;
@@ -108,9 +108,10 @@ describe('5.1. PassportToken', async () => {
         pause = false,
     } = {}): Promise<PassportTokenFixture> {
         const fixture = await loadFixture(passportTokenFixture);
+        const { passportToken, admins, admin } = fixture;
 
         if (pause) {
-            await callPassportToken_Pause(fixture.passportToken, fixture.admins, 0);
+            await callPausable_Pause(passportToken, admins, admin);
         }
 
         return {

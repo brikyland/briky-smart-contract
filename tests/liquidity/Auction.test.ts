@@ -10,11 +10,15 @@ import { deployPrimaryToken } from '@utils/deployments/liquidity/primaryToken';
 import { deployStakeToken } from '@utils/deployments/liquidity/stakeToken';
 import { Initialization as LiquidityInitialization } from '@tests/liquidity/test.initialization';
 import { deployAuction } from '@utils/deployments/liquidity/auction';
-import { callAuction_Pause, callAuction_StartAuction, callAuction_UpdateStakeTokens } from '@utils/callWithSignatures/auction';
+import { callAuction_StartAuction, callAuction_UpdateStakeTokens } from '@utils/callWithSignatures/auction';
 import { callPrimaryToken_UnlockForPublicSale, callPrimaryToken_UpdateStakeTokens, callPrimaryToken_UpdateTreasury } from '@utils/callWithSignatures/primary';
 import { MockContract, smock } from '@defi-wonderland/smock';
 import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
 import { Contract } from 'ethers';
+import { getStartAuctionInvalidSignatures, getStartAuctionSignatures, getUpdateStakeTokensInvalidSignatures, getUpdateStakeTokensSignatures } from '@utils/signatures/Auction';
+import { StartAuctionParams, StartAuctionParamsInput, UpdateStakeTokensParams, UpdateStakeTokensParamsInput } from '@utils/models/Auction';
+import { getStartAuctionTx, getUpdateStakeTokensTx } from '@utils/transaction/Auction';
+import { callPausable_Pause } from '@utils/callWithSignatures/Pausable';
 
 interface AuctionFixture {
     deployer: any;
@@ -177,13 +181,17 @@ describe('4.1. Auction', async () => {
         }
 
         if (updateStakeTokens) {
+            const paramsInput: UpdateStakeTokensParamsInput = {
+                stakeToken1: stakeToken1.address,
+                stakeToken2: stakeToken2.address,
+                stakeToken3: stakeToken3.address,
+            };
             await callAuction_UpdateStakeTokens(
                 auction,
+                deployer,
                 admins,
-                stakeToken1.address,
-                stakeToken2.address,
-                stakeToken3.address,
-                await admin.nonce(),
+                admin,
+                paramsInput,
             );
         }
 
@@ -192,12 +200,16 @@ describe('4.1. Auction', async () => {
             let endAt = currentTimestamp + 10000;
             let vestingDuration = 1000;
 
+            const paramsInput: StartAuctionParamsInput = {
+                endAt: endAt,
+                vestingDuration: vestingDuration,
+            };
             await callAuction_StartAuction(
                 auction,
+                deployer,
                 admins,
-                endAt,
-                vestingDuration,
-                await admin.nonce(),
+                admin,
+                paramsInput,
             );
         }
 
@@ -215,10 +227,10 @@ describe('4.1. Auction', async () => {
         }
 
         if (pause) {
-            await callAuction_Pause(
+            await callPausable_Pause(
                 auction,
                 admins,
-                await admin.nonce(),
+                admin,
             );
         }
 
@@ -249,25 +261,20 @@ describe('4.1. Auction', async () => {
     describe('4.1.2. updateStakeTokens(address, address, address, bytes[])', async () => {
         it('4.1.2.1. updateStakeTokens successfully', async () => {
             const fixture = await setupBeforeTest({});
-            const { admin, admins, auction, stakeToken1, stakeToken2, stakeToken3 } = fixture;
+            const { admin, admins, deployer, auction, stakeToken1, stakeToken2, stakeToken3 } = fixture;
             
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "address", "address", "address"],
-                [auction.address, "updateStakeTokens", stakeToken1.address, stakeToken2.address, stakeToken3.address]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput: UpdateStakeTokensParamsInput = {
+                stakeToken1: stakeToken1.address,
+                stakeToken2: stakeToken2.address,
+                stakeToken3: stakeToken3.address,
+            };
+            const params: UpdateStakeTokensParams = {
+                ...paramsInput,
+                signatures: await getUpdateStakeTokensSignatures(auction, admins, admin, paramsInput),
+            };
 
-            const tx = await auction.updateStakeTokens(
-                stakeToken1.address,
-                stakeToken2.address,
-                stakeToken3.address,
-                signatures,
-            );
+            const tx = await getUpdateStakeTokensTx(auction, deployer, params);
             await tx.wait();
-
-            await expect(tx).to
-                .emit(auction, 'StakeTokensUpdate')
-                .withArgs(stakeToken1.address, stakeToken2.address, stakeToken3.address);
 
             expect(await auction.stakeToken1()).to.equal(stakeToken1.address);
             expect(await auction.stakeToken2()).to.equal(stakeToken2.address);
@@ -275,57 +282,57 @@ describe('4.1. Auction', async () => {
         });
 
         it('4.1.2.2. updateStakeTokens unsuccessfully with invalid signatures', async () => {
-            const { admin, admins, auction, stakeToken1, stakeToken2, stakeToken3 } = await setupBeforeTest({});
+            const { admin, admins, deployer, auction, stakeToken1, stakeToken2, stakeToken3 } = await setupBeforeTest({});
             
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "address", "address", "address"],
-                [auction.address, "updateStakeTokens", stakeToken1.address, stakeToken2.address, stakeToken3.address]
-            );
-            let invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
-            
-            await expect(auction.updateStakeTokens(
-                stakeToken1.address,
-                stakeToken2.address,
-                stakeToken3.address,
-                invalidSignatures,
-            )).to.be.revertedWithCustomError(admin, 'FailedVerification');
+            const paramsInput: UpdateStakeTokensParamsInput = {
+                stakeToken1: stakeToken1.address,
+                stakeToken2: stakeToken2.address,
+                stakeToken3: stakeToken3.address,
+            };
+            const params: UpdateStakeTokensParams = {
+                ...paramsInput,
+                signatures: await getUpdateStakeTokensInvalidSignatures(auction, admins, admin, paramsInput),
+            };
+
+            await expect(getUpdateStakeTokensTx(auction, deployer, params))
+                .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
         async function testForInvalidInput(
-            auction: Auction,
-            admins: any[],
-            admin: Admin,
+            fixture: AuctionFixture,
             stakeToken1: string,
             stakeToken2: string,
             stakeToken3: string,
         ) {
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "address", "address", "address"],
-                [auction.address, "updateStakeTokens", stakeToken1, stakeToken2, stakeToken3]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
-            
-            await expect(auction.updateStakeTokens(
-                stakeToken1,
-                stakeToken2,
-                stakeToken3,
-                signatures,
-            )).to.be.revertedWithCustomError(auction, 'InvalidUpdating');
+            const { admin, admins, deployer, auction } = fixture;
+            const paramsInput: UpdateStakeTokensParamsInput = {
+                stakeToken1: stakeToken1,
+                stakeToken2: stakeToken2,
+                stakeToken3: stakeToken3,
+            };
+            const params: UpdateStakeTokensParams = {
+                ...paramsInput,
+                signatures: await getUpdateStakeTokensSignatures(auction, admins, admin, paramsInput),
+            };
+            await expect(getUpdateStakeTokensTx(auction, deployer, params))
+                .to.be.revertedWithCustomError(auction, 'InvalidUpdating');
         }
 
         it('4.1.2.3. updateStakeTokens unsuccessfully with zero address stake tokens', async () => {
-            const { admin, admins, auction, stakeToken1, stakeToken2, stakeToken3 } = await setupBeforeTest({});
+            const fixture = await setupBeforeTest({});
+            const { stakeToken1, stakeToken2, stakeToken3 } = fixture;
 
-            await testForInvalidInput(auction, admins, admin, ethers.constants.AddressZero, stakeToken2.address, stakeToken3.address);
-            await testForInvalidInput(auction, admins, admin, stakeToken1.address, ethers.constants.AddressZero, stakeToken3.address);
-            await testForInvalidInput(auction, admins, admin, stakeToken1.address, stakeToken2.address, ethers.constants.AddressZero);
+            await testForInvalidInput(fixture, ethers.constants.AddressZero, stakeToken2.address, stakeToken3.address);
+            await testForInvalidInput(fixture, stakeToken1.address, ethers.constants.AddressZero, stakeToken3.address);
+            await testForInvalidInput(fixture, stakeToken1.address, stakeToken2.address, ethers.constants.AddressZero);
         });
 
         it('4.1.2.4. updateStakeTokens unsuccessfully with already updated stake tokens', async () => {
-            const { admin, admins, auction, stakeToken1, stakeToken2, stakeToken3 } = await setupBeforeTest({
+            const fixture = await setupBeforeTest({
                 updateStakeTokens: true,
             });
-            await testForInvalidInput(auction, admins, admin, stakeToken1.address, stakeToken2.address, stakeToken3.address);
+            const { stakeToken1, stakeToken2, stakeToken3 } = fixture;
+            await testForInvalidInput(fixture, stakeToken1.address, stakeToken2.address, stakeToken3.address);
         });        
     });
 
@@ -335,26 +342,23 @@ describe('4.1. Auction', async () => {
                 updateStakeTokens: true,
                 mintPrimaryTokenForAuction: true,
             });
-            const { admin, admins, auction } = fixture;
+            const { admin, admins, deployer, auction } = fixture;
 
             let currentTimestamp = await time.latest();
             let endAt = currentTimestamp + 10000;
             let vestingDuration = 1000;
 
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "uint256", "uint256"],
-                [auction.address, "startAuction", endAt, vestingDuration]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput: StartAuctionParamsInput = {
+                endAt: endAt,
+                vestingDuration: vestingDuration,
+            };
+            const params: StartAuctionParams = {
+                ...paramsInput,
+                signatures: await getStartAuctionSignatures(auction, admins, admin, paramsInput),
+            };
 
-            const tx = await auction.startAuction(
-                endAt,
-                vestingDuration,
-                signatures,
-            );
+            const tx = await getStartAuctionTx(auction, deployer, params);
             await tx.wait();
-
-            // TODO: Add event check
 
             expect(await auction.endAt()).to.equal(endAt);
             expect(await auction.vestingDuration()).to.equal(vestingDuration);
@@ -363,7 +367,7 @@ describe('4.1. Auction', async () => {
         });
 
         it('4.1.3.2. startAuction unsuccessfully with invalid signatures', async () => {
-            const { admin, admins, auction } = await setupBeforeTest({
+            const { admin, admins, deployer, auction } = await setupBeforeTest({
                 updateStakeTokens: true,
                 mintPrimaryTokenForAuction: true,
             });
@@ -372,21 +376,21 @@ describe('4.1. Auction', async () => {
             let endAt = currentTimestamp + 10000;
             let vestingDuration = 1000;
 
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "uint256", "uint256"],
-                [auction.address, "startAuction", endAt, vestingDuration]
-            );
-            let invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+            const paramsInput: StartAuctionParamsInput = {
+                endAt: endAt,
+                vestingDuration: vestingDuration,
+            };
+            const params: StartAuctionParams = {
+                ...paramsInput,
+                signatures: await getStartAuctionInvalidSignatures(auction, admins, admin, paramsInput),
+            };
 
-            await expect(auction.startAuction(
-                endAt,
-                vestingDuration,
-                invalidSignatures,
-            )).to.be.revertedWithCustomError(admin, 'FailedVerification');
+            await expect(getStartAuctionTx(auction, deployer, params))
+                .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
         it('4.1.3.3. startAuction unsuccessfully with invalid end time', async () => {
-            const { admin, admins, auction } = await setupBeforeTest({
+            const { admin, admins, deployer, auction } = await setupBeforeTest({
                 updateStakeTokens: true,
                 mintPrimaryTokenForAuction: true,
             });
@@ -397,21 +401,21 @@ describe('4.1. Auction', async () => {
             let endAt = currentTimestamp + 9;
             let vestingDuration = 1000;
 
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "uint256", "uint256"],
-                [auction.address, "startAuction", endAt, vestingDuration]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput: StartAuctionParamsInput = {
+                endAt: endAt,
+                vestingDuration: vestingDuration,
+            };
+            const params: StartAuctionParams = {
+                ...paramsInput,
+                signatures: await getStartAuctionSignatures(auction, admins, admin, paramsInput),
+            };
 
-            await expect(auction.startAuction(
-                endAt,
-                vestingDuration,
-                signatures,
-            )).to.be.revertedWithCustomError(auction, 'InvalidTimestamp');
+            await expect(getStartAuctionTx(auction, deployer, params))
+                .to.be.revertedWithCustomError(auction, 'InvalidTimestamp');
         });
 
         it('4.1.3.4. startAuction unsuccessfully when it has already started', async () => {
-            const { admin, admins, auction } = await setupBeforeTest({
+            const { admin, admins, deployer, auction } = await setupBeforeTest({
                 updateStakeTokens: true,
                 mintPrimaryTokenForAuction: true,
                 startAuction: true,
@@ -421,17 +425,17 @@ describe('4.1. Auction', async () => {
             let endAt = currentTimestamp + 10000;
             let vestingDuration = 1000;
 
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "uint256", "uint256"],
-                [auction.address, "startAuction", endAt, vestingDuration]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput: StartAuctionParamsInput = {
+                endAt: endAt,
+                vestingDuration: vestingDuration,
+            };
+            const params: StartAuctionParams = {
+                ...paramsInput,
+                signatures: await getStartAuctionSignatures(auction, admins, admin, paramsInput),
+            };
 
-            await expect(auction.startAuction(
-                endAt,
-                vestingDuration,
-                signatures,
-            )).to.be.revertedWithCustomError(auction, 'AlreadyStarted');
+            await expect(getStartAuctionTx(auction, deployer, params))
+                .to.be.revertedWithCustomError(auction, 'AlreadyStarted');
         });
     });
     
