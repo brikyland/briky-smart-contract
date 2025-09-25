@@ -508,9 +508,15 @@ ReentrancyGuardUpgradeable {
      *  @return Whether the staking pool has culminated.
      */
     function isStakeRewardingCulminated(address _stakeToken) external view returns (bool) {
-        if (_stakeToken == stakeToken1) return stakeToken1Waves >= PrimaryTokenConstant.STAKE_1_CULMINATING_WAVE;
-        if (_stakeToken == stakeToken2) return stakeToken2Waves >= PrimaryTokenConstant.STAKE_2_CULMINATING_WAVE;
-        if (_stakeToken == stakeToken3) return stakeToken3Waves >= PrimaryTokenConstant.STAKE_3_CULMINATING_WAVE;
+        if (_stakeToken == stakeToken1) {
+            return stakeToken1Waves >= PrimaryTokenConstant.STAKE_1_CULMINATING_WAVE;
+        }
+        if (_stakeToken == stakeToken2) {
+            return stakeToken2Waves >= PrimaryTokenConstant.STAKE_2_CULMINATING_WAVE;
+        }
+        if (_stakeToken == stakeToken3) {
+            return stakeToken3Waves >= PrimaryTokenConstant.STAKE_3_CULMINATING_WAVE;
+        }
         revert InvalidStakeToken();
     }
 
