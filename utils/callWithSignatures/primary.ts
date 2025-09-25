@@ -1,159 +1,188 @@
-import { PrimaryToken } from "@typechain-types";
-import { getSignatures } from "../blockchain";
-import { ethers } from "hardhat";
+import { Admin, PrimaryToken } from "@typechain-types";
 import { callTransaction } from "../blockchain";
-import { BigNumberish } from "ethers";
-import { MockContract } from "@defi-wonderland/smock";
+import { UnlockForBackerRoundParams,
+    UnlockForBackerRoundParamsInput,
+    UnlockForCoreTeamParams,
+    UnlockForCoreTeamParamsInput,
+    UnlockForExternalTreasuryParams,
+    UnlockForExternalTreasuryParamsInput,
+    UnlockForMarketMakerParams,
+    UnlockForMarketMakerParamsInput,
+    UnlockForPrivateSale1Params,
+    UnlockForPrivateSale1ParamsInput,
+    UnlockForPrivateSale2Params,
+    UnlockForPrivateSale2ParamsInput,
+    UnlockForPublicSaleParams,
+    UnlockForPublicSaleParamsInput,
+    UnlockForSeedRoundParams,
+    UnlockForSeedRoundParamsInput,
+    UpdateStakeTokensParams,
+    UpdateStakeTokensParamsInput,
+    UpdateTreasuryParams,
+    UpdateTreasuryParamsInput
+} from "@utils/models/PrimaryToken";
+import { 
+    getUnlockForBackerRoundSignatures,
+    getUnlockForCoreTeamSignatures,
+    getUnlockForExternalTreasurySignatures,
+    getUnlockForMarketMakerSignatures,
+    getUnlockForPrivateSale1Signatures,
+    getUnlockForPrivateSale2Signatures,
+    getUnlockForPublicSaleSignatures,
+    getUnlockForSeedRoundSignatures,
+    getUpdateStakeTokensSignatures,
+    getUpdateTreasurySignatures 
+} from "@utils/signatures/PrimaryToken";
+import {
+    getUnlockForBackerRoundTx,
+    getUnlockForCoreTeamTx,
+    getUnlockForExternalTreasuryTx,
+    getUnlockForMarketMakerTx,
+    getUnlockForPrivateSale1Tx,
+    getUnlockForPrivateSale2Tx,
+    getUnlockForPublicSaleTx,
+    getUnlockForSeedRoundTx,
+    getUpdateStakeTokensTx,
+    getUpdateTreasuryTx
+} from "@utils/transaction/PrimaryToken";
 
 
 export async function callPrimaryToken_UpdateTreasury(
-    primaryToken: PrimaryToken | MockContract<PrimaryToken>,
+    primaryToken: PrimaryToken,
+    deployer: any,
     admins: any[],
-    treasury: string,
-    nonce: BigNumberish
+    admin: Admin,
+    paramsInput: UpdateTreasuryParamsInput,
 ) {
-    let message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "address"],
-        [primaryToken.address, "updateTreasury", treasury]
-    );
-    let signatures = await getSignatures(message, admins, nonce);
-
-    await callTransaction(primaryToken.updateTreasury(treasury, signatures));
+    const params: UpdateTreasuryParams = {
+        ...paramsInput,
+        signatures: await getUpdateTreasurySignatures(primaryToken, admins, admin, paramsInput),
+    };
+    await callTransaction(getUpdateTreasuryTx(primaryToken, deployer, params));
 }
 
 export async function callPrimaryToken_UpdateStakeTokens(
-    primaryToken: PrimaryToken | MockContract<PrimaryToken>,
+    primaryToken: PrimaryToken,
+    deployer: any,
     admins: any[],
-    stakeToken1: string,
-    stakeToken2: string,
-    stakeToken3: string,
-    nonce: BigNumberish
+    admin: Admin,
+    paramsInput: UpdateStakeTokensParamsInput,
 ) {
-    let message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "address", "address", "address"],
-        [primaryToken.address, "updateStakeTokens", stakeToken1, stakeToken2, stakeToken3]
-    );
-    let signatures = await getSignatures(message, admins, nonce);
-
-    await callTransaction(primaryToken.updateStakeTokens(stakeToken1, stakeToken2, stakeToken3, signatures));
+    const params: UpdateStakeTokensParams = {
+        ...paramsInput,
+        signatures: await getUpdateStakeTokensSignatures(primaryToken, admins, admin, paramsInput),
+    };
+    await callTransaction(getUpdateStakeTokensTx(primaryToken, deployer, params));
 }
 
 export async function callPrimaryToken_UnlockForBackerRound(
-    primaryToken: PrimaryToken | MockContract<PrimaryToken>,
+    primaryToken: PrimaryToken,
+    deployer: any,
     admins: any[],
-    receiver: string,
-    nonce: BigNumberish
+    admin: Admin,
+    paramsInput: UnlockForBackerRoundParamsInput,
 ) {
-    let message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "address"],
-        [primaryToken.address, "unlockForBackerRound", receiver]
-    );
-    let signatures = await getSignatures(message, admins, nonce);
-
-    await callTransaction(primaryToken.unlockForBackerRound(receiver, signatures));
+    const params: UnlockForBackerRoundParams = {
+        ...paramsInput,
+        signatures: await getUnlockForBackerRoundSignatures(primaryToken, admins, admin, paramsInput),
+    };
+    await callTransaction(getUnlockForBackerRoundTx(primaryToken, deployer, params));
 }
 
 export async function callPrimaryToken_UnlockForSeedRound(
-    primaryToken: PrimaryToken | MockContract<PrimaryToken>,
+    primaryToken: PrimaryToken,
+    deployer: any,
     admins: any[],
-    receiver: string,
-    nonce: BigNumberish
+    admin: Admin,
+    paramsInput: UnlockForSeedRoundParamsInput,
 ) {
-    let message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "address"],
-        [primaryToken.address, "unlockForSeedRound", receiver]
-    );
-    let signatures = await getSignatures(message, admins, nonce);
-
-    await callTransaction(primaryToken.unlockForSeedRound(receiver, signatures));
+    const params: UnlockForSeedRoundParams = {
+        ...paramsInput,
+        signatures: await getUnlockForSeedRoundSignatures(primaryToken, admins, admin, paramsInput),
+    };
+    await callTransaction(getUnlockForSeedRoundTx(primaryToken, deployer, params));
 }
 
 export async function callPrimaryToken_UnlockForPrivateSale1(
-    primaryToken: PrimaryToken | MockContract<PrimaryToken>,
+    primaryToken: PrimaryToken,
+    deployer: any,
     admins: any[],
-    receiver: string,
-    nonce: BigNumberish
+    admin: Admin,
+    paramsInput: UnlockForPrivateSale1ParamsInput,
 ) {
-    let message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "address"],
-        [primaryToken.address, "unlockForPrivateSale1", receiver]
-    );
-    let signatures = await getSignatures(message, admins, nonce);
-
-    await callTransaction(primaryToken.unlockForPrivateSale1(receiver, signatures));
+    const params: UnlockForPrivateSale1Params = {
+        ...paramsInput,
+        signatures: await getUnlockForPrivateSale1Signatures(primaryToken, admins, admin, paramsInput),
+    };
+    await callTransaction(getUnlockForPrivateSale1Tx(primaryToken, deployer, params));
 }
 
 export async function callPrimaryToken_UnlockForPrivateSale2(
-    primaryToken: PrimaryToken | MockContract<PrimaryToken>,
+    primaryToken: PrimaryToken,
+    deployer: any,
     admins: any[],
-    receiver: string,
-    nonce: BigNumberish
+    admin: Admin,
+    paramsInput: UnlockForPrivateSale2ParamsInput,
 ) {
-    let message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "address"],
-        [primaryToken.address, "unlockForPrivateSale2", receiver]
-    );
-    let signatures = await getSignatures(message, admins, nonce);
-
-    await callTransaction(primaryToken.unlockForPrivateSale2(receiver, signatures));
+    const params: UnlockForPrivateSale2Params = {
+        ...paramsInput,
+        signatures: await getUnlockForPrivateSale2Signatures(primaryToken, admins, admin, paramsInput),
+    };
+    await callTransaction(getUnlockForPrivateSale2Tx(primaryToken, deployer, params));
 }
 
 export async function callPrimaryToken_UnlockForPublicSale(
-    primaryToken: PrimaryToken | MockContract<PrimaryToken>,
+    primaryToken: PrimaryToken,
+    deployer: any,
     admins: any[],
-    receiver: string,
-    nonce: BigNumberish
+    admin: Admin,
+    paramsInput: UnlockForPublicSaleParamsInput,
 ) {
-    let message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "address"],
-        [primaryToken.address, "unlockForPublicSale", receiver]
-    );
-    let signatures = await getSignatures(message, admins, nonce);
-
-    await callTransaction(primaryToken.unlockForPublicSale(receiver, signatures));
+    const params: UnlockForPublicSaleParams = {
+        ...paramsInput,
+        signatures: await getUnlockForPublicSaleSignatures(primaryToken, admins, admin, paramsInput),
+    };
+    await callTransaction(getUnlockForPublicSaleTx(primaryToken, deployer, params));
 }
 
 export async function callPrimaryToken_UnlockForCoreTeam(
-    primaryToken: PrimaryToken | MockContract<PrimaryToken>,
+    primaryToken: PrimaryToken,
+    deployer: any,
     admins: any[],
-    receiver: string,
-    nonce: BigNumberish
+    admin: Admin,
+    paramsInput: UnlockForCoreTeamParamsInput,
 ) {
-    let message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "address"],
-        [primaryToken.address, "unlockForCoreTeam", receiver]
-    );
-    let signatures = await getSignatures(message, admins, nonce);
-
-    await callTransaction(primaryToken.unlockForCoreTeam(receiver, signatures));
+    const params: UnlockForCoreTeamParams = {
+        ...paramsInput,
+        signatures: await getUnlockForCoreTeamSignatures(primaryToken, admins, admin, paramsInput),
+    };
+    await callTransaction(getUnlockForCoreTeamTx(primaryToken, deployer, params));
 }
 
 export async function callPrimaryToken_UnlockForMarketMaker(
-    primaryToken: PrimaryToken | MockContract<PrimaryToken>,
+    primaryToken: PrimaryToken,
+    deployer: any,
     admins: any[],
-    receiver: string,
-    nonce: BigNumberish
+    admin: Admin,
+    paramsInput: UnlockForMarketMakerParamsInput,
 ) {
-    let message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "address"],
-        [primaryToken.address, "unlockForMarketMaker", receiver]
-    );
-    let signatures = await getSignatures(message, admins, nonce);
-
-    await callTransaction(primaryToken.unlockForMarketMaker(receiver, signatures));
+    const params: UnlockForMarketMakerParams = {
+        ...paramsInput,
+        signatures: await getUnlockForMarketMakerSignatures(primaryToken, admins, admin, paramsInput),
+    };
+    await callTransaction(getUnlockForMarketMakerTx(primaryToken, deployer, params));
 }
 
 export async function callPrimaryToken_UnlockForExternalTreasury(
-    primaryToken: PrimaryToken | MockContract<PrimaryToken>,
+    primaryToken: PrimaryToken,
+    deployer: any,
     admins: any[],
-    receiver: string,
-    nonce: BigNumberish
+    admin: Admin,
+    paramsInput: UnlockForExternalTreasuryParamsInput,
 ) {
-    let message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "address"],
-        [primaryToken.address, "unlockForExternalTreasury", receiver]
-    );
-    let signatures = await getSignatures(message, admins, nonce);
-
-    await callTransaction(primaryToken.unlockForExternalTreasury(receiver, signatures));
+    const params: UnlockForExternalTreasuryParams = {
+        ...paramsInput,
+        signatures: await getUnlockForExternalTreasurySignatures(primaryToken, admins, admin, paramsInput),
+    };
+    await callTransaction(getUnlockForExternalTreasuryTx(primaryToken, deployer, params));
 }

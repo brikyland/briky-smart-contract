@@ -15,6 +15,9 @@ import { callPrimaryToken_UpdateStakeTokens } from '@utils/callWithSignatures/pr
 import { MockContract, smock } from '@defi-wonderland/smock';
 import { Initialization as LiquidityInitialization } from '@tests/liquidity/test.initialization';
 import { callPausable_Pause } from '@utils/callWithSignatures/Pausable';
+import { DistributeTokensWithDurationParams, DistributeTokensWithDurationParamsInput, DistributeTokensWithTimestampParams, DistributeTokensWithTimestampParamsInput, UpdateStakeTokensParams, UpdateStakeTokensParamsInput } from '@utils/models/Driptributor';
+import { getDistributeTokensWithDurationSignatures, getDistributeTokensWithTimestampSignatures, getUpdateStakeTokensSignatures } from '@utils/signatures/Driptributor';
+import { getDistributeTokensWithDurationTx, getDistributeTokensWithTimestampTx, getUpdateStakeTokensTx } from '@utils/transaction/Driptributor';
 
 interface DriptributorFixture {
     deployer: any;
@@ -33,6 +36,7 @@ interface DriptributorFixture {
     receiver3: any;
 }
 
+// TODO: Add non-reentrant test?
 async function testReentrancy_driptributor(
     driptributor: Driptributor,
     reentrancyContract: Contract,
@@ -132,13 +136,18 @@ describe('4.3. Driptributor', async () => {
         ) as Driptributor;
 
         await primaryToken.mint(driptributor.address, totalAmount);
-        await callPrimaryToken_UpdateStakeTokens(
-            primaryToken,
+
+        const paramsInput: UpdateStakeTokensParamsInput = {
+            stakeToken1: stakeToken1.address,
+            stakeToken2: stakeToken2.address,
+            stakeToken3: stakeToken3.address,
+        };
+        await callDriptributor_UpdateStakeTokens(
+            driptributor,
+            deployer,
             admins,
-            stakeToken1.address,
-            stakeToken2.address,
-            stakeToken3.address,
-            await admin.nonce(),
+            admin,
+            paramsInput,
         );
         
         return {
@@ -172,13 +181,18 @@ describe('4.3. Driptributor', async () => {
         await treasury.provideLiquidity(ethers.utils.parseEther("1000000"));
 
         if (updateStakeTokens) {
+            const params: UpdateStakeTokensParamsInput = {
+                stakeToken1: stakeToken1.address,
+                stakeToken2: stakeToken2.address,
+                stakeToken3: stakeToken3.address,
+            };
+
             await callDriptributor_UpdateStakeTokens(
                 driptributor,
+                deployer,
                 admins,
-                stakeToken1.address,
-                stakeToken2.address,
-                stakeToken3.address,
-                await admin.nonce(),
+                admin,
+                params,                
             );
         }
 
@@ -186,25 +200,33 @@ describe('4.3. Driptributor', async () => {
 
         if (addDistribution) {
             await time.setNextBlockTimestamp(currentTimestamp);
+            const params1: DistributeTokensWithDurationParamsInput = {
+                receivers: [receiver1.address, receiver2.address],
+                amounts: [ethers.utils.parseEther('100'), ethers.utils.parseEther('200')],
+                durations: [1000, 10000],
+                notes: ['data1', 'data2'],
+            };
             await callDriptributor_DistributeTokensWithDuration(
                 driptributor,
+                deployer,
                 admins,
-                [receiver1.address, receiver2.address],
-                [ethers.utils.parseEther('100'), ethers.utils.parseEther('200')],
-                [1000, 10000],
-                ['data1', 'data2'],
-                await admin.nonce(),
+                admin,
+                params1,
             );
             
             await time.setNextBlockTimestamp(currentTimestamp + 100);
+            const params2: DistributeTokensWithDurationParamsInput = {
+                receivers: [receiver1.address, receiver2.address],
+                amounts: [ethers.utils.parseEther('10'), ethers.utils.parseEther('20')],
+                durations: [2000, 20000],
+                notes: ['data3', 'data4'],
+            };
             await callDriptributor_DistributeTokensWithDuration(
                 driptributor,
+                deployer,
                 admins,
-                [receiver1.address, receiver2.address],
-                [ethers.utils.parseEther('10'), ethers.utils.parseEther('20')],
-                [2000, 20000],
-                ['data3', 'data4'],
-                await admin.nonce(),
+                admin,
+                params2,
             );
         }
 
@@ -236,20 +258,19 @@ describe('4.3. Driptributor', async () => {
 
     describe('4.3.2. updateStakeTokens(address, address, address, bytes[])', async () => {
         it('4.3.2.1. updateStakeTokens successfully', async () => {
-            const { admin, admins, driptributor, stakeToken1, stakeToken2, stakeToken3 } = await setupBeforeTest();
+            const { deployer, admin, admins, driptributor, stakeToken1, stakeToken2, stakeToken3 } = await setupBeforeTest();
             
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "address", "address", "address"],
-                [driptributor.address, "updateStakeTokens", stakeToken1.address, stakeToken2.address, stakeToken3.address]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput: UpdateStakeTokensParamsInput = {
+                stakeToken1: stakeToken1.address,
+                stakeToken2: stakeToken2.address,
+                stakeToken3: stakeToken3.address,
+            };
+            const params: UpdateStakeTokensParams = {
+                ...paramsInput,
+                signatures: await getUpdateStakeTokensSignatures(driptributor, admins, admin, paramsInput),
+            };
 
-            const tx = await driptributor.updateStakeTokens(
-                stakeToken1.address,
-                stakeToken2.address,
-                stakeToken3.address,
-                signatures,
-            );
+            const tx = await getUpdateStakeTokensTx(driptributor, deployer, params);
             await tx.wait();
 
             expect(await driptributor.stakeToken1()).to.equal(stakeToken1.address);
@@ -258,190 +279,194 @@ describe('4.3. Driptributor', async () => {
         });
 
         it('4.3.2.2. updateStakeTokens unsuccessfully with invalid signatures', async () => {
-            const { admin, admins, driptributor, stakeToken1, stakeToken2, stakeToken3 } = await setupBeforeTest();
+            const { deployer, admin, admins, driptributor, stakeToken1, stakeToken2, stakeToken3 } = await setupBeforeTest();
             
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "address", "address", "address"],
-                [driptributor.address, "updateStakeTokens", stakeToken1.address, stakeToken2.address, stakeToken3.address]
-            );
-            let invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
-            
-            await expect(driptributor.updateStakeTokens(
-                stakeToken1.address,
-                stakeToken2.address,
-                stakeToken3.address,
-                invalidSignatures,
-            )).to.be.revertedWithCustomError(admin, 'FailedVerification');
+            const paramsInput: UpdateStakeTokensParamsInput = {
+                stakeToken1: stakeToken1.address,
+                stakeToken2: stakeToken2.address,
+                stakeToken3: stakeToken3.address,
+            };
+            const params: UpdateStakeTokensParams = {
+                ...paramsInput,
+                signatures: await getUpdateStakeTokensSignatures(driptributor, admins, admin, paramsInput, false),
+            };
+            await expect(getUpdateStakeTokensTx(driptributor, deployer, params))
+                .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
         async function testForInvalidInput(
-            driptributor: Driptributor,
-            admins: any[],
-            admin: Admin,
+            fixture: DriptributorFixture,
             stakeToken1: string,
             stakeToken2: string,
             stakeToken3: string,
         ) {
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "address", "address", "address"],
-                [driptributor.address, "updateStakeTokens", stakeToken1, stakeToken2, stakeToken3]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
-            
-            await expect(driptributor.updateStakeTokens(
-                stakeToken1,
-                stakeToken2,
-                stakeToken3,
-                signatures,
-            )).to.be.revertedWithCustomError(driptributor, 'InvalidUpdating');
+            const { admin, admins, driptributor, deployer } = fixture;
+            const paramsInput: UpdateStakeTokensParamsInput = {
+                stakeToken1: stakeToken1,
+                stakeToken2: stakeToken2,
+                stakeToken3: stakeToken3,
+            };
+            const params: UpdateStakeTokensParams = {
+                ...paramsInput,
+                signatures: await getUpdateStakeTokensSignatures(driptributor, admins, admin, paramsInput, false),
+            };
+            await expect(getUpdateStakeTokensTx(driptributor, deployer, params))
+                .to.be.revertedWithCustomError(driptributor, 'InvalidUpdating');
         }
 
         it('4.3.2.3. updateStakeTokens unsuccessfully with zero address stake tokens', async () => {
-            const { admin, admins, driptributor, stakeToken1, stakeToken2, stakeToken3 } = await setupBeforeTest();
+            const fixture = await setupBeforeTest();
+            const { stakeToken1, stakeToken2, stakeToken3 } = fixture;
 
-            await testForInvalidInput(driptributor, admins, admin, ethers.constants.AddressZero, stakeToken2.address, stakeToken3.address);
-            await testForInvalidInput(driptributor, admins, admin, stakeToken1.address, ethers.constants.AddressZero, stakeToken3.address);
-            await testForInvalidInput(driptributor, admins, admin, stakeToken1.address, stakeToken2.address, ethers.constants.AddressZero);
+            await testForInvalidInput(fixture, ethers.constants.AddressZero, stakeToken2.address, stakeToken3.address);
+            await testForInvalidInput(fixture, stakeToken1.address, ethers.constants.AddressZero, stakeToken3.address);
+            await testForInvalidInput(fixture, stakeToken1.address, stakeToken2.address, ethers.constants.AddressZero);
         });
 
         it('4.3.2.4. updateStakeTokens unsuccessfully with already updated stake tokens', async () => {
-            const { admin, admins, driptributor, stakeToken1, stakeToken2, stakeToken3 } = await setupBeforeTest({
+            const fixture = await setupBeforeTest({
                 updateStakeTokens: true,
             });
-            await testForInvalidInput(driptributor, admins, admin, stakeToken1.address, stakeToken2.address, stakeToken3.address);
+            const { stakeToken1, stakeToken2, stakeToken3 } = fixture;
+            await testForInvalidInput(fixture, stakeToken1.address, stakeToken2.address, stakeToken3.address);
         });
     });
 
     describe('4.3.3. distributeTokensWithDuration(address[], uint256[], uint40[], string[], bytes[])', async () => {
         it('4.3.3.1. distributeTokensWithDuration successfully with valid signatures', async () => {
-            const { admin, admins, driptributor, totalAmount, receiver1, receiver2 } = await setupBeforeTest({
+            const { deployer, admin, admins, driptributor, totalAmount, receiver1, receiver2 } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
 
             let currentTimestamp = await time.latest() + 1000;
 
-            const receivers1 = [receiver1.address, receiver2.address];
-            const amounts1 = [ethers.utils.parseEther('100'), ethers.utils.parseEther('200')];
-            const vestingDurations1 = [100, 1000];
-            const data1 = ['data1', 'data2'];
-
-            const message1 = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "address[]", "uint256[]", "uint40[]", "string[]"],
-                [driptributor.address, "distributeTokensWithDuration", receivers1, amounts1, vestingDurations1, data1]
-            );
-            const signatures1 = await getSignatures(message1, admins, await admin.nonce());
+            const paramsInput1: DistributeTokensWithDurationParamsInput = {
+                receivers: [receiver1.address, receiver2.address],
+                amounts: [ethers.utils.parseEther('100'), ethers.utils.parseEther('200')],
+                durations: [100, 1000],
+                notes: ['data1', 'data2'],
+            };
+            const params1: DistributeTokensWithDurationParams = {
+                ...paramsInput1,
+                signatures: await getDistributeTokensWithDurationSignatures(driptributor, admins, admin, paramsInput1),
+            };
 
             await time.setNextBlockTimestamp(currentTimestamp);
-            const tx1 = await driptributor.distributeTokensWithDuration(
-                receivers1,
-                amounts1,
-                vestingDurations1,
-                data1,
-                signatures1
-            );
+            const tx1 = await getDistributeTokensWithDurationTx(driptributor, deployer, params1);
             await tx1.wait();
             
-            await expect(tx1).to
-                .emit(driptributor, 'NewDistribution')
-                .withArgs(1, receiver1.address, currentTimestamp, 100, ethers.utils.parseEther('100'), 'data1')
-                .emit(driptributor, 'NewDistribution')
-                .withArgs(2, receiver2.address, currentTimestamp, 1000, ethers.utils.parseEther('200'), 'data2')
+            await expect(tx1).to.emit(driptributor, 'NewDistribution').withArgs(
+                1,
+                params1.receivers[0],
+                currentTimestamp,
+                params1.durations[0],
+                params1.amounts[0],
+                params1.notes[0]
+            );
+            await expect(tx1).to.emit(driptributor, 'NewDistribution').withArgs(
+                2,
+                params1.receivers[1],
+                currentTimestamp,
+                params1.durations[1],
+                params1.amounts[1],
+                params1.notes[1]
+            );
 
             expect(await driptributor.totalAllocation()).to.equal(totalAmount);
             expect(await driptributor.distributedAmount()).to.equal(ethers.utils.parseEther('300'));
             
             const distribution1 = await driptributor.getDistribution(1);
-            expect(distribution1.totalAmount).to.equal(ethers.utils.parseEther('100'));
+            expect(distribution1.totalAmount).to.equal(params1.amounts[0]);
             expect(distribution1.withdrawnAmount).to.equal(0);
-            expect(distribution1.receiver).to.equal(receiver1.address);
+            expect(distribution1.receiver).to.equal(params1.receivers[0]);
             expect(distribution1.distributeAt).to.equal(currentTimestamp);
-            expect(distribution1.vestingDuration).to.equal(100);
+            expect(distribution1.vestingDuration).to.equal(params1.durations[0]);
             expect(distribution1.isStaked).to.equal(false);
 
             const distribution2 = await driptributor.getDistribution(2);
-            expect(distribution2.totalAmount).to.equal(ethers.utils.parseEther('200'));
+            expect(distribution2.totalAmount).to.equal(params1.amounts[1]);
             expect(distribution2.withdrawnAmount).to.equal(0);
-            expect(distribution2.receiver).to.equal(receiver2.address);
+            expect(distribution2.receiver).to.equal(params1.receivers[1]);
             expect(distribution2.distributeAt).to.equal(currentTimestamp);
-            expect(distribution2.vestingDuration).to.equal(1000);
+            expect(distribution2.vestingDuration).to.equal(params1.durations[1]);
             expect(distribution2.isStaked).to.equal(false);
 
             currentTimestamp += 100;
 
-            const receivers2 = [receiver1.address, receiver2.address];
-            const amounts2 = [ethers.utils.parseEther('10'), ethers.utils.parseEther('20')];
-            const vestingDurations2 = [200, 2000];
-            const data2 = ['data3', 'data4'];
-
-            const message2 = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "address[]", "uint256[]", "uint40[]", "string[]"],
-                [driptributor.address, "distributeTokensWithDuration", receivers2, amounts2, vestingDurations2, data2]
-            );
-            const signatures2 = await getSignatures(message2, admins, await admin.nonce());
+            const paramsInput2: DistributeTokensWithDurationParamsInput = {
+                receivers: [receiver1.address, receiver2.address],
+                amounts: [ethers.utils.parseEther('10'), ethers.utils.parseEther('20')],
+                durations: [200, 2000],
+                notes: ['data3', 'data4'],
+            };
+            const params2: DistributeTokensWithDurationParams = {
+                ...paramsInput2,
+                signatures: await getDistributeTokensWithDurationSignatures(driptributor, admins, admin, paramsInput2),
+            };
 
             await time.setNextBlockTimestamp(currentTimestamp);
-            const tx2 = await driptributor.distributeTokensWithDuration(
-                receivers2,
-                amounts2,
-                vestingDurations2,
-                data2,
-                signatures2
-            );
+            const tx2 = await getDistributeTokensWithDurationTx(driptributor, deployer, params2);
             await tx2.wait();
             
-            await expect(tx2).to
-                .emit(driptributor, 'NewDistribution')
-                .withArgs(3, receiver1.address, currentTimestamp, 200, ethers.utils.parseEther('10'), 'data3')
-                .emit(driptributor, 'NewDistribution')
-                .withArgs(4, receiver2.address, currentTimestamp, 2000, ethers.utils.parseEther('20'), 'data4')
+            await expect(tx2).to.emit(driptributor, 'NewDistribution').withArgs(
+                3,
+                params2.receivers[0],
+                currentTimestamp,
+                params2.durations[0],
+                params2.amounts[0],
+                params2.notes[0]
+            );
+            await expect(tx2).to.emit(driptributor, 'NewDistribution').withArgs(
+                4,
+                params2.receivers[1],
+                currentTimestamp,
+                params2.durations[1],
+                params2.amounts[1],
+                params2.notes[1]
+            );
 
             expect(await driptributor.totalAllocation()).to.equal(totalAmount);
             expect(await driptributor.distributedAmount()).to.equal(ethers.utils.parseEther('330'));
             
             const distribution3 = await driptributor.getDistribution(3);
-            expect(distribution3.totalAmount).to.equal(ethers.utils.parseEther('10'));
+            expect(distribution3.totalAmount).to.equal(params2.amounts[0]);
             expect(distribution3.withdrawnAmount).to.equal(0);
-            expect(distribution3.receiver).to.equal(receiver1.address);
+            expect(distribution3.receiver).to.equal(params2.receivers[0]);
             expect(distribution3.distributeAt).to.equal(currentTimestamp);
-            expect(distribution3.vestingDuration).to.equal(200);
+            expect(distribution3.vestingDuration).to.equal(params2.durations[0]);
             expect(distribution3.isStaked).to.equal(false);
 
             const distribution4 = await driptributor.getDistribution(4);
-            expect(distribution4.totalAmount).to.equal(ethers.utils.parseEther('20'));
+            expect(distribution4.totalAmount).to.equal(params2.amounts[1]);
             expect(distribution4.withdrawnAmount).to.equal(0);
-            expect(distribution4.receiver).to.equal(receiver2.address);
+            expect(distribution4.receiver).to.equal(params2.receivers[1]);
             expect(distribution4.distributeAt).to.equal(currentTimestamp);
-            expect(distribution4.vestingDuration).to.equal(2000);
+            expect(distribution4.vestingDuration).to.equal(params2.durations[1]);
             expect(distribution4.isStaked).to.equal(false);
         });
 
         it('4.3.3.2. distributeTokensWithDuration unsuccessfully with invalid signatures', async () => {
-            const { admin, admins, driptributor, totalAmount, receiver1, receiver2 } = await setupBeforeTest({
+            const { deployer, admin, admins, driptributor, receiver1, receiver2 } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
 
-            const receivers = [receiver1.address, receiver2.address];
-            const amounts = [ethers.utils.parseEther('100'), ethers.utils.parseEther('200')];
-            const vestingDurations = [100, 1000];
-            const data = ['data1', 'data2'];
+            const paramsInput: DistributeTokensWithDurationParamsInput = {
+                receivers: [receiver1.address, receiver2.address],
+                amounts: [ethers.utils.parseEther('100'), ethers.utils.parseEther('200')],
+                durations: [100, 1000],
+                notes: ['data1', 'data2'],
+            };
+            const params: DistributeTokensWithDurationParams = {
+                ...paramsInput,
+                signatures: await getDistributeTokensWithDurationSignatures(driptributor, admins, admin, paramsInput, false),
+            };
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "address[]", "uint256[]", "uint40[]", "string[]"],
-                [driptributor.address, "distributeTokensWithDuration", receivers, amounts, vestingDurations, data]
-            );
-            const invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
-
-            await expect(driptributor.distributeTokensWithDuration(
-                receivers,
-                amounts,
-                vestingDurations,
-                data,
-                invalidSignatures
-            )).to.be.revertedWithCustomError(admin, 'FailedVerification');
+            await expect(getDistributeTokensWithDurationTx(driptributor, deployer, params))
+                .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
         it('4.3.3.3. distributeTokensWithDuration unsuccessfully with invalid input', async () => {
-            const { admin, admins, driptributor, totalAmount, receiver1, receiver2 } = await setupBeforeTest({
+            const { deployer, admin, admins, driptributor, receiver1, receiver2 } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
 
@@ -451,19 +476,18 @@ describe('4.3. Driptributor', async () => {
                 vestingDurations: number[],
                 data: string[]
             ) {
-                let message = ethers.utils.defaultAbiCoder.encode(
-                    ['address', 'string', 'address[]', 'uint256[]', 'uint40[]', 'string[]'],
-                    [driptributor.address, 'distributeTokensWithDuration', receivers, amounts, vestingDurations, data]
-                );
-                let signatures = await getSignatures(message, admins, await admin.nonce());
-
-                await expect(driptributor.distributeTokensWithDuration(
-                    receivers,
-                    amounts,
-                    vestingDurations,
-                    data,
-                    signatures
-                )).to.be.revertedWithCustomError(driptributor, 'InvalidInput');
+                const paramsInput: DistributeTokensWithDurationParamsInput = {
+                    receivers: receivers,
+                    amounts: amounts,
+                    durations: vestingDurations,
+                    notes: data,
+                };
+                const params: DistributeTokensWithDurationParams = {
+                    ...paramsInput,
+                    signatures: await getDistributeTokensWithDurationSignatures(driptributor, admins, admin, paramsInput),
+                };
+                await expect(getDistributeTokensWithDurationTx(driptributor, deployer, params))
+                    .to.be.revertedWithCustomError(driptributor, 'InvalidInput');
             }
 
             const receivers = [receiver1.address, receiver2.address];
@@ -473,48 +497,42 @@ describe('4.3. Driptributor', async () => {
 
             await testForInvalidInput(receivers.slice(0, 1), amounts, vestingDurations, data);
             await testForInvalidInput(receivers, amounts.slice(0, 1), vestingDurations, data);
-            await testForInvalidInput(receivers, amounts, vestingDurations.slice(0, 1), data);            
+            await testForInvalidInput(receivers, amounts, vestingDurations.slice(0, 1), data);
             await testForInvalidInput(receivers, amounts, vestingDurations, data.slice(0, 1));
         });
 
         it('4.3.3.4. distributeTokensWithDuration unsuccessfully with insufficient funds', async () => {
-            const { admin, admins, driptributor, totalAmount, receiver1, receiver2 } = await setupBeforeTest({
+            const { deployer, admin, admins, driptributor, receiver1, receiver2 } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
 
-            const receivers1 = [receiver1.address, receiver2.address];
-            const amounts1 = [ethers.utils.parseEther('100'), ethers.utils.parseEther('200')];
-            const vestingDurations1 = [100, 1000];
-            const data1 = ['data1', 'data2'];
-
+            const paramsInput1: DistributeTokensWithDurationParamsInput = {
+                receivers: [receiver1.address, receiver2.address],
+                amounts: [ethers.utils.parseEther('100'), ethers.utils.parseEther('200')],
+                durations: [100, 1000],
+                notes: ['data1', 'data2'],
+            };
             await callDriptributor_DistributeTokensWithDuration(
                 driptributor,
+                deployer,
                 admins,
-                receivers1,
-                amounts1,
-                vestingDurations1,
-                data1,
-                await admin.nonce(),
+                admin,
+                paramsInput1,
             );
 
-            const receivers2 = [receiver1.address, receiver2.address];
-            const amounts2 = [ethers.utils.parseEther('300'), ethers.utils.parseEther('401')];
-            const vestingDurations2 = [200, 2000];
-            const data2 = ['data3', 'data4'];
+            const paramsInput2: DistributeTokensWithDurationParamsInput = {
+                receivers: [receiver1.address, receiver2.address],
+                amounts: [ethers.utils.parseEther('300'), ethers.utils.parseEther('401')],
+                durations: [200, 2000],
+                notes: ['data3', 'data4'],
+            };
+            const params2: DistributeTokensWithDurationParams = {
+                ...paramsInput2,
+                signatures: await getDistributeTokensWithDurationSignatures(driptributor, admins, admin, paramsInput2),
+            };
 
-            const message2 = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "address[]", "uint256[]", "uint40[]", "string[]"],
-                [driptributor.address, "distributeTokensWithDuration", receivers2, amounts2, vestingDurations2, data2]
-            );
-            const signatures2 = await getSignatures(message2, admins, await admin.nonce());
-
-            await expect(driptributor.distributeTokensWithDuration(
-                receivers2,
-                amounts2,
-                vestingDurations2,
-                data2,
-                signatures2,
-            )).to.be.revertedWithCustomError(driptributor, 'InsufficientFunds');
+            await expect(getDistributeTokensWithDurationTx(driptributor, deployer, params2))
+                .to.be.revertedWithCustomError(driptributor, 'InsufficientFunds');
         });
     });
     
@@ -622,34 +640,29 @@ describe('4.3. Driptributor', async () => {
         });
 
         it('4.3.4.2. distributeTokensWithTimestamp unsuccessfully with invalid signatures', async () => {
-            const { admin, admins, driptributor, totalAmount, receiver1, receiver2 } = await setupBeforeTest({
+            const { admin, admins, driptributor, receiver1, receiver2, deployer } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
 
             let currentTimestamp = await time.latest() + 1000;
 
-            const receivers = [receiver1.address, receiver2.address];
-            const amounts = [ethers.utils.parseEther('100'), ethers.utils.parseEther('200')];
-            const endAts = [currentTimestamp + 100, currentTimestamp + 1000];
-            const data = ['data1', 'data2'];
+            const paramsInput: DistributeTokensWithTimestampParamsInput = {
+                receivers: [receiver1.address, receiver2.address],
+                amounts: [ethers.utils.parseEther('100'), ethers.utils.parseEther('200')],
+                endAts: [currentTimestamp + 100, currentTimestamp + 1000],
+                notes: ['data1', 'data2'],
+            };
+            const params: DistributeTokensWithTimestampParams = {
+                ...paramsInput,
+                signatures: await getDistributeTokensWithTimestampSignatures(driptributor, admins, admin, paramsInput, false),
+            };
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "address[]", "uint256[]", "uint40[]", "string[]"],
-                [driptributor.address, "distributeTokensWithTimestamp", receivers, amounts, endAts, data]
-            );
-            const invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
-
-            await expect(driptributor.distributeTokensWithTimestamp(
-                receivers,
-                amounts,
-                endAts,
-                data,
-                invalidSignatures
-            )).to.be.revertedWithCustomError(admin, 'FailedVerification');
+            await expect(getDistributeTokensWithTimestampTx(driptributor, deployer, params))
+                .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
         it('4.3.4.3. distributeTokensWithTimestamp unsuccessfully with invalid input', async () => {
-            const { admin, admins, driptributor, totalAmount, receiver1, receiver2 } = await setupBeforeTest({
+            const { admin, admins, driptributor, receiver1, receiver2, deployer } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
 
@@ -661,19 +674,19 @@ describe('4.3. Driptributor', async () => {
                 endAts: number[],
                 data: string[]
             ) {
-                let message = ethers.utils.defaultAbiCoder.encode(
-                    ['address', 'string', 'address[]', 'uint256[]', 'uint40[]', 'string[]'],
-                    [driptributor.address, 'distributeTokensWithTimestamp', receivers, amounts, endAts, data]
-                );
-                let signatures = await getSignatures(message, admins, await admin.nonce());
+                const paramsInput: DistributeTokensWithTimestampParamsInput = {
+                    receivers: receivers,
+                    amounts: amounts,
+                    endAts: endAts,
+                    notes: data,
+                };
+                const params: DistributeTokensWithTimestampParams = {
+                    ...paramsInput,
+                    signatures: await getDistributeTokensWithTimestampSignatures(driptributor, admins, admin, paramsInput),
+                };
 
-                await expect(driptributor.distributeTokensWithTimestamp(
-                    receivers,
-                    amounts,
-                    endAts,
-                    data,
-                    signatures
-                )).to.be.revertedWithCustomError(driptributor, 'InvalidInput');
+                await expect(getDistributeTokensWithTimestampTx(driptributor, deployer, params))
+                    .to.be.revertedWithCustomError(driptributor, 'InvalidInput');
             }
 
             const receivers = [receiver1.address, receiver2.address];
@@ -688,73 +701,62 @@ describe('4.3. Driptributor', async () => {
         });
 
         it('4.3.4.4. distributeTokensWithTimestamp unsuccessfully with insufficient funds', async () => {
-            const { admin, admins, driptributor, totalAmount, receiver1, receiver2 } = await setupBeforeTest({
+            const { admin, admins, driptributor, receiver1, receiver2, deployer } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
 
             let currentTimestamp = await time.latest() + 1000;
 
-            const receivers1 = [receiver1.address, receiver2.address];
-            const amounts1 = [ethers.utils.parseEther('100'), ethers.utils.parseEther('200')];
-            const endAts1 = [currentTimestamp + 100, currentTimestamp + 1000];
-            const data1 = ['data1', 'data2'];
-
+            const params1: DistributeTokensWithTimestampParamsInput = {
+                receivers: [receiver1.address, receiver2.address],
+                amounts: [ethers.utils.parseEther('100'), ethers.utils.parseEther('200')],
+                endAts: [currentTimestamp + 100, currentTimestamp + 1000],
+                notes:  ['data1', 'data2'],
+            };
             await callDriptributor_DistributeTokensWithTimestamp(
                 driptributor,
+                deployer,
                 admins,
-                receivers1,
-                amounts1,
-                endAts1,
-                data1,
-                await admin.nonce(),
+                admin,
+                params1,
             );
 
-            const receivers2 = [receiver1.address, receiver2.address];
-            const amounts2 = [ethers.utils.parseEther('300'), ethers.utils.parseEther('401')];
-            const endAts2 = [currentTimestamp + 200, currentTimestamp + 2000];
-            const data2 = ['data3', 'data4'];
+            const paramsInput2: DistributeTokensWithTimestampParamsInput = {
+                receivers: [receiver1.address, receiver2.address],
+                amounts: [ethers.utils.parseEther('300'), ethers.utils.parseEther('401')],
+                endAts: [currentTimestamp + 200, currentTimestamp + 2000],
+                notes: ['data3', 'data4'],
+            };
+            const params2: DistributeTokensWithTimestampParams = {
+                ...paramsInput2,
+                signatures: await getDistributeTokensWithTimestampSignatures(driptributor, admins, admin, paramsInput2),
+            };
 
-            const message2 = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "address[]", "uint256[]", "uint40[]", "string[]"],
-                [driptributor.address, "distributeTokensWithTimestamp", receivers2, amounts2, endAts2, data2]
-            );
-            const signatures2 = await getSignatures(message2, admins, await admin.nonce());
-
-            await expect(driptributor.distributeTokensWithTimestamp(
-                receivers2,
-                amounts2,
-                endAts2,
-                data2,
-                signatures2,
-            )).to.be.revertedWithCustomError(driptributor, 'InsufficientFunds');
+            await expect(getDistributeTokensWithTimestampTx(driptributor, deployer, params2))
+                .to.be.revertedWithCustomError(driptributor, 'InsufficientFunds');
         });
 
         it('4.3.4.5. distributeTokensWithTimestamp unsuccessfully with invalid end timestamp', async () => {
-            const { admin, admins, driptributor, receiver1, receiver2 } = await setupBeforeTest({
+            const { admin, admins, driptributor, receiver1, receiver2, deployer } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
 
             const currentTimestamp = await time.latest();
             await time.setNextBlockTimestamp(currentTimestamp + 10);
 
-            const receivers = [receiver1.address, receiver2.address];
-            const amounts = [ethers.utils.parseEther('100'), ethers.utils.parseEther('200')];
-            const endAts = [currentTimestamp + 10, currentTimestamp + 9];
-            const data = ['data1', 'data2'];
+            const paramsInput: DistributeTokensWithTimestampParamsInput = {
+                receivers: [receiver1.address, receiver2.address],
+                amounts: [ethers.utils.parseEther('100'), ethers.utils.parseEther('200')],
+                endAts: [currentTimestamp + 10, currentTimestamp + 9],
+                notes: ['data1', 'data2'],
+            };
+            const params: DistributeTokensWithTimestampParams = {
+                ...paramsInput,
+                signatures: await getDistributeTokensWithTimestampSignatures(driptributor, admins, admin, paramsInput),
+            };
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "address[]", "uint256[]", "uint40[]", "string[]"],
-                [driptributor.address, "distributeTokensWithTimestamp", receivers, amounts, endAts, data]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await expect(driptributor.distributeTokensWithTimestamp(
-                receivers,
-                amounts,
-                endAts,
-                data,
-                signatures,
-            )).to.be.revertedWithCustomError(driptributor, 'InvalidTimestamp');
+            await expect(getDistributeTokensWithTimestampTx(driptributor, deployer, params))
+                .to.be.revertedWithCustomError(driptributor, 'InvalidTimestamp');
         });
     });
     
@@ -875,18 +877,22 @@ describe('4.3. Driptributor', async () => {
         });
 
         it('4.3.5.2. withdraw unsuccessfully with zero vesting duration distribution', async () => {
-            const { driptributor, admin, admins, receiver1, primaryToken, totalAmount } = await setupBeforeTest({
+            const { driptributor, admin, admins, receiver1, primaryToken, totalAmount, deployer } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
 
+            const paramsInput: DistributeTokensWithDurationParamsInput = {
+                receivers: [receiver1.address],
+                amounts: [ethers.utils.parseEther('100')],
+                durations: [0],
+                notes: ['data1'],
+            };
             await callDriptributor_DistributeTokensWithDuration(
                 driptributor,
+                deployer,
                 admins,
-                [receiver1.address],
-                [ethers.utils.parseEther('100')],
-                [0],
-                ['data1'],
-                await admin.nonce(),
+                admin,
+                paramsInput,
             );
             
             let tx = await driptributor.connect(receiver1).withdraw([1]);
@@ -911,8 +917,10 @@ describe('4.3. Driptributor', async () => {
 
             let distributionIds = [1, 2];
 
-            await expect(driptributor.connect(receiver1).withdraw(distributionIds)).to.be.revertedWithCustomError(driptributor, 'Unauthorized');
-            await expect(driptributor.connect(receiver2).withdraw(distributionIds)).to.be.revertedWithCustomError(driptributor, 'Unauthorized');
+            await expect(driptributor.connect(receiver1).withdraw(distributionIds))
+                .to.be.revertedWithCustomError(driptributor, 'Unauthorized');
+            await expect(driptributor.connect(receiver2).withdraw(distributionIds))
+                .to.be.revertedWithCustomError(driptributor, 'Unauthorized');
         });
 
         it('4.3.5.4. withdraw unsuccessfully with staked distribution', async () => {
@@ -924,7 +932,8 @@ describe('4.3. Driptributor', async () => {
             let distributionIds = [1, 3];
             await driptributor.connect(receiver1).stake(distributionIds, 0, 0);
 
-            await expect(driptributor.connect(receiver1).withdraw(distributionIds)).to.be.revertedWithCustomError(driptributor, 'AlreadyStaked');
+            await expect(driptributor.connect(receiver1).withdraw(distributionIds))
+                .to.be.revertedWithCustomError(driptributor, 'AlreadyStaked');
         });
 
         it('4.3.5.5. withdraw unsuccessfully when paused', async () => {
@@ -936,7 +945,8 @@ describe('4.3. Driptributor', async () => {
 
             let distributionIds = [1, 3];
 
-            await expect(driptributor.connect(receiver1).withdraw(distributionIds)).to.be.revertedWith('Pausable: paused');            
+            await expect(driptributor.connect(receiver1).withdraw(distributionIds))
+                .to.be.revertedWith('Pausable: paused');            
         });
     });
 
@@ -1072,7 +1082,7 @@ describe('4.3. Driptributor', async () => {
             )).to.be.revertedWithCustomError(driptributor, 'AlreadyStaked');
         });
 
-        it('4.3.6.6. stake unsuccessfully when distributions\' total amount is insufficient', async () => {
+        it('4.3.6.6. stake unsuccessfully when total amount of distributions is insufficient', async () => {
             const { driptributor, receiver1 } = await setupBeforeTest({
                 updateStakeTokens: true,
                 addDistribution: true,
@@ -1094,7 +1104,11 @@ describe('4.3. Driptributor', async () => {
             });
 
             let distributionIds = [1, 3];
-            await expect(driptributor.connect(receiver1).stake(distributionIds, ethers.utils.parseEther('40'), ethers.utils.parseEther('20'))).to.be.revertedWith('Pausable: paused');
+            await expect(driptributor.connect(receiver1).stake(
+                distributionIds,
+                ethers.utils.parseEther('40'),
+                ethers.utils.parseEther('20'))
+            ).to.be.revertedWith('Pausable: paused');
         });
     });
 });

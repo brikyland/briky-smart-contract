@@ -18,6 +18,10 @@ import { randomArrayWithSum, randomBigNumber, randomInt, shuffle, structToObject
 import { StakeTokenOperation } from '@utils/models/enums';
 import { Initialization as LiquidityInitialization } from '@tests/liquidity/test.initialization';
 import { callPausable_Pause } from '@utils/callWithSignatures/Pausable';
+import { UpdateStakeTokensParamsInput, UpdateTreasuryParamsInput } from '@utils/models/PrimaryToken';
+import { InitializeRewardingParams, InitializeRewardingParamsInput, UpdateFeeRateParams, UpdateFeeRateParamsInput } from '@utils/models/StakeToken';
+import { getInitializeRewardingSignatures, getUpdateFeeRateSignatures } from '@utils/signatures/StakeToken';
+import { getInitializeRewardingTx, getUpdateFeeRateTx } from '@utils/transaction/StakeToken';
 
 interface StakeTokenFixture {
     deployer: any;
@@ -99,13 +103,17 @@ describe('4.5. StakeToken', async () => {
             LiquidityInitialization.STAKE_TOKEN_FeeRate,
         ));
 
+        const updateStakeTokensParamsInput: UpdateStakeTokensParamsInput = {
+            stakeToken1: stakeToken1.address,
+            stakeToken2: stakeToken2.address,
+            stakeToken3: stakeToken3.address,
+        };
         await callPrimaryToken_UpdateStakeTokens(
-            primaryToken,
+            primaryToken as any,
+            deployer,
             admins,
-            stakeToken1.address,
-            stakeToken2.address,
-            stakeToken3.address,
-            await admin.nonce()
+            admin,
+            updateStakeTokensParamsInput,
         );
 
         const treasury = await deployTreasury(
@@ -115,11 +123,15 @@ describe('4.5. StakeToken', async () => {
             primaryToken.address,
         ) as Treasury;
 
+        const updateTreasuryParamsInput: UpdateTreasuryParamsInput = {
+            treasury: treasury.address,
+        };
         await callPrimaryToken_UpdateTreasury(
-            primaryToken,
+            primaryToken as any,
+            deployer,
             admins,
-            treasury.address,
-            await admin.nonce()
+            admin,
+            updateTreasuryParamsInput,
         );
 
         return {
@@ -348,13 +360,16 @@ describe('4.5. StakeToken', async () => {
 
             let timestamp = await time.latest() + 100;
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "uint256", "address"],
-                [stakeToken1.address, "initializeRewarding", timestamp, stakeToken2.address]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput: InitializeRewardingParamsInput = {
+                initialLastRewardFetch: BigNumber.from(timestamp),
+                successor: stakeToken2.address,
+            };
+            const params: InitializeRewardingParams = {
+                ...paramsInput,
+                signatures: await getInitializeRewardingSignatures(stakeToken1 as any, admins, admin, paramsInput),
+            };
 
-            const tx = await stakeToken1.initializeRewarding(timestamp, stakeToken2.address, signatures);
+            const tx = await getInitializeRewardingTx(stakeToken1 as any, deployer, params);
             await tx.wait();
 
             expect(await stakeToken1.lastRewardFetch()).to.equal(timestamp);
@@ -362,56 +377,57 @@ describe('4.5. StakeToken', async () => {
         });
 
         it('4.5.2.2. initialize rewarding unsuccessfully with invalid signatures', async () => {
-            const { admin, admins, stakeToken1, stakeToken2 } = await setupBeforeTest();
+            const { deployer, admin, admins, stakeToken1, stakeToken2 } = await setupBeforeTest();
 
             let timestamp = await time.latest() + 100;
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "uint256", "address"],
-                [stakeToken1.address, "initializeRewarding", timestamp, stakeToken2.address]
-            );
-            const invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+            const paramsInput: InitializeRewardingParamsInput = {
+                initialLastRewardFetch: BigNumber.from(timestamp),
+                successor: stakeToken2.address,
+            };
+            const params: InitializeRewardingParams = {
+                ...paramsInput,
+                signatures: await getInitializeRewardingSignatures(stakeToken1 as any, admins, admin, paramsInput, false),
+            };
             
-            await expect(stakeToken1.initializeRewarding(
-                timestamp,
-                stakeToken2.address,
-                invalidSignatures,
-            )).to.be.revertedWithCustomError(admin, 'FailedVerification');
+            await expect(getInitializeRewardingTx(stakeToken1 as any, deployer, params))
+                .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
         it('4.5.2.3. initialize rewarding unsuccessfully when already initialized', async () => {
-            const { admin, admins, stakeToken1, stakeToken2 } = await setupBeforeTest({
+            const { deployer, admin, admins, stakeToken1, stakeToken2 } = await setupBeforeTest({
                 initializeRewarding: true,
             });
 
             let timestamp = await time.latest() + 100;
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "uint256", "address"],
-                [stakeToken1.address, "initializeRewarding", timestamp, stakeToken2.address]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput: InitializeRewardingParamsInput = {
+                initialLastRewardFetch: BigNumber.from(timestamp),
+                successor: stakeToken2.address,
+            };
+            const params: InitializeRewardingParams = {
+                ...paramsInput,
+                signatures: await getInitializeRewardingSignatures(stakeToken1 as any, admins, admin, paramsInput),
+            };
 
-            await expect(stakeToken1.initializeRewarding(
-                timestamp,
-                stakeToken2.address,
-                signatures,
-            )).to.be.revertedWithCustomError(stakeToken1, 'AlreadyStartedRewarding');
+            await expect(getInitializeRewardingTx(stakeToken1 as any, deployer, params))
+                .to.be.revertedWithCustomError(stakeToken1, 'AlreadyStartedRewarding');
         });
     });
 
     describe('4.5.3. updateFeeRate(uint256, bytes[])', async () => {
         it('4.5.3.1. updateFeeRate successfully with valid signatures', async () => {
-            const { admin, admins, stakeToken1 } = await setupBeforeTest();
+            const { deployer, admin, admins, stakeToken1 } = await setupBeforeTest();
 
             const rateValue = ethers.utils.parseEther('0.2');
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "uint256"],
-                [stakeToken1.address, "updateFeeRate", rateValue]
-            );
+            const paramsInput: UpdateFeeRateParamsInput = {
+                feeRate: rateValue,
+            };
+            const params: UpdateFeeRateParams = {
+                ...paramsInput,
+                signatures: await getUpdateFeeRateSignatures(stakeToken1 as any, admins, admin, paramsInput),
+            };
 
-            const signatures = await getSignatures(message, admins, await admin.nonce());
-
-            const tx = await stakeToken1.updateFeeRate(rateValue, signatures);
+            const tx = await getUpdateFeeRateTx(stakeToken1 as any, deployer, params);
             await tx.wait();
 
             await expect(tx).to.emit(stakeToken1, 'FeeRateUpdate').withArgs(
@@ -432,33 +448,32 @@ describe('4.5. StakeToken', async () => {
         });
 
         it('4.5.3.2. updateFeeRate unsuccessfully with invalid signatures', async () => {
-            const { admin, admins, stakeToken1 } = await setupBeforeTest();
+            const { deployer, admin, admins, stakeToken1 } = await setupBeforeTest();
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "uint256"],
-                [stakeToken1.address, "updateFeeRate", ethers.utils.parseEther('0.2')]
-            );
-            const invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
-
-            await expect(stakeToken1.updateFeeRate(
-                ethers.utils.parseEther('0.2'),
-                invalidSignatures
-            )).to.be.revertedWithCustomError(admin, 'FailedVerification');
+            const paramsInput: UpdateFeeRateParamsInput = {
+                feeRate: ethers.utils.parseEther('0.2'),
+            };
+            const params: UpdateFeeRateParams = {
+                ...paramsInput,
+                signatures: await getUpdateFeeRateSignatures(stakeToken1 as any, admins, admin, paramsInput, false),
+            };
+            await expect(getUpdateFeeRateTx(stakeToken1 as any, deployer, params))
+                .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
         it('4.5.3.3. updateFeeRate unsuccessfully with invalid rate', async () => {
-            const { admin, admins, stakeToken1 } = await setupBeforeTest();
+            const { deployer, admin, admins, stakeToken1 } = await setupBeforeTest();
             
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "uint256"],
-                [stakeToken1.address, "updateFeeRate", Constant.COMMON_RATE_MAX_FRACTION.add(1)]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput: UpdateFeeRateParamsInput = {
+                feeRate: Constant.COMMON_RATE_MAX_FRACTION.add(1),
+            };
+            const params: UpdateFeeRateParams = {
+                ...paramsInput,
+                signatures: await getUpdateFeeRateSignatures(stakeToken1 as any, admins, admin, paramsInput),
+            };
 
-            await expect(stakeToken1.updateFeeRate(
-                Constant.COMMON_RATE_MAX_FRACTION.add(1),
-                signatures
-            )).to.be.revertedWithCustomError(stakeToken1, 'InvalidRate');
+            await expect(getUpdateFeeRateTx(stakeToken1 as any, deployer, params))
+                .to.be.revertedWithCustomError(stakeToken1, 'InvalidRate');
         });
     });
 
@@ -553,7 +568,7 @@ describe('4.5. StakeToken', async () => {
             lastRewardFetch = lastRewardFetch.add(Constant.STAKE_TOKEN_REWARD_FETCH_COOLDOWN);
             await time.setNextBlockTimestamp(lastRewardFetch);
             await expect(stakeToken1.fetchReward())
-                .to.be.revertedWithCustomError(stakeToken1, 'NoStakeholder');
+                .to.be.revertedWithCustomError(stakeToken1, 'NoStake');
         });        
     });
 
@@ -571,24 +586,33 @@ describe('4.5. StakeToken', async () => {
             const stakeAmount1 = ethers.utils.parseEther("100");
             const tx1 = (stakeToken1.connect(staker1).stake(staker1.address, stakeAmount1));
 
-            await expect(tx1)
-                .to.emit(stakeToken1, 'Stake')
-                .withArgs(staker1.address, stakeAmount1);
+            await expect(tx1).to.emit(stakeToken1, 'Stake').withArgs(
+                staker1.address,
+                stakeAmount1,
+                ethers.constants.Zero,
+            );
 
-            expect(await primaryToken.balanceOf(stakeToken1.address)).to.equal(initStakeToken1PrimaryBalance.add(stakeAmount1));
-            expect(await primaryToken.balanceOf(staker1.address)).to.equal(initStaker1PrimaryBalance.sub(stakeAmount1));
+            expect(await primaryToken.balanceOf(stakeToken1.address)).to.equal(
+                initStakeToken1PrimaryBalance.add(stakeAmount1)
+            );
+            expect(await primaryToken.balanceOf(staker1.address)).to.equal(
+                initStaker1PrimaryBalance.sub(stakeAmount1)
+            );
 
             expect(await stakeToken1.totalSupply()).to.equal(stakeAmount1);
 
             const stakeAmount2 = ethers.utils.parseEther("1000");
             const tx2 = (stakeToken1.connect(staker1).stake(staker1.address, stakeAmount2));
 
-            await expect(tx2)
-                .to.emit(stakeToken1, 'Stake')
-                .withArgs(staker1.address, stakeAmount2);
+            await expect(tx2).to.emit(stakeToken1, 'Stake').withArgs(
+                staker1.address,
+                stakeAmount2,
+                ethers.constants.Zero,
+            );
 
-            expect(await primaryToken.balanceOf(stakeToken1.address))
-                .to.equal(initStakeToken1PrimaryBalance.add(stakeAmount1).add(stakeAmount2));
+            expect(await primaryToken.balanceOf(stakeToken1.address)).to.equal(
+                initStakeToken1PrimaryBalance.add(stakeAmount1).add(stakeAmount2)
+            );
             expect(await primaryToken.balanceOf(staker1.address))
                 .to.equal(initStaker1PrimaryBalance.sub(stakeAmount1).sub(stakeAmount2));
 
@@ -625,9 +649,11 @@ describe('4.5. StakeToken', async () => {
 
             const tx1 = (stakeToken1.connect(staker1).stake(staker1.address, stakeValue1));
 
-            await expect(tx1)
-                .to.emit(stakeToken1, 'Stake')
-                .withArgs(staker1.address, stakeValue1);
+            await expect(tx1).to.emit(stakeToken1, 'Stake').withArgs(
+                staker1.address,
+                stakeValue1,
+                feeAmount1,
+            );
 
             expect(await primaryToken.balanceOf(stakeToken1.address)).to.equal(initStakeToken1PrimaryBalance.add(stakeValue1));
             expect(await primaryToken.balanceOf(staker1.address)).to.equal(initStaker1PrimaryBalance.sub(stakeValue1));
@@ -651,9 +677,11 @@ describe('4.5. StakeToken', async () => {
             
             const tx2 = (stakeToken1.connect(staker1).stake(staker1.address, stakeValue2));
 
-            await expect(tx2)
-                .to.emit(stakeToken1, 'Stake')
-                .withArgs(staker1.address, stakeValue2);
+            await expect(tx2).to.emit(stakeToken1, 'Stake').withArgs(
+                staker1.address,
+                stakeValue2,
+                feeAmount2,
+            );
 
             expect(await primaryToken.balanceOf(stakeToken1.address))
                 .to.equal(initStakeToken1PrimaryBalance.add(stakeValue1).add(stakeValue2));
@@ -700,9 +728,10 @@ describe('4.5. StakeToken', async () => {
             const tx1 = await stakeToken1.connect(staker1).unstake(unstakeAmount1);
             await tx1.wait();
 
-            await expect(tx1)
-                .to.emit(stakeToken1, 'Unstake')
-                .withArgs(staker1.address, unstakeAmount1);
+            await expect(tx1).to.emit(stakeToken1, 'Unstake').withArgs(
+                staker1.address,
+                unstakeAmount1
+            );
 
             expect(await stakeToken1.totalSupply()).to.equal(stakeAmount.sub(unstakeAmount1));
 
@@ -741,7 +770,7 @@ describe('4.5. StakeToken', async () => {
         });
 
         it('4.5.6.2. unstake unsuccessfully when rewarding is not completed', async () => {
-            const { stakeToken1, staker1, primaryToken } = await setupBeforeTest({
+            const { stakeToken1, staker1 } = await setupBeforeTest({
                 setFeeRate: true,
                 initializeRewarding: true,
                 preparePrimaryTokenForStakers: true,
@@ -756,7 +785,7 @@ describe('4.5. StakeToken', async () => {
 
             // Unstake
             await expect(stakeToken1.connect(staker1).unstake(ethers.utils.parseEther("30")))
-                .to.be.revertedWithCustomError(stakeToken1, 'NotCompletedRewarding');
+                .to.be.revertedWithCustomError(stakeToken1, 'NotCulminated');
         });
 
         it('4.5.6.3. unstake unsuccessfully when amount is greater than balance', async () => {
@@ -803,9 +832,10 @@ describe('4.5. StakeToken', async () => {
             const tx1 = await stakeToken1.connect(staker1).promote(promoteAmount1);
             await tx1.wait();
 
-            await expect(tx1)
-                .to.emit(stakeToken1, 'Promotion')
-                .withArgs(staker1.address, promoteAmount1);
+            await expect(tx1).to.emit(stakeToken1, 'Promotion').withArgs(
+                staker1.address,
+                promoteAmount1
+            );
                 
             expect(await stakeToken1.totalSupply()).to.equal(stakeAmount.sub(promoteAmount1));
             expect(await stakeToken2.totalSupply()).to.equal(promoteAmount1);
@@ -822,18 +852,29 @@ describe('4.5. StakeToken', async () => {
             const tx2 = await stakeToken1.connect(staker1).promote(promoteAmount2);
             await tx2.wait();
 
-            await expect(tx2)
-                .to.emit(stakeToken1, 'Promotion')
-                .withArgs(staker1.address, promoteAmount2);
+            await expect(tx2).to.emit(stakeToken1, 'Promotion').withArgs(
+                staker1.address,
+                promoteAmount2
+            );
 
             expect(await stakeToken1.totalSupply()).to.equal(stakeAmount.sub(promoteAmount1).sub(promoteAmount2));
             expect(await stakeToken2.totalSupply()).to.equal(promoteAmount1.add(promoteAmount2));
 
-            expect(await primaryToken.balanceOf(stakeToken1.address)).to.equal(stakeAmount.sub(promoteAmount1).sub(promoteAmount2));
-            expect(await primaryToken.balanceOf(stakeToken2.address)).to.equal(promoteAmount1.add(promoteAmount2));
+            expect(await primaryToken.balanceOf(stakeToken1.address)).to.equal(
+                stakeAmount.sub(promoteAmount1).sub(promoteAmount2)
+            );
+            expect(await primaryToken.balanceOf(stakeToken2.address)).to.equal(
+                promoteAmount1.add(promoteAmount2)
+            );
 
-            expectEqualWithErrorMargin(await stakeToken1.balanceOf(staker1.address), stakeAmount.sub(promoteAmount1).sub(promoteAmount2));
-            expectEqualWithErrorMargin(await stakeToken2.balanceOf(staker1.address), promoteAmount1.add(promoteAmount2));
+            expectEqualWithErrorMargin(
+                await stakeToken1.balanceOf(staker1.address),
+                stakeAmount.sub(promoteAmount1).sub(promoteAmount2)
+            );
+            expectEqualWithErrorMargin(
+                await stakeToken2.balanceOf(staker1.address),
+                promoteAmount1.add(promoteAmount2)
+            );
 
             // Transaction #3
             const promoteAmount3 = ethers.utils.parseEther("20");
@@ -841,9 +882,10 @@ describe('4.5. StakeToken', async () => {
             const tx3 = await stakeToken2.connect(staker1).promote(promoteAmount3);
             await tx3.wait();
 
-            await expect(tx3)
-                .to.emit(stakeToken2, 'Promotion')
-                .withArgs(staker1.address, promoteAmount3);
+            await expect(tx3).to.emit(stakeToken2, 'Promotion').withArgs(
+                staker1.address,
+                promoteAmount3,
+            );
 
             expect(await stakeToken2.totalSupply()).to.equal(promoteAmount1.add(promoteAmount2).sub(promoteAmount3));
             expect(await stakeToken3.totalSupply()).to.equal(promoteAmount3);
@@ -1267,9 +1309,11 @@ describe('4.5. StakeToken', async () => {
             );
             await tx.wait();
 
-            await expect(tx)
-                .to.emit(stakeToken1, 'Transfer')
-                .withArgs(staker1.address, staker2.address, ethers.utils.parseEther("40"));
+            await expect(tx).to.emit(stakeToken1, 'Transfer').withArgs(
+                staker1.address,
+                staker2.address,
+                ethers.utils.parseEther("40"),
+            );
 
             expect(await stakeToken1.balanceOf(staker1.address)).to.equal(ethers.utils.parseEther("60"));
             expect(await stakeToken1.balanceOf(staker2.address)).to.equal(ethers.utils.parseEther("40"));

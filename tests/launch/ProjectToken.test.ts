@@ -1436,7 +1436,7 @@ describe('7.2. ProjectToken', async () => {
                 .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
         });
 
-        it('7.2.10.4. mint unsuccessfully when when sender is not project\'s launchpad', async () => {
+        it('7.2.10.4. mint unsuccessfully when when sender is not launchpad of project', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
             });
@@ -2842,7 +2842,7 @@ describe('7.2. ProjectToken', async () => {
                 .to.be.revertedWithCustomError(projectToken, `InvalidTimestamp`);
         });
 
-        it('7.2.20.5. return 0 for project\'s launchpad contract', async () => {
+        it('7.2.20.5. return 0 for launchpad contract of project', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
             });
