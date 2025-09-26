@@ -24,7 +24,7 @@ interface TreasuryFixture {
     receiver: any;
 }
 
-describe.only('4.6. Treasury', async () => {
+describe('4.6. Treasury', async () => {
     async function treasuryFixture(): Promise<TreasuryFixture> {
         const accounts = await ethers.getSigners();
         const deployer = accounts[0];
