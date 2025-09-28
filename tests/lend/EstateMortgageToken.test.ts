@@ -42,7 +42,6 @@ import { BigNumber, Contract } from 'ethers';
 import { getBytes4Hex, getInterfaceID, randomBigNumber, structToObject } from '@utils/utils';
 import { deployEstateMortgageToken } from '@utils/deployments/lend/estateMortgageToken';
 import { callEstateToken_AuthorizeTokenizers, callEstateToken_UpdateCommissionToken, callEstateToken_UpdateZoneRoyaltyRate } from '@utils/callWithSignatures/estateToken';
-import { callEstateMortgageToken_Pause, callEstateMortgageToken_UpdateFeeRate } from '@utils/callWithSignatures/estateMortgageToken';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployReentrancyERC1155Holder } from '@utils/deployments/mock/mockReentrancy/reentrancyERC1155Holder';
 import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
@@ -58,6 +57,7 @@ import { getRegisterBrokerTx } from '@utils/transaction/CommissionToken';
 import { applyDiscount, scaleRate } from '@utils/formula';
 import { EstateBorrowParams } from '@utils/models/EstateMortgageToken';
 import { getEstateBorrowTx } from '@utils/transaction/EstateMortgageToken';
+import { callPausable_Pause } from '@utils/callWithSignatures/Pausable';
 
 
 async function testReentrancy_estateMortgageToken(
@@ -110,8 +110,6 @@ interface EstateMortgageTokenFixture {
 
     zone1: string;
     zone2: string;
-
-    mockCurrencyExclusiveRate: BigNumber;
 }
 
 describe('3.1. EstateMortgageToken', async () => {
@@ -164,8 +162,11 @@ describe('3.1. EstateMortgageToken', async () => {
             'MockCurrency',
             'MCK'
         ) as Currency;
-        const mockCurrencyExclusiveRate = ethers.utils.parseEther('0.3');
-        await callTransaction(currency.setExclusiveDiscount(mockCurrencyExclusiveRate, Constant.COMMON_RATE_DECIMALS));
+
+        await callTransaction(
+            currency.setExclusiveDiscount(ethers.utils.parseEther('0.3'),
+            Constant.COMMON_RATE_DECIMALS)
+        );
 
         const MockEstateTokenFactory = await smock.mock('MockEstateToken') as any;
         const estateToken = await MockEstateTokenFactory.deploy();
@@ -246,7 +247,6 @@ describe('3.1. EstateMortgageToken', async () => {
             custodian2,
             broker1,
             broker2,
-            mockCurrencyExclusiveRate,
             estateMortgageTokenOwner,
             zone1,
             zone2,
@@ -264,6 +264,7 @@ describe('3.1. EstateMortgageToken', async () => {
         const fixture = await loadFixture(estateMortgageTokenFixture);
 
         const {
+            deployer,
             admin,
             admins,
             currency,
@@ -444,10 +445,11 @@ describe('3.1. EstateMortgageToken', async () => {
         }
 
         if (pause) {
-            await callEstateMortgageToken_Pause(
+            await callPausable_Pause(
                 estateMortgageToken,
+                deployer,
                 admins,
-                await admin.nonce()
+                admin,
             );
         }
 
@@ -1168,7 +1170,7 @@ describe('3.1. EstateMortgageToken', async () => {
             const fixture = await beforeEstateMortgageTokenTest();
             await testLend(
                 fixture,
-                fixture.mockCurrencyExclusiveRate,
+                ethers.utils.parseEther('0.3'),
                 ethers.utils.parseEther('0.1'),
                 LendInitialization.ESTATE_MORTGAGE_TOKEN_FeeRate,
                 false,
@@ -1181,7 +1183,7 @@ describe('3.1. EstateMortgageToken', async () => {
 
             await testLend(
                 fixture,
-                fixture.mockCurrencyExclusiveRate,
+                ethers.utils.parseEther('0.3'),
                 ethers.utils.parseEther('0.1'),
                 LendInitialization.ESTATE_MORTGAGE_TOKEN_FeeRate,
                 true,
@@ -1202,7 +1204,7 @@ describe('3.1. EstateMortgageToken', async () => {
                     }
                     await testLend(
                         fixture,
-                        fixture.mockCurrencyExclusiveRate,
+                        ethers.utils.parseEther('0.3'),
                         ethers.utils.parseEther('0.1'),
                         LendInitialization.ESTATE_MORTGAGE_TOKEN_FeeRate,
                         isERC20,

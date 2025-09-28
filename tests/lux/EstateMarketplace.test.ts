@@ -252,6 +252,7 @@ describe('6.2. EstateMarketplace', async () => {
         const fixture = await loadFixture(estateMarketplaceFixture);
 
         const {
+            deployer,
             admin,
             admins,
             currency,
@@ -430,7 +431,7 @@ describe('6.2. EstateMarketplace', async () => {
         }
 
         if (pause) {
-            await callPausable_Pause(estateMarketplace, admins, admin);
+            await callPausable_Pause(estateMarketplace, deployer, admins, admin);
         }
 
         return {

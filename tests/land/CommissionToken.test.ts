@@ -142,7 +142,7 @@ describe('2.1. CommissionToken', async () => {
         pause = false,
     } = {}): Promise<CommissionTokenFixture> {
         const fixture = await loadFixture(commissionTokenFixture);
-        const { admin, admins, commissionToken, estateToken, manager, moderator, broker1, broker2, zone1, zone2 } = fixture;
+        const { deployer, admin, admins, commissionToken, estateToken, manager, moderator, broker1, broker2, zone1, zone2 } = fixture;
 
         await callAdmin_AuthorizeManagers(
             admin,
@@ -228,7 +228,7 @@ describe('2.1. CommissionToken', async () => {
         }
 
         if (pause) {
-            await callPausable_Pause(commissionToken, admins, admin)
+            await callPausable_Pause(commissionToken, deployer, admins, admin)
         }
 
         return {

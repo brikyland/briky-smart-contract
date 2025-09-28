@@ -175,7 +175,7 @@ describe('4.3. Driptributor', async () => {
     } = {}): Promise<DriptributorFixture> {
         const fixture = await loadFixture(driptributorFixture);
 
-        const { admin, driptributor, admins, stakeToken1, stakeToken2, stakeToken3, receiver1, receiver2, treasury, currency, deployer } = fixture;
+        const { deployer, admin, driptributor, admins, stakeToken1, stakeToken2, stakeToken3, receiver1, receiver2, treasury, currency } = fixture;
 
         await prepareERC20(currency, [deployer], [treasury], ethers.utils.parseEther("1000000"));
         await treasury.provideLiquidity(ethers.utils.parseEther("1000000"));
@@ -231,7 +231,7 @@ describe('4.3. Driptributor', async () => {
         }
 
         if (pause) {
-            await callPausable_Pause(driptributor, admins, admin);
+            await callPausable_Pause(driptributor, deployer, admins, admin);
         }
 
         return {

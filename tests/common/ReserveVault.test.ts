@@ -203,7 +203,7 @@ describe('1.8. ReserveVault', async () => {
         }
 
         if (pause) {
-            await callPausable_Pause(reserveVault as any, admins, admin)
+            await callPausable_Pause(reserveVault as any, deployer, admins, admin)
         }
 
         return {

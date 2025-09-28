@@ -276,6 +276,7 @@ describe('2.4. EstateToken', async () => {
     } = {}): Promise<EstateTokenFixture> {
         const fixture = await loadFixture(estateTokenFixture);
         const {
+            deployer,
             admin,
             admins,
             manager,
@@ -291,7 +292,6 @@ describe('2.4. EstateToken', async () => {
             validator,
             custodian1,
             custodian2,
-            custodian3,
             custodians
         } = fixture;
 
@@ -415,7 +415,7 @@ describe('2.4. EstateToken', async () => {
         }
 
         if (pause) {
-            await callPausable_Pause(estateToken, admins, admin);
+            await callPausable_Pause(estateToken, deployer, admins, admin);
         }
 
         return fixture;

@@ -359,6 +359,7 @@ describe('2.3. EstateLiquidator', async () => {
     } = {}): Promise<EstateLiquidatorFixture> {
         const fixture = await loadFixture(estateLiquidatorFixture);
         const { 
+            deployer,
             admin,
             admins,
             manager,
@@ -374,7 +375,6 @@ describe('2.3. EstateLiquidator', async () => {
             zone1, zone2,
             operator1, operator2, operator3,
             broker1, broker2,
-            deployer,
             estateForger,
             failReceiver,
             reentrancyERC20,
@@ -584,7 +584,7 @@ describe('2.3. EstateLiquidator', async () => {
         }
 
         if (pause) {
-            await callPausable_Pause(estateLiquidator, admins, admin);
+            await callPausable_Pause(estateLiquidator, deployer, admins, admin);
         }
 
         return fixture;

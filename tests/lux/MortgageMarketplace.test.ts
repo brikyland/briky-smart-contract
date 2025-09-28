@@ -281,6 +281,7 @@ describe('6.3. MortgageMarketplace', async () => {
     } = {}): Promise<MortgageMarketplaceFixture> {
         const fixture = await loadFixture(mortgageMarketplaceFixture);
         const {
+            deployer,
             admin,
             admins,
             currency,
@@ -391,7 +392,7 @@ describe('6.3. MortgageMarketplace', async () => {
         }
 
         if (pause) {
-            await callPausable_Pause(mortgageMarketplace, admins, admin);
+            await callPausable_Pause(mortgageMarketplace, deployer, admins, admin);
         }
 
         return {

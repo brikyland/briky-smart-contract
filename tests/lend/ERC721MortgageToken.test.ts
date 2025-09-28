@@ -7,7 +7,6 @@ import {
     IERC165Upgradeable__factory,
     IERC2981Upgradeable__factory,
     ERC721MortgageToken,
-    IERC1155ReceiverUpgradeable__factory,
     ICommon__factory,
     IERC721MetadataUpgradeable__factory,
     IERC721Upgradeable__factory,
@@ -16,13 +15,13 @@ import {
     RoyaltyCollection,
     RoyaltyCollection__factory,
 } from '@typechain-types';
-import { callTransaction, getBalance, getSignatures, prepareERC20, prepareNativeToken, randomWallet, resetERC20, resetNativeToken, testReentrancy } from '@utils/blockchain';
+import { callTransaction, getBalance, prepareERC20, prepareNativeToken, randomWallet, resetERC20, resetNativeToken, testReentrancy } from '@utils/blockchain';
 import { Constant } from '@tests/test.constant';
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
 import { deployCurrency } from '@utils/deployments/common/currency';
 import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
-
+import { getUpdateBaseURISignatures, getUpdateFeeRateSignatures } from '@utils/signatures/MortgageToken';
 import { MockContract, smock } from '@defi-wonderland/smock';
 
 import {
@@ -40,9 +39,12 @@ import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentra
 import { MortgageState } from '@utils/models/enums';
 import { Initialization as LendInitialization } from '@tests/lend/test.initialization';
 import { applyDiscount, scaleRate } from '@utils/formula';
-import { ERC721BorrowParams } from '@utils/models/ERC721MortgageToken';
-import { getERC721BorrowTx } from '@utils/transaction/ERC721MortgageToken';
+import { ERC721BorrowParams, RegisterCollateralsParams, RegisterCollateralsParamsInput } from '@utils/models/ERC721MortgageToken';
+import { getERC721BorrowTx, getRegisterCollateralsTx } from '@utils/transaction/ERC721MortgageToken';
 import { callPausable_Pause } from '@utils/callWithSignatures/Pausable';
+import { UpdateBaseURIParams, UpdateBaseURIParamsInput, UpdateFeeRateParams, UpdateFeeRateParamsInput } from '@utils/models/MortgageToken';
+import { getUpdateBaseURITx, getUpdateFeeRateTx } from '@utils/transaction/MortgageToken';
+import { getRegisterCollateralsSignatures } from '@utils/signatures/ERC721MortgageToken';
 
 
 async function testReentrancy_erc721MortgageToken(
@@ -86,8 +88,6 @@ interface ERC721MortgageTokenFixture {
     moderator: any;
     royaltyReceiver: any;
     erc721MortgageTokenOwner: any;
-
-    mockCurrencyExclusiveRate: BigNumber;
 }
 
 describe('3.2. ERC721MortgageToken', async () => {
@@ -125,8 +125,11 @@ describe('3.2. ERC721MortgageToken', async () => {
             'MockCurrency',
             'MCK'
         ) as Currency;
-        const mockCurrencyExclusiveRate = ethers.utils.parseEther('0.3');
-        await callTransaction(currency.setExclusiveDiscount(mockCurrencyExclusiveRate, Constant.COMMON_RATE_DECIMALS));
+
+        await callTransaction(currency.setExclusiveDiscount(
+            ethers.utils.parseEther('0.3'),
+            Constant.COMMON_RATE_DECIMALS
+        ));
 
         const SmockCollectionFactory = await smock.mock<RoyaltyCollection__factory>("RoyaltyCollection");
         const feeReceiverCollection = await SmockCollectionFactory.deploy();
@@ -186,7 +189,6 @@ describe('3.2. ERC721MortgageToken', async () => {
             lender2,
             borrower1,
             borrower2,
-            mockCurrencyExclusiveRate,
             erc721MortgageTokenOwner,
         };
     };
@@ -203,6 +205,7 @@ describe('3.2. ERC721MortgageToken', async () => {
         const fixture = await loadFixture(erc721MortgageTokenFixture);
 
         const {
+            deployer,
             admin,
             admins,
             currency,
@@ -237,11 +240,14 @@ describe('3.2. ERC721MortgageToken', async () => {
 
         if (!skipRegisterCollaterals) {
             await callERC721MortgageToken_RegisterCollaterals(
-                erc721MortgageToken,
+                erc721MortgageToken as any,
+                deployer,
                 admins,
-                [feeReceiverCollection.address, otherCollection.address],
-                true,
-                await admin.nonce()
+                admin,
+                {
+                    tokens: [feeReceiverCollection.address, otherCollection.address],
+                    isCollateral: true,
+                }
             );
         }
 
@@ -308,7 +314,7 @@ describe('3.2. ERC721MortgageToken', async () => {
         }
 
         if (pause) {
-            await callPausable_Pause(erc721MortgageToken, admins, admin);
+            await callPausable_Pause(erc721MortgageToken, deployer, admins, admin);
         }
 
         return {
@@ -321,7 +327,9 @@ describe('3.2. ERC721MortgageToken', async () => {
             const { admin, feeReceiver, erc721MortgageToken } = await beforeERC721MortgageTokenTest();
 
             const tx = erc721MortgageToken.deployTransaction;
-            await expect(tx).to.emit(erc721MortgageToken, "BaseURIUpdate").withArgs(LendInitialization.ERC721_MORTGAGE_TOKEN_BaseURI);
+            await expect(tx).to.emit(erc721MortgageToken, "BaseURIUpdate").withArgs(
+                LendInitialization.ERC721_MORTGAGE_TOKEN_BaseURI
+            );
             await expect(tx).to.emit(erc721MortgageToken, "FeeRateUpdate").withArgs(
                 (rate: any) => {
                     expect(structToObject(rate)).to.deep.equal({
@@ -362,69 +370,67 @@ describe('3.2. ERC721MortgageToken', async () => {
     });
 
     describe('3.2.2. updateBaseURI(string, bytes[])', async () => {
-        it('3.2.2.1. updateBaseURI successfully with valid signatures', async () => {
-            const { erc721MortgageToken, admin, admins } = await beforeERC721MortgageTokenTest({
+        it('3.2.2.1. update base URI successfully with valid signatures', async () => {
+            const { deployer, erc721MortgageToken, admin, admins } = await beforeERC721MortgageTokenTest({
                 listSampleCurrencies: true,
                 listSampleCollectionTokens: true,
                 listSampleMortgage: true,
                 listSampleLending: true,
             });
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "string"],
-                [erc721MortgageToken.address, "updateBaseURI", "NewBaseURI:"]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
-
-            const tx = await erc721MortgageToken.updateBaseURI("NewBaseURI:", signatures);
+            const paramsInput: UpdateBaseURIParamsInput = {
+                uri: "NewBaseURI:",
+            };
+            const params: UpdateBaseURIParams = {
+                ...paramsInput,
+                signatures: await getUpdateBaseURISignatures(erc721MortgageToken as any, admins, admin, paramsInput),
+            };
+            const tx = await getUpdateBaseURITx(erc721MortgageToken as any, deployer, params);
             await tx.wait();
 
-            await expect(tx).to
-                .emit(erc721MortgageToken, 'BaseURIUpdate')
-                .withArgs("NewBaseURI:");
+            await expect(tx).to.emit(erc721MortgageToken, 'BaseURIUpdate').withArgs(
+                "NewBaseURI:"
+            );
 
             expect(await erc721MortgageToken.tokenURI(1)).to.equal("NewBaseURI:1");
             expect(await erc721MortgageToken.tokenURI(2)).to.equal("NewBaseURI:2");
         });
 
-        it('3.2.2.2. updateBaseURI unsuccessfully with invalid signatures', async () => {
-            const { erc721MortgageToken, admin, admins } = await beforeERC721MortgageTokenTest();
+        it('3.2.2.2. update base URI unsuccessfully with invalid signatures', async () => {
+            const { deployer, erc721MortgageToken, admin, admins } = await beforeERC721MortgageTokenTest();
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "string"],
-                [erc721MortgageToken.address, "updateBaseURI", "NewBaseURI:"]
-            );
-            const invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+            const paramsInput: UpdateBaseURIParamsInput = {
+                uri: "NewBaseURI:",
+            };
+            const params: UpdateBaseURIParams = {
+                ...paramsInput,
+                signatures: await getUpdateBaseURISignatures(erc721MortgageToken as any, admins, admin, paramsInput, false),
+            };
 
-            await expect(erc721MortgageToken.updateBaseURI(
-                "NewBaseURI:",
-                invalidSignatures
-            )).to.be.revertedWithCustomError(admin, 'FailedVerification');
+            await expect(getUpdateBaseURITx(erc721MortgageToken as any, deployer, params))
+                .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
     });
 
     describe('3.2.3. updateFeeRate(uint256, bytes[])', async () => {
-        it('3.2.3.1. updateFeeRate successfully with valid signatures', async () => {
-            const { erc721MortgageToken, admin, admins } = await beforeERC721MortgageTokenTest();
+        it('3.2.3.1. update fee rate successfully with valid signatures', async () => {
+            const { deployer, erc721MortgageToken, admin, admins } = await beforeERC721MortgageTokenTest();
 
-            const rateValue = ethers.utils.parseEther('0.2');
+            const paramsInput: UpdateFeeRateParamsInput = {
+                feeRate: ethers.utils.parseEther('0.2')
+            };
+            const params: UpdateFeeRateParams = {
+                ...paramsInput,
+                signatures: await getUpdateFeeRateSignatures(erc721MortgageToken as any, admins, admin, paramsInput),
+            }
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "uint256"],
-                [erc721MortgageToken.address, "updateFeeRate", rateValue]
-            );
-
-            const signatures = await getSignatures(message, admins, await admin.nonce());
-
-            const tx = await erc721MortgageToken.updateFeeRate(rateValue, signatures);
+            const tx = await getUpdateFeeRateTx(erc721MortgageToken as any, deployer, params);
             await tx.wait();
 
-            await expect(tx).to
-                .emit(erc721MortgageToken, 'FeeRateUpdate')
-                .withArgs(
+            await expect(tx).to.emit(erc721MortgageToken, 'FeeRateUpdate').withArgs(
                     (rate: any) => {
                         expect(structToObject(rate)).to.deep.equal({
-                            value: rateValue,
+                            value: params.feeRate,
                             decimals: Constant.COMMON_RATE_DECIMALS,
                         });
                         return true;
@@ -433,65 +439,63 @@ describe('3.2. ERC721MortgageToken', async () => {
 
             const feeRate = await erc721MortgageToken.getFeeRate();
             expect(structToObject(feeRate)).to.deep.equal({
-                value: rateValue,
+                value: params.feeRate,
                 decimals: Constant.COMMON_RATE_DECIMALS,
             });
         });
 
-        it('3.2.3.2. updateFeeRate unsuccessfully with invalid signatures', async () => {
-            const { erc721MortgageToken, admin, admins } = await beforeERC721MortgageTokenTest();
+        it('3.2.3.2. update fee rate unsuccessfully with invalid signatures', async () => {
+            const { deployer, erc721MortgageToken, admin, admins } = await beforeERC721MortgageTokenTest();
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "uint256"],
-                [erc721MortgageToken.address, "updateFeeRate", ethers.utils.parseEther('0.2')]
-            );
-            const invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+            const paramsInput: UpdateFeeRateParamsInput = {
+                feeRate: ethers.utils.parseEther("0.2"),                
+            }
+            const params: UpdateFeeRateParams = {
+                ...paramsInput,
+                signatures: await getUpdateFeeRateSignatures(erc721MortgageToken as any, admins, admin, paramsInput, false)
+            }
 
-            await expect(erc721MortgageToken.updateFeeRate(
-                ethers.utils.parseEther('0.2'),
-                invalidSignatures
-            )).to.be.revertedWithCustomError(admin, 'FailedVerification');
+            await expect(getUpdateFeeRateTx(erc721MortgageToken as any, deployer, params))
+                .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('3.2.3.3. updateFeeRate unsuccessfully with invalid rate', async () => {
-            const { erc721MortgageToken, admin, admins } = await beforeERC721MortgageTokenTest();
+        it('3.2.3.3. update fee rate unsuccessfully with invalid rate', async () => {
+            const { deployer, erc721MortgageToken, admin, admins } = await beforeERC721MortgageTokenTest();
 
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "uint256"],
-                [erc721MortgageToken.address, "updateFeeRate", Constant.COMMON_RATE_MAX_FRACTION.add(1)]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput: UpdateFeeRateParamsInput = {
+                feeRate: Constant.COMMON_RATE_MAX_FRACTION.add(1),
+            }
+            const params: UpdateFeeRateParams = {
+                ...paramsInput,
+                signatures: await getUpdateFeeRateSignatures(erc721MortgageToken as any, admins, admin, paramsInput),
+            }
 
-            await expect(erc721MortgageToken.updateFeeRate(
-                Constant.COMMON_RATE_MAX_FRACTION.add(1),
-                signatures
-            )).to.be.revertedWithCustomError(erc721MortgageToken, 'InvalidRate');
+            await expect(getUpdateFeeRateTx(erc721MortgageToken as any, deployer, params))
+                .to.be.revertedWithCustomError(erc721MortgageToken, 'InvalidRate');
         });
     });
 
     describe('3.2.4. registerCollaterals(address[], bool, bytes[])', async () => {
         it('3.2.4.1. Register collaterals successfully with valid signatures', async () => {
-            const { erc721MortgageToken, admin, admins, collaterals } = await beforeERC721MortgageTokenTest();
+            const { deployer, erc721MortgageToken, admin, admins, collaterals } = await beforeERC721MortgageTokenTest();
 
             const toBeCollaterals = collaterals.slice(0, 3);
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [erc721MortgageToken.address, 'registerCollaterals', toBeCollaterals.map(x => x.address), true]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
-
-            const tx = await erc721MortgageToken.registerCollaterals(
-                toBeCollaterals.map(x => x.address),
-                true,
-                signatures
-            );
+            const paramsInput: RegisterCollateralsParamsInput = {
+                tokens: toBeCollaterals.map(x => x.address),
+                isCollateral: true,
+            }
+            const params: RegisterCollateralsParams = {
+                ...paramsInput,
+                signatures: await getRegisterCollateralsSignatures(erc721MortgageToken as any, admins, admin, paramsInput),
+            }
+            const tx = await getRegisterCollateralsTx(erc721MortgageToken as any, deployer, params);
             await tx.wait();
 
             for (const collateral of toBeCollaterals) {
-                await expect(tx).to
-                    .emit(erc721MortgageToken, 'CollateralRegistration')
-                    .withArgs(collateral.address);
+                await expect(tx).to.emit(erc721MortgageToken, 'CollateralRegistration').withArgs(
+                    collateral.address
+                );
             }
 
             for (const collateral of collaterals) {
@@ -505,161 +509,150 @@ describe('3.2. ERC721MortgageToken', async () => {
         });
 
         it('3.2.4.2. Register collaterals unsuccessfully with invalid signatures', async () => {
-            const { erc721MortgageToken, admin, admins, collaterals } = await beforeERC721MortgageTokenTest();
+            const { deployer, erc721MortgageToken, admin, admins, collaterals } = await beforeERC721MortgageTokenTest();
 
             const toBeCollaterals = collaterals.slice(0, 3);
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [erc721MortgageToken.address, 'registerCollaterals', toBeCollaterals.map(x => x.address), true]
-            );
-            const invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
-
-            await expect(erc721MortgageToken.registerCollaterals(
-                toBeCollaterals.map(x => x.address),
-                true,
-                invalidSignatures
-            )).to.be.revertedWithCustomError(admin, 'FailedVerification');
+            const paramsInput: RegisterCollateralsParamsInput = {
+                tokens: toBeCollaterals.map(x => x.address),
+                isCollateral: true,
+            }
+            const params: RegisterCollateralsParams = {
+                ...paramsInput,
+                signatures: await getRegisterCollateralsSignatures(erc721MortgageToken as any, admins, admin, paramsInput, false),
+            }
+            await expect(getRegisterCollateralsTx(erc721MortgageToken as any, deployer, params))
+                .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
         it('3.2.4.3. Register collaterals unsuccessfully with EOA address', async () => {
-            const { erc721MortgageToken, admin, admins } = await beforeERC721MortgageTokenTest();
+            const { deployer, erc721MortgageToken, admin, admins } = await beforeERC721MortgageTokenTest();
 
             const invalidCollateral = randomWallet();
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [erc721MortgageToken.address, 'registerCollaterals', [invalidCollateral.address], true]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput: RegisterCollateralsParamsInput = {
+                tokens: [invalidCollateral.address],
+                isCollateral: true,
+            }
+            const params: RegisterCollateralsParams = {
+                ...paramsInput,
+                signatures: await getRegisterCollateralsSignatures(erc721MortgageToken as any, admins, admin, paramsInput),
+            }
+            await expect(getRegisterCollateralsTx(erc721MortgageToken as any, deployer, params))
+                .to.be.revertedWithCustomError(erc721MortgageToken, 'InvalidCollateral');
+        });
 
-            await expect(erc721MortgageToken.registerCollaterals(
-                [invalidCollateral.address],
-                true,
-                signatures
-            )).to.be.revertedWithCustomError(erc721MortgageToken, 'InvalidCollateral');
-        })
-
-        it('3.2.4.4. Authorize launchpad reverted with contract not supporting ProjectLaunchpad interface', async () => {
-            const { erc721MortgageToken, admin, admins } = await beforeERC721MortgageTokenTest();
+        it('3.2.4.4. Register collaterals reverted with contract not supporting ProjectLaunchpad interface', async () => {
+            const { deployer, erc721MortgageToken, admin, admins } = await beforeERC721MortgageTokenTest();
 
             const invalidCollateral = erc721MortgageToken;
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [erc721MortgageToken.address, 'registerCollaterals', [invalidCollateral.address], true]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput: RegisterCollateralsParamsInput = {
+                tokens: [invalidCollateral.address],
+                isCollateral: true,
+            }
+            const params: RegisterCollateralsParams = {
+                ...paramsInput,
+                signatures: await getRegisterCollateralsSignatures(erc721MortgageToken as any, admins, admin, paramsInput),
+            }
+            await expect(getRegisterCollateralsTx(erc721MortgageToken as any, deployer, params))
+                .to.be.revertedWithCustomError(erc721MortgageToken, 'InvalidCollateral');
+        });
 
-            await expect(erc721MortgageToken.registerCollaterals(
-                [invalidCollateral.address],
-                true,
-                signatures
-            )).to.be.revertedWithCustomError(erc721MortgageToken, 'InvalidCollateral');
-        })
-
-        it('3.2.4.5. Authorize launchpad unsuccessfully when authorizing itself', async () => {
-            const { erc721MortgageToken, admin, admins } = await beforeERC721MortgageTokenTest();
+        it('3.2.4.5. Register collaterals unsuccessfully when authorizing itself', async () => {
+            const { deployer, erc721MortgageToken, admin, admins } = await beforeERC721MortgageTokenTest();
 
             const toBeCollaterals = [erc721MortgageToken];
 
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [erc721MortgageToken.address, 'registerCollaterals', toBeCollaterals.map(x => x.address), true]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput: RegisterCollateralsParamsInput = {
+                tokens: toBeCollaterals.map(x => x.address),
+                isCollateral: true,
+            }
+            const params: RegisterCollateralsParams = {
+                ...paramsInput,
+                signatures: await getRegisterCollateralsSignatures(erc721MortgageToken as any, admins, admin, paramsInput),
+            }
 
-            await expect(erc721MortgageToken.registerCollaterals(
-                toBeCollaterals.map(x => x.address),
-                true,
-                signatures
-            )).to.be.revertedWithCustomError(erc721MortgageToken, `InvalidCollateral`)
+            await expect(getRegisterCollateralsTx(erc721MortgageToken as any, deployer, params))
+                .to.be.revertedWithCustomError(erc721MortgageToken, `InvalidCollateral`)
         });
 
-        it('3.2.4.5. Authorize launchpad unsuccessfully when authorizing same account twice on same tx', async () => {
-            const { erc721MortgageToken, admin, admins, collaterals } = await beforeERC721MortgageTokenTest();
+        it('3.2.4.5. Register collaterals unsuccessfully when authorizing same account twice on same tx', async () => {
+            const { deployer, erc721MortgageToken, admin, admins, collaterals } = await beforeERC721MortgageTokenTest();
 
             const duplicateCollaterals = [collaterals[0], collaterals[1], collaterals[2], collaterals[0]];
 
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [erc721MortgageToken.address, 'registerCollaterals', duplicateCollaterals.map(x => x.address), true]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput: RegisterCollateralsParamsInput = {
+                tokens: duplicateCollaterals.map(x => x.address),
+                isCollateral: true,
+            }
+            const params: RegisterCollateralsParams = {
+                ...paramsInput,
+                signatures: await getRegisterCollateralsSignatures(erc721MortgageToken as any, admins, admin, paramsInput),
+            }
 
-            await expect(erc721MortgageToken.registerCollaterals(
-                duplicateCollaterals.map(x => x.address),
-                true,
-                signatures
-            )).to.be.revertedWithCustomError(erc721MortgageToken, `RegisteredCollateral`)
+            await expect(getRegisterCollateralsTx(erc721MortgageToken as any, deployer, params))
+                .to.be.revertedWithCustomError(erc721MortgageToken, `RegisteredCollateral`)
         });
 
-        it('3.2.4.6. Authorize launchpad unsuccessfully when authorizing same account twice on different tx', async () => {
-            const { erc721MortgageToken, admin, admins, collaterals } = await beforeERC721MortgageTokenTest();
+        it('3.2.4.6. Register collaterals unsuccessfully when authorizing same account twice on different tx', async () => {
+            const { deployer, erc721MortgageToken, admin, admins, collaterals } = await beforeERC721MortgageTokenTest();
 
             const tx1Collaterals = collaterals.slice(0, 3);
-
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [erc721MortgageToken.address, 'registerCollaterals', tx1Collaterals.map(x => x.address), true]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await callTransaction(erc721MortgageToken.registerCollaterals(
-                tx1Collaterals.map(x => x.address),
-                true,
-                signatures
-            ));
-
-            const tx2Collaterals = [collaterals[3], collaterals[2], collaterals[4]];
-
-            message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [erc721MortgageToken.address, 'registerCollaterals', tx2Collaterals.map(x => x.address), true]
-            );
-            signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await expect(erc721MortgageToken.registerCollaterals(
-                tx2Collaterals.map(x => x.address),
-                true,
-                signatures
-            )).to.be.revertedWithCustomError(erc721MortgageToken, `RegisteredCollateral`)
-        })
-
-        async function setupCollaterals(erc721MortgageToken: ERC721MortgageToken, admin: Admin, admins: any[], collaterals: any[]) {
             await callERC721MortgageToken_RegisterCollaterals(
                 erc721MortgageToken as any,
+                deployer,
                 admins,
-                collaterals.map(x => x.address),
-                true,
-                await admin.nonce(),
+                admin,
+                {
+                    tokens: tx1Collaterals.map(x => x.address),
+                    isCollateral: true,
+                }
             );
-        }
+
+            const tx2Collaterals = [collaterals[3], collaterals[2], collaterals[4]];
+            const paramsInput2: RegisterCollateralsParamsInput = {
+                tokens: tx2Collaterals.map(x => x.address),
+                isCollateral: true,
+            }
+            const params2: RegisterCollateralsParams = {
+                ...paramsInput2,
+                signatures: await getRegisterCollateralsSignatures(erc721MortgageToken as any, admins, admin, paramsInput2),
+            }
+            await expect(getRegisterCollateralsTx(erc721MortgageToken as any, deployer, params2))
+                .to.be.revertedWithCustomError(erc721MortgageToken, `RegisteredCollateral`)
+        })
 
         it('3.2.4.7. Deregister collaterals successfully', async () => {
-            const { erc721MortgageToken, admin, admins, collaterals } = await beforeERC721MortgageTokenTest();
+            const { deployer, erc721MortgageToken, admin, admins, collaterals } = await beforeERC721MortgageTokenTest();
 
-            await setupCollaterals(erc721MortgageToken, admin, admins, collaterals);
+            await callERC721MortgageToken_RegisterCollaterals(
+                erc721MortgageToken as any,
+                deployer,
+                admins,
+                admin,
+                {
+                    tokens: collaterals.map(x => x.address),
+                    isCollateral: true,
+                },
+            );
 
             const toDeregister = collaterals.slice(0, 2);
-
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [erc721MortgageToken.address, 'registerCollaterals', toDeregister.map(x => x.address), false]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
-
-            const tx = await erc721MortgageToken.registerCollaterals(
-                toDeregister.map(x => x.address),
-                false,
-                signatures
-            );
+            const paramsInput2: RegisterCollateralsParamsInput = {
+                tokens: toDeregister.map(x => x.address),
+                isCollateral: false,
+            }
+            const params2: RegisterCollateralsParams = {
+                ...paramsInput2,
+                signatures: await getRegisterCollateralsSignatures(erc721MortgageToken as any, admins, admin, paramsInput2),
+            }
+            const tx = await getRegisterCollateralsTx(erc721MortgageToken as any, deployer, params2);
             await tx.wait();
 
             for (const collateral of toDeregister) {
-                await expect(tx).to
-                    .emit(erc721MortgageToken, 'CollateralDeregistration')
-                    .withArgs(collateral.address);
+                await expect(tx).to.emit(erc721MortgageToken, 'CollateralDeregistration').withArgs(
+                    collateral.address
+                );
             }
 
             for (const collateral of collaterals) {
@@ -673,72 +666,94 @@ describe('3.2. ERC721MortgageToken', async () => {
         });
 
         it('3.2.4.8. Deregister collaterals unsuccessfully with unauthorized account', async () => {
-            const { erc721MortgageToken, admin, admins, collaterals } = await beforeERC721MortgageTokenTest();
+            const { deployer, erc721MortgageToken, admin, admins, collaterals } = await beforeERC721MortgageTokenTest();
 
-            await setupCollaterals(erc721MortgageToken, admin, admins, collaterals);
+            await callERC721MortgageToken_RegisterCollaterals(
+                erc721MortgageToken as any,
+                deployer,
+                admins,
+                admin,
+                {
+                    tokens: collaterals.map(x => x.address),
+                    isCollateral: true,
+                },
+            );
 
             const account = randomWallet();
             const toDeauth = [collaterals[0], account];
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [erc721MortgageToken.address, 'registerCollaterals', toDeauth.map(x => x.address), false]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput2: RegisterCollateralsParamsInput = {
+                tokens: toDeauth.map(x => x.address),
+                isCollateral: false,
+            }
+            const params2: RegisterCollateralsParams = {
+                ...paramsInput2,
+                signatures: await getRegisterCollateralsSignatures(erc721MortgageToken as any, admins, admin, paramsInput2),
+            }
 
-            await expect(erc721MortgageToken.registerCollaterals(
-                toDeauth.map(x => x.address),
-                false,
-                signatures
-            )).to.be.revertedWithCustomError(erc721MortgageToken, `NotRegisteredCollateral`)
+            await expect(getRegisterCollateralsTx(erc721MortgageToken as any, deployer, params2))
+                .to.be.revertedWithCustomError(erc721MortgageToken, `NotRegisteredCollateral`)
         });
 
-        it('7.2.4.8. Deauthorize launchpad unsuccessfully when unauthorizing same accounts twice on same tx', async () => {
-            const { erc721MortgageToken, admin, admins, collaterals } = await beforeERC721MortgageTokenTest();
+        it('7.2.4.8. Deregister collaterals unsuccessfully when unauthorizing same accounts twice on same tx', async () => {
+            const { deployer, erc721MortgageToken, admin, admins, collaterals } = await beforeERC721MortgageTokenTest();
 
-            await setupCollaterals(erc721MortgageToken, admin, admins, collaterals);
-
-            const toDeauth = collaterals.slice(0, 2).concat([collaterals[0]]);
-
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [erc721MortgageToken.address, 'registerCollaterals', toDeauth.map(x => x.address), false]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await expect(erc721MortgageToken.registerCollaterals(
-                toDeauth.map(x => x.address),
-                false,
-                signatures
-            )).to.be.revertedWithCustomError(erc721MortgageToken, `NotRegisteredCollateral`)
-        });
-
-        it('7.2.4.9. Deauthorize launchpad unsuccessfully when unauthorizing same accounts twice on different tx', async () => {
-            const { erc721MortgageToken, admin, admins, collaterals } = await beforeERC721MortgageTokenTest();
-
-            await setupCollaterals(erc721MortgageToken, admin, admins, collaterals);
-
-            const tx1Accounts = collaterals.slice(0, 2);
             await callERC721MortgageToken_RegisterCollaterals(
                 erc721MortgageToken as any,
+                deployer,
                 admins,
-                tx1Accounts.map(x => x.address),
-                false,
-                await admin.nonce()
+                admin,
+                {
+                    tokens: collaterals.map(x => x.address),
+                    isCollateral: true,
+                },
             );
 
+            const toDeauth = collaterals.slice(0, 2).concat([collaterals[0]]);
+            const paramsInput2: RegisterCollateralsParamsInput = {
+                tokens: toDeauth.map(x => x.address),
+                isCollateral: false,
+            }
+            const params2: RegisterCollateralsParams = {
+                ...paramsInput2,
+                signatures: await getRegisterCollateralsSignatures(erc721MortgageToken as any, admins, admin, paramsInput2),
+            }
+            await expect(getRegisterCollateralsTx(erc721MortgageToken as any, deployer, params2))
+                .to.be.revertedWithCustomError(erc721MortgageToken, `NotRegisteredCollateral`)
+        });
+
+        it('7.2.4.9. Deregister collaterals unsuccessfully when unauthorizing same accounts twice on different tx', async () => {
+            const { deployer, erc721MortgageToken, admin, admins, collaterals } = await beforeERC721MortgageTokenTest();
+
+            await callERC721MortgageToken_RegisterCollaterals(
+                erc721MortgageToken as any,
+                deployer,
+                admins,
+                admin,
+                {
+                    tokens: collaterals.map(x => x.address),
+                    isCollateral: true,
+                },
+            );
+
+            const tx1Accounts = collaterals.slice(0, 2);
+            const paramsInput1: RegisterCollateralsParamsInput = {
+                tokens: tx1Accounts.map(x => x.address),
+                isCollateral: false,
+            }
+            await callERC721MortgageToken_RegisterCollaterals(erc721MortgageToken as any, deployer, admins, admin, paramsInput1);
+            
             const tx2Accounts = [collaterals[0]];
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [erc721MortgageToken.address, 'registerCollaterals', tx2Accounts.map(x => x.address), false]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await expect(erc721MortgageToken.registerCollaterals(
-                tx2Accounts.map(x => x.address),
-                false,
-                signatures
-            )).to.be.revertedWithCustomError(erc721MortgageToken, `NotRegisteredCollateral`)
+            const paramsInput2: RegisterCollateralsParamsInput = {
+                tokens: tx2Accounts.map(x => x.address),
+                isCollateral: false,
+            }
+            const params2: RegisterCollateralsParams = {
+                ...paramsInput2,
+                signatures: await getRegisterCollateralsSignatures(erc721MortgageToken as any, admins, admin, paramsInput2),
+            }
+            await expect(getRegisterCollateralsTx(erc721MortgageToken as any, deployer, params2))
+                .to.be.revertedWithCustomError(erc721MortgageToken, `NotRegisteredCollateral`)
         });
     });
 
@@ -988,9 +1003,7 @@ describe('3.2. ERC721MortgageToken', async () => {
             let tx = await erc721MortgageToken.connect(borrower1).cancel(1);
             await tx.wait();
 
-            expect(tx).to
-                .emit(erc721MortgageToken, 'MortgageCancellation')
-                .withArgs(1);
+            expect(tx).to.emit(erc721MortgageToken, 'MortgageCancellation').withArgs(1);
 
             expect(await erc721MortgageToken.mortgageNumber()).to.equal(2);
 
@@ -1009,9 +1022,7 @@ describe('3.2. ERC721MortgageToken', async () => {
             let tx = await erc721MortgageToken.connect(manager).cancel(2);
             await tx.wait();
 
-            expect(tx).to
-                .emit(erc721MortgageToken, 'MortgageCancellation')
-                .withArgs(2);
+            expect(tx).to.emit(erc721MortgageToken, 'MortgageCancellation').withArgs(2);
 
             expect(await erc721MortgageToken.mortgageNumber()).to.equal(2);
 
@@ -1125,7 +1136,15 @@ describe('3.2. ERC721MortgageToken', async () => {
             const borrower = borrower1;
             const lender = lender1;
             
-            await callERC721MortgageToken_UpdateFeeRate(erc721MortgageToken, admins, erc721MortgageTokenFeeRate, await admin.nonce());
+            await callERC721MortgageToken_UpdateFeeRate(
+                erc721MortgageToken,
+                deployer,
+                admins,
+                admin,
+                {
+                    feeRate: erc721MortgageTokenFeeRate,
+                }
+            );
 
             let collection = feeReceiverCollection;
 
@@ -1256,7 +1275,7 @@ describe('3.2. ERC721MortgageToken', async () => {
             const fixture = await beforeERC721MortgageTokenTest();
             await testLend(
                 fixture,
-                fixture.mockCurrencyExclusiveRate,
+                ethers.utils.parseEther('0.3'),
                 LendInitialization.ERC721_MORTGAGE_TOKEN_FeeRate,
                 false,
                 false,
@@ -1267,7 +1286,7 @@ describe('3.2. ERC721MortgageToken', async () => {
 
             await testLend(
                 fixture,
-                fixture.mockCurrencyExclusiveRate,
+                ethers.utils.parseEther('0.3'),
                 LendInitialization.ERC721_MORTGAGE_TOKEN_FeeRate,
                 true,
                 true,
@@ -1286,7 +1305,7 @@ describe('3.2. ERC721MortgageToken', async () => {
                     }
                     await testLend(
                         fixture,
-                        fixture.mockCurrencyExclusiveRate,
+                        ethers.utils.parseEther('0.3'),
                         LendInitialization.ERC721_MORTGAGE_TOKEN_FeeRate,
                         isERC20,
                         isExclusive,
@@ -1641,9 +1660,7 @@ describe('3.2. ERC721MortgageToken', async () => {
             let receipt = await tx.wait();
             let gasFee = receipt.gasUsed.mul(receipt.effectiveGasPrice);
 
-            await expect(tx)
-                .to.emit(erc721MortgageToken, 'MortgageRepayment')
-                .withArgs(1);
+            await expect(tx).to.emit(erc721MortgageToken, 'MortgageRepayment').withArgs(1);
 
             const mortgage1 = await erc721MortgageToken.getMortgage(1);
             expect(mortgage1.state).to.equal(MortgageState.Repaid);
@@ -1671,9 +1688,7 @@ describe('3.2. ERC721MortgageToken', async () => {
             tx = await erc721MortgageToken.connect(borrower2).repay(2, { value: 1e9 });
             await tx.wait();
 
-            await expect(tx)
-                .to.emit(erc721MortgageToken, 'MortgageRepayment')
-                .withArgs(2);
+            await expect(tx).to.emit(erc721MortgageToken, 'MortgageRepayment').withArgs(2);
 
             const mortgage2 = await erc721MortgageToken.getMortgage(2);
             expect(mortgage2.state).to.equal(MortgageState.Repaid);
@@ -1943,9 +1958,10 @@ describe('3.2. ERC721MortgageToken', async () => {
             let tx = await erc721MortgageToken.foreclose(1);
             await tx.wait();
 
-            await expect(tx)
-                .to.emit(erc721MortgageToken, 'MortgageForeclosure')
-                .withArgs(1, lender1.address);
+            await expect(tx).to.emit(erc721MortgageToken, 'MortgageForeclosure').withArgs(
+                1,
+                lender1.address
+            );
 
             const mortgage1 = await erc721MortgageToken.getMortgage(1);
             expect(mortgage1.state).to.equal(MortgageState.Foreclosed);
@@ -1969,9 +1985,10 @@ describe('3.2. ERC721MortgageToken', async () => {
             tx = await erc721MortgageToken.foreclose(2);
             await tx.wait();
 
-            await expect(tx)
-                .to.emit(erc721MortgageToken, 'MortgageForeclosure')
-                .withArgs(2, erc721MortgageTokenOwner.address);
+            await expect(tx).to.emit(erc721MortgageToken, 'MortgageForeclosure').withArgs(
+                2,
+                erc721MortgageTokenOwner.address
+            );
 
             const mortgage2 = await erc721MortgageToken.getMortgage(2);
             expect(mortgage2.state).to.equal(MortgageState.Foreclosed);
@@ -2117,7 +2134,7 @@ describe('3.2. ERC721MortgageToken', async () => {
                 listSampleCurrencies: true,
             });
 
-            const { erc721MortgageToken, borrower1, admin, admins, lender1 } = fixture;
+            const { deployer, erc721MortgageToken, borrower1, admin, admins, lender1 } = fixture;
 
             const CollectionFactory = await ethers.getContractFactory("Collection");
             const collection = await upgrades.deployProxy(CollectionFactory, ["TestCollection", "TC"]);
@@ -2127,11 +2144,14 @@ describe('3.2. ERC721MortgageToken', async () => {
 
             await callERC721MortgageToken_RegisterCollaterals(
                 erc721MortgageToken,
+                deployer,
                 admins,
-                [collection.address],
-                true,
-                await admin.nonce(),
-            )
+                admin,
+                {
+                    tokens: [collection.address],
+                    isCollateral: true,
+                }
+            );
 
             await callTransaction(getERC721BorrowTx(erc721MortgageToken, borrower1, {
                 token: collection.address,

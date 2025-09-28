@@ -1,36 +1,32 @@
+import { Admin, MortgageToken } from "@typechain-types";
+import { UpdateBaseURIParamsInput, UpdateFeeRateParamsInput } from "@utils/models/MortgageToken";
 import { getSignatures } from "@utils/blockchain";
-import { 
-    InitializeRewardingParamsInput,
-    UpdateFeeRateParamsInput
-} from "@utils/models/StakeToken";
-import { StakeToken } from "@typechain-types";
-import { Admin } from "@typechain-types";
 import { ethers } from "ethers";
 
-export async function getInitializeRewardingSignatures(
-    stakeToken: StakeToken,
+export async function getUpdateBaseURISignatures(
+    mortgageToken: MortgageToken,
     admins: any[],
     admin: Admin,
-    params: InitializeRewardingParamsInput,
+    paramsInput: UpdateBaseURIParamsInput,
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "uint256", "address"],
-        [stakeToken.address, "initializeRewarding", params.initialLastRewardFetch, params.successor]
+        ["address", "string", "string"],
+        [mortgageToken.address, "updateBaseURI", paramsInput.uri]
     );
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
 
 export async function getUpdateFeeRateSignatures(
-    stakeToken: StakeToken,
+    mortgageToken: MortgageToken,
     admins: any[],
     admin: Admin,
-    params: UpdateFeeRateParamsInput,
+    paramsInput: UpdateFeeRateParamsInput,
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
         ["address", "string", "uint256"],
-        [stakeToken.address, "updateFeeRate", params.feeRate]
+        [mortgageToken.address, "updateFeeRate", paramsInput.feeRate]
     );
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }

@@ -25,6 +25,11 @@ import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
 import { deployCurrency } from '@utils/deployments/common/currency';
 import { callPausable_Pause } from '@utils/callWithSignatures/Pausable';
+import { CancelContentsParams, CancelContentsParamsInput, CreateContentsParams, CreateContentsParamsInput, UpdateContentURIsParams, UpdateContentURIsParamsInput, UpdateFeeParams, UpdateFeeParamsInput, UpdateRoyaltyRateParams, UpdateRoyaltyRateParamsInput, WithdrawParams, WithdrawParamsInput } from '@utils/models/PromotionToken';
+import { getCancelContentsSignatures, getCreateContentsSignatures, getUpdateContentURIsSignatures, getUpdateFeeSignatures, getUpdateRoyaltyRateSignatures, getWithdrawSignatures } from '@utils/signatures/PromotionToken';
+import { getCancelContentsTx, getCreateContentsTx, getUpdateContentURIsTx, getUpdateFeeTx, getUpdateRoyaltyRateTx, getWithdrawTx } from '@utils/transaction/PromotionToken';
+import { BigNumber } from 'ethers';
+import { IERC165UpgradeableInterfaceId, IERC2981UpgradeableInterfaceId, IERC4906UpgradeableInterfaceId, IERC721MetadataUpgradeableInterfaceId, IERC721UpgradeableInterfaceId, IRoyaltyRateProposerInterfaceId } from '@tests/interfaces';
 
 interface PromotionTokenFixture {
     admin: Admin;
@@ -89,23 +94,27 @@ describe('5.2. PromotionToken', async () => {
         listSampleContents = false,
     } = {}): Promise<PromotionTokenFixture> {
         const fixture = await loadFixture(promotionTokenFixture);
-        const { promotionToken, admin, admins } = fixture;
+        const { deployer, promotionToken, admin, admins } = fixture;
 
         let currentTimestamp = await time.latest();
 
-        if (listSampleContents) {            
+        if (listSampleContents) {
+            const paramsInput: CreateContentsParamsInput = {
+                uris: ["testing_uri_1", "testing_uri_2", "testing_uri_3"],
+                startAts: [currentTimestamp + 100, currentTimestamp + 400, currentTimestamp + 800],
+                durations: [200, 1600, 3200],
+            };
             await callPromotionToken_CreateContents(
                 promotionToken,
+                deployer,
+                admin,
                 admins,
-                ["testing_uri_1", "testing_uri_2", "testing_uri_3"],
-                [currentTimestamp + 100, currentTimestamp + 400, currentTimestamp + 800],
-                [200, 1600, 3200],
-                await admin.nonce()
+                paramsInput,
             );
         }
 
         if (pause) {
-            await callPausable_Pause(promotionToken, admins, admin);
+            await callPausable_Pause(promotionToken, deployer, admins, admin);
         }
 
         return {
@@ -115,21 +124,7 @@ describe('5.2. PromotionToken', async () => {
 
     describe('5.2.1. initialize(address, string, string, uint256, uint256)', async () => {
         it('5.2.1.1. Deploy successfully', async () => {
-            const { deployer, admin } = await beforePromotionTokenTest();
-
-            const PromotionToken = await ethers.getContractFactory('PromotionToken', deployer);
-
-            const promotionToken = await upgrades.deployProxy(
-                PromotionToken,
-                [
-                    admin.address,
-                    Initialization.PROMOTION_TOKEN_Name,
-                    Initialization.PROMOTION_TOKEN_Symbol,
-                    Initialization.PROMOTION_TOKEN_Fee,
-                    Initialization.PROMOTION_TOKEN_RoyaltyRate,
-                ]
-            ) as PromotionToken;
-            await promotionToken.deployed();
+            const { admin, promotionToken } = await beforePromotionTokenTest();
             
             expect(await promotionToken.admin()).to.equal(admin.address);
 
@@ -147,17 +142,16 @@ describe('5.2. PromotionToken', async () => {
             expect(royaltyRate.decimals).to.equal(Constant.COMMON_RATE_DECIMALS);
 
             const tx = promotionToken.deployTransaction;
-            await expect(tx).to
-                .emit(promotionToken, 'FeeUpdate').withArgs(Initialization.PROMOTION_TOKEN_Fee)
-                .emit(promotionToken, 'RoyaltyRateUpdate').withArgs(
-                    (rate: any) => {
-                        expect(structToObject(rate)).to.deep.equal({
-                            value: Initialization.PROMOTION_TOKEN_RoyaltyRate,
-                            decimals: Constant.COMMON_RATE_DECIMALS,
-                        });
-                        return true;
-                    }
-                );
+            await expect(tx).to.emit(promotionToken, 'FeeUpdate').withArgs(Initialization.PROMOTION_TOKEN_Fee)
+            await expect(tx).to.emit(promotionToken, 'RoyaltyRateUpdate').withArgs(
+                (rate: any) => {
+                    expect(structToObject(rate)).to.deep.equal({
+                        value: Initialization.PROMOTION_TOKEN_RoyaltyRate,
+                        decimals: Constant.COMMON_RATE_DECIMALS,
+                    });
+                    return true;
+                }
+            );
         });
 
         it('5.2.1.2. Deploy unsuccessfully with invalid royalty rate', async () => {
@@ -176,66 +170,69 @@ describe('5.2. PromotionToken', async () => {
     });
 
     describe('5.2.2. updateFee(uint256, bytes[])', async () => {
-        it('5.2.2.1. updateFee successfully', async () => {
-            const { promotionToken, admin, admins } = await beforePromotionTokenTest();
+        it('5.2.2.1. update fee successfully', async () => {
+            const { deployer, promotionToken, admin, admins } = await beforePromotionTokenTest();
 
             const fee = await promotionToken.fee();
             const newFee = fee.add(ethers.utils.parseEther('1'));
+            
+            const paramsInput: UpdateFeeParamsInput = {
+                fee: newFee,
+            };
+            const params: UpdateFeeParams = {
+                ...paramsInput,
+                signatures: await getUpdateFeeSignatures(promotionToken, admins, admin, paramsInput),
+            };
 
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'uint256'],
-                [promotionToken.address, 'updateFee', newFee]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
-
-            const tx = await promotionToken.updateFee(newFee, signatures);
+            const tx = await getUpdateFeeTx(promotionToken, deployer, params);
             await expect(tx).to.emit(promotionToken, 'FeeUpdate').withArgs(newFee);
             
             expect(await promotionToken.fee()).to.equal(newFee);
         });
 
-        it('5.2.2.2. updateFee unsuccessfully with invalid signature', async () => {
-            const { promotionToken, admin, admins } = await beforePromotionTokenTest();
+        it('5.2.2.2. update fee unsuccessfully with invalid signature', async () => {
+            const { deployer, promotionToken, admin, admins } = await beforePromotionTokenTest();
 
             const fee = await promotionToken.fee();
             const newFee = fee.add(ethers.utils.parseEther('1'));
 
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'uint256'],
-                [promotionToken.address, 'updateFee', newFee]
-            );
-            let invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+            const paramsInput: UpdateFeeParamsInput = {
+                fee: newFee,
+            };
+            const params: UpdateFeeParams = {
+                ...paramsInput,
+                signatures: await getUpdateFeeSignatures(promotionToken, admins, admin, paramsInput, false),
+            };
 
-            await expect(promotionToken.updateFee(newFee, invalidSignatures)).to.be
+            await expect(getUpdateFeeTx(promotionToken, deployer, params)).to.be
                 .revertedWithCustomError(promotionToken, 'FailedVerification');
         });
     });
 
     describe('5.2.3. updateRoyaltyRate(uint256, bytes[])', async () => {
-        it('5.2.3.1. updateRoyaltyRate successfully with valid signatures', async () => {
-            const { promotionToken, admin, admins } = await beforePromotionTokenTest();
+        it('5.2.3.1. update royalty rate successfully with valid signatures', async () => {
+            const { deployer, promotionToken, admin, admins } = await beforePromotionTokenTest();
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "uint256"],
-                [promotionToken.address, "updateRoyaltyRate", ethers.utils.parseEther('0.2')]
-            );
+            const paramsInput: UpdateRoyaltyRateParamsInput = {
+                royaltyRate: ethers.utils.parseEther('0.2'),
+            };
+            const params: UpdateRoyaltyRateParams = {
+                ...paramsInput,
+                signatures: await getUpdateRoyaltyRateSignatures(promotionToken, admins, admin, paramsInput),
+            };
 
-            const signatures = await getSignatures(message, admins, await admin.nonce());
-
-            const tx = await promotionToken.updateRoyaltyRate(ethers.utils.parseEther('0.2'), signatures);
+            const tx = await getUpdateRoyaltyRateTx(promotionToken, deployer, params);
             await tx.wait();
 
-            await expect(tx).to
-                .emit(promotionToken, 'RoyaltyRateUpdate')
-                .withArgs(
-                    (rate: any) => {
-                        expect(structToObject(rate)).to.deep.equal({
-                            value: ethers.utils.parseEther('0.2'),
-                            decimals: Constant.COMMON_RATE_DECIMALS,
-                        });
-                        return true;
-                    }
-                );
+            await expect(tx).to.emit(promotionToken, 'RoyaltyRateUpdate').withArgs(
+                (rate: any) => {
+                    expect(structToObject(rate)).to.deep.equal({
+                        value: ethers.utils.parseEther('0.2'),
+                        decimals: Constant.COMMON_RATE_DECIMALS,
+                    });
+                    return true;
+                }
+            );
 
             const royaltyRate = await promotionToken.getRoyaltyRate(0);
             expect(royaltyRate.value).to.equal(ethers.utils.parseEther('0.2'));
@@ -243,33 +240,33 @@ describe('5.2. PromotionToken', async () => {
         });
 
         it('5.2.3.2. updateRoyaltyRate unsuccessfully with invalid signatures', async () => {
-            const { promotionToken, admin, admins } = await beforePromotionTokenTest();
+            const { deployer, promotionToken, admin, admins } = await beforePromotionTokenTest();
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "uint256"],
-                [promotionToken.address, "updateRoyaltyRate", ethers.utils.parseEther('0.2')]
-            );
-            const invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+            const paramsInput: UpdateRoyaltyRateParamsInput = {
+                royaltyRate: ethers.utils.parseEther('0.2'),
+            };
+            const params: UpdateRoyaltyRateParams = {
+                ...paramsInput,
+                signatures: await getUpdateRoyaltyRateSignatures(promotionToken, admins, admin, paramsInput, false),
+            };
 
-            await expect(promotionToken.updateRoyaltyRate(
-                ethers.utils.parseEther('0.2'),
-                invalidSignatures
-            )).to.be.revertedWithCustomError(admin, 'FailedVerification');
+            await expect(getUpdateRoyaltyRateTx(promotionToken, deployer, params))
+                .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
         it('5.2.3.3. updateRoyaltyRate unsuccessfully with invalid rate', async () => {
-            const { promotionToken, admin, admins } = await beforePromotionTokenTest();
+            const { deployer, promotionToken, admin, admins } = await beforePromotionTokenTest();
 
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "uint256"],
-                [promotionToken.address, "updateRoyaltyRate", Constant.COMMON_RATE_MAX_FRACTION.add(1)]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput: UpdateRoyaltyRateParamsInput = {
+                royaltyRate: Constant.COMMON_RATE_MAX_FRACTION.add(1),
+            };
+            const params: UpdateRoyaltyRateParams = {
+                ...paramsInput,
+                signatures: await getUpdateRoyaltyRateSignatures(promotionToken, admins, admin, paramsInput),
+            };
 
-            await expect(promotionToken.updateRoyaltyRate(
-                Constant.COMMON_RATE_MAX_FRACTION.add(1),
-                signatures
-            )).to.be.revertedWithCustomError(promotionToken, 'InvalidRate');
+            await expect(getUpdateRoyaltyRateTx(promotionToken, deployer, params))
+                .to.be.revertedWithCustomError(promotionToken, 'InvalidRate');
         });
     });
 
@@ -277,7 +274,7 @@ describe('5.2. PromotionToken', async () => {
         it('5.2.4.1. Withdraw native tokens successfully', async () => {
             const { deployer, admins, admin, promotionToken } = await beforePromotionTokenTest();
 
-            let receiver = randomWallet();
+            const receiver = randomWallet();
 
             await callTransaction(deployer.sendTransaction({
                 to: promotionToken.address,
@@ -287,19 +284,18 @@ describe('5.2. PromotionToken', async () => {
             let balance = await ethers.provider.getBalance(promotionToken.address);
             expect(balance).to.equal(2000);
 
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address', 'address[]', 'uint256[]'],
-                [promotionToken.address, 'withdraw', receiver.address, [ethers.constants.AddressZero], [1200]]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput1: WithdrawParamsInput = {
+                receiver: receiver.address,
+                currencies: [ethers.constants.AddressZero],
+                values: [BigNumber.from(1200)],
+            };
+            const params1: WithdrawParams = {
+                ...paramsInput1,
+                signatures: await getWithdrawSignatures(promotionToken, admins, admin, paramsInput1),
+            };
 
-            let tx = await promotionToken.withdraw(
-                receiver.address,
-                [ethers.constants.AddressZero],
-                [1200],
-                signatures,
-            );
-            await tx.wait();
+            const tx1 = await getWithdrawTx(promotionToken, deployer, params1);
+            await tx1.wait();
 
             balance = await ethers.provider.getBalance(promotionToken.address);
             expect(balance).to.equal(800);
@@ -315,19 +311,18 @@ describe('5.2. PromotionToken', async () => {
             balance = await ethers.provider.getBalance(promotionToken.address);
             expect(balance).to.equal(3800);
 
-            message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address', 'address[]', 'uint256[]'],
-                [promotionToken.address, 'withdraw', receiver.address, [ethers.constants.AddressZero], [3800]]
-            );
-            signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput2: WithdrawParamsInput = {
+                receiver: receiver.address,
+                currencies: [ethers.constants.AddressZero],
+                values: [BigNumber.from(3800)],
+            };
+            const params2: WithdrawParams = {
+                ...paramsInput2,
+                signatures: await getWithdrawSignatures(promotionToken, admins, admin, paramsInput2),
+            };
 
-            tx = await promotionToken.withdraw(
-                receiver.address,
-                [ethers.constants.AddressZero],
-                [3800],
-                signatures,
-            );
-            await tx.wait();
+            const tx2 = await getWithdrawTx(promotionToken, deployer, params2);
+            await tx2.wait();
 
             balance = await ethers.provider.getBalance(promotionToken.address);
             expect(balance).to.equal(0);
@@ -335,11 +330,11 @@ describe('5.2. PromotionToken', async () => {
             balance = await ethers.provider.getBalance(receiver.address);
             expect(balance).to.equal(5000);
         });
-
+       
         it('5.2.4.2. Withdraw ERC-20 tokens successfully', async () => {
-            const { admins, admin, promotionToken, currency1, currency2 } = await beforePromotionTokenTest();
+            const { deployer, admins, admin, promotionToken, currency1, currency2 } = await beforePromotionTokenTest();
 
-            let receiver = randomWallet();
+            const receiver = randomWallet();
 
             await callTransaction(currency1.mint(promotionToken.address, 1000));
             await callTransaction(currency2.mint(promotionToken.address, ethers.constants.MaxUint256));
@@ -349,18 +344,17 @@ describe('5.2. PromotionToken', async () => {
             expect(await currency1.balanceOf(receiver.address)).to.equal(0);
             expect(await currency2.balanceOf(receiver.address)).to.equal(0);
 
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address', 'address[]', 'uint256[]'],
-                [promotionToken.address, 'withdraw', receiver.address, [currency1.address, currency2.address], [700, ethers.constants.MaxUint256]]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput: WithdrawParamsInput = {
+                receiver: receiver.address,
+                currencies: [currency1.address, currency2.address],
+                values: [BigNumber.from(700), ethers.constants.MaxUint256],
+            };
+            const params: WithdrawParams = {
+                ...paramsInput,
+                signatures: await getWithdrawSignatures(promotionToken, admins, admin, paramsInput),
+            };
 
-            let tx = await promotionToken.withdraw(
-                receiver.address,
-                [currency1.address, currency2.address],
-                [700, ethers.constants.MaxUint256],
-                signatures,
-            );
+            const tx = await getWithdrawTx(promotionToken, deployer, params);
             await tx.wait();
 
             expect(await currency1.balanceOf(promotionToken.address)).to.equal(300);
@@ -372,7 +366,7 @@ describe('5.2. PromotionToken', async () => {
         it('5.2.4.3. Withdraw token successfully multiple times in the same tx', async () => {
             const { deployer, admins, admin, promotionToken, currency1, currency2 } = await beforePromotionTokenTest();
 
-            let receiver = randomWallet();
+            const receiver = randomWallet();
 
             await callTransaction(deployer.sendTransaction({
                 to: promotionToken.address,
@@ -387,21 +381,17 @@ describe('5.2. PromotionToken', async () => {
             expect(await currency1.balanceOf(receiver.address)).to.equal(0);
             expect(await currency2.balanceOf(receiver.address)).to.equal(0);
 
-            const currencies = [ethers.constants.AddressZero, ethers.constants.AddressZero, currency1.address, currency2.address];
-            const amounts = [100, 200, 400, 800];
+            const paramsInput: WithdrawParamsInput = {
+                receiver: receiver.address,
+                currencies: [ethers.constants.AddressZero, ethers.constants.AddressZero, currency1.address, currency2.address],
+                values: [BigNumber.from(100), BigNumber.from(200), BigNumber.from(400), BigNumber.from(800)],
+            };
+            const params: WithdrawParams = {
+                ...paramsInput,
+                signatures: await getWithdrawSignatures(promotionToken, admins, admin, paramsInput),
+            };
 
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address', 'address[]', 'uint256[]'],
-                [promotionToken.address, 'withdraw', receiver.address, currencies, amounts]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
-
-            let tx = await promotionToken.withdraw(
-                receiver.address,
-                currencies,
-                amounts,
-                signatures,
-            );
+            const tx = await getWithdrawTx(promotionToken, deployer, params);
             await tx.wait();
 
             expect(await ethers.provider.getBalance(promotionToken.address)).to.equal(1700);
@@ -416,53 +406,54 @@ describe('5.2. PromotionToken', async () => {
         it('5.2.4.4. Withdraw unsuccessfully with invalid signatures', async () => {
             const { deployer, admins, admin, promotionToken } = await beforePromotionTokenTest();
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address', 'address[]', 'uint256[]'],
-                [promotionToken.address, 'withdraw', deployer.address, [ethers.constants.AddressZero], [1000]]
-            );
-            let invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+            const paramsInput: WithdrawParamsInput = {
+                receiver: deployer.address,
+                currencies: [ethers.constants.AddressZero],
+                values: [BigNumber.from(1000)],
+            };
+            const params: WithdrawParams = {
+                ...paramsInput,
+                signatures: await getWithdrawSignatures(promotionToken, admins, admin, paramsInput, false),
+            };
 
-            await expect(promotionToken.withdraw(
-                deployer.address,
-                [ethers.constants.AddressZero],
-                [1000],
-                invalidSignatures,
-            )).to.be.revertedWithCustomError(promotionToken, 'FailedVerification');
+            await expect(getWithdrawTx(promotionToken, deployer, params))
+                .to.be.revertedWithCustomError(promotionToken, 'FailedVerification');
         });
 
         it('5.2.4.5. Withdraw unsuccessfully with insufficient native tokens', async () => {
             const { deployer, admins, admin, promotionToken } = await beforePromotionTokenTest();
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address', 'address[]', 'uint256[]'],
-                [promotionToken.address, 'withdraw', deployer.address, [ethers.constants.AddressZero], [1000]]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput: WithdrawParamsInput = {
+                receiver: deployer.address,
+                currencies: [ethers.constants.AddressZero],
+                values: [BigNumber.from(1000)],
+            };
+            const params: WithdrawParams = {
+                ...paramsInput,
+                signatures: await getWithdrawSignatures(promotionToken, admins, admin, paramsInput),
+            };
 
-            await expect(promotionToken.withdraw(
-                deployer.address,
-                [ethers.constants.AddressZero],
-                [1000],
-                signatures
-            )).to.be.revertedWithCustomError(promotionToken, 'FailedTransfer');
+            await expect(getWithdrawTx(promotionToken, deployer, params))
+                .to.be.revertedWithCustomError(promotionToken, 'FailedTransfer');
         })
 
         it('5.2.4.6. Withdraw unsuccessfully with insufficient ERC20 tokens', async () => {
-            const { deployer, admins, admin, promotionToken, currency1, currency2 } = await beforePromotionTokenTest();
+            const { deployer, admins, admin, promotionToken, currency1 } = await beforePromotionTokenTest();
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address', 'address[]', 'uint256[]'],
-                [promotionToken.address, 'withdraw', deployer.address, [currency1.address], [1000]]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput: WithdrawParamsInput = {
+                receiver: deployer.address,
+                currencies: [currency1.address],
+                values: [BigNumber.from(1000)],
+            };
+            const params: WithdrawParams = {
+                ...paramsInput,
+                signatures: await getWithdrawSignatures(promotionToken, admins, admin, paramsInput),
+            };
 
-            await expect(promotionToken.withdraw(
-                deployer.address,
-                [currency1.address],
-                [1000],
-                signatures
-            )).to.be.revertedWith('ERC20: transfer amount exceeds balance');
-        })
+            await expect(getWithdrawTx(promotionToken, deployer, params))
+                .to.be.revertedWith('ERC20: transfer amount exceeds balance');
+        });
+
 
         it('5.2.4.7. withdraw unsuccessfully when native token receiving failed', async () => {
             const { deployer, admins, admin, promotionToken } = await beforePromotionTokenTest();
@@ -474,18 +465,18 @@ describe('5.2. PromotionToken', async () => {
                 value: 1000,
             }));
 
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address', 'address[]', 'uint256[]'],
-                [promotionToken.address, 'withdraw', failReceiver.address, [ethers.constants.AddressZero], [1000]]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput: WithdrawParamsInput = {
+                receiver: failReceiver.address,
+                currencies: [ethers.constants.AddressZero],
+                values: [BigNumber.from(1000)],
+            };
+            const params: WithdrawParams = {
+                ...paramsInput,
+                signatures: await getWithdrawSignatures(promotionToken, admins, admin, paramsInput),
+            };
 
-            await expect(promotionToken.withdraw(
-                failReceiver.address,
-                [ethers.constants.AddressZero],
-                [1000],
-                signatures
-            )).to.be.revertedWithCustomError(promotionToken, 'FailedTransfer');
+            await expect(getWithdrawTx(promotionToken, deployer, params))
+                .to.be.revertedWithCustomError(promotionToken, 'FailedTransfer');
         });
 
         it('5.2.4.8. withdraw unsuccessfully when the contract is reentered', async () => {
@@ -529,7 +520,7 @@ describe('5.2. PromotionToken', async () => {
 
     describe('5.2.5. getContent(uint256)', async () => {
         it('5.2.5.1. return successfully with valid content id', async () => {
-            const { promotionToken, admin, admins } = await beforePromotionTokenTest({
+            const { promotionToken } = await beforePromotionTokenTest({
                 listSampleContents: true,
             });
 
@@ -539,7 +530,7 @@ describe('5.2. PromotionToken', async () => {
         });
 
         it('5.2.5.2. revert with invalid content id', async () => {
-            const { promotionToken, admin, admins } = await beforePromotionTokenTest({
+            const { promotionToken } = await beforePromotionTokenTest({
                 listSampleContents: true,
             });
 
@@ -552,7 +543,7 @@ describe('5.2. PromotionToken', async () => {
 
     describe('5.2.6. createContents(string[], uint40[], uint40[], bytes[])', async () => {
         it('5.2.6.1. create contents successfully', async () => {
-            const { promotionToken, admin, admins } = await beforePromotionTokenTest();
+            const { deployer, promotionToken, admin, admins } = await beforePromotionTokenTest();
 
             const currentTimestamp = await time.latest();
 
@@ -563,47 +554,48 @@ describe('5.2. PromotionToken', async () => {
             const duration2 = 1600;
             const duration3 = 3200;
 
-            const uris = ["testing_uri_1", "testing_uri_2", "testing_uri_3"];
-            const startAts = [startAt1, startAt2, startAt3];
-            const durations = [duration1, duration2, duration3];
+            const paramsInput: CreateContentsParamsInput = {
+                uris: ["testing_uri_1", "testing_uri_2", "testing_uri_3"],
+                startAts: [startAt1, startAt2, startAt3],
+                durations: [duration1, duration2, duration3],
+            };
+            const params: CreateContentsParams = {
+                ...paramsInput,
+                signatures: await getCreateContentsSignatures(promotionToken, admins, admin, paramsInput),
+            };
 
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "string[]", "uint40[]", "uint40[]"],
-                [promotionToken.address, "createContents", uris, startAts, durations]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
-
-            const tx = await promotionToken.createContents(uris, startAts, durations, signatures);
+            const tx = await getCreateContentsTx(promotionToken, deployer, params);
             await tx.wait();
 
-            await expect(tx).to
-                .emit(promotionToken, 'NewContent')
-                .withArgs(1, "testing_uri_1", startAt1, duration1)
-                .emit(promotionToken, 'NewContent')
-                .withArgs(2, "testing_uri_2", startAt2, duration2)
-                .emit(promotionToken, 'NewContent')
-                .withArgs(3, "testing_uri_3", startAt3, duration3);
+            for (let i = 1; i <= 3; ++i) {
+                await expect(tx).to.emit(promotionToken, 'NewContent').withArgs(
+                    i,
+                    params.uris[i - 1],
+                    params.startAts[i - 1],
+                    params.durations[i - 1]
+                );
+            }
 
             expect(await promotionToken.contentNumber()).to.equal(3);
             
             const content1 = await promotionToken.getContent(1);
-            expect(content1.uri).to.equal("testing_uri_1");
-            expect(content1.startAt).to.equal(startAt1);
-            expect(content1.endAt).to.equal(startAt1 + duration1);
+            expect(content1.uri).to.equal(params.uris[0]);
+            expect(content1.startAt).to.equal(params.startAts[0]);
+            expect(content1.endAt).to.equal(params.startAts[0] + params.durations[0]);
             
             const content2 = await promotionToken.getContent(2);
-            expect(content2.uri).to.equal("testing_uri_2");
-            expect(content2.startAt).to.equal(startAt2);
-            expect(content2.endAt).to.equal(startAt2 + duration2);
+            expect(content2.uri).to.equal(params.uris[1]);
+            expect(content2.startAt).to.equal(params.startAts[1]);
+            expect(content2.endAt).to.equal(params.startAts[1] + params.durations[1]);
 
             const content3 = await promotionToken.getContent(3);
-            expect(content3.uri).to.equal("testing_uri_3");
-            expect(content3.startAt).to.equal(startAt3);
-            expect(content3.endAt).to.equal(startAt3 + duration3);
+            expect(content3.uri).to.equal(params.uris[2]);
+            expect(content3.startAt).to.equal(params.startAts[2]);
+            expect(content3.endAt).to.equal(params.startAts[2] + params.durations[2]);
         });
 
         it('5.2.6.2. create contents unsuccessfully with invalid signatures', async () => {
-            const { promotionToken, admin, admins } = await beforePromotionTokenTest();
+            const { deployer, promotionToken, admin, admins } = await beforePromotionTokenTest();
 
             const currentTimestamp = await time.latest();
 
@@ -614,30 +606,39 @@ describe('5.2. PromotionToken', async () => {
             const duration2 = 1600;
             const duration3 = 3200;
 
-            const uris = ["testing_uri_1", "testing_uri_2", "testing_uri_3"];
-            const startAts = [startAt1, startAt2, startAt3];
-            const durations = [duration1, duration2, duration3];
+            const paramsInput: CreateContentsParamsInput = {
+                uris: ["testing_uri_1", "testing_uri_2", "testing_uri_3"],
+                startAts: [startAt1, startAt2, startAt3],
+                durations: [duration1, duration2, duration3],
+            };
+            const params: CreateContentsParams = {
+                ...paramsInput,
+                signatures: await getCreateContentsSignatures(promotionToken, admins, admin, paramsInput, false),
+            };
 
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "string[]", "uint40[]", "uint40[]"],
-                [promotionToken.address, "createContents", uris, startAts, durations]
-            );
-            let invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
-
-            await expect(promotionToken.createContents(uris, startAts, durations, invalidSignatures))
+            await expect(getCreateContentsTx(promotionToken, deployer, params))
                 .to.be.revertedWithCustomError(promotionToken, 'FailedVerification');
         })
 
-        async function testRevert(fixture: PromotionTokenFixture, uris: string[], startAts: number[], durations: number[], customError: string) {
-            const { promotionToken, admin, admins } = fixture;
+        async function testRevert(
+            fixture: PromotionTokenFixture,
+            uris: string[],
+            startAts: number[],
+            durations: number[],
+            customError: string
+        ) {
+            const { deployer, promotionToken, admin, admins } = fixture;
 
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "string[]", "uint40[]", "uint40[]"],
-                [promotionToken.address, "createContents", uris, startAts, durations]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await expect(promotionToken.createContents(uris, startAts, durations, signatures))
+            const paramsInput: CreateContentsParamsInput = {
+                uris: uris,
+                startAts: startAts,
+                durations: durations,
+            };
+            const params: CreateContentsParams = {
+                ...paramsInput,
+                signatures: await getCreateContentsSignatures(promotionToken, admins, admin, paramsInput),
+            };
+            await expect(getCreateContentsTx(promotionToken, deployer, params))
                 .to.be.revertedWithCustomError(promotionToken, customError);
         }
 
@@ -681,61 +682,72 @@ describe('5.2. PromotionToken', async () => {
 
     describe('5.2.7. updateContentURIs(uint256[],string[], bytes[])', async () => {
         it('5.2.7.1. update content uris successfully', async () => {
-            const { promotionToken, admin, admins } = await beforePromotionTokenTest({
+            const { deployer, promotionToken, admin, admins } = await beforePromotionTokenTest({
                 listSampleContents: true,
             });
 
-            const contentIds = [1, 2];
-            const uris = ["testing_uri_1_updated", "testing_uri_2_updated"];
+            const paramsInput: UpdateContentURIsParamsInput = {
+                contentIds: [BigNumber.from(1), BigNumber.from(2)],
+                uris: ["testing_uri_1_updated", "testing_uri_2_updated"],
+            };
+            const params: UpdateContentURIsParams = {
+                ...paramsInput,
+                signatures: await getUpdateContentURIsSignatures(promotionToken, admins, admin, paramsInput),
+            };
 
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "uint256[]", "string[]"],
-                [promotionToken.address, "updateContentURIs", contentIds, uris]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
-
-            const tx = await promotionToken.updateContentURIs(contentIds, uris, signatures);
+            const tx = await getUpdateContentURIsTx(promotionToken, deployer, params);
             await tx.wait();
 
-            await expect(tx).to
-                .emit(promotionToken, 'ContentURIUpdate')
-                .withArgs(1, "testing_uri_1_updated")
-                .emit(promotionToken, 'ContentURIUpdate')
-                .withArgs(2, "testing_uri_2_updated");
-
+            for (let i = 1; i <= 2; ++i) {
+                await expect(tx).to.emit(promotionToken, 'ContentURIUpdate').withArgs(
+                    params.contentIds[i - 1],
+                    params.uris[i - 1]
+                );
+            }
+            
             expect((await promotionToken.getContent(1)).uri).to.equal("testing_uri_1_updated");
             expect((await promotionToken.getContent(2)).uri).to.equal("testing_uri_2_updated");
             expect((await promotionToken.getContent(3)).uri).to.equal("testing_uri_3");
         });
 
         it('5.2.7.2. update content uris unsuccessfully with invalid signatures', async () => {
-            const { promotionToken, admin, admins } = await beforePromotionTokenTest({
+            const { deployer, promotionToken, admin, admins } = await beforePromotionTokenTest({
                 listSampleContents: true,
             });
 
-            const contentIds = [1, 2];
+            const contentIds = [BigNumber.from(1), BigNumber.from(2)];
             const uris = ["testing_uri_1_updated", "testing_uri_2_updated"];
 
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "uint256[]", "string[]"],
-                [promotionToken.address, "updateContentURIs", contentIds, uris]
-            );
-            let invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+            const paramsInput: UpdateContentURIsParamsInput = {
+                contentIds: contentIds,
+                uris: uris,
+            };
+            const params: UpdateContentURIsParams = {
+                ...paramsInput,
+                signatures: await getUpdateContentURIsSignatures(promotionToken, admins, admin, paramsInput, false),
+            };
 
-            await expect(promotionToken.updateContentURIs(contentIds, uris, invalidSignatures))
+            await expect(getUpdateContentURIsTx(promotionToken, deployer, params))
                 .to.be.revertedWithCustomError(promotionToken, 'FailedVerification');
         });
 
-        async function testRevert(fixture: PromotionTokenFixture, contentIds: number[], uris: string[], customError: string) {
-            const { promotionToken, admin, admins } = fixture;
+        async function testRevert(
+            fixture: PromotionTokenFixture,
+            contentIds: BigNumber[],
+            uris: string[],
+            customError: string
+        ) {
+            const { deployer, promotionToken, admin, admins } = fixture;
 
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "uint256[]", "string[]"],
-                [promotionToken.address, "updateContentURIs", contentIds, uris]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await expect(promotionToken.updateContentURIs(contentIds, uris, signatures))
+            const paramsInput: UpdateContentURIsParamsInput = {
+                contentIds: contentIds,
+                uris: uris,
+            };
+            const params: UpdateContentURIsParams = {
+                ...paramsInput,
+                signatures: await getUpdateContentURIsSignatures(promotionToken, admins, admin, paramsInput),
+            };
+            await expect(getUpdateContentURIsTx(promotionToken, deployer, params))
                 .to.be.revertedWithCustomError(promotionToken, customError);
         }
 
@@ -744,7 +756,7 @@ describe('5.2. PromotionToken', async () => {
                 listSampleContents: true,
             });
 
-            const contentIds = [1, 2, 3];
+            const contentIds = [BigNumber.from(1), BigNumber.from(2), BigNumber.from(3)];
             const uris = ["testing_uri_1_updated", "testing_uri_2_updated"];
 
             await testRevert(fixture, contentIds, uris, 'InvalidInput');
@@ -755,7 +767,7 @@ describe('5.2. PromotionToken', async () => {
                 listSampleContents: true,
             });
 
-            const contentIds = [1, 0];
+            const contentIds = [BigNumber.from(1), BigNumber.from(0)];
             const uris = ["testing_uri_1_updated", "testing_uri_2_updated"];
 
             await testRevert(fixture, contentIds, uris, 'InvalidContentId');
@@ -767,7 +779,7 @@ describe('5.2. PromotionToken', async () => {
             });
             const { promotionToken } = fixture;
 
-            const contentIds = [1];
+            const contentIds = [BigNumber.from(1)];
             const uris = ["testing_uri_1_updated"];
 
             const startAt = (await promotionToken.getContent(1)).startAt;
@@ -779,7 +791,7 @@ describe('5.2. PromotionToken', async () => {
 
     describe('5.2.8. cancelContents(uint256, bytes[])', async () => {
         it('5.2.8.1. cancel contents successfully', async () => {
-            const { promotionToken, admin, admins } = await beforePromotionTokenTest({
+            const { deployer, promotionToken, admin, admins } = await beforePromotionTokenTest({
                 listSampleContents: true,
             });
 
@@ -795,20 +807,20 @@ describe('5.2. PromotionToken', async () => {
 
             await time.setNextBlockTimestamp(cancelAt);
 
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "uint256[]"],
-                [promotionToken.address, "cancelContents", [2, 3]]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput: CancelContentsParamsInput = {
+                contentIds: [BigNumber.from(2), BigNumber.from(3)],
+            };
+            const params: CancelContentsParams = {
+                ...paramsInput,
+                signatures: await getCancelContentsSignatures(promotionToken, admins, admin, paramsInput),
+            };
 
-            const tx = await promotionToken.cancelContents([2, 3], signatures);
+            const tx = await getCancelContentsTx(promotionToken, deployer, params);
             await tx.wait();
 
             await expect(tx).to
-                .emit(promotionToken, 'ContentCancellation')
-                .withArgs(2)
-                .emit(promotionToken, 'ContentCancellation')
-                .withArgs(3);
+                .emit(promotionToken, 'ContentCancellation').withArgs(2)
+                .emit(promotionToken, 'ContentCancellation').withArgs(3);
 
             expect(await promotionToken.contentNumber()).to.equal(3);
 
@@ -829,77 +841,90 @@ describe('5.2. PromotionToken', async () => {
         });
 
         it('5.2.8.2. cancel contents unsuccessfully with invalid signatures', async () => {
-            const { promotionToken, admin, admins } = await beforePromotionTokenTest({
+            const { deployer, promotionToken, admin, admins } = await beforePromotionTokenTest({
                 listSampleContents: true,
             });
 
             const cancelAt = (await promotionToken.getContent(1)).startAt + 50;
             await time.setNextBlockTimestamp(cancelAt);
 
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "uint256[]"],
-                [promotionToken.address, "cancelContents", [2, 3]]
-            );
-            let invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
-
-            await expect(promotionToken.cancelContents([2, 3], invalidSignatures))
+            const paramsInput: CancelContentsParamsInput = {
+                contentIds: [BigNumber.from(2), BigNumber.from(3)],
+            };
+            const params: CancelContentsParams = {
+                ...paramsInput,
+                signatures: await getCancelContentsSignatures(promotionToken, admins, admin, paramsInput, false),
+            };
+            await expect(getCancelContentsTx(promotionToken, deployer, params))
                 .to.be.revertedWithCustomError(promotionToken, 'FailedVerification');
         });
 
         it('5.2.8.3. revert with invalid content id', async () => {
-            const { promotionToken, admin, admins } = await beforePromotionTokenTest({
+            const { deployer, promotionToken, admin, admins } = await beforePromotionTokenTest({
                 listSampleContents: true,
             });
 
             const cancelAt = (await promotionToken.getContent(1)).startAt + 50;
             await time.setNextBlockTimestamp(cancelAt);
 
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "uint256[]"],
-                [promotionToken.address, "cancelContents", [2, 3, 0]]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await expect(promotionToken.cancelContents([2, 3, 0], signatures))
+            const paramsInput: CancelContentsParamsInput = {
+                contentIds: [BigNumber.from(2), BigNumber.from(3), BigNumber.from(0)],
+            };
+            const params: CancelContentsParams = {
+                ...paramsInput,
+                signatures: await getCancelContentsSignatures(promotionToken, admins, admin, paramsInput),
+            };
+            await expect(getCancelContentsTx(promotionToken, deployer, params))
                 .to.be.revertedWithCustomError(promotionToken, 'InvalidContentId');
         });
 
         it('5.2.8.4. cancel contents unsuccessfully with started events', async () => {
-            const { promotionToken, admin, admins } = await beforePromotionTokenTest({
+            const { deployer, promotionToken, admin, admins } = await beforePromotionTokenTest({
                 listSampleContents: true,
             });
 
             const cancelAt = (await promotionToken.getContent(1)).startAt + 50;
             await time.setNextBlockTimestamp(cancelAt);
 
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "uint256[]"],
-                [promotionToken.address, "cancelContents", [1]]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput: CancelContentsParamsInput = {
+                contentIds: [BigNumber.from(1)],
+            };
+            const params: CancelContentsParams = {
+                ...paramsInput,
+                signatures: await getCancelContentsSignatures(promotionToken, admins, admin, paramsInput),
+            };
 
-            await expect(promotionToken.cancelContents([1], signatures))
+            await expect(getCancelContentsTx(promotionToken, deployer, params))
                 .to.be.revertedWithCustomError(promotionToken, 'AlreadyStarted');
         });
 
         it('5.2.8.5. cancel contents successfully with already cancelled content', async () => {
-            const { promotionToken, admin, admins } = await beforePromotionTokenTest({
+            const { deployer, promotionToken, admin, admins } = await beforePromotionTokenTest({
                 listSampleContents: true,
             });
 
             const cancelAt = (await promotionToken.getContent(1)).startAt + 50;
             await time.setNextBlockTimestamp(cancelAt);
 
-            await callPromotionToken_CancelContents(promotionToken, admins, [2, 3], await admin.nonce());
-
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "uint256[]"],
-                [promotionToken.address, "cancelContents", [3]]
+            await callPromotionToken_CancelContents(
+                promotionToken,
+                deployer,
+                admin,
+                admins,
+                {
+                    contentIds: [BigNumber.from(2), BigNumber.from(3)],
+                },
             );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
 
-            await expect(promotionToken.cancelContents([3], signatures))
-                .to.be.not.reverted;            
+            const paramsInput: CancelContentsParamsInput = {
+                contentIds: [BigNumber.from(3)],
+            };
+            const params: CancelContentsParams = {
+                ...paramsInput,
+                signatures: await getCancelContentsSignatures(promotionToken, admins, admin, paramsInput),
+            };
+            await expect(getCancelContentsTx(promotionToken, deployer, params))
+                .to.be.not.reverted;
         });
     });
 
@@ -927,9 +952,11 @@ describe('5.2. PromotionToken', async () => {
             const receipt1 = await tx1.wait();
 
             for(let i = tokenIdStart; i.lte(tokenIdEnd); i = i.add(1)) {
-                await expect(tx1).to
-                    .emit(promotionToken, 'NewToken')
-                    .withArgs(i, 1, minter1.address);
+                await expect(tx1).to.emit(promotionToken, 'NewToken').withArgs(
+                    i,
+                    1,
+                    minter1.address
+                );
             }
 
             expect(await promotionToken.tokenNumber()).to.equal(tokenIdEnd);
@@ -956,9 +983,11 @@ describe('5.2. PromotionToken', async () => {
             const receipt2 = await tx2.wait();
             
             for(let i = tokenIdStart; i.lte(tokenIdEnd); i = i.add(1)) {
-                await expect(tx2).to
-                    .emit(promotionToken, 'NewToken')
-                    .withArgs(i, 1, minter1.address);
+                await expect(tx2).to.emit(promotionToken, 'NewToken').withArgs(
+                    i,
+                    1,
+                    minter1.address
+                );
             }
 
             expect(await promotionToken.tokenNumber()).to.equal(tokenIdEnd);
@@ -986,9 +1015,11 @@ describe('5.2. PromotionToken', async () => {
             const receipt3 = await tx3.wait();
 
             for(let i = tokenIdStart; i.lte(tokenIdEnd); i = i.add(1)) {
-                await expect(tx3).to
-                    .emit(promotionToken, 'NewToken')
-                    .withArgs(i, 2, minter2.address);
+                await expect(tx3).to.emit(promotionToken, 'NewToken').withArgs(
+                    i,
+                    2,
+                    minter2.address
+                );
             }
 
             expect(await promotionToken.tokenNumber()).to.equal(tokenIdEnd);
@@ -1086,21 +1117,6 @@ describe('5.2. PromotionToken', async () => {
     describe('5.2.10. supportsInterface(bytes4)', async () => {
         it('5.2.10.1. return true for appropriate interface', async () => {
             const { promotionToken } = await beforePromotionTokenTest();
-
-            const IERC4906Upgradeable = IERC4906Upgradeable__factory.createInterface();
-            const IERC165Upgradeable = IERC165Upgradeable__factory.createInterface();
-            const IERC721Upgradeable = IERC721Upgradeable__factory.createInterface();
-            const IERC2981Upgradeable = IERC2981Upgradeable__factory.createInterface();
-            const IERC721MetadataUpgradeable = IERC721MetadataUpgradeable__factory.createInterface();
-            const ICommon = ICommon__factory.createInterface();
-            const IRoyaltyRateProposer = IRoyaltyRateProposer__factory.createInterface();
-
-            const IERC4906UpgradeableInterfaceId = getInterfaceID(IERC4906Upgradeable, [IERC165Upgradeable, IERC721Upgradeable]);
-            const IRoyaltyRateProposerInterfaceId = getInterfaceID(IRoyaltyRateProposer, [ICommon, IERC165Upgradeable, IERC2981Upgradeable]);
-            const IERC2981UpgradeableInterfaceId = getInterfaceID(IERC2981Upgradeable, [IERC165Upgradeable]);
-            const IERC165UpgradeableInterfaceId = getInterfaceID(IERC165Upgradeable, []);
-            const IERC721UpgradeableInterfaceId = getInterfaceID(IERC721Upgradeable, [IERC165Upgradeable]);
-            const IERC721MetadataUpgradeableInterfaceId = getInterfaceID(IERC721MetadataUpgradeable, [IERC721Upgradeable]);
 
             expect(await promotionToken.supportsInterface(getBytes4Hex(IERC4906UpgradeableInterfaceId))).to.equal(true);
             expect(await promotionToken.supportsInterface(getBytes4Hex(IRoyaltyRateProposerInterfaceId))).to.equal(true);

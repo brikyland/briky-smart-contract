@@ -416,6 +416,7 @@ describe('7.1. PrestigePad', async () => {
     } = {}): Promise<PrestigePadFixture> {
         const fixture = await loadFixture(prestigePadFixture);
         const { 
+            deployer,
             admin,
             admins,
             manager,
@@ -432,7 +433,6 @@ describe('7.1. PrestigePad', async () => {
             depositor2,
             depositor3,
             reserveVault,
-            deployer,
             validator,
             reentrancyExclusiveERC20,
             reentrancyERC20,
@@ -844,7 +844,7 @@ describe('7.1. PrestigePad', async () => {
         }
 
         if (pause) {
-            await callPausable_Pause(prestigePad, admins, admin);
+            await callPausable_Pause(prestigePad, deployer, admins, admin);
         }
 
         return {
@@ -1318,11 +1318,11 @@ describe('7.1. PrestigePad', async () => {
         it('7.1.5.9. initiate launch unsuccessfully when launching project failed', async () => {
             const fixture = await beforePrestigePadTest();
 
-            const { admin, manager, projectToken, admins, validator, prestigePad } = fixture;
+            const { deployer, admin, manager, projectToken, admins, validator, prestigePad } = fixture;
 
             const { defaultParams } = await beforeInitiateLaunchTest(fixture);
 
-            await callPausable_Pause(projectToken as any, admins, admin);
+            await callPausable_Pause(projectToken as any, deployer, admins, admin);
 
             await expect(getInitiateLaunchTx(prestigePad, validator, manager, defaultParams))
                 .to.be.revertedWith('Pausable: paused');
@@ -3898,9 +3898,9 @@ describe('7.1. PrestigePad', async () => {
                 depositFirstRound: true,
             });
 
-            const { prestigePad, initiator1, reserveVault, admin, admins } = fixture;
+            const { deployer, prestigePad, initiator1, reserveVault, admin, admins } = fixture;
 
-            await callPausable_Pause(reserveVault as any, admins, admin);
+            await callPausable_Pause(reserveVault as any, deployer, admins, admin);
 
             const params = await getSafeConfirmCurrentRoundParams(prestigePad, { launchId: BigNumber.from(1) });
             await expect(getSafeConfirmCurrentRoundTx(
@@ -4517,9 +4517,9 @@ describe('7.1. PrestigePad', async () => {
                 raiseFirstRound: true,
             });
 
-            const { prestigePad, depositor1, admin, admins, reserveVault } = fixture;
+            const { deployer, prestigePad, depositor1, admin, admins, reserveVault } = fixture;
 
-            await callPausable_Pause(reserveVault as any, admins, admin);
+            await callPausable_Pause(reserveVault as any, deployer, admins, admin);
 
             const roundId = (await prestigePad.getLaunch(1)).roundIds[1];
             const round = await prestigePad.getRound(roundId);
@@ -4752,13 +4752,13 @@ describe('7.1. PrestigePad', async () => {
                 depositFirstRound: true,
             });
 
-            const { prestigePad, depositor1, initiator1, admin, admins } = fixture;
+            const { deployer, prestigePad, depositor1, initiator1, admin, admins } = fixture;
 
             const oldRoundId = (await prestigePad.getLaunch(1)).roundIds[1];
 
             await callTransaction(prestigePad.connect(initiator1).cancelCurrentRound(1));
 
-            await callPausable_Pause(prestigePad, admins, admin);
+            await callPausable_Pause(prestigePad, deployer, admins, admin);
 
             await expect(prestigePad.connect(depositor1).withdrawContribution(oldRoundId))
                 .to.be.revertedWith('Pausable: paused'); 
@@ -5377,9 +5377,9 @@ describe('7.1. PrestigePad', async () => {
                 doAllFirstFound: true,
             });
 
-            const { prestigePad, depositor3, admins, admin, reserveVault } = fixture;
+            const { deployer, prestigePad, depositor3, admins, admin, reserveVault } = fixture;
 
-            await callPausable_Pause(reserveVault as any, admins, admin);
+            await callPausable_Pause(reserveVault as any, deployer, admins, admin);
 
             const launchId = 1;
             const index = 1;

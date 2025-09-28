@@ -13,3 +13,12 @@ export interface ERC721BorrowParams {
     currency: string;
     duration: BigNumber;
 }
+
+export interface RegisterCollateralsParamsInput {
+    tokens: string[];
+    isCollateral: boolean;
+}
+
+export interface RegisterCollateralsParams extends RegisterCollateralsParamsInput {
+    signatures: string[];
+}

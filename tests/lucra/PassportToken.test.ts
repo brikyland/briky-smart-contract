@@ -55,7 +55,7 @@ async function testReentrancy_passportToken(
     );
 }
 
-describe.only('5.1. PassportToken', async () => {
+describe('5.1. PassportToken', async () => {
     async function passportTokenFixture(): Promise<PassportTokenFixture> {
         const accounts = await ethers.getSigners();
         const deployer = accounts[0];
@@ -105,10 +105,10 @@ describe.only('5.1. PassportToken', async () => {
         pause = false,
     } = {}): Promise<PassportTokenFixture> {
         const fixture = await loadFixture(passportTokenFixture);
-        const { passportToken, admins, admin } = fixture;
+        const { deployer, passportToken, admins, admin } = fixture;
 
         if (pause) {
-            await callPausable_Pause(passportToken, admins, admin);
+            await callPausable_Pause(passportToken, deployer, admins, admin);
         }
 
         return {

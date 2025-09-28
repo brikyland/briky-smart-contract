@@ -331,6 +331,7 @@ describe('7.2. ProjectToken', async () => {
     } = {}): Promise<ProjectTokenFixture> {
         const fixture = await loadFixture(projectTokenFixture);
         const {
+            deployer,
             admin,
             admins,
             manager,
@@ -556,7 +557,7 @@ describe('7.2. ProjectToken', async () => {
         }
 
         if (pause) {
-            await callPausable_Pause(projectToken, admins, admin);
+            await callPausable_Pause(projectToken, deployer, admins, admin);
         }
 
         return {

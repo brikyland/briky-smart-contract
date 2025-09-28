@@ -88,7 +88,7 @@ describe('4.6. Treasury', async () => {
         }
 
         if (pause) {
-            await callPausable_Pause(treasury, admins, admin);
+            await callPausable_Pause(treasury, deployer, admins, admin);
         }
 
         return {

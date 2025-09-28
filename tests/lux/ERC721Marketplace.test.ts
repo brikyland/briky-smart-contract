@@ -179,6 +179,7 @@ describe('6.1. ERC721Marketplace', async () => {
         const fixture = await loadFixture(erc721MarketplaceFixture);
 
         const {
+            deployer,
             admin,
             admins,
             currency,
@@ -254,7 +255,7 @@ describe('6.1. ERC721Marketplace', async () => {
         }
 
         if (pause) {
-            await callPausable_Pause(erc721Marketplace, admins, admin);
+            await callPausable_Pause(erc721Marketplace, deployer, admins, admin);
         }
 
         return {

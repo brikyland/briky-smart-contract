@@ -130,18 +130,24 @@ describe('4.1. Auction', async () => {
 
         await callPrimaryToken_UpdateTreasury(
             primaryToken,
+            deployer,
             admins,
-            treasury.address,
-            await admin.nonce(),
+            admin,
+            {
+                treasury: treasury.address,
+            },
         );
 
         await callPrimaryToken_UpdateStakeTokens(
             primaryToken,
+            deployer,
             admins,
-            stakeToken1.address,
-            stakeToken2.address,
-            stakeToken3.address,
-            await admin.nonce(),
+            admin,
+            {
+                stakeToken1: stakeToken1.address,
+                stakeToken2: stakeToken2.address,
+                stakeToken3: stakeToken3.address,
+            }
         );
         
         return {
@@ -174,10 +180,13 @@ describe('4.1. Auction', async () => {
         if (mintPrimaryTokenForAuction) {
             await callPrimaryToken_UnlockForPublicSale(
                 primaryToken,
+                deployer,
                 admins,
-                auction.address,
-                await admin.nonce(),
-            );    
+                admin,
+                {
+                    distributor: auction.address,
+                },
+            );
         }
 
         if (updateStakeTokens) {
@@ -229,6 +238,7 @@ describe('4.1. Auction', async () => {
         if (pause) {
             await callPausable_Pause(
                 auction,
+                deployer,
                 admins,
                 admin,
             );
@@ -276,9 +286,9 @@ describe('4.1. Auction', async () => {
             const tx = await getUpdateStakeTokensTx(auction, deployer, params);
             await tx.wait();
 
-            expect(await auction.stakeToken1()).to.equal(stakeToken1.address);
-            expect(await auction.stakeToken2()).to.equal(stakeToken2.address);
-            expect(await auction.stakeToken3()).to.equal(stakeToken3.address);
+            expect(await auction.stakeToken1()).to.equal(params.stakeToken1);
+            expect(await auction.stakeToken2()).to.equal(params.stakeToken2);
+            expect(await auction.stakeToken3()).to.equal(params.stakeToken3);
         });
 
         it('4.1.2.2. updateStakeTokens unsuccessfully with invalid signatures', async () => {

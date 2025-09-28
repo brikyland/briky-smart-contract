@@ -246,6 +246,7 @@ describe('6.4. AssetMarketplace', async () => {
         const fixture = await loadFixture(assetMarketplaceFixture);
 
         const {
+            deployer,
             admin,
             admins,
             currency,
@@ -385,7 +386,7 @@ describe('6.4. AssetMarketplace', async () => {
         }
 
         if (pause) {
-            await callPausable_Pause(assetMarketplace, admins, admin);
+            await callPausable_Pause(assetMarketplace, deployer, admins, admin);
         }
 
         return {

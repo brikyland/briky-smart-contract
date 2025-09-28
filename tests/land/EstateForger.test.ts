@@ -308,7 +308,8 @@ describe('2.2. EstateForger', async () => {
         pause = false,
     } = {}): Promise<EstateForgerFixture> {
         const fixture = await loadFixture(estateForgerFixture);
-        const { 
+        const {
+            deployer,
             admin,
             admins,
             manager,
@@ -331,7 +332,6 @@ describe('2.2. EstateForger', async () => {
             depositor3,
             depositors,
             reserveVault,
-            deployer,
             validator,
             failReceiver,
             reentrancy,
@@ -621,7 +621,7 @@ describe('2.2. EstateForger', async () => {
         }
 
         if (pause) {
-            await callPausable_Pause(estateForger, admins, admin);
+            await callPausable_Pause(estateForger, deployer, admins, admin);
         }
 
         return fixture;
@@ -4259,9 +4259,9 @@ describe('2.2. EstateForger', async () => {
                 addEstateForgerToVault: true,
                 fundERC20ForManagers: true,
             });
-            const {estateForger, admin, admins, manager} = fixture;
+            const {deployer, estateForger, admin, admins, manager} = fixture;
 
-            await callPausable_Pause(estateForger, admins, admin);
+            await callPausable_Pause(estateForger, deployer, admins, admin);
 
             const params1: ConfirmParams = {
                 requestId: BigNumber.from(1),

@@ -153,7 +153,7 @@ describe('4.4. PrimaryToken', async () => {
         pause = false,
     } = {}): Promise<PrimaryTokenFixture> {
         const fixture = await loadFixture(primaryTokenFixture);
-        const { admin, admins, primaryToken, stakeToken1, stakeToken2, stakeToken3, currency, contributor, treasury, deployer } = fixture;
+        const { deployer, admin, admins, primaryToken, stakeToken1, stakeToken2, stakeToken3, currency, contributor, treasury } = fixture;
 
         await prepareERC20(
             currency,
@@ -178,15 +178,14 @@ describe('4.4. PrimaryToken', async () => {
         }
 
         if (updateTreasury) {
-            const paramsInput: UpdateTreasuryParamsInput = {
-                treasury: treasury.address,
-            };
             await callPrimaryToken_UpdateTreasury(
                 primaryToken as any,
                 deployer,
                 admins,
                 admin,
-                paramsInput,
+                {
+                    treasury: treasury.address,
+                },
             );
         }
 
@@ -230,15 +229,14 @@ describe('4.4. PrimaryToken', async () => {
         }
 
         if (unlockForPublicSale) {
-            const paramsInput: UnlockForPublicSaleParamsInput = {
-                distributor: contributor.address,
-            };
             await callPrimaryToken_UnlockForPublicSale(
                 primaryToken as any,
                 deployer,
                 admins,
                 admin,
-                paramsInput,
+                {
+                    distributor: contributor.address,
+                },
             );
         }
 
@@ -296,7 +294,7 @@ describe('4.4. PrimaryToken', async () => {
         
 
         if (pause) {
-            await callPausable_Pause(primaryToken as any, admins, admin);
+            await callPausable_Pause(primaryToken as any, deployer, admins, admin);
         }
 
         return fixture;
@@ -320,7 +318,7 @@ describe('4.4. PrimaryToken', async () => {
 
     describe('4.4.2. updateTreasury(address)', async () => {
         it('4.4.2.1. update treasury successfully', async () => {
-            const { admin, admins, primaryToken, treasury, deployer } = await setupBeforeTest();
+            const { deployer, admin, admins, primaryToken, treasury } = await setupBeforeTest();
 
             const paramsInput: UpdateTreasuryParamsInput = {
                 treasury: treasury.address,
@@ -1581,7 +1579,7 @@ describe('4.4. PrimaryToken', async () => {
             await prepareERC20(currency, [deployer], [treasury as any], ethers.utils.parseEther("1000000"));
             await treasury.provideLiquidity(ethers.utils.parseEther("1000000"));
 
-            await callPausable_Pause(primaryToken as any, admins, admin);
+            await callPausable_Pause(primaryToken as any, deployer, admins, admin);
             
             await time.setNextBlockTimestamp(await primaryToken.liquidationUnlockedAt());
             await expect(primaryToken.connect(contributor).liquidate(ethers.utils.parseEther("100")))

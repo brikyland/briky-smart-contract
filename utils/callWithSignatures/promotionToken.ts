@@ -1,38 +1,46 @@
-import { PromotionToken } from "../../typechain-types";
+import { Admin, PromotionToken } from "../../typechain-types";
+import {
+    CancelContentsParams,
+    CancelContentsParamsInput,
+    CreateContentsParams,
+    CreateContentsParamsInput,
+} from "@utils/models/PromotionToken";
 import { callTransaction } from "../blockchain";
-import { getSignatures } from "../blockchain";
-import { ethers } from "hardhat";
-import { BigNumberish } from "ethers";
-import { MockContract } from "@defi-wonderland/smock";
+import {
+    getCancelContentsSignatures,
+    getCreateContentsSignatures
+} from "@utils/signatures/PromotionToken";
+import { 
+    getCancelContentsTx,
+    getCreateContentsTx,
+} from "@utils/transaction/PromotionToken";
 
 export async function callPromotionToken_CreateContents(
-    promotionToken: PromotionToken | MockContract<PromotionToken>,
+    promotionToken: PromotionToken,
+    deployer: any,
+    admin: Admin,
     admins: any[],
-    uris: string[],
-    startAts: number[],
-    durations: number[],
-    nonce: BigNumberish,
+    paramsInput: CreateContentsParamsInput,
 ) {
-    let message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "string[]", "uint40[]", "uint40[]"],
-        [promotionToken.address, "createContents", uris, startAts, durations]
-    );
-    let signatures = await getSignatures(message, admins, nonce);
+    const params: CreateContentsParams = {
+        ...paramsInput,
+        signatures: await getCreateContentsSignatures(promotionToken, admins, admin, paramsInput),
+    };
 
-    await callTransaction(promotionToken.createContents(uris, startAts, durations, signatures));
+    await callTransaction(getCreateContentsTx(promotionToken, deployer, params));
 }
 
 export async function callPromotionToken_CancelContents(
-    promotionToken: PromotionToken | MockContract<PromotionToken>,
+    promotionToken: PromotionToken,
+    deployer: any,
+    admin: Admin,
     admins: any[],
-    contentIds: BigNumberish[],
-    nonce: BigNumberish,
+    paramsInput: CancelContentsParamsInput,
 ) {
-    let message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "uint256[]"],
-        [promotionToken.address, "cancelContents", contentIds]
-    );
-    let signatures = await getSignatures(message, admins, nonce);
+    const params: CancelContentsParams = {
+        ...paramsInput,
+        signatures: await getCancelContentsSignatures(promotionToken, admins, admin, paramsInput),
+    };
 
-    await callTransaction(promotionToken.cancelContents(contentIds, signatures));
+    await callTransaction(getCancelContentsTx(promotionToken, deployer, params));
 }

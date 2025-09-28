@@ -123,15 +123,14 @@ describe('4.5. StakeToken', async () => {
             primaryToken.address,
         ) as Treasury;
 
-        const updateTreasuryParamsInput: UpdateTreasuryParamsInput = {
-            treasury: treasury.address,
-        };
         await callPrimaryToken_UpdateTreasury(
             primaryToken as any,
             deployer,
             admins,
             admin,
-            updateTreasuryParamsInput,
+            {
+                treasury: treasury.address,
+            },
         );
 
         return {
@@ -222,7 +221,7 @@ describe('4.5. StakeToken', async () => {
         }
 
         if (pause) {
-            await callPausable_Pause(stakeToken1 as any, admins, admin);
+            await callPausable_Pause(stakeToken1 as any, deployer, admins, admin);
         }
 
         return {

@@ -218,6 +218,7 @@ describe('1.6. GovernanceHub', async () => {
     } = {}): Promise<GovernanceHubFixture> {
         const fixture = await loadFixture(governanceHubFixture);
         const { 
+            deployer,
             admin, admins, governanceHub, governor, 
             contributor1, contributor2,
             voter1, voter2, voter3, 
@@ -229,7 +230,6 @@ describe('1.6. GovernanceHub', async () => {
             currencies,
             reentrancyERC20,
             failReceiver,
-            deployer,
             validator,
         } = fixture;
         const fee = await governanceHub.fee();
@@ -477,7 +477,7 @@ describe('1.6. GovernanceHub', async () => {
         }
 
         if (pause) {
-            await callPausable_Pause(governanceHub, admins, admin);
+            await callPausable_Pause(governanceHub, deployer, admins, admin);
         }
 
         return fixture;

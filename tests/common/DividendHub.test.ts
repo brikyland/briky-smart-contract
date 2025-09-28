@@ -135,7 +135,7 @@ describe('1.4. DividendHub', async () => {
         pause = false,
     } = {}): Promise<DividendHubFixture> {
         const fixture = await loadFixture(dividendHubFixture);
-        const { admin, admins, dividendHub, governor, zone, receiver1, receiver2, receiver3, issuer1, issuer2, reentrancyERC20, failReceiver } = fixture;
+        const { deployer, admin, admins, dividendHub, governor, zone, receiver1, receiver2, receiver3, issuer1, issuer2, reentrancyERC20, failReceiver } = fixture;
         let { currencies } = fixture;
 
         if (useReentrancyERC20) {
@@ -220,7 +220,7 @@ describe('1.4. DividendHub', async () => {
         }
 
         if (pause) {
-            await callPausable_Pause(dividendHub, admins, admin)
+            await callPausable_Pause(dividendHub, deployer, admins, admin)
         }
 
         return {
