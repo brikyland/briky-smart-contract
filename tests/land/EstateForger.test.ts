@@ -36,18 +36,18 @@ import {
     callAdmin_AuthorizeModerators,
     callAdmin_DeclareZone,
     callAdmin_UpdateCurrencyRegistries,
-} from '@utils/callWithSignatures/admin';
+} from '@utils/call/admin';
 import {
     callEstateToken_UpdateCommissionToken,
     callEstateToken_AuthorizeTokenizers,
-} from '@utils/callWithSignatures/estateToken';
+} from '@utils/call/estateToken';
 import { BigNumber, BigNumberish, Contract, ContractTransaction, Wallet } from 'ethers';
 import { randomInt } from 'crypto';
 import { getBytes4Hex, getInterfaceID, randomBigNumber, structToObject } from '@utils/utils';
 import { OrderedMap } from '@utils/utils';
 import { deployEstateForger } from '@utils/deployments/land/estateForger';
-import { addCurrencyToAdminAndPriceWatcher } from '@utils/callWithSignatures/common';
-import { callEstateForger_UpdateBaseUnitPriceRange, callEstateForger_Whitelist } from '@utils/callWithSignatures/estateForger';
+import { addCurrencyToAdminAndPriceWatcher } from '@utils/call/common';
+import { callEstateForger_UpdateBaseUnitPriceRange, callEstateForger_Whitelist } from '@utils/call/estateForger';
 import { deployMockPriceFeed } from '@utils/deployments/mock/mockPriceFeed';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
@@ -56,7 +56,7 @@ import { deployMockEstateForger } from '@utils/deployments/mock/mockEstateForger
 import { deployReentrancyERC1155Holder } from '@utils/deployments/mock/mockReentrancy/reentrancyERC1155Holder';
 import { request } from 'http';
 import { Initialization as LandInitialization } from '@tests/land/test.initialization';
-import { callReserveVault_AuthorizeProvider } from '@utils/callWithSignatures/reserveVault';
+import { callReserveVault_AuthorizeProvider } from '@utils/call/reserveVault';
 import { remain, scaleRate } from '@utils/formula';
 import { RequestQuote, RequestAgenda, RequestEstate, RequestQuota, SafeDepositParams, DepositParams, ConfirmParams } from '@utils/models/EstateForger';
 import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
@@ -68,7 +68,7 @@ import { RegisterCustodianParams } from '@utils/models/EstateToken';
 import { getRegisterCustodianTx } from '@utils/transaction/EstateToken';
 import { getRequestTokenizationTx, getSafeConfirmTx, getSafeConfirmTxByParams, getSafeDepositTx, getSafeDepositTxByParams, getUpdateRequestAgendaTx, getUpdateRequestEstateURITx } from '@utils/transaction/EstateForger';
 import { getActivateBrokerTx, getRegisterBrokerTx } from '@utils/transaction/CommissionToken';
-import { callPausable_Pause } from '@utils/callWithSignatures/Pausable';
+import { callPausable_Pause } from '@utils/call/Pausable';
 
 chai.use(smock.matchers);
 

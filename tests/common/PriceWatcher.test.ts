@@ -15,7 +15,7 @@ import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 import { BigNumber } from 'ethers';
 import { smock } from '@defi-wonderland/smock';
 
-import { addCurrencyToAdminAndPriceWatcher } from '@utils/callWithSignatures/common';
+import { addCurrencyToAdminAndPriceWatcher } from '@utils/call/common';
 import { deployMockPriceFeed } from '@utils/deployments/mock/mockPriceFeed';
 import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
 import { Rate, RATE_SCHEMA } from '@utils/models/Common';

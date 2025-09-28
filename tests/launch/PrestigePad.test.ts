@@ -42,13 +42,13 @@ import {
     callAdmin_AuthorizeModerators,
     callAdmin_DeclareZone,
     callAdmin_UpdateCurrencyRegistries,
-} from '@utils/callWithSignatures/admin';
+} from '@utils/call/admin';
 import { BigNumber, BigNumberish, Contract, Wallet } from 'ethers';
 import { randomInt } from 'crypto';
 import { getBytes4Hex, getInterfaceID, randomBigNumber, structToObject } from '@utils/utils';
 import { OrderedMap } from '@utils/utils';
 import { deployEstateForger } from '@utils/deployments/land/estateForger';
-import { addCurrencyToAdminAndPriceWatcher } from '@utils/callWithSignatures/common';
+import { addCurrencyToAdminAndPriceWatcher } from '@utils/call/common';
 import { deployMockPriceFeed } from '@utils/deployments/mock/mockPriceFeed';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
@@ -58,7 +58,7 @@ import { deployReentrancyERC1155Holder } from '@utils/deployments/mock/mockReent
 import { request } from 'http';
 import { Initialization as LandInitialization } from '@tests/land/test.initialization';
 import { Initialization as LaunchInitialization } from '@tests/launch/test.initialization';
-import { callReserveVault_AuthorizeProvider } from '@utils/callWithSignatures/reserveVault';
+import { callReserveVault_AuthorizeProvider } from '@utils/call/reserveVault';
 import { applyDiscount, remain, scaleRate } from '@utils/formula';
 import { RequestQuote, RequestAgenda, RequestEstate, RequestQuota } from '@utils/models/EstateForger';
 import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
@@ -71,12 +71,12 @@ import { getSafeConfirmCurrentRoundParams, getSafeFinalizeLaunchParams, Initiate
 import { getInitiateLaunchInvalidValidation, getInitiateLaunchValidation, getUpdateLaunchURIInvalidValidation, getUpdateRoundInvalidValidation, getUpdateRoundsInvalidValidation, getUpdateRoundsValidation, getUpdateRoundValidation } from '@utils/validation/PrestigePad';
 import { RegisterInitiatorParams } from '@utils/models/ProjectToken';
 import { getRegisterInitiatorValidation } from '@utils/validation/ProjectToken';
-import { callProjectToken_AuthorizeLaunchpads } from '@utils/callWithSignatures/projectToken';
+import { callProjectToken_AuthorizeLaunchpads } from '@utils/call/projectToken';
 import { deployReentrancyERC1155Receiver } from '@utils/deployments/mock/mockReentrancy/reentrancyERC1155Receiver';
 import { deployReentrancyExclusiveERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyExclusiveERC20';
 import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
 import { getCallSafeConfirmCurrentRoundTx, getCallScheduleNextRoundTx, getCallUpdateRoundsTx, getInitiateLaunchTx, getSafeConfirmCurrentRoundTx, getSafeFinalizeLaunchTx, getScheduleNextRoundTx, getUpdateLaunchURITx, getUpdateRoundsTx, getUpdateRoundTx } from '@utils/transaction/PrestigePad';
-import { callPausable_Pause } from '@utils/callWithSignatures/Pausable';
+import { callPausable_Pause } from '@utils/call/Pausable';
 
 chai.use(smock.matchers);
 

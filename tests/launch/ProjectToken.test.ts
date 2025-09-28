@@ -51,7 +51,7 @@ import {
     callAdmin_AuthorizeManagers,
     callAdmin_AuthorizeModerators,
     callAdmin_DeclareZone,
-} from '@utils/callWithSignatures/admin';
+} from '@utils/call/admin';
 import { BigNumber, Contract } from 'ethers';
 import { randomInt } from 'crypto';
 import { getBytes4Hex, getInterfaceID, randomBigNumber, structToObject } from '@utils/utils';
@@ -65,19 +65,19 @@ import { UpdateEstateURIParams } from '@utils/models/EstateToken';
 import { getUpdateEstateURIValidation } from '@utils/validation/EstateToken';
 import { Initialization as LaunchInitialization } from '@tests/launch/test.initialization';
 import { Initialization as LandInitialization } from '@tests/land/test.initialization';
-import { callProjectToken_AuthorizeLaunchpads } from '@utils/callWithSignatures/projectToken';
+import { callProjectToken_AuthorizeLaunchpads } from '@utils/call/projectToken';
 import { DeprecateProjectParams, LaunchProjectParams, MintParams, RegisterInitiatorParams, SafeDeprecateProjectParams, SafeUpdateProjectURIParams, TokenizeProjectParams, UpdateProjectURIParams } from '@utils/models/ProjectToken';
 import { getInitiateLaunchValidation } from '@utils/validation/PrestigePad';
 import { getRegisterInitiatorInvalidValidation, getRegisterInitiatorValidation, getSafeUpdateProjectURIInvalidValidation, getSafeUpdateProjectURIValidation } from '@utils/validation/ProjectToken';
 import { ContractTransaction } from 'ethers';
 import { getCallLaunchProjectTx, getCallMintTx, getCallSafeTokenizeProjectTxByParams, getRegisterInitiatorTx, getSafeDeprecateProjectTx, getSafeDeprecateProjectTxByParams, getSafeTokenizeProjectTxByParams, getSafeUpdateProjectURITx, getSafeUpdateProjectURITxByParams } from '@utils/transaction/ProjectToken';
 import { getRegisterCustodianTx } from '@utils/transaction/EstateToken';
-import { callEstateToken_AuthorizeTokenizers, callEstateToken_UpdateCommissionToken } from '@utils/callWithSignatures/estateToken';
+import { callEstateToken_AuthorizeTokenizers, callEstateToken_UpdateCommissionToken } from '@utils/call/estateToken';
 import { deployReentrancyERC1155Receiver } from '@utils/deployments/mock/mockReentrancy/reentrancyERC1155Receiver';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { getRegisterBrokerTx } from '@utils/transaction/CommissionToken';
 import { IAssetTokenInterfaceId, IERC1155MetadataURIUpgradeableInterfaceId, IERC165UpgradeableInterfaceId, IERC2981UpgradeableInterfaceId, IEstateTokenizerInterfaceId, IGovernorInterfaceId, IRoyaltyRateProposerInterfaceId } from '@tests/interfaces';
-import { callPausable_Pause } from '@utils/callWithSignatures/Pausable';
+import { callPausable_Pause } from '@utils/call/Pausable';
 
 interface ProjectTokenFixture {
     admin: Admin;

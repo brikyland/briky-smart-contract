@@ -9,7 +9,7 @@ import { deployCurrency } from '@utils/deployments/common/currency';
 import { deployTreasury } from '@utils/deployments/liquidity/treasury';
 import { deployMockPrimaryToken } from '@utils/deployments/mock/mockPrimaryToken';
 import { Initialization as LiquidityInitialization } from '@tests/liquidity/test.initialization';
-import { callPausable_Pause } from '@utils/callWithSignatures/Pausable';
+import { callPausable_Pause } from '@utils/call/Pausable';
 import { WithdrawOperationFundParams, WithdrawOperationFundParamsInput } from '@utils/models/Treasury';
 import { getWithdrawOperationFundSignatures } from '@utils/signatures/Treasury';
 import { getWithdrawOperationFundTx } from '@utils/transaction/Treasury';

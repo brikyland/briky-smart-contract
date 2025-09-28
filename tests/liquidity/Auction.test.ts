@@ -10,15 +10,15 @@ import { deployPrimaryToken } from '@utils/deployments/liquidity/primaryToken';
 import { deployStakeToken } from '@utils/deployments/liquidity/stakeToken';
 import { Initialization as LiquidityInitialization } from '@tests/liquidity/test.initialization';
 import { deployAuction } from '@utils/deployments/liquidity/auction';
-import { callAuction_StartAuction, callAuction_UpdateStakeTokens } from '@utils/callWithSignatures/auction';
-import { callPrimaryToken_UnlockForPublicSale, callPrimaryToken_UpdateStakeTokens, callPrimaryToken_UpdateTreasury } from '@utils/callWithSignatures/primary';
+import { callAuction_StartAuction, callAuction_UpdateStakeTokens } from '@utils/call/auction';
+import { callPrimaryToken_UnlockForPublicSale, callPrimaryToken_UpdateStakeTokens, callPrimaryToken_UpdateTreasury } from '@utils/call/primary';
 import { MockContract, smock } from '@defi-wonderland/smock';
 import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
 import { Contract } from 'ethers';
 import { getStartAuctionInvalidSignatures, getStartAuctionSignatures, getUpdateStakeTokensInvalidSignatures, getUpdateStakeTokensSignatures } from '@utils/signatures/Auction';
 import { StartAuctionParams, StartAuctionParamsInput, UpdateStakeTokensParams, UpdateStakeTokensParamsInput } from '@utils/models/Auction';
 import { getStartAuctionTx, getUpdateStakeTokensTx } from '@utils/transaction/Auction';
-import { callPausable_Pause } from '@utils/callWithSignatures/Pausable';
+import { callPausable_Pause } from '@utils/call/Pausable';
 
 interface AuctionFixture {
     deployer: any;

@@ -16,12 +16,12 @@ import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { randomWallet } from '@utils/blockchain';
 import { MockContract, smock } from '@defi-wonderland/smock';
 
-import { callAdmin_UpdateCurrencyRegistries } from '@utils/callWithSignatures/admin';
+import { callAdmin_UpdateCurrencyRegistries } from '@utils/call/admin';
 import { BigNumber } from 'ethers';
-import { callReserveVault_AuthorizeProvider } from '@utils/callWithSignatures/reserveVault';
+import { callReserveVault_AuthorizeProvider } from '@utils/call/reserveVault';
 import { deployMockProvider } from '@utils/deployments/mock/mockProvider';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
-import { callPausable_Pause } from '@utils/callWithSignatures/Pausable';
+import { callPausable_Pause } from '@utils/call/Pausable';
 
 interface ReserveVaultFixture {
     admin: Admin;

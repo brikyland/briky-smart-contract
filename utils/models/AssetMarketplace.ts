@@ -7,3 +7,20 @@ export interface ListParams {
     currency: string;
     isDivisible: boolean;
 }
+
+export interface BuyParams {
+    offerId: BigNumber;
+}
+
+export interface SafeBuyParams extends BuyParams {
+    anchor: string;
+}
+
+export interface BuyPartParams {
+    offerId: BigNumber;
+    amount: BigNumber;
+}
+
+export interface SafeBuyPartParams extends BuyPartParams {
+    anchor: string;
+}

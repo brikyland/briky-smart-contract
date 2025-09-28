@@ -27,7 +27,7 @@ import { deployGovernanceHub } from '@utils/deployments/common/governanceHub';
 import { ProposalRule, ProposalState, ProposalVerdict, ProposalVoteOption } from '@utils/models/Proposal';
 import { BigNumber, Contract, Wallet } from 'ethers';
 import { MockContract, smock } from '@defi-wonderland/smock';
-import { callAdmin_ActivateIn, callAdmin_AuthorizeGovernor, callAdmin_AuthorizeManagers, callAdmin_AuthorizeModerators, callAdmin_DeclareZone } from '@utils/callWithSignatures/admin';
+import { callAdmin_ActivateIn, callAdmin_AuthorizeGovernor, callAdmin_AuthorizeManagers, callAdmin_AuthorizeModerators, callAdmin_DeclareZone } from '@utils/call/admin';
 import { MockValidator } from '@utils/mockValidator';
 import { scale } from "@utils/formula";
 import { deployCurrency } from '@utils/deployments/common/currency';
@@ -37,7 +37,7 @@ import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentra
 import { ProposeParams, AdmitParams, DisqualifyParams, LogExecutionParams, ConcludeExecutionParams } from '@utils/models/GovernanceHub';
 import { getProposeValidation, getProposeInvalidValidation, getAdmitInvalidValidation, getDisqualifyInvalidValidation, getLogExecutionValidation, getLogExecutionInvalidValidation, getConcludeExecutionInvalidValidation } from '@utils/validation/GovernanceHub';
 import { getAdmitTx, getCallProposeTx, getConcludeExecutionTx, getDisqualifyTx, getLogExecutionTx, getProposeTx } from '@utils/transaction/GovernanceHub';
-import { callPausable_Pause } from '@utils/callWithSignatures/Pausable';
+import { callPausable_Pause } from '@utils/call/Pausable';
 
 export interface GovernanceHubFixture {
     admin: Admin;

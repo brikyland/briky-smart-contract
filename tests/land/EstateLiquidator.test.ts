@@ -39,18 +39,18 @@ import {
     callAdmin_AuthorizeModerators,
     callAdmin_DeclareZone,
     callAdmin_UpdateCurrencyRegistries,
-} from '@utils/callWithSignatures/admin';
+} from '@utils/call/admin';
 import {
     callEstateToken_UpdateCommissionToken,
     callEstateToken_AuthorizeTokenizers,
     callEstateToken_AuthorizeExtractors,
-} from '@utils/callWithSignatures/estateToken';
+} from '@utils/call/estateToken';
 import { BigNumber, BigNumberish, Contract, Wallet } from 'ethers';
 import { randomInt } from 'crypto';
 import { getBytes4Hex, getInterfaceID, randomBigNumber, structToObject } from '@utils/utils';
 import { OrderedMap } from '@utils/utils';
 import { deployEstateLiquidator } from '@utils/deployments/land/estateLiquidator';
-import { addCurrencyToAdminAndPriceWatcher } from '@utils/callWithSignatures/common';
+import { addCurrencyToAdminAndPriceWatcher } from '@utils/call/common';
 import { deployMockPriceFeed } from '@utils/deployments/mock/mockPriceFeed';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
@@ -59,7 +59,7 @@ import { deployMockEstateLiquidator } from '@utils/deployments/mock/mockEstateLi
 import { deployReentrancyERC1155Holder } from '@utils/deployments/mock/mockReentrancy/reentrancyERC1155Holder';
 import { request } from 'http';
 import { Initialization as LandInitialization } from '@tests/land/test.initialization';
-import { callReserveVault_AuthorizeProvider } from '@utils/callWithSignatures/reserveVault';
+import { callReserveVault_AuthorizeProvider } from '@utils/call/reserveVault';
 import { remain, scaleRate } from '@utils/formula';
 import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
 import { Rate } from '@utils/models/Common';
@@ -75,7 +75,7 @@ import { getCallTokenizeEstateTx, getRegisterCustodianTx, getSafeDeprecateEstate
 import { getRequestExtractionTx } from '@utils/transaction/EstateLiquidator';
 import { getRegisterBrokerTx } from '@utils/transaction/CommissionToken';
 import { Initialization as CommonInitialization } from '@tests/common/test.initialization';
-import { callPausable_Pause } from '@utils/callWithSignatures/Pausable';
+import { callPausable_Pause } from '@utils/call/Pausable';
 
 chai.use(smock.matchers);
 

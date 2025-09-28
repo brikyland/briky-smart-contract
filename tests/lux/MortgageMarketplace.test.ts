@@ -35,14 +35,13 @@ import {
     callAdmin_AuthorizeModerators,
     callAdmin_UpdateCurrencyRegistries,
     callAdmin_ActivateIn,
-} from '@utils/callWithSignatures/admin';
+} from '@utils/call/admin';
 import { BigNumber } from 'ethers';
 import { randomInt } from 'crypto';
 import { getInterfaceID, randomBigNumber } from '@utils/utils';
 import { OrderedMap } from '@utils/utils';
 import { deployEstateMortgageToken } from '@utils/deployments/lend/estateMortgageToken';
 import { deployMortgageMarketplace } from '@utils/deployments/lux/mortgageMarketplace';
-import { callMortgageMarketplace_RegisterCollections } from '@utils/callWithSignatures/mortgageMarketplace';
 import { Contract } from 'ethers';
 import { MortgageState, OfferState } from '@utils/models/enums';
 import { getBalance } from '@utils/blockchain';
@@ -58,16 +57,18 @@ import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
 import { deployReserveVault } from '@utils/deployments/common/reserveVault';
 import { RegisterCustodianParams } from '@utils/models/EstateToken';
 import { deployMockEstateForger } from '@utils/deployments/mock/mockEstateForger';
-import { callEstateToken_AuthorizeTokenizers, callEstateToken_UpdateCommissionToken, callEstateToken_UpdateZoneRoyaltyRate } from '@utils/callWithSignatures/estateToken';
+import { callEstateToken_AuthorizeTokenizers, callEstateToken_UpdateCommissionToken, callEstateToken_UpdateZoneRoyaltyRate } from '@utils/call/estateToken';
 import { deployMockMortgageToken } from '@utils/deployments/mock/mockMortgageToken';
-import { ListParams } from '@utils/models/ERC721Marketplace';
-import { callERC721Marketplace_RegisterCollections } from '@utils/callWithSignatures/erc721Marketplace';
-import { getCallListTx, getListTx } from '@utils/transaction/ERC721Marketplace';
+import { BuyParams, ListParams, RegisterCollectionsParams, RegisterCollectionsParamsInput, SafeBuyParams } from '@utils/models/ERC721Marketplace';
+import { callERC721Marketplace_RegisterCollections } from '@utils/call/erc721Marketplace';
+import { getBuyTx, getCallListTx, getListTx, getRegisterCollectionsTx, getSafeBuyTx } from '@utils/transaction/ERC721Marketplace';
 import { deployERC721MortgageToken } from '@utils/deployments/lend/erc721MortgageToken';
 import { deployProjectMortgageToken } from '@utils/deployments/lend/projectMortgageToken';
 import { deployEstateToken } from '@utils/deployments/land/estateToken';
 import { applyDiscount } from '@utils/formula';
-import { callPausable_Pause } from '@utils/callWithSignatures/Pausable';
+import { callPausable_Pause } from '@utils/call/Pausable';
+import { getRegisterCollectionsSignatures } from '@utils/signatures/ERC721Marketplace';
+import { getSafeBuyAnchor } from '@utils/anchor/ERC721Marketplace';
 
 interface MortgageMarketplaceFixture {
     admin: Admin;
@@ -318,10 +319,13 @@ describe('6.3. MortgageMarketplace', async () => {
         if (!skipRegisterCollection) {
             await callERC721Marketplace_RegisterCollections(
                 mortgageMarketplace,
+                deployer,
                 admins,
-                [mortgageToken.address],
-                true,
-                await admin.nonce(),
+                admin,
+                {
+                    collections: [mortgageToken.address],
+                    isCollection: true,
+                },
             );
         }
 
@@ -447,29 +451,24 @@ describe('6.3. MortgageMarketplace', async () => {
 
     describe('6.3.3. registerCollections(address[], bool, bytes[])', async () => {
         it('6.3.3.1. Register collections successfully with valid signatures', async () => {
-            const { mortgageMarketplace, admin, admins, collections } = await beforeMortgageMarketplaceTest({
+            const { deployer, mortgageMarketplace, admin, admins, collections } = await beforeMortgageMarketplaceTest({
                 skipRegisterCollection: true,
             });
 
             const toBeCollections = collections.slice(0, 3);
-
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [mortgageMarketplace.address, 'registerCollections', toBeCollections.map(x => x.address), true]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
-
-            const tx = await mortgageMarketplace.registerCollections(
-                toBeCollections.map(x => x.address),
-                true,
-                signatures
-            );
+            const paramsInput: RegisterCollectionsParamsInput = {
+                collections: toBeCollections.map(x => x.address),
+                isCollection: true,
+            };
+            const params: RegisterCollectionsParams = {
+                ...paramsInput,
+                signatures: await getRegisterCollectionsSignatures(mortgageMarketplace, admins, admin, paramsInput),
+            };
+            const tx = await getRegisterCollectionsTx(mortgageMarketplace as any, deployer, params);
             await tx.wait();
 
             for (const collection of toBeCollections) {
-                await expect(tx).to
-                    .emit(mortgageMarketplace, 'CollectionRegistration')
-                    .withArgs(collection.address);
+                await expect(tx).to.emit(mortgageMarketplace, 'CollectionRegistration').withArgs(collection.address);
             }
 
             for (const collection of collections) {
@@ -483,155 +482,143 @@ describe('6.3. MortgageMarketplace', async () => {
         });
 
         it('6.3.3.2. Register collections unsuccessfully with invalid signatures', async () => {
-            const { mortgageMarketplace, admin, admins, collections } = await beforeMortgageMarketplaceTest({
+            const { deployer, mortgageMarketplace, admin, admins, collections } = await beforeMortgageMarketplaceTest({
                 skipRegisterCollection: true,
             });
 
             const toBeCollections = collections.slice(0, 3);
-
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [mortgageMarketplace.address, 'registerCollections', toBeCollections.map(x => x.address), true]
-            );
-            const invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
-
-            await expect(mortgageMarketplace.registerCollections(
-                toBeCollections.map(x => x.address),
-                true,
-                invalidSignatures
-            )).to.be.revertedWithCustomError(admin, 'FailedVerification');
+            const paramsInput: RegisterCollectionsParamsInput = {
+                collections: toBeCollections.map(x => x.address),
+                isCollection: true,
+            };
+            const params: RegisterCollectionsParams = {
+                ...paramsInput,
+                signatures: await getRegisterCollectionsSignatures(mortgageMarketplace, admins, admin, paramsInput, false),
+            };
+            await expect(getRegisterCollectionsTx(mortgageMarketplace as any, deployer, params))
+                .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
         it('6.3.3.3. Register collections reverted without reason with EOA address', async () => {
-            const { mortgageMarketplace, admin, admins } = await beforeMortgageMarketplaceTest({
+            const { deployer, mortgageMarketplace, admin, admins } = await beforeMortgageMarketplaceTest({
                 skipRegisterCollection: true,
             });
 
             const invalidCollection = randomWallet();
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [mortgageMarketplace.address, 'registerCollections', [invalidCollection.address], true]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput: RegisterCollectionsParamsInput = {
+                collections: [invalidCollection.address],
+                isCollection: true,
+            };
+            const params: RegisterCollectionsParams = {
+                ...paramsInput,
+                signatures: await getRegisterCollectionsSignatures(mortgageMarketplace, admins, admin, paramsInput),
+            };
+            await expect(getRegisterCollectionsTx(mortgageMarketplace as any, deployer, params))
+                .to.be.revertedWithCustomError(mortgageMarketplace, 'InvalidCollection');
+        });
 
-            await expect(mortgageMarketplace.registerCollections(
-                [invalidCollection.address],
-                true,
-                signatures
-            )).to.be.revertedWithCustomError(mortgageMarketplace, 'InvalidCollection');
-        })
-
-        it('6.3.3.4. Authorize launchpad reverted with contract not supporting ProjectLaunchpad interface', async () => {
-            const { mortgageMarketplace, admin, admins } = await beforeMortgageMarketplaceTest({
+        it('6.3.3.4. Register collections unsuccessfully with contract not supporting IMortgageToken interface', async () => {
+            const { deployer, mortgageMarketplace, admin, admins } = await beforeMortgageMarketplaceTest({
                 skipRegisterCollection: true,
             });
 
             const invalidCollection = mortgageMarketplace;
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [mortgageMarketplace.address, 'registerCollections', [invalidCollection.address], true]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput: RegisterCollectionsParamsInput = {
+                collections: [invalidCollection.address],
+                isCollection: true,
+            };
+            const params: RegisterCollectionsParams = {
+                ...paramsInput,
+                signatures: await getRegisterCollectionsSignatures(mortgageMarketplace, admins, admin, paramsInput),
+            };
+            await expect(getRegisterCollectionsTx(mortgageMarketplace as any, deployer, params))
+                .to.be.revertedWithCustomError(mortgageMarketplace, 'InvalidCollection');
+        });
 
-            await expect(mortgageMarketplace.registerCollections(
-                [invalidCollection.address],
-                true,
-                signatures
-            )).to.be.revertedWithCustomError(mortgageMarketplace, 'InvalidCollection');
-        })
-
-        it('6.3.3.5. Authorize launchpad unsuccessfully when authorizing same account twice on same tx', async () => {
-            const { mortgageMarketplace, admin, admins, collections } = await beforeMortgageMarketplaceTest({
+        it('6.3.3.5. Register collections unsuccessfully when authorizing same account twice on same tx', async () => {
+            const { deployer, mortgageMarketplace, admin, admins, collections } = await beforeMortgageMarketplaceTest({
                 skipRegisterCollection: true,
             });
 
             const duplicateCollections = [collections[0], collections[1], collections[2], collections[0]];
 
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [mortgageMarketplace.address, 'registerCollections', duplicateCollections.map(x => x.address), true]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await expect(mortgageMarketplace.registerCollections(
-                duplicateCollections.map(x => x.address),
-                true,
-                signatures
-            )).to.be.revertedWithCustomError(mortgageMarketplace, `RegisteredCollection`)
+            const paramsInput: RegisterCollectionsParamsInput = {
+                collections: duplicateCollections.map(x => x.address),
+                isCollection: true,
+            };
+            const params: RegisterCollectionsParams = {
+                ...paramsInput,
+                signatures: await getRegisterCollectionsSignatures(mortgageMarketplace, admins, admin, paramsInput),
+            };
+            await expect(getRegisterCollectionsTx(mortgageMarketplace as any, deployer, params))
+                .to.be.revertedWithCustomError(mortgageMarketplace, `RegisteredCollection`)
         });
 
-        it('6.3.3.6. Authorize launchpad unsuccessfully when authorizing same account twice on different tx', async () => {
-            const { mortgageMarketplace, admin, admins, collections } = await beforeMortgageMarketplaceTest({
+        it('6.3.3.6. Register collections unsuccessfully when authorizing same account twice on different tx', async () => {
+            const { deployer, mortgageMarketplace, admin, admins, collections } = await beforeMortgageMarketplaceTest({
                 skipRegisterCollection: true,
             });
 
             const tx1Collections = collections.slice(0, 3);
-
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [mortgageMarketplace.address, 'registerCollections', tx1Collections.map(x => x.address), true]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await callTransaction(mortgageMarketplace.registerCollections(
-                tx1Collections.map(x => x.address),
-                true,
-                signatures
-            ));
-
+            await callERC721Marketplace_RegisterCollections(
+                mortgageMarketplace,
+                deployer,
+                admins,
+                admin,
+                {
+                    collections: tx1Collections.map(x => x.address),
+                    isCollection: true,
+                }
+            )
+            
             const tx2Collections = [collections[3], collections[2], collections[4]];
 
-            message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [mortgageMarketplace.address, 'registerCollections', tx2Collections.map(x => x.address), true]
-            );
-            signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput: RegisterCollectionsParamsInput = {
+                collections: tx2Collections.map(x => x.address),
+                isCollection: true,
+            };
+            const params: RegisterCollectionsParams = {
+                ...paramsInput,
+                signatures: await getRegisterCollectionsSignatures(mortgageMarketplace, admins, admin, paramsInput),
+            };
 
-            await expect(mortgageMarketplace.registerCollections(
-                tx2Collections.map(x => x.address),
-                true,
-                signatures
-            )).to.be.revertedWithCustomError(mortgageMarketplace, `RegisteredCollection`)
+            await expect(getRegisterCollectionsTx(mortgageMarketplace as any, deployer, params))
+                .to.be.revertedWithCustomError(mortgageMarketplace, `RegisteredCollection`)
         })
 
-        async function setupCollections(mortgageMarketplace: MortgageMarketplace, admin: Admin, admins: any[], collections: any[]) {
-            await callMortgageMarketplace_RegisterCollections(
-                mortgageMarketplace as any,
-                admins,
-                collections.map(x => x.address),
-                true,
-                await admin.nonce(),
-            );
-        }
-
         it('6.3.3.7. Deregister collections successfully', async () => {
-            const { mortgageMarketplace, admin, admins, collections } = await beforeMortgageMarketplaceTest({
+            const { deployer, mortgageMarketplace, admin, admins, collections } = await beforeMortgageMarketplaceTest({
                 skipRegisterCollection: true,
             });
 
-            await setupCollections(mortgageMarketplace, admin, admins, collections);
+            await callERC721Marketplace_RegisterCollections(
+                mortgageMarketplace,
+                deployer,
+                admins,
+                admin,
+                {
+                    collections: collections.map(x => x.address),
+                    isCollection: true,
+                }
+            );
 
             const toDeregister = collections.slice(0, 2);
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [mortgageMarketplace.address, 'registerCollections', toDeregister.map(x => x.address), false]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
-
-            const tx = await mortgageMarketplace.registerCollections(
-                toDeregister.map(x => x.address),
-                false,
-                signatures
-            );
+            const paramsInput: RegisterCollectionsParamsInput = {
+                collections: toDeregister.map(x => x.address),
+                isCollection: false,
+            };
+            const params: RegisterCollectionsParams = {
+                ...paramsInput,
+                signatures: await getRegisterCollectionsSignatures(mortgageMarketplace, admins, admin, paramsInput),
+            };
+            const tx = await getRegisterCollectionsTx(mortgageMarketplace as any, deployer, params);
             await tx.wait();
 
             for (const collection of toDeregister) {
-                await expect(tx).to
-                    .emit(mortgageMarketplace, 'CollectionDeregistration')
-                    .withArgs(collection.address);
+                await expect(tx).to.emit(mortgageMarketplace, 'CollectionDeregistration').withArgs(collection.address);
             }
 
             for (const collection of collections) {
@@ -645,78 +632,105 @@ describe('6.3. MortgageMarketplace', async () => {
         });
 
         it('6.3.3.8. Deregister collections unsuccessfully with unauthorized account', async () => {
-            const { mortgageMarketplace, admin, admins, collections } = await beforeMortgageMarketplaceTest({
+            const { deployer, mortgageMarketplace, admin, admins, collections } = await beforeMortgageMarketplaceTest({
                 skipRegisterCollection: true,
             });
 
-            await setupCollections(mortgageMarketplace, admin, admins, collections);
+            await callERC721Marketplace_RegisterCollections(
+                mortgageMarketplace,
+                deployer,
+                admins,
+                admin,
+                {
+                    collections: collections.map(x => x.address),
+                    isCollection: true,
+                }
+            );
 
             const account = randomWallet();
             const toDeauth = [collections[0], account];
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [mortgageMarketplace.address, 'registerCollections', toDeauth.map(x => x.address), false]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await expect(mortgageMarketplace.registerCollections(
-                toDeauth.map(x => x.address),
-                false,
-                signatures
-            )).to.be.revertedWithCustomError(mortgageMarketplace, `NotRegisteredCollection`)
+            const paramsInput: RegisterCollectionsParamsInput = {
+                collections: toDeauth.map(x => x.address),
+                isCollection: false,
+            };
+            const params: RegisterCollectionsParams = {
+                ...paramsInput,
+                signatures: await getRegisterCollectionsSignatures(mortgageMarketplace, admins, admin, paramsInput),
+            };
+            await expect(getRegisterCollectionsTx(mortgageMarketplace as any, deployer, params))
+                .to.be.revertedWithCustomError(mortgageMarketplace, `NotRegisteredCollection`)
         });
 
-        it('6.3.3.8. Deauthorize launchpad unsuccessfully when unauthorizing same accounts twice on same tx', async () => {
-            const { mortgageMarketplace, admin, admins, collections } = await beforeMortgageMarketplaceTest({
+        it('6.3.3.8. Deauthorize collections unsuccessfully when unauthorizing same accounts twice on same tx', async () => {
+            const { deployer, mortgageMarketplace, admin, admins, collections } = await beforeMortgageMarketplaceTest({
                 skipRegisterCollection: true,
             });
-
-            await setupCollections(mortgageMarketplace, admin, admins, collections);
+            
+            await callERC721Marketplace_RegisterCollections(
+                mortgageMarketplace,
+                deployer,
+                admins,
+                admin,
+                {
+                    collections: collections.map(x => x.address),
+                    isCollection: true,
+                }
+            );
 
             const toDeauth = collections.slice(0, 2).concat([collections[0]]);
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [mortgageMarketplace.address, 'registerCollections', toDeauth.map(x => x.address), false]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await expect(mortgageMarketplace.registerCollections(
-                toDeauth.map(x => x.address),
-                false,
-                signatures
-            )).to.be.revertedWithCustomError(mortgageMarketplace, `NotRegisteredCollection`)
+            const paramsInput: RegisterCollectionsParamsInput = {
+                collections: toDeauth.map(x => x.address),
+                isCollection: false,
+            };
+            const params: RegisterCollectionsParams = {
+                ...paramsInput,
+                signatures: await getRegisterCollectionsSignatures(mortgageMarketplace, admins, admin, paramsInput),
+            };
+            await expect(getRegisterCollectionsTx(mortgageMarketplace as any, deployer, params))
+                .to.be.revertedWithCustomError(mortgageMarketplace, `NotRegisteredCollection`)
         });
 
-        it('6.3.3.9. Deauthorize launchpad unsuccessfully when unauthorizing same accounts twice on different tx', async () => {
-            const { mortgageMarketplace, admin, admins, collections } = await beforeMortgageMarketplaceTest({
+        it('6.3.3.9. Deauthorize collections unsuccessfully when unauthorizing same accounts twice on different tx', async () => {
+            const { deployer, mortgageMarketplace, admin, admins, collections } = await beforeMortgageMarketplaceTest({
                 skipRegisterCollection: true,
             });
 
-            await setupCollections(mortgageMarketplace, admin, admins, collections);
+            await callERC721Marketplace_RegisterCollections(
+                mortgageMarketplace,
+                deployer,
+                admins,
+                admin,
+                {
+                    collections: collections.map(x => x.address),
+                    isCollection: true,
+                }
+            );
 
             const tx1Accounts = collections.slice(0, 2);
-            await callMortgageMarketplace_RegisterCollections(
+            await callERC721Marketplace_RegisterCollections(
                 mortgageMarketplace as any,
+                deployer,
                 admins,
-                tx1Accounts.map(x => x.address),
-                false,
-                await admin.nonce()
+                admin,
+                {
+                    collections: tx1Accounts.map(x => x.address),
+                    isCollection: false,
+                }
             );
 
             const tx2Accounts = [collections[0]];
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [mortgageMarketplace.address, 'registerCollections', tx2Accounts.map(x => x.address), false]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await expect(mortgageMarketplace.registerCollections(
-                tx2Accounts.map(x => x.address),
-                false,
-                signatures
-            )).to.be.revertedWithCustomError(mortgageMarketplace, `NotRegisteredCollection`)
+            const paramsInput: RegisterCollectionsParamsInput = {
+                collections: tx2Accounts.map(x => x.address),
+                isCollection: false,
+            };
+            const params: RegisterCollectionsParams = {
+                ...paramsInput,
+                signatures: await getRegisterCollectionsSignatures(mortgageMarketplace, admins, admin, paramsInput),
+            };
+            await expect(getRegisterCollectionsTx(mortgageMarketplace as any, deployer, params))
+                .to.be.revertedWithCustomError(mortgageMarketplace, `NotRegisteredCollection`)
         });
     });
     
@@ -1017,13 +1031,16 @@ describe('6.3. MortgageMarketplace', async () => {
         ));
         await callTransaction(mortgageToken.mint(seller.address, currentTokenId));
 
-        await callMortgageMarketplace_RegisterCollections(
+        await callERC721Marketplace_RegisterCollections(
             mortgageMarketplace,
+            deployer,
             admins,
-            [mortgageToken.address],
-            true,
-            await admin.nonce(),
-        )
+            admin,
+            {
+                collections: [mortgageToken.address],
+                isCollection: true,
+            },
+        );
 
         const params: ListParams = {
             collection: mortgageToken.address,
@@ -1054,20 +1071,20 @@ describe('6.3. MortgageMarketplace', async () => {
         let initBuyerBalance = await getBalance(ethers.provider, buyer.address, newCurrency);
         let initSellerBalance = await getBalance(ethers.provider, seller.address, newCurrency);
         let initFeeReceiverBalance = await getBalance(ethers.provider, feeReceiver.address, newCurrency);
-        let initBrokerBalance = await getBalance(ethers.provider, broker.address, newCurrency);
+
+        const buyParams: BuyParams = {
+            offerId: currentOfferId,
+        };
 
         let tx;
         if (isSafeBuy) {
-            tx = await mortgageMarketplace.connect(buyer).safeBuy(
-                currentOfferId,
-                currentTokenId,
-                { value: ethValue }
-            );
+            const safeBuyParams: SafeBuyParams = {
+                ...buyParams,
+                anchor: await getSafeBuyAnchor(mortgageMarketplace, buyParams),
+            };
+            tx = await getSafeBuyTx(mortgageMarketplace, buyer, safeBuyParams, { value: ethValue });
         } else {
-            tx = await mortgageMarketplace.connect(buyer).buy(
-                currentOfferId,
-                { value: ethValue }
-            );
+            tx = await getBuyTx(mortgageMarketplace, buyer, buyParams, { value: ethValue });
         }
         const receipt = await tx.wait();
 

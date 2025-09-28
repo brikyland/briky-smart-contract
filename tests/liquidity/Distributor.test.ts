@@ -10,7 +10,7 @@ import { deployPrimaryToken } from '@utils/deployments/liquidity/primaryToken';
 import { deployTreasury } from '@utils/deployments/liquidity/treasury';
 import { Initialization as LiquidityInitialization } from '@tests/liquidity/test.initialization';
 import { deployDistributor } from '@utils/deployments/liquidity/distributor';
-import { callPrimaryToken_UnlockForCoreTeam } from '@utils/callWithSignatures/primary';
+import { callPrimaryToken_UnlockForCoreTeam } from '@utils/call/primary';
 import { DistributeTokenParams, DistributeTokenParamsInput } from '@utils/models/Distributor';
 import { getDistributeTokenInvalidSignatures, getDistributeTokenSignatures } from '@utils/signatures/Distributor';
 import { getDistributeTokenTx } from '@utils/transaction/Distributor';

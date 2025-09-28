@@ -12,7 +12,7 @@ import {
     callAdmin_AuthorizeManagers,
     callAdmin_AuthorizeModerators,
     callAdmin_DeclareZone
-} from '@utils/callWithSignatures/admin';
+} from '@utils/call/admin';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { smock } from '@defi-wonderland/smock';
 import { deployCurrency } from '@utils/deployments/common/currency';

@@ -39,13 +39,13 @@ import {
     callAdmin_AuthorizeManagers,
     callAdmin_AuthorizeModerators,
     callAdmin_DeclareZone,
-} from '@utils/callWithSignatures/admin';
+} from '@utils/call/admin';
 import {
     callEstateToken_UpdateCommissionToken,
     callEstateToken_AuthorizeTokenizers,
     callEstateToken_AuthorizeExtractors,
     callEstateToken_UpdateZoneRoyaltyRate,
-} from '@utils/callWithSignatures/estateToken';
+} from '@utils/call/estateToken';
 import { BigNumber } from 'ethers';
 import { randomInt } from 'crypto';
 import { getBytes4Hex, getInterfaceID, randomBigNumber, structToObject } from '@utils/utils';
@@ -62,7 +62,7 @@ import { getCallTokenizeEstateTx, getRegisterCustodianTx, getSafeDeprecateEstate
 import { ContractTransaction } from 'ethers';
 import { getRegisterBrokerTx } from '@utils/transaction/CommissionToken';
 import { Initialization as CommonInitialization } from '@tests/common/test.initialization';
-import { callPausable_Pause } from '@utils/callWithSignatures/Pausable';
+import { callPausable_Pause } from '@utils/call/Pausable';
 
 interface EstateTokenFixture {
     admin: Admin;

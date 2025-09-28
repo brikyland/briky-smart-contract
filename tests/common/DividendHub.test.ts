@@ -17,7 +17,7 @@ import { deployDividendHub } from '@utils/deployments/common/dividendHub';
 import { 
     callAdmin_AuthorizeGovernor,
     callAdmin_UpdateCurrencyRegistries,
-} from '@utils/callWithSignatures/admin';
+} from '@utils/call/admin';
 import { expect } from 'chai';
 import {
     callTransaction,
@@ -34,7 +34,7 @@ import {
     getCallIssueDividendTx,
     getIssueDividendTx,
 } from '@utils/transaction/DividendHub';
-import { callPausable_Pause } from '@utils/callWithSignatures/Pausable';
+import { callPausable_Pause } from '@utils/call/Pausable';
 
 interface DividendHubFixture {
     admin: Admin;
