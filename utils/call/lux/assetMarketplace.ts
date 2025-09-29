@@ -1,8 +1,8 @@
 import { AssetMarketplace } from "@typechain-types";
 import { getSafeBuyAnchor, getSafeBuyPartAnchor } from "@utils/anchor/lux/assetMarketplace";
 import { BuyParams, BuyPartParams, SafeBuyParams, SafeBuyPartParams } from "@utils/models/lux/assetMarketplace";
-import { callTransaction } from "../../blockchain";
-import { getSafeBuyPartTx, getSafeBuyTx } from "../../transaction/lux/assetMarketplace";
+import { callTransaction } from "@utils/blockchain";
+import { getSafeBuyPartTx, getSafeBuyTx } from "@utils/transaction/lux/assetMarketplace";
 
 export async function callAssetMarketplace_SafeBuy(
     assetMarketplace: AssetMarketplace,

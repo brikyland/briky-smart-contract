@@ -61,7 +61,7 @@ import { deployMockEstateForger } from '@utils/deployments/mock/mockEstateForger
 import { callEstateToken_AuthorizeTokenizers, callEstateToken_UpdateCommissionToken, callEstateToken_UpdateZoneRoyaltyRate } from '@utils/call/land/estateToken';
 import { deployMockMortgageToken } from '@utils/deployments/mock/mockMortgageToken';
 import { BuyParams, ListParams, RegisterCollectionsParams, RegisterCollectionsParamsInput, SafeBuyParams } from '@utils/models/lux/erc721Marketplace';
-import { callERC721Marketplace_RegisterCollections } from '@utils/call/ERC721Marketplace';
+import { callERC721Marketplace_RegisterCollections } from '@utils/call/lux/erc721Marketplace';
 import { getBuyTx, getCallListTx, getListTx, getRegisterCollectionsTx, getSafeBuyTx } from '@utils/transaction/lux/erc721Marketplace';
 import { deployERC721MortgageToken } from '@utils/deployments/lend/erc721MortgageToken';
 import { deployProjectMortgageToken } from '@utils/deployments/lend/projectMortgageToken';

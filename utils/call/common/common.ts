@@ -1,4 +1,4 @@
-import { Admin, PriceWatcher } from "../../../typechain-types";
+import { Admin, PriceWatcher } from "@typechain-types";
 import { callAdmin_UpdateCurrencyRegistries } from "./admin";
 import { 
     callPriceWatcher_UpdateDefaultRates,
@@ -19,11 +19,13 @@ export async function addCurrencyToAdminAndPriceWatcher(
 ) {
     await callAdmin_UpdateCurrencyRegistries(
         admin,
+        deployer,
         admins,
-        currencyAddresses,
-        isAvailable,
-        isExclusive,
-        await admin.nonce()
+        {
+            currencies: currencyAddresses,
+            isAvailable,
+            isExclusive,
+        }
     );
     await callPriceWatcher_UpdatePriceFeeds(
         priceWatcher,

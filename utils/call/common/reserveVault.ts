@@ -1,6 +1,5 @@
-import { ReserveVault } from "../../../typechain-types";
-import { callTransaction } from "../../blockchain";
-import { getSignatures } from "../../blockchain";
+import { ReserveVault } from "@typechain-types";
+import { callTransaction, getSignatures } from "@utils/blockchain";
 import { ethers } from "hardhat";
 import { BigNumberish } from "ethers";
 import { MockContract } from "@defi-wonderland/smock";

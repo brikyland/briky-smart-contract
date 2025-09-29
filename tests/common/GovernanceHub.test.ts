@@ -30,7 +30,7 @@ import { ProposalRule } from "@utils/models/common/governanceHub";
 import { ProposalVoteOption } from "@utils/models/common/governanceHub";
 import { BigNumber, Contract, Wallet } from 'ethers';
 import { MockContract, smock } from '@defi-wonderland/smock';
-import { callAdmin_ActivateIn, callAdmin_AuthorizeGovernor, callAdmin_AuthorizeManagers, callAdmin_AuthorizeModerators, callAdmin_DeclareZone } from '@utils/call/common/admin';
+import { callAdmin_ActivateIn, callAdmin_AuthorizeGovernors, callAdmin_AuthorizeManagers, callAdmin_AuthorizeModerators, callAdmin_DeclareZone } from '@utils/call/common/admin';
 import { MockValidator } from '@utils/mockValidator';
 import { scale } from "@utils/formula";
 import { deployCurrency } from '@utils/deployments/common/currency';
@@ -251,7 +251,7 @@ describe('1.6. GovernanceHub', async () => {
             true,
             await admin.nonce(),
         );
-        await callAdmin_AuthorizeGovernor(
+        await callAdmin_AuthorizeGovernors(
             admin,
             admins,
             [governor.address],
@@ -1150,7 +1150,7 @@ describe('1.6. GovernanceHub', async () => {
             });
             const { admin, admins, proposer1, governor, governanceHub, validator } = fixture;
 
-            await callAdmin_AuthorizeGovernor(
+            await callAdmin_AuthorizeGovernors(
                 admin,
                 admins,
                 [governor.address],

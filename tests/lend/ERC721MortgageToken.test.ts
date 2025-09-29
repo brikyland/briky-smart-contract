@@ -32,7 +32,7 @@ import {
 import { BigNumber, Contract, Wallet } from 'ethers';
 import { getBytes4Hex, getInterfaceID, randomBigNumber, structToObject } from '@utils/utils';
 import { deployERC721MortgageToken } from '@utils/deployments/lend/erc721MortgageToken';
-import { callERC721MortgageToken_RegisterCollaterals } from '@utils/call/erc721MortgageToken';
+import { callERC721MortgageToken_RegisterCollaterals } from '@utils/call/lend/erc721MortgageToken';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployReentrancyERC1155Holder } from '@utils/deployments/mock/mockReentrancy/reentrancyERC1155Holder';
 import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
@@ -45,7 +45,7 @@ import { callPausable_Pause } from '@utils/call/common/pausable';
 import { UpdateBaseURIParams, UpdateBaseURIParamsInput, UpdateFeeRateParams, UpdateFeeRateParamsInput } from '@utils/models/lend/mortgageToken';
 import { getUpdateBaseURITx, getUpdateFeeRateTx } from '@utils/transaction/lend/mortgageToken';
 import { getRegisterCollateralsSignatures } from '@utils/signatures/lend/erc721MortgageToken';
-import { callMortgageToken_UpdateFeeRate } from '@utils/call/MortgageToken';
+import { callMortgageToken_UpdateFeeRate } from '@utils/call/lend/mortgageToken';
 
 
 async function testReentrancy_erc721MortgageToken(

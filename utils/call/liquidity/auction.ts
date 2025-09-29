@@ -1,5 +1,5 @@
-import { Admin, Auction } from "../../../typechain-types";
-import { callTransaction } from "../../blockchain";
+import { Admin, Auction } from "@typechain-types";
+import { callTransaction } from "@utils/blockchain";
 import { StartAuctionParams, StartAuctionParamsInput, UpdateStakeTokensParams, UpdateStakeTokensParamsInput } from "@utils/models/liquidity/auction";
 import { getStartAuctionSignatures, getUpdateStakeTokensSignatures } from "@utils/signatures/liquidity/auction";
 import { getStartAuctionTx, getUpdateStakeTokensTx } from "@utils/transaction/liquidity/auction";

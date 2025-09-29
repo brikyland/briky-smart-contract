@@ -1,5 +1,5 @@
 import { Wallet } from "ethers";
-import { RequestExtractionParams } from "../../models/land/estateLiquidator";
+import { RequestExtractionParams } from "@utils/models/land/estateLiquidator";
 import { EstateLiquidator, EstateToken, GovernanceHub } from "@typechain-types";
 import { MockValidator } from "@utils/mockValidator";
 import { getRequestExtractionValidation } from "@utils/validation/land/estateLiquidator";

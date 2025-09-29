@@ -1,6 +1,6 @@
 import { getSafeBuyAnchor } from "@utils/anchor/lux/erc721Marketplace";
-import { Admin, ERC721Marketplace } from "../../../typechain-types";
-import { callTransaction } from "../../blockchain";
+import { Admin, ERC721Marketplace } from "@typechain-types";
+import { callTransaction } from "@utils/blockchain";
 import { BuyParams, RegisterCollectionsParams, RegisterCollectionsParamsInput, SafeBuyParams } from "@utils/models/lux/erc721Marketplace";
 import { getRegisterCollectionsSignatures } from "@utils/signatures/lux/erc721Marketplace";
 import { getRegisterCollectionsTx, getSafeBuyTx } from "@utils/transaction/lux/erc721Marketplace";

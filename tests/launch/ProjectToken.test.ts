@@ -62,7 +62,7 @@ import { deployGovernanceHub } from '@utils/deployments/common/governanceHub';
 import { deployDividendHub } from '@utils/deployments/common/dividendHub';
 import { MockValidator } from '@utils/mockValidator';
 import { UpdateEstateURIParams } from '@utils/models/land/estateToken';
-import { getUpdateEstateURIValidation } from '@utils/validation/EstateToken';
+import { getUpdateEstateURIValidation } from '@utils/validation/land/estateToken';
 import { Initialization as LaunchInitialization } from '@tests/launch/test.initialization';
 import { Initialization as LandInitialization } from '@tests/land/test.initialization';
 import { callProjectToken_AuthorizeLaunchpads } from '@utils/call/launch/projectToken';

@@ -5,7 +5,7 @@ import { RequestExtractionParams } from '@utils/models/land/estateLiquidator';
 import { ProposeParams } from '@utils/models/common/governanceHub';
 import { ProposalRule } from "@utils/models/common/governanceHub";
 import { BigNumber } from 'ethers';
-import { getProposeInvalidValidation, getProposeValidation } from './GovernanceHub';
+import { getProposeInvalidValidation, getProposeValidation } from '@utils/validation/common/governanceHub';
 
 export async function getRequestExtractionValidation(
     estateToken: EstateToken,

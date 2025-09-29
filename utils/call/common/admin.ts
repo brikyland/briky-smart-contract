@@ -1,218 +1,195 @@
 import { Admin } from "@typechain-types";
-import { ethers } from "hardhat";
-import { callTransaction } from "../../blockchain";
-import { getSignatures } from "../../blockchain";
-import { BigNumberish } from "ethers";
-import { MockContract } from "@defi-wonderland/smock";
+import { callTransaction } from "@utils/blockchain";
+import { 
+    TransferAdministration1Params,
+    TransferAdministration1ParamsInput,
+    TransferAdministration2Params,
+    TransferAdministration2ParamsInput,
+    TransferAdministration3Params,
+    TransferAdministration3ParamsInput,
+    TransferAdministration4Params,
+    TransferAdministration4ParamsInput,
+    TransferAdministration5Params,
+    TransferAdministration5ParamsInput,
+    AuthorizeManagersParams,
+    AuthorizeManagersParamsInput,
+    AuthorizeModeratorsParams,
+    AuthorizeModeratorsParamsInput,
+    AuthorizeGovernorsParams,
+    AuthorizeGovernorsParamsInput,
+    DeclareZoneParams,
+    DeclareZoneParamsInput,
+    ActivateInParams,
+    ActivateInParamsInput,
+    UpdateCurrencyRegistriesParams,
+    UpdateCurrencyRegistriesParamsInput
+} from "@utils/models/common/admin";
+import {
+    getTransferAdministration1Signatures,
+    getTransferAdministration2Signatures,
+    getTransferAdministration3Signatures,
+    getTransferAdministration4Signatures,
+    getTransferAdministration5Signatures,
+    getAuthorizeManagersSignatures,
+    getAuthorizeModeratorsSignatures,
+    getAuthorizeGovernorsSignatures,
+    getDeclareZoneSignatures,
+    getActivateInSignatures,
+    getUpdateCurrencyRegistriesSignatures
+} from "@utils/signatures/common/admin";
+import {
+    getTransferAdministration1Tx,
+    getTransferAdministration2Tx,
+    getTransferAdministration3Tx,
+    getTransferAdministration4Tx,
+    getTransferAdministration5Tx,
+    getAuthorizeManagersTx,
+    getAuthorizeModeratorsTx,
+    getAuthorizeGovernorsTx,
+    getDeclareZoneTx,
+    getActivateInTx,
+    getUpdateCurrencyRegistriesTx
+} from "@utils/transaction/common/admin";
 
 export async function callAdmin_TransferAdministration1(
-    admin: Admin | MockContract<Admin>,
+    admin: Admin,
+    deployer: any,
     admins: any[],
-    admin1: string,
-    nonce: BigNumberish
+    paramsInput: TransferAdministration1ParamsInput
 ) {
-    const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "address"],
-        [admin.address, "transferAdministration1", admin1]
-    );
-    const signatures = await getSignatures(message, admins, nonce);
-
-    await callTransaction(admin.transferAdministration1(
-        admin1,
-        signatures
-    ));
+    const params: TransferAdministration1Params = {
+        ...paramsInput,
+        signatures: await getTransferAdministration1Signatures(admin, admins, paramsInput)
+    };
+    await callTransaction(getTransferAdministration1Tx(admin as Admin, deployer, params));
 }
 
 export async function callAdmin_TransferAdministration2(
-    admin: Admin | MockContract<Admin>,
+    admin: Admin,
+    deployer: any,
     admins: any[],
-    admin2: string,
-    nonce: BigNumberish
+    paramsInput: TransferAdministration2ParamsInput
 ) {
-    const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "address"],
-        [admin.address, "transferAdministration2", admin2]
-    );
-    const signatures = await getSignatures(message, admins, nonce);
-
-    await callTransaction(admin.transferAdministration2(
-        admin2,
-        signatures
-    ));
+    const params: TransferAdministration2Params = {
+        ...paramsInput,
+        signatures: await getTransferAdministration2Signatures(admin, admins, paramsInput)
+    };
+    await callTransaction(getTransferAdministration2Tx(admin as Admin, deployer, params));
 }
 
 export async function callAdmin_TransferAdministration3(
-    admin: Admin | MockContract<Admin>,
+    admin: Admin,
+    deployer: any,
     admins: any[],
-    admin3: string,
-    nonce: BigNumberish
+    paramsInput: TransferAdministration3ParamsInput
 ) {
-    const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "address"],
-        [admin.address, "transferAdministration3", admin3]
-    );
-    const signatures = await getSignatures(message, admins, nonce);
-
-    await callTransaction(admin.transferAdministration3(
-        admin3,
-        signatures
-    ));
+    const params: TransferAdministration3Params = {
+        ...paramsInput,
+        signatures: await getTransferAdministration3Signatures(admin, admins, paramsInput)
+    };
+    await callTransaction(getTransferAdministration3Tx(admin as Admin, deployer, params));
 }
 
 export async function callAdmin_TransferAdministration4(
-    admin: Admin | MockContract<Admin>,
+    admin: Admin,
+    deployer: any,
     admins: any[],
-    admin4: string,
-    nonce: BigNumberish
+    paramsInput: TransferAdministration4ParamsInput
 ) {
-    const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "address"],
-        [admin.address, "transferAdministration4", admin4]
-    );
-    const signatures = await getSignatures(message, admins, nonce);
-
-    await callTransaction(admin.transferAdministration4(
-        admin4,
-        signatures
-    ));
+    const params: TransferAdministration4Params = {
+        ...paramsInput,
+        signatures: await getTransferAdministration4Signatures(admin, admins, paramsInput)
+    };
+    await callTransaction(getTransferAdministration4Tx(admin as Admin, deployer, params));
 }
 
 export async function callAdmin_TransferAdministration5(
-    admin: Admin | MockContract<Admin>,
+    admin: Admin,
+    deployer: any,
     admins: any[],
-    admin5: string,
-    nonce: BigNumberish
+    paramsInput: TransferAdministration5ParamsInput
 ) {
-    const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "address"],
-        [admin.address, "transferAdministration5", admin5]
-    );
-    const signatures = await getSignatures(message, admins, nonce);
-
-    await callTransaction(admin.transferAdministration5(
-        admin5,
-        signatures
-    ));
+    const params: TransferAdministration5Params = {
+        ...paramsInput,
+        signatures: await getTransferAdministration5Signatures(admin, admins, paramsInput)
+    };
+    await callTransaction(getTransferAdministration5Tx(admin as Admin, deployer, params));
 }
 
 export async function callAdmin_AuthorizeManagers(
-    admin: Admin | MockContract<Admin>,
+    admin: Admin,
+    deployer: any,
     admins: any[],
-    accounts: string[],
-    isManager: boolean,
-    nonce: BigNumberish
+    paramsInput: AuthorizeManagersParamsInput
 ) {
-    const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "address[]", "bool"],
-        [admin.address, "authorizeManagers", accounts, isManager]
-    );
-    const signatures = await getSignatures(message, admins, nonce);
-
-    await callTransaction(admin.authorizeManagers(
-        accounts,
-        isManager,
-        signatures
-    ));
+    const params: AuthorizeManagersParams = {
+        ...paramsInput,
+        signatures: await getAuthorizeManagersSignatures(admin, admins, paramsInput)
+    };
+    await callTransaction(getAuthorizeManagersTx(admin as Admin, deployer, params));
 }
 
 export async function callAdmin_AuthorizeModerators(
-    admin: Admin | MockContract<Admin>,
+    admin: Admin,
+    deployer: any,
     admins: any[],
-    accounts: string[],
-    isModerator: boolean,
-    nonce: BigNumberish
+    paramsInput: AuthorizeModeratorsParamsInput
 ) {
-    const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "address[]", "bool"],
-        [admin.address, "authorizeModerators", accounts, isModerator]
-    );
-    const signatures = await getSignatures(message, admins, nonce);
-
-    await callTransaction(admin.authorizeModerators(
-        accounts,
-        isModerator,
-        signatures
-    ));
+    const params: AuthorizeModeratorsParams = {
+        ...paramsInput,
+        signatures: await getAuthorizeModeratorsSignatures(admin, admins, paramsInput)
+    };
+    await callTransaction(getAuthorizeModeratorsTx(admin as Admin, deployer, params));
 }
 
-export async function callAdmin_AuthorizeGovernor(
-    admin: Admin | MockContract<Admin>,
+export async function callAdmin_AuthorizeGovernors(
+    admin: Admin,
+    deployer: any,
     admins: any[],
-    accounts: string[],
-    isGovernor: boolean,
-    nonce: BigNumberish
+    paramsInput: AuthorizeGovernorsParamsInput
 ) {
-    const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "address[]", "bool"],
-        [admin.address, "authorizeGovernor", accounts, isGovernor]
-    );
-    const signatures = await getSignatures(message, admins, nonce);
-
-    await callTransaction(admin.authorizeGovernor(
-        accounts,
-        isGovernor,
-        signatures
-    ));
+    const params: AuthorizeGovernorsParams = {
+        ...paramsInput,
+        signatures: await getAuthorizeGovernorsSignatures(admin, admins, paramsInput)
+    };
+    await callTransaction(getAuthorizeGovernorsTx(admin as Admin, deployer, params));
 }
 
 export async function callAdmin_DeclareZone(
-    admin: Admin | MockContract<Admin>,
+    admin: Admin,
+    deployer: any,
     admins: any[],
-    zone: string,
-    nonce: BigNumberish
+    paramsInput: DeclareZoneParamsInput
 ) {
-    const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "bytes32"],
-        [admin.address, "declareZone", zone]
-    );
-    const signatures = await getSignatures(message, admins, nonce);
-
-    await callTransaction(admin.declareZone(
-        zone,
-        signatures
-    ));
+    const params: DeclareZoneParams = {
+        ...paramsInput,
+        signatures: await getDeclareZoneSignatures(admin, admins, paramsInput)
+    };
+    await callTransaction(getDeclareZoneTx(admin as Admin, deployer, params));
 }
 
 export async function callAdmin_ActivateIn(
-    admin: Admin | MockContract<Admin>,
+    admin: Admin,
+    deployer: any,
     admins: any[],
-    zone: string,
-    accounts: string[],
-    isActive: boolean,
-    nonce: BigNumberish
+    paramsInput: ActivateInParamsInput
 ) {
-    const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "bytes32", "address[]", "bool"],
-        [admin.address, "activateIn", zone, accounts, isActive]
-    );
-    const signatures = await getSignatures(message, admins, nonce);
-
-    await callTransaction(admin.activateIn(
-        zone,
-        accounts,
-        isActive,
-        signatures
-    ));
+    const params: ActivateInParams = {
+        ...paramsInput,
+        signatures: await getActivateInSignatures(admin, admins, paramsInput)
+    };
+    await callTransaction(getActivateInTx(admin as Admin, deployer, params));
 }
 
 export async function callAdmin_UpdateCurrencyRegistries(
-    admin: Admin | MockContract<Admin>,
+    admin: Admin,
+    deployer: any,
     admins: any[],
-    currencies: string[],
-    isAvailable: boolean[],
-    isExclusive: boolean[],
-    nonce: BigNumberish
+    paramsInput: UpdateCurrencyRegistriesParamsInput
 ) {
-    const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "address[]", "bool[]", "bool[]"],
-        [admin.address, "updateCurrencyRegistries", currencies, isAvailable, isExclusive]
-    );
-    const signatures = await getSignatures(message, admins, nonce);
-
-    await callTransaction(admin.updateCurrencyRegistries(
-        currencies,
-        isAvailable,
-        isExclusive,
-        signatures
-    ));
+    const params: UpdateCurrencyRegistriesParams = {
+        ...paramsInput,
+        signatures: await getUpdateCurrencyRegistriesSignatures(admin, admins, paramsInput)
+    };
+    await callTransaction(getUpdateCurrencyRegistriesTx(admin as Admin, deployer, params));
 }

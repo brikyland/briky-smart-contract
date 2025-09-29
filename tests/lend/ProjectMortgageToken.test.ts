@@ -59,7 +59,7 @@ import { UpdateBaseURIParams, UpdateBaseURIParamsInput, UpdateFeeRateParams, Upd
 import { getUpdateBaseURITx, getUpdateFeeRateTx } from '@utils/transaction/lend/mortgageToken';
 import { getUpdateBaseURISignatures, getUpdateFeeRateSignatures } from '@utils/signatures/lend/mortgageToken';
 import { callPausable_Pause } from '@utils/call/common/pausable';
-import { callMortgageToken_UpdateFeeRate } from '@utils/call/MortgageToken';
+import { callMortgageToken_UpdateFeeRate } from '@utils/call/lend/mortgageToken';
 
 
 async function testReentrancy_projectMortgageToken(

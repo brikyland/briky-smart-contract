@@ -15,7 +15,7 @@ import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/re
 import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 import { deployDividendHub } from '@utils/deployments/common/dividendHub';
 import { 
-    callAdmin_AuthorizeGovernor,
+    callAdmin_AuthorizeGovernors,
     callAdmin_UpdateCurrencyRegistries,
 } from '@utils/call/common/admin';
 import { expect } from 'chai';
@@ -126,7 +126,7 @@ describe('1.4. DividendHub', async () => {
 
     async function beforeDividendHubTest({
         registerCurrencies = false,
-        authorizeGovernor = false,
+        authorizeGovernors = false,
         fundERC20ForIssuer = false,
         initGovernorTokens = false,
         useReentrancyERC20 = false,
@@ -153,8 +153,8 @@ describe('1.4. DividendHub', async () => {
             )
         }
 
-        if (authorizeGovernor) {
-            await callAdmin_AuthorizeGovernor(
+        if (authorizeGovernors) {
+            await callAdmin_AuthorizeGovernors(
                 admin,
                 admins,
                 [governor.address],
@@ -256,7 +256,7 @@ describe('1.4. DividendHub', async () => {
         it('1.4.2.1. Issue dividend successfully', async () => {
             const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
-                authorizeGovernor: true,
+                authorizeGovernors: true,
                 fundERC20ForIssuer: true,
                 initGovernorTokens: true,
             });
@@ -361,7 +361,7 @@ describe('1.4. DividendHub', async () => {
         it('1.4.2.2. Issue dividend unsuccessfully when paused', async () => {
             const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
-                authorizeGovernor: true,
+                authorizeGovernors: true,
                 fundERC20ForIssuer: true,
                 initGovernorTokens: true,
                 pause: true,
@@ -391,7 +391,7 @@ describe('1.4. DividendHub', async () => {
         it('1.4.2.4. Issue dividend unsuccessfully with invalid token id', async () => {
             const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
-                authorizeGovernor: true,
+                authorizeGovernors: true,
                 fundERC20ForIssuer: true,
                 initGovernorTokens: true,
             });
@@ -409,7 +409,7 @@ describe('1.4. DividendHub', async () => {
 
         it('1.4.2.5. Issue dividend unsuccessfully with unavailable currency', async () => {
             const fixture = await beforeDividendHubTest({
-                authorizeGovernor: true,
+                authorizeGovernors: true,
                 fundERC20ForIssuer: true,
                 initGovernorTokens: true,
             });
@@ -423,7 +423,7 @@ describe('1.4. DividendHub', async () => {
 
         it('1.4.2.6. Issue dividend unsuccessfully with insufficient balance', async () => {
             const fixture = await beforeDividendHubTest({
-                authorizeGovernor: true,
+                authorizeGovernors: true,
                 fundERC20ForIssuer: true,
                 initGovernorTokens: true,
             });
@@ -437,7 +437,7 @@ describe('1.4. DividendHub', async () => {
         it('1.4.2.7. Issue dividend unsuccessfully with invalid value', async () => {
             const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
-                authorizeGovernor: true,
+                authorizeGovernors: true,
                 fundERC20ForIssuer: true,
                 initGovernorTokens: true,
             });
@@ -456,7 +456,7 @@ describe('1.4. DividendHub', async () => {
         it('1.4.2.8. Issue dividend unsuccessfully with insufficient native token', async () => {
             const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
-                authorizeGovernor: true,
+                authorizeGovernors: true,
                 fundERC20ForIssuer: true,
                 initGovernorTokens: true,
             });
@@ -471,7 +471,7 @@ describe('1.4. DividendHub', async () => {
         it('1.4.2.9. Issue dividend unsuccessfully with insufficient erc20 token', async () => {
             const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
-                authorizeGovernor: true,
+                authorizeGovernors: true,
                 initGovernorTokens: true,
             });
             const { dividendHub, issuer1, currencies } = fixture;
@@ -489,7 +489,7 @@ describe('1.4. DividendHub', async () => {
         it('1.4.2.10. Issue dividend unsuccessfully when receiving native token failed', async () => {
             const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
-                authorizeGovernor: true,
+                authorizeGovernors: true,
                 fundERC20ForIssuer: true,
                 initGovernorTokens: true,
             });
@@ -513,7 +513,7 @@ describe('1.4. DividendHub', async () => {
         it('1.4.2.11. Issue dividend unsuccessfully when this contract is reentered', async () => {
             const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
-                authorizeGovernor: true,
+                authorizeGovernors: true,
                 fundERC20ForIssuer: true,
                 initGovernorTokens: true,
                 useReentrancyERC20: true,
@@ -544,7 +544,7 @@ describe('1.4. DividendHub', async () => {
         it('1.4.3.1. Withdraw successfully with multiple tx', async () => {
             const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
-                authorizeGovernor: true,
+                authorizeGovernors: true,
                 fundERC20ForIssuer: true,
                 initGovernorTokens: true,
                 issueSampleDividends: true,
@@ -705,7 +705,7 @@ describe('1.4. DividendHub', async () => {
         it('1.4.3.2. Withdraw successfully with multiple dividend ids', async () => {
             const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
-                authorizeGovernor: true,
+                authorizeGovernors: true,
                 fundERC20ForIssuer: true,
                 initGovernorTokens: true,
                 issueSampleDividends: true,
@@ -794,7 +794,7 @@ describe('1.4. DividendHub', async () => {
         it('1.4.3.3. Withdraw unsuccessfully when paused', async () => {
             const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
-                authorizeGovernor: true,
+                authorizeGovernors: true,
                 fundERC20ForIssuer: true,
                 initGovernorTokens: true,
                 issueSampleDividends: true,
@@ -809,7 +809,7 @@ describe('1.4. DividendHub', async () => {
         it('1.4.3.4. Withdraw unsuccessfully with invalid dividend id', async () => {
             const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
-                authorizeGovernor: true,
+                authorizeGovernors: true,
                 fundERC20ForIssuer: true,
                 initGovernorTokens: true,
                 issueSampleDividends: true,
@@ -825,7 +825,7 @@ describe('1.4. DividendHub', async () => {
         it('1.4.3.5. Withdraw unsuccessfully when withdraw same dividend id in same tx', async () => {
             const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
-                authorizeGovernor: true,
+                authorizeGovernors: true,
                 fundERC20ForIssuer: true,
                 initGovernorTokens: true,
                 issueSampleDividends: true,
@@ -839,7 +839,7 @@ describe('1.4. DividendHub', async () => {
         it('1.4.3.6. Withdraw unsuccessfully when withdraw same dividend id in different tx', async () => {
             const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
-                authorizeGovernor: true,
+                authorizeGovernors: true,
                 fundERC20ForIssuer: true,
                 initGovernorTokens: true,
                 issueSampleDividends: true,
@@ -855,7 +855,7 @@ describe('1.4. DividendHub', async () => {
         it('1.4.3.7. Withdraw unsuccessfully with zero weight', async () => {
             const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
-                authorizeGovernor: true,
+                authorizeGovernors: true,
                 fundERC20ForIssuer: true,
                 initGovernorTokens: true,
                 issueSampleDividends: true,
@@ -869,7 +869,7 @@ describe('1.4. DividendHub', async () => {
         it('1.4.3.8. Withdraw unsuccessfully with insufficient remaining funds', async () => {
             const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
-                authorizeGovernor: true,
+                authorizeGovernors: true,
                 fundERC20ForIssuer: true,
                 initGovernorTokens: true,
             });
@@ -899,7 +899,7 @@ describe('1.4. DividendHub', async () => {
         it('1.4.3.9. Withdraw unsuccessfully when receiving native token failed', async () => {
             const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
-                authorizeGovernor: true,
+                authorizeGovernors: true,
                 fundERC20ForIssuer: true,
                 initGovernorTokens: true,
                 useFailReceiver: true,
@@ -926,7 +926,7 @@ describe('1.4. DividendHub', async () => {
         it('1.4.3.10. Withdraw unsuccessfully when this contract is reentered', async () => {
             const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
-                authorizeGovernor: true,
+                authorizeGovernors: true,
                 fundERC20ForIssuer: true,
                 initGovernorTokens: true,
                 useReentrancyERC20: true,
@@ -954,7 +954,7 @@ describe('1.4. DividendHub', async () => {
         it('1.4.4.1. return correct dividend', async () => {
             const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
-                authorizeGovernor: true,
+                authorizeGovernors: true,
                 fundERC20ForIssuer: true,
                 initGovernorTokens: true,
             });
@@ -987,7 +987,7 @@ describe('1.4. DividendHub', async () => {
         it('1.4.4.2. revert with invalid dividend id', async () => {
             const fixture = await beforeDividendHubTest({
                 registerCurrencies: true,
-                authorizeGovernor: true,
+                authorizeGovernors: true,
                 fundERC20ForIssuer: true,
                 initGovernorTokens: true,
                 issueSampleDividends: true,

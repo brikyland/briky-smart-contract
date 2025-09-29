@@ -1,5 +1,5 @@
 import { Admin, ERC721MortgageToken } from "@typechain-types";
-import { callTransaction } from "../blockchain";
+import { callTransaction } from "@utils/blockchain";
 import { MockContract } from "@defi-wonderland/smock";
 import {
     RegisterCollateralsParams,

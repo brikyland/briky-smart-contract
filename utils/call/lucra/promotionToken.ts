@@ -1,11 +1,11 @@
-import { Admin, PromotionToken } from "../../../typechain-types";
+import { Admin, PromotionToken } from "@typechain-types";
+import { callTransaction } from "@utils/blockchain";
 import {
     CancelContentsParams,
     CancelContentsParamsInput,
     CreateContentsParams,
     CreateContentsParamsInput,
 } from "@utils/models/lucra/promotionToken";
-import { callTransaction } from "../../blockchain";
 import {
     getCancelContentsSignatures,
     getCreateContentsSignatures

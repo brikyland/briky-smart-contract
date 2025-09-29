@@ -1,5 +1,4 @@
 import { BigNumber, ethers } from "ethers";
-import { Validation } from "../common/validatable";
 import { MockPrestigePad } from "@typechain-types";
 import { PrestigePad } from "@typechain-types";
 

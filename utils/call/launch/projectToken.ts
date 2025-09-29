@@ -1,7 +1,6 @@
-import { ProjectToken } from "../../../typechain-types";
-import { getSignatures } from "../../blockchain";
+import { ProjectToken } from "@typechain-types";
+import { getSignatures, callTransaction } from "@utils/blockchain";
 import { ethers } from "hardhat";
-import { callTransaction } from "../../blockchain";
 import { BigNumberish } from "ethers";
 import { MockContract } from "@defi-wonderland/smock";
 

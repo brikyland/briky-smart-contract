@@ -58,7 +58,7 @@ import { applyDiscount, scaleRate } from '@utils/formula';
 import { EstateBorrowParams } from '@utils/models/lend/estateMortgageToken';
 import { getEstateBorrowTx } from '@utils/transaction/lend/estateMortgageToken';
 import { callPausable_Pause } from '@utils/call/common/pausable';
-import { callMortgageToken_UpdateFeeRate } from '@utils/call/MortgageToken';
+import { callMortgageToken_UpdateFeeRate } from '@utils/call/lend/mortgageToken';
 import { getUpdateBaseURISignatures, getUpdateFeeRateSignatures } from '@utils/signatures/lend/mortgageToken';
 import { getUpdateBaseURITx, getUpdateFeeRateTx } from '@utils/transaction/lend/mortgageToken';
 import { UpdateBaseURIParams, UpdateBaseURIParamsInput, UpdateFeeRateParams, UpdateFeeRateParamsInput } from '@utils/models/lend/mortgageToken';

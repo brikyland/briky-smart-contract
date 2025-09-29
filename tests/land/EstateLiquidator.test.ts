@@ -34,7 +34,7 @@ import { MockContract, smock } from '@defi-wonderland/smock';
 
 import {
     callAdmin_ActivateIn,
-    callAdmin_AuthorizeGovernor,
+    callAdmin_AuthorizeGovernors,
     callAdmin_AuthorizeManagers,
     callAdmin_AuthorizeModerators,
     callAdmin_DeclareZone,
@@ -50,7 +50,7 @@ import { randomInt } from 'crypto';
 import { getBytes4Hex, getInterfaceID, randomBigNumber, structToObject } from '@utils/utils';
 import { OrderedMap } from '@utils/utils';
 import { deployEstateLiquidator } from '@utils/deployments/land/estateLiquidator';
-import { addCurrencyToAdminAndPriceWatcher } from '@utils/call/Common';
+import { addCurrencyToAdminAndPriceWatcher } from '@utils/call/common/common';
 import { deployMockPriceFeed } from '@utils/deployments/mock/mockPriceFeed';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
@@ -59,16 +59,16 @@ import { deployMockEstateLiquidator } from '@utils/deployments/mock/mockEstateLi
 import { deployReentrancyERC1155Holder } from '@utils/deployments/mock/mockReentrancy/reentrancyERC1155Holder';
 import { request } from 'http';
 import { Initialization as LandInitialization } from '@tests/land/test.initialization';
-import { callReserveVault_AuthorizeProvider } from '@utils/call/ReserveVault';
+import { callReserveVault_AuthorizeProvider } from '@utils/call/common/reserveVault';
 import { remain, scaleRate } from '@utils/formula';
 import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
 import { Rate } from '@utils/models/common/common';
 import { MockValidator } from '@utils/mockValidator';
 import { deployMockEstateForger } from '@utils/deployments/mock/mockEstateForger';
-import { getRequestExtractionInvalidValidation, getRequestExtractionValidation } from '@utils/validation/EstateLiquidator';
+import { getRequestExtractionInvalidValidation, getRequestExtractionValidation } from '@utils/validation/land/estateLiquidator';
 import { ProposalState } from "@utils/models/common/governanceHub";
 import { ProposalRule } from "@utils/models/common/governanceHub";
-import { getRegisterSellerInValidation } from '@utils/validation/EstateForger';
+import { getRegisterSellerInValidation } from '@utils/validation/land/estateForger';
 import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
 import { RequestExtractionParams } from '@utils/models/land/estateLiquidator';
 import { DeprecateEstateParams, RegisterCustodianParams } from '@utils/models/land/estateToken';
@@ -351,7 +351,7 @@ describe('2.3. EstateLiquidator', async () => {
 
     async function beforeEstateLiquidatorTest({
         skipAuthorizeExtractor = false,
-        skipAuthorizeGovernor = false,
+        skipAuthorizeGovernors = false,
         skipDeclareZone = false,
         skipPrepareERC20ForOperators: skipPrepareERC20ForManager = false,
         listSampleExtractionRequests = false,
@@ -498,8 +498,8 @@ describe('2.3. EstateLiquidator', async () => {
             broker: broker2.address,
         }));
 
-        if (!skipAuthorizeGovernor) {
-            await callAdmin_AuthorizeGovernor(
+        if (!skipAuthorizeGovernors) {
+            await callAdmin_AuthorizeGovernors(
                 admin,
                 admins,
                 [estateToken.address],
@@ -1364,7 +1364,7 @@ describe('2.3. EstateLiquidator', async () => {
 
         it('2.3.3.16. request extraction unsuccessfully when estate token is not authorized as governor', async () => {
             const fixture = await beforeEstateLiquidatorTest({
-                skipAuthorizeGovernor: true,
+                skipAuthorizeGovernors: true,
             });
 
             const { governanceHub, manager } = fixture;
@@ -1964,7 +1964,7 @@ describe('2.3. EstateLiquidator', async () => {
 
             const { admin, admins, estateToken, estateLiquidator, governanceHub, operator1, dividendHub } = fixture;
             
-            await callAdmin_AuthorizeGovernor(
+            await callAdmin_AuthorizeGovernors(
                 admin as any,
                 admins,
                 [estateToken.address],

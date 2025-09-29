@@ -1,14 +1,14 @@
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
 import { Admin, Governor__factory } from '@typechain-types';
-import { callTransaction, getSignatures, randomWallet } from '@utils/blockchain';
+import { getSignatures, randomWallet } from '@utils/blockchain';
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { nextPermutation } from '@utils/utils';
 import { Constant } from '@tests/test.constant';
 import { Wallet } from 'ethers';
 import { 
     callAdmin_ActivateIn,
-    callAdmin_AuthorizeGovernor,
+    callAdmin_AuthorizeGovernors,
     callAdmin_AuthorizeManagers,
     callAdmin_AuthorizeModerators,
     callAdmin_DeclareZone
@@ -16,6 +16,56 @@ import {
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { smock } from '@defi-wonderland/smock';
 import { deployCurrency } from '@utils/deployments/common/currency';
+import {
+    getTransferAdministration1Signatures,
+    getTransferAdministration2Signatures,
+    getTransferAdministration3Signatures,
+    getTransferAdministration4Signatures,
+    getTransferAdministration5Signatures,
+    getAuthorizeManagersSignatures,
+    getAuthorizeModeratorsSignatures,
+    getAuthorizeGovernorsSignatures,
+    getDeclareZoneSignatures,
+    getActivateInSignatures,
+    getUpdateCurrencyRegistriesSignatures
+} from '@utils/signatures/common/admin';
+import {
+    getTransferAdministration1Tx,
+    getTransferAdministration2Tx,
+    getTransferAdministration3Tx,
+    getTransferAdministration4Tx,
+    getTransferAdministration5Tx,
+    getAuthorizeManagersTx,
+    getAuthorizeModeratorsTx,
+    getAuthorizeGovernorsTx,
+    getDeclareZoneTx,
+    getActivateInTx,
+    getUpdateCurrencyRegistriesTx
+} from '@utils/transaction/common/admin';
+import {
+    TransferAdministration1ParamsInput,
+    TransferAdministration1Params,
+    TransferAdministration2ParamsInput,
+    TransferAdministration2Params,
+    TransferAdministration3ParamsInput,
+    TransferAdministration3Params,
+    TransferAdministration4ParamsInput,
+    TransferAdministration4Params,
+    TransferAdministration5ParamsInput,
+    TransferAdministration5Params,
+    AuthorizeManagersParamsInput,
+    AuthorizeManagersParams,
+    AuthorizeModeratorsParamsInput,
+    AuthorizeModeratorsParams,
+    AuthorizeGovernorsParamsInput,
+    AuthorizeGovernorsParams,
+    DeclareZoneParamsInput,
+    DeclareZoneParams,
+    ActivateInParamsInput,
+    ActivateInParams,
+    UpdateCurrencyRegistriesParamsInput,
+    UpdateCurrencyRegistriesParams
+} from '@utils/models/common/admin';
 
 interface AdminFixture {
     deployer: any;
@@ -29,7 +79,7 @@ interface AdminFixture {
     zone1: string, zone2: string, zone3: string, zone4: string, zone5: string;
 }
 
-describe('1.2. Admin', async () => {
+describe.only('1.2. Admin', async () => {
     async function adminFixture(): Promise<AdminFixture> {
         const accounts = await ethers.getSigners();
         const deployer = accounts[0];
@@ -103,7 +153,7 @@ describe('1.2. Admin', async () => {
     });
 
     describe('1.2.2. verifyAdminSignature(bytes, bytes[])', async () => {
-        it('1.2.2.1. verify admin signatures successfully with at least 4/5 valid admin signatures', async () => {
+        it('1.2.2.1. Verify admin signatures successfully with at least 4/5 valid admin signatures', async () => {
             const fixture = await setupBeforeTest();
             const { admins, admin } = fixture;            
             let currentNonce = 0;
@@ -141,7 +191,7 @@ describe('1.2. Admin', async () => {
             }
         });
 
-        it('1.2.2.2. verify admin signatures successfully multiple times', async () => {
+        it('1.2.2.2. Verify admin signatures successfully multiple times', async () => {
             const fixture = await setupBeforeTest();
             const { admins, admin } = fixture;            
             let currentNonce = 0;
@@ -364,19 +414,18 @@ describe('1.2. Admin', async () => {
     describe('1.2.3. transferAdministration1(address, bytes[])', async () => {
         it('1.2.3.1. Change admin 1 successfully', async () => {
             const fixture = await setupBeforeTest();
-            const { admins, admin } = fixture;            
+            const { deployer, admins, admin } = fixture;            
 
             const newAdmin = randomWallet();
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address'],
-                [admin.address, 'transferAdministration1', newAdmin.address]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput: TransferAdministration1ParamsInput = {
+                admin1: newAdmin.address
+            };
+            const params: TransferAdministration1Params = {
+                ...paramsInput,
+                signatures: await getTransferAdministration1Signatures(admin, admins, paramsInput)
+            };
 
-            const tx = await admin.transferAdministration1(
-                newAdmin.address,
-                signatures
-            );
+            const tx = await getTransferAdministration1Tx(admin, deployer, params);
             await tx.wait();
 
             await expect(tx).to
@@ -389,38 +438,37 @@ describe('1.2. Admin', async () => {
 
         it('1.2.3.2. Change admin 1 unsuccessfully with invalid signatures', async () => {
             const fixture = await setupBeforeTest();
-            const { admins, admin } = fixture;            
+            const { deployer, admins, admin } = fixture;            
 
             const newAdmin = randomWallet();
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address'],
-                [admin.address, 'transferAdministration1', newAdmin.address]
-            );
-            const invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+            const paramsInput: TransferAdministration1ParamsInput = {
+                admin1: newAdmin.address
+            };
+            const params: TransferAdministration1Params = {
+                ...paramsInput,
+                signatures: await getTransferAdministration1Signatures(admin, admins, paramsInput, false)
+            };
 
-            await expect(admin.transferAdministration1(
-                newAdmin.address,
-                invalidSignatures
-            )).to.be.revertedWithCustomError(admin, 'FailedVerification');
+            await expect(getTransferAdministration1Tx(admin, deployer, params))
+                .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
     });
 
     describe('1.2.4. transferAdministration2(address, bytes[])', async () => {
         it('1.2.4.1. Change admin 2 successfully', async () => {
             const fixture = await setupBeforeTest();
-            const { admins, admin } = fixture;            
+            const { deployer, admins, admin } = fixture;            
 
             const newAdmin = randomWallet();
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address'],
-                [admin.address, 'transferAdministration2', newAdmin.address]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput: TransferAdministration2ParamsInput = {
+                admin2: newAdmin.address
+            };
+            const params: TransferAdministration2Params = {
+                ...paramsInput,
+                signatures: await getTransferAdministration2Signatures(admin, admins, paramsInput)
+            };
 
-            const tx = await admin.transferAdministration2(
-                newAdmin.address,
-                signatures
-            );
+            const tx = await getTransferAdministration2Tx(admin, deployer, params);
             await tx.wait();
 
             await expect(tx).to
@@ -433,38 +481,37 @@ describe('1.2. Admin', async () => {
 
         it('1.2.4.2. Change admin 2 unsuccessfully with invalid signatures', async () => {
             const fixture = await setupBeforeTest();
-            const { admins, admin } = fixture;            
+            const { deployer, admins, admin } = fixture;            
 
             const newAdmin = randomWallet();
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address'],
-                [admin.address, 'transferAdministration2', newAdmin.address]
-            );
-            const invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+            const paramsInput: TransferAdministration2ParamsInput = {
+                admin2: newAdmin.address
+            };
+            const params: TransferAdministration2Params = {
+                ...paramsInput,
+                signatures: await getTransferAdministration2Signatures(admin, admins, paramsInput, false)
+            };
 
-            await expect(admin.transferAdministration2(
-                newAdmin.address,
-                invalidSignatures
-            )).to.be.revertedWithCustomError(admin, 'FailedVerification');
+            await expect(getTransferAdministration2Tx(admin, deployer, params))
+                .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
     });
 
     describe('1.2.5. transferAdministration3(address, bytes[])', async () => {
         it('1.2.5.1. Change admin 3 successfully', async () => {
             const fixture = await setupBeforeTest();
-            const { admins, admin } = fixture;            
+            const { deployer, admins, admin } = fixture;            
 
             const newAdmin = randomWallet();
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address'],
-                [admin.address, 'transferAdministration3', newAdmin.address]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput: TransferAdministration3ParamsInput = {
+                admin3: newAdmin.address
+            };
+            const params: TransferAdministration3Params = {
+                ...paramsInput,
+                signatures: await getTransferAdministration3Signatures(admin, admins, paramsInput)
+            };
 
-            const tx = await admin.transferAdministration3(
-                newAdmin.address,
-                signatures
-            );
+            const tx = await getTransferAdministration3Tx(admin, deployer, params);
             await tx.wait();
 
             await expect(tx).to
@@ -477,38 +524,37 @@ describe('1.2. Admin', async () => {
 
         it('1.2.5.2. Change admin 3 unsuccessfully with invalid signatures', async () => {
             const fixture = await setupBeforeTest();
-            const { admins, admin } = fixture;            
+            const { deployer, admins, admin } = fixture;            
 
             const newAdmin = randomWallet();
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address'],
-                [admin.address, 'transferAdministration3', newAdmin.address]
-            );
-            const invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+            const paramsInput: TransferAdministration3ParamsInput = {
+                admin3: newAdmin.address
+            };
+            const params: TransferAdministration3Params = {
+                ...paramsInput,
+                signatures: await getTransferAdministration3Signatures(admin, admins, paramsInput, false)
+            };
 
-            await expect(admin.transferAdministration3(
-                newAdmin.address,
-                invalidSignatures
-            )).to.be.revertedWithCustomError(admin, 'FailedVerification');
+            await expect(getTransferAdministration3Tx(admin, deployer, params))
+                .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
     });
 
     describe('1.2.6. transferAdministration4(address, bytes[])', async () => {
         it('1.2.6.1. Change admin 4 successfully', async () => {
             const fixture = await setupBeforeTest();
-            const { admins, admin } = fixture;            
+            const { deployer, admins, admin } = fixture;            
 
             const newAdmin = randomWallet();
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address'],
-                [admin.address, 'transferAdministration4', newAdmin.address]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput: TransferAdministration4ParamsInput = {
+                admin4: newAdmin.address
+            };
+            const params: TransferAdministration4Params = {
+                ...paramsInput,
+                signatures: await getTransferAdministration4Signatures(admin, admins, paramsInput)
+            };
 
-            const tx = await admin.transferAdministration4(
-                newAdmin.address,
-                signatures
-            );
+            const tx = await getTransferAdministration4Tx(admin, deployer, params);
             await tx.wait();
 
             await expect(tx).to
@@ -521,39 +567,37 @@ describe('1.2. Admin', async () => {
 
         it('1.2.6.2. Change admin 4 unsuccessfully with invalid signatures', async () => {
             const fixture = await setupBeforeTest();
-            const { admins, admin } = fixture;            
+            const { deployer, admins, admin } = fixture;            
 
             const newAdmin = randomWallet();
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address'],
-                [admin.address, 'transferAdministration4', newAdmin.address]
-            );
-            const invalidSignatures = await getSignatures(message, admins, 1);
+            const paramsInput: TransferAdministration4ParamsInput = {
+                admin4: newAdmin.address
+            };
+            const params: TransferAdministration4Params = {
+                ...paramsInput,
+                signatures: await getTransferAdministration4Signatures(admin, admins, paramsInput, false)
+            };
 
-            await expect(admin.transferAdministration4(
-                newAdmin.address,
-                invalidSignatures
-            )).to.be.revertedWithCustomError(admin, 'FailedVerification');
+            await expect(getTransferAdministration4Tx(admin, deployer, params))
+                .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
     });
 
     describe('1.2.7. transferAdministration5(address, bytes[])', async () => {
         it('1.2.7.1. Change admin 5 successfully', async () => {
             const fixture = await setupBeforeTest();
-            const { admins, admin } = fixture;            
-            let currentNonce = 0;
+            const { deployer, admins, admin } = fixture;            
 
             const newAdmin = randomWallet();
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address'],
-                [admin.address, 'transferAdministration5', newAdmin.address]
-            );
-            const signatures = await getSignatures(message, admins, currentNonce);
+            const paramsInput: TransferAdministration5ParamsInput = {
+                admin5: newAdmin.address
+            };
+            const params: TransferAdministration5Params = {
+                ...paramsInput,
+                signatures: await getTransferAdministration5Signatures(admin, admins, paramsInput)
+            };
 
-            const tx = await admin.transferAdministration5(
-                newAdmin.address,
-                signatures
-            );
+            const tx = await getTransferAdministration5Tx(admin, deployer, params);
             await tx.wait();
 
             await expect(tx).to
@@ -566,41 +610,40 @@ describe('1.2. Admin', async () => {
 
         it('1.2.7.2. Change admin 5 unsuccessfully with invalid signatures', async () => {
             const fixture = await setupBeforeTest();
-            const { admins, admin } = fixture;            
+            const { deployer, admins, admin } = fixture;            
 
             const newAdmin = randomWallet();
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address'],
-                [admin.address, 'transferAdministration5', newAdmin.address]
-            );
-            const invalidSignatures = await getSignatures(message, admins, 1);
+            const paramsInput: TransferAdministration5ParamsInput = {
+                admin5: newAdmin.address
+            };
+            const params: TransferAdministration5Params = {
+                ...paramsInput,
+                signatures: await getTransferAdministration5Signatures(admin, admins, paramsInput, false)
+            };
 
-            await expect(admin.transferAdministration5(
-                newAdmin.address,
-                invalidSignatures
-            )).to.be.revertedWithCustomError(admin, 'FailedVerification');
+            await expect(getTransferAdministration5Tx(admin, deployer, params))
+                .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
     });
 
     describe('1.2.8. authorizeManager(address[], bool, bytes[])', async () => {
         it('1.2.8.1. Authorize manager successfully', async () => {
             const fixture = await setupBeforeTest();
-            const { admins, admin } = fixture;            
+            const { deployer, admins, admin } = fixture;            
 
             const toBeManagers = [];
             for (let i = 0; i < 5; ++i) toBeManagers.push(randomWallet());
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [admin.address, 'authorizeManagers', toBeManagers.map(x => x.address), true]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput: AuthorizeManagersParamsInput = {
+                accounts: toBeManagers.map(x => x.address),
+                isManager: true
+            };
+            const params: AuthorizeManagersParams = {
+                ...paramsInput,
+                signatures: await getAuthorizeManagersSignatures(admin, admins, paramsInput)
+            };
 
-            const tx = await admin.authorizeManagers(
-                toBeManagers.map(x => x.address),
-                true,
-                signatures
-            );
+            const tx = await getAuthorizeManagersTx(admin, deployer, params);
             await tx.wait();
 
             for (const manager of toBeManagers) {
@@ -617,118 +660,115 @@ describe('1.2. Admin', async () => {
 
         it('1.2.8.2. Authorize manager unsuccessfully with invalid signatures', async () => {
             const fixture = await setupBeforeTest();
-            const { admins, admin } = fixture;            
+            const { deployer, admins, admin } = fixture;            
 
             const toBeManagers = [];
             for (let i = 0; i < 5; ++i) toBeManagers.push(randomWallet());
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [admin.address, 'authorizeManagers', toBeManagers.map(x => x.address), true]
-            );
-            const invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+            const paramsInput: AuthorizeManagersParamsInput = {
+                accounts: toBeManagers.map(x => x.address),
+                isManager: true
+            };
+            const params: AuthorizeManagersParams = {
+                ...paramsInput,
+                signatures: await getAuthorizeManagersSignatures(admin, admins, paramsInput, false)
+            };
 
-            await expect(admin.authorizeManagers(
-                toBeManagers.map(x => x.address),
-                true,
-                invalidSignatures
-            )).to.be.revertedWithCustomError(admin, 'FailedVerification');
+            await expect(getAuthorizeManagersTx(admin, deployer, params))
+                .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
         it('1.2.8.3. Authorize manager unsuccessfully when authorizing same account twice on same tx', async () => {
             const fixture = await setupBeforeTest();
-            const { admins, admin } = fixture;            
+            const { deployer, admins, admin } = fixture;            
 
             const duplicateManagers = [];
             for (let i = 0; i < 5; ++i) duplicateManagers.push(randomWallet());
             duplicateManagers.push(duplicateManagers[0]);
 
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [admin.address, 'authorizeManagers', duplicateManagers.map(x => x.address), true]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput: AuthorizeManagersParamsInput = {
+                accounts: duplicateManagers.map(x => x.address),
+                isManager: true
+            };
+            const params: AuthorizeManagersParams = {
+                ...paramsInput,
+                signatures: await getAuthorizeManagersSignatures(admin, admins, paramsInput)
+            };
 
-            await expect(admin.authorizeManagers(
-                duplicateManagers.map(x => x.address),
-                true,
-                signatures
-            )).to.be.revertedWithCustomError(admin, `AuthorizedAccount`)
+            await expect(getAuthorizeManagersTx(admin, deployer, params))
+                .to.be.revertedWithCustomError(admin, `AuthorizedAccount`)
         });
 
         it('1.2.8.4. Authorize manager unsuccessfully when authorizing same account twice on different tx', async () => {
             const fixture = await setupBeforeTest();
-            const { admins, admin } = fixture;            
+            const { deployer, admins, admin } = fixture;            
 
             const toBeManagers = [];
             for (let i = 0; i < 5; ++i) toBeManagers.push(randomWallet());
 
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [admin.address, 'authorizeManagers', toBeManagers.map(x => x.address), true]
+            await callAdmin_AuthorizeManagers(
+                admin,
+                deployer,
+                admins,
+                {
+                    accounts: toBeManagers.map(x => x.address),
+                    isManager: true
+                }
             );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await callTransaction(admin.authorizeManagers(
-                toBeManagers.map(x => x.address),
-                true,
-                signatures
-            ));
 
             const managers = [randomWallet(), toBeManagers[2], randomWallet()];
 
-            message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [admin.address, 'authorizeManagers', managers.map(x => x.address), true]
-            );
-            signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput: AuthorizeManagersParamsInput = {
+                accounts: managers.map(x => x.address),
+                isManager: true
+            };
+            const params: AuthorizeManagersParams = {
+                ...paramsInput,
+                signatures: await getAuthorizeManagersSignatures(admin, admins, paramsInput)
+            };
 
-            await expect(admin.authorizeManagers(
-                managers.map(x => x.address),
-                true,
-                signatures
-            )).to.be.revertedWithCustomError(admin, `AuthorizedAccount`)
+            await expect(getAuthorizeManagersTx(admin, deployer, params))
+                .to.be.revertedWithCustomError(admin, `AuthorizedAccount`)
         })
 
-        async function setupManagers(admins: any[], admin: Admin): Promise<Wallet[]> {
+        async function setupManagers(fixture: AdminFixture): Promise<Wallet[]> {
+            const { deployer, admins, admin } = fixture;
+
             const managers = [];
             for (let i = 0; i < 5; ++i) managers.push(randomWallet());
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [admin.address, 'authorizeManagers', managers.map(x => x.address), true]
+            await callAdmin_AuthorizeManagers(
+                admin,
+                deployer,
+                admins,
+                {
+                    accounts: managers.map(x => x.address),
+                    isManager: true
+                }
             );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await callTransaction(admin.authorizeManagers(
-                managers.map(x => x.address),
-                true,
-                signatures
-            ));
-
+      
             return managers;
         }
 
         it('1.2.8.5. Deauthorize manager successfully', async () => {
             const fixture = await setupBeforeTest();
-            const { admins, admin } = fixture;            
+            const { deployer, admins, admin } = fixture;            
 
-            const managers = await setupManagers(admins, admin);
+            const managers = await setupManagers(fixture);
 
             const toDeauth = managers.slice(0, 2);
             const remainManagers = managers.slice(2);
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [admin.address, 'authorizeManagers', toDeauth.map(x => x.address), false]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput: AuthorizeManagersParamsInput = {
+                accounts: toDeauth.map(x => x.address),
+                isManager: false
+            };
+            const params: AuthorizeManagersParams = {
+                ...paramsInput,
+                signatures: await getAuthorizeManagersSignatures(admin, admins, paramsInput)
+            };
 
-            const tx = await admin.authorizeManagers(
-                toDeauth.map(x => x.address),
-                false,
-                signatures
-            );
+            const tx = await getAuthorizeManagersTx(admin, deployer, params);
             await tx.wait();
 
             for (const manager of toDeauth) {
@@ -749,108 +789,116 @@ describe('1.2. Admin', async () => {
 
         it('1.2.8.6. Deauthorize manager unsuccessfully with unauthorized account', async () => {
             const fixture = await setupBeforeTest();
-            const { admins, admin } = fixture;            
+            const { deployer, admins, admin } = fixture;            
 
-            const managers = await setupManagers(admins, admin);
+            const managers = await setupManagers(fixture);
 
             const account = randomWallet();
             const toDeauth = [managers[0], account];
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [admin.address, 'authorizeManagers', toDeauth.map(x => x.address), false]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput: AuthorizeManagersParamsInput = {
+                accounts: toDeauth.map(x => x.address),
+                isManager: false
+            };
+            const params: AuthorizeManagersParams = {
+                ...paramsInput,
+                signatures: await getAuthorizeManagersSignatures(admin, admins, paramsInput)
+            };
 
-            await expect(admin.authorizeManagers(
-                toDeauth.map(x => x.address),
-                false,
-                signatures
-            )).to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`)
+            await expect(getAuthorizeManagersTx(admin, deployer, params))
+                .to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`)
         });
 
         it('1.2.8.7. Deauthorize manager unsuccessfully when unauthorizing same accounts twice on same tx', async () => {
             const fixture = await setupBeforeTest();
-            const { admins, admin } = fixture;            
+            const { deployer, admins, admin } = fixture;            
 
-            const managers = await setupManagers(admins, admin);
+            const managers = await setupManagers(fixture);
 
             const toDeauth = managers.slice(0, 2).concat([managers[0]]);
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [admin.address, 'authorizeManagers', toDeauth.map(x => x.address), false]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await expect(admin.authorizeManagers(
-                toDeauth.map(x => x.address),
-                false,
-                signatures
-            )).to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`)
+            const paramsInput: AuthorizeManagersParamsInput = {
+                accounts: toDeauth.map(x => x.address),
+                isManager: false
+            };
+            const params: AuthorizeManagersParams = {
+                ...paramsInput,
+                signatures: await getAuthorizeManagersSignatures(admin, admins, paramsInput)
+            };
+            
+            await expect(getAuthorizeManagersTx(admin, deployer, params))
+                .to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`)
         });
 
         it('1.2.8.8. Deauthorize manager unsuccessfully when unauthorizing same accounts twice on different tx', async () => {
             const fixture = await setupBeforeTest();
-            const { admins, admin } = fixture;            
+            const { deployer, admins, admin } = fixture;            
 
-            const managers = await setupManagers(admins, admin);
+            const managers = await setupManagers(fixture);
 
             const tx1_accounts = managers.slice(0, 2);
-            await callAdmin_AuthorizeManagers(admin, admins, tx1_accounts.map(x => x.address), false, await admin.nonce());
+            await callAdmin_AuthorizeManagers(
+                admin,
+                deployer,
+                admins,
+                {
+                    accounts: tx1_accounts.map(x => x.address),
+                    isManager: false 
+                }
+            );
 
             const tx2_accounts = [managers[0]];
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [admin.address, 'authorizeManagers', tx2_accounts.map(x => x.address), false]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput: AuthorizeManagersParamsInput = {
+                accounts: tx2_accounts.map(x => x.address),
+                isManager: false
+            };
+            const params: AuthorizeManagersParams = {
+                ...paramsInput,
+                signatures: await getAuthorizeManagersSignatures(admin, admins, paramsInput)
+            };
 
-            await expect(admin.authorizeManagers(
-                tx2_accounts.map(x => x.address),
-                false,
-                signatures
-            )).to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`)
+            await expect(getAuthorizeManagersTx(admin, deployer, params))
+                .to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`)
         });
 
         it('1.2.8.9. Deauthorize manager unsuccessfully when the caller self-deauthorizes', async () => {
-            const { admins, admin, deployer } = await setupBeforeTest();
+            const fixture = await setupBeforeTest();
+            const { deployer, admins, admin } = fixture;            
 
             const toDeauth = [deployer];
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [admin.address, 'authorizeManagers', toDeauth.map(x => x.address), false]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput: AuthorizeManagersParamsInput = {
+                accounts: toDeauth.map(x => x.address),
+                isManager: false
+            };
+            const params: AuthorizeManagersParams = {
+                ...paramsInput,
+                signatures: await getAuthorizeManagersSignatures(admin, admins, paramsInput)
+            };
 
-            await expect(admin.authorizeManagers(
-                toDeauth.map(x => x.address),
-                false,
-                signatures
-            )).to.be.revertedWithCustomError(admin, `CannotSelfDeauthorizing`)
+            await expect(getAuthorizeManagersTx(admin, deployer, params))
+                .to.be.revertedWithCustomError(admin, `CannotSelfDeauthorizing`)
         });
     });
 
     describe('1.2.9. authorizeModerators(address[], bool, bytes[])', async () => {
         it('1.2.9.1. Authorize moderator successfully', async () => {
             const fixture = await setupBeforeTest();
-            const { admins, admin } = fixture;            
+            const { deployer, admins, admin } = fixture;            
 
             const toBeModerators = [];
             for (let i = 0; i < 5; ++i) toBeModerators.push(randomWallet());
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [admin.address, 'authorizeModerators', toBeModerators.map(x => x.address), true]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput: AuthorizeModeratorsParamsInput = {
+                accounts: toBeModerators.map(x => x.address),
+                isModerator: true
+            };
+            const params: AuthorizeModeratorsParams = {
+                ...paramsInput,
+                signatures: await getAuthorizeModeratorsSignatures(admin, admins, paramsInput)
+            };
 
-            const tx = await admin.authorizeModerators(
-                toBeModerators.map(x => x.address),
-                true,
-                signatures
-            );
+            const tx = await getAuthorizeModeratorsTx(admin, deployer, params);
             await tx.wait();
 
             for (const moderator of toBeModerators) {
@@ -867,118 +915,115 @@ describe('1.2. Admin', async () => {
 
         it('1.2.9.2. Authorize moderator unsuccessfully with invalid signatures', async () => {
             const fixture = await setupBeforeTest();
-            const { admins, admin } = fixture;            
+            const { deployer, admins, admin } = fixture;            
 
             const toBeModerators = [];
             for (let i = 0; i < 5; ++i) toBeModerators.push(randomWallet());
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [admin.address, 'authorizeModerators', toBeModerators.map(x => x.address), true]
-            );
-            const invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+            const paramsInput: AuthorizeModeratorsParamsInput = {
+                accounts: toBeModerators.map(x => x.address),
+                isModerator: true
+            };
+            const params: AuthorizeModeratorsParams = {
+                ...paramsInput,
+                signatures: await getAuthorizeModeratorsSignatures(admin, admins, paramsInput, false)
+            };
 
-            await expect(admin.authorizeModerators(
-                toBeModerators.map(x => x.address),
-                true,
-                invalidSignatures
-            )).to.be.revertedWithCustomError(admin, 'FailedVerification');
+            await expect(getAuthorizeModeratorsTx(admin, deployer, params))
+                .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
         it('1.2.9.3. Authorize moderator unsuccessfully when authorizing same account twice on same tx', async () => {
             const fixture = await setupBeforeTest();
-            const { admins, admin } = fixture;            
+            const { deployer, admins, admin } = fixture;            
 
             const duplicateModerators = [];
             for (let i = 0; i < 5; ++i) duplicateModerators.push(randomWallet());
             duplicateModerators.push(duplicateModerators[0]);
 
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [admin.address, 'authorizeModerators', duplicateModerators.map(x => x.address), true]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput: AuthorizeModeratorsParamsInput = {
+                accounts: duplicateModerators.map(x => x.address),
+                isModerator: true
+            };
+            const params: AuthorizeModeratorsParams = {
+                ...paramsInput,
+                signatures: await getAuthorizeModeratorsSignatures(admin, admins, paramsInput)
+            };
 
-            await expect(admin.authorizeModerators(
-                duplicateModerators.map(x => x.address),
-                true,
-                signatures
-            )).to.be.revertedWithCustomError(admin, `AuthorizedAccount`)
+            await expect(getAuthorizeModeratorsTx(admin, deployer, params))
+                .to.be.revertedWithCustomError(admin, `AuthorizedAccount`)
         });
 
         it('1.2.9.4. Authorize moderator unsuccessfully when authorizing same account twice on different tx', async () => {
             const fixture = await setupBeforeTest();
-            const { admins, admin } = fixture;            
+            const { deployer, admins, admin } = fixture;            
 
             const toBeModerators = [];
             for (let i = 0; i < 5; ++i) toBeModerators.push(randomWallet());
 
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [admin.address, 'authorizeModerators', toBeModerators.map(x => x.address), true]
+            await callAdmin_AuthorizeModerators(
+                admin,
+                deployer,
+                admins,
+                {
+                    accounts: toBeModerators.map(x => x.address),
+                    isModerator: true
+                }
             );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await callTransaction(admin.authorizeModerators(
-                toBeModerators.map(x => x.address),
-                true,
-                signatures
-            ));
 
             const moderators = [randomWallet(), toBeModerators[2], randomWallet()];
 
-            message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [admin.address, 'authorizeModerators', moderators.map(x => x.address), true]
-            );
-            signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput: AuthorizeModeratorsParamsInput = {
+                accounts: moderators.map(x => x.address),
+                isModerator: true
+            };
+            const params: AuthorizeModeratorsParams = {
+                ...paramsInput,
+                signatures: await getAuthorizeModeratorsSignatures(admin, admins, paramsInput)
+            };
 
-            await expect(admin.authorizeModerators(
-                moderators.map(x => x.address),
-                true,
-                signatures
-            )).to.be.revertedWithCustomError(admin, `AuthorizedAccount`)
-        })
+            await expect(getAuthorizeModeratorsTx(admin, deployer, params))
+                .to.be.revertedWithCustomError(admin, `AuthorizedAccount`)
+        });
 
-        async function setupModerators(admin: Admin, admins: any[]): Promise<Wallet[]> {
+        async function setupModerators(fixture: AdminFixture): Promise<Wallet[]> {
+            const { deployer, admins, admin } = fixture;
+
             const moderators = [];
             for (let i = 0; i < 5; ++i) moderators.push(randomWallet());
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [admin.address, 'authorizeModerators', moderators.map(x => x.address), true]
+            await callAdmin_AuthorizeModerators(
+                admin,
+                deployer,
+                admins,
+                {
+                    accounts: moderators.map(x => x.address),
+                    isModerator: true
+                }
             );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await callTransaction(admin.authorizeModerators(
-                moderators.map(x => x.address),
-                true,
-                signatures
-            ));
 
             return moderators;
         }
 
         it('1.2.9.5. Deauthorize moderator successfully', async () => {
             const fixture = await setupBeforeTest();
-            const { admins, admin } = fixture;            
+            const { deployer, admins, admin } = fixture;            
 
-            const moderators = await setupModerators(admin, admins);
+            const moderators = await setupModerators(fixture);
 
             const toDeauth = moderators.slice(0, 2);
             const remainModerators = moderators.slice(2);
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [admin.address, 'authorizeModerators', toDeauth.map(x => x.address), false]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput: AuthorizeModeratorsParamsInput = {
+                accounts: toDeauth.map(x => x.address),
+                isModerator: false
+            };
+            const params: AuthorizeModeratorsParams = {
+                ...paramsInput,
+                signatures: await getAuthorizeModeratorsSignatures(admin, admins, paramsInput)
+            };
 
-            const tx = await admin.authorizeModerators(
-                toDeauth.map(x => x.address),
-                false,
-                signatures
-            );
+            const tx = await getAuthorizeModeratorsTx(admin, deployer, params);
             await tx.wait();
 
             for (const moderator of toDeauth) {
@@ -999,90 +1044,97 @@ describe('1.2. Admin', async () => {
 
         it('1.2.9.6. Deauthorize moderator unsuccessfully with unauthorized account', async () => {
             const fixture = await setupBeforeTest();
-            const { admins, admin } = fixture;            
+            const { deployer, admins, admin } = fixture;            
 
-            const moderators = await setupModerators(admin, admins);
+            const moderators = await setupModerators(fixture);
 
             const account = randomWallet();
             const toDeauth = [moderators[0], account];
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [admin.address, 'authorizeModerators', toDeauth.map(x => x.address), false]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput: AuthorizeModeratorsParamsInput = {
+                accounts: toDeauth.map(x => x.address),
+                isModerator: false
+            };
+            const params: AuthorizeModeratorsParams = {
+                ...paramsInput,
+                signatures: await getAuthorizeModeratorsSignatures(admin, admins, paramsInput)
+            };
 
-            await expect(admin.authorizeModerators(
-                toDeauth.map(x => x.address),
-                false,
-                signatures
-            )).to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`)
+            await expect(getAuthorizeModeratorsTx(admin, deployer, params))
+                .to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`)
         });
 
         it('1.2.9.7. Deauthorize moderator unsuccessfully when unauthorizing same accounts twice on same tx', async () => {
             const fixture = await setupBeforeTest();
-            const { admins, admin } = fixture;            
+            const { deployer, admins, admin } = fixture;            
 
-            const moderators = await setupModerators(admin, admins);
+            const moderators = await setupModerators(fixture);
 
             const toDeauth = moderators.slice(0, 2).concat([moderators[0]]);
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [admin.address, 'authorizeModerators', toDeauth.map(x => x.address), false]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput: AuthorizeModeratorsParamsInput = {
+                accounts: toDeauth.map(x => x.address),
+                isModerator: false
+            };
+            const params: AuthorizeModeratorsParams = {
+                ...paramsInput,
+                signatures: await getAuthorizeModeratorsSignatures(admin, admins, paramsInput)
+            };
 
-            await expect(admin.authorizeModerators(
-                toDeauth.map(x => x.address),
-                false,
-                signatures
-            )).to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`)
+            await expect(getAuthorizeModeratorsTx(admin, deployer, params))
+                .to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`)
         });
 
         it('1.2.9.8. Deauthorize moderator unsuccessfully when unauthorizing same accounts twice on different tx', async () => {
             const fixture = await setupBeforeTest();
-            const { admins, admin } = fixture;            
+            const { deployer, admins, admin } = fixture;            
 
-            const moderators = await setupModerators(admin, admins);
+            const moderators = await setupModerators(fixture);
 
             const tx1_accounts = moderators.slice(0, 2);
-            await callAdmin_AuthorizeModerators(admin, admins, tx1_accounts.map(x => x.address), false, await admin.nonce());
-
-            const tx2_accounts = [moderators[0]];
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [admin.address, 'authorizeModerators', tx2_accounts.map(x => x.address), false]
+            await callAdmin_AuthorizeModerators(
+                admin,
+                deployer,
+                admins,
+                { 
+                    accounts: tx1_accounts.map(x => x.address),
+                    isModerator: false
+                }
             );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
+            
+            const tx2_accounts = [moderators[0]];
+            const paramsInput: AuthorizeModeratorsParamsInput = {
+                accounts: tx2_accounts.map(x => x.address),
+                isModerator: false
+            };
+            const params: AuthorizeModeratorsParams = {
+                ...paramsInput,
+                signatures: await getAuthorizeModeratorsSignatures(admin, admins, paramsInput)
+            };
 
-            await expect(admin.authorizeModerators(
-                tx2_accounts.map(x => x.address),
-                false,
-                signatures
-            )).to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`)
+            await expect(getAuthorizeModeratorsTx(admin, deployer, params))
+                .to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`)
         });
     });
 
-    describe('1.2.10. authorizeGovernor(address[], bool, bytes[])', async () => {
+    describe('1.2.10. authorizeGovernors(address[], bool, bytes[])', async () => {
         it('1.2.10.1. Authorize governor successfully', async () => {
             const fixture = await setupBeforeTest();
-            const { admins, admin, governors } = fixture;            
+            const { deployer, admins, admin, governors } = fixture;            
 
             const toBeGovernors = [];
             for (let i = 0; i < 5; ++i) toBeGovernors.push(governors[i]);
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [admin.address, 'authorizeGovernor', toBeGovernors.map(x => x.address), true]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput: AuthorizeGovernorsParamsInput = {
+                accounts: toBeGovernors.map(x => x.address),
+                isGovernor: true
+            };
+            const params: AuthorizeGovernorsParams = {
+                ...paramsInput,
+                signatures: await getAuthorizeGovernorsSignatures(admin, admins, paramsInput)
+            };
 
-            const tx = await admin.authorizeGovernor(
-                toBeGovernors.map(x => x.address),
-                true,
-                signatures
-            );
+            const tx = await getAuthorizeGovernorsTx(admin, deployer, params);
             await tx.wait();
 
             for (const governor of toBeGovernors) {
@@ -1099,146 +1151,144 @@ describe('1.2. Admin', async () => {
 
         it('1.2.10.2. Authorize governor unsuccessfully with invalid signatures', async () => {
             const fixture = await setupBeforeTest();
-            const { admins, admin, governors } = fixture;            
+            const { deployer, admins, admin, governors } = fixture;            
 
             const toBeGovernors = [];
             for (let i = 0; i < 5; ++i) toBeGovernors.push(governors[i]);
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [admin.address, 'authorizeGovernor', toBeGovernors.map(x => x.address), true]
-            );
-            const invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+            const paramsInput: AuthorizeGovernorsParamsInput = {
+                accounts: toBeGovernors.map(x => x.address),
+                isGovernor: true
+            };
+            const params: AuthorizeGovernorsParams = {
+                ...paramsInput,
+                signatures: await getAuthorizeGovernorsSignatures(admin, admins, paramsInput, false)
+            };
 
-            await expect(admin.authorizeGovernor(
-                toBeGovernors.map(x => x.address),
-                true,
-                invalidSignatures
-            )).to.be.revertedWithCustomError(admin, 'FailedVerification');
+            await expect(getAuthorizeGovernorsTx(admin, deployer, params))
+                .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
         it('1.2.10.3. Authorize governor reverted without reason with EOA address', async () => {
             const fixture = await setupBeforeTest();
-            const { admins, admin } = fixture;            
+            const { deployer, admins, admin } = fixture;            
 
             const invalidGovernor = randomWallet();
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [admin.address, 'authorizeGovernor', [invalidGovernor.address], true]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput: AuthorizeGovernorsParamsInput = {
+                accounts: [invalidGovernor.address],
+                isGovernor: true
+            };
+            const params: AuthorizeGovernorsParams = {
+                ...paramsInput,
+                signatures: await getAuthorizeGovernorsSignatures(admin, admins, paramsInput)
+            };
 
-            await expect(admin.authorizeGovernor(
-                [invalidGovernor.address],
-                true,
-                signatures
-            )).to.be.revertedWithCustomError(admin, 'InvalidGovernor');
-        })
+            await expect(getAuthorizeGovernorsTx(admin, deployer, params))
+                .to.be.revertedWithCustomError(admin, 'InvalidGovernor');
+        });
 
         it('1.2.10.4. Authorize governor reverted with contract not supporting Governor interface', async () => {
             const fixture = await setupBeforeTest();
-            const { admins, admin, deployer } = fixture;            
+            const { deployer, admins, admin } = fixture;            
 
             const invalidGovernor = await deployCurrency(deployer, "MockCurrency", "MCK");
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [admin.address, 'authorizeGovernor', [invalidGovernor.address], true]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput: AuthorizeGovernorsParamsInput = {
+                accounts: [invalidGovernor.address],
+                isGovernor: true
+            };
+            const params: AuthorizeGovernorsParams = {
+                ...paramsInput,
+                signatures: await getAuthorizeGovernorsSignatures(admin, admins, paramsInput)
+            };
 
-            await expect(admin.authorizeGovernor(
-                [invalidGovernor.address],
-                true,
-                signatures
-            )).to.be.revertedWithCustomError(admin, 'InvalidGovernor');
+            await expect(getAuthorizeGovernorsTx(admin, deployer, params))
+                .to.be.revertedWithCustomError(admin, 'InvalidGovernor');
         })
 
         it('1.2.10.5. Authorize governor unsuccessfully when authorizing same account twice on same tx', async () => {
             const fixture = await setupBeforeTest();
-            const { admins, admin, governors } = fixture;            
+            const { deployer, admins, admin, governors } = fixture;
 
             const duplicateGovernors = [];
             for (let i = 0; i < 5; ++i) duplicateGovernors.push(governors[i]);
             duplicateGovernors.push(duplicateGovernors[0]);
 
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [admin.address, 'authorizeGovernor', duplicateGovernors.map(x => x.address), true]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput: AuthorizeGovernorsParamsInput = {
+                accounts: duplicateGovernors.map(x => x.address),
+                isGovernor: true
+            };
+            const params: AuthorizeGovernorsParams = {
+                ...paramsInput,
+                signatures: await getAuthorizeGovernorsSignatures(admin, admins, paramsInput)
+            };
 
-            await expect(admin.authorizeGovernor(
-                duplicateGovernors.map(x => x.address),
-                true,
-                signatures
-            )).to.be.revertedWithCustomError(admin, `AuthorizedAccount`)
+            await expect(getAuthorizeGovernorsTx(admin, deployer, params))
+                .to.be.revertedWithCustomError(admin, `AuthorizedAccount`)
         });
 
         it('1.2.10.6. Authorize governor unsuccessfully when authorizing same account twice on different tx', async () => {
             const fixture = await setupBeforeTest();
-            const { admins, admin, governors } = fixture;            
+            const { deployer, admins, admin, governors } = fixture;
 
             const tx1Governors = [governors[0], governors[1]];
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [admin.address, 'authorizeGovernor', tx1Governors.map(x => x.address), true]
+            await callAdmin_AuthorizeGovernors(
+                admin,
+                deployer,
+                admins,
+                {
+                    accounts: tx1Governors.map(x => x.address),
+                    isGovernor: true
+                }
             );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await callTransaction(admin.authorizeGovernor(
-                tx1Governors.map(x => x.address),
-                true,
-                signatures
-            ));
 
             const tx2Governors = [governors[2], governors[1]];
-            message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [admin.address, 'authorizeGovernor', tx2Governors.map(x => x.address), true]
-            );
-            signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await expect(admin.authorizeGovernor(
-                tx2Governors.map(x => x.address),
-                true,
-                signatures
-            )).to.be.revertedWithCustomError(admin, `AuthorizedAccount`)
+            const paramsInput: AuthorizeGovernorsParamsInput = {
+                accounts: tx2Governors.map(x => x.address),
+                isGovernor: true
+            };
+            const params: AuthorizeGovernorsParams = {
+                ...paramsInput,
+                signatures: await getAuthorizeGovernorsSignatures(admin, admins, paramsInput)
+            };
+            await expect(getAuthorizeGovernorsTx(admin, deployer, params))
+                .to.be.revertedWithCustomError(admin, `AuthorizedAccount`)
         })
 
         async function setupGovernors(fixture: AdminFixture) {
-            const { admins, admin, governors } = fixture;
+            const { deployer, admins, admin, governors } = fixture;
 
-            await callAdmin_AuthorizeGovernor(
+            await callAdmin_AuthorizeGovernors(
                 admin,
+                deployer,
                 admins,
-                governors.map(x => x.address),
-                true,
-                await admin.nonce()
+                {
+                    accounts: governors.map(x => x.address),
+                    isGovernor: true
+                }
             );
         }
 
         it('1.2.10.7. Deauthorize governor successfully', async () => {
             const fixture = await setupBeforeTest();
-            const { admins, admin, governors } = fixture;            
+            const { deployer, admins, admin, governors } = fixture;            
 
             await setupGovernors(fixture);
 
             const toDeauth = governors.slice(0, 2);
             const remainGovernors = governors.slice(2);
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [admin.address, 'authorizeGovernor', toDeauth.map(x => x.address), false]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput: AuthorizeGovernorsParamsInput = {
+                accounts: toDeauth.map(x => x.address),
+                isGovernor: false
+            };
+            const params: AuthorizeGovernorsParams = {
+                ...paramsInput,
+                signatures: await getAuthorizeGovernorsSignatures(admin, admins, paramsInput)
+            };
 
-            const tx = await admin.authorizeGovernor(
-                toDeauth.map(x => x.address),
-                false,
-                signatures
-            );
+            const tx = await getAuthorizeGovernorsTx(admin, deployer, params);
             await tx.wait();
 
             for (const governor of toDeauth) {
@@ -1259,105 +1309,109 @@ describe('1.2. Admin', async () => {
 
         it('1.2.10.8. Deauthorize governor unsuccessfully with unauthorized account', async () => {
             const fixture = await setupBeforeTest();
-            const { admins, admin, governors } = fixture;            
+            const { deployer, admins, admin, governors } = fixture;            
 
             await setupGovernors(fixture);
 
             const account = randomWallet();
             const toDeauth = [governors[0], account];
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [admin.address, 'authorizeGovernor', toDeauth.map(x => x.address), false]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput: AuthorizeGovernorsParamsInput = {
+                accounts: toDeauth.map(x => x.address),
+                isGovernor: false
+            };
+            const params: AuthorizeGovernorsParams = {
+                ...paramsInput,
+                signatures: await getAuthorizeGovernorsSignatures(admin, admins, paramsInput)
+            };
 
-            await expect(admin.authorizeGovernor(
-                toDeauth.map(x => x.address),
-                false,
-                signatures
-            )).to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`)
+            await expect(getAuthorizeGovernorsTx(admin, deployer, params))
+                .to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`)
         });
 
         it('1.2.10.9. Deauthorize governor unsuccessfully when unauthorizing same accounts twice on same tx', async () => {
             const fixture = await setupBeforeTest();
-            const { admins, admin, governors } = fixture;            
+            const { deployer, admins, admin, governors } = fixture;            
 
             await setupGovernors(fixture);
 
             const toDeauth = governors.slice(0, 2).concat([governors[0]]);
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [admin.address, 'authorizeGovernor', toDeauth.map(x => x.address), false]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput: AuthorizeGovernorsParamsInput = {
+                accounts: toDeauth.map(x => x.address),
+                isGovernor: false
+            };
+            const params: AuthorizeGovernorsParams = {
+                ...paramsInput,
+                signatures: await getAuthorizeGovernorsSignatures(admin, admins, paramsInput)
+            };
 
-            await expect(admin.authorizeGovernor(
-                toDeauth.map(x => x.address),
-                false,
-                signatures
-            )).to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`)
+            await expect(getAuthorizeGovernorsTx(admin, deployer, params))
+                .to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`)
         });
 
         it('1.2.10.10. Deauthorize governor unsuccessfully when unauthorizing same accounts twice on different tx', async () => {
             const fixture = await setupBeforeTest();
-            const { admins, admin, governors } = fixture;            
+            const { deployer, admins, admin, governors } = fixture;            
 
             await setupGovernors(fixture);
 
             const tx1_accounts = governors.slice(0, 2);
-            await callAdmin_AuthorizeGovernor(admin, admins, tx1_accounts.map(x => x.address), false, await admin.nonce());
+            await callAdmin_AuthorizeGovernors(
+                admin,
+                deployer,
+                admins,
+                {
+                    accounts: tx1_accounts.map(x => x.address),
+                    isGovernor: false
+                }
+            );
 
             const tx2_accounts = [governors[0]];
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [admin.address, 'authorizeGovernor', tx2_accounts.map(x => x.address), false]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput: AuthorizeGovernorsParamsInput = {
+                accounts: tx2_accounts.map(x => x.address),
+                isGovernor: false
+            };
+            const params: AuthorizeGovernorsParams = {
+                ...paramsInput,
+                signatures: await getAuthorizeGovernorsSignatures(admin, admins, paramsInput)
+            };
 
-            await expect(admin.authorizeGovernor(
-                tx2_accounts.map(x => x.address),
-                false,
-                signatures
-            )).to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`);
+            await expect(getAuthorizeGovernorsTx(admin, deployer, params))
+                .to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`)
         });
     });
-
 
     describe('1.2.11. declareZone(bytes32[], bytes[])', async () => {
         it('1.2.11.1. Declare zone successfully', async () => {
             const fixture = await setupBeforeTest();
-            const { admins, admin, zone1, zone3 } = fixture;            
+            const { deployer, admins, admin, zone1, zone3 } = fixture;            
 
-            const message1 = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'bytes32'],
-                [admin.address, 'declareZone', zone1]
-            );
-            const signatures1 = await getSignatures(message1, admins, await admin.nonce());
-            
-            const tx1 = await admin.declareZone(
-                zone1,
-                signatures1
-            );
+            const paramsInput1: DeclareZoneParamsInput = {
+                zone: zone1
+            };
+            const params1: DeclareZoneParams = {
+                ...paramsInput1,
+                signatures: await getDeclareZoneSignatures(admin, admins, paramsInput1)
+            };
+            const tx1 = await getDeclareZoneTx(admin, deployer, params1);
             await tx1.wait();
-            
+
             await expect(tx1).to
                 .emit(admin, 'ZoneDeclaration')
                 .withArgs(zone1);
 
             expect(await admin.isZone(zone1)).to.be.true;
 
-            const message2 = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'bytes32'],
-                [admin.address, 'declareZone', zone3]
-            );
-            const signatures2 = await getSignatures(message2, admins, await admin.nonce());
-            
-            const tx2 = await admin.declareZone(
-                zone3,
-                signatures2
-            );
+            const paramsInput2: DeclareZoneParamsInput = {
+                zone: zone3
+            };
+            const params2: DeclareZoneParams = {
+                ...paramsInput2,
+                signatures: await getDeclareZoneSignatures(admin, admins, paramsInput2)
+            };
+
+            const tx2 = await getDeclareZoneTx(admin, deployer, params2);
             await tx2.wait();
             
             await expect(tx2).to
@@ -1369,50 +1423,52 @@ describe('1.2. Admin', async () => {
 
         it('1.2.11.2. Declare zone unsuccessfully with invalid signatures', async () => {
             const fixture = await setupBeforeTest();
-            const { admins, admin, zone1 } = fixture;            
+            const { deployer, admins, admin, zone1 } = fixture;            
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'bytes32'],
-                [admin.address, 'declareZone', zone1]
-            );
-            const signatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
-            
-            await expect(admin.declareZone(
-                zone1,
-                signatures
-            )).to.be.revertedWithCustomError(admin, 'FailedVerification');
+            const paramsInput: DeclareZoneParamsInput = {
+                zone: zone1
+            };
+            const params: DeclareZoneParams = {
+                ...paramsInput,
+                signatures: await getDeclareZoneSignatures(admin, admins, paramsInput, false)
+            };
+
+            await expect(getDeclareZoneTx(admin, deployer, params))
+                .to.be.revertedWithCustomError(admin, 'FailedVerification')
         });
 
         it('1.2.11.3. Declare zone unsuccessfully when declaring same zone twice', async () => {
             const fixture = await setupBeforeTest();
-            const { admins, admin, zone1 } = fixture;            
+            const { deployer, admins, admin, zone1 } = fixture;            
 
             await callAdmin_DeclareZone(
                 admin,
+                deployer,
                 admins,
-                zone1,
-                await admin.nonce()
+                { zone: zone1 }
             );
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'bytes32'],
-                [admin.address, 'declareZone', zone1]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput: DeclareZoneParamsInput = {
+                zone: zone1
+            };
+            const params: DeclareZoneParams = {
+                ...paramsInput,
+                signatures: await getDeclareZoneSignatures(admin, admins, paramsInput)
+            };
 
-            await expect(admin.declareZone(
-                zone1,
-                signatures
-            )).to.be.revertedWithCustomError(admin, 'AuthorizedZone')
+            await expect(getDeclareZoneTx(admin, deployer, params))
+                .to.be.revertedWithCustomError(admin, 'AuthorizedZone')
         });
     });
 
     describe('1.2.12. activateIn(bytes32, address[], bool, bytes[])', async () => {
-        async function setupAccounts(admins: any[], admin: Admin): Promise<{
+        async function setupAccounts(fixture: AdminFixture): Promise<{
             zone1: string,
             zone2: string,
             accounts: Wallet[]
         }> {
+            const { admins, admin } = fixture;
+
             const zone1 = ethers.utils.formatBytes32String("TestZone1");
             const zone2 = ethers.utils.formatBytes32String("TestZone2");
 
@@ -1421,50 +1477,67 @@ describe('1.2. Admin', async () => {
             return { zone1, zone2, accounts };
         }
 
-        async function setupActivateIn(admin: Admin, admins: any[], zones: string[], accounts: Wallet[]) {
+        async function setupActivateIn(admin: Admin, deployer: any, admins: any[], zones: string[], accounts: Wallet[]) {
             for(const zone of zones) {
-                await callAdmin_ActivateIn(admin, admins, zone, accounts.map(x => x.address), true, await admin.nonce());
+                await callAdmin_ActivateIn(
+                    admin,
+                    deployer,
+                    admins,
+                    { 
+                        zone,
+                        accounts: accounts.map(x => x.address),
+                        isActive: true 
+                    }
+                );
             }
         }
 
         it('1.2.12.1. Activate accounts in zone successfully', async () => {
             const fixture = await setupBeforeTest();
-            const { admins, admin } = fixture;            
+            const { deployer, admin, admins } = fixture;            
 
-            const { zone1, zone2, accounts } = await setupAccounts(admins, admin);
+            const { zone1, zone2, accounts } = await setupAccounts(fixture);
 
-            await callAdmin_DeclareZone(admin, admins, zone1, await admin.nonce());
-            await callAdmin_DeclareZone(admin, admins, zone2, await admin.nonce());
+            await callAdmin_DeclareZone(admin, deployer, admins, { zone: zone1 });
+            await callAdmin_DeclareZone(admin, deployer, admins, { zone: zone2 });
 
             const zone1Accounts = [accounts[0], accounts[2], accounts[4]];
             const zone2Accounts = [accounts[0], accounts[1], accounts[3]];
 
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'bytes32', 'address[]', 'bool'],
-                [admin.address, 'activateIn', zone1, zone1Accounts.map(x => x.address), true]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput1: ActivateInParamsInput = {
+                zone: zone1,
+                accounts: zone1Accounts.map(x => x.address),
+                isActive: true
+            };
+            const params1: ActivateInParams = {
+                ...paramsInput1,
+                signatures: await getActivateInSignatures(admin, admins, paramsInput1)
+            };
 
-            let tx = await admin.activateIn(zone1, zone1Accounts.map(x => x.address), true, signatures);
-            await tx.wait();
+            const tx1 = await getActivateInTx(admin, deployer, params1);
+            await tx1.wait();
 
             for(const account of zone1Accounts) {
-                await expect(tx).to
+                await expect(tx1).to
                     .emit(admin, 'Activation')
                     .withArgs(zone1, account.address);
             }
 
-            message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'bytes32', 'address[]', 'bool'],
-                [admin.address, 'activateIn', zone2, zone2Accounts.map(x => x.address), true]
-            );
-            signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput2: ActivateInParamsInput = {
+                zone: zone2,
+                accounts: zone2Accounts.map(x => x.address),
+                isActive: true
+            };
+            const params2: ActivateInParams = {
+                ...paramsInput2,
+                signatures: await getActivateInSignatures(admin, admins, paramsInput2)
+            };
 
-            tx = await admin.activateIn(zone2, zone2Accounts.map(x => x.address), true, signatures);
-            await tx.wait();
+            const tx2 = await getActivateInTx(admin, deployer, params2);
+            await tx2.wait();
 
             for(const account of zone2Accounts) {
-                await expect(tx).to
+                await expect(tx2).to
                     .emit(admin, 'Activation')
                     .withArgs(zone2, account.address);
             }
@@ -1485,112 +1558,138 @@ describe('1.2. Admin', async () => {
 
         it('1.2.12.2. Activate accounts in zone unsuccessfully with invalid signatures', async () => {
             const fixture = await setupBeforeTest();
-            const { admins, admin } = fixture;            
+            const { deployer, admins, admin } = fixture;            
 
-            const { zone1, accounts } = await setupAccounts(admins, admin);
-            await callAdmin_DeclareZone(admin, admins, zone1, await admin.nonce());
+            const { zone1, accounts } = await setupAccounts(fixture);
+            await callAdmin_DeclareZone(admin, deployer, admins, { zone: zone1 });
 
             const zone1Accounts = [accounts[0], accounts[1]];
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'bytes32', 'address[]', 'bool'],
-                [admin.address, 'activateIn', zone1, zone1Accounts.map(x => x.address), true]
-            );
-            const signatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
-
-            await expect(
-                admin.activateIn(zone1, zone1Accounts.map(x => x.address), true, signatures)
-            ).to.be.revertedWithCustomError(admin, 'FailedVerification');
+            const paramsInput: ActivateInParamsInput = {
+                zone: zone1,
+                accounts: zone1Accounts.map(x => x.address),
+                isActive: true
+            };
+            const params: ActivateInParams = {
+                ...paramsInput,
+                signatures: await getActivateInSignatures(admin, admins, paramsInput, false)
+            };
+            await expect(getActivateInTx(admin, deployer, params))
+                .to.be.revertedWithCustomError(admin, 'FailedVerification')
         });
 
         it('1.2.12.3. Activate accounts in zone unsuccessfully with invalid zone', async () => {
             const fixture = await setupBeforeTest();
-            const { admins, admin } = fixture;
+            const { deployer, admins, admin } = fixture;
 
-            const { accounts } = await setupAccounts(admins, admin);
+            const { accounts } = await setupAccounts(fixture);
 
             const invalidZone = ethers.utils.formatBytes32String("InvalidZone");
 
             const zone1Accounts = [accounts[0], accounts[1]];
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'bytes32', 'address[]', 'bool'],
-                [admin.address, 'activateIn', invalidZone, zone1Accounts.map(x => x.address), true]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await expect(
-                admin.activateIn(invalidZone, zone1Accounts.map(x => x.address), true, signatures)
-            ).to.be.revertedWithCustomError(admin, 'InvalidInput')
+            const paramsInput: ActivateInParamsInput = {
+                zone: invalidZone,
+                accounts: zone1Accounts.map(x => x.address),
+                isActive: true
+            };
+            const params: ActivateInParams = {
+                ...paramsInput,
+                signatures: await getActivateInSignatures(admin, admins, paramsInput)
+            };
+            await expect(getActivateInTx(admin, deployer, params))
+                .to.be.revertedWithCustomError(admin, 'InvalidInput')
         });
 
         it('1.2.12.4. Activate accounts in zone unsuccessfully when activating same account twice on same tx', async () => {
             const fixture = await setupBeforeTest();
-            const { admins, admin } = fixture;            
+            const { deployer, admins, admin } = fixture;            
 
-            const { zone1, accounts } = await setupAccounts(admins, admin);
-            await callAdmin_DeclareZone(admin, admins, zone1, await admin.nonce());
+            const { zone1, accounts } = await setupAccounts(fixture);
+            await callAdmin_DeclareZone(admin, deployer, admins, { zone: zone1 });
 
             const zone1Accounts = [accounts[0], accounts[1], accounts[2], accounts[1]];
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'bytes32', 'address[]', 'bool'],
-                [admin.address, 'activateIn', zone1, zone1Accounts.map(x => x.address), true]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await expect(
-                admin.activateIn(zone1, zone1Accounts.map(x => x.address), true, signatures)
-            ).to.be.revertedWithCustomError(admin, 'ActivatedAccount')
+            const paramsInput: ActivateInParamsInput = {
+                zone: zone1,
+                accounts: zone1Accounts.map(x => x.address),
+                isActive: true
+            };
+            const params: ActivateInParams = {
+                ...paramsInput,
+                signatures: await getActivateInSignatures(admin, admins, paramsInput)
+            };
+            await expect(getActivateInTx(admin, deployer, params))
+                .to.be.revertedWithCustomError(admin, 'ActivatedAccount')
         });
 
         it('1.2.12.5. Activate accounts in zone unsuccessfully when activating same account twice on different tx', async () => {
             const fixture = await setupBeforeTest();
-            const { admins, admin } = fixture;            
+            const { deployer, admins, admin } = fixture;            
 
-            const { zone1, accounts } = await setupAccounts(admins, admin);
-            await callAdmin_DeclareZone(admin, admins, zone1, await admin.nonce());
+            const { zone1, accounts } = await setupAccounts(fixture);
+            await callAdmin_DeclareZone(
+                admin,
+                deployer,
+                admins,
+                { zone: zone1 }
+            );
 
             const tx1_accounts = [accounts[0], accounts[1], accounts[2]];
-            await callAdmin_ActivateIn(admin, admins, zone1, tx1_accounts.map(x => x.address), true, await admin.nonce());
+            await callAdmin_ActivateIn(
+                admin,
+                deployer,
+                admins,
+                {
+                    zone: zone1,
+                    accounts: tx1_accounts.map(x => x.address),
+                    isActive: true
+                }
+            );
 
             const tx2_accounts = [accounts[3], accounts[2]];
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'bytes32', 'address[]', 'bool'],
-                [admin.address, 'activateIn', zone1, tx2_accounts.map(x => x.address), true]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await expect(
-                admin.activateIn(zone1, tx2_accounts.map(x => x.address), true, signatures)
-            ).to.be.revertedWithCustomError(admin, 'ActivatedAccount')
+            const paramsInput: ActivateInParamsInput = {
+                zone: zone1,
+                accounts: tx2_accounts.map(x => x.address),
+                isActive: true
+            };
+            const params: ActivateInParams = {
+                ...paramsInput,
+                signatures: await getActivateInSignatures(admin, admins, paramsInput)
+            };
+            await expect(getActivateInTx(admin, deployer, params))
+                .to.be.revertedWithCustomError(admin, 'ActivatedAccount')
         });
 
         it('1.2.12.6. Deactivate accounts in zone successfully', async () => {
             const fixture = await setupBeforeTest();
-            const { admins, admin } = fixture;            
+            const { deployer, admins, admin } = fixture;            
 
-            const { zone1, zone2, accounts } = await setupAccounts(admins, admin);
+            const { zone1, zone2, accounts } = await setupAccounts(fixture);
 
-            await callAdmin_DeclareZone(admin, admins, zone1, await admin.nonce());
-            await callAdmin_DeclareZone(admin, admins, zone2, await admin.nonce());
-            await setupActivateIn(admin, admins, [zone1, zone2], accounts);
+            await callAdmin_DeclareZone(admin, deployer, admins, { zone: zone1 });
+            await callAdmin_DeclareZone(admin, deployer, admins, { zone: zone2 });
+            await setupActivateIn(admin, deployer, admins, [zone1, zone2], accounts);
 
             const zone1ToDeacivate = [accounts[0], accounts[2], accounts[4]];
             const zone1Remaining = accounts.filter(x => !zone1ToDeacivate.includes(x));
 
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'bytes32', 'address[]', 'bool'],
-                [admin.address, 'activateIn', zone1, zone1ToDeacivate.map(x => x.address), false]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
-            
-            let tx = await admin.activateIn(zone1, zone1ToDeacivate.map(x => x.address), false, signatures);
-            await tx.wait();
+            const paramsInput: ActivateInParamsInput = {
+                zone: zone1,
+                accounts: zone1ToDeacivate.map(x => x.address),
+                isActive: false
+            };
+            const params: ActivateInParams = {
+                ...paramsInput,
+                signatures: await getActivateInSignatures(admin, admins, paramsInput)
+            };
+
+            const tx1 = await getActivateInTx(admin, deployer, params);
+            await tx1.wait();
 
             for(const account of zone1ToDeacivate) {
-                await expect(tx).to
+                await expect(tx1).to
                     .emit(admin, 'Deactivation')
                     .withArgs(zone1, account.address);
             }
@@ -1598,17 +1697,21 @@ describe('1.2. Admin', async () => {
             const zone2ToDeacivate = [accounts[0], accounts[1], accounts[3]];
             const zone2Remaining = accounts.filter(x => !zone2ToDeacivate.includes(x));
 
-            message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'bytes32', 'address[]', 'bool'],
-                [admin.address, 'activateIn', zone2, zone2ToDeacivate.map(x => x.address), false]
-            );
-            signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput2: ActivateInParamsInput = {
+                zone: zone2,
+                accounts: zone2ToDeacivate.map(x => x.address),
+                isActive: false
+            };
+            const params2: ActivateInParams = {
+                ...paramsInput2,
+                signatures: await getActivateInSignatures(admin, admins, paramsInput2)
+            };
             
-            tx = await admin.activateIn(zone2, zone2ToDeacivate.map(x => x.address), false, signatures);
-            await tx.wait();
+            const tx2 = await getActivateInTx(admin, deployer, params2);
+            await tx2.wait();
 
             for(const account of zone2ToDeacivate) {
-                await expect(tx).to
+                await expect(tx2).to
                     .emit(admin, 'Deactivation')
                     .withArgs(zone2, account.address);
             }
@@ -1629,100 +1732,114 @@ describe('1.2. Admin', async () => {
 
         it('1.2.12.7. Deactivate accounts in zone unsuccessfully with inactive accounts', async () => {
             const fixture = await setupBeforeTest();
-            const { admins, admin } = fixture;            
+            const { deployer, admins, admin } = fixture;            
 
-            const { zone1, zone2, accounts } = await setupAccounts(admins, admin);
+            const { zone1, zone2, accounts } = await setupAccounts(fixture);
 
-            await callAdmin_DeclareZone(admin, admins, zone1, await admin.nonce());
-            await callAdmin_DeclareZone(admin, admins, zone2, await admin.nonce());
-            await setupActivateIn(admin, admins, [zone1, zone2], accounts);
+            await callAdmin_DeclareZone(admin, deployer, admins, { zone: zone1 });
+            await callAdmin_DeclareZone(admin, deployer, admins, { zone: zone2 });
+            await setupActivateIn(admin, deployer, admins, [zone1, zone2], accounts);
 
             const newAccount = randomWallet();
             const zone1ToDeacivate = [accounts[0], accounts[2], newAccount];
 
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'bytes32', 'address[]', 'bool'],
-                [admin.address, 'activateIn', zone1, zone1ToDeacivate.map(x => x.address), false]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await expect(
-                admin.activateIn(zone1, zone1ToDeacivate.map(x => x.address), false, signatures)
-            ).to.be.revertedWithCustomError(admin, 'NotActivatedAccount')
+            const paramsInput: ActivateInParamsInput = {
+                zone: zone1,
+                accounts: zone1ToDeacivate.map(x => x.address),
+                isActive: false
+            };
+            const params: ActivateInParams = {
+                ...paramsInput,
+                signatures: await getActivateInSignatures(admin, admins, paramsInput)
+            };
+            await expect(getActivateInTx(admin, deployer, params))
+                .to.be.revertedWithCustomError(admin, 'NotActivatedAccount')
         });
 
         it('1.2.12.8. Deactivate accounts in zone unsuccessfully when deactivating same account twice on same tx', async () => {
             const fixture = await setupBeforeTest();
-            const { admins, admin } = fixture;            
+            const { deployer, admins, admin } = fixture;            
 
-            const { zone1, zone2, accounts } = await setupAccounts(admins, admin);
+            const { zone1, zone2, accounts } = await setupAccounts(fixture);
 
-            await callAdmin_DeclareZone(admin, admins, zone1, await admin.nonce());
-            await callAdmin_DeclareZone(admin, admins, zone2, await admin.nonce());
-            await setupActivateIn(admin, admins, [zone1, zone2], accounts);
+            await callAdmin_DeclareZone(admin, deployer, admins, { zone: zone1 });
+            await callAdmin_DeclareZone(admin, deployer, admins, { zone: zone2 });
+            await setupActivateIn(admin, deployer, admins, [zone1, zone2], accounts);
 
             const zone1ToDeacivate = [accounts[0], accounts[1], accounts[2], accounts[0]];
             
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'bytes32', 'address[]', 'bool'],
-                [admin.address, 'activateIn', zone1, zone1ToDeacivate.map(x => x.address), false]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
-            
-            await expect(
-                admin.activateIn(zone1, zone1ToDeacivate.map(x => x.address), false, signatures)
-            ).to.be.revertedWithCustomError(admin, 'NotActivatedAccount')
+            const paramsInput: ActivateInParamsInput = {
+                zone: zone1,
+                accounts: zone1ToDeacivate.map(x => x.address),
+                isActive: false
+            };
+            const params: ActivateInParams = {
+                ...paramsInput,
+                signatures: await getActivateInSignatures(admin, admins, paramsInput)
+            };
+            await expect(getActivateInTx(admin, deployer, params))
+                .to.be.revertedWithCustomError(admin, 'NotActivatedAccount')
         });
 
         it('1.2.12.9. Deactivate accounts in zone unsuccessfully when deactivating same account twice on different tx', async () => {
             const fixture = await setupBeforeTest();
-            const { admins, admin } = fixture;            
+            const { deployer, admins, admin } = fixture;            
 
-            const { zone1, zone2, accounts } = await setupAccounts(admins, admin);
+            const { zone1, zone2, accounts } = await setupAccounts(fixture);
 
-            await callAdmin_DeclareZone(admin, admins, zone1, await admin.nonce());
-            await callAdmin_DeclareZone(admin, admins, zone2, await admin.nonce());
-            await setupActivateIn(admin, admins, [zone1, zone2], accounts);
+            await callAdmin_DeclareZone(admin, deployer, admins, { zone: zone1 });
+            await callAdmin_DeclareZone(admin, deployer, admins, { zone: zone2 });
+            await setupActivateIn(admin, deployer, admins, [zone1, zone2], accounts);
 
             let tx1_accounts = [accounts[0], accounts[1], accounts[2]];
-            await callAdmin_ActivateIn(admin, admins, zone1, tx1_accounts.map(x => x.address), false, await admin.nonce());
+            await callAdmin_ActivateIn(
+                admin,
+                deployer,
+                admins,
+                {
+                    zone: zone1,
+                    accounts: tx1_accounts.map(x => x.address),
+                    isActive: false
+                }
+            );
 
             let tx2_accounts = [accounts[3], accounts[2]];
 
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'bytes32', 'address[]', 'bool'],
-                [admin.address, 'activateIn', zone1, tx2_accounts.map(x => x.address), false]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
-            
-            await expect(
-                admin.activateIn(zone1, tx2_accounts.map(x => x.address), false, signatures)
-            ).to.be.revertedWithCustomError(admin, 'NotActivatedAccount')
+            const paramsInput: ActivateInParamsInput = {
+                zone: zone1,
+                accounts: tx2_accounts.map(x => x.address),
+                isActive: false
+            };
+            const params: ActivateInParams = {
+                ...paramsInput,
+                signatures: await getActivateInSignatures(admin, admins, paramsInput)
+            };
+            await expect(getActivateInTx(admin, deployer, params))
+                .to.be.revertedWithCustomError(admin, 'NotActivatedAccount')
         });
     });
 
     describe('1.2.14. updateCurrencyRegistries(address[], bool[], bool[], uint256[], uint256[], bytes[])', async () => {
         it('1.2.14.1. Update currency registry successfully', async () => {
             const fixture = await setupBeforeTest();
-            const { admins, admin } = fixture;            
+            const { deployer, admins, admin } = fixture;            
 
             const currencyAddresses = [];
             for (let i = 0; i < 5; ++i) currencyAddresses.push(ethers.utils.computeAddress(ethers.utils.id(`currency_${i}`)));
             const isAvailable = [true, false, true, false, true];
             const isExclusive = [false, false, true, true, false];
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool[]', 'bool[]'],
-                [admin.address, 'updateCurrencyRegistries', currencyAddresses, isAvailable, isExclusive]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
-
-            const tx = await admin.updateCurrencyRegistries(
-                currencyAddresses,
+            const paramsInput: UpdateCurrencyRegistriesParamsInput = {
+                currencies: currencyAddresses,
                 isAvailable,
-                isExclusive,
-                signatures
-            );
+                isExclusive
+            };
+            const params: UpdateCurrencyRegistriesParams = {
+                ...paramsInput,
+                signatures: await getUpdateCurrencyRegistriesSignatures(admin, admins, paramsInput)
+            };
+
+            const tx = await getUpdateCurrencyRegistriesTx(admin, deployer, params);
             await tx.wait();
 
             for (let i = 0; i < currencyAddresses.length; i++) {
@@ -1751,26 +1868,24 @@ describe('1.2. Admin', async () => {
 
         it('1.2.14.2. Update currency registry successfully with multiple records of same currency', async () => {
             const fixture = await setupBeforeTest();
-            const { admins, admin } = fixture;            
+            const { deployer, admins, admin } = fixture;            
 
             const address = ethers.utils.computeAddress(ethers.utils.id(`currency`));
             const currencyAddresses = [address, address];
-
             const isAvailable = [false, false];
             const isExclusive = [true, true];
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool[]', 'bool[]'],
-                [admin.address, 'updateCurrencyRegistries', currencyAddresses, isAvailable, isExclusive]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
-
-            const tx = await admin.updateCurrencyRegistries(
-                currencyAddresses,
+            const paramsInput: UpdateCurrencyRegistriesParamsInput = {
+                currencies: currencyAddresses,
                 isAvailable,
-                isExclusive,
-                signatures
-            );
+                isExclusive
+            };
+            const params: UpdateCurrencyRegistriesParams = {
+                ...paramsInput,
+                signatures: await getUpdateCurrencyRegistriesSignatures(admin, admins, paramsInput)
+            };
+            
+            const tx = await getUpdateCurrencyRegistriesTx(admin, deployer, params);
             await tx.wait();
 
             for (let i = 0; i < currencyAddresses.length; i++) {
@@ -1792,48 +1907,49 @@ describe('1.2. Admin', async () => {
 
         it('1.2.14.3. Update currency registries unsuccesfully with incorrect signatures', async () => {
             const fixture = await setupBeforeTest();
-            const { admins, admin } = fixture;            
+            const { deployer, admins, admin } = fixture;            
 
             const currencyAddresses = [];
             for (let i = 0; i < 5; ++i) currencyAddresses.push(ethers.utils.computeAddress(ethers.utils.id(`currency_${i}`)));
             const isAvailable = [true, false, true, false, true];
             const isExclusive = [false, false, true, true, false];
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool[]', 'bool[]'],
-                [admin.address, 'updateCurrencyRegistries', currencyAddresses, isAvailable, isExclusive]
-            );
-            const invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
-
-            await expect(admin.updateCurrencyRegistries(
-                currencyAddresses,
+            const paramsInput: UpdateCurrencyRegistriesParamsInput = {
+                currencies: currencyAddresses,
                 isAvailable,
-                isExclusive,
-                invalidSignatures
-            )).to.be.revertedWithCustomError(admin, 'FailedVerification');
+                isExclusive
+            };
+            const params: UpdateCurrencyRegistriesParams = {
+                ...paramsInput,
+                signatures: await getUpdateCurrencyRegistriesSignatures(admin, admins, paramsInput, false)
+            };
+
+            await expect(getUpdateCurrencyRegistriesTx(admin, deployer, params))
+                .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
         it('1.2.14.4. Update currency registries unsuccesfully with conflicting params lengths', async () => {
             const fixture = await setupBeforeTest();
-            const { admins, admin } = fixture;            
+            const { deployer, admins, admin } = fixture;            
 
             async function testForInvalidInput(currencyAddresses: string[], isAvailable: boolean[], isExclusive: boolean[]) {
-                let message = ethers.utils.defaultAbiCoder.encode(
-                    ['address', 'string', 'address[]', 'bool[]', 'bool[]'],
-                    [admin.address, 'updateCurrencyRegistries', currencyAddresses, isAvailable, isExclusive]
-                );
-                let signatures = await getSignatures(message, admins, await admin.nonce());
-
-                await expect(admin.updateCurrencyRegistries(
-                    currencyAddresses,
+                const paramsInput: UpdateCurrencyRegistriesParamsInput = {
+                    currencies: currencyAddresses,
                     isAvailable,
-                    isExclusive,
-                    signatures
-                )).to.be.revertedWithCustomError(admin, 'InvalidInput');
+                    isExclusive
+                };
+                const params: UpdateCurrencyRegistriesParams = {
+                    ...paramsInput,
+                    signatures: await getUpdateCurrencyRegistriesSignatures(admin, admins, paramsInput)
+                };
+                await expect(getUpdateCurrencyRegistriesTx(admin, deployer, params))
+                    .to.be.revertedWithCustomError(admin, 'InvalidInput');
             }
 
             const currencyAddresses = [];
-            for (let i = 0; i < 5; ++i) currencyAddresses.push(ethers.utils.computeAddress(ethers.utils.id(`currency_${i}`)));
+            for (let i = 0; i < 5; ++i) {
+                currencyAddresses.push(ethers.utils.computeAddress(ethers.utils.id(`currency_${i}`)));
+            }
             const isAvailable = [true, false, true, false, true];
             const isExclusive = [false, false, true, true, false];
 

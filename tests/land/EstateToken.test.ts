@@ -57,7 +57,7 @@ import { deployGovernanceHub } from '@utils/deployments/common/governanceHub';
 import { deployDividendHub } from '@utils/deployments/common/dividendHub';
 import { MockValidator } from '@utils/mockValidator';
 import { RegisterCustodianParams, TokenizeEstateParams, SafeUpdateEstateURIParams, SafeUpdateEstateCustodianParams, UpdateEstateURIParams, DeprecateEstateParams, SafeDeprecateEstateParams, ExtendEstateExpirationParams, SafeExtendEstateExpirationParams, UpdateEstateCustodianParams } from '@utils/models/land/estateToken';
-import { getRegisterCustodianInvalidValidation, getUpdateEstateURIInvalidValidation, getUpdateEstateURIValidation } from '@utils/validation/EstateToken';
+import { getRegisterCustodianInvalidValidation, getUpdateEstateURIInvalidValidation, getUpdateEstateURIValidation } from '@utils/validation/land/estateToken';
 import { getCallTokenizeEstateTx, getRegisterCustodianTx, getSafeDeprecateEstateTx, getSafeDeprecateEstateTxByParams, getSafeExtendEstateExpirationTx, getSafeExtendEstateExpirationTxByParams, getSafeUpdateEstateCustodianTx, getSafeUpdateEstateCustodianTxByParams, getSafeUpdateEstateURITx, getSafeUpdateEstateURITxByParams } from '@utils/transaction/land/estateToken';
 import { ContractTransaction } from 'ethers';
 import { getRegisterBrokerTx } from '@utils/transaction/land/commissionToken';

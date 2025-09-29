@@ -1,7 +1,7 @@
 import { EstateForger, MockEstateForger } from "@typechain-types";
 import { MockValidator } from "@utils/mockValidator";
 import { ConfirmParams, DepositParams, RequestTokenizationParams, SafeConfirmParams, SafeDepositParams, UpdateRequestAgendaParams, UpdateRequestEstateURIParams } from "@utils/models/land/estateForger";
-import { getRequestTokenizationValidation, getUpdateRequestEstateURIValidation } from "@utils/validation/EstateForger";
+import { getRequestTokenizationValidation, getUpdateRequestEstateURIValidation } from "@utils/validation/land/estateForger";
 import { ContractTransaction, ethers } from "ethers";
 
 export async function getRequestTokenizationTx(

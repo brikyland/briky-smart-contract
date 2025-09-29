@@ -1,7 +1,7 @@
 import { EstateToken, MockEstateToken } from "@typechain-types";
 import { MockValidator } from "@utils/mockValidator";
 import { RegisterCustodianParams, TokenizeEstateParams, SafeUpdateEstateURIParams, SafeUpdateEstateCustodianParams, SafeDeprecateEstateParams, SafeExtendEstateExpirationParams, UpdateEstateURIParams, UpdateEstateCustodianParams, DeprecateEstateParams, ExtendEstateExpirationParams } from "@utils/models/land/estateToken";
-import { getRegisterCustodianValidation, getUpdateEstateURIValidation } from "@utils/validation/EstateToken";
+import { getRegisterCustodianValidation, getUpdateEstateURIValidation } from "@utils/validation/land/estateToken";
 import { ContractTransaction, ethers } from "ethers";
 
 export async function getRegisterCustodianTx(

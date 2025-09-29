@@ -1,4 +1,4 @@
-import { expect } from 'chai';
+    import { expect } from 'chai';
 import { ethers, upgrades } from 'hardhat';
 import {
     Admin,
@@ -27,7 +27,7 @@ import {
 import { BigNumber, Contract, Wallet } from 'ethers';
 import { deployERC721Marketplace } from '@utils/deployments/lux/erc721Marketplace';
 import { OfferState } from "@utils/models/lux/offerState";
-import { callERC721Marketplace_RegisterCollections } from '@utils/call/ERC721Marketplace';
+import { callERC721Marketplace_RegisterCollections } from '@utils/call/lux/erc721Marketplace';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
 import { applyDiscount, remain } from '@utils/formula';

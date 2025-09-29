@@ -1,5 +1,5 @@
 import { Admin, PrimaryToken } from "@typechain-types";
-import { callTransaction } from "../../blockchain";
+import { callTransaction } from "@utils/blockchain";
 import { UnlockForBackerRoundParams,
     UnlockForBackerRoundParamsInput,
     UnlockForCoreTeamParams,

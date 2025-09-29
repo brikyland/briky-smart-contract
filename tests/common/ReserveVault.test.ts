@@ -18,7 +18,7 @@ import { MockContract, smock } from '@defi-wonderland/smock';
 
 import { callAdmin_UpdateCurrencyRegistries } from '@utils/call/common/admin';
 import { BigNumber } from 'ethers';
-import { callReserveVault_AuthorizeProvider } from '@utils/call/ReserveVault';
+import { callReserveVault_AuthorizeProvider } from '@utils/call/common/reserveVault';
 import { deployMockProvider } from '@utils/deployments/mock/mockProvider';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { callPausable_Pause } from '@utils/call/common/pausable';
