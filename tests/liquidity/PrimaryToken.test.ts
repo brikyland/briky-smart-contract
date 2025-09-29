@@ -17,13 +17,13 @@ import {
     callPrimaryToken_UnlockForSeedRound,
     callPrimaryToken_UpdateStakeTokens,
     callPrimaryToken_UpdateTreasury 
-} from '@utils/call/primary';
+} from '@utils/call/liquidity/primaryToken';
 import { MockContract, smock } from '@defi-wonderland/smock';
 import { Initialization as LiquidityInitialization } from '@tests/liquidity/test.initialization';
-import { callPausable_Pause } from '@utils/call/Pausable';
-import { UnlockForBackerRoundParams, UnlockForBackerRoundParamsInput, UnlockForCoreTeamParams, UnlockForCoreTeamParamsInput, UnlockForMarketMakerParamsInput, UnlockForMarketMakerParams, UnlockForPrivateSale1Params, UnlockForPrivateSale1ParamsInput, UnlockForPrivateSale2Params, UnlockForPrivateSale2ParamsInput, UnlockForPublicSaleParams, UnlockForPublicSaleParamsInput, UnlockForSeedRoundParams, UnlockForSeedRoundParamsInput, UpdateStakeTokensParams, UpdateStakeTokensParamsInput, UpdateTreasuryParams, UpdateTreasuryParamsInput, UnlockForExternalTreasuryParamsInput, UnlockForExternalTreasuryParams } from '@utils/models/PrimaryToken';
-import { getUnlockForBackerRoundSignatures, getUnlockForCoreTeamSignatures, getUnlockForExternalTreasurySignatures, getUnlockForMarketMakerSignatures, getUnlockForPrivateSale1Signatures, getUnlockForPrivateSale2Signatures, getUnlockForPublicSaleSignatures, getUnlockForSeedRoundSignatures, getUpdateStakeTokensSignatures, getUpdateTreasurySignatures } from '@utils/signatures/PrimaryToken';
-import { getCallContributeLiquidityFromStakeTokenTx, getUnlockForBackerRoundTx, getUnlockForCoreTeamTx, getUnlockForExternalTreasuryTx, getUnlockForMarketMakerTx, getUnlockForPrivateSale1Tx, getUnlockForPrivateSale2Tx, getUnlockForPublicSaleTx, getUnlockForSeedRoundTx, getUpdateStakeTokensTx, getUpdateTreasuryTx } from '@utils/transaction/PrimaryToken';
+import { callPausable_Pause } from '@utils/call/common/pausable';
+import { UnlockForBackerRoundParams, UnlockForBackerRoundParamsInput, UnlockForCoreTeamParams, UnlockForCoreTeamParamsInput, UnlockForMarketMakerParamsInput, UnlockForMarketMakerParams, UnlockForPrivateSale1Params, UnlockForPrivateSale1ParamsInput, UnlockForPrivateSale2Params, UnlockForPrivateSale2ParamsInput, UnlockForPublicSaleParams, UnlockForPublicSaleParamsInput, UnlockForSeedRoundParams, UnlockForSeedRoundParamsInput, UpdateStakeTokensParams, UpdateStakeTokensParamsInput, UpdateTreasuryParams, UpdateTreasuryParamsInput, UnlockForExternalTreasuryParamsInput, UnlockForExternalTreasuryParams } from '@utils/models/liquidity/primaryToken';
+import { getUnlockForBackerRoundSignatures, getUnlockForCoreTeamSignatures, getUnlockForExternalTreasurySignatures, getUnlockForMarketMakerSignatures, getUnlockForPrivateSale1Signatures, getUnlockForPrivateSale2Signatures, getUnlockForPublicSaleSignatures, getUnlockForSeedRoundSignatures, getUpdateStakeTokensSignatures, getUpdateTreasurySignatures } from '@utils/signatures/liquidity/primaryToken';
+import { getCallContributeLiquidityFromStakeTokenTx, getUnlockForBackerRoundTx, getUnlockForCoreTeamTx, getUnlockForExternalTreasuryTx, getUnlockForMarketMakerTx, getUnlockForPrivateSale1Tx, getUnlockForPrivateSale2Tx, getUnlockForPublicSaleTx, getUnlockForSeedRoundTx, getUpdateStakeTokensTx, getUpdateTreasuryTx } from '@utils/transaction/liquidity/primaryToken';
 import { deployProxyCaller } from '@utils/deployments/mock/proxyCaller';
 
 interface PrimaryTokenFixture {

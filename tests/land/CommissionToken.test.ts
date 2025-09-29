@@ -33,12 +33,12 @@ import { scale } from "@utils/formula";
 import { scaleRate } from "@utils/formula";
 import { Initialization as LandInitialization } from '@tests/land/test.initialization';
 import { MockValidator } from '@utils/mockValidator';
-import { callAdmin_ActivateIn, callAdmin_AuthorizeManagers, callAdmin_AuthorizeModerators, callAdmin_DeclareZone } from '@utils/call/admin';
-import { getActivateBrokerTx, getMintTx, getRegisterBrokerTx } from '@utils/transaction/CommissionToken';
-import { ActivateBrokerParams, MintParams, RegisterBrokerParams } from '@utils/models/CommissionToken';
+import { callAdmin_ActivateIn, callAdmin_AuthorizeManagers, callAdmin_AuthorizeModerators, callAdmin_DeclareZone } from '@utils/call/common/admin';
+import { getActivateBrokerTx, getMintTx, getRegisterBrokerTx } from '@utils/transaction/land/commissionToken';
+import { ActivateBrokerParams, MintParams, RegisterBrokerParams } from '@utils/models/land/commissionToken';
 import { BigNumber } from 'ethers';
 import { TransactionReceipt } from '@ethersproject/abstract-provider';
-import { callPausable_Pause } from '@utils/call/Pausable';
+import { callPausable_Pause } from '@utils/call/common/pausable';
 
 interface CommissionTokenFixture {
     admin: Admin;

@@ -18,11 +18,11 @@ import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentra
 import { deployCurrency } from '@utils/deployments/common/currency';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
-import { Rate } from '@utils/models/Common';
-import { callPausable_Pause } from '@utils/call/Pausable';
-import { UpdateBaseURIParams, UpdateBaseURIParamsInput, UpdateFeeParams, UpdateFeeParamsInput, UpdateRoyaltyRateParams, UpdateRoyaltyRateParamsInput, WithdrawParams, WithdrawParamsInput } from '@utils/models/PassportToken';
-import { getUpdateBaseURISignatures, getUpdateFeeSignatures, getUpdateRoyaltyRateSignatures, getWithdrawSignatures } from '@utils/signatures/PassportToken';
-import { getUpdateBaseURITx, getUpdateFeeTx, getUpdateRoyaltyRateTx, getWithdrawTx } from '@utils/transaction/PassportToken';
+import { Rate } from '@utils/models/common/common';
+import { callPausable_Pause } from '@utils/call/common/pausable';
+import { UpdateBaseURIParams, UpdateBaseURIParamsInput, UpdateFeeParams, UpdateFeeParamsInput, UpdateRoyaltyRateParams, UpdateRoyaltyRateParamsInput, WithdrawParams, WithdrawParamsInput } from '@utils/models/lucra/passportToken';
+import { getUpdateBaseURISignatures, getUpdateFeeSignatures, getUpdateRoyaltyRateSignatures, getWithdrawSignatures } from '@utils/signatures/lucra/passportToken';
+import { getUpdateBaseURITx, getUpdateFeeTx, getUpdateRoyaltyRateTx, getWithdrawTx } from '@utils/transaction/lucra/passportToken';
 import { IERC165UpgradeableInterfaceId, IERC2981UpgradeableInterfaceId, IERC4906UpgradeableInterfaceId, IERC721MetadataUpgradeableInterfaceId, IERC721UpgradeableInterfaceId, IRoyaltyRateProposerInterfaceId } from '@tests/interfaces';
 
 interface PassportTokenFixture {

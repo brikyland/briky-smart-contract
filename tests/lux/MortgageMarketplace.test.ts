@@ -35,7 +35,7 @@ import {
     callAdmin_AuthorizeModerators,
     callAdmin_UpdateCurrencyRegistries,
     callAdmin_ActivateIn,
-} from '@utils/call/admin';
+} from '@utils/call/common/admin';
 import { BigNumber } from 'ethers';
 import { randomInt } from 'crypto';
 import { getInterfaceID, randomBigNumber } from '@utils/utils';
@@ -43,32 +43,33 @@ import { OrderedMap } from '@utils/utils';
 import { deployEstateMortgageToken } from '@utils/deployments/lend/estateMortgageToken';
 import { deployMortgageMarketplace } from '@utils/deployments/lux/mortgageMarketplace';
 import { Contract } from 'ethers';
-import { MortgageState, OfferState } from '@utils/models/enums';
+import { OfferState } from "@utils/models/lux/offerState";
+import { MortgageState } from "@utils/models/lend/mortgageToken";
 import { getBalance } from '@utils/blockchain';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
 import { Initialization as LandInitialization } from '@tests/land/test.initialization';
 import { Initialization as LendInitialization } from '@tests/lend/test.initialization';
 import { MockValidator } from '@utils/mockValidator';
-import { getRegisterBrokerTx } from '@utils/transaction/CommissionToken';
-import { getCallTokenizeEstateTx, getRegisterCustodianTx } from '@utils/transaction/EstateToken';
+import { getRegisterBrokerTx } from '@utils/transaction/land/commissionToken';
+import { getCallTokenizeEstateTx, getRegisterCustodianTx } from '@utils/transaction/land/estateToken';
 import { deployEstateForger } from '@utils/deployments/land/estateForger';
 import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
 import { deployReserveVault } from '@utils/deployments/common/reserveVault';
-import { RegisterCustodianParams } from '@utils/models/EstateToken';
+import { RegisterCustodianParams } from '@utils/models/land/estateToken';
 import { deployMockEstateForger } from '@utils/deployments/mock/mockEstateForger';
-import { callEstateToken_AuthorizeTokenizers, callEstateToken_UpdateCommissionToken, callEstateToken_UpdateZoneRoyaltyRate } from '@utils/call/estateToken';
+import { callEstateToken_AuthorizeTokenizers, callEstateToken_UpdateCommissionToken, callEstateToken_UpdateZoneRoyaltyRate } from '@utils/call/land/estateToken';
 import { deployMockMortgageToken } from '@utils/deployments/mock/mockMortgageToken';
-import { BuyParams, ListParams, RegisterCollectionsParams, RegisterCollectionsParamsInput, SafeBuyParams } from '@utils/models/ERC721Marketplace';
-import { callERC721Marketplace_RegisterCollections } from '@utils/call/erc721Marketplace';
-import { getBuyTx, getCallListTx, getListTx, getRegisterCollectionsTx, getSafeBuyTx } from '@utils/transaction/ERC721Marketplace';
+import { BuyParams, ListParams, RegisterCollectionsParams, RegisterCollectionsParamsInput, SafeBuyParams } from '@utils/models/lux/erc721Marketplace';
+import { callERC721Marketplace_RegisterCollections } from '@utils/call/ERC721Marketplace';
+import { getBuyTx, getCallListTx, getListTx, getRegisterCollectionsTx, getSafeBuyTx } from '@utils/transaction/lux/erc721Marketplace';
 import { deployERC721MortgageToken } from '@utils/deployments/lend/erc721MortgageToken';
 import { deployProjectMortgageToken } from '@utils/deployments/lend/projectMortgageToken';
 import { deployEstateToken } from '@utils/deployments/land/estateToken';
 import { applyDiscount } from '@utils/formula';
-import { callPausable_Pause } from '@utils/call/Pausable';
-import { getRegisterCollectionsSignatures } from '@utils/signatures/ERC721Marketplace';
-import { getSafeBuyAnchor } from '@utils/anchor/ERC721Marketplace';
+import { callPausable_Pause } from '@utils/call/common/pausable';
+import { getRegisterCollectionsSignatures } from '@utils/signatures/lux/erc721Marketplace';
+import { getSafeBuyAnchor } from '@utils/anchor/lux/erc721Marketplace';
 
 interface MortgageMarketplaceFixture {
     admin: Admin;

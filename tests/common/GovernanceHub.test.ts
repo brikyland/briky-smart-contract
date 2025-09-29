@@ -24,20 +24,23 @@ import { Initialization as CommonInitialization } from '@tests/common/test.initi
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 import { deployGovernanceHub } from '@utils/deployments/common/governanceHub';
-import { ProposalRule, ProposalState, ProposalVerdict, ProposalVoteOption } from '@utils/models/Proposal';
+import { ProposalVerdict } from "@utils/models/common/governanceHub";
+import { ProposalState } from "@utils/models/common/governanceHub";
+import { ProposalRule } from "@utils/models/common/governanceHub";
+import { ProposalVoteOption } from "@utils/models/common/governanceHub";
 import { BigNumber, Contract, Wallet } from 'ethers';
 import { MockContract, smock } from '@defi-wonderland/smock';
-import { callAdmin_ActivateIn, callAdmin_AuthorizeGovernor, callAdmin_AuthorizeManagers, callAdmin_AuthorizeModerators, callAdmin_DeclareZone } from '@utils/call/admin';
+import { callAdmin_ActivateIn, callAdmin_AuthorizeGovernor, callAdmin_AuthorizeManagers, callAdmin_AuthorizeModerators, callAdmin_DeclareZone } from '@utils/call/common/admin';
 import { MockValidator } from '@utils/mockValidator';
 import { scale } from "@utils/formula";
 import { deployCurrency } from '@utils/deployments/common/currency';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
 import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
-import { ProposeParams, AdmitParams, DisqualifyParams, LogExecutionParams, ConcludeExecutionParams } from '@utils/models/GovernanceHub';
-import { getProposeValidation, getProposeInvalidValidation, getAdmitInvalidValidation, getDisqualifyInvalidValidation, getLogExecutionValidation, getLogExecutionInvalidValidation, getConcludeExecutionInvalidValidation } from '@utils/validation/GovernanceHub';
-import { getAdmitTx, getCallProposeTx, getConcludeExecutionTx, getDisqualifyTx, getLogExecutionTx, getProposeTx } from '@utils/transaction/GovernanceHub';
-import { callPausable_Pause } from '@utils/call/Pausable';
+import { ProposeParams, AdmitParams, DisqualifyParams, LogExecutionParams, ConcludeExecutionParams } from '@utils/models/common/governanceHub';
+import { getProposeValidation, getProposeInvalidValidation, getAdmitInvalidValidation, getDisqualifyInvalidValidation, getLogExecutionValidation, getLogExecutionInvalidValidation, getConcludeExecutionInvalidValidation } from '@utils/validation/common/governanceHub';
+import { getAdmitTx, getCallProposeTx, getConcludeExecutionTx, getDisqualifyTx, getLogExecutionTx, getProposeTx } from '@utils/transaction/common/governanceHub';
+import { callPausable_Pause } from '@utils/call/common/pausable';
 
 export interface GovernanceHubFixture {
     admin: Admin;

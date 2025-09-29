@@ -23,19 +23,19 @@ import {
     callAdmin_AuthorizeManagers,
     callAdmin_AuthorizeModerators,
     callAdmin_UpdateCurrencyRegistries,
-} from '@utils/call/admin';
+} from '@utils/call/common/admin';
 import { BigNumber, Contract, Wallet } from 'ethers';
 import { deployERC721Marketplace } from '@utils/deployments/lux/erc721Marketplace';
-import { OfferState } from '@utils/models/enums';
-import { callERC721Marketplace_RegisterCollections } from '@utils/call/erc721Marketplace';
+import { OfferState } from "@utils/models/lux/offerState";
+import { callERC721Marketplace_RegisterCollections } from '@utils/call/ERC721Marketplace';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
 import { applyDiscount, remain } from '@utils/formula';
-import { BuyParams, ListParams, RegisterCollectionsParams, RegisterCollectionsParamsInput, SafeBuyParams } from '@utils/models/ERC721Marketplace';
-import { getBuyTx, getCallListTx, getListTx, getRegisterCollectionsTx, getSafeBuyTx } from '@utils/transaction/ERC721Marketplace';
-import { callPausable_Pause } from '@utils/call/Pausable';
-import { getRegisterCollectionsSignatures } from '@utils/signatures/ERC721Marketplace';
-import { getSafeBuyAnchor } from '@utils/anchor/ERC721Marketplace';
+import { BuyParams, ListParams, RegisterCollectionsParams, RegisterCollectionsParamsInput, SafeBuyParams } from '@utils/models/lux/erc721Marketplace';
+import { getBuyTx, getCallListTx, getListTx, getRegisterCollectionsTx, getSafeBuyTx } from '@utils/transaction/lux/erc721Marketplace';
+import { callPausable_Pause } from '@utils/call/common/pausable';
+import { getRegisterCollectionsSignatures } from '@utils/signatures/lux/erc721Marketplace';
+import { getSafeBuyAnchor } from '@utils/anchor/lux/erc721Marketplace';
 
 interface ERC721MarketplaceFixture {
     admin: Admin;

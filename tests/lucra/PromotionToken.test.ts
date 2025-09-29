@@ -19,15 +19,15 @@ import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 
 import { getBytes4Hex, getInterfaceID, structToObject } from '@utils/utils';
 import { Initialization } from './test.initialization';
-import { callPromotionToken_CancelContents, callPromotionToken_CreateContents } from '@utils/call/promotionToken';
+import { callPromotionToken_CancelContents, callPromotionToken_CreateContents } from '@utils/call/lucra/promotionToken';
 import { deployPromotionToken } from '@utils/deployments/lucra/promotionToken';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
 import { deployCurrency } from '@utils/deployments/common/currency';
-import { callPausable_Pause } from '@utils/call/Pausable';
-import { CancelContentsParams, CancelContentsParamsInput, CreateContentsParams, CreateContentsParamsInput, UpdateContentURIsParams, UpdateContentURIsParamsInput, UpdateFeeParams, UpdateFeeParamsInput, UpdateRoyaltyRateParams, UpdateRoyaltyRateParamsInput, WithdrawParams, WithdrawParamsInput } from '@utils/models/PromotionToken';
-import { getCancelContentsSignatures, getCreateContentsSignatures, getUpdateContentURIsSignatures, getUpdateFeeSignatures, getUpdateRoyaltyRateSignatures, getWithdrawSignatures } from '@utils/signatures/PromotionToken';
-import { getCancelContentsTx, getCreateContentsTx, getUpdateContentURIsTx, getUpdateFeeTx, getUpdateRoyaltyRateTx, getWithdrawTx } from '@utils/transaction/PromotionToken';
+import { callPausable_Pause } from '@utils/call/common/pausable';
+import { CancelContentsParams, CancelContentsParamsInput, CreateContentsParams, CreateContentsParamsInput, UpdateContentURIsParams, UpdateContentURIsParamsInput, UpdateFeeParams, UpdateFeeParamsInput, UpdateRoyaltyRateParams, UpdateRoyaltyRateParamsInput, WithdrawParams, WithdrawParamsInput } from '@utils/models/lucra/promotionToken';
+import { getCancelContentsSignatures, getCreateContentsSignatures, getUpdateContentURIsSignatures, getUpdateFeeSignatures, getUpdateRoyaltyRateSignatures, getWithdrawSignatures } from '@utils/signatures/lucra/promotionToken';
+import { getCancelContentsTx, getCreateContentsTx, getUpdateContentURIsTx, getUpdateFeeTx, getUpdateRoyaltyRateTx, getWithdrawTx } from '@utils/transaction/lucra/promotionToken';
 import { BigNumber } from 'ethers';
 import { IERC165UpgradeableInterfaceId, IERC2981UpgradeableInterfaceId, IERC4906UpgradeableInterfaceId, IERC721MetadataUpgradeableInterfaceId, IERC721UpgradeableInterfaceId, IRoyaltyRateProposerInterfaceId } from '@tests/interfaces';
 

@@ -9,7 +9,7 @@ import { Constant } from '@tests/test.constant';
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 import { deployMockValidatable } from '@utils/deployments/mock/mockValidatable';
-import { Validation } from '@utils/models/Validation';
+import { Validation } from '@utils/models/common/validatable';
 
 interface ValidatableFixture {
     admin: Admin;

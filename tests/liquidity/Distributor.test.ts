@@ -10,10 +10,10 @@ import { deployPrimaryToken } from '@utils/deployments/liquidity/primaryToken';
 import { deployTreasury } from '@utils/deployments/liquidity/treasury';
 import { Initialization as LiquidityInitialization } from '@tests/liquidity/test.initialization';
 import { deployDistributor } from '@utils/deployments/liquidity/distributor';
-import { callPrimaryToken_UnlockForCoreTeam } from '@utils/call/primary';
-import { DistributeTokenParams, DistributeTokenParamsInput } from '@utils/models/Distributor';
-import { getDistributeTokenInvalidSignatures, getDistributeTokenSignatures } from '@utils/signatures/Distributor';
-import { getDistributeTokenTx } from '@utils/transaction/Distributor';
+import { callPrimaryToken_UnlockForCoreTeam } from '@utils/call/liquidity/primaryToken';
+import { DistributeTokenParams, DistributeTokenParamsInput } from '@utils/models/liquidity/distributor';
+import { getDistributeTokenInvalidSignatures, getDistributeTokenSignatures } from '@utils/signatures/liquidity/distributor';
+import { getDistributeTokenTx } from '@utils/transaction/liquidity/distributor';
 
 interface DistributorFixture {
     deployer: any;

@@ -1,5 +1,5 @@
 import { BigNumber, ethers, Wallet } from "ethers";
-import { Validation } from "./models/Validation";
+import { Validation } from "./models/common/validatable";
 import { getSignatures } from "./blockchain";
 import { MockContract } from "@defi-wonderland/smock";
 

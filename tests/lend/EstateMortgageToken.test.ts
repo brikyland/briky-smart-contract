@@ -37,31 +37,31 @@ import {
     callAdmin_AuthorizeModerators,
     callAdmin_DeclareZone,
     callAdmin_UpdateCurrencyRegistries,
-} from '@utils/call/admin';
+} from '@utils/call/common/admin';
 import { BigNumber, Contract } from 'ethers';
 import { getBytes4Hex, getInterfaceID, randomBigNumber, structToObject } from '@utils/utils';
 import { deployEstateMortgageToken } from '@utils/deployments/lend/estateMortgageToken';
-import { callEstateToken_AuthorizeTokenizers, callEstateToken_UpdateCommissionToken, callEstateToken_UpdateZoneRoyaltyRate } from '@utils/call/estateToken';
+import { callEstateToken_AuthorizeTokenizers, callEstateToken_UpdateCommissionToken, callEstateToken_UpdateZoneRoyaltyRate } from '@utils/call/land/estateToken';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployReentrancyERC1155Holder } from '@utils/deployments/mock/mockReentrancy/reentrancyERC1155Holder';
 import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
-import { MortgageState } from '@utils/models/enums';
+import { MortgageState } from "@utils/models/lend/mortgageToken";
 import { Initialization as LandInitialization } from '@tests/land/test.initialization';
 import { Initialization as LendInitialization } from '@tests/lend/test.initialization';
 import { deployReserveVault } from '@utils/deployments/common/reserveVault';
 import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
 import { MockValidator } from '@utils/mockValidator';
-import { getCallTokenizeEstateTx, getRegisterCustodianTx } from '@utils/transaction/EstateToken';
-import { RegisterCustodianParams } from '@utils/models/EstateToken';
-import { getRegisterBrokerTx } from '@utils/transaction/CommissionToken';
+import { getCallTokenizeEstateTx, getRegisterCustodianTx } from '@utils/transaction/land/estateToken';
+import { RegisterCustodianParams } from '@utils/models/land/estateToken';
+import { getRegisterBrokerTx } from '@utils/transaction/land/commissionToken';
 import { applyDiscount, scaleRate } from '@utils/formula';
-import { EstateBorrowParams } from '@utils/models/EstateMortgageToken';
-import { getEstateBorrowTx } from '@utils/transaction/EstateMortgageToken';
-import { callPausable_Pause } from '@utils/call/Pausable';
+import { EstateBorrowParams } from '@utils/models/lend/estateMortgageToken';
+import { getEstateBorrowTx } from '@utils/transaction/lend/estateMortgageToken';
+import { callPausable_Pause } from '@utils/call/common/pausable';
 import { callMortgageToken_UpdateFeeRate } from '@utils/call/MortgageToken';
-import { getUpdateBaseURISignatures, getUpdateFeeRateSignatures } from '@utils/signatures/MortgageToken';
-import { getUpdateBaseURITx, getUpdateFeeRateTx } from '@utils/transaction/MortgageToken';
-import { UpdateBaseURIParams, UpdateBaseURIParamsInput, UpdateFeeRateParams, UpdateFeeRateParamsInput } from '@utils/models/MortgageToken';
+import { getUpdateBaseURISignatures, getUpdateFeeRateSignatures } from '@utils/signatures/lend/mortgageToken';
+import { getUpdateBaseURITx, getUpdateFeeRateTx } from '@utils/transaction/lend/mortgageToken';
+import { UpdateBaseURIParams, UpdateBaseURIParamsInput, UpdateFeeRateParams, UpdateFeeRateParamsInput } from '@utils/models/lend/mortgageToken';
 
 
 async function testReentrancy_estateMortgageToken(

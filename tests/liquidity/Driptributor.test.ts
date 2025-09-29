@@ -9,15 +9,15 @@ import { loadFixture, time } from '@nomicfoundation/hardhat-network-helpers';
 import { deployCurrency } from '@utils/deployments/common/currency';
 import { deployTreasury } from '@utils/deployments/liquidity/treasury';
 import { deployDriptributor } from '@utils/deployments/liquidity/driptributor';
-import { callDriptributor_DistributeTokensWithDuration, callDriptributor_DistributeTokensWithTimestamp, callDriptributor_UpdateStakeTokens } from '@utils/call/driptributor';
+import { callDriptributor_DistributeTokensWithDuration, callDriptributor_DistributeTokensWithTimestamp, callDriptributor_UpdateStakeTokens } from '@utils/call/liquidity/driptributor';
 import { deployMockPrimaryToken } from '@utils/deployments/mock/mockPrimaryToken';
-import { callPrimaryToken_UpdateStakeTokens } from '@utils/call/primary';
+import { callPrimaryToken_UpdateStakeTokens } from '@utils/call/liquidity/primaryToken';
 import { MockContract, smock } from '@defi-wonderland/smock';
 import { Initialization as LiquidityInitialization } from '@tests/liquidity/test.initialization';
-import { callPausable_Pause } from '@utils/call/Pausable';
-import { DistributeTokensWithDurationParams, DistributeTokensWithDurationParamsInput, DistributeTokensWithTimestampParams, DistributeTokensWithTimestampParamsInput, UpdateStakeTokensParams, UpdateStakeTokensParamsInput } from '@utils/models/Driptributor';
-import { getDistributeTokensWithDurationSignatures, getDistributeTokensWithTimestampSignatures, getUpdateStakeTokensSignatures } from '@utils/signatures/Driptributor';
-import { getDistributeTokensWithDurationTx, getDistributeTokensWithTimestampTx, getUpdateStakeTokensTx } from '@utils/transaction/Driptributor';
+import { callPausable_Pause } from '@utils/call/common/pausable';
+import { DistributeTokensWithDurationParams, DistributeTokensWithDurationParamsInput, DistributeTokensWithTimestampParams, DistributeTokensWithTimestampParamsInput, UpdateStakeTokensParams, UpdateStakeTokensParamsInput } from '@utils/models/liquidity/driptributor';
+import { getDistributeTokensWithDurationSignatures, getDistributeTokensWithTimestampSignatures, getUpdateStakeTokensSignatures } from '@utils/signatures/liquidity/driptributor';
+import { getDistributeTokensWithDurationTx, getDistributeTokensWithTimestampTx, getUpdateStakeTokensTx } from '@utils/transaction/liquidity/driptributor';
 
 interface DriptributorFixture {
     deployer: any;

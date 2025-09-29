@@ -21,14 +21,14 @@ import { deployAdmin } from '@utils/deployments/common/admin';
 import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
 import { deployCurrency } from '@utils/deployments/common/currency';
 import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
-import { getUpdateBaseURISignatures, getUpdateFeeRateSignatures } from '@utils/signatures/MortgageToken';
+import { getUpdateBaseURISignatures, getUpdateFeeRateSignatures } from '@utils/signatures/lend/mortgageToken';
 import { MockContract, smock } from '@defi-wonderland/smock';
 
 import {
     callAdmin_AuthorizeManagers,
     callAdmin_AuthorizeModerators,
     callAdmin_UpdateCurrencyRegistries,
-} from '@utils/call/admin';
+} from '@utils/call/common/admin';
 import { BigNumber, Contract, Wallet } from 'ethers';
 import { getBytes4Hex, getInterfaceID, randomBigNumber, structToObject } from '@utils/utils';
 import { deployERC721MortgageToken } from '@utils/deployments/lend/erc721MortgageToken';
@@ -36,15 +36,15 @@ import { callERC721MortgageToken_RegisterCollaterals } from '@utils/call/erc721M
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployReentrancyERC1155Holder } from '@utils/deployments/mock/mockReentrancy/reentrancyERC1155Holder';
 import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
-import { MortgageState } from '@utils/models/enums';
+import { MortgageState } from "@utils/models/lend/mortgageToken";
 import { Initialization as LendInitialization } from '@tests/lend/test.initialization';
 import { applyDiscount, scaleRate } from '@utils/formula';
-import { ERC721BorrowParams, RegisterCollateralsParams, RegisterCollateralsParamsInput } from '@utils/models/ERC721MortgageToken';
-import { getERC721BorrowTx, getRegisterCollateralsTx } from '@utils/transaction/ERC721MortgageToken';
-import { callPausable_Pause } from '@utils/call/Pausable';
-import { UpdateBaseURIParams, UpdateBaseURIParamsInput, UpdateFeeRateParams, UpdateFeeRateParamsInput } from '@utils/models/MortgageToken';
-import { getUpdateBaseURITx, getUpdateFeeRateTx } from '@utils/transaction/MortgageToken';
-import { getRegisterCollateralsSignatures } from '@utils/signatures/ERC721MortgageToken';
+import { ERC721BorrowParams, RegisterCollateralsParams, RegisterCollateralsParamsInput } from '@utils/models/lend/erc721MortgageToken';
+import { getERC721BorrowTx, getRegisterCollateralsTx } from '@utils/transaction/lend/erc721MortgageToken';
+import { callPausable_Pause } from '@utils/call/common/pausable';
+import { UpdateBaseURIParams, UpdateBaseURIParamsInput, UpdateFeeRateParams, UpdateFeeRateParamsInput } from '@utils/models/lend/mortgageToken';
+import { getUpdateBaseURITx, getUpdateFeeRateTx } from '@utils/transaction/lend/mortgageToken';
+import { getRegisterCollateralsSignatures } from '@utils/signatures/lend/erc721MortgageToken';
 import { callMortgageToken_UpdateFeeRate } from '@utils/call/MortgageToken';
 
 

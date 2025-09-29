@@ -15,10 +15,10 @@ import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 import { BigNumber } from 'ethers';
 import { smock } from '@defi-wonderland/smock';
 
-import { addCurrencyToAdminAndPriceWatcher } from '@utils/call/common';
+import { addCurrencyToAdminAndPriceWatcher } from '@utils/call/Common';
 import { deployMockPriceFeed } from '@utils/deployments/mock/mockPriceFeed';
 import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
-import { Rate, RATE_SCHEMA } from '@utils/models/Common';
+import { Rate, RATE_SCHEMA } from '@utils/models/common/common';
 import { randomBigNumber, randomInt, structToObject } from '@utils/utils';
 
 chai.use(smock.matchers);

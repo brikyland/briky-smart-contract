@@ -39,13 +39,13 @@ import {
     callAdmin_AuthorizeManagers,
     callAdmin_AuthorizeModerators,
     callAdmin_DeclareZone,
-} from '@utils/call/admin';
+} from '@utils/call/common/admin';
 import {
     callEstateToken_UpdateCommissionToken,
     callEstateToken_AuthorizeTokenizers,
     callEstateToken_AuthorizeExtractors,
     callEstateToken_UpdateZoneRoyaltyRate,
-} from '@utils/call/estateToken';
+} from '@utils/call/land/estateToken';
 import { BigNumber } from 'ethers';
 import { randomInt } from 'crypto';
 import { getBytes4Hex, getInterfaceID, randomBigNumber, structToObject } from '@utils/utils';
@@ -56,13 +56,13 @@ import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
 import { deployGovernanceHub } from '@utils/deployments/common/governanceHub';
 import { deployDividendHub } from '@utils/deployments/common/dividendHub';
 import { MockValidator } from '@utils/mockValidator';
-import { RegisterCustodianParams, TokenizeEstateParams, SafeUpdateEstateURIParams, SafeUpdateEstateCustodianParams, UpdateEstateURIParams, DeprecateEstateParams, SafeDeprecateEstateParams, ExtendEstateExpirationParams, SafeExtendEstateExpirationParams, UpdateEstateCustodianParams } from '@utils/models/EstateToken';
+import { RegisterCustodianParams, TokenizeEstateParams, SafeUpdateEstateURIParams, SafeUpdateEstateCustodianParams, UpdateEstateURIParams, DeprecateEstateParams, SafeDeprecateEstateParams, ExtendEstateExpirationParams, SafeExtendEstateExpirationParams, UpdateEstateCustodianParams } from '@utils/models/land/estateToken';
 import { getRegisterCustodianInvalidValidation, getUpdateEstateURIInvalidValidation, getUpdateEstateURIValidation } from '@utils/validation/EstateToken';
-import { getCallTokenizeEstateTx, getRegisterCustodianTx, getSafeDeprecateEstateTx, getSafeDeprecateEstateTxByParams, getSafeExtendEstateExpirationTx, getSafeExtendEstateExpirationTxByParams, getSafeUpdateEstateCustodianTx, getSafeUpdateEstateCustodianTxByParams, getSafeUpdateEstateURITx, getSafeUpdateEstateURITxByParams } from '@utils/transaction/EstateToken';
+import { getCallTokenizeEstateTx, getRegisterCustodianTx, getSafeDeprecateEstateTx, getSafeDeprecateEstateTxByParams, getSafeExtendEstateExpirationTx, getSafeExtendEstateExpirationTxByParams, getSafeUpdateEstateCustodianTx, getSafeUpdateEstateCustodianTxByParams, getSafeUpdateEstateURITx, getSafeUpdateEstateURITxByParams } from '@utils/transaction/land/estateToken';
 import { ContractTransaction } from 'ethers';
-import { getRegisterBrokerTx } from '@utils/transaction/CommissionToken';
+import { getRegisterBrokerTx } from '@utils/transaction/land/commissionToken';
 import { Initialization as CommonInitialization } from '@tests/common/test.initialization';
-import { callPausable_Pause } from '@utils/call/Pausable';
+import { callPausable_Pause } from '@utils/call/common/pausable';
 
 interface EstateTokenFixture {
     admin: Admin;

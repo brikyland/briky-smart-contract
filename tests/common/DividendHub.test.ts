@@ -17,7 +17,7 @@ import { deployDividendHub } from '@utils/deployments/common/dividendHub';
 import { 
     callAdmin_AuthorizeGovernor,
     callAdmin_UpdateCurrencyRegistries,
-} from '@utils/call/admin';
+} from '@utils/call/common/admin';
 import { expect } from 'chai';
 import {
     callTransaction,
@@ -29,12 +29,12 @@ import { BigNumber } from 'ethers';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { MockContract, smock } from '@defi-wonderland/smock';
 import { expectEqualWithErrorMargin } from '@utils/testHelper';
-import { IssueDividendParams } from '@utils/models/DividendHub';
+import { IssueDividendParams } from '@utils/models/common/dividendHub';
 import {
     getCallIssueDividendTx,
     getIssueDividendTx,
-} from '@utils/transaction/DividendHub';
-import { callPausable_Pause } from '@utils/call/Pausable';
+} from '@utils/transaction/common/dividendHub';
+import { callPausable_Pause } from '@utils/call/common/pausable';
 
 interface DividendHubFixture {
     admin: Admin;

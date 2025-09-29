@@ -39,18 +39,18 @@ import {
     callAdmin_AuthorizeModerators,
     callAdmin_DeclareZone,
     callAdmin_UpdateCurrencyRegistries,
-} from '@utils/call/admin';
+} from '@utils/call/common/admin';
 import {
     callEstateToken_UpdateCommissionToken,
     callEstateToken_AuthorizeTokenizers,
     callEstateToken_AuthorizeExtractors,
-} from '@utils/call/estateToken';
+} from '@utils/call/land/estateToken';
 import { BigNumber, BigNumberish, Contract, Wallet } from 'ethers';
 import { randomInt } from 'crypto';
 import { getBytes4Hex, getInterfaceID, randomBigNumber, structToObject } from '@utils/utils';
 import { OrderedMap } from '@utils/utils';
 import { deployEstateLiquidator } from '@utils/deployments/land/estateLiquidator';
-import { addCurrencyToAdminAndPriceWatcher } from '@utils/call/common';
+import { addCurrencyToAdminAndPriceWatcher } from '@utils/call/Common';
 import { deployMockPriceFeed } from '@utils/deployments/mock/mockPriceFeed';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
@@ -59,23 +59,24 @@ import { deployMockEstateLiquidator } from '@utils/deployments/mock/mockEstateLi
 import { deployReentrancyERC1155Holder } from '@utils/deployments/mock/mockReentrancy/reentrancyERC1155Holder';
 import { request } from 'http';
 import { Initialization as LandInitialization } from '@tests/land/test.initialization';
-import { callReserveVault_AuthorizeProvider } from '@utils/call/reserveVault';
+import { callReserveVault_AuthorizeProvider } from '@utils/call/ReserveVault';
 import { remain, scaleRate } from '@utils/formula';
 import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
-import { Rate } from '@utils/models/Common';
+import { Rate } from '@utils/models/common/common';
 import { MockValidator } from '@utils/mockValidator';
 import { deployMockEstateForger } from '@utils/deployments/mock/mockEstateForger';
 import { getRequestExtractionInvalidValidation, getRequestExtractionValidation } from '@utils/validation/EstateLiquidator';
-import { ProposalRule, ProposalState } from '@utils/models/Proposal';
+import { ProposalState } from "@utils/models/common/governanceHub";
+import { ProposalRule } from "@utils/models/common/governanceHub";
 import { getRegisterSellerInValidation } from '@utils/validation/EstateForger';
 import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
-import { RequestExtractionParams } from '@utils/models/EstateLiquidator';
-import { DeprecateEstateParams, RegisterCustodianParams } from '@utils/models/EstateToken';
-import { getCallTokenizeEstateTx, getRegisterCustodianTx, getSafeDeprecateEstateTxByParams } from '@utils/transaction/EstateToken';
-import { getRequestExtractionTx } from '@utils/transaction/EstateLiquidator';
-import { getRegisterBrokerTx } from '@utils/transaction/CommissionToken';
+import { RequestExtractionParams } from '@utils/models/land/estateLiquidator';
+import { DeprecateEstateParams, RegisterCustodianParams } from '@utils/models/land/estateToken';
+import { getCallTokenizeEstateTx, getRegisterCustodianTx, getSafeDeprecateEstateTxByParams } from '@utils/transaction/land/estateToken';
+import { getRequestExtractionTx } from '@utils/transaction/land/estateLiquidator';
+import { getRegisterBrokerTx } from '@utils/transaction/land/commissionToken';
 import { Initialization as CommonInitialization } from '@tests/common/test.initialization';
-import { callPausable_Pause } from '@utils/call/Pausable';
+import { callPausable_Pause } from '@utils/call/common/pausable';
 
 chai.use(smock.matchers);
 
