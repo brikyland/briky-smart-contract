@@ -372,7 +372,7 @@ Initializable {
      * 
      *  @dev    Administrative operator.
      */
-    function authorizeGovernor(
+    function authorizeGovernors(
         address[] calldata _accounts,
         bool _isGovernor,
         bytes[] calldata _signatures
@@ -380,7 +380,7 @@ Initializable {
         verifyAdminSignatures(
             abi.encode(
                 address(this),
-                "authorizeGovernor",
+                "authorizeGovernors",
                 _accounts,
                 _isGovernor
             ),
