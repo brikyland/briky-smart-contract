@@ -71,23 +71,27 @@ interface AdminFixture {
     deployer: any;
     admins: any[];
     admin: Admin;
-    governors: any[];
     manager: any;
     moderator: any;
     user: any;
 
-    zone1: string, zone2: string, zone3: string, zone4: string, zone5: string;
+    governors: any[];
+    managers: any[];
+    moderators: any[];
+    accounts: any[];
+
+    zone1: string, zone2: string;
 }
 
-describe.only('1.2. Admin', async () => {
+describe('1.2. Admin', async () => {
     async function adminFixture(): Promise<AdminFixture> {
-        const accounts = await ethers.getSigners();
-        const deployer = accounts[0];
+        const signers = await ethers.getSigners();
+        const deployer = signers[0];
         const admins = [];
-        for (let i = 1; i <= Constant.ADMIN_NUMBER; ++i) admins.push(accounts[i]);
-        const manager = accounts[Constant.ADMIN_NUMBER + 1];
-        const moderator = accounts[Constant.ADMIN_NUMBER + 2];
-        const user = accounts[Constant.ADMIN_NUMBER + 3];
+        for (let i = 1; i <= Constant.ADMIN_NUMBER; ++i) admins.push(signers[i]);
+        const manager = signers[Constant.ADMIN_NUMBER + 1];
+        const moderator = signers[Constant.ADMIN_NUMBER + 2];
+        const user = signers[Constant.ADMIN_NUMBER + 3];
 
         const adminAddresses: string[] = admins.map(signer => signer.address);
         const admin = await deployAdmin(
@@ -106,30 +110,107 @@ describe.only('1.2. Admin', async () => {
             governors.push(governor);
         }
 
+        const managers = [];
+        for (let i = 0; i < 5; ++i) {
+            managers.push(randomWallet());
+        }
+
+        const moderators = [];
+        for (let i = 0; i < 5; ++i) {
+            moderators.push(randomWallet());
+        }
+        const accounts = [];
+        for (let i = 0; i < 5; ++i) {
+            accounts.push(randomWallet());
+        }
+
         const zone1 = ethers.utils.formatBytes32String("TestZone1");
         const zone2 = ethers.utils.formatBytes32String("TestZone2");
-        const zone3 = ethers.utils.formatBytes32String("TestZone3");
-        const zone4 = ethers.utils.formatBytes32String("TestZone4");
-        const zone5 = ethers.utils.formatBytes32String("TestZone5");
 
         return {
             deployer,
             admins,
             admin,
-            governors,
             manager,
             moderator,
             user,
+            governors,
+            managers,
+            moderators,
+            accounts,
             zone1,
             zone2,
-            zone3,
-            zone4,
-            zone5,
         };
     };
 
-    async function setupBeforeTest(): Promise<AdminFixture> {
-        return await loadFixture(adminFixture);
+    async function setupBeforeTest({
+        authorizeManagers = false,
+        authorizeModerators = false,
+        authorizeGovernors = false,
+        declareZones = false,
+        activateAccountsInZones = false,
+    } = {}): Promise<AdminFixture> {
+        const fixture = await loadFixture(adminFixture);
+        const { deployer, admins, admin, managers, moderators, accounts, zone1, zone2, governors } = fixture;
+
+        if (authorizeManagers) {
+            await callAdmin_AuthorizeManagers(
+                admin,
+                deployer,
+                admins,
+                { 
+                    accounts: managers.map(x => x.address),
+                    isManager: true
+                }
+            );
+        }
+
+        if (authorizeModerators) {
+            await callAdmin_AuthorizeModerators(
+                admin,
+                deployer,
+                admins,
+                {
+                    accounts: moderators.map(x => x.address),
+                    isModerator: true
+                }
+            );
+        }
+
+        if (authorizeGovernors) {
+            await callAdmin_AuthorizeGovernors(
+                admin,
+                deployer,
+                admins,
+                {
+                    accounts: governors.map(x => x.address),
+                    isGovernor: true
+                }
+            );
+        }
+
+        if (declareZones) {
+            for (const zone of [zone1, zone2]) {
+                await callAdmin_DeclareZone(admin, deployer, admins, { zone: zone });
+            }
+        }
+
+        if (activateAccountsInZones) {
+            for (const zone of [zone1, zone2]) {
+                await callAdmin_ActivateIn(
+                    admin,
+                    deployer,
+                    admins,
+                    {
+                        zone: zone,
+                        accounts: accounts.map(x => x.address),
+                        isActive: true
+                    }
+                );
+            }
+        }
+
+        return fixture;
     }
 
     describe('1.2.1. initialize(address, address, address, address, address)', async () => {
@@ -731,30 +812,11 @@ describe.only('1.2. Admin', async () => {
                 .to.be.revertedWithCustomError(admin, `AuthorizedAccount`)
         })
 
-        async function setupManagers(fixture: AdminFixture): Promise<Wallet[]> {
-            const { deployer, admins, admin } = fixture;
-
-            const managers = [];
-            for (let i = 0; i < 5; ++i) managers.push(randomWallet());
-
-            await callAdmin_AuthorizeManagers(
-                admin,
-                deployer,
-                admins,
-                {
-                    accounts: managers.map(x => x.address),
-                    isManager: true
-                }
-            );
-      
-            return managers;
-        }
-
         it('1.2.8.5. Deauthorize manager successfully', async () => {
-            const fixture = await setupBeforeTest();
-            const { deployer, admins, admin } = fixture;            
-
-            const managers = await setupManagers(fixture);
+            const fixture = await setupBeforeTest({
+                authorizeManagers: true
+            });
+            const { deployer, admins, admin, managers } = fixture;            
 
             const toDeauth = managers.slice(0, 2);
             const remainManagers = managers.slice(2);
@@ -788,10 +850,10 @@ describe.only('1.2. Admin', async () => {
         });
 
         it('1.2.8.6. Deauthorize manager unsuccessfully with unauthorized account', async () => {
-            const fixture = await setupBeforeTest();
-            const { deployer, admins, admin } = fixture;            
-
-            const managers = await setupManagers(fixture);
+            const fixture = await setupBeforeTest({
+                authorizeManagers: true
+            });
+            const { deployer, admins, admin, managers } = fixture;            
 
             const account = randomWallet();
             const toDeauth = [managers[0], account];
@@ -810,10 +872,10 @@ describe.only('1.2. Admin', async () => {
         });
 
         it('1.2.8.7. Deauthorize manager unsuccessfully when unauthorizing same accounts twice on same tx', async () => {
-            const fixture = await setupBeforeTest();
-            const { deployer, admins, admin } = fixture;            
-
-            const managers = await setupManagers(fixture);
+            const fixture = await setupBeforeTest({
+                authorizeManagers: true
+            });
+            const { deployer, admins, admin, managers } = fixture;            
 
             const toDeauth = managers.slice(0, 2).concat([managers[0]]);
 
@@ -831,25 +893,25 @@ describe.only('1.2. Admin', async () => {
         });
 
         it('1.2.8.8. Deauthorize manager unsuccessfully when unauthorizing same accounts twice on different tx', async () => {
-            const fixture = await setupBeforeTest();
-            const { deployer, admins, admin } = fixture;            
+            const fixture = await setupBeforeTest({
+                authorizeManagers: true
+            });
+            const { deployer, admins, admin, managers } = fixture;            
 
-            const managers = await setupManagers(fixture);
-
-            const tx1_accounts = managers.slice(0, 2);
+            const tx1Accounts = managers.slice(0, 2);
             await callAdmin_AuthorizeManagers(
                 admin,
                 deployer,
                 admins,
                 {
-                    accounts: tx1_accounts.map(x => x.address),
+                    accounts: tx1Accounts.map(x => x.address),
                     isManager: false 
                 }
             );
 
-            const tx2_accounts = [managers[0]];
+            const tx2Accounts = [managers[0]];
             const paramsInput: AuthorizeManagersParamsInput = {
-                accounts: tx2_accounts.map(x => x.address),
+                accounts: tx2Accounts.map(x => x.address),
                 isManager: false
             };
             const params: AuthorizeManagersParams = {
@@ -986,30 +1048,11 @@ describe.only('1.2. Admin', async () => {
                 .to.be.revertedWithCustomError(admin, `AuthorizedAccount`)
         });
 
-        async function setupModerators(fixture: AdminFixture): Promise<Wallet[]> {
-            const { deployer, admins, admin } = fixture;
-
-            const moderators = [];
-            for (let i = 0; i < 5; ++i) moderators.push(randomWallet());
-
-            await callAdmin_AuthorizeModerators(
-                admin,
-                deployer,
-                admins,
-                {
-                    accounts: moderators.map(x => x.address),
-                    isModerator: true
-                }
-            );
-
-            return moderators;
-        }
-
         it('1.2.9.5. Deauthorize moderator successfully', async () => {
-            const fixture = await setupBeforeTest();
-            const { deployer, admins, admin } = fixture;            
-
-            const moderators = await setupModerators(fixture);
+            const fixture = await setupBeforeTest({
+                authorizeModerators: true
+            });
+            const { deployer, admins, admin, moderators } = fixture;            
 
             const toDeauth = moderators.slice(0, 2);
             const remainModerators = moderators.slice(2);
@@ -1043,10 +1086,10 @@ describe.only('1.2. Admin', async () => {
         });
 
         it('1.2.9.6. Deauthorize moderator unsuccessfully with unauthorized account', async () => {
-            const fixture = await setupBeforeTest();
-            const { deployer, admins, admin } = fixture;            
-
-            const moderators = await setupModerators(fixture);
+            const fixture = await setupBeforeTest({
+                authorizeModerators: true
+            });
+            const { deployer, admins, admin, moderators } = fixture;            
 
             const account = randomWallet();
             const toDeauth = [moderators[0], account];
@@ -1065,10 +1108,10 @@ describe.only('1.2. Admin', async () => {
         });
 
         it('1.2.9.7. Deauthorize moderator unsuccessfully when unauthorizing same accounts twice on same tx', async () => {
-            const fixture = await setupBeforeTest();
-            const { deployer, admins, admin } = fixture;            
-
-            const moderators = await setupModerators(fixture);
+            const fixture = await setupBeforeTest({
+                authorizeModerators: true
+            });
+            const { deployer, admins, admin, moderators } = fixture;
 
             const toDeauth = moderators.slice(0, 2).concat([moderators[0]]);
 
@@ -1086,25 +1129,25 @@ describe.only('1.2. Admin', async () => {
         });
 
         it('1.2.9.8. Deauthorize moderator unsuccessfully when unauthorizing same accounts twice on different tx', async () => {
-            const fixture = await setupBeforeTest();
-            const { deployer, admins, admin } = fixture;            
+            const fixture = await setupBeforeTest({
+                authorizeModerators: true
+            });
+            const { deployer, admins, admin, moderators } = fixture;
 
-            const moderators = await setupModerators(fixture);
-
-            const tx1_accounts = moderators.slice(0, 2);
+            const tx1Accounts = moderators.slice(0, 2);
             await callAdmin_AuthorizeModerators(
                 admin,
                 deployer,
                 admins,
                 { 
-                    accounts: tx1_accounts.map(x => x.address),
+                    accounts: tx1Accounts.map(x => x.address),
                     isModerator: false
                 }
             );
             
-            const tx2_accounts = [moderators[0]];
+            const tx2Accounts = [moderators[0]];
             const paramsInput: AuthorizeModeratorsParamsInput = {
-                accounts: tx2_accounts.map(x => x.address),
+                accounts: tx2Accounts.map(x => x.address),
                 isModerator: false
             };
             const params: AuthorizeModeratorsParams = {
@@ -1256,25 +1299,11 @@ describe.only('1.2. Admin', async () => {
                 .to.be.revertedWithCustomError(admin, `AuthorizedAccount`)
         })
 
-        async function setupGovernors(fixture: AdminFixture) {
-            const { deployer, admins, admin, governors } = fixture;
-
-            await callAdmin_AuthorizeGovernors(
-                admin,
-                deployer,
-                admins,
-                {
-                    accounts: governors.map(x => x.address),
-                    isGovernor: true
-                }
-            );
-        }
-
         it('1.2.10.7. Deauthorize governor successfully', async () => {
-            const fixture = await setupBeforeTest();
+            const fixture = await setupBeforeTest({
+                authorizeGovernors: true
+            });
             const { deployer, admins, admin, governors } = fixture;            
-
-            await setupGovernors(fixture);
 
             const toDeauth = governors.slice(0, 2);
             const remainGovernors = governors.slice(2);
@@ -1308,10 +1337,10 @@ describe.only('1.2. Admin', async () => {
         });
 
         it('1.2.10.8. Deauthorize governor unsuccessfully with unauthorized account', async () => {
-            const fixture = await setupBeforeTest();
+            const fixture = await setupBeforeTest({
+                authorizeGovernors: true
+            });
             const { deployer, admins, admin, governors } = fixture;            
-
-            await setupGovernors(fixture);
 
             const account = randomWallet();
             const toDeauth = [governors[0], account];
@@ -1330,10 +1359,10 @@ describe.only('1.2. Admin', async () => {
         });
 
         it('1.2.10.9. Deauthorize governor unsuccessfully when unauthorizing same accounts twice on same tx', async () => {
-            const fixture = await setupBeforeTest();
+            const fixture = await setupBeforeTest({
+                authorizeGovernors: true
+            });
             const { deployer, admins, admin, governors } = fixture;            
-
-            await setupGovernors(fixture);
 
             const toDeauth = governors.slice(0, 2).concat([governors[0]]);
 
@@ -1351,25 +1380,25 @@ describe.only('1.2. Admin', async () => {
         });
 
         it('1.2.10.10. Deauthorize governor unsuccessfully when unauthorizing same accounts twice on different tx', async () => {
-            const fixture = await setupBeforeTest();
+            const fixture = await setupBeforeTest({
+                authorizeGovernors: true
+            });
             const { deployer, admins, admin, governors } = fixture;            
 
-            await setupGovernors(fixture);
-
-            const tx1_accounts = governors.slice(0, 2);
+            const tx1Accounts = governors.slice(0, 2);
             await callAdmin_AuthorizeGovernors(
                 admin,
                 deployer,
                 admins,
                 {
-                    accounts: tx1_accounts.map(x => x.address),
+                    accounts: tx1Accounts.map(x => x.address),
                     isGovernor: false
                 }
             );
 
-            const tx2_accounts = [governors[0]];
+            const tx2Accounts = [governors[0]];
             const paramsInput: AuthorizeGovernorsParamsInput = {
-                accounts: tx2_accounts.map(x => x.address),
+                accounts: tx2Accounts.map(x => x.address),
                 isGovernor: false
             };
             const params: AuthorizeGovernorsParams = {
@@ -1385,7 +1414,7 @@ describe.only('1.2. Admin', async () => {
     describe('1.2.11. declareZone(bytes32[], bytes[])', async () => {
         it('1.2.11.1. Declare zone successfully', async () => {
             const fixture = await setupBeforeTest();
-            const { deployer, admins, admin, zone1, zone3 } = fixture;            
+            const { deployer, admins, admin, zone1, zone2 } = fixture;            
 
             const paramsInput1: DeclareZoneParamsInput = {
                 zone: zone1
@@ -1404,7 +1433,7 @@ describe.only('1.2. Admin', async () => {
             expect(await admin.isZone(zone1)).to.be.true;
 
             const paramsInput2: DeclareZoneParamsInput = {
-                zone: zone3
+                zone: zone2
             };
             const params2: DeclareZoneParams = {
                 ...paramsInput2,
@@ -1416,9 +1445,9 @@ describe.only('1.2. Admin', async () => {
             
             await expect(tx2).to
                 .emit(admin, 'ZoneDeclaration')
-                .withArgs(zone3);
+                .withArgs(zone2);
 
-            expect(await admin.isZone(zone3)).to.be.true;
+            expect(await admin.isZone(zone2)).to.be.true;
         });
 
         it('1.2.11.2. Declare zone unsuccessfully with invalid signatures', async () => {
@@ -1462,44 +1491,11 @@ describe.only('1.2. Admin', async () => {
     });
 
     describe('1.2.12. activateIn(bytes32, address[], bool, bytes[])', async () => {
-        async function setupAccounts(fixture: AdminFixture): Promise<{
-            zone1: string,
-            zone2: string,
-            accounts: Wallet[]
-        }> {
-            const { admins, admin } = fixture;
-
-            const zone1 = ethers.utils.formatBytes32String("TestZone1");
-            const zone2 = ethers.utils.formatBytes32String("TestZone2");
-
-            const accounts = [];
-            for(let i = 0; i < 5; ++i) accounts.push(randomWallet());
-            return { zone1, zone2, accounts };
-        }
-
-        async function setupActivateIn(admin: Admin, deployer: any, admins: any[], zones: string[], accounts: Wallet[]) {
-            for(const zone of zones) {
-                await callAdmin_ActivateIn(
-                    admin,
-                    deployer,
-                    admins,
-                    { 
-                        zone,
-                        accounts: accounts.map(x => x.address),
-                        isActive: true 
-                    }
-                );
-            }
-        }
-
         it('1.2.12.1. Activate accounts in zone successfully', async () => {
-            const fixture = await setupBeforeTest();
-            const { deployer, admin, admins } = fixture;            
-
-            const { zone1, zone2, accounts } = await setupAccounts(fixture);
-
-            await callAdmin_DeclareZone(admin, deployer, admins, { zone: zone1 });
-            await callAdmin_DeclareZone(admin, deployer, admins, { zone: zone2 });
+            const fixture = await setupBeforeTest({
+                declareZones: true
+            });
+            const { deployer, admin, admins, zone1, zone2, accounts } = fixture;            
 
             const zone1Accounts = [accounts[0], accounts[2], accounts[4]];
             const zone2Accounts = [accounts[0], accounts[1], accounts[3]];
@@ -1557,11 +1553,10 @@ describe.only('1.2. Admin', async () => {
         });
 
         it('1.2.12.2. Activate accounts in zone unsuccessfully with invalid signatures', async () => {
-            const fixture = await setupBeforeTest();
-            const { deployer, admins, admin } = fixture;            
-
-            const { zone1, accounts } = await setupAccounts(fixture);
-            await callAdmin_DeclareZone(admin, deployer, admins, { zone: zone1 });
+            const fixture = await setupBeforeTest({
+                declareZones: true
+            });
+            const { deployer, admins, admin, zone1, accounts } = fixture;            
 
             const zone1Accounts = [accounts[0], accounts[1]];
 
@@ -1579,10 +1574,10 @@ describe.only('1.2. Admin', async () => {
         });
 
         it('1.2.12.3. Activate accounts in zone unsuccessfully with invalid zone', async () => {
-            const fixture = await setupBeforeTest();
-            const { deployer, admins, admin } = fixture;
-
-            const { accounts } = await setupAccounts(fixture);
+            const fixture = await setupBeforeTest({
+                declareZones: true
+            });
+            const { deployer, admins, admin, accounts } = fixture;
 
             const invalidZone = ethers.utils.formatBytes32String("InvalidZone");
 
@@ -1602,11 +1597,10 @@ describe.only('1.2. Admin', async () => {
         });
 
         it('1.2.12.4. Activate accounts in zone unsuccessfully when activating same account twice on same tx', async () => {
-            const fixture = await setupBeforeTest();
-            const { deployer, admins, admin } = fixture;            
-
-            const { zone1, accounts } = await setupAccounts(fixture);
-            await callAdmin_DeclareZone(admin, deployer, admins, { zone: zone1 });
+            const fixture = await setupBeforeTest({
+                declareZones: true
+            });
+            const { deployer, admins, admin, zone1, accounts } = fixture;            
 
             const zone1Accounts = [accounts[0], accounts[1], accounts[2], accounts[1]];
 
@@ -1624,34 +1618,28 @@ describe.only('1.2. Admin', async () => {
         });
 
         it('1.2.12.5. Activate accounts in zone unsuccessfully when activating same account twice on different tx', async () => {
-            const fixture = await setupBeforeTest();
-            const { deployer, admins, admin } = fixture;            
+            const fixture = await setupBeforeTest({
+                declareZones: true
+            });
+            const { deployer, admins, admin, zone1, accounts } = fixture;            
 
-            const { zone1, accounts } = await setupAccounts(fixture);
-            await callAdmin_DeclareZone(
-                admin,
-                deployer,
-                admins,
-                { zone: zone1 }
-            );
-
-            const tx1_accounts = [accounts[0], accounts[1], accounts[2]];
+            const tx1Accounts = [accounts[0], accounts[1], accounts[2]];
             await callAdmin_ActivateIn(
                 admin,
                 deployer,
                 admins,
                 {
                     zone: zone1,
-                    accounts: tx1_accounts.map(x => x.address),
+                    accounts: tx1Accounts.map(x => x.address),
                     isActive: true
                 }
             );
 
-            const tx2_accounts = [accounts[3], accounts[2]];
+            const tx2Accounts = [accounts[3], accounts[2]];
 
             const paramsInput: ActivateInParamsInput = {
                 zone: zone1,
-                accounts: tx2_accounts.map(x => x.address),
+                accounts: tx2Accounts.map(x => x.address),
                 isActive: true
             };
             const params: ActivateInParams = {
@@ -1663,14 +1651,11 @@ describe.only('1.2. Admin', async () => {
         });
 
         it('1.2.12.6. Deactivate accounts in zone successfully', async () => {
-            const fixture = await setupBeforeTest();
-            const { deployer, admins, admin } = fixture;            
-
-            const { zone1, zone2, accounts } = await setupAccounts(fixture);
-
-            await callAdmin_DeclareZone(admin, deployer, admins, { zone: zone1 });
-            await callAdmin_DeclareZone(admin, deployer, admins, { zone: zone2 });
-            await setupActivateIn(admin, deployer, admins, [zone1, zone2], accounts);
+            const fixture = await setupBeforeTest({
+                declareZones: true,
+                activateAccountsInZones: true
+            });
+            const { deployer, admins, admin, zone1, zone2, accounts } = fixture;            
 
             const zone1ToDeacivate = [accounts[0], accounts[2], accounts[4]];
             const zone1Remaining = accounts.filter(x => !zone1ToDeacivate.includes(x));
@@ -1731,14 +1716,11 @@ describe.only('1.2. Admin', async () => {
         });
 
         it('1.2.12.7. Deactivate accounts in zone unsuccessfully with inactive accounts', async () => {
-            const fixture = await setupBeforeTest();
-            const { deployer, admins, admin } = fixture;            
-
-            const { zone1, zone2, accounts } = await setupAccounts(fixture);
-
-            await callAdmin_DeclareZone(admin, deployer, admins, { zone: zone1 });
-            await callAdmin_DeclareZone(admin, deployer, admins, { zone: zone2 });
-            await setupActivateIn(admin, deployer, admins, [zone1, zone2], accounts);
+            const fixture = await setupBeforeTest({
+                declareZones: true,
+                activateAccountsInZones: true
+            });
+            const { deployer, admins, admin, zone1, accounts } = fixture;            
 
             const newAccount = randomWallet();
             const zone1ToDeacivate = [accounts[0], accounts[2], newAccount];
@@ -1757,14 +1739,11 @@ describe.only('1.2. Admin', async () => {
         });
 
         it('1.2.12.8. Deactivate accounts in zone unsuccessfully when deactivating same account twice on same tx', async () => {
-            const fixture = await setupBeforeTest();
-            const { deployer, admins, admin } = fixture;            
-
-            const { zone1, zone2, accounts } = await setupAccounts(fixture);
-
-            await callAdmin_DeclareZone(admin, deployer, admins, { zone: zone1 });
-            await callAdmin_DeclareZone(admin, deployer, admins, { zone: zone2 });
-            await setupActivateIn(admin, deployer, admins, [zone1, zone2], accounts);
+            const fixture = await setupBeforeTest({
+                declareZones: true,
+                activateAccountsInZones: true
+            });
+            const { deployer, admins, admin, zone1, accounts } = fixture;            
 
             const zone1ToDeacivate = [accounts[0], accounts[1], accounts[2], accounts[0]];
             
@@ -1782,32 +1761,29 @@ describe.only('1.2. Admin', async () => {
         });
 
         it('1.2.12.9. Deactivate accounts in zone unsuccessfully when deactivating same account twice on different tx', async () => {
-            const fixture = await setupBeforeTest();
-            const { deployer, admins, admin } = fixture;            
+            const fixture = await setupBeforeTest({
+                declareZones: true,
+                activateAccountsInZones: true
+            });
+            const { deployer, admins, admin, zone1, accounts } = fixture;            
 
-            const { zone1, zone2, accounts } = await setupAccounts(fixture);
-
-            await callAdmin_DeclareZone(admin, deployer, admins, { zone: zone1 });
-            await callAdmin_DeclareZone(admin, deployer, admins, { zone: zone2 });
-            await setupActivateIn(admin, deployer, admins, [zone1, zone2], accounts);
-
-            let tx1_accounts = [accounts[0], accounts[1], accounts[2]];
+            let tx1Accounts = [accounts[0], accounts[1], accounts[2]];
             await callAdmin_ActivateIn(
                 admin,
                 deployer,
                 admins,
                 {
                     zone: zone1,
-                    accounts: tx1_accounts.map(x => x.address),
+                    accounts: tx1Accounts.map(x => x.address),
                     isActive: false
                 }
             );
 
-            let tx2_accounts = [accounts[3], accounts[2]];
+            let tx2Accounts = [accounts[3], accounts[2]];
 
             const paramsInput: ActivateInParamsInput = {
                 zone: zone1,
-                accounts: tx2_accounts.map(x => x.address),
+                accounts: tx2Accounts.map(x => x.address),
                 isActive: false
             };
             const params: ActivateInParams = {
