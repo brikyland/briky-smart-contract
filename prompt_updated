@@ -1,0 +1,58 @@
+# ✅ Refactor Checklist: `common/DividendHub.test.ts`
+
+## Phase 1 – Contract Function Refactor
+For each function in **`contracts/common/DividendHub.sol`**:
+
+1. **Check verification parameters**  
+   - Does the function include `_signatures`?  
+   - Does the function include `_validation`?  
+   - Does the function include `_anchor`?  
+
+2. **Create models** in `utils/models/common/DividendHub.ts`  
+   - Define `<FunctionName>ParamsInput` → contains non-verification params only.  
+   - Define `<FunctionName>Params` → extends `ParamsInput`, includes verification params.  
+
+3. **If `_signatures` present** → in `utils/signatures/common/DividendHub.ts`  
+   - Add `get<FunctionName>Signatures(..., params: <FunctionName>ParamsInput)`  
+
+4. **If `_validation` present** → in `utils/validation/common/DividendHub.ts`  
+   - Add `get<FunctionName>Validation(..., params: <FunctionName>ParamsInput)`  
+
+5. **If `_anchor` present**  
+   - **In `utils/models/common/DividendHub.ts`**:  
+     - If safe + non-safe versions exist → create two sets of interfaces: (`ParamsInput`, `Params`) for each.  
+     - If `_anchor` is the only verification param → create just `<FunctionName>Params`.  
+   - **In `utils/anchor/common/DividendHub.ts`**:  
+     - Add `getSafe<FunctionName>Anchor(..., params: <FunctionName>ParamsInput | Params)`  
+
+6. **In `utils/transaction/common/DividendHub.ts`**:  
+     - Add `get<FunctionName>Tx(..., params: <FunctionName>Params)`
+
+7. **In `utils/call/common/DividendHub.ts`**:  
+     - Add `call<ContractName>_<FunctionName>(..., deployer, ..., params: <FunctionName>Params)`, use the `get<FunctionName>Tx` function in the body.
+
+8. Include all defined functions / interfaces in the import of `common/DividendHub.test.ts`.
+
+Reference: **`lux/ERC721Marketplace`** module
+
+Note:
+- Remove all MockContract usage in these files
+- Do not make any change to `common/DividendHub.test.ts`, as it will be done in phase 2.
+
+---
+
+## Phase 2 – Test File Updates
+1. Update imports in `DividendHub.test.ts`  
+   - Change relative paths (`"./abc/xyz"`) → module paths (`"@abc/xyz"`)
+
+2. For each test case:  
+   - Rename description → **Capitalize first letter of the description**
+   - Move `deployer` param in the destructuring statement to be the first param (if exists). Get the `deployer` variable from the destructuring statement instead of using fixture.deployer.
+   - Refactor the code to use new Params interfaces + signatures + validation + anchor from Phase 1:
+     - First, define the paramsInput variable of type `<FunctionName>ParamInput` with the non-verification params
+     - For the setup transaction, use the `call<ContractName>_<FunctionName>` function to send the transaction
+     - For the transaction that need to be teested 
+       - Then, define the params variable of type `<FunctionName>ParamInput` with the verification params
+       - Then, use the function `get<FunctionName>Tx` to get the transaction using the params variable.
+   
+Reference: `ERC721Marketplace.test.ts`

@@ -1,5 +1,7 @@
-import { Admin } from "@typechain-types";
 import { Contract } from "ethers";
+
+import { Admin } from "@typechain-types";
+
 import {
     getPauseSignatures,
     getUnpauseSignatures,

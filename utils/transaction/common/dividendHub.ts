@@ -1,12 +1,15 @@
-import { DividendHub, ProxyCaller } from "@typechain-types";
+import {
+    DividendHub,
+    ProxyCaller
+} from "@typechain-types";
+
 import { IssueDividendParams } from "@utils/models/common/dividendHub";
-import { BigNumber } from "ethers";
 
 export async function getIssueDividendTx(
     dividendHub: DividendHub,
     signer: any,
     params: IssueDividendParams,
-    value: BigNumber,
+    txConfig = {},
 ) {
     return await dividendHub.connect(signer).issueDividend(
         params.governor,
@@ -14,7 +17,7 @@ export async function getIssueDividendTx(
         params.value,
         params.currency,
         params.data,
-        { value: value },
+        txConfig,
     );
 }
 
@@ -22,7 +25,7 @@ export async function getCallIssueDividendTx(
     dividendHub: DividendHub,
     caller: ProxyCaller,
     params: IssueDividendParams,
-    value: BigNumber,
+    txConfig = {},
 ) {
     return await caller.call(
         dividendHub.address,
@@ -33,6 +36,6 @@ export async function getCallIssueDividendTx(
             params.currency,
             params.data,
         ]),
-        { value: value },
+        txConfig,
     );
 }

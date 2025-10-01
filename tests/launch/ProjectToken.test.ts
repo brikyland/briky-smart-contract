@@ -590,7 +590,7 @@ describe('7.2. ProjectToken', async () => {
     });
 
     describe('7.2.2. updateBaseURI(string, bytes[])', async () => {
-        it('7.2.2.1. updateBaseURI successfully with valid signatures', async () => {
+        it('7.2.2.1. UpdateBaseURI successfully with valid signatures', async () => {
             const { projectToken, admin, admins } = await beforeProjectTokenTest({
                 addSampleProjects: true,        
             });
@@ -612,7 +612,7 @@ describe('7.2. ProjectToken', async () => {
             expect(await projectToken.uri(2)).to.equal("NewBaseURI:initiator2_uri");
         });
 
-        it('7.2.2.2. updateBaseURI unsuccessfully with invalid signatures', async () => {
+        it('7.2.2.2. UpdateBaseURI unsuccessfully with invalid signatures', async () => {
             const { projectToken, admin, admins } = await beforeProjectTokenTest();
 
             const message = ethers.utils.defaultAbiCoder.encode(
@@ -629,7 +629,7 @@ describe('7.2. ProjectToken', async () => {
     });
 
     describe('7.2.3. updateZoneRoyaltyRate(uint256, bytes[])', async () => {
-        it('7.2.3.1. updateZoneRoyaltyRate successfully with valid signatures', async () => {
+        it('7.2.3.1. UpdateZoneRoyaltyRate successfully with valid signatures', async () => {
             const fixture = await beforeProjectTokenTest();
             const { projectToken, admin, admins, zone1, zone2 } = fixture;
 
@@ -687,7 +687,7 @@ describe('7.2. ProjectToken', async () => {
             });
         });
 
-        it('7.2.3.2. updateZoneRoyaltyRate unsuccessfully with invalid signatures', async () => {
+        it('7.2.3.2. UpdateZoneRoyaltyRate unsuccessfully with invalid signatures', async () => {
             const fixture = await beforeProjectTokenTest();
             const { projectToken, admin, admins, zone1 } = fixture;
 
@@ -704,7 +704,7 @@ describe('7.2. ProjectToken', async () => {
             )).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('7.2.3.3. updateZoneRoyaltyRate unsuccessfully with invalid rate', async () => {
+        it('7.2.3.3. UpdateZoneRoyaltyRate unsuccessfully with invalid rate', async () => {
             const fixture = await beforeProjectTokenTest();
             const { projectToken, admin, admins, zone1 } = fixture;
 
@@ -722,7 +722,7 @@ describe('7.2. ProjectToken', async () => {
             )).to.be.revertedWithCustomError(projectToken, 'InvalidRate');
         });
 
-        it('7.2.3.4. updateZoneRoyaltyRate unsuccessfully with invalid zone', async () => {
+        it('7.2.3.4. UpdateZoneRoyaltyRate unsuccessfully with invalid zone', async () => {
             const fixture = await beforeProjectTokenTest();
             const { projectToken, admin, admins } = fixture;
 
@@ -797,7 +797,7 @@ describe('7.2. ProjectToken', async () => {
             )).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('7.2.4.3. Authorize launchpad reverted without reason with EOA address', async () => {
+        it('7.2.4.3. Authorize launchpad reverted without reason with EOA', async () => {
             const { projectToken, admin, admins } = await beforeProjectTokenTest();
 
             const invalidLaunchpad = randomWallet();
@@ -815,7 +815,7 @@ describe('7.2. ProjectToken', async () => {
             )).to.be.revertedWithCustomError(projectToken, 'InvalidLaunchpad');
         })
 
-        it('7.2.4.4. Authorize launchpad reverted with contract not supporting ProjectLaunchpad interface', async () => {
+        it('7.2.4.4. Authorize launchpad reverted when contract does not support ProjectLaunchpad interface', async () => {
             const { projectToken, admin, admins } = await beforeProjectTokenTest();
 
             const invalidLaunchpad = projectToken;
@@ -833,7 +833,7 @@ describe('7.2. ProjectToken', async () => {
             )).to.be.revertedWithCustomError(projectToken, 'InvalidLaunchpad');
         })
 
-        it('7.2.4.5. Authorize launchpad unsuccessfully when authorizing same account twice on same tx', async () => {
+        it('7.2.4.5. Authorize launchpad unsuccessfully when authorizing the same account twice on the same tx', async () => {
             const { projectToken, admin, admins, launchpads } = await beforeProjectTokenTest();
 
             const duplicateLaunchpads = [launchpads[0], launchpads[1], launchpads[2], launchpads[0]];
@@ -851,7 +851,7 @@ describe('7.2. ProjectToken', async () => {
             )).to.be.revertedWithCustomError(projectToken, `AuthorizedAccount`)
         });
 
-        it('7.7.2.3. Authorize launchpad unsuccessfully when authorizing same account twice on different tx', async () => {
+        it('7.7.2.3. Authorize launchpad unsuccessfully when authorizing the same account twice on different txs', async () => {
             const { projectToken, admin, admins, launchpads } = await beforeProjectTokenTest();
 
             const tx1Launchpads = launchpads.slice(0, 3);
@@ -950,7 +950,7 @@ describe('7.2. ProjectToken', async () => {
             )).to.be.revertedWithCustomError(projectToken, `NotAuthorizedAccount`)
         });
 
-        it('7.2.4.8. Deauthorize launchpad unsuccessfully when unauthorizing same accounts twice on same tx', async () => {
+        it('7.2.4.8. Deauthorize launchpad unsuccessfully when unauthorizing the same account twice on the same tx', async () => {
             const { projectToken, admin, admins, launchpads } = await beforeProjectTokenTest();
 
             await setupLaunchpads(projectToken, admin, admins, launchpads);
@@ -970,7 +970,7 @@ describe('7.2. ProjectToken', async () => {
             )).to.be.revertedWithCustomError(projectToken, `NotAuthorizedAccount`)
         });
 
-        it('7.2.4.9. Deauthorize launchpad unsuccessfully when unauthorizing same accounts twice on different tx', async () => {
+        it('7.2.4.9. Deauthorize launchpad unsuccessfully when unauthorizing the same account twice on different txs', async () => {
             const { projectToken, admin, admins, launchpads } = await beforeProjectTokenTest();
 
             await setupLaunchpads(projectToken, admin, admins, launchpads);
@@ -1014,7 +1014,7 @@ describe('7.2. ProjectToken', async () => {
             return { defaultParams }
         }
 
-        it('7.2.5.1. register initiator successfully', async () => {
+        it('7.2.5.1. Register initiator successfully', async () => {
             const fixture = await beforeProjectTokenTest();
             const { projectToken, manager, validator } = fixture;
 
@@ -1031,7 +1031,7 @@ describe('7.2. ProjectToken', async () => {
             expect(await projectToken.initiatorURI(params.zone, params.initiator)).to.equal(params.uri);
         });
 
-        it('7.2.5.2. register initiator unsuccessfully by non-manager', async () => {
+        it('7.2.5.2. Register initiator unsuccessfully by non-manager', async () => {
             const fixture = await beforeProjectTokenTest();
             const { projectToken, moderator, user, validator } = fixture;
 
@@ -1046,7 +1046,7 @@ describe('7.2. ProjectToken', async () => {
                 .to.be.revertedWithCustomError(projectToken, `Unauthorized`);
         });
 
-        it('7.2.5.3. register initiator unsuccessfully with inactive zone', async () => {
+        it('7.2.5.3. Register initiator unsuccessfully with inactive zone', async () => {
             const fixture = await beforeProjectTokenTest();
             const { projectToken, manager, validator } = fixture;
 
@@ -1062,7 +1062,7 @@ describe('7.2. ProjectToken', async () => {
                 .to.be.revertedWithCustomError(projectToken, `Unauthorized`);
         });
 
-        it('7.2.5.4. register initiator unsuccessfully with inactive manager in zone', async () => {
+        it('7.2.5.4. Register initiator unsuccessfully with inactive manager in zone', async () => {
             const fixture = await beforeProjectTokenTest();
             const { projectToken, manager, admin, admins, validator } = fixture;
 
@@ -1081,7 +1081,7 @@ describe('7.2. ProjectToken', async () => {
                 .to.be.revertedWithCustomError(projectToken, `Unauthorized`);
         });
 
-        it('7.2.5.5. register initiator unsuccessfully with invalid validation', async () => {
+        it('7.2.5.5. Register initiator unsuccessfully with invalid validation', async () => {
             const fixture = await beforeProjectTokenTest();
             const { projectToken, manager, validator } = fixture;
 
@@ -1101,7 +1101,7 @@ describe('7.2. ProjectToken', async () => {
             )).to.be.revertedWithCustomError(projectToken, `InvalidSignature`);
         });
 
-        it('7.2.5.6. register initiator unsuccessfully with invalid uri', async () => {
+        it('7.2.5.6. Register initiator unsuccessfully with invalid uri', async () => {
             const fixture = await beforeProjectTokenTest();
             const { projectToken, manager, validator } = fixture;
 
@@ -1117,7 +1117,7 @@ describe('7.2. ProjectToken', async () => {
     });
 
     describe('7.2.6. isInitiatorIn(bytes32, address)', async () => {
-        it('7.2.6.1. return correct value', async () => {
+        it('7.2.6.1. Return correct value', async () => {
             const fixture = await beforeProjectTokenTest();
             const { projectToken, manager, initiator1, initiator2, zone1, zone2, validator } = fixture;
 
@@ -1137,7 +1137,7 @@ describe('7.2. ProjectToken', async () => {
     });
 
     describe('7.2.7. getProject(uint256)', async () => {
-        it('7.2.7.1. return with valid project id', async () => {
+        it('7.2.7.1. Return with valid project id', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
             });
@@ -1147,7 +1147,7 @@ describe('7.2. ProjectToken', async () => {
             await expect(projectToken.getProject(2)).to.not.be.reverted;
         });
 
-        it('7.2.7.2. revert with invalid project id', async () => {
+        it('7.2.7.2. Revert with invalid project id', async () => {
             const fixture = await beforeProjectTokenTest();
             const { projectToken } = fixture;
 
@@ -1159,7 +1159,7 @@ describe('7.2. ProjectToken', async () => {
     });
 
     describe('7.2.8. isAvailable(uint256)', async () => {
-        it('7.2.8.1. return true for undeprecated project and untokenized project', async () => {
+        it('7.2.8.1. Return true for undeprecated project and untokenized project', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
             });
@@ -1169,7 +1169,7 @@ describe('7.2. ProjectToken', async () => {
             expect(await projectToken.isAvailable(2)).to.be.true;
         });
 
-        it('7.2.8.2. return false for deprecated project', async () => {
+        it('7.2.8.2. Return false for deprecated project', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
             });
@@ -1188,7 +1188,7 @@ describe('7.2. ProjectToken', async () => {
             expect(await projectToken.isAvailable(2)).to.be.false;
         });
 
-        it('7.2.8.3. return false for tokenized project', async () => {
+        it('7.2.8.3. Return false for tokenized project', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
                 mintProjectTokenForDepositor: true,
@@ -1217,7 +1217,7 @@ describe('7.2. ProjectToken', async () => {
             return { defaultParams }
         }
 
-        it('7.2.9.1. launch project successfully', async () => {
+        it('7.2.9.1. Launch project successfully', async () => {
             const fixture = await beforeProjectTokenTest();
 
             const { projectToken, prestigePad, zone1, initiator1 } = fixture;
@@ -1297,7 +1297,7 @@ describe('7.2. ProjectToken', async () => {
             expect(await projectToken.uri(projectId2)).to.equal(LaunchInitialization.PROJECT_TOKEN_BaseURI + params2.uri);
         });
 
-        it('7.2.9.2. launch project unsuccessfully when paused', async () => {
+        it('7.2.9.2. Launch project unsuccessfully when paused', async () => {
             const fixture = await beforeProjectTokenTest({
                 pause: true,
             });
@@ -1309,7 +1309,7 @@ describe('7.2. ProjectToken', async () => {
                 .to.be.revertedWith(`Pausable: paused`);
         });
 
-        it('7.2.9.3. launch project unsuccessfully by non-launchpad sender', async () => {
+        it('7.2.9.3. Launch project unsuccessfully by non-launchpad sender', async () => {
             const fixture = await beforeProjectTokenTest({
                 skipAuthorizeLaunchpad: true,
             });
@@ -1321,7 +1321,7 @@ describe('7.2. ProjectToken', async () => {
                 .to.be.revertedWithCustomError(projectToken, `Unauthorized`);
         });
 
-        it('7.2.9.4. launch project unsuccessfully when zone is inactive', async () => {
+        it('7.2.9.4. Launch project unsuccessfully when zone is inactive', async () => {
             const fixture = await beforeProjectTokenTest();
             const { projectToken, prestigePad } = fixture;
 
@@ -1339,7 +1339,7 @@ describe('7.2. ProjectToken', async () => {
     });
 
     describe('7.2.10. mint(uint256, uint256)', async () => {
-        it('7.2.10.1. mint project token successfully', async () => {
+        it('7.2.10.1. Mint project token successfully', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
             });
@@ -1403,7 +1403,7 @@ describe('7.2. ProjectToken', async () => {
             expect(await projectToken.balanceOf(prestigePad.address, 2)).to.equal(params2.amount);
         });
 
-        it('7.2.10.2. mint unsuccessfully with invalid project id', async () => {
+        it('7.2.10.2. Mint unsuccessfully with invalid project id', async () => {
             const fixture = await beforeProjectTokenTest();
             const { projectToken, prestigePad } = fixture;
 
@@ -1422,7 +1422,7 @@ describe('7.2. ProjectToken', async () => {
                 .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
         });
 
-        it('7.2.10.3. mint unsuccessfully with deprecated project', async () => {
+        it('7.2.10.3. Mint unsuccessfully with deprecated project', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
                 deprecateProjects: true,
@@ -1437,7 +1437,7 @@ describe('7.2. ProjectToken', async () => {
                 .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
         });
 
-        it('7.2.10.4. mint unsuccessfully when when sender is not launchpad of project', async () => {
+        it('7.2.10.4. Mint unsuccessfully when when sender is not launchpad of project', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
             });
@@ -1451,7 +1451,7 @@ describe('7.2. ProjectToken', async () => {
                 .to.be.revertedWithCustomError(projectToken, `Unauthorized`);
         });
 
-        it('7.2.10.5. mint unsuccessfully when paused', async () => {
+        it('7.2.10.5. Mint unsuccessfully when paused', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
                 pause: true,
@@ -1468,7 +1468,7 @@ describe('7.2. ProjectToken', async () => {
     });
 
     describe('7.2.11. safeDeprecateProject(uint256, string, bytes32)', async () => {
-        it('7.2.11.1. safe deprecate project successfully', async () => {
+        it('7.2.11.1. Safe deprecate project successfully', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
             });
@@ -1493,7 +1493,7 @@ describe('7.2. ProjectToken', async () => {
             expect(project.deprecateAt).to.equal(timestamp);
         });
 
-        it('7.2.11.2. safe deprecate project unsuccessfully with invalid project id', async () => {
+        it('7.2.11.2. Safe deprecate project unsuccessfully with invalid project id', async () => {
             const fixture = await beforeProjectTokenTest();
             const { projectToken, manager } = fixture;
 
@@ -1512,7 +1512,7 @@ describe('7.2. ProjectToken', async () => {
                 .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);            
         });
 
-        it('7.2.11.2. safe deprecate project unsuccessfully with invalid anchor', async () => {
+        it('7.2.11.2. Safe deprecate project unsuccessfully with invalid anchor', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
             });
@@ -1527,7 +1527,7 @@ describe('7.2. ProjectToken', async () => {
                 .to.be.revertedWithCustomError(projectToken, `BadAnchor`);
         });
 
-        it('7.2.11.3. safe deprecate project unsuccessfully with already deprecated project', async () => {
+        it('7.2.11.3. Safe deprecate project unsuccessfully with already deprecated project', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
                 deprecateProjects: true,
@@ -1549,7 +1549,7 @@ describe('7.2. ProjectToken', async () => {
                 .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
         });
 
-        it('7.2.11.4. safe deprecate project unsuccessfully with non-manager sender', async () => {
+        it('7.2.11.4. Safe deprecate project unsuccessfully with non-manager sender', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
             });
@@ -1572,7 +1572,7 @@ describe('7.2. ProjectToken', async () => {
                 .to.be.revertedWithCustomError(projectToken, `Unauthorized`);
         });
 
-        it('7.2.11.6. safe deprecate project unsuccessfully with inactive manager in zone', async () => {
+        it('7.2.11.6. Safe deprecate project unsuccessfully with inactive manager in zone', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
             });
@@ -1595,7 +1595,7 @@ describe('7.2. ProjectToken', async () => {
                 .to.be.revertedWithCustomError(projectToken, `Unauthorized`);
         });
     
-        it('7.2.11.7. safe deprecate project unsuccessfully when paused', async () => {
+        it('7.2.11.7. Safe deprecate project unsuccessfully when paused', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
                 pause: true,
@@ -1612,7 +1612,7 @@ describe('7.2. ProjectToken', async () => {
     });
 
     describe('7.2.12. safeUpdateProjectURI(uint256, string, (uint256, uint256, bytes), bytes32)', async () => {
-        it('7.2.12.1. safe update project uri successfully', async () => {
+        it('7.2.12.1. Safe update project uri successfully', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
             });
@@ -1634,7 +1634,7 @@ describe('7.2. ProjectToken', async () => {
             expect(await projectToken.uri(1)).to.equal(LaunchInitialization.PROJECT_TOKEN_BaseURI + params.uri);
         });
 
-        it('7.2.12.2. safe update project uri unsuccessfully with invalid project id', async () => {
+        it('7.2.12.2. Safe update project uri unsuccessfully with invalid project id', async () => {
             const fixture = await beforeProjectTokenTest();
             const { projectToken, manager, validator } = fixture;
 
@@ -1653,7 +1653,7 @@ describe('7.2. ProjectToken', async () => {
                 .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
         });
 
-        it('7.2.12.3. safe update project uri unsuccessfully with invalid anchor', async () => {
+        it('7.2.12.3. Safe update project uri unsuccessfully with invalid anchor', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
             });
@@ -1668,7 +1668,7 @@ describe('7.2. ProjectToken', async () => {
                 .to.be.revertedWithCustomError(projectToken, `BadAnchor`);
         });
 
-        it('7.2.12.3. safe update project uri unsuccessfully with already deprecated project', async () => {
+        it('7.2.12.3. Safe update project uri unsuccessfully with already deprecated project', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
                 deprecateProjects: true,
@@ -1683,7 +1683,7 @@ describe('7.2. ProjectToken', async () => {
                 .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
         });
 
-        it('7.2.12.4. safe update project uri unsuccessfully with non-manager sender', async () => {
+        it('7.2.12.4. Safe update project uri unsuccessfully with non-manager sender', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
             });
@@ -1703,7 +1703,7 @@ describe('7.2. ProjectToken', async () => {
                 .to.be.revertedWithCustomError(projectToken, `Unauthorized`);
         });
 
-        it('7.2.12.6. safe update project uri unsuccessfully with inactive manager in zone', async () => {
+        it('7.2.12.6. Safe update project uri unsuccessfully with inactive manager in zone', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
             });
@@ -1726,7 +1726,7 @@ describe('7.2. ProjectToken', async () => {
                 .to.be.revertedWithCustomError(projectToken, `Unauthorized`);
         });
     
-        it('7.2.12.7. safe update project uri unsuccessfully when paused', async () => {
+        it('7.2.12.7. Safe update project uri unsuccessfully when paused', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
                 pause: true,
@@ -1741,7 +1741,7 @@ describe('7.2. ProjectToken', async () => {
                 .to.be.revertedWith(`Pausable: paused`);
         });
 
-        it('7.2.12.8. safe update project uri unsuccessfully with invalid validation', async () => {
+        it('7.2.12.8. Safe update project uri unsuccessfully with invalid validation', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
             });
@@ -1770,7 +1770,7 @@ describe('7.2. ProjectToken', async () => {
     });
 
     describe('7.2.13. safeTokenizeProject(uint256, address, address, bytes32)', async () => {
-        it('7.2.13.1. safe tokenize project successfully', async () => {
+        it('7.2.13.1. Safe tokenize project successfully', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
                 mintProjectTokenForDepositor: true,
@@ -1889,7 +1889,7 @@ describe('7.2. ProjectToken', async () => {
             expect(await estateToken.uri(estateId2)).to.equal(LandInitialization.ESTATE_TOKEN_BaseURI + uri2);
         });
 
-        it('7.2.13.2. safe tokenize project unsuccessfully with invalid project id', async () => {
+        it('7.2.13.2. Safe tokenize project unsuccessfully with invalid project id', async () => {
             const fixture = await beforeProjectTokenTest();
             const { projectToken, manager, broker1, custodian1 } = fixture;
 
@@ -1910,7 +1910,7 @@ describe('7.2. ProjectToken', async () => {
                 .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
         });
 
-        it('7.2.13.3. safe tokenize project unsuccessfully with deprecated project', async () => {
+        it('7.2.13.3. Safe tokenize project unsuccessfully with deprecated project', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
                 mintProjectTokenForDepositor: true,
@@ -1929,7 +1929,7 @@ describe('7.2. ProjectToken', async () => {
                 .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
         });
 
-        it('7.2.13.4. safe tokenize project unsuccessfully by non-manager', async () => {
+        it('7.2.13.4. Safe tokenize project unsuccessfully by non-manager', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
                 mintProjectTokenForDepositor: true,
@@ -1953,7 +1953,7 @@ describe('7.2. ProjectToken', async () => {
                 .to.be.revertedWithCustomError(projectToken, `Unauthorized`);
         });
 
-        it('7.2.13.6. safe tokenize project unsuccessfully with inactive manager in zone', async () => {
+        it('7.2.13.6. Safe tokenize project unsuccessfully with inactive manager in zone', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
                 mintProjectTokenForDepositor: true,
@@ -1980,7 +1980,7 @@ describe('7.2. ProjectToken', async () => {
                 .to.be.revertedWithCustomError(projectToken, `Unauthorized`);
         });
 
-        it('7.2.13.7. safe tokenize project unsuccessfully when paused', async () => {
+        it('7.2.13.7. Safe tokenize project unsuccessfully when paused', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
                 mintProjectTokenForDepositor: true,
@@ -1999,7 +1999,7 @@ describe('7.2. ProjectToken', async () => {
                 .to.be.revertedWith(`Pausable: paused`);
         });
 
-        it('7.2.13.8. safe tokenize project unsuccessfully with unregistered custodian', async () => {
+        it('7.2.13.8. Safe tokenize project unsuccessfully with unregistered custodian', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
                 mintProjectTokenForDepositor: true,
@@ -2019,7 +2019,7 @@ describe('7.2. ProjectToken', async () => {
                 .to.be.reverted;
         });
 
-        it('7.2.13.8. safe tokenize project unsuccessfully with unregistered broker', async () => {
+        it('7.2.13.8. Safe tokenize project unsuccessfully with unregistered broker', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
                 mintProjectTokenForDepositor: true,
@@ -2039,7 +2039,7 @@ describe('7.2. ProjectToken', async () => {
                 .to.be.reverted
         });
 
-        it('7.2.13.10. safe tokenize project unsuccessfully when project is already tokenized', async () => {
+        it('7.2.13.10. Safe tokenize project unsuccessfully when project is already tokenized', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
                 mintProjectTokenForDepositor: true,
@@ -2056,7 +2056,7 @@ describe('7.2. ProjectToken', async () => {
                 .to.be.revertedWithCustomError(projectToken, `AlreadyTokenized`);
         });
 
-        it('7.2.13.11. safe tokenize project unsuccessfully with zero total supply', async () => {
+        it('7.2.13.11. Safe tokenize project unsuccessfully with zero total supply', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
             });
@@ -2073,7 +2073,7 @@ describe('7.2. ProjectToken', async () => {
                 .to.be.revertedWithCustomError(projectToken, `NothingToTokenize`);
         });
 
-        it('7.2.13.12. safe tokenize project unsuccessfully when project is not finalized', async () => {
+        it('7.2.13.12. Safe tokenize project unsuccessfully when project is not finalized', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
                 mintProjectTokenForDepositor: true,
@@ -2089,7 +2089,7 @@ describe('7.2. ProjectToken', async () => {
                 .to.be.revertedWithCustomError(projectToken, `InvalidTokenizing`);
         });
         
-        it('7.2.13.13. safe tokenize project unsuccessfully when tokenize estate failed', async () => {
+        it('7.2.13.13. Safe tokenize project unsuccessfully when tokenize estate failed', async () => {
             // ProjectToken is not registered as tokenizer in estate token
             const fixture = await beforeProjectTokenTest({
                 skipAddProjectTokenAsTokenizer: true,
@@ -2111,7 +2111,7 @@ describe('7.2. ProjectToken', async () => {
     });
 
     describe('7.2.14. withdrawEstateToken(uint256)', async () => {
-        it('7.2.14.1. withdraw estate token successfully', async () => {
+        it('7.2.14.1. Withdraw estate token successfully', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
                 mintProjectTokenForDepositor: true,
@@ -2183,7 +2183,7 @@ describe('7.2. ProjectToken', async () => {
             );
         });
 
-        it('7.2.14.2. withdraw zero estate token when user has zero project token balance', async () => {
+        it('7.2.14.2. Withdraw zero estate token when user has zero project token balance', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
                 mintProjectTokenForDepositor: true,
@@ -2204,7 +2204,7 @@ describe('7.2. ProjectToken', async () => {
             expect(await estateToken.balanceOf(initiator2.address, 1)).to.equal(0);
         });
 
-        it('7.2.14.3. withdraw estate token unsuccessfully when contract is reentered', async () => {
+        it('7.2.14.3. Withdraw estate token unsuccessfully when contract is reentered', async () => {
             const fixture = await beforeProjectTokenTest({                
                 useReentrancyERC1155ReceiverAsDepositor: true,
                 addSampleProjects: true,
@@ -2225,7 +2225,7 @@ describe('7.2. ProjectToken', async () => {
             );
         });
 
-        it('7.2.14.4. withdraw estate token unsuccessfully with invalid project id', async () => {
+        it('7.2.14.4. Withdraw estate token unsuccessfully with invalid project id', async () => {
             const fixture = await beforeProjectTokenTest();
             
             const { projectToken, depositor1 } = fixture;
@@ -2237,7 +2237,7 @@ describe('7.2. ProjectToken', async () => {
                 .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
         });
         
-        it('7.2.14.5. withdraw estate token unsuccessfully when project is deprecated', async () => {
+        it('7.2.14.5. Withdraw estate token unsuccessfully when project is deprecated', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
                 mintProjectTokenForDepositor: true,
@@ -2250,7 +2250,7 @@ describe('7.2. ProjectToken', async () => {
                 .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
         });
 
-        it('7.2.14.6. withdraw estate token unsuccessfully when paused', async () => {
+        it('7.2.14.6. Withdraw estate token unsuccessfully when paused', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
                 mintProjectTokenForDepositor: true,
@@ -2263,7 +2263,7 @@ describe('7.2. ProjectToken', async () => {
                 .to.be.revertedWith(`Pausable: paused`);
         });
 
-        it('7.2.14.7. withdraw estate token unsuccessfully when project is not tokenized', async () => {
+        it('7.2.14.7. Withdraw estate token unsuccessfully when project is not tokenized', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
                 mintProjectTokenForDepositor: true,
@@ -2274,7 +2274,7 @@ describe('7.2. ProjectToken', async () => {
                 .to.be.revertedWithCustomError(projectToken, `InvalidWithdrawing`);
         });
 
-        it('7.2.14.8. withdraw estate token unsuccessfully when transfer erc1155 failed', async () => {
+        it('7.2.14.8. Withdraw estate token unsuccessfully when transfer erc1155 failed', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
                 mintProjectTokenForDepositor: true,
@@ -2293,7 +2293,7 @@ describe('7.2. ProjectToken', async () => {
     });
 
     describe('7.2.15. isTokenized(uint256)', async () => {
-        it('7.2.15.1. return true for tokenized project', async () => {
+        it('7.2.15.1. Return true for tokenized project', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
                 mintProjectTokenForDepositor: true,
@@ -2305,7 +2305,7 @@ describe('7.2. ProjectToken', async () => {
             expect(await projectToken.isTokenized(2)).to.equal(true);
         });
 
-        it('7.2.15.2. return false for untokenized project', async () => {
+        it('7.2.15.2. Return false for untokenized project', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
                 mintProjectTokenForDepositor: true,
@@ -2318,7 +2318,7 @@ describe('7.2. ProjectToken', async () => {
     });
 
     describe('7.2.16. zoneOf(uint256)', async () => {
-        it('7.2.16.1. return correct zone', async () => {
+        it('7.2.16.1. Return correct zone', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
             });
@@ -2328,7 +2328,7 @@ describe('7.2. ProjectToken', async () => {
             expect(await projectToken.zoneOf(2)).to.equal(zone2);
         });
 
-        it('7.2.16.2. revert with invalid project id', async () => {
+        it('7.2.16.2. Revert with invalid project id', async () => {
             const fixture = await beforeProjectTokenTest();
             const { projectToken, depositor1 } = fixture;
 
@@ -2341,7 +2341,7 @@ describe('7.2. ProjectToken', async () => {
     });
 
     describe('7.2.17. balanceOf(address, uint256)', async () => {
-        it('7.2.17.1. return correct project token balance', async () => {
+        it('7.2.17.1. Return correct project token balance', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
                 mintProjectTokenForDepositor: true,
@@ -2358,7 +2358,7 @@ describe('7.2. ProjectToken', async () => {
             expect(await projectToken.balanceOf(depositor3.address, 2)).to.equal(50);
         });
 
-        it('7.2.17.2. return zero for invalid project id', async () => {
+        it('7.2.17.2. Return zero for invalid project id', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
                 mintProjectTokenForDepositor: true,
@@ -2371,7 +2371,7 @@ describe('7.2. ProjectToken', async () => {
             expect(await projectToken.balanceOf(depositor1.address, 100)).to.equal(0);
         });
 
-        it('7.2.17.3. return zero for deprecated project', async () => {
+        it('7.2.17.3. Return zero for deprecated project', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
                 mintProjectTokenForDepositor: true,
@@ -2391,7 +2391,7 @@ describe('7.2. ProjectToken', async () => {
     });
 
     describe('7.2.18. balanceOfAt(address, uint256, uint256)', () => {
-        it('7.2.18.1. return correct project token balance', async () => {
+        it('7.2.18.1. Return correct project token balance', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
                 mintProjectTokenForDepositor: true,
@@ -2410,7 +2410,7 @@ describe('7.2. ProjectToken', async () => {
             expect(await projectToken.balanceOfAt(depositor3.address, 2, timestamp)).to.equal(50);
         });
 
-        it('7.2.18.2. return correct project token balance in random tests', async () => {
+        it('7.2.18.2. Return correct project token balance in random tests', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
             });
@@ -2523,7 +2523,7 @@ describe('7.2. ProjectToken', async () => {
             currentTimestamp = lastTimestamp;
         });
 
-        it('7.2.18.3. revert with invalid project id', async () => {
+        it('7.2.18.3. Revert with invalid project id', async () => {
             const fixture = await beforeProjectTokenTest();
             const { projectToken, depositor1 } = fixture;
 
@@ -2536,7 +2536,7 @@ describe('7.2. ProjectToken', async () => {
                 .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
         });
 
-        it('7.2.18.4. revert with timestamp after current timestamp', async () => {
+        it('7.2.18.4. Revert with timestamp after current timestamp', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
                 mintProjectTokenForDepositor: true,
@@ -2554,7 +2554,7 @@ describe('7.2. ProjectToken', async () => {
                 .to.be.revertedWithCustomError(projectToken, `InvalidTimestamp`);
         });
 
-        it('7.2.18.5. revert with timestamp after deprecation', async () => {
+        it('7.2.18.5. Revert with timestamp after deprecation', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
                 mintProjectTokenForDepositor: true,
@@ -2575,7 +2575,7 @@ describe('7.2. ProjectToken', async () => {
     });
 
     describe('7.2.19. allocationOfAt(address, uint256, uint256)', () => {
-        it('7.2.19.1. return correct allocation for tokenized project', async () => {
+        it('7.2.19.1. Return correct allocation for tokenized project', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
             });
@@ -2684,7 +2684,7 @@ describe('7.2. ProjectToken', async () => {
             await assertCorrectAllocation(tokenizeAt, timestamp);            
         });
 
-        it('7.2.19.2. revert with invalid project id', async () => {
+        it('7.2.19.2. Revert with invalid project id', async () => {
             const fixture = await beforeProjectTokenTest();
             const { projectToken, depositor1 } = fixture;
 
@@ -2697,7 +2697,7 @@ describe('7.2. ProjectToken', async () => {
                 .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
         });
 
-        it('7.2.19.3. revert with timestamp after current timestamp', async () => {
+        it('7.2.19.3. Revert with timestamp after current timestamp', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
                 mintProjectTokenForDepositor: true,
@@ -2719,7 +2719,7 @@ describe('7.2. ProjectToken', async () => {
     });
 
     describe('7.2.20. equityOfAt(address, uint256, uint256)', () => {
-        it('7.2.20.1. return correct vote for available project', async () => {
+        it('7.2.20.1. Return correct vote for available project', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
             });
@@ -2779,7 +2779,7 @@ describe('7.2. ProjectToken', async () => {
             expect(await projectToken.equityOfAt(depositor2.address, projectId1, baseTimestamp + 50)).to.equal(480_000);
         });
         
-        it('7.2.20.2. revert with invalid project id', async () => {
+        it('7.2.20.2. Revert with invalid project id', async () => {
             const fixture = await beforeProjectTokenTest();
             const { projectToken, depositor1 } = fixture;
 
@@ -2792,7 +2792,7 @@ describe('7.2. ProjectToken', async () => {
                 .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
         });
 
-        it('7.2.20.3. revert with timestamp after current timestamp', async () => {
+        it('7.2.20.3. Revert with timestamp after current timestamp', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
             });
@@ -2812,7 +2812,7 @@ describe('7.2. ProjectToken', async () => {
                 .to.be.revertedWithCustomError(projectToken, `InvalidTimestamp`);
         });
 
-        it('7.2.20.4. revert with timestamp after deprecation', async () => {
+        it('7.2.20.4. Revert with timestamp after deprecation', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
             });
@@ -2843,7 +2843,7 @@ describe('7.2. ProjectToken', async () => {
                 .to.be.revertedWithCustomError(projectToken, `InvalidTimestamp`);
         });
 
-        it('7.2.20.5. return 0 for launchpad contract of project', async () => {
+        it('7.2.20.5. Return 0 for launchpad contract of project', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
             });
@@ -2869,7 +2869,7 @@ describe('7.2. ProjectToken', async () => {
     });
 
     describe('7.2.21. totalEquityAt(uint256, uint256)', () => {
-        it('7.2.21.1. return correct total vote for existing project', async () => {
+        it('7.2.21.1. Return correct total vote for existing project', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
             });
@@ -3001,7 +3001,7 @@ describe('7.2. ProjectToken', async () => {
             await assertCorrectAllocation(timestamp);
         });
 
-        it('7.2.21.2. revert with invalid project id', async () => {
+        it('7.2.21.2. Revert with invalid project id', async () => {
             const fixture = await beforeProjectTokenTest();
             const { projectToken, depositor1 } = fixture;
 
@@ -3014,7 +3014,7 @@ describe('7.2. ProjectToken', async () => {
                 .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
         });
 
-        it('7.2.21.3. revert with timestamp after current timestamp', async () => {
+        it('7.2.21.3. Revert with timestamp after current timestamp', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
             });
@@ -3034,7 +3034,7 @@ describe('7.2. ProjectToken', async () => {
                 .to.be.revertedWithCustomError(projectToken, `InvalidTimestamp`);
         });
 
-        it('7.2.21.4. revert with timestamp before tokenize', async () => {
+        it('7.2.21.4. Revert with timestamp before tokenize', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
             });
@@ -3054,7 +3054,7 @@ describe('7.2. ProjectToken', async () => {
                 .to.be.not.reverted;
         });
 
-        it('7.2.21.5. revert with timestamp after deprecation', async () => {
+        it('7.2.21.5. Revert with timestamp after deprecation', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
             });
@@ -3076,7 +3076,7 @@ describe('7.2. ProjectToken', async () => {
                 .to.be.revertedWithCustomError(projectToken, `InvalidTimestamp`);
         });
 
-        it('7.2.21.6. returned total vote should be the sum of equityOfAt', async () => {
+        it('7.2.21.6. Returned total vote should be the sum of equityOfAt', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
             });
@@ -3194,7 +3194,7 @@ describe('7.2. ProjectToken', async () => {
     });
 
     describe('2.4.23. supportsInterface(bytes4)', () => {
-        it('2.4.23.1. return true for appropriate interface', async () => {
+        it('2.4.23.1. Return true for appropriate interface', async () => {
             const fixture = await beforeProjectTokenTest();
             const { projectToken } = fixture;
 

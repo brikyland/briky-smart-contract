@@ -1,6 +1,11 @@
+import {
+    Contract,
+    ethers
+} from "ethers";
+
 import { Admin } from "@typechain-types";
+
 import { getSignatures } from "@utils/blockchain";
-import { Contract, ethers } from "ethers";
 
 export async function getPauseSignatures(
     pausable: Contract,

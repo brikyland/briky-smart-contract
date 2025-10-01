@@ -1,4 +1,8 @@
+import { ethers } from "ethers";
+
 import { Admin } from "@typechain-types";
+
+import { getSignatures } from "@utils/blockchain";
 import { 
     TransferAdministration1ParamsInput,
     TransferAdministration2ParamsInput,
@@ -12,8 +16,6 @@ import {
     ActivateInParamsInput,
     UpdateCurrencyRegistriesParamsInput
 } from "@utils/models/common/admin";
-import { getSignatures } from "@utils/blockchain";
-import { ethers } from "ethers";
 
 export async function getTransferAdministration1Signatures(
     admin: Admin,

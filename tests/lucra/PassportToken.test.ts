@@ -184,7 +184,7 @@ describe('5.1. PassportToken', async () => {
     });
 
     describe('5.1.2. updateBaseURI(string, bytes[])', async () => {
-        it('5.1.2.1. update base URI successfully', async () => {
+        it('5.1.2.1. Update base URI successfully', async () => {
             const { deployer, passportToken, admin, admins, minter1, minter2 } = await beforePassportTokenTest();
 
             const fee = await passportToken.fee();
@@ -215,7 +215,7 @@ describe('5.1. PassportToken', async () => {
             expect(await passportToken.tokenURI(2)).to.equal(newBaseURI);
         });
 
-        it('5.1.2.2. update base URI unsuccessfully with invalid signature', async () => {
+        it('5.1.2.2. Update base URI unsuccessfully with invalid signature', async () => {
             const { deployer, passportToken, admin, admins } = await beforePassportTokenTest();
 
             const newBaseURI = "new_base_uri";
@@ -233,7 +233,7 @@ describe('5.1. PassportToken', async () => {
     });
 
     describe('5.1.3. updateFee(uint256, bytes[])', async () => {
-        it('5.1.3.1. update fee successfully', async () => {
+        it('5.1.3.1. Update fee successfully', async () => {
             const { deployer, passportToken, admin, admins } = await beforePassportTokenTest();
 
             const fee = await passportToken.fee();
@@ -252,7 +252,7 @@ describe('5.1. PassportToken', async () => {
             expect(await passportToken.fee()).to.equal(newFee);
         });
 
-        it('5.1.3.2. update fee unsuccessfully with invalid signature', async () => {
+        it('5.1.3.2. Update fee unsuccessfully with invalid signature', async () => {
             const { deployer, passportToken, admin, admins } = await beforePassportTokenTest();
 
             const fee = await passportToken.fee();
@@ -271,7 +271,7 @@ describe('5.1. PassportToken', async () => {
     });
 
     describe('5.1.4. updateRoyaltyRate(uint256, bytes[])', async () => {
-        it('5.1.4.1. update royalty rate successfully with valid signatures', async () => {
+        it('5.1.4.1. Update royalty rate successfully with valid signatures', async () => {
             const { deployer, passportToken, admin, admins } = await beforePassportTokenTest();
 
             const paramsInput: UpdateRoyaltyRateParamsInput = {
@@ -298,7 +298,7 @@ describe('5.1. PassportToken', async () => {
             });
         });
 
-        it('5.1.4.2. update royalty rate unsuccessfully with invalid signatures', async () => {
+        it('5.1.4.2. Update royalty rate unsuccessfully with invalid signatures', async () => {
             const { deployer, passportToken, admin, admins } = await beforePassportTokenTest();
 
             const paramsInput: UpdateRoyaltyRateParamsInput = {
@@ -313,7 +313,7 @@ describe('5.1. PassportToken', async () => {
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('5.1.4.3. updateRoyaltyRate unsuccessfully with invalid rate', async () => {
+        it('5.1.4.3. UpdateRoyaltyRate unsuccessfully with invalid rate', async () => {
             const { deployer, passportToken, admin, admins } = await beforePassportTokenTest();
 
             const paramsInput: UpdateRoyaltyRateParamsInput = {
@@ -505,7 +505,7 @@ describe('5.1. PassportToken', async () => {
                 .to.be.revertedWith('ERC20: transfer amount exceeds balance');
         });
 
-        it('5.1.5.7. withdraw unsuccessfully when native token receiving failed', async () => {
+        it('5.1.5.7. Withdraw unsuccessfully when native token receiving failed', async () => {
             const { deployer, admins, admin, passportToken } = await beforePassportTokenTest();
 
             const failReceiver = await deployFailReceiver(deployer, true, false);
@@ -529,7 +529,7 @@ describe('5.1. PassportToken', async () => {
                 .to.be.revertedWithCustomError(passportToken, 'FailedTransfer');
         });
 
-        it('5.1.5.8. withdraw unsuccessfully when the contract is reentered', async () => {
+        it('5.1.5.8. Withdraw unsuccessfully when the contract is reentered', async () => {
             const { deployer, admins, admin, passportToken } = await beforePassportTokenTest();
 
             const reentrancyERC20 = await deployReentrancyERC20(deployer);
@@ -569,7 +569,7 @@ describe('5.1. PassportToken', async () => {
     });
 
     describe('5.1.6. mint()', async () => {
-        it('5.1.6.1. mint successfully', async () => {
+        it('5.1.6.1. Mint successfully', async () => {
             const { passportToken, minter1, minter2 } = await beforePassportTokenTest();
 
             const fee = await passportToken.fee();
@@ -611,7 +611,7 @@ describe('5.1. PassportToken', async () => {
             expect(await ethers.provider.getBalance(passportToken.address)).to.equal(initPassportTokenBalance.add(fee).add(fee));
         });
 
-        it('5.1.6.2. mint successfully when paused', async () => {
+        it('5.1.6.2. Mint successfully when paused', async () => {
             const { passportToken, minter1, minter2 } = await beforePassportTokenTest({
                 pause: true,
             });
@@ -621,7 +621,7 @@ describe('5.1. PassportToken', async () => {
                 .to.be.revertedWith('Pausable: paused');
         });
 
-        it('5.1.6.3. mint unsuccessfully when already minted', async () => {
+        it('5.1.6.3. Mint unsuccessfully when already minted', async () => {
             const { passportToken, minter1, minter2 } = await beforePassportTokenTest();
 
             const fee = await passportToken.fee();
@@ -635,14 +635,14 @@ describe('5.1. PassportToken', async () => {
                 .to.be.revertedWithCustomError(passportToken, 'AlreadyMinted');
         });
 
-        it('5.1.6.4. mint unsuccessfully with insufficient value', async () => {
+        it('5.1.6.4. Mint unsuccessfully with insufficient value', async () => {
             const { passportToken, minter1 } = await beforePassportTokenTest();
 
             await expect(passportToken.connect(minter1).mint())
                 .to.be.revertedWithCustomError(passportToken, 'InsufficientValue');
         });
 
-        it('5.1.6.5. mint unsuccessfully when sender reenter the contract', async () => {
+        it('5.1.6.5. Mint unsuccessfully when sender reenter the contract', async () => {
             const { passportToken, deployer, minter1 } = await beforePassportTokenTest();
 
             const reentrancy = await deployReentrancy(deployer);
@@ -663,7 +663,7 @@ describe('5.1. PassportToken', async () => {
     });
 
     describe('5.1.7. supportsInterface(bytes4)', async () => {
-        it('5.1.7.1. return true for appropriate interface', async () => {
+        it('5.1.7.1. Return true for appropriate interface', async () => {
             const { passportToken } = await beforePassportTokenTest();
 
             expect(await passportToken.supportsInterface(getBytes4Hex(IERC4906UpgradeableInterfaceId))).to.equal(true);

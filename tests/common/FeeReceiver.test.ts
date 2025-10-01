@@ -298,7 +298,7 @@ describe('1.5. FeeReceiver', async () => {
             )).to.be.revertedWith('ERC20: transfer amount exceeds balance');
         })
 
-        it('1.5.2.7. withdraw unsuccessfully when native token receiving failed', async () => {
+        it('1.5.2.7. Withdraw unsuccessfully when native token receiving failed', async () => {
             const { deployer, admins, admin, feeReceiver } = await setupBeforeTest();
 
             const failReceiver = await deployFailReceiver(deployer, true, false);
@@ -322,7 +322,7 @@ describe('1.5. FeeReceiver', async () => {
             )).to.be.revertedWithCustomError(feeReceiver, 'FailedTransfer');
         });
 
-        it('1.5.2.8. withdraw unsuccessfully when the contract is reentered', async () => {
+        it('1.5.2.8. Withdraw unsuccessfully when the contract is reentered', async () => {
             const { deployer, admins, admin, feeReceiver } = await setupBeforeTest();
 
             const reentrancyERC20 = await deployReentrancyERC20(deployer);

@@ -1,5 +1,6 @@
 import { Admin, PriceWatcher } from "@typechain-types";
-import { callAdmin_UpdateCurrencyRegistries } from "./admin";
+
+import { callAdmin_UpdateCurrencyRegistries } from "@utils/call/common/admin";
 import { 
     callPriceWatcher_UpdateDefaultRates,
     callPriceWatcher_UpdatePriceFeeds
@@ -7,6 +8,7 @@ import {
 import { Rate } from "@utils/models/common/common";
 
 export async function addCurrencyToAdminAndPriceWatcher(
+    deployer: any,
     admin: Admin,
     priceWatcher: PriceWatcher,
     admins: any[],

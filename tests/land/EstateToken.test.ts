@@ -446,7 +446,7 @@ describe('2.4. EstateToken', async () => {
     });
 
     describe('2.4.2. updateCommissionToken(address, bytes[])', async () => {
-        it('2.4.2.1. updateCommissionToken successfully with valid signatures', async () => {
+        it('2.4.2.1. UpdateCommissionToken successfully with valid signatures', async () => {
             const { estateToken, admin, admins, commissionToken } = await beforeEstateTokenTest({
                 skipUpdateCommissionToken: true,
             });
@@ -463,7 +463,7 @@ describe('2.4. EstateToken', async () => {
             expect(await estateToken.commissionToken()).to.equal(commissionToken.address);
         });
 
-        it('2.4.2.2. updateCommissionToken unsuccessfully with invalid signatures', async () => {
+        it('2.4.2.2. UpdateCommissionToken unsuccessfully with invalid signatures', async () => {
             const { estateToken, admin, admins, commissionToken } = await beforeEstateTokenTest({
                 skipUpdateCommissionToken: true,
             });
@@ -480,7 +480,7 @@ describe('2.4. EstateToken', async () => {
             )).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('2.4.2.3. updateCommissionToken unsuccessfully when already set', async () => {
+        it('2.4.2.3. UpdateCommissionToken unsuccessfully when already set', async () => {
             const { estateToken, admin, admins, commissionToken } = await beforeEstateTokenTest();
 
             const message = ethers.utils.defaultAbiCoder.encode(
@@ -497,7 +497,7 @@ describe('2.4. EstateToken', async () => {
     });
 
     describe('2.4.3. updateBaseURI(string, bytes[])', async () => {
-        it('2.4.3.1. updateBaseURI successfully with valid signatures', async () => {
+        it('2.4.3.1. UpdateBaseURI successfully with valid signatures', async () => {
             const { estateToken, admin, admins } = 
             await beforeEstateTokenTest({
                 addSampleEstates: true,        
@@ -520,7 +520,7 @@ describe('2.4. EstateToken', async () => {
             expect(await estateToken.uri(2)).to.equal("NewBaseURI:Token2_URI");
         });
 
-        it('2.4.3.2. updateBaseURI unsuccessfully with invalid signatures', async () => {
+        it('2.4.3.2. UpdateBaseURI unsuccessfully with invalid signatures', async () => {
             const { estateToken, admin, admins } = await beforeEstateTokenTest();
 
             const message = ethers.utils.defaultAbiCoder.encode(
@@ -593,7 +593,7 @@ describe('2.4. EstateToken', async () => {
             )).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('2.4.4.3. Authorize tokenizer reverted without reason with EOA address', async () => {
+        it('2.4.4.3. Authorize tokenizer reverted without reason with EOA', async () => {
             const { estateToken, admin, admins } = await beforeEstateTokenTest({
                 skipAuthorizeEstateForger: true,
             });
@@ -613,7 +613,7 @@ describe('2.4. EstateToken', async () => {
             )).to.be.revertedWithCustomError(estateToken, 'InvalidTokenizer');
         })
 
-        it('2.4.4.4. Authorize tokenizer reverted with contract not supporting EstateTokenizer interface', async () => {
+        it('2.4.4.4. Authorize tokenizer reverted when contract does not support EstateTokenizer interface', async () => {
             const { estateToken, admin, admins } = await beforeEstateTokenTest({
                 skipAuthorizeEstateForger: true,
             });
@@ -633,7 +633,7 @@ describe('2.4. EstateToken', async () => {
             )).to.be.revertedWithCustomError(estateToken, 'InvalidTokenizer');
         })
 
-        it('2.4.4.5. Authorize tokenizer unsuccessfully when authorizing same account twice on same tx', async () => {
+        it('2.4.4.5. Authorize tokenizer unsuccessfully when authorizing the same account twice on the same tx', async () => {
             const { estateToken, admin, admins, tokenizers } = await beforeEstateTokenTest({
                 skipAuthorizeEstateForger: true,
             });
@@ -653,7 +653,7 @@ describe('2.4. EstateToken', async () => {
             )).to.be.revertedWithCustomError(estateToken, `AuthorizedAccount`)
         });
 
-        it('2.4.4.6. Authorize tokenizer unsuccessfully when authorizing same account twice on different tx', async () => {
+        it('2.4.4.6. Authorize tokenizer unsuccessfully when authorizing the same account twice on different txs', async () => {
             const { estateToken, admin, admins, tokenizers } = await beforeEstateTokenTest({
                 skipAuthorizeEstateForger: true,
             });
@@ -758,7 +758,7 @@ describe('2.4. EstateToken', async () => {
             )).to.be.revertedWithCustomError(estateToken, `NotAuthorizedAccount`)
         });
 
-        it('2.4.4.9. Deauthorize tokenizer unsuccessfully when unauthorizing same accounts twice on same tx', async () => {
+        it('2.4.4.9. Deauthorize tokenizer unsuccessfully when unauthorizing the same account twice on the same tx', async () => {
             const { estateToken, admin, admins, tokenizers } = await beforeEstateTokenTest();
 
             await setupTokenizers(estateToken, admin, admins, tokenizers);
@@ -778,7 +778,7 @@ describe('2.4. EstateToken', async () => {
             )).to.be.revertedWithCustomError(estateToken, `NotAuthorizedAccount`)
         });
 
-        it('2.4.4.10. Deauthorize tokenizer unsuccessfully when unauthorizing same accounts twice on different tx', async () => {
+        it('2.4.4.10. Deauthorize tokenizer unsuccessfully when unauthorizing the same account twice on different txs', async () => {
             const { estateToken, admin, admins, tokenizers } = await beforeEstateTokenTest();
 
             await setupTokenizers(estateToken, admin, admins, tokenizers);
@@ -860,7 +860,7 @@ describe('2.4. EstateToken', async () => {
             )).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('2.4.5.3. Authorize extractor unsuccessfully when authorizing same account twice on same tx', async () => {
+        it('2.4.5.3. Authorize extractor unsuccessfully when authorizing the same account twice on the same tx', async () => {
             const { estateToken, admin, admins, extractors } = await beforeEstateTokenTest();
 
             const duplicateExtractors = [extractors[0], extractors[1], extractors[2], extractors[0]];
@@ -878,7 +878,7 @@ describe('2.4. EstateToken', async () => {
             )).to.be.revertedWithCustomError(estateToken, `AuthorizedAccount`)
         });
 
-        it('2.4.5.4. Authorize extractor unsuccessfully when authorizing same account twice on different tx', async () => {
+        it('2.4.5.4. Authorize extractor unsuccessfully when authorizing the same account twice on different txs', async () => {
             const { estateToken, admin, admins, extractors } = await beforeEstateTokenTest();
 
             const tx1Extractors = extractors.slice(0, 3);
@@ -977,7 +977,7 @@ describe('2.4. EstateToken', async () => {
             )).to.be.revertedWithCustomError(estateToken, `NotAuthorizedAccount`)
         });
 
-        it('2.4.5.7. Deauthorize extractor unsuccessfully when unauthorizing same accounts twice on same tx', async () => {
+        it('2.4.5.7. Deauthorize extractor unsuccessfully when unauthorizing the same account twice on the same tx', async () => {
             const { estateToken, admin, admins, extractors } = await beforeEstateTokenTest();
 
             await setupExtractors(estateToken, admin, admins, extractors);
@@ -997,7 +997,7 @@ describe('2.4. EstateToken', async () => {
             )).to.be.revertedWithCustomError(estateToken, `NotAuthorizedAccount`)
         });
 
-        it('2.4.5.8. Deauthorize extractor unsuccessfully when unauthorizing same accounts twice on different tx', async () => {
+        it('2.4.5.8. Deauthorize extractor unsuccessfully when unauthorizing the same account twice on different txs', async () => {
             const { estateToken, admin, admins, extractors } = await beforeEstateTokenTest();
 
             await setupExtractors(estateToken, admin, admins, extractors);
@@ -1027,7 +1027,7 @@ describe('2.4. EstateToken', async () => {
     });
     
     describe('2.4.6. updateZoneRoyaltyRate(uint256, bytes[])', async () => {
-        it('2.4.6.1. updateZoneRoyaltyRate successfully with valid signatures', async () => {
+        it('2.4.6.1. UpdateZoneRoyaltyRate successfully with valid signatures', async () => {
             const fixture = await beforeEstateTokenTest();
             const { estateToken, admin, admins, zone1, zone2 } = fixture;
 
@@ -1085,7 +1085,7 @@ describe('2.4. EstateToken', async () => {
             });
         });
 
-        it('2.4.6.2. updateZoneRoyaltyRate unsuccessfully with invalid signatures', async () => {
+        it('2.4.6.2. UpdateZoneRoyaltyRate unsuccessfully with invalid signatures', async () => {
             const fixture = await beforeEstateTokenTest();
             const { estateToken, admin, admins, zone1 } = fixture;
 
@@ -1102,7 +1102,7 @@ describe('2.4. EstateToken', async () => {
             )).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('2.4.6.3. updateZoneRoyaltyRate unsuccessfully with invalid rate', async () => {
+        it('2.4.6.3. UpdateZoneRoyaltyRate unsuccessfully with invalid rate', async () => {
             const fixture = await beforeEstateTokenTest();
             const { estateToken, admin, admins, zone1 } = fixture;
 
@@ -1120,7 +1120,7 @@ describe('2.4. EstateToken', async () => {
             )).to.be.revertedWithCustomError(estateToken, 'InvalidRate');
         });
 
-        it('2.4.6.4. updateZoneRoyaltyRate unsuccessfully with invalid zone', async () => {
+        it('2.4.6.4. UpdateZoneRoyaltyRate unsuccessfully with invalid zone', async () => {
             const fixture = await beforeEstateTokenTest();
             const { estateToken, admin, admins } = fixture;
 
@@ -1142,7 +1142,7 @@ describe('2.4. EstateToken', async () => {
     });
 
     describe('2.4.7. getEstate(uint256)', () => {
-        it('2.4.7.1. succeed with existing estate id', async () => {
+        it('2.4.7.1. Succeed with existing estate id', async () => {
             const { estateToken } = await beforeEstateTokenTest({
                 addSampleEstates: true,                
             });
@@ -1151,7 +1151,7 @@ describe('2.4. EstateToken', async () => {
             await estateToken.getEstate(2);
         });
 
-        it('2.4.7.2. revert with non-existing estate id', async () => {
+        it('2.4.7.2. Revert with non-existing estate id', async () => {
             const { estateToken } = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -1168,7 +1168,7 @@ describe('2.4. EstateToken', async () => {
     });
 
     describe('2.4.8. isAvailable(uint256)', () => {
-        it('2.4.8.1. return true for existing, not deprecated, and not expired estate', async () => {
+        it('2.4.8.1. Return true for existing, not deprecated, and not expired estate', async () => {
             const { estateToken } = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -1177,7 +1177,7 @@ describe('2.4. EstateToken', async () => {
             expect(await estateToken.isAvailable(2)).to.equal(true);
         });
 
-        it('2.4.8.2. return false for non-existing estate', async () => {
+        it('2.4.8.2. Return false for non-existing estate', async () => {
             const { estateToken } = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -1187,7 +1187,7 @@ describe('2.4. EstateToken', async () => {
             expect(await estateToken.isAvailable(100)).to.equal(false);
         });
 
-        it('2.4.8.3. return false for deprecated estate', async () => {
+        it('2.4.8.3. Return false for deprecated estate', async () => {
             const { estateToken, manager } = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -1211,7 +1211,7 @@ describe('2.4. EstateToken', async () => {
             expect(await estateToken.isAvailable(2)).to.equal(false);
         });
 
-        it('2.4.8.4. return false for expired estate', async () => {
+        it('2.4.8.4. Return false for expired estate', async () => {
             const { estateToken } = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -1392,7 +1392,7 @@ describe('2.4. EstateToken', async () => {
                 .to.be.revertedWithCustomError(estateToken, `Unauthorized`)           
         });
 
-        it('2.4.9.5. Register custodian successfully when registering same account twice', async () => {
+        it('2.4.9.5. Register custodian successfully when registering the same account twice', async () => {
             const fixture = await beforeEstateTokenTest({
                 skipRegisterCustodians: true,
             });
@@ -1460,7 +1460,7 @@ describe('2.4. EstateToken', async () => {
             return { baseTimestamp, defaultParams };
         };
 
-        it('2.4.10.1. tokenize estate successfully with commission receiver', async () => {
+        it('2.4.10.1. Tokenize estate successfully with commission receiver', async () => {
             const fixture = await beforeEstateTokenTest();
             const { estateToken, estateForger, broker1, commissionToken } = fixture;
             const { baseTimestamp, defaultParams } = await beforeTokenizeEstateTest(fixture);
@@ -1498,7 +1498,7 @@ describe('2.4. EstateToken', async () => {
             expect(await commissionToken.ownerOf(1)).to.equal(params.broker);
         });
 
-        it('2.4.10.2. tokenize estate unsuccessfully with unregistered broker', async () => {
+        it('2.4.10.2. Tokenize estate unsuccessfully with unregistered broker', async () => {
             const fixture = await beforeEstateTokenTest();
             const { estateToken, estateForger, commissionToken } = fixture;
 
@@ -1516,7 +1516,7 @@ describe('2.4. EstateToken', async () => {
                 .to.be.revertedWithCustomError(commissionToken, `InvalidBroker`);
         });
 
-        it('2.4.10.3. tokenize estate unsuccessfully when tokenizer is not authorized', async () => {
+        it('2.4.10.3. Tokenize estate unsuccessfully when tokenizer is not authorized', async () => {
             const fixture = await beforeEstateTokenTest({
                 skipAuthorizeEstateForger: true,
             });
@@ -1529,7 +1529,7 @@ describe('2.4. EstateToken', async () => {
                 .to.be.revertedWithCustomError(estateToken, `Unauthorized`);
         });
 
-        it('2.4.10.4. tokenize estate unsuccessfully when zone is not declared', async () => {
+        it('2.4.10.4. Tokenize estate unsuccessfully when zone is not declared', async () => {
             const fixture = await beforeEstateTokenTest();
             const { estateToken, estateForger } = fixture;
             const { baseTimestamp, defaultParams } = await beforeTokenizeEstateTest(fixture);
@@ -1546,7 +1546,7 @@ describe('2.4. EstateToken', async () => {
                 .to.be.revertedWithCustomError(estateToken, `InvalidInput`);
         });
 
-        it('2.4.10.5. tokenize estate unsuccessfully with expired estate', async () => {
+        it('2.4.10.5. Tokenize estate unsuccessfully with expired estate', async () => {
             const fixture = await beforeEstateTokenTest();
             const { estateToken, estateForger } = fixture;
             const { baseTimestamp, defaultParams } = await beforeTokenizeEstateTest(fixture);
@@ -1568,7 +1568,7 @@ describe('2.4. EstateToken', async () => {
                 .to.be.revertedWithCustomError(estateToken, `InvalidTimestamp`);
         });
 
-        it('2.4.10.6. tokenize estate unsuccessfully when custodian is not registered', async () => {
+        it('2.4.10.6. Tokenize estate unsuccessfully when custodian is not registered', async () => {
             const fixture = await beforeEstateTokenTest({
                 skipRegisterCustodians: true,
             });
@@ -1581,7 +1581,7 @@ describe('2.4. EstateToken', async () => {
                 .to.be.revertedWithCustomError(estateToken, `InvalidCustodian`);
         })
 
-        it('2.4.10.7. tokenize estate unsuccessfully when commission token is not set', async () => {
+        it('2.4.10.7. Tokenize estate unsuccessfully when commission token is not set', async () => {
             const fixture = await beforeEstateTokenTest({
                 skipUpdateCommissionToken: true,
             });
@@ -1596,7 +1596,7 @@ describe('2.4. EstateToken', async () => {
     });
 
     describe('2.4.11. safeDeprecateEstate(uint256, string, bytes32)', () => {
-        it('2.4.11.1. deprecate estate successfully', async () => {
+        it('2.4.11.1. Deprecate estate successfully', async () => {
             const { estateToken, manager } = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -1635,7 +1635,7 @@ describe('2.4. EstateToken', async () => {
             expect((await estateToken.getEstate(2)).deprecateAt).to.equal(baseTimestamp + 100);
         });
 
-        it('2.4.11.2. deprecate estate unsuccessfully with invalid anchor', async () => {
+        it('2.4.11.2. Deprecate estate unsuccessfully with invalid anchor', async () => {
             const { estateToken, manager } = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -1649,7 +1649,7 @@ describe('2.4. EstateToken', async () => {
                 .to.be.revertedWithCustomError(estateToken, "BadAnchor");
         });
 
-        it('2.4.11.2. deprecate estate unsuccessfully with non-existing estate id', async () => {
+        it('2.4.11.2. Deprecate estate unsuccessfully with non-existing estate id', async () => {
             const { estateToken, manager } = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -1676,7 +1676,7 @@ describe('2.4. EstateToken', async () => {
                 .to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
         });
 
-        it('2.4.11.3. deprecate estate unsuccessfully with deprecated estate', async () => {
+        it('2.4.11.3. Deprecate estate unsuccessfully with deprecated estate', async () => {
             const { estateToken, manager } = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -1698,7 +1698,7 @@ describe('2.4. EstateToken', async () => {
                 .to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
         });
 
-        it('2.4.11.4. deprecate estate unsuccessfully by unauthorized sender', async () => {
+        it('2.4.11.4. Deprecate estate unsuccessfully by unauthorized sender', async () => {
             const { estateToken, user, moderator } = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -1714,7 +1714,7 @@ describe('2.4. EstateToken', async () => {
                 .to.be.revertedWithCustomError(estateToken, "Unauthorized");
         });
 
-        it('2.4.11.6. deprecate estate unsuccessfully when sender is not active in zone', async () => {
+        it('2.4.11.6. Deprecate estate unsuccessfully when sender is not active in zone', async () => {
             const { estateToken, manager, admin, admins, zone1 } = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -1736,7 +1736,7 @@ describe('2.4. EstateToken', async () => {
                 .to.be.revertedWithCustomError(estateToken, "Unauthorized");
         });
 
-        it('2.4.11.7. deprecate estate unsuccessfully when paused', async () => {
+        it('2.4.11.7. Deprecate estate unsuccessfully when paused', async () => {
             const { estateToken, manager } = await beforeEstateTokenTest({
                 addSampleEstates: true,
                 pause: true,
@@ -1752,7 +1752,7 @@ describe('2.4. EstateToken', async () => {
     });
 
     describe('2.4.12. safeExtendEstateExpiration(uint256, uint40, bytes32)', () => {
-        it('2.4.12.1. extend estate expiration successfully by manager with valid estate', async () => {
+        it('2.4.12.1. Extend estate expiration successfully by manager with valid estate', async () => {
             const { estateToken, manager } = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -1788,7 +1788,7 @@ describe('2.4. EstateToken', async () => {
             expect((await estateToken.getEstate(1)).expireAt).to.equal(params2.expireAt);
         });
 
-        it('2.4.12.2. extend estate expiration successfully by manager with invalid anchor', async () => {
+        it('2.4.12.2. Extend estate expiration successfully by manager with invalid anchor', async () => {
             const { estateToken, manager } = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -1804,7 +1804,7 @@ describe('2.4. EstateToken', async () => {
                 .to.be.revertedWithCustomError(estateToken, "BadAnchor");
         });
 
-        it('2.4.12.2. extend estate expiration unsuccessfully with non-existing estate', async () => {
+        it('2.4.12.2. Extend estate expiration unsuccessfully with non-existing estate', async () => {
             const { estateToken, manager } = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -1833,7 +1833,7 @@ describe('2.4. EstateToken', async () => {
                 .to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
         });
 
-        it('2.4.12.3. extend estate expiration unsuccessfully with deprecated estate', async () => {
+        it('2.4.12.3. Extend estate expiration unsuccessfully with deprecated estate', async () => {
             const { estateToken, manager } = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -1853,7 +1853,7 @@ describe('2.4. EstateToken', async () => {
                 .to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
         });
 
-        it('2.4.12.4. extend estate expiration unsuccessfully by non-manager sender', async () => {
+        it('2.4.12.4. Extend estate expiration unsuccessfully by non-manager sender', async () => {
             const { estateToken, user, moderator } = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -1870,7 +1870,7 @@ describe('2.4. EstateToken', async () => {
                 .to.be.revertedWithCustomError(estateToken, "Unauthorized");
         });
 
-        it('2.4.12.6. extend estate expiration unsuccessfully when sender is not active in zone', async () => {
+        it('2.4.12.6. Extend estate expiration unsuccessfully when sender is not active in zone', async () => {
             const { estateToken, manager, admin, admins, zone1 } = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -1893,7 +1893,7 @@ describe('2.4. EstateToken', async () => {
                 .to.be.revertedWithCustomError(estateToken, "Unauthorized");
         });
 
-        it('2.4.12.7. extend estate expiration unsuccessfully with invalid new expire timestamp', async () => {
+        it('2.4.12.7. Extend estate expiration unsuccessfully with invalid new expire timestamp', async () => {
             const { estateToken, manager } = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -1907,7 +1907,7 @@ describe('2.4. EstateToken', async () => {
                 .to.be.revertedWithCustomError(estateToken, "InvalidTimestamp");
         });
 
-        it('2.4.12.8. extend estate expiration unsuccessfully when paused', async () => {
+        it('2.4.12.8. Extend estate expiration unsuccessfully when paused', async () => {
             const { estateToken, manager } = await beforeEstateTokenTest({
                 addSampleEstates: true,
                 pause: true,
@@ -1925,7 +1925,7 @@ describe('2.4. EstateToken', async () => {
     });
 
     describe('2.4.13. safeUpdateEstateURI(uint256, string, (uint256, uint256, bytes), bytes32)', () => {
-        it('2.4.13.1. update estate URI successfully by manager with available estate', async () => {
+        it('2.4.13.1. Update estate URI successfully by manager with available estate', async () => {
             const fixture = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -1960,7 +1960,7 @@ describe('2.4. EstateToken', async () => {
             expect(await estateToken.uri(params2.estateId)).to.equal(LandInitialization.ESTATE_TOKEN_BaseURI + 'new_URI_2');
         });
 
-        it('2.4.13.2. update estate URI successfully by manager with invalid anchor', async () => {
+        it('2.4.13.2. Update estate URI successfully by manager with invalid anchor', async () => {
             const fixture = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -1975,7 +1975,7 @@ describe('2.4. EstateToken', async () => {
                 .to.be.revertedWithCustomError(estateToken, "BadAnchor");            
         });
 
-        it('2.4.13.3. update estate URI successfully by manager with invalid validation', async () => {
+        it('2.4.13.3. Update estate URI successfully by manager with invalid validation', async () => {
             const fixture = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -1998,7 +1998,7 @@ describe('2.4. EstateToken', async () => {
             )).to.be.revertedWithCustomError(estateToken, "InvalidSignature");
         });
 
-        it('2.4.13.2. update estate URI unsuccessfully with unavailable estate', async () => {
+        it('2.4.13.2. Update estate URI unsuccessfully with unavailable estate', async () => {
             const fixture = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -2033,7 +2033,7 @@ describe('2.4. EstateToken', async () => {
                 .to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
         });
 
-        it('2.4.13.3. update estate URI unsuccessfully by non-manager sender', async () => {
+        it('2.4.13.3. Update estate URI unsuccessfully by non-manager sender', async () => {
             const fixture = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -2051,7 +2051,7 @@ describe('2.4. EstateToken', async () => {
                 .to.be.revertedWithCustomError(estateToken, "Unauthorized");
         });
 
-        it('2.4.13.5. update estate URI unsuccessfully when sender is not active in zone', async () => {
+        it('2.4.13.5. Update estate URI unsuccessfully when sender is not active in zone', async () => {
             const fixture = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -2074,7 +2074,7 @@ describe('2.4. EstateToken', async () => {
                 .to.be.revertedWithCustomError(estateToken, "Unauthorized");
         });
 
-        it('2.4.13.6. update estate URI unsuccessfully when paused', async () => {
+        it('2.4.13.6. Update estate URI unsuccessfully when paused', async () => {
             const fixture = await beforeEstateTokenTest({
                 addSampleEstates: true,
                 pause: true,
@@ -2091,7 +2091,7 @@ describe('2.4. EstateToken', async () => {
     });
 
     describe('2.4.14. safeUpdateEstateCustodian(uint256, address)', () => {
-        it('2.4.14.1. update estate custodian successfully', async () => {
+        it('2.4.14.1. Update estate custodian successfully', async () => {
             const fixture = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -2114,7 +2114,7 @@ describe('2.4. EstateToken', async () => {
             expect(estate.custodian).to.equal(custodian3.address);
         });
 
-        it('2.4.14.2. update estate custodian successfully with invalid anchor', async () => {
+        it('2.4.14.2. Update estate custodian successfully with invalid anchor', async () => {
             const fixture = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -2129,7 +2129,7 @@ describe('2.4. EstateToken', async () => {
                 .to.be.revertedWithCustomError(estateToken, "BadAnchor");            
         });
 
-        it('2.4.14.2. update estate custodian unsuccessfully with unavailable estate', async () => {
+        it('2.4.14.2. Update estate custodian unsuccessfully with unavailable estate', async () => {
             const fixture = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -2163,7 +2163,7 @@ describe('2.4. EstateToken', async () => {
                 .to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
         });
 
-        it('2.4.14.3. update estate custodian unsuccessfully by non-manager sender', async () => {
+        it('2.4.14.3. Update estate custodian unsuccessfully by non-manager sender', async () => {
             const fixture = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -2179,7 +2179,7 @@ describe('2.4. EstateToken', async () => {
                 .to.be.revertedWithCustomError(estateToken, "Unauthorized");
         });
 
-        it('2.4.14.5. update estate custodian unsuccessfully when sender is not active in zone', async () => {
+        it('2.4.14.5. Update estate custodian unsuccessfully when sender is not active in zone', async () => {
             const fixture = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -2202,7 +2202,7 @@ describe('2.4. EstateToken', async () => {
                 .to.be.revertedWithCustomError(estateToken, "Unauthorized");
         });
 
-        it('2.4.14.6. update estate custodian unsuccessfully when paused', async () => {
+        it('2.4.14.6. Update estate custodian unsuccessfully when paused', async () => {
             const fixture = await beforeEstateTokenTest({
                 addSampleEstates: true,
                 pause: true,
@@ -2217,7 +2217,7 @@ describe('2.4. EstateToken', async () => {
                 .to.be.revertedWith("Pausable: paused");
         });
 
-        it('2.4.14.7. update estate custodian unsuccessfully when custodian is not registered in zone', async () => {
+        it('2.4.14.7. Update estate custodian unsuccessfully when custodian is not registered in zone', async () => {
             const fixture = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -2233,7 +2233,7 @@ describe('2.4. EstateToken', async () => {
     });
 
     describe('2.4.15. extractEstate(uint256, uint256)', () => {
-        it('2.4.15.1. extract estate successfully by extractor', async () => {
+        it('2.4.15.1. Extract estate successfully by extractor', async () => {
             const fixture = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -2280,7 +2280,7 @@ describe('2.4. EstateToken', async () => {
             expect(estate2.deprecateAt).to.equal(timestamp);
         });
 
-        it('2.4.15.2. extract estate unsuccessfully with invalid estate id', async () => {
+        it('2.4.15.2. Extract estate unsuccessfully with invalid estate id', async () => {
             const fixture = await beforeEstateTokenTest();
 
             const { estateToken, estateLiquidator } = fixture;
@@ -2296,7 +2296,7 @@ describe('2.4. EstateToken', async () => {
             )).to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
         });
 
-        it('2.4.15.3. extract estate unsuccessfully when paused', async () => {
+        it('2.4.15.3. Extract estate unsuccessfully when paused', async () => {
             const fixture = await beforeEstateTokenTest({
                 addSampleEstates: true,
                 pause: true,
@@ -2310,7 +2310,7 @@ describe('2.4. EstateToken', async () => {
             )).to.be.revertedWith("Pausable: paused");
         });
 
-        it('2.4.15.4. extract estate unsuccessfully when estate liquidator is not authorized', async () => {
+        it('2.4.15.4. Extract estate unsuccessfully when estate liquidator is not authorized', async () => {
             const fixture = await beforeEstateTokenTest({
                 skipAuthorizeEstateLiquidator: true,
                 addSampleEstates: true,
@@ -2326,7 +2326,7 @@ describe('2.4. EstateToken', async () => {
     });
 
     describe('2.4.16. zoneOf(uint256)', () => {
-        it('2.4.16.1. return correct zone with available estate', async () => {
+        it('2.4.16.1. Return correct zone with available estate', async () => {
             const fixture = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -2336,7 +2336,7 @@ describe('2.4. EstateToken', async () => {
             expect(await estateToken.zoneOf(2)).to.equal(zone2);
         });
 
-        it('2.4.16.2. revert with invalid estate id', async () => {
+        it('2.4.16.2. Revert with invalid estate id', async () => {
             const fixture = await beforeEstateTokenTest();
 
             const { estateToken } = fixture;
@@ -2349,7 +2349,7 @@ describe('2.4. EstateToken', async () => {
     });
 
     describe('2.4.17. balanceOf(address, uint256)', () => {
-        it('2.4.17.1. return correct estate token balance for available estate', async () => {
+        it('2.4.17.1. Return correct estate token balance for available estate', async () => {
             const { estateToken, depositor1, depositor2 } = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -2361,7 +2361,7 @@ describe('2.4. EstateToken', async () => {
             expect(await estateToken.balanceOf(depositor2.address, 2)).to.equal(500);
         });
 
-        it('2.4.17.2. return 0 for invalid estate id', async () => {
+        it('2.4.17.2. Return 0 for invalid estate id', async () => {
             const { estateToken, depositor1 } = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -2373,7 +2373,7 @@ describe('2.4. EstateToken', async () => {
     });
 
     describe('2.4.18. balanceOfAt(address, uint256, uint40)', () => {
-        it('2.4.18.1. return correct estate token balance for available estate', async () => {
+        it('2.4.18.1. Return correct estate token balance for available estate', async () => {
             const { estateToken, depositor1, depositor2, depositor3 } = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -2432,7 +2432,7 @@ describe('2.4. EstateToken', async () => {
             expect(await estateToken.balanceOfAt(depositor3.address, 1, baseTimestamp + 120)).to.equal(8_000);
         });
 
-        it('2.4.18.2. return 0 when user has not withdrawn from tokenizer', async () => {
+        it('2.4.18.2. Return 0 when user has not withdrawn from tokenizer', async () => {
             const { estateToken, depositor1, estateForger } = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -2449,7 +2449,7 @@ describe('2.4. EstateToken', async () => {
             expect(await estateToken.balanceOfAt(estateToken.address, 1, baseTimestamp + 20)).to.equal(0);
         });
 
-        it('2.4.18.3. return correct estate token balance in random tests', async () => {
+        it('2.4.18.3. Return correct estate token balance in random tests', async () => {
             const { estateToken, depositors, estateForger } = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -2554,7 +2554,7 @@ describe('2.4. EstateToken', async () => {
             estateForger.allocationOfAt.reset();
         });
 
-        it('2.4.18.4. revert with inexistent estate id', async () => {
+        it('2.4.18.4. Revert with inexistent estate id', async () => {
             const { estateToken, depositor1 } = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -2568,7 +2568,7 @@ describe('2.4. EstateToken', async () => {
                 .to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
         });
 
-        it('2.4.18.5. revert with timestamp after current block timestamp', async () => {
+        it('2.4.18.5. Revert with timestamp after current block timestamp', async () => {
             const { estateToken, depositor1 } = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -2586,7 +2586,7 @@ describe('2.4. EstateToken', async () => {
                 .to.be.revertedWithCustomError(estateToken, "InvalidTimestamp");
         });
 
-        it('2.4.18.6. revert with timestamp after deprecation', async () => {
+        it('2.4.18.6. Revert with timestamp after deprecation', async () => {
             const { estateToken, depositor1, manager } = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -2613,7 +2613,7 @@ describe('2.4. EstateToken', async () => {
                 .to.be.revertedWithCustomError(estateToken, "InvalidTimestamp");
         });
 
-        it('2.4.18.7. revert with timestamp after expiration', async () => {
+        it('2.4.18.7. Revert with timestamp after expiration', async () => {
             const { estateToken, depositor1, manager } = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -2631,7 +2631,7 @@ describe('2.4. EstateToken', async () => {
                 .to.be.revertedWithCustomError(estateToken, "InvalidTimestamp");
         });
 
-        it('2.4.18.8. return correct balance when account is estate tokenizer', async () => {
+        it('2.4.18.8. Return correct balance when account is estate tokenizer', async () => {
             const { estateToken, estateForger } = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -2644,7 +2644,7 @@ describe('2.4. EstateToken', async () => {
     });
 
     describe('2.4.19. totalEquityAt(uint256, uint40)', () => {
-        it('2.4.19.1. return correct total vote for available estate', async () => {
+        it('2.4.19.1. Return correct total vote for available estate', async () => {
             const { estateToken } = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -2655,7 +2655,7 @@ describe('2.4. EstateToken', async () => {
             expect(await estateToken.totalEquityAt(2, baseTimestamp)).to.equal(10_000);            
         });
 
-        it('2.4.19.2. revert with inexistent estate id', async () => {
+        it('2.4.19.2. Revert with inexistent estate id', async () => {
             const { estateToken, depositor1, estateForger } = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -2668,7 +2668,7 @@ describe('2.4. EstateToken', async () => {
                 .to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
         });
 
-        it('2.4.19.3. revert with timestamp after current block timestamp', async () => {
+        it('2.4.19.3. Revert with timestamp after current block timestamp', async () => {
             const { estateToken, manager } = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -2682,7 +2682,7 @@ describe('2.4. EstateToken', async () => {
                 .to.be.revertedWithCustomError(estateToken, "InvalidTimestamp");
         });
 
-        it('2.4.19.4. revert with timestamp before tokenization', async () => {
+        it('2.4.19.4. Revert with timestamp before tokenization', async () => {
             const { estateToken } = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -2707,7 +2707,7 @@ describe('2.4. EstateToken', async () => {
                 .to.not.be.reverted;
         });
 
-        it('2.4.19.5. revert with timestamp after deprecation', async () => {
+        it('2.4.19.5. Revert with timestamp after deprecation', async () => {
             const { estateToken, manager } = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -2751,7 +2751,7 @@ describe('2.4. EstateToken', async () => {
                 .to.be.revertedWithCustomError(estateToken, "InvalidTimestamp");
         });
 
-        it('2.4.19.6. revert with timestamp after expiration', async () => {
+        it('2.4.19.6. Revert with timestamp after expiration', async () => {
             const { estateToken } = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -2777,7 +2777,7 @@ describe('2.4. EstateToken', async () => {
                 .to.be.revertedWithCustomError(estateToken, "InvalidTimestamp");
         });
 
-        it('2.4.19.7. return total vote of each equityOfAt', async () => {
+        it('2.4.19.7. Return total vote of each equityOfAt', async () => {
             // Note: this variant is only true when total supply of estate does not change
             const { estateToken, manager, depositor1, depositor2, estateForger, zone1, custodian1, broker1 } = await beforeEstateTokenTest({
                 addSampleEstates: true,
@@ -2922,7 +2922,7 @@ describe('2.4. EstateToken', async () => {
     });
 
     describe('2.4.20. equityOfAt(address, uint256, uint40)', () => {
-        it('2.4.20.1. return correct vote for available estate', async () => {
+        it('2.4.20.1. Return correct vote for available estate', async () => {
             const { estateForger, estateToken, depositor1, depositor2 } = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -2977,7 +2977,7 @@ describe('2.4. EstateToken', async () => {
             estateForger.allocationOfAt.reset();
         });
 
-        it('2.4.20.2. revert with invalid estate id', async () => {
+        it('2.4.20.2. Revert with invalid estate id', async () => {
             const fixture = await beforeEstateTokenTest();
             const { estateToken, depositor1 } = fixture;
 
@@ -2989,7 +2989,7 @@ describe('2.4. EstateToken', async () => {
                 .to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
         });
 
-        it('2.4.20.3. revert with timestamp after current block timestamp', async () => {
+        it('2.4.20.3. Revert with timestamp after current block timestamp', async () => {
             const fixture = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -3018,7 +3018,7 @@ describe('2.4. EstateToken', async () => {
             estateForger.allocationOfAt.reset();
         });
 
-        it('2.4.20.4. revert with timestamp after deprecation', async () => {
+        it('2.4.20.4. Revert with timestamp after deprecation', async () => {
             const fixture = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -3053,7 +3053,7 @@ describe('2.4. EstateToken', async () => {
             estateForger.allocationOfAt.reset();
         });
 
-        it('2.4.20.5. revert with timestamp after expiration', async () => {
+        it('2.4.20.5. Revert with timestamp after expiration', async () => {
             const fixture = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -3080,7 +3080,7 @@ describe('2.4. EstateToken', async () => {
             estateForger.allocationOfAt.reset();
         });
 
-        it('2.4.20.6. return 0 with estate tokenizer account', async () => {
+        it('2.4.20.6. Return 0 with estate tokenizer account', async () => {
             const { estateForger, estateToken } = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -3107,7 +3107,7 @@ describe('2.4. EstateToken', async () => {
     });
 
     describe('2.4.21. safeTransferFrom(address, address, uint256, uint256, bytes)', () => {
-        it('2.4.21.1. transfer unsuccessfully when the token is deprecated', async () => {
+        it('2.4.21.1. Transfer unsuccessfully when the token is deprecated', async () => {
             const { estateToken, manager, depositor1, depositor2 } = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -3130,7 +3130,7 @@ describe('2.4. EstateToken', async () => {
             )).to.be.revertedWith("EstateToken: Token is unavailable");
         });
 
-        it('2.4.21.2. transfer unsuccessfully when the token is expired', async () => {
+        it('2.4.21.2. Transfer unsuccessfully when the token is expired', async () => {
             const { estateToken, manager, depositor1, depositor2 } = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -3153,7 +3153,7 @@ describe('2.4. EstateToken', async () => {
     });
 
     describe('2.4.22. getRoyaltyRate()', () => {
-        it('2.4.22.1. return correct royalty rate for available estate', async () => {
+        it('2.4.22.1. Return correct royalty rate for available estate', async () => {
             const { estateToken, zone1, zone2, admins, admin } = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -3184,7 +3184,7 @@ describe('2.4. EstateToken', async () => {
             });
         });
 
-        it('2.4.22.2. revert with invalid estate id', async () => {
+        it('2.4.22.2. Revert with invalid estate id', async () => {
             const { estateToken } = await beforeEstateTokenTest();
 
             await expect(estateToken.getRoyaltyRate(0))
@@ -3194,7 +3194,7 @@ describe('2.4. EstateToken', async () => {
                 .to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
         });
 
-        it('2.4.22.3. revert with unavailable estate', async () => {
+        it('2.4.22.3. Revert with unavailable estate', async () => {
             const { estateToken, manager } = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -3211,7 +3211,7 @@ describe('2.4. EstateToken', async () => {
     });
 
     describe('2.4.23. supportsInterface(bytes4)', () => {
-        it('2.4.23.1. return true for appropriate interface', async () => {
+        it('2.4.23.1. Return true for appropriate interface', async () => {
             const fixture = await beforeEstateTokenTest();
             const { estateToken } = fixture;
 

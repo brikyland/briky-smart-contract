@@ -881,7 +881,7 @@ describe('7.1. PrestigePad', async () => {
     });
 
     describe('7.1.2. updateBaseUnitPriceRange(uint256, uint256, bytes[])', async () => {
-        it('7.1.2.1. updateBaseUnitPriceRange successfully with valid signatures', async () => {
+        it('7.1.2.1. UpdateBaseUnitPriceRange successfully with valid signatures', async () => {
             const { admin, admins, prestigePad } = await beforePrestigePadTest({});
             
             const baseMinUnitPrice = 20;
@@ -908,7 +908,7 @@ describe('7.1. PrestigePad', async () => {
             expect(await prestigePad.baseMaxUnitPrice()).to.equal(baseMaxUnitPrice);
         });
 
-        it('7.1.2.2. updateBaseUnitPriceRange unsuccessfully with invalid signatures', async () => {
+        it('7.1.2.2. UpdateBaseUnitPriceRange unsuccessfully with invalid signatures', async () => {
             const { admin, admins, prestigePad } = await beforePrestigePadTest({});
             const baseMinUnitPrice = 20;
             const baseMaxUnitPrice = 100;
@@ -926,7 +926,7 @@ describe('7.1. PrestigePad', async () => {
             )).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('7.1.2.3. updateBaseUnitPriceRange unsuccessfully with invalid price range', async () => {
+        it('7.1.2.3. UpdateBaseUnitPriceRange unsuccessfully with invalid price range', async () => {
             const { admin, admins, prestigePad } = await beforePrestigePadTest({});
             const baseMinUnitPrice = 101;
             const baseMaxUnitPrice = 100;
@@ -946,7 +946,7 @@ describe('7.1. PrestigePad', async () => {
     });
 
     describe('7.1.3. getLaunch(uint256)', async () => {
-        it('7.1.3.1. return correct launch with valid launch id', async () => {
+        it('7.1.3.1. Return correct launch with valid launch id', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,                
             });
@@ -957,7 +957,7 @@ describe('7.1. PrestigePad', async () => {
             await expect(prestigePad.getLaunch(2)).to.not.be.reverted;
         });
 
-        it('7.1.3.2. revert with invalid launch id', async () => {
+        it('7.1.3.2. Revert with invalid launch id', async () => {
             const fixture = await beforePrestigePadTest();
 
             const { prestigePad } = fixture;
@@ -970,7 +970,7 @@ describe('7.1. PrestigePad', async () => {
     });
 
     describe('7.1.4. getRound(uint256)', async () => {
-        it('7.1.4.1. return correct round with valid round id', async () => {
+        it('7.1.4.1. Return correct round with valid round id', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -985,7 +985,7 @@ describe('7.1. PrestigePad', async () => {
             await expect(prestigePad.getRound(roundId2)).to.not.be.reverted;
         });
 
-        it('7.1.4.2. revert with invalid round id', async () => {
+        it('7.1.4.2. Revert with invalid round id', async () => {
             const fixture = await beforePrestigePadTest();
 
             const { prestigePad } = fixture;
@@ -1015,7 +1015,7 @@ describe('7.1. PrestigePad', async () => {
             return { defaultParams };
         }
 
-        it('7.1.5.1. initiate launch successfully', async () => {
+        it('7.1.5.1. Initiate launch successfully', async () => {
             const fixture = await beforePrestigePadTest({});
 
             const { prestigePad, validator, projectToken, manager, moderator, initiator1, zone1, initiator2, zone2 } = fixture;
@@ -1181,7 +1181,7 @@ describe('7.1. PrestigePad', async () => {
             expect(await projectToken.balanceOf(params2.initiator, projectId2)).to.equal(initiatorInitBalance2.add(initialAmount2));            
         });
 
-        it('7.1.5.2. initiate launch unsuccessfully when contract is reentered', async () => {
+        it('7.1.5.2. Initiate launch unsuccessfully when contract is reentered', async () => {
             const fixture = await beforePrestigePadTest();
 
             const { prestigePad, validator, manager, zone1, deployer, projectToken } = fixture;
@@ -1225,7 +1225,7 @@ describe('7.1. PrestigePad', async () => {
             );
         });
 
-        it('7.1.5.3. initiate launch unsuccessfully by non-executive account', async () => {
+        it('7.1.5.3. Initiate launch unsuccessfully by non-executive account', async () => {
             const fixture = await beforePrestigePadTest();
 
             const { prestigePad, user, validator } = fixture;
@@ -1236,7 +1236,7 @@ describe('7.1. PrestigePad', async () => {
                 .to.be.revertedWithCustomError(prestigePad, 'Unauthorized');
         });
 
-        it('7.1.5.4. initiate launch unsuccessfully when paused', async () => {
+        it('7.1.5.4. Initiate launch unsuccessfully when paused', async () => {
             const fixture = await beforePrestigePadTest({
                 pause: true,
             });
@@ -1248,7 +1248,7 @@ describe('7.1. PrestigePad', async () => {
                 .to.be.revertedWith('Pausable: paused');
         });
 
-        it('7.1.5.5. initiate launch unsuccessfully with invalid validation', async () => {
+        it('7.1.5.5. Initiate launch unsuccessfully with invalid validation', async () => {
             const fixture = await beforePrestigePadTest();
 
             const { prestigePad, manager, validator } = fixture;
@@ -1268,7 +1268,7 @@ describe('7.1. PrestigePad', async () => {
             )).to.be.revertedWithCustomError(prestigePad, 'InvalidSignature');
         });
 
-        it('7.1.5.6. initiate launch unsuccessfully with inactive zone', async () => {
+        it('7.1.5.6. Initiate launch unsuccessfully with inactive zone', async () => {
             const fixture = await beforePrestigePadTest();
 
             const { prestigePad, manager, validator } = fixture;
@@ -1282,7 +1282,7 @@ describe('7.1. PrestigePad', async () => {
                 .to.be.revertedWithCustomError(prestigePad, 'Unauthorized');
         });
 
-        it('7.1.5.7. initiate launch unsuccessfully when sender is not authorized in zone', async () => {
+        it('7.1.5.7. Initiate launch unsuccessfully when sender is not authorized in zone', async () => {
             const fixture = await beforePrestigePadTest();
 
             const { admin, admins, prestigePad, manager, validator } = fixture;
@@ -1302,7 +1302,7 @@ describe('7.1. PrestigePad', async () => {
                 .to.be.revertedWithCustomError(prestigePad, 'Unauthorized');
         });
 
-        it('7.1.5.8. initiate launch unsuccessfully when initiator is not registered in zone', async () => {
+        it('7.1.5.8. Initiate launch unsuccessfully when initiator is not registered in zone', async () => {
             const fixture = await beforePrestigePadTest({
                 skipAuthorizeInitiators: true,
             });
@@ -1315,7 +1315,7 @@ describe('7.1. PrestigePad', async () => {
                 .to.be.revertedWithCustomError(prestigePad, 'NotRegisteredInitiator');
         });
 
-        it('7.1.5.9. initiate launch unsuccessfully when launching project failed', async () => {
+        it('7.1.5.9. Initiate launch unsuccessfully when launching project failed', async () => {
             const fixture = await beforePrestigePadTest();
 
             const { deployer, admin, manager, projectToken, admins, validator, prestigePad } = fixture;
@@ -1328,7 +1328,7 @@ describe('7.1. PrestigePad', async () => {
                 .to.be.revertedWith('Pausable: paused');
         });
 
-        it('7.1.5.10. initiate launch unsuccessfully when initiator cannot receive erc1155', async () => {
+        it('7.1.5.10. Initiate launch unsuccessfully when initiator cannot receive erc1155', async () => {
             const fixture = await beforePrestigePadTest();
 
             const { prestigePad, manager, deployer, projectToken, validator, zone1 } = fixture;
@@ -1368,7 +1368,7 @@ describe('7.1. PrestigePad', async () => {
             return { defaultParams }
         }
 
-        it('7.1.6.1. update launch uri successfully', async () => {
+        it('7.1.6.1. Update launch uri successfully', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
             });
@@ -1398,7 +1398,7 @@ describe('7.1. PrestigePad', async () => {
             expect(launch2.uri).to.equal(params2.uri);
         });
 
-        it('7.1.6.2. update launch uri unsuccessfully with invalid launch id', async () => {
+        it('7.1.6.2. Update launch uri unsuccessfully with invalid launch id', async () => {
             const fixture = await beforePrestigePadTest();
 
             const { prestigePad, manager, validator } = fixture;
@@ -1419,7 +1419,7 @@ describe('7.1. PrestigePad', async () => {
                 .to.be.revertedWithCustomError(prestigePad, 'InvalidLaunchId');
         });
 
-        it('7.1.6.3. update launch uri unsuccessfully when sender is not launch initiator', async () => {
+        it('7.1.6.3. Update launch uri unsuccessfully when sender is not launch initiator', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
             });
@@ -1437,7 +1437,7 @@ describe('7.1. PrestigePad', async () => {
                 .to.be.revertedWithCustomError(prestigePad, 'Unauthorized');
         });
 
-        it('7.1.6.4. update launch uri unsuccessfully when paused', async () => {
+        it('7.1.6.4. Update launch uri unsuccessfully when paused', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 pause: true,
@@ -1451,7 +1451,7 @@ describe('7.1. PrestigePad', async () => {
                 .to.be.revertedWith('Pausable: paused');
         });
 
-        it('7.1.6.5. update launch uri unsuccessfully with invalid validation', async () => {
+        it('7.1.6.5. Update launch uri unsuccessfully with invalid validation', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
             });
@@ -1468,7 +1468,7 @@ describe('7.1. PrestigePad', async () => {
             )).to.be.revertedWithCustomError(prestigePad, 'InvalidSignature');
         });
 
-        it('7.1.6.6. update launch uri unsuccessfully when launch is finalized', async () => {
+        it('7.1.6.6. Update launch uri unsuccessfully when launch is finalized', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -1512,7 +1512,7 @@ describe('7.1. PrestigePad', async () => {
             return { defaultParams }
         }
 
-        it('7.1.7.1. update round successfully', async () => {
+        it('7.1.7.1. Update round successfully', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -1576,7 +1576,7 @@ describe('7.1. PrestigePad', async () => {
             expect(round.quote.currency).to.equal(params.round.quote.currency);
         });
 
-        it('7.1.7.2. update round unsuccessfully with invalid launch id', async () => {
+        it('7.1.7.2. Update round unsuccessfully with invalid launch id', async () => {
             const fixture = await beforePrestigePadTest();
 
             const { prestigePad, initiator1, validator } = fixture;
@@ -1592,7 +1592,7 @@ describe('7.1. PrestigePad', async () => {
                 .to.be.revertedWithCustomError(prestigePad, 'InvalidLaunchId');
         });
 
-        it('7.1.7.3. update round unsuccessfully when sender is not launch initiator', async () => {
+        it('7.1.7.3. Update round unsuccessfully when sender is not launch initiator', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -1613,7 +1613,7 @@ describe('7.1. PrestigePad', async () => {
                 .to.be.revertedWithCustomError(prestigePad, 'Unauthorized');
         });
 
-        it('7.1.7.4. update round unsuccessfully when paused', async () => {
+        it('7.1.7.4. Update round unsuccessfully when paused', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -1629,7 +1629,7 @@ describe('7.1. PrestigePad', async () => {
                 .to.be.revertedWith('Pausable: paused');
         });
 
-        it('7.1.7.5. update round unsuccessfully with invalid round validation', async () => {
+        it('7.1.7.5. Update round unsuccessfully with invalid round validation', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -1652,7 +1652,7 @@ describe('7.1. PrestigePad', async () => {
             )).to.be.revertedWithCustomError(prestigePad, 'InvalidSignature');
         });
 
-        it('7.1.7.6. update round unsuccessfully when launch is finalized', async () => {
+        it('7.1.7.6. Update round unsuccessfully when launch is finalized', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -1669,7 +1669,7 @@ describe('7.1. PrestigePad', async () => {
                 .to.be.revertedWithCustomError(prestigePad, 'AlreadyFinalized');
         });
 
-        it('7.1.7.7. update round unsuccessfully with invalid index', async () => {
+        it('7.1.7.7. Update round unsuccessfully with invalid index', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -1689,7 +1689,7 @@ describe('7.1. PrestigePad', async () => {
                 .to.be.revertedWithCustomError(prestigePad, 'InvalidInput');
         });
 
-        it('7.1.7.8. update round unsuccessfully when updated round is already initiated', async () => {
+        it('7.1.7.8. Update round unsuccessfully when updated round is already initiated', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -1704,7 +1704,7 @@ describe('7.1. PrestigePad', async () => {
                 .to.be.revertedWithCustomError(prestigePad, 'InvalidUpdating');
         });
 
-        it('7.1.7.9. update round unsuccessfully when currency price is not in range', async () => {
+        it('7.1.7.9. Update round unsuccessfully when currency price is not in range', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -1743,7 +1743,7 @@ describe('7.1. PrestigePad', async () => {
                 .to.be.revertedWithCustomError(prestigePad, 'InvalidUnitPrice');
         });
 
-        it('7.1.7.10. update round unsuccessfully when min selling quantity exceed max selling quantity', async () => {
+        it('7.1.7.10. Update round unsuccessfully when min selling quantity exceed max selling quantity', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -1780,7 +1780,7 @@ describe('7.1. PrestigePad', async () => {
                 .to.not.be.reverted;
         });
 
-        it('7.1.7.11. update round unsuccessfully when max selling quantity exceed total quantity', async () => {
+        it('7.1.7.11. Update round unsuccessfully when max selling quantity exceed total quantity', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -1857,7 +1857,7 @@ describe('7.1. PrestigePad', async () => {
             return { defaultParams };
         }
         
-        it('7.1.8.1. update rounds successfully', async () => {
+        it('7.1.8.1. Update rounds successfully', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -1965,7 +1965,7 @@ describe('7.1. PrestigePad', async () => {
             }
         });
 
-        it('7.1.8.2. update round unsuccessfully with invalid launch id', async () => {
+        it('7.1.8.2. Update round unsuccessfully with invalid launch id', async () => {
             const fixture = await beforePrestigePadTest();
 
             const { prestigePad, validator, initiator1 } = fixture;
@@ -1995,7 +1995,7 @@ describe('7.1. PrestigePad', async () => {
             )).to.be.revertedWithCustomError(prestigePad, 'InvalidLaunchId');
         });
 
-        it('7.1.8.3. update round unsuccessfully when sender is not launch initiator', async () => {
+        it('7.1.8.3. Update round unsuccessfully when sender is not launch initiator', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -2022,7 +2022,7 @@ describe('7.1. PrestigePad', async () => {
             )).to.be.revertedWithCustomError(prestigePad, 'Unauthorized');
         });
 
-        it('7.1.8.4. update round unsuccessfully when paused', async () => {
+        it('7.1.8.4. Update round unsuccessfully when paused', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -2041,7 +2041,7 @@ describe('7.1. PrestigePad', async () => {
             )).to.be.revertedWith('Pausable: paused');
         });
 
-        it('7.1.8.5. update round unsuccessfully when launch is finalized', async () => {
+        it('7.1.8.5. Update round unsuccessfully when launch is finalized', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -2062,7 +2062,7 @@ describe('7.1. PrestigePad', async () => {
             )).to.be.revertedWithCustomError(prestigePad, 'AlreadyFinalized');
         });
 
-        it('7.1.8.6. update round unsuccessfully when removing round number is greater than launch total round number', async () => {
+        it('7.1.8.6. Update round unsuccessfully when removing round number is greater than launch total round number', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -2097,7 +2097,7 @@ describe('7.1. PrestigePad', async () => {
             )).to.be.revertedWithCustomError(prestigePad, 'InvalidRemoving');
         });
 
-        it('7.1.8.7. update round unsuccessfully when current round is removed', async () => {
+        it('7.1.8.7. Update round unsuccessfully when current round is removed', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -2142,7 +2142,7 @@ describe('7.1. PrestigePad', async () => {
             )).to.not.be.reverted;
         });
 
-        it('7.1.8.8. update round unsuccessfully with invalid round validation', async () => {
+        it('7.1.8.8. Update round unsuccessfully with invalid round validation', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -2168,7 +2168,7 @@ describe('7.1. PrestigePad', async () => {
             )).to.be.revertedWithCustomError(prestigePad, 'InvalidSignature');
         });
 
-        it('7.1.8.9. update round unsuccessfully when currency price is not in range', async () => {
+        it('7.1.8.9. Update round unsuccessfully when currency price is not in range', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -2220,7 +2220,7 @@ describe('7.1. PrestigePad', async () => {
             )).to.be.revertedWithCustomError(prestigePad, 'InvalidUnitPrice');
         });
 
-        it('7.1.8.10. update round unsuccessfully when min selling quantity exceed max selling quantity', async () => {
+        it('7.1.8.10. Update round unsuccessfully when min selling quantity exceed max selling quantity', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -2270,7 +2270,7 @@ describe('7.1. PrestigePad', async () => {
             )).to.not.be.reverted;
         });
 
-        it('7.1.8.11. update round unsuccessfully when max selling quantity exceed total quantity', async () => {
+        it('7.1.8.11. Update round unsuccessfully when max selling quantity exceed total quantity', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -2360,7 +2360,7 @@ describe('7.1. PrestigePad', async () => {
             ));
         }
 
-        it('7.1.9.1. raise next round successfully', async () => {
+        it('7.1.9.1. Raise next round successfully', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -2491,7 +2491,7 @@ describe('7.1. PrestigePad', async () => {
             expect(fund2.extraDenominations).to.deep.equal(params2.cashbackDenominations);
         });
         
-        it('7.1.9.2. raise next round successfully without cashback', async () => {
+        it('7.1.9.2. Raise next round successfully without cashback', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -2555,7 +2555,7 @@ describe('7.1. PrestigePad', async () => {
             expect(round.agenda.raiseEndsAt).to.equal(params.raiseStartsAt + params.raiseDuration);
         });
 
-        it('7.1.9.3. raise next round unsuccessfully when contract is reentered', async () => {
+        it('7.1.9.3. Raise next round unsuccessfully when contract is reentered', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -2582,7 +2582,7 @@ describe('7.1. PrestigePad', async () => {
             );
         });
 
-        it('7.1.9.4. raise next round unsuccessfully with invalid launch id', async () => {
+        it('7.1.9.4. Raise next round unsuccessfully with invalid launch id', async () => {
             const fixture = await beforePrestigePadTest();
 
             const { prestigePad, initiator1 } = fixture;
@@ -2606,7 +2606,7 @@ describe('7.1. PrestigePad', async () => {
             });
         });
 
-        it('7.1.9.5. raise next round unsuccessfully when sender is not launch initiator', async () => {
+        it('7.1.9.5. Raise next round unsuccessfully when sender is not launch initiator', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -2627,7 +2627,7 @@ describe('7.1. PrestigePad', async () => {
             });
         });
 
-        it('7.1.9.6. raise next round unsuccessfully when paused', async () => {
+        it('7.1.9.6. Raise next round unsuccessfully when paused', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -2643,7 +2643,7 @@ describe('7.1. PrestigePad', async () => {
             });
         });
 
-        it('7.1.9.7. raise next round unsuccessfully with invalid cashback base rate', async () => {
+        it('7.1.9.7. Raise next round unsuccessfully with invalid cashback base rate', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -2670,7 +2670,7 @@ describe('7.1. PrestigePad', async () => {
             });
         });
 
-        it('7.1.9.8. raise next round unsuccessfully with mismatched params length', async () => {
+        it('7.1.9.8. Raise next round unsuccessfully with mismatched params length', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -2699,7 +2699,7 @@ describe('7.1. PrestigePad', async () => {
             });
         });
 
-        it('7.1.9.9. raise next round unsuccessfully with raise start time before current timestamp', async () => {
+        it('7.1.9.9. Raise next round unsuccessfully with raise start time before current timestamp', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -2732,7 +2732,7 @@ describe('7.1. PrestigePad', async () => {
             });
         });
 
-        it('7.1.9.10. raise next round unsuccessfully with raise duration less than minimum requirement', async () => {
+        it('7.1.9.10. Raise next round unsuccessfully with raise duration less than minimum requirement', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -2759,7 +2759,7 @@ describe('7.1. PrestigePad', async () => {
             });
         });
 
-        it('7.1.9.11. raise next round unsuccessfully when launch is finalized', async () => {
+        it('7.1.9.11. Raise next round unsuccessfully when launch is finalized', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -2777,7 +2777,7 @@ describe('7.1. PrestigePad', async () => {
             });
         });
 
-        it('7.1.9.12. raise next round unsuccessfully when current round is not confirmed', async () => {
+        it('7.1.9.12. Raise next round unsuccessfully when current round is not confirmed', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -2794,7 +2794,7 @@ describe('7.1. PrestigePad', async () => {
             
         });
 
-        it('7.1.9.13. raise next round unsuccessfully when there is no new round', async () => {
+        it('7.1.9.13. Raise next round unsuccessfully when there is no new round', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
             });
@@ -2808,7 +2808,7 @@ describe('7.1. PrestigePad', async () => {
             });            
         });
 
-        it('7.1.9.14. raise next round unsuccessfully when cashback threshold exceed total quantity', async () => {
+        it('7.1.9.14. Raise next round unsuccessfully when cashback threshold exceed total quantity', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -2837,7 +2837,7 @@ describe('7.1. PrestigePad', async () => {
             });
         });
 
-        it('7.1.9.15. raise next round unsuccessfully without cashback currencies and rate, but with cashback threshold', async () => {
+        it('7.1.9.15. Raise next round unsuccessfully without cashback currencies and rate, but with cashback threshold', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -2859,7 +2859,7 @@ describe('7.1. PrestigePad', async () => {
             });
         });
 
-        it('7.1.9.16. raise next round unsuccessfully with cashback currencies and rate, but without cashback threshold', async () => {
+        it('7.1.9.16. Raise next round unsuccessfully with cashback currencies and rate, but without cashback threshold', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -2881,7 +2881,7 @@ describe('7.1. PrestigePad', async () => {
             });
         });
 
-        it('7.1.9.17. raise next round unsuccessfully when open fund failed', async () => {
+        it('7.1.9.17. Raise next round unsuccessfully when open fund failed', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -2899,7 +2899,7 @@ describe('7.1. PrestigePad', async () => {
     });
 
     describe('7.1.10. cancelCurrentRound(uint256)', async () => {
-        it('7.1.10.1. cancel current round successfully', async () => {
+        it('7.1.10.1. Cancel current round successfully', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -2943,7 +2943,7 @@ describe('7.1. PrestigePad', async () => {
             expect(oldRound1After.quota.totalQuantity).to.equal(0);
         });
 
-        it('7.1.10.2. cancel current round unsuccessfully with invalid launch id', async () => {
+        it('7.1.10.2. Cancel current round unsuccessfully with invalid launch id', async () => {
             const fixture = await beforePrestigePadTest();
 
             const { prestigePad, initiator1 } = fixture;
@@ -2952,7 +2952,7 @@ describe('7.1. PrestigePad', async () => {
                 .to.be.revertedWithCustomError(prestigePad, 'InvalidLaunchId');
         });
 
-        it('7.1.10.3. cancel current round unsuccessfully when sender is not launch initiator', async () => {
+        it('7.1.10.3. Cancel current round unsuccessfully when sender is not launch initiator', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -2970,7 +2970,7 @@ describe('7.1. PrestigePad', async () => {
                 .to.be.revertedWithCustomError(prestigePad, 'Unauthorized');
         });
 
-        it('7.1.10.4. cancel current round unsuccessfully when paused', async () => {
+        it('7.1.10.4. Cancel current round unsuccessfully when paused', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -2984,7 +2984,7 @@ describe('7.1. PrestigePad', async () => {
                 .to.be.revertedWith('Pausable: paused');
         });
 
-        it('7.1.10.5. cancel current round unsuccessfully when launch is finalized', async () => {
+        it('7.1.10.5. Cancel current round unsuccessfully when launch is finalized', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -2999,7 +2999,7 @@ describe('7.1. PrestigePad', async () => {
                 .to.be.revertedWithCustomError(prestigePad, 'AlreadyFinalized');
         });
 
-        it('7.1.10.6. cancel current round unsuccessfully when current round is confirmed', async () => {
+        it('7.1.10.6. Cancel current round unsuccessfully when current round is confirmed', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -3016,7 +3016,7 @@ describe('7.1. PrestigePad', async () => {
     });
 
     describe('7.1.11. safeConfirmCurrentRound(uint256, bytes32)', async () => {
-        it('7.1.11.1. safe confirm current round successfully with native currency', async () => {
+        it('7.1.11.1. Safe confirm current round successfully with native currency', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -3135,7 +3135,7 @@ describe('7.1. PrestigePad', async () => {
             );
         });
 
-        it('7.1.11.2. safe confirm current round successfully with erc20 after raise ended', async () => {
+        it('7.1.11.2. Safe confirm current round successfully with erc20 after raise ended', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -3257,7 +3257,7 @@ describe('7.1. PrestigePad', async () => {
             );
         });
 
-        it('7.1.11.3. safe confirm current round successfully with erc20 without cashback', async () => {
+        it('7.1.11.3. Safe confirm current round successfully with erc20 without cashback', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -3342,7 +3342,7 @@ describe('7.1. PrestigePad', async () => {
             );
         });
 
-        it('7.1.11.4. safe confirm current round successfully with native currency without cashback', async () => {
+        it('7.1.11.4. Safe confirm current round successfully with native currency without cashback', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -3418,7 +3418,7 @@ describe('7.1. PrestigePad', async () => {
             );
         });
 
-        it('7.1.11.5. safe confirm current round successfully with native currency in both main and extra currencies', async () => {
+        it('7.1.11.5. Safe confirm current round successfully with native currency in both main and extra currencies', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -3524,7 +3524,7 @@ describe('7.1. PrestigePad', async () => {
             );
         });
 
-        it('7.1.11.6. safe confirm current round successfully with erc20 currency in both main and extra currencies', async () => {
+        it('7.1.11.6. Safe confirm current round successfully with erc20 currency in both main and extra currencies', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -3648,7 +3648,7 @@ describe('7.1. PrestigePad', async () => {
             );
         });
 
-        it('7.1.11.7. safe confirm current round unsuccessfully when contract is reentered', async () => {
+        it('7.1.11.7. Safe confirm current round unsuccessfully when contract is reentered', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -3676,7 +3676,7 @@ describe('7.1. PrestigePad', async () => {
             )
         });
 
-        it('7.1.11.8. safe confirm current round unsuccessfully with invalid launch id', async () => {
+        it('7.1.11.8. Safe confirm current round unsuccessfully with invalid launch id', async () => {
             const fixture = await beforePrestigePadTest();
 
             const { prestigePad, initiator1 } = fixture;
@@ -3704,7 +3704,7 @@ describe('7.1. PrestigePad', async () => {
             )).to.be.revertedWithCustomError(prestigePad, 'InvalidLaunchId');
         });
 
-        it('7.1.11.9. safe confirm current round unsuccessfully when sender is not launch initiator', async () => {
+        it('7.1.11.9. Safe confirm current round unsuccessfully when sender is not launch initiator', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -3731,7 +3731,7 @@ describe('7.1. PrestigePad', async () => {
             )).to.be.revertedWithCustomError(prestigePad, 'Unauthorized');
         });
 
-        it('7.1.11.10. safe confirm current round unsuccessfully when paused', async () => {
+        it('7.1.11.10. Safe confirm current round unsuccessfully when paused', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -3751,7 +3751,7 @@ describe('7.1. PrestigePad', async () => {
             )).to.be.revertedWith('Pausable: paused');
         });
 
-        it('7.1.11.11. safe confirm current round unsuccessfully when launch is finalized', async () => {
+        it('7.1.11.11. Safe confirm current round unsuccessfully when launch is finalized', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -3771,7 +3771,7 @@ describe('7.1. PrestigePad', async () => {
             )).to.be.revertedWithCustomError(prestigePad, 'AlreadyFinalized');
         });
 
-        it('7.1.11.12. safe confirm current round unsuccessfully when round is confirmed', async () => {
+        it('7.1.11.12. Safe confirm current round unsuccessfully when round is confirmed', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -3791,7 +3791,7 @@ describe('7.1. PrestigePad', async () => {
             )).to.be.revertedWithCustomError(prestigePad, 'AlreadyConfirmed');
         });
 
-        it('7.1.11.13. safe confirm current round unsuccessfully when confirm time limit is overdue', async () => {
+        it('7.1.11.13. Safe confirm current round unsuccessfully when confirm time limit is overdue', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -3826,7 +3826,7 @@ describe('7.1. PrestigePad', async () => {
             )).to.be.revertedWithCustomError(prestigePad, 'Timeout');
         });
 
-        it('7.1.11.14. safe confirm current round unsuccessfully when sold quantity is not enough', async () => {
+        it('7.1.11.14. Safe confirm current round unsuccessfully when sold quantity is not enough', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -3868,7 +3868,7 @@ describe('7.1. PrestigePad', async () => {
             )).to.be.not.reverted;
         });
 
-        it('7.1.11.15. safe confirm current round unsuccessfully when sending native token to initiator failed', async () => {
+        it('7.1.11.15. Safe confirm current round unsuccessfully when sending native token to initiator failed', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -3890,7 +3890,7 @@ describe('7.1. PrestigePad', async () => {
             )).to.be.revertedWithCustomError(prestigePad, 'FailedTransfer');
         });
 
-        it('7.1.11.16. safe confirm current round unsuccessfully when provide fund failed', async () => {
+        it('7.1.11.16. Safe confirm current round unsuccessfully when provide fund failed', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -3913,7 +3913,7 @@ describe('7.1. PrestigePad', async () => {
     });
 
     describe('7.1.12. finalize(uint256)', async () => {
-        it('7.1.12.1. finalize launch successfully', async () => {
+        it('7.1.12.1. Finalize launch successfully', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -3937,7 +3937,7 @@ describe('7.1. PrestigePad', async () => {
             expect(launchAfter.isFinalized).to.be.true;
         });
 
-        it('7.1.12.2. finalize launch unsuccessfully with invalid launch id', async () => {
+        it('7.1.12.2. Finalize launch unsuccessfully with invalid launch id', async () => {
             const fixture = await beforePrestigePadTest();
 
             const { prestigePad, initiator1 } = fixture;
@@ -3963,7 +3963,7 @@ describe('7.1. PrestigePad', async () => {
             )).to.be.revertedWithCustomError(prestigePad, 'InvalidLaunchId');
         });
 
-        it('7.1.12.3. finalize launch unsuccessfully when sender is not launch initiator', async () => {
+        it('7.1.12.3. Finalize launch unsuccessfully when sender is not launch initiator', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -3990,7 +3990,7 @@ describe('7.1. PrestigePad', async () => {
             )).to.be.revertedWithCustomError(prestigePad, 'Unauthorized');
         });
 
-        it('7.1.12.4. finalize launch unsuccessfully when paused', async () => {
+        it('7.1.12.4. Finalize launch unsuccessfully when paused', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -4009,7 +4009,7 @@ describe('7.1. PrestigePad', async () => {
             )).to.be.revertedWith('Pausable: paused');
         });
 
-        it('7.1.12.5. finalize launch unsuccessfully when launch is already finalized', async () => {
+        it('7.1.12.5. Finalize launch unsuccessfully when launch is already finalized', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -4028,7 +4028,7 @@ describe('7.1. PrestigePad', async () => {
             )).to.be.revertedWithCustomError(prestigePad, 'AlreadyFinalized');
         });
         
-        it('7.1.12.6. finalize launch unsuccessfully when there are more round to raise', async () => {
+        it('7.1.12.6. Finalize launch unsuccessfully when there are more round to raise', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -4045,7 +4045,7 @@ describe('7.1. PrestigePad', async () => {
             )).to.be.revertedWithCustomError(prestigePad, 'InvalidFinalizing');
         });
 
-        it('7.1.12.7. finalize launch unsuccessfully when current round is not confirmed', async () => {
+        it('7.1.12.7. Finalize launch unsuccessfully when current round is not confirmed', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -4065,7 +4065,7 @@ describe('7.1. PrestigePad', async () => {
     });
 
     describe('7.1.13. contributeCurrentRound(uint256, uint256)', async () => {
-        it('7.1.13.1. deposit current round successfully with native currency', async () => {
+        it('7.1.13.1. Deposit current round successfully with native currency', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -4285,7 +4285,7 @@ describe('7.1. PrestigePad', async () => {
             expect((await reserveVault.getFund(fundId)).quantity).to.equal(quantity1 + quantity3 + quantity4 + quantity5);            
         });
 
-        it('7.1.13.2. deposit current round successfully with erc20 currency and no cashback', async () => {
+        it('7.1.13.2. Deposit current round successfully with erc20 currency and no cashback', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -4334,7 +4334,7 @@ describe('7.1. PrestigePad', async () => {
             expect(await prestigePad.contributions(roundId, depositor1.address)).to.equal(quantity);
         });
 
-        it('7.1.13.3. deposit current round unsuccessfully with invalid launch id', async () => {
+        it('7.1.13.3. Deposit current round unsuccessfully with invalid launch id', async () => {
             const fixture = await beforePrestigePadTest();
 
             const { prestigePad, depositor1 } = fixture;
@@ -4346,7 +4346,7 @@ describe('7.1. PrestigePad', async () => {
                 .to.be.revertedWithCustomError(prestigePad, 'InvalidLaunchId');
         });
 
-        it('7.1.13.4. deposit current round unsuccessfully when contract is reentered', async () => {
+        it('7.1.13.4. Deposit current round unsuccessfully when contract is reentered', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -4370,7 +4370,7 @@ describe('7.1. PrestigePad', async () => {
             )
         });
 
-        it('7.1.13.5. deposit current round unsuccessfully when paused', async () => {
+        it('7.1.13.5. Deposit current round unsuccessfully when paused', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -4391,7 +4391,7 @@ describe('7.1. PrestigePad', async () => {
             )).to.be.revertedWith('Pausable: paused');
         });
 
-        it('7.1.13.6. deposit current round unsuccessfully when launch is finalized', async () => {
+        it('7.1.13.6. Deposit current round unsuccessfully when launch is finalized', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -4409,7 +4409,7 @@ describe('7.1. PrestigePad', async () => {
             )).to.be.revertedWithCustomError(prestigePad, 'AlreadyFinalized');
         });
 
-        it('7.1.13.7. deposit current round unsuccessfully when current round is confirmed', async () => {
+        it('7.1.13.7. Deposit current round unsuccessfully when current round is confirmed', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -4427,7 +4427,7 @@ describe('7.1. PrestigePad', async () => {
             )).to.be.revertedWithCustomError(prestigePad, 'AlreadyConfirmed');
         });
 
-        it('7.1.13.8. deposit current round unsuccessfully before raise starts', async () => {
+        it('7.1.13.8. Deposit current round unsuccessfully before raise starts', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -4455,7 +4455,7 @@ describe('7.1. PrestigePad', async () => {
             )).to.not.be.reverted;
         });
 
-        it('7.1.13.9. deposit current round unsuccessfully after raise ends', async () => {
+        it('7.1.13.9. Deposit current round unsuccessfully after raise ends', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -4483,7 +4483,7 @@ describe('7.1. PrestigePad', async () => {
             )).to.be.revertedWithCustomError(prestigePad, 'InvalidContributing');
         });
 
-        it('7.1.13.10. deposit current round unsuccessfully when deposit quantity exceed remaining quantity', async () => {
+        it('7.1.13.10. Deposit current round unsuccessfully when deposit quantity exceed remaining quantity', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -4510,7 +4510,7 @@ describe('7.1. PrestigePad', async () => {
             )).to.not.be.reverted;
         });
 
-        it('7.1.13.11. deposit current round unsuccessfully when expand fund failed', async () => {
+        it('7.1.13.11. Deposit current round unsuccessfully when expand fund failed', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -4535,7 +4535,7 @@ describe('7.1. PrestigePad', async () => {
     });
 
     describe('7.1.14. safeContributeCurrentRound(uint256, uint256, bytes32)', async () => {
-        it('7.1.14.1. safe deposit current round successfully', async () => {
+        it('7.1.14.1. Safe deposit current round successfully', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -4590,7 +4590,7 @@ describe('7.1. PrestigePad', async () => {
             expect(await prestigePad.contributions(roundId, depositor1.address)).to.equal(quantity);
         });
 
-        it('7.1.14.2. safe deposit current round unsuccessfully with invalid launch id', async () => {
+        it('7.1.14.2. Safe deposit current round unsuccessfully with invalid launch id', async () => {
             const fixture = await beforePrestigePadTest();
 
             const { prestigePad, depositor1 } = fixture;
@@ -4608,7 +4608,7 @@ describe('7.1. PrestigePad', async () => {
             )).to.be.revertedWithCustomError(prestigePad, 'InvalidLaunchId');
         });
 
-        it('7.1.14.3. safe deposit current round unsuccessfully with invalid anchor', async () => {
+        it('7.1.14.3. Safe deposit current round unsuccessfully with invalid anchor', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -4632,7 +4632,7 @@ describe('7.1. PrestigePad', async () => {
     });
 
     describe('7.1.15. withdrawContribution(uint256)', async () => {
-        it('7.1.15.1. withdraw deposit successfully', async () => {
+        it('7.1.15.1. Withdraw deposit successfully', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -4706,7 +4706,7 @@ describe('7.1. PrestigePad', async () => {
             );
         });
 
-        it('7.1.15.2. withdraw deposit unsuccessfully when contract is reentered', async () => {
+        it('7.1.15.2. Withdraw deposit unsuccessfully when contract is reentered', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -4732,7 +4732,7 @@ describe('7.1. PrestigePad', async () => {
             );
         });
 
-        it('7.1.15.3. withdraw deposit unsuccessfully with invalid round id', async () => {
+        it('7.1.15.3. Withdraw deposit unsuccessfully with invalid round id', async () => {
             const fixture = await beforePrestigePadTest();
             
             const { prestigePad, depositor1 } = fixture;
@@ -4744,7 +4744,7 @@ describe('7.1. PrestigePad', async () => {
                 .to.be.revertedWithCustomError(prestigePad, 'InvalidRoundId');
         });
 
-        it('7.1.15.4. withdraw deposit unsuccessfully when paused', async () => {
+        it('7.1.15.4. Withdraw deposit unsuccessfully when paused', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -4764,7 +4764,7 @@ describe('7.1. PrestigePad', async () => {
                 .to.be.revertedWith('Pausable: paused'); 
         });
 
-        it('7.1.15.5. withdraw deposit unsuccessfully when round is confirmed', async () => {
+        it('7.1.15.5. Withdraw deposit unsuccessfully when round is confirmed', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -4781,7 +4781,7 @@ describe('7.1. PrestigePad', async () => {
                 .to.be.revertedWithCustomError(prestigePad, 'AlreadyConfirmed');
         });
 
-        it('7.1.15.6. withdraw deposit unsuccessfully when raising is not ended', async () => {
+        it('7.1.15.6. Withdraw deposit unsuccessfully when raising is not ended', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -4800,7 +4800,7 @@ describe('7.1. PrestigePad', async () => {
                 .to.be.revertedWithCustomError(prestigePad, 'StillRaising');
         });
 
-        it('7.1.15.7. withdraw deposit unsuccessfully when sold quantity is enough and confirm time limit is not overdue', async () => {
+        it('7.1.15.7. Withdraw deposit unsuccessfully when sold quantity is enough and confirm time limit is not overdue', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -4819,7 +4819,7 @@ describe('7.1. PrestigePad', async () => {
                 .to.be.revertedWithCustomError(prestigePad, 'InvalidWithdrawing');
         });
 
-        it('7.1.15.8. withdraw deposit successfully when confirm time limit is overdue', async () => {
+        it('7.1.15.8. Withdraw deposit successfully when confirm time limit is overdue', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -4838,7 +4838,7 @@ describe('7.1. PrestigePad', async () => {
                 .to.not.be.reverted;
         });
 
-        it('7.1.15.9. withdraw deposit successfully when sold quantity is not enough', async () => {
+        it('7.1.15.9. Withdraw deposit successfully when sold quantity is not enough', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -4867,7 +4867,7 @@ describe('7.1. PrestigePad', async () => {
                 .to.not.be.reverted;
         });
 
-        it('7.1.15.10. withdraw deposit unsuccessfully when not deposited', async () => {
+        it('7.1.15.10. Withdraw deposit unsuccessfully when not deposited', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -4884,7 +4884,7 @@ describe('7.1. PrestigePad', async () => {
                 .to.be.revertedWithCustomError(prestigePad, 'NothingToWithdraw');
         });
 
-        it('7.1.15.11. withdraw deposit unsuccessfully when already withdrawn', async () => {
+        it('7.1.15.11. Withdraw deposit unsuccessfully when already withdrawn', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -4904,7 +4904,7 @@ describe('7.1. PrestigePad', async () => {
                 .to.be.revertedWithCustomError(prestigePad, 'NothingToWithdraw');
         });
 
-        it('7.1.15.12. withdraw deposit unsuccessfully when sending native token to user failed', async () => {
+        it('7.1.15.12. Withdraw deposit unsuccessfully when sending native token to user failed', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -4949,7 +4949,7 @@ describe('7.1. PrestigePad', async () => {
     });
 
     describe('7.1.16. withdrawProjectToken(uint256, uint256)', async () => {
-        it('7.1.16.1. withdraw project token successfully with native token when qualified for cashback', async () => {
+        it('7.1.16.1. Withdraw project token successfully with native token when qualified for cashback', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -5048,7 +5048,7 @@ describe('7.1. PrestigePad', async () => {
             );
         });
 
-        it('7.1.16.2. withdraw project token successfully with native token when not qualified for cashback', async () => {
+        it('7.1.16.2. Withdraw project token successfully with native token when not qualified for cashback', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -5139,7 +5139,7 @@ describe('7.1. PrestigePad', async () => {
             );
         });
 
-        it('7.1.16.3. withdraw project token successfully with erc20 without cashback', async () => {
+        it('7.1.16.3. Withdraw project token successfully with erc20 without cashback', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -5214,7 +5214,7 @@ describe('7.1. PrestigePad', async () => {
             );
         });
 
-        it('7.1.16.4. withdraw zero project token when user not deposited', async () => {
+        it('7.1.16.4. Withdraw zero project token when user not deposited', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -5271,7 +5271,7 @@ describe('7.1. PrestigePad', async () => {
             );
         });
 
-        it('7.1.16.5. withdraw project token unsuccessfully when contract is reentered', async () => {
+        it('7.1.16.5. Withdraw project token unsuccessfully when contract is reentered', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -5294,7 +5294,7 @@ describe('7.1. PrestigePad', async () => {
             );
         });
 
-        it('7.1.16.6. withdraw project token unsuccessfully with invalid launch id', async () => {
+        it('7.1.16.6. Withdraw project token unsuccessfully with invalid launch id', async () => {
             const fixture = await beforePrestigePadTest();
 
             const { prestigePad, depositor1 } = fixture;
@@ -5306,7 +5306,7 @@ describe('7.1. PrestigePad', async () => {
                 .to.be.revertedWithCustomError(prestigePad, 'InvalidLaunchId');
         });
 
-        it('7.1.16.7. withdraw project token unsuccessfully when paused', async () => {
+        it('7.1.16.7. Withdraw project token unsuccessfully when paused', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -5320,7 +5320,7 @@ describe('7.1. PrestigePad', async () => {
                 .to.be.revertedWith('Pausable: paused');
         });
 
-        it('7.1.16.8. withdraw project token unsuccessfully with invalid round index', async () => {
+        it('7.1.16.8. Withdraw project token unsuccessfully with invalid round index', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -5335,7 +5335,7 @@ describe('7.1. PrestigePad', async () => {
                 .to.be.revertedWithCustomError(prestigePad, 'InvalidInput');
         });
 
-        it('7.1.16.9. withdraw project token unsuccessfully when round is not confirmed', async () => {
+        it('7.1.16.9. Withdraw project token unsuccessfully when round is not confirmed', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -5352,7 +5352,7 @@ describe('7.1. PrestigePad', async () => {
                 .to.be.revertedWithCustomError(prestigePad, 'NotConfirmed');
         });
 
-        it('7.1.16.10. withdraw project token unsuccessfully when user already withdrawn project token', async () => {
+        it('7.1.16.10. Withdraw project token unsuccessfully when user already withdrawn project token', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -5370,7 +5370,7 @@ describe('7.1. PrestigePad', async () => {
                 .to.be.revertedWithCustomError(prestigePad, 'AlreadyWithdrawn');
         });
 
-        it('7.1.16.11. withdraw project token unsuccessfully when withdraw fund failed', async () => {
+        it('7.1.16.11. Withdraw project token unsuccessfully when withdraw fund failed', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -5390,7 +5390,7 @@ describe('7.1. PrestigePad', async () => {
     });
 
     describe('7.1.17. allocationOfAt(uint256)', async () => {
-        it('7.1.17.1. return correct allocation', async () => {
+        it('7.1.17.1. Return correct allocation', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -5588,7 +5588,7 @@ describe('7.1. PrestigePad', async () => {
             await assertCorrectAllocation(timestamp + 5);
         });
 
-        it('7.1.17.2. revert with invalid launch id', async () => {
+        it('7.1.17.2. Revert with invalid launch id', async () => {
             const fixture = await beforePrestigePadTest();
 
             const { prestigePad, depositor1 } = fixture;
@@ -5599,7 +5599,7 @@ describe('7.1. PrestigePad', async () => {
                 .to.be.revertedWithCustomError(prestigePad, 'InvalidLaunchId');
         });
 
-        it('7.1.17.3. revert with timestamp after current timestamp', async () => {
+        it('7.1.17.3. Revert with timestamp after current timestamp', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -5620,7 +5620,7 @@ describe('7.1. PrestigePad', async () => {
 
 
     describe('7.1.18. supportsInterface(bytes4)', () => {
-        it('7.1.18.1. return true for appropriate interface', async () => {
+        it('7.1.18.1. Return true for appropriate interface', async () => {
             const fixture = await beforePrestigePadTest();
             const { prestigePad } = fixture;
 

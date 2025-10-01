@@ -110,7 +110,7 @@ describe('4.6. Treasury', async () => {
     });
 
     describe('4.6.2. withdrawOperationFund(uint256, address, bytes[])', async () => {
-        it('4.6.2.1. withdrawOperationFund successfully with valid signatures', async () => {
+        it('4.6.2.1. WithdrawOperationFund successfully with valid signatures', async () => {
             const { deployer, treasury, admin, admins, currency, primaryToken, receiver } = await setupBeforeTest({
                 prepareLiquidity: true,
             });
@@ -165,7 +165,7 @@ describe('4.6. Treasury', async () => {
             expect(await currency.balanceOf(receiver.address)).to.equal(value1.add(value2));
         });
 
-        it('4.6.2.2. withdrawOperationFund unsuccessfully with invalid signatures', async () => {
+        it('4.6.2.2. WithdrawOperationFund unsuccessfully with invalid signatures', async () => {
             const { deployer, treasury, admin, admins, receiver } = await setupBeforeTest({
                 prepareLiquidity: true,
             });
@@ -185,7 +185,7 @@ describe('4.6. Treasury', async () => {
                 .to.be.revertedWithCustomError(admin, "FailedVerification");
         });
 
-        it('4.6.2.3. withdrawOperationFund unsuccessfully with insufficient funds', async () => {
+        it('4.6.2.3. WithdrawOperationFund unsuccessfully with insufficient funds', async () => {
             const { deployer, treasury, admin, admins, receiver } = await setupBeforeTest({
                 prepareLiquidity: true,
             });
@@ -208,7 +208,7 @@ describe('4.6. Treasury', async () => {
     });
 
     describe('4.6.3. withdrawLiquidity(uint256)', async () => {
-        it('4.6.3.1. withdrawLiquidity successfully', async () => {
+        it('4.6.3.1. WithdrawLiquidity successfully', async () => {
             const { treasury, admin, admins, currency, primaryToken, receiver } = await setupBeforeTest({
                 prepareLiquidity: true,
             });
@@ -253,7 +253,7 @@ describe('4.6. Treasury', async () => {
             expect(await currency.balanceOf(treasury.address)).to.equal(initialTreasuryBalance.sub(value1).sub(value2));
         });
 
-        it('4.6.3.2. withdrawLiquidity unsuccessfully when paused', async () => {
+        it('4.6.3.2. WithdrawLiquidity unsuccessfully when paused', async () => {
             const { treasury, primaryToken, receiver } = await setupBeforeTest({
                 prepareLiquidity: true,
                 pause: true,
@@ -270,7 +270,7 @@ describe('4.6. Treasury', async () => {
             )).to.be.revertedWith("Pausable: paused");
         });
 
-        it('4.6.3.3. withdrawLiquidity unsuccessfully by unauthorized user', async () => {
+        it('4.6.3.3. WithdrawLiquidity unsuccessfully by unauthorized user', async () => {
             const { treasury, receiver } = await setupBeforeTest({
                 prepareLiquidity: true,
             });
@@ -281,7 +281,7 @@ describe('4.6. Treasury', async () => {
                 .to.be.revertedWithCustomError(treasury, "Unauthorized");
         });
 
-        it('4.6.3.4. withdrawLiquidity unsuccessfully with insufficient funds', async () => {
+        it('4.6.3.4. WithdrawLiquidity unsuccessfully with insufficient funds', async () => {
             const { treasury, primaryToken, receiver } = await setupBeforeTest({
                 prepareLiquidity: true,
             });
@@ -296,7 +296,7 @@ describe('4.6. Treasury', async () => {
     });
 
     describe('4.6.4. provideLiquidity(uint256)', async () => {
-        it('4.6.4.1. provideLiquidity successfully', async () => {
+        it('4.6.4.1. ProvideLiquidity successfully', async () => {
             const { treasury, currency, receiver } = await setupBeforeTest();
 
             const value1 = ethers.utils.parseEther("100");
@@ -339,7 +339,7 @@ describe('4.6. Treasury', async () => {
             expect(await currency.balanceOf(treasury.address)).to.equal(initialTreasuryBalance.add(value1).add(value2));
         });
 
-        it('4.6.4.2. provideLiquidity unsuccessfully when paused', async () => {
+        it('4.6.4.2. ProvideLiquidity unsuccessfully when paused', async () => {
             const { treasury, receiver } = await setupBeforeTest({
                 prepareLiquidity: true,
                 pause: true,

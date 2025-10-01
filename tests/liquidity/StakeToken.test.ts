@@ -354,7 +354,7 @@ describe('4.5. StakeToken', async () => {
     });
 
     describe('4.5.2. initializeRewarding(uint256, address, bytes[])', async () => {
-        it('4.5.2.1. initialize rewarding successfully', async () => {
+        it('4.5.2.1. Initialize rewarding successfully', async () => {
             const { deployer, admin, admins, stakeToken1, stakeToken2 } = await setupBeforeTest();
 
             let timestamp = await time.latest() + 100;
@@ -375,7 +375,7 @@ describe('4.5. StakeToken', async () => {
             expect(await stakeToken1.successor()).to.equal(stakeToken2.address); 
         });
 
-        it('4.5.2.2. initialize rewarding unsuccessfully with invalid signatures', async () => {
+        it('4.5.2.2. Initialize rewarding unsuccessfully with invalid signatures', async () => {
             const { deployer, admin, admins, stakeToken1, stakeToken2 } = await setupBeforeTest();
 
             let timestamp = await time.latest() + 100;
@@ -393,7 +393,7 @@ describe('4.5. StakeToken', async () => {
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('4.5.2.3. initialize rewarding unsuccessfully when already initialized', async () => {
+        it('4.5.2.3. Initialize rewarding unsuccessfully when already initialized', async () => {
             const { deployer, admin, admins, stakeToken1, stakeToken2 } = await setupBeforeTest({
                 initializeRewarding: true,
             });
@@ -414,7 +414,7 @@ describe('4.5. StakeToken', async () => {
     });
 
     describe('4.5.3. updateFeeRate(uint256, bytes[])', async () => {
-        it('4.5.3.1. updateFeeRate successfully with valid signatures', async () => {
+        it('4.5.3.1. UpdateFeeRate successfully with valid signatures', async () => {
             const { deployer, admin, admins, stakeToken1 } = await setupBeforeTest();
 
             const rateValue = ethers.utils.parseEther('0.2');
@@ -446,7 +446,7 @@ describe('4.5. StakeToken', async () => {
             });
         });
 
-        it('4.5.3.2. updateFeeRate unsuccessfully with invalid signatures', async () => {
+        it('4.5.3.2. UpdateFeeRate unsuccessfully with invalid signatures', async () => {
             const { deployer, admin, admins, stakeToken1 } = await setupBeforeTest();
 
             const paramsInput: UpdateFeeRateParamsInput = {
@@ -460,7 +460,7 @@ describe('4.5. StakeToken', async () => {
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('4.5.3.3. updateFeeRate unsuccessfully with invalid rate', async () => {
+        it('4.5.3.3. UpdateFeeRate unsuccessfully with invalid rate', async () => {
             const { deployer, admin, admins, stakeToken1 } = await setupBeforeTest();
             
             const paramsInput: UpdateFeeRateParamsInput = {
@@ -477,7 +477,7 @@ describe('4.5. StakeToken', async () => {
     });
 
     describe('4.5.4. fetchReward()', async () => {
-        it('4.5.4.1. fetchReward successfully for stake token', async () => {
+        it('4.5.4.1. FetchReward successfully for stake token', async () => {
             const { stakeToken1, primaryToken, staker1 } = await setupBeforeTest({
                 setFeeRate: true,
                 initializeRewarding: true,
@@ -509,7 +509,7 @@ describe('4.5. StakeToken', async () => {
             }
         });
 
-        it('4.5.4.2. fetchReward unsuccessfully when not started rewarding', async () => {
+        it('4.5.4.2. FetchReward unsuccessfully when not started rewarding', async () => {
             const { stakeToken1, staker1 } = await setupBeforeTest({
                 setFeeRate: true,
                 preparePrimaryTokenForStakers: true,
@@ -522,7 +522,7 @@ describe('4.5. StakeToken', async () => {
                 .to.be.revertedWithCustomError(stakeToken1, 'NotStartedRewarding');
         });
 
-        it('4.5.4.3. fetchReward unsuccessfully when on initial cooldown', async () => {
+        it('4.5.4.3. FetchReward unsuccessfully when on initial cooldown', async () => {
             const { stakeToken1, staker1 } = await setupBeforeTest({
                 setFeeRate: true,
                 initializeRewarding: true,
@@ -538,7 +538,7 @@ describe('4.5. StakeToken', async () => {
                 .to.be.revertedWithCustomError(stakeToken1, 'OnCoolDown');
         });
 
-        it('4.5.4.4. fetchReward unsuccessfully when on cooldown after fetching reward', async () => {
+        it('4.5.4.4. FetchReward unsuccessfully when on cooldown after fetching reward', async () => {
             const { stakeToken1, staker1 } = await setupBeforeTest({
                 setFeeRate: true,
                 initializeRewarding: true,
@@ -557,7 +557,7 @@ describe('4.5. StakeToken', async () => {
                 .to.be.revertedWithCustomError(stakeToken1, 'OnCoolDown');
         });
 
-        it('4.5.4.5. fetchReward unsuccessfully when stake token has zero stake', async () => {
+        it('4.5.4.5. FetchReward unsuccessfully when stake token has zero stake', async () => {
             const { stakeToken1, staker1 } = await setupBeforeTest({
                 setFeeRate: true,
                 initializeRewarding: true,
@@ -572,7 +572,7 @@ describe('4.5. StakeToken', async () => {
     });
 
     describe('4.5.5. stake(address, uint256)', async () => {
-        it('4.5.5.1. stake successfully before stake rewarding completed', async () => {
+        it('4.5.5.1. Stake successfully before stake rewarding completed', async () => {
             const { stakeToken1, staker1, primaryToken } = await setupBeforeTest({
                 setFeeRate: true,
                 initializeRewarding: true,
@@ -620,7 +620,7 @@ describe('4.5. StakeToken', async () => {
             expectEqualWithErrorMargin(await stakeToken1.balanceOf(staker1.address), stakeAmount1.add(stakeAmount2));
         });
 
-        it('4.5.5.2. stake successfully after stake rewarding completed', async () => {
+        it('4.5.5.2. Stake successfully after stake rewarding completed', async () => {
             const { stakeToken1, staker1, primaryToken, currency, treasury } = await setupBeforeTest({
                 setFeeRate: true,
                 initializeRewarding: true,
@@ -701,7 +701,7 @@ describe('4.5. StakeToken', async () => {
     });
 
     describe('4.5.6. unstake(uint256)', async () => {
-        it('4.5.6.1. unstake successfully', async () => {
+        it('4.5.6.1. Unstake successfully', async () => {
             const { stakeToken1, staker1, primaryToken } = await setupBeforeTest({
                 setFeeRate: true,
                 initializeRewarding: true,
@@ -768,7 +768,7 @@ describe('4.5. StakeToken', async () => {
             primaryToken.isStakeRewardingCulminated.reset();
         });
 
-        it('4.5.6.2. unstake unsuccessfully when rewarding is not completed', async () => {
+        it('4.5.6.2. Unstake unsuccessfully when rewarding is not completed', async () => {
             const { stakeToken1, staker1 } = await setupBeforeTest({
                 setFeeRate: true,
                 initializeRewarding: true,
@@ -787,7 +787,7 @@ describe('4.5. StakeToken', async () => {
                 .to.be.revertedWithCustomError(stakeToken1, 'NotCulminated');
         });
 
-        it('4.5.6.3. unstake unsuccessfully when amount is greater than balance', async () => {
+        it('4.5.6.3. Unstake unsuccessfully when amount is greater than balance', async () => {
             const { stakeToken1, staker1, primaryToken } = await setupBeforeTest({
                 setFeeRate: true,
                 initializeRewarding: true,
@@ -812,7 +812,7 @@ describe('4.5. StakeToken', async () => {
     });
 
     describe('4.5.7. promote(uint256)', async () => {
-        it('4.5.7.1. promote successfully', async () => {
+        it('4.5.7.1. Promote successfully', async () => {
             const { stakeToken1, stakeToken2, stakeToken3, staker1, primaryToken } = await setupBeforeTest({
                 setFeeRate: true,
                 initializeRewarding: true,
@@ -896,7 +896,7 @@ describe('4.5. StakeToken', async () => {
             expectEqualWithErrorMargin(await stakeToken3.balanceOf(staker1.address), promoteAmount3);
         });
 
-        it('4.5.7.2. promote unsuccessfully when paused', async () => {
+        it('4.5.7.2. Promote unsuccessfully when paused', async () => {
             const fixture = await setupBeforeTest({
                 setFeeRate: true,
                 initializeRewarding: true,
@@ -909,7 +909,7 @@ describe('4.5. StakeToken', async () => {
                 .to.be.revertedWith('Pausable: paused');
         });
 
-        it('4.5.7.3. promote unsuccessfully when there is no successor', async () => {
+        it('4.5.7.3. Promote unsuccessfully when there is no successor', async () => {
             const fixture = await setupBeforeTest({
                 setFeeRate: true,
                 initializeRewarding: true,
@@ -921,7 +921,7 @@ describe('4.5. StakeToken', async () => {
                 .to.be.revertedWithCustomError(stakeToken3, 'NoSuccessor');
         });
 
-        it('4.5.7.4. promote unsuccessfully when stake rewarding is completed', async () => {
+        it('4.5.7.4. Promote unsuccessfully when stake rewarding is completed', async () => {
             const fixture = await setupBeforeTest({
                 setFeeRate: true,
                 initializeRewarding: true,
@@ -936,7 +936,7 @@ describe('4.5. StakeToken', async () => {
             primaryToken.isStakeRewardingCulminated.reset();
         });
 
-        it('4.5.7.5. promote unsuccessfully when amount is greater than balance', async () => {
+        it('4.5.7.5. Promote unsuccessfully when amount is greater than balance', async () => {
             const fixture = await setupBeforeTest({
                 setFeeRate: true,
                 initializeRewarding: true,
@@ -1200,7 +1200,7 @@ describe('4.5. StakeToken', async () => {
             return operations;
         }
         
-        it('4.5.8.1. return correct balance in a few staking and rewarding operations', async () => {
+        it('4.5.8.1. Return correct balance in a few staking and rewarding operations', async () => {
             const fixture = await setupBeforeTest({
                 setFeeRate: true,
                 initializeRewarding: true,
@@ -1222,7 +1222,7 @@ describe('4.5. StakeToken', async () => {
             await testBalanceAfterOperations(fixture, operations);
         });
 
-        it('4.5.8.2. return correct balance in 1000 random operations', async () => {
+        it('4.5.8.2. Return correct balance in 1000 random operations', async () => {
             const fixture = await setupBeforeTest({
                 setFeeRate: true,
                 initializeRewarding: true,
@@ -1266,7 +1266,7 @@ describe('4.5. StakeToken', async () => {
             expectBetween(expectedStateToken3Discount, ethers.utils.parseEther("0.15"), ethers.utils.parseEther("0.30"));
         }
         
-        it('4.5.9.1. return correct discount', async () => {
+        it('4.5.9.1. Return correct discount', async () => {
             const fixture = await setupBeforeTest();
             
             const primaryTokenMaxSupply = Constant.PRIMARY_TOKEN_MAXIMUM_SUPPLY;
@@ -1290,7 +1290,7 @@ describe('4.5. StakeToken', async () => {
     });
 
     describe('4.5.10. transfer(address, uint256)', async () => {
-        it('4.5.10.1. transfer successfully', async () => {
+        it('4.5.10.1. Transfer successfully', async () => {
             const { stakeToken1, staker1, staker2 } = await setupBeforeTest({
                 setFeeRate: true,
                 initializeRewarding: true,

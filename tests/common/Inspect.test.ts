@@ -474,7 +474,7 @@ describe('1.1. Inspect', async () => {
     });
 
     describe('1.1.2. receive', async () => {
-        it('1.1.2.1. receive function of each contract should not execute any code', async () => {
+        it('1.1.2.1. Receive function of each contract should not execute any code', async () => {
             async function testReceiveNotExecuteAnyCode(contract: any, gasLimit: number) {
                 const [owner] = await ethers.getSigners();
 

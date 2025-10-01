@@ -114,7 +114,7 @@ describe('4.2. Distributor', async () => {
     });
 
     describe('4.2.2. distributeToken(address[], uint256[], string, bytes[])', async () => {
-        it('4.2.2.1. distribute tokens successfully', async () => {
+        it('4.2.2.1. Distribute tokens successfully', async () => {
             const fixture = await setupBeforeTest();
             const { admin, admins, deployer, distributor, primaryToken, receiver1, receiver2, receiver3 } = fixture;
 
@@ -153,7 +153,7 @@ describe('4.2. Distributor', async () => {
             expect(await primaryToken.balanceOf(distributor.address)).to.equal(initDistributorBalance.sub(ethers.utils.parseEther('600')));
         });
 
-        it('4.2.2.2. distribute tokens unsuccessfully with invalid signatures', async () => {
+        it('4.2.2.2. Distribute tokens unsuccessfully with invalid signatures', async () => {
             const fixture = await setupBeforeTest();
             const { admin, admins, deployer, distributor, receiver1, receiver2, receiver3 } = fixture;
 
@@ -175,7 +175,7 @@ describe('4.2. Distributor', async () => {
                 .to.be.revertedWithCustomError(distributor, "FailedVerification");
         });
 
-        it('4.2.2.3. distribute tokens unsuccessfully with invalid inputs length', async () => {
+        it('4.2.2.3. Distribute tokens unsuccessfully with invalid inputs length', async () => {
             const fixture = await setupBeforeTest();
             const { admin, admins, deployer, distributor, primaryToken, receiver1, receiver2, receiver3 } = fixture;
 
@@ -205,7 +205,7 @@ describe('4.2. Distributor', async () => {
             await testForInvalidInput(receivers.slice(0, 2), amounts, note);
         });
 
-        it('4.2.2.4. distribute tokens unsuccessfully with insufficient funds', async () => {
+        it('4.2.2.4. Distribute tokens unsuccessfully with insufficient funds', async () => {
             const fixture = await setupBeforeTest();
             const { admin, admins, deployer, distributor, primaryToken, receiver1, receiver2, receiver3 } = fixture;
 

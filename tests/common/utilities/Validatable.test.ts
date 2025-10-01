@@ -59,13 +59,13 @@ describe('1.b. Validatable', async () => {
     }
 
     describe('1.b.1. __Validatable_init(address)', async () => {
-        it('1.b.1.1. init validator successfully after deploy', async () => {
+        it('1.b.1.1. Init validator successfully after deploy', async () => {
             const { validatable, validator } = await beforeValidatableTest();
 
             expect(await validatable.validator()).to.equal(validator.address);
         });
 
-        it('1.b.1.2. init validator unsuccessfully when not initializing', async () => {
+        it('1.b.1.2. Init validator unsuccessfully when not initializing', async () => {
             const { validatable } = await beforeValidatableTest();
 
             const newValidator = randomWallet();
@@ -76,7 +76,7 @@ describe('1.b. Validatable', async () => {
     });
 
     describe('1.b.2. updateValidator(address)', async () => {
-        it('1.b.2.1. updateValidator successfully with valid signatures', async () => {
+        it('1.b.2.1. UpdateValidator successfully with valid signatures', async () => {
             const { admin, admins, validatable } = await beforeValidatableTest();
 
             const newValidator = randomWallet();
@@ -97,7 +97,7 @@ describe('1.b. Validatable', async () => {
                 .withArgs(newValidator.address);
         });
 
-        it('1.b.2.2. updateValidator unsuccessfully with invalid signatures', async () => {
+        it('1.b.2.2. UpdateValidator unsuccessfully with invalid signatures', async () => {
             const { admin, admins, validatable } = await beforeValidatableTest();
 
             const newValidator = randomWallet();
@@ -114,7 +114,7 @@ describe('1.b. Validatable', async () => {
     });
 
     describe('1.b.3. _validate(bytes, (uint256, uint256, bytes))', async () => {
-        it('1.b.3.1. validate successfully with valid signatures', async () => {
+        it('1.b.3.1. Validate successfully with valid signatures', async () => {
             const { validatable, validator } = await beforeValidatableTest();
 
             const content = "Bitcoin";
@@ -142,7 +142,7 @@ describe('1.b. Validatable', async () => {
             expect(await validatable.isNonceUsed(nonce)).to.equal(true);
         });
 
-        it('1.b.3.2. validate unsuccessfully with different content', async () => {
+        it('1.b.3.2. Validate unsuccessfully with different content', async () => {
             const { validatable, validator } = await beforeValidatableTest();
 
             const content = "Bitcoin";
@@ -168,7 +168,7 @@ describe('1.b. Validatable', async () => {
                 .to.be.revertedWithCustomError(validatable, 'InvalidSignature');
         });
 
-        it('1.b.3.3. validate unsuccessfully with different nonce', async () => {
+        it('1.b.3.3. Validate unsuccessfully with different nonce', async () => {
             const { validatable, validator } = await beforeValidatableTest();
 
             const content = "Bitcoin";
@@ -194,7 +194,7 @@ describe('1.b. Validatable', async () => {
                 .to.be.revertedWithCustomError(validatable, 'InvalidSignature');
         });
 
-        it('1.b.3.4. validate unsuccessfully with different expiry', async () => {
+        it('1.b.3.4. Validate unsuccessfully with different expiry', async () => {
             const { validatable, validator } = await beforeValidatableTest();
 
             const content = "Bitcoin";
@@ -220,7 +220,7 @@ describe('1.b. Validatable', async () => {
                 .to.be.revertedWithCustomError(validatable, 'InvalidSignature');
         });
 
-        it('1.b.3.5. validate unsuccessfully with expired validation', async () => {
+        it('1.b.3.5. Validate unsuccessfully with expired validation', async () => {
             const { validatable, validator } = await beforeValidatableTest();
 
             const content = "Bitcoin";
@@ -255,7 +255,7 @@ describe('1.b. Validatable', async () => {
                 .to.be.revertedWithCustomError(validatable, 'ValidationExpired');
         });
 
-        it('1.b.3.6. validate unsuccessfully with used nonce', async () => {
+        it('1.b.3.6. Validate unsuccessfully with used nonce', async () => {
             const { validatable, validator } = await beforeValidatableTest();
 
             const content = "Bitcoin";
