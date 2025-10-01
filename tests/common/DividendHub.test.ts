@@ -207,7 +207,7 @@ describe('1.4. DividendHub', async () => {
                     tokenId: BigNumber.from(1),
                     value: ethers.utils.parseEther('1000'),
                     currency: ethers.constants.AddressZero,
-                    data: "Data_1",
+                    note: "Data_1",
                 },
                 { value: ethers.utils.parseEther('1000') }
             ));
@@ -220,7 +220,7 @@ describe('1.4. DividendHub', async () => {
                     tokenId: BigNumber.from(1),
                     value: ethers.utils.parseEther('100'),
                     currency: ethers.constants.AddressZero,
-                    data: "Data_2",
+                    note: "Data_2",
                 },
                 { value: ethers.utils.parseEther('100') }
             ));
@@ -233,7 +233,7 @@ describe('1.4. DividendHub', async () => {
                     tokenId: BigNumber.from(2),
                     value: ethers.utils.parseEther('2000'),
                     currency: currencies[0].address,
-                    data: "Data_3",
+                    note: "Data_3",
                 },
                 { value: ethers.utils.parseEther('2000') }
             ));
@@ -277,7 +277,7 @@ describe('1.4. DividendHub', async () => {
                     tokenId: BigNumber.from(tokenId1),
                     value: value1,
                     currency: ethers.constants.AddressZero,
-                    data: "Data_1",
+                    note: "Data_1",
                 },
                 { value: value1.add(ethers.utils.parseEther('1')) }
             ));
@@ -321,7 +321,7 @@ describe('1.4. DividendHub', async () => {
                     tokenId: BigNumber.from(1),
                     value: ethers.utils.parseEther('1000'),
                     currency: ethers.constants.AddressZero,
-                    data: "Data_1",
+                    note: "Data_1",
                 },
             };
         }
@@ -887,7 +887,7 @@ describe('1.4. DividendHub', async () => {
                     tokenId: BigNumber.from(1),
                     value: ethers.utils.parseEther('1000'),
                     currency: ethers.constants.AddressZero,
-                    data: "Data_1",
+                    note: "Data_1",
                 },
                 { value: ethers.utils.parseEther('1000') }
             ));
@@ -913,7 +913,7 @@ describe('1.4. DividendHub', async () => {
                     tokenId: BigNumber.from(1),
                     value: ethers.utils.parseEther('1000'),
                     currency: ethers.constants.AddressZero,
-                    data: "Data_1",
+                    note: "Data_1",
                 },
                 { value: ethers.utils.parseEther('1000') }
             ));
@@ -940,7 +940,7 @@ describe('1.4. DividendHub', async () => {
                     tokenId: BigNumber.from(2),
                     value: ethers.utils.parseEther('1000'),
                     currency: reentrancyERC20.address,
-                    data: "Data_2",
+                    note: "Data_2",
                 }
             ));
 

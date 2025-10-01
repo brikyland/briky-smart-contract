@@ -1,7 +1,47 @@
 import { BigNumber, ethers } from "ethers";
 import { MockPrestigePad } from "@typechain-types";
 import { PrestigePad } from "@typechain-types";
+import { Validation } from "../common/validatable";
 
+
+// updateBaseUnitPriceRange
+export interface UpdateBaseUnitPriceRangeParamsInput {
+    baseMinUnitPrice: BigNumber;
+    baseMaxUnitPrice: BigNumber;
+}
+
+export interface UpdateBaseUnitPriceRangeParams extends UpdateBaseUnitPriceRangeParamsInput {
+    signatures: string[];
+}
+
+
+// initiateLaunch
+export interface InitiateLaunchParamsInput {
+    initiator: string;
+    zone: string;
+    projectURI: string;
+    launchURI: string;
+    feeRate: BigNumber;
+    initialQuantity: BigNumber;
+}
+
+export interface InitiateLaunchParams extends InitiateLaunchParamsInput {
+    validation: Validation;
+}
+
+
+// updateLaunchURI
+export interface UpdateLaunchURIParamsInput {
+    launchId: BigNumber;
+    uri: string;
+}
+
+export interface UpdateLaunchURIParams extends UpdateLaunchURIParamsInput {
+    validation: Validation;
+}
+
+
+// updateRound
 export interface PrestigePadRoundInput {
     uri: string;
     quota: PrestigePadRoundQuotaInput;
@@ -52,27 +92,22 @@ export interface PrestigePadRoundAgenda {
     publicSaleEndsAt: number;
 };
 
-export interface InitiateLaunchParams {
-    initiator: string;
-    zone: string;
-    projectURI: string;
-    launchURI: string;
-    feeRate: BigNumber;
-    initialQuantity: BigNumber;
-}
-
 export interface UpdateRoundParams {
     launchId: BigNumber;
     index: BigNumber;
     round: PrestigePadRoundInput;
 }
 
+
+// updateRounds
 export interface UpdateRoundsParams {
     launchId: BigNumber;
     removedRoundNumber: BigNumber;
     addedRounds: PrestigePadRoundInput[];
 }
 
+
+// scheduleNextRound
 export interface ScheduleNextRoundParams {
     launchId: BigNumber;
     cashbackThreshold: BigNumber;
@@ -83,49 +118,56 @@ export interface ScheduleNextRoundParams {
     raiseDuration: number;
 }
 
-export interface UpdateLaunchURIParams {
+
+// cancelCurrentRound
+export interface CancelCurrentRoundParams {
     launchId: BigNumber;
-    uri: string;
 }
 
+
+// confirmCurrentRound
 export interface ConfirmCurrentRoundParams {
     launchId: BigNumber;
 }
 
-export interface SafeConfirmCurrentRoundParams {
-    launchId: BigNumber;
+
+// safeConfirmCurrentRound
+export interface SafeConfirmCurrentRoundParams extends ConfirmCurrentRoundParams {
     anchor: string;
 }
 
-export interface FinalizeLaunchParams {
+
+// safeFinalize
+export interface FinalizeParams {
     launchId: BigNumber;
 }
 
-export interface SafeFinalizeLaunchParams {
-    launchId: BigNumber;
+export interface SafeFinalizeParams extends FinalizeParams {
     anchor: string;
 }
 
-export async function getSafeConfirmCurrentRoundParams(
-    prestigePad: PrestigePad | MockPrestigePad,
-    params: ConfirmCurrentRoundParams
-): Promise<SafeConfirmCurrentRoundParams> {
-    const currentURI = (await prestigePad.getLaunch(params.launchId)).uri;
-    const safeParams: SafeConfirmCurrentRoundParams = {
-        ...params,
-        anchor: ethers.utils.keccak256(ethers.utils.toUtf8Bytes(currentURI)),
-    };
-    return safeParams;
+
+// contributeCurrentRound
+export interface ContributeCurrentRoundParams {
+    launchId: BigNumber;
+    quantity: BigNumber;
 }
 
-export async function getSafeFinalizeLaunchParams(
-    prestigePad: PrestigePad | MockPrestigePad,
-    params: FinalizeLaunchParams
-): Promise<SafeFinalizeLaunchParams> {
-    const currentURI = (await prestigePad.getLaunch(params.launchId)).uri;
-    const safeParams: SafeFinalizeLaunchParams = {
-        ...params,
-        anchor: ethers.utils.keccak256(ethers.utils.toUtf8Bytes(currentURI)),
-    };
-    return safeParams;
+
+// safeContributeCurrentRound
+export interface SafeContributeCurrentRoundParams extends ContributeCurrentRoundParams {
+    anchor: string;
+}
+
+
+// withdrawContribution
+export interface WithdrawContributionParams {
+    roundId: BigNumber;
+}
+
+
+// withdrawProjectToken
+export interface WithdrawProjectTokenParams {
+    launchId: BigNumber;
+    index: BigNumber;
 }

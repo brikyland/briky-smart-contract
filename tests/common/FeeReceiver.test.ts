@@ -1,27 +1,36 @@
 import { expect } from 'chai';
-import { ethers, upgrades } from 'hardhat';
+import { ethers } from 'hardhat';
+
+import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
+
 import {
     Admin,
     Currency,
     FeeReceiver,
 } from '@typechain-types';
-import { callTransaction, getSignatures, randomWallet } from '@utils/blockchain';
+
 import { Constant } from '@tests/test.constant';
+
+import {
+    callTransaction,
+    getSignatures,
+    randomWallet,
+} from '@utils/blockchain';
+
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
 import { deployCurrency } from '@utils/deployments/common/currency';
 import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
-import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 
 interface FeeReceiverFixture {
     deployer: any;
     admins: any[];
+
     admin: Admin;
-    feeReceiver: FeeReceiver;
-    currency: Currency;
     currency1: Currency;
     currency2: Currency;
+    feeReceiver: FeeReceiver;
 }
 
 describe('1.5. FeeReceiver', async () => {
@@ -42,17 +51,6 @@ describe('1.5. FeeReceiver', async () => {
             adminAddresses[4],
         ) as Admin;
 
-        const feeReceiver = await deployFeeReceiver(
-            deployer.address,
-            admin.address
-        ) as FeeReceiver;
-
-        const currency = await deployCurrency(
-            deployer.address,
-            'MockCurrency',
-            'MCK'
-        ) as Currency;
-
         const currency1 = await deployCurrency(
             deployer.address,
             'MockCurrency1',
@@ -65,12 +63,16 @@ describe('1.5. FeeReceiver', async () => {
             'MCK2'
         ) as Currency;
 
+        const feeReceiver = await deployFeeReceiver(
+            deployer.address,
+            admin.address
+        ) as FeeReceiver;
+
         return {
             deployer,
             admins,
             admin,
             feeReceiver,
-            currency,
             currency1,
             currency2,
         }
@@ -199,7 +201,7 @@ describe('1.5. FeeReceiver', async () => {
         });
 
         it('1.5.2.3. Withdraw token successfully multiple times in the same tx', async () => {
-            const { deployer, admins, admin, currency, feeReceiver } = await setupBeforeTest();
+            const { deployer, admins, admin, currency1, feeReceiver } = await setupBeforeTest();
 
             let receiver = randomWallet();
 
@@ -208,12 +210,12 @@ describe('1.5. FeeReceiver', async () => {
                 value: 2000
             }));
 
-            await callTransaction(currency.mint(feeReceiver.address, 1000));
+            await callTransaction(currency1.mint(feeReceiver.address, 1000));
 
-            expect(await currency.balanceOf(feeReceiver.address)).to.equal(1000);
-            expect(await currency.balanceOf(receiver.address)).to.equal(0);
+            expect(await currency1.balanceOf(feeReceiver.address)).to.equal(1000);
+            expect(await currency1.balanceOf(receiver.address)).to.equal(0);
 
-            const currencies = [ethers.constants.AddressZero, ethers.constants.AddressZero, currency.address, currency.address];
+            const currencies = [ethers.constants.AddressZero, ethers.constants.AddressZero, currency1.address, currency1.address];
             const amounts = [100, 200, 300, 400];
 
             let message = ethers.utils.defaultAbiCoder.encode(
@@ -243,8 +245,8 @@ describe('1.5. FeeReceiver', async () => {
             expect(await ethers.provider.getBalance(feeReceiver.address)).to.equal(1700);
             expect(await ethers.provider.getBalance(receiver.address)).to.equal(300);
 
-            expect(await currency.balanceOf(feeReceiver.address)).to.equal(300);
-            expect(await currency.balanceOf(receiver.address)).to.equal(700);
+            expect(await currency1.balanceOf(feeReceiver.address)).to.equal(300);
+            expect(await currency1.balanceOf(receiver.address)).to.equal(700);
         });
 
         it('1.5.2.4. Withdraw unsuccessfully with invalid signatures', async () => {
@@ -282,17 +284,17 @@ describe('1.5. FeeReceiver', async () => {
         })
 
         it('1.5.2.6. Withdraw unsuccessfully with insufficient ERC20 tokens', async () => {
-            const { deployer, admins, admin, feeReceiver, currency } = await setupBeforeTest();
+            const { deployer, admins, admin, feeReceiver, currency1 } = await setupBeforeTest();
 
             const message = ethers.utils.defaultAbiCoder.encode(
                 ['address', 'string', 'address', 'address[]', 'uint256[]'],
-                [feeReceiver.address, 'withdraw', deployer.address, [currency.address], [1000]]
+                [feeReceiver.address, 'withdraw', deployer.address, [currency1.address], [1000]]
             );
             let signatures = await getSignatures(message, admins, await admin.nonce());
 
             await expect(feeReceiver.withdraw(
                 deployer.address,
-                [currency.address],
+                [currency1.address],
                 [1000],
                 signatures
             )).to.be.revertedWith('ERC20: transfer amount exceeds balance');

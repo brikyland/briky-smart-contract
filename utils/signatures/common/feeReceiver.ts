@@ -1,0 +1,24 @@
+import { ethers } from "ethers";
+
+import {
+    Admin,
+    FeeReceiver
+} from "@typechain-types";
+
+import { getSignatures } from "@utils/blockchain";
+
+import { WithdrawParamsInput } from "@utils/models/common/feeReceiver";
+
+export async function getWithdrawSignatures(
+    feeReceiver: FeeReceiver,
+    admins: any[],
+    admin: Admin,
+    paramsInput: WithdrawParamsInput,
+    isValid: boolean = true
+) {
+    const message = ethers.utils.defaultAbiCoder.encode(
+        ["address", "string", "address", "address[]", "uint256[]"],
+        [feeReceiver.address, "withdraw", paramsInput.receiver, paramsInput.currencies, paramsInput.values]
+    );
+    return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
+}

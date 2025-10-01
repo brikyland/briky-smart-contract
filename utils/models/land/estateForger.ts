@@ -1,5 +1,31 @@
 import { BigNumber } from "ethers";
 
+import { Validation } from "@utils/models/common/validatable";
+
+
+// updateBaseUnitPriceRange
+export interface UpdateBaseUnitPriceRangeParamsInput {
+    baseMinUnitPrice: BigNumber;
+    baseMaxUnitPrice: BigNumber;
+}
+
+export interface UpdateBaseUnitPriceRangeParams extends UpdateBaseUnitPriceRangeParamsInput {
+    signatures: string[];
+}
+
+
+// whitelist
+export interface WhitelistParamsInput {
+    accounts: string[];
+    isWhitelisted: boolean;
+}
+
+export interface WhitelistParams extends WhitelistParamsInput {
+    signatures: string[];
+}
+
+
+// requestTokenization
 export interface RequestEstateInput {
     zone: string;
     uri: string;
@@ -66,7 +92,7 @@ export interface RegisterSellerInParams {
     uri: string;
 }
 
-export interface RequestTokenizationParams {
+export interface RequestTokenizationParamsInput {
     requester: string;
     estate: RequestEstateInput;
     quota: RequestQuotaInput;
@@ -74,32 +100,75 @@ export interface RequestTokenizationParams {
     agenda: RequestAgendaInput;
 }
 
-export interface UpdateRequestEstateURIParams {
+export interface RequestTokenizationParams extends RequestTokenizationParamsInput {
+    signatures: string[];
+}
+
+
+// whitelistFor
+export interface WhitelistForParams {
+    requestId: BigNumber;
+    accounts: string[];
+    isWhitelisted: boolean;
+}
+
+
+// updateRequestEstateURI
+export interface UpdateRequestEstateURIParamsInput {
     requestId: BigNumber;
     uri: string;
 }
 
+export interface UpdateRequestEstateURIParams extends UpdateRequestEstateURIParamsInput {
+    validation: Validation;
+}
+
+
+// updateRequestAgenda
 export interface UpdateRequestAgendaParams {
     requestId: BigNumber;
     agenda: RequestAgendaInput;
 }
 
+
+// cancel
+export interface CancelParams {
+    requestId: BigNumber;
+}
+
+
+// deposit
 export interface DepositParams {
     requestId: BigNumber;
     quantity: BigNumber;
 }
 
-export interface SafeDepositParams {
-    requestId: BigNumber;
-    quantity: BigNumber;
+
+// safeDeposit
+export interface SafeDepositParams extends DepositParams {
     anchor: string;
 }
 
+
+// confirm
 export interface ConfirmParams {
     requestId: BigNumber;
 }
 
-export interface SafeConfirmParams {
-    requestId: BigNumber;
+
+// safeConfirm
+export interface SafeConfirmParams extends ConfirmParams {
     anchor: string;
+}
+
+
+// withdrawDeposit
+export interface WithdrawDepositParams {
+    requestId: BigNumber;
+}
+
+
+// withdrawEstateToken
+export interface WithdrawEstateTokenParams {
+    requestId: BigNumber;
 }

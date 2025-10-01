@@ -1,5 +1,7 @@
 import { BigNumberish } from "ethers";
 
+
+// updateStakeTokens
 export interface UpdateStakeTokensParamsInput {
     stakeToken1: string;
     stakeToken2: string;
@@ -10,6 +12,8 @@ export interface UpdateStakeTokensParams extends UpdateStakeTokensParamsInput {
     signatures: string[];
 }
 
+
+// distributeTokensWithDuration
 export interface DistributeTokensWithDurationParamsInput {
     receivers: string[];
     amounts: BigNumberish[];
@@ -21,6 +25,8 @@ export interface DistributeTokensWithDurationParams extends DistributeTokensWith
     signatures: string[];
 }
 
+
+// distributeTokensWithTimestamp
 export interface DistributeTokensWithTimestampParamsInput {
     receivers: string[];
     amounts: BigNumberish[];
@@ -30,4 +36,18 @@ export interface DistributeTokensWithTimestampParamsInput {
 
 export interface DistributeTokensWithTimestampParams extends DistributeTokensWithTimestampParamsInput {
     signatures: string[];
+}
+
+
+// withdraw
+export interface WithdrawParams {
+    distributionIds: number[];
+}
+
+
+// stake
+export interface StakeParams {
+    distributionIds: number[];
+    stake1: number;
+    stake2: number;
 }

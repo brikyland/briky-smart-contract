@@ -1200,7 +1200,7 @@ describe('2.3. EstateLiquidator', async () => {
 
             const deprecateParams: DeprecateEstateParams = {
                 estateId: defaultParams.estateId,
-                data: "deprecate",
+                note: "deprecate",
             };
             await callTransaction(getSafeDeprecateEstateTxByParams(estateToken as any, manager, deprecateParams));
             
@@ -1345,7 +1345,7 @@ describe('2.3. EstateLiquidator', async () => {
             
             const deprecateParams: DeprecateEstateParams = {
                 estateId: defaultParams.estateId,
-                data: "deprecate",
+                note: "deprecate",
             };
             await callTransaction(getSafeDeprecateEstateTxByParams(estateToken as any, manager, deprecateParams));
 
@@ -1906,7 +1906,7 @@ describe('2.3. EstateLiquidator', async () => {
 
             const deprecateParams: DeprecateEstateParams = {
                 estateId: BigNumber.from(1),
-                data: "deprecate",
+                note: "deprecate",
             };
             await callTransaction(getSafeDeprecateEstateTxByParams(estateToken as any, manager, deprecateParams));
 

@@ -1,6 +1,10 @@
 import { BigNumber } from "ethers";
 
-export interface RequestExtractionParams {
+import { Validation } from "@utils/models/common/validatable";
+
+
+// requestExtraction
+export interface RequestExtractionParamsInput {
     estateId: BigNumber;
     buyer: string;
     value: BigNumber;
@@ -8,4 +12,14 @@ export interface RequestExtractionParams {
     feeRate: BigNumber;
     uuid: string;
     admissionExpiry: number;
+}
+
+export interface RequestExtractionParams extends RequestExtractionParamsInput {
+    validation: Validation;
+}
+
+
+// conclude
+export interface ConcludeParams {
+    requestId: BigNumber;
 }

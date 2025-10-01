@@ -1,11 +1,74 @@
 import { BigNumber } from "ethers";
 
-export interface RegisterCustodianParams {
+import { Validation } from "@utils/models/common/validatable";
+
+
+// updateCommissionToken
+export interface UpdateCommissionTokenParamsInput {
+    commissionToken: string;
+}
+
+export interface UpdateCommissionTokenParams extends UpdateCommissionTokenParamsInput {
+    signatures: string[];
+}
+
+
+// updateBaseURI
+export interface UpdateBaseURIParamsInput {
+    uri: string;
+}
+
+export interface UpdateBaseURIParams extends UpdateBaseURIParamsInput {
+    signatures: string[];
+}
+
+
+// authorizeTokenizers
+export interface AuthorizeTokenizersParamsInput {
+    accounts: string[];
+    isTokenizer: boolean;
+}
+
+export interface AuthorizeTokenizersParams extends AuthorizeTokenizersParamsInput {
+    signatures: string[];
+}
+
+
+// authorizeExtractors
+export interface AuthorizeExtractorsParamsInput {
+    accounts: string[];
+    isExtractor: boolean;
+}
+
+export interface AuthorizeExtractorsParams extends AuthorizeExtractorsParamsInput {
+    signatures: string[];
+}
+
+
+// updateZoneRoyaltyRate
+export interface UpdateZoneRoyaltyRateParamsInput {
+    zone: string;
+    royaltyRate: BigNumber;
+}
+
+export interface UpdateZoneRoyaltyRateParams extends UpdateZoneRoyaltyRateParamsInput {
+    signatures: string[];
+}
+
+
+// registerCustodian
+export interface RegisterCustodianParamsInput {
     zone: string;
     custodian: string;
     uri: string;
 }
 
+export interface RegisterCustodianParams extends RegisterCustodianParamsInput {
+    validation: Validation;
+}
+
+
+// tokenizeEstate
 export interface TokenizeEstateParams {
     totalSupply: BigNumber;
     zone: string;
@@ -16,46 +79,61 @@ export interface TokenizeEstateParams {
     broker: string;
 }
 
-export interface UpdateEstateURIParams {
+
+// extractEstate
+export interface ExtractEstateParams {
     estateId: BigNumber;
-    uri: string;
+    extractionId: BigNumber;
 }
 
-export interface UpdateEstateCustodianParams {
-    estateId: BigNumber;
-    custodian: string;
-}
 
+// safeDeprecateEstate
 export interface DeprecateEstateParams {
     estateId: BigNumber;
-    data: string;
+    note: string;
 }
 
+export interface SafeDeprecateEstateParams extends DeprecateEstateParams {
+    anchor: string;
+}
+
+
+// safeExtendEstateExpiration
 export interface ExtendEstateExpirationParams {
     estateId: BigNumber;
     expireAt: number;
 }
 
-export interface SafeUpdateEstateURIParams {
-    estateId: BigNumber;
-    uri: string;
-    anchor: string;
+export interface SafeExtendEstateExpirationParams extends ExtendEstateExpirationParams {
+    anchor: string
 }
 
-export interface SafeUpdateEstateCustodianParams {
+
+// safeUpdateEstateCustodian
+export interface UpdateEstateCustodianParams {
     estateId: BigNumber;
     custodian: string;
+}
+
+export interface SafeUpdateEstateCustodianParams extends UpdateEstateCustodianParams {
     anchor: string;
 }
 
-export interface SafeDeprecateEstateParams {
+
+// safeUpdateEstateURI
+export interface UpdateEstateURIParamsInput {
     estateId: BigNumber;
-    data: string;
+    uri: string;
+}
+
+export interface UpdateEstateURIParams extends UpdateEstateURIParamsInput {
+    validation: Validation;
+}
+
+export interface SafeUpdateEstateURIParamsInput extends UpdateEstateURIParamsInput {
     anchor: string;
 }
 
-export interface SafeExtendEstateExpirationParams {
-    estateId: BigNumber;
-    expireAt: number;
-    anchor: string;
+export interface SafeUpdateEstateURIParams extends SafeUpdateEstateURIParamsInput {
+    validation: Validation;
 }

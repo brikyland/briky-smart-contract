@@ -142,7 +142,7 @@ export async function getSafeDeprecateEstateTxByParams(
     const currentURI = await estateToken.uri(params.estateId);
     const safeParams: SafeDeprecateEstateParams = {
         estateId: params.estateId,
-        data: params.data,
+        data: params.note,
         anchor: ethers.utils.keccak256(ethers.utils.toUtf8Bytes(currentURI)),
     };
     return await getSafeDeprecateEstateTx(estateToken, deployer, safeParams);

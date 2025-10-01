@@ -1,5 +1,6 @@
 import { BigNumber } from "ethers";
 
+
 export enum StakeTokenOperation {
     Stake,
     Unstake,
@@ -8,6 +9,8 @@ export enum StakeTokenOperation {
     Transfer
 }
 
+
+// initializeRewarding
 export interface InitializeRewardingParamsInput {
     initialLastRewardFetch: BigNumber;
     successor: string;
@@ -17,10 +20,31 @@ export interface InitializeRewardingParams extends InitializeRewardingParamsInpu
     signatures: string[];
 }
 
+
+// updateFeeRate
 export interface UpdateFeeRateParamsInput {
     feeRate: BigNumber;
 }
 
 export interface UpdateFeeRateParams extends UpdateFeeRateParamsInput {
     signatures: string[];
+}
+
+
+// stake
+export interface StakeParams {
+    account: string;
+    value: BigNumber;
+}
+
+
+// unstake
+export interface UnstakeParams {
+    value: BigNumber;
+}
+
+
+// promote
+export interface PromoteParams {
+    value: BigNumber;
 }

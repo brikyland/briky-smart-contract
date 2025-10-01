@@ -16,7 +16,7 @@ export async function getIssueDividendTx(
         params.tokenId,
         params.value,
         params.currency,
-        params.data,
+        params.note,
         txConfig,
     );
 }
@@ -34,7 +34,7 @@ export async function getCallIssueDividendTx(
             params.tokenId,
             params.value,
             params.currency,
-            params.data,
+            params.note,
         ]),
         txConfig,
     );

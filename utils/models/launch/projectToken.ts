@@ -1,16 +1,53 @@
 import { BigNumber } from "ethers";
 
-export interface RegisterInitiatorParams {
+import { Validation } from "@utils/models/common/validatable";
+
+
+// updateBaseURI
+export interface UpdateBaseURIParamsInput {
+    uri: string;
+}
+
+export interface UpdateBaseURIParams extends UpdateBaseURIParamsInput {
+    signatures: string[];
+}
+
+
+// updateZoneRoyaltyRate
+export interface UpdateZoneRoyaltyRateParamsInput {
+    zone: string;
+    royaltyRate: BigNumber;
+}
+
+export interface UpdateZoneRoyaltyRateParams extends UpdateZoneRoyaltyRateParamsInput {
+    signatures: string[];
+}
+
+
+// authorizeLaunchpads
+export interface AuthorizeLaunchpadsParamsInput {
+    accounts: string[];
+    isLaunchpad: boolean;
+}
+
+export interface AuthorizeLaunchpadsParams extends AuthorizeLaunchpadsParamsInput {
+    signatures: string[];
+}
+
+
+// registerInitiator
+export interface RegisterInitiatorParamsInput {
     zone: string;
     initiator: string;
     uri: string;
 }
 
-export interface UpdateProjectURIParams {
-    projectId: BigNumber;
-    uri: string;
+export interface RegisterInitiatorParams extends RegisterInitiatorParamsInput {
+    validation: Validation;
 }
 
+
+// launchProject
 export interface LaunchProjectParams {
     zone: string;
     launchId: BigNumber;
@@ -18,42 +55,49 @@ export interface LaunchProjectParams {
     uri: string;
 }
 
+
+// mint
 export interface MintParams {
     projectId: BigNumber;
     amount: BigNumber;
 }
 
+
+// withdrawEstateToken
+export interface WithdrawEstateTokenParams {
+    projectId: BigNumber;
+}
+
+
+// safeDeprecateProject
 export interface DeprecateProjectParams {
     projectId: BigNumber;
     data: string;
 }
 
-export interface SafeDeprecateProjectParams {
-    projectId: BigNumber;
-    data: string;
+export interface SafeDeprecateProjectParams extends DeprecateProjectParams {
     anchor: string;
 }
 
+
+// safeUpdateProjectURI
+export interface UpdateProjectURIParams {
+    projectId: BigNumber;
+    uri: string;
+}
+
+export interface SafeUpdateProjectURIParams extends UpdateProjectURIParams {
+    anchor: string;
+}
+
+
+// safeTokenizeProject
 export interface TokenizeProjectParams {
     projectId: BigNumber;
     custodian: string;
     broker: string;
 }
 
-export interface SafeTokenizeProjectParams {
-    projectId: BigNumber;
-    custodian: string;
-    broker: string;
-    anchor: string;
-}
-
-export interface UpdateProjectURIParams {
-    projectId: BigNumber;
-    uri: string;
-}
-
-export interface SafeUpdateProjectURIParams {
-    projectId: BigNumber;
-    uri: string;
+export interface SafeTokenizeProjectParams extends TokenizeProjectParams {
     anchor: string;
 }
