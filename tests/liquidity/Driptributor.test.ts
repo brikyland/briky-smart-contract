@@ -20,7 +20,7 @@ import { getDistributeTokensWithDurationSignatures, getDistributeTokensWithTimes
 import { getDistributeTokensWithDurationTx, getDistributeTokensWithTimestampTx, getUpdateStakeTokensTx } from '@utils/transaction/liquidity/driptributor';
 
 interface DriptributorFixture {
-    deployer: any;
+    deployer: SignerWithAddress;
     admins: any[];
     admin: Admin;
     treasury: Treasury;
@@ -231,7 +231,7 @@ describe('4.3. Driptributor', async () => {
         }
 
         if (pause) {
-            await callPausable_Pause(driptributor, deployer, admins, admin);
+            await callPausable_Pause(deployer, admins, admin, driptributor);
         }
 
         return {

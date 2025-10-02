@@ -24,7 +24,7 @@ import { getInitializeRewardingSignatures, getUpdateFeeRateSignatures } from '@u
 import { getInitializeRewardingTx, getUpdateFeeRateTx } from '@utils/transaction/liquidity/StakeToken';
 
 interface StakeTokenFixture {
-    deployer: any;
+    deployer: SignerWithAddress;
     admins: any[];
     admin: Admin;
     currency: Currency;

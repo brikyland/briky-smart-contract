@@ -14,7 +14,7 @@ interface PausableFixture {
     admin: Admin;
     pausable: Pausable;
 
-    deployer: any;
+    deployer: SignerWithAddress;
     admins: any[];
 }
 

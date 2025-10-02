@@ -1,11 +1,9 @@
 import { Admin, PriceWatcher } from "@typechain-types";
+import { callTransaction } from "@utils/blockchain";
 
-import { callAdmin_UpdateCurrencyRegistries } from "@utils/call/common/admin";
-import { 
-    callPriceWatcher_UpdateDefaultRates,
-    callPriceWatcher_UpdatePriceFeeds
-} from "@utils/call/common/priceWatcher";
 import { Rate } from "@utils/models/common/common";
+import { getUpdateCurrencyRegistriesTxByInput } from "@utils/transaction/common/admin";
+import { getUpdateDefaultRatesTxByInput, getUpdatePriceFeedsTxByInput } from "@utils/transaction/common/priceWatcher";
 
 export async function addCurrencyToAdminAndPriceWatcher(
     deployer: any,
@@ -19,29 +17,37 @@ export async function addCurrencyToAdminAndPriceWatcher(
     heartbeats: number[],
     defaultRates: Rate[],
 ) {
-    await callAdmin_UpdateCurrencyRegistries(
-        admin,
+    await callTransaction(getUpdateCurrencyRegistriesTxByInput(
         deployer,
         admins,
+        admin,
         {
             currencies: currencyAddresses,
             isAvailable,
             isExclusive,
         }
-    );
-    await callPriceWatcher_UpdatePriceFeeds(
-        priceWatcher,
+    ));
+    
+    await callTransaction(getUpdatePriceFeedsTxByInput(
+        deployer,
         admins,
-        currencyAddresses,
-        priceFeeds,
-        heartbeats,
-        await admin.nonce()
-    );
-    await callPriceWatcher_UpdateDefaultRates(
+        admin,
         priceWatcher,
+        {
+            currencies: currencyAddresses,
+            feeds: priceFeeds,
+            heartbeats,
+        }
+    ));
+    
+    await callTransaction(getUpdateDefaultRatesTxByInput(
+        deployer,
         admins,
-        currencyAddresses,
-        defaultRates,
-        await admin.nonce()
-    );
+        admin,
+        priceWatcher,
+        {
+            currencies: currencyAddresses,
+            rates: defaultRates,
+        }
+    ));
 }

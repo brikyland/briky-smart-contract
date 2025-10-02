@@ -13,17 +13,10 @@ import {
 import { Constant } from '@tests/test.constant';
 
 import {
+    callTransaction,
     getSignatures,
     randomWallet
 } from '@utils/blockchain';
-
-import { 
-    callAdmin_ActivateIn,
-    callAdmin_AuthorizeGovernors,
-    callAdmin_AuthorizeManagers,
-    callAdmin_AuthorizeModerators,
-    callAdmin_DeclareZone
-} from '@utils/call/common/admin';
 
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { deployCurrency } from '@utils/deployments/common/currency';
@@ -78,7 +71,12 @@ import {
     getAuthorizeGovernorsTx,
     getDeclareZoneTx,
     getActivateInTx,
-    getUpdateCurrencyRegistriesTx
+    getUpdateCurrencyRegistriesTx,
+    getAuthorizeManagersTxByInput,
+    getAuthorizeModeratorsTxByInput,
+    getAuthorizeGovernorsTxByInput,
+    getDeclareZoneTxByInput,
+    getActivateInTxByInput
 } from '@utils/transaction/common/admin';
 
 import { nextPermutation } from '@utils/utils';
@@ -171,59 +169,59 @@ describe('1.2. Admin', async () => {
         const {deployer, admins, admin, governors, managers, moderators, accounts, zone1, zone2 } = fixture;
 
         if (authorizeManagers) {
-            await callAdmin_AuthorizeManagers(
-                admin,
+            await callTransaction(getAuthorizeManagersTxByInput(
                 deployer,
                 admins,
+                admin,
                 { 
                     accounts: managers.map(x => x.address),
                     isManager: true
                 }
-            );
+            ));
         }
 
         if (authorizeModerators) {
-            await callAdmin_AuthorizeModerators(
-                admin,
+            await callTransaction(getAuthorizeModeratorsTxByInput(
                 deployer,
                 admins,
+                admin,
                 {
                     accounts: moderators.map(x => x.address),
                     isModerator: true
                 }
-            );
+            ));
         }
 
         if (authorizeGovernors) {
-            await callAdmin_AuthorizeGovernors(
-                admin,
+            await callTransaction(getAuthorizeGovernorsTxByInput(
                 deployer,
                 admins,
+                admin,
                 {
                     accounts: governors.map(x => x.address),
                     isGovernor: true
                 }
-            );
+            ));
         }
 
         if (declareZones) {
             for (const zone of [zone1, zone2]) {
-                await callAdmin_DeclareZone(admin, deployer, admins, { zone: zone });
+                await callTransaction(getDeclareZoneTxByInput(deployer, admins, admin, { zone: zone }));
             }
         }
 
         if (activateAccountsInZones) {
             for (const zone of [zone1, zone2]) {
-                await callAdmin_ActivateIn(
-                    admin,
+                await callTransaction(getActivateInTxByInput(
                     deployer,
                     admins,
+                    admin,
                     {
                         zone: zone,
                         accounts: accounts.map(x => x.address),
                         isActive: true
                     }
-                );
+                ));
             }
         }
 
@@ -520,10 +518,10 @@ describe('1.2. Admin', async () => {
             };
             const params: TransferAdministration1Params = {
                 ...paramsInput,
-                signatures: await getTransferAdministration1Signatures(admin, admins, paramsInput)
+                signatures: await getTransferAdministration1Signatures(admins, admin, paramsInput)
             };
 
-            const tx = await getTransferAdministration1Tx(admin, deployer, params);
+            const tx = await getTransferAdministration1Tx(deployer, admin, params);
             await tx.wait();
 
             await expect(tx).to
@@ -544,10 +542,10 @@ describe('1.2. Admin', async () => {
             };
             const params: TransferAdministration1Params = {
                 ...paramsInput,
-                signatures: await getTransferAdministration1Signatures(admin, admins, paramsInput, false)
+                signatures: await getTransferAdministration1Signatures(admins, admin, paramsInput, false)
             };
 
-            await expect(getTransferAdministration1Tx(admin, deployer, params))
+            await expect(getTransferAdministration1Tx(deployer, admin, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
     });
@@ -563,10 +561,10 @@ describe('1.2. Admin', async () => {
             };
             const params: TransferAdministration2Params = {
                 ...paramsInput,
-                signatures: await getTransferAdministration2Signatures(admin, admins, paramsInput)
+                signatures: await getTransferAdministration2Signatures(admins, admin, paramsInput)
             };
 
-            const tx = await getTransferAdministration2Tx(admin, deployer, params);
+            const tx = await getTransferAdministration2Tx(deployer, admin, params);
             await tx.wait();
 
             await expect(tx).to
@@ -587,10 +585,10 @@ describe('1.2. Admin', async () => {
             };
             const params: TransferAdministration2Params = {
                 ...paramsInput,
-                signatures: await getTransferAdministration2Signatures(admin, admins, paramsInput, false)
+                signatures: await getTransferAdministration2Signatures(admins, admin, paramsInput, false)
             };
 
-            await expect(getTransferAdministration2Tx(admin, deployer, params))
+            await expect(getTransferAdministration2Tx(deployer, admin, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
     });
@@ -606,10 +604,10 @@ describe('1.2. Admin', async () => {
             };
             const params: TransferAdministration3Params = {
                 ...paramsInput,
-                signatures: await getTransferAdministration3Signatures(admin, admins, paramsInput)
+                signatures: await getTransferAdministration3Signatures(admins, admin, paramsInput)
             };
 
-            const tx = await getTransferAdministration3Tx(admin, deployer, params);
+            const tx = await getTransferAdministration3Tx(deployer, admin, params);
             await tx.wait();
 
             await expect(tx).to
@@ -630,10 +628,10 @@ describe('1.2. Admin', async () => {
             };
             const params: TransferAdministration3Params = {
                 ...paramsInput,
-                signatures: await getTransferAdministration3Signatures(admin, admins, paramsInput, false)
+                signatures: await getTransferAdministration3Signatures(admins, admin, paramsInput, false)
             };
 
-            await expect(getTransferAdministration3Tx(admin, deployer, params))
+            await expect(getTransferAdministration3Tx(deployer, admin, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
     });
@@ -649,10 +647,10 @@ describe('1.2. Admin', async () => {
             };
             const params: TransferAdministration4Params = {
                 ...paramsInput,
-                signatures: await getTransferAdministration4Signatures(admin, admins, paramsInput)
+                signatures: await getTransferAdministration4Signatures(admins, admin, paramsInput)
             };
 
-            const tx = await getTransferAdministration4Tx(admin, deployer, params);
+            const tx = await getTransferAdministration4Tx(deployer, admin, params);
             await tx.wait();
 
             await expect(tx).to
@@ -673,10 +671,10 @@ describe('1.2. Admin', async () => {
             };
             const params: TransferAdministration4Params = {
                 ...paramsInput,
-                signatures: await getTransferAdministration4Signatures(admin, admins, paramsInput, false)
+                signatures: await getTransferAdministration4Signatures(admins, admin, paramsInput, false)
             };
 
-            await expect(getTransferAdministration4Tx(admin, deployer, params))
+            await expect(getTransferAdministration4Tx(deployer, admin, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
     });
@@ -692,10 +690,10 @@ describe('1.2. Admin', async () => {
             };
             const params: TransferAdministration5Params = {
                 ...paramsInput,
-                signatures: await getTransferAdministration5Signatures(admin, admins, paramsInput)
+                signatures: await getTransferAdministration5Signatures(admins, admin, paramsInput)
             };
 
-            const tx = await getTransferAdministration5Tx(admin, deployer, params);
+            const tx = await getTransferAdministration5Tx(deployer, admin, params);
             await tx.wait();
 
             await expect(tx).to
@@ -716,10 +714,10 @@ describe('1.2. Admin', async () => {
             };
             const params: TransferAdministration5Params = {
                 ...paramsInput,
-                signatures: await getTransferAdministration5Signatures(admin, admins, paramsInput, false)
+                signatures: await getTransferAdministration5Signatures(admins, admin, paramsInput, false)
             };
 
-            await expect(getTransferAdministration5Tx(admin, deployer, params))
+            await expect(getTransferAdministration5Tx(deployer, admin, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
     });
@@ -738,10 +736,10 @@ describe('1.2. Admin', async () => {
             };
             const params: AuthorizeManagersParams = {
                 ...paramsInput,
-                signatures: await getAuthorizeManagersSignatures(admin, admins, paramsInput)
+                signatures: await getAuthorizeManagersSignatures(admins, admin, paramsInput)
             };
 
-            const tx = await getAuthorizeManagersTx(admin, deployer, params);
+            const tx = await getAuthorizeManagersTx(deployer, admin, params);
             await tx.wait();
 
             for (const manager of toBeManagers) {
@@ -769,10 +767,10 @@ describe('1.2. Admin', async () => {
             };
             const params: AuthorizeManagersParams = {
                 ...paramsInput,
-                signatures: await getAuthorizeManagersSignatures(admin, admins, paramsInput, false)
+                signatures: await getAuthorizeManagersSignatures(admins, admin, paramsInput, false)
             };
 
-            await expect(getAuthorizeManagersTx(admin, deployer, params))
+            await expect(getAuthorizeManagersTx(deployer, admin, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
@@ -790,10 +788,10 @@ describe('1.2. Admin', async () => {
             };
             const params: AuthorizeManagersParams = {
                 ...paramsInput,
-                signatures: await getAuthorizeManagersSignatures(admin, admins, paramsInput)
+                signatures: await getAuthorizeManagersSignatures(admins, admin, paramsInput)
             };
 
-            await expect(getAuthorizeManagersTx(admin, deployer, params))
+            await expect(getAuthorizeManagersTx(deployer, admin, params))
                 .to.be.revertedWithCustomError(admin, `AuthorizedAccount`)
         });
 
@@ -804,15 +802,15 @@ describe('1.2. Admin', async () => {
             const toBeManagers = [];
             for (let i = 0; i < 5; ++i) toBeManagers.push(randomWallet());
 
-            await callAdmin_AuthorizeManagers(
-                admin,
+            await callTransaction(getAuthorizeManagersTxByInput(
                 deployer,
                 admins,
+                admin,
                 {
                     accounts: toBeManagers.map(x => x.address),
                     isManager: true
                 }
-            );
+            ));
 
             const managers = [randomWallet(), toBeManagers[2], randomWallet()];
 
@@ -822,10 +820,10 @@ describe('1.2. Admin', async () => {
             };
             const params: AuthorizeManagersParams = {
                 ...paramsInput,
-                signatures: await getAuthorizeManagersSignatures(admin, admins, paramsInput)
+                signatures: await getAuthorizeManagersSignatures(admins, admin, paramsInput)
             };
 
-            await expect(getAuthorizeManagersTx(admin, deployer, params))
+            await expect(getAuthorizeManagersTx(deployer, admin, params))
                 .to.be.revertedWithCustomError(admin, `AuthorizedAccount`)
         })
 
@@ -844,10 +842,10 @@ describe('1.2. Admin', async () => {
             };
             const params: AuthorizeManagersParams = {
                 ...paramsInput,
-                signatures: await getAuthorizeManagersSignatures(admin, admins, paramsInput)
+                signatures: await getAuthorizeManagersSignatures(admins, admin, paramsInput)
             };
 
-            const tx = await getAuthorizeManagersTx(admin, deployer, params);
+            const tx = await getAuthorizeManagersTx(deployer, admin, params);
             await tx.wait();
 
             for (const manager of toDeauth) {
@@ -881,10 +879,10 @@ describe('1.2. Admin', async () => {
             };
             const params: AuthorizeManagersParams = {
                 ...paramsInput,
-                signatures: await getAuthorizeManagersSignatures(admin, admins, paramsInput)
+                signatures: await getAuthorizeManagersSignatures(admins, admin, paramsInput)
             };
 
-            await expect(getAuthorizeManagersTx(admin, deployer, params))
+            await expect(getAuthorizeManagersTx(deployer, admin, params))
                 .to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`)
         });
 
@@ -902,10 +900,10 @@ describe('1.2. Admin', async () => {
             };
             const params: AuthorizeManagersParams = {
                 ...paramsInput,
-                signatures: await getAuthorizeManagersSignatures(admin, admins, paramsInput)
+                signatures: await getAuthorizeManagersSignatures(admins, admin, paramsInput)
             };
             
-            await expect(getAuthorizeManagersTx(admin, deployer, params))
+            await expect(getAuthorizeManagersTx(deployer, admin, params))
                 .to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`)
         });
 
@@ -916,15 +914,15 @@ describe('1.2. Admin', async () => {
             const { deployer, admins, admin, managers } = fixture;            
 
             const tx1Accounts = managers.slice(0, 2);
-            await callAdmin_AuthorizeManagers(
-                admin,
+            await callTransaction(getAuthorizeManagersTxByInput(
                 deployer,
                 admins,
+                admin,
                 {
                     accounts: tx1Accounts.map(x => x.address),
                     isManager: false 
                 }
-            );
+            ));
 
             const tx2Accounts = [managers[0]];
             const paramsInput: AuthorizeManagersParamsInput = {
@@ -933,10 +931,10 @@ describe('1.2. Admin', async () => {
             };
             const params: AuthorizeManagersParams = {
                 ...paramsInput,
-                signatures: await getAuthorizeManagersSignatures(admin, admins, paramsInput)
+                signatures: await getAuthorizeManagersSignatures(admins, admin, paramsInput)
             };
 
-            await expect(getAuthorizeManagersTx(admin, deployer, params))
+            await expect(getAuthorizeManagersTx(deployer, admin, params))
                 .to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`)
         });
 
@@ -952,10 +950,10 @@ describe('1.2. Admin', async () => {
             };
             const params: AuthorizeManagersParams = {
                 ...paramsInput,
-                signatures: await getAuthorizeManagersSignatures(admin, admins, paramsInput)
+                signatures: await getAuthorizeManagersSignatures(admins, admin, paramsInput)
             };
 
-            await expect(getAuthorizeManagersTx(admin, deployer, params))
+            await expect(getAuthorizeManagersTx(deployer, admin, params))
                 .to.be.revertedWithCustomError(admin, `CannotSelfDeauthorizing`)
         });
     });
@@ -974,10 +972,10 @@ describe('1.2. Admin', async () => {
             };
             const params: AuthorizeModeratorsParams = {
                 ...paramsInput,
-                signatures: await getAuthorizeModeratorsSignatures(admin, admins, paramsInput)
+                signatures: await getAuthorizeModeratorsSignatures(admins, admin, paramsInput)
             };
 
-            const tx = await getAuthorizeModeratorsTx(admin, deployer, params);
+            const tx = await getAuthorizeModeratorsTx(deployer, admin, params);
             await tx.wait();
 
             for (const moderator of toBeModerators) {
@@ -1005,10 +1003,10 @@ describe('1.2. Admin', async () => {
             };
             const params: AuthorizeModeratorsParams = {
                 ...paramsInput,
-                signatures: await getAuthorizeModeratorsSignatures(admin, admins, paramsInput, false)
+                signatures: await getAuthorizeModeratorsSignatures(admins, admin, paramsInput, false)
             };
 
-            await expect(getAuthorizeModeratorsTx(admin, deployer, params))
+            await expect(getAuthorizeModeratorsTx(deployer, admin, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
@@ -1026,10 +1024,10 @@ describe('1.2. Admin', async () => {
             };
             const params: AuthorizeModeratorsParams = {
                 ...paramsInput,
-                signatures: await getAuthorizeModeratorsSignatures(admin, admins, paramsInput)
+                signatures: await getAuthorizeModeratorsSignatures(admins, admin, paramsInput)
             };
 
-            await expect(getAuthorizeModeratorsTx(admin, deployer, params))
+            await expect(getAuthorizeModeratorsTx(deployer, admin, params))
                 .to.be.revertedWithCustomError(admin, `AuthorizedAccount`)
         });
 
@@ -1040,15 +1038,15 @@ describe('1.2. Admin', async () => {
             const toBeModerators = [];
             for (let i = 0; i < 5; ++i) toBeModerators.push(randomWallet());
 
-            await callAdmin_AuthorizeModerators(
-                admin,
+            await callTransaction(getAuthorizeModeratorsTxByInput(
                 deployer,
                 admins,
+                admin,
                 {
                     accounts: toBeModerators.map(x => x.address),
                     isModerator: true
                 }
-            );
+            ));
 
             const moderators = [randomWallet(), toBeModerators[2], randomWallet()];
 
@@ -1058,10 +1056,10 @@ describe('1.2. Admin', async () => {
             };
             const params: AuthorizeModeratorsParams = {
                 ...paramsInput,
-                signatures: await getAuthorizeModeratorsSignatures(admin, admins, paramsInput)
+                signatures: await getAuthorizeModeratorsSignatures(admins, admin, paramsInput)
             };
 
-            await expect(getAuthorizeModeratorsTx(admin, deployer, params))
+            await expect(getAuthorizeModeratorsTx(deployer, admin, params))
                 .to.be.revertedWithCustomError(admin, `AuthorizedAccount`)
         });
 
@@ -1080,10 +1078,10 @@ describe('1.2. Admin', async () => {
             };
             const params: AuthorizeModeratorsParams = {
                 ...paramsInput,
-                signatures: await getAuthorizeModeratorsSignatures(admin, admins, paramsInput)
+                signatures: await getAuthorizeModeratorsSignatures(admins, admin, paramsInput)
             };
 
-            const tx = await getAuthorizeModeratorsTx(admin, deployer, params);
+            const tx = await getAuthorizeModeratorsTx(deployer, admin, params);
             await tx.wait();
 
             for (const moderator of toDeauth) {
@@ -1117,10 +1115,10 @@ describe('1.2. Admin', async () => {
             };
             const params: AuthorizeModeratorsParams = {
                 ...paramsInput,
-                signatures: await getAuthorizeModeratorsSignatures(admin, admins, paramsInput)
+                signatures: await getAuthorizeModeratorsSignatures(admins, admin, paramsInput)
             };
 
-            await expect(getAuthorizeModeratorsTx(admin, deployer, params))
+            await expect(getAuthorizeModeratorsTx(deployer, admin, params))
                 .to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`)
         });
 
@@ -1138,10 +1136,10 @@ describe('1.2. Admin', async () => {
             };
             const params: AuthorizeModeratorsParams = {
                 ...paramsInput,
-                signatures: await getAuthorizeModeratorsSignatures(admin, admins, paramsInput)
+                signatures: await getAuthorizeModeratorsSignatures(admins, admin, paramsInput)
             };
 
-            await expect(getAuthorizeModeratorsTx(admin, deployer, params))
+            await expect(getAuthorizeModeratorsTx(deployer, admin, params))
                 .to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`)
         });
 
@@ -1152,15 +1150,15 @@ describe('1.2. Admin', async () => {
             const { deployer, admins, admin, moderators } = fixture;
 
             const tx1Accounts = moderators.slice(0, 2);
-            await callAdmin_AuthorizeModerators(
-                admin,
+            await callTransaction(getAuthorizeModeratorsTxByInput(
                 deployer,
                 admins,
+                admin,
                 { 
                     accounts: tx1Accounts.map(x => x.address),
                     isModerator: false
                 }
-            );
+            ));
             
             const tx2Accounts = [moderators[0]];
             const paramsInput: AuthorizeModeratorsParamsInput = {
@@ -1169,10 +1167,10 @@ describe('1.2. Admin', async () => {
             };
             const params: AuthorizeModeratorsParams = {
                 ...paramsInput,
-                signatures: await getAuthorizeModeratorsSignatures(admin, admins, paramsInput)
+                signatures: await getAuthorizeModeratorsSignatures(admins, admin, paramsInput)
             };
 
-            await expect(getAuthorizeModeratorsTx(admin, deployer, params))
+            await expect(getAuthorizeModeratorsTx(deployer, admin, params))
                 .to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`)
         });
     });
@@ -1191,10 +1189,10 @@ describe('1.2. Admin', async () => {
             };
             const params: AuthorizeGovernorsParams = {
                 ...paramsInput,
-                signatures: await getAuthorizeGovernorsSignatures(admin, admins, paramsInput)
+                signatures: await getAuthorizeGovernorsSignatures(admins, admin, paramsInput)
             };
 
-            const tx = await getAuthorizeGovernorsTx(admin, deployer, params);
+            const tx = await getAuthorizeGovernorsTx(deployer, admin, params);
             await tx.wait();
 
             for (const governor of toBeGovernors) {
@@ -1222,10 +1220,10 @@ describe('1.2. Admin', async () => {
             };
             const params: AuthorizeGovernorsParams = {
                 ...paramsInput,
-                signatures: await getAuthorizeGovernorsSignatures(admin, admins, paramsInput, false)
+                signatures: await getAuthorizeGovernorsSignatures(admins, admin, paramsInput, false)
             };
 
-            await expect(getAuthorizeGovernorsTx(admin, deployer, params))
+            await expect(getAuthorizeGovernorsTx(deployer, admin, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
@@ -1241,10 +1239,10 @@ describe('1.2. Admin', async () => {
             };
             const params: AuthorizeGovernorsParams = {
                 ...paramsInput,
-                signatures: await getAuthorizeGovernorsSignatures(admin, admins, paramsInput)
+                signatures: await getAuthorizeGovernorsSignatures(admins, admin, paramsInput)
             };
 
-            await expect(getAuthorizeGovernorsTx(admin, deployer, params))
+            await expect(getAuthorizeGovernorsTx(deployer, admin, params))
                 .to.be.revertedWithCustomError(admin, 'InvalidGovernor');
         });
 
@@ -1260,10 +1258,10 @@ describe('1.2. Admin', async () => {
             };
             const params: AuthorizeGovernorsParams = {
                 ...paramsInput,
-                signatures: await getAuthorizeGovernorsSignatures(admin, admins, paramsInput)
+                signatures: await getAuthorizeGovernorsSignatures(admins, admin, paramsInput)
             };
 
-            await expect(getAuthorizeGovernorsTx(admin, deployer, params))
+            await expect(getAuthorizeGovernorsTx(deployer, admin, params))
                 .to.be.revertedWithCustomError(admin, 'InvalidGovernor');
         })
 
@@ -1281,10 +1279,10 @@ describe('1.2. Admin', async () => {
             };
             const params: AuthorizeGovernorsParams = {
                 ...paramsInput,
-                signatures: await getAuthorizeGovernorsSignatures(admin, admins, paramsInput)
+                signatures: await getAuthorizeGovernorsSignatures(admins, admin, paramsInput)
             };
 
-            await expect(getAuthorizeGovernorsTx(admin, deployer, params))
+            await expect(getAuthorizeGovernorsTx(deployer, admin, params))
                 .to.be.revertedWithCustomError(admin, `AuthorizedAccount`)
         });
 
@@ -1293,15 +1291,15 @@ describe('1.2. Admin', async () => {
             const { deployer, admins, admin, governors } = fixture;
 
             const tx1Governors = [governors[0], governors[1]];
-            await callAdmin_AuthorizeGovernors(
-                admin,
+            await callTransaction(getAuthorizeGovernorsTxByInput(
                 deployer,
                 admins,
+                admin,
                 {
                     accounts: tx1Governors.map(x => x.address),
                     isGovernor: true
                 }
-            );
+            ));
 
             const tx2Governors = [governors[2], governors[1]];
             const paramsInput: AuthorizeGovernorsParamsInput = {
@@ -1310,9 +1308,9 @@ describe('1.2. Admin', async () => {
             };
             const params: AuthorizeGovernorsParams = {
                 ...paramsInput,
-                signatures: await getAuthorizeGovernorsSignatures(admin, admins, paramsInput)
+                signatures: await getAuthorizeGovernorsSignatures(admins, admin, paramsInput)
             };
-            await expect(getAuthorizeGovernorsTx(admin, deployer, params))
+            await expect(getAuthorizeGovernorsTx(deployer, admin, params))
                 .to.be.revertedWithCustomError(admin, `AuthorizedAccount`)
         })
 
@@ -1331,10 +1329,10 @@ describe('1.2. Admin', async () => {
             };
             const params: AuthorizeGovernorsParams = {
                 ...paramsInput,
-                signatures: await getAuthorizeGovernorsSignatures(admin, admins, paramsInput)
+                signatures: await getAuthorizeGovernorsSignatures(admins, admin, paramsInput)
             };
 
-            const tx = await getAuthorizeGovernorsTx(admin, deployer, params);
+            const tx = await getAuthorizeGovernorsTx(deployer, admin, params);
             await tx.wait();
 
             for (const governor of toDeauth) {
@@ -1368,10 +1366,10 @@ describe('1.2. Admin', async () => {
             };
             const params: AuthorizeGovernorsParams = {
                 ...paramsInput,
-                signatures: await getAuthorizeGovernorsSignatures(admin, admins, paramsInput)
+                signatures: await getAuthorizeGovernorsSignatures(admins, admin, paramsInput)
             };
 
-            await expect(getAuthorizeGovernorsTx(admin, deployer, params))
+            await expect(getAuthorizeGovernorsTx(deployer, admin, params))
                 .to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`)
         });
 
@@ -1389,10 +1387,10 @@ describe('1.2. Admin', async () => {
             };
             const params: AuthorizeGovernorsParams = {
                 ...paramsInput,
-                signatures: await getAuthorizeGovernorsSignatures(admin, admins, paramsInput)
+                signatures: await getAuthorizeGovernorsSignatures(admins, admin, paramsInput)
             };
 
-            await expect(getAuthorizeGovernorsTx(admin, deployer, params))
+            await expect(getAuthorizeGovernorsTx(deployer, admin, params))
                 .to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`)
         });
 
@@ -1403,15 +1401,15 @@ describe('1.2. Admin', async () => {
             const { deployer, admins, admin, governors } = fixture;            
 
             const tx1Accounts = governors.slice(0, 2);
-            await callAdmin_AuthorizeGovernors(
-                admin,
+            await callTransaction(getAuthorizeGovernorsTxByInput(
                 deployer,
                 admins,
+                admin,
                 {
                     accounts: tx1Accounts.map(x => x.address),
                     isGovernor: false
                 }
-            );
+            ));
 
             const tx2Accounts = [governors[0]];
             const paramsInput: AuthorizeGovernorsParamsInput = {
@@ -1420,10 +1418,10 @@ describe('1.2. Admin', async () => {
             };
             const params: AuthorizeGovernorsParams = {
                 ...paramsInput,
-                signatures: await getAuthorizeGovernorsSignatures(admin, admins, paramsInput)
+                signatures: await getAuthorizeGovernorsSignatures(admins, admin, paramsInput)
             };
 
-            await expect(getAuthorizeGovernorsTx(admin, deployer, params))
+            await expect(getAuthorizeGovernorsTx(deployer, admin, params))
                 .to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`)
         });
     });
@@ -1438,9 +1436,9 @@ describe('1.2. Admin', async () => {
             };
             const params1: DeclareZoneParams = {
                 ...paramsInput1,
-                signatures: await getDeclareZoneSignatures(admin, admins, paramsInput1)
+                signatures: await getDeclareZoneSignatures(admins, admin, paramsInput1)
             };
-            const tx1 = await getDeclareZoneTx(admin, deployer, params1);
+            const tx1 = await getDeclareZoneTx(deployer, admin, params1);
             await tx1.wait();
 
             await expect(tx1).to
@@ -1454,10 +1452,10 @@ describe('1.2. Admin', async () => {
             };
             const params2: DeclareZoneParams = {
                 ...paramsInput2,
-                signatures: await getDeclareZoneSignatures(admin, admins, paramsInput2)
+                signatures: await getDeclareZoneSignatures(admins, admin, paramsInput2)
             };
 
-            const tx2 = await getDeclareZoneTx(admin, deployer, params2);
+            const tx2 = await getDeclareZoneTx(deployer, admin, params2);
             await tx2.wait();
             
             await expect(tx2).to
@@ -1476,10 +1474,10 @@ describe('1.2. Admin', async () => {
             };
             const params: DeclareZoneParams = {
                 ...paramsInput,
-                signatures: await getDeclareZoneSignatures(admin, admins, paramsInput, false)
+                signatures: await getDeclareZoneSignatures(admins, admin, paramsInput, false)
             };
 
-            await expect(getDeclareZoneTx(admin, deployer, params))
+            await expect(getDeclareZoneTx(deployer, admin, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification')
         });
 
@@ -1487,22 +1485,22 @@ describe('1.2. Admin', async () => {
             const fixture = await setupBeforeTest();
             const { deployer, admins, admin, zone1 } = fixture;            
 
-            await callAdmin_DeclareZone(
-                admin,
+            await callTransaction(getDeclareZoneTxByInput(
                 deployer,
                 admins,
+                admin,
                 { zone: zone1 }
-            );
+            ));
 
             const paramsInput: DeclareZoneParamsInput = {
                 zone: zone1
             };
             const params: DeclareZoneParams = {
                 ...paramsInput,
-                signatures: await getDeclareZoneSignatures(admin, admins, paramsInput)
+                signatures: await getDeclareZoneSignatures(admins, admin, paramsInput)
             };
 
-            await expect(getDeclareZoneTx(admin, deployer, params))
+            await expect(getDeclareZoneTx(deployer, admin, params))
                 .to.be.revertedWithCustomError(admin, 'AuthorizedZone')
         });
     });
@@ -1524,10 +1522,10 @@ describe('1.2. Admin', async () => {
             };
             const params1: ActivateInParams = {
                 ...paramsInput1,
-                signatures: await getActivateInSignatures(admin, admins, paramsInput1)
+                signatures: await getActivateInSignatures(admins, admin, paramsInput1)
             };
 
-            const tx1 = await getActivateInTx(admin, deployer, params1);
+            const tx1 = await getActivateInTx(deployer, admin, params1);
             await tx1.wait();
 
             for(const account of zone1Accounts) {
@@ -1543,10 +1541,10 @@ describe('1.2. Admin', async () => {
             };
             const params2: ActivateInParams = {
                 ...paramsInput2,
-                signatures: await getActivateInSignatures(admin, admins, paramsInput2)
+                signatures: await getActivateInSignatures(admins, admin, paramsInput2)
             };
 
-            const tx2 = await getActivateInTx(admin, deployer, params2);
+            const tx2 = await getActivateInTx(deployer, admin, params2);
             await tx2.wait();
 
             for(const account of zone2Accounts) {
@@ -1584,9 +1582,9 @@ describe('1.2. Admin', async () => {
             };
             const params: ActivateInParams = {
                 ...paramsInput,
-                signatures: await getActivateInSignatures(admin, admins, paramsInput, false)
+                signatures: await getActivateInSignatures(admins, admin, paramsInput, false)
             };
-            await expect(getActivateInTx(admin, deployer, params))
+            await expect(getActivateInTx(deployer, admin, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification')
         });
 
@@ -1607,9 +1605,9 @@ describe('1.2. Admin', async () => {
             };
             const params: ActivateInParams = {
                 ...paramsInput,
-                signatures: await getActivateInSignatures(admin, admins, paramsInput)
+                signatures: await getActivateInSignatures(admins, admin, paramsInput)
             };
-            await expect(getActivateInTx(admin, deployer, params))
+            await expect(getActivateInTx(deployer, admin, params))
                 .to.be.revertedWithCustomError(admin, 'InvalidInput')
         });
 
@@ -1628,9 +1626,9 @@ describe('1.2. Admin', async () => {
             };
             const params: ActivateInParams = {
                 ...paramsInput,
-                signatures: await getActivateInSignatures(admin, admins, paramsInput)
+                signatures: await getActivateInSignatures(admins, admin, paramsInput)
             };
-            await expect(getActivateInTx(admin, deployer, params))
+            await expect(getActivateInTx(deployer, admin, params))
                 .to.be.revertedWithCustomError(admin, 'ActivatedAccount')
         });
 
@@ -1641,16 +1639,16 @@ describe('1.2. Admin', async () => {
             const { deployer, admins, admin, accounts, zone1 } = fixture;            
 
             const tx1Accounts = [accounts[0], accounts[1], accounts[2]];
-            await callAdmin_ActivateIn(
-                admin,
+            await callTransaction(getActivateInTxByInput(
                 deployer,
                 admins,
+                admin,
                 {
                     zone: zone1,
                     accounts: tx1Accounts.map(x => x.address),
                     isActive: true
                 }
-            );
+            ));
 
             const tx2Accounts = [accounts[3], accounts[2]];
 
@@ -1661,9 +1659,9 @@ describe('1.2. Admin', async () => {
             };
             const params: ActivateInParams = {
                 ...paramsInput,
-                signatures: await getActivateInSignatures(admin, admins, paramsInput)
+                signatures: await getActivateInSignatures(admins, admin, paramsInput)
             };
-            await expect(getActivateInTx(admin, deployer, params))
+            await expect(getActivateInTx(deployer, admin, params))
                 .to.be.revertedWithCustomError(admin, 'ActivatedAccount')
         });
 
@@ -1684,10 +1682,10 @@ describe('1.2. Admin', async () => {
             };
             const params: ActivateInParams = {
                 ...paramsInput,
-                signatures: await getActivateInSignatures(admin, admins, paramsInput)
+                signatures: await getActivateInSignatures(admins, admin, paramsInput)
             };
 
-            const tx1 = await getActivateInTx(admin, deployer, params);
+            const tx1 = await getActivateInTx(deployer, admin, params);
             await tx1.wait();
 
             for(const account of zone1ToDeacivate) {
@@ -1706,10 +1704,10 @@ describe('1.2. Admin', async () => {
             };
             const params2: ActivateInParams = {
                 ...paramsInput2,
-                signatures: await getActivateInSignatures(admin, admins, paramsInput2)
+                signatures: await getActivateInSignatures(admins, admin, paramsInput2)
             };
             
-            const tx2 = await getActivateInTx(admin, deployer, params2);
+            const tx2 = await getActivateInTx(deployer, admin, params2);
             await tx2.wait();
 
             for(const account of zone2ToDeacivate) {
@@ -1749,9 +1747,9 @@ describe('1.2. Admin', async () => {
             };
             const params: ActivateInParams = {
                 ...paramsInput,
-                signatures: await getActivateInSignatures(admin, admins, paramsInput)
+                signatures: await getActivateInSignatures(admins, admin, paramsInput)
             };
-            await expect(getActivateInTx(admin, deployer, params))
+            await expect(getActivateInTx(deployer, admin, params))
                 .to.be.revertedWithCustomError(admin, 'NotActivatedAccount')
         });
 
@@ -1771,9 +1769,9 @@ describe('1.2. Admin', async () => {
             };
             const params: ActivateInParams = {
                 ...paramsInput,
-                signatures: await getActivateInSignatures(admin, admins, paramsInput)
+                signatures: await getActivateInSignatures(admins, admin, paramsInput)
             };
-            await expect(getActivateInTx(admin, deployer, params))
+            await expect(getActivateInTx(deployer, admin, params))
                 .to.be.revertedWithCustomError(admin, 'NotActivatedAccount')
         });
 
@@ -1785,16 +1783,16 @@ describe('1.2. Admin', async () => {
             const { deployer, admins, admin, accounts, zone1 } = fixture;            
 
             let tx1Accounts = [accounts[0], accounts[1], accounts[2]];
-            await callAdmin_ActivateIn(
-                admin,
+            await callTransaction(getActivateInTxByInput(
                 deployer,
                 admins,
+                admin,
                 {
                     zone: zone1,
                     accounts: tx1Accounts.map(x => x.address),
                     isActive: false
                 }
-            );
+            ));
 
             let tx2Accounts = [accounts[3], accounts[2]];
 
@@ -1805,9 +1803,9 @@ describe('1.2. Admin', async () => {
             };
             const params: ActivateInParams = {
                 ...paramsInput,
-                signatures: await getActivateInSignatures(admin, admins, paramsInput)
+                signatures: await getActivateInSignatures(admins, admin, paramsInput)
             };
-            await expect(getActivateInTx(admin, deployer, params))
+            await expect(getActivateInTx(deployer, admin, params))
                 .to.be.revertedWithCustomError(admin, 'NotActivatedAccount')
         });
     });
@@ -1829,10 +1827,10 @@ describe('1.2. Admin', async () => {
             };
             const params: UpdateCurrencyRegistriesParams = {
                 ...paramsInput,
-                signatures: await getUpdateCurrencyRegistriesSignatures(admin, admins, paramsInput)
+                signatures: await getUpdateCurrencyRegistriesSignatures(admins, admin, paramsInput)
             };
 
-            const tx = await getUpdateCurrencyRegistriesTx(admin, deployer, params);
+            const tx = await getUpdateCurrencyRegistriesTx(deployer, admin, params);
             await tx.wait();
 
             for (let i = 0; i < currencyAddresses.length; i++) {
@@ -1875,10 +1873,10 @@ describe('1.2. Admin', async () => {
             };
             const params: UpdateCurrencyRegistriesParams = {
                 ...paramsInput,
-                signatures: await getUpdateCurrencyRegistriesSignatures(admin, admins, paramsInput)
+                signatures: await getUpdateCurrencyRegistriesSignatures(admins, admin, paramsInput)
             };
             
-            const tx = await getUpdateCurrencyRegistriesTx(admin, deployer, params);
+            const tx = await getUpdateCurrencyRegistriesTx(deployer, admin, params);
             await tx.wait();
 
             for (let i = 0; i < currencyAddresses.length; i++) {
@@ -1914,10 +1912,10 @@ describe('1.2. Admin', async () => {
             };
             const params: UpdateCurrencyRegistriesParams = {
                 ...paramsInput,
-                signatures: await getUpdateCurrencyRegistriesSignatures(admin, admins, paramsInput, false)
+                signatures: await getUpdateCurrencyRegistriesSignatures(admins, admin, paramsInput, false)
             };
 
-            await expect(getUpdateCurrencyRegistriesTx(admin, deployer, params))
+            await expect(getUpdateCurrencyRegistriesTx(deployer, admin, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
@@ -1933,9 +1931,9 @@ describe('1.2. Admin', async () => {
                 };
                 const params: UpdateCurrencyRegistriesParams = {
                     ...paramsInput,
-                    signatures: await getUpdateCurrencyRegistriesSignatures(admin, admins, paramsInput)
+                    signatures: await getUpdateCurrencyRegistriesSignatures(admins, admin, paramsInput)
                 };
-                await expect(getUpdateCurrencyRegistriesTx(admin, deployer, params))
+                await expect(getUpdateCurrencyRegistriesTx(deployer, admin, params))
                     .to.be.revertedWithCustomError(admin, 'InvalidInput');
             }
 
@@ -1957,25 +1955,25 @@ describe('1.2. Admin', async () => {
             const fixture = await setupBeforeTest();
             const { deployer, admins, admin, accounts } = fixture;
 
-            await callAdmin_AuthorizeManagers(
-                admin,
+            await callTransaction(getAuthorizeManagersTxByInput(
                 deployer,
                 admins,
+                admin,
                 {
                     accounts: [accounts[0], accounts[2]],
                     isManager: true
                 }
-            );
+            ));
 
-            await callAdmin_AuthorizeModerators(
-                admin,
+            await callTransaction(getAuthorizeModeratorsTxByInput(
                 deployer,
                 admins,
+                admin,
                 {
                     accounts: [accounts[0], accounts[1]],
                     isModerator: true
                 }
-            );
+            ));
 
             expect(await admin.isExecutive(accounts[0])).to.be.true;
             expect(await admin.isExecutive(accounts[1])).to.be.true;

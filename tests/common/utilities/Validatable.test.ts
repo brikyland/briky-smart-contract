@@ -15,7 +15,7 @@ interface ValidatableFixture {
     admin: Admin;
     validatable: MockValidatable;
 
-    deployer: any;
+    deployer: SignerWithAddress;
     admins: any[];
     validator: any;
 }

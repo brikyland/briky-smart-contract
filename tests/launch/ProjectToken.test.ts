@@ -94,7 +94,7 @@ interface ProjectTokenFixture {
     reentrancyERC1155Receiver: ReentrancyERC1155Receiver;
     failReceiver: FailReceiver;
 
-    deployer: any;
+    deployer: SignerWithAddress;
     admins: any[];
     manager: any;
     moderator: any;
@@ -557,7 +557,7 @@ describe('7.2. ProjectToken', async () => {
         }
 
         if (pause) {
-            await callPausable_Pause(projectToken, deployer, admins, admin);
+            await callPausable_Pause(deployer, admins, admin, projectToken);
         }
 
         return {
@@ -2204,7 +2204,7 @@ describe('7.2. ProjectToken', async () => {
             expect(await estateToken.balanceOf(initiator2.address, 1)).to.equal(0);
         });
 
-        it('7.2.14.3. Withdraw estate token unsuccessfully when contract is reentered', async () => {
+        it('7.2.14.3. Withdraw estate token unsuccessfully when the contract is reentered', async () => {
             const fixture = await beforeProjectTokenTest({                
                 useReentrancyERC1155ReceiverAsDepositor: true,
                 addSampleProjects: true,

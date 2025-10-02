@@ -4,7 +4,7 @@ import { LendParams, RepayParams, SafeLendParams, SafeRepayParams } from "@utils
 
 export async function getRegisterCollateralsTx(
     erc721MortgageToken: ERC721MortgageToken,
-    signer: any,
+    signer: SignerWithAddress,
     params: RegisterCollateralsParams,
 ) {
     return await erc721MortgageToken.connect(signer).registerCollaterals(
@@ -16,7 +16,7 @@ export async function getRegisterCollateralsTx(
 
 export async function getERC721BorrowTx(
     erc721MortgageToken: ERC721MortgageToken,
-    signer: any,
+    signer: SignerWithAddress,
     params: ERC721BorrowParams,
 ) {
     return await erc721MortgageToken.connect(signer).borrow(
@@ -31,7 +31,7 @@ export async function getERC721BorrowTx(
 
 export async function getLendTx(
     erc721MortgageToken: ERC721MortgageToken,
-    signer: any,
+    signer: SignerWithAddress,
     params: LendParams,
 ) {
     return await erc721MortgageToken.connect(signer).lend(
@@ -41,7 +41,7 @@ export async function getLendTx(
 
 export async function getSafeLendTx(
     erc721MortgageToken: ERC721MortgageToken,
-    signer: any,
+    signer: SignerWithAddress,
     params: SafeLendParams,
 ) {
     return await erc721MortgageToken.connect(signer).safeLend(
@@ -52,7 +52,7 @@ export async function getSafeLendTx(
 
 export async function getRepayTx(
     erc721MortgageToken: ERC721MortgageToken,
-    signer: any,
+    signer: SignerWithAddress,
     params: RepayParams,
 ) {
     return await erc721MortgageToken.connect(signer).repay(
@@ -62,7 +62,7 @@ export async function getRepayTx(
 
 export async function getSafeRepayTx(
     erc721MortgageToken: ERC721MortgageToken,
-    signer: any,
+    signer: SignerWithAddress,
     params: SafeRepayParams,
 ) {
     return await erc721MortgageToken.connect(signer).safeRepay(

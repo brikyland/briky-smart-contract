@@ -79,7 +79,7 @@ interface MortgageMarketplaceFixture {
     mortgageMarketplace: MortgageMarketplace;
     collections: any[];
 
-    deployer: any;
+    deployer: SignerWithAddress;
     admins: any[];
     borrower1: any;
     borrower2: any;
@@ -397,7 +397,7 @@ describe('6.3. MortgageMarketplace', async () => {
         }
 
         if (pause) {
-            await callPausable_Pause(mortgageMarketplace, deployer, admins, admin);
+            await callPausable_Pause(deployer, admins, admin, mortgageMarketplace);
         }
 
         return {
@@ -1365,7 +1365,7 @@ describe('6.3. MortgageMarketplace', async () => {
                 .to.be.revertedWithCustomError(mortgageMarketplace, "FailedRefund");
         });
 
-        it('6.3.4.12. Buy token unsuccessfully when this contract is reentered', async () => {
+        it('6.3.4.12. Buy token unsuccessfully when the contract is reentered', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleMortgageToken: true,

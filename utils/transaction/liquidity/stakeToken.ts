@@ -3,7 +3,7 @@ import { InitializeRewardingParams, UpdateFeeRateParams } from "@utils/models/li
 
 export function getInitializeRewardingTx(
     stakeToken: StakeToken,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: InitializeRewardingParams,
     txConfig = {}
 ) {
@@ -17,7 +17,7 @@ export function getInitializeRewardingTx(
 
 export function getUpdateFeeRateTx(
     stakeToken: StakeToken,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: UpdateFeeRateParams,
     txConfig = {}
 ) {

@@ -37,7 +37,7 @@ interface PromotionTokenFixture {
     currency1: Currency;
     currency2: Currency;
 
-    deployer: any;
+    deployer: SignerWithAddress;
     admins: any[];
     minter1: any;
     minter2: any;
@@ -114,7 +114,7 @@ describe('5.2. PromotionToken', async () => {
         }
 
         if (pause) {
-            await callPausable_Pause(promotionToken, deployer, admins, admin);
+            await callPausable_Pause(deployer, admins, admin, promotionToken);
         }
 
         return {

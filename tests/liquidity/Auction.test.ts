@@ -21,7 +21,7 @@ import { getStartAuctionTx, getUpdateStakeTokensTx } from '@utils/transaction/li
 import { callPausable_Pause } from '@utils/call/common/pausable';
 
 interface AuctionFixture {
-    deployer: any;
+    deployer: SignerWithAddress;
     admins: any[];
     depositor1: any, depositor2: any, depositor3: any;
 
@@ -236,12 +236,7 @@ describe('4.1. Auction', async () => {
         }
 
         if (pause) {
-            await callPausable_Pause(
-                auction,
-                deployer,
-                admins,
-                admin,
-            );
+            await callPausable_Pause(deployer, admins, admin, auction);
         }
 
         return fixture;
@@ -544,7 +539,7 @@ describe('4.1. Auction', async () => {
             await expect(auction.connect(depositor1).deposit(amount)).to.be.revertedWithCustomError(auction, 'AlreadyEnded');
         });
 
-        it('4.1.4.5. Deposit unsuccessfully when contract is reentered', async () => {
+        it('4.1.4.5. Deposit unsuccessfully when the contract is reentered', async () => {
             const fixture = await setupBeforeTest({
                 updateStakeTokens: true,
                 mintPrimaryTokenForAuction: true,

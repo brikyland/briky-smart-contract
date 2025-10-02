@@ -7,7 +7,7 @@ import {
     MockPriceFeed,
     PriceWatcher,
 } from '@typechain-types';
-import { callTransaction, expectRevertWithModifierCustomError, getSignatures, randomWallet } from '@utils/blockchain';
+import { callTransaction, expectRevertWithModifierCustomError, randomWallet } from '@utils/blockchain';
 import { Constant } from '@tests/test.constant';
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { deployCurrency } from '@utils/deployments/common/currency';
@@ -18,21 +18,24 @@ import { smock } from '@defi-wonderland/smock';
 import { addCurrencyToAdminAndPriceWatcher } from '@utils/call/common/common';
 import { deployMockPriceFeed } from '@utils/deployments/mock/mockPriceFeed';
 import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
-import { Rate, RATE_SCHEMA } from '@utils/models/common/common';
+import { Rate } from '@utils/models/common/common';
 import { randomBigNumber, randomInt, structToObject } from '@utils/utils';
+import { UpdateDefaultRatesParams, UpdateDefaultRatesParamsInput, UpdatePriceFeedsParams, UpdatePriceFeedsParamsInput } from '@utils/models/common/priceWatcher';
+import { getUpdateDefaultRatesTxByInput, getUpdatePriceFeedsTx, getUpdatePriceFeedsTxByInput } from '@utils/transaction/common/priceWatcher';
+import { getUpdateDefaultRatesSignatures, getUpdatePriceFeedsSignatures } from '@utils/signatures/common/priceWatcher';
 
 chai.use(smock.matchers);
 
 interface PriceWatcherFixture {
-    admin: Admin;
-    currency: Currency;
-    priceWatcher: PriceWatcher;
-    nativePriceFeed: MockPriceFeed;
-    currencyPriceFeed: MockPriceFeed;
-    priceFeeds: MockPriceFeed[];
-    
     deployer: any;
     admins: any[];
+
+    admin: Admin;
+    currency: Currency;
+    nativePriceFeed: MockPriceFeed;
+    currencyPriceFeed: MockPriceFeed;
+    priceFeeds: MockPriceFeed[];    
+    priceWatcher: PriceWatcher;
 }
 
 describe('1.7. PriceWatcher', async () => {
@@ -72,14 +75,14 @@ describe('1.7. PriceWatcher', async () => {
         ) as PriceWatcher;
 
         return {
+            deployer,
+            admins,
             admin,
             currency,
-            priceWatcher,
             nativePriceFeed,
             currencyPriceFeed,
             priceFeeds,
-            deployer,
-            admins,
+            priceWatcher,
         };
     };
 
@@ -87,14 +90,15 @@ describe('1.7. PriceWatcher', async () => {
         listSampleCurrencies = false,
     } = {}): Promise<PriceWatcherFixture> {
         const fixture = await loadFixture(priceWatcherFixture);
-        const { 
-            admin,
+        const {
+            deployer,
             admins,
+            admin,
             currency,
-            priceWatcher,
             nativePriceFeed,
             currencyPriceFeed,
             priceFeeds,
+            priceWatcher,
         } = fixture;
 
 
@@ -111,6 +115,7 @@ describe('1.7. PriceWatcher', async () => {
             }
     
             await addCurrencyToAdminAndPriceWatcher(
+                deployer,
                 admin,
                 priceWatcher,
                 admins,
@@ -123,6 +128,7 @@ describe('1.7. PriceWatcher', async () => {
             );
             
             await addCurrencyToAdminAndPriceWatcher(
+                deployer,
                 admin,
                 priceWatcher,
                 admins,
@@ -138,7 +144,7 @@ describe('1.7. PriceWatcher', async () => {
         return fixture;
     }
 
-    describe('1.7.1. initialize(address, address, string, uint256, uint256, uint256, uint256)', async () => {
+    describe('1.7.1. initialize(address)', async () => {
         it('1.7.1.1. Deploy successfully', async () => {
             const { admin, priceWatcher } = await beforePriceWatcherTest({});
             
@@ -146,9 +152,9 @@ describe('1.7. PriceWatcher', async () => {
         });
     });
 
-    describe('1.7.2. updatePriceFeeds(uint256, uint256, bytes[])', async () => {
-        it('1.7.2.1. UpdatePriceFeeds successfully with valid signatures', async () => {
-            const { admin, admins, priceWatcher, priceFeeds } = await beforePriceWatcherTest();
+    describe('1.7.2. updatePriceFeeds(address[], address[], uint40[], bytes[])', async () => {
+        it('1.7.2.1. Update price feeds successfully with valid signatures', async () => {
+            const { deployer, admin, admins, priceWatcher, priceFeeds } = await beforePriceWatcherTest();
 
             const priceFeedAddresses = priceFeeds.map(priceFeed => priceFeed.address);
             
@@ -158,18 +164,13 @@ describe('1.7. PriceWatcher', async () => {
             }
             const heartbeats = [40, 50, 60, 70, 80];
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'address[]', 'uint40[]'],
-                [priceWatcher.address, 'updatePriceFeeds', currencyAddresses, priceFeedAddresses, heartbeats]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
-
-            const tx = await priceWatcher.updatePriceFeeds(
-                currencyAddresses,
-                priceFeedAddresses,
+            const paramsInput: UpdatePriceFeedsParamsInput = {
+                currencies: currencyAddresses,
+                feeds: priceFeedAddresses,
                 heartbeats,
-                signatures
-            );
+            };
+
+            const tx = await getUpdatePriceFeedsTxByInput(deployer, admins, admin, priceWatcher, paramsInput);
             await tx.wait();
 
             for (let i = 0; i < currencyAddresses.length; ++i) {
@@ -185,8 +186,8 @@ describe('1.7. PriceWatcher', async () => {
             }
         });
 
-        it('1.7.2.2. UpdatePriceFeeds unsuccessfully with invalid signatures', async () => {
-            const { admin, admins, priceWatcher, priceFeeds } = await beforePriceWatcherTest();
+        it('1.7.2.2. Update price feeds unsuccessfully with invalid signatures', async () => {
+            const { deployer, admin, admins, priceWatcher, priceFeeds } = await beforePriceWatcherTest();
             const priceFeedAddresses = priceFeeds.map(priceFeed => priceFeed.address);
 
             const currencyAddresses = [];
@@ -195,22 +196,22 @@ describe('1.7. PriceWatcher', async () => {
             }
             const heartbeats = [40, 50, 60, 70, 80];
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'address[]', 'uint40[]'],
-                [priceWatcher.address, 'updatePriceFeeds', currencyAddresses, priceFeedAddresses, heartbeats]
-            );
-            const invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
-
-            await expect(priceWatcher.updatePriceFeeds(
-                currencyAddresses,
-                priceFeedAddresses,
+            const paramsInput: UpdatePriceFeedsParamsInput = {
+                currencies: currencyAddresses,
+                feeds: priceFeedAddresses,
                 heartbeats,
-                invalidSignatures
-            )).to.be.revertedWithCustomError(admin, 'FailedVerification');
+            };
+            const params: UpdatePriceFeedsParams = {
+                ...paramsInput,
+                signatures: await getUpdatePriceFeedsSignatures(admins, admin, priceWatcher, paramsInput, false),
+            };
+
+            await expect(getUpdatePriceFeedsTx(deployer, priceWatcher, params))
+                .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('1.7.2.3. UpdatePriceFeeds unsuccessfully with invalid heartbeat', async () => {
-            const { admin, admins, priceWatcher, priceFeeds } = await beforePriceWatcherTest();
+        it('1.7.2.3. Update price feeds unsuccessfully with invalid heartbeat', async () => {
+            const { deployer, admin, admins, priceWatcher, priceFeeds } = await beforePriceWatcherTest();
 
             const priceFeedAddresses = priceFeeds.map(priceFeed => priceFeed.address);
             const currencyAddresses = [];
@@ -219,38 +220,29 @@ describe('1.7. PriceWatcher', async () => {
             }
             const heartbeats = [40, 50, 0, 70, 80];
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'address[]', 'uint40[]'],
-                [priceWatcher.address, 'updatePriceFeeds', currencyAddresses, priceFeedAddresses, heartbeats]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await expect(priceWatcher.updatePriceFeeds(
-                currencyAddresses,
-                priceFeedAddresses,
+            const paramsInput: UpdatePriceFeedsParamsInput = {
+                currencies: currencyAddresses,
+                feeds: priceFeedAddresses,
                 heartbeats,
-                signatures
-            )).to.be.revertedWithCustomError(priceWatcher, 'InvalidInput');
+            };
+            
+            await expect(getUpdatePriceFeedsTxByInput(deployer, admins, admin, priceWatcher, paramsInput))
+                .to.be.revertedWithCustomError(priceWatcher, 'InvalidInput');
         });
 
-        it('1.7.2.4. UpdatePriceFeeds unsuccessfully with conflicting params length', async () => {
-            const { admin, admins, priceWatcher, priceFeeds } = await beforePriceWatcherTest();
+        it('1.7.2.4. Update price feeds unsuccessfully with conflicting params length', async () => {
+            const { deployer, admin, admins, priceWatcher, priceFeeds } = await beforePriceWatcherTest();
             
             const priceFeedAddresses = priceFeeds.map(priceFeed => priceFeed.address);
 
             async function testForInvalidInput(currencyAddresses: string[], priceFeedAddresses: string[], heartbeats: number[]) {
-                const message = ethers.utils.defaultAbiCoder.encode(
-                    ['address', 'string', 'address[]', 'address[]', 'uint40[]'],
-                    [priceWatcher.address, 'updatePriceFeeds', currencyAddresses, priceFeedAddresses, heartbeats]
-                );
-                const signatures = await getSignatures(message, admins, await admin.nonce());
-    
-                await expect(priceWatcher.updatePriceFeeds(
-                    currencyAddresses,
-                    priceFeedAddresses,
+                const paramsInput: UpdatePriceFeedsParamsInput = {
+                    currencies: currencyAddresses,
+                    feeds: priceFeedAddresses,
                     heartbeats,
-                    signatures
-                )).to.be.revertedWithCustomError(priceWatcher, 'InvalidInput');
+                };
+                await expect(getUpdatePriceFeedsTxByInput(deployer, admins, admin, priceWatcher, paramsInput))
+                    .to.be.revertedWithCustomError(priceWatcher, 'InvalidInput');
             }
 
 
@@ -267,9 +259,9 @@ describe('1.7. PriceWatcher', async () => {
         });
     });
 
-    describe('1.7.3. updateDefaultRates(address[], uint256[], uint8[], bytes[])', async () => {
-        it('1.7.3.1. UpdateDefaultRates successfully with valid signatures', async () => {
-            const { admin, admins, priceWatcher } = await beforePriceWatcherTest();
+    describe('1.7.3. updateDefaultRates(address[], (uint256, uint8)[], bytes[])', async () => {
+        it('1.7.3.1. Update default rates successfully with valid signatures', async () => {
+            const { deployer, admin, admins, priceWatcher } = await beforePriceWatcherTest();
 
             const currencyAddresses = [];
             for (let i = 0; i < 5; ++i) {
@@ -283,17 +275,11 @@ describe('1.7. PriceWatcher', async () => {
                 { value: BigNumber.from(50_0000), decimals: 4 },
             ];
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', RATE_SCHEMA],
-                [priceWatcher.address, 'updateDefaultRates', currencyAddresses, rates]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
-
-            const tx = await priceWatcher.updateDefaultRates(
-                currencyAddresses,
+            const paramsInput: UpdateDefaultRatesParamsInput = {
+                currencies: currencyAddresses,
                 rates,
-                signatures
-            );
+            };
+            const tx = await getUpdateDefaultRatesTxByInput(deployer, admins, admin, priceWatcher, paramsInput);
             const receipt = await tx.wait();
 
             for (let i = 0; i < currencyAddresses.length; ++i) {
@@ -306,8 +292,8 @@ describe('1.7. PriceWatcher', async () => {
             }
         });
 
-        it('1.7.3.2. UpdateDefaultRates unsuccessfully with invalid signatures', async () => {
-            const { admin, admins, priceWatcher } = await beforePriceWatcherTest({});
+        it('1.7.3.2. Update default rates unsuccessfully with invalid signatures', async () => {
+            const { deployer, admin, admins, priceWatcher } = await beforePriceWatcherTest({});
             const currencyAddresses = [];
             for (let i = 0; i < 5; ++i) {
                 currencyAddresses.push(ethers.utils.computeAddress(ethers.utils.id(`currency_${i}`)));
@@ -320,21 +306,20 @@ describe('1.7. PriceWatcher', async () => {
                 { value: BigNumber.from(50_0000), decimals: 4 },
             ];
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', RATE_SCHEMA],
-                [priceWatcher.address, 'updateDefaultRates', currencyAddresses, rates]
-            );
-            const invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
-
-            await expect(priceWatcher.updateDefaultRates(
-                currencyAddresses,
+            const paramsInput: UpdateDefaultRatesParamsInput = {
+                currencies: currencyAddresses,
                 rates,
-                invalidSignatures
-            )).to.be.revertedWithCustomError(admin, 'FailedVerification');
+            };
+            const params: UpdateDefaultRatesParams = {
+                ...paramsInput,
+                signatures: await getUpdateDefaultRatesSignatures(admins, admin, priceWatcher, paramsInput, false),
+            };
+            await expect(getUpdateDefaultRatesTxByInput(deployer, admins, admin, priceWatcher, params))
+                .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('1.7.3.3. UpdateDefaultRates unsuccessfully with invalid decimals', async () => {
-            const { admin, admins, priceWatcher } = await beforePriceWatcherTest({});
+        it('1.7.3.3. Update default rates unsuccessfully with invalid decimals', async () => {
+            const { deployer, admin, admins, priceWatcher } = await beforePriceWatcherTest({});
             const currencyAddresses = [];
             for (let i = 0; i < 5; ++i) {
                 currencyAddresses.push(ethers.utils.computeAddress(ethers.utils.id(`currency_${i}`)));
@@ -347,34 +332,24 @@ describe('1.7. PriceWatcher', async () => {
                 { value: BigNumber.from(50_0000), decimals: 4 },
             ];
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', RATE_SCHEMA],
-                [priceWatcher.address, 'updateDefaultRates', currencyAddresses, rates]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await expect(priceWatcher.updateDefaultRates(
-                currencyAddresses,
+            const paramsInput: UpdateDefaultRatesParamsInput = {
+                currencies: currencyAddresses,
                 rates,
-                signatures
-            )).to.be.revertedWithCustomError(priceWatcher, 'InvalidInput');
+            };
+            await expect(getUpdateDefaultRatesTxByInput(deployer, admins, admin, priceWatcher, paramsInput))
+                .to.be.revertedWithCustomError(priceWatcher, 'InvalidInput');
         });
 
-        it('1.7.3.4. UpdateDefaultRates unsuccessfully with conflicting params length', async () => {
-            const { admin, admins, priceWatcher } = await beforePriceWatcherTest({});
+        it('1.7.3.4. Update default rates unsuccessfully with conflicting params length', async () => {
+            const { deployer, admin, admins, priceWatcher } = await beforePriceWatcherTest({});
 
             async function testForInvalidInput(currencyAddresses: string[], rates: Rate[]) {
-                const message = ethers.utils.defaultAbiCoder.encode(
-                    ['address', 'string', 'address[]', RATE_SCHEMA],
-                    [priceWatcher.address, 'updateDefaultRates', currencyAddresses, rates]
-                );
-                const signatures = await getSignatures(message, admins, await admin.nonce());
-    
-                await expect(priceWatcher.updateDefaultRates(
-                    currencyAddresses,
+                const paramsInput: UpdateDefaultRatesParamsInput = {
+                    currencies: currencyAddresses,
                     rates,
-                    signatures
-                )).to.be.revertedWithCustomError(priceWatcher, 'InvalidInput');
+                };
+                await expect(getUpdateDefaultRatesTxByInput(deployer, admins, admin, priceWatcher, paramsInput))
+                    .to.be.revertedWithCustomError(priceWatcher, 'InvalidInput');
             }
 
             const currencyAddresses = [];
@@ -400,7 +375,7 @@ describe('1.7. PriceWatcher', async () => {
                 listSampleCurrencies: true,
             });
 
-            const { priceWatcher, nativePriceFeed, currencyPriceFeed } = fixture;
+            const { priceWatcher } = fixture;
 
             const nativeValue = 1000;
             const unitPrice = 1000;
@@ -433,6 +408,7 @@ describe('1.7. PriceWatcher', async () => {
             );
 
             await addCurrencyToAdminAndPriceWatcher(
+                deployer,
                 admin,
                 priceWatcher,
                 admins,
@@ -464,11 +440,12 @@ describe('1.7. PriceWatcher', async () => {
         it('1.7.4.3. Revert when currency is unavailable', async () => {
             const fixture = await beforePriceWatcherTest();
 
-            const { admin, admins, priceWatcher } = fixture;
+            const { deployer, admin, admins, priceWatcher } = fixture;
 
             const unavailableCurrency = randomWallet();
 
             await addCurrencyToAdminAndPriceWatcher(
+                deployer,
                 admin,
                 priceWatcher,
                 admins,
@@ -495,11 +472,12 @@ describe('1.7. PriceWatcher', async () => {
         it('1.7.4.4. Revert when currency rate is missing', async () => {
             const fixture = await beforePriceWatcherTest();
 
-            const { admin, admins, priceWatcher } = fixture;
+            const { deployer, admin, admins, priceWatcher } = fixture;
 
             const unavailableCurrency = randomWallet();
 
             await addCurrencyToAdminAndPriceWatcher(
+                deployer,
                 admin,
                 priceWatcher,
                 admins,
@@ -543,12 +521,13 @@ describe('1.7. PriceWatcher', async () => {
         it('1.7.4.6. Revert when price feed return invalid data', async () => {
             const fixture = await beforePriceWatcherTest();
 
-            const { admin, admins, priceWatcher, nativePriceFeed, currencyPriceFeed, currency } = fixture;
+            const { deployer, admin, admins, priceWatcher, nativePriceFeed, currencyPriceFeed, currency } = fixture;
 
             await currencyPriceFeed.updateData(-5_00000000, 8);
             await nativePriceFeed.updateData(0, 8);
 
             await addCurrencyToAdminAndPriceWatcher(
+                deployer,
                 admin,
                 priceWatcher,
                 admins,
@@ -561,6 +540,7 @@ describe('1.7. PriceWatcher', async () => {
             );
             
             await addCurrencyToAdminAndPriceWatcher(
+                deployer,
                 admin,
                 priceWatcher,
                 admins,

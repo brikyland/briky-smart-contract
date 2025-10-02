@@ -27,7 +27,7 @@ import { getCallContributeLiquidityFromStakeTokenTx, getUnlockForBackerRoundTx, 
 import { deployProxyCaller } from '@utils/deployments/mock/proxyCaller';
 
 interface PrimaryTokenFixture {
-    deployer: any;
+    deployer: SignerWithAddress;
     admins: any[];
     admin: Admin;
     treasury: Treasury;

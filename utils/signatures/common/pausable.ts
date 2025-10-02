@@ -7,50 +7,32 @@ import { Admin } from "@typechain-types";
 
 import { getSignatures } from "@utils/blockchain";
 
+
+// pause
 export async function getPauseSignatures(
-    pausable: Contract,
     admins: any[],
     admin: Admin,
+    pausable: Contract,
+    isValid: boolean = true
 ) {
     let message = ethers.utils.defaultAbiCoder.encode(
         ["address", "string"],
         [pausable.address, "pause"]
     );
-    return await getSignatures(message, admins, await admin.nonce());
+    return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
 
-export async function getPauseInvalidSignatures(
-    pausable: Contract,
-    admins: any[],
-    admin: Admin,
-) {
-    let message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string"],
-        [pausable.address, "pause"]
-    );
-    return await getSignatures(message, admins, (await admin.nonce()).add(1));
-}
 
+// unpause
 export async function getUnpauseSignatures(
-    pausable: Contract,
     admins: any[],
     admin: Admin,
+    pausable: Contract,
+    isValid: boolean = true
 ) {
     let message = ethers.utils.defaultAbiCoder.encode(
         ["address", "string"],
         [pausable.address, "unpause"]
     );
-    return await getSignatures(message, admins, await admin.nonce());
-}
-
-export async function getUnpauseInvalidSignatures(
-    pausable: Contract,
-    admins: any[],
-    admin: Admin,
-) {
-    let message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string"],
-        [pausable.address, "unpause"]
-    );
-    return await getSignatures(message, admins, (await admin.nonce()).add(1));
+    return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }

@@ -67,7 +67,7 @@ interface EstateMarketplaceFixture {
     estateMarketplace: EstateMarketplace;
     validator: MockValidator;
 
-    deployer: any;
+    deployer: SignerWithAddress;
     admins: any[];
     seller1: any;
     seller2: any;
@@ -433,7 +433,7 @@ describe('6.2. EstateMarketplace', async () => {
         }
 
         if (pause) {
-            await callPausable_Pause(estateMarketplace, deployer, admins, admin);
+            await callPausable_Pause(deployer, admins, admin, estateMarketplace);
         }
 
         return {
@@ -1572,7 +1572,7 @@ describe('6.2. EstateMarketplace', async () => {
             )).to.be.revertedWithCustomError(estateMarketplace, "FailedRefund");
         });
 
-        it('6.2.5.15. Buy token unsuccessfully when this contract is reentered', async () => {
+        it('6.2.5.15. Buy token unsuccessfully when the contract is reentered', async () => {
             const fixture = await beforeEstateMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleEstateToken: true,

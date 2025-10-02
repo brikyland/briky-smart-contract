@@ -3,7 +3,7 @@ import { BuyParams, BuyPartParams, ListParams, SafeBuyParams, SafeBuyPartParams 
 
 export async function getListTx(
     assetMarketplace: AssetMarketplace,
-    signer: any,
+    signer: SignerWithAddress,
     params: ListParams
 ) {
     const tx = await assetMarketplace.connect(signer).list(
@@ -37,7 +37,7 @@ export async function getCallListTx(
 
 export async function getBuyTx(
     assetMarketplace: AssetMarketplace,
-    signer: any,
+    signer: SignerWithAddress,
     params: BuyParams,
     txConfig = {}
 ) {
@@ -49,7 +49,7 @@ export async function getBuyTx(
 
 export async function getSafeBuyTx(
     assetMarketplace: AssetMarketplace,
-    signer: any,
+    signer: SignerWithAddress,
     params: SafeBuyParams,
     txConfig = {}
 ) {
@@ -62,7 +62,7 @@ export async function getSafeBuyTx(
 
 export async function getBuyPartTx(
     assetMarketplace: AssetMarketplace,
-    signer: any,
+    signer: SignerWithAddress,
     params: BuyPartParams,
     txConfig = {}
 ) {
@@ -75,7 +75,7 @@ export async function getBuyPartTx(
 
 export async function getSafeBuyPartTx(
     assetMarketplace: AssetMarketplace,
-    signer: any,
+    signer: SignerWithAddress,
     params: SafeBuyPartParams,
     txConfig = {}
 ) {

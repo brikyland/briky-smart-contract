@@ -69,7 +69,7 @@ interface ProjectMarketplaceFixture {
     projectMarketplace: ProjectMarketplace;
     validator: MockValidator;
 
-    deployer: any;
+    deployer: SignerWithAddress;
     admins: any[];
     seller1: any;
     seller2: any;
@@ -388,7 +388,7 @@ describe('6.4. ProjectMarketplace', async () => {
         }
 
         if (pause) {
-            await callPausable_Pause(projectMarketplace, deployer, admins, admin);
+            await callPausable_Pause(deployer, admins, admin, projectMarketplace);
         }
 
         return {
@@ -1468,7 +1468,7 @@ describe('6.4. ProjectMarketplace', async () => {
             )).to.be.revertedWithCustomError(projectMarketplace, "FailedRefund");
         });
 
-        it('6.4.5.14. Buy token unsuccessfully when this contract is reentered', async () => {
+        it('6.4.5.14. Buy token unsuccessfully when the contract is reentered', async () => {
             const fixture = await beforeProjectMarketplaceTest({
                 listSampleCurrencies: true,
                 listSampleProjectToken: true,

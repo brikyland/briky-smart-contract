@@ -96,7 +96,7 @@ interface EstateLiquidatorFixture {
     reentrancyERC20: ReentrancyERC20;
     validator: MockValidator;
     
-    deployer: any;
+    deployer: SignerWithAddress;
     admins: any[];
 
     manager: any;
@@ -585,7 +585,7 @@ describe('2.3. EstateLiquidator', async () => {
         }
 
         if (pause) {
-            await callPausable_Pause(estateLiquidator, deployer, admins, admin);
+            await callPausable_Pause(deployer, admins, admin, estateLiquidator);
         }
 
         return fixture;

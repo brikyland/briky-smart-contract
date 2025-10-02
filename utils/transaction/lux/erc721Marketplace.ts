@@ -4,7 +4,7 @@ import { BuyParams, ListParams, RegisterCollectionsParams, SafeBuyParams } from 
 
 export async function getListTx(
     erc721Marketplace: ERC721Marketplace,
-    signer: any,
+    signer: SignerWithAddress,
     params: ListParams
 ) {
     const tx = await erc721Marketplace.connect(signer).list(
@@ -36,7 +36,7 @@ export async function getCallListTx(
 
 export async function getRegisterCollectionsTx(
     erc721Marketplace: ERC721Marketplace,
-    signer: any,
+    signer: SignerWithAddress,
     params: RegisterCollectionsParams,
     txConfig = {}
 ) {
@@ -50,7 +50,7 @@ export async function getRegisterCollectionsTx(
 
 export async function getBuyTx(
     erc721Marketplace: ERC721Marketplace,
-    signer: any,
+    signer: SignerWithAddress,
     params: BuyParams,
     txConfig = {}
 ) {
@@ -62,7 +62,7 @@ export async function getBuyTx(
 
 export async function getSafeBuyTx(
     erc721Marketplace: ERC721Marketplace,
-    signer: any,
+    signer: SignerWithAddress,
     params: SafeBuyParams,
     txConfig = {}
 ) {

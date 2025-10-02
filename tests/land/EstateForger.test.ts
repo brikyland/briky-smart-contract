@@ -85,7 +85,7 @@ export interface EstateForgerFixture {
     currencyPriceFeed: MockPriceFeed;
     validator: MockValidator;
     
-    deployer: any;
+    deployer: SignerWithAddress;
     admins: any[];
 
     manager: any;
@@ -621,7 +621,7 @@ describe('2.2. EstateForger', async () => {
         }
 
         if (pause) {
-            await callPausable_Pause(estateForger, deployer, admins, admin);
+            await callPausable_Pause(deployer, admins, admin, estateForger);
         }
 
         return fixture;
@@ -3174,7 +3174,7 @@ describe('2.2. EstateForger', async () => {
                 .to.be.revertedWithCustomError(estateForger, "FailedRefund");
         });
 
-        it('2.2.9.16. Deposit tokenization request unsuccessfully when this contract is reentered', async () => {
+        it('2.2.9.16. Deposit tokenization request unsuccessfully when the contract is reentered', async () => {
             const fixture = await beforeEstateForgerTest({
                 listSampleCurrencies: true,
                 addZoneForExecutive: true,
@@ -4261,7 +4261,7 @@ describe('2.2. EstateForger', async () => {
             });
             const {deployer, estateForger, admin, admins, manager} = fixture;
 
-            await callPausable_Pause(estateForger, deployer, admins, admin);
+            await callPausable_Pause(deployer, admins, admin, estateForger);
 
             const params1: ConfirmParams = {
                 requestId: BigNumber.from(1),
@@ -4698,7 +4698,7 @@ describe('2.2. EstateForger', async () => {
             )).to.be.revertedWithCustomError(estateForger, "FailedTransfer");
         });
 
-        it('2.2.12.23. Confirm tokenization unsuccessfully when this contract is reentered', async () => {
+        it('2.2.12.23. Confirm tokenization unsuccessfully when the contract is reentered', async () => {
             const fixture = await beforeEstateForgerTest({
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,
@@ -5011,7 +5011,7 @@ describe('2.2. EstateForger', async () => {
                 .to.be.revertedWithCustomError(estateForger, "FailedTransfer");
         });
 
-        it('2.2.13.11. Withdraw deposit unsuccessfully when this contract is reentered', async () => {
+        it('2.2.13.11. Withdraw deposit unsuccessfully when the contract is reentered', async () => {
             const fixture = await beforeEstateForgerTest({
                 addZoneForExecutive: true,
                 listSampleCurrencies: true,

@@ -4,7 +4,7 @@ import { ContractTransaction } from "ethers";
 
 export async function getRegisterBrokerTx(
     commissionToken: CommissionToken,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: RegisterBrokerParams
 ): Promise<ContractTransaction> {
     return commissionToken.connect(deployer).registerBroker(
@@ -16,7 +16,7 @@ export async function getRegisterBrokerTx(
 
 export async function getActivateBrokerTx(
     commissionToken: CommissionToken,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: ActivateBrokerParams
 ): Promise<ContractTransaction> {
     return commissionToken.connect(deployer).activateBroker(

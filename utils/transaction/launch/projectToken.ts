@@ -7,7 +7,7 @@ import { ContractTransaction, ethers } from "ethers";
 export async function getRegisterInitiatorTx(
     projectToken: MockProjectToken,
     validator: MockValidator,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: RegisterInitiatorParams
 ): Promise<ContractTransaction> {
     const validation = await getRegisterInitiatorValidation(
@@ -63,7 +63,7 @@ export async function getCallMintTx(
 export async function getSafeUpdateProjectURITx(
     projectToken: MockProjectToken,
     validator: MockValidator,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: SafeUpdateProjectURIParams
 ): Promise<ContractTransaction> {
     const validation = await getSafeUpdateProjectURIValidation(
@@ -84,7 +84,7 @@ export async function getSafeUpdateProjectURITx(
 export async function getSafeUpdateProjectURITxByParams(
     projectToken: MockProjectToken,
     validator: MockValidator,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: UpdateProjectURIParams
 ): Promise<ContractTransaction> {
     const currentURI = await projectToken.uri(params.projectId);
@@ -109,7 +109,7 @@ export async function getSafeUpdateProjectURITxByParams(
 
 export async function getSafeDeprecateProjectTx(
     projectToken: MockProjectToken,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: SafeDeprecateProjectParams
 ): Promise<ContractTransaction> {
     const tx = projectToken.connect(deployer).safeDeprecateProject(
@@ -122,7 +122,7 @@ export async function getSafeDeprecateProjectTx(
 
 export async function getSafeDeprecateProjectTxByParams(
     projectToken: MockProjectToken,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: DeprecateProjectParams
 ): Promise<ContractTransaction> {
     const currentURI = await projectToken.uri(params.projectId);
@@ -135,7 +135,7 @@ export async function getSafeDeprecateProjectTxByParams(
 
 export async function getSafeTokenizeProjectTx(
     projectToken: MockProjectToken,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: SafeTokenizeProjectParams
 ): Promise<ContractTransaction> {
     const tx = projectToken.connect(deployer).safeTokenizeProject(
@@ -149,7 +149,7 @@ export async function getSafeTokenizeProjectTx(
 
 export async function getSafeTokenizeProjectTxByParams(
     projectToken: MockProjectToken,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: TokenizeProjectParams
 ): Promise<ContractTransaction> {
     const currentURI = await projectToken.uri(params.projectId);

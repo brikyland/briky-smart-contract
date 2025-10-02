@@ -79,7 +79,7 @@ interface ERC721MortgageTokenFixture {
     collaterals: MockContract<RoyaltyCollection>[];
     erc721MortgageToken: ERC721MortgageToken;
 
-    deployer: any;
+    deployer: SignerWithAddress;
     admins: any[];
     lender1: any;
     lender2: any;
@@ -1862,7 +1862,7 @@ describe('3.1. ERC721MortgageToken', async () => {
                 .to.be.revertedWithCustomError(erc721MortgageToken, "FailedTransfer");
         });
 
-        it('3.1.8.11. Repay unsuccessfully when this contract is reentered', async () => {
+        it('3.1.8.11. Repay unsuccessfully when the contract is reentered', async () => {
             const fixture = await beforeERC721MortgageTokenTest({
                 listSampleCurrencies: true,
                 listSampleCollectionTokens: true,

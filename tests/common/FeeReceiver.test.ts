@@ -1,4 +1,5 @@
 import { expect } from 'chai';
+import { BigNumber } from 'ethers';
 import { ethers } from 'hardhat';
 
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
@@ -22,6 +23,9 @@ import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
 import { deployCurrency } from '@utils/deployments/common/currency';
 import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
+import { WithdrawParams, WithdrawParamsInput } from '@utils/models/common/feeReceiver';
+import { getWithdrawSignatures } from '@utils/signatures/common/feeReceiver';
+import { getWithdrawTx } from '@utils/transaction/common/feeReceiver';
 
 interface FeeReceiverFixture {
     deployer: any;
@@ -72,9 +76,9 @@ describe('1.5. FeeReceiver', async () => {
             deployer,
             admins,
             admin,
-            feeReceiver,
             currency1,
             currency2,
+            feeReceiver,
         }
     }
 
@@ -104,21 +108,19 @@ describe('1.5. FeeReceiver', async () => {
             let balance = await ethers.provider.getBalance(feeReceiver.address);
             expect(balance).to.equal(2000);
 
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address', 'address[]', 'uint256[]'],
-                [feeReceiver.address, 'withdraw', receiver.address, [ethers.constants.AddressZero], [1200]]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput1: WithdrawParamsInput = {
+                receiver: receiver.address,
+                currencies: [ethers.constants.AddressZero],
+                values: [BigNumber.from(1200)],
+            };
+            const params1: WithdrawParams = {
+                ...paramsInput1,
+                signatures: await getWithdrawSignatures(admins, admin, feeReceiver, paramsInput1),
+            };
+            const tx1 = await getWithdrawTx(deployer, feeReceiver, params1);
+            await tx1.wait();
 
-            let tx = await feeReceiver.withdraw(
-                receiver.address,
-                [ethers.constants.AddressZero],
-                [1200],
-                signatures,
-            );
-            await tx.wait();
-
-            await expect(tx).to
+            await expect(tx1).to
                 .emit(feeReceiver, 'Withdrawal')
                 .withArgs(receiver.address, ethers.constants.AddressZero, 1200)
 
@@ -136,21 +138,19 @@ describe('1.5. FeeReceiver', async () => {
             balance = await ethers.provider.getBalance(feeReceiver.address);
             expect(balance).to.equal(3800);
 
-            message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address', 'address[]', 'uint256[]'],
-                [feeReceiver.address, 'withdraw', receiver.address, [ethers.constants.AddressZero], [3800]]
-            );
-            signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput2: WithdrawParamsInput = {
+                receiver: receiver.address,
+                currencies: [ethers.constants.AddressZero],
+                values: [BigNumber.from(3800)],
+            };
+            const params2: WithdrawParams = {
+                ...paramsInput2,
+                signatures: await getWithdrawSignatures(admins, admin, feeReceiver, paramsInput2),
+            };
+            const tx2 = await getWithdrawTx(deployer, feeReceiver, params2);
+            await tx2.wait();
 
-            tx = await feeReceiver.withdraw(
-                receiver.address,
-                [ethers.constants.AddressZero],
-                [3800],
-                signatures,
-            );
-            await tx.wait();
-
-            await expect(tx).to
+            await expect(tx2).to
                 .emit(feeReceiver, 'Withdrawal')
                 .withArgs(receiver.address, ethers.constants.AddressZero, 3800)
 
@@ -174,18 +174,16 @@ describe('1.5. FeeReceiver', async () => {
             expect(await currency1.balanceOf(receiver.address)).to.equal(0);
             expect(await currency2.balanceOf(receiver.address)).to.equal(0);
 
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address', 'address[]', 'uint256[]'],
-                [feeReceiver.address, 'withdraw', receiver.address, [currency1.address, currency2.address], [700, ethers.constants.MaxUint256]]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
-
-            let tx = await feeReceiver.withdraw(
-                receiver.address,
-                [currency1.address, currency2.address],
-                [700, ethers.constants.MaxUint256],
-                signatures,
-            );
+            const paramsInput1: WithdrawParamsInput = {
+                receiver: receiver.address,
+                currencies: [currency1.address, currency2.address],
+                values: [BigNumber.from(700), ethers.constants.MaxUint256],
+            };
+            const params1: WithdrawParams = {
+                ...paramsInput1,
+                signatures: await getWithdrawSignatures(admins, admin, feeReceiver, paramsInput1),
+            };
+            const tx = await getWithdrawTx(deployer, feeReceiver, params1);
             await tx.wait();
 
             await expect(tx).to
@@ -216,20 +214,18 @@ describe('1.5. FeeReceiver', async () => {
             expect(await currency1.balanceOf(receiver.address)).to.equal(0);
 
             const currencies = [ethers.constants.AddressZero, ethers.constants.AddressZero, currency1.address, currency1.address];
-            const amounts = [100, 200, 300, 400];
+            const amounts = [BigNumber.from(100), BigNumber.from(200), BigNumber.from(300), BigNumber.from(400)];
 
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address', 'address[]', 'uint256[]'],
-                [feeReceiver.address, 'withdraw', receiver.address, currencies, amounts]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
-
-            let tx = await feeReceiver.withdraw(
-                receiver.address,
-                currencies,
-                amounts,
-                signatures,
-            );
+            const paramsInput: WithdrawParamsInput = {
+                receiver: receiver.address,
+                currencies: currencies,
+                values: amounts,
+            };
+            const params: WithdrawParams = {
+                ...paramsInput,
+                signatures: await getWithdrawSignatures(admins, admin, feeReceiver, paramsInput),
+            };
+            const tx = await getWithdrawTx(deployer, feeReceiver, params);
             await tx.wait();
 
             await expect(tx).to
@@ -252,53 +248,54 @@ describe('1.5. FeeReceiver', async () => {
         it('1.5.2.4. Withdraw unsuccessfully with invalid signatures', async () => {
             const { deployer, admins, admin, feeReceiver } = await setupBeforeTest();
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address', 'address[]', 'uint256[]'],
-                [feeReceiver.address, 'withdraw', deployer.address, [ethers.constants.AddressZero], [1000]]
-            );
-            let invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
+            const paramsInput: WithdrawParamsInput = {
+                receiver: deployer.address,
+                currencies: [ethers.constants.AddressZero],
+                values: [BigNumber.from(1000)],
+            };
+            const params: WithdrawParams = {
+                ...paramsInput,
+                signatures: await getWithdrawSignatures(admins, admin, feeReceiver, paramsInput),
+            };
+            const tx = await getWithdrawTx(deployer, feeReceiver, params);
+            await tx.wait();
 
-            await expect(feeReceiver.withdraw(
-                deployer.address,
-                [ethers.constants.AddressZero],
-                [1000],
-                invalidSignatures,
-            )).to.be.revertedWithCustomError(admin, 'FailedVerification');
+            await expect(tx).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
         it('1.5.2.5. Withdraw unsuccessfully with insufficient native tokens', async () => {
             const { deployer, admins, admin, feeReceiver } = await setupBeforeTest();
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address', 'address[]', 'uint256[]'],
-                [feeReceiver.address, 'withdraw', deployer.address, [ethers.constants.AddressZero], [1000]]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput: WithdrawParamsInput = {
+                receiver: deployer.address,
+                currencies: [ethers.constants.AddressZero],
+                values: [BigNumber.from(1000)],
+            };
+            const params: WithdrawParams = {
+                ...paramsInput,
+                signatures: await getWithdrawSignatures(admins, admin, feeReceiver, paramsInput),
+            };
 
-            await expect(feeReceiver.withdraw(
-                deployer.address,
-                [ethers.constants.AddressZero],
-                [1000],
-                signatures
-            )).to.be.revertedWithCustomError(feeReceiver, 'FailedTransfer');
-        })
+            await expect(getWithdrawTx(deployer, feeReceiver, params))
+                .to.be.revertedWithCustomError(feeReceiver, 'FailedTransfer');
+        });
 
         it('1.5.2.6. Withdraw unsuccessfully with insufficient ERC20 tokens', async () => {
             const { deployer, admins, admin, feeReceiver, currency1 } = await setupBeforeTest();
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address', 'address[]', 'uint256[]'],
-                [feeReceiver.address, 'withdraw', deployer.address, [currency1.address], [1000]]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput: WithdrawParamsInput = {
+                receiver: deployer.address,
+                currencies: [currency1.address],
+                values: [BigNumber.from(1000)],
+            };
+            const params: WithdrawParams = {
+                ...paramsInput,
+                signatures: await getWithdrawSignatures(admins, admin, feeReceiver, paramsInput),
+            };
 
-            await expect(feeReceiver.withdraw(
-                deployer.address,
-                [currency1.address],
-                [1000],
-                signatures
-            )).to.be.revertedWith('ERC20: transfer amount exceeds balance');
-        })
+            await expect(getWithdrawTx(deployer, feeReceiver, params))
+                .to.be.revertedWith('ERC20: transfer amount exceeds balance');
+        });
 
         it('1.5.2.7. Withdraw unsuccessfully when native token receiving failed', async () => {
             const { deployer, admins, admin, feeReceiver } = await setupBeforeTest();
@@ -310,18 +307,18 @@ describe('1.5. FeeReceiver', async () => {
                 value: 1000,
             }));
 
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address', 'address[]', 'uint256[]'],
-                [feeReceiver.address, 'withdraw', failReceiver.address, [ethers.constants.AddressZero], [1000]]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
+            const paramsInput: WithdrawParamsInput = {
+                receiver: failReceiver.address,
+                currencies: [ethers.constants.AddressZero],
+                values: [BigNumber.from(1000)],
+            };
+            const params: WithdrawParams = {
+                ...paramsInput,
+                signatures: await getWithdrawSignatures(admins, admin, feeReceiver, paramsInput),
+            };
 
-            await expect(feeReceiver.withdraw(
-                failReceiver.address,
-                [ethers.constants.AddressZero],
-                [1000],
-                signatures
-            )).to.be.revertedWithCustomError(feeReceiver, 'FailedTransfer');
+            await expect(getWithdrawTx(deployer, feeReceiver, params))
+                .to.be.revertedWithCustomError(feeReceiver, 'FailedTransfer');
         });
 
         it('1.5.2.8. Withdraw unsuccessfully when the contract is reentered', async () => {

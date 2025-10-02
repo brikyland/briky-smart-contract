@@ -8,7 +8,7 @@ import {
 
 export async function getUpdateBaseURITx(
     passportToken: PassportToken,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: UpdateBaseURIParams,
     txConfig = {}
 ) {
@@ -21,7 +21,7 @@ export async function getUpdateBaseURITx(
 
 export async function getUpdateFeeTx(
     passportToken: PassportToken,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: UpdateFeeParams,
     txConfig = {}
 ) {
@@ -34,7 +34,7 @@ export async function getUpdateFeeTx(
 
 export async function getUpdateRoyaltyRateTx(
     passportToken: PassportToken,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: UpdateRoyaltyRateParams,
     txConfig = {}
 ) {
@@ -47,7 +47,7 @@ export async function getUpdateRoyaltyRateTx(
 
 export async function getWithdrawTx(
     passportToken: PassportToken,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: WithdrawParams,
     txConfig = {}
 ) {

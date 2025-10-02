@@ -7,7 +7,7 @@ import { ContractTransaction } from "ethers";
 export async function getInitiateLaunchTx(
     prestigePad: PrestigePad | MockPrestigePad,
     validator: MockValidator,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: InitiateLaunchParams
 ): Promise<ContractTransaction> {
     const validation = await getInitiateLaunchValidation(
@@ -32,7 +32,7 @@ export async function getInitiateLaunchTx(
 export async function getUpdateRoundTx(
     prestigePad: PrestigePad | MockPrestigePad,
     validator: MockValidator,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: UpdateRoundParams
 ): Promise<ContractTransaction> {
     const validation = await getUpdateRoundValidation(prestigePad, validator, params);
@@ -52,7 +52,7 @@ export async function getUpdateRoundTx(
 export async function getUpdateRoundsTx(
     prestigePad: PrestigePad | MockPrestigePad,
     validator: MockValidator,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: UpdateRoundsParams
 ): Promise<ContractTransaction> {
     const validations = await getUpdateRoundsValidation(prestigePad, validator, params);
@@ -94,7 +94,7 @@ export async function getCallUpdateRoundsTx(
 
 export async function getScheduleNextRoundTx(
     prestigePad: PrestigePad | MockPrestigePad,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: ScheduleNextRoundParams
 ): Promise<ContractTransaction> {
     return prestigePad.connect(deployer).scheduleNextRound(
@@ -130,7 +130,7 @@ export async function getCallScheduleNextRoundTx(
 export async function getUpdateLaunchURITx(
     prestigePad: PrestigePad | MockPrestigePad,
     validator: MockValidator,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: UpdateLaunchURIParams
 ): Promise<ContractTransaction> {
     const validation = await getUpdateLaunchURIValidation(prestigePad, validator, params);
@@ -146,7 +146,7 @@ export async function getUpdateLaunchURITx(
 
 export async function getSafeConfirmCurrentRoundTx(
     prestigePad: PrestigePad | MockPrestigePad,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: SafeConfirmCurrentRoundParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
@@ -177,7 +177,7 @@ export async function getCallSafeConfirmCurrentRoundTx(
 
 export async function getSafeFinalizeLaunchTx(
     prestigePad: PrestigePad | MockPrestigePad,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: SafeFinalizeLaunchParams,
     txConfig = {}
 ): Promise<ContractTransaction> {

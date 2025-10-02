@@ -9,10 +9,12 @@ import { getSignatures } from "@utils/blockchain";
 
 import { WithdrawParamsInput } from "@utils/models/common/feeReceiver";
 
+
+// withdraw
 export async function getWithdrawSignatures(
-    feeReceiver: FeeReceiver,
     admins: any[],
     admin: Admin,
+    feeReceiver: FeeReceiver,
     paramsInput: WithdrawParamsInput,
     isValid: boolean = true
 ) {

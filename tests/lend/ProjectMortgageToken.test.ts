@@ -95,7 +95,7 @@ interface ProjectMortgageTokenFixture {
     projectMortgageToken: ProjectMortgageToken;
     validator: MockValidator;
 
-    deployer: any;
+    deployer: SignerWithAddress;
     admins: any[];
     lender1: any;
     lender2: any;
@@ -409,12 +409,7 @@ describe('3.3. ProjectMortgageToken', async () => {
         }
 
         if (pause) {
-            await callPausable_Pause(
-                projectMortgageToken,
-                deployer,
-                admins,
-                admin,
-            );
+            await callPausable_Pause(deployer, admins, admin, projectMortgageToken);
         }
 
         return {
@@ -1717,7 +1712,7 @@ describe('3.3. ProjectMortgageToken', async () => {
                 .to.be.revertedWithCustomError(projectMortgageToken, "FailedTransfer");
         });
 
-        it('3.3.8.11. Repay unsuccessfully when this contract is reentered', async () => {
+        it('3.3.8.11. Repay unsuccessfully when the contract is reentered', async () => {
             const fixture = await beforeProjectMortgageTokenTest({
                 listSampleCurrencies: true,
                 listProjectToken: true,

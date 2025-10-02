@@ -10,7 +10,7 @@ import {
 
 export async function getUpdateFeeTx(
     promotionToken: PromotionToken,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: UpdateFeeParams,
     txConfig = {}
 ) {
@@ -23,7 +23,7 @@ export async function getUpdateFeeTx(
 
 export async function getUpdateRoyaltyRateTx(
     promotionToken: PromotionToken,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: UpdateRoyaltyRateParams,
     txConfig = {}
 ) {
@@ -36,7 +36,7 @@ export async function getUpdateRoyaltyRateTx(
 
 export async function getWithdrawTx(
     promotionToken: PromotionToken,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: WithdrawParams,
     txConfig = {}
 ) {
@@ -51,7 +51,7 @@ export async function getWithdrawTx(
 
 export async function getCreateContentsTx(
     promotionToken: PromotionToken,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: CreateContentsParams,
     txConfig = {}
 ) {
@@ -66,7 +66,7 @@ export async function getCreateContentsTx(
 
 export async function getUpdateContentURIsTx(
     promotionToken: PromotionToken,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: UpdateContentURIsParams,
     txConfig = {}
 ) {
@@ -80,7 +80,7 @@ export async function getUpdateContentURIsTx(
 
 export async function getCancelContentsTx(
     promotionToken: PromotionToken,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: CancelContentsParams,
     txConfig = {}
 ) {

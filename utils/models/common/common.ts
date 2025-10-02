@@ -5,7 +5,7 @@ export interface Rate {
     decimals: number;
 };
 
-export const RATE_SCHEMA = {
+export const RATES_SCHEMA = {
     type: "tuple[]",
     name: "rates",
     components: [

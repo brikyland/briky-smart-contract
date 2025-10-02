@@ -3,7 +3,7 @@ import { ProjectBorrowParams } from "@utils/models/lend/projectMortgageToken";
 
 export async function getProjectBorrowTx(
     projectMortgageToken: ProjectMortgageToken,
-    signer: any,
+    signer: SignerWithAddress,
     params: ProjectBorrowParams,
 ) {
     return await projectMortgageToken.connect(signer).borrow(

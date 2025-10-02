@@ -78,7 +78,7 @@ interface EstateTokenFixture {
     estateForger: MockContract<MockEstateForger>;
     validator: MockValidator;
 
-    deployer: any;
+    deployer: SignerWithAddress;
     admins: any[];
     manager: any;
     moderator: any;
@@ -415,7 +415,7 @@ describe('2.4. EstateToken', async () => {
         }
 
         if (pause) {
-            await callPausable_Pause(estateToken, deployer, admins, admin);
+            await callPausable_Pause(deployer, admins, admin, estateToken);
         }
 
         return fixture;
@@ -1236,7 +1236,7 @@ describe('2.4. EstateToken', async () => {
         async function getRegisterCustodianWithInvalidValidationTx(
             estateToken: EstateToken,
             validator: MockValidator,
-            deployer: any,
+            deployer: SignerWithAddress,
             params: RegisterCustodianParams
         ): Promise<ContractTransaction> {
             const validation = await getRegisterCustodianInvalidValidation(

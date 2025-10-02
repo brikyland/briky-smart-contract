@@ -48,7 +48,7 @@ interface CommissionTokenFixture {
     commissionToken: CommissionToken;
     validator: MockValidator;
 
-    deployer: any;
+    deployer: SignerWithAddress;
     admins: any[];
     manager: any;
     moderator: any;
@@ -228,7 +228,7 @@ describe('2.1. CommissionToken', async () => {
         }
 
         if (pause) {
-            await callPausable_Pause(commissionToken, deployer, admins, admin)
+            await callPausable_Pause(deployer, admins, admin, commissionToken)
         }
 
         return {

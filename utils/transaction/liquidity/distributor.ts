@@ -3,7 +3,7 @@ import { DistributeTokenParams } from "@utils/models/liquidity/distributor";
 
 export async function getDistributeTokenTx(
     distributor: Distributor,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: DistributeTokenParams,
     txConfig = {}
 ) {

@@ -3,11 +3,15 @@ import {
     ProxyCaller
 } from "@typechain-types";
 
-import { IssueDividendParams } from "@utils/models/common/dividendHub";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
+import { IssueDividendParams, WithdrawParams } from "@utils/models/common/dividendHub";
+
+
+// issueDividend
 export async function getIssueDividendTx(
+    signer: SignerWithAddress,
     dividendHub: DividendHub,
-    signer: any,
     params: IssueDividendParams,
     txConfig = {},
 ) {
@@ -36,6 +40,20 @@ export async function getCallIssueDividendTx(
             params.currency,
             params.note,
         ]),
+        txConfig,
+    );
+}
+
+
+// withdraw
+export async function getWithdrawTx(
+    signer: SignerWithAddress,
+    dividendHub: DividendHub,
+    params: WithdrawParams,
+    txConfig = {},
+) {
+    return await dividendHub.connect(signer).withdraw(
+        params.dividendIds,
         txConfig,
     );
 }

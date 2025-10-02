@@ -7,7 +7,7 @@ import {
 
 export async function getUpdateStakeTokensTx(
     driptributor: Driptributor,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: UpdateStakeTokensParams,
     txConfig = {}
 ) {
@@ -22,7 +22,7 @@ export async function getUpdateStakeTokensTx(
 
 export async function getDistributeTokensWithDurationTx(
     driptributor: Driptributor,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: DistributeTokensWithDurationParams,
     txConfig = {}
 ) {
@@ -38,7 +38,7 @@ export async function getDistributeTokensWithDurationTx(
 
 export async function getDistributeTokensWithTimestampTx(
     driptributor: Driptributor,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: DistributeTokensWithTimestampParams,
     txConfig = {}
 ) {

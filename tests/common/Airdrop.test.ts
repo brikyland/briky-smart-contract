@@ -7,6 +7,7 @@ import {
 } from '@typechain-types';
 
 import {
+    callTransaction,
     prepareERC20,
     prepareNativeToken,
     resetNativeToken,
@@ -14,6 +15,7 @@ import {
 
 import { deployAirdrop } from '@utils/deployments/common/airdrop';
 import { deployCurrency } from '@utils/deployments/common/currency';
+import { getAirdropTx } from '@utils/transaction/common/airdrop';
 
 interface AirdropFixture {
     deployer: any;
@@ -91,7 +93,16 @@ describe('1.3. Airdrop', async () => {
             const amounts1 = [amount1_receiver1, amount1_receiver2];
             const total1 = amount1_receiver1.add(amount1_receiver2);
 
-            const tx1 = await airdrop.connect(sender1).airdrop(accounts1, amounts1, ethers.constants.AddressZero, { value: total1 });
+            const tx1 = await getAirdropTx(
+                sender1,
+                airdrop,
+                {
+                    receivers: accounts1,
+                    amounts: amounts1,
+                    currency: ethers.constants.AddressZero
+                },
+                { value: total1 }
+            );
             const receipt1 = await tx1.wait();
 
             const tx1GasFee = receipt1.gasUsed.mul(receipt1.effectiveGasPrice);
@@ -107,7 +118,16 @@ describe('1.3. Airdrop', async () => {
             const total2 = amount2_receiver1.add(amount2_receiver3);
 
             // Should refund when value is more than needed
-            const tx2 = await airdrop.connect(sender2).airdrop(accounts2, amounts2, ethers.constants.AddressZero, { value: total2.add(ethers.utils.parseEther('1')) });
+            const tx2 = await getAirdropTx(
+                sender2,
+                airdrop,
+                {
+                    receivers: accounts2,
+                    amounts: amounts2,
+                    currency: ethers.constants.AddressZero
+                },
+                { value: total2.add(ethers.utils.parseEther('1')) }
+            );
             const receipt2 = await tx2.wait();
             const tx2GasFee = receipt2.gasUsed.mul(receipt2.effectiveGasPrice);
 
@@ -133,7 +153,15 @@ describe('1.3. Airdrop', async () => {
             const amounts1 = [amount1_receiver1, amount1_receiver2];
             const total1 = amount1_receiver1.add(amount1_receiver2);
 
-            const tx1 = await airdrop.connect(sender1).airdrop(accounts1, amounts1, currency.address);
+            await callTransaction(getAirdropTx(
+                sender1,
+                airdrop,
+                {
+                    receivers: accounts1,
+                    amounts: amounts1,
+                    currency: currency.address
+                }
+            ));
 
             expect(await currency.balanceOf(sender1.address)).to.equal(sender1InitBalance.sub(total1));
             expect(await currency.balanceOf(receiver1.address)).to.equal(receiver1InitBalance.add(amount1_receiver1));
@@ -146,7 +174,15 @@ describe('1.3. Airdrop', async () => {
             const total2 = amount2_receiver1.add(amount2_receiver3);
 
             // Should refund when value is more than needed
-            const tx2 = await airdrop.connect(sender2).airdrop(accounts2, amounts2, currency.address);
+            await callTransaction(getAirdropTx(
+                sender2,
+                airdrop,
+                {
+                    receivers: accounts2,
+                    amounts: amounts2,
+                    currency: currency.address
+                }
+            ));
 
             expect(await currency.balanceOf(sender2.address)).to.equal(sender2InitBalance.sub(total2));
             expect(await currency.balanceOf(receiver1.address)).to.equal(receiver1InitBalance.add(amount1_receiver1).add(amount2_receiver1));
@@ -159,8 +195,15 @@ describe('1.3. Airdrop', async () => {
             const accounts = [receiver1.address, receiver2.address];
             const amounts = [ethers.utils.parseEther('1'), ethers.utils.parseEther('2'), ethers.utils.parseEther('3')];
 
-            await expect(airdrop.connect(sender1).airdrop(accounts, amounts, ethers.constants.AddressZero))
-                .to.be.revertedWith('invalid input');
+            await expect(getAirdropTx(
+                sender1,
+                airdrop,
+                {
+                    receivers: accounts,
+                    amounts: amounts,
+                    currency: ethers.constants.AddressZero
+                }
+            )).to.be.revertedWith('invalid input');
         });
 
         it('1.3.2.4. Airdrop unsuccessfully with insufficient native balance', async () => {
@@ -172,8 +215,15 @@ describe('1.3. Airdrop', async () => {
             const accounts = [receiver1.address];
             const amounts = [ethers.utils.parseEther('100')];
 
-            await expect(airdrop.connect(sender1).airdrop(accounts, amounts, ethers.constants.AddressZero))
-                .to.be.revertedWithCustomError(airdrop, 'InsufficientValue');
+            await expect(getAirdropTx(
+                sender1,
+                airdrop,
+                {
+                    receivers: accounts,
+                    amounts: amounts,
+                    currency: ethers.constants.AddressZero
+                }
+            )).to.be.revertedWithCustomError(airdrop, 'InsufficientValue');
         });
 
         it('1.3.2.5. Airdrop unsuccessfully with insufficient ERC20 balance', async () => {
@@ -182,8 +232,15 @@ describe('1.3. Airdrop', async () => {
             const accounts = [receiver1.address];
             const amounts = [ethers.utils.parseEther('100')];
 
-            await expect(airdrop.connect(sender1).airdrop(accounts, amounts, currency.address))
-                .to.be.revertedWith('ERC20: insufficient allowance');
+            await expect(getAirdropTx(
+                sender1,
+                airdrop,
+                {
+                    receivers: accounts,
+                    amounts: amounts,
+                    currency: currency.address
+                }
+            )).to.be.revertedWithCustomError(airdrop, 'InsufficientValue');
         });
         
         it('1.3.2.6. Airdrop unsuccessfully with invalid address', async () => {
@@ -192,8 +249,15 @@ describe('1.3. Airdrop', async () => {
             const accounts = [receiver1.address, ethers.constants.AddressZero];
             const amounts = [ethers.utils.parseEther('1'), ethers.utils.parseEther('2')];
 
-            await expect(airdrop.connect(sender1).airdrop(accounts, amounts, ethers.constants.AddressZero))
-                .to.be.revertedWith('invalid address');
+            await expect(getAirdropTx(
+                sender1,
+                airdrop,
+                {
+                    receivers: accounts,
+                    amounts: amounts,
+                    currency: ethers.constants.AddressZero
+                }
+            )).to.be.revertedWith('invalid address');
         });
 
         it('1.3.2.7. Airdrop unsuccessfully with invalid amount', async () => {
@@ -202,8 +266,15 @@ describe('1.3. Airdrop', async () => {
             const accounts = [receiver1.address, receiver2.address];
             const amounts = [ethers.utils.parseEther('1'), ethers.constants.Zero];
 
-            await expect(airdrop.connect(sender1).airdrop(accounts, amounts, ethers.constants.AddressZero))
-                .to.be.revertedWith('invalid amount');
+            await expect(getAirdropTx(
+                sender1,
+                airdrop,
+                {
+                    receivers: accounts,
+                    amounts: amounts,
+                    currency: ethers.constants.AddressZero
+                }
+            )).to.be.revertedWith('invalid amount');
         });
     });
 });

@@ -7,7 +7,7 @@ import { ContractTransaction, ethers } from "ethers";
 export async function getRequestTokenizationTx(
     estateForger: EstateForger | MockEstateForger,
     validator: MockValidator,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: RequestTokenizationParams
 ): Promise<ContractTransaction> {
     const validation = await getRequestTokenizationValidation(
@@ -30,7 +30,7 @@ export async function getRequestTokenizationTx(
 export async function getUpdateRequestEstateURITx(
     estateForger: EstateForger | MockEstateForger,
     validator: MockValidator,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: UpdateRequestEstateURIParams
 ): Promise<ContractTransaction> {
     const validation = await getUpdateRequestEstateURIValidation(
@@ -49,7 +49,7 @@ export async function getUpdateRequestEstateURITx(
 
 export async function getUpdateRequestAgendaTx(
     estateForger: EstateForger | MockEstateForger,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: UpdateRequestAgendaParams
 ): Promise<ContractTransaction> {
     const tx = estateForger.connect(deployer).updateRequestAgenda(
@@ -61,7 +61,7 @@ export async function getUpdateRequestAgendaTx(
 
 export async function getDepositTx(
     estateForger: EstateForger | MockEstateForger,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: DepositParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
@@ -75,7 +75,7 @@ export async function getDepositTx(
 
 export async function getSafeDepositTx(
     estateForger: EstateForger | MockEstateForger,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: SafeDepositParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
@@ -90,7 +90,7 @@ export async function getSafeDepositTx(
 
 export async function getSafeDepositTxByParams(
     estateForger: EstateForger | MockEstateForger,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: DepositParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
@@ -105,7 +105,7 @@ export async function getSafeDepositTxByParams(
 
 export async function getSafeConfirmTx(
     estateForger: EstateForger | MockEstateForger,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: SafeConfirmParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
@@ -119,7 +119,7 @@ export async function getSafeConfirmTx(
 
 export async function getSafeConfirmTxByParams(
     estateForger: EstateForger | MockEstateForger,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: ConfirmParams,
     txConfig = {}
 ): Promise<ContractTransaction> {

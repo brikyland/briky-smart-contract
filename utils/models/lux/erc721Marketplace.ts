@@ -27,7 +27,6 @@ export interface BuyParams {
 }
 
 
-
 // cancel
 export interface CancelParams {
     offerId: BigNumber;

@@ -31,7 +31,7 @@ interface PassportTokenFixture {
     currency1: Currency;
     currency2: Currency;
 
-    deployer: any;
+    deployer: SignerWithAddress;
     admins: any[];
     minter1: any;
     minter2: any;
@@ -108,7 +108,7 @@ describe('5.1. PassportToken', async () => {
         const { deployer, passportToken, admins, admin } = fixture;
 
         if (pause) {
-            await callPausable_Pause(passportToken, deployer, admins, admin);
+            await callPausable_Pause(deployer, admins, admin, passportToken);
         }
 
         return {

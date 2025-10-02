@@ -3,7 +3,7 @@ import { EstateBorrowParams } from "@utils/models/lend/estateMortgageToken";
 
 export async function getEstateBorrowTx(
     estateMortgageToken: EstateMortgageToken,
-    signer: any,
+    signer: SignerWithAddress,
     params: EstateBorrowParams,
 ) {
     return await estateMortgageToken.connect(signer).borrow(

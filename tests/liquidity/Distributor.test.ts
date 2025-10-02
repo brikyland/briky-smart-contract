@@ -16,7 +16,7 @@ import { getDistributeTokenInvalidSignatures, getDistributeTokenSignatures } fro
 import { getDistributeTokenTx } from '@utils/transaction/liquidity/distributor';
 
 interface DistributorFixture {
-    deployer: any;
+    deployer: SignerWithAddress;
     admins: any[];
     admin: Admin;
     treasury: Treasury;

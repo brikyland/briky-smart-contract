@@ -3,7 +3,7 @@ import { Treasury } from "@typechain-types";
 
 export function getWithdrawOperationFundTx(
     treasury: Treasury,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: WithdrawOperationFundParams,
 ) {
     return treasury.connect(deployer).withdrawOperationFund(

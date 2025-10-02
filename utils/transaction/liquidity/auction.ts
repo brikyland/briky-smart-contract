@@ -3,7 +3,7 @@ import { StartAuctionParams, UpdateStakeTokensParams } from "@utils/models/liqui
 
 export async function getUpdateStakeTokensTx(
     auction: Auction,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: UpdateStakeTokensParams
 ) {
     const tx = auction.connect(deployer).updateStakeTokens(
@@ -17,7 +17,7 @@ export async function getUpdateStakeTokensTx(
 
 export async function getStartAuctionTx(
     auction: Auction,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: StartAuctionParams
 ) {
     const tx = auction.connect(deployer).startAuction(

@@ -3,7 +3,7 @@ import { LendParams, RepayParams, SafeLendParams, SafeRepayParams, UpdateBaseURI
 
 export async function getUpdateBaseURITx(
     mortgageToken: MortgageToken,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: UpdateBaseURIParams,
     txConfig = {}
 ) {
@@ -16,7 +16,7 @@ export async function getUpdateBaseURITx(
 
 export async function getUpdateFeeRateTx(
     mortgageToken: MortgageToken,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: UpdateFeeRateParams,
     txConfig = {}
 ) {
@@ -29,7 +29,7 @@ export async function getUpdateFeeRateTx(
 
 export async function getLendTx(
     mortgageToken: MortgageToken,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: LendParams,
     txConfig = {}
 ) {
@@ -41,7 +41,7 @@ export async function getLendTx(
 
 export async function getSafeLendTx(
     mortgageToken: MortgageToken,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: SafeLendParams,
     txConfig = {}
 ) {
@@ -54,7 +54,7 @@ export async function getSafeLendTx(
 
 export async function getRepayTx(
     mortgageToken: MortgageToken,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: RepayParams,
     txConfig = {}
 ) {
@@ -66,7 +66,7 @@ export async function getRepayTx(
 
 export async function getSafeRepayTx(
     mortgageToken: MortgageToken,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: SafeRepayParams,
     txConfig = {}
 ) {

@@ -17,9 +17,11 @@ import {
     UpdateCurrencyRegistriesParamsInput
 } from "@utils/models/common/admin";
 
+
+// transferAdministration1
 export async function getTransferAdministration1Signatures(
-    admin: Admin,
     admins: any[],
+    admin: Admin,
     params: TransferAdministration1ParamsInput,
     isValid: boolean = true
 ) {
@@ -30,9 +32,11 @@ export async function getTransferAdministration1Signatures(
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
 
+
+// transferAdministration2
 export async function getTransferAdministration2Signatures(
-    admin: Admin,
     admins: any[],
+    admin: Admin,
     params: TransferAdministration2ParamsInput,
     isValid: boolean = true
 ) {
@@ -43,9 +47,11 @@ export async function getTransferAdministration2Signatures(
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
 
+
+// transferAdministration3
 export async function getTransferAdministration3Signatures(
-    admin: Admin,
     admins: any[],
+    admin: Admin,
     params: TransferAdministration3ParamsInput,
     isValid: boolean = true
 ) {
@@ -56,9 +62,11 @@ export async function getTransferAdministration3Signatures(
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
 
+
+// transferAdministration4
 export async function getTransferAdministration4Signatures(
-    admin: Admin,
     admins: any[],
+    admin: Admin,
     params: TransferAdministration4ParamsInput,
     isValid: boolean = true
 ) {
@@ -69,9 +77,11 @@ export async function getTransferAdministration4Signatures(
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
 
+
+// transferAdministration5
 export async function getTransferAdministration5Signatures(
-    admin: Admin,
     admins: any[],
+    admin: Admin,
     params: TransferAdministration5ParamsInput,
     isValid: boolean = true
 ) {
@@ -82,9 +92,11 @@ export async function getTransferAdministration5Signatures(
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
 
+
+// authorizeManagers
 export async function getAuthorizeManagersSignatures(
-    admin: Admin,
     admins: any[],
+    admin: Admin,
     params: AuthorizeManagersParamsInput,
     isValid: boolean = true
 ) {
@@ -95,9 +107,11 @@ export async function getAuthorizeManagersSignatures(
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
 
+
+// authorizeModerators
 export async function getAuthorizeModeratorsSignatures(
-    admin: Admin,
     admins: any[],
+    admin: Admin,
     params: AuthorizeModeratorsParamsInput,
     isValid: boolean = true
 ) {
@@ -108,9 +122,11 @@ export async function getAuthorizeModeratorsSignatures(
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
 
+
+// authorizeGovernors
 export async function getAuthorizeGovernorsSignatures(
-    admin: Admin,
     admins: any[],
+    admin: Admin,
     params: AuthorizeGovernorsParamsInput,
     isValid: boolean = true
 ) {
@@ -121,9 +137,11 @@ export async function getAuthorizeGovernorsSignatures(
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
 
+
+// declareZone
 export async function getDeclareZoneSignatures(
-    admin: Admin,
     admins: any[],
+    admin: Admin,
     params: DeclareZoneParamsInput,
     isValid: boolean = true
 ) {
@@ -134,9 +152,11 @@ export async function getDeclareZoneSignatures(
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
 
+
+// activateIn
 export async function getActivateInSignatures(
-    admin: Admin,
     admins: any[],
+    admin: Admin,
     params: ActivateInParamsInput,
     isValid: boolean = true
 ) {
@@ -147,9 +167,11 @@ export async function getActivateInSignatures(
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
 
+
+// updateCurrencyRegistries
 export async function getUpdateCurrencyRegistriesSignatures(
-    admin: Admin,
     admins: any[],
+    admin: Admin,
     params: UpdateCurrencyRegistriesParamsInput,
     isValid: boolean = true
 ) {

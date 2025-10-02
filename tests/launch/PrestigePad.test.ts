@@ -97,7 +97,7 @@ export interface PrestigePadFixture {
     reentrancyERC20: ReentrancyERC20;
     failReceiver: FailReceiver;
     
-    deployer: any;
+    deployer: SignerWithAddress;
     admins: any[];
 
     manager: any;
@@ -844,7 +844,7 @@ describe('7.1. PrestigePad', async () => {
         }
 
         if (pause) {
-            await callPausable_Pause(prestigePad, deployer, admins, admin);
+            await callPausable_Pause(deployer, admins, admin, prestigePad);
         }
 
         return {
@@ -1181,7 +1181,7 @@ describe('7.1. PrestigePad', async () => {
             expect(await projectToken.balanceOf(params2.initiator, projectId2)).to.equal(initiatorInitBalance2.add(initialAmount2));            
         });
 
-        it('7.1.5.2. Initiate launch unsuccessfully when contract is reentered', async () => {
+        it('7.1.5.2. Initiate launch unsuccessfully when the contract is reentered', async () => {
             const fixture = await beforePrestigePadTest();
 
             const { prestigePad, validator, manager, zone1, deployer, projectToken } = fixture;
@@ -2555,7 +2555,7 @@ describe('7.1. PrestigePad', async () => {
             expect(round.agenda.raiseEndsAt).to.equal(params.raiseStartsAt + params.raiseDuration);
         });
 
-        it('7.1.9.3. Raise next round unsuccessfully when contract is reentered', async () => {
+        it('7.1.9.3. Raise next round unsuccessfully when the contract is reentered', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -3648,7 +3648,7 @@ describe('7.1. PrestigePad', async () => {
             );
         });
 
-        it('7.1.11.7. Safe confirm current round unsuccessfully when contract is reentered', async () => {
+        it('7.1.11.7. Safe confirm current round unsuccessfully when the contract is reentered', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -4346,7 +4346,7 @@ describe('7.1. PrestigePad', async () => {
                 .to.be.revertedWithCustomError(prestigePad, 'InvalidLaunchId');
         });
 
-        it('7.1.13.4. Deposit current round unsuccessfully when contract is reentered', async () => {
+        it('7.1.13.4. Deposit current round unsuccessfully when the contract is reentered', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -4706,7 +4706,7 @@ describe('7.1. PrestigePad', async () => {
             );
         });
 
-        it('7.1.15.2. Withdraw deposit unsuccessfully when contract is reentered', async () => {
+        it('7.1.15.2. Withdraw deposit unsuccessfully when the contract is reentered', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,
@@ -4758,7 +4758,7 @@ describe('7.1. PrestigePad', async () => {
 
             await callTransaction(prestigePad.connect(initiator1).cancelCurrentRound(1));
 
-            await callPausable_Pause(prestigePad, deployer, admins, admin);
+            await callPausable_Pause(deployer, admins, admin, prestigePad);
 
             await expect(prestigePad.connect(depositor1).withdrawContribution(oldRoundId))
                 .to.be.revertedWith('Pausable: paused'); 
@@ -5271,7 +5271,7 @@ describe('7.1. PrestigePad', async () => {
             );
         });
 
-        it('7.1.16.5. Withdraw project token unsuccessfully when contract is reentered', async () => {
+        it('7.1.16.5. Withdraw project token unsuccessfully when the contract is reentered', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
                 addSampleRounds: true,

@@ -7,7 +7,7 @@ import { ContractTransaction, ethers } from "ethers";
 export async function getRegisterCustodianTx(
     estateToken: EstateToken | MockEstateToken,
     validator: MockValidator,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: RegisterCustodianParams
 ): Promise<ContractTransaction> {
     const validation = await getRegisterCustodianValidation(
@@ -48,7 +48,7 @@ export async function getCallTokenizeEstateTx(
 export async function getSafeUpdateEstateURITx(
     estateToken: EstateToken | MockEstateToken,
     validator: MockValidator,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: SafeUpdateEstateURIParams
 ): Promise<ContractTransaction> {
     const validation = await getUpdateEstateURIValidation(
@@ -68,7 +68,7 @@ export async function getSafeUpdateEstateURITx(
 
 export async function getSafeUpdateEstateCustodianTx(
     estateToken: EstateToken | MockEstateToken,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: SafeUpdateEstateCustodianParams
 ): Promise<ContractTransaction> {
     const tx = estateToken.connect(deployer).safeUpdateEstateCustodian(
@@ -81,7 +81,7 @@ export async function getSafeUpdateEstateCustodianTx(
 
 export async function getSafeDeprecateEstateTx(
     estateToken: EstateToken | MockEstateToken,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: SafeDeprecateEstateParams
 ): Promise<ContractTransaction> {
     const tx = estateToken.connect(deployer).safeDeprecateEstate(
@@ -94,7 +94,7 @@ export async function getSafeDeprecateEstateTx(
 
 export async function getSafeExtendEstateExpirationTx(
     estateToken: EstateToken | MockEstateToken,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: SafeExtendEstateExpirationParams
 ): Promise<ContractTransaction> {
     const tx = estateToken.connect(deployer).safeExtendEstateExpiration(
@@ -108,7 +108,7 @@ export async function getSafeExtendEstateExpirationTx(
 export async function getSafeUpdateEstateURITxByParams(
     estateToken: EstateToken | MockEstateToken,
     validator: MockValidator,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: UpdateEstateURIParams
 ): Promise<ContractTransaction> {
     const currentURI = await estateToken.uri(params.estateId);
@@ -122,7 +122,7 @@ export async function getSafeUpdateEstateURITxByParams(
 
 export async function getSafeUpdateEstateCustodianTxByParams(
     estateToken: EstateToken | MockEstateToken,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: UpdateEstateCustodianParams
 ): Promise<ContractTransaction> {
     const currentURI = await estateToken.uri(params.estateId);
@@ -136,7 +136,7 @@ export async function getSafeUpdateEstateCustodianTxByParams(
 
 export async function getSafeDeprecateEstateTxByParams(
     estateToken: EstateToken | MockEstateToken,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: DeprecateEstateParams
 ): Promise<ContractTransaction> {
     const currentURI = await estateToken.uri(params.estateId);
@@ -150,7 +150,7 @@ export async function getSafeDeprecateEstateTxByParams(
 
 export async function getSafeExtendEstateExpirationTxByParams(
     estateToken: EstateToken | MockEstateToken,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: ExtendEstateExpirationParams
 ): Promise<ContractTransaction> {
     const currentURI = await estateToken.uri(params.estateId);

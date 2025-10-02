@@ -98,7 +98,7 @@ interface EstateMortgageTokenFixture {
     estateForger: MockContract<MockEstateForger>;
     validator: MockValidator;
 
-    deployer: any;
+    deployer: SignerWithAddress;
     admins: any[];
     lender1: any;
     lender2: any;
@@ -449,12 +449,7 @@ describe('3.2. EstateMortgageToken', async () => {
         }
 
         if (pause) {
-            await callPausable_Pause(
-                estateMortgageToken,
-                deployer,
-                admins,
-                admin,
-            );
+            await callPausable_Pause(deployer, admins, admin, estateMortgageToken);
         }
 
         return {
@@ -1805,7 +1800,7 @@ describe('3.2. EstateMortgageToken', async () => {
                 .to.be.revertedWithCustomError(estateMortgageToken, "FailedTransfer");
         });
 
-        it('3.2.8.11. Repay unsuccessfully when this contract is reentered', async () => {
+        it('3.2.8.11. Repay unsuccessfully when the contract is reentered', async () => {
             const fixture = await beforeEstateMortgageTokenTest({
                 listSampleCurrencies: true,
                 listEstateToken: true,

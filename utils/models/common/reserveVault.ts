@@ -1,7 +1,7 @@
 import { BigNumber } from "ethers";
 
 
-// authorizeProvider
+// authorizeProviders
 export interface AuthorizeProviderParamsInput {
     accounts: string[];
     isProvider: boolean;

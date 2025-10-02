@@ -46,7 +46,7 @@ interface ERC721MarketplaceFixture {
     erc721Marketplace: ERC721Marketplace;
     collections: any[];
 
-    deployer: any;
+    deployer: SignerWithAddress;
     admins: any[];
     royaltyReceiver: any;
     seller1: any;
@@ -1348,7 +1348,7 @@ describe('6.1. ERC721Marketplace', async () => {
                 .to.be.revertedWithCustomError(erc721Marketplace, "FailedRefund");
         });
 
-        it('6.1.4.13. Buy token unsuccessfully when this contract is reentered', async () => {
+        it('6.1.4.13. Buy token unsuccessfully when the contract is reentered', async () => {
             const fixture = await beforeERC721MarketplaceTest({
                 listSampleCurrencies: true,
             });

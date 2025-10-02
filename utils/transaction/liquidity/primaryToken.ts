@@ -15,7 +15,7 @@ import {
 
 export async function getUpdateTreasuryTx(
     primaryToken: PrimaryToken,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: UpdateTreasuryParams,
     txConfig = {}
 ) {
@@ -28,7 +28,7 @@ export async function getUpdateTreasuryTx(
 
 export async function getUpdateStakeTokensTx(
     primaryToken: PrimaryToken,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: UpdateStakeTokensParams,
     txConfig = {}
 ) {
@@ -43,7 +43,7 @@ export async function getUpdateStakeTokensTx(
 
 export async function getUnlockForBackerRoundTx(
     primaryToken: PrimaryToken,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: UnlockForBackerRoundParams,
     txConfig = {}
 ) {
@@ -56,7 +56,7 @@ export async function getUnlockForBackerRoundTx(
 
 export async function getUnlockForSeedRoundTx(
     primaryToken: PrimaryToken,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: UnlockForSeedRoundParams,
     txConfig = {}
 ) {
@@ -69,7 +69,7 @@ export async function getUnlockForSeedRoundTx(
 
 export async function getUnlockForPrivateSale1Tx(
     primaryToken: PrimaryToken,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: UnlockForPrivateSale1Params,
     txConfig = {}
 ) {
@@ -82,7 +82,7 @@ export async function getUnlockForPrivateSale1Tx(
 
 export async function getUnlockForPrivateSale2Tx(
     primaryToken: PrimaryToken,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: UnlockForPrivateSale2Params,
     txConfig = {}
 ) {
@@ -95,7 +95,7 @@ export async function getUnlockForPrivateSale2Tx(
 
 export async function getUnlockForPublicSaleTx(
     primaryToken: PrimaryToken,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: UnlockForPublicSaleParams,
     txConfig = {}
 ) {
@@ -108,7 +108,7 @@ export async function getUnlockForPublicSaleTx(
 
 export async function getUnlockForCoreTeamTx(
     primaryToken: PrimaryToken,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: UnlockForCoreTeamParams,
     txConfig = {}
 ) {
@@ -120,7 +120,7 @@ export async function getUnlockForCoreTeamTx(
 }
 export async function getUnlockForMarketMakerTx(
     primaryToken: PrimaryToken,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: UnlockForMarketMakerParams,
     txConfig = {}
 ) {
@@ -133,7 +133,7 @@ export async function getUnlockForMarketMakerTx(
 
 export async function getUnlockForExternalTreasuryTx(
     primaryToken: PrimaryToken,
-    deployer: any,
+    deployer: SignerWithAddress,
     params: UnlockForExternalTreasuryParams,
     txConfig = {}
 ) {

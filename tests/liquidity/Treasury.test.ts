@@ -15,7 +15,7 @@ import { getWithdrawOperationFundSignatures } from '@utils/signatures/liquidity/
 import { getWithdrawOperationFundTx } from '@utils/transaction/liquidity/treasury';
 
 interface TreasuryFixture {
-    deployer: any;
+    deployer: SignerWithAddress;
     admins: any[];
     admin: Admin;
     treasury: Treasury;
@@ -88,7 +88,7 @@ describe('4.6. Treasury', async () => {
         }
 
         if (pause) {
-            await callPausable_Pause(treasury, deployer, admins, admin);
+            await callPausable_Pause(deployer, admins, admin, treasury);
         }
 
         return {
