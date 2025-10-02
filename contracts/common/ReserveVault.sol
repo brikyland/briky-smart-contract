@@ -110,7 +110,7 @@ ReentrancyGuardUpgradeable {
      * 
      *  @dev    Administrative operator.
      */
-    function authorizeProvider(
+    function authorizeProviders(
         address[] calldata _accounts,
         bool _isProvider,
         bytes[] calldata _signatures
@@ -118,7 +118,7 @@ ReentrancyGuardUpgradeable {
         IAdmin(admin).verifyAdminSignatures(
             abi.encode(
                 address(this),
-                "authorizeProvider",
+                "authorizeProviders",
                 _accounts,
                 _isProvider
             ),
