@@ -3,12 +3,15 @@ import { time } from "@nomicfoundation/hardhat-network-helpers";
 
 import { MockValidator } from "@utils/mockValidator";
 
-import { RegisterInitiatorParams, SafeUpdateProjectURIParams, UpdateProjectURIParams } from "@utils/models/launch/projectToken";
+import { RegisterInitiatorParamsInput, UpdateProjectURIParamsInput } from "@utils/models/launch/projectToken";
 
+
+// registerInitiator
 export async function getRegisterInitiatorValidation(
     projectToken: Contract,
+    params: RegisterInitiatorParamsInput,
     validator: MockValidator,
-    params: RegisterInitiatorParams
+    isValid = true
 ) {
     const content = ethers.utils.defaultAbiCoder.encode(
         ["address", "string"],
@@ -16,29 +19,18 @@ export async function getRegisterInitiatorValidation(
     );
     const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
 
-    const validation = await validator.getValidation(projectToken, content, expiry);
-    return validation;
+    return isValid
+        ? await validator.getValidation(projectToken, content, expiry)
+        : await validator.getInvalidValidation(projectToken, content, expiry);
 }
 
-export async function getRegisterInitiatorInvalidValidation(
-    projectToken: Contract,
-    validator: MockValidator,
-    params: RegisterInitiatorParams
-) {
-    const content = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string"],
-        [params.initiator, params.uri]
-    );
-    const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
 
-    const validation = await validator.getInvalidValidation(projectToken, content, expiry);
-    return validation;
-}
-
+// safeUpdateProjectURI
 export async function getSafeUpdateProjectURIValidation(
     projectToken: Contract,
+    params: UpdateProjectURIParamsInput,
     validator: MockValidator,
-    params: SafeUpdateProjectURIParams
+    isValid = true
 ) {
     const content = ethers.utils.defaultAbiCoder.encode(
         ["uint256", "string"],
@@ -46,21 +38,7 @@ export async function getSafeUpdateProjectURIValidation(
     );
     const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
 
-    const validation = await validator.getValidation(projectToken, content, expiry);
-    return validation;
-}
-
-export async function getSafeUpdateProjectURIInvalidValidation(
-    projectToken: Contract,
-    validator: MockValidator,
-    params: SafeUpdateProjectURIParams
-) {
-    const content = ethers.utils.defaultAbiCoder.encode(
-        ["uint256", "string"],
-        [params.projectId, params.uri]
-    );
-    const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
-
-    const validation = await validator.getInvalidValidation(projectToken, content, expiry);
-    return validation;
+    return isValid
+        ? await validator.getValidation(projectToken, content, expiry)
+        : await validator.getInvalidValidation(projectToken, content, expiry);
 }

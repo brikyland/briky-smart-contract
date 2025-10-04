@@ -92,18 +92,34 @@ export interface PrestigePadRoundAgenda {
     publicSaleEndsAt: number;
 };
 
-export interface UpdateRoundParams {
+export interface UpdateRoundParamsInput {
     launchId: BigNumber;
     index: BigNumber;
     round: PrestigePadRoundInput;
 }
 
+export interface PrestigePadRoundInputWithValidation extends PrestigePadRoundInput {
+    validation: Validation;
+};
+
+export interface UpdateRoundParams {
+    launchId: BigNumber;
+    index: BigNumber;
+    round: PrestigePadRoundInputWithValidation;
+}
+
 
 // updateRounds
-export interface UpdateRoundsParams {
+export interface UpdateRoundsParamsInput {
     launchId: BigNumber;
     removedRoundNumber: BigNumber;
     addedRounds: PrestigePadRoundInput[];
+}
+
+export interface UpdateRoundsParams {
+    launchId: BigNumber;
+    removedRoundNumber: BigNumber;
+    addedRounds: PrestigePadRoundInputWithValidation[];
 }
 
 

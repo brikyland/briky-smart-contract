@@ -130,10 +130,6 @@ export interface UpdateEstateURIParams extends UpdateEstateURIParamsInput {
     validation: Validation;
 }
 
-export interface SafeUpdateEstateURIParamsInput extends UpdateEstateURIParamsInput {
+export interface SafeUpdateEstateURIParams extends UpdateEstateURIParams {
     anchor: string;
-}
-
-export interface SafeUpdateEstateURIParams extends SafeUpdateEstateURIParamsInput {
-    validation: Validation;
 }

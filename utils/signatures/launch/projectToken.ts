@@ -1,0 +1,59 @@
+import { Admin, ProjectToken } from "@typechain-types";
+import { getSignatures } from "@utils/blockchain";
+import {
+    AuthorizeLaunchpadsParamsInput,
+    UpdateBaseURIParamsInput,
+    UpdateZoneRoyaltyRateParamsInput,
+} from "@utils/models/launch/projectToken";
+import { ethers } from "ethers";
+
+
+// updateBaseURI
+export async function getUpdateBaseURISignatures(
+    projectToken: ProjectToken,
+    paramsInput: UpdateBaseURIParamsInput,
+    admins: any[],
+    admin: Admin,
+    isValid: boolean = true
+) {
+    const message = ethers.utils.defaultAbiCoder.encode(
+        ["address", "string", "string"],
+        [projectToken.address, "updateBaseURI", paramsInput.uri]
+    );
+
+    return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
+}
+
+
+// updateZoneRoyaltyRate
+export async function getUpdateZoneRoyaltyRateSignatures(
+    projectToken: ProjectToken,
+    paramsInput: UpdateZoneRoyaltyRateParamsInput,
+    admins: any[],
+    admin: Admin,
+    isValid: boolean = true
+) {
+    const message = ethers.utils.defaultAbiCoder.encode(
+        ["address", "string", "bytes32", "uint256"],
+        [projectToken.address, "updateZoneRoyaltyRate", paramsInput.zone, paramsInput.royaltyRate]
+    );
+
+    return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
+}
+
+
+// authorizeLaunchpads
+export async function getAuthorizeLaunchpadsSignatures(
+    projectToken: ProjectToken,
+    paramsInput: AuthorizeLaunchpadsParamsInput,
+    admins: any[],
+    admin: Admin,
+    isValid: boolean = true
+) {
+    const message = ethers.utils.defaultAbiCoder.encode(
+        ["address", "string", "address[]", "bool"],
+        [projectToken.address, "authorizeLaunchpads", paramsInput.accounts, paramsInput.isLaunchpad]
+    );
+
+    return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
+}

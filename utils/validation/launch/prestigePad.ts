@@ -1,13 +1,17 @@
 import { time } from "@nomicfoundation/hardhat-network-helpers";
 import { MockValidator } from "@utils/mockValidator";
-import { InitiateLaunchParams, UpdateLaunchURIParams, UpdateRoundParams, UpdateRoundsParams } from "@utils/models/launch/prestigePad";
+import { InitiateLaunchParamsInput, UpdateLaunchURIParamsInput, UpdateRoundParams, UpdateRoundsParams } from "@utils/models/launch/prestigePad";
+import { UpdateRoundParamsInput } from "@utils/models/launch/prestigePad";
+import { UpdateRoundsParamsInput } from "@utils/models/launch/prestigePad";
 import { Contract } from "ethers";
 import { ethers } from 'hardhat';
 
+
+// initiateLaunch
 export async function getInitiateLaunchValidation(
     prestigePad: Contract,
+    params: InitiateLaunchParamsInput,
     validator: MockValidator,
-    params: InitiateLaunchParams,
     isValid = true
 ) {
     const content = ethers.utils.defaultAbiCoder.encode(
@@ -16,16 +20,17 @@ export async function getInitiateLaunchValidation(
     );
     const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
 
-    const validation = isValid
+    return isValid
         ? await validator.getValidation(prestigePad, content, expiry)
         : await validator.getInvalidValidation(prestigePad, content, expiry);
-    return validation;
 }
 
+
+// updateRound
 export async function getUpdateRoundValidation(
     prestigePad: Contract,
+    params: UpdateRoundParamsInput,
     validator: MockValidator,
-    params: UpdateRoundParams,
     isValid = true
 ) {
     const content = ethers.utils.defaultAbiCoder.encode(
@@ -34,16 +39,17 @@ export async function getUpdateRoundValidation(
     );
     const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
 
-    const validation = isValid
+    return isValid
         ? await validator.getValidation(prestigePad, content, expiry)
         : await validator.getInvalidValidation(prestigePad, content, expiry);
-    return validation;
 }
 
+
+// updateRounds
 export async function getUpdateRoundsValidation(
     prestigePad: Contract,
+    params: UpdateRoundsParamsInput,
     validator: MockValidator,
-    params: UpdateRoundsParams,
     isValid = true
 ) {
     const validations = [];
@@ -62,10 +68,12 @@ export async function getUpdateRoundsValidation(
     return validations;
 }
 
+
+// updateLaunchURI
 export async function getUpdateLaunchURIValidation(
     prestigePad: Contract,
+    params: UpdateLaunchURIParamsInput,
     validator: MockValidator,
-    params: UpdateLaunchURIParams,
     isValid = true
 ) {
     const content = ethers.utils.defaultAbiCoder.encode(
@@ -74,8 +82,7 @@ export async function getUpdateLaunchURIValidation(
     );
     const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
 
-    const validation = isValid
+    return isValid
         ? await validator.getValidation(prestigePad, content, expiry)
         : await validator.getInvalidValidation(prestigePad, content, expiry);
-    return validation;
 }

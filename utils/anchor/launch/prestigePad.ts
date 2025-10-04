@@ -5,7 +5,7 @@ import { PrestigePad } from "@typechain-types";
 import {
     ContributeCurrentRoundParams,
     ConfirmCurrentRoundParams,
-    FinalizeLaunchParams,
+    FinalizeParams,
 } from "@utils/models/launch/prestigePad";
 
 export async function getSafeContributeCurrentRoundAnchor(
@@ -24,9 +24,9 @@ export async function getSafeConfirmCurrentRoundParams(
     return ethers.utils.keccak256(ethers.utils.toUtf8Bytes(currentURI));
 }
 
-export async function getSafeFinalizeLaunchParams(
+export async function getSafeFinalizeParams(
     prestigePad: PrestigePad,
-    params: FinalizeLaunchParams
+    params: FinalizeParams
 ): Promise<string> {
     const currentURI = (await prestigePad.getLaunch(params.launchId)).uri;
     return ethers.utils.keccak256(ethers.utils.toUtf8Bytes(currentURI));

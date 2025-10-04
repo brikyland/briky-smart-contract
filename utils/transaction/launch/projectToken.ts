@@ -1,191 +1,305 @@
-import { MockProjectToken, ProxyCaller } from "@typechain-types";
+import { Admin, ProjectToken, ProxyCaller } from "@typechain-types";
 import { MockValidator } from "@utils/mockValidator";
-import { DeprecateProjectParams, LaunchProjectParams, MintParams, RegisterInitiatorParams, SafeDeprecateProjectParams, SafeTokenizeProjectParams, SafeUpdateProjectURIParams, TokenizeProjectParams, UpdateProjectURIParams } from "@utils/models/launch/projectToken";
+import { AuthorizeLaunchpadsParams, AuthorizeLaunchpadsParamsInput, DeprecateProjectParams, LaunchProjectParams, MintParams, RegisterInitiatorParams, RegisterInitiatorParamsInput, SafeDeprecateProjectParams, SafeTokenizeProjectParams, SafeUpdateProjectURIParams, TokenizeProjectParams, UpdateBaseURIParams, UpdateBaseURIParamsInput, UpdateProjectURIParams, UpdateProjectURIParamsInput, UpdateZoneRoyaltyRateParams, UpdateZoneRoyaltyRateParamsInput, WithdrawEstateTokenParams } from "@utils/models/launch/projectToken";
 import { getRegisterInitiatorValidation, getSafeUpdateProjectURIValidation } from "@utils/validation/launch/projectToken";
 import { ContractTransaction, ethers } from "ethers";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { getAuthorizeLaunchpadsSignatures, getUpdateBaseURISignatures, getUpdateZoneRoyaltyRateSignatures } from "@utils/signatures/launch/projectToken";
+import { getSafeDeprecateProjectAnchor, getSafeTokenizeProjectAnchor, getSafeUpdateProjectURIAnchor } from "@utils/anchor/launch/projectToken";
 
-export async function getRegisterInitiatorTx(
-    projectToken: MockProjectToken,
-    validator: MockValidator,
+
+// updateBaseURI
+export async function getUpdateBaseURITx(
+    projectToken: ProjectToken,
     deployer: SignerWithAddress,
-    params: RegisterInitiatorParams
+    params: UpdateBaseURIParams,
+    txConfig = {}
 ): Promise<ContractTransaction> {
-    const validation = await getRegisterInitiatorValidation(
-        projectToken,
-        validator,
-        params
+    return projectToken.connect(deployer).updateBaseURI(
+        params.uri,
+        params.signatures,
+        txConfig
     );
+}
 
-    const tx = projectToken.connect(deployer).registerInitiator(
+export async function getUpdateBaseURITxByParams(
+    projectToken: ProjectToken,
+    deployer: SignerWithAddress,
+    paramsInput: UpdateBaseURIParamsInput,
+    admins: any[],
+    admin: Admin,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    const params: UpdateBaseURIParams = {
+        ...paramsInput,
+        signatures: await getUpdateBaseURISignatures(projectToken, paramsInput, admins, admin),
+    };
+    return getUpdateBaseURITx(projectToken, deployer, params, txConfig);
+}
+
+
+// updateZoneRoyaltyRate
+export async function getUpdateZoneRoyaltyRateTx(
+    projectToken: ProjectToken,
+    deployer: SignerWithAddress,
+    params: UpdateZoneRoyaltyRateParams,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    return projectToken.connect(deployer).updateZoneRoyaltyRate(
+        params.zone,
+        params.royaltyRate,
+        params.signatures,
+        txConfig
+    );
+}
+
+export async function getUpdateZoneRoyaltyRateTxByInput(
+    projectToken: ProjectToken,
+    deployer: SignerWithAddress,
+    paramsInput: UpdateZoneRoyaltyRateParamsInput,
+    admins: any[],
+    admin: Admin,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    const params: UpdateZoneRoyaltyRateParams = {
+        ...paramsInput,
+        signatures: await getUpdateZoneRoyaltyRateSignatures(projectToken, paramsInput, admins, admin),
+    };
+    return getUpdateZoneRoyaltyRateTx(projectToken, deployer, params, txConfig);
+}
+
+
+// authorizeLaunchpads
+export async function getAuthorizeLaunchpadsTx(
+    projectToken: ProjectToken,
+    deployer: SignerWithAddress,
+    params: AuthorizeLaunchpadsParams,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    return projectToken.connect(deployer).authorizeLaunchpads(
+        params.accounts,
+        params.isLaunchpad,
+        params.signatures,
+        txConfig
+    );
+}
+
+export async function getAuthorizeLaunchpadsTxByInput(
+    projectToken: ProjectToken,
+    deployer: SignerWithAddress,
+    paramsInput: AuthorizeLaunchpadsParamsInput,
+    admins: any[],
+    admin: Admin,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    const params: AuthorizeLaunchpadsParams = {
+        ...paramsInput,
+        signatures: await getAuthorizeLaunchpadsSignatures(projectToken, paramsInput, admins, admin),
+    };
+    return getAuthorizeLaunchpadsTx(projectToken, deployer, params, txConfig);
+}
+
+
+// registerInitiator
+export async function getRegisterInitiatorTx(
+    projectToken: ProjectToken,
+    deployer: SignerWithAddress,
+    params: RegisterInitiatorParams,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    return projectToken.connect(deployer).registerInitiator(
         params.zone,
         params.initiator,
         params.uri,
-        validation
+        params.validation,
+        txConfig
     );
-
-    return tx;            
 }
 
-export async function getCallLaunchProjectTx(
-    projectToken: MockProjectToken,
-    launchpad: any,
-    params: LaunchProjectParams
+export async function getRegisterInitiatorTxByInput(
+    projectToken: ProjectToken,
+    deployer: SignerWithAddress,
+    paramsInput: RegisterInitiatorParamsInput,
+    validator: MockValidator,
+    txConfig = {}
 ): Promise<ContractTransaction> {
-    const tx = launchpad.call(
+    const params: RegisterInitiatorParams = {
+        ...paramsInput,
+        validation: await getRegisterInitiatorValidation(projectToken, validator, paramsInput)
+    };
+    return getRegisterInitiatorTx(projectToken, deployer, params, txConfig);
+}
+
+
+// launchProject
+export async function getCallLaunchProjectTx(
+    projectToken: ProjectToken,
+    launchpad: any,
+    params: LaunchProjectParams,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    return launchpad.call(
         projectToken.address,
         projectToken.interface.encodeFunctionData('launchProject', [
             params.zone,
             params.launchId,
             params.initiator,
             params.uri,
-        ])
+        ]),
+        txConfig
     );
-
-    return tx;
 }
 
+
+// mint
 export async function getCallMintTx(
-    projectToken: MockProjectToken,
+    projectToken: ProjectToken,
     launchpad: any,
-    params: MintParams
+    params: MintParams,
+    txConfig = {}
 ): Promise<ContractTransaction> {
-    const tx = launchpad.call(
+    return launchpad.call(
         projectToken.address,
         projectToken.interface.encodeFunctionData('mint', [
             params.projectId,
             params.amount,
-        ])
+        ]),
+        txConfig
     );
-
-    return tx;
 }
 
-export async function getSafeUpdateProjectURITx(
-    projectToken: MockProjectToken,
-    validator: MockValidator,
+
+// safeWithdrawEstateToken
+export async function getWithdrawEstateTokenTx(
+    projectToken: ProjectToken,
     deployer: SignerWithAddress,
-    params: SafeUpdateProjectURIParams
+    params: WithdrawEstateTokenParams,
+    txConfig = {}
 ): Promise<ContractTransaction> {
-    const validation = await getSafeUpdateProjectURIValidation(
-        projectToken,
-        validator,
-        params
-    );
-    const tx = projectToken.connect(deployer).safeUpdateProjectURI(
+    return projectToken.connect(deployer).withdrawEstateToken(
         params.projectId,
-        params.uri,
-        validation,
-        params.anchor
+        txConfig
     );
-
-    return tx;
 }
 
-export async function getSafeUpdateProjectURITxByParams(
-    projectToken: MockProjectToken,
-    validator: MockValidator,
-    deployer: SignerWithAddress,
-    params: UpdateProjectURIParams
-): Promise<ContractTransaction> {
-    const currentURI = await projectToken.uri(params.projectId);
-    const safeParams: SafeUpdateProjectURIParams = {
-        ...params,
-        anchor: ethers.utils.keccak256(ethers.utils.toUtf8Bytes(currentURI)),
-    };
-    const validation = await getSafeUpdateProjectURIValidation(
-        projectToken,
-        validator,
-        safeParams
-    );
-    const tx = projectToken.connect(deployer).safeUpdateProjectURI(
-        safeParams.projectId,
-        safeParams.uri,
-        validation,
-        safeParams.anchor
-    );
 
-    return tx;
-}
-
+// safeDeprecateProject
 export async function getSafeDeprecateProjectTx(
-    projectToken: MockProjectToken,
+    projectToken: ProjectToken,
     deployer: SignerWithAddress,
-    params: SafeDeprecateProjectParams
+    params: SafeDeprecateProjectParams,
+    txConfig = {}
 ): Promise<ContractTransaction> {
-    const tx = projectToken.connect(deployer).safeDeprecateProject(
+    return projectToken.connect(deployer).safeDeprecateProject(
         params.projectId,
         params.data,
-        params.anchor
+        params.anchor,
+        txConfig
     );
-    return tx;
 }
 
 export async function getSafeDeprecateProjectTxByParams(
-    projectToken: MockProjectToken,
+    projectToken: ProjectToken,
     deployer: SignerWithAddress,
-    params: DeprecateProjectParams
+    params: DeprecateProjectParams,
+    txConfig = {}
 ): Promise<ContractTransaction> {
-    const currentURI = await projectToken.uri(params.projectId);
     const safeParams: SafeDeprecateProjectParams = {
         ...params,
-        anchor: ethers.utils.keccak256(ethers.utils.toUtf8Bytes(currentURI)),
+        anchor: await getSafeDeprecateProjectAnchor(projectToken, params)
     };
-    return await getSafeDeprecateProjectTx(projectToken, deployer, safeParams);
+    return getSafeDeprecateProjectTx(projectToken, deployer, safeParams, txConfig);
 }
 
-export async function getSafeTokenizeProjectTx(
-    projectToken: MockProjectToken,
+
+// safeUpdateProjectURI
+export async function getSafeUpdateProjectURITx(
+    projectToken: ProjectToken,
     deployer: SignerWithAddress,
-    params: SafeTokenizeProjectParams
+    params: SafeUpdateProjectURIParams,
+    txConfig = {}
 ): Promise<ContractTransaction> {
-    const tx = projectToken.connect(deployer).safeTokenizeProject(
+    return projectToken.connect(deployer).safeUpdateProjectURI(
+        params.projectId,
+        params.uri,
+        params.validation,
+        params.anchor,
+        txConfig
+    );
+}
+
+export async function getSafeUpdateProjectURITxByInput(
+    projectToken: ProjectToken,
+    deployer: SignerWithAddress,
+    paramsInput: UpdateProjectURIParamsInput,
+    validator: MockValidator,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    const params: SafeUpdateProjectURIParams = {
+        ...paramsInput,
+        validation: await getSafeUpdateProjectURIValidation(projectToken, validator, paramsInput),
+        anchor: await getSafeUpdateProjectURIAnchor(projectToken, paramsInput)
+    };
+    return getSafeUpdateProjectURITx(projectToken, deployer, params, txConfig);
+}
+
+
+// safeTokenizeProject
+export async function getSafeTokenizeProjectTx(
+    projectToken: ProjectToken,
+    deployer: SignerWithAddress,
+    params: SafeTokenizeProjectParams,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    return projectToken.connect(deployer).safeTokenizeProject(
         params.projectId,
         params.custodian,
         params.broker,
-        params.anchor
+        params.anchor,
+        txConfig
     );
-    return tx;
 }
 
 export async function getSafeTokenizeProjectTxByParams(
-    projectToken: MockProjectToken,
+    projectToken: ProjectToken,
     deployer: SignerWithAddress,
-    params: TokenizeProjectParams
+    params: TokenizeProjectParams,
+    txConfig = {}
 ): Promise<ContractTransaction> {
-    const currentURI = await projectToken.uri(params.projectId);
     const safeParams: SafeTokenizeProjectParams = {
         ...params,
-        anchor: ethers.utils.keccak256(ethers.utils.toUtf8Bytes(currentURI)),
+        anchor: await getSafeTokenizeProjectAnchor(projectToken, params),
     };
-    return await getSafeTokenizeProjectTx(projectToken, deployer, safeParams);
+    return getSafeTokenizeProjectTx(projectToken, deployer, safeParams, txConfig);
 }
 
 export async function getCallSafeTokenizeProjectTx(
-    projectToken: MockProjectToken,
+    projectToken: ProjectToken,
     caller: ProxyCaller,
-    params: SafeTokenizeProjectParams
+    params: SafeTokenizeProjectParams,
+    txConfig = {}
 ): Promise<ContractTransaction> {
-    const tx = caller.call(
+    return caller.call(
         projectToken.address,
         projectToken.interface.encodeFunctionData('safeTokenizeProject', [
             params.projectId,
             params.custodian,
             params.broker,
             params.anchor,
-        ])
+        ]),
+        txConfig
     );
-    return tx;
 }
 
 export async function getCallSafeTokenizeProjectTxByParams(
-    projectToken: MockProjectToken,
+    projectToken: ProjectToken,
     caller: ProxyCaller,
-    params: TokenizeProjectParams
+    params: TokenizeProjectParams,
+    txConfig = {}
 ): Promise<ContractTransaction> {
-    const currentURI = await projectToken.uri(params.projectId);
     const safeParams: SafeTokenizeProjectParams = {
         ...params,
-        anchor: ethers.utils.keccak256(ethers.utils.toUtf8Bytes(currentURI)),
+        anchor: await getSafeTokenizeProjectAnchor(projectToken, params),
     };
-    return await getCallSafeTokenizeProjectTx(projectToken, caller, safeParams);
+    return getCallSafeTokenizeProjectTx(projectToken, caller, safeParams, txConfig);
 }

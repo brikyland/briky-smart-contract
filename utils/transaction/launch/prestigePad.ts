@@ -1,101 +1,217 @@
-import { MockPrestigePad, PrestigePad, ProxyCaller } from "@typechain-types";
+import { Admin, MockPrestigePad, PrestigePad, ProxyCaller } from "@typechain-types";
 import { MockValidator } from "@utils/mockValidator";
-import { InitiateLaunchParams, SafeConfirmCurrentRoundParams, SafeFinalizeLaunchParams, ScheduleNextRoundParams, UpdateLaunchURIParams, UpdateRoundParams, UpdateRoundsParams } from "@utils/models/launch/prestigePad";
+import { CancelCurrentRoundParams, ConfirmCurrentRoundParams, ContributeCurrentRoundParams, FinalizeParams, InitiateLaunchParams, InitiateLaunchParamsInput, SafeConfirmCurrentRoundParams, SafeContributeCurrentRoundParams, SafeFinalizeParams, ScheduleNextRoundParams, UpdateBaseUnitPriceRangeParams, UpdateBaseUnitPriceRangeParamsInput, UpdateLaunchURIParams, UpdateLaunchURIParamsInput, UpdateRoundParams, UpdateRoundParamsInput, UpdateRoundsParams, UpdateRoundsParamsInput, WithdrawContributionParams, WithdrawProjectTokenParams } from "@utils/models/launch/prestigePad";
 import { getInitiateLaunchValidation, getUpdateLaunchURIValidation, getUpdateRoundsValidation, getUpdateRoundValidation } from "@utils/validation/launch/prestigePad";
 import { ContractTransaction } from "ethers";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { getUpdateBaseUnitPriceRangeSignatures } from "@utils/signatures/launch/prestigePad";
+import { getSafeConfirmCurrentRoundParams, getSafeContributeCurrentRoundAnchor, getSafeFinalizeParams } from "@utils/anchor/launch/prestigePad";
 
-export async function getInitiateLaunchTx(
-    prestigePad: PrestigePad | MockPrestigePad,
-    validator: MockValidator,
+
+// updateBaseUnitPriceRange
+export async function getUpdateBaseUnitPriceRangeTx(
+    prestigePad: PrestigePad,
     deployer: SignerWithAddress,
-    params: InitiateLaunchParams
+    params: UpdateBaseUnitPriceRangeParams,
+    txConfig = {}
 ): Promise<ContractTransaction> {
-    const validation = await getInitiateLaunchValidation(
-        prestigePad,
-        validator,
-        params
+    return prestigePad.connect(deployer).updateBaseUnitPriceRange(
+        params.baseMinUnitPrice,
+        params.baseMaxUnitPrice,
+        params.signatures,
+        txConfig,
     );
+}
 
-    const tx = prestigePad.connect(deployer).initiateLaunch(
+export async function getUpdateBaseUnitPriceRangeTxByInput(
+    prestigePad: PrestigePad,
+    deployer: SignerWithAddress,
+    paramsInput: UpdateBaseUnitPriceRangeParamsInput,
+    admins: any[],
+    admin: Admin
+): Promise<ContractTransaction> {
+    const params: UpdateBaseUnitPriceRangeParams = {
+        ...paramsInput,
+        signatures: await getUpdateBaseUnitPriceRangeSignatures(prestigePad, paramsInput, admins, admin)
+    }
+    return await getUpdateBaseUnitPriceRangeTx(prestigePad, deployer, params);
+}
+
+
+// initiateLaunch
+export async function getInitiateLaunchTx(
+    prestigePad: PrestigePad,
+    deployer: SignerWithAddress,
+    params: InitiateLaunchParams,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    return prestigePad.connect(deployer).initiateLaunch(
         params.initiator,
         params.zone,
         params.projectURI,
         params.launchURI,
         params.initialQuantity,
         params.feeRate,
-        validation,
+        params.validation,
+        txConfig,
     );
-
-    return tx;
 }
 
-export async function getUpdateRoundTx(
-    prestigePad: PrestigePad | MockPrestigePad,
+export async function getInitiateLaunchTxByInput(
+    prestigePad: PrestigePad,
     validator: MockValidator,
     deployer: SignerWithAddress,
-    params: UpdateRoundParams
+    paramsInput: InitiateLaunchParamsInput,
+    txConfig = {}
 ): Promise<ContractTransaction> {
-    const validation = await getUpdateRoundValidation(prestigePad, validator, params);
+    const params: InitiateLaunchParams = {
+        ...paramsInput,
+        validation: await getInitiateLaunchValidation(prestigePad, paramsInput, validator)
+    };
+    return await getInitiateLaunchTx(prestigePad, deployer, params, txConfig);
+};
 
+
+// updateLaunchURI
+export async function getUpdateLaunchURITx(
+    prestigePad: PrestigePad,
+    deployer: SignerWithAddress,
+    params: UpdateLaunchURIParams,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    return prestigePad.connect(deployer).updateLaunchURI(
+        params.launchId,
+        params.uri,
+        params.validation,
+        txConfig,
+    );
+}
+
+export async function getUpdateLaunchURITxByInput(
+    prestigePad: PrestigePad,
+    deployer: SignerWithAddress,
+    paramsInput: UpdateLaunchURIParamsInput,
+    validator: MockValidator,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    const params: UpdateLaunchURIParams = {
+        ...paramsInput,
+        validation: await getUpdateLaunchURIValidation(prestigePad, paramsInput, validator)
+    };
+    return getUpdateLaunchURITx(prestigePad, deployer, params, txConfig);
+}
+
+
+// updateRound
+export async function getUpdateRoundTx(
+    prestigePad: PrestigePad,
+    deployer: SignerWithAddress,
+    params: UpdateRoundParams,
+    txConfig = {}
+): Promise<ContractTransaction> {
     const tx = prestigePad.connect(deployer).updateRound(
         params.launchId,
         params.index,
-        {
-            ...params.round,
-            validation,
-        },
+        params.round,
+        txConfig,
     );
-
     return tx;
 }
 
-export async function getUpdateRoundsTx(
-    prestigePad: PrestigePad | MockPrestigePad,
-    validator: MockValidator,
+export async function getUpdateRoundTxByInput(
+    prestigePad: PrestigePad,
     deployer: SignerWithAddress,
-    params: UpdateRoundsParams
+    paramsInput: UpdateRoundParamsInput,
+    validator: MockValidator,
+    txConfig = {}
 ): Promise<ContractTransaction> {
-    const validations = await getUpdateRoundsValidation(prestigePad, validator, params);
-    const roundsWithValidations = params.addedRounds.map((round, index) => ({
-        ...round,
-        validation: validations[index],
-    }));
+    const params: UpdateRoundParams = {
+        ...paramsInput,
+        round: {
+            ...paramsInput.round,
+            validation: await getUpdateRoundValidation(prestigePad, paramsInput, validator)
+        },
+    };
+    return getUpdateRoundTx(prestigePad, deployer, params, txConfig);
+}
 
-    const tx = prestigePad.connect(deployer).updateRounds(
+
+// updateRounds
+export async function getUpdateRoundsTx(
+    prestigePad: PrestigePad,
+    deployer: SignerWithAddress,
+    params: UpdateRoundsParams,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    return prestigePad.connect(deployer).updateRounds(
         params.launchId,
         params.removedRoundNumber,
-        roundsWithValidations,
+        params.addedRounds,
     );
-
-    return tx;
 }
 
 export async function getCallUpdateRoundsTx(
-    prestigePad: PrestigePad | MockPrestigePad,
-    validator: MockValidator,
+    prestigePad: PrestigePad,
     proxyCaller: any,
-    params: UpdateRoundsParams
+    params: UpdateRoundsParams,
+    txConfig = {}
 ): Promise<ContractTransaction> {
-    const validations = await getUpdateRoundsValidation(prestigePad, validator, params);
-    const roundsWithValidations = params.addedRounds.map((round, index) => ({
-        ...round,
-        validation: validations[index],
-    }));
-
     return proxyCaller.call(
         prestigePad.address,
         prestigePad.interface.encodeFunctionData('updateRounds', [
             params.launchId,
             params.removedRoundNumber,
-            roundsWithValidations,
+            params.addedRounds,
         ]),
+        txConfig,
     );
 }
 
-export async function getScheduleNextRoundTx(
-    prestigePad: PrestigePad | MockPrestigePad,
+export async function getUpdateRoundsTxByInput(
+    prestigePad: PrestigePad,
     deployer: SignerWithAddress,
-    params: ScheduleNextRoundParams
+    paramsInput: UpdateRoundsParamsInput,
+    validator: MockValidator,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    const validations = await getUpdateRoundsValidation(prestigePad, paramsInput, validator);
+    const roundsWithValidations = paramsInput.addedRounds.map((round, index) => ({
+        ...round,
+        validation: validations[index],
+    }));
+    const params: UpdateRoundsParams = {
+        ...paramsInput,
+        addedRounds: roundsWithValidations,
+    };
+    return getUpdateRoundsTx(prestigePad, deployer, params, txConfig);
+}
+
+export async function getCallUpdateRoundsTxByInput(
+    prestigePad: PrestigePad,
+    proxyCaller: any,
+    paramsInput: UpdateRoundsParamsInput,
+    validator: MockValidator,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    const validations = await getUpdateRoundsValidation(prestigePad, paramsInput, validator);
+    const roundsWithValidations = paramsInput.addedRounds.map((round, index) => ({
+        ...round,
+        validation: validations[index],
+    }));
+    const params: UpdateRoundsParams = {
+        ...paramsInput,
+        addedRounds: roundsWithValidations,
+    };
+    return getCallUpdateRoundsTx(prestigePad, proxyCaller, params, txConfig);
+}
+
+
+// scheduleNextRound
+export async function getScheduleNextRoundTx(
+    prestigePad: PrestigePad,
+    deployer: SignerWithAddress,
+    params: ScheduleNextRoundParams,
+    txConfig = {}
 ): Promise<ContractTransaction> {
     return prestigePad.connect(deployer).scheduleNextRound(
         params.launchId,
@@ -105,13 +221,15 @@ export async function getScheduleNextRoundTx(
         params.cashbackDenominations,
         params.raiseStartsAt,
         params.raiseDuration,
+        txConfig,
     );
 }
 
 export async function getCallScheduleNextRoundTx(
-    prestigePad: PrestigePad | MockPrestigePad,
+    prestigePad: PrestigePad,
     proxyCaller: any,
-    params: ScheduleNextRoundParams
+    params: ScheduleNextRoundParams,
+    txConfig = {}
 ): Promise<ContractTransaction> {
     return proxyCaller.call(
         prestigePad.address,
@@ -124,28 +242,28 @@ export async function getCallScheduleNextRoundTx(
             params.raiseStartsAt,
             params.raiseDuration,
         ]),
+        txConfig,
     );
 }
 
-export async function getUpdateLaunchURITx(
-    prestigePad: PrestigePad | MockPrestigePad,
-    validator: MockValidator,
+
+// cancelCurrentRound
+export async function getCancelCurrentRoundTx(
+    prestigePad: PrestigePad,
     deployer: SignerWithAddress,
-    params: UpdateLaunchURIParams
+    params: CancelCurrentRoundParams,
+    txConfig = {}
 ): Promise<ContractTransaction> {
-    const validation = await getUpdateLaunchURIValidation(prestigePad, validator, params);
-
-    const tx = prestigePad.connect(deployer).updateLaunchURI(
+    return prestigePad.connect(deployer).cancelCurrentRound(
         params.launchId,
-        params.uri,
-        validation,
+        txConfig,
     );
-
-    return tx;
 }
 
+
+// safeConfirmCurrentRound
 export async function getSafeConfirmCurrentRoundTx(
-    prestigePad: PrestigePad | MockPrestigePad,
+    prestigePad: PrestigePad,
     deployer: SignerWithAddress,
     params: SafeConfirmCurrentRoundParams,
     txConfig = {}
@@ -158,8 +276,21 @@ export async function getSafeConfirmCurrentRoundTx(
     return tx;
 }
 
+export async function getSafeConfirmCurrentRoundTxByParams(
+    prestigePad: PrestigePad,
+    deployer: SignerWithAddress,
+    params: ConfirmCurrentRoundParams,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    const safeParams: SafeConfirmCurrentRoundParams = {
+        ...params,
+        anchor: await getSafeConfirmCurrentRoundParams(prestigePad, params),
+    };
+    return getSafeConfirmCurrentRoundTx(prestigePad, deployer, safeParams, txConfig);
+}
+
 export async function getCallSafeConfirmCurrentRoundTx(
-    prestigePad: PrestigePad | MockPrestigePad,
+    prestigePad: PrestigePad,
     proxyCaller: ProxyCaller,
     params: SafeConfirmCurrentRoundParams,
     txConfig = {}
@@ -175,16 +306,103 @@ export async function getCallSafeConfirmCurrentRoundTx(
     return tx;
 }
 
-export async function getSafeFinalizeLaunchTx(
-    prestigePad: PrestigePad | MockPrestigePad,
+
+// safeFinalize
+export async function getSafeFinalizeTx(
+    prestigePad: PrestigePad,
     deployer: SignerWithAddress,
-    params: SafeFinalizeLaunchParams,
+    params: SafeFinalizeParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    const tx = prestigePad.connect(deployer).safeFinalize(
+    return prestigePad.connect(deployer).safeFinalize(
         params.launchId,
         params.anchor,
         txConfig,
     );
-    return tx;
+}
+
+export async function getSafeFinalizeTxByParams(
+    prestigePad: PrestigePad,
+    deployer: SignerWithAddress,
+    params: FinalizeParams,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    const safeParams: SafeFinalizeParams = {
+        ...params,
+        anchor: await getSafeFinalizeParams(prestigePad, params),
+    };
+    return getSafeFinalizeTx(prestigePad, deployer, safeParams, txConfig);
+}
+
+
+// contributeCurrentRound
+export async function getContributeCurrentRoundTx(
+    prestigePad: PrestigePad,
+    deployer: SignerWithAddress,
+    params: ContributeCurrentRoundParams,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    return prestigePad.connect(deployer).contributeCurrentRound(
+        params.launchId,
+        params.quantity,
+        txConfig,
+    );
+}
+
+
+// safeContributeCurrentRound
+export async function getSafeContributeCurrentRoundTx(
+    prestigePad: PrestigePad,
+    deployer: SignerWithAddress,
+    params: SafeContributeCurrentRoundParams,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    return prestigePad.connect(deployer).safeContributeCurrentRound(
+        params.launchId,
+        params.quantity,
+        params.anchor,
+        txConfig,
+    );
+}
+
+export async function getSafeContributeCurrentRoundTxByParams(
+    prestigePad: PrestigePad,
+    deployer: SignerWithAddress,
+    params: ContributeCurrentRoundParams,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    const safeParams: SafeContributeCurrentRoundParams = {
+        ...params,
+        anchor: await getSafeContributeCurrentRoundAnchor(prestigePad, params),
+    };
+    return getSafeContributeCurrentRoundTx(prestigePad, deployer, safeParams, txConfig);
+}
+
+
+// withdrawContribution
+export async function getWithdrawContributionTx(
+    prestigePad: PrestigePad,
+    deployer: SignerWithAddress,
+    params: WithdrawContributionParams,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    return prestigePad.connect(deployer).withdrawContribution(
+        params.roundId,
+        txConfig,
+    );
+}
+
+
+// withdrawProjectToken
+export async function getWithdrawProjectTokenTx(
+    prestigePad: PrestigePad,
+    deployer: SignerWithAddress,
+    params: WithdrawProjectTokenParams,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    return prestigePad.connect(deployer).withdrawProjectToken(
+        params.launchId,
+        params.index,
+        txConfig,
+    );
 }

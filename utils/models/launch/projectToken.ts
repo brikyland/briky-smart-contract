@@ -81,9 +81,13 @@ export interface SafeDeprecateProjectParams extends DeprecateProjectParams {
 
 
 // safeUpdateProjectURI
-export interface UpdateProjectURIParams {
+export interface UpdateProjectURIParamsInput {
     projectId: BigNumber;
     uri: string;
+}
+
+export interface UpdateProjectURIParams extends UpdateProjectURIParamsInput {
+    validation: Validation;
 }
 
 export interface SafeUpdateProjectURIParams extends UpdateProjectURIParams {
