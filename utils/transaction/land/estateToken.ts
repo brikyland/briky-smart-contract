@@ -1,30 +1,199 @@
-import { EstateToken, MockEstateToken } from "@typechain-types";
+import { Admin, EstateToken, MockEstateToken, ProxyCaller } from "@typechain-types";
 import { MockValidator } from "@utils/mockValidator";
-import { RegisterCustodianParams, TokenizeEstateParams, SafeUpdateEstateURIParams, SafeUpdateEstateCustodianParams, SafeDeprecateEstateParams, SafeExtendEstateExpirationParams, UpdateEstateURIParams, UpdateEstateCustodianParams, DeprecateEstateParams, ExtendEstateExpirationParams } from "@utils/models/land/estateToken";
+import { RegisterCustodianParams, TokenizeEstateParams, SafeUpdateEstateURIParams, SafeUpdateEstateCustodianParams, SafeDeprecateEstateParams, SafeExtendEstateExpirationParams, UpdateEstateURIParams, UpdateEstateCustodianParams, DeprecateEstateParams, ExtendEstateExpirationParams, RegisterCustodianParamsInput, UpdateCommissionTokenParams, UpdateCommissionTokenParamsInput, UpdateBaseURIParams, UpdateBaseURIParamsInput, AuthorizeTokenizersParams, AuthorizeTokenizersParamsInput, AuthorizeExtractorsParams, AuthorizeExtractorsParamsInput, UpdateZoneRoyaltyRateParams, UpdateZoneRoyaltyRateParamsInput, ExtractEstateParams, UpdateEstateURIParamsInput } from "@utils/models/land/estateToken";
 import { getRegisterCustodianValidation, getUpdateEstateURIValidation } from "@utils/validation/land/estateToken";
 import { ContractTransaction, ethers } from "ethers";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { getAuthorizeExtractorsSignatures, getAuthorizeTokenizersSignatures, getUpdateBaseURISignatures, getUpdateCommissionTokenSignatures, getUpdateZoneRoyaltyRateSignatures } from "@utils/signatures/land/estateToken";
+import { getSafeDeprecateEstateAnchor, getSafeExtendEstateExpirationAnchor, getSafeUpdateEstateCustodianAnchor, getSafeUpdateEstateURIAnchor } from "@utils/anchor/land/estateToken";
 
+
+// updateCommissionToken
+export async function getUpdateCommissionTokenTx(
+    estateToken: EstateToken | MockEstateToken,
+    deployer: SignerWithAddress,
+    params: UpdateCommissionTokenParams,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    return estateToken.connect(deployer).updateCommissionToken(
+        params.commissionToken,
+        params.signatures,
+        txConfig
+    );
+}
+
+export async function getUpdateCommissionTokenTxByInput(
+    estateToken: EstateToken | MockEstateToken,
+    deployer: SignerWithAddress,
+    paramsInput: UpdateCommissionTokenParamsInput,
+    admins: any[],
+    admin: Admin,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    const params: UpdateCommissionTokenParams = {
+        ...paramsInput,
+        signatures: await getUpdateCommissionTokenSignatures(estateToken, paramsInput, admins, admin)
+    };
+    return await getUpdateCommissionTokenTx(estateToken, deployer, params, txConfig);
+}
+
+
+// updateBaseURI
+export async function getUpdateBaseURITx(
+    estateToken: EstateToken | MockEstateToken,
+    deployer: SignerWithAddress,
+    params: UpdateBaseURIParams,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    return estateToken.connect(deployer).updateBaseURI(
+        params.uri,
+        params.signatures,
+        txConfig
+    );
+}
+
+export async function getUpdateBaseURITxByInput(
+    estateToken: EstateToken | MockEstateToken,
+    deployer: SignerWithAddress,
+    paramsInput: UpdateBaseURIParamsInput,
+    admins: any[],
+    admin: Admin,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    const params: UpdateBaseURIParams = {
+        ...paramsInput,
+        signatures: await getUpdateBaseURISignatures(estateToken, paramsInput, admins, admin)
+    };
+    return await getUpdateBaseURITx(estateToken, deployer, params, txConfig);
+}
+
+
+// authorizeTokenizers
+export async function getAuthorizeTokenizersTx(
+    estateToken: EstateToken | MockEstateToken,
+    deployer: SignerWithAddress,
+    params: AuthorizeTokenizersParams,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    return estateToken.connect(deployer).authorizeTokenizers(
+        params.accounts,
+        params.isTokenizer,
+        params.signatures,
+        txConfig
+    );
+}
+
+export async function getAuthorizeTokenizersTxByInput(
+    estateToken: EstateToken | MockEstateToken,
+    deployer: SignerWithAddress,
+    paramsInput: AuthorizeTokenizersParamsInput,
+    admins: any[],
+    admin: Admin,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    const params: AuthorizeTokenizersParams = {
+        ...paramsInput,
+        signatures: await getAuthorizeTokenizersSignatures(estateToken, paramsInput, admins, admin)
+    };
+    return await getAuthorizeTokenizersTx(estateToken, deployer, params, txConfig);
+}
+
+
+// authorizeExtractors
+export async function getAuthorizeExtractorsTx(
+    estateToken: EstateToken | MockEstateToken,
+    deployer: SignerWithAddress,
+    params: AuthorizeExtractorsParams,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    return estateToken.connect(deployer).authorizeExtractors(
+        params.accounts,
+        params.isExtractor,
+        params.signatures,
+        txConfig
+    );
+}
+
+export async function getAuthorizeExtractorsTxByInput(
+    estateToken: EstateToken | MockEstateToken,
+    deployer: SignerWithAddress,
+    paramsInput: AuthorizeExtractorsParamsInput,
+    admins: any[],
+    admin: Admin,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    const params: AuthorizeExtractorsParams = {
+        ...paramsInput,
+        signatures: await getAuthorizeExtractorsSignatures(estateToken, paramsInput, admins, admin)
+    };
+    return await getAuthorizeExtractorsTx(estateToken, deployer, params, txConfig);
+}
+
+
+// updateZoneRoyaltyRate
+export async function getUpdateZoneRoyaltyRateTx(
+    estateToken: EstateToken | MockEstateToken,
+    deployer: SignerWithAddress,
+    params: UpdateZoneRoyaltyRateParams,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    return estateToken.connect(deployer).updateZoneRoyaltyRate(
+        params.zone,
+        params.royaltyRate,
+        params.signatures,
+        txConfig
+    );
+}
+
+export async function getUpdateZoneRoyaltyRateTxByInput(
+    estateToken: EstateToken | MockEstateToken,
+    deployer: SignerWithAddress,
+    paramsInput: UpdateZoneRoyaltyRateParamsInput,
+    admins: any[],
+    admin: Admin,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    const params: UpdateZoneRoyaltyRateParams = {
+        ...paramsInput,
+        signatures: await getUpdateZoneRoyaltyRateSignatures(estateToken, paramsInput, admins, admin)
+    };
+    return await getUpdateZoneRoyaltyRateTx(estateToken, deployer, params, txConfig);
+}
+
+
+// registerCustodian
 export async function getRegisterCustodianTx(
     estateToken: EstateToken | MockEstateToken,
-    validator: MockValidator,
     deployer: SignerWithAddress,
-    params: RegisterCustodianParams
+    params: RegisterCustodianParams,
+    txConfig = {}
 ): Promise<ContractTransaction> {
-    const validation = await getRegisterCustodianValidation(
-        estateToken,
-        validator,
-        params
-    );
-    const tx = estateToken.connect(deployer).registerCustodian(
+    return estateToken.connect(deployer).registerCustodian(
         params.zone,
         params.custodian,
         params.uri,
-        validation
+        params.validation,
+        txConfig
     );
-
-    return tx;
 }
 
+
+export async function getRegisterCustodianTxByInput(
+    estateToken: EstateToken | MockEstateToken,
+    deployer: SignerWithAddress,
+    paramsInput: RegisterCustodianParamsInput,
+    validator: MockValidator,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    const params: RegisterCustodianParams = {
+        ...paramsInput,
+        validation: await getRegisterCustodianValidation(estateToken, validator, paramsInput)
+    };
+    return await getRegisterCustodianTx(estateToken, deployer, params, txConfig);
+}
+
+
+// tokenizeEstate
 export async function getCallTokenizeEstateTx(
     estateToken: EstateToken | MockEstateToken,
     proxyCaller: any,
@@ -45,119 +214,143 @@ export async function getCallTokenizeEstateTx(
     return tx;
 }
 
-export async function getSafeUpdateEstateURITx(
-    estateToken: EstateToken | MockEstateToken,
-    validator: MockValidator,
-    deployer: SignerWithAddress,
-    params: SafeUpdateEstateURIParams
-): Promise<ContractTransaction> {
-    const validation = await getUpdateEstateURIValidation(
-        estateToken,
-        validator,
-        params
-    );
-    const tx = estateToken.connect(deployer).safeUpdateEstateURI(
-        params.estateId,
-        params.uri,
-        validation,
-        params.anchor
-    );
 
-    return tx;
+// extractEstate
+export async function getCallExtractEstateTx(
+    estateToken: EstateToken | MockEstateToken,
+    caller: ProxyCaller,
+    params: ExtractEstateParams,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    return caller.call(
+        estateToken.address,
+        estateToken.interface.encodeFunctionData('extractEstate', [
+            params.estateId,
+            params.extractionId,
+        ]),
+        txConfig
+    );
 }
 
-export async function getSafeUpdateEstateCustodianTx(
-    estateToken: EstateToken | MockEstateToken,
-    deployer: SignerWithAddress,
-    params: SafeUpdateEstateCustodianParams
-): Promise<ContractTransaction> {
-    const tx = estateToken.connect(deployer).safeUpdateEstateCustodian(
-        params.estateId,
-        params.custodian,
-        params.anchor
-    );
-    return tx;
-}
 
+// safeDeprecateEstate
 export async function getSafeDeprecateEstateTx(
     estateToken: EstateToken | MockEstateToken,
     deployer: SignerWithAddress,
-    params: SafeDeprecateEstateParams
+    params: SafeDeprecateEstateParams,
+    txConfig = {}
 ): Promise<ContractTransaction> {
     const tx = estateToken.connect(deployer).safeDeprecateEstate(
         params.estateId,
-        params.data,
-        params.anchor
+        params.note,
+        params.anchor,
+        txConfig
     );
     return tx;
-}
-
-export async function getSafeExtendEstateExpirationTx(
-    estateToken: EstateToken | MockEstateToken,
-    deployer: SignerWithAddress,
-    params: SafeExtendEstateExpirationParams
-): Promise<ContractTransaction> {
-    const tx = estateToken.connect(deployer).safeExtendEstateExpiration(
-        params.estateId,
-        params.expireAt,
-        params.anchor
-    );
-    return tx;
-}
-
-export async function getSafeUpdateEstateURITxByParams(
-    estateToken: EstateToken | MockEstateToken,
-    validator: MockValidator,
-    deployer: SignerWithAddress,
-    params: UpdateEstateURIParams
-): Promise<ContractTransaction> {
-    const currentURI = await estateToken.uri(params.estateId);
-    const safeParams = {
-        estateId: params.estateId,
-        uri: params.uri,
-        anchor: ethers.utils.keccak256(ethers.utils.toUtf8Bytes(currentURI)),
-    };
-    return await getSafeUpdateEstateURITx(estateToken, validator, deployer, safeParams);
-}
-
-export async function getSafeUpdateEstateCustodianTxByParams(
-    estateToken: EstateToken | MockEstateToken,
-    deployer: SignerWithAddress,
-    params: UpdateEstateCustodianParams
-): Promise<ContractTransaction> {
-    const currentURI = await estateToken.uri(params.estateId);
-    const safeParams = {
-        estateId: params.estateId,
-        custodian: params.custodian,
-        anchor: ethers.utils.keccak256(ethers.utils.toUtf8Bytes(currentURI)),
-    };
-    return await getSafeUpdateEstateCustodianTx(estateToken, deployer, safeParams);
 }
 
 export async function getSafeDeprecateEstateTxByParams(
     estateToken: EstateToken | MockEstateToken,
     deployer: SignerWithAddress,
-    params: DeprecateEstateParams
+    paramsInput: DeprecateEstateParams,
+    txConfig = {}
 ): Promise<ContractTransaction> {
-    const currentURI = await estateToken.uri(params.estateId);
-    const safeParams: SafeDeprecateEstateParams = {
-        estateId: params.estateId,
-        data: params.note,
-        anchor: ethers.utils.keccak256(ethers.utils.toUtf8Bytes(currentURI)),
+    const params: SafeDeprecateEstateParams = {
+        ...paramsInput,
+        anchor: await getSafeDeprecateEstateAnchor(estateToken, paramsInput)
     };
-    return await getSafeDeprecateEstateTx(estateToken, deployer, safeParams);
+    return await getSafeDeprecateEstateTx(estateToken, deployer, params, txConfig);
+}
+
+
+// safeExtendEstateExpiration
+export async function getSafeExtendEstateExpirationTx(
+    estateToken: EstateToken | MockEstateToken,
+    deployer: SignerWithAddress,
+    params: SafeExtendEstateExpirationParams,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    const tx = estateToken.connect(deployer).safeExtendEstateExpiration(
+        params.estateId,
+        params.expireAt,
+        params.anchor,
+        txConfig
+    );
+    return tx;
 }
 
 export async function getSafeExtendEstateExpirationTxByParams(
     estateToken: EstateToken | MockEstateToken,
     deployer: SignerWithAddress,
-    params: ExtendEstateExpirationParams
+    params: ExtendEstateExpirationParams,
+    txConfig = {}
 ): Promise<ContractTransaction> {
-    const currentURI = await estateToken.uri(params.estateId);
-    const safeParams = {
-        estateId: params.estateId,
-        expireAt: params.expireAt,
-        anchor: ethers.utils.keccak256(ethers.utils.toUtf8Bytes(currentURI)),
+    const safeParams: SafeExtendEstateExpirationParams = {
+        ...params,
+        anchor: await getSafeExtendEstateExpirationAnchor(estateToken, params)
     };
-    return await getSafeExtendEstateExpirationTx(estateToken, deployer, safeParams);
+    return await getSafeExtendEstateExpirationTx(estateToken, deployer, safeParams, txConfig);
+}
+
+
+// safeUpdateEstateCustodian
+export async function getSafeUpdateEstateCustodianTx(
+    estateToken: EstateToken | MockEstateToken,
+    deployer: SignerWithAddress,
+    params: SafeUpdateEstateCustodianParams,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    const tx = estateToken.connect(deployer).safeUpdateEstateCustodian(
+        params.estateId,
+        params.custodian,
+        params.anchor,
+        txConfig
+    );
+    return tx;
+}
+
+export async function getSafeUpdateEstateCustodianTxByParams(
+    estateToken: EstateToken | MockEstateToken,
+    deployer: SignerWithAddress,
+    params: UpdateEstateCustodianParams,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    const safeParams: SafeUpdateEstateCustodianParams = {
+        ...params,
+        anchor: await getSafeUpdateEstateCustodianAnchor(estateToken, params)
+    };
+    return await getSafeUpdateEstateCustodianTx(estateToken, deployer, safeParams, txConfig);
+}
+
+
+// safeUpdateEstateURI
+export async function getSafeUpdateEstateURITx(
+    estateToken: EstateToken | MockEstateToken,
+    deployer: SignerWithAddress,
+    params: SafeUpdateEstateURIParams,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    const tx = estateToken.connect(deployer).safeUpdateEstateURI(
+        params.estateId,
+        params.uri,
+        params.validation,
+        params.anchor,
+        txConfig
+    );
+    return tx;
+}
+
+export async function getSafeUpdateEstateURITxByInput(
+    estateToken: EstateToken | MockEstateToken,
+    deployer: SignerWithAddress,
+    paramsInput: UpdateEstateURIParamsInput,
+    validator: MockValidator,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    const params: SafeUpdateEstateURIParams = {
+        ...paramsInput,
+        anchor: await getSafeUpdateEstateURIAnchor(estateToken, paramsInput),
+        validation: await getUpdateEstateURIValidation(estateToken, validator, paramsInput)
+    };
+    return await getSafeUpdateEstateURITx(estateToken, deployer, params, txConfig);
 }

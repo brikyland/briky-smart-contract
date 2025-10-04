@@ -203,22 +203,3 @@ export function structToObject(struct: any): any {
         .map(([key, value]) => [key, structToObject(value)])
     );
 }
-
-export function getEventsFromReceipt(
-    contract: any,
-    receipt: any,
-    eventName: string | null = null
-): any[] {
-    const events = receipt.logs.map((log: any) => {
-        try {
-            return contract.interface.parseLog(log);
-        } catch (e) {
-            return null;
-        }
-    }).filter((event: any) => event !== null);
-    
-    if (eventName) {
-        return events.filter((event: any) => event.name === eventName);
-    }
-    return events;
-}

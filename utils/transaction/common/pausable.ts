@@ -7,8 +7,8 @@ import { Contract } from "ethers";
 
 // pause
 export async function getPauseTx(
-    signer: SignerWithAddress,
     pausable: Contract,
+    signer: SignerWithAddress,
     params: PauseParams,
     txConfig = {}
 ) {
@@ -19,23 +19,23 @@ export async function getPauseTx(
 }
 
 export async function getPauseTxByInput(
+    pausable: Contract,
     signer: SignerWithAddress,
     admins: any[],
     admin: Admin,
-    pausable: Contract,
     txConfig = {}
 ) {
     const params: PauseParams = {
         signatures: await getPauseSignatures(admins, admin, pausable)
     };
-    return await getPauseTx(signer, pausable, params, txConfig);
+    return await getPauseTx(pausable, signer, params, txConfig);
 }
 
 
 // unpause
 export async function getUnpauseTx(
-    signer: SignerWithAddress,
     pausable: Contract,
+    signer: SignerWithAddress,
     params: UnpauseParams,
     txConfig = {}
 ) {
@@ -46,14 +46,14 @@ export async function getUnpauseTx(
 }
 
 export async function getUnpauseTxByInput(
+    pausable: Contract,
     signer: SignerWithAddress,
     admins: any[],
     admin: Admin,
-    pausable: Contract,
     txConfig = {}
 ) {
     const params: UnpauseParams = {
         signatures: await getUnpauseSignatures(admins, admin, pausable)
     };
-    return await getUnpauseTx(signer, pausable, params, txConfig);
+    return await getUnpauseTx(pausable, signer, params, txConfig);
 }

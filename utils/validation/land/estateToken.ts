@@ -3,64 +3,47 @@ import { time } from "@nomicfoundation/hardhat-network-helpers";
 
 import { MockValidator } from "@utils/mockValidator";
 
-import { RegisterCustodianParams, UpdateEstateURIParams } from "@utils/models/land/estateToken";
+import {
+    RegisterCustodianParamsInput,
+    UpdateEstateURIParamsInput,
+} from "@utils/models/land/estateToken";
 
-export async function getUpdateEstateURIValidation(
-    estateToken: Contract,
-    validator: MockValidator,
-    params: UpdateEstateURIParams
-) {
-    const content = ethers.utils.defaultAbiCoder.encode(
-        ["uint256", "string"],
-        [params.estateId, params.uri]
-    );
-    const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
 
-    const validation = await validator.getValidation(estateToken, content, expiry);
-    return validation;
-}
-
-export async function getUpdateEstateURIInvalidValidation(
-    estateToken: Contract,
-    validator: MockValidator,
-    params: UpdateEstateURIParams
-) {
-    const content = ethers.utils.defaultAbiCoder.encode(
-        ["uint256", "string"],
-        [params.estateId, params.uri]
-    );
-    const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
-
-    const validation = await validator.getInvalidValidation(estateToken, content, expiry);
-    return validation;
-}
-
+// registerCustodian
 export async function getRegisterCustodianValidation(
     estateToken: Contract,
     validator: MockValidator,
-    params: RegisterCustodianParams
+    paramsInput: RegisterCustodianParamsInput,
+    isValid: boolean = true
 ) {
     const content = ethers.utils.defaultAbiCoder.encode(
         ["bytes32", "address", "string"],
-        [params.zone, params.custodian, params.uri]
+        [paramsInput.zone, paramsInput.custodian, paramsInput.uri]
     );
     const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
 
-    const validation = await validator.getValidation(estateToken, content, expiry);
+    const validation = isValid 
+        ? await validator.getValidation(estateToken, content, expiry)
+        : await validator.getInvalidValidation(estateToken, content, expiry);
     return validation;
 }
 
-export async function getRegisterCustodianInvalidValidation(
+
+// updateEstateURI
+export async function getUpdateEstateURIValidation(
     estateToken: Contract,
     validator: MockValidator,
-    params: RegisterCustodianParams
+    paramsInput: UpdateEstateURIParamsInput,
+    isValid: boolean = true
 ) {
     const content = ethers.utils.defaultAbiCoder.encode(
-        ["bytes32", "address", "string"],
-        [params.zone, params.custodian, params.uri]
+        ["uint256", "string"],
+        [paramsInput.estateId, paramsInput.uri]
     );
     const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
 
-    const validation = await validator.getInvalidValidation(estateToken, content, expiry);
+    const validation = isValid 
+        ? await validator.getValidation(estateToken, content, expiry)
+        : await validator.getInvalidValidation(estateToken, content, expiry);
     return validation;
 }
