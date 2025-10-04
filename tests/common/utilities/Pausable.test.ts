@@ -9,13 +9,16 @@ import { Constant } from '@tests/test.constant';
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { deployMockPausable } from '@utils/deployments/mock/mockPausable';
+import { getPauseTx, getPauseTxByInput, getUnpauseTx, getUnpauseTxByInput } from '@utils/transaction/common/pausable';
+import { getPauseSignatures, getUnpauseSignatures } from '@utils/signatures/common/pausable';
+import { PauseParams, UnpauseParams } from '@utils/models/common/pausable';
 
 interface PausableFixture {
+    deployer: any;
+    admins: any[];
+
     admin: Admin;
     pausable: Pausable;
-
-    deployer: SignerWithAddress;
-    admins: any[];
 }
 
 describe('1.a. Pausable', async () => {
@@ -41,10 +44,10 @@ describe('1.a. Pausable', async () => {
         ) as Pausable;
 
         return {
-            admin,
-            pausable,
             deployer,
             admins,
+            admin,
+            pausable,
         };
     };
 
@@ -69,14 +72,9 @@ describe('1.a. Pausable', async () => {
 
     describe('1.a.1. pause(bytes[])', async () => {
         it('1.a.1.1. Pause successfully with valid signatures', async () => {
-            const { deployer, admin, admins, pausable } = await beforePausableTest({});
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string"],
-                [pausable.address, "pause"]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
+            const { deployer, admins, admin, pausable } = await beforePausableTest();
 
-            const tx = await pausable.pause(signatures);
+            const tx = await getPauseTxByInput(pausable, deployer, admins, admin);
             await tx.wait();
 
             expect(await pausable.paused()).to.equal(true);
@@ -87,44 +85,32 @@ describe('1.a. Pausable', async () => {
         });
 
         it('1.a.1.2. Pause unsuccessfully with invalid signatures', async () => {
-            const { admin, admins, pausable } = await beforePausableTest({});
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string"],
-                [pausable.address, "pause"]
-            );
-            let invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
-
-            await expect(pausable.pause(invalidSignatures)).to.be.revertedWithCustomError(admin, 'FailedVerification');
+            const { deployer, admins, admin, pausable } = await beforePausableTest();
+            
+            const params: PauseParams = {
+                signatures: await getPauseSignatures(pausable, admins, admin, false)
+            };
+            await expect(getPauseTx(pausable, deployer, params))
+                .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
         it('1.a.1.3. Pause unsuccessfully when already paused', async () => {
-            const { admin, admins, pausable } = await beforePausableTest({});
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string"],
-                [pausable.address, "pause"]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
+            const { deployer, admins, admin, pausable } = await beforePausableTest({
+                pause: true,
+            });
 
-            await callTransaction(pausable.pause(signatures));
-
-            signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await expect(pausable.pause(signatures)).to.be.revertedWith('Pausable: paused');
+            await expect(getPauseTxByInput(pausable, deployer, admins, admin))
+                .to.be.revertedWith('Pausable: paused');
         });
     });
 
     describe('1.a.2. unpause(bytes[])', async () => {
         it('1.a.2.1. Unpause successfully with valid signatures', async () => {
-            const { deployer, admin, admins, pausable } = await beforePausableTest({
+            const { deployer, admins, admin, pausable } = await beforePausableTest({
                 pause: true,
             });
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string"],
-                [pausable.address, "unpause"]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
 
-            const tx = await pausable.unpause(signatures);
+            const tx = await getUnpauseTxByInput(pausable, deployer, admins, admin);
             await tx.wait();
 
             await expect(tx).to
@@ -133,33 +119,26 @@ describe('1.a. Pausable', async () => {
         });
 
         it('1.a.2.2. Unpause unsuccessfully with invalid signatures', async () => {
-            const { admin, admins, pausable } = await beforePausableTest({
+            const { deployer, admins, admin, pausable } = await beforePausableTest({
                 pause: true,
             });
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string"],
-                [pausable.address, "unpause"]
-            );
-            const invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
 
-            await expect(pausable.unpause(invalidSignatures)).to.be.revertedWithCustomError(admin, 'FailedVerification');
+            const params: UnpauseParams = {
+                signatures: await getUnpauseSignatures(pausable, admins, admin, false)
+            };
+            await expect(getUnpauseTx(pausable, deployer, params))
+                .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
         it('1.a.2.3. Unpause unsuccessfully when not paused', async () => {
-            const { admin, admins, pausable } = await beforePausableTest({
+            const { deployer, admins, admin, pausable } = await beforePausableTest({
                 pause: true,
             });
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string"],
-                [pausable.address, "unpause"]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
 
-            await callTransaction(pausable.unpause(signatures));
+            await callTransaction(getUnpauseTxByInput(pausable, deployer, admins, admin));
 
-            signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await expect(pausable.unpause(signatures)).to.be.revertedWith('Pausable: not paused');
+            await expect(getUnpauseTxByInput(pausable, deployer, admins, admin))
+                .to.be.revertedWith('Pausable: not paused');
         });
     });
 });

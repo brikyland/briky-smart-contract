@@ -17,20 +17,37 @@ export async function addCurrencyToAdminAndPriceWatcher(
     heartbeats: number[],
     defaultRates: Rate[],
 ) {
-    await callTransaction(getUpdateCurrencyRegistriesTxByInput(admin, deployer, {
-        currencies: currencyAddresses,
-        isAvailable,
-        isExclusive,
-    }, admins));
+    await callTransaction(getUpdateCurrencyRegistriesTxByInput(
+        admin,
+        deployer,
+        {
+            currencies: currencyAddresses,
+            isAvailable,
+            isExclusive,
+        },
+        admins
+    ));
     
-    await callTransaction(getUpdatePriceFeedsTxByInput(priceWatcher, deployer, {
-        currencies: currencyAddresses,
-        feeds: priceFeeds,
-        heartbeats,
-    }, admins, admin));
+    await callTransaction(getUpdatePriceFeedsTxByInput(
+        priceWatcher,
+        deployer,
+        {
+            currencies: currencyAddresses,
+            feeds: priceFeeds,
+            heartbeats,
+        },
+        admins,
+        admin
+    ));
     
-    await callTransaction(getUpdateDefaultRatesTxByInput(priceWatcher, deployer, {
-        currencies: currencyAddresses,
-        rates: defaultRates,
-    }, admins, admin));
+    await callTransaction(getUpdateDefaultRatesTxByInput(
+        priceWatcher,
+        deployer,
+        {
+            currencies: currencyAddresses,
+            rates: defaultRates,
+        },
+        admins,
+        admin
+    ));
 }

@@ -25,19 +25,11 @@ import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 import { OfferState } from "@utils/models/lux/offerState";
 import { MockContract, smock } from '@defi-wonderland/smock';
 
-import {
-    callAdmin_ActivateIn,
-    callAdmin_AuthorizeManagers,
-    callAdmin_AuthorizeModerators,
-    callAdmin_DeclareZone,
-    callAdmin_UpdateCurrencyRegistries,
-} from '@utils/call/common/admin';
 import { BigNumber, Contract, Wallet } from 'ethers';
 import { randomInt } from 'crypto';
 import { getInterfaceID, randomArrayWithSum, randomBigNumber } from '@utils/utils';
 import { OrderedMap } from '@utils/utils';
 import { deployEstateMarketplace } from '@utils/deployments/lux/estateMarketplace';
-import { callEstateToken_AuthorizeTokenizers, callEstateToken_UpdateCommissionToken, callEstateToken_UpdateZoneRoyaltyRate } from '@utils/call/land/estateToken';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployReentrancyERC1155Holder } from '@utils/deployments/mock/mockReentrancy/reentrancyERC1155Holder';
 import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
@@ -46,14 +38,13 @@ import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
 import { deployReserveVault } from '@utils/deployments/common/reserveVault';
 import { MockValidator } from '@utils/mockValidator';
 import { RegisterCustodianParams } from '@utils/models/land/estateToken';
-import { getCallTokenizeEstateTx, getRegisterCustodianTx } from '@utils/transaction/land/estateToken';
+import { getAuthorizeTokenizersTxByInput, getCallTokenizeEstateTx, getRegisterCustodianTx, getUpdateCommissionTokenTxByInput } from '@utils/transaction/land/estateToken';
 import { getRegisterBrokerTx } from '@utils/transaction/land/commissionToken';
 import { BuyParams, BuyPartParams, ListParams, SafeBuyParams, SafeBuyPartParams } from '@utils/models/lux/assetMarketplace';
 import { getBuyPartTx, getBuyTx, getListTx, getSafeBuyPartTx, getSafeBuyTx } from '@utils/transaction/lux/assetMarketplace';
 import { applyDiscount } from '@utils/formula';
-import { callPausable_Pause } from '@utils/call/common/pausable';
 import { getSafeBuyAnchor, getSafeBuyPartAnchor } from '@utils/anchor/lux/assetMarketplace';
-import { callAssetMarketplace_SafeBuy } from '@utils/call/lux/assetMarketplace';
+import { getActivateInTxByInput, getAuthorizeManagersTxByInput, getAuthorizeModeratorsTxByInput, getDeclareZoneTxByInput, getUpdateCurrencyRegistriesTxByInput } from '@utils/transaction/common/admin';
 
 interface EstateMarketplaceFixture {
     admin: Admin;
@@ -279,51 +270,61 @@ describe('6.2. EstateMarketplace', async () => {
         } = fixture;
 
         for (const zone of [zone1, zone2]) {
-            await callAdmin_DeclareZone(
+            await callTransaction(getDeclareZoneTxByInput(
                 admin,
+                deployer,
+                { zone },
                 admins,
-                zone,
-                await admin.nonce(),
-            );
+            ));
         }
-        await callAdmin_AuthorizeManagers(
-            admin,
-            admins,
-            [manager.address],
-            true,
-            await admin.nonce(),
-        );
-        await callAdmin_AuthorizeModerators(
-            admin,
-            admins,
-            [moderator.address],
-            true,
-            await admin.nonce(),
-        );
 
-        await callEstateToken_AuthorizeTokenizers(
-            estateToken,
+        await callTransaction(getAuthorizeManagersTxByInput(
+            admin,
+            deployer,
+            {
+                accounts: [manager.address],
+                isManager: true,
+            },
             admins,
-            [estateForger.address],
-            true,
-            await admin.nonce()
-        );
-        await callEstateToken_UpdateCommissionToken(
-            estateToken,
+        ));
+        
+        await callTransaction(getAuthorizeModeratorsTxByInput(
+            admin,
+            deployer,
+            {
+                accounts: [moderator.address],
+                isModerator: true,
+            },
             admins,
-            commissionToken.address,
-            await admin.nonce(),
-        );
+        ));
+
+        await callTransaction(getAuthorizeTokenizersTxByInput(
+            estateToken as any,
+            deployer,
+            { accounts: [estateForger.address], isTokenizer: true },
+            admins,
+            admin,
+        ));
+
+        await callTransaction(getUpdateCommissionTokenTxByInput(
+            estateToken as any,
+            deployer,
+            { commissionToken: commissionToken.address },
+            admins,
+            admin
+        ));
 
         for (const zone of [zone1, zone2]) {
-            await callAdmin_ActivateIn(
+            await callTransaction(getActivateInTxByInput(
                 admin,
-                admins,
-                zone,
-                [manager.address, moderator.address],
-                true,
-                await admin.nonce(),
-            );
+                deployer,
+                {
+                    zone,
+                    accounts: [manager.address, moderator.address],
+                    isActive: true
+                },
+                admins
+            ));
         }
 
         for (const zone of [zone1, zone2]) {
@@ -351,14 +352,16 @@ describe('6.2. EstateMarketplace', async () => {
         let currentTimestamp = await time.latest();
         
         if (listSampleCurrencies) {
-            await callAdmin_UpdateCurrencyRegistries(
+            await callTransaction(getUpdateCurrencyRegistriesTxByInput(
                 admin,
-                admins,
-                [ethers.constants.AddressZero, currency.address],
-                [true, true],
-                [false, true],
-                await admin.nonce(),
-            );
+                deployer,
+                {
+                    currencies: [ethers.constants.AddressZero, currency.address],
+                    isAvailable: [true, true],
+                    isExclusive: [false, true],
+                },
+                admins
+            ));
         }
 
         if (useFailRoyaltyReceiver) {
@@ -433,7 +436,7 @@ describe('6.2. EstateMarketplace', async () => {
         }
 
         if (pause) {
-            await callPausable_Pause(deployer, admins, admin, estateMarketplace);
+            await callTransaction(getPauseTxByInput(estateMarketplace, deployer, admins, admin));;
         }
 
         return {
@@ -768,14 +771,16 @@ describe('6.2. EstateMarketplace', async () => {
             newCurrencyAddress = ethers.constants.AddressZero;
         }
 
-        await callAdmin_UpdateCurrencyRegistries(
+        await callTransaction(getUpdateCurrencyRegistriesTxByInput(
             admin,
-            admins,
-            [newCurrencyAddress],
-            [true],
-            [isExclusive],
-            await admin.nonce(),
-        );
+            deployer,
+            {
+                currencies: [newCurrencyAddress],
+                isAvailable: [true],
+                isExclusive: [isExclusive],
+            },
+            admins
+        ));
 
         let currentTimestamp = await time.latest();
 

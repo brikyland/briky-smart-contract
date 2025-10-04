@@ -29,13 +29,6 @@ import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 
 import { MockContract, smock } from '@defi-wonderland/smock';
 
-import {
-    callAdmin_ActivateIn,
-    callAdmin_AuthorizeManagers,
-    callAdmin_AuthorizeModerators,
-    callAdmin_DeclareZone,
-    callAdmin_UpdateCurrencyRegistries,
-} from '@utils/call/common/admin';
 import { BigNumber, Contract } from 'ethers';
 import { getBytes4Hex, getInterfaceID, randomBigNumber, structToObject } from '@utils/utils';
 import { deployProjectMortgageToken } from '@utils/deployments/lend/projectMortgageToken';
@@ -58,8 +51,8 @@ import { getProjectBorrowTx } from '@utils/transaction/lend/projectMortgageToken
 import { UpdateBaseURIParams, UpdateBaseURIParamsInput, UpdateFeeRateParams, UpdateFeeRateParamsInput } from '@utils/models/lend/mortgageToken';
 import { getUpdateBaseURITx, getUpdateFeeRateTx } from '@utils/transaction/lend/mortgageToken';
 import { getUpdateBaseURISignatures, getUpdateFeeRateSignatures } from '@utils/signatures/lend/mortgageToken';
-import { callPausable_Pause } from '@utils/call/common/pausable';
 import { callMortgageToken_UpdateFeeRate } from '@utils/call/lend/mortgageToken';
+import { getActivateInTxByInput, getAuthorizeManagersTxByInput, getAuthorizeModeratorsTxByInput, getDeclareZoneTxByInput, getUpdateCurrencyRegistriesTxByInput } from '@utils/transaction/common/admin';
 
 
 async function testReentrancy_projectMortgageToken(
@@ -268,40 +261,46 @@ describe('3.3. ProjectMortgageToken', async () => {
             zone2 
         } = fixture;
 
-        await callAdmin_AuthorizeManagers(
+        await callTransaction(getAuthorizeManagersTxByInput(
             admin,
+            deployer,
+            {
+                accounts: [manager.address],
+                isManager: true,
+            },
             admins,
-            [manager.address],
-            true,
-            await admin.nonce()
-        );
+        ));
 
-        await callAdmin_AuthorizeModerators(
+        await callTransaction(getAuthorizeModeratorsTxByInput(
             admin,
+            deployer,
+            {
+                accounts: [moderator.address],
+                isModerator: true,
+            },
             admins,
-            [moderator.address],
-            true,
-            await admin.nonce()
-        );
+        ));
 
         for (const zone of [zone1, zone2]) {
-            await callAdmin_DeclareZone(
+            await callTransaction(getDeclareZoneTxByInput(
                 admin,
+                deployer,
+                { zone },
                 admins,
-                zone,
-                await fixture.admin.nonce()
-            );
+            ));
         }
 
         for (const zone of [zone1, zone2]) {
-            await callAdmin_ActivateIn(
+            await callTransaction(getActivateInTxByInput(
                 admin,
-                admins,
-                zone,
-                [manager.address, moderator.address],
-                true,
-                await admin.nonce(),
-            );
+                deployer,
+                {
+                    zone,
+                    accounts: [manager.address, moderator.address],
+                    isActive: true
+                },
+                admins
+            ));
         }
 
         await callProjectToken_AuthorizeLaunchpads(
@@ -326,14 +325,16 @@ describe('3.3. ProjectMortgageToken', async () => {
         let currentTimestamp = await time.latest();
 
         if (listSampleCurrencies) {
-            await callAdmin_UpdateCurrencyRegistries(
+            await callTransaction(getUpdateCurrencyRegistriesTxByInput(
                 admin,
-                admins,
-                [ethers.constants.AddressZero, currency.address],
-                [true, true],
-                [false, true],
-                await admin.nonce(),
-            );            
+                deployer,
+                {
+                    currencies: [ethers.constants.AddressZero, currency.address],
+                    isAvailable: [true, true],
+                    isExclusive: [false, true],
+                },
+                admins
+            ));        
         }
 
         if (listProjectToken) {
@@ -409,7 +410,7 @@ describe('3.3. ProjectMortgageToken', async () => {
         }
 
         if (pause) {
-            await callPausable_Pause(deployer, admins, admin, projectMortgageToken);
+            await callTransaction(getPauseTxByInput(projectMortgageToken, deployer, admins, admin));;
         }
 
         return {
@@ -994,14 +995,16 @@ describe('3.3. ProjectMortgageToken', async () => {
                 newCurrencyAddress = ethers.constants.AddressZero;
             }
             
-            await callAdmin_UpdateCurrencyRegistries(
+            await callTransaction(getUpdateCurrencyRegistriesTxByInput(
                 admin,
-                admins,
-                [newCurrencyAddress],
-                [true],
-                [isExclusive],
-                await admin.nonce()
-            );
+                deployer,
+                {
+                    currencies: [newCurrencyAddress],
+                    isAvailable: [true],
+                    isExclusive: [isExclusive],
+                },
+                admins
+            ));
 
             let currentTimestamp = await time.latest() + 10;
 

@@ -154,7 +154,7 @@ describe('2.1. CommissionToken', async () => {
 
         if (!skipDeclareZone) {
             for (const zone of [zone1, zone2]) {
-                await callTransaction(getDeclareZoneTxByInput(admin, deployer, {zone}, admins));
+                await callTransaction(getDeclareZoneTxByInput(admin, deployer, { zone }, admins));
             }
 
             if (!skipActivateExecutiveInZone) {

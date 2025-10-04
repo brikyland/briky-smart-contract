@@ -24,7 +24,6 @@ import { deployPromotionToken } from '@utils/deployments/lucra/promotionToken';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
 import { deployCurrency } from '@utils/deployments/common/currency';
-import { callPausable_Pause } from '@utils/call/common/pausable';
 import { CancelContentsParams, CancelContentsParamsInput, CreateContentsParams, CreateContentsParamsInput, UpdateContentURIsParams, UpdateContentURIsParamsInput, UpdateFeeParams, UpdateFeeParamsInput, UpdateRoyaltyRateParams, UpdateRoyaltyRateParamsInput, WithdrawParams, WithdrawParamsInput } from '@utils/models/lucra/promotionToken';
 import { getCancelContentsSignatures, getCreateContentsSignatures, getUpdateContentURIsSignatures, getUpdateFeeSignatures, getUpdateRoyaltyRateSignatures, getWithdrawSignatures } from '@utils/signatures/lucra/promotionToken';
 import { getCancelContentsTx, getCreateContentsTx, getUpdateContentURIsTx, getUpdateFeeTx, getUpdateRoyaltyRateTx, getWithdrawTx } from '@utils/transaction/lucra/promotionToken';
@@ -37,7 +36,7 @@ interface PromotionTokenFixture {
     currency1: Currency;
     currency2: Currency;
 
-    deployer: SignerWithAddress;
+    deployer: any;
     admins: any[];
     minter1: any;
     minter2: any;
@@ -114,7 +113,7 @@ describe('5.2. PromotionToken', async () => {
         }
 
         if (pause) {
-            await callPausable_Pause(deployer, admins, admin, promotionToken);
+            await callTransaction(getPauseTxByInput(promotionToken, deployer, admins, admin));;
         }
 
         return {

@@ -36,13 +36,6 @@ import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 
 import { MockContract, smock } from '@defi-wonderland/smock';
 
-import {
-    callAdmin_ActivateIn,
-    callAdmin_AuthorizeManagers,
-    callAdmin_AuthorizeModerators,
-    callAdmin_DeclareZone,
-    callAdmin_UpdateCurrencyRegistries,
-} from '@utils/call/common/admin';
 import { BigNumber, BigNumberish, Contract, Wallet } from 'ethers';
 import { randomInt } from 'crypto';
 import { getBytes4Hex, getInterfaceID, randomBigNumber, structToObject } from '@utils/utils';
@@ -76,7 +69,8 @@ import { deployReentrancyERC1155Receiver } from '@utils/deployments/mock/mockRee
 import { deployReentrancyExclusiveERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyExclusiveERC20';
 import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
 import { getCallSafeConfirmCurrentRoundTx, getCallScheduleNextRoundTx, getCallUpdateRoundsTx, getInitiateLaunchTx, getSafeConfirmCurrentRoundTx, getSafeFinalizeLaunchTx, getScheduleNextRoundTx, getUpdateLaunchURITx, getUpdateRoundsTx, getUpdateRoundTx } from '@utils/transaction/launch/prestigePad';
-import { callPausable_Pause } from '@utils/call/common/pausable';
+import { getActivateInTxByInput, getAuthorizeManagersTxByInput, getAuthorizeModeratorsTxByInput, getDeclareZoneTxByInput, getUpdateCurrencyRegistriesTxByInput } from '@utils/transaction/common/admin';
+import { getPauseTxByInput } from '@utils/transaction/common/pausable';
 
 chai.use(smock.matchers);
 
@@ -455,22 +449,26 @@ describe('7.1. PrestigePad', async () => {
             initiator1 = failReceiver;
         }
 
-        await callAdmin_AuthorizeManagers(
+        await callTransaction(getAuthorizeManagersTxByInput(
             admin,
+            deployer,
+            {
+                accounts: [manager.address],
+                isManager: true,
+            },
             admins,
-            [manager.address],
-            true,
-            await admin.nonce()
-        );
+        ));
 
-        await callAdmin_AuthorizeModerators(
+        await callTransaction(getAuthorizeModeratorsTxByInput(
             admin,
+            deployer,
+            {
+                accounts: [moderator.address],
+                isModerator: true,
+            },
             admins,
-            [moderator.address],
-            true,
-            await admin.nonce()
-        );
-
+        ));
+        
         if (!skipListSampleCurrencies) {
             await nativePriceFeed.updateData(1000_00000000, 8);
             await currencyPriceFeed.updateData(5_00000000, 8);
@@ -499,14 +497,16 @@ describe('7.1. PrestigePad', async () => {
                 [{ value: BigNumber.from(50_000), decimals: 3 }],
             );
 
-            await callAdmin_UpdateCurrencyRegistries(
+            await callTransaction(getUpdateCurrencyRegistriesTxByInput(
                 admin,
-                admins,
-                [currencies[1].address, currencies[2].address],
-                [true, true],
-                [false, false],
-                await admin.nonce(),
-            );
+                deployer,
+                {
+                    currencies: [currencies[1].address, currencies[2].address],
+                    isAvailable: [true, true],
+                    isExclusive: [false, false],
+                },
+                admins
+            ));
         }
 
         if (!skipFundERC20ForInitiators) {
@@ -535,31 +535,27 @@ describe('7.1. PrestigePad', async () => {
 
         if (!skipDeclareZone) {
             for (const zone of [zone1, zone2]) {
-                await callAdmin_DeclareZone(
+                await callTransaction(getDeclareZoneTxByInput(
                     admin,
+                    deployer,
+                    { zone },
                     admins,
-                    zone,
-                    await admin.nonce()
-                );
+                ));
             }
 
             if (!skipAddZoneForExecutive) {
-                await callAdmin_ActivateIn(
-                    admin,
-                    admins,
-                    zone1,
-                    [manager.address, moderator.address],
-                    true,
-                    await admin.nonce()
-                );
-                await callAdmin_ActivateIn(
-                    admin,
-                    admins,
-                    zone2,
-                    [manager.address, moderator.address],
-                    true,
-                    await admin.nonce()
-                );
+                for (const zone of [zone1, zone2]) {
+                    await callTransaction(getActivateInTxByInput(
+                        admin,
+                        deployer,
+                        {
+                            zone,
+                            accounts: [manager.address, moderator.address],
+                            isActive: true
+                        },
+                        admins
+                    ));
+                }
             }
         }
 
@@ -844,7 +840,7 @@ describe('7.1. PrestigePad', async () => {
         }
 
         if (pause) {
-            await callPausable_Pause(deployer, admins, admin, prestigePad);
+            await callTransaction(getPauseTxByInput(prestigePad, deployer, admins, admin));
         }
 
         return {
@@ -1285,18 +1281,20 @@ describe('7.1. PrestigePad', async () => {
         it('7.1.5.7. Initiate launch unsuccessfully when sender is not authorized in zone', async () => {
             const fixture = await beforePrestigePadTest();
 
-            const { admin, admins, prestigePad, manager, validator } = fixture;
+            const { deployer, admin, admins, prestigePad, manager, validator } = fixture;
 
             const { defaultParams } = await beforeInitiateLaunchTest(fixture);
 
-            await callAdmin_ActivateIn(
+            await callTransaction(getActivateInTxByInput(
                 admin,
-                admins,
-                defaultParams.zone,
-                [manager.address],
-                false,
-                await admin.nonce()
-            );
+                deployer,
+                {
+                    zone: defaultParams.zone,
+                    accounts: [manager.address],
+                    isActive: false
+                },
+                admins
+            ));
 
             await expect(getInitiateLaunchTx(prestigePad, validator, manager, defaultParams))
                 .to.be.revertedWithCustomError(prestigePad, 'Unauthorized');
@@ -1322,7 +1320,7 @@ describe('7.1. PrestigePad', async () => {
 
             const { defaultParams } = await beforeInitiateLaunchTest(fixture);
 
-            await callPausable_Pause(projectToken as any, deployer, admins, admin);
+            await callTransaction(getPauseTxByInput(projectToken as any, deployer, admins, admin));;
 
             await expect(getInitiateLaunchTx(prestigePad, validator, manager, defaultParams))
                 .to.be.revertedWith('Pausable: paused');
@@ -3900,7 +3898,7 @@ describe('7.1. PrestigePad', async () => {
 
             const { deployer, prestigePad, initiator1, reserveVault, admin, admins } = fixture;
 
-            await callPausable_Pause(reserveVault as any, deployer, admins, admin);
+            await callTransaction(getPauseTxByInput(reserveVault as any, deployer, admins, admin));;
 
             const params = await getSafeConfirmCurrentRoundParams(prestigePad, { launchId: BigNumber.from(1) });
             await expect(getSafeConfirmCurrentRoundTx(
@@ -4519,7 +4517,7 @@ describe('7.1. PrestigePad', async () => {
 
             const { deployer, prestigePad, depositor1, admin, admins, reserveVault } = fixture;
 
-            await callPausable_Pause(reserveVault as any, deployer, admins, admin);
+            await callTransaction(getPauseTxByInput(reserveVault as any, deployer, admins, admin));;
 
             const roundId = (await prestigePad.getLaunch(1)).roundIds[1];
             const round = await prestigePad.getRound(roundId);
@@ -4758,7 +4756,7 @@ describe('7.1. PrestigePad', async () => {
 
             await callTransaction(prestigePad.connect(initiator1).cancelCurrentRound(1));
 
-            await callPausable_Pause(deployer, admins, admin, prestigePad);
+            await callTransaction(getPauseTxByInput(prestigePad, deployer, admins, admin));;
 
             await expect(prestigePad.connect(depositor1).withdrawContribution(oldRoundId))
                 .to.be.revertedWith('Pausable: paused'); 
@@ -5379,7 +5377,7 @@ describe('7.1. PrestigePad', async () => {
 
             const { deployer, prestigePad, depositor3, admins, admin, reserveVault } = fixture;
 
-            await callPausable_Pause(reserveVault as any, deployer, admins, admin);
+            await callTransaction(getPauseTxByInput(reserveVault as any, deployer, admins, admin));;
 
             const launchId = 1;
             const index = 1;

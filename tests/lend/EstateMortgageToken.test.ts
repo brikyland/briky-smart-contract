@@ -31,17 +31,9 @@ import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 
 import { MockContract, smock } from '@defi-wonderland/smock';
 
-import {
-    callAdmin_ActivateIn,
-    callAdmin_AuthorizeManagers,
-    callAdmin_AuthorizeModerators,
-    callAdmin_DeclareZone,
-    callAdmin_UpdateCurrencyRegistries,
-} from '@utils/call/common/admin';
 import { BigNumber, Contract } from 'ethers';
 import { getBytes4Hex, getInterfaceID, randomBigNumber, structToObject } from '@utils/utils';
 import { deployEstateMortgageToken } from '@utils/deployments/lend/estateMortgageToken';
-import { callEstateToken_AuthorizeTokenizers, callEstateToken_UpdateCommissionToken, callEstateToken_UpdateZoneRoyaltyRate } from '@utils/call/land/estateToken';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployReentrancyERC1155Holder } from '@utils/deployments/mock/mockReentrancy/reentrancyERC1155Holder';
 import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
@@ -51,17 +43,16 @@ import { Initialization as LendInitialization } from '@tests/lend/test.initializ
 import { deployReserveVault } from '@utils/deployments/common/reserveVault';
 import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
 import { MockValidator } from '@utils/mockValidator';
-import { getCallTokenizeEstateTx, getRegisterCustodianTx } from '@utils/transaction/land/estateToken';
+import { getAuthorizeTokenizersTxByInput, getCallTokenizeEstateTx, getRegisterCustodianTx, getUpdateCommissionTokenTxByInput } from '@utils/transaction/land/estateToken';
 import { RegisterCustodianParams } from '@utils/models/land/estateToken';
 import { getRegisterBrokerTx } from '@utils/transaction/land/commissionToken';
 import { applyDiscount, scaleRate } from '@utils/formula';
 import { EstateBorrowParams } from '@utils/models/lend/estateMortgageToken';
 import { getEstateBorrowTx } from '@utils/transaction/lend/estateMortgageToken';
-import { callPausable_Pause } from '@utils/call/common/pausable';
-import { callMortgageToken_UpdateFeeRate } from '@utils/call/lend/mortgageToken';
 import { getUpdateBaseURISignatures, getUpdateFeeRateSignatures } from '@utils/signatures/lend/mortgageToken';
 import { getUpdateBaseURITx, getUpdateFeeRateTx } from '@utils/transaction/lend/mortgageToken';
 import { UpdateBaseURIParams, UpdateBaseURIParamsInput, UpdateFeeRateParams, UpdateFeeRateParamsInput } from '@utils/models/lend/mortgageToken';
+import { getActivateInTxByInput, getAuthorizeManagersTxByInput, getAuthorizeModeratorsTxByInput, getDeclareZoneTxByInput, getUpdateCurrencyRegistriesTxByInput } from '@utils/transaction/common/admin';
 
 
 async function testReentrancy_estateMortgageToken(
@@ -193,12 +184,13 @@ describe('3.2. EstateMortgageToken', async () => {
             LandInitialization.COMMISSION_TOKEN_RoyaltyRate,
         ));
         
-        await callEstateToken_UpdateCommissionToken(
-            estateToken,
+        await callTransaction(getUpdateCommissionTokenTxByInput(
+            estateToken as any,
+            deployer,
+            { commissionToken: commissionToken.address },
             admins,
-            commissionToken.address,
-            await admin.nonce()
-        );
+            admin
+        ));
 
         const MockEstateForgerFactory = await smock.mock<MockEstateForger__factory>('MockEstateForger');
         const estateForger = await MockEstateForgerFactory.deploy();
@@ -291,49 +283,55 @@ describe('3.2. EstateMortgageToken', async () => {
             zone2 
         } = fixture;
 
-        await callAdmin_AuthorizeManagers(
+        await callTransaction(getAuthorizeManagersTxByInput(
             admin,
+            deployer,
+            {
+                accounts: [manager.address],
+                isManager: true,
+            },
             admins,
-            [manager.address],
-            true,
-            await admin.nonce()
-        );
+        ));
 
-        await callAdmin_AuthorizeModerators(
+        await callTransaction(getAuthorizeModeratorsTxByInput(
             admin,
+            deployer,
+            {
+                accounts: [moderator.address],
+                isModerator: true,
+            },
             admins,
-            [moderator.address],
-            true,
-            await admin.nonce()
-        );
+        ));
 
         for (const zone of [zone1, zone2]) {
-            await callAdmin_DeclareZone(
+            await callTransaction(getDeclareZoneTxByInput(
                 admin,
+                deployer,
+                { zone },
                 admins,
-                zone,
-                await fixture.admin.nonce()
-            );
+            ));
         }
 
         for (const zone of [zone1, zone2]) {
-            await callAdmin_ActivateIn(
+            await callTransaction(getActivateInTxByInput(
                 admin,
-                admins,
-                zone,
-                [manager.address, moderator.address],
-                true,
-                await admin.nonce(),
-            );
+                deployer,
+                {
+                    zone,
+                    accounts: [manager.address, moderator.address],
+                    isActive: true
+                },
+                admins
+            ));
         }
 
-        await callEstateToken_AuthorizeTokenizers(
-            estateToken,
+        await callTransaction(getAuthorizeTokenizersTxByInput(
+            estateToken as any,
+            deployer,
+            { accounts: [estateForger.address], isTokenizer: true },
             admins,
-            [estateForger.address],
-            true,
-            await admin.nonce()
-        );
+            admin,
+        ));
 
         for (const zone of [zone1, zone2]) {
             for (const custodian of [custodian1, custodian2]) {
@@ -360,14 +358,16 @@ describe('3.2. EstateMortgageToken', async () => {
         let currentTimestamp = await time.latest();
 
         if (listSampleCurrencies) {
-            await callAdmin_UpdateCurrencyRegistries(
+            await callTransaction(getUpdateCurrencyRegistriesTxByInput(
                 admin,
-                admins,
-                [ethers.constants.AddressZero, currency.address],
-                [true, true],
-                [false, true],
-                await admin.nonce(),
-            );
+                deployer,
+                {
+                    currencies: [ethers.constants.AddressZero, currency.address],
+                    isAvailable: [true, true],
+                    isExclusive: [false, true],
+                },
+                admins
+            ));
         }
 
         if (listEstateToken) {
@@ -449,7 +449,7 @@ describe('3.2. EstateMortgageToken', async () => {
         }
 
         if (pause) {
-            await callPausable_Pause(deployer, admins, admin, estateMortgageToken);
+            await callTransaction(getPauseTxByInput(estateMortgageToken, deployer, admins, admin));;
         }
 
         return {
@@ -1038,15 +1038,17 @@ describe('3.2. EstateMortgageToken', async () => {
             } else {
                 newCurrencyAddress = ethers.constants.AddressZero;
             }
-            
-            await callAdmin_UpdateCurrencyRegistries(
+
+            await callTransaction(getUpdateCurrencyRegistriesTxByInput(
                 admin,
-                admins,
-                [newCurrencyAddress],
-                [true],
-                [isExclusive],
-                await admin.nonce()
-            );
+                deployer,
+                {
+                    currencies: [newCurrencyAddress],
+                    isAvailable: [true],
+                    isExclusive: [isExclusive],
+                },
+                admins
+            ));
 
             let currentTimestamp = await time.latest() + 10;
 

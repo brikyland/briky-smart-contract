@@ -294,7 +294,7 @@ describe('2.4. EstateToken', async () => {
 
         if (!skipDeclareZone) {
             for (const zone of [zone1, zone2]) {
-                await callTransaction(getDeclareZoneTxByInput(admin, deployer, {zone}, admins));
+                await callTransaction(getDeclareZoneTxByInput(admin, deployer, { zone }, admins));
             }
 
             for (const zone of [zone1, zone2]) {

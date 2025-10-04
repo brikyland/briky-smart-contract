@@ -139,11 +139,16 @@ describe('1.4. DividendHub', async () => {
         }
 
         if (!skipRegisterCurrencies) {
-            await callTransaction(getUpdateCurrencyRegistriesTxByInput(admin, deployer, {
-                currencies: [ethers.constants.AddressZero, ...currencies.map(currency => currency.address)],
-                isAvailable: [true, ...currencies.map(_ => true)],
-                isExclusive: [false, ...currencies.map(_ => true)],
-            }, admins))
+            await callTransaction(getUpdateCurrencyRegistriesTxByInput(
+                admin,
+                deployer,
+                {
+                    currencies: [ethers.constants.AddressZero, ...currencies.map(currency => currency.address)],
+                    isAvailable: [true, ...currencies.map(_ => true)],
+                    isExclusive: [false, ...currencies.map(_ => true)],
+                },
+                admins
+            ));
         }
 
         if (!skipAuthorizeGovernors) {

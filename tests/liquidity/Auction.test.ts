@@ -18,10 +18,9 @@ import { Contract } from 'ethers';
 import { getStartAuctionInvalidSignatures, getStartAuctionSignatures, getUpdateStakeTokensInvalidSignatures, getUpdateStakeTokensSignatures } from '@utils/signatures/liquidity/auction';
 import { StartAuctionParams, StartAuctionParamsInput, UpdateStakeTokensParams, UpdateStakeTokensParamsInput } from '@utils/models/liquidity/auction';
 import { getStartAuctionTx, getUpdateStakeTokensTx } from '@utils/transaction/liquidity/auction';
-import { callPausable_Pause } from '@utils/call/common/pausable';
 
 interface AuctionFixture {
-    deployer: SignerWithAddress;
+    deployer: any;
     admins: any[];
     depositor1: any, depositor2: any, depositor3: any;
 
@@ -236,7 +235,7 @@ describe('4.1. Auction', async () => {
         }
 
         if (pause) {
-            await callPausable_Pause(deployer, admins, admin, auction);
+            await callTransaction(getPauseTxByInput(auction, deployer, admins, admin));;
         }
 
         return fixture;

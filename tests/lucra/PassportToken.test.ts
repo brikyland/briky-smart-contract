@@ -19,7 +19,6 @@ import { deployCurrency } from '@utils/deployments/common/currency';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
 import { Rate } from '@utils/models/common/common';
-import { callPausable_Pause } from '@utils/call/common/pausable';
 import { UpdateBaseURIParams, UpdateBaseURIParamsInput, UpdateFeeParams, UpdateFeeParamsInput, UpdateRoyaltyRateParams, UpdateRoyaltyRateParamsInput, WithdrawParams, WithdrawParamsInput } from '@utils/models/lucra/passportToken';
 import { getUpdateBaseURISignatures, getUpdateFeeSignatures, getUpdateRoyaltyRateSignatures, getWithdrawSignatures } from '@utils/signatures/lucra/passportToken';
 import { getUpdateBaseURITx, getUpdateFeeTx, getUpdateRoyaltyRateTx, getWithdrawTx } from '@utils/transaction/lucra/passportToken';
@@ -31,7 +30,7 @@ interface PassportTokenFixture {
     currency1: Currency;
     currency2: Currency;
 
-    deployer: SignerWithAddress;
+    deployer: any;
     admins: any[];
     minter1: any;
     minter2: any;
@@ -108,7 +107,7 @@ describe('5.1. PassportToken', async () => {
         const { deployer, passportToken, admins, admin } = fixture;
 
         if (pause) {
-            await callPausable_Pause(deployer, admins, admin, passportToken);
+            await callTransaction(getPauseTxByInput(passportToken, deployer, admins, admin));;
         }
 
         return {

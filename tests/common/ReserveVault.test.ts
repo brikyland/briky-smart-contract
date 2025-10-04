@@ -119,11 +119,16 @@ describe('1.8. ReserveVault', async () => {
                 currencyAddresses.push(reentrancyERC20.address);
             }
 
-            await callTransaction(getUpdateCurrencyRegistriesTxByInput(admin, deployer, {
-                currencies: currencyAddresses,
-                isAvailable: currencyAddresses.map(_ => true),
-                isExclusive: currencyAddresses.map(_ => false),
-            }, admins));
+            await callTransaction(getUpdateCurrencyRegistriesTxByInput(
+                admin,
+                deployer,
+                {
+                    currencies: currencyAddresses,
+                    isAvailable: currencyAddresses.map(_ => true),
+                    isExclusive: currencyAddresses.map(_ => false),
+                },
+                admins
+            ));
         }
 
         if (!skipFundForProvider) {            

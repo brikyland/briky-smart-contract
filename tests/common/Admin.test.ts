@@ -199,11 +199,16 @@ describe.only('1.2. Admin', async () => {
 
         if (activateAccountsInZones) {
             for (const zone of [zone1, zone2]) {
-                await callTransaction(getActivateInTxByInput(admin, deployer, {
-                    zone: zone,
-                    accounts: accounts.map(x => x.address),
-                    isActive: true
-                }, admins));
+                await callTransaction(getActivateInTxByInput(
+                    admin,
+                    deployer,
+                    {
+                        zone: zone,
+                        accounts: accounts.map(x => x.address),
+                        isActive: true
+                    },
+                    admins
+                ));
             }
         }
 

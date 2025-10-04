@@ -14,13 +14,12 @@ import { deployMockPrimaryToken } from '@utils/deployments/mock/mockPrimaryToken
 import { callPrimaryToken_UpdateStakeTokens } from '@utils/call/liquidity/primaryToken';
 import { MockContract, smock } from '@defi-wonderland/smock';
 import { Initialization as LiquidityInitialization } from '@tests/liquidity/test.initialization';
-import { callPausable_Pause } from '@utils/call/common/pausable';
 import { DistributeTokensWithDurationParams, DistributeTokensWithDurationParamsInput, DistributeTokensWithTimestampParams, DistributeTokensWithTimestampParamsInput, UpdateStakeTokensParams, UpdateStakeTokensParamsInput } from '@utils/models/liquidity/driptributor';
 import { getDistributeTokensWithDurationSignatures, getDistributeTokensWithTimestampSignatures, getUpdateStakeTokensSignatures } from '@utils/signatures/liquidity/driptributor';
 import { getDistributeTokensWithDurationTx, getDistributeTokensWithTimestampTx, getUpdateStakeTokensTx } from '@utils/transaction/liquidity/driptributor';
 
 interface DriptributorFixture {
-    deployer: SignerWithAddress;
+    deployer: any;
     admins: any[];
     admin: Admin;
     treasury: Treasury;
@@ -231,7 +230,7 @@ describe('4.3. Driptributor', async () => {
         }
 
         if (pause) {
-            await callPausable_Pause(deployer, admins, admin, driptributor);
+            await callTransaction(getPauseTxByInput(driptributor, deployer, admins, admin));;
         }
 
         return {

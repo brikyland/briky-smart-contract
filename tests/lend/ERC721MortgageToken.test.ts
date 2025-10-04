@@ -24,15 +24,9 @@ import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 import { getUpdateBaseURISignatures, getUpdateFeeRateSignatures } from '@utils/signatures/lend/mortgageToken';
 import { MockContract, smock } from '@defi-wonderland/smock';
 
-import {
-    callAdmin_AuthorizeManagers,
-    callAdmin_AuthorizeModerators,
-    callAdmin_UpdateCurrencyRegistries,
-} from '@utils/call/common/admin';
 import { BigNumber, Contract, Wallet } from 'ethers';
 import { getBytes4Hex, getInterfaceID, randomBigNumber, structToObject } from '@utils/utils';
 import { deployERC721MortgageToken } from '@utils/deployments/lend/erc721MortgageToken';
-import { callERC721MortgageToken_RegisterCollaterals } from '@utils/call/lend/erc721MortgageToken';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployReentrancyERC1155Holder } from '@utils/deployments/mock/mockReentrancy/reentrancyERC1155Holder';
 import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
@@ -41,11 +35,11 @@ import { Initialization as LendInitialization } from '@tests/lend/test.initializ
 import { applyDiscount, scaleRate } from '@utils/formula';
 import { ERC721BorrowParams, RegisterCollateralsParams, RegisterCollateralsParamsInput } from '@utils/models/lend/erc721MortgageToken';
 import { getERC721BorrowTx, getRegisterCollateralsTx } from '@utils/transaction/lend/erc721MortgageToken';
-import { callPausable_Pause } from '@utils/call/common/pausable';
 import { UpdateBaseURIParams, UpdateBaseURIParamsInput, UpdateFeeRateParams, UpdateFeeRateParamsInput } from '@utils/models/lend/mortgageToken';
 import { getUpdateBaseURITx, getUpdateFeeRateTx } from '@utils/transaction/lend/mortgageToken';
 import { getRegisterCollateralsSignatures } from '@utils/signatures/lend/erc721MortgageToken';
-import { callMortgageToken_UpdateFeeRate } from '@utils/call/lend/mortgageToken';
+import { getAuthorizeManagersTxByInput, getAuthorizeModeratorsTxByInput, getUpdateCurrencyRegistriesTxByInput } from '@utils/transaction/common/admin';
+import { getPauseTxByInput } from '@utils/transaction/common/pausable';
 
 
 async function testReentrancy_erc721MortgageToken(
@@ -223,21 +217,25 @@ describe('3.1. ERC721MortgageToken', async () => {
             royaltyReceiver,
         } = fixture;
 
-        await callAdmin_AuthorizeManagers(
+        await callTransaction(getAuthorizeManagersTxByInput(
             admin,
+            deployer,
+            {
+                accounts: [manager.address],
+                isManager: true,
+            },
             admins,
-            [manager.address],
-            true,
-            await admin.nonce()
-        );
+        ));
 
-        await callAdmin_AuthorizeModerators(
+        await callTransaction(getAuthorizeModeratorsTxByInput(
             admin,
+            deployer,
+            {
+                accounts: [moderator.address],
+                isModerator: true,
+            },
             admins,
-            [moderator.address],
-            true,
-            await admin.nonce()
-        );
+        ));
 
         if (!skipRegisterCollaterals) {
             await callERC721MortgageToken_RegisterCollaterals(
@@ -255,14 +253,16 @@ describe('3.1. ERC721MortgageToken', async () => {
         let currentTimestamp = await time.latest();
 
         if (listSampleCurrencies) {
-            await callAdmin_UpdateCurrencyRegistries(
+            await callTransaction(getUpdateCurrencyRegistriesTxByInput(
                 admin,
-                admins,
-                [ethers.constants.AddressZero, currency.address],
-                [true, true],
-                [false, true],
-                await admin.nonce(),
-            );
+                deployer,
+                {
+                    currencies: [ethers.constants.AddressZero, currency.address],
+                    isAvailable: [true, true],
+                    isExclusive: [false, true],
+                },
+                admins
+            ));
         }
 
         if (listSampleCollectionTokens) {
@@ -315,7 +315,7 @@ describe('3.1. ERC721MortgageToken', async () => {
         }
 
         if (pause) {
-            await callPausable_Pause(erc721MortgageToken, deployer, admins, admin);
+            await callTransaction(getPauseTxByInput(erc721MortgageToken, deployer, admins, admin));
         }
 
         return {
@@ -1166,14 +1166,16 @@ describe('3.1. ERC721MortgageToken', async () => {
                 newCurrencyAddress = ethers.constants.AddressZero;
             }
             
-            await callAdmin_UpdateCurrencyRegistries(
+            await callTransaction(getUpdateCurrencyRegistriesTxByInput(
                 admin,
-                admins,
-                [newCurrencyAddress],
-                [true],
-                [isExclusive],
-                await admin.nonce()
-            );
+                deployer,
+                {
+                    currencies: [newCurrencyAddress],
+                    isAvailable: [true],
+                    isExclusive: [isExclusive],
+                },
+                admins
+            ));
 
             let currentTimestamp = await time.latest() + 10;
 

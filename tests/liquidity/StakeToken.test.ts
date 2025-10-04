@@ -17,14 +17,14 @@ import { BigNumber, Wallet } from 'ethers';
 import { randomArrayWithSum, randomBigNumber, randomInt, shuffle, structToObject } from '@utils/utils';
 import { StakeTokenOperation } from "@utils/models/liquidity/stakeToken";
 import { Initialization as LiquidityInitialization } from '@tests/liquidity/test.initialization';
-import { callPausable_Pause } from '@utils/call/common/pausable';
 import { UpdateStakeTokensParamsInput, UpdateTreasuryParamsInput } from '@utils/models/liquidity/primaryToken';
 import { InitializeRewardingParams, InitializeRewardingParamsInput, UpdateFeeRateParams, UpdateFeeRateParamsInput } from '@utils/models/liquidity/stakeToken';
 import { getInitializeRewardingSignatures, getUpdateFeeRateSignatures } from '@utils/signatures/liquidity/stakeToken';
 import { getInitializeRewardingTx, getUpdateFeeRateTx } from '@utils/transaction/liquidity/StakeToken';
+import { getPauseTxByInput } from '@utils/transaction/common/pausable';
 
 interface StakeTokenFixture {
-    deployer: SignerWithAddress;
+    deployer: any;
     admins: any[];
     admin: Admin;
     currency: Currency;
@@ -221,7 +221,7 @@ describe('4.5. StakeToken', async () => {
         }
 
         if (pause) {
-            await callPausable_Pause(stakeToken1 as any, deployer, admins, admin);
+            await callTransaction(getPauseTxByInput(stakeToken1 as any, deployer, admins, admin));
         }
 
         return {

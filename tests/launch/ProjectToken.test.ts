@@ -46,12 +46,6 @@ import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 import { MockContract, smock } from '@defi-wonderland/smock';
 import { deployMockProjectToken } from '@utils/deployments/mock/mockProjectToken';
 
-import {
-    callAdmin_ActivateIn,
-    callAdmin_AuthorizeManagers,
-    callAdmin_AuthorizeModerators,
-    callAdmin_DeclareZone,
-} from '@utils/call/common/admin';
 import { BigNumber, Contract } from 'ethers';
 import { randomInt } from 'crypto';
 import { getBytes4Hex, getInterfaceID, randomBigNumber, structToObject } from '@utils/utils';
@@ -65,19 +59,17 @@ import { UpdateEstateURIParams } from '@utils/models/land/estateToken';
 import { getUpdateEstateURIValidation } from '@utils/validation/land/estateToken';
 import { Initialization as LaunchInitialization } from '@tests/launch/test.initialization';
 import { Initialization as LandInitialization } from '@tests/land/test.initialization';
-import { callProjectToken_AuthorizeLaunchpads } from '@utils/call/launch/projectToken';
 import { DeprecateProjectParams, LaunchProjectParams, MintParams, RegisterInitiatorParams, SafeDeprecateProjectParams, SafeUpdateProjectURIParams, TokenizeProjectParams, UpdateProjectURIParams } from '@utils/models/launch/projectToken';
 import { getInitiateLaunchValidation } from '@utils/validation/launch/prestigePad';
 import { getRegisterInitiatorInvalidValidation, getRegisterInitiatorValidation, getSafeUpdateProjectURIInvalidValidation, getSafeUpdateProjectURIValidation } from '@utils/validation/launch/projectToken';
 import { ContractTransaction } from 'ethers';
 import { getCallLaunchProjectTx, getCallMintTx, getCallSafeTokenizeProjectTxByParams, getRegisterInitiatorTx, getSafeDeprecateProjectTx, getSafeDeprecateProjectTxByParams, getSafeTokenizeProjectTxByParams, getSafeUpdateProjectURITx, getSafeUpdateProjectURITxByParams } from '@utils/transaction/launch/projectToken';
-import { getRegisterCustodianTx } from '@utils/transaction/land/estateToken';
-import { callEstateToken_AuthorizeTokenizers, callEstateToken_UpdateCommissionToken } from '@utils/call/land/estateToken';
+import { getAuthorizeTokenizersTxByInput, getRegisterCustodianTx, getUpdateCommissionTokenTxByInput } from '@utils/transaction/land/estateToken';
 import { deployReentrancyERC1155Receiver } from '@utils/deployments/mock/mockReentrancy/reentrancyERC1155Receiver';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { getRegisterBrokerTx } from '@utils/transaction/land/commissionToken';
 import { IAssetTokenInterfaceId, IERC1155MetadataURIUpgradeableInterfaceId, IERC165UpgradeableInterfaceId, IERC2981UpgradeableInterfaceId, IEstateTokenizerInterfaceId, IGovernorInterfaceId, IRoyaltyRateProposerInterfaceId } from '@tests/interfaces';
-import { callPausable_Pause } from '@utils/call/common/pausable';
+import { getActivateInTxByInput, getAuthorizeManagersTxByInput, getAuthorizeModeratorsTxByInput, getDeclareZoneTxByInput } from '@utils/transaction/common/admin';
 
 interface ProjectTokenFixture {
     admin: Admin;
@@ -234,12 +226,13 @@ describe('7.2. ProjectToken', async () => {
             LandInitialization.COMMISSION_TOKEN_RoyaltyRate,
         ) as CommissionToken;
 
-        await callEstateToken_UpdateCommissionToken(
+        await callTransaction(getUpdateCommissionTokenTxByInput(
             estateToken as any,
+            deployer,
+            { commissionToken: commissionToken.address },
             admins,
-            commissionToken.address,
-            await admin.nonce()
-        );
+            admin
+        ));
 
         const projectToken = await deployMockProjectToken(
             deployer.address,
@@ -364,21 +357,25 @@ describe('7.2. ProjectToken', async () => {
         }
 
         if (!skipAuthorizeExecutive) {
-            await callAdmin_AuthorizeManagers(
+            await callTransaction(getAuthorizeManagersTxByInput(
                 admin,
+                deployer,
+                {
+                    accounts: [manager.address],
+                    isManager: true,
+                },
                 admins,
-                [manager.address],
-                true,
-                await fixture.admin.nonce()
-            );
+            ));
 
-            await callAdmin_AuthorizeModerators(
+            await callTransaction(getAuthorizeModeratorsTxByInput(
                 admin,
+                deployer,
+                {
+                    accounts: [moderator.address],
+                    isModerator: true,
+                },
                 admins,
-                [moderator.address],
-                true,
-                await fixture.admin.nonce()
-            );
+            ));
         }
 
         if (!skipAuthorizeLaunchpad) {
@@ -393,41 +390,37 @@ describe('7.2. ProjectToken', async () => {
 
         if (!skipDeclareZone) {
             for (const zone of [zone1, zone2]) {
-                await callAdmin_DeclareZone(
+                await callTransaction(getDeclareZoneTxByInput(
                     admin,
+                    deployer,
+                    { zone },
                     admins,
-                    zone,
-                    await admin.nonce()
-                );
+                ));
             }
         }
 
         if (!skipAddProjectTokenAsTokenizer) {
-            await callEstateToken_AuthorizeTokenizers(
+            await callTransaction(getAuthorizeTokenizersTxByInput(
                 estateToken as any,
+                deployer,
+                { accounts: [projectToken.address], isTokenizer: true },
                 admins,
-                [projectToken.address],
-                true,
-                await admin.nonce()
-            );
+                admin,
+            ));
         }
 
-        await callAdmin_ActivateIn(
-            admin,
-            admins,
-            zone1,
-            [manager.address, moderator.address],
-            true,
-            await fixture.admin.nonce()
-        );
-        await callAdmin_ActivateIn(
-            admin,
-            admins,
-            zone2,
-            [manager.address, moderator.address],
-            true,
-            await fixture.admin.nonce()
-        );
+        for (const zone of [zone1, zone2]) {
+            await callTransaction(getActivateInTxByInput(
+                admin,
+                deployer,
+                {
+                    zone,
+                    accounts: [manager.address, moderator.address],
+                    isActive: true
+                },
+                admins
+            ));
+        }
 
         if (!skipRegisterBroker) {
             await callTransaction(getRegisterBrokerTx(commissionToken as any, manager, {
@@ -557,7 +550,7 @@ describe('7.2. ProjectToken', async () => {
         }
 
         if (pause) {
-            await callPausable_Pause(deployer, admins, admin, projectToken);
+            await callTransaction(getPauseTxByInput(projectToken, deployer, admins, admin));;
         }
 
         return {
@@ -1064,19 +1057,20 @@ describe('7.2. ProjectToken', async () => {
 
         it('7.2.5.4. Register initiator unsuccessfully with inactive manager in zone', async () => {
             const fixture = await beforeProjectTokenTest();
-            const { projectToken, manager, admin, admins, validator } = fixture;
+            const { deployer, projectToken, manager, admin, admins, validator } = fixture;
 
             const { defaultParams: params } = await beforeRegisterInitiatorTest(fixture);
 
-            await callAdmin_ActivateIn(
+            await callTransaction(getActivateInTxByInput(
                 admin,
-                admins,
-                params.zone,
-                [manager.address],
-                false,
-                await admin.nonce()
-            )
-
+                deployer,
+                {
+                    zone: params.zone,
+                    accounts: [manager.address],
+                    isActive: false
+                },
+                admins
+            ));
             await expect(getRegisterInitiatorTx(projectToken, validator, manager, params))
                 .to.be.revertedWithCustomError(projectToken, `Unauthorized`);
         });
@@ -1576,17 +1570,19 @@ describe('7.2. ProjectToken', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
             });
-            const { projectToken, manager, admin, admins, zone1 } = fixture;
+            const { deployer, projectToken, manager, admin, admins, zone1 } = fixture;
 
-            await callAdmin_ActivateIn(
+            await callTransaction(getActivateInTxByInput(
                 admin,
-                admins,
-                zone1,
-                [manager.address],
-                false,
-                await admin.nonce()
-            );
-
+                deployer,
+                {
+                    zone: zone1,
+                    accounts: [manager.address],
+                    isActive: false
+                },
+                admins
+            ));
+            
             const params: DeprecateProjectParams = {
                 projectId: BigNumber.from(1),
                 data: 'deprecateProject1',
@@ -1707,17 +1703,19 @@ describe('7.2. ProjectToken', async () => {
             const fixture = await beforeProjectTokenTest({
                 addSampleProjects: true,
             });
-            const { projectToken, manager, admin, admins, zone1, validator } = fixture;
+            const { deployer, projectToken, manager, admin, admins, zone1, validator } = fixture;
 
-            await callAdmin_ActivateIn(
+            await callTransaction(getActivateInTxByInput(
                 admin,
-                admins,
-                zone1,
-                [manager.address],
-                false,
-                await admin.nonce()
-            );
-
+                deployer,
+                {
+                    zone: zone1,
+                    accounts: [manager.address],
+                    isActive: false
+                },
+                admins
+            ));
+            
             const params: UpdateProjectURIParams = {
                 projectId: BigNumber.from(1),
                 uri: 'new_project_uri_1',
@@ -1958,16 +1956,18 @@ describe('7.2. ProjectToken', async () => {
                 addSampleProjects: true,
                 mintProjectTokenForDepositor: true,
             });
-            const { prestigePad, projectToken, manager, admin, admins, zone1, broker1, custodian1 } = fixture;
+            const { deployer, prestigePad, projectToken, manager, admin, admins, zone1, broker1, custodian1 } = fixture;
 
-            await callAdmin_ActivateIn(
+            await callTransaction(getActivateInTxByInput(
                 admin,
-                admins,
-                zone1,
-                [manager.address],
-                false,
-                await admin.nonce()
-            );
+                deployer,
+                {
+                    zone: zone1,
+                    accounts: [manager.address],
+                    isActive: false
+                },
+                admins
+            ));
 
             prestigePad.isFinalized.whenCalledWith(1).returns(true);
 

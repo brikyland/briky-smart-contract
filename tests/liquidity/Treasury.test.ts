@@ -9,13 +9,12 @@ import { deployCurrency } from '@utils/deployments/common/currency';
 import { deployTreasury } from '@utils/deployments/liquidity/treasury';
 import { deployMockPrimaryToken } from '@utils/deployments/mock/mockPrimaryToken';
 import { Initialization as LiquidityInitialization } from '@tests/liquidity/test.initialization';
-import { callPausable_Pause } from '@utils/call/common/pausable';
 import { WithdrawOperationFundParams, WithdrawOperationFundParamsInput } from '@utils/models/liquidity/treasury';
 import { getWithdrawOperationFundSignatures } from '@utils/signatures/liquidity/treasury';
 import { getWithdrawOperationFundTx } from '@utils/transaction/liquidity/treasury';
 
 interface TreasuryFixture {
-    deployer: SignerWithAddress;
+    deployer: any;
     admins: any[];
     admin: Admin;
     treasury: Treasury;
@@ -88,7 +87,7 @@ describe('4.6. Treasury', async () => {
         }
 
         if (pause) {
-            await callPausable_Pause(deployer, admins, admin, treasury);
+            await callTransaction(getPauseTxByInput(treasury, deployer, admins, admin));;
         }
 
         return {

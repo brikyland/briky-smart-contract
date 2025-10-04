@@ -284,7 +284,7 @@ describe('1.6. GovernanceHub', async () => {
         }, admins));
 
         if (!skipDeclareZone) {
-            await callTransaction(getDeclareZoneTxByInput(admin, deployer, {zone}, admins));
+            await callTransaction(getDeclareZoneTxByInput(admin, deployer, { zone }, admins));
             await callTransaction(getActivateInTxByInput(admin, deployer, {
                 zone,
                 accounts: [manager.address, moderator.address, operator1.address, operator2.address],

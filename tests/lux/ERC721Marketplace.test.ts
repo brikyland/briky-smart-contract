@@ -19,23 +19,18 @@ import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 
 import { MockContract, smock } from '@defi-wonderland/smock';
 
-import {
-    callAdmin_AuthorizeManagers,
-    callAdmin_AuthorizeModerators,
-    callAdmin_UpdateCurrencyRegistries,
-} from '@utils/call/common/admin';
 import { BigNumber, Contract, Wallet } from 'ethers';
 import { deployERC721Marketplace } from '@utils/deployments/lux/erc721Marketplace';
 import { OfferState } from "@utils/models/lux/offerState";
-import { callERC721Marketplace_RegisterCollections } from '@utils/call/lux/erc721Marketplace';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
 import { applyDiscount, remain } from '@utils/formula';
 import { BuyParams, ListParams, RegisterCollectionsParams, RegisterCollectionsParamsInput, SafeBuyParams } from '@utils/models/lux/erc721Marketplace';
 import { getBuyTx, getCallListTx, getListTx, getRegisterCollectionsTx, getSafeBuyTx } from '@utils/transaction/lux/erc721Marketplace';
-import { callPausable_Pause } from '@utils/call/common/pausable';
 import { getRegisterCollectionsSignatures } from '@utils/signatures/lux/erc721Marketplace';
 import { getSafeBuyAnchor } from '@utils/anchor/lux/erc721Marketplace';
+import { getAuthorizeManagersTxByInput, getAuthorizeModeratorsTxByInput, getUpdateCurrencyRegistriesTxByInput } from '@utils/transaction/common/admin';
+import { getPauseTxByInput } from '@utils/transaction/common/pausable';
 
 interface ERC721MarketplaceFixture {
     admin: Admin;
@@ -197,20 +192,25 @@ describe('6.1. ERC721Marketplace', async () => {
             failReceiver,
         } = fixture;
 
-        await callAdmin_AuthorizeManagers(
+        await callTransaction(getAuthorizeManagersTxByInput(
             admin,
+            deployer,
+            {
+                accounts: [manager.address],
+                isManager: true,
+            },
             admins,
-            [manager.address],
-            true,
-            await admin.nonce(),
-        )
-        await callAdmin_AuthorizeModerators(
+        ));
+
+        await callTransaction(getAuthorizeModeratorsTxByInput(
             admin,
+            deployer,
+            {
+                accounts: [moderator.address],
+                isModerator: true,
+            },
             admins,
-            [moderator.address],
-            true,
-            await admin.nonce(),
-        )
+        ));
 
         if (!skipRegisterCollection) {
             await callERC721Marketplace_RegisterCollections(
@@ -226,14 +226,16 @@ describe('6.1. ERC721Marketplace', async () => {
         }
 
         if (listSampleCurrencies) {
-            await callAdmin_UpdateCurrencyRegistries(
+            await callTransaction(getUpdateCurrencyRegistriesTxByInput(
                 admin,
-                admins,
-                [ethers.constants.AddressZero, currency.address],
-                [true, true],
-                [false, true],
-                await admin.nonce(),
-            );
+                deployer,
+                {
+                    currencies: [ethers.constants.AddressZero, currency.address],
+                    isAvailable: [true, true],
+                    isExclusive: [false, true],
+                },
+                admins
+            ));
         }
 
         if (listSampleCollectionTokens) {
@@ -260,7 +262,7 @@ describe('6.1. ERC721Marketplace', async () => {
         }
 
         if (pause) {
-            await callPausable_Pause(erc721Marketplace, deployer, admins, admin);
+            await callTransaction(getPauseTxByInput(erc721Marketplace, deployer, admins, admin));
         }
 
         return {
@@ -916,14 +918,16 @@ describe('6.1. ERC721Marketplace', async () => {
             newCurrencyAddress = ethers.constants.AddressZero;
         }
 
-        await callAdmin_UpdateCurrencyRegistries(
+        await callTransaction(getUpdateCurrencyRegistriesTxByInput(
             admin,
-            admins,
-            [newCurrencyAddress],
-            [true],
-            [isExclusive],
-            await admin.nonce(),
-        );
+            deployer,
+            {
+                currencies: [newCurrencyAddress],
+                isAvailable: [true],
+                isExclusive: [isExclusive],
+            },
+            admins
+        ));
 
         const seller = seller1;
         const buyer = buyer1;

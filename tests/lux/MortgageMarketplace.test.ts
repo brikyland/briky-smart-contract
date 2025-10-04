@@ -29,13 +29,6 @@ import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 
 import { MockContract, smock } from '@defi-wonderland/smock';
 
-import {
-    callAdmin_DeclareZone,
-    callAdmin_AuthorizeManagers,
-    callAdmin_AuthorizeModerators,
-    callAdmin_UpdateCurrencyRegistries,
-    callAdmin_ActivateIn,
-} from '@utils/call/common/admin';
 import { BigNumber } from 'ethers';
 import { randomInt } from 'crypto';
 import { getInterfaceID, randomBigNumber } from '@utils/utils';
@@ -52,24 +45,22 @@ import { Initialization as LandInitialization } from '@tests/land/test.initializ
 import { Initialization as LendInitialization } from '@tests/lend/test.initialization';
 import { MockValidator } from '@utils/mockValidator';
 import { getRegisterBrokerTx } from '@utils/transaction/land/commissionToken';
-import { getCallTokenizeEstateTx, getRegisterCustodianTx } from '@utils/transaction/land/estateToken';
+import { getCallTokenizeEstateTx, getRegisterCustodianTx, getUpdateCommissionTokenTxByInput } from '@utils/transaction/land/estateToken';
 import { deployEstateForger } from '@utils/deployments/land/estateForger';
 import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
 import { deployReserveVault } from '@utils/deployments/common/reserveVault';
 import { RegisterCustodianParams } from '@utils/models/land/estateToken';
 import { deployMockEstateForger } from '@utils/deployments/mock/mockEstateForger';
-import { callEstateToken_AuthorizeTokenizers, callEstateToken_UpdateCommissionToken, callEstateToken_UpdateZoneRoyaltyRate } from '@utils/call/land/estateToken';
 import { deployMockMortgageToken } from '@utils/deployments/mock/mockMortgageToken';
 import { BuyParams, ListParams, RegisterCollectionsParams, RegisterCollectionsParamsInput, SafeBuyParams } from '@utils/models/lux/erc721Marketplace';
-import { callERC721Marketplace_RegisterCollections } from '@utils/call/lux/erc721Marketplace';
 import { getBuyTx, getCallListTx, getListTx, getRegisterCollectionsTx, getSafeBuyTx } from '@utils/transaction/lux/erc721Marketplace';
 import { deployERC721MortgageToken } from '@utils/deployments/lend/erc721MortgageToken';
 import { deployProjectMortgageToken } from '@utils/deployments/lend/projectMortgageToken';
 import { deployEstateToken } from '@utils/deployments/land/estateToken';
 import { applyDiscount } from '@utils/formula';
-import { callPausable_Pause } from '@utils/call/common/pausable';
 import { getRegisterCollectionsSignatures } from '@utils/signatures/lux/erc721Marketplace';
 import { getSafeBuyAnchor } from '@utils/anchor/lux/erc721Marketplace';
+import { getAuthorizeManagersTxByInput, getAuthorizeModeratorsTxByInput, getUpdateCurrencyRegistriesTxByInput } from '@utils/transaction/common/admin';
 
 interface MortgageMarketplaceFixture {
     admin: Admin;
@@ -187,12 +178,13 @@ describe('6.3. MortgageMarketplace', async () => {
             LandInitialization.COMMISSION_TOKEN_RoyaltyRate,
         ));
         
-        await callEstateToken_UpdateCommissionToken(
-            estateToken,
+        await callTransaction(getUpdateCommissionTokenTxByInput(
+            estateToken as any,
+            deployer,
+            { commissionToken: commissionToken.address },
             admins,
-            commissionToken.address,
-            await admin.nonce()
-        );
+            admin
+        ));
 
         const estateMortgageToken = await deployEstateMortgageToken(
             deployer.address,
@@ -302,20 +294,25 @@ describe('6.3. MortgageMarketplace', async () => {
 
         let currentTimestamp = await time.latest();
 
-        await callAdmin_AuthorizeManagers(
+        await callTransaction(getAuthorizeManagersTxByInput(
             admin,
+            deployer,
+            {
+                accounts: [manager.address],
+                isManager: true,
+            },
             admins,
-            [manager.address],
-            true,
-            await admin.nonce(),
-        )
-        await callAdmin_AuthorizeModerators(
+        ));
+        
+        await callTransaction(getAuthorizeModeratorsTxByInput(
             admin,
+            deployer,
+            {
+                accounts: [moderator.address],
+                isModerator: true,
+            },
             admins,
-            [moderator.address],
-            true,
-            await admin.nonce(),
-        );
+        ));
 
         if (!skipRegisterCollection) {
             await callERC721Marketplace_RegisterCollections(
@@ -331,14 +328,16 @@ describe('6.3. MortgageMarketplace', async () => {
         }
 
         if (listSampleCurrencies) {
-            await callAdmin_UpdateCurrencyRegistries(
+            await callTransaction(getUpdateCurrencyRegistriesTxByInput(
                 admin,
-                admins,
-                [ethers.constants.AddressZero, currency.address],
-                [true, true],
-                [false, true],
-                await admin.nonce()
-            );
+                deployer,
+                {
+                    currencies: [ethers.constants.AddressZero, currency.address],
+                    isAvailable: [true, true],
+                    isExclusive: [false, true],
+                },
+                admins
+            ));
         }
 
         if (useFailRoyaltyReceiver) {
@@ -397,7 +396,7 @@ describe('6.3. MortgageMarketplace', async () => {
         }
 
         if (pause) {
-            await callPausable_Pause(deployer, admins, admin, mortgageMarketplace);
+            await callTransaction(getPauseTxByInput(mortgageMarketplace, deployer, admins, admin));;
         }
 
         return {
@@ -1005,14 +1004,16 @@ describe('6.3. MortgageMarketplace', async () => {
             newCurrencyAddress = ethers.constants.AddressZero;
         }
 
-        await callAdmin_UpdateCurrencyRegistries(
+        await callTransaction(getUpdateCurrencyRegistriesTxByInput(
             admin,
-            admins,
-            [newCurrencyAddress],
-            [true],
-            [isExclusive],
-            await admin.nonce(),
-        );
+            deployer,
+            {
+                currencies: [newCurrencyAddress],
+                isAvailable: [true],
+                isExclusive: [isExclusive],
+            },
+            admins
+        ));
 
         let currentTimestamp = await time.latest();
 
