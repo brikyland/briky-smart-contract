@@ -86,12 +86,6 @@ export interface RequestAgenda {
     confirmAt: number;
 };
 
-export interface RegisterSellerInParams {
-    zone: string;
-    account: string;
-    uri: string;
-}
-
 export interface RequestTokenizationParamsInput {
     requester: string;
     estate: RequestEstateInput;
@@ -101,7 +95,7 @@ export interface RequestTokenizationParamsInput {
 }
 
 export interface RequestTokenizationParams extends RequestTokenizationParamsInput {
-    signatures: string[];
+    validation: Validation;
 }
 
 

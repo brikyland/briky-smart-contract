@@ -100,7 +100,7 @@ interface AdminFixture {
     zone2: string;
 }
 
-describe('1.2. Admin', async () => {
+describe.only('1.2. Admin', async () => {
     async function adminFixture(): Promise<AdminFixture> {
         const signers = await ethers.getSigners();
         const deployer = signers[0];

@@ -1,81 +1,235 @@
-import { EstateForger, MockEstateForger } from "@typechain-types";
-import { MockValidator } from "@utils/mockValidator";
-import { ConfirmParams, DepositParams, RequestTokenizationParams, SafeConfirmParams, SafeDepositParams, UpdateRequestAgendaParams, UpdateRequestEstateURIParams } from "@utils/models/land/estateForger";
-import { getRequestTokenizationValidation, getUpdateRequestEstateURIValidation } from "@utils/validation/land/estateForger";
-import { ContractTransaction, ethers } from "ethers";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import {Admin, EstateForger, ProxyCaller} from "@typechain-types";
+import {MockValidator} from "@utils/mockValidator";
+import {
+    CancelParams,
+    ConfirmParams,
+    DepositParams,
+    RequestTokenizationParams,
+    RequestTokenizationParamsInput,
+    SafeConfirmParams,
+    SafeDepositParams,
+    UpdateBaseUnitPriceRangeParams,
+    UpdateBaseUnitPriceRangeParamsInput,
+    UpdateRequestAgendaParams,
+    UpdateRequestEstateURIParams,
+    UpdateRequestEstateURIParamsInput,
+    WhitelistForParams,
+    WhitelistParams,
+    WhitelistParamsInput,
+    WithdrawDepositParams,
+    WithdrawEstateTokenParams
+} from "@utils/models/land/estateForger";
+import {
+    getRequestTokenizationValidation,
+    getUpdateRequestEstateURIValidation
+} from "@utils/validation/land/estateForger";
+import {ContractTransaction, ethers} from "ethers";
+import {SignerWithAddress} from "@nomiclabs/hardhat-ethers/signers";
+import {getUpdateBaseUnitPriceRangeSignatures, getWhitelistSignatures} from "@utils/signatures/land/estateForger";
+import {getSafeConfirmAnchor, getSafeDepositAnchor} from "@utils/anchor/land/estateForger";
 
-export async function getRequestTokenizationTx(
-    estateForger: EstateForger | MockEstateForger,
-    validator: MockValidator,
+
+// updateBaseUnitPriceRange
+export async function getUpdateBaseUnitPriceRangeTx(
+    estateForger: EstateForger,
     deployer: SignerWithAddress,
-    params: RequestTokenizationParams
+    params: UpdateBaseUnitPriceRangeParams,
+    txConfig = {}
 ): Promise<ContractTransaction> {
-    const validation = await getRequestTokenizationValidation(
-        estateForger,
-        validator,
-        params
+    return estateForger.connect(deployer).updateBaseUnitPriceRange(
+        params.baseMinUnitPrice,
+        params.baseMaxUnitPrice,
+        params.signatures,
+        txConfig,
     );
-    const tx = estateForger.connect(deployer).requestTokenization(
+}
+
+export async function getUpdateBaseUnitPriceRangeTxByInput(
+    estateForger: EstateForger,
+    deployer: SignerWithAddress,
+    paramsInput: UpdateBaseUnitPriceRangeParamsInput,
+    admins: any[],
+    admin: Admin
+): Promise<ContractTransaction> {
+    const params: UpdateBaseUnitPriceRangeParams = {
+        ...paramsInput,
+        signatures: await getUpdateBaseUnitPriceRangeSignatures(estateForger, paramsInput, admins, admin)
+    }
+    return await getUpdateBaseUnitPriceRangeTx(estateForger, deployer, params);
+}
+
+
+// whitelist
+export async function getWhitelistTx(
+    estateForger: EstateForger,
+    deployer: SignerWithAddress,
+    params: WhitelistParams,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    return estateForger.connect(deployer).whitelist(
+        params.accounts,
+        params.isWhitelisted,
+        params.signatures,
+        txConfig,
+    );
+}
+
+export async function getWhitelistTxByInput(
+    estateForger: EstateForger,
+    deployer: SignerWithAddress,
+    paramsInput: WhitelistParamsInput,
+    admins: any[],
+    admin: Admin,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    const params: WhitelistParams = {
+        ...paramsInput,
+        signatures: await getWhitelistSignatures(estateForger, paramsInput, admins, admin)
+    }
+    return await getWhitelistTx(estateForger, deployer, params, txConfig);
+}
+
+
+// requestTokenization
+export async function getRequestTokenizationTx(
+    estateForger: EstateForger,
+    deployer: SignerWithAddress,
+    params: RequestTokenizationParams,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    return estateForger.connect(deployer).requestTokenization(
         params.requester,
         params.estate,
         params.quota,
         params.quote,
         params.agenda,
-        validation,
+        params.validation,
+        txConfig,
     );
-
-    return tx;
 }
 
-export async function getUpdateRequestEstateURITx(
-    estateForger: EstateForger | MockEstateForger,
-    validator: MockValidator,
+export async function getRequestTokenizationTxByInput(
+    estateForger: EstateForger,
     deployer: SignerWithAddress,
-    params: UpdateRequestEstateURIParams
+    paramsInput: RequestTokenizationParamsInput,
+    validator: MockValidator,
+    txConfig = {}
 ): Promise<ContractTransaction> {
-    const validation = await getUpdateRequestEstateURIValidation(
-        estateForger,
-        validator,
-        params,
+    const params: RequestTokenizationParams = {
+        ...paramsInput,
+        validation: await getRequestTokenizationValidation(estateForger, validator, paramsInput)
+    }
+    return await getRequestTokenizationTx(estateForger, deployer, params, txConfig);
+}
+
+
+// whitelistFor
+export async function getWhitelistForTx(
+    estateForger: EstateForger,
+    deployer: SignerWithAddress,
+    params: WhitelistForParams,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    return estateForger.connect(deployer).whitelistFor(
+        params.requestId,
+        params.accounts,
+        params.isWhitelisted,
+        txConfig,
     );
-    const tx = estateForger.connect(deployer).updateRequestEstateURI(
+}
+
+
+// updateRequestEstateURI
+export async function getUpdateRequestEstateURITx(
+    estateForger: EstateForger,
+    deployer: SignerWithAddress,
+    params: UpdateRequestEstateURIParams,
+    txConfig = {},
+): Promise<ContractTransaction> {
+    return estateForger.connect(deployer).updateRequestEstateURI(
         params.requestId,
         params.uri,
-        validation,
+        params.validation,
+        txConfig,
     );
-
-    return tx;
 }
 
+export async function getUpdateRequestEstateURITxByInput(
+    estateForger: EstateForger,
+    deployer: SignerWithAddress,
+    paramsInput: UpdateRequestEstateURIParamsInput,
+    validator: MockValidator,
+    txConfig = {},
+): Promise<ContractTransaction> {
+    const params: UpdateRequestEstateURIParams = {
+        ...paramsInput,
+        validation: await getUpdateRequestEstateURIValidation(estateForger, validator, paramsInput)
+    }
+    return getUpdateRequestEstateURITx(estateForger, deployer, params, txConfig);
+}
+
+
+// updateRequestAgenda
 export async function getUpdateRequestAgendaTx(
-    estateForger: EstateForger | MockEstateForger,
+    estateForger: EstateForger,
     deployer: SignerWithAddress,
     params: UpdateRequestAgendaParams
 ): Promise<ContractTransaction> {
-    const tx = estateForger.connect(deployer).updateRequestAgenda(
+    return estateForger.connect(deployer).updateRequestAgenda(
         params.requestId,
         params.agenda,
     );
-    return tx;
 }
 
+
+// cancel
+export async function getCancelTx(
+    estateForger: EstateForger,
+    deployer: SignerWithAddress,
+    params: CancelParams,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    return estateForger.connect(deployer).cancel(
+        params.requestId,
+        txConfig,
+    )
+}
+
+
+// deposit
 export async function getDepositTx(
-    estateForger: EstateForger | MockEstateForger,
+    estateForger: EstateForger,
     deployer: SignerWithAddress,
     params: DepositParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    const tx = estateForger.connect(deployer).deposit(
+    return estateForger.connect(deployer).deposit(
         params.requestId,
         params.quantity,
         txConfig,
     );
-    return tx;
 }
 
+export async function getCallDepositTx(
+    estateForger: EstateForger,
+    caller: ProxyCaller,
+    params: DepositParams,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    return caller.call(
+        estateForger.address,
+        estateForger.interface.encodeFunctionData('deposit', [
+            params.requestId,
+            params.quantity
+        ]),
+        txConfig,
+    );
+}
+
+
+// safeDeposit
 export async function getSafeDepositTx(
-    estateForger: EstateForger | MockEstateForger,
+    estateForger: EstateForger,
     deployer: SignerWithAddress,
     params: SafeDepositParams,
     txConfig = {}
@@ -90,44 +244,70 @@ export async function getSafeDepositTx(
 }
 
 export async function getSafeDepositTxByParams(
-    estateForger: EstateForger | MockEstateForger,
+    estateForger: EstateForger,
     deployer: SignerWithAddress,
     params: DepositParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    const currentURI = (await estateForger.getRequest(params.requestId)).estate.uri;
     const safeParams: SafeDepositParams = {
-        requestId: params.requestId,
-        quantity: params.quantity,
-        anchor: ethers.utils.keccak256(ethers.utils.toUtf8Bytes(currentURI)),
+        ...params,
+        anchor: await getSafeDepositAnchor(estateForger, params),
     };
     return await getSafeDepositTx(estateForger, deployer, safeParams, txConfig);
 }
 
+
+// confirm
 export async function getSafeConfirmTx(
-    estateForger: EstateForger | MockEstateForger,
+    estateForger: EstateForger,
     deployer: SignerWithAddress,
     params: SafeConfirmParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    const tx = estateForger.connect(deployer).safeConfirm(
+    return estateForger.connect(deployer).safeConfirm(
         params.requestId,
         params.anchor,
         txConfig,
     );
-    return tx;
 }
 
 export async function getSafeConfirmTxByParams(
-    estateForger: EstateForger | MockEstateForger,
+    estateForger: EstateForger,
     deployer: SignerWithAddress,
     params: ConfirmParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    const currentURI = (await estateForger.getRequest(params.requestId)).estate.uri;
     const safeParams: SafeConfirmParams = {
-        requestId: params.requestId,
-        anchor: ethers.utils.keccak256(ethers.utils.toUtf8Bytes(currentURI)),
+        ...params,
+        anchor: await getSafeConfirmAnchor(estateForger, params),
     };
     return await getSafeConfirmTx(estateForger, deployer, safeParams, txConfig);
+}
+
+
+// withdrawDeposit
+export async function getWithdrawDepositTx(
+    estateForger: EstateForger,
+    deployer: SignerWithAddress,
+    params: WithdrawDepositParams,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    return estateForger.connect(deployer).withdrawDeposit(
+        params.requestId,
+        txConfig
+    );
+}
+
+
+// withdrawEstateToken
+export async function getWithdrawEstateTokenTx(
+    estateForger: EstateForger,
+    deployer: SignerWithAddress,
+    params: WithdrawEstateTokenParams,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    return estateForger.connect(deployer).withdrawEstateToken(
+        params.requestId,
+        txConfig
+    );
 }

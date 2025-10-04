@@ -1,29 +1,23 @@
-import { Wallet } from "ethers";
-import { RequestExtractionParams } from "@utils/models/land/estateLiquidator";
+import {ContractTransaction, Wallet} from "ethers";
+import {
+    ConcludeParams,
+    RequestExtractionParams,
+    RequestExtractionParamsInput
+} from "@utils/models/land/estateLiquidator";
 import { EstateLiquidator, EstateToken, GovernanceHub } from "@typechain-types";
 import { MockValidator } from "@utils/mockValidator";
 import { getRequestExtractionValidation } from "@utils/validation/land/estateLiquidator";
+import {SignerWithAddress} from "@nomiclabs/hardhat-ethers/signers";
 
+
+// requestExtraction
 export async function getRequestExtractionTx(
     estateLiquidator: EstateLiquidator,
-    estateToken: EstateToken,
-    governanceHub: GovernanceHub,
-    validator: MockValidator,
+    signer: SignerWithAddress,
     params: RequestExtractionParams,
-    signer: Wallet,
-    timestamp: number,
     txConfig = {},
 ) {
-    const validation = await getRequestExtractionValidation(
-        estateToken as any,
-        estateLiquidator as any,
-        governanceHub as any,
-        validator,
-        timestamp,
-        params,
-    )
-
-    return await estateLiquidator.connect(signer).requestExtraction(
+    return estateLiquidator.connect(signer).requestExtraction(
         params.estateId,
         params.buyer,
         params.value,
@@ -31,7 +25,45 @@ export async function getRequestExtractionTx(
         params.feeRate,
         params.uuid,
         params.admissionExpiry,
-        validation,
+        params.validation,
+        txConfig,
+    );
+}
+
+export async function getRequestExtractionTxByInput(
+    estateLiquidator: EstateLiquidator,
+    estateToken: EstateToken,
+    governanceHub: GovernanceHub,
+    validator: MockValidator,
+    paramsInput: RequestExtractionParamsInput,
+    signer: SignerWithAddress,
+    timestamp: number,
+    txConfig = {},
+) {
+    const params: RequestExtractionParams = {
+        ...paramsInput,
+        validation: await getRequestExtractionValidation(
+            estateToken as any,
+            estateLiquidator as any,
+            governanceHub as any,
+            validator,
+            timestamp,
+            paramsInput,
+        )
+    }
+    return await getRequestExtractionTx(estateLiquidator, signer, params, txConfig);
+}
+
+
+// conclude
+export async function getConcludeTx(
+    estateLiquidator: EstateLiquidator,
+    signer: SignerWithAddress,
+    params: ConcludeParams,
+    txConfig = {},
+): Promise<ContractTransaction> {
+    return estateLiquidator.connect(signer).conclude(
+        params.requestId,
         txConfig,
     );
 }
