@@ -143,47 +143,27 @@ describe('2.1. CommissionToken', async () => {
         const fixture = await loadFixture(commissionTokenFixture);
         const { deployer, admin, admins, commissionToken, estateToken, manager, moderator, broker1, broker2, zone1, zone2 } = fixture;
 
-        await callTransaction(getAuthorizeManagersTxByInput(
-            deployer,
-            admins,
-            admin,
-            {
-                accounts: [manager.address],
-                isManager: true
-            }
-        ));
-        await callTransaction(getAuthorizeModeratorsTxByInput(
-            deployer,
-            admins,
-            admin,
-            {
-                accounts: [moderator.address],
-                isModerator: true
-            }
-        ));
+        await callTransaction(getAuthorizeManagersTxByInput(admin, deployer, {
+            accounts: [manager.address],
+            isManager: true
+        }, admins));
+        await callTransaction(getAuthorizeModeratorsTxByInput(admin, deployer, {
+            accounts: [moderator.address],
+            isModerator: true
+        }, admins));
 
         if (!skipDeclareZone) {
             for (const zone of [zone1, zone2]) {
-                await callTransaction(getDeclareZoneTxByInput(
-                    deployer,
-                    admins,
-                    admin,
-                    { zone },
-                ));
+                await callTransaction(getDeclareZoneTxByInput(admin, deployer, {zone}, admins));
             }
 
             if (!skipActivateExecutiveInZone) {
                 for (const zone of [zone1, zone2]) {
-                    await callTransaction(getActivateInTxByInput(
-                        deployer,
-                        admins,
-                        admin,
-                        {
-                            zone,
-                            accounts: [manager.address, moderator.address],
-                            isActive: true
-                        },
-                    ));
+                    await callTransaction(getActivateInTxByInput(admin, deployer, {
+                        zone,
+                        accounts: [manager.address, moderator.address],
+                        isActive: true
+                    }, admins));
                 }
             }
         }
@@ -234,10 +214,10 @@ describe('2.1. CommissionToken', async () => {
 
         if (pause) {
             await callTransaction(getPauseTxByInput(
+                commissionToken,
                 deployer,
                 admins,
                 admin,
-                commissionToken,
             ));
         }
 
@@ -717,16 +697,11 @@ describe('2.1. CommissionToken', async () => {
 
             const { deployer, commissionToken, manager, zone1, admin, admins } = fixture;
 
-            await callTransaction(getActivateInTxByInput(
-                deployer,
-                admins,
-                admin,
-                {
-                    zone: zone1,
-                    accounts: [manager.address],
-                    isActive: false,
-                },
-            ))
+            await callTransaction(getActivateInTxByInput(admin, deployer, {
+                zone: zone1,
+                accounts: [manager.address],
+                isActive: false,
+            }, admins))
 
             const { defaultParams: params } = await beforeRegisterBrokerTest(fixture);
 
@@ -869,16 +844,11 @@ describe('2.1. CommissionToken', async () => {
 
             const { deployer, commissionToken, manager, zone1, admin, admins } = fixture;
 
-            await callTransaction(getActivateInTxByInput(
-                deployer,
-                admins,
-                admin,
-                {
-                    zone: zone1,
-                    accounts: [manager.address],
-                    isActive: false,
-                },
-            ))
+            await callTransaction(getActivateInTxByInput(admin, deployer, {
+                zone: zone1,
+                accounts: [manager.address],
+                isActive: false,
+            }, admins))
 
             const { defaultParams: params } = await beforeActivateBrokerTest(fixture);
 

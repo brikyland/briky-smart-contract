@@ -15,8 +15,8 @@ import {
 
 // authorizeProviders
 export async function getAuthorizeProviderTx(
-    deployer: any,
     reserveVault: ReserveVault,
+    deployer: any,
     params: AuthorizeProviderParams,
     txConfig = {},
 ) {
@@ -29,26 +29,26 @@ export async function getAuthorizeProviderTx(
 }
 
 export async function getAuthorizeProviderTxByInput(
+    reserveVault: ReserveVault,
     deployer: any,
+    paramsInput: AuthorizeProviderParamsInput,
     admins: any[],
     admin: Admin,
-    reserveVault: ReserveVault,
-    paramsInput: AuthorizeProviderParamsInput,
     txConfig = {},
 ) {
     const params: AuthorizeProviderParams = {
         ...paramsInput,
-        signatures: await getAuthorizeProviderSignatures(admins, admin, reserveVault, paramsInput),
+        signatures: await getAuthorizeProviderSignatures(reserveVault, paramsInput, admins, admin),
     };
 
-    return await getAuthorizeProviderTx(deployer, reserveVault, params, txConfig);
+    return await getAuthorizeProviderTx(reserveVault, deployer, params, txConfig);
 }
 
 
 // openFund
 export async function getOpenFundTx(
-    deployer: any,
     reserveVault: ReserveVault,
+    deployer: any,
     params: OpenFundParams,
     txConfig = {},
 ) {
@@ -62,8 +62,8 @@ export async function getOpenFundTx(
 }
 
 export async function getCallOpenFundTx(
-    caller: ProxyCaller,
     reserveVault: ReserveVault,
+    caller: ProxyCaller,
     params: OpenFundParams,
     txConfig = {},
 ) {
@@ -81,22 +81,9 @@ export async function getCallOpenFundTx(
 
 
 // expandFund
-export async function getExpandFundTx(
-    deployer: any,
-    reserveVault: ReserveVault,
-    params: ExpandFundParams,
-    txConfig = {},
-) {
-    return await reserveVault.connect(deployer).expandFund(
-        params.fundId,
-        params.quantity,
-        txConfig
-    );
-}
-
 export async function getCallExpandFundTx(
-    caller: ProxyCaller,
     reserveVault: ReserveVault,
+    caller: ProxyCaller,
     params: ExpandFundParams,
     txConfig = {},
 ) {
@@ -112,21 +99,9 @@ export async function getCallExpandFundTx(
 
 
 // provideFund
-export async function getProvideFundTx(
-    deployer: any,
-    reserveVault: ReserveVault,
-    params: ProvideFundParams,
-    txConfig = {},
-) {
-    return await reserveVault.connect(deployer).provideFund(
-        params.fundId,
-        txConfig
-    );
-}
-
 export async function getCallProvideFundTx(
-    caller: ProxyCaller,
     reserveVault: ReserveVault,
+    caller: ProxyCaller,
     params: ProvideFundParams,
     txConfig = {},
 ) {
@@ -141,23 +116,9 @@ export async function getCallProvideFundTx(
 
 
 // withdrawFund
-export async function getWithdrawFundTx(
-    deployer: any,
-    reserveVault: ReserveVault,
-    params: WithdrawFundParams,
-    txConfig = {},
-) {
-    return await reserveVault.connect(deployer).withdrawFund(
-        params.fundId,
-        params.receiver,
-        params.quantity,
-        txConfig
-    );
-}
-
 export async function getCallWithdrawFundTx(
-    caller: ProxyCaller,
     reserveVault: ReserveVault,
+    caller: ProxyCaller,
     params: WithdrawFundParams,
     txConfig = {},
 ) {

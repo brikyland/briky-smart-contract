@@ -14,10 +14,10 @@ import { RATES_SCHEMA } from "@utils/models/common/common";
 
 // updatePriceFeeds
 export async function getUpdatePriceFeedsSignatures(
-    admins: any[],
-    admin: Admin,
     priceWatcher: PriceWatcher,
     paramsInput: UpdatePriceFeedsParamsInput,
+    admins: any[],
+    admin: Admin,
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
@@ -30,10 +30,10 @@ export async function getUpdatePriceFeedsSignatures(
 
 // updateDefaultRates
 export async function getUpdateDefaultRatesSignatures(
-    admins: any[],
-    admin: Admin,
     priceWatcher: PriceWatcher,
     paramsInput: UpdateDefaultRatesParamsInput,
+    admins: any[],
+    admin: Admin,
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(

@@ -25,7 +25,7 @@ import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/re
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { WithdrawParams, WithdrawParamsInput } from '@utils/models/common/feeReceiver';
 import { getWithdrawSignatures } from '@utils/signatures/common/feeReceiver';
-import { getWithdrawTx } from '@utils/transaction/common/feeReceiver';
+import {getWithdrawTx, getWithdrawTxByInput} from '@utils/transaction/common/feeReceiver';
 
 interface FeeReceiverFixture {
     deployer: any;
@@ -113,11 +113,7 @@ describe('1.5. FeeReceiver', async () => {
                 currencies: [ethers.constants.AddressZero],
                 values: [BigNumber.from(1200)],
             };
-            const params1: WithdrawParams = {
-                ...paramsInput1,
-                signatures: await getWithdrawSignatures(admins, admin, feeReceiver, paramsInput1),
-            };
-            const tx1 = await getWithdrawTx(deployer, feeReceiver, params1);
+            const tx1 = await getWithdrawTxByInput(feeReceiver, deployer, paramsInput1, admins, admin);
             await tx1.wait();
 
             await expect(tx1).to
@@ -143,11 +139,7 @@ describe('1.5. FeeReceiver', async () => {
                 currencies: [ethers.constants.AddressZero],
                 values: [BigNumber.from(3800)],
             };
-            const params2: WithdrawParams = {
-                ...paramsInput2,
-                signatures: await getWithdrawSignatures(admins, admin, feeReceiver, paramsInput2),
-            };
-            const tx2 = await getWithdrawTx(deployer, feeReceiver, params2);
+            const tx2 = await getWithdrawTxByInput(feeReceiver, deployer, paramsInput2, admins, admin);
             await tx2.wait();
 
             await expect(tx2).to
@@ -179,11 +171,7 @@ describe('1.5. FeeReceiver', async () => {
                 currencies: [currency1.address, currency2.address],
                 values: [BigNumber.from(700), ethers.constants.MaxUint256],
             };
-            const params1: WithdrawParams = {
-                ...paramsInput1,
-                signatures: await getWithdrawSignatures(admins, admin, feeReceiver, paramsInput1),
-            };
-            const tx = await getWithdrawTx(deployer, feeReceiver, params1);
+            const tx = await getWithdrawTxByInput(feeReceiver, deployer, paramsInput1, admins, admin);
             await tx.wait();
 
             await expect(tx).to
@@ -221,11 +209,7 @@ describe('1.5. FeeReceiver', async () => {
                 currencies: currencies,
                 values: amounts,
             };
-            const params: WithdrawParams = {
-                ...paramsInput,
-                signatures: await getWithdrawSignatures(admins, admin, feeReceiver, paramsInput),
-            };
-            const tx = await getWithdrawTx(deployer, feeReceiver, params);
+            const tx = await getWithdrawTxByInput(feeReceiver, deployer, paramsInput, admins, admin);
             await tx.wait();
 
             await expect(tx).to
@@ -253,11 +237,7 @@ describe('1.5. FeeReceiver', async () => {
                 currencies: [ethers.constants.AddressZero],
                 values: [BigNumber.from(1000)],
             };
-            const params: WithdrawParams = {
-                ...paramsInput,
-                signatures: await getWithdrawSignatures(admins, admin, feeReceiver, paramsInput),
-            };
-            const tx = await getWithdrawTx(deployer, feeReceiver, params);
+            const tx = await getWithdrawTxByInput(feeReceiver, deployer, paramsInput, admins, admin);
             await tx.wait();
 
             await expect(tx).to.be.revertedWithCustomError(admin, 'FailedVerification');
@@ -271,12 +251,7 @@ describe('1.5. FeeReceiver', async () => {
                 currencies: [ethers.constants.AddressZero],
                 values: [BigNumber.from(1000)],
             };
-            const params: WithdrawParams = {
-                ...paramsInput,
-                signatures: await getWithdrawSignatures(admins, admin, feeReceiver, paramsInput),
-            };
-
-            await expect(getWithdrawTx(deployer, feeReceiver, params))
+            await expect(getWithdrawTxByInput(feeReceiver, deployer, paramsInput, admins, admin))
                 .to.be.revertedWithCustomError(feeReceiver, 'FailedTransfer');
         });
 
@@ -288,12 +263,7 @@ describe('1.5. FeeReceiver', async () => {
                 currencies: [currency1.address],
                 values: [BigNumber.from(1000)],
             };
-            const params: WithdrawParams = {
-                ...paramsInput,
-                signatures: await getWithdrawSignatures(admins, admin, feeReceiver, paramsInput),
-            };
-
-            await expect(getWithdrawTx(deployer, feeReceiver, params))
+            await expect(getWithdrawTxByInput(feeReceiver, deployer, paramsInput, admins, admin))
                 .to.be.revertedWith('ERC20: transfer amount exceeds balance');
         });
 
@@ -312,12 +282,7 @@ describe('1.5. FeeReceiver', async () => {
                 currencies: [ethers.constants.AddressZero],
                 values: [BigNumber.from(1000)],
             };
-            const params: WithdrawParams = {
-                ...paramsInput,
-                signatures: await getWithdrawSignatures(admins, admin, feeReceiver, paramsInput),
-            };
-
-            await expect(getWithdrawTx(deployer, feeReceiver, params))
+            await expect(getWithdrawTxByInput(feeReceiver, deployer, paramsInput, admins, admin))
                 .to.be.revertedWithCustomError(feeReceiver, 'FailedTransfer');
         });
 

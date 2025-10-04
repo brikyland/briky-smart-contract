@@ -3,6 +3,7 @@ import { MockValidator } from "@utils/mockValidator";
 import { ConfirmParams, DepositParams, RequestTokenizationParams, SafeConfirmParams, SafeDepositParams, UpdateRequestAgendaParams, UpdateRequestEstateURIParams } from "@utils/models/land/estateForger";
 import { getRequestTokenizationValidation, getUpdateRequestEstateURIValidation } from "@utils/validation/land/estateForger";
 import { ContractTransaction, ethers } from "ethers";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 export async function getRequestTokenizationTx(
     estateForger: EstateForger | MockEstateForger,

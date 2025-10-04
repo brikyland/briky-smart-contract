@@ -7,8 +7,8 @@ import { AirdropParams } from "@utils/models/common/airdrop";
 
 // airdrop
 export async function getAirdropTx(
-    signer: SignerWithAddress,
     airdrop: Airdrop,
+    signer: SignerWithAddress,
     params: AirdropParams,
     txConfig = {}
 ) {

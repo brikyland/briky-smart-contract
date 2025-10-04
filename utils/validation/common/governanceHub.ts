@@ -1,23 +1,24 @@
-import { time } from '@nomicfoundation/hardhat-network-helpers';
-import { MockValidator } from '@utils/mockValidator';
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { 
-    ProposeParamsInput,
+import {time} from '@nomicfoundation/hardhat-network-helpers';
+import {MockValidator} from '@utils/mockValidator';
+import {SignerWithAddress} from '@nomiclabs/hardhat-ethers/signers';
+import {
     AdmitParamsInput,
+    ConcludeExecutionParamsInput,
     DisqualifyParamsInput,
     LogExecutionParamsInput,
-    ConcludeExecutionParamsInput
+    ProposeParamsInput
 } from '@utils/models/common/governanceHub';
-import { Validation } from '@utils/models/common/validatable';
-import { Wallet, Contract } from 'ethers';
-import { ethers } from 'hardhat';
+import {GovernanceHub} from "@typechain-types";
+import {Validation} from '@utils/models/common/validatable';
+import {Contract, Wallet} from 'ethers';
+import {ethers} from 'hardhat';
 
 
 // propose
 export async function getProposeValidation(
-    validator: MockValidator,
-    governanceHub: Contract,
+    governanceHub: GovernanceHub,
     params: ProposeParamsInput,
+    validator: MockValidator,
     operator: SignerWithAddress | Wallet | Contract,
     isValid: boolean = true
 ): Promise<Validation> {
@@ -28,19 +29,17 @@ export async function getProposeValidation(
         [params.governor, params.tokenId, operator.address, params.uuid, params.operator, params.rule, params.quorumRate, params.duration, params.admissionExpiry]
     );
 
-    const validation = isValid
+    return isValid
         ? await validator.getValidation(governanceHub, content, expiry)
         : await validator.getInvalidValidation(governanceHub, content, expiry);
-
-    return validation;
 }
 
 
 // admit
 export async function getAdmitValidation(
-    validator: MockValidator,
-    governanceHub: Contract,
+    governanceHub: GovernanceHub,
     params: AdmitParamsInput,
+    validator: MockValidator,
     isValid: boolean = true
 ): Promise<Validation> {
     const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
@@ -50,19 +49,17 @@ export async function getAdmitValidation(
         [params.proposalId, params.contextURI, params.reviewURI, params.currency]
     );
 
-    const validation = isValid
+    return isValid
         ? await validator.getValidation(governanceHub, content, expiry)
         : await validator.getInvalidValidation(governanceHub, content, expiry);
-
-    return validation;
 }
 
 
 // disqualify
 export async function getDisqualifyValidation(
-    validator: MockValidator,
-    governanceHub: Contract,
+    governanceHub: GovernanceHub,
     params: DisqualifyParamsInput,
+    validator: MockValidator,
     isValid: boolean = true
 ): Promise<Validation> {
     const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
@@ -72,19 +69,17 @@ export async function getDisqualifyValidation(
         [params.proposalId, params.contextURI, params.reviewURI]
     );
 
-    const validation = isValid
+    return isValid
         ? await validator.getValidation(governanceHub, content, expiry)
         : await validator.getInvalidValidation(governanceHub, content, expiry);
-
-    return validation;
 }
 
 
 // logExecution
 export async function getLogExecutionValidation(
-    validator: MockValidator,
-    governanceHub: Contract,
+    governanceHub: GovernanceHub,
     params: LogExecutionParamsInput,
+    validator: MockValidator,
     isValid: boolean = true
 ): Promise<Validation> {
     const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
@@ -94,19 +89,17 @@ export async function getLogExecutionValidation(
         [params.proposalId, params.logURI]
     );
 
-    const validation = isValid
+    return isValid
         ? await validator.getValidation(governanceHub, content, expiry)
         : await validator.getInvalidValidation(governanceHub, content, expiry);
-
-    return validation;
 }
 
 
 // concludeExecution
 export async function getConcludeExecutionValidation(
-    validator: MockValidator,
     governanceHub: Contract,
     params: ConcludeExecutionParamsInput,
+    validator: MockValidator,
     isValid: boolean = true
 ): Promise<Validation> {
     const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
@@ -116,9 +109,7 @@ export async function getConcludeExecutionValidation(
         [params.proposalId, params.logURI, params.isSuccessful]
     );
 
-    const validation = isValid
+    return isValid
         ? await validator.getValidation(governanceHub, content, expiry)
         : await validator.getInvalidValidation(governanceHub, content, expiry);
-
-    return validation;
 }

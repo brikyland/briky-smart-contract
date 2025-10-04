@@ -1,11 +1,15 @@
-import { time } from "@nomicfoundation/hardhat-network-helpers";
-import { MockValidator } from "@utils/mockValidator";
-import { RegisterSellerInParams, RequestTokenizationParams, UpdateRequestEstateURIParams } from "@utils/models/land/estateForger";
-import { Contract } from "ethers";
-import { ethers } from 'hardhat';
+import {time} from "@nomicfoundation/hardhat-network-helpers";
+import {MockValidator} from "@utils/mockValidator";
+import {
+    RegisterSellerInParams,
+    RequestTokenizationParams,
+    UpdateRequestEstateURIParams
+} from "@utils/models/land/estateForger";
+import {ethers} from 'hardhat';
+import {EstateForger} from "@typechain-types";
 
 export async function getRegisterSellerInValidation(
-    estateForger: Contract,
+    estateForger: EstateForger,
     validator: MockValidator,
     params: RegisterSellerInParams
 ) {
@@ -15,12 +19,11 @@ export async function getRegisterSellerInValidation(
     );
     const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
 
-    const validation = await validator.getValidation(estateForger, content, expiry);
-    return validation;
+    return await validator.getValidation(estateForger, content, expiry);
 }
 
 export async function getRegisterSellerInInvalidValidation(
-    estateForger: Contract,
+    estateForger: EstateForger,
     validator: MockValidator,
     params: RegisterSellerInParams
 ) {
@@ -30,12 +33,11 @@ export async function getRegisterSellerInInvalidValidation(
     );
     const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
 
-    const validation = await validator.getInvalidValidation(estateForger, content, expiry);
-    return validation;
+    return await validator.getInvalidValidation(estateForger, content, expiry);
 }
 
 export async function getRequestTokenizationValidation(
-    estateForger: Contract,
+    estateForger: EstateForger,
     validator: MockValidator,
     params: RequestTokenizationParams
 ) {
@@ -45,12 +47,11 @@ export async function getRequestTokenizationValidation(
     );
     const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
 
-    const validation = await validator.getValidation(estateForger, content, expiry);
-    return validation;
+    return await validator.getValidation(estateForger, content, expiry);
 }
 
 export async function getRequestTokenizationInvalidValidation(
-    estateForger: Contract,
+    estateForger: EstateForger,
     validator: MockValidator,
     params: RequestTokenizationParams
 ) {
@@ -60,12 +61,11 @@ export async function getRequestTokenizationInvalidValidation(
     );
     const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
 
-    const validation = await validator.getInvalidValidation(estateForger, content, expiry);
-    return validation;
+    return await validator.getInvalidValidation(estateForger, content, expiry);
 }
 
 export async function getUpdateRequestEstateURIValidation(
-    estateForger: Contract,
+    estateForger: EstateForger,
     validator: MockValidator,
     params: UpdateRequestEstateURIParams
 ) {
@@ -74,12 +74,11 @@ export async function getUpdateRequestEstateURIValidation(
         [params.requestId, params.uri]
     );
     const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
-    const validation = await validator.getValidation(estateForger, content, expiry);
-    return validation;
+    return await validator.getValidation(estateForger, content, expiry);
 }
 
 export async function getUpdateRequestEstateURIInvalidValidation(
-    estateForger: Contract,
+    estateForger: EstateForger,
     validator: MockValidator,
     params: UpdateRequestEstateURIParams
 ) {
@@ -88,6 +87,5 @@ export async function getUpdateRequestEstateURIInvalidValidation(
         [params.requestId, params.uri]
     );
     const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
-    const validation = await validator.getInvalidValidation(estateForger, content, expiry);
-    return validation;
+    return await validator.getInvalidValidation(estateForger, content, expiry);
 }

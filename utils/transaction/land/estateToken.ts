@@ -10,7 +10,7 @@ import { getSafeDeprecateEstateAnchor, getSafeExtendEstateExpirationAnchor, getS
 
 // updateCommissionToken
 export async function getUpdateCommissionTokenTx(
-    estateToken: EstateToken | MockEstateToken,
+    estateToken: EstateToken,
     deployer: SignerWithAddress,
     params: UpdateCommissionTokenParams,
     txConfig = {}
@@ -23,7 +23,7 @@ export async function getUpdateCommissionTokenTx(
 }
 
 export async function getUpdateCommissionTokenTxByInput(
-    estateToken: EstateToken | MockEstateToken,
+    estateToken: EstateToken,
     deployer: SignerWithAddress,
     paramsInput: UpdateCommissionTokenParamsInput,
     admins: any[],
@@ -40,7 +40,7 @@ export async function getUpdateCommissionTokenTxByInput(
 
 // updateBaseURI
 export async function getUpdateBaseURITx(
-    estateToken: EstateToken | MockEstateToken,
+    estateToken: EstateToken,
     deployer: SignerWithAddress,
     params: UpdateBaseURIParams,
     txConfig = {}
@@ -53,7 +53,7 @@ export async function getUpdateBaseURITx(
 }
 
 export async function getUpdateBaseURITxByInput(
-    estateToken: EstateToken | MockEstateToken,
+    estateToken: EstateToken,
     deployer: SignerWithAddress,
     paramsInput: UpdateBaseURIParamsInput,
     admins: any[],
@@ -70,7 +70,7 @@ export async function getUpdateBaseURITxByInput(
 
 // authorizeTokenizers
 export async function getAuthorizeTokenizersTx(
-    estateToken: EstateToken | MockEstateToken,
+    estateToken: EstateToken,
     deployer: SignerWithAddress,
     params: AuthorizeTokenizersParams,
     txConfig = {}
@@ -84,7 +84,7 @@ export async function getAuthorizeTokenizersTx(
 }
 
 export async function getAuthorizeTokenizersTxByInput(
-    estateToken: EstateToken | MockEstateToken,
+    estateToken: EstateToken,
     deployer: SignerWithAddress,
     paramsInput: AuthorizeTokenizersParamsInput,
     admins: any[],
@@ -101,7 +101,7 @@ export async function getAuthorizeTokenizersTxByInput(
 
 // authorizeExtractors
 export async function getAuthorizeExtractorsTx(
-    estateToken: EstateToken | MockEstateToken,
+    estateToken: EstateToken,
     deployer: SignerWithAddress,
     params: AuthorizeExtractorsParams,
     txConfig = {}
@@ -115,7 +115,7 @@ export async function getAuthorizeExtractorsTx(
 }
 
 export async function getAuthorizeExtractorsTxByInput(
-    estateToken: EstateToken | MockEstateToken,
+    estateToken: EstateToken,
     deployer: SignerWithAddress,
     paramsInput: AuthorizeExtractorsParamsInput,
     admins: any[],
@@ -132,7 +132,7 @@ export async function getAuthorizeExtractorsTxByInput(
 
 // updateZoneRoyaltyRate
 export async function getUpdateZoneRoyaltyRateTx(
-    estateToken: EstateToken | MockEstateToken,
+    estateToken: EstateToken,
     deployer: SignerWithAddress,
     params: UpdateZoneRoyaltyRateParams,
     txConfig = {}
@@ -146,7 +146,7 @@ export async function getUpdateZoneRoyaltyRateTx(
 }
 
 export async function getUpdateZoneRoyaltyRateTxByInput(
-    estateToken: EstateToken | MockEstateToken,
+    estateToken: EstateToken,
     deployer: SignerWithAddress,
     paramsInput: UpdateZoneRoyaltyRateParamsInput,
     admins: any[],
@@ -163,7 +163,7 @@ export async function getUpdateZoneRoyaltyRateTxByInput(
 
 // registerCustodian
 export async function getRegisterCustodianTx(
-    estateToken: EstateToken | MockEstateToken,
+    estateToken: EstateToken,
     deployer: SignerWithAddress,
     params: RegisterCustodianParams,
     txConfig = {}
@@ -179,7 +179,7 @@ export async function getRegisterCustodianTx(
 
 
 export async function getRegisterCustodianTxByInput(
-    estateToken: EstateToken | MockEstateToken,
+    estateToken: EstateToken,
     deployer: SignerWithAddress,
     paramsInput: RegisterCustodianParamsInput,
     validator: MockValidator,
@@ -195,7 +195,7 @@ export async function getRegisterCustodianTxByInput(
 
 // tokenizeEstate
 export async function getCallTokenizeEstateTx(
-    estateToken: EstateToken | MockEstateToken,
+    estateToken: EstateToken,
     proxyCaller: any,
     params: TokenizeEstateParams
 ): Promise<ContractTransaction> {
@@ -217,7 +217,7 @@ export async function getCallTokenizeEstateTx(
 
 // extractEstate
 export async function getCallExtractEstateTx(
-    estateToken: EstateToken | MockEstateToken,
+    estateToken: EstateToken,
     caller: ProxyCaller,
     params: ExtractEstateParams,
     txConfig = {}
@@ -235,7 +235,7 @@ export async function getCallExtractEstateTx(
 
 // safeDeprecateEstate
 export async function getSafeDeprecateEstateTx(
-    estateToken: EstateToken | MockEstateToken,
+    estateToken: EstateToken,
     deployer: SignerWithAddress,
     params: SafeDeprecateEstateParams,
     txConfig = {}
@@ -250,7 +250,7 @@ export async function getSafeDeprecateEstateTx(
 }
 
 export async function getSafeDeprecateEstateTxByParams(
-    estateToken: EstateToken | MockEstateToken,
+    estateToken: EstateToken,
     deployer: SignerWithAddress,
     paramsInput: DeprecateEstateParams,
     txConfig = {}
@@ -265,7 +265,7 @@ export async function getSafeDeprecateEstateTxByParams(
 
 // safeExtendEstateExpiration
 export async function getSafeExtendEstateExpirationTx(
-    estateToken: EstateToken | MockEstateToken,
+    estateToken: EstateToken,
     deployer: SignerWithAddress,
     params: SafeExtendEstateExpirationParams,
     txConfig = {}
@@ -280,7 +280,7 @@ export async function getSafeExtendEstateExpirationTx(
 }
 
 export async function getSafeExtendEstateExpirationTxByParams(
-    estateToken: EstateToken | MockEstateToken,
+    estateToken: EstateToken,
     deployer: SignerWithAddress,
     params: ExtendEstateExpirationParams,
     txConfig = {}
@@ -295,7 +295,7 @@ export async function getSafeExtendEstateExpirationTxByParams(
 
 // safeUpdateEstateCustodian
 export async function getSafeUpdateEstateCustodianTx(
-    estateToken: EstateToken | MockEstateToken,
+    estateToken: EstateToken,
     deployer: SignerWithAddress,
     params: SafeUpdateEstateCustodianParams,
     txConfig = {}
@@ -310,7 +310,7 @@ export async function getSafeUpdateEstateCustodianTx(
 }
 
 export async function getSafeUpdateEstateCustodianTxByParams(
-    estateToken: EstateToken | MockEstateToken,
+    estateToken: EstateToken,
     deployer: SignerWithAddress,
     params: UpdateEstateCustodianParams,
     txConfig = {}
@@ -325,7 +325,7 @@ export async function getSafeUpdateEstateCustodianTxByParams(
 
 // safeUpdateEstateURI
 export async function getSafeUpdateEstateURITx(
-    estateToken: EstateToken | MockEstateToken,
+    estateToken: EstateToken,
     deployer: SignerWithAddress,
     params: SafeUpdateEstateURIParams,
     txConfig = {}
@@ -341,7 +341,7 @@ export async function getSafeUpdateEstateURITx(
 }
 
 export async function getSafeUpdateEstateURITxByInput(
-    estateToken: EstateToken | MockEstateToken,
+    estateToken: EstateToken,
     deployer: SignerWithAddress,
     paramsInput: UpdateEstateURIParamsInput,
     validator: MockValidator,

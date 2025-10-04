@@ -35,8 +35,8 @@ import { getSafeContributeBudgetAnchor, getSafeVoteAnchor } from "@utils/anchor/
 
 // updateFee
 export async function getUpdateFeeTx(
-    signer: SignerWithAddress,
     governanceHub: GovernanceHub,
+    signer: SignerWithAddress,
     params: UpdateFeeParams,
     txConfig = {},
 ) {
@@ -48,26 +48,26 @@ export async function getUpdateFeeTx(
 }
 
 export async function getUpdateFeeTxByInput(
+    governanceHub: GovernanceHub,
     signer: SignerWithAddress,
+    paramsInput: UpdateFeeParamsInput,
     admins: any[],
     admin: Admin,
-    governanceHub: GovernanceHub,
-    paramsInput: UpdateFeeParamsInput,
     txConfig = {},
 ) {
     const params: UpdateFeeParams = {
         ...paramsInput,
-        signatures: await getUpdateFeeSignatures(admins, admin, governanceHub, paramsInput),
+        signatures: await getUpdateFeeSignatures(governanceHub, paramsInput, admins, admin),
     };
 
-    return await getUpdateFeeTx(signer, governanceHub, params, txConfig);
+    return await getUpdateFeeTx(governanceHub, signer, params, txConfig);
 }
 
 
 // propose
 export async function getProposeTx(
-    signer: SignerWithAddress,
     governanceHub: GovernanceHub,
+    signer: SignerWithAddress,
     params: ProposeParams,
     txConfig = {},
 ) {
@@ -86,23 +86,23 @@ export async function getProposeTx(
 }
 
 export async function getProposeTxByInput(
-    signer: SignerWithAddress,
-    validator: MockValidator,
     governanceHub: GovernanceHub,
+    signer: SignerWithAddress,
     paramsInput: ProposeParamsInput,
+    validator: MockValidator,
     txConfig = {},
 ) {
     const params: ProposeParams = {
         ...paramsInput,
-        validation: await getProposeValidation(validator, governanceHub, paramsInput, signer)
+        validation: await getProposeValidation(governanceHub, paramsInput, validator, signer)
     };
 
-    return await getProposeTx(signer, governanceHub, params, txConfig);
+    return await getProposeTx(governanceHub, signer, params, txConfig);
 }
 
 export async function getCallProposeTx(
-    caller: ProxyCaller,
     governanceHub: GovernanceHub,
+    caller: ProxyCaller,
     params: ProposeParams,
     txConfig = {},
 ) {
@@ -124,25 +124,25 @@ export async function getCallProposeTx(
 }
 
 export async function getCallProposeTxByInput(
-    caller: ProxyCaller,
-    validator: MockValidator,
     governanceHub: GovernanceHub,
+    caller: ProxyCaller,
     paramsInput: ProposeParamsInput,
+    validator: MockValidator,
     txConfig = {},
 ) {
     const params: ProposeParams = {
         ...paramsInput,
-        validation: await getProposeValidation(validator, governanceHub, paramsInput, caller)
+        validation: await getProposeValidation(governanceHub, paramsInput, validator, caller)
     };
 
-    return await getCallProposeTx(caller, governanceHub, params, txConfig);
+    return await getCallProposeTx(governanceHub, caller, params, txConfig);
 }
 
 
 // admit
 export async function getAdmitTx(
-    signer: SignerWithAddress,
     governanceHub: GovernanceHub,
+    signer: SignerWithAddress,
     params: AdmitParams,
     txConfig = {},
 ) {
@@ -157,25 +157,25 @@ export async function getAdmitTx(
 }
 
 export async function getAdmitTxByInput(
-    signer: SignerWithAddress,
-    validator: MockValidator,
     governanceHub: GovernanceHub,
+    signer: SignerWithAddress,
     paramsInput: AdmitParamsInput,
+    validator: MockValidator,
     txConfig = {},
 ) {
     const params: AdmitParams = {
         ...paramsInput,
-        validation: await getAdmitValidation(validator, governanceHub, paramsInput)
+        validation: await getAdmitValidation(governanceHub, paramsInput, validator)
     };
 
-    return await getAdmitTx(signer, governanceHub, params, txConfig);
+    return await getAdmitTx(governanceHub, signer, params, txConfig);
 }
 
 
 // disqualify
 export async function getDisqualifyTx(
-    signer: SignerWithAddress,
     governanceHub: GovernanceHub,
+    signer: SignerWithAddress,
     params: DisqualifyParams,
     txConfig = {},
 ) {
@@ -189,24 +189,24 @@ export async function getDisqualifyTx(
 }
 
 export async function getDisqualifyTxByInput(
-    signer: SignerWithAddress,
-    validator: MockValidator,
     governanceHub: GovernanceHub,
+    signer: SignerWithAddress,
     paramsInput: DisqualifyParamsInput,
+    validator: MockValidator,
     txConfig = {},
 ) {
     const params: DisqualifyParams = {
         ...paramsInput,
-        validation: await getDisqualifyValidation(validator, governanceHub, paramsInput)
+        validation: await getDisqualifyValidation(governanceHub, paramsInput, validator)
     };
-    return await getDisqualifyTx(signer, governanceHub, params, txConfig);
+    return await getDisqualifyTx(governanceHub, signer, params, txConfig);
 }
 
 
 // vote
 export async function getVoteTx(
-    signer: SignerWithAddress,
     governanceHub: GovernanceHub,
+    signer: SignerWithAddress,
     params: VoteParams,
     txConfig = {},
 ) {
@@ -220,8 +220,8 @@ export async function getVoteTx(
 
 // safeVote
 export async function getSafeVoteTx(
-    signer: SignerWithAddress,
     governanceHub: GovernanceHub,
+    signer: SignerWithAddress,
     params: SafeVoteParams,
     txConfig = {},
 ) {
@@ -233,9 +233,9 @@ export async function getSafeVoteTx(
     );
 }
 
-export async function getSafeVoteTxByInput(
-    signer: SignerWithAddress,
+export async function getSafeVoteTxByParams(
     governanceHub: GovernanceHub,
+    signer: SignerWithAddress,
     paramsInput: VoteParams,
     txConfig = {},
 ) {
@@ -243,14 +243,14 @@ export async function getSafeVoteTxByInput(
         ...paramsInput,
         anchor: await getSafeVoteAnchor(governanceHub, paramsInput)
     };
-    return await getSafeVoteTx(signer, governanceHub, params, txConfig);
+    return await getSafeVoteTx(governanceHub, signer, params, txConfig);
 }
 
 
 // contributeBudget
 export async function getContributeBudgetTx(
-    signer: SignerWithAddress,
     governanceHub: GovernanceHub,
+    signer: SignerWithAddress,
     params: ContributeBudgetParams,
     txConfig = {},
 ) {
@@ -264,8 +264,8 @@ export async function getContributeBudgetTx(
 
 // safeContributeBudget
 export async function getSafeContributeBudgetTx(
-    signer: SignerWithAddress,
     governanceHub: GovernanceHub,
+    signer: SignerWithAddress,
     params: SafeContributeBudgetParams,
     txConfig = {},
 ) {
@@ -278,8 +278,8 @@ export async function getSafeContributeBudgetTx(
 }
 
 export async function getSafeContributeBudgetTxByInput(
-    signer: SignerWithAddress,
     governanceHub: GovernanceHub,
+    signer: SignerWithAddress,
     paramsInput: ContributeBudgetParams,
     txConfig = {},
 ) {
@@ -287,14 +287,14 @@ export async function getSafeContributeBudgetTxByInput(
         ...paramsInput,
         anchor: await getSafeContributeBudgetAnchor(governanceHub, paramsInput)
     };
-    return await getSafeContributeBudgetTx(signer, governanceHub, params, txConfig);
+    return await getSafeContributeBudgetTx(governanceHub, signer, params, txConfig);
 }
 
 
 // withdrawBudgetContribution
 export async function getWithdrawBudgetContributionTx(
-    signer: SignerWithAddress,
     governanceHub: GovernanceHub,
+    signer: SignerWithAddress,
     params: WithdrawBudgetContributionParams,
     txConfig = {},
 ) {
@@ -307,8 +307,8 @@ export async function getWithdrawBudgetContributionTx(
 
 // confirm
 export async function getConfirmTx(
-    signer: SignerWithAddress,
     governanceHub: GovernanceHub,
+    signer: SignerWithAddress,
     params: ConfirmParams,
     txConfig = {},
 ) {
@@ -321,8 +321,8 @@ export async function getConfirmTx(
 
 // rejectExecution
 export async function getRejectExecutionTx(
-    signer: SignerWithAddress,
     governanceHub: GovernanceHub,
+    signer: SignerWithAddress,
     params: RejectExecutionParams,
     txConfig = {},
 ) {
@@ -335,8 +335,8 @@ export async function getRejectExecutionTx(
 
 // logExecution
 export async function getLogExecutionTx(
-    signer: SignerWithAddress,
     governanceHub: GovernanceHub,
+    signer: SignerWithAddress,
     params: LogExecutionParams,
     txConfig = {},
 ) {
@@ -349,25 +349,25 @@ export async function getLogExecutionTx(
 }
 
 export async function getLogExecutionTxByInput(
-    signer: SignerWithAddress,
-    validator: MockValidator,
     governanceHub: GovernanceHub,
+    signer: SignerWithAddress,
     paramsInput: LogExecutionParamsInput,
+    validator: MockValidator,
     txConfig = {},
 ) {
     const params: LogExecutionParams = {
         ...paramsInput,
-        validation: await getLogExecutionValidation(validator, governanceHub, paramsInput)
+        validation: await getLogExecutionValidation(governanceHub, paramsInput, validator)
     };
 
-    return await getLogExecutionTx(signer, governanceHub, params, txConfig);
+    return await getLogExecutionTx(governanceHub, signer, params, txConfig);
 }
 
 
 // concludeExecution
 export async function getConcludeExecutionTx(
-    signer: SignerWithAddress,
     governanceHub: GovernanceHub,
+    signer: SignerWithAddress,
     params: ConcludeExecutionParams,
     txConfig = {},
 ) {
@@ -381,16 +381,16 @@ export async function getConcludeExecutionTx(
 }
 
 export async function getConcludeExecutionTxByInput(
-    signer: SignerWithAddress,
-    validator: MockValidator,
     governanceHub: GovernanceHub,
+    signer: SignerWithAddress,
     paramsInput: ConcludeExecutionParamsInput,
+    validator: MockValidator,
     txConfig = {},
 ) {
     const params: ConcludeExecutionParams = {
         ...paramsInput,
-        validation: await getConcludeExecutionValidation(validator, governanceHub, paramsInput)
+        validation: await getConcludeExecutionValidation(governanceHub, paramsInput, validator)
     };
 
-    return await getConcludeExecutionTx(signer, governanceHub, params, txConfig);
+    return await getConcludeExecutionTx(governanceHub, signer, params, txConfig);
 }

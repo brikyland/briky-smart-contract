@@ -35,7 +35,7 @@ export async function getRequestExtractionValidation(
         admissionExpiry: params.admissionExpiry,
     };
 
-    return await getProposeValidation(governanceHub, validator, estateLiquidator, proposeParams);
+    return await getProposeValidation(validator, estateLiquidator, governanceHub, proposeParams);
 }
 
 export async function getRequestExtractionInvalidValidation(

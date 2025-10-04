@@ -26,7 +26,7 @@ export async function getPauseTxByInput(
     txConfig = {}
 ) {
     const params: PauseParams = {
-        signatures: await getPauseSignatures(admins, admin, pausable)
+        signatures: await getPauseSignatures(pausable, admins, admin)
     };
     return await getPauseTx(pausable, signer, params, txConfig);
 }
@@ -53,7 +53,7 @@ export async function getUnpauseTxByInput(
     txConfig = {}
 ) {
     const params: UnpauseParams = {
-        signatures: await getUnpauseSignatures(admins, admin, pausable)
+        signatures: await getUnpauseSignatures(pausable, admins, admin)
     };
     return await getUnpauseTx(pausable, signer, params, txConfig);
 }

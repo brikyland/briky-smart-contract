@@ -10,8 +10,8 @@ import { IssueDividendParams, WithdrawParams } from "@utils/models/common/divide
 
 // issueDividend
 export async function getIssueDividendTx(
-    signer: SignerWithAddress,
     dividendHub: DividendHub,
+    signer: SignerWithAddress,
     params: IssueDividendParams,
     txConfig = {},
 ) {

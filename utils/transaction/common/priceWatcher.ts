@@ -14,8 +14,8 @@ import {
 
 // updatePriceFeeds
 export async function getUpdatePriceFeedsTx(
-    deployer: any,
     priceWatcher: PriceWatcher,
+    deployer: any,
     params: UpdatePriceFeedsParams,
     txConfig = {},
 ) {
@@ -29,25 +29,25 @@ export async function getUpdatePriceFeedsTx(
 }
 
 export async function getUpdatePriceFeedsTxByInput(
+    priceWatcher: PriceWatcher,
     deployer: any,
+    paramsInput: UpdatePriceFeedsParamsInput,
     admins: any[],
     admin: Admin,
-    priceWatcher: PriceWatcher,
-    paramsInput: UpdatePriceFeedsParamsInput,
     txConfig = {},
 ) {
     const params: UpdatePriceFeedsParams = {
         ...paramsInput,
-        signatures: await getUpdatePriceFeedsSignatures(admins, admin, priceWatcher, paramsInput)
+        signatures: await getUpdatePriceFeedsSignatures(priceWatcher, paramsInput, admins, admin)
     };
-    return await getUpdatePriceFeedsTx(deployer, priceWatcher, params, txConfig);
+    return await getUpdatePriceFeedsTx(priceWatcher, deployer, params, txConfig);
 }
 
 
 // updateDefaultRates
 export async function getUpdateDefaultRatesTx(
-    deployer: any,
     priceWatcher: PriceWatcher,
+    deployer: any,
     params: UpdateDefaultRatesParams,
     txConfig = {},
 ) {
@@ -60,16 +60,16 @@ export async function getUpdateDefaultRatesTx(
 }
 
 export async function getUpdateDefaultRatesTxByInput(
+    priceWatcher: PriceWatcher,
     deployer: any,
+    paramsInput: UpdateDefaultRatesParamsInput,
     admins: any[],
     admin: Admin,
-    priceWatcher: PriceWatcher,
-    paramsInput: UpdateDefaultRatesParamsInput,
     txConfig = {},
 ) {
     const params: UpdateDefaultRatesParams = {
         ...paramsInput,
-        signatures: await getUpdateDefaultRatesSignatures(admins, admin, priceWatcher, paramsInput)
+        signatures: await getUpdateDefaultRatesSignatures(priceWatcher, paramsInput, admins, admin)
     };
-    return await getUpdateDefaultRatesTx(deployer, priceWatcher, params, txConfig);
+    return await getUpdateDefaultRatesTx(priceWatcher, deployer, params, txConfig);
 }

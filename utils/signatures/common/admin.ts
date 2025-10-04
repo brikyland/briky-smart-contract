@@ -20,9 +20,9 @@ import {
 
 // transferAdministration1
 export async function getTransferAdministration1Signatures(
-    admins: any[],
     admin: Admin,
     params: TransferAdministration1ParamsInput,
+    admins: any[],
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
@@ -35,9 +35,9 @@ export async function getTransferAdministration1Signatures(
 
 // transferAdministration2
 export async function getTransferAdministration2Signatures(
-    admins: any[],
     admin: Admin,
     params: TransferAdministration2ParamsInput,
+    admins: any[],
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
@@ -50,9 +50,9 @@ export async function getTransferAdministration2Signatures(
 
 // transferAdministration3
 export async function getTransferAdministration3Signatures(
-    admins: any[],
     admin: Admin,
     params: TransferAdministration3ParamsInput,
+    admins: any[],
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
@@ -65,9 +65,9 @@ export async function getTransferAdministration3Signatures(
 
 // transferAdministration4
 export async function getTransferAdministration4Signatures(
-    admins: any[],
     admin: Admin,
     params: TransferAdministration4ParamsInput,
+    admins: any[],
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
@@ -80,9 +80,9 @@ export async function getTransferAdministration4Signatures(
 
 // transferAdministration5
 export async function getTransferAdministration5Signatures(
-    admins: any[],
     admin: Admin,
     params: TransferAdministration5ParamsInput,
+    admins: any[],
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
@@ -95,9 +95,9 @@ export async function getTransferAdministration5Signatures(
 
 // authorizeManagers
 export async function getAuthorizeManagersSignatures(
-    admins: any[],
     admin: Admin,
     params: AuthorizeManagersParamsInput,
+    admins: any[],
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
@@ -110,9 +110,9 @@ export async function getAuthorizeManagersSignatures(
 
 // authorizeModerators
 export async function getAuthorizeModeratorsSignatures(
-    admins: any[],
     admin: Admin,
     params: AuthorizeModeratorsParamsInput,
+    admins: any[],
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
@@ -125,9 +125,9 @@ export async function getAuthorizeModeratorsSignatures(
 
 // authorizeGovernors
 export async function getAuthorizeGovernorsSignatures(
-    admins: any[],
     admin: Admin,
     params: AuthorizeGovernorsParamsInput,
+    admins: any[],
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
@@ -140,9 +140,9 @@ export async function getAuthorizeGovernorsSignatures(
 
 // declareZone
 export async function getDeclareZoneSignatures(
-    admins: any[],
     admin: Admin,
     params: DeclareZoneParamsInput,
+    admins: any[],
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
@@ -155,9 +155,9 @@ export async function getDeclareZoneSignatures(
 
 // activateIn
 export async function getActivateInSignatures(
-    admins: any[],
     admin: Admin,
     params: ActivateInParamsInput,
+    admins: any[],
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
@@ -170,9 +170,9 @@ export async function getActivateInSignatures(
 
 // updateCurrencyRegistries
 export async function getUpdateCurrencyRegistriesSignatures(
-    admins: any[],
     admin: Admin,
     params: UpdateCurrencyRegistriesParamsInput,
+    admins: any[],
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(

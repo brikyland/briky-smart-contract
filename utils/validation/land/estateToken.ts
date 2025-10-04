@@ -1,17 +1,15 @@
-import { ethers, Contract } from "ethers";
-import { time } from "@nomicfoundation/hardhat-network-helpers";
+import {ethers} from "ethers";
+import {time} from "@nomicfoundation/hardhat-network-helpers";
 
-import { MockValidator } from "@utils/mockValidator";
+import {MockValidator} from "@utils/mockValidator";
 
-import {
-    RegisterCustodianParamsInput,
-    UpdateEstateURIParamsInput,
-} from "@utils/models/land/estateToken";
+import {RegisterCustodianParamsInput, UpdateEstateURIParamsInput} from "@utils/models/land/estateToken";
+import {EstateToken} from "@typechain-types";
 
 
 // registerCustodian
 export async function getRegisterCustodianValidation(
-    estateToken: Contract,
+    estateToken: EstateToken,
     validator: MockValidator,
     paramsInput: RegisterCustodianParamsInput,
     isValid: boolean = true
@@ -22,16 +20,15 @@ export async function getRegisterCustodianValidation(
     );
     const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
 
-    const validation = isValid 
+    return isValid
         ? await validator.getValidation(estateToken, content, expiry)
         : await validator.getInvalidValidation(estateToken, content, expiry);
-    return validation;
 }
 
 
 // updateEstateURI
 export async function getUpdateEstateURIValidation(
-    estateToken: Contract,
+    estateToken: EstateToken,
     validator: MockValidator,
     paramsInput: UpdateEstateURIParamsInput,
     isValid: boolean = true
@@ -42,8 +39,7 @@ export async function getUpdateEstateURIValidation(
     );
     const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
 
-    const validation = isValid 
+    return isValid
         ? await validator.getValidation(estateToken, content, expiry)
         : await validator.getInvalidValidation(estateToken, content, expiry);
-    return validation;
 }

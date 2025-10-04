@@ -282,47 +282,27 @@ describe('2.4. EstateToken', async () => {
             custodians
         } = fixture;
 
-        await callTransaction(getAuthorizeManagersTxByInput(
-            deployer,
-            admins,
-            admin,
-            {
-                accounts: [manager.address],
-                isManager: true
-            }
-        ));
+        await callTransaction(getAuthorizeManagersTxByInput(admin, deployer, {
+            accounts: [manager.address],
+            isManager: true
+        }, admins));
 
-        await callTransaction(getAuthorizeModeratorsTxByInput(
-            deployer,
-            admins,
-            admin,
-            {
-                accounts: [moderator.address],
-                isModerator: true
-            }
-        ));
+        await callTransaction(getAuthorizeModeratorsTxByInput(admin, deployer, {
+            accounts: [moderator.address],
+            isModerator: true
+        }, admins));
 
         if (!skipDeclareZone) {
             for (const zone of [zone1, zone2]) {
-                await callTransaction(getDeclareZoneTxByInput(
-                    deployer,
-                    admins,
-                    admin,
-                    { zone }
-                ));
+                await callTransaction(getDeclareZoneTxByInput(admin, deployer, {zone}, admins));
             }
 
             for (const zone of [zone1, zone2]) {
-                await callTransaction(getActivateInTxByInput(
-                    deployer,
-                    admins,
-                    admin,
-                    {
-                        zone,
-                        accounts: [manager.address, moderator.address],
-                        isActive: true
-                    }
-                ));
+                await callTransaction(getActivateInTxByInput(admin, deployer, {
+                    zone,
+                    accounts: [manager.address, moderator.address],
+                    isActive: true
+                }, admins));
             }
         }
 
@@ -2235,16 +2215,11 @@ describe('2.4. EstateToken', async () => {
 
             const { defaultParamsInput } = await beforeRegisterCustodianTest(fixture);
 
-            await callTransaction(getActivateInTxByInput(
-                deployer,
-                admins,
-                admin,
-                {
-                    zone: defaultParamsInput.zone,
-                    accounts: [manager.address],
-                    isActive: false,
-                }
-            ));
+            await callTransaction(getActivateInTxByInput(admin, deployer, {
+                zone: defaultParamsInput.zone,
+                accounts: [manager.address],
+                isActive: false,
+            }, admins));
             await expect(getRegisterCustodianTxByInput(estateToken, manager, defaultParamsInput, validator))
                 .to.be.revertedWithCustomError(estateToken, `Unauthorized`)           
         });
@@ -2681,16 +2656,11 @@ describe('2.4. EstateToken', async () => {
                 addSampleEstates: true,
             });
 
-            await callTransaction(getActivateInTxByInput(
-                manager,
-                admins,
-                admin,
-                {
-                    zone: zone1,
-                    accounts: [manager.address],
-                    isActive: false,
-                }
-            ));
+            await callTransaction(getActivateInTxByInput(admin, manager, {
+                zone: zone1,
+                accounts: [manager.address],
+                isActive: false,
+            }, admins));
 
             const params: DeprecateEstateParams = {
                 estateId: BigNumber.from(1),
@@ -2840,16 +2810,11 @@ describe('2.4. EstateToken', async () => {
             });
             const baseTimestamp = await time.latest() + 1000;
             
-            await callTransaction(getActivateInTxByInput(
-                manager,
-                admins,
-                admin,
-                {
-                    zone: zone1,
-                    accounts: [manager.address],
-                    isActive: false,
-                }
-            ));
+            await callTransaction(getActivateInTxByInput(admin, manager, {
+                zone: zone1,
+                accounts: [manager.address],
+                isActive: false,
+            }, admins));
 
             const params: ExtendEstateExpirationParams = {
                 estateId: BigNumber.from(1),
@@ -3023,16 +2988,11 @@ describe('2.4. EstateToken', async () => {
             });
             const { manager, admin, admins, zone1, estateToken, validator } = fixture;
 
-            await callTransaction(getActivateInTxByInput(
-                manager,
-                admins,
-                admin,
-                {
-                    zone: zone1,
-                    accounts: [manager.address],
-                    isActive: false,
-                }
-            ));
+            await callTransaction(getActivateInTxByInput(admin, manager, {
+                zone: zone1,
+                accounts: [manager.address],
+                isActive: false,
+            }, admins));
 
             const paramsInput: UpdateEstateURIParamsInput = {
                 estateId: BigNumber.from(1),
@@ -3153,16 +3113,11 @@ describe('2.4. EstateToken', async () => {
             });
             const { manager, admin, admins, zone1, estateToken, custodian3 } = fixture;
 
-            await callTransaction(getActivateInTxByInput(
-                manager,
-                admins,
-                admin,
-                {
-                    zone: zone1,
-                    accounts: [manager.address],
-                    isActive: false,
-                }
-            ));
+            await callTransaction(getActivateInTxByInput(admin, manager, {
+                zone: zone1,
+                accounts: [manager.address],
+                isActive: false,
+            }, admins));
 
             const params: UpdateEstateCustodianParams = {
                 estateId: BigNumber.from(1),

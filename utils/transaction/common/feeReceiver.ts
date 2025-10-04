@@ -8,8 +8,8 @@ import { getWithdrawSignatures } from "@utils/signatures/common/feeReceiver";
 
 // withdraw
 export async function getWithdrawTx(
-    signer: SignerWithAddress,
     feeReceiver: FeeReceiver,
+    signer: SignerWithAddress,
     params: WithdrawParams,
     txConfig = {},
 ) {
@@ -23,16 +23,16 @@ export async function getWithdrawTx(
 }
 
 export async function getWithdrawTxByInput(
+    feeReceiver: FeeReceiver,
     signer: SignerWithAddress,
+    paramsInput: WithdrawParamsInput,
     admins: any[],
     admin: Admin,
-    feeReceiver: FeeReceiver,
-    paramsInput: WithdrawParamsInput,
     txConfig = {},
 ) {
     const params: WithdrawParams = {
         ...paramsInput,
-        signatures: await getWithdrawSignatures(admins, admin, feeReceiver, paramsInput)
+        signatures: await getWithdrawSignatures(feeReceiver, paramsInput, admins, admin)
     };
-    return await getWithdrawTx(signer, feeReceiver, params, txConfig);
+    return await getWithdrawTx(feeReceiver, signer, params, txConfig);
 }

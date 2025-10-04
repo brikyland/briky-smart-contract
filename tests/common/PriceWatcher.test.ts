@@ -170,7 +170,7 @@ describe('1.7. PriceWatcher', async () => {
                 heartbeats,
             };
 
-            const tx = await getUpdatePriceFeedsTxByInput(deployer, admins, admin, priceWatcher, paramsInput);
+            const tx = await getUpdatePriceFeedsTxByInput(priceWatcher, deployer, paramsInput, admins, admin);
             await tx.wait();
 
             for (let i = 0; i < currencyAddresses.length; ++i) {
@@ -203,10 +203,10 @@ describe('1.7. PriceWatcher', async () => {
             };
             const params: UpdatePriceFeedsParams = {
                 ...paramsInput,
-                signatures: await getUpdatePriceFeedsSignatures(admins, admin, priceWatcher, paramsInput, false),
+                signatures: await getUpdatePriceFeedsSignatures(priceWatcher, paramsInput, admins, admin, false),
             };
 
-            await expect(getUpdatePriceFeedsTx(deployer, priceWatcher, params))
+            await expect(getUpdatePriceFeedsTx(priceWatcher, deployer, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
@@ -226,7 +226,7 @@ describe('1.7. PriceWatcher', async () => {
                 heartbeats,
             };
             
-            await expect(getUpdatePriceFeedsTxByInput(deployer, admins, admin, priceWatcher, paramsInput))
+            await expect(getUpdatePriceFeedsTxByInput(priceWatcher, deployer, paramsInput, admins, admin))
                 .to.be.revertedWithCustomError(priceWatcher, 'InvalidInput');
         });
 
@@ -241,7 +241,7 @@ describe('1.7. PriceWatcher', async () => {
                     feeds: priceFeedAddresses,
                     heartbeats,
                 };
-                await expect(getUpdatePriceFeedsTxByInput(deployer, admins, admin, priceWatcher, paramsInput))
+                await expect(getUpdatePriceFeedsTxByInput(priceWatcher, deployer, paramsInput, admins, admin))
                     .to.be.revertedWithCustomError(priceWatcher, 'InvalidInput');
             }
 
@@ -279,7 +279,7 @@ describe('1.7. PriceWatcher', async () => {
                 currencies: currencyAddresses,
                 rates,
             };
-            const tx = await getUpdateDefaultRatesTxByInput(deployer, admins, admin, priceWatcher, paramsInput);
+            const tx = await getUpdateDefaultRatesTxByInput(priceWatcher, deployer, paramsInput, admins, admin);
             const receipt = await tx.wait();
 
             for (let i = 0; i < currencyAddresses.length; ++i) {
@@ -312,9 +312,9 @@ describe('1.7. PriceWatcher', async () => {
             };
             const params: UpdateDefaultRatesParams = {
                 ...paramsInput,
-                signatures: await getUpdateDefaultRatesSignatures(admins, admin, priceWatcher, paramsInput, false),
+                signatures: await getUpdateDefaultRatesSignatures(priceWatcher, paramsInput, admins, admin, false),
             };
-            await expect(getUpdateDefaultRatesTxByInput(deployer, admins, admin, priceWatcher, params))
+            await expect(getUpdateDefaultRatesTxByInput(priceWatcher, deployer, params, admins, admin))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
@@ -336,7 +336,7 @@ describe('1.7. PriceWatcher', async () => {
                 currencies: currencyAddresses,
                 rates,
             };
-            await expect(getUpdateDefaultRatesTxByInput(deployer, admins, admin, priceWatcher, paramsInput))
+            await expect(getUpdateDefaultRatesTxByInput(priceWatcher, deployer, paramsInput, admins, admin))
                 .to.be.revertedWithCustomError(priceWatcher, 'InvalidInput');
         });
 
@@ -348,7 +348,7 @@ describe('1.7. PriceWatcher', async () => {
                     currencies: currencyAddresses,
                     rates,
                 };
-                await expect(getUpdateDefaultRatesTxByInput(deployer, admins, admin, priceWatcher, paramsInput))
+                await expect(getUpdateDefaultRatesTxByInput(priceWatcher, deployer, paramsInput, admins, admin))
                     .to.be.revertedWithCustomError(priceWatcher, 'InvalidInput');
             }
 

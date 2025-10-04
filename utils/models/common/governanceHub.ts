@@ -62,7 +62,7 @@ export interface ProposeParams extends ProposeParamsInput {
 
 // admit
 export interface AdmitParamsInput {
-    proposalId: number;
+    proposalId: BigNumber;
     contextURI: string;
     reviewURI: string;
     currency: string;
@@ -75,7 +75,7 @@ export interface AdmitParams extends AdmitParamsInput {
 
 // disqualify
 export interface DisqualifyParamsInput {
-    proposalId: number;
+    proposalId: BigNumber;
     contextURI: string;
     reviewURI: string;
 }
@@ -87,7 +87,7 @@ export interface DisqualifyParams extends DisqualifyParamsInput {
 
 // vote
 export interface VoteParams {
-    proposalId: number;
+    proposalId: BigNumber;
     voteOption: ProposalVoteOption;
 }
 
@@ -100,7 +100,7 @@ export interface SafeVoteParams extends VoteParams {
 
 // contributeBudget
 export interface ContributeBudgetParams {
-    proposalId: number;
+    proposalId: BigNumber;
     value: BigNumber;
 }
 
@@ -113,25 +113,25 @@ export interface SafeContributeBudgetParams extends ContributeBudgetParams {
 
 // withdrawBudgetContribution
 export interface WithdrawBudgetContributionParams {
-    proposalId: number;
+    proposalId: BigNumber;
 }
 
 
 // confirm
 export interface ConfirmParams {
-    proposalId: number;
+    proposalId: BigNumber;
 }
 
 
 // rejectExecution
 export interface RejectExecutionParams {
-    proposalId: number;
+    proposalId: BigNumber;
 }
 
 
 // logExecution
 export interface LogExecutionParamsInput {
-    proposalId: number;
+    proposalId: BigNumber;
     logURI: string;
 }
 
@@ -142,7 +142,7 @@ export interface LogExecutionParams extends LogExecutionParamsInput {
 
 // concludeExecution
 export interface ConcludeExecutionParamsInput {
-    proposalId: number;
+    proposalId: BigNumber;
     logURI: string;
     isSuccessful: boolean;
 }

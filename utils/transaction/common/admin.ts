@@ -43,8 +43,8 @@ import {
 
 // transferAdministration1
 export async function getTransferAdministration1Tx(
-    signer: SignerWithAddress,
     admin: Admin,
+    signer: SignerWithAddress,
     params: TransferAdministration1Params,
     txConfig = {}
 ) {
@@ -56,24 +56,24 @@ export async function getTransferAdministration1Tx(
 }
 
 export async function getTransferAdministration1TxByInput(
-    signer: SignerWithAddress,
-    admins: any[],
     admin: Admin,
+    signer: SignerWithAddress,
     paramsInput: TransferAdministration1ParamsInput,
+    admins: any[],
     txConfig = {}
 ) {
     const params: TransferAdministration1Params = {
         ...paramsInput,
-        signatures: await getTransferAdministration1Signatures(admins, admin, paramsInput)
+        signatures: await getTransferAdministration1Signatures(admin, paramsInput, admins)
     };
-    return await getTransferAdministration1Tx(signer, admin, params, txConfig);
+    return await getTransferAdministration1Tx(admin, signer, params, txConfig);
 }
 
 
 // transferAdministration2
 export async function getTransferAdministration2Tx(
-    signer: SignerWithAddress,
     admin: Admin,
+    signer: SignerWithAddress,
     params: TransferAdministration2Params,
     txConfig = {}
 ) {
@@ -85,24 +85,24 @@ export async function getTransferAdministration2Tx(
 }
 
 export async function getTransferAdministration2TxByInput(
-    signer: SignerWithAddress,
-    admins: any[],
     admin: Admin,
+    signer: SignerWithAddress,
     paramsInput: TransferAdministration2ParamsInput,
+    admins: any[],
     txConfig = {}
 ) {
     const params: TransferAdministration2Params = {
         ...paramsInput,
-        signatures: await getTransferAdministration2Signatures(admins, admin, paramsInput)
+        signatures: await getTransferAdministration2Signatures(admin, paramsInput, admins)
     };
-    return await getTransferAdministration2Tx(signer, admin, params, txConfig);
+    return await getTransferAdministration2Tx(admin, signer, params, txConfig);
 }
 
 
 // transferAdministration3
 export async function getTransferAdministration3Tx(
-    signer: SignerWithAddress,
     admin: Admin,
+    signer: SignerWithAddress,
     params: TransferAdministration3Params,
     txConfig = {}
 ) {
@@ -114,24 +114,24 @@ export async function getTransferAdministration3Tx(
 }
 
 export async function getTransferAdministration3TxByInput(
-    signer: SignerWithAddress,
-    admins: any[],
     admin: Admin,
+    signer: SignerWithAddress,
     paramsInput: TransferAdministration3ParamsInput,
+    admins: any[],
     txConfig = {}
 ) {
     const params: TransferAdministration3Params = {
         ...paramsInput,
-        signatures: await getTransferAdministration3Signatures(admins, admin, paramsInput)
+        signatures: await getTransferAdministration3Signatures(admin, paramsInput, admins)
     };
-    return await getTransferAdministration3Tx(signer, admin, params, txConfig);
+    return await getTransferAdministration3Tx(admin, signer, params, txConfig);
 }
 
 
 // transferAdministration4
 export async function getTransferAdministration4Tx(
-    signer: SignerWithAddress,
     admin: Admin,
+    signer: SignerWithAddress,
     params: TransferAdministration4Params,
     txConfig = {}
 ) {
@@ -143,24 +143,24 @@ export async function getTransferAdministration4Tx(
 }
 
 export async function getTransferAdministration4TxByInput(
-    signer: SignerWithAddress,
-    admins: any[],
     admin: Admin,
+    signer: SignerWithAddress,
     paramsInput: TransferAdministration4ParamsInput,
+    admins: any[],
     txConfig = {}
 ) {
     const params: TransferAdministration4Params = {
         ...paramsInput,
-        signatures: await getTransferAdministration4Signatures(admins, admin, paramsInput)
+        signatures: await getTransferAdministration4Signatures(admin, paramsInput, admins)
     };
-    return await getTransferAdministration4Tx(signer, admin, params, txConfig);
+    return await getTransferAdministration4Tx(admin, signer, params, txConfig);
 }
 
 
 // transferAdministration5
 export async function getTransferAdministration5Tx(
-    signer: SignerWithAddress,
     admin: Admin,
+    signer: SignerWithAddress,
     params: TransferAdministration5Params,
     txConfig = {}
 ) {
@@ -172,24 +172,24 @@ export async function getTransferAdministration5Tx(
 }
 
 export async function getTransferAdministration5TxByInput(
-    signer: SignerWithAddress,
-    admins: any[],
     admin: Admin,
+    signer: SignerWithAddress,
     paramsInput: TransferAdministration5ParamsInput,
+    admins: any[],
     txConfig = {}
 ) {
     const params: TransferAdministration5Params = {
         ...paramsInput,
-        signatures: await getTransferAdministration5Signatures(admins, admin, paramsInput)
+        signatures: await getTransferAdministration5Signatures(admin, paramsInput, admins)
     };
-    return await getTransferAdministration5Tx(signer, admin, params, txConfig);
+    return await getTransferAdministration5Tx(admin, signer, params, txConfig);
 }
 
 
 // authorizeManagers
 export async function getAuthorizeManagersTx(
-    signer: SignerWithAddress,
     admin: Admin,
+    signer: SignerWithAddress,
     params: AuthorizeManagersParams,
     txConfig = {}
 ) {
@@ -202,24 +202,24 @@ export async function getAuthorizeManagersTx(
 }
 
 export async function getAuthorizeManagersTxByInput(
-    signer: SignerWithAddress,
-    admins: any[],
     admin: Admin,
+    signer: SignerWithAddress,
     paramsInput: AuthorizeManagersParamsInput,
+    admins: any[],
     txConfig = {}
 ) {
     const params: AuthorizeManagersParams = {
         ...paramsInput,
-        signatures: await getAuthorizeManagersSignatures(admins, admin, paramsInput)
+        signatures: await getAuthorizeManagersSignatures(admin, paramsInput, admins)
     };
-    return await getAuthorizeManagersTx(signer, admin, params, txConfig);
+    return await getAuthorizeManagersTx(admin, signer, params, txConfig);
 }
 
 
 // authorizeModerators
 export async function getAuthorizeModeratorsTx(
-    signer: SignerWithAddress,
     admin: Admin,
+    signer: SignerWithAddress,
     params: AuthorizeModeratorsParams,
     txConfig = {}
 ) {
@@ -232,24 +232,24 @@ export async function getAuthorizeModeratorsTx(
 }
 
 export async function getAuthorizeModeratorsTxByInput(
-    signer: SignerWithAddress,
-    admins: any[],
     admin: Admin,
+    signer: SignerWithAddress,
     paramsInput: AuthorizeModeratorsParamsInput,
+    admins: any[],
     txConfig = {}
 ) {
     const params: AuthorizeModeratorsParams = {
         ...paramsInput,
-        signatures: await getAuthorizeModeratorsSignatures(admins, admin, paramsInput)
+        signatures: await getAuthorizeModeratorsSignatures(admin, paramsInput, admins)
     };
-    return await getAuthorizeModeratorsTx(signer, admin, params, txConfig);
+    return await getAuthorizeModeratorsTx(admin, signer, params, txConfig);
 }
 
 
 // authorizeGovernors
 export async function getAuthorizeGovernorsTx(
-    signer: SignerWithAddress,
     admin: Admin,
+    signer: SignerWithAddress,
     params: AuthorizeGovernorsParams,
     txConfig = {}
 ) {
@@ -262,24 +262,24 @@ export async function getAuthorizeGovernorsTx(
 }
 
 export async function getAuthorizeGovernorsTxByInput(
-    signer: SignerWithAddress,
-    admins: any[],
     admin: Admin,
+    signer: SignerWithAddress,
     paramsInput: AuthorizeGovernorsParamsInput,
+    admins: any[],
     txConfig = {}
 ) {
     const params: AuthorizeGovernorsParams = {
         ...paramsInput,
-        signatures: await getAuthorizeGovernorsSignatures(admins, admin, paramsInput)
+        signatures: await getAuthorizeGovernorsSignatures(admin, paramsInput, admins)
     };
-    return await getAuthorizeGovernorsTx(signer, admin, params, txConfig);
+    return await getAuthorizeGovernorsTx(admin, signer, params, txConfig);
 }
 
 
 // declareZone
 export async function getDeclareZoneTx(
-    signer: SignerWithAddress,
     admin: Admin,
+    signer: SignerWithAddress,
     params: DeclareZoneParams,
     txConfig = {}
 ) {
@@ -291,24 +291,24 @@ export async function getDeclareZoneTx(
 }
 
 export async function getDeclareZoneTxByInput(
-    signer: SignerWithAddress,
-    admins: any[],
     admin: Admin,
+    signer: SignerWithAddress,
     paramsInput: DeclareZoneParamsInput,
+    admins: any[],
     txConfig = {}
 ) {
     const params: DeclareZoneParams = {
         ...paramsInput,
-        signatures: await getDeclareZoneSignatures(admins, admin, paramsInput)
+        signatures: await getDeclareZoneSignatures(admin, paramsInput, admins)
     };
-    return await getDeclareZoneTx(signer, admin, params, txConfig);
+    return await getDeclareZoneTx(admin, signer, params, txConfig);
 }
 
 
 // activateIn
 export async function getActivateInTx(
-    signer: SignerWithAddress,
     admin: Admin,
+    signer: SignerWithAddress,
     params: ActivateInParams,
     txConfig = {}
 ) {
@@ -322,24 +322,24 @@ export async function getActivateInTx(
 }
 
 export async function getActivateInTxByInput(
-    signer: SignerWithAddress,
-    admins: any[],
     admin: Admin,
+    signer: SignerWithAddress,
     paramsInput: ActivateInParamsInput,
+    admins: any[],
     txConfig = {}
 ) {
     const params: ActivateInParams = {
         ...paramsInput,
-        signatures: await getActivateInSignatures(admins, admin, paramsInput)
+        signatures: await getActivateInSignatures(admin, paramsInput, admins)
     };
-    return await getActivateInTx(signer, admin, params, txConfig);
+    return await getActivateInTx(admin, signer, params, txConfig);
 }
 
 
 // updateCurrencyRegistries
 export async function getUpdateCurrencyRegistriesTx(
-    signer: SignerWithAddress,
     admin: Admin,
+    signer: SignerWithAddress,
     params: UpdateCurrencyRegistriesParams,
     txConfig = {}
 ) {
@@ -353,15 +353,15 @@ export async function getUpdateCurrencyRegistriesTx(
 }
 
 export async function getUpdateCurrencyRegistriesTxByInput(
-    signer: SignerWithAddress,
-    admins: any[],
     admin: Admin,
+    signer: SignerWithAddress,
     paramsInput: UpdateCurrencyRegistriesParamsInput,
+    admins: any[],
     txConfig = {}
 ) {
     const params: UpdateCurrencyRegistriesParams = {
         ...paramsInput,
-        signatures: await getUpdateCurrencyRegistriesSignatures(admins, admin, paramsInput)
+        signatures: await getUpdateCurrencyRegistriesSignatures(admin, paramsInput, admins)
     };
-    return await getUpdateCurrencyRegistriesTx(signer, admin, params, txConfig);
+    return await getUpdateCurrencyRegistriesTx(admin, signer, params, txConfig);
 }
