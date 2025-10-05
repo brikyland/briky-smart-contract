@@ -125,7 +125,7 @@ describe('4.6. Treasury', async () => {
             };
             const params1: WithdrawOperationFundParams = {
                 ...paramsInput1,
-                signatures: await getWithdrawOperationFundSignatures(treasury, admins, admin, paramsInput1),
+                signatures: await getWithdrawOperationFundSignatures(treasury, paramsInput1, admin, admins),
             };
             
             const tx1 = await getWithdrawOperationFundTx(treasury, deployer, params1);
@@ -148,7 +148,7 @@ describe('4.6. Treasury', async () => {
             };
             const params2: WithdrawOperationFundParams = {
                 ...paramsInput2,
-                signatures: await getWithdrawOperationFundSignatures(treasury, admins, admin, paramsInput2),
+                signatures: await getWithdrawOperationFundSignatures(treasury, paramsInput2, admin, admins),
             };
 
             const tx2 = await getWithdrawOperationFundTx(treasury, deployer, params2);
@@ -177,7 +177,7 @@ describe('4.6. Treasury', async () => {
             };
             const params: WithdrawOperationFundParams = {
                 ...paramsInput,
-                signatures: await getWithdrawOperationFundSignatures(treasury, admins, admin, paramsInput, false),
+                signatures: await getWithdrawOperationFundSignatures(treasury, paramsInput, admin, admins, false),
             };
 
             await expect(getWithdrawOperationFundTx(treasury, deployer, params))
@@ -198,7 +198,7 @@ describe('4.6. Treasury', async () => {
             };
             const params: WithdrawOperationFundParams = {
                 ...paramsInput,
-                signatures: await getWithdrawOperationFundSignatures(treasury, admins, admin, paramsInput),
+                signatures: await getWithdrawOperationFundSignatures(treasury, paramsInput, admin, admins),
             };
 
             await expect(getWithdrawOperationFundTx(treasury, deployer, params))

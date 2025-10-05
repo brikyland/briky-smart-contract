@@ -14,8 +14,8 @@ import { AuthorizeProviderParamsInput } from "@utils/models/common/reserveVault"
 export async function getAuthorizeProviderSignatures(
     reserveVault: ReserveVault,
     paramsInput: AuthorizeProviderParamsInput,
-    admins: any[],
     admin: Admin,
+    admins: any[],
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(

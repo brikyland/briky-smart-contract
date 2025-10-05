@@ -184,13 +184,7 @@ describe('3.2. EstateMortgageToken', async () => {
             LandInitialization.COMMISSION_TOKEN_RoyaltyRate,
         ));
         
-        await callTransaction(getUpdateCommissionTokenTxByInput(
-            estateToken as any,
-            deployer,
-            { commissionToken: commissionToken.address },
-            admins,
-            admin
-        ));
+        await callTransaction(getUpdateCommissionTokenTxByInput(estateToken as any, deployer, {commissionToken: commissionToken.address}, admin, admins));
 
         const MockEstateForgerFactory = await smock.mock<MockEstateForger__factory>('MockEstateForger');
         const estateForger = await MockEstateForgerFactory.deploy();
@@ -325,13 +319,10 @@ describe('3.2. EstateMortgageToken', async () => {
             ));
         }
 
-        await callTransaction(getAuthorizeTokenizersTxByInput(
-            estateToken as any,
-            deployer,
-            { accounts: [estateForger.address], isTokenizer: true },
-            admins,
-            admin,
-        ));
+        await callTransaction(getAuthorizeTokenizersTxByInput(estateToken as any, deployer, {
+            accounts: [estateForger.address],
+            isTokenizer: true
+        }, admin, admins));
 
         for (const zone of [zone1, zone2]) {
             for (const custodian of [custodian1, custodian2]) {
@@ -519,7 +510,7 @@ describe('3.2. EstateMortgageToken', async () => {
             };
             const params: UpdateBaseURIParams = {
                 ...paramsInput,
-                signatures: await getUpdateBaseURISignatures(estateMortgageToken as any, admins, admin, paramsInput),
+                signatures: await getUpdateBaseURISignatures(estateMortgageToken as any, paramsInput, admin, admins),
             };
             const tx = await getUpdateBaseURITx(estateMortgageToken as any, deployer, params);
             await tx.wait();
@@ -538,7 +529,7 @@ describe('3.2. EstateMortgageToken', async () => {
             };
             const params: UpdateBaseURIParams = {
                 ...paramsInput,
-                signatures: await getUpdateBaseURISignatures(estateMortgageToken as any, admins, admin, paramsInput, false),
+                signatures: await getUpdateBaseURISignatures(estateMortgageToken as any, paramsInput, admin, admins, false),
             };
             await expect(getUpdateBaseURITx(estateMortgageToken as any, deployer, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
@@ -554,7 +545,7 @@ describe('3.2. EstateMortgageToken', async () => {
             };
             const params: UpdateFeeRateParams = {
                 ...paramsInput,
-                signatures: await getUpdateFeeRateSignatures(estateMortgageToken as any, admins, admin, paramsInput),
+                signatures: await getUpdateFeeRateSignatures(estateMortgageToken as any, paramsInput, admin, admins),
             }
             const tx = await getUpdateFeeRateTx(estateMortgageToken as any, deployer, params);
             await tx.wait();
@@ -584,7 +575,7 @@ describe('3.2. EstateMortgageToken', async () => {
             }
             const params: UpdateFeeRateParams = {
                 ...paramsInput,
-                signatures: await getUpdateFeeRateSignatures(estateMortgageToken as any, admins, admin, paramsInput, false)
+                signatures: await getUpdateFeeRateSignatures(estateMortgageToken as any, paramsInput, admin, admins, false)
             }
 
             await expect(getUpdateFeeRateTx(estateMortgageToken as any, deployer, params))
@@ -599,7 +590,7 @@ describe('3.2. EstateMortgageToken', async () => {
             }
             const params: UpdateFeeRateParams = {
                 ...paramsInput,
-                signatures: await getUpdateFeeRateSignatures(estateMortgageToken as any, admins, admin, paramsInput),
+                signatures: await getUpdateFeeRateSignatures(estateMortgageToken as any, paramsInput, admin, admins),
             }
 
             await expect(getUpdateFeeRateTx(estateMortgageToken as any, deployer, params))

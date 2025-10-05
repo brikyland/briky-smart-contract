@@ -266,7 +266,7 @@ describe('4.3. Driptributor', async () => {
             };
             const params: UpdateStakeTokensParams = {
                 ...paramsInput,
-                signatures: await getUpdateStakeTokensSignatures(driptributor, admins, admin, paramsInput),
+                signatures: await getUpdateStakeTokensSignatures(driptributor, paramsInput, admin, admins),
             };
 
             const tx = await getUpdateStakeTokensTx(driptributor, deployer, params);
@@ -287,7 +287,7 @@ describe('4.3. Driptributor', async () => {
             };
             const params: UpdateStakeTokensParams = {
                 ...paramsInput,
-                signatures: await getUpdateStakeTokensSignatures(driptributor, admins, admin, paramsInput, false),
+                signatures: await getUpdateStakeTokensSignatures(driptributor, paramsInput, admin, admins, false),
             };
             await expect(getUpdateStakeTokensTx(driptributor, deployer, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
@@ -307,7 +307,7 @@ describe('4.3. Driptributor', async () => {
             };
             const params: UpdateStakeTokensParams = {
                 ...paramsInput,
-                signatures: await getUpdateStakeTokensSignatures(driptributor, admins, admin, paramsInput, false),
+                signatures: await getUpdateStakeTokensSignatures(driptributor, paramsInput, admin, admins, false),
             };
             await expect(getUpdateStakeTokensTx(driptributor, deployer, params))
                 .to.be.revertedWithCustomError(driptributor, 'InvalidUpdating');
@@ -347,7 +347,7 @@ describe('4.3. Driptributor', async () => {
             };
             const params1: DistributeTokensWithDurationParams = {
                 ...paramsInput1,
-                signatures: await getDistributeTokensWithDurationSignatures(driptributor, admins, admin, paramsInput1),
+                signatures: await getDistributeTokensWithDurationSignatures(driptributor, paramsInput1, admin, admins),
             };
 
             await time.setNextBlockTimestamp(currentTimestamp);
@@ -400,7 +400,7 @@ describe('4.3. Driptributor', async () => {
             };
             const params2: DistributeTokensWithDurationParams = {
                 ...paramsInput2,
-                signatures: await getDistributeTokensWithDurationSignatures(driptributor, admins, admin, paramsInput2),
+                signatures: await getDistributeTokensWithDurationSignatures(driptributor, paramsInput2, admin, admins),
             };
 
             await time.setNextBlockTimestamp(currentTimestamp);
@@ -457,7 +457,7 @@ describe('4.3. Driptributor', async () => {
             };
             const params: DistributeTokensWithDurationParams = {
                 ...paramsInput,
-                signatures: await getDistributeTokensWithDurationSignatures(driptributor, admins, admin, paramsInput, false),
+                signatures: await getDistributeTokensWithDurationSignatures(driptributor, paramsInput, admin, admins, false),
             };
 
             await expect(getDistributeTokensWithDurationTx(driptributor, deployer, params))
@@ -483,7 +483,7 @@ describe('4.3. Driptributor', async () => {
                 };
                 const params: DistributeTokensWithDurationParams = {
                     ...paramsInput,
-                    signatures: await getDistributeTokensWithDurationSignatures(driptributor, admins, admin, paramsInput),
+                    signatures: await getDistributeTokensWithDurationSignatures(driptributor, paramsInput, admin, admins),
                 };
                 await expect(getDistributeTokensWithDurationTx(driptributor, deployer, params))
                     .to.be.revertedWithCustomError(driptributor, 'InvalidInput');
@@ -527,7 +527,7 @@ describe('4.3. Driptributor', async () => {
             };
             const params2: DistributeTokensWithDurationParams = {
                 ...paramsInput2,
-                signatures: await getDistributeTokensWithDurationSignatures(driptributor, admins, admin, paramsInput2),
+                signatures: await getDistributeTokensWithDurationSignatures(driptributor, paramsInput2, admin, admins),
             };
 
             await expect(getDistributeTokensWithDurationTx(driptributor, deployer, params2))
@@ -653,7 +653,7 @@ describe('4.3. Driptributor', async () => {
             };
             const params: DistributeTokensWithTimestampParams = {
                 ...paramsInput,
-                signatures: await getDistributeTokensWithTimestampSignatures(driptributor, admins, admin, paramsInput, false),
+                signatures: await getDistributeTokensWithTimestampSignatures(driptributor, paramsInput, admin, admins, false),
             };
 
             await expect(getDistributeTokensWithTimestampTx(driptributor, deployer, params))
@@ -681,7 +681,7 @@ describe('4.3. Driptributor', async () => {
                 };
                 const params: DistributeTokensWithTimestampParams = {
                     ...paramsInput,
-                    signatures: await getDistributeTokensWithTimestampSignatures(driptributor, admins, admin, paramsInput),
+                    signatures: await getDistributeTokensWithTimestampSignatures(driptributor, paramsInput, admin, admins),
                 };
 
                 await expect(getDistributeTokensWithTimestampTx(driptributor, deployer, params))
@@ -728,7 +728,7 @@ describe('4.3. Driptributor', async () => {
             };
             const params2: DistributeTokensWithTimestampParams = {
                 ...paramsInput2,
-                signatures: await getDistributeTokensWithTimestampSignatures(driptributor, admins, admin, paramsInput2),
+                signatures: await getDistributeTokensWithTimestampSignatures(driptributor, paramsInput2, admin, admins),
             };
 
             await expect(getDistributeTokensWithTimestampTx(driptributor, deployer, params2))
@@ -751,7 +751,7 @@ describe('4.3. Driptributor', async () => {
             };
             const params: DistributeTokensWithTimestampParams = {
                 ...paramsInput,
-                signatures: await getDistributeTokensWithTimestampSignatures(driptributor, admins, admin, paramsInput),
+                signatures: await getDistributeTokensWithTimestampSignatures(driptributor, paramsInput, admin, admins),
             };
 
             await expect(getDistributeTokensWithTimestampTx(driptributor, deployer, params))

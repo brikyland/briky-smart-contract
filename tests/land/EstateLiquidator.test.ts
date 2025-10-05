@@ -245,13 +245,7 @@ describe('2.3. EstateLiquidator', async () => {
             LandInitialization.COMMISSION_TOKEN_RoyaltyRate,
         ));
 
-        await callTransaction(getUpdateCommissionTokenTxByInput(
-            estateToken as any,
-            deployer,
-            { commissionToken: commissionToken.address },
-            admins,
-            admin
-        ));
+        await callTransaction(getUpdateCommissionTokenTxByInput(estateToken as any, deployer, {commissionToken: commissionToken.address}, admin, admins));
 
         const SmockGovernanceHubFactory = await smock.mock('GovernanceHub') as any;
         const governanceHub = await SmockGovernanceHubFactory.deploy() as MockContract<GovernanceHub>;
@@ -455,13 +449,10 @@ describe('2.3. EstateLiquidator', async () => {
             commissionRate: ethers.utils.parseEther('0.2'),
         }));
 
-        await callTransaction(getAuthorizeTokenizersTxByInput(
-            estateToken as any,
-            deployer,
-            { accounts: [estateForger.address], isTokenizer: true },
-            admins,
-            admin,
-        ));
+        await callTransaction(getAuthorizeTokenizersTxByInput(estateToken as any, deployer, {
+            accounts: [estateForger.address],
+            isTokenizer: true
+        }, admin, admins));
 
         for (const zone of [zone1, zone2]) {
             for (const custodian of [custodian1, custodian2]) {
@@ -577,7 +568,7 @@ describe('2.3. EstateLiquidator', async () => {
         }
 
         if (pause) {
-            await callTransaction(getPauseTxByInput(estateLiquidator, deployer, admins, admin));
+            await callTransaction(getPauseTxByInput(estateLiquidator, deployer, admin, admins));
         }
 
         return fixture;
@@ -1088,15 +1079,7 @@ describe('2.3. EstateLiquidator', async () => {
 
             const params: RequestExtractionParams = {
                 ...defaultParamsInput,
-                validation: await getRequestExtractionValidation(
-                    estateToken as any,
-                    estateLiquidator as any,
-                    governanceHub as any,
-                    validator,
-                    timestamp,
-                    defaultParamsInput,
-                    false,
-                ),
+                validation: await getRequestExtractionValidation(estateLiquidator as any, estateToken as any, governanceHub as any, defaultParamsInput, validator, timestamp, false),
             }
 
             await time.setNextBlockTimestamp(timestamp);
@@ -1888,16 +1871,10 @@ describe('2.3. EstateLiquidator', async () => {
 
             const { deployer, admins, operator1, admin, governanceHub, estateToken, estateLiquidator } = fixture;
 
-            await callTransaction(getAuthorizeExtractorsTxByInput(
-                estateToken as any,
-                deployer,
-                {
-                    accounts: [estateLiquidator.address],
-                    isExtractor: false,
-                },
-                admins,
-                admin,
-            ));
+            await callTransaction(getAuthorizeExtractorsTxByInput(estateToken as any, deployer, {
+                accounts: [estateLiquidator.address],
+                isExtractor: false,
+            }, admin, admins));
 
             governanceHub.getProposalState.whenCalledWith(1).returns(ProposalState.SuccessfulExecuted);
 

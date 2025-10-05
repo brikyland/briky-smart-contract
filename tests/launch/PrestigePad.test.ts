@@ -840,7 +840,7 @@ describe('7.1. PrestigePad', async () => {
         }
 
         if (pause) {
-            await callTransaction(getPauseTxByInput(prestigePad, deployer, admins, admin));
+            await callTransaction(getPauseTxByInput(prestigePad, deployer, admin, admins));
         }
 
         return {
@@ -1320,7 +1320,7 @@ describe('7.1. PrestigePad', async () => {
 
             const { defaultParams } = await beforeInitiateLaunchTest(fixture);
 
-            await callTransaction(getPauseTxByInput(projectToken as any, deployer, admins, admin));;
+            await callTransaction(getPauseTxByInput(projectToken as any, deployer, admin, admins));;
 
             await expect(getInitiateLaunchTx(prestigePad, validator, manager, defaultParams))
                 .to.be.revertedWith('Pausable: paused');
@@ -3898,7 +3898,7 @@ describe('7.1. PrestigePad', async () => {
 
             const { deployer, prestigePad, initiator1, reserveVault, admin, admins } = fixture;
 
-            await callTransaction(getPauseTxByInput(reserveVault as any, deployer, admins, admin));;
+            await callTransaction(getPauseTxByInput(reserveVault as any, deployer, admin, admins));;
 
             const params = await getSafeConfirmCurrentRoundParams(prestigePad, { launchId: BigNumber.from(1) });
             await expect(getSafeConfirmCurrentRoundTx(
@@ -4517,7 +4517,7 @@ describe('7.1. PrestigePad', async () => {
 
             const { deployer, prestigePad, depositor1, admin, admins, reserveVault } = fixture;
 
-            await callTransaction(getPauseTxByInput(reserveVault as any, deployer, admins, admin));;
+            await callTransaction(getPauseTxByInput(reserveVault as any, deployer, admin, admins));;
 
             const roundId = (await prestigePad.getLaunch(1)).roundIds[1];
             const round = await prestigePad.getRound(roundId);
@@ -4756,7 +4756,7 @@ describe('7.1. PrestigePad', async () => {
 
             await callTransaction(prestigePad.connect(initiator1).cancelCurrentRound(1));
 
-            await callTransaction(getPauseTxByInput(prestigePad, deployer, admins, admin));;
+            await callTransaction(getPauseTxByInput(prestigePad, deployer, admin, admins));;
 
             await expect(prestigePad.connect(depositor1).withdrawContribution(oldRoundId))
                 .to.be.revertedWith('Pausable: paused'); 
@@ -5377,7 +5377,7 @@ describe('7.1. PrestigePad', async () => {
 
             const { deployer, prestigePad, depositor3, admins, admin, reserveVault } = fixture;
 
-            await callTransaction(getPauseTxByInput(reserveVault as any, deployer, admins, admin));;
+            await callTransaction(getPauseTxByInput(reserveVault as any, deployer, admin, admins));;
 
             const launchId = 1;
             const index = 1;

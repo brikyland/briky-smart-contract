@@ -23,13 +23,13 @@ export async function getUpdateBaseURITxByInput(
     commissionToken: CommissionToken,
     deployer: SignerWithAddress,
     paramsInput: UpdateBaseURIParamsInput,
-    admins: any[],
     admin: Admin,
+    admins: any[],
     txConfig = {}
 ): Promise<ContractTransaction> {
     const params: UpdateBaseURIParams = {
         ...paramsInput,
-        signatures: await getUpdateBaseURISignatures(commissionToken, paramsInput, admins, admin),
+        signatures: await getUpdateBaseURISignatures(commissionToken, paramsInput, admin, admins),
     };
     
     return await getUpdateBaseURITx(commissionToken, deployer, params, txConfig);
@@ -54,13 +54,13 @@ export async function getUpdateRoyaltyRateTxByInput(
     commissionToken: CommissionToken,
     deployer: SignerWithAddress,
     paramsInput: UpdateRoyaltyRateParamsInput,
-    admins: any[],
     admin: Admin,
+    admins: any[],
     txConfig = {}
 ): Promise<ContractTransaction> {
     const params: UpdateRoyaltyRateParams = {
         ...paramsInput,
-        signatures: await getUpdateRoyaltyRateSignatures(commissionToken, paramsInput, admins, admin),
+        signatures: await getUpdateRoyaltyRateSignatures(commissionToken, paramsInput, admin, admins),
     };
 
     return await getUpdateRoyaltyRateTx(commissionToken, deployer, params, txConfig);

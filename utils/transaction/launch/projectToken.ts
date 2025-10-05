@@ -22,17 +22,17 @@ export async function getUpdateBaseURITx(
     );
 }
 
-export async function getUpdateBaseURITxByParams(
+export async function getUpdateBaseURITxByInput(
     projectToken: ProjectToken,
     deployer: SignerWithAddress,
     paramsInput: UpdateBaseURIParamsInput,
-    admins: any[],
     admin: Admin,
+    admins: any[],
     txConfig = {}
 ): Promise<ContractTransaction> {
     const params: UpdateBaseURIParams = {
         ...paramsInput,
-        signatures: await getUpdateBaseURISignatures(projectToken, paramsInput, admins, admin),
+        signatures: await getUpdateBaseURISignatures(projectToken, paramsInput, admin, admins),
     };
     return getUpdateBaseURITx(projectToken, deployer, params, txConfig);
 }
@@ -57,13 +57,13 @@ export async function getUpdateZoneRoyaltyRateTxByInput(
     projectToken: ProjectToken,
     deployer: SignerWithAddress,
     paramsInput: UpdateZoneRoyaltyRateParamsInput,
-    admins: any[],
     admin: Admin,
+    admins: any[],
     txConfig = {}
 ): Promise<ContractTransaction> {
     const params: UpdateZoneRoyaltyRateParams = {
         ...paramsInput,
-        signatures: await getUpdateZoneRoyaltyRateSignatures(projectToken, paramsInput, admins, admin),
+        signatures: await getUpdateZoneRoyaltyRateSignatures(projectToken, paramsInput, admin, admins),
     };
     return getUpdateZoneRoyaltyRateTx(projectToken, deployer, params, txConfig);
 }
@@ -88,13 +88,13 @@ export async function getAuthorizeLaunchpadsTxByInput(
     projectToken: ProjectToken,
     deployer: SignerWithAddress,
     paramsInput: AuthorizeLaunchpadsParamsInput,
-    admins: any[],
     admin: Admin,
+    admins: any[],
     txConfig = {}
 ): Promise<ContractTransaction> {
     const params: AuthorizeLaunchpadsParams = {
         ...paramsInput,
-        signatures: await getAuthorizeLaunchpadsSignatures(projectToken, paramsInput, admins, admin),
+        signatures: await getAuthorizeLaunchpadsSignatures(projectToken, paramsInput, admin, admins),
     };
     return getAuthorizeLaunchpadsTx(projectToken, deployer, params, txConfig);
 }
@@ -125,7 +125,7 @@ export async function getRegisterInitiatorTxByInput(
 ): Promise<ContractTransaction> {
     const params: RegisterInitiatorParams = {
         ...paramsInput,
-        validation: await getRegisterInitiatorValidation(projectToken, validator, paramsInput)
+        validation: await getRegisterInitiatorValidation(projectToken, paramsInput, validator)
     };
     return getRegisterInitiatorTx(projectToken, deployer, params, txConfig);
 }
@@ -237,7 +237,7 @@ export async function getSafeUpdateProjectURITxByInput(
 ): Promise<ContractTransaction> {
     const params: SafeUpdateProjectURIParams = {
         ...paramsInput,
-        validation: await getSafeUpdateProjectURIValidation(projectToken, validator, paramsInput),
+        validation: await getSafeUpdateProjectURIValidation(projectToken, paramsInput, validator),
         anchor: await getSafeUpdateProjectURIAnchor(projectToken, paramsInput)
     };
     return getSafeUpdateProjectURITx(projectToken, deployer, params, txConfig);

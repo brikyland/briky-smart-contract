@@ -14,8 +14,8 @@ import { UpdateFeeParamsInput } from "@utils/models/common/governanceHub";
 export async function getUpdateFeeSignatures(
     governanceHub: GovernanceHub,
     paramsInput: UpdateFeeParamsInput,
-    admins: any[],
     admin: Admin,
+    admins: any[],
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(

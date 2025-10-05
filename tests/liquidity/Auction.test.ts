@@ -274,7 +274,7 @@ describe('4.1. Auction', async () => {
             };
             const params: UpdateStakeTokensParams = {
                 ...paramsInput,
-                signatures: await getUpdateStakeTokensSignatures(auction, admins, admin, paramsInput),
+                signatures: await getUpdateStakeTokensSignatures(auction, paramsInput, admin, admins),
             };
 
             const tx = await getUpdateStakeTokensTx(auction, deployer, params);
@@ -316,7 +316,7 @@ describe('4.1. Auction', async () => {
             };
             const params: UpdateStakeTokensParams = {
                 ...paramsInput,
-                signatures: await getUpdateStakeTokensSignatures(auction, admins, admin, paramsInput),
+                signatures: await getUpdateStakeTokensSignatures(auction, paramsInput, admin, admins),
             };
             await expect(getUpdateStakeTokensTx(auction, deployer, params))
                 .to.be.revertedWithCustomError(auction, 'InvalidUpdating');
@@ -358,7 +358,7 @@ describe('4.1. Auction', async () => {
             };
             const params: StartAuctionParams = {
                 ...paramsInput,
-                signatures: await getStartAuctionSignatures(auction, admins, admin, paramsInput),
+                signatures: await getStartAuctionSignatures(auction, paramsInput, admin, admins),
             };
 
             const tx = await getStartAuctionTx(auction, deployer, params);
@@ -411,7 +411,7 @@ describe('4.1. Auction', async () => {
             };
             const params: StartAuctionParams = {
                 ...paramsInput,
-                signatures: await getStartAuctionSignatures(auction, admins, admin, paramsInput),
+                signatures: await getStartAuctionSignatures(auction, paramsInput, admin, admins),
             };
 
             await expect(getStartAuctionTx(auction, deployer, params))
@@ -435,7 +435,7 @@ describe('4.1. Auction', async () => {
             };
             const params: StartAuctionParams = {
                 ...paramsInput,
-                signatures: await getStartAuctionSignatures(auction, admins, admin, paramsInput),
+                signatures: await getStartAuctionSignatures(auction, paramsInput, admin, admins),
             };
 
             await expect(getStartAuctionTx(auction, deployer, params))

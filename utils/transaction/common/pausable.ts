@@ -21,12 +21,12 @@ export async function getPauseTx(
 export async function getPauseTxByInput(
     pausable: Contract,
     signer: SignerWithAddress,
-    admins: any[],
     admin: Admin,
+    admins: any[],
     txConfig = {}
 ) {
     const params: PauseParams = {
-        signatures: await getPauseSignatures(pausable, admins, admin)
+        signatures: await getPauseSignatures(pausable, admin, admins)
     };
     return await getPauseTx(pausable, signer, params, txConfig);
 }
@@ -48,12 +48,12 @@ export async function getUnpauseTx(
 export async function getUnpauseTxByInput(
     pausable: Contract,
     signer: SignerWithAddress,
-    admins: any[],
     admin: Admin,
+    admins: any[],
     txConfig = {}
 ) {
     const params: UnpauseParams = {
-        signatures: await getUnpauseSignatures(pausable, admins, admin)
+        signatures: await getUnpauseSignatures(pausable, admin, admins)
     };
     return await getUnpauseTx(pausable, signer, params, txConfig);
 }

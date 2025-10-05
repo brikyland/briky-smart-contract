@@ -217,7 +217,7 @@ describe('1.4. DividendHub', async () => {
         }
 
         if (pause) {
-            await callTransaction(getPauseTxByInput(dividendHub, deployer, admins, admin));
+            await callTransaction(getPauseTxByInput(dividendHub, deployer, admin, admins));
         }
 
         return {

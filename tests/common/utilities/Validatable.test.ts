@@ -86,7 +86,7 @@ describe('1.b. Validatable', async () => {
             const paramsInput: UpdateValidatorParamsInput = {
                 validator: newValidator.address,
             };
-            const tx = await getUpdateValidatorTxByInput(validatable, deployer, paramsInput, admins, admin);
+            const tx = await getUpdateValidatorTxByInput(validatable, deployer, paramsInput, admin, admins);
             await tx.wait();
 
             expect(await validatable.validator()).to.equal(newValidator.address);
@@ -106,7 +106,7 @@ describe('1.b. Validatable', async () => {
             };
             const params: UpdateValidatorParams = {
                 ...paramsInput,
-                signatures: await getUpdateValidatorSignatures(validatable, admins, admin, paramsInput, false),
+                signatures: await getUpdateValidatorSignatures(validatable, paramsInput, admin, admins, false),
             };
             await expect(getUpdateValidatorTx(validatable, deployer, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');

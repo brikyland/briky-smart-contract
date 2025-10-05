@@ -9,28 +9,28 @@ import { ethers } from "ethers";
 
 export async function getInitializeRewardingSignatures(
     stakeToken: StakeToken,
-    admins: any[],
+    paramsInput: InitializeRewardingParamsInput,
     admin: Admin,
-    params: InitializeRewardingParamsInput,
+    admins: any[],
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
         ["address", "string", "uint256", "address"],
-        [stakeToken.address, "initializeRewarding", params.initialLastRewardFetch, params.successor]
+        [stakeToken.address, "initializeRewarding", paramsInput.initialLastRewardFetch, paramsInput.successor]
     );
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
 
 export async function getUpdateFeeRateSignatures(
     stakeToken: StakeToken,
-    admins: any[],
+    paramsInput: UpdateFeeRateParamsInput,
     admin: Admin,
-    params: UpdateFeeRateParamsInput,
+    admins: any[],
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
         ["address", "string", "uint256"],
-        [stakeToken.address, "updateFeeRate", params.feeRate]
+        [stakeToken.address, "updateFeeRate", paramsInput.feeRate]
     );
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }

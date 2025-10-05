@@ -500,7 +500,7 @@ describe('1.6. GovernanceHub', async () => {
         }
 
         if (pause) {
-            await callTransaction(getPauseTxByInput(governanceHub, deployer, admins, admin));
+            await callTransaction(getPauseTxByInput(governanceHub, deployer, admin, admins));
         }
 
         return fixture;
@@ -531,7 +531,7 @@ describe('1.6. GovernanceHub', async () => {
                 fee: newFee
             };
             
-            const tx = await getUpdateFeeTxByInput(governanceHub, deployer, paramsInput, admins, admin);
+            const tx = await getUpdateFeeTxByInput(governanceHub, deployer, paramsInput, admin, admins);
             await tx.wait();
 
             await expect(tx).to.emit(governanceHub, 'FeeUpdate').withArgs(newFee);
@@ -549,7 +549,7 @@ describe('1.6. GovernanceHub', async () => {
             };
             const params: UpdateFeeParams = {
                 ...paramsInput,
-                signatures: await getUpdateFeeSignatures(governanceHub, paramsInput, admins, admin, false),
+                signatures: await getUpdateFeeSignatures(governanceHub, paramsInput, admin, admins, false),
             };
             await expect(getUpdateFeeTx(governanceHub, deployer, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');

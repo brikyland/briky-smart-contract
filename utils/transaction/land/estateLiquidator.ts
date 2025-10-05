@@ -42,14 +42,7 @@ export async function getRequestExtractionTxByInput(
 ) {
     const params: RequestExtractionParams = {
         ...paramsInput,
-        validation: await getRequestExtractionValidation(
-            estateToken as any,
-            estateLiquidator as any,
-            governanceHub as any,
-            validator,
-            timestamp,
-            paramsInput,
-        )
+        validation: await getRequestExtractionValidation(estateLiquidator as any, estateToken as any, governanceHub as any, paramsInput, validator, timestamp)
     }
     return await getRequestExtractionTx(estateLiquidator, signer, params, txConfig);
 }

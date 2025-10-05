@@ -307,13 +307,7 @@ describe('2.4. EstateToken', async () => {
         }
 
         if (!skipUpdateCommissionToken) {
-            await callTransaction(getUpdateCommissionTokenTxByInput(
-                estateToken,
-                deployer,
-                { commissionToken: commissionToken.address },
-                admins,
-                admin,
-            ));
+            await callTransaction(getUpdateCommissionTokenTxByInput(estateToken, deployer, {commissionToken: commissionToken.address}, admin, admins));
         }
 
         if (!skipRegisterBrokers) {
@@ -338,29 +332,17 @@ describe('2.4. EstateToken', async () => {
         }
         
         if (!skipAuthorizeEstateForger) {
-            await callTransaction(getAuthorizeTokenizersTxByInput(
-                estateToken,
-                deployer,
-                {
-                    accounts: [estateForger.address],
-                    isTokenizer: true
-                },
-                admins,
-                admin,
-            ));
+            await callTransaction(getAuthorizeTokenizersTxByInput(estateToken, deployer, {
+                accounts: [estateForger.address],
+                isTokenizer: true
+            }, admin, admins));
         }
 
         if (!skipAuthorizeEstateLiquidator) {
-            await callTransaction(getAuthorizeExtractorsTxByInput(
-                estateToken,
-                deployer,
-                {
-                    accounts: [estateLiquidator.address],
-                    isExtractor: true
-                },
-                admins,
-                admin,
-            ));
+            await callTransaction(getAuthorizeExtractorsTxByInput(estateToken, deployer, {
+                accounts: [estateLiquidator.address],
+                isExtractor: true
+            }, admin, admins));
         }
 
         if (!skipRegisterCustodians) {
@@ -413,12 +395,7 @@ describe('2.4. EstateToken', async () => {
         }
 
         if (pause) {
-            await callTransaction(getPauseTxByInput(
-                estateToken,
-                deployer,
-                admins,
-                admin,
-            ));
+            await callTransaction(getPauseTxByInput(estateToken, deployer, admin, admins));
         }
 
         return fixture;
@@ -457,7 +434,7 @@ describe('2.4. EstateToken', async () => {
             const paramsInput: UpdateCommissionTokenParamsInput = {
                 commissionToken: commissionToken.address,
             };
-            const tx = await getUpdateCommissionTokenTxByInput(estateToken, deployer, paramsInput, admins, admin);
+            const tx = await getUpdateCommissionTokenTxByInput(estateToken, deployer, paramsInput, admin, admins);
             await tx.wait();
 
             expect(await estateToken.commissionToken()).to.equal(commissionToken.address);
@@ -473,7 +450,7 @@ describe('2.4. EstateToken', async () => {
             };
             const params: UpdateCommissionTokenParams = {
                 ...paramsInput,
-                signatures: await getUpdateCommissionTokenSignatures(estateToken, paramsInput, admins, admin, false),
+                signatures: await getUpdateCommissionTokenSignatures(estateToken, paramsInput, admin, admins, false),
             };
             await expect(getUpdateCommissionTokenTx(estateToken, deployer, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
@@ -485,7 +462,7 @@ describe('2.4. EstateToken', async () => {
             const paramsInput: UpdateCommissionTokenParamsInput = {
                 commissionToken: commissionToken.address,
             };
-            await expect(getUpdateCommissionTokenTxByInput(estateToken, deployer, paramsInput, admins, admin))
+            await expect(getUpdateCommissionTokenTxByInput(estateToken, deployer, paramsInput, admin, admins))
                 .to.be.revertedWithCustomError(estateToken, 'InvalidUpdating');
         });
     });
@@ -499,7 +476,7 @@ describe('2.4. EstateToken', async () => {
             const paramsInput: UpdateBaseURIParamsInput = {
                 uri: "NewBaseURI:",
             };
-            const tx = await getUpdateBaseURITxByInput(estateToken, deployer, paramsInput, admins, admin);
+            const tx = await getUpdateBaseURITxByInput(estateToken, deployer, paramsInput, admin, admins);
             await tx.wait();
 
             await expect(tx).to
@@ -518,9 +495,9 @@ describe('2.4. EstateToken', async () => {
             };
             const params: UpdateBaseURIParams = {
                 ...paramsInput,
-                signatures: await getUpdateBaseURISignatures(estateToken, paramsInput, admins, admin, false),
+                signatures: await getUpdateBaseURISignatures(estateToken, paramsInput, admin, admins, false),
             };
-            await expect(getUpdateBaseURITxByInput(estateToken, deployer, paramsInput, admins, admin))
+            await expect(getUpdateBaseURITxByInput(estateToken, deployer, paramsInput, admin, admins))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
     });
@@ -537,7 +514,7 @@ describe('2.4. EstateToken', async () => {
                 accounts: toBeTokenizers.map(x => x.address),
                 isTokenizer: true,
             };
-            const tx = await getAuthorizeTokenizersTxByInput(estateToken, deployer, paramsInput, admins, admin);
+            const tx = await getAuthorizeTokenizersTxByInput(estateToken, deployer, paramsInput, admin, admins);
             await tx.wait();
 
             for (const tokenizer of toBeTokenizers) {
@@ -569,7 +546,7 @@ describe('2.4. EstateToken', async () => {
             };
             const params: AuthorizeTokenizersParams = {
                 ...paramsInput,
-                signatures: await getAuthorizeTokenizersSignatures(estateToken, paramsInput, admins, admin, false),
+                signatures: await getAuthorizeTokenizersSignatures(estateToken, paramsInput, admin, admins, false),
             };
             await expect(getAuthorizeTokenizersTx(estateToken, deployer, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
@@ -586,7 +563,7 @@ describe('2.4. EstateToken', async () => {
                 accounts: [invalidTokenizer.address],
                 isTokenizer: true,
             };
-            await expect(getAuthorizeTokenizersTxByInput(estateToken, deployer, paramsInput, admins, admin))
+            await expect(getAuthorizeTokenizersTxByInput(estateToken, deployer, paramsInput, admin, admins))
                 .to.be.revertedWithCustomError(estateToken, 'InvalidTokenizer');
         });
 
@@ -601,7 +578,7 @@ describe('2.4. EstateToken', async () => {
                 accounts: [invalidTokenizer.address],
                 isTokenizer: true,
             };
-            await expect(getAuthorizeTokenizersTxByInput(estateToken, deployer, paramsInput, admins, admin))
+            await expect(getAuthorizeTokenizersTxByInput(estateToken, deployer, paramsInput, admin, admins))
                 .to.be.revertedWithCustomError(estateToken, 'InvalidTokenizer');
         });
 
@@ -618,7 +595,7 @@ describe('2.4. EstateToken', async () => {
             };
             const params: AuthorizeTokenizersParams = {
                 ...paramsInput,
-                signatures: await getAuthorizeTokenizersSignatures(estateToken, paramsInput, admins, admin, true),
+                signatures: await getAuthorizeTokenizersSignatures(estateToken, paramsInput, admin, admins, true),
             };
             await expect(getAuthorizeTokenizersTx(estateToken, deployer, params))
                 .to.be.revertedWithCustomError(estateToken, `AuthorizedAccount`);
@@ -631,16 +608,10 @@ describe('2.4. EstateToken', async () => {
 
             const tx1Tokenizers = tokenizers.slice(0, 3);
 
-            await callTransaction(getAuthorizeTokenizersTxByInput(
-                estateToken,
-                deployer,
-                {
-                    accounts: tx1Tokenizers.map(x => x.address),
-                    isTokenizer: true,
-                },
-                admins,
-                admin,
-            ));
+            await callTransaction(getAuthorizeTokenizersTxByInput(estateToken, deployer, {
+                accounts: tx1Tokenizers.map(x => x.address),
+                isTokenizer: true,
+            }, admin, admins));
 
             const tx2Tokenizers = [tokenizers[3], tokenizers[2], tokenizers[4]];
 
@@ -648,22 +619,16 @@ describe('2.4. EstateToken', async () => {
                 accounts: tx2Tokenizers.map(x => x.address),
                 isTokenizer: true,
             };
-            await expect(getAuthorizeTokenizersTxByInput(estateToken, deployer, paramsInput, admins, admin))
+            await expect(getAuthorizeTokenizersTxByInput(estateToken, deployer, paramsInput, admin, admins))
                 .to.be.revertedWithCustomError(estateToken, `AuthorizedAccount`);
         });
 
         async function setupTokenizers(fixture: EstateTokenFixture) {
             const { deployer, admins, admin, estateToken, tokenizers } = fixture;
-            await callTransaction(getAuthorizeTokenizersTxByInput(
-                estateToken,
-                deployer,
-                {
-                    accounts: tokenizers.map(x => x.address),
-                    isTokenizer: true,
-                },
-                admins,
-                admin,
-            ));
+            await callTransaction(getAuthorizeTokenizersTxByInput(estateToken, deployer, {
+                accounts: tokenizers.map(x => x.address),
+                isTokenizer: true,
+            }, admin, admins));
         }
 
         it('2.4.4.7. Deauthorize tokenizer successfully', async () => {
@@ -674,16 +639,10 @@ describe('2.4. EstateToken', async () => {
             await setupTokenizers(fixture);
 
             const toDeauth = tokenizers.slice(0, 2);
-            const tx = await getAuthorizeTokenizersTxByInput(
-                estateToken,
-                deployer,
-                {
-                    accounts: toDeauth.map(x => x.address),
-                    isTokenizer: false,
-                },
-                admins,
-                admin,
-            );
+            const tx = await getAuthorizeTokenizersTxByInput(estateToken, deployer, {
+                accounts: toDeauth.map(x => x.address),
+                isTokenizer: false,
+            }, admin, admins);
             await tx.wait();
             
             for (const tokenizer of toDeauth) {
@@ -716,7 +675,7 @@ describe('2.4. EstateToken', async () => {
                 accounts: toDeauth.map(x => x.address),
                 isTokenizer: false,
             };
-            await expect(getAuthorizeTokenizersTxByInput(estateToken, deployer, paramsInput, admins, admin))
+            await expect(getAuthorizeTokenizersTxByInput(estateToken, deployer, paramsInput, admin, admins))
                 .to.be.revertedWithCustomError(estateToken, `NotAuthorizedAccount`);
         });
 
@@ -728,16 +687,10 @@ describe('2.4. EstateToken', async () => {
             await setupTokenizers(fixture);
 
             const toDeauth = tokenizers.slice(0, 2).concat([tokenizers[0]]);
-            const tx = await getAuthorizeTokenizersTxByInput(
-                estateToken,
-                deployer,
-                {
-                    accounts: toDeauth.map(x => x.address),
-                    isTokenizer: false,
-                },
-                admins,
-                admin,
-            );
+            const tx = await getAuthorizeTokenizersTxByInput(estateToken, deployer, {
+                accounts: toDeauth.map(x => x.address),
+                isTokenizer: false,
+            }, admin, admins);
             await tx.wait();
         });
 
@@ -749,23 +702,17 @@ describe('2.4. EstateToken', async () => {
             await setupTokenizers(fixture);
 
             const tx1Accounts = tokenizers.slice(0, 2);
-            await callTransaction(getAuthorizeTokenizersTxByInput(
-                estateToken,
-                deployer,
-                {
-                    accounts: tx1Accounts.map(x => x.address),
-                    isTokenizer: false,
-                },
-                admins,
-                admin,
-            ));
+            await callTransaction(getAuthorizeTokenizersTxByInput(estateToken, deployer, {
+                accounts: tx1Accounts.map(x => x.address),
+                isTokenizer: false,
+            }, admin, admins));
 
             const tx2Accounts = [tokenizers[0]];
             const paramsInput: AuthorizeTokenizersParamsInput = {
                 accounts: tx2Accounts.map(x => x.address),
                 isTokenizer: false,
             };
-            await expect(getAuthorizeTokenizersTxByInput(estateToken, deployer, paramsInput, admins, admin))
+            await expect(getAuthorizeTokenizersTxByInput(estateToken, deployer, paramsInput, admin, admins))
                 .to.be.revertedWithCustomError(estateToken, `NotAuthorizedAccount`);
         });
     });
@@ -783,7 +730,7 @@ describe('2.4. EstateToken', async () => {
                 accounts: toBeExtractors.map(x => x.address),
                 isExtractor: true,
             };
-            const tx = await getAuthorizeExtractorsTxByInput(estateToken, deployer, paramsInput, admins, admin);
+            const tx = await getAuthorizeExtractorsTxByInput(estateToken, deployer, paramsInput, admin, admins);
             await tx.wait();
 
             for (const extractor of toBeExtractors) {
@@ -816,7 +763,7 @@ describe('2.4. EstateToken', async () => {
             };
             const params: AuthorizeExtractorsParams = {
                 ...paramsInput,
-                signatures: await getAuthorizeExtractorsSignatures(estateToken, paramsInput, admins, admin, false),
+                signatures: await getAuthorizeExtractorsSignatures(estateToken, paramsInput, admin, admins, false),
             };
             await expect(getAuthorizeExtractorsTx(estateToken, deployer, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
@@ -834,7 +781,7 @@ describe('2.4. EstateToken', async () => {
                 accounts: duplicateExtractors.map(x => x.address),
                 isExtractor: true,
             };
-            await expect(getAuthorizeExtractorsTxByInput(estateToken, deployer, paramsInput, admins, admin))
+            await expect(getAuthorizeExtractorsTxByInput(estateToken, deployer, paramsInput, admin, admins))
                 .to.be.revertedWithCustomError(estateToken, `AuthorizedAccount`);
         });
 
@@ -845,16 +792,10 @@ describe('2.4. EstateToken', async () => {
             const { deployer, admins, admin, estateToken, extractors } = fixture;
 
             const tx1Extractors = extractors.slice(0, 3);
-            await callTransaction(getAuthorizeExtractorsTxByInput(
-                estateToken,
-                deployer,
-                {
-                    accounts: tx1Extractors.map(x => x.address),
-                    isExtractor: true,
-                },
-                admins,
-                admin,
-            ));
+            await callTransaction(getAuthorizeExtractorsTxByInput(estateToken, deployer, {
+                accounts: tx1Extractors.map(x => x.address),
+                isExtractor: true,
+            }, admin, admins));
 
             const tx2Extractors = [extractors[3], extractors[2], extractors[4]];
 
@@ -862,22 +803,16 @@ describe('2.4. EstateToken', async () => {
                 accounts: tx2Extractors.map(x => x.address),
                 isExtractor: true,
             };
-            await expect(getAuthorizeExtractorsTxByInput(estateToken, deployer, paramsInput, admins, admin))
+            await expect(getAuthorizeExtractorsTxByInput(estateToken, deployer, paramsInput, admin, admins))
                 .to.be.revertedWithCustomError(estateToken, `AuthorizedAccount`);
         })
 
         async function setupExtractors(fixture: EstateTokenFixture) {
             const { deployer, admins, admin, estateToken, extractors } = fixture;
-            await callTransaction(getAuthorizeExtractorsTxByInput(
-                estateToken,
-                deployer,
-                {
-                    accounts: extractors.map(x => x.address),
-                    isExtractor: true,
-                },
-                admins,
-                admin,
-            ));
+            await callTransaction(getAuthorizeExtractorsTxByInput(estateToken, deployer, {
+                accounts: extractors.map(x => x.address),
+                isExtractor: true,
+            }, admin, admins));
         }
 
         it('2.4.5.5. Deauthorize extractor successfully', async () => {
@@ -888,16 +823,10 @@ describe('2.4. EstateToken', async () => {
             await setupExtractors(fixture);
 
             const toDeauth = extractors.slice(0, 2);
-            const tx = await getAuthorizeExtractorsTxByInput(
-                estateToken,
-                deployer,
-                {
-                    accounts: toDeauth.map(x => x.address),
-                    isExtractor: false,
-                },
-                admins,
-                admin,
-            );
+            const tx = await getAuthorizeExtractorsTxByInput(estateToken, deployer, {
+                accounts: toDeauth.map(x => x.address),
+                isExtractor: false,
+            }, admin, admins);
             await tx.wait();
 
             for (const extractor of toDeauth) {
@@ -930,7 +859,7 @@ describe('2.4. EstateToken', async () => {
                 accounts: toDeauth.map(x => x.address),
                 isExtractor: false,
             };
-            await expect(getAuthorizeExtractorsTxByInput(estateToken, deployer, paramsInput, admins, admin))
+            await expect(getAuthorizeExtractorsTxByInput(estateToken, deployer, paramsInput, admin, admins))
                 .to.be.revertedWithCustomError(estateToken, `NotAuthorizedAccount`);
         });
 
@@ -946,7 +875,7 @@ describe('2.4. EstateToken', async () => {
                 accounts: toDeauth.map(x => x.address),
                 isExtractor: false,
             };
-            await expect(getAuthorizeExtractorsTxByInput(estateToken, deployer, paramsInput, admins, admin))
+            await expect(getAuthorizeExtractorsTxByInput(estateToken, deployer, paramsInput, admin, admins))
                 .to.be.revertedWithCustomError(estateToken, `NotAuthorizedAccount`);
         });
 
@@ -958,23 +887,17 @@ describe('2.4. EstateToken', async () => {
             await setupExtractors(fixture);
 
             const tx1Accounts = extractors.slice(0, 2);
-            await callTransaction(getAuthorizeExtractorsTxByInput(
-                estateToken,
-                deployer,
-                {
-                    accounts: tx1Accounts.map(x => x.address),
-                    isExtractor: true,
-                },
-                admins,
-                admin,
-            ));
+            await callTransaction(getAuthorizeExtractorsTxByInput(estateToken, deployer, {
+                accounts: tx1Accounts.map(x => x.address),
+                isExtractor: true,
+            }, admin, admins));
 
             const tx2Accounts = [extractors[0]];
             const paramsInput: AuthorizeExtractorsParamsInput = {
                 accounts: tx2Accounts.map(x => x.address),
                 isExtractor: false,
             };
-            await expect(getAuthorizeExtractorsTxByInput(estateToken, deployer, paramsInput, admins, admin))
+            await expect(getAuthorizeExtractorsTxByInput(estateToken, deployer, paramsInput, admin, admins))
                 .to.be.revertedWithCustomError(estateToken, `NotAuthorizedAccount`);
         });
     });
@@ -989,7 +912,7 @@ describe('2.4. EstateToken', async () => {
                 zone: zone1,
                 royaltyRate: rate1,
             };
-            const tx1 = await getUpdateZoneRoyaltyRateTxByInput(estateToken, deployer, paramsInput1, admins, admin);
+            const tx1 = await getUpdateZoneRoyaltyRateTxByInput(estateToken, deployer, paramsInput1, admin, admins);
             await tx1.wait();
 
             await expect(tx1).to.emit(estateToken, 'ZoneRoyaltyRateUpdate').withArgs(
@@ -1013,7 +936,7 @@ describe('2.4. EstateToken', async () => {
                 zone: zone2,
                 royaltyRate: rate2,
             };
-            const tx2 = await getUpdateZoneRoyaltyRateTxByInput(estateToken, deployer, paramsInput2, admins, admin);
+            const tx2 = await getUpdateZoneRoyaltyRateTxByInput(estateToken, deployer, paramsInput2, admin, admins);
             await tx2.wait();
 
             await expect(tx2).to.emit(estateToken, 'ZoneRoyaltyRateUpdate').withArgs(
@@ -1043,7 +966,7 @@ describe('2.4. EstateToken', async () => {
             };
             const params: UpdateZoneRoyaltyRateParams = {
                 ...paramsInput,
-                signatures: await getUpdateZoneRoyaltyRateSignatures(estateToken, paramsInput, admins, admin, false),
+                signatures: await getUpdateZoneRoyaltyRateSignatures(estateToken, paramsInput, admin, admins, false),
             };
             await expect(getUpdateZoneRoyaltyRateTx(estateToken, deployer, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
@@ -1057,7 +980,7 @@ describe('2.4. EstateToken', async () => {
                 zone: zone1,
                 royaltyRate: Constant.COMMON_RATE_MAX_FRACTION.add(1),
             };
-            await expect(getUpdateZoneRoyaltyRateTxByInput(estateToken, deployer, paramsInput, admins, admin))
+            await expect(getUpdateZoneRoyaltyRateTxByInput(estateToken, deployer, paramsInput, admin, admins))
                 .to.be.revertedWithCustomError(estateToken, 'InvalidRate');
         });
 
@@ -1069,7 +992,7 @@ describe('2.4. EstateToken', async () => {
                 zone: ethers.utils.formatBytes32String('invalid zone'),
                 royaltyRate: ethers.utils.parseEther('0.2'),
             };
-            await expect(getUpdateZoneRoyaltyRateTxByInput(estateToken, deployer, paramsInput, admins, admin))
+            await expect(getUpdateZoneRoyaltyRateTxByInput(estateToken, deployer, paramsInput, admin, admins))
                 .to.be.revertedWithCustomError(estateToken, 'InvalidZone');
         });
     });
@@ -1998,26 +1921,14 @@ describe('2.4. EstateToken', async () => {
                 addSampleEstates: true,
             });
 
-            await callTransaction(getUpdateZoneRoyaltyRateTxByInput(
-                estateToken,
-                deployer,
-                {
-                    zone: zone1,
-                    royaltyRate: ethers.utils.parseEther('0.1'),
-                },
-                admins,
-                admin
-            ));
-            await callTransaction(getUpdateZoneRoyaltyRateTxByInput(
-                estateToken,
-                deployer,
-                {
-                    zone: zone2,
-                    royaltyRate: ethers.utils.parseEther('0.2'),
-                },
-                admins,
-                admin
-            ));
+            await callTransaction(getUpdateZoneRoyaltyRateTxByInput(estateToken, deployer, {
+                zone: zone1,
+                royaltyRate: ethers.utils.parseEther('0.1'),
+            }, admin, admins));
+            await callTransaction(getUpdateZoneRoyaltyRateTxByInput(estateToken, deployer, {
+                zone: zone2,
+                royaltyRate: ethers.utils.parseEther('0.2'),
+            }, admin, admins));
 
             expect(structToObject(await estateToken.getRoyaltyRate(1))).to.deep.equal({
                 value: ethers.utils.parseEther('0.1'),
@@ -2253,7 +2164,7 @@ describe('2.4. EstateToken', async () => {
 
             const params: RegisterCustodianParams = {
                 ...defaultParamsInput,
-                validation: await getRegisterCustodianValidation(estateToken, validator, defaultParamsInput, false),
+                validation: await getRegisterCustodianValidation(estateToken, defaultParamsInput, validator, false),
             }
             await expect(getRegisterCustodianTx(estateToken, manager, params))
                 .to.be.revertedWithCustomError(estateToken, `InvalidSignature`);
@@ -2904,7 +2815,7 @@ describe('2.4. EstateToken', async () => {
             const params: SafeUpdateEstateURIParams = {
                 ...paramsInput,
                 anchor: ethers.utils.keccak256(ethers.utils.toUtf8Bytes('invalid anchor')),
-                validation: await getUpdateEstateURIValidation(estateToken, validator, paramsInput),
+                validation: await getUpdateEstateURIValidation(estateToken, paramsInput, validator),
             };
             await expect(getSafeUpdateEstateURITx(estateToken, manager, params))
                 .to.be.revertedWithCustomError(estateToken, "BadAnchor");            
@@ -2923,7 +2834,7 @@ describe('2.4. EstateToken', async () => {
             const params: SafeUpdateEstateURIParams = {
                 ...paramsInput,
                 anchor: await getSafeUpdateEstateURIAnchor(estateToken, paramsInput),
-                validation: await getUpdateEstateURIValidation(estateToken, validator, paramsInput, false),
+                validation: await getUpdateEstateURIValidation(estateToken, paramsInput, validator, false),
             };
             await expect(getSafeUpdateEstateURITx(estateToken, manager, params))
                 .to.be.revertedWithCustomError(estateToken, "InvalidSignature");

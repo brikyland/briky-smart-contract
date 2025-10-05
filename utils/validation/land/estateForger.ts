@@ -11,13 +11,13 @@ import {EstateForger} from "@typechain-types";
 // requestTokenization
 export async function getRequestTokenizationValidation(
     estateForger: EstateForger,
+    paramsInput: RequestTokenizationParamsInput,
     validator: MockValidator,
-    params: RequestTokenizationParamsInput,
     isValid: boolean = true
 ) {
     const content = ethers.utils.defaultAbiCoder.encode(
         ["address", "string"],
-        [params.requester, params.estate.uri]
+        [paramsInput.requester, paramsInput.estate.uri]
     );
     const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
 
@@ -30,13 +30,13 @@ export async function getRequestTokenizationValidation(
 // updateRequestEstateURI
 export async function getUpdateRequestEstateURIValidation(
     estateForger: EstateForger,
+    paramsInput: UpdateRequestEstateURIParamsInput,
     validator: MockValidator,
-    params: UpdateRequestEstateURIParamsInput,
     isValid: boolean = true
 ) {
     const content = ethers.utils.defaultAbiCoder.encode(
         ["uint256", "string"],
-        [params.requestId, params.uri]
+        [paramsInput.requestId, paramsInput.uri]
     );
     const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
     return isValid

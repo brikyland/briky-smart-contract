@@ -11,8 +11,8 @@ import { getSignatures } from "@utils/blockchain";
 // pause
 export async function getPauseSignatures(
     pausable: Contract,
-    admins: any[],
     admin: Admin,
+    admins: any[],
     isValid: boolean = true
 ) {
     let message = ethers.utils.defaultAbiCoder.encode(
@@ -26,8 +26,8 @@ export async function getPauseSignatures(
 // unpause
 export async function getUnpauseSignatures(
     pausable: Contract,
-    admins: any[],
     admin: Admin,
+    admins: any[],
     isValid: boolean = true
 ) {
     let message = ethers.utils.defaultAbiCoder.encode(

@@ -3,54 +3,34 @@ import { getSignatures } from "@utils/blockchain";
 import { StartAuctionParamsInput, UpdateStakeTokensParamsInput } from "@utils/models/liquidity/auction";
 import { ethers } from "ethers";
 
+
+// updateStakeTokens
 export async function getUpdateStakeTokensSignatures(
     auction: Auction,
-    admins: any[],
+    paramsInput: UpdateStakeTokensParamsInput,
     admin: Admin,
-    params: UpdateStakeTokensParamsInput
+    admins: any[],
+    isValid: boolean = true
 ) {            
     let message = ethers.utils.defaultAbiCoder.encode(
         ["address", "string", "address", "address", "address"],
-        [auction.address, "updateStakeTokens", params.stakeToken1, params.stakeToken2, params.stakeToken3]
+        [auction.address, "updateStakeTokens", paramsInput.stakeToken1, paramsInput.stakeToken2, paramsInput.stakeToken3]
     );
-    return await getSignatures(message, admins, await admin.nonce());
+    return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
 
-export async function getUpdateStakeTokensInvalidSignatures(
-    auction: Auction,
-    admins: any[],
-    admin: Admin,
-    params: UpdateStakeTokensParamsInput
-) {
-    const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "address", "address", "address"],
-        [auction.address, "updateStakeTokens", params.stakeToken1, params.stakeToken2, params.stakeToken3]
-    );
-    return await getSignatures(message, admins, (await admin.nonce()).add(1));
-}
 
+// startAuction
 export async function getStartAuctionSignatures(
     auction: Auction,
-    admins: any[],
+    paramsInput: StartAuctionParamsInput,
     admin: Admin,
-    params: StartAuctionParamsInput
+    admins: any[],
+    isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
         ["address", "string", "uint256", "uint256"],
-        [auction.address, "startAuction", params.endAt, params.vestingDuration]
+        [auction.address, "startAuction", paramsInput.endAt, paramsInput.vestingDuration]
     );
-    return await getSignatures(message, admins, await admin.nonce());
-}
-
-export async function getStartAuctionInvalidSignatures(
-    auction: Auction,
-    admins: any[],
-    admin: Admin,
-    params: StartAuctionParamsInput
-) {
-    const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "uint256", "uint256"],
-        [auction.address, "startAuction", params.endAt, params.vestingDuration]
-    );
-    return await getSignatures(message, admins, (await admin.nonce()).add(1));
+    return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }

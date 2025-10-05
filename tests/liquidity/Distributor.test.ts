@@ -129,7 +129,7 @@ describe('4.2. Distributor', async () => {
             };
             const params: DistributeTokenParams = {
                 ...paramsInput,
-                signatures: await getDistributeTokenSignatures(distributor, admins, admin, paramsInput),
+                signatures: await getDistributeTokenSignatures(distributor, paramsInput, admin, admins),
             };
 
             const initDistributorBalance = await primaryToken.balanceOf(distributor.address);
@@ -191,7 +191,7 @@ describe('4.2. Distributor', async () => {
                 };
                 const params: DistributeTokenParams = {
                     ...paramsInput,
-                    signatures: await getDistributeTokenSignatures(distributor, admins, admin, paramsInput),
+                    signatures: await getDistributeTokenSignatures(distributor, paramsInput, admin, admins),
                 };
 
                 await expect(getDistributeTokenTx(distributor, deployer, params))
@@ -222,7 +222,7 @@ describe('4.2. Distributor', async () => {
             };
             const params: DistributeTokenParams = {
                 ...paramsInput,
-                signatures: await getDistributeTokenSignatures(distributor, admins, admin, paramsInput),
+                signatures: await getDistributeTokenSignatures(distributor, paramsInput, admin, admins),
             };
 
             await expect(getDistributeTokenTx(distributor, deployer, params))

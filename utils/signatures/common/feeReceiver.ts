@@ -14,8 +14,8 @@ import { WithdrawParamsInput } from "@utils/models/common/feeReceiver";
 export async function getWithdrawSignatures(
     feeReceiver: FeeReceiver,
     paramsInput: WithdrawParamsInput,
-    admins: any[],
     admin: Admin,
+    admins: any[],
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(

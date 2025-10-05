@@ -324,7 +324,7 @@ describe('4.4. PrimaryToken', async () => {
             };
             const params: UpdateTreasuryParams = {
                 ...paramsInput,
-                signatures: await getUpdateTreasurySignatures(primaryToken as any, admins, admin, paramsInput),
+                signatures: await getUpdateTreasurySignatures(primaryToken as any, paramsInput, admin, admins),
             };
 
             const tx = await getUpdateTreasuryTx(primaryToken as any, deployer, params);
@@ -341,7 +341,7 @@ describe('4.4. PrimaryToken', async () => {
             };
             const params: UpdateTreasuryParams = {
                 ...paramsInput,
-                signatures: await getUpdateTreasurySignatures(primaryToken as any, admins, admin, paramsInput, false),
+                signatures: await getUpdateTreasurySignatures(primaryToken as any, paramsInput, admin, admins, false),
             };
 
             await expect(getUpdateTreasuryTx(primaryToken as any, deployer, params))
@@ -358,7 +358,7 @@ describe('4.4. PrimaryToken', async () => {
             };
             const params: UpdateTreasuryParams = {
                 ...paramsInput,
-                signatures: await getUpdateTreasurySignatures(primaryToken as any, admins, admin, paramsInput),
+                signatures: await getUpdateTreasurySignatures(primaryToken as any, paramsInput, admin, admins),
             };
 
             await expect(getUpdateTreasuryTx(primaryToken as any, deployer, params))
@@ -373,7 +373,7 @@ describe('4.4. PrimaryToken', async () => {
             };
             const params: UpdateTreasuryParams = {
                 ...paramsInput,
-                signatures: await getUpdateTreasurySignatures(primaryToken as any, admins, admin, paramsInput),
+                signatures: await getUpdateTreasurySignatures(primaryToken as any, paramsInput, admin, admins),
             };
 
             await expect(getUpdateTreasuryTx(primaryToken as any, deployer, params))
@@ -392,7 +392,7 @@ describe('4.4. PrimaryToken', async () => {
             };
             const params: UpdateStakeTokensParams = {
                 ...paramsInput,
-                signatures: await getUpdateStakeTokensSignatures(primaryToken as any, admins, admin, paramsInput),
+                signatures: await getUpdateStakeTokensSignatures(primaryToken as any, paramsInput, admin, admins),
             };
 
             const tx = await getUpdateStakeTokensTx(primaryToken as any, deployer, params);
@@ -413,7 +413,7 @@ describe('4.4. PrimaryToken', async () => {
             };
             const params: UpdateStakeTokensParams = {
                 ...paramsInput,
-                signatures: await getUpdateStakeTokensSignatures(primaryToken as any, admins, admin, paramsInput, false),
+                signatures: await getUpdateStakeTokensSignatures(primaryToken as any, paramsInput, admin, admins, false),
             };
 
             await expect(getUpdateStakeTokensTx(primaryToken as any, deployer, params))
@@ -434,7 +434,7 @@ describe('4.4. PrimaryToken', async () => {
             };
             const params: UpdateStakeTokensParams = {
                 ...paramsInput,
-                signatures: await getUpdateStakeTokensSignatures(primaryToken as any, admins, admin, paramsInput),
+                signatures: await getUpdateStakeTokensSignatures(primaryToken as any, paramsInput, admin, admins),
             };
 
             await expect(getUpdateStakeTokensTx(primaryToken as any, deployer, params))
@@ -526,7 +526,7 @@ describe('4.4. PrimaryToken', async () => {
             };
             const params: UnlockForBackerRoundParams = {
                 ...paramsInput,
-                signatures: await getUnlockForBackerRoundSignatures(primaryToken as any, admins, admin, paramsInput),
+                signatures: await getUnlockForBackerRoundSignatures(primaryToken as any, paramsInput, admin, admins),
             };
 
             const tx = await getUnlockForBackerRoundTx(primaryToken as any, deployer, params);
@@ -548,7 +548,7 @@ describe('4.4. PrimaryToken', async () => {
             };
             const params: UnlockForBackerRoundParams = {
                 ...paramsInput,
-                signatures: await getUnlockForBackerRoundSignatures(primaryToken as any, admins, admin, paramsInput, false),
+                signatures: await getUnlockForBackerRoundSignatures(primaryToken as any, paramsInput, admin, admins, false),
             };
 
             await expect(getUnlockForBackerRoundTx(primaryToken as any, deployer, params))
@@ -566,7 +566,7 @@ describe('4.4. PrimaryToken', async () => {
             };
             const params: UnlockForBackerRoundParams = {
                 ...paramsInput,
-                signatures: await getUnlockForBackerRoundSignatures(primaryToken as any, admins, admin, paramsInput),
+                signatures: await getUnlockForBackerRoundSignatures(primaryToken as any, paramsInput, admin, admins),
             };
 
             await expect(getUnlockForBackerRoundTx(primaryToken as any, deployer, params))
@@ -585,7 +585,7 @@ describe('4.4. PrimaryToken', async () => {
             };
             const params: UnlockForSeedRoundParams = {
                 ...paramsInput,
-                signatures: await getUnlockForSeedRoundSignatures(primaryToken as any, admins, admin, paramsInput),
+                signatures: await getUnlockForSeedRoundSignatures(primaryToken as any, paramsInput, admin, admins),
             };
 
             const tx = await getUnlockForSeedRoundTx(primaryToken as any, deployer, params);
@@ -607,7 +607,7 @@ describe('4.4. PrimaryToken', async () => {
             };
             const params: UnlockForSeedRoundParams = {
                 ...paramsInput,
-                signatures: await getUnlockForSeedRoundSignatures(primaryToken as any, admins, admin, paramsInput, false),
+                signatures: await getUnlockForSeedRoundSignatures(primaryToken as any, paramsInput, admin, admins, false),
             };
 
             await expect(getUnlockForSeedRoundTx(primaryToken as any, deployer, params))
@@ -625,7 +625,7 @@ describe('4.4. PrimaryToken', async () => {
             };
             const params: UnlockForSeedRoundParams = {
                 ...paramsInput,
-                signatures: await getUnlockForSeedRoundSignatures(primaryToken as any, admins, admin, paramsInput),
+                signatures: await getUnlockForSeedRoundSignatures(primaryToken as any, paramsInput, admin, admins),
             };
 
             await expect(getUnlockForSeedRoundTx(primaryToken as any, deployer, params))
@@ -644,7 +644,7 @@ describe('4.4. PrimaryToken', async () => {
             };
             const params: UnlockForPrivateSale1Params = {
                 ...paramsInput,
-                signatures: await getUnlockForPrivateSale1Signatures(primaryToken as any, admins, admin, paramsInput),
+                signatures: await getUnlockForPrivateSale1Signatures(primaryToken as any, paramsInput, admin, admins),
             };
 
             const tx = await getUnlockForPrivateSale1Tx(primaryToken as any, deployer, params);
@@ -666,7 +666,7 @@ describe('4.4. PrimaryToken', async () => {
             };
             const params: UnlockForPrivateSale1Params = {
                 ...paramsInput,
-                signatures: await getUnlockForPrivateSale1Signatures(primaryToken as any, admins, admin, paramsInput, false),
+                signatures: await getUnlockForPrivateSale1Signatures(primaryToken as any, paramsInput, admin, admins, false),
             };
 
             await expect(getUnlockForPrivateSale1Tx(primaryToken as any, deployer, params))
@@ -684,7 +684,7 @@ describe('4.4. PrimaryToken', async () => {
             };
             const params: UnlockForPrivateSale1Params = {
                 ...paramsInput,
-                signatures: await getUnlockForPrivateSale1Signatures(primaryToken as any, admins, admin, paramsInput),
+                signatures: await getUnlockForPrivateSale1Signatures(primaryToken as any, paramsInput, admin, admins),
             };
 
             await expect(getUnlockForPrivateSale1Tx(primaryToken as any, deployer, params))
@@ -703,7 +703,7 @@ describe('4.4. PrimaryToken', async () => {
             };
             const params: UnlockForPrivateSale2Params = {
                 ...paramsInput,
-                signatures: await getUnlockForPrivateSale2Signatures(primaryToken as any, admins, admin, paramsInput),
+                signatures: await getUnlockForPrivateSale2Signatures(primaryToken as any, paramsInput, admin, admins),
             };
             const tx = await getUnlockForPrivateSale2Tx(primaryToken as any, deployer, params);
             await tx.wait();
@@ -724,7 +724,7 @@ describe('4.4. PrimaryToken', async () => {
             };
             const params: UnlockForPrivateSale2Params = {
                 ...paramsInput,
-                signatures: await getUnlockForPrivateSale2Signatures(primaryToken as any, admins, admin, paramsInput, false),
+                signatures: await getUnlockForPrivateSale2Signatures(primaryToken as any, paramsInput, admin, admins, false),
             };
 
             await expect(getUnlockForPrivateSale2Tx(primaryToken as any, deployer, params))
@@ -742,7 +742,7 @@ describe('4.4. PrimaryToken', async () => {
             };
             const params: UnlockForPrivateSale2Params = {
                 ...paramsInput,
-                signatures: await getUnlockForPrivateSale2Signatures(primaryToken as any, admins, admin, paramsInput),
+                signatures: await getUnlockForPrivateSale2Signatures(primaryToken as any, paramsInput, admin, admins),
             };
             await expect(getUnlockForPrivateSale2Tx(primaryToken as any, deployer, params))
                 .to.be.revertedWithCustomError(primaryToken, 'AlreadyUnlockedTokens');
@@ -760,7 +760,7 @@ describe('4.4. PrimaryToken', async () => {
             };
             const params: UnlockForPublicSaleParams = {
                 ...paramsInput,
-                signatures: await getUnlockForPublicSaleSignatures(primaryToken as any, admins, admin, paramsInput),
+                signatures: await getUnlockForPublicSaleSignatures(primaryToken as any, paramsInput, admin, admins),
             };
             
             const tx = await getUnlockForPublicSaleTx(primaryToken as any, deployer, params);
@@ -782,7 +782,7 @@ describe('4.4. PrimaryToken', async () => {
             };
             const params: UnlockForPublicSaleParams = {
                 ...paramsInput,
-                signatures: await getUnlockForPublicSaleSignatures(primaryToken as any, admins, admin, paramsInput, false),
+                signatures: await getUnlockForPublicSaleSignatures(primaryToken as any, paramsInput, admin, admins, false),
             };
 
             await expect(getUnlockForPublicSaleTx(primaryToken as any, deployer, params))
@@ -800,7 +800,7 @@ describe('4.4. PrimaryToken', async () => {
             };
             const params: UnlockForPublicSaleParams = {
                 ...paramsInput,
-                signatures: await getUnlockForPublicSaleSignatures(primaryToken as any, admins, admin, paramsInput),
+                signatures: await getUnlockForPublicSaleSignatures(primaryToken as any, paramsInput, admin, admins),
             };
             await expect(getUnlockForPublicSaleTx(primaryToken as any, deployer, params))
                 .to.be.revertedWithCustomError(primaryToken, 'AlreadyUnlockedTokens');
@@ -818,7 +818,7 @@ describe('4.4. PrimaryToken', async () => {
             };
             const params: UnlockForCoreTeamParams = {
                 ...paramsInput,
-                signatures: await getUnlockForCoreTeamSignatures(primaryToken as any, admins, admin, paramsInput),
+                signatures: await getUnlockForCoreTeamSignatures(primaryToken as any, paramsInput, admin, admins),
             };
 
             const tx = await getUnlockForCoreTeamTx(primaryToken as any, deployer, params);
@@ -840,7 +840,7 @@ describe('4.4. PrimaryToken', async () => {
             };
             const params: UnlockForCoreTeamParams = {
                 ...paramsInput,
-                signatures: await getUnlockForCoreTeamSignatures(primaryToken as any, admins, admin, paramsInput, false),
+                signatures: await getUnlockForCoreTeamSignatures(primaryToken as any, paramsInput, admin, admins, false),
             };
 
             await expect(getUnlockForCoreTeamTx(primaryToken as any, deployer, params))
@@ -858,7 +858,7 @@ describe('4.4. PrimaryToken', async () => {
             };
             const params: UnlockForCoreTeamParams = {
                 ...paramsInput,
-                signatures: await getUnlockForCoreTeamSignatures(primaryToken as any, admins, admin, paramsInput),
+                signatures: await getUnlockForCoreTeamSignatures(primaryToken as any, paramsInput, admin, admins),
             };
             await expect(getUnlockForCoreTeamTx(primaryToken as any, deployer, params))
                 .to.be.revertedWithCustomError(primaryToken, 'AlreadyUnlockedTokens');
@@ -876,7 +876,7 @@ describe('4.4. PrimaryToken', async () => {
             };
             const params: UnlockForMarketMakerParams = {
                 ...paramsInput,
-                signatures: await getUnlockForMarketMakerSignatures(primaryToken as any, admins, admin, paramsInput),
+                signatures: await getUnlockForMarketMakerSignatures(primaryToken as any, paramsInput, admin, admins),
             };
 
             const tx = await getUnlockForMarketMakerTx(primaryToken as any, deployer, params);
@@ -898,7 +898,7 @@ describe('4.4. PrimaryToken', async () => {
             };
             const params: UnlockForMarketMakerParams = {
                 ...paramsInput,
-                signatures: await getUnlockForMarketMakerSignatures(primaryToken as any, admins, admin, paramsInput, false),
+                signatures: await getUnlockForMarketMakerSignatures(primaryToken as any, paramsInput, admin, admins, false),
             };
 
             await expect(getUnlockForMarketMakerTx(primaryToken as any, deployer, params))
@@ -916,7 +916,7 @@ describe('4.4. PrimaryToken', async () => {
             };
             const params: UnlockForMarketMakerParams = {
                 ...paramsInput,
-                signatures: await getUnlockForMarketMakerSignatures(primaryToken as any, admins, admin, paramsInput),
+                signatures: await getUnlockForMarketMakerSignatures(primaryToken as any, paramsInput, admin, admins),
             };
             await expect(getUnlockForMarketMakerTx(primaryToken as any, deployer, params))
                 .to.be.revertedWithCustomError(primaryToken, 'AlreadyUnlockedTokens');
@@ -934,7 +934,7 @@ describe('4.4. PrimaryToken', async () => {
             };
             const params: UnlockForExternalTreasuryParams = {
                 ...paramsInput,
-                signatures: await getUnlockForExternalTreasurySignatures(primaryToken as any, admins, admin, paramsInput),
+                signatures: await getUnlockForExternalTreasurySignatures(primaryToken as any, paramsInput, admin, admins),
             };
 
             const tx = await getUnlockForExternalTreasuryTx(primaryToken as any, deployer, params);
@@ -956,7 +956,7 @@ describe('4.4. PrimaryToken', async () => {
             };
             const params: UnlockForExternalTreasuryParams = {
                 ...paramsInput,
-                signatures: await getUnlockForExternalTreasurySignatures(primaryToken as any, admins, admin, paramsInput, false),
+                signatures: await getUnlockForExternalTreasurySignatures(primaryToken as any, paramsInput, admin, admins, false),
             };
 
             await expect(getUnlockForExternalTreasuryTx(primaryToken as any, deployer, params))
@@ -974,7 +974,7 @@ describe('4.4. PrimaryToken', async () => {
             };
             const params: UnlockForExternalTreasuryParams = {
                 ...paramsInput,
-                signatures: await getUnlockForExternalTreasurySignatures(primaryToken as any, admins, admin, paramsInput),
+                signatures: await getUnlockForExternalTreasurySignatures(primaryToken as any, paramsInput, admin, admins),
             };
             await expect(getUnlockForExternalTreasuryTx(primaryToken as any, deployer, params))
                 .to.be.revertedWithCustomError(primaryToken, 'AlreadyUnlockedTokens');

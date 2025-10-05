@@ -3,44 +3,50 @@ import { DistributeTokensWithDurationParamsInput, DistributeTokensWithTimestampP
 import { ethers } from "ethers";
 import { getSignatures } from "@utils/blockchain";
 
+
+// updateStakeTokens
 export async function getUpdateStakeTokensSignatures(
     driptributor: Driptributor,
-    admins: any[],
+    paramsInput: UpdateStakeTokensParamsInput,
     admin: Admin,
-    params: UpdateStakeTokensParamsInput,
+    admins: any[],
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
         ["address", "string", "address", "address", "address"],
-        [driptributor.address, "updateStakeTokens", params.stakeToken1, params.stakeToken2, params.stakeToken3]
+        [driptributor.address, "updateStakeTokens", paramsInput.stakeToken1, paramsInput.stakeToken2, paramsInput.stakeToken3]
     );
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
 
+
+// distributeTokensWithDuration
 export async function getDistributeTokensWithDurationSignatures(
     driptributor: Driptributor,
-    admins: any[],
+    paramsInput: DistributeTokensWithDurationParamsInput,
     admin: Admin,
-    params: DistributeTokensWithDurationParamsInput,
+    admins: any[],
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
         ["address", "string", "address[]", "uint256[]", "uint40[]", "string[]"],
-        [driptributor.address, "distributeTokensWithDuration", params.receivers, params.amounts, params.durations, params.notes]
+        [driptributor.address, "distributeTokensWithDuration", paramsInput.receivers, paramsInput.amounts, paramsInput.durations, paramsInput.notes]
     );
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
 
+
+// distributeTokensWithTimestamp
 export async function getDistributeTokensWithTimestampSignatures(
     driptributor: Driptributor,
-    admins: any[],
+    paramsInput: DistributeTokensWithTimestampParamsInput,
     admin: Admin,
-    params: DistributeTokensWithTimestampParamsInput,
+    admins: any[],
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
         ["address", "string", "address[]", "uint256[]", "uint40[]", "string[]"],
-        [driptributor.address, "distributeTokensWithTimestamp", params.receivers, params.amounts, params.endAts, params.notes]
+        [driptributor.address, "distributeTokensWithTimestamp", paramsInput.receivers, paramsInput.amounts, paramsInput.endAts, paramsInput.notes]
     );
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }

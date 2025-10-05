@@ -13,9 +13,9 @@ import { UpdateValidatorParamsInput } from "@utils/models/common/validatable";
 // updateValidator
 export async function getUpdateValidatorSignatures(
     validatable: Contract,
-    admins: any[],
-    admin: Admin,
     paramsInput: UpdateValidatorParamsInput,
+    admin: Admin,
+    admins: any[],
     isValid: boolean = true
 ) {
     let message = ethers.utils.defaultAbiCoder.encode(

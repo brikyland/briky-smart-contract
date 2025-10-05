@@ -48,14 +48,15 @@ export async function getUpdateBaseUnitPriceRangeTxByInput(
     estateForger: EstateForger,
     deployer: SignerWithAddress,
     paramsInput: UpdateBaseUnitPriceRangeParamsInput,
+    admin: Admin,
     admins: any[],
-    admin: Admin
+    txConfig = {}
 ): Promise<ContractTransaction> {
     const params: UpdateBaseUnitPriceRangeParams = {
         ...paramsInput,
-        signatures: await getUpdateBaseUnitPriceRangeSignatures(estateForger, paramsInput, admins, admin)
+        signatures: await getUpdateBaseUnitPriceRangeSignatures(estateForger, paramsInput, admin, admins)
     }
-    return await getUpdateBaseUnitPriceRangeTx(estateForger, deployer, params);
+    return await getUpdateBaseUnitPriceRangeTx(estateForger, deployer, params, txConfig);
 }
 
 
@@ -78,13 +79,13 @@ export async function getWhitelistTxByInput(
     estateForger: EstateForger,
     deployer: SignerWithAddress,
     paramsInput: WhitelistParamsInput,
-    admins: any[],
     admin: Admin,
+    admins: any[],
     txConfig = {}
 ): Promise<ContractTransaction> {
     const params: WhitelistParams = {
         ...paramsInput,
-        signatures: await getWhitelistSignatures(estateForger, paramsInput, admins, admin)
+        signatures: await getWhitelistSignatures(estateForger, paramsInput, admin, admins)
     }
     return await getWhitelistTx(estateForger, deployer, params, txConfig);
 }
@@ -117,7 +118,7 @@ export async function getRequestTokenizationTxByInput(
 ): Promise<ContractTransaction> {
     const params: RequestTokenizationParams = {
         ...paramsInput,
-        validation: await getRequestTokenizationValidation(estateForger, validator, paramsInput)
+        validation: await getRequestTokenizationValidation(estateForger, paramsInput, validator)
     }
     return await getRequestTokenizationTx(estateForger, deployer, params, txConfig);
 }
@@ -163,7 +164,7 @@ export async function getUpdateRequestEstateURITxByInput(
 ): Promise<ContractTransaction> {
     const params: UpdateRequestEstateURIParams = {
         ...paramsInput,
-        validation: await getUpdateRequestEstateURIValidation(estateForger, validator, paramsInput)
+        validation: await getUpdateRequestEstateURIValidation(estateForger, paramsInput, validator)
     }
     return getUpdateRequestEstateURITx(estateForger, deployer, params, txConfig);
 }

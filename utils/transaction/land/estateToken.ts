@@ -26,13 +26,13 @@ export async function getUpdateCommissionTokenTxByInput(
     estateToken: EstateToken,
     deployer: SignerWithAddress,
     paramsInput: UpdateCommissionTokenParamsInput,
-    admins: any[],
     admin: Admin,
+    admins: any[],
     txConfig = {}
 ): Promise<ContractTransaction> {
     const params: UpdateCommissionTokenParams = {
         ...paramsInput,
-        signatures: await getUpdateCommissionTokenSignatures(estateToken, paramsInput, admins, admin)
+        signatures: await getUpdateCommissionTokenSignatures(estateToken, paramsInput, admin, admins)
     };
     return await getUpdateCommissionTokenTx(estateToken, deployer, params, txConfig);
 }
@@ -56,13 +56,13 @@ export async function getUpdateBaseURITxByInput(
     estateToken: EstateToken,
     deployer: SignerWithAddress,
     paramsInput: UpdateBaseURIParamsInput,
-    admins: any[],
     admin: Admin,
+    admins: any[],
     txConfig = {}
 ): Promise<ContractTransaction> {
     const params: UpdateBaseURIParams = {
         ...paramsInput,
-        signatures: await getUpdateBaseURISignatures(estateToken, paramsInput, admins, admin)
+        signatures: await getUpdateBaseURISignatures(estateToken, paramsInput, admin, admins)
     };
     return await getUpdateBaseURITx(estateToken, deployer, params, txConfig);
 }
@@ -87,13 +87,13 @@ export async function getAuthorizeTokenizersTxByInput(
     estateToken: EstateToken,
     deployer: SignerWithAddress,
     paramsInput: AuthorizeTokenizersParamsInput,
-    admins: any[],
     admin: Admin,
+    admins: any[],
     txConfig = {}
 ): Promise<ContractTransaction> {
     const params: AuthorizeTokenizersParams = {
         ...paramsInput,
-        signatures: await getAuthorizeTokenizersSignatures(estateToken, paramsInput, admins, admin)
+        signatures: await getAuthorizeTokenizersSignatures(estateToken, paramsInput, admin, admins)
     };
     return await getAuthorizeTokenizersTx(estateToken, deployer, params, txConfig);
 }
@@ -118,13 +118,13 @@ export async function getAuthorizeExtractorsTxByInput(
     estateToken: EstateToken,
     deployer: SignerWithAddress,
     paramsInput: AuthorizeExtractorsParamsInput,
-    admins: any[],
     admin: Admin,
+    admins: any[],
     txConfig = {}
 ): Promise<ContractTransaction> {
     const params: AuthorizeExtractorsParams = {
         ...paramsInput,
-        signatures: await getAuthorizeExtractorsSignatures(estateToken, paramsInput, admins, admin)
+        signatures: await getAuthorizeExtractorsSignatures(estateToken, paramsInput, admin, admins)
     };
     return await getAuthorizeExtractorsTx(estateToken, deployer, params, txConfig);
 }
@@ -149,13 +149,13 @@ export async function getUpdateZoneRoyaltyRateTxByInput(
     estateToken: EstateToken,
     deployer: SignerWithAddress,
     paramsInput: UpdateZoneRoyaltyRateParamsInput,
-    admins: any[],
     admin: Admin,
+    admins: any[],
     txConfig = {}
 ): Promise<ContractTransaction> {
     const params: UpdateZoneRoyaltyRateParams = {
         ...paramsInput,
-        signatures: await getUpdateZoneRoyaltyRateSignatures(estateToken, paramsInput, admins, admin)
+        signatures: await getUpdateZoneRoyaltyRateSignatures(estateToken, paramsInput, admin, admins)
     };
     return await getUpdateZoneRoyaltyRateTx(estateToken, deployer, params, txConfig);
 }
@@ -187,7 +187,7 @@ export async function getRegisterCustodianTxByInput(
 ): Promise<ContractTransaction> {
     const params: RegisterCustodianParams = {
         ...paramsInput,
-        validation: await getRegisterCustodianValidation(estateToken, validator, paramsInput)
+        validation: await getRegisterCustodianValidation(estateToken, paramsInput, validator)
     };
     return await getRegisterCustodianTx(estateToken, deployer, params, txConfig);
 }
@@ -350,7 +350,7 @@ export async function getSafeUpdateEstateURITxByInput(
     const params: SafeUpdateEstateURIParams = {
         ...paramsInput,
         anchor: await getSafeUpdateEstateURIAnchor(estateToken, paramsInput),
-        validation: await getUpdateEstateURIValidation(estateToken, validator, paramsInput)
+        validation: await getUpdateEstateURIValidation(estateToken, paramsInput, validator)
     };
     return await getSafeUpdateEstateURITx(estateToken, deployer, params, txConfig);
 }

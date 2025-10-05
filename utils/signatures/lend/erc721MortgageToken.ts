@@ -3,11 +3,13 @@ import { RegisterCollateralsParamsInput } from "@utils/models/lend/erc721Mortgag
 import { ethers } from "ethers";
 import { getSignatures } from "@utils/blockchain";
 
+
+// registerCollaterals
 export async function getRegisterCollateralsSignatures(
     erc721MortgageToken: ERC721MortgageToken,
-    admins: any[],
-    admin: Admin,
     params: RegisterCollateralsParamsInput,
+    admin: Admin,
+    admins: any[],
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(

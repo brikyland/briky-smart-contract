@@ -178,13 +178,7 @@ describe('6.3. MortgageMarketplace', async () => {
             LandInitialization.COMMISSION_TOKEN_RoyaltyRate,
         ));
         
-        await callTransaction(getUpdateCommissionTokenTxByInput(
-            estateToken as any,
-            deployer,
-            { commissionToken: commissionToken.address },
-            admins,
-            admin
-        ));
+        await callTransaction(getUpdateCommissionTokenTxByInput(estateToken as any, deployer, {commissionToken: commissionToken.address}, admin, admins));
 
         const estateMortgageToken = await deployEstateMortgageToken(
             deployer.address,
@@ -462,7 +456,7 @@ describe('6.3. MortgageMarketplace', async () => {
             };
             const params: RegisterCollectionsParams = {
                 ...paramsInput,
-                signatures: await getRegisterCollectionsSignatures(mortgageMarketplace, admins, admin, paramsInput),
+                signatures: await getRegisterCollectionsSignatures(mortgageMarketplace, paramsInput, admin, admins),
             };
             const tx = await getRegisterCollectionsTx(mortgageMarketplace as any, deployer, params);
             await tx.wait();
@@ -493,7 +487,7 @@ describe('6.3. MortgageMarketplace', async () => {
             };
             const params: RegisterCollectionsParams = {
                 ...paramsInput,
-                signatures: await getRegisterCollectionsSignatures(mortgageMarketplace, admins, admin, paramsInput, false),
+                signatures: await getRegisterCollectionsSignatures(mortgageMarketplace, paramsInput, admin, admins, false),
             };
             await expect(getRegisterCollectionsTx(mortgageMarketplace as any, deployer, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
@@ -512,7 +506,7 @@ describe('6.3. MortgageMarketplace', async () => {
             };
             const params: RegisterCollectionsParams = {
                 ...paramsInput,
-                signatures: await getRegisterCollectionsSignatures(mortgageMarketplace, admins, admin, paramsInput),
+                signatures: await getRegisterCollectionsSignatures(mortgageMarketplace, paramsInput, admin, admins),
             };
             await expect(getRegisterCollectionsTx(mortgageMarketplace as any, deployer, params))
                 .to.be.revertedWithCustomError(mortgageMarketplace, 'InvalidCollection');
@@ -531,7 +525,7 @@ describe('6.3. MortgageMarketplace', async () => {
             };
             const params: RegisterCollectionsParams = {
                 ...paramsInput,
-                signatures: await getRegisterCollectionsSignatures(mortgageMarketplace, admins, admin, paramsInput),
+                signatures: await getRegisterCollectionsSignatures(mortgageMarketplace, paramsInput, admin, admins),
             };
             await expect(getRegisterCollectionsTx(mortgageMarketplace as any, deployer, params))
                 .to.be.revertedWithCustomError(mortgageMarketplace, 'InvalidCollection');
@@ -550,7 +544,7 @@ describe('6.3. MortgageMarketplace', async () => {
             };
             const params: RegisterCollectionsParams = {
                 ...paramsInput,
-                signatures: await getRegisterCollectionsSignatures(mortgageMarketplace, admins, admin, paramsInput),
+                signatures: await getRegisterCollectionsSignatures(mortgageMarketplace, paramsInput, admin, admins),
             };
             await expect(getRegisterCollectionsTx(mortgageMarketplace as any, deployer, params))
                 .to.be.revertedWithCustomError(mortgageMarketplace, `RegisteredCollection`)
@@ -581,7 +575,7 @@ describe('6.3. MortgageMarketplace', async () => {
             };
             const params: RegisterCollectionsParams = {
                 ...paramsInput,
-                signatures: await getRegisterCollectionsSignatures(mortgageMarketplace, admins, admin, paramsInput),
+                signatures: await getRegisterCollectionsSignatures(mortgageMarketplace, paramsInput, admin, admins),
             };
 
             await expect(getRegisterCollectionsTx(mortgageMarketplace as any, deployer, params))
@@ -612,7 +606,7 @@ describe('6.3. MortgageMarketplace', async () => {
             };
             const params: RegisterCollectionsParams = {
                 ...paramsInput,
-                signatures: await getRegisterCollectionsSignatures(mortgageMarketplace, admins, admin, paramsInput),
+                signatures: await getRegisterCollectionsSignatures(mortgageMarketplace, paramsInput, admin, admins),
             };
             const tx = await getRegisterCollectionsTx(mortgageMarketplace as any, deployer, params);
             await tx.wait();
@@ -656,7 +650,7 @@ describe('6.3. MortgageMarketplace', async () => {
             };
             const params: RegisterCollectionsParams = {
                 ...paramsInput,
-                signatures: await getRegisterCollectionsSignatures(mortgageMarketplace, admins, admin, paramsInput),
+                signatures: await getRegisterCollectionsSignatures(mortgageMarketplace, paramsInput, admin, admins),
             };
             await expect(getRegisterCollectionsTx(mortgageMarketplace as any, deployer, params))
                 .to.be.revertedWithCustomError(mortgageMarketplace, `NotRegisteredCollection`)
@@ -686,7 +680,7 @@ describe('6.3. MortgageMarketplace', async () => {
             };
             const params: RegisterCollectionsParams = {
                 ...paramsInput,
-                signatures: await getRegisterCollectionsSignatures(mortgageMarketplace, admins, admin, paramsInput),
+                signatures: await getRegisterCollectionsSignatures(mortgageMarketplace, paramsInput, admin, admins),
             };
             await expect(getRegisterCollectionsTx(mortgageMarketplace as any, deployer, params))
                 .to.be.revertedWithCustomError(mortgageMarketplace, `NotRegisteredCollection`)
@@ -727,7 +721,7 @@ describe('6.3. MortgageMarketplace', async () => {
             };
             const params: RegisterCollectionsParams = {
                 ...paramsInput,
-                signatures: await getRegisterCollectionsSignatures(mortgageMarketplace, admins, admin, paramsInput),
+                signatures: await getRegisterCollectionsSignatures(mortgageMarketplace, paramsInput, admin, admins),
             };
             await expect(getRegisterCollectionsTx(mortgageMarketplace as any, deployer, params))
                 .to.be.revertedWithCustomError(mortgageMarketplace, `NotRegisteredCollection`)

@@ -5,56 +5,56 @@ import { ethers } from "ethers";
 
 export async function getUpdateBaseURISignatures(
     passportToken: PassportToken,
-    admins: any[],
+    paramsInput: UpdateBaseURIParamsInput,
     admin: Admin,
-    params: UpdateBaseURIParamsInput,
+    admins: any[],
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
         ["address", "string", "string"],
-        [passportToken.address, "updateBaseURI", params.uri]
+        [passportToken.address, "updateBaseURI", paramsInput.uri]
     );
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
 
 export async function getUpdateFeeSignatures(
     passportToken: PassportToken,
-    admins: any[],
+    paramsInput: UpdateFeeParamsInput,
     admin: Admin,
-    params: UpdateFeeParamsInput,
+    admins: any[],
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
         ["address", "string", "uint256"],
-        [passportToken.address, "updateFee", params.fee]
+        [passportToken.address, "updateFee", paramsInput.fee]
     );
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
 
 export async function getUpdateRoyaltyRateSignatures(
     passportToken: PassportToken,
-    admins: any[],
+    paramsInput: UpdateRoyaltyRateParamsInput,
     admin: Admin,
-    params: UpdateRoyaltyRateParamsInput,
+    admins: any[],
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
         ["address", "string", "uint256"],
-        [passportToken.address, "updateRoyaltyRate", params.royaltyRate]
+        [passportToken.address, "updateRoyaltyRate", paramsInput.royaltyRate]
     );
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
 
 export async function getWithdrawSignatures(
     passportToken: PassportToken,
-    admins: any[],
+    paramsInput: WithdrawParamsInput,
     admin: Admin,
-    params: WithdrawParamsInput,
+    admins: any[],
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
         ["address", "string", "address", "address[]", "uint256[]"],
-        [passportToken.address, "withdraw", params.receiver, params.currencies, params.values]
+        [passportToken.address, "withdraw", paramsInput.receiver, paramsInput.currencies, paramsInput.values]
     );
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }

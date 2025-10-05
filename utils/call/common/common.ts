@@ -28,26 +28,14 @@ export async function addCurrencyToAdminAndPriceWatcher(
         admins
     ));
     
-    await callTransaction(getUpdatePriceFeedsTxByInput(
-        priceWatcher,
-        deployer,
-        {
-            currencies: currencyAddresses,
-            feeds: priceFeeds,
-            heartbeats,
-        },
-        admins,
-        admin
-    ));
+    await callTransaction(getUpdatePriceFeedsTxByInput(priceWatcher, deployer, {
+        currencies: currencyAddresses,
+        feeds: priceFeeds,
+        heartbeats,
+    }, admin, admins));
     
-    await callTransaction(getUpdateDefaultRatesTxByInput(
-        priceWatcher,
-        deployer,
-        {
-            currencies: currencyAddresses,
-            rates: defaultRates,
-        },
-        admins,
-        admin
-    ));
+    await callTransaction(getUpdateDefaultRatesTxByInput(priceWatcher, deployer, {
+        currencies: currencyAddresses,
+        rates: defaultRates,
+    }, admin, admins));
 }

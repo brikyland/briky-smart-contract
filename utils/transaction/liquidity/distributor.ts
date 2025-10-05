@@ -1,5 +1,6 @@
 import { Distributor } from "@typechain-types";
 import { DistributeTokenParams } from "@utils/models/liquidity/distributor";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 export async function getDistributeTokenTx(
     distributor: Distributor,
@@ -7,12 +8,11 @@ export async function getDistributeTokenTx(
     params: DistributeTokenParams,
     txConfig = {}
 ) {
-    const tx = distributor.connect(deployer).distributeToken(
+    return distributor.connect(deployer).distributeToken(
         params.receivers,
         params.amounts,
         params.note,
         params.signatures,
         txConfig
     );
-    return tx;
 }

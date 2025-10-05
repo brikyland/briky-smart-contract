@@ -27,14 +27,15 @@ export async function getUpdateBaseUnitPriceRangeTxByInput(
     prestigePad: PrestigePad,
     deployer: SignerWithAddress,
     paramsInput: UpdateBaseUnitPriceRangeParamsInput,
+    admin: Admin,
     admins: any[],
-    admin: Admin
+    txConfig = {}
 ): Promise<ContractTransaction> {
     const params: UpdateBaseUnitPriceRangeParams = {
         ...paramsInput,
-        signatures: await getUpdateBaseUnitPriceRangeSignatures(prestigePad, paramsInput, admins, admin)
+        signatures: await getUpdateBaseUnitPriceRangeSignatures(prestigePad, paramsInput, admin, admins)
     }
-    return await getUpdateBaseUnitPriceRangeTx(prestigePad, deployer, params);
+    return await getUpdateBaseUnitPriceRangeTx(prestigePad, deployer, params, txConfig);
 }
 
 

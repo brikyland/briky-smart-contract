@@ -221,7 +221,7 @@ describe('4.5. StakeToken', async () => {
         }
 
         if (pause) {
-            await callTransaction(getPauseTxByInput(stakeToken1 as any, deployer, admins, admin));
+            await callTransaction(getPauseTxByInput(stakeToken1 as any, deployer, admin, admins));
         }
 
         return {
@@ -365,7 +365,7 @@ describe('4.5. StakeToken', async () => {
             };
             const params: InitializeRewardingParams = {
                 ...paramsInput,
-                signatures: await getInitializeRewardingSignatures(stakeToken1 as any, admins, admin, paramsInput),
+                signatures: await getInitializeRewardingSignatures(stakeToken1 as any, paramsInput, admin, admins),
             };
 
             const tx = await getInitializeRewardingTx(stakeToken1 as any, deployer, params);
@@ -386,7 +386,7 @@ describe('4.5. StakeToken', async () => {
             };
             const params: InitializeRewardingParams = {
                 ...paramsInput,
-                signatures: await getInitializeRewardingSignatures(stakeToken1 as any, admins, admin, paramsInput, false),
+                signatures: await getInitializeRewardingSignatures(stakeToken1 as any, paramsInput, admin, admins, false),
             };
             
             await expect(getInitializeRewardingTx(stakeToken1 as any, deployer, params))
@@ -405,7 +405,7 @@ describe('4.5. StakeToken', async () => {
             };
             const params: InitializeRewardingParams = {
                 ...paramsInput,
-                signatures: await getInitializeRewardingSignatures(stakeToken1 as any, admins, admin, paramsInput),
+                signatures: await getInitializeRewardingSignatures(stakeToken1 as any, paramsInput, admin, admins),
             };
 
             await expect(getInitializeRewardingTx(stakeToken1 as any, deployer, params))
@@ -423,7 +423,7 @@ describe('4.5. StakeToken', async () => {
             };
             const params: UpdateFeeRateParams = {
                 ...paramsInput,
-                signatures: await getUpdateFeeRateSignatures(stakeToken1 as any, admins, admin, paramsInput),
+                signatures: await getUpdateFeeRateSignatures(stakeToken1 as any, paramsInput, admin, admins),
             };
 
             const tx = await getUpdateFeeRateTx(stakeToken1 as any, deployer, params);
@@ -454,7 +454,7 @@ describe('4.5. StakeToken', async () => {
             };
             const params: UpdateFeeRateParams = {
                 ...paramsInput,
-                signatures: await getUpdateFeeRateSignatures(stakeToken1 as any, admins, admin, paramsInput, false),
+                signatures: await getUpdateFeeRateSignatures(stakeToken1 as any, paramsInput, admin, admins, false),
             };
             await expect(getUpdateFeeRateTx(stakeToken1 as any, deployer, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
@@ -468,7 +468,7 @@ describe('4.5. StakeToken', async () => {
             };
             const params: UpdateFeeRateParams = {
                 ...paramsInput,
-                signatures: await getUpdateFeeRateSignatures(stakeToken1 as any, admins, admin, paramsInput),
+                signatures: await getUpdateFeeRateSignatures(stakeToken1 as any, paramsInput, admin, admins),
             };
 
             await expect(getUpdateFeeRateTx(stakeToken1 as any, deployer, params))

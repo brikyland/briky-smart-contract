@@ -14,8 +14,8 @@ import { ethers } from "ethers";
 export async function getUpdateCommissionTokenSignatures(
     estateToken: EstateToken,
     paramsInput: UpdateCommissionTokenParamsInput,
-    admins: any[],
     admin: Admin,
+    admins: any[],
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
@@ -30,8 +30,8 @@ export async function getUpdateCommissionTokenSignatures(
 export async function getUpdateBaseURISignatures(
     estateToken: EstateToken,
     paramsInput: UpdateBaseURIParamsInput,
-    admins: any[],
     admin: Admin,
+    admins: any[],
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
@@ -47,8 +47,8 @@ export async function getUpdateBaseURISignatures(
 export async function getAuthorizeTokenizersSignatures(
     estateToken: EstateToken,
     paramsInput: AuthorizeTokenizersParamsInput,
-    admins: any[],
     admin: Admin,
+    admins: any[],
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
@@ -64,8 +64,8 @@ export async function getAuthorizeTokenizersSignatures(
 export async function getAuthorizeExtractorsSignatures(
     estateToken: EstateToken,
     paramsInput: AuthorizeExtractorsParamsInput,
-    admins: any[],
     admin: Admin,
+    admins: any[],
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
@@ -81,8 +81,8 @@ export async function getAuthorizeExtractorsSignatures(
 export async function getUpdateZoneRoyaltyRateSignatures(
     estateToken: EstateToken,
     paramsInput: UpdateZoneRoyaltyRateParamsInput,
-    admins: any[],
     admin: Admin,
+    admins: any[],
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(

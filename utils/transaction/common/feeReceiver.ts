@@ -26,13 +26,13 @@ export async function getWithdrawTxByInput(
     feeReceiver: FeeReceiver,
     signer: SignerWithAddress,
     paramsInput: WithdrawParamsInput,
-    admins: any[],
     admin: Admin,
+    admins: any[],
     txConfig = {},
 ) {
     const params: WithdrawParams = {
         ...paramsInput,
-        signatures: await getWithdrawSignatures(feeReceiver, paramsInput, admins, admin)
+        signatures: await getWithdrawSignatures(feeReceiver, paramsInput, admin, admins)
     };
     return await getWithdrawTx(feeReceiver, signer, params, txConfig);
 }

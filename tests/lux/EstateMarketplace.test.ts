@@ -298,21 +298,12 @@ describe('6.2. EstateMarketplace', async () => {
             admins,
         ));
 
-        await callTransaction(getAuthorizeTokenizersTxByInput(
-            estateToken as any,
-            deployer,
-            { accounts: [estateForger.address], isTokenizer: true },
-            admins,
-            admin,
-        ));
+        await callTransaction(getAuthorizeTokenizersTxByInput(estateToken as any, deployer, {
+            accounts: [estateForger.address],
+            isTokenizer: true
+        }, admin, admins));
 
-        await callTransaction(getUpdateCommissionTokenTxByInput(
-            estateToken as any,
-            deployer,
-            { commissionToken: commissionToken.address },
-            admins,
-            admin
-        ));
+        await callTransaction(getUpdateCommissionTokenTxByInput(estateToken as any, deployer, {commissionToken: commissionToken.address}, admin, admins));
 
         for (const zone of [zone1, zone2]) {
             await callTransaction(getActivateInTxByInput(

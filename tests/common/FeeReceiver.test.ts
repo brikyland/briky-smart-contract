@@ -113,7 +113,7 @@ describe('1.5. FeeReceiver', async () => {
                 currencies: [ethers.constants.AddressZero],
                 values: [BigNumber.from(1200)],
             };
-            const tx1 = await getWithdrawTxByInput(feeReceiver, deployer, paramsInput1, admins, admin);
+            const tx1 = await getWithdrawTxByInput(feeReceiver, deployer, paramsInput1, admin, admins);
             await tx1.wait();
 
             await expect(tx1).to
@@ -139,7 +139,7 @@ describe('1.5. FeeReceiver', async () => {
                 currencies: [ethers.constants.AddressZero],
                 values: [BigNumber.from(3800)],
             };
-            const tx2 = await getWithdrawTxByInput(feeReceiver, deployer, paramsInput2, admins, admin);
+            const tx2 = await getWithdrawTxByInput(feeReceiver, deployer, paramsInput2, admin, admins);
             await tx2.wait();
 
             await expect(tx2).to
@@ -171,7 +171,7 @@ describe('1.5. FeeReceiver', async () => {
                 currencies: [currency1.address, currency2.address],
                 values: [BigNumber.from(700), ethers.constants.MaxUint256],
             };
-            const tx = await getWithdrawTxByInput(feeReceiver, deployer, paramsInput1, admins, admin);
+            const tx = await getWithdrawTxByInput(feeReceiver, deployer, paramsInput1, admin, admins);
             await tx.wait();
 
             await expect(tx).to
@@ -209,7 +209,7 @@ describe('1.5. FeeReceiver', async () => {
                 currencies: currencies,
                 values: amounts,
             };
-            const tx = await getWithdrawTxByInput(feeReceiver, deployer, paramsInput, admins, admin);
+            const tx = await getWithdrawTxByInput(feeReceiver, deployer, paramsInput, admin, admins);
             await tx.wait();
 
             await expect(tx).to
@@ -237,7 +237,7 @@ describe('1.5. FeeReceiver', async () => {
                 currencies: [ethers.constants.AddressZero],
                 values: [BigNumber.from(1000)],
             };
-            const tx = await getWithdrawTxByInput(feeReceiver, deployer, paramsInput, admins, admin);
+            const tx = await getWithdrawTxByInput(feeReceiver, deployer, paramsInput, admin, admins);
             await tx.wait();
 
             await expect(tx).to.be.revertedWithCustomError(admin, 'FailedVerification');
@@ -251,7 +251,7 @@ describe('1.5. FeeReceiver', async () => {
                 currencies: [ethers.constants.AddressZero],
                 values: [BigNumber.from(1000)],
             };
-            await expect(getWithdrawTxByInput(feeReceiver, deployer, paramsInput, admins, admin))
+            await expect(getWithdrawTxByInput(feeReceiver, deployer, paramsInput, admin, admins))
                 .to.be.revertedWithCustomError(feeReceiver, 'FailedTransfer');
         });
 
@@ -263,7 +263,7 @@ describe('1.5. FeeReceiver', async () => {
                 currencies: [currency1.address],
                 values: [BigNumber.from(1000)],
             };
-            await expect(getWithdrawTxByInput(feeReceiver, deployer, paramsInput, admins, admin))
+            await expect(getWithdrawTxByInput(feeReceiver, deployer, paramsInput, admin, admins))
                 .to.be.revertedWith('ERC20: transfer amount exceeds balance');
         });
 
@@ -282,7 +282,7 @@ describe('1.5. FeeReceiver', async () => {
                 currencies: [ethers.constants.AddressZero],
                 values: [BigNumber.from(1000)],
             };
-            await expect(getWithdrawTxByInput(feeReceiver, deployer, paramsInput, admins, admin))
+            await expect(getWithdrawTxByInput(feeReceiver, deployer, paramsInput, admin, admins))
                 .to.be.revertedWithCustomError(feeReceiver, 'FailedTransfer');
         });
 

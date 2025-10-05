@@ -10,8 +10,8 @@ import {EstateToken} from "@typechain-types";
 // registerCustodian
 export async function getRegisterCustodianValidation(
     estateToken: EstateToken,
-    validator: MockValidator,
     paramsInput: RegisterCustodianParamsInput,
+    validator: MockValidator,
     isValid: boolean = true
 ) {
     const content = ethers.utils.defaultAbiCoder.encode(
@@ -29,8 +29,8 @@ export async function getRegisterCustodianValidation(
 // updateEstateURI
 export async function getUpdateEstateURIValidation(
     estateToken: EstateToken,
-    validator: MockValidator,
     paramsInput: UpdateEstateURIParamsInput,
+    validator: MockValidator,
     isValid: boolean = true
 ) {
     const content = ethers.utils.defaultAbiCoder.encode(

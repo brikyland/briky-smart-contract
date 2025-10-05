@@ -16,8 +16,8 @@ import { RATES_SCHEMA } from "@utils/models/common/common";
 export async function getUpdatePriceFeedsSignatures(
     priceWatcher: PriceWatcher,
     paramsInput: UpdatePriceFeedsParamsInput,
-    admins: any[],
     admin: Admin,
+    admins: any[],
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
@@ -32,8 +32,8 @@ export async function getUpdatePriceFeedsSignatures(
 export async function getUpdateDefaultRatesSignatures(
     priceWatcher: PriceWatcher,
     paramsInput: UpdateDefaultRatesParamsInput,
-    admins: any[],
     admin: Admin,
+    admins: any[],
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(

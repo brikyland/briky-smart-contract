@@ -9,8 +9,8 @@ import {UpdateBaseUnitPriceRangeParamsInput, WhitelistParamsInput} from "@utils/
 export async function getUpdateBaseUnitPriceRangeSignatures(
     estateForger: EstateForger,
     paramsInput: UpdateBaseUnitPriceRangeParamsInput,
-    admins: any[],
     admin: Admin,
+    admins: any[],
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
@@ -26,8 +26,8 @@ export async function getUpdateBaseUnitPriceRangeSignatures(
 export async function getWhitelistSignatures(
     estateForger: EstateForger,
     paramsInput: WhitelistParamsInput,
-    admins: any[],
     admin: Admin,
+    admins: any[],
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(

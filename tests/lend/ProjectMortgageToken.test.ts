@@ -479,7 +479,7 @@ describe('3.3. ProjectMortgageToken', async () => {
             };
             const params: UpdateBaseURIParams = {
                 ...paramsInput,
-                signatures: await getUpdateBaseURISignatures(projectMortgageToken as any, admins, admin, paramsInput),
+                signatures: await getUpdateBaseURISignatures(projectMortgageToken as any, paramsInput, admin, admins),
             };
             const tx = await getUpdateBaseURITx(projectMortgageToken as any, deployer, params);
             await tx.wait();
@@ -498,7 +498,7 @@ describe('3.3. ProjectMortgageToken', async () => {
             };
             const params: UpdateBaseURIParams = {
                 ...paramsInput,
-                signatures: await getUpdateBaseURISignatures(projectMortgageToken as any, admins, admin, paramsInput, false),
+                signatures: await getUpdateBaseURISignatures(projectMortgageToken as any, paramsInput, admin, admins, false),
             };
             await expect(getUpdateBaseURITx(projectMortgageToken as any, deployer, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
@@ -514,7 +514,7 @@ describe('3.3. ProjectMortgageToken', async () => {
             };
             const params: UpdateFeeRateParams = {
                 ...paramsInput,
-                signatures: await getUpdateFeeRateSignatures(projectMortgageToken as any, admins, admin, paramsInput),
+                signatures: await getUpdateFeeRateSignatures(projectMortgageToken as any, paramsInput, admin, admins),
             }
             const tx = await getUpdateFeeRateTx(projectMortgageToken as any, deployer, params);
             await tx.wait();
@@ -544,7 +544,7 @@ describe('3.3. ProjectMortgageToken', async () => {
             }
             const params: UpdateFeeRateParams = {
                 ...paramsInput,
-                signatures: await getUpdateFeeRateSignatures(projectMortgageToken as any, admins, admin, paramsInput, false)
+                signatures: await getUpdateFeeRateSignatures(projectMortgageToken as any, paramsInput, admin, admins, false)
             }
 
             await expect(getUpdateFeeRateTx(projectMortgageToken as any, deployer, params))
@@ -559,7 +559,7 @@ describe('3.3. ProjectMortgageToken', async () => {
             }
             const params: UpdateFeeRateParams = {
                 ...paramsInput,
-                signatures: await getUpdateFeeRateSignatures(projectMortgageToken as any, admins, admin, paramsInput),
+                signatures: await getUpdateFeeRateSignatures(projectMortgageToken as any, paramsInput, admin, admins),
             }
 
             await expect(getUpdateFeeRateTx(projectMortgageToken as any, deployer, params))

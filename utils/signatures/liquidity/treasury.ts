@@ -5,14 +5,14 @@ import { ethers } from "ethers";
 
 export async function getWithdrawOperationFundSignatures(
     treasury: Treasury,
-    admins: any[],
+    paramsInput: WithdrawOperationFundParamsInput,
     admin: Admin,
-    params: WithdrawOperationFundParamsInput,
+    admins: any[],
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
         ["address", "string", "address", "uint256"],
-        [treasury.address, "withdrawOperationFund", params.operator, params.value]
+        [treasury.address, "withdrawOperationFund", paramsInput.operator, paramsInput.value]
     );
     const nonce = await admin.nonce();
     return await getSignatures(message, admins, isValid ? nonce : nonce.add(1));

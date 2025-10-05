@@ -8,8 +8,8 @@ import { UpdateBaseUnitPriceRangeParamsInput } from "@utils/models/launch/presti
 export async function getUpdateBaseUnitPriceRangeSignatures(
     prestigePad: PrestigePad,
     paramsInput: UpdateBaseUnitPriceRangeParamsInput,
-    admins: any[],
     admin: Admin,
+    admins: any[],
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(

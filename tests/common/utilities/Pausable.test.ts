@@ -74,7 +74,7 @@ describe('1.a. Pausable', async () => {
         it('1.a.1.1. Pause successfully with valid signatures', async () => {
             const { deployer, admins, admin, pausable } = await beforePausableTest();
 
-            const tx = await getPauseTxByInput(pausable, deployer, admins, admin);
+            const tx = await getPauseTxByInput(pausable, deployer, admin, admins);
             await tx.wait();
 
             expect(await pausable.paused()).to.equal(true);
@@ -88,7 +88,7 @@ describe('1.a. Pausable', async () => {
             const { deployer, admins, admin, pausable } = await beforePausableTest();
             
             const params: PauseParams = {
-                signatures: await getPauseSignatures(pausable, admins, admin, false)
+                signatures: await getPauseSignatures(pausable, admin, admins, false)
             };
             await expect(getPauseTx(pausable, deployer, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
@@ -99,7 +99,7 @@ describe('1.a. Pausable', async () => {
                 pause: true,
             });
 
-            await expect(getPauseTxByInput(pausable, deployer, admins, admin))
+            await expect(getPauseTxByInput(pausable, deployer, admin, admins))
                 .to.be.revertedWith('Pausable: paused');
         });
     });
@@ -110,7 +110,7 @@ describe('1.a. Pausable', async () => {
                 pause: true,
             });
 
-            const tx = await getUnpauseTxByInput(pausable, deployer, admins, admin);
+            const tx = await getUnpauseTxByInput(pausable, deployer, admin, admins);
             await tx.wait();
 
             await expect(tx).to
@@ -124,7 +124,7 @@ describe('1.a. Pausable', async () => {
             });
 
             const params: UnpauseParams = {
-                signatures: await getUnpauseSignatures(pausable, admins, admin, false)
+                signatures: await getUnpauseSignatures(pausable, admin, admins, false)
             };
             await expect(getUnpauseTx(pausable, deployer, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
@@ -135,9 +135,9 @@ describe('1.a. Pausable', async () => {
                 pause: true,
             });
 
-            await callTransaction(getUnpauseTxByInput(pausable, deployer, admins, admin));
+            await callTransaction(getUnpauseTxByInput(pausable, deployer, admin, admins));
 
-            await expect(getUnpauseTxByInput(pausable, deployer, admins, admin))
+            await expect(getUnpauseTxByInput(pausable, deployer, admin, admins))
                 .to.be.revertedWith('Pausable: not paused');
         });
     });

@@ -213,12 +213,7 @@ describe('2.1. CommissionToken', async () => {
         }
 
         if (pause) {
-            await callTransaction(getPauseTxByInput(
-                commissionToken,
-                deployer,
-                admins,
-                admin,
-            ));
+            await callTransaction(getPauseTxByInput(commissionToken, deployer, admin, admins));
         }
 
         return {
@@ -281,7 +276,7 @@ describe('2.1. CommissionToken', async () => {
             const paramsInput: UpdateBaseURIParamsInput = {
                 uri: "NewBaseURI:",
             };
-            const tx = await getUpdateBaseURITxByInput(commissionToken, deployer, paramsInput, admins, admin);
+            const tx = await getUpdateBaseURITxByInput(commissionToken, deployer, paramsInput, admin, admins);
             await tx.wait();
 
             await expect(tx).to
@@ -303,7 +298,7 @@ describe('2.1. CommissionToken', async () => {
             };
             const params: UpdateBaseURIParams = {
                 ...paramsInput,
-                signatures: await getUpdateBaseURISignatures(commissionToken, paramsInput, admins, admin, false),
+                signatures: await getUpdateBaseURISignatures(commissionToken, paramsInput, admin, admins, false),
             };
             await expect(getUpdateBaseURITx(commissionToken, deployer, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
@@ -317,7 +312,7 @@ describe('2.1. CommissionToken', async () => {
             const paramsInput: UpdateRoyaltyRateParamsInput = {
                 royaltyRate: ethers.utils.parseEther('0.2'),
             };            
-            const tx = await getUpdateRoyaltyRateTxByInput(commissionToken, deployer, paramsInput, admins, admin);
+            const tx = await getUpdateRoyaltyRateTxByInput(commissionToken, deployer, paramsInput, admin, admins);
             await tx.wait();
 
             await expect(tx).to
@@ -344,7 +339,7 @@ describe('2.1. CommissionToken', async () => {
             };
             const params: UpdateRoyaltyRateParams = {
                 ...paramsInput,
-                signatures: await getUpdateRoyaltyRateSignatures(commissionToken, paramsInput, admins, admin, false),
+                signatures: await getUpdateRoyaltyRateSignatures(commissionToken, paramsInput, admin, admins, false),
             };
             await expect(getUpdateRoyaltyRateTx(commissionToken, deployer, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
@@ -356,7 +351,7 @@ describe('2.1. CommissionToken', async () => {
             const paramsInput: UpdateRoyaltyRateParamsInput = {
                 royaltyRate: Constant.COMMON_RATE_MAX_FRACTION.add(1),
             };
-            await expect(getUpdateRoyaltyRateTxByInput(commissionToken, deployer, paramsInput, admins, admin))
+            await expect(getUpdateRoyaltyRateTxByInput(commissionToken, deployer, paramsInput, admin, admins))
                 .to.be.revertedWithCustomError(commissionToken, 'InvalidRate');
         });
     });

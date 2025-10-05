@@ -226,13 +226,7 @@ describe('7.2. ProjectToken', async () => {
             LandInitialization.COMMISSION_TOKEN_RoyaltyRate,
         ) as CommissionToken;
 
-        await callTransaction(getUpdateCommissionTokenTxByInput(
-            estateToken as any,
-            deployer,
-            { commissionToken: commissionToken.address },
-            admins,
-            admin
-        ));
+        await callTransaction(getUpdateCommissionTokenTxByInput(estateToken as any, deployer, {commissionToken: commissionToken.address}, admin, admins));
 
         const projectToken = await deployMockProjectToken(
             deployer.address,
@@ -400,13 +394,10 @@ describe('7.2. ProjectToken', async () => {
         }
 
         if (!skipAddProjectTokenAsTokenizer) {
-            await callTransaction(getAuthorizeTokenizersTxByInput(
-                estateToken as any,
-                deployer,
-                { accounts: [projectToken.address], isTokenizer: true },
-                admins,
-                admin,
-            ));
+            await callTransaction(getAuthorizeTokenizersTxByInput(estateToken as any, deployer, {
+                accounts: [projectToken.address],
+                isTokenizer: true
+            }, admin, admins));
         }
 
         for (const zone of [zone1, zone2]) {

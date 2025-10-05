@@ -8,8 +8,8 @@ import { ethers } from "ethers";
 export async function getUpdateBaseURISignatures(
     commissionToken: CommissionToken,
     paramsInput: UpdateBaseURIParamsInput,
-    admins: any[],
     admin: Admin,
+    admins: any[],
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
@@ -25,8 +25,8 @@ export async function getUpdateBaseURISignatures(
 export async function getUpdateRoyaltyRateSignatures(
     commissionToken: CommissionToken,
     paramsInput: UpdateRoyaltyRateParamsInput,
-    admins: any[],
     admin: Admin,
+    admins: any[],
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(

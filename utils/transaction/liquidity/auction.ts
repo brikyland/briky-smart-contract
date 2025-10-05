@@ -1,18 +1,21 @@
-import { Auction } from "@typechain-types";
-import { StartAuctionParams, UpdateStakeTokensParams } from "@utils/models/liquidity/auction";
+import {Auction} from "@typechain-types";
+import {StartAuctionParams, UpdateStakeTokensParams} from "@utils/models/liquidity/auction";
+import {SignerWithAddress} from "@nomiclabs/hardhat-ethers/signers";
 
+// updateStakeTokens
 export async function getUpdateStakeTokensTx(
     auction: Auction,
     deployer: SignerWithAddress,
-    params: UpdateStakeTokensParams
+    params: UpdateStakeTokensParams,
+    txConfig = {}
 ) {
-    const tx = auction.connect(deployer).updateStakeTokens(
+    return auction.connect(deployer).updateStakeTokens(
         params.stakeToken1,
         params.stakeToken2,
         params.stakeToken3,
         params.signatures,
+        txConfig
     );
-    return tx;
 }
 
 export async function getStartAuctionTx(
@@ -20,10 +23,9 @@ export async function getStartAuctionTx(
     deployer: SignerWithAddress,
     params: StartAuctionParams
 ) {
-    const tx = auction.connect(deployer).startAuction(
+    return auction.connect(deployer).startAuction(
         params.endAt,
         params.vestingDuration,
         params.signatures,
     );
-    return tx;
 }

@@ -10,13 +10,13 @@ import { ethers } from 'hardhat';
 // initiateLaunch
 export async function getInitiateLaunchValidation(
     prestigePad: Contract,
-    params: InitiateLaunchParamsInput,
+    paramsInput: InitiateLaunchParamsInput,
     validator: MockValidator,
     isValid = true
 ) {
     const content = ethers.utils.defaultAbiCoder.encode(
         ["string", "string"],
-        [params.projectURI, params.launchURI]
+        [paramsInput.projectURI, paramsInput.launchURI]
     );
     const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
 
@@ -29,13 +29,13 @@ export async function getInitiateLaunchValidation(
 // updateRound
 export async function getUpdateRoundValidation(
     prestigePad: Contract,
-    params: UpdateRoundParamsInput,
+    paramsInput: UpdateRoundParamsInput,
     validator: MockValidator,
     isValid = true
 ) {
     const content = ethers.utils.defaultAbiCoder.encode(
         ["uint256", "string"],
-        [params.launchId, params.round.uri]
+        [paramsInput.launchId, paramsInput.round.uri]
     );
     const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
 
@@ -48,15 +48,15 @@ export async function getUpdateRoundValidation(
 // updateRounds
 export async function getUpdateRoundsValidation(
     prestigePad: Contract,
-    params: UpdateRoundsParamsInput,
+    paramsInput: UpdateRoundsParamsInput,
     validator: MockValidator,
     isValid = true
 ) {
     const validations = [];
-    for (const round of params.addedRounds) {
+    for (const round of paramsInput.addedRounds) {
         const content = ethers.utils.defaultAbiCoder.encode(
             ["uint256", "string"],
-            [params.launchId, round.uri]
+            [paramsInput.launchId, round.uri]
         );
         const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
         const validation = isValid
@@ -72,13 +72,13 @@ export async function getUpdateRoundsValidation(
 // updateLaunchURI
 export async function getUpdateLaunchURIValidation(
     prestigePad: Contract,
-    params: UpdateLaunchURIParamsInput,
+    paramsInput: UpdateLaunchURIParamsInput,
     validator: MockValidator,
     isValid = true
 ) {
     const content = ethers.utils.defaultAbiCoder.encode(
         ["uint256", "string"],
-        [params.launchId, params.uri]
+        [paramsInput.launchId, paramsInput.uri]
     );
     const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
 

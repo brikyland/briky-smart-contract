@@ -315,7 +315,7 @@ describe('3.1. ERC721MortgageToken', async () => {
         }
 
         if (pause) {
-            await callTransaction(getPauseTxByInput(erc721MortgageToken, deployer, admins, admin));
+            await callTransaction(getPauseTxByInput(erc721MortgageToken, deployer, admin, admins));
         }
 
         return {
@@ -384,7 +384,7 @@ describe('3.1. ERC721MortgageToken', async () => {
             };
             const params: UpdateBaseURIParams = {
                 ...paramsInput,
-                signatures: await getUpdateBaseURISignatures(erc721MortgageToken as any, admins, admin, paramsInput),
+                signatures: await getUpdateBaseURISignatures(erc721MortgageToken as any, paramsInput, admin, admins),
             };
             const tx = await getUpdateBaseURITx(erc721MortgageToken as any, deployer, params);
             await tx.wait();
@@ -405,7 +405,7 @@ describe('3.1. ERC721MortgageToken', async () => {
             };
             const params: UpdateBaseURIParams = {
                 ...paramsInput,
-                signatures: await getUpdateBaseURISignatures(erc721MortgageToken as any, admins, admin, paramsInput, false),
+                signatures: await getUpdateBaseURISignatures(erc721MortgageToken as any, paramsInput, admin, admins, false),
             };
 
             await expect(getUpdateBaseURITx(erc721MortgageToken as any, deployer, params))
@@ -422,7 +422,7 @@ describe('3.1. ERC721MortgageToken', async () => {
             };
             const params: UpdateFeeRateParams = {
                 ...paramsInput,
-                signatures: await getUpdateFeeRateSignatures(erc721MortgageToken as any, admins, admin, paramsInput),
+                signatures: await getUpdateFeeRateSignatures(erc721MortgageToken as any, paramsInput, admin, admins),
             }
 
             const tx = await getUpdateFeeRateTx(erc721MortgageToken as any, deployer, params);
@@ -453,7 +453,7 @@ describe('3.1. ERC721MortgageToken', async () => {
             }
             const params: UpdateFeeRateParams = {
                 ...paramsInput,
-                signatures: await getUpdateFeeRateSignatures(erc721MortgageToken as any, admins, admin, paramsInput, false)
+                signatures: await getUpdateFeeRateSignatures(erc721MortgageToken as any, paramsInput, admin, admins, false)
             }
 
             await expect(getUpdateFeeRateTx(erc721MortgageToken as any, deployer, params))
@@ -468,7 +468,7 @@ describe('3.1. ERC721MortgageToken', async () => {
             }
             const params: UpdateFeeRateParams = {
                 ...paramsInput,
-                signatures: await getUpdateFeeRateSignatures(erc721MortgageToken as any, admins, admin, paramsInput),
+                signatures: await getUpdateFeeRateSignatures(erc721MortgageToken as any, paramsInput, admin, admins),
             }
 
             await expect(getUpdateFeeRateTx(erc721MortgageToken as any, deployer, params))
@@ -488,7 +488,7 @@ describe('3.1. ERC721MortgageToken', async () => {
             }
             const params: RegisterCollateralsParams = {
                 ...paramsInput,
-                signatures: await getRegisterCollateralsSignatures(erc721MortgageToken as any, admins, admin, paramsInput),
+                signatures: await getRegisterCollateralsSignatures(erc721MortgageToken as any, paramsInput, admin, admins),
             }
             const tx = await getRegisterCollateralsTx(erc721MortgageToken as any, deployer, params);
             await tx.wait();
@@ -520,7 +520,7 @@ describe('3.1. ERC721MortgageToken', async () => {
             }
             const params: RegisterCollateralsParams = {
                 ...paramsInput,
-                signatures: await getRegisterCollateralsSignatures(erc721MortgageToken as any, admins, admin, paramsInput, false),
+                signatures: await getRegisterCollateralsSignatures(erc721MortgageToken as any, paramsInput, admin, admins, false),
             }
             await expect(getRegisterCollateralsTx(erc721MortgageToken as any, deployer, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
@@ -537,7 +537,7 @@ describe('3.1. ERC721MortgageToken', async () => {
             }
             const params: RegisterCollateralsParams = {
                 ...paramsInput,
-                signatures: await getRegisterCollateralsSignatures(erc721MortgageToken as any, admins, admin, paramsInput),
+                signatures: await getRegisterCollateralsSignatures(erc721MortgageToken as any, paramsInput, admin, admins),
             }
             await expect(getRegisterCollateralsTx(erc721MortgageToken as any, deployer, params))
                 .to.be.revertedWithCustomError(erc721MortgageToken, 'InvalidCollateral');
@@ -554,7 +554,7 @@ describe('3.1. ERC721MortgageToken', async () => {
             }
             const params: RegisterCollateralsParams = {
                 ...paramsInput,
-                signatures: await getRegisterCollateralsSignatures(erc721MortgageToken as any, admins, admin, paramsInput),
+                signatures: await getRegisterCollateralsSignatures(erc721MortgageToken as any, paramsInput, admin, admins),
             }
             await expect(getRegisterCollateralsTx(erc721MortgageToken as any, deployer, params))
                 .to.be.revertedWithCustomError(erc721MortgageToken, 'InvalidCollateral');
@@ -571,7 +571,7 @@ describe('3.1. ERC721MortgageToken', async () => {
             }
             const params: RegisterCollateralsParams = {
                 ...paramsInput,
-                signatures: await getRegisterCollateralsSignatures(erc721MortgageToken as any, admins, admin, paramsInput),
+                signatures: await getRegisterCollateralsSignatures(erc721MortgageToken as any, paramsInput, admin, admins),
             }
 
             await expect(getRegisterCollateralsTx(erc721MortgageToken as any, deployer, params))
@@ -589,7 +589,7 @@ describe('3.1. ERC721MortgageToken', async () => {
             }
             const params: RegisterCollateralsParams = {
                 ...paramsInput,
-                signatures: await getRegisterCollateralsSignatures(erc721MortgageToken as any, admins, admin, paramsInput),
+                signatures: await getRegisterCollateralsSignatures(erc721MortgageToken as any, paramsInput, admin, admins),
             }
 
             await expect(getRegisterCollateralsTx(erc721MortgageToken as any, deployer, params))
@@ -618,7 +618,7 @@ describe('3.1. ERC721MortgageToken', async () => {
             }
             const params2: RegisterCollateralsParams = {
                 ...paramsInput2,
-                signatures: await getRegisterCollateralsSignatures(erc721MortgageToken as any, admins, admin, paramsInput2),
+                signatures: await getRegisterCollateralsSignatures(erc721MortgageToken as any, paramsInput2, admin, admins),
             }
             await expect(getRegisterCollateralsTx(erc721MortgageToken as any, deployer, params2))
                 .to.be.revertedWithCustomError(erc721MortgageToken, `RegisteredCollateral`)
@@ -645,7 +645,7 @@ describe('3.1. ERC721MortgageToken', async () => {
             }
             const params2: RegisterCollateralsParams = {
                 ...paramsInput2,
-                signatures: await getRegisterCollateralsSignatures(erc721MortgageToken as any, admins, admin, paramsInput2),
+                signatures: await getRegisterCollateralsSignatures(erc721MortgageToken as any, paramsInput2, admin, admins),
             }
             const tx = await getRegisterCollateralsTx(erc721MortgageToken as any, deployer, params2);
             await tx.wait();
@@ -689,7 +689,7 @@ describe('3.1. ERC721MortgageToken', async () => {
             }
             const params2: RegisterCollateralsParams = {
                 ...paramsInput2,
-                signatures: await getRegisterCollateralsSignatures(erc721MortgageToken as any, admins, admin, paramsInput2),
+                signatures: await getRegisterCollateralsSignatures(erc721MortgageToken as any, paramsInput2, admin, admins),
             }
 
             await expect(getRegisterCollateralsTx(erc721MortgageToken as any, deployer, params2))
@@ -717,7 +717,7 @@ describe('3.1. ERC721MortgageToken', async () => {
             }
             const params2: RegisterCollateralsParams = {
                 ...paramsInput2,
-                signatures: await getRegisterCollateralsSignatures(erc721MortgageToken as any, admins, admin, paramsInput2),
+                signatures: await getRegisterCollateralsSignatures(erc721MortgageToken as any, paramsInput2, admin, admins),
             }
             await expect(getRegisterCollateralsTx(erc721MortgageToken as any, deployer, params2))
                 .to.be.revertedWithCustomError(erc721MortgageToken, `NotRegisteredCollateral`)
@@ -751,7 +751,7 @@ describe('3.1. ERC721MortgageToken', async () => {
             }
             const params2: RegisterCollateralsParams = {
                 ...paramsInput2,
-                signatures: await getRegisterCollateralsSignatures(erc721MortgageToken as any, admins, admin, paramsInput2),
+                signatures: await getRegisterCollateralsSignatures(erc721MortgageToken as any, paramsInput2, admin, admins),
             }
             await expect(getRegisterCollateralsTx(erc721MortgageToken as any, deployer, params2))
                 .to.be.revertedWithCustomError(erc721MortgageToken, `NotRegisteredCollateral`)

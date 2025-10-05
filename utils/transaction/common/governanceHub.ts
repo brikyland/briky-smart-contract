@@ -51,13 +51,13 @@ export async function getUpdateFeeTxByInput(
     governanceHub: GovernanceHub,
     signer: SignerWithAddress,
     paramsInput: UpdateFeeParamsInput,
-    admins: any[],
     admin: Admin,
+    admins: any[],
     txConfig = {},
 ) {
     const params: UpdateFeeParams = {
         ...paramsInput,
-        signatures: await getUpdateFeeSignatures(governanceHub, paramsInput, admins, admin),
+        signatures: await getUpdateFeeSignatures(governanceHub, paramsInput, admin, admins),
     };
 
     return await getUpdateFeeTx(governanceHub, signer, params, txConfig);

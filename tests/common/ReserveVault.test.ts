@@ -152,7 +152,7 @@ describe('1.8. ReserveVault', async () => {
             await callTransaction(getAuthorizeProviderTxByInput(reserveVault as any, deployer, {
                 accounts: providers.map(x => x.address),
                 isProvider: true,
-            }, admins, admin))
+            }, admin, admins))
         }
 
         if (listFunds) {
@@ -187,7 +187,7 @@ describe('1.8. ReserveVault', async () => {
         }
 
         if (pause) {
-            await callTransaction(getPauseTxByInput(reserveVault as any, deployer, admins, admin))
+            await callTransaction(getPauseTxByInput(reserveVault as any, deployer, admin, admins))
         }
 
         return {
@@ -215,7 +215,7 @@ describe('1.8. ReserveVault', async () => {
                 accounts: toBeProviders.map(x => x.address),
                 isProvider: true,
             };
-            const tx = await getAuthorizeProviderTxByInput(reserveVault as any, deployer, paramsInput, admins, admin);
+            const tx = await getAuthorizeProviderTxByInput(reserveVault as any, deployer, paramsInput, admin, admins);
             await tx.wait();
 
             for (const provider of toBeProviders) {
@@ -245,7 +245,7 @@ describe('1.8. ReserveVault', async () => {
             };
             const params: AuthorizeProviderParams = {
                 ...paramsInput,
-                signatures: await getAuthorizeProviderSignatures(reserveVault as any, paramsInput, admins, admin, false)
+                signatures: await getAuthorizeProviderSignatures(reserveVault as any, paramsInput, admin, admins, false)
             };
             await expect(getAuthorizeProviderTx(reserveVault as any, deployer, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
@@ -260,7 +260,7 @@ describe('1.8. ReserveVault', async () => {
                 accounts: toBeProviders.map(x => x.address),
                 isProvider: true,
             };
-            await expect(getAuthorizeProviderTxByInput(reserveVault as any, deployer, paramsInput, admins, admin))
+            await expect(getAuthorizeProviderTxByInput(reserveVault as any, deployer, paramsInput, admin, admins))
                 .to.be.revertedWithCustomError(reserveVault, `AuthorizedAccount`);
         });
 
@@ -272,7 +272,7 @@ describe('1.8. ReserveVault', async () => {
             await callTransaction(getAuthorizeProviderTxByInput(reserveVault as any, deployer, {
                 accounts: tx1Providers.map(x => x.address),
                 isProvider: true,
-            }, admins, admin));
+            }, admin, admins));
 
             const tx2Providers = [providers[2], providers[1]];
 
@@ -280,7 +280,7 @@ describe('1.8. ReserveVault', async () => {
                 accounts: tx2Providers.map(x => x.address),
                 isProvider: true,
             };
-            await expect(getAuthorizeProviderTxByInput(reserveVault as any, deployer, paramsInput, admins, admin))
+            await expect(getAuthorizeProviderTxByInput(reserveVault as any, deployer, paramsInput, admin, admins))
                 .to.be.revertedWithCustomError(reserveVault, `AuthorizedAccount`);
         })
 
@@ -295,7 +295,7 @@ describe('1.8. ReserveVault', async () => {
                 accounts: toDeauth.map(x => x.address),
                 isProvider: false,
             };
-            const tx = await getAuthorizeProviderTxByInput(reserveVault as any, deployer, paramsInput, admins, admin);
+            const tx = await getAuthorizeProviderTxByInput(reserveVault as any, deployer, paramsInput, admin, admins);
             await tx.wait();
 
             for (const provider of toDeauth) {
@@ -326,7 +326,7 @@ describe('1.8. ReserveVault', async () => {
                 accounts: toDeauth.map(x => x.address),
                 isProvider: false,
             };
-            await expect(getAuthorizeProviderTxByInput(reserveVault as any, deployer, paramsInput, admins, admin))
+            await expect(getAuthorizeProviderTxByInput(reserveVault as any, deployer, paramsInput, admin, admins))
                 .to.be.revertedWithCustomError(reserveVault, `NotAuthorizedAccount`)
         });
 
@@ -341,7 +341,7 @@ describe('1.8. ReserveVault', async () => {
                 accounts: toDeauth.map(x => x.address),
                 isProvider: false,
             };
-            await expect(getAuthorizeProviderTxByInput(reserveVault as any, deployer, paramsInput, admins, admin))
+            await expect(getAuthorizeProviderTxByInput(reserveVault as any, deployer, paramsInput, admin, admins))
                 .to.be.revertedWithCustomError(reserveVault, `NotAuthorizedAccount`)
         });
 
@@ -354,7 +354,7 @@ describe('1.8. ReserveVault', async () => {
             await callTransaction(getAuthorizeProviderTxByInput(reserveVault as any, deployer, {
                 accounts: tx1Providers.map(x => x.address),
                 isProvider: true,
-            }, admins, admin));
+            }, admin, admins));
 
             const tx2Providers = [providers[2], providers[1]];
 
@@ -362,7 +362,7 @@ describe('1.8. ReserveVault', async () => {
                 accounts: tx2Providers.map(x => x.address),
                 isProvider: false,
             };
-            await expect(getAuthorizeProviderTxByInput(reserveVault as any, deployer, paramsInput, admins, admin))
+            await expect(getAuthorizeProviderTxByInput(reserveVault as any, deployer, paramsInput, admin, admins))
                 .to.be.revertedWithCustomError(reserveVault, `NotAuthorizedAccount`)
         });
     });
@@ -908,7 +908,7 @@ describe('1.8. ReserveVault', async () => {
             await callTransaction(getAuthorizeProviderTxByInput(reserveVault as any, deployer, {
                 accounts: [failReceiver.address],
                 isProvider: true
-            }, admins, admin));
+            }, admin, admins));
 
             await callTransaction(getCallOpenFundTx(reserveVault as any, failReceiver as any, {
                 mainCurrency: currencies[0].address,

@@ -3,28 +3,18 @@ import { getSignatures } from "@utils/blockchain";
 import { DistributeTokenParamsInput } from "@utils/models/liquidity/distributor";
 import { ethers } from "ethers";
 
+
+// distributeToken
 export async function getDistributeTokenSignatures(
     distributor: Distributor,
-    admins: any[],
+    paramsInput: DistributeTokenParamsInput,
     admin: Admin,
-    params: DistributeTokenParamsInput
+    admins: any[],
+    isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
         ["address", "string", "address[]", "uint256[]", "string"],
-        [distributor.address, "distributeToken", params.receivers, params.amounts, params.note]
+        [distributor.address, "distributeToken", paramsInput.receivers, paramsInput.amounts, paramsInput.note]
     );
-    return await getSignatures(message, admins, await admin.nonce());
-}
-
-export async function getDistributeTokenInvalidSignatures(
-    distributor: Distributor,
-    admins: any[],
-    admin: Admin,
-    params: DistributeTokenParamsInput
-) {
-    const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "address[]", "uint256[]", "string"],
-        [distributor.address, "distributeToken", params.receivers, params.amounts, params.note]
-    );
-    return await getSignatures(message, admins, (await admin.nonce()).add(1));
+    return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }

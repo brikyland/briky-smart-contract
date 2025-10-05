@@ -12,8 +12,8 @@ import { ethers } from "ethers";
 export async function getUpdateBaseURISignatures(
     projectToken: ProjectToken,
     paramsInput: UpdateBaseURIParamsInput,
-    admins: any[],
     admin: Admin,
+    admins: any[],
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
@@ -29,8 +29,8 @@ export async function getUpdateBaseURISignatures(
 export async function getUpdateZoneRoyaltyRateSignatures(
     projectToken: ProjectToken,
     paramsInput: UpdateZoneRoyaltyRateParamsInput,
-    admins: any[],
     admin: Admin,
+    admins: any[],
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
@@ -46,8 +46,8 @@ export async function getUpdateZoneRoyaltyRateSignatures(
 export async function getAuthorizeLaunchpadsSignatures(
     projectToken: ProjectToken,
     paramsInput: AuthorizeLaunchpadsParamsInput,
-    admins: any[],
     admin: Admin,
+    admins: any[],
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(

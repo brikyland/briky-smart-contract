@@ -9,13 +9,13 @@ import { RegisterInitiatorParamsInput, UpdateProjectURIParamsInput } from "@util
 // registerInitiator
 export async function getRegisterInitiatorValidation(
     projectToken: Contract,
-    params: RegisterInitiatorParamsInput,
+    paramsInput: RegisterInitiatorParamsInput,
     validator: MockValidator,
     isValid = true
 ) {
     const content = ethers.utils.defaultAbiCoder.encode(
         ["address", "string"],
-        [params.initiator, params.uri]
+        [paramsInput.initiator, paramsInput.uri]
     );
     const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
 
@@ -28,13 +28,13 @@ export async function getRegisterInitiatorValidation(
 // safeUpdateProjectURI
 export async function getSafeUpdateProjectURIValidation(
     projectToken: Contract,
-    params: UpdateProjectURIParamsInput,
+    paramsInput: UpdateProjectURIParamsInput,
     validator: MockValidator,
     isValid = true
 ) {
     const content = ethers.utils.defaultAbiCoder.encode(
         ["uint256", "string"],
-        [params.projectId, params.uri]
+        [paramsInput.projectId, paramsInput.uri]
     );
     const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
 

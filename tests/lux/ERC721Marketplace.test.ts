@@ -262,7 +262,7 @@ describe('6.1. ERC721Marketplace', async () => {
         }
 
         if (pause) {
-            await callTransaction(getPauseTxByInput(erc721Marketplace, deployer, admins, admin));
+            await callTransaction(getPauseTxByInput(erc721Marketplace, deployer, admin, admins));
         }
 
         return {
@@ -330,7 +330,7 @@ describe('6.1. ERC721Marketplace', async () => {
             };
             const params: RegisterCollectionsParams = {
                 ...paramsInput,
-                signatures: await getRegisterCollectionsSignatures(erc721Marketplace, admins, admin, paramsInput),
+                signatures: await getRegisterCollectionsSignatures(erc721Marketplace, paramsInput, admin, admins),
             };
             const tx = await getRegisterCollectionsTx(erc721Marketplace as any, deployer, params);
             await tx.wait();
@@ -361,7 +361,7 @@ describe('6.1. ERC721Marketplace', async () => {
             };
             const params: RegisterCollectionsParams = {
                 ...paramsInput,
-                signatures: await getRegisterCollectionsSignatures(erc721Marketplace, admins, admin, paramsInput, false),
+                signatures: await getRegisterCollectionsSignatures(erc721Marketplace, paramsInput, admin, admins, false),
             };
             await expect(getRegisterCollectionsTx(erc721Marketplace as any, deployer, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
@@ -380,7 +380,7 @@ describe('6.1. ERC721Marketplace', async () => {
             };
             const params: RegisterCollectionsParams = {
                 ...paramsInput,
-                signatures: await getRegisterCollectionsSignatures(erc721Marketplace, admins, admin, paramsInput),
+                signatures: await getRegisterCollectionsSignatures(erc721Marketplace, paramsInput, admin, admins),
             };
 
             await expect(getRegisterCollectionsTx(erc721Marketplace as any, deployer, params))
@@ -399,7 +399,7 @@ describe('6.1. ERC721Marketplace', async () => {
             };
             const params: RegisterCollectionsParams = {
                 ...paramsInput,
-                signatures: await getRegisterCollectionsSignatures(erc721Marketplace, admins, admin, paramsInput),
+                signatures: await getRegisterCollectionsSignatures(erc721Marketplace, paramsInput, admin, admins),
             };
             await expect(getRegisterCollectionsTx(erc721Marketplace as any, deployer, params))
                 .to.be.revertedWithCustomError(erc721Marketplace, 'InvalidCollection');
@@ -417,7 +417,7 @@ describe('6.1. ERC721Marketplace', async () => {
             };
             const params: RegisterCollectionsParams = {
                 ...paramsInput,
-                signatures: await getRegisterCollectionsSignatures(erc721Marketplace, admins, admin, paramsInput),
+                signatures: await getRegisterCollectionsSignatures(erc721Marketplace, paramsInput, admin, admins),
             };
             await expect(getRegisterCollectionsTx(erc721Marketplace as any, deployer, params))
                 .to.be.revertedWithCustomError(erc721Marketplace, `RegisteredCollection`)
@@ -447,7 +447,7 @@ describe('6.1. ERC721Marketplace', async () => {
             };
             const params: RegisterCollectionsParams = {
                 ...paramsInput,
-                signatures: await getRegisterCollectionsSignatures(erc721Marketplace, admins, admin, paramsInput),
+                signatures: await getRegisterCollectionsSignatures(erc721Marketplace, paramsInput, admin, admins),
             };
             await expect(getRegisterCollectionsTx(erc721Marketplace as any, deployer, params))
                 .to.be.revertedWithCustomError(erc721Marketplace, `RegisteredCollection`)
@@ -477,7 +477,7 @@ describe('6.1. ERC721Marketplace', async () => {
             };
             const params: RegisterCollectionsParams = {
                 ...paramsInput,
-                signatures: await getRegisterCollectionsSignatures(erc721Marketplace, admins, admin, paramsInput),
+                signatures: await getRegisterCollectionsSignatures(erc721Marketplace, paramsInput, admin, admins),
             };
 
             const tx = await getRegisterCollectionsTx(erc721Marketplace as any, deployer, params);
@@ -521,7 +521,7 @@ describe('6.1. ERC721Marketplace', async () => {
             };
             const params: RegisterCollectionsParams = {
                 ...paramsInput,
-                signatures: await getRegisterCollectionsSignatures(erc721Marketplace, admins, admin, paramsInput),
+                signatures: await getRegisterCollectionsSignatures(erc721Marketplace, paramsInput, admin, admins),
             };
             await expect(getRegisterCollectionsTx(erc721Marketplace as any, deployer, params))
                 .to.be.revertedWithCustomError(erc721Marketplace, `NotRegisteredCollection`)
@@ -550,7 +550,7 @@ describe('6.1. ERC721Marketplace', async () => {
             };
             const params: RegisterCollectionsParams = {
                 ...paramsInput,
-                signatures: await getRegisterCollectionsSignatures(erc721Marketplace, admins, admin, paramsInput),
+                signatures: await getRegisterCollectionsSignatures(erc721Marketplace, paramsInput, admin, admins),
             };
             await expect(getRegisterCollectionsTx(erc721Marketplace as any, deployer, params))
                 .to.be.revertedWithCustomError(erc721Marketplace, `NotRegisteredCollection`)
@@ -591,7 +591,7 @@ describe('6.1. ERC721Marketplace', async () => {
             };
             const params: RegisterCollectionsParams = {
                 ...paramsInput,
-                signatures: await getRegisterCollectionsSignatures(erc721Marketplace, admins, admin, paramsInput),
+                signatures: await getRegisterCollectionsSignatures(erc721Marketplace, paramsInput, admin, admins),
             };
 
             await expect(getRegisterCollectionsTx(erc721Marketplace as any, deployer, params))

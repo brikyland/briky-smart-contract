@@ -27,13 +27,13 @@ export async function getUpdateValidatorTxByInput(
     validatable: Contract,
     signer: SignerWithAddress,
     paramsInput: UpdateValidatorParamsInput,
-    admins: any[],
     admin: Admin,
+    admins: any[],
     txConfig = {}
 ) {
     const params: UpdateValidatorParams = {
         ...paramsInput,
-        signatures: await getUpdateValidatorSignatures(validatable, admins, admin, paramsInput)
+        signatures: await getUpdateValidatorSignatures(validatable, paramsInput, admin, admins)
     };
     return await getUpdateValidatorTx(validatable, signer, params, txConfig);
 }

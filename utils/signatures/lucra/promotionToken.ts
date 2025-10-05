@@ -12,70 +12,70 @@ import { ethers } from "ethers";
 
 export async function getUpdateFeeSignatures(
     promotionToken: PromotionToken,
-    admins: any[],
+    paramsInput: UpdateFeeParamsInput,
     admin: Admin,
-    params: UpdateFeeParamsInput,
+    admins: any[],
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
         ["address", "string", "uint256"],
-        [promotionToken.address, "updateFee", params.fee]
+        [promotionToken.address, "updateFee", paramsInput.fee]
     );
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
 
 export async function getUpdateRoyaltyRateSignatures(
     promotionToken: PromotionToken,
-    admins: any[],
+    paramsInput: UpdateRoyaltyRateParamsInput,
     admin: Admin,
-    params: UpdateRoyaltyRateParamsInput,
+    admins: any[],
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
         ["address", "string", "uint256"],
-        [promotionToken.address, "updateRoyaltyRate", params.royaltyRate]
+        [promotionToken.address, "updateRoyaltyRate", paramsInput.royaltyRate]
     );
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
 
 export async function getWithdrawSignatures(
     promotionToken: PromotionToken,
-    admins: any[],
+    paramsInput: WithdrawParamsInput,
     admin: Admin,
-    params: WithdrawParamsInput,
+    admins: any[],
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
         ["address", "string", "address", "address[]", "uint256[]"],
-        [promotionToken.address, "withdraw", params.receiver, params.currencies, params.values]
+        [promotionToken.address, "withdraw", paramsInput.receiver, paramsInput.currencies, paramsInput.values]
     );
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
 
 export async function getCreateContentsSignatures(
     promotionToken: PromotionToken,
-    admins: any[],
+    paramsInput: CreateContentsParamsInput,
     admin: Admin,
-    params: CreateContentsParamsInput,
+    admins: any[],
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
         ["address", "string", "string[]", "uint40[]", "uint40[]"],
-        [promotionToken.address, "createContents", params.uris, params.startAts, params.durations]
+        [promotionToken.address, "createContents", paramsInput.uris, paramsInput.startAts, paramsInput.durations]
     );
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
 
 export async function getUpdateContentURIsSignatures(
     promotionToken: PromotionToken,
-    admins: any[],
+    paramsInput: UpdateContentURIsParamsInput,
     admin: Admin,
-    params: UpdateContentURIsParamsInput,
+    admins: any[],
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
         ["address", "string", "uint256[]", "string[]"],
-        [promotionToken.address, "updateContentURIs", params.contentIds, params.uris]
+        [promotionToken.address, "updateContentURIs", paramsInput.contentIds, paramsInput.uris]
     );
 
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
@@ -83,14 +83,14 @@ export async function getUpdateContentURIsSignatures(
 
 export async function getCancelContentsSignatures(
     promotionToken: PromotionToken,
-    admins: any[],
+    paramsInput: CancelContentsParamsInput,
     admin: Admin,
-    params: CancelContentsParamsInput,
+    admins: any[],
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
         ["address", "string", "uint256[]"],
-        [promotionToken.address, "cancelContents", params.contentIds]
+        [promotionToken.address, "cancelContents", paramsInput.contentIds]
     );
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }

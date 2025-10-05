@@ -32,13 +32,13 @@ export async function getAuthorizeProviderTxByInput(
     reserveVault: ReserveVault,
     deployer: any,
     paramsInput: AuthorizeProviderParamsInput,
-    admins: any[],
     admin: Admin,
+    admins: any[],
     txConfig = {},
 ) {
     const params: AuthorizeProviderParams = {
         ...paramsInput,
-        signatures: await getAuthorizeProviderSignatures(reserveVault, paramsInput, admins, admin),
+        signatures: await getAuthorizeProviderSignatures(reserveVault, paramsInput, admin, admins),
     };
 
     return await getAuthorizeProviderTx(reserveVault, deployer, params, txConfig);

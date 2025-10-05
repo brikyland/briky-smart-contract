@@ -198,7 +198,7 @@ describe('5.1. PassportToken', async () => {
             };
             const params: UpdateBaseURIParams = {
                 ...paramsInput,
-                signatures: await getUpdateBaseURISignatures(passportToken, admins, admin, paramsInput),
+                signatures: await getUpdateBaseURISignatures(passportToken, paramsInput, admin, admins),
             };
 
             const tx = await getUpdateBaseURITx(passportToken, deployer, params);
@@ -224,7 +224,7 @@ describe('5.1. PassportToken', async () => {
             };
             const params: UpdateBaseURIParams = {
                 ...paramsInput,
-                signatures: await getUpdateBaseURISignatures(passportToken, admins, admin, paramsInput, false),
+                signatures: await getUpdateBaseURISignatures(passportToken, paramsInput, admin, admins, false),
             };
             await expect(getUpdateBaseURITx(passportToken, deployer, params)).to.be
                 .revertedWithCustomError(passportToken, 'FailedVerification');
@@ -243,7 +243,7 @@ describe('5.1. PassportToken', async () => {
             };
             const params: UpdateFeeParams = {
                 ...paramsInput,
-                signatures: await getUpdateFeeSignatures(passportToken, admins, admin, paramsInput),
+                signatures: await getUpdateFeeSignatures(passportToken, paramsInput, admin, admins),
             };
             const tx = await getUpdateFeeTx(passportToken, deployer, params);
             await expect(tx).to.emit(passportToken, 'FeeUpdate').withArgs(newFee);
@@ -262,7 +262,7 @@ describe('5.1. PassportToken', async () => {
             };
             const params: UpdateFeeParams = {
                 ...paramsInput,
-                signatures: await getUpdateFeeSignatures(passportToken, admins, admin, paramsInput, false),
+                signatures: await getUpdateFeeSignatures(passportToken, paramsInput, admin, admins, false),
             };
             await expect(getUpdateFeeTx(passportToken, deployer, params))
                 .to.be.revertedWithCustomError(passportToken, 'FailedVerification');
@@ -278,7 +278,7 @@ describe('5.1. PassportToken', async () => {
             };
             const params: UpdateRoyaltyRateParams = {
                 ...paramsInput,
-                signatures: await getUpdateRoyaltyRateSignatures(passportToken, admins, admin, paramsInput),
+                signatures: await getUpdateRoyaltyRateSignatures(passportToken, paramsInput, admin, admins),
             };
             const tx = await getUpdateRoyaltyRateTx(passportToken, deployer, params);
             await expect(tx).to.emit(passportToken, 'RoyaltyRateUpdate').withArgs(
@@ -305,7 +305,7 @@ describe('5.1. PassportToken', async () => {
             };
             const params: UpdateRoyaltyRateParams = {
                 ...paramsInput,
-                signatures: await getUpdateRoyaltyRateSignatures(passportToken, admins, admin, paramsInput, false),
+                signatures: await getUpdateRoyaltyRateSignatures(passportToken, paramsInput, admin, admins, false),
             };
 
             await expect(getUpdateRoyaltyRateTx(passportToken, deployer, params))
@@ -320,7 +320,7 @@ describe('5.1. PassportToken', async () => {
             };
             const params: UpdateRoyaltyRateParams = {
                 ...paramsInput,
-                signatures: await getUpdateRoyaltyRateSignatures(passportToken, admins, admin, paramsInput),
+                signatures: await getUpdateRoyaltyRateSignatures(passportToken, paramsInput, admin, admins),
             };
             await expect(getUpdateRoyaltyRateTx(passportToken, deployer, params))
                 .to.be.revertedWithCustomError(passportToken, 'InvalidRate');
@@ -348,7 +348,7 @@ describe('5.1. PassportToken', async () => {
             };
             const params1: WithdrawParams = {
                 ...paramsInput1,
-                signatures: await getWithdrawSignatures(passportToken, admins, admin, paramsInput1),
+                signatures: await getWithdrawSignatures(passportToken, paramsInput1, admin, admins),
             };
 
             const tx1 = await getWithdrawTx(passportToken, deployer, params1);            
@@ -371,7 +371,7 @@ describe('5.1. PassportToken', async () => {
             };
             const params2: WithdrawParams = {
                 ...paramsInput2,
-                signatures: await getWithdrawSignatures(passportToken, admins, admin, paramsInput2),
+                signatures: await getWithdrawSignatures(passportToken, paramsInput2, admin, admins),
             };
 
             const tx2 = await getWithdrawTx(passportToken, deployer, params2);
@@ -401,7 +401,7 @@ describe('5.1. PassportToken', async () => {
             };
             const params1: WithdrawParams = {
                 ...paramsInput1,
-                signatures: await getWithdrawSignatures(passportToken, admins, admin, paramsInput1),
+                signatures: await getWithdrawSignatures(passportToken, paramsInput1, admin, admins),
             };
 
             const tx = await getWithdrawTx(passportToken, deployer, params1);
@@ -438,7 +438,7 @@ describe('5.1. PassportToken', async () => {
             };
             const params: WithdrawParams = {
                 ...paramsInput,
-                signatures: await getWithdrawSignatures(passportToken, admins, admin, paramsInput),
+                signatures: await getWithdrawSignatures(passportToken, paramsInput, admin, admins),
             };
 
             const tx = await getWithdrawTx(passportToken, deployer, params);
@@ -463,7 +463,7 @@ describe('5.1. PassportToken', async () => {
             };
             const params: WithdrawParams = {
                 ...paramsInput,
-                signatures: await getWithdrawSignatures(passportToken, admins, admin, paramsInput, false),
+                signatures: await getWithdrawSignatures(passportToken, paramsInput, admin, admins, false),
             };
 
             await expect(getWithdrawTx(passportToken, deployer, params))
@@ -480,7 +480,7 @@ describe('5.1. PassportToken', async () => {
             };
             const params: WithdrawParams = {
                 ...paramsInput,
-                signatures: await getWithdrawSignatures(passportToken, admins, admin, paramsInput),
+                signatures: await getWithdrawSignatures(passportToken, paramsInput, admin, admins),
             };
 
             await expect(getWithdrawTx(passportToken, deployer, params))
@@ -497,7 +497,7 @@ describe('5.1. PassportToken', async () => {
             };
             const params: WithdrawParams = {
                 ...paramsInput,
-                signatures: await getWithdrawSignatures(passportToken, admins, admin, paramsInput),
+                signatures: await getWithdrawSignatures(passportToken, paramsInput, admin, admins),
             };
 
             await expect(getWithdrawTx(passportToken, deployer, params))
@@ -521,7 +521,7 @@ describe('5.1. PassportToken', async () => {
             };
             const params: WithdrawParams = {
                 ...paramsInput,
-                signatures: await getWithdrawSignatures(passportToken, admins, admin, paramsInput),
+                signatures: await getWithdrawSignatures(passportToken, paramsInput, admin, admins),
             };
 
             await expect(getWithdrawTx(passportToken, deployer, params))

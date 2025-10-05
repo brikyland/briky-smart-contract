@@ -206,13 +206,7 @@ describe('2.2. EstateForger', async () => {
             LandInitialization.COMMISSION_TOKEN_RoyaltyRate,
         ));
 
-        await callTransaction(getUpdateCommissionTokenTxByInput(
-            estateToken as any,
-            deployer,
-            { commissionToken: commissionToken.address },
-            admins,
-            admin
-        ));
+        await callTransaction(getUpdateCommissionTokenTxByInput(estateToken as any, deployer, {commissionToken: commissionToken.address}, admin, admins));
 
         const SmockReserveVaultFactory = await smock.mock('ReserveVault') as any;
         const reserveVault = await SmockReserveVaultFactory.deploy() as MockContract<ReserveVault>;
@@ -410,13 +404,10 @@ describe('2.2. EstateForger', async () => {
             }
         }
 
-        await callTransaction(getAuthorizeTokenizersTxByInput(
-            estateToken as any,
-            deployer,
-            { accounts: [estateForger.address], isTokenizer: true },
-            admins,
-            admin,
-        ));
+        await callTransaction(getAuthorizeTokenizersTxByInput(estateToken as any, deployer, {
+            accounts: [estateForger.address],
+            isTokenizer: true
+        }, admin, admins));
 
         let timestamp = await time.latest() + 1000;
 
@@ -436,13 +427,10 @@ describe('2.2. EstateForger', async () => {
         }
 
         if (addEstateForgerToVault) {
-            await callTransaction(getAuthorizeProviderTxByInput(
-                reserveVault as any,
-                deployer,
-                { accounts: [estateForger.address], isProvider: true },
-                admins,
-                admin,
-            ));
+            await callTransaction(getAuthorizeProviderTxByInput(reserveVault as any, deployer, {
+                accounts: [estateForger.address],
+                isProvider: true
+            }, admin, admins));
         }
 
         if (registerBrokers) {
@@ -459,16 +447,10 @@ describe('2.2. EstateForger', async () => {
         }
 
         if (whitelistDepositors) {
-            await callTransaction(getWhitelistTxByInput(
-                estateForger,
-                deployer,
-                {
-                    accounts: [depositor1.address, depositor2.address, depositor3.address],
-                    isWhitelisted: true
-                },
-                admins,
-                admin,
-            ));
+            await callTransaction(getWhitelistTxByInput(estateForger, deployer, {
+                accounts: [depositor1.address, depositor2.address, depositor3.address],
+                isWhitelisted: true
+            }, admin, admins));
         }
 
         if (listSampleCustodians) {
@@ -640,7 +622,7 @@ describe('2.2. EstateForger', async () => {
         }
 
         if (pause) {
-            await callTransaction(getPauseTxByInput(estateForger, deployer, admins, admin));
+            await callTransaction(getPauseTxByInput(estateForger, deployer, admin, admins));
         }
 
         return fixture;
@@ -676,7 +658,7 @@ describe('2.2. EstateForger', async () => {
                 baseMinUnitPrice: BigNumber.from(20),
                 baseMaxUnitPrice: BigNumber.from(100),
             };
-            const tx = await getUpdateBaseUnitPriceRangeTxByInput(estateForger, deployer, paramsInput, admins, admin);
+            const tx = await getUpdateBaseUnitPriceRangeTxByInput(estateForger, deployer, paramsInput, admin, admins);
             await tx.wait();
 
             await expect(tx).to
@@ -696,25 +678,19 @@ describe('2.2. EstateForger', async () => {
             };
             const params: UpdateBaseUnitPriceRangeParams = {
                 ...paramsInput,
-                signatures: await getUpdateBaseUnitPriceRangeSignatures(estateForger, paramsInput, admins, admin, false),
+                signatures: await getUpdateBaseUnitPriceRangeSignatures(estateForger, paramsInput, admin, admins, false),
             };
-            await expect(getUpdateBaseUnitPriceRangeTxByInput(estateForger, deployer, params, admins, admin))
+            await expect(getUpdateBaseUnitPriceRangeTxByInput(estateForger, deployer, params, admin, admins))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
         it('2.2.2.3. Update base unit price range unsuccessfully with invalid price range', async () => {
             const { deployer, admin, admins, estateForger } = await beforeEstateForgerTest({});
 
-            await expect(getUpdateBaseUnitPriceRangeTxByInput(
-                estateForger,
-                deployer,
-                {
-                    baseMinUnitPrice: BigNumber.from(101),
-                    baseMaxUnitPrice: BigNumber.from(100),
-                },
-                admins,
-                admin
-            )).to.be.revertedWithCustomError(estateForger, 'InvalidInput');
+            await expect(getUpdateBaseUnitPriceRangeTxByInput(estateForger, deployer, {
+                baseMinUnitPrice: BigNumber.from(101),
+                baseMaxUnitPrice: BigNumber.from(100),
+            }, admin, admins)).to.be.revertedWithCustomError(estateForger, 'InvalidInput');
         });
     });
 
@@ -729,7 +705,7 @@ describe('2.2. EstateForger', async () => {
                 accounts: depositors.map(x => x.address),
                 isWhitelisted: true,
             };
-            const tx = await getWhitelistTxByInput(estateForger, deployer, paramsInput, admins, admin);
+            const tx = await getWhitelistTxByInput(estateForger, deployer, paramsInput, admin, admins);
             await tx.wait();
             
             for(const depositor of depositors) {
@@ -756,9 +732,9 @@ describe('2.2. EstateForger', async () => {
             };
             const params: WhitelistParams = {
                 ...paramsInput,
-                signatures: await getWhitelistSignatures(estateForger, paramsInput, admins, admin, false),
+                signatures: await getWhitelistSignatures(estateForger, paramsInput, admin, admins, false),
             };
-            await expect(getWhitelistTxByInput(estateForger, deployer, params, admins, admin))
+            await expect(getWhitelistTxByInput(estateForger, deployer, params, admin, admins))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
@@ -768,16 +744,10 @@ describe('2.2. EstateForger', async () => {
 
             const depositors = [depositor1, depositor2, depositor3, depositor1];
 
-            await expect(getWhitelistTxByInput(
-                estateForger,
-                deployer,
-                {
-                    accounts: depositors.map(x => x.address),
-                    isWhitelisted: true,
-                },
-                admins,
-                admin
-            )).to.be.revertedWithCustomError(estateForger, 'WhitelistedAccount');
+            await expect(getWhitelistTxByInput(estateForger, deployer, {
+                accounts: depositors.map(x => x.address),
+                isWhitelisted: true,
+            }, admin, admins)).to.be.revertedWithCustomError(estateForger, 'WhitelistedAccount');
         });
 
         it('2.2.3.4. Whitelist unsuccessfully when whitelisting the same account twice on different txs', async () => {
@@ -785,28 +755,16 @@ describe('2.2. EstateForger', async () => {
             const { deployer, admins, admin, estateForger, depositor1, depositor2, depositor3 } = fixture;            
 
             let depositors = [depositor1, depositor3];
-            await getWhitelistTxByInput(
-                estateForger,
-                deployer,
-                {
-                    accounts: depositors.map(x => x.address),
-                    isWhitelisted: true,
-                },
-                admins,
-                admin
-            );
+            await getWhitelistTxByInput(estateForger, deployer, {
+                accounts: depositors.map(x => x.address),
+                isWhitelisted: true,
+            }, admin, admins);
 
             depositors = [depositor2, depositor3];
-            await expect(getWhitelistTxByInput(
-                estateForger,
-                deployer,
-                {
-                    accounts: depositors.map(x => x.address),
-                    isWhitelisted: true,
-                },
-                admins,
-                admin
-            )).to.be.revertedWithCustomError(estateForger, 'WhitelistedAccount');
+            await expect(getWhitelistTxByInput(estateForger, deployer, {
+                accounts: depositors.map(x => x.address),
+                isWhitelisted: true,
+            }, admin, admins)).to.be.revertedWithCustomError(estateForger, 'WhitelistedAccount');
         });
 
         
@@ -819,16 +777,10 @@ describe('2.2. EstateForger', async () => {
             const depositors = [depositor1, depositor2, depositor3];
             const toUnwhitelistDepositors = [depositor1, depositor3];
 
-            const tx = await getWhitelistTxByInput(
-                estateForger,
-                deployer,
-                {
-                    accounts: toUnwhitelistDepositors.map(x => x.address),
-                    isWhitelisted: false,
-                },
-                admins,
-                admin
-            );
+            const tx = await getWhitelistTxByInput(estateForger, deployer, {
+                accounts: toUnwhitelistDepositors.map(x => x.address),
+                isWhitelisted: false,
+            }, admin, admins);
             await tx.wait();
             
             for(const depositor of toUnwhitelistDepositors) {
@@ -851,16 +803,10 @@ describe('2.2. EstateForger', async () => {
             const { deployer, admins, admin, estateForger, depositor1, depositor2, depositor3 } = fixture;            
 
             const toUnwhitelistDepositors = [depositor1, depositor2, depositor3];
-            await expect(getWhitelistTxByInput(
-                estateForger,
-                deployer,
-                {
-                    accounts: toUnwhitelistDepositors.map(x => x.address),
-                    isWhitelisted: false,
-                },
-                admins,
-                admin
-            )).to.be.revertedWithCustomError(estateForger, 'NotWhitelistedAccount');
+            await expect(getWhitelistTxByInput(estateForger, deployer, {
+                accounts: toUnwhitelistDepositors.map(x => x.address),
+                isWhitelisted: false,
+            }, admin, admins)).to.be.revertedWithCustomError(estateForger, 'NotWhitelistedAccount');
         });
 
         it('2.2.3.7. Unwhitelist account unsuccessfully when unwhitelisting the same account twice on the same tx', async () => {
@@ -871,16 +817,10 @@ describe('2.2. EstateForger', async () => {
 
             const toUnwhitelistDepositors = [depositor1, depositor2, depositor3, depositor1];
 
-            await expect(getWhitelistTxByInput(
-                estateForger,
-                deployer,
-                {
-                    accounts: toUnwhitelistDepositors.map(x => x.address),
-                    isWhitelisted: false,
-                },
-                admins,
-                admin
-            )).to.be.revertedWithCustomError(estateForger, 'NotWhitelistedAccount');
+            await expect(getWhitelistTxByInput(estateForger, deployer, {
+                accounts: toUnwhitelistDepositors.map(x => x.address),
+                isWhitelisted: false,
+            }, admin, admins)).to.be.revertedWithCustomError(estateForger, 'NotWhitelistedAccount');
         });
 
         it('2.2.3.8. Unwhitelist account unsuccessfully when unwhitelisting the same account twice on different txs', async () => {
@@ -890,28 +830,16 @@ describe('2.2. EstateForger', async () => {
             const { deployer, admins, admin, estateForger, depositor1, depositor2, depositor3 } = fixture;            
 
             const tx1_depositors = [depositor1, depositor2];
-            await getWhitelistTxByInput(
-                estateForger,
-                deployer,
-                {
-                    accounts: tx1_depositors.map(x => x.address),
-                    isWhitelisted: false,
-                },
-                admins,
-                admin
-            );
+            await getWhitelistTxByInput(estateForger, deployer, {
+                accounts: tx1_depositors.map(x => x.address),
+                isWhitelisted: false,
+            }, admin, admins);
             
             const tx2_depositors = [depositor3, depositor2];
-            await expect(getWhitelistTxByInput(
-                estateForger,
-                deployer,
-                {
-                    accounts: tx2_depositors.map(x => x.address),
-                    isWhitelisted: false,
-                },
-                admins,
-                admin
-            )).to.be.revertedWithCustomError(estateForger, 'NotWhitelistedAccount');
+            await expect(getWhitelistTxByInput(estateForger, deployer, {
+                accounts: tx2_depositors.map(x => x.address),
+                isWhitelisted: false,
+            }, admin, admins)).to.be.revertedWithCustomError(estateForger, 'NotWhitelistedAccount');
         });
     });
 
@@ -1162,7 +1090,7 @@ describe('2.2. EstateForger', async () => {
             const defaultParams = await getDefaultParams(fixture);
             const params: RequestTokenizationParams = {
                 ...defaultParams,
-                validation: await getRequestTokenizationValidation(estateForger, validator, defaultParams, false),
+                validation: await getRequestTokenizationValidation(estateForger, defaultParams, validator, false),
             }
             await expect(getRequestTokenizationTx(estateForger, manager, params))
                 .to.be.revertedWithCustomError(estateForger, 'InvalidSignature');
@@ -2055,7 +1983,7 @@ describe('2.2. EstateForger', async () => {
             const { defaultParamsInput } = await beforeUpdateRequestEstateURI(fixture);
             const params: UpdateRequestEstateURIParams = {
                 ...defaultParamsInput,
-                validation: await getUpdateRequestEstateURIValidation(estateForger, validator, defaultParamsInput, false),
+                validation: await getUpdateRequestEstateURIValidation(estateForger, defaultParamsInput, validator, false),
             };
             await expect(getUpdateRequestEstateURITx(estateForger, manager, params))
                 .to.be.revertedWithCustomError(estateForger, 'InvalidSignature');
@@ -3942,16 +3870,10 @@ describe('2.2. EstateForger', async () => {
             });
             const { deployer, admins, depositor1, depositor2, depositor3, broker1, broker2, currencies, admin, estateForger} = fixture;
         
-            await callTransaction(getUpdateBaseUnitPriceRangeTxByInput(
-                estateForger,
-                deployer,
-                {
-                    baseMinUnitPrice: ethers.BigNumber.from(0),
-                    baseMaxUnitPrice: ethers.constants.MaxUint256,
-                },
-                admins,
-                admin,
-            ));
+            await callTransaction(getUpdateBaseUnitPriceRangeTxByInput(estateForger, deployer, {
+                baseMinUnitPrice: ethers.BigNumber.from(0),
+                baseMaxUnitPrice: ethers.constants.MaxUint256,
+            }, admin, admins));
 
             // Native token as main currency, ERC20 as extra currency
             await testConfirmTokenization(
@@ -4011,16 +3933,10 @@ describe('2.2. EstateForger', async () => {
             });
             const { deployer, admins, depositor1, depositor2, depositor3, currencies, broker1, broker2, admin, estateForger} = fixture;
         
-            await callTransaction(getUpdateBaseUnitPriceRangeTxByInput(
-                estateForger,
-                deployer,
-                {
-                    baseMinUnitPrice: ethers.BigNumber.from(0),
-                    baseMaxUnitPrice: ethers.constants.MaxUint256,
-                },
-                admins,
-                admin,
-            ));
+            await callTransaction(getUpdateBaseUnitPriceRangeTxByInput(estateForger, deployer, {
+                baseMinUnitPrice: ethers.BigNumber.from(0),
+                baseMaxUnitPrice: ethers.constants.MaxUint256,
+            }, admin, admins));
 
             // Native token as main currency and as extra currency
             await testConfirmTokenization(
@@ -4080,16 +3996,10 @@ describe('2.2. EstateForger', async () => {
             });
             const { deployer, admins, depositor1, depositor2, depositor3, currencies, broker1, broker2, admin, estateForger} = fixture;
         
-            await callTransaction(getUpdateBaseUnitPriceRangeTxByInput(
-                estateForger,
-                deployer,
-                {
-                    baseMinUnitPrice: ethers.BigNumber.from(0),
-                    baseMaxUnitPrice: ethers.constants.MaxUint256,
-                },
-                admins,
-                admin,
-            ));
+            await callTransaction(getUpdateBaseUnitPriceRangeTxByInput(estateForger, deployer, {
+                baseMinUnitPrice: ethers.BigNumber.from(0),
+                baseMaxUnitPrice: ethers.constants.MaxUint256,
+            }, admin, admins));
 
             // Native token as main currency
             await testConfirmTokenization(
@@ -4149,16 +4059,10 @@ describe('2.2. EstateForger', async () => {
             });
             const { deployer, admins, depositor1, depositor2, depositor3, currencies, admin, estateForger } = fixture;
         
-            await callTransaction(getUpdateBaseUnitPriceRangeTxByInput(
-                estateForger,
-                deployer,
-                {
-                    baseMinUnitPrice: ethers.BigNumber.from(0),
-                    baseMaxUnitPrice: ethers.constants.MaxUint256,
-                },
-                admins,
-                admin,
-            ));
+            await callTransaction(getUpdateBaseUnitPriceRangeTxByInput(estateForger, deployer, {
+                baseMinUnitPrice: ethers.BigNumber.from(0),
+                baseMaxUnitPrice: ethers.constants.MaxUint256,
+            }, admin, admins));
 
             let currentRequestId = 0;
             for (const isERC20 of [false, true]) {
@@ -4202,16 +4106,10 @@ describe('2.2. EstateForger', async () => {
             });
             const { deployer, admins, depositor1, currencies, broker1, admin, estateForger} = fixture;
         
-            await callTransaction(getUpdateBaseUnitPriceRangeTxByInput(
-                estateForger,
-                deployer,
-                {
-                    baseMinUnitPrice: ethers.BigNumber.from(0),
-                    baseMaxUnitPrice: ethers.constants.MaxUint256,
-                },
-                admins,
-                admin,
-            ));
+            await callTransaction(getUpdateBaseUnitPriceRangeTxByInput(estateForger, deployer, {
+                baseMinUnitPrice: ethers.BigNumber.from(0),
+                baseMaxUnitPrice: ethers.constants.MaxUint256,
+            }, admin, admins));
 
             let currentRequestId = 0;
             for (const isERC20 of [false, true]) {
@@ -4253,16 +4151,10 @@ describe('2.2. EstateForger', async () => {
             });
             const { deployer, admins, depositor1, currencies, admin, estateForger } = fixture;
         
-            await callTransaction(getUpdateBaseUnitPriceRangeTxByInput(
-                estateForger,
-                deployer,
-                {
-                    baseMinUnitPrice: ethers.BigNumber.from(0),
-                    baseMaxUnitPrice: ethers.constants.MaxUint256,
-                },
-                admins,
-                admin,
-            ));
+            await callTransaction(getUpdateBaseUnitPriceRangeTxByInput(estateForger, deployer, {
+                baseMinUnitPrice: ethers.BigNumber.from(0),
+                baseMaxUnitPrice: ethers.constants.MaxUint256,
+            }, admin, admins));
 
             let currentRequestId = 0;
             for (let testcase = 0; testcase < 100; testcase++) {
@@ -4421,7 +4313,7 @@ describe('2.2. EstateForger', async () => {
             });
             const {deployer, estateForger, admin, admins, manager} = fixture;
 
-            await callTransaction(getPauseTxByInput(estateForger, deployer, admins, admin));
+            await callTransaction(getPauseTxByInput(estateForger, deployer, admin, admins));
 
             const params1: ConfirmParams = {
                 requestId: BigNumber.from(1),
@@ -4738,16 +4630,10 @@ describe('2.2. EstateForger', async () => {
             const {estateForger, estateToken, zone1, manager, depositor1, deployer, admin, admins, currencies, validator, broker1} = fixture;
             const baseTimestamp = await time.latest();
 
-            await callTransaction(getUpdateBaseUnitPriceRangeTxByInput(
-                estateForger,
-                deployer,
-                {
-                    baseMinUnitPrice: ethers.BigNumber.from(0),
-                    baseMaxUnitPrice: ethers.constants.MaxUint256,
-                },
-                admins,
-                admin,
-            ));
+            await callTransaction(getUpdateBaseUnitPriceRangeTxByInput(estateForger, deployer, {
+                baseMinUnitPrice: ethers.BigNumber.from(0),
+                baseMaxUnitPrice: ethers.constants.MaxUint256,
+            }, admin, admins));
 
             const failReceiver = await deployFailReceiver(deployer, true, false);
 
