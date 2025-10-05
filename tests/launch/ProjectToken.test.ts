@@ -63,7 +63,7 @@ import { DeprecateProjectParams, LaunchProjectParams, MintParams, RegisterInitia
 import { getInitiateLaunchValidation } from '@utils/validation/launch/prestigePad';
 import { getRegisterInitiatorInvalidValidation, getRegisterInitiatorValidation, getSafeUpdateProjectURIInvalidValidation, getSafeUpdateProjectURIValidation } from '@utils/validation/launch/projectToken';
 import { ContractTransaction } from 'ethers';
-import { getCallLaunchProjectTx, getCallMintTx, getCallSafeTokenizeProjectTxByParams, getRegisterInitiatorTx, getSafeDeprecateProjectTx, getSafeDeprecateProjectTxByParams, getSafeTokenizeProjectTxByParams, getSafeUpdateProjectURITx, getSafeUpdateProjectURITxByParams } from '@utils/transaction/launch/projectToken';
+import { getAuthorizeLaunchpadTxByInput, getCallLaunchProjectTx, getCallMintTx, getCallSafeTokenizeProjectTxByParams, getRegisterInitiatorTx, getSafeDeprecateProjectTx, getSafeDeprecateProjectTxByParams, getSafeTokenizeProjectTxByParams, getSafeUpdateProjectURITx, getSafeUpdateProjectURITxByParams } from '@utils/transaction/launch/projectToken';
 import { getAuthorizeTokenizersTxByInput, getRegisterCustodianTx, getUpdateCommissionTokenTxByInput } from '@utils/transaction/land/estateToken';
 import { deployReentrancyERC1155Receiver } from '@utils/deployments/mock/mockReentrancy/reentrancyERC1155Receiver';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
@@ -373,13 +373,16 @@ describe('7.2. ProjectToken', async () => {
         }
 
         if (!skipAuthorizeLaunchpad) {
-            await callProjectToken_AuthorizeLaunchpads(
+            await callTransaction(getAuthorizeLaunchpadTxByInput(
                 projectToken as any,
-                admins,
-                [prestigePad.address],
-                true,
-                await fixture.admin.nonce()
-            );
+                deployer,
+                {
+                    accounts: [prestigePad.address],
+                    isLaunchpad: true,
+                },
+                admin,
+                admins
+            ));
         }
 
         if (!skipDeclareZone) {
@@ -867,20 +870,26 @@ describe('7.2. ProjectToken', async () => {
             )).to.be.revertedWithCustomError(projectToken, `AuthorizedAccount`)
         })
 
-        async function setupLaunchpads(projectToken: MockProjectToken, admin: Admin, admins: any[], launchpads: any[]) {
-            await callProjectToken_AuthorizeLaunchpads(
+        async function setupLaunchpads(fixture: ProjectTokenFixture) {
+            const { deployer, projectToken, admin, admins, launchpads } = fixture;
+
+            await callTransaction(getAuthorizeLaunchpadTxByInput(
                 projectToken as any,
-                admins,
-                launchpads.map(x => x.address),
-                true,
-                await admin.nonce(),
-            );
+                deployer,
+                {
+                    accounts: launchpads.map(x => x.address),
+                    isLaunchpad: true,
+                },
+                admin,
+                admins
+            ));
         }
 
         it('7.2.4.6. Deauthorize launchpad successfully', async () => {
-            const { projectToken, admin, admins, launchpads } = await beforeProjectTokenTest();
+            const fixture = await beforeProjectTokenTest();
+            const { projectToken, admin, admins, launchpads } = fixture;
 
-            await setupLaunchpads(projectToken, admin, admins, launchpads);
+            await setupLaunchpads(fixture);
 
             const toDeauth = launchpads.slice(0, 2);
 
@@ -914,9 +923,10 @@ describe('7.2. ProjectToken', async () => {
         });
 
         it('7.2.4.7. Deauthorize launchpad unsuccessfully with unauthorized account', async () => {
-            const { projectToken, admin, admins, launchpads } = await beforeProjectTokenTest();
+            const fixture = await beforeProjectTokenTest();
+            const { projectToken, admin, admins, launchpads } = fixture;
 
-            await setupLaunchpads(projectToken, admin, admins, launchpads);
+            await setupLaunchpads(fixture);
 
             const account = randomWallet();
             const toDeauth = [launchpads[0], account];
@@ -935,9 +945,10 @@ describe('7.2. ProjectToken', async () => {
         });
 
         it('7.2.4.8. Deauthorize launchpad unsuccessfully when unauthorizing the same account twice on the same tx', async () => {
-            const { projectToken, admin, admins, launchpads } = await beforeProjectTokenTest();
+            const fixture = await beforeProjectTokenTest();
+            const { projectToken, admin, admins, launchpads } = fixture;
 
-            await setupLaunchpads(projectToken, admin, admins, launchpads);
+            await setupLaunchpads(fixture);
 
             const toDeauth = launchpads.slice(0, 2).concat([launchpads[0]]);
 
@@ -955,18 +966,22 @@ describe('7.2. ProjectToken', async () => {
         });
 
         it('7.2.4.9. Deauthorize launchpad unsuccessfully when unauthorizing the same account twice on different txs', async () => {
-            const { projectToken, admin, admins, launchpads } = await beforeProjectTokenTest();
+            const fixture = await beforeProjectTokenTest();
+            const { deployer, projectToken, admin, admins, launchpads } = fixture;
 
-            await setupLaunchpads(projectToken, admin, admins, launchpads);
+            await setupLaunchpads(fixture);
 
             const tx1Accounts = launchpads.slice(0, 2);
-            await callProjectToken_AuthorizeLaunchpads(
+            await callTransaction(getAuthorizeLaunchpadTxByInput(
                 projectToken as any,
-                admins,
-                tx1Accounts.map(x => x.address),
-                false,
-                await admin.nonce()
-            );
+                deployer,
+                {
+                    accounts: tx1Accounts.map(x => x.address),
+                    isLaunchpad: false,
+                },
+                admin,
+                admins
+            ));
 
             const tx2Accounts = [launchpads[0]];
             const message = ethers.utils.defaultAbiCoder.encode(

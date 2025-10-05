@@ -32,7 +32,7 @@ import { MockContract, smock } from '@defi-wonderland/smock';
 import { BigNumber, Contract } from 'ethers';
 import { getBytes4Hex, getInterfaceID, randomBigNumber, structToObject } from '@utils/utils';
 import { deployProjectMortgageToken } from '@utils/deployments/lend/projectMortgageToken';
-import { callProjectToken_AuthorizeLaunchpads, callProjectToken_UpdateZoneRoyaltyRate } from '@utils/call/launch/projectToken';
+import { callProjectToken_AuthorizeLaunchpad, callProjectToken_UpdateZoneRoyaltyRate } from '@utils/call/launch/projectToken';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployReentrancyERC1155Holder } from '@utils/deployments/mock/mockReentrancy/reentrancyERC1155Holder';
 import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
@@ -43,7 +43,7 @@ import { Initialization as LendInitialization } from '@tests/lend/test.initializ
 import { deployReserveVault } from '@utils/deployments/common/reserveVault';
 import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
 import { MockValidator } from '@utils/mockValidator';
-import { getCallLaunchProjectTx, getRegisterInitiatorTx } from '@utils/transaction/launch/projectToken';
+import { getAuthorizeLaunchpadTxByInput, getCallLaunchProjectTx, getRegisterInitiatorTx, getUpdateZoneRoyaltyRateTxByInput } from '@utils/transaction/launch/projectToken';
 import { RegisterInitiatorParams } from '@utils/models/launch/projectToken';
 import { applyDiscount, scaleRate } from '@utils/formula';
 import { ProjectBorrowParams } from '@utils/models/lend/projectMortgageToken';
@@ -303,13 +303,16 @@ describe('3.3. ProjectMortgageToken', async () => {
             ));
         }
 
-        await callProjectToken_AuthorizeLaunchpads(
-            projectToken,
-            admins,
-            [prestigePad.address],
-            true,
-            await admin.nonce()
-        );
+        await callTransaction(getAuthorizeLaunchpadTxByInput(
+            projectToken as any,
+            deployer,
+            {
+                accounts: [prestigePad.address],
+                isLaunchpad: true,
+            },
+            admin,
+            admins
+        ));
 
         for (const zone of [zone1, zone2]) {
             for (const initiator of [initiator1, initiator2]) {
@@ -1973,27 +1976,33 @@ describe('3.3. ProjectMortgageToken', async () => {
                 listSampleMortgage: true,
                 listSampleLending: true,
             });
-            const { projectMortgageToken, feeReceiver, projectToken, admin, admins, zone1, zone2 } = fixture;
+            const { deployer, projectMortgageToken, feeReceiver, projectToken, admin, admins, zone1, zone2 } = fixture;
 
             const zone1RoyaltyRate = ethers.utils.parseEther('0.1');
             const zone2RoyaltyRate = ethers.utils.parseEther('0.2');
-            
-            await callProjectToken_UpdateZoneRoyaltyRate(
-                projectToken,
-                admins,
-                zone1,
-                zone1RoyaltyRate,
-                await admin.nonce(),
-            );
-            
-            await callProjectToken_UpdateZoneRoyaltyRate(
-                projectToken,
-                admins,
-                zone2,
-                zone2RoyaltyRate,
-                await admin.nonce(),
-            );
 
+            await callTransaction(getUpdateZoneRoyaltyRateTxByInput(
+                projectToken as any,
+                deployer,
+                {
+                    zone: zone1,
+                    royaltyRate: zone1RoyaltyRate,
+                },
+                admin,
+                admins
+            ));
+
+            await callTransaction(getUpdateZoneRoyaltyRateTxByInput(
+                projectToken as any,
+                deployer,
+                {
+                    zone: zone2,
+                    royaltyRate: zone2RoyaltyRate,
+                },
+                admin,
+                admins
+            ));
+            
             const salePrice = ethers.BigNumber.from(1e6);
             
             const royaltyInfo1 = await projectMortgageToken.royaltyInfo(1, salePrice);

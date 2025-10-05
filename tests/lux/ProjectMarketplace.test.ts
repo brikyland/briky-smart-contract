@@ -37,9 +37,9 @@ import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
 import { deployReserveVault } from '@utils/deployments/common/reserveVault';
 import { MockValidator } from '@utils/mockValidator';
 import { RegisterCustodianParams } from '@utils/models/land/estateToken';
-import { getRegisterCustodianTx } from '@utils/transaction/land/estateToken';
+import { getRegisterCustodianTx, getUpdateZoneRoyaltyRateTxByInput } from '@utils/transaction/land/estateToken';
 import { Initialization as LaunchInitialization } from '@tests/launch/test.initialization';
-import { getCallLaunchProjectTx, getCallMintTx } from '@utils/transaction/launch/projectToken';
+import { getAuthorizeLaunchpadTxByInput, getCallLaunchProjectTx, getCallMintTx } from '@utils/transaction/launch/projectToken';
 import { deployMockPrestigePad } from '@utils/deployments/mock/mockPrestigePad';
 import { getBuyPartTx, getBuyTx, getCallListTx, getListTx, getSafeBuyPartTx, getSafeBuyTx } from '@utils/transaction/lux/assetMarketplace';
 import { BuyParams, BuyPartParams, ListParams, SafeBuyParams, SafeBuyPartParams } from '@utils/models/lux/assetMarketplace';
@@ -290,13 +290,16 @@ describe('6.4. ProjectMarketplace', async () => {
             admins,
         ));
 
-        await callProjectToken_AuthorizeLaunchpads(
-            projectToken,
-            admins,
-            [prestigePad.address],
-            true,
-            await admin.nonce()
-        );
+        await callTransaction(getAuthorizeLaunchpadTxByInput(
+            projectToken as any,
+            deployer,
+            {
+                accounts: [prestigePad.address],
+                isLaunchpad: true,
+            },
+            admin,
+            admins
+        ));
 
         for (const zone of [zone1, zone2]) {
             await callTransaction(getActivateInTxByInput(
@@ -686,13 +689,16 @@ describe('6.4. ProjectMarketplace', async () => {
 
         const zone = zone1;
 
-        await callProjectToken_UpdateZoneRoyaltyRate(
-            projectToken,
-            admins,
-            zone,
-            projectTokenRoyaltyRate,
-            await admin.nonce()
-        );
+        await callTransaction(getUpdateZoneRoyaltyRateTxByInput(
+            projectToken as any,
+            deployer,
+            {
+                zone: zone,
+                royaltyRate: projectTokenRoyaltyRate,
+            },
+            admin,
+            admins
+        ));
 
         const currentProjectId = (await projectToken.projectNumber()).add(1);
         const currentOfferId = (await projectMarketplace.offerNumber()).add(1);
