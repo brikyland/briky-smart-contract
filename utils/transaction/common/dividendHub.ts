@@ -6,6 +6,7 @@ import {
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 import { IssueDividendParams, WithdrawParams } from "@utils/models/common/dividendHub";
+import {ContractTransaction} from "ethers";
 
 
 // issueDividend
@@ -14,7 +15,7 @@ export async function getIssueDividendTx(
     signer: SignerWithAddress,
     params: IssueDividendParams,
     txConfig = {},
-) {
+): Promise<ContractTransaction> {
     return await dividendHub.connect(signer).issueDividend(
         params.governor,
         params.tokenId,
@@ -30,7 +31,7 @@ export async function getCallIssueDividendTx(
     caller: ProxyCaller,
     params: IssueDividendParams,
     txConfig = {},
-) {
+): Promise<ContractTransaction> {
     return await caller.call(
         dividendHub.address,
         dividendHub.interface.encodeFunctionData('issueDividend', [
@@ -51,7 +52,7 @@ export async function getWithdrawTx(
     dividendHub: DividendHub,
     params: WithdrawParams,
     txConfig = {},
-) {
+): Promise<ContractTransaction> {
     return await dividendHub.connect(signer).withdraw(
         params.dividendIds,
         txConfig,

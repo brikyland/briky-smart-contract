@@ -2,6 +2,7 @@ import { Admin, ERC721MortgageToken } from "@typechain-types";
 import { ERC721BorrowParams, RegisterCollateralsParams, RegisterCollateralsParamsInput } from "@utils/models/lend/erc721MortgageToken";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { getRegisterCollateralsSignatures } from "@utils/signatures/lend/erc721MortgageToken";
+import { ContractTransaction } from "ethers";
 
 
 // registerCollaterals
@@ -10,7 +11,7 @@ export async function getRegisterCollateralsTx(
     signer: SignerWithAddress,
     params: RegisterCollateralsParams,
     txConfig = {}
-) {
+): Promise<ContractTransaction> {
     return erc721MortgageToken.connect(signer).registerCollaterals(
         params.tokens,
         params.isCollateral,
@@ -26,7 +27,7 @@ export async function getRegisterCollateralsTxByInput(
     admin: Admin,
     admins: any[],
     txConfig = {}
-) {
+): Promise<ContractTransaction> {
     const params: RegisterCollateralsParams = {
         ...paramsInput,
         signatures: await getRegisterCollateralsSignatures(erc721MortgageToken, paramsInput, admin, admins)
@@ -41,7 +42,7 @@ export async function getERC721BorrowTx(
     signer: SignerWithAddress,
     params: ERC721BorrowParams,
     txConfig = {}
-) {
+): Promise<ContractTransaction> {
     return erc721MortgageToken.connect(signer).borrow(
         params.token,
         params.tokenId,

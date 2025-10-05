@@ -4,6 +4,7 @@ import { Admin, FeeReceiver } from "@typechain-types";
 
 import { WithdrawParams, WithdrawParamsInput } from "@utils/models/common/feeReceiver";
 import { getWithdrawSignatures } from "@utils/signatures/common/feeReceiver";
+import {ContractTransaction} from "ethers";
 
 
 // withdraw
@@ -12,7 +13,7 @@ export async function getWithdrawTx(
     signer: SignerWithAddress,
     params: WithdrawParams,
     txConfig = {},
-) {
+): Promise<ContractTransaction> {
     return await feeReceiver.connect(signer).withdraw(
         params.receiver,
         params.currencies,
@@ -29,7 +30,7 @@ export async function getWithdrawTxByInput(
     admin: Admin,
     admins: any[],
     txConfig = {},
-) {
+): Promise<ContractTransaction> {
     const params: WithdrawParams = {
         ...paramsInput,
         signatures: await getWithdrawSignatures(feeReceiver, paramsInput, admin, admins)

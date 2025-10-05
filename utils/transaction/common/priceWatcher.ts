@@ -1,4 +1,5 @@
 import { Admin, PriceWatcher } from "@typechain-types";
+import { ContractTransaction } from "ethers";
 
 import {
     getUpdateDefaultRatesSignatures,
@@ -18,7 +19,7 @@ export async function getUpdatePriceFeedsTx(
     deployer: any,
     params: UpdatePriceFeedsParams,
     txConfig = {},
-) {
+): Promise<ContractTransaction> {
     return await priceWatcher.connect(deployer).updatePriceFeeds(
         params.currencies,
         params.feeds,
@@ -35,7 +36,7 @@ export async function getUpdatePriceFeedsTxByInput(
     admin: Admin,
     admins: any[],
     txConfig = {},
-) {
+): Promise<ContractTransaction> {
     const params: UpdatePriceFeedsParams = {
         ...paramsInput,
         signatures: await getUpdatePriceFeedsSignatures(priceWatcher, paramsInput, admin, admins)
@@ -50,7 +51,7 @@ export async function getUpdateDefaultRatesTx(
     deployer: any,
     params: UpdateDefaultRatesParams,
     txConfig = {},
-) {
+): Promise<ContractTransaction> {
     return await priceWatcher.connect(deployer).updateDefaultRates(
         params.currencies,
         params.rates,
@@ -66,7 +67,7 @@ export async function getUpdateDefaultRatesTxByInput(
     admin: Admin,
     admins: any[],
     txConfig = {},
-) {
+): Promise<ContractTransaction> {
     const params: UpdateDefaultRatesParams = {
         ...paramsInput,
         signatures: await getUpdateDefaultRatesSignatures(priceWatcher, paramsInput, admin, admins)

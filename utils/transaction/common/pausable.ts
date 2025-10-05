@@ -2,7 +2,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { Admin } from "@typechain-types";
 import { PauseParams, UnpauseParams } from "@utils/models/common/pausable";
 import { getPauseSignatures, getUnpauseSignatures } from "@utils/signatures/common/pausable";
-import { Contract } from "ethers";
+import { Contract, ContractTransaction } from "ethers";
 
 
 // pause
@@ -11,7 +11,7 @@ export async function getPauseTx(
     signer: SignerWithAddress,
     params: PauseParams,
     txConfig = {}
-) {
+): Promise<ContractTransaction> {
     return await pausable.connect(signer).pause(
         params.signatures,
         txConfig
@@ -24,7 +24,7 @@ export async function getPauseTxByInput(
     admin: Admin,
     admins: any[],
     txConfig = {}
-) {
+): Promise<ContractTransaction> {
     const params: PauseParams = {
         signatures: await getPauseSignatures(pausable, admin, admins)
     };
@@ -38,7 +38,7 @@ export async function getUnpauseTx(
     signer: SignerWithAddress,
     params: UnpauseParams,
     txConfig = {}
-) {
+): Promise<ContractTransaction> {
     return await pausable.connect(signer).unpause(
         params.signatures,
         txConfig
@@ -51,7 +51,7 @@ export async function getUnpauseTxByInput(
     admin: Admin,
     admins: any[],
     txConfig = {}
-) {
+): Promise<ContractTransaction> {
     const params: UnpauseParams = {
         signatures: await getUnpauseSignatures(pausable, admin, admins)
     };

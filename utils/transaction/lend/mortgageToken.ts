@@ -3,6 +3,7 @@ import { ForecloseParams, LendParams, RepayParams, SafeLendParams, SafeRepayPara
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { getUpdateBaseURISignatures, getUpdateFeeRateSignatures } from "@utils/signatures/lend/mortgageToken";
 import { getSafeLendAnchor, getSafeRepayAnchor } from "@utils/anchor/lend/mortgageToken";
+import { ContractTransaction } from "ethers";
 
 
 // updateBaseURI
@@ -11,7 +12,7 @@ export async function getUpdateBaseURITx(
     deployer: SignerWithAddress,
     params: UpdateBaseURIParams,
     txConfig = {}
-) {
+): Promise<ContractTransaction> {
     return mortgageToken.connect(deployer).updateBaseURI(
         params.uri,
         params.signatures,
@@ -26,7 +27,7 @@ export async function getUpdateBaseURITxByInput(
     admin: Admin,
     admins: any[],
     txConfig = {}
-) {
+): Promise<ContractTransaction> {
     const params: UpdateBaseURIParams = {
         ...paramsInput,
         signatures: await getUpdateBaseURISignatures(mortgageToken, paramsInput, admin, admins)
@@ -41,7 +42,7 @@ export async function getUpdateFeeRateTx(
     deployer: SignerWithAddress,
     params: UpdateFeeRateParams,
     txConfig = {}
-) {
+): Promise<ContractTransaction> {
     return mortgageToken.connect(deployer).updateFeeRate(
         params.feeRate,
         params.signatures,
@@ -56,7 +57,7 @@ export async function getUpdateFeeRateTxByInput(
     admin: Admin,
     admins: any[],
     txConfig = {}
-) {
+): Promise<ContractTransaction> {
     const params: UpdateFeeRateParams = {
         ...paramsInput,
         signatures: await getUpdateFeeRateSignatures(mortgageToken, paramsInput, admin, admins)
@@ -71,7 +72,7 @@ export async function getLendTx(
     deployer: SignerWithAddress,
     params: LendParams,
     txConfig = {}
-) {
+): Promise<ContractTransaction> {
     return mortgageToken.connect(deployer).lend(
         params.mortgageId,
         txConfig
@@ -85,7 +86,7 @@ export async function getSafeLendTx(
     deployer: SignerWithAddress,
     params: SafeLendParams,
     txConfig = {}
-) {
+): Promise<ContractTransaction> {
     return mortgageToken.connect(deployer).safeLend(
         params.mortgageId,
         params.anchor,
@@ -98,7 +99,7 @@ export async function getSafeLendTxByParams(
     deployer: SignerWithAddress,
     params: LendParams,
     txConfig = {}
-) {
+): Promise<ContractTransaction> {
     const safeParams: SafeLendParams = {
         ...params,
         anchor: await getSafeLendAnchor(mortgageToken, params),
@@ -113,7 +114,7 @@ export async function getRepayTx(
     deployer: SignerWithAddress,
     params: RepayParams,
     txConfig = {}
-) {
+): Promise<ContractTransaction> {
     return mortgageToken.connect(deployer).repay(
         params.mortgageId,
         txConfig
@@ -127,7 +128,7 @@ export async function getSafeRepayTx(
     deployer: SignerWithAddress,
     params: SafeRepayParams,
     txConfig = {}
-) {
+): Promise<ContractTransaction> {
     return mortgageToken.connect(deployer).safeRepay(
         params.mortgageId,
         params.anchor,
@@ -140,7 +141,7 @@ export async function getSafeRepayTxByParams(
     deployer: SignerWithAddress,
     params: RepayParams,
     txConfig = {}
-) {
+): Promise<ContractTransaction> {
     const safeParams: SafeRepayParams = {
         ...params,
         anchor: await getSafeRepayAnchor(mortgageToken, params),
@@ -155,7 +156,7 @@ export async function getForecloseTx(
     deployer: SignerWithAddress,
     params: ForecloseParams,
     txConfig = {}
-) {
+): Promise<ContractTransaction> {
     return mortgageToken.connect(deployer).foreclose(
         params.mortgageId,
         txConfig

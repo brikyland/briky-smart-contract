@@ -11,7 +11,7 @@ export async function getAirdropTx(
     signer: SignerWithAddress,
     params: AirdropParams,
     txConfig = {}
-) {
+): Promise<ContractTransaction> {
     return await airdrop.connect(signer).airdrop(
         params.receivers,
         params.amounts,

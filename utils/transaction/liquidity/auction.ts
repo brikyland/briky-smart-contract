@@ -2,6 +2,7 @@ import {Admin, Auction} from "@typechain-types";
 import {DepositParams, StartAuctionParams, StartAuctionParamsInput, UpdateStakeTokensParams, UpdateStakeTokensParamsInput} from "@utils/models/liquidity/auction";
 import {SignerWithAddress} from "@nomiclabs/hardhat-ethers/signers";
 import { getStartAuctionSignatures, getUpdateStakeTokensSignatures } from "@utils/signatures/liquidity/auction";
+import { ContractTransaction } from "ethers";
 
 
 // updateStakeTokens
@@ -10,7 +11,7 @@ export async function getUpdateStakeTokensTx(
     deployer: SignerWithAddress,
     params: UpdateStakeTokensParams,
     txConfig = {}
-) {
+): Promise<ContractTransaction> {
     return auction.connect(deployer).updateStakeTokens(
         params.stakeToken1,
         params.stakeToken2,
@@ -27,7 +28,7 @@ export async function getUpdateStakeTokensTxByInput(
     admin: Admin,
     admins: any[],
     txConfig = {}
-) {
+): Promise<ContractTransaction> {
     const params: UpdateStakeTokensParams = {
         ...paramsInput,
         signatures: await getUpdateStakeTokensSignatures(auction, paramsInput, admin, admins)
@@ -42,7 +43,7 @@ export async function getStartAuctionTx(
     deployer: SignerWithAddress,
     params: StartAuctionParams,
     txConfig = {}
-) {
+): Promise<ContractTransaction> {
     return auction.connect(deployer).startAuction(
         params.endAt,
         params.vestingDuration,
@@ -58,7 +59,7 @@ export async function getStartAuctionTxByInput(
     admin: Admin,
     admins: any[],
     txConfig = {}
-) {
+): Promise<ContractTransaction> {
     const params: StartAuctionParams = {
         ...paramsInput,
         signatures: await getStartAuctionSignatures(auction, paramsInput, admin, admins)
@@ -73,7 +74,7 @@ export async function getDepositTx(
     deployer: SignerWithAddress,
     params: DepositParams,
     txConfig = {}
-) {
+): Promise<ContractTransaction> {
     return auction.connect(deployer).deposit(
         params.value,
         txConfig
@@ -86,6 +87,6 @@ export async function getWithdrawTx(
     auction: Auction,
     deployer: SignerWithAddress,
     txConfig = {}
-) {
+): Promise<ContractTransaction> {
     return auction.connect(deployer).withdraw(txConfig);
 }

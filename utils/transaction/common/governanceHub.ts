@@ -31,6 +31,7 @@ import { getUpdateFeeSignatures } from "@utils/signatures/common/governanceHub";
 import { getAdmitValidation, getConcludeExecutionValidation, getDisqualifyValidation, getLogExecutionValidation, getProposeValidation } from "@utils/validation/common/governanceHub";
 import { MockValidator } from "@utils/mockValidator";
 import { getSafeContributeBudgetAnchor, getSafeVoteAnchor } from "@utils/anchor/common/governanceHub";
+import {ContractTransaction} from "ethers";
 
 
 // updateFee
@@ -39,7 +40,7 @@ export async function getUpdateFeeTx(
     signer: SignerWithAddress,
     params: UpdateFeeParams,
     txConfig = {},
-) {
+): Promise<ContractTransaction> {
     return await governanceHub.connect(signer).updateFee(
         params.fee,
         params.signatures,
@@ -54,7 +55,7 @@ export async function getUpdateFeeTxByInput(
     admin: Admin,
     admins: any[],
     txConfig = {},
-) {
+): Promise<ContractTransaction> {
     const params: UpdateFeeParams = {
         ...paramsInput,
         signatures: await getUpdateFeeSignatures(governanceHub, paramsInput, admin, admins),
@@ -70,7 +71,7 @@ export async function getProposeTx(
     signer: SignerWithAddress,
     params: ProposeParams,
     txConfig = {},
-) {
+): Promise<ContractTransaction> {
     return await governanceHub.connect(signer).propose(
         params.governor,
         params.tokenId,
@@ -91,7 +92,7 @@ export async function getProposeTxByInput(
     paramsInput: ProposeParamsInput,
     validator: MockValidator,
     txConfig = {},
-) {
+): Promise<ContractTransaction> {
     const params: ProposeParams = {
         ...paramsInput,
         validation: await getProposeValidation(governanceHub, paramsInput, validator, signer)
@@ -105,7 +106,7 @@ export async function getCallProposeTx(
     caller: ProxyCaller,
     params: ProposeParams,
     txConfig = {},
-) {
+): Promise<ContractTransaction> {
     return await caller.call(
         governanceHub.address,
         governanceHub.interface.encodeFunctionData('propose', [
@@ -129,7 +130,7 @@ export async function getCallProposeTxByInput(
     paramsInput: ProposeParamsInput,
     validator: MockValidator,
     txConfig = {},
-) {
+): Promise<ContractTransaction> {
     const params: ProposeParams = {
         ...paramsInput,
         validation: await getProposeValidation(governanceHub, paramsInput, validator, caller)
@@ -145,7 +146,7 @@ export async function getAdmitTx(
     signer: SignerWithAddress,
     params: AdmitParams,
     txConfig = {},
-) {
+): Promise<ContractTransaction> {
     return await governanceHub.connect(signer).admit(
         params.proposalId,
         params.contextURI,
@@ -162,7 +163,7 @@ export async function getAdmitTxByInput(
     paramsInput: AdmitParamsInput,
     validator: MockValidator,
     txConfig = {},
-) {
+): Promise<ContractTransaction> {
     const params: AdmitParams = {
         ...paramsInput,
         validation: await getAdmitValidation(governanceHub, paramsInput, validator)
@@ -178,7 +179,7 @@ export async function getDisqualifyTx(
     signer: SignerWithAddress,
     params: DisqualifyParams,
     txConfig = {},
-) {
+): Promise<ContractTransaction> {
     return await governanceHub.connect(signer).disqualify(
         params.proposalId,
         params.contextURI,
@@ -194,7 +195,7 @@ export async function getDisqualifyTxByInput(
     paramsInput: DisqualifyParamsInput,
     validator: MockValidator,
     txConfig = {},
-) {
+): Promise<ContractTransaction> {
     const params: DisqualifyParams = {
         ...paramsInput,
         validation: await getDisqualifyValidation(governanceHub, paramsInput, validator)
@@ -209,7 +210,7 @@ export async function getVoteTx(
     signer: SignerWithAddress,
     params: VoteParams,
     txConfig = {},
-) {
+): Promise<ContractTransaction> {
     return await governanceHub.connect(signer).vote(
         params.proposalId,
         params.voteOption,
@@ -224,7 +225,7 @@ export async function getSafeVoteTx(
     signer: SignerWithAddress,
     params: SafeVoteParams,
     txConfig = {},
-) {
+): Promise<ContractTransaction> {
     return await governanceHub.connect(signer).safeVote(
         params.proposalId,
         params.voteOption,
@@ -238,7 +239,7 @@ export async function getSafeVoteTxByParams(
     signer: SignerWithAddress,
     paramsInput: VoteParams,
     txConfig = {},
-) {
+): Promise<ContractTransaction> {
     const params: SafeVoteParams = {
         ...paramsInput,
         anchor: await getSafeVoteAnchor(governanceHub, paramsInput)
@@ -253,7 +254,7 @@ export async function getContributeBudgetTx(
     signer: SignerWithAddress,
     params: ContributeBudgetParams,
     txConfig = {},
-) {
+): Promise<ContractTransaction> {
     return await governanceHub.connect(signer).contributeBudget(
         params.proposalId,
         params.value,
@@ -268,7 +269,7 @@ export async function getSafeContributeBudgetTx(
     signer: SignerWithAddress,
     params: SafeContributeBudgetParams,
     txConfig = {},
-) {
+): Promise<ContractTransaction> {
     return await governanceHub.connect(signer).safeContributeBudget(
         params.proposalId,
         params.value,
@@ -282,7 +283,7 @@ export async function getSafeContributeBudgetTxByInput(
     signer: SignerWithAddress,
     paramsInput: ContributeBudgetParams,
     txConfig = {},
-) {
+): Promise<ContractTransaction> {
     const params: SafeContributeBudgetParams = {
         ...paramsInput,
         anchor: await getSafeContributeBudgetAnchor(governanceHub, paramsInput)
@@ -297,7 +298,7 @@ export async function getWithdrawBudgetContributionTx(
     signer: SignerWithAddress,
     params: WithdrawBudgetContributionParams,
     txConfig = {},
-) {
+): Promise<ContractTransaction> {
     return await governanceHub.connect(signer).withdrawBudgetContribution(
         params.proposalId,
         txConfig,
@@ -311,7 +312,7 @@ export async function getConfirmTx(
     signer: SignerWithAddress,
     params: ConfirmParams,
     txConfig = {},
-) {
+): Promise<ContractTransaction> {
     return await governanceHub.connect(signer).confirm(
         params.proposalId,
         txConfig,
@@ -325,7 +326,7 @@ export async function getRejectExecutionTx(
     signer: SignerWithAddress,
     params: RejectExecutionParams,
     txConfig = {},
-) {
+): Promise<ContractTransaction> {
     return await governanceHub.connect(signer).rejectExecution(
         params.proposalId,
         txConfig,
@@ -339,7 +340,7 @@ export async function getLogExecutionTx(
     signer: SignerWithAddress,
     params: LogExecutionParams,
     txConfig = {},
-) {
+): Promise<ContractTransaction> {
     return await governanceHub.connect(signer).logExecution(
         params.proposalId,
         params.logURI,
@@ -354,7 +355,7 @@ export async function getLogExecutionTxByInput(
     paramsInput: LogExecutionParamsInput,
     validator: MockValidator,
     txConfig = {},
-) {
+): Promise<ContractTransaction> {
     const params: LogExecutionParams = {
         ...paramsInput,
         validation: await getLogExecutionValidation(governanceHub, paramsInput, validator)
@@ -370,7 +371,7 @@ export async function getConcludeExecutionTx(
     signer: SignerWithAddress,
     params: ConcludeExecutionParams,
     txConfig = {},
-) {
+): Promise<ContractTransaction> {
     return await governanceHub.connect(signer).concludeExecution(
         params.proposalId,
         params.logURI,
@@ -386,7 +387,7 @@ export async function getConcludeExecutionTxByInput(
     paramsInput: ConcludeExecutionParamsInput,
     validator: MockValidator,
     txConfig = {},
-) {
+): Promise<ContractTransaction> {
     const params: ConcludeExecutionParams = {
         ...paramsInput,
         validation: await getConcludeExecutionValidation(governanceHub, paramsInput, validator)

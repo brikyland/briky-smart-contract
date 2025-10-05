@@ -1,6 +1,7 @@
 import { ProjectMortgageToken } from "@typechain-types";
 import { ProjectBorrowParams } from "@utils/models/lend/projectMortgageToken";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { ContractTransaction } from "ethers";
 
 
 // borrow
@@ -9,7 +10,7 @@ export async function getProjectBorrowTx(
     signer: SignerWithAddress,
     params: ProjectBorrowParams,
     txConfig = {}
-) {
+): Promise<ContractTransaction> {
     return await projectMortgageToken.connect(signer).borrow(
         params.projectId,
         params.amount,

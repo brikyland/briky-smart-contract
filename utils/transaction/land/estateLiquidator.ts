@@ -16,7 +16,7 @@ export async function getRequestExtractionTx(
     signer: SignerWithAddress,
     params: RequestExtractionParams,
     txConfig = {},
-) {
+): Promise<ContractTransaction> {
     return estateLiquidator.connect(signer).requestExtraction(
         params.estateId,
         params.buyer,
@@ -39,7 +39,7 @@ export async function getRequestExtractionTxByInput(
     signer: SignerWithAddress,
     timestamp: number,
     txConfig = {},
-) {
+): Promise<ContractTransaction> {
     const params: RequestExtractionParams = {
         ...paramsInput,
         validation: await getRequestExtractionValidation(estateLiquidator as any, estateToken as any, governanceHub as any, paramsInput, validator, timestamp)

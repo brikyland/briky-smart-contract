@@ -1,4 +1,4 @@
-import { Contract } from "ethers";
+import { Contract, ContractTransaction } from "ethers";
 
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
@@ -15,7 +15,7 @@ export async function getUpdateValidatorTx(
     signer: SignerWithAddress,
     params: UpdateValidatorParams,
     txConfig = {}
-) {
+): Promise<ContractTransaction> {
     return await validatable.connect(signer).updateValidator(
         params.validator,
         params.signatures,
@@ -30,7 +30,7 @@ export async function getUpdateValidatorTxByInput(
     admin: Admin,
     admins: any[],
     txConfig = {}
-) {
+): Promise<ContractTransaction> {
     const params: UpdateValidatorParams = {
         ...paramsInput,
         signatures: await getUpdateValidatorSignatures(validatable, paramsInput, admin, admins)
