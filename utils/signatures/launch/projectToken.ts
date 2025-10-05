@@ -1,7 +1,7 @@
 import { Admin, ProjectToken } from "@typechain-types";
 import { getSignatures } from "@utils/blockchain";
 import {
-    AuthorizeLaunchpadsParamsInput,
+    AuthorizeLaunchpadParamsInput,
     UpdateBaseURIParamsInput,
     UpdateZoneRoyaltyRateParamsInput,
 } from "@utils/models/launch/projectToken";
@@ -43,9 +43,9 @@ export async function getUpdateZoneRoyaltyRateSignatures(
 
 
 // authorizeLaunchpads
-export async function getAuthorizeLaunchpadsSignatures(
+export async function getAuthorizeLaunchpadSignatures(
     projectToken: ProjectToken,
-    paramsInput: AuthorizeLaunchpadsParamsInput,
+    paramsInput: AuthorizeLaunchpadParamsInput,
     admin: Admin,
     admins: any[],
     isValid: boolean = true

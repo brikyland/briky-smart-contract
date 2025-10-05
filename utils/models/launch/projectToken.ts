@@ -25,12 +25,12 @@ export interface UpdateZoneRoyaltyRateParams extends UpdateZoneRoyaltyRateParams
 
 
 // authorizeLaunchpads
-export interface AuthorizeLaunchpadsParamsInput {
+export interface AuthorizeLaunchpadParamsInput {
     accounts: string[];
     isLaunchpad: boolean;
 }
 
-export interface AuthorizeLaunchpadsParams extends AuthorizeLaunchpadsParamsInput {
+export interface AuthorizeLaunchpadParams extends AuthorizeLaunchpadParamsInput {
     signatures: string[];
 }
 

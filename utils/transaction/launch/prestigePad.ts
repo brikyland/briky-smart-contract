@@ -1,11 +1,41 @@
-import { Admin, MockPrestigePad, PrestigePad, ProxyCaller } from "@typechain-types";
-import { MockValidator } from "@utils/mockValidator";
-import { CancelCurrentRoundParams, ConfirmCurrentRoundParams, ContributeCurrentRoundParams, FinalizeParams, InitiateLaunchParams, InitiateLaunchParamsInput, SafeConfirmCurrentRoundParams, SafeContributeCurrentRoundParams, SafeFinalizeParams, ScheduleNextRoundParams, UpdateBaseUnitPriceRangeParams, UpdateBaseUnitPriceRangeParamsInput, UpdateLaunchURIParams, UpdateLaunchURIParamsInput, UpdateRoundParams, UpdateRoundParamsInput, UpdateRoundsParams, UpdateRoundsParamsInput, WithdrawContributionParams, WithdrawProjectTokenParams } from "@utils/models/launch/prestigePad";
-import { getInitiateLaunchValidation, getUpdateLaunchURIValidation, getUpdateRoundsValidation, getUpdateRoundValidation } from "@utils/validation/launch/prestigePad";
-import { ContractTransaction } from "ethers";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { getUpdateBaseUnitPriceRangeSignatures } from "@utils/signatures/launch/prestigePad";
-import { getSafeConfirmCurrentRoundParams, getSafeContributeCurrentRoundAnchor, getSafeFinalizeParams } from "@utils/anchor/launch/prestigePad";
+import {Admin, PrestigePad, ProxyCaller} from "@typechain-types";
+import {MockValidator} from "@utils/mockValidator";
+import {
+    CancelCurrentRoundParams,
+    ConfirmCurrentRoundParams,
+    ContributeCurrentRoundParams,
+    FinalizeParams,
+    InitiateLaunchParams,
+    InitiateLaunchParamsInput,
+    SafeConfirmCurrentRoundParams,
+    SafeContributeCurrentRoundParams,
+    SafeFinalizeParams,
+    ScheduleNextRoundParams,
+    UpdateBaseUnitPriceRangeParams,
+    UpdateBaseUnitPriceRangeParamsInput,
+    UpdateLaunchURIParams,
+    UpdateLaunchURIParamsInput,
+    UpdateRoundParams,
+    UpdateRoundParamsInput,
+    UpdateRoundsParams,
+    UpdateRoundsParamsInput,
+    WithdrawContributionParams,
+    WithdrawProjectTokenParams
+} from "@utils/models/launch/prestigePad";
+import {
+    getInitiateLaunchValidation,
+    getUpdateLaunchURIValidation,
+    getUpdateRoundsValidation,
+    getUpdateRoundValidation
+} from "@utils/validation/launch/prestigePad";
+import {ContractTransaction} from "ethers";
+import {SignerWithAddress} from "@nomiclabs/hardhat-ethers/signers";
+import {getUpdateBaseUnitPriceRangeSignatures} from "@utils/signatures/launch/prestigePad";
+import {
+    getSafeConfirmCurrentRoundParams,
+    getSafeContributeCurrentRoundAnchor,
+    getSafeFinalizeParams
+} from "@utils/anchor/launch/prestigePad";
 
 
 // updateBaseUnitPriceRange
@@ -60,9 +90,9 @@ export async function getInitiateLaunchTx(
 
 export async function getInitiateLaunchTxByInput(
     prestigePad: PrestigePad,
-    validator: MockValidator,
     deployer: SignerWithAddress,
     paramsInput: InitiateLaunchParamsInput,
+    validator: MockValidator,
     txConfig = {}
 ): Promise<ContractTransaction> {
     const params: InitiateLaunchParams = {
@@ -110,13 +140,12 @@ export async function getUpdateRoundTx(
     params: UpdateRoundParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    const tx = prestigePad.connect(deployer).updateRound(
+    return prestigePad.connect(deployer).updateRound(
         params.launchId,
         params.index,
         params.round,
         txConfig,
     );
-    return tx;
 }
 
 export async function getUpdateRoundTxByInput(
@@ -269,12 +298,11 @@ export async function getSafeConfirmCurrentRoundTx(
     params: SafeConfirmCurrentRoundParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    const tx = prestigePad.connect(deployer).safeConfirmCurrentRound(
+    return prestigePad.connect(deployer).safeConfirmCurrentRound(
         params.launchId,
         params.anchor,
         txConfig,
     );
-    return tx;
 }
 
 export async function getSafeConfirmCurrentRoundTxByParams(
@@ -296,7 +324,7 @@ export async function getCallSafeConfirmCurrentRoundTx(
     params: SafeConfirmCurrentRoundParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    const tx = proxyCaller.call(
+    return proxyCaller.call(
         prestigePad.address,
         prestigePad.interface.encodeFunctionData('safeConfirmCurrentRound', [
             params.launchId,
@@ -304,7 +332,19 @@ export async function getCallSafeConfirmCurrentRoundTx(
         ]),
         txConfig,
     );
-    return tx;
+}
+
+export async function getCallSafeConfirmCurrentRoundTxByParams(
+    prestigePad: PrestigePad,
+    proxyCaller: ProxyCaller,
+    params: ConfirmCurrentRoundParams,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    const safeParams: SafeConfirmCurrentRoundParams = {
+        ...params,
+        anchor: await getSafeConfirmCurrentRoundParams(prestigePad, params),
+    };
+    return getCallSafeConfirmCurrentRoundTx(prestigePad, proxyCaller, safeParams, txConfig);
 }
 
 

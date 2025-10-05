@@ -1,10 +1,10 @@
 import { Admin, ProjectToken, ProxyCaller } from "@typechain-types";
 import { MockValidator } from "@utils/mockValidator";
-import { AuthorizeLaunchpadsParams, AuthorizeLaunchpadsParamsInput, DeprecateProjectParams, LaunchProjectParams, MintParams, RegisterInitiatorParams, RegisterInitiatorParamsInput, SafeDeprecateProjectParams, SafeTokenizeProjectParams, SafeUpdateProjectURIParams, TokenizeProjectParams, UpdateBaseURIParams, UpdateBaseURIParamsInput, UpdateProjectURIParams, UpdateProjectURIParamsInput, UpdateZoneRoyaltyRateParams, UpdateZoneRoyaltyRateParamsInput, WithdrawEstateTokenParams } from "@utils/models/launch/projectToken";
+import { AuthorizeLaunchpadParams, AuthorizeLaunchpadParamsInput, DeprecateProjectParams, LaunchProjectParams, MintParams, RegisterInitiatorParams, RegisterInitiatorParamsInput, SafeDeprecateProjectParams, SafeTokenizeProjectParams, SafeUpdateProjectURIParams, TokenizeProjectParams, UpdateBaseURIParams, UpdateBaseURIParamsInput, UpdateProjectURIParams, UpdateProjectURIParamsInput, UpdateZoneRoyaltyRateParams, UpdateZoneRoyaltyRateParamsInput, WithdrawEstateTokenParams } from "@utils/models/launch/projectToken";
 import { getRegisterInitiatorValidation, getSafeUpdateProjectURIValidation } from "@utils/validation/launch/projectToken";
 import { ContractTransaction, ethers } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { getAuthorizeLaunchpadsSignatures, getUpdateBaseURISignatures, getUpdateZoneRoyaltyRateSignatures } from "@utils/signatures/launch/projectToken";
+import { getAuthorizeLaunchpadSignatures, getUpdateBaseURISignatures, getUpdateZoneRoyaltyRateSignatures } from "@utils/signatures/launch/projectToken";
 import { getSafeDeprecateProjectAnchor, getSafeTokenizeProjectAnchor, getSafeUpdateProjectURIAnchor } from "@utils/anchor/launch/projectToken";
 
 
@@ -70,10 +70,10 @@ export async function getUpdateZoneRoyaltyRateTxByInput(
 
 
 // authorizeLaunchpads
-export async function getAuthorizeLaunchpadsTx(
+export async function getAuthorizeLaunchpadTx(
     projectToken: ProjectToken,
     deployer: SignerWithAddress,
-    params: AuthorizeLaunchpadsParams,
+    params: AuthorizeLaunchpadParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
     return projectToken.connect(deployer).authorizeLaunchpads(
@@ -84,19 +84,19 @@ export async function getAuthorizeLaunchpadsTx(
     );
 }
 
-export async function getAuthorizeLaunchpadsTxByInput(
+export async function getAuthorizeLaunchpadTxByInput(
     projectToken: ProjectToken,
     deployer: SignerWithAddress,
-    paramsInput: AuthorizeLaunchpadsParamsInput,
+    paramsInput: AuthorizeLaunchpadParamsInput,
     admin: Admin,
     admins: any[],
     txConfig = {}
 ): Promise<ContractTransaction> {
-    const params: AuthorizeLaunchpadsParams = {
+    const params: AuthorizeLaunchpadParams = {
         ...paramsInput,
-        signatures: await getAuthorizeLaunchpadsSignatures(projectToken, paramsInput, admin, admins),
+        signatures: await getAuthorizeLaunchpadSignatures(projectToken, paramsInput, admin, admins),
     };
-    return getAuthorizeLaunchpadsTx(projectToken, deployer, params, txConfig);
+    return getAuthorizeLaunchpadTx(projectToken, deployer, params, txConfig);
 }
 
 
