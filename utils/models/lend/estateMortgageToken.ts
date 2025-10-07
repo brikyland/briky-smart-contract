@@ -14,5 +14,5 @@ export interface EstateBorrowParams {
     principal: BigNumber;
     repayment: BigNumber;
     currency: string;
-    duration: BigNumber;
+    duration: number;
 }

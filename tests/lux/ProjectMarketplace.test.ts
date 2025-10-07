@@ -1719,7 +1719,7 @@ describe('6.4. ProjectMarketplace', async () => {
             });
             const { projectMarketplace, seller1 } = fixture;
 
-            let tx = await projectMarketplace.connect(seller1).cancel(1);
+            let tx = await getCancelTx(projectMarketplace, seller1, { requestId: BigNumber.from(1) });
             await tx.wait();
 
             const offer = await projectMarketplace.getOffer(1);
@@ -1738,7 +1738,7 @@ describe('6.4. ProjectMarketplace', async () => {
                 fundERC20ForBuyers: true,
             });
             const { projectMarketplace, manager } = fixture;
-            let tx = await projectMarketplace.connect(manager).cancel(1);
+            let tx = await getCancelTx(projectMarketplace, manager, { requestId: BigNumber.from(1) });
             await tx.wait();
 
             const offer = await projectMarketplace.getOffer(1);
@@ -1758,9 +1758,9 @@ describe('6.4. ProjectMarketplace', async () => {
             });
             const { projectMarketplace, manager } = fixture;
 
-            await expect(projectMarketplace.connect(manager).cancel(0))
+            await expect(getCancelTx(projectMarketplace, manager, { requestId: BigNumber.from(0) }))
                 .to.be.revertedWithCustomError(projectMarketplace, "InvalidOfferId");
-            await expect(projectMarketplace.connect(manager).cancel(3))
+            await expect(getCancelTx(projectMarketplace, manager, { requestId: BigNumber.from(3) }))
                 .to.be.revertedWithCustomError(projectMarketplace, "InvalidOfferId");
         });
 
@@ -1773,10 +1773,10 @@ describe('6.4. ProjectMarketplace', async () => {
             });
             const { projectMarketplace, seller2, moderator } = fixture;
 
-            await expect(projectMarketplace.connect(seller2).cancel(1))
+            await expect(getCancelTx(projectMarketplace, seller2, { requestId: BigNumber.from(1) }))
                 .to.be.revertedWithCustomError(projectMarketplace, "Unauthorized");
 
-            await expect(projectMarketplace.connect(moderator).cancel(1))
+            await expect(getCancelTx(projectMarketplace, moderator, { requestId: BigNumber.from(1) }))
                 .to.be.revertedWithCustomError(projectMarketplace, "Unauthorized");
         });
 
@@ -1789,8 +1789,8 @@ describe('6.4. ProjectMarketplace', async () => {
             });
             const { projectMarketplace, manager } = fixture;
 
-            await callTransaction(projectMarketplace.connect(manager).cancel(1));
-            await expect(projectMarketplace.connect(manager).cancel(1))
+            await callTransaction(getCancelTx(projectMarketplace, manager, { requestId: BigNumber.from(1) }));
+            await expect(getCancelTx(projectMarketplace, manager, { requestId: BigNumber.from(1) }))
                 .to.be.revertedWithCustomError(projectMarketplace, "InvalidCancelling");
         });
 
@@ -1812,7 +1812,7 @@ describe('6.4. ProjectMarketplace', async () => {
                 { value: 1e9 }
             );
 
-            await expect(projectMarketplace.connect(manager).cancel(1))
+            await expect(getCancelTx(projectMarketplace, manager, { requestId: BigNumber.from(1) }))
                 .to.be.revertedWithCustomError(projectMarketplace, "InvalidCancelling");
         });
     });

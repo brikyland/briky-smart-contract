@@ -34,9 +34,9 @@ import { MortgageState } from "@utils/models/lend/mortgageToken";
 import { Initialization as LendInitialization } from '@tests/lend/test.initialization';
 import { applyDiscount, scaleRate } from '@utils/formula';
 import { ERC721BorrowParams, RegisterCollateralsParams, RegisterCollateralsParamsInput } from '@utils/models/lend/erc721MortgageToken';
-import { getERC721BorrowTx, getRegisterCollateralsTx } from '@utils/transaction/lend/erc721MortgageToken';
+import { getERC721BorrowTx, getRegisterCollateralsTx, getRegisterCollateralsTxByInput } from '@utils/transaction/lend/erc721MortgageToken';
 import { UpdateBaseURIParams, UpdateBaseURIParamsInput, UpdateFeeRateParams, UpdateFeeRateParamsInput } from '@utils/models/lend/mortgageToken';
-import { getUpdateBaseURITx, getUpdateFeeRateTx } from '@utils/transaction/lend/mortgageToken';
+import { getCancelTx, getForecloseTx, getLendTx, getRepayTx, getSafeLendTx, getSafeLendTxByParams, getSafeRepayTx, getSafeRepayTxByParams, getUpdateBaseURITx, getUpdateBaseURITxByInput, getUpdateFeeRateTx, getUpdateFeeRateTxByInput } from '@utils/transaction/lend/mortgageToken';
 import { getRegisterCollateralsSignatures } from '@utils/signatures/lend/erc721MortgageToken';
 import { getAuthorizeManagersTxByInput, getAuthorizeModeratorsTxByInput, getUpdateCurrencyRegistriesTxByInput } from '@utils/transaction/common/admin';
 import { getPauseTxByInput } from '@utils/transaction/common/pausable';
@@ -65,15 +65,7 @@ async function testReentrancy_erc721MortgageToken(
 
 
 interface ERC721MortgageTokenFixture {
-    admin: Admin;
-    feeReceiver: FeeReceiver;
-    currency: Currency;
-    feeReceiverCollection: MockContract<RoyaltyCollection>;
-    otherCollection: MockContract<RoyaltyCollection>;
-    collaterals: MockContract<RoyaltyCollection>[];
-    erc721MortgageToken: ERC721MortgageToken;
-
-    deployer: SignerWithAddress;
+    deployer: any;
     admins: any[];
     lender1: any;
     lender2: any;
@@ -83,6 +75,15 @@ interface ERC721MortgageTokenFixture {
     moderator: any;
     royaltyReceiver: any;
     erc721MortgageTokenOwner: any;
+    user: any;
+
+    admin: Admin;
+    currency: Currency;
+    feeReceiver: FeeReceiver;
+    feeReceiverCollection: MockContract<RoyaltyCollection>;
+    otherCollection: MockContract<RoyaltyCollection>;
+    collaterals: MockContract<RoyaltyCollection>[];
+    erc721MortgageToken: ERC721MortgageToken;
 }
 
 describe('3.1. ERC721MortgageToken', async () => {
@@ -99,6 +100,7 @@ describe('3.1. ERC721MortgageToken', async () => {
         const moderator = accounts[Constant.ADMIN_NUMBER + 6];
         const royaltyReceiver = accounts[Constant.ADMIN_NUMBER + 7];
         const erc721MortgageTokenOwner = accounts[Constant.ADMIN_NUMBER + 8];
+        const user = accounts[Constant.ADMIN_NUMBER + 9];
 
         const adminAddresses: string[] = admins.map(signer => signer.address);
         const admin = await deployAdmin(
@@ -110,11 +112,6 @@ describe('3.1. ERC721MortgageToken', async () => {
             adminAddresses[4],
         ) as Admin;
 
-        const feeReceiver = await deployFeeReceiver(
-            deployer.address,
-            admin.address
-        ) as FeeReceiver;
-
         const currency = await deployCurrency(
             deployer.address,
             'MockCurrency',
@@ -125,6 +122,11 @@ describe('3.1. ERC721MortgageToken', async () => {
             ethers.utils.parseEther('0.3'),
             Constant.COMMON_RATE_DECIMALS
         ));
+
+        const feeReceiver = await deployFeeReceiver(
+            deployer.address,
+            admin.address
+        ) as FeeReceiver;
 
         const SmockCollectionFactory = await smock.mock<RoyaltyCollection__factory>("RoyaltyCollection");
         const feeReceiverCollection = await SmockCollectionFactory.deploy();
@@ -168,13 +170,6 @@ describe('3.1. ERC721MortgageToken', async () => {
         ) as ERC721MortgageToken;
 
         return {
-            admin,
-            feeReceiver,
-            currency,
-            feeReceiverCollection,
-            otherCollection,
-            collaterals,
-            erc721MortgageToken,
             deployer,
             admins,
             manager,
@@ -185,6 +180,14 @@ describe('3.1. ERC721MortgageToken', async () => {
             borrower1,
             borrower2,
             erc721MortgageTokenOwner,
+            user,
+            admin,
+            currency,
+            feeReceiver,
+            feeReceiverCollection,
+            otherCollection,
+            collaterals,
+            erc721MortgageToken,
         };
     };
 
@@ -201,13 +204,7 @@ describe('3.1. ERC721MortgageToken', async () => {
 
         const {
             deployer,
-            admin,
             admins,
-            currency,
-            feeReceiverCollection,
-            otherCollection,
-            collaterals,
-            erc721MortgageToken,
             borrower1,
             borrower2,
             lender1,
@@ -215,6 +212,13 @@ describe('3.1. ERC721MortgageToken', async () => {
             manager,
             moderator,
             royaltyReceiver,
+            user,
+            admin,
+            currency,
+            feeReceiverCollection,
+            otherCollection,
+            collaterals,
+            erc721MortgageToken,
         } = fixture;
 
         await callTransaction(getAuthorizeManagersTxByInput(
@@ -238,16 +242,16 @@ describe('3.1. ERC721MortgageToken', async () => {
         ));
 
         if (!skipRegisterCollaterals) {
-            await callERC721MortgageToken_RegisterCollaterals(
+            await callTransaction(getRegisterCollateralsTxByInput(
                 erc721MortgageToken as any,
                 deployer,
-                admins,
-                admin,
                 {
                     tokens: [feeReceiverCollection.address, otherCollection.address],
                     isCollateral: true,
-                }
-            );
+                },
+                admin,
+                admins,
+            ));
         }
 
         let currentTimestamp = await time.latest();
@@ -284,7 +288,7 @@ describe('3.1. ERC721MortgageToken', async () => {
                 principal: BigNumber.from(10e5),
                 repayment: BigNumber.from(11e5),
                 currency: ethers.constants.AddressZero,
-                duration: BigNumber.from(1000),
+                duration: 1000,
             }));
 
             await callTransaction(getERC721BorrowTx(erc721MortgageToken, borrower2, {
@@ -293,7 +297,7 @@ describe('3.1. ERC721MortgageToken', async () => {
                 principal: BigNumber.from(100000),
                 repayment: BigNumber.from(110000),
                 currency: currency.address,
-                duration: BigNumber.from(1000),
+                duration: 1000,
             }));    
             
             await prepareERC20(
@@ -307,11 +311,11 @@ describe('3.1. ERC721MortgageToken', async () => {
         if (listSampleLending) {
             currentTimestamp += 100;
             await time.setNextBlockTimestamp(currentTimestamp);
-            await callTransaction(erc721MortgageToken.connect(lender1).lend(1, { value: 1e9 }));
+            await callTransaction(getLendTx(erc721MortgageToken, lender1, { mortgageId: BigNumber.from(1) }, { value: 1e9 }));
 
             currentTimestamp += 100;
             await time.setNextBlockTimestamp(currentTimestamp);
-            await callTransaction(erc721MortgageToken.connect(lender2).lend(2));
+            await callTransaction(getLendTx(erc721MortgageToken, lender2, { mortgageId: BigNumber.from(2) }));
         }
 
         if (pause) {
@@ -382,11 +386,7 @@ describe('3.1. ERC721MortgageToken', async () => {
             const paramsInput: UpdateBaseURIParamsInput = {
                 uri: "NewBaseURI:",
             };
-            const params: UpdateBaseURIParams = {
-                ...paramsInput,
-                signatures: await getUpdateBaseURISignatures(erc721MortgageToken as any, paramsInput, admin, admins),
-            };
-            const tx = await getUpdateBaseURITx(erc721MortgageToken as any, deployer, params);
+            const tx = await getUpdateBaseURITxByInput(erc721MortgageToken as any, deployer, paramsInput, admin, admins);
             await tx.wait();
 
             await expect(tx).to.emit(erc721MortgageToken, 'BaseURIUpdate').withArgs(
@@ -407,7 +407,6 @@ describe('3.1. ERC721MortgageToken', async () => {
                 ...paramsInput,
                 signatures: await getUpdateBaseURISignatures(erc721MortgageToken as any, paramsInput, admin, admins, false),
             };
-
             await expect(getUpdateBaseURITx(erc721MortgageToken as any, deployer, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
@@ -420,27 +419,22 @@ describe('3.1. ERC721MortgageToken', async () => {
             const paramsInput: UpdateFeeRateParamsInput = {
                 feeRate: ethers.utils.parseEther('0.2')
             };
-            const params: UpdateFeeRateParams = {
-                ...paramsInput,
-                signatures: await getUpdateFeeRateSignatures(erc721MortgageToken as any, paramsInput, admin, admins),
-            }
-
-            const tx = await getUpdateFeeRateTx(erc721MortgageToken as any, deployer, params);
+            const tx = await getUpdateFeeRateTxByInput(erc721MortgageToken as any, deployer, paramsInput, admin, admins);
             await tx.wait();
 
             await expect(tx).to.emit(erc721MortgageToken, 'FeeRateUpdate').withArgs(
-                    (rate: any) => {
-                        expect(structToObject(rate)).to.deep.equal({
-                            value: params.feeRate,
-                            decimals: Constant.COMMON_RATE_DECIMALS,
-                        });
-                        return true;
-                    }
-                );
+                (rate: any) => {
+                    expect(structToObject(rate)).to.deep.equal({
+                        value: paramsInput.feeRate,
+                        decimals: Constant.COMMON_RATE_DECIMALS,
+                    });
+                    return true;
+                }
+            );
 
             const feeRate = await erc721MortgageToken.getFeeRate();
             expect(structToObject(feeRate)).to.deep.equal({
-                value: params.feeRate,
+                value: paramsInput.feeRate,
                 decimals: Constant.COMMON_RATE_DECIMALS,
             });
         });
@@ -455,7 +449,6 @@ describe('3.1. ERC721MortgageToken', async () => {
                 ...paramsInput,
                 signatures: await getUpdateFeeRateSignatures(erc721MortgageToken as any, paramsInput, admin, admins, false)
             }
-
             await expect(getUpdateFeeRateTx(erc721MortgageToken as any, deployer, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
@@ -463,16 +456,13 @@ describe('3.1. ERC721MortgageToken', async () => {
         it('3.1.3.3. Update fee rate unsuccessfully with invalid rate', async () => {
             const { deployer, erc721MortgageToken, admin, admins } = await beforeERC721MortgageTokenTest();
 
-            const paramsInput: UpdateFeeRateParamsInput = {
-                feeRate: Constant.COMMON_RATE_MAX_FRACTION.add(1),
-            }
-            const params: UpdateFeeRateParams = {
-                ...paramsInput,
-                signatures: await getUpdateFeeRateSignatures(erc721MortgageToken as any, paramsInput, admin, admins),
-            }
-
-            await expect(getUpdateFeeRateTx(erc721MortgageToken as any, deployer, params))
-                .to.be.revertedWithCustomError(erc721MortgageToken, 'InvalidRate');
+            await expect(getUpdateFeeRateTxByInput(
+                erc721MortgageToken as any,
+                deployer,
+                { feeRate: Constant.COMMON_RATE_MAX_FRACTION.add(1) },
+                admin,
+                admins,
+            )).to.be.revertedWithCustomError(erc721MortgageToken, 'InvalidRate');
         });
     });
 
@@ -486,11 +476,13 @@ describe('3.1. ERC721MortgageToken', async () => {
                 tokens: toBeCollaterals.map(x => x.address),
                 isCollateral: true,
             }
-            const params: RegisterCollateralsParams = {
-                ...paramsInput,
-                signatures: await getRegisterCollateralsSignatures(erc721MortgageToken as any, paramsInput, admin, admins),
-            }
-            const tx = await getRegisterCollateralsTx(erc721MortgageToken as any, deployer, params);
+            const tx = await getRegisterCollateralsTxByInput(
+                erc721MortgageToken as any,
+                deployer,
+                paramsInput,
+                admin,
+                admins,
+            );
             await tx.wait();
 
             for (const collateral of toBeCollaterals) {
@@ -531,16 +523,16 @@ describe('3.1. ERC721MortgageToken', async () => {
 
             const invalidCollateral = randomWallet();
 
-            const paramsInput: RegisterCollateralsParamsInput = {
-                tokens: [invalidCollateral.address],
-                isCollateral: true,
-            }
-            const params: RegisterCollateralsParams = {
-                ...paramsInput,
-                signatures: await getRegisterCollateralsSignatures(erc721MortgageToken as any, paramsInput, admin, admins),
-            }
-            await expect(getRegisterCollateralsTx(erc721MortgageToken as any, deployer, params))
-                .to.be.revertedWithCustomError(erc721MortgageToken, 'InvalidCollateral');
+            await expect(getRegisterCollateralsTxByInput(
+                erc721MortgageToken as any,
+                deployer,
+                {
+                    tokens: [invalidCollateral.address],
+                    isCollateral: true,
+                },
+                admin,
+                admins,
+            )).to.be.revertedWithCustomError(erc721MortgageToken, 'InvalidCollateral');
         });
 
         it('3.1.4.4. Register collaterals reverted when contract does not support ProjectLaunchpad interface', async () => {
@@ -548,16 +540,16 @@ describe('3.1. ERC721MortgageToken', async () => {
 
             const invalidCollateral = erc721MortgageToken;
 
-            const paramsInput: RegisterCollateralsParamsInput = {
-                tokens: [invalidCollateral.address],
-                isCollateral: true,
-            }
-            const params: RegisterCollateralsParams = {
-                ...paramsInput,
-                signatures: await getRegisterCollateralsSignatures(erc721MortgageToken as any, paramsInput, admin, admins),
-            }
-            await expect(getRegisterCollateralsTx(erc721MortgageToken as any, deployer, params))
-                .to.be.revertedWithCustomError(erc721MortgageToken, 'InvalidCollateral');
+            await expect(getRegisterCollateralsTxByInput(
+                erc721MortgageToken as any,
+                deployer,
+                {
+                    tokens: [invalidCollateral.address],
+                    isCollateral: true,
+                },
+                admin,
+                admins,
+            )).to.be.revertedWithCustomError(erc721MortgageToken, 'InvalidCollateral');
         });
 
         it('3.1.4.5. Register collaterals unsuccessfully when authorizing itself', async () => {
@@ -565,17 +557,16 @@ describe('3.1. ERC721MortgageToken', async () => {
 
             const toBeCollaterals = [erc721MortgageToken];
 
-            const paramsInput: RegisterCollateralsParamsInput = {
-                tokens: toBeCollaterals.map(x => x.address),
-                isCollateral: true,
-            }
-            const params: RegisterCollateralsParams = {
-                ...paramsInput,
-                signatures: await getRegisterCollateralsSignatures(erc721MortgageToken as any, paramsInput, admin, admins),
-            }
-
-            await expect(getRegisterCollateralsTx(erc721MortgageToken as any, deployer, params))
-                .to.be.revertedWithCustomError(erc721MortgageToken, `InvalidCollateral`)
+            await expect(getRegisterCollateralsTxByInput(
+                erc721MortgageToken as any,
+                deployer,
+                {
+                    tokens: toBeCollaterals.map(x => x.address),
+                    isCollateral: true,
+                },
+                admin,
+                admins,
+            )).to.be.revertedWithCustomError(erc721MortgageToken, `InvalidCollateral`)
         });
 
         it('3.1.4.5. Register collaterals unsuccessfully when authorizing the same account twice on the same tx', async () => {
@@ -583,71 +574,71 @@ describe('3.1. ERC721MortgageToken', async () => {
 
             const duplicateCollaterals = [collaterals[0], collaterals[1], collaterals[2], collaterals[0]];
 
-            const paramsInput: RegisterCollateralsParamsInput = {
-                tokens: duplicateCollaterals.map(x => x.address),
-                isCollateral: true,
-            }
-            const params: RegisterCollateralsParams = {
-                ...paramsInput,
-                signatures: await getRegisterCollateralsSignatures(erc721MortgageToken as any, paramsInput, admin, admins),
-            }
-
-            await expect(getRegisterCollateralsTx(erc721MortgageToken as any, deployer, params))
-                .to.be.revertedWithCustomError(erc721MortgageToken, `RegisteredCollateral`)
+            await expect(getRegisterCollateralsTxByInput(
+                erc721MortgageToken as any,
+                deployer,
+                {
+                    tokens: duplicateCollaterals.map(x => x.address),
+                    isCollateral: true,
+                },
+                admin,
+                admins,
+            )).to.be.revertedWithCustomError(erc721MortgageToken, `RegisteredCollateral`)
         });
 
         it('3.1.4.6. Register collaterals unsuccessfully when authorizing the same account twice on different txs', async () => {
             const { deployer, erc721MortgageToken, admin, admins, collaterals } = await beforeERC721MortgageTokenTest();
 
             const tx1Collaterals = collaterals.slice(0, 3);
-            await callERC721MortgageToken_RegisterCollaterals(
+            await callTransaction(getRegisterCollateralsTxByInput(
                 erc721MortgageToken as any,
                 deployer,
-                admins,
-                admin,
                 {
                     tokens: tx1Collaterals.map(x => x.address),
                     isCollateral: true,
-                }
-            );
+                },
+                admin,
+                admins,
+            ));
 
             const tx2Collaterals = [collaterals[3], collaterals[2], collaterals[4]];
-            const paramsInput2: RegisterCollateralsParamsInput = {
-                tokens: tx2Collaterals.map(x => x.address),
-                isCollateral: true,
-            }
-            const params2: RegisterCollateralsParams = {
-                ...paramsInput2,
-                signatures: await getRegisterCollateralsSignatures(erc721MortgageToken as any, paramsInput2, admin, admins),
-            }
-            await expect(getRegisterCollateralsTx(erc721MortgageToken as any, deployer, params2))
-                .to.be.revertedWithCustomError(erc721MortgageToken, `RegisteredCollateral`)
+            await expect(getRegisterCollateralsTxByInput(
+                erc721MortgageToken as any,
+                deployer,
+                {
+                    tokens: tx2Collaterals.map(x => x.address),
+                    isCollateral: true,
+                },
+                admin,
+                admins,
+            )).to.be.revertedWithCustomError(erc721MortgageToken, `RegisteredCollateral`)
         })
 
         it('3.1.4.7. Deregister collaterals successfully', async () => {
             const { deployer, erc721MortgageToken, admin, admins, collaterals } = await beforeERC721MortgageTokenTest();
 
-            await callERC721MortgageToken_RegisterCollaterals(
+            await callTransaction(getRegisterCollateralsTxByInput(
                 erc721MortgageToken as any,
                 deployer,
-                admins,
-                admin,
                 {
                     tokens: collaterals.map(x => x.address),
                     isCollateral: true,
                 },
-            );
+                admin,
+                admins,
+            ));
 
             const toDeregister = collaterals.slice(0, 2);
-            const paramsInput2: RegisterCollateralsParamsInput = {
-                tokens: toDeregister.map(x => x.address),
-                isCollateral: false,
-            }
-            const params2: RegisterCollateralsParams = {
-                ...paramsInput2,
-                signatures: await getRegisterCollateralsSignatures(erc721MortgageToken as any, paramsInput2, admin, admins),
-            }
-            const tx = await getRegisterCollateralsTx(erc721MortgageToken as any, deployer, params2);
+            const tx = await getRegisterCollateralsTxByInput(
+                erc721MortgageToken as any,
+                deployer,
+                {
+                    tokens: toDeregister.map(x => x.address),
+                    isCollateral: false,
+                },
+                admin,
+                admins,
+            );
             await tx.wait();
 
             for (const collateral of toDeregister) {
@@ -669,92 +660,96 @@ describe('3.1. ERC721MortgageToken', async () => {
         it('3.1.4.8. Deregister collaterals unsuccessfully with unauthorized account', async () => {
             const { deployer, erc721MortgageToken, admin, admins, collaterals } = await beforeERC721MortgageTokenTest();
 
-            await callERC721MortgageToken_RegisterCollaterals(
+            await callTransaction(getRegisterCollateralsTxByInput(
                 erc721MortgageToken as any,
                 deployer,
-                admins,
-                admin,
                 {
                     tokens: collaterals.map(x => x.address),
                     isCollateral: true,
                 },
-            );
+                admin,
+                admins,
+            ));
 
             const account = randomWallet();
             const toDeauth = [collaterals[0], account];
 
-            const paramsInput2: RegisterCollateralsParamsInput = {
-                tokens: toDeauth.map(x => x.address),
-                isCollateral: false,
-            }
-            const params2: RegisterCollateralsParams = {
-                ...paramsInput2,
-                signatures: await getRegisterCollateralsSignatures(erc721MortgageToken as any, paramsInput2, admin, admins),
-            }
-
-            await expect(getRegisterCollateralsTx(erc721MortgageToken as any, deployer, params2))
-                .to.be.revertedWithCustomError(erc721MortgageToken, `NotRegisteredCollateral`)
+            await expect(getRegisterCollateralsTxByInput(
+                erc721MortgageToken as any,
+                deployer,
+                {
+                    tokens: toDeauth.map(x => x.address),
+                    isCollateral: false,
+                },
+                admin,
+                admins,
+            )).to.be.revertedWithCustomError(erc721MortgageToken, `NotRegisteredCollateral`)
         });
 
         it('7.2.4.8. Deregister collaterals unsuccessfully when unauthorizing the same account twice on the same tx', async () => {
             const { deployer, erc721MortgageToken, admin, admins, collaterals } = await beforeERC721MortgageTokenTest();
 
-            await callERC721MortgageToken_RegisterCollaterals(
+            await callTransaction(getRegisterCollateralsTxByInput(
                 erc721MortgageToken as any,
                 deployer,
-                admins,
-                admin,
                 {
                     tokens: collaterals.map(x => x.address),
                     isCollateral: true,
                 },
-            );
+                admin,
+                admins,
+            ));
 
             const toDeauth = collaterals.slice(0, 2).concat([collaterals[0]]);
-            const paramsInput2: RegisterCollateralsParamsInput = {
-                tokens: toDeauth.map(x => x.address),
-                isCollateral: false,
-            }
-            const params2: RegisterCollateralsParams = {
-                ...paramsInput2,
-                signatures: await getRegisterCollateralsSignatures(erc721MortgageToken as any, paramsInput2, admin, admins),
-            }
-            await expect(getRegisterCollateralsTx(erc721MortgageToken as any, deployer, params2))
-                .to.be.revertedWithCustomError(erc721MortgageToken, `NotRegisteredCollateral`)
+            await expect(getRegisterCollateralsTxByInput(
+                erc721MortgageToken as any,
+                deployer,
+                {
+                    tokens: toDeauth.map(x => x.address),
+                    isCollateral: false,
+                },
+                admin,
+                admins,
+            )).to.be.revertedWithCustomError(erc721MortgageToken, `NotRegisteredCollateral`)
         });
 
         it('7.2.4.9. Deregister collaterals unsuccessfully when unauthorizing the same account twice on different txs', async () => {
             const { deployer, erc721MortgageToken, admin, admins, collaterals } = await beforeERC721MortgageTokenTest();
 
-            await callERC721MortgageToken_RegisterCollaterals(
+            await callTransaction(getRegisterCollateralsTxByInput(
                 erc721MortgageToken as any,
                 deployer,
-                admins,
-                admin,
                 {
                     tokens: collaterals.map(x => x.address),
                     isCollateral: true,
                 },
-            );
+                admin,
+                admins,
+            ));
 
             const tx1Accounts = collaterals.slice(0, 2);
-            const paramsInput1: RegisterCollateralsParamsInput = {
-                tokens: tx1Accounts.map(x => x.address),
-                isCollateral: false,
-            }
-            await callERC721MortgageToken_RegisterCollaterals(erc721MortgageToken as any, deployer, admins, admin, paramsInput1);
+            await callTransaction(getRegisterCollateralsTxByInput(
+                erc721MortgageToken as any,
+                deployer,
+                {
+                    tokens: tx1Accounts.map(x => x.address),
+                    isCollateral: false,
+                },
+                admin,
+                admins,
+            ));
             
             const tx2Accounts = [collaterals[0]];
-            const paramsInput2: RegisterCollateralsParamsInput = {
-                tokens: tx2Accounts.map(x => x.address),
-                isCollateral: false,
-            }
-            const params2: RegisterCollateralsParams = {
-                ...paramsInput2,
-                signatures: await getRegisterCollateralsSignatures(erc721MortgageToken as any, paramsInput2, admin, admins),
-            }
-            await expect(getRegisterCollateralsTx(erc721MortgageToken as any, deployer, params2))
-                .to.be.revertedWithCustomError(erc721MortgageToken, `NotRegisteredCollateral`)
+            await expect(getRegisterCollateralsTxByInput(
+                erc721MortgageToken as any,
+                deployer,
+                {
+                    tokens: tx2Accounts.map(x => x.address),
+                    isCollateral: false,
+                },
+                admin,
+                admins,
+            )).to.be.revertedWithCustomError(erc721MortgageToken, `NotRegisteredCollateral`)
         });
     });
 
@@ -768,7 +763,7 @@ describe('3.1. ERC721MortgageToken', async () => {
                     principal: BigNumber.from(10e5),
                     repayment: BigNumber.from(11e5),
                     currency: ethers.constants.AddressZero,
-                    duration: BigNumber.from(1000),
+                    duration: 1000,
                 }
             }
         }
@@ -786,7 +781,7 @@ describe('3.1. ERC721MortgageToken', async () => {
                 principal: BigNumber.from(10e5),
                 repayment: BigNumber.from(11e5),
                 currency: ethers.constants.AddressZero,
-                duration: BigNumber.from(1000),
+                duration: 1000,
             }
 
             const tx1 = await getERC721BorrowTx(erc721MortgageToken, borrower1, params1);
@@ -833,7 +828,7 @@ describe('3.1. ERC721MortgageToken', async () => {
                 principal: BigNumber.from(100000),
                 repayment: BigNumber.from(110000),
                 currency: currency.address,
-                duration: BigNumber.from(1000),
+                duration: 1000,
             }
 
             const tx2 = await getERC721BorrowTx(erc721MortgageToken, borrower2, params2);
@@ -915,19 +910,23 @@ describe('3.1. ERC721MortgageToken', async () => {
 
             const { defaultParams } = await beforeBorrowTest(fixture);
 
-            const params1: ERC721BorrowParams = {
-                ...defaultParams,
-                tokenId: BigNumber.from(0),
-            }
-            await expect(getERC721BorrowTx(erc721MortgageToken, borrower1, params1))
-                .to.be.revertedWith('ERC721: invalid token ID');
+            await expect(getERC721BorrowTx(
+                erc721MortgageToken,
+                borrower1,
+                {
+                    ...defaultParams,
+                    tokenId: BigNumber.from(0),
+                }
+            )).to.be.revertedWith('ERC721: invalid token ID');
 
-            const params2: ERC721BorrowParams = {
-                ...defaultParams,
-                tokenId: BigNumber.from(3),
-            }
-            await expect(getERC721BorrowTx(erc721MortgageToken, borrower1, params2))
-                .to.be.revertedWith('ERC721: invalid token ID');
+            await expect(getERC721BorrowTx(
+                erc721MortgageToken,
+                borrower1,
+                {
+                    ...defaultParams,
+                    tokenId: BigNumber.from(3),
+                }
+            )).to.be.revertedWith('ERC721: invalid token ID');
         });
 
         it('3.1.4.4. Create mortgage unsuccessfully with invalid currency', async () => {
@@ -949,13 +948,15 @@ describe('3.1. ERC721MortgageToken', async () => {
             const { erc721MortgageToken, feeReceiverCollection, borrower2 } = fixture;
             const { defaultParams } = await beforeBorrowTest(fixture);
 
-            const params: ERC721BorrowParams = {
-                ...defaultParams,
-                token: feeReceiverCollection.address,
-                tokenId: BigNumber.from(1),
-            }
-            await expect(getERC721BorrowTx(erc721MortgageToken, borrower2, params))
-                .to.be.revertedWithCustomError(erc721MortgageToken, 'InvalidCollateral');
+            await expect(getERC721BorrowTx(
+                erc721MortgageToken,
+                borrower2,
+                {
+                    ...defaultParams,
+                    token: feeReceiverCollection.address,
+                    tokenId: BigNumber.from(1),
+                }
+            )).to.be.revertedWithCustomError(erc721MortgageToken, 'InvalidCollateral');
         });
 
 
@@ -967,12 +968,14 @@ describe('3.1. ERC721MortgageToken', async () => {
             const { erc721MortgageToken, borrower1 } = fixture;
             const { defaultParams } = await beforeBorrowTest(fixture);
 
-            const params: ERC721BorrowParams = {
-                ...defaultParams,
-                principal: BigNumber.from(0),
-            }
-            await expect(getERC721BorrowTx(erc721MortgageToken, borrower1, params))
-                .to.be.revertedWithCustomError(erc721MortgageToken, 'InvalidPrincipal');
+            await expect(getERC721BorrowTx(
+                erc721MortgageToken,
+                borrower1,
+                {
+                    ...defaultParams,
+                    principal: BigNumber.from(0),
+                }
+            )).to.be.revertedWithCustomError(erc721MortgageToken, 'InvalidPrincipal');
         });
 
         it('3.1.4.7. Create mortgage unsuccessfully with invalid repayment', async () => {
@@ -983,12 +986,14 @@ describe('3.1. ERC721MortgageToken', async () => {
             const { erc721MortgageToken, borrower1 } = fixture;
             const { defaultParams } = await beforeBorrowTest(fixture);
 
-            const params: ERC721BorrowParams = {
-                ...defaultParams,
-                repayment: defaultParams.principal.sub(1),
-            }
-            await expect(getERC721BorrowTx(erc721MortgageToken, borrower1, params))
-                .to.be.revertedWithCustomError(erc721MortgageToken, 'InvalidRepayment');
+            await expect(getERC721BorrowTx(
+                erc721MortgageToken,
+                borrower1,
+                {
+                    ...defaultParams,
+                    repayment: defaultParams.principal.sub(1),
+                }
+            )).to.be.revertedWithCustomError(erc721MortgageToken, 'InvalidRepayment');
         });
     });
 
@@ -1001,7 +1006,7 @@ describe('3.1. ERC721MortgageToken', async () => {
             });
             const { erc721MortgageToken, borrower1 } = fixture;
 
-            let tx = await erc721MortgageToken.connect(borrower1).cancel(1);
+            let tx = await getCancelTx(erc721MortgageToken, borrower1, { mortgageId: BigNumber.from(1) });
             await tx.wait();
 
             expect(tx).to.emit(erc721MortgageToken, 'MortgageCancellation').withArgs(1);
@@ -1020,7 +1025,7 @@ describe('3.1. ERC721MortgageToken', async () => {
             });
             const { erc721MortgageToken, manager } = fixture;
 
-            let tx = await erc721MortgageToken.connect(manager).cancel(2);
+            let tx = await getCancelTx(erc721MortgageToken, manager, { mortgageId: BigNumber.from(2) });
             await tx.wait();
 
             expect(tx).to.emit(erc721MortgageToken, 'MortgageCancellation').withArgs(2);
@@ -1038,9 +1043,9 @@ describe('3.1. ERC721MortgageToken', async () => {
                 listSampleMortgage: true,
             });
             const { erc721MortgageToken, lender1, moderator } = fixture;
-            await expect(erc721MortgageToken.connect(lender1).cancel(1))
+            await expect(getCancelTx(erc721MortgageToken, lender1, { mortgageId: BigNumber.from(1) }))
                 .to.be.revertedWithCustomError(erc721MortgageToken, 'Unauthorized');
-            await expect(erc721MortgageToken.connect(moderator).cancel(1))
+            await expect(getCancelTx(erc721MortgageToken, moderator, { mortgageId: BigNumber.from(1) }))
                 .to.be.revertedWithCustomError(erc721MortgageToken, 'Unauthorized');
         });
 
@@ -1051,10 +1056,10 @@ describe('3.1. ERC721MortgageToken', async () => {
                 listSampleMortgage: true,
             });
             const { erc721MortgageToken, borrower1 } = fixture;
-            await expect(erc721MortgageToken.connect(borrower1).cancel(0))
+            await expect(getCancelTx(erc721MortgageToken, borrower1, { mortgageId: BigNumber.from(0) }))
                 .to.be.revertedWithCustomError(erc721MortgageToken, 'InvalidMortgageId');
 
-            await expect(erc721MortgageToken.connect(borrower1).cancel(3))
+            await expect(getCancelTx(erc721MortgageToken, borrower1, { mortgageId: BigNumber.from(3) }))
                 .to.be.revertedWithCustomError(erc721MortgageToken, 'InvalidMortgageId');
         });
 
@@ -1065,9 +1070,9 @@ describe('3.1. ERC721MortgageToken', async () => {
                 listSampleMortgage: true,
             });
             const { erc721MortgageToken, borrower1 } = fixture;
-            await callTransaction(erc721MortgageToken.connect(borrower1).cancel(1));
+            await callTransaction(getCancelTx(erc721MortgageToken, borrower1, { mortgageId: BigNumber.from(1) }));
 
-            await expect(erc721MortgageToken.connect(borrower1).cancel(1))
+            await expect(getCancelTx(erc721MortgageToken, borrower1, { mortgageId: BigNumber.from(1) }))
                 .to.be.revertedWithCustomError(erc721MortgageToken, 'InvalidCancelling');
         });
 
@@ -1079,9 +1084,9 @@ describe('3.1. ERC721MortgageToken', async () => {
             });
             const { erc721MortgageToken, borrower1, lender1 } = fixture;
 
-            await callTransaction(erc721MortgageToken.connect(lender1).lend(1, { value: 1e9 }));
+            await callTransaction(getLendTx(erc721MortgageToken, lender1, { mortgageId: BigNumber.from(1) }, { value: 1e9 }));
 
-            await expect(erc721MortgageToken.connect(borrower1).cancel(1))
+            await expect(getCancelTx(erc721MortgageToken, borrower1, { mortgageId: BigNumber.from(1) }))
                 .to.be.revertedWithCustomError(erc721MortgageToken, 'InvalidCancelling');
         });
 
@@ -1093,14 +1098,14 @@ describe('3.1. ERC721MortgageToken', async () => {
             });
             const { erc721MortgageToken, borrower1, lender1 } = fixture;
 
-            await callTransaction(erc721MortgageToken.connect(lender1).lend(1, { value: 1e9 }));
+            await callTransaction(getLendTx(erc721MortgageToken, lender1, { mortgageId: BigNumber.from(1) }, { value: 1e9 }));
 
             const due = (await erc721MortgageToken.getMortgage(1)).due;
 
             await time.setNextBlockTimestamp(due);
-            await callTransaction(erc721MortgageToken.connect(lender1).foreclose(1));
+            await callTransaction(getForecloseTx(erc721MortgageToken, lender1, { mortgageId: BigNumber.from(1) }));
 
-            await expect(erc721MortgageToken.connect(borrower1).cancel(1))
+            await expect(getCancelTx(erc721MortgageToken, borrower1, { mortgageId: BigNumber.from(1) }))
                 .to.be.revertedWithCustomError(erc721MortgageToken, 'InvalidCancelling');
         });
 
@@ -1112,11 +1117,11 @@ describe('3.1. ERC721MortgageToken', async () => {
             });
             const { erc721MortgageToken, borrower1, lender1 } = fixture;
 
-            await callTransaction(erc721MortgageToken.connect(lender1).lend(1, { value: 1e9 }));
+            await callTransaction(getLendTx(erc721MortgageToken, lender1, { mortgageId: BigNumber.from(1) }, { value: 1e9 }));
 
-            await callTransaction(erc721MortgageToken.connect(borrower1).repay(1, { value: 1e9 }));
+            await callTransaction(getRepayTx(erc721MortgageToken, borrower1, { mortgageId: BigNumber.from(1) }, { value: 1e9 }));
 
-            await expect(erc721MortgageToken.connect(borrower1).cancel(1))
+            await expect(getCancelTx(erc721MortgageToken, borrower1, { mortgageId: BigNumber.from(1) }))
                 .to.be.revertedWithCustomError(erc721MortgageToken, 'InvalidCancelling');
         });
     });
@@ -1137,15 +1142,15 @@ describe('3.1. ERC721MortgageToken', async () => {
             const borrower = borrower1;
             const lender = lender1;
             
-            await callMortgageToken_UpdateFeeRate(
+            await callTransaction(getUpdateFeeRateTxByInput(
                 erc721MortgageToken as any,
                 deployer,
-                admins,
-                admin,
                 {
                     feeRate: erc721MortgageTokenFeeRate,
-                }
-            );
+                },
+                admin,
+                admins,
+            ));
 
             let collection = feeReceiverCollection;
 
@@ -1190,15 +1195,14 @@ describe('3.1. ERC721MortgageToken', async () => {
             }
 
             const due = 1000;
-
-            let receipt = await callTransaction(erc721MortgageToken.connect(borrower).borrow(
-                collection.address,
-                currentTokenId,
-                principal,
-                repayment,
-                newCurrencyAddress,
-                due
-            ));
+            let receipt = await callTransaction(getERC721BorrowTx(erc721MortgageToken, borrower, {
+                token: collection.address,
+                tokenId: currentTokenId,
+                principal: principal,
+                repayment: repayment,
+                currency: newCurrencyAddress,
+                duration: due,
+            }));
 
             let fee = principal.mul(erc721MortgageTokenFeeRate).div(Constant.COMMON_RATE_MAX_FRACTION);
             if (isExclusive) {
@@ -1225,14 +1229,17 @@ describe('3.1. ERC721MortgageToken', async () => {
 
             let tx;
             if (isSafeLend) {
-                tx = await erc721MortgageToken.connect(lender).lend(
-                    currentMortgageId,
+                tx = await getLendTx(
+                    erc721MortgageToken,
+                    lender,
+                    { mortgageId: currentMortgageId },
                     { value: ethValue }
                 );
             } else {
-                tx = await erc721MortgageToken.connect(lender).safeLend(
-                    currentMortgageId,
-                    principal,
+                tx = await getSafeLendTxByParams(
+                    erc721MortgageToken,
+                    lender,
+                    { mortgageId: currentMortgageId },
                     { value: ethValue }
                 );
             }
@@ -1390,7 +1397,7 @@ describe('3.1. ERC721MortgageToken', async () => {
             });
             const { erc721MortgageToken, borrower1 } = fixture;
 
-            await expect(erc721MortgageToken.connect(borrower1).lend(1, { value: 1e9 }))
+            await expect(getLendTx(erc721MortgageToken, borrower1, { mortgageId: BigNumber.from(1) }, { value: 1e9 }))
                 .to.be.revertedWith("Pausable: paused");
         });
 
@@ -1402,10 +1409,10 @@ describe('3.1. ERC721MortgageToken', async () => {
             });
             const { erc721MortgageToken, borrower1 } = fixture;
 
-            await expect(erc721MortgageToken.connect(borrower1).lend(0, { value: 1e9 }))
+            await expect(getLendTx(erc721MortgageToken, borrower1, { mortgageId: BigNumber.from(0) }, { value: 1e9 }))
                 .to.be.revertedWithCustomError(erc721MortgageToken, "InvalidMortgageId");
 
-            await expect(erc721MortgageToken.connect(borrower1).lend(3, { value: 1e9 }))
+            await expect(getLendTx(erc721MortgageToken, borrower1, { mortgageId: BigNumber.from(3) }, { value: 1e9 }))
                 .to.be.revertedWithCustomError(erc721MortgageToken, "InvalidMortgageId");
         });
 
@@ -1417,10 +1424,10 @@ describe('3.1. ERC721MortgageToken', async () => {
             });
             const { erc721MortgageToken, borrower1, borrower2 } = fixture;
 
-            await expect(erc721MortgageToken.connect(borrower1).lend(1, { value: 1e9 }))
+            await expect(getLendTx(erc721MortgageToken, borrower1, { mortgageId: BigNumber.from(1) }, { value: 1e9 }))
                 .to.be.revertedWithCustomError(erc721MortgageToken, "InvalidLending");
 
-            await expect(erc721MortgageToken.connect(borrower2).lend(2, { value: 1e9 }))
+            await expect(getLendTx(erc721MortgageToken, borrower2, { mortgageId: BigNumber.from(2) }, { value: 1e9 }))
                 .to.be.revertedWithCustomError(erc721MortgageToken, "InvalidLending");
         });
 
@@ -1432,11 +1439,11 @@ describe('3.1. ERC721MortgageToken', async () => {
             });
             const { erc721MortgageToken, borrower1, lender1, lender2 } = fixture;
 
-            await callTransaction(erc721MortgageToken.connect(lender1).lend(1, { value: 1e9 }));
+            await callTransaction(getLendTx(erc721MortgageToken, lender1, { mortgageId: BigNumber.from(1) }, { value: 1e9 }));
 
-            await expect(erc721MortgageToken.connect(lender1).lend(1, { value: 1e9 }))
+            await expect(getLendTx(erc721MortgageToken, lender1, { mortgageId: BigNumber.from(1) }, { value: 1e9 }))
                 .to.be.revertedWithCustomError(erc721MortgageToken, "InvalidLending");
-            await expect(erc721MortgageToken.connect(lender2).lend(1, { value: 1e9 }))
+            await expect(getLendTx(erc721MortgageToken, lender2, { mortgageId: BigNumber.from(1) }, { value: 1e9 }))
                 .to.be.revertedWithCustomError(erc721MortgageToken, "InvalidLending");
         });
 
@@ -1448,13 +1455,13 @@ describe('3.1. ERC721MortgageToken', async () => {
             });
             const { erc721MortgageToken, borrower1, lender1, lender2 } = fixture;
 
-            await callTransaction(erc721MortgageToken.connect(lender1).lend(1, { value: 1e9 }));
+            await callTransaction(getLendTx(erc721MortgageToken, lender1, { mortgageId: BigNumber.from(1) }, { value: 1e9 }));
 
-            await callTransaction(erc721MortgageToken.connect(borrower1).repay(1, { value: 1e9 }));
+            await callTransaction(getRepayTx(erc721MortgageToken, borrower1, { mortgageId: BigNumber.from(1) }, { value: 1e9 }));
 
-            await expect(erc721MortgageToken.connect(lender1).lend(1, { value: 1e9 }))
+            await expect(getLendTx(erc721MortgageToken, lender1, { mortgageId: BigNumber.from(1) }, { value: 1e9 }))
                 .to.be.revertedWithCustomError(erc721MortgageToken, "InvalidLending");
-            await expect(erc721MortgageToken.connect(lender2).lend(1, { value: 1e9 }))
+            await expect(getLendTx(erc721MortgageToken, lender2, { mortgageId: BigNumber.from(1) }, { value: 1e9 }))
                 .to.be.revertedWithCustomError(erc721MortgageToken, "InvalidLending");
         });
 
@@ -1466,9 +1473,9 @@ describe('3.1. ERC721MortgageToken', async () => {
             });
             const { erc721MortgageToken, borrower1, lender1 } = fixture;
 
-            await callTransaction(erc721MortgageToken.connect(borrower1).cancel(1));
+            await callTransaction(getCancelTx(erc721MortgageToken, borrower1, { mortgageId: BigNumber.from(1) }));
 
-            await expect(erc721MortgageToken.connect(lender1).lend(1, { value: 1e9 }))
+            await expect(getLendTx(erc721MortgageToken, lender1, { mortgageId: BigNumber.from(1) }, { value: 1e9 }))
                 .to.be.revertedWithCustomError(erc721MortgageToken, "InvalidLending");
         });
 
@@ -1480,16 +1487,16 @@ describe('3.1. ERC721MortgageToken', async () => {
             });
             const { erc721MortgageToken, lender1, lender2 } = fixture;
 
-            await callTransaction(erc721MortgageToken.connect(lender1).lend(1, { value: 1e9 }));
+            await callTransaction(getLendTx(erc721MortgageToken, lender1, { mortgageId: BigNumber.from(1) }, { value: 1e9 }));
 
             const due = (await erc721MortgageToken.getMortgage(1)).due;
             await time.setNextBlockTimestamp(due);
 
-            await callTransaction(erc721MortgageToken.connect(lender1).foreclose(1));
+            await callTransaction(getForecloseTx(erc721MortgageToken, lender1, { mortgageId: BigNumber.from(1) }));
 
-            await expect(erc721MortgageToken.connect(lender1).lend(1, { value: 1e9 }))
+            await expect(getLendTx(erc721MortgageToken, lender1, { mortgageId: BigNumber.from(1) }, { value: 1e9 }))
                 .to.be.revertedWithCustomError(erc721MortgageToken, "InvalidLending");
-            await expect(erc721MortgageToken.connect(lender2).lend(1, { value: 1e9 }))
+            await expect(getLendTx(erc721MortgageToken, lender2, { mortgageId: BigNumber.from(1) }, { value: 1e9 }))
                 .to.be.revertedWithCustomError(erc721MortgageToken, "InvalidLending");
         });
 
@@ -1501,7 +1508,7 @@ describe('3.1. ERC721MortgageToken', async () => {
             });
             const { erc721MortgageToken, lender1 } = fixture;
 
-            await expect(erc721MortgageToken.connect(lender1).lend(1))
+            await expect(getLendTx(erc721MortgageToken, lender1, { mortgageId: BigNumber.from(1) }))
                 .to.be.revertedWithCustomError(erc721MortgageToken, "InsufficientValue");
         });
 
@@ -1529,7 +1536,7 @@ describe('3.1. ERC721MortgageToken', async () => {
             ]);
             await callTransaction(failReceiver.call(erc721MortgageToken.address, data));
 
-            await expect(erc721MortgageToken.connect(lender1).lend(1, { value: 1e9 }))
+            await expect(getLendTx(erc721MortgageToken, lender1, { mortgageId: BigNumber.from(1) }, { value: 1e9 }))
                 .to.be.revertedWithCustomError(erc721MortgageToken, "FailedTransfer");
         });
 
@@ -1584,7 +1591,7 @@ describe('3.1. ERC721MortgageToken', async () => {
                 erc721MortgageToken,
                 reentrancy,
                 async () => {
-                    await expect(erc721MortgageToken.connect(lender1).lend(mortgageId, { value: 1e9 }))
+                    await expect(getLendTx(erc721MortgageToken, lender1, { mortgageId: BigNumber.from(mortgageId) }, { value: 1e9 }))
                         .to.be.revertedWithCustomError(erc721MortgageToken, "FailedTransfer");
                 },
             );
@@ -1600,13 +1607,18 @@ describe('3.1. ERC721MortgageToken', async () => {
             });
             const { erc721MortgageToken, borrower1, borrower2 } = fixture;
 
-            const anchor1 = (await erc721MortgageToken.getMortgage(1)).principal;
-            await expect(erc721MortgageToken.connect(borrower2).safeLend(1, anchor1, { value: 1e9 }))
-                .to.not.be.reverted;
+            await expect(getSafeLendTxByParams(
+                erc721MortgageToken,
+                borrower2,
+                { mortgageId: BigNumber.from(1) },
+                { value: 1e9 }
+            )).to.not.be.reverted;
 
-            const anchor2 = (await erc721MortgageToken.getMortgage(2)).principal;
-            await expect(erc721MortgageToken.connect(borrower1).safeLend(2, anchor2))
-                .to.not.be.reverted;
+            await expect(getSafeLendTxByParams(
+                erc721MortgageToken,
+                borrower1,
+                { mortgageId: BigNumber.from(2) }
+            )).to.not.be.reverted;
         });
 
         it('3.1.7.2. Safe lend unsuccessfully with invalid mortgage id', async () => {
@@ -1617,13 +1629,20 @@ describe('3.1. ERC721MortgageToken', async () => {
             });
             const { erc721MortgageToken, borrower1 } = fixture;
 
-            await expect(erc721MortgageToken.connect(borrower1).safeLend(0, 1, { value: 1e9 }))
-                .to.be.revertedWithCustomError(erc721MortgageToken, "InvalidMortgageId");
+            await expect(getSafeLendTx(
+                erc721MortgageToken,
+                borrower1,
+                { mortgageId: BigNumber.from(0), anchor: BigNumber.from(0) },
+                { value: 1e9 }
+            )).to.be.revertedWithCustomError(erc721MortgageToken, "InvalidMortgageId");
 
-            await expect(erc721MortgageToken.connect(borrower1).safeLend(3, 1, { value: 1e9 }))
-                .to.be.revertedWithCustomError(erc721MortgageToken, "InvalidMortgageId");
+            await expect(getSafeLendTx(
+                erc721MortgageToken,
+                borrower1,
+                { mortgageId: BigNumber.from(3), anchor: BigNumber.from(0) },
+                { value: 1e9 }
+            )).to.be.revertedWithCustomError(erc721MortgageToken, "InvalidMortgageId");
         });
-
 
         it('3.1.7.3. Safe lend unsuccessfully with invalid anchor', async () => {
             const fixture = await beforeERC721MortgageTokenTest({
@@ -1633,11 +1652,19 @@ describe('3.1. ERC721MortgageToken', async () => {
             });
             const { erc721MortgageToken, lender1 } = fixture;
 
-            await expect(erc721MortgageToken.connect(lender1).safeLend(1, 0, { value: 1e9 }))
-                .to.be.revertedWithCustomError(erc721MortgageToken, "BadAnchor");
+            await expect(getSafeLendTx(
+                erc721MortgageToken,
+                lender1,
+                { mortgageId: BigNumber.from(1), anchor: BigNumber.from(0) },
+                { value: 1e9 }
+            )).to.be.revertedWithCustomError(erc721MortgageToken, "BadAnchor");
 
-            await expect(erc721MortgageToken.connect(lender1).safeLend(2, 0, { value: 1e9 }))
-                .to.be.revertedWithCustomError(erc721MortgageToken, "BadAnchor");
+            await expect(getSafeLendTx(
+                erc721MortgageToken,
+                lender1,
+                { mortgageId: BigNumber.from(2), anchor: BigNumber.from(0) },
+                { value: 1e9 }
+            )).to.be.revertedWithCustomError(erc721MortgageToken, "BadAnchor");
         });
     });
     
@@ -1659,7 +1686,7 @@ describe('3.1. ERC721MortgageToken', async () => {
             let borrower1NativeBalance = await ethers.provider.getBalance(borrower1.address);
             let currentTotalSupply = await erc721MortgageToken.totalSupply();
 
-            let tx = await erc721MortgageToken.connect(borrower1).repay(1, { value: 1e9 });
+            let tx = await getRepayTx(erc721MortgageToken, borrower1, { mortgageId: BigNumber.from(1) }, { value: 1e9 });
             let receipt = await tx.wait();
             let gasFee = receipt.gasUsed.mul(receipt.effectiveGasPrice);
 
@@ -1688,7 +1715,7 @@ describe('3.1. ERC721MortgageToken', async () => {
             let lender2CurrencyBalance = await currency.balanceOf(lender2.address);
             let erc721MortgageTokenOwnerBalance = await currency.balanceOf(erc721MortgageTokenOwner.address);            
 
-            tx = await erc721MortgageToken.connect(borrower2).repay(2, { value: 1e9 });
+            tx = await getRepayTx(erc721MortgageToken, borrower2, { mortgageId: BigNumber.from(2) }, { value: 1e9 });
             await tx.wait();
 
             await expect(tx).to.emit(erc721MortgageToken, 'MortgageRepayment').withArgs(2);
@@ -1716,7 +1743,7 @@ describe('3.1. ERC721MortgageToken', async () => {
             });
             const { erc721MortgageToken, borrower1 } = fixture;
 
-            await expect(erc721MortgageToken.connect(borrower1).repay(1, { value: 1e9 }))
+            await expect(getRepayTx(erc721MortgageToken, borrower1, { mortgageId: BigNumber.from(1) }, { value: 1e9 }))
                 .to.be.revertedWith("Pausable: paused");
         });
 
@@ -1729,10 +1756,10 @@ describe('3.1. ERC721MortgageToken', async () => {
             });
             const { erc721MortgageToken, borrower1 } = fixture;
 
-            await expect(erc721MortgageToken.connect(borrower1).repay(0))
+            await expect(getRepayTx(erc721MortgageToken, borrower1, { mortgageId: BigNumber.from(0) }))
                 .to.be.revertedWithCustomError(erc721MortgageToken, "InvalidMortgageId");
 
-            await expect(erc721MortgageToken.connect(borrower1).repay(3))
+            await expect(getRepayTx(erc721MortgageToken, borrower1, { mortgageId: BigNumber.from(3) }))
                 .to.be.revertedWithCustomError(erc721MortgageToken, "InvalidMortgageId");
         });
 
@@ -1748,13 +1775,13 @@ describe('3.1. ERC721MortgageToken', async () => {
             const due1 = (await erc721MortgageToken.getMortgage(1)).due;
             await time.setNextBlockTimestamp(due1);
 
-            await expect(erc721MortgageToken.connect(borrower1).repay(1, { value: 1e9 }))
+            await expect(getRepayTx(erc721MortgageToken, borrower1, { mortgageId: BigNumber.from(1) }, { value: 1e9 }))
                 .to.be.revertedWithCustomError(erc721MortgageToken, "Overdue");
 
             const due2 = (await erc721MortgageToken.getMortgage(2)).due;
             await time.setNextBlockTimestamp(due2);
 
-            await expect(erc721MortgageToken.connect(borrower2).repay(2))
+            await expect(getRepayTx(erc721MortgageToken, borrower2, { mortgageId: BigNumber.from(2) }))
                 .to.be.revertedWithCustomError(erc721MortgageToken, "Overdue");
         });
 
@@ -1766,9 +1793,9 @@ describe('3.1. ERC721MortgageToken', async () => {
             });
             const { erc721MortgageToken, borrower1, borrower2 } = fixture;
 
-            await expect(erc721MortgageToken.connect(borrower1).repay(1, { value: 1e9 }))
+            await expect(getRepayTx(erc721MortgageToken, borrower1, { mortgageId: BigNumber.from(1) }, { value: 1e9 }))
                 .to.be.revertedWithCustomError(erc721MortgageToken, "InvalidRepaying");
-            await expect(erc721MortgageToken.connect(borrower2).repay(2))
+            await expect(getRepayTx(erc721MortgageToken, borrower2, { mortgageId: BigNumber.from(2) }))
                 .to.be.revertedWithCustomError(erc721MortgageToken, "InvalidRepaying");
         });
 
@@ -1781,12 +1808,12 @@ describe('3.1. ERC721MortgageToken', async () => {
             });
             const { erc721MortgageToken, borrower1, borrower2 } = fixture;
 
-            await callTransaction(erc721MortgageToken.connect(borrower1).repay(1, { value: 1e9 }));
-            await callTransaction(erc721MortgageToken.connect(borrower2).repay(2));
+            await callTransaction(getRepayTx(erc721MortgageToken, borrower1, { mortgageId: BigNumber.from(1) }, { value: 1e9 }));
+            await callTransaction(getRepayTx(erc721MortgageToken, borrower2, { mortgageId: BigNumber.from(2) }));
 
-            await expect(erc721MortgageToken.connect(borrower1).repay(1, { value: 1e9 }))
+            await expect(getRepayTx(erc721MortgageToken, borrower1, { mortgageId: BigNumber.from(1) }, { value: 1e9 }))
                 .to.be.revertedWithCustomError(erc721MortgageToken, "InvalidRepaying");
-            await expect(erc721MortgageToken.connect(borrower2).repay(2))
+            await expect(getRepayTx(erc721MortgageToken, borrower2, { mortgageId: BigNumber.from(2) }))
                 .to.be.revertedWithCustomError(erc721MortgageToken, "InvalidRepaying");
         });
 
@@ -1802,12 +1829,12 @@ describe('3.1. ERC721MortgageToken', async () => {
             const due = (await erc721MortgageToken.getMortgage(2)).due;
             await time.setNextBlockTimestamp(due);
 
-            await callTransaction(erc721MortgageToken.connect(borrower1).foreclose(1));
-            await callTransaction(erc721MortgageToken.connect(borrower2).foreclose(2));
+            await callTransaction(getForecloseTx(erc721MortgageToken, borrower1, { mortgageId: BigNumber.from(1) }));
+            await callTransaction(getForecloseTx(erc721MortgageToken, borrower2, { mortgageId: BigNumber.from(2) }));
 
-            await expect(erc721MortgageToken.connect(borrower1).repay(1, { value: 1e9 }))
+            await expect(getRepayTx(erc721MortgageToken, borrower1, { mortgageId: BigNumber.from(1) }, { value: 1e9 }))
                 .to.be.revertedWithCustomError(erc721MortgageToken, "InvalidRepaying");
-            await expect(erc721MortgageToken.connect(borrower2).repay(2))
+            await expect(getRepayTx(erc721MortgageToken, borrower2, { mortgageId: BigNumber.from(2) }))
                 .to.be.revertedWithCustomError(erc721MortgageToken, "InvalidRepaying");
         });
 
@@ -1819,12 +1846,12 @@ describe('3.1. ERC721MortgageToken', async () => {
             });
             const { erc721MortgageToken, borrower1, borrower2 } = fixture;
 
-            await callTransaction(erc721MortgageToken.connect(borrower1).cancel(1));
-            await callTransaction(erc721MortgageToken.connect(borrower2).cancel(2));
+            await callTransaction(getCancelTx(erc721MortgageToken, borrower1, { mortgageId: BigNumber.from(1) }));
+            await callTransaction(getCancelTx(erc721MortgageToken, borrower2, { mortgageId: BigNumber.from(2) }));
 
-            await expect(erc721MortgageToken.connect(borrower1).repay(1, { value: 1e9 }))
+            await expect(getRepayTx(erc721MortgageToken, borrower1, { mortgageId: BigNumber.from(1) }, { value: 1e9 }))
                 .to.be.revertedWithCustomError(erc721MortgageToken, "InvalidRepaying");
-            await expect(erc721MortgageToken.connect(borrower2).repay(2))
+            await expect(getRepayTx(erc721MortgageToken, borrower2, { mortgageId: BigNumber.from(2) }))
                 .to.be.revertedWithCustomError(erc721MortgageToken, "InvalidRepaying");
         });
 
@@ -1837,11 +1864,11 @@ describe('3.1. ERC721MortgageToken', async () => {
             });
             const { erc721MortgageToken, borrower1, borrower2, currency } = fixture;
 
-            await expect(erc721MortgageToken.connect(borrower1).repay(1))
+            await expect(getRepayTx(erc721MortgageToken, borrower1, { mortgageId: BigNumber.from(1) }))
                 .to.be.revertedWithCustomError(erc721MortgageToken, "InsufficientValue");
 
             await resetERC20(currency, [borrower2])
-            await expect(erc721MortgageToken.connect(borrower2).repay(2))
+            await expect(getRepayTx(erc721MortgageToken, borrower2, { mortgageId: BigNumber.from(2) }))
                 .to.be.revertedWith("ERC20: transfer amount exceeds balance");
         });
 
@@ -1860,7 +1887,7 @@ describe('3.1. ERC721MortgageToken', async () => {
             let data = erc721MortgageToken.interface.encodeFunctionData("lend", [1]);
             await callTransaction(failReceiver.call(erc721MortgageToken.address, data, { value: principal }));
 
-            await expect(erc721MortgageToken.connect(borrower1).repay(1, { value: 1e9 }))
+            await expect(getRepayTx(erc721MortgageToken, borrower1, { mortgageId: BigNumber.from(1) }, { value: 1e9 }))
                 .to.be.revertedWithCustomError(erc721MortgageToken, "FailedTransfer");
         });
 
@@ -1883,7 +1910,7 @@ describe('3.1. ERC721MortgageToken', async () => {
                 erc721MortgageToken,
                 reentrancy,
                 async () => {
-                    await expect(erc721MortgageToken.connect(borrower1).repay(1, { value: 1e9 }))
+                    await expect(getRepayTx(erc721MortgageToken, borrower1, { mortgageId: BigNumber.from(1) }, { value: 1e9 }))
                         .to.be.revertedWithCustomError(erc721MortgageToken, "FailedTransfer");
                 },
             );
@@ -1900,13 +1927,18 @@ describe('3.1. ERC721MortgageToken', async () => {
             });
             const { erc721MortgageToken, borrower1, borrower2 } = fixture;
 
-            const anchor1 = (await erc721MortgageToken.getMortgage(1)).repayment;
-            await expect(erc721MortgageToken.connect(borrower1).safeRepay(1, anchor1, { value: 1e9 }))
-                .to.not.be.reverted;
+            await expect(getSafeRepayTxByParams(
+                erc721MortgageToken,
+                borrower1,
+                { mortgageId: BigNumber.from(1) },
+                { value: 1e9 }
+            )).to.not.be.reverted;
 
-            const anchor2 = (await erc721MortgageToken.getMortgage(2)).repayment;
-            await expect(erc721MortgageToken.connect(borrower2).safeRepay(2, anchor2))
-                .to.not.be.reverted;
+            await expect(getSafeRepayTxByParams(
+                erc721MortgageToken,
+                borrower2,
+                { mortgageId: BigNumber.from(2) },
+            )).to.not.be.reverted;
         });
 
         it('3.1.9.2. Safe repay unsuccessfully with invalid mortgage id', async () => {
@@ -1918,11 +1950,17 @@ describe('3.1. ERC721MortgageToken', async () => {
             });
             const { erc721MortgageToken, borrower1 } = fixture;
 
-            await expect(erc721MortgageToken.connect(borrower1).safeRepay(0, 0))
-                .to.be.revertedWithCustomError(erc721MortgageToken, "InvalidMortgageId");
+            await expect(getSafeRepayTx(
+                erc721MortgageToken,
+                borrower1,
+                { mortgageId: BigNumber.from(0), anchor: BigNumber.from(0) }
+            )).to.be.revertedWithCustomError(erc721MortgageToken, "InvalidMortgageId");
 
-            await expect(erc721MortgageToken.connect(borrower1).safeRepay(3, 3))
-                .to.be.revertedWithCustomError(erc721MortgageToken, "InvalidMortgageId");
+            await expect(getSafeRepayTx(
+                erc721MortgageToken,
+                borrower1,
+                { mortgageId: BigNumber.from(3), anchor: BigNumber.from(3) }
+            )).to.be.revertedWithCustomError(erc721MortgageToken, "InvalidMortgageId");
         });
 
         it('3.1.9.3. Repay unsuccessfully with invalid anchor', async () => {
@@ -1934,11 +1972,17 @@ describe('3.1. ERC721MortgageToken', async () => {
             });
             const { erc721MortgageToken, borrower1 } = fixture;
 
-            await expect(erc721MortgageToken.connect(borrower1).safeRepay(1, 0))
-                .to.be.revertedWithCustomError(erc721MortgageToken, "BadAnchor");
+            await expect(getSafeRepayTx(
+                erc721MortgageToken,
+                borrower1,
+                { mortgageId: BigNumber.from(1), anchor: BigNumber.from(0) }
+            )).to.be.revertedWithCustomError(erc721MortgageToken, "BadAnchor");
 
-            await expect(erc721MortgageToken.connect(borrower1).safeRepay(2, 0))
-                .to.be.revertedWithCustomError(erc721MortgageToken, "BadAnchor");
+            await expect(getSafeRepayTx(
+                erc721MortgageToken,
+                borrower1,
+                { mortgageId: BigNumber.from(2), anchor: BigNumber.from(0) }
+            )).to.be.revertedWithCustomError(erc721MortgageToken, "BadAnchor");
         });
     });
 
@@ -1950,7 +1994,7 @@ describe('3.1. ERC721MortgageToken', async () => {
                 listSampleMortgage: true,
                 listSampleLending: true,
             });
-            const { erc721MortgageToken, feeReceiverCollection, otherCollection, lender1, lender2, erc721MortgageTokenOwner } = fixture;
+            const { user, erc721MortgageToken, feeReceiverCollection, otherCollection, lender1, lender2, erc721MortgageTokenOwner } = fixture;
 
             let currentTotalSupply = await erc721MortgageToken.totalSupply();
 
@@ -1958,7 +2002,7 @@ describe('3.1. ERC721MortgageToken', async () => {
             const due1 = (await erc721MortgageToken.getMortgage(1)).due;
             await time.setNextBlockTimestamp(due1);
 
-            let tx = await erc721MortgageToken.foreclose(1);
+            let tx = await getForecloseTx(erc721MortgageToken, user, { mortgageId: BigNumber.from(1) });
             await tx.wait();
 
             await expect(tx).to.emit(erc721MortgageToken, 'MortgageForeclosure').withArgs(
@@ -1985,7 +2029,7 @@ describe('3.1. ERC721MortgageToken', async () => {
             const due2 = (await erc721MortgageToken.getMortgage(2)).due;
             await time.setNextBlockTimestamp(due2);
 
-            tx = await erc721MortgageToken.foreclose(2);
+            tx = await getForecloseTx(erc721MortgageToken, user, { mortgageId: BigNumber.from(2) });
             await tx.wait();
 
             await expect(tx).to.emit(erc721MortgageToken, 'MortgageForeclosure').withArgs(
@@ -2011,9 +2055,9 @@ describe('3.1. ERC721MortgageToken', async () => {
                 listSampleLending: true,
                 pause: true,
             });
-            const { erc721MortgageToken } = fixture;
+            const { user, erc721MortgageToken } = fixture;
 
-            await expect(erc721MortgageToken.foreclose(1))
+            await expect(getForecloseTx(erc721MortgageToken, user, { mortgageId: BigNumber.from(1) }))
                 .to.be.revertedWith("Pausable: paused");
         });
 
@@ -2024,12 +2068,12 @@ describe('3.1. ERC721MortgageToken', async () => {
                 listSampleMortgage: true,
                 listSampleLending: true,
             });
-            const { erc721MortgageToken } = fixture;
+            const { user, erc721MortgageToken } = fixture;
 
-            await expect(erc721MortgageToken.foreclose(0))
+            await expect(getForecloseTx(erc721MortgageToken, user, { mortgageId: BigNumber.from(0) }))
                 .to.be.revertedWithCustomError(erc721MortgageToken, "InvalidMortgageId");
 
-            await expect(erc721MortgageToken.foreclose(3))
+            await expect(getForecloseTx(erc721MortgageToken, user, { mortgageId: BigNumber.from(3) }))
                 .to.be.revertedWithCustomError(erc721MortgageToken, "InvalidMortgageId");
         });
 
@@ -2040,9 +2084,9 @@ describe('3.1. ERC721MortgageToken', async () => {
                 listSampleMortgage: true,
                 listSampleLending: true,
             });
-            const { erc721MortgageToken, borrower1, borrower2 } = fixture;
+            const { user, erc721MortgageToken, borrower1, borrower2 } = fixture;
 
-            await expect(erc721MortgageToken.foreclose(1))
+            await expect(getForecloseTx(erc721MortgageToken, user, { mortgageId: BigNumber.from(1) }))
                 .to.be.revertedWithCustomError(erc721MortgageToken, "InvalidForeclosing");
         });
 
@@ -2052,9 +2096,9 @@ describe('3.1. ERC721MortgageToken', async () => {
                 listSampleCollectionTokens: true,
                 listSampleMortgage: true,
             });
-            const { erc721MortgageToken } = fixture;
+            const { user, erc721MortgageToken } = fixture;
 
-            await expect(erc721MortgageToken.foreclose(1))
+            await expect(getForecloseTx(erc721MortgageToken, user, { mortgageId: BigNumber.from(1) }))
                 .to.be.revertedWithCustomError(erc721MortgageToken, "InvalidForeclosing");
         });
 
@@ -2065,14 +2109,14 @@ describe('3.1. ERC721MortgageToken', async () => {
                 listSampleMortgage: true,
                 listSampleLending: true,
             });
-            const { erc721MortgageToken, borrower1 } = fixture;
+            const { user, erc721MortgageToken, borrower1 } = fixture;
 
-            await callTransaction(erc721MortgageToken.connect(borrower1).repay(1, { value: 1e9 }));
+            await callTransaction(getRepayTx(erc721MortgageToken, borrower1, { mortgageId: BigNumber.from(1) }, { value: 1e9 }));
 
             const due = (await erc721MortgageToken.getMortgage(1)).due;
             await time.setNextBlockTimestamp(due);
 
-            await expect(erc721MortgageToken.foreclose(1))
+            await expect(getForecloseTx(erc721MortgageToken, user, { mortgageId: BigNumber.from(1) }))
                 .to.be.revertedWithCustomError(erc721MortgageToken, "InvalidForeclosing");
         });
 
@@ -2083,14 +2127,14 @@ describe('3.1. ERC721MortgageToken', async () => {
                 listSampleMortgage: true,
                 listSampleLending: true,
             });
-            const { erc721MortgageToken, lender1 } = fixture;
+            const { user, erc721MortgageToken, lender1 } = fixture;
 
             const due = (await erc721MortgageToken.getMortgage(1)).due;
             await time.setNextBlockTimestamp(due);
 
-            await callTransaction(erc721MortgageToken.connect(lender1).foreclose(1));
+            await callTransaction(getForecloseTx(erc721MortgageToken, lender1, { mortgageId: BigNumber.from(1) }));
 
-            await expect(erc721MortgageToken.foreclose(1))
+            await expect(getForecloseTx(erc721MortgageToken, user, { mortgageId: BigNumber.from(1) }))
                 .to.be.revertedWithCustomError(erc721MortgageToken, "InvalidForeclosing");
         });
 
@@ -2100,11 +2144,11 @@ describe('3.1. ERC721MortgageToken', async () => {
                 listSampleCollectionTokens: true,
                 listSampleMortgage: true,
             });
-            const { erc721MortgageToken, borrower1 } = fixture;
+            const { user, erc721MortgageToken, borrower1 } = fixture;
 
-            await callTransaction(erc721MortgageToken.connect(borrower1).cancel(1));
+            await callTransaction(getCancelTx(erc721MortgageToken, borrower1, { mortgageId: BigNumber.from(1) }));
 
-            await expect(erc721MortgageToken.foreclose(1))
+            await expect(getForecloseTx(erc721MortgageToken, user, { mortgageId: BigNumber.from(1) }))
                 .to.be.revertedWithCustomError(erc721MortgageToken, "InvalidForeclosing");
         });
     });
@@ -2145,16 +2189,16 @@ describe('3.1. ERC721MortgageToken', async () => {
             await callTransaction(collection.mint(borrower1.address, 1));
             await callTransaction(collection.connect(borrower1).setApprovalForAll(erc721MortgageToken.address, true));
 
-            await callERC721MortgageToken_RegisterCollaterals(
+            await callTransaction(getRegisterCollateralsTxByInput(
                 erc721MortgageToken,
                 deployer,
-                admins,
-                admin,
                 {
                     tokens: [collection.address],
                     isCollateral: true,
-                }
-            );
+                },
+                admin,
+                admins,
+            ));
 
             await callTransaction(getERC721BorrowTx(erc721MortgageToken, borrower1, {
                 token: collection.address,
@@ -2162,13 +2206,10 @@ describe('3.1. ERC721MortgageToken', async () => {
                 principal: BigNumber.from(10e5),
                 repayment: BigNumber.from(11e5),
                 currency: ethers.constants.AddressZero,
-                duration: BigNumber.from(1000),
+                duration: 1000,
             }));
 
-            await callTransaction(erc721MortgageToken.connect(lender1).lend(
-                1,
-                { value: 1e9 }
-            ));
+            await callTransaction(getLendTx(erc721MortgageToken, lender1, { mortgageId: BigNumber.from(1) }, { value: 1e9 }));
 
             const royaltyInfo = await erc721MortgageToken.royaltyInfo(1, ethers.BigNumber.from(1e6));
             expect(royaltyInfo[0]).to.equal(ethers.constants.AddressZero);

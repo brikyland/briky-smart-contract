@@ -55,38 +55,28 @@ import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
 import { deployGovernanceHub } from '@utils/deployments/common/governanceHub';
 import { deployDividendHub } from '@utils/deployments/common/dividendHub';
 import { MockValidator } from '@utils/mockValidator';
-import { UpdateEstateURIParams } from '@utils/models/land/estateToken';
+import { UpdateBaseURIParams, UpdateBaseURIParamsInput, UpdateEstateURIParams, UpdateZoneRoyaltyRateParams, UpdateZoneRoyaltyRateParamsInput } from '@utils/models/land/estateToken';
 import { getUpdateEstateURIValidation } from '@utils/validation/land/estateToken';
 import { Initialization as LaunchInitialization } from '@tests/launch/test.initialization';
 import { Initialization as LandInitialization } from '@tests/land/test.initialization';
-import { DeprecateProjectParams, LaunchProjectParams, MintParams, RegisterInitiatorParams, SafeDeprecateProjectParams, SafeUpdateProjectURIParams, TokenizeProjectParams, UpdateProjectURIParams } from '@utils/models/launch/projectToken';
+import { AuthorizeLaunchpadParams, AuthorizeLaunchpadParamsInput, DeprecateProjectParams, LaunchProjectParams, MintParams, RegisterInitiatorParams, RegisterInitiatorParamsInput, SafeDeprecateProjectParams, SafeUpdateProjectURIParams, TokenizeProjectParams, UpdateProjectURIParams, UpdateProjectURIParamsInput } from '@utils/models/launch/projectToken';
 import { getInitiateLaunchValidation } from '@utils/validation/launch/prestigePad';
-import { getRegisterInitiatorInvalidValidation, getRegisterInitiatorValidation, getSafeUpdateProjectURIInvalidValidation, getSafeUpdateProjectURIValidation } from '@utils/validation/launch/projectToken';
+import { getRegisterInitiatorValidation, getSafeUpdateProjectURIValidation } from '@utils/validation/launch/projectToken';
 import { ContractTransaction } from 'ethers';
-import { getAuthorizeLaunchpadTxByInput, getCallLaunchProjectTx, getCallMintTx, getCallSafeTokenizeProjectTxByParams, getRegisterInitiatorTx, getSafeDeprecateProjectTx, getSafeDeprecateProjectTxByParams, getSafeTokenizeProjectTxByParams, getSafeUpdateProjectURITx, getSafeUpdateProjectURITxByParams } from '@utils/transaction/launch/projectToken';
-import { getAuthorizeTokenizersTxByInput, getRegisterCustodianTx, getUpdateCommissionTokenTxByInput } from '@utils/transaction/land/estateToken';
+import { getAuthorizeLaunchpadTx, getAuthorizeLaunchpadTxByInput, getCallLaunchProjectTx, getCallMintTx, getCallSafeTokenizeProjectTxByParams, getMintTx, getRegisterInitiatorTx, getRegisterInitiatorTxByInput, getSafeDeprecateProjectTx, getSafeDeprecateProjectTxByParams, getSafeTokenizeProjectTxByParams, getSafeUpdateProjectURITx, getSafeUpdateProjectURITxByInput, getUpdateZoneRoyaltyRateTx, getWithdrawEstateTokenTx } from '@utils/transaction/launch/projectToken';
+import { getAuthorizeTokenizersTxByInput, getRegisterCustodianTx, getRegisterCustodianTxByInput, getUpdateCommissionTokenTxByInput, getUpdateZoneRoyaltyRateTxByInput } from '@utils/transaction/land/estateToken';
 import { deployReentrancyERC1155Receiver } from '@utils/deployments/mock/mockReentrancy/reentrancyERC1155Receiver';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
-import { getRegisterBrokerTx } from '@utils/transaction/land/commissionToken';
+import { getRegisterBrokerTx, getUpdateBaseURITxByInput } from '@utils/transaction/land/commissionToken';
 import { IAssetTokenInterfaceId, IERC1155MetadataURIUpgradeableInterfaceId, IERC165UpgradeableInterfaceId, IERC2981UpgradeableInterfaceId, IEstateTokenizerInterfaceId, IGovernorInterfaceId, IRoyaltyRateProposerInterfaceId } from '@tests/interfaces';
 import { getActivateInTxByInput, getAuthorizeManagersTxByInput, getAuthorizeModeratorsTxByInput, getDeclareZoneTxByInput } from '@utils/transaction/common/admin';
+import { getPauseTxByInput } from '@utils/transaction/common/pausable';
+import { getUpdateBaseURISignatures, getUpdateZoneRoyaltyRateSignatures } from '@utils/signatures/land/estateToken';
+import { getAuthorizeLaunchpadSignatures } from '@utils/signatures/launch/projectToken';
+import { getSafeUpdateProjectURIAnchor } from '@utils/anchor/launch/projectToken';
 
 interface ProjectTokenFixture {
-    admin: Admin;
-    feeReceiver: FeeReceiver;
-    priceWatcher: PriceWatcher;
-    currency: Currency;
-    reserveVault: ReserveVault;
-    estateToken: MockContract<MockEstateToken>;
-    projectToken: MockProjectToken;
-    prestigePad: MockContract<MockPrestigePad>;
-    commissionToken: CommissionToken;
-    validator: MockValidator;
-    
-    reentrancyERC1155Receiver: ReentrancyERC1155Receiver;
-    failReceiver: FailReceiver;
-
-    deployer: SignerWithAddress;
+    deployer: any;
     admins: any[];
     manager: any;
     moderator: any;
@@ -95,13 +85,26 @@ interface ProjectTokenFixture {
     broker1: any, broker2: any;
     depositor1: any, depositor2: any, depositor3: any;
     depositors: any[];
-    zone1: string, zone2: string;
     initiator1: any, initiator2: any;
     initiators: any[];
     custodian1: any, custodian2: any;
     custodians: any[];
-
+    validator: MockValidator;
+    
+    admin: Admin;
+    currency: Currency;
+    feeReceiver: FeeReceiver;
+    priceWatcher: PriceWatcher;
+    reserveVault: ReserveVault;
+    estateToken: MockContract<MockEstateToken>;
+    projectToken: MockProjectToken;
+    prestigePad: MockContract<MockPrestigePad>;
+    commissionToken: CommissionToken;
+    
     launchpads: any[];
+    reentrancyERC1155Receiver: ReentrancyERC1155Receiver;
+    failReceiver: FailReceiver;
+    zone1: string, zone2: string;
 }
 
 async function testReentrancy_projectToken(
@@ -264,15 +267,6 @@ describe('7.2. ProjectToken', async () => {
         const failReceiver = await deployFailReceiver(deployer.address, false, false) as FailReceiver;
 
         return {
-            admin,
-            feeReceiver,
-            priceWatcher,
-            currency,
-            reserveVault,
-            commissionToken,
-            estateToken,
-            projectToken,
-            prestigePad,
             deployer,
             admins,
             manager,
@@ -292,12 +286,21 @@ describe('7.2. ProjectToken', async () => {
             custodian1,
             custodian2,
             custodians,
-            zone1,
-            zone2,
             validator,
+            admin,
+            currency,
+            feeReceiver,
+            priceWatcher,
+            reserveVault,
+            commissionToken,
+            estateToken,
+            projectToken,
+            prestigePad,
             launchpads,
             reentrancyERC1155Receiver,
             failReceiver,
+            zone1,
+            zone2,
         };
     };
 
@@ -429,19 +432,27 @@ describe('7.2. ProjectToken', async () => {
             }));
         }
 
-        const baseTimestamp = await time.latest() + 1000;
-
         if (!skipAddCustodianAsEstateCustodian) {
-            await callTransaction(getRegisterCustodianTx(estateToken as any, validator, manager, {
-                zone: zone1,
-                custodian: custodian1.address,
-                uri: 'custodian1_zone1_uri',
-            }));
-            await callTransaction(getRegisterCustodianTx(estateToken as any, validator, manager, {
-                zone: zone2,
-                custodian: custodian2.address,
-                uri: 'custodian2_zone2_uri',
-            }));
+            await callTransaction(getRegisterCustodianTxByInput(
+                estateToken as any,
+                manager,
+                {
+                    zone: zone1,
+                    custodian: custodian1.address,
+                    uri: 'custodian1_zone1_uri',
+                },
+                validator,
+            ));
+            await callTransaction(getRegisterCustodianTxByInput(
+                estateToken as any,
+                manager,
+                {
+                    zone: zone2,
+                    custodian: custodian2.address,
+                    uri: 'custodian2_zone2_uri',
+                },
+                validator,
+            ));
         }
 
         if (addSampleProjects) {
@@ -544,7 +555,7 @@ describe('7.2. ProjectToken', async () => {
         }
 
         if (pause) {
-            await callTransaction(getPauseTxByInput(projectToken, deployer, admins, admin));;
+            await callTransaction(getPauseTxByInput(projectToken, deployer, admin, admins));;
         }
 
         return {
@@ -577,18 +588,15 @@ describe('7.2. ProjectToken', async () => {
     });
 
     describe('7.2.2. updateBaseURI(string, bytes[])', async () => {
-        it('7.2.2.1. UpdateBaseURI successfully with valid signatures', async () => {
-            const { projectToken, admin, admins } = await beforeProjectTokenTest({
+        it('7.2.2.1. Update base URI successfully with valid signatures', async () => {
+            const { deployer, projectToken, admin, admins } = await beforeProjectTokenTest({
                 addSampleProjects: true,        
             });
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "string"],
-                [projectToken.address, "updateBaseURI", "NewBaseURI:"]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
-
-            const tx = await projectToken.updateBaseURI("NewBaseURI:", signatures);
+            const paramsInput: UpdateBaseURIParamsInput = {
+                uri: "NewBaseURI:",
+            };
+            const tx = await getUpdateBaseURITxByInput(projectToken as any, deployer, paramsInput, admin, admins);
             await tx.wait();
 
             await expect(tx).to
@@ -599,43 +607,38 @@ describe('7.2. ProjectToken', async () => {
             expect(await projectToken.uri(2)).to.equal("NewBaseURI:initiator2_uri");
         });
 
-        it('7.2.2.2. UpdateBaseURI unsuccessfully with invalid signatures', async () => {
-            const { projectToken, admin, admins } = await beforeProjectTokenTest();
+        it('7.2.2.2. Update base URI unsuccessfully with invalid signatures', async () => {
+            const { deployer, projectToken, admin, admins } = await beforeProjectTokenTest();
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "string"],
-                [projectToken.address, "updateBaseURI", "NewBaseURI:"]
-            );
-            const invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
-
-            await expect(projectToken.updateBaseURI(
-                "NewBaseURI:",
-                invalidSignatures
-            )).to.be.revertedWithCustomError(admin, 'FailedVerification');
+            const paramsInput: UpdateBaseURIParamsInput = {
+                uri: "NewBaseURI:",
+            };
+            const params: UpdateBaseURIParams = {
+                ...paramsInput,
+                signatures: await getUpdateBaseURISignatures(projectToken as any, paramsInput, admin, admins, false),
+            };
+            await expect(getUpdateBaseURITxByInput(projectToken as any, deployer, params, admin, admins))
+                .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
     });
 
     describe('7.2.3. updateZoneRoyaltyRate(uint256, bytes[])', async () => {
-        it('7.2.3.1. UpdateZoneRoyaltyRate successfully with valid signatures', async () => {
+        it('7.2.3.1. Update zone royalty rate successfully with valid signatures', async () => {
             const fixture = await beforeProjectTokenTest();
-            const { projectToken, admin, admins, zone1, zone2 } = fixture;
+            const { deployer, projectToken, admin, admins, zone1, zone2 } = fixture;
 
-            const rate1 = ethers.utils.parseEther('0.2');
-            const message1 = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "bytes32", "uint256"],
-                [projectToken.address, "updateZoneRoyaltyRate", zone1, rate1]
-            );
-
-            const signatures1 = await getSignatures(message1, admins, await admin.nonce());
-
-            const tx1 = await projectToken.updateZoneRoyaltyRate(zone1, rate1, signatures1);
+            const paramsInput1: UpdateZoneRoyaltyRateParamsInput = {
+                zone: zone1,
+                royaltyRate: ethers.utils.parseEther('0.2'),
+            };
+            const tx1 = await getUpdateZoneRoyaltyRateTxByInput(projectToken as any, deployer, paramsInput1, admin, admins);
             await tx1.wait();
 
             await expect(tx1).to.emit(projectToken, 'ZoneRoyaltyRateUpdate').withArgs(
                 zone1,
                 (rate: any) => {
                     expect(structToObject(rate)).to.deep.equal({
-                        value: rate1,
+                        value: paramsInput1.royaltyRate,
                         decimals: Constant.COMMON_RATE_DECIMALS,
                     });
                     return true;
@@ -643,25 +646,22 @@ describe('7.2. ProjectToken', async () => {
             );
 
             expect(structToObject(await projectToken.getZoneRoyaltyRate(zone1))).to.deep.equal({
-                value: rate1,
+                value: paramsInput1.royaltyRate,
                 decimals: Constant.COMMON_RATE_DECIMALS,
             });
 
-            const rate2 = ethers.utils.parseEther('0.3');
-            const message2 = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "bytes32", "uint256"],
-                [projectToken.address, "updateZoneRoyaltyRate", zone2, rate2]
-            );
-            const signatures2 = await getSignatures(message2, admins, await admin.nonce());
-
-            const tx2 = await projectToken.updateZoneRoyaltyRate(zone2, rate2, signatures2);
+            const paramsInput2: UpdateZoneRoyaltyRateParamsInput = {
+                zone: zone2,
+                royaltyRate: ethers.utils.parseEther('0.3'),
+            };
+            const tx2 = await getUpdateZoneRoyaltyRateTxByInput(projectToken as any, deployer, paramsInput2, admin, admins);
             await tx2.wait();
 
             await expect(tx2).to.emit(projectToken, 'ZoneRoyaltyRateUpdate').withArgs(
                 zone2,
                 (rate: any) => {
                     expect(structToObject(rate)).to.deep.equal({
-                        value: rate2,
+                        value: paramsInput2.royaltyRate,
                         decimals: Constant.COMMON_RATE_DECIMALS,
                     });
                     return true;
@@ -669,63 +669,56 @@ describe('7.2. ProjectToken', async () => {
             );
 
             expect(structToObject(await projectToken.getZoneRoyaltyRate(zone2))).to.deep.equal({
-                value: rate2,
+                value: paramsInput2.royaltyRate,
                 decimals: Constant.COMMON_RATE_DECIMALS,
             });
         });
 
-        it('7.2.3.2. UpdateZoneRoyaltyRate unsuccessfully with invalid signatures', async () => {
+        it('7.2.3.2. Update zone royalty rate unsuccessfully with invalid signatures', async () => {
             const fixture = await beforeProjectTokenTest();
-            const { projectToken, admin, admins, zone1 } = fixture;
+            const { deployer, projectToken, admin, admins, zone1 } = fixture;
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "bytes32", "uint256"],
-                [projectToken.address, "updateZoneRoyaltyRate", zone1, ethers.utils.parseEther('0.2')]
-            );
-            const invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
-
-            await expect(projectToken.updateZoneRoyaltyRate(
-                zone1,
-                ethers.utils.parseEther('0.2'),
-                invalidSignatures
-            )).to.be.revertedWithCustomError(admin, 'FailedVerification');
+            const paramsInput: UpdateZoneRoyaltyRateParamsInput = {
+                zone: zone1,
+                royaltyRate: ethers.utils.parseEther('0.2'),
+            };
+            const params: UpdateZoneRoyaltyRateParams = {
+                ...paramsInput,
+                signatures: await getUpdateZoneRoyaltyRateSignatures(projectToken as any, paramsInput, admin, admins, false),
+            };
+            await expect(getUpdateZoneRoyaltyRateTx(projectToken as any, deployer, params))
+                .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('7.2.3.3. UpdateZoneRoyaltyRate unsuccessfully with invalid rate', async () => {
+        it('7.2.3.3. Update zone royalty rate unsuccessfully with invalid rate', async () => {
             const fixture = await beforeProjectTokenTest();
-            const { projectToken, admin, admins, zone1 } = fixture;
+            const { deployer, projectToken, admin, admins, zone1 } = fixture;
 
-            const rate = Constant.COMMON_RATE_MAX_FRACTION.add(1);
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "bytes32", "uint256"],
-                [projectToken.address, "updateZoneRoyaltyRate", zone1, rate]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await expect(projectToken.updateZoneRoyaltyRate(
-                zone1,
-                rate,
-                signatures
+            await expect(getUpdateZoneRoyaltyRateTxByInput(
+                projectToken as any,
+                deployer,
+                {
+                    zone: zone1,
+                    royaltyRate: Constant.COMMON_RATE_MAX_FRACTION.add(1),
+                },
+                admin,
+                admins
             )).to.be.revertedWithCustomError(projectToken, 'InvalidRate');
         });
 
-        it('7.2.3.4. UpdateZoneRoyaltyRate unsuccessfully with invalid zone', async () => {
+        it('7.2.3.4. Update zone royalty rate unsuccessfully with invalid zone', async () => {
             const fixture = await beforeProjectTokenTest();
-            const { projectToken, admin, admins } = fixture;
+            const { deployer, projectToken, admin, admins } = fixture;
 
-            const zone = ethers.utils.formatBytes32String('invalid zone');
-            const rate = ethers.utils.parseEther('0.2');
-
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string", "bytes32", "uint256"],
-                [projectToken.address, "updateZoneRoyaltyRate", zone, rate]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await expect(projectToken.updateZoneRoyaltyRate(
-                zone,
-                rate,
-                signatures
+            await expect(getUpdateZoneRoyaltyRateTxByInput(
+                projectToken as any,
+                deployer,
+                {
+                    zone: ethers.utils.formatBytes32String('invalid zone'),
+                    royaltyRate: ethers.utils.parseEther('0.2'),
+                },
+                admin,
+                admins
             )).to.be.revertedWithCustomError(projectToken, 'InvalidZone');
         });
     });
@@ -733,21 +726,15 @@ describe('7.2. ProjectToken', async () => {
 
     describe('7.2.4. authorizeLaunchpads(address[], bool, bytes[])', async () => {
         it('7.2.4.1. Authorize launchpads successfully with valid signatures', async () => {
-            const { projectToken, admin, admins, launchpads } = await beforeProjectTokenTest();
+            const { deployer, projectToken, admin, admins, launchpads } = await beforeProjectTokenTest();
 
             const toBeLaunchpads = launchpads.slice(0, 3);
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [projectToken.address, 'authorizeLaunchpads', toBeLaunchpads.map(x => x.address), true]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
-
-            const tx = await projectToken.authorizeLaunchpads(
-                toBeLaunchpads.map(x => x.address),
-                true,
-                signatures
-            );
+            const paramsInput: AuthorizeLaunchpadParamsInput = {
+                accounts: toBeLaunchpads.map(x => x.address),
+                isLaunchpad: true,
+            };
+            const tx = await getAuthorizeLaunchpadTxByInput(projectToken as any, deployer, paramsInput, admin, admins);
             await tx.wait();
 
             for (const launchpad of toBeLaunchpads) {
@@ -767,106 +754,96 @@ describe('7.2. ProjectToken', async () => {
         });
 
         it('7.2.4.2. Authorize launchpad unsuccessfully with invalid signatures', async () => {
-            const { projectToken, admin, admins, launchpads } = await beforeProjectTokenTest();
+            const { deployer, projectToken, admin, admins, launchpads } = await beforeProjectTokenTest();
 
             const toBeLaunchpads = launchpads.slice(0, 3);
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [projectToken.address, 'authorizeLaunchpads', toBeLaunchpads.map(x => x.address), true]
-            );
-            const invalidSignatures = await getSignatures(message, admins, (await admin.nonce()).add(1));
-
-            await expect(projectToken.authorizeLaunchpads(
-                toBeLaunchpads.map(x => x.address),
-                true,
-                invalidSignatures
-            )).to.be.revertedWithCustomError(admin, 'FailedVerification');
+            const paramsInput: AuthorizeLaunchpadParamsInput = {
+                accounts: toBeLaunchpads.map(x => x.address),
+                isLaunchpad: true,
+            };
+            const params: AuthorizeLaunchpadParams = {
+                ...paramsInput,
+                signatures: await getAuthorizeLaunchpadSignatures(projectToken as any, paramsInput, admin, admins, false),
+            };
+            await expect(getAuthorizeLaunchpadTx(projectToken as any, deployer, params))
+                .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
         it('7.2.4.3. Authorize launchpad reverted without reason with EOA', async () => {
-            const { projectToken, admin, admins } = await beforeProjectTokenTest();
+            const { deployer, projectToken, admin, admins } = await beforeProjectTokenTest();
 
             const invalidLaunchpad = randomWallet();
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [projectToken.address, 'authorizeLaunchpads', [invalidLaunchpad.address], true]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await expect(projectToken.authorizeLaunchpads(
-                [invalidLaunchpad.address],
-                true,
-                signatures
+            await expect(getAuthorizeLaunchpadTxByInput(
+                projectToken as any,
+                deployer,
+                {
+                    accounts: [invalidLaunchpad.address],
+                    isLaunchpad: true,
+                },
+                admin,
+                admins
             )).to.be.revertedWithCustomError(projectToken, 'InvalidLaunchpad');
         })
-
+        
         it('7.2.4.4. Authorize launchpad reverted when contract does not support ProjectLaunchpad interface', async () => {
-            const { projectToken, admin, admins } = await beforeProjectTokenTest();
+            const { deployer, projectToken, admin, admins } = await beforeProjectTokenTest();
 
-            const invalidLaunchpad = projectToken;
-
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [projectToken.address, 'authorizeLaunchpads', [invalidLaunchpad.address], true]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await expect(projectToken.authorizeLaunchpads(
-                [invalidLaunchpad.address],
-                true,
-                signatures
+            await expect(getAuthorizeLaunchpadTxByInput(
+                projectToken as any,
+                deployer,
+                {
+                    accounts: [projectToken.address],
+                    isLaunchpad: true,
+                },
+                admin,
+                admins
             )).to.be.revertedWithCustomError(projectToken, 'InvalidLaunchpad');
         })
 
         it('7.2.4.5. Authorize launchpad unsuccessfully when authorizing the same account twice on the same tx', async () => {
-            const { projectToken, admin, admins, launchpads } = await beforeProjectTokenTest();
+            const { deployer, projectToken, admin, admins, launchpads } = await beforeProjectTokenTest();
 
             const duplicateLaunchpads = [launchpads[0], launchpads[1], launchpads[2], launchpads[0]];
 
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [projectToken.address, 'authorizeLaunchpads', duplicateLaunchpads.map(x => x.address), true]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await expect(projectToken.authorizeLaunchpads(
-                duplicateLaunchpads.map(x => x.address),
-                true,
-                signatures
-            )).to.be.revertedWithCustomError(projectToken, `AuthorizedAccount`)
+            await expect(getAuthorizeLaunchpadTxByInput(
+                projectToken as any,
+                deployer,
+                {
+                    accounts: duplicateLaunchpads.map(x => x.address),
+                    isLaunchpad: true,
+                },
+                admin,
+                admins
+            )).to.be.revertedWithCustomError(projectToken, `AuthorizedAccount`);
         });
 
         it('7.7.2.3. Authorize launchpad unsuccessfully when authorizing the same account twice on different txs', async () => {
-            const { projectToken, admin, admins, launchpads } = await beforeProjectTokenTest();
+            const { deployer, projectToken, admin, admins, launchpads } = await beforeProjectTokenTest();
 
             const tx1Launchpads = launchpads.slice(0, 3);
-
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [projectToken.address, 'authorizeLaunchpads', tx1Launchpads.map(x => x.address), true]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await callTransaction(projectToken.authorizeLaunchpads(
-                tx1Launchpads.map(x => x.address),
-                true,
-                signatures
+            await callTransaction(getAuthorizeLaunchpadTxByInput(
+                projectToken as any,
+                deployer,
+                {
+                    accounts: tx1Launchpads.map(x => x.address),
+                    isLaunchpad: true,
+                },
+                admin,
+                admins
             ));
 
             const tx2Launchpads = [launchpads[3], launchpads[2], launchpads[4]];
-
-            message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [projectToken.address, 'authorizeLaunchpads', tx2Launchpads.map(x => x.address), true]
-            );
-            signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await expect(projectToken.authorizeLaunchpads(
-                tx2Launchpads.map(x => x.address),
-                true,
-                signatures
+            await expect(getAuthorizeLaunchpadTxByInput(
+                projectToken as any,
+                deployer,
+                {
+                    accounts: tx2Launchpads.map(x => x.address),
+                    isLaunchpad: true,
+                },
+                admin,
+                admins
             )).to.be.revertedWithCustomError(projectToken, `AuthorizedAccount`)
         })
 
@@ -887,22 +864,20 @@ describe('7.2. ProjectToken', async () => {
 
         it('7.2.4.6. Deauthorize launchpad successfully', async () => {
             const fixture = await beforeProjectTokenTest();
-            const { projectToken, admin, admins, launchpads } = fixture;
+            const { deployer, projectToken, admin, admins, launchpads } = fixture;
 
             await setupLaunchpads(fixture);
 
             const toDeauth = launchpads.slice(0, 2);
-
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [projectToken.address, 'authorizeLaunchpads', toDeauth.map(x => x.address), false]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
-
-            const tx = await projectToken.authorizeLaunchpads(
-                toDeauth.map(x => x.address),
-                false,
-                signatures
+            const tx = await getAuthorizeLaunchpadTxByInput(
+                projectToken as any,
+                deployer,
+                {
+                    accounts: toDeauth.map(x => x.address),
+                    isLaunchpad: false,
+                },
+                admin,
+                admins
             );
             await tx.wait();
 
@@ -924,44 +899,41 @@ describe('7.2. ProjectToken', async () => {
 
         it('7.2.4.7. Deauthorize launchpad unsuccessfully with unauthorized account', async () => {
             const fixture = await beforeProjectTokenTest();
-            const { projectToken, admin, admins, launchpads } = fixture;
+            const { deployer, projectToken, admin, admins, launchpads } = fixture;
 
             await setupLaunchpads(fixture);
 
             const account = randomWallet();
             const toDeauth = [launchpads[0], account];
 
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [projectToken.address, 'authorizeLaunchpads', toDeauth.map(x => x.address), false]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await expect(projectToken.authorizeLaunchpads(
-                toDeauth.map(x => x.address),
-                false,
-                signatures
+            await expect(getAuthorizeLaunchpadTxByInput(
+                projectToken as any,
+                deployer,
+                {
+                    accounts: toDeauth.map(x => x.address),
+                    isLaunchpad: false,
+                },
+                admin,
+                admins
             )).to.be.revertedWithCustomError(projectToken, `NotAuthorizedAccount`)
         });
 
         it('7.2.4.8. Deauthorize launchpad unsuccessfully when unauthorizing the same account twice on the same tx', async () => {
             const fixture = await beforeProjectTokenTest();
-            const { projectToken, admin, admins, launchpads } = fixture;
+            const { deployer, projectToken, admin, admins, launchpads } = fixture;
 
             await setupLaunchpads(fixture);
 
             const toDeauth = launchpads.slice(0, 2).concat([launchpads[0]]);
-
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [projectToken.address, 'authorizeLaunchpads', toDeauth.map(x => x.address), false]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await expect(projectToken.authorizeLaunchpads(
-                toDeauth.map(x => x.address),
-                false,
-                signatures
+            await expect(getAuthorizeLaunchpadTxByInput(
+                projectToken as any,
+                deployer,
+                {
+                    accounts: toDeauth.map(x => x.address),
+                    isLaunchpad: false,
+                },
+                admin,
+                admins
             )).to.be.revertedWithCustomError(projectToken, `NotAuthorizedAccount`)
         });
 
@@ -984,64 +956,63 @@ describe('7.2. ProjectToken', async () => {
             ));
 
             const tx2Accounts = [launchpads[0]];
-            const message = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'string', 'address[]', 'bool'],
-                [projectToken.address, 'authorizeLaunchpads', tx2Accounts.map(x => x.address), false]
-            );
-            const signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await expect(projectToken.authorizeLaunchpads(
-                tx2Accounts.map(x => x.address),
-                false,
-                signatures
+            await expect(getAuthorizeLaunchpadTxByInput(
+                projectToken as any,
+                deployer,
+                {
+                    accounts: tx2Accounts.map(x => x.address),
+                    isLaunchpad: false,
+                },
+                admin,
+                admins
             )).to.be.revertedWithCustomError(projectToken, `NotAuthorizedAccount`)
         });
     });
 
     describe('7.2.5. registerInitiator(bytes32, address, string, (uint256, uint256, bytes))', async () => {        
         async function beforeRegisterInitiatorTest(fixture: ProjectTokenFixture): Promise<{
-            defaultParams: RegisterInitiatorParams,
+            defaultParamsInput: RegisterInitiatorParamsInput,
         }> {
             const { zone1, initiator1 } = fixture;
 
-            const defaultParams: RegisterInitiatorParams = {
+            const defaultParamsInput: RegisterInitiatorParamsInput = {
                 zone: zone1,
                 initiator: initiator1.address,
                 uri: "initiator_uri",
             }
 
-            return { defaultParams }
+            return { defaultParamsInput }
         }
 
         it('7.2.5.1. Register initiator successfully', async () => {
             const fixture = await beforeProjectTokenTest();
-            const { projectToken, manager, validator } = fixture;
+            const { manager, projectToken, validator } = fixture;
 
-            const { defaultParams: params } = await beforeRegisterInitiatorTest(fixture);
+            const { defaultParamsInput } = await beforeRegisterInitiatorTest(fixture);
 
-            const tx = await getRegisterInitiatorTx(projectToken, validator, manager, params);
+            const tx = await getRegisterInitiatorTxByInput(projectToken as any, manager, defaultParamsInput, validator);
             await tx.wait();
 
             await expect(tx).to.emit(projectToken, 'InitiatorRegistration').withArgs(
-                params.zone,
-                params.initiator,
-                params.uri
+                defaultParamsInput.zone,
+                defaultParamsInput.initiator,
+                defaultParamsInput.uri
             );
-            expect(await projectToken.initiatorURI(params.zone, params.initiator)).to.equal(params.uri);
+            expect(await projectToken.initiatorURI(defaultParamsInput.zone, defaultParamsInput.initiator)).to.equal(defaultParamsInput.uri);
         });
 
         it('7.2.5.2. Register initiator unsuccessfully by non-manager', async () => {
             const fixture = await beforeProjectTokenTest();
             const { projectToken, moderator, user, validator } = fixture;
 
-            const { defaultParams: params } = await beforeRegisterInitiatorTest(fixture);
+            const { defaultParamsInput } = await beforeRegisterInitiatorTest(fixture);
 
             // By moderator
-            await expect(getRegisterInitiatorTx(projectToken, validator, moderator, params))
+            await expect(getRegisterInitiatorTxByInput(projectToken as any, moderator, defaultParamsInput, validator))
                 .to.be.revertedWithCustomError(projectToken, `Unauthorized`);
 
             // By user
-            await expect(getRegisterInitiatorTx(projectToken, validator, user, params))
+            await expect(getRegisterInitiatorTxByInput(projectToken as any, user, defaultParamsInput, validator))
                 .to.be.revertedWithCustomError(projectToken, `Unauthorized`);
         });
 
@@ -1049,35 +1020,37 @@ describe('7.2. ProjectToken', async () => {
             const fixture = await beforeProjectTokenTest();
             const { projectToken, manager, validator } = fixture;
 
-            const { defaultParams } = await beforeRegisterInitiatorTest(fixture);
+            const { defaultParamsInput } = await beforeRegisterInitiatorTest(fixture);
 
             const zone = ethers.utils.formatBytes32String('invalid zone');
-            const params: RegisterInitiatorParams = {
-                ...defaultParams,
-                zone: zone,
-            }
-
-            await expect(getRegisterInitiatorTx(projectToken, validator, manager, params))
-                .to.be.revertedWithCustomError(projectToken, `Unauthorized`);
+            await expect(getRegisterInitiatorTxByInput(
+                projectToken as any,
+                manager,
+                {
+                    ...defaultParamsInput,
+                    zone: zone,
+                },
+                validator
+            )).to.be.revertedWithCustomError(projectToken, `Unauthorized`);
         });
 
         it('7.2.5.4. Register initiator unsuccessfully with inactive manager in zone', async () => {
             const fixture = await beforeProjectTokenTest();
             const { deployer, projectToken, manager, admin, admins, validator } = fixture;
 
-            const { defaultParams: params } = await beforeRegisterInitiatorTest(fixture);
+            const { defaultParamsInput } = await beforeRegisterInitiatorTest(fixture);
 
             await callTransaction(getActivateInTxByInput(
                 admin,
                 deployer,
                 {
-                    zone: params.zone,
+                    zone: defaultParamsInput.zone,
                     accounts: [manager.address],
                     isActive: false
                 },
                 admins
             ));
-            await expect(getRegisterInitiatorTx(projectToken, validator, manager, params))
+            await expect(getRegisterInitiatorTxByInput(projectToken as any, manager, defaultParamsInput, validator))
                 .to.be.revertedWithCustomError(projectToken, `Unauthorized`);
         });
 
@@ -1085,34 +1058,32 @@ describe('7.2. ProjectToken', async () => {
             const fixture = await beforeProjectTokenTest();
             const { projectToken, manager, validator } = fixture;
 
-            const { defaultParams: params } = await beforeRegisterInitiatorTest(fixture);
+            const { defaultParamsInput } = await beforeRegisterInitiatorTest(fixture);
 
-            const validation = await getRegisterInitiatorInvalidValidation(
-                projectToken,
-                validator,
-                params
-            );
+            const params: RegisterInitiatorParams = {
+                ...defaultParamsInput,
+                validation: await getRegisterInitiatorValidation(projectToken, defaultParamsInput, validator, false),
+            }
 
-            await expect(projectToken.connect(manager).registerInitiator(
-                params.zone,
-                params.initiator,
-                params.uri,
-                validation
-            )).to.be.revertedWithCustomError(projectToken, `InvalidSignature`);
+            await expect(getRegisterInitiatorTxByInput(projectToken as any, manager, params, validator))
+                .to.be.revertedWithCustomError(projectToken, `InvalidSignature`);
         });
 
         it('7.2.5.6. Register initiator unsuccessfully with invalid uri', async () => {
             const fixture = await beforeProjectTokenTest();
             const { projectToken, manager, validator } = fixture;
 
-            const { defaultParams } = await beforeRegisterInitiatorTest(fixture);
-            const params = {
-                ...defaultParams,
-                uri: "",
-            }
+            const { defaultParamsInput } = await beforeRegisterInitiatorTest(fixture);
 
-            await expect(getRegisterInitiatorTx(projectToken, validator, manager, params))
-                .to.be.revertedWithCustomError(projectToken, `InvalidURI`);
+            await expect(getRegisterInitiatorTxByInput(
+                projectToken as any,
+                manager,
+                {
+                    ...defaultParamsInput,
+                    uri: "",
+                },
+                validator
+            )).to.be.revertedWithCustomError(projectToken, `InvalidURI`);
         });
     });
 
@@ -1121,13 +1092,13 @@ describe('7.2. ProjectToken', async () => {
             const fixture = await beforeProjectTokenTest();
             const { projectToken, manager, initiator1, initiator2, zone1, zone2, validator } = fixture;
 
-            const params: RegisterInitiatorParams = {
+            const paramsInput: RegisterInitiatorParamsInput = {
                 zone: zone1,
                 initiator: initiator1.address,
                 uri: "initiator_uri",
             }
 
-            await callTransaction(getRegisterInitiatorTx(projectToken, validator, manager, params));
+            await callTransaction(getRegisterInitiatorTxByInput(projectToken as any, manager, paramsInput, validator));
 
             expect(await projectToken.isInitiatorIn(zone1, initiator1.address)).to.be.true;
             expect(await projectToken.isInitiatorIn(zone1, initiator2.address)).to.be.false;
@@ -1325,16 +1296,16 @@ describe('7.2. ProjectToken', async () => {
             const fixture = await beforeProjectTokenTest();
             const { projectToken, prestigePad } = fixture;
 
-            const zone = ethers.utils.formatBytes32String('invalid zone');
-
             const { defaultParams } = await beforeLaunchProjectTest(fixture);
 
-            const params: LaunchProjectParams = {
-                ...defaultParams,
-                zone: zone,
-            }
-            await expect(getCallLaunchProjectTx(projectToken, prestigePad, params))
-                .to.be.revertedWithCustomError(projectToken, `InvalidInput`);
+            await expect(getCallLaunchProjectTx(
+                projectToken,
+                prestigePad,
+                {
+                    ...defaultParams,
+                    zone: ethers.utils.formatBytes32String('invalid zone'),
+                }
+            )).to.be.revertedWithCustomError(projectToken, `InvalidInput`);
         });
     });
 
@@ -1407,19 +1378,23 @@ describe('7.2. ProjectToken', async () => {
             const fixture = await beforeProjectTokenTest();
             const { projectToken, prestigePad } = fixture;
 
-            const params1: MintParams = {
-                projectId: BigNumber.from(0),
-                amount: BigNumber.from(100),
-            }
-            await expect(getCallMintTx(projectToken, prestigePad, params1))
-                .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
+            await expect(getCallMintTx(
+                projectToken,
+                prestigePad,
+                {
+                    projectId: BigNumber.from(0),
+                    amount: BigNumber.from(100),
+                }
+            )).to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
 
-            const params2: MintParams = {
-                projectId: BigNumber.from(100),
-                amount: BigNumber.from(100),
-            }
-            await expect(getCallMintTx(projectToken, prestigePad, params2))
-                .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
+            await expect(getCallMintTx(
+                projectToken,
+                prestigePad,
+                {
+                    projectId: BigNumber.from(100),
+                    amount: BigNumber.from(100),
+                }
+            )).to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
         });
 
         it('7.2.10.3. Mint unsuccessfully with deprecated project', async () => {
@@ -1429,12 +1404,14 @@ describe('7.2. ProjectToken', async () => {
             });
             const { projectToken, prestigePad } = fixture;
 
-            const params: MintParams = {
-                projectId: BigNumber.from(1),
-                amount: BigNumber.from(100),
-            }
-            await expect(getCallMintTx(projectToken, prestigePad, params))
-                .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
+            await expect(getCallMintTx(
+                projectToken,
+                prestigePad,
+                {
+                    projectId: BigNumber.from(1),
+                    amount: BigNumber.from(100),
+                }
+            )).to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
         });
 
         it('7.2.10.4. Mint unsuccessfully when when sender is not launchpad of project', async () => {
@@ -1443,12 +1420,14 @@ describe('7.2. ProjectToken', async () => {
             });
             const { projectToken, manager } = fixture;
 
-            const params: MintParams = {
-                projectId: BigNumber.from(1),
-                amount: BigNumber.from(100),
-            }
-            await expect(projectToken.connect(manager).mint(params.projectId, params.amount))
-                .to.be.revertedWithCustomError(projectToken, `Unauthorized`);
+            await expect(getMintTx(
+                projectToken as any,
+                manager,
+                {
+                    projectId: BigNumber.from(1),
+                    amount: BigNumber.from(100),
+                }
+            )).to.be.revertedWithCustomError(projectToken, `Unauthorized`);
         });
 
         it('7.2.10.5. Mint unsuccessfully when paused', async () => {
@@ -1458,12 +1437,14 @@ describe('7.2. ProjectToken', async () => {
             });
             const { projectToken, prestigePad } = fixture;
 
-            const params: MintParams = {
-                projectId: BigNumber.from(1),
-                amount: BigNumber.from(100),
-            }
-            await expect(getCallMintTx(projectToken, prestigePad, params))
-                .to.be.revertedWith(`Pausable: paused`);
+            await expect(getCallMintTx(
+                projectToken,
+                prestigePad,
+                {
+                    projectId: BigNumber.from(1),
+                    amount: BigNumber.from(100),
+                }
+            )).to.be.revertedWith(`Pausable: paused`);
         });
     });
 
@@ -1497,19 +1478,23 @@ describe('7.2. ProjectToken', async () => {
             const fixture = await beforeProjectTokenTest();
             const { projectToken, manager } = fixture;
 
-            const params1: DeprecateProjectParams = {
-                projectId: BigNumber.from(0),
-                data: 'deprecateProject1',
-            };
-            await expect(getSafeDeprecateProjectTxByParams(projectToken as any, manager, params1))
-                .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
+            await expect(getSafeDeprecateProjectTxByParams(
+                projectToken as any,
+                manager,
+                {
+                    projectId: BigNumber.from(0),
+                    data: 'deprecateProject1',
+                }
+            )).to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
 
-            const params2: DeprecateProjectParams = {
-                projectId: BigNumber.from(100),
-                data: 'deprecateProject1',
-            };
-            await expect(getSafeDeprecateProjectTxByParams(projectToken as any, manager, params2))
-                .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);            
+            await expect(getSafeDeprecateProjectTxByParams(
+                projectToken as any,
+                manager,
+                {
+                    projectId: BigNumber.from(100),
+                    data: 'deprecateProject1',
+                }
+            )).to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);            
         });
 
         it('7.2.11.2. Safe deprecate project unsuccessfully with invalid anchor', async () => {
@@ -1518,13 +1503,15 @@ describe('7.2. ProjectToken', async () => {
             });
             const { projectToken, manager } = fixture;
 
-            const params: SafeDeprecateProjectParams = {
-                projectId: BigNumber.from(1),
-                data: 'deprecateProject1',
-                anchor: ethers.utils.keccak256(ethers.utils.toUtf8Bytes('invalid anchor')),
-            };
-            await expect(getSafeDeprecateProjectTx(projectToken as any, manager, params))
-                .to.be.revertedWithCustomError(projectToken, `BadAnchor`);
+            await expect(getSafeDeprecateProjectTx(
+                projectToken as any,
+                manager,
+                {
+                    projectId: BigNumber.from(1),
+                    data: 'deprecateProject1',
+                    anchor: ethers.utils.keccak256(ethers.utils.toUtf8Bytes('invalid anchor')),
+                }
+            )).to.be.revertedWithCustomError(projectToken, `BadAnchor`);
         });
 
         it('7.2.11.3. Safe deprecate project unsuccessfully with already deprecated project', async () => {
@@ -1534,19 +1521,23 @@ describe('7.2. ProjectToken', async () => {
             });
             const { projectToken, manager } = fixture;
 
-            const params1: DeprecateProjectParams = {
-                projectId: BigNumber.from(1),
-                data: 'deprecateProject1',
-            };
-            await expect(getSafeDeprecateProjectTxByParams(projectToken as any, manager, params1))
-                .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
+            await expect(getSafeDeprecateProjectTxByParams(
+                projectToken as any,
+                manager,
+                {
+                    projectId: BigNumber.from(1),
+                    data: 'deprecateProject1',
+                }
+            )).to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
 
-            const params2: DeprecateProjectParams = {
-                projectId: BigNumber.from(2),
-                data: 'deprecateProject1',
-            };
-            await expect(getSafeDeprecateProjectTxByParams(projectToken as any, manager, params2))
-                .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
+            await expect(getSafeDeprecateProjectTxByParams(
+                projectToken as any,
+                manager,
+                {
+                    projectId: BigNumber.from(2),
+                    data: 'deprecateProject1',
+                }
+            )).to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
         });
 
         it('7.2.11.4. Safe deprecate project unsuccessfully with non-manager sender', async () => {
@@ -1556,20 +1547,24 @@ describe('7.2. ProjectToken', async () => {
             const { projectToken, moderator, user } = fixture;
 
             // By moderator
-            const params1: DeprecateProjectParams = {
-                projectId: BigNumber.from(1),
-                data: 'deprecateProject1',
-            };
-            await expect(getSafeDeprecateProjectTxByParams(projectToken as any, moderator, params1))
-                .to.be.revertedWithCustomError(projectToken, `Unauthorized`);
+            await expect(getSafeDeprecateProjectTxByParams(
+                projectToken as any,
+                moderator,
+                {
+                    projectId: BigNumber.from(1),
+                    data: 'deprecateProject1',
+                }
+            )).to.be.revertedWithCustomError(projectToken, `Unauthorized`);
 
             // By user
-            const params2: DeprecateProjectParams = {
-                projectId: BigNumber.from(1),
-                data: 'deprecateProject1',
-            };
-            await expect(getSafeDeprecateProjectTxByParams(projectToken as any, user, params2))
-                .to.be.revertedWithCustomError(projectToken, `Unauthorized`);
+            await expect(getSafeDeprecateProjectTxByParams(
+                projectToken as any,
+                user,
+                {
+                    projectId: BigNumber.from(1),
+                    data: 'deprecateProject1',
+                }
+            )).to.be.revertedWithCustomError(projectToken, `Unauthorized`);
         });
 
         it('7.2.11.6. Safe deprecate project unsuccessfully with inactive manager in zone', async () => {
@@ -1589,12 +1584,14 @@ describe('7.2. ProjectToken', async () => {
                 admins
             ));
             
-            const params: DeprecateProjectParams = {
-                projectId: BigNumber.from(1),
-                data: 'deprecateProject1',
-            };
-            await expect(getSafeDeprecateProjectTxByParams(projectToken as any, manager, params))
-                .to.be.revertedWithCustomError(projectToken, `Unauthorized`);
+            await expect(getSafeDeprecateProjectTxByParams(
+                projectToken as any,
+                manager,
+                {
+                    projectId: BigNumber.from(1),
+                    data: 'deprecateProject1',
+                }
+            )).to.be.revertedWithCustomError(projectToken, `Unauthorized`);
         });
     
         it('7.2.11.7. Safe deprecate project unsuccessfully when paused', async () => {
@@ -1604,12 +1601,14 @@ describe('7.2. ProjectToken', async () => {
             });
             const { projectToken, manager } = fixture;
 
-            const params: DeprecateProjectParams = {
-                projectId: BigNumber.from(1),
-                data: 'deprecateProject1',
-            };
-            await expect(getSafeDeprecateProjectTxByParams(projectToken as any, manager, params))
-                .to.be.revertedWith(`Pausable: paused`);
+            await expect(getSafeDeprecateProjectTxByParams(
+                projectToken as any,
+                manager,
+                {
+                    projectId: BigNumber.from(1),
+                    data: 'deprecateProject1',
+                }
+            )).to.be.revertedWith(`Pausable: paused`);
         });
     });
 
@@ -1620,39 +1619,45 @@ describe('7.2. ProjectToken', async () => {
             });
             const { projectToken, manager, validator } = fixture;
 
-            const params: UpdateProjectURIParams = {
+            const paramsInput: UpdateProjectURIParamsInput = {
                 projectId: BigNumber.from(1),
                 uri: 'new_project_uri_1',
             }
 
-            const tx = await getSafeUpdateProjectURITxByParams(projectToken, validator, manager, params);
+            const tx = await getSafeUpdateProjectURITxByInput(projectToken, manager, paramsInput, validator);
             await tx.wait();
 
             await expect(tx).to.emit(projectToken, 'URI').withArgs(
-                LaunchInitialization.PROJECT_TOKEN_BaseURI + params.uri,
+                LaunchInitialization.PROJECT_TOKEN_BaseURI + paramsInput.uri,
                 1,
             );
 
-            expect(await projectToken.uri(1)).to.equal(LaunchInitialization.PROJECT_TOKEN_BaseURI + params.uri);
+            expect(await projectToken.uri(1)).to.equal(LaunchInitialization.PROJECT_TOKEN_BaseURI + paramsInput.uri);
         });
 
         it('7.2.12.2. Safe update project uri unsuccessfully with invalid project id', async () => {
             const fixture = await beforeProjectTokenTest();
             const { projectToken, manager, validator } = fixture;
 
-            const params: UpdateProjectURIParams = {
-                projectId: BigNumber.from(0),
-                uri: 'new_project_uri_1',
-            }
-            await expect(getSafeUpdateProjectURITxByParams(projectToken, validator, manager, params))
-                .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
+            await expect(getSafeUpdateProjectURITxByInput(
+                projectToken,
+                manager,
+                {
+                    projectId: BigNumber.from(0),
+                    uri: 'new_project_uri_1',
+                },
+                validator
+            )).to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
 
-            const params2: UpdateProjectURIParams = {
-                projectId: BigNumber.from(100),
-                uri: 'new_project_uri_1',
-            }
-            await expect(getSafeUpdateProjectURITxByParams(projectToken, validator, manager, params2))
-                .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
+            await expect(getSafeUpdateProjectURITxByInput(
+                projectToken,
+                manager,
+                {
+                    projectId: BigNumber.from(100),
+                    uri: 'new_project_uri_1',
+                },
+                validator
+            )).to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
         });
 
         it('7.2.12.3. Safe update project uri unsuccessfully with invalid anchor', async () => {
@@ -1660,13 +1665,17 @@ describe('7.2. ProjectToken', async () => {
                 addSampleProjects: true,
             });
             const { projectToken, manager, validator } = fixture;
-            
-            const params: SafeUpdateProjectURIParams = {
+
+            const paramsInput: UpdateProjectURIParamsInput = {
                 projectId: BigNumber.from(1),
                 uri: 'new_project_uri_1',
-                anchor: ethers.utils.keccak256(ethers.utils.toUtf8Bytes('invalid anchor')),
             }
-            await expect(getSafeUpdateProjectURITx(projectToken, validator, manager, params))
+            const params: SafeUpdateProjectURIParams = {
+                ...paramsInput,
+                anchor: ethers.utils.keccak256(ethers.utils.toUtf8Bytes('invalid anchor')),
+                validation: await getSafeUpdateProjectURIValidation(projectToken, paramsInput, validator),
+            }            
+            await expect(getSafeUpdateProjectURITx(projectToken, manager, params))
                 .to.be.revertedWithCustomError(projectToken, `BadAnchor`);
         });
 
@@ -1677,12 +1686,15 @@ describe('7.2. ProjectToken', async () => {
             });
             const { projectToken, manager, validator } = fixture;
 
-            const params: UpdateProjectURIParams = {
-                projectId: BigNumber.from(1),
-                uri: 'new_project_uri_1',
-            }
-            await expect(getSafeUpdateProjectURITxByParams(projectToken, validator, manager, params))
-                .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
+            await expect(getSafeUpdateProjectURITxByInput(
+                projectToken,
+                manager,
+                {
+                    projectId: BigNumber.from(1),
+                    uri: 'new_project_uri_1',
+                },
+                validator
+            )).to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
         });
 
         it('7.2.12.4. Safe update project uri unsuccessfully with non-manager sender', async () => {
@@ -1691,17 +1703,17 @@ describe('7.2. ProjectToken', async () => {
             });
             const { projectToken, moderator, user, validator } = fixture;
 
-            const params: UpdateProjectURIParams = {
+            const paramsInput: UpdateProjectURIParamsInput = {
                 projectId: BigNumber.from(1),
                 uri: 'new_project_uri_1',
             }
             
             // By moderator
-            await expect(getSafeUpdateProjectURITxByParams(projectToken, validator, moderator, params))
+            await expect(getSafeUpdateProjectURITxByInput(projectToken, moderator, paramsInput, validator))
                 .to.be.revertedWithCustomError(projectToken, `Unauthorized`);
 
             // By user
-            await expect(getSafeUpdateProjectURITxByParams(projectToken, validator, user, params))
+            await expect(getSafeUpdateProjectURITxByInput(projectToken, user, paramsInput, validator))
                 .to.be.revertedWithCustomError(projectToken, `Unauthorized`);
         });
 
@@ -1722,12 +1734,15 @@ describe('7.2. ProjectToken', async () => {
                 admins
             ));
             
-            const params: UpdateProjectURIParams = {
-                projectId: BigNumber.from(1),
-                uri: 'new_project_uri_1',
-            }
-            await expect(getSafeUpdateProjectURITxByParams(projectToken, validator, manager, params))
-                .to.be.revertedWithCustomError(projectToken, `Unauthorized`);
+            await expect(getSafeUpdateProjectURITxByInput(
+                projectToken,
+                manager,
+                {
+                    projectId: BigNumber.from(1),
+                    uri: 'new_project_uri_1',
+                },
+                validator
+            )).to.be.revertedWithCustomError(projectToken, `Unauthorized`);
         });
     
         it('7.2.12.7. Safe update project uri unsuccessfully when paused', async () => {
@@ -1737,12 +1752,15 @@ describe('7.2. ProjectToken', async () => {
             });
             const { projectToken, manager, validator } = fixture;
 
-            const params: UpdateProjectURIParams = {
-                projectId: BigNumber.from(1),
-                uri: 'new_project_uri_1',
-            }
-            await expect(getSafeUpdateProjectURITxByParams(projectToken, validator, manager, params))
-                .to.be.revertedWith(`Pausable: paused`);
+            await expect(getSafeUpdateProjectURITxByInput(
+                projectToken,
+                manager,
+                {
+                    projectId: BigNumber.from(1),
+                    uri: 'new_project_uri_1',
+                },
+                validator
+            )).to.be.revertedWith(`Pausable: paused`);
         });
 
         it('7.2.12.8. Safe update project uri unsuccessfully with invalid validation', async () => {
@@ -1751,25 +1769,17 @@ describe('7.2. ProjectToken', async () => {
             });
             const { projectToken, manager, validator } = fixture;
 
-            const currentURI = await projectToken.uri(BigNumber.from(1));
-            const safeParams: SafeUpdateProjectURIParams = {
+            const paramsInput: UpdateProjectURIParamsInput = {
                 projectId: BigNumber.from(1),
                 uri: 'new_project_uri_1',
-                anchor: ethers.utils.keccak256(ethers.utils.toUtf8Bytes(currentURI)),
             }
-
-            const validation = await getSafeUpdateProjectURIInvalidValidation(
-                projectToken,
-                validator,
-                safeParams
-            );
-
-            await expect(projectToken.connect(manager).safeUpdateProjectURI(
-                safeParams.projectId,
-                safeParams.uri,
-                validation,
-                safeParams.anchor,
-            )).to.be.revertedWithCustomError(projectToken, `InvalidSignature`);
+            const params: SafeUpdateProjectURIParams = {
+                ...paramsInput,
+                anchor: await getSafeUpdateProjectURIAnchor(projectToken, paramsInput),
+                validation: await getSafeUpdateProjectURIValidation(projectToken, paramsInput, validator, false),
+            }
+            await expect(getSafeUpdateProjectURITx(projectToken, manager, params))
+                .to.be.revertedWithCustomError(projectToken, `InvalidSignature`);
         });
     });
 
@@ -1897,21 +1907,25 @@ describe('7.2. ProjectToken', async () => {
             const fixture = await beforeProjectTokenTest();
             const { projectToken, manager, broker1, custodian1 } = fixture;
 
-            const params1: TokenizeProjectParams = {
-                projectId: BigNumber.from(0),
-                custodian: custodian1.address,
-                broker: broker1.address,
-            }
-            await expect(getSafeTokenizeProjectTxByParams(projectToken, manager, params1))
-                .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
+            await expect(getSafeTokenizeProjectTxByParams(
+                projectToken,
+                manager,
+                {
+                    projectId: BigNumber.from(0),
+                    custodian: custodian1.address,
+                    broker: broker1.address,
+                }
+            )).to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
 
-            const params2: TokenizeProjectParams = {
-                projectId: BigNumber.from(100),
-                custodian: custodian1.address,
-                broker: broker1.address,
-            }
-            await expect(getSafeTokenizeProjectTxByParams(projectToken, manager, params2))
-                .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
+            await expect(getSafeTokenizeProjectTxByParams(
+                projectToken,
+                manager,
+                {
+                    projectId: BigNumber.from(100),
+                    custodian: custodian1.address,
+                    broker: broker1.address,
+                }
+            )).to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
         });
 
         it('7.2.13.3. Safe tokenize project unsuccessfully with deprecated project', async () => {
@@ -1924,13 +1938,15 @@ describe('7.2. ProjectToken', async () => {
 
             prestigePad.isFinalized.whenCalledWith(1).returns(true);
 
-            const params: TokenizeProjectParams = {
-                projectId: BigNumber.from(1),
-                custodian: custodian1.address,
-                broker: broker1.address,
-            }
-            await expect(getSafeTokenizeProjectTxByParams(projectToken, manager, params))
-                .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
+            await expect(getSafeTokenizeProjectTxByParams(
+                projectToken,
+                manager,
+                {
+                    projectId: BigNumber.from(1),
+                    custodian: custodian1.address,
+                    broker: broker1.address,
+                }
+            )).to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
         });
 
         it('7.2.13.4. Safe tokenize project unsuccessfully by non-manager', async () => {
@@ -1977,13 +1993,15 @@ describe('7.2. ProjectToken', async () => {
 
             prestigePad.isFinalized.whenCalledWith(1).returns(true);
 
-            const params: TokenizeProjectParams = {
-                projectId: BigNumber.from(1),
-                custodian: custodian1.address,
-                broker: broker1.address,
-            }
-            await expect(getSafeTokenizeProjectTxByParams(projectToken, manager, params))
-                .to.be.revertedWithCustomError(projectToken, `Unauthorized`);
+            await expect(getSafeTokenizeProjectTxByParams(
+                projectToken,
+                manager,
+                {
+                    projectId: BigNumber.from(1),
+                    custodian: custodian1.address,
+                    broker: broker1.address,
+                }
+            )).to.be.revertedWithCustomError(projectToken, `Unauthorized`);
         });
 
         it('7.2.13.7. Safe tokenize project unsuccessfully when paused', async () => {
@@ -1996,13 +2014,15 @@ describe('7.2. ProjectToken', async () => {
 
             prestigePad.isFinalized.whenCalledWith(1).returns(true);
 
-            const params: TokenizeProjectParams = {
-                projectId: BigNumber.from(1),
-                custodian: custodian1.address,
-                broker: broker1.address,
-            }
-            await expect(getSafeTokenizeProjectTxByParams(projectToken, manager, params))
-                .to.be.revertedWith(`Pausable: paused`);
+            await expect(getSafeTokenizeProjectTxByParams(
+                projectToken,
+                manager,
+                {
+                    projectId: BigNumber.from(1),
+                    custodian: custodian1.address,
+                    broker: broker1.address,
+                }
+            )).to.be.revertedWith(`Pausable: paused`);
         });
 
         it('7.2.13.8. Safe tokenize project unsuccessfully with unregistered custodian', async () => {
@@ -2010,19 +2030,21 @@ describe('7.2. ProjectToken', async () => {
                 addSampleProjects: true,
                 mintProjectTokenForDepositor: true,
             });
-            const { prestigePad, projectToken, manager, broker1, custodian1 } = fixture;
+            const { prestigePad, projectToken, manager, broker1 } = fixture;
 
             prestigePad.isFinalized.whenCalledWith(1).returns(true);
 
             const unregisteredCustodian = randomWallet();
 
-            const params: TokenizeProjectParams = {
-                projectId: BigNumber.from(1),
-                custodian: unregisteredCustodian.address,
-                broker: broker1.address,
-            }
-            await expect(getSafeTokenizeProjectTxByParams(projectToken, manager, params))
-                .to.be.reverted;
+            await expect(getSafeTokenizeProjectTxByParams(
+                projectToken,
+                manager,
+                {
+                    projectId: BigNumber.from(1),
+                    custodian: unregisteredCustodian.address,
+                    broker: broker1.address,
+                }
+            )).to.be.reverted;
         });
 
         it('7.2.13.8. Safe tokenize project unsuccessfully with unregistered broker', async () => {
@@ -2030,19 +2052,21 @@ describe('7.2. ProjectToken', async () => {
                 addSampleProjects: true,
                 mintProjectTokenForDepositor: true,
             });
-            const { prestigePad, projectToken, manager, broker1, custodian1 } = fixture;
+            const { prestigePad, projectToken, manager, custodian1 } = fixture;
 
             prestigePad.isFinalized.whenCalledWith(1).returns(true);
 
             const unregisteredBroker = randomWallet();
 
-            const params: TokenizeProjectParams = {
-                projectId: BigNumber.from(1),
-                custodian: custodian1.address,
-                broker: unregisteredBroker.address,
-            }
-            await expect(getSafeTokenizeProjectTxByParams(projectToken, manager, params))
-                .to.be.reverted
+            await expect(getSafeTokenizeProjectTxByParams(
+                projectToken,
+                manager,
+                {
+                    projectId: BigNumber.from(1),
+                    custodian: custodian1.address,
+                    broker: unregisteredBroker.address,
+                }
+            )).to.be.reverted;
         });
 
         it('7.2.13.10. Safe tokenize project unsuccessfully when project is already tokenized', async () => {
@@ -2053,13 +2077,15 @@ describe('7.2. ProjectToken', async () => {
             });
             const { projectToken, manager, broker1, custodian1 } = fixture;
 
-            const params: TokenizeProjectParams = {
-                projectId: BigNumber.from(1),
-                custodian: custodian1.address,
-                broker: broker1.address,
-            }
-            await expect(getSafeTokenizeProjectTxByParams(projectToken, manager, params))
-                .to.be.revertedWithCustomError(projectToken, `AlreadyTokenized`);
+            await expect(getSafeTokenizeProjectTxByParams(
+                projectToken,
+                manager,
+                {
+                    projectId: BigNumber.from(1),
+                    custodian: custodian1.address,
+                    broker: broker1.address,
+                }
+            )).to.be.revertedWithCustomError(projectToken, `AlreadyTokenized`);
         });
 
         it('7.2.13.11. Safe tokenize project unsuccessfully with zero total supply', async () => {
@@ -2070,13 +2096,15 @@ describe('7.2. ProjectToken', async () => {
 
             prestigePad.isFinalized.whenCalledWith(1).returns(true);
 
-            const params: TokenizeProjectParams = {
-                projectId: BigNumber.from(1),
-                custodian: custodian1.address,
-                broker: broker1.address,
-            }
-            await expect(getSafeTokenizeProjectTxByParams(projectToken, manager, params))
-                .to.be.revertedWithCustomError(projectToken, `NothingToTokenize`);
+            await expect(getSafeTokenizeProjectTxByParams(
+                projectToken,
+                manager,
+                {
+                    projectId: BigNumber.from(1),
+                    custodian: custodian1.address,
+                    broker: broker1.address,
+                }
+            )).to.be.revertedWithCustomError(projectToken, `NothingToTokenize`);
         });
 
         it('7.2.13.12. Safe tokenize project unsuccessfully when project is not finalized', async () => {
@@ -2086,13 +2114,15 @@ describe('7.2. ProjectToken', async () => {
             });
             const { projectToken, manager, broker1, custodian1 } = fixture;
 
-            const params: TokenizeProjectParams = {
-                projectId: BigNumber.from(1),
-                custodian: custodian1.address,
-                broker: broker1.address,
-            }
-            await expect(getSafeTokenizeProjectTxByParams(projectToken, manager, params))
-                .to.be.revertedWithCustomError(projectToken, `InvalidTokenizing`);
+            await expect(getSafeTokenizeProjectTxByParams(
+                projectToken,
+                manager,
+                {
+                    projectId: BigNumber.from(1),
+                    custodian: custodian1.address,
+                    broker: broker1.address,
+                }
+            )).to.be.revertedWithCustomError(projectToken, `InvalidTokenizing`);
         });
         
         it('7.2.13.13. Safe tokenize project unsuccessfully when tokenize estate failed', async () => {
@@ -2106,13 +2136,15 @@ describe('7.2. ProjectToken', async () => {
 
             prestigePad.isFinalized.whenCalledWith(1).returns(true);
 
-            const params: TokenizeProjectParams = {
-                projectId: BigNumber.from(1),
-                custodian: custodian1.address,
-                broker: broker1.address,
-            }
-            await expect(getSafeTokenizeProjectTxByParams(projectToken, manager, params))
-                .to.be.revertedWithCustomError(estateToken, `Unauthorized`);
+            await expect(getSafeTokenizeProjectTxByParams(
+                projectToken,
+                manager,
+                {
+                    projectId: BigNumber.from(1),
+                    custodian: custodian1.address,
+                    broker: broker1.address,
+                }
+            )).to.be.revertedWithCustomError(estateToken, `Unauthorized`);
         });
     });
 
@@ -2131,7 +2163,7 @@ describe('7.2. ProjectToken', async () => {
             let initProjectTokenProjectBalance = await projectToken.balanceOf(projectToken.address, 1);
             let initProjectTokenEstateBalance = await estateToken.balanceOf(projectToken.address, 1);
 
-            const tx1 = await projectToken.connect(depositor1).withdrawEstateToken(1);
+            const tx1 = await getWithdrawEstateTokenTx(projectToken, depositor1, { projectId: BigNumber.from(1) });
             await tx1.wait();
             
             await expect(tx1).to.emit(projectToken, 'EstateTokenWithdrawal').withArgs(
@@ -2167,7 +2199,7 @@ describe('7.2. ProjectToken', async () => {
             initProjectTokenProjectBalance = await projectToken.balanceOf(projectToken.address, 1);
             initProjectTokenEstateBalance = await estateToken.balanceOf(projectToken.address, 1);
 
-            const tx2 = await projectToken.connect(depositor1).withdrawEstateToken(1);
+            const tx2 = await getWithdrawEstateTokenTx(projectToken, depositor1, { projectId: BigNumber.from(1) });
             await tx2.wait();
 
             await expect(tx2).to.emit(projectToken, 'EstateTokenWithdrawal').withArgs(
@@ -2197,7 +2229,7 @@ describe('7.2. ProjectToken', async () => {
             });
             const { projectToken, estateToken, initiator2 } = fixture;
 
-            const tx = await projectToken.connect(initiator2).withdrawEstateToken(1);
+            const tx = await getWithdrawEstateTokenTx(projectToken, initiator2, { projectId: BigNumber.from(1) });
             await tx.wait();
 
             await expect(tx).to.emit(projectToken, 'EstateTokenWithdrawal').withArgs(
@@ -2236,10 +2268,10 @@ describe('7.2. ProjectToken', async () => {
             
             const { projectToken, depositor1 } = fixture;
 
-            await expect(projectToken.connect(depositor1).withdrawEstateToken(0))
+            await expect(getWithdrawEstateTokenTx(projectToken, depositor1, { projectId: BigNumber.from(0) }))
                 .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
 
-            await expect(projectToken.connect(depositor1).withdrawEstateToken(100))
+            await expect(getWithdrawEstateTokenTx(projectToken, depositor1, { projectId: BigNumber.from(100) }))
                 .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
         });
         
@@ -2252,7 +2284,7 @@ describe('7.2. ProjectToken', async () => {
             });
             const { projectToken, depositor1 } = fixture;
 
-            await expect(projectToken.connect(depositor1).withdrawEstateToken(1))
+            await expect(getWithdrawEstateTokenTx(projectToken, depositor1, { projectId: BigNumber.from(1) }))
                 .to.be.revertedWithCustomError(projectToken, `InvalidProjectId`);
         });
 
@@ -2265,7 +2297,7 @@ describe('7.2. ProjectToken', async () => {
             });
             const { projectToken, depositor1 } = fixture;
 
-            await expect(projectToken.connect(depositor1).withdrawEstateToken(1))
+            await expect(getWithdrawEstateTokenTx(projectToken, depositor1, { projectId: BigNumber.from(1) }))
                 .to.be.revertedWith(`Pausable: paused`);
         });
 
@@ -2276,7 +2308,7 @@ describe('7.2. ProjectToken', async () => {
             });
             const { projectToken, depositor1 } = fixture;
 
-            await expect(projectToken.connect(depositor1).withdrawEstateToken(1))
+            await expect(getWithdrawEstateTokenTx(projectToken, depositor1, { projectId: BigNumber.from(1) }))
                 .to.be.revertedWithCustomError(projectToken, `InvalidWithdrawing`);
         });
 
@@ -2678,7 +2710,7 @@ describe('7.2. ProjectToken', async () => {
             // Withdraw estate token
             timestamp += 10;
             await callTransactionAtTimestamp(
-                projectToken.connect(depositor).withdrawEstateToken(projectId),
+                getWithdrawEstateTokenTx(projectToken, depositor, { projectId: BigNumber.from(projectId) }),
                 timestamp,
             );
 

@@ -1,14 +1,14 @@
-import { Admin, MortgageToken } from "@typechain-types";
-import { ForecloseParams, LendParams, RepayParams, SafeLendParams, SafeRepayParams, UpdateBaseURIParams, UpdateBaseURIParamsInput, UpdateFeeRateParams, UpdateFeeRateParamsInput } from "@utils/models/lend/mortgageToken";
+import { Admin } from "@typechain-types";
+import { CancelParams, ForecloseParams, LendParams, RepayParams, SafeLendParams, SafeRepayParams, UpdateBaseURIParams, UpdateBaseURIParamsInput, UpdateFeeRateParams, UpdateFeeRateParamsInput } from "@utils/models/lend/mortgageToken";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { getUpdateBaseURISignatures, getUpdateFeeRateSignatures } from "@utils/signatures/lend/mortgageToken";
 import { getSafeLendAnchor, getSafeRepayAnchor } from "@utils/anchor/lend/mortgageToken";
-import { ContractTransaction } from "ethers";
+import { Contract, ContractTransaction } from "ethers";
 
 
 // updateBaseURI
 export async function getUpdateBaseURITx(
-    mortgageToken: MortgageToken,
+    mortgageToken: Contract,
     deployer: SignerWithAddress,
     params: UpdateBaseURIParams,
     txConfig = {}
@@ -21,7 +21,7 @@ export async function getUpdateBaseURITx(
 }
 
 export async function getUpdateBaseURITxByInput(
-    mortgageToken: MortgageToken,
+    mortgageToken: Contract,
     deployer: SignerWithAddress,
     paramsInput: UpdateBaseURIParamsInput,
     admin: Admin,
@@ -38,7 +38,7 @@ export async function getUpdateBaseURITxByInput(
 
 // updateFeeRate
 export async function getUpdateFeeRateTx(
-    mortgageToken: MortgageToken,
+    mortgageToken: Contract,
     deployer: SignerWithAddress,
     params: UpdateFeeRateParams,
     txConfig = {}
@@ -51,7 +51,7 @@ export async function getUpdateFeeRateTx(
 }
 
 export async function getUpdateFeeRateTxByInput(
-    mortgageToken: MortgageToken,
+    mortgageToken: Contract,
     deployer: SignerWithAddress,
     paramsInput: UpdateFeeRateParamsInput,
     admin: Admin,
@@ -66,9 +66,23 @@ export async function getUpdateFeeRateTxByInput(
 }
 
 
+// cancel
+export async function getCancelTx(
+    mortgageToken: Contract,
+    deployer: SignerWithAddress,
+    params: CancelParams,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    return mortgageToken.connect(deployer).cancel(
+        params.mortgageId,
+        txConfig
+    );
+}
+
+
 // lend
 export async function getLendTx(
-    mortgageToken: MortgageToken,
+    mortgageToken: Contract,
     deployer: SignerWithAddress,
     params: LendParams,
     txConfig = {}
@@ -82,7 +96,7 @@ export async function getLendTx(
 
 // safeLend
 export async function getSafeLendTx(
-    mortgageToken: MortgageToken,
+    mortgageToken: Contract,
     deployer: SignerWithAddress,
     params: SafeLendParams,
     txConfig = {}
@@ -95,7 +109,7 @@ export async function getSafeLendTx(
 }
 
 export async function getSafeLendTxByParams(
-    mortgageToken: MortgageToken,
+    mortgageToken: Contract,
     deployer: SignerWithAddress,
     params: LendParams,
     txConfig = {}
@@ -110,7 +124,7 @@ export async function getSafeLendTxByParams(
 
 // repay
 export async function getRepayTx(
-    mortgageToken: MortgageToken,
+    mortgageToken: Contract,
     deployer: SignerWithAddress,
     params: RepayParams,
     txConfig = {}
@@ -124,7 +138,7 @@ export async function getRepayTx(
 
 // safeRepay
 export async function getSafeRepayTx(
-    mortgageToken: MortgageToken,
+    mortgageToken: Contract,
     deployer: SignerWithAddress,
     params: SafeRepayParams,
     txConfig = {}
@@ -137,7 +151,7 @@ export async function getSafeRepayTx(
 }
 
 export async function getSafeRepayTxByParams(
-    mortgageToken: MortgageToken,
+    mortgageToken: Contract,
     deployer: SignerWithAddress,
     params: RepayParams,
     txConfig = {}
@@ -152,7 +166,7 @@ export async function getSafeRepayTxByParams(
 
 // foreclose
 export async function getForecloseTx(
-    mortgageToken: MortgageToken,
+    mortgageToken: Contract,
     deployer: SignerWithAddress,
     params: ForecloseParams,
     txConfig = {}

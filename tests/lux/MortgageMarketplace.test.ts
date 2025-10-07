@@ -1260,7 +1260,7 @@ describe('6.3. MortgageMarketplace', async () => {
             });
             const { mortgageMarketplace, buyer1, borrower1, mortgageToken } = fixture;
 
-            await callTransaction(mortgageToken.connect(borrower1).repay(1));
+            await callTransaction(getRepayTx(mortgageToken, borrower1, { mortgageId: BigNumber.from(1) }));
 
             await expect(mortgageMarketplace.connect(buyer1).buy(1, { value: 1e9 }))
                 .to.be.revertedWithCustomError(mortgageMarketplace, "InvalidTokenId");
@@ -1274,7 +1274,7 @@ describe('6.3. MortgageMarketplace', async () => {
             });
             const { mortgageMarketplace, buyer1, seller1, mortgageToken } = fixture;
 
-            await callTransaction(mortgageToken.connect(seller1).foreclose(1));
+            await callTransaction(getForecloseTx(mortgageToken, seller1, { mortgageId: BigNumber.from(1) }));
 
             await expect(mortgageMarketplace.connect(buyer1).buy(1, { value: 1e9 }))
                 .to.be.revertedWithCustomError(mortgageMarketplace, "InvalidTokenId");
@@ -1464,7 +1464,7 @@ describe('6.3. MortgageMarketplace', async () => {
             });
             const { mortgageMarketplace, seller1 } = fixture;
 
-            let tx = await mortgageMarketplace.connect(seller1).cancel(1);
+            let tx = await getCancelTx(mortgageMarketplace, seller1, { requestId: BigNumber.from(1) });
             await tx.wait();
 
             const offer = await mortgageMarketplace.getOffer(1);
@@ -1483,7 +1483,7 @@ describe('6.3. MortgageMarketplace', async () => {
                 fundERC20ForBuyers: true,
             });
             const { mortgageMarketplace, manager } = fixture;
-            let tx = await mortgageMarketplace.connect(manager).cancel(1);
+            let tx = await getCancelTx(mortgageMarketplace, manager, { requestId: BigNumber.from(1) });
             await tx.wait();
 
             const offer = await mortgageMarketplace.getOffer(1);
@@ -1503,9 +1503,9 @@ describe('6.3. MortgageMarketplace', async () => {
             });
             const { mortgageMarketplace, manager } = fixture;
 
-            await expect(mortgageMarketplace.connect(manager).cancel(0))
+            await expect(getCancelTx(mortgageMarketplace, manager, { requestId: BigNumber.from(0) }))
                 .to.be.revertedWithCustomError(mortgageMarketplace, "InvalidOfferId");
-            await expect(mortgageMarketplace.connect(manager).cancel(3))
+            await expect(getCancelTx(mortgageMarketplace, manager, { requestId: BigNumber.from(3) }))
                 .to.be.revertedWithCustomError(mortgageMarketplace, "InvalidOfferId");
         });
 
@@ -1518,10 +1518,10 @@ describe('6.3. MortgageMarketplace', async () => {
             });
             const { mortgageMarketplace, seller2, moderator } = fixture;
 
-            await expect(mortgageMarketplace.connect(seller2).cancel(1))
+            await expect(getCancelTx(mortgageMarketplace, seller2, { requestId: BigNumber.from(1) }))
                 .to.be.revertedWithCustomError(mortgageMarketplace, "Unauthorized");
 
-            await expect(mortgageMarketplace.connect(moderator).cancel(1))
+            await expect(getCancelTx(mortgageMarketplace, moderator, { requestId: BigNumber.from(1) }))
                 .to.be.revertedWithCustomError(mortgageMarketplace, "Unauthorized");
         });
 
@@ -1534,8 +1534,8 @@ describe('6.3. MortgageMarketplace', async () => {
             });
             const { mortgageMarketplace, manager } = fixture;
 
-            await callTransaction(mortgageMarketplace.connect(manager).cancel(1));
-            await expect(mortgageMarketplace.connect(manager).cancel(1))
+            await callTransaction(getCancelTx(mortgageMarketplace, manager, { requestId: BigNumber.from(1) }));
+            await expect(getCancelTx(mortgageMarketplace, manager, { requestId: BigNumber.from(1) }))
                 .to.be.revertedWithCustomError(mortgageMarketplace, "InvalidCancelling");
         });
 
@@ -1550,7 +1550,7 @@ describe('6.3. MortgageMarketplace', async () => {
 
             await callTransaction(mortgageMarketplace.connect(buyer1).buy(1, { value: 1e9 }));
 
-            await expect(mortgageMarketplace.connect(manager).cancel(1))
+            await expect(getCancelTx(mortgageMarketplace, manager, { requestId: BigNumber.from(1) }))
                 .to.be.revertedWithCustomError(mortgageMarketplace, "InvalidCancelling");
         });
     });

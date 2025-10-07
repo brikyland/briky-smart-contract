@@ -1493,7 +1493,7 @@ describe('6.1. ERC721Marketplace', async () => {
             });
             const { erc721Marketplace, seller1 } = fixture;
 
-            let tx = await erc721Marketplace.connect(seller1).cancel(1);
+            let tx = await getCancelTx(erc721Marketplace, seller1, { requestId: BigNumber.from(1) });
             await tx.wait();
 
             const offer = await erc721Marketplace.getOffer(1);
@@ -1512,7 +1512,7 @@ describe('6.1. ERC721Marketplace', async () => {
                 fundERC20ForBuyers: true,
             });
             const { erc721Marketplace, manager } = fixture;
-            let tx = await erc721Marketplace.connect(manager).cancel(1);
+            let tx = await getCancelTx(erc721Marketplace, manager, { requestId: BigNumber.from(1) });
             await tx.wait();
 
             const offer = await erc721Marketplace.getOffer(1);
@@ -1532,9 +1532,9 @@ describe('6.1. ERC721Marketplace', async () => {
             });
             const { erc721Marketplace, manager } = fixture;
 
-            await expect(erc721Marketplace.connect(manager).cancel(0))
+            await expect(getCancelTx(erc721Marketplace, manager, { requestId: BigNumber.from(0) }))
                 .to.be.revertedWithCustomError(erc721Marketplace, "InvalidOfferId");
-            await expect(erc721Marketplace.connect(manager).cancel(3))
+            await expect(getCancelTx(erc721Marketplace, manager, { requestId: BigNumber.from(3) }))
                 .to.be.revertedWithCustomError(erc721Marketplace, "InvalidOfferId");
         });
 
@@ -1547,10 +1547,10 @@ describe('6.1. ERC721Marketplace', async () => {
             });
             const { erc721Marketplace, seller2, moderator } = fixture;
 
-            await expect(erc721Marketplace.connect(seller2).cancel(1))
+            await expect(getCancelTx(erc721Marketplace, seller2, { requestId: BigNumber.from(1) }))
                 .to.be.revertedWithCustomError(erc721Marketplace, "Unauthorized");
 
-            await expect(erc721Marketplace.connect(moderator).cancel(1))
+            await expect(getCancelTx(erc721Marketplace, moderator, { requestId: BigNumber.from(1) }))
                 .to.be.revertedWithCustomError(erc721Marketplace, "Unauthorized");
         });
 
@@ -1563,8 +1563,8 @@ describe('6.1. ERC721Marketplace', async () => {
             });
             const { erc721Marketplace, manager } = fixture;
 
-            await callTransaction(erc721Marketplace.connect(manager).cancel(1));
-            await expect(erc721Marketplace.connect(manager).cancel(1))
+            await callTransaction(getCancelTx(erc721Marketplace, manager, { requestId: BigNumber.from(1) }));
+            await expect(getCancelTx(erc721Marketplace, manager, { requestId: BigNumber.from(1) }))
                 .to.be.revertedWithCustomError(erc721Marketplace, "InvalidCancelling");
         });
 
@@ -1586,7 +1586,7 @@ describe('6.1. ERC721Marketplace', async () => {
             };
             await callTransaction(erc721Marketplace.connect(buyer1).safeBuy(1, 1, { value: 1e9 }));
 
-            await expect(erc721Marketplace.connect(manager).cancel(1))
+            await expect(getCancelTx(erc721Marketplace, manager, { requestId: BigNumber.from(1) }))
                 .to.be.revertedWithCustomError(erc721Marketplace, "InvalidCancelling");
         });
     });

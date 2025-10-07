@@ -152,6 +152,20 @@ export async function getCallLaunchProjectTx(
 
 
 // mint
+export async function getMintTx(
+    projectToken: ProjectToken,
+    deployer: SignerWithAddress,
+    params: MintParams,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    return projectToken.connect(deployer).mint(
+        params.projectId,
+        params.amount,
+        txConfig
+    );
+}
+
+
 export async function getCallMintTx(
     projectToken: ProjectToken,
     launchpad: any,

@@ -11,5 +11,5 @@ export interface ProjectBorrowParams {
     principal: BigNumber;
     repayment: BigNumber;
     currency: string;
-    duration: BigNumber;
+    duration: number;
 }

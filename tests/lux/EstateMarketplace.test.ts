@@ -1806,7 +1806,7 @@ describe('6.2. EstateMarketplace', async () => {
             });
             const { estateMarketplace, seller1 } = fixture;
 
-            let tx = await estateMarketplace.connect(seller1).cancel(1);
+            let tx = await getCancelTx(estateMarketplace, seller1, { requestId: BigNumber.from(1) });
             await tx.wait();
 
             const offer = await estateMarketplace.getOffer(1);
@@ -1825,7 +1825,7 @@ describe('6.2. EstateMarketplace', async () => {
                 fundERC20ForBuyers: true,
             });
             const { estateMarketplace, manager } = fixture;
-            let tx = await estateMarketplace.connect(manager).cancel(1);
+            let tx = await getCancelTx(estateMarketplace, manager, { requestId: BigNumber.from(1) });
             await tx.wait();
 
             const offer = await estateMarketplace.getOffer(1);
@@ -1845,9 +1845,9 @@ describe('6.2. EstateMarketplace', async () => {
             });
             const { estateMarketplace, manager } = fixture;
 
-            await expect(estateMarketplace.connect(manager).cancel(0))
+            await expect(getCancelTx(estateMarketplace, manager, { requestId: BigNumber.from(0) }))
                 .to.be.revertedWithCustomError(estateMarketplace, "InvalidOfferId");
-            await expect(estateMarketplace.connect(manager).cancel(3))
+            await expect(getCancelTx(estateMarketplace, manager, { requestId: BigNumber.from(3) }))
                 .to.be.revertedWithCustomError(estateMarketplace, "InvalidOfferId");
         });
 
@@ -1860,10 +1860,10 @@ describe('6.2. EstateMarketplace', async () => {
             });
             const { estateMarketplace, seller2, moderator } = fixture;
 
-            await expect(estateMarketplace.connect(seller2).cancel(1))
+            await expect(getCancelTx(estateMarketplace, seller2, { requestId: BigNumber.from(1) }))
                 .to.be.revertedWithCustomError(estateMarketplace, "Unauthorized");
 
-            await expect(estateMarketplace.connect(moderator).cancel(1))
+            await expect(getCancelTx(estateMarketplace, moderator, { requestId: BigNumber.from(1) }))
                 .to.be.revertedWithCustomError(estateMarketplace, "Unauthorized");
         });
 
@@ -1876,8 +1876,8 @@ describe('6.2. EstateMarketplace', async () => {
             });
             const { estateMarketplace, manager } = fixture;
 
-            await callTransaction(estateMarketplace.connect(manager).cancel(1));
-            await expect(estateMarketplace.connect(manager).cancel(1))
+            await callTransaction(getCancelTx(estateMarketplace, manager, { requestId: BigNumber.from(1) }));
+            await expect(getCancelTx(estateMarketplace, manager, { requestId: BigNumber.from(1) }))
                 .to.be.revertedWithCustomError(estateMarketplace, "InvalidCancelling");
         });
 
@@ -1899,7 +1899,7 @@ describe('6.2. EstateMarketplace', async () => {
                 { value: 1e9 }
             );
 
-            await expect(estateMarketplace.connect(manager).cancel(1))
+            await expect(getCancelTx(estateMarketplace, manager, { requestId: BigNumber.from(1) }))
                 .to.be.revertedWithCustomError(estateMarketplace, "InvalidCancelling");
         });
     });

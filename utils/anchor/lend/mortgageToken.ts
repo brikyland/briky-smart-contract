@@ -1,11 +1,10 @@
-import { MortgageToken } from "@typechain-types";
 import { LendParams, RepayParams } from "@utils/models/lend/mortgageToken";
-import { BigNumber } from "ethers";
+import { BigNumber, Contract } from "ethers";
 
 
 // safeLend
 export async function getSafeLendAnchor(
-    mortgageToken: MortgageToken,
+    mortgageToken: Contract,
     params: LendParams
 ): Promise<BigNumber> {
     return (await mortgageToken.getMortgage(params.mortgageId)).principal;
@@ -14,7 +13,7 @@ export async function getSafeLendAnchor(
 
 // safeRepay
 export async function getSafeRepayAnchor(
-    mortgageToken: MortgageToken,
+    mortgageToken: Contract,
     params: RepayParams
 ): Promise<BigNumber> {
     return (await mortgageToken.getMortgage(params.mortgageId)).repayment;

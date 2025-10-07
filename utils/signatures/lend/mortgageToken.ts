@@ -1,12 +1,12 @@
 import { Admin, MortgageToken } from "@typechain-types";
 import { UpdateBaseURIParamsInput, UpdateFeeRateParamsInput } from "@utils/models/lend/mortgageToken";
 import { getSignatures } from "@utils/blockchain";
-import { ethers } from "ethers";
+import { ethers, Contract } from "ethers";
 
 
 // updateBaseURI
 export async function getUpdateBaseURISignatures(
-    mortgageToken: MortgageToken,
+    mortgageToken: Contract,
     paramsInput: UpdateBaseURIParamsInput,
     admin: Admin,
     admins: any[],
@@ -22,7 +22,7 @@ export async function getUpdateBaseURISignatures(
 
 // updateFeeRate
 export async function getUpdateFeeRateSignatures(
-    mortgageToken: MortgageToken,
+    mortgageToken: Contract,
     paramsInput: UpdateFeeRateParamsInput,
     admin: Admin,
     admins: any[],
