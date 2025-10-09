@@ -1,5 +1,5 @@
 import { Admin, StakeToken } from "@typechain-types";
-import { InitializeRewardingParams, InitializeRewardingParamsInput, PromoteParams, StakeParams, UnstakeParams, UpdateFeeRateParams, UpdateFeeRateParamsInput } from "@utils/models/liquidity/stakeToken";
+import { InitializeRewardingParams, InitializeRewardingParamsInput, PromoteParams, StakeParams, TransferParams, UnstakeParams, UpdateFeeRateParams, UpdateFeeRateParamsInput } from "@utils/models/liquidity/stakeToken";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { ContractTransaction } from "ethers";
 import { getInitializeRewardingSignatures, getUpdateFeeRateSignatures } from "@utils/signatures/liquidity/stakeToken";
@@ -77,7 +77,7 @@ export async function getStakeTokenTx_FetchReward(
 
 
 // stake
-export async function getStakeTx(
+export async function getStakeTokenTx_Stake(
     stakeToken: StakeToken,
     deployer: SignerWithAddress,
     params: StakeParams,
@@ -92,7 +92,7 @@ export async function getStakeTx(
 
 
 // unstake
-export async function getUnstakeTx(
+export async function getStakeTokenTx_Unstake(
     stakeToken: StakeToken,
     deployer: SignerWithAddress,
     params: UnstakeParams,
@@ -106,7 +106,7 @@ export async function getUnstakeTx(
 
 
 // promote
-export async function getPromoteTx(
+export async function getStakeTokenTx_Promote(
     stakeToken: StakeToken,
     deployer: SignerWithAddress,
     params: PromoteParams,
@@ -114,6 +114,21 @@ export async function getPromoteTx(
 ): Promise<ContractTransaction> {
     return stakeToken.connect(deployer).promote(
         params.value,
+        txConfig
+    );
+}
+
+
+// transfer
+export async function getStakeTokenTx_Transfer(
+    stakeToken: StakeToken,
+    deployer: SignerWithAddress,
+    params: TransferParams,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    return stakeToken.connect(deployer).transfer(
+        params.to,
+        params.amount,
         txConfig
     );
 }

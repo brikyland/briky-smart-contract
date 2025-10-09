@@ -1,5 +1,5 @@
 import {Admin, Auction} from "@typechain-types";
-import {DepositParams, StartAuctionParams, StartAuctionParamsInput, UpdateStakeTokensParams, UpdateStakeTokensParamsInput} from "@utils/models/liquidity/auction";
+import {DepositParams, StakeParams, StartAuctionParams, StartAuctionParamsInput, UpdateStakeTokensParams, UpdateStakeTokensParamsInput} from "@utils/models/liquidity/auction";
 import {SignerWithAddress} from "@nomiclabs/hardhat-ethers/signers";
 import { getStartAuctionSignatures, getUpdateStakeTokensSignatures } from "@utils/signatures/liquidity/auction";
 import { ContractTransaction } from "ethers";
@@ -89,4 +89,19 @@ export async function getAuctionTx_Withdraw(
     txConfig = {}
 ): Promise<ContractTransaction> {
     return auction.connect(deployer).withdraw(txConfig);
+}
+
+
+// stake
+export async function getAuctionTx_Stake(
+    auction: Auction,
+    deployer: SignerWithAddress,
+    params: StakeParams,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    return auction.connect(deployer).stake(
+        params.stake1,
+        params.stake2,
+        txConfig
+    );
 }

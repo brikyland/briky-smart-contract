@@ -1,5 +1,5 @@
 import { ProvideLiquidityParams, WithdrawLiquidityParams, WithdrawOperationFundParams, WithdrawOperationFundParamsInput } from "@utils/models/liquidity/treasury";
-import { Admin, Treasury } from "@typechain-types";
+import { Admin, ProxyCaller, Treasury } from "@typechain-types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { ContractTransaction } from "ethers";
 import { getWithdrawOperationFundSignatures } from "@utils/signatures/liquidity/treasury";
@@ -47,6 +47,22 @@ export async function getTreasuryTx_WithdrawLiquidity(
         params.withdrawer,
         params.value,
         txConfig
+    );
+}
+
+export async function getCallTreasuryTx_WithdrawLiquidity(
+    treasury: Treasury,
+    caller: ProxyCaller,
+    params: WithdrawLiquidityParams,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    return caller.call(
+        treasury.address,
+        treasury.interface.encodeFunctionData('withdrawLiquidity', [
+            params.withdrawer,
+            params.value,
+        ]),
+        txConfig,
     );
 }
 

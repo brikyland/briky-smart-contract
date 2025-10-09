@@ -1,4 +1,4 @@
-import { BigNumberish } from "ethers";
+import { BigNumber, BigNumberish } from "ethers";
 
 
 // updateStakeTokens
@@ -48,6 +48,6 @@ export interface WithdrawParams {
 // stake
 export interface StakeParams {
     distributionIds: number[];
-    stake1: number;
-    stake2: number;
+    stake1: BigNumber;
+    stake2: BigNumber;
 }

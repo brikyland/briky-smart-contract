@@ -48,3 +48,10 @@ export interface UnstakeParams {
 export interface PromoteParams {
     value: BigNumber;
 }
+
+
+// transfer
+export interface TransferParams {
+    to: string;
+    amount: BigNumber;
+}

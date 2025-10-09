@@ -463,9 +463,21 @@ export async function getPrimaryTokenTx_MintForStake(
     );
 }
 
+export async function getCallPrimaryTokenTx_MintForStake(
+    primaryToken: PrimaryToken,
+    caller: ProxyCaller,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    return caller.call(
+        primaryToken.address,
+        primaryToken.interface.encodeFunctionData("mintForStake"),
+        txConfig
+    );
+}
+
 
 // liquidate
-export async function getLiquidateTx(
+export async function getPrimaryTokenTx_Liquidate(
     primaryToken: PrimaryToken,
     deployer: SignerWithAddress,
     params: LiquidateParams,

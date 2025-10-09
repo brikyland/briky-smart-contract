@@ -10,20 +10,22 @@ import { deployPrimaryToken } from '@utils/deployments/liquidity/primaryToken';
 import { deployTreasury } from '@utils/deployments/liquidity/treasury';
 import { Initialization as LiquidityInitialization } from '@tests/liquidity/test.initialization';
 import { deployDistributor } from '@utils/deployments/liquidity/distributor';
-import { callPrimaryToken_UnlockForCoreTeam } from '@utils/call/liquidity/primaryToken';
 import { DistributeTokenParams, DistributeTokenParamsInput } from '@utils/models/liquidity/distributor';
-import { getDistributeTokenInvalidSignatures, getDistributeTokenSignatures } from '@utils/signatures/liquidity/distributor';
-import { getDistributorTx_DistributeToken } from '@utils/transaction/liquidity/distributor';
+import { getDistributeTokenSignatures } from '@utils/signatures/liquidity/distributor';
+import { getDistributorTx_DistributeToken, getDistributorTxByInput_DistributeToken } from '@utils/transaction/liquidity/distributor';
+import { getPrimaryTokenTxByInput_UnlockForCoreTeam } from '@utils/transaction/liquidity/primaryToken';
+import { callTransaction } from '@utils/blockchain';
 
 interface DistributorFixture {
-    deployer: SignerWithAddress;
+    deployer: any;
     admins: any[];
+    receiver1: any, receiver2: any, receiver3: any;
+
     admin: Admin;
-    treasury: Treasury;
     currency: Currency;
+    treasury: Treasury;
     primaryToken: PrimaryToken;
     distributor: Distributor;
-    receiver1: any, receiver2: any, receiver3: any;
 }
 
 describe('4.2. Distributor', async () => {
@@ -90,14 +92,17 @@ describe('4.2. Distributor', async () => {
 
     async function setupBeforeTest(): Promise<DistributorFixture> {
         const fixture = await loadFixture(distributorFixture);
-        const { admin, admins, primaryToken, distributor } = fixture;
+        const { deployer, admin, admins, primaryToken, distributor } = fixture;
 
-        await callPrimaryToken_UnlockForCoreTeam(
+        await callTransaction(getPrimaryTokenTxByInput_UnlockForCoreTeam(
             primaryToken,
+            deployer,
+            {
+                distributor: distributor.address,
+            },
+            admin,
             admins,
-            distributor.address,
-            await admin.nonce()
-        );
+        ));
 
         return fixture;
     }
@@ -127,17 +132,12 @@ describe('4.2. Distributor', async () => {
                 amounts,
                 note,
             };
-            const params: DistributeTokenParams = {
-                ...paramsInput,
-                signatures: await getDistributeTokenSignatures(distributor, paramsInput, admin, admins),
-            };
-
             const initDistributorBalance = await primaryToken.balanceOf(distributor.address);
             const initReceiver1Balance = await primaryToken.balanceOf(receiver1.address);
             const initReceiver2Balance = await primaryToken.balanceOf(receiver2.address);
             const initReceiver3Balance = await primaryToken.balanceOf(receiver3.address);
 
-            const tx = await getDistributorTx_DistributeToken(distributor, deployer, params);
+            const tx = await getDistributorTxByInput_DistributeToken(distributor, deployer, paramsInput, admin, admins);
             await tx.wait();
 
             for(let i = 0; i < receivers.length; i++) {
@@ -168,9 +168,8 @@ describe('4.2. Distributor', async () => {
             };
             const params: DistributeTokenParams = {
                 ...paramsInput,
-                signatures: await getDistributeTokenInvalidSignatures(distributor, admins, admin, paramsInput),
+                signatures: await getDistributeTokenSignatures(distributor, paramsInput, admin, admins, false),
             };
-
             await expect(getDistributorTx_DistributeToken(distributor, deployer, params))
                 .to.be.revertedWithCustomError(distributor, "FailedVerification");
         });
@@ -189,12 +188,7 @@ describe('4.2. Distributor', async () => {
                     amounts,
                     note,
                 };
-                const params: DistributeTokenParams = {
-                    ...paramsInput,
-                    signatures: await getDistributeTokenSignatures(distributor, paramsInput, admin, admins),
-                };
-
-                await expect(getDistributorTx_DistributeToken(distributor, deployer, params))
+                await expect(getDistributorTxByInput_DistributeToken(distributor, deployer, paramsInput, admin, admins))
                     .to.be.revertedWithCustomError(distributor, "InvalidInput");
             }
 
@@ -220,12 +214,7 @@ describe('4.2. Distributor', async () => {
                 amounts,
                 note,
             };
-            const params: DistributeTokenParams = {
-                ...paramsInput,
-                signatures: await getDistributeTokenSignatures(distributor, paramsInput, admin, admins),
-            };
-
-            await expect(getDistributorTx_DistributeToken(distributor, deployer, params))
+            await expect(getDistributorTxByInput_DistributeToken(distributor, deployer, paramsInput, admin, admins))
                 .to.be.revertedWithCustomError(distributor, "InsufficientFunds");
         });        
     });

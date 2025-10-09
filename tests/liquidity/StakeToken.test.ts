@@ -7,9 +7,6 @@ import { Constant } from '@tests/test.constant';
 import { loadFixture, time } from '@nomicfoundation/hardhat-network-helpers';
 import { deployCurrency } from '@utils/deployments/common/currency';
 import { deployTreasury } from '@utils/deployments/liquidity/treasury';
-import { callStakeToken_UpdateFeeRate } from '@utils/call/liquidity/stakeToken';
-import { callStakeToken_InitializeRewarding } from '@utils/call/liquidity/stakeToken';
-import { callPrimaryToken_UpdateStakeTokens, callPrimaryToken_UpdateTreasury } from '@utils/call/liquidity/primaryToken';
 import { MockContract, smock } from '@defi-wonderland/smock';
 import { getStakingFee } from '@utils/formula';
 import { expectBetween, expectEqualWithErrorMargin } from '@utils/testHelper';
@@ -20,13 +17,17 @@ import { Initialization as LiquidityInitialization } from '@tests/liquidity/test
 import { UpdateStakeTokensParamsInput, UpdateTreasuryParamsInput } from '@utils/models/liquidity/primaryToken';
 import { InitializeRewardingParams, InitializeRewardingParamsInput, UpdateFeeRateParams, UpdateFeeRateParamsInput } from '@utils/models/liquidity/stakeToken';
 import { getInitializeRewardingSignatures, getUpdateFeeRateSignatures } from '@utils/signatures/liquidity/stakeToken';
-import { getStakeTokenTx_InitializeRewarding, getStakeTokenTx_UpdateFeeRate } from '@utils/transaction/liquidity/StakeToken';
 import { getPausableTxByInput_Pause } from '@utils/transaction/common/pausable';
-import { getPrimaryTokenTxByInput_UpdateTreasury } from '@utils/transaction/liquidity/primaryToken';
+import { getPrimaryTokenTxByInput_UpdateStakeTokens, getPrimaryTokenTxByInput_UpdateTreasury } from '@utils/transaction/liquidity/primaryToken';
+import { getStakeTokenTx_FetchReward, getStakeTokenTx_InitializeRewarding, getStakeTokenTx_Promote, getStakeTokenTx_Stake, getStakeTokenTx_Transfer, getStakeTokenTx_Unstake, getStakeTokenTx_UpdateFeeRate, getStakeTokenTxByInput_InitializeRewarding, getStakeTokenTxByInput_UpdateFeeRate } from '@utils/transaction/liquidity/stakeToken';
 
 interface StakeTokenFixture {
     deployer: any;
     admins: any[];
+    staker1: any;
+    staker2: any;
+    staker3: any;
+
     admin: Admin;
     currency: Currency;
     primaryToken: MockContract<MockPrimaryToken>;
@@ -36,9 +37,6 @@ interface StakeTokenFixture {
     treasury: Treasury;
 
     initialLastRewardFetch: number;
-    staker1: any;
-    staker2: any;
-    staker3: any;
 }
 
 describe('4.5. StakeToken', async () => {
@@ -104,18 +102,17 @@ describe('4.5. StakeToken', async () => {
             LiquidityInitialization.STAKE_TOKEN_FeeRate,
         ));
 
-        const updateStakeTokensParamsInput: UpdateStakeTokensParamsInput = {
-            stakeToken1: stakeToken1.address,
-            stakeToken2: stakeToken2.address,
-            stakeToken3: stakeToken3.address,
-        };
-        await callPrimaryToken_UpdateStakeTokens(
+        await callTransaction(getPrimaryTokenTxByInput_UpdateStakeTokens(
             primaryToken as any,
             deployer,
-            admins,
+            {
+                stakeToken1: stakeToken1.address,
+                stakeToken2: stakeToken2.address,
+                stakeToken3: stakeToken3.address,
+            },
             admin,
-            updateStakeTokensParamsInput,
-        );
+            admins,
+        ));
 
         const treasury = await deployTreasury(
             deployer,
@@ -168,38 +165,50 @@ describe('4.5. StakeToken', async () => {
         await treasury.provideLiquidity(ethers.utils.parseEther("1000000"));
 
         if (setFeeRate) {
-            await callStakeToken_UpdateFeeRate(
-                stakeToken1,
+            await callTransaction(getStakeTokenTxByInput_UpdateFeeRate(
+                stakeToken1 as any,
+                deployer,
+                {
+                    feeRate: LiquidityInitialization.STAKE_TOKEN_FeeRate,
+                },
+                admin,
                 admins,
-                LiquidityInitialization.STAKE_TOKEN_FeeRate,
-                await admin.nonce()
-            );
+            ));
         }
 
         let initialLastRewardFetch = 0;
         if (initializeRewarding) {
             initialLastRewardFetch = currentTimestamp;
-            await callStakeToken_InitializeRewarding(
-                stakeToken1,
+            await callTransaction(getStakeTokenTxByInput_InitializeRewarding(
+                stakeToken1 as any,
+                deployer,
+                {
+                    initialLastRewardFetch: BigNumber.from(initialLastRewardFetch),
+                    successor: stakeToken2.address,
+                },
+                admin,
                 admins,
-                initialLastRewardFetch,
-                stakeToken2.address,
-                await admin.nonce()
-            );
-            await callStakeToken_InitializeRewarding(
-                stakeToken2,
+            ));
+            await callTransaction(getStakeTokenTxByInput_InitializeRewarding(
+                stakeToken2 as any,
+                deployer,
+                {
+                    initialLastRewardFetch: BigNumber.from(initialLastRewardFetch),
+                    successor: stakeToken3.address,
+                },
+                admin,
                 admins,
-                initialLastRewardFetch,
-                stakeToken3.address,
-                await admin.nonce()
-            );
-            await callStakeToken_InitializeRewarding(
-                stakeToken3,
+            ));
+            await callTransaction(getStakeTokenTxByInput_InitializeRewarding(
+                stakeToken3 as any,
+                deployer,
+                {
+                    initialLastRewardFetch: BigNumber.from(initialLastRewardFetch),
+                    successor: ethers.constants.AddressZero,
+                },
+                admin,
                 admins,
-                initialLastRewardFetch,
-                ethers.constants.AddressZero,
-                await admin.nonce()
-            );            
+            ));
         }
 
         if (prepareCurrencyForStakers) {
@@ -364,12 +373,7 @@ describe('4.5. StakeToken', async () => {
                 initialLastRewardFetch: BigNumber.from(timestamp),
                 successor: stakeToken2.address,
             };
-            const params: InitializeRewardingParams = {
-                ...paramsInput,
-                signatures: await getInitializeRewardingSignatures(stakeToken1 as any, paramsInput, admin, admins),
-            };
-
-            const tx = await getStakeTokenTx_InitializeRewarding(stakeToken1 as any, deployer, params);
+            const tx = await getStakeTokenTxByInput_InitializeRewarding(stakeToken1 as any, deployer, paramsInput, admin, admins);
             await tx.wait();
 
             expect(await stakeToken1.lastRewardFetch()).to.equal(timestamp);
@@ -389,7 +393,6 @@ describe('4.5. StakeToken', async () => {
                 ...paramsInput,
                 signatures: await getInitializeRewardingSignatures(stakeToken1 as any, paramsInput, admin, admins, false),
             };
-            
             await expect(getStakeTokenTx_InitializeRewarding(stakeToken1 as any, deployer, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
@@ -400,17 +403,16 @@ describe('4.5. StakeToken', async () => {
             });
 
             let timestamp = await time.latest() + 100;
-            const paramsInput: InitializeRewardingParamsInput = {
-                initialLastRewardFetch: BigNumber.from(timestamp),
-                successor: stakeToken2.address,
-            };
-            const params: InitializeRewardingParams = {
-                ...paramsInput,
-                signatures: await getInitializeRewardingSignatures(stakeToken1 as any, paramsInput, admin, admins),
-            };
-
-            await expect(getStakeTokenTx_InitializeRewarding(stakeToken1 as any, deployer, params))
-                .to.be.revertedWithCustomError(stakeToken1, 'AlreadyStartedRewarding');
+            await expect(getStakeTokenTxByInput_InitializeRewarding(
+                stakeToken1 as any,
+                deployer,
+                {
+                    initialLastRewardFetch: BigNumber.from(timestamp),
+                    successor: stakeToken2.address,
+                },
+                admin,
+                admins
+            )).to.be.revertedWithCustomError(stakeToken1, 'AlreadyStartedRewarding');
         });
     });
 
@@ -422,12 +424,7 @@ describe('4.5. StakeToken', async () => {
             const paramsInput: UpdateFeeRateParamsInput = {
                 feeRate: rateValue,
             };
-            const params: UpdateFeeRateParams = {
-                ...paramsInput,
-                signatures: await getUpdateFeeRateSignatures(stakeToken1 as any, paramsInput, admin, admins),
-            };
-
-            const tx = await getStakeTokenTx_UpdateFeeRate(stakeToken1 as any, deployer, params);
+            const tx = await getStakeTokenTxByInput_UpdateFeeRate(stakeToken1 as any, deployer, paramsInput, admin, admins);
             await tx.wait();
 
             await expect(tx).to.emit(stakeToken1, 'FeeRateUpdate').withArgs(
@@ -464,29 +461,32 @@ describe('4.5. StakeToken', async () => {
         it('4.5.3.3. UpdateFeeRate unsuccessfully with invalid rate', async () => {
             const { deployer, admin, admins, stakeToken1 } = await setupBeforeTest();
             
-            const paramsInput: UpdateFeeRateParamsInput = {
-                feeRate: Constant.COMMON_RATE_MAX_FRACTION.add(1),
-            };
-            const params: UpdateFeeRateParams = {
-                ...paramsInput,
-                signatures: await getUpdateFeeRateSignatures(stakeToken1 as any, paramsInput, admin, admins),
-            };
-
-            await expect(getStakeTokenTx_UpdateFeeRate(stakeToken1 as any, deployer, params))
-                .to.be.revertedWithCustomError(stakeToken1, 'InvalidRate');
+            await expect(getStakeTokenTxByInput_UpdateFeeRate(
+                stakeToken1 as any,
+                deployer,
+                {
+                    feeRate: Constant.COMMON_RATE_MAX_FRACTION.add(1),
+                },
+                admin,
+                admins
+            )).to.be.revertedWithCustomError(stakeToken1, 'InvalidRate');
         });
     });
 
     describe('4.5.4. fetchReward()', async () => {
         it('4.5.4.1. FetchReward successfully for stake token', async () => {
-            const { stakeToken1, primaryToken, staker1 } = await setupBeforeTest({
+            const { deployer, stakeToken1, primaryToken, staker1 } = await setupBeforeTest({
                 setFeeRate: true,
                 initializeRewarding: true,
                 preparePrimaryTokenForStakers: true,
             });
             
             const initialStake = ethers.utils.parseEther("100");
-            await callTransaction(stakeToken1.connect(staker1).stake(staker1.address, initialStake));
+            await callTransaction(getStakeTokenTx_Stake(
+                stakeToken1 as any,
+                staker1,
+                { account: staker1.address, value: initialStake }
+            ));
             
             const reward = Constant.PRIMARY_TOKEN_STAKE_1_WAVE_REWARD;
 
@@ -498,7 +498,7 @@ describe('4.5. StakeToken', async () => {
 
                 lastRewardFetch = lastRewardFetch.add(Constant.STAKE_TOKEN_REWARD_FETCH_COOLDOWN);
                 await time.setNextBlockTimestamp(lastRewardFetch);
-                const tx = await stakeToken1.fetchReward();
+                const tx = await getStakeTokenTx_FetchReward(stakeToken1 as any, deployer);
                 await tx.wait();
 
                 await expect(tx).to
@@ -511,55 +511,67 @@ describe('4.5. StakeToken', async () => {
         });
 
         it('4.5.4.2. FetchReward unsuccessfully when not started rewarding', async () => {
-            const { stakeToken1, staker1 } = await setupBeforeTest({
+            const { deployer, stakeToken1, staker1 } = await setupBeforeTest({
                 setFeeRate: true,
                 preparePrimaryTokenForStakers: true,
             });
 
             const initialStake = ethers.utils.parseEther("100");
-            await callTransaction(stakeToken1.connect(staker1).stake(staker1.address, initialStake));
+            await callTransaction(getStakeTokenTx_Stake(
+                stakeToken1 as any,
+                staker1,
+                { account: staker1.address, value: initialStake }
+            ));
 
-            await expect(stakeToken1.fetchReward())
+            await expect(getStakeTokenTx_FetchReward(stakeToken1 as any, deployer))
                 .to.be.revertedWithCustomError(stakeToken1, 'NotStartedRewarding');
         });
 
         it('4.5.4.3. FetchReward unsuccessfully when on initial cooldown', async () => {
-            const { stakeToken1, staker1 } = await setupBeforeTest({
+            const { deployer, stakeToken1, staker1 } = await setupBeforeTest({
                 setFeeRate: true,
                 initializeRewarding: true,
                 preparePrimaryTokenForStakers: true,
             });
 
             const initialStake = ethers.utils.parseEther("100");
-            await callTransaction(stakeToken1.connect(staker1).stake(staker1.address, initialStake));
+            await callTransaction(getStakeTokenTx_Stake(
+                stakeToken1 as any,
+                staker1,
+                { account: staker1.address, value: initialStake }
+            ));
 
             let lastRewardFetch = await stakeToken1.lastRewardFetch();
             lastRewardFetch = lastRewardFetch.add(Constant.STAKE_TOKEN_REWARD_FETCH_COOLDOWN);
-            await expect(stakeToken1.fetchReward())
+            await expect(getStakeTokenTx_FetchReward(stakeToken1 as any, deployer))
                 .to.be.revertedWithCustomError(stakeToken1, 'OnCoolDown');
         });
 
         it('4.5.4.4. FetchReward unsuccessfully when on cooldown after fetching reward', async () => {
-            const { stakeToken1, staker1 } = await setupBeforeTest({
+            const { deployer, stakeToken1, staker1 } = await setupBeforeTest({
                 setFeeRate: true,
                 initializeRewarding: true,
                 preparePrimaryTokenForStakers: true,
             });
 
             const initialStake = ethers.utils.parseEther("100");
-            await callTransaction(stakeToken1.connect(staker1).stake(staker1.address, initialStake));
+            await callTransaction(getStakeTokenTx_Stake(
+                stakeToken1 as any,
+                staker1,
+                { account: staker1.address, value: initialStake }
+            ));
 
             let lastRewardFetch = await stakeToken1.lastRewardFetch();
             lastRewardFetch = lastRewardFetch.add(Constant.STAKE_TOKEN_REWARD_FETCH_COOLDOWN);
             await time.setNextBlockTimestamp(lastRewardFetch);
-            await callTransaction(stakeToken1.fetchReward());
+            await callTransaction(getStakeTokenTx_FetchReward(stakeToken1 as any, deployer));
 
-            await expect(stakeToken1.fetchReward())
+            await expect(getStakeTokenTx_FetchReward(stakeToken1 as any, deployer))
                 .to.be.revertedWithCustomError(stakeToken1, 'OnCoolDown');
         });
 
         it('4.5.4.5. FetchReward unsuccessfully when stake token has zero stake', async () => {
-            const { stakeToken1, staker1 } = await setupBeforeTest({
+            const { deployer, stakeToken1 } = await setupBeforeTest({
                 setFeeRate: true,
                 initializeRewarding: true,
             });
@@ -567,7 +579,7 @@ describe('4.5. StakeToken', async () => {
             let lastRewardFetch = await stakeToken1.lastRewardFetch();
             lastRewardFetch = lastRewardFetch.add(Constant.STAKE_TOKEN_REWARD_FETCH_COOLDOWN);
             await time.setNextBlockTimestamp(lastRewardFetch);
-            await expect(stakeToken1.fetchReward())
+            await expect(getStakeTokenTx_FetchReward(stakeToken1 as any, deployer))
                 .to.be.revertedWithCustomError(stakeToken1, 'NoStake');
         });        
     });
@@ -584,7 +596,11 @@ describe('4.5. StakeToken', async () => {
             const initStakeToken1PrimaryBalance = await primaryToken.balanceOf(stakeToken1.address);
 
             const stakeAmount1 = ethers.utils.parseEther("100");
-            const tx1 = (stakeToken1.connect(staker1).stake(staker1.address, stakeAmount1));
+            const tx1 = await getStakeTokenTx_Stake(
+                stakeToken1 as any,
+                staker1,
+                { account: staker1.address, value: stakeAmount1 }
+            );
 
             await expect(tx1).to.emit(stakeToken1, 'Stake').withArgs(
                 staker1.address,
@@ -602,7 +618,11 @@ describe('4.5. StakeToken', async () => {
             expect(await stakeToken1.totalSupply()).to.equal(stakeAmount1);
 
             const stakeAmount2 = ethers.utils.parseEther("1000");
-            const tx2 = (stakeToken1.connect(staker1).stake(staker1.address, stakeAmount2));
+            const tx2 = await getStakeTokenTx_Stake(
+                stakeToken1 as any,
+                staker1,
+                { account: staker1.address, value: stakeAmount2 }
+            );
 
             await expect(tx2).to.emit(stakeToken1, 'Stake').withArgs(
                 staker1.address,
@@ -647,7 +667,11 @@ describe('4.5. StakeToken', async () => {
                 (await stakeToken1.getFeeRate()).value
             );
 
-            const tx1 = (stakeToken1.connect(staker1).stake(staker1.address, stakeValue1));
+            const tx1 = await getStakeTokenTx_Stake(
+                stakeToken1 as any,
+                staker1,
+                { account: staker1.address, value: stakeValue1 }
+            );
 
             await expect(tx1).to.emit(stakeToken1, 'Stake').withArgs(
                 staker1.address,
@@ -675,7 +699,11 @@ describe('4.5. StakeToken', async () => {
                 (await stakeToken1.getFeeRate()).value
             );
             
-            const tx2 = (stakeToken1.connect(staker1).stake(staker1.address, stakeValue2));
+            const tx2 = await getStakeTokenTx_Stake(
+                stakeToken1 as any,
+                staker1,
+                { account: staker1.address, value: stakeValue2 }
+            );
 
             await expect(tx2).to.emit(stakeToken1, 'Stake').withArgs(
                 staker1.address,
@@ -715,9 +743,10 @@ describe('4.5. StakeToken', async () => {
             // Initial staking
             const stakeAmount = ethers.utils.parseEther("100");
 
-            await callTransaction(stakeToken1.connect(staker1).stake(
-                staker1.address, 
-                stakeAmount
+            await callTransaction(getStakeTokenTx_Stake(
+                stakeToken1 as any,
+                staker1,
+                { account: staker1.address, value: stakeAmount }
             ));
 
             primaryToken.isStakeRewardingCulminated.returns(true);
@@ -749,7 +778,7 @@ describe('4.5. StakeToken', async () => {
 
             const unstakeAmount2 = ethers.utils.parseEther("20");
 
-            const tx2 = await stakeToken1.connect(staker1).unstake(unstakeAmount2);
+            const tx2 = await getStakeTokenTx_Unstake(stakeToken1 as any, staker1, { value: unstakeAmount2 });
             await tx2.wait();
 
             await expect(tx2)
@@ -778,13 +807,14 @@ describe('4.5. StakeToken', async () => {
 
             // Initial staking
             const stakeAmount = ethers.utils.parseEther("100");
-            await callTransaction(stakeToken1.connect(staker1).stake(
-                staker1.address, 
-                stakeAmount
+            await callTransaction(getStakeTokenTx_Stake(
+                stakeToken1 as any,
+                staker1,
+                { account: staker1.address, value: stakeAmount }
             ));
 
             // Unstake
-            await expect(stakeToken1.connect(staker1).unstake(ethers.utils.parseEther("30")))
+            await expect(getStakeTokenTx_Unstake(stakeToken1 as any, staker1, { value: ethers.utils.parseEther("30") }))
                 .to.be.revertedWithCustomError(stakeToken1, 'NotCulminated');
         });
 
@@ -797,15 +827,16 @@ describe('4.5. StakeToken', async () => {
 
             // Initial staking
             const stakeAmount = ethers.utils.parseEther("100");
-            await callTransaction(stakeToken1.connect(staker1).stake(
-                staker1.address, 
-                stakeAmount
+            await callTransaction(getStakeTokenTx_Stake(
+                stakeToken1 as any,
+                staker1,
+                { account: staker1.address, value: stakeAmount }
             ));
 
             // Unstake
             primaryToken.isStakeRewardingCulminated.returns(true);
 
-            await expect(stakeToken1.connect(staker1).unstake(stakeAmount.add(1)))
+            await expect(getStakeTokenTx_Unstake(stakeToken1 as any, staker1, { value: stakeAmount.add(1) }))
                 .to.be.revertedWithCustomError(stakeToken1, 'InsufficientFunds');
 
             primaryToken.isStakeRewardingCulminated.reset();
@@ -821,15 +852,16 @@ describe('4.5. StakeToken', async () => {
             });
 
             const stakeAmount = ethers.utils.parseEther("150");
-            await callTransaction(stakeToken1.connect(staker1).stake(
-                staker1.address, 
-                stakeAmount
+            await callTransaction(getStakeTokenTx_Stake(
+                stakeToken1 as any,
+                staker1,
+                { account: staker1.address, value: stakeAmount }
             ));
 
             // Transaction #1
             const promoteAmount1 = ethers.utils.parseEther("80");
 
-            const tx1 = await stakeToken1.connect(staker1).promote(promoteAmount1);
+            const tx1 = await getStakeTokenTx_Promote(stakeToken1 as any, staker1, { value: promoteAmount1 });
             await tx1.wait();
 
             await expect(tx1).to.emit(stakeToken1, 'Promotion').withArgs(
@@ -849,7 +881,7 @@ describe('4.5. StakeToken', async () => {
             // Transaction #2
             const promoteAmount2 = ethers.utils.parseEther("40");
 
-            const tx2 = await stakeToken1.connect(staker1).promote(promoteAmount2);
+            const tx2 = await getStakeTokenTx_Promote(stakeToken1 as any, staker1, { value: promoteAmount2 });
             await tx2.wait();
 
             await expect(tx2).to.emit(stakeToken1, 'Promotion').withArgs(
@@ -879,7 +911,7 @@ describe('4.5. StakeToken', async () => {
             // Transaction #3
             const promoteAmount3 = ethers.utils.parseEther("20");
 
-            const tx3 = await stakeToken2.connect(staker1).promote(promoteAmount3);
+            const tx3 = await getStakeTokenTx_Promote(stakeToken2 as any, staker1, { value: promoteAmount3 });
             await tx3.wait();
 
             await expect(tx3).to.emit(stakeToken2, 'Promotion').withArgs(
@@ -906,7 +938,7 @@ describe('4.5. StakeToken', async () => {
             });
             const { stakeToken1, staker1 } = fixture;
 
-            await expect(stakeToken1.connect(staker1).promote(ethers.utils.parseEther("10")))
+            await expect(getStakeTokenTx_Promote(stakeToken1 as any, staker1, { value: ethers.utils.parseEther("10") }))
                 .to.be.revertedWith('Pausable: paused');
         });
 
@@ -918,7 +950,7 @@ describe('4.5. StakeToken', async () => {
             });
             const { stakeToken3, staker1 } = fixture;
 
-            await expect(stakeToken3.connect(staker1).promote(ethers.utils.parseEther("10")))
+            await expect(getStakeTokenTx_Promote(stakeToken3 as any, staker1, { value: ethers.utils.parseEther("10") }))
                 .to.be.revertedWithCustomError(stakeToken3, 'NoSuccessor');
         });
 
@@ -931,7 +963,7 @@ describe('4.5. StakeToken', async () => {
             const { stakeToken1, staker1, primaryToken } = fixture;
             primaryToken.isStakeRewardingCulminated.returns(true);
 
-            await expect(stakeToken1.connect(staker1).promote(ethers.utils.parseEther("10")))
+            await expect(getStakeTokenTx_Promote(stakeToken1 as any, staker1, { value: ethers.utils.parseEther("10") }))
                 .to.be.revertedWithCustomError(stakeToken1, 'InvalidPromoting');
 
             primaryToken.isStakeRewardingCulminated.reset();
@@ -945,12 +977,13 @@ describe('4.5. StakeToken', async () => {
             });
             const { stakeToken1, staker1 } = fixture;
 
-            await callTransaction(stakeToken1.connect(staker1).stake(
-                staker1.address, 
-                ethers.utils.parseEther("100")
+            await callTransaction(getStakeTokenTx_Stake(
+                stakeToken1 as any,
+                staker1,
+                { account: staker1.address, value: ethers.utils.parseEther("100") }
             ));
 
-            await expect(stakeToken1.connect(staker1).promote(ethers.utils.parseEther("101")))
+            await expect(getStakeTokenTx_Promote(stakeToken1 as any, staker1, { value: ethers.utils.parseEther("101") }))
                 .to.be.revertedWithCustomError(stakeToken1, 'InsufficientFunds');
         });        
     });
@@ -960,7 +993,7 @@ describe('4.5. StakeToken', async () => {
             fixture: StakeTokenFixture,
             operations: any[],
         ) {
-            const { stakeToken1, stakeToken2, stakeToken3, primaryToken } = fixture;
+            const { deployer, stakeToken1, stakeToken2, stakeToken3, primaryToken } = fixture;
 
             const stakeTokens = [stakeToken1, stakeToken2, stakeToken3];
             const stakers: Wallet[] = [];
@@ -998,9 +1031,10 @@ describe('4.5. StakeToken', async () => {
                     // console.log("Stake", pool, staker.address, amount);
                     addStaker(staker);
                     
-                    await callTransaction(stakeToken.connect(staker).stake(
-                        staker.address, 
-                        amount
+                    await callTransaction(getStakeTokenTx_Stake(
+                        stakeToken as any,
+                        staker,
+                        { account: staker.address, value: amount }
                     ));
 
                     expectedBalances[pool].set(staker.address, getBalance(pool, staker).add(amount));
@@ -1011,7 +1045,7 @@ describe('4.5. StakeToken', async () => {
                     // console.log("Unstake", pool, staker.address, amount);
                     addStaker(staker);
 
-                    await callTransaction(stakeToken.connect(staker).unstake(amount));
+                    await callTransaction(getStakeTokenTx_Unstake(stakeToken as any, staker, { value: amount }));
 
                     expectedBalances[pool].set(staker.address, getBalance(pool, staker).sub(amount));
 
@@ -1021,7 +1055,7 @@ describe('4.5. StakeToken', async () => {
                     // console.log("Promote", pool, staker.address, amount);
                     addStaker(staker);
 
-                    await callTransaction(stakeToken.connect(staker).promote(amount));
+                    await callTransaction(getStakeTokenTx_Promote(stakeToken as any, staker, { value: amount }));
 
                     expectedBalances[pool].set(staker.address, getBalance(pool, staker).sub(amount));
                     expectedBalances[pool+1].set(staker.address, getBalance(pool+1, staker).add(amount));
@@ -1034,9 +1068,10 @@ describe('4.5. StakeToken', async () => {
                     addStaker(sender);
                     addStaker(receiver);
 
-                    await callTransaction(stakeToken.connect(sender).transfer(
-                        receiver.address, 
-                        amount
+                    await callTransaction(getStakeTokenTx_Transfer(
+                        stakeToken as any,
+                        sender,
+                        { to: receiver.address, amount: amount }
                     ));
                     expectedBalances[pool].set(sender.address, getBalance(pool, sender).sub(amount));
                     expectedBalances[pool].set(receiver.address, getBalance(pool, receiver).add(amount));
@@ -1051,7 +1086,7 @@ describe('4.5. StakeToken', async () => {
                     if (nextRewardFetch.gt(await time.latest())) {
                         await time.setNextBlockTimestamp(nextRewardFetch);
                     }
-                    await callTransaction(stakeTokens[pool].fetchReward());
+                    await callTransaction(getStakeTokenTx_FetchReward(stakeTokens[pool] as any, deployer));
     
                     const newTotalSupply = await stakeTokens[pool].totalSupply();
     
@@ -1298,14 +1333,16 @@ describe('4.5. StakeToken', async () => {
                 preparePrimaryTokenForStakers: true,
             });
 
-            await callTransaction(stakeToken1.connect(staker1).stake(
-                staker1.address, 
-                ethers.utils.parseEther("100")
+            await callTransaction(getStakeTokenTx_Stake(
+                stakeToken1 as any,
+                staker1,
+                { account: staker1.address, value: ethers.utils.parseEther("100") }
             ));
 
-            const tx = await stakeToken1.connect(staker1).transfer(
-                staker2.address,
-                ethers.utils.parseEther("40")
+            const tx = await getStakeTokenTx_Transfer(
+                stakeToken1 as any,
+                staker1,
+                { to: staker2.address, amount: ethers.utils.parseEther("40") }
             );
             await tx.wait();
 

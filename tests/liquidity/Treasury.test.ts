@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
 import { Admin, Currency, MockPrimaryToken, Treasury } from '@typechain-types';
-import { getSignatures, prepareERC20 } from '@utils/blockchain';
+import { callTransaction, getSignatures, prepareERC20 } from '@utils/blockchain';
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { Constant } from '@tests/test.constant';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
@@ -11,7 +11,8 @@ import { deployMockPrimaryToken } from '@utils/deployments/mock/mockPrimaryToken
 import { Initialization as LiquidityInitialization } from '@tests/liquidity/test.initialization';
 import { WithdrawOperationFundParams, WithdrawOperationFundParamsInput } from '@utils/models/liquidity/treasury';
 import { getWithdrawOperationFundSignatures } from '@utils/signatures/liquidity/treasury';
-import { getTreasuryTx_WithdrawOperationFund } from '@utils/transaction/liquidity/treasury';
+import { getCallTreasuryTx_WithdrawLiquidity, getTreasuryTx_ProvideLiquidity, getTreasuryTx_WithdrawLiquidity, getTreasuryTx_WithdrawOperationFund, getTreasuryTxByInput_WithdrawOperationFund } from '@utils/transaction/liquidity/treasury';
+import { getPausableTxByInput_Pause } from '@utils/transaction/common/pausable';
 
 interface TreasuryFixture {
     deployer: any;
@@ -83,11 +84,15 @@ describe('4.6. Treasury', async () => {
 
         if (prepareLiquidity) {
             await prepareERC20(currency, [deployer], [treasury as any], ethers.utils.parseEther("1000000"));
-            await treasury.provideLiquidity(ethers.utils.parseEther("1000000"));
+            await callTransaction(getTreasuryTx_ProvideLiquidity(
+                treasury,
+                deployer,
+                { value: ethers.utils.parseEther("1000000") }
+            ));
         }
 
         if (pause) {
-            await callTransaction(getPauseTxByInput(treasury, deployer, admins, admin));;
+            await callTransaction(getPausableTxByInput_Pause(treasury as any, deployer, admin, admins));;
         }
 
         return {
@@ -109,7 +114,7 @@ describe('4.6. Treasury', async () => {
     });
 
     describe('4.6.2. withdrawOperationFund(uint256, address, bytes[])', async () => {
-        it('4.6.2.1. WithdrawOperationFund successfully with valid signatures', async () => {
+        it('4.6.2.1. Withdraw operation fund successfully with valid signatures', async () => {
             const { deployer, treasury, admin, admins, currency, primaryToken, receiver } = await setupBeforeTest({
                 prepareLiquidity: true,
             });
@@ -123,12 +128,13 @@ describe('4.6. Treasury', async () => {
                 operator: receiver.address,
                 value: value1,
             };
-            const params1: WithdrawOperationFundParams = {
-                ...paramsInput1,
-                signatures: await getWithdrawOperationFundSignatures(treasury, paramsInput1, admin, admins),
-            };
-            
-            const tx1 = await getTreasuryTx_WithdrawOperationFund(treasury, deployer, params1);
+            const tx1 = await getTreasuryTxByInput_WithdrawOperationFund(
+                treasury,
+                deployer,
+                paramsInput1,
+                admin,
+                admins,
+            );
             await tx1.wait();
 
             await expect(tx1).to.emit(treasury, "OperationFundWithdrawal").withArgs(
@@ -146,12 +152,13 @@ describe('4.6. Treasury', async () => {
                 operator: receiver.address,
                 value: value2,
             };
-            const params2: WithdrawOperationFundParams = {
-                ...paramsInput2,
-                signatures: await getWithdrawOperationFundSignatures(treasury, paramsInput2, admin, admins),
-            };
-
-            const tx2 = await getTreasuryTx_WithdrawOperationFund(treasury, deployer, params2);
+            const tx2 = await getTreasuryTxByInput_WithdrawOperationFund(
+                treasury,
+                deployer,
+                paramsInput2,
+                admin,
+                admins,
+            );
             await tx2.wait();
 
             await expect(tx2).to.emit(treasury, "OperationFundWithdrawal").withArgs(
@@ -164,7 +171,7 @@ describe('4.6. Treasury', async () => {
             expect(await currency.balanceOf(receiver.address)).to.equal(value1.add(value2));
         });
 
-        it('4.6.2.2. WithdrawOperationFund unsuccessfully with invalid signatures', async () => {
+        it('4.6.2.2. Withdraw operation fund unsuccessfully with invalid signatures', async () => {
             const { deployer, treasury, admin, admins, receiver } = await setupBeforeTest({
                 prepareLiquidity: true,
             });
@@ -179,12 +186,11 @@ describe('4.6. Treasury', async () => {
                 ...paramsInput,
                 signatures: await getWithdrawOperationFundSignatures(treasury, paramsInput, admin, admins, false),
             };
-
             await expect(getTreasuryTx_WithdrawOperationFund(treasury, deployer, params))
                 .to.be.revertedWithCustomError(admin, "FailedVerification");
         });
 
-        it('4.6.2.3. WithdrawOperationFund unsuccessfully with insufficient funds', async () => {
+        it('4.6.2.3. Withdraw operation fund unsuccessfully with insufficient funds', async () => {
             const { deployer, treasury, admin, admins, receiver } = await setupBeforeTest({
                 prepareLiquidity: true,
             });
@@ -192,22 +198,21 @@ describe('4.6. Treasury', async () => {
             const operationFund = await treasury.operationFund();
             const value = operationFund.add(1);
 
-            const paramsInput: WithdrawOperationFundParamsInput = {
-                operator: receiver.address,
-                value: value,
-            };
-            const params: WithdrawOperationFundParams = {
-                ...paramsInput,
-                signatures: await getWithdrawOperationFundSignatures(treasury, paramsInput, admin, admins),
-            };
-
-            await expect(getTreasuryTx_WithdrawOperationFund(treasury, deployer, params))
-                .to.be.revertedWithCustomError(treasury, "InsufficientFunds");
+            await expect(getTreasuryTxByInput_WithdrawOperationFund(
+                treasury,
+                deployer,
+                {
+                    operator: receiver.address,
+                    value: value,
+                },
+                admin,
+                admins,
+            )).to.be.revertedWithCustomError(treasury, "InsufficientFunds");
         });
     });
 
     describe('4.6.3. withdrawLiquidity(uint256)', async () => {
-        it('4.6.3.1. WithdrawLiquidity successfully', async () => {
+        it('4.6.3.1. Withdraw liquidity successfully', async () => {
             const { treasury, admin, admins, currency, primaryToken, receiver } = await setupBeforeTest({
                 prepareLiquidity: true,
             });
@@ -218,10 +223,14 @@ describe('4.6. Treasury', async () => {
             const initialOperationFund = await treasury.operationFund();
             const initialLiquidity = await treasury.liquidity();
 
-            const tx1 = await primaryToken.call(treasury.address, treasury.interface.encodeFunctionData("withdrawLiquidity", [
-                receiver.address,
-                value1
-            ]))
+            const tx1 = await getCallTreasuryTx_WithdrawLiquidity(
+                treasury,
+                primaryToken as any,
+                {
+                    withdrawer: receiver.address,
+                    value: value1,
+                }
+            );
             await tx1.wait();
 
             await expect(tx1).to.emit(treasury, "LiquidityWithdrawal").withArgs(
@@ -236,10 +245,14 @@ describe('4.6. Treasury', async () => {
 
             const value2 = ethers.utils.parseEther("1000");
 
-            const tx2 = await primaryToken.call(treasury.address, treasury.interface.encodeFunctionData("withdrawLiquidity", [
-                receiver.address,
-                value2,
-            ]))
+            const tx2 = await getCallTreasuryTx_WithdrawLiquidity(
+                treasury,
+                primaryToken as any,
+                {
+                    withdrawer: receiver.address,
+                    value: value2,
+                }
+            );
             await tx2.wait();
 
             await expect(tx2).to.emit(treasury, "LiquidityWithdrawal").withArgs(
@@ -252,7 +265,7 @@ describe('4.6. Treasury', async () => {
             expect(await currency.balanceOf(treasury.address)).to.equal(initialTreasuryBalance.sub(value1).sub(value2));
         });
 
-        it('4.6.3.2. WithdrawLiquidity unsuccessfully when paused', async () => {
+        it('4.6.3.2. Withdraw liquidity unsuccessfully when paused', async () => {
             const { treasury, primaryToken, receiver } = await setupBeforeTest({
                 prepareLiquidity: true,
                 pause: true,
@@ -260,42 +273,53 @@ describe('4.6. Treasury', async () => {
 
             const value = ethers.utils.parseEther("100");
             
-            await expect(primaryToken.call(
-                treasury.address,
-                treasury.interface.encodeFunctionData("withdrawLiquidity", [
-                    receiver.address,
-                    value,
-                ])
+            await expect(getCallTreasuryTx_WithdrawLiquidity(
+                treasury,
+                primaryToken as any,
+                {
+                    withdrawer: receiver.address,
+                    value: value,
+                }
             )).to.be.revertedWith("Pausable: paused");
         });
 
-        it('4.6.3.3. WithdrawLiquidity unsuccessfully by unauthorized user', async () => {
-            const { treasury, receiver } = await setupBeforeTest({
+        it('4.6.3.3. Withdraw liquidity unsuccessfully by unauthorized user', async () => {
+            const { deployer, treasury, receiver } = await setupBeforeTest({
                 prepareLiquidity: true,
             });
 
             const value = ethers.utils.parseEther("100");
 
-            await expect(treasury.withdrawLiquidity(receiver.address, value))
-                .to.be.revertedWithCustomError(treasury, "Unauthorized");
+            await expect(getTreasuryTx_WithdrawLiquidity(
+                treasury,
+                deployer,
+                {
+                    withdrawer: receiver.address,
+                    value: value,
+                }
+            )).to.be.revertedWithCustomError(treasury, "Unauthorized");
         });
 
-        it('4.6.3.4. WithdrawLiquidity unsuccessfully with insufficient funds', async () => {
-            const { treasury, primaryToken, receiver } = await setupBeforeTest({
+        it('4.6.3.4. Withdraw liquidity unsuccessfully with insufficient funds', async () => {
+            const { deployer, treasury, primaryToken, receiver } = await setupBeforeTest({
                 prepareLiquidity: true,
             });
 
             const value = (await treasury.liquidity()).add(1);
             
-            await expect(primaryToken.call(treasury.address, treasury.interface.encodeFunctionData("withdrawLiquidity", [
-                receiver.address,
-                value
-            ]))).to.be.revertedWithCustomError(treasury, "InsufficientFunds");
+            await expect(getCallTreasuryTx_WithdrawLiquidity(
+                treasury,
+                primaryToken as any,
+                {
+                    withdrawer: receiver.address,
+                    value: value,
+                }
+            )).to.be.revertedWithCustomError(treasury, "InsufficientFunds");
         });
     });
 
     describe('4.6.4. provideLiquidity(uint256)', async () => {
-        it('4.6.4.1. ProvideLiquidity successfully', async () => {
+        it('4.6.4.1. Provide liquidity successfully', async () => {
             const { treasury, currency, receiver } = await setupBeforeTest();
 
             const value1 = ethers.utils.parseEther("100");
@@ -308,7 +332,7 @@ describe('4.6. Treasury', async () => {
             const feeAmount1 = value1.mul(Constant.TREASURY_OPERATION_FUND_RATE).div(Constant.COMMON_RATE_MAX_FRACTION);
             const valueAfterFee1 = value1.sub(feeAmount1);
 
-            const tx1 = await treasury.connect(receiver).provideLiquidity(value1);
+            const tx1 = await getTreasuryTx_ProvideLiquidity(treasury, receiver, { value: value1 });
             await tx1.wait();
 
             await expect(tx1).to.emit(treasury, "LiquidityProvision").withArgs(
@@ -321,7 +345,7 @@ describe('4.6. Treasury', async () => {
             expect(await treasury.operationFund()).to.equal(feeAmount1);
             expect(await currency.balanceOf(treasury.address)).to.equal(initialTreasuryBalance.add(value1));
 
-            const tx2 = await treasury.connect(receiver).provideLiquidity(value2);
+            const tx2 = await getTreasuryTx_ProvideLiquidity(treasury, receiver, { value: value2 });
             await tx2.wait();
 
             const feeAmount2 = value2.mul(Constant.TREASURY_OPERATION_FUND_RATE).div(Constant.COMMON_RATE_MAX_FRACTION);
@@ -338,7 +362,7 @@ describe('4.6. Treasury', async () => {
             expect(await currency.balanceOf(treasury.address)).to.equal(initialTreasuryBalance.add(value1).add(value2));
         });
 
-        it('4.6.4.2. ProvideLiquidity unsuccessfully when paused', async () => {
+        it('4.6.4.2. Provide liquidity unsuccessfully when paused', async () => {
             const { treasury, receiver } = await setupBeforeTest({
                 prepareLiquidity: true,
                 pause: true,
@@ -346,7 +370,7 @@ describe('4.6. Treasury', async () => {
 
             const value = ethers.utils.parseEther("100");
 
-            await expect(treasury.connect(receiver).provideLiquidity(value))
+            await expect(getTreasuryTx_ProvideLiquidity(treasury, receiver, { value: value }))
                 .to.be.revertedWith("Pausable: paused");
         });
     });

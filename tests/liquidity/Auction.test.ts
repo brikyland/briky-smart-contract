@@ -15,8 +15,9 @@ import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/re
 import { Contract } from 'ethers';
 import { getStartAuctionSignatures, getUpdateStakeTokensSignatures } from '@utils/signatures/liquidity/auction';
 import { StartAuctionParams, StartAuctionParamsInput, UpdateStakeTokensParams, UpdateStakeTokensParamsInput } from '@utils/models/liquidity/auction';
-import { getAuctionTx_StartAuction, getAuctionTx_UpdateStakeTokens } from '@utils/transaction/liquidity/auction';
-import { getPrimaryTokenTxByInput_UpdateStakeTokens, getPrimaryTokenTxByInput_UpdateTreasury } from '@utils/transaction/liquidity/primaryToken';
+import { getAuctionTx_Deposit, getAuctionTx_Stake, getAuctionTx_StartAuction, getAuctionTx_UpdateStakeTokens, getAuctionTx_Withdraw, getAuctionTxByInput_StartAuction, getAuctionTxByInput_UpdateStakeTokens } from '@utils/transaction/liquidity/auction';
+import { getPrimaryTokenTxByInput_UnlockForPublicSale, getPrimaryTokenTxByInput_UpdateStakeTokens, getPrimaryTokenTxByInput_UpdateTreasury } from '@utils/transaction/liquidity/primaryToken';
+import { getPausableTxByInput_Pause } from '@utils/transaction/common/pausable';
 
 interface AuctionFixture {
     deployer: any;
@@ -175,30 +176,29 @@ describe('4.1. Auction', async () => {
         const { deployer, admins, depositor1, depositor2, depositor3, admin, treasury, currency, primaryToken, stakeToken1, stakeToken2, stakeToken3, auction } = fixture;
 
         if (mintPrimaryTokenForAuction) {
-            await callPrimaryToken_UnlockForPublicSale(
+            await callTransaction(getPrimaryTokenTxByInput_UnlockForPublicSale(
                 primaryToken,
                 deployer,
-                admins,
-                admin,
                 {
                     distributor: auction.address,
                 },
-            );
+                admin,
+                admins,
+            ));
         }
 
         if (updateStakeTokens) {
-            const paramsInput: UpdateStakeTokensParamsInput = {
-                stakeToken1: stakeToken1.address,
-                stakeToken2: stakeToken2.address,
-                stakeToken3: stakeToken3.address,
-            };
-            await callAuction_UpdateStakeTokens(
+            await callTransaction(getAuctionTxByInput_UpdateStakeTokens(
                 auction,
                 deployer,
-                admins,
+                {
+                    stakeToken1: stakeToken1.address,
+                    stakeToken2: stakeToken2.address,
+                    stakeToken3: stakeToken3.address,
+                },
                 admin,
-                paramsInput,
-            );
+                admins,
+            ));
         }
 
         if (startAuction) {
@@ -210,13 +210,13 @@ describe('4.1. Auction', async () => {
                 endAt: endAt,
                 vestingDuration: vestingDuration,
             };
-            await callAuction_StartAuction(
+            await callTransaction(getAuctionTxByInput_StartAuction(
                 auction,
                 deployer,
-                admins,
-                admin,
                 paramsInput,
-            );
+                admin,
+                admins,
+            ));
         }
 
         await prepareERC20(
@@ -227,13 +227,13 @@ describe('4.1. Auction', async () => {
         );
 
         if (listDeposits) {
-            await auction.connect(depositor1).deposit(ethers.utils.parseEther('100'));
-            await auction.connect(depositor2).deposit(ethers.utils.parseEther('200'));
-            await auction.connect(depositor3).deposit(ethers.utils.parseEther('400'));
+            await getAuctionTx_Deposit(auction, depositor1, { value: ethers.utils.parseEther('100') });
+            await getAuctionTx_Deposit(auction, depositor2, { value: ethers.utils.parseEther('200') });
+            await getAuctionTx_Deposit(auction, depositor3, { value: ethers.utils.parseEther('400') });
         }
 
         if (pause) {
-            await callTransaction(getPauseTxByInput(auction, deployer, admins, admin));;
+            await callTransaction(getPausableTxByInput_Pause(auction, deployer, admin, admins));;
         }
 
         return fixture;
@@ -261,7 +261,7 @@ describe('4.1. Auction', async () => {
     });
 
     describe('4.1.2. updateStakeTokens(address, address, address, bytes[])', async () => {
-        it('4.1.2.1. UpdateStakeTokens successfully', async () => {
+        it('4.1.2.1. Update stake tokenssuccessfully', async () => {
             const fixture = await setupBeforeTest({});
             const { admin, admins, deployer, auction, stakeToken1, stakeToken2, stakeToken3 } = fixture;
             
@@ -270,20 +270,15 @@ describe('4.1. Auction', async () => {
                 stakeToken2: stakeToken2.address,
                 stakeToken3: stakeToken3.address,
             };
-            const params: UpdateStakeTokensParams = {
-                ...paramsInput,
-                signatures: await getUpdateStakeTokensSignatures(auction, paramsInput, admin, admins),
-            };
-
-            const tx = await getAuctionTx_UpdateStakeTokens(auction, deployer, params);
+            const tx = await getAuctionTxByInput_UpdateStakeTokens(auction, deployer, paramsInput, admin, admins);
             await tx.wait();
 
-            expect(await auction.stakeToken1()).to.equal(params.stakeToken1);
-            expect(await auction.stakeToken2()).to.equal(params.stakeToken2);
-            expect(await auction.stakeToken3()).to.equal(params.stakeToken3);
+            expect(await auction.stakeToken1()).to.equal(stakeToken1.address);
+            expect(await auction.stakeToken2()).to.equal(stakeToken2.address);
+            expect(await auction.stakeToken3()).to.equal(stakeToken3.address);
         });
 
-        it('4.1.2.2. UpdateStakeTokens unsuccessfully with invalid signatures', async () => {
+        it('4.1.2.2. Update stake tokensunsuccessfully with invalid signatures', async () => {
             const { admin, admins, deployer, auction, stakeToken1, stakeToken2, stakeToken3 } = await setupBeforeTest({});
             
             const paramsInput: UpdateStakeTokensParamsInput = {
@@ -293,9 +288,8 @@ describe('4.1. Auction', async () => {
             };
             const params: UpdateStakeTokensParams = {
                 ...paramsInput,
-                signatures: await getUpdateStakeTokensInvalidSignatures(auction, admins, admin, paramsInput),
+                signatures: await getUpdateStakeTokensSignatures(auction, paramsInput, admin, admins, false),
             };
-
             await expect(getAuctionTx_UpdateStakeTokens(auction, deployer, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
@@ -312,15 +306,11 @@ describe('4.1. Auction', async () => {
                 stakeToken2: stakeToken2,
                 stakeToken3: stakeToken3,
             };
-            const params: UpdateStakeTokensParams = {
-                ...paramsInput,
-                signatures: await getUpdateStakeTokensSignatures(auction, paramsInput, admin, admins),
-            };
-            await expect(getAuctionTx_UpdateStakeTokens(auction, deployer, params))
+            await expect(getAuctionTxByInput_UpdateStakeTokens(auction, deployer, paramsInput, admin, admins))
                 .to.be.revertedWithCustomError(auction, 'InvalidUpdating');
         }
 
-        it('4.1.2.3. UpdateStakeTokens unsuccessfully with zero address stake tokens', async () => {
+        it('4.1.2.3. Update stake tokensunsuccessfully with zero address stake tokens', async () => {
             const fixture = await setupBeforeTest({});
             const { stakeToken1, stakeToken2, stakeToken3 } = fixture;
 
@@ -329,7 +319,7 @@ describe('4.1. Auction', async () => {
             await testForInvalidInput(fixture, stakeToken1.address, stakeToken2.address, ethers.constants.AddressZero);
         });
 
-        it('4.1.2.4. UpdateStakeTokens unsuccessfully with already updated stake tokens', async () => {
+        it('4.1.2.4. Update stake tokensunsuccessfully with already updated stake tokens', async () => {
             const fixture = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -339,7 +329,7 @@ describe('4.1. Auction', async () => {
     });
 
     describe('4.1.3. startAuction(uint256, uint256, bytes[])', async () => {
-        it('4.1.3.1. StartAuction successfully', async () => {
+        it('4.1.3.1. Start auction successfully', async () => {
             const fixture = await setupBeforeTest({
                 updateStakeTokens: true,
                 mintPrimaryTokenForAuction: true,
@@ -354,12 +344,7 @@ describe('4.1. Auction', async () => {
                 endAt: endAt,
                 vestingDuration: vestingDuration,
             };
-            const params: StartAuctionParams = {
-                ...paramsInput,
-                signatures: await getStartAuctionSignatures(auction, paramsInput, admin, admins),
-            };
-
-            const tx = await getAuctionTx_StartAuction(auction, deployer, params);
+            const tx = await getAuctionTxByInput_StartAuction(auction, deployer, paramsInput, admin, admins);
             await tx.wait();
 
             expect(await auction.endAt()).to.equal(endAt);
@@ -368,7 +353,7 @@ describe('4.1. Auction', async () => {
             expect(await auction.totalToken()).to.equal(Constant.PRIMARY_TOKEN_PUBLIC_SALE);            
         });
 
-        it('4.1.3.2. StartAuction unsuccessfully with invalid signatures', async () => {
+        it('4.1.3.2. Start auction unsuccessfully with invalid signatures', async () => {
             const { admin, admins, deployer, auction } = await setupBeforeTest({
                 updateStakeTokens: true,
                 mintPrimaryTokenForAuction: true,
@@ -384,14 +369,13 @@ describe('4.1. Auction', async () => {
             };
             const params: StartAuctionParams = {
                 ...paramsInput,
-                signatures: await getStartAuctionInvalidSignatures(auction, admins, admin, paramsInput),
+                signatures: await getStartAuctionSignatures(auction, paramsInput, admin, admins, false),
             };
-
             await expect(getAuctionTx_StartAuction(auction, deployer, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('4.1.3.3. StartAuction unsuccessfully with invalid end time', async () => {
+        it('4.1.3.3. Start auction unsuccessfully with invalid end time', async () => {
             const { admin, admins, deployer, auction } = await setupBeforeTest({
                 updateStakeTokens: true,
                 mintPrimaryTokenForAuction: true,
@@ -407,16 +391,11 @@ describe('4.1. Auction', async () => {
                 endAt: endAt,
                 vestingDuration: vestingDuration,
             };
-            const params: StartAuctionParams = {
-                ...paramsInput,
-                signatures: await getStartAuctionSignatures(auction, paramsInput, admin, admins),
-            };
-
-            await expect(getAuctionTx_StartAuction(auction, deployer, params))
+            await expect(getAuctionTxByInput_StartAuction(auction, deployer, paramsInput, admin, admins))
                 .to.be.revertedWithCustomError(auction, 'InvalidTimestamp');
         });
 
-        it('4.1.3.4. StartAuction unsuccessfully when it has already started', async () => {
+        it('4.1.3.4. Start auction unsuccessfully when it has already started', async () => {
             const { admin, admins, deployer, auction } = await setupBeforeTest({
                 updateStakeTokens: true,
                 mintPrimaryTokenForAuction: true,
@@ -431,12 +410,7 @@ describe('4.1. Auction', async () => {
                 endAt: endAt,
                 vestingDuration: vestingDuration,
             };
-            const params: StartAuctionParams = {
-                ...paramsInput,
-                signatures: await getStartAuctionSignatures(auction, paramsInput, admin, admins),
-            };
-
-            await expect(getAuctionTx_StartAuction(auction, deployer, params))
+            await expect(getAuctionTxByInput_StartAuction(auction, deployer, paramsInput, admin, admins))
                 .to.be.revertedWithCustomError(auction, 'AlreadyStarted');
         });
     });
@@ -460,7 +434,7 @@ describe('4.1. Auction', async () => {
             const depositor1InitialBalance = await currency.balanceOf(depositor1.address);
             const depositor2InitialBalance = await currency.balanceOf(depositor2.address);
 
-            const tx1 = await auction.connect(depositor1).deposit(amount1);
+            const tx1 = await getAuctionTx_Deposit(auction, depositor1, { value: amount1 })
             await tx1.wait();
 
             await expect(tx1).to.emit(auction, 'Deposit').withArgs(depositor1.address, amount1);
@@ -472,7 +446,7 @@ describe('4.1. Auction', async () => {
             expect(await auction.totalDeposit()).to.equal(amount1);
             expect(await auction.deposits(depositor1.address)).to.equal(amount1);
 
-            const tx2 = await auction.connect(depositor2).deposit(amount2);
+            const tx2 = await getAuctionTx_Deposit(auction, depositor2, { value: amount2 })
             await tx2.wait();
 
             await expect(tx2).to.emit(auction, 'Deposit').withArgs(depositor2.address, amount2);
@@ -485,7 +459,7 @@ describe('4.1. Auction', async () => {
             expect(await auction.totalDeposit()).to.equal(amount1.add(amount2));
             expect(await auction.deposits(depositor2.address)).to.equal(amount2);
 
-            const tx3 = await auction.connect(depositor1).deposit(amount3);
+            const tx3 = await getAuctionTx_Deposit(auction, depositor1, { value: amount3 })
             await tx3.wait();
 
             await expect(tx3).to.emit(auction, 'Deposit').withArgs(depositor1.address, amount3);
@@ -508,7 +482,8 @@ describe('4.1. Auction', async () => {
             const { depositor1, auction } = fixture;
 
             const amount = ethers.utils.parseEther('100');
-            await expect(auction.connect(depositor1).deposit(amount)).to.be.revertedWith('Pausable: paused');
+            await expect(getAuctionTx_Deposit(auction, depositor1, { value: amount }))
+                .to.be.revertedWith('Pausable: paused');
         });
 
         it('4.1.4.3. Deposit unsuccessfully when auction not started', async () => {
@@ -519,7 +494,8 @@ describe('4.1. Auction', async () => {
             const { depositor1, auction } = fixture;
 
             const amount = ethers.utils.parseEther('100');
-            await expect(auction.connect(depositor1).deposit(amount)).to.be.revertedWithCustomError(auction, 'NotStarted');            
+            await expect(getAuctionTx_Deposit(auction, depositor1, { value: amount }))
+                .to.be.revertedWithCustomError(auction, 'NotStarted');            
         });
 
         it('4.1.4.4. Deposit unsuccessfully when auction ended', async () => {
@@ -533,7 +509,8 @@ describe('4.1. Auction', async () => {
             await time.setNextBlockTimestamp(await auction.endAt());
 
             const amount = ethers.utils.parseEther('100');
-            await expect(auction.connect(depositor1).deposit(amount)).to.be.revertedWithCustomError(auction, 'AlreadyEnded');
+            await expect(getAuctionTx_Deposit(auction, depositor1, { value: amount }))
+                .to.be.revertedWithCustomError(auction, 'AlreadyEnded');
         });
 
         it('4.1.4.5. Deposit unsuccessfully when the contract is reentered', async () => {
@@ -558,7 +535,8 @@ describe('4.1. Auction', async () => {
                 auction,
                 reentrancyERC20,
                 async () => {
-                    await expect(auction.connect(depositor1).deposit(amount)).to.be.revertedWith('ReentrancyGuard: reentrant call');
+                    await expect(getAuctionTx_Deposit(auction, depositor1, { value: amount }))
+                        .to.be.revertedWith('ReentrancyGuard: reentrant call');
                 },
             );
         });
@@ -614,7 +592,7 @@ describe('4.1. Auction', async () => {
             let timestamp1 = endAt.add(vestingDuration.div(5));
             await time.setNextBlockTimestamp(timestamp1);
 
-            const depositor1_timestamp1_tx = await auction.connect(depositor1).withdraw();
+            const depositor1_timestamp1_tx = await getAuctionTx_Withdraw(auction, depositor1);
             await ethers.provider.send("evm_mine", []);
 
             const vestedAmount1_timestamp1 = (await auction.allocationOf(depositor1.address)).mul(timestamp1.sub(endAt)).div(vestingDuration);
@@ -629,8 +607,8 @@ describe('4.1. Auction', async () => {
             let timestamp2 = endAt.add(vestingDuration.div(3));
             await time.setNextBlockTimestamp(timestamp2);
 
-            const depositor1_timestamp2_tx = await auction.connect(depositor1).withdraw();
-            const depositor2_timestamp2_tx = await auction.connect(depositor2).withdraw();
+            const depositor1_timestamp2_tx = await getAuctionTx_Withdraw(auction, depositor1);
+            const depositor2_timestamp2_tx = await getAuctionTx_Withdraw(auction, depositor2);
             await ethers.provider.send("evm_mine", []);
 
             const vestedAmount1_timestamp2 = (await auction.allocationOf(depositor1.address)).mul(timestamp2.sub(endAt)).div(vestingDuration)
@@ -647,9 +625,9 @@ describe('4.1. Auction', async () => {
             let timestamp3 = endAt.add(vestingDuration.add(100));
             await time.setNextBlockTimestamp(timestamp3);
 
-            const depositor1_timestamp3_tx = await auction.connect(depositor1).withdraw();
-            const depositor2_timestamp3_tx = await auction.connect(depositor2).withdraw();
-            const depositor3_timestamp3_tx = await auction.connect(depositor3).withdraw();
+            const depositor1_timestamp3_tx = await getAuctionTx_Withdraw(auction, depositor1);
+            const depositor2_timestamp3_tx = await getAuctionTx_Withdraw(auction, depositor2);
+            const depositor3_timestamp3_tx = await getAuctionTx_Withdraw(auction, depositor3);
             await ethers.provider.send("evm_mine", []);
 
             const vestedAmount1_timestamp3 = await auction.allocationOf(depositor1.address);
@@ -681,7 +659,8 @@ describe('4.1. Auction', async () => {
 
             const { depositor1, auction } = fixture;
 
-            await expect(auction.connect(depositor1).withdraw()).to.be.revertedWith('Pausable: paused');
+            await expect(getAuctionTx_Withdraw(auction, depositor1))
+                .to.be.revertedWith('Pausable: paused');
         });
 
         it('4.1.6.3. Withdraw unsuccessfully when auction not started', async () => {
@@ -692,7 +671,8 @@ describe('4.1. Auction', async () => {
 
             const { depositor1, auction } = fixture;
 
-            await expect(auction.connect(depositor1).withdraw()).to.be.revertedWithCustomError(auction, 'NotStarted');
+            await expect(getAuctionTx_Withdraw(auction, depositor1))
+                .to.be.revertedWithCustomError(auction, 'NotStarted');
         });
     
         it('4.1.6.4. Withdraw unsuccessfully when auction not ended', async () => {
@@ -705,7 +685,8 @@ describe('4.1. Auction', async () => {
 
             const { depositor1, auction } = fixture;
 
-            await expect(auction.connect(depositor1).withdraw()).to.be.revertedWithCustomError(auction, 'NotEnded');
+            await expect(getAuctionTx_Withdraw(auction, depositor1))
+                .to.be.revertedWithCustomError(auction, 'NotEnded');
         });
     });
 
@@ -728,7 +709,14 @@ describe('4.1. Auction', async () => {
             let timestamp1 = endAt.add(vestingDuration.div(5));
             await time.setNextBlockTimestamp(timestamp1);
 
-            const depositor1_timestamp1_tx = await auction.connect(depositor1).stake(ethers.utils.parseEther('100'), ethers.utils.parseEther('200'));
+            const depositor1_timestamp1_tx = await getAuctionTx_Stake(
+                auction,
+                depositor1,
+                {
+                    stake1: ethers.utils.parseEther('100'),
+                    stake2: ethers.utils.parseEther('200'),
+                }
+            );
             await ethers.provider.send("evm_mine", []);
 
             const allocation1 = await auction.allocationOf(depositor1.address);
@@ -755,7 +743,7 @@ describe('4.1. Auction', async () => {
 
             const vestedAmount2_timestamp2 = (await auction.allocationOf(depositor2.address)).mul(timestamp2.sub(endAt)).div(vestingDuration);
 
-            const depositor2_timestamp2_tx = await auction.connect(depositor2).withdraw();
+            const depositor2_timestamp2_tx = await getAuctionTx_Withdraw(auction, depositor2);
             await ethers.provider.send("evm_mine", []);
 
             expect(await primaryToken.balanceOf(depositor2.address)).to.equal(vestedAmount2_timestamp2);
@@ -775,8 +763,22 @@ describe('4.1. Auction', async () => {
             const stake2_depositor3_timestamp3 = ethers.utils.parseEther('1000');
             const stake3_depositor3_timestamp3 = allocation3.sub(stake1_depositor3_timestamp3).sub(stake2_depositor3_timestamp3);
 
-            const depositor2_timestamp3_tx = await auction.connect(depositor2).stake(stake1_depositor2_timestamp3, stake2_depositor2_timestamp3);
-            const depositor3_timestamp3_tx = await auction.connect(depositor3).stake(stake1_depositor3_timestamp3, stake2_depositor3_timestamp3);
+            const depositor2_timestamp3_tx = await getAuctionTx_Stake(
+                auction,
+                depositor2,
+                { 
+                    stake1: stake1_depositor2_timestamp3,
+                    stake2: stake2_depositor2_timestamp3,
+                }
+            );
+            const depositor3_timestamp3_tx = await getAuctionTx_Stake(
+                auction,
+                depositor3,
+                {
+                    stake1: stake1_depositor3_timestamp3,
+                    stake2: stake2_depositor3_timestamp3,
+                }
+            );
             await ethers.provider.send("evm_mine", []);
 
             await expect(depositor2_timestamp3_tx).to.emit(auction, 'Stake').withArgs(
@@ -819,9 +821,13 @@ describe('4.1. Auction', async () => {
 
             const { depositor1, auction } = fixture;
 
-            await expect(auction.connect(depositor1).stake(
-                ethers.utils.parseEther('100'),
-                ethers.utils.parseEther('200'),
+            await expect(getAuctionTx_Stake(
+                auction,
+                depositor1,
+                {
+                    stake1: ethers.utils.parseEther('100'),
+                    stake2: ethers.utils.parseEther('200'),
+                }
             )).to.be.revertedWith('Pausable: paused');
         });
 
@@ -834,9 +840,13 @@ describe('4.1. Auction', async () => {
 
             const { depositor1, auction } = fixture;
 
-            await expect(auction.connect(depositor1).stake(
-                ethers.utils.parseEther('100'),
-                ethers.utils.parseEther('200'),
+            await expect(getAuctionTx_Stake(
+                auction,
+                depositor1,
+                {
+                    stake1: ethers.utils.parseEther('100'),
+                    stake2: ethers.utils.parseEther('200'),
+                }
             )).to.be.revertedWithCustomError(auction, 'NotAssignedStakeTokens');
         });
 
@@ -847,9 +857,13 @@ describe('4.1. Auction', async () => {
 
             const { depositor1, auction } = fixture;
 
-            await expect(auction.connect(depositor1).stake(
-                ethers.utils.parseEther('100'),
-                ethers.utils.parseEther('200'),
+            await expect(getAuctionTx_Stake(
+                auction,
+                depositor1,
+                {
+                    stake1: ethers.utils.parseEther('100'),
+                    stake2: ethers.utils.parseEther('200'),
+                }
             )).to.be.revertedWithCustomError(auction, 'NotStarted');
         });
 
@@ -863,9 +877,13 @@ describe('4.1. Auction', async () => {
 
             const { depositor1, auction } = fixture;
 
-            await expect(auction.connect(depositor1).stake(
-                ethers.utils.parseEther('100'),
-                ethers.utils.parseEther('200'),
+            await expect(getAuctionTx_Stake(
+                auction,
+                depositor1,
+                {
+                    stake1: ethers.utils.parseEther('100'),
+                    stake2: ethers.utils.parseEther('200'),
+                }
             )).to.be.revertedWithCustomError(auction, 'NotEnded');
         });
 
@@ -881,9 +899,13 @@ describe('4.1. Auction', async () => {
 
             await time.setNextBlockTimestamp(await auction.endAt());
 
-            await expect(auction.connect(depositor1).stake(
-                ethers.utils.parseEther('100'),
-                await auction.allocationOf(depositor1.address),
+            await expect(getAuctionTx_Stake(
+                auction,
+                depositor1,
+                {
+                    stake1: ethers.utils.parseEther('100'),
+                    stake2: await auction.allocationOf(depositor1.address),
+                }
             )).to.be.revertedWithCustomError(auction, 'InsufficientFunds');
         });
     });

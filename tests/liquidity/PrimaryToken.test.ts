@@ -6,24 +6,13 @@ import { deployAdmin } from '@utils/deployments/common/admin';
 import { Constant } from '@tests/test.constant';
 import { loadFixture, time } from '@nomicfoundation/hardhat-network-helpers';
 import { deployCurrency } from '@utils/deployments/common/currency';
-import {
-    callPrimaryToken_UnlockForBackerRound,
-    callPrimaryToken_UnlockForCoreTeam,
-    callPrimaryToken_UnlockForExternalTreasury,
-    callPrimaryToken_UnlockForMarketMaker,
-    callPrimaryToken_UnlockForPrivateSale1,
-    callPrimaryToken_UnlockForPrivateSale2,
-    callPrimaryToken_UnlockForPublicSale,
-    callPrimaryToken_UnlockForSeedRound,
-    callPrimaryToken_UpdateStakeTokens,
-    callPrimaryToken_UpdateTreasury 
-} from '@utils/call/liquidity/primaryToken';
 import { MockContract, smock } from '@defi-wonderland/smock';
 import { Initialization as LiquidityInitialization } from '@tests/liquidity/test.initialization';
 import { UnlockForBackerRoundParams, UnlockForBackerRoundParamsInput, UnlockForCoreTeamParams, UnlockForCoreTeamParamsInput, UnlockForMarketMakerParamsInput, UnlockForMarketMakerParams, UnlockForPrivateSale1Params, UnlockForPrivateSale1ParamsInput, UnlockForPrivateSale2Params, UnlockForPrivateSale2ParamsInput, UnlockForPublicSaleParams, UnlockForPublicSaleParamsInput, UnlockForSeedRoundParams, UnlockForSeedRoundParamsInput, UpdateStakeTokensParams, UpdateStakeTokensParamsInput, UpdateTreasuryParams, UpdateTreasuryParamsInput, UnlockForExternalTreasuryParamsInput, UnlockForExternalTreasuryParams } from '@utils/models/liquidity/primaryToken';
 import { getUnlockForBackerRoundSignatures, getUnlockForCoreTeamSignatures, getUnlockForExternalTreasurySignatures, getUnlockForMarketMakerSignatures, getUnlockForPrivateSale1Signatures, getUnlockForPrivateSale2Signatures, getUnlockForPublicSaleSignatures, getUnlockForSeedRoundSignatures, getUpdateStakeTokensSignatures, getUpdateTreasurySignatures } from '@utils/signatures/liquidity/primaryToken';
-import { getCallPrimaryTokenTx_ContributeLiquidityFromStakeToken, getPrimaryTokenTx_UnlockForBackerRound, getPrimaryTokenTx_UnlockForCoreTeam, getPrimaryTokenTx_UnlockForExternalTreasury, getPrimaryTokenTx_UnlockForMarketMaker, getPrimaryTokenTx_UnlockForPrivateSale1, getPrimaryTokenTx_UnlockForPrivateSale2, getPrimaryTokenTx_UnlockForPublicSale, getPrimaryTokenTx_UnlockForSeedRound, getPrimaryTokenTx_UpdateStakeTokens, getPrimaryTokenTx_UpdateTreasury, getPrimaryTokenTxByInput_UpdateTreasury } from '@utils/transaction/liquidity/primaryToken';
+import { getCallPrimaryTokenTx_ContributeLiquidityFromStakeToken, getCallPrimaryTokenTx_MintForStake, getPrimaryTokenTx_ContributeLiquidityFromBackerRound, getPrimaryTokenTx_ContributeLiquidityFromExternalTreasury, getPrimaryTokenTx_ContributeLiquidityFromMarketMaker, getPrimaryTokenTx_ContributeLiquidityFromPrivateSale1, getPrimaryTokenTx_ContributeLiquidityFromPrivateSale2, getPrimaryTokenTx_ContributeLiquidityFromPublicSale, getPrimaryTokenTx_ContributeLiquidityFromSeedRound, getPrimaryTokenTx_Liquidate, getPrimaryTokenTx_MintForStake, getPrimaryTokenTx_UnlockForBackerRound, getPrimaryTokenTx_UnlockForCoreTeam, getPrimaryTokenTx_UnlockForExternalTreasury, getPrimaryTokenTx_UnlockForMarketMaker, getPrimaryTokenTx_UnlockForPrivateSale1, getPrimaryTokenTx_UnlockForPrivateSale2, getPrimaryTokenTx_UnlockForPublicSale, getPrimaryTokenTx_UnlockForSeedRound, getPrimaryTokenTx_UpdateStakeTokens, getPrimaryTokenTx_UpdateTreasury, getPrimaryTokenTxByInput_UnlockForBackerRound, getPrimaryTokenTxByInput_UnlockForCoreTeam, getPrimaryTokenTxByInput_UnlockForExternalTreasury, getPrimaryTokenTxByInput_UnlockForMarketMaker, getPrimaryTokenTxByInput_UnlockForPrivateSale1, getPrimaryTokenTxByInput_UnlockForPrivateSale2, getPrimaryTokenTxByInput_UnlockForPublicSale, getPrimaryTokenTxByInput_UnlockForSeedRound, getPrimaryTokenTxByInput_UpdateStakeTokens, getPrimaryTokenTxByInput_UpdateTreasury } from '@utils/transaction/liquidity/primaryToken';
 import { deployProxyCaller } from '@utils/deployments/mock/proxyCaller';
+import { getPausableTxByInput_Pause } from '@utils/transaction/common/pausable';
 
 interface PrimaryTokenFixture {
     deployer: any;
@@ -162,18 +151,17 @@ describe('4.4. PrimaryToken', async () => {
         );
 
         if (updateStakeTokens) {
-            const paramsInput: UpdateStakeTokensParamsInput = {
-                stakeToken1: stakeToken1.address,
-                stakeToken2: stakeToken2.address,
-                stakeToken3: stakeToken3.address,
-            };
-            await callPrimaryToken_UpdateStakeTokens(
+            await callTransaction(getPrimaryTokenTxByInput_UpdateStakeTokens(
                 primaryToken as any,
                 deployer,
-                admins,
+                {
+                    stakeToken1: stakeToken1.address,
+                    stakeToken2: stakeToken2.address,
+                    stakeToken3: stakeToken3.address,
+                },
                 admin,
-                paramsInput,
-            );
+                admins,
+            ));
         }
 
         if (updateTreasury) {
@@ -189,111 +177,107 @@ describe('4.4. PrimaryToken', async () => {
         }
 
         if (unlockForSeedRound) {
-            const paramsInput: UnlockForSeedRoundParamsInput = {
-                distributor: contributor.address,
-            };
-            await callPrimaryToken_UnlockForSeedRound(
+            await callTransaction(getPrimaryTokenTxByInput_UnlockForSeedRound(
                 primaryToken as any,
                 deployer,
-                admins,
+                {
+                    distributor: contributor.address,
+                },                
                 admin,
-                paramsInput,
-            );
+                admins,
+            ));
         }
 
         if (unlockForPrivateSale1) {
             const paramsInput: UnlockForPrivateSale1ParamsInput = {
                 distributor: contributor.address,
             };
-            await callPrimaryToken_UnlockForPrivateSale1(
+            await callTransaction(getPrimaryTokenTxByInput_UnlockForPrivateSale1(
                 primaryToken as any,
                 deployer,
-                admins,
-                admin,
-                paramsInput,
-            );
-        }
-
-        if (unlockForPrivateSale2) {
-            const paramsInput: UnlockForPrivateSale2ParamsInput = {
-                distributor: contributor.address,
-            };
-            await callPrimaryToken_UnlockForPrivateSale2(
-                primaryToken as any,
-                deployer,
-                admins,
-                admin,
-                paramsInput,
-            );
-        }
-
-        if (unlockForPublicSale) {
-            await callPrimaryToken_UnlockForPublicSale(
-                primaryToken as any,
-                deployer,
-                admins,
-                admin,
                 {
                     distributor: contributor.address,
                 },
-            );
+                admin,
+                admins,
+            ));
+        }
+
+        if (unlockForPrivateSale2) {
+            await callTransaction(getPrimaryTokenTxByInput_UnlockForPrivateSale2(
+                primaryToken as any,
+                deployer,
+                {
+                    distributor: contributor.address,
+                },
+                admin,
+                admins,
+            ));
+        }
+
+        if (unlockForPublicSale) {
+            await callTransaction(getPrimaryTokenTxByInput_UnlockForPublicSale(
+                primaryToken as any,
+                deployer,
+                {
+                    distributor: contributor.address,
+                },
+                admin,
+                admins,
+            ));
         }
 
         if (unlockForBackerRound) {
-            const paramsInput: UnlockForBackerRoundParamsInput = {
-                distributor: contributor.address,
-            };
-            await callPrimaryToken_UnlockForBackerRound(
+            await callTransaction(getPrimaryTokenTxByInput_UnlockForBackerRound(
                 primaryToken as any,
                 deployer,
-                admins,
+                {
+                    distributor: contributor.address,
+                },
                 admin,
-                paramsInput,
-            );
+                admins,
+            ));
         }
 
         if (unlockForCoreTeam) {
-            const paramsInput: UnlockForCoreTeamParamsInput = {
-                distributor: contributor.address,
-            };
-            await callPrimaryToken_UnlockForCoreTeam(
+            await callTransaction(getPrimaryTokenTxByInput_UnlockForCoreTeam(
                 primaryToken as any,
                 deployer,
-                admins,
+                {
+                    distributor: contributor.address,
+                },
                 admin,
-                paramsInput,
-            );
+                admins,
+            ));
         }
 
         if (unlockForMarketMaker) {
-            const paramsInput: UnlockForMarketMakerParamsInput = {
-                distributor: contributor.address,
-            };
-            await callPrimaryToken_UnlockForMarketMaker(
+            await callTransaction(getPrimaryTokenTxByInput_UnlockForMarketMaker(
                 primaryToken as any,
                 deployer,
-                admins,
+                {
+                    distributor: contributor.address,
+                },
                 admin,
-                paramsInput,
-            );
+                admins,
+            ));
         }
 
         if (unlockForExternalTreasury) {
-            const paramsInput: UnlockForExternalTreasuryParamsInput = {
-                distributor: contributor.address,
-            };
-            await callPrimaryToken_UnlockForExternalTreasury(
+            await callTransaction(getPrimaryTokenTxByInput_UnlockForExternalTreasury(
                 primaryToken as any,
                 deployer,
-                admins,
+                {
+                    distributor: contributor.address,
+                },
                 admin,
-                paramsInput,
-            );
+                admins,
+            ));
         }
         
 
         if (pause) {
-            await callTransaction(getPauseTxByInput(primaryToken as any, deployer, admins, admin));;
+            await callTransaction(getPausableTxByInput_Pause(primaryToken as any, deployer, admin, admins));;
         }
 
         return fixture;
@@ -322,12 +306,13 @@ describe('4.4. PrimaryToken', async () => {
             const paramsInput: UpdateTreasuryParamsInput = {
                 treasury: treasury.address,
             };
-            const params: UpdateTreasuryParams = {
-                ...paramsInput,
-                signatures: await getUpdateTreasurySignatures(primaryToken as any, paramsInput, admin, admins),
-            };
-
-            const tx = await getPrimaryTokenTx_UpdateTreasury(primaryToken as any, deployer, params);
+            const tx = await getPrimaryTokenTxByInput_UpdateTreasury(
+                primaryToken as any,
+                deployer,
+                paramsInput,
+                admin,
+                admins,
+            );
             await tx.wait();
 
             expect(await primaryToken.treasury()).to.equal(treasury.address);
@@ -343,7 +328,6 @@ describe('4.4. PrimaryToken', async () => {
                 ...paramsInput,
                 signatures: await getUpdateTreasurySignatures(primaryToken as any, paramsInput, admin, admins, false),
             };
-
             await expect(getPrimaryTokenTx_UpdateTreasury(primaryToken as any, deployer, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
@@ -353,31 +337,29 @@ describe('4.4. PrimaryToken', async () => {
                 updateTreasury: true,
             });
 
-            const paramsInput: UpdateTreasuryParamsInput = {
-                treasury: treasury.address,
-            };
-            const params: UpdateTreasuryParams = {
-                ...paramsInput,
-                signatures: await getUpdateTreasurySignatures(primaryToken as any, paramsInput, admin, admins),
-            };
-
-            await expect(getPrimaryTokenTx_UpdateTreasury(primaryToken as any, deployer, params))
-                .to.be.revertedWithCustomError(primaryToken, 'InvalidUpdating');            
+            await expect(getPrimaryTokenTxByInput_UpdateTreasury(
+                primaryToken as any,
+                deployer,
+                {
+                    treasury: treasury.address,
+                },
+                admin,
+                admins
+            )).to.be.revertedWithCustomError(primaryToken, 'InvalidUpdating');            
         });
 
         it('4.4.2.4. Update treasury unsuccessfully with zero address', async () => {
             const { deployer, admin, admins, primaryToken } = await setupBeforeTest();
 
-            const paramsInput: UpdateTreasuryParamsInput = {
-                treasury: ethers.constants.AddressZero,
-            };
-            const params: UpdateTreasuryParams = {
-                ...paramsInput,
-                signatures: await getUpdateTreasurySignatures(primaryToken as any, paramsInput, admin, admins),
-            };
-
-            await expect(getPrimaryTokenTx_UpdateTreasury(primaryToken as any, deployer, params))
-                .to.be.revertedWithCustomError(primaryToken, 'InvalidUpdating');
+            await expect(getPrimaryTokenTxByInput_UpdateTreasury(
+                primaryToken as any,
+                deployer,
+                {
+                    treasury: ethers.constants.AddressZero,
+                },
+                admin,
+                admins
+            )).to.be.revertedWithCustomError(primaryToken, 'InvalidUpdating');
         });
     });
 
@@ -390,12 +372,13 @@ describe('4.4. PrimaryToken', async () => {
                 stakeToken2: stakeToken2.address,
                 stakeToken3: stakeToken3.address,
             };
-            const params: UpdateStakeTokensParams = {
-                ...paramsInput,
-                signatures: await getUpdateStakeTokensSignatures(primaryToken as any, paramsInput, admin, admins),
-            };
-
-            const tx = await getPrimaryTokenTx_UpdateStakeTokens(primaryToken as any, deployer, params);
+            const tx = await getPrimaryTokenTxByInput_UpdateStakeTokens(
+                primaryToken as any,
+                deployer,
+                paramsInput,
+                admin,
+                admins,
+            );
             await tx.wait();
 
             expect(await primaryToken.stakeToken1()).to.equal(stakeToken1.address);
@@ -415,7 +398,6 @@ describe('4.4. PrimaryToken', async () => {
                 ...paramsInput,
                 signatures: await getUpdateStakeTokensSignatures(primaryToken as any, paramsInput, admin, admins, false),
             };
-
             await expect(getPrimaryTokenTx_UpdateStakeTokens(primaryToken as any, deployer, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
@@ -427,18 +409,18 @@ describe('4.4. PrimaryToken', async () => {
             stakeToken3: string,
         ) {
             const { deployer, admin, admins, primaryToken } = fixture;
-            const paramsInput: UpdateStakeTokensParamsInput = {
-                stakeToken1: stakeToken1,
-                stakeToken2: stakeToken2,
-                stakeToken3: stakeToken3,
-            };
-            const params: UpdateStakeTokensParams = {
-                ...paramsInput,
-                signatures: await getUpdateStakeTokensSignatures(primaryToken as any, paramsInput, admin, admins),
-            };
 
-            await expect(getPrimaryTokenTx_UpdateStakeTokens(primaryToken as any, deployer, params))
-                .to.be.revertedWithCustomError(primaryToken, 'InvalidUpdating');
+            await expect(getPrimaryTokenTxByInput_UpdateStakeTokens(
+                primaryToken as any,
+                deployer,
+                {
+                    stakeToken1: stakeToken1,
+                    stakeToken2: stakeToken2,
+                    stakeToken3: stakeToken3,
+                },
+                admin,
+                admins,
+            )).to.be.revertedWithCustomError(primaryToken, 'InvalidUpdating');
         }
 
         it('4.4.3.3. Update stake tokens unsuccessfully with zero address stake tokens', async () => {
@@ -524,12 +506,13 @@ describe('4.4. PrimaryToken', async () => {
             const paramsInput: UnlockForBackerRoundParamsInput = {
                 distributor: receiver.address,
             };
-            const params: UnlockForBackerRoundParams = {
-                ...paramsInput,
-                signatures: await getUnlockForBackerRoundSignatures(primaryToken as any, paramsInput, admin, admins),
-            };
-
-            const tx = await getPrimaryTokenTx_UnlockForBackerRound(primaryToken as any, deployer, params);
+            const tx = await getPrimaryTokenTxByInput_UnlockForBackerRound(
+                primaryToken as any,
+                deployer,
+                paramsInput,
+                admin,
+                admins,
+            );
             await tx.wait();
 
             expect(await primaryToken.backerRoundUnlocked()).to.equal(true);
@@ -550,7 +533,6 @@ describe('4.4. PrimaryToken', async () => {
                 ...paramsInput,
                 signatures: await getUnlockForBackerRoundSignatures(primaryToken as any, paramsInput, admin, admins, false),
             };
-
             await expect(getPrimaryTokenTx_UnlockForBackerRound(primaryToken as any, deployer, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
@@ -561,16 +543,15 @@ describe('4.4. PrimaryToken', async () => {
                 unlockForBackerRound: true,
             });
 
-            const paramsInput: UnlockForBackerRoundParamsInput = {
-                distributor: receiver.address,
-            };
-            const params: UnlockForBackerRoundParams = {
-                ...paramsInput,
-                signatures: await getUnlockForBackerRoundSignatures(primaryToken as any, paramsInput, admin, admins),
-            };
-
-            await expect(getPrimaryTokenTx_UnlockForBackerRound(primaryToken as any, deployer, params))
-                .to.be.revertedWithCustomError(primaryToken, 'AlreadyUnlockedTokens');
+            await expect(getPrimaryTokenTxByInput_UnlockForBackerRound(
+                primaryToken as any,
+                deployer,
+                {
+                    distributor: receiver.address,
+                },
+                admin,
+                admins
+            )).to.be.revertedWithCustomError(primaryToken, 'AlreadyUnlockedTokens');
         });
     });
 
@@ -583,12 +564,13 @@ describe('4.4. PrimaryToken', async () => {
             const paramsInput: UnlockForSeedRoundParamsInput = {
                 distributor: receiver.address,
             };
-            const params: UnlockForSeedRoundParams = {
-                ...paramsInput,
-                signatures: await getUnlockForSeedRoundSignatures(primaryToken as any, paramsInput, admin, admins),
-            };
-
-            const tx = await getPrimaryTokenTx_UnlockForSeedRound(primaryToken as any, deployer, params);
+            const tx = await getPrimaryTokenTxByInput_UnlockForSeedRound(
+                primaryToken as any,
+                deployer,
+                paramsInput,
+                admin,
+                admins,
+            );
             await tx.wait();
 
             expect(await primaryToken.seedRoundUnlocked()).to.equal(true);
@@ -609,7 +591,6 @@ describe('4.4. PrimaryToken', async () => {
                 ...paramsInput,
                 signatures: await getUnlockForSeedRoundSignatures(primaryToken as any, paramsInput, admin, admins, false),
             };
-
             await expect(getPrimaryTokenTx_UnlockForSeedRound(primaryToken as any, deployer, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
@@ -620,16 +601,15 @@ describe('4.4. PrimaryToken', async () => {
                 unlockForSeedRound: true,
             });
 
-            const paramsInput: UnlockForSeedRoundParamsInput = {
-                distributor: receiver.address,
-            };
-            const params: UnlockForSeedRoundParams = {
-                ...paramsInput,
-                signatures: await getUnlockForSeedRoundSignatures(primaryToken as any, paramsInput, admin, admins),
-            };
-
-            await expect(getPrimaryTokenTx_UnlockForSeedRound(primaryToken as any, deployer, params))
-                .to.be.revertedWithCustomError(primaryToken, 'AlreadyUnlockedTokens');
+            await expect(getPrimaryTokenTxByInput_UnlockForSeedRound(
+                primaryToken as any,
+                deployer,
+                {
+                    distributor: receiver.address,
+                },
+                admin,
+                admins
+            )).to.be.revertedWithCustomError(primaryToken, 'AlreadyUnlockedTokens');
         });
     });
 
@@ -642,12 +622,13 @@ describe('4.4. PrimaryToken', async () => {
             const paramsInput: UnlockForPrivateSale1ParamsInput = {
                 distributor: receiver.address,
             };
-            const params: UnlockForPrivateSale1Params = {
-                ...paramsInput,
-                signatures: await getUnlockForPrivateSale1Signatures(primaryToken as any, paramsInput, admin, admins),
-            };
-
-            const tx = await getPrimaryTokenTx_UnlockForPrivateSale1(primaryToken as any, deployer, params);
+            const tx = await getPrimaryTokenTxByInput_UnlockForPrivateSale1(
+                primaryToken as any,
+                deployer,
+                paramsInput,
+                admin,
+                admins,
+            );
             await tx.wait();
 
             expect(await primaryToken.privateSale1Unlocked()).to.equal(true);
@@ -668,7 +649,6 @@ describe('4.4. PrimaryToken', async () => {
                 ...paramsInput,
                 signatures: await getUnlockForPrivateSale1Signatures(primaryToken as any, paramsInput, admin, admins, false),
             };
-
             await expect(getPrimaryTokenTx_UnlockForPrivateSale1(primaryToken as any, deployer, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
@@ -679,16 +659,15 @@ describe('4.4. PrimaryToken', async () => {
                 unlockForPrivateSale1: true,
             });
 
-            const paramsInput: UnlockForPrivateSale1ParamsInput = {
-                distributor: receiver.address,
-            };
-            const params: UnlockForPrivateSale1Params = {
-                ...paramsInput,
-                signatures: await getUnlockForPrivateSale1Signatures(primaryToken as any, paramsInput, admin, admins),
-            };
-
-            await expect(getPrimaryTokenTx_UnlockForPrivateSale1(primaryToken as any, deployer, params))
-                .to.be.revertedWithCustomError(primaryToken, 'AlreadyUnlockedTokens');
+            await expect(getPrimaryTokenTxByInput_UnlockForPrivateSale1(
+                primaryToken as any,
+                deployer,
+                {
+                    distributor: receiver.address,
+                },
+                admin,
+                admins,
+            )).to.be.revertedWithCustomError(primaryToken, 'AlreadyUnlockedTokens');
         });
     });
 
@@ -701,11 +680,13 @@ describe('4.4. PrimaryToken', async () => {
             const paramsInput: UnlockForPrivateSale2ParamsInput = {
                 distributor: receiver.address,
             };
-            const params: UnlockForPrivateSale2Params = {
-                ...paramsInput,
-                signatures: await getUnlockForPrivateSale2Signatures(primaryToken as any, paramsInput, admin, admins),
-            };
-            const tx = await getPrimaryTokenTx_UnlockForPrivateSale2(primaryToken as any, deployer, params);
+            const tx = await getPrimaryTokenTxByInput_UnlockForPrivateSale2(
+                primaryToken as any,
+                deployer,
+                paramsInput,
+                admin,
+                admins,
+            );
             await tx.wait();
 
             expect(await primaryToken.privateSale2Unlocked()).to.equal(true);
@@ -726,7 +707,6 @@ describe('4.4. PrimaryToken', async () => {
                 ...paramsInput,
                 signatures: await getUnlockForPrivateSale2Signatures(primaryToken as any, paramsInput, admin, admins, false),
             };
-
             await expect(getPrimaryTokenTx_UnlockForPrivateSale2(primaryToken as any, deployer, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
@@ -737,15 +717,15 @@ describe('4.4. PrimaryToken', async () => {
                 unlockForPrivateSale2: true,
             });
 
-            const paramsInput: UnlockForPrivateSale2ParamsInput = {
-                distributor: receiver.address,
-            };
-            const params: UnlockForPrivateSale2Params = {
-                ...paramsInput,
-                signatures: await getUnlockForPrivateSale2Signatures(primaryToken as any, paramsInput, admin, admins),
-            };
-            await expect(getPrimaryTokenTx_UnlockForPrivateSale2(primaryToken as any, deployer, params))
-                .to.be.revertedWithCustomError(primaryToken, 'AlreadyUnlockedTokens');
+            await expect(getPrimaryTokenTxByInput_UnlockForPrivateSale2(
+                primaryToken as any,
+                deployer,
+                {
+                    distributor: receiver.address,
+                },
+                admin,
+                admins,
+            )).to.be.revertedWithCustomError(primaryToken, 'AlreadyUnlockedTokens');
         });
     });
 
@@ -758,12 +738,13 @@ describe('4.4. PrimaryToken', async () => {
             const paramsInput: UnlockForPublicSaleParamsInput = {
                 distributor: receiver.address,
             };
-            const params: UnlockForPublicSaleParams = {
-                ...paramsInput,
-                signatures: await getUnlockForPublicSaleSignatures(primaryToken as any, paramsInput, admin, admins),
-            };
-            
-            const tx = await getPrimaryTokenTx_UnlockForPublicSale(primaryToken as any, deployer, params);
+            const tx = await getPrimaryTokenTxByInput_UnlockForPublicSale(
+                primaryToken as any,
+                deployer,
+                paramsInput,
+                admin,
+                admins,
+            );            
             await tx.wait();
 
             expect(await primaryToken.publicSaleUnlocked()).to.equal(true);
@@ -784,7 +765,6 @@ describe('4.4. PrimaryToken', async () => {
                 ...paramsInput,
                 signatures: await getUnlockForPublicSaleSignatures(primaryToken as any, paramsInput, admin, admins, false),
             };
-
             await expect(getPrimaryTokenTx_UnlockForPublicSale(primaryToken as any, deployer, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
@@ -795,15 +775,15 @@ describe('4.4. PrimaryToken', async () => {
                 unlockForPublicSale: true,
             });
 
-            const paramsInput: UnlockForPublicSaleParamsInput = {
-                distributor: receiver.address,
-            };
-            const params: UnlockForPublicSaleParams = {
-                ...paramsInput,
-                signatures: await getUnlockForPublicSaleSignatures(primaryToken as any, paramsInput, admin, admins),
-            };
-            await expect(getPrimaryTokenTx_UnlockForPublicSale(primaryToken as any, deployer, params))
-                .to.be.revertedWithCustomError(primaryToken, 'AlreadyUnlockedTokens');
+            await expect(getPrimaryTokenTxByInput_UnlockForPublicSale(
+                primaryToken as any,
+                deployer,
+                {
+                    distributor: receiver.address,
+                },
+                admin,
+                admins,
+            )).to.be.revertedWithCustomError(primaryToken, 'AlreadyUnlockedTokens');
         });
     });
 
@@ -816,12 +796,13 @@ describe('4.4. PrimaryToken', async () => {
             const paramsInput: UnlockForCoreTeamParamsInput = {
                 distributor: receiver.address,
             };
-            const params: UnlockForCoreTeamParams = {
-                ...paramsInput,
-                signatures: await getUnlockForCoreTeamSignatures(primaryToken as any, paramsInput, admin, admins),
-            };
-
-            const tx = await getPrimaryTokenTx_UnlockForCoreTeam(primaryToken as any, deployer, params);
+            const tx = await getPrimaryTokenTxByInput_UnlockForCoreTeam(
+                primaryToken as any,
+                deployer,
+                paramsInput,
+                admin,
+                admins,
+            );
             await tx.wait();
 
             expect(await primaryToken.coreTeamTokensUnlocked()).to.equal(true);
@@ -842,7 +823,6 @@ describe('4.4. PrimaryToken', async () => {
                 ...paramsInput,
                 signatures: await getUnlockForCoreTeamSignatures(primaryToken as any, paramsInput, admin, admins, false),
             };
-
             await expect(getPrimaryTokenTx_UnlockForCoreTeam(primaryToken as any, deployer, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
@@ -853,15 +833,15 @@ describe('4.4. PrimaryToken', async () => {
                 unlockForCoreTeam: true,
             });
 
-            const paramsInput: UnlockForCoreTeamParamsInput = {
-                distributor: receiver.address,
-            };
-            const params: UnlockForCoreTeamParams = {
-                ...paramsInput,
-                signatures: await getUnlockForCoreTeamSignatures(primaryToken as any, paramsInput, admin, admins),
-            };
-            await expect(getPrimaryTokenTx_UnlockForCoreTeam(primaryToken as any, deployer, params))
-                .to.be.revertedWithCustomError(primaryToken, 'AlreadyUnlockedTokens');
+            await expect(getPrimaryTokenTxByInput_UnlockForCoreTeam(
+                primaryToken as any,
+                deployer,
+                {
+                    distributor: receiver.address,
+                },
+                admin,
+                admins,
+            )).to.be.revertedWithCustomError(primaryToken, 'AlreadyUnlockedTokens');
         });
     });
 
@@ -874,12 +854,13 @@ describe('4.4. PrimaryToken', async () => {
             const paramsInput: UnlockForMarketMakerParamsInput = {
                 distributor: receiver.address,
             };
-            const params: UnlockForMarketMakerParams = {
-                ...paramsInput,
-                signatures: await getUnlockForMarketMakerSignatures(primaryToken as any, paramsInput, admin, admins),
-            };
-
-            const tx = await getPrimaryTokenTx_UnlockForMarketMaker(primaryToken as any, deployer, params);
+            const tx = await getPrimaryTokenTxByInput_UnlockForMarketMaker(
+                primaryToken as any,
+                deployer,
+                paramsInput,
+                admin,
+                admins,
+            );
             await tx.wait();
 
             expect(await primaryToken.marketMakerTokensUnlocked()).to.equal(true);
@@ -900,7 +881,6 @@ describe('4.4. PrimaryToken', async () => {
                 ...paramsInput,
                 signatures: await getUnlockForMarketMakerSignatures(primaryToken as any, paramsInput, admin, admins, false),
             };
-
             await expect(getPrimaryTokenTx_UnlockForMarketMaker(primaryToken as any, deployer, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
@@ -911,15 +891,15 @@ describe('4.4. PrimaryToken', async () => {
                 unlockForMarketMaker: true,
             });
 
-            const paramsInput: UnlockForMarketMakerParamsInput = {
-                distributor: receiver.address,
-            };
-            const params: UnlockForMarketMakerParams = {
-                ...paramsInput,
-                signatures: await getUnlockForMarketMakerSignatures(primaryToken as any, paramsInput, admin, admins),
-            };
-            await expect(getPrimaryTokenTx_UnlockForMarketMaker(primaryToken as any, deployer, params))
-                .to.be.revertedWithCustomError(primaryToken, 'AlreadyUnlockedTokens');
+            await expect(getPrimaryTokenTxByInput_UnlockForMarketMaker(
+                primaryToken as any,
+                deployer,
+                {
+                    distributor: receiver.address,
+                },
+                admin,
+                admins,
+            )).to.be.revertedWithCustomError(primaryToken, 'AlreadyUnlockedTokens');
         });
     });
 
@@ -932,12 +912,13 @@ describe('4.4. PrimaryToken', async () => {
             const paramsInput: UnlockForExternalTreasuryParamsInput = {
                 distributor: receiver.address,
             };
-            const params: UnlockForExternalTreasuryParams = {
-                ...paramsInput,
-                signatures: await getUnlockForExternalTreasurySignatures(primaryToken as any, paramsInput, admin, admins),
-            };
-
-            const tx = await getPrimaryTokenTx_UnlockForExternalTreasury(primaryToken as any, deployer, params);
+            const tx = await getPrimaryTokenTxByInput_UnlockForExternalTreasury(
+                primaryToken as any,
+                deployer,
+                paramsInput,
+                admin,
+                admins,
+            );
             await tx.wait();
 
             expect(await primaryToken.externalTreasuryTokensUnlocked()).to.equal(true);
@@ -958,7 +939,6 @@ describe('4.4. PrimaryToken', async () => {
                 ...paramsInput,
                 signatures: await getUnlockForExternalTreasurySignatures(primaryToken as any, paramsInput, admin, admins, false),
             };
-
             await expect(getPrimaryTokenTx_UnlockForExternalTreasury(primaryToken as any, deployer, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
@@ -969,15 +949,15 @@ describe('4.4. PrimaryToken', async () => {
                 unlockForExternalTreasury: true,
             });
 
-            const paramsInput: UnlockForExternalTreasuryParamsInput = {
-                distributor: receiver.address,
-            };
-            const params: UnlockForExternalTreasuryParams = {
-                ...paramsInput,
-                signatures: await getUnlockForExternalTreasurySignatures(primaryToken as any, paramsInput, admin, admins),
-            };
-            await expect(getPrimaryTokenTx_UnlockForExternalTreasury(primaryToken as any, deployer, params))
-                .to.be.revertedWithCustomError(primaryToken, 'AlreadyUnlockedTokens');
+            await expect(getPrimaryTokenTxByInput_UnlockForExternalTreasury(
+                primaryToken as any,
+                deployer,
+                {
+                    distributor: receiver.address,
+                },
+                admin,
+                admins,
+            )).to.be.revertedWithCustomError(primaryToken, 'AlreadyUnlockedTokens');
         });
     });
 
@@ -989,8 +969,12 @@ describe('4.4. PrimaryToken', async () => {
                 unlockForBackerRound: true,
             });
 
-            const tx = await primaryToken.connect(contributor).contributeLiquidityFromBackerRound(
-                ethers.utils.parseEther("1000")
+            const tx = await getPrimaryTokenTx_ContributeLiquidityFromBackerRound(
+                primaryToken as any,
+                contributor,
+                {
+                    liquidity: ethers.utils.parseEther("1000"),
+                },
             );
             await tx.wait();
 
@@ -1013,8 +997,13 @@ describe('4.4. PrimaryToken', async () => {
 
             await prepareERC20(currency, [contributor], [primaryToken as any], ethers.utils.parseEther("10000"));
 
-            await expect(primaryToken.connect(contributor).contributeLiquidityFromBackerRound(ethers.utils.parseEther("1000")))
-                .to.be.revertedWithCustomError(primaryToken, 'NotUnlocked');
+            await expect(getPrimaryTokenTx_ContributeLiquidityFromBackerRound(
+                primaryToken as any,
+                contributor,
+                {
+                    liquidity: ethers.utils.parseEther("1000"),
+                },
+            )).to.be.revertedWithCustomError(primaryToken, 'NotUnlocked');
         });
     });
 
@@ -1026,7 +1015,13 @@ describe('4.4. PrimaryToken', async () => {
                 unlockForSeedRound: true,
             });
 
-            const tx = await primaryToken.connect(contributor).contributeLiquidityFromSeedRound(ethers.utils.parseEther("1000"));
+            const tx = await getPrimaryTokenTx_ContributeLiquidityFromSeedRound(
+                primaryToken as any,
+                contributor,
+                {
+                    liquidity: ethers.utils.parseEther("1000"),
+                },
+            );
             await tx.wait();
 
             await expect(tx).to.emit(primaryToken, 'LiquidityContributionFromSeedRound').withArgs(
@@ -1046,8 +1041,13 @@ describe('4.4. PrimaryToken', async () => {
                 updateTreasury: true,
             });
 
-            await expect(primaryToken.connect(contributor).contributeLiquidityFromSeedRound(ethers.utils.parseEther("1000")))
-                .to.be.revertedWithCustomError(primaryToken, 'NotUnlocked');
+            await expect(getPrimaryTokenTx_ContributeLiquidityFromSeedRound(
+                primaryToken as any,
+                contributor,
+                {
+                    liquidity: ethers.utils.parseEther("1000"),
+                },
+            )).to.be.revertedWithCustomError(primaryToken, 'NotUnlocked');
         });
     });
 
@@ -1059,7 +1059,13 @@ describe('4.4. PrimaryToken', async () => {
                 unlockForPrivateSale1: true,
             });
 
-            const tx = await primaryToken.connect(contributor).contributeLiquidityFromPrivateSale1(ethers.utils.parseEther("1000"));
+            const tx = await getPrimaryTokenTx_ContributeLiquidityFromPrivateSale1(
+                primaryToken as any,
+                contributor,
+                {
+                    liquidity: ethers.utils.parseEther("1000"),
+                },
+            );
             await tx.wait();
 
             await expect(tx)
@@ -1079,8 +1085,13 @@ describe('4.4. PrimaryToken', async () => {
                 updateTreasury: true,
             });
 
-            await expect(primaryToken.connect(contributor).contributeLiquidityFromPrivateSale1(ethers.utils.parseEther("1000")))
-                .to.be.revertedWithCustomError(primaryToken, 'NotUnlocked');
+            await expect(getPrimaryTokenTx_ContributeLiquidityFromPrivateSale1(
+                primaryToken as any,
+                contributor,
+                {
+                    liquidity: ethers.utils.parseEther("1000"),
+                },
+            )).to.be.revertedWithCustomError(primaryToken, 'NotUnlocked');
         });
     });
 
@@ -1092,7 +1103,13 @@ describe('4.4. PrimaryToken', async () => {
                 unlockForPrivateSale2: true,
             });
 
-            const tx = await primaryToken.connect(contributor).contributeLiquidityFromPrivateSale2(ethers.utils.parseEther("1000"));
+            const tx = await getPrimaryTokenTx_ContributeLiquidityFromPrivateSale2(
+                primaryToken as any,
+                contributor,
+                {
+                    liquidity: ethers.utils.parseEther("1000"),
+                },
+            );
             await tx.wait();
 
             await expect(tx)
@@ -1112,8 +1129,13 @@ describe('4.4. PrimaryToken', async () => {
                 updateTreasury: true,
             });
 
-            await expect(primaryToken.connect(contributor).contributeLiquidityFromPrivateSale2(ethers.utils.parseEther("1000")))
-                .to.be.revertedWithCustomError(primaryToken, 'NotUnlocked');
+            await expect(getPrimaryTokenTx_ContributeLiquidityFromPrivateSale2(
+                primaryToken as any,
+                contributor,
+                {
+                    liquidity: ethers.utils.parseEther("1000"),
+                },
+            )).to.be.revertedWithCustomError(primaryToken, 'NotUnlocked');
         });
     });
 
@@ -1125,7 +1147,13 @@ describe('4.4. PrimaryToken', async () => {
                 unlockForPublicSale: true,
             });
 
-            const tx = await primaryToken.connect(contributor).contributeLiquidityFromPublicSale(ethers.utils.parseEther("1000"));
+            const tx = await getPrimaryTokenTx_ContributeLiquidityFromPublicSale(
+                primaryToken as any,
+                contributor,
+                {
+                    liquidity: ethers.utils.parseEther("1000"),
+                },
+            );
             await tx.wait();
 
             await expect(tx)
@@ -1145,8 +1173,13 @@ describe('4.4. PrimaryToken', async () => {
                 updateTreasury: true,
             });
 
-            await expect(primaryToken.connect(contributor).contributeLiquidityFromPublicSale(ethers.utils.parseEther("1000")))
-                .to.be.revertedWithCustomError(primaryToken, 'NotUnlocked');
+            await expect(getPrimaryTokenTx_ContributeLiquidityFromPublicSale(
+                primaryToken as any,
+                contributor,
+                {
+                    liquidity: ethers.utils.parseEther("1000"),
+                },
+            )).to.be.revertedWithCustomError(primaryToken, 'NotUnlocked');
         });
     });
 
@@ -1158,7 +1191,13 @@ describe('4.4. PrimaryToken', async () => {
                 unlockForMarketMaker: true,
             });
 
-            const tx = await primaryToken.connect(contributor).contributeLiquidityFromMarketMaker(ethers.utils.parseEther("1000"));
+            const tx = await getPrimaryTokenTx_ContributeLiquidityFromMarketMaker(
+                primaryToken as any,
+                contributor,
+                {
+                    liquidity: ethers.utils.parseEther("1000"),
+                },
+            );
             await tx.wait();
 
             await expect(tx)
@@ -1178,8 +1217,13 @@ describe('4.4. PrimaryToken', async () => {
                 updateTreasury: true,
             });
 
-            await expect(primaryToken.connect(contributor).contributeLiquidityFromMarketMaker(ethers.utils.parseEther("1000")))
-                .to.be.revertedWithCustomError(primaryToken, 'NotUnlocked');
+            await expect(getPrimaryTokenTx_ContributeLiquidityFromMarketMaker(
+                primaryToken as any,
+                contributor,
+                {
+                    liquidity: ethers.utils.parseEther("1000"),
+                },
+            )).to.be.revertedWithCustomError(primaryToken, 'NotUnlocked');
         });
     });
 
@@ -1191,7 +1235,13 @@ describe('4.4. PrimaryToken', async () => {
                 unlockForExternalTreasury: true,
             });
 
-            const tx = await primaryToken.connect(contributor).contributeLiquidityFromExternalTreasury(ethers.utils.parseEther("1000"));
+            const tx = await getPrimaryTokenTx_ContributeLiquidityFromExternalTreasury(
+                primaryToken as any,
+                contributor,
+                {
+                    liquidity: ethers.utils.parseEther("1000"),
+                },
+            );
             await tx.wait();
 
             await expect(tx)
@@ -1211,8 +1261,13 @@ describe('4.4. PrimaryToken', async () => {
                 updateTreasury: true,
             });
 
-            await expect(primaryToken.connect(contributor).contributeLiquidityFromExternalTreasury(ethers.utils.parseEther("1000")))
-                .to.be.revertedWithCustomError(primaryToken, 'NotUnlocked');
+            await expect(getPrimaryTokenTx_ContributeLiquidityFromExternalTreasury(
+                primaryToken as any,
+                contributor,
+                {
+                    liquidity: ethers.utils.parseEther("1000"),
+                },
+            )).to.be.revertedWithCustomError(primaryToken, 'NotUnlocked');
         });
     });
 
@@ -1330,7 +1385,7 @@ describe('4.4. PrimaryToken', async () => {
     });
 
     describe('4.4.22. mintForStake()', async () => {
-        it('4.4.22.1. MintForStake successfully by stake token 1', async () => {
+        it('4.4.22.1. Mint for stake token successfully by stake token 1', async () => {
             const { primaryToken, stakeToken1 } = await setupBeforeTest({
                 updateStakeTokens: true,
                 updateTreasury: true,
@@ -1339,7 +1394,10 @@ describe('4.4. PrimaryToken', async () => {
             let expectedBalance = ethers.constants.Zero;
 
             for (let i = 0; i < 10; i++) {
-                const tx = await stakeToken1.call(primaryToken.address, primaryToken.interface.encodeFunctionData("mintForStake"));
+                const tx = await getCallPrimaryTokenTx_MintForStake(
+                    primaryToken as any,
+                    stakeToken1 as any,
+                );
                 await tx.wait();
 
                 expect(tx).to.emit(primaryToken, 'Stake1WaveReward').withArgs(
@@ -1356,23 +1414,26 @@ describe('4.4. PrimaryToken', async () => {
             }
         });
 
-        it('4.4.22.2. MintForStake unsuccessfully by stake token 1 when all stake reward is minted', async () => {
+        it('4.4.22.2. Mint for stake token unsuccessfully by stake token 1 when all stake reward is minted', async () => {
             const { primaryToken, stakeToken1 } = await setupBeforeTest({
                 updateStakeTokens: true,
                 updateTreasury: true,
             });
 
             for (let i = 0; i < Constant.PRIMARY_TOKEN_STAKE_1_CULMINATING_WAVE; i++) {
-                await callTransaction(stakeToken1.call(primaryToken.address, primaryToken.interface.encodeFunctionData("mintForStake")));
+                await callTransaction(getCallPrimaryTokenTx_MintForStake(
+                    primaryToken as any,
+                    stakeToken1 as any,
+                ));
             }
 
-            await expect(stakeToken1.call(
-                primaryToken.address,
-                primaryToken.interface.encodeFunctionData("mintForStake")
+            await expect(getCallPrimaryTokenTx_MintForStake(
+                primaryToken as any,
+                stakeToken1 as any,
             )).to.be.revertedWithCustomError(primaryToken, 'AllStakeRewardMinted');
         });
 
-        it('4.4.22.3. MintForStake successfully by stake token 2', async () => {
+        it('4.4.22.3. Mint for stake token successfully by stake token 2', async () => {
             const { primaryToken, stakeToken2 } = await setupBeforeTest({
                 updateStakeTokens: true,
                 updateTreasury: true,
@@ -1381,7 +1442,10 @@ describe('4.4. PrimaryToken', async () => {
             let expectedBalance = ethers.constants.Zero;
 
             for (let i = 0; i < 10; i++) {
-                const tx = await stakeToken2.call(primaryToken.address, primaryToken.interface.encodeFunctionData("mintForStake"));
+                const tx = await getCallPrimaryTokenTx_MintForStake(
+                    primaryToken as any,
+                    stakeToken2 as any,
+                );
                 await tx.wait();
 
                 expect(tx).to.emit(primaryToken, 'Stake2WaveReward').withArgs(
@@ -1398,26 +1462,26 @@ describe('4.4. PrimaryToken', async () => {
             }
         });
 
-        it('4.4.22.4. MintForStake unsuccessfully by stake token 2 when all stake reward is minted', async () => {
+        it('4.4.22.4. Mint for stake token unsuccessfully by stake token 2 when all stake reward is minted', async () => {
             const { primaryToken, stakeToken2 } = await setupBeforeTest({
                 updateStakeTokens: true,
                 updateTreasury: true,
             });
 
             for (let i = 0; i < Constant.PRIMARY_TOKEN_STAKE_2_CULMINATING_WAVE; i++) {
-                await callTransaction(stakeToken2.call(
-                    primaryToken.address,
-                    primaryToken.interface.encodeFunctionData("mintForStake")
+                await callTransaction(getCallPrimaryTokenTx_MintForStake(
+                    primaryToken as any,
+                    stakeToken2 as any,
                 ));
             }
 
-            await expect(stakeToken2.call(
-                primaryToken.address,
-                primaryToken.interface.encodeFunctionData("mintForStake")
+            await expect(getCallPrimaryTokenTx_MintForStake(
+                primaryToken as any,
+                stakeToken2 as any,
             )).to.be.revertedWithCustomError(primaryToken, 'AllStakeRewardMinted');
         });
 
-        it('4.4.22.5. MintForStake successfully by stake token 3', async () => {
+        it('4.4.22.5. Mint for stake token successfully by stake token 3', async () => {
             const { primaryToken, stakeToken3 } = await setupBeforeTest({
                 updateStakeTokens: true,
                 updateTreasury: true,
@@ -1426,7 +1490,10 @@ describe('4.4. PrimaryToken', async () => {
             let expectedBalance = ethers.constants.Zero;
 
             for (let i = 0; i < 10; i++) {
-                const tx = await stakeToken3.call(primaryToken.address, primaryToken.interface.encodeFunctionData("mintForStake"));
+                const tx = await getCallPrimaryTokenTx_MintForStake(
+                    primaryToken as any,
+                    stakeToken3 as any,
+                );
                 await tx.wait();
 
                 expect(tx).to.emit(primaryToken, 'Stake3WaveReward').withArgs(
@@ -1443,7 +1510,7 @@ describe('4.4. PrimaryToken', async () => {
             }
         });
 
-        it('4.4.22.6. MintForStake successfully by stake token 3 when total supply is nearly capped', async () => {
+        it('4.4.22.6. Mint for stake token successfully by stake token 3 when total supply is nearly capped', async () => {
             const { primaryToken, receiver, currency, stakeToken3 } = await setupBeforeTest({
                 updateStakeTokens: true,
                 updateTreasury: true,
@@ -1453,9 +1520,9 @@ describe('4.4. PrimaryToken', async () => {
 
             await primaryToken.mint(receiver.address, initialStakeTokensCap.sub(ethers.utils.parseEther("1")));
 
-            const tx = await stakeToken3.call(
-                primaryToken.address,
-                primaryToken.interface.encodeFunctionData("mintForStake")
+            const tx = await getCallPrimaryTokenTx_MintForStake(
+                primaryToken as any,
+                stakeToken3 as any,
             );
             await tx.wait();
 
@@ -1471,7 +1538,7 @@ describe('4.4. PrimaryToken', async () => {
             expect(await primaryToken.balanceOf(stakeToken3.address)).to.equal(ethers.utils.parseEther("1"));
         });
 
-        it('4.4.22.7. MintForStake unsuccessfully by stake token 3 when total supply is capped', async () => {
+        it('4.4.22.7. Mint for stake token unsuccessfully by stake token 3 when total supply is capped', async () => {
             const { primaryToken, receiver, stakeToken3 } = await setupBeforeTest({
                 updateStakeTokens: true,
                 updateTreasury: true,
@@ -1481,19 +1548,22 @@ describe('4.4. PrimaryToken', async () => {
 
             await primaryToken.mint(receiver.address, initialStakeTokensCap);
 
-            await expect(stakeToken3.call(
-                primaryToken.address,
-                primaryToken.interface.encodeFunctionData("mintForStake")
+            await expect(getCallPrimaryTokenTx_MintForStake(
+                primaryToken as any,
+                stakeToken3 as any,
             )).to.be.revertedWithCustomError(primaryToken, 'SupplyCapReached');
         });
         
-        it('4.4.22.8. MintForStake unsuccessfully by unauthorized user', async () => {
-            const { primaryToken } = await setupBeforeTest({
+        it('4.4.22.8. Mint for stake token unsuccessfully by unauthorized user', async () => {
+            const { deployer, primaryToken } = await setupBeforeTest({
                 updateStakeTokens: true,
                 updateTreasury: true,
             });
 
-            await expect(primaryToken.mintForStake()).to.be.revertedWithCustomError(primaryToken, 'Unauthorized');
+            await expect(getPrimaryTokenTx_MintForStake(
+                primaryToken as any,
+                deployer,
+            )).to.be.revertedWithCustomError(primaryToken, 'Unauthorized');
         });
     });
 
@@ -1526,7 +1596,7 @@ describe('4.4. PrimaryToken', async () => {
             const initContributorCurrencyBalance = await currency.balanceOf(contributor.address);
 
             await time.setNextBlockTimestamp(await primaryToken.liquidationUnlockedAt());
-            const tx = await primaryToken.connect(contributor).liquidate(burnAmount);
+            const tx = await getPrimaryTokenTx_Liquidate(primaryToken as any, contributor, { amount: burnAmount });
             await tx.wait();
 
             await expect(tx).to.emit(primaryToken, 'Liquidation').withArgs(
@@ -1562,7 +1632,7 @@ describe('4.4. PrimaryToken', async () => {
             await treasury.provideLiquidity(ethers.utils.parseEther("1000000"));
 
             await time.setNextBlockTimestamp((await primaryToken.liquidationUnlockedAt()).sub(1));
-            await expect(primaryToken.connect(contributor).liquidate(ethers.utils.parseEther("100")))
+            await expect(getPrimaryTokenTx_Liquidate(primaryToken as any, contributor, { amount: ethers.utils.parseEther("100") }))
                 .to.be.revertedWithCustomError(primaryToken, 'BeingLocked');
         });
 
@@ -1578,11 +1648,14 @@ describe('4.4. PrimaryToken', async () => {
             await prepareERC20(currency, [deployer], [treasury as any], ethers.utils.parseEther("1000000"));
             await treasury.provideLiquidity(ethers.utils.parseEther("1000000"));
 
-            await callTransaction(getPauseTxByInput(primaryToken as any, deployer, admins, admin));;
+            await callTransaction(getPausableTxByInput_Pause(primaryToken as any, deployer, admin, admins));;
             
             await time.setNextBlockTimestamp(await primaryToken.liquidationUnlockedAt());
-            await expect(primaryToken.connect(contributor).liquidate(ethers.utils.parseEther("100")))
-                .to.be.revertedWith('Pausable: paused');
+            await expect(getPrimaryTokenTx_Liquidate(
+                primaryToken as any,
+                contributor,
+                { amount: ethers.utils.parseEther("100") }
+            )).to.be.revertedWith('Pausable: paused');
         });
 
         it('4.4.23.4. Liquidate unsuccessfully when the amount to liquidate is greater than the liquidity', async () => {
@@ -1605,7 +1678,7 @@ describe('4.4. PrimaryToken', async () => {
 
             const burnAmount = (await primaryToken.totalSupply()).add(ethers.utils.parseEther("1"));
             await time.setNextBlockTimestamp(await primaryToken.liquidationUnlockedAt());
-            await expect(primaryToken.connect(contributor).liquidate(burnAmount))
+            await expect(getPrimaryTokenTx_Liquidate(primaryToken as any, contributor, { amount: burnAmount }))
                 .to.be.revertedWithCustomError(primaryToken, 'InsufficientFunds');
         });
     });
