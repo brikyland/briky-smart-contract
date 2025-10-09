@@ -35,7 +35,7 @@ import {ContractTransaction} from "ethers";
 
 
 // updateFee
-export async function getUpdateFeeTx(
+export async function getGovernanceHubTx_UpdateFee(
     governanceHub: GovernanceHub,
     signer: SignerWithAddress,
     params: UpdateFeeParams,
@@ -48,7 +48,7 @@ export async function getUpdateFeeTx(
     );
 }
 
-export async function getUpdateFeeTxByInput(
+export async function getGovernanceHubTxByInput_UpdateFee(
     governanceHub: GovernanceHub,
     signer: SignerWithAddress,
     paramsInput: UpdateFeeParamsInput,
@@ -61,12 +61,12 @@ export async function getUpdateFeeTxByInput(
         signatures: await getUpdateFeeSignatures(governanceHub, paramsInput, admin, admins),
     };
 
-    return await getUpdateFeeTx(governanceHub, signer, params, txConfig);
+    return await getGovernanceHubTx_UpdateFee(governanceHub, signer, params, txConfig);
 }
 
 
 // propose
-export async function getProposeTx(
+export async function getGovernanceHubTx_Propose(
     governanceHub: GovernanceHub,
     signer: SignerWithAddress,
     params: ProposeParams,
@@ -86,7 +86,7 @@ export async function getProposeTx(
     );
 }
 
-export async function getProposeTxByInput(
+export async function getGovernanceHubTxByInput_Propose(
     governanceHub: GovernanceHub,
     signer: SignerWithAddress,
     paramsInput: ProposeParamsInput,
@@ -98,10 +98,10 @@ export async function getProposeTxByInput(
         validation: await getProposeValidation(governanceHub, paramsInput, validator, signer)
     };
 
-    return await getProposeTx(governanceHub, signer, params, txConfig);
+    return await getGovernanceHubTx_Propose(governanceHub, signer, params, txConfig);
 }
 
-export async function getCallProposeTx(
+export async function getCallGovernanceHubTx_Propose(
     governanceHub: GovernanceHub,
     caller: ProxyCaller,
     params: ProposeParams,
@@ -124,7 +124,7 @@ export async function getCallProposeTx(
     );
 }
 
-export async function getCallProposeTxByInput(
+export async function getCallGovernanceHubTxByInput_Propose(
     governanceHub: GovernanceHub,
     caller: ProxyCaller,
     paramsInput: ProposeParamsInput,
@@ -136,12 +136,12 @@ export async function getCallProposeTxByInput(
         validation: await getProposeValidation(governanceHub, paramsInput, validator, caller)
     };
 
-    return await getCallProposeTx(governanceHub, caller, params, txConfig);
+    return await getCallGovernanceHubTx_Propose(governanceHub, caller, params, txConfig);
 }
 
 
 // admit
-export async function getAdmitTx(
+export async function getGovernanceHubTx_Admit(
     governanceHub: GovernanceHub,
     signer: SignerWithAddress,
     params: AdmitParams,
@@ -157,7 +157,7 @@ export async function getAdmitTx(
     );
 }
 
-export async function getAdmitTxByInput(
+export async function getGovernanceHubTxByInput_Admit(
     governanceHub: GovernanceHub,
     signer: SignerWithAddress,
     paramsInput: AdmitParamsInput,
@@ -169,12 +169,12 @@ export async function getAdmitTxByInput(
         validation: await getAdmitValidation(governanceHub, paramsInput, validator)
     };
 
-    return await getAdmitTx(governanceHub, signer, params, txConfig);
+    return await getGovernanceHubTx_Admit(governanceHub, signer, params, txConfig);
 }
 
 
 // disqualify
-export async function getDisqualifyTx(
+export async function getGovernanceTx_Disqualify(
     governanceHub: GovernanceHub,
     signer: SignerWithAddress,
     params: DisqualifyParams,
@@ -189,7 +189,7 @@ export async function getDisqualifyTx(
     );
 }
 
-export async function getDisqualifyTxByInput(
+export async function getGovernanceHubTxByInput_Disqualify(
     governanceHub: GovernanceHub,
     signer: SignerWithAddress,
     paramsInput: DisqualifyParamsInput,
@@ -200,12 +200,12 @@ export async function getDisqualifyTxByInput(
         ...paramsInput,
         validation: await getDisqualifyValidation(governanceHub, paramsInput, validator)
     };
-    return await getDisqualifyTx(governanceHub, signer, params, txConfig);
+    return await getGovernanceTx_Disqualify(governanceHub, signer, params, txConfig);
 }
 
 
 // vote
-export async function getVoteTx(
+export async function getGovernanceHubTx_Vote(
     governanceHub: GovernanceHub,
     signer: SignerWithAddress,
     params: VoteParams,

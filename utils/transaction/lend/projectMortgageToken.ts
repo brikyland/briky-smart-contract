@@ -5,7 +5,7 @@ import { ContractTransaction } from "ethers";
 
 
 // borrow
-export async function getProjectBorrowTx(
+export async function getProjectMortgageTokenTx_Borrow(
     projectMortgageToken: ProjectMortgageToken,
     signer: SignerWithAddress,
     params: ProjectBorrowParams,

@@ -7,7 +7,7 @@ import { Contract, ContractTransaction } from "ethers";
 
 
 // updateBaseURI
-export async function getUpdateBaseURITx(
+export async function getMortgageTokenTx_UpdateBaseURI(
     mortgageToken: Contract,
     deployer: SignerWithAddress,
     params: UpdateBaseURIParams,
@@ -20,7 +20,7 @@ export async function getUpdateBaseURITx(
     );
 }
 
-export async function getUpdateBaseURITxByInput(
+export async function getMortgageTokenTxByInput_UpdateBaseURI(
     mortgageToken: Contract,
     deployer: SignerWithAddress,
     paramsInput: UpdateBaseURIParamsInput,
@@ -32,12 +32,12 @@ export async function getUpdateBaseURITxByInput(
         ...paramsInput,
         signatures: await getUpdateBaseURISignatures(mortgageToken, paramsInput, admin, admins)
     };
-    return getUpdateBaseURITx(mortgageToken, deployer, params, txConfig);
+    return getMortgageTokenTx_UpdateBaseURI(mortgageToken, deployer, params, txConfig);
 }
 
 
 // updateFeeRate
-export async function getUpdateFeeRateTx(
+export async function getMortgageTokenTx_UpdateFeeRate(
     mortgageToken: Contract,
     deployer: SignerWithAddress,
     params: UpdateFeeRateParams,
@@ -50,7 +50,7 @@ export async function getUpdateFeeRateTx(
     );
 }
 
-export async function getUpdateFeeRateTxByInput(
+export async function getMortgageTokenTxByInput_UpdateFeeRate(
     mortgageToken: Contract,
     deployer: SignerWithAddress,
     paramsInput: UpdateFeeRateParamsInput,
@@ -62,12 +62,12 @@ export async function getUpdateFeeRateTxByInput(
         ...paramsInput,
         signatures: await getUpdateFeeRateSignatures(mortgageToken, paramsInput, admin, admins)
     };
-    return getUpdateFeeRateTx(mortgageToken, deployer, params, txConfig);
+    return getMortgageTokenTx_UpdateFeeRate(mortgageToken, deployer, params, txConfig);
 }
 
 
 // cancel
-export async function getCancelTx(
+export async function getMortgageTokenTx_Cancel(
     mortgageToken: Contract,
     deployer: SignerWithAddress,
     params: CancelParams,
@@ -81,7 +81,7 @@ export async function getCancelTx(
 
 
 // lend
-export async function getLendTx(
+export async function getMortgageTokenTx_Lend(
     mortgageToken: Contract,
     deployer: SignerWithAddress,
     params: LendParams,
@@ -95,7 +95,7 @@ export async function getLendTx(
 
 
 // safeLend
-export async function getSafeLendTx(
+export async function getMortgageTokenTx_SafeLend(
     mortgageToken: Contract,
     deployer: SignerWithAddress,
     params: SafeLendParams,
@@ -108,7 +108,7 @@ export async function getSafeLendTx(
     );
 }
 
-export async function getSafeLendTxByParams(
+export async function getMortgageTokenTxByParams_SafeLend(
     mortgageToken: Contract,
     deployer: SignerWithAddress,
     params: LendParams,
@@ -118,12 +118,12 @@ export async function getSafeLendTxByParams(
         ...params,
         anchor: await getSafeLendAnchor(mortgageToken, params),
     };
-    return getSafeLendTx(mortgageToken, deployer, safeParams, txConfig);
+    return getMortgageTokenTx_SafeLend(mortgageToken, deployer, safeParams, txConfig);
 }
 
 
 // repay
-export async function getRepayTx(
+export async function getMortgageTokenTx_Repay(
     mortgageToken: Contract,
     deployer: SignerWithAddress,
     params: RepayParams,
@@ -137,7 +137,7 @@ export async function getRepayTx(
 
 
 // safeRepay
-export async function getSafeRepayTx(
+export async function getMortgageTokenTx_SafeRepay(
     mortgageToken: Contract,
     deployer: SignerWithAddress,
     params: SafeRepayParams,
@@ -150,7 +150,7 @@ export async function getSafeRepayTx(
     );
 }
 
-export async function getSafeRepayTxByParams(
+export async function getMortgageTokenTxByParams_SafeRepay(
     mortgageToken: Contract,
     deployer: SignerWithAddress,
     params: RepayParams,
@@ -160,12 +160,12 @@ export async function getSafeRepayTxByParams(
         ...params,
         anchor: await getSafeRepayAnchor(mortgageToken, params),
     };
-    return getSafeRepayTx(mortgageToken, deployer, safeParams, txConfig);
+    return getMortgageTokenTx_SafeRepay(mortgageToken, deployer, safeParams, txConfig);
 }
 
 
 // foreclose
-export async function getForecloseTx(
+export async function getMortgageTokenTx_Foreclose(
     mortgageToken: Contract,
     deployer: SignerWithAddress,
     params: ForecloseParams,

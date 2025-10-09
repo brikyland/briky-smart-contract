@@ -6,7 +6,7 @@ import { getWithdrawOperationFundSignatures } from "@utils/signatures/liquidity/
 
 
 // withdrawOperationFund
-export async function getWithdrawOperationFundTx(
+export async function getTreasuryTx_WithdrawOperationFund(
     treasury: Treasury,
     deployer: SignerWithAddress,
     params: WithdrawOperationFundParams,
@@ -20,7 +20,7 @@ export async function getWithdrawOperationFundTx(
     );
 }
 
-export async function getWithdrawOperationFundTxByInput(
+export async function getTreasuryTxByInput_WithdrawOperationFund(
     treasury: Treasury,
     deployer: SignerWithAddress,
     paramsInput: WithdrawOperationFundParamsInput,
@@ -32,12 +32,12 @@ export async function getWithdrawOperationFundTxByInput(
         ...paramsInput,
         signatures: await getWithdrawOperationFundSignatures(treasury, paramsInput, admin, admins),
     };
-    return getWithdrawOperationFundTx(treasury, deployer, params, txConfig);
+    return getTreasuryTx_WithdrawOperationFund(treasury, deployer, params, txConfig);
 }
 
 
 // withdrawLiquidity
-export async function getWithdrawLiquidityTx(
+export async function getTreasuryTx_WithdrawLiquidity(
     treasury: Treasury,
     deployer: SignerWithAddress,
     params: WithdrawLiquidityParams,
@@ -52,7 +52,7 @@ export async function getWithdrawLiquidityTx(
 
 
 // provideLiquidity
-export async function getProvideLiquidityTx(
+export async function getTreasuryTx_ProvideLiquidity(
     treasury: Treasury,
     deployer: SignerWithAddress,
     params: ProvideLiquidityParams,

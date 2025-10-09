@@ -6,7 +6,7 @@ import { getDistributeTokenSignatures } from "@utils/signatures/liquidity/distri
 
 
 // distributeToken
-export async function getDistributeTokenTx(
+export async function getDistributorTx_DistributeToken(
     distributor: Distributor,
     deployer: SignerWithAddress,
     params: DistributeTokenParams,
@@ -21,7 +21,7 @@ export async function getDistributeTokenTx(
     );
 }
 
-export async function getDistributeTokenTxByInput(
+export async function getDistributorTxByInput_DistributeToken(
     distributor: Distributor,
     deployer: SignerWithAddress,
     paramsInput: DistributeTokenParamsInput,
@@ -33,5 +33,5 @@ export async function getDistributeTokenTxByInput(
         ...paramsInput,
         signatures: await getDistributeTokenSignatures(distributor, paramsInput, admin, admins),
     };
-    return getDistributeTokenTx(distributor, deployer, params, txConfig);
+    return getDistributorTx_DistributeToken(distributor, deployer, params, txConfig);
 }

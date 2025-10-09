@@ -26,7 +26,7 @@ import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/re
 import { deployCurrency } from '@utils/deployments/common/currency';
 import { CancelContentsParams, CancelContentsParamsInput, CreateContentsParams, CreateContentsParamsInput, UpdateContentURIsParams, UpdateContentURIsParamsInput, UpdateFeeParams, UpdateFeeParamsInput, UpdateRoyaltyRateParams, UpdateRoyaltyRateParamsInput, WithdrawParams, WithdrawParamsInput } from '@utils/models/lucra/promotionToken';
 import { getCancelContentsSignatures, getCreateContentsSignatures, getUpdateContentURIsSignatures, getUpdateFeeSignatures, getUpdateRoyaltyRateSignatures, getWithdrawSignatures } from '@utils/signatures/lucra/promotionToken';
-import { getCancelContentsTx, getCreateContentsTx, getUpdateContentURIsTx, getUpdateFeeTx, getUpdateRoyaltyRateTx, getWithdrawTx } from '@utils/transaction/lucra/promotionToken';
+import { getPromotionTokenTx_CancelContents, getPromotionTokenTx_CreateContents, getPromotionTokenTx_UpdateContentURIs, getPromotionTokenTx_UpdateFee, getPromotionTokenTx_UpdateRoyaltyRate, getPromotionTokenTx_Withdraw } from '@utils/transaction/lucra/promotionToken';
 import { BigNumber } from 'ethers';
 import { IERC165UpgradeableInterfaceId, IERC2981UpgradeableInterfaceId, IERC4906UpgradeableInterfaceId, IERC721MetadataUpgradeableInterfaceId, IERC721UpgradeableInterfaceId, IRoyaltyRateProposerInterfaceId } from '@tests/interfaces';
 
@@ -183,7 +183,7 @@ describe('5.2. PromotionToken', async () => {
                 signatures: await getUpdateFeeSignatures(promotionToken, paramsInput, admin, admins),
             };
 
-            const tx = await getUpdateFeeTx(promotionToken, deployer, params);
+            const tx = await getPromotionTokenTx_UpdateFee(promotionToken, deployer, params);
             await expect(tx).to.emit(promotionToken, 'FeeUpdate').withArgs(newFee);
             
             expect(await promotionToken.fee()).to.equal(newFee);
@@ -203,7 +203,7 @@ describe('5.2. PromotionToken', async () => {
                 signatures: await getUpdateFeeSignatures(promotionToken, paramsInput, admin, admins, false),
             };
 
-            await expect(getUpdateFeeTx(promotionToken, deployer, params)).to.be
+            await expect(getPromotionTokenTx_UpdateFee(promotionToken, deployer, params)).to.be
                 .revertedWithCustomError(promotionToken, 'FailedVerification');
         });
     });
@@ -220,7 +220,7 @@ describe('5.2. PromotionToken', async () => {
                 signatures: await getUpdateRoyaltyRateSignatures(promotionToken, paramsInput, admin, admins),
             };
 
-            const tx = await getUpdateRoyaltyRateTx(promotionToken, deployer, params);
+            const tx = await getPromotionTokenTx_UpdateRoyaltyRate(promotionToken, deployer, params);
             await tx.wait();
 
             await expect(tx).to.emit(promotionToken, 'RoyaltyRateUpdate').withArgs(
@@ -249,7 +249,7 @@ describe('5.2. PromotionToken', async () => {
                 signatures: await getUpdateRoyaltyRateSignatures(promotionToken, paramsInput, admin, admins, false),
             };
 
-            await expect(getUpdateRoyaltyRateTx(promotionToken, deployer, params))
+            await expect(getPromotionTokenTx_UpdateRoyaltyRate(promotionToken, deployer, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
@@ -264,7 +264,7 @@ describe('5.2. PromotionToken', async () => {
                 signatures: await getUpdateRoyaltyRateSignatures(promotionToken, paramsInput, admin, admins),
             };
 
-            await expect(getUpdateRoyaltyRateTx(promotionToken, deployer, params))
+            await expect(getPromotionTokenTx_UpdateRoyaltyRate(promotionToken, deployer, params))
                 .to.be.revertedWithCustomError(promotionToken, 'InvalidRate');
         });
     });
@@ -293,7 +293,7 @@ describe('5.2. PromotionToken', async () => {
                 signatures: await getWithdrawSignatures(promotionToken, paramsInput1, admin, admins),
             };
 
-            const tx1 = await getWithdrawTx(promotionToken, deployer, params1);
+            const tx1 = await getPromotionTokenTx_Withdraw(promotionToken, deployer, params1);
             await tx1.wait();
 
             balance = await ethers.provider.getBalance(promotionToken.address);
@@ -320,7 +320,7 @@ describe('5.2. PromotionToken', async () => {
                 signatures: await getWithdrawSignatures(promotionToken, paramsInput2, admin, admins),
             };
 
-            const tx2 = await getWithdrawTx(promotionToken, deployer, params2);
+            const tx2 = await getPromotionTokenTx_Withdraw(promotionToken, deployer, params2);
             await tx2.wait();
 
             balance = await ethers.provider.getBalance(promotionToken.address);
@@ -353,7 +353,7 @@ describe('5.2. PromotionToken', async () => {
                 signatures: await getWithdrawSignatures(promotionToken, paramsInput, admin, admins),
             };
 
-            const tx = await getWithdrawTx(promotionToken, deployer, params);
+            const tx = await getPromotionTokenTx_Withdraw(promotionToken, deployer, params);
             await tx.wait();
 
             expect(await currency1.balanceOf(promotionToken.address)).to.equal(300);
@@ -390,7 +390,7 @@ describe('5.2. PromotionToken', async () => {
                 signatures: await getWithdrawSignatures(promotionToken, paramsInput, admin, admins),
             };
 
-            const tx = await getWithdrawTx(promotionToken, deployer, params);
+            const tx = await getPromotionTokenTx_Withdraw(promotionToken, deployer, params);
             await tx.wait();
 
             expect(await ethers.provider.getBalance(promotionToken.address)).to.equal(1700);
@@ -415,7 +415,7 @@ describe('5.2. PromotionToken', async () => {
                 signatures: await getWithdrawSignatures(promotionToken, paramsInput, admin, admins, false),
             };
 
-            await expect(getWithdrawTx(promotionToken, deployer, params))
+            await expect(getPromotionTokenTx_Withdraw(promotionToken, deployer, params))
                 .to.be.revertedWithCustomError(promotionToken, 'FailedVerification');
         });
 
@@ -432,7 +432,7 @@ describe('5.2. PromotionToken', async () => {
                 signatures: await getWithdrawSignatures(promotionToken, paramsInput, admin, admins),
             };
 
-            await expect(getWithdrawTx(promotionToken, deployer, params))
+            await expect(getPromotionTokenTx_Withdraw(promotionToken, deployer, params))
                 .to.be.revertedWithCustomError(promotionToken, 'FailedTransfer');
         })
 
@@ -449,7 +449,7 @@ describe('5.2. PromotionToken', async () => {
                 signatures: await getWithdrawSignatures(promotionToken, paramsInput, admin, admins),
             };
 
-            await expect(getWithdrawTx(promotionToken, deployer, params))
+            await expect(getPromotionTokenTx_Withdraw(promotionToken, deployer, params))
                 .to.be.revertedWith('ERC20: transfer amount exceeds balance');
         });
 
@@ -474,7 +474,7 @@ describe('5.2. PromotionToken', async () => {
                 signatures: await getWithdrawSignatures(promotionToken, paramsInput, admin, admins),
             };
 
-            await expect(getWithdrawTx(promotionToken, deployer, params))
+            await expect(getPromotionTokenTx_Withdraw(promotionToken, deployer, params))
                 .to.be.revertedWithCustomError(promotionToken, 'FailedTransfer');
         });
 
@@ -563,7 +563,7 @@ describe('5.2. PromotionToken', async () => {
                 signatures: await getCreateContentsSignatures(promotionToken, paramsInput, admin, admins),
             };
 
-            const tx = await getCreateContentsTx(promotionToken, deployer, params);
+            const tx = await getPromotionTokenTx_CreateContents(promotionToken, deployer, params);
             await tx.wait();
 
             for (let i = 1; i <= 3; ++i) {
@@ -615,7 +615,7 @@ describe('5.2. PromotionToken', async () => {
                 signatures: await getCreateContentsSignatures(promotionToken, paramsInput, admin, admins, false),
             };
 
-            await expect(getCreateContentsTx(promotionToken, deployer, params))
+            await expect(getPromotionTokenTx_CreateContents(promotionToken, deployer, params))
                 .to.be.revertedWithCustomError(promotionToken, 'FailedVerification');
         })
 
@@ -637,7 +637,7 @@ describe('5.2. PromotionToken', async () => {
                 ...paramsInput,
                 signatures: await getCreateContentsSignatures(promotionToken, paramsInput, admin, admins),
             };
-            await expect(getCreateContentsTx(promotionToken, deployer, params))
+            await expect(getPromotionTokenTx_CreateContents(promotionToken, deployer, params))
                 .to.be.revertedWithCustomError(promotionToken, customError);
         }
 
@@ -694,7 +694,7 @@ describe('5.2. PromotionToken', async () => {
                 signatures: await getUpdateContentURIsSignatures(promotionToken, paramsInput, admin, admins),
             };
 
-            const tx = await getUpdateContentURIsTx(promotionToken, deployer, params);
+            const tx = await getPromotionTokenTx_UpdateContentURIs(promotionToken, deployer, params);
             await tx.wait();
 
             for (let i = 1; i <= 2; ++i) {
@@ -726,7 +726,7 @@ describe('5.2. PromotionToken', async () => {
                 signatures: await getUpdateContentURIsSignatures(promotionToken, paramsInput, admin, admins, false),
             };
 
-            await expect(getUpdateContentURIsTx(promotionToken, deployer, params))
+            await expect(getPromotionTokenTx_UpdateContentURIs(promotionToken, deployer, params))
                 .to.be.revertedWithCustomError(promotionToken, 'FailedVerification');
         });
 
@@ -746,7 +746,7 @@ describe('5.2. PromotionToken', async () => {
                 ...paramsInput,
                 signatures: await getUpdateContentURIsSignatures(promotionToken, paramsInput, admin, admins),
             };
-            await expect(getUpdateContentURIsTx(promotionToken, deployer, params))
+            await expect(getPromotionTokenTx_UpdateContentURIs(promotionToken, deployer, params))
                 .to.be.revertedWithCustomError(promotionToken, customError);
         }
 
@@ -814,7 +814,7 @@ describe('5.2. PromotionToken', async () => {
                 signatures: await getCancelContentsSignatures(promotionToken, paramsInput, admin, admins),
             };
 
-            const tx = await getCancelContentsTx(promotionToken, deployer, params);
+            const tx = await getPromotionTokenTx_CancelContents(promotionToken, deployer, params);
             await tx.wait();
 
             await expect(tx).to
@@ -854,7 +854,7 @@ describe('5.2. PromotionToken', async () => {
                 ...paramsInput,
                 signatures: await getCancelContentsSignatures(promotionToken, paramsInput, admin, admins, false),
             };
-            await expect(getCancelContentsTx(promotionToken, deployer, params))
+            await expect(getPromotionTokenTx_CancelContents(promotionToken, deployer, params))
                 .to.be.revertedWithCustomError(promotionToken, 'FailedVerification');
         });
 
@@ -873,7 +873,7 @@ describe('5.2. PromotionToken', async () => {
                 ...paramsInput,
                 signatures: await getCancelContentsSignatures(promotionToken, paramsInput, admin, admins),
             };
-            await expect(getCancelContentsTx(promotionToken, deployer, params))
+            await expect(getPromotionTokenTx_CancelContents(promotionToken, deployer, params))
                 .to.be.revertedWithCustomError(promotionToken, 'InvalidContentId');
         });
 
@@ -893,7 +893,7 @@ describe('5.2. PromotionToken', async () => {
                 signatures: await getCancelContentsSignatures(promotionToken, paramsInput, admin, admins),
             };
 
-            await expect(getCancelContentsTx(promotionToken, deployer, params))
+            await expect(getPromotionTokenTx_CancelContents(promotionToken, deployer, params))
                 .to.be.revertedWithCustomError(promotionToken, 'AlreadyStarted');
         });
 
@@ -922,7 +922,7 @@ describe('5.2. PromotionToken', async () => {
                 ...paramsInput,
                 signatures: await getCancelContentsSignatures(promotionToken, paramsInput, admin, admins),
             };
-            await expect(getCancelContentsTx(promotionToken, deployer, params))
+            await expect(getPromotionTokenTx_CancelContents(promotionToken, deployer, params))
                 .to.be.not.reverted;
         });
     });

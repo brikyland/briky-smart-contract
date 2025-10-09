@@ -9,7 +9,7 @@ import { getSafeDeprecateEstateAnchor, getSafeExtendEstateExpirationAnchor, getS
 
 
 // updateCommissionToken
-export async function getUpdateCommissionTokenTx(
+export async function getEstateTokenTx_UpdateCommissionToken(
     estateToken: EstateToken,
     deployer: SignerWithAddress,
     params: UpdateCommissionTokenParams,
@@ -22,7 +22,7 @@ export async function getUpdateCommissionTokenTx(
     );
 }
 
-export async function getUpdateCommissionTokenTxByInput(
+export async function getEstateTokenTxByInput_UpdateCommissionToken(
     estateToken: EstateToken,
     deployer: SignerWithAddress,
     paramsInput: UpdateCommissionTokenParamsInput,
@@ -34,12 +34,12 @@ export async function getUpdateCommissionTokenTxByInput(
         ...paramsInput,
         signatures: await getUpdateCommissionTokenSignatures(estateToken, paramsInput, admin, admins)
     };
-    return await getUpdateCommissionTokenTx(estateToken, deployer, params, txConfig);
+    return await getEstateTokenTx_UpdateCommissionToken(estateToken, deployer, params, txConfig);
 }
 
 
 // updateBaseURI
-export async function getUpdateBaseURITx(
+export async function getEstateTokenTx_UpdateBaseURI(
     estateToken: EstateToken,
     deployer: SignerWithAddress,
     params: UpdateBaseURIParams,
@@ -52,7 +52,7 @@ export async function getUpdateBaseURITx(
     );
 }
 
-export async function getUpdateBaseURITxByInput(
+export async function getEstateTokenTxByInput_UpdateBaseURI(
     estateToken: EstateToken,
     deployer: SignerWithAddress,
     paramsInput: UpdateBaseURIParamsInput,
@@ -64,12 +64,12 @@ export async function getUpdateBaseURITxByInput(
         ...paramsInput,
         signatures: await getUpdateBaseURISignatures(estateToken, paramsInput, admin, admins)
     };
-    return await getUpdateBaseURITx(estateToken, deployer, params, txConfig);
+    return await getEstateTokenTx_UpdateBaseURI(estateToken, deployer, params, txConfig);
 }
 
 
 // authorizeTokenizers
-export async function getAuthorizeTokenizersTx(
+export async function getEstateTokenTx_AuthorizeTokenizers(
     estateToken: EstateToken,
     deployer: SignerWithAddress,
     params: AuthorizeTokenizersParams,
@@ -83,7 +83,7 @@ export async function getAuthorizeTokenizersTx(
     );
 }
 
-export async function getAuthorizeTokenizersTxByInput(
+export async function getEstateTokenTxByInput_AuthorizeTokenizers(
     estateToken: EstateToken,
     deployer: SignerWithAddress,
     paramsInput: AuthorizeTokenizersParamsInput,
@@ -95,12 +95,12 @@ export async function getAuthorizeTokenizersTxByInput(
         ...paramsInput,
         signatures: await getAuthorizeTokenizersSignatures(estateToken, paramsInput, admin, admins)
     };
-    return await getAuthorizeTokenizersTx(estateToken, deployer, params, txConfig);
+    return await getEstateTokenTx_AuthorizeTokenizers(estateToken, deployer, params, txConfig);
 }
 
 
 // authorizeExtractors
-export async function getAuthorizeExtractorsTx(
+export async function getEstateTokenTx_AuthorizeExtractors(
     estateToken: EstateToken,
     deployer: SignerWithAddress,
     params: AuthorizeExtractorsParams,
@@ -114,7 +114,7 @@ export async function getAuthorizeExtractorsTx(
     );
 }
 
-export async function getAuthorizeExtractorsTxByInput(
+export async function getEstateTokenTxByInput_AuthorizeExtractors(
     estateToken: EstateToken,
     deployer: SignerWithAddress,
     paramsInput: AuthorizeExtractorsParamsInput,
@@ -126,12 +126,12 @@ export async function getAuthorizeExtractorsTxByInput(
         ...paramsInput,
         signatures: await getAuthorizeExtractorsSignatures(estateToken, paramsInput, admin, admins)
     };
-    return await getAuthorizeExtractorsTx(estateToken, deployer, params, txConfig);
+    return await getEstateTokenTx_AuthorizeExtractors(estateToken, deployer, params, txConfig);
 }
 
 
 // updateZoneRoyaltyRate
-export async function getUpdateZoneRoyaltyRateTx(
+export async function getEstateTokenTx_UpdateZoneRoyaltyRate(
     estateToken: EstateToken,
     deployer: SignerWithAddress,
     params: UpdateZoneRoyaltyRateParams,
@@ -145,7 +145,7 @@ export async function getUpdateZoneRoyaltyRateTx(
     );
 }
 
-export async function getUpdateZoneRoyaltyRateTxByInput(
+export async function getEstateTokenTxByInput_UpdateZoneRoyaltyRate(
     estateToken: EstateToken,
     deployer: SignerWithAddress,
     paramsInput: UpdateZoneRoyaltyRateParamsInput,
@@ -157,12 +157,12 @@ export async function getUpdateZoneRoyaltyRateTxByInput(
         ...paramsInput,
         signatures: await getUpdateZoneRoyaltyRateSignatures(estateToken, paramsInput, admin, admins)
     };
-    return await getUpdateZoneRoyaltyRateTx(estateToken, deployer, params, txConfig);
+    return await getEstateTokenTx_UpdateZoneRoyaltyRate(estateToken, deployer, params, txConfig);
 }
 
 
 // registerCustodian
-export async function getRegisterCustodianTx(
+export async function getEstateTokenTx_RegisterCustodian(
     estateToken: EstateToken,
     deployer: SignerWithAddress,
     params: RegisterCustodianParams,
@@ -178,7 +178,7 @@ export async function getRegisterCustodianTx(
 }
 
 
-export async function getRegisterCustodianTxByInput(
+export async function getEstateTokenTxByInput_RegisterCustodian(
     estateToken: EstateToken,
     deployer: SignerWithAddress,
     paramsInput: RegisterCustodianParamsInput,
@@ -189,12 +189,12 @@ export async function getRegisterCustodianTxByInput(
         ...paramsInput,
         validation: await getRegisterCustodianValidation(estateToken, paramsInput, validator)
     };
-    return await getRegisterCustodianTx(estateToken, deployer, params, txConfig);
+    return await getEstateTokenTx_RegisterCustodian(estateToken, deployer, params, txConfig);
 }
 
 
 // tokenizeEstate
-export async function getCallTokenizeEstateTx(
+export async function getCallEstateTokenTx_TokenizeEstate(
     estateToken: EstateToken,
     proxyCaller: any,
     params: TokenizeEstateParams
@@ -216,7 +216,7 @@ export async function getCallTokenizeEstateTx(
 
 
 // extractEstate
-export async function getCallExtractEstateTx(
+export async function getCallEstateTokenTx_ExtractEstate(
     estateToken: EstateToken,
     caller: ProxyCaller,
     params: ExtractEstateParams,
@@ -234,7 +234,7 @@ export async function getCallExtractEstateTx(
 
 
 // safeDeprecateEstate
-export async function getSafeDeprecateEstateTx(
+export async function getEstateTokenTx_SafeDeprecateEstate(
     estateToken: EstateToken,
     deployer: SignerWithAddress,
     params: SafeDeprecateEstateParams,
@@ -249,7 +249,7 @@ export async function getSafeDeprecateEstateTx(
     return tx;
 }
 
-export async function getSafeDeprecateEstateTxByParams(
+export async function getEstateTokenTxByParams_SafeDeprecateEstate(
     estateToken: EstateToken,
     deployer: SignerWithAddress,
     paramsInput: DeprecateEstateParams,
@@ -259,12 +259,12 @@ export async function getSafeDeprecateEstateTxByParams(
         ...paramsInput,
         anchor: await getSafeDeprecateEstateAnchor(estateToken, paramsInput)
     };
-    return await getSafeDeprecateEstateTx(estateToken, deployer, params, txConfig);
+    return await getEstateTokenTx_SafeDeprecateEstate(estateToken, deployer, params, txConfig);
 }
 
 
 // safeExtendEstateExpiration
-export async function getSafeExtendEstateExpirationTx(
+export async function getEstateTokenTx_SafeExtendEstateExpiration(
     estateToken: EstateToken,
     deployer: SignerWithAddress,
     params: SafeExtendEstateExpirationParams,
@@ -279,7 +279,7 @@ export async function getSafeExtendEstateExpirationTx(
     return tx;
 }
 
-export async function getSafeExtendEstateExpirationTxByParams(
+export async function getEstateTokenTxByParams_SafeExtendEstateExpiration(
     estateToken: EstateToken,
     deployer: SignerWithAddress,
     params: ExtendEstateExpirationParams,
@@ -289,12 +289,12 @@ export async function getSafeExtendEstateExpirationTxByParams(
         ...params,
         anchor: await getSafeExtendEstateExpirationAnchor(estateToken, params)
     };
-    return await getSafeExtendEstateExpirationTx(estateToken, deployer, safeParams, txConfig);
+    return await getEstateTokenTx_SafeExtendEstateExpiration(estateToken, deployer, safeParams, txConfig);
 }
 
 
 // safeUpdateEstateCustodian
-export async function getSafeUpdateEstateCustodianTx(
+export async function getEstateTokenTx_SafeUpdateEstateCustodian(
     estateToken: EstateToken,
     deployer: SignerWithAddress,
     params: SafeUpdateEstateCustodianParams,
@@ -309,7 +309,7 @@ export async function getSafeUpdateEstateCustodianTx(
     return tx;
 }
 
-export async function getSafeUpdateEstateCustodianTxByParams(
+export async function getEstateTokenTxByParams_SafeUpdateEstateCustodian(
     estateToken: EstateToken,
     deployer: SignerWithAddress,
     params: UpdateEstateCustodianParams,
@@ -319,12 +319,12 @@ export async function getSafeUpdateEstateCustodianTxByParams(
         ...params,
         anchor: await getSafeUpdateEstateCustodianAnchor(estateToken, params)
     };
-    return await getSafeUpdateEstateCustodianTx(estateToken, deployer, safeParams, txConfig);
+    return await getEstateTokenTx_SafeUpdateEstateCustodian(estateToken, deployer, safeParams, txConfig);
 }
 
 
 // safeUpdateEstateURI
-export async function getSafeUpdateEstateURITx(
+export async function getEstateTokenTx_SafeUpdateEstateURI(
     estateToken: EstateToken,
     deployer: SignerWithAddress,
     params: SafeUpdateEstateURIParams,
@@ -340,7 +340,7 @@ export async function getSafeUpdateEstateURITx(
     return tx;
 }
 
-export async function getSafeUpdateEstateURITxByInput(
+export async function getEstateTokenTxByInput_SafeUpdateEstateURI(
     estateToken: EstateToken,
     deployer: SignerWithAddress,
     paramsInput: UpdateEstateURIParamsInput,
@@ -352,5 +352,5 @@ export async function getSafeUpdateEstateURITxByInput(
         anchor: await getSafeUpdateEstateURIAnchor(estateToken, paramsInput),
         validation: await getUpdateEstateURIValidation(estateToken, paramsInput, validator)
     };
-    return await getSafeUpdateEstateURITx(estateToken, deployer, params, txConfig);
+    return await getEstateTokenTx_SafeUpdateEstateURI(estateToken, deployer, params, txConfig);
 }

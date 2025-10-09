@@ -15,7 +15,7 @@ import {
 
 import { deployAirdrop } from '@utils/deployments/common/airdrop';
 import { deployCurrency } from '@utils/deployments/common/currency';
-import { getAirdropTx } from '@utils/transaction/common/airdrop';
+import { getAirdropTx_Airdrop } from '@utils/transaction/common/airdrop';
 
 interface AirdropFixture {
     deployer: any;
@@ -93,7 +93,7 @@ describe('1.3. Airdrop', async () => {
             const amounts1 = [amount1_receiver1, amount1_receiver2];
             const total1 = amount1_receiver1.add(amount1_receiver2);
 
-            const tx1 = await getAirdropTx(airdrop, sender1, {
+            const tx1 = await getAirdropTx_Airdrop(airdrop, sender1, {
                 receivers: accounts1,
                 amounts: amounts1,
                 currency: ethers.constants.AddressZero
@@ -113,7 +113,7 @@ describe('1.3. Airdrop', async () => {
             const total2 = amount2_receiver1.add(amount2_receiver3);
 
             // Should refund when value is more than needed
-            const tx2 = await getAirdropTx(airdrop, sender2, {
+            const tx2 = await getAirdropTx_Airdrop(airdrop, sender2, {
                 receivers: accounts2,
                 amounts: amounts2,
                 currency: ethers.constants.AddressZero
@@ -143,7 +143,7 @@ describe('1.3. Airdrop', async () => {
             const amounts1 = [amount1_receiver1, amount1_receiver2];
             const total1 = amount1_receiver1.add(amount1_receiver2);
 
-            await callTransaction(getAirdropTx(airdrop, sender1, {
+            await callTransaction(getAirdropTx_Airdrop(airdrop, sender1, {
                 receivers: accounts1,
                 amounts: amounts1,
                 currency: currency.address
@@ -160,7 +160,7 @@ describe('1.3. Airdrop', async () => {
             const total2 = amount2_receiver1.add(amount2_receiver3);
 
             // Should refund when value is more than needed
-            await callTransaction(getAirdropTx(airdrop, sender2, {
+            await callTransaction(getAirdropTx_Airdrop(airdrop, sender2, {
                 receivers: accounts2,
                 amounts: amounts2,
                 currency: currency.address
@@ -177,7 +177,7 @@ describe('1.3. Airdrop', async () => {
             const accounts = [receiver1.address, receiver2.address];
             const amounts = [ethers.utils.parseEther('1'), ethers.utils.parseEther('2'), ethers.utils.parseEther('3')];
 
-            await expect(getAirdropTx(airdrop, sender1, {
+            await expect(getAirdropTx_Airdrop(airdrop, sender1, {
                 receivers: accounts,
                 amounts: amounts,
                 currency: ethers.constants.AddressZero
@@ -193,7 +193,7 @@ describe('1.3. Airdrop', async () => {
             const accounts = [receiver1.address];
             const amounts = [ethers.utils.parseEther('100')];
 
-            await expect(getAirdropTx(airdrop, sender1, {
+            await expect(getAirdropTx_Airdrop(airdrop, sender1, {
                 receivers: accounts,
                 amounts: amounts,
                 currency: ethers.constants.AddressZero
@@ -206,7 +206,7 @@ describe('1.3. Airdrop', async () => {
             const accounts = [receiver1.address];
             const amounts = [ethers.utils.parseEther('100')];
 
-            await expect(getAirdropTx(airdrop, sender1, {
+            await expect(getAirdropTx_Airdrop(airdrop, sender1, {
                 receivers: accounts,
                 amounts: amounts,
                 currency: currency.address
@@ -219,7 +219,7 @@ describe('1.3. Airdrop', async () => {
             const accounts = [receiver1.address, ethers.constants.AddressZero];
             const amounts = [ethers.utils.parseEther('1'), ethers.utils.parseEther('2')];
 
-            await expect(getAirdropTx(airdrop, sender1, {
+            await expect(getAirdropTx_Airdrop(airdrop, sender1, {
                 receivers: accounts,
                 amounts: amounts,
                 currency: ethers.constants.AddressZero
@@ -232,7 +232,7 @@ describe('1.3. Airdrop', async () => {
             const accounts = [receiver1.address, receiver2.address];
             const amounts = [ethers.utils.parseEther('1'), ethers.constants.Zero];
 
-            await expect(getAirdropTx(airdrop, sender1, {
+            await expect(getAirdropTx_Airdrop(airdrop, sender1, {
                 receivers: accounts,
                 amounts: amounts,
                 currency: ethers.constants.AddressZero

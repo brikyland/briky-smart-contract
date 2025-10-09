@@ -13,7 +13,7 @@ import { deployDistributor } from '@utils/deployments/liquidity/distributor';
 import { callPrimaryToken_UnlockForCoreTeam } from '@utils/call/liquidity/primaryToken';
 import { DistributeTokenParams, DistributeTokenParamsInput } from '@utils/models/liquidity/distributor';
 import { getDistributeTokenInvalidSignatures, getDistributeTokenSignatures } from '@utils/signatures/liquidity/distributor';
-import { getDistributeTokenTx } from '@utils/transaction/liquidity/distributor';
+import { getDistributorTx_DistributeToken } from '@utils/transaction/liquidity/distributor';
 
 interface DistributorFixture {
     deployer: SignerWithAddress;
@@ -137,7 +137,7 @@ describe('4.2. Distributor', async () => {
             const initReceiver2Balance = await primaryToken.balanceOf(receiver2.address);
             const initReceiver3Balance = await primaryToken.balanceOf(receiver3.address);
 
-            const tx = await getDistributeTokenTx(distributor, deployer, params);
+            const tx = await getDistributorTx_DistributeToken(distributor, deployer, params);
             await tx.wait();
 
             for(let i = 0; i < receivers.length; i++) {
@@ -171,7 +171,7 @@ describe('4.2. Distributor', async () => {
                 signatures: await getDistributeTokenInvalidSignatures(distributor, admins, admin, paramsInput),
             };
 
-            await expect(getDistributeTokenTx(distributor, deployer, params))
+            await expect(getDistributorTx_DistributeToken(distributor, deployer, params))
                 .to.be.revertedWithCustomError(distributor, "FailedVerification");
         });
 
@@ -194,7 +194,7 @@ describe('4.2. Distributor', async () => {
                     signatures: await getDistributeTokenSignatures(distributor, paramsInput, admin, admins),
                 };
 
-                await expect(getDistributeTokenTx(distributor, deployer, params))
+                await expect(getDistributorTx_DistributeToken(distributor, deployer, params))
                     .to.be.revertedWithCustomError(distributor, "InvalidInput");
             }
 
@@ -225,7 +225,7 @@ describe('4.2. Distributor', async () => {
                 signatures: await getDistributeTokenSignatures(distributor, paramsInput, admin, admins),
             };
 
-            await expect(getDistributeTokenTx(distributor, deployer, params))
+            await expect(getDistributorTx_DistributeToken(distributor, deployer, params))
                 .to.be.revertedWithCustomError(distributor, "InsufficientFunds");
         });        
     });

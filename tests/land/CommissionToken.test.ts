@@ -31,11 +31,11 @@ import {
 import { scaleRate } from "@utils/formula";
 import { Initialization as LandInitialization } from '@tests/land/test.initialization';
 import { MockValidator } from '@utils/mockValidator';
-import { getActivateBrokerTx, getCallMintTx, getRegisterBrokerTx, getUpdateBaseURITx, getUpdateBaseURITxByInput, getUpdateRoyaltyRateTx, getUpdateRoyaltyRateTxByInput } from '@utils/transaction/land/commissionToken';
+import { getCommissionTokenTx_ActivateBroker, getCallCommissionTokenTx_Mint, getCommissionTokenTx_RegisterBroker, getCommissionTokenTx_UpdateBaseURI, getCommissionTokenTxByInput_UpdateBaseURI, getCommissionTokenTx_UpdateRoyaltyRate, getCommissionTokenTxByInput_UpdateRoyaltyRate } from '@utils/transaction/land/commissionToken';
 import { ActivateBrokerParams, MintParams, RegisterBrokerParams, UpdateBaseURIParams, UpdateBaseURIParamsInput, UpdateRoyaltyRateParams, UpdateRoyaltyRateParamsInput } from '@utils/models/land/commissionToken';
 import { BigNumber } from 'ethers';
-import { getActivateInTxByInput, getAuthorizeManagersTxByInput, getAuthorizeModeratorsTxByInput, getDeclareZoneTxByInput } from '@utils/transaction/common/admin';
-import { getPauseTxByInput } from '@utils/transaction/common/pausable';
+import { getAdminTxByInput_ActivateIn, getAdminTxByInput_AuthorizeManagers, getAdminTxByInput_AuthorizeModerators, getAdminTxByInput_DeclareZone } from '@utils/transaction/common/admin';
+import { getPausableTxByInput_Pause } from '@utils/transaction/common/pausable';
 import { getUpdateBaseURISignatures, getUpdateRoyaltyRateSignatures } from '@utils/signatures/land/commissionToken';
 
 interface CommissionTokenFixture {
@@ -143,23 +143,23 @@ describe('2.1. CommissionToken', async () => {
         const fixture = await loadFixture(commissionTokenFixture);
         const { deployer, admin, admins, commissionToken, estateToken, manager, moderator, broker1, broker2, zone1, zone2 } = fixture;
 
-        await callTransaction(getAuthorizeManagersTxByInput(admin, deployer, {
+        await callTransaction(getAdminTxByInput_AuthorizeManagers(admin, deployer, {
             accounts: [manager.address],
             isManager: true
         }, admins));
-        await callTransaction(getAuthorizeModeratorsTxByInput(admin, deployer, {
+        await callTransaction(getAdminTxByInput_AuthorizeModerators(admin, deployer, {
             accounts: [moderator.address],
             isModerator: true
         }, admins));
 
         if (!skipDeclareZone) {
             for (const zone of [zone1, zone2]) {
-                await callTransaction(getDeclareZoneTxByInput(admin, deployer, { zone }, admins));
+                await callTransaction(getAdminTxByInput_DeclareZone(admin, deployer, { zone }, admins));
             }
 
             if (!skipActivateExecutiveInZone) {
                 for (const zone of [zone1, zone2]) {
-                    await callTransaction(getActivateInTxByInput(admin, deployer, {
+                    await callTransaction(getAdminTxByInput_ActivateIn(admin, deployer, {
                         zone,
                         accounts: [manager.address, moderator.address],
                         isActive: true
@@ -169,7 +169,7 @@ describe('2.1. CommissionToken', async () => {
         }
 
         if (registerSampleBrokers) {
-            await callTransaction(getRegisterBrokerTx(
+            await callTransaction(getCommissionTokenTx_RegisterBroker(
                 commissionToken,
                 manager,
                 {
@@ -179,7 +179,7 @@ describe('2.1. CommissionToken', async () => {
                 },
             ));
 
-            await callTransaction(getRegisterBrokerTx(
+            await callTransaction(getCommissionTokenTx_RegisterBroker(
                 commissionToken,
                 manager,
                 {
@@ -191,7 +191,7 @@ describe('2.1. CommissionToken', async () => {
         }
 
         if (mintSampleTokens) {
-            await callTransaction(getCallMintTx(
+            await callTransaction(getCallCommissionTokenTx_Mint(
                 commissionToken,
                 estateToken,
                 {
@@ -201,7 +201,7 @@ describe('2.1. CommissionToken', async () => {
                 },
             ));
 
-            await callTransaction(getCallMintTx(
+            await callTransaction(getCallCommissionTokenTx_Mint(
                 commissionToken,
                 estateToken,
                 {
@@ -213,7 +213,7 @@ describe('2.1. CommissionToken', async () => {
         }
 
         if (pause) {
-            await callTransaction(getPauseTxByInput(commissionToken, deployer, admin, admins));
+            await callTransaction(getPausableTxByInput_Pause(commissionToken, deployer, admin, admins));
         }
 
         return {
@@ -276,7 +276,7 @@ describe('2.1. CommissionToken', async () => {
             const paramsInput: UpdateBaseURIParamsInput = {
                 uri: "NewBaseURI:",
             };
-            const tx = await getUpdateBaseURITxByInput(commissionToken, deployer, paramsInput, admin, admins);
+            const tx = await getCommissionTokenTxByInput_UpdateBaseURI(commissionToken, deployer, paramsInput, admin, admins);
             await tx.wait();
 
             await expect(tx).to
@@ -300,7 +300,7 @@ describe('2.1. CommissionToken', async () => {
                 ...paramsInput,
                 signatures: await getUpdateBaseURISignatures(commissionToken, paramsInput, admin, admins, false),
             };
-            await expect(getUpdateBaseURITx(commissionToken, deployer, params))
+            await expect(getCommissionTokenTx_UpdateBaseURI(commissionToken, deployer, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
     });
@@ -312,7 +312,7 @@ describe('2.1. CommissionToken', async () => {
             const paramsInput: UpdateRoyaltyRateParamsInput = {
                 royaltyRate: ethers.utils.parseEther('0.2'),
             };            
-            const tx = await getUpdateRoyaltyRateTxByInput(commissionToken, deployer, paramsInput, admin, admins);
+            const tx = await getCommissionTokenTxByInput_UpdateRoyaltyRate(commissionToken, deployer, paramsInput, admin, admins);
             await tx.wait();
 
             await expect(tx).to
@@ -341,7 +341,7 @@ describe('2.1. CommissionToken', async () => {
                 ...paramsInput,
                 signatures: await getUpdateRoyaltyRateSignatures(commissionToken, paramsInput, admin, admins, false),
             };
-            await expect(getUpdateRoyaltyRateTx(commissionToken, deployer, params))
+            await expect(getCommissionTokenTx_UpdateRoyaltyRate(commissionToken, deployer, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
@@ -351,7 +351,7 @@ describe('2.1. CommissionToken', async () => {
             const paramsInput: UpdateRoyaltyRateParamsInput = {
                 royaltyRate: Constant.COMMON_RATE_MAX_FRACTION.add(1),
             };
-            await expect(getUpdateRoyaltyRateTxByInput(commissionToken, deployer, paramsInput, admin, admins))
+            await expect(getCommissionTokenTxByInput_UpdateRoyaltyRate(commissionToken, deployer, paramsInput, admin, admins))
                 .to.be.revertedWithCustomError(commissionToken, 'InvalidRate');
         });
     });
@@ -363,7 +363,7 @@ describe('2.1. CommissionToken', async () => {
             let timestamp = await time.latest() + 100;
 
             await callTransactionAtTimestamp(
-                getRegisterBrokerTx(commissionToken, manager, {
+                getCommissionTokenTx_RegisterBroker(commissionToken, manager, {
                     zone: zone1,
                     broker: broker1.address,
                     commissionRate: ethers.utils.parseEther('0.1'),
@@ -393,7 +393,7 @@ describe('2.1. CommissionToken', async () => {
                 registerSampleBrokers: true,
             });
 
-            await callTransaction(getActivateBrokerTx(commissionToken, manager, {
+            await callTransaction(getCommissionTokenTx_ActivateBroker(commissionToken, manager, {
                 zone: zone1,
                 broker: broker1.address,
                 isActive: false,
@@ -580,7 +580,7 @@ describe('2.1. CommissionToken', async () => {
             }
 
             await time.setNextBlockTimestamp(timestamp);
-            const tx1 = await getRegisterBrokerTx(commissionToken, manager, params1);
+            const tx1 = await getCommissionTokenTx_RegisterBroker(commissionToken, manager, params1);
             const receipt1 = await tx1.wait();
 
             const expectedRate1 = {
@@ -605,7 +605,7 @@ describe('2.1. CommissionToken', async () => {
             }
             
             await time.setNextBlockTimestamp(timestamp);
-            const tx2 = await getRegisterBrokerTx(commissionToken, manager, params2);
+            const tx2 = await getCommissionTokenTx_RegisterBroker(commissionToken, manager, params2);
             const receipt2 = await tx2.wait();
 
             const expectedRate2 = {
@@ -630,7 +630,7 @@ describe('2.1. CommissionToken', async () => {
             }
 
             await time.setNextBlockTimestamp(timestamp);
-            const tx3 = await getRegisterBrokerTx(commissionToken, manager, params3);
+            const tx3 = await getCommissionTokenTx_RegisterBroker(commissionToken, manager, params3);
             const receipt3 = await tx3.wait();
 
             const expectedRate3 = {
@@ -656,7 +656,7 @@ describe('2.1. CommissionToken', async () => {
 
             const { defaultParams: params } = await beforeRegisterBrokerTest(fixture);
 
-            await expect(getRegisterBrokerTx(commissionToken, manager, params))
+            await expect(getCommissionTokenTx_RegisterBroker(commissionToken, manager, params))
                 .to.be.revertedWith('Pausable: paused');
         });
 
@@ -667,10 +667,10 @@ describe('2.1. CommissionToken', async () => {
 
             const { defaultParams: params } = await beforeRegisterBrokerTest(fixture);
             
-            await expect(getRegisterBrokerTx(commissionToken, moderator, params))
+            await expect(getCommissionTokenTx_RegisterBroker(commissionToken, moderator, params))
                 .to.be.revertedWithCustomError(commissionToken, 'Unauthorized');
 
-            await expect(getRegisterBrokerTx(commissionToken, user, params))
+            await expect(getCommissionTokenTx_RegisterBroker(commissionToken, user, params))
                 .to.be.revertedWithCustomError(commissionToken, 'Unauthorized');
         });
 
@@ -683,7 +683,7 @@ describe('2.1. CommissionToken', async () => {
 
             const { defaultParams: params } = await beforeRegisterBrokerTest(fixture);
 
-            await expect(getRegisterBrokerTx(commissionToken, manager, params))
+            await expect(getCommissionTokenTx_RegisterBroker(commissionToken, manager, params))
                 .to.be.revertedWithCustomError(commissionToken, 'Unauthorized');
         });
 
@@ -692,7 +692,7 @@ describe('2.1. CommissionToken', async () => {
 
             const { deployer, commissionToken, manager, zone1, admin, admins } = fixture;
 
-            await callTransaction(getActivateInTxByInput(admin, deployer, {
+            await callTransaction(getAdminTxByInput_ActivateIn(admin, deployer, {
                 zone: zone1,
                 accounts: [manager.address],
                 isActive: false,
@@ -700,7 +700,7 @@ describe('2.1. CommissionToken', async () => {
 
             const { defaultParams: params } = await beforeRegisterBrokerTest(fixture);
 
-            await expect(getRegisterBrokerTx(commissionToken, manager, params))
+            await expect(getCommissionTokenTx_RegisterBroker(commissionToken, manager, params))
                 .to.be.revertedWithCustomError(commissionToken, 'Unauthorized');
         });
 
@@ -715,7 +715,7 @@ describe('2.1. CommissionToken', async () => {
                 ...defaultParams,
                 commissionRate: Constant.COMMON_RATE_MAX_FRACTION.add(1),
             }
-            await expect(getRegisterBrokerTx(commissionToken, manager, params))
+            await expect(getCommissionTokenTx_RegisterBroker(commissionToken, manager, params))
                 .to.be.revertedWithCustomError(commissionToken, 'InvalidRate');
         });
 
@@ -728,7 +728,7 @@ describe('2.1. CommissionToken', async () => {
 
             const { defaultParams: params } = await beforeRegisterBrokerTest(fixture);
 
-            await expect(getRegisterBrokerTx(commissionToken, manager, params))
+            await expect(getCommissionTokenTx_RegisterBroker(commissionToken, manager, params))
                 .to.be.revertedWithCustomError(commissionToken, 'AlreadyRegistered');
         });
     });
@@ -764,7 +764,7 @@ describe('2.1. CommissionToken', async () => {
                 isActive: false,
             }
             
-            const tx1 = await getActivateBrokerTx(commissionToken, manager, params1);
+            const tx1 = await getCommissionTokenTx_ActivateBroker(commissionToken, manager, params1);
             await tx1.wait();
 
             await expect(tx1).to.emit(commissionToken, 'BrokerDeactivation').withArgs(
@@ -782,7 +782,7 @@ describe('2.1. CommissionToken', async () => {
                 isActive: true,
             }
             
-            const tx2 = await getActivateBrokerTx(commissionToken, manager, params2);
+            const tx2 = await getCommissionTokenTx_ActivateBroker(commissionToken, manager, params2);
             await tx2.wait();
 
             await expect(tx2).to.emit(commissionToken, 'BrokerActivation').withArgs(
@@ -803,7 +803,7 @@ describe('2.1. CommissionToken', async () => {
 
             const { defaultParams: params } = await beforeActivateBrokerTest(fixture);
 
-            await expect(getActivateBrokerTx(commissionToken, manager, params))
+            await expect(getCommissionTokenTx_ActivateBroker(commissionToken, manager, params))
                 .to.be.revertedWith('Pausable: paused');
         });
 
@@ -814,10 +814,10 @@ describe('2.1. CommissionToken', async () => {
 
             const { defaultParams: params } = await beforeActivateBrokerTest(fixture);
 
-            await expect(getActivateBrokerTx(commissionToken, moderator, params))
+            await expect(getCommissionTokenTx_ActivateBroker(commissionToken, moderator, params))
                 .to.be.revertedWithCustomError(commissionToken, 'Unauthorized');
 
-            await expect(getActivateBrokerTx(commissionToken, user, params))
+            await expect(getCommissionTokenTx_ActivateBroker(commissionToken, user, params))
                 .to.be.revertedWithCustomError(commissionToken, 'Unauthorized');
         });
 
@@ -830,7 +830,7 @@ describe('2.1. CommissionToken', async () => {
 
             const { defaultParams: params } = await beforeActivateBrokerTest(fixture);
 
-            await expect(getActivateBrokerTx(commissionToken, manager, params))
+            await expect(getCommissionTokenTx_ActivateBroker(commissionToken, manager, params))
                 .to.be.revertedWithCustomError(commissionToken, 'Unauthorized');
         });
 
@@ -839,7 +839,7 @@ describe('2.1. CommissionToken', async () => {
 
             const { deployer, commissionToken, manager, zone1, admin, admins } = fixture;
 
-            await callTransaction(getActivateInTxByInput(admin, deployer, {
+            await callTransaction(getAdminTxByInput_ActivateIn(admin, deployer, {
                 zone: zone1,
                 accounts: [manager.address],
                 isActive: false,
@@ -847,7 +847,7 @@ describe('2.1. CommissionToken', async () => {
 
             const { defaultParams: params } = await beforeActivateBrokerTest(fixture);
 
-            await expect(getActivateBrokerTx(commissionToken, manager, params))
+            await expect(getCommissionTokenTx_ActivateBroker(commissionToken, manager, params))
                 .to.be.revertedWithCustomError(commissionToken, 'Unauthorized');
         });
     });
@@ -877,7 +877,7 @@ describe('2.1. CommissionToken', async () => {
             // Mint for broker 1 in zone 1
             const commissionRate1 = await commissionToken.getBrokerCommissionRate(zone1, broker1.address);
             
-            const tx1 = await getCallMintTx(commissionToken, estateToken, {
+            const tx1 = await getCallCommissionTokenTx_Mint(commissionToken, estateToken, {
                 zone: zone1,
                 broker: broker1.address,
                 tokenId: BigNumber.from(1),
@@ -909,7 +909,7 @@ describe('2.1. CommissionToken', async () => {
             // Mint for broker 2 in zone 2
             const commissionRate2 = await commissionToken.getBrokerCommissionRate(zone2, broker2.address);
 
-            const tx2 = await getCallMintTx(commissionToken, estateToken, {
+            const tx2 = await getCallCommissionTokenTx_Mint(commissionToken, estateToken, {
                 zone: zone2,
                 broker: broker2.address,
                 tokenId: BigNumber.from(2),
@@ -947,7 +947,7 @@ describe('2.1. CommissionToken', async () => {
 
             const { defaultParams: params } = await beforeMintTest(fixture);
 
-            await expect(getCallMintTx(commissionToken, estateToken, params))
+            await expect(getCallCommissionTokenTx_Mint(commissionToken, estateToken, params))
                 .to.be.revertedWith('Pausable: paused');
         });
 
@@ -991,8 +991,8 @@ describe('2.1. CommissionToken', async () => {
                 broker: broker1.address,
                 tokenId: BigNumber.from(1),
             }
-            await callTransaction(getCallMintTx(commissionToken, estateToken, params1));
-            await expect(getCallMintTx(commissionToken, estateToken, params1))
+            await callTransaction(getCallCommissionTokenTx_Mint(commissionToken, estateToken, params1));
+            await expect(getCallCommissionTokenTx_Mint(commissionToken, estateToken, params1))
                 .to.be.revertedWithCustomError(commissionToken, 'AlreadyMinted');
 
             const params2: MintParams = {
@@ -1000,8 +1000,8 @@ describe('2.1. CommissionToken', async () => {
                 broker: broker2.address,
                 tokenId: BigNumber.from(2),
             }
-            await callTransaction(getCallMintTx(commissionToken, estateToken, params2));
-            await expect(getCallMintTx(commissionToken, estateToken, params2))
+            await callTransaction(getCallCommissionTokenTx_Mint(commissionToken, estateToken, params2));
+            await expect(getCallCommissionTokenTx_Mint(commissionToken, estateToken, params2))
                 .to.be.revertedWithCustomError(commissionToken, 'AlreadyMinted');
         });
 
@@ -1020,7 +1020,7 @@ describe('2.1. CommissionToken', async () => {
                 zone: invalidZone,
             }
 
-            await expect(getCallMintTx(commissionToken, estateToken, params))
+            await expect(getCallCommissionTokenTx_Mint(commissionToken, estateToken, params))
                 .to.be.revertedWithCustomError(commissionToken, 'InvalidZone');
         });
 
@@ -1031,7 +1031,7 @@ describe('2.1. CommissionToken', async () => {
 
             const { defaultParams: params } = await beforeMintTest(fixture);
 
-            await expect(getCallMintTx(commissionToken, estateToken, params))
+            await expect(getCallCommissionTokenTx_Mint(commissionToken, estateToken, params))
                 .to.be.revertedWithCustomError(commissionToken, 'InvalidBroker');
         });
 
@@ -1044,13 +1044,13 @@ describe('2.1. CommissionToken', async () => {
 
             const { defaultParams: params } = await beforeMintTest(fixture);
 
-            await callTransaction(getActivateBrokerTx(commissionToken, manager, {
+            await callTransaction(getCommissionTokenTx_ActivateBroker(commissionToken, manager, {
                 zone: params.zone,
                 broker: params.broker,
                 isActive: false,
             }));
 
-            await expect(getCallMintTx(commissionToken, estateToken, params))
+            await expect(getCallCommissionTokenTx_Mint(commissionToken, estateToken, params))
                 .to.be.revertedWithCustomError(commissionToken, 'InvalidBroker');
         });
     });

@@ -39,7 +39,7 @@ import {
 
 
 // updateBaseUnitPriceRange
-export async function getUpdateBaseUnitPriceRangeTx(
+export async function getPrestigePadTx_UpdateBaseUnitPriceRange(
     prestigePad: PrestigePad,
     deployer: SignerWithAddress,
     params: UpdateBaseUnitPriceRangeParams,
@@ -53,7 +53,7 @@ export async function getUpdateBaseUnitPriceRangeTx(
     );
 }
 
-export async function getUpdateBaseUnitPriceRangeTxByInput(
+export async function getPrestigePadTxByInput_UpdateBaseUnitPriceRange(
     prestigePad: PrestigePad,
     deployer: SignerWithAddress,
     paramsInput: UpdateBaseUnitPriceRangeParamsInput,
@@ -65,12 +65,12 @@ export async function getUpdateBaseUnitPriceRangeTxByInput(
         ...paramsInput,
         signatures: await getUpdateBaseUnitPriceRangeSignatures(prestigePad, paramsInput, admin, admins)
     }
-    return await getUpdateBaseUnitPriceRangeTx(prestigePad, deployer, params, txConfig);
+    return await getPrestigePadTx_UpdateBaseUnitPriceRange(prestigePad, deployer, params, txConfig);
 }
 
 
 // initiateLaunch
-export async function getInitiateLaunchTx(
+export async function getPrestigePadTx_InitiateLaunch(
     prestigePad: PrestigePad,
     deployer: SignerWithAddress,
     params: InitiateLaunchParams,
@@ -88,7 +88,7 @@ export async function getInitiateLaunchTx(
     );
 }
 
-export async function getInitiateLaunchTxByInput(
+export async function getPrestigePadTxByInput_InitiateLaunch(
     prestigePad: PrestigePad,
     deployer: SignerWithAddress,
     paramsInput: InitiateLaunchParamsInput,
@@ -99,12 +99,12 @@ export async function getInitiateLaunchTxByInput(
         ...paramsInput,
         validation: await getInitiateLaunchValidation(prestigePad, paramsInput, validator)
     };
-    return await getInitiateLaunchTx(prestigePad, deployer, params, txConfig);
+    return await getPrestigePadTx_InitiateLaunch(prestigePad, deployer, params, txConfig);
 };
 
 
 // updateLaunchURI
-export async function getUpdateLaunchURITx(
+export async function getPrestigePadTx_UpdateLaunchURI(
     prestigePad: PrestigePad,
     deployer: SignerWithAddress,
     params: UpdateLaunchURIParams,
@@ -118,7 +118,7 @@ export async function getUpdateLaunchURITx(
     );
 }
 
-export async function getUpdateLaunchURITxByInput(
+export async function getPrestigePadTxByInput_UpdateLaunchURI(
     prestigePad: PrestigePad,
     deployer: SignerWithAddress,
     paramsInput: UpdateLaunchURIParamsInput,
@@ -129,12 +129,12 @@ export async function getUpdateLaunchURITxByInput(
         ...paramsInput,
         validation: await getUpdateLaunchURIValidation(prestigePad, paramsInput, validator)
     };
-    return getUpdateLaunchURITx(prestigePad, deployer, params, txConfig);
+    return getPrestigePadTx_UpdateLaunchURI(prestigePad, deployer, params, txConfig);
 }
 
 
 // updateRound
-export async function getUpdateRoundTx(
+export async function getPrestigePadTx_UpdateRound(
     prestigePad: PrestigePad,
     deployer: SignerWithAddress,
     params: UpdateRoundParams,
@@ -148,7 +148,7 @@ export async function getUpdateRoundTx(
     );
 }
 
-export async function getUpdateRoundTxByInput(
+export async function getPrestigePadTxByInput_UpdateRound(
     prestigePad: PrestigePad,
     deployer: SignerWithAddress,
     paramsInput: UpdateRoundParamsInput,
@@ -162,12 +162,12 @@ export async function getUpdateRoundTxByInput(
             validation: await getUpdateRoundValidation(prestigePad, paramsInput, validator)
         },
     };
-    return getUpdateRoundTx(prestigePad, deployer, params, txConfig);
+    return getPrestigePadTx_UpdateRound(prestigePad, deployer, params, txConfig);
 }
 
 
 // updateRounds
-export async function getUpdateRoundsTx(
+export async function getPrestigePadTx_UpdateRounds(
     prestigePad: PrestigePad,
     deployer: SignerWithAddress,
     params: UpdateRoundsParams,
@@ -180,7 +180,7 @@ export async function getUpdateRoundsTx(
     );
 }
 
-export async function getCallUpdateRoundsTx(
+export async function getCallPrestigePadTx_UpdateRounds(
     prestigePad: PrestigePad,
     proxyCaller: any,
     params: UpdateRoundsParams,
@@ -197,7 +197,7 @@ export async function getCallUpdateRoundsTx(
     );
 }
 
-export async function getUpdateRoundsTxByInput(
+export async function getPrestigePadTxByInput_UpdateRounds(
     prestigePad: PrestigePad,
     deployer: SignerWithAddress,
     paramsInput: UpdateRoundsParamsInput,
@@ -213,10 +213,10 @@ export async function getUpdateRoundsTxByInput(
         ...paramsInput,
         addedRounds: roundsWithValidations,
     };
-    return getUpdateRoundsTx(prestigePad, deployer, params, txConfig);
+    return getPrestigePadTx_UpdateRounds(prestigePad, deployer, params, txConfig);
 }
 
-export async function getCallUpdateRoundsTxByInput(
+export async function getPrestigePadTxByInput_CallUpdateRounds(
     prestigePad: PrestigePad,
     proxyCaller: any,
     paramsInput: UpdateRoundsParamsInput,
@@ -232,12 +232,12 @@ export async function getCallUpdateRoundsTxByInput(
         ...paramsInput,
         addedRounds: roundsWithValidations,
     };
-    return getCallUpdateRoundsTx(prestigePad, proxyCaller, params, txConfig);
+    return getCallPrestigePadTx_UpdateRounds(prestigePad, proxyCaller, params, txConfig);
 }
 
 
 // scheduleNextRound
-export async function getScheduleNextRoundTx(
+export async function getPrestigePadTx_ScheduleNextRound(
     prestigePad: PrestigePad,
     deployer: SignerWithAddress,
     params: ScheduleNextRoundParams,
@@ -255,7 +255,7 @@ export async function getScheduleNextRoundTx(
     );
 }
 
-export async function getCallScheduleNextRoundTx(
+export async function getCallPrestigePadTx_ScheduleNextRound(
     prestigePad: PrestigePad,
     proxyCaller: any,
     params: ScheduleNextRoundParams,
@@ -278,7 +278,7 @@ export async function getCallScheduleNextRoundTx(
 
 
 // cancelCurrentRound
-export async function getCancelCurrentRoundTx(
+export async function getPrestigePadTx_CancelCurrentRound(
     prestigePad: PrestigePad,
     deployer: SignerWithAddress,
     params: CancelCurrentRoundParams,
@@ -292,7 +292,7 @@ export async function getCancelCurrentRoundTx(
 
 
 // safeConfirmCurrentRound
-export async function getSafeConfirmCurrentRoundTx(
+export async function getPrestigePadTx_SafeConfirmCurrentRound(
     prestigePad: PrestigePad,
     deployer: SignerWithAddress,
     params: SafeConfirmCurrentRoundParams,
@@ -305,7 +305,7 @@ export async function getSafeConfirmCurrentRoundTx(
     );
 }
 
-export async function getSafeConfirmCurrentRoundTxByParams(
+export async function getPrestigePadTxByParams_SafeConfirmCurrentRound(
     prestigePad: PrestigePad,
     deployer: SignerWithAddress,
     params: ConfirmCurrentRoundParams,
@@ -315,10 +315,10 @@ export async function getSafeConfirmCurrentRoundTxByParams(
         ...params,
         anchor: await getSafeConfirmCurrentRoundParams(prestigePad, params),
     };
-    return getSafeConfirmCurrentRoundTx(prestigePad, deployer, safeParams, txConfig);
+    return getPrestigePadTx_SafeConfirmCurrentRound(prestigePad, deployer, safeParams, txConfig);
 }
 
-export async function getCallSafeConfirmCurrentRoundTx(
+export async function getCallPrestigePadTx_SafeConfirmCurrentRound(
     prestigePad: PrestigePad,
     proxyCaller: ProxyCaller,
     params: SafeConfirmCurrentRoundParams,
@@ -334,7 +334,7 @@ export async function getCallSafeConfirmCurrentRoundTx(
     );
 }
 
-export async function getCallSafeConfirmCurrentRoundTxByParams(
+export async function getCallTxByParams_SafeConfirmCurrentRound(
     prestigePad: PrestigePad,
     proxyCaller: ProxyCaller,
     params: ConfirmCurrentRoundParams,
@@ -344,12 +344,12 @@ export async function getCallSafeConfirmCurrentRoundTxByParams(
         ...params,
         anchor: await getSafeConfirmCurrentRoundParams(prestigePad, params),
     };
-    return getCallSafeConfirmCurrentRoundTx(prestigePad, proxyCaller, safeParams, txConfig);
+    return getCallPrestigePadTx_SafeConfirmCurrentRound(prestigePad, proxyCaller, safeParams, txConfig);
 }
 
 
 // safeFinalize
-export async function getSafeFinalizeTx(
+export async function getPrestigePadTx_SafeFinalize(
     prestigePad: PrestigePad,
     deployer: SignerWithAddress,
     params: SafeFinalizeParams,
@@ -362,7 +362,7 @@ export async function getSafeFinalizeTx(
     );
 }
 
-export async function getSafeFinalizeTxByParams(
+export async function getPrestigePadTxByParams_SafeFinalize(
     prestigePad: PrestigePad,
     deployer: SignerWithAddress,
     params: FinalizeParams,
@@ -372,12 +372,12 @@ export async function getSafeFinalizeTxByParams(
         ...params,
         anchor: await getSafeFinalizeParams(prestigePad, params),
     };
-    return getSafeFinalizeTx(prestigePad, deployer, safeParams, txConfig);
+    return getPrestigePadTx_SafeFinalize(prestigePad, deployer, safeParams, txConfig);
 }
 
 
 // contributeCurrentRound
-export async function getContributeCurrentRoundTx(
+export async function getPrestigePadTx_ContributeCurrentRound(
     prestigePad: PrestigePad,
     deployer: SignerWithAddress,
     params: ContributeCurrentRoundParams,
@@ -392,7 +392,7 @@ export async function getContributeCurrentRoundTx(
 
 
 // safeContributeCurrentRound
-export async function getSafeContributeCurrentRoundTx(
+export async function getPrestigePadTx_SafeContributeCurrentRound(
     prestigePad: PrestigePad,
     deployer: SignerWithAddress,
     params: SafeContributeCurrentRoundParams,
@@ -406,7 +406,7 @@ export async function getSafeContributeCurrentRoundTx(
     );
 }
 
-export async function getSafeContributeCurrentRoundTxByParams(
+export async function getPrestigePadTxByParams_SafeContributeCurrentRound(
     prestigePad: PrestigePad,
     deployer: SignerWithAddress,
     params: ContributeCurrentRoundParams,
@@ -416,12 +416,12 @@ export async function getSafeContributeCurrentRoundTxByParams(
         ...params,
         anchor: await getSafeContributeCurrentRoundAnchor(prestigePad, params),
     };
-    return getSafeContributeCurrentRoundTx(prestigePad, deployer, safeParams, txConfig);
+    return getPrestigePadTx_SafeContributeCurrentRound(prestigePad, deployer, safeParams, txConfig);
 }
 
 
 // withdrawContribution
-export async function getWithdrawContributionTx(
+export async function getPrestigePadTx_WithdrawContribution(
     prestigePad: PrestigePad,
     deployer: SignerWithAddress,
     params: WithdrawContributionParams,
@@ -435,7 +435,7 @@ export async function getWithdrawContributionTx(
 
 
 // withdrawProjectToken
-export async function getWithdrawProjectTokenTx(
+export async function getPrestigePadTx_WithdrawProjectToken(
     prestigePad: PrestigePad,
     deployer: SignerWithAddress,
     params: WithdrawProjectTokenParams,

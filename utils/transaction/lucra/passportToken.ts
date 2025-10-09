@@ -15,7 +15,7 @@ import { getUpdateBaseURISignatures, getUpdateFeeSignatures, getUpdateRoyaltyRat
 
 
 // updateBaseURI
-export async function getUpdateBaseURITx(
+export async function getPassportTokenTx_UpdateBaseURI(
     passportToken: PassportToken,
     deployer: SignerWithAddress,
     params: UpdateBaseURIParams,
@@ -28,7 +28,7 @@ export async function getUpdateBaseURITx(
     );
 }
 
-export async function getUpdateBaseURITxByInput(
+export async function getPassportTokenTxByInput_UpdateBaseURI(
     passportToken: PassportToken,
     deployer: SignerWithAddress,
     paramsInput: UpdateBaseURIParamsInput,
@@ -40,12 +40,12 @@ export async function getUpdateBaseURITxByInput(
         ...paramsInput,
         signatures: await getUpdateBaseURISignatures(passportToken, paramsInput, admin, admins),
     };
-    return getUpdateBaseURITx(passportToken, deployer, params, txConfig);
+    return getPassportTokenTx_UpdateBaseURI(passportToken, deployer, params, txConfig);
 }
 
 
 // updateFee
-export async function getUpdateFeeTx(
+export async function getPassportTokenTx_UpdateFee(
     passportToken: PassportToken,
     deployer: SignerWithAddress,
     params: UpdateFeeParams,
@@ -58,7 +58,7 @@ export async function getUpdateFeeTx(
     );
 }
 
-export async function getUpdateFeeTxByInput(
+export async function getPassportTokenTxByInput_UpdateFee(
     passportToken: PassportToken,
     deployer: SignerWithAddress,
     paramsInput: UpdateFeeParamsInput,
@@ -70,12 +70,12 @@ export async function getUpdateFeeTxByInput(
         ...paramsInput,
         signatures: await getUpdateFeeSignatures(passportToken, paramsInput, admin, admins),
     };
-    return getUpdateFeeTx(passportToken, deployer, params, txConfig);
+    return getPassportTokenTx_UpdateFee(passportToken, deployer, params, txConfig);
 }
 
 
 // updateRoyaltyRate
-export async function getUpdateRoyaltyRateTx(
+export async function getPassportTokenTx_UpdateRoyaltyRate(
     passportToken: PassportToken,
     deployer: SignerWithAddress,
     params: UpdateRoyaltyRateParams,
@@ -88,7 +88,7 @@ export async function getUpdateRoyaltyRateTx(
     );
 }
 
-export async function getUpdateRoyaltyRateTxByInput(
+export async function getPassportTokenTxByInput_UpdateRoyaltyRate(
     passportToken: PassportToken,
     deployer: SignerWithAddress,
     paramsInput: UpdateRoyaltyRateParamsInput,
@@ -100,12 +100,12 @@ export async function getUpdateRoyaltyRateTxByInput(
         ...paramsInput,
         signatures: await getUpdateRoyaltyRateSignatures(passportToken, paramsInput, admin, admins),
     };
-    return getUpdateRoyaltyRateTx(passportToken, deployer, params, txConfig);
+    return getPassportTokenTx_UpdateRoyaltyRate(passportToken, deployer, params, txConfig);
 }
 
 
 // withdraw
-export async function getWithdrawTx(
+export async function getPassportTokenTx_Withdraw(
     passportToken: PassportToken,
     deployer: SignerWithAddress,
     params: WithdrawParams,
@@ -120,7 +120,7 @@ export async function getWithdrawTx(
     );
 }
 
-export async function getWithdrawTxByInput(
+export async function getPassportTokenTxByInput_Withdraw(
     passportToken: PassportToken,
     deployer: SignerWithAddress,
     paramsInput: WithdrawParamsInput,
@@ -132,12 +132,12 @@ export async function getWithdrawTxByInput(
         ...paramsInput,
         signatures: await getWithdrawSignatures(passportToken, paramsInput, admin, admins),
     };
-    return getWithdrawTx(passportToken, deployer, params, txConfig);
+    return getPassportTokenTx_Withdraw(passportToken, deployer, params, txConfig);
 }
 
 
 // mint
-export async function getMintTx(
+export async function getPassportTokenTx_Mint(
     passportToken: PassportToken,
     deployer: SignerWithAddress,
     txConfig = {}

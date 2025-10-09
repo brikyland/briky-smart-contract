@@ -8,7 +8,7 @@ import {ContractTransaction} from "ethers";
 
 
 // withdraw
-export async function getWithdrawTx(
+export async function getFeeReceiverTx_Withdraw(
     feeReceiver: FeeReceiver,
     signer: SignerWithAddress,
     params: WithdrawParams,
@@ -23,7 +23,7 @@ export async function getWithdrawTx(
     );
 }
 
-export async function getWithdrawTxByInput(
+export async function getFeeReceiverTxByInput_Withdraw(
     feeReceiver: FeeReceiver,
     signer: SignerWithAddress,
     paramsInput: WithdrawParamsInput,
@@ -35,5 +35,5 @@ export async function getWithdrawTxByInput(
         ...paramsInput,
         signatures: await getWithdrawSignatures(feeReceiver, paramsInput, admin, admins)
     };
-    return await getWithdrawTx(feeReceiver, signer, params, txConfig);
+    return await getFeeReceiverTx_Withdraw(feeReceiver, signer, params, txConfig);
 }

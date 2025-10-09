@@ -6,7 +6,7 @@ import { getUpdateBaseURISignatures, getUpdateRoyaltyRateSignatures } from "@uti
 
 
 // updateBaseURI
-export async function getUpdateBaseURITx(
+export async function getCommissionTokenTx_UpdateBaseURI(
     commissionToken: CommissionToken,
     deployer: SignerWithAddress,
     params: UpdateBaseURIParams,
@@ -19,7 +19,7 @@ export async function getUpdateBaseURITx(
     );
 }
 
-export async function getUpdateBaseURITxByInput(
+export async function getCommissionTokenTxByInput_UpdateBaseURI(
     commissionToken: CommissionToken,
     deployer: SignerWithAddress,
     paramsInput: UpdateBaseURIParamsInput,
@@ -32,12 +32,12 @@ export async function getUpdateBaseURITxByInput(
         signatures: await getUpdateBaseURISignatures(commissionToken, paramsInput, admin, admins),
     };
     
-    return await getUpdateBaseURITx(commissionToken, deployer, params, txConfig);
+    return await getCommissionTokenTx_UpdateBaseURI(commissionToken, deployer, params, txConfig);
 }
 
 
 // updateRoyaltyRate
-export async function getUpdateRoyaltyRateTx(
+export async function getCommissionTokenTx_UpdateRoyaltyRate(
     commissionToken: CommissionToken,
     deployer: SignerWithAddress,
     params: UpdateRoyaltyRateParams,
@@ -50,7 +50,7 @@ export async function getUpdateRoyaltyRateTx(
     );
 }
 
-export async function getUpdateRoyaltyRateTxByInput(
+export async function getCommissionTokenTxByInput_UpdateRoyaltyRate(
     commissionToken: CommissionToken,
     deployer: SignerWithAddress,
     paramsInput: UpdateRoyaltyRateParamsInput,
@@ -63,12 +63,12 @@ export async function getUpdateRoyaltyRateTxByInput(
         signatures: await getUpdateRoyaltyRateSignatures(commissionToken, paramsInput, admin, admins),
     };
 
-    return await getUpdateRoyaltyRateTx(commissionToken, deployer, params, txConfig);
+    return await getCommissionTokenTx_UpdateRoyaltyRate(commissionToken, deployer, params, txConfig);
 }
 
 
 // registerBroker
-export async function getRegisterBrokerTx(
+export async function getCommissionTokenTx_RegisterBroker(
     commissionToken: CommissionToken,
     deployer: SignerWithAddress,
     params: RegisterBrokerParams,
@@ -84,7 +84,7 @@ export async function getRegisterBrokerTx(
 
 
 // activateBroker
-export async function getActivateBrokerTx(
+export async function getCommissionTokenTx_ActivateBroker(
     commissionToken: CommissionToken,
     deployer: SignerWithAddress,
     params: ActivateBrokerParams,
@@ -100,7 +100,7 @@ export async function getActivateBrokerTx(
 
 
 // mint
-export async function getCallMintTx(
+export async function getCallCommissionTokenTx_Mint(
     commissionToken: CommissionToken,
     caller: ProxyCaller,
     params: MintParams,

@@ -11,7 +11,7 @@ import {SignerWithAddress} from "@nomiclabs/hardhat-ethers/signers";
 
 
 // requestExtraction
-export async function getRequestExtractionTx(
+export async function getEstateLiquidatorTx_RequestExtraction(
     estateLiquidator: EstateLiquidator,
     signer: SignerWithAddress,
     params: RequestExtractionParams,
@@ -30,7 +30,7 @@ export async function getRequestExtractionTx(
     );
 }
 
-export async function getRequestExtractionTxByInput(
+export async function getEstateLiquidatorTxByInput_RequestExtraction(
     estateLiquidator: EstateLiquidator,
     estateToken: EstateToken,
     governanceHub: GovernanceHub,
@@ -44,12 +44,12 @@ export async function getRequestExtractionTxByInput(
         ...paramsInput,
         validation: await getRequestExtractionValidation(estateLiquidator as any, estateToken as any, governanceHub as any, paramsInput, validator, timestamp)
     }
-    return await getRequestExtractionTx(estateLiquidator, signer, params, txConfig);
+    return await getEstateLiquidatorTx_RequestExtraction(estateLiquidator, signer, params, txConfig);
 }
 
 
 // conclude
-export async function getConcludeTx(
+export async function getEstateLiquidatorTx_Conclude(
     estateLiquidator: EstateLiquidator,
     signer: SignerWithAddress,
     params: ConcludeParams,

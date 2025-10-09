@@ -9,7 +9,7 @@ import { getSafeDeprecateProjectAnchor, getSafeTokenizeProjectAnchor, getSafeUpd
 
 
 // updateBaseURI
-export async function getUpdateBaseURITx(
+export async function getProjectTokenTx_UpdateBaseURI(
     projectToken: ProjectToken,
     deployer: SignerWithAddress,
     params: UpdateBaseURIParams,
@@ -22,7 +22,7 @@ export async function getUpdateBaseURITx(
     );
 }
 
-export async function getUpdateBaseURITxByInput(
+export async function getProjectTokenTxByInput_UpdateBaseURI(
     projectToken: ProjectToken,
     deployer: SignerWithAddress,
     paramsInput: UpdateBaseURIParamsInput,
@@ -34,12 +34,12 @@ export async function getUpdateBaseURITxByInput(
         ...paramsInput,
         signatures: await getUpdateBaseURISignatures(projectToken, paramsInput, admin, admins),
     };
-    return getUpdateBaseURITx(projectToken, deployer, params, txConfig);
+    return getProjectTokenTx_UpdateBaseURI(projectToken, deployer, params, txConfig);
 }
 
 
 // updateZoneRoyaltyRate
-export async function getUpdateZoneRoyaltyRateTx(
+export async function getProjectTokenTx_UpdateZoneRoyaltyRate(
     projectToken: ProjectToken,
     deployer: SignerWithAddress,
     params: UpdateZoneRoyaltyRateParams,
@@ -53,7 +53,7 @@ export async function getUpdateZoneRoyaltyRateTx(
     );
 }
 
-export async function getUpdateZoneRoyaltyRateTxByInput(
+export async function getProjectTokenTxByInput_UpdateZoneRoyaltyRate(
     projectToken: ProjectToken,
     deployer: SignerWithAddress,
     paramsInput: UpdateZoneRoyaltyRateParamsInput,
@@ -65,12 +65,12 @@ export async function getUpdateZoneRoyaltyRateTxByInput(
         ...paramsInput,
         signatures: await getUpdateZoneRoyaltyRateSignatures(projectToken, paramsInput, admin, admins),
     };
-    return getUpdateZoneRoyaltyRateTx(projectToken, deployer, params, txConfig);
+    return getProjectTokenTx_UpdateZoneRoyaltyRate(projectToken, deployer, params, txConfig);
 }
 
 
 // authorizeLaunchpads
-export async function getAuthorizeLaunchpadTx(
+export async function getProjectTokenTx_AuthorizeLaunchpad(
     projectToken: ProjectToken,
     deployer: SignerWithAddress,
     params: AuthorizeLaunchpadParams,
@@ -84,7 +84,7 @@ export async function getAuthorizeLaunchpadTx(
     );
 }
 
-export async function getAuthorizeLaunchpadTxByInput(
+export async function getProjectTokenTxByInput_AuthorizeLaunchpad(
     projectToken: ProjectToken,
     deployer: SignerWithAddress,
     paramsInput: AuthorizeLaunchpadParamsInput,
@@ -96,12 +96,12 @@ export async function getAuthorizeLaunchpadTxByInput(
         ...paramsInput,
         signatures: await getAuthorizeLaunchpadSignatures(projectToken, paramsInput, admin, admins),
     };
-    return getAuthorizeLaunchpadTx(projectToken, deployer, params, txConfig);
+    return getProjectTokenTx_AuthorizeLaunchpad(projectToken, deployer, params, txConfig);
 }
 
 
 // registerInitiator
-export async function getRegisterInitiatorTx(
+export async function getProjectTokenTx_RegisterInitiator(
     projectToken: ProjectToken,
     deployer: SignerWithAddress,
     params: RegisterInitiatorParams,
@@ -116,7 +116,7 @@ export async function getRegisterInitiatorTx(
     );
 }
 
-export async function getRegisterInitiatorTxByInput(
+export async function getProjectTokenTxByInput_RegisterInitiator(
     projectToken: ProjectToken,
     deployer: SignerWithAddress,
     paramsInput: RegisterInitiatorParamsInput,
@@ -127,12 +127,12 @@ export async function getRegisterInitiatorTxByInput(
         ...paramsInput,
         validation: await getRegisterInitiatorValidation(projectToken, paramsInput, validator)
     };
-    return getRegisterInitiatorTx(projectToken, deployer, params, txConfig);
+    return getProjectTokenTx_RegisterInitiator(projectToken, deployer, params, txConfig);
 }
 
 
 // launchProject
-export async function getCallLaunchProjectTx(
+export async function getCallProjectTokenTx_LaunchProject(
     projectToken: ProjectToken,
     launchpad: any,
     params: LaunchProjectParams,
@@ -152,7 +152,7 @@ export async function getCallLaunchProjectTx(
 
 
 // mint
-export async function getMintTx(
+export async function getProjectTokenTx_Mint(
     projectToken: ProjectToken,
     deployer: SignerWithAddress,
     params: MintParams,
@@ -166,7 +166,7 @@ export async function getMintTx(
 }
 
 
-export async function getCallMintTx(
+export async function getCallProjectTokenTx_Mint(
     projectToken: ProjectToken,
     launchpad: any,
     params: MintParams,
@@ -184,7 +184,7 @@ export async function getCallMintTx(
 
 
 // safeWithdrawEstateToken
-export async function getWithdrawEstateTokenTx(
+export async function getProjectTokenTx_WithdrawEstateToken(
     projectToken: ProjectToken,
     deployer: SignerWithAddress,
     params: WithdrawEstateTokenParams,
@@ -198,7 +198,7 @@ export async function getWithdrawEstateTokenTx(
 
 
 // safeDeprecateProject
-export async function getSafeDeprecateProjectTx(
+export async function getProjectTokenTx_SafeDeprecateProject(
     projectToken: ProjectToken,
     deployer: SignerWithAddress,
     params: SafeDeprecateProjectParams,
@@ -212,7 +212,7 @@ export async function getSafeDeprecateProjectTx(
     );
 }
 
-export async function getSafeDeprecateProjectTxByParams(
+export async function getProjectTokenTxByParams_SafeDeprecateProject(
     projectToken: ProjectToken,
     deployer: SignerWithAddress,
     params: DeprecateProjectParams,
@@ -222,12 +222,12 @@ export async function getSafeDeprecateProjectTxByParams(
         ...params,
         anchor: await getSafeDeprecateProjectAnchor(projectToken, params)
     };
-    return getSafeDeprecateProjectTx(projectToken, deployer, safeParams, txConfig);
+    return getProjectTokenTx_SafeDeprecateProject(projectToken, deployer, safeParams, txConfig);
 }
 
 
 // safeUpdateProjectURI
-export async function getSafeUpdateProjectURITx(
+export async function getProjectTokenTx_SafeUpdateProjectURI(
     projectToken: ProjectToken,
     deployer: SignerWithAddress,
     params: SafeUpdateProjectURIParams,
@@ -242,7 +242,7 @@ export async function getSafeUpdateProjectURITx(
     );
 }
 
-export async function getSafeUpdateProjectURITxByInput(
+export async function getProjectTokenTxByInput_SafeUpdateProjectURI(
     projectToken: ProjectToken,
     deployer: SignerWithAddress,
     paramsInput: UpdateProjectURIParamsInput,
@@ -254,12 +254,12 @@ export async function getSafeUpdateProjectURITxByInput(
         validation: await getSafeUpdateProjectURIValidation(projectToken, paramsInput, validator),
         anchor: await getSafeUpdateProjectURIAnchor(projectToken, paramsInput)
     };
-    return getSafeUpdateProjectURITx(projectToken, deployer, params, txConfig);
+    return getProjectTokenTx_SafeUpdateProjectURI(projectToken, deployer, params, txConfig);
 }
 
 
 // safeTokenizeProject
-export async function getSafeTokenizeProjectTx(
+export async function getProjectTokenTx_SafeTokenizeProject(
     projectToken: ProjectToken,
     deployer: SignerWithAddress,
     params: SafeTokenizeProjectParams,
@@ -274,7 +274,7 @@ export async function getSafeTokenizeProjectTx(
     );
 }
 
-export async function getSafeTokenizeProjectTxByParams(
+export async function getProjectTokenTxByParams_SafeTokenizeProject(
     projectToken: ProjectToken,
     deployer: SignerWithAddress,
     params: TokenizeProjectParams,
@@ -284,10 +284,10 @@ export async function getSafeTokenizeProjectTxByParams(
         ...params,
         anchor: await getSafeTokenizeProjectAnchor(projectToken, params),
     };
-    return getSafeTokenizeProjectTx(projectToken, deployer, safeParams, txConfig);
+    return getProjectTokenTx_SafeTokenizeProject(projectToken, deployer, safeParams, txConfig);
 }
 
-export async function getCallSafeTokenizeProjectTx(
+export async function getCallProjectTokenTx_SafeTokenizeProject(
     projectToken: ProjectToken,
     caller: ProxyCaller,
     params: SafeTokenizeProjectParams,
@@ -305,7 +305,7 @@ export async function getCallSafeTokenizeProjectTx(
     );
 }
 
-export async function getCallSafeTokenizeProjectTxByParams(
+export async function getCallProjectTokenTxByParams_SafeTokenizeProject(
     projectToken: ProjectToken,
     caller: ProxyCaller,
     params: TokenizeProjectParams,
@@ -315,5 +315,5 @@ export async function getCallSafeTokenizeProjectTxByParams(
         ...params,
         anchor: await getSafeTokenizeProjectAnchor(projectToken, params),
     };
-    return getCallSafeTokenizeProjectTx(projectToken, caller, safeParams, txConfig);
+    return getCallProjectTokenTx_SafeTokenizeProject(projectToken, caller, safeParams, txConfig);
 }

@@ -10,14 +10,13 @@ import { deployPrimaryToken } from '@utils/deployments/liquidity/primaryToken';
 import { deployStakeToken } from '@utils/deployments/liquidity/stakeToken';
 import { Initialization as LiquidityInitialization } from '@tests/liquidity/test.initialization';
 import { deployAuction } from '@utils/deployments/liquidity/auction';
-import { callAuction_StartAuction, callAuction_UpdateStakeTokens } from '@utils/call/liquidity/auction';
-import { callPrimaryToken_UnlockForPublicSale, callPrimaryToken_UpdateStakeTokens, callPrimaryToken_UpdateTreasury } from '@utils/call/liquidity/primaryToken';
 import { MockContract, smock } from '@defi-wonderland/smock';
 import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
 import { Contract } from 'ethers';
-import { getStartAuctionInvalidSignatures, getStartAuctionSignatures, getUpdateStakeTokensInvalidSignatures, getUpdateStakeTokensSignatures } from '@utils/signatures/liquidity/auction';
+import { getStartAuctionSignatures, getUpdateStakeTokensSignatures } from '@utils/signatures/liquidity/auction';
 import { StartAuctionParams, StartAuctionParamsInput, UpdateStakeTokensParams, UpdateStakeTokensParamsInput } from '@utils/models/liquidity/auction';
-import { getStartAuctionTx, getUpdateStakeTokensTx } from '@utils/transaction/liquidity/auction';
+import { getAuctionTx_StartAuction, getAuctionTx_UpdateStakeTokens } from '@utils/transaction/liquidity/auction';
+import { getPrimaryTokenTxByInput_UpdateStakeTokens, getPrimaryTokenTxByInput_UpdateTreasury } from '@utils/transaction/liquidity/primaryToken';
 
 interface AuctionFixture {
     deployer: any;
@@ -25,8 +24,8 @@ interface AuctionFixture {
     depositor1: any, depositor2: any, depositor3: any;
 
     admin: Admin;
-    treasury: MockContract<Treasury>;
     currency: Currency;
+    treasury: MockContract<Treasury>;
     primaryToken: PrimaryToken;
     stakeToken1: StakeToken;
     stakeToken2: StakeToken;
@@ -40,7 +39,6 @@ async function testReentrancy_Auction(
     assertion: any,
 ) {
     let data = [
-        auction.interface.encodeFunctionData("deposit", [0]),
         auction.interface.encodeFunctionData("deposit", [0]),
     ];
 
@@ -127,27 +125,27 @@ describe('4.1. Auction', async () => {
             primaryToken.address,
         ) as Auction;
 
-        await callPrimaryToken_UpdateTreasury(
-            primaryToken,
+        await callTransaction(getPrimaryTokenTxByInput_UpdateTreasury(
+            primaryToken as any,
             deployer,
-            admins,
-            admin,
             {
                 treasury: treasury.address,
             },
-        );
+            admin,
+            admins,
+        ));
 
-        await callPrimaryToken_UpdateStakeTokens(
+        await callTransaction(getPrimaryTokenTxByInput_UpdateStakeTokens(
             primaryToken,
             deployer,
-            admins,
-            admin,
             {
                 stakeToken1: stakeToken1.address,
                 stakeToken2: stakeToken2.address,
                 stakeToken3: stakeToken3.address,
-            }
-        );
+            },
+            admin,
+            admins,
+        ));
         
         return {
             deployer,
@@ -277,7 +275,7 @@ describe('4.1. Auction', async () => {
                 signatures: await getUpdateStakeTokensSignatures(auction, paramsInput, admin, admins),
             };
 
-            const tx = await getUpdateStakeTokensTx(auction, deployer, params);
+            const tx = await getAuctionTx_UpdateStakeTokens(auction, deployer, params);
             await tx.wait();
 
             expect(await auction.stakeToken1()).to.equal(params.stakeToken1);
@@ -298,7 +296,7 @@ describe('4.1. Auction', async () => {
                 signatures: await getUpdateStakeTokensInvalidSignatures(auction, admins, admin, paramsInput),
             };
 
-            await expect(getUpdateStakeTokensTx(auction, deployer, params))
+            await expect(getAuctionTx_UpdateStakeTokens(auction, deployer, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
@@ -318,7 +316,7 @@ describe('4.1. Auction', async () => {
                 ...paramsInput,
                 signatures: await getUpdateStakeTokensSignatures(auction, paramsInput, admin, admins),
             };
-            await expect(getUpdateStakeTokensTx(auction, deployer, params))
+            await expect(getAuctionTx_UpdateStakeTokens(auction, deployer, params))
                 .to.be.revertedWithCustomError(auction, 'InvalidUpdating');
         }
 
@@ -361,7 +359,7 @@ describe('4.1. Auction', async () => {
                 signatures: await getStartAuctionSignatures(auction, paramsInput, admin, admins),
             };
 
-            const tx = await getStartAuctionTx(auction, deployer, params);
+            const tx = await getAuctionTx_StartAuction(auction, deployer, params);
             await tx.wait();
 
             expect(await auction.endAt()).to.equal(endAt);
@@ -389,7 +387,7 @@ describe('4.1. Auction', async () => {
                 signatures: await getStartAuctionInvalidSignatures(auction, admins, admin, paramsInput),
             };
 
-            await expect(getStartAuctionTx(auction, deployer, params))
+            await expect(getAuctionTx_StartAuction(auction, deployer, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
@@ -414,7 +412,7 @@ describe('4.1. Auction', async () => {
                 signatures: await getStartAuctionSignatures(auction, paramsInput, admin, admins),
             };
 
-            await expect(getStartAuctionTx(auction, deployer, params))
+            await expect(getAuctionTx_StartAuction(auction, deployer, params))
                 .to.be.revertedWithCustomError(auction, 'InvalidTimestamp');
         });
 
@@ -438,7 +436,7 @@ describe('4.1. Auction', async () => {
                 signatures: await getStartAuctionSignatures(auction, paramsInput, admin, admins),
             };
 
-            await expect(getStartAuctionTx(auction, deployer, params))
+            await expect(getAuctionTx_StartAuction(auction, deployer, params))
                 .to.be.revertedWithCustomError(auction, 'AlreadyStarted');
         });
     });

@@ -15,7 +15,7 @@ import { getDistributeTokensWithDurationSignatures, getDistributeTokensWithTimes
 
 
 // updateStakeTokens
-export async function getUpdateStakeTokensTx(
+export async function getDriptributorTx_UpdateStakeTokens(
     driptributor: Driptributor,
     deployer: SignerWithAddress,
     params: UpdateStakeTokensParams,
@@ -30,7 +30,7 @@ export async function getUpdateStakeTokensTx(
     );
 }
 
-export async function getUpdateStakeTokensTxByInput(
+export async function getDriptributorTxByInput_UpdateStakeTokens(
     driptributor: Driptributor,
     deployer: SignerWithAddress,
     paramsInput: UpdateStakeTokensParamsInput,
@@ -42,12 +42,12 @@ export async function getUpdateStakeTokensTxByInput(
         ...paramsInput,
         signatures: await getUpdateStakeTokensSignatures(driptributor, paramsInput, admin, admins),
     };
-    return getUpdateStakeTokensTx(driptributor, deployer, params, txConfig);
+    return getDriptributorTx_UpdateStakeTokens(driptributor, deployer, params, txConfig);
 }
 
 
 // distributeTokensWithDuration
-export async function getDistributeTokensWithDurationTx(
+export async function getDriptributorTx_DistributeTokensWithDuration(
     driptributor: Driptributor,
     deployer: SignerWithAddress,
     params: DistributeTokensWithDurationParams,
@@ -63,7 +63,7 @@ export async function getDistributeTokensWithDurationTx(
     );
 }
 
-export async function getDistributeTokensWithDurationTxByInput(
+export async function getDriptributorTxByInput_DistributeTokensWithDuration(
     driptributor: Driptributor,
     deployer: SignerWithAddress,
     paramsInput: DistributeTokensWithDurationParamsInput,
@@ -75,12 +75,12 @@ export async function getDistributeTokensWithDurationTxByInput(
         ...paramsInput,
         signatures: await getDistributeTokensWithDurationSignatures(driptributor, paramsInput, admin, admins),
     };
-    return getDistributeTokensWithDurationTx(driptributor, deployer, params, txConfig);
+    return getDriptributorTx_DistributeTokensWithDuration(driptributor, deployer, params, txConfig);
 }
 
 
 // distributeTokensWithTimestamp
-export async function getDistributeTokensWithTimestampTx(
+export async function getDriptributorTx_DistributeTokensWithTimestamp(
     driptributor: Driptributor,
     deployer: SignerWithAddress,
     params: DistributeTokensWithTimestampParams,
@@ -96,7 +96,7 @@ export async function getDistributeTokensWithTimestampTx(
     );
 }
 
-export async function getDistributeTokensWithTimestampTxByInput(
+export async function getDriptributorTxByInput_DistributeTokensWithTimestamp(
     driptributor: Driptributor,
     deployer: SignerWithAddress,
     paramsInput: DistributeTokensWithTimestampParamsInput,
@@ -108,12 +108,12 @@ export async function getDistributeTokensWithTimestampTxByInput(
         ...paramsInput,
         signatures: await getDistributeTokensWithTimestampSignatures(driptributor, paramsInput, admin, admins),
     };
-    return getDistributeTokensWithTimestampTx(driptributor, deployer, params, txConfig);
+    return getDriptributorTx_DistributeTokensWithTimestamp(driptributor, deployer, params, txConfig);
 }
 
 
 // withdraw
-export async function getWithdrawTx(
+export async function getDriptributorTx_Withdraw(
     driptributor: Driptributor,
     deployer: SignerWithAddress,
     params: WithdrawParams,
@@ -127,7 +127,7 @@ export async function getWithdrawTx(
 
 
 // stake
-export async function getStakeTx(
+export async function getDriptributorTx_Stake(
     driptributor: Driptributor,
     deployer: SignerWithAddress,
     params: StakeParams,

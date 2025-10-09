@@ -6,7 +6,7 @@ import { ContractTransaction } from "ethers";
 
 
 // registerCollaterals
-export async function getRegisterCollateralsTx(
+export async function getERC721MortgageTokenTx_RegisterCollaterals(
     erc721MortgageToken: ERC721MortgageToken,
     signer: SignerWithAddress,
     params: RegisterCollateralsParams,
@@ -20,7 +20,7 @@ export async function getRegisterCollateralsTx(
     );
 }
 
-export async function getRegisterCollateralsTxByInput(
+export async function getERC721MortgageTokenTxByInput_RegisterCollaterals(
     erc721MortgageToken: ERC721MortgageToken,
     signer: SignerWithAddress,
     paramsInput: RegisterCollateralsParamsInput,
@@ -32,12 +32,12 @@ export async function getRegisterCollateralsTxByInput(
         ...paramsInput,
         signatures: await getRegisterCollateralsSignatures(erc721MortgageToken, paramsInput, admin, admins)
     };
-    return getRegisterCollateralsTx(erc721MortgageToken, signer, params, txConfig);
+    return getERC721MortgageTokenTx_RegisterCollaterals(erc721MortgageToken, signer, params, txConfig);
 }
 
 
 // borrow
-export async function getERC721BorrowTx(
+export async function getERC721MortgageTokenTx_Borrow(
     erc721MortgageToken: ERC721MortgageToken,
     signer: SignerWithAddress,
     params: ERC721BorrowParams,

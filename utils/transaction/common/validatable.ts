@@ -10,7 +10,7 @@ import { getUpdateValidatorSignatures } from "@utils/signatures/common/validatab
 
 
 // updateValidator
-export async function getUpdateValidatorTx(
+export async function getValidatableTx_UpdateValidator(
     validatable: Contract,
     signer: SignerWithAddress,
     params: UpdateValidatorParams,
@@ -23,7 +23,7 @@ export async function getUpdateValidatorTx(
     );
 }
 
-export async function getUpdateValidatorTxByInput(
+export async function getValidatableTxByInput_UpdateValidator(
     validatable: Contract,
     signer: SignerWithAddress,
     paramsInput: UpdateValidatorParamsInput,
@@ -35,5 +35,5 @@ export async function getUpdateValidatorTxByInput(
         ...paramsInput,
         signatures: await getUpdateValidatorSignatures(validatable, paramsInput, admin, admins)
     };
-    return await getUpdateValidatorTx(validatable, signer, params, txConfig);
+    return await getValidatableTx_UpdateValidator(validatable, signer, params, txConfig);
 }

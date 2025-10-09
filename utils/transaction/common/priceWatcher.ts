@@ -14,7 +14,7 @@ import {
 
 
 // updatePriceFeeds
-export async function getUpdatePriceFeedsTx(
+export async function getPriceWatcherTx_UpdatePriceFeeds(
     priceWatcher: PriceWatcher,
     deployer: any,
     params: UpdatePriceFeedsParams,
@@ -29,7 +29,7 @@ export async function getUpdatePriceFeedsTx(
     );
 }
 
-export async function getUpdatePriceFeedsTxByInput(
+export async function getPriceWatcherTxByInput_UpdatePriceFeeds(
     priceWatcher: PriceWatcher,
     deployer: any,
     paramsInput: UpdatePriceFeedsParamsInput,
@@ -41,12 +41,12 @@ export async function getUpdatePriceFeedsTxByInput(
         ...paramsInput,
         signatures: await getUpdatePriceFeedsSignatures(priceWatcher, paramsInput, admin, admins)
     };
-    return await getUpdatePriceFeedsTx(priceWatcher, deployer, params, txConfig);
+    return await getPriceWatcherTx_UpdatePriceFeeds(priceWatcher, deployer, params, txConfig);
 }
 
 
 // updateDefaultRates
-export async function getUpdateDefaultRatesTx(
+export async function getPriceWatcherTx_UpdateDefaultRates(
     priceWatcher: PriceWatcher,
     deployer: any,
     params: UpdateDefaultRatesParams,
@@ -60,7 +60,7 @@ export async function getUpdateDefaultRatesTx(
     );
 }
 
-export async function getUpdateDefaultRatesTxByInput(
+export async function getPriceWatcherTxByInput_UpdateDefaultRates(
     priceWatcher: PriceWatcher,
     deployer: any,
     paramsInput: UpdateDefaultRatesParamsInput,
@@ -72,5 +72,5 @@ export async function getUpdateDefaultRatesTxByInput(
         ...paramsInput,
         signatures: await getUpdateDefaultRatesSignatures(priceWatcher, paramsInput, admin, admins)
     };
-    return await getUpdateDefaultRatesTx(priceWatcher, deployer, params, txConfig);
+    return await getPriceWatcherTx_UpdateDefaultRates(priceWatcher, deployer, params, txConfig);
 }

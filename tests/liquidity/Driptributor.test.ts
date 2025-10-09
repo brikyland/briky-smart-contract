@@ -16,7 +16,7 @@ import { MockContract, smock } from '@defi-wonderland/smock';
 import { Initialization as LiquidityInitialization } from '@tests/liquidity/test.initialization';
 import { DistributeTokensWithDurationParams, DistributeTokensWithDurationParamsInput, DistributeTokensWithTimestampParams, DistributeTokensWithTimestampParamsInput, UpdateStakeTokensParams, UpdateStakeTokensParamsInput } from '@utils/models/liquidity/driptributor';
 import { getDistributeTokensWithDurationSignatures, getDistributeTokensWithTimestampSignatures, getUpdateStakeTokensSignatures } from '@utils/signatures/liquidity/driptributor';
-import { getDistributeTokensWithDurationTx, getDistributeTokensWithTimestampTx, getUpdateStakeTokensTx } from '@utils/transaction/liquidity/driptributor';
+import { getDriptributorTx_DistributeTokensWithDuration, getDriptributorTx_DistributeTokensWithTimestamp, getDriptributorTx_UpdateStakeTokens } from '@utils/transaction/liquidity/driptributor';
 
 interface DriptributorFixture {
     deployer: any;
@@ -269,7 +269,7 @@ describe('4.3. Driptributor', async () => {
                 signatures: await getUpdateStakeTokensSignatures(driptributor, paramsInput, admin, admins),
             };
 
-            const tx = await getUpdateStakeTokensTx(driptributor, deployer, params);
+            const tx = await getDriptributorTx_UpdateStakeTokens(driptributor, deployer, params);
             await tx.wait();
 
             expect(await driptributor.stakeToken1()).to.equal(stakeToken1.address);
@@ -289,7 +289,7 @@ describe('4.3. Driptributor', async () => {
                 ...paramsInput,
                 signatures: await getUpdateStakeTokensSignatures(driptributor, paramsInput, admin, admins, false),
             };
-            await expect(getUpdateStakeTokensTx(driptributor, deployer, params))
+            await expect(getDriptributorTx_UpdateStakeTokens(driptributor, deployer, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
@@ -309,7 +309,7 @@ describe('4.3. Driptributor', async () => {
                 ...paramsInput,
                 signatures: await getUpdateStakeTokensSignatures(driptributor, paramsInput, admin, admins, false),
             };
-            await expect(getUpdateStakeTokensTx(driptributor, deployer, params))
+            await expect(getDriptributorTx_UpdateStakeTokens(driptributor, deployer, params))
                 .to.be.revertedWithCustomError(driptributor, 'InvalidUpdating');
         }
 
@@ -351,7 +351,7 @@ describe('4.3. Driptributor', async () => {
             };
 
             await time.setNextBlockTimestamp(currentTimestamp);
-            const tx1 = await getDistributeTokensWithDurationTx(driptributor, deployer, params1);
+            const tx1 = await getDriptributorTx_DistributeTokensWithDuration(driptributor, deployer, params1);
             await tx1.wait();
             
             await expect(tx1).to.emit(driptributor, 'NewDistribution').withArgs(
@@ -404,7 +404,7 @@ describe('4.3. Driptributor', async () => {
             };
 
             await time.setNextBlockTimestamp(currentTimestamp);
-            const tx2 = await getDistributeTokensWithDurationTx(driptributor, deployer, params2);
+            const tx2 = await getDriptributorTx_DistributeTokensWithDuration(driptributor, deployer, params2);
             await tx2.wait();
             
             await expect(tx2).to.emit(driptributor, 'NewDistribution').withArgs(
@@ -460,7 +460,7 @@ describe('4.3. Driptributor', async () => {
                 signatures: await getDistributeTokensWithDurationSignatures(driptributor, paramsInput, admin, admins, false),
             };
 
-            await expect(getDistributeTokensWithDurationTx(driptributor, deployer, params))
+            await expect(getDriptributorTx_DistributeTokensWithDuration(driptributor, deployer, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
@@ -485,7 +485,7 @@ describe('4.3. Driptributor', async () => {
                     ...paramsInput,
                     signatures: await getDistributeTokensWithDurationSignatures(driptributor, paramsInput, admin, admins),
                 };
-                await expect(getDistributeTokensWithDurationTx(driptributor, deployer, params))
+                await expect(getDriptributorTx_DistributeTokensWithDuration(driptributor, deployer, params))
                     .to.be.revertedWithCustomError(driptributor, 'InvalidInput');
             }
 
@@ -530,7 +530,7 @@ describe('4.3. Driptributor', async () => {
                 signatures: await getDistributeTokensWithDurationSignatures(driptributor, paramsInput2, admin, admins),
             };
 
-            await expect(getDistributeTokensWithDurationTx(driptributor, deployer, params2))
+            await expect(getDriptributorTx_DistributeTokensWithDuration(driptributor, deployer, params2))
                 .to.be.revertedWithCustomError(driptributor, 'InsufficientFunds');
         });
     });
@@ -656,7 +656,7 @@ describe('4.3. Driptributor', async () => {
                 signatures: await getDistributeTokensWithTimestampSignatures(driptributor, paramsInput, admin, admins, false),
             };
 
-            await expect(getDistributeTokensWithTimestampTx(driptributor, deployer, params))
+            await expect(getDriptributorTx_DistributeTokensWithTimestamp(driptributor, deployer, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
@@ -684,7 +684,7 @@ describe('4.3. Driptributor', async () => {
                     signatures: await getDistributeTokensWithTimestampSignatures(driptributor, paramsInput, admin, admins),
                 };
 
-                await expect(getDistributeTokensWithTimestampTx(driptributor, deployer, params))
+                await expect(getDriptributorTx_DistributeTokensWithTimestamp(driptributor, deployer, params))
                     .to.be.revertedWithCustomError(driptributor, 'InvalidInput');
             }
 
@@ -731,7 +731,7 @@ describe('4.3. Driptributor', async () => {
                 signatures: await getDistributeTokensWithTimestampSignatures(driptributor, paramsInput2, admin, admins),
             };
 
-            await expect(getDistributeTokensWithTimestampTx(driptributor, deployer, params2))
+            await expect(getDriptributorTx_DistributeTokensWithTimestamp(driptributor, deployer, params2))
                 .to.be.revertedWithCustomError(driptributor, 'InsufficientFunds');
         });
 
@@ -754,7 +754,7 @@ describe('4.3. Driptributor', async () => {
                 signatures: await getDistributeTokensWithTimestampSignatures(driptributor, paramsInput, admin, admins),
             };
 
-            await expect(getDistributeTokensWithTimestampTx(driptributor, deployer, params))
+            await expect(getDriptributorTx_DistributeTokensWithTimestamp(driptributor, deployer, params))
                 .to.be.revertedWithCustomError(driptributor, 'InvalidTimestamp');
         });
     });

@@ -36,7 +36,7 @@ import { getUnlockForBackerRoundSignatures, getUnlockForCoreTeamSignatures, getU
 
 
 // updateTreasury
-export async function getUpdateTreasuryTx(
+export async function getPrimaryTokenTx_UpdateTreasury(
     primaryToken: PrimaryToken,
     deployer: SignerWithAddress,
     params: UpdateTreasuryParams,
@@ -49,7 +49,7 @@ export async function getUpdateTreasuryTx(
     );
 }
 
-export async function getUpdateTreasuryTxByInput(
+export async function getPrimaryTokenTxByInput_UpdateTreasury(
     primaryToken: PrimaryToken,
     deployer: SignerWithAddress,
     paramsInput: UpdateTreasuryParamsInput,
@@ -61,12 +61,12 @@ export async function getUpdateTreasuryTxByInput(
         ...paramsInput,
         signatures: await getUpdateTreasurySignatures(primaryToken, paramsInput, admin, admins),
     };
-    return getUpdateTreasuryTx(primaryToken, deployer, params, txConfig);
+    return getPrimaryTokenTx_UpdateTreasury(primaryToken, deployer, params, txConfig);
 }
 
 
 // updateStakeTokens
-export async function getUpdateStakeTokensTx(
+export async function getPrimaryTokenTx_UpdateStakeTokens(
     primaryToken: PrimaryToken,
     deployer: SignerWithAddress,
     params: UpdateStakeTokensParams,
@@ -81,7 +81,7 @@ export async function getUpdateStakeTokensTx(
     );
 }
 
-export async function getUpdateStakeTokensTxByInput(
+export async function getPrimaryTokenTxByInput_UpdateStakeTokens(
     primaryToken: PrimaryToken,
     deployer: SignerWithAddress,
     paramsInput: UpdateStakeTokensParamsInput,
@@ -93,12 +93,12 @@ export async function getUpdateStakeTokensTxByInput(
         ...paramsInput,
         signatures: await getUpdateStakeTokensSignatures(primaryToken, paramsInput, admin, admins),
     };
-    return getUpdateStakeTokensTx(primaryToken, deployer, params, txConfig);
+    return getPrimaryTokenTx_UpdateStakeTokens(primaryToken, deployer, params, txConfig);
 }
 
 
 // unlockForBackerRound
-export async function getUnlockForBackerRoundTx(
+export async function getPrimaryTokenTx_UnlockForBackerRound(
     primaryToken: PrimaryToken,
     deployer: SignerWithAddress,
     params: UnlockForBackerRoundParams,
@@ -111,7 +111,7 @@ export async function getUnlockForBackerRoundTx(
     );
 }
 
-export async function getUnlockForBackerRoundTxByInput(
+export async function getPrimaryTokenTxByInput_UnlockForBackerRound(
     primaryToken: PrimaryToken,
     deployer: SignerWithAddress,
     paramsInput: UnlockForBackerRoundParamsInput,
@@ -123,12 +123,12 @@ export async function getUnlockForBackerRoundTxByInput(
         ...paramsInput,
         signatures: await getUnlockForBackerRoundSignatures(primaryToken, paramsInput, admin, admins),
     };
-    return getUnlockForBackerRoundTx(primaryToken, deployer, params, txConfig);
+    return getPrimaryTokenTx_UnlockForBackerRound(primaryToken, deployer, params, txConfig);
 }
 
 
 // unlockForSeedRound
-export async function getUnlockForSeedRoundTx(
+export async function getPrimaryTokenTx_UnlockForSeedRound(
     primaryToken: PrimaryToken,
     deployer: SignerWithAddress,
     params: UnlockForSeedRoundParams,
@@ -141,7 +141,7 @@ export async function getUnlockForSeedRoundTx(
     );
 }
 
-export async function getUnlockForSeedRoundTxByInput(
+export async function getPrimaryTokenTxByInput_UnlockForSeedRound(
     primaryToken: PrimaryToken,
     deployer: SignerWithAddress,
     paramsInput: UnlockForSeedRoundParamsInput,
@@ -153,12 +153,12 @@ export async function getUnlockForSeedRoundTxByInput(
         ...paramsInput,
         signatures: await getUnlockForSeedRoundSignatures(primaryToken, paramsInput, admin, admins),
     };
-    return getUnlockForSeedRoundTx(primaryToken, deployer, params, txConfig);
+    return getPrimaryTokenTx_UnlockForSeedRound(primaryToken, deployer, params, txConfig);
 }
 
 
 // unlockForPrivateSale1
-export async function getUnlockForPrivateSale1Tx(
+export async function getPrimaryTokenTx_UnlockForPrivateSale1(
     primaryToken: PrimaryToken,
     deployer: SignerWithAddress,
     params: UnlockForPrivateSale1Params,
@@ -171,7 +171,7 @@ export async function getUnlockForPrivateSale1Tx(
     );
 }
 
-export async function getUnlockForPrivateSale1TxByInput(
+export async function getPrimaryTokenTxByInput_UnlockForPrivateSale1(
     primaryToken: PrimaryToken,
     deployer: SignerWithAddress,
     paramsInput: UnlockForPrivateSale1ParamsInput,
@@ -183,12 +183,12 @@ export async function getUnlockForPrivateSale1TxByInput(
         ...paramsInput,
         signatures: await getUnlockForPrivateSale1Signatures(primaryToken, paramsInput, admin, admins),
     };
-    return getUnlockForPrivateSale1Tx(primaryToken, deployer, params, txConfig);
+    return getPrimaryTokenTx_UnlockForPrivateSale1(primaryToken, deployer, params, txConfig);
 }
 
 
 // unlockForPrivateSale2
-export async function getUnlockForPrivateSale2Tx(
+export async function getPrimaryTokenTx_UnlockForPrivateSale2(
     primaryToken: PrimaryToken,
     deployer: SignerWithAddress,
     params: UnlockForPrivateSale2Params,
@@ -201,7 +201,7 @@ export async function getUnlockForPrivateSale2Tx(
     );
 }
 
-export async function getUnlockForPrivateSale2TxByInput(
+export async function getPrimaryTokenTxByInput_UnlockForPrivateSale2(
     primaryToken: PrimaryToken,
     deployer: SignerWithAddress,
     paramsInput: UnlockForPrivateSale2ParamsInput,
@@ -213,12 +213,12 @@ export async function getUnlockForPrivateSale2TxByInput(
         ...paramsInput,
         signatures: await getUnlockForPrivateSale2Signatures(primaryToken, paramsInput, admin, admins),
     };
-    return getUnlockForPrivateSale2Tx(primaryToken, deployer, params, txConfig);
+    return getPrimaryTokenTx_UnlockForPrivateSale2(primaryToken, deployer, params, txConfig);
 }
 
 
 // unlockForPublicSale
-export async function getUnlockForPublicSaleTx(
+export async function getPrimaryTokenTx_UnlockForPublicSale(
     primaryToken: PrimaryToken,
     deployer: SignerWithAddress,
     params: UnlockForPublicSaleParams,
@@ -231,7 +231,7 @@ export async function getUnlockForPublicSaleTx(
     );
 }
 
-export async function getUnlockForPublicSaleTxByInput(
+export async function getPrimaryTokenTxByInput_UnlockForPublicSale(
     primaryToken: PrimaryToken,
     deployer: SignerWithAddress,
     paramsInput: UnlockForPublicSaleParamsInput,
@@ -243,12 +243,12 @@ export async function getUnlockForPublicSaleTxByInput(
         ...paramsInput,
         signatures: await getUnlockForPublicSaleSignatures(primaryToken, paramsInput, admin, admins),
     };
-    return getUnlockForPublicSaleTx(primaryToken, deployer, params, txConfig);
+    return getPrimaryTokenTx_UnlockForPublicSale(primaryToken, deployer, params, txConfig);
 }
 
 
 // unlockForCoreTeam
-export async function getUnlockForCoreTeamTx(
+export async function getPrimaryTokenTx_UnlockForCoreTeam(
     primaryToken: PrimaryToken,
     deployer: SignerWithAddress,
     params: UnlockForCoreTeamParams,
@@ -261,7 +261,7 @@ export async function getUnlockForCoreTeamTx(
     );
 }
 
-export async function getUnlockForCoreTeamTxByInput(
+export async function getPrimaryTokenTxByInput_UnlockForCoreTeam(
     primaryToken: PrimaryToken,
     deployer: SignerWithAddress,
     paramsInput: UnlockForCoreTeamParamsInput,
@@ -273,12 +273,12 @@ export async function getUnlockForCoreTeamTxByInput(
         ...paramsInput,
         signatures: await getUnlockForCoreTeamSignatures(primaryToken, paramsInput, admin, admins),
     };
-    return getUnlockForCoreTeamTx(primaryToken, deployer, params, txConfig);
+    return getPrimaryTokenTx_UnlockForCoreTeam(primaryToken, deployer, params, txConfig);
 }
 
 
 // unlockForMarketMaker
-export async function getUnlockForMarketMakerTx(
+export async function getPrimaryTokenTx_UnlockForMarketMaker(
     primaryToken: PrimaryToken,
     deployer: SignerWithAddress,
     params: UnlockForMarketMakerParams,
@@ -291,7 +291,7 @@ export async function getUnlockForMarketMakerTx(
     );
 }
 
-export async function getUnlockForMarketMakerTxByInput(
+export async function getPrimaryTokenTxByInput_UnlockForMarketMaker(
     primaryToken: PrimaryToken,
     deployer: SignerWithAddress,
     paramsInput: UnlockForMarketMakerParamsInput,
@@ -303,12 +303,12 @@ export async function getUnlockForMarketMakerTxByInput(
         ...paramsInput,
         signatures: await getUnlockForMarketMakerSignatures(primaryToken, paramsInput, admin, admins),
     };
-    return getUnlockForMarketMakerTx(primaryToken, deployer, params, txConfig);
+    return getPrimaryTokenTx_UnlockForMarketMaker(primaryToken, deployer, params, txConfig);
 }
 
 
 // unlockForExternalTreasury
-export async function getUnlockForExternalTreasuryTx(
+export async function getPrimaryTokenTx_UnlockForExternalTreasury(
     primaryToken: PrimaryToken,
     deployer: SignerWithAddress,
     params: UnlockForExternalTreasuryParams,
@@ -321,7 +321,7 @@ export async function getUnlockForExternalTreasuryTx(
     );
 }
 
-export async function getUnlockForExternalTreasuryTxByInput(
+export async function getPrimaryTokenTxByInput_UnlockForExternalTreasury(
     primaryToken: PrimaryToken,
     deployer: SignerWithAddress,
     paramsInput: UnlockForExternalTreasuryParamsInput,
@@ -333,12 +333,12 @@ export async function getUnlockForExternalTreasuryTxByInput(
         ...paramsInput,
         signatures: await getUnlockForExternalTreasurySignatures(primaryToken, paramsInput, admin, admins),
     };
-    return getUnlockForExternalTreasuryTx(primaryToken, deployer, params, txConfig);
+    return getPrimaryTokenTx_UnlockForExternalTreasury(primaryToken, deployer, params, txConfig);
 }
 
 
 // contributeLiquidityFromBackerRound
-export async function getContributeLiquidityFromBackerRoundTx(
+export async function getPrimaryTokenTx_ContributeLiquidityFromBackerRound(
     primaryToken: PrimaryToken,
     deployer: SignerWithAddress,
     params: ContributeLiquidityFromBackerRoundParams,
@@ -352,7 +352,7 @@ export async function getContributeLiquidityFromBackerRoundTx(
 
 
 // contributeLiquidityFromSeedRound
-export async function getContributeLiquidityFromSeedRoundTx(
+export async function getPrimaryTokenTx_ContributeLiquidityFromSeedRound(
     primaryToken: PrimaryToken,
     deployer: SignerWithAddress,
     params: ContributeLiquidityFromSeedRoundParams,
@@ -366,7 +366,7 @@ export async function getContributeLiquidityFromSeedRoundTx(
 
 
 // contributeLiquidityFromPrivateSale1
-export async function getContributeLiquidityFromPrivateSale1Tx(
+export async function getPrimaryTokenTx_ContributeLiquidityFromPrivateSale1(
     primaryToken: PrimaryToken,
     deployer: SignerWithAddress,
     params: ContributeLiquidityFromPrivateSale1Params,
@@ -380,7 +380,7 @@ export async function getContributeLiquidityFromPrivateSale1Tx(
 
 
 // contributeLiquidityFromPrivateSale2
-export async function getContributeLiquidityFromPrivateSale2Tx(
+export async function getPrimaryTokenTx_ContributeLiquidityFromPrivateSale2(
     primaryToken: PrimaryToken,
     deployer: SignerWithAddress,
     params: ContributeLiquidityFromPrivateSale2Params,
@@ -394,7 +394,7 @@ export async function getContributeLiquidityFromPrivateSale2Tx(
 
 
 // contributeLiquidityFromPublicSale
-export async function getContributeLiquidityFromPublicSaleTx(
+export async function getPrimaryTokenTx_ContributeLiquidityFromPublicSale(
     primaryToken: PrimaryToken,
     deployer: SignerWithAddress,
     params: ContributeLiquidityFromPublicSaleParams,
@@ -408,7 +408,7 @@ export async function getContributeLiquidityFromPublicSaleTx(
 
 
 // contributeLiquidityFromMarketMaker
-export async function getContributeLiquidityFromMarketMakerTx(
+export async function getPrimaryTokenTx_ContributeLiquidityFromMarketMaker(
     primaryToken: PrimaryToken,
     deployer: SignerWithAddress,
     params: ContributeLiquidityFromMarketMakerParams,
@@ -422,7 +422,7 @@ export async function getContributeLiquidityFromMarketMakerTx(
 
 
 // contributeLiquidityFromExternalTreasury
-export async function getContributeLiquidityFromExternalTreasuryTx(
+export async function getPrimaryTokenTx_ContributeLiquidityFromExternalTreasury(
     primaryToken: PrimaryToken,
     deployer: SignerWithAddress,
     params: ContributeLiquidityFromExternalTreasuryParams,
@@ -436,7 +436,7 @@ export async function getContributeLiquidityFromExternalTreasuryTx(
 
 
 // contributeLiquidityFromStakeToken
-export async function getCallContributeLiquidityFromStakeTokenTx(
+export async function getCallPrimaryTokenTx_ContributeLiquidityFromStakeToken(
     primaryToken: PrimaryToken,
     caller: ProxyCaller,
     params: ContributeLiquidityFromStakeTokenParams,
@@ -453,7 +453,7 @@ export async function getCallContributeLiquidityFromStakeTokenTx(
 
 
 // mintForStake
-export async function getMintForStakeTx(
+export async function getPrimaryTokenTx_MintForStake(
     primaryToken: PrimaryToken,
     deployer: SignerWithAddress,
     txConfig = {}

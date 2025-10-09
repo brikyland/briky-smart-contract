@@ -6,7 +6,7 @@ import { Contract, ContractTransaction } from "ethers";
 
 
 // pause
-export async function getPauseTx(
+export async function getPausableTx_Pause(
     pausable: Contract,
     signer: SignerWithAddress,
     params: PauseParams,
@@ -18,7 +18,7 @@ export async function getPauseTx(
     );
 }
 
-export async function getPauseTxByInput(
+export async function getPausableTxByInput_Pause(
     pausable: Contract,
     signer: SignerWithAddress,
     admin: Admin,
@@ -28,12 +28,12 @@ export async function getPauseTxByInput(
     const params: PauseParams = {
         signatures: await getPauseSignatures(pausable, admin, admins)
     };
-    return await getPauseTx(pausable, signer, params, txConfig);
+    return await getPausableTx_Pause(pausable, signer, params, txConfig);
 }
 
 
 // unpause
-export async function getUnpauseTx(
+export async function getPausableTx_Unpause(
     pausable: Contract,
     signer: SignerWithAddress,
     params: UnpauseParams,
@@ -45,7 +45,7 @@ export async function getUnpauseTx(
     );
 }
 
-export async function getUnpauseTxByInput(
+export async function getPausableTxByInput_Unpause(
     pausable: Contract,
     signer: SignerWithAddress,
     admin: Admin,
@@ -55,5 +55,5 @@ export async function getUnpauseTxByInput(
     const params: UnpauseParams = {
         signatures: await getUnpauseSignatures(pausable, admin, admins)
     };
-    return await getUnpauseTx(pausable, signer, params, txConfig);
+    return await getPausableTx_Unpause(pausable, signer, params, txConfig);
 }

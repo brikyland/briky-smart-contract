@@ -10,7 +10,7 @@ import {ContractTransaction} from "ethers";
 
 
 // issueDividend
-export async function getIssueDividendTx(
+export async function getDividendTx_IssueDividend(
     dividendHub: DividendHub,
     signer: SignerWithAddress,
     params: IssueDividendParams,
@@ -26,7 +26,7 @@ export async function getIssueDividendTx(
     );
 }
 
-export async function getCallIssueDividendTx(
+export async function getCallDividendHubTx_IssueDividend(
     dividendHub: DividendHub,
     caller: ProxyCaller,
     params: IssueDividendParams,

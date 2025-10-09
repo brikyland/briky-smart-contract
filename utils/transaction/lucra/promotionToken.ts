@@ -20,7 +20,7 @@ import { getCancelContentsSignatures, getCreateContentsSignatures, getUpdateCont
 
 
 // updateFee
-export async function getUpdateFeeTx(
+export async function getPromotionTokenTx_UpdateFee(
     promotionToken: PromotionToken,
     deployer: SignerWithAddress,
     params: UpdateFeeParams,
@@ -33,7 +33,7 @@ export async function getUpdateFeeTx(
     );
 }
 
-export async function getUpdateFeeTxByInput(
+export async function getPromotionTokenTxByInput_UpdateFee(
     promotionToken: PromotionToken,
     deployer: SignerWithAddress,
     paramsInput: UpdateFeeParamsInput,
@@ -45,12 +45,12 @@ export async function getUpdateFeeTxByInput(
         ...paramsInput,
         signatures: await getUpdateFeeSignatures(promotionToken, paramsInput, admin, admins),
     };
-    return getUpdateFeeTx(promotionToken, deployer, params, txConfig);
+    return getPromotionTokenTx_UpdateFee(promotionToken, deployer, params, txConfig);
 }
 
 
 // updateRoyaltyRate
-export async function getUpdateRoyaltyRateTx(
+export async function getPromotionTokenTx_UpdateRoyaltyRate(
     promotionToken: PromotionToken,
     deployer: SignerWithAddress,
     params: UpdateRoyaltyRateParams,
@@ -63,7 +63,7 @@ export async function getUpdateRoyaltyRateTx(
     );
 }
 
-export async function getUpdateRoyaltyRateTxByInput(
+export async function getPromotionTokenTxByInput_UpdateRoyaltyRate(
     promotionToken: PromotionToken,
     deployer: SignerWithAddress,
     paramsInput: UpdateRoyaltyRateParamsInput,
@@ -75,12 +75,12 @@ export async function getUpdateRoyaltyRateTxByInput(
         ...paramsInput,
         signatures: await getUpdateRoyaltyRateSignatures(promotionToken, paramsInput, admin, admins),
     };
-    return getUpdateRoyaltyRateTx(promotionToken, deployer, params, txConfig);
+    return getPromotionTokenTx_UpdateRoyaltyRate(promotionToken, deployer, params, txConfig);
 }
 
 
 // withdraw
-export async function getWithdrawTx(
+export async function getPromotionTokenTx_Withdraw(
     promotionToken: PromotionToken,
     deployer: SignerWithAddress,
     params: WithdrawParams,
@@ -95,7 +95,7 @@ export async function getWithdrawTx(
     );
 }
 
-export async function getWithdrawTxByInput(
+export async function getPromotionTokenTxByInput_Withdraw(
     promotionToken: PromotionToken,
     deployer: SignerWithAddress,
     paramsInput: WithdrawParamsInput,
@@ -107,12 +107,12 @@ export async function getWithdrawTxByInput(
         ...paramsInput,
         signatures: await getWithdrawSignatures(promotionToken, paramsInput, admin, admins),
     };
-    return getWithdrawTx(promotionToken, deployer, params, txConfig);
+    return getPromotionTokenTx_Withdraw(promotionToken, deployer, params, txConfig);
 }
 
 
 // createContents
-export async function getCreateContentsTx(
+export async function getPromotionTokenTx_CreateContents(
     promotionToken: PromotionToken,
     deployer: SignerWithAddress,
     params: CreateContentsParams,
@@ -127,7 +127,7 @@ export async function getCreateContentsTx(
     );
 }
 
-export async function getCreateContentsTxByInput(
+export async function getPromotionTokenTxByInput_CreateContents(
     promotionToken: PromotionToken,
     deployer: SignerWithAddress,
     paramsInput: CreateContentsParamsInput,
@@ -139,12 +139,12 @@ export async function getCreateContentsTxByInput(
         ...paramsInput,
         signatures: await getCreateContentsSignatures(promotionToken, paramsInput, admin, admins),
     };
-    return getCreateContentsTx(promotionToken, deployer, params, txConfig);
+    return getPromotionTokenTx_CreateContents(promotionToken, deployer, params, txConfig);
 }
 
 
 // updateContentURIs
-export async function getUpdateContentURIsTx(
+export async function getPromotionTokenTx_UpdateContentURIs(
     promotionToken: PromotionToken,
     deployer: SignerWithAddress,
     params: UpdateContentURIsParams,
@@ -158,7 +158,7 @@ export async function getUpdateContentURIsTx(
     );
 }
 
-export async function getUpdateContentURIsTxByInput(
+export async function getPromotionTokenTxByInput_UpdateContentURIs(
     promotionToken: PromotionToken,
     deployer: SignerWithAddress,
     paramsInput: UpdateContentURIsParamsInput,
@@ -170,12 +170,12 @@ export async function getUpdateContentURIsTxByInput(
         ...paramsInput,
         signatures: await getUpdateContentURIsSignatures(promotionToken, paramsInput, admin, admins),
     };
-    return getUpdateContentURIsTx(promotionToken, deployer, params, txConfig);
+    return getPromotionTokenTx_UpdateContentURIs(promotionToken, deployer, params, txConfig);
 }
 
 
 // cancelContents
-export async function getCancelContentsTx(
+export async function getPromotionTokenTx_CancelContents(
     promotionToken: PromotionToken,
     deployer: SignerWithAddress,
     params: CancelContentsParams,
@@ -188,7 +188,7 @@ export async function getCancelContentsTx(
     );
 }
 
-export async function getCancelContentsTxByInput(
+export async function getPromotionTokenTxByInput_CancelContents(
     promotionToken: PromotionToken,
     deployer: SignerWithAddress,
     paramsInput: CancelContentsParamsInput,
@@ -200,12 +200,12 @@ export async function getCancelContentsTxByInput(
         ...paramsInput,
         signatures: await getCancelContentsSignatures(promotionToken, paramsInput, admin, admins),
     };
-    return getCancelContentsTx(promotionToken, deployer, params, txConfig);
+    return getPromotionTokenTx_CancelContents(promotionToken, deployer, params, txConfig);
 }
 
 
 // mint
-export async function getMintTx(
+export async function getPromotionTokenTx_Mint(
     promotionToken: PromotionToken,
     deployer: SignerWithAddress,
     params: MintParams,

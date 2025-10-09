@@ -11,7 +11,7 @@ import { deployMockPrimaryToken } from '@utils/deployments/mock/mockPrimaryToken
 import { Initialization as LiquidityInitialization } from '@tests/liquidity/test.initialization';
 import { WithdrawOperationFundParams, WithdrawOperationFundParamsInput } from '@utils/models/liquidity/treasury';
 import { getWithdrawOperationFundSignatures } from '@utils/signatures/liquidity/treasury';
-import { getWithdrawOperationFundTx } from '@utils/transaction/liquidity/treasury';
+import { getTreasuryTx_WithdrawOperationFund } from '@utils/transaction/liquidity/treasury';
 
 interface TreasuryFixture {
     deployer: any;
@@ -128,7 +128,7 @@ describe('4.6. Treasury', async () => {
                 signatures: await getWithdrawOperationFundSignatures(treasury, paramsInput1, admin, admins),
             };
             
-            const tx1 = await getWithdrawOperationFundTx(treasury, deployer, params1);
+            const tx1 = await getTreasuryTx_WithdrawOperationFund(treasury, deployer, params1);
             await tx1.wait();
 
             await expect(tx1).to.emit(treasury, "OperationFundWithdrawal").withArgs(
@@ -151,7 +151,7 @@ describe('4.6. Treasury', async () => {
                 signatures: await getWithdrawOperationFundSignatures(treasury, paramsInput2, admin, admins),
             };
 
-            const tx2 = await getWithdrawOperationFundTx(treasury, deployer, params2);
+            const tx2 = await getTreasuryTx_WithdrawOperationFund(treasury, deployer, params2);
             await tx2.wait();
 
             await expect(tx2).to.emit(treasury, "OperationFundWithdrawal").withArgs(
@@ -180,7 +180,7 @@ describe('4.6. Treasury', async () => {
                 signatures: await getWithdrawOperationFundSignatures(treasury, paramsInput, admin, admins, false),
             };
 
-            await expect(getWithdrawOperationFundTx(treasury, deployer, params))
+            await expect(getTreasuryTx_WithdrawOperationFund(treasury, deployer, params))
                 .to.be.revertedWithCustomError(admin, "FailedVerification");
         });
 
@@ -201,7 +201,7 @@ describe('4.6. Treasury', async () => {
                 signatures: await getWithdrawOperationFundSignatures(treasury, paramsInput, admin, admins),
             };
 
-            await expect(getWithdrawOperationFundTx(treasury, deployer, params))
+            await expect(getTreasuryTx_WithdrawOperationFund(treasury, deployer, params))
                 .to.be.revertedWithCustomError(treasury, "InsufficientFunds");
         });
     });

@@ -15,7 +15,7 @@ import {
 
 
 // authorizeProviders
-export async function getAuthorizeProviderTx(
+export async function getReserveVaultTx_AuthorizeProvider(
     reserveVault: ReserveVault,
     deployer: any,
     params: AuthorizeProviderParams,
@@ -29,7 +29,7 @@ export async function getAuthorizeProviderTx(
     );
 }
 
-export async function getAuthorizeProviderTxByInput(
+export async function getReserveVaultTxByInput_AuthorizeProvider(
     reserveVault: ReserveVault,
     deployer: any,
     paramsInput: AuthorizeProviderParamsInput,
@@ -42,12 +42,12 @@ export async function getAuthorizeProviderTxByInput(
         signatures: await getAuthorizeProviderSignatures(reserveVault, paramsInput, admin, admins),
     };
 
-    return await getAuthorizeProviderTx(reserveVault, deployer, params, txConfig);
+    return await getReserveVaultTx_AuthorizeProvider(reserveVault, deployer, params, txConfig);
 }
 
 
 // openFund
-export async function getOpenFundTx(
+export async function getReserveVaultTx_OpenFund(
     reserveVault: ReserveVault,
     deployer: any,
     params: OpenFundParams,
@@ -62,7 +62,7 @@ export async function getOpenFundTx(
     );
 }
 
-export async function getCallOpenFundTx(
+export async function getCallReserveVaultTx_OpenFund(
     reserveVault: ReserveVault,
     caller: ProxyCaller,
     params: OpenFundParams,
@@ -82,7 +82,7 @@ export async function getCallOpenFundTx(
 
 
 // expandFund
-export async function getCallExpandFundTx(
+export async function getCallReserveVaultTx_ExpandFund(
     reserveVault: ReserveVault,
     caller: ProxyCaller,
     params: ExpandFundParams,
@@ -100,7 +100,7 @@ export async function getCallExpandFundTx(
 
 
 // provideFund
-export async function getCallProvideFundTx(
+export async function getCallReserveVaultTx_ProvideFund(
     reserveVault: ReserveVault,
     caller: ProxyCaller,
     params: ProvideFundParams,
@@ -117,7 +117,7 @@ export async function getCallProvideFundTx(
 
 
 // withdrawFund
-export async function getCallWithdrawFundTx(
+export async function getCallReserveVaultTx_WithdrawFund(
     reserveVault: ReserveVault,
     caller: ProxyCaller,
     params: WithdrawFundParams,

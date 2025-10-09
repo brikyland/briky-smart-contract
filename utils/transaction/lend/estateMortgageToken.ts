@@ -4,7 +4,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { ContractTransaction } from "ethers";
 
 // borrow
-export async function getEstateBorrowTx(
+export async function getEstateMortgageTokenTx_Borrow(
     estateMortgageToken: EstateMortgageToken,
     signer: SignerWithAddress,
     params: EstateBorrowParams,

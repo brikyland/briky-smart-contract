@@ -10,7 +10,7 @@ import { deployAdmin } from '@utils/deployments/common/admin';
 import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 import { deployMockValidatable } from '@utils/deployments/mock/mockValidatable';
 import { UpdateValidatorParams, UpdateValidatorParamsInput, Validation } from '@utils/models/common/validatable';
-import { getUpdateValidatorTx, getUpdateValidatorTxByInput } from '@utils/transaction/common/validatable';
+import { getValidatableTx_UpdateValidator, getValidatableTxByInput_UpdateValidator } from '@utils/transaction/common/validatable';
 import { getUpdateValidatorSignatures } from '@utils/signatures/common/validatable';
 
 interface ValidatableFixture {
@@ -86,7 +86,7 @@ describe('1.b. Validatable', async () => {
             const paramsInput: UpdateValidatorParamsInput = {
                 validator: newValidator.address,
             };
-            const tx = await getUpdateValidatorTxByInput(validatable, deployer, paramsInput, admin, admins);
+            const tx = await getValidatableTxByInput_UpdateValidator(validatable, deployer, paramsInput, admin, admins);
             await tx.wait();
 
             expect(await validatable.validator()).to.equal(newValidator.address);
@@ -108,7 +108,7 @@ describe('1.b. Validatable', async () => {
                 ...paramsInput,
                 signatures: await getUpdateValidatorSignatures(validatable, paramsInput, admin, admins, false),
             };
-            await expect(getUpdateValidatorTx(validatable, deployer, params))
+            await expect(getValidatableTx_UpdateValidator(validatable, deployer, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
     });

@@ -6,7 +6,7 @@ import { getRegisterCollectionsSignatures } from "@utils/signatures/lux/erc721Ma
 
 
 // registerCollections
-export async function getRegisterCollectionsTx(
+export async function getERC721MarketplaceTx_RegisterCollections(
     erc721Marketplace: ERC721Marketplace,
     signer: SignerWithAddress,
     params: RegisterCollectionsParams,
@@ -20,7 +20,7 @@ export async function getRegisterCollectionsTx(
     );
 }
 
-export async function getRegisterCollectionsTxByInput(
+export async function getERC721MarketplaceTxByInput_RegisterCollections(
     erc721Marketplace: ERC721Marketplace,
     signer: SignerWithAddress,
     paramsInput: RegisterCollectionsParamsInput,
@@ -32,12 +32,12 @@ export async function getRegisterCollectionsTxByInput(
         ...paramsInput,
         signatures: await getRegisterCollectionsSignatures(erc721Marketplace, paramsInput, admin, admins)
     };
-    return getRegisterCollectionsTx(erc721Marketplace, signer, params, txConfig);
+    return getERC721MarketplaceTx_RegisterCollections(erc721Marketplace, signer, params, txConfig);
 }
 
 
 // list
-export async function getListTx(
+export async function getERC721MarketplaceTx_List(
     erc721Marketplace: ERC721Marketplace,
     signer: SignerWithAddress,
     params: ListParams
@@ -50,7 +50,7 @@ export async function getListTx(
     );
 }
 
-export async function getCallListTx(
+export async function getCallERC721MarketplaceTx_List(
     erc721Marketplace: ERC721Marketplace,
     caller: ProxyCaller,
     params: ListParams
@@ -68,7 +68,7 @@ export async function getCallListTx(
 
 
 // buy
-export async function getBuyTx(
+export async function getERC721MarketplaceTx_Buy(
     erc721Marketplace: ERC721Marketplace,
     signer: SignerWithAddress,
     params: BuyParams,
@@ -82,7 +82,7 @@ export async function getBuyTx(
 
 
 // cancel
-export async function getCancelTx(
+export async function getERC721MarketplaceTx_Cancel(
     erc721Marketplace: ERC721Marketplace,
     signer: SignerWithAddress,
     params: CancelParams,
@@ -96,7 +96,7 @@ export async function getCancelTx(
 
 
 // safeBuy
-export async function getSafeBuyTx(
+export async function getERC721MarketplaceTx_SafeBuy(
     erc721Marketplace: ERC721Marketplace,
     signer: SignerWithAddress,
     params: SafeBuyParams,

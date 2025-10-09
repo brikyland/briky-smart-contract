@@ -43,7 +43,7 @@ import {ContractTransaction} from "ethers";
 
 
 // transferAdministration1
-export async function getTransferAdministration1Tx(
+export async function getAdminTx_TransferAdministration1(
     admin: Admin,
     signer: SignerWithAddress,
     params: TransferAdministration1Params,
@@ -56,7 +56,7 @@ export async function getTransferAdministration1Tx(
     );
 }
 
-export async function getTransferAdministration1TxByInput(
+export async function getAdminTxByInput_TransferAdministration1(
     admin: Admin,
     signer: SignerWithAddress,
     paramsInput: TransferAdministration1ParamsInput,
@@ -67,12 +67,12 @@ export async function getTransferAdministration1TxByInput(
         ...paramsInput,
         signatures: await getTransferAdministration1Signatures(admin, paramsInput, admins)
     };
-    return await getTransferAdministration1Tx(admin, signer, params, txConfig);
+    return await getAdminTx_TransferAdministration1(admin, signer, params, txConfig);
 }
 
 
 // transferAdministration2
-export async function getTransferAdministration2Tx(
+export async function getAdminTx_TransferAdministration2(
     admin: Admin,
     signer: SignerWithAddress,
     params: TransferAdministration2Params,
@@ -85,7 +85,7 @@ export async function getTransferAdministration2Tx(
     );
 }
 
-export async function getTransferAdministration2TxByInput(
+export async function getAdminTxByInput_TransferAdministration2(
     admin: Admin,
     signer: SignerWithAddress,
     paramsInput: TransferAdministration2ParamsInput,
@@ -96,12 +96,12 @@ export async function getTransferAdministration2TxByInput(
         ...paramsInput,
         signatures: await getTransferAdministration2Signatures(admin, paramsInput, admins)
     };
-    return await getTransferAdministration2Tx(admin, signer, params, txConfig);
+    return await getAdminTx_TransferAdministration2(admin, signer, params, txConfig);
 }
 
 
 // transferAdministration3
-export async function getTransferAdministration3Tx(
+export async function getAdminTx_TransferAdministration3(
     admin: Admin,
     signer: SignerWithAddress,
     params: TransferAdministration3Params,
@@ -114,7 +114,7 @@ export async function getTransferAdministration3Tx(
     );
 }
 
-export async function getTransferAdministration3TxByInput(
+export async function getAdminTxByInput_TransferAdministration3(
     admin: Admin,
     signer: SignerWithAddress,
     paramsInput: TransferAdministration3ParamsInput,
@@ -125,12 +125,12 @@ export async function getTransferAdministration3TxByInput(
         ...paramsInput,
         signatures: await getTransferAdministration3Signatures(admin, paramsInput, admins)
     };
-    return await getTransferAdministration3Tx(admin, signer, params, txConfig);
+    return await getAdminTx_TransferAdministration3(admin, signer, params, txConfig);
 }
 
 
 // transferAdministration4
-export async function getTransferAdministration4Tx(
+export async function getAdminTx_TransferAdministration4(
     admin: Admin,
     signer: SignerWithAddress,
     params: TransferAdministration4Params,
@@ -143,7 +143,7 @@ export async function getTransferAdministration4Tx(
     );
 }
 
-export async function getTransferAdministration4TxByInput(
+export async function getAdminTxByInput_TransferAdministration4(
     admin: Admin,
     signer: SignerWithAddress,
     paramsInput: TransferAdministration4ParamsInput,
@@ -154,12 +154,12 @@ export async function getTransferAdministration4TxByInput(
         ...paramsInput,
         signatures: await getTransferAdministration4Signatures(admin, paramsInput, admins)
     };
-    return await getTransferAdministration4Tx(admin, signer, params, txConfig);
+    return await getAdminTx_TransferAdministration4(admin, signer, params, txConfig);
 }
 
 
 // transferAdministration5
-export async function getTransferAdministration5Tx(
+export async function getAdminTx_TransferAdministration5(
     admin: Admin,
     signer: SignerWithAddress,
     params: TransferAdministration5Params,
@@ -172,7 +172,7 @@ export async function getTransferAdministration5Tx(
     );
 }
 
-export async function getTransferAdministration5TxByInput(
+export async function getAdminTxByInput_TransferAdministration5(
     admin: Admin,
     signer: SignerWithAddress,
     paramsInput: TransferAdministration5ParamsInput,
@@ -183,12 +183,12 @@ export async function getTransferAdministration5TxByInput(
         ...paramsInput,
         signatures: await getTransferAdministration5Signatures(admin, paramsInput, admins)
     };
-    return await getTransferAdministration5Tx(admin, signer, params, txConfig);
+    return await getAdminTx_TransferAdministration5(admin, signer, params, txConfig);
 }
 
 
 // authorizeManagers
-export async function getAuthorizeManagersTx(
+export async function getAdminTx_AuthorizeManagers(
     admin: Admin,
     signer: SignerWithAddress,
     params: AuthorizeManagersParams,
@@ -202,7 +202,7 @@ export async function getAuthorizeManagersTx(
     );
 }
 
-export async function getAuthorizeManagersTxByInput(
+export async function getAdminTxByInput_AuthorizeManagers(
     admin: Admin,
     signer: SignerWithAddress,
     paramsInput: AuthorizeManagersParamsInput,
@@ -213,12 +213,12 @@ export async function getAuthorizeManagersTxByInput(
         ...paramsInput,
         signatures: await getAuthorizeManagersSignatures(admin, paramsInput, admins)
     };
-    return await getAuthorizeManagersTx(admin, signer, params, txConfig);
+    return await getAdminTx_AuthorizeManagers(admin, signer, params, txConfig);
 }
 
 
 // authorizeModerators
-export async function getAuthorizeModeratorsTx(
+export async function getAdminTx_AuthorizeModerators(
     admin: Admin,
     signer: SignerWithAddress,
     params: AuthorizeModeratorsParams,
@@ -232,7 +232,7 @@ export async function getAuthorizeModeratorsTx(
     );
 }
 
-export async function getAuthorizeModeratorsTxByInput(
+export async function getAdminTxByInput_AuthorizeModerators(
     admin: Admin,
     signer: SignerWithAddress,
     paramsInput: AuthorizeModeratorsParamsInput,
@@ -243,12 +243,12 @@ export async function getAuthorizeModeratorsTxByInput(
         ...paramsInput,
         signatures: await getAuthorizeModeratorsSignatures(admin, paramsInput, admins)
     };
-    return await getAuthorizeModeratorsTx(admin, signer, params, txConfig);
+    return await getAdminTx_AuthorizeModerators(admin, signer, params, txConfig);
 }
 
 
 // authorizeGovernors
-export async function getAuthorizeGovernorsTx(
+export async function getAdminTx_AuthorizeGovernors(
     admin: Admin,
     signer: SignerWithAddress,
     params: AuthorizeGovernorsParams,
@@ -262,7 +262,7 @@ export async function getAuthorizeGovernorsTx(
     );
 }
 
-export async function getAuthorizeGovernorsTxByInput(
+export async function getAdminTxByInput_AuthorizeGovernors(
     admin: Admin,
     signer: SignerWithAddress,
     paramsInput: AuthorizeGovernorsParamsInput,
@@ -273,12 +273,12 @@ export async function getAuthorizeGovernorsTxByInput(
         ...paramsInput,
         signatures: await getAuthorizeGovernorsSignatures(admin, paramsInput, admins)
     };
-    return await getAuthorizeGovernorsTx(admin, signer, params, txConfig);
+    return await getAdminTx_AuthorizeGovernors(admin, signer, params, txConfig);
 }
 
 
 // declareZone
-export async function getDeclareZoneTx(
+export async function getAdminTx_DeclareZone(
     admin: Admin,
     signer: SignerWithAddress,
     params: DeclareZoneParams,
@@ -291,7 +291,7 @@ export async function getDeclareZoneTx(
     );
 }
 
-export async function getDeclareZoneTxByInput(
+export async function getAdminTxByInput_DeclareZone(
     admin: Admin,
     signer: SignerWithAddress,
     paramsInput: DeclareZoneParamsInput,
@@ -302,12 +302,12 @@ export async function getDeclareZoneTxByInput(
         ...paramsInput,
         signatures: await getDeclareZoneSignatures(admin, paramsInput, admins)
     };
-    return await getDeclareZoneTx(admin, signer, params, txConfig);
+    return await getAdminTx_DeclareZone(admin, signer, params, txConfig);
 }
 
 
 // activateIn
-export async function getActivateInTx(
+export async function getAdminTx_ActivateIn(
     admin: Admin,
     signer: SignerWithAddress,
     params: ActivateInParams,
@@ -322,7 +322,7 @@ export async function getActivateInTx(
     );
 }
 
-export async function getActivateInTxByInput(
+export async function getAdminTxByInput_ActivateIn(
     admin: Admin,
     signer: SignerWithAddress,
     paramsInput: ActivateInParamsInput,
@@ -333,12 +333,12 @@ export async function getActivateInTxByInput(
         ...paramsInput,
         signatures: await getActivateInSignatures(admin, paramsInput, admins)
     };
-    return await getActivateInTx(admin, signer, params, txConfig);
+    return await getAdminTx_ActivateIn(admin, signer, params, txConfig);
 }
 
 
 // updateCurrencyRegistries
-export async function getUpdateCurrencyRegistriesTx(
+export async function getAdminTx_UpdateCurrencyRegistries(
     admin: Admin,
     signer: SignerWithAddress,
     params: UpdateCurrencyRegistriesParams,
@@ -353,7 +353,7 @@ export async function getUpdateCurrencyRegistriesTx(
     );
 }
 
-export async function getUpdateCurrencyRegistriesTxByInput(
+export async function getAdminTxByInput_UpdateCurrencyRegistries(
     admin: Admin,
     signer: SignerWithAddress,
     paramsInput: UpdateCurrencyRegistriesParamsInput,
@@ -364,5 +364,5 @@ export async function getUpdateCurrencyRegistriesTxByInput(
         ...paramsInput,
         signatures: await getUpdateCurrencyRegistriesSignatures(admin, paramsInput, admins)
     };
-    return await getUpdateCurrencyRegistriesTx(admin, signer, params, txConfig);
+    return await getAdminTx_UpdateCurrencyRegistries(admin, signer, params, txConfig);
 }

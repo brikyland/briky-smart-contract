@@ -21,7 +21,7 @@ import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/re
 import { Rate } from '@utils/models/common/common';
 import { UpdateBaseURIParams, UpdateBaseURIParamsInput, UpdateFeeParams, UpdateFeeParamsInput, UpdateRoyaltyRateParams, UpdateRoyaltyRateParamsInput, WithdrawParams, WithdrawParamsInput } from '@utils/models/lucra/passportToken';
 import { getUpdateBaseURISignatures, getUpdateFeeSignatures, getUpdateRoyaltyRateSignatures, getWithdrawSignatures } from '@utils/signatures/lucra/passportToken';
-import { getUpdateBaseURITx, getUpdateFeeTx, getUpdateRoyaltyRateTx, getWithdrawTx } from '@utils/transaction/lucra/passportToken';
+import { getPassportTokenTx_UpdateBaseURI, getPassportTokenTx_UpdateFee, getPassportTokenTx_UpdateRoyaltyRate, getPassportTokenTx_Withdraw } from '@utils/transaction/lucra/passportToken';
 import { IERC165UpgradeableInterfaceId, IERC2981UpgradeableInterfaceId, IERC4906UpgradeableInterfaceId, IERC721MetadataUpgradeableInterfaceId, IERC721UpgradeableInterfaceId, IRoyaltyRateProposerInterfaceId } from '@tests/interfaces';
 
 interface PassportTokenFixture {
@@ -201,7 +201,7 @@ describe('5.1. PassportToken', async () => {
                 signatures: await getUpdateBaseURISignatures(passportToken, paramsInput, admin, admins),
             };
 
-            const tx = await getUpdateBaseURITx(passportToken, deployer, params);
+            const tx = await getPassportTokenTx_UpdateBaseURI(passportToken, deployer, params);
             await expect(tx).to.emit(passportToken, 'BaseURIUpdate').withArgs(
                 newBaseURI
             );
@@ -226,7 +226,7 @@ describe('5.1. PassportToken', async () => {
                 ...paramsInput,
                 signatures: await getUpdateBaseURISignatures(passportToken, paramsInput, admin, admins, false),
             };
-            await expect(getUpdateBaseURITx(passportToken, deployer, params)).to.be
+            await expect(getPassportTokenTx_UpdateBaseURI(passportToken, deployer, params)).to.be
                 .revertedWithCustomError(passportToken, 'FailedVerification');
         });
     });
@@ -245,7 +245,7 @@ describe('5.1. PassportToken', async () => {
                 ...paramsInput,
                 signatures: await getUpdateFeeSignatures(passportToken, paramsInput, admin, admins),
             };
-            const tx = await getUpdateFeeTx(passportToken, deployer, params);
+            const tx = await getPassportTokenTx_UpdateFee(passportToken, deployer, params);
             await expect(tx).to.emit(passportToken, 'FeeUpdate').withArgs(newFee);
             
             expect(await passportToken.fee()).to.equal(newFee);
@@ -264,7 +264,7 @@ describe('5.1. PassportToken', async () => {
                 ...paramsInput,
                 signatures: await getUpdateFeeSignatures(passportToken, paramsInput, admin, admins, false),
             };
-            await expect(getUpdateFeeTx(passportToken, deployer, params))
+            await expect(getPassportTokenTx_UpdateFee(passportToken, deployer, params))
                 .to.be.revertedWithCustomError(passportToken, 'FailedVerification');
         });
     });
@@ -280,7 +280,7 @@ describe('5.1. PassportToken', async () => {
                 ...paramsInput,
                 signatures: await getUpdateRoyaltyRateSignatures(passportToken, paramsInput, admin, admins),
             };
-            const tx = await getUpdateRoyaltyRateTx(passportToken, deployer, params);
+            const tx = await getPassportTokenTx_UpdateRoyaltyRate(passportToken, deployer, params);
             await expect(tx).to.emit(passportToken, 'RoyaltyRateUpdate').withArgs(
                 (rate: any) => {
                     expect(structToObject(rate)).to.deep.equal({
@@ -308,7 +308,7 @@ describe('5.1. PassportToken', async () => {
                 signatures: await getUpdateRoyaltyRateSignatures(passportToken, paramsInput, admin, admins, false),
             };
 
-            await expect(getUpdateRoyaltyRateTx(passportToken, deployer, params))
+            await expect(getPassportTokenTx_UpdateRoyaltyRate(passportToken, deployer, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
@@ -322,7 +322,7 @@ describe('5.1. PassportToken', async () => {
                 ...paramsInput,
                 signatures: await getUpdateRoyaltyRateSignatures(passportToken, paramsInput, admin, admins),
             };
-            await expect(getUpdateRoyaltyRateTx(passportToken, deployer, params))
+            await expect(getPassportTokenTx_UpdateRoyaltyRate(passportToken, deployer, params))
                 .to.be.revertedWithCustomError(passportToken, 'InvalidRate');
         });
     });
@@ -351,7 +351,7 @@ describe('5.1. PassportToken', async () => {
                 signatures: await getWithdrawSignatures(passportToken, paramsInput1, admin, admins),
             };
 
-            const tx1 = await getWithdrawTx(passportToken, deployer, params1);            
+            const tx1 = await getPassportTokenTx_Withdraw(passportToken, deployer, params1);
             await tx1.wait();
 
             expect(await ethers.provider.getBalance(passportToken.address)).to.equal(800);
@@ -374,7 +374,7 @@ describe('5.1. PassportToken', async () => {
                 signatures: await getWithdrawSignatures(passportToken, paramsInput2, admin, admins),
             };
 
-            const tx2 = await getWithdrawTx(passportToken, deployer, params2);
+            const tx2 = await getPassportTokenTx_Withdraw(passportToken, deployer, params2);
             await tx2.wait();
 
             expect(await ethers.provider.getBalance(passportToken.address)).to.equal(0);
@@ -404,7 +404,7 @@ describe('5.1. PassportToken', async () => {
                 signatures: await getWithdrawSignatures(passportToken, paramsInput1, admin, admins),
             };
 
-            const tx = await getWithdrawTx(passportToken, deployer, params1);
+            const tx = await getPassportTokenTx_Withdraw(passportToken, deployer, params1);
             await tx.wait();
 
             expect(await currency1.balanceOf(passportToken.address)).to.equal(300);
@@ -441,7 +441,7 @@ describe('5.1. PassportToken', async () => {
                 signatures: await getWithdrawSignatures(passportToken, paramsInput, admin, admins),
             };
 
-            const tx = await getWithdrawTx(passportToken, deployer, params);
+            const tx = await getPassportTokenTx_Withdraw(passportToken, deployer, params);
             await tx.wait();
 
             expect(await ethers.provider.getBalance(passportToken.address)).to.equal(1700);
@@ -466,7 +466,7 @@ describe('5.1. PassportToken', async () => {
                 signatures: await getWithdrawSignatures(passportToken, paramsInput, admin, admins, false),
             };
 
-            await expect(getWithdrawTx(passportToken, deployer, params))
+            await expect(getPassportTokenTx_Withdraw(passportToken, deployer, params))
                 .to.be.revertedWithCustomError(passportToken, 'FailedVerification');
         });
 
@@ -483,7 +483,7 @@ describe('5.1. PassportToken', async () => {
                 signatures: await getWithdrawSignatures(passportToken, paramsInput, admin, admins),
             };
 
-            await expect(getWithdrawTx(passportToken, deployer, params))
+            await expect(getPassportTokenTx_Withdraw(passportToken, deployer, params))
                 .to.be.revertedWithCustomError(passportToken, 'FailedTransfer');
         });
 
@@ -500,7 +500,7 @@ describe('5.1. PassportToken', async () => {
                 signatures: await getWithdrawSignatures(passportToken, paramsInput, admin, admins),
             };
 
-            await expect(getWithdrawTx(passportToken, deployer, params))
+            await expect(getPassportTokenTx_Withdraw(passportToken, deployer, params))
                 .to.be.revertedWith('ERC20: transfer amount exceeds balance');
         });
 
@@ -524,7 +524,7 @@ describe('5.1. PassportToken', async () => {
                 signatures: await getWithdrawSignatures(passportToken, paramsInput, admin, admins),
             };
 
-            await expect(getWithdrawTx(passportToken, deployer, params))
+            await expect(getPassportTokenTx_Withdraw(passportToken, deployer, params))
                 .to.be.revertedWithCustomError(passportToken, 'FailedTransfer');
         });
 

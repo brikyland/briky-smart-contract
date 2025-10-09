@@ -6,7 +6,7 @@ import { ContractTransaction } from "ethers";
 
 
 // updateStakeTokens
-export async function getUpdateStakeTokensTx(
+export async function getAuctionTx_UpdateStakeTokens(
     auction: Auction,
     deployer: SignerWithAddress,
     params: UpdateStakeTokensParams,
@@ -21,7 +21,7 @@ export async function getUpdateStakeTokensTx(
     );
 }
 
-export async function getUpdateStakeTokensTxByInput(
+export async function getAuctionTxByInput_UpdateStakeTokens(
     auction: Auction,
     deployer: SignerWithAddress,
     paramsInput: UpdateStakeTokensParamsInput,
@@ -33,12 +33,12 @@ export async function getUpdateStakeTokensTxByInput(
         ...paramsInput,
         signatures: await getUpdateStakeTokensSignatures(auction, paramsInput, admin, admins)
     };
-    return getUpdateStakeTokensTx(auction, deployer, params, txConfig);
+    return getAuctionTx_UpdateStakeTokens(auction, deployer, params, txConfig);
 }
 
 
 // startAuction
-export async function getStartAuctionTx(
+export async function getAuctionTx_StartAuction(
     auction: Auction,
     deployer: SignerWithAddress,
     params: StartAuctionParams,
@@ -52,7 +52,7 @@ export async function getStartAuctionTx(
     );
 }
 
-export async function getStartAuctionTxByInput(
+export async function getAuctionTxByInput_StartAuction(
     auction: Auction,
     deployer: SignerWithAddress,
     paramsInput: StartAuctionParamsInput,
@@ -64,12 +64,12 @@ export async function getStartAuctionTxByInput(
         ...paramsInput,
         signatures: await getStartAuctionSignatures(auction, paramsInput, admin, admins)
     };
-    return getStartAuctionTx(auction, deployer, params, txConfig);
+    return getAuctionTx_StartAuction(auction, deployer, params, txConfig);
 }
 
 
 // deposit
-export async function getDepositTx(
+export async function getAuctionTx_Deposit(
     auction: Auction,
     deployer: SignerWithAddress,
     params: DepositParams,
@@ -83,7 +83,7 @@ export async function getDepositTx(
 
 
 // withdraw
-export async function getWithdrawTx(
+export async function getAuctionTx_Withdraw(
     auction: Auction,
     deployer: SignerWithAddress,
     txConfig = {}

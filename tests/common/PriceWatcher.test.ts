@@ -21,7 +21,7 @@ import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
 import { Rate } from '@utils/models/common/common';
 import { randomBigNumber, randomInt, structToObject } from '@utils/utils';
 import { UpdateDefaultRatesParams, UpdateDefaultRatesParamsInput, UpdatePriceFeedsParams, UpdatePriceFeedsParamsInput } from '@utils/models/common/priceWatcher';
-import { getUpdateDefaultRatesTxByInput, getUpdatePriceFeedsTx, getUpdatePriceFeedsTxByInput } from '@utils/transaction/common/priceWatcher';
+import { getPriceWatcherTxByInput_UpdateDefaultRates, getPriceWatcherTx_UpdatePriceFeeds, getPriceWatcherTxByInput_UpdatePriceFeeds } from '@utils/transaction/common/priceWatcher';
 import { getUpdateDefaultRatesSignatures, getUpdatePriceFeedsSignatures } from '@utils/signatures/common/priceWatcher';
 
 chai.use(smock.matchers);
@@ -170,7 +170,7 @@ describe('1.7. PriceWatcher', async () => {
                 heartbeats,
             };
 
-            const tx = await getUpdatePriceFeedsTxByInput(priceWatcher, deployer, paramsInput, admin, admins);
+            const tx = await getPriceWatcherTxByInput_UpdatePriceFeeds(priceWatcher, deployer, paramsInput, admin, admins);
             await tx.wait();
 
             for (let i = 0; i < currencyAddresses.length; ++i) {
@@ -206,7 +206,7 @@ describe('1.7. PriceWatcher', async () => {
                 signatures: await getUpdatePriceFeedsSignatures(priceWatcher, paramsInput, admin, admins, false),
             };
 
-            await expect(getUpdatePriceFeedsTx(priceWatcher, deployer, params))
+            await expect(getPriceWatcherTx_UpdatePriceFeeds(priceWatcher, deployer, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
@@ -226,7 +226,7 @@ describe('1.7. PriceWatcher', async () => {
                 heartbeats,
             };
             
-            await expect(getUpdatePriceFeedsTxByInput(priceWatcher, deployer, paramsInput, admin, admins))
+            await expect(getPriceWatcherTxByInput_UpdatePriceFeeds(priceWatcher, deployer, paramsInput, admin, admins))
                 .to.be.revertedWithCustomError(priceWatcher, 'InvalidInput');
         });
 
@@ -241,7 +241,7 @@ describe('1.7. PriceWatcher', async () => {
                     feeds: priceFeedAddresses,
                     heartbeats,
                 };
-                await expect(getUpdatePriceFeedsTxByInput(priceWatcher, deployer, paramsInput, admin, admins))
+                await expect(getPriceWatcherTxByInput_UpdatePriceFeeds(priceWatcher, deployer, paramsInput, admin, admins))
                     .to.be.revertedWithCustomError(priceWatcher, 'InvalidInput');
             }
 
@@ -279,7 +279,7 @@ describe('1.7. PriceWatcher', async () => {
                 currencies: currencyAddresses,
                 rates,
             };
-            const tx = await getUpdateDefaultRatesTxByInput(priceWatcher, deployer, paramsInput, admin, admins);
+            const tx = await getPriceWatcherTxByInput_UpdateDefaultRates(priceWatcher, deployer, paramsInput, admin, admins);
             const receipt = await tx.wait();
 
             for (let i = 0; i < currencyAddresses.length; ++i) {
@@ -314,7 +314,7 @@ describe('1.7. PriceWatcher', async () => {
                 ...paramsInput,
                 signatures: await getUpdateDefaultRatesSignatures(priceWatcher, paramsInput, admin, admins, false),
             };
-            await expect(getUpdateDefaultRatesTxByInput(priceWatcher, deployer, params, admin, admins))
+            await expect(getPriceWatcherTxByInput_UpdateDefaultRates(priceWatcher, deployer, params, admin, admins))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
@@ -336,7 +336,7 @@ describe('1.7. PriceWatcher', async () => {
                 currencies: currencyAddresses,
                 rates,
             };
-            await expect(getUpdateDefaultRatesTxByInput(priceWatcher, deployer, paramsInput, admin, admins))
+            await expect(getPriceWatcherTxByInput_UpdateDefaultRates(priceWatcher, deployer, paramsInput, admin, admins))
                 .to.be.revertedWithCustomError(priceWatcher, 'InvalidInput');
         });
 
@@ -348,7 +348,7 @@ describe('1.7. PriceWatcher', async () => {
                     currencies: currencyAddresses,
                     rates,
                 };
-                await expect(getUpdateDefaultRatesTxByInput(priceWatcher, deployer, paramsInput, admin, admins))
+                await expect(getPriceWatcherTxByInput_UpdateDefaultRates(priceWatcher, deployer, paramsInput, admin, admins))
                     .to.be.revertedWithCustomError(priceWatcher, 'InvalidInput');
             }
 

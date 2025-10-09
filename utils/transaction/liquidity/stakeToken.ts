@@ -6,7 +6,7 @@ import { getInitializeRewardingSignatures, getUpdateFeeRateSignatures } from "@u
 
 
 // initializeRewarding
-export async function getInitializeRewardingTx(
+export async function getStakeTokenTx_InitializeRewarding(
     stakeToken: StakeToken,
     deployer: SignerWithAddress,
     params: InitializeRewardingParams,
@@ -20,7 +20,7 @@ export async function getInitializeRewardingTx(
     );
 }
 
-export async function getInitializeRewardingTxByInput(
+export async function getStakeTokenTxByInput_InitializeRewarding(
     stakeToken: StakeToken,
     deployer: SignerWithAddress,
     paramsInput: InitializeRewardingParamsInput,
@@ -32,12 +32,12 @@ export async function getInitializeRewardingTxByInput(
         ...paramsInput,
         signatures: await getInitializeRewardingSignatures(stakeToken, paramsInput, admin, admins),
     };
-    return getInitializeRewardingTx(stakeToken, deployer, params, txConfig);
+    return getStakeTokenTx_InitializeRewarding(stakeToken, deployer, params, txConfig);
 }
 
 
 // updateFeeRate
-export function getUpdateFeeRateTx(
+export function getStakeTokenTx_UpdateFeeRate(
     stakeToken: StakeToken,
     deployer: SignerWithAddress,
     params: UpdateFeeRateParams,
@@ -50,7 +50,7 @@ export function getUpdateFeeRateTx(
     );
 }
 
-export async function getUpdateFeeRateTxByInput(
+export async function getStakeTokenTxByInput_UpdateFeeRate(
     stakeToken: StakeToken,
     deployer: SignerWithAddress,
     paramsInput: UpdateFeeRateParamsInput,
@@ -62,12 +62,12 @@ export async function getUpdateFeeRateTxByInput(
         ...paramsInput,
         signatures: await getUpdateFeeRateSignatures(stakeToken, paramsInput, admin, admins),
     };
-    return getUpdateFeeRateTx(stakeToken, deployer, params, txConfig);
+    return getStakeTokenTx_UpdateFeeRate(stakeToken, deployer, params, txConfig);
 }
 
 
 // fetchReward
-export async function getFetchRewardTx(
+export async function getStakeTokenTx_FetchReward(
     stakeToken: StakeToken,
     deployer: SignerWithAddress,
     txConfig = {}

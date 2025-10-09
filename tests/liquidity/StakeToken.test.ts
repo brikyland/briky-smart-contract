@@ -20,8 +20,9 @@ import { Initialization as LiquidityInitialization } from '@tests/liquidity/test
 import { UpdateStakeTokensParamsInput, UpdateTreasuryParamsInput } from '@utils/models/liquidity/primaryToken';
 import { InitializeRewardingParams, InitializeRewardingParamsInput, UpdateFeeRateParams, UpdateFeeRateParamsInput } from '@utils/models/liquidity/stakeToken';
 import { getInitializeRewardingSignatures, getUpdateFeeRateSignatures } from '@utils/signatures/liquidity/stakeToken';
-import { getInitializeRewardingTx, getUpdateFeeRateTx } from '@utils/transaction/liquidity/StakeToken';
-import { getPauseTxByInput } from '@utils/transaction/common/pausable';
+import { getStakeTokenTx_InitializeRewarding, getStakeTokenTx_UpdateFeeRate } from '@utils/transaction/liquidity/StakeToken';
+import { getPausableTxByInput_Pause } from '@utils/transaction/common/pausable';
+import { getPrimaryTokenTxByInput_UpdateTreasury } from '@utils/transaction/liquidity/primaryToken';
 
 interface StakeTokenFixture {
     deployer: any;
@@ -123,15 +124,15 @@ describe('4.5. StakeToken', async () => {
             primaryToken.address,
         ) as Treasury;
 
-        await callPrimaryToken_UpdateTreasury(
+        await callTransaction(getPrimaryTokenTxByInput_UpdateTreasury(
             primaryToken as any,
             deployer,
-            admins,
-            admin,
             {
                 treasury: treasury.address,
             },
-        );
+            admin,
+            admins,
+        ));
 
         return {
             deployer,
@@ -221,7 +222,7 @@ describe('4.5. StakeToken', async () => {
         }
 
         if (pause) {
-            await callTransaction(getPauseTxByInput(stakeToken1 as any, deployer, admin, admins));
+            await callTransaction(getPausableTxByInput_Pause(stakeToken1 as any, deployer, admin, admins));
         }
 
         return {
@@ -368,7 +369,7 @@ describe('4.5. StakeToken', async () => {
                 signatures: await getInitializeRewardingSignatures(stakeToken1 as any, paramsInput, admin, admins),
             };
 
-            const tx = await getInitializeRewardingTx(stakeToken1 as any, deployer, params);
+            const tx = await getStakeTokenTx_InitializeRewarding(stakeToken1 as any, deployer, params);
             await tx.wait();
 
             expect(await stakeToken1.lastRewardFetch()).to.equal(timestamp);
@@ -389,7 +390,7 @@ describe('4.5. StakeToken', async () => {
                 signatures: await getInitializeRewardingSignatures(stakeToken1 as any, paramsInput, admin, admins, false),
             };
             
-            await expect(getInitializeRewardingTx(stakeToken1 as any, deployer, params))
+            await expect(getStakeTokenTx_InitializeRewarding(stakeToken1 as any, deployer, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
@@ -408,7 +409,7 @@ describe('4.5. StakeToken', async () => {
                 signatures: await getInitializeRewardingSignatures(stakeToken1 as any, paramsInput, admin, admins),
             };
 
-            await expect(getInitializeRewardingTx(stakeToken1 as any, deployer, params))
+            await expect(getStakeTokenTx_InitializeRewarding(stakeToken1 as any, deployer, params))
                 .to.be.revertedWithCustomError(stakeToken1, 'AlreadyStartedRewarding');
         });
     });
@@ -426,7 +427,7 @@ describe('4.5. StakeToken', async () => {
                 signatures: await getUpdateFeeRateSignatures(stakeToken1 as any, paramsInput, admin, admins),
             };
 
-            const tx = await getUpdateFeeRateTx(stakeToken1 as any, deployer, params);
+            const tx = await getStakeTokenTx_UpdateFeeRate(stakeToken1 as any, deployer, params);
             await tx.wait();
 
             await expect(tx).to.emit(stakeToken1, 'FeeRateUpdate').withArgs(
@@ -456,7 +457,7 @@ describe('4.5. StakeToken', async () => {
                 ...paramsInput,
                 signatures: await getUpdateFeeRateSignatures(stakeToken1 as any, paramsInput, admin, admins, false),
             };
-            await expect(getUpdateFeeRateTx(stakeToken1 as any, deployer, params))
+            await expect(getStakeTokenTx_UpdateFeeRate(stakeToken1 as any, deployer, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
@@ -471,7 +472,7 @@ describe('4.5. StakeToken', async () => {
                 signatures: await getUpdateFeeRateSignatures(stakeToken1 as any, paramsInput, admin, admins),
             };
 
-            await expect(getUpdateFeeRateTx(stakeToken1 as any, deployer, params))
+            await expect(getStakeTokenTx_UpdateFeeRate(stakeToken1 as any, deployer, params))
                 .to.be.revertedWithCustomError(stakeToken1, 'InvalidRate');
         });
     });
