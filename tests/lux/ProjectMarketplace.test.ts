@@ -46,6 +46,7 @@ import { BuyParams, BuyPartParams, ListParams, SafeBuyParams, SafeBuyPartParams 
 import { applyDiscount } from '@utils/formula';
 import { getSafeBuyAnchor, getSafeBuyPartAnchor } from '@utils/anchor/lux/assetMarketplace';
 import { getAdminTxByInput_ActivateIn, getAdminTxByInput_AuthorizeManagers, getAdminTxByInput_AuthorizeModerators, getAdminTxByInput_DeclareZone, getAdminTxByInput_UpdateCurrencyRegistries } from '@utils/transaction/common/admin';
+import { getPausableTxByInput_Pause } from '@utils/transaction/common/pausable';
 
 interface ProjectMarketplaceFixture {
     admin: Admin;
@@ -391,7 +392,7 @@ describe('6.4. ProjectMarketplace', async () => {
         }
 
         if (pause) {
-            await callTransaction(getPauseTxByInput(projectMarketplace, deployer, admins, admin));;
+            await callTransaction(getPausableTxByInput_Pause(projectMarketplace, deployer, admin, admins));
         }
 
         return {

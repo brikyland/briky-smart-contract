@@ -61,6 +61,7 @@ import { applyDiscount } from '@utils/formula';
 import { getRegisterCollectionsSignatures } from '@utils/signatures/lux/erc721Marketplace';
 import { getSafeBuyAnchor } from '@utils/anchor/lux/erc721Marketplace';
 import { getAdminTxByInput_AuthorizeManagers, getAdminTxByInput_AuthorizeModerators, getAdminTxByInput_UpdateCurrencyRegistries } from '@utils/transaction/common/admin';
+import { getPausableTxByInput_Pause } from '@utils/transaction/common/pausable';
 
 interface MortgageMarketplaceFixture {
     admin: Admin;
@@ -390,7 +391,7 @@ describe('6.3. MortgageMarketplace', async () => {
         }
 
         if (pause) {
-            await callTransaction(getPauseTxByInput(mortgageMarketplace, deployer, admins, admin));;
+            await callTransaction(getPausableTxByInput_Pause(mortgageMarketplace, deployer, admin, admins));
         }
 
         return {

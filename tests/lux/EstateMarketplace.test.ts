@@ -45,6 +45,7 @@ import { getAssetMarketplaceTx_BuyPart, getAssetMarketplaceTx_Buy, getAssetMarke
 import { applyDiscount } from '@utils/formula';
 import { getSafeBuyAnchor, getSafeBuyPartAnchor } from '@utils/anchor/lux/assetMarketplace';
 import { getAdminTxByInput_ActivateIn, getAdminTxByInput_AuthorizeManagers, getAdminTxByInput_AuthorizeModerators, getAdminTxByInput_DeclareZone, getAdminTxByInput_UpdateCurrencyRegistries } from '@utils/transaction/common/admin';
+import { getPausableTxByInput_Pause } from '@utils/transaction/common/pausable';
 
 interface EstateMarketplaceFixture {
     admin: Admin;
@@ -427,7 +428,7 @@ describe('6.2. EstateMarketplace', async () => {
         }
 
         if (pause) {
-            await callTransaction(getPauseTxByInput(estateMarketplace, deployer, admins, admin));;
+            await callTransaction(getPausableTxByInput_Pause(estateMarketplace, deployer, admin, admins));
         }
 
         return {

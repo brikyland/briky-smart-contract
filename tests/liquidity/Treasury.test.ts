@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
 import { Admin, Currency, MockPrimaryToken, Treasury } from '@typechain-types';
-import { callTransaction, getSignatures, prepareERC20 } from '@utils/blockchain';
+import { callTransaction, prepareERC20 } from '@utils/blockchain';
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { Constant } from '@tests/test.constant';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';

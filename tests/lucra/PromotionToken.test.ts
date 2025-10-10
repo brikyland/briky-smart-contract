@@ -19,16 +19,16 @@ import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 
 import { getBytes4Hex, getInterfaceID, structToObject } from '@utils/utils';
 import { Initialization } from './test.initialization';
-import { callPromotionToken_CancelContents, callPromotionToken_CreateContents } from '@utils/call/lucra/promotionToken';
 import { deployPromotionToken } from '@utils/deployments/lucra/promotionToken';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
 import { deployCurrency } from '@utils/deployments/common/currency';
 import { CancelContentsParams, CancelContentsParamsInput, CreateContentsParams, CreateContentsParamsInput, UpdateContentURIsParams, UpdateContentURIsParamsInput, UpdateFeeParams, UpdateFeeParamsInput, UpdateRoyaltyRateParams, UpdateRoyaltyRateParamsInput, WithdrawParams, WithdrawParamsInput } from '@utils/models/lucra/promotionToken';
 import { getCancelContentsSignatures, getCreateContentsSignatures, getUpdateContentURIsSignatures, getUpdateFeeSignatures, getUpdateRoyaltyRateSignatures, getWithdrawSignatures } from '@utils/signatures/lucra/promotionToken';
-import { getPromotionTokenTx_CancelContents, getPromotionTokenTx_CreateContents, getPromotionTokenTx_UpdateContentURIs, getPromotionTokenTx_UpdateFee, getPromotionTokenTx_UpdateRoyaltyRate, getPromotionTokenTx_Withdraw } from '@utils/transaction/lucra/promotionToken';
+import { getPromotionTokenTx_CancelContents, getPromotionTokenTx_CreateContents, getPromotionTokenTx_Mint, getPromotionTokenTx_UpdateContentURIs, getPromotionTokenTx_UpdateFee, getPromotionTokenTx_UpdateRoyaltyRate, getPromotionTokenTx_Withdraw, getPromotionTokenTxByInput_CancelContents, getPromotionTokenTxByInput_CreateContents, getPromotionTokenTxByInput_UpdateContentURIs, getPromotionTokenTxByInput_UpdateFee, getPromotionTokenTxByInput_UpdateRoyaltyRate, getPromotionTokenTxByInput_Withdraw } from '@utils/transaction/lucra/promotionToken';
 import { BigNumber } from 'ethers';
 import { IERC165UpgradeableInterfaceId, IERC2981UpgradeableInterfaceId, IERC4906UpgradeableInterfaceId, IERC721MetadataUpgradeableInterfaceId, IERC721UpgradeableInterfaceId, IRoyaltyRateProposerInterfaceId } from '@tests/interfaces';
+import { getPausableTxByInput_Pause } from '@utils/transaction/common/pausable';
 
 interface PromotionTokenFixture {
     admin: Admin;
@@ -98,22 +98,21 @@ describe('5.2. PromotionToken', async () => {
         let currentTimestamp = await time.latest();
 
         if (listSampleContents) {
-            const paramsInput: CreateContentsParamsInput = {
-                uris: ["testing_uri_1", "testing_uri_2", "testing_uri_3"],
-                startAts: [currentTimestamp + 100, currentTimestamp + 400, currentTimestamp + 800],
-                durations: [200, 1600, 3200],
-            };
-            await callPromotionToken_CreateContents(
+            await getPromotionTokenTxByInput_CreateContents(
                 promotionToken,
                 deployer,
+                {
+                    uris: ["testing_uri_1", "testing_uri_2", "testing_uri_3"],
+                    startAts: [currentTimestamp + 100, currentTimestamp + 400, currentTimestamp + 800],
+                    durations: [200, 1600, 3200],
+                },
                 admin,
                 admins,
-                paramsInput,
             );
         }
 
         if (pause) {
-            await callTransaction(getPauseTxByInput(promotionToken, deployer, admins, admin));;
+            await callTransaction(getPausableTxByInput_Pause(promotionToken, deployer, admin, admins));
         }
 
         return {
@@ -178,12 +177,7 @@ describe('5.2. PromotionToken', async () => {
             const paramsInput: UpdateFeeParamsInput = {
                 fee: newFee,
             };
-            const params: UpdateFeeParams = {
-                ...paramsInput,
-                signatures: await getUpdateFeeSignatures(promotionToken, paramsInput, admin, admins),
-            };
-
-            const tx = await getPromotionTokenTx_UpdateFee(promotionToken, deployer, params);
+            const tx = await getPromotionTokenTxByInput_UpdateFee(promotionToken, deployer, paramsInput, admin, admins);
             await expect(tx).to.emit(promotionToken, 'FeeUpdate').withArgs(newFee);
             
             expect(await promotionToken.fee()).to.equal(newFee);
@@ -202,7 +196,6 @@ describe('5.2. PromotionToken', async () => {
                 ...paramsInput,
                 signatures: await getUpdateFeeSignatures(promotionToken, paramsInput, admin, admins, false),
             };
-
             await expect(getPromotionTokenTx_UpdateFee(promotionToken, deployer, params)).to.be
                 .revertedWithCustomError(promotionToken, 'FailedVerification');
         });
@@ -215,12 +208,13 @@ describe('5.2. PromotionToken', async () => {
             const paramsInput: UpdateRoyaltyRateParamsInput = {
                 royaltyRate: ethers.utils.parseEther('0.2'),
             };
-            const params: UpdateRoyaltyRateParams = {
-                ...paramsInput,
-                signatures: await getUpdateRoyaltyRateSignatures(promotionToken, paramsInput, admin, admins),
-            };
-
-            const tx = await getPromotionTokenTx_UpdateRoyaltyRate(promotionToken, deployer, params);
+            const tx = await getPromotionTokenTxByInput_UpdateRoyaltyRate(
+                promotionToken,
+                deployer,
+                paramsInput,
+                admin,
+                admins
+            );
             await tx.wait();
 
             await expect(tx).to.emit(promotionToken, 'RoyaltyRateUpdate').withArgs(
@@ -248,7 +242,6 @@ describe('5.2. PromotionToken', async () => {
                 ...paramsInput,
                 signatures: await getUpdateRoyaltyRateSignatures(promotionToken, paramsInput, admin, admins, false),
             };
-
             await expect(getPromotionTokenTx_UpdateRoyaltyRate(promotionToken, deployer, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
@@ -256,16 +249,15 @@ describe('5.2. PromotionToken', async () => {
         it('5.2.3.3. UpdateRoyaltyRate unsuccessfully with invalid rate', async () => {
             const { deployer, promotionToken, admin, admins } = await beforePromotionTokenTest();
 
-            const paramsInput: UpdateRoyaltyRateParamsInput = {
-                royaltyRate: Constant.COMMON_RATE_MAX_FRACTION.add(1),
-            };
-            const params: UpdateRoyaltyRateParams = {
-                ...paramsInput,
-                signatures: await getUpdateRoyaltyRateSignatures(promotionToken, paramsInput, admin, admins),
-            };
-
-            await expect(getPromotionTokenTx_UpdateRoyaltyRate(promotionToken, deployer, params))
-                .to.be.revertedWithCustomError(promotionToken, 'InvalidRate');
+            await expect(getPromotionTokenTxByInput_UpdateRoyaltyRate(
+                promotionToken,
+                deployer,
+                {
+                    royaltyRate: Constant.COMMON_RATE_MAX_FRACTION.add(1),
+                },
+                admin,
+                admins
+            )).to.be.revertedWithCustomError(promotionToken, 'InvalidRate');
         });
     });
 
@@ -288,12 +280,7 @@ describe('5.2. PromotionToken', async () => {
                 currencies: [ethers.constants.AddressZero],
                 values: [BigNumber.from(1200)],
             };
-            const params1: WithdrawParams = {
-                ...paramsInput1,
-                signatures: await getWithdrawSignatures(promotionToken, paramsInput1, admin, admins),
-            };
-
-            const tx1 = await getPromotionTokenTx_Withdraw(promotionToken, deployer, params1);
+            const tx1 = await getPromotionTokenTxByInput_Withdraw(promotionToken, deployer, paramsInput1, admin, admins);
             await tx1.wait();
 
             balance = await ethers.provider.getBalance(promotionToken.address);
@@ -315,12 +302,7 @@ describe('5.2. PromotionToken', async () => {
                 currencies: [ethers.constants.AddressZero],
                 values: [BigNumber.from(3800)],
             };
-            const params2: WithdrawParams = {
-                ...paramsInput2,
-                signatures: await getWithdrawSignatures(promotionToken, paramsInput2, admin, admins),
-            };
-
-            const tx2 = await getPromotionTokenTx_Withdraw(promotionToken, deployer, params2);
+            const tx2 = await getPromotionTokenTxByInput_Withdraw(promotionToken, deployer, paramsInput2, admin, admins);
             await tx2.wait();
 
             balance = await ethers.provider.getBalance(promotionToken.address);
@@ -348,12 +330,7 @@ describe('5.2. PromotionToken', async () => {
                 currencies: [currency1.address, currency2.address],
                 values: [BigNumber.from(700), ethers.constants.MaxUint256],
             };
-            const params: WithdrawParams = {
-                ...paramsInput,
-                signatures: await getWithdrawSignatures(promotionToken, paramsInput, admin, admins),
-            };
-
-            const tx = await getPromotionTokenTx_Withdraw(promotionToken, deployer, params);
+            const tx = await getPromotionTokenTxByInput_Withdraw(promotionToken, deployer, paramsInput, admin, admins);
             await tx.wait();
 
             expect(await currency1.balanceOf(promotionToken.address)).to.equal(300);
@@ -385,12 +362,7 @@ describe('5.2. PromotionToken', async () => {
                 currencies: [ethers.constants.AddressZero, ethers.constants.AddressZero, currency1.address, currency2.address],
                 values: [BigNumber.from(100), BigNumber.from(200), BigNumber.from(400), BigNumber.from(800)],
             };
-            const params: WithdrawParams = {
-                ...paramsInput,
-                signatures: await getWithdrawSignatures(promotionToken, paramsInput, admin, admins),
-            };
-
-            const tx = await getPromotionTokenTx_Withdraw(promotionToken, deployer, params);
+            const tx = await getPromotionTokenTxByInput_Withdraw(promotionToken, deployer, paramsInput, admin, admins);
             await tx.wait();
 
             expect(await ethers.provider.getBalance(promotionToken.address)).to.equal(1700);
@@ -414,7 +386,6 @@ describe('5.2. PromotionToken', async () => {
                 ...paramsInput,
                 signatures: await getWithdrawSignatures(promotionToken, paramsInput, admin, admins, false),
             };
-
             await expect(getPromotionTokenTx_Withdraw(promotionToken, deployer, params))
                 .to.be.revertedWithCustomError(promotionToken, 'FailedVerification');
         });
@@ -422,35 +393,33 @@ describe('5.2. PromotionToken', async () => {
         it('5.2.4.5. Withdraw unsuccessfully with insufficient native tokens', async () => {
             const { deployer, admins, admin, promotionToken } = await beforePromotionTokenTest();
 
-            const paramsInput: WithdrawParamsInput = {
-                receiver: deployer.address,
-                currencies: [ethers.constants.AddressZero],
-                values: [BigNumber.from(1000)],
-            };
-            const params: WithdrawParams = {
-                ...paramsInput,
-                signatures: await getWithdrawSignatures(promotionToken, paramsInput, admin, admins),
-            };
-
-            await expect(getPromotionTokenTx_Withdraw(promotionToken, deployer, params))
-                .to.be.revertedWithCustomError(promotionToken, 'FailedTransfer');
+            await expect(getPromotionTokenTxByInput_Withdraw(
+                promotionToken,
+                deployer,
+                {
+                    receiver: deployer.address,
+                    currencies: [ethers.constants.AddressZero],
+                    values: [BigNumber.from(1000)],
+                },
+                admin,
+                admins
+            )).to.be.revertedWithCustomError(promotionToken, 'FailedTransfer');
         })
 
         it('5.2.4.6. Withdraw unsuccessfully with insufficient ERC20 tokens', async () => {
             const { deployer, admins, admin, promotionToken, currency1 } = await beforePromotionTokenTest();
 
-            const paramsInput: WithdrawParamsInput = {
-                receiver: deployer.address,
-                currencies: [currency1.address],
-                values: [BigNumber.from(1000)],
-            };
-            const params: WithdrawParams = {
-                ...paramsInput,
-                signatures: await getWithdrawSignatures(promotionToken, paramsInput, admin, admins),
-            };
-
-            await expect(getPromotionTokenTx_Withdraw(promotionToken, deployer, params))
-                .to.be.revertedWith('ERC20: transfer amount exceeds balance');
+            await expect(getPromotionTokenTxByInput_Withdraw(
+                promotionToken,
+                deployer,
+                {
+                    receiver: deployer.address,
+                    currencies: [currency1.address],
+                    values: [BigNumber.from(1000)],
+                },
+                admin,
+                admins
+            )).to.be.revertedWith('ERC20: transfer amount exceeds balance');
         });
 
 
@@ -464,18 +433,17 @@ describe('5.2. PromotionToken', async () => {
                 value: 1000,
             }));
 
-            const paramsInput: WithdrawParamsInput = {
-                receiver: failReceiver.address,
-                currencies: [ethers.constants.AddressZero],
-                values: [BigNumber.from(1000)],
-            };
-            const params: WithdrawParams = {
-                ...paramsInput,
-                signatures: await getWithdrawSignatures(promotionToken, paramsInput, admin, admins),
-            };
-
-            await expect(getPromotionTokenTx_Withdraw(promotionToken, deployer, params))
-                .to.be.revertedWithCustomError(promotionToken, 'FailedTransfer');
+            await expect(getPromotionTokenTxByInput_Withdraw(
+                promotionToken,
+                deployer,
+                {
+                    receiver: failReceiver.address,
+                    currencies: [ethers.constants.AddressZero],
+                    values: [BigNumber.from(1000)],
+                },
+                admin,
+                admins
+            )).to.be.revertedWithCustomError(promotionToken, 'FailedTransfer');
         });
 
         it('5.2.4.8. Withdraw unsuccessfully when the contract is reentered', async () => {
@@ -490,27 +458,25 @@ describe('5.2. PromotionToken', async () => {
                 [promotionToken.address, 'withdraw', reentrancyERC20.address, [reentrancyERC20.address], [200]]
             );
 
-            let calldata = promotionToken.interface.encodeFunctionData('withdraw', [
-                reentrancyERC20.address,
-                [reentrancyERC20.address],
-                [200],
-                await getSignatures(message, admins, (await admin.nonce()).add(1))
-            ]);
-
             await callTransaction(reentrancyERC20.updateReentrancyPlan(
                 promotionToken.address,
-                calldata
+                promotionToken.interface.encodeFunctionData('withdraw', [
+                    reentrancyERC20.address,
+                    [reentrancyERC20.address],
+                    [200],
+                    await getSignatures(message, admins, (await admin.nonce()).add(1))
+                ])
             ));
 
-            calldata = promotionToken.interface.encodeFunctionData('withdraw', [
-                reentrancyERC20.address,
-                [reentrancyERC20.address],
-                [200],
-                await getSignatures(message, admins, await admin.nonce())
-            ]);
-
-            await expect(reentrancyERC20.call(promotionToken.address, calldata))
-                .to.be.revertedWith('ReentrancyGuard: reentrant call');
+            await expect(reentrancyERC20.call(
+                promotionToken.address,
+                promotionToken.interface.encodeFunctionData('withdraw', [
+                    reentrancyERC20.address,
+                    [reentrancyERC20.address],
+                    [200],
+                    await getSignatures(message, admins, await admin.nonce())
+                ])
+            )).to.be.revertedWith('ReentrancyGuard: reentrant call');
 
             const balance = await reentrancyERC20.balanceOf(promotionToken.address);
             expect(balance).to.equal(1000);
@@ -558,39 +524,34 @@ describe('5.2. PromotionToken', async () => {
                 startAts: [startAt1, startAt2, startAt3],
                 durations: [duration1, duration2, duration3],
             };
-            const params: CreateContentsParams = {
-                ...paramsInput,
-                signatures: await getCreateContentsSignatures(promotionToken, paramsInput, admin, admins),
-            };
-
-            const tx = await getPromotionTokenTx_CreateContents(promotionToken, deployer, params);
+            const tx = await getPromotionTokenTxByInput_CreateContents(promotionToken, deployer, paramsInput, admin, admins);
             await tx.wait();
 
             for (let i = 1; i <= 3; ++i) {
                 await expect(tx).to.emit(promotionToken, 'NewContent').withArgs(
                     i,
-                    params.uris[i - 1],
-                    params.startAts[i - 1],
-                    params.durations[i - 1]
+                    paramsInput.uris[i - 1],
+                    paramsInput.startAts[i - 1],
+                    paramsInput.durations[i - 1]
                 );
             }
 
             expect(await promotionToken.contentNumber()).to.equal(3);
             
             const content1 = await promotionToken.getContent(1);
-            expect(content1.uri).to.equal(params.uris[0]);
-            expect(content1.startAt).to.equal(params.startAts[0]);
-            expect(content1.endAt).to.equal(params.startAts[0] + params.durations[0]);
+            expect(content1.uri).to.equal(paramsInput.uris[0]);
+            expect(content1.startAt).to.equal(paramsInput.startAts[0]);
+            expect(content1.endAt).to.equal(paramsInput.startAts[0] + paramsInput.durations[0]);
             
             const content2 = await promotionToken.getContent(2);
-            expect(content2.uri).to.equal(params.uris[1]);
-            expect(content2.startAt).to.equal(params.startAts[1]);
-            expect(content2.endAt).to.equal(params.startAts[1] + params.durations[1]);
+            expect(content2.uri).to.equal(paramsInput.uris[1]);
+            expect(content2.startAt).to.equal(paramsInput.startAts[1]);
+            expect(content2.endAt).to.equal(paramsInput.startAts[1] + paramsInput.durations[1]);
 
             const content3 = await promotionToken.getContent(3);
-            expect(content3.uri).to.equal(params.uris[2]);
-            expect(content3.startAt).to.equal(params.startAts[2]);
-            expect(content3.endAt).to.equal(params.startAts[2] + params.durations[2]);
+            expect(content3.uri).to.equal(paramsInput.uris[2]);
+            expect(content3.startAt).to.equal(paramsInput.startAts[2]);
+            expect(content3.endAt).to.equal(paramsInput.startAts[2] + paramsInput.durations[2]);
         });
 
         it('5.2.6.2. Create contents unsuccessfully with invalid signatures', async () => {
@@ -614,7 +575,6 @@ describe('5.2. PromotionToken', async () => {
                 ...paramsInput,
                 signatures: await getCreateContentsSignatures(promotionToken, paramsInput, admin, admins, false),
             };
-
             await expect(getPromotionTokenTx_CreateContents(promotionToken, deployer, params))
                 .to.be.revertedWithCustomError(promotionToken, 'FailedVerification');
         })
@@ -628,17 +588,17 @@ describe('5.2. PromotionToken', async () => {
         ) {
             const { deployer, promotionToken, admin, admins } = fixture;
 
-            const paramsInput: CreateContentsParamsInput = {
-                uris: uris,
-                startAts: startAts,
-                durations: durations,
-            };
-            const params: CreateContentsParams = {
-                ...paramsInput,
-                signatures: await getCreateContentsSignatures(promotionToken, paramsInput, admin, admins),
-            };
-            await expect(getPromotionTokenTx_CreateContents(promotionToken, deployer, params))
-                .to.be.revertedWithCustomError(promotionToken, customError);
+            await expect(getPromotionTokenTxByInput_CreateContents(
+                promotionToken,
+                deployer,
+                {
+                    uris: uris,
+                    startAts: startAts,
+                    durations: durations,
+                },
+                admin,
+                admins
+            )).to.be.revertedWithCustomError(promotionToken, customError);
         }
 
         it('5.2.6.3. Create contents unsuccessfully with invalid input', async () => {
@@ -689,18 +649,19 @@ describe('5.2. PromotionToken', async () => {
                 contentIds: [BigNumber.from(1), BigNumber.from(2)],
                 uris: ["testing_uri_1_updated", "testing_uri_2_updated"],
             };
-            const params: UpdateContentURIsParams = {
-                ...paramsInput,
-                signatures: await getUpdateContentURIsSignatures(promotionToken, paramsInput, admin, admins),
-            };
-
-            const tx = await getPromotionTokenTx_UpdateContentURIs(promotionToken, deployer, params);
+            const tx = await getPromotionTokenTxByInput_UpdateContentURIs(
+                promotionToken,
+                deployer,
+                paramsInput,
+                admin,
+                admins
+            );
             await tx.wait();
 
             for (let i = 1; i <= 2; ++i) {
                 await expect(tx).to.emit(promotionToken, 'ContentURIUpdate').withArgs(
-                    params.contentIds[i - 1],
-                    params.uris[i - 1]
+                    paramsInput.contentIds[i - 1],
+                    paramsInput.uris[i - 1]
                 );
             }
             
@@ -725,7 +686,6 @@ describe('5.2. PromotionToken', async () => {
                 ...paramsInput,
                 signatures: await getUpdateContentURIsSignatures(promotionToken, paramsInput, admin, admins, false),
             };
-
             await expect(getPromotionTokenTx_UpdateContentURIs(promotionToken, deployer, params))
                 .to.be.revertedWithCustomError(promotionToken, 'FailedVerification');
         });
@@ -738,16 +698,16 @@ describe('5.2. PromotionToken', async () => {
         ) {
             const { deployer, promotionToken, admin, admins } = fixture;
 
-            const paramsInput: UpdateContentURIsParamsInput = {
-                contentIds: contentIds,
-                uris: uris,
-            };
-            const params: UpdateContentURIsParams = {
-                ...paramsInput,
-                signatures: await getUpdateContentURIsSignatures(promotionToken, paramsInput, admin, admins),
-            };
-            await expect(getPromotionTokenTx_UpdateContentURIs(promotionToken, deployer, params))
-                .to.be.revertedWithCustomError(promotionToken, customError);
+            await expect(getPromotionTokenTxByInput_UpdateContentURIs(
+                promotionToken,
+                deployer,
+                {
+                    contentIds: contentIds,
+                    uris: uris,
+                },
+                admin,
+                admins
+            )).to.be.revertedWithCustomError(promotionToken, customError);
         }
 
         it('5.2.7.3. Update content uris unsuccessfully with invalid input', async () => {
@@ -809,12 +769,7 @@ describe('5.2. PromotionToken', async () => {
             const paramsInput: CancelContentsParamsInput = {
                 contentIds: [BigNumber.from(2), BigNumber.from(3)],
             };
-            const params: CancelContentsParams = {
-                ...paramsInput,
-                signatures: await getCancelContentsSignatures(promotionToken, paramsInput, admin, admins),
-            };
-
-            const tx = await getPromotionTokenTx_CancelContents(promotionToken, deployer, params);
+            const tx = await getPromotionTokenTxByInput_CancelContents(promotionToken, deployer, paramsInput, admin, admins);
             await tx.wait();
 
             await expect(tx).to
@@ -866,15 +821,15 @@ describe('5.2. PromotionToken', async () => {
             const cancelAt = (await promotionToken.getContent(1)).startAt + 50;
             await time.setNextBlockTimestamp(cancelAt);
 
-            const paramsInput: CancelContentsParamsInput = {
-                contentIds: [BigNumber.from(2), BigNumber.from(3), BigNumber.from(0)],
-            };
-            const params: CancelContentsParams = {
-                ...paramsInput,
-                signatures: await getCancelContentsSignatures(promotionToken, paramsInput, admin, admins),
-            };
-            await expect(getPromotionTokenTx_CancelContents(promotionToken, deployer, params))
-                .to.be.revertedWithCustomError(promotionToken, 'InvalidContentId');
+            await expect(getPromotionTokenTxByInput_CancelContents(
+                promotionToken,
+                deployer,
+                {
+                    contentIds: [BigNumber.from(2), BigNumber.from(3), BigNumber.from(0)],
+                },
+                admin,
+                admins
+            )).to.be.revertedWithCustomError(promotionToken, 'InvalidContentId');
         });
 
         it('5.2.8.4. Cancel contents unsuccessfully with started events', async () => {
@@ -885,16 +840,15 @@ describe('5.2. PromotionToken', async () => {
             const cancelAt = (await promotionToken.getContent(1)).startAt + 50;
             await time.setNextBlockTimestamp(cancelAt);
 
-            const paramsInput: CancelContentsParamsInput = {
-                contentIds: [BigNumber.from(1)],
-            };
-            const params: CancelContentsParams = {
-                ...paramsInput,
-                signatures: await getCancelContentsSignatures(promotionToken, paramsInput, admin, admins),
-            };
-
-            await expect(getPromotionTokenTx_CancelContents(promotionToken, deployer, params))
-                .to.be.revertedWithCustomError(promotionToken, 'AlreadyStarted');
+            await expect(getPromotionTokenTxByInput_CancelContents(
+                promotionToken,
+                deployer,
+                {
+                    contentIds: [BigNumber.from(1)],
+                },
+                admin,
+                admins
+            )).to.be.revertedWithCustomError(promotionToken, 'AlreadyStarted');
         });
 
         it('5.2.8.5. Cancel contents successfully with already cancelled content', async () => {
@@ -905,25 +859,25 @@ describe('5.2. PromotionToken', async () => {
             const cancelAt = (await promotionToken.getContent(1)).startAt + 50;
             await time.setNextBlockTimestamp(cancelAt);
 
-            await callPromotionToken_CancelContents(
+            await callTransaction(getPromotionTokenTxByInput_CancelContents(
                 promotionToken,
                 deployer,
-                admin,
-                admins,
                 {
                     contentIds: [BigNumber.from(2), BigNumber.from(3)],
                 },
-            );
+                admin,
+                admins
+            ));
 
-            const paramsInput: CancelContentsParamsInput = {
-                contentIds: [BigNumber.from(3)],
-            };
-            const params: CancelContentsParams = {
-                ...paramsInput,
-                signatures: await getCancelContentsSignatures(promotionToken, paramsInput, admin, admins),
-            };
-            await expect(getPromotionTokenTx_CancelContents(promotionToken, deployer, params))
-                .to.be.not.reverted;
+            await expect(getPromotionTokenTxByInput_CancelContents(
+                promotionToken,
+                deployer,
+                {
+                    contentIds: [BigNumber.from(3)],
+                },
+                admin,
+                admins
+            )).to.be.not.reverted;
         });
     });
 
@@ -947,7 +901,12 @@ describe('5.2. PromotionToken', async () => {
             let tokenIdStart = (await promotionToken.tokenNumber()).add(1);
             let tokenIdEnd = tokenIdStart.add(amount1).sub(1);
 
-            const tx1 = await promotionToken.connect(minter1).mint(1, amount1, { value: fee.mul(amount1) });
+            const tx1 = await getPromotionTokenTx_Mint(
+                promotionToken,
+                minter1,
+                { contentId: BigNumber.from(1), amount: BigNumber.from(amount1) },
+                { value: fee.mul(amount1) }
+            );
             const receipt1 = await tx1.wait();
 
             for(let i = tokenIdStart; i.lte(tokenIdEnd); i = i.add(1)) {
@@ -978,7 +937,12 @@ describe('5.2. PromotionToken', async () => {
             tokenIdStart = (await promotionToken.tokenNumber()).add(1);
             tokenIdEnd = tokenIdStart.add(amount2).sub(1);
 
-            const tx2 = await promotionToken.connect(minter1).mint(1, amount2, { value: fee.mul(amount2).add(ethers.utils.parseEther('1')) });
+            const tx2 = await getPromotionTokenTx_Mint(
+                promotionToken,
+                minter1,
+                { contentId: BigNumber.from(1), amount: BigNumber.from(amount2) },
+                { value: fee.mul(amount2).add(ethers.utils.parseEther('1')) }
+            );
             const receipt2 = await tx2.wait();
             
             for(let i = tokenIdStart; i.lte(tokenIdEnd); i = i.add(1)) {
@@ -1010,7 +974,12 @@ describe('5.2. PromotionToken', async () => {
             tokenIdStart = (await promotionToken.tokenNumber()).add(1);
             tokenIdEnd = tokenIdStart.add(amount3).sub(1);
 
-            const tx3 = await promotionToken.connect(minter2).mint(2, amount3, { value: fee.mul(amount3) });
+            const tx3 = await getPromotionTokenTx_Mint(
+                promotionToken,
+                minter2,
+                { contentId: BigNumber.from(2), amount: BigNumber.from(amount3) },
+                { value: fee.mul(amount3) }
+            );
             const receipt3 = await tx3.wait();
 
             for(let i = tokenIdStart; i.lte(tokenIdEnd); i = i.add(1)) {
@@ -1045,8 +1014,12 @@ describe('5.2. PromotionToken', async () => {
             await time.setNextBlockTimestamp(startAt1);
 
             const fee = await promotionToken.fee();
-            await expect(promotionToken.connect(minter1).mint(1, 1, { value: fee }))
-                .to.be.revertedWith('Pausable: paused');
+            await expect(getPromotionTokenTx_Mint(
+                promotionToken,
+                minter1,
+                { contentId: BigNumber.from(1), amount: BigNumber.from(1) },
+                { value: fee }
+            )).to.be.revertedWith('Pausable: paused');
         });
 
         it('5.2.9.3. Mint unsuccessfully with invalid amount', async () => {
@@ -1057,8 +1030,11 @@ describe('5.2. PromotionToken', async () => {
             const startAt1 = (await promotionToken.getContent(1)).startAt;
             await time.setNextBlockTimestamp(startAt1);
 
-            await expect(promotionToken.connect(minter1).mint(1, 0))
-                .to.be.revertedWithCustomError(promotionToken, 'InvalidInput');
+            await expect(getPromotionTokenTx_Mint(
+                promotionToken,
+                minter1,
+                { contentId: BigNumber.from(1), amount: BigNumber.from(0) }
+            )).to.be.revertedWithCustomError(promotionToken, 'InvalidInput');
         });
 
         it('5.2.9.4. Mint unsuccessfully with invalid content id', async () => {
@@ -1070,10 +1046,19 @@ describe('5.2. PromotionToken', async () => {
             await time.setNextBlockTimestamp(startAt1);
 
             const fee = await promotionToken.fee();
-            await expect(promotionToken.connect(minter1).mint(0, 1, { value: fee }))
-                .to.be.revertedWithCustomError(promotionToken, 'InvalidContentId');
-            await expect(promotionToken.connect(minter1).mint(100, 1, { value: fee }))
-                .to.be.revertedWithCustomError(promotionToken, 'InvalidContentId');
+            await expect(getPromotionTokenTx_Mint(
+                promotionToken,
+                minter1,
+                { contentId: BigNumber.from(0), amount: BigNumber.from(1) },
+                { value: fee }
+            )).to.be.revertedWithCustomError(promotionToken, 'InvalidContentId');
+
+            await expect(getPromotionTokenTx_Mint(
+                promotionToken,
+                minter1,
+                { contentId: BigNumber.from(100), amount: BigNumber.from(1) },
+                { value: fee }
+            )).to.be.revertedWithCustomError(promotionToken, 'InvalidContentId');
         });
 
         it('5.2.9.5. Mint unsuccessfully with unopened content', async () => {
@@ -1084,8 +1069,11 @@ describe('5.2. PromotionToken', async () => {
             const startAt1 = (await promotionToken.getContent(1)).startAt;
             await time.setNextBlockTimestamp(startAt1 - 1);
 
-            await expect(promotionToken.connect(minter1).mint(1, 1))
-                .to.be.revertedWithCustomError(promotionToken, 'NotOpened');
+            await expect(getPromotionTokenTx_Mint(
+                promotionToken,
+                minter1,
+                { contentId: BigNumber.from(1), amount: BigNumber.from(1) },
+            )).to.be.revertedWithCustomError(promotionToken, 'NotOpened');
         });
 
         it('5.2.9.6. Mint unsuccessfully with ended content', async () => {
@@ -1096,8 +1084,11 @@ describe('5.2. PromotionToken', async () => {
             const endAt1 = (await promotionToken.getContent(1)).endAt;
             await time.setNextBlockTimestamp(endAt1 + 1);
 
-            await expect(promotionToken.connect(minter1).mint(1, 1))
-                .to.be.revertedWithCustomError(promotionToken, 'AlreadyEnded');
+            await expect(getPromotionTokenTx_Mint(
+                promotionToken,
+                minter1,
+                { contentId: BigNumber.from(1), amount: BigNumber.from(1) },
+            )).to.be.revertedWithCustomError(promotionToken, 'AlreadyEnded');
         }); 
 
         it('5.2.9.7. Mint unsuccessfully with insufficient value', async () => {
@@ -1108,8 +1099,11 @@ describe('5.2. PromotionToken', async () => {
             const startAt1 = (await promotionToken.getContent(1)).startAt;
             await time.setNextBlockTimestamp(startAt1);
 
-            await expect(promotionToken.connect(minter1).mint(1, 1))
-                .to.be.revertedWithCustomError(promotionToken, 'InsufficientValue');
+            await expect(getPromotionTokenTx_Mint(
+                promotionToken,
+                minter1,
+                { contentId: BigNumber.from(1), amount: BigNumber.from(1) },
+            )).to.be.revertedWithCustomError(promotionToken, 'InsufficientValue');
         });
     });
 
