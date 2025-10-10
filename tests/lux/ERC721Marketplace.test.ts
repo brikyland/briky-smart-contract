@@ -26,7 +26,7 @@ import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
 import { applyDiscount, remain } from '@utils/formula';
 import { BuyParams, ListParams, RegisterCollectionsParams, RegisterCollectionsParamsInput, SafeBuyParams } from '@utils/models/lux/erc721Marketplace';
-import { getERC721MarketplaceTx_Buy, getCallERC721MarketplaceTx_List, getERC721MarketplaceTx_List, getERC721MarketplaceTx_RegisterCollections, getERC721MarketplaceTx_SafeBuy, getERC721MarketplaceTxByInput_RegisterCollections, getERC721MarketplaceTx_Cancel } from '@utils/transaction/lux/erc721Marketplace';
+import { getERC721MarketplaceTx_Buy, getCallERC721MarketplaceTx_List, getERC721MarketplaceTx_List, getERC721MarketplaceTx_RegisterCollections, getERC721MarketplaceTx_SafeBuy, getERC721MarketplaceTxByInput_RegisterCollections, getERC721MarketplaceTx_Cancel, getERC721MarketplaceTxByParams_SafeBuy } from '@utils/transaction/lux/erc721Marketplace';
 import { getRegisterCollectionsSignatures } from '@utils/signatures/lux/erc721Marketplace';
 import { getSafeBuyAnchor } from '@utils/anchor/lux/erc721Marketplace';
 import { getAdminTxByInput_AuthorizeManagers, getAdminTxByInput_AuthorizeModerators, getAdminTxByInput_UpdateCurrencyRegistries } from '@utils/transaction/common/admin';
@@ -1038,13 +1038,19 @@ describe('6.1. ERC721Marketplace', async () => {
 
         let tx;
         if (isSafeBuy) {
-            const safeBuyParams: SafeBuyParams = {
-                ...buyParams,
-                anchor: await getSafeBuyAnchor(erc721Marketplace, buyParams),
-            };
-            tx = await getERC721MarketplaceTx_SafeBuy(erc721Marketplace, buyer, safeBuyParams, { value: ethValue });
+            tx = await getERC721MarketplaceTxByParams_SafeBuy(
+                erc721Marketplace,
+                buyer as any,
+                buyParams,
+                { value: ethValue }
+            );
         } else {
-            tx = await getERC721MarketplaceTx_Buy(erc721Marketplace, buyer, buyParams, { value: ethValue });
+            tx = await getERC721MarketplaceTx_Buy(
+                erc721Marketplace,
+                buyer as any,
+                buyParams,
+                { value: ethValue }
+            );
         }
         const receipt = await tx.wait();
 

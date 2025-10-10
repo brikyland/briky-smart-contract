@@ -53,7 +53,7 @@ import { RegisterCustodianParams } from '@utils/models/land/estateToken';
 import { deployMockEstateForger } from '@utils/deployments/mock/mockEstateForger';
 import { deployMockMortgageToken } from '@utils/deployments/mock/mockMortgageToken';
 import { BuyParams, ListParams, RegisterCollectionsParams, RegisterCollectionsParamsInput, SafeBuyParams } from '@utils/models/lux/erc721Marketplace';
-import { getERC721MarketplaceTx_Buy, getCallERC721MarketplaceTx_List, getERC721MarketplaceTx_List, getERC721MarketplaceTx_RegisterCollections, getERC721MarketplaceTx_SafeBuy, getERC721MarketplaceTxByInput_RegisterCollections, getERC721MarketplaceTx_Cancel } from '@utils/transaction/lux/erc721Marketplace';
+import { getERC721MarketplaceTx_Buy, getCallERC721MarketplaceTx_List, getERC721MarketplaceTx_List, getERC721MarketplaceTx_RegisterCollections, getERC721MarketplaceTx_SafeBuy, getERC721MarketplaceTxByInput_RegisterCollections, getERC721MarketplaceTx_Cancel, getERC721MarketplaceTxByParams_SafeBuy } from '@utils/transaction/lux/erc721Marketplace';
 import { deployERC721MortgageToken } from '@utils/deployments/lend/erc721MortgageToken';
 import { deployProjectMortgageToken } from '@utils/deployments/lend/projectMortgageToken';
 import { deployEstateToken } from '@utils/deployments/land/estateToken';
@@ -1085,13 +1085,19 @@ describe('6.3. MortgageMarketplace', async () => {
 
         let tx;
         if (isSafeBuy) {
-            const safeBuyParams: SafeBuyParams = {
-                ...buyParams,
-                anchor: await getSafeBuyAnchor(mortgageMarketplace, buyParams),
-            };
-            tx = await getERC721MarketplaceTx_SafeBuy(mortgageMarketplace, buyer, safeBuyParams, { value: ethValue });
+            tx = await getERC721MarketplaceTxByParams_SafeBuy(
+                mortgageMarketplace,
+                buyer as any,
+                buyParams,
+                { value: ethValue }
+            );
         } else {
-            tx = await getERC721MarketplaceTx_Buy(mortgageMarketplace, buyer, buyParams, { value: ethValue });
+            tx = await getERC721MarketplaceTx_Buy(
+                mortgageMarketplace,
+                buyer as any,
+                buyParams,
+                { value: ethValue }
+            );
         }
         const receipt = await tx.wait();
 

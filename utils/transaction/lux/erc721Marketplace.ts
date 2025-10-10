@@ -3,6 +3,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { ContractTransaction } from "ethers";
 import { BuyParams, CancelParams, ListParams, RegisterCollectionsParams, RegisterCollectionsParamsInput, SafeBuyParams } from "@utils/models/lux/erc721Marketplace";
 import { getRegisterCollectionsSignatures } from "@utils/signatures/lux/erc721Marketplace";
+import { getSafeBuyAnchor } from "@utils/anchor/lux/erc721Marketplace";
 
 
 // registerCollections
@@ -107,4 +108,17 @@ export async function getERC721MarketplaceTx_SafeBuy(
         params.anchor,
         txConfig
     );
+}
+
+export async function getERC721MarketplaceTxByParams_SafeBuy(
+    erc721Marketplace: ERC721Marketplace,
+    signer: SignerWithAddress,
+    params: BuyParams,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    const safeParams: SafeBuyParams = {
+        ...params,
+        anchor: await getSafeBuyAnchor(erc721Marketplace, params),
+    };
+    return getERC721MarketplaceTx_SafeBuy(erc721Marketplace, signer, safeParams, txConfig);
 }
