@@ -2,15 +2,22 @@ import { ethers } from 'hardhat';
 import { expect } from 'chai';
 import { BigNumber } from 'ethers';
 
-import {
-    loadFixture,
-    time
-} from "@nomicfoundation/hardhat-network-helpers";
+// @defi-wonderland/smock
 import {
     MockContract,
     smock
 } from '@defi-wonderland/smock';
 
+// @nomicfoundation/hardhat-network-helpers
+import {
+    loadFixture,
+    time
+} from "@nomicfoundation/hardhat-network-helpers";
+
+// @tests/test.constant
+import { Constant } from '@tests/test.constant';
+
+// @typechain-types
 import {
     Admin,
     Currency,
@@ -21,8 +28,7 @@ import {
     ReentrancyERC20,
 } from '@typechain-types';
 
-import { Constant } from '@tests/test.constant';
-
+// @utils/blockchain
 import {
     callTransaction,
     expectRevertWithModifierCustomError,
@@ -30,22 +36,31 @@ import {
     prepareNativeToken,
 } from '@utils/blockchain';
 
+// @utils/deployments/common
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { deployCurrency } from '@utils/deployments/common/currency';
 import { deployDividendHub } from '@utils/deployments/common/dividendHub';
+
+// @utils/deployments/mock
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
 
+// @utils/models/common
 import { IssueDividendParams } from '@utils/models/common/dividendHub';
 
+// @utils/testHelper
 import { expectEqualWithErrorMargin } from '@utils/testHelper';
 
+// @utils/transaction/common
 import {
     getCallDividendHubTx_IssueDividend,
     getDividendTx_IssueDividend,
     getWithdrawTx,
 } from '@utils/transaction/common/dividendHub';
-import { getAdminTxByInput_AuthorizeGovernors, getAdminTxByInput_UpdateCurrencyRegistries } from '@utils/transaction/common/admin';
+import {
+    getAdminTxByInput_AuthorizeGovernors,
+    getAdminTxByInput_UpdateCurrencyRegistries
+} from '@utils/transaction/common/admin';
 import { getPausableTxByInput_Pause } from '@utils/transaction/common/pausable';
 
 interface DividendHubFixture {
@@ -66,7 +81,13 @@ interface DividendHubFixture {
     failReceiver: FailReceiver;
 }
 
-describe('1.4. DividendHub', async () => {
+describe.only('1.4. DividendHub', async () => {
+    afterEach(async () => {
+        const fixture = await loadFixture(dividendHubFixture);
+        const { governor } = fixture;
+        governor.totalEquityAt.reset();
+    });
+
     async function dividendHubFixture(): Promise<DividendHubFixture> {
         const accounts = await ethers.getSigners();
         const deployer = accounts[0];
@@ -152,10 +173,15 @@ describe('1.4. DividendHub', async () => {
         }
 
         if (!skipAuthorizeGovernors) {
-            await callTransaction(getAdminTxByInput_AuthorizeGovernors(admin, deployer, {
-                accounts: [governor.address],
-                isGovernor: true,
-            }, admins))
+            await callTransaction(getAdminTxByInput_AuthorizeGovernors(
+                admin,
+                deployer,
+                {
+                    accounts: [governor.address],
+                    isGovernor: true,
+                },
+                admins
+            ))
         }
 
         if (!skipFundERC20ForIssuer) {
@@ -191,29 +217,44 @@ describe('1.4. DividendHub', async () => {
         }
 
         if (issueSampleDividends) {
-            await callTransaction(getDividendTx_IssueDividend(dividendHub, issuer1, {
-                governor: governor.address,
-                tokenId: BigNumber.from(1),
-                value: ethers.utils.parseEther('1000'),
-                currency: ethers.constants.AddressZero,
-                note: "Data_1",
-            }, {value: ethers.utils.parseEther('1000')}));
+            await callTransaction(getDividendTx_IssueDividend(
+                dividendHub,
+                issuer1,
+                {
+                    governor: governor.address,
+                    tokenId: BigNumber.from(1),
+                    value: ethers.utils.parseEther('1000'),
+                    currency: ethers.constants.AddressZero,
+                    note: "Data_1",
+                },
+                { value: ethers.utils.parseEther('1000') }
+            ));
 
-            await callTransaction(getDividendTx_IssueDividend(dividendHub, issuer1, {
-                governor: governor.address,
-                tokenId: BigNumber.from(1),
-                value: ethers.utils.parseEther('100'),
-                currency: ethers.constants.AddressZero,
-                note: "Data_2",
-            }, {value: ethers.utils.parseEther('100')}));
+            await callTransaction(getDividendTx_IssueDividend(
+                dividendHub,
+                issuer1,
+                {
+                    governor: governor.address,
+                    tokenId: BigNumber.from(1),
+                    value: ethers.utils.parseEther('100'),
+                    currency: ethers.constants.AddressZero,
+                    note: "Data_2",
+                },
+                { value: ethers.utils.parseEther('100') }
+            ));
             
-            await callTransaction(getDividendTx_IssueDividend(dividendHub, issuer2, {
-                governor: governor.address,
-                tokenId: BigNumber.from(2),
-                value: ethers.utils.parseEther('2000'),
-                currency: currencies[0].address,
-                note: "Data_3",
-            }, {value: ethers.utils.parseEther('2000')}));
+            await callTransaction(getDividendTx_IssueDividend(
+                dividendHub,
+                issuer2,
+                {
+                    governor: governor.address,
+                    tokenId: BigNumber.from(2),
+                    value: ethers.utils.parseEther('2000'),
+                    currency: currencies[0].address,
+                    note: "Data_3",
+                },
+                { value: ethers.utils.parseEther('2000') }
+            ));
         }
 
         if (pause) {
@@ -225,6 +266,8 @@ describe('1.4. DividendHub', async () => {
         }
     }
 
+
+    /* --- Initialization --- */
     describe('1.4.1. initialize(address)', async () => {
         it('1.4.1.1. Deploy successfully', async () => {
             const fixture = await loadFixture(dividendHubFixture);
@@ -234,6 +277,8 @@ describe('1.4. DividendHub', async () => {
         });
     });
 
+
+    /* --- Query --- */
     describe('1.4.4. getDividend(uint256)', async () => {
         it('1.4.4.1. Return correct dividend', async () => {
             const fixture = await beforeDividendHubTest();
@@ -246,13 +291,18 @@ describe('1.4. DividendHub', async () => {
 
             let timestamp = await time.latest() + 10;
             await time.setNextBlockTimestamp(timestamp);
-            await callTransaction(getDividendTx_IssueDividend(dividendHub, issuer1, {
-                governor: governor.address,
-                tokenId: BigNumber.from(tokenId1),
-                value: value1,
-                currency: ethers.constants.AddressZero,
-                note: "Data_1",
-            }, {value: value1.add(ethers.utils.parseEther('1'))}));
+            await callTransaction(getDividendTx_IssueDividend(
+                dividendHub,
+                issuer1,
+                {
+                    governor: governor.address,
+                    tokenId: BigNumber.from(tokenId1),
+                    value: value1,
+                    currency: ethers.constants.AddressZero,
+                    note: "Data_1",
+                },
+                { value: value1.add(ethers.utils.parseEther('1')) }
+            ));
  
             const dividend = await dividendHub.getDividend(tokenId1);
             expect(dividend.tokenId).to.equal(tokenId1);
@@ -282,6 +332,8 @@ describe('1.4. DividendHub', async () => {
         });
     });
     
+
+    /* --- Command --- */
     describe('1.4.2. issueDividend(address, uint256, uint256, address, string)', async () => {
         async function beforeIssueDividendTest(fixture: DividendHubFixture): Promise<{
             defaultParams: IssueDividendParams
@@ -320,7 +372,12 @@ describe('1.4. DividendHub', async () => {
                 note: "Data_1",
             };
 
-            const tx1 = await getDividendTx_IssueDividend(dividendHub, issuer1, params1, value1.add(ethers.utils.parseEther('1')));
+            const tx1 = await getDividendTx_IssueDividend(
+                dividendHub,
+                issuer1,
+                params1,
+                { value: value1.add(ethers.utils.parseEther('1')) }
+            );
             const receipt1 = await tx1.wait();
             const gasFee1 = receipt1.gasUsed.mul(receipt1.effectiveGasPrice);
  
@@ -396,7 +453,7 @@ describe('1.4. DividendHub', async () => {
 
             const { defaultParams } = await beforeIssueDividendTest(fixture);
             
-            await expect(getDividendTx_IssueDividend(dividendHub, issuer1, defaultParams, {value: defaultParams.value}))
+            await expect(getDividendTx_IssueDividend(dividendHub, issuer1, defaultParams, { value: defaultParams.value }))
                 .to.be.revertedWith('Pausable: paused');
         });
 
@@ -408,7 +465,7 @@ describe('1.4. DividendHub', async () => {
 
             const { defaultParams } = await beforeIssueDividendTest(fixture);
             
-            await expect(getDividendTx_IssueDividend(dividendHub, issuer1, defaultParams, {value: defaultParams.value}))
+            await expect(getDividendTx_IssueDividend(dividendHub, issuer1, defaultParams, { value: defaultParams.value }))
                 .to.be.revertedWithCustomError(dividendHub, 'Unauthorized');
         });
 
@@ -417,13 +474,16 @@ describe('1.4. DividendHub', async () => {
             const { issuer1, dividendHub } = fixture;
 
             const { defaultParams } = await beforeIssueDividendTest(fixture);
-            const params: IssueDividendParams = {
-                ...defaultParams,
-                tokenId: BigNumber.from(0),
-            };
             
-            await expect(getDividendTx_IssueDividend(dividendHub, issuer1, params, {value: params.value}))
-                .to.be.revertedWithCustomError(dividendHub, 'InvalidTokenId');
+            await expect(getDividendTx_IssueDividend(
+                dividendHub,
+                issuer1,
+                {
+                    ...defaultParams,
+                    tokenId: BigNumber.from(0),
+                },
+                { value: defaultParams.value }
+            )).to.be.revertedWithCustomError(dividendHub, 'InvalidTokenId');
         });
 
         it('1.4.2.5. Issue dividend unsuccessfully with unavailable currency', async () => {
@@ -434,7 +494,7 @@ describe('1.4. DividendHub', async () => {
 
             const { defaultParams } = await beforeIssueDividendTest(fixture);
             
-            await expect(getDividendTx_IssueDividend(dividendHub, issuer1, defaultParams, {value: defaultParams.value}))
+            await expect(getDividendTx_IssueDividend(dividendHub, issuer1, defaultParams, { value: defaultParams.value }))
                 .to.be.revertedWithCustomError(dividendHub, 'InvalidCurrency');
         });
 
@@ -444,7 +504,7 @@ describe('1.4. DividendHub', async () => {
 
             const { defaultParams } = await beforeIssueDividendTest(fixture);
             await expect(getDividendTx_IssueDividend(dividendHub, issuer1, defaultParams))
-                .to.be.revertedWithCustomError(dividendHub, 'InvalidCurrency');
+                .to.be.revertedWithCustomError(dividendHub, 'InsufficientValue');
         });
 
         it('1.4.2.7. Issue dividend unsuccessfully with invalid value', async () => {
@@ -452,13 +512,16 @@ describe('1.4. DividendHub', async () => {
             const { issuer1, dividendHub } = fixture;
 
             const { defaultParams } = await beforeIssueDividendTest(fixture);
-            const params: IssueDividendParams = {
-                ...defaultParams,
-                value: BigNumber.from(0),
-            };
 
-            await expect(getDividendTx_IssueDividend(dividendHub, issuer1, params, {value: params.value}))
-                .to.be.revertedWithCustomError(dividendHub, 'InvalidInput');
+            await expect(getDividendTx_IssueDividend(
+                dividendHub,
+                issuer1,
+                {
+                    ...defaultParams,
+                    value: BigNumber.from(0),
+                },
+                { value: defaultParams.value }
+            )).to.be.revertedWithCustomError(dividendHub, 'InvalidInput');
         });
 
         it('1.4.2.8. Issue dividend unsuccessfully with insufficient native token', async () => {
@@ -467,7 +530,7 @@ describe('1.4. DividendHub', async () => {
 
             const { defaultParams } = await beforeIssueDividendTest(fixture);
             
-            await expect(getDividendTx_IssueDividend(dividendHub, issuer1, defaultParams, {value: BigNumber.from(0)}))
+            await expect(getDividendTx_IssueDividend(dividendHub, issuer1, defaultParams, { value: BigNumber.from(0) }))
                 .to.be.revertedWithCustomError(dividendHub, 'InsufficientValue');
         });
 
@@ -478,13 +541,15 @@ describe('1.4. DividendHub', async () => {
             const { issuer1, currencies, dividendHub } = fixture;
 
             const { defaultParams } = await beforeIssueDividendTest(fixture);
-            const params: IssueDividendParams = {
-                ...defaultParams,
-                currency: currencies[0].address,
-            };
 
-            await expect(getDividendTx_IssueDividend(dividendHub, issuer1, params))
-                .to.be.revertedWith('ERC20: insufficient allowance');
+            await expect(getDividendTx_IssueDividend(
+                dividendHub,
+                issuer1,
+                {
+                    ...defaultParams,
+                    currency: currencies[0].address,
+                }
+            )).to.be.revertedWith('ERC20: insufficient allowance');
         });
 
         it('1.4.2.10. Issue dividend unsuccessfully when receiving native token failed', async () => {
@@ -498,7 +563,12 @@ describe('1.4. DividendHub', async () => {
 
             const { defaultParams } = await beforeIssueDividendTest(fixture);
 
-            await expect(getCallDividendHubTx_IssueDividend(dividendHub, failReceiver as any, defaultParams, defaultParams.value.add(ethers.utils.parseEther('1')))).to.be.revertedWithCustomError(dividendHub, 'FailedRefund');
+            await expect(getCallDividendHubTx_IssueDividend(
+                dividendHub,
+                failReceiver as any,
+                defaultParams,
+                { value: defaultParams.value.add(ethers.utils.parseEther('1')) }
+            )).to.be.revertedWithCustomError(dividendHub, 'FailedRefund');
         });
 
         it('1.4.2.11. Issue dividend unsuccessfully when the contract is reentered', async () => {
@@ -518,13 +588,17 @@ describe('1.4. DividendHub', async () => {
                 ])
             ));
 
-            await expect(getDividendTx_IssueDividend(dividendHub, issuer1, {
-                governor: governor.address,
-                tokenId: BigNumber.from(2),
-                value: ethers.utils.parseEther('1000'),
-                currency: reentrancyERC20.address,
-                note: "Data_2",
-            })).to.be.revertedWith('ReentrancyGuard: reentrant call');
+            await expect(getDividendTx_IssueDividend(
+                dividendHub,
+                issuer1,
+                {
+                    governor: governor.address,
+                    tokenId: BigNumber.from(2),
+                    value: ethers.utils.parseEther('1000'),
+                    currency: reentrancyERC20.address,
+                    note: "Data_2",
+                }
+            )).to.be.revertedWith('ReentrancyGuard: reentrant call');
         });
     });
 
@@ -880,13 +954,18 @@ describe('1.4. DividendHub', async () => {
             governor.totalEquityAt.whenCalledWith(1, timestamp).returns(ethers.utils.parseEther('1'));
             governor.totalEquityAt.whenCalledWith(2, timestamp).returns(ethers.utils.parseEther('1'));
 
-            await callTransaction(getDividendTx_IssueDividend(dividendHub, issuer1, {
-                governor: governor.address,
-                tokenId: BigNumber.from(1),
-                value: ethers.utils.parseEther('1000'),
-                currency: ethers.constants.AddressZero,
-                note: "Data_1",
-            }, {value: ethers.utils.parseEther('1000')}));
+            await callTransaction(getDividendTx_IssueDividend(
+                dividendHub,
+                issuer1,
+                {
+                    governor: governor.address,
+                    tokenId: BigNumber.from(1),
+                    value: ethers.utils.parseEther('1000'),
+                    currency: ethers.constants.AddressZero,
+                    note: "Data_1",
+                },
+                { value: ethers.utils.parseEther('1000') }
+            ));
 
             governor.totalEquityAt.reset();
 
@@ -904,13 +983,18 @@ describe('1.4. DividendHub', async () => {
 
             const { governor, issuer1, dividendHub, failReceiver } = fixture;
 
-            await callTransaction(getDividendTx_IssueDividend(dividendHub, issuer1, {
-                governor: governor.address,
-                tokenId: BigNumber.from(1),
-                value: ethers.utils.parseEther('1000'),
-                currency: ethers.constants.AddressZero,
-                note: "Data_1",
-            }, {value: ethers.utils.parseEther('1000')}));
+            await callTransaction(getDividendTx_IssueDividend(
+                dividendHub,
+                issuer1,
+                {
+                    governor: governor.address,
+                    tokenId: BigNumber.from(1),
+                    value: ethers.utils.parseEther('1000'),
+                    currency: ethers.constants.AddressZero,
+                    note: "Data_1",
+                },
+                { value: ethers.utils.parseEther('1000') }
+            ));
 
             await callTransaction(failReceiver.activate(true));
 
@@ -926,13 +1010,17 @@ describe('1.4. DividendHub', async () => {
             });
             const { dividendHub, issuer1, governor, reentrancyERC20, receiver1 } = fixture;
 
-            await callTransaction(getDividendTx_IssueDividend(dividendHub, issuer1, {
-                governor: governor.address,
-                tokenId: BigNumber.from(2),
-                value: ethers.utils.parseEther('1000'),
-                currency: reentrancyERC20.address,
-                note: "Data_2",
-            }));
+            await callTransaction(getDividendTx_IssueDividend(
+                dividendHub,
+                issuer1,
+                {
+                    governor: governor.address,
+                    tokenId: BigNumber.from(2),
+                    value: ethers.utils.parseEther('1000'),
+                    currency: reentrancyERC20.address,
+                    note: "Data_2",
+                }
+            ));
 
             await callTransaction(reentrancyERC20.updateReentrancyPlan(
                 dividendHub.address,

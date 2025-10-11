@@ -1,4 +1,15 @@
-import { Admin, PromotionToken } from "@typechain-types";
+import { ContractTransaction } from "ethers";
+
+// @nomiclabs/hardhat-ethers
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+
+// @typechain-types
+import {
+    Admin,
+    PromotionToken
+} from "@typechain-types";
+
+// @utils/models/lucra
 import {
     UpdateFeeParams,
     UpdateRoyaltyRateParams,
@@ -14,9 +25,16 @@ import {
     CancelContentsParamsInput,
     MintParams
 } from "@utils/models/lucra/promotionToken";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { ContractTransaction } from "ethers";
-import { getCancelContentsSignatures, getCreateContentsSignatures, getUpdateContentURIsSignatures, getUpdateFeeSignatures, getUpdateRoyaltyRateSignatures, getWithdrawSignatures } from "@utils/signatures/lucra/promotionToken";
+
+// @utils/signatures/lucra
+import {
+    getCancelContentsSignatures,
+    getCreateContentsSignatures,
+    getUpdateContentURIsSignatures,
+    getUpdateFeeSignatures,
+    getUpdateRoyaltyRateSignatures,
+    getWithdrawSignatures
+} from "@utils/signatures/lucra/promotionToken";
 
 
 // updateFee

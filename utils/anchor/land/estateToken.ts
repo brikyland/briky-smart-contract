@@ -1,7 +1,9 @@
 import { ethers } from "ethers";
 
+// @typechain-types
 import { EstateToken } from "@typechain-types";
 
+// @utils/models/land
 import {
     DeprecateEstateParams,
     ExtendEstateExpirationParams,

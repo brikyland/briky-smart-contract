@@ -1,8 +1,24 @@
-import { Admin, PassportToken } from "@typechain-types";
-import { getSignatures } from "@utils/blockchain";
-import { UpdateBaseURIParamsInput, UpdateFeeParamsInput, UpdateRoyaltyRateParamsInput, WithdrawParamsInput } from "@utils/models/lucra/passportToken";
 import { ethers } from "ethers";
 
+// @typechain-types
+import {
+    Admin,
+    PassportToken
+} from "@typechain-types";
+
+// @utils/blockchain
+import { getSignatures } from "@utils/blockchain";
+
+// @utils/models/lucra
+import {
+    UpdateBaseURIParamsInput,
+    UpdateFeeParamsInput,
+    UpdateRoyaltyRateParamsInput,
+    WithdrawParamsInput
+} from "@utils/models/lucra/passportToken";
+
+
+// updateBaseURI
 export async function getUpdateBaseURISignatures(
     passportToken: PassportToken,
     paramsInput: UpdateBaseURIParamsInput,
@@ -17,6 +33,8 @@ export async function getUpdateBaseURISignatures(
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
 
+
+// updateFee
 export async function getUpdateFeeSignatures(
     passportToken: PassportToken,
     paramsInput: UpdateFeeParamsInput,
@@ -31,6 +49,8 @@ export async function getUpdateFeeSignatures(
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
 
+
+// updateRoyaltyRate
 export async function getUpdateRoyaltyRateSignatures(
     passportToken: PassportToken,
     paramsInput: UpdateRoyaltyRateParamsInput,
@@ -45,6 +65,8 @@ export async function getUpdateRoyaltyRateSignatures(
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
 
+
+// withdraw
 export async function getWithdrawSignatures(
     passportToken: PassportToken,
     paramsInput: WithdrawParamsInput,

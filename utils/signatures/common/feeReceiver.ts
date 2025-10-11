@@ -1,12 +1,15 @@
 import { ethers } from "ethers";
 
+// @typechain-types
 import {
     Admin,
     FeeReceiver
 } from "@typechain-types";
 
+// @utils/blockchain
 import { getSignatures } from "@utils/blockchain";
 
+// @utils/models/common
 import { WithdrawParamsInput } from "@utils/models/common/feeReceiver";
 
 

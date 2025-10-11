@@ -1,7 +1,14 @@
-import { EstateMortgageToken } from "@typechain-types";
-import { EstateBorrowParams } from "@utils/models/lend/estateMortgageToken";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { ContractTransaction } from "ethers";
+
+// @nomiclabs/hardhat-ethers
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+
+// @typechain-types
+import { EstateMortgageToken } from "@typechain-types";
+
+// @utils/models/lend
+import { EstateBorrowParams } from "@utils/models/lend/estateMortgageToken";
+
 
 // borrow
 export async function getEstateMortgageTokenTx_Borrow(

@@ -1,7 +1,20 @@
-import { Admin, Driptributor } from "@typechain-types";
-import { DistributeTokensWithDurationParamsInput, DistributeTokensWithTimestampParamsInput, UpdateStakeTokensParamsInput } from "@utils/models/liquidity/driptributor";
 import { ethers } from "ethers";
+
+// @typechain-types
+import {
+    Admin,
+    Driptributor
+} from "@typechain-types";
+
+// @utils/blockchain
 import { getSignatures } from "@utils/blockchain";
+
+// @utils/models/liquidity
+import {
+    DistributeTokensWithDurationParamsInput,
+    DistributeTokensWithTimestampParamsInput,
+    UpdateStakeTokensParamsInput
+} from "@utils/models/liquidity/driptributor";
 
 
 // updateStakeTokens

@@ -1,17 +1,50 @@
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
+
+// @nomicfoundation/hardhat-network-helpers
+import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
+
+// @tests/test.constant
+import { Constant } from '@tests/test.constant';
+
+// @typechain-types
 import {
     Admin,
     Pausable,
 } from '@typechain-types';
-import { callTransaction, getSignatures } from '@utils/blockchain';
-import { Constant } from '@tests/test.constant';
+
+// @utils/blockchain
+import {
+    callTransaction,
+    getSignatures
+} from '@utils/blockchain';
+
+// @utils/deployments/common
 import { deployAdmin } from '@utils/deployments/common/admin';
-import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
+
+// @utils/deployments/mock
 import { deployMockPausable } from '@utils/deployments/mock/mockPausable';
-import { getPausableTx_Pause, getPausableTxByInput_Pause, getPausableTx_Unpause, getPausableTxByInput_Unpause } from '@utils/transaction/common/pausable';
-import { getPauseSignatures, getUnpauseSignatures } from '@utils/signatures/common/pausable';
-import { PauseParams, UnpauseParams } from '@utils/models/common/pausable';
+
+// @utils/models/common
+import {
+    PauseParams,
+    UnpauseParams
+} from '@utils/models/common/pausable';
+
+// @utils/signatures/common
+import {
+    getPauseSignatures,
+    getUnpauseSignatures
+} from '@utils/signatures/common/pausable';
+
+// @utils/transaction/common
+import {
+    getPausableTx_Pause,
+    getPausableTxByInput_Pause,
+    getPausableTx_Unpause,
+    getPausableTxByInput_Unpause
+} from '@utils/transaction/common/pausable';
+
 
 interface PausableFixture {
     deployer: any;
@@ -70,6 +103,8 @@ describe('1.a. Pausable', async () => {
         return fixture;
     }
 
+
+    /* --- Administration --- */
     describe('1.a.1. pause(bytes[])', async () => {
         it('1.a.1.1. Pause successfully with valid signatures', async () => {
             const { deployer, admins, admin, pausable } = await beforePausableTest();

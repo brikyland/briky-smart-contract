@@ -1,9 +1,12 @@
 import { ContractTransaction } from "ethers";
 
+// @nomiclabs/hardhat-ethers
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
+// @typechain-types
 import { Airdrop } from "@typechain-types";
 
+// @utils/models/common
 import { AirdropParams } from "@utils/models/common/airdrop";
 
 

@@ -1,13 +1,27 @@
-import {ContractTransaction, Wallet} from "ethers";
+import { ContractTransaction } from "ethers";
+
+// @nomiclabs/hardhat-ethers
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+
+// @typechain-types
+import {
+    EstateLiquidator,
+    EstateToken,
+    GovernanceHub
+} from "@typechain-types";
+
+// @utils/mockValidator
+import { MockValidator } from "@utils/mockValidator";
+
+// @utils/models/land
 import {
     ConcludeParams,
     RequestExtractionParams,
     RequestExtractionParamsInput
 } from "@utils/models/land/estateLiquidator";
-import { EstateLiquidator, EstateToken, GovernanceHub } from "@typechain-types";
-import { MockValidator } from "@utils/mockValidator";
+
+// @utils/validation/land
 import { getRequestExtractionValidation } from "@utils/validation/land/estateLiquidator";
-import {SignerWithAddress} from "@nomiclabs/hardhat-ethers/signers";
 
 
 // requestExtraction

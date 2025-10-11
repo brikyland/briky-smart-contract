@@ -1,5 +1,13 @@
-import { LendParams, RepayParams } from "@utils/models/lend/mortgageToken";
-import { BigNumber, Contract } from "ethers";
+import {
+    BigNumber,
+    Contract,
+} from "ethers";
+
+// @utils/models/lend
+import {
+    LendParams,
+    RepayParams,
+} from "@utils/models/lend/mortgageToken";
 
 
 // safeLend

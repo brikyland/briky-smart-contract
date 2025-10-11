@@ -1,8 +1,26 @@
-import {Admin, Auction} from "@typechain-types";
-import {DepositParams, StakeParams, StartAuctionParams, StartAuctionParamsInput, UpdateStakeTokensParams, UpdateStakeTokensParamsInput} from "@utils/models/liquidity/auction";
-import {SignerWithAddress} from "@nomiclabs/hardhat-ethers/signers";
-import { getStartAuctionSignatures, getUpdateStakeTokensSignatures } from "@utils/signatures/liquidity/auction";
 import { ContractTransaction } from "ethers";
+
+// @nomiclabs/hardhat-ethers
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+
+// @typechain-types
+import {Admin, Auction} from "@typechain-types";
+
+// @utils/models/liquidity
+import {
+    DepositParams,
+    StakeParams,
+    StartAuctionParams,
+    StartAuctionParamsInput,
+    UpdateStakeTokensParams,
+    UpdateStakeTokensParamsInput
+} from "@utils/models/liquidity/auction";
+
+// @utils/signatures/liquidity
+import {
+    getStartAuctionSignatures,
+    getUpdateStakeTokensSignatures
+} from "@utils/signatures/liquidity/auction";
 
 
 // updateStakeTokens

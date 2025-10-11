@@ -1,8 +1,19 @@
-import { Admin, ERC721Marketplace } from "@typechain-types";
-import { RegisterCollectionsParamsInput } from "@utils/models/lux/erc721Marketplace";
-import { getSignatures } from "@utils/blockchain";
 import { ethers } from "ethers";
 
+// @typechain-types
+import {
+    Admin,
+    ERC721Marketplace
+} from "@typechain-types";
+
+// @utils/blockchain
+import { getSignatures } from "@utils/blockchain";
+
+// @utils/models/lux
+import { RegisterCollectionsParamsInput } from "@utils/models/lux/erc721Marketplace";
+
+
+// registerCollections
 export async function getRegisterCollectionsSignatures(
     erc721Marketplace: ERC721Marketplace,
     paramsInput: RegisterCollectionsParamsInput,

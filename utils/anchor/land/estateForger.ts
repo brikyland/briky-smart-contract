@@ -1,7 +1,9 @@
 import { ethers } from "ethers";
 
-import {EstateForger} from "@typechain-types";
+// @typechain-types
+import { EstateForger } from "@typechain-types";
 
+// @utils/models/land
 import {
     ConfirmParams,
     DepositParams

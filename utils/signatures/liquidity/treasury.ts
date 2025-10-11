@@ -1,8 +1,19 @@
-import { Admin, Treasury } from "@typechain-types";
-import { WithdrawOperationFundParamsInput } from "@utils/models/liquidity/treasury";
-import { getSignatures } from "@utils/blockchain";
 import { ethers } from "ethers";
 
+// @typechain-types
+import {
+    Admin,
+    Treasury
+} from "@typechain-types";
+
+// @utils/blockchain
+import { getSignatures } from "@utils/blockchain";
+
+// @utils/models/liquidity
+import { WithdrawOperationFundParamsInput } from "@utils/models/liquidity/treasury";
+
+
+// withdrawOperationFund
 export async function getWithdrawOperationFundSignatures(
     treasury: Treasury,
     paramsInput: WithdrawOperationFundParamsInput,

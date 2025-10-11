@@ -2,25 +2,33 @@ import { expect } from 'chai';
 import { Wallet } from 'ethers';
 import { ethers } from 'hardhat';
 
+// @defi-wonderland/smock
 import { smock } from '@defi-wonderland/smock';
+
+// @nomicfoundation/hardhat-network-helpers
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 
+// @typechain-types
 import {
     Admin,
     Governor__factory,
 } from '@typechain-types';
 
+// @tests/test.constant
 import { Constant } from '@tests/test.constant';
 
+// @utils/blockchain
 import {
     callTransaction,
     getSignatures,
     randomWallet
 } from '@utils/blockchain';
 
+// @utils/deployments/common
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { deployCurrency } from '@utils/deployments/common/currency';
 
+// @utils/models/common
 import {
     TransferAdministration1ParamsInput,
     TransferAdministration1Params,
@@ -46,6 +54,7 @@ import {
     UpdateCurrencyRegistriesParams
 } from '@utils/models/common/admin';
 
+// @utils/signatures/common
 import {
     getTransferAdministration1Signatures,
     getTransferAdministration2Signatures,
@@ -60,6 +69,7 @@ import {
     getUpdateCurrencyRegistriesSignatures
 } from '@utils/signatures/common/admin';
 
+// @utils/transaction/common
 import {
     getAdminTx_TransferAdministration1,
     getAdminTx_TransferAdministration2,
@@ -81,7 +91,9 @@ import {
     getAdminTxByInput_UpdateCurrencyRegistries
 } from '@utils/transaction/common/admin';
 
+// @utils/utils
 import { nextPermutation } from '@utils/utils';
+
 
 interface AdminFixture {
     deployer: any;
@@ -100,7 +112,7 @@ interface AdminFixture {
     zone2: string;
 }
 
-describe.only('1.2. Admin', async () => {
+describe('1.2. Admin', async () => {
     async function adminFixture(): Promise<AdminFixture> {
         const signers = await ethers.getSigners();
         const deployer = signers[0];
@@ -171,29 +183,44 @@ describe.only('1.2. Admin', async () => {
         const {deployer, admins, admin, governors, managers, moderators, accounts, zone1, zone2 } = fixture;
 
         if (authorizeManagers) {
-            await callTransaction(getAdminTxByInput_AuthorizeManagers(admin, deployer, {
-                accounts: managers.map(x => x.address),
-                isManager: true
-            }, admins));
+            await callTransaction(getAdminTxByInput_AuthorizeManagers(
+                admin,
+                deployer,
+                {
+                    accounts: managers.map(x => x.address),
+                    isManager: true
+                },
+                admins
+            ));
         }
 
         if (authorizeModerators) {
-            await callTransaction(getAdminTxByInput_AuthorizeModerators(admin, deployer, {
-                accounts: moderators.map(x => x.address),
-                isModerator: true
-            }, admins));
+            await callTransaction(getAdminTxByInput_AuthorizeModerators(
+                admin,
+                deployer,
+                {
+                    accounts: moderators.map(x => x.address),
+                    isModerator: true
+                },
+                admins
+            ));
         }
 
         if (authorizeGovernors) {
-            await callTransaction(getAdminTxByInput_AuthorizeGovernors(admin, deployer, {
-                accounts: governors.map(x => x.address),
-                isGovernor: true
-            }, admins));
+            await callTransaction(getAdminTxByInput_AuthorizeGovernors(
+                admin,
+                deployer,
+                {
+                    accounts: governors.map(x => x.address),
+                    isGovernor: true
+                },
+                admins
+            ));
         }
 
         if (declareZones) {
             for (const zone of [zone1, zone2]) {
-                await callTransaction(getAdminTxByInput_DeclareZone(admin, deployer, {zone: zone}, admins));
+                await callTransaction(getAdminTxByInput_DeclareZone(admin, deployer, { zone }, admins));
             }
         }
 
@@ -203,7 +230,7 @@ describe.only('1.2. Admin', async () => {
                     admin,
                     deployer,
                     {
-                        zone: zone,
+                        zone,
                         accounts: accounts.map(x => x.address),
                         isActive: true
                     },
@@ -215,6 +242,8 @@ describe.only('1.2. Admin', async () => {
         return fixture;
     }
 
+
+    /* --- Initialization --- */
     describe('1.2.1. initialize(address, address, address, address, address)', async () => {
         it('1.2.1.1. Deploy successfully', async () => {
             const { deployer, admins, admin } = await setupBeforeTest();
@@ -235,6 +264,8 @@ describe.only('1.2. Admin', async () => {
         });
     });
 
+    
+    /* --- Administration --- */
     describe('1.2.2. verifyAdminSignatures(bytes, bytes[])', async () => {
         it('1.2.2.1. Verify admin signatures successfully with at least 4/5 valid admin signatures', async () => {
             const fixture = await setupBeforeTest();
@@ -738,12 +769,15 @@ describe.only('1.2. Admin', async () => {
             for (let i = 0; i < 5; ++i) duplicateManagers.push(randomWallet());
             duplicateManagers.push(duplicateManagers[0]);
 
-            const paramsInput: AuthorizeManagersParamsInput = {
-                accounts: duplicateManagers.map(x => x.address),
-                isManager: true
-            };
-            await expect(getAdminTxByInput_AuthorizeManagers(admin, deployer, paramsInput, admins))
-                .to.be.revertedWithCustomError(admin, `AuthorizedAccount`)
+            await expect(getAdminTxByInput_AuthorizeManagers(
+                admin,
+                deployer,
+                {
+                    accounts: duplicateManagers.map(x => x.address),
+                    isManager: true
+                },
+                admins
+            )).to.be.revertedWithCustomError(admin, `AuthorizedAccount`)
         });
 
         it('1.2.8.4. Authorize managers unsuccessfully when authorizing the same account twice on different txs', async () => {
@@ -753,19 +787,27 @@ describe.only('1.2. Admin', async () => {
             const toBeManagers = [];
             for (let i = 0; i < 5; ++i) toBeManagers.push(randomWallet());
 
-            await callTransaction(getAdminTxByInput_AuthorizeManagers(admin, deployer, {
-                accounts: toBeManagers.map(x => x.address),
-                isManager: true
-            }, admins));
+            await callTransaction(getAdminTxByInput_AuthorizeManagers(
+                admin,
+                deployer,
+                {
+                    accounts: toBeManagers.map(x => x.address),
+                    isManager: true
+                },
+                admins
+            ));
 
             const managers = [randomWallet(), toBeManagers[2], randomWallet()];
 
-            const paramsInput: AuthorizeManagersParamsInput = {
-                accounts: managers.map(x => x.address),
-                isManager: true
-            };
-            await expect(getAdminTxByInput_AuthorizeManagers(admin, deployer, paramsInput, admins))
-                .to.be.revertedWithCustomError(admin, `AuthorizedAccount`)
+            await expect(getAdminTxByInput_AuthorizeManagers(
+                admin,
+                deployer,
+                {
+                    accounts: managers.map(x => x.address),
+                    isManager: true
+                },
+                admins
+            )).to.be.revertedWithCustomError(admin, `AuthorizedAccount`)
         })
 
         it('1.2.8.5. Deauthorize managers successfully', async () => {
@@ -809,12 +851,15 @@ describe.only('1.2. Admin', async () => {
             const account = randomWallet();
             const toDeauth = [managers[0], account];
 
-            const paramsInput: AuthorizeManagersParamsInput = {
-                accounts: toDeauth.map(x => x.address),
-                isManager: false
-            };
-            await expect(getAdminTxByInput_AuthorizeManagers(admin, deployer, paramsInput, admins))
-                .to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`)
+            await expect(getAdminTxByInput_AuthorizeManagers(
+                admin,
+                deployer,
+                {
+                    accounts: toDeauth.map(x => x.address),
+                    isManager: false
+                },
+                admins
+            )).to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`)
         });
 
         it('1.2.8.7. Deauthorize managers unsuccessfully when unauthorizing the same account twice on the same tx', async () => {
@@ -825,12 +870,15 @@ describe.only('1.2. Admin', async () => {
 
             const toDeauth = managers.slice(0, 2).concat([managers[0]]);
 
-            const paramsInput: AuthorizeManagersParamsInput = {
-                accounts: toDeauth.map(x => x.address),
-                isManager: false
-            };
-            await expect(getAdminTxByInput_AuthorizeManagers(admin, deployer, paramsInput, admins))
-                .to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`)
+            await expect(getAdminTxByInput_AuthorizeManagers(
+                admin,
+                deployer,
+                {
+                    accounts: toDeauth.map(x => x.address),
+                    isManager: false
+                },
+                admins
+            )).to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`)
         });
 
         it('1.2.8.8. Deauthorize managers unsuccessfully when unauthorizing the same account twice on different txs', async () => {
@@ -846,12 +894,15 @@ describe.only('1.2. Admin', async () => {
             }, admins));
 
             const tx2Accounts = [managers[0]];
-            const paramsInput: AuthorizeManagersParamsInput = {
-                accounts: tx2Accounts.map(x => x.address),
-                isManager: false
-            };
-            await expect(getAdminTxByInput_AuthorizeManagers(admin, deployer, paramsInput, admins))
-                .to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`)
+            await expect(getAdminTxByInput_AuthorizeManagers(
+                admin,
+                deployer,
+                {
+                    accounts: tx2Accounts.map(x => x.address),
+                    isManager: false
+                },
+                admins
+            )).to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`)
         });
 
         it('1.2.8.9. Deauthorize managers unsuccessfully when the caller self-deauthorizes', async () => {
@@ -860,12 +911,15 @@ describe.only('1.2. Admin', async () => {
 
             const toDeauth = [deployer];
 
-            const paramsInput: AuthorizeManagersParamsInput = {
-                accounts: toDeauth.map(x => x.address),
-                isManager: false
-            };
-            await expect(getAdminTxByInput_AuthorizeManagers(admin, deployer, paramsInput, admins))
-                .to.be.revertedWithCustomError(admin, `CannotSelfDeauthorizing`)
+            await expect(getAdminTxByInput_AuthorizeManagers(
+                admin,
+                deployer,
+                {
+                    accounts: toDeauth.map(x => x.address),
+                    isManager: false
+                },
+                admins
+            )).to.be.revertedWithCustomError(admin, `CannotSelfDeauthorizing`)
         });
     });
 
@@ -923,12 +977,15 @@ describe.only('1.2. Admin', async () => {
             for (let i = 0; i < 5; ++i) duplicateModerators.push(randomWallet());
             duplicateModerators.push(duplicateModerators[0]);
 
-            const paramsInput: AuthorizeModeratorsParamsInput = {
-                accounts: duplicateModerators.map(x => x.address),
-                isModerator: true
-            };
-            await expect(getAdminTxByInput_AuthorizeModerators(admin, deployer, paramsInput, admins))
-                .to.be.revertedWithCustomError(admin, `AuthorizedAccount`)
+            await expect(getAdminTxByInput_AuthorizeModerators(
+                admin,
+                deployer,
+                {
+                    accounts: duplicateModerators.map(x => x.address),
+                    isModerator: true
+                },
+                admins
+            )).to.be.revertedWithCustomError(admin, `AuthorizedAccount`)
         });
 
         it('1.2.9.4. Authorize moderators unsuccessfully when authorizing the same account twice on different txs', async () => {
@@ -938,19 +995,27 @@ describe.only('1.2. Admin', async () => {
             const toBeModerators = [];
             for (let i = 0; i < 5; ++i) toBeModerators.push(randomWallet());
 
-            await callTransaction(getAdminTxByInput_AuthorizeModerators(admin, deployer, {
-                accounts: toBeModerators.map(x => x.address),
-                isModerator: true
-            }, admins));
+            await callTransaction(getAdminTxByInput_AuthorizeModerators(
+                admin,
+                deployer,
+                {
+                    accounts: toBeModerators.map(x => x.address),
+                    isModerator: true
+                },
+                admins
+            ));
 
             const moderators = [randomWallet(), toBeModerators[2], randomWallet()];
 
-            const paramsInput: AuthorizeModeratorsParamsInput = {
-                accounts: moderators.map(x => x.address),
-                isModerator: true
-            };
-            await expect(getAdminTxByInput_AuthorizeModerators(admin, deployer, paramsInput, admins))
-                .to.be.revertedWithCustomError(admin, `AuthorizedAccount`)
+            await expect(getAdminTxByInput_AuthorizeModerators(
+                admin,
+                deployer,
+                {
+                    accounts: moderators.map(x => x.address),
+                    isModerator: true
+                },
+                admins
+            )).to.be.revertedWithCustomError(admin, `AuthorizedAccount`)
         });
 
         it('1.2.9.5. Deauthorize moderators successfully', async () => {
@@ -994,12 +1059,15 @@ describe.only('1.2. Admin', async () => {
             const account = randomWallet();
             const toDeauth = [moderators[0], account];
 
-            const paramsInput: AuthorizeModeratorsParamsInput = {
-                accounts: toDeauth.map(x => x.address),
-                isModerator: false
-            };
-            await expect(getAdminTxByInput_AuthorizeModerators(admin, deployer, paramsInput, admins))
-                .to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`)
+            await expect(getAdminTxByInput_AuthorizeModerators(
+                admin,
+                deployer,
+                {
+                    accounts: toDeauth.map(x => x.address),
+                    isModerator: false
+                },
+                admins
+            )).to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`)
         });
 
         it('1.2.9.7. Deauthorize moderators unsuccessfully when unauthorizing the same account twice on the same tx', async () => {
@@ -1010,12 +1078,15 @@ describe.only('1.2. Admin', async () => {
 
             const toDeauth = moderators.slice(0, 2).concat([moderators[0]]);
 
-            const paramsInput: AuthorizeModeratorsParamsInput = {
-                accounts: toDeauth.map(x => x.address),
-                isModerator: false
-            };
-            await expect(getAdminTxByInput_AuthorizeModerators(admin, deployer, paramsInput, admins))
-                .to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`)
+            await expect(getAdminTxByInput_AuthorizeModerators(
+                admin,
+                deployer,
+                {
+                    accounts: toDeauth.map(x => x.address),
+                    isModerator: false
+                },
+                admins
+            )).to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`)
         });
 
         it('1.2.9.8. Deauthorize moderators unsuccessfully when unauthorizing the same account twice on different txs', async () => {
@@ -1031,12 +1102,15 @@ describe.only('1.2. Admin', async () => {
             }, admins));
             
             const tx2Accounts = [moderators[0]];
-            const paramsInput: AuthorizeModeratorsParamsInput = {
-                accounts: tx2Accounts.map(x => x.address),
-                isModerator: false
-            };
-            await expect(getAdminTxByInput_AuthorizeModerators(admin, deployer, paramsInput, admins))
-                .to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`)
+            await expect(getAdminTxByInput_AuthorizeModerators(
+                admin,
+                deployer,
+                {
+                    accounts: tx2Accounts.map(x => x.address),
+                    isModerator: false
+                },
+                admins
+            )).to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`)
         });
     });
 
@@ -1078,7 +1152,11 @@ describe.only('1.2. Admin', async () => {
                 accounts: toBeGovernors.map(x => x.address),
                 isGovernor: true
             };
-            await expect(getAdminTxByInput_AuthorizeGovernors(admin, deployer, paramsInput, admins))
+            const params: AuthorizeGovernorsParams = {
+                ...paramsInput,
+                signatures: await getAuthorizeGovernorsSignatures(admin, paramsInput, admins, false)
+            };
+            await expect(getAdminTx_AuthorizeGovernors(admin, deployer, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
@@ -1088,12 +1166,15 @@ describe.only('1.2. Admin', async () => {
 
             const invalidGovernor = randomWallet();
 
-            const paramsInput: AuthorizeGovernorsParamsInput = {
-                accounts: [invalidGovernor.address],
-                isGovernor: true
-            };
-            await expect(getAdminTxByInput_AuthorizeGovernors(admin, deployer, paramsInput, admins))
-                .to.be.revertedWithCustomError(admin, 'InvalidGovernor');
+            await expect(getAdminTxByInput_AuthorizeGovernors(
+                admin,
+                deployer,
+                {
+                    accounts: [invalidGovernor.address],
+                    isGovernor: true
+                },
+                admins
+            )).to.be.revertedWithCustomError(admin, 'InvalidGovernor');
         });
 
         it('1.2.10.4. Authorize governors reverted when contract does not support Governor interface', async () => {
@@ -1102,12 +1183,15 @@ describe.only('1.2. Admin', async () => {
 
             const invalidGovernor = await deployCurrency(deployer, "MockCurrency", "MCK");
 
-            const paramsInput: AuthorizeGovernorsParamsInput = {
-                accounts: [invalidGovernor.address],
-                isGovernor: true
-            };
-            await expect(getAdminTxByInput_AuthorizeGovernors(admin, deployer, paramsInput, admins))
-                .to.be.revertedWithCustomError(admin, 'InvalidGovernor');
+            await expect(getAdminTxByInput_AuthorizeGovernors(
+                admin,
+                deployer,
+                {
+                    accounts: [invalidGovernor.address],
+                    isGovernor: true
+                },
+                admins
+            )).to.be.revertedWithCustomError(admin, 'InvalidGovernor');
         })
 
         it('1.2.10.5. Authorize governors unsuccessfully when authorizing the same account twice on the same tx', async () => {
@@ -1118,12 +1202,15 @@ describe.only('1.2. Admin', async () => {
             for (let i = 0; i < 5; ++i) duplicateGovernors.push(governors[i]);
             duplicateGovernors.push(duplicateGovernors[0]);
 
-            const paramsInput: AuthorizeGovernorsParamsInput = {
-                accounts: duplicateGovernors.map(x => x.address),
-                isGovernor: true
-            };
-            await expect(getAdminTxByInput_AuthorizeGovernors(admin, deployer, paramsInput, admins))
-                .to.be.revertedWithCustomError(admin, `AuthorizedAccount`)
+            await expect(getAdminTxByInput_AuthorizeGovernors(
+                admin,
+                deployer,
+                {
+                    accounts: duplicateGovernors.map(x => x.address),
+                    isGovernor: true
+                },
+                admins
+            )).to.be.revertedWithCustomError(admin, `AuthorizedAccount`)
         });
 
         it('1.2.10.6. Authorize governors unsuccessfully when authorizing the same account twice on different txs', async () => {
@@ -1131,18 +1218,26 @@ describe.only('1.2. Admin', async () => {
             const { deployer, admins, admin, governors } = fixture;
 
             const tx1Governors = [governors[0], governors[1]];
-            await callTransaction(getAdminTxByInput_AuthorizeGovernors(admin, deployer, {
-                accounts: tx1Governors.map(x => x.address),
-                isGovernor: true
-            }, admins));
+            await callTransaction(getAdminTxByInput_AuthorizeGovernors(
+                admin,
+                deployer,
+                {
+                    accounts: tx1Governors.map(x => x.address),
+                    isGovernor: true
+                },
+                admins
+            ));
 
             const tx2Governors = [governors[2], governors[1]];
-            const paramsInput: AuthorizeGovernorsParamsInput = {
-                accounts: tx2Governors.map(x => x.address),
-                isGovernor: true
-            };
-            await expect(getAdminTxByInput_AuthorizeGovernors(admin, deployer, paramsInput, admins))
-                .to.be.revertedWithCustomError(admin, `AuthorizedAccount`)
+            await expect(getAdminTxByInput_AuthorizeGovernors(
+                admin,
+                deployer,
+                {
+                    accounts: tx2Governors.map(x => x.address),
+                    isGovernor: true
+                },
+                admins
+            )).to.be.revertedWithCustomError(admin, `AuthorizedAccount`)
         })
 
         it('1.2.10.7. Deauthorize governors successfully', async () => {
@@ -1186,12 +1281,15 @@ describe.only('1.2. Admin', async () => {
             const account = randomWallet();
             const toDeauth = [governors[0], account];
 
-            const paramsInput: AuthorizeGovernorsParamsInput = {
-                accounts: toDeauth.map(x => x.address),
-                isGovernor: false
-            };
-            await expect(getAdminTxByInput_AuthorizeGovernors(admin, deployer, paramsInput, admins))
-                .to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`)
+            await expect(getAdminTxByInput_AuthorizeGovernors(
+                admin,
+                deployer,
+                {
+                    accounts: toDeauth.map(x => x.address),
+                    isGovernor: false
+                },
+                admins
+            )).to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`)
         });
 
         it('1.2.10.9. Deauthorize governors unsuccessfully when unauthorizing the same account twice on the same tx', async () => {
@@ -1202,12 +1300,15 @@ describe.only('1.2. Admin', async () => {
 
             const toDeauth = governors.slice(0, 2).concat([governors[0]]);
 
-            const paramsInput: AuthorizeGovernorsParamsInput = {
-                accounts: toDeauth.map(x => x.address),
-                isGovernor: false
-            };
-            await expect(getAdminTxByInput_AuthorizeGovernors(admin, deployer, paramsInput, admins))
-                .to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`)
+            await expect(getAdminTxByInput_AuthorizeGovernors(
+                admin,
+                deployer,
+                {
+                    accounts: toDeauth.map(x => x.address),
+                    isGovernor: false
+                },
+                admins
+            )).to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`)
         });
 
         it('1.2.10.10. Deauthorize governors unsuccessfully when unauthorizing the same account twice on different txs', async () => {
@@ -1217,18 +1318,26 @@ describe.only('1.2. Admin', async () => {
             const { deployer, admins, admin, governors } = fixture;            
 
             const tx1Accounts = governors.slice(0, 2);
-            await callTransaction(getAdminTxByInput_AuthorizeGovernors(admin, deployer, {
-                accounts: tx1Accounts.map(x => x.address),
-                isGovernor: false
-            }, admins));
+            await callTransaction(getAdminTxByInput_AuthorizeGovernors(
+                admin,
+                deployer,
+                {
+                    accounts: tx1Accounts.map(x => x.address),
+                    isGovernor: false
+                },
+                admins
+            ));
 
             const tx2Accounts = [governors[0]];
-            const paramsInput: AuthorizeGovernorsParamsInput = {
-                accounts: tx2Accounts.map(x => x.address),
-                isGovernor: false
-            };
-            await expect(getAdminTxByInput_AuthorizeGovernors(admin, deployer, paramsInput, admins))
-                .to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`)
+            await expect(getAdminTxByInput_AuthorizeGovernors(
+                admin,
+                deployer,
+                {
+                    accounts: tx2Accounts.map(x => x.address),
+                    isGovernor: false
+                },
+                admins
+            )).to.be.revertedWithCustomError(admin, `NotAuthorizedAccount`)
         });
     });
 
@@ -1283,11 +1392,12 @@ describe.only('1.2. Admin', async () => {
 
             await callTransaction(getAdminTxByInput_DeclareZone(admin, deployer, {zone: zone1}, admins));
 
-            const paramsInput: DeclareZoneParamsInput = {
-                zone: zone1
-            };
-            await expect(getAdminTxByInput_DeclareZone(admin, deployer, paramsInput, admins))
-                .to.be.revertedWithCustomError(admin, 'AuthorizedZone')
+            await expect(getAdminTxByInput_DeclareZone(
+                admin,
+                deployer,
+                { zone: zone1 },
+                admins
+            )).to.be.revertedWithCustomError(admin, 'AuthorizedZone')
         });
     });
 
@@ -1379,13 +1489,16 @@ describe.only('1.2. Admin', async () => {
 
             const zone1Accounts = [accounts[0], accounts[1]];
 
-            const paramsInput: ActivateInParamsInput = {
-                zone: invalidZone,
-                accounts: zone1Accounts.map(x => x.address),
-                isActive: true
-            };
-            await expect(getAdminTxByInput_ActivateIn(admin, deployer, paramsInput, admins))
-                .to.be.revertedWithCustomError(admin, 'InvalidInput')
+            await expect(getAdminTxByInput_ActivateIn(
+                admin,
+                deployer,
+                {
+                    zone: invalidZone,
+                    accounts: zone1Accounts.map(x => x.address),
+                    isActive: true
+                },
+                admins
+            )).to.be.revertedWithCustomError(admin, 'InvalidInput')
         });
 
         it('1.2.12.4. Activate accounts in zone unsuccessfully when activating the same account twice on the same tx', async () => {
@@ -1396,13 +1509,16 @@ describe.only('1.2. Admin', async () => {
 
             const zone1Accounts = [accounts[0], accounts[1], accounts[2], accounts[1]];
 
-            const paramsInput: ActivateInParamsInput = {
-                zone: zone1,
-                accounts: zone1Accounts.map(x => x.address),
-                isActive: true
-            };
-            await expect(getAdminTxByInput_ActivateIn(admin, deployer, paramsInput, admins))
-                .to.be.revertedWithCustomError(admin, 'ActivatedAccount')
+            await expect(getAdminTxByInput_ActivateIn(
+                admin,
+                deployer,
+                {
+                    zone: zone1,
+                    accounts: zone1Accounts.map(x => x.address),
+                    isActive: true
+                },
+                admins
+            )).to.be.revertedWithCustomError(admin, 'ActivatedAccount')
         });
 
         it('1.2.12.5. Activate accounts in zone unsuccessfully when activating the same account twice on different txs', async () => {
@@ -1420,13 +1536,16 @@ describe.only('1.2. Admin', async () => {
 
             const tx2Accounts = [accounts[3], accounts[2]];
 
-            const paramsInput: ActivateInParamsInput = {
-                zone: zone1,
-                accounts: tx2Accounts.map(x => x.address),
-                isActive: true
-            };
-            await expect(getAdminTxByInput_ActivateIn(admin, deployer, paramsInput, admins))
-                .to.be.revertedWithCustomError(admin, 'ActivatedAccount')
+            await expect(getAdminTxByInput_ActivateIn(
+                admin,
+                deployer,
+                {
+                    zone: zone1,
+                    accounts: tx2Accounts.map(x => x.address),
+                    isActive: true
+                },
+                admins
+            )).to.be.revertedWithCustomError(admin, 'ActivatedAccount')
         });
 
         it('1.2.12.6. Deactivate accounts in zone successfully', async () => {
@@ -1494,13 +1613,16 @@ describe.only('1.2. Admin', async () => {
             const newAccount = randomWallet();
             const zone1ToDeactivate = [accounts[0], accounts[2], newAccount];
 
-            const paramsInput: ActivateInParamsInput = {
-                zone: zone1,
-                accounts: zone1ToDeactivate.map(x => x.address),
-                isActive: false
-            };
-            await expect(getAdminTxByInput_ActivateIn(admin, deployer, paramsInput, admins))
-                .to.be.revertedWithCustomError(admin, 'NotActivatedAccount')
+            await expect(getAdminTxByInput_ActivateIn(
+                admin,
+                deployer,
+                {
+                    zone: zone1,
+                    accounts: zone1ToDeactivate.map(x => x.address),
+                    isActive: false
+                },
+                admins
+            )).to.be.revertedWithCustomError(admin, 'NotActivatedAccount')
         });
 
         it('1.2.12.8. Deactivate accounts in zone unsuccessfully when deactivating the same account twice on the same tx', async () => {
@@ -1512,13 +1634,16 @@ describe.only('1.2. Admin', async () => {
 
             const zone1ToDeactivate = [accounts[0], accounts[1], accounts[2], accounts[0]];
             
-            const paramsInput: ActivateInParamsInput = {
-                zone: zone1,
-                accounts: zone1ToDeactivate.map(x => x.address),
-                isActive: false
-            };
-            await expect(getAdminTxByInput_ActivateIn(admin, deployer, paramsInput, admins))
-                .to.be.revertedWithCustomError(admin, 'NotActivatedAccount')
+            await expect(getAdminTxByInput_ActivateIn(
+                admin,
+                deployer,
+                {
+                    zone: zone1,
+                    accounts: zone1ToDeactivate.map(x => x.address),
+                    isActive: false
+                },
+                admins
+            )).to.be.revertedWithCustomError(admin, 'NotActivatedAccount')
         });
 
         it('1.2.12.9. Deactivate accounts in zone unsuccessfully when deactivating the same account twice on different txs', async () => {
@@ -1529,20 +1654,28 @@ describe.only('1.2. Admin', async () => {
             const { deployer, admins, admin, accounts, zone1 } = fixture;            
 
             let tx1Accounts = [accounts[0], accounts[1], accounts[2]];
-            await callTransaction(getAdminTxByInput_ActivateIn(admin, deployer, {
-                zone: zone1,
-                accounts: tx1Accounts.map(x => x.address),
-                isActive: false
-            }, admins));
+            await callTransaction(getAdminTxByInput_ActivateIn(
+                admin,
+                deployer,
+                {
+                    zone: zone1,
+                    accounts: tx1Accounts.map(x => x.address),
+                    isActive: false
+                },
+                admins
+            ));
 
             let tx2Accounts = [accounts[3], accounts[2]];
-            const paramsInput: ActivateInParamsInput = {
-                zone: zone1,
-                accounts: tx2Accounts.map(x => x.address),
-                isActive: false
-            };
-            await expect(getAdminTxByInput_ActivateIn(admin, deployer, paramsInput, admins))
-                .to.be.revertedWithCustomError(admin, 'NotActivatedAccount')
+            await expect(getAdminTxByInput_ActivateIn(
+                admin,
+                deployer,
+                {
+                    zone: zone1,
+                    accounts: tx2Accounts.map(x => x.address),
+                    isActive: false
+                },
+                admins
+            )).to.be.revertedWithCustomError(admin, 'NotActivatedAccount');
         });
     });
 
@@ -1649,13 +1782,16 @@ describe.only('1.2. Admin', async () => {
             const { deployer, admins, admin } = fixture;            
 
             async function testForInvalidInput(currencyAddresses: string[], isAvailable: boolean[], isExclusive: boolean[]) {
-                const paramsInput: UpdateCurrencyRegistriesParamsInput = {
-                    currencies: currencyAddresses,
-                    isAvailable,
-                    isExclusive
-                };
-                await expect(getAdminTxByInput_UpdateCurrencyRegistries(admin, deployer, paramsInput, admins))
-                    .to.be.revertedWithCustomError(admin, 'InvalidInput');
+                await expect(getAdminTxByInput_UpdateCurrencyRegistries(
+                    admin,
+                    deployer,
+                    {
+                        currencies: currencyAddresses,
+                        isAvailable,
+                        isExclusive
+                    },
+                    admins
+                )).to.be.revertedWithCustomError(admin, 'InvalidInput');
             }
 
             const currencyAddresses = [];
@@ -1671,25 +1807,37 @@ describe.only('1.2. Admin', async () => {
         });
     });
 
+
+    /* --- Query --- */
     describe('1.2.15. isExecutive(address)', async () => {
         it('1.2.15.1. Return true only if the account is authorized as manager or moderator', async () => {
             const fixture = await setupBeforeTest();
             const { deployer, admins, admin, accounts } = fixture;
 
-            await callTransaction(getAdminTxByInput_AuthorizeManagers(admin, deployer, {
-                accounts: [accounts[0], accounts[2]],
-                isManager: true
-            }, admins));
+            await callTransaction(getAdminTxByInput_AuthorizeManagers(
+                admin,
+                deployer,
+                {
+                    accounts: [accounts[0].address, accounts[2].address],
+                    isManager: true
+                },
+                admins
+            ));
 
-            await callTransaction(getAdminTxByInput_AuthorizeModerators(admin, deployer, {
-                accounts: [accounts[0], accounts[1]],
-                isModerator: true
-            }, admins));
+            await callTransaction(getAdminTxByInput_AuthorizeModerators(
+                admin,
+                deployer,
+                {
+                    accounts: [accounts[0].address, accounts[1].address],
+                    isModerator: true
+                },
+                admins
+            ));
 
-            expect(await admin.isExecutive(accounts[0])).to.be.true;
-            expect(await admin.isExecutive(accounts[1])).to.be.true;
-            expect(await admin.isExecutive(accounts[2])).to.be.true;
-            expect(await admin.isExecutive(accounts[3])).to.be.false;
+            expect(await admin.isExecutive(accounts[0].address)).to.be.true;
+            expect(await admin.isExecutive(accounts[1].address)).to.be.true;
+            expect(await admin.isExecutive(accounts[2].address)).to.be.true;
+            expect(await admin.isExecutive(accounts[3].address)).to.be.false;
         });
     });
 });

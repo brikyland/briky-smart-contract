@@ -1,17 +1,51 @@
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
+
+// @nomicfoundation/hardhat-network-helpers
+import {
+    loadFixture,
+    time
+} from "@nomicfoundation/hardhat-network-helpers";
+
+// @typechain-types
 import {
     Admin,
     MockValidatable,
 } from '@typechain-types';
-import { callTransaction, getSignatures, getValidationMessage, randomWallet } from '@utils/blockchain';
+
+// @tests/test.constant
 import { Constant } from '@tests/test.constant';
+
+// @utils/blockchain
+import {
+    callTransaction,
+    getSignatures,
+    getValidationMessage,
+    randomWallet
+} from '@utils/blockchain';
+
+// @utils/deployments/common
 import { deployAdmin } from '@utils/deployments/common/admin';
-import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
+
+// @utils/deployments/mock
 import { deployMockValidatable } from '@utils/deployments/mock/mockValidatable';
-import { UpdateValidatorParams, UpdateValidatorParamsInput, Validation } from '@utils/models/common/validatable';
-import { getValidatableTx_UpdateValidator, getValidatableTxByInput_UpdateValidator } from '@utils/transaction/common/validatable';
+
+// @utils/models/common
+import {
+    UpdateValidatorParams,
+    UpdateValidatorParamsInput,
+    Validation
+} from '@utils/models/common/validatable';
+
+// @utils/signatures/common
 import { getUpdateValidatorSignatures } from '@utils/signatures/common/validatable';
+
+// @utils/transaction/common
+import {
+    getValidatableTx_UpdateValidator,
+    getValidatableTxByInput_UpdateValidator
+} from '@utils/transaction/common/validatable';
+
 
 interface ValidatableFixture {
     deployer: any;
@@ -60,6 +94,8 @@ describe('1.b. Validatable', async () => {
         return fixture;
     }
 
+
+    /* --- Initialization --- */
     describe('1.b.1. __Validatable_init(address)', async () => {
         it('1.b.1.1. Init validator successfully after deploy', async () => {
             const { validator, validatable } = await beforeValidatableTest();
@@ -77,6 +113,8 @@ describe('1.b. Validatable', async () => {
         });
     });
 
+
+    /* --- Administration --- */
     describe('1.b.2. updateValidator(address)', async () => {
         it('1.b.2.1. Update validator successfully with valid signatures', async () => {
             const { deployer, admins, admin, validatable } = await beforeValidatableTest();
@@ -113,6 +151,8 @@ describe('1.b. Validatable', async () => {
         });
     });
 
+    
+    /* --- Helper --- */
     describe('1.b.3. _validate(bytes, (uint256, uint256, bytes))', async () => {
         it('1.b.3.1. Validate successfully with valid signatures', async () => {
             const { validator, validatable } = await beforeValidatableTest();

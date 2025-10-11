@@ -1,14 +1,21 @@
 import { ethers } from "ethers";
 
+// @typechain-types
 import {
     Admin,
     PriceWatcher
 } from "@typechain-types";
 
+// @utils/blockchain
 import { getSignatures } from "@utils/blockchain";
 
-import { UpdateDefaultRatesParamsInput, UpdatePriceFeedsParamsInput } from "@utils/models/common/priceWatcher";
+// @utils/models/common
+import {
+    UpdateDefaultRatesParamsInput,
+    UpdatePriceFeedsParamsInput
+} from "@utils/models/common/priceWatcher";
 
+// @utils/models/common
 import { RATES_SCHEMA } from "@utils/models/common/common";
 
 

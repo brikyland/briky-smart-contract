@@ -1,7 +1,24 @@
-import { ProvideLiquidityParams, WithdrawLiquidityParams, WithdrawOperationFundParams, WithdrawOperationFundParamsInput } from "@utils/models/liquidity/treasury";
-import { Admin, ProxyCaller, Treasury } from "@typechain-types";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { ContractTransaction } from "ethers";
+
+// @nomiclabs/hardhat-ethers
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+
+// @typechain-types
+import {
+    Admin,
+    ProxyCaller,
+    Treasury
+} from "@typechain-types";
+
+// @utils/models/liquidity
+import {
+    ProvideLiquidityParams,
+    WithdrawLiquidityParams,
+    WithdrawOperationFundParams,
+    WithdrawOperationFundParamsInput
+} from "@utils/models/liquidity/treasury";
+
+// @utils/signatures/liquidity
 import { getWithdrawOperationFundSignatures } from "@utils/signatures/liquidity/treasury";
 
 

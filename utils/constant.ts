@@ -1,5 +1,7 @@
-import { parseEther } from "./blockchain";
 import { BigNumber } from "ethers";
+
+// @utils/blockchain
+import { parseEther } from "@utils/blockchain";
 
 export const MINUTE = 60;
 export const HOUR = 60 * MINUTE;

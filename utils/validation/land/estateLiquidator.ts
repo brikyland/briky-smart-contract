@@ -1,12 +1,28 @@
-import { Constant } from '@tests/test.constant';
-import { EstateToken, EstateLiquidator, GovernanceHub } from '@typechain-types';
-import { MockValidator } from '@utils/mockValidator';
-import { RequestExtractionParamsInput } from '@utils/models/land/estateLiquidator';
-import { ProposeParamsInput } from '@utils/models/common/governanceHub';
-import { ProposalRule } from "@utils/models/common/governanceHub";
 import { BigNumber } from 'ethers';
+
+// @tests/test.constant
+import { Constant } from '@tests/test.constant';
+
+// @typechain-types
+import { EstateToken, EstateLiquidator, GovernanceHub } from '@typechain-types';
+
+// @utils/mockValidator
+import { MockValidator } from '@utils/mockValidator';
+
+// @utils/models/common
+import {
+    ProposeParamsInput,
+    ProposalRule
+} from '@utils/models/common/governanceHub';
+
+// @utils/models/land
+import { RequestExtractionParamsInput } from '@utils/models/land/estateLiquidator';
+
+// @utils/validation/common
 import { getProposeValidation } from '@utils/validation/common/governanceHub';
 
+
+// requestExtraction
 export async function getRequestExtractionValidation(
     estateLiquidator: EstateLiquidator,
     estateToken: EstateToken,

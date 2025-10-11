@@ -1,8 +1,23 @@
-import { Admin, ERC721MortgageToken } from "@typechain-types";
-import { ERC721BorrowParams, RegisterCollateralsParams, RegisterCollateralsParamsInput } from "@utils/models/lend/erc721MortgageToken";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { getRegisterCollateralsSignatures } from "@utils/signatures/lend/erc721MortgageToken";
 import { ContractTransaction } from "ethers";
+
+// @nomiclabs/hardhat-ethers
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+
+// @typechain-types
+import {
+    Admin,
+    ERC721MortgageToken
+} from "@typechain-types";
+
+// @utils/models/lend
+import {
+    ERC721BorrowParams,
+    RegisterCollateralsParams,
+    RegisterCollateralsParamsInput
+} from "@utils/models/lend/erc721MortgageToken";
+
+// @utils/signatures/lend
+import { getRegisterCollateralsSignatures } from "@utils/signatures/lend/erc721MortgageToken";
 
 
 // registerCollaterals

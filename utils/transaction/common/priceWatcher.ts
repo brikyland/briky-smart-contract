@@ -1,10 +1,15 @@
-import { Admin, PriceWatcher } from "@typechain-types";
 import { ContractTransaction } from "ethers";
 
+// @typechain-types
+import { Admin, PriceWatcher } from "@typechain-types";
+
+// @utils/signatures/common
 import {
     getUpdateDefaultRatesSignatures,
     getUpdatePriceFeedsSignatures
 } from "@utils/signatures/common/priceWatcher";
+
+// @utils/models/common
 import {
     UpdateDefaultRatesParams,
     UpdateDefaultRatesParamsInput,

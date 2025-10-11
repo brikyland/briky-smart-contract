@@ -1,12 +1,22 @@
+import { ethers } from "ethers";
+
+// @typechain-types
+import {
+    Admin,
+    StakeToken
+} from "@typechain-types";
+
+// @utils/blockchain
 import { getSignatures } from "@utils/blockchain";
+
+// @utils/models/liquidity
 import { 
     InitializeRewardingParamsInput,
     UpdateFeeRateParamsInput
 } from "@utils/models/liquidity/stakeToken";
-import { StakeToken } from "@typechain-types";
-import { Admin } from "@typechain-types";
-import { ethers } from "ethers";
 
+
+// initializeRewarding
 export async function getInitializeRewardingSignatures(
     stakeToken: StakeToken,
     paramsInput: InitializeRewardingParamsInput,
@@ -21,6 +31,8 @@ export async function getInitializeRewardingSignatures(
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
 
+
+// updateFeeRate
 export async function getUpdateFeeRateSignatures(
     stakeToken: StakeToken,
     paramsInput: UpdateFeeRateParamsInput,

@@ -1,4 +1,16 @@
-import { Admin, PrimaryToken, ProxyCaller } from "@typechain-types";
+import { ContractTransaction } from "ethers";
+
+// @nomiclabs/hardhat-ethers
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+
+// @typechain-types
+import {
+    Admin,
+    PrimaryToken,
+    ProxyCaller
+} from "@typechain-types";
+
+// @utils/models/liquidity
 import {
     ContributeLiquidityFromBackerRoundParams,
     ContributeLiquidityFromExternalTreasuryParams,
@@ -30,9 +42,20 @@ import {
     UpdateTreasuryParams,
     UpdateTreasuryParamsInput,
 } from "@utils/models/liquidity/primaryToken";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { ContractTransaction } from "ethers";
-import { getUnlockForBackerRoundSignatures, getUnlockForCoreTeamSignatures, getUnlockForExternalTreasurySignatures, getUnlockForMarketMakerSignatures, getUnlockForPrivateSale1Signatures, getUnlockForPrivateSale2Signatures, getUnlockForPublicSaleSignatures, getUnlockForSeedRoundSignatures, getUpdateStakeTokensSignatures, getUpdateTreasurySignatures } from "@utils/signatures/liquidity/primaryToken";
+
+// @utils/signatures/liquidity
+import {
+    getUnlockForBackerRoundSignatures,
+    getUnlockForCoreTeamSignatures,
+    getUnlockForExternalTreasurySignatures,
+    getUnlockForMarketMakerSignatures,
+    getUnlockForPrivateSale1Signatures,
+    getUnlockForPrivateSale2Signatures,
+    getUnlockForPublicSaleSignatures,
+    getUnlockForSeedRoundSignatures,
+    getUpdateStakeTokensSignatures,
+    getUpdateTreasurySignatures
+} from "@utils/signatures/liquidity/primaryToken";
 
 
 // updateTreasury

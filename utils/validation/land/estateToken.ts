@@ -1,10 +1,19 @@
-import {ethers} from "ethers";
-import {time} from "@nomicfoundation/hardhat-network-helpers";
+import { ethers } from "ethers";
 
-import {MockValidator} from "@utils/mockValidator";
+// @nomicfoundation/hardhat-network-helpers
+import { time } from "@nomicfoundation/hardhat-network-helpers";
 
-import {RegisterCustodianParamsInput, UpdateEstateURIParamsInput} from "@utils/models/land/estateToken";
-import {EstateToken} from "@typechain-types";
+// @typechain-types
+import { EstateToken } from "@typechain-types";
+
+// @utils/mockValidator
+import { MockValidator } from "@utils/mockValidator";
+
+// @utils/models/land
+import {
+    RegisterCustodianParamsInput,
+    UpdateEstateURIParamsInput
+} from "@utils/models/land/estateToken";
 
 
 // registerCustodian

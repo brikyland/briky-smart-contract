@@ -1,7 +1,9 @@
 import { ethers } from "ethers";
 
+// @typechain-types
 import { ProjectToken } from "@typechain-types";
 
+// @utils/models/launch
 import {
     DeprecateProjectParams,
     TokenizeProjectParams,

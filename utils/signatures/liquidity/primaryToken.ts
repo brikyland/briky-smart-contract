@@ -1,4 +1,15 @@
-import { Admin, PrimaryToken } from "@typechain-types";
+import { ethers } from 'ethers';
+
+// @typechain-types
+import {
+    Admin,
+    PrimaryToken
+} from "@typechain-types";
+
+// @utils/blockchain
+import { getSignatures } from "@utils/blockchain";
+
+// @utils/models/liquidity
 import {
     UnlockForBackerRoundParamsInput,
     UnlockForCoreTeamParamsInput,
@@ -11,8 +22,6 @@ import {
     UpdateStakeTokensParamsInput,
     UpdateTreasuryParamsInput
 } from "@utils/models/liquidity/primaryToken";
-import { getSignatures } from "@utils/blockchain";
-import { ethers } from 'ethers';
 
 
 // updateTreasury

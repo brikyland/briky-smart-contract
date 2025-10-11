@@ -1,8 +1,27 @@
-import { Admin, CommissionToken, ProxyCaller } from "@typechain-types";
-import { ActivateBrokerParams, MintParams, RegisterBrokerParams, UpdateBaseURIParams, UpdateBaseURIParamsInput, UpdateRoyaltyRateParams, UpdateRoyaltyRateParamsInput } from "@utils/models/land/commissionToken";
 import { ContractTransaction } from "ethers";
+
+// @nomiclabs/hardhat-ethers
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { getUpdateBaseURISignatures, getUpdateRoyaltyRateSignatures } from "@utils/signatures/land/commissionToken";
+
+// @typechain-types
+import { Admin, CommissionToken, ProxyCaller } from "@typechain-types";
+
+// @utils/models/land
+import {
+    ActivateBrokerParams,
+    MintParams,
+    RegisterBrokerParams,
+    UpdateBaseURIParams,
+    UpdateBaseURIParamsInput,
+    UpdateRoyaltyRateParams,
+    UpdateRoyaltyRateParamsInput
+} from "@utils/models/land/commissionToken";
+
+// @utils/signatures/land
+import {
+    getUpdateBaseURISignatures,
+    getUpdateRoyaltyRateSignatures
+} from "@utils/signatures/land/commissionToken";
 
 
 // updateBaseURI

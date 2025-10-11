@@ -1,10 +1,16 @@
+import { ContractTransaction } from "ethers";
+
+// @nomiclabs/hardhat-ethers
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
+// @typechain-types
 import { Admin, FeeReceiver } from "@typechain-types";
 
+// @utils/models/common
 import { WithdrawParams, WithdrawParamsInput } from "@utils/models/common/feeReceiver";
+
+// @utils/signatures/common
 import { getWithdrawSignatures } from "@utils/signatures/common/feeReceiver";
-import {ContractTransaction} from "ethers";
 
 
 // withdraw

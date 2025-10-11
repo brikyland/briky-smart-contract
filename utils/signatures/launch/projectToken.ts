@@ -1,11 +1,20 @@
-import { Admin, ProjectToken } from "@typechain-types";
+import { ethers } from "ethers";
+
+// @typechain-types
+import {
+    Admin,
+    ProjectToken
+} from "@typechain-types";
+
+// @utils/blockchain
 import { getSignatures } from "@utils/blockchain";
+
+// @utils/models/launch
 import {
     AuthorizeLaunchpadParamsInput,
     UpdateBaseURIParamsInput,
     UpdateZoneRoyaltyRateParamsInput,
 } from "@utils/models/launch/projectToken";
-import { ethers } from "ethers";
 
 
 // updateBaseURI

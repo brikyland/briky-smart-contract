@@ -1,7 +1,7 @@
-import { ethers } from "ethers";
-
+// @typechain-types
 import { GovernanceHub } from "@typechain-types";
 
+// @utils/models/common
 import {
     ContributeBudgetParams,
     VoteParams,

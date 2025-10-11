@@ -278,10 +278,15 @@ describe('1.6. GovernanceHub', async () => {
             accounts: [moderator.address],
             isModerator: true
         }, admins));
-        await callTransaction(getAdminTxByInput_AuthorizeGovernors(admin, deployer, {
-            accounts: [governor.address],
-            isGovernor: true
-        }, admins));
+        await callTransaction(getAdminTxByInput_AuthorizeGovernors(
+            admin,
+            deployer,
+            {
+                accounts: [governor.address],
+                isGovernor: true
+            },
+            admins
+        ));
 
         if (!skipDeclareZone) {
             await callTransaction(getAdminTxByInput_DeclareZone(admin, deployer, { zone }, admins));
@@ -1148,10 +1153,15 @@ describe('1.6. GovernanceHub', async () => {
             const fixture = await beforeGovernanceHubTest();
             const { admin, admins, proposer1, governor, governanceHub, validator } = fixture;
 
-            await callTransaction(getAdminTxByInput_AuthorizeGovernors(admin, proposer1, {
-                accounts: [governor.address],
-                isGovernor: false,
-            }, admins));
+            await callTransaction(getAdminTxByInput_AuthorizeGovernors(
+                admin,
+                proposer1,
+                {
+                    accounts: [governor.address],
+                    isGovernor: false,
+                },
+                admins
+            ));
 
             const fee = await governanceHub.fee();
 

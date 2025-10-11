@@ -1,12 +1,19 @@
+import { ContractTransaction } from "ethers";
+
+// @nomiclabs/hardhat-ethers
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+
+// @typechain-types
 import {
     DividendHub,
     ProxyCaller
 } from "@typechain-types";
 
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-
-import { IssueDividendParams, WithdrawParams } from "@utils/models/common/dividendHub";
-import {ContractTransaction} from "ethers";
+// @utils/models/common
+import {
+    IssueDividendParams,
+    WithdrawParams
+} from "@utils/models/common/dividendHub";
 
 
 // issueDividend

@@ -1,17 +1,27 @@
-import {time} from '@nomicfoundation/hardhat-network-helpers';
-import {MockValidator} from '@utils/mockValidator';
-import {SignerWithAddress} from '@nomiclabs/hardhat-ethers/signers';
+import { Contract, Wallet } from "ethers";
+import { ethers } from "hardhat";
+
+// @nomicfoundation/hardhat-network-helpers
+import { time } from "@nomicfoundation/hardhat-network-helpers";
+
+// @nomiclabs/hardhat-ethers
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+
+// @typechain-types
+import { GovernanceHub } from "@typechain-types";
+
+// @utils/mockValidator
+import { MockValidator } from "@utils/mockValidator";
+
+// @utils/models/common
 import {
     AdmitParamsInput,
     ConcludeExecutionParamsInput,
     DisqualifyParamsInput,
     LogExecutionParamsInput,
     ProposeParamsInput
-} from '@utils/models/common/governanceHub';
-import {GovernanceHub} from "@typechain-types";
-import {Validation} from '@utils/models/common/validatable';
-import {Contract, Wallet} from 'ethers';
-import {ethers} from 'hardhat';
+} from "@utils/models/common/governanceHub";
+import { Validation } from "@utils/models/common/validatable";
 
 
 // propose

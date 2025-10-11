@@ -1,11 +1,58 @@
-import { Admin, ProjectToken, ProxyCaller } from "@typechain-types";
-import { MockValidator } from "@utils/mockValidator";
-import { AuthorizeLaunchpadParams, AuthorizeLaunchpadParamsInput, DeprecateProjectParams, LaunchProjectParams, MintParams, RegisterInitiatorParams, RegisterInitiatorParamsInput, SafeDeprecateProjectParams, SafeTokenizeProjectParams, SafeUpdateProjectURIParams, TokenizeProjectParams, UpdateBaseURIParams, UpdateBaseURIParamsInput, UpdateProjectURIParams, UpdateProjectURIParamsInput, UpdateZoneRoyaltyRateParams, UpdateZoneRoyaltyRateParamsInput, WithdrawEstateTokenParams } from "@utils/models/launch/projectToken";
-import { getRegisterInitiatorValidation, getSafeUpdateProjectURIValidation } from "@utils/validation/launch/projectToken";
-import { ContractTransaction, ethers } from "ethers";
+import { ContractTransaction } from "ethers";
+
+// @nomiclabs/hardhat-ethers
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { getAuthorizeLaunchpadSignatures, getUpdateBaseURISignatures, getUpdateZoneRoyaltyRateSignatures } from "@utils/signatures/launch/projectToken";
-import { getSafeDeprecateProjectAnchor, getSafeTokenizeProjectAnchor, getSafeUpdateProjectURIAnchor } from "@utils/anchor/launch/projectToken";
+
+// @typechain-types
+import { 
+    Admin,
+    ProjectToken,
+    ProxyCaller
+} from "@typechain-types";
+
+// @utils/anchor/launch
+import {
+    getSafeDeprecateProjectAnchor,
+    getSafeTokenizeProjectAnchor,
+    getSafeUpdateProjectURIAnchor
+} from "@utils/anchor/launch/projectToken";
+
+// @utils/mockValidator
+import { MockValidator } from "@utils/mockValidator";
+
+// @utils/models/launch
+import {
+    AuthorizeLaunchpadParams,
+    AuthorizeLaunchpadParamsInput,
+    DeprecateProjectParams,
+    LaunchProjectParams,
+    MintParams,
+    RegisterInitiatorParams,
+    RegisterInitiatorParamsInput,
+    SafeDeprecateProjectParams,
+    SafeTokenizeProjectParams,
+    SafeUpdateProjectURIParams,
+    TokenizeProjectParams,
+    UpdateBaseURIParams,
+    UpdateBaseURIParamsInput,
+    UpdateProjectURIParamsInput,
+    UpdateZoneRoyaltyRateParams,
+    UpdateZoneRoyaltyRateParamsInput,
+    WithdrawEstateTokenParams
+} from "@utils/models/launch/projectToken";
+
+// @utils/signatures/launch
+import {
+    getAuthorizeLaunchpadSignatures,
+    getUpdateBaseURISignatures,
+    getUpdateZoneRoyaltyRateSignatures
+} from "@utils/signatures/launch/projectToken";
+
+// @utils/validation/launch
+import {
+    getRegisterInitiatorValidation,
+    getSafeUpdateProjectURIValidation
+} from "@utils/validation/launch/projectToken";
 
 
 // updateBaseURI

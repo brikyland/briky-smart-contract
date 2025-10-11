@@ -1,7 +1,18 @@
-import { Admin, Distributor } from "@typechain-types";
-import { DistributeTokenParams, DistributeTokenParamsInput } from "@utils/models/liquidity/distributor";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { ContractTransaction } from "ethers";
+
+// @nomiclabs/hardhat-ethers
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+
+// @typechain-types
+import { Admin, Distributor } from "@typechain-types";
+
+// @utils/models/liquidity
+import {
+    DistributeTokenParams,
+    DistributeTokenParamsInput
+} from "@utils/models/liquidity/distributor";
+
+// @utils/signatures/liquidity
 import { getDistributeTokenSignatures } from "@utils/signatures/liquidity/distributor";
 
 

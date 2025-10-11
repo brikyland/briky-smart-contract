@@ -1,5 +1,15 @@
-import { Admin, EstateToken } from "@typechain-types";
+import { ethers } from "ethers";
+
+// @typechain-types
+import {
+    Admin,
+    EstateToken
+} from "@typechain-types";
+
+// @utils/blockchain
 import { getSignatures } from "@utils/blockchain";
+
+// @utils/models/land
 import {
     AuthorizeExtractorsParamsInput,
     AuthorizeTokenizersParamsInput,
@@ -7,7 +17,6 @@ import {
     UpdateCommissionTokenParamsInput,
     UpdateZoneRoyaltyRateParamsInput,
 } from "@utils/models/land/estateToken";
-import { ethers } from "ethers";
 
 
 // updateCommissionToken

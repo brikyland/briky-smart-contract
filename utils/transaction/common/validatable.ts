@@ -1,11 +1,18 @@
 import { Contract, ContractTransaction } from "ethers";
 
+// @nomiclabs/hardhat-ethers
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
+// @typechain-types
 import { Admin } from "@typechain-types";
 
-import { UpdateValidatorParams, UpdateValidatorParamsInput } from "@utils/models/common/validatable";
+// @utils/models/common
+import {
+    UpdateValidatorParams,
+    UpdateValidatorParamsInput
+} from "@utils/models/common/validatable";
 
+// @utils/signatures/common
 import { getUpdateValidatorSignatures } from "@utils/signatures/common/validatable";
 
 

@@ -1,7 +1,7 @@
-import { BigNumber, ethers } from "ethers";
-import { MockPrestigePad } from "@typechain-types";
-import { PrestigePad } from "@typechain-types";
-import { Validation } from "../common/validatable";
+import { BigNumber } from "ethers";
+
+// @utils/models/common
+import { Validation } from "@utils/models/common/validatable";
 
 
 // updateBaseUnitPriceRange

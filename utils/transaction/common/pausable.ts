@@ -1,8 +1,25 @@
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import {
+    Contract,
+    ContractTransaction
+} from "ethers";
+
+// @typechain-types
 import { Admin } from "@typechain-types";
-import { PauseParams, UnpauseParams } from "@utils/models/common/pausable";
-import { getPauseSignatures, getUnpauseSignatures } from "@utils/signatures/common/pausable";
-import { Contract, ContractTransaction } from "ethers";
+
+// @nomiclabs/hardhat-ethers
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+
+// @utils/models/common
+import {
+    PauseParams,
+    UnpauseParams
+} from "@utils/models/common/pausable";
+
+// @utils/signatures/common
+import {
+    getPauseSignatures,
+    getUnpauseSignatures
+} from "@utils/signatures/common/pausable";
 
 
 // pause

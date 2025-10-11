@@ -1,8 +1,31 @@
-import { Admin, StakeToken } from "@typechain-types";
-import { InitializeRewardingParams, InitializeRewardingParamsInput, PromoteParams, StakeParams, TransferParams, UnstakeParams, UpdateFeeRateParams, UpdateFeeRateParamsInput } from "@utils/models/liquidity/stakeToken";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { ContractTransaction } from "ethers";
-import { getInitializeRewardingSignatures, getUpdateFeeRateSignatures } from "@utils/signatures/liquidity/stakeToken";
+
+// @nomiclabs/hardhat-ethers
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+
+// @typechain-types
+import {
+    Admin,
+    StakeToken
+} from "@typechain-types";
+
+// @utils/models/liquidity
+import {
+    InitializeRewardingParams,
+    InitializeRewardingParamsInput,
+    PromoteParams,
+    StakeParams,
+    TransferParams,
+    UnstakeParams,
+    UpdateFeeRateParams,
+    UpdateFeeRateParamsInput
+} from "@utils/models/liquidity/stakeToken";
+
+// @utils/signatures/liquidity
+import {
+    getInitializeRewardingSignatures,
+    getUpdateFeeRateSignatures
+} from "@utils/signatures/liquidity/stakeToken";
 
 
 // initializeRewarding

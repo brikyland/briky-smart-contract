@@ -1,7 +1,16 @@
-import { Admin, ERC721MortgageToken } from "@typechain-types";
-import { RegisterCollateralsParamsInput } from "@utils/models/lend/erc721MortgageToken";
 import { ethers } from "ethers";
+
+// @typechain-types
+import {
+    Admin,
+    ERC721MortgageToken
+} from "@typechain-types";
+
+// @utils/blockchain
 import { getSignatures } from "@utils/blockchain";
+
+// @utils/models/lend
+import { RegisterCollateralsParamsInput } from "@utils/models/lend/erc721MortgageToken";
 
 
 // registerCollaterals

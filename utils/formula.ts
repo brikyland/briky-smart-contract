@@ -1,7 +1,14 @@
 import { BigNumber, Contract, ethers } from "ethers";
-import { Constant } from "@utils/constant";
-import { Rate } from "@utils/models/common/common";
+
+// @typechain-types
 import { Admin } from "@typechain-types";
+
+// @utils/constant
+import { Constant } from "@utils/constant";
+
+// @utils/models/common
+import { Rate } from "@utils/models/common/common";
+
 
 export function getStakingFee(
     liquidity: ethers.BigNumber,

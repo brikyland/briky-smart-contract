@@ -1,5 +1,15 @@
-import { Admin, PromotionToken } from "@typechain-types";
+import { ethers } from "ethers";
+
+// @typechain-types
+import {
+    Admin,
+    PromotionToken
+} from "@typechain-types";
+
+// @utils/blockchain
 import { getSignatures } from "@utils/blockchain";
+
+// @utils/models/lucra
 import { 
     UpdateFeeParamsInput,
     UpdateRoyaltyRateParamsInput,
@@ -8,8 +18,9 @@ import {
     UpdateContentURIsParamsInput,
     CancelContentsParamsInput
 } from "@utils/models/lucra/promotionToken";
-import { ethers } from "ethers";
 
+
+// updateFee
 export async function getUpdateFeeSignatures(
     promotionToken: PromotionToken,
     paramsInput: UpdateFeeParamsInput,
@@ -24,6 +35,8 @@ export async function getUpdateFeeSignatures(
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
 
+
+// updateRoyaltyRate
 export async function getUpdateRoyaltyRateSignatures(
     promotionToken: PromotionToken,
     paramsInput: UpdateRoyaltyRateParamsInput,
@@ -38,6 +51,8 @@ export async function getUpdateRoyaltyRateSignatures(
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
 
+
+// withdraw
 export async function getWithdrawSignatures(
     promotionToken: PromotionToken,
     paramsInput: WithdrawParamsInput,
@@ -52,6 +67,8 @@ export async function getWithdrawSignatures(
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
 
+
+// createContents
 export async function getCreateContentsSignatures(
     promotionToken: PromotionToken,
     paramsInput: CreateContentsParamsInput,
@@ -66,6 +83,8 @@ export async function getCreateContentsSignatures(
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
 
+
+// updateContentURIs
 export async function getUpdateContentURIsSignatures(
     promotionToken: PromotionToken,
     paramsInput: UpdateContentURIsParamsInput,
@@ -81,6 +100,8 @@ export async function getUpdateContentURIsSignatures(
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
 
+
+// cancelContents
 export async function getCancelContentsSignatures(
     promotionToken: PromotionToken,
     paramsInput: CancelContentsParamsInput,

@@ -1,4 +1,15 @@
-import { Admin, PassportToken } from "@typechain-types";
+import { ContractTransaction } from "ethers";
+
+// @nomiclabs/hardhat-ethers
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+
+// @typechain-types
+import {
+    Admin,
+    PassportToken
+} from "@typechain-types";
+
+// @utils/models/lucra
 import {
     UpdateBaseURIParams,
     UpdateBaseURIParamsInput,
@@ -9,9 +20,14 @@ import {
     WithdrawParams,
     WithdrawParamsInput
 } from "@utils/models/lucra/passportToken";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { ContractTransaction } from "ethers";
-import { getUpdateBaseURISignatures, getUpdateFeeSignatures, getUpdateRoyaltyRateSignatures, getWithdrawSignatures } from "@utils/signatures/lucra/passportToken";
+
+// @utils/signatures/lucra
+import {
+    getUpdateBaseURISignatures,
+    getUpdateFeeSignatures,
+    getUpdateRoyaltyRateSignatures,
+    getWithdrawSignatures
+} from "@utils/signatures/lucra/passportToken";
 
 
 // updateBaseURI

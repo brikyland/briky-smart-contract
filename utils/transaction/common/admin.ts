@@ -1,6 +1,12 @@
-import { Admin } from "@typechain-types";
+import { ContractTransaction } from "ethers";
+
+// @nomiclabs/hardhat-ethers
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
+// @typechain-types
+import { Admin } from "@typechain-types";
+
+// @utils/models/common
 import { 
     TransferAdministration1Params,
     TransferAdministration2Params,
@@ -25,7 +31,6 @@ import {
     ActivateInParamsInput,
     UpdateCurrencyRegistriesParamsInput
 } from "@utils/models/common/admin";
-
 import {
     getActivateInSignatures,
     getAuthorizeGovernorsSignatures,
@@ -39,7 +44,6 @@ import {
     getTransferAdministration5Signatures,
     getUpdateCurrencyRegistriesSignatures
 } from "@utils/signatures/common/admin";
-import {ContractTransaction} from "ethers";
 
 
 // transferAdministration1

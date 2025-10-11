@@ -1,9 +1,16 @@
 import { ethers, Contract } from "ethers";
+
+// @nomicfoundation/hardhat-network-helpers
 import { time } from "@nomicfoundation/hardhat-network-helpers";
 
+// @utils/mockValidator
 import { MockValidator } from "@utils/mockValidator";
 
-import { RegisterInitiatorParamsInput, UpdateProjectURIParamsInput } from "@utils/models/launch/projectToken";
+// @utils/models/launch
+import {
+    RegisterInitiatorParamsInput,
+    UpdateProjectURIParamsInput
+} from "@utils/models/launch/projectToken";
 
 
 // registerInitiator

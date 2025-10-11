@@ -1,12 +1,15 @@
 import { ethers } from "ethers";
 
+// @typechain-types
 import {
     Admin,
     ReserveVault
 } from "@typechain-types";
 
+// @utils/blockchain
 import { getSignatures } from "@utils/blockchain";
 
+// @utils/models/common
 import { AuthorizeProviderParamsInput } from "@utils/models/common/reserveVault";
 
 

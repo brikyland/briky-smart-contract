@@ -3,10 +3,13 @@ import {
     ethers
 } from "ethers";
 
+// @typechain-types
 import { Admin } from "@typechain-types";
 
+// @utils/blockchain
 import { getSignatures } from "@utils/blockchain";
 
+// @utils/models/common
 import { UpdateValidatorParamsInput } from "@utils/models/common/validatable";
 
 

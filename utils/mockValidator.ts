@@ -1,7 +1,14 @@
 import { BigNumber, ethers, Wallet } from "ethers";
-import { Validation } from "./models/common/validatable";
-import { getSignatures } from "./blockchain";
+
+// @defi-wonderland/smock
 import { MockContract } from "@defi-wonderland/smock";
+
+// @utils/blockchain
+import { getSignatures } from "@utils/blockchain";
+
+// @utils/models/common
+import { Validation } from "@utils/models/common/validatable";
+
 
 export class MockValidator {
     public signer: Wallet;

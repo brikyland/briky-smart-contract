@@ -1,4 +1,4 @@
-import { ethers, upgrades } from 'hardhat';
+import { ethers, upgrades } from "hardhat";
 
 export async function deployReentrancyERC1155Holder(
     signer: any,

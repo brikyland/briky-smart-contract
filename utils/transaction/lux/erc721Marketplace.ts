@@ -1,9 +1,30 @@
-import { Admin, ERC721Marketplace, ProxyCaller } from "@typechain-types";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { ContractTransaction } from "ethers";
-import { BuyParams, CancelParams, ListParams, RegisterCollectionsParams, RegisterCollectionsParamsInput, SafeBuyParams } from "@utils/models/lux/erc721Marketplace";
-import { getRegisterCollectionsSignatures } from "@utils/signatures/lux/erc721Marketplace";
+
+// @nomiclabs/hardhat-ethers
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+
+// @typechain-types
+import {
+    Admin,
+    ERC721Marketplace,
+    ProxyCaller
+} from "@typechain-types";
+
+// @utils/anchor/lux
 import { getSafeBuyAnchor } from "@utils/anchor/lux/erc721Marketplace";
+
+// @utils/models/lux
+import {
+    BuyParams,
+    CancelParams,
+    ListParams,
+    RegisterCollectionsParams,
+    RegisterCollectionsParamsInput,
+    SafeBuyParams
+} from "@utils/models/lux/erc721Marketplace";
+
+// @utils/signatures/lux
+import { getRegisterCollectionsSignatures } from "@utils/signatures/lux/erc721Marketplace";
 
 
 // registerCollections

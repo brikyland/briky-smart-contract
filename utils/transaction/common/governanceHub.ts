@@ -1,11 +1,16 @@
+import { ContractTransaction } from "ethers";
+
+// @nomiclabs/hardhat-ethers
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
+// @typechain-types
 import {
     Admin,
     GovernanceHub,
     ProxyCaller
 } from "@typechain-types";
 
+// @utils/models/common
 import {
     AdmitParams,
     AdmitParamsInput,
@@ -27,11 +32,27 @@ import {
     VoteParams,
     WithdrawBudgetContributionParams
 } from "@utils/models/common/governanceHub";
-import { getUpdateFeeSignatures } from "@utils/signatures/common/governanceHub";
-import { getAdmitValidation, getConcludeExecutionValidation, getDisqualifyValidation, getLogExecutionValidation, getProposeValidation } from "@utils/validation/common/governanceHub";
+
+// @utils/anchor/common
+import {
+    getSafeContributeBudgetAnchor,
+    getSafeVoteAnchor
+} from "@utils/anchor/common/governanceHub";
+
+// @utils/mockValidator
 import { MockValidator } from "@utils/mockValidator";
-import { getSafeContributeBudgetAnchor, getSafeVoteAnchor } from "@utils/anchor/common/governanceHub";
-import {ContractTransaction} from "ethers";
+
+// @utils/signatures/common
+import { getUpdateFeeSignatures } from "@utils/signatures/common/governanceHub";
+
+// @utils/validation/common
+import {
+    getAdmitValidation,
+    getConcludeExecutionValidation,
+    getDisqualifyValidation,
+    getLogExecutionValidation,
+    getProposeValidation
+} from "@utils/validation/common/governanceHub";
 
 
 // updateFee

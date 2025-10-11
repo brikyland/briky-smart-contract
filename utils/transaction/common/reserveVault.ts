@@ -1,9 +1,18 @@
-import { Admin, ProxyCaller, ReserveVault } from "@typechain-types";
 import { ContractTransaction } from "ethers";
 
+// @typechain-types
+import {
+    Admin,
+    ProxyCaller,
+    ReserveVault
+} from "@typechain-types";
+
+// @utils/signatures/common
 import {
     getAuthorizeProviderSignatures,
 } from "@utils/signatures/common/reserveVault";
+
+// @utils/models/common
 import {
     AuthorizeProviderParams,
     AuthorizeProviderParamsInput,

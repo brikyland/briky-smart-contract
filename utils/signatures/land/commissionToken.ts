@@ -1,6 +1,16 @@
+// @typechain-types
 import { Admin, CommissionToken } from "@typechain-types";
+
+// @utils/blockchain
 import { getSignatures } from "@utils/blockchain";
-import { UpdateBaseURIParamsInput, UpdateRoyaltyRateParamsInput } from "@utils/models/land/commissionToken";
+
+// @utils/models/land
+import {
+    UpdateBaseURIParamsInput,
+    UpdateRoyaltyRateParamsInput,
+} from "@utils/models/land/commissionToken";
+
+// @ethers
 import { ethers } from "ethers";
 
 

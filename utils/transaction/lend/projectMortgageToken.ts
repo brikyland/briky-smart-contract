@@ -1,7 +1,13 @@
-import { ProjectMortgageToken } from "@typechain-types";
-import { ProjectBorrowParams } from "@utils/models/lend/projectMortgageToken";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { ContractTransaction } from "ethers";
+
+// @nomiclabs/hardhat-ethers
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+
+// @typechain-types
+import { ProjectMortgageToken } from "@typechain-types";
+
+// @utils/models/lend
+import { ProjectBorrowParams } from "@utils/models/lend/projectMortgageToken";
 
 
 // borrow

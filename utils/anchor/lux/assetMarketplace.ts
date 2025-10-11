@@ -1,7 +1,16 @@
-import { AssetMarketplace } from "@typechain-types";
-import { BuyParams, BuyPartParams } from "@utils/models/lux/assetMarketplace";
 import { ethers } from "ethers";
 
+// @typechain-types
+import { AssetMarketplace } from "@typechain-types";
+
+// @utils/models/lux
+import {
+    BuyParams,
+    BuyPartParams,
+} from "@utils/models/lux/assetMarketplace";
+
+
+// safeBuy(uint256,bytes32)
 export async function getSafeBuyAnchor(
     assetMarketplace: AssetMarketplace,
     params: BuyParams
@@ -13,6 +22,8 @@ export async function getSafeBuyAnchor(
     ));
 }
 
+
+// safeBuy(uint256,uint256,bytes32)
 export async function getSafeBuyPartAnchor(
     assetMarketplace: AssetMarketplace,
     params: BuyPartParams

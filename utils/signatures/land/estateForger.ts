@@ -1,8 +1,16 @@
-import {Admin, CommissionToken, EstateForger} from "@typechain-types";
-import { getSignatures } from "@utils/blockchain";
-import { UpdateBaseURIParamsInput, UpdateRoyaltyRateParamsInput } from "@utils/models/land/commissionToken";
 import { ethers } from "ethers";
-import {UpdateBaseUnitPriceRangeParamsInput, WhitelistParamsInput} from "@utils/models/land/estateForger";
+
+// @typechain-types
+import { Admin, EstateForger } from "@typechain-types";
+
+// @utils/blockchain
+import { getSignatures } from "@utils/blockchain";
+
+// @utils/models/land
+import {
+    UpdateBaseUnitPriceRangeParamsInput,
+    WhitelistParamsInput,
+} from "@utils/models/land/estateForger";
 
 
 // updateBaseUnitPriceRange

@@ -1,4 +1,15 @@
-import { Admin, Driptributor } from "@typechain-types";
+import { ContractTransaction } from "ethers";
+
+// @nomiclabs/hardhat-ethers
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+
+// @typechain-types
+import {
+    Admin,
+    Driptributor
+} from "@typechain-types";
+
+// @utils/models/liquidity
 import {
     DistributeTokensWithDurationParams,
     DistributeTokensWithDurationParamsInput,
@@ -9,9 +20,13 @@ import {
     UpdateStakeTokensParamsInput,
     WithdrawParams
 } from "@utils/models/liquidity/driptributor";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { ContractTransaction } from "ethers";
-import { getDistributeTokensWithDurationSignatures, getDistributeTokensWithTimestampSignatures, getUpdateStakeTokensSignatures } from "@utils/signatures/liquidity/driptributor";
+
+// @utils/signatures/liquidity
+import {
+    getDistributeTokensWithDurationSignatures,
+    getDistributeTokensWithTimestampSignatures,
+    getUpdateStakeTokensSignatures
+} from "@utils/signatures/liquidity/driptributor";
 
 
 // updateStakeTokens

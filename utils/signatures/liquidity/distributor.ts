@@ -1,7 +1,16 @@
-import { Admin, Distributor } from "@typechain-types";
-import { getSignatures } from "@utils/blockchain";
-import { DistributeTokenParamsInput } from "@utils/models/liquidity/distributor";
 import { ethers } from "ethers";
+
+// @typechain-types
+import {
+    Admin,
+    Distributor
+} from "@typechain-types";
+
+// @utils/blockchain
+import { getSignatures } from "@utils/blockchain";
+
+// @utils/models/liquidity
+import { DistributeTokenParamsInput } from "@utils/models/liquidity/distributor";
 
 
 // distributeToken

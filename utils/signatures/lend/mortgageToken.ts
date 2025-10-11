@@ -1,7 +1,19 @@
-import { Admin, MortgageToken } from "@typechain-types";
-import { UpdateBaseURIParamsInput, UpdateFeeRateParamsInput } from "@utils/models/lend/mortgageToken";
+import {
+    ethers,
+    Contract
+} from "ethers";
+
+// @typechain-types
+import { Admin } from "@typechain-types";
+
+// @utils/blockchain
 import { getSignatures } from "@utils/blockchain";
-import { ethers, Contract } from "ethers";
+
+// @utils/models/lend
+import {
+    UpdateBaseURIParamsInput,
+    UpdateFeeRateParamsInput
+} from "@utils/models/lend/mortgageToken";
 
 
 // updateBaseURI

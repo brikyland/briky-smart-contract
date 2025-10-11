@@ -32,9 +32,9 @@ import {ContractTransaction} from "ethers";
 import {SignerWithAddress} from "@nomiclabs/hardhat-ethers/signers";
 import {getUpdateBaseUnitPriceRangeSignatures} from "@utils/signatures/launch/prestigePad";
 import {
-    getSafeConfirmCurrentRoundParams,
+    getSafeConfirmCurrentRoundAnchor,
     getSafeContributeCurrentRoundAnchor,
-    getSafeFinalizeParams
+    getSafeFinalizeAnchor
 } from "@utils/anchor/launch/prestigePad";
 
 
@@ -313,7 +313,7 @@ export async function getPrestigePadTxByParams_SafeConfirmCurrentRound(
 ): Promise<ContractTransaction> {
     const safeParams: SafeConfirmCurrentRoundParams = {
         ...params,
-        anchor: await getSafeConfirmCurrentRoundParams(prestigePad, params),
+        anchor: await getSafeConfirmCurrentRoundAnchor(prestigePad, params),
     };
     return getPrestigePadTx_SafeConfirmCurrentRound(prestigePad, deployer, safeParams, txConfig);
 }
@@ -342,7 +342,7 @@ export async function getCallTxByParams_SafeConfirmCurrentRound(
 ): Promise<ContractTransaction> {
     const safeParams: SafeConfirmCurrentRoundParams = {
         ...params,
-        anchor: await getSafeConfirmCurrentRoundParams(prestigePad, params),
+        anchor: await getSafeConfirmCurrentRoundAnchor(prestigePad, params),
     };
     return getCallPrestigePadTx_SafeConfirmCurrentRound(prestigePad, proxyCaller, safeParams, txConfig);
 }
@@ -370,7 +370,7 @@ export async function getPrestigePadTxByParams_SafeFinalize(
 ): Promise<ContractTransaction> {
     const safeParams: SafeFinalizeParams = {
         ...params,
-        anchor: await getSafeFinalizeParams(prestigePad, params),
+        anchor: await getSafeFinalizeAnchor(prestigePad, params),
     };
     return getPrestigePadTx_SafeFinalize(prestigePad, deployer, safeParams, txConfig);
 }
