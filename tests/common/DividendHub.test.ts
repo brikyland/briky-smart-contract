@@ -334,7 +334,7 @@ describe.only('1.4. DividendHub', async () => {
     
 
     /* --- Command --- */
-    describe('1.4.2. issueDividend(address, uint256, uint256, address, string)', async () => {
+    describe('1.4.2. issueDividend(address,uint256,uint256,address,string)', async () => {
         async function beforeIssueDividendTest(fixture: DividendHubFixture): Promise<{
             defaultParams: IssueDividendParams
         }> {

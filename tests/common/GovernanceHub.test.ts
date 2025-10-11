@@ -1,5 +1,14 @@
+import { BigNumber, Contract } from 'ethers';
 import { expect } from 'chai';
-import { ethers, upgrades } from 'hardhat';
+import { ethers } from 'hardhat';
+
+// @defi-wonderland/smock
+import { MockContract, smock } from '@defi-wonderland/smock';
+
+// @nomicfoundation/hardhat-network-helpers
+import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
+
+// @typechain-types
 import {
     Admin,
     GovernanceHub,
@@ -10,67 +19,112 @@ import {
     FailReceiver,
     Reentrancy,
 } from '@typechain-types';
+
+// @tests/test.constant
+import { Constant } from '@tests/test.constant';
+
+// @tests/common
+import { Initialization as CommonInitialization } from '@tests/common/test.initialization';
+
+// @utils/blockchain
 import {
     callTransaction,
-    callTransactionAtTimestamp,
     expectRevertWithModifierCustomError,
-    getSignatures,
     prepareERC20,
     prepareNativeToken,
     testReentrancy
 } from '@utils/blockchain';
-import { Constant } from '@tests/test.constant';
-import { Initialization as CommonInitialization } from '@tests/common/test.initialization';
+
+// @utils/deployments/common
 import { deployAdmin } from '@utils/deployments/common/admin';
-import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 import { deployGovernanceHub } from '@utils/deployments/common/governanceHub';
+
+// @utils/models/common
 import {
     AdmitParamsInput,
     ConcludeExecutionParamsInput, ContributeBudgetParams,
     DisqualifyParamsInput,
     LogExecutionParamsInput,
+    ProposalState,
+    ProposalRule,
     ProposalVerdict,
+    ProposalVoteOption,
     UpdateFeeParams,
     UpdateFeeParamsInput,
-    VoteParams
+    VoteParams,
+    SafeVoteParams
 } from "@utils/models/common/governanceHub";
-import { ProposalState } from "@utils/models/common/governanceHub";
-import { ProposalRule } from "@utils/models/common/governanceHub";
-import { ProposalVoteOption } from "@utils/models/common/governanceHub";
-import { BigNumber, Contract, Wallet } from 'ethers';
-import { MockContract, smock } from '@defi-wonderland/smock';
+
+// @utils/mockValidator
 import { MockValidator } from '@utils/mockValidator';
+
+// @utils/formula
 import { scale } from "@utils/formula";
+
+// @utils/deployments/common
 import { deployCurrency } from '@utils/deployments/common/currency';
+
+// @utils/deployments/mock
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
 import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
-import { ProposeParams, AdmitParams, DisqualifyParams, LogExecutionParams, ConcludeExecutionParams } from '@utils/models/common/governanceHub';
-import { getProposeValidation, getAdmitValidation, getDisqualifyValidation, getLogExecutionValidation, getConcludeExecutionValidation } from '@utils/validation/common/governanceHub';
+
+// @utils/models/common
+import {
+    AdmitParams,
+    DisqualifyParams,
+    LogExecutionParams,
+    ConcludeExecutionParams,
+    ProposeParamsInput,
+} from '@utils/models/common/governanceHub';
+
+// @utils/signatures/common
+import { getUpdateFeeSignatures } from '@utils/signatures/common/governanceHub';
+
+// @utils/transaction/common
+import {
+    getAdminTxByInput_ActivateIn,
+    getAdminTxByInput_AuthorizeGovernors,
+    getAdminTxByInput_AuthorizeManagers,
+    getAdminTxByInput_AuthorizeModerators,
+    getAdminTxByInput_DeclareZone
+} from '@utils/transaction/common/admin';
 import {
     getGovernanceHubTx_Admit,
     getGovernanceHubTxByInput_Admit,
     getCallGovernanceHubTx_Propose,
     getCallGovernanceHubTxByInput_Propose,
-    getConcludeExecutionTx,
-    getConcludeExecutionTxByInput,
-    getConfirmTx, getContributeBudgetTx,
-    getGovernanceTx_Disqualify,
+    getGovernanceHubTx_ConcludeExecution,
+    getGovernanceHubTxByInput_ConcludeExecution,
+    getGovernanceHubTx_Confirm,
+    getGovernanceHubTx_ContributeBudget,
+    getGovernanceHubTx_Disqualify,
     getGovernanceHubTxByInput_Disqualify,
-    getLogExecutionTx,
-    getLogExecutionTxByInput,
+    getGovernanceHubTx_LogExecution,
+    getGovernanceHubTxByInput_LogExecution,
     getGovernanceHubTx_Propose,
     getGovernanceHubTxByInput_Propose,
-    getRejectExecutionTx, getSafeContributeBudgetTx, getSafeContributeBudgetTxByInput,
-    getSafeVoteTxByParams,
+    getGovernanceHubTx_RejectExecution,
+    getGovernanceHubTx_SafeContributeBudget,
+    getGovernanceHubTxByInput_SafeContributeBudget,
+    getGovernanceHubTx_Vote,
+    getGovernanceHubTxByParams_SafeVote,
     getGovernanceHubTx_UpdateFee,
     getGovernanceHubTxByInput_UpdateFee,
-    getGovernanceHubTx_Vote, getWithdrawBudgetContributionTx
+    getGovernancHubTx_WithdrawBudgetContribution,
+    getGovernanceHubTx_SafeVote
 } from '@utils/transaction/common/governanceHub';
-import { ProposeParamsInput } from '@utils/models/common/governanceHub';
-import { getUpdateFeeSignatures } from '@utils/signatures/common/governanceHub';
-import { getAdminTxByInput_ActivateIn, getAdminTxByInput_AuthorizeGovernors, getAdminTxByInput_AuthorizeManagers, getAdminTxByInput_AuthorizeModerators, getAdminTxByInput_DeclareZone } from '@utils/transaction/common/admin';
 import { getPausableTxByInput_Pause } from '@utils/transaction/common/pausable';
+
+// @utils/validation/common
+import {
+    getProposeValidation,
+    getAdmitValidation,
+    getDisqualifyValidation,
+    getLogExecutionValidation,
+    getConcludeExecutionValidation
+} from '@utils/validation/common/governanceHub';
+
 
 export interface GovernanceHubFixture {
     deployer: any;
@@ -270,14 +324,24 @@ describe('1.6. GovernanceHub', async () => {
         } = fixture;
         const fee = await governanceHub.fee();
 
-        await callTransaction(getAdminTxByInput_AuthorizeManagers(admin, deployer, {
-            accounts: [manager.address],
-            isManager: true
-        }, admins));
-        await callTransaction(getAdminTxByInput_AuthorizeModerators(admin, deployer, {
-            accounts: [moderator.address],
-            isModerator: true
-        }, admins));
+        await callTransaction(getAdminTxByInput_AuthorizeManagers(
+            admin,
+            deployer,
+            {
+                accounts: [manager.address],
+                isManager: true
+            },
+            admins
+        ));
+        await callTransaction(getAdminTxByInput_AuthorizeModerators(
+            admin,
+            deployer,
+            {
+                accounts: [moderator.address],
+                isModerator: true
+            },
+            admins
+        ));
         await callTransaction(getAdminTxByInput_AuthorizeGovernors(
             admin,
             deployer,
@@ -289,12 +353,22 @@ describe('1.6. GovernanceHub', async () => {
         ));
 
         if (!skipDeclareZone) {
-            await callTransaction(getAdminTxByInput_DeclareZone(admin, deployer, { zone }, admins));
-            await callTransaction(getAdminTxByInput_ActivateIn(admin, deployer, {
-                zone,
-                accounts: [manager.address, moderator.address, operator1.address, operator2.address],
-                isActive: true
-            }, admins));
+            await callTransaction(getAdminTxByInput_DeclareZone(
+                admin,
+                deployer,
+                { zone },
+                admins
+            ));
+            await callTransaction(getAdminTxByInput_ActivateIn(
+                admin,
+                deployer,
+                {
+                    zone,
+                    accounts: [manager.address, moderator.address, operator1.address, operator2.address],
+                    isActive: true
+                },
+                admins
+            ));
         }
 
         let timestamp = await time.latest() + 10;
@@ -314,60 +388,92 @@ describe('1.6. GovernanceHub', async () => {
 
         if (addSampleProposals) {
             await time.setNextBlockTimestamp(timestamp);
-            await callTransaction(getGovernanceHubTxByInput_Propose(governanceHub, proposer1, {
-                governor: governor.address,
-                tokenId: ethers.BigNumber.from(1),
-                operator: useFailReceiverOperator ? failReceiver.address : operator1.address,
-                uuid: ethers.utils.formatBytes32String("uuid_1"),
-                rule: ProposalRule.ApprovalBeyondQuorum,
-                quorumRate: ethers.utils.parseEther("0.7"),
-                duration: 1000,
-                admissionExpiry: timestamp + 2000,
-            }, validator, {value: fee}));
+            await callTransaction(getGovernanceHubTxByInput_Propose(
+                governanceHub,
+                proposer1,
+                {
+                    governor: governor.address,
+                    tokenId: ethers.BigNumber.from(1),
+                    operator: useFailReceiverOperator ? failReceiver.address : operator1.address,
+                    uuid: ethers.utils.formatBytes32String("uuid_1"),
+                    rule: ProposalRule.ApprovalBeyondQuorum,
+                    quorumRate: ethers.utils.parseEther("0.7"),
+                    duration: 1000,
+                    admissionExpiry: timestamp + 2000,
+                },
+                validator,
+                {value: fee}
+            ));
 
             timestamp += 10;
 
             await time.setNextBlockTimestamp(timestamp);
-            await callTransaction(getGovernanceHubTxByInput_Propose(governanceHub, proposer2, {
-                governor: governor.address,
-                tokenId: ethers.BigNumber.from(2),
-                operator: operator2.address,
-                uuid: ethers.utils.formatBytes32String("uuid_2"),
-                rule: ProposalRule.DisapprovalBeyondQuorum,
-                quorumRate: ethers.utils.parseEther("0.75"),
-                duration: 3000,
-                admissionExpiry: timestamp + 4000,
-            }, validator, {value: fee}));
+            await callTransaction(getGovernanceHubTxByInput_Propose(
+                governanceHub,
+                proposer2,
+                {
+                    governor: governor.address,
+                    tokenId: ethers.BigNumber.from(2),
+                    operator: operator2.address,
+                    uuid: ethers.utils.formatBytes32String("uuid_2"),
+                    rule: ProposalRule.DisapprovalBeyondQuorum,
+                    quorumRate: ethers.utils.parseEther("0.75"),
+                    duration: 3000,
+                    admissionExpiry: timestamp + 4000,
+                },
+                validator,
+                { value: fee }
+            ));
         }
 
         if (admitSampleProposals) {
-            await callTransaction(getGovernanceHubTxByInput_Admit(governanceHub, custodian1, {
-                proposalId: BigNumber.from(1),
-                contextURI: "metadata_uri_1",
-                reviewURI: "state_uri_1",
-                currency: ethers.constants.AddressZero,
-            }, validator));
+            await callTransaction(getGovernanceHubTxByInput_Admit(
+                governanceHub,
+                custodian1,
+                {
+                    proposalId: BigNumber.from(1),
+                    contextURI: "metadata_uri_1",
+                    reviewURI: "state_uri_1",
+                    currency: ethers.constants.AddressZero,
+                },
+                validator
+            ));
 
-            await callTransaction(getGovernanceHubTxByInput_Admit(governanceHub, custodian2, {
-                proposalId: BigNumber.from(2),
-                contextURI: "metadata_uri_2",
-                reviewURI: "state_uri_2",
-                currency: useReentrancyERC20 ? reentrancyERC20.address : currencies[0].address,
-            }, validator));
+            await callTransaction(getGovernanceHubTxByInput_Admit(
+                governanceHub,
+                custodian2,
+                {
+                    proposalId: BigNumber.from(2),
+                    contextURI: "metadata_uri_2",
+                    reviewURI: "state_uri_2",
+                    currency: useReentrancyERC20 ? reentrancyERC20.address : currencies[0].address,
+                },
+                validator
+            ));
         }
 
         if (disqualifySampleProposals) {
-            await callTransaction(getGovernanceHubTxByInput_Disqualify(governanceHub, manager, {
-                proposalId: BigNumber.from(1),
-                contextURI: "metadata_uri_1",
-                reviewURI: "state_uri_1",
-            }, validator));
+            await callTransaction(getGovernanceHubTxByInput_Disqualify(
+                governanceHub,
+                manager,
+                {
+                    proposalId: BigNumber.from(1),
+                    contextURI: "metadata_uri_1",
+                    reviewURI: "state_uri_1",
+                },
+                validator
+            ));
 
-            await callTransaction(getGovernanceHubTxByInput_Disqualify(governanceHub, manager, {
-                proposalId: BigNumber.from(2),
-                contextURI: "metadata_uri_2",
-                reviewURI: "state_uri_2",
-            }, validator));
+            await callTransaction(getGovernanceHubTxByInput_Disqualify(
+                governanceHub,
+                manager,
+                {
+                    proposalId: BigNumber.from(2),
+                    contextURI: "metadata_uri_2",
+                    reviewURI: "state_uri_2",
+                },
+                validator
+            ));
         }
 
         await prepareERC20(
@@ -385,51 +491,91 @@ describe('1.6. GovernanceHub', async () => {
         );
 
         if (voteApprovalSampleProposals) {
-            await callTransaction(getGovernanceHubTx_Vote(governanceHub, voter1, {
-                proposalId: BigNumber.from(1),
-                voteOption: ProposalVoteOption.Approval
-            }));
-            await callTransaction(getGovernanceHubTx_Vote(governanceHub, voter2, {
-                proposalId: BigNumber.from(1),
-                voteOption: ProposalVoteOption.Approval
-            }));
-            await callTransaction(getGovernanceHubTx_Vote(governanceHub, voter3, {
-                proposalId: BigNumber.from(1),
-                voteOption: ProposalVoteOption.Approval
-            }));
+            await callTransaction(getGovernanceHubTx_Vote(
+                governanceHub,
+                voter1,
+                {
+                    proposalId: BigNumber.from(1),
+                    voteOption: ProposalVoteOption.Approval
+                }
+            ));
+            await callTransaction(getGovernanceHubTx_Vote(
+                governanceHub,
+                voter2,
+                {
+                    proposalId: BigNumber.from(1),
+                    voteOption: ProposalVoteOption.Approval
+                }
+            ));
+            await callTransaction(getGovernanceHubTx_Vote(
+                governanceHub,
+                voter3,
+                {
+                    proposalId: BigNumber.from(1),
+                    voteOption: ProposalVoteOption.Approval
+                }
+            ));
 
-            await callTransaction(getGovernanceHubTx_Vote(governanceHub, voter1, {
-                proposalId: BigNumber.from(2),
-                voteOption: ProposalVoteOption.Approval
-            }));
-            await callTransaction(getGovernanceHubTx_Vote(governanceHub, voter2, {
-                proposalId: BigNumber.from(2),
-                voteOption: ProposalVoteOption.Approval
-            }));
+            await callTransaction(getGovernanceHubTx_Vote(
+                governanceHub,
+                voter1,
+                {
+                    proposalId: BigNumber.from(2),
+                    voteOption: ProposalVoteOption.Approval
+                }
+            ));
+            await callTransaction(getGovernanceHubTx_Vote(
+                governanceHub,
+                voter2,
+                {
+                    proposalId: BigNumber.from(2),
+                    voteOption: ProposalVoteOption.Approval
+                }
+            ));
         }
 
         if (voteDisapprovalSampleProposals) {
-            await callTransaction(getGovernanceHubTx_Vote(governanceHub, voter1, {
-                proposalId: BigNumber.from(1),
-                voteOption: ProposalVoteOption.Disapproval
-            }));
-            await callTransaction(getGovernanceHubTx_Vote(governanceHub, voter2, {
-                proposalId: BigNumber.from(1),
-                voteOption: ProposalVoteOption.Disapproval
-            }));
-            await callTransaction(getGovernanceHubTx_Vote(governanceHub, voter3, {
-                proposalId: BigNumber.from(1),
-                voteOption: ProposalVoteOption.Disapproval
-            }));
+            await callTransaction(getGovernanceHubTx_Vote(
+                governanceHub,
+                voter1,
+                {
+                    proposalId: BigNumber.from(1),
+                    voteOption: ProposalVoteOption.Disapproval
+                }
+            ));
+            await callTransaction(getGovernanceHubTx_Vote(
+                governanceHub,
+                voter2,
+                {
+                    proposalId: BigNumber.from(1),
+                    voteOption: ProposalVoteOption.Disapproval
+                }
+            ));
+            await callTransaction(getGovernanceHubTx_Vote(
+                governanceHub,
+                voter3,
+                {
+                    proposalId: BigNumber.from(1),
+                    voteOption: ProposalVoteOption.Disapproval
+                }
+            ));
 
-            await callTransaction(getGovernanceHubTx_Vote(governanceHub, voter1, {
-                proposalId: BigNumber.from(2),
-                voteOption: ProposalVoteOption.Disapproval
-            }));
-            await callTransaction(getGovernanceHubTx_Vote(governanceHub, voter2, {
-                proposalId: BigNumber.from(2),
-                voteOption: ProposalVoteOption.Disapproval
-            }));
+            await callTransaction(getGovernanceHubTx_Vote(
+                governanceHub,
+                voter1,
+                {
+                    proposalId: BigNumber.from(2),
+                    voteOption: ProposalVoteOption.Disapproval
+                }
+            ));
+            await callTransaction(getGovernanceHubTx_Vote(
+                governanceHub,
+                voter2,
+                {
+                    proposalId: BigNumber.from(2),
+                    voteOption: ProposalVoteOption.Disapproval
+                }
+            ));
         }
 
         if (contributeBudgetSampleProposals) {
@@ -459,49 +605,85 @@ describe('1.6. GovernanceHub', async () => {
         if (confirmExecutionSampleProposals) {
             timestamp = (await governanceHub.getProposal(1)).due;
             await time.setNextBlockTimestamp(timestamp);
-            await callTransaction(getConfirmTx(governanceHub, manager, {proposalId: BigNumber.from(1)}));
+            await callTransaction(getGovernanceHubTx_Confirm(
+                governanceHub,
+                manager,
+                { proposalId: BigNumber.from(1) }
+            ));
 
             timestamp = (await governanceHub.getProposal(2)).due;
             await time.setNextBlockTimestamp(timestamp);
-            await callTransaction(getConfirmTx(governanceHub, manager, {proposalId: BigNumber.from(2)}));
+            await callTransaction(getGovernanceHubTx_Confirm(
+                governanceHub,
+                manager,
+                { proposalId: BigNumber.from(2) }
+            ));
         }
 
         if (rejectExecutionSampleProposals) {
             timestamp = (await governanceHub.getProposal(1)).due;
             await time.setNextBlockTimestamp(timestamp);
-            await callTransaction(getRejectExecutionTx(governanceHub, operator1, {proposalId: BigNumber.from(1)}));
+            await callTransaction(getGovernanceHubTx_RejectExecution(
+                governanceHub,
+                operator1,
+                { proposalId: BigNumber.from(1) }
+            ));
 
             timestamp = (await governanceHub.getProposal(2)).due;
             await time.setNextBlockTimestamp(timestamp);
-            await callTransaction(getRejectExecutionTx(governanceHub, operator2, {proposalId: BigNumber.from(2)}));
+            await callTransaction(getGovernanceHubTx_RejectExecution(
+                governanceHub,
+                operator2,
+                { proposalId: BigNumber.from(2) }
+            ));
         }
 
         if (concludeExecutionSucceededSampleProposals) {
-            await callTransaction(getConcludeExecutionTxByInput(governanceHub, custodian1, {
-                proposalId: BigNumber.from(1),
-                logURI: "state_uri_1",
-                isSuccessful: true,
-            }, validator));
+            await callTransaction(getGovernanceHubTxByInput_ConcludeExecution(
+                governanceHub,
+                custodian1,
+                {
+                    proposalId: BigNumber.from(1),
+                    logURI: "state_uri_1",
+                    isSuccessful: true,
+                },
+                validator
+            ));
 
-            await callTransaction(getConcludeExecutionTxByInput(governanceHub, custodian2, {
-                proposalId: BigNumber.from(2),
-                logURI: "state_uri_2",
-                isSuccessful: true,
-            }, validator));
+            await callTransaction(getGovernanceHubTxByInput_ConcludeExecution(
+                governanceHub,
+                custodian2,
+                {
+                    proposalId: BigNumber.from(2),
+                    logURI: "state_uri_2",
+                    isSuccessful: true,
+                },
+                validator
+            ));
         }
 
         if (concludeExecutionFailedSampleProposals) {
-            await callTransaction(getConcludeExecutionTxByInput(governanceHub, custodian1, {
-                proposalId: BigNumber.from(1),
-                logURI: "state_uri_1",
-                isSuccessful: false,
-            }, validator));
+            await callTransaction(getGovernanceHubTxByInput_ConcludeExecution(
+                governanceHub,
+                custodian1,
+                {
+                    proposalId: BigNumber.from(1),
+                    logURI: "state_uri_1",
+                    isSuccessful: false,
+                },
+                validator
+            ));
 
-            await callTransaction(getConcludeExecutionTxByInput(governanceHub, custodian2, {
-                proposalId: BigNumber.from(2),
-                logURI: "state_uri_2",
-                isSuccessful: false,
-            }, validator));
+            await callTransaction(getGovernanceHubTxByInput_ConcludeExecution(
+                governanceHub,
+                custodian2,
+                {
+                    proposalId: BigNumber.from(2),
+                    logURI: "state_uri_2",
+                    isSuccessful: false,
+                },
+                validator
+            ));
         }
 
         if (pause) {
@@ -511,7 +693,9 @@ describe('1.6. GovernanceHub', async () => {
         return fixture;
     }
 
-    describe('1.6.1. initialize(address, address, uint256)', async () => {
+
+    /* --- Initialization --- */
+    describe('1.6.1. initialize(address,address,uint256)', async () => {
         it('1.6.1.1. Init validator successfully after deploy', async () => {
             const { validator, admin, governanceHub } = await beforeGovernanceHubTest();
 
@@ -526,7 +710,9 @@ describe('1.6. GovernanceHub', async () => {
         });
     });
 
-    describe('1.6.2. updateFee(uint256, bytes[])', async () => {
+
+    /* --- Administration --- */
+    describe('1.6.2. updateFee(uint256,bytes[])', async () => {
         it('1.6.2.1. Update fee successfully with valid signatures', async () => {
             const { deployer, admins, admin, governanceHub } = await beforeGovernanceHubTest();
 
@@ -561,6 +747,8 @@ describe('1.6. GovernanceHub', async () => {
         });
     });
 
+
+    /* --- Query --- */
     describe('1.6.3. getProposal(uint256)', async () => {
         it('1.6.3.1. Return correct proposal', async () => {
             const fixture = await beforeGovernanceHubTest();
@@ -579,7 +767,13 @@ describe('1.6. GovernanceHub', async () => {
                 duration: 1000,
                 admissionExpiry: timestamp + 2000,
             };
-            await callTransaction(getGovernanceHubTxByInput_Propose(governanceHub, proposer1, paramsInput, validator, {value: fee}));
+            await callTransaction(getGovernanceHubTxByInput_Propose(
+                governanceHub,
+                proposer1,
+                paramsInput,
+                validator,
+                { value: fee }
+            ));
             
             const proposal = await governanceHub.getProposal(1);
             expect(proposal.uuid).to.equal(paramsInput.uuid);
@@ -702,22 +896,34 @@ describe('1.6. GovernanceHub', async () => {
             });
             const { governanceHub, voter1, voter2, voter3 } = fixture;
 
-            await callTransaction(getGovernanceHubTx_Vote(governanceHub, voter1, {
-                proposalId: BigNumber.from(1),
-                voteOption: ProposalVoteOption.Approval
-            }));
+            await callTransaction(getGovernanceHubTx_Vote(
+                governanceHub,
+                voter1,
+                {
+                    proposalId: BigNumber.from(1),
+                    voteOption: ProposalVoteOption.Approval
+                }
+            ));
             expect(await governanceHub.getProposalVerdict(1)).to.equal(ProposalVerdict.Unsettled);
 
-            await callTransaction(getGovernanceHubTx_Vote(governanceHub, voter3, {
-                proposalId: BigNumber.from(1),
-                voteOption: ProposalVoteOption.Approval
-            }));
+            await callTransaction(getGovernanceHubTx_Vote(
+                governanceHub,
+                voter3,
+                {
+                    proposalId: BigNumber.from(1),
+                    voteOption: ProposalVoteOption.Approval
+                }
+            ));
             expect(await governanceHub.getProposalVerdict(1)).to.equal(ProposalVerdict.Passed);
 
-            await callTransaction(getGovernanceHubTx_Vote(governanceHub, voter2, {
-                proposalId: BigNumber.from(1),
-                voteOption: ProposalVoteOption.Disapproval
-            }));
+            await callTransaction(getGovernanceHubTx_Vote(
+                governanceHub,
+                voter2,
+                {
+                    proposalId: BigNumber.from(1),
+                    voteOption: ProposalVoteOption.Disapproval
+                }
+            ));
             expect(await governanceHub.getProposalVerdict(1)).to.equal(ProposalVerdict.Passed);
         });
 
@@ -728,22 +934,34 @@ describe('1.6. GovernanceHub', async () => {
             });
             const { governanceHub, voter1, voter2, voter3 } = fixture;
 
-            await callTransaction(getGovernanceHubTx_Vote(governanceHub, voter2, {
-                proposalId: BigNumber.from(1),
-                voteOption: ProposalVoteOption.Disapproval
-            }));
+            await callTransaction(getGovernanceHubTx_Vote(
+                governanceHub,
+                voter2,
+                {
+                    proposalId: BigNumber.from(1),
+                    voteOption: ProposalVoteOption.Disapproval
+                }
+            ));
             expect(await governanceHub.getProposalVerdict(1)).to.equal(ProposalVerdict.Unsettled);
 
-            await callTransaction(getGovernanceHubTx_Vote(governanceHub, voter3, {
-                proposalId: BigNumber.from(1),
-                voteOption: ProposalVoteOption.Disapproval
-            }));
+            await callTransaction(getGovernanceHubTx_Vote(
+                governanceHub,
+                voter3,
+                {
+                    proposalId: BigNumber.from(1),
+                    voteOption: ProposalVoteOption.Disapproval
+                }
+            ));
             expect(await governanceHub.getProposalVerdict(1)).to.equal(ProposalVerdict.Failed);
 
-            await callTransaction(getGovernanceHubTx_Vote(governanceHub, voter1, {
-                proposalId: BigNumber.from(1),
-                voteOption: ProposalVoteOption.Approval
-            }));
+            await callTransaction(getGovernanceHubTx_Vote(
+                governanceHub,
+                voter1,
+                {
+                    proposalId: BigNumber.from(1),
+                    voteOption: ProposalVoteOption.Approval
+                }
+            ));
             expect(await governanceHub.getProposalVerdict(1)).to.equal(ProposalVerdict.Failed);
         });
 
@@ -754,10 +972,14 @@ describe('1.6. GovernanceHub', async () => {
             });
             const { governanceHub, voter1 } = fixture;
             
-            await callTransaction(getGovernanceHubTx_Vote(governanceHub, voter1, {
-                proposalId: BigNumber.from(1),
-                voteOption: ProposalVoteOption.Disapproval
-            }));
+            await callTransaction(getGovernanceHubTx_Vote(
+                governanceHub,
+                voter1,
+                {
+                    proposalId: BigNumber.from(1),
+                    voteOption: ProposalVoteOption.Disapproval
+                }
+            ));
 
             const due = (await governanceHub.getProposal(1)).due;
             await time.increaseTo(due);
@@ -772,10 +994,14 @@ describe('1.6. GovernanceHub', async () => {
             });
             const { governanceHub, voter1 } = fixture;
             
-            await callTransaction(getGovernanceHubTx_Vote(governanceHub, voter1, {
-                proposalId: BigNumber.from(1),
-                voteOption: ProposalVoteOption.Disapproval
-            }));
+            await callTransaction(getGovernanceHubTx_Vote(
+                governanceHub,
+                voter1,
+                {
+                    proposalId: BigNumber.from(1),
+                    voteOption: ProposalVoteOption.Disapproval
+                }
+            ));
 
             expect(await governanceHub.getProposalVerdict(1)).to.equal(ProposalVerdict.Unsettled);
         });
@@ -787,16 +1013,24 @@ describe('1.6. GovernanceHub', async () => {
             });
             const { governanceHub, voter1, voter2 } = fixture;
 
-            await callTransaction(getGovernanceHubTx_Vote(governanceHub, voter2, {
-                proposalId: BigNumber.from(2),
-                voteOption: ProposalVoteOption.Disapproval
-            }));
+            await callTransaction(getGovernanceHubTx_Vote(
+                governanceHub,
+                voter2,
+                {
+                    proposalId: BigNumber.from(2),
+                    voteOption: ProposalVoteOption.Disapproval
+                }
+            ));
             expect(await governanceHub.getProposalVerdict(2)).to.equal(ProposalVerdict.Failed);
 
-            await callTransaction(getGovernanceHubTx_Vote(governanceHub, voter1, {
-                proposalId: BigNumber.from(2),
-                voteOption: ProposalVoteOption.Approval
-            }));
+            await callTransaction(getGovernanceHubTx_Vote(
+                governanceHub,
+                voter1,
+                {
+                    proposalId: BigNumber.from(2),
+                    voteOption: ProposalVoteOption.Approval
+                }
+            ));
             expect(await governanceHub.getProposalVerdict(2)).to.equal(ProposalVerdict.Failed);
         });
 
@@ -807,16 +1041,24 @@ describe('1.6. GovernanceHub', async () => {
             });
             const { governanceHub, voter1, voter2 } = fixture;
 
-            await callTransaction(getGovernanceHubTx_Vote(governanceHub, voter2, {
-                proposalId: BigNumber.from(2),
-                voteOption: ProposalVoteOption.Approval
-            }));
+            await callTransaction(getGovernanceHubTx_Vote(
+                governanceHub,
+                voter2,
+                {
+                    proposalId: BigNumber.from(2),
+                    voteOption: ProposalVoteOption.Approval
+                }
+            ));
             expect(await governanceHub.getProposalVerdict(2)).to.equal(ProposalVerdict.Passed);
 
-            await callTransaction(getGovernanceHubTx_Vote(governanceHub, voter1, {
-                proposalId: BigNumber.from(2),
-                voteOption: ProposalVoteOption.Disapproval
-            }));
+            await callTransaction(getGovernanceHubTx_Vote(
+                governanceHub,
+                voter1,
+                {
+                    proposalId: BigNumber.from(2),
+                    voteOption: ProposalVoteOption.Disapproval
+                }
+            ));
             expect(await governanceHub.getProposalVerdict(2)).to.equal(ProposalVerdict.Passed);
         });
 
@@ -827,10 +1069,14 @@ describe('1.6. GovernanceHub', async () => {
             });
             const { governanceHub, voter1 } = fixture;
 
-            await callTransaction(getGovernanceHubTx_Vote(governanceHub, voter1, {
-                proposalId: BigNumber.from(2),
-                voteOption: ProposalVoteOption.Disapproval
-            }));
+            await callTransaction(getGovernanceHubTx_Vote(
+                governanceHub,
+                voter1,
+                {
+                    proposalId: BigNumber.from(2),
+                    voteOption: ProposalVoteOption.Disapproval
+                }
+            ));
 
             const due = (await governanceHub.getProposal(2)).due;
             await time.increaseTo(due);
@@ -845,10 +1091,14 @@ describe('1.6. GovernanceHub', async () => {
             });
             const { governanceHub, voter1 } = fixture;
 
-            await callTransaction(getGovernanceHubTx_Vote(governanceHub, voter1, {
-                proposalId: BigNumber.from(2),
-                voteOption: ProposalVoteOption.Approval
-            }));
+            await callTransaction(getGovernanceHubTx_Vote(
+                governanceHub,
+                voter1,
+                {
+                    proposalId: BigNumber.from(2),
+                    voteOption: ProposalVoteOption.Approval
+                }
+            ));
 
             expect(await governanceHub.getProposalVerdict(2)).to.equal(ProposalVerdict.Unsettled);
         });
@@ -978,7 +1228,9 @@ describe('1.6. GovernanceHub', async () => {
         });
     });
 
-    describe('1.6.6. propose(address, uint256, address, bytes32, uint8, uint256, uint40, uint40, (uint256, uint256, bytes))', async () => {       
+
+    /* --- Command --- */
+    describe('1.6.6. propose(address,uint256,address,bytes32,uint8,uint256,uint40,uint40,(uint256,uint256,bytes))', async () => {       
         async function beforeProposeTest(fixture: GovernanceHubFixture): Promise<{ defaultParams: ProposeParamsInput }> {
             let timestamp = await time.latest() + 10;
             const { governor, operator1 } = fixture;
@@ -1018,7 +1270,13 @@ describe('1.6. GovernanceHub', async () => {
             };
 
             await time.setNextBlockTimestamp(timestamp);
-            const tx1 = await getGovernanceHubTxByInput_Propose(governanceHub, proposer1, paramsInput1, validator, {value: fee});
+            const tx1 = await getGovernanceHubTxByInput_Propose(
+                governanceHub,
+                proposer1,
+                paramsInput1,
+                validator,
+                { value: fee }
+            );
             const receipt1 = await tx1.wait();
             const gasFee1 = receipt1.gasUsed.mul(receipt1.effectiveGasPrice);
 
@@ -1074,7 +1332,13 @@ describe('1.6. GovernanceHub', async () => {
             }
             
             await time.setNextBlockTimestamp(timestamp);
-            const tx2 = await getGovernanceHubTxByInput_Propose(governanceHub, proposer2, paramsInput2, validator, {value: fee.add(ethers.utils.parseEther("1"))});
+            const tx2 = await getGovernanceHubTxByInput_Propose(
+                governanceHub,
+                proposer2,
+                paramsInput2,
+                validator,
+                { value: fee.add(ethers.utils.parseEther("1")) }
+            );
             const receipt2 = await tx2.wait();
             const gasFee2 = receipt2.gasUsed.mul(receipt2.effectiveGasPrice);
 
@@ -1145,17 +1409,22 @@ describe('1.6. GovernanceHub', async () => {
             const { defaultParams } = await beforeProposeTest(fixture);
 
             await time.setNextBlockTimestamp(timestamp);
-            await expect(getGovernanceHubTxByInput_Propose(governanceHub, proposer1, defaultParams, validator, {value: fee}))
-                .to.be.revertedWith('Pausable: paused');
+            await expect(getGovernanceHubTxByInput_Propose(
+                governanceHub,
+                proposer1,
+                defaultParams,
+                validator,
+                { value: fee }
+            )).to.be.revertedWith('Pausable: paused');
         });
         
         it('1.6.6.4. Propose unsuccessfully with invalid governor', async () => {
             const fixture = await beforeGovernanceHubTest();
-            const { admin, admins, proposer1, governor, governanceHub, validator } = fixture;
+            const { deployer, admin, admins, proposer1, governor, governanceHub, validator } = fixture;
 
             await callTransaction(getAdminTxByInput_AuthorizeGovernors(
                 admin,
-                proposer1,
+                deployer,
                 {
                     accounts: [governor.address],
                     isGovernor: false,
@@ -1169,8 +1438,13 @@ describe('1.6. GovernanceHub', async () => {
             const { defaultParams } = await beforeProposeTest(fixture);
 
             await time.setNextBlockTimestamp(timestamp);
-            await expect(getGovernanceHubTxByInput_Propose(governanceHub, proposer1, defaultParams, validator, {value: fee}))
-                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
+            await expect(getGovernanceHubTxByInput_Propose(
+                governanceHub,
+                proposer1,
+                defaultParams,
+                validator,
+                { value: fee }
+            )).to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
         });
 
         it('1.6.6.5. Propose unsuccessfully with unavailable token', async () => {
@@ -1181,19 +1455,27 @@ describe('1.6. GovernanceHub', async () => {
 
             const { defaultParams } = await beforeProposeTest(fixture);
 
-            const paramsInput1: ProposeParamsInput = {
-                ...defaultParams,
-                tokenId: ethers.BigNumber.from(0),
-            }
-            await expect(getGovernanceHubTxByInput_Propose(governanceHub, proposer1, paramsInput1, validator, {value: fee}))
-                .to.be.revertedWithCustomError(governanceHub, 'UnavailableToken');
+            await expect(getGovernanceHubTxByInput_Propose(
+                governanceHub,
+                proposer1,
+                {
+                    ...defaultParams,
+                    tokenId: ethers.BigNumber.from(0),
+                },
+                validator,
+                { value: fee }
+            )).to.be.revertedWithCustomError(governanceHub, 'UnavailableToken');
 
-            const paramsInput2: ProposeParamsInput = {
-                ...defaultParams,
-                tokenId: ethers.BigNumber.from(100),
-            }
-            await expect(getGovernanceHubTxByInput_Propose(governanceHub, proposer1, paramsInput2, validator, {value: fee}))
-                .to.be.revertedWithCustomError(governanceHub, 'UnavailableToken');
+            await expect(getGovernanceHubTxByInput_Propose(
+                governanceHub,
+                proposer1,
+                {
+                    ...defaultParams,
+                    tokenId: ethers.BigNumber.from(100),
+                },
+                validator,
+                { value: fee }
+            )).to.be.revertedWithCustomError(governanceHub, 'UnavailableToken');
         });
 
         it('1.6.6.6. Propose unsuccessfully with invalid quorum rate', async () => {
@@ -1202,16 +1484,20 @@ describe('1.6. GovernanceHub', async () => {
 
             let timestamp = await time.latest() + 10;
             const { defaultParams } = await beforeProposeTest(fixture);
-            const paramsInput: ProposeParamsInput = {
-                ...defaultParams,
-                quorumRate: ethers.utils.parseEther("1").add(1),
-            }
 
             const fee = await governanceHub.fee();
 
             await time.setNextBlockTimestamp(timestamp);
-            await expect(getGovernanceHubTxByInput_Propose(governanceHub, proposer1, paramsInput, validator, {value: fee}))
-                .to.be.revertedWithCustomError(governanceHub, 'InvalidInput');
+            await expect(getGovernanceHubTxByInput_Propose(
+                governanceHub,
+                proposer1,
+                {
+                    ...defaultParams,
+                    quorumRate: ethers.utils.parseEther("1").add(1),
+                },
+                validator,
+                { value: fee }
+            )).to.be.revertedWithCustomError(governanceHub, 'InvalidInput');
         });
         
         it('1.6.6.7. Propose unsuccessfully with invalid admission expiry timestamp', async () => {
@@ -1223,14 +1509,18 @@ describe('1.6. GovernanceHub', async () => {
             const fee = await governanceHub.fee();
 
             let timestamp = await time.latest() + 10;
-            const paramsInput: ProposeParamsInput = {
-                ...defaultParams,
-                admissionExpiry: timestamp - 1,
-            }
 
             await time.setNextBlockTimestamp(timestamp);
-            await expect(getGovernanceHubTxByInput_Propose(governanceHub, proposer1, paramsInput, validator, {value: fee}))
-                .to.be.revertedWithCustomError(governanceHub, 'InvalidTimestamp');
+            await expect(getGovernanceHubTxByInput_Propose(
+                governanceHub,
+                proposer1,
+                {
+                    ...defaultParams,
+                    admissionExpiry: timestamp - 1,
+                },
+                validator,
+                { value: fee }
+            )).to.be.revertedWithCustomError(governanceHub, 'InvalidTimestamp');
         });
 
         it('1.6.6.8. Propose unsuccessfully when refund native token failed', async () => {
@@ -1243,8 +1533,13 @@ describe('1.6. GovernanceHub', async () => {
 
             const { defaultParams } = await beforeProposeTest(fixture);
 
-            await expect(getCallGovernanceHubTxByInput_Propose(governanceHub, failReceiver, defaultParams, validator, {value: fee.mul(2)}))
-                .to.be.revertedWithCustomError(governanceHub, 'FailedRefund');
+            await expect(getCallGovernanceHubTxByInput_Propose(
+                governanceHub,
+                failReceiver,
+                defaultParams,
+                validator,
+                { value: fee.mul(2) }
+            )).to.be.revertedWithCustomError(governanceHub, 'FailedRefund');
         })
 
         it('1.6.6.9. Propose unsuccessfully when the contract is reentered', async () => {
@@ -1264,14 +1559,19 @@ describe('1.6. GovernanceHub', async () => {
                 fixture,
                 reentrancy,
                 async () => {
-                    await expect(getCallGovernanceHubTxByInput_Propose(governanceHub, reentrancy, defaultParams, validator, {value: fee.mul(2)}))
-                        .to.be.revertedWithCustomError(governanceHub, 'FailedRefund');
+                    await expect(getCallGovernanceHubTxByInput_Propose(
+                        governanceHub,
+                        reentrancy,
+                        defaultParams,
+                        validator,
+                        { value: fee.mul(2) }
+                    )).to.be.revertedWithCustomError(governanceHub, 'FailedRefund');
                 }
             );
         });
     });
 
-    describe('1.6.7. admit(uint256, string, string, address, (uint256, uint256, bytes))', async () => {
+    describe('1.6.7. admit(uint256,string,string,address,(uint256,uint256,bytes))', async () => {
         async function beforeAdmitTest(fixture: GovernanceHubFixture): Promise<{defaultParams: AdmitParamsInput}> {
             const defaultParams = {
                 proposalId: BigNumber.from(1),
@@ -1386,19 +1686,25 @@ describe('1.6. GovernanceHub', async () => {
             const { governanceHub, custodian1, custodian2, validator } = fixture;
 
             const { defaultParams } = await beforeAdmitTest(fixture);
-            const paramsInput1: AdmitParamsInput = {
-                ...defaultParams,
-                proposalId: BigNumber.from(0),
-            }
-            await expect(getGovernanceHubTxByInput_Admit(governanceHub, custodian1, paramsInput1, validator))
-                .to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
+            await expect(getGovernanceHubTxByInput_Admit(
+                governanceHub,
+                custodian1,
+                {
+                    ...defaultParams,
+                    proposalId: BigNumber.from(0),
+                },
+                validator
+            )).to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
 
-            const paramsInput2: AdmitParamsInput = {
-                ...defaultParams,
-                proposalId: BigNumber.from(100),
-            }
-            await expect(getGovernanceHubTxByInput_Admit(governanceHub, custodian2, paramsInput2, validator))
-                .to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
+            await expect(getGovernanceHubTxByInput_Admit(
+                governanceHub,
+                custodian2,
+                {
+                    ...defaultParams,
+                    proposalId: BigNumber.from(100),
+                },
+                validator
+            )).to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
         });
 
         it('1.6.7.4. Admit unsuccessfully by unauthorized sender', async () => {
@@ -1526,22 +1832,28 @@ describe('1.6. GovernanceHub', async () => {
             await time.setNextBlockTimestamp(timePivot1);
 
             const { defaultParams } = await beforeAdmitTest(fixture);
-            const paramsInput1: AdmitParamsInput = {
-                ...defaultParams,
-                proposalId: BigNumber.from(1),
-            }
-            await expect(getGovernanceHubTxByInput_Admit(governanceHub, custodian1, paramsInput1, validator))
-                .to.be.revertedWithCustomError(governanceHub, 'Timeout');
+            await expect(getGovernanceHubTxByInput_Admit(
+                governanceHub,
+                custodian1,
+                {
+                    ...defaultParams,
+                    proposalId: BigNumber.from(1),
+                },
+                validator
+            )).to.be.revertedWithCustomError(governanceHub, 'Timeout');
 
             const timePivot2 = (await governanceHub.getProposal(2)).timePivot;
             await time.setNextBlockTimestamp(timePivot2 + 1);
 
-            const paramsInput2: AdmitParamsInput = {
-                ...defaultParams,
-                proposalId: BigNumber.from(2),
-            }
-            await expect(getGovernanceHubTxByInput_Admit(governanceHub, custodian2, paramsInput2, validator))
-                .to.be.revertedWithCustomError(governanceHub, 'Timeout');
+            await expect(getGovernanceHubTxByInput_Admit(
+                governanceHub,
+                custodian2,
+                {
+                    ...defaultParams,
+                    proposalId: BigNumber.from(2),
+                },
+                validator
+            )).to.be.revertedWithCustomError(governanceHub, 'Timeout');
         });
 
         it('1.6.7.13. Admit unsuccessfully with no longer available token', async () => {
@@ -1574,7 +1886,7 @@ describe('1.6. GovernanceHub', async () => {
         });
     });
 
-    describe('1.6.8. disqualify(uint256, string, string, (uint256, uint256, bytes))', async () => {
+    describe('1.6.8. disqualify(uint256,string,string,(uint256,uint256,bytes))', async () => {
         async function beforeDisqualifyTest(fixture: GovernanceHubFixture): Promise<{defaultParams: DisqualifyParamsInput }> {
             const defaultParams: DisqualifyParamsInput = {
                 proposalId: BigNumber.from(1),
@@ -1666,8 +1978,7 @@ describe('1.6. GovernanceHub', async () => {
                 ...defaultParams,
                 validation: await getDisqualifyValidation(governanceHub, defaultParams, validator, false)
             }
-
-            await expect(getGovernanceTx_Disqualify(governanceHub, manager, params))
+            await expect(getGovernanceHubTx_Disqualify(governanceHub, manager, params))
                 .to.be.revertedWithCustomError(governanceHub, 'InvalidSignature');
         });
 
@@ -1676,19 +1987,25 @@ describe('1.6. GovernanceHub', async () => {
             const { manager, governanceHub, validator } = fixture;
 
             const { defaultParams } = await beforeDisqualifyTest(fixture);
-            const paramsInput1: DisqualifyParamsInput = {
-                ...defaultParams,
-                proposalId: BigNumber.from(0),
-            }
-            await expect(getGovernanceHubTxByInput_Disqualify(governanceHub, manager, paramsInput1, validator))
-                .to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
+            await expect(getGovernanceHubTxByInput_Disqualify(
+                governanceHub,
+                manager,
+                {
+                    ...defaultParams,
+                    proposalId: BigNumber.from(0),
+                },
+                validator
+            )).to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
 
-            const paramsInput2: DisqualifyParamsInput = {
-                ...defaultParams,
-                proposalId: BigNumber.from(100),
-            }
-            await expect(getGovernanceHubTxByInput_Disqualify(governanceHub, manager, paramsInput2, validator))
-                .to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
+            await expect(getGovernanceHubTxByInput_Disqualify(
+                governanceHub,
+                manager,
+                {
+                    ...defaultParams,
+                    proposalId: BigNumber.from(100),
+                },
+                validator
+            )).to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
         });
 
         it('1.6.8.5. Disqualify unsuccessfully when zone is not active', async () => {
@@ -1709,11 +2026,16 @@ describe('1.6. GovernanceHub', async () => {
             });
             const { deployer, admin, admins, manager, zone, governanceHub, validator } = fixture;
 
-            await callTransaction(getAdminTxByInput_ActivateIn(admin, deployer, {
-                zone,
-                accounts: [manager.address],
-                isActive: false,
-            }, admins));
+            await callTransaction(getAdminTxByInput_ActivateIn(
+                admin,
+                deployer,
+                {
+                    zone,
+                    accounts: [manager.address],
+                    isActive: false,
+                },
+                admins
+            ));
 
             const { defaultParams } = await beforeDisqualifyTest(fixture);
             await expect(getGovernanceHubTxByInput_Disqualify(governanceHub, manager, defaultParams, validator))
@@ -1853,7 +2175,7 @@ describe('1.6. GovernanceHub', async () => {
         });
     });
 
-    describe('1.6.9. vote(uint256, uint8)', async () => {
+    describe('1.6.9. vote(uint256,uint8)', async () => {
         it('1.6.9.1. Vote successfully', async () => {
             const fixture = await beforeGovernanceHubTest({
                 addSampleProposals: true,
@@ -1870,10 +2192,14 @@ describe('1.6. GovernanceHub', async () => {
             const weight2 = await governor.equityOfAt(voter2.address, 1, timestamp);
             const weight3 = await governor.equityOfAt(voter3.address, 1, timestamp);
 
-            const tx1 = await getGovernanceHubTx_Vote(governanceHub, voter1, {
-                proposalId: BigNumber.from(1),
-                voteOption: ProposalVoteOption.Approval,
-            });
+            const tx1 = await getGovernanceHubTx_Vote(
+                governanceHub,
+                voter1,
+                {
+                    proposalId: BigNumber.from(1),
+                    voteOption: ProposalVoteOption.Approval,
+                }
+            );
             await tx1.wait();
 
             await expect(tx1).to.emit(governanceHub, 'ProposalVote').withArgs(
@@ -1897,10 +2223,14 @@ describe('1.6. GovernanceHub', async () => {
             timestamp += 10;
             await time.setNextBlockTimestamp(timestamp);
             
-            const tx2 = await getGovernanceHubTx_Vote(governanceHub, voter2, {
-                proposalId: BigNumber.from(1),
-                voteOption: ProposalVoteOption.Disapproval,
-            });
+            const tx2 = await getGovernanceHubTx_Vote(
+                governanceHub,
+                voter2,
+                {
+                    proposalId: BigNumber.from(1),
+                    voteOption: ProposalVoteOption.Disapproval,
+                }
+            );
             await tx2.wait();
 
             await expect(tx2).to.emit(governanceHub, 'ProposalVote').withArgs(
@@ -1924,10 +2254,14 @@ describe('1.6. GovernanceHub', async () => {
             timestamp += 10;
             await time.setNextBlockTimestamp(timestamp);
 
-            const tx3 = await getGovernanceHubTx_Vote(governanceHub, voter3, {
-                proposalId: BigNumber.from(1),
-                voteOption: ProposalVoteOption.Approval,
-            });
+            const tx3 = await getGovernanceHubTx_Vote(
+                governanceHub,
+                voter3,
+                {
+                    proposalId: BigNumber.from(1),
+                    voteOption: ProposalVoteOption.Approval,
+                }
+            );
             await tx3.wait();
 
             await expect(tx3).to.emit(governanceHub, 'ProposalVote').withArgs(
@@ -1952,14 +2286,23 @@ describe('1.6. GovernanceHub', async () => {
             const fixture = await beforeGovernanceHubTest();
             const { governanceHub, voter1, voter2 } = fixture;
 
-            await expect(getGovernanceHubTx_Vote(governanceHub, voter1, {
-                proposalId: BigNumber.from(0),
-                voteOption: ProposalVoteOption.Approval,
-            })).to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
-            await expect(getGovernanceHubTx_Vote(governanceHub, voter2, {
-                proposalId: BigNumber.from(100),
-                voteOption: ProposalVoteOption.Disapproval,
-            })).to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
+            await expect(getGovernanceHubTx_Vote(
+                governanceHub,
+                voter1,
+                {
+                    proposalId: BigNumber.from(0),
+                    voteOption: ProposalVoteOption.Approval,
+                }
+            )).to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
+
+            await expect(getGovernanceHubTx_Vote(
+                governanceHub,
+                voter2,
+                {
+                    proposalId: BigNumber.from(100),
+                    voteOption: ProposalVoteOption.Disapproval,
+                }
+            )).to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
         });
 
         it('1.6.9.3. Vote unsuccessfully when paused', async () => {
@@ -1970,10 +2313,14 @@ describe('1.6. GovernanceHub', async () => {
             });
             const { governanceHub, voter1 } = fixture;
 
-            await expect(getGovernanceHubTx_Vote(governanceHub, voter1, {
-                proposalId: BigNumber.from(1),
-                voteOption: ProposalVoteOption.Approval
-            })).to.be.revertedWith('Pausable: paused');
+            await expect(getGovernanceHubTx_Vote(
+                governanceHub,
+                voter1,
+                {
+                    proposalId: BigNumber.from(1),
+                    voteOption: ProposalVoteOption.Approval
+                }
+            )).to.be.revertedWith('Pausable: paused');
         });
 
         it('1.6.9.4. Vote unsuccessfully when proposal is pending', async () => {
@@ -1982,14 +2329,23 @@ describe('1.6. GovernanceHub', async () => {
             });
             const { governanceHub, voter1, voter2 } = fixture;
 
-            await expect(getGovernanceHubTx_Vote(governanceHub, voter1, {
-                proposalId: BigNumber.from(1),
-                voteOption: ProposalVoteOption.Approval
-            })).to.be.revertedWithCustomError(governanceHub, 'InvalidVoting');
-            await expect(getGovernanceHubTx_Vote(governanceHub, voter2, {
-                proposalId: BigNumber.from(2),
-                voteOption: ProposalVoteOption.Disapproval
-            })).to.be.revertedWithCustomError(governanceHub, 'InvalidVoting');
+            await expect(getGovernanceHubTx_Vote(
+                governanceHub,
+                voter1,
+                {
+                    proposalId: BigNumber.from(1),
+                    voteOption: ProposalVoteOption.Approval
+                }
+            )).to.be.revertedWithCustomError(governanceHub, 'InvalidVoting');
+
+            await expect(getGovernanceHubTx_Vote(
+                governanceHub,
+                voter2,
+                {
+                    proposalId: BigNumber.from(2),
+                    voteOption: ProposalVoteOption.Disapproval
+                }
+            )).to.be.revertedWithCustomError(governanceHub, 'InvalidVoting');
         });
 
         it('1.6.9.5. Vote unsuccessfully when proposal is executing', async () => {
@@ -2001,10 +2357,14 @@ describe('1.6. GovernanceHub', async () => {
             });
             const { governanceHub, voter3 } = fixture;
 
-            await expect(getGovernanceHubTx_Vote(governanceHub, voter3, {
-                proposalId: BigNumber.from(2),
-                voteOption: ProposalVoteOption.Approval
-            })).to.be.revertedWithCustomError(governanceHub, 'InvalidVoting');
+            await expect(getGovernanceHubTx_Vote(
+                governanceHub,
+                voter3,
+                {
+                    proposalId: BigNumber.from(2),
+                    voteOption: ProposalVoteOption.Approval
+                }
+            )).to.be.revertedWithCustomError(governanceHub, 'InvalidVoting');
         });
 
         it('1.6.9.6. Vote unsuccessfully when proposal is successfully executed', async () => {
@@ -2017,10 +2377,14 @@ describe('1.6. GovernanceHub', async () => {
             });
             const { governanceHub, voter3 } = fixture;
 
-            await expect(getGovernanceHubTx_Vote(governanceHub, voter3, {
-                proposalId: BigNumber.from(2),
-                voteOption: ProposalVoteOption.Approval
-            })).to.be.revertedWithCustomError(governanceHub, 'InvalidVoting');
+            await expect(getGovernanceHubTx_Vote(
+                governanceHub,
+                voter3,
+                {
+                    proposalId: BigNumber.from(2),
+                    voteOption: ProposalVoteOption.Approval
+                }
+            )).to.be.revertedWithCustomError(governanceHub, 'InvalidVoting');
         });
 
         it('1.6.9.7. Vote unsuccessfully when proposal is unsuccessfully executed', async () => {
@@ -2033,10 +2397,14 @@ describe('1.6. GovernanceHub', async () => {
             });
             const { governanceHub, voter3 } = fixture;
 
-            await expect(getGovernanceHubTx_Vote(governanceHub, voter3, {
-                proposalId: BigNumber.from(2),
-                voteOption: ProposalVoteOption.Approval
-            })).to.be.revertedWithCustomError(governanceHub, 'InvalidVoting');
+            await expect(getGovernanceHubTx_Vote(
+                governanceHub,
+                voter3,
+                {
+                    proposalId: BigNumber.from(2),
+                    voteOption: ProposalVoteOption.Approval
+                }
+            )).to.be.revertedWithCustomError(governanceHub, 'InvalidVoting');
         });
         
         it('1.6.9.8. Vote unsuccessfully when proposal is disqualified', async () => {
@@ -2046,10 +2414,14 @@ describe('1.6. GovernanceHub', async () => {
             });
             const { governanceHub, voter3 } = fixture;
 
-            await expect(getGovernanceHubTx_Vote(governanceHub, voter3, {
-                proposalId: BigNumber.from(2),
-                voteOption: ProposalVoteOption.Approval
-            })).to.be.revertedWithCustomError(governanceHub, 'InvalidVoting');
+            await expect(getGovernanceHubTx_Vote(
+                governanceHub,
+                voter3,
+                {
+                    proposalId: BigNumber.from(2),
+                    voteOption: ProposalVoteOption.Approval
+                }
+            )).to.be.revertedWithCustomError(governanceHub, 'InvalidVoting');
         });
 
         it('1.6.9.9. Vote unsuccessfully when proposal is rejected', async () => {
@@ -2060,10 +2432,14 @@ describe('1.6. GovernanceHub', async () => {
             });
             const { governanceHub, voter3 } = fixture;
 
-            await expect(getGovernanceHubTx_Vote(governanceHub, voter3, {
-                proposalId: BigNumber.from(2),
-                voteOption: ProposalVoteOption.Approval
-            })).to.be.revertedWithCustomError(governanceHub, 'InvalidVoting');
+            await expect(getGovernanceHubTx_Vote(
+                governanceHub,
+                voter3,
+                {
+                    proposalId: BigNumber.from(2),
+                    voteOption: ProposalVoteOption.Approval
+                }
+            )).to.be.revertedWithCustomError(governanceHub, 'InvalidVoting');
         });
 
         it('1.6.9.10. Vote unsuccessfully when voting is overdue', async () => {
@@ -2077,18 +2453,26 @@ describe('1.6. GovernanceHub', async () => {
             let due = (await governanceHub.getProposal(1)).due;
             await time.setNextBlockTimestamp(due);
 
-            await expect(getGovernanceHubTx_Vote(governanceHub, voter1, {
-                proposalId: BigNumber.from(1),
-                voteOption: ProposalVoteOption.Approval
-            })).to.be.revertedWithCustomError(governanceHub, 'Overdue');
+            await expect(getGovernanceHubTx_Vote(
+                governanceHub,
+                voter1,
+                {
+                    proposalId: BigNumber.from(1),
+                    voteOption: ProposalVoteOption.Approval
+                }
+            )).to.be.revertedWithCustomError(governanceHub, 'Overdue');
 
             due += 10;
             await time.setNextBlockTimestamp(due);
 
-            await expect(getGovernanceHubTx_Vote(governanceHub, voter1, {
-                proposalId: BigNumber.from(1),
-                voteOption: ProposalVoteOption.Approval
-            })).to.be.revertedWithCustomError(governanceHub, 'Overdue');
+            await expect(getGovernanceHubTx_Vote(
+                governanceHub,
+                voter1,
+                {
+                    proposalId: BigNumber.from(1),
+                    voteOption: ProposalVoteOption.Approval
+                }
+            )).to.be.revertedWithCustomError(governanceHub, 'Overdue');
         });
 
         it('1.6.9.11. Vote unsuccessfully when sender already voted', async () => {
@@ -2098,19 +2482,31 @@ describe('1.6. GovernanceHub', async () => {
             });
             const { governanceHub, voter1 } = fixture;
 
-            await callTransaction(getGovernanceHubTx_Vote(governanceHub, voter1, {
-                proposalId: BigNumber.from(1),
-                voteOption: ProposalVoteOption.Approval
-            }));
+            await callTransaction(getGovernanceHubTx_Vote(
+                governanceHub,
+                voter1,
+                {
+                    proposalId: BigNumber.from(1),
+                    voteOption: ProposalVoteOption.Approval
+                }
+            ));
 
-            await expect(getGovernanceHubTx_Vote(governanceHub, voter1, {
-                proposalId: BigNumber.from(1),
-                voteOption: ProposalVoteOption.Approval
-            })).to.be.revertedWithCustomError(governanceHub, 'AlreadyVoted');
-            await expect(getGovernanceHubTx_Vote(governanceHub, voter1, {
-                proposalId: BigNumber.from(1),
-                voteOption: ProposalVoteOption.Disapproval
-            })).to.be.revertedWithCustomError(governanceHub, 'AlreadyVoted');
+            await expect(getGovernanceHubTx_Vote(
+                governanceHub,
+                voter1,
+                {
+                    proposalId: BigNumber.from(1),
+                    voteOption: ProposalVoteOption.Approval
+                }
+            )).to.be.revertedWithCustomError(governanceHub, 'AlreadyVoted');
+            await expect(getGovernanceHubTx_Vote(
+                governanceHub,
+                voter1,
+                {
+                    proposalId: BigNumber.from(1),
+                    voteOption: ProposalVoteOption.Disapproval
+                }
+            )).to.be.revertedWithCustomError(governanceHub, 'AlreadyVoted');
         });
 
         it('1.6.9.12. Vote unsuccessfully with no longer available token', async () => {
@@ -2123,14 +2519,23 @@ describe('1.6. GovernanceHub', async () => {
             governor.isAvailable.whenCalledWith(1).returns(false);
             governor.isAvailable.whenCalledWith(2).returns(false);
 
-            await expect(getGovernanceHubTx_Vote(governanceHub, voter1, {
-                proposalId: BigNumber.from(1),
-                voteOption: ProposalVoteOption.Approval
-            })).to.be.revertedWithCustomError(governanceHub, 'UnavailableToken');
-            await expect(getGovernanceHubTx_Vote(governanceHub, voter1, {
-                proposalId: BigNumber.from(2),
-                voteOption: ProposalVoteOption.Disapproval
-            })).to.be.revertedWithCustomError(governanceHub, 'UnavailableToken');
+            await expect(getGovernanceHubTx_Vote(
+                governanceHub,
+                voter1,
+                {
+                    proposalId: BigNumber.from(1),
+                    voteOption: ProposalVoteOption.Approval
+                }
+            )).to.be.revertedWithCustomError(governanceHub, 'UnavailableToken');
+
+            await expect(getGovernanceHubTx_Vote(
+                governanceHub,
+                voter1,
+                {
+                    proposalId: BigNumber.from(2),
+                    voteOption: ProposalVoteOption.Disapproval
+                }
+            )).to.be.revertedWithCustomError(governanceHub, 'UnavailableToken');
         });
 
         it('1.6.9.13. Vote unsuccessfully when sender has no vote power', async () => {
@@ -2140,10 +2545,14 @@ describe('1.6. GovernanceHub', async () => {
             });
             const { governanceHub, proposer2 } = fixture;
             
-            await expect(getGovernanceHubTx_Vote(governanceHub, proposer2, {
-                proposalId: BigNumber.from(1),
-                voteOption: ProposalVoteOption.Approval
-            })).to.be.revertedWithCustomError(governanceHub, 'NoVotingPower');
+            await expect(getGovernanceHubTx_Vote(
+                governanceHub,
+                proposer2,
+                {
+                    proposalId: BigNumber.from(1),
+                    voteOption: ProposalVoteOption.Approval
+                }
+            )).to.be.revertedWithCustomError(governanceHub, 'NoVotingPower');
         });
 
         it('1.6.9.14. Vote unsuccessfully when sum of vote exceed total vote power', async () => {
@@ -2153,34 +2562,52 @@ describe('1.6. GovernanceHub', async () => {
             });
             const { governanceHub, governor, voter1, voter2, voter3 } = fixture;
 
-            await callTransaction(getGovernanceHubTx_Vote(governanceHub, voter1, {
-                proposalId: BigNumber.from(1),
-                voteOption: ProposalVoteOption.Approval
-            }));
-            await callTransaction(getGovernanceHubTx_Vote(governanceHub, voter2, {
-                proposalId: BigNumber.from(1),
-                voteOption: ProposalVoteOption.Disapproval
-            }));
+            await callTransaction(getGovernanceHubTx_Vote(
+                governanceHub,
+                voter1,
+                {
+                    proposalId: BigNumber.from(1),
+                    voteOption: ProposalVoteOption.Approval
+                }
+            ));
+
+            await callTransaction(getGovernanceHubTx_Vote(
+                governanceHub,
+                voter2,
+                {
+                    proposalId: BigNumber.from(1),
+                    voteOption: ProposalVoteOption.Disapproval
+                }
+            ));
 
             let timestamp = (await governanceHub.getProposal(1)).timePivot;
 
             const voter3Vote = await governor.equityOfAt(voter3.address, 1, timestamp);
             governor.equityOfAt.whenCalledWith(voter3.address, 1, timestamp).returns(voter3Vote.add(1));
 
-            await expect(getGovernanceHubTx_Vote(governanceHub, voter3, {
-                proposalId: BigNumber.from(1),
-                voteOption: ProposalVoteOption.Approval
-            })).to.be.revertedWithCustomError(governanceHub, 'ConflictedWeight');
-            await expect(getGovernanceHubTx_Vote(governanceHub, voter3, {
-                proposalId: BigNumber.from(1),
-                voteOption: ProposalVoteOption.Disapproval
-            })).to.be.revertedWithCustomError(governanceHub, 'ConflictedWeight');
+            await expect(getGovernanceHubTx_Vote(
+                governanceHub,
+                voter3,
+                {
+                    proposalId: BigNumber.from(1),
+                    voteOption: ProposalVoteOption.Approval
+                }
+            )).to.be.revertedWithCustomError(governanceHub, 'ConflictedWeight');
+
+            await expect(getGovernanceHubTx_Vote(
+                governanceHub,
+                voter3,
+                {
+                    proposalId: BigNumber.from(1),
+                    voteOption: ProposalVoteOption.Disapproval
+                }
+            )).to.be.revertedWithCustomError(governanceHub, 'ConflictedWeight');
 
             governor.equityOfAt.reset();
         }); 
     });
 
-    describe('1.6.10. safeVote(uint256, uint8, bytes32)', async () => {
+    describe('1.6.10. safeVote(uint256,uint8,bytes32)', async () => {
         it('1.6.10.1. Safe vote successfully', async () => {
             const fixture = await beforeGovernanceHubTest({
                 addSampleProposals: true,
@@ -2201,7 +2628,7 @@ describe('1.6. GovernanceHub', async () => {
                 proposalId: BigNumber.from(1),
                 voteOption: ProposalVoteOption.Approval,
             };
-            const tx1 = await getSafeVoteTxByParams(governanceHub, voter1, params1);
+            const tx1 = await getGovernanceHubTxByParams_SafeVote(governanceHub, voter1, params1);
             await tx1.wait();
 
             await expect(tx1).to.emit(governanceHub, 'ProposalVote').withArgs(
@@ -2229,7 +2656,7 @@ describe('1.6. GovernanceHub', async () => {
                 proposalId: BigNumber.from(1),
                 voteOption: ProposalVoteOption.Disapproval,
             }
-            const tx2 = await getSafeVoteTxByParams(governanceHub, voter2, params2);
+            const tx2 = await getGovernanceHubTxByParams_SafeVote(governanceHub, voter2, params2);
             await tx2.wait();
 
             await expect(tx2).to.emit(governanceHub, 'ProposalVote').withArgs(
@@ -2257,7 +2684,7 @@ describe('1.6. GovernanceHub', async () => {
                 proposalId: BigNumber.from(1),
                 voteOption: ProposalVoteOption.Approval,
             }
-            const tx3 = await getSafeVoteTxByParams(governanceHub, voter3, params3);
+            const tx3 = await getGovernanceHubTxByParams_SafeVote(governanceHub, voter3, params3);
             await tx3.wait();
 
             await expect(tx3).to.emit(governanceHub, 'ProposalVote').withArgs(
@@ -2285,24 +2712,30 @@ describe('1.6. GovernanceHub', async () => {
             });
             const { governanceHub, voter1 } = fixture;
 
-            const params: VoteParams = {
-                proposalId: BigNumber.from(1),
-                voteOption: ProposalVoteOption.Approval,
-            }
-            await expect(getSafeVoteTxByParams(governanceHub, voter1, params))
-                .to.be.revertedWithCustomError(governanceHub, 'BadAnchor');
+            await expect(getGovernanceHubTx_SafeVote(
+                governanceHub,
+                voter1,
+                {
+                    proposalId: BigNumber.from(1),
+                    voteOption: ProposalVoteOption.Approval,
+                    anchor: ethers.utils.formatBytes32String("Blockchain"),
+                }
+            )).to.be.revertedWithCustomError(governanceHub, 'BadAnchor');
         });
 
         it('1.6.10.3. Safe vote unsuccessfully with invalid proposal id', async () => {
             const fixture = await beforeGovernanceHubTest();
             const { governanceHub, voter1 } = fixture;
 
-            const params: VoteParams = {
-                proposalId: BigNumber.from(0),
-                voteOption: ProposalVoteOption.Approval,
-            }
-            await expect(getSafeVoteTxByParams(governanceHub, voter1, params))
-                .to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
+            await expect(getGovernanceHubTx_SafeVote(
+                governanceHub,
+                voter1,
+                {
+                    proposalId: BigNumber.from(0),
+                    voteOption: ProposalVoteOption.Approval,
+                    anchor: ethers.utils.formatBytes32String("Blockchain"),
+                }
+            )).to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
         });
 
         it('1.6.10.4. Safe vote unsuccessfully when paused', async () => {
@@ -2313,16 +2746,18 @@ describe('1.6. GovernanceHub', async () => {
             });
             const { governanceHub, voter1 } = fixture;
 
-            const params: VoteParams = {
-                proposalId: BigNumber.from(1),
-                voteOption: ProposalVoteOption.Approval,
-            }
-            await expect(getSafeVoteTxByParams(governanceHub, voter1, params))
-                .to.be.revertedWith('Pausable: paused');
+            await expect(getGovernanceHubTxByParams_SafeVote(
+                governanceHub,
+                voter1,
+                {
+                    proposalId: BigNumber.from(1),
+                    voteOption: ProposalVoteOption.Approval,
+                }
+            )).to.be.revertedWith('Pausable: paused');
         });    
     });
 
-    describe('1.6.11. contributeBudget(uint256, uint256)', async () => {
+    describe('1.6.11. contributeBudget(uint256,uint256)', async () => {
         it('1.6.11.1. Contribute budget successfully', async () => {
             const fixture = await beforeGovernanceHubTest({
                 addSampleProposals: true,
@@ -2339,7 +2774,7 @@ describe('1.6. GovernanceHub', async () => {
                 proposalId: BigNumber.from(1),
                 value: BigNumber.from(value1),
             }
-            const tx1 = await getContributeBudgetTx(governanceHub, voter1, params1, { value: params1.value });
+            const tx1 = await getGovernanceHubTx_ContributeBudget(governanceHub, voter1, params1, { value: params1.value });
             const receipt1 = await tx1.wait();
             const gasFee1 = receipt1.gasUsed.mul(receipt1.effectiveGasPrice);
 
@@ -2365,7 +2800,7 @@ describe('1.6. GovernanceHub', async () => {
                 proposalId: BigNumber.from(1),
                 value: BigNumber.from(value2),
             }
-            const tx2 = await getContributeBudgetTx(governanceHub, voter1, params2, { value: value2.add(1) });
+            const tx2 = await getGovernanceHubTx_ContributeBudget(governanceHub, voter1, params2, { value: value2.add(1) });
             const receipt2 = await tx2.wait();
             const gasFee2 = receipt2.gasUsed.mul(receipt2.effectiveGasPrice);
 
@@ -2391,7 +2826,7 @@ describe('1.6. GovernanceHub', async () => {
                 proposalId: BigNumber.from(1),
                 value: BigNumber.from(value3),
             }
-            const tx3 = await getContributeBudgetTx(governanceHub, proposer2, params3, { value: value3 });
+            const tx3 = await getGovernanceHubTx_ContributeBudget(governanceHub, proposer2, params3, { value: value3 });
             const receipt3 = await tx3.wait();
             const gasFee3 = receipt3.gasUsed.mul(receipt3.effectiveGasPrice);
 
@@ -2425,7 +2860,7 @@ describe('1.6. GovernanceHub', async () => {
                 proposalId: BigNumber.from(2),
                 value: BigNumber.from(value4),
             }
-            const tx4 = await getContributeBudgetTx(governanceHub, voter1, params4);
+            const tx4 = await getGovernanceHubTx_ContributeBudget(governanceHub, voter1, params4);
             await tx4.wait();
 
             await expect(tx4).to.emit(governanceHub, 'ProposalBudgetContribution').withArgs(
@@ -2450,7 +2885,7 @@ describe('1.6. GovernanceHub', async () => {
                 proposalId: BigNumber.from(2),
                 value: BigNumber.from(value5),
             }
-            const tx5 = await getContributeBudgetTx(governanceHub, voter1, params5);
+            const tx5 = await getGovernanceHubTx_ContributeBudget(governanceHub, voter1, params5);
             await tx5.wait();
 
             await expect(tx5).to.emit(governanceHub, 'ProposalBudgetContribution').withArgs(
@@ -2475,7 +2910,7 @@ describe('1.6. GovernanceHub', async () => {
                 proposalId: BigNumber.from(2),
                 value: BigNumber.from(value6),
             }
-            const tx6 = await getContributeBudgetTx(governanceHub, proposer2, params6);
+            const tx6 = await getGovernanceHubTx_ContributeBudget(governanceHub, proposer2, params6);
             await tx6.wait();
 
             await expect(tx6).to.emit(governanceHub, 'ProposalBudgetContribution').withArgs(
@@ -2496,12 +2931,15 @@ describe('1.6. GovernanceHub', async () => {
             const fixture = await beforeGovernanceHubTest();
             const { governanceHub, voter1 } = fixture;
 
-            const params: ContributeBudgetParams = {
-                proposalId: BigNumber.from(0),
-                value: ethers.utils.parseEther("1"),
-            }
-            await expect(getContributeBudgetTx(governanceHub, voter1, params, { value: ethers.utils.parseEther("1") }))
-                .to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
+            await expect(getGovernanceHubTx_ContributeBudget(
+                governanceHub,
+                voter1,
+                {
+                    proposalId: BigNumber.from(0),
+                    value: ethers.utils.parseEther("1"),
+                },
+                { value: ethers.utils.parseEther("1") }
+            )).to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
         });
 
         it('1.6.11.3. Contribute budget unsuccessfully when paused', async () => {
@@ -2512,12 +2950,15 @@ describe('1.6. GovernanceHub', async () => {
             });
             const { governanceHub, voter1 } = fixture; 
 
-            const params: ContributeBudgetParams = {
-                proposalId: BigNumber.from(1),
-                value: ethers.utils.parseEther("1"),
-            }
-            await expect(getContributeBudgetTx(governanceHub, voter1, params, { value: ethers.utils.parseEther("1") }))
-                .to.be.revertedWith('Pausable: paused');
+            await expect(getGovernanceHubTx_ContributeBudget(
+                governanceHub,
+                voter1,
+                {
+                    proposalId: BigNumber.from(1),
+                    value: ethers.utils.parseEther("1"),
+                },
+                { value: ethers.utils.parseEther("1") }
+            )).to.be.revertedWith('Pausable: paused');
         });
 
         it('1.6.11.4. Contribute budget unsuccessfully when proposal is pending', async () => {
@@ -2526,12 +2967,15 @@ describe('1.6. GovernanceHub', async () => {
             });
             const { governanceHub, voter1 } = fixture;
 
-            const params: ContributeBudgetParams = {
-                proposalId: BigNumber.from(1),
-                value: ethers.utils.parseEther("1"),
-            }
-            await expect(getContributeBudgetTx(governanceHub, voter1, params, { value: ethers.utils.parseEther("1") }))
-                .to.be.revertedWithCustomError(governanceHub, 'InvalidContributing');
+            await expect(getGovernanceHubTx_ContributeBudget(
+                governanceHub,
+                voter1,
+                {
+                    proposalId: BigNumber.from(1),
+                    value: ethers.utils.parseEther("1"),
+                },
+                { value: ethers.utils.parseEther("1") }
+            )).to.be.revertedWithCustomError(governanceHub, 'InvalidContributing');
         });
 
         it('1.6.11.5. Contribute budget unsuccessfully when proposal is executing', async () => {
@@ -2544,12 +2988,15 @@ describe('1.6. GovernanceHub', async () => {
             });
             const { governanceHub, voter1 } = fixture;
 
-            const params: ContributeBudgetParams = {
-                proposalId: BigNumber.from(1),
-                value: ethers.utils.parseEther("1"),
-            }
-            await expect(getContributeBudgetTx(governanceHub, voter1, params, { value: ethers.utils.parseEther("1") }))
-                .to.be.revertedWithCustomError(governanceHub, 'InvalidContributing');
+            await expect(getGovernanceHubTx_ContributeBudget(
+                governanceHub,
+                voter1,
+                {
+                    proposalId: BigNumber.from(1),
+                    value: ethers.utils.parseEther("1"),
+                },
+                { value: ethers.utils.parseEther("1") }
+            )).to.be.revertedWithCustomError(governanceHub, 'InvalidContributing');
         });
 
         it('1.6.11.6. Contribute budget unsuccessfully when proposal is successfully executed', async () => {
@@ -2563,12 +3010,15 @@ describe('1.6. GovernanceHub', async () => {
             });
             const { governanceHub, voter1 } = fixture;
 
-            const params: ContributeBudgetParams = {
-                proposalId: BigNumber.from(1),
-                value: ethers.utils.parseEther("1"),
-            }
-            await expect(getContributeBudgetTx(governanceHub, voter1, params, { value: ethers.utils.parseEther("1") }))
-                .to.be.revertedWithCustomError(governanceHub, 'InvalidContributing');
+            await expect(getGovernanceHubTx_ContributeBudget(
+                governanceHub,
+                voter1,
+                {
+                    proposalId: BigNumber.from(1),
+                    value: ethers.utils.parseEther("1"),
+                },
+                { value: ethers.utils.parseEther("1") }
+            )).to.be.revertedWithCustomError(governanceHub, 'InvalidContributing');
         });
 
         it('1.6.11.7. Contribute budget unsuccessfully when proposal is unsuccessfully executed', async () => {
@@ -2582,12 +3032,15 @@ describe('1.6. GovernanceHub', async () => {
             });
             const { governanceHub, voter1 } = fixture;
 
-            const params: ContributeBudgetParams = {
-                proposalId: BigNumber.from(1),
-                value: ethers.utils.parseEther("1"),
-            }
-            await expect(getContributeBudgetTx(governanceHub, voter1, params, { value: ethers.utils.parseEther("1") }))
-                .to.be.revertedWithCustomError(governanceHub, 'InvalidContributing');
+            await expect(getGovernanceHubTx_ContributeBudget(
+                governanceHub,
+                voter1,
+                {
+                    proposalId: BigNumber.from(1),
+                    value: ethers.utils.parseEther("1"),
+                },
+                { value: ethers.utils.parseEther("1") }
+            )).to.be.revertedWithCustomError(governanceHub, 'InvalidContributing');
         });
 
         it('1.6.11.8. Contribute budget unsuccessfully when proposal is disqualified', async () => {
@@ -2597,12 +3050,15 @@ describe('1.6. GovernanceHub', async () => {
             });
             const { governanceHub, voter1 } = fixture;  
 
-            const params: ContributeBudgetParams = {
-                proposalId: BigNumber.from(1),
-                value: ethers.utils.parseEther("1"),
-            }
-            await expect(getContributeBudgetTx(governanceHub, voter1, params, { value: ethers.utils.parseEther("1") }))
-                .to.be.revertedWithCustomError(governanceHub, 'InvalidContributing');
+            await expect(getGovernanceHubTx_ContributeBudget(
+                governanceHub,
+                voter1,
+                {
+                    proposalId: BigNumber.from(1),
+                    value: ethers.utils.parseEther("1"),
+                },
+                { value: ethers.utils.parseEther("1") }
+            )).to.be.revertedWithCustomError(governanceHub, 'InvalidContributing');
         });
 
         it('1.6.11.9. Contribute budget unsuccessfully when proposal is rejected', async () => {
@@ -2613,12 +3069,15 @@ describe('1.6. GovernanceHub', async () => {
             });
             const { governanceHub, voter1 } = fixture;  
 
-            const params: ContributeBudgetParams = {
-                proposalId: BigNumber.from(1),
-                value: ethers.utils.parseEther("1"),
-            }
-            await expect(getContributeBudgetTx(governanceHub, voter1, params, { value: ethers.utils.parseEther("1") }))
-                .to.be.revertedWithCustomError(governanceHub, 'InvalidContributing');
+            await expect(getGovernanceHubTx_ContributeBudget(
+                governanceHub,
+                voter1,
+                {
+                    proposalId: BigNumber.from(1),
+                    value: ethers.utils.parseEther("1"),
+                },
+                { value: ethers.utils.parseEther("1") }
+            )).to.be.revertedWithCustomError(governanceHub, 'InvalidContributing');
         });
 
         it('1.6.11.10. Contribute budget unsuccessfully when execution confirmation is overdue', async () => {
@@ -2634,14 +3093,23 @@ describe('1.6. GovernanceHub', async () => {
                 proposalId: BigNumber.from(1),
                 value: ethers.utils.parseEther("1"),
             }
-            await expect(getContributeBudgetTx(governanceHub, voter1, params, { value: ethers.utils.parseEther("1") }))
-                .to.be.revertedWithCustomError(governanceHub, 'Timeout');
+
+            await expect(getGovernanceHubTx_ContributeBudget(
+                governanceHub,
+                voter1,
+                params,
+                { value: ethers.utils.parseEther("1") }
+            )).to.be.revertedWithCustomError(governanceHub, 'Timeout');
 
             timestamp += 10;
             await time.setNextBlockTimestamp(timestamp);
 
-            await expect(getContributeBudgetTx(governanceHub, voter1, params, { value: ethers.utils.parseEther("1") }))
-                .to.be.revertedWithCustomError(governanceHub, 'Timeout');
+            await expect(getGovernanceHubTx_ContributeBudget(
+                governanceHub,
+                voter1,
+                params,
+                { value: ethers.utils.parseEther("1") }
+            )).to.be.revertedWithCustomError(governanceHub, 'Timeout');
         });
 
         it('1.6.11.11. Contribute budget unsuccessfully when the contract is reentered', async () => {
@@ -2657,16 +3125,20 @@ describe('1.6. GovernanceHub', async () => {
                 fixture,
                 reentrancyERC20,
                 async () => {
-                    await expect(getContributeBudgetTx(governanceHub, proposer1, {
-                        proposalId: BigNumber.from(2),
-                        value: ethers.utils.parseEther("1"),
-                    })).to.be.revertedWith("ReentrancyGuard: reentrant call");
+                    await expect(getGovernanceHubTx_ContributeBudget(
+                        governanceHub,
+                        proposer1,
+                        {
+                            proposalId: BigNumber.from(2),
+                            value: ethers.utils.parseEther("1"),
+                        }
+                    )).to.be.revertedWith("ReentrancyGuard: reentrant call");
                 }
             );
         });
     });
 
-    describe('1.6.12. safeContributeBudget(uint256, uint256, bytes32)', async () => {
+    describe('1.6.12. safeContributeBudget(uint256,uint256,bytes32)', async () => {
         it('1.6.12.1. Safe contribute budget successfully', async () => {
             const fixture = await beforeGovernanceHubTest({
                 addSampleProposals: true,
@@ -2682,7 +3154,7 @@ describe('1.6. GovernanceHub', async () => {
                 proposalId: BigNumber.from(1),
                 value: value,
             }
-            const tx1 = await getSafeContributeBudgetTxByInput(governanceHub, voter1, params, { value: value });
+            const tx1 = await getGovernanceHubTxByInput_SafeContributeBudget(governanceHub, voter1, params, { value: value });
             const receipt1 = await tx1.wait();
             const gasFee1 = receipt1.gasUsed.mul(receipt1.effectiveGasPrice);
 
@@ -2707,7 +3179,7 @@ describe('1.6. GovernanceHub', async () => {
             });
             const { governanceHub, voter1 } = fixture;
             
-            await expect(getSafeContributeBudgetTx(
+            await expect(getGovernanceHubTx_SafeContributeBudget(
                 governanceHub,
                 voter1,
                 {
@@ -2723,7 +3195,7 @@ describe('1.6. GovernanceHub', async () => {
             const fixture = await beforeGovernanceHubTest();
             const { governanceHub, voter1 } = fixture;
 
-            await expect(getSafeContributeBudgetTx(
+            await expect(getGovernanceHubTx_SafeContributeBudget(
                 governanceHub,
                 voter1,
                 {
@@ -2752,7 +3224,11 @@ describe('1.6. GovernanceHub', async () => {
             let contributor1InitNativeBalance = await ethers.provider.getBalance(contributor1.address);
 
             const value1 = await governanceHub.contributions(1, contributor1.address);
-            const tx1 = await getWithdrawBudgetContributionTx(governanceHub, contributor1, { proposalId: BigNumber.from(1) });
+            const tx1 = await getGovernancHubTx_WithdrawBudgetContribution(
+                governanceHub,
+                contributor1,
+                { proposalId: BigNumber.from(1) }
+            );
             const receipt1 = await tx1.wait();
             const gasFee1 = receipt1.gasUsed.mul(receipt1.effectiveGasPrice);
 
@@ -2772,7 +3248,11 @@ describe('1.6. GovernanceHub', async () => {
             let contributor2InitERC20Balance = await currency.balanceOf(contributor2.address);
 
             const value2 = await governanceHub.contributions(2, contributor2.address);
-            const tx2 = await getWithdrawBudgetContributionTx(governanceHub, contributor2, { proposalId: BigNumber.from(2) });
+            const tx2 = await getGovernancHubTx_WithdrawBudgetContribution(
+                governanceHub,
+                contributor2,
+                { proposalId: BigNumber.from(2) }
+            );
             await tx2.wait();
 
             await expect(tx2).to.emit(governanceHub, 'ProposalBudgetContributionWithdrawal').withArgs(
@@ -2804,7 +3284,11 @@ describe('1.6. GovernanceHub', async () => {
             let contributor1InitNativeBalance = await ethers.provider.getBalance(contributor1.address);
 
             const value1 = await governanceHub.contributions(1, contributor1.address);
-            const tx1 = await getWithdrawBudgetContributionTx(governanceHub, contributor1, { proposalId: BigNumber.from(1) });
+            const tx1 = await getGovernancHubTx_WithdrawBudgetContribution(
+                governanceHub,
+                contributor1,
+                { proposalId: BigNumber.from(1) }
+            );
             const receipt1 = await tx1.wait();
             const gasFee1 = receipt1.gasUsed.mul(receipt1.effectiveGasPrice);
 
@@ -2827,7 +3311,11 @@ describe('1.6. GovernanceHub', async () => {
             let contributor2InitERC20Balance = await currency.balanceOf(contributor2.address);
 
             const value2 = await governanceHub.contributions(2, contributor2.address);
-            const tx2 = await getWithdrawBudgetContributionTx(governanceHub, contributor2, { proposalId: BigNumber.from(2) });
+            const tx2 = await getGovernancHubTx_WithdrawBudgetContribution(
+                governanceHub,
+                contributor2,
+                { proposalId: BigNumber.from(2) }
+            );
             await tx2.wait();
 
             await expect(tx2).to.emit(governanceHub, 'ProposalBudgetContributionWithdrawal').withArgs(
@@ -2845,10 +3333,17 @@ describe('1.6. GovernanceHub', async () => {
             const fixture = await beforeGovernanceHubTest();
             const { governanceHub, contributor1 } = fixture;
 
-            await expect(getWithdrawBudgetContributionTx(governanceHub, contributor1, { proposalId: BigNumber.from(0) }))
-                .to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
-            await expect(getWithdrawBudgetContributionTx(governanceHub, contributor1, { proposalId: BigNumber.from(100) }))
-                .to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
+            await expect(getGovernancHubTx_WithdrawBudgetContribution(
+                governanceHub,
+                contributor1,
+                { proposalId: BigNumber.from(0) }
+            )).to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
+
+            await expect(getGovernancHubTx_WithdrawBudgetContribution(
+                governanceHub,
+                contributor1,
+                { proposalId: BigNumber.from(100) }
+            )).to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
         });
 
         it('1.6.13.4. Withdraw budget contribution unsuccessfully when paused', async () => {
@@ -2862,8 +3357,11 @@ describe('1.6. GovernanceHub', async () => {
 
             const { governanceHub, contributor1 } = fixture;
 
-            await expect(getWithdrawBudgetContributionTx(governanceHub, contributor1, { proposalId: BigNumber.from(1) }))
-                .to.be.revertedWith('Pausable: paused');
+            await expect(getGovernancHubTx_WithdrawBudgetContribution(
+                governanceHub,
+                contributor1,
+                { proposalId: BigNumber.from(1) }
+            )).to.be.revertedWith('Pausable: paused');
         });
 
         it('1.6.13.5. Withdraw budget contribution unsuccessfully when the contract is reentered', async () => {
@@ -2881,8 +3379,11 @@ describe('1.6. GovernanceHub', async () => {
                 fixture,
                 reentrancyERC20,
                 async () => {
-                    await expect(getWithdrawBudgetContributionTx(governanceHub, contributor2, { proposalId: BigNumber.from(2) }))
-                        .to.be.revertedWith("ReentrancyGuard: reentrant call");
+                    await expect(getGovernancHubTx_WithdrawBudgetContribution(
+                        governanceHub,
+                        contributor2,
+                        { proposalId: BigNumber.from(2) }
+                    )).to.be.revertedWith("ReentrancyGuard: reentrant call");
                 }
             );
         });
@@ -2894,8 +3395,11 @@ describe('1.6. GovernanceHub', async () => {
 
             const { governanceHub, contributor1 } = fixture;
 
-            await expect(getWithdrawBudgetContributionTx(governanceHub, contributor1, { proposalId: BigNumber.from(1) }))
-                .to.be.revertedWithCustomError(governanceHub, 'InvalidWithdrawing');
+            await expect(getGovernancHubTx_WithdrawBudgetContribution(
+                governanceHub,
+                contributor1,
+                { proposalId: BigNumber.from(1) }
+            )).to.be.revertedWithCustomError(governanceHub, 'InvalidWithdrawing');
         });
 
         it('1.6.13.7. Withdraw budget contribution unsuccessfully when proposal is executing', async () => {
@@ -2909,8 +3413,11 @@ describe('1.6. GovernanceHub', async () => {
 
             const { governanceHub, contributor1 } = fixture;
 
-            await expect(getWithdrawBudgetContributionTx(governanceHub, contributor1, { proposalId: BigNumber.from(1) }))
-                .to.be.revertedWithCustomError(governanceHub, 'InvalidWithdrawing');
+            await expect(getGovernancHubTx_WithdrawBudgetContribution(
+                governanceHub,
+                contributor1,
+                { proposalId: BigNumber.from(1) }
+            )).to.be.revertedWithCustomError(governanceHub, 'InvalidWithdrawing');
 
         });
 
@@ -2926,8 +3433,11 @@ describe('1.6. GovernanceHub', async () => {
 
             const { governanceHub, contributor1 } = fixture;
 
-            await expect(getWithdrawBudgetContributionTx(governanceHub, contributor1, { proposalId: BigNumber.from(1) }))
-                .to.be.revertedWithCustomError(governanceHub, 'InvalidWithdrawing');
+            await expect(getGovernancHubTx_WithdrawBudgetContribution(
+                governanceHub,
+                contributor1,
+                { proposalId: BigNumber.from(1) }
+            )).to.be.revertedWithCustomError(governanceHub, 'InvalidWithdrawing');
         });
 
         it('1.6.13.9. Withdraw budget contribution unsuccessfully when proposal is unsuccessfully executed', async () => {
@@ -2942,8 +3452,11 @@ describe('1.6. GovernanceHub', async () => {
 
             const { governanceHub, contributor1 } = fixture;
 
-            await expect(getWithdrawBudgetContributionTx(governanceHub, contributor1, { proposalId: BigNumber.from(1) }))
-                .to.be.revertedWithCustomError(governanceHub, 'InvalidWithdrawing');
+            await expect(getGovernancHubTx_WithdrawBudgetContribution(
+                governanceHub,
+                contributor1,
+                { proposalId: BigNumber.from(1) }
+            )).to.be.revertedWithCustomError(governanceHub, 'InvalidWithdrawing');
         });
 
         it('1.6.13.10. Withdraw budget contribution unsuccessfully when proposal is voting and execution confirmation is not overdue', async () => {
@@ -2956,8 +3469,11 @@ describe('1.6. GovernanceHub', async () => {
 
             const { governanceHub, contributor1 } = fixture;
 
-            await expect(getWithdrawBudgetContributionTx(governanceHub, contributor1, { proposalId: BigNumber.from(1) }))
-                .to.be.revertedWithCustomError(governanceHub, 'InvalidWithdrawing');
+            await expect(getGovernancHubTx_WithdrawBudgetContribution(
+                governanceHub,
+                contributor1,
+                { proposalId: BigNumber.from(1) }
+            )).to.be.revertedWithCustomError(governanceHub, 'InvalidWithdrawing');
         });
 
         it('1.6.13.11. Withdraw budget contribution unsuccessfully when sender did not contribute', async () => {
@@ -2970,8 +3486,11 @@ describe('1.6. GovernanceHub', async () => {
 
             const { governanceHub, proposer2 } = fixture;
 
-            await expect(getWithdrawBudgetContributionTx(governanceHub, proposer2, { proposalId: BigNumber.from(1) }))
-                .to.be.revertedWithCustomError(governanceHub, 'NothingToWithdraw');
+            await expect(getGovernancHubTx_WithdrawBudgetContribution(
+                governanceHub,
+                proposer2,
+                { proposalId: BigNumber.from(1) }
+            )).to.be.revertedWithCustomError(governanceHub, 'NothingToWithdraw');
         });
         
         it('1.6.13.12. Withdraw budget contribution unsuccessfully when sender already withdrawn contribution', async () => {
@@ -2984,10 +3503,17 @@ describe('1.6. GovernanceHub', async () => {
 
             const { governanceHub, contributor1 } = fixture;
 
-            await callTransaction(getWithdrawBudgetContributionTx(governanceHub, contributor1, { proposalId: BigNumber.from(1) }));
+            await callTransaction(getGovernancHubTx_WithdrawBudgetContribution(
+                governanceHub,
+                contributor1,
+                { proposalId: BigNumber.from(1) }
+            ));
 
-            await expect(getWithdrawBudgetContributionTx(governanceHub, contributor1, { proposalId: BigNumber.from(1) }))
-                .to.be.revertedWithCustomError(governanceHub, 'NothingToWithdraw');            
+            await expect(getGovernancHubTx_WithdrawBudgetContribution(
+                governanceHub,
+                contributor1,
+                { proposalId: BigNumber.from(1) }
+            )).to.be.revertedWithCustomError(governanceHub, 'NothingToWithdraw');            
         });
         
         it('1.6.13.13. Withdraw budget contribution unsuccessfully when sending native token failed', async () => {
@@ -3028,7 +3554,11 @@ describe('1.6. GovernanceHub', async () => {
 
             const budget1 = (await governanceHub.getProposal(1)).budget;
 
-            const tx1 = await getConfirmTx(governanceHub, manager, { proposalId: BigNumber.from(1) });
+            const tx1 = await getGovernanceHubTx_Confirm(
+                governanceHub,
+                manager,
+                { proposalId: BigNumber.from(1) }
+            );
             const receipt1 = await tx1.wait();
             const gasFee1 = receipt1.gasUsed.mul(receipt1.effectiveGasPrice);
 
@@ -3052,7 +3582,11 @@ describe('1.6. GovernanceHub', async () => {
 
             const budget2 = (await governanceHub.getProposal(2)).budget;
             
-            const tx2 = await getConfirmTx(governanceHub, manager, { proposalId: BigNumber.from(2) });
+            const tx2 = await getGovernanceHubTx_Confirm(
+                governanceHub,
+                manager,
+                { proposalId: BigNumber.from(2) }
+            );
             await tx2.wait();
 
             await expect(tx2).to.emit(governanceHub, 'ProposalConfirmation').withArgs(
@@ -3082,7 +3616,11 @@ describe('1.6. GovernanceHub', async () => {
             let initGovernanceHubNativeBalance = await ethers.provider.getBalance(governanceHub.address);
             let initOperator1NativeBalance = await ethers.provider.getBalance(operator1.address);
 
-            const tx1 = await getConfirmTx(governanceHub, manager, { proposalId: BigNumber.from(1) });
+            const tx1 = await getGovernanceHubTx_Confirm(
+                governanceHub,
+                manager,
+                { proposalId: BigNumber.from(1) }
+            );
             const receipt1 = await tx1.wait();
             const gasFee1 = receipt1.gasUsed.mul(receipt1.effectiveGasPrice);
 
@@ -3104,10 +3642,17 @@ describe('1.6. GovernanceHub', async () => {
 
             const { governanceHub, manager } = fixture;
 
-            await expect(getConfirmTx(governanceHub, manager, { proposalId: BigNumber.from(0) }))
-                .to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
-            await expect(getConfirmTx(governanceHub, manager, { proposalId: BigNumber.from(100) }))
-                .to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
+            await expect(getGovernanceHubTx_Confirm(
+                governanceHub,
+                manager,
+                { proposalId: BigNumber.from(0) }
+            )).to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
+
+            await expect(getGovernanceHubTx_Confirm(
+                governanceHub,
+                manager,
+                { proposalId: BigNumber.from(100) }
+            )).to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
         });
 
         it('1.6.14.4. Confirm execution unsuccessfully when paused', async () => {
@@ -3121,8 +3666,11 @@ describe('1.6. GovernanceHub', async () => {
 
             const { governanceHub, manager } = fixture;
 
-            await expect(getConfirmTx(governanceHub, manager, { proposalId: BigNumber.from(1) }))
-                .to.be.revertedWith('Pausable: paused');
+            await expect(getGovernanceHubTx_Confirm(
+                governanceHub,
+                manager,
+                { proposalId: BigNumber.from(1) }
+            )).to.be.revertedWith('Pausable: paused');
         });
 
         it('1.6.14.5. Confirm execution unsuccessfully when the contract is reentered', async () => {
@@ -3140,8 +3688,11 @@ describe('1.6. GovernanceHub', async () => {
                 fixture,
                 reentrancyERC20,
                 async () => {
-                    await expect(getConfirmTx(governanceHub, manager, { proposalId: BigNumber.from(2) }))
-                        .to.be.revertedWith("ReentrancyGuard: reentrant call");
+                    await expect(getGovernanceHubTx_Confirm(
+                        governanceHub,
+                        manager,
+                        { proposalId: BigNumber.from(2) }
+                    )).to.be.revertedWith("ReentrancyGuard: reentrant call");
                 }
             )
         });
@@ -3156,12 +3707,23 @@ describe('1.6. GovernanceHub', async () => {
 
             const { governanceHub, moderator, operator1, custodian1 } = fixture;
 
-            await expect(getConfirmTx(governanceHub, moderator, { proposalId: BigNumber.from(1) }))
-                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
-            await expect(getConfirmTx(governanceHub, operator1, { proposalId: BigNumber.from(1) }))
-                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
-            await expect(getConfirmTx(governanceHub, custodian1, { proposalId: BigNumber.from(1) }))
-                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
+            await expect(getGovernanceHubTx_Confirm(
+                governanceHub,
+                moderator,
+                { proposalId: BigNumber.from(1) }
+            )).to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
+            
+            await expect(getGovernanceHubTx_Confirm(
+                governanceHub,
+                operator1,
+                { proposalId: BigNumber.from(1) }
+            )).to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
+            
+            await expect(getGovernanceHubTx_Confirm(
+                governanceHub,
+                custodian1,
+                { proposalId: BigNumber.from(1) }
+            )).to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
         });
 
         it('1.6.14.7. Confirm execution unsuccessfully with no longer available token', async () => {
@@ -3176,8 +3738,11 @@ describe('1.6. GovernanceHub', async () => {
 
             governor.isAvailable.whenCalledWith(1).returns(false);
 
-            await expect(getConfirmTx(governanceHub, manager, { proposalId: BigNumber.from(1) }))
-                .to.be.revertedWithCustomError(governanceHub, 'UnavailableToken');
+            await expect(getGovernanceHubTx_Confirm(
+                governanceHub,
+                manager,
+                { proposalId: BigNumber.from(1) }
+            )).to.be.revertedWithCustomError(governanceHub, 'UnavailableToken');
         });
 
         it('1.6.14.9. Confirm execution unsuccessfully when sender is inactive in zone', async () => {
@@ -3190,14 +3755,22 @@ describe('1.6. GovernanceHub', async () => {
 
             const { deployer, governanceHub, admin, admins, zone, manager } = fixture;
 
-            await callTransaction(getAdminTxByInput_ActivateIn(admin, deployer, {
-                zone,
-                accounts: [manager.address],
-                isActive: false,
-            }, admins));
+            await callTransaction(getAdminTxByInput_ActivateIn(
+                admin,
+                deployer,
+                {
+                    zone,
+                    accounts: [manager.address],
+                    isActive: false,
+                },
+                admins
+            ));
 
-            await expect(getConfirmTx(governanceHub, manager, { proposalId: BigNumber.from(1) }))
-                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
+            await expect(getGovernanceHubTx_Confirm(
+                governanceHub,
+                manager,
+                { proposalId: BigNumber.from(1) }
+            )).to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
         });
 
         it('1.6.14.10. Confirm execution unsuccessfully when proposal is pending', async () => {
@@ -3207,8 +3780,11 @@ describe('1.6. GovernanceHub', async () => {
 
             const { governanceHub, manager } = fixture;
 
-            await expect(getConfirmTx(governanceHub, manager, { proposalId: BigNumber.from(1) }))
-                .to.be.revertedWithCustomError(governanceHub, 'InvalidConfirming');
+            await expect(getGovernanceHubTx_Confirm(
+                governanceHub,
+                manager,
+                { proposalId: BigNumber.from(1) }
+            )).to.be.revertedWithCustomError(governanceHub, 'InvalidConfirming');
         });
 
         it('1.6.14.11. Confirm execution unsuccessfully when proposal is executing', async () => {
@@ -3222,8 +3798,11 @@ describe('1.6. GovernanceHub', async () => {
 
             const { governanceHub, manager } = fixture;
 
-            await expect(getConfirmTx(governanceHub, manager, { proposalId: BigNumber.from(1) }))
-                .to.be.revertedWithCustomError(governanceHub, 'InvalidConfirming');
+            await expect(getGovernanceHubTx_Confirm(
+                governanceHub,
+                manager,
+                { proposalId: BigNumber.from(1) }
+            )).to.be.revertedWithCustomError(governanceHub, 'InvalidConfirming');
         });
 
         it('1.6.14.12. Confirm execution unsuccessfully when proposal is successfully executed', async () => {
@@ -3238,8 +3817,11 @@ describe('1.6. GovernanceHub', async () => {
 
             const { governanceHub, manager } = fixture;
 
-            await expect(getConfirmTx(governanceHub, manager, { proposalId: BigNumber.from(1) }))
-                .to.be.revertedWithCustomError(governanceHub, 'InvalidConfirming');
+            await expect(getGovernanceHubTx_Confirm(
+                governanceHub,
+                manager,
+                { proposalId: BigNumber.from(1) }
+            )).to.be.revertedWithCustomError(governanceHub, 'InvalidConfirming');
         });
 
         it('1.6.14.13. Confirm execution unsuccessfully when proposal is unsuccessfully executed', async () => {
@@ -3254,8 +3836,11 @@ describe('1.6. GovernanceHub', async () => {
 
             const { governanceHub, manager } = fixture;
 
-            await expect(getConfirmTx(governanceHub, manager, { proposalId: BigNumber.from(1) }))
-                .to.be.revertedWithCustomError(governanceHub, 'InvalidConfirming');
+            await expect(getGovernanceHubTx_Confirm(
+                governanceHub,
+                manager,
+                { proposalId: BigNumber.from(1) }
+            )).to.be.revertedWithCustomError(governanceHub, 'InvalidConfirming');
         });
 
         it('1.6.14.14. Confirm execution unsuccessfully when proposal is disqualified', async () => {
@@ -3266,8 +3851,11 @@ describe('1.6. GovernanceHub', async () => {
 
             const { governanceHub, manager } = fixture;
 
-            await expect(getConfirmTx(governanceHub, manager, { proposalId: BigNumber.from(1) }))
-                .to.be.revertedWithCustomError(governanceHub, 'InvalidConfirming');
+            await expect(getGovernanceHubTx_Confirm(
+                governanceHub,
+                manager,
+                { proposalId: BigNumber.from(1) }
+            )).to.be.revertedWithCustomError(governanceHub, 'InvalidConfirming');
         });
         
         it('1.6.14.15. Confirm execution unsuccessfully when proposal is rejected', async () => {
@@ -3279,8 +3867,11 @@ describe('1.6. GovernanceHub', async () => {
 
             const { governanceHub, manager } = fixture;
 
-            await expect(getConfirmTx(governanceHub, manager, { proposalId: BigNumber.from(1) }))
-                .to.be.revertedWithCustomError(governanceHub, "InvalidConfirming");
+            await expect(getGovernanceHubTx_Confirm(
+                governanceHub,
+                manager,
+                { proposalId: BigNumber.from(1) }
+            )).to.be.revertedWithCustomError(governanceHub, "InvalidConfirming");
         });
         
         it('1.6.14.16. Confirm execution unsuccessfully when execution confirmation is overdue', async () => {
@@ -3296,8 +3887,11 @@ describe('1.6. GovernanceHub', async () => {
             let timestamp = (await governanceHub.getProposal(1)).due + Constant.GOVERNANCE_HUB_CONFIRMATION_TIME_LIMIT;
             await time.setNextBlockTimestamp(timestamp);
 
-            await expect(getConfirmTx(governanceHub, manager, { proposalId: BigNumber.from(1) }))
-                .to.be.revertedWithCustomError(governanceHub, "InvalidConfirming");
+            await expect(getGovernanceHubTx_Confirm(
+                governanceHub,
+                manager,
+                { proposalId: BigNumber.from(1) }
+            )).to.be.revertedWithCustomError(governanceHub, "InvalidConfirming");
         });
 
         it('1.6.14.17. Confirm execution unsuccessfully with failed proposal', async () => {
@@ -3310,8 +3904,11 @@ describe('1.6. GovernanceHub', async () => {
 
             const { governanceHub, manager } = fixture;
 
-            await expect(getConfirmTx(governanceHub, manager, { proposalId: BigNumber.from(1) }))
-                .to.be.revertedWithCustomError(governanceHub, "InvalidConfirming");
+            await expect(getGovernanceHubTx_Confirm(
+                governanceHub,
+                manager,
+                { proposalId: BigNumber.from(1) }
+            )).to.be.revertedWithCustomError(governanceHub, "InvalidConfirming");
         });
 
         it('1.6.14.18. Confirm execution unsuccessfully with unsettled proposal', async () => {
@@ -3323,8 +3920,11 @@ describe('1.6. GovernanceHub', async () => {
 
             const { governanceHub, manager } = fixture;
 
-            await expect(getConfirmTx(governanceHub, manager, { proposalId: BigNumber.from(1) }))
-                .to.be.revertedWithCustomError(governanceHub, "InvalidConfirming");
+            await expect(getGovernanceHubTx_Confirm(
+                governanceHub,
+                manager,
+                { proposalId: BigNumber.from(1) }
+            )).to.be.revertedWithCustomError(governanceHub, "InvalidConfirming");
         });
        
         it('1.6.14.19. Confirm execution unsuccessfully when transfer to operator failed', async () => {
@@ -3340,8 +3940,11 @@ describe('1.6. GovernanceHub', async () => {
 
             await callTransaction(failReceiver.activate(true));
 
-            await expect(getConfirmTx(governanceHub, manager, { proposalId: BigNumber.from(1) }))
-                .to.be.revertedWithCustomError(governanceHub, "FailedTransfer");
+            await expect(getGovernanceHubTx_Confirm(
+                governanceHub,
+                manager,
+                { proposalId: BigNumber.from(1) }
+            )).to.be.revertedWithCustomError(governanceHub, "FailedTransfer");
         });
     });
 
@@ -3354,7 +3957,11 @@ describe('1.6. GovernanceHub', async () => {
 
             const { governanceHub, operator1, operator2 } = fixture;
 
-            const tx1 = await getRejectExecutionTx(governanceHub, operator1, { proposalId: BigNumber.from(1) });
+            const tx1 = await getGovernanceHubTx_RejectExecution(
+                governanceHub,
+                operator1,
+                { proposalId: BigNumber.from(1) }
+            );
             await tx1.wait();
 
             await expect(tx1).to.emit(governanceHub, 'ProposalExecutionRejection').withArgs(1);            
@@ -3362,7 +3969,11 @@ describe('1.6. GovernanceHub', async () => {
             const proposal1 = await governanceHub.getProposal(1);
             expect(proposal1.state).to.equal(ProposalState.Rejected);
 
-            const tx2 = await getRejectExecutionTx(governanceHub, operator2, { proposalId: BigNumber.from(2) });
+            const tx2 = await getGovernanceHubTx_RejectExecution(
+                governanceHub,
+                operator2,
+                { proposalId: BigNumber.from(2) }
+            );
             await tx2.wait();
 
             await expect(tx2).to.emit(governanceHub, 'ProposalExecutionRejection').withArgs(2);
@@ -3376,10 +3987,17 @@ describe('1.6. GovernanceHub', async () => {
 
             const { governanceHub, operator1 } = fixture;
 
-            await expect(getRejectExecutionTx(governanceHub, operator1, { proposalId: BigNumber.from(0) }))
-                .to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
-            await expect(getRejectExecutionTx(governanceHub, operator1, { proposalId: BigNumber.from(100) }))
-                .to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
+            await expect(getGovernanceHubTx_RejectExecution(
+                governanceHub,
+                operator1,
+                { proposalId: BigNumber.from(0) }
+            )).to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
+
+            await expect(getGovernanceHubTx_RejectExecution(
+                governanceHub,
+                operator1,
+                { proposalId: BigNumber.from(100) }
+            )).to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
         });
 
         it('1.6.15.3. Reject execution unsuccessfully when paused', async () => {
@@ -3391,8 +4009,11 @@ describe('1.6. GovernanceHub', async () => {
 
             const { governanceHub, operator1 } = fixture;
 
-            await expect(getRejectExecutionTx(governanceHub, operator1, { proposalId: BigNumber.from(1) }))
-                .to.be.revertedWith('Pausable: paused');
+            await expect(getGovernanceHubTx_RejectExecution(
+                governanceHub,
+                operator1,
+                { proposalId: BigNumber.from(1) }
+            )).to.be.revertedWith('Pausable: paused');
         });
 
         it('1.6.15.4. Reject execution unsuccessfully with unauthorized sender', async () => {
@@ -3403,17 +4024,36 @@ describe('1.6. GovernanceHub', async () => {
 
             const { governanceHub, moderator, manager, custodian1, operator1, operator2 } = fixture;
 
-            await expect(getRejectExecutionTx(governanceHub, moderator, { proposalId: BigNumber.from(1) }))
-                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
-            await expect(getRejectExecutionTx(governanceHub, manager, { proposalId: BigNumber.from(1) }))
-                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
-            await expect(getRejectExecutionTx(governanceHub, custodian1, { proposalId: BigNumber.from(1) }))
-                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
+            await expect(getGovernanceHubTx_RejectExecution(
+                governanceHub,
+                moderator,
+                { proposalId: BigNumber.from(1) }
+            )).to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
+            
+            await expect(getGovernanceHubTx_RejectExecution(
+                governanceHub,
+                manager,
+                { proposalId: BigNumber.from(1) }
+            )).to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
+            
+            await expect(getGovernanceHubTx_RejectExecution(
+                governanceHub,
+                custodian1,
+                { proposalId: BigNumber.from(1) }
+            )).to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
+            
             // Wrong operator
-            await expect(getRejectExecutionTx(governanceHub, operator2, { proposalId: BigNumber.from(1) }))
-                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
-            await expect(getRejectExecutionTx(governanceHub, operator1, { proposalId: BigNumber.from(2) }))
-                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
+            await expect(getGovernanceHubTx_RejectExecution(
+                governanceHub,
+                operator2,
+                { proposalId: BigNumber.from(1) }
+            )).to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
+            
+            await expect(getGovernanceHubTx_RejectExecution(
+                governanceHub,
+                operator1,
+                { proposalId: BigNumber.from(2) }
+            )).to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
         });
 
         it('1.6.15.5. Reject execution unsuccessfully when proposal is pending', async () => {
@@ -3423,8 +4063,11 @@ describe('1.6. GovernanceHub', async () => {
 
             const { governanceHub, operator1 } = fixture;
 
-            await expect(getRejectExecutionTx(governanceHub, operator1, { proposalId: BigNumber.from(1) }))
-                .to.be.revertedWithCustomError(governanceHub, 'InvalidRejecting');
+            await expect(getGovernanceHubTx_RejectExecution(
+                governanceHub,
+                operator1,
+                { proposalId: BigNumber.from(1) }
+            )).to.be.revertedWithCustomError(governanceHub, 'InvalidRejecting');
         });
 
         it('1.6.15.6. Reject execution unsuccessfully when proposal is executing', async () => {
@@ -3437,8 +4080,11 @@ describe('1.6. GovernanceHub', async () => {
 
             const { governanceHub, operator1 } = fixture;
 
-            await expect(getRejectExecutionTx(governanceHub, operator1, { proposalId: BigNumber.from(1) }))
-                .to.be.revertedWithCustomError(governanceHub, 'InvalidRejecting');
+            await expect(getGovernanceHubTx_RejectExecution(
+                governanceHub,
+                operator1,
+                { proposalId: BigNumber.from(1) }
+            )).to.be.revertedWithCustomError(governanceHub, 'InvalidRejecting');
         });
         
         it('1.6.15.7. Reject execution unsuccessfully when proposal is successfully executed', async () => {
@@ -3452,8 +4098,11 @@ describe('1.6. GovernanceHub', async () => {
 
             const { governanceHub, operator1 } = fixture;
 
-            await expect(getRejectExecutionTx(governanceHub, operator1, { proposalId: BigNumber.from(1) }))
-                .to.be.revertedWithCustomError(governanceHub, 'InvalidRejecting');
+            await expect(getGovernanceHubTx_RejectExecution(
+                governanceHub,
+                operator1,
+                { proposalId: BigNumber.from(1) }
+            )).to.be.revertedWithCustomError(governanceHub, 'InvalidRejecting');
         });
 
         it('1.6.15.8. Reject execution unsuccessfully when proposal is unsuccessfully executed', async () => {
@@ -3467,8 +4116,11 @@ describe('1.6. GovernanceHub', async () => {
 
             const { governanceHub, operator1 } = fixture;
 
-            await expect(getRejectExecutionTx(governanceHub, operator1, { proposalId: BigNumber.from(1) }))
-                .to.be.revertedWithCustomError(governanceHub, 'InvalidRejecting');
+            await expect(getGovernanceHubTx_RejectExecution(
+                governanceHub,
+                operator1,
+                { proposalId: BigNumber.from(1) }
+            )).to.be.revertedWithCustomError(governanceHub, 'InvalidRejecting');
         });
         
         it('1.6.15.9. Reject execution unsuccessfully when proposal is disqualified', async () => {
@@ -3479,8 +4131,11 @@ describe('1.6. GovernanceHub', async () => {
 
             const { governanceHub, operator1 } = fixture;
 
-            await expect(getRejectExecutionTx(governanceHub, operator1, { proposalId: BigNumber.from(1) }))
-                .to.be.revertedWithCustomError(governanceHub, 'InvalidRejecting');
+            await expect(getGovernanceHubTx_RejectExecution(
+                governanceHub,
+                operator1,
+                { proposalId: BigNumber.from(1) }
+            )).to.be.revertedWithCustomError(governanceHub, 'InvalidRejecting');
         });
         
         it('1.6.15.10. Reject execution unsuccessfully when proposal is rejected', async () => {
@@ -3492,12 +4147,15 @@ describe('1.6. GovernanceHub', async () => {
 
             const { governanceHub, operator1 } = fixture;
 
-            await expect(getRejectExecutionTx(governanceHub, operator1, { proposalId: BigNumber.from(1) }))
-                .to.be.revertedWithCustomError(governanceHub, 'InvalidRejecting');
+            await expect(getGovernanceHubTx_RejectExecution(
+                governanceHub,
+                operator1,
+                { proposalId: BigNumber.from(1) }
+            )).to.be.revertedWithCustomError(governanceHub, 'InvalidRejecting');
         });
     });
 
-    describe('1.6.16. logExecution(uint256, string, (uint256, uint256, bytes))', async () => {
+    describe('1.6.16. logExecution(uint256,string,(uint256,uint256,bytes))', async () => {
         async function beforeLogExecutionTest(fixture: GovernanceHubFixture): Promise<{ defaultParams: LogExecutionParamsInput }> {
             const defaultParams = {
                 proposalId: BigNumber.from(1),
@@ -3523,7 +4181,7 @@ describe('1.6. GovernanceHub', async () => {
                 logURI: "updated_state_uri_1",
             }
 
-            const tx1 = await getLogExecutionTxByInput(governanceHub, operator1, paramsInput1, validator);
+            const tx1 = await getGovernanceHubTxByInput_LogExecution(governanceHub, operator1, paramsInput1, validator);
             await tx1.wait();
 
             await expect(tx1).to.emit(governanceHub, 'ProposalExecutionLog').withArgs(
@@ -3541,7 +4199,7 @@ describe('1.6. GovernanceHub', async () => {
                 logURI: "updated_state_uri_2",
             }
 
-            const tx2 = await getLogExecutionTxByInput(governanceHub, operator2, paramsInput2, validator);
+            const tx2 = await getGovernanceHubTxByInput_LogExecution(governanceHub, operator2, paramsInput2, validator);
             await tx2.wait();
 
             await expect(tx2).to.emit(governanceHub, 'ProposalExecutionLog').withArgs(
@@ -3560,19 +4218,25 @@ describe('1.6. GovernanceHub', async () => {
             const { operator1, operator2, governanceHub, validator } = fixture;
 
             const { defaultParams } = await beforeLogExecutionTest(fixture);            
-            const paramsInput1: LogExecutionParamsInput = {
-                ...defaultParams,
-                proposalId: BigNumber.from(0),
-            }
-            await expect(getLogExecutionTxByInput(governanceHub, operator1, paramsInput1, validator))
-                .to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
+            await expect(getGovernanceHubTxByInput_LogExecution(
+                governanceHub,
+                operator1,
+                {
+                    ...defaultParams,
+                    proposalId: BigNumber.from(0),
+                },
+                validator
+            )).to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
 
-            const paramsInput2: LogExecutionParamsInput = {
-                ...defaultParams,
-                proposalId: BigNumber.from(100),
-            }
-            await expect(getLogExecutionTxByInput(governanceHub, operator2, paramsInput2, validator))
-                .to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
+            await expect(getGovernanceHubTxByInput_LogExecution(
+                governanceHub,
+                operator2,
+                {
+                    ...defaultParams,
+                    proposalId: BigNumber.from(100),
+                },
+                validator
+            )).to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
         });
 
         it('1.6.16.3. Update execution unsuccessfully when paused', async () => {
@@ -3588,7 +4252,7 @@ describe('1.6. GovernanceHub', async () => {
 
             const { defaultParams } = await beforeLogExecutionTest(fixture);
 
-            await expect(getLogExecutionTxByInput(governanceHub, operator1, defaultParams, validator))
+            await expect(getGovernanceHubTxByInput_LogExecution(governanceHub, operator1, defaultParams, validator))
                 .to.be.revertedWith('Pausable: paused');
         });
 
@@ -3604,25 +4268,31 @@ describe('1.6. GovernanceHub', async () => {
 
             const { defaultParams } = await beforeLogExecutionTest(fixture);
 
-            await expect(getLogExecutionTxByInput(governanceHub, moderator, defaultParams, validator))
+            await expect(getGovernanceHubTxByInput_LogExecution(governanceHub, moderator, defaultParams, validator))
                 .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
 
-            await expect(getLogExecutionTxByInput(governanceHub, manager, defaultParams, validator))
+            await expect(getGovernanceHubTxByInput_LogExecution(governanceHub, manager, defaultParams, validator))
                 .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
 
-            const paramsInput1: LogExecutionParamsInput = {
-                ...defaultParams,
-                proposalId: BigNumber.from(1),
-            }
-            await expect(getLogExecutionTxByInput(governanceHub, operator2, paramsInput1, validator))
-                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
+            await expect(getGovernanceHubTxByInput_LogExecution(
+                governanceHub,
+                operator2,
+                {
+                    ...defaultParams,
+                    proposalId: BigNumber.from(1),
+                },
+                validator
+            )).to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
 
-            const paramsInput2: LogExecutionParamsInput = {
-                ...defaultParams,
-                proposalId: BigNumber.from(2),
-            }
-            await expect(getLogExecutionTxByInput(governanceHub, operator1, paramsInput2, validator))
-                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
+            await expect(getGovernanceHubTxByInput_LogExecution(
+                governanceHub,
+                operator1,
+                {
+                    ...defaultParams,
+                    proposalId: BigNumber.from(2),
+                },
+                validator
+            )).to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
         });
 
         it('1.6.16.5. Update execution unsuccessfully with invalid validation', async () => {
@@ -3641,7 +4311,7 @@ describe('1.6. GovernanceHub', async () => {
                 validation: await getLogExecutionValidation(governanceHub, defaultParams, validator, false),
             }
 
-            await expect(getLogExecutionTx(governanceHub, operator1, params))
+            await expect(getGovernanceHubTx_LogExecution(governanceHub, operator1, params))
                 .to.be.revertedWithCustomError(governanceHub, 'InvalidSignature');
         });
 
@@ -3659,7 +4329,7 @@ describe('1.6. GovernanceHub', async () => {
 
             governor.isAvailable.whenCalledWith(1).returns(false);
 
-            await expect(getLogExecutionTxByInput(governanceHub, operator1, defaultParams, validator))
+            await expect(getGovernanceHubTxByInput_LogExecution(governanceHub, operator1, defaultParams, validator))
                 .to.be.revertedWithCustomError(governanceHub, 'UnavailableToken');
         });
 
@@ -3672,7 +4342,7 @@ describe('1.6. GovernanceHub', async () => {
 
             const { defaultParams } = await beforeLogExecutionTest(fixture);
 
-            await expect(getLogExecutionTxByInput(governanceHub, operator1, defaultParams, validator))
+            await expect(getGovernanceHubTxByInput_LogExecution(governanceHub, operator1, defaultParams, validator))
                 .to.be.revertedWithCustomError(governanceHub, 'InvalidUpdating');
         });
 
@@ -3686,7 +4356,7 @@ describe('1.6. GovernanceHub', async () => {
 
             const { defaultParams } = await beforeLogExecutionTest(fixture);
 
-            await expect(getLogExecutionTxByInput(governanceHub, operator1, defaultParams, validator))
+            await expect(getGovernanceHubTxByInput_LogExecution(governanceHub, operator1, defaultParams, validator))
                 .to.be.revertedWithCustomError(governanceHub, 'InvalidUpdating');
         });
 
@@ -3703,7 +4373,7 @@ describe('1.6. GovernanceHub', async () => {
 
             const { defaultParams } = await beforeLogExecutionTest(fixture);
 
-            await expect(getLogExecutionTxByInput(governanceHub, operator1, defaultParams, validator))
+            await expect(getGovernanceHubTxByInput_LogExecution(governanceHub, operator1, defaultParams, validator))
                 .to.be.revertedWithCustomError(governanceHub, 'InvalidUpdating');
         });
 
@@ -3720,7 +4390,7 @@ describe('1.6. GovernanceHub', async () => {
 
             const { defaultParams } = await beforeLogExecutionTest(fixture);
 
-            await expect(getLogExecutionTxByInput(governanceHub, operator1, defaultParams, validator))
+            await expect(getGovernanceHubTxByInput_LogExecution(governanceHub, operator1, defaultParams, validator))
                 .to.be.revertedWithCustomError(governanceHub, 'InvalidUpdating');
         });
 
@@ -3734,7 +4404,7 @@ describe('1.6. GovernanceHub', async () => {
 
             const { defaultParams } = await beforeLogExecutionTest(fixture);
 
-            await expect(getLogExecutionTxByInput(governanceHub, operator1, defaultParams, validator))
+            await expect(getGovernanceHubTxByInput_LogExecution(governanceHub, operator1, defaultParams, validator))
                 .to.be.revertedWithCustomError(governanceHub, 'InvalidUpdating');
         });
 
@@ -3749,12 +4419,12 @@ describe('1.6. GovernanceHub', async () => {
 
             const { defaultParams } = await beforeLogExecutionTest(fixture);
 
-            await expect(getLogExecutionTxByInput(governanceHub, operator1, defaultParams, validator))
+            await expect(getGovernanceHubTxByInput_LogExecution(governanceHub, operator1, defaultParams, validator))
                 .to.be.revertedWithCustomError(governanceHub, 'InvalidUpdating');
         });
     });
 
-    describe('1.6.17. concludeExecution(uint256, string, bool, (uint256, uint256, bytes))', async () => {
+    describe('1.6.17. concludeExecution(uint256,string,bool,(uint256,uint256,bytes))', async () => {
         async function beforeConcludeExecutionTest(fixture: GovernanceHubFixture): Promise<{ defaultParams: ConcludeExecutionParamsInput }> {
             const defaultParams: ConcludeExecutionParamsInput = {
                 proposalId: BigNumber.from(1),
@@ -3781,7 +4451,7 @@ describe('1.6. GovernanceHub', async () => {
                 isSuccessful: true,
             }
 
-            const tx1 = await getConcludeExecutionTxByInput(governanceHub, custodian1, paramsInput1, validator);
+            const tx1 = await getGovernanceHubTxByInput_ConcludeExecution(governanceHub, custodian1, paramsInput1, validator);
             await tx1.wait();
 
             await expect(tx1).to.emit(governanceHub, 'ProposalExecutionConclusion').withArgs(
@@ -3801,7 +4471,7 @@ describe('1.6. GovernanceHub', async () => {
                 isSuccessful: false,
             }
 
-            const tx2 = await getConcludeExecutionTxByInput(governanceHub, custodian2, paramsInput2, validator);
+            const tx2 = await getGovernanceHubTxByInput_ConcludeExecution(governanceHub, custodian2, paramsInput2, validator);
             await tx2.wait();
 
             await expect(tx2).to.emit(governanceHub, 'ProposalExecutionConclusion').withArgs(
@@ -3822,19 +4492,25 @@ describe('1.6. GovernanceHub', async () => {
 
             const { defaultParams } = await beforeConcludeExecutionTest(fixture);
 
-            const paramsInput1: ConcludeExecutionParamsInput = {
-                ...defaultParams,
-                proposalId: BigNumber.from(0),
-            }
-            await expect(getConcludeExecutionTxByInput(governanceHub, custodian1, paramsInput1, validator))
-                .to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
+            await expect(getGovernanceHubTxByInput_ConcludeExecution(
+                governanceHub,
+                custodian1,
+                {
+                    ...defaultParams,
+                    proposalId: BigNumber.from(0),
+                },
+                validator
+            )).to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
 
-            const paramsInput2: ConcludeExecutionParamsInput = {
-                ...defaultParams,
-                proposalId: BigNumber.from(100),
-            }
-            await expect(getConcludeExecutionTxByInput(governanceHub, custodian1, paramsInput2, validator))
-                .to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
+            await expect(getGovernanceHubTxByInput_ConcludeExecution(
+                governanceHub,
+                custodian1,
+                {
+                    ...defaultParams,
+                    proposalId: BigNumber.from(100),
+                },
+                validator
+            )).to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
         });
 
         it('1.6.17.3. Conclude execution unsuccessfully when paused', async () => {
@@ -3850,7 +4526,7 @@ describe('1.6. GovernanceHub', async () => {
 
             const { defaultParams } = await beforeConcludeExecutionTest(fixture);
             
-            await expect(getConcludeExecutionTxByInput(governanceHub, custodian1, defaultParams, validator))
+            await expect(getGovernanceHubTxByInput_ConcludeExecution(governanceHub, custodian1, defaultParams, validator))
                 .to.be.revertedWith('Pausable: paused');
         });
 
@@ -3866,24 +4542,30 @@ describe('1.6. GovernanceHub', async () => {
 
             const { defaultParams } = await beforeConcludeExecutionTest(fixture);
 
-            await expect(getConcludeExecutionTxByInput(governanceHub, manager, defaultParams, validator))
+            await expect(getGovernanceHubTxByInput_ConcludeExecution(governanceHub, manager, defaultParams, validator))
                 .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
-            await expect(getConcludeExecutionTxByInput(governanceHub, moderator, defaultParams, validator))
-                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
-
-            const paramsInput1: ConcludeExecutionParamsInput = {
-                ...defaultParams,
-                proposalId: BigNumber.from(1),
-            }
-            await expect(getConcludeExecutionTxByInput(governanceHub, custodian2, paramsInput1, validator))
+            await expect(getGovernanceHubTxByInput_ConcludeExecution(governanceHub, moderator, defaultParams, validator))
                 .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
 
-            const paramsInput2: ConcludeExecutionParamsInput = {
-                ...defaultParams,
-                proposalId: BigNumber.from(2),
-            }
-            await expect(getConcludeExecutionTxByInput(governanceHub, custodian1, paramsInput2, validator))
-                .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
+            await expect(getGovernanceHubTxByInput_ConcludeExecution(
+                governanceHub,
+                custodian2,
+                {
+                    ...defaultParams,
+                    proposalId: BigNumber.from(1),
+                },
+                validator
+            )).to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
+
+            await expect(getGovernanceHubTxByInput_ConcludeExecution(
+                governanceHub,
+                custodian1,
+                {
+                    ...defaultParams,
+                    proposalId: BigNumber.from(2),
+                },
+                validator
+            )).to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
         });
 
         it('1.6.17.5. Conclude execution unsuccessfully with invalid validation', async () => {
@@ -3902,7 +4584,7 @@ describe('1.6. GovernanceHub', async () => {
                 validation: await getConcludeExecutionValidation(governanceHub, defaultParams, validator, false),
             }
 
-            await expect(getConcludeExecutionTx(governanceHub, custodian1, params))
+            await expect(getGovernanceHubTx_ConcludeExecution(governanceHub, custodian1, params))
                 .to.be.revertedWithCustomError(governanceHub, 'InvalidSignature');
         });
 
@@ -3920,7 +4602,7 @@ describe('1.6. GovernanceHub', async () => {
 
             governor.isAvailable.whenCalledWith(1).returns(false);
 
-            await expect(getConcludeExecutionTxByInput(governanceHub, custodian1, defaultParams, validator))
+            await expect(getGovernanceHubTxByInput_ConcludeExecution(governanceHub, custodian1, defaultParams, validator))
                 .to.be.revertedWithCustomError(governanceHub, 'UnavailableToken');
         });
 
@@ -3933,7 +4615,7 @@ describe('1.6. GovernanceHub', async () => {
 
             const { defaultParams } = await beforeConcludeExecutionTest(fixture);
 
-            await expect(getConcludeExecutionTxByInput(governanceHub, custodian1, defaultParams, validator))
+            await expect(getGovernanceHubTxByInput_ConcludeExecution(governanceHub, custodian1, defaultParams, validator))
                 .to.be.revertedWithCustomError(governanceHub, 'InvalidConcluding');
         });
         
@@ -3947,7 +4629,7 @@ describe('1.6. GovernanceHub', async () => {
 
             const { defaultParams } = await beforeConcludeExecutionTest(fixture);
             
-            await expect(getConcludeExecutionTxByInput(governanceHub, custodian1, defaultParams, validator))
+            await expect(getGovernanceHubTxByInput_ConcludeExecution(governanceHub, custodian1, defaultParams, validator))
                 .to.be.revertedWithCustomError(governanceHub, 'InvalidConcluding');
         });
 
@@ -3964,7 +4646,7 @@ describe('1.6. GovernanceHub', async () => {
 
             const { defaultParams } = await beforeConcludeExecutionTest(fixture);
 
-            await expect(getConcludeExecutionTxByInput(governanceHub, custodian1, defaultParams, validator))
+            await expect(getGovernanceHubTxByInput_ConcludeExecution(governanceHub, custodian1, defaultParams, validator))
                 .to.be.revertedWithCustomError(governanceHub, 'InvalidConcluding');
         });
 
@@ -3981,7 +4663,7 @@ describe('1.6. GovernanceHub', async () => {
 
             const { defaultParams } = await beforeConcludeExecutionTest(fixture);
             
-            await expect(getConcludeExecutionTxByInput(governanceHub, custodian1, defaultParams, validator))
+            await expect(getGovernanceHubTxByInput_ConcludeExecution(governanceHub, custodian1, defaultParams, validator))
                 .to.be.revertedWithCustomError(governanceHub, 'InvalidConcluding');
         });
         
@@ -3995,7 +4677,7 @@ describe('1.6. GovernanceHub', async () => {
 
             const { defaultParams } = await beforeConcludeExecutionTest(fixture);
             
-            await expect(getConcludeExecutionTxByInput(governanceHub, custodian1, defaultParams, validator))
+            await expect(getGovernanceHubTxByInput_ConcludeExecution(governanceHub, custodian1, defaultParams, validator))
                 .to.be.revertedWithCustomError(governanceHub, 'InvalidConcluding');
         });
 
@@ -4010,7 +4692,7 @@ describe('1.6. GovernanceHub', async () => {
 
             const { defaultParams } = await beforeConcludeExecutionTest(fixture);
 
-            await expect(getConcludeExecutionTxByInput(governanceHub, custodian1, defaultParams, validator))
+            await expect(getGovernanceHubTxByInput_ConcludeExecution(governanceHub, custodian1, defaultParams, validator))
                 .to.be.revertedWithCustomError(governanceHub, 'InvalidConcluding');
         });
     });

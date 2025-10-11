@@ -220,7 +220,12 @@ describe('1.2. Admin', async () => {
 
         if (declareZones) {
             for (const zone of [zone1, zone2]) {
-                await callTransaction(getAdminTxByInput_DeclareZone(admin, deployer, { zone }, admins));
+                await callTransaction(getAdminTxByInput_DeclareZone(
+                    admin,
+                    deployer,
+                    { zone },
+                    admins
+                ));
             }
         }
 
@@ -244,7 +249,7 @@ describe('1.2. Admin', async () => {
 
 
     /* --- Initialization --- */
-    describe('1.2.1. initialize(address, address, address, address, address)', async () => {
+    describe('1.2.1. initialize(address,address,address,address,address)', async () => {
         it('1.2.1.1. Deploy successfully', async () => {
             const { deployer, admins, admin } = await setupBeforeTest();
 
@@ -266,7 +271,7 @@ describe('1.2. Admin', async () => {
 
     
     /* --- Administration --- */
-    describe('1.2.2. verifyAdminSignatures(bytes, bytes[])', async () => {
+    describe('1.2.2. verifyAdminSignatures(bytes,bytes[])', async () => {
         it('1.2.2.1. Verify admin signatures successfully with at least 4/5 valid admin signatures', async () => {
             const fixture = await setupBeforeTest();
             const { admins, admin } = fixture;            
@@ -525,7 +530,7 @@ describe('1.2. Admin', async () => {
         });
     });
 
-    describe('1.2.3. transferAdministration1(address, bytes[])', async () => {
+    describe('1.2.3. transferAdministration1(address,bytes[])', async () => {
         it('1.2.3.1. Change admin 1 successfully', async () => {
             const fixture = await setupBeforeTest();
             const { deployer, admins, admin } = fixture;            
@@ -563,7 +568,7 @@ describe('1.2. Admin', async () => {
         });
     });
 
-    describe('1.2.4. transferAdministration2(address, bytes[])', async () => {
+    describe('1.2.4. transferAdministration2(address,bytes[])', async () => {
         it('1.2.4.1. Change admin 2 successfully', async () => {
             const fixture = await setupBeforeTest();
             const { deployer, admins, admin } = fixture;            
@@ -601,7 +606,7 @@ describe('1.2. Admin', async () => {
         });
     });
 
-    describe('1.2.5. transferAdministration3(address, bytes[])', async () => {
+    describe('1.2.5. transferAdministration3(address,bytes[])', async () => {
         it('1.2.5.1. Change admin 3 successfully', async () => {
             const fixture = await setupBeforeTest();
             const { deployer, admins, admin } = fixture;            
@@ -639,7 +644,7 @@ describe('1.2. Admin', async () => {
         });
     });
 
-    describe('1.2.6. transferAdministration4(address, bytes[])', async () => {
+    describe('1.2.6. transferAdministration4(address,bytes[])', async () => {
         it('1.2.6.1. Change admin 4 successfully', async () => {
             const fixture = await setupBeforeTest();
             const { deployer, admins, admin } = fixture;            
@@ -677,7 +682,7 @@ describe('1.2. Admin', async () => {
         });
     });
 
-    describe('1.2.7. transferAdministration5(address, bytes[])', async () => {
+    describe('1.2.7. transferAdministration5(address,bytes[])', async () => {
         it('1.2.7.1. Change admin 5 successfully', async () => {
             const fixture = await setupBeforeTest();
             const { deployer, admins, admin } = fixture;            
@@ -715,7 +720,7 @@ describe('1.2. Admin', async () => {
         });
     });
 
-    describe('1.2.8. authorizeManagers(address[], bool, bytes[])', async () => {
+    describe('1.2.8. authorizeManagers(address[],bool,bytes[])', async () => {
         it('1.2.8.1. Authorize managers successfully', async () => {
             const fixture = await setupBeforeTest();
             const { deployer, admins, admin } = fixture;            
@@ -888,10 +893,15 @@ describe('1.2. Admin', async () => {
             const { deployer, admins, admin, managers } = fixture;            
 
             const tx1Accounts = managers.slice(0, 2);
-            await callTransaction(getAdminTxByInput_AuthorizeManagers(admin, deployer, {
-                accounts: tx1Accounts.map(x => x.address),
-                isManager: false
-            }, admins));
+            await callTransaction(getAdminTxByInput_AuthorizeManagers(
+                admin,
+                deployer,
+                {
+                    accounts: tx1Accounts.map(x => x.address),
+                    isManager: false
+                },
+                admins
+            ));
 
             const tx2Accounts = [managers[0]];
             await expect(getAdminTxByInput_AuthorizeManagers(
@@ -923,7 +933,7 @@ describe('1.2. Admin', async () => {
         });
     });
 
-    describe('1.2.9. authorizeModerators(address[], bool, bytes[])', async () => {
+    describe('1.2.9. authorizeModerators(address[],bool,bytes[])', async () => {
         it('1.2.9.1. Authorize moderators successfully', async () => {
             const fixture = await setupBeforeTest();
             const { deployer, admins, admin } = fixture;            
@@ -1096,10 +1106,15 @@ describe('1.2. Admin', async () => {
             const { deployer, admins, admin, moderators } = fixture;
 
             const tx1Accounts = moderators.slice(0, 2);
-            await callTransaction(getAdminTxByInput_AuthorizeModerators(admin, deployer, {
-                accounts: tx1Accounts.map(x => x.address),
-                isModerator: false
-            }, admins));
+            await callTransaction(getAdminTxByInput_AuthorizeModerators(
+                admin,
+                deployer,
+                {
+                    accounts: tx1Accounts.map(x => x.address),
+                    isModerator: false
+                },
+                admins
+            ));
             
             const tx2Accounts = [moderators[0]];
             await expect(getAdminTxByInput_AuthorizeModerators(
@@ -1114,7 +1129,7 @@ describe('1.2. Admin', async () => {
         });
     });
 
-    describe('1.2.10. authorizeGovernors(address[], bool, bytes[])', async () => {
+    describe('1.2.10. authorizeGovernors(address[],bool,bytes[])', async () => {
         it('1.2.10.1. Authorize governors successfully', async () => {
             const fixture = await setupBeforeTest();
             const { deployer, admins, admin, governors } = fixture;            
@@ -1341,7 +1356,7 @@ describe('1.2. Admin', async () => {
         });
     });
 
-    describe('1.2.11. declareZone(bytes32, bytes[])', async () => {
+    describe('1.2.11. declareZone(bytes32,bytes[])', async () => {
         it('1.2.11.1. Declare zone successfully', async () => {
             const fixture = await setupBeforeTest();
             const { deployer, admins, admin, zone1, zone2 } = fixture;            
@@ -1349,7 +1364,12 @@ describe('1.2. Admin', async () => {
             const paramsInput1: DeclareZoneParamsInput = {
                 zone: zone1
             };
-            const tx1 = await getAdminTxByInput_DeclareZone(admin, deployer, paramsInput1, admins);
+            const tx1 = await getAdminTxByInput_DeclareZone(
+                admin,
+                deployer,
+                paramsInput1,
+                admins
+            );
             await tx1.wait();
 
             await expect(tx1).to
@@ -1361,7 +1381,12 @@ describe('1.2. Admin', async () => {
             const paramsInput2: DeclareZoneParamsInput = {
                 zone: zone2
             };
-            const tx2 = await getAdminTxByInput_DeclareZone(admin, deployer, paramsInput2, admins);
+            const tx2 = await getAdminTxByInput_DeclareZone(
+                admin,
+                deployer,
+                paramsInput2,
+                admins
+            );
             await tx2.wait();
             
             await expect(tx2).to
@@ -1390,7 +1415,12 @@ describe('1.2. Admin', async () => {
             const fixture = await setupBeforeTest();
             const { deployer, admins, admin, zone1 } = fixture;            
 
-            await callTransaction(getAdminTxByInput_DeclareZone(admin, deployer, {zone: zone1}, admins));
+            await callTransaction(getAdminTxByInput_DeclareZone(
+                admin,
+                deployer,
+                { zone: zone1 },
+                admins
+            ));
 
             await expect(getAdminTxByInput_DeclareZone(
                 admin,
@@ -1401,7 +1431,7 @@ describe('1.2. Admin', async () => {
         });
     });
 
-    describe('1.2.12. activateIn(bytes32, address[], bool, bytes[])', async () => {
+    describe('1.2.12. activateIn(bytes32,address[],bool,bytes[])', async () => {
         it('1.2.12.1. Activate accounts in zone successfully', async () => {
             const fixture = await setupBeforeTest({
                 declareZones: true
@@ -1528,11 +1558,16 @@ describe('1.2. Admin', async () => {
             const { deployer, admins, admin, accounts, zone1 } = fixture;            
 
             const tx1Accounts = [accounts[0], accounts[1], accounts[2]];
-            await callTransaction(getAdminTxByInput_ActivateIn(admin, deployer, {
-                zone: zone1,
-                accounts: tx1Accounts.map(x => x.address),
-                isActive: true
-            }, admins));
+            await callTransaction(getAdminTxByInput_ActivateIn(
+                admin,
+                deployer,
+                {
+                    zone: zone1,
+                    accounts: tx1Accounts.map(x => x.address),
+                    isActive: true
+                },
+                admins
+            ));
 
             const tx2Accounts = [accounts[3], accounts[2]];
 
@@ -1679,7 +1714,7 @@ describe('1.2. Admin', async () => {
         });
     });
 
-    describe('1.2.14. updateCurrencyRegistries(address[], bool[], bool[], bytes[])', async () => {
+    describe('1.2.14. updateCurrencyRegistries(address[],bool[],bool[],bytes[])', async () => {
         it('1.2.14.1. Update currency registries successfully', async () => {
             const fixture = await setupBeforeTest();
             const { deployer, admins, admin } = fixture;            

@@ -87,7 +87,7 @@ describe('1.3. Airdrop', async () => {
 
 
     /* --- Command --- */
-    describe('1.3.2. airdrop(address[], uint256[], currency)', async () => {
+    describe('1.3.2. airdrop(address[],uint256[],address)', async () => {
         it('1.3.2.1. Airdrop successfully with native token', async () => {
             const { sender1, sender2, receiver1, receiver2, receiver3, airdrop } = await beforeAirdropTest({
                 skipPrepareERC20ForSender: true,

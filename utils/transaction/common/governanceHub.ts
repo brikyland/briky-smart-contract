@@ -195,7 +195,7 @@ export async function getGovernanceHubTxByInput_Admit(
 
 
 // disqualify
-export async function getGovernanceTx_Disqualify(
+export async function getGovernanceHubTx_Disqualify(
     governanceHub: GovernanceHub,
     signer: SignerWithAddress,
     params: DisqualifyParams,
@@ -221,7 +221,7 @@ export async function getGovernanceHubTxByInput_Disqualify(
         ...paramsInput,
         validation: await getDisqualifyValidation(governanceHub, paramsInput, validator)
     };
-    return await getGovernanceTx_Disqualify(governanceHub, signer, params, txConfig);
+    return await getGovernanceHubTx_Disqualify(governanceHub, signer, params, txConfig);
 }
 
 
@@ -241,7 +241,7 @@ export async function getGovernanceHubTx_Vote(
 
 
 // safeVote
-export async function getSafeVoteTx(
+export async function getGovernanceHubTx_SafeVote(
     governanceHub: GovernanceHub,
     signer: SignerWithAddress,
     params: SafeVoteParams,
@@ -255,7 +255,7 @@ export async function getSafeVoteTx(
     );
 }
 
-export async function getSafeVoteTxByParams(
+export async function getGovernanceHubTxByParams_SafeVote(
     governanceHub: GovernanceHub,
     signer: SignerWithAddress,
     paramsInput: VoteParams,
@@ -265,12 +265,12 @@ export async function getSafeVoteTxByParams(
         ...paramsInput,
         anchor: await getSafeVoteAnchor(governanceHub, paramsInput)
     };
-    return await getSafeVoteTx(governanceHub, signer, params, txConfig);
+    return await getGovernanceHubTx_SafeVote(governanceHub, signer, params, txConfig);
 }
 
 
 // contributeBudget
-export async function getContributeBudgetTx(
+export async function getGovernanceHubTx_ContributeBudget(
     governanceHub: GovernanceHub,
     signer: SignerWithAddress,
     params: ContributeBudgetParams,
@@ -285,7 +285,7 @@ export async function getContributeBudgetTx(
 
 
 // safeContributeBudget
-export async function getSafeContributeBudgetTx(
+export async function getGovernanceHubTx_SafeContributeBudget(
     governanceHub: GovernanceHub,
     signer: SignerWithAddress,
     params: SafeContributeBudgetParams,
@@ -299,7 +299,7 @@ export async function getSafeContributeBudgetTx(
     );
 }
 
-export async function getSafeContributeBudgetTxByInput(
+export async function getGovernanceHubTxByInput_SafeContributeBudget(
     governanceHub: GovernanceHub,
     signer: SignerWithAddress,
     paramsInput: ContributeBudgetParams,
@@ -309,12 +309,12 @@ export async function getSafeContributeBudgetTxByInput(
         ...paramsInput,
         anchor: await getSafeContributeBudgetAnchor(governanceHub, paramsInput)
     };
-    return await getSafeContributeBudgetTx(governanceHub, signer, params, txConfig);
+    return await getGovernanceHubTx_SafeContributeBudget(governanceHub, signer, params, txConfig);
 }
 
 
 // withdrawBudgetContribution
-export async function getWithdrawBudgetContributionTx(
+export async function getGovernancHubTx_WithdrawBudgetContribution(
     governanceHub: GovernanceHub,
     signer: SignerWithAddress,
     params: WithdrawBudgetContributionParams,
@@ -328,7 +328,7 @@ export async function getWithdrawBudgetContributionTx(
 
 
 // confirm
-export async function getConfirmTx(
+export async function getGovernanceHubTx_Confirm(
     governanceHub: GovernanceHub,
     signer: SignerWithAddress,
     params: ConfirmParams,
@@ -342,7 +342,7 @@ export async function getConfirmTx(
 
 
 // rejectExecution
-export async function getRejectExecutionTx(
+export async function getGovernanceHubTx_RejectExecution(
     governanceHub: GovernanceHub,
     signer: SignerWithAddress,
     params: RejectExecutionParams,
@@ -356,7 +356,7 @@ export async function getRejectExecutionTx(
 
 
 // logExecution
-export async function getLogExecutionTx(
+export async function getGovernanceHubTx_LogExecution(
     governanceHub: GovernanceHub,
     signer: SignerWithAddress,
     params: LogExecutionParams,
@@ -370,7 +370,7 @@ export async function getLogExecutionTx(
     );
 }
 
-export async function getLogExecutionTxByInput(
+export async function getGovernanceHubTxByInput_LogExecution(
     governanceHub: GovernanceHub,
     signer: SignerWithAddress,
     paramsInput: LogExecutionParamsInput,
@@ -382,12 +382,12 @@ export async function getLogExecutionTxByInput(
         validation: await getLogExecutionValidation(governanceHub, paramsInput, validator)
     };
 
-    return await getLogExecutionTx(governanceHub, signer, params, txConfig);
+    return await getGovernanceHubTx_LogExecution(governanceHub, signer, params, txConfig);
 }
 
 
 // concludeExecution
-export async function getConcludeExecutionTx(
+export async function getGovernanceHubTx_ConcludeExecution(
     governanceHub: GovernanceHub,
     signer: SignerWithAddress,
     params: ConcludeExecutionParams,
@@ -402,7 +402,7 @@ export async function getConcludeExecutionTx(
     );
 }
 
-export async function getConcludeExecutionTxByInput(
+export async function getGovernanceHubTxByInput_ConcludeExecution(
     governanceHub: GovernanceHub,
     signer: SignerWithAddress,
     paramsInput: ConcludeExecutionParamsInput,
@@ -414,5 +414,5 @@ export async function getConcludeExecutionTxByInput(
         validation: await getConcludeExecutionValidation(governanceHub, paramsInput, validator)
     };
 
-    return await getConcludeExecutionTx(governanceHub, signer, params, txConfig);
+    return await getGovernanceHubTx_ConcludeExecution(governanceHub, signer, params, txConfig);
 }

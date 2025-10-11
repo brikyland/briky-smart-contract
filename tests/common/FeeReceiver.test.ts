@@ -2,30 +2,42 @@ import { expect } from 'chai';
 import { BigNumber } from 'ethers';
 import { ethers } from 'hardhat';
 
+// @nomicfoundation/hardhat-network-helpers
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 
+// @typechain-types
 import {
     Admin,
     Currency,
     FeeReceiver,
 } from '@typechain-types';
 
+// @tests/test.constant
 import { Constant } from '@tests/test.constant';
 
+// @utils/blockchain
 import {
     callTransaction,
     getSignatures,
     randomWallet,
 } from '@utils/blockchain';
 
+// @utils/deployments/common
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
 import { deployCurrency } from '@utils/deployments/common/currency';
+
+// @utils/deployments/mock
 import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
+
+// @utils/models/common
 import { WithdrawParams, WithdrawParamsInput } from '@utils/models/common/feeReceiver';
+
+// @utils/transaction/common
+import { getFeeReceiverTx_Withdraw, getFeeReceiverTxByInput_Withdraw} from '@utils/transaction/common/feeReceiver';
 import { getWithdrawSignatures } from '@utils/signatures/common/feeReceiver';
-import {getFeeReceiverTx_Withdraw, getFeeReceiverTxByInput_Withdraw} from '@utils/transaction/common/feeReceiver';
+
 
 interface FeeReceiverFixture {
     deployer: any;
@@ -86,6 +98,8 @@ describe('1.5. FeeReceiver', async () => {
         return await loadFixture(feeReceiverFixture);
     }
 
+
+    /* --- Initialization --- */
     describe('1.5.1. initialize(address)', async () => {
         it('1.5.1.1. Deploy successfully', async () => {
             const { admin, feeReceiver } = await setupBeforeTest();
@@ -94,7 +108,9 @@ describe('1.5. FeeReceiver', async () => {
         });
     });
 
-    describe('1.5.2. withdraw(address, address[], uint256[], bytes[])', async () => {
+
+    /* --- Command --- */
+    describe('1.5.2. withdraw(address,address[],uint256[],bytes[])', async () => {
         it('1.5.2.1. Withdraw native tokens successfully', async () => {
             const { deployer, admins, admin, feeReceiver } = await setupBeforeTest();
 
@@ -237,7 +253,11 @@ describe('1.5. FeeReceiver', async () => {
                 currencies: [ethers.constants.AddressZero],
                 values: [BigNumber.from(1000)],
             };
-            const tx = await getFeeReceiverTxByInput_Withdraw(feeReceiver, deployer, paramsInput, admin, admins);
+            const params: WithdrawParams = {
+                ...paramsInput,
+                signatures: await getWithdrawSignatures(feeReceiver, paramsInput, admin, admins, false),
+            };
+            const tx = await getFeeReceiverTx_Withdraw(feeReceiver, deployer, params);
             await tx.wait();
 
             await expect(tx).to.be.revertedWithCustomError(admin, 'FailedVerification');
@@ -246,25 +266,33 @@ describe('1.5. FeeReceiver', async () => {
         it('1.5.2.5. Withdraw unsuccessfully with insufficient native tokens', async () => {
             const { deployer, admins, admin, feeReceiver } = await setupBeforeTest();
 
-            const paramsInput: WithdrawParamsInput = {
-                receiver: deployer.address,
-                currencies: [ethers.constants.AddressZero],
-                values: [BigNumber.from(1000)],
-            };
-            await expect(getFeeReceiverTxByInput_Withdraw(feeReceiver, deployer, paramsInput, admin, admins))
-                .to.be.revertedWithCustomError(feeReceiver, 'FailedTransfer');
+            await expect(getFeeReceiverTxByInput_Withdraw(
+                feeReceiver,
+                deployer,
+                {
+                    receiver: deployer.address,
+                    currencies: [ethers.constants.AddressZero],
+                    values: [BigNumber.from(1000)],
+                },
+                admin,
+                admins
+            )).to.be.revertedWithCustomError(feeReceiver, 'FailedTransfer');
         });
 
         it('1.5.2.6. Withdraw unsuccessfully with insufficient ERC20 tokens', async () => {
             const { deployer, admins, admin, feeReceiver, currency1 } = await setupBeforeTest();
 
-            const paramsInput: WithdrawParamsInput = {
-                receiver: deployer.address,
-                currencies: [currency1.address],
-                values: [BigNumber.from(1000)],
-            };
-            await expect(getFeeReceiverTxByInput_Withdraw(feeReceiver, deployer, paramsInput, admin, admins))
-                .to.be.revertedWith('ERC20: transfer amount exceeds balance');
+            await expect(getFeeReceiverTxByInput_Withdraw(
+                feeReceiver,
+                deployer,
+                {
+                    receiver: deployer.address,
+                    currencies: [currency1.address],
+                    values: [BigNumber.from(1000)],
+                },
+                admin,
+                admins
+            )).to.be.revertedWith('ERC20: transfer amount exceeds balance');
         });
 
         it('1.5.2.7. Withdraw unsuccessfully when native token receiving failed', async () => {
@@ -277,13 +305,17 @@ describe('1.5. FeeReceiver', async () => {
                 value: 1000,
             }));
 
-            const paramsInput: WithdrawParamsInput = {
-                receiver: failReceiver.address,
-                currencies: [ethers.constants.AddressZero],
-                values: [BigNumber.from(1000)],
-            };
-            await expect(getFeeReceiverTxByInput_Withdraw(feeReceiver, deployer, paramsInput, admin, admins))
-                .to.be.revertedWithCustomError(feeReceiver, 'FailedTransfer');
+            await expect(getFeeReceiverTxByInput_Withdraw(
+                feeReceiver,
+                deployer,
+                {
+                    receiver: failReceiver.address,
+                    currencies: [ethers.constants.AddressZero],
+                    values: [BigNumber.from(1000)],
+                },
+                admin,
+                admins
+            )).to.be.revertedWithCustomError(feeReceiver, 'FailedTransfer');
         });
 
         it('1.5.2.8. Withdraw unsuccessfully when the contract is reentered', async () => {
@@ -298,27 +330,25 @@ describe('1.5. FeeReceiver', async () => {
                 [feeReceiver.address, 'withdraw', reentrancyERC20.address, [reentrancyERC20.address], [200]]
             );
 
-            let calldata = feeReceiver.interface.encodeFunctionData('withdraw', [
-                reentrancyERC20.address,
-                [reentrancyERC20.address],
-                [200],
-                await getSignatures(message, admins, (await admin.nonce()).add(1))
-            ]);
-
             await callTransaction(reentrancyERC20.updateReentrancyPlan(
                 feeReceiver.address,
-                calldata
+                feeReceiver.interface.encodeFunctionData('withdraw', [
+                    reentrancyERC20.address,
+                    [reentrancyERC20.address],
+                    [200],
+                    await getSignatures(message, admins, (await admin.nonce()).add(1))
+                ])
             ));
 
-            calldata = feeReceiver.interface.encodeFunctionData('withdraw', [
-                reentrancyERC20.address,
-                [reentrancyERC20.address],
-                [200],
-                await getSignatures(message, admins, await admin.nonce())
-            ]);
-
-            await expect(reentrancyERC20.call(feeReceiver.address, calldata))
-                .to.be.revertedWith('ReentrancyGuard: reentrant call');
+            await expect(reentrancyERC20.call(
+                feeReceiver.address,
+                feeReceiver.interface.encodeFunctionData('withdraw', [
+                    reentrancyERC20.address,
+                    [reentrancyERC20.address],
+                    [200],
+                    await getSignatures(message, admins, await admin.nonce())
+                ])
+            )).to.be.revertedWith('ReentrancyGuard: reentrant call');
 
             const balance = await reentrancyERC20.balanceOf(feeReceiver.address);
             expect(balance).to.equal(1000);

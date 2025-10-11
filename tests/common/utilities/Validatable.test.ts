@@ -115,7 +115,7 @@ describe('1.b. Validatable', async () => {
 
 
     /* --- Administration --- */
-    describe('1.b.2. updateValidator(address)', async () => {
+    describe('1.b.2. updateValidator(address,bytes[])', async () => {
         it('1.b.2.1. Update validator successfully with valid signatures', async () => {
             const { deployer, admins, admin, validatable } = await beforeValidatableTest();
 
@@ -153,7 +153,7 @@ describe('1.b. Validatable', async () => {
 
     
     /* --- Helper --- */
-    describe('1.b.3. _validate(bytes, (uint256, uint256, bytes))', async () => {
+    describe('1.b.3. _validate(bytes,(uint256,uint256,bytes))', async () => {
         it('1.b.3.1. Validate successfully with valid signatures', async () => {
             const { validator, validatable } = await beforeValidatableTest();
 

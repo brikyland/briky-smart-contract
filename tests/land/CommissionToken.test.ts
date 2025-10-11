@@ -143,27 +143,47 @@ describe('2.1. CommissionToken', async () => {
         const fixture = await loadFixture(commissionTokenFixture);
         const { deployer, admin, admins, commissionToken, estateToken, manager, moderator, broker1, broker2, zone1, zone2 } = fixture;
 
-        await callTransaction(getAdminTxByInput_AuthorizeManagers(admin, deployer, {
-            accounts: [manager.address],
-            isManager: true
-        }, admins));
-        await callTransaction(getAdminTxByInput_AuthorizeModerators(admin, deployer, {
-            accounts: [moderator.address],
-            isModerator: true
-        }, admins));
+        await callTransaction(getAdminTxByInput_AuthorizeManagers(
+            admin,
+            deployer,
+            {
+                accounts: [manager.address],
+                isManager: true
+            },
+            admins
+        ));
+        await callTransaction(getAdminTxByInput_AuthorizeModerators(
+            admin,
+            deployer,
+            {
+                accounts: [moderator.address],
+                isModerator: true
+            },
+            admins
+        ));
 
         if (!skipDeclareZone) {
             for (const zone of [zone1, zone2]) {
-                await callTransaction(getAdminTxByInput_DeclareZone(admin, deployer, { zone }, admins));
+                await callTransaction(getAdminTxByInput_DeclareZone(
+                    admin,
+                    deployer,
+                    { zone },
+                    admins
+                ));
             }
 
             if (!skipActivateExecutiveInZone) {
                 for (const zone of [zone1, zone2]) {
-                    await callTransaction(getAdminTxByInput_ActivateIn(admin, deployer, {
-                        zone,
-                        accounts: [manager.address, moderator.address],
-                        isActive: true
-                    }, admins));
+                    await callTransaction(getAdminTxByInput_ActivateIn(
+                        admin,
+                        deployer,
+                        {
+                            zone,
+                            accounts: [manager.address, moderator.address],
+                            isActive: true
+                        },
+                        admins
+                    ));
                 }
             }
         }
@@ -692,11 +712,16 @@ describe('2.1. CommissionToken', async () => {
 
             const { deployer, commissionToken, manager, zone1, admin, admins } = fixture;
 
-            await callTransaction(getAdminTxByInput_ActivateIn(admin, deployer, {
-                zone: zone1,
-                accounts: [manager.address],
-                isActive: false,
-            }, admins))
+            await callTransaction(getAdminTxByInput_ActivateIn(
+                admin,
+                deployer,
+                {
+                    zone: zone1,
+                    accounts: [manager.address],
+                    isActive: false,
+                },
+                admins
+            ))
 
             const { defaultParams: params } = await beforeRegisterBrokerTest(fixture);
 
@@ -839,11 +864,16 @@ describe('2.1. CommissionToken', async () => {
 
             const { deployer, commissionToken, manager, zone1, admin, admins } = fixture;
 
-            await callTransaction(getAdminTxByInput_ActivateIn(admin, deployer, {
-                zone: zone1,
-                accounts: [manager.address],
-                isActive: false,
-            }, admins))
+            await callTransaction(getAdminTxByInput_ActivateIn(
+                admin,
+                deployer,
+                {
+                    zone: zone1,
+                    accounts: [manager.address],
+                    isActive: false,
+                },
+                admins
+            ))
 
             const { defaultParams: params } = await beforeActivateBrokerTest(fixture);
 
