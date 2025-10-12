@@ -31,7 +31,6 @@ import { MockContract, smock } from '@defi-wonderland/smock';
 import { BigNumber, BigNumberish, Contract, ContractTransaction, Wallet } from 'ethers';
 import { getBytes4Hex, getInterfaceID, randomBigNumber, structToObject } from '@utils/utils';
 import { OrderedMap } from '@utils/utils';
-import { addCurrencyToAdminAndPriceWatcher } from '@utils/call/common/common';
 import { deployMockPriceFeed } from '@utils/deployments/mock/mockPriceFeed';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
@@ -58,6 +57,7 @@ import {getAdminTxByInput_ActivateIn, getAdminTxByInput_AuthorizeManagers, getAd
 import { getReserveVaultTxByInput_AuthorizeProvider } from '@utils/transaction/common/reserveVault';
 import { getPausableTxByInput_Pause } from '@utils/transaction/common/pausable';
 import { getUpdateBaseUnitPriceRangeSignatures, getWhitelistSignatures } from '@utils/signatures/land/estateForger';
+import { getPriceWatcherTxByInput_UpdateDefaultRates, getPriceWatcherTxByInput_UpdatePriceFeeds } from '@utils/transaction/common/priceWatcher';
 
 chai.use(smock.matchers);
 
@@ -346,31 +346,28 @@ describe('2.2. EstateForger', async () => {
             await nativePriceFeed.updateData(1000_00000000, 8);
             await currencyPriceFeed.updateData(5_00000000, 8);
 
-            await addCurrencyToAdminAndPriceWatcher(
-                deployer,
+            await callTransaction(getAdminTxByInput_UpdateCurrencyRegistries(
                 admin,
-                priceWatcher,
-                admins,
-                [ethers.constants.AddressZero],
-                [true],
-                [false],
-                [nativePriceFeed.address],
-                [3600],
-                [{ value: BigNumber.from(10000_000), decimals: 3 }],
-            );
+                deployer,
+                {
+                    currencies: [ethers.constants.AddressZero, currencies[0].address],
+                    isAvailable: [true, true],
+                    isExclusive: [false, true],
+                },
+                admins
+            ));
             
-            await addCurrencyToAdminAndPriceWatcher(
-                deployer,
-                admin,
+            await callTransaction(getPriceWatcherTxByInput_UpdatePriceFeeds(
                 priceWatcher,
-                admins,
-                [currencies[0].address],
-                [true],
-                [true],
-                [currencyPriceFeed.address],
-                [24 * 3600],
-                [{ value: BigNumber.from(50_000), decimals: 3 }],
-            );
+                deployer,
+                {
+                    currencies: [ethers.constants.AddressZero, currencies[0].address],
+                    feeds: [nativePriceFeed.address, currencyPriceFeed.address],
+                    heartbeats: [3600, 24 * 3600],
+                },
+                admin,
+                admins
+            ));
 
             await callTransaction(getAdminTxByInput_UpdateCurrencyRegistries(
                 admin,
@@ -3641,23 +3638,22 @@ describe('2.2. EstateForger', async () => {
                 deployer,
                 {
                     currencies: allCashbackCurrencies,
-                    isAvailable: allCashbackCurrencies.map(_ => true),
-                    isExclusive: allCashbackCurrencies.map(_ => false),
+                    isAvailable: [true, ...cashbackCurrencies.map(_ => true)],
+                    isExclusive: [isExclusive, ...cashbackCurrencies.map(_ => false)],
                 },
                 admins,
             ));
-            await addCurrencyToAdminAndPriceWatcher(
-                deployer,
-                admin,
+
+            await callTransaction(getPriceWatcherTxByInput_UpdateDefaultRates(
                 priceWatcher,
-                admins,
-                [newCurrencyAddress],
-                [true],
-                [isExclusive],
-                [ethers.constants.AddressZero],
-                [100],
-                [{ value: BigNumber.from(100), decimals: 0 }],
-            );
+                deployer,
+                {
+                    currencies: [newCurrencyAddress],
+                    rates: [{ value: BigNumber.from(100), decimals: 0 }],
+                },
+                admin,
+                admins
+            ));        
 
             await callTransaction(getCommissionTokenTx_RegisterBroker(commissionToken as any, manager, {
                 zone: zone,

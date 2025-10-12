@@ -41,7 +41,6 @@ import { randomInt } from 'crypto';
 import { getBytes4Hex, getInterfaceID, randomBigNumber, structToObject } from '@utils/utils';
 import { OrderedMap } from '@utils/utils';
 import { deployEstateForger } from '@utils/deployments/land/estateForger';
-import { addCurrencyToAdminAndPriceWatcher } from '@utils/call/common/common';
 import { deployMockPriceFeed } from '@utils/deployments/mock/mockPriceFeed';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
@@ -70,6 +69,7 @@ import { getPausableTxByInput_Pause } from '@utils/transaction/common/pausable';
 import { getProjectTokenTxByInput_AuthorizeLaunchpad, getProjectTokenTxByInput_RegisterInitiator } from '@utils/transaction/launch/projectToken';
 import { getReserveVaultTxByInput_AuthorizeProvider } from '@utils/transaction/common/reserveVault';
 import { getUpdateBaseUnitPriceRangeSignatures } from '@utils/signatures/launch/prestigePad';
+import { getPriceWatcherTxByInput_UpdatePriceFeeds } from '@utils/transaction/common/priceWatcher';
 
 chai.use(smock.matchers);
 
@@ -470,40 +470,26 @@ describe('7.1. PrestigePad', async () => {
             await nativePriceFeed.updateData(1000_00000000, 8);
             await currencyPriceFeed.updateData(5_00000000, 8);
 
-            await addCurrencyToAdminAndPriceWatcher(
-                deployer,
-                admin,
-                priceWatcher,
-                admins,
-                [ethers.constants.AddressZero],
-                [true],
-                [false],
-                [nativePriceFeed.address],
-                [3600],
-                [{ value: BigNumber.from(10000_000), decimals: 3 }],
-            );
-            
-            await addCurrencyToAdminAndPriceWatcher(
-                deployer,
-                admin,
-                priceWatcher,
-                admins,
-                [currencies[0].address],
-                [true],
-                [true],
-                [currencyPriceFeed.address],
-                [24 * 3600],
-                [{ value: BigNumber.from(50_000), decimals: 3 }],
-            );
-
             await callTransaction(getAdminTxByInput_UpdateCurrencyRegistries(
                 admin,
                 deployer,
                 {
-                    currencies: [currencies[1].address, currencies[2].address],
-                    isAvailable: [true, true],
-                    isExclusive: [false, false],
+                    currencies: [ethers.constants.AddressZero, currencies[0].address, currencies[1].address, currencies[2].address],
+                    isAvailable: [true, true, true, true],
+                    isExclusive: [false, true, false, false],
                 },
+                admins
+            ));
+
+            await callTransaction(getPriceWatcherTxByInput_UpdatePriceFeeds(
+                priceWatcher,
+                deployer,
+                {
+                    currencies: [ethers.constants.AddressZero, currencies[0].address],
+                    feeds: [nativePriceFeed.address, currencyPriceFeed.address],
+                    heartbeats: [3600, 24 * 3600],
+                },
+                admin,
                 admins
             ));
         }

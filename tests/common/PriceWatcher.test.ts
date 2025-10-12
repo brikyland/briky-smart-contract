@@ -30,9 +30,6 @@ import {
     randomWallet
 } from '@utils/blockchain';
 
-// @utils/call/common
-import { addCurrencyToAdminAndPriceWatcher } from '@utils/call/common/common';
-
 // @utils/deployments/common
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { deployCurrency } from '@utils/deployments/common/currency';
@@ -70,6 +67,7 @@ import {
     randomInt,
     structToObject
 } from '@utils/utils';
+import { getAdminTxByInput_UpdateCurrencyRegistries } from '@utils/transaction/common/admin';
 
 
 chai.use(smock.matchers);
@@ -161,32 +159,44 @@ describe('1.7. PriceWatcher', async () => {
                 );
                 await callTransaction(priceFeeds[i].updateData(value, decimals));
             }
-    
-            await addCurrencyToAdminAndPriceWatcher(
-                deployer,
+
+            await callTransaction(getAdminTxByInput_UpdateCurrencyRegistries(
                 admin,
-                priceWatcher,
-                admins,
-                [ethers.constants.AddressZero],
-                [true],
-                [false],
-                [nativePriceFeed.address],
-                [3600],
-                [{ value: BigNumber.from(10000_000), decimals: 3 }],
-            );
-            
-            await addCurrencyToAdminAndPriceWatcher(
                 deployer,
-                admin,
+                {
+                    currencies: [ethers.constants.AddressZero, currency.address],
+                    isAvailable: [true, true],
+                    isExclusive: [false, true],
+                },
+                admins
+            ));
+
+
+            await callTransaction(getPriceWatcherTxByInput_UpdatePriceFeeds(
                 priceWatcher,
-                admins,
-                [currency.address],
-                [true],
-                [true],
-                [currencyPriceFeed.address],
-                [24 * 3600],
-                [{ value: BigNumber.from(50_000), decimals: 3 }],
-            );
+                deployer,
+                {
+                    currencies: [ethers.constants.AddressZero, currency.address],
+                    feeds: [nativePriceFeed.address, currencyPriceFeed.address],
+                    heartbeats: [3600, 24 * 3600],
+                },
+                admin,
+                admins
+            ));
+        
+            await callTransaction(getPriceWatcherTxByInput_UpdateDefaultRates(
+                priceWatcher,
+                deployer,
+                {
+                    currencies: [ethers.constants.AddressZero, currency.address],
+                    rates: [
+                        { value: BigNumber.from(10000_000), decimals: 3 },
+                        { value: BigNumber.from(50_000), decimals: 3 }
+                    ],
+                },
+                admin,
+                admins
+            ));
         }
 
         return fixture;
@@ -472,18 +482,27 @@ describe('1.7. PriceWatcher', async () => {
                 "NC",
             );
 
-            await addCurrencyToAdminAndPriceWatcher(
-                deployer,
+            await callTransaction(getAdminTxByInput_UpdateCurrencyRegistries(
                 admin,
+                deployer,
+                {
+                    currencies: [newCurrency.address],
+                    isAvailable: [true],
+                    isExclusive: [false],
+                },
+                admins
+            ));
+            
+            await callTransaction(getPriceWatcherTxByInput_UpdateDefaultRates(
                 priceWatcher,
-                admins,
-                [newCurrency.address],
-                [true],
-                [false],
-                [ethers.constants.AddressZero],
-                [3600],
-                [{ value: BigNumber.from(2_0000), decimals: 4 }],
-            );
+                deployer,
+                {
+                    currencies: [newCurrency.address],
+                    rates: [{ value: BigNumber.from(2_0000), decimals: 4 }],
+                },
+                admin,
+                admins
+            ));
 
             const unitPrice = 200;
             const normalizedUnitPrice = unitPrice * 2;
@@ -510,18 +529,27 @@ describe('1.7. PriceWatcher', async () => {
 
             const unavailableCurrency = randomWallet();
 
-            await addCurrencyToAdminAndPriceWatcher(
-                deployer,
+            await callTransaction(getAdminTxByInput_UpdateCurrencyRegistries(
                 admin,
+                deployer,
+                {
+                    currencies: [unavailableCurrency.address],
+                    isAvailable: [false],
+                    isExclusive: [false],
+                },
+                admins
+            ));
+            
+            await callTransaction(getPriceWatcherTxByInput_UpdateDefaultRates(
                 priceWatcher,
-                admins,
-                [unavailableCurrency.address],
-                [false],
-                [false],
-                [ethers.constants.AddressZero],
-                [3600],
-                [{ value: BigNumber.from(100_000), decimals: 3 }],
-            );
+                deployer,
+                {
+                    currencies: [unavailableCurrency.address],
+                    rates: [{ value: BigNumber.from(100_000), decimals: 3 }],
+                },
+                admin,
+                admins
+            ));
 
             await expectRevertWithModifierCustomError(
                 priceWatcher,
@@ -541,20 +569,17 @@ describe('1.7. PriceWatcher', async () => {
             const { deployer, admin, admins, priceWatcher } = fixture;
 
             const unavailableCurrency = randomWallet();
-
-            await addCurrencyToAdminAndPriceWatcher(
-                deployer,
+            await callTransaction(getAdminTxByInput_UpdateCurrencyRegistries(
                 admin,
-                priceWatcher,
-                admins,
-                [unavailableCurrency.address],
-                [true],
-                [false],
-                [ethers.constants.AddressZero],
-                [3600],
-                [{ value: BigNumber.from(0), decimals: 0 }],
-            );
-
+                deployer,
+                {
+                    currencies: [unavailableCurrency.address],
+                    isAvailable: [true],
+                    isExclusive: [false],
+                },
+                admins
+            ));
+            
             await expect(priceWatcher.isPriceInRange(
                 unavailableCurrency.address,
                 1000,
@@ -592,31 +617,28 @@ describe('1.7. PriceWatcher', async () => {
             await currencyPriceFeed.updateData(-5_00000000, 8);
             await nativePriceFeed.updateData(0, 8);
 
-            await addCurrencyToAdminAndPriceWatcher(
-                deployer,
+            await callTransaction(getAdminTxByInput_UpdateCurrencyRegistries(
                 admin,
-                priceWatcher,
-                admins,
-                [ethers.constants.AddressZero],
-                [true],
-                [false],
-                [nativePriceFeed.address],
-                [3600],
-                [{ value: BigNumber.from(10000_000), decimals: 3 }],
-            );
+                deployer,
+                {
+                    currencies: [ethers.constants.AddressZero, currency.address],
+                    isAvailable: [true, true],
+                    isExclusive: [false, true],
+                },
+                admins
+            ));
             
-            await addCurrencyToAdminAndPriceWatcher(
-                deployer,
-                admin,
+            await callTransaction(getPriceWatcherTxByInput_UpdatePriceFeeds(
                 priceWatcher,
-                admins,
-                [currency.address],
-                [true],
-                [true],
-                [currencyPriceFeed.address],
-                [24 * 3600],
-                [{ value: BigNumber.from(50_000), decimals: 3 }],
-            );
+                deployer,
+                {
+                    currencies: [ethers.constants.AddressZero, currency.address],
+                    feeds: [nativePriceFeed.address, currencyPriceFeed.address],
+                    heartbeats: [3600, 24 * 3600],
+                },
+                admin,
+                admins
+            ));
 
             await expect(priceWatcher.isPriceInRange(
                 currency.address,

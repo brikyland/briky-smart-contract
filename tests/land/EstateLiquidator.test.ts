@@ -37,7 +37,6 @@ import { randomInt } from 'crypto';
 import { getBytes4Hex, getInterfaceID, randomBigNumber, structToObject } from '@utils/utils';
 import { OrderedMap } from '@utils/utils';
 import { deployEstateLiquidator } from '@utils/deployments/land/estateLiquidator';
-import { addCurrencyToAdminAndPriceWatcher } from '@utils/call/common/common';
 import { deployMockPriceFeed } from '@utils/deployments/mock/mockPriceFeed';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
