@@ -38,6 +38,7 @@ const IRoyaltyRateProposer = IRoyaltyRateProposer__factory.createInterface();
 export const IERC165UpgradeableInterfaceId = getInterfaceID(IERC165Upgradeable, []);
 export const IERC721UpgradeableInterfaceId = getInterfaceID(IERC721Upgradeable, [IERC165Upgradeable]);
 export const IERC721MetadataUpgradeableInterfaceId = getInterfaceID(IERC721MetadataUpgradeable, [IERC721Upgradeable]);
+export const IERC1155UpgradeableInterfaceId = getInterfaceID(IERC1155Upgradeable, [IERC165Upgradeable]);
 export const IERC1155MetadataURIUpgradeableInterfaceId = getInterfaceID(IERC1155MetadataURIUpgradeable, [IERC1155Upgradeable]);
 export const IERC2981UpgradeableInterfaceId = getInterfaceID(IERC2981Upgradeable, [IERC165Upgradeable]);
 export const IERC4906UpgradeableInterfaceId = getInterfaceID(IERC4906Upgradeable, [IERC165Upgradeable, IERC721Upgradeable]);

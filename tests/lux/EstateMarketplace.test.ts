@@ -310,7 +310,13 @@ describe('6.2. EstateMarketplace', async () => {
             admins
         ));
 
-        await callTransaction(getEstateTokenTxByInput_UpdateCommissionToken(estateToken as any, deployer, {commissionToken: commissionToken.address}, admin, admins));
+        await callTransaction(getEstateTokenTxByInput_UpdateCommissionToken(
+            estateToken as any,
+            deployer,
+            { commissionToken: commissionToken.address },
+            admin,
+            admins
+        ));
 
         for (const zone of [zone1, zone2]) {
             await callTransaction(getAdminTxByInput_ActivateIn(
@@ -384,25 +390,33 @@ describe('6.2. EstateMarketplace', async () => {
 
             await time.setNextBlockTimestamp(currentTimestamp);
 
-            await callTransaction(getCallEstateTokenTx_TokenizeEstate(estateToken as any, estateForger, {
-                totalSupply: BigNumber.from(0),
-                zone: zone1,
-                tokenizationId: BigNumber.from(10),
-                uri: "Token1_URI",
-                expireAt: currentTimestamp + 1e8,
-                custodian: custodian1.address,
-                broker: broker1.address,
-            }))
+            await callTransaction(getCallEstateTokenTx_TokenizeEstate(
+                estateToken as any,
+                estateForger,
+                {
+                    totalSupply: BigNumber.from(0),
+                    zone: zone1,
+                    tokenizationId: BigNumber.from(10),
+                    uri: "Token1_URI",
+                    expireAt: currentTimestamp + 1e8,
+                    custodian: custodian1.address,
+                    broker: broker1.address,
+                }
+            ))
 
-            await callTransaction(getCallEstateTokenTx_TokenizeEstate(estateToken as any, estateForger, {
-                totalSupply: BigNumber.from(0),
-                zone: zone2,
-                tokenizationId: BigNumber.from(10),
-                uri: "Token2_URI",
-                expireAt: currentTimestamp + 2e8,
-                custodian: custodian2.address,
-                broker: broker2.address,
-            }))
+            await callTransaction(getCallEstateTokenTx_TokenizeEstate(
+                estateToken as any,
+                estateForger,
+                {
+                    totalSupply: BigNumber.from(0),
+                    zone: zone2,
+                    tokenizationId: BigNumber.from(10),
+                    uri: "Token2_URI",
+                    expireAt: currentTimestamp + 2e8,
+                    custodian: custodian2.address,
+                    broker: broker2.address,
+                }
+            ))
 
             estateToken.isAvailable.whenCalledWith(1).returns(true);
             estateToken.isAvailable.whenCalledWith(2).returns(true);

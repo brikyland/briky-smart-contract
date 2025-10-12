@@ -187,7 +187,13 @@ describe('3.2. EstateMortgageToken', async () => {
             LandInitialization.COMMISSION_TOKEN_RoyaltyRate,
         ));
         
-        await callTransaction(getEstateTokenTxByInput_UpdateCommissionToken(estateToken as any, deployer, {commissionToken: commissionToken.address}, admin, admins));
+        await callTransaction(getEstateTokenTxByInput_UpdateCommissionToken(
+            estateToken as any,
+            deployer,
+            { commissionToken: commissionToken.address },
+            admin,
+            admins
+        ));
 
         const MockEstateForgerFactory = await smock.mock<MockEstateForger__factory>('MockEstateForger');
         const estateForger = await MockEstateForgerFactory.deploy();
@@ -389,24 +395,32 @@ describe('3.2. EstateMortgageToken', async () => {
 
             await time.setNextBlockTimestamp(currentTimestamp);
 
-            await callTransaction(getCallEstateTokenTx_TokenizeEstate(estateToken as any, estateForger, {
-                totalSupply: BigNumber.from(1e9),
-                zone: zone1,
-                tokenizationId: BigNumber.from(10),
-                uri: "Token1_URI",
-                expireAt: currentTimestamp + 1e8,
-                custodian: custodian1.address,
-                broker: broker1.address,
-            }));
-            await callTransaction(getCallEstateTokenTx_TokenizeEstate(estateToken as any, estateForger, {
-                totalSupply: BigNumber.from(1e9),
-                zone: zone2,
-                tokenizationId: BigNumber.from(10),
-                uri: "Token2_URI",
-                expireAt: currentTimestamp + 2e8,
-                custodian: custodian2.address,
-                broker: broker2.address,
-            }));
+            await callTransaction(getCallEstateTokenTx_TokenizeEstate(
+                estateToken as any,
+                estateForger,
+                {
+                    totalSupply: BigNumber.from(1e9),
+                    zone: zone1,
+                    tokenizationId: BigNumber.from(10),
+                    uri: "Token1_URI",
+                    expireAt: currentTimestamp + 1e8,
+                    custodian: custodian1.address,
+                    broker: broker1.address,
+                }
+            ));
+            await callTransaction(getCallEstateTokenTx_TokenizeEstate(
+                estateToken as any,
+                estateForger,
+                {
+                    totalSupply: BigNumber.from(1e9),
+                    zone: zone2,
+                    tokenizationId: BigNumber.from(10),
+                    uri: "Token2_URI",
+                    expireAt: currentTimestamp + 2e8,
+                    custodian: custodian2.address,
+                    broker: broker2.address,
+                }
+            ));
 
             estateToken.isAvailable.whenCalledWith(1).returns(true);
             estateToken.isAvailable.whenCalledWith(2).returns(true);
@@ -1074,15 +1088,19 @@ describe('3.2. EstateMortgageToken', async () => {
 
             let currentTimestamp = await time.latest() + 10;
 
-            await callTransaction(getCallEstateTokenTx_TokenizeEstate(estateToken as any, estateForger, {
-                totalSupply: BigNumber.from(0),
-                zone,
-                tokenizationId: BigNumber.from(currentTokenizationId),
-                uri: "TestURI",
-                expireAt: currentTimestamp + 1e9,
-                custodian: custodian1.address,
-                broker: broker.address,
-            }));
+            await callTransaction(getCallEstateTokenTx_TokenizeEstate(
+                estateToken as any,
+                estateForger,
+                {
+                    totalSupply: BigNumber.from(0),
+                    zone,
+                    tokenizationId: BigNumber.from(currentTokenizationId),
+                    uri: "TestURI",
+                    expireAt: currentTimestamp + 1e9,
+                    custodian: custodian1.address,
+                    broker: broker.address,
+                }
+            ));
 
             const currentTokenId = await estateToken.estateNumber();
 

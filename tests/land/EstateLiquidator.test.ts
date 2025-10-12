@@ -1,19 +1,42 @@
 import chai from 'chai';
 import { expect } from 'chai';
-import { ethers, upgrades } from 'hardhat';
+import {
+    BigNumber,
+    Contract,
+    Wallet
+} from 'ethers';
+import { ethers } from 'hardhat';
+
+// @defi-wonderland/smock
+import {
+    MockContract,
+    smock
+} from '@defi-wonderland/smock';
+
+// @nomicfoundation/hardhat-network-helpers
+import {
+    loadFixture,
+    time
+} from "@nomicfoundation/hardhat-network-helpers";
+
+// @tests
+import { Constant } from '@tests/test.constant';
+
+// @tests/common
+import { Initialization as CommonInitialization } from '@tests/common/test.initialization';
+
+// @tests/land
+import { Initialization as LandInitialization } from '@tests/land/test.initialization';
+
+// @typechain-types
 import {
     Admin,
     CommissionToken,
     Currency,
     EstateToken,
     FeeReceiver,
-    EstateLiquidator,
     MockPriceFeed,
     MockEstateLiquidator,
-    IEstateTokenizer__factory,
-    IEstateTokenReceiver__factory,
-    ICommon__factory,
-    IERC1155ReceiverUpgradeable__factory,
     ReserveVault,
     PriceWatcher,
     GovernanceHub,
@@ -22,50 +45,90 @@ import {
     FailReceiver,
     ReentrancyERC20,
 } from '@typechain-types';
-import { callTransaction, getBalance, getSignatures, parseEther, prepareERC20, prepareNativeToken, randomWallet, resetERC20, resetNativeToken, testReentrancy } from '@utils/blockchain';
-import { applyDiscount, scale } from '@utils/formula';
-import { Constant, DAY } from '@tests/test.constant';
+
+// @utils/blockchain
+import {
+    callTransaction,
+    prepareERC20,
+    prepareNativeToken,
+    randomWallet,
+} from '@utils/blockchain';
+
+// @utils/deployments/common
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
-import { deployCurrency } from '@utils/deployments/common/currency';
-import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 
-import { MockContract, smock } from '@defi-wonderland/smock';
-
-import { BigNumber, BigNumberish, Contract, Wallet } from 'ethers';
-import { randomInt } from 'crypto';
-import { getBytes4Hex, getInterfaceID, randomBigNumber, structToObject } from '@utils/utils';
-import { OrderedMap } from '@utils/utils';
-import { deployEstateLiquidator } from '@utils/deployments/land/estateLiquidator';
+// @utils/deployments/mock
 import { deployMockPriceFeed } from '@utils/deployments/mock/mockPriceFeed';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
-import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
-import { deployEstateToken } from '@utils/deployments/land/estateToken';
 import { deployMockEstateLiquidator } from '@utils/deployments/mock/mockEstateLiquidator';
-import { deployReentrancyERC1155Holder } from '@utils/deployments/mock/mockReentrancy/reentrancyERC1155Holder';
-import { request } from 'http';
-import { Initialization as LandInitialization } from '@tests/land/test.initialization';
-import { remain, scaleRate } from '@utils/formula';
+
+// @utils/formula
+import {
+    applyDiscount,
+    scale
+} from '@utils/formula';
+
+// @utils/utils
+import { structToObject } from '@utils/utils';
+
+// @utils/formula
+import { scaleRate } from '@utils/formula';
+
+// @utils/deployments/common
 import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
-import { Rate } from '@utils/models/common/common';
-import { MockValidator } from '@utils/mockValidator';
+
+// @utils/deployments/mock
 import { deployMockEstateForger } from '@utils/deployments/mock/mockEstateForger';
-import { getRequestExtractionValidation } from '@utils/validation/land/estateLiquidator';
+import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
+
+// @utils/mockValidator
+import { MockValidator } from '@utils/mockValidator';
+
+// @utils/models/common
+import { Rate } from '@utils/models/common/common';
+
+// @utils/models/common
 import { ProposalState } from "@utils/models/common/governanceHub";
 import { ProposalRule } from "@utils/models/common/governanceHub";
-import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
-import { RequestExtractionParams, RequestExtractionParamsInput } from '@utils/models/land/estateLiquidator';
-import { DeprecateEstateParams, RegisterCustodianParams } from '@utils/models/land/estateToken';
-import { getEstateTokenTxByInput_AuthorizeExtractors, getEstateTokenTxByInput_AuthorizeTokenizers, getCallEstateTokenTx_TokenizeEstate, getEstateTokenTx_RegisterCustodian, getEstateTokenTxByInput_RegisterCustodian, getEstateTokenTxByParams_SafeDeprecateEstate, getEstateTokenTxByInput_UpdateCommissionToken } from '@utils/transaction/land/estateToken';
+
+// @utils/models/land
+import {
+    RequestExtractionParams,
+    RequestExtractionParamsInput
+} from '@utils/models/land/estateLiquidator';
+import { DeprecateEstateParams } from '@utils/models/land/estateToken';
+
+// @utils/transaction/common
+import {
+    getAdminTxByInput_ActivateIn,
+    getAdminTxByInput_AuthorizeGovernors,
+    getAdminTxByInput_AuthorizeManagers,
+    getAdminTxByInput_AuthorizeModerators,
+    getAdminTxByInput_DeclareZone,
+    getAdminTxByInput_UpdateCurrencyRegistries
+} from '@utils/transaction/common/admin';
+import { getPausableTxByInput_Pause } from '@utils/transaction/common/pausable';
+
+// @utils/transaction/land
+import {
+    getEstateTokenTxByInput_AuthorizeExtractors,
+    getEstateTokenTxByInput_AuthorizeTokenizers,
+    getCallEstateTokenTx_TokenizeEstate,
+    getEstateTokenTxByInput_RegisterCustodian,
+    getEstateTokenTxByParams_SafeDeprecateEstate,
+    getEstateTokenTxByInput_UpdateCommissionToken
+} from '@utils/transaction/land/estateToken';
 import {
     getEstateLiquidatorTx_Conclude,
     getEstateLiquidatorTx_RequestExtraction,
     getEstateLiquidatorTxByInput_RequestExtraction
 } from '@utils/transaction/land/estateLiquidator';
 import { getCommissionTokenTx_RegisterBroker } from '@utils/transaction/land/commissionToken';
-import { Initialization as CommonInitialization } from '@tests/common/test.initialization';
-import { getAdminTxByInput_ActivateIn, getAdminTxByInput_AuthorizeGovernors, getAdminTxByInput_AuthorizeManagers, getAdminTxByInput_AuthorizeModerators, getAdminTxByInput_DeclareZone, getAdminTxByInput_UpdateCurrencyRegistries } from '@utils/transaction/common/admin';
-import { getPausableTxByInput_Pause } from '@utils/transaction/common/pausable';
+
+// @utils/validation/land
+import { getRequestExtractionValidation } from '@utils/validation/land/estateLiquidator';
+
 
 chai.use(smock.matchers);
 
@@ -105,6 +168,9 @@ async function testReentrancy_estateLiquidator(
     assertion: any,
 ) {
     const { validator, estateLiquidator, estateToken, governanceHub } = fixture;
+    
+    let timestamp = await time.latest() + 20;
+
     const requestExtractionParams = {
         estateId: BigNumber.from(1),
         buyer: operator.address,
@@ -112,33 +178,33 @@ async function testReentrancy_estateLiquidator(
         currency: reentrancyContract.address,
         feeRate: ethers.utils.parseEther('0.1'),
         uuid: ethers.utils.formatBytes32String("uuid_1"),
+        admissionExpiry: timestamp,
     }
     
-    let timestamp = await time.latest() + 20;
-    
-    // const requestExtractionValidation = await getRequestExtractionValidation(
-    //     estateToken as any,
-    //     estateLiquidator as any,
-    //     governanceHub as any,
-    //     validator,
-    //     timestamp,
-    //     requestExtractionParams,
-    // );
+    const requestExtractionValidation = await getRequestExtractionValidation(
+        estateLiquidator,
+        estateToken as any,
+        governanceHub as any,
+        requestExtractionParams,
+        validator,
+        timestamp,
+    );
 
-    // await callTransaction(reentrancyContract.updateReentrancyPlan(
-    //     estateLiquidator.address,
-    //     estateLiquidator.interface.encodeFunctionData("requestExtraction", [
-    //         requestExtractionParams.estateId,
-    //         requestExtractionParams.buyer,
-    //         requestExtractionParams.value,
-    //         requestExtractionParams.currency,
-    //         requestExtractionParams.feeRate,
-    //         requestExtractionParams.uuid,
-    //         requestExtractionValidation,
-    //     ]),
-    // ));
+    await callTransaction(reentrancyContract.updateReentrancyPlan(
+        estateLiquidator.address,
+        estateLiquidator.interface.encodeFunctionData("requestExtraction", [
+            requestExtractionParams.estateId,
+            requestExtractionParams.buyer,
+            requestExtractionParams.value,
+            requestExtractionParams.currency,
+            requestExtractionParams.feeRate,
+            requestExtractionParams.uuid,
+            requestExtractionParams.admissionExpiry,
+            requestExtractionValidation,
+        ]),
+    ));
 
-    // await assertion(timestamp);
+    await assertion(timestamp);
 
     timestamp += 10;
 
@@ -172,7 +238,7 @@ export async function getCashbackBaseDenomination(
     );
 }
 
-describe.only('2.3. EstateLiquidator', async () => {
+describe('2.3. EstateLiquidator', async () => {
     async function estateLiquidatorFixture(): Promise<EstateLiquidatorFixture> {
         const accounts = await ethers.getSigners();
         const deployer = accounts[0];
@@ -244,7 +310,13 @@ describe.only('2.3. EstateLiquidator', async () => {
             LandInitialization.COMMISSION_TOKEN_RoyaltyRate,
         ));
 
-        await callTransaction(getEstateTokenTxByInput_UpdateCommissionToken(estateToken as any, deployer, {commissionToken: commissionToken.address}, admin, admins));
+        await callTransaction(getEstateTokenTxByInput_UpdateCommissionToken(
+            estateToken as any,
+            deployer,
+            { commissionToken: commissionToken.address },
+            admin,
+            admins
+        ));
 
         const SmockGovernanceHubFactory = await smock.mock('GovernanceHub') as any;
         const governanceHub = await SmockGovernanceHubFactory.deploy() as MockContract<GovernanceHub>;
@@ -337,7 +409,7 @@ describe.only('2.3. EstateLiquidator', async () => {
         skipAuthorizeExtractor = false,
         skipAuthorizeGovernors = false,
         skipDeclareZone = false,
-        skipPrepareERC20ForOperators: skipPrepareERC20ForManager = false,
+        skipPrepareERC20ForManager = false,
         listSampleExtractionRequests = false,
         useReentrancyERC20 = false,
         pause = false,
@@ -482,25 +554,43 @@ describe.only('2.3. EstateLiquidator', async () => {
             }
         }
         
-        await callTransaction(getCallEstateTokenTx_TokenizeEstate(estateToken as any, estateForger, {
-            totalSupply: ethers.utils.parseEther('100'),
-            zone: zone1,
-            tokenizationId: BigNumber.from(10),
-            uri: "Token1_URI",
-            expireAt: timestamp + 1e9,
-            custodian: custodian1.address,
-            broker: broker1.address,
-        }));
+        await callTransaction(getCallEstateTokenTx_TokenizeEstate(
+            estateToken as any,
+            estateForger,
+            {
+                totalSupply: ethers.utils.parseEther('100'),
+                zone: zone1,
+                tokenizationId: BigNumber.from(10),
+                uri: "Token1_URI",
+                expireAt: timestamp + 1e9,
+                custodian: custodian1.address,
+                broker: broker1.address,
+            }
+        ));
 
-        await callTransaction(getCallEstateTokenTx_TokenizeEstate(estateToken as any, estateForger, {
-            totalSupply: ethers.utils.parseEther('200'),
-            zone: zone2,
-            tokenizationId: BigNumber.from(10),
-            uri: "Token2_URI",
-            expireAt: timestamp + 1e9,
-            custodian: custodian2.address,
-            broker: broker2.address,
-        }));
+        await callTransaction(getCallEstateTokenTx_TokenizeEstate(
+            estateToken as any,
+            estateForger,
+            {
+                totalSupply: ethers.utils.parseEther('200'),
+                zone: zone2,
+                tokenizationId: BigNumber.from(10),
+                uri: "Token2_URI",
+                expireAt: timestamp + 1e9,
+                custodian: custodian2.address,
+                broker: broker2.address,
+            }
+        ));
+
+        if (!skipAuthorizeExtractor) {
+            await callTransaction(getEstateTokenTxByInput_AuthorizeExtractors(
+                estateToken as any,
+                deployer,
+                { accounts: [estateLiquidator.address], isExtractor: true },
+                admin,
+                admins
+            ));
+        }
 
         if (!skipAuthorizeGovernors) {
             await callTransaction(getAdminTxByInput_AuthorizeGovernors(
@@ -587,7 +677,9 @@ describe.only('2.3. EstateLiquidator', async () => {
         return fixture;
     }
 
-    describe('2.3.1. initialize(address, address, string, uint256, uint256, uint256, uint256)', async () => {
+
+    /* --- Initialization --- */
+    describe('2.3.1. initialize(address,address,address,address,address,address,address)', async () => {
         it('2.3.1.1. Deploy successfully', async () => {
             const { admin, estateLiquidator, estateToken, feeReceiver, commissionToken, governanceHub, dividendHub, validator } = await beforeEstateLiquidatorTest({});
 
@@ -606,6 +698,8 @@ describe.only('2.3. EstateLiquidator', async () => {
         });
     });
 
+
+    /* --- Query --- */
     describe('2.3.2. getRequest(uint256)', async () => {
         it('2.3.2.1. Return correct request', async () => {
             const fixture = await beforeEstateLiquidatorTest({
@@ -630,7 +724,9 @@ describe.only('2.3. EstateLiquidator', async () => {
         });
     });
 
-    describe('2.3.3. requestExtraction(uint256, uint256, address, bytes32, (uint256, uint256, bytes32))', async () => {
+
+    /* --- Command --- */
+    describe('2.3.3. requestExtraction(uint256,address,uint256,address,uint256,bytes32,uint40,(uint256,uint256,bytes32))', async () => {
         async function beforeRequestExtractionTest(fixture: EstateLiquidatorFixture): Promise<{
             defaultParamsInput: RequestExtractionParamsInput
         }> {
@@ -722,9 +818,15 @@ describe.only('2.3. EstateLiquidator', async () => {
             expect(proposal1.due).to.equal(Constant.ESTATE_LIQUIDATOR_VOTING_DURATION);
             expect(proposal1.timePivot).to.equal(paramsInput1.admissionExpiry);
 
-            expect(await ethers.provider.getBalance(manager.address)).to.equal(initManagerNativeBalance.sub(paramsInput1.value.add(governanceFee)).sub(gasFee1));
-            expect(await ethers.provider.getBalance(estateLiquidator.address)).to.equal(initEstateLiquidatorNativeBalance.add(paramsInput1.value));
-            expect(await ethers.provider.getBalance(governanceHub.address)).to.equal(initGovernanceHubNativeBalance.add(governanceFee));
+            expect(await ethers.provider.getBalance(manager.address)).to.equal(
+                initManagerNativeBalance.sub(paramsInput1.value.add(governanceFee)).sub(gasFee1)
+            );
+            expect(await ethers.provider.getBalance(estateLiquidator.address)).to.equal(
+                initEstateLiquidatorNativeBalance.add(paramsInput1.value)
+            );
+            expect(await ethers.provider.getBalance(governanceHub.address)).to.equal(
+                initGovernanceHubNativeBalance.add(governanceFee)
+            );
             
             // Tx2: Request extraction with native token after unanimous guard due, with excess native token
             // Also by moderator
@@ -796,9 +898,15 @@ describe.only('2.3. EstateLiquidator', async () => {
             expect(proposal2.due).to.equal(Constant.ESTATE_LIQUIDATOR_VOTING_DURATION);
             expect(proposal2.timePivot).to.equal(paramsInput2.admissionExpiry);
             
-            expect(await ethers.provider.getBalance(moderator.address)).to.equal(initModeratorNativeBalance.sub(paramsInput2.value.add(governanceFee)).sub(gasFee2));
-            expect(await ethers.provider.getBalance(estateLiquidator.address)).to.equal(initEstateLiquidatorNativeBalance.add(paramsInput2.value));
-            expect(await ethers.provider.getBalance(governanceHub.address)).to.equal(initGovernanceHubNativeBalance.add(governanceFee));
+            expect(await ethers.provider.getBalance(moderator.address)).to.equal(
+                initModeratorNativeBalance.sub(paramsInput2.value.add(governanceFee)).sub(gasFee2)
+            );
+            expect(await ethers.provider.getBalance(estateLiquidator.address)).to.equal(
+                initEstateLiquidatorNativeBalance.add(paramsInput2.value)
+            );
+            expect(await ethers.provider.getBalance(governanceHub.address)).to.equal(
+                initGovernanceHubNativeBalance.add(governanceFee)
+            );
 
             // Tx3: Request extraction with erc20 token after unanimous guard due, with just enough erc20 token
             const currency = currencies[0];
@@ -873,13 +981,25 @@ describe.only('2.3. EstateLiquidator', async () => {
             expect(proposal3.due).to.equal(Constant.ESTATE_LIQUIDATOR_VOTING_DURATION);
             expect(proposal3.timePivot).to.equal(paramsInput3.admissionExpiry);
 
-            expect(await currency.balanceOf(manager.address)).to.equal(initManagerCurrencyBalance.sub(paramsInput3.value));
-            expect(await currency.balanceOf(estateLiquidator.address)).to.equal(initEstateLiquidatorCurrencyBalance.add(paramsInput3.value));
-            expect(await currency.balanceOf(governanceHub.address)).to.equal(initGovernanceHubCurrencyBalance);
+            expect(await currency.balanceOf(manager.address)).to.equal(
+                initManagerCurrencyBalance.sub(paramsInput3.value)
+            );
+            expect(await currency.balanceOf(estateLiquidator.address)).to.equal(
+                initEstateLiquidatorCurrencyBalance.add(paramsInput3.value)
+            );
+            expect(await currency.balanceOf(governanceHub.address)).to.equal(
+                initGovernanceHubCurrencyBalance
+            );
 
-            expect(await ethers.provider.getBalance(manager.address)).to.equal(initManagerNativeBalance.sub(governanceFee).sub(gasFee3));
-            expect(await ethers.provider.getBalance(estateLiquidator.address)).to.equal(initEstateLiquidatorNativeBalance);
-            expect(await ethers.provider.getBalance(governanceHub.address)).to.equal(initGovernanceHubNativeBalance.add(governanceFee));
+            expect(await ethers.provider.getBalance(manager.address)).to.equal(
+                initManagerNativeBalance.sub(governanceFee).sub(gasFee3)
+            );
+            expect(await ethers.provider.getBalance(estateLiquidator.address)).to.equal(
+                initEstateLiquidatorNativeBalance
+            );
+            expect(await ethers.provider.getBalance(governanceHub.address)).to.equal(
+                initGovernanceHubNativeBalance.add(governanceFee)
+            );
 
             // Tx4: Request extraction with erc20 token after unanimous guard due, with just enough erc20 token
             const paramsInput4 = {
@@ -953,13 +1073,25 @@ describe.only('2.3. EstateLiquidator', async () => {
             expect(proposal4.due).to.equal(Constant.ESTATE_LIQUIDATOR_VOTING_DURATION);
             expect(proposal4.timePivot).to.equal(paramsInput4.admissionExpiry);
 
-            expect(await currency.balanceOf(manager.address)).to.equal(initManagerCurrencyBalance.sub(paramsInput4.value));
-            expect(await currency.balanceOf(estateLiquidator.address)).to.equal(initEstateLiquidatorCurrencyBalance.add(paramsInput4.value));
-            expect(await currency.balanceOf(governanceHub.address)).to.equal(initGovernanceHubCurrencyBalance);
+            expect(await currency.balanceOf(manager.address)).to.equal(
+                initManagerCurrencyBalance.sub(paramsInput4.value)
+            );
+            expect(await currency.balanceOf(estateLiquidator.address)).to.equal(
+                initEstateLiquidatorCurrencyBalance.add(paramsInput4.value)
+            );
+            expect(await currency.balanceOf(governanceHub.address)).to.equal(
+                initGovernanceHubCurrencyBalance
+            );
 
-            expect(await ethers.provider.getBalance(manager.address)).to.equal(initManagerNativeBalance.sub(governanceFee).sub(gasFee4));
-            expect(await ethers.provider.getBalance(estateLiquidator.address)).to.equal(initEstateLiquidatorNativeBalance);
-            expect(await ethers.provider.getBalance(governanceHub.address)).to.equal(initGovernanceHubNativeBalance.add(governanceFee));
+            expect(await ethers.provider.getBalance(manager.address)).to.equal(
+                initManagerNativeBalance.sub(governanceFee).sub(gasFee4)
+            );
+            expect(await ethers.provider.getBalance(estateLiquidator.address)).to.equal(
+                initEstateLiquidatorNativeBalance
+            );
+            expect(await ethers.provider.getBalance(governanceHub.address)).to.equal(
+                initGovernanceHubNativeBalance.add(governanceFee)
+            );
         });
 
         it('2.3.3.2. Request extraction unsuccessfully when paused', async () => {
@@ -1021,7 +1153,7 @@ describe.only('2.3. EstateLiquidator', async () => {
         it('2.3.3.4. Request extraction unsuccessfully by non-executive', async () => {
             const fixture = await beforeEstateLiquidatorTest();
 
-            const { estateLiquidator, moderator, user, estateToken, governanceHub, validator } = fixture;
+            const { estateLiquidator, user, estateToken, governanceHub, validator } = fixture;
 
             const { defaultParamsInput } = await beforeRequestExtractionTest(fixture);
 
@@ -1092,12 +1224,24 @@ describe.only('2.3. EstateLiquidator', async () => {
 
             const params: RequestExtractionParams = {
                 ...defaultParamsInput,
-                validation: await getRequestExtractionValidation(estateLiquidator as any, estateToken as any, governanceHub as any, defaultParamsInput, validator, timestamp, false),
+                validation: await getRequestExtractionValidation(
+                    estateLiquidator,
+                    estateToken as any,
+                    governanceHub as any,
+                    defaultParamsInput,
+                    validator,
+                    timestamp,
+                    false
+                ),
             }
 
             await time.setNextBlockTimestamp(timestamp);
-            await expect(getEstateLiquidatorTx_RequestExtraction(estateLiquidator, manager, params, { value: defaultParamsInput.value.add(fee) }))
-                .to.be.revertedWithCustomError(governanceHub, 'InvalidSignature');
+            await expect(getEstateLiquidatorTx_RequestExtraction(
+                estateLiquidator,
+                manager,
+                params,
+                { value: defaultParamsInput.value.add(fee) }
+            )).to.be.revertedWithCustomError(governanceHub, 'InvalidSignature');
         });
 
         it('2.3.3.8. Request extraction unsuccessfully with expired estate', async () => {
@@ -1197,7 +1341,7 @@ describe.only('2.3. EstateLiquidator', async () => {
         it('2.3.3.12. Request extraction unsuccessfully with insufficient native token', async () => {
             const fixture = await beforeEstateLiquidatorTest();
 
-            const { manager, validator, currencies, estateToken, governanceHub, estateLiquidator } = fixture;
+            const { manager, validator, estateToken, governanceHub, estateLiquidator } = fixture;
 
             const { defaultParamsInput } = await beforeRequestExtractionTest(fixture);
 
@@ -1217,7 +1361,7 @@ describe.only('2.3. EstateLiquidator', async () => {
 
         it('2.3.3.13. Request extraction unsuccessfully with insufficient erc20 allowance', async () => {
             const fixture = await beforeEstateLiquidatorTest({
-                skipPrepareERC20ForOperators: true,
+                skipPrepareERC20ForManager: true,
             });
 
             const { operator1, manager, validator, currencies, governanceHub, estateToken, estateLiquidator } = fixture;
@@ -1246,7 +1390,7 @@ describe.only('2.3. EstateLiquidator', async () => {
 
         it('2.3.3.14. Request extraction unsuccessfully with insufficient erc20 balance', async () => {
             const fixture = await beforeEstateLiquidatorTest({
-                skipPrepareERC20ForOperators: true,
+                skipPrepareERC20ForManager: true,
             });
 
             const { manager, validator, currencies, governanceHub, estateToken, estateLiquidator } = fixture;
@@ -1365,7 +1509,11 @@ describe.only('2.3. EstateLiquidator', async () => {
             );
             const commissionAmount1 = (await commissionToken.commissionInfo(estateId1, feeAmount1))[1];
 
-            const tx1 = await getEstateLiquidatorTx_Conclude(estateLiquidator, operator1, { requestId: BigNumber.from(requestId1) });
+            const tx1 = await getEstateLiquidatorTx_Conclude(
+                estateLiquidator,
+                operator1,
+                { requestId: BigNumber.from(requestId1) }
+            );
             const receipt1 = await tx1.wait();
             const gasFee1 = receipt1.gasUsed.mul(receipt1.effectiveGasPrice);
 
@@ -1450,7 +1598,11 @@ describe.only('2.3. EstateLiquidator', async () => {
             );
             const commissionAmount2 = (await commissionToken.commissionInfo(2, feeAmount2))[1];
 
-            const tx2 = await getEstateLiquidatorTx_Conclude(estateLiquidator, operator2, { requestId: BigNumber.from(requestId2) });
+            const tx2 = await getEstateLiquidatorTx_Conclude(
+                estateLiquidator,
+                operator2,
+                { requestId: BigNumber.from(requestId2) }
+            );
             const receipt2 = await tx2.wait();
             const gasFee2 = receipt2.gasUsed.mul(receipt2.effectiveGasPrice);
 
@@ -1585,7 +1737,11 @@ describe.only('2.3. EstateLiquidator', async () => {
             );
             const commissionAmount = (await commissionToken.commissionInfo(2, feeAmount))[1];
 
-            const tx = await getEstateLiquidatorTx_Conclude(estateLiquidator, operator2, { requestId: BigNumber.from(requestId) });
+            const tx = await getEstateLiquidatorTx_Conclude(
+                estateLiquidator,
+                operator2,
+                { requestId: BigNumber.from(requestId) }
+            );
             const receipt = await tx.wait();
             const gasFee = receipt.gasUsed.mul(receipt.effectiveGasPrice);
 
@@ -1671,7 +1827,11 @@ describe.only('2.3. EstateLiquidator', async () => {
             let operator1InitNativeBalance = await ethers.provider.getBalance(operator1.address);
             let estateLiquidatorInitNativeBalance = await ethers.provider.getBalance(estateLiquidator.address);
 
-            const tx1 = await getEstateLiquidatorTx_Conclude(estateLiquidator, operator1, { requestId: BigNumber.from(requestId1) });
+            const tx1 = await getEstateLiquidatorTx_Conclude(
+                estateLiquidator,
+                operator1,
+                { requestId: BigNumber.from(requestId1) }
+            );
             const receipt1 = await tx1.wait();
             const gasFee1 = receipt1.gasUsed.mul(receipt1.effectiveGasPrice);
 
@@ -1764,8 +1924,11 @@ describe.only('2.3. EstateLiquidator', async () => {
             const { estateLiquidator, operator1, governanceHub } = fixture;
             governanceHub.getProposalState.whenCalledWith(1).returns(ProposalState.SuccessfulExecuted);
 
-            await expect(getEstateLiquidatorTx_Conclude(estateLiquidator, operator1, { requestId: BigNumber.from(1) }))
-                .to.be.revertedWith('Pausable: paused');
+            await expect(getEstateLiquidatorTx_Conclude(
+                estateLiquidator,
+                operator1,
+                { requestId: BigNumber.from(1) }
+            )).to.be.revertedWith('Pausable: paused');
 
             governanceHub.getProposalState.reset();
         });
@@ -1785,8 +1948,11 @@ describe.only('2.3. EstateLiquidator', async () => {
                 operator1,
                 reentrancyERC20,
                 async (timestamp: number) => {
-                    await expect(getEstateLiquidatorTx_Conclude(estateLiquidator, operator1, { requestId: BigNumber.from(2) }))
-                        .to.be.revertedWith('ReentrancyGuard: reentrant call');
+                    await expect(getEstateLiquidatorTx_Conclude(
+                        estateLiquidator,
+                        operator1,
+                        { requestId: BigNumber.from(2) }
+                    )).to.be.revertedWith('ReentrancyGuard: reentrant call');
                 }
             );
 
@@ -1798,10 +1964,17 @@ describe.only('2.3. EstateLiquidator', async () => {
 
             const { estateLiquidator, operator1 } = fixture;
 
-            await expect(getEstateLiquidatorTx_Conclude(estateLiquidator, operator1, { requestId: BigNumber.from(0) }))
-                .to.be.revertedWithCustomError(estateLiquidator, 'InvalidRequestId');
-            await expect(getEstateLiquidatorTx_Conclude(estateLiquidator, operator1, { requestId: BigNumber.from(100) }))
-                .to.be.revertedWithCustomError(estateLiquidator, 'InvalidRequestId');
+            await expect(getEstateLiquidatorTx_Conclude(
+                estateLiquidator,
+                operator1,
+                { requestId: BigNumber.from(0) }
+            )).to.be.revertedWithCustomError(estateLiquidator, 'InvalidRequestId');
+            
+            await expect(getEstateLiquidatorTx_Conclude(
+                estateLiquidator,
+                operator1,
+                { requestId: BigNumber.from(100) }
+            )).to.be.revertedWithCustomError(estateLiquidator, 'InvalidRequestId');
         });
 
         it('2.3.4.9. Conclude unsuccessfully with already disapproved request', async () => {
@@ -1813,10 +1986,17 @@ describe.only('2.3. EstateLiquidator', async () => {
 
             governanceHub.getProposalState.whenCalledWith(1).returns(ProposalState.UnsuccessfulExecuted);
 
-            await callTransaction(getEstateLiquidatorTx_Conclude(estateLiquidator, operator1, { requestId: BigNumber.from(1) }));
+            await callTransaction(getEstateLiquidatorTx_Conclude(
+                estateLiquidator,
+                operator1,
+                { requestId: BigNumber.from(1) }
+            ));
 
-            await expect(getEstateLiquidatorTx_Conclude(estateLiquidator, operator1, { requestId: BigNumber.from(1) }))
-                .to.be.revertedWithCustomError(estateLiquidator, 'AlreadyCancelled');
+            await expect(getEstateLiquidatorTx_Conclude(
+                estateLiquidator,
+                operator1,
+                { requestId: BigNumber.from(1) }
+            )).to.be.revertedWithCustomError(estateLiquidator, 'AlreadyCancelled');
 
             governanceHub.getProposalState.reset();
         });
@@ -1830,10 +2010,17 @@ describe.only('2.3. EstateLiquidator', async () => {
 
             governanceHub.getProposalState.whenCalledWith(1).returns(ProposalState.SuccessfulExecuted);
 
-            await callTransaction(getEstateLiquidatorTx_Conclude(estateLiquidator, operator1, { requestId: BigNumber.from(1) }));
+            await callTransaction(getEstateLiquidatorTx_Conclude(
+                estateLiquidator,
+                operator1,
+                { requestId: BigNumber.from(1) }
+            ));
 
-            await expect(getEstateLiquidatorTx_Conclude(estateLiquidator, operator1, { requestId: BigNumber.from(1) }))
-                .to.be.revertedWithCustomError(estateLiquidator, 'UnavailableEstate');
+            await expect(getEstateLiquidatorTx_Conclude(
+                estateLiquidator,
+                operator1,
+                { requestId: BigNumber.from(1) }
+            )).to.be.revertedWithCustomError(estateLiquidator, 'UnavailableEstate');
 
             governanceHub.getProposalState.reset();
         });
@@ -1847,14 +2034,20 @@ describe.only('2.3. EstateLiquidator', async () => {
 
             governanceHub.getProposalState.whenCalledWith(1).returns(ProposalState.SuccessfulExecuted);
 
-            const deprecateParams: DeprecateEstateParams = {
-                estateId: BigNumber.from(1),
-                note: "deprecate",
-            };
-            await callTransaction(getEstateTokenTxByParams_SafeDeprecateEstate(estateToken as any, manager, deprecateParams));
+            await callTransaction(getEstateTokenTxByParams_SafeDeprecateEstate(
+                estateToken as any,
+                manager,
+                {
+                    estateId: BigNumber.from(1),
+                    note: 'test deprecate 1',
+                }
+            ));
 
-            await expect(getEstateLiquidatorTx_Conclude(estateLiquidator, operator1, { requestId: BigNumber.from(1) }))
-                .to.be.revertedWithCustomError(estateLiquidator, 'UnavailableEstate');
+            await expect(getEstateLiquidatorTx_Conclude(
+                estateLiquidator,
+                operator1,
+                { requestId: BigNumber.from(1) }
+            )).to.be.revertedWithCustomError(estateLiquidator, 'UnavailableEstate');
 
             governanceHub.getProposalState.reset();
         });
@@ -1871,8 +2064,11 @@ describe.only('2.3. EstateLiquidator', async () => {
             const expireAt = (await estateToken.getEstate(1)).expireAt;
             await time.setNextBlockTimestamp(expireAt);
 
-            await expect(getEstateLiquidatorTx_Conclude(estateLiquidator, operator1, { requestId: BigNumber.from(1) }))
-                .to.be.revertedWithCustomError(estateLiquidator, 'UnavailableEstate');
+            await expect(getEstateLiquidatorTx_Conclude(
+                estateLiquidator,
+                operator1,
+                { requestId: BigNumber.from(1) }
+            )).to.be.revertedWithCustomError(estateLiquidator, 'UnavailableEstate');
 
             governanceHub.getProposalState.reset();
         });
@@ -1884,10 +2080,16 @@ describe.only('2.3. EstateLiquidator', async () => {
 
             const { deployer, admins, operator1, admin, governanceHub, estateToken, estateLiquidator } = fixture;
 
-            await callTransaction(getEstateTokenTxByInput_AuthorizeExtractors(estateToken as any, deployer, {
-                accounts: [estateLiquidator.address],
-                isExtractor: false,
-            }, admin, admins));
+            await callTransaction(getEstateTokenTxByInput_AuthorizeExtractors(
+                estateToken as any,
+                deployer,
+                {
+                    accounts: [estateLiquidator.address],
+                    isExtractor: false,
+                },
+                admin,
+                admins
+            ));
 
             governanceHub.getProposalState.whenCalledWith(1).returns(ProposalState.SuccessfulExecuted);
 

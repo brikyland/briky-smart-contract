@@ -180,7 +180,13 @@ describe('6.3. MortgageMarketplace', async () => {
             LandInitialization.COMMISSION_TOKEN_RoyaltyRate,
         ));
         
-        await callTransaction(getEstateTokenTxByInput_UpdateCommissionToken(estateToken as any, deployer, {commissionToken: commissionToken.address}, admin, admins));
+        await callTransaction(getEstateTokenTxByInput_UpdateCommissionToken(
+            estateToken as any,
+            deployer,
+            { commissionToken: commissionToken.address },
+            admin,
+            admins
+        ));
 
         const estateMortgageToken = await deployEstateMortgageToken(
             deployer.address,

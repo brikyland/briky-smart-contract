@@ -229,7 +229,13 @@ describe('7.2. ProjectToken', async () => {
             LandInitialization.COMMISSION_TOKEN_RoyaltyRate,
         ) as CommissionToken;
 
-        await callTransaction(getEstateTokenTxByInput_UpdateCommissionToken(estateToken as any, deployer, {commissionToken: commissionToken.address}, admin, admins));
+        await callTransaction(getEstateTokenTxByInput_UpdateCommissionToken(
+            estateToken as any,
+            deployer,
+            { commissionToken: commissionToken.address },
+            admin,
+            admins
+        ));
 
         const projectToken = await deployMockProjectToken(
             deployer.address,

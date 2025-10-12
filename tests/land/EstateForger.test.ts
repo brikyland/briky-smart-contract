@@ -1,6 +1,35 @@
 import chai from 'chai';
 import { expect } from 'chai';
+import {
+    BigNumber,
+    Contract
+} from 'ethers';
 import { ethers } from 'hardhat';
+
+// @defi-wonderland/smock
+import {
+    MockContract,
+    smock
+} from '@defi-wonderland/smock';
+
+// @nomicfoundation/hardhat-network-helpers
+import {
+    loadFixture,
+    time
+} from "@nomicfoundation/hardhat-network-helpers";
+
+// @tests/interfaces
+import {
+    IERC165UpgradeableInterfaceId,
+    IEstateTokenizerInterfaceId,
+    IEstateTokenReceiverInterfaceId
+} from '@tests/interfaces';
+
+// @tests
+import { Constant, DAY } from '@tests/test.constant';
+
+// @tests/land
+import { Initialization as LandInitialization } from '@tests/land/test.initialization';
 
 // @typechain-types
 import {
@@ -12,54 +41,137 @@ import {
     EstateForger,
     MockPriceFeed,
     MockEstateForger,
-    IEstateTokenizer__factory,
-    IEstateTokenReceiver__factory,
-    ICommon__factory,
-    IERC1155ReceiverUpgradeable__factory,
     ReserveVault,
     PriceWatcher,
-    IERC165Upgradeable__factory,
 } from '@typechain-types';
-import { callTransaction, callTransactionAtTimestamp, getBalance, getSignatures, prepareERC20, prepareNativeToken, randomWallet, resetERC20, resetNativeToken, testReentrancy } from '@utils/blockchain';
-import { Constant, DAY } from '@tests/test.constant';
-import { deployAdmin } from '@utils/deployments/common/admin';
-import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
-import { deployCurrency } from '@utils/deployments/common/currency';
-import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
-import { applyDiscount } from '@utils/formula';
-import { MockContract, smock } from '@defi-wonderland/smock';
 
-import { BigNumber, BigNumberish, Contract, ContractTransaction, Wallet } from 'ethers';
-import { getBytes4Hex, getInterfaceID, randomBigNumber, structToObject } from '@utils/utils';
-import { OrderedMap } from '@utils/utils';
-import { deployMockPriceFeed } from '@utils/deployments/mock/mockPriceFeed';
-import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
-import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
-import { deployEstateToken } from '@utils/deployments/land/estateToken';
-import { deployMockEstateForger } from '@utils/deployments/mock/mockEstateForger';
-import { deployReentrancyERC1155Holder } from '@utils/deployments/mock/mockReentrancy/reentrancyERC1155Holder';
-import { request } from 'http';
-import { Initialization as LandInitialization } from '@tests/land/test.initialization';
-import { remain, scaleRate } from '@utils/formula';
-import { RequestQuote, RequestAgenda, RequestEstate, RequestQuota, SafeDepositParams, DepositParams, ConfirmParams, RequestTokenizationParamsInput, UpdateBaseUnitPriceRangeParamsInput, UpdateBaseUnitPriceRangeParams, WhitelistParamsInput, WhitelistParams, WhitelistForParams, UpdateRequestEstateURIParamsInput } from '@utils/models/land/estateForger';
+// @utils/blockchain
+import {
+    callTransaction,
+    callTransactionAtTimestamp,
+    getBalance,
+    prepareERC20,
+    prepareNativeToken,
+    randomWallet,
+    resetERC20,
+    resetNativeToken,
+    testReentrancy
+} from '@utils/blockchain';
+
+// @utils/deployments/common
+import { deployAdmin } from '@utils/deployments/common/admin';
+import { deployCurrency } from '@utils/deployments/common/currency';
+import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
 import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
+
+// @utils/deployments/mock
+import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
+import { deployMockEstateForger } from '@utils/deployments/mock/mockEstateForger';
+import { deployMockPriceFeed } from '@utils/deployments/mock/mockPriceFeed';
+import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
+import { deployReentrancyERC1155Holder } from '@utils/deployments/mock/mockReentrancy/reentrancyERC1155Holder';
+
+// @utils/formula
+import { scaleRate } from '@utils/formula';
+
+// @utils/models/common
 import { Rate } from '@utils/models/common/common';
+
+// @utils/models/land
+import {
+    RequestQuote,
+    RequestAgenda,
+    RequestEstate,
+    RequestQuota,
+    SafeDepositParams,
+    DepositParams,
+    ConfirmParams,
+    RequestTokenizationParamsInput,
+    UpdateBaseUnitPriceRangeParamsInput,
+    UpdateBaseUnitPriceRangeParams,
+    WhitelistParamsInput,
+    WhitelistParams,
+    WhitelistForParams,
+    UpdateRequestEstateURIParamsInput
+} from '@utils/models/land/estateForger';
+
+// @utils/mockValidator
 import { MockValidator } from '@utils/mockValidator';
-import { RequestTokenizationParams, UpdateRequestEstateURIParams, UpdateRequestAgendaParams } from '@utils/models/land/estateForger';
+
+// @utils/models/land
+import {
+    RequestTokenizationParams,
+    UpdateRequestEstateURIParams,
+    UpdateRequestAgendaParams
+} from '@utils/models/land/estateForger';
+
+// @utils/signatures/land
+import {
+    getUpdateBaseUnitPriceRangeSignatures,
+    getWhitelistSignatures
+} from '@utils/signatures/land/estateForger';
+
+// @utils/validation/land
 import {
     getRequestTokenizationValidation,
     getUpdateRequestEstateURIValidation
 } from '@utils/validation/land/estateForger';
-import { RegisterCustodianParams } from '@utils/models/land/estateToken';
-import {getEstateTokenTxByInput_AuthorizeTokenizers, getEstateTokenTx_RegisterCustodian, getEstateTokenTxByInput_RegisterCustodian, getEstateTokenTxByInput_UpdateCommissionToken} from '@utils/transaction/land/estateToken';
-import { getCallEstateForgerTx_Deposit, getEstateForgerTx_Cancel, getEstateForgerTx_Deposit, getEstateForgerTx_RequestTokenization, getEstateForgerTxByInput_RequestTokenization, getEstateForgerTx_SafeConfirm, getEstateForgerTxByParams_SafeConfirm, getEstateForgerTx_SafeDeposit, getEstateForgerTxByParams_SafeDeposit, getEstateForgerTxByInput_UpdateBaseUnitPriceRange, getEstateForgerTx_UpdateRequestAgenda, getEstateForgerTx_UpdateRequestEstateURI, getEstateForgerTxByInput_UpdateRequestEstateURI, getEstateForgerTx_WhitelistFor, getEstateForgerTxByInput_Whitelist, getEstateForgerTx_WithdrawDeposit, getEstateForgerTx_WithdrawEstateToken, getEstateForgerTx_UpdateBaseUnitPriceRange, getEstateForgerTx_Whitelist } from '@utils/transaction/land/estateForger';
-import { getCommissionTokenTx_ActivateBroker, getCommissionTokenTx_RegisterBroker } from '@utils/transaction/land/commissionToken';
-import {getAdminTxByInput_ActivateIn, getAdminTxByInput_AuthorizeManagers, getAdminTxByInput_AuthorizeModerators, getAdminTxByInput_DeclareZone, getAdminTxByInput_UpdateCurrencyRegistries} from "@utils/transaction/common/admin";
+
+// @utils/transaction/land
+import {
+    getCommissionTokenTx_ActivateBroker,
+    getCommissionTokenTx_RegisterBroker
+} from '@utils/transaction/land/commissionToken';
+import {
+    getCallEstateForgerTx_Deposit,
+    getEstateForgerTx_Cancel,
+    getEstateForgerTx_Deposit,
+    getEstateForgerTx_RequestTokenization,
+    getEstateForgerTxByInput_RequestTokenization,
+    getEstateForgerTx_SafeConfirm,
+    getEstateForgerTxByParams_SafeConfirm,
+    getEstateForgerTx_SafeDeposit,
+    getEstateForgerTxByParams_SafeDeposit,
+    getEstateForgerTxByInput_UpdateBaseUnitPriceRange,
+    getEstateForgerTx_UpdateRequestAgenda,
+    getEstateForgerTx_UpdateRequestEstateURI,
+    getEstateForgerTxByInput_UpdateRequestEstateURI,
+    getEstateForgerTx_WhitelistFor,
+    getEstateForgerTxByInput_Whitelist,
+    getEstateForgerTx_WithdrawDeposit,
+    getEstateForgerTx_WithdrawEstateToken,
+    getEstateForgerTx_UpdateBaseUnitPriceRange,
+    getEstateForgerTx_Whitelist
+} from '@utils/transaction/land/estateForger';
+import {
+    getEstateTokenTxByInput_AuthorizeTokenizers,
+    getEstateTokenTxByInput_RegisterCustodian,
+    getEstateTokenTxByInput_UpdateCommissionToken
+} from '@utils/transaction/land/estateToken';
+
+// @utils/transaction/common
+import {
+    getAdminTxByInput_ActivateIn,
+    getAdminTxByInput_AuthorizeManagers,
+    getAdminTxByInput_AuthorizeModerators,
+    getAdminTxByInput_DeclareZone,
+    getAdminTxByInput_UpdateCurrencyRegistries
+} from "@utils/transaction/common/admin";
 import { getReserveVaultTxByInput_AuthorizeProvider } from '@utils/transaction/common/reserveVault';
 import { getPausableTxByInput_Pause } from '@utils/transaction/common/pausable';
-import { getUpdateBaseUnitPriceRangeSignatures, getWhitelistSignatures } from '@utils/signatures/land/estateForger';
-import { getPriceWatcherTxByInput_UpdateDefaultRates, getPriceWatcherTxByInput_UpdatePriceFeeds } from '@utils/transaction/common/priceWatcher';
-import { IERC165UpgradeableInterfaceId, IEstateTokenizerInterfaceId, IEstateTokenReceiverInterfaceId } from '@tests/interfaces';
+import {
+    getPriceWatcherTxByInput_UpdateDefaultRates,
+    getPriceWatcherTxByInput_UpdatePriceFeeds
+} from '@utils/transaction/common/priceWatcher';
+
+// @utils/utils
+import {
+    getBytes4Hex,
+    randomBigNumber,
+    structToObject,
+    OrderedMap
+} from '@utils/utils';
+
 
 chai.use(smock.matchers);
 
@@ -208,7 +320,13 @@ describe('2.2. EstateForger', async () => {
             LandInitialization.COMMISSION_TOKEN_RoyaltyRate,
         ));
 
-        await callTransaction(getEstateTokenTxByInput_UpdateCommissionToken(estateToken as any, deployer, {commissionToken: commissionToken.address}, admin, admins));
+        await callTransaction(getEstateTokenTxByInput_UpdateCommissionToken(
+            estateToken as any,
+            deployer,
+            { commissionToken: commissionToken.address },
+            admin,
+            admins
+        ));
 
         const SmockReserveVaultFactory = await smock.mock('ReserveVault') as any;
         const reserveVault = await SmockReserveVaultFactory.deploy() as MockContract<ReserveVault>;
@@ -4743,6 +4861,30 @@ describe('2.2. EstateForger', async () => {
                     commissionRate,
                 );                
             }
+        });
+
+        it('2.2.12.7. Confirm tokenization unsuccessfully with invalid anchor', async () => {
+            const fixture = await beforeEstateForgerTest({
+                addZoneForExecutive: true,
+                listSampleCurrencies: true,
+                listSampleCustodians: true,
+                registerBrokers: true,
+                addSampleRequests: true,
+                fundERC20ForDepositors: true,
+                addDepositions: true,
+                addEstateForgerToVault: true,
+                fundERC20ForManagers: true,
+            });
+            const { estateForger, manager } = fixture;
+
+            await expect(getEstateForgerTx_SafeConfirm(
+                estateForger,
+                manager,
+                {
+                    requestId: BigNumber.from(1),
+                    anchor: ethers.utils.keccak256(ethers.utils.toUtf8Bytes("invalid anchor")),
+                }
+            )).to.be.revertedWithCustomError(estateForger, "InvalidAnchor");
         });
 
         it('2.2.12.7. Confirm tokenization unsuccessfully by unauthorized account', async () => {
