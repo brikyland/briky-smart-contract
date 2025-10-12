@@ -299,10 +299,16 @@ describe('6.2. EstateMarketplace', async () => {
             admins,
         ));
 
-        await callTransaction(getEstateTokenTxByInput_AuthorizeTokenizers(estateToken as any, deployer, {
-            accounts: [estateForger.address],
-            isTokenizer: true
-        }, admin, admins));
+        await callTransaction(getEstateTokenTxByInput_AuthorizeTokenizers(
+            estateToken as any,
+            deployer,
+            {
+                accounts: [estateForger.address],
+                isTokenizer: true
+            },
+            admin,
+            admins
+        ));
 
         await callTransaction(getEstateTokenTxByInput_UpdateCommissionToken(estateToken as any, deployer, {commissionToken: commissionToken.address}, admin, admins));
 
@@ -334,16 +340,25 @@ describe('6.2. EstateMarketplace', async () => {
             }
         }
 
-        await callTransaction(getCommissionTokenTx_RegisterBroker(commissionToken as any, manager, {
-            zone: zone1,
-            broker: broker1.address,
-            commissionRate: ethers.utils.parseEther("0.1"),
-        }));
-        await callTransaction(getCommissionTokenTx_RegisterBroker(commissionToken as any, manager, {
-            zone: zone2,
-            broker: broker2.address,
-            commissionRate: ethers.utils.parseEther("0.2"),
-        }));
+        await callTransaction(getCommissionTokenTx_RegisterBroker(
+            commissionToken as any,
+            manager,
+            {
+                zone: zone1,
+                broker: broker1.address,
+                commissionRate: ethers.utils.parseEther("0.1"),
+            }
+        ));
+        
+        await callTransaction(getCommissionTokenTx_RegisterBroker(
+            commissionToken as any,
+            manager,
+            {
+                zone: zone2,
+                broker: broker2.address,
+                commissionRate: ethers.utils.parseEther("0.2"),
+            }
+        ));
 
         let currentTimestamp = await time.latest();
         

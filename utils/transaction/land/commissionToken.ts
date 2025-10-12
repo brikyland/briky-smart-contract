@@ -119,6 +119,20 @@ export async function getCommissionTokenTx_ActivateBroker(
 
 
 // mint
+export async function getCommissionTokenTx_Mint(
+    commissionToken: CommissionToken,
+    deployer: SignerWithAddress,
+    params: MintParams,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    return commissionToken.connect(deployer).mint(
+        params.zone,
+        params.broker,
+        params.tokenId,
+        txConfig
+    );
+}
+
 export async function getCallCommissionTokenTx_Mint(
     commissionToken: CommissionToken,
     caller: ProxyCaller,

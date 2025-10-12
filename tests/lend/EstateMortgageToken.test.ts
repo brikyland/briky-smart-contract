@@ -323,10 +323,16 @@ describe('3.2. EstateMortgageToken', async () => {
             ));
         }
 
-        await callTransaction(getEstateTokenTxByInput_AuthorizeTokenizers(estateToken as any, deployer, {
-            accounts: [estateForger.address],
-            isTokenizer: true
-        }, admin, admins));
+        await callTransaction(getEstateTokenTxByInput_AuthorizeTokenizers(
+            estateToken as any,
+            deployer,
+            {
+                accounts: [estateForger.address],
+                isTokenizer: true
+            },
+            admin,
+            admins
+        ));
 
         for (const zone of [zone1, zone2]) {
             for (const custodian of [custodian1, custodian2]) {
@@ -343,16 +349,25 @@ describe('3.2. EstateMortgageToken', async () => {
             }
         }
 
-        await callTransaction(getCommissionTokenTx_RegisterBroker(commissionToken as any, manager, {
-            zone: zone1,
-            broker: broker1.address,
-            commissionRate: ethers.utils.parseEther('0.1'),
-        }));
-        await callTransaction(getCommissionTokenTx_RegisterBroker(commissionToken as any, manager, {
-            zone: zone2,
-            broker: broker2.address,
-            commissionRate: ethers.utils.parseEther('0.2'),
-        }));
+        await callTransaction(getCommissionTokenTx_RegisterBroker(
+            commissionToken as any,
+            manager,
+            {
+                zone: zone1,
+                broker: broker1.address,
+                commissionRate: ethers.utils.parseEther('0.1'),
+            }
+        ));
+
+        await callTransaction(getCommissionTokenTx_RegisterBroker(
+            commissionToken as any,
+            manager,
+            {
+                zone: zone2,
+                broker: broker2.address,
+                commissionRate: ethers.utils.parseEther('0.2'),
+            }
+        ));
 
         let currentTimestamp = await time.latest();
 
@@ -1022,11 +1037,15 @@ describe('3.2. EstateMortgageToken', async () => {
                 admins,
             ));
 
-            await callTransaction(getCommissionTokenTx_RegisterBroker(commissionToken as any, manager, {
-                zone,
-                broker: broker.address,
-                commissionRate: commissionTokenRate,
-            }));
+            await callTransaction(getCommissionTokenTx_RegisterBroker(
+                commissionToken as any,
+                manager,
+                {
+                    zone,
+                    broker: broker.address,
+                    commissionRate: commissionTokenRate,
+                }
+            ));
 
             let newCurrency: Currency | null = null;
             let newCurrencyAddress: string;

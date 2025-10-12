@@ -352,10 +352,16 @@ describe('2.4. EstateToken', async () => {
         }
         
         if (!skipAuthorizeEstateForger) {
-            await callTransaction(getEstateTokenTxByInput_AuthorizeTokenizers(estateToken, deployer, {
-                accounts: [estateForger.address],
-                isTokenizer: true
-            }, admin, admins));
+            await callTransaction(getEstateTokenTxByInput_AuthorizeTokenizers(
+                estateToken,
+                deployer,
+                {
+                    accounts: [estateForger.address],
+                    isTokenizer: true
+                },
+                admin,
+                admins
+            ));
         }
 
         if (!skipAuthorizeEstateLiquidator) {
@@ -370,7 +376,7 @@ describe('2.4. EstateToken', async () => {
                 for (const [custodianIndex, custodian] of custodians.entries()) {
                     await callTransaction(getEstateTokenTxByInput_RegisterCustodian(
                         estateToken,
-                        deployer,
+                        manager,
                         {
                             zone,
                             custodian: custodian.address,
@@ -534,7 +540,13 @@ describe('2.4. EstateToken', async () => {
                 accounts: toBeTokenizers.map(x => x.address),
                 isTokenizer: true,
             };
-            const tx = await getEstateTokenTxByInput_AuthorizeTokenizers(estateToken, deployer, paramsInput, admin, admins);
+            const tx = await getEstateTokenTxByInput_AuthorizeTokenizers(
+                estateToken,
+                deployer,
+                paramsInput,
+                admin,
+                admins
+            );
             await tx.wait();
 
             for (const tokenizer of toBeTokenizers) {
@@ -579,12 +591,16 @@ describe('2.4. EstateToken', async () => {
 
             const invalidTokenizer = randomWallet();
 
-            const paramsInput: AuthorizeTokenizersParamsInput = {
-                accounts: [invalidTokenizer.address],
-                isTokenizer: true,
-            };
-            await expect(getEstateTokenTxByInput_AuthorizeTokenizers(estateToken, deployer, paramsInput, admin, admins))
-                .to.be.revertedWithCustomError(estateToken, 'InvalidTokenizer');
+            await expect(getEstateTokenTxByInput_AuthorizeTokenizers(
+                estateToken,
+                deployer,
+                {
+                    accounts: [invalidTokenizer.address],
+                    isTokenizer: true,
+                },
+                admin,
+                admins
+            )).to.be.revertedWithCustomError(estateToken, 'InvalidTokenizer');
         });
 
         it('2.4.4.4. Authorize tokenizer reverted when contract does not support EstateTokenizer interface', async () => {
@@ -594,12 +610,16 @@ describe('2.4. EstateToken', async () => {
 
             const invalidTokenizer = estateToken;
 
-            const paramsInput: AuthorizeTokenizersParamsInput = {
-                accounts: [invalidTokenizer.address],
-                isTokenizer: true,
-            };
-            await expect(getEstateTokenTxByInput_AuthorizeTokenizers(estateToken, deployer, paramsInput, admin, admins))
-                .to.be.revertedWithCustomError(estateToken, 'InvalidTokenizer');
+            await expect(getEstateTokenTxByInput_AuthorizeTokenizers(
+                estateToken,
+                deployer,
+                {
+                    accounts: [invalidTokenizer.address],
+                    isTokenizer: true,
+                },
+                admin,
+                admins
+            )).to.be.revertedWithCustomError(estateToken, 'InvalidTokenizer');
         });
 
         it('2.4.4.5. Authorize tokenizer unsuccessfully when authorizing the same account twice on the same tx', async () => {
@@ -627,28 +647,42 @@ describe('2.4. EstateToken', async () => {
             });
 
             const tx1Tokenizers = tokenizers.slice(0, 3);
-
-            await callTransaction(getEstateTokenTxByInput_AuthorizeTokenizers(estateToken, deployer, {
-                accounts: tx1Tokenizers.map(x => x.address),
-                isTokenizer: true,
-            }, admin, admins));
+            await callTransaction(getEstateTokenTxByInput_AuthorizeTokenizers(
+                estateToken,
+                deployer,
+                {
+                    accounts: tx1Tokenizers.map(x => x.address),
+                    isTokenizer: true,
+                },
+                admin,
+                admins
+            ));
 
             const tx2Tokenizers = [tokenizers[3], tokenizers[2], tokenizers[4]];
-
-            const paramsInput: AuthorizeTokenizersParamsInput = {
-                accounts: tx2Tokenizers.map(x => x.address),
-                isTokenizer: true,
-            };
-            await expect(getEstateTokenTxByInput_AuthorizeTokenizers(estateToken, deployer, paramsInput, admin, admins))
-                .to.be.revertedWithCustomError(estateToken, `AuthorizedAccount`);
+            await expect(getEstateTokenTxByInput_AuthorizeTokenizers(
+                estateToken,
+                deployer,
+                {
+                    accounts: tx2Tokenizers.map(x => x.address),
+                    isTokenizer: true,
+                },
+                admin,
+                admins
+            )).to.be.revertedWithCustomError(estateToken, `AuthorizedAccount`);
         });
 
         async function setupTokenizers(fixture: EstateTokenFixture) {
             const { deployer, admins, admin, estateToken, tokenizers } = fixture;
-            await callTransaction(getEstateTokenTxByInput_AuthorizeTokenizers(estateToken, deployer, {
-                accounts: tokenizers.map(x => x.address),
-                isTokenizer: true,
-            }, admin, admins));
+            await callTransaction(getEstateTokenTxByInput_AuthorizeTokenizers(
+                estateToken,
+                deployer,
+                {
+                    accounts: tokenizers.map(x => x.address),
+                    isTokenizer: true,
+                },
+                admin,
+                admins
+            ));
         }
 
         it('2.4.4.7. Deauthorize tokenizer successfully', async () => {
@@ -659,10 +693,16 @@ describe('2.4. EstateToken', async () => {
             await setupTokenizers(fixture);
 
             const toDeauth = tokenizers.slice(0, 2);
-            const tx = await getEstateTokenTxByInput_AuthorizeTokenizers(estateToken, deployer, {
-                accounts: toDeauth.map(x => x.address),
-                isTokenizer: false,
-            }, admin, admins);
+            const tx = await getEstateTokenTxByInput_AuthorizeTokenizers(
+                estateToken,
+                deployer,
+                {
+                    accounts: toDeauth.map(x => x.address),
+                    isTokenizer: false,
+                },
+                admin,
+                admins
+            );
             await tx.wait();
             
             for (const tokenizer of toDeauth) {
@@ -691,12 +731,16 @@ describe('2.4. EstateToken', async () => {
             const account = randomWallet();
             const toDeauth = [tokenizers[0], account];
 
-            const paramsInput: AuthorizeTokenizersParamsInput = {
-                accounts: toDeauth.map(x => x.address),
-                isTokenizer: false,
-            };
-            await expect(getEstateTokenTxByInput_AuthorizeTokenizers(estateToken, deployer, paramsInput, admin, admins))
-                .to.be.revertedWithCustomError(estateToken, `NotAuthorizedAccount`);
+            await expect(getEstateTokenTxByInput_AuthorizeTokenizers(
+                estateToken,
+                deployer,
+                {
+                    accounts: toDeauth.map(x => x.address),
+                    isTokenizer: false,
+                },
+                admin,
+                admins
+            )).to.be.revertedWithCustomError(estateToken, `NotAuthorizedAccount`);
         });
 
         it('2.4.4.9. Deauthorize tokenizer unsuccessfully when unauthorizing the same account twice on the same tx', async () => {
@@ -707,10 +751,16 @@ describe('2.4. EstateToken', async () => {
             await setupTokenizers(fixture);
 
             const toDeauth = tokenizers.slice(0, 2).concat([tokenizers[0]]);
-            const tx = await getEstateTokenTxByInput_AuthorizeTokenizers(estateToken, deployer, {
-                accounts: toDeauth.map(x => x.address),
-                isTokenizer: false,
-            }, admin, admins);
+            const tx = await getEstateTokenTxByInput_AuthorizeTokenizers(
+                estateToken,
+                deployer,
+                {
+                    accounts: toDeauth.map(x => x.address),
+                    isTokenizer: false,
+                },
+                admin,
+                admins
+            );
             await tx.wait();
         });
 
@@ -722,18 +772,28 @@ describe('2.4. EstateToken', async () => {
             await setupTokenizers(fixture);
 
             const tx1Accounts = tokenizers.slice(0, 2);
-            await callTransaction(getEstateTokenTxByInput_AuthorizeTokenizers(estateToken, deployer, {
-                accounts: tx1Accounts.map(x => x.address),
-                isTokenizer: false,
-            }, admin, admins));
+            await callTransaction(getEstateTokenTxByInput_AuthorizeTokenizers(
+                estateToken,
+                deployer,
+                {
+                    accounts: tx1Accounts.map(x => x.address),
+                    isTokenizer: false,
+                },
+                admin,
+                admins
+            ));
 
             const tx2Accounts = [tokenizers[0]];
-            const paramsInput: AuthorizeTokenizersParamsInput = {
-                accounts: tx2Accounts.map(x => x.address),
-                isTokenizer: false,
-            };
-            await expect(getEstateTokenTxByInput_AuthorizeTokenizers(estateToken, deployer, paramsInput, admin, admins))
-                .to.be.revertedWithCustomError(estateToken, `NotAuthorizedAccount`);
+            await expect(getEstateTokenTxByInput_AuthorizeTokenizers(
+                estateToken,
+                deployer,
+                {
+                    accounts: tx2Accounts.map(x => x.address),
+                    isTokenizer: false,
+                },
+                admin,
+                admins
+            )).to.be.revertedWithCustomError(estateToken, `NotAuthorizedAccount`);
         });
     });
 

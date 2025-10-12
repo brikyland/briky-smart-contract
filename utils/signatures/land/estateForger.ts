@@ -23,7 +23,7 @@ export async function getUpdateBaseUnitPriceRangeSignatures(
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
         ["address", "string", "uint256", "uint256"],
-        [estateForger.address, "update", paramsInput.baseMinUnitPrice, paramsInput.baseMaxUnitPrice]
+        [estateForger.address, "updateBaseUnitPriceRange", paramsInput.baseMinUnitPrice, paramsInput.baseMaxUnitPrice]
     );
 
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
@@ -39,7 +39,7 @@ export async function getWhitelistSignatures(
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "address[]", "bool[]"],
+        ["address", "string", "address[]", "bool"],
         [estateForger.address, "whitelist", paramsInput.accounts, paramsInput.isWhitelisted]
     );
 

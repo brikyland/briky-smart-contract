@@ -172,7 +172,7 @@ export async function getCashbackBaseDenomination(
     );
 }
 
-describe('2.3. EstateLiquidator', async () => {
+describe.only('2.3. EstateLiquidator', async () => {
     async function estateLiquidatorFixture(): Promise<EstateLiquidatorFixture> {
         const accounts = await ethers.getSigners();
         const deployer = accounts[0];
@@ -437,27 +437,41 @@ describe('2.3. EstateLiquidator', async () => {
             ));
         }
 
-        await callTransaction(getCommissionTokenTx_RegisterBroker(commissionToken as any, manager, {
-            zone: zone1,
-            broker: broker1.address,
-            commissionRate: ethers.utils.parseEther('0.1'),
-        }));
-        await callTransaction(getCommissionTokenTx_RegisterBroker(commissionToken as any, manager, {
-            zone: zone2,
-            broker: broker2.address,
-            commissionRate: ethers.utils.parseEther('0.2'),
-        }));
+        await callTransaction(getCommissionTokenTx_RegisterBroker(
+            commissionToken as any,
+            manager,
+            {
+                zone: zone1,
+                broker: broker1.address,
+                commissionRate: ethers.utils.parseEther('0.1'),
+            }
+        ));
+        await callTransaction(getCommissionTokenTx_RegisterBroker(
+            commissionToken as any,
+            manager,
+            {
+                zone: zone2,
+                broker: broker2.address,
+                commissionRate: ethers.utils.parseEther('0.2'),
+            }
+        ));
 
-        await callTransaction(getEstateTokenTxByInput_AuthorizeTokenizers(estateToken as any, deployer, {
-            accounts: [estateForger.address],
-            isTokenizer: true
-        }, admin, admins));
+        await callTransaction(getEstateTokenTxByInput_AuthorizeTokenizers(
+            estateToken as any,
+            deployer,
+            {
+                accounts: [estateForger.address],
+                isTokenizer: true
+            },
+            admin,
+            admins
+        ));
 
         for (const zone of [zone1, zone2]) {
             for (const custodian of [custodian1, custodian2]) {
                 await callTransaction(getEstateTokenTxByInput_RegisterCustodian(
                     estateToken as any,
-                    deployer,
+                    manager,
                     {
                         zone,
                         custodian: custodian.address,
