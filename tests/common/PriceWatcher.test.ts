@@ -1,28 +1,76 @@
 import chai from 'chai';
 import { expect } from 'chai';
+import { BigNumber } from 'ethers';
 import { ethers } from 'hardhat';
+
+// @defi-wonderland/smock
+import { smock } from '@defi-wonderland/smock';
+
+// @nomicfoundation/hardhat-network-helpers
+import { 
+    loadFixture,
+    time
+} from "@nomicfoundation/hardhat-network-helpers";
+
+// @typechain-types
 import {
     Admin,
     Currency,
     MockPriceFeed,
     PriceWatcher,
 } from '@typechain-types';
-import { callTransaction, expectRevertWithModifierCustomError, randomWallet } from '@utils/blockchain';
+
+// @tests/test.constant
 import { Constant } from '@tests/test.constant';
+
+// @utils/blockchain
+import {
+    callTransaction,
+    expectRevertWithModifierCustomError,
+    randomWallet
+} from '@utils/blockchain';
+
+// @utils/call/common
+import { addCurrencyToAdminAndPriceWatcher } from '@utils/call/common/common';
+
+// @utils/deployments/common
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { deployCurrency } from '@utils/deployments/common/currency';
-import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
-import { BigNumber } from 'ethers';
-import { smock } from '@defi-wonderland/smock';
-
-import { addCurrencyToAdminAndPriceWatcher } from '@utils/call/common/common';
-import { deployMockPriceFeed } from '@utils/deployments/mock/mockPriceFeed';
 import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
+
+// @utils/deployments/mock
+import { deployMockPriceFeed } from '@utils/deployments/mock/mockPriceFeed';
+
+// @utils/models/common
 import { Rate } from '@utils/models/common/common';
-import { randomBigNumber, randomInt, structToObject } from '@utils/utils';
-import { UpdateDefaultRatesParams, UpdateDefaultRatesParamsInput, UpdatePriceFeedsParams, UpdatePriceFeedsParamsInput } from '@utils/models/common/priceWatcher';
-import { getPriceWatcherTxByInput_UpdateDefaultRates, getPriceWatcherTx_UpdatePriceFeeds, getPriceWatcherTxByInput_UpdatePriceFeeds } from '@utils/transaction/common/priceWatcher';
-import { getUpdateDefaultRatesSignatures, getUpdatePriceFeedsSignatures } from '@utils/signatures/common/priceWatcher';
+import {
+    UpdateDefaultRatesParams,
+    UpdateDefaultRatesParamsInput,
+    UpdatePriceFeedsParams,
+    UpdatePriceFeedsParamsInput
+} from '@utils/models/common/priceWatcher';
+
+// @utils/signatures/common
+import {
+    getUpdateDefaultRatesSignatures,
+    getUpdatePriceFeedsSignatures
+} from '@utils/signatures/common/priceWatcher';
+
+// @utils/transaction/common
+import {
+    getPriceWatcherTxByInput_UpdateDefaultRates,
+    getPriceWatcherTx_UpdatePriceFeeds,
+    getPriceWatcherTxByInput_UpdatePriceFeeds,
+    getPriceWatcherTx_UpdateDefaultRates
+} from '@utils/transaction/common/priceWatcher';
+
+// @utils/utils
+import {
+    randomBigNumber,
+    randomInt,
+    structToObject
+} from '@utils/utils';
+
 
 chai.use(smock.matchers);
 
@@ -144,6 +192,8 @@ describe('1.7. PriceWatcher', async () => {
         return fixture;
     }
 
+
+    /* --- Initialization --- */
     describe('1.7.1. initialize(address)', async () => {
         it('1.7.1.1. Deploy successfully', async () => {
             const { admin, priceWatcher } = await beforePriceWatcherTest({});
@@ -152,7 +202,9 @@ describe('1.7. PriceWatcher', async () => {
         });
     });
 
-    describe('1.7.2. updatePriceFeeds(address[], address[], uint40[], bytes[])', async () => {
+
+    /* --- Administration --- */
+    describe('1.7.2. updatePriceFeeds(address[],address[],uint40[],bytes[])', async () => {
         it('1.7.2.1. Update price feeds successfully with valid signatures', async () => {
             const { deployer, admin, admins, priceWatcher, priceFeeds } = await beforePriceWatcherTest();
 
@@ -169,7 +221,6 @@ describe('1.7. PriceWatcher', async () => {
                 feeds: priceFeedAddresses,
                 heartbeats,
             };
-
             const tx = await getPriceWatcherTxByInput_UpdatePriceFeeds(priceWatcher, deployer, paramsInput, admin, admins);
             await tx.wait();
 
@@ -205,7 +256,6 @@ describe('1.7. PriceWatcher', async () => {
                 ...paramsInput,
                 signatures: await getUpdatePriceFeedsSignatures(priceWatcher, paramsInput, admin, admins, false),
             };
-
             await expect(getPriceWatcherTx_UpdatePriceFeeds(priceWatcher, deployer, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
@@ -220,14 +270,17 @@ describe('1.7. PriceWatcher', async () => {
             }
             const heartbeats = [40, 50, 0, 70, 80];
 
-            const paramsInput: UpdatePriceFeedsParamsInput = {
-                currencies: currencyAddresses,
-                feeds: priceFeedAddresses,
-                heartbeats,
-            };
-            
-            await expect(getPriceWatcherTxByInput_UpdatePriceFeeds(priceWatcher, deployer, paramsInput, admin, admins))
-                .to.be.revertedWithCustomError(priceWatcher, 'InvalidInput');
+            await expect(getPriceWatcherTxByInput_UpdatePriceFeeds(
+                priceWatcher,
+                deployer,
+                {
+                    currencies: currencyAddresses,
+                    feeds: priceFeedAddresses,
+                    heartbeats,
+                },
+                admin,
+                admins,
+            )).to.be.revertedWithCustomError(priceWatcher, 'InvalidInput');
         });
 
         it('1.7.2.4. Update price feeds unsuccessfully with conflicting params length', async () => {
@@ -236,20 +289,22 @@ describe('1.7. PriceWatcher', async () => {
             const priceFeedAddresses = priceFeeds.map(priceFeed => priceFeed.address);
 
             async function testForInvalidInput(currencyAddresses: string[], priceFeedAddresses: string[], heartbeats: number[]) {
-                const paramsInput: UpdatePriceFeedsParamsInput = {
-                    currencies: currencyAddresses,
-                    feeds: priceFeedAddresses,
-                    heartbeats,
-                };
-                await expect(getPriceWatcherTxByInput_UpdatePriceFeeds(priceWatcher, deployer, paramsInput, admin, admins))
-                    .to.be.revertedWithCustomError(priceWatcher, 'InvalidInput');
+                await expect(getPriceWatcherTxByInput_UpdatePriceFeeds(
+                    priceWatcher,
+                    deployer,
+                    {
+                        currencies: currencyAddresses,
+                        feeds: priceFeedAddresses,
+                        heartbeats,
+                    },
+                    admin,
+                    admins
+                )).to.be.revertedWithCustomError(priceWatcher, 'InvalidInput');
             }
-
 
             const currencyAddresses = [];
             for (let i = 0; i < 5; ++i) {
                 currencyAddresses.push(ethers.utils.computeAddress(ethers.utils.id(`currency_${i}`)));
-
             }
             const heartbeats = [40, 50, 60, 70, 80];
 
@@ -259,7 +314,7 @@ describe('1.7. PriceWatcher', async () => {
         });
     });
 
-    describe('1.7.3. updateDefaultRates(address[], (uint256, uint8)[], bytes[])', async () => {
+    describe('1.7.3. updateDefaultRates(address[],(uint256,uint8)[],bytes[])', async () => {
         it('1.7.3.1. Update default rates successfully with valid signatures', async () => {
             const { deployer, admin, admins, priceWatcher } = await beforePriceWatcherTest();
 
@@ -314,7 +369,7 @@ describe('1.7. PriceWatcher', async () => {
                 ...paramsInput,
                 signatures: await getUpdateDefaultRatesSignatures(priceWatcher, paramsInput, admin, admins, false),
             };
-            await expect(getPriceWatcherTxByInput_UpdateDefaultRates(priceWatcher, deployer, params, admin, admins))
+            await expect(getPriceWatcherTx_UpdateDefaultRates(priceWatcher, deployer, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
@@ -332,24 +387,32 @@ describe('1.7. PriceWatcher', async () => {
                 { value: BigNumber.from(50_0000), decimals: 4 },
             ];
 
-            const paramsInput: UpdateDefaultRatesParamsInput = {
-                currencies: currencyAddresses,
-                rates,
-            };
-            await expect(getPriceWatcherTxByInput_UpdateDefaultRates(priceWatcher, deployer, paramsInput, admin, admins))
-                .to.be.revertedWithCustomError(priceWatcher, 'InvalidInput');
+            await expect(getPriceWatcherTxByInput_UpdateDefaultRates(
+                priceWatcher,
+                deployer,
+                {
+                    currencies: currencyAddresses,
+                    rates,
+                },
+                admin,
+                admins,
+            )).to.be.revertedWithCustomError(priceWatcher, 'InvalidInput');
         });
 
         it('1.7.3.4. Update default rates unsuccessfully with conflicting params length', async () => {
             const { deployer, admin, admins, priceWatcher } = await beforePriceWatcherTest({});
 
             async function testForInvalidInput(currencyAddresses: string[], rates: Rate[]) {
-                const paramsInput: UpdateDefaultRatesParamsInput = {
-                    currencies: currencyAddresses,
-                    rates,
-                };
-                await expect(getPriceWatcherTxByInput_UpdateDefaultRates(priceWatcher, deployer, paramsInput, admin, admins))
-                    .to.be.revertedWithCustomError(priceWatcher, 'InvalidInput');
+                await expect(getPriceWatcherTxByInput_UpdateDefaultRates(
+                    priceWatcher,
+                    deployer,
+                    {
+                        currencies: currencyAddresses,
+                        rates,
+                    },
+                    admin,
+                    admins
+                )).to.be.revertedWithCustomError(priceWatcher, 'InvalidInput');
             }
 
             const currencyAddresses = [];
@@ -369,7 +432,9 @@ describe('1.7. PriceWatcher', async () => {
         });
     });
 
-    describe('1.7.4. isPriceInRange(address, uint256, uint256, uint256)', async () => {
+
+    /* --- Query --- */
+    describe('1.7.4. isPriceInRange(address,uint256,uint256,uint256)', async () => {
         it('1.7.4.1. Return correct value when currency have price feed', async () => {
             const fixture = await beforePriceWatcherTest({
                 listSampleCurrencies: true,
@@ -429,6 +494,7 @@ describe('1.7. PriceWatcher', async () => {
                 normalizedUnitPrice,
                 normalizedUnitPrice,
             )).to.equal(true);
+
             expect(await priceWatcher.isPriceInRange(
                 newCurrency.address,
                 unitPrice,

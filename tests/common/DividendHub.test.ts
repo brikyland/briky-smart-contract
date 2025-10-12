@@ -81,7 +81,7 @@ interface DividendHubFixture {
     failReceiver: FailReceiver;
 }
 
-describe.only('1.4. DividendHub', async () => {
+describe('1.4. DividendHub', async () => {
     afterEach(async () => {
         const fixture = await loadFixture(dividendHubFixture);
         const { governor } = fixture;

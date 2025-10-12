@@ -813,6 +813,120 @@ describe('1.6. GovernanceHub', async () => {
         });
     });
 
+    describe('1.6.5. getProposalState(uint256)', async () => {
+        it('1.6.5.1. Return disqualified state with proposal overdue for confirmation', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteApprovalSampleProposals: true,
+            });
+            const { governanceHub } = fixture;
+
+            const proposal = await governanceHub.getProposal(1);
+            const due = proposal.due;
+            await time.increaseTo(due + Constant.GOVERNANCE_HUB_CONFIRMATION_TIME_LIMIT);
+            expect(await governanceHub.getProposalState(1)).to.equal(ProposalState.Disqualified);
+
+            await time.increaseTo(due + Constant.GOVERNANCE_HUB_CONFIRMATION_TIME_LIMIT + 10);
+            expect(await governanceHub.getProposalState(1)).to.equal(ProposalState.Disqualified);
+        });
+
+        it('1.6.5.2. Return correct proposal state for pending proposal', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                addSampleProposals: true,
+            });
+            const { governanceHub } = fixture;
+
+            expect(await governanceHub.getProposalState(1)).to.equal(ProposalState.Pending);
+            expect(await governanceHub.getProposalState(2)).to.equal(ProposalState.Pending);
+        });
+
+        it('1.6.5.3. Return correct proposal state for voting proposal that is not overdue for confirmation', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                addSampleProposals: true,
+                admitSampleProposals: true,
+            });
+            const { governanceHub } = fixture;
+
+            expect(await governanceHub.getProposalState(1)).to.equal(ProposalState.Voting);
+            expect(await governanceHub.getProposalState(2)).to.equal(ProposalState.Voting);
+        });
+
+        it('1.6.5.4. Return correct proposal state for executing proposal', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteApprovalSampleProposals: true,
+                confirmExecutionSampleProposals: true,
+            });
+            const { governanceHub } = fixture;
+            
+            expect(await governanceHub.getProposalState(1)).to.equal(ProposalState.Executing);
+            expect(await governanceHub.getProposalState(2)).to.equal(ProposalState.Executing);
+        });
+
+        it('1.6.5.5. Return correct proposal state for successfully executed proposal', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteApprovalSampleProposals: true,
+                confirmExecutionSampleProposals: true,
+                concludeExecutionSucceededSampleProposals: true,
+            });
+            const { governanceHub } = fixture;
+
+            expect(await governanceHub.getProposalState(1)).to.equal(ProposalState.SuccessfulExecuted);
+            expect(await governanceHub.getProposalState(2)).to.equal(ProposalState.SuccessfulExecuted);
+        });
+
+        it('1.6.5.6. Return correct proposal state for unsuccessfully executed proposal', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                voteApprovalSampleProposals: true,
+                confirmExecutionSampleProposals: true,
+                concludeExecutionFailedSampleProposals: true,
+            });
+            const { governanceHub } = fixture;
+
+            expect(await governanceHub.getProposalState(1)).to.equal(ProposalState.UnsuccessfulExecuted);
+            expect(await governanceHub.getProposalState(2)).to.equal(ProposalState.UnsuccessfulExecuted);
+        });
+
+        it('1.6.5.7. Return correct proposal state for disqualified proposal', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                addSampleProposals: true,
+                disqualifySampleProposals: true,
+            });
+            const { governanceHub } = fixture;
+
+            expect(await governanceHub.getProposalState(1)).to.equal(ProposalState.Disqualified);
+            expect(await governanceHub.getProposalState(2)).to.equal(ProposalState.Disqualified);
+        });
+
+        it('1.6.5.8. Return correct proposal state for rejected proposal', async () => {
+            const fixture = await beforeGovernanceHubTest({
+                addSampleProposals: true,
+                admitSampleProposals: true,
+                rejectExecutionSampleProposals: true,
+            });
+            const { governanceHub } = fixture;
+
+            expect(await governanceHub.getProposalState(1)).to.equal(ProposalState.Rejected);
+            expect(await governanceHub.getProposalState(2)).to.equal(ProposalState.Rejected);
+        });
+
+        it('1.6.5.9. Revert with invalid proposal id', async () => {
+            const fixture = await beforeGovernanceHubTest();
+            const { governanceHub } = fixture;
+
+            await expect(governanceHub.getProposalState(0))
+                .to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
+            await expect(governanceHub.getProposalState(100))
+                .to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
+        });
+    });
+
     describe('1.6.4. getProposalVerdict(uint256)', async () => {
         it('1.6.4.1. Return unsettled verdict for pending proposal', async () => {
             const fixture = await beforeGovernanceHubTest({
@@ -1110,120 +1224,6 @@ describe('1.6. GovernanceHub', async () => {
             await expect(governanceHub.getProposalVerdict(0))
                 .to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
             await expect(governanceHub.getProposalVerdict(100))
-                .to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
-        });
-    });
-
-    describe('1.6.5. getProposalState(uint256)', async () => {
-        it('1.6.5.1. Return disqualified state with proposal overdue for confirmation', async () => {
-            const fixture = await beforeGovernanceHubTest({
-                addSampleProposals: true,
-                admitSampleProposals: true,
-                voteApprovalSampleProposals: true,
-            });
-            const { governanceHub } = fixture;
-
-            const proposal = await governanceHub.getProposal(1);
-            const due = proposal.due;
-            await time.increaseTo(due + Constant.GOVERNANCE_HUB_CONFIRMATION_TIME_LIMIT);
-            expect(await governanceHub.getProposalState(1)).to.equal(ProposalState.Disqualified);
-
-            await time.increaseTo(due + Constant.GOVERNANCE_HUB_CONFIRMATION_TIME_LIMIT + 10);
-            expect(await governanceHub.getProposalState(1)).to.equal(ProposalState.Disqualified);
-        });
-
-        it('1.6.5.2. Return correct proposal state for pending proposal', async () => {
-            const fixture = await beforeGovernanceHubTest({
-                addSampleProposals: true,
-            });
-            const { governanceHub } = fixture;
-
-            expect(await governanceHub.getProposalState(1)).to.equal(ProposalState.Pending);
-            expect(await governanceHub.getProposalState(2)).to.equal(ProposalState.Pending);
-        });
-
-        it('1.6.5.3. Return correct proposal state for voting proposal that is not overdue for confirmation', async () => {
-            const fixture = await beforeGovernanceHubTest({
-                addSampleProposals: true,
-                admitSampleProposals: true,
-            });
-            const { governanceHub } = fixture;
-
-            expect(await governanceHub.getProposalState(1)).to.equal(ProposalState.Voting);
-            expect(await governanceHub.getProposalState(2)).to.equal(ProposalState.Voting);
-        });
-
-        it('1.6.5.4. Return correct proposal state for executing proposal', async () => {
-            const fixture = await beforeGovernanceHubTest({
-                addSampleProposals: true,
-                admitSampleProposals: true,
-                voteApprovalSampleProposals: true,
-                confirmExecutionSampleProposals: true,
-            });
-            const { governanceHub } = fixture;
-            
-            expect(await governanceHub.getProposalState(1)).to.equal(ProposalState.Executing);
-            expect(await governanceHub.getProposalState(2)).to.equal(ProposalState.Executing);
-        });
-
-        it('1.6.5.5. Return correct proposal state for successfully executed proposal', async () => {
-            const fixture = await beforeGovernanceHubTest({
-                addSampleProposals: true,
-                admitSampleProposals: true,
-                voteApprovalSampleProposals: true,
-                confirmExecutionSampleProposals: true,
-                concludeExecutionSucceededSampleProposals: true,
-            });
-            const { governanceHub } = fixture;
-
-            expect(await governanceHub.getProposalState(1)).to.equal(ProposalState.SuccessfulExecuted);
-            expect(await governanceHub.getProposalState(2)).to.equal(ProposalState.SuccessfulExecuted);
-        });
-
-        it('1.6.5.6. Return correct proposal state for unsuccessfully executed proposal', async () => {
-            const fixture = await beforeGovernanceHubTest({
-                addSampleProposals: true,
-                admitSampleProposals: true,
-                voteApprovalSampleProposals: true,
-                confirmExecutionSampleProposals: true,
-                concludeExecutionFailedSampleProposals: true,
-            });
-            const { governanceHub } = fixture;
-
-            expect(await governanceHub.getProposalState(1)).to.equal(ProposalState.UnsuccessfulExecuted);
-            expect(await governanceHub.getProposalState(2)).to.equal(ProposalState.UnsuccessfulExecuted);
-        });
-
-        it('1.6.5.7. Return correct proposal state for disqualified proposal', async () => {
-            const fixture = await beforeGovernanceHubTest({
-                addSampleProposals: true,
-                disqualifySampleProposals: true,
-            });
-            const { governanceHub } = fixture;
-
-            expect(await governanceHub.getProposalState(1)).to.equal(ProposalState.Disqualified);
-            expect(await governanceHub.getProposalState(2)).to.equal(ProposalState.Disqualified);
-        });
-
-        it('1.6.5.8. Return correct proposal state for rejected proposal', async () => {
-            const fixture = await beforeGovernanceHubTest({
-                addSampleProposals: true,
-                admitSampleProposals: true,
-                rejectExecutionSampleProposals: true,
-            });
-            const { governanceHub } = fixture;
-
-            expect(await governanceHub.getProposalState(1)).to.equal(ProposalState.Rejected);
-            expect(await governanceHub.getProposalState(2)).to.equal(ProposalState.Rejected);
-        });
-
-        it('1.6.5.9. Revert with invalid proposal id', async () => {
-            const fixture = await beforeGovernanceHubTest();
-            const { governanceHub } = fixture;
-
-            await expect(governanceHub.getProposalState(0))
-                .to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
-            await expect(governanceHub.getProposalState(100))
                 .to.be.revertedWithCustomError(governanceHub, 'InvalidProposalId');
         });
     });

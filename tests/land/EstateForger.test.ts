@@ -427,10 +427,16 @@ describe('2.2. EstateForger', async () => {
         }
 
         if (addEstateForgerToVault) {
-            await callTransaction(getReserveVaultTxByInput_AuthorizeProvider(reserveVault as any, deployer, {
-                accounts: [estateForger.address],
-                isProvider: true
-            }, admin, admins));
+            await callTransaction(getReserveVaultTxByInput_AuthorizeProvider(
+                reserveVault as any,
+                deployer,
+                {
+                    accounts: [estateForger.address],
+                    isProvider: true
+                },
+                admin,
+                admins
+            ));
         }
 
         if (registerBrokers) {

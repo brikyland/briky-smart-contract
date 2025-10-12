@@ -1,5 +1,17 @@
 import { expect } from 'chai';
-import { ethers, upgrades } from 'hardhat';
+import { BigNumber } from 'ethers';
+import { ethers } from 'hardhat';
+
+// @defi-wonderland/smock
+import {
+    MockContract,
+    smock
+} from '@defi-wonderland/smock';
+
+// @nomicfoundation/hardhat-network-helpers
+import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
+
+// @typechain-types
 import {
     Admin,
     Currency,
@@ -8,23 +20,54 @@ import {
     MockProvider,
     ReentrancyERC20,
 } from '@typechain-types';
-import { callTransaction, getSignatures, prepareERC20, prepareNativeToken } from '@utils/blockchain';
+
+// @tests/test.constant
 import { Constant } from '@tests/test.constant';
+
+// @utils/blockchain
+import {
+    callTransaction,
+    expectRevertWithModifierCustomError,
+    prepareERC20,
+    prepareNativeToken,
+    randomWallet
+} from '@utils/blockchain';
+
+// @utils/deployments/common
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { deployCurrency } from '@utils/deployments/common/currency';
-import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
-import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-import { randomWallet } from '@utils/blockchain';
-import { MockContract, smock } from '@defi-wonderland/smock';
 
-import { BigNumber } from 'ethers';
+// @utils/deployments/mock
+import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
 import { deployMockProvider } from '@utils/deployments/mock/mockProvider';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
-import { getReserveVaultTx_AuthorizeProvider, getReserveVaultTxByInput_AuthorizeProvider, getCallReserveVaultTx_ExpandFund, getCallReserveVaultTx_OpenFund, getCallReserveVaultTx_ProvideFund, getCallReserveVaultTx_WithdrawFund, getReserveVaultTx_OpenFund } from '@utils/transaction/common/reserveVault';
+
+// @utils/models/common
+import {
+    AuthorizeProviderParams,
+    AuthorizeProviderParamsInput,
+    ExpandFundParams,
+    OpenFundParams,
+    ProvideFundParams,
+    WithdrawFundParams
+} from '@utils/models/common/reserveVault';
+
+// @utils/signatures/common
+import { getAuthorizeProviderSignatures } from '@utils/signatures/common/reserveVault';
+
+// @utils/transaction/common
 import { getAdminTxByInput_UpdateCurrencyRegistries } from '@utils/transaction/common/admin';
 import { getPausableTxByInput_Pause } from '@utils/transaction/common/pausable';
-import { AuthorizeProviderParams, AuthorizeProviderParamsInput, ExpandFundParams, OpenFundParams, ProvideFundParams, WithdrawFundParams } from '@utils/models/common/reserveVault';
-import { getAuthorizeProviderSignatures } from '@utils/signatures/common/reserveVault';
+import {
+    getReserveVaultTx_AuthorizeProvider,
+    getReserveVaultTxByInput_AuthorizeProvider,
+    getCallReserveVaultTx_ExpandFund,
+    getCallReserveVaultTx_OpenFund,
+    getCallReserveVaultTx_ProvideFund,
+    getCallReserveVaultTx_WithdrawFund,
+    getReserveVaultTx_OpenFund
+} from '@utils/transaction/common/reserveVault';
+
 
 interface ReserveVaultFixture {
     deployer: any;
@@ -149,10 +192,16 @@ describe('1.8. ReserveVault', async () => {
         }
 
         if (authorizeProviders) {
-            await callTransaction(getReserveVaultTxByInput_AuthorizeProvider(reserveVault as any, deployer, {
-                accounts: providers.map(x => x.address),
-                isProvider: true,
-            }, admin, admins))
+            await callTransaction(getReserveVaultTxByInput_AuthorizeProvider(
+                reserveVault as any,
+                deployer,
+                {
+                    accounts: providers.map(x => x.address),
+                    isProvider: true,
+                },
+                admin,
+                admins
+            ))
         }
 
         if (listFunds) {
@@ -164,26 +213,38 @@ describe('1.8. ReserveVault', async () => {
                 extraCurrencies.push(reentrancyERC20.address);
                 extraDenominations.push(300);
             }
-            await callTransaction(getCallReserveVaultTx_OpenFund(reserveVault as any, providers[0], {
-                mainCurrency,
-                mainDenomination,
-                extraCurrencies,
-                extraDenominations,
-            }));
+            await callTransaction(getCallReserveVaultTx_OpenFund(
+                reserveVault as any,
+                providers[0],
+                {
+                    mainCurrency,
+                    mainDenomination,
+                    extraCurrencies,
+                    extraDenominations,
+                }
+            ));
         }
 
         if (expandFunds) {
             const quantity = 1000;
-            await callTransaction(getCallReserveVaultTx_ExpandFund(reserveVault as any, providers[0], {
-                fundId: BigNumber.from(1),
-                quantity: BigNumber.from(quantity),
-            }));
+            await callTransaction(getCallReserveVaultTx_ExpandFund(
+                reserveVault as any,
+                providers[0],
+                {
+                    fundId: BigNumber.from(1),
+                    quantity: BigNumber.from(quantity),
+                }
+            ));
         }
 
         if (provideFunds) {
             const initTotalQuantity = (await reserveVault.getFund(1)).quantity;
             const nativeDenomination = 400;
-            await callTransaction(getCallReserveVaultTx_ProvideFund(reserveVault as any, providers[0], {fundId: BigNumber.from(1)}, {value: initTotalQuantity.mul(nativeDenomination)}));
+            await callTransaction(getCallReserveVaultTx_ProvideFund(
+                reserveVault as any,
+                providers[0],
+                { fundId: BigNumber.from(1) },
+                { value: initTotalQuantity.mul(nativeDenomination) }));
         }
 
         if (pause) {
@@ -195,6 +256,8 @@ describe('1.8. ReserveVault', async () => {
         }
     }
 
+
+    /* --- Initialization --- */
     describe('1.8.1. initialize(address)', async () => {
         it('1.8.1.1. Deploy successfully', async () => {
             const { admin, reserveVault } = await beforeReserveVaultTest();
@@ -205,7 +268,9 @@ describe('1.8. ReserveVault', async () => {
         });
     });
 
-    describe('1.8.2. authorizeProviders(address[], bool, bytes[])', async () => {
+
+    /* --- Administration --- */
+    describe('1.8.2. authorizeProviders(address[],bool,bytes[])', async () => {
         it('1.8.2.1. Authorize providers successfully with valid signatures', async () => {
             const { deployer, reserveVault, admin, admins, providers } = await beforeReserveVaultTest();
 
@@ -215,7 +280,13 @@ describe('1.8. ReserveVault', async () => {
                 accounts: toBeProviders.map(x => x.address),
                 isProvider: true,
             };
-            const tx = await getReserveVaultTxByInput_AuthorizeProvider(reserveVault as any, deployer, paramsInput, admin, admins);
+            const tx = await getReserveVaultTxByInput_AuthorizeProvider(
+                reserveVault as any,
+                deployer,
+                paramsInput,
+                admin,
+                admins,
+            );
             await tx.wait();
 
             for (const provider of toBeProviders) {
@@ -256,12 +327,16 @@ describe('1.8. ReserveVault', async () => {
 
             const toBeProviders = [providers[0], providers[1], providers[2], providers[0]];
 
-            const paramsInput: AuthorizeProviderParamsInput = {
-                accounts: toBeProviders.map(x => x.address),
-                isProvider: true,
-            };
-            await expect(getReserveVaultTxByInput_AuthorizeProvider(reserveVault as any, deployer, paramsInput, admin, admins))
-                .to.be.revertedWithCustomError(reserveVault, `AuthorizedAccount`);
+            await expect(getReserveVaultTxByInput_AuthorizeProvider(
+                reserveVault as any,
+                deployer,
+                {
+                    accounts: toBeProviders.map(x => x.address),
+                    isProvider: true,
+                },
+                admin,
+                admins,
+            )).to.be.revertedWithCustomError(reserveVault, `AuthorizedAccount`);
         });
 
         it('1.8.2.4. Authorize provider unsuccessfully when authorizing the same account twice on different txs', async () => {
@@ -269,19 +344,29 @@ describe('1.8. ReserveVault', async () => {
 
             const tx1Providers = providers.slice(0, 2);
 
-            await callTransaction(getReserveVaultTxByInput_AuthorizeProvider(reserveVault as any, deployer, {
-                accounts: tx1Providers.map(x => x.address),
-                isProvider: true,
-            }, admin, admins));
+            await callTransaction(getReserveVaultTxByInput_AuthorizeProvider(
+                reserveVault as any,
+                deployer,
+                {
+                    accounts: tx1Providers.map(x => x.address),
+                    isProvider: true,
+                },
+                admin,
+                admins,
+            ));
 
             const tx2Providers = [providers[2], providers[1]];
 
-            const paramsInput: AuthorizeProviderParamsInput = {
-                accounts: tx2Providers.map(x => x.address),
-                isProvider: true,
-            };
-            await expect(getReserveVaultTxByInput_AuthorizeProvider(reserveVault as any, deployer, paramsInput, admin, admins))
-                .to.be.revertedWithCustomError(reserveVault, `AuthorizedAccount`);
+            await expect(getReserveVaultTxByInput_AuthorizeProvider(
+                reserveVault as any,
+                deployer,
+                {
+                    accounts: tx2Providers.map(x => x.address),
+                    isProvider: true,
+                },
+                admin,
+                admins,
+            )).to.be.revertedWithCustomError(reserveVault, `AuthorizedAccount`);
         })
 
         it('1.8.2.5. Deauthorize provider successfully', async () => {
@@ -322,12 +407,16 @@ describe('1.8. ReserveVault', async () => {
             const account = randomWallet();
             const toDeauth = [providers[0], account];
 
-            const paramsInput: AuthorizeProviderParamsInput = {
-                accounts: toDeauth.map(x => x.address),
-                isProvider: false,
-            };
-            await expect(getReserveVaultTxByInput_AuthorizeProvider(reserveVault as any, deployer, paramsInput, admin, admins))
-                .to.be.revertedWithCustomError(reserveVault, `NotAuthorizedAccount`)
+            await expect(getReserveVaultTxByInput_AuthorizeProvider(
+                reserveVault as any,
+                deployer,
+                {
+                    accounts: toDeauth.map(x => x.address),
+                    isProvider: false,
+                },
+                admin,
+                admins,
+            )).to.be.revertedWithCustomError(reserveVault, `NotAuthorizedAccount`)
         });
 
         it('1.8.2.7. Deauthorize provider unsuccessfully when unauthorizing the same account twice on the same tx', async () => {
@@ -337,12 +426,16 @@ describe('1.8. ReserveVault', async () => {
 
             const toDeauth = [providers[0], providers[1], providers[0]];
 
-            const paramsInput: AuthorizeProviderParamsInput = {
-                accounts: toDeauth.map(x => x.address),
-                isProvider: false,
-            };
-            await expect(getReserveVaultTxByInput_AuthorizeProvider(reserveVault as any, deployer, paramsInput, admin, admins))
-                .to.be.revertedWithCustomError(reserveVault, `NotAuthorizedAccount`)
+            await expect(getReserveVaultTxByInput_AuthorizeProvider(
+                reserveVault as any,
+                deployer,
+                {
+                    accounts: toDeauth.map(x => x.address),
+                    isProvider: false,
+                },
+                admin,
+                admins,
+            )).to.be.revertedWithCustomError(reserveVault, `NotAuthorizedAccount`)
         });
 
         it('1.8.2.8. Deauthorize provider unsuccessfully when unauthorizing the same account twice on different txs', async () => {
@@ -351,23 +444,107 @@ describe('1.8. ReserveVault', async () => {
             });
 
             const tx1Providers = [providers[0], providers[1]];
-            await callTransaction(getReserveVaultTxByInput_AuthorizeProvider(reserveVault as any, deployer, {
-                accounts: tx1Providers.map(x => x.address),
-                isProvider: true,
-            }, admin, admins));
+            await callTransaction(getReserveVaultTxByInput_AuthorizeProvider(
+                reserveVault as any,
+                deployer,
+                {
+                    accounts: tx1Providers.map(x => x.address),
+                    isProvider: false,
+                },
+                admin,
+                admins
+            ));
 
             const tx2Providers = [providers[2], providers[1]];
 
-            const paramsInput: AuthorizeProviderParamsInput = {
-                accounts: tx2Providers.map(x => x.address),
-                isProvider: false,
-            };
-            await expect(getReserveVaultTxByInput_AuthorizeProvider(reserveVault as any, deployer, paramsInput, admin, admins))
-                .to.be.revertedWithCustomError(reserveVault, `NotAuthorizedAccount`)
+            await expect(getReserveVaultTxByInput_AuthorizeProvider(
+                reserveVault as any,
+                deployer,
+                {
+                    accounts: tx2Providers.map(x => x.address),
+                    isProvider: false,
+                },
+                admin,
+                admins,
+            )).to.be.revertedWithCustomError(reserveVault, `NotAuthorizedAccount`)
         });
     });
 
-    describe('1.8.3. openFund(address, uint256, address[], uint256[])', async () => {
+
+    /* --- Query --- */
+    describe('1.8.3. getFund(uint256)', async () => {
+        it('1.8.3.1. Return successfully with valid fund id', async () => {
+            const { reserveVault } = await beforeReserveVaultTest({
+                authorizeProviders: true,
+                listFunds: true,
+            });
+
+            expect(await reserveVault.getFund(1)).to.not.be.reverted;
+        });
+
+        it('1.8.3.2. Revert with invalid fund id', async () => {
+            const { reserveVault } = await beforeReserveVaultTest({
+                authorizeProviders: true,
+                listFunds: true,
+            });
+
+            await expectRevertWithModifierCustomError(
+                reserveVault as any,
+                reserveVault.getFund(0),
+                'InvalidFundId',
+            );
+
+            await expectRevertWithModifierCustomError(
+                reserveVault as any,
+                reserveVault.getFund(3),
+                'InvalidFundId',
+            );
+        });
+    });
+
+    describe('1.8.3. isFundSufficient(uint256)', async () => {
+        it('1.8.3.1. Return false with unprovided fund', async () => {
+            const { reserveVault } = await beforeReserveVaultTest({
+                authorizeProviders: true,
+                listFunds: true,
+            });
+
+            expect(await reserveVault.isFundSufficient(1)).to.be.false;
+        });
+
+        it('1.8.3.2. Return true with provided fund', async () => {
+            const { reserveVault } = await beforeReserveVaultTest({
+                authorizeProviders: true,
+                listFunds: true,
+                provideFunds: true,
+            });
+
+            expect(await reserveVault.isFundSufficient(1)).to.be.true;
+        });
+        
+        it('1.8.3.3. Revert with invalid fund id', async () => {
+            const { reserveVault } = await beforeReserveVaultTest({
+                authorizeProviders: true,
+                listFunds: true,
+            });
+
+            await expectRevertWithModifierCustomError(
+                reserveVault as any,
+                reserveVault.isFundSufficient(0),
+                'InvalidFundId',
+            );
+
+            await expectRevertWithModifierCustomError(
+                reserveVault as any,
+                reserveVault.isFundSufficient(3),
+                'InvalidFundId',
+            );
+        });
+    });
+
+
+    /* --- Command --- */
+    describe('1.8.3. openFund(address,uint256,address[],uint256[])', async () => {
         it('1.8.3.1. Open fund successfully', async () => {
             const { reserveVault, providers, currencies } = await beforeReserveVaultTest({
                 authorizeProviders: true,
@@ -410,7 +587,6 @@ describe('1.8. ReserveVault', async () => {
             expect(fund1.isSufficient).to.equal(false);
 
             // Tx2: ERC20 main currency
-
             const params2: OpenFundParams = {
                 mainCurrency: currencies[0].address,
                 mainDenomination: 1600,
@@ -494,14 +670,16 @@ describe('1.8. ReserveVault', async () => {
 
             const provider = providers[0];
 
-            const params: OpenFundParams = {
-                mainCurrency: currencies[0].address,
-                mainDenomination: 100,
-                extraCurrencies: [currencies[1].address, currencies[2].address, ethers.constants.AddressZero],
-                extraDenominations: [200, 400, 800],
-            };
-            await expect(getCallReserveVaultTx_OpenFund(reserveVault as any, provider, params))
-                .to.be.revertedWith('Pausable: paused');
+            await expect(getCallReserveVaultTx_OpenFund(
+                reserveVault as any,
+                provider,
+                {
+                    mainCurrency: currencies[0].address,
+                    mainDenomination: 100,
+                    extraCurrencies: [currencies[1].address, currencies[2].address, ethers.constants.AddressZero],
+                    extraDenominations: [200, 400, 800],
+                }
+            )).to.be.revertedWith('Pausable: paused');
         });
 
         it('1.8.3.4. Open fund unsuccessfully by unauthorized account', async () => {
@@ -509,14 +687,16 @@ describe('1.8. ReserveVault', async () => {
                 authorizeProviders: true,
             });
 
-            const params: OpenFundParams = {
-                mainCurrency: currencies[0].address,
-                mainDenomination: 100,
-                extraCurrencies: [currencies[1].address, currencies[2].address, ethers.constants.AddressZero],
-                extraDenominations: [200, 400, 800],
-            };
-            await expect(getReserveVaultTx_OpenFund(reserveVault as any, deployer, params))
-                .to.be.revertedWithCustomError(reserveVault, 'Unauthorized');
+            await expect(getReserveVaultTx_OpenFund(
+                reserveVault as any,
+                deployer,
+                {
+                    mainCurrency: currencies[0].address,
+                    mainDenomination: 100,
+                    extraCurrencies: [currencies[1].address, currencies[2].address, ethers.constants.AddressZero],
+                    extraDenominations: [200, 400, 800],
+                }
+            )).to.be.revertedWithCustomError(reserveVault, 'Unauthorized');
         });
 
         it('1.8.3.5. Open fund unsuccessfully with invalid params length', async () => {
@@ -526,14 +706,16 @@ describe('1.8. ReserveVault', async () => {
 
             const provider = providers[0];
 
-            const params: OpenFundParams = {
-                mainCurrency: currencies[0].address,
-                mainDenomination: 100,
-                extraCurrencies: [currencies[1].address, currencies[2].address, ethers.constants.AddressZero],
-                extraDenominations: [200, 400, 800],
-            };
-            await expect(getCallReserveVaultTx_OpenFund(reserveVault as any, provider, params))
-                .to.be.revertedWithCustomError(reserveVault, 'InvalidInput');
+            await expect(getCallReserveVaultTx_OpenFund(
+                reserveVault as any,
+                provider,
+                {
+                    mainCurrency: currencies[0].address,
+                    mainDenomination: 100,
+                    extraCurrencies: [currencies[1].address, currencies[2].address, ethers.constants.AddressZero],
+                    extraDenominations: [200, 400, 800, 1600],
+                }
+            )).to.be.revertedWithCustomError(reserveVault, 'InvalidInput');
         });
 
         it('1.8.3.6. Open fund unsuccessfully with invalid main currency', async () => {
@@ -543,15 +725,17 @@ describe('1.8. ReserveVault', async () => {
 
             const provider = providers[0];
             
-            const params: OpenFundParams = {
-                mainCurrency: randomWallet().address,
-                mainDenomination: 100,
-                extraCurrencies: [currencies[1].address, currencies[2].address, ethers.constants.AddressZero],
-                extraDenominations: [200, 400, 800],
-            };
 
-            await expect(getCallReserveVaultTx_OpenFund(reserveVault as any, provider, params))
-                .to.be.revertedWithCustomError(reserveVault, 'InvalidCurrency');
+            await expect(getCallReserveVaultTx_OpenFund(
+                reserveVault as any,
+                provider,
+                {
+                    mainCurrency: randomWallet().address,
+                    mainDenomination: 100,
+                    extraCurrencies: [currencies[1].address, currencies[2].address, ethers.constants.AddressZero],
+                    extraDenominations: [200, 400, 800],
+                }
+            )).to.be.revertedWithCustomError(reserveVault, 'InvalidCurrency');
         });
 
         it('1.8.3.7. Open fund unsuccessfully with invalid sub currencies', async () => {
@@ -561,14 +745,16 @@ describe('1.8. ReserveVault', async () => {
 
             const provider = providers[0];
             
-            const params: OpenFundParams = {
-                mainCurrency: currencies[0].address,
-                mainDenomination: 100,
-                extraCurrencies: [currencies[1].address, currencies[2].address, randomWallet().address],
-                extraDenominations: [200, 400, 800],
-            };
-            await expect(getCallReserveVaultTx_OpenFund(reserveVault as any, provider, params))
-                .to.be.revertedWithCustomError(reserveVault, 'InvalidCurrency');
+            await expect(getCallReserveVaultTx_OpenFund(
+                reserveVault as any,
+                provider,
+                {
+                    mainCurrency: currencies[0].address,
+                    mainDenomination: 100,
+                    extraCurrencies: [currencies[1].address, currencies[2].address, randomWallet().address],
+                    extraDenominations: [200, 400, 800],
+                }
+            )).to.be.revertedWithCustomError(reserveVault, 'InvalidCurrency');
         });
 
         it('1.8.3.8. Open fund unsuccessfully with zero denomination sub currencies', async () => {
@@ -578,18 +764,20 @@ describe('1.8. ReserveVault', async () => {
 
             const provider = providers[0];
             
-            const params: OpenFundParams = {
-                mainCurrency: currencies[0].address,
-                mainDenomination: 100,
-                extraCurrencies: [currencies[1].address, currencies[2].address, ethers.constants.AddressZero],
-                extraDenominations: [200, 400, 0],
-            };
-            await expect(getCallReserveVaultTx_OpenFund(reserveVault as any, provider, params))
-                .to.be.revertedWithCustomError(reserveVault, 'InvalidDenomination');
+            await expect(getCallReserveVaultTx_OpenFund(
+                reserveVault as any,
+                provider,
+                {
+                    mainCurrency: currencies[0].address,
+                    mainDenomination: 100,
+                    extraCurrencies: [currencies[1].address, currencies[2].address, ethers.constants.AddressZero],
+                    extraDenominations: [200, 400, 0],
+                }
+            )).to.be.revertedWithCustomError(reserveVault, 'InvalidDenomination');
         });
     });
 
-    describe('1.8.4. expandFund(uint256, uint256)', async () => {
+    describe('1.8.4. expandFund(uint256,uint256)', async () => {
         it('1.8.4.1. Expand fund successfully', async () => {
             const { reserveVault, providers, deployer } = await beforeReserveVaultTest({
                 authorizeProviders: true,
@@ -646,12 +834,14 @@ describe('1.8. ReserveVault', async () => {
             const invalidFundIds = [0, 3];
 
             for (const invalidFundId of invalidFundIds) {
-                const params: ExpandFundParams = {
-                    fundId: BigNumber.from(invalidFundId),
-                    quantity: BigNumber.from(2000),
-                };
-                await expect(getCallReserveVaultTx_ExpandFund(reserveVault as any, provider, params))
-                    .to.be.revertedWithCustomError(reserveVault, 'InvalidFundId');
+                await expect(getCallReserveVaultTx_ExpandFund(
+                    reserveVault as any,
+                    provider,
+                    {
+                        fundId: BigNumber.from(invalidFundId),
+                        quantity: BigNumber.from(2000),
+                    }
+                )).to.be.revertedWithCustomError(reserveVault, 'InvalidFundId');
             }
         });
 
@@ -663,12 +853,14 @@ describe('1.8. ReserveVault', async () => {
                 pause: true,
             });
 
-            const params: ExpandFundParams = {
-                fundId: BigNumber.from(1),
-                quantity: BigNumber.from(2000),
-            };
-            await expect(getCallReserveVaultTx_ExpandFund(reserveVault as any, providers[0], params))
-                .to.be.revertedWith('Pausable: paused');
+            await expect(getCallReserveVaultTx_ExpandFund(
+                reserveVault as any,
+                providers[0],
+                {
+                    fundId: BigNumber.from(1),
+                    quantity: BigNumber.from(2000),
+                }
+            )).to.be.revertedWith('Pausable: paused');
         });
 
         it('1.8.4.4. Expand fund unsuccessfully by unauthorized account', async () => {
@@ -678,12 +870,14 @@ describe('1.8. ReserveVault', async () => {
                 expandFunds: true,
             });
 
-            const params: ExpandFundParams = {
-                fundId: BigNumber.from(1),
-                quantity: BigNumber.from(2000),
-            };
-            await expect(getCallReserveVaultTx_ExpandFund(reserveVault as any, providers[1], params))
-                .to.be.revertedWithCustomError(reserveVault, 'Unauthorized');
+            await expect(getCallReserveVaultTx_ExpandFund(
+                reserveVault as any,
+                providers[1],
+                {
+                    fundId: BigNumber.from(1),
+                    quantity: BigNumber.from(2000),
+                }
+            )).to.be.revertedWithCustomError(reserveVault, 'Unauthorized');
         });
 
         it('1.8.4.5. Expand fund unsuccessfully with already provided fund', async () => {
@@ -694,12 +888,14 @@ describe('1.8. ReserveVault', async () => {
                 provideFunds: true,
             });
 
-            const params: ExpandFundParams = {
-                fundId: BigNumber.from(1),
-                quantity: BigNumber.from(2000),
-            };
-            await expect(getCallReserveVaultTx_ExpandFund(reserveVault as any, providers[0], params))
-                .to.be.revertedWithCustomError(reserveVault, 'AlreadyProvided');
+            await expect(getCallReserveVaultTx_ExpandFund(
+                reserveVault as any,
+                providers[0],
+                {
+                    fundId: BigNumber.from(1),
+                    quantity: BigNumber.from(2000),
+                }
+            )).to.be.revertedWithCustomError(reserveVault, 'AlreadyProvided');
         });
     });
 
@@ -729,7 +925,12 @@ describe('1.8. ReserveVault', async () => {
             const params: ProvideFundParams = {
                 fundId: BigNumber.from(fundId),
             };
-            const tx = await getCallReserveVaultTx_ProvideFund(reserveVault as any, provider, params, {value: initTotalQuantity.mul(nativeDenomination)});
+            const tx = await getCallReserveVaultTx_ProvideFund(
+                reserveVault as any,
+                provider,
+                params,
+                { value: initTotalQuantity.mul(nativeDenomination) }
+            );
             const receipt = await tx.wait();
             const gasFee = receipt.gasUsed.mul(receipt.effectiveGasPrice);
 
@@ -773,7 +974,12 @@ describe('1.8. ReserveVault', async () => {
             const params: ProvideFundParams = {
                 fundId: BigNumber.from(fundId),
             };
-            const tx = await getCallReserveVaultTx_ProvideFund(reserveVault as any, provider, params, {value: initTotalQuantity.mul(nativeDenomination).add(ethers.utils.parseEther('100'))});
+            const tx = await getCallReserveVaultTx_ProvideFund(
+                reserveVault as any,
+                provider,
+                params,
+                { value: initTotalQuantity.mul(nativeDenomination).add(ethers.utils.parseEther('100')) }
+            );
             const receipt = await tx.wait();
             const gasFee = receipt.gasUsed.mul(receipt.effectiveGasPrice);
 
@@ -799,17 +1005,19 @@ describe('1.8. ReserveVault', async () => {
                 expandFunds: true,
             });
 
-            const params1: ProvideFundParams = {
-                fundId: BigNumber.from(0),
-            };
-            await expect(getCallReserveVaultTx_ProvideFund(reserveVault as any, providers[0], params1, {value: 0}))
-                .to.be.revertedWithCustomError(reserveVault, 'InvalidFundId');
+            await expect(getCallReserveVaultTx_ProvideFund(
+                reserveVault as any,
+                providers[0],
+                { fundId: BigNumber.from(0) },
+                { value: 0 }
+            )).to.be.revertedWithCustomError(reserveVault, 'InvalidFundId');
 
-            const params2: ProvideFundParams = {
-                fundId: BigNumber.from(3),
-            };
-            await expect(getCallReserveVaultTx_ProvideFund(reserveVault as any, providers[0], params2, {value: 0}))
-                .to.be.revertedWithCustomError(reserveVault, 'InvalidFundId');
+            await expect(getCallReserveVaultTx_ProvideFund(
+                reserveVault as any,
+                providers[0],
+                { fundId: BigNumber.from(3) },
+                { value: 0 }
+            )).to.be.revertedWithCustomError(reserveVault, 'InvalidFundId');
         });
 
         it('1.8.5.4. Provide fund unsuccessfully when paused', async () => {
@@ -820,11 +1028,12 @@ describe('1.8. ReserveVault', async () => {
                 pause: true,
             });
 
-            const params: ProvideFundParams = {
-                fundId: BigNumber.from(1),
-            };
-            await expect(getCallReserveVaultTx_ProvideFund(reserveVault as any, providers[0], params, {value: 0}))
-                .to.be.revertedWith('Pausable: paused');
+            await expect(getCallReserveVaultTx_ProvideFund(
+                reserveVault as any,
+                providers[0],
+                { fundId: BigNumber.from(1) },
+                { value: 0 }
+            )).to.be.revertedWith('Pausable: paused');
         });
 
         it('1.8.5.5. Provide fund unsuccessfully by unauthorized account', async () => {
@@ -833,11 +1042,13 @@ describe('1.8. ReserveVault', async () => {
                 listFunds: true,
                 expandFunds: true,
             });
-            const params: ProvideFundParams = {
-                fundId: BigNumber.from(1),
-            };
-            await expect(getCallReserveVaultTx_ProvideFund(reserveVault as any, providers[1], params, {value: 0}))
-                .to.be.revertedWithCustomError(reserveVault, 'Unauthorized');
+
+            await expect(getCallReserveVaultTx_ProvideFund(
+                reserveVault as any,
+                providers[1],
+                { fundId: BigNumber.from(1) },
+                { value: 0 }
+            )).to.be.revertedWithCustomError(reserveVault, 'Unauthorized');
         });
 
         it('1.8.5.6. Provide fund unsuccessfully with already provided fund', async () => {
@@ -847,11 +1058,13 @@ describe('1.8. ReserveVault', async () => {
                 expandFunds: true,
                 provideFunds: true,
             });
-            const params: ProvideFundParams = {
-                fundId: BigNumber.from(1),
-            };
-            await expect(getCallReserveVaultTx_ProvideFund(reserveVault as any, providers[0], params, {value: 0}))
-                .to.be.revertedWithCustomError(reserveVault, 'AlreadyProvided');
+
+            await expect(getCallReserveVaultTx_ProvideFund(
+                reserveVault as any,
+                providers[0],
+                { fundId: BigNumber.from(1) },
+                { value: 0 }
+            )).to.be.revertedWithCustomError(reserveVault, 'AlreadyProvided');
         });
 
         it('1.8.5.7. Provide fund unsuccessfully with insufficient native currency', async () => {
@@ -864,16 +1077,19 @@ describe('1.8. ReserveVault', async () => {
             const initTotalQuantity = (await reserveVault.getFund(1)).quantity;
             const nativeDenomination = 400;
 
-            const params: ProvideFundParams = {
-                fundId: BigNumber.from(1),
-            };
-            await expect(getCallReserveVaultTx_ProvideFund(reserveVault as any, providers[0], params, {value: initTotalQuantity.mul(nativeDenomination).sub(1)})).to.be.revertedWithCustomError(reserveVault, 'InsufficientValue');
+            await expect(getCallReserveVaultTx_ProvideFund(
+                reserveVault as any,
+                providers[0],
+                { fundId: BigNumber.from(1) },
+                { value: initTotalQuantity.mul(nativeDenomination).sub(1) }
+            )).to.be.revertedWithCustomError(reserveVault, 'InsufficientValue');
         });
 
 
         it('1.8.5.8. Provide fund unsuccessfully with insufficient ERC20 currencies', async () => {
             const { reserveVault, providers, deployer } = await beforeReserveVaultTest({
                 authorizeProviders: true,
+                skipFundForProvider: true,
                 listFunds: true,
                 expandFunds: true,
             });
@@ -890,10 +1106,12 @@ describe('1.8. ReserveVault', async () => {
             const initTotalQuantity = (await reserveVault.getFund(fundId)).quantity;
             const nativeDenomination = 400;
 
-            const params: ProvideFundParams = {
-                fundId: BigNumber.from(fundId),
-            };
-            await expect(getCallReserveVaultTx_ProvideFund(reserveVault as any, provider, params, {value: initTotalQuantity.mul(nativeDenomination)})).to.be.revertedWith('ERC20: insufficient allowance');
+            await expect(getCallReserveVaultTx_ProvideFund(
+                reserveVault as any,
+                provider,
+                { fundId: BigNumber.from(fundId) },
+                { value: initTotalQuantity.mul(nativeDenomination) }
+            )).to.be.revertedWith('ERC20: insufficient allowance');
         });
 
         it('1.8.5.9. Provide fund unsuccessfully when refunding native currency failed', async () => {
@@ -905,17 +1123,27 @@ describe('1.8. ReserveVault', async () => {
 
             const failReceiver = await deployFailReceiver(deployer, false, false);
 
-            await callTransaction(getReserveVaultTxByInput_AuthorizeProvider(reserveVault as any, deployer, {
-                accounts: [failReceiver.address],
-                isProvider: true
-            }, admin, admins));
+            await callTransaction(getReserveVaultTxByInput_AuthorizeProvider(
+                reserveVault as any,
+                deployer,
+                {
+                    accounts: [failReceiver.address],
+                    isProvider: true
+                },
+                admin,
+                admins
+            ));
 
-            await callTransaction(getCallReserveVaultTx_OpenFund(reserveVault as any, failReceiver as any, {
-                mainCurrency: currencies[0].address,
-                mainDenomination: 100,
-                extraCurrencies: [currencies[1].address, ethers.constants.AddressZero],
-                extraDenominations: [200, 400],
-            }));
+            await callTransaction(getCallReserveVaultTx_OpenFund(
+                reserveVault as any,
+                failReceiver as any,
+                {
+                    mainCurrency: currencies[0].address,
+                    mainDenomination: 100,
+                    extraCurrencies: [currencies[1].address, ethers.constants.AddressZero],
+                    extraDenominations: [200, 400],
+                }
+            ));
 
             await prepareNativeToken(
                 ethers.provider,
@@ -930,11 +1158,12 @@ describe('1.8. ReserveVault', async () => {
             const initTotalQuantity = (await reserveVault.getFund(fundId)).quantity;
             const nativeDenomination = 400;
 
-            const params: ProvideFundParams = {
-                fundId: BigNumber.from(fundId),
-            };
-            
-            await expect(getCallReserveVaultTx_ProvideFund(reserveVault as any, failReceiver as any, params, {value: initTotalQuantity.mul(nativeDenomination).add(1)})).to.be.revertedWithCustomError(reserveVault, 'FailedRefund');
+            await expect(getCallReserveVaultTx_ProvideFund(
+                reserveVault as any,
+                failReceiver as any,
+                { fundId: BigNumber.from(fundId) },
+                { value: initTotalQuantity.mul(nativeDenomination).add(1) }
+            )).to.be.revertedWithCustomError(reserveVault, 'FailedRefund');
         });
 
         it('1.8.5.10. Provide fund unsuccessfully when the contract is reentered', async () => {
@@ -974,7 +1203,7 @@ describe('1.8. ReserveVault', async () => {
         });        
     });
 
-    describe('1.8.6. withdrawFund(uint256, address, uint256)', async () => {
+    describe('1.8.6. withdrawFund(uint256,address,uint256)', async () => {
         it('1.8.6.1. Withdraw fund successfully', async () => {
             const { reserveVault, providers, currencies, deployer, withdrawer1, withdrawer2 } = await beforeReserveVaultTest({
                 authorizeProviders: true,
@@ -1049,13 +1278,15 @@ describe('1.8. ReserveVault', async () => {
                 provideFunds: true,
             });
 
-            const params: WithdrawFundParams = {
-                fundId: BigNumber.from(3),
-                receiver: withdrawer1.address,
-                quantity: BigNumber.from(10),
-            };
-            await expect(getCallReserveVaultTx_WithdrawFund(reserveVault as any, providers[0], params))
-                .to.be.revertedWithCustomError(reserveVault, 'InvalidFundId');
+            await expect(getCallReserveVaultTx_WithdrawFund(
+                reserveVault as any,
+                providers[0],
+                {
+                    fundId: BigNumber.from(3),
+                    receiver: withdrawer1.address,
+                    quantity: BigNumber.from(10),
+                }
+            )).to.be.revertedWithCustomError(reserveVault, 'InvalidFundId');
         });
 
         it('1.8.6.3. Withdraw fund unsuccessfully when paused', async () => {
@@ -1067,13 +1298,15 @@ describe('1.8. ReserveVault', async () => {
                 pause: true,
             });
 
-            const params: WithdrawFundParams = {
-                fundId: BigNumber.from(1),
-                receiver: withdrawer1.address,
-                quantity: BigNumber.from(10),
-            };
-            await expect(getCallReserveVaultTx_WithdrawFund(reserveVault as any, providers[0], params))
-                .to.be.revertedWith('Pausable: paused');
+            await expect(getCallReserveVaultTx_WithdrawFund(
+                reserveVault as any,
+                providers[0],
+                {
+                    fundId: BigNumber.from(1),
+                    receiver: withdrawer1.address,
+                    quantity: BigNumber.from(10),
+                }
+            )).to.be.revertedWith('Pausable: paused');
         });
 
         it('1.8.6.4. Withdraw fund unsuccessfully by unauthorized account', async () => {
@@ -1084,13 +1317,15 @@ describe('1.8. ReserveVault', async () => {
                 provideFunds: true,
             });
 
-            const params: WithdrawFundParams = {
-                fundId: BigNumber.from(1),
-                receiver: withdrawer1.address,
-                quantity: BigNumber.from(10),
-            };
-            await expect(getCallReserveVaultTx_WithdrawFund(reserveVault as any, providers[1], params))
-                .to.be.revertedWithCustomError(reserveVault, 'Unauthorized');
+            await expect(getCallReserveVaultTx_WithdrawFund(
+                reserveVault as any,
+                providers[1],
+                {
+                    fundId: BigNumber.from(1),
+                    receiver: withdrawer1.address,
+                    quantity: BigNumber.from(10),
+                }
+            )).to.be.revertedWithCustomError(reserveVault, 'Unauthorized');
         });
 
         it('1.8.6.5. Withdraw fund unsuccessfully with unprovided fund', async () => {
@@ -1100,13 +1335,15 @@ describe('1.8. ReserveVault', async () => {
                 expandFunds: true,
             });
 
-            const params: WithdrawFundParams = {
-                fundId: BigNumber.from(1),
-                receiver: withdrawer1.address,
-                quantity: BigNumber.from(10),
-            };
-            await expect(getCallReserveVaultTx_WithdrawFund(reserveVault as any, providers[0], params))
-                .to.be.revertedWithCustomError(reserveVault, 'InsufficientFunds');
+            await expect(getCallReserveVaultTx_WithdrawFund(
+                reserveVault as any,
+                providers[0],
+                {
+                    fundId: BigNumber.from(1),
+                    receiver: withdrawer1.address,
+                    quantity: BigNumber.from(10),
+                }
+            )).to.be.revertedWithCustomError(reserveVault, 'InsufficientFunds');
         });
         
         it('1.8.6.6. Withdraw fund unsuccessfully when withdraw quantity exceed fund quantity', async () => {
@@ -1118,13 +1355,15 @@ describe('1.8. ReserveVault', async () => {
             });
 
             const fundId = 1;
-            const params: WithdrawFundParams = {
-                fundId: BigNumber.from(fundId),
-                receiver: withdrawer1.address,
-                quantity: (await reserveVault.getFund(fundId)).quantity.add(100),
-            }
-            await expect(getCallReserveVaultTx_WithdrawFund(reserveVault as any, providers[0], params))
-                .to.be.revertedWithCustomError(reserveVault, 'InsufficientFunds');
+            await expect(getCallReserveVaultTx_WithdrawFund(
+                reserveVault as any,
+                providers[0],
+                {
+                    fundId: BigNumber.from(fundId),
+                    receiver: withdrawer1.address,
+                    quantity: (await reserveVault.getFund(fundId)).quantity.add(100),
+                }
+            )).to.be.revertedWithCustomError(reserveVault, 'InsufficientFunds');
         });
 
         it('1.8.6.7. Withdraw fund unsuccessfully when the contract is reentered', async () => {
