@@ -133,7 +133,9 @@ describe('1.7. PriceWatcher', async () => {
     };
 
     async function beforePriceWatcherTest({
-        listSampleCurrencies = false,
+        skipListSampleCurrencies = false,
+        listPriceFeeds = false,
+        listDefaultRates = false,
     } = {}): Promise<PriceWatcherFixture> {
         const fixture = await loadFixture(priceWatcherFixture);
         const {
@@ -146,20 +148,8 @@ describe('1.7. PriceWatcher', async () => {
             priceFeeds,
             priceWatcher,
         } = fixture;
-
-
-        if (listSampleCurrencies) {
-            await callTransaction(nativePriceFeed.updateData(1000_00000000, 8));
-            await callTransaction(currencyPriceFeed.updateData(5_00000000, 8));
-            for (let i = 2; i < priceFeeds.length; ++i) {
-                const decimals = randomInt(0, 18);
-                const value = randomBigNumber(
-                    BigNumber.from(10).pow(decimals).mul(100),
-                    BigNumber.from(10).pow(decimals + 1).mul(100)
-                );
-                await callTransaction(priceFeeds[i].updateData(value, decimals));
-            }
-
+        
+        if (!skipListSampleCurrencies) {
             await callTransaction(getAdminTxByInput_UpdateCurrencyRegistries(
                 admin,
                 deployer,
@@ -170,7 +160,19 @@ describe('1.7. PriceWatcher', async () => {
                 },
                 admins
             ));
+        }
 
+        if (listPriceFeeds) {
+            await callTransaction(nativePriceFeed.updateData(1000_00000000, 8));
+            await callTransaction(currencyPriceFeed.updateData(5_00000000, 8));
+            for (let i = 2; i < priceFeeds.length; ++i) {
+                const decimals = randomInt(0, 18);
+                const value = randomBigNumber(
+                    BigNumber.from(10).pow(decimals).mul(100),
+                    BigNumber.from(10).pow(decimals + 1).mul(100)
+                );
+                await callTransaction(priceFeeds[i].updateData(value, decimals));
+            }
 
             await callTransaction(getPriceWatcherTxByInput_UpdatePriceFeeds(
                 priceWatcher,
@@ -183,7 +185,9 @@ describe('1.7. PriceWatcher', async () => {
                 admin,
                 admins
             ));
-        
+        }
+
+        if (listDefaultRates) {                    
             await callTransaction(getPriceWatcherTxByInput_UpdateDefaultRates(
                 priceWatcher,
                 deployer,
@@ -447,7 +451,7 @@ describe('1.7. PriceWatcher', async () => {
     describe('1.7.4. isPriceInRange(address,uint256,uint256,uint256)', async () => {
         it('1.7.4.1. Return correct value when currency have price feed', async () => {
             const fixture = await beforePriceWatcherTest({
-                listSampleCurrencies: true,
+                listPriceFeeds: true,
             });
 
             const { priceWatcher } = fixture;
@@ -472,7 +476,9 @@ describe('1.7. PriceWatcher', async () => {
         });
 
         it('1.7.4.2. Return correct value when currency have default price', async () => {
-            const fixture = await beforePriceWatcherTest();
+            const fixture = await beforePriceWatcherTest({
+                listDefaultRates: true,
+            });
 
             const { admin, admins, priceWatcher, deployer } = fixture;
 
@@ -523,7 +529,9 @@ describe('1.7. PriceWatcher', async () => {
         });
 
         it('1.7.4.3. Revert when currency is unavailable', async () => {
-            const fixture = await beforePriceWatcherTest();
+            const fixture = await beforePriceWatcherTest({
+                skipListSampleCurrencies: true,
+            });
 
             const { deployer, admin, admins, priceWatcher } = fixture;
 
@@ -566,22 +574,10 @@ describe('1.7. PriceWatcher', async () => {
         it('1.7.4.4. Revert when currency rate is missing', async () => {
             const fixture = await beforePriceWatcherTest();
 
-            const { deployer, admin, admins, priceWatcher } = fixture;
-
-            const unavailableCurrency = randomWallet();
-            await callTransaction(getAdminTxByInput_UpdateCurrencyRegistries(
-                admin,
-                deployer,
-                {
-                    currencies: [unavailableCurrency.address],
-                    isAvailable: [true],
-                    isExclusive: [false],
-                },
-                admins
-            ));
+            const { priceWatcher } = fixture;
             
             await expect(priceWatcher.isPriceInRange(
-                unavailableCurrency.address,
+                ethers.constants.AddressZero,
                 1000,
                 100 * 1000,
                 100 * 1000,
@@ -590,7 +586,7 @@ describe('1.7. PriceWatcher', async () => {
         
         it('1.7.4.5. Revert when price feed is stale', async () => {
             const fixture = await beforePriceWatcherTest({
-                listSampleCurrencies: true,
+                listPriceFeeds: true,
             });
 
             const { priceWatcher, currency } = fixture;
@@ -610,7 +606,9 @@ describe('1.7. PriceWatcher', async () => {
         });
 
         it('1.7.4.6. Revert when price feed return invalid data', async () => {
-            const fixture = await beforePriceWatcherTest();
+            const fixture = await beforePriceWatcherTest({
+                listPriceFeeds: true,
+            });
 
             const { deployer, admin, admins, priceWatcher, nativePriceFeed, currencyPriceFeed, currency } = fixture;
 

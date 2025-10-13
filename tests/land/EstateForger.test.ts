@@ -245,7 +245,7 @@ export async function getCashbackBaseDenomination(
     );
 }
 
-describe('2.2. EstateForger', async () => {
+describe.only('2.2. EstateForger', async () => {
     async function estateForgerFixture(): Promise<EstateForgerFixture> {
         const accounts = await ethers.getSigners();
         const deployer = accounts[0];
@@ -393,21 +393,21 @@ describe('2.2. EstateForger', async () => {
 
     async function beforeEstateForgerTest({
         skipDeclareZone = false,
-        registerBrokers = false,
-        listSampleCurrencies = false,
-        fundERC20ForDepositors = false,
-        fundERC20ForManagers = false,
-        addZoneForExecutive = false,
-        addEstateForgerToVault = false,
+        skipRegisterBrokers = false,
+        skipListSampleCurrencies = false,
+        skipFundERC20ForDepositors = false,
+        skipFundERC20ForManagers = false,
+        skipAddZoneForExecutive = false,
+        skipAddEstateForgerToVault = false,
+        skipListSampleCustodians = false,
         whitelistDepositors = false,
-        whitelistDepositorsForRequests = false,
-        useFailReceiverAsBroker = false,
-        useReentrancyAsBroker = false,
-        listSampleCustodians = false,
         addSampleRequests = false,
-        useNoCashback = false,
+        whitelistDepositorsForRequests = false,
         addDepositions = false,
         confirmRequests = false,        
+        useNoCashback = false,
+        useFailReceiverAsBroker = false,
+        useReentrancyAsBroker = false,
         pause = false,
     } = {}): Promise<EstateForgerFixture> {
         const fixture = await loadFixture(estateForgerFixture);
@@ -462,7 +462,7 @@ describe('2.2. EstateForger', async () => {
             admins,
         ));
 
-        if (listSampleCurrencies) {
+        if (!skipListSampleCurrencies) {
             await nativePriceFeed.updateData(1000_00000000, 8);
             await currencyPriceFeed.updateData(5_00000000, 8);
 
@@ -501,7 +501,7 @@ describe('2.2. EstateForger', async () => {
             ));
         }
 
-        if (fundERC20ForDepositors) {
+        if (!skipFundERC20ForDepositors) {
             await prepareERC20(
                 currencies[0],
                 [depositor1, depositor2, depositor3],
@@ -534,7 +534,7 @@ describe('2.2. EstateForger', async () => {
 
         let timestamp = await time.latest() + 1000;
 
-        if (addZoneForExecutive) {
+        if (!skipAddZoneForExecutive) {
             for (const zone of [zone1, zone2]) {
                 await callTransaction(getAdminTxByInput_ActivateIn(
                     admin,
@@ -549,7 +549,7 @@ describe('2.2. EstateForger', async () => {
             }
         }
 
-        if (addEstateForgerToVault) {
+        if (!skipAddEstateForgerToVault) {
             await callTransaction(getReserveVaultTxByInput_AuthorizeProvider(
                 reserveVault as any,
                 deployer,
@@ -562,7 +562,7 @@ describe('2.2. EstateForger', async () => {
             ));
         }
 
-        if (registerBrokers) {
+        if (!skipRegisterBrokers) {
             await callTransaction(getCommissionTokenTx_RegisterBroker(
                 commissionToken as any,
                 manager,
@@ -583,20 +583,7 @@ describe('2.2. EstateForger', async () => {
             ));
         }
 
-        if (whitelistDepositors) {
-            await callTransaction(getEstateForgerTxByInput_Whitelist(
-                estateForger,
-                deployer,
-                {
-                    accounts: [depositor1.address, depositor2.address, depositor3.address],
-                    isWhitelisted: true
-                },
-                admin,
-                admins
-            ));
-        }
-
-        if (listSampleCustodians) {
+        if (!skipListSampleCustodians) {
             for (const [zoneIndex, zone] of [zone1, zone2].entries()) {
                 for (const [custodianIndex, custodian] of [custodian1, custodian2, custodian3].entries()) {
                     await callTransaction(getEstateTokenTxByInput_RegisterCustodian(
@@ -611,6 +598,25 @@ describe('2.2. EstateForger', async () => {
                     ));
                 }
             }
+        }
+
+        if (!skipFundERC20ForManagers) {
+            for(const currency of currencies) {
+                await prepareERC20(currency, [manager], [estateForger], ethers.utils.parseEther('10000'));
+            }
+        }
+
+        if (whitelistDepositors) {
+            await callTransaction(getEstateForgerTxByInput_Whitelist(
+                estateForger,
+                deployer,
+                {
+                    accounts: [depositor1.address, depositor2.address, depositor3.address],
+                    isWhitelisted: true
+                },
+                admin,
+                admins
+            ));
         }
 
         if (addSampleRequests) {
@@ -754,12 +760,6 @@ describe('2.2. EstateForger', async () => {
                 depositor3,
                 { requestId: BigNumber.from(2), quantity: BigNumber.from(500) },
             ));
-        }
-
-        if (fundERC20ForManagers) {
-            for(const currency of currencies) {
-                await prepareERC20(currency, [manager], [estateForger], ethers.utils.parseEther('10000'));
-            }
         }
 
         if (confirmRequests) {
@@ -1062,12 +1062,7 @@ describe('2.2. EstateForger', async () => {
     describe('2.2.4. getRequest(uint256)', async () => {
         it('2.2.4.1. Return successfully', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
-                registerBrokers: true,
                 addSampleRequests: true,
-                addEstateForgerToVault: true,
             });
             const { estateForger } = fixture;
 
@@ -1077,12 +1072,7 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.4.2. Revert with invalid request id', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
-                registerBrokers: true,
                 addSampleRequests: true,
-                addEstateForgerToVault: true,
             });
             const { estateForger } = fixture;
 
@@ -1095,17 +1085,10 @@ describe('2.2. EstateForger', async () => {
 
     describe('2.2.16. isTokenized(uint256)', () => {
         it('2.2.16.1. Return true for tokenized estate', async () => {
-            const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleCurrencies: true,
-                listSampleCustodians: true,
-                registerBrokers: true,
+            const fixture = await beforeEstateForgerTest({                
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
                 addDepositions: true,
-                confirmRequests: true,
-                addEstateForgerToVault: true,
-                fundERC20ForManagers: true,
+                confirmRequests: true,                
             });
 
             const { estateForger } = fixture;
@@ -1116,15 +1099,8 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.16.2. Return false for not tokenized estate', async () => {
             const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleCurrencies: true,
-                listSampleCustodians: true,
-                registerBrokers: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
                 addDepositions: true,
-                addEstateForgerToVault: true,
-                fundERC20ForManagers: true,
             });
 
             const { estateForger } = fixture;
@@ -1140,16 +1116,9 @@ describe('2.2. EstateForger', async () => {
     describe('2.2.15. allocationOfAt(address,uint256,uint256)', () => {
         it('2.2.15.1. Succeed with existing estate id', async () => {
             const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleCurrencies: true,
-                listSampleCustodians: true,
-                registerBrokers: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
                 addDepositions: true,
                 confirmRequests: true,
-                addEstateForgerToVault: true,
-                fundERC20ForManagers: true,
             });
 
             const { estateForger, depositor1, estateToken } = fixture;
@@ -1208,14 +1177,8 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.15.2. Revert with unconfirmed request', async () => {
             const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleCurrencies: true,
-                listSampleCustodians: true,
-                registerBrokers: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
                 addDepositions: true,
-                addEstateForgerToVault: true,
             });
 
             const { estateForger, depositor1, depositor2 } = fixture;
@@ -1255,16 +1218,9 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.15.3. Revert with non-existing estate id', async () => {
             const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleCurrencies: true,
-                listSampleCustodians: true,
-                registerBrokers: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
                 addDepositions: true,
                 confirmRequests: true,
-                addEstateForgerToVault: true,
-                fundERC20ForManagers: true,
             });
             const { estateForger, depositor1 } = fixture;
 
@@ -1278,16 +1234,9 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.15.4. Revert with timestamp after current block timestamp', async () => {
             const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleCurrencies: true,
-                listSampleCustodians: true,
-                registerBrokers: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
                 addDepositions: true,
                 confirmRequests: true,
-                addEstateForgerToVault: true,
-                fundERC20ForManagers: true,
             });
 
             const { estateForger, depositor1 } = fixture;
@@ -1356,13 +1305,7 @@ describe('2.2. EstateForger', async () => {
         }
 
         it('2.2.5.1. RequestTokenization successfully by manager', async () => {
-            const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,
-            });
+            const fixture = await beforeEstateForgerTest();
             const { manager, estateForger, reserveVault, commissionToken, validator } = fixture;
 
             const data = await getDefaultParams(fixture);
@@ -1438,13 +1381,7 @@ describe('2.2. EstateForger', async () => {
         });
 
         it('2.2.5.2. RequestTokenization successfully by moderator and without cashback', async () => {
-            const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,
-            });
+            const fixture = await beforeEstateForgerTest();
             const { manager, estateForger, reserveVault, commissionToken, validator, broker1 } = fixture;
 
             const defaultParams = await getDefaultParams(fixture);
@@ -1516,13 +1453,7 @@ describe('2.2. EstateForger', async () => {
         });
 
         it('2.2.5.3. RequestTokenization unsuccessfully with invalid validation', async () => {
-            const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,
-            });
+            const fixture = await beforeEstateForgerTest();
 
             const { manager, estateForger, validator } = fixture;
 
@@ -1536,13 +1467,7 @@ describe('2.2. EstateForger', async () => {
         });
 
         it('2.2.5.4. RequestTokenization unsuccessfully by non-executive', async () => {
-            const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,
-            });
+            const fixture = await beforeEstateForgerTest();
 
             const { user, estateForger, validator } = fixture;
 
@@ -1554,11 +1479,6 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.5.5. RequestTokenization unsuccessfully when paused', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,
                 pause: true,
             });
 
@@ -1571,13 +1491,7 @@ describe('2.2. EstateForger', async () => {
         })
 
         it('2.2.5.7. RequestTokenization unsuccessfully by inactive zone', async () => {
-            const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,
-            });
+            const fixture = await beforeEstateForgerTest();
 
             const { moderator, manager, estateForger, validator } = fixture;
 
@@ -1599,13 +1513,7 @@ describe('2.2. EstateForger', async () => {
         });
 
         it('2.2.5.7. RequestTokenization unsuccessfully by inactive executive in zone', async () => {
-            const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,
-            });
+            const fixture = await beforeEstateForgerTest();
 
             const { deployer, admin, admins, moderator, manager, zone1, estateForger, validator } = fixture;
 
@@ -1629,13 +1537,7 @@ describe('2.2. EstateForger', async () => {
         });
 
         it('2.2.5.8. RequestTokenization unsuccessfully with unit price out of base range', async () => {
-            const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,
-            });
+            const fixture = await beforeEstateForgerTest();
 
             const { manager, currencies, estateForger, validator } = fixture;
 
@@ -1674,10 +1576,7 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.5.9. RequestTokenization unsuccessfully with inactive custodian in zone', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,
+                skipListSampleCustodians: true,
             });
 
             const { manager, estateForger, validator } = fixture;
@@ -1695,13 +1594,7 @@ describe('2.2. EstateForger', async () => {
         });
 
         it('2.2.5.10. RequestTokenization unsuccessfully with expired estate', async () => {
-            const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,
-            });
+            const fixture = await beforeEstateForgerTest();
 
             const { manager, estateForger, validator } = fixture;
             
@@ -1724,13 +1617,7 @@ describe('2.2. EstateForger', async () => {
         });
 
         it('2.2.5.11. RequestTokenization unsuccessfully when minimum selling amount exceeds maximum', async () => {
-            const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,
-            });
+            const fixture = await beforeEstateForgerTest();
 
             const { manager, estateForger, validator } = fixture;
 
@@ -1750,13 +1637,7 @@ describe('2.2. EstateForger', async () => {
         });
 
         it('2.2.5.12. RequestTokenization unsuccessfully when maximum selling amount exceeds total supply', async () => {
-            const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,
-            });
+            const fixture = await beforeEstateForgerTest();
 
             const { manager, estateForger, validator } = fixture;
 
@@ -1776,13 +1657,7 @@ describe('2.2. EstateForger', async () => {
         });
 
         it('2.2.5.13. RequestTokenization unsuccessfully with invalid cashback threshold', async () => {
-            const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,
-            });
+            const fixture = await beforeEstateForgerTest();
 
             const { manager, estateForger, validator } = fixture;
 
@@ -1802,13 +1677,7 @@ describe('2.2. EstateForger', async () => {
         });
 
         it('2.2.5.14. RequestTokenization unsuccessfully with invalid cashback base rate', async () => {
-            const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,
-            });
+            const fixture = await beforeEstateForgerTest();
 
             const { manager, estateForger, validator } = fixture;
 
@@ -1828,13 +1697,7 @@ describe('2.2. EstateForger', async () => {
         });
 
         it('2.2.5.15. RequestTokenization unsuccessfully with invalid cashback params length', async () => {
-            const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,
-            });
+            const fixture = await beforeEstateForgerTest();
 
             const { manager, estateForger, validator } = fixture;
 
@@ -1854,13 +1717,7 @@ describe('2.2. EstateForger', async () => {
         });
         
         it('2.2.5.16. RequestTokenization unsuccessfully with invalid sale start time', async () => {
-            const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,
-            });
+            const fixture = await beforeEstateForgerTest();
 
             const { manager, estateForger, validator } = fixture;
 
@@ -1900,13 +1757,7 @@ describe('2.2. EstateForger', async () => {
         });
 
         it('2.2.5.17. RequestTokenization unsuccessfully with invalid sale durations', async () => {
-            const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,
-            });
+            const fixture = await beforeEstateForgerTest();
 
             const { manager, estateForger, validator } = fixture;
 
@@ -1974,10 +1825,7 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.5.18. RequestTokenization unsuccessfully with unregistered broker', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
-                addEstateForgerToVault: true,
+                skipRegisterBrokers: true,
             });
 
             const { manager, estateForger, validator } = fixture;
@@ -1990,10 +1838,7 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.5.19. RequestTokenization unsuccessfully with inactive broker', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
-                addEstateForgerToVault: true,
+                skipRegisterBrokers: true,
             });
 
             const { manager, estateForger, validator, commissionToken } = fixture;
@@ -2025,10 +1870,7 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.5.20. RequestTokenization unsuccessfully when estate forger is not vault initiator', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
-                registerBrokers: true,
+                skipAddEstateForgerToVault: true,
             });
 
             const { manager, estateForger, validator } = fixture;
@@ -2039,12 +1881,7 @@ describe('2.2. EstateForger', async () => {
         });
 
         it('2.2.5.21. RequestTokenization unsuccessfully without cashback params but with cashback threshold', async () => {
-            const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
-                registerBrokers: true,
-            });
+            const fixture = await beforeEstateForgerTest();
 
             const { manager, estateForger, validator } = fixture;
 
@@ -2066,12 +1903,7 @@ describe('2.2. EstateForger', async () => {
         });
 
         it('2.2.5.22. RequestTokenization unsuccessfully with cashback params but without cashback threshold', async () => {
-            const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
-                registerBrokers: true,
-            });
+            const fixture = await beforeEstateForgerTest();
 
             const { manager, estateForger, validator } = fixture;
 
@@ -2094,11 +1926,6 @@ describe('2.2. EstateForger', async () => {
     describe('2.2.6. whitelistFor(uint256,address[],bool)', async () => {
         it('2.2.6.1. Whitelist user for request successfully', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,
                 addSampleRequests: true,              
             });
             const { estateForger, manager, moderator, depositor1, depositor2, depositor3 } = fixture;            
@@ -2183,11 +2010,6 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.6.3. Whitelist user for request unsuccessfully by non-executive', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,                
                 addSampleRequests: true,
             });
             const { admins, manager, user, depositor1, depositor2, admin, estateForger, zone1 } = fixture;   
@@ -2216,11 +2038,6 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.6.5. Whitelist user for request unsuccessfully with inactive executive in zone', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,                
                 addSampleRequests: true,
             });
             const { admins, manager, moderator, depositor1, depositor2, admin, estateForger, zone1 } = fixture;
@@ -2249,11 +2066,6 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.6.6. Whitelist user for request unsuccessfully when whitelisting the same account twice on the same tx', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,                
                 addSampleRequests: true,
             });
             const { estateForger, manager, depositor1, depositor2, depositor3 } = fixture;            
@@ -2272,11 +2084,6 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.6.7. Whitelist user for request unsuccessfully when whitelisting the same account twice on different txs', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,                
                 addSampleRequests: true,
             });
             const { estateForger, manager, depositor1, depositor2, depositor3 } = fixture;            
@@ -2304,11 +2111,6 @@ describe('2.2. EstateForger', async () => {
         
         it('2.2.6.8. Unwhitelist user for request successfully', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,                
                 addSampleRequests: true,
             });
             const { estateForger, manager, moderator, depositor1, depositor2, depositor3, depositors } = fixture;            
@@ -2385,11 +2187,6 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.6.9. Unwhitelist user for request unsuccessfully with not whitelisted account', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,                
                 addSampleRequests: true,
             });
             const { manager, depositor1, depositor2, estateForger } = fixture;            
@@ -2407,11 +2204,6 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.6.10. Unwhitelist user for request unsuccessfully when unwhitelisting the same account twice on the same tx', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,                
                 addSampleRequests: true,
             });
             const { manager, depositor1, depositor2, depositor3, depositors, estateForger } = fixture;            
@@ -2439,11 +2231,6 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.6.11. Unwhitelist user for request unsuccessfully when unwhitelisting the same account twice on different txs', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,                
                 addSampleRequests: true,
             });
             const { manager, depositor1, depositor2, depositor3, depositors, estateForger } = fixture;            
@@ -2494,12 +2281,7 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.7.1. Update tokenization request URI successfully', async () => {            
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
                 addSampleRequests: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,
             });
             const { moderator, manager, estateForger, validator } = fixture;
 
@@ -2540,12 +2322,7 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.7.2. Update tokenization request URI unsuccessfully with invalid signatures', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
                 addSampleRequests: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,
             });
             const { manager, estateForger, validator } = fixture;
             
@@ -2560,12 +2337,7 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.7.3. Update tokenization request URI unsuccessfully by non-executive', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
                 addSampleRequests: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,
             });
             const { user, estateForger, validator } = fixture;
 
@@ -2576,12 +2348,7 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.7.4. Update tokenization request URI unsuccessfully with invalid request id', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
                 addSampleRequests: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,
             });
             const { manager, estateForger, validator } = fixture;
             const { defaultParamsInput } = await beforeUpdateRequestEstateURI(fixture);
@@ -2609,12 +2376,7 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.7.5. Update tokenization request URI unsuccessfully with cancelled request', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
                 addSampleRequests: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,
             });
             const { manager, estateForger, validator } = fixture;
             const { defaultParamsInput } = await beforeUpdateRequestEstateURI(fixture);
@@ -2631,16 +2393,9 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.7.6. Update tokenization request URI unsuccessfully with confirmed request', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
-                registerBrokers: true,
                 addDepositions: true,
                 confirmRequests: true,
-                addEstateForgerToVault: true,
-                fundERC20ForManagers: true,
             });
             const { manager, estateForger, validator } = fixture;
             const { defaultParamsInput } = await beforeUpdateRequestEstateURI(fixture);
@@ -2651,12 +2406,7 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.7.8. Update tokenization request URI unsuccessfully by inactive manager in zone', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
                 addSampleRequests: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,
             });
             const { manager, estateForger, admin, admins, validator } = fixture;
             const { defaultParamsInput } = await beforeUpdateRequestEstateURI(fixture);
@@ -2697,12 +2447,7 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.8.1. Update tokenization request agenda successfully without updating start time', async () => {            
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
                 addSampleRequests: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,
             });
             const { manager, estateForger } = fixture;
             
@@ -2731,12 +2476,7 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.8.2. Update tokenization request agenda successfully with updating start time', async () => {            
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
                 addSampleRequests: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,
             });
             const { manager, estateForger } = fixture;
 
@@ -2773,12 +2513,7 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.8.3. Update tokenization request agenda unsuccessfully when paused', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
                 addSampleRequests: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,
                 pause: true,
             });
             const { manager, estateForger } = fixture;
@@ -2790,12 +2525,7 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.8.4. Update tokenization request agenda unsuccessfully by non-executive', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
                 addSampleRequests: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,
             });
             const { user, estateForger } = fixture;
             const defaultParams = await getDefaultParams(fixture);
@@ -2809,12 +2539,7 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.8.5. Update tokenization request agenda unsuccessfully with invalid request id', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
                 addSampleRequests: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,
             });
             const { manager, estateForger } = fixture;
             const defaultParams = await getDefaultParams(fixture);
@@ -2836,12 +2561,7 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.8.6. Update tokenization request agenda unsuccessfully with cancelled request', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
                 addSampleRequests: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,
             });
             const { manager, estateForger } = fixture;
             const defaultParams = await getDefaultParams(fixture);
@@ -2858,16 +2578,9 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.8.7. Update tokenization request agenda unsuccessfully with confirmed request', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
-                registerBrokers: true,
                 addSampleRequests: true,
                 addDepositions: true,
                 confirmRequests: true,
-                fundERC20ForDepositors: true,
-                addEstateForgerToVault: true,
-                fundERC20ForManagers: true,
             });
             const { manager, estateForger } = fixture;
             const defaultParams = await getDefaultParams(fixture);
@@ -2878,14 +2591,8 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.8.8. Update tokenization request agenda unsuccessfully when request already have deposits', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
                 addSampleRequests: true,
                 addDepositions: true,
-                fundERC20ForDepositors: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,
             });
             const { manager, estateForger } = fixture;
             const defaultParams = await getDefaultParams(fixture);
@@ -2896,12 +2603,7 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.8.10. Update tokenization request agenda unsuccessfully by inactive executive in zone', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
                 addSampleRequests: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,
             });
             const { admin, admins, moderator, manager, estateForger } = fixture;
             const defaultParams = await getDefaultParams(fixture);
@@ -2926,12 +2628,7 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.8.11. Update tokenization request agenda unsuccessfully with invalid sale durations', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
                 addSampleRequests: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,
             });
 
             const { manager, estateForger } = fixture;
@@ -2988,12 +2685,7 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.8.12. Update tokenization request agenda unsuccessfully when updating start time of already sales started request', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
                 addSampleRequests: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,
             });
 
             const { manager, estateForger } = fixture;
@@ -3017,12 +2709,7 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.8.13. Update tokenization request agenda unsuccessfully with invalid sale start time', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
                 addSampleRequests: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,
             });
             const { manager, estateForger } = fixture;
 
@@ -3060,13 +2747,7 @@ describe('2.2. EstateForger', async () => {
     describe('2.2.11. cancel(uint256)', async () => {
         it('2.2.11.1. Cancel tokenization successfully', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
-                registerBrokers: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
-                addEstateForgerToVault: true,
             });
             const { manager, estateForger } = fixture;
 
@@ -3090,13 +2771,7 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.11.2. Cancel tokenization unsuccessfully by non-manager', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
-                registerBrokers: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
-                addEstateForgerToVault: true,
             });
             const { user, moderator, estateForger } = fixture;
 
@@ -3109,13 +2784,7 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.11.3. Cancel tokenization unsuccessfully with invalid request id', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
-                registerBrokers: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
-                addEstateForgerToVault: true,
             });
             const { manager, estateForger, depositor1 } = fixture;
 
@@ -3128,13 +2797,7 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.11.4. Cancel tokenization unsuccessfully when paused', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
-                registerBrokers: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
-                addEstateForgerToVault: true,
                 pause: true,
             });
             const { manager, estateForger } = fixture;
@@ -3148,12 +2811,7 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.11.6. Cancel tokenization unsuccessfully by inactive manager in zone', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
-                registerBrokers: true,
                 addSampleRequests: true,
-                addEstateForgerToVault: true,
             });
             const { manager, estateForger, admin, admins } = fixture;
             
@@ -3175,13 +2833,7 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.11.7. Cancel tokenization unsuccessfully with cancelled request', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
-                registerBrokers: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
-                addEstateForgerToVault: true,
             });
             const { manager, estateForger } = fixture;
 
@@ -3196,16 +2848,9 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.11.8. Cancel tokenization unsuccessfully with confirmed request', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
-                registerBrokers: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
                 addDepositions: true,
                 confirmRequests: true,
-                addEstateForgerToVault: true,
-                fundERC20ForManagers: true,
             });
             const { manager, estateForger } = fixture;
 
@@ -3217,15 +2862,9 @@ describe('2.2. EstateForger', async () => {
     describe('2.2.9. deposit(uint256,uint256)', async () => {
         it('2.2.9.1. Deposit tokenization successfully and correctly refund native currency', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
-                addEstateForgerToVault: true,
                 whitelistDepositors: true,
                 whitelistDepositorsForRequests: true,
-                registerBrokers: true,
             });
             const { depositor1, depositor2, reserveVault, estateForger } = fixture;
 
@@ -3368,13 +3007,7 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.9.2. Deposit tokenization successfully with ERC20 currency', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,
                 whitelistDepositors: true,
                 whitelistDepositorsForRequests: true,
             });
@@ -3453,13 +3086,7 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.9.3. Deposit tokenization successfully when no cashback', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,
                 whitelistDepositors: true,
                 whitelistDepositorsForRequests: true,
             });
@@ -3536,16 +3163,10 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.9.4. Deposit tokenization unsuccessfully when paused', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
                 whitelistDepositors: true,
                 whitelistDepositorsForRequests: true,
-                listSampleCustodians: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
-                registerBrokers: true,
                 pause: true,
-                addEstateForgerToVault: true,
             });
             const { estateForger, depositor1 } = fixture;
 
@@ -3572,13 +3193,7 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.9.5. Deposit tokenization unsuccessfully with invalid request id', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,
                 whitelistDepositors: true,
                 whitelistDepositorsForRequests: true,
             });
@@ -3601,15 +3216,9 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.9.6. Deposit tokenization unsuccessfully with cancelled request', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
+                addSampleRequests: true,
                 whitelistDepositors: true,
                 whitelistDepositorsForRequests: true,
-                listSampleCustodians: true,
-                addSampleRequests: true,
-                fundERC20ForDepositors: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,
             });
             const { manager, estateForger, depositor1 } = fixture;
 
@@ -3663,18 +3272,11 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.9.7. Deposit tokenization unsuccessfully with confirmed request', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
+                addSampleRequests: true,
                 whitelistDepositors: true,
                 whitelistDepositorsForRequests: true,
-                listSampleCustodians: true,
-                addSampleRequests: true,
-                fundERC20ForDepositors: true,
                 addDepositions: true,
                 confirmRequests: true,
-                addEstateForgerToVault: true,
-                fundERC20ForManagers: true,
-                registerBrokers: true,
             });
             const { manager, estateForger, depositor1 } = fixture;
 
@@ -3695,14 +3297,8 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.9.8. Deposit tokenization unsuccessfully by whitelisted account before private sale start', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
-                addEstateForgerToVault: true,
                 whitelistDepositors: true,
-                registerBrokers: true,
             });
             const { estateForger, depositor1 } = fixture;
 
@@ -3726,14 +3322,8 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.9.9. Deposit tokenization successfully by only whitelisted for request account before public sale start', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
-                addEstateForgerToVault: true,
                 whitelistDepositorsForRequests: true,
-                registerBrokers: true,
             });
             const { estateForger, depositor1 } = fixture;
 
@@ -3760,14 +3350,8 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.9.10. Deposit tokenization successfully by only whitelisted account before public sale start', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
-                addEstateForgerToVault: true,
                 whitelistDepositors: true,
-                registerBrokers: true,
             });
             const { estateForger, depositor1 } = fixture;
 
@@ -3794,13 +3378,7 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.9.10. Deposit tokenization unsuccessfully by accounts neither whitelisted nor whitelisted for request before public sale start', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,
             });
             const { estateForger, depositor1 } = fixture;
 
@@ -3827,15 +3405,9 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.9.11. Deposit tokenization unsuccessfully after public sale ended', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
+                addSampleRequests: true,
                 whitelistDepositors: true,
                 whitelistDepositorsForRequests: true,
-                listSampleCustodians: true,
-                addSampleRequests: true,
-                fundERC20ForDepositors: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,
             });
             const { manager, estateForger, depositor1 } = fixture;
 
@@ -3876,15 +3448,9 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.9.12. Deposit tokenization unsuccessfully with max selling amount exceeded', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
                 whitelistDepositors: true,
                 whitelistDepositorsForRequests: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,
             });
             const { estateForger, depositor1, depositor2 } = fixture;
 
@@ -3924,15 +3490,9 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.9.13. Deposit tokenization request unsuccessfully with insufficient native token', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
                 whitelistDepositors: true,
                 whitelistDepositorsForRequests: true,
-                listSampleCustodians: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,
             });
             const { estateForger, depositor1 } = fixture;
 
@@ -3948,14 +3508,10 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.9.14. Deposit tokenization request unsuccessfully with insufficient ERC20 token allowance', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
+                skipFundERC20ForDepositors: true,
                 whitelistDepositors: true,
                 whitelistDepositorsForRequests: true,
-                listSampleCustodians: true,
                 addSampleRequests: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,
             });
             const { estateForger, depositor1 } = fixture;
 
@@ -3972,15 +3528,9 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.9.15. Deposit tokenization request unsuccessfully when refunding failed', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
                 whitelistDepositors: true,
                 whitelistDepositorsForRequests: true,
-                listSampleCustodians: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,
             });
             const { deployer, estateForger } = fixture;
 
@@ -3999,13 +3549,7 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.9.16. Deposit tokenization request unsuccessfully when the contract is reentered', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,
             });
             const { deployer, estateForger } = fixture;
 
@@ -4036,15 +3580,9 @@ describe('2.2. EstateForger', async () => {
     describe('2.2.10. safeDeposit(uint256,uint256,bytes32)', async () => {
         it('2.2.10.1. Deposit tokenization successfully and correctly refund native currency', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
-                addEstateForgerToVault: true,
                 whitelistDepositors: true,
                 whitelistDepositorsForRequests: true,
-                registerBrokers: true,
             });
             const { estateForger, depositor1 } = fixture;
 
@@ -4089,14 +3627,8 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.10.2. Deposit tokenization unsuccessfully with invalid request id', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                whitelistDepositors: true,
-                listSampleCustodians: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,
+                whitelistDepositors: true,
             });
             const { estateForger, depositor1 } = fixture;
 
@@ -4125,64 +3657,52 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.10.3. Deposit tokenization unsuccessfully with invalid anchor', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                whitelistDepositors: true,
-                listSampleCustodians: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,
+                whitelistDepositors: true,
             });
             const { estateForger, depositor1 } = fixture;
 
-            const params1: SafeDepositParams = {
-                requestId: BigNumber.from(1),
-                quantity: BigNumber.from(2),
-                anchor: ethers.utils.solidityKeccak256(["string"], ["invalid anchor"]),
-            }
             await expect(getEstateForgerTx_SafeDeposit(
                 estateForger,
                 depositor1,
-                params1, { value: ethers.utils.parseEther('100') }
+                {
+                    requestId: BigNumber.from(1),
+                    quantity: BigNumber.from(2),
+                    anchor: ethers.utils.solidityKeccak256(["string"], ["invalid anchor"]),
+                },
+                { value: ethers.utils.parseEther('100') }
             )).to.be.revertedWithCustomError(estateForger, "BadAnchor");
 
-            const params2: SafeDepositParams = {
-                requestId: BigNumber.from(2),
-                quantity: BigNumber.from(2),
-                anchor: ethers.utils.solidityKeccak256(["string"], ["invalid anchor"]),
-            }
             await expect(getEstateForgerTx_SafeDeposit(
                 estateForger,
                 depositor1,
-                params2, { value: ethers.utils.parseEther('100') }
+                {
+                    requestId: BigNumber.from(2),
+                    quantity: BigNumber.from(2),
+                    anchor: ethers.utils.solidityKeccak256(["string"], ["invalid anchor"]),
+                },
+                { value: ethers.utils.parseEther('100') }
             )).to.be.revertedWithCustomError(estateForger, "BadAnchor");
         });
 
         it('2.2.10.4. Deposit tokenization unsuccessfully when paused', async () => {
             const fixture = await beforeEstateForgerTest({
-                listSampleCurrencies: true,
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
-                addEstateForgerToVault: true,
                 whitelistDepositors: true,
                 whitelistDepositorsForRequests: true,
-                registerBrokers: true,
+                pause: true,
             });
             const { estateForger, depositor1 } = fixture;
 
-            const params1: DepositParams = {
-                requestId: BigNumber.from(0),
-                quantity: BigNumber.from(2),
-            }
             await expect(getEstateForgerTxByParams_SafeDeposit(
                 estateForger,
                 depositor1,
-                params1,
+                {
+                    requestId: BigNumber.from(1),
+                    quantity: BigNumber.from(2),
+                },
                 { value: ethers.utils.parseEther('100') }
-            )).to.be.revertedWithCustomError(estateForger, "InvalidRequestId");
+            )).to.be.revertedWith("Pausable: paused");
         });
     });
 
@@ -4483,9 +4003,10 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.12.1. Confirm tokenization successfully (small test)', async () => {
             const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
-                addEstateForgerToVault: true,
+                skipRegisterBrokers: true,
+                skipListSampleCurrencies: true,
+                skipFundERC20ForDepositors: true,
+                skipFundERC20ForManagers: true,
             });
             const { deployer, admins, manager, depositor1, depositor2, depositor3, broker1, broker2, currencies, admin, estateForger} = fixture;
         
@@ -4552,9 +4073,10 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.12.2. Confirm tokenization successfully with duplicated currency', async () => {
             const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
-                addEstateForgerToVault: true,
+                skipRegisterBrokers: true,
+                skipListSampleCurrencies: true,
+                skipFundERC20ForDepositors: true,
+                skipFundERC20ForManagers: true,
             });
             const { deployer, admins, depositor1, depositor2, depositor3, currencies, broker1, broker2, admin, estateForger} = fixture;
         
@@ -4621,9 +4143,10 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.12.3. Confirm tokenization successfully with no cashback currency', async () => {
             const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
-                addEstateForgerToVault: true,
+                skipRegisterBrokers: true,
+                skipListSampleCurrencies: true,
+                skipFundERC20ForDepositors: true,
+                skipFundERC20ForManagers: true,
             });
             const { deployer, admins, depositor1, depositor2, depositor3, currencies, broker1, broker2, admin, estateForger} = fixture;
         
@@ -4690,9 +4213,10 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.12.4. Confirm tokenization successfully with different native/erc20 and exclusive/non-exclusive combinations', async () => {
             const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
-                addEstateForgerToVault: true,
+                skipRegisterBrokers: true,
+                skipListSampleCurrencies: true,
+                skipFundERC20ForDepositors: true,
+                skipFundERC20ForManagers: true,
             });
             const { deployer, admins, depositor1, depositor2, depositor3, currencies, admin, estateForger } = fixture;
         
@@ -4743,9 +4267,10 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.12.5. Confirm tokenization successfully with very large deposition', async () => {
             const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
-                addEstateForgerToVault: true,
+                skipRegisterBrokers: true,
+                skipListSampleCurrencies: true,
+                skipFundERC20ForDepositors: true,
+                skipFundERC20ForManagers: true,
             });
             const { deployer, admins, depositor1, currencies, broker1, admin, estateForger} = fixture;
         
@@ -4794,9 +4319,10 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.12.6. Confirm tokenization successfully in 100 random test cases', async () => {
             const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleCustodians: true,
-                addEstateForgerToVault: true,
+                skipRegisterBrokers: true,
+                skipListSampleCurrencies: true,
+                skipFundERC20ForDepositors: true,
+                skipFundERC20ForManagers: true,
             });
             const { deployer, admins, depositor1, currencies, admin, estateForger } = fixture;
         
@@ -4865,15 +4391,8 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.12.7. Confirm tokenization unsuccessfully with invalid anchor', async () => {
             const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleCurrencies: true,
-                listSampleCustodians: true,
-                registerBrokers: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
                 addDepositions: true,
-                addEstateForgerToVault: true,
-                fundERC20ForManagers: true,
             });
             const { estateForger, manager } = fixture;
 
@@ -4884,19 +4403,13 @@ describe('2.2. EstateForger', async () => {
                     requestId: BigNumber.from(1),
                     anchor: ethers.utils.keccak256(ethers.utils.toUtf8Bytes("invalid anchor")),
                 }
-            )).to.be.revertedWithCustomError(estateForger, "InvalidAnchor");
+            )).to.be.revertedWithCustomError(estateForger, "BadAnchor");
         });
 
         it('2.2.12.7. Confirm tokenization unsuccessfully by unauthorized account', async () => {
             const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleCurrencies: true,
-                listSampleCustodians: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
                 addDepositions: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,
             });
             
             const { deployer, admins, user, moderator, currencies, admin, estateForger} = fixture;
@@ -4945,15 +4458,8 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.12.8. Confirm tokenization unsuccessfully with invalid request id', async () => {
             const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleCurrencies: true,
-                listSampleCustodians: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
                 addDepositions: true,
-                addEstateForgerToVault: true,
-                registerBrokers: true,
-                fundERC20ForManagers: true,
             });
             const {estateForger, manager} = fixture;
             
@@ -4980,19 +4486,11 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.12.9. Confirm tokenization unsuccessfully when paused', async () => {
             const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleCurrencies: true,
-                listSampleCustodians: true,
-                registerBrokers: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
                 addDepositions: true,
-                addEstateForgerToVault: true,
-                fundERC20ForManagers: true,
+                pause: true,
             });
             const {deployer, estateForger, admin, admins, manager} = fixture;
-
-            await callTransaction(getPausableTxByInput_Pause(estateForger, deployer, admin, admins));
 
             const params1: ConfirmParams = {
                 requestId: BigNumber.from(1),
@@ -5017,15 +4515,8 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.12.11. Confirm tokenization unsuccessfully with inactive manager in zone', async () => {
             const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleCurrencies: true,
-                listSampleCustodians: true,
-                registerBrokers: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
                 addDepositions: true,
-                addEstateForgerToVault: true,
-                fundERC20ForManagers: true,
             });
             const { deployer, manager, admin, admins, estateForger } = fixture;
 
@@ -5054,13 +4545,7 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.12.12. Confirm tokenization unsuccessfully when confirm before sale starts', async () => {
             const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleCurrencies: true,
-                listSampleCustodians: true,
-                registerBrokers: true,
                 addSampleRequests: true,
-                addEstateForgerToVault: true,
-                fundERC20ForManagers: true,
             });
             const {estateForger, manager} = fixture;
 
@@ -5077,13 +4562,7 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.12.13. Confirm tokenization unsuccessfully with cancelled request id', async () => {
             const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleCurrencies: true,
-                listSampleCustodians: true,
-                registerBrokers: true,
                 addSampleRequests: true,
-                addEstateForgerToVault: true,
-                fundERC20ForManagers: true,
             });
             const {estateForger, manager} = fixture;
 
@@ -5119,16 +4598,9 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.12.14. Confirm tokenization unsuccessfully with confirmed request id', async () => {
             const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleCurrencies: true,
-                listSampleCustodians: true,
-                registerBrokers: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
                 addDepositions: true,
                 confirmRequests: true,
-                addEstateForgerToVault: true,
-                fundERC20ForManagers: true,
             });
             const {estateForger, manager} = fixture;
 
@@ -5155,15 +4627,8 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.12.15. Confirm tokenization successfully within 30 days after public sale ends', async () => {
             const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleCurrencies: true,
-                listSampleCustodians: true,
-                registerBrokers: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
                 addDepositions: true,
-                addEstateForgerToVault: true,
-                fundERC20ForManagers: true,
             });
             const {estateForger, manager} = fixture;
 
@@ -5188,15 +4653,8 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.12.16. Confirm tokenization unsuccessfully after 30 days after public sale ends', async () => {
             const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleCurrencies: true,
-                listSampleCustodians: true,
-                registerBrokers: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
                 addDepositions: true,
-                addEstateForgerToVault: true,
-                fundERC20ForManagers: true,
             });
             const {estateForger, manager} = fixture;
 
@@ -5219,14 +4677,7 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.12.17. Confirm tokenization unsuccessfully when sold amount is less than min selling amount', async () => {
             const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleCurrencies: true,
-                listSampleCustodians: true,
-                registerBrokers: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
-                addEstateForgerToVault: true,
-                fundERC20ForManagers: true,
             });
             const {estateForger, manager, depositor1} = fixture;
             
@@ -5251,15 +4702,8 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.12.18. Confirm tokenization unsuccessfully with insufficient native token', async () => {
             const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleCurrencies: true,
-                listSampleCustodians: true,
-                registerBrokers: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
                 addDepositions: true,
-                addEstateForgerToVault: true,
-                fundERC20ForManagers: true,
             });
             const {estateForger, manager} = fixture;
 
@@ -5275,14 +4719,9 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.12.19. Confirm tokenization unsuccessfully with insufficient erc20 allowance or balance', async () => {
             const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleCurrencies: true,
-                listSampleCustodians: true,
-                registerBrokers: true,
+                skipFundERC20ForManagers: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
                 addDepositions: true,
-                addEstateForgerToVault: true,
             });
             const {estateForger, manager} = fixture;
 
@@ -5298,14 +4737,8 @@ describe('2.2. EstateForger', async () => {
         });
 
         it('2.2.12.20. Confirm tokenization unsuccessfully when native token transfer to requester failed', async () => {
-            const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleCurrencies: true,
-                listSampleCustodians: true,
-                registerBrokers: true,
-                addEstateForgerToVault: true,
-                fundERC20ForManagers: true,
-            });
+            // TODO: Refactor?
+            const fixture = await beforeEstateForgerTest();
             const {estateForger, estateToken, zone1, manager, depositor1, deployer, admin, admins, validator, broker1} = fixture;
             const baseTimestamp = await time.latest();
 
@@ -5394,15 +4827,8 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.12.21. Confirm tokenization unsuccessfully when native token transfer to fee receiver failed', async () => {
             const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleCurrencies: true,
-                listSampleCustodians: true,
-                registerBrokers: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
                 addDepositions: true,
-                addEstateForgerToVault: true,
-                fundERC20ForManagers: true,
             });
             const {estateForger, manager, deployer} = fixture;
 
@@ -5423,15 +4849,8 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.12.22. Confirm tokenization unsuccessfully when native token transfer to broker failed', async () => {
             const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleCurrencies: true,
-                listSampleCustodians: true,
-                registerBrokers: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
                 addDepositions: true,
-                fundERC20ForManagers: true,
-                addEstateForgerToVault: true,
                 useFailReceiverAsBroker: true,
             });
             const {estateForger, manager, failReceiver} = fixture;
@@ -5451,15 +4870,8 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.12.23. Confirm tokenization unsuccessfully when the contract is reentered', async () => {
             const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleCurrencies: true,
-                listSampleCustodians: true,
-                registerBrokers: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
                 addDepositions: true,
-                fundERC20ForManagers: true,
-                addEstateForgerToVault: true,
                 useReentrancyAsBroker: true,
             });
             const {estateForger, reentrancy, manager} = fixture;
@@ -5485,14 +4897,8 @@ describe('2.2. EstateForger', async () => {
     describe('2.2.13. withdrawDeposit(uint256)', () => {
         it('2.2.13.1. Withdraw deposit successfully when request is cancelled', async () => {
             const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleCurrencies: true,
-                listSampleCustodians: true,
-                registerBrokers: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
                 addDepositions: true,
-                addEstateForgerToVault: true,
             });
             const {estateForger, manager, depositor1, depositor2, currencies} = fixture;
 
@@ -5539,13 +4945,7 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.13.2. Withdraw deposit successfully when request is not confirmable (sold amount is less than minimum selling amount', async () => {
             const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleCurrencies: true,
-                listSampleCustodians: true,
-                registerBrokers: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
-                addEstateForgerToVault: true,
             });
             const {estateForger, depositor1, depositor2} = fixture;
 
@@ -5582,14 +4982,8 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.13.3. Withdraw deposit successfully after request is no longer confirmable (30 days after public sale ended', async () => {
             const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleCurrencies: true,
-                listSampleCustodians: true,
-                registerBrokers: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
                 addDepositions: true,
-                addEstateForgerToVault: true,
             });
             const {estateForger, depositor1, depositor2} = fixture;
 
@@ -5607,15 +5001,9 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.13.4. Withdraw deposit unsuccessfully when paused', async () => {
             const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleCurrencies: true,
-                listSampleCustodians: true,
-                registerBrokers: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
                 addDepositions: true,
                 pause: true,
-                addEstateForgerToVault: true,
             });
             const {estateForger, depositor1, depositor2} = fixture;
 
@@ -5627,14 +5015,8 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.13.5. Withdraw deposit unsuccessfully with invalid request id', async () => {
             const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleCurrencies: true,
-                listSampleCustodians: true,
-                registerBrokers: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
                 addDepositions: true,
-                addEstateForgerToVault: true,
             });
             const {estateForger, manager, depositor1, depositor2} = fixture;
 
@@ -5649,16 +5031,9 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.13.6. Withdraw deposit unsuccessfully with confirmed request', async () => {
             const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleCurrencies: true,
-                listSampleCustodians: true,
-                registerBrokers: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
                 addDepositions: true,
                 confirmRequests: true,
-                addEstateForgerToVault: true,
-                fundERC20ForManagers: true,
             });
             const {estateForger, depositor1, depositor2} = fixture;
 
@@ -5670,14 +5045,8 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.13.7. Withdraw deposit unsuccessfully when public sale not ended', async () => {
             const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleCurrencies: true,
-                listSampleCustodians: true,
-                registerBrokers: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
                 addDepositions: true,
-                addEstateForgerToVault: true,
             });
             const {estateForger, depositor1, depositor2} = fixture;
 
@@ -5689,14 +5058,8 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.13.8. Withdraw deposit unsuccessfully with confirmable request', async () => {
             const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleCurrencies: true,
-                listSampleCustodians: true,
-                registerBrokers: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
                 addDepositions: true,
-                addEstateForgerToVault: true,
             });
             const {estateForger, depositor1, depositor2} = fixture;
 
@@ -5714,14 +5077,8 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.13.9. Withdraw deposit unsuccessfully by already withdrawn user', async () => {
             const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleCurrencies: true,
-                listSampleCustodians: true,
-                registerBrokers: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
                 addDepositions: true,
-                addEstateForgerToVault: true,
             });
             const {estateForger, manager, depositor1, depositor2} = fixture;
 
@@ -5745,14 +5102,8 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.13.10. Withdraw deposit unsuccessfully when native transfer to sender failed', async () => {
             const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleCurrencies: true,
-                listSampleCustodians: true,
-                registerBrokers: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
                 addDepositions: true,
-                addEstateForgerToVault: true,
             });
             const {estateForger, deployer, manager} = fixture;
 
@@ -5774,14 +5125,8 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.13.11. Withdraw deposit unsuccessfully when the contract is reentered', async () => {
             const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleCurrencies: true,
-                listSampleCustodians: true,
-                registerBrokers: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
                 addDepositions: true,
-                addEstateForgerToVault: true,
             });
             const {estateForger, deployer, manager} = fixture;
 
@@ -5810,16 +5155,9 @@ describe('2.2. EstateForger', async () => {
     describe('2.2.14. withdrawEstateToken(uint256)', () => {
         it('2.2.14.1. Withdraw token successfully after request is confirmed', async () => {
             const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleCurrencies: true,
-                listSampleCustodians: true,
-                registerBrokers: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
                 addDepositions: true,
                 confirmRequests: true,
-                addEstateForgerToVault: true,
-                fundERC20ForManagers: true,
             });
             const {estateForger, estateToken, depositor1, depositor2, depositor3, reserveVault, currencies} = fixture;
 
@@ -6029,16 +5367,9 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.14.2. Withdraw token successfully when request has no cashback', async () => {
             const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleCurrencies: true,
-                listSampleCustodians: true,
-                registerBrokers: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
                 addDepositions: true,
                 confirmRequests: true,
-                addEstateForgerToVault: true,
-                fundERC20ForManagers: true,
                 useNoCashback: true,
             });
             const {estateForger, estateToken, depositor1, depositor2, depositor3, reserveVault, currencies} = fixture;
@@ -6111,17 +5442,10 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.14.3. Withdraw token unsuccessfully when paused', async () => {
             const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleCurrencies: true,
-                listSampleCustodians: true,
-                registerBrokers: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
                 addDepositions: true,
                 confirmRequests: true,
                 pause: true,
-                addEstateForgerToVault: true,
-                fundERC20ForManagers: true,
             });
             
             const {estateForger, depositor1, depositor2} = fixture;
@@ -6134,16 +5458,9 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.14.4. Withdraw token unsuccessfully with invalid request id', async () => {
             const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleCurrencies: true,
-                listSampleCustodians: true,
-                registerBrokers: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
                 addDepositions: true,
                 confirmRequests: true,
-                addEstateForgerToVault: true,
-                fundERC20ForManagers: true,
             });
             const {estateForger, depositor1, depositor2} = fixture;
 
@@ -6155,15 +5472,8 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.14.5. Withdraw token unsuccessfully with untokenized request', async () => {
             const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleCurrencies: true,
-                listSampleCustodians: true,
-                registerBrokers: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
                 addDepositions: true,
-                addEstateForgerToVault: true,
-                fundERC20ForManagers: true,
             });
             const {estateForger, depositor1, depositor2} = fixture;
 
@@ -6173,16 +5483,9 @@ describe('2.2. EstateForger', async () => {
 
         it('2.2.14.6. Withdraw token unsuccessfully when sender is already withdrawn', async () => {
             const fixture = await beforeEstateForgerTest({
-                addZoneForExecutive: true,
-                listSampleCurrencies: true,
-                listSampleCustodians: true,
-                registerBrokers: true,
                 addSampleRequests: true,
-                fundERC20ForDepositors: true,
                 addDepositions: true,
                 confirmRequests: true,
-                addEstateForgerToVault: true,
-                fundERC20ForManagers: true,
             });
 
             const {estateForger, depositor1, depositor2} = fixture;
