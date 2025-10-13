@@ -251,7 +251,7 @@ describe('3.2. EstateMortgageToken', async () => {
             zone1,
             zone2,
         };
-    };
+    }
 
     async function beforeEstateMortgageTokenTest({
         skipSetApprovalForAll = false,

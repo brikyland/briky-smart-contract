@@ -403,7 +403,7 @@ describe('2.3. EstateLiquidator', async () => {
             zone1,
             zone2,
         };
-    };
+    }
 
     async function beforeEstateLiquidatorTest({
         skipAuthorizeExtractor = false,
@@ -1291,11 +1291,14 @@ describe('2.3. EstateLiquidator', async () => {
 
             const fee = await governanceHub.fee();
 
-            const deprecateParams: DeprecateEstateParams = {
-                estateId: defaultParamsInput.estateId,
-                note: "deprecate",
-            };
-            await callTransaction(getEstateTokenTxByParams_SafeDeprecateEstate(estateToken as any, manager, deprecateParams));
+            await callTransaction(getEstateTokenTxByParams_SafeDeprecateEstate(
+                estateToken as any,
+                manager,
+                {
+                    estateId: defaultParamsInput.estateId,
+                    note: "deprecate",
+                }
+            ));
             
             let timestamp = await time.latest() + 10;
 
@@ -1426,11 +1429,14 @@ describe('2.3. EstateLiquidator', async () => {
 
             const fee = await governanceHub.fee();
             
-            const deprecateParams: DeprecateEstateParams = {
-                estateId: defaultParamsInput.estateId,
-                note: "deprecate",
-            };
-            await callTransaction(getEstateTokenTxByParams_SafeDeprecateEstate(estateToken as any, manager, deprecateParams));
+            await callTransaction(getEstateTokenTxByParams_SafeDeprecateEstate(
+                estateToken as any,
+                manager,
+                {
+                    estateId: defaultParamsInput.estateId,
+                    note: "deprecate",
+                }
+            ));
 
             let timestamp = await time.latest() + 100;
 

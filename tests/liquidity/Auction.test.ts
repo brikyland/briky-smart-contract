@@ -163,7 +163,7 @@ describe('4.1. Auction', async () => {
             stakeToken3,
             auction,
         };
-    };
+    }
 
     async function setupBeforeTest({
         mintPrimaryTokenForAuction = false,

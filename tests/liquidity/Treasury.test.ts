@@ -72,7 +72,7 @@ describe('4.6. Treasury', async () => {
             primaryToken,
             receiver,
         };
-    };
+    }
 
     async function setupBeforeTest({
         prepareLiquidity = false,

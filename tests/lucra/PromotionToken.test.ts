@@ -86,7 +86,7 @@ describe('5.2. PromotionToken', async () => {
             currency1,
             currency2,
         };
-    };
+    }
 
     async function beforePromotionTokenTest({
         pause = false,

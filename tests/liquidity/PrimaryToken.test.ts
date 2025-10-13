@@ -125,7 +125,7 @@ describe('4.4. PrimaryToken', async () => {
             contributor,
             liquidationUnlockedAt,
         };
-    };
+    }
 
     async function setupBeforeTest({
         updateStakeTokens = false,

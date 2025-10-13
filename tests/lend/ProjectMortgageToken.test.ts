@@ -229,7 +229,7 @@ describe('3.3. ProjectMortgageToken', async () => {
             zone1,
             zone2,
         };
-    };
+    }
 
     async function beforeProjectMortgageTokenTest({
         skipSetApprovalForAll = false,

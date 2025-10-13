@@ -263,7 +263,7 @@ describe('6.3. MortgageMarketplace', async () => {
             collections,
             failReceiver,
         };
-    };
+    }
 
     async function beforeMortgageMarketplaceTest({
         skipRegisterCollection = false,

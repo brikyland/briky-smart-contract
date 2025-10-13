@@ -284,7 +284,7 @@ describe('1.6. GovernanceHub', async () => {
             failReceiver,
             reentrancyERC20,
         };
-    };
+    }
 
     async function beforeGovernanceHubTest({
         skipDeclareZone = false,

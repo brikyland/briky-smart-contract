@@ -146,7 +146,7 @@ describe('4.5. StakeToken', async () => {
             staker2,
             staker3,
         };
-    };
+    }
 
     async function setupBeforeTest({
         setFeeRate = false,

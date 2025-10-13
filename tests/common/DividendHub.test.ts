@@ -139,7 +139,7 @@ describe('1.4. DividendHub', async () => {
             failReceiver,
             reentrancyERC20,
         };
-    };
+    }
 
     async function beforeDividendHubTest({
         skipRegisterCurrencies = false,

@@ -389,7 +389,7 @@ describe.only('2.2. EstateForger', async () => {
             failReceiver,
             reentrancy,
         };
-    };
+    }
 
     async function beforeEstateForgerTest({
         skipDeclareZone = false,

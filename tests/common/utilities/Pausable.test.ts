@@ -82,7 +82,7 @@ describe('1.a. Pausable', async () => {
             admin,
             pausable,
         };
-    };
+    }
 
     async function beforePausableTest({
         pause = false,

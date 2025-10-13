@@ -62,7 +62,7 @@ describe('1.3. Airdrop', async () => {
             currency,
             airdrop,
         };
-    };
+    }
 
     async function beforeAirdropTest({
         skipPrepareERC20ForSender = false,

@@ -226,7 +226,7 @@ describe('6.4. ProjectMarketplace', async () => {
             mockCurrencyExclusiveRate,
             failReceiver,
         };
-    };
+    }
 
     async function beforeProjectMarketplaceTest({
         listSampleCurrencies = false,

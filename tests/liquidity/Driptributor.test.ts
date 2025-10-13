@@ -166,7 +166,7 @@ describe('4.3. Driptributor', async () => {
             receiver2,
             receiver3,
         };
-    };
+    }
 
     async function setupBeforeTest({
         updateStakeTokens = false,

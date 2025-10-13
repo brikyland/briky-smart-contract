@@ -162,7 +162,7 @@ describe('6.1. ERC721Marketplace', async () => {
             collections,
             failReceiver,
         };
-    };
+    }
 
     async function beforeERC721MarketplaceTest({
         skipRegisterCollection = false,

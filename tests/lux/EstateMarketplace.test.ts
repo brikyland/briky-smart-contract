@@ -233,7 +233,7 @@ describe('6.2. EstateMarketplace', async () => {
             mockCurrencyExclusiveRate,
             failReceiver,
         };
-    };
+    }
 
     async function beforeEstateMarketplaceTest({
         listSampleCurrencies = false,

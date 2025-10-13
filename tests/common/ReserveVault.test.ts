@@ -138,7 +138,7 @@ describe('1.8. ReserveVault', async () => {
             reserveVault,
             reentrancyERC20,
         };
-    };
+    }
 
     async function beforeReserveVaultTest({
         skipListSampleCurrencies = false,

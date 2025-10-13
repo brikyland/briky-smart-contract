@@ -189,7 +189,7 @@ describe('3.1. ERC721MortgageToken', async () => {
             collaterals,
             erc721MortgageToken,
         };
-    };
+    }
 
     async function beforeERC721MortgageTokenTest({
         skipSetApprovalForAll = false,

@@ -99,7 +99,7 @@ describe('5.1. PassportToken', async () => {
             admin,
             passportToken,
         };
-    };
+    }
 
     async function beforePassportTokenTest({
         pause = false,

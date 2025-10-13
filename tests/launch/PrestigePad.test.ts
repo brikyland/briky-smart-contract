@@ -377,7 +377,7 @@ describe('7.1. PrestigePad', async () => {
             zone1,
             zone2,
         };
-    };
+    }
 
     async function beforePrestigePadTest({
         skipListSampleCurrencies = false,

@@ -130,7 +130,7 @@ describe('1.7. PriceWatcher', async () => {
             priceFeeds,
             priceWatcher,
         };
-    };
+    }
 
     async function beforePriceWatcherTest({
         skipListSampleCurrencies = false,

@@ -87,7 +87,7 @@ describe('1.b. Validatable', async () => {
             admins,
             validator,
         };
-    };
+    }
 
     async function beforeValidatableTest(): Promise<ValidatableFixture> {
         const fixture = await loadFixture(validatableFixture);

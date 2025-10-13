@@ -170,7 +170,7 @@ describe('1.2. Admin', async () => {
             zone1,
             zone2,
         };
-    };
+    }
 
     async function setupBeforeTest({
         authorizeManagers = false,
@@ -370,16 +370,12 @@ describe('1.2. Admin', async () => {
             expect(nonce).to.equal(3);
         });
 
-        it('1.2.2.3. Verify admin signatures unsuccessfully with less than 4/5 valid admin signatures (incorrect nonce)', async () => {
-            const fixture = await setupBeforeTest();
-            const { admins, admin } = fixture;            
-            let currentNonce = 0;
-
-            const message = ethers.utils.hexlify(ethers.utils.toUtf8Bytes('Blockchain'));
-
-            const validSignatures = await getSignatures(message, admins, currentNonce);
-            const invalidSignatures = await getSignatures(message, admins, currentNonce + 1);
-
+        async function isUnsuccessfulWithLessThan4Signatures(
+            admin: Admin,
+            message: string,
+            validSignatures: string[],
+            invalidSignatures: string[],
+        ) {
             for (let mask = 0; mask < (1 << Constant.ADMIN_NUMBER); ++mask) {
                 let countValidSignatures = 0;
                 const signatures = [];
@@ -399,6 +395,19 @@ describe('1.2. Admin', async () => {
                     signatures,
                 )).to.be.revertedWithCustomError(admin, 'FailedVerification');
             }
+        }
+
+        it('1.2.2.3. Verify admin signatures unsuccessfully with less than 4/5 valid admin signatures (incorrect nonce)', async () => {
+            const fixture = await setupBeforeTest();
+            const { admins, admin } = fixture;            
+            let currentNonce = 0;
+
+            const message = ethers.utils.hexlify(ethers.utils.toUtf8Bytes('Blockchain'));
+
+            const validSignatures = await getSignatures(message, admins, currentNonce);
+            const invalidSignatures = await getSignatures(message, admins, currentNonce + 1);
+
+            await isUnsuccessfulWithLessThan4Signatures(admin, message, validSignatures, invalidSignatures);
         });
 
         it('1.2.2.4. Verify admin signatures unsuccessfully with less than 4/5 valid admin signatures (incorrect message)', async () => {
@@ -412,25 +421,7 @@ describe('1.2. Admin', async () => {
             const validSignatures = await getSignatures(message, admins, currentNonce);
             const invalidSignatures = await getSignatures(incorrectMessage, admins, currentNonce);
 
-            for (let mask = 0; mask < (1 << Constant.ADMIN_NUMBER); ++mask) {
-                let countValidSignatures = 0;
-                const signatures = [];
-                for (let i = 0; i < Constant.ADMIN_NUMBER; ++i) {
-                    if ((mask >> i) & 1) {
-                        signatures.push(validSignatures[i]);
-                        ++countValidSignatures;
-                    } else {
-                        signatures.push(invalidSignatures[i]);
-                    }
-                }
-
-                if (countValidSignatures >= 4) continue;
-
-                await expect(admin.verifyAdminSignatures(
-                    message,
-                    signatures,
-                )).to.be.revertedWithCustomError(admin, 'FailedVerification');
-            }
+            await isUnsuccessfulWithLessThan4Signatures(admin, message, validSignatures, invalidSignatures);
         });
 
         it('1.2.2.5. Verify admin signatures unsuccessfully with less than 4/5 valid admin signatures (incorrect address)', async () => {
@@ -446,25 +437,7 @@ describe('1.2. Admin', async () => {
             const validSignatures = await getSignatures(message, admins, currentNonce);
             const invalidSignatures = await getSignatures(message, invalidAdmins, currentNonce);
 
-            for (let mask = 0; mask < (1 << Constant.ADMIN_NUMBER); ++mask) {
-                let countValidSignatures = 0;
-                const signatures = [];
-                for (let i = 0; i < Constant.ADMIN_NUMBER; ++i) {
-                    if ((mask >> i) & 1) {
-                        signatures.push(validSignatures[i]);
-                        ++countValidSignatures;
-                    } else {
-                        signatures.push(invalidSignatures[i]);
-                    }
-                }
-
-                if (countValidSignatures >= 4) continue;
-
-                await expect(admin.verifyAdminSignatures(
-                    message,
-                    signatures,
-                )).to.be.revertedWithCustomError(admin, 'FailedVerification');
-            }
+            await isUnsuccessfulWithLessThan4Signatures(admin, message, validSignatures, invalidSignatures);
         });
 
         it('1.2.2.6. Verify admin signatures unsuccessfully with incorrect admin signatures order', async () => {

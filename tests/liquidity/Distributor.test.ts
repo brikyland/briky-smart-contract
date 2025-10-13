@@ -88,7 +88,7 @@ describe('4.2. Distributor', async () => {
             receiver2,
             receiver3,
         };
-    };
+    }
 
     async function setupBeforeTest(): Promise<DistributorFixture> {
         const fixture = await loadFixture(distributorFixture);

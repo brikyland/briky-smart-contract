@@ -63,7 +63,7 @@ import { AuthorizeLaunchpadParams, AuthorizeLaunchpadParamsInput, DeprecateProje
 import { getInitiateLaunchValidation } from '@utils/validation/launch/prestigePad';
 import { getRegisterInitiatorValidation, getSafeUpdateProjectURIValidation } from '@utils/validation/launch/projectToken';
 import { ContractTransaction } from 'ethers';
-import { getProjectTokenTx_AuthorizeLaunchpad, getProjectTokenTxByInput_AuthorizeLaunchpad, getCallProjectTokenTx_LaunchProject, getCallProjectTokenTx_Mint, getCallProjectTokenTxByParams_SafeTokenizeProject, getProjectTokenTx_Mint, getProjectTokenTx_RegisterInitiator, getProjectTokenTxByInput_RegisterInitiator, getProjectTokenTx_SafeDeprecateProject, getProjectTokenTxByParams_SafeDeprecateProject, getProjectTokenTxByParams_SafeTokenizeProject, getProjectTokenTx_SafeUpdateProjectURI, getProjectTokenTxByInput_SafeUpdateProjectURI, getProjectTokenTx_UpdateZoneRoyaltyRate, getProjectTokenTx_WithdrawEstateToken } from '@utils/transaction/launch/projectToken';
+import { getProjectTokenTx_AuthorizeLaunchpad, getProjectTokenTxByInput_AuthorizeLaunchpad, getCallProjectTokenTx_LaunchProject, getCallProjectTokenTx_Mint, getCallProjectTokenTxByParams_SafeTokenizeProject, getProjectTokenTx_Mint, getProjectTokenTx_RegisterInitiator, getProjectTokenTxByInput_RegisterInitiator, getProjectTokenTx_SafeDeprecateProject, getProjectTokenTxByParams_SafeDeprecateProject, getProjectTokenTxByParams_SafeTokenizeProject, getProjectTokenTx_SafeUpdateProjectURI, getProjectTokenTxByInput_SafeUpdateProjectURI, getProjectTokenTx_UpdateZoneRoyaltyRate, getProjectTokenTx_WithdrawEstateToken, getProjectTokenTxByInput_UpdateZoneRoyaltyRate } from '@utils/transaction/launch/projectToken';
 import { getEstateTokenTxByInput_AuthorizeTokenizers, getEstateTokenTx_RegisterCustodian, getEstateTokenTxByInput_RegisterCustodian, getEstateTokenTxByInput_UpdateCommissionToken, getEstateTokenTxByInput_UpdateZoneRoyaltyRate } from '@utils/transaction/land/estateToken';
 import { deployReentrancyERC1155Receiver } from '@utils/deployments/mock/mockReentrancy/reentrancyERC1155Receiver';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
@@ -308,7 +308,7 @@ describe('7.2. ProjectToken', async () => {
             zone1,
             zone2,
         };
-    };
+    }
 
     async function beforeProjectTokenTest({
         skipAuthorizeLaunchpad = false,
@@ -652,7 +652,13 @@ describe('7.2. ProjectToken', async () => {
                 zone: zone1,
                 royaltyRate: ethers.utils.parseEther('0.2'),
             };
-            const tx1 = await getEstateTokenTxByInput_UpdateZoneRoyaltyRate(projectToken as any, deployer, paramsInput1, admin, admins);
+            const tx1 = await getProjectTokenTxByInput_UpdateZoneRoyaltyRate(
+                projectToken as any,
+                deployer,
+                paramsInput1,
+                admin,
+                admins
+            );
             await tx1.wait();
 
             await expect(tx1).to.emit(projectToken, 'ZoneRoyaltyRateUpdate').withArgs(
@@ -675,7 +681,13 @@ describe('7.2. ProjectToken', async () => {
                 zone: zone2,
                 royaltyRate: ethers.utils.parseEther('0.3'),
             };
-            const tx2 = await getEstateTokenTxByInput_UpdateZoneRoyaltyRate(projectToken as any, deployer, paramsInput2, admin, admins);
+            const tx2 = await getProjectTokenTxByInput_UpdateZoneRoyaltyRate(
+                projectToken as any,
+                deployer,
+                paramsInput2,
+                admin,
+                admins
+            );
             await tx2.wait();
 
             await expect(tx2).to.emit(projectToken, 'ZoneRoyaltyRateUpdate').withArgs(
@@ -715,7 +727,7 @@ describe('7.2. ProjectToken', async () => {
             const fixture = await beforeProjectTokenTest();
             const { deployer, projectToken, admin, admins, zone1 } = fixture;
 
-            await expect(getEstateTokenTxByInput_UpdateZoneRoyaltyRate(
+            await expect(getProjectTokenTxByInput_UpdateZoneRoyaltyRate(
                 projectToken as any,
                 deployer,
                 {
@@ -731,7 +743,7 @@ describe('7.2. ProjectToken', async () => {
             const fixture = await beforeProjectTokenTest();
             const { deployer, projectToken, admin, admins } = fixture;
 
-            await expect(getEstateTokenTxByInput_UpdateZoneRoyaltyRate(
+            await expect(getProjectTokenTxByInput_UpdateZoneRoyaltyRate(
                 projectToken as any,
                 deployer,
                 {

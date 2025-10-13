@@ -194,7 +194,7 @@ describe('2.1. CommissionToken', async () => {
             zone1,
             zone2,
         };
-    };
+    }
 
     async function beforeCommissionTokenTest({
         skipDeclareZone = false,
