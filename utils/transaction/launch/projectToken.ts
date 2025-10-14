@@ -10,15 +10,15 @@ import {
     ProxyCaller
 } from "@typechain-types";
 
+// @utils
+import { MockValidator } from "@utils/mockValidator";
+
 // @utils/anchor/launch
 import {
     getSafeDeprecateProjectAnchor,
     getSafeTokenizeProjectAnchor,
     getSafeUpdateProjectURIAnchor
 } from "@utils/anchor/launch/projectToken";
-
-// @utils/mockValidator
-import { MockValidator } from "@utils/mockValidator";
 
 // @utils/models/launch
 import {

@@ -6,7 +6,7 @@ import { time } from "@nomicfoundation/hardhat-network-helpers";
 // @typechain-types
 import { EstateForger } from "@typechain-types";
 
-// @utils/mockValidator
+// @utils
 import { MockValidator } from "@utils/mockValidator";
 
 // @utils/models/land

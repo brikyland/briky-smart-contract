@@ -4,9 +4,25 @@ import { ethers } from 'hardhat';
 // @nomicfoundation/hardhat-network-helpers
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 
-// @utils/blockchain
-import { callTransaction } from '@utils/blockchain';
+// @tests/common
+import { Initialization as CommonInitialization } from '@tests/common/test.initialization';
 
+// @tests/land
+import { Initialization as LandInitialization } from '@tests/land/test.initialization';
+
+// @tests/lend
+import { Initialization as LendInitialization } from '@tests/lend/test.initialization';
+
+// @tests/lucra
+import { Initialization as LucraInitialization } from '@tests/lucra/test.initialization';
+
+// @tests/liquidity
+import { Initialization as LiquidityInitialization } from '@tests/liquidity/test.initialization';
+
+// @tests/launch
+import { Initialization as LaunchInitialization } from '@tests/launch/test.initialization';
+
+// @typechain-types
 import { 
     Admin,
     FeeReceiver,
@@ -40,6 +56,10 @@ import {
     ProjectMortgageToken,
     ERC721MortgageToken
 } from '@typechain-types';
+
+// @utils
+import { callTransaction } from '@utils/blockchain';
+import { MockValidator } from '@utils/mockValidator';
 
 // @utils/deployments/common
 import { deployAdmin } from '@utils/deployments/common/admin';
@@ -83,27 +103,6 @@ import { deployERC721Marketplace } from '@utils/deployments/lux/erc721Marketplac
 import { deployEstateMarketplace } from '@utils/deployments/lux/estateMarketplace';
 import { deployMortgageMarketplace } from '@utils/deployments/lux/mortgageMarketplace';
 import { deployProjectMarketplace } from '@utils/deployments/lux/projectMarketplace';
-
-// @tests/common
-import { Initialization as CommonInitialization } from '@tests/common/test.initialization';
-
-// @tests/land
-import { Initialization as LandInitialization } from '@tests/land/test.initialization';
-
-// @tests/lend
-import { Initialization as LendInitialization } from '@tests/lend/test.initialization';
-
-// @tests/lucra
-import { Initialization as LucraInitialization } from '@tests/lucra/test.initialization';
-
-// @tests/liquidity
-import { Initialization as LiquidityInitialization } from '@tests/liquidity/test.initialization';
-
-// @tests/launch
-import { Initialization as LaunchInitialization } from '@tests/launch/test.initialization';
-
-// @utils/mockValidator
-import { MockValidator } from '@utils/mockValidator';
 
 
 interface CommonFixture {

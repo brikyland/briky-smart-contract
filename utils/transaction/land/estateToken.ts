@@ -10,6 +10,9 @@ import {
     ProxyCaller
 } from "@typechain-types";
 
+// @utils
+import { MockValidator } from "@utils/mockValidator";
+
 // @utils/anchor/land
 import {
     getSafeDeprecateEstateAnchor,
@@ -17,9 +20,6 @@ import {
     getSafeUpdateEstateCustodianAnchor,
     getSafeUpdateEstateURIAnchor
 } from "@utils/anchor/land/estateToken";
-
-// @utils/mockValidator
-import { MockValidator } from "@utils/mockValidator";
 
 // @utils/models/land
 import {

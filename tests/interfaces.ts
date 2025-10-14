@@ -12,6 +12,7 @@ import {
     IEstateTokenizer__factory,
     IEstateTokenReceiver__factory,
     IGovernor__factory,
+    IMortgageToken__factory,
     IProjectLaunchpad__factory,
     IProjectTokenReceiver__factory,
     IRoyaltyRateProposer__factory,
@@ -37,7 +38,7 @@ const IEstateTokenReceiver = IEstateTokenReceiver__factory.createInterface();
 const IGovernor = IGovernor__factory.createInterface();
 const IRoyaltyRateProposer = IRoyaltyRateProposer__factory.createInterface();
 const IProjectTokenReceiver = IProjectTokenReceiver__factory.createInterface();
-
+const IMortgageToken = IMortgageToken__factory.createInterface();
 
 /* --- Interface IDs --- */
 export const IERC165UpgradeableInterfaceId = getInterfaceID(IERC165Upgradeable, []);
@@ -55,3 +56,4 @@ export const IProjectTokenReceiverInterfaceId = getInterfaceID(IProjectTokenRece
 export const IGovernorInterfaceId = getInterfaceID(IGovernor, [IERC1155Upgradeable]);
 export const IRoyaltyRateProposerInterfaceId = getInterfaceID(IRoyaltyRateProposer, [ICommon, IERC165Upgradeable, IERC2981Upgradeable]);
 export const IProjectLaunchpadInterfaceId = getInterfaceID(IProjectLaunchpad, [ICommon, IProjectTokenReceiver])
+export const IMortgageTokenInterfaceId = getInterfaceID(IMortgageToken, [ICommon, IERC721MetadataUpgradeable, IERC2981Upgradeable, IERC4906Upgradeable]);

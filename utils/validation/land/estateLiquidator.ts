@@ -6,7 +6,7 @@ import { Constant } from '@tests/test.constant';
 // @typechain-types
 import { EstateToken, EstateLiquidator, GovernanceHub } from '@typechain-types';
 
-// @utils/mockValidator
+// @utils
 import { MockValidator } from '@utils/mockValidator';
 
 // @utils/models/common

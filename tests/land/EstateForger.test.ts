@@ -18,15 +18,16 @@ import {
     time
 } from "@nomicfoundation/hardhat-network-helpers";
 
-// @tests/interfaces
+// @tests
 import {
     IERC165UpgradeableInterfaceId,
     IEstateTokenizerInterfaceId,
     IEstateTokenReceiverInterfaceId
 } from '@tests/interfaces';
-
-// @tests
-import { Constant, DAY } from '@tests/test.constant';
+import {
+    Constant,
+    DAY
+} from '@tests/test.constant';
 
 // @tests/land
 import { Initialization as LandInitialization } from '@tests/land/test.initialization';
@@ -45,7 +46,7 @@ import {
     PriceWatcher,
 } from '@typechain-types';
 
-// @utils/blockchain
+// @utils
 import {
     callTransaction,
     callTransactionAtTimestamp,
@@ -57,6 +58,14 @@ import {
     resetNativeToken,
     testReentrancy
 } from '@utils/blockchain';
+import { scaleRate } from '@utils/formula';
+import { MockValidator } from '@utils/mockValidator';
+import {
+    getBytes4Hex,
+    randomBigNumber,
+    structToObject,
+    OrderedMap
+} from '@utils/utils';
 
 // @utils/deployments/common
 import { deployAdmin } from '@utils/deployments/common/admin';
@@ -70,9 +79,6 @@ import { deployMockEstateForger } from '@utils/deployments/mock/mockEstateForger
 import { deployMockPriceFeed } from '@utils/deployments/mock/mockPriceFeed';
 import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
 import { deployReentrancyERC1155Holder } from '@utils/deployments/mock/mockReentrancy/reentrancyERC1155Holder';
-
-// @utils/formula
-import { scaleRate } from '@utils/formula';
 
 // @utils/models/common
 import { Rate } from '@utils/models/common/common';
@@ -94,9 +100,6 @@ import {
     WhitelistForParams,
     UpdateRequestEstateURIParamsInput
 } from '@utils/models/land/estateForger';
-
-// @utils/mockValidator
-import { MockValidator } from '@utils/mockValidator';
 
 // @utils/models/land
 import {
@@ -163,14 +166,7 @@ import {
     getPriceWatcherTxByInput_UpdateDefaultRates,
     getPriceWatcherTxByInput_UpdatePriceFeeds
 } from '@utils/transaction/common/priceWatcher';
-
-// @utils/utils
-import {
-    getBytes4Hex,
-    randomBigNumber,
-    structToObject,
-    OrderedMap
-} from '@utils/utils';
+import { deployGovernor } from '@utils/deployments/common/governor';
 
 
 chai.use(smock.matchers);
@@ -1250,6 +1246,83 @@ describe('2.2. EstateForger', async () => {
         });
     });
 
+    describe('2.2.22. onERC1155Received(address,address,uint256,uint256,bytes)', async () => {
+        it('2.2.22.1. Successfully receive ERC1155 tokens when receiving project token', async () => {
+            const fixture = await beforeEstateForgerTest({
+                addSampleRequests: true,
+                addDepositions: true,
+                confirmRequests: true,
+            });
+            const { depositor1, estateForger, estateToken } = fixture;
+
+            await callTransaction(estateForger.connect(depositor1).withdrawEstateToken(1));
+
+            await expect(estateToken.connect(depositor1).safeTransferFrom(
+                depositor1.address,
+                estateForger.address,
+                1,
+                50,
+                "0x"
+            )).to.not.be.reverted;
+        });
+
+        it('2.2.22.2. Revert when receiving ERC1155 tokens when receiving unknown ERC1155 token', async () => {
+            const fixture = await beforeEstateForgerTest();
+            const { deployer, depositor1, estateForger, admin } = fixture;
+
+            const unknownERC1155Token = await deployGovernor(deployer, admin.address);
+
+            await callTransaction(unknownERC1155Token.connect(depositor1).mint(1, 50));
+
+            await expect(unknownERC1155Token.connect(depositor1).safeTransferFrom(
+                depositor1.address,
+                estateForger.address,
+                1,
+                50,
+                "0x"
+            )).to.be.revertedWith('ERC1155: ERC1155Receiver rejected tokens');
+        });
+    });
+
+    describe('2.2.23. onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)', async () => {
+        it('2.2.23.1. Successfully receive ERC1155 tokens batch when receiving project token', async () => {
+            const fixture = await beforeEstateForgerTest({
+                addSampleRequests: true,
+                addDepositions: true,
+                confirmRequests: true,
+            });
+            const { depositor1, estateForger, estateToken } = fixture;
+
+            await callTransaction(estateForger.connect(depositor1).withdrawEstateToken(1));
+            await callTransaction(estateForger.connect(depositor1).withdrawEstateToken(2));
+
+            await callTransaction(estateToken.connect(depositor1).safeBatchTransferFrom(
+                depositor1.address,
+                estateForger.address,
+                [1, 2],
+                [10, 5],
+                "0x"
+            ));
+        });
+
+        it('2.2.23.2. Revert when receiving ERC1155 tokens batch from unknown ERC1155 token', async () => {
+            const fixture = await beforeEstateForgerTest();
+            const { deployer, depositor1, admin, estateForger } = fixture;
+
+            const unknownERC1155Token = await deployGovernor(deployer, admin.address);
+
+            await callTransaction(unknownERC1155Token.connect(depositor1).mint(1, 50));
+            await callTransaction(unknownERC1155Token.connect(depositor1).mint(2, 50));
+
+            await expect(unknownERC1155Token.connect(depositor1).safeBatchTransferFrom(
+                depositor1.address,
+                estateForger.address,
+                [1, 2],
+                [10, 5],
+                "0x"
+            )).to.be.revertedWith('ERC1155: ERC1155Receiver rejected tokens');
+        });
+    });
 
     /* --- Command --- */
     describe('2.2.5. requestTokenization(address,(bytes32,string,uint40),(uint256,uint256,uint256),(uint256,address,uint256,uint256,address[],uint256[],uint256,address),(uint40,uint40,uint40),(uint256,uint256,bytes))', async () => {

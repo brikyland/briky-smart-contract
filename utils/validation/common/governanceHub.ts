@@ -10,7 +10,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 // @typechain-types
 import { GovernanceHub } from "@typechain-types";
 
-// @utils/mockValidator
+// @utils
 import { MockValidator } from "@utils/mockValidator";
 
 // @utils/models/common

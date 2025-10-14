@@ -10,14 +10,14 @@ import {
     ProxyCaller
 } from "@typechain-types";
 
+// @utils
+import { MockValidator } from "@utils/mockValidator";
+
 // @utils/anchor/land
 import {
     getSafeConfirmAnchor,
     getSafeDepositAnchor
 } from "@utils/anchor/land/estateForger";
-
-// @utils/mockValidator
-import { MockValidator } from "@utils/mockValidator";
 
 // @utils/models/land
 import {

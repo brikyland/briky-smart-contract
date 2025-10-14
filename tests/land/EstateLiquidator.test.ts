@@ -46,13 +46,20 @@ import {
     ReentrancyERC20,
 } from '@typechain-types';
 
-// @utils/blockchain
+// @utils
 import {
     callTransaction,
     prepareERC20,
     prepareNativeToken,
     randomWallet,
 } from '@utils/blockchain';
+import {
+    applyDiscount,
+    scale,
+    scaleRate
+} from '@utils/formula';
+import { MockValidator } from '@utils/mockValidator';
+import { structToObject } from '@utils/utils';
 
 // @utils/deployments/common
 import { deployAdmin } from '@utils/deployments/common/admin';
@@ -63,27 +70,12 @@ import { deployMockPriceFeed } from '@utils/deployments/mock/mockPriceFeed';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployMockEstateLiquidator } from '@utils/deployments/mock/mockEstateLiquidator';
 
-// @utils/formula
-import {
-    applyDiscount,
-    scale
-} from '@utils/formula';
-
-// @utils/utils
-import { structToObject } from '@utils/utils';
-
-// @utils/formula
-import { scaleRate } from '@utils/formula';
-
 // @utils/deployments/common
 import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
 
 // @utils/deployments/mock
 import { deployMockEstateForger } from '@utils/deployments/mock/mockEstateForger';
 import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
-
-// @utils/mockValidator
-import { MockValidator } from '@utils/mockValidator';
 
 // @utils/models/common
 import { Rate } from '@utils/models/common/common';

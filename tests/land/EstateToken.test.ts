@@ -3,6 +3,35 @@ import { randomInt } from 'crypto';
 import { BigNumber } from 'ethers';
 import { ethers } from 'hardhat';
 
+// @defi-wonderland/smock
+import {
+    MockContract,
+    smock
+} from '@defi-wonderland/smock';
+
+// @nomicfoundation/hardhat-network-helpers
+import {
+    loadFixture,
+    time
+} from "@nomicfoundation/hardhat-network-helpers";
+
+// @tests
+import {
+    IERC1155MetadataURIUpgradeableInterfaceId,
+    IERC1155UpgradeableInterfaceId,
+    IERC165UpgradeableInterfaceId,
+    IERC2981UpgradeableInterfaceId,
+    IGovernorInterfaceId,
+    IRoyaltyRateProposerInterfaceId
+} from '@tests/interfaces';
+import { Constant } from '@tests/test.constant';
+
+// @tests/common
+import { Initialization as CommonInitialization } from '@tests/common/test.initialization';
+
+// @tests/land
+import { Initialization as LandInitialization } from '@tests/land/test.initialization';
+
 // @typechain-types
 import {
     Admin,
@@ -20,46 +49,22 @@ import {
     MockEstateLiquidator__factory,
 } from '@typechain-types';
 
-// @defi-wonderland/smock
-import {
-    MockContract,
-    smock
-} from '@defi-wonderland/smock';
-
-// @nomicfoundation/hardhat-network-helpers
-import {
-    loadFixture,
-    time
-} from "@nomicfoundation/hardhat-network-helpers";
-
-// @tests
-import { Constant } from '@tests/test.constant';
-
-// @tests/common
-import { Initialization as CommonInitialization } from '@tests/common/test.initialization';
-
-// @tests/interfaces
-import {
-    IERC1155MetadataURIUpgradeableInterfaceId,
-    IERC1155UpgradeableInterfaceId,
-    IERC165UpgradeableInterfaceId,
-    IERC2981UpgradeableInterfaceId,
-    IGovernorInterfaceId,
-    IRoyaltyRateProposerInterfaceId
-} from '@tests/interfaces';
-
-// @tests/land
-import { Initialization as LandInitialization } from '@tests/land/test.initialization';
-
-// @utils/anchor/land
-import { getSafeUpdateEstateURIAnchor } from '@utils/anchor/land/estateToken';
-
-// @utils/blockchain
+// @utils
 import {
     callTransaction,
     callTransactionAtTimestamp,
     randomWallet
 } from '@utils/blockchain';
+import { MockValidator } from '@utils/mockValidator';
+import {
+    getBytes4Hex,
+    randomBigNumber,
+    structToObject,
+    OrderedMap
+} from '@utils/utils';
+
+// @utils/anchor/land
+import { getSafeUpdateEstateURIAnchor } from '@utils/anchor/land/estateToken';
 
 // @utils/deployments/common
 import { deployAdmin } from '@utils/deployments/common/admin';
@@ -75,9 +80,6 @@ import { deployMockEstateToken } from '@utils/deployments/mock/mockEstateToken';
 
 // @utils/deployments/land
 import { deployCommissionToken } from '@utils/deployments/land/commissionToken';
-
-// @utils/mockValidator
-import { MockValidator } from '@utils/mockValidator';
 
 // @utils/models/land
 import {
@@ -155,14 +157,6 @@ import {
     getEstateTokenTxByInput_UpdateZoneRoyaltyRate,
     getEstateTokenTx_UpdateBaseURI
 } from '@utils/transaction/land/estateToken';
-
-// @utils/utils
-import {
-    getBytes4Hex,
-    randomBigNumber,
-    structToObject,
-    OrderedMap
-} from '@utils/utils';
 
 
 interface EstateTokenFixture {
@@ -2274,7 +2268,6 @@ describe('2.4. EstateToken', async () => {
             expect(await estateToken.supportsInterface(getBytes4Hex(IGovernorInterfaceId))).to.equal(true);
         });
     });
-
 
     /* --- Command --- */
     describe('2.4.9. registerCustodian(bytes32,address,string,(uint256,uint256,bytes))', async () => {

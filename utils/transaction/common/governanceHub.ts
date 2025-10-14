@@ -10,6 +10,9 @@ import {
     ProxyCaller
 } from "@typechain-types";
 
+// @utils
+import { MockValidator } from "@utils/mockValidator";
+
 // @utils/models/common
 import {
     AdmitParams,
@@ -38,9 +41,6 @@ import {
     getSafeContributeBudgetAnchor,
     getSafeVoteAnchor
 } from "@utils/anchor/common/governanceHub";
-
-// @utils/mockValidator
-import { MockValidator } from "@utils/mockValidator";
 
 // @utils/signatures/common
 import { getUpdateFeeSignatures } from "@utils/signatures/common/governanceHub";

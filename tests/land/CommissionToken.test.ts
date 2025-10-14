@@ -11,6 +11,19 @@ import {
     time
 } from "@nomicfoundation/hardhat-network-helpers";
 
+// @tests
+import {
+    IERC2981UpgradeableInterfaceId,
+    IERC4906UpgradeableInterfaceId,
+    IERC721UpgradeableInterfaceId,
+    IERC721MetadataUpgradeableInterfaceId,
+    IRoyaltyRateProposerInterfaceId
+} from '@tests/interfaces';
+import { Constant } from '@tests/test.constant';
+
+// @tests/land
+import { Initialization as LandInitialization } from '@tests/land/test.initialization';
+
 // @typechain-types
 import {
     Admin,
@@ -20,11 +33,17 @@ import {
     MockEstateToken,
 } from '@typechain-types';
 
-// @utils/blockchain
+// @utils
 import {
     callTransaction,
     callTransactionAtTimestamp
 } from '@utils/blockchain';
+import { scaleRate } from "@utils/formula";
+import { MockValidator } from '@utils/mockValidator';
+import {
+    getBytes4Hex,
+    structToObject,
+} from '@utils/utils';
 
 // @utils/deployments/common
 import { deployAdmin } from '@utils/deployments/common/admin';
@@ -34,30 +53,6 @@ import { deployCurrency } from '@utils/deployments/common/currency';
 // @utils/deployments/mock
 import { deployMockEstateToken } from '@utils/deployments/mock/mockEstateToken';
 import { deployCommissionToken } from '@utils/deployments/land/commissionToken';
-
-// @utils/utils
-import {
-    getBytes4Hex,
-    structToObject,
-} from '@utils/utils';
-
-// @utils/formula
-import { scaleRate } from "@utils/formula";
-
-// @tests/interfaces
-import {
-    IERC2981UpgradeableInterfaceId,
-    IERC4906UpgradeableInterfaceId,
-    IERC721UpgradeableInterfaceId,
-    IERC721MetadataUpgradeableInterfaceId,
-    IRoyaltyRateProposerInterfaceId
-} from '@tests/interfaces';
-
-// @tests/land
-import { Initialization as LandInitialization } from '@tests/land/test.initialization';
-
-// @utils/mockValidator
-import { MockValidator } from '@utils/mockValidator';
 
 // @utils/models/land
 import {

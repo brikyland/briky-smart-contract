@@ -43,13 +43,20 @@ import {
     FailReceiver,
 } from '@typechain-types';
 
-// @utils/blockchain
+// @utils
 import {
     callTransaction,
     callTransactionAtTimestamp,
     prepareERC20,
     prepareNativeToken
 } from '@utils/blockchain';
+import { applyDiscount, scaleRate } from '@utils/formula';
+import { MockValidator } from '@utils/mockValidator';
+import {
+    getBytes4Hex,
+    structToObject,
+    OrderedMap
+} from '@utils/utils';
 
 // @utils/deployments/common
 import { deployAdmin } from '@utils/deployments/common/admin';
@@ -63,12 +70,6 @@ import { deployMockPrestigePad } from '@utils/deployments/mock/mockPrestigePad';
 import { deployReentrancyERC1155Receiver } from '@utils/deployments/mock/mockReentrancy/reentrancyERC1155Receiver';
 import { deployReentrancyExclusiveERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyExclusiveERC20';
 import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
-
-// @utils/formula
-import { applyDiscount, scaleRate } from '@utils/formula';
-
-// @utils/mockValidator
-import { MockValidator } from '@utils/mockValidator';
 
 // @utils/models/common
 import { Rate } from '@utils/models/common/common';
@@ -145,19 +146,13 @@ import {
     getUpdateRoundValidation
 } from '@utils/validation/launch/prestigePad';
 
-// @utils/utils
-import {
-    getBytes4Hex,
-    structToObject,
-    OrderedMap
-} from '@utils/utils';
-
-// @tests/interfaces
+// @tests
 import {
     IERC165UpgradeableInterfaceId,
     IProjectLaunchpadInterfaceId,
     IProjectTokenReceiverInterfaceId
 } from '@tests/interfaces';
+import { deployGovernor } from '@utils/deployments/common/governor';
 
 
 chai.use(smock.matchers);
@@ -1401,6 +1396,83 @@ describe('7.1. PrestigePad', async () => {
         });
     });
 
+    describe('7.1.22. onERC1155Received(address,address,uint256,uint256,bytes)', async () => {
+        it('7.1.22.1. Successfully receive ERC1155 tokens when receiving project token', async () => {
+            const fixture = await beforePrestigePadTest({
+                addSampleLaunch: true,
+                addSampleRounds: true,
+                doAllFirstFound: true,
+            });
+            const { depositor1, prestigePad, projectToken } = fixture;
+
+            await callTransaction(prestigePad.connect(depositor1).withdrawProjectToken(1, 1));
+
+            await expect(projectToken.connect(depositor1).safeTransferFrom(
+                depositor1.address,
+                prestigePad.address,
+                1,
+                50,
+                "0x"
+            )).to.not.be.reverted;
+        });
+
+        it('7.1.22.2. Revert when receiving ERC1155 tokens when receiving unknown ERC1155 token', async () => {
+            const fixture = await beforePrestigePadTest();
+            const { deployer, depositor1, prestigePad, admin } = fixture;
+
+            const unknownERC1155Token = await deployGovernor(deployer, admin.address);
+
+            await callTransaction(unknownERC1155Token.connect(depositor1).mint(1, 50));
+
+            await expect(unknownERC1155Token.connect(depositor1).safeTransferFrom(
+                depositor1.address,
+                prestigePad.address,
+                1,
+                50,
+                "0x"
+            )).to.be.revertedWith('ERC1155: ERC1155Receiver rejected tokens');
+        });
+    });
+
+    describe('7.1.23. onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)', async () => {
+        it('7.1.23.1. Successfully receive ERC1155 tokens batch when receiving project token', async () => {
+            const fixture = await beforePrestigePadTest({
+                addSampleLaunch: true,
+                addSampleRounds: true,
+                doAllFirstFound: true,
+            });
+            const { depositor1, prestigePad, projectToken } = fixture;
+
+            await callTransaction(prestigePad.connect(depositor1).withdrawProjectToken(1, 1));
+            await callTransaction(prestigePad.connect(depositor1).withdrawProjectToken(2, 1));
+
+            await callTransaction(projectToken.connect(depositor1).safeBatchTransferFrom(
+                depositor1.address,
+                prestigePad.address,
+                [1, 2],
+                [10, 5],
+                "0x"
+            ));
+        });
+
+        it('7.1.23.2. Revert when receiving ERC1155 tokens batch from unknown ERC1155 token', async () => {
+            const fixture = await beforePrestigePadTest();
+            const { deployer, depositor1, admin, projectToken } = fixture;
+
+            const unknownERC1155Token = await deployGovernor(deployer, admin.address);
+
+            await callTransaction(unknownERC1155Token.connect(depositor1).mint(1, 50));
+            await callTransaction(unknownERC1155Token.connect(depositor1).mint(2, 50));
+
+            await expect(unknownERC1155Token.connect(depositor1).safeBatchTransferFrom(
+                depositor1.address,
+                projectToken.address,
+                [1, 2],
+                [10, 5],
+                "0x"
+            )).to.be.revertedWith('ERC1155: ERC1155Receiver rejected tokens');
+        });
+    });
 
     /* --- Command --- */
     describe('7.1.5. initiateLaunch(address,bytes32,string,string,uint256,uint256,(uint256,uint256,bytes))', async () => {

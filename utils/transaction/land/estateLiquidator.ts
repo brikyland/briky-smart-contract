@@ -10,7 +10,7 @@ import {
     GovernanceHub
 } from "@typechain-types";
 
-// @utils/mockValidator
+// @utils
 import { MockValidator } from "@utils/mockValidator";
 
 // @utils/models/land

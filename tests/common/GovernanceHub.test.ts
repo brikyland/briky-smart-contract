@@ -26,7 +26,7 @@ import { Constant } from '@tests/test.constant';
 // @tests/common
 import { Initialization as CommonInitialization } from '@tests/common/test.initialization';
 
-// @utils/blockchain
+// @utils
 import {
     callTransaction,
     expectRevertWithModifierCustomError,
@@ -34,6 +34,8 @@ import {
     prepareNativeToken,
     testReentrancy
 } from '@utils/blockchain';
+import { scale } from "@utils/formula";
+import { MockValidator } from '@utils/mockValidator';
 
 // @utils/deployments/common
 import { deployAdmin } from '@utils/deployments/common/admin';
@@ -54,12 +56,6 @@ import {
     UpdateFeeParamsInput,
     VoteParams,
 } from "@utils/models/common/governanceHub";
-
-// @utils/mockValidator
-import { MockValidator } from '@utils/mockValidator';
-
-// @utils/formula
-import { scale } from "@utils/formula";
 
 // @utils/deployments/common
 import { deployCurrency } from '@utils/deployments/common/currency';

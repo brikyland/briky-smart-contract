@@ -54,6 +54,7 @@ import { getMortgageTokenTx_Cancel, getMortgageTokenTx_Foreclose, getMortgageTok
 import { UpdateBaseURIParams, UpdateBaseURIParamsInput, UpdateFeeRateParams, UpdateFeeRateParamsInput } from '@utils/models/lend/mortgageToken';
 import { getAdminTxByInput_ActivateIn, getAdminTxByInput_AuthorizeManagers, getAdminTxByInput_AuthorizeModerators, getAdminTxByInput_DeclareZone, getAdminTxByInput_UpdateCurrencyRegistries } from '@utils/transaction/common/admin';
 import { getPausableTxByInput_Pause } from '@utils/transaction/common/pausable';
+import { IERC165UpgradeableInterfaceId, IEstateTokenReceiverInterfaceId, IERC721MetadataUpgradeableInterfaceId, IMortgageTokenInterfaceId, IERC2981UpgradeableInterfaceId } from '@tests/interfaces';
 
 
 async function testReentrancy_estateMortgageToken(
@@ -2202,22 +2203,6 @@ describe('3.2. EstateMortgageToken', async () => {
         it('3.2.13.1. Return true for appropriate interface', async () => {
             const fixture = await beforeEstateMortgageTokenTest();
             const { estateMortgageToken } = fixture;
-
-            const ICommon = ICommon__factory.createInterface();
-            const IERC165Upgradeable = IERC165Upgradeable__factory.createInterface();
-            const IERC2981Upgradeable = IERC2981Upgradeable__factory.createInterface();
-            const IERC1155ReceiverUpgradeable = IERC1155ReceiverUpgradeable__factory.createInterface();
-            const IEstateTokenReceiver = IEstateTokenReceiver__factory.createInterface();
-            const IERC721Upgradeable = IERC721Upgradeable__factory.createInterface();
-            const IERC721MetadataUpgradeable = IERC721MetadataUpgradeable__factory.createInterface();
-            const IERC4906Upgradeable = IERC4906Upgradeable__factory.createInterface();
-            const IMortgageToken = IMortgageToken__factory.createInterface();
-
-            const IERC165UpgradeableInterfaceId = getInterfaceID(IERC165Upgradeable, []);
-            const IEstateTokenReceiverInterfaceId = getInterfaceID(IEstateTokenReceiver, [IERC1155ReceiverUpgradeable]);
-            const IERC721MetadataUpgradeableInterfaceId = getInterfaceID(IERC721MetadataUpgradeable, [IERC721Upgradeable]);
-            const IMortgageTokenInterfaceId = getInterfaceID(IMortgageToken, [ICommon, IERC721MetadataUpgradeable, IERC2981Upgradeable, IERC4906Upgradeable]);
-            const IERC2981UpgradeableInterfaceId = getInterfaceID(IERC2981Upgradeable, [IERC165Upgradeable]);
 
             expect(await estateMortgageToken.supportsInterface(getBytes4Hex(IERC165UpgradeableInterfaceId))).to.equal(true);
             expect(await estateMortgageToken.supportsInterface(getBytes4Hex(IEstateTokenReceiverInterfaceId))).to.equal(true);

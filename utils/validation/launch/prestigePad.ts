@@ -4,7 +4,7 @@ import { ethers } from "hardhat";
 // @nomicfoundation/hardhat-network-helpers
 import { time } from "@nomicfoundation/hardhat-network-helpers";
 
-// @utils/mockValidator
+// @utils
 import { MockValidator } from "@utils/mockValidator";
 
 // @utils/models/launch
