@@ -107,22 +107,8 @@ async function testReentrancy_MortgageMarketplace(
 
 describe('6.3. MortgageMarketplace', async () => {
     async function mortgageMarketplaceFixture(): Promise<MortgageMarketplaceFixture> {
-        const accounts = await ethers.getSigners();
-        const deployer = accounts[0];
-        const admins = [];
-        for (let i = 1; i <= Constant.ADMIN_NUMBER; ++i) admins.push(accounts[i]);
-        const borrower1 = accounts[Constant.ADMIN_NUMBER + 1];
-        const borrower2 = accounts[Constant.ADMIN_NUMBER + 2];
-        const seller1 = accounts[Constant.ADMIN_NUMBER + 3];
-        const seller2 = accounts[Constant.ADMIN_NUMBER + 4];
-        const buyer1 = accounts[Constant.ADMIN_NUMBER + 5];
-        const buyer2 = accounts[Constant.ADMIN_NUMBER + 6];
-        const broker1 = accounts[Constant.ADMIN_NUMBER + 7];
-        const broker2 = accounts[Constant.ADMIN_NUMBER + 8];
-        const custodian1 = accounts[Constant.ADMIN_NUMBER + 9];
-        const custodian2 = accounts[Constant.ADMIN_NUMBER + 10];
-        const manager = accounts[Constant.ADMIN_NUMBER + 11];
-        const moderator = accounts[Constant.ADMIN_NUMBER + 12];
+        const [deployer, admin1, admin2, admin3, admin4, admin5, borrower1, borrower2, seller1, seller2, buyer1, buyer2, broker1, broker2, custodian1, custodian2, manager, moderator] = await ethers.getSigners();
+        const admins = [admin1, admin2, admin3, admin4, admin5];
 
         const adminAddresses: string[] = admins.map(signer => signer.address);
         const admin = await deployAdmin(

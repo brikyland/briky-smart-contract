@@ -53,13 +53,8 @@ async function testReentrancy_Auction(
 
 describe('4.1. Auction', async () => {
     async function auctionFixture(): Promise<AuctionFixture> {
-        const accounts = await ethers.getSigners();
-        const deployer = accounts[0];
-        const admins = [];
-        for (let i = 1; i <= Constant.ADMIN_NUMBER; ++i) admins.push(accounts[i]);
-        const depositor1 = accounts[Constant.ADMIN_NUMBER + 1];
-        const depositor2 = accounts[Constant.ADMIN_NUMBER + 2];
-        const depositor3 = accounts[Constant.ADMIN_NUMBER + 3];
+        const [deployer, admin1, admin2, admin3, admin4, admin5, depositor1, depositor2, depositor3] = await ethers.getSigners();
+        const admins = [admin1, admin2, admin3, admin4, admin5];
 
         const adminAddresses: string[] = admins.map(signer => signer.address);
         const admin = await deployAdmin(

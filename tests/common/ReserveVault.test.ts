@@ -87,14 +87,8 @@ interface ReserveVaultFixture {
 
 describe('1.8. ReserveVault', async () => {
     async function reserveVaultFixture(): Promise<ReserveVaultFixture> {
-        const accounts = await ethers.getSigners();
-        const deployer = accounts[0];
-        const admins = [];
-        for (let i = 1; i <= Constant.ADMIN_NUMBER; ++i) admins.push(accounts[i]);
-        const funder1 = accounts[Constant.ADMIN_NUMBER + 1];
-        const funder2 = accounts[Constant.ADMIN_NUMBER + 2];
-        const withdrawer1 = accounts[Constant.ADMIN_NUMBER + 3];
-        const withdrawer2 = accounts[Constant.ADMIN_NUMBER + 4];
+        const [deployer, admin1, admin2, admin3, admin4, admin5, funder1, funder2, withdrawer1, withdrawer2] = await ethers.getSigners();
+        const admins = [admin1, admin2, admin3, admin4, admin5];
         
         const adminAddresses: string[] = admins.map(signer => signer.address);
         const admin = await deployAdmin(

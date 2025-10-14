@@ -12,6 +12,8 @@ import {
     IEstateTokenizer__factory,
     IEstateTokenReceiver__factory,
     IGovernor__factory,
+    IProjectLaunchpad__factory,
+    IProjectTokenReceiver__factory,
     IRoyaltyRateProposer__factory,
 } from "@typechain-types";
 
@@ -30,9 +32,12 @@ const IERC4906Upgradeable = IERC4906Upgradeable__factory.createInterface();
 const IAssetToken = IAssetToken__factory.createInterface();
 const ICommon = ICommon__factory.createInterface();
 const IEstateTokenizer = IEstateTokenizer__factory.createInterface();
+const IProjectLaunchpad = IProjectLaunchpad__factory.createInterface();
 const IEstateTokenReceiver = IEstateTokenReceiver__factory.createInterface();
 const IGovernor = IGovernor__factory.createInterface();
 const IRoyaltyRateProposer = IRoyaltyRateProposer__factory.createInterface();
+const IProjectTokenReceiver = IProjectTokenReceiver__factory.createInterface();
+
 
 /* --- Interface IDs --- */
 export const IERC165UpgradeableInterfaceId = getInterfaceID(IERC165Upgradeable, []);
@@ -46,8 +51,7 @@ export const IERC4906UpgradeableInterfaceId = getInterfaceID(IERC4906Upgradeable
 export const IAssetTokenInterfaceId = getInterfaceID(IAssetToken, [IERC1155MetadataURIUpgradeable, IERC2981Upgradeable, IGovernor]);
 export const IEstateTokenizerInterfaceId = getInterfaceID(IEstateTokenizer, [ICommon, IEstateTokenReceiver]);
 export const IEstateTokenReceiverInterfaceId = getInterfaceID(IEstateTokenReceiver, [IERC1155ReceiverUpgradeable])
+export const IProjectTokenReceiverInterfaceId = getInterfaceID(IProjectTokenReceiver, [IERC1155ReceiverUpgradeable])
 export const IGovernorInterfaceId = getInterfaceID(IGovernor, [IERC1155Upgradeable]);
 export const IRoyaltyRateProposerInterfaceId = getInterfaceID(IRoyaltyRateProposer, [ICommon, IERC165Upgradeable, IERC2981Upgradeable]);
-
-
-
+export const IProjectLaunchpadInterfaceId = getInterfaceID(IProjectLaunchpad, [ICommon, IProjectTokenReceiver])

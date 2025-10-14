@@ -240,20 +240,8 @@ export async function getCashbackBaseDenomination(
 
 describe('2.3. EstateLiquidator', async () => {
     async function estateLiquidatorFixture(): Promise<EstateLiquidatorFixture> {
-        const accounts = await ethers.getSigners();
-        const deployer = accounts[0];
-        const admins = [];
-        for (let i = 1; i <= Constant.ADMIN_NUMBER; ++i) admins.push(accounts[i]);
-        const user = accounts[Constant.ADMIN_NUMBER + 1];
-        const manager = accounts[Constant.ADMIN_NUMBER + 2];
-        const moderator = accounts[Constant.ADMIN_NUMBER + 3];
-        const operator1 = accounts[Constant.ADMIN_NUMBER + 4];
-        const operator2 = accounts[Constant.ADMIN_NUMBER + 5];
-        const operator3 = accounts[Constant.ADMIN_NUMBER + 6];
-        const broker1 = accounts[Constant.ADMIN_NUMBER + 7];
-        const broker2 = accounts[Constant.ADMIN_NUMBER + 8];
-        const custodian1 = accounts[Constant.ADMIN_NUMBER + 9];
-        const custodian2 = accounts[Constant.ADMIN_NUMBER + 10];
+        const [deployer, admin1, admin2, admin3, admin4, admin5, user, manager, moderator, operator1, operator2, operator3, broker1, broker2, custodian1, custodian2] = await ethers.getSigners();
+        const admins = [admin1, admin2, admin3, admin4, admin5];
 
         const validator = new MockValidator(deployer as any);
 

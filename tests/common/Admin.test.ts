@@ -114,13 +114,8 @@ interface AdminFixture {
 
 describe('1.2. Admin', async () => {
     async function adminFixture(): Promise<AdminFixture> {
-        const signers = await ethers.getSigners();
-        const deployer = signers[0];
-        const admins = [];
-        for (let i = 1; i <= Constant.ADMIN_NUMBER; ++i) admins.push(signers[i]);
-        const manager = signers[Constant.ADMIN_NUMBER + 1];
-        const moderator = signers[Constant.ADMIN_NUMBER + 2];
-        const user = signers[Constant.ADMIN_NUMBER + 3];
+        const [deployer, admin1, admin2, admin3, admin4, admin5, manager, moderator, user] = await ethers.getSigners();
+        const admins = [admin1, admin2, admin3, admin4, admin5];
 
         const zone1 = ethers.utils.formatBytes32String("TestZone1");
         const zone2 = ethers.utils.formatBytes32String("TestZone2");

@@ -58,11 +58,8 @@ interface ValidatableFixture {
 
 describe('1.b. Validatable', async () => {
     async function validatableFixture(): Promise<ValidatableFixture> {
-        const accounts = await ethers.getSigners();
-        const deployer = accounts[0];
-        const admins = [];
-        for (let i = 1; i <= Constant.ADMIN_NUMBER; ++i) admins.push(accounts[i]);
-        const validator = accounts[Constant.ADMIN_NUMBER + 1];
+        const [deployer, admin1, admin2, admin3, admin4, admin5, validator] = await ethers.getSigners();
+        const admins = [admin1, admin2, admin3, admin4, admin5];
   
         const adminAddresses: string[] = admins.map(signer => signer.address);
         const admin = await deployAdmin(

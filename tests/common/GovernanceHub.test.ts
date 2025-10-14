@@ -42,7 +42,8 @@ import { deployGovernanceHub } from '@utils/deployments/common/governanceHub';
 // @utils/models/common
 import {
     AdmitParamsInput,
-    ConcludeExecutionParamsInput, ContributeBudgetParams,
+    ConcludeExecutionParamsInput,
+    ContributeBudgetParams,
     DisqualifyParamsInput,
     LogExecutionParamsInput,
     ProposalState,
@@ -52,7 +53,6 @@ import {
     UpdateFeeParams,
     UpdateFeeParamsInput,
     VoteParams,
-    SafeVoteParams
 } from "@utils/models/common/governanceHub";
 
 // @utils/mockValidator
@@ -91,9 +91,10 @@ import {
 } from '@utils/transaction/common/admin';
 import {
     getGovernanceHubTx_Admit,
-    getGovernanceHubTxByInput_Admit,
-    getCallGovernanceHubTx_Propose,
+    getGovernanceHubTx_Propose,
+    getGovernanceHubTxByInput_Propose,
     getCallGovernanceHubTxByInput_Propose,
+    getGovernanceHubTxByInput_Admit,
     getGovernanceHubTx_ConcludeExecution,
     getGovernanceHubTxByInput_ConcludeExecution,
     getGovernanceHubTx_Confirm,
@@ -102,8 +103,6 @@ import {
     getGovernanceHubTxByInput_Disqualify,
     getGovernanceHubTx_LogExecution,
     getGovernanceHubTxByInput_LogExecution,
-    getGovernanceHubTx_Propose,
-    getGovernanceHubTxByInput_Propose,
     getGovernanceHubTx_RejectExecution,
     getGovernanceHubTx_SafeContributeBudget,
     getGovernanceHubTxByInput_SafeContributeBudget,
@@ -209,24 +208,8 @@ describe('1.6. GovernanceHub', async () => {
     });
 
     async function governanceHubFixture(): Promise<GovernanceHubFixture> {
-        const accounts = await ethers.getSigners();
-        const deployer = accounts[0];
-        const admins = [];
-        for (let i = 1; i <= Constant.ADMIN_NUMBER; ++i) admins.push(accounts[i]);
-        const validatorWallet = accounts[Constant.ADMIN_NUMBER + 1];
-        const proposer1 = accounts[Constant.ADMIN_NUMBER + 2];
-        const proposer2 = accounts[Constant.ADMIN_NUMBER + 3];
-        const operator1 = accounts[Constant.ADMIN_NUMBER + 4];
-        const operator2 = accounts[Constant.ADMIN_NUMBER + 5];
-        const contributor1 = accounts[Constant.ADMIN_NUMBER + 6];
-        const contributor2 = accounts[Constant.ADMIN_NUMBER + 7];
-        const voter1 = accounts[Constant.ADMIN_NUMBER + 8];
-        const voter2 = accounts[Constant.ADMIN_NUMBER + 9];
-        const voter3 = accounts[Constant.ADMIN_NUMBER + 10];
-        const custodian1 = accounts[Constant.ADMIN_NUMBER + 11];
-        const custodian2 = accounts[Constant.ADMIN_NUMBER + 12];
-        const manager = accounts[Constant.ADMIN_NUMBER + 13];
-        const moderator = accounts[Constant.ADMIN_NUMBER + 14];
+        const [deployer, admin1, admin2, admin3, admin4, admin5, validatorWallet, proposer1, proposer2, operator1, operator2, contributor1, contributor2, voter1, voter2, voter3, custodian1, custodian2, manager, moderator] = await ethers.getSigners();
+        const admins = [admin1, admin2, admin3, admin4, admin5];
 
         const validator = new MockValidator(validatorWallet as any);
 
@@ -1254,7 +1237,7 @@ describe('1.6. GovernanceHub', async () => {
             const fee = await governanceHub.fee();
             let timestamp = await time.latest() + 10;
 
-            // Tx1: Send just enough for fee
+            // Tx1: Send just enough for the fee
             let proposer1InitBalance = await ethers.provider.getBalance(proposer1.address);
             let governanceHubInitBalance = await ethers.provider.getBalance(governanceHub.address);
 
@@ -2059,7 +2042,7 @@ describe('1.6. GovernanceHub', async () => {
                 .to.be.revertedWithCustomError(governanceHub, 'Unauthorized');
         });
 
-        it('1.6.8.8. Disqualify unsuccessfully by non-mananger for voting proposal', async () => {
+        it('1.6.8.8. Disqualify unsuccessfully by non-manager for voting proposal', async () => {
             const fixture = await beforeGovernanceHubTest({
                 addSampleProposals: true,
                 admitSampleProposals: true,                
@@ -2817,7 +2800,7 @@ describe('1.6. GovernanceHub', async () => {
             expect(await ethers.provider.getBalance(governanceHub.address)).to.equal(governanceHubInitNativeBalance.add(value2));
             expect(await ethers.provider.getBalance(voter1.address)).to.equal(voter1InitNativeBalance.sub(value2).sub(gasFee2));
 
-            // Tx3: Contribution by non token holder with native token
+            // Tx3: Contribution by non-token holder with native token
             let proposer2InitNativeBalance = await ethers.provider.getBalance(proposer2.address);
             governanceHubInitNativeBalance = await ethers.provider.getBalance(governanceHub.address);
 
@@ -2901,7 +2884,7 @@ describe('1.6. GovernanceHub', async () => {
             expect(await currency.balanceOf(voter1.address)).to.equal(voter1InitERC20Balance.sub(value5));
             expect(await currency.balanceOf(governanceHub.address)).to.equal(governanceHubInitERC20Balance.add(value5));
 
-            // Tx6: Contribution by non token holder with erc20
+            // Tx6: Contribution by non-token holder with erc20
             let proposer2InitERC20Balance = await currency.balanceOf(proposer2.address);
             governanceHubInitERC20Balance = await currency.balanceOf(governanceHub.address);
 

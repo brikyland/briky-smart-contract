@@ -154,26 +154,10 @@ describe('7.2. ProjectToken', async () => {
     });
 
     async function projectTokenFixture(): Promise<ProjectTokenFixture> {
-        const accounts = await ethers.getSigners();
-        const deployer = accounts[0];
-        const admins = [];
-        for (let i = 1; i <= Constant.ADMIN_NUMBER; ++i) admins.push(accounts[i]);
-        const user = accounts[Constant.ADMIN_NUMBER + 1];
-        const manager = accounts[Constant.ADMIN_NUMBER + 2];
-        const moderator = accounts[Constant.ADMIN_NUMBER + 3];
-        const requester1 = accounts[Constant.ADMIN_NUMBER + 4];
-        const requester2 = accounts[Constant.ADMIN_NUMBER + 5];
-        const broker1 = accounts[Constant.ADMIN_NUMBER + 6];
-        const broker2 = accounts[Constant.ADMIN_NUMBER + 7];
-        const depositor1 = accounts[Constant.ADMIN_NUMBER + 8];
-        const depositor2 = accounts[Constant.ADMIN_NUMBER + 9];
-        const depositor3 = accounts[Constant.ADMIN_NUMBER + 10];        
+        const [deployer, admin1, admin2, admin3, admin4, admin5, user, manager, moderator, requester1, requester2, broker1, broker2, depositor1, depositor2, depositor3, initiator1, initiator2, custodian1, custodian2] = await ethers.getSigners();
+        const admins = [admin1, admin2, admin3, admin4, admin5];
         const depositors = [depositor1, depositor2, depositor3];
-        const initiator1 = accounts[Constant.ADMIN_NUMBER + 11];
-        const initiator2 = accounts[Constant.ADMIN_NUMBER + 12];
         const initiators = [initiator1, initiator2];
-        const custodian1 = accounts[Constant.ADMIN_NUMBER + 13];
-        const custodian2 = accounts[Constant.ADMIN_NUMBER + 14];
         const custodians = [custodian1, custodian2];
 
         const adminAddresses: string[] = admins.map(signer => signer.address);

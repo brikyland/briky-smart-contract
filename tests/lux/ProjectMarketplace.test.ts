@@ -107,19 +107,8 @@ describe('6.4. ProjectMarketplace', async () => {
     });
 
     async function projectMarketplaceFixture(): Promise<ProjectMarketplaceFixture> {
-        const accounts = await ethers.getSigners();
-        const deployer = accounts[0];
-        const admins = [];
-        for (let i = 1; i <= Constant.ADMIN_NUMBER; ++i) admins.push(accounts[i]);
-        const seller1 = accounts[Constant.ADMIN_NUMBER + 1];
-        const seller2 = accounts[Constant.ADMIN_NUMBER + 2];
-        const buyer1 = accounts[Constant.ADMIN_NUMBER + 3];
-        const buyer2 = accounts[Constant.ADMIN_NUMBER + 4];
-        const commissionReceiver = accounts[Constant.ADMIN_NUMBER + 5];
-        const manager = accounts[Constant.ADMIN_NUMBER + 6];
-        const moderator = accounts[Constant.ADMIN_NUMBER + 7];
-        const initiator1 = accounts[Constant.ADMIN_NUMBER + 8];
-        const initiator2 = accounts[Constant.ADMIN_NUMBER + 9];
+        const [deployer, admin1, admin2, admin3, admin4, admin5, seller1, seller2, buyer1, buyer2, commissionReceiver, manager, moderator, initiator1, initiator2] = await ethers.getSigners();
+        const admins = [admin1, admin2, admin3, admin4, admin5];
 
         const validator = new MockValidator(deployer as any);
 

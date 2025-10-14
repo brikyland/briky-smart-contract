@@ -26,9 +26,6 @@ import {
     callTransactionAtTimestamp
 } from '@utils/blockchain';
 
-// @tests/test.constant
-import { Constant } from '@tests/test.constant';
-
 // @utils/deployments/common
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
@@ -122,15 +119,8 @@ interface CommissionTokenFixture {
 
 describe('2.1. CommissionToken', async () => {
     async function commissionTokenFixture(): Promise<CommissionTokenFixture> {
-        const accounts = await ethers.getSigners();
-        const deployer = accounts[0];
-        const admins = [];
-        for (let i = 1; i <= Constant.ADMIN_NUMBER; ++i) admins.push(accounts[i]);
-        const manager = accounts[Constant.ADMIN_NUMBER + 1];
-        const moderator = accounts[Constant.ADMIN_NUMBER + 2];
-        const user = accounts[Constant.ADMIN_NUMBER + 3];
-        const broker1 = accounts[Constant.ADMIN_NUMBER + 4];
-        const broker2 = accounts[Constant.ADMIN_NUMBER + 5];
+        const [deployer, admin1, admin2, admin3, admin4, admin5, manager, moderator, user, broker1, broker2] = await ethers.getSigners();
+        const admins = [admin1, admin2, admin3, admin4, admin5];
         
         const validator = new MockValidator(deployer as any);
 

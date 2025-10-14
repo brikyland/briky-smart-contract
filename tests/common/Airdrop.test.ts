@@ -37,13 +37,7 @@ interface AirdropFixture {
 
 describe('1.3. Airdrop', async () => {
     async function airdropFixture(): Promise<AirdropFixture> {
-        const accounts = await ethers.getSigners();
-        const deployer = accounts[0];
-        const sender1 = accounts[1];
-        const sender2 = accounts[2];
-        const receiver1 = accounts[4];
-        const receiver2 = accounts[5];
-        const receiver3 = accounts[6];
+        const [deployer, sender1, sender2, receiver1, receiver2, receiver3] = await ethers.getSigners();
         
         const currency = await deployCurrency(
             deployer,

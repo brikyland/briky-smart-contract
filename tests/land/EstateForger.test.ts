@@ -245,23 +245,10 @@ export async function getCashbackBaseDenomination(
     );
 }
 
-describe.only('2.2. EstateForger', async () => {
+describe('2.2. EstateForger', async () => {
     async function estateForgerFixture(): Promise<EstateForgerFixture> {
-        const accounts = await ethers.getSigners();
-        const deployer = accounts[0];
-        const admins = [];
-        for (let i = 1; i <= Constant.ADMIN_NUMBER; ++i) admins.push(accounts[i]);
-        const user = accounts[Constant.ADMIN_NUMBER + 1];
-        const manager = accounts[Constant.ADMIN_NUMBER + 2];
-        const moderator = accounts[Constant.ADMIN_NUMBER + 3];
-        const custodian1 = accounts[Constant.ADMIN_NUMBER + 4];
-        const custodian2 = accounts[Constant.ADMIN_NUMBER + 5];
-        const custodian3 = accounts[Constant.ADMIN_NUMBER + 6];
-        const depositor1 = accounts[Constant.ADMIN_NUMBER + 7];
-        const depositor2 = accounts[Constant.ADMIN_NUMBER + 8];
-        const depositor3 = accounts[Constant.ADMIN_NUMBER + 9];
-        const broker1 = accounts[Constant.ADMIN_NUMBER + 10];
-        const broker2 = accounts[Constant.ADMIN_NUMBER + 11];
+        const [deployer, admin1, admin2, admin3, admin4, admin5, user, manager, moderator, custodian1, custodian2, custodian3, depositor1, depositor2, depositor3, broker1, broker2] = await ethers.getSigners();
+        const admins = [admin1, admin2, admin3, admin4, admin5];
 
         const depositors = [depositor1, depositor2, depositor3];
 

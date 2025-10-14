@@ -30,13 +30,8 @@ interface DistributorFixture {
 
 describe('4.2. Distributor', async () => {
     async function distributorFixture(): Promise<DistributorFixture> {
-        const accounts = await ethers.getSigners();
-        const deployer = accounts[0];
-        const admins = [];
-        for (let i = 1; i <= Constant.ADMIN_NUMBER; ++i) admins.push(accounts[i]);
-        const receiver1 = accounts[Constant.ADMIN_NUMBER + 1];
-        const receiver2 = accounts[Constant.ADMIN_NUMBER + 2];
-        const receiver3 = accounts[Constant.ADMIN_NUMBER + 3];
+        const [deployer, admin1, admin2, admin3, admin4, admin5, receiver1, receiver2, receiver3] = await ethers.getSigners();
+        const admins = [admin1, admin2, admin3, admin4, admin5];
 
         const adminAddresses: string[] = admins.map(signer => signer.address);
         const admin = await deployAdmin(

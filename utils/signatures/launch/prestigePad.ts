@@ -23,7 +23,7 @@ export async function getUpdateBaseUnitPriceRangeSignatures(
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
         ["address", "string", "uint256", "uint256"],
-        [prestigePad.address, "update", paramsInput.baseMinUnitPrice, paramsInput.baseMaxUnitPrice]
+        [prestigePad.address, "updateBaseUnitPriceRange", paramsInput.baseMinUnitPrice, paramsInput.baseMaxUnitPrice]
     );
 
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));

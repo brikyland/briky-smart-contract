@@ -1,60 +1,169 @@
 import { expect } from 'chai';
-import { ethers, upgrades } from 'hardhat';
+import { randomInt } from 'crypto';
+import { BigNumber } from 'ethers';
+import { ethers } from 'hardhat';
+
+// @typechain-types
 import {
     Admin,
     CommissionToken,
     Currency,
-    EstateToken,
     FeeReceiver,
-    IERC165Upgradeable__factory,
     MockEstateToken,
     MockEstateForger__factory,
     ReserveVault,
-    IERC2981Upgradeable__factory,
-    IRoyaltyRateProposer__factory,
-    ICommon__factory,
-    IERC1155Upgradeable__factory,
-    IERC1155MetadataURIUpgradeable__factory,
     PriceWatcher,
-    IGovernor__factory,
     GovernanceHub,
     DividendHub,
     MockEstateLiquidator,
     MockEstateForger,
     MockEstateLiquidator__factory,
 } from '@typechain-types';
-import { callTransaction, callTransactionAtTimestamp, getSignatures, randomWallet } from '@utils/blockchain';
+
+// @defi-wonderland/smock
+import {
+    MockContract,
+    smock
+} from '@defi-wonderland/smock';
+
+// @nomicfoundation/hardhat-network-helpers
+import {
+    loadFixture,
+    time
+} from "@nomicfoundation/hardhat-network-helpers";
+
+// @tests
 import { Constant } from '@tests/test.constant';
-import { deployAdmin } from '@utils/deployments/common/admin';
-import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
-import { deployCurrency } from '@utils/deployments/common/currency';
-import { deployMockEstateToken } from '@utils/deployments/mock/mockEstateToken';
-import { deployCommissionToken } from '@utils/deployments/land/commissionToken';
-import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 
-import { MockContract, smock } from '@defi-wonderland/smock';
-
-import { BigNumber } from 'ethers';
-import { randomInt } from 'crypto';
-import { getBytes4Hex, getInterfaceID, randomBigNumber, structToObject } from '@utils/utils';
-import { OrderedMap } from '@utils/utils';
-import { Initialization as LandInitialization } from '@tests/land/test.initialization';
-import { deployReserveVault } from '@utils/deployments/common/reserveVault';
-import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
-import { deployGovernanceHub } from '@utils/deployments/common/governanceHub';
-import { deployDividendHub } from '@utils/deployments/common/dividendHub';
-import { MockValidator } from '@utils/mockValidator';
-import { RegisterCustodianParams, TokenizeEstateParams, SafeUpdateEstateURIParams, SafeUpdateEstateCustodianParams, UpdateEstateURIParams, DeprecateEstateParams, SafeDeprecateEstateParams, ExtendEstateExpirationParams, SafeExtendEstateExpirationParams, UpdateEstateCustodianParams, UpdateCommissionTokenParamsInput, UpdateCommissionTokenParams, UpdateBaseURIParamsInput, UpdateBaseURIParams, AuthorizeTokenizersParamsInput, AuthorizeTokenizersParams, AuthorizeExtractorsParamsInput, AuthorizeExtractorsParams, UpdateZoneRoyaltyRateParamsInput, UpdateZoneRoyaltyRateParams, RegisterCustodianParamsInput, UpdateEstateURIParamsInput } from '@utils/models/land/estateToken';
-import { getRegisterCustodianValidation, getUpdateEstateURIValidation } from '@utils/validation/land/estateToken';
-import { getEstateTokenTx_AuthorizeExtractors, getEstateTokenTxByInput_AuthorizeExtractors, getEstateTokenTx_AuthorizeTokenizers, getEstateTokenTxByInput_AuthorizeTokenizers, getCallEstateTokenTx_ExtractEstate, getCallEstateTokenTx_TokenizeEstate, getEstateTokenTx_RegisterCustodian, getEstateTokenTxByInput_RegisterCustodian, getEstateTokenTx_SafeDeprecateEstate, getEstateTokenTxByParams_SafeDeprecateEstate, getEstateTokenTx_SafeExtendEstateExpiration, getEstateTokenTxByParams_SafeExtendEstateExpiration, getEstateTokenTx_SafeUpdateEstateCustodian, getEstateTokenTxByParams_SafeUpdateEstateCustodian, getEstateTokenTx_SafeUpdateEstateURI, getEstateTokenTxByInput_SafeUpdateEstateURI, getEstateTokenTxByInput_UpdateBaseURI, getEstateTokenTx_UpdateCommissionToken, getEstateTokenTxByInput_UpdateCommissionToken, getEstateTokenTx_UpdateZoneRoyaltyRate, getEstateTokenTxByInput_UpdateZoneRoyaltyRate, getEstateTokenTx_UpdateBaseURI } from '@utils/transaction/land/estateToken';
-import { ContractTransaction } from 'ethers';
-import { getCommissionTokenTx_RegisterBroker, getCommissionTokenTx_UpdateBaseURI } from '@utils/transaction/land/commissionToken';
+// @tests/common
 import { Initialization as CommonInitialization } from '@tests/common/test.initialization';
-import { getAdminTxByInput_ActivateIn, getAdminTxByInput_AuthorizeManagers, getAdminTxByInput_AuthorizeModerators, getAdminTxByInput_DeclareZone } from '@utils/transaction/common/admin';
-import { getPausableTxByInput_Pause } from '@utils/transaction/common/pausable';
-import { getAuthorizeExtractorsSignatures, getAuthorizeTokenizersSignatures, getUpdateBaseURISignatures, getUpdateCommissionTokenSignatures, getUpdateZoneRoyaltyRateSignatures } from '@utils/signatures/land/estateToken';
+
+// @tests/interfaces
+import {
+    IERC1155MetadataURIUpgradeableInterfaceId,
+    IERC1155UpgradeableInterfaceId,
+    IERC165UpgradeableInterfaceId,
+    IERC2981UpgradeableInterfaceId,
+    IGovernorInterfaceId,
+    IRoyaltyRateProposerInterfaceId
+} from '@tests/interfaces';
+
+// @tests/land
+import { Initialization as LandInitialization } from '@tests/land/test.initialization';
+
+// @utils/anchor/land
 import { getSafeUpdateEstateURIAnchor } from '@utils/anchor/land/estateToken';
-import { IERC1155MetadataURIUpgradeableInterfaceId, IERC1155UpgradeableInterfaceId, IERC165UpgradeableInterfaceId, IERC2981UpgradeableInterfaceId, IGovernorInterfaceId, IRoyaltyRateProposerInterfaceId } from '@tests/interfaces';
+
+// @utils/blockchain
+import {
+    callTransaction,
+    callTransactionAtTimestamp,
+    randomWallet
+} from '@utils/blockchain';
+
+// @utils/deployments/common
+import { deployAdmin } from '@utils/deployments/common/admin';
+import { deployCurrency } from '@utils/deployments/common/currency';
+import { deployDividendHub } from '@utils/deployments/common/dividendHub';
+import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
+import { deployGovernanceHub } from '@utils/deployments/common/governanceHub';
+import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
+import { deployReserveVault } from '@utils/deployments/common/reserveVault';
+
+// @utils/deployments/mock
+import { deployMockEstateToken } from '@utils/deployments/mock/mockEstateToken';
+
+// @utils/deployments/land
+import { deployCommissionToken } from '@utils/deployments/land/commissionToken';
+
+// @utils/mockValidator
+import { MockValidator } from '@utils/mockValidator';
+
+// @utils/models/land
+import {
+    RegisterCustodianParams,
+    TokenizeEstateParams,
+    SafeUpdateEstateURIParams,
+    SafeUpdateEstateCustodianParams,
+    UpdateEstateURIParams,
+    DeprecateEstateParams,
+    SafeDeprecateEstateParams,
+    ExtendEstateExpirationParams,
+    SafeExtendEstateExpirationParams,
+    UpdateEstateCustodianParams,
+    UpdateCommissionTokenParamsInput,
+    UpdateCommissionTokenParams,
+    UpdateBaseURIParamsInput,
+    UpdateBaseURIParams,
+    AuthorizeTokenizersParamsInput,
+    AuthorizeTokenizersParams,
+    AuthorizeExtractorsParamsInput,
+    AuthorizeExtractorsParams,
+    UpdateZoneRoyaltyRateParamsInput,
+    UpdateZoneRoyaltyRateParams,
+    RegisterCustodianParamsInput,
+    UpdateEstateURIParamsInput
+} from '@utils/models/land/estateToken';
+
+// @utils/signatures/land
+import {
+    getAuthorizeExtractorsSignatures,
+    getAuthorizeTokenizersSignatures,
+    getUpdateBaseURISignatures,
+    getUpdateCommissionTokenSignatures,
+    getUpdateZoneRoyaltyRateSignatures
+} from '@utils/signatures/land/estateToken';
+
+// @utils/validation/land
+import {
+    getRegisterCustodianValidation,
+    getUpdateEstateURIValidation
+} from '@utils/validation/land/estateToken';
+
+// @utils/transaction/common
+import {
+    getAdminTxByInput_ActivateIn,
+    getAdminTxByInput_AuthorizeManagers,
+    getAdminTxByInput_AuthorizeModerators,
+    getAdminTxByInput_DeclareZone
+} from '@utils/transaction/common/admin';
+import { getPausableTxByInput_Pause } from '@utils/transaction/common/pausable';
+
+// @utils/transaction/land
+import { getCommissionTokenTx_RegisterBroker } from '@utils/transaction/land/commissionToken';
+import {
+    getEstateTokenTx_AuthorizeExtractors,
+    getEstateTokenTxByInput_AuthorizeExtractors,
+    getEstateTokenTx_AuthorizeTokenizers,
+    getEstateTokenTxByInput_AuthorizeTokenizers,
+    getCallEstateTokenTx_ExtractEstate,
+    getCallEstateTokenTx_TokenizeEstate,
+    getEstateTokenTx_RegisterCustodian,
+    getEstateTokenTxByInput_RegisterCustodian,
+    getEstateTokenTx_SafeDeprecateEstate,
+    getEstateTokenTxByParams_SafeDeprecateEstate,
+    getEstateTokenTx_SafeExtendEstateExpiration,
+    getEstateTokenTxByParams_SafeExtendEstateExpiration,
+    getEstateTokenTx_SafeUpdateEstateCustodian,
+    getEstateTokenTxByParams_SafeUpdateEstateCustodian,
+    getEstateTokenTx_SafeUpdateEstateURI,
+    getEstateTokenTxByInput_SafeUpdateEstateURI,
+    getEstateTokenTxByInput_UpdateBaseURI,
+    getEstateTokenTx_UpdateCommissionToken,
+    getEstateTokenTxByInput_UpdateCommissionToken,
+    getEstateTokenTx_UpdateZoneRoyaltyRate,
+    getEstateTokenTxByInput_UpdateZoneRoyaltyRate,
+    getEstateTokenTx_UpdateBaseURI
+} from '@utils/transaction/land/estateToken';
+
+// @utils/utils
+import {
+    getBytes4Hex,
+    randomBigNumber,
+    structToObject,
+    OrderedMap
+} from '@utils/utils';
+
 
 interface EstateTokenFixture {
     deployer: any;
@@ -93,22 +202,9 @@ describe('2.4. EstateToken', async () => {
     });
 
     async function estateTokenFixture(): Promise<EstateTokenFixture> {
-        const accounts = await ethers.getSigners();
-        const deployer = accounts[0];
-        const admins = [];
-        for (let i = 1; i <= Constant.ADMIN_NUMBER; ++i) admins.push(accounts[i]);
-        const user = accounts[Constant.ADMIN_NUMBER + 2];
-        const manager = accounts[Constant.ADMIN_NUMBER + 3];
-        const moderator = accounts[Constant.ADMIN_NUMBER + 4];
-        const broker1 = accounts[Constant.ADMIN_NUMBER + 5];
-        const broker2 = accounts[Constant.ADMIN_NUMBER + 6];
-        const depositor1 = accounts[Constant.ADMIN_NUMBER + 7];
-        const depositor2 = accounts[Constant.ADMIN_NUMBER + 8];
-        const depositor3 = accounts[Constant.ADMIN_NUMBER + 9];
+        const [deployer, admin1, admin2, admin3, admin4, admin5, user, manager, moderator, broker1, broker2, depositor1, depositor2, depositor3, custodian1, custodian2, custodian3] = await ethers.getSigners();
+        const admins = [admin1, admin2, admin3, admin4, admin5];
         const depositors = [depositor1, depositor2, depositor3];
-        const custodian1 = accounts[Constant.ADMIN_NUMBER + 10];
-        const custodian2 = accounts[Constant.ADMIN_NUMBER + 11];
-        const custodian3 = accounts[Constant.ADMIN_NUMBER + 12];
         const custodians = [custodian1, custodian2, custodian3];
 
         const validator = new MockValidator(deployer as any);
@@ -778,7 +874,7 @@ describe('2.4. EstateToken', async () => {
             await setupTokenizers(fixture);
 
             const toDeauth = tokenizers.slice(0, 2).concat([tokenizers[0]]);
-            const tx = await getEstateTokenTxByInput_AuthorizeTokenizers(
+            await expect(getEstateTokenTxByInput_AuthorizeTokenizers(
                 estateToken,
                 deployer,
                 {
@@ -787,8 +883,7 @@ describe('2.4. EstateToken', async () => {
                 },
                 admin,
                 admins
-            );
-            await tx.wait();
+            )).to.be.revertedWithCustomError(estateToken, `NotAuthorizedAccount`);
         });
 
         it('2.4.4.10. Deauthorize tokenizer unsuccessfully when unauthorizing the same account twice on different txs', async () => {
@@ -2612,15 +2707,23 @@ describe('2.4. EstateToken', async () => {
 
             const { estateToken, estateLiquidator } = fixture;
 
-            await expect(getCallEstateTokenTx_ExtractEstate(estateToken, estateLiquidator as any, {
-                estateId: BigNumber.from(0),
-                extractionId: BigNumber.from(1),
-            })).to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
+            await expect(getCallEstateTokenTx_ExtractEstate(
+                estateToken,
+                estateLiquidator as any,
+                {
+                    estateId: BigNumber.from(0),
+                    extractionId: BigNumber.from(1),
+                }
+            )).to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
 
-            await expect(getCallEstateTokenTx_ExtractEstate(estateToken, estateLiquidator as any, {
-                estateId: BigNumber.from(100),
-                extractionId: BigNumber.from(1),
-            })).to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
+            await expect(getCallEstateTokenTx_ExtractEstate(
+                estateToken,
+                estateLiquidator as any,
+                {
+                    estateId: BigNumber.from(100),
+                    extractionId: BigNumber.from(1),
+                }
+            )).to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
         });
 
         it('2.4.15.3. Extract estate unsuccessfully when paused', async () => {
@@ -2631,10 +2734,14 @@ describe('2.4. EstateToken', async () => {
 
             const { estateToken, estateLiquidator } = fixture;
 
-            await expect(getCallEstateTokenTx_ExtractEstate(estateToken, estateLiquidator as any, {
-                estateId: BigNumber.from(1),
-                extractionId: BigNumber.from(1),
-            })).to.be.revertedWith("Pausable: paused");
+            await expect(getCallEstateTokenTx_ExtractEstate(
+                estateToken,
+                estateLiquidator as any,
+                {
+                    estateId: BigNumber.from(1),
+                    extractionId: BigNumber.from(1),
+                }
+            )).to.be.revertedWith("Pausable: paused");
         });
 
         it('2.4.15.4. Extract estate unsuccessfully when estate liquidator is not authorized', async () => {
@@ -2645,10 +2752,14 @@ describe('2.4. EstateToken', async () => {
 
             const { estateToken, estateLiquidator } = fixture;
 
-            await expect(getCallEstateTokenTx_ExtractEstate(estateToken, estateLiquidator as any, {
-                estateId: BigNumber.from(1),
-                extractionId: BigNumber.from(1),
-            })).to.be.revertedWithCustomError(estateToken, "Unauthorized");
+            await expect(getCallEstateTokenTx_ExtractEstate(
+                estateToken,
+                estateLiquidator as any,
+                {
+                    estateId: BigNumber.from(1),
+                    extractionId: BigNumber.from(1),
+                }
+            )).to.be.revertedWithCustomError(estateToken, "Unauthorized");
         });
     });
 
@@ -2880,26 +2991,32 @@ describe('2.4. EstateToken', async () => {
 
             const baseTimestamp = await time.latest() + 1000;
 
-            const params1: ExtendEstateExpirationParams = {
-                estateId: BigNumber.from(0),
-                expireAt: baseTimestamp + 1e9,
-            };
-            await expect(getEstateTokenTxByParams_SafeExtendEstateExpiration(estateToken, manager, params1))
-                .to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
+            await expect(getEstateTokenTxByParams_SafeExtendEstateExpiration(
+                estateToken,
+                manager,
+                {
+                    estateId: BigNumber.from(0),
+                    expireAt: baseTimestamp + 1e9,
+                }
+            )).to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
 
-            const params2: ExtendEstateExpirationParams = {
-                estateId: BigNumber.from(3),
-                expireAt: baseTimestamp + 1e9,
-            };
-            await expect(getEstateTokenTxByParams_SafeExtendEstateExpiration(estateToken, manager, params2))
-                .to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
+            await expect(getEstateTokenTxByParams_SafeExtendEstateExpiration(
+                estateToken,
+                manager,
+                {
+                    estateId: BigNumber.from(3),
+                    expireAt: baseTimestamp + 1e9,
+                }
+            )).to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
 
-            const params3: ExtendEstateExpirationParams = {
-                estateId: BigNumber.from(100),
-                expireAt: baseTimestamp + 1e9,
-            };
-            await expect(getEstateTokenTxByParams_SafeExtendEstateExpiration(estateToken, manager, params3))
-                .to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
+            await expect(getEstateTokenTxByParams_SafeExtendEstateExpiration(
+                estateToken,
+                manager,
+                {
+                    estateId: BigNumber.from(100),
+                    expireAt: baseTimestamp + 1e9,
+                }
+            )).to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
         });
 
         it('2.4.12.3. Extend estate expiration unsuccessfully with deprecated estate', async () => {
@@ -2961,12 +3078,14 @@ describe('2.4. EstateToken', async () => {
                 admins
             ));
 
-            const params: ExtendEstateExpirationParams = {
-                estateId: BigNumber.from(1),
-                expireAt: baseTimestamp + 1e9,
-            };
-            await expect(getEstateTokenTxByParams_SafeExtendEstateExpiration(estateToken, manager, params))
-                .to.be.revertedWithCustomError(estateToken, "Unauthorized");
+            await expect(getEstateTokenTxByParams_SafeExtendEstateExpiration(
+                estateToken,
+                manager,
+                {
+                    estateId: BigNumber.from(1),
+                    expireAt: baseTimestamp + 1e9,
+                }
+            )).to.be.revertedWithCustomError(estateToken, "Unauthorized");
         });
 
         it('2.4.12.7. Extend estate expiration unsuccessfully with invalid new expire timestamp', async () => {
@@ -2975,12 +3094,14 @@ describe('2.4. EstateToken', async () => {
             });
             const baseTimestamp = await time.latest();
 
-            const params: ExtendEstateExpirationParams = {
-                estateId: BigNumber.from(1),
-                expireAt: baseTimestamp - 1,
-            };
-            await expect(getEstateTokenTxByParams_SafeExtendEstateExpiration(estateToken, manager, params))
-                .to.be.revertedWithCustomError(estateToken, "InvalidTimestamp");
+            await expect(getEstateTokenTxByParams_SafeExtendEstateExpiration(
+                estateToken,
+                manager,
+                {
+                    estateId: BigNumber.from(1),
+                    expireAt: baseTimestamp - 1,
+                }
+            )).to.be.revertedWithCustomError(estateToken, "InvalidTimestamp");
         });
 
         it('2.4.12.8. Extend estate expiration unsuccessfully when paused', async () => {
@@ -2991,12 +3112,14 @@ describe('2.4. EstateToken', async () => {
 
             const expireAt = (await estateToken.getEstate(1)).expireAt;
 
-            const params: ExtendEstateExpirationParams = {
-                estateId: BigNumber.from(1),
-                expireAt: expireAt + 1e9,
-            };
-            await expect(getEstateTokenTxByParams_SafeExtendEstateExpiration(estateToken, manager, params))
-                .to.be.revertedWith("Pausable: paused");
+            await expect(getEstateTokenTxByParams_SafeExtendEstateExpiration(
+                estateToken,
+                manager,
+                {
+                    estateId: BigNumber.from(1),
+                    expireAt: expireAt + 1e9,
+                }
+            )).to.be.revertedWith("Pausable: paused");
         });
     });
 
@@ -3228,19 +3351,25 @@ describe('2.4. EstateToken', async () => {
 
             const { estateToken, manager, validator } = fixture;
 
-            const paramsInput1: UpdateEstateURIParamsInput = {
-                estateId: BigNumber.from(0),
-                uri: 'new_URI_1',
-            };
-            await expect(getEstateTokenTxByInput_SafeUpdateEstateURI(estateToken, manager, paramsInput1, validator))
-                .to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
+            await expect(getEstateTokenTxByInput_SafeUpdateEstateURI(
+                estateToken,
+                manager,
+                {
+                    estateId: BigNumber.from(0),
+                    uri: 'new_URI_1',
+                },
+                validator
+            )).to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
 
-            const paramsInput2: UpdateEstateURIParamsInput = {
-                estateId: BigNumber.from(100),
-                uri: 'new_URI_2',
-            };    
-            await expect(getEstateTokenTxByInput_SafeUpdateEstateURI(estateToken, manager, paramsInput2, validator))
-                .to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
+            await expect(getEstateTokenTxByInput_SafeUpdateEstateURI(
+                estateToken,
+                manager,
+                {
+                    estateId: BigNumber.from(100),
+                    uri: 'new_URI_2',
+                },
+                validator
+            )).to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
 
             await callTransaction(getEstateTokenTxByParams_SafeDeprecateEstate(
                 estateToken,
@@ -3251,12 +3380,15 @@ describe('2.4. EstateToken', async () => {
                 }
             ));
 
-            const paramsInput3: UpdateEstateURIParamsInput = {
-                estateId: BigNumber.from(1),
-                uri: 'new_URI_3',
-            };
-            await expect(getEstateTokenTxByInput_SafeUpdateEstateURI(estateToken, manager, paramsInput3, validator))
-                .to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
+            await expect(getEstateTokenTxByInput_SafeUpdateEstateURI(
+                estateToken,
+                manager,
+                {
+                    estateId: BigNumber.from(1),
+                    uri: 'new_URI_3',
+                },
+                validator
+            )).to.be.revertedWithCustomError(estateToken, "InvalidEstateId");
         });
 
         it('2.4.13.3. Update estate URI unsuccessfully by non-manager sender', async () => {
@@ -3294,12 +3426,15 @@ describe('2.4. EstateToken', async () => {
                 admins
             ));
 
-            const paramsInput: UpdateEstateURIParamsInput = {
-                estateId: BigNumber.from(1),
-                uri: 'new_URI_1',
-            };
-            await expect(getEstateTokenTxByInput_SafeUpdateEstateURI(estateToken, manager, paramsInput, validator))
-                .to.be.revertedWithCustomError(estateToken, "Unauthorized");
+            await expect(getEstateTokenTxByInput_SafeUpdateEstateURI(
+                estateToken,
+                manager,
+                {
+                    estateId: BigNumber.from(1),
+                    uri: 'new_URI_1',
+                },
+                validator
+            )).to.be.revertedWithCustomError(estateToken, "Unauthorized");
         });
 
         it('2.4.13.6. Update estate URI unsuccessfully when paused', async () => {
@@ -3309,12 +3444,15 @@ describe('2.4. EstateToken', async () => {
             });
             const { manager, estateToken, validator } = fixture;
 
-            const paramsInput: UpdateEstateURIParamsInput = {
-                estateId: BigNumber.from(1),
-                uri: 'new_URI_1',
-            };
-            await expect(getEstateTokenTxByInput_SafeUpdateEstateURI(estateToken, manager, paramsInput, validator))
-                .to.be.revertedWith("Pausable: paused");
+            await expect(getEstateTokenTxByInput_SafeUpdateEstateURI(
+                estateToken,
+                manager,
+                {
+                    estateId: BigNumber.from(1),
+                    uri: 'new_URI_1',
+                },
+                validator
+            )).to.be.revertedWith("Pausable: paused");
         });
     });
 

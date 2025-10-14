@@ -14,9 +14,6 @@ import {
     time
 } from "@nomicfoundation/hardhat-network-helpers";
 
-// @tests/test.constant
-import { Constant } from '@tests/test.constant';
-
 // @typechain-types
 import {
     Admin,
@@ -89,15 +86,8 @@ describe('1.4. DividendHub', async () => {
     });
 
     async function dividendHubFixture(): Promise<DividendHubFixture> {
-        const accounts = await ethers.getSigners();
-        const deployer = accounts[0];
-        const admins = [];
-        for (let i = 1; i <= Constant.ADMIN_NUMBER; ++i) admins.push(accounts[i]);
-        const issuer1 = accounts[Constant.ADMIN_NUMBER + 1];
-        const issuer2 = accounts[Constant.ADMIN_NUMBER + 2];
-        const receiver1 = accounts[Constant.ADMIN_NUMBER + 3];
-        const receiver2 = accounts[Constant.ADMIN_NUMBER + 4];
-        const receiver3 = accounts[Constant.ADMIN_NUMBER + 5];
+        const [deployer, admin1, admin2, admin3, admin4, admin5, issuer1, issuer2, receiver1, receiver2, receiver3] = await ethers.getSigners();
+        const admins = [admin1, admin2, admin3, admin4, admin5];
 
         const adminAddresses: string[] = admins.map(signer => signer.address);
         const admin = await deployAdmin(

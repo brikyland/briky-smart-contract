@@ -1,19 +1,39 @@
 import chai from 'chai';
 import { expect } from 'chai';
-import { ethers, upgrades } from 'hardhat';
+import {
+    BigNumber,
+    Contract
+} from 'ethers';
+import { ethers } from 'hardhat';
+
+// @nomicfoundation/hardhat-network-helpers
+import {
+    loadFixture,
+    time
+} from "@nomicfoundation/hardhat-network-helpers";
+
+// @defi-wonderland/smock
+import {
+    MockContract,
+    smock
+} from '@defi-wonderland/smock';
+
+// @tests
+import { Constant } from '@tests/test.constant';
+
+// @tests/land
+import { Initialization as LandInitialization } from '@tests/land/test.initialization';
+
+// @tests/launch
+import { Initialization as LaunchInitialization } from '@tests/launch/test.initialization';
+
+// @typechain-types
 import {
     Admin,
-    CommissionToken,
     Currency,
     EstateToken,
     FeeReceiver,
-    EstateForger,
     MockPriceFeed,
-    MockEstateForger,
-    IEstateTokenizer__factory,
-    IEstateTokenReceiver__factory,
-    ICommon__factory,
-    IERC1155ReceiverUpgradeable__factory,
     ReserveVault,
     PriceWatcher,
     ProjectToken,
@@ -21,55 +41,124 @@ import {
     ReentrancyERC20,
     ReentrancyExclusiveERC20,
     FailReceiver,
-    IProjectTokenReceiver__factory,
-    IProjectLaunchpad__factory,
-    IERC165Upgradeable__factory,
-    IValidatable__factory,
-    IPrestigePad__factory,
 } from '@typechain-types';
-import { callTransaction, callTransactionAtTimestamp, getBalance, getSignatures, prepareERC20, prepareNativeToken, randomWallet, resetERC20, resetNativeToken, testReentrancy } from '@utils/blockchain';
-import { Constant, DAY } from '@tests/test.constant';
+
+// @utils/blockchain
+import {
+    callTransaction,
+    callTransactionAtTimestamp,
+    prepareERC20,
+    prepareNativeToken
+} from '@utils/blockchain';
+
+// @utils/deployments/common
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
-import { deployCurrency } from '@utils/deployments/common/currency';
-import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
-
-import { MockContract, smock } from '@defi-wonderland/smock';
-
-import { BigNumber, BigNumberish, Contract, Wallet } from 'ethers';
-import { randomInt } from 'crypto';
-import { getBytes4Hex, getInterfaceID, randomBigNumber, structToObject } from '@utils/utils';
-import { OrderedMap } from '@utils/utils';
-import { deployEstateForger } from '@utils/deployments/land/estateForger';
-import { deployMockPriceFeed } from '@utils/deployments/mock/mockPriceFeed';
-import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
-import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
-import { deployEstateToken } from '@utils/deployments/land/estateToken';
-import { deployMockEstateForger } from '@utils/deployments/mock/mockEstateForger';
-import { deployReentrancyERC1155Holder } from '@utils/deployments/mock/mockReentrancy/reentrancyERC1155Holder';
-import { request } from 'http';
-import { Initialization as LandInitialization } from '@tests/land/test.initialization';
-import { Initialization as LaunchInitialization } from '@tests/launch/test.initialization';
-import { applyDiscount, remain, scaleRate } from '@utils/formula';
-import { RequestQuote, RequestAgenda, RequestEstate, RequestQuota, UpdateBaseUnitPriceRangeParamsInput, UpdateBaseUnitPriceRangeParams } from '@utils/models/land/estateForger';
 import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
-import { Rate } from '@utils/models/common/common';
-import { MockValidator } from '@utils/mockValidator';
+
+// @utils/deployments/mock
+import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
+import { deployMockPriceFeed } from '@utils/deployments/mock/mockPriceFeed';
 import { deployMockPrestigePad } from '@utils/deployments/mock/mockPrestigePad';
-import { InitiateLaunchParams, InitiateLaunchParamsInput, SafeConfirmCurrentRoundParams, ScheduleNextRoundParams, UpdateLaunchURIParams, UpdateLaunchURIParamsInput, UpdateRoundParams, UpdateRoundParamsInput, UpdateRoundsParams, UpdateRoundsParamsInput, WithdrawProjectTokenParams } from '@utils/models/launch/prestigePad';
-import { getInitiateLaunchValidation, getUpdateLaunchURIValidation, getUpdateRoundsValidation, getUpdateRoundValidation } from '@utils/validation/launch/prestigePad';
-import { RegisterInitiatorParams, RegisterInitiatorParamsInput } from '@utils/models/launch/projectToken';
-import { getRegisterInitiatorValidation } from '@utils/validation/launch/projectToken';
 import { deployReentrancyERC1155Receiver } from '@utils/deployments/mock/mockReentrancy/reentrancyERC1155Receiver';
 import { deployReentrancyExclusiveERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyExclusiveERC20';
 import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
-import { getCallPrestigePadTx_SafeConfirmCurrentRound, getCallTxByParams_SafeConfirmCurrentRound, getCallPrestigePadTx_ScheduleNextRound, getCallPrestigePadTx_UpdateRounds, getPrestigePadTxByInput_CallUpdateRounds, getPrestigePadTx_CancelCurrentRound, getPrestigePadTx_ContributeCurrentRound, getPrestigePadTx_InitiateLaunch, getPrestigePadTxByInput_InitiateLaunch, getPrestigePadTx_SafeConfirmCurrentRound, getPrestigePadTxByParams_SafeConfirmCurrentRound, getPrestigePadTx_SafeContributeCurrentRound, getPrestigePadTxByParams_SafeContributeCurrentRound, getPrestigePadTx_SafeFinalize, getPrestigePadTxByParams_SafeFinalize, getPrestigePadTx_ScheduleNextRound, getPrestigePadTxByInput_UpdateBaseUnitPriceRange, getPrestigePadTx_UpdateLaunchURI, getPrestigePadTxByInput_UpdateLaunchURI, getPrestigePadTx_UpdateRounds, getPrestigePadTxByInput_UpdateRounds, getPrestigePadTx_UpdateRound, getPrestigePadTxByInput_UpdateRound, getPrestigePadTx_WithdrawContribution, getPrestigePadTx_WithdrawProjectToken } from '@utils/transaction/launch/prestigePad';
-import { getAdminTxByInput_ActivateIn, getAdminTxByInput_AuthorizeManagers, getAdminTxByInput_AuthorizeModerators, getAdminTxByInput_DeclareZone, getAdminTxByInput_UpdateCurrencyRegistries } from '@utils/transaction/common/admin';
-import { getPausableTxByInput_Pause } from '@utils/transaction/common/pausable';
-import { getProjectTokenTxByInput_AuthorizeLaunchpad, getProjectTokenTxByInput_RegisterInitiator } from '@utils/transaction/launch/projectToken';
-import { getReserveVaultTxByInput_AuthorizeProvider } from '@utils/transaction/common/reserveVault';
+
+// @utils/formula
+import { applyDiscount, scaleRate } from '@utils/formula';
+
+// @utils/mockValidator
+import { MockValidator } from '@utils/mockValidator';
+
+// @utils/models/common
+import { Rate } from '@utils/models/common/common';
+
+// @utils/models/land
+import { UpdateBaseUnitPriceRangeParamsInput, UpdateBaseUnitPriceRangeParams } from '@utils/models/land/estateForger';
+
+// @utils/models/launch
+import {
+    InitiateLaunchParams,
+    InitiateLaunchParamsInput,
+    SafeConfirmCurrentRoundParams,
+    ScheduleNextRoundParams,
+    UpdateLaunchURIParams,
+    UpdateLaunchURIParamsInput,
+    UpdateRoundParams,
+    UpdateRoundParamsInput,
+    UpdateRoundsParamsInput,
+    WithdrawProjectTokenParams
+} from '@utils/models/launch/prestigePad';
+
+// @utils/signatures/launch
 import { getUpdateBaseUnitPriceRangeSignatures } from '@utils/signatures/launch/prestigePad';
+
+// @utils/transaction/common
+import {
+    getAdminTxByInput_ActivateIn,
+    getAdminTxByInput_AuthorizeManagers,
+    getAdminTxByInput_AuthorizeModerators,
+    getAdminTxByInput_DeclareZone,
+    getAdminTxByInput_UpdateCurrencyRegistries
+} from '@utils/transaction/common/admin';
+import { getPausableTxByInput_Pause } from '@utils/transaction/common/pausable';
+import { getReserveVaultTxByInput_AuthorizeProvider } from '@utils/transaction/common/reserveVault';
 import { getPriceWatcherTxByInput_UpdatePriceFeeds } from '@utils/transaction/common/priceWatcher';
+
+// @utils/transaction/launch
+import {
+    getCallTxByParams_SafeConfirmCurrentRound,
+    getCallPrestigePadTx_ScheduleNextRound,
+    getPrestigePadTxByInput_CallUpdateRounds,
+    getPrestigePadTx_CancelCurrentRound,
+    getPrestigePadTx_ContributeCurrentRound,
+    getPrestigePadTx_InitiateLaunch,
+    getPrestigePadTxByInput_InitiateLaunch,
+    getPrestigePadTx_SafeConfirmCurrentRound,
+    getPrestigePadTxByParams_SafeConfirmCurrentRound,
+    getPrestigePadTx_SafeContributeCurrentRound,
+    getPrestigePadTxByParams_SafeContributeCurrentRound,
+    getPrestigePadTx_SafeFinalize,
+    getPrestigePadTxByParams_SafeFinalize,
+    getPrestigePadTx_ScheduleNextRound,
+    getPrestigePadTxByInput_UpdateBaseUnitPriceRange,
+    getPrestigePadTx_UpdateLaunchURI,
+    getPrestigePadTxByInput_UpdateLaunchURI,
+    getPrestigePadTx_UpdateRounds,
+    getPrestigePadTxByInput_UpdateRounds,
+    getPrestigePadTx_UpdateRound,
+    getPrestigePadTxByInput_UpdateRound,
+    getPrestigePadTx_WithdrawContribution,
+    getPrestigePadTx_WithdrawProjectToken,
+    getPrestigePadTx_UpdateBaseUnitPriceRange
+} from '@utils/transaction/launch/prestigePad';
+import {
+    getProjectTokenTxByInput_AuthorizeLaunchpad,
+    getProjectTokenTxByInput_RegisterInitiator
+} from '@utils/transaction/launch/projectToken';
+
+// @utils/validation/launch
+import {
+    getInitiateLaunchValidation,
+    getUpdateLaunchURIValidation,
+    getUpdateRoundsValidation,
+    getUpdateRoundValidation
+} from '@utils/validation/launch/prestigePad';
+
+// @utils/utils
+import {
+    getBytes4Hex,
+    structToObject,
+    OrderedMap
+} from '@utils/utils';
+
+// @tests/interfaces
+import {
+    IERC165UpgradeableInterfaceId,
+    IProjectLaunchpadInterfaceId,
+    IProjectTokenReceiverInterfaceId
+} from '@tests/interfaces';
+
 
 chai.use(smock.matchers);
 
@@ -243,21 +332,8 @@ export async function getCashbackBaseDenomination(
 
 describe('7.1. PrestigePad', async () => {
     async function prestigePadFixture(): Promise<PrestigePadFixture> {
-        const accounts = await ethers.getSigners();
-        const deployer = accounts[0];
-        const admins = [];
-        for (let i = 1; i <= Constant.ADMIN_NUMBER; ++i) admins.push(accounts[i]);
-        const user = accounts[Constant.ADMIN_NUMBER + 1];
-        const manager = accounts[Constant.ADMIN_NUMBER + 2];
-        const moderator = accounts[Constant.ADMIN_NUMBER + 3];
-        const initiator1 = accounts[Constant.ADMIN_NUMBER + 4];
-        const initiator2 = accounts[Constant.ADMIN_NUMBER + 5];
-        const initiator3 = accounts[Constant.ADMIN_NUMBER + 6];
-        const commissionReceiver = accounts[Constant.ADMIN_NUMBER + 7];
-        const depositor1 = accounts[Constant.ADMIN_NUMBER + 8];
-        const depositor2 = accounts[Constant.ADMIN_NUMBER + 9];
-        const depositor3 = accounts[Constant.ADMIN_NUMBER + 10];
-
+        const [deployer, admin1, admin2, admin3, admin4, admin5, user, manager, moderator, initiator1, initiator2, initiator3, commissionReceiver, depositor1, depositor2, depositor3] = await ethers.getSigners();
+        const admins = [admin1, admin2, admin3, admin4, admin5];
         const initiators = [initiator1, initiator2, initiator3];
         const depositors = [depositor1, depositor2, depositor3];
 
@@ -724,17 +800,62 @@ describe('7.1. PrestigePad', async () => {
             timestamp = (await prestigePad.getRound(roundId1)).agenda.raiseStartsAt;
             await time.setNextBlockTimestamp(timestamp);
 
-            await callTransaction(prestigePad.connect(depositor1).contributeCurrentRound(1, 2, { value: ethers.utils.parseEther('10') }));
-            await callTransaction(prestigePad.connect(depositor2).contributeCurrentRound(1, 3, { value: ethers.utils.parseEther('10') }));
-            await callTransaction(prestigePad.connect(depositor3).contributeCurrentRound(1, 5, { value: ethers.utils.parseEther('10') }));
+            await callTransaction(getPrestigePadTx_ContributeCurrentRound(
+                prestigePad,
+                depositor1,
+                {
+                    launchId: BigNumber.from(1),
+                    quantity: BigNumber.from(2)
+                },
+                { value: ethers.utils.parseEther('10') }
+            ));
+            await callTransaction(getPrestigePadTx_ContributeCurrentRound(
+                prestigePad,
+                depositor2,
+                {
+                    launchId: BigNumber.from(1),
+                    quantity: BigNumber.from(3)
+                },
+                { value: ethers.utils.parseEther('10') }
+            ));
+            await callTransaction(getPrestigePadTx_ContributeCurrentRound(
+                prestigePad,
+                depositor3,
+                {
+                    launchId: BigNumber.from(1),
+                    quantity: BigNumber.from(5)
+                },
+                { value: ethers.utils.parseEther('10') }
+            ));
             
             const roundId2 = (await prestigePad.getLaunch(2)).roundIds[1];
             timestamp = (await prestigePad.getRound(roundId2)).agenda.raiseStartsAt;
             await time.setNextBlockTimestamp(timestamp);
 
-            await callTransaction(prestigePad.connect(depositor1).contributeCurrentRound(2, 400));
-            await callTransaction(prestigePad.connect(depositor2).contributeCurrentRound(2, 600));
-            await callTransaction(prestigePad.connect(depositor3).contributeCurrentRound(2, 1000));
+            await callTransaction(getPrestigePadTx_ContributeCurrentRound(
+                prestigePad,
+                depositor1,
+                {
+                    launchId: BigNumber.from(2),
+                    quantity: BigNumber.from(400)
+                },
+            ));
+            await callTransaction(getPrestigePadTx_ContributeCurrentRound(
+                prestigePad,
+                depositor2,
+                {
+                    launchId: BigNumber.from(2),
+                    quantity: BigNumber.from(600)
+                },
+            ));
+            await callTransaction(getPrestigePadTx_ContributeCurrentRound(
+                prestigePad,
+                depositor3,
+                {
+                    launchId: BigNumber.from(2),
+                    quantity: BigNumber.from(1000)
+                },
+            ));
         }
 
         if (confirmFirstRound || doAllFirstFound) {
@@ -786,17 +907,62 @@ describe('7.1. PrestigePad', async () => {
             timestamp = (await prestigePad.getRound(roundId1)).agenda.raiseStartsAt;
             await time.setNextBlockTimestamp(timestamp);
 
-            await callTransaction(prestigePad.connect(depositor1).contributeCurrentRound(1, 200));
-            await callTransaction(prestigePad.connect(depositor2).contributeCurrentRound(1, 300));
-            await callTransaction(prestigePad.connect(depositor3).contributeCurrentRound(1, 500));
+            await callTransaction(getPrestigePadTx_ContributeCurrentRound(
+                prestigePad,
+                depositor1,
+                {
+                    launchId: BigNumber.from(1),
+                    quantity: BigNumber.from(200)
+                },
+            ));
+            await callTransaction(getPrestigePadTx_ContributeCurrentRound(
+                prestigePad,
+                depositor2,
+                {
+                    launchId: BigNumber.from(1),
+                    quantity: BigNumber.from(300)
+                },
+            ));
+            await callTransaction(getPrestigePadTx_ContributeCurrentRound(
+                prestigePad,
+                depositor3,
+                {
+                    launchId: BigNumber.from(1),
+                    quantity: BigNumber.from(500)
+                },
+            ));
             
             const roundId2 = (await prestigePad.getLaunch(2)).roundIds[2];
             timestamp = (await prestigePad.getRound(roundId2)).agenda.raiseStartsAt;
             await time.setNextBlockTimestamp(timestamp);
 
-            await callTransaction(prestigePad.connect(depositor1).contributeCurrentRound(2, 40, { value: ethers.utils.parseEther('100') }));
-            await callTransaction(prestigePad.connect(depositor2).contributeCurrentRound(2, 60, { value: ethers.utils.parseEther('100') }));
-            await callTransaction(prestigePad.connect(depositor3).contributeCurrentRound(2, 100, { value: ethers.utils.parseEther('100') }));
+            await callTransaction(getPrestigePadTx_ContributeCurrentRound(
+                prestigePad,
+                depositor1,
+                {
+                    launchId: BigNumber.from(2),
+                    quantity: BigNumber.from(40)
+                },
+                { value: ethers.utils.parseEther('100') }
+            ));
+            await callTransaction(getPrestigePadTx_ContributeCurrentRound(
+                prestigePad,
+                depositor2,
+                {
+                    launchId: BigNumber.from(2),
+                    quantity: BigNumber.from(60)
+                },
+                { value: ethers.utils.parseEther('100') }
+            ));
+            await callTransaction(getPrestigePadTx_ContributeCurrentRound(
+                prestigePad,
+                depositor3,
+                {
+                    launchId: BigNumber.from(2),
+                    quantity: BigNumber.from(100)
+                },
+                { value: ethers.utils.parseEther('100') }
+            ));
         }
 
         if (confirmSecondRound || doAllSecondFound) {
@@ -838,7 +1004,9 @@ describe('7.1. PrestigePad', async () => {
         };
     }
 
-    describe('7.1.1. initialize(address, address, address, address, address, address, uint256, uint256)', async () => {
+
+    /* --- Initialization --- */
+    describe('7.1.1. initialize(address,address,address,address,address,address,uint256,uint256)', async () => {
         it('7.1.1.1. Deploy successfully', async () => {
             const { admin, prestigePad, projectToken, feeReceiver, priceWatcher, reserveVault, validator } = await beforePrestigePadTest({});
 
@@ -865,7 +1033,9 @@ describe('7.1. PrestigePad', async () => {
         });
     });
 
-    describe('7.1.2. updateBaseUnitPriceRange(uint256, uint256, bytes[])', async () => {
+
+    /* --- Administration --- */
+    describe('7.1.2. updateBaseUnitPriceRange(uint256,uint256,bytes[])', async () => {
         it('7.1.2.1. Update base unit price range successfully with valid signatures', async () => {
             const { deployer, admin, admins, prestigePad } = await beforePrestigePadTest({});
             
@@ -895,22 +1065,28 @@ describe('7.1. PrestigePad', async () => {
                 ...paramsInput,
                 signatures: await getUpdateBaseUnitPriceRangeSignatures(prestigePad, paramsInput, admin, admins, false),
             };
-            await expect(getPrestigePadTxByInput_UpdateBaseUnitPriceRange(prestigePad, deployer, params, admin, admins))
+            await expect(getPrestigePadTx_UpdateBaseUnitPriceRange(prestigePad, deployer, params))
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
         it('7.1.2.3. Update base unit price range unsuccessfully with invalid price range', async () => {
             const { deployer, admin, admins, prestigePad } = await beforePrestigePadTest({});
 
-            const paramsInput: UpdateBaseUnitPriceRangeParamsInput = {
-                baseMinUnitPrice: BigNumber.from(101),
-                baseMaxUnitPrice: BigNumber.from(100),
-            };
-            await expect(getPrestigePadTxByInput_UpdateBaseUnitPriceRange(prestigePad, deployer, paramsInput, admin, admins))
-                .to.be.revertedWithCustomError(prestigePad, 'InvalidInput');
+            await expect(getPrestigePadTxByInput_UpdateBaseUnitPriceRange(
+                prestigePad,
+                deployer,
+                {
+                    baseMinUnitPrice: BigNumber.from(101),
+                    baseMaxUnitPrice: BigNumber.from(100),
+                },
+                admin,
+                admins
+            )).to.be.revertedWithCustomError(prestigePad, 'InvalidInput');
         });
     });
 
+    
+    /* --- Query --- */
     describe('7.1.3. getLaunch(uint256)', async () => {
         it('7.1.3.1. Return correct launch with valid launch id', async () => {
             const fixture = await beforePrestigePadTest({
@@ -942,7 +1118,7 @@ describe('7.1. PrestigePad', async () => {
                 addSampleRounds: true,
             });
 
-            const { prestigePad, currencies } = fixture;
+            const { prestigePad } = fixture;
 
             const roundId1 = (await prestigePad.getLaunch(1)).roundIds[1];
             await expect(prestigePad.getRound(roundId1)).to.not.be.reverted;
@@ -963,7 +1139,271 @@ describe('7.1. PrestigePad', async () => {
         });
     });
 
-    describe('7.1.5. initiateLaunch(address, bytes32, string, string, uint256, uint256, (uint256, uint256, bytes))', async () => {
+    describe('7.1.17. allocationOfAt(address,uint256,uint256)', async () => {
+        it('7.1.17.1. Return correct allocation', async () => {
+            const fixture = await beforePrestigePadTest({
+                addSampleLaunch: true,
+                addSampleRounds: true,
+            });
+
+            const { prestigePad, depositor1, initiator1, projectToken } = fixture;
+
+            const launchId = 1;
+            const depositor = depositor1;
+
+            const depositRound1Turn1 = 5;
+            const depositRound1Turn2 = 10;
+            const depositRound1 = depositRound1Turn1 + depositRound1Turn2;
+            const depositRound2 = 200;
+
+            const units = BigNumber.from(10).pow(await projectToken.decimals());
+
+            const expectedAllocations = new OrderedMap<number, BigNumber>(ethers.BigNumber.from(0));
+            expectedAllocations.set(0, BigNumber.from(0));
+
+            const timePivots = new Set<number>();
+            function addTimePivot(timestamp: number) {
+                if (timestamp > 0) {
+                    timePivots.add(timestamp - 1);
+                }
+                timePivots.add(timestamp);
+                timePivots.add(timestamp + 1);
+            }
+            
+            let timestamp = await time.latest() + 100;
+
+            async function assertCorrectAllocation(currentTimestamp: number) {
+                for (const timestamp of timePivots) {
+                    if (timestamp > currentTimestamp) {
+                        break;
+                    }
+                    expect(await prestigePad.allocationOfAt(depositor.address, launchId, timestamp))
+                        .to.equal(expectedAllocations.get(timestamp));
+                }
+            }
+
+            // Test after round 1 start
+            await callTransactionAtTimestamp(
+                getPrestigePadTx_ScheduleNextRound(
+                    prestigePad,
+                    initiator1,
+                    {
+                        launchId: BigNumber.from(launchId),
+                        cashbackThreshold: BigNumber.from(0),
+                        cashbackBaseRate: BigNumber.from(0),
+                        cashbackCurrencies: [],
+                        cashbackDenominations: [],
+                        raiseStartsAt: timestamp,
+                        raiseDuration: Constant.PRESTIGE_PAD_RAISE_MINIMUM_DURATION
+                    }
+                ),
+                timestamp
+            );
+
+            addTimePivot(0);
+            addTimePivot(timestamp);
+            await time.increaseTo(timestamp + 5);
+            await assertCorrectAllocation(timestamp + 5);
+            
+            // Test after round 1 first deposit
+            timestamp += 10;
+            await callTransactionAtTimestamp(
+                getPrestigePadTx_ContributeCurrentRound(
+                    prestigePad,
+                    depositor,
+                    { launchId: BigNumber.from(launchId), quantity: BigNumber.from(depositRound1Turn1) },
+                    { value: ethers.utils.parseEther('10') }
+                ),
+                timestamp
+            );
+            
+            addTimePivot(timestamp);
+            await time.increaseTo(timestamp + 5);
+            await assertCorrectAllocation(timestamp + 5);
+
+            // Test after round 1 second deposit
+            timestamp += 10;
+            await callTransactionAtTimestamp(
+                getPrestigePadTx_ContributeCurrentRound(
+                    prestigePad,
+                    depositor,
+                    { launchId: BigNumber.from(launchId), quantity: BigNumber.from(depositRound1Turn2) },
+                    { value: ethers.utils.parseEther('10') }
+                ),
+                timestamp
+            );
+            
+            addTimePivot(timestamp);
+            await time.increaseTo(timestamp + 5);
+            await assertCorrectAllocation(timestamp + 5);
+            
+            // Test after round 1 confirm
+            timestamp += 10;
+            await callTransactionAtTimestamp(
+                getPrestigePadTxByParams_SafeConfirmCurrentRound(
+                    prestigePad,
+                    initiator1,
+                    { launchId: BigNumber.from(launchId) },
+                ),
+                timestamp
+            );
+
+            expectedAllocations.set(timestamp, BigNumber.from(depositRound1).mul(units));
+
+            addTimePivot(timestamp);
+            await time.increaseTo(timestamp + 5);
+            await assertCorrectAllocation(timestamp + 5);
+
+            // Test after round 2 start
+            timestamp += 10;
+            await callTransactionAtTimestamp(
+                getPrestigePadTx_ScheduleNextRound(
+                    prestigePad,
+                    initiator1,
+                    {
+                        launchId: BigNumber.from(launchId),
+                        cashbackThreshold: BigNumber.from(0),
+                        cashbackBaseRate: BigNumber.from(0),
+                        cashbackCurrencies: [],
+                        cashbackDenominations: [],
+                        raiseStartsAt: timestamp,
+                        raiseDuration: Constant.PRESTIGE_PAD_RAISE_MINIMUM_DURATION
+                    }
+                ),
+                timestamp
+            );
+            
+            addTimePivot(timestamp);
+            await time.increaseTo(timestamp + 5);
+            await assertCorrectAllocation(timestamp + 5);
+
+            // Test after round 2 deposit
+            timestamp += 10;
+            await callTransactionAtTimestamp(
+                getPrestigePadTx_ContributeCurrentRound(
+                    prestigePad,
+                    depositor,
+                    { launchId: BigNumber.from(launchId), quantity: BigNumber.from(depositRound2) },
+                    { value: ethers.utils.parseEther('10') }
+                ),
+                timestamp
+            );
+
+            addTimePivot(timestamp);
+            await time.increaseTo(timestamp + 5);
+            await assertCorrectAllocation(timestamp + 5);
+
+            // Test after round 2 confirm
+            timestamp += 10;
+            await callTransactionAtTimestamp(
+                getPrestigePadTxByParams_SafeConfirmCurrentRound(
+                    prestigePad,
+                    initiator1,
+                    { launchId: BigNumber.from(launchId) },
+                ),
+                timestamp
+            );
+            
+            expectedAllocations.set(timestamp, BigNumber.from(depositRound1 + depositRound2).mul(units));
+
+            addTimePivot(timestamp);
+            await time.increaseTo(timestamp + 5);
+            await assertCorrectAllocation(timestamp + 5);
+
+            // Test after finalize launch
+            timestamp += 10;
+            await callTransactionAtTimestamp(
+                getPrestigePadTxByParams_SafeFinalize(
+                    prestigePad,
+                    initiator1,
+                    { launchId: BigNumber.from(launchId) },
+                ),
+                timestamp
+            );
+
+            addTimePivot(timestamp);
+            await time.increaseTo(timestamp + 5);
+            await assertCorrectAllocation(timestamp + 5);
+
+            // Test after withdraw project token of first round
+            timestamp += 10;
+            await callTransactionAtTimestamp(
+                getPrestigePadTx_WithdrawProjectToken(
+                    prestigePad,
+                    depositor,
+                    { launchId: BigNumber.from(launchId), index: BigNumber.from(1) },
+                ),
+                timestamp
+            );
+
+            expectedAllocations.set(timestamp, BigNumber.from(depositRound2).mul(units));
+
+            addTimePivot(timestamp);
+            await time.increaseTo(timestamp + 5);
+            await assertCorrectAllocation(timestamp + 5);
+
+            // Test after withdraw project token of second round
+            timestamp += 10;
+            await callTransactionAtTimestamp(
+                getPrestigePadTx_WithdrawProjectToken(
+                    prestigePad,
+                    depositor,
+                    { launchId: BigNumber.from(launchId), index: BigNumber.from(2) },
+                ),
+                timestamp
+            );
+
+            expectedAllocations.set(timestamp, BigNumber.from(0));
+
+            addTimePivot(timestamp);
+            await time.increaseTo(timestamp + 5);
+            await assertCorrectAllocation(timestamp + 5);
+        });
+
+        it('7.1.17.2. Revert with invalid launch id', async () => {
+            const fixture = await beforePrestigePadTest();
+
+            const { prestigePad, depositor1 } = fixture;
+
+            await expect(prestigePad.allocationOfAt(depositor1.address, 0, 0))
+                .to.be.revertedWithCustomError(prestigePad, 'InvalidLaunchId');
+            await expect(prestigePad.allocationOfAt(depositor1.address, 0, 100))
+                .to.be.revertedWithCustomError(prestigePad, 'InvalidLaunchId');
+        });
+
+        it('7.1.17.3. Revert with timestamp after current timestamp', async () => {
+            const fixture = await beforePrestigePadTest({
+                addSampleLaunch: true,
+                addSampleRounds: true,
+            });
+
+            const { prestigePad, depositor1 } = fixture;
+
+            let timestamp = await time.latest();
+
+            await expect(prestigePad.allocationOfAt(depositor1.address, 1, timestamp - 1))
+                .to.not.be.reverted;
+            await expect(prestigePad.allocationOfAt(depositor1.address, 1, timestamp))
+                .to.not.be.reverted;
+            await expect(prestigePad.allocationOfAt(depositor1.address, 1, timestamp + 1))
+                .to.be.revertedWithCustomError(prestigePad, 'InvalidTimestamp');
+        });
+    });
+
+    describe('7.1.18. supportsInterface(bytes4)', () => {
+        it('7.1.18.1. Return true for appropriate interface', async () => {
+            const fixture = await beforePrestigePadTest();
+            const { prestigePad } = fixture;
+
+            expect(await prestigePad.supportsInterface(getBytes4Hex(IProjectTokenReceiverInterfaceId))).to.equal(true);
+            expect(await prestigePad.supportsInterface(getBytes4Hex(IProjectLaunchpadInterfaceId))).to.equal(true);
+            expect(await prestigePad.supportsInterface(getBytes4Hex(IERC165UpgradeableInterfaceId))).to.equal(true);
+        });
+    });
+
+
+    /* --- Command --- */
+    describe('7.1.5. initiateLaunch(address,bytes32,string,string,uint256,uint256,(uint256,uint256,bytes))', async () => {
         async function beforeInitiateLaunchTest(fixture: PrestigePadFixture): Promise<{
             defaultParamsInput: InitiateLaunchParamsInput,
         }> {
@@ -1312,7 +1752,7 @@ describe('7.1. PrestigePad', async () => {
         });
     });
 
-    describe('7.1.6. updateLaunchURI(uint256, string, (uint256, uint256, bytes))', async () => {
+    describe('7.1.6. updateLaunchURI(uint256,string,(uint256,uint256,bytes))', async () => {
         async function beforeUpdateLaunchURITest(fixture: PrestigePadFixture): Promise<{
             defaultParamsInput: UpdateLaunchURIParamsInput,
         }> {
@@ -1421,7 +1861,7 @@ describe('7.1. PrestigePad', async () => {
                 validation: await getUpdateLaunchURIValidation(prestigePad, defaultParamsInput, validator, false),
             }
 
-            await expect(getPrestigePadTxByInput_UpdateLaunchURI(prestigePad, initiator1, params, validator))
+            await expect(getPrestigePadTx_UpdateLaunchURI(prestigePad, initiator1, params))
                 .to.be.revertedWithCustomError(prestigePad, 'InvalidSignature');
         });
 
@@ -1443,7 +1883,7 @@ describe('7.1. PrestigePad', async () => {
         });
     });
 
-    describe('7.1.7. updateRound(uint256, uint256, (string, (uint256, uint256, uint256), (uint256, address), (uint256, uint256, bytes)))', async () => {
+    describe('7.1.7. updateRound(uint256,uint256,(string,(uint256,uint256,uint256),(uint256,address), (uint256,uint256,bytes)))', async () => {
         async function beforeUpdateRoundTest(fixture: PrestigePadFixture): Promise<{
             defaultParamsInput: UpdateRoundParamsInput,
         }> {
@@ -1796,7 +2236,7 @@ describe('7.1. PrestigePad', async () => {
         });
     });
 
-    describe('7.1.8. updateRounds(uint256, uint256, (string, (uint256, uint256, uint256), (uint256, address), (uint256, uint256, bytes))[])', async () => {
+    describe('7.1.8. updateRounds(uint256,uint256,(string,(uint256,uint256,uint256),(uint256,address),(uint256,uint256,bytes))[])', async () => {
         async function beforeUpdateRoundsTest(fixture: PrestigePadFixture): Promise<{
             defaultParamsInput: UpdateRoundsParamsInput,
         }> {
@@ -2091,7 +2531,7 @@ describe('7.1. PrestigePad', async () => {
             }));
             roundsWithInvalidValidations[0].validation = invalidValidations[0];
             
-            await expect(getPrestigePadTxByInput_UpdateRounds(
+            await expect(getPrestigePadTx_UpdateRounds(
                 prestigePad,
                 initiator1,
                 {
@@ -2231,7 +2671,7 @@ describe('7.1. PrestigePad', async () => {
         });
     });
 
-    describe('7.1.9. scheduleNextRound(uint256, uint256, uint256, address[], uint256[], uint40, uint40)', async () => {
+    describe('7.1.9. scheduleNextRound(uint256,uint256,uint256,address[],uint256[],uint40,uint40)', async () => {
         async function beforeScheduleNextRoundTest(fixture: PrestigePadFixture): Promise<{
             defaultParams: ScheduleNextRoundParams,
         }> {
@@ -2881,7 +3321,7 @@ describe('7.1. PrestigePad', async () => {
         });
     });
 
-    describe('7.1.11. safeConfirmCurrentRound(uint256, bytes32)', async () => {
+    describe('7.1.11. safeConfirmCurrentRound(uint256,bytes32)', async () => {
         it('7.1.11.1. Safe confirm current round successfully with native currency', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
@@ -3293,30 +3733,30 @@ describe('7.1. PrestigePad', async () => {
 
             const launchId = 1;
 
-            const scheduleParams = {
-                launchId: BigNumber.from(launchId),
-                cashbackThreshold: BigNumber.from('5'),
-                cashbackBaseRate: ethers.utils.parseEther("0.1"),
-                cashbackCurrencies: [ethers.constants.AddressZero],
-                cashbackDenominations: [ethers.utils.parseEther('0.01')],
-                raiseStartsAt: timestamp + 10,
-                raiseDuration: Constant.PRESTIGE_PAD_RAISE_MINIMUM_DURATION + 10,
-            };
-            await callTransaction(prestigePad.connect(initiator1).scheduleNextRound(
-                scheduleParams.launchId,
-                scheduleParams.cashbackThreshold,
-                scheduleParams.cashbackBaseRate,
-                scheduleParams.cashbackCurrencies,
-                scheduleParams.cashbackDenominations,
-                scheduleParams.raiseStartsAt,
-                scheduleParams.raiseDuration
+            await callTransaction(getPrestigePadTx_ScheduleNextRound(
+                prestigePad,
+                initiator1,
+                {
+                    launchId: BigNumber.from(launchId),
+                    cashbackThreshold: BigNumber.from('5'),
+                    cashbackBaseRate: ethers.utils.parseEther("0.1"),
+                    cashbackCurrencies: [ethers.constants.AddressZero],
+                    cashbackDenominations: [ethers.utils.parseEther('0.01')],
+                    raiseStartsAt: timestamp + 10,
+                    raiseDuration: Constant.PRESTIGE_PAD_RAISE_MINIMUM_DURATION + 10,
+                }
             ));
 
             const roundId = (await prestigePad.getLaunch(launchId)).roundIds[1];
             timestamp = (await prestigePad.getRound(roundId)).agenda.raiseStartsAt;
             await time.setNextBlockTimestamp(timestamp);
 
-            await callTransaction(prestigePad.connect(depositor1).contributeCurrentRound(launchId, 10, { value: ethers.utils.parseEther('10') }));
+            await callTransaction(getPrestigePadTx_ContributeCurrentRound(
+                prestigePad,
+                depositor1,
+                { launchId: BigNumber.from(launchId), quantity: BigNumber.from(10) },
+                { value: ethers.utils.parseEther('10') }
+            ));
 
             const round = await prestigePad.getRound(roundId);
             const value = round.quote.unitPrice.mul(round.quota.raisedQuantity);
@@ -3398,30 +3838,30 @@ describe('7.1. PrestigePad', async () => {
 
             const launchId = 2;
 
-            const scheduleParams = {
-                launchId: BigNumber.from(launchId),
-                cashbackThreshold: BigNumber.from('5'),
-                cashbackBaseRate: ethers.utils.parseEther("0.1"),
-                cashbackCurrencies: [currencies[0].address],
-                cashbackDenominations: [ethers.utils.parseEther('0.01')],
-                raiseStartsAt: timestamp + 10,
-                raiseDuration: Constant.PRESTIGE_PAD_RAISE_MINIMUM_DURATION + 10,
-            };
-            await callTransaction(prestigePad.connect(initiator2).scheduleNextRound(
-                scheduleParams.launchId,
-                scheduleParams.cashbackThreshold,
-                scheduleParams.cashbackBaseRate,
-                scheduleParams.cashbackCurrencies,
-                scheduleParams.cashbackDenominations,
-                scheduleParams.raiseStartsAt,
-                scheduleParams.raiseDuration
+            await callTransaction(getPrestigePadTx_ScheduleNextRound(
+                prestigePad,
+                initiator2,
+                {
+                    launchId: BigNumber.from(launchId),
+                    cashbackThreshold: BigNumber.from('5'),
+                    cashbackBaseRate: ethers.utils.parseEther("0.1"),
+                    cashbackCurrencies: [currencies[0].address],
+                    cashbackDenominations: [ethers.utils.parseEther('0.01')],
+                    raiseStartsAt: timestamp + 10,
+                    raiseDuration: Constant.PRESTIGE_PAD_RAISE_MINIMUM_DURATION + 10,
+                }
             ));
 
             const roundId = (await prestigePad.getLaunch(launchId)).roundIds[1];
             timestamp = (await prestigePad.getRound(roundId)).agenda.raiseStartsAt;
             await time.setNextBlockTimestamp(timestamp);
 
-            await callTransaction(prestigePad.connect(depositor1).contributeCurrentRound(launchId, 500, { value: ethers.utils.parseEther('10') }));
+            await callTransaction(getPrestigePadTx_ContributeCurrentRound(
+                prestigePad,
+                depositor1,
+                { launchId: BigNumber.from(launchId), quantity: BigNumber.from(500) },
+                { value: ethers.utils.parseEther('10') }
+            ));
 
             const round = await prestigePad.getRound(roundId);
             const value = round.quote.unitPrice.mul(round.quota.raisedQuantity);
@@ -3705,9 +4145,10 @@ describe('7.1. PrestigePad', async () => {
             )).to.be.revertedWithCustomError(prestigePad, 'NotEnoughSoldQuantity');
 
             // Just enough sold quantity
-            await callTransaction(prestigePad.connect(depositor1).contributeCurrentRound(
-                1,
-                minRaisingQuantity,
+            await callTransaction(getPrestigePadTx_ContributeCurrentRound(
+                prestigePad,
+                depositor1,
+                { launchId: BigNumber.from(1), quantity: BigNumber.from(minRaisingQuantity) },
                 { value: ethers.utils.parseEther('100') }
             ));
 
@@ -3761,7 +4202,7 @@ describe('7.1. PrestigePad', async () => {
         });
     });
 
-    describe('7.1.12. safeFinalize(uint256, bytes32)', async () => {
+    describe('7.1.12. safeFinalize(uint256,bytes32)', async () => {
         it('7.1.12.1. Finalize launch successfully', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
@@ -3906,7 +4347,7 @@ describe('7.1. PrestigePad', async () => {
         });
     });
 
-    describe('7.1.13. contributeCurrentRound(uint256, uint256)', async () => {
+    describe('7.1.13. contributeCurrentRound(uint256,uint256)', async () => {
         it('7.1.13.1. Deposit current round successfully with native currency', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
@@ -4458,7 +4899,7 @@ describe('7.1. PrestigePad', async () => {
         });
     });
 
-    describe('7.1.14. safeContributeCurrentRound(uint256, uint256, bytes32)', async () => {
+    describe('7.1.14. safeContributeCurrentRound(uint256,uint256,bytes32)', async () => {
         it('7.1.14.1. Safe deposit current round successfully', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
@@ -4790,9 +5231,10 @@ describe('7.1. PrestigePad', async () => {
 
             const quantity = round.quota.minRaisingQuantity.sub(1);
 
-            await callTransaction(prestigePad.connect(depositor1).contributeCurrentRound(
-                launchId,
-                quantity,
+            await callTransaction(getPrestigePadTx_ContributeCurrentRound(
+                prestigePad,
+                depositor1,
+                { launchId: BigNumber.from(launchId), quantity: BigNumber.from(quantity) },
                 { value: round.quote.unitPrice.mul(quantity) }
             ));
 
@@ -4883,7 +5325,7 @@ describe('7.1. PrestigePad', async () => {
         });
     });
 
-    describe('7.1.16. withdrawProjectToken(uint256, uint256)', async () => {
+    describe('7.1.16. withdrawProjectToken(uint256,uint256)', async () => {
         it('7.1.16.1. Withdraw project token successfully with native token when qualified for cashback', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
@@ -5363,262 +5805,6 @@ describe('7.1. PrestigePad', async () => {
                 depositor3,
                 { launchId: BigNumber.from(launchId), index: BigNumber.from(index) }
             )).to.be.revertedWith('Pausable: paused');
-        });
-    });
-
-    describe('7.1.17. allocationOfAt(uint256)', async () => {
-        it('7.1.17.1. Return correct allocation', async () => {
-            const fixture = await beforePrestigePadTest({
-                addSampleLaunch: true,
-                addSampleRounds: true,
-            });
-
-            const { prestigePad, depositor1, initiator1, projectToken } = fixture;
-
-            const launchId = 1;
-            const depositor = depositor1;
-
-            const depositRound1Turn1 = 5;
-            const depositRound1Turn2 = 10;
-            const depositRound1 = depositRound1Turn1 + depositRound1Turn2;
-            const depositRound2 = 200;
-
-            const units = BigNumber.from(10).pow(await projectToken.decimals());
-
-            const expectedAllocations = new OrderedMap<number, BigNumber>(ethers.BigNumber.from(0));
-            expectedAllocations.set(0, BigNumber.from(0));
-
-            const timePivots = new Set<number>();
-            function addTimePivot(timestamp: number) {
-                if (timestamp > 0) {
-                    timePivots.add(timestamp - 1);
-                }
-                timePivots.add(timestamp);
-                timePivots.add(timestamp + 1);
-            }
-            
-            let timestamp = await time.latest() + 100;
-            const baseTimestamp = timestamp;
-
-            async function assertCorrectAllocation(currentTimestamp: number) {
-                for (const timestamp of timePivots) {
-                    if (timestamp > currentTimestamp) {
-                        break;
-                    }
-                    console.log(`delta timestamp: ${timestamp - baseTimestamp}`);
-                    console.log(`expected allocation: ${expectedAllocations.get(timestamp)}`);
-                    console.log(`actual allocation: ${await prestigePad.allocationOfAt(depositor.address, launchId, timestamp)}`);
-                    expect(await prestigePad.allocationOfAt(depositor.address, launchId, timestamp))
-                        .to.equal(expectedAllocations.get(timestamp));
-                }
-            }
-
-            // Test after round 1 start
-            await callTransactionAtTimestamp(
-                prestigePad.connect(initiator1).scheduleNextRound(
-                    launchId,
-                    BigNumber.from(0),
-                    BigNumber.from(0),
-                    [],
-                    [],
-                    timestamp,
-                    Constant.PRESTIGE_PAD_RAISE_MINIMUM_DURATION
-                ),
-                timestamp
-            );
-
-            addTimePivot(0);
-            addTimePivot(timestamp);
-            await time.increaseTo(timestamp + 5);
-            await assertCorrectAllocation(timestamp + 5);
-            
-            // Test after round 1 first deposit
-            timestamp += 10;
-            await callTransactionAtTimestamp(
-                prestigePad.connect(depositor).contributeCurrentRound(launchId, depositRound1Turn1, { value: ethers.utils.parseEther('10') }),
-                timestamp
-            );
-
-            expectedAllocations.set(timestamp, BigNumber.from(depositRound1Turn1).mul(units));
-            
-            addTimePivot(timestamp);
-            await time.increaseTo(timestamp + 5);
-            await assertCorrectAllocation(timestamp + 5);
-
-            // Test after round 1 second deposit
-            timestamp += 10;
-            await callTransactionAtTimestamp(
-                prestigePad.connect(depositor).contributeCurrentRound(launchId, depositRound1Turn2, { value: ethers.utils.parseEther('10') }),
-                timestamp
-            );
-            
-            expectedAllocations.set(timestamp, BigNumber.from(depositRound1).mul(units));
-            
-            addTimePivot(timestamp);
-            await time.increaseTo(timestamp + 5);
-            await assertCorrectAllocation(timestamp + 5);
-            
-            // Test after round 1 confirm
-            timestamp += 10;
-            await callTransactionAtTimestamp(
-                getPrestigePadTxByParams_SafeConfirmCurrentRound(
-                    prestigePad,
-                    initiator1,
-                    { launchId: BigNumber.from(launchId) },
-                ),
-                timestamp
-            );
-
-            addTimePivot(timestamp);
-            await time.increaseTo(timestamp + 5);
-            await assertCorrectAllocation(timestamp + 5);
-
-            // Test after round 2 start
-            timestamp += 10;
-            await callTransactionAtTimestamp(
-                prestigePad.connect(initiator1).scheduleNextRound(
-                    launchId,
-                    BigNumber.from(0),
-                    BigNumber.from(0),
-                    [],
-                    [],
-                    timestamp,
-                    Constant.PRESTIGE_PAD_RAISE_MINIMUM_DURATION
-                ),
-                timestamp
-            );
-            
-            addTimePivot(timestamp);
-            await time.increaseTo(timestamp + 5);
-            await assertCorrectAllocation(timestamp + 5);
-
-            // Test after round 2 deposit
-            timestamp += 10;
-            await callTransactionAtTimestamp(
-                prestigePad.connect(depositor).contributeCurrentRound(launchId, depositRound2, { value: ethers.utils.parseEther('10') }),
-                timestamp
-            );
-            
-            expectedAllocations.set(timestamp, BigNumber.from(depositRound1 + depositRound2).mul(units));
-
-            addTimePivot(timestamp);
-            await time.increaseTo(timestamp + 5);
-            await assertCorrectAllocation(timestamp + 5);
-
-            // Test after round 2 confirm
-            timestamp += 10;
-            await callTransactionAtTimestamp(
-                getPrestigePadTxByParams_SafeConfirmCurrentRound(
-                    prestigePad,
-                    initiator1,
-                    { launchId: BigNumber.from(launchId) },
-                ),
-                timestamp
-            );
-
-            addTimePivot(timestamp);
-            await time.increaseTo(timestamp + 5);
-            await assertCorrectAllocation(timestamp + 5);
-
-            // Test after finalize launch
-            timestamp += 10;
-            await callTransactionAtTimestamp(
-                getPrestigePadTxByParams_SafeFinalize(
-                    prestigePad,
-                    initiator1,
-                    { launchId: BigNumber.from(launchId) },
-                ),
-                timestamp
-            );
-
-            addTimePivot(timestamp);
-            await time.increaseTo(timestamp + 5);
-            await assertCorrectAllocation(timestamp + 5);
-
-            // Test after withdraw project token of first round
-            timestamp += 10;
-            await callTransactionAtTimestamp(
-                getPrestigePadTx_WithdrawProjectToken(
-                    prestigePad,
-                    depositor,
-                    { launchId: BigNumber.from(launchId), index: BigNumber.from(1) },
-                ),
-                timestamp
-            );
-
-            expectedAllocations.set(timestamp, BigNumber.from(depositRound2).mul(units));
-
-            addTimePivot(timestamp);
-            await time.increaseTo(timestamp + 5);
-            await assertCorrectAllocation(timestamp + 5);
-
-            // Test after withdraw project token of second round
-            timestamp += 10;
-            await callTransactionAtTimestamp(
-                getPrestigePadTx_WithdrawProjectToken(
-                    prestigePad,
-                    depositor,
-                    { launchId: BigNumber.from(launchId), index: BigNumber.from(2) },
-                ),
-                timestamp
-            );
-
-            expectedAllocations.set(timestamp, BigNumber.from(0));
-
-            addTimePivot(timestamp);
-            await time.increaseTo(timestamp + 5);
-            await assertCorrectAllocation(timestamp + 5);
-        });
-
-        it('7.1.17.2. Revert with invalid launch id', async () => {
-            const fixture = await beforePrestigePadTest();
-
-            const { prestigePad, depositor1 } = fixture;
-
-            await expect(prestigePad.allocationOfAt(depositor1.address, 0, 0))
-                .to.be.revertedWithCustomError(prestigePad, 'InvalidLaunchId');
-            await expect(prestigePad.allocationOfAt(depositor1.address, 0, 100))
-                .to.be.revertedWithCustomError(prestigePad, 'InvalidLaunchId');
-        });
-
-        it('7.1.17.3. Revert with timestamp after current timestamp', async () => {
-            const fixture = await beforePrestigePadTest({
-                addSampleLaunch: true,
-                addSampleRounds: true,
-            });
-
-            const { prestigePad, depositor1 } = fixture;
-
-            let timestamp = await time.latest();
-
-            await expect(prestigePad.allocationOfAt(depositor1.address, 1, timestamp - 1))
-                .to.not.be.reverted;
-            await expect(prestigePad.allocationOfAt(depositor1.address, 1, timestamp))
-                .to.not.be.reverted;
-            await expect(prestigePad.allocationOfAt(depositor1.address, 1, timestamp + 1))
-                .to.be.revertedWithCustomError(prestigePad, 'InvalidTimestamp');
-        });
-    });
-
-
-    describe('7.1.18. supportsInterface(bytes4)', () => {
-        it('7.1.18.1. Return true for appropriate interface', async () => {
-            const fixture = await beforePrestigePadTest();
-            const { prestigePad } = fixture;
-
-            const ICommon = ICommon__factory.createInterface();
-            const IERC1155ReceiverUpgradeable = IERC1155ReceiverUpgradeable__factory.createInterface();
-            const IProjectTokenReceiver = IProjectTokenReceiver__factory.createInterface();
-            const IProjectLaunchpad = IProjectLaunchpad__factory.createInterface();
-            const IERC165Upgradeable = IERC165Upgradeable__factory.createInterface();
-
-            const IProjectTokenReceiverInterfaceId = getInterfaceID(IProjectTokenReceiver, [IERC1155ReceiverUpgradeable])
-            const IProjectLaunchpadInterfaceId = getInterfaceID(IProjectLaunchpad, [ICommon, IProjectTokenReceiver])
-            const IERC165UpgradeableInterfaceId = getInterfaceID(IERC165Upgradeable, []);
-
-            expect(await prestigePad.supportsInterface(getBytes4Hex(IProjectTokenReceiverInterfaceId))).to.equal(true);
-            expect(await prestigePad.supportsInterface(getBytes4Hex(IProjectLaunchpadInterfaceId))).to.equal(true);
-            expect(await prestigePad.supportsInterface(getBytes4Hex(IERC165UpgradeableInterfaceId))).to.equal(true);
         });
     });
 });

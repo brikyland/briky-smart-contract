@@ -57,13 +57,8 @@ async function testReentrancy_passportToken(
 
 describe('5.1. PassportToken', async () => {
     async function passportTokenFixture(): Promise<PassportTokenFixture> {
-        const accounts = await ethers.getSigners();
-        const deployer = accounts[0];
-        const admins = [];
-        for (let i = 1; i <= Constant.ADMIN_NUMBER; ++i) admins.push(accounts[i]);
-        const minter1 = accounts[Constant.ADMIN_NUMBER + 1];
-        const minter2 = accounts[Constant.ADMIN_NUMBER + 2];
-        const minter3 = accounts[Constant.ADMIN_NUMBER + 3];
+        const [deployer, admin1, admin2, admin3, admin4, admin5, minter1, minter2, minter3] = await ethers.getSigners();
+        const admins = [admin1, admin2, admin3, admin4, admin5];
         
         const adminAddresses: string[] = admins.map(signer => signer.address);
         const admin = await deployAdmin(

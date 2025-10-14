@@ -107,20 +107,8 @@ interface ProjectMortgageTokenFixture {
 
 describe('3.3. ProjectMortgageToken', async () => {
     async function projectMortgageTokenFixture(): Promise<ProjectMortgageTokenFixture> {
-        const accounts = await ethers.getSigners();
-        const deployer = accounts[0];
-        const admins = [];
-        for (let i = 1; i <= Constant.ADMIN_NUMBER; ++i) admins.push(accounts[i]);
-        const lender1 = accounts[Constant.ADMIN_NUMBER + 1];
-        const lender2 = accounts[Constant.ADMIN_NUMBER + 2];
-        const borrower1 = accounts[Constant.ADMIN_NUMBER + 3];
-        const borrower2 = accounts[Constant.ADMIN_NUMBER + 4];
-        const manager = accounts[Constant.ADMIN_NUMBER + 5];
-        const moderator = accounts[Constant.ADMIN_NUMBER + 6];
-        const user = accounts[Constant.ADMIN_NUMBER + 7];
-        const projectMortgageTokenOwner = accounts[Constant.ADMIN_NUMBER + 8];
-        const initiator1 = accounts[Constant.ADMIN_NUMBER + 9];
-        const initiator2 = accounts[Constant.ADMIN_NUMBER + 10];
+        const [deployer, admin1, admin2, admin3, admin4, admin5, lender1, lender2, borrower1, borrower2, manager, moderator, user, projectMortgageTokenOwner, initiator1, initiator2] = await ethers.getSigners();
+        const admins = [admin1, admin2, admin3, admin4, admin5];
         const validator = new MockValidator(deployer as any);
 
         const currency = await deployCurrency(

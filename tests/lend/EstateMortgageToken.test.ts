@@ -111,22 +111,8 @@ interface EstateMortgageTokenFixture {
 
 describe('3.2. EstateMortgageToken', async () => {
     async function estateMortgageTokenFixture(): Promise<EstateMortgageTokenFixture> {
-        const accounts = await ethers.getSigners();
-        const deployer = accounts[0];
-        const admins = [];
-        for (let i = 1; i <= Constant.ADMIN_NUMBER; ++i) admins.push(accounts[i]);
-        const lender1 = accounts[Constant.ADMIN_NUMBER + 1];
-        const lender2 = accounts[Constant.ADMIN_NUMBER + 2];
-        const borrower1 = accounts[Constant.ADMIN_NUMBER + 3];
-        const borrower2 = accounts[Constant.ADMIN_NUMBER + 4];
-        const manager = accounts[Constant.ADMIN_NUMBER + 5];
-        const moderator = accounts[Constant.ADMIN_NUMBER + 6];
-        const user = accounts[Constant.ADMIN_NUMBER + 7];
-        const estateMortgageTokenOwner = accounts[Constant.ADMIN_NUMBER + 8];
-        const custodian1 = accounts[Constant.ADMIN_NUMBER + 9];
-        const custodian2 = accounts[Constant.ADMIN_NUMBER + 10];
-        const broker1 = accounts[Constant.ADMIN_NUMBER + 11];
-        const broker2 = accounts[Constant.ADMIN_NUMBER + 12];
+        const [deployer, admin1, admin2, admin3, admin4, admin5, lender1, lender2, borrower1, borrower2, manager, moderator, user, estateMortgageTokenOwner, custodian1, custodian2, broker1, broker2] = await ethers.getSigners();
+        const admins = [admin1, admin2, admin3, admin4, admin5];
 
         const adminAddresses: string[] = admins.map(signer => signer.address);
         const admin = await deployAdmin(
