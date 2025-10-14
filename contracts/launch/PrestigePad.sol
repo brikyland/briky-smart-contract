@@ -288,8 +288,9 @@ ReentrancyGuardUpgradeable {
         /// @dev    Unwithdrawn tokens from previous rounds.
         for (uint256 i = 0; i <= currentIndex; ++i) {
             uint256 roundId = launch.roundIds[i];
-            uint256 withdrawAt = withdrawAt[roundId][_account];
-            if (_at >= rounds[roundId].agenda.confirmAt) {
+            uint256 confirmAt = rounds[roundId].agenda.confirmAt;
+            if (_at >= confirmAt && confirmAt != 0) {
+                uint256 withdrawAt = withdrawAt[roundId][_account];
                 if (withdrawAt == 0 || _at < withdrawAt) {
                     allocation += contributions[roundId][_account];
                 }
