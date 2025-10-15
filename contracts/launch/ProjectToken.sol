@@ -180,6 +180,118 @@ ReentrancyGuardUpgradeable {
     }
 
 
+    /* --- Administration --- */
+    /**
+     *  @notice Update the base URI.
+     *
+     *          Name            Description
+     *  @param  _uri            New base URI.
+     *  @param  _signatures     Array of admin signatures.
+     * 
+     *  @dev    Administrative operator.
+     */
+    function updateBaseURI(
+        string calldata _uri,
+        bytes[] calldata _signatures
+    ) external {
+        IAdmin(admin).verifyAdminSignatures(
+            abi.encode(
+                address(this),
+                "updateBaseURI",
+                _uri
+            ),
+            _signatures
+        );
+        _setBaseURI(_uri);
+        emit BaseURIUpdate(_uri);
+    }
+
+    /**
+     *  @notice Update the royalty rate of a zone.
+     *
+     *          Name            Description
+     *  @param  _zone           Zone code.
+     *  @param  _royaltyRate    New default royalty rate.
+     *  @param  _signatures     Array of admin signatures.
+     *
+     *  @dev    Administrative operator.
+     */
+    function updateZoneRoyaltyRate(
+        bytes32 _zone,
+        uint256 _royaltyRate,
+        bytes[] calldata _signatures
+    ) external {
+        IAdmin(this.admin()).verifyAdminSignatures(
+            abi.encode(
+                address(this),
+                "updateZoneRoyaltyRate",
+                _zone,
+                _royaltyRate
+            ),
+            _signatures
+        );
+        if (!IAdmin(admin).isZone(_zone)) {
+            revert InvalidZone();
+        }
+
+        if (_royaltyRate > CommonConstant.RATE_MAX_SUBUNIT) {
+            revert InvalidRate();
+        }
+        zoneRoyaltyRates[_zone] = _royaltyRate;
+        emit ZoneRoyaltyRateUpdate(
+            _zone,
+            Rate(_royaltyRate, CommonConstant.RATE_DECIMALS)
+        );
+    }
+
+    /**
+     *  @notice Authorize or deauthorize contract addresses as launchpads.
+     *
+     *          Name            Description
+     *  @param  _accounts       Array of contract addresses.
+     *  @param  _isLaunchpad    Whether the operation is authorizing or deauthorizing.
+     *  @param  _signatures     Array of admin signatures.
+     * 
+     *  @dev    Administrative operator.
+     */
+    function authorizeLaunchpads(
+        address[] calldata _accounts,
+        bool _isLaunchpad,
+        bytes[] calldata _signatures
+    ) external {
+        IAdmin(admin).verifyAdminSignatures(
+            abi.encode(
+                address(this),
+                "authorizeLaunchpads",
+                _accounts,
+                _isLaunchpad
+            ),
+            _signatures
+        );
+
+        if (_isLaunchpad) {
+            for (uint256 i; i < _accounts.length; ++i) {
+                if (isLaunchpad[_accounts[i]]) {
+                    revert AuthorizedAccount();
+                }
+                if (!_accounts[i].supportsInterface(type(IProjectLaunchpad).interfaceId)) {
+                    revert InvalidLaunchpad(_accounts[i]);
+                }
+                isLaunchpad[_accounts[i]] = true;
+                emit LaunchpadAuthorization(_accounts[i]);
+            }
+        } else {
+            for (uint256 i; i < _accounts.length; ++i) {
+                if (!isLaunchpad[_accounts[i]]) {
+                    revert NotAuthorizedAccount();
+                }
+                isLaunchpad[_accounts[i]] = false;
+                emit LaunchpadDeauthorization(_accounts[i]);
+            }
+        }
+    }
+
+
     /* --- Query --- */
     /**
      *  @return decimals        Token decimals.
@@ -563,120 +675,8 @@ ReentrancyGuardUpgradeable {
             _values,
             _data
         ) == this.onERC1155BatchReceived.selector
-            ? this.onERC1155Received.selector
+            ? this.onERC1155BatchReceived.selector
             : bytes4(0);
-    }
-
-
-    /* --- Administration --- */
-    /**
-     *  @notice Update the base URI.
-     *
-     *          Name            Description
-     *  @param  _uri            New base URI.
-     *  @param  _signatures     Array of admin signatures.
-     * 
-     *  @dev    Administrative operator.
-     */
-    function updateBaseURI(
-        string calldata _uri,
-        bytes[] calldata _signatures
-    ) external {
-        IAdmin(admin).verifyAdminSignatures(
-            abi.encode(
-                address(this),
-                "updateBaseURI",
-                _uri
-            ),
-            _signatures
-        );
-        _setBaseURI(_uri);
-        emit BaseURIUpdate(_uri);
-    }
-
-    /**
-     *  @notice Update the royalty rate of a zone.
-     *
-     *          Name            Description
-     *  @param  _zone           Zone code.
-     *  @param  _royaltyRate    New default royalty rate.
-     *  @param  _signatures     Array of admin signatures.
-     *
-     *  @dev    Administrative operator.
-     */
-    function updateZoneRoyaltyRate(
-        bytes32 _zone,
-        uint256 _royaltyRate,
-        bytes[] calldata _signatures
-    ) external {
-        IAdmin(this.admin()).verifyAdminSignatures(
-            abi.encode(
-                address(this),
-                "updateZoneRoyaltyRate",
-                _zone,
-                _royaltyRate
-            ),
-            _signatures
-        );
-        if (!IAdmin(admin).isZone(_zone)) {
-            revert InvalidZone();
-        }
-
-        if (_royaltyRate > CommonConstant.RATE_MAX_SUBUNIT) {
-            revert InvalidRate();
-        }
-        zoneRoyaltyRates[_zone] = _royaltyRate;
-        emit ZoneRoyaltyRateUpdate(
-            _zone,
-            Rate(_royaltyRate, CommonConstant.RATE_DECIMALS)
-        );
-    }
-
-    /**
-     *  @notice Authorize or deauthorize contract addresses as launchpads.
-     *
-     *          Name            Description
-     *  @param  _accounts       Array of contract addresses.
-     *  @param  _isLaunchpad    Whether the operation is authorizing or deauthorizing.
-     *  @param  _signatures     Array of admin signatures.
-     * 
-     *  @dev    Administrative operator.
-     */
-    function authorizeLaunchpads(
-        address[] calldata _accounts,
-        bool _isLaunchpad,
-        bytes[] calldata _signatures
-    ) external {
-        IAdmin(admin).verifyAdminSignatures(
-            abi.encode(
-                address(this),
-                "authorizeLaunchpads",
-                _accounts,
-                _isLaunchpad
-            ),
-            _signatures
-        );
-
-        if (_isLaunchpad) {
-            for (uint256 i; i < _accounts.length; ++i) {
-                if (isLaunchpad[_accounts[i]]) {
-                    revert AuthorizedAccount();
-                }
-                if (!_accounts[i].supportsInterface(type(IProjectLaunchpad).interfaceId)) {
-                    revert InvalidLaunchpad(_accounts[i]);
-                }
-                isLaunchpad[_accounts[i]] = true;
-                emit LaunchpadAuthorization(_accounts[i]);
-            }
-        } else {
-            for (uint256 i; i < _accounts.length; ++i) {
-                if (!isLaunchpad[_accounts[i]]) {
-                    revert NotAuthorizedAccount();
-                }
-                isLaunchpad[_accounts[i]] = false;
-                emit LaunchpadDeauthorization(_accounts[i]);
-            }
-        }
     }
 
 
