@@ -1,60 +1,146 @@
 import { expect } from 'chai';
-import { ethers, upgrades } from 'hardhat';
+import {
+    BigNumber,
+    Contract
+} from 'ethers';
+import {
+    ethers,
+    upgrades
+} from 'hardhat';
+
+// @nomicfoundation/hardhat-network-helpers
+import {
+    loadFixture,
+    time
+} from "@nomicfoundation/hardhat-network-helpers";
+
+// @defi-wonderland/smock
+import {
+    MockContract,
+    smock
+} from '@defi-wonderland/smock';
+
+// @tests
+import { Constant } from '@tests/test.constant';
+import {
+    IERC165UpgradeableInterfaceId,
+    IEstateTokenReceiverInterfaceId,
+    IERC721MetadataUpgradeableInterfaceId,
+    IMortgageTokenInterfaceId,
+    IERC2981UpgradeableInterfaceId
+} from '@tests/interfaces';
+
+// @tests/land
+import { Initialization as LandInitialization } from '@tests/land/test.initialization';
+
+// @tests/lend
+import { Initialization as LendInitialization } from '@tests/lend/test.initialization';
+
+// @typechain-types
 import {
     Admin,
     CommissionToken,
     Currency,
     FeeReceiver,
-    IERC165Upgradeable__factory,
-    IERC2981Upgradeable__factory,
     MockEstateToken,
     MockEstateForger__factory,
     EstateMortgageToken,
     MockEstateForger,
     CommissionToken__factory,
-    IEstateTokenReceiver__factory,
-    IERC1155ReceiverUpgradeable__factory,
-    ICommon__factory,
-    IERC721MetadataUpgradeable__factory,
-    IERC721Upgradeable__factory,
     PriceWatcher,
     ReserveVault,
-    IERC4906Upgradeable__factory,
-    IMortgageToken__factory,
 } from '@typechain-types';
-import { callTransaction, getBalance, prepareERC20, prepareNativeToken, randomWallet, resetERC20, resetNativeToken, testReentrancy } from '@utils/blockchain';
-import { Constant } from '@tests/test.constant';
+
+// @utils
+import {
+    callTransaction,
+    expectRevertWithModifierCustomError,
+    getBalance,
+    prepareERC20,
+    prepareNativeToken,
+    randomWallet,
+    resetERC20,
+    resetNativeToken,
+    testReentrancy
+} from '@utils/blockchain';
+import {
+    applyDiscount,
+    scaleRate
+} from '@utils/formula';
+import { MockValidator } from '@utils/mockValidator';
+import {
+    getBytes4Hex,
+    randomBigNumber,
+    structToObject
+} from '@utils/utils';
+
+// @utils/deployments/common
 import { deployAdmin } from '@utils/deployments/common/admin';
-import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
 import { deployCurrency } from '@utils/deployments/common/currency';
-import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
+import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
+import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
+import { deployReserveVault } from '@utils/deployments/common/reserveVault';
 
-import { MockContract, smock } from '@defi-wonderland/smock';
-
-import { BigNumber, Contract } from 'ethers';
-import { getBytes4Hex, getInterfaceID, randomBigNumber, structToObject } from '@utils/utils';
-import { deployEstateMortgageToken } from '@utils/deployments/lend/estateMortgageToken';
+// @utils/deployments/mock
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployReentrancyERC1155Holder } from '@utils/deployments/mock/mockReentrancy/reentrancyERC1155Holder';
 import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
-import { MortgageState } from "@utils/models/lend/mortgageToken";
-import { Initialization as LandInitialization } from '@tests/land/test.initialization';
-import { Initialization as LendInitialization } from '@tests/lend/test.initialization';
-import { deployReserveVault } from '@utils/deployments/common/reserveVault';
-import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
-import { MockValidator } from '@utils/mockValidator';
-import { getEstateTokenTxByInput_AuthorizeTokenizers, getCallEstateTokenTx_TokenizeEstate, getEstateTokenTx_RegisterCustodian, getEstateTokenTxByInput_RegisterCustodian, getEstateTokenTxByInput_UpdateCommissionToken, getEstateTokenTxByInput_UpdateZoneRoyaltyRate } from '@utils/transaction/land/estateToken';
-import { RegisterCustodianParams } from '@utils/models/land/estateToken';
+
+// @utils/deployments/lend
+import { deployEstateMortgageToken } from '@utils/deployments/lend/estateMortgageToken';
+
+// @utils/models/lend
+import {
+    MortgageState,
+    UpdateBaseURIParams,
+    UpdateBaseURIParamsInput,
+    UpdateFeeRateParams,
+    UpdateFeeRateParamsInput
+} from '@utils/models/lend/mortgageToken';
+
+// @utils/signatures/lend
+import {
+    getUpdateBaseURISignatures,
+    getUpdateFeeRateSignatures
+} from '@utils/signatures/lend/mortgageToken';
+
+// @utils/transaction/land
 import { getCommissionTokenTx_RegisterBroker } from '@utils/transaction/land/commissionToken';
-import { applyDiscount, scaleRate } from '@utils/formula';
+import {
+    getEstateTokenTxByInput_AuthorizeTokenizers,
+    getCallEstateTokenTx_TokenizeEstate,
+    getEstateTokenTxByInput_RegisterCustodian,
+    getEstateTokenTxByInput_UpdateCommissionToken,
+    getEstateTokenTxByInput_UpdateZoneRoyaltyRate
+} from '@utils/transaction/land/estateToken';
 import { EstateBorrowParams } from '@utils/models/lend/estateMortgageToken';
+
+// @utils/transaction/lend
 import { getEstateMortgageTokenTx_Borrow } from '@utils/transaction/lend/estateMortgageToken';
-import { getUpdateBaseURISignatures, getUpdateFeeRateSignatures } from '@utils/signatures/lend/mortgageToken';
-import { getMortgageTokenTx_Cancel, getMortgageTokenTx_Foreclose, getMortgageTokenTx_Lend, getMortgageTokenTx_Repay, getMortgageTokenTx_SafeLend, getMortgageTokenTxByParams_SafeLend, getMortgageTokenTx_SafeRepay, getMortgageTokenTxByParams_SafeRepay, getMortgageTokenTx_UpdateBaseURI, getMortgageTokenTxByInput_UpdateBaseURI, getMortgageTokenTx_UpdateFeeRate, getMortgageTokenTxByInput_UpdateFeeRate } from '@utils/transaction/lend/mortgageToken';
-import { UpdateBaseURIParams, UpdateBaseURIParamsInput, UpdateFeeRateParams, UpdateFeeRateParamsInput } from '@utils/models/lend/mortgageToken';
-import { getAdminTxByInput_ActivateIn, getAdminTxByInput_AuthorizeManagers, getAdminTxByInput_AuthorizeModerators, getAdminTxByInput_DeclareZone, getAdminTxByInput_UpdateCurrencyRegistries } from '@utils/transaction/common/admin';
+import {
+    getMortgageTokenTx_Cancel,
+    getMortgageTokenTx_Foreclose,
+    getMortgageTokenTx_Lend,
+    getMortgageTokenTx_Repay,
+    getMortgageTokenTx_SafeLend,
+    getMortgageTokenTxByParams_SafeLend,
+    getMortgageTokenTx_SafeRepay,
+    getMortgageTokenTxByParams_SafeRepay,
+    getMortgageTokenTx_UpdateBaseURI,
+    getMortgageTokenTxByInput_UpdateBaseURI,
+    getMortgageTokenTx_UpdateFeeRate,
+    getMortgageTokenTxByInput_UpdateFeeRate
+} from '@utils/transaction/lend/mortgageToken';
+
+// @utils/transaction/common
+import {
+    getAdminTxByInput_ActivateIn,
+    getAdminTxByInput_AuthorizeManagers,
+    getAdminTxByInput_AuthorizeModerators,
+    getAdminTxByInput_DeclareZone,
+    getAdminTxByInput_UpdateCurrencyRegistries
+} from '@utils/transaction/common/admin';
 import { getPausableTxByInput_Pause } from '@utils/transaction/common/pausable';
-import { IERC165UpgradeableInterfaceId, IEstateTokenReceiverInterfaceId, IERC721MetadataUpgradeableInterfaceId, IMortgageTokenInterfaceId, IERC2981UpgradeableInterfaceId } from '@tests/interfaces';
 
 
 async function testReentrancy_estateMortgageToken(
@@ -472,7 +558,9 @@ describe('3.2. EstateMortgageToken', async () => {
         }
     }
 
-    describe('3.2.1. initialize(address, address, address, address, string, string, string, uint256, uint256)', async () => {
+
+    /* --- Initialization --- */
+    describe('3.2.1. initialize(address,address,string,string,string,uint256)', async () => {
         it('3.2.1.1. Deploy successfully', async () => {
             const { admin, estateToken, feeReceiver, commissionToken, estateMortgageToken } = await beforeEstateMortgageTokenTest();
 
@@ -520,7 +608,9 @@ describe('3.2. EstateMortgageToken', async () => {
         });
     });
 
-    describe('3.2.2. updateBaseURI(string, bytes[])', async () => {
+
+    /* --- Administration --- */
+    describe('3.2.2. updateBaseURI(string,bytes[])', async () => {
         it('3.2.2.1. Update base URI successfully with valid signatures', async () => {
             const { deployer, estateMortgageToken, admin, admins } = await beforeEstateMortgageTokenTest({
                 listSampleCurrencies: true,
@@ -556,7 +646,7 @@ describe('3.2. EstateMortgageToken', async () => {
         });
     });
 
-    describe('3.2.3. updateFeeRate(uint256, bytes[])', async () => {
+    describe('3.2.3. updateFeeRate(uint256,bytes[])', async () => {
         it('3.2.3.1. Update fee rate successfully with valid signatures', async () => {
             const { deployer, estateMortgageToken, admin, admins } = await beforeEstateMortgageTokenTest();
 
@@ -612,7 +702,140 @@ describe('3.2. EstateMortgageToken', async () => {
         });
     });
 
-    describe('3.2.4. borrow(uint256, uint256, uint256, uint256, address, uint40)', async () => {
+
+    /* --- Query --- */
+    describe('3.2.10. getMortgage(uint256)', () => {
+        it('3.2.10.1. Revert with invalid mortgage id', async () => {
+            const fixture = await beforeEstateMortgageTokenTest({
+                listSampleCurrencies: true,
+                listEstateToken: true,
+                listSampleMortgage: true,
+            });
+
+            const { estateMortgageToken } = fixture;
+
+            await expectRevertWithModifierCustomError(
+                estateMortgageToken,
+                estateMortgageToken.getMortgage(0),
+                'InvalidMortgageId'
+            );
+            await expectRevertWithModifierCustomError(
+                estateMortgageToken,
+                estateMortgageToken.getMortgage(100),
+                'InvalidMortgageId'
+            );
+        });
+    });
+    
+    describe('3.2.10. getCollateral(uint256)', () => {
+        it('3.2.10.1. Revert with invalid mortgage id', async () => {
+            const fixture = await beforeEstateMortgageTokenTest({
+                listSampleCurrencies: true,
+                listEstateToken: true,
+                listSampleMortgage: true,
+            });
+
+            const { estateMortgageToken } = fixture;
+
+            await expectRevertWithModifierCustomError(
+                estateMortgageToken,
+                estateMortgageToken.getCollateral(0),
+                'InvalidMortgageId'
+            );
+            await expectRevertWithModifierCustomError(
+                estateMortgageToken,
+                estateMortgageToken.getCollateral(100),
+                'InvalidMortgageId'
+            );
+        });
+    });
+
+    describe('3.2.11. royaltyInfo(uint256,uint256)', () => {
+        it('3.2.11.1. Return correct royalty info', async () => {
+            const fixture = await beforeEstateMortgageTokenTest({
+                listSampleCurrencies: true,
+                listEstateToken: true,
+                listSampleMortgage: true,
+                listSampleLending: true,
+            });
+            const { deployer, estateMortgageToken, feeReceiver, estateToken, admin, admins, zone1, zone2 } = fixture;
+
+            const zone1RoyaltyRate = ethers.utils.parseEther('0.1');
+            const zone2RoyaltyRate = ethers.utils.parseEther('0.2');
+            
+            await callTransaction(getEstateTokenTxByInput_UpdateZoneRoyaltyRate(
+                estateToken as any,
+                deployer,
+                {
+                    zone: zone1,
+                    royaltyRate: zone1RoyaltyRate,
+                },
+                admin,
+                admins,
+            ));
+            
+            await callTransaction(getEstateTokenTxByInput_UpdateZoneRoyaltyRate(
+                estateToken as any,
+                deployer,
+                {
+                    zone: zone2,
+                    royaltyRate: zone2RoyaltyRate,
+                },
+                admin,
+                admins,
+            ));
+
+            const salePrice = ethers.BigNumber.from(1e6);
+            
+            const royaltyInfo1 = await estateMortgageToken.royaltyInfo(1, salePrice);
+            const royaltyFee1 = salePrice.mul(zone1RoyaltyRate).div(Constant.COMMON_RATE_MAX_FRACTION);
+            expect(royaltyInfo1[0]).to.equal(feeReceiver.address);
+            expect(royaltyInfo1[1]).to.equal(royaltyFee1);
+
+            const royaltyInfo2 = await estateMortgageToken.royaltyInfo(2, salePrice);
+            const royaltyFee2 = salePrice.mul(zone2RoyaltyRate).div(Constant.COMMON_RATE_MAX_FRACTION);
+            expect(royaltyInfo2[0]).to.equal(feeReceiver.address);
+            expect(royaltyInfo2[1]).to.equal(royaltyFee2);
+        });
+
+        it('3.2.11.2. Revert with invalid token id', async () => {
+            const fixture = await beforeEstateMortgageTokenTest({
+                listSampleCurrencies: true,
+                listEstateToken: true,
+                listSampleMortgage: true,
+            });
+            const { estateMortgageToken } = fixture;
+
+            const salePrice = ethers.utils.parseEther('10');
+
+            await expect(estateMortgageToken.royaltyInfo(0, salePrice))
+                .to.be.revertedWith("ERC721: invalid token ID");
+            await expect(estateMortgageToken.royaltyInfo(100, salePrice))
+                .to.be.revertedWith("ERC721: invalid token ID");
+
+            await expect(estateMortgageToken.royaltyInfo(1, salePrice))
+                .to.be.revertedWith("ERC721: invalid token ID");
+            await expect(estateMortgageToken.royaltyInfo(2, salePrice))
+                .to.be.revertedWith("ERC721: invalid token ID");
+        });
+    });
+
+    describe('3.2.13. supportsInterface(bytes4)', () => {
+        it('3.2.13.1. Return true for appropriate interface', async () => {
+            const fixture = await beforeEstateMortgageTokenTest();
+            const { estateMortgageToken } = fixture;
+
+            expect(await estateMortgageToken.supportsInterface(getBytes4Hex(IERC165UpgradeableInterfaceId))).to.equal(true);
+            expect(await estateMortgageToken.supportsInterface(getBytes4Hex(IEstateTokenReceiverInterfaceId))).to.equal(true);
+            expect(await estateMortgageToken.supportsInterface(getBytes4Hex(IERC721MetadataUpgradeableInterfaceId))).to.equal(true);
+            expect(await estateMortgageToken.supportsInterface(getBytes4Hex(IMortgageTokenInterfaceId))).to.equal(true);
+            expect(await estateMortgageToken.supportsInterface(getBytes4Hex(IERC2981UpgradeableInterfaceId))).to.equal(true);
+        });
+    });
+
+
+    /* --- Command --- */
+    describe('3.2.4. borrow(uint256,uint256,uint256,uint256,address,uint40)', async () => {
         async function beforeBorrowTest(fixture: EstateMortgageTokenFixture): Promise<{ defaultParams: EstateBorrowParams }> {
             return {
                 defaultParams: {
@@ -1560,7 +1783,7 @@ describe('3.2. EstateMortgageToken', async () => {
         });
     });
 
-    describe('3.2.7. safeLend(uint256, uint256)', async () => {
+    describe('3.2.7. safeLend(uint256,uint256)', async () => {
         it('3.2.7.1. Safe lend successfully', async () => {
             const fixture = await beforeEstateMortgageTokenTest({
                 listSampleCurrencies: true,
@@ -1886,7 +2109,7 @@ describe('3.2. EstateMortgageToken', async () => {
         });
     });
     
-    describe('3.2.9. safeRepay(uint256, uint256)', () => {
+    describe('3.2.9. safeRepay(uint256,uint256)', () => {
         it('3.2.9.1. Safe repay successfully', async () => {
             const fixture = await beforeEstateMortgageTokenTest({
                 listSampleCurrencies: true,
@@ -2126,89 +2349,6 @@ describe('3.2. EstateMortgageToken', async () => {
 
             await expect(getMortgageTokenTx_Foreclose(estateMortgageToken, user, { mortgageId: BigNumber.from(1) }))
                 .to.be.revertedWithCustomError(estateMortgageToken, "InvalidForeclosing");
-        });
-    });
-
-    describe('3.2.11. royaltyInfo(uint256, uint256)', () => {
-        it('3.2.11.1. Return correct royalty info', async () => {
-            const fixture = await beforeEstateMortgageTokenTest({
-                listSampleCurrencies: true,
-                listEstateToken: true,
-                listSampleMortgage: true,
-                listSampleLending: true,
-            });
-            const { deployer, estateMortgageToken, feeReceiver, estateToken, admin, admins, zone1, zone2 } = fixture;
-
-            const zone1RoyaltyRate = ethers.utils.parseEther('0.1');
-            const zone2RoyaltyRate = ethers.utils.parseEther('0.2');
-            
-            await callTransaction(getEstateTokenTxByInput_UpdateZoneRoyaltyRate(
-                estateToken as any,
-                deployer,
-                {
-                    zone: zone1,
-                    royaltyRate: zone1RoyaltyRate,
-                },
-                admin,
-                admins,
-            ));
-            
-            await callTransaction(getEstateTokenTxByInput_UpdateZoneRoyaltyRate(
-                estateToken as any,
-                deployer,
-                {
-                    zone: zone2,
-                    royaltyRate: zone2RoyaltyRate,
-                },
-                admin,
-                admins,
-            ));
-
-            const salePrice = ethers.BigNumber.from(1e6);
-            
-            const royaltyInfo1 = await estateMortgageToken.royaltyInfo(1, salePrice);
-            const royaltyFee1 = salePrice.mul(zone1RoyaltyRate).div(Constant.COMMON_RATE_MAX_FRACTION);
-            expect(royaltyInfo1[0]).to.equal(feeReceiver.address);
-            expect(royaltyInfo1[1]).to.equal(royaltyFee1);
-
-            const royaltyInfo2 = await estateMortgageToken.royaltyInfo(2, salePrice);
-            const royaltyFee2 = salePrice.mul(zone2RoyaltyRate).div(Constant.COMMON_RATE_MAX_FRACTION);
-            expect(royaltyInfo2[0]).to.equal(feeReceiver.address);
-            expect(royaltyInfo2[1]).to.equal(royaltyFee2);
-        });
-
-        it('3.2.11.2. Revert with invalid token id', async () => {
-            const fixture = await beforeEstateMortgageTokenTest({
-                listSampleCurrencies: true,
-                listEstateToken: true,
-                listSampleMortgage: true,
-            });
-            const { estateMortgageToken } = fixture;
-
-            const salePrice = ethers.utils.parseEther('10');
-
-            await expect(estateMortgageToken.royaltyInfo(0, salePrice))
-                .to.be.revertedWith("ERC721: invalid token ID");
-            await expect(estateMortgageToken.royaltyInfo(100, salePrice))
-                .to.be.revertedWith("ERC721: invalid token ID");
-
-            await expect(estateMortgageToken.royaltyInfo(1, salePrice))
-                .to.be.revertedWith("ERC721: invalid token ID");
-            await expect(estateMortgageToken.royaltyInfo(2, salePrice))
-                .to.be.revertedWith("ERC721: invalid token ID");
-        });
-    });
-
-    describe('3.2.13. supportsInterface(bytes4)', () => {
-        it('3.2.13.1. Return true for appropriate interface', async () => {
-            const fixture = await beforeEstateMortgageTokenTest();
-            const { estateMortgageToken } = fixture;
-
-            expect(await estateMortgageToken.supportsInterface(getBytes4Hex(IERC165UpgradeableInterfaceId))).to.equal(true);
-            expect(await estateMortgageToken.supportsInterface(getBytes4Hex(IEstateTokenReceiverInterfaceId))).to.equal(true);
-            expect(await estateMortgageToken.supportsInterface(getBytes4Hex(IERC721MetadataUpgradeableInterfaceId))).to.equal(true);
-            expect(await estateMortgageToken.supportsInterface(getBytes4Hex(IMortgageTokenInterfaceId))).to.equal(true);
-            expect(await estateMortgageToken.supportsInterface(getBytes4Hex(IERC2981UpgradeableInterfaceId))).to.equal(true);
         });
     });
 });
