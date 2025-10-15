@@ -234,6 +234,52 @@ ReentrancyGuardUpgradeable {
     }
 
 
+    /**
+     *  @return Royalty rate of the token identifier.
+     */
+    function getRoyaltyRate(
+        uint256
+    ) external view returns (Rate memory) {
+        return Rate(
+            royaltyRate,
+            CommonConstant.RATE_DECIMALS
+        );
+    }
+
+    /**
+     *          Name            Description
+     *  @param  _tokenId        Token identifier.
+     *
+     *  @return Token URI.
+     */
+    function tokenURI(
+        uint256 _tokenId
+    ) public view override(
+        IERC721MetadataUpgradeable,
+        ERC721Upgradeable
+    ) returns (string memory) {
+        return super.tokenURI(_tokenId);
+    }
+
+    /**
+     *          Name            Description
+     *  @param  _interfaceId    Interface identifier.
+     *
+     *  @return Whether this contract implements the interface.
+     */
+    function supportsInterface(
+        bytes4 _interfaceId
+    ) public view override(
+        IERC165Upgradeable,
+        ERC721Upgradeable
+    ) returns (bool) {
+        return _interfaceId == type(IRoyaltyRateProposer).interfaceId
+            || _interfaceId == type(IERC2981Upgradeable).interfaceId
+            || _interfaceId == type(IERC4906Upgradeable).interfaceId
+            || super.supportsInterface(_interfaceId);
+    }
+
+
     /* --- Command --- */
     /**
      *  @notice Register a broker in a zone.
@@ -352,52 +398,6 @@ ReentrancyGuardUpgradeable {
             _broker,
             rate
         );
-    }
-
-
-    /**
-     *  @return Royalty rate of the token identifier.
-     */
-    function getRoyaltyRate(
-        uint256
-    ) external view returns (Rate memory) {
-        return Rate(
-            royaltyRate,
-            CommonConstant.RATE_DECIMALS
-        );
-    }
-
-    /**
-     *          Name            Description
-     *  @param  _tokenId        Token identifier.
-     *
-     *  @return Token URI.
-     */
-    function tokenURI(
-        uint256 _tokenId
-    ) public view override(
-        IERC721MetadataUpgradeable,
-        ERC721Upgradeable
-    ) returns (string memory) {
-        return super.tokenURI(_tokenId);
-    }
-
-    /**
-     *          Name            Description
-     *  @param  _interfaceId    Interface identifier.
-     *
-     *  @return Whether this contract implements the interface.
-     */
-    function supportsInterface(
-        bytes4 _interfaceId
-    ) public view override(
-        IERC165Upgradeable,
-        ERC721Upgradeable
-    ) returns (bool) {
-        return _interfaceId == type(IRoyaltyRateProposer).interfaceId
-            || _interfaceId == type(IERC2981Upgradeable).interfaceId
-            || _interfaceId == type(IERC4906Upgradeable).interfaceId
-            || super.supportsInterface(_interfaceId);
     }
 
 

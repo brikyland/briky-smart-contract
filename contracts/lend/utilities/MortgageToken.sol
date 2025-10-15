@@ -196,6 +196,41 @@ ReentrancyGuardUpgradeable {
     }
 
 
+    /**
+     *          Name            Description
+     *  @param  _tokenId        Token identifier.
+     * 
+     *  @return Token URI.
+     */
+    function tokenURI(
+        uint256 _tokenId
+    ) public view override(
+        IERC721MetadataUpgradeable,
+        ERC721Upgradeable
+    ) returns (string memory) {
+        return super.tokenURI(_tokenId);
+    }
+
+
+    /**
+     *          Name            Description
+     *  @param  _interfaceId    Interface identifier.
+     * 
+     *  @return Whether this contract supports the interface.
+     */
+    function supportsInterface(
+        bytes4 _interfaceId
+    ) public view virtual override(
+        IERC165Upgradeable,
+        ERC721Upgradeable
+    ) returns (bool) {
+        return _interfaceId == type(IMortgageToken).interfaceId 
+            || _interfaceId == type(IERC2981Upgradeable).interfaceId
+            || _interfaceId == type(IERC4906Upgradeable).interfaceId
+            || super.supportsInterface(_interfaceId);
+    }
+
+
     /* --- Command --- */
     /**
      *  @notice Cancel a mortgage.
@@ -348,40 +383,6 @@ ReentrancyGuardUpgradeable {
         );
 
         emit MortgageForeclosure(_mortgageId, receiver);
-    }
-
-    /**
-     *          Name            Description
-     *  @param  _tokenId        Token identifier.
-     * 
-     *  @return Token URI.
-     */
-    function tokenURI(
-        uint256 _tokenId
-    ) public view override(
-        IERC721MetadataUpgradeable,
-        ERC721Upgradeable
-    ) returns (string memory) {
-        return super.tokenURI(_tokenId);
-    }
-
-
-    /**
-     *          Name            Description
-     *  @param  _interfaceId    Interface identifier.
-     * 
-     *  @return Whether this contract supports the interface.
-     */
-    function supportsInterface(
-        bytes4 _interfaceId
-    ) public view virtual override(
-        IERC165Upgradeable,
-        ERC721Upgradeable
-    ) returns (bool) {
-        return _interfaceId == type(IMortgageToken).interfaceId 
-            || _interfaceId == type(IERC2981Upgradeable).interfaceId
-            || _interfaceId == type(IERC4906Upgradeable).interfaceId
-            || super.supportsInterface(_interfaceId);
     }
 
 

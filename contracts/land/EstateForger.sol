@@ -279,6 +279,64 @@ ReentrancyGuardUpgradeable {
         return requests[_requestId];
     }
 
+    /**
+     *          Name            Description
+     *  @param  _requestId      Request identifier.
+     *
+     *  @return Whether the request has been confirmed and tokenized.
+     */
+    function isTokenized(
+        uint256 _requestId
+    ) external view returns (bool) {
+        return requests[_requestId].estate.estateId != 0;
+    }
+
+    /**
+     *          Name            Description
+     *  @param  _account        Account address.
+     *  @param  _requestId      Request identifier.
+     *  @param  _at             Reference timestamp.
+     *
+     *  @return Allocation of the account at the reference timestamp.
+     */
+    function allocationOfAt(
+        address _account,
+        uint256 _requestId,
+        uint256 _at
+    ) external view
+    validRequest(_requestId)
+    returns (uint256) {
+        if (_at > block.timestamp) {
+            revert InvalidTimestamp();
+        }
+        if (requests[_requestId].estate.estateId == 0) {
+            revert NotTokenized();
+        }
+        uint256 withdrawAt = withdrawAt[_requestId][_account];
+        /// @dev    Allocated tokens of the message sender only stays in this contract after the tokenization and before the
+        ///         withdrawal.
+        return _at >= requests[_requestId].agenda.confirmAt && (withdrawAt == 0 || _at < withdrawAt)
+            ? deposits[_requestId][_account] * 10 ** IEstateToken(estateToken).decimals()
+            : 0;
+    }
+
+    /**
+     *          Name                Description
+     *  @param  _interfaceId        Interface identifier.
+     *
+     *  @return Whether this contract supports the interface.
+     */
+    function supportsInterface(
+        bytes4 _interfaceId
+    ) public view virtual override(
+        IERC165Upgradeable,
+        ERC165Upgradeable
+    ) returns (bool) {
+        return _interfaceId == type(IEstateTokenizer).interfaceId
+            || _interfaceId == type(IEstateTokenReceiver).interfaceId
+            || super.supportsInterface(_interfaceId);
+    }
+
 
     /* --- Command --- */
     /**
@@ -896,64 +954,6 @@ ReentrancyGuardUpgradeable {
         );
 
         return amount;
-    }
-
-    /**
-     *          Name            Description
-     *  @param  _requestId      Request identifier.
-     *
-     *  @return Whether the request has been confirmed and tokenized.
-     */
-    function isTokenized(
-        uint256 _requestId
-    ) external view returns (bool) {
-        return requests[_requestId].estate.estateId != 0;
-    }
-
-    /**
-     *          Name            Description
-     *  @param  _account        Account address.
-     *  @param  _requestId      Request identifier.
-     *  @param  _at             Reference timestamp.
-     *
-     *  @return Allocation of the account at the reference timestamp.
-     */
-    function allocationOfAt(
-        address _account,
-        uint256 _requestId,
-        uint256 _at
-    ) external view
-    validRequest(_requestId)
-    returns (uint256) {
-        if (_at > block.timestamp) {
-            revert InvalidTimestamp();
-        }
-        if (requests[_requestId].estate.estateId == 0) {
-            revert NotTokenized();
-        }
-        uint256 withdrawAt = withdrawAt[_requestId][_account];
-        /// @dev    Allocated tokens of the message sender only stays in this contract after the tokenization and before the
-        ///         withdrawal.
-        return _at >= requests[_requestId].agenda.confirmAt && (withdrawAt == 0 || _at < withdrawAt)
-            ? deposits[_requestId][_account] * 10 ** IEstateToken(estateToken).decimals()
-            : 0;
-    }
-
-    /**
-     *          Name                Description
-     *  @param  _interfaceId        Interface identifier.
-     *
-     *  @return Whether this contract supports the interface.
-     */
-    function supportsInterface(
-        bytes4 _interfaceId
-    ) public view virtual override(
-        IERC165Upgradeable,
-        ERC165Upgradeable
-    ) returns (bool) {
-        return _interfaceId == type(IEstateTokenizer).interfaceId
-            || _interfaceId == type(IEstateTokenReceiver).interfaceId
-            || super.supportsInterface(_interfaceId);
     }
 
 
