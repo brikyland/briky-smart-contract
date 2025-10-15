@@ -1,18 +1,119 @@
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
-import { Admin, Currency, Treasury, MockStakeToken, MockPrimaryToken } from '@typechain-types';
-import { callTransaction, getSignatures, prepareERC20, prepareNativeToken } from '@utils/blockchain';
-import { deployAdmin } from '@utils/deployments/common/admin';
-import { Constant } from '@tests/test.constant';
+
+// @defi-wonderland/smock
+import {
+    MockContract,
+    smock
+} from '@defi-wonderland/smock';
+
+// @nomicfoundation/hardhat-network-helpers
 import { loadFixture, time } from '@nomicfoundation/hardhat-network-helpers';
-import { deployCurrency } from '@utils/deployments/common/currency';
-import { MockContract, smock } from '@defi-wonderland/smock';
+
+// @tests
+import { Constant } from '@tests/test.constant';
+
+// @tests/liquidity
 import { Initialization as LiquidityInitialization } from '@tests/liquidity/test.initialization';
-import { UnlockForBackerRoundParams, UnlockForBackerRoundParamsInput, UnlockForCoreTeamParams, UnlockForCoreTeamParamsInput, UnlockForMarketMakerParamsInput, UnlockForMarketMakerParams, UnlockForPrivateSale1Params, UnlockForPrivateSale1ParamsInput, UnlockForPrivateSale2Params, UnlockForPrivateSale2ParamsInput, UnlockForPublicSaleParams, UnlockForPublicSaleParamsInput, UnlockForSeedRoundParams, UnlockForSeedRoundParamsInput, UpdateStakeTokensParams, UpdateStakeTokensParamsInput, UpdateTreasuryParams, UpdateTreasuryParamsInput, UnlockForExternalTreasuryParamsInput, UnlockForExternalTreasuryParams } from '@utils/models/liquidity/primaryToken';
-import { getUnlockForBackerRoundSignatures, getUnlockForCoreTeamSignatures, getUnlockForExternalTreasurySignatures, getUnlockForMarketMakerSignatures, getUnlockForPrivateSale1Signatures, getUnlockForPrivateSale2Signatures, getUnlockForPublicSaleSignatures, getUnlockForSeedRoundSignatures, getUpdateStakeTokensSignatures, getUpdateTreasurySignatures } from '@utils/signatures/liquidity/primaryToken';
-import { getCallPrimaryTokenTx_ContributeLiquidityFromStakeToken, getCallPrimaryTokenTx_MintForStake, getPrimaryTokenTx_ContributeLiquidityFromBackerRound, getPrimaryTokenTx_ContributeLiquidityFromExternalTreasury, getPrimaryTokenTx_ContributeLiquidityFromMarketMaker, getPrimaryTokenTx_ContributeLiquidityFromPrivateSale1, getPrimaryTokenTx_ContributeLiquidityFromPrivateSale2, getPrimaryTokenTx_ContributeLiquidityFromPublicSale, getPrimaryTokenTx_ContributeLiquidityFromSeedRound, getPrimaryTokenTx_Liquidate, getPrimaryTokenTx_MintForStake, getPrimaryTokenTx_UnlockForBackerRound, getPrimaryTokenTx_UnlockForCoreTeam, getPrimaryTokenTx_UnlockForExternalTreasury, getPrimaryTokenTx_UnlockForMarketMaker, getPrimaryTokenTx_UnlockForPrivateSale1, getPrimaryTokenTx_UnlockForPrivateSale2, getPrimaryTokenTx_UnlockForPublicSale, getPrimaryTokenTx_UnlockForSeedRound, getPrimaryTokenTx_UpdateStakeTokens, getPrimaryTokenTx_UpdateTreasury, getPrimaryTokenTxByInput_UnlockForBackerRound, getPrimaryTokenTxByInput_UnlockForCoreTeam, getPrimaryTokenTxByInput_UnlockForExternalTreasury, getPrimaryTokenTxByInput_UnlockForMarketMaker, getPrimaryTokenTxByInput_UnlockForPrivateSale1, getPrimaryTokenTxByInput_UnlockForPrivateSale2, getPrimaryTokenTxByInput_UnlockForPublicSale, getPrimaryTokenTxByInput_UnlockForSeedRound, getPrimaryTokenTxByInput_UpdateStakeTokens, getPrimaryTokenTxByInput_UpdateTreasury } from '@utils/transaction/liquidity/primaryToken';
+
+// @typechain-types
+import {
+    Admin,
+    Currency,
+    Treasury,
+    MockStakeToken,
+    MockPrimaryToken
+} from '@typechain-types';
+
+// @utils
+import {
+    callTransaction,
+    prepareERC20
+} from '@utils/blockchain';
+
+// @utils/deployments/common
+import { deployAdmin } from '@utils/deployments/common/admin';
+import { deployCurrency } from '@utils/deployments/common/currency';
+
+// @utils/deployments/mock
 import { deployProxyCaller } from '@utils/deployments/mock/proxyCaller';
+
+// @utils/models/liquidity
+import {
+    UnlockForBackerRoundParams,
+    UnlockForBackerRoundParamsInput,
+    UnlockForCoreTeamParams,
+    UnlockForCoreTeamParamsInput,
+    UnlockForMarketMakerParamsInput,
+    UnlockForMarketMakerParams,
+    UnlockForPrivateSale1Params,
+    UnlockForPrivateSale1ParamsInput,
+    UnlockForPrivateSale2Params,
+    UnlockForPrivateSale2ParamsInput,
+    UnlockForPublicSaleParams,
+    UnlockForPublicSaleParamsInput,
+    UnlockForSeedRoundParams,
+    UnlockForSeedRoundParamsInput,
+    UpdateStakeTokensParams,
+    UpdateStakeTokensParamsInput,
+    UpdateTreasuryParams,
+    UpdateTreasuryParamsInput,
+    UnlockForExternalTreasuryParamsInput,
+    UnlockForExternalTreasuryParams
+} from '@utils/models/liquidity/primaryToken';
+
+// @utils/signatures/liquidity
+import {
+    getUnlockForBackerRoundSignatures,
+    getUnlockForCoreTeamSignatures,
+    getUnlockForExternalTreasurySignatures,
+    getUnlockForMarketMakerSignatures,
+    getUnlockForPrivateSale1Signatures,
+    getUnlockForPrivateSale2Signatures,
+    getUnlockForPublicSaleSignatures,
+    getUnlockForSeedRoundSignatures,
+    getUpdateStakeTokensSignatures,
+    getUpdateTreasurySignatures
+} from '@utils/signatures/liquidity/primaryToken';
+
+// @utils/transaction/common
 import { getPausableTxByInput_Pause } from '@utils/transaction/common/pausable';
+
+// @utils/transaction/liquidity
+import {
+    getCallPrimaryTokenTx_ContributeLiquidityFromStakeToken,
+    getCallPrimaryTokenTx_MintForStake,
+    getPrimaryTokenTx_ContributeLiquidityFromBackerRound,
+    getPrimaryTokenTx_ContributeLiquidityFromExternalTreasury,
+    getPrimaryTokenTx_ContributeLiquidityFromMarketMaker,
+    getPrimaryTokenTx_ContributeLiquidityFromPrivateSale1,
+    getPrimaryTokenTx_ContributeLiquidityFromPrivateSale2,
+    getPrimaryTokenTx_ContributeLiquidityFromPublicSale,
+    getPrimaryTokenTx_ContributeLiquidityFromSeedRound,
+    getPrimaryTokenTx_Liquidate,
+    getPrimaryTokenTx_MintForStake,
+    getPrimaryTokenTx_UnlockForBackerRound,
+    getPrimaryTokenTx_UnlockForCoreTeam,
+    getPrimaryTokenTx_UnlockForExternalTreasury,
+    getPrimaryTokenTx_UnlockForMarketMaker,
+    getPrimaryTokenTx_UnlockForPrivateSale1,
+    getPrimaryTokenTx_UnlockForPrivateSale2,
+    getPrimaryTokenTx_UnlockForPublicSale,
+    getPrimaryTokenTx_UnlockForSeedRound,
+    getPrimaryTokenTx_UpdateStakeTokens,
+    getPrimaryTokenTx_UpdateTreasury,
+    getPrimaryTokenTxByInput_UnlockForBackerRound,
+    getPrimaryTokenTxByInput_UnlockForCoreTeam,
+    getPrimaryTokenTxByInput_UnlockForExternalTreasury,
+    getPrimaryTokenTxByInput_UnlockForMarketMaker,
+    getPrimaryTokenTxByInput_UnlockForPrivateSale1,
+    getPrimaryTokenTxByInput_UnlockForPrivateSale2,
+    getPrimaryTokenTxByInput_UnlockForPublicSale,
+    getPrimaryTokenTxByInput_UnlockForSeedRound,
+    getPrimaryTokenTxByInput_UpdateStakeTokens,
+    getPrimaryTokenTxByInput_UpdateTreasury
+} from '@utils/transaction/liquidity/primaryToken';
+
 
 interface PrimaryTokenFixture {
     deployer: any;
@@ -279,7 +380,9 @@ describe('4.4. PrimaryToken', async () => {
         return fixture;
     }
 
-    describe('4.4.1. initialize(address, string, string, uint256)', async () => {
+
+    /* --- Initialization --- */
+    describe('4.4.1. initialize(address,string,string,uint256)', async () => {
         it('4.4.1.1. Deploy successfully', async () => {
             const { primaryToken, admin, liquidationUnlockedAt } = await setupBeforeTest();
 
@@ -295,6 +398,8 @@ describe('4.4. PrimaryToken', async () => {
         });
     });
 
+
+    /* --- Administration --- */
     describe('4.4.2. updateTreasury(address)', async () => {
         it('4.4.2.1. Update treasury successfully', async () => {
             const { deployer, admin, admins, primaryToken, treasury } = await setupBeforeTest();
@@ -437,63 +542,7 @@ describe('4.4. PrimaryToken', async () => {
         });        
     });
 
-    describe('4.4.4. totalStake()', async () => {
-        it('4.4.4.1. Return correct total stake', async () => {
-            const { primaryToken, stakeToken1, stakeToken2, stakeToken3 } = await setupBeforeTest({
-                updateStakeTokens: true,
-            });            
-
-            expect(await primaryToken.totalStake()).to.equal(0);
-
-            stakeToken1.totalSupply.returns(ethers.utils.parseEther('100'));
-            stakeToken2.totalSupply.returns(ethers.utils.parseEther('200'));
-            stakeToken3.totalSupply.returns(ethers.utils.parseEther('300'));
-
-            expect(await primaryToken.totalStake()).to.equal(ethers.utils.parseEther('600'));
-
-            stakeToken1.totalSupply.reset();
-            stakeToken2.totalSupply.reset();
-            stakeToken3.totalSupply.reset();
-        });
-    });
-
-    describe('4.4.5. isStakeRewardingCulminated(address)', async () => {        
-        it('4.4.5.1. Return corrent value', async () => {
-            const { primaryToken, stakeToken1, stakeToken2, stakeToken3 } = await setupBeforeTest({
-                updateStakeTokens: true,
-            });
-
-            expect(await primaryToken.isStakeRewardingCulminated(stakeToken1.address)).to.equal(false);
-            expect(await primaryToken.isStakeRewardingCulminated(stakeToken2.address)).to.equal(false);
-            expect(await primaryToken.isStakeRewardingCulminated(stakeToken3.address)).to.equal(false);
-            
-            primaryToken.setVariable('stakeToken1Waves', Constant.PRIMARY_TOKEN_STAKE_1_CULMINATING_WAVE);
-            expect(await primaryToken.isStakeRewardingCulminated(stakeToken1.address)).to.equal(true);
-            expect(await primaryToken.isStakeRewardingCulminated(stakeToken2.address)).to.equal(false);
-            expect(await primaryToken.isStakeRewardingCulminated(stakeToken3.address)).to.equal(false);
-
-            primaryToken.setVariable('stakeToken2Waves', Constant.PRIMARY_TOKEN_STAKE_2_CULMINATING_WAVE);
-            expect(await primaryToken.isStakeRewardingCulminated(stakeToken1.address)).to.equal(true);
-            expect(await primaryToken.isStakeRewardingCulminated(stakeToken2.address)).to.equal(true);
-            expect(await primaryToken.isStakeRewardingCulminated(stakeToken3.address)).to.equal(false);
-
-            primaryToken.setVariable('stakeToken3Waves', Constant.PRIMARY_TOKEN_STAKE_3_CULMINATING_WAVE);
-            expect(await primaryToken.isStakeRewardingCulminated(stakeToken1.address)).to.equal(true);
-            expect(await primaryToken.isStakeRewardingCulminated(stakeToken2.address)).to.equal(true);
-            expect(await primaryToken.isStakeRewardingCulminated(stakeToken3.address)).to.equal(true);
-        });
-
-        it('4.4.5.2. Revert with unknown stake token', async () => {
-            const { primaryToken } = await setupBeforeTest({
-                updateStakeTokens: true,
-            });
-
-            await expect(primaryToken.isStakeRewardingCulminated(ethers.constants.AddressZero))
-                .to.be.revertedWithCustomError(primaryToken, 'InvalidStakeToken');
-        });
-    });
-
-    describe('4.4.6. unlockForBackerRound(address, bytes[])', async () => {
+    describe('4.4.6. unlockForBackerRound(address,bytes[])', async () => {
         it('4.4.6.1. Unlock for backer round successfully', async () => {
             const { primaryToken, deployer, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
@@ -551,7 +600,7 @@ describe('4.4. PrimaryToken', async () => {
         });
     });
 
-    describe('4.4.7. unlockForSeedRound(address, bytes[])', async () => {
+    describe('4.4.7. unlockForSeedRound(address,bytes[])', async () => {
         it('4.4.7.1. Unlock for seed round successfully', async () => {
             const { primaryToken, deployer, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
@@ -609,7 +658,7 @@ describe('4.4. PrimaryToken', async () => {
         });
     });
 
-    describe('4.4.8. unlockForPrivateSale1(address, bytes[])', async () => {
+    describe('4.4.8. unlockForPrivateSale1(address,bytes[])', async () => {
         it('4.4.8.1. Unlock for private sale 1 successfully', async () => {
             const { primaryToken, deployer, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
@@ -667,7 +716,7 @@ describe('4.4. PrimaryToken', async () => {
         });
     });
 
-    describe('4.4.9. unlockForPrivateSale2(address, bytes[])', async () => {
+    describe('4.4.9. unlockForPrivateSale2(address,bytes[])', async () => {
         it('4.4.9.1. Unlock for private sale 2 successfully', async () => {
             const { primaryToken, deployer, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
@@ -725,7 +774,7 @@ describe('4.4. PrimaryToken', async () => {
         });
     });
 
-    describe('4.4.10. unlockForPublicSale(address, bytes[])', async () => {
+    describe('4.4.10. unlockForPublicSale(address,bytes[])', async () => {
         it('4.4.10.1. Unlock for public sale successfully', async () => {
             const { primaryToken, deployer, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
@@ -783,7 +832,7 @@ describe('4.4. PrimaryToken', async () => {
         });
     });
 
-    describe('4.4.11. unlockForCoreTeam(address, bytes[])', async () => {
+    describe('4.4.11. unlockForCoreTeam(address,bytes[])', async () => {
         it('4.4.11.1. Unlock for core team successfully', async () => {
             const { primaryToken, deployer, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
@@ -841,7 +890,7 @@ describe('4.4. PrimaryToken', async () => {
         });
     });
 
-    describe('4.4.12. unlockForMarketMaker(address, bytes[])', async () => {
+    describe('4.4.12. unlockForMarketMaker(address,bytes[])', async () => {
         it('4.4.12.1. Unlock for market maker successfully', async () => {
             const { primaryToken, deployer, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
@@ -899,7 +948,7 @@ describe('4.4. PrimaryToken', async () => {
         });
     });
 
-    describe('4.4.13. unlockForExternalTreasury(address, bytes[])', async () => {
+    describe('4.4.13. unlockForExternalTreasury(address,bytes[])', async () => {
         it('4.4.13.1. Unlock for external treasury successfully', async () => {
             const { primaryToken, deployer, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
@@ -957,6 +1006,66 @@ describe('4.4. PrimaryToken', async () => {
         });
     });
 
+
+    /* --- Query --- */
+    describe('4.4.4. totalStake()', async () => {
+        it('4.4.4.1. Return correct total stake', async () => {
+            const { primaryToken, stakeToken1, stakeToken2, stakeToken3 } = await setupBeforeTest({
+                updateStakeTokens: true,
+            });            
+
+            expect(await primaryToken.totalStake()).to.equal(0);
+
+            stakeToken1.totalSupply.returns(ethers.utils.parseEther('100'));
+            stakeToken2.totalSupply.returns(ethers.utils.parseEther('200'));
+            stakeToken3.totalSupply.returns(ethers.utils.parseEther('300'));
+
+            expect(await primaryToken.totalStake()).to.equal(ethers.utils.parseEther('600'));
+
+            stakeToken1.totalSupply.reset();
+            stakeToken2.totalSupply.reset();
+            stakeToken3.totalSupply.reset();
+        });
+    });
+
+    describe('4.4.5. isStakeRewardingCulminated(address)', async () => {
+        it('4.4.5.1. Return corrent value', async () => {
+            const { primaryToken, stakeToken1, stakeToken2, stakeToken3 } = await setupBeforeTest({
+                updateStakeTokens: true,
+            });
+
+            expect(await primaryToken.isStakeRewardingCulminated(stakeToken1.address)).to.equal(false);
+            expect(await primaryToken.isStakeRewardingCulminated(stakeToken2.address)).to.equal(false);
+            expect(await primaryToken.isStakeRewardingCulminated(stakeToken3.address)).to.equal(false);
+            
+            primaryToken.setVariable('stakeToken1Waves', Constant.PRIMARY_TOKEN_STAKE_1_CULMINATING_WAVE);
+            expect(await primaryToken.isStakeRewardingCulminated(stakeToken1.address)).to.equal(true);
+            expect(await primaryToken.isStakeRewardingCulminated(stakeToken2.address)).to.equal(false);
+            expect(await primaryToken.isStakeRewardingCulminated(stakeToken3.address)).to.equal(false);
+
+            primaryToken.setVariable('stakeToken2Waves', Constant.PRIMARY_TOKEN_STAKE_2_CULMINATING_WAVE);
+            expect(await primaryToken.isStakeRewardingCulminated(stakeToken1.address)).to.equal(true);
+            expect(await primaryToken.isStakeRewardingCulminated(stakeToken2.address)).to.equal(true);
+            expect(await primaryToken.isStakeRewardingCulminated(stakeToken3.address)).to.equal(false);
+
+            primaryToken.setVariable('stakeToken3Waves', Constant.PRIMARY_TOKEN_STAKE_3_CULMINATING_WAVE);
+            expect(await primaryToken.isStakeRewardingCulminated(stakeToken1.address)).to.equal(true);
+            expect(await primaryToken.isStakeRewardingCulminated(stakeToken2.address)).to.equal(true);
+            expect(await primaryToken.isStakeRewardingCulminated(stakeToken3.address)).to.equal(true);
+        });
+
+        it('4.4.5.2. Revert with unknown stake token', async () => {
+            const { primaryToken } = await setupBeforeTest({
+                updateStakeTokens: true,
+            });
+
+            await expect(primaryToken.isStakeRewardingCulminated(ethers.constants.AddressZero))
+                .to.be.revertedWithCustomError(primaryToken, 'InvalidStakeToken');
+        });
+    });
+
+
+    /* --- Command --- */
     describe('4.4.14. contributeLiquidityFromBackerRound(uint256)', async () => {
         it('4.4.14.1. Contribute liquidity from backer round successfully', async () => {
             const { primaryToken, contributor, currency, treasury } = await setupBeforeTest({

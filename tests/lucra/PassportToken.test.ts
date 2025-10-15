@@ -1,29 +1,95 @@
 import { expect } from 'chai';
-import { ethers, upgrades } from 'hardhat';
+import {
+    BigNumber,
+    Contract
+} from 'ethers';
+import {
+    ethers,
+    upgrades
+} from 'hardhat';
+
+// @nomicfoundation/hardhat-network-helpers
+import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
+
+// @typechain-types
 import {
     Admin,
     PassportToken,
     Currency,
 } from '@typechain-types';
-import { callTransaction, getSignatures, randomWallet, testReentrancy } from '@utils/blockchain';
-import { Constant } from '@tests/test.constant';
-import { deployAdmin } from '@utils/deployments/common/admin';
-import { deployPassportToken } from '@utils/deployments/lucra/passportToken';
-import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 
-import { BigNumber, Contract } from 'ethers';
-import { getBytes4Hex, getInterfaceID, structToObject } from '@utils/utils';
-import { Initialization } from './test.initialization';
-import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
+// @tests
+import {
+    IERC165UpgradeableInterfaceId,
+    IERC2981UpgradeableInterfaceId,
+    IERC4906UpgradeableInterfaceId,
+    IERC721MetadataUpgradeableInterfaceId,
+    IERC721UpgradeableInterfaceId,
+    IRoyaltyRateProposerInterfaceId
+} from '@tests/interfaces';
+import { Constant } from '@tests/test.constant';
+
+// @tests/lucra
+import { Initialization } from '@tests/lucra/test.initialization';
+
+// @utils
+import {
+    getBytes4Hex,
+    structToObject
+} from '@utils/utils';
+import {
+    callTransaction,
+    getSignatures,
+    randomWallet,
+    testReentrancy
+} from '@utils/blockchain';
+
+// @utils/deployments/common
+import { deployAdmin } from '@utils/deployments/common/admin';
 import { deployCurrency } from '@utils/deployments/common/currency';
+import { deployPassportToken } from '@utils/deployments/lucra/passportToken';
+
+// @utils/deployments/mock
+import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
-import { Rate } from '@utils/models/common/common';
-import { UpdateBaseURIParams, UpdateBaseURIParamsInput, UpdateFeeParams, UpdateFeeParamsInput, UpdateRoyaltyRateParams, UpdateRoyaltyRateParamsInput, WithdrawParams, WithdrawParamsInput } from '@utils/models/lucra/passportToken';
-import { getUpdateBaseURISignatures, getUpdateFeeSignatures, getUpdateRoyaltyRateSignatures, getWithdrawSignatures } from '@utils/signatures/lucra/passportToken';
-import { getPassportTokenTx_Mint, getPassportTokenTx_UpdateBaseURI, getPassportTokenTx_UpdateFee, getPassportTokenTx_UpdateRoyaltyRate, getPassportTokenTx_Withdraw, getPassportTokenTxByInput_UpdateBaseURI, getPassportTokenTxByInput_UpdateFee, getPassportTokenTxByInput_UpdateRoyaltyRate, getPassportTokenTxByInput_Withdraw } from '@utils/transaction/lucra/passportToken';
-import { IERC165UpgradeableInterfaceId, IERC2981UpgradeableInterfaceId, IERC4906UpgradeableInterfaceId, IERC721MetadataUpgradeableInterfaceId, IERC721UpgradeableInterfaceId, IRoyaltyRateProposerInterfaceId } from '@tests/interfaces';
+
+// @utils/models/lucra
+import {
+    UpdateBaseURIParams,
+    UpdateBaseURIParamsInput,
+    UpdateFeeParams,
+    UpdateFeeParamsInput,
+    UpdateRoyaltyRateParams,
+    UpdateRoyaltyRateParamsInput,
+    WithdrawParams,
+    WithdrawParamsInput
+} from '@utils/models/lucra/passportToken';
+
+// @utils/signatures/lucra
+import {
+    getUpdateBaseURISignatures,
+    getUpdateFeeSignatures,
+    getUpdateRoyaltyRateSignatures,
+    getWithdrawSignatures
+} from '@utils/signatures/lucra/passportToken';
+
+// @utils/transaction/common
 import { getPausableTxByInput_Pause } from '@utils/transaction/common/pausable';
+
+// @utils/transaction/lucra
+import {
+    getPassportTokenTx_Mint,
+    getPassportTokenTx_UpdateBaseURI,
+    getPassportTokenTx_UpdateFee,
+    getPassportTokenTx_UpdateRoyaltyRate,
+    getPassportTokenTx_Withdraw,
+    getPassportTokenTxByInput_UpdateBaseURI,
+    getPassportTokenTxByInput_UpdateFee,
+    getPassportTokenTxByInput_UpdateRoyaltyRate,
+    getPassportTokenTxByInput_Withdraw
+} from '@utils/transaction/lucra/passportToken';
+
 
 interface PassportTokenFixture {
     deployer: any;
@@ -111,7 +177,9 @@ describe('5.1. PassportToken', async () => {
         }
     }
 
-    describe('5.1.1. initialize(address, string, string, string, uint256, uint256)', async () => {
+
+    /* --- Initialization --- */
+    describe('5.1.1. initialize(address,string,string,string,uint256,uint256)', async () => {
         it('5.1.1.1. Deploy successfully', async () => {
             const { deployer, admin } = await beforePassportTokenTest();
 
@@ -178,7 +246,9 @@ describe('5.1. PassportToken', async () => {
         });
     });
 
-    describe('5.1.2. updateBaseURI(string, bytes[])', async () => {
+
+    /* --- Administration --- */
+    describe('5.1.2. updateBaseURI(string,bytes[])', async () => {
         it('5.1.2.1. Update base URI successfully', async () => {
             const { deployer, passportToken, admin, admins, minter1, minter2 } = await beforePassportTokenTest();
 
@@ -228,7 +298,7 @@ describe('5.1. PassportToken', async () => {
         });
     });
 
-    describe('5.1.3. updateFee(uint256, bytes[])', async () => {
+    describe('5.1.3. updateFee(uint256,bytes[])', async () => {
         it('5.1.3.1. Update fee successfully', async () => {
             const { deployer, passportToken, admin, admins } = await beforePassportTokenTest();
 
@@ -268,7 +338,7 @@ describe('5.1. PassportToken', async () => {
         });
     });
 
-    describe('5.1.4. updateRoyaltyRate(uint256, bytes[])', async () => {
+    describe('5.1.4. updateRoyaltyRate(uint256,bytes[])', async () => {
         it('5.1.4.1. Update royalty rate successfully with valid signatures', async () => {
             const { deployer, passportToken, admin, admins } = await beforePassportTokenTest();
 
@@ -327,7 +397,7 @@ describe('5.1. PassportToken', async () => {
         });
     });
 
-    describe('5.1.5. withdraw(address, address[], uint256[], bytes[])', async () => {
+    describe('5.1.5. withdraw(address,address[],uint256[],bytes[])', async () => {
         it('5.1.5.1. Withdraw native tokens successfully', async () => {
             const { deployer, admins, admin, passportToken } = await beforePassportTokenTest();
 
@@ -541,6 +611,23 @@ describe('5.1. PassportToken', async () => {
         });
     });
 
+
+    /* --- Query --- */
+    describe('5.1.7. supportsInterface(bytes4)', async () => {
+        it('5.1.7.1. Return true for appropriate interface', async () => {
+            const { passportToken } = await beforePassportTokenTest();
+
+            expect(await passportToken.supportsInterface(getBytes4Hex(IERC4906UpgradeableInterfaceId))).to.equal(true);
+            expect(await passportToken.supportsInterface(getBytes4Hex(IRoyaltyRateProposerInterfaceId))).to.equal(true);
+            expect(await passportToken.supportsInterface(getBytes4Hex(IERC2981UpgradeableInterfaceId))).to.equal(true);
+            expect(await passportToken.supportsInterface(getBytes4Hex(IERC165UpgradeableInterfaceId))).to.equal(true);
+            expect(await passportToken.supportsInterface(getBytes4Hex(IERC721UpgradeableInterfaceId))).to.equal(true);
+            expect(await passportToken.supportsInterface(getBytes4Hex(IERC721MetadataUpgradeableInterfaceId))).to.equal(true);
+        });
+    });
+
+
+    /* --- Command --- */
     describe('5.1.6. mint()', async () => {
         it('5.1.6.1. Mint successfully', async () => {
             const { passportToken, minter1, minter2 } = await beforePassportTokenTest();
@@ -593,7 +680,7 @@ describe('5.1. PassportToken', async () => {
         });
 
         it('5.1.6.2. Mint successfully when paused', async () => {
-            const { passportToken, minter1, minter2 } = await beforePassportTokenTest({
+            const { passportToken, minter1 } = await beforePassportTokenTest({
                 pause: true,
             });
 
@@ -641,19 +728,6 @@ describe('5.1. PassportToken', async () => {
                     )).to.be.revertedWithCustomError(passportToken, 'FailedRefund');
                 },
             );
-        });
-    });
-
-    describe('5.1.7. supportsInterface(bytes4)', async () => {
-        it('5.1.7.1. Return true for appropriate interface', async () => {
-            const { passportToken } = await beforePassportTokenTest();
-
-            expect(await passportToken.supportsInterface(getBytes4Hex(IERC4906UpgradeableInterfaceId))).to.equal(true);
-            expect(await passportToken.supportsInterface(getBytes4Hex(IRoyaltyRateProposerInterfaceId))).to.equal(true);
-            expect(await passportToken.supportsInterface(getBytes4Hex(IERC2981UpgradeableInterfaceId))).to.equal(true);
-            expect(await passportToken.supportsInterface(getBytes4Hex(IERC165UpgradeableInterfaceId))).to.equal(true);
-            expect(await passportToken.supportsInterface(getBytes4Hex(IERC721UpgradeableInterfaceId))).to.equal(true);
-            expect(await passportToken.supportsInterface(getBytes4Hex(IERC721MetadataUpgradeableInterfaceId))).to.equal(true);
         });
     });
 });

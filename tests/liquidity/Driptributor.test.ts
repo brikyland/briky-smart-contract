@@ -1,22 +1,85 @@
 import { expect } from 'chai';
-import { BigNumber, BigNumberish, Contract } from 'ethers';
+import {
+    BigNumber,
+    BigNumberish,
+    Contract
+} from 'ethers';
 import { ethers } from 'hardhat';
-import { Admin, Currency, Driptributor, StakeToken, Treasury, MockPrimaryToken } from '@typechain-types';
-import { callTransaction, getSignatures, prepareERC20, testReentrancy } from '@utils/blockchain';
+
+// @defi-wonderland/smock
+import { MockContract, smock } from '@defi-wonderland/smock';
+
+// @nomicfoundation/hardhat-network-helpers
+import {
+    loadFixture,
+    time
+} from '@nomicfoundation/hardhat-network-helpers';
+
+// @tests/liquidity
+import { Initialization as LiquidityInitialization } from '@tests/liquidity/test.initialization';
+
+// @typechain-types
+import {
+    Admin,
+    Currency,
+    Driptributor,
+    StakeToken,
+    Treasury,
+    MockPrimaryToken
+} from '@typechain-types';
+
+// @utils
+import {
+    callTransaction,
+    expectRevertWithModifierCustomError,
+    prepareERC20,
+    testReentrancy
+} from '@utils/blockchain';
+
+// @utils/deployments/common
 import { deployAdmin } from '@utils/deployments/common/admin';
-import { Constant } from '@tests/test.constant';
-import { loadFixture, time } from '@nomicfoundation/hardhat-network-helpers';
 import { deployCurrency } from '@utils/deployments/common/currency';
+
+// @utils/deployments/liquidity
 import { deployTreasury } from '@utils/deployments/liquidity/treasury';
 import { deployDriptributor } from '@utils/deployments/liquidity/driptributor';
+
+// @utils/deployments/mock
 import { deployMockPrimaryToken } from '@utils/deployments/mock/mockPrimaryToken';
-import { MockContract, smock } from '@defi-wonderland/smock';
-import { Initialization as LiquidityInitialization } from '@tests/liquidity/test.initialization';
-import { DistributeTokensWithDurationParams, DistributeTokensWithDurationParamsInput, DistributeTokensWithTimestampParams, DistributeTokensWithTimestampParamsInput, UpdateStakeTokensParams, UpdateStakeTokensParamsInput } from '@utils/models/liquidity/driptributor';
-import { getDistributeTokensWithDurationSignatures, getDistributeTokensWithTimestampSignatures, getUpdateStakeTokensSignatures } from '@utils/signatures/liquidity/driptributor';
-import { getDriptributorTx_DistributeTokensWithDuration, getDriptributorTx_DistributeTokensWithTimestamp, getDriptributorTx_Stake, getDriptributorTx_UpdateStakeTokens, getDriptributorTx_Withdraw, getDriptributorTxByInput_DistributeTokensWithDuration, getDriptributorTxByInput_DistributeTokensWithTimestamp, getDriptributorTxByInput_UpdateStakeTokens } from '@utils/transaction/liquidity/driptributor';
-import { getPrimaryTokenTxByInput_UpdateStakeTokens } from '@utils/transaction/liquidity/primaryToken';
+
+// @utils/models/liquidity
+import {
+    DistributeTokensWithDurationParams,
+    DistributeTokensWithDurationParamsInput,
+    DistributeTokensWithTimestampParams,
+    DistributeTokensWithTimestampParamsInput,
+    UpdateStakeTokensParams,
+    UpdateStakeTokensParamsInput
+} from '@utils/models/liquidity/driptributor';
+
+// @utils/signatures/liquidity
+import {
+    getDistributeTokensWithDurationSignatures,
+    getDistributeTokensWithTimestampSignatures,
+    getUpdateStakeTokensSignatures
+} from '@utils/signatures/liquidity/driptributor';
+
+// @utils/transaction/common
 import { getPausableTxByInput_Pause } from '@utils/transaction/common/pausable';
+
+// @utils/transaction/liquidity
+import {
+    getDriptributorTx_DistributeTokensWithDuration,
+    getDriptributorTx_DistributeTokensWithTimestamp,
+    getDriptributorTx_Stake,
+    getDriptributorTx_UpdateStakeTokens,
+    getDriptributorTx_Withdraw,
+    getDriptributorTxByInput_DistributeTokensWithDuration,
+    getDriptributorTxByInput_DistributeTokensWithTimestamp,
+    getDriptributorTxByInput_UpdateStakeTokens
+} from '@utils/transaction/liquidity/driptributor';
+import { getPrimaryTokenTxByInput_UpdateStakeTokens } from '@utils/transaction/liquidity/primaryToken';
+
 
 interface DriptributorFixture {
     deployer: any;
@@ -230,7 +293,9 @@ describe('4.3. Driptributor', async () => {
         }
     }
 
-    describe('4.3.1. initialize(address, address, address, address, address, uint256)', async () => {
+
+    /* --- Initialization --- */
+    describe('4.3.1. initialize(address,address,uint256)', async () => {
         it('4.3.1.1. Deploy successfully', async () => {
             const { admin, primaryToken, driptributor, totalAmount } = await setupBeforeTest();
             
@@ -247,7 +312,9 @@ describe('4.3. Driptributor', async () => {
         });
     });
 
-    describe('4.3.2. updateStakeTokens(address, address, address, bytes[])', async () => {
+
+    /* --- Administration --- */
+    describe('4.3.2. updateStakeTokens(address,address,address,bytes[])', async () => {
         it('4.3.2.1. Update stake tokenssuccessfully', async () => {
             const { deployer, admin, admins, driptributor, stakeToken1, stakeToken2, stakeToken3 } = await setupBeforeTest();
             
@@ -314,7 +381,7 @@ describe('4.3. Driptributor', async () => {
         });
     });
 
-    describe('4.3.3. distributeTokensWithDuration(address[], uint256[], uint40[], string[], bytes[])', async () => {
+    describe('4.3.3. distributeTokensWithDuration(address[],uint256[],uint40[],string[],bytes[])', async () => {
         it('4.3.3.1. DistributeTokensWithDuration successfully with valid signatures', async () => {
             const { deployer, admin, admins, driptributor, totalAmount, receiver1, receiver2 } = await setupBeforeTest({
                 updateStakeTokens: true,
@@ -518,7 +585,7 @@ describe('4.3. Driptributor', async () => {
         });
     });
     
-    describe('4.3.4. distributeTokensWithTimestamp(address[], uint256[], uint40[], string[], bytes[])', async () => {
+    describe('4.3.4. distributeTokensWithTimestamp(address[],uint256[],uint40[],string[],bytes[])', async () => {
         it('4.3.4.1. DistributeTokensWithTimestamp successfully with valid signatures', async () => {
             const { deployer, admin, admins, driptributor, totalAmount, receiver1, receiver2 } = await setupBeforeTest({
                 updateStakeTokens: true,
@@ -727,10 +794,30 @@ describe('4.3. Driptributor', async () => {
             ))
         });
     });
-    
+
+
+    /* --- Query --- */
+    describe('4.3.3. getDistribution(uint256)', async () => {
+        it('4.3.3.1. Revert with invalid distribution id', async () => {
+            const { driptributor } = await setupBeforeTest();
+
+            expectRevertWithModifierCustomError(
+                driptributor,
+                driptributor.getDistribution(0),
+                'InvalidDistributionId'
+            );
+            expectRevertWithModifierCustomError(
+                driptributor,
+                driptributor.getDistribution(100),
+                'InvalidDistributionId'
+            );
+        });
+    });
+
+    /* --- Command --- */
     describe('4.3.5. withdraw(uint256[])', async () => {
         it('4.3.5.1. Withdraw successfully', async () => {
-            const { deployer, driptributor, totalAmount, receiver1, primaryToken } = await setupBeforeTest({
+            const { driptributor, totalAmount, receiver1, primaryToken } = await setupBeforeTest({
                 updateStakeTokens: true,
                 addDistribution: true,
             });
@@ -743,7 +830,7 @@ describe('4.3. Driptributor', async () => {
 
             // Transaction 1
             await time.setNextBlockTimestamp(currentTimestamp + 100);
-            let tx1 = await getDriptributorTx_Withdraw(driptributor, deployer, { distributionIds });
+            let tx1 = await getDriptributorTx_Withdraw(driptributor, receiver1, { distributionIds });
             await tx1.wait();
 
             let distribution1 = await driptributor.getDistribution(1);
@@ -777,7 +864,7 @@ describe('4.3. Driptributor', async () => {
 
             // Transaction 2
             await time.setNextBlockTimestamp(currentTimestamp + 1000);
-            let tx2 = await getDriptributorTx_Withdraw(driptributor, deployer, { distributionIds });
+            let tx2 = await getDriptributorTx_Withdraw(driptributor, receiver1, { distributionIds });
             await tx2.wait();
 
             distribution1 = await driptributor.getDistribution(1);
@@ -811,7 +898,7 @@ describe('4.3. Driptributor', async () => {
 
             // Transaction 3
             await time.setNextBlockTimestamp(currentTimestamp + 1e9);
-            let tx3 = await getDriptributorTx_Withdraw(driptributor, deployer, { distributionIds });
+            let tx3 = await getDriptributorTx_Withdraw(driptributor, receiver1, { distributionIds });
             await tx3.wait();
 
             distribution1 = await driptributor.getDistribution(1);
@@ -925,7 +1012,7 @@ describe('4.3. Driptributor', async () => {
         });
     });
 
-    describe('4.3.6. stake(uint256[], uint256, uint256)', async () => {
+    describe('4.3.6. stake(uint256[],uint256,uint256)', async () => {
         it('4.3.6.1. Stake successfully with fresh distributions', async () => {
             const { driptributor, receiver1, primaryToken, stakeToken1, stakeToken2, stakeToken3 } = await setupBeforeTest({
                 updateStakeTokens: true,
@@ -1097,8 +1184,8 @@ describe('4.3. Driptributor', async () => {
                 receiver1,
                 {
                     distributionIds,
-                    stake1: ethers.utils.parseEther('40'),
-                    stake2: ethers.utils.parseEther('20')
+                    stake1: ethers.utils.parseEther('400'),
+                    stake2: ethers.utils.parseEther('200')
                 }
             )).to.be.revertedWithCustomError(driptributor, 'InsufficientFunds');
         });

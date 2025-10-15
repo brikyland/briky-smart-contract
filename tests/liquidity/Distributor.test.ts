@@ -1,20 +1,50 @@
 import { expect } from 'chai';
-import { ethers } from 'hardhat';
 import { BigNumberish } from 'ethers';
-import { Admin, Currency, Distributor, PrimaryToken, Treasury } from '@typechain-types';
-import { deployAdmin } from '@utils/deployments/common/admin';
-import { Constant } from '@tests/test.constant';
+import { ethers } from 'hardhat';
+
+// @nomicfoundation/hardhat-network-helpers
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
+
+// @tests/liquidity
+import { Initialization as LiquidityInitialization } from '@tests/liquidity/test.initialization';
+
+// @typechain-types
+import {
+    Admin,
+    Currency,
+    Distributor,
+    PrimaryToken,
+    Treasury
+} from '@typechain-types';
+
+// @utils
+import { callTransaction } from '@utils/blockchain';
+
+// @utils/deployments/common
+import { deployAdmin } from '@utils/deployments/common/admin';
 import { deployCurrency } from '@utils/deployments/common/currency';
+
+// @utils/deployments/liquidity
+import { deployDistributor } from '@utils/deployments/liquidity/distributor';
 import { deployPrimaryToken } from '@utils/deployments/liquidity/primaryToken';
 import { deployTreasury } from '@utils/deployments/liquidity/treasury';
-import { Initialization as LiquidityInitialization } from '@tests/liquidity/test.initialization';
-import { deployDistributor } from '@utils/deployments/liquidity/distributor';
-import { DistributeTokenParams, DistributeTokenParamsInput } from '@utils/models/liquidity/distributor';
+
+// @utils/models/liquidity
+import {
+    DistributeTokenParams,
+    DistributeTokenParamsInput
+} from '@utils/models/liquidity/distributor';
+
+// @utils/signatures/liquidity
 import { getDistributeTokenSignatures } from '@utils/signatures/liquidity/distributor';
-import { getDistributorTx_DistributeToken, getDistributorTxByInput_DistributeToken } from '@utils/transaction/liquidity/distributor';
+
+// @utils/transaction/liquidity
+import {
+    getDistributorTx_DistributeToken,
+    getDistributorTxByInput_DistributeToken
+} from '@utils/transaction/liquidity/distributor';
 import { getPrimaryTokenTxByInput_UnlockForCoreTeam } from '@utils/transaction/liquidity/primaryToken';
-import { callTransaction } from '@utils/blockchain';
+
 
 interface DistributorFixture {
     deployer: any;
@@ -102,7 +132,9 @@ describe('4.2. Distributor', async () => {
         return fixture;
     }
 
-    describe('4.2.1. initialize(address, address, address)', async () => {
+
+    /* --- Initialization --- */
+    describe('4.2.1. initialize(address,address,address)', async () => {
         it('4.2.1.1. Deploy successfully', async () => {
             const fixture = await setupBeforeTest();
             const { admin, distributor, primaryToken, treasury } = fixture;
@@ -113,7 +145,9 @@ describe('4.2. Distributor', async () => {
         });
     });
 
-    describe('4.2.2. distributeToken(address[], uint256[], string, bytes[])', async () => {
+
+    /* --- Administration --- */
+    describe('4.2.2. distributeToken(address[],uint256[],string,bytes[])', async () => {
         it('4.2.2.1. Distribute tokens successfully', async () => {
             const fixture = await setupBeforeTest();
             const { admin, admins, deployer, distributor, primaryToken, receiver1, receiver2, receiver3 } = fixture;

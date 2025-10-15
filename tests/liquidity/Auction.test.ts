@@ -1,23 +1,77 @@
 import { expect } from 'chai';
+import { Contract } from 'ethers';
 import { ethers } from 'hardhat';
-import { Admin, Auction, Currency, PrimaryToken, StakeToken, Treasury, Treasury__factory } from '@typechain-types';
-import { callTransaction, getSignatures, prepareERC20, testReentrancy } from '@utils/blockchain';
-import { deployAdmin } from '@utils/deployments/common/admin';
-import { Constant } from '@tests/test.constant';
+
+// @defi-wonderland/smock
+import {
+    MockContract,
+    smock
+} from '@defi-wonderland/smock';
+
+// @nomicfoundation/hardhat-network-helpers
 import { loadFixture, time } from '@nomicfoundation/hardhat-network-helpers';
+
+// @typechain-types
+import { Admin, Auction, Currency, PrimaryToken, StakeToken, Treasury, Treasury__factory } from '@typechain-types';
+
+// @tests
+import { Constant } from '@tests/test.constant';
+
+// @tests/liquidity
+import { Initialization as LiquidityInitialization } from '@tests/liquidity/test.initialization';
+
+// @utils
+import {
+    callTransaction,
+    prepareERC20,
+    testReentrancy
+} from '@utils/blockchain';
+
+// @utils/deployments/common
+import { deployAdmin } from '@utils/deployments/common/admin';
 import { deployCurrency } from '@utils/deployments/common/currency';
+
+// @utils/deployments/liquidity
+import { deployAuction } from '@utils/deployments/liquidity/auction';
 import { deployPrimaryToken } from '@utils/deployments/liquidity/primaryToken';
 import { deployStakeToken } from '@utils/deployments/liquidity/stakeToken';
-import { Initialization as LiquidityInitialization } from '@tests/liquidity/test.initialization';
-import { deployAuction } from '@utils/deployments/liquidity/auction';
-import { MockContract, smock } from '@defi-wonderland/smock';
+
+// @utils/deployments/mock
 import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
-import { Contract } from 'ethers';
-import { getStartAuctionSignatures, getUpdateStakeTokensSignatures } from '@utils/signatures/liquidity/auction';
-import { StartAuctionParams, StartAuctionParamsInput, UpdateStakeTokensParams, UpdateStakeTokensParamsInput } from '@utils/models/liquidity/auction';
-import { getAuctionTx_Deposit, getAuctionTx_Stake, getAuctionTx_StartAuction, getAuctionTx_UpdateStakeTokens, getAuctionTx_Withdraw, getAuctionTxByInput_StartAuction, getAuctionTxByInput_UpdateStakeTokens } from '@utils/transaction/liquidity/auction';
-import { getPrimaryTokenTxByInput_UnlockForPublicSale, getPrimaryTokenTxByInput_UpdateStakeTokens, getPrimaryTokenTxByInput_UpdateTreasury } from '@utils/transaction/liquidity/primaryToken';
+
+// @utils/models/liquidity
+import {
+    StartAuctionParams,
+    StartAuctionParamsInput,
+    UpdateStakeTokensParams,
+    UpdateStakeTokensParamsInput
+} from '@utils/models/liquidity/auction';
+
+// @utils/signatures/liquidity
+import {
+    getStartAuctionSignatures,
+    getUpdateStakeTokensSignatures
+} from '@utils/signatures/liquidity/auction';
+
+// @utils/transaction/common
 import { getPausableTxByInput_Pause } from '@utils/transaction/common/pausable';
+
+// @utils/transaction/liquidity
+import {
+    getAuctionTx_Deposit,
+    getAuctionTx_Stake,
+    getAuctionTx_StartAuction,
+    getAuctionTx_UpdateStakeTokens,
+    getAuctionTx_Withdraw,
+    getAuctionTxByInput_StartAuction,
+    getAuctionTxByInput_UpdateStakeTokens
+} from '@utils/transaction/liquidity/auction';
+import {
+    getPrimaryTokenTxByInput_UnlockForPublicSale,
+    getPrimaryTokenTxByInput_UpdateStakeTokens,
+    getPrimaryTokenTxByInput_UpdateTreasury
+} from '@utils/transaction/liquidity/primaryToken';
+
 
 interface AuctionFixture {
     deployer: any;
@@ -161,7 +215,7 @@ describe('4.1. Auction', async () => {
     }
 
     async function setupBeforeTest({
-        mintPrimaryTokenForAuction = false,
+        skipMintPrimaryTokenForAuction = false,
         updateStakeTokens = false,
         startAuction = false,
         listDeposits = false,
@@ -170,7 +224,7 @@ describe('4.1. Auction', async () => {
         const fixture = await loadFixture(auctionFixture);
         const { deployer, admins, depositor1, depositor2, depositor3, admin, treasury, currency, primaryToken, stakeToken1, stakeToken2, stakeToken3, auction } = fixture;
 
-        if (mintPrimaryTokenForAuction) {
+        if (!skipMintPrimaryTokenForAuction) {
             await callTransaction(getPrimaryTokenTxByInput_UnlockForPublicSale(
                 primaryToken,
                 deployer,
@@ -234,7 +288,9 @@ describe('4.1. Auction', async () => {
         return fixture;
     }
 
-    describe('4.1.1. initialize(address, address, address, address, address)', async () => {
+
+    /* --- Initialization --- */
+    describe('4.1.1. initialize(address,address)', async () => {
         it('4.1.1.1. Deploy successfully', async () => {
             const fixture = await setupBeforeTest({});
             const { admin, primaryToken, auction } = fixture;
@@ -255,7 +311,9 @@ describe('4.1. Auction', async () => {
         });
     });
 
-    describe('4.1.2. updateStakeTokens(address, address, address, bytes[])', async () => {
+
+    /* --- Administration --- */
+    describe('4.1.2. updateStakeTokens(address,address,address,bytes[])', async () => {
         it('4.1.2.1. Update stake tokenssuccessfully', async () => {
             const fixture = await setupBeforeTest({});
             const { admin, admins, deployer, auction, stakeToken1, stakeToken2, stakeToken3 } = fixture;
@@ -323,11 +381,10 @@ describe('4.1. Auction', async () => {
         });        
     });
 
-    describe('4.1.3. startAuction(uint256, uint256, bytes[])', async () => {
+    describe('4.1.3. startAuction(uint256,uint256,bytes[])', async () => {
         it('4.1.3.1. Start auction successfully', async () => {
             const fixture = await setupBeforeTest({
                 updateStakeTokens: true,
-                mintPrimaryTokenForAuction: true,
             });
             const { admin, admins, deployer, auction } = fixture;
 
@@ -351,7 +408,6 @@ describe('4.1. Auction', async () => {
         it('4.1.3.2. Start auction unsuccessfully with invalid signatures', async () => {
             const { admin, admins, deployer, auction } = await setupBeforeTest({
                 updateStakeTokens: true,
-                mintPrimaryTokenForAuction: true,
             });
 
             let currentTimestamp = await time.latest();
@@ -373,7 +429,6 @@ describe('4.1. Auction', async () => {
         it('4.1.3.3. Start auction unsuccessfully with invalid end time', async () => {
             const { admin, admins, deployer, auction } = await setupBeforeTest({
                 updateStakeTokens: true,
-                mintPrimaryTokenForAuction: true,
             });
 
             let currentTimestamp = await time.latest();
@@ -393,7 +448,6 @@ describe('4.1. Auction', async () => {
         it('4.1.3.4. Start auction unsuccessfully when it has already started', async () => {
             const { admin, admins, deployer, auction } = await setupBeforeTest({
                 updateStakeTokens: true,
-                mintPrimaryTokenForAuction: true,
                 startAuction: true,
             });            
 
@@ -409,12 +463,45 @@ describe('4.1. Auction', async () => {
                 .to.be.revertedWithCustomError(auction, 'AlreadyStarted');
         });
     });
+
+
+    /* --- Query --- */
+    describe('4.1.5. allocationOf(address)', async () => {
+        it('4.1.5.1. Return correct allocation', async () => {
+            const fixture = await setupBeforeTest({
+                updateStakeTokens: true,
+                startAuction: true,
+                listDeposits: true,
+            });
+
+            const { depositor1, depositor2, depositor3, auction } = fixture;
+
+            const deposit1 = await auction.deposits(depositor1.address);
+            const deposit2 = await auction.deposits(depositor2.address);
+            const deposit3 = await auction.deposits(depositor3.address);
+            const totalDeposit = await deposit1.add(deposit2).add(deposit3);
+
+            expect(await auction.allocationOf(depositor1.address)).to.equal(deposit1.mul(Constant.PRIMARY_TOKEN_PUBLIC_SALE).div(totalDeposit));
+            expect(await auction.allocationOf(depositor2.address)).to.equal(deposit2.mul(Constant.PRIMARY_TOKEN_PUBLIC_SALE).div(totalDeposit));
+            expect(await auction.allocationOf(depositor3.address)).to.equal(deposit3.mul(Constant.PRIMARY_TOKEN_PUBLIC_SALE).div(totalDeposit));
+        });
+
+        it('4.1.5.2. Return zero allocation before any deposits', async () => {
+            const fixture = await setupBeforeTest();
+            const { depositor1, depositor2, depositor3, auction } = fixture;
+
+            expect(await auction.allocationOf(depositor1.address)).to.equal(0);
+            expect(await auction.allocationOf(depositor2.address)).to.equal(0);
+            expect(await auction.allocationOf(depositor3.address)).to.equal(0);
+        });
+    });
     
-    describe('4.1.4. deposit(uint256, bytes[])', async () => {
+
+    /* --- Command --- */
+    describe('4.1.4. deposit(uint256)', async () => {
         it('4.1.4.1. Deposit successfully', async () => {
             const fixture = await setupBeforeTest({
                 updateStakeTokens: true,
-                mintPrimaryTokenForAuction: true,
                 startAuction: true,
             });
 
@@ -470,7 +557,6 @@ describe('4.1. Auction', async () => {
         it('4.1.4.2. Deposit unsuccessfully when paused', async () => {
             const fixture = await setupBeforeTest({
                 updateStakeTokens: true,
-                mintPrimaryTokenForAuction: true,
                 startAuction: true,
                 pause: true,
             });
@@ -484,7 +570,6 @@ describe('4.1. Auction', async () => {
         it('4.1.4.3. Deposit unsuccessfully when auction not started', async () => {
             const fixture = await setupBeforeTest({
                 updateStakeTokens: true,
-                mintPrimaryTokenForAuction: true,
             });
             const { depositor1, auction } = fixture;
 
@@ -496,7 +581,6 @@ describe('4.1. Auction', async () => {
         it('4.1.4.4. Deposit unsuccessfully when auction ended', async () => {
             const fixture = await setupBeforeTest({
                 updateStakeTokens: true,
-                mintPrimaryTokenForAuction: true,
                 startAuction: true,
             });
             const { depositor1, auction } = fixture;
@@ -511,7 +595,6 @@ describe('4.1. Auction', async () => {
         it('4.1.4.5. Deposit unsuccessfully when the contract is reentered', async () => {
             const fixture = await setupBeforeTest({
                 updateStakeTokens: true,
-                mintPrimaryTokenForAuction: true,
                 startAuction: true,
             });
 
@@ -537,42 +620,10 @@ describe('4.1. Auction', async () => {
         });
     });
 
-    describe('4.1.5. allocationOf(address)', async () => {
-        it('4.1.5.1. Return correct allocation', async () => {
-            const fixture = await setupBeforeTest({
-                updateStakeTokens: true,
-                mintPrimaryTokenForAuction: true,
-                startAuction: true,
-                listDeposits: true,
-            });
-
-            const { depositor1, depositor2, depositor3, auction } = fixture;
-
-            const deposit1 = await auction.deposits(depositor1.address);
-            const deposit2 = await auction.deposits(depositor2.address);
-            const deposit3 = await auction.deposits(depositor3.address);
-            const totalDeposit = await deposit1.add(deposit2).add(deposit3);
-
-            expect(await auction.allocationOf(depositor1.address)).to.equal(deposit1.mul(Constant.PRIMARY_TOKEN_PUBLIC_SALE).div(totalDeposit));
-            expect(await auction.allocationOf(depositor2.address)).to.equal(deposit2.mul(Constant.PRIMARY_TOKEN_PUBLIC_SALE).div(totalDeposit));
-            expect(await auction.allocationOf(depositor3.address)).to.equal(deposit3.mul(Constant.PRIMARY_TOKEN_PUBLIC_SALE).div(totalDeposit));
-        });
-
-        it('4.1.5.2. Return zero allocation before any deposits', async () => {
-            const fixture = await setupBeforeTest({});
-            const { depositor1, depositor2, depositor3, auction } = fixture;
-
-            expect(await auction.allocationOf(depositor1.address)).to.equal(0);
-            expect(await auction.allocationOf(depositor2.address)).to.equal(0);
-            expect(await auction.allocationOf(depositor3.address)).to.equal(0);
-        });
-    });
-
-    describe('4.1.6. withdraw(uint256)', async () => {
+    describe('4.1.6. withdraw()', async () => {
         it('4.1.6.1. Deposit successfully', async () => {
             const fixture = await setupBeforeTest({
                 updateStakeTokens: true,
-                mintPrimaryTokenForAuction: true,
                 startAuction: true,
                 listDeposits: true,
             });
@@ -646,7 +697,6 @@ describe('4.1. Auction', async () => {
         it('4.1.6.2. Withdraw unsuccessfully when paused', async () => {
             const fixture = await setupBeforeTest({
                 updateStakeTokens: true,
-                mintPrimaryTokenForAuction: true,
                 startAuction: true,
                 listDeposits: true,
                 pause: true,
@@ -661,7 +711,6 @@ describe('4.1. Auction', async () => {
         it('4.1.6.3. Withdraw unsuccessfully when auction not started', async () => {
             const fixture = await setupBeforeTest({
                 updateStakeTokens: true,
-                mintPrimaryTokenForAuction: true,                
             });
 
             const { depositor1, auction } = fixture;
@@ -673,7 +722,6 @@ describe('4.1. Auction', async () => {
         it('4.1.6.4. Withdraw unsuccessfully when auction not ended', async () => {
             const fixture = await setupBeforeTest({
                 updateStakeTokens: true,
-                mintPrimaryTokenForAuction: true,
                 startAuction: true,
                 listDeposits: true,
             });
@@ -685,11 +733,10 @@ describe('4.1. Auction', async () => {
         });
     });
 
-    describe('4.1.7. stake(uint256, uint256)', async () => {
+    describe('4.1.7. stake(uint256,uint256)', async () => {
         it('4.1.7.1. Stake successfully', async () => {
             const fixture = await setupBeforeTest({
                 updateStakeTokens: true,
-                mintPrimaryTokenForAuction: true,
                 startAuction: true,
                 listDeposits: true,
             });
@@ -808,7 +855,6 @@ describe('4.1. Auction', async () => {
         it('4.1.7.2. Stake unsuccessfully when paused', async () => {
             const fixture = await setupBeforeTest({
                 updateStakeTokens: true,
-                mintPrimaryTokenForAuction: true,
                 startAuction: true,
                 listDeposits: true,
                 pause: true,
@@ -828,7 +874,6 @@ describe('4.1. Auction', async () => {
 
         it('4.1.7.3. Stake unsuccessfully when stake tokens not assigned', async () => {
             const fixture = await setupBeforeTest({
-                mintPrimaryTokenForAuction: true,
                 startAuction: true,
                 listDeposits: true,                
             });
@@ -865,7 +910,6 @@ describe('4.1. Auction', async () => {
         it('4.1.7.5. Stake unsuccessfully when auction not ended', async () => {
             const fixture = await setupBeforeTest({
                 updateStakeTokens: true,
-                mintPrimaryTokenForAuction: true,
                 startAuction: true,
                 listDeposits: true,
             });
@@ -885,7 +929,6 @@ describe('4.1. Auction', async () => {
         it('4.1.7.6. Stake unsuccessfully with insufficient funds', async () => {
             const fixture = await setupBeforeTest({
                 updateStakeTokens: true,
-                mintPrimaryTokenForAuction: true,
                 startAuction: true,
                 listDeposits: true,
             });

@@ -1,34 +1,100 @@
 import { expect } from 'chai';
-import { ethers, upgrades } from 'hardhat';
+import { BigNumber } from 'ethers';
+import {
+    ethers,
+    upgrades
+} from 'hardhat';
+
+// @nomicfoundation/hardhat-network-helpers
+import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
+
+// @tests
+import { Constant } from '@tests/test.constant';
+import {
+    IERC165UpgradeableInterfaceId,
+    IERC2981UpgradeableInterfaceId,
+    IERC4906UpgradeableInterfaceId,
+    IERC721MetadataUpgradeableInterfaceId,
+    IERC721UpgradeableInterfaceId,
+    IRoyaltyRateProposerInterfaceId
+} from '@tests/interfaces';
+
+// @tests/lucra
+import { Initialization } from '@tests/lucra/test.initialization';
+
+// @typechain-types
 import {
     Admin,
     PromotionToken,
-    IERC165Upgradeable__factory,
-    IERC721Upgradeable__factory,
-    IERC4906Upgradeable__factory,
     Currency,
-    IERC2981Upgradeable__factory,
-    IRoyaltyRateProposer__factory,
-    ICommon__factory,
-    IERC721MetadataUpgradeable__factory,
 } from '@typechain-types';
-import { callTransaction, getSignatures, randomWallet } from '@utils/blockchain';
-import { Constant } from '@tests/test.constant';
-import { deployAdmin } from '@utils/deployments/common/admin';
-import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 
-import { getBytes4Hex, getInterfaceID, structToObject } from '@utils/utils';
-import { Initialization } from './test.initialization';
+// @utils
+import {
+    callTransaction,
+    getSignatures,
+    randomWallet
+} from '@utils/blockchain';
+import {
+    getBytes4Hex,
+    structToObject
+} from '@utils/utils';
+
+// @utils/deployments/common
+import { deployAdmin } from '@utils/deployments/common/admin';
+import { deployCurrency } from '@utils/deployments/common/currency';
 import { deployPromotionToken } from '@utils/deployments/lucra/promotionToken';
+
+// @utils/deployments/mock
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
-import { deployCurrency } from '@utils/deployments/common/currency';
-import { CancelContentsParams, CancelContentsParamsInput, CreateContentsParams, CreateContentsParamsInput, UpdateContentURIsParams, UpdateContentURIsParamsInput, UpdateFeeParams, UpdateFeeParamsInput, UpdateRoyaltyRateParams, UpdateRoyaltyRateParamsInput, WithdrawParams, WithdrawParamsInput } from '@utils/models/lucra/promotionToken';
-import { getCancelContentsSignatures, getCreateContentsSignatures, getUpdateContentURIsSignatures, getUpdateFeeSignatures, getUpdateRoyaltyRateSignatures, getWithdrawSignatures } from '@utils/signatures/lucra/promotionToken';
-import { getPromotionTokenTx_CancelContents, getPromotionTokenTx_CreateContents, getPromotionTokenTx_Mint, getPromotionTokenTx_UpdateContentURIs, getPromotionTokenTx_UpdateFee, getPromotionTokenTx_UpdateRoyaltyRate, getPromotionTokenTx_Withdraw, getPromotionTokenTxByInput_CancelContents, getPromotionTokenTxByInput_CreateContents, getPromotionTokenTxByInput_UpdateContentURIs, getPromotionTokenTxByInput_UpdateFee, getPromotionTokenTxByInput_UpdateRoyaltyRate, getPromotionTokenTxByInput_Withdraw } from '@utils/transaction/lucra/promotionToken';
-import { BigNumber } from 'ethers';
-import { IERC165UpgradeableInterfaceId, IERC2981UpgradeableInterfaceId, IERC4906UpgradeableInterfaceId, IERC721MetadataUpgradeableInterfaceId, IERC721UpgradeableInterfaceId, IRoyaltyRateProposerInterfaceId } from '@tests/interfaces';
+
+// @utils/models/lucra
+import {
+    CancelContentsParams,
+    CancelContentsParamsInput,
+    CreateContentsParams,
+    CreateContentsParamsInput,
+    UpdateContentURIsParams,
+    UpdateContentURIsParamsInput,
+    UpdateFeeParams,
+    UpdateFeeParamsInput,
+    UpdateRoyaltyRateParams,
+    UpdateRoyaltyRateParamsInput,
+    WithdrawParams,
+    WithdrawParamsInput
+} from '@utils/models/lucra/promotionToken';
+
+// @utils/signatures/lucra
+import {
+    getCancelContentsSignatures,
+    getCreateContentsSignatures,
+    getUpdateContentURIsSignatures,
+    getUpdateFeeSignatures,
+    getUpdateRoyaltyRateSignatures,
+    getWithdrawSignatures
+} from '@utils/signatures/lucra/promotionToken';
+
+// @utils/transaction/common
 import { getPausableTxByInput_Pause } from '@utils/transaction/common/pausable';
+
+// @utils/transaction/lucra
+import {
+    getPromotionTokenTx_CancelContents,
+    getPromotionTokenTx_CreateContents,
+    getPromotionTokenTx_Mint,
+    getPromotionTokenTx_UpdateContentURIs,
+    getPromotionTokenTx_UpdateFee,
+    getPromotionTokenTx_UpdateRoyaltyRate,
+    getPromotionTokenTx_Withdraw,
+    getPromotionTokenTxByInput_CancelContents,
+    getPromotionTokenTxByInput_CreateContents,
+    getPromotionTokenTxByInput_UpdateContentURIs,
+    getPromotionTokenTxByInput_UpdateFee,
+    getPromotionTokenTxByInput_UpdateRoyaltyRate,
+    getPromotionTokenTxByInput_Withdraw
+} from '@utils/transaction/lucra/promotionToken';
+
 
 interface PromotionTokenFixture {
     admin: Admin;
@@ -84,8 +150,8 @@ describe('5.2. PromotionToken', async () => {
     }
 
     async function beforePromotionTokenTest({
-        pause = false,
         listSampleContents = false,
+        pause = false,
     } = {}): Promise<PromotionTokenFixture> {
         const fixture = await loadFixture(promotionTokenFixture);
         const { deployer, promotionToken, admin, admins } = fixture;
@@ -115,7 +181,9 @@ describe('5.2. PromotionToken', async () => {
         }
     }
 
-    describe('5.2.1. initialize(address, string, string, uint256, uint256)', async () => {
+
+    /* --- Initialization --- */
+    describe('5.2.1. initialize(address,string,string,uint256,uint256)', async () => {
         it('5.2.1.1. Deploy successfully', async () => {
             const { admin, promotionToken } = await beforePromotionTokenTest();
             
@@ -162,7 +230,9 @@ describe('5.2. PromotionToken', async () => {
         });
     });
 
-    describe('5.2.2. updateFee(uint256, bytes[])', async () => {
+
+    /* --- Administration --- */
+    describe('5.2.2. updateFee(uint256,bytes[])', async () => {
         it('5.2.2.1. Update fee successfully', async () => {
             const { deployer, promotionToken, admin, admins } = await beforePromotionTokenTest();
 
@@ -196,7 +266,7 @@ describe('5.2. PromotionToken', async () => {
         });
     });
 
-    describe('5.2.3. updateRoyaltyRate(uint256, bytes[])', async () => {
+    describe('5.2.3. updateRoyaltyRate(uint256,bytes[])', async () => {
         it('5.2.3.1. Update royalty rate successfully with valid signatures', async () => {
             const { deployer, promotionToken, admin, admins } = await beforePromotionTokenTest();
 
@@ -256,7 +326,7 @@ describe('5.2. PromotionToken', async () => {
         });
     });
 
-    describe('5.2.4. withdraw(address, address[], uint256[], bytes[])', async () => {
+    describe('5.2.4. withdraw(address,address[],uint256[],bytes[])', async () => {
         it('5.2.4.1. Withdraw native tokens successfully', async () => {
             const { deployer, admins, admin, promotionToken } = await beforePromotionTokenTest();
 
@@ -478,30 +548,7 @@ describe('5.2. PromotionToken', async () => {
         });
     });
 
-    describe('5.2.5. getContent(uint256)', async () => {
-        it('5.2.5.1. Return successfully with valid content id', async () => {
-            const { promotionToken } = await beforePromotionTokenTest({
-                listSampleContents: true,
-            });
-
-            await expect(promotionToken.getContent(1)).to.not.be.reverted;
-            await expect(promotionToken.getContent(2)).to.not.be.reverted;
-            await expect(promotionToken.getContent(3)).to.not.be.reverted;
-        });
-
-        it('5.2.5.2. Revert with invalid content id', async () => {
-            const { promotionToken } = await beforePromotionTokenTest({
-                listSampleContents: true,
-            });
-
-            await expect(promotionToken.getContent(0)).to.be
-                .revertedWithCustomError(promotionToken, 'InvalidContentId');
-            await expect(promotionToken.getContent(10)).to.be
-                .revertedWithCustomError(promotionToken, 'InvalidContentId');
-        });
-    });
-
-    describe('5.2.6. createContents(string[], uint40[], uint40[], bytes[])', async () => {
+    describe('5.2.6. createContents(string[],uint40[],uint40[],bytes[])', async () => {
         it('5.2.6.1. Create contents successfully', async () => {
             const { deployer, promotionToken, admin, admins } = await beforePromotionTokenTest();
 
@@ -634,7 +681,7 @@ describe('5.2. PromotionToken', async () => {
         });
     });
 
-    describe('5.2.7. updateContentURIs(uint256[],string[], bytes[])', async () => {
+    describe('5.2.7. updateContentURIs(uint256[],string[],bytes[])', async () => {
         it('5.2.7.1. Update content uris successfully', async () => {
             const { deployer, promotionToken, admin, admins } = await beforePromotionTokenTest({
                 listSampleContents: true,
@@ -743,7 +790,7 @@ describe('5.2. PromotionToken', async () => {
         });
     });
 
-    describe('5.2.8. cancelContents(uint256, bytes[])', async () => {
+    describe('5.2.8. cancelContents(uint256,bytes[])', async () => {
         it('5.2.8.1. Cancel contents successfully', async () => {
             const { deployer, promotionToken, admin, admins } = await beforePromotionTokenTest({
                 listSampleContents: true,
@@ -876,7 +923,47 @@ describe('5.2. PromotionToken', async () => {
         });
     });
 
-    describe('5.2.9. mint(uint256, uint256)', async () => {
+
+    /* --- Query --- */
+    describe('5.2.5. getContent(uint256)', async () => {
+        it('5.2.5.1. Return successfully with valid content id', async () => {
+            const { promotionToken } = await beforePromotionTokenTest({
+                listSampleContents: true,
+            });
+
+            await expect(promotionToken.getContent(1)).to.not.be.reverted;
+            await expect(promotionToken.getContent(2)).to.not.be.reverted;
+            await expect(promotionToken.getContent(3)).to.not.be.reverted;
+        });
+
+        it('5.2.5.2. Revert with invalid content id', async () => {
+            const { promotionToken } = await beforePromotionTokenTest({
+                listSampleContents: true,
+            });
+
+            await expect(promotionToken.getContent(0)).to.be
+                .revertedWithCustomError(promotionToken, 'InvalidContentId');
+            await expect(promotionToken.getContent(10)).to.be
+                .revertedWithCustomError(promotionToken, 'InvalidContentId');
+        });
+    });
+
+    describe('5.2.10. supportsInterface(bytes4)', async () => {
+        it('5.2.10.1. Return true for appropriate interface', async () => {
+            const { promotionToken } = await beforePromotionTokenTest();
+
+            expect(await promotionToken.supportsInterface(getBytes4Hex(IERC4906UpgradeableInterfaceId))).to.equal(true);
+            expect(await promotionToken.supportsInterface(getBytes4Hex(IRoyaltyRateProposerInterfaceId))).to.equal(true);
+            expect(await promotionToken.supportsInterface(getBytes4Hex(IERC2981UpgradeableInterfaceId))).to.equal(true);
+            expect(await promotionToken.supportsInterface(getBytes4Hex(IERC165UpgradeableInterfaceId))).to.equal(true);
+            expect(await promotionToken.supportsInterface(getBytes4Hex(IERC721UpgradeableInterfaceId))).to.equal(true);
+            expect(await promotionToken.supportsInterface(getBytes4Hex(IERC721MetadataUpgradeableInterfaceId))).to.equal(true);
+        });
+    });
+
+
+    /* --- Command --- */
+    describe('5.2.9. mint(uint256,uint256)', async () => {
         it('5.2.9.1. Mint successfully', async () => {
             const { promotionToken, minter1, minter2 } = await beforePromotionTokenTest({
                 listSampleContents: true,
@@ -1099,19 +1186,6 @@ describe('5.2. PromotionToken', async () => {
                 minter1,
                 { contentId: BigNumber.from(1), amount: BigNumber.from(1) },
             )).to.be.revertedWithCustomError(promotionToken, 'InsufficientValue');
-        });
-    });
-
-    describe('5.2.10. supportsInterface(bytes4)', async () => {
-        it('5.2.10.1. Return true for appropriate interface', async () => {
-            const { promotionToken } = await beforePromotionTokenTest();
-
-            expect(await promotionToken.supportsInterface(getBytes4Hex(IERC4906UpgradeableInterfaceId))).to.equal(true);
-            expect(await promotionToken.supportsInterface(getBytes4Hex(IRoyaltyRateProposerInterfaceId))).to.equal(true);
-            expect(await promotionToken.supportsInterface(getBytes4Hex(IERC2981UpgradeableInterfaceId))).to.equal(true);
-            expect(await promotionToken.supportsInterface(getBytes4Hex(IERC165UpgradeableInterfaceId))).to.equal(true);
-            expect(await promotionToken.supportsInterface(getBytes4Hex(IERC721UpgradeableInterfaceId))).to.equal(true);
-            expect(await promotionToken.supportsInterface(getBytes4Hex(IERC721MetadataUpgradeableInterfaceId))).to.equal(true);
         });
     });
 });

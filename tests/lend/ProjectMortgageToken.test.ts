@@ -775,8 +775,7 @@ describe('3.3. ProjectMortgageToken', async () => {
         }
 
         it('3.3.4.1. Create mortgage successfully', async () => {
-            const fixture = await beforeProjectMortgageTokenTest({
-            });
+            const fixture = await beforeProjectMortgageTokenTest();
             const { projectMortgageToken, admin, borrower1, borrower2, currency, projectToken } = fixture;
 
             const params1: ProjectBorrowParams = {
@@ -899,8 +898,7 @@ describe('3.3. ProjectMortgageToken', async () => {
         });
 
         it('3.3.4.3. Create mortgage unsuccessfully with invalid project id', async () => {
-            const fixture = await beforeProjectMortgageTokenTest({
-            });
+            const fixture = await beforeProjectMortgageTokenTest();
             const { projectMortgageToken, projectToken, borrower1 } = fixture;
 
             const { defaultParams } = await beforeBorrowTest(fixture);
@@ -947,8 +945,7 @@ describe('3.3. ProjectMortgageToken', async () => {
         });
 
         it('3.3.4.5. Create mortgage unsuccessfully with zero amount', async () => {
-            const fixture = await beforeProjectMortgageTokenTest({
-            });
+            const fixture = await beforeProjectMortgageTokenTest();
             const { projectMortgageToken, borrower1 } = fixture;
             const { defaultParams } = await beforeBorrowTest(fixture);
 
@@ -963,8 +960,7 @@ describe('3.3. ProjectMortgageToken', async () => {
         });
 
         it('3.3.4.5. Create mortgage unsuccessfully with amount more than balance', async () => {
-            const fixture = await beforeProjectMortgageTokenTest({
-            });
+            const fixture = await beforeProjectMortgageTokenTest();
             const { projectMortgageToken, projectToken, borrower1 } = fixture;
             const { defaultParams } = await beforeBorrowTest(fixture);
 
@@ -981,8 +977,7 @@ describe('3.3. ProjectMortgageToken', async () => {
         });
 
         it('3.3.4.6. Create mortgage unsuccessfully with invalid principal', async () => {
-            const fixture = await beforeProjectMortgageTokenTest({
-            });
+            const fixture = await beforeProjectMortgageTokenTest();
             const { projectMortgageToken, projectToken, borrower1 } = fixture;
             const { defaultParams } = await beforeBorrowTest(fixture);
 
@@ -997,8 +992,7 @@ describe('3.3. ProjectMortgageToken', async () => {
         });
 
         it('3.3.4.7. Create mortgage unsuccessfully with invalid repayment', async () => {
-            const fixture = await beforeProjectMortgageTokenTest({
-            });
+            const fixture = await beforeProjectMortgageTokenTest();
             const { projectMortgageToken, borrower1 } = fixture;
             const { defaultParams } = await beforeBorrowTest(fixture);
 
@@ -1531,8 +1525,7 @@ describe('3.3. ProjectMortgageToken', async () => {
         });
 
         it('3.3.6.13. Lend unsuccessfully when native token transfer to borrower failed', async () => {
-            const fixture = await beforeProjectMortgageTokenTest({
-            });
+            const fixture = await beforeProjectMortgageTokenTest();
             const { projectMortgageToken, lender1, deployer, projectToken } = fixture;
 
             const failReceiver = await deployFailReceiver(deployer, true, false);
@@ -1564,8 +1557,7 @@ describe('3.3. ProjectMortgageToken', async () => {
         });
 
         it('3.3.6.16. Buy token unsuccessfully when borrower reenter this function', async () => {
-            const fixture = await beforeProjectMortgageTokenTest({
-            });
+            const fixture = await beforeProjectMortgageTokenTest();
             const { projectMortgageToken, deployer, projectToken, lender1 } = fixture;
 
             const reentrancy = await deployReentrancyERC1155Holder(deployer);

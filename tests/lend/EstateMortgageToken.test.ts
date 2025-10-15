@@ -840,8 +840,7 @@ describe('3.2. EstateMortgageToken', async () => {
         }
 
         it('3.2.4.1. Create mortgage successfully', async () => {
-            const fixture = await beforeEstateMortgageTokenTest({
-            });
+            const fixture = await beforeEstateMortgageTokenTest();
             const { estateMortgageToken, admin, borrower1, borrower2, currency, estateToken } = fixture;
 
             const params1: EstateBorrowParams = {
@@ -964,8 +963,7 @@ describe('3.2. EstateMortgageToken', async () => {
         });
 
         it('3.2.4.3. Create mortgage unsuccessfully with invalid estate id', async () => {
-            const fixture = await beforeEstateMortgageTokenTest({
-            });
+            const fixture = await beforeEstateMortgageTokenTest();
             const { estateMortgageToken, estateToken, borrower1 } = fixture;
 
             const { defaultParams } = await beforeBorrowTest(fixture);
@@ -1012,8 +1010,7 @@ describe('3.2. EstateMortgageToken', async () => {
         });
 
         it('3.2.4.5. Create mortgage unsuccessfully with zero amount', async () => {
-            const fixture = await beforeEstateMortgageTokenTest({
-            });
+            const fixture = await beforeEstateMortgageTokenTest();
             const { estateMortgageToken, borrower1 } = fixture;
             const { defaultParams } = await beforeBorrowTest(fixture);
 
@@ -1028,8 +1025,7 @@ describe('3.2. EstateMortgageToken', async () => {
         });
 
         it('3.2.4.5. Create mortgage unsuccessfully with amount more than balance', async () => {
-            const fixture = await beforeEstateMortgageTokenTest({
-            });
+            const fixture = await beforeEstateMortgageTokenTest();
             const { estateMortgageToken, estateToken, borrower1 } = fixture;
             const { defaultParams } = await beforeBorrowTest(fixture);
 
@@ -1046,8 +1042,7 @@ describe('3.2. EstateMortgageToken', async () => {
         });
 
         it('3.2.4.6. Create mortgage unsuccessfully with invalid principal', async () => {
-            const fixture = await beforeEstateMortgageTokenTest({
-            });
+            const fixture = await beforeEstateMortgageTokenTest();
             const { estateMortgageToken, estateToken, borrower1 } = fixture;
             const { defaultParams } = await beforeBorrowTest(fixture);
 
@@ -1062,8 +1057,7 @@ describe('3.2. EstateMortgageToken', async () => {
         });
 
         it('3.2.4.7. Create mortgage unsuccessfully with invalid repayment', async () => {
-            const fixture = await beforeEstateMortgageTokenTest({
-            });
+            const fixture = await beforeEstateMortgageTokenTest();
             const { estateMortgageToken, borrower1 } = fixture;
             const { defaultParams } = await beforeBorrowTest(fixture);
 
@@ -1626,8 +1620,7 @@ describe('3.2. EstateMortgageToken', async () => {
         });
 
         it('3.2.6.13. Lend unsuccessfully when native token transfer to borrower failed', async () => {
-            const fixture = await beforeEstateMortgageTokenTest({
-            });
+            const fixture = await beforeEstateMortgageTokenTest();
             const { estateMortgageToken, lender1, deployer, estateToken } = fixture;
 
             const failReceiver = await deployFailReceiver(deployer, true, false);
@@ -1646,8 +1639,7 @@ describe('3.2. EstateMortgageToken', async () => {
         });
 
         it('3.2.6.14. Lend unsuccessfully when native token transfer to commission receiver failed', async () => {
-            const fixture = await beforeEstateMortgageTokenTest({
-            });
+            const fixture = await beforeEstateMortgageTokenTest();
             const { estateMortgageToken, borrower2, lender1, deployer, estateToken, commissionToken, broker2 } = fixture;
 
             const failReceiver = await deployFailReceiver(deployer, true, false);
@@ -1690,8 +1682,7 @@ describe('3.2. EstateMortgageToken', async () => {
         });
 
         it('3.2.6.16. Buy token unsuccessfully when borrower reenter this function', async () => {
-            const fixture = await beforeEstateMortgageTokenTest({
-            });
+            const fixture = await beforeEstateMortgageTokenTest();
             const { estateMortgageToken, deployer, estateToken, lender1 } = fixture;
 
             const reentrancy = await deployReentrancyERC1155Holder(deployer);

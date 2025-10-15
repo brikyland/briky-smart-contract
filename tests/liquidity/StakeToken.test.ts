@@ -1,25 +1,98 @@
 import { expect } from 'chai';
-import { ethers, upgrades } from 'hardhat';
-import { Admin, Currency, MockPrimaryToken, MockPrimaryToken__factory, MockStakeToken, MockStakeToken__factory, Treasury } from '@typechain-types';
-import { callTransaction, getSignatures, prepareERC20 } from '@utils/blockchain';
-import { deployAdmin } from '@utils/deployments/common/admin';
-import { Constant } from '@tests/test.constant';
-import { loadFixture, time } from '@nomicfoundation/hardhat-network-helpers';
-import { deployCurrency } from '@utils/deployments/common/currency';
-import { deployTreasury } from '@utils/deployments/liquidity/treasury';
+import {
+    BigNumber,
+    Wallet
+} from 'ethers';
+import {
+    ethers,
+    upgrades
+} from 'hardhat';
+
+// @defi-wonderland/smock
 import { MockContract, smock } from '@defi-wonderland/smock';
-import { getStakingFee } from '@utils/formula';
-import { expectBetween, expectEqualWithErrorMargin } from '@utils/testHelper';
-import { BigNumber, Wallet } from 'ethers';
-import { randomArrayWithSum, randomBigNumber, randomInt, shuffle, structToObject } from '@utils/utils';
-import { StakeTokenOperation } from "@utils/models/liquidity/stakeToken";
+
+// @nomicfoundation/hardhat-network-helpers
+import {
+    loadFixture,
+    time
+} from '@nomicfoundation/hardhat-network-helpers';
+
+// @tests
+import { Constant } from '@tests/test.constant';
+
+// @tests/liquidity
 import { Initialization as LiquidityInitialization } from '@tests/liquidity/test.initialization';
-import { UpdateStakeTokensParamsInput, UpdateTreasuryParamsInput } from '@utils/models/liquidity/primaryToken';
-import { InitializeRewardingParams, InitializeRewardingParamsInput, UpdateFeeRateParams, UpdateFeeRateParamsInput } from '@utils/models/liquidity/stakeToken';
-import { getInitializeRewardingSignatures, getUpdateFeeRateSignatures } from '@utils/signatures/liquidity/stakeToken';
+
+// @typechain-types
+import {
+    Admin,
+    Currency,
+    MockPrimaryToken,
+    MockPrimaryToken__factory,
+    MockStakeToken,
+    MockStakeToken__factory,
+    Treasury
+} from '@typechain-types';
+
+// @utils
+import {
+    callTransaction,
+    prepareERC20
+} from '@utils/blockchain';
+import { getStakingFee } from '@utils/formula';
+import {
+    expectBetween,
+    expectEqualWithErrorMargin
+} from '@utils/testHelper';
+import {
+    randomArrayWithSum,
+    randomBigNumber,
+    randomInt,
+    shuffle,
+    structToObject
+} from '@utils/utils';
+
+// @utils/deployments/common
+import { deployAdmin } from '@utils/deployments/common/admin';
+import { deployCurrency } from '@utils/deployments/common/currency';
+
+// @utils/deployments/liquidity
+import { deployTreasury } from '@utils/deployments/liquidity/treasury';
+
+// @utils/models/liquidity
+import { StakeTokenOperation } from "@utils/models/liquidity/stakeToken";
+import {
+    InitializeRewardingParams,
+    InitializeRewardingParamsInput,
+    UpdateFeeRateParams,
+    UpdateFeeRateParamsInput
+} from '@utils/models/liquidity/stakeToken';
+
+// @utils/signatures/liquidity
+import {
+    getInitializeRewardingSignatures,
+    getUpdateFeeRateSignatures
+} from '@utils/signatures/liquidity/stakeToken';
+
+// @utils/transaction/common
 import { getPausableTxByInput_Pause } from '@utils/transaction/common/pausable';
-import { getPrimaryTokenTxByInput_UpdateStakeTokens, getPrimaryTokenTxByInput_UpdateTreasury } from '@utils/transaction/liquidity/primaryToken';
-import { getStakeTokenTx_FetchReward, getStakeTokenTx_InitializeRewarding, getStakeTokenTx_Promote, getStakeTokenTx_Stake, getStakeTokenTx_Transfer, getStakeTokenTx_Unstake, getStakeTokenTx_UpdateFeeRate, getStakeTokenTxByInput_InitializeRewarding, getStakeTokenTxByInput_UpdateFeeRate } from '@utils/transaction/liquidity/stakeToken';
+
+// @utils/transaction/liquidity
+import {
+    getPrimaryTokenTxByInput_UpdateStakeTokens,
+    getPrimaryTokenTxByInput_UpdateTreasury
+} from '@utils/transaction/liquidity/primaryToken';
+import {
+    getStakeTokenTx_FetchReward,
+    getStakeTokenTx_InitializeRewarding,
+    getStakeTokenTx_Promote,
+    getStakeTokenTx_Stake,
+    getStakeTokenTx_Transfer,
+    getStakeTokenTx_Unstake,
+    getStakeTokenTx_UpdateFeeRate,
+    getStakeTokenTxByInput_InitializeRewarding,
+    getStakeTokenTxByInput_UpdateFeeRate
+} from '@utils/transaction/liquidity/stakeToken';
 
 interface StakeTokenFixture {
     deployer: any;
@@ -144,10 +217,10 @@ describe('4.5. StakeToken', async () => {
     }
 
     async function setupBeforeTest({
+        skipPrepareCurrencyForStakers = false,
+        skipPreparePrimaryTokenForStakers = false,
         setFeeRate = false,
         initializeRewarding = false,
-        prepareCurrencyForStakers = false,
-        preparePrimaryTokenForStakers = false,
         pause = false,
     } = {}): Promise<StakeTokenFixture> {
         const fixture = await loadFixture(stakeTokenFixture);
@@ -158,6 +231,25 @@ describe('4.5. StakeToken', async () => {
 
         await prepareERC20(currency, [deployer], [treasury], ethers.utils.parseEther("1000000"));
         await treasury.provideLiquidity(ethers.utils.parseEther("1000000"));
+
+        if (!skipPrepareCurrencyForStakers) {
+            await prepareERC20(
+                currency,
+                [staker1, staker2, staker3],
+                [stakeToken1 as any, stakeToken2 as any, stakeToken3 as any],
+                ethers.utils.parseEther("1000000000")
+            );
+        }
+
+        if (!skipPreparePrimaryTokenForStakers) {
+            for (const sender of [staker1, staker2, staker3]) {
+                const amount = ethers.utils.parseEther("1000000");
+                await callTransaction(primaryToken.selfTransfer(sender.address, amount));
+                for (const operator of [stakeToken1, stakeToken2, stakeToken3]) {
+                    await callTransaction(primaryToken.connect(sender).increaseAllowance(operator.address, amount));
+                }
+            }
+        }
 
         if (setFeeRate) {
             await callTransaction(getStakeTokenTxByInput_UpdateFeeRate(
@@ -206,25 +298,6 @@ describe('4.5. StakeToken', async () => {
             ));
         }
 
-        if (prepareCurrencyForStakers) {
-            await prepareERC20(
-                currency,
-                [staker1, staker2, staker3],
-                [stakeToken1 as any, stakeToken2 as any, stakeToken3 as any],
-                ethers.utils.parseEther("1000000000")
-            );
-        }
-
-        if (preparePrimaryTokenForStakers) {
-            for (const sender of [staker1, staker2, staker3]) {
-                const amount = ethers.utils.parseEther("1000000");
-                await callTransaction(primaryToken.selfTransfer(sender.address, amount));
-                for (const operator of [stakeToken1, stakeToken2, stakeToken3]) {
-                    await callTransaction(primaryToken.connect(sender).increaseAllowance(operator.address, amount));
-                }
-            }
-        }
-
         if (pause) {
             await callTransaction(getPausableTxByInput_Pause(stakeToken1 as any, deployer, admin, admins));
         }
@@ -235,7 +308,9 @@ describe('4.5. StakeToken', async () => {
         };
     }
 
-    describe('4.5.1. initialize(address, address, address)', async () => {
+
+    /* --- Initialization --- */
+    describe('4.5.1. initialize(address,address,string,string,uint256)', async () => {
         it('4.5.1.1. Deploy successfully', async () => {
             const { admin, primaryToken } = await setupBeforeTest();
 
@@ -358,7 +433,9 @@ describe('4.5. StakeToken', async () => {
         });
     });
 
-    describe('4.5.2. initializeRewarding(uint256, address, bytes[])', async () => {
+
+    /* --- Administration --- */
+    describe('4.5.2. initializeRewarding(uint256,address,bytes[])', async () => {
         it('4.5.2.1. Initialize rewarding successfully', async () => {
             const { deployer, admin, admins, stakeToken1, stakeToken2 } = await setupBeforeTest();
 
@@ -411,7 +488,7 @@ describe('4.5. StakeToken', async () => {
         });
     });
 
-    describe('4.5.3. updateFeeRate(uint256, bytes[])', async () => {
+    describe('4.5.3. updateFeeRate(uint256,bytes[])', async () => {
         it('4.5.3.1. UpdateFeeRate successfully with valid signatures', async () => {
             const { deployer, admin, admins, stakeToken1 } = await setupBeforeTest();
 
@@ -468,521 +545,8 @@ describe('4.5. StakeToken', async () => {
         });
     });
 
-    describe('4.5.4. fetchReward()', async () => {
-        it('4.5.4.1. FetchReward successfully for stake token', async () => {
-            const { deployer, stakeToken1, primaryToken, staker1 } = await setupBeforeTest({
-                setFeeRate: true,
-                initializeRewarding: true,
-                preparePrimaryTokenForStakers: true,
-            });
-            
-            const initialStake = ethers.utils.parseEther("100");
-            await callTransaction(getStakeTokenTx_Stake(
-                stakeToken1 as any,
-                staker1,
-                { account: staker1.address, value: initialStake }
-            ));
-            
-            const reward = Constant.PRIMARY_TOKEN_STAKE_1_WAVE_REWARD;
 
-            let lastRewardFetch = await stakeToken1.lastRewardFetch();
-            let currentSupply;
-
-            for(let i = 0; i < 10; ++i) {
-                currentSupply = await stakeToken1.totalSupply();
-
-                lastRewardFetch = lastRewardFetch.add(Constant.STAKE_TOKEN_REWARD_FETCH_COOLDOWN);
-                await time.setNextBlockTimestamp(lastRewardFetch);
-                const tx = await getStakeTokenTx_FetchReward(stakeToken1 as any, deployer);
-                await tx.wait();
-
-                await expect(tx).to
-                    .emit(stakeToken1, 'RewardFetch')
-                    .withArgs(reward);
-
-                expect(await stakeToken1.totalSupply()).to.equal(currentSupply.add(reward));
-                expect(await stakeToken1.lastRewardFetch()).to.equal(lastRewardFetch);
-            }
-        });
-
-        it('4.5.4.2. FetchReward unsuccessfully when not started rewarding', async () => {
-            const { deployer, stakeToken1, staker1 } = await setupBeforeTest({
-                setFeeRate: true,
-                preparePrimaryTokenForStakers: true,
-            });
-
-            const initialStake = ethers.utils.parseEther("100");
-            await callTransaction(getStakeTokenTx_Stake(
-                stakeToken1 as any,
-                staker1,
-                { account: staker1.address, value: initialStake }
-            ));
-
-            await expect(getStakeTokenTx_FetchReward(stakeToken1 as any, deployer))
-                .to.be.revertedWithCustomError(stakeToken1, 'NotStartedRewarding');
-        });
-
-        it('4.5.4.3. FetchReward unsuccessfully when on initial cooldown', async () => {
-            const { deployer, stakeToken1, staker1 } = await setupBeforeTest({
-                setFeeRate: true,
-                initializeRewarding: true,
-                preparePrimaryTokenForStakers: true,
-            });
-
-            const initialStake = ethers.utils.parseEther("100");
-            await callTransaction(getStakeTokenTx_Stake(
-                stakeToken1 as any,
-                staker1,
-                { account: staker1.address, value: initialStake }
-            ));
-
-            let lastRewardFetch = await stakeToken1.lastRewardFetch();
-            lastRewardFetch = lastRewardFetch.add(Constant.STAKE_TOKEN_REWARD_FETCH_COOLDOWN);
-            await expect(getStakeTokenTx_FetchReward(stakeToken1 as any, deployer))
-                .to.be.revertedWithCustomError(stakeToken1, 'OnCoolDown');
-        });
-
-        it('4.5.4.4. FetchReward unsuccessfully when on cooldown after fetching reward', async () => {
-            const { deployer, stakeToken1, staker1 } = await setupBeforeTest({
-                setFeeRate: true,
-                initializeRewarding: true,
-                preparePrimaryTokenForStakers: true,
-            });
-
-            const initialStake = ethers.utils.parseEther("100");
-            await callTransaction(getStakeTokenTx_Stake(
-                stakeToken1 as any,
-                staker1,
-                { account: staker1.address, value: initialStake }
-            ));
-
-            let lastRewardFetch = await stakeToken1.lastRewardFetch();
-            lastRewardFetch = lastRewardFetch.add(Constant.STAKE_TOKEN_REWARD_FETCH_COOLDOWN);
-            await time.setNextBlockTimestamp(lastRewardFetch);
-            await callTransaction(getStakeTokenTx_FetchReward(stakeToken1 as any, deployer));
-
-            await expect(getStakeTokenTx_FetchReward(stakeToken1 as any, deployer))
-                .to.be.revertedWithCustomError(stakeToken1, 'OnCoolDown');
-        });
-
-        it('4.5.4.5. FetchReward unsuccessfully when stake token has zero stake', async () => {
-            const { deployer, stakeToken1 } = await setupBeforeTest({
-                setFeeRate: true,
-                initializeRewarding: true,
-            });
-
-            let lastRewardFetch = await stakeToken1.lastRewardFetch();
-            lastRewardFetch = lastRewardFetch.add(Constant.STAKE_TOKEN_REWARD_FETCH_COOLDOWN);
-            await time.setNextBlockTimestamp(lastRewardFetch);
-            await expect(getStakeTokenTx_FetchReward(stakeToken1 as any, deployer))
-                .to.be.revertedWithCustomError(stakeToken1, 'NoStake');
-        });        
-    });
-
-    describe('4.5.5. stake(address, uint256)', async () => {
-        it('4.5.5.1. Stake successfully before stake rewarding completed', async () => {
-            const { stakeToken1, staker1, primaryToken } = await setupBeforeTest({
-                setFeeRate: true,
-                initializeRewarding: true,
-                preparePrimaryTokenForStakers: true,
-            });
-
-            const initStaker1PrimaryBalance = await primaryToken.balanceOf(staker1.address);
-            const initStakeToken1PrimaryBalance = await primaryToken.balanceOf(stakeToken1.address);
-
-            const stakeAmount1 = ethers.utils.parseEther("100");
-            const tx1 = await getStakeTokenTx_Stake(
-                stakeToken1 as any,
-                staker1,
-                { account: staker1.address, value: stakeAmount1 }
-            );
-
-            await expect(tx1).to.emit(stakeToken1, 'Stake').withArgs(
-                staker1.address,
-                stakeAmount1,
-                ethers.constants.Zero,
-            );
-
-            expect(await primaryToken.balanceOf(stakeToken1.address)).to.equal(
-                initStakeToken1PrimaryBalance.add(stakeAmount1)
-            );
-            expect(await primaryToken.balanceOf(staker1.address)).to.equal(
-                initStaker1PrimaryBalance.sub(stakeAmount1)
-            );
-
-            expect(await stakeToken1.totalSupply()).to.equal(stakeAmount1);
-
-            const stakeAmount2 = ethers.utils.parseEther("1000");
-            const tx2 = await getStakeTokenTx_Stake(
-                stakeToken1 as any,
-                staker1,
-                { account: staker1.address, value: stakeAmount2 }
-            );
-
-            await expect(tx2).to.emit(stakeToken1, 'Stake').withArgs(
-                staker1.address,
-                stakeAmount2,
-                ethers.constants.Zero,
-            );
-
-            expect(await primaryToken.balanceOf(stakeToken1.address)).to.equal(
-                initStakeToken1PrimaryBalance.add(stakeAmount1).add(stakeAmount2)
-            );
-            expect(await primaryToken.balanceOf(staker1.address))
-                .to.equal(initStaker1PrimaryBalance.sub(stakeAmount1).sub(stakeAmount2));
-
-            expect(await stakeToken1.totalSupply()).to.equal(stakeAmount1.add(stakeAmount2));
-
-            expectEqualWithErrorMargin(await stakeToken1.balanceOf(staker1.address), stakeAmount1.add(stakeAmount2));
-        });
-
-        it('4.5.5.2. Stake successfully after stake rewarding completed', async () => {
-            const { stakeToken1, staker1, primaryToken, currency, treasury } = await setupBeforeTest({
-                setFeeRate: true,
-                initializeRewarding: true,
-                prepareCurrencyForStakers: true,
-                preparePrimaryTokenForStakers: true,
-            });
-
-            primaryToken.isStakeRewardingCulminated.returns(true);
-
-            const initStaker1PrimaryBalance = await primaryToken.balanceOf(staker1.address);
-            const initStakeToken1PrimaryBalance = await primaryToken.balanceOf(stakeToken1.address);
-
-            const initStaker1CurrencyBalance = await currency.balanceOf(staker1.address);
-            const initStakeToken1CurrencyBalance = await currency.balanceOf(stakeToken1.address);
-            const initPrimaryTokenCurrencyBalance = await currency.balanceOf(primaryToken.address);
-            const initTreasuryCurrencyBalance = await currency.balanceOf(treasury.address);
-
-            const stakeValue1 = ethers.utils.parseEther("100");
-            const feeAmount1 = getStakingFee(
-                await treasury.liquidity(),
-                stakeValue1,
-                await primaryToken.totalSupply(),
-                (await stakeToken1.getFeeRate()).value
-            );
-
-            const tx1 = await getStakeTokenTx_Stake(
-                stakeToken1 as any,
-                staker1,
-                { account: staker1.address, value: stakeValue1 }
-            );
-
-            await expect(tx1).to.emit(stakeToken1, 'Stake').withArgs(
-                staker1.address,
-                stakeValue1,
-                feeAmount1,
-            );
-
-            expect(await primaryToken.balanceOf(stakeToken1.address)).to.equal(initStakeToken1PrimaryBalance.add(stakeValue1));
-            expect(await primaryToken.balanceOf(staker1.address)).to.equal(initStaker1PrimaryBalance.sub(stakeValue1));
-
-            expect(await currency.balanceOf(staker1.address)).to.equal(initStaker1CurrencyBalance.sub(feeAmount1));
-            expect(await currency.balanceOf(stakeToken1.address)).to.equal(initStakeToken1CurrencyBalance);
-            expect(await currency.balanceOf(primaryToken.address)).to.equal(initPrimaryTokenCurrencyBalance);
-            expect(await currency.balanceOf(treasury.address)).to.equal(initTreasuryCurrencyBalance.add(feeAmount1));
-
-            expect(await stakeToken1.totalSupply()).to.equal(stakeValue1);
-            
-            expectEqualWithErrorMargin(await stakeToken1.balanceOf(staker1.address), stakeValue1);
-
-            const stakeValue2 = ethers.utils.parseEther("1000");
-            const feeAmount2 = getStakingFee(
-                await treasury.liquidity(),
-                stakeValue2,
-                await primaryToken.totalSupply(),
-                (await stakeToken1.getFeeRate()).value
-            );
-            
-            const tx2 = await getStakeTokenTx_Stake(
-                stakeToken1 as any,
-                staker1,
-                { account: staker1.address, value: stakeValue2 }
-            );
-
-            await expect(tx2).to.emit(stakeToken1, 'Stake').withArgs(
-                staker1.address,
-                stakeValue2,
-                feeAmount2,
-            );
-
-            expect(await primaryToken.balanceOf(stakeToken1.address))
-                .to.equal(initStakeToken1PrimaryBalance.add(stakeValue1).add(stakeValue2));
-            expect(await primaryToken.balanceOf(staker1.address))
-                .to.equal(initStaker1PrimaryBalance.sub(stakeValue1).sub(stakeValue2));
-
-            expect(await stakeToken1.totalSupply()).to.equal(stakeValue1.add(stakeValue2));
-
-            expect(await currency.balanceOf(staker1.address)).to.equal(initStaker1CurrencyBalance.sub(feeAmount1).sub(feeAmount2));
-            expect(await currency.balanceOf(stakeToken1.address)).to.equal(initStakeToken1CurrencyBalance);
-            expect(await currency.balanceOf(primaryToken.address)).to.equal(initPrimaryTokenCurrencyBalance);
-            expect(await currency.balanceOf(treasury.address)).to.equal(initTreasuryCurrencyBalance.add(feeAmount1).add(feeAmount2));
-
-            expectEqualWithErrorMargin(await stakeToken1.balanceOf(staker1.address), stakeValue1.add(stakeValue2));
-            
-            primaryToken.isStakeRewardingCulminated.reset();
-        });
-    });
-
-    describe('4.5.6. unstake(uint256)', async () => {
-        it('4.5.6.1. Unstake successfully', async () => {
-            const { stakeToken1, staker1, primaryToken } = await setupBeforeTest({
-                setFeeRate: true,
-                initializeRewarding: true,
-                preparePrimaryTokenForStakers: true,
-            });
-
-            let initStaker1PrimaryBalance = await primaryToken.balanceOf(staker1.address);
-            let initStakeToken1PrimaryBalance = await primaryToken.balanceOf(stakeToken1.address);
-
-            // Initial staking
-            const stakeAmount = ethers.utils.parseEther("100");
-
-            await callTransaction(getStakeTokenTx_Stake(
-                stakeToken1 as any,
-                staker1,
-                { account: staker1.address, value: stakeAmount }
-            ));
-
-            primaryToken.isStakeRewardingCulminated.returns(true);
-
-            // Unstake #1
-            const unstakeAmount1 = ethers.utils.parseEther("30");
-
-            const tx1 = await stakeToken1.connect(staker1).unstake(unstakeAmount1);
-            await tx1.wait();
-
-            await expect(tx1).to.emit(stakeToken1, 'Unstake').withArgs(
-                staker1.address,
-                unstakeAmount1
-            );
-
-            expect(await stakeToken1.totalSupply()).to.equal(stakeAmount.sub(unstakeAmount1));
-
-            expect(await primaryToken.balanceOf(stakeToken1.address)).to.equal(
-                initStakeToken1PrimaryBalance.add(stakeAmount).sub(unstakeAmount1)
-            );
-            expect(await primaryToken.balanceOf(staker1.address)).to.equal(
-                initStaker1PrimaryBalance.sub(stakeAmount).add(unstakeAmount1)
-            );
-            expectEqualWithErrorMargin(await stakeToken1.balanceOf(staker1.address), stakeAmount.sub(unstakeAmount1));
-
-            // Unstake #2
-            initStakeToken1PrimaryBalance = await primaryToken.balanceOf(stakeToken1.address);
-            initStaker1PrimaryBalance = await primaryToken.balanceOf(staker1.address);
-
-            const unstakeAmount2 = ethers.utils.parseEther("20");
-
-            const tx2 = await getStakeTokenTx_Unstake(stakeToken1 as any, staker1, { value: unstakeAmount2 });
-            await tx2.wait();
-
-            await expect(tx2)
-                .to.emit(stakeToken1, 'Unstake')
-                .withArgs(staker1.address, unstakeAmount2);
-
-            expect(await stakeToken1.totalSupply()).to.equal(initStakeToken1PrimaryBalance.sub(unstakeAmount2));
-
-            expect(await primaryToken.balanceOf(stakeToken1.address)).to.equal(
-                initStakeToken1PrimaryBalance.sub(unstakeAmount2)
-            );
-            expect(await primaryToken.balanceOf(staker1.address)).to.equal(
-                initStaker1PrimaryBalance.add(unstakeAmount2)
-            );                
-            expectEqualWithErrorMargin(await stakeToken1.balanceOf(staker1.address), stakeAmount.sub(unstakeAmount1).sub(unstakeAmount2));
-
-            primaryToken.isStakeRewardingCulminated.reset();
-        });
-
-        it('4.5.6.2. Unstake unsuccessfully when rewarding is not completed', async () => {
-            const { stakeToken1, staker1 } = await setupBeforeTest({
-                setFeeRate: true,
-                initializeRewarding: true,
-                preparePrimaryTokenForStakers: true,
-            });
-
-            // Initial staking
-            const stakeAmount = ethers.utils.parseEther("100");
-            await callTransaction(getStakeTokenTx_Stake(
-                stakeToken1 as any,
-                staker1,
-                { account: staker1.address, value: stakeAmount }
-            ));
-
-            // Unstake
-            await expect(getStakeTokenTx_Unstake(stakeToken1 as any, staker1, { value: ethers.utils.parseEther("30") }))
-                .to.be.revertedWithCustomError(stakeToken1, 'NotCulminated');
-        });
-
-        it('4.5.6.3. Unstake unsuccessfully when amount is greater than balance', async () => {
-            const { stakeToken1, staker1, primaryToken } = await setupBeforeTest({
-                setFeeRate: true,
-                initializeRewarding: true,
-                preparePrimaryTokenForStakers: true,
-            });
-
-            // Initial staking
-            const stakeAmount = ethers.utils.parseEther("100");
-            await callTransaction(getStakeTokenTx_Stake(
-                stakeToken1 as any,
-                staker1,
-                { account: staker1.address, value: stakeAmount }
-            ));
-
-            // Unstake
-            primaryToken.isStakeRewardingCulminated.returns(true);
-
-            await expect(getStakeTokenTx_Unstake(stakeToken1 as any, staker1, { value: stakeAmount.add(1) }))
-                .to.be.revertedWithCustomError(stakeToken1, 'InsufficientFunds');
-
-            primaryToken.isStakeRewardingCulminated.reset();
-        });        
-    });
-
-    describe('4.5.7. promote(uint256)', async () => {
-        it('4.5.7.1. Promote successfully', async () => {
-            const { stakeToken1, stakeToken2, stakeToken3, staker1, primaryToken } = await setupBeforeTest({
-                setFeeRate: true,
-                initializeRewarding: true,
-                preparePrimaryTokenForStakers: true,
-            });
-
-            const stakeAmount = ethers.utils.parseEther("150");
-            await callTransaction(getStakeTokenTx_Stake(
-                stakeToken1 as any,
-                staker1,
-                { account: staker1.address, value: stakeAmount }
-            ));
-
-            // Transaction #1
-            const promoteAmount1 = ethers.utils.parseEther("80");
-
-            const tx1 = await getStakeTokenTx_Promote(stakeToken1 as any, staker1, { value: promoteAmount1 });
-            await tx1.wait();
-
-            await expect(tx1).to.emit(stakeToken1, 'Promotion').withArgs(
-                staker1.address,
-                promoteAmount1
-            );
-                
-            expect(await stakeToken1.totalSupply()).to.equal(stakeAmount.sub(promoteAmount1));
-            expect(await stakeToken2.totalSupply()).to.equal(promoteAmount1);
-
-            expect(await primaryToken.balanceOf(stakeToken1.address)).to.equal(stakeAmount.sub(promoteAmount1));
-            expect(await primaryToken.balanceOf(stakeToken2.address)).to.equal(promoteAmount1);
-
-            expectEqualWithErrorMargin(await stakeToken1.balanceOf(staker1.address), stakeAmount.sub(promoteAmount1));
-            expectEqualWithErrorMargin(await stakeToken2.balanceOf(staker1.address), promoteAmount1);
-            
-            // Transaction #2
-            const promoteAmount2 = ethers.utils.parseEther("40");
-
-            const tx2 = await getStakeTokenTx_Promote(stakeToken1 as any, staker1, { value: promoteAmount2 });
-            await tx2.wait();
-
-            await expect(tx2).to.emit(stakeToken1, 'Promotion').withArgs(
-                staker1.address,
-                promoteAmount2
-            );
-
-            expect(await stakeToken1.totalSupply()).to.equal(stakeAmount.sub(promoteAmount1).sub(promoteAmount2));
-            expect(await stakeToken2.totalSupply()).to.equal(promoteAmount1.add(promoteAmount2));
-
-            expect(await primaryToken.balanceOf(stakeToken1.address)).to.equal(
-                stakeAmount.sub(promoteAmount1).sub(promoteAmount2)
-            );
-            expect(await primaryToken.balanceOf(stakeToken2.address)).to.equal(
-                promoteAmount1.add(promoteAmount2)
-            );
-
-            expectEqualWithErrorMargin(
-                await stakeToken1.balanceOf(staker1.address),
-                stakeAmount.sub(promoteAmount1).sub(promoteAmount2)
-            );
-            expectEqualWithErrorMargin(
-                await stakeToken2.balanceOf(staker1.address),
-                promoteAmount1.add(promoteAmount2)
-            );
-
-            // Transaction #3
-            const promoteAmount3 = ethers.utils.parseEther("20");
-
-            const tx3 = await getStakeTokenTx_Promote(stakeToken2 as any, staker1, { value: promoteAmount3 });
-            await tx3.wait();
-
-            await expect(tx3).to.emit(stakeToken2, 'Promotion').withArgs(
-                staker1.address,
-                promoteAmount3,
-            );
-
-            expect(await stakeToken2.totalSupply()).to.equal(promoteAmount1.add(promoteAmount2).sub(promoteAmount3));
-            expect(await stakeToken3.totalSupply()).to.equal(promoteAmount3);
-
-            expect(await primaryToken.balanceOf(stakeToken2.address)).to.equal(promoteAmount1.add(promoteAmount2).sub(promoteAmount3));
-            expect(await primaryToken.balanceOf(stakeToken3.address)).to.equal(promoteAmount3);
-
-            expectEqualWithErrorMargin(await stakeToken2.balanceOf(staker1.address), promoteAmount1.add(promoteAmount2).sub(promoteAmount3));
-            expectEqualWithErrorMargin(await stakeToken3.balanceOf(staker1.address), promoteAmount3);
-        });
-
-        it('4.5.7.2. Promote unsuccessfully when paused', async () => {
-            const fixture = await setupBeforeTest({
-                setFeeRate: true,
-                initializeRewarding: true,
-                preparePrimaryTokenForStakers: true,
-                pause: true,
-            });
-            const { stakeToken1, staker1 } = fixture;
-
-            await expect(getStakeTokenTx_Promote(stakeToken1 as any, staker1, { value: ethers.utils.parseEther("10") }))
-                .to.be.revertedWith('Pausable: paused');
-        });
-
-        it('4.5.7.3. Promote unsuccessfully when there is no successor', async () => {
-            const fixture = await setupBeforeTest({
-                setFeeRate: true,
-                initializeRewarding: true,
-                preparePrimaryTokenForStakers: true,
-            });
-            const { stakeToken3, staker1 } = fixture;
-
-            await expect(getStakeTokenTx_Promote(stakeToken3 as any, staker1, { value: ethers.utils.parseEther("10") }))
-                .to.be.revertedWithCustomError(stakeToken3, 'NoSuccessor');
-        });
-
-        it('4.5.7.4. Promote unsuccessfully when stake rewarding is completed', async () => {
-            const fixture = await setupBeforeTest({
-                setFeeRate: true,
-                initializeRewarding: true,
-                preparePrimaryTokenForStakers: true,
-            });
-            const { stakeToken1, staker1, primaryToken } = fixture;
-            primaryToken.isStakeRewardingCulminated.returns(true);
-
-            await expect(getStakeTokenTx_Promote(stakeToken1 as any, staker1, { value: ethers.utils.parseEther("10") }))
-                .to.be.revertedWithCustomError(stakeToken1, 'InvalidPromoting');
-
-            primaryToken.isStakeRewardingCulminated.reset();
-        });
-
-        it('4.5.7.5. Promote unsuccessfully when amount is greater than balance', async () => {
-            const fixture = await setupBeforeTest({
-                setFeeRate: true,
-                initializeRewarding: true,
-                preparePrimaryTokenForStakers: true,
-            });
-            const { stakeToken1, staker1 } = fixture;
-
-            await callTransaction(getStakeTokenTx_Stake(
-                stakeToken1 as any,
-                staker1,
-                { account: staker1.address, value: ethers.utils.parseEther("100") }
-            ));
-
-            await expect(getStakeTokenTx_Promote(stakeToken1 as any, staker1, { value: ethers.utils.parseEther("101") }))
-                .to.be.revertedWithCustomError(stakeToken1, 'InsufficientFunds');
-        });        
-    });
-
+    /* --- Query --- */
     describe('4.5.8. balanceOf()', async () => {
         async function testBalanceAfterOperations(
             fixture: StakeTokenFixture,
@@ -1235,8 +799,6 @@ describe('4.5. StakeToken', async () => {
             const fixture = await setupBeforeTest({
                 setFeeRate: true,
                 initializeRewarding: true,
-                prepareCurrencyForStakers: true,
-                preparePrimaryTokenForStakers: true,
             });
 
             const { stakeToken1, staker1, staker2, staker3 } = fixture;
@@ -1257,8 +819,6 @@ describe('4.5. StakeToken', async () => {
             const fixture = await setupBeforeTest({
                 setFeeRate: true,
                 initializeRewarding: true,
-                prepareCurrencyForStakers: true,
-                preparePrimaryTokenForStakers: true,
             });
 
             const operations = await getRandomOperations(fixture, 1000);
@@ -1320,12 +880,513 @@ describe('4.5. StakeToken', async () => {
         });
     });
 
-    describe('4.5.10. transfer(address, uint256)', async () => {
+
+    /* --- Command --- */
+    describe('4.5.4. fetchReward()', async () => {
+        it('4.5.4.1. FetchReward successfully for stake token', async () => {
+            const { deployer, stakeToken1, staker1 } = await setupBeforeTest({
+                setFeeRate: true,
+                initializeRewarding: true,
+            });
+            
+            const initialStake = ethers.utils.parseEther("100");
+            await callTransaction(getStakeTokenTx_Stake(
+                stakeToken1 as any,
+                staker1,
+                { account: staker1.address, value: initialStake }
+            ));
+            
+            const reward = Constant.PRIMARY_TOKEN_STAKE_1_WAVE_REWARD;
+
+            let lastRewardFetch = await stakeToken1.lastRewardFetch();
+            let currentSupply;
+
+            for(let i = 0; i < 10; ++i) {
+                currentSupply = await stakeToken1.totalSupply();
+
+                lastRewardFetch = lastRewardFetch.add(Constant.STAKE_TOKEN_REWARD_FETCH_COOLDOWN);
+                await time.setNextBlockTimestamp(lastRewardFetch);
+                const tx = await getStakeTokenTx_FetchReward(stakeToken1 as any, deployer);
+                await tx.wait();
+
+                await expect(tx).to
+                    .emit(stakeToken1, 'RewardFetch')
+                    .withArgs(reward);
+
+                expect(await stakeToken1.totalSupply()).to.equal(currentSupply.add(reward));
+                expect(await stakeToken1.lastRewardFetch()).to.equal(lastRewardFetch);
+            }
+        });
+
+        it('4.5.4.2. FetchReward unsuccessfully when not started rewarding', async () => {
+            const { deployer, stakeToken1, staker1 } = await setupBeforeTest({
+                setFeeRate: true,
+            });
+
+            const initialStake = ethers.utils.parseEther("100");
+            await callTransaction(getStakeTokenTx_Stake(
+                stakeToken1 as any,
+                staker1,
+                { account: staker1.address, value: initialStake }
+            ));
+
+            await expect(getStakeTokenTx_FetchReward(stakeToken1 as any, deployer))
+                .to.be.revertedWithCustomError(stakeToken1, 'NotStartedRewarding');
+        });
+
+        it('4.5.4.3. FetchReward unsuccessfully when on initial cooldown', async () => {
+            const { deployer, stakeToken1, staker1 } = await setupBeforeTest({
+                setFeeRate: true,
+                initializeRewarding: true,
+            });
+
+            const initialStake = ethers.utils.parseEther("100");
+            await callTransaction(getStakeTokenTx_Stake(
+                stakeToken1 as any,
+                staker1,
+                { account: staker1.address, value: initialStake }
+            ));
+
+            let lastRewardFetch = await stakeToken1.lastRewardFetch();
+            lastRewardFetch = lastRewardFetch.add(Constant.STAKE_TOKEN_REWARD_FETCH_COOLDOWN);
+            await expect(getStakeTokenTx_FetchReward(stakeToken1 as any, deployer))
+                .to.be.revertedWithCustomError(stakeToken1, 'OnCoolDown');
+        });
+
+        it('4.5.4.4. FetchReward unsuccessfully when on cooldown after fetching reward', async () => {
+            const { deployer, stakeToken1, staker1 } = await setupBeforeTest({
+                setFeeRate: true,
+                initializeRewarding: true,                
+            });
+
+            const initialStake = ethers.utils.parseEther("100");
+            await callTransaction(getStakeTokenTx_Stake(
+                stakeToken1 as any,
+                staker1,
+                { account: staker1.address, value: initialStake }
+            ));
+
+            let lastRewardFetch = await stakeToken1.lastRewardFetch();
+            lastRewardFetch = lastRewardFetch.add(Constant.STAKE_TOKEN_REWARD_FETCH_COOLDOWN);
+            await time.setNextBlockTimestamp(lastRewardFetch);
+            await callTransaction(getStakeTokenTx_FetchReward(stakeToken1 as any, deployer));
+
+            await expect(getStakeTokenTx_FetchReward(stakeToken1 as any, deployer))
+                .to.be.revertedWithCustomError(stakeToken1, 'OnCoolDown');
+        });
+
+        it('4.5.4.5. FetchReward unsuccessfully when stake token has zero stake', async () => {
+            const { deployer, stakeToken1 } = await setupBeforeTest({
+                setFeeRate: true,
+                initializeRewarding: true,
+            });
+
+            let lastRewardFetch = await stakeToken1.lastRewardFetch();
+            lastRewardFetch = lastRewardFetch.add(Constant.STAKE_TOKEN_REWARD_FETCH_COOLDOWN);
+            await time.setNextBlockTimestamp(lastRewardFetch);
+            await expect(getStakeTokenTx_FetchReward(stakeToken1 as any, deployer))
+                .to.be.revertedWithCustomError(stakeToken1, 'NoStake');
+        });        
+    });
+
+    describe('4.5.5. stake(address,uint256)', async () => {
+        it('4.5.5.1. Stake successfully before stake rewarding completed', async () => {
+            const { stakeToken1, staker1, primaryToken } = await setupBeforeTest({
+                setFeeRate: true,
+                initializeRewarding: true,
+            });
+
+            const initStaker1PrimaryBalance = await primaryToken.balanceOf(staker1.address);
+            const initStakeToken1PrimaryBalance = await primaryToken.balanceOf(stakeToken1.address);
+
+            const stakeAmount1 = ethers.utils.parseEther("100");
+            const tx1 = await getStakeTokenTx_Stake(
+                stakeToken1 as any,
+                staker1,
+                { account: staker1.address, value: stakeAmount1 }
+            );
+
+            await expect(tx1).to.emit(stakeToken1, 'Stake').withArgs(
+                staker1.address,
+                stakeAmount1,
+                ethers.constants.Zero,
+            );
+
+            expect(await primaryToken.balanceOf(stakeToken1.address)).to.equal(
+                initStakeToken1PrimaryBalance.add(stakeAmount1)
+            );
+            expect(await primaryToken.balanceOf(staker1.address)).to.equal(
+                initStaker1PrimaryBalance.sub(stakeAmount1)
+            );
+
+            expect(await stakeToken1.totalSupply()).to.equal(stakeAmount1);
+
+            const stakeAmount2 = ethers.utils.parseEther("1000");
+            const tx2 = await getStakeTokenTx_Stake(
+                stakeToken1 as any,
+                staker1,
+                { account: staker1.address, value: stakeAmount2 }
+            );
+
+            await expect(tx2).to.emit(stakeToken1, 'Stake').withArgs(
+                staker1.address,
+                stakeAmount2,
+                ethers.constants.Zero,
+            );
+
+            expect(await primaryToken.balanceOf(stakeToken1.address)).to.equal(
+                initStakeToken1PrimaryBalance.add(stakeAmount1).add(stakeAmount2)
+            );
+            expect(await primaryToken.balanceOf(staker1.address))
+                .to.equal(initStaker1PrimaryBalance.sub(stakeAmount1).sub(stakeAmount2));
+
+            expect(await stakeToken1.totalSupply()).to.equal(stakeAmount1.add(stakeAmount2));
+
+            expectEqualWithErrorMargin(await stakeToken1.balanceOf(staker1.address), stakeAmount1.add(stakeAmount2));
+        });
+
+        it('4.5.5.2. Stake successfully after stake rewarding completed', async () => {
+            const { stakeToken1, staker1, primaryToken, currency, treasury } = await setupBeforeTest({
+                setFeeRate: true,
+                initializeRewarding: true,
+            });
+
+            primaryToken.isStakeRewardingCulminated.returns(true);
+
+            const initStaker1PrimaryBalance = await primaryToken.balanceOf(staker1.address);
+            const initStakeToken1PrimaryBalance = await primaryToken.balanceOf(stakeToken1.address);
+
+            const initStaker1CurrencyBalance = await currency.balanceOf(staker1.address);
+            const initStakeToken1CurrencyBalance = await currency.balanceOf(stakeToken1.address);
+            const initPrimaryTokenCurrencyBalance = await currency.balanceOf(primaryToken.address);
+            const initTreasuryCurrencyBalance = await currency.balanceOf(treasury.address);
+
+            const stakeValue1 = ethers.utils.parseEther("100");
+            const feeAmount1 = getStakingFee(
+                await treasury.liquidity(),
+                stakeValue1,
+                await primaryToken.totalSupply(),
+                (await stakeToken1.getFeeRate()).value
+            );
+
+            const tx1 = await getStakeTokenTx_Stake(
+                stakeToken1 as any,
+                staker1,
+                { account: staker1.address, value: stakeValue1 }
+            );
+
+            await expect(tx1).to.emit(stakeToken1, 'Stake').withArgs(
+                staker1.address,
+                stakeValue1,
+                feeAmount1,
+            );
+
+            expect(await primaryToken.balanceOf(stakeToken1.address)).to.equal(initStakeToken1PrimaryBalance.add(stakeValue1));
+            expect(await primaryToken.balanceOf(staker1.address)).to.equal(initStaker1PrimaryBalance.sub(stakeValue1));
+
+            expect(await currency.balanceOf(staker1.address)).to.equal(initStaker1CurrencyBalance.sub(feeAmount1));
+            expect(await currency.balanceOf(stakeToken1.address)).to.equal(initStakeToken1CurrencyBalance);
+            expect(await currency.balanceOf(primaryToken.address)).to.equal(initPrimaryTokenCurrencyBalance);
+            expect(await currency.balanceOf(treasury.address)).to.equal(initTreasuryCurrencyBalance.add(feeAmount1));
+
+            expect(await stakeToken1.totalSupply()).to.equal(stakeValue1);
+            
+            expectEqualWithErrorMargin(await stakeToken1.balanceOf(staker1.address), stakeValue1);
+
+            const stakeValue2 = ethers.utils.parseEther("1000");
+            const feeAmount2 = getStakingFee(
+                await treasury.liquidity(),
+                stakeValue2,
+                await primaryToken.totalSupply(),
+                (await stakeToken1.getFeeRate()).value
+            );
+            
+            const tx2 = await getStakeTokenTx_Stake(
+                stakeToken1 as any,
+                staker1,
+                { account: staker1.address, value: stakeValue2 }
+            );
+
+            await expect(tx2).to.emit(stakeToken1, 'Stake').withArgs(
+                staker1.address,
+                stakeValue2,
+                feeAmount2,
+            );
+
+            expect(await primaryToken.balanceOf(stakeToken1.address))
+                .to.equal(initStakeToken1PrimaryBalance.add(stakeValue1).add(stakeValue2));
+            expect(await primaryToken.balanceOf(staker1.address))
+                .to.equal(initStaker1PrimaryBalance.sub(stakeValue1).sub(stakeValue2));
+
+            expect(await stakeToken1.totalSupply()).to.equal(stakeValue1.add(stakeValue2));
+
+            expect(await currency.balanceOf(staker1.address)).to.equal(initStaker1CurrencyBalance.sub(feeAmount1).sub(feeAmount2));
+            expect(await currency.balanceOf(stakeToken1.address)).to.equal(initStakeToken1CurrencyBalance);
+            expect(await currency.balanceOf(primaryToken.address)).to.equal(initPrimaryTokenCurrencyBalance);
+            expect(await currency.balanceOf(treasury.address)).to.equal(initTreasuryCurrencyBalance.add(feeAmount1).add(feeAmount2));
+
+            expectEqualWithErrorMargin(await stakeToken1.balanceOf(staker1.address), stakeValue1.add(stakeValue2));
+            
+            primaryToken.isStakeRewardingCulminated.reset();
+        });
+    });
+
+    describe('4.5.6. unstake(uint256)', async () => {
+        it('4.5.6.1. Unstake successfully', async () => {
+            const { stakeToken1, staker1, primaryToken } = await setupBeforeTest({
+                setFeeRate: true,
+                initializeRewarding: true,
+            });
+
+            let initStaker1PrimaryBalance = await primaryToken.balanceOf(staker1.address);
+            let initStakeToken1PrimaryBalance = await primaryToken.balanceOf(stakeToken1.address);
+
+            // Initial staking
+            const stakeAmount = ethers.utils.parseEther("100");
+
+            await callTransaction(getStakeTokenTx_Stake(
+                stakeToken1 as any,
+                staker1,
+                { account: staker1.address, value: stakeAmount }
+            ));
+
+            primaryToken.isStakeRewardingCulminated.returns(true);
+
+            // Unstake #1
+            const unstakeAmount1 = ethers.utils.parseEther("30");
+
+            const tx1 = await stakeToken1.connect(staker1).unstake(unstakeAmount1);
+            await tx1.wait();
+
+            await expect(tx1).to.emit(stakeToken1, 'Unstake').withArgs(
+                staker1.address,
+                unstakeAmount1
+            );
+
+            expect(await stakeToken1.totalSupply()).to.equal(stakeAmount.sub(unstakeAmount1));
+
+            expect(await primaryToken.balanceOf(stakeToken1.address)).to.equal(
+                initStakeToken1PrimaryBalance.add(stakeAmount).sub(unstakeAmount1)
+            );
+            expect(await primaryToken.balanceOf(staker1.address)).to.equal(
+                initStaker1PrimaryBalance.sub(stakeAmount).add(unstakeAmount1)
+            );
+            expectEqualWithErrorMargin(await stakeToken1.balanceOf(staker1.address), stakeAmount.sub(unstakeAmount1));
+
+            // Unstake #2
+            initStakeToken1PrimaryBalance = await primaryToken.balanceOf(stakeToken1.address);
+            initStaker1PrimaryBalance = await primaryToken.balanceOf(staker1.address);
+
+            const unstakeAmount2 = ethers.utils.parseEther("20");
+
+            const tx2 = await getStakeTokenTx_Unstake(stakeToken1 as any, staker1, { value: unstakeAmount2 });
+            await tx2.wait();
+
+            await expect(tx2)
+                .to.emit(stakeToken1, 'Unstake')
+                .withArgs(staker1.address, unstakeAmount2);
+
+            expect(await stakeToken1.totalSupply()).to.equal(initStakeToken1PrimaryBalance.sub(unstakeAmount2));
+
+            expect(await primaryToken.balanceOf(stakeToken1.address)).to.equal(
+                initStakeToken1PrimaryBalance.sub(unstakeAmount2)
+            );
+            expect(await primaryToken.balanceOf(staker1.address)).to.equal(
+                initStaker1PrimaryBalance.add(unstakeAmount2)
+            );                
+            expectEqualWithErrorMargin(await stakeToken1.balanceOf(staker1.address), stakeAmount.sub(unstakeAmount1).sub(unstakeAmount2));
+
+            primaryToken.isStakeRewardingCulminated.reset();
+        });
+
+        it('4.5.6.2. Unstake unsuccessfully when rewarding is not completed', async () => {
+            const { stakeToken1, staker1 } = await setupBeforeTest({
+                setFeeRate: true,
+                initializeRewarding: true,
+            });
+
+            // Initial staking
+            const stakeAmount = ethers.utils.parseEther("100");
+            await callTransaction(getStakeTokenTx_Stake(
+                stakeToken1 as any,
+                staker1,
+                { account: staker1.address, value: stakeAmount }
+            ));
+
+            // Unstake
+            await expect(getStakeTokenTx_Unstake(stakeToken1 as any, staker1, { value: ethers.utils.parseEther("30") }))
+                .to.be.revertedWithCustomError(stakeToken1, 'NotCulminated');
+        });
+
+        it('4.5.6.3. Unstake unsuccessfully when amount is greater than balance', async () => {
+            const { stakeToken1, staker1, primaryToken } = await setupBeforeTest({
+                setFeeRate: true,
+                initializeRewarding: true,
+            });
+
+            // Initial staking
+            const stakeAmount = ethers.utils.parseEther("100");
+            await callTransaction(getStakeTokenTx_Stake(
+                stakeToken1 as any,
+                staker1,
+                { account: staker1.address, value: stakeAmount }
+            ));
+
+            // Unstake
+            primaryToken.isStakeRewardingCulminated.returns(true);
+
+            await expect(getStakeTokenTx_Unstake(stakeToken1 as any, staker1, { value: stakeAmount.add(1) }))
+                .to.be.revertedWithCustomError(stakeToken1, 'InsufficientFunds');
+
+            primaryToken.isStakeRewardingCulminated.reset();
+        });        
+    });
+
+    describe('4.5.7. promote(uint256)', async () => {
+        it('4.5.7.1. Promote successfully', async () => {
+            const { stakeToken1, stakeToken2, stakeToken3, staker1, primaryToken } = await setupBeforeTest({
+                setFeeRate: true,
+                initializeRewarding: true,
+            });
+
+            const stakeAmount = ethers.utils.parseEther("150");
+            await callTransaction(getStakeTokenTx_Stake(
+                stakeToken1 as any,
+                staker1,
+                { account: staker1.address, value: stakeAmount }
+            ));
+
+            // Transaction #1
+            const promoteAmount1 = ethers.utils.parseEther("80");
+
+            const tx1 = await getStakeTokenTx_Promote(stakeToken1 as any, staker1, { value: promoteAmount1 });
+            await tx1.wait();
+
+            await expect(tx1).to.emit(stakeToken1, 'Promotion').withArgs(
+                staker1.address,
+                promoteAmount1
+            );
+                
+            expect(await stakeToken1.totalSupply()).to.equal(stakeAmount.sub(promoteAmount1));
+            expect(await stakeToken2.totalSupply()).to.equal(promoteAmount1);
+
+            expect(await primaryToken.balanceOf(stakeToken1.address)).to.equal(stakeAmount.sub(promoteAmount1));
+            expect(await primaryToken.balanceOf(stakeToken2.address)).to.equal(promoteAmount1);
+
+            expectEqualWithErrorMargin(await stakeToken1.balanceOf(staker1.address), stakeAmount.sub(promoteAmount1));
+            expectEqualWithErrorMargin(await stakeToken2.balanceOf(staker1.address), promoteAmount1);
+            
+            // Transaction #2
+            const promoteAmount2 = ethers.utils.parseEther("40");
+
+            const tx2 = await getStakeTokenTx_Promote(stakeToken1 as any, staker1, { value: promoteAmount2 });
+            await tx2.wait();
+
+            await expect(tx2).to.emit(stakeToken1, 'Promotion').withArgs(
+                staker1.address,
+                promoteAmount2
+            );
+
+            expect(await stakeToken1.totalSupply()).to.equal(stakeAmount.sub(promoteAmount1).sub(promoteAmount2));
+            expect(await stakeToken2.totalSupply()).to.equal(promoteAmount1.add(promoteAmount2));
+
+            expect(await primaryToken.balanceOf(stakeToken1.address)).to.equal(
+                stakeAmount.sub(promoteAmount1).sub(promoteAmount2)
+            );
+            expect(await primaryToken.balanceOf(stakeToken2.address)).to.equal(
+                promoteAmount1.add(promoteAmount2)
+            );
+
+            expectEqualWithErrorMargin(
+                await stakeToken1.balanceOf(staker1.address),
+                stakeAmount.sub(promoteAmount1).sub(promoteAmount2)
+            );
+            expectEqualWithErrorMargin(
+                await stakeToken2.balanceOf(staker1.address),
+                promoteAmount1.add(promoteAmount2)
+            );
+
+            // Transaction #3
+            const promoteAmount3 = ethers.utils.parseEther("20");
+
+            const tx3 = await getStakeTokenTx_Promote(stakeToken2 as any, staker1, { value: promoteAmount3 });
+            await tx3.wait();
+
+            await expect(tx3).to.emit(stakeToken2, 'Promotion').withArgs(
+                staker1.address,
+                promoteAmount3,
+            );
+
+            expect(await stakeToken2.totalSupply()).to.equal(promoteAmount1.add(promoteAmount2).sub(promoteAmount3));
+            expect(await stakeToken3.totalSupply()).to.equal(promoteAmount3);
+
+            expect(await primaryToken.balanceOf(stakeToken2.address)).to.equal(promoteAmount1.add(promoteAmount2).sub(promoteAmount3));
+            expect(await primaryToken.balanceOf(stakeToken3.address)).to.equal(promoteAmount3);
+
+            expectEqualWithErrorMargin(await stakeToken2.balanceOf(staker1.address), promoteAmount1.add(promoteAmount2).sub(promoteAmount3));
+            expectEqualWithErrorMargin(await stakeToken3.balanceOf(staker1.address), promoteAmount3);
+        });
+
+        it('4.5.7.2. Promote unsuccessfully when paused', async () => {
+            const fixture = await setupBeforeTest({
+                setFeeRate: true,
+                initializeRewarding: true,
+                pause: true,
+            });
+            const { stakeToken1, staker1 } = fixture;
+
+            await expect(getStakeTokenTx_Promote(stakeToken1 as any, staker1, { value: ethers.utils.parseEther("10") }))
+                .to.be.revertedWith('Pausable: paused');
+        });
+
+        it('4.5.7.3. Promote unsuccessfully when there is no successor', async () => {
+            const fixture = await setupBeforeTest({
+                setFeeRate: true,
+                initializeRewarding: true,
+            });
+            const { stakeToken3, staker1 } = fixture;
+
+            await expect(getStakeTokenTx_Promote(stakeToken3 as any, staker1, { value: ethers.utils.parseEther("10") }))
+                .to.be.revertedWithCustomError(stakeToken3, 'NoSuccessor');
+        });
+
+        it('4.5.7.4. Promote unsuccessfully when stake rewarding is completed', async () => {
+            const fixture = await setupBeforeTest({
+                setFeeRate: true,
+                initializeRewarding: true,
+            });
+            const { stakeToken1, staker1, primaryToken } = fixture;
+            primaryToken.isStakeRewardingCulminated.returns(true);
+
+            await expect(getStakeTokenTx_Promote(stakeToken1 as any, staker1, { value: ethers.utils.parseEther("10") }))
+                .to.be.revertedWithCustomError(stakeToken1, 'InvalidPromoting');
+
+            primaryToken.isStakeRewardingCulminated.reset();
+        });
+
+        it('4.5.7.5. Promote unsuccessfully when amount is greater than balance', async () => {
+            const fixture = await setupBeforeTest({
+                setFeeRate: true,
+                initializeRewarding: true,
+            });
+            const { stakeToken1, staker1 } = fixture;
+
+            await callTransaction(getStakeTokenTx_Stake(
+                stakeToken1 as any,
+                staker1,
+                { account: staker1.address, value: ethers.utils.parseEther("100") }
+            ));
+
+            await expect(getStakeTokenTx_Promote(stakeToken1 as any, staker1, { value: ethers.utils.parseEther("101") }))
+                .to.be.revertedWithCustomError(stakeToken1, 'InsufficientFunds');
+        });        
+    });
+
+    describe('4.5.10. transfer(address,uint256)', async () => {
         it('4.5.10.1. Transfer successfully', async () => {
             const { stakeToken1, staker1, staker2 } = await setupBeforeTest({
                 setFeeRate: true,
                 initializeRewarding: true,
-                preparePrimaryTokenForStakers: true,
             });
 
             await callTransaction(getStakeTokenTx_Stake(

@@ -973,8 +973,7 @@ describe('3.1. ERC721MortgageToken', async () => {
         }
 
         it('3.1.4.1. Create mortgage successfully', async () => {
-            const fixture = await beforeERC721MortgageTokenTest({
-            });
+            const fixture = await beforeERC721MortgageTokenTest();
             const { erc721MortgageToken, admin, borrower1, borrower2, currency, feeReceiverCollection, otherCollection } = fixture;
 
             const params1: ERC721BorrowParams = {
@@ -1102,8 +1101,7 @@ describe('3.1. ERC721MortgageToken', async () => {
         });
 
         it('3.1.4.3. Create mortgage unsuccessfully with invalid erc721 id', async () => {
-            const fixture = await beforeERC721MortgageTokenTest({
-            });
+            const fixture = await beforeERC721MortgageTokenTest();
             const { erc721MortgageToken, borrower1 } = fixture;
 
             const { defaultParams } = await beforeBorrowTest(fixture);
@@ -1139,8 +1137,7 @@ describe('3.1. ERC721MortgageToken', async () => {
         });
 
         it('3.1.4.5. Create mortgage unsuccessfully when borrower is not token owner', async () => {
-            const fixture = await beforeERC721MortgageTokenTest({
-            });
+            const fixture = await beforeERC721MortgageTokenTest();
             const { erc721MortgageToken, feeReceiverCollection, borrower2 } = fixture;
             const { defaultParams } = await beforeBorrowTest(fixture);
 
@@ -1157,8 +1154,7 @@ describe('3.1. ERC721MortgageToken', async () => {
 
 
         it('3.1.4.6. Create mortgage unsuccessfully with invalid principal', async () => {
-            const fixture = await beforeERC721MortgageTokenTest({
-            });
+            const fixture = await beforeERC721MortgageTokenTest();
             const { erc721MortgageToken, borrower1 } = fixture;
             const { defaultParams } = await beforeBorrowTest(fixture);
 
@@ -1173,8 +1169,7 @@ describe('3.1. ERC721MortgageToken', async () => {
         });
 
         it('3.1.4.7. Create mortgage unsuccessfully with invalid repayment', async () => {
-            const fixture = await beforeERC721MortgageTokenTest({
-            });
+            const fixture = await beforeERC721MortgageTokenTest();
             const { erc721MortgageToken, borrower1 } = fixture;
             const { defaultParams } = await beforeBorrowTest(fixture);
 
