@@ -1,68 +1,115 @@
 import { expect } from 'chai';
+import { Contract, BigNumber } from 'ethers';
 import { ethers } from 'hardhat';
+
+// @defi-wonderland/smock
+import { smock } from '@defi-wonderland/smock';
+
+// @nomicfoundation/hardhat-network-helpers
+import {
+    loadFixture,
+    time
+} from "@nomicfoundation/hardhat-network-helpers";
+
+// @tests
+import { Constant } from '@tests/test.constant';
+
+// @tests/land
+import { Initialization as LandInitialization } from '@tests/land/test.initialization';
+
+// @tests/lend
+import { Initialization as LendInitialization } from '@tests/lend/test.initialization';
+
+// @typechain-types
 import {
     Admin,
-    CommissionToken,
     Currency,
     FeeReceiver,
-    MockEstateToken,
     MortgageMarketplace,
     MockMortgageToken,
-    MockEstateToken__factory,
-    MockMortgageToken__factory,
     CommissionToken__factory,
-    EstateForger,
-    ReserveVault,
-    PriceWatcher,
-    MockEstateForger,
     EstateMortgageToken,
     ProjectMortgageToken,
     ERC721MortgageToken,
     ProxyCaller,
 } from '@typechain-types';
-import { callTransaction, expectRevertWithModifierCustomError, getSignatures, prepareERC20, prepareNativeToken, randomWallet, resetERC20, resetNativeToken, testReentrancy } from '@utils/blockchain';
-import { Constant } from '@tests/test.constant';
+
+// @utils
+import { getBalance } from '@utils/blockchain';
+import {
+    callTransaction,
+    expectRevertWithModifierCustomError,
+    prepareERC20,
+    prepareNativeToken,
+    randomWallet,
+    resetERC20,
+    resetNativeToken,
+    testReentrancy
+} from '@utils/blockchain';
+import { applyDiscount } from '@utils/formula';
+import { MockValidator } from '@utils/mockValidator';
+
+// @utils/deployments/common
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
 import { deployCurrency } from '@utils/deployments/common/currency';
-import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 
-import { MockContract, smock } from '@defi-wonderland/smock';
-
-import { BigNumber } from 'ethers';
-import { randomInt } from 'crypto';
-import { getInterfaceID, randomBigNumber } from '@utils/utils';
-import { OrderedMap } from '@utils/utils';
+// @utils/deployments/lend
 import { deployEstateMortgageToken } from '@utils/deployments/lend/estateMortgageToken';
+
+// @utils/deployments/lux
 import { deployMortgageMarketplace } from '@utils/deployments/lux/mortgageMarketplace';
-import { Contract } from 'ethers';
-import { OfferState } from "@utils/models/lux/offerState";
-import { MortgageState } from "@utils/models/lend/mortgageToken";
-import { getBalance } from '@utils/blockchain';
+
+// @utils/deployments/mock
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
-import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
-import { Initialization as LandInitialization } from '@tests/land/test.initialization';
-import { Initialization as LendInitialization } from '@tests/lend/test.initialization';
-import { MockValidator } from '@utils/mockValidator';
-import { getCommissionTokenTx_RegisterBroker } from '@utils/transaction/land/commissionToken';
-import { getCallEstateTokenTx_TokenizeEstate, getEstateTokenTx_RegisterCustodian, getEstateTokenTxByInput_UpdateCommissionToken } from '@utils/transaction/land/estateToken';
-import { deployEstateForger } from '@utils/deployments/land/estateForger';
-import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
-import { deployReserveVault } from '@utils/deployments/common/reserveVault';
-import { RegisterCustodianParams } from '@utils/models/land/estateToken';
-import { deployMockEstateForger } from '@utils/deployments/mock/mockEstateForger';
 import { deployMockMortgageToken } from '@utils/deployments/mock/mockMortgageToken';
-import { BuyParams, ListParams, RegisterCollectionsParams, RegisterCollectionsParamsInput, SafeBuyParams } from '@utils/models/lux/erc721Marketplace';
-import { getERC721MarketplaceTx_Buy, getCallERC721MarketplaceTx_List, getERC721MarketplaceTx_List, getERC721MarketplaceTx_RegisterCollections, getERC721MarketplaceTx_SafeBuy, getERC721MarketplaceTxByInput_RegisterCollections, getERC721MarketplaceTx_Cancel, getERC721MarketplaceTxByParams_SafeBuy } from '@utils/transaction/lux/erc721Marketplace';
+import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
+
+// @utils/models/lux
+import { OfferState } from "@utils/models/lux/offerState";
+
+// @utils/models/lend
+import { MortgageState } from "@utils/models/lend/mortgageToken";
+import {
+    BuyParams,
+    ListParams,
+    RegisterCollectionsParams,
+    RegisterCollectionsParamsInput
+} from '@utils/models/lux/erc721Marketplace';
+
+// @utils/transaction/land
+import { getEstateTokenTxByInput_UpdateCommissionToken } from '@utils/transaction/land/estateToken';
+
+// @utils/deployments/lend
 import { deployERC721MortgageToken } from '@utils/deployments/lend/erc721MortgageToken';
 import { deployProjectMortgageToken } from '@utils/deployments/lend/projectMortgageToken';
-import { deployEstateToken } from '@utils/deployments/land/estateToken';
-import { applyDiscount } from '@utils/formula';
+
+// @utils/signatures/lux
 import { getRegisterCollectionsSignatures } from '@utils/signatures/lux/erc721Marketplace';
-import { getSafeBuyAnchor } from '@utils/anchor/lux/erc721Marketplace';
-import { getAdminTxByInput_AuthorizeManagers, getAdminTxByInput_AuthorizeModerators, getAdminTxByInput_UpdateCurrencyRegistries } from '@utils/transaction/common/admin';
+
+// @utils/transaction/common
+import {
+    getAdminTxByInput_AuthorizeManagers,
+    getAdminTxByInput_AuthorizeModerators,
+    getAdminTxByInput_UpdateCurrencyRegistries
+} from '@utils/transaction/common/admin';
 import { getPausableTxByInput_Pause } from '@utils/transaction/common/pausable';
+
+// @utils/transaction/lend
 import { getMortgageTokenTx_Foreclose, getMortgageTokenTx_Repay } from '@utils/transaction/lend/mortgageToken';
+
+// @utils/transaction/lux
+import {
+    getERC721MarketplaceTx_Buy,
+    getCallERC721MarketplaceTx_List,
+    getERC721MarketplaceTx_List,
+    getERC721MarketplaceTx_RegisterCollections,
+    getERC721MarketplaceTx_SafeBuy,
+    getERC721MarketplaceTxByInput_RegisterCollections,
+    getERC721MarketplaceTx_Cancel,
+    getERC721MarketplaceTxByParams_SafeBuy
+} from '@utils/transaction/lux/erc721Marketplace';
+
 
 interface MortgageMarketplaceFixture {
     deployer: any;
@@ -107,7 +154,7 @@ async function testReentrancy_MortgageMarketplace(
 
 describe('6.3. MortgageMarketplace', async () => {
     async function mortgageMarketplaceFixture(): Promise<MortgageMarketplaceFixture> {
-        const [deployer, admin1, admin2, admin3, admin4, admin5, borrower1, borrower2, seller1, seller2, buyer1, buyer2, broker1, broker2, custodian1, custodian2, manager, moderator] = await ethers.getSigners();
+        const [deployer, admin1, admin2, admin3, admin4, admin5, borrower1, borrower2, seller1, seller2, buyer1, buyer2, manager, moderator] = await ethers.getSigners();
         const admins = [admin1, admin2, admin3, admin4, admin5];
 
         const adminAddresses: string[] = admins.map(signer => signer.address);
@@ -253,12 +300,12 @@ describe('6.3. MortgageMarketplace', async () => {
 
     async function beforeMortgageMarketplaceTest({
         skipRegisterCollection = false,
-        listSampleCurrencies = false,
-        listSampleMortgageToken = false,
+        skipListSampleCurrencies = false,
+        skipListSampleMortgageToken = false,
+        skipFundERC20ForBuyers = false,
         listSampleOffers = false,
         initialMortgageState = MortgageState.Supplied,
         useFailRoyaltyReceiver = false,
-        fundERC20ForBuyers = false,
         pause = false,
     } = {}): Promise<MortgageMarketplaceFixture> {
         const fixture = await loadFixture(mortgageMarketplaceFixture);
@@ -315,7 +362,7 @@ describe('6.3. MortgageMarketplace', async () => {
             ));
         }
 
-        if (listSampleCurrencies) {
+        if (!skipListSampleCurrencies) {
             await callTransaction(getAdminTxByInput_UpdateCurrencyRegistries(
                 admin,
                 deployer,
@@ -332,7 +379,7 @@ describe('6.3. MortgageMarketplace', async () => {
             await callTransaction(mortgageToken.updateFeeReceiver(failReceiver.address));
         }
 
-        if (listSampleMortgageToken) {
+        if (!skipListSampleMortgageToken) {
             await callTransaction(mortgageToken.addMortgage(
                 10e5,
                 11e5,
@@ -358,6 +405,10 @@ describe('6.3. MortgageMarketplace', async () => {
             await callTransaction(mortgageToken.mint(seller2.address, 2));
         }
 
+        if (!skipFundERC20ForBuyers) {
+            await prepareERC20(currency, [buyer1, buyer2], [mortgageMarketplace], ethers.BigNumber.from(1e9));
+        }
+
         if (listSampleOffers) {
             const params1: ListParams = {
                 collection: mortgageToken.address,
@@ -379,10 +430,6 @@ describe('6.3. MortgageMarketplace', async () => {
             await callTransaction(mortgageToken.connect(seller2).setApprovalForAll(mortgageMarketplace.address, true));
         }
 
-        if (fundERC20ForBuyers) {
-            await prepareERC20(currency, [buyer1, buyer2], [mortgageMarketplace], ethers.BigNumber.from(1e9));
-        }
-
         if (pause) {
             await callTransaction(getPausableTxByInput_Pause(mortgageMarketplace, deployer, admin, admins));
         }
@@ -392,7 +439,9 @@ describe('6.3. MortgageMarketplace', async () => {
         }
     }
 
-    describe('6.3.1. initialize(address, address, address, address)', async () => {
+
+    /* --- Initialization --- */
+    describe('6.3.1. initialize(address,address)', async () => {
         it('6.3.1.1. Deploy successfully', async () => {
             const { mortgageMarketplace, admin, feeReceiver } = await beforeMortgageMarketplaceTest();
 
@@ -403,41 +452,9 @@ describe('6.3. MortgageMarketplace', async () => {
         });
     });
 
-    describe('6.3.2. getOffer(uint256)', async () => {
-        it('6.3.2.1. Return successfully', async () => {
-            const fixture = await beforeMortgageMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleMortgageToken: true,
-                listSampleOffers: true,
-            });
-            const { mortgageMarketplace } = fixture;
 
-            expect(await mortgageMarketplace.getOffer(1)).to.not.be.reverted;
-            expect(await mortgageMarketplace.getOffer(2)).to.not.be.reverted;
-        });
-
-        it('6.3.2.2. Revert with invalid offer id', async () => {
-            const fixture = await beforeMortgageMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleMortgageToken: true,
-                listSampleOffers: true,
-            });
-            const { mortgageMarketplace } = fixture;
-
-            await expectRevertWithModifierCustomError(
-                mortgageMarketplace,
-                mortgageMarketplace.getOffer(0),
-                'InvalidOfferId'
-            );
-            await expectRevertWithModifierCustomError(
-                mortgageMarketplace,
-                mortgageMarketplace.getOffer(3),
-                'InvalidOfferId'
-            );
-        });
-    });
-
-    describe('6.3.3. registerCollections(address[], bool, bytes[])', async () => {
+    /* --- Administration --- */
+    describe('6.3.3. registerCollections(address[],bool,bytes[])', async () => {
         it('6.3.3.1. Register collections successfully with valid signatures', async () => {
             const { deployer, mortgageMarketplace, admin, admins, collections } = await beforeMortgageMarketplaceTest({
                 skipRegisterCollection: true,
@@ -724,8 +741,42 @@ describe('6.3. MortgageMarketplace', async () => {
             )).to.be.revertedWithCustomError(mortgageMarketplace, `NotRegisteredCollection`);
         });
     });
+
+
+    /* --- Query --- */
+    describe('6.3.2. getOffer(uint256)', async () => {
+        it('6.3.2.1. Return successfully', async () => {
+            const fixture = await beforeMortgageMarketplaceTest({
+                listSampleOffers: true,
+            });
+            const { mortgageMarketplace } = fixture;
+
+            expect(await mortgageMarketplace.getOffer(1)).to.not.be.reverted;
+            expect(await mortgageMarketplace.getOffer(2)).to.not.be.reverted;
+        });
+
+        it('6.3.2.2. Revert with invalid offer id', async () => {
+            const fixture = await beforeMortgageMarketplaceTest({
+                listSampleOffers: true,
+            });
+            const { mortgageMarketplace } = fixture;
+
+            await expectRevertWithModifierCustomError(
+                mortgageMarketplace,
+                mortgageMarketplace.getOffer(0),
+                'InvalidOfferId'
+            );
+            await expectRevertWithModifierCustomError(
+                mortgageMarketplace,
+                mortgageMarketplace.getOffer(3),
+                'InvalidOfferId'
+            );
+        });
+    });
+
     
-    describe('6.3.3. list(uint256, uint256, address)', async () => {
+    /* --- Command --- */
+    describe('6.3.3. list(address,uint256,uint256,address)', async () => {
         async function beforeListTest(fixture: MortgageMarketplaceFixture): Promise<{ defaultParams: ListParams }> {
             const { mortgageToken } = fixture;
             const defaultParams = {
@@ -738,10 +789,7 @@ describe('6.3. MortgageMarketplace', async () => {
         }
 
         it('6.3.3.1. List token successfully', async () => {
-            const fixture = await beforeMortgageMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleMortgageToken: true,
-            });
+            const fixture = await beforeMortgageMarketplaceTest();
             const { mortgageMarketplace, mortgageToken, seller1, feeReceiver, currency, seller2, admin } = fixture;
 
             const params1: ListParams = {
@@ -821,8 +869,6 @@ describe('6.3. MortgageMarketplace', async () => {
 
         it('6.3.3.2. List token unsuccessfully when paused', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleMortgageToken: true,
                 pause: true,
             });
             const { mortgageMarketplace, seller1 } = fixture;
@@ -834,10 +880,7 @@ describe('6.3. MortgageMarketplace', async () => {
         });
 
         it('6.3.3.3. List token unsuccessfully with invalid token id', async () => {
-            const fixture = await beforeMortgageMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleMortgageToken: true,
-            });
+            const fixture = await beforeMortgageMarketplaceTest();
             const { mortgageMarketplace, seller1 } = fixture;
 
             const { defaultParams } = await beforeListTest(fixture);
@@ -863,8 +906,6 @@ describe('6.3. MortgageMarketplace', async () => {
 
         it('6.3.3.4. List token unsuccessfully with unregistered collection', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleMortgageToken: true,
                 skipRegisterCollection: true,
             });
             const { mortgageMarketplace, seller1 } = fixture;
@@ -877,8 +918,6 @@ describe('6.3. MortgageMarketplace', async () => {
 
         it('6.3.3.4. List token unsuccessfully with pending mortgage', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleMortgageToken: true,
                 initialMortgageState: MortgageState.Pending,
             });
             const { mortgageMarketplace, seller1 } = fixture;
@@ -891,8 +930,6 @@ describe('6.3. MortgageMarketplace', async () => {
 
         it('6.3.3.4. List token unsuccessfully with repaid mortgage', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleMortgageToken: true,
                 initialMortgageState: MortgageState.Repaid,
             });
             const { mortgageMarketplace, seller1 } = fixture;
@@ -905,8 +942,6 @@ describe('6.3. MortgageMarketplace', async () => {
 
         it('6.3.3.4. List token unsuccessfully with foreclosed mortgage', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleMortgageToken: true,
                 initialMortgageState: MortgageState.Foreclosed,
             });
             const { mortgageMarketplace, seller1 } = fixture;
@@ -918,23 +953,17 @@ describe('6.3. MortgageMarketplace', async () => {
         });
 
         it('6.3.3.4. List token unsuccessfully by non token owner', async () => {
-            const fixture = await beforeMortgageMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleMortgageToken: true,
-            });
-            const { mortgageMarketplace, seller1 } = fixture;
+            const fixture = await beforeMortgageMarketplaceTest();
+            const { mortgageMarketplace, seller2 } = fixture;
 
             const { defaultParams } = await beforeListTest(fixture);
 
-            await expect(getERC721MarketplaceTx_List(mortgageMarketplace, seller1, defaultParams))
+            await expect(getERC721MarketplaceTx_List(mortgageMarketplace, seller2, defaultParams))
                 .to.be.revertedWithCustomError(mortgageMarketplace, 'InvalidTokenId');
         });
 
         it('6.3.3.5. List token unsuccessfully with zero unit price', async () => {
-            const fixture = await beforeMortgageMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleMortgageToken: true,
-            });
+            const fixture = await beforeMortgageMarketplaceTest();
             const { mortgageMarketplace, seller1 } = fixture;
 
             const { defaultParams } = await beforeListTest(fixture);
@@ -951,7 +980,7 @@ describe('6.3. MortgageMarketplace', async () => {
 
         it('6.3.3.6. List token unsuccessfully with invalid currency', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
-                listSampleMortgageToken: true,
+                skipListSampleCurrencies: true,
             });
             const { mortgageMarketplace, seller1 } = fixture;
 
@@ -1133,10 +1162,7 @@ describe('6.3. MortgageMarketplace', async () => {
 
     describe('6.3.4. buy(uint256)', async () => {
         it('6.3.4.1. Buy token successfully in native and erc20 token', async () => {
-            const fixture = await beforeMortgageMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleMortgageToken: true,
-            });
+            const fixture = await beforeMortgageMarketplaceTest();
     
             await testBuyOffer(
                 fixture,
@@ -1158,10 +1184,7 @@ describe('6.3. MortgageMarketplace', async () => {
         });
 
         it('6.3.4.2. Buy token successfully in all native/erc20 and exclusive/non-exclusive combinations', async () => {
-            const fixture = await beforeMortgageMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleMortgageToken: true,
-            });
+            const fixture = await beforeMortgageMarketplaceTest();
 
             for (const isERC20 of [false, true]) {
                 for (const isExclusive of [false, true]) {
@@ -1181,10 +1204,7 @@ describe('6.3. MortgageMarketplace', async () => {
         });
 
         it('6.3.4.3. Buy token successfully with very large amount in all native/erc20 and exclusive/non-exclusive combinations', async () => {
-            const fixture = await beforeMortgageMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleMortgageToken: true,
-            });
+            const fixture = await beforeMortgageMarketplaceTest();
 
             for (const isERC20 of [false, true]) {
                 for (const isExclusive of [false, true]) {
@@ -1206,8 +1226,6 @@ describe('6.3. MortgageMarketplace', async () => {
 
         it('6.3.4.4. Buy token unsuccessfully when paused', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleMortgageToken: true,
                 listSampleOffers: true,
                 pause: true,
             });
@@ -1223,8 +1241,6 @@ describe('6.3. MortgageMarketplace', async () => {
 
         it('6.3.4.5. Buy token unsuccessfully with invalid offer id', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleMortgageToken: true,
                 listSampleOffers: true,
             });
             const { mortgageMarketplace, buyer1 } = fixture;
@@ -1246,8 +1262,6 @@ describe('6.3. MortgageMarketplace', async () => {
 
         it('6.3.4.6. Buy token unsuccessfully when seller buy their own token', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleMortgageToken: true,
                 listSampleOffers: true,
             });
             const { mortgageMarketplace, seller1, seller2 } = fixture;
@@ -1269,8 +1283,6 @@ describe('6.3. MortgageMarketplace', async () => {
 
         it('6.3.4.7. Buy token unsuccessfully when offer is not selling', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleMortgageToken: true,
                 listSampleOffers: true,
             });
             const { mortgageMarketplace, buyer1, buyer2 } = fixture;
@@ -1292,8 +1304,6 @@ describe('6.3. MortgageMarketplace', async () => {
 
         it('6.3.4.7. Buy token unsuccessfully when mortgage is repaid', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleMortgageToken: true,
                 listSampleOffers: true,
             });
             const { mortgageMarketplace, buyer1, borrower1, mortgageToken } = fixture;
@@ -1310,8 +1320,6 @@ describe('6.3. MortgageMarketplace', async () => {
 
         it('6.3.4.7. Buy token unsuccessfully when mortgage is foreclosed', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleMortgageToken: true,
                 listSampleOffers: true,
             });
             const { mortgageMarketplace, buyer1, seller1, mortgageToken } = fixture;
@@ -1328,8 +1336,6 @@ describe('6.3. MortgageMarketplace', async () => {
 
         it('6.3.4.8. Buy token unsuccessfully with insufficient native token', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleMortgageToken: true,
                 listSampleOffers: true,
             });
             const { mortgageMarketplace, buyer1 } = fixture;
@@ -1342,10 +1348,7 @@ describe('6.3. MortgageMarketplace', async () => {
         });
 
         it('6.3.4.9. Buy token unsuccessfully when native token transfer to seller failed', async () => {
-            const fixture = await beforeMortgageMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleMortgageToken: true,
-            });
+            const fixture = await beforeMortgageMarketplaceTest();
             const { mortgageMarketplace, seller1, buyer1, deployer, mortgageToken } = fixture;
             
             const failReceiver = await deployFailReceiver(deployer, true, false);
@@ -1382,10 +1385,7 @@ describe('6.3. MortgageMarketplace', async () => {
 
         it('6.3.4.10. Buy token unsuccessfully when native token transfer to royalty receiver failed', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleMortgageToken: true,
                 listSampleOffers: true,
-                fundERC20ForBuyers: true,
                 useFailRoyaltyReceiver: true,
             });
             const { mortgageMarketplace, buyer1, failReceiver } = fixture;
@@ -1402,10 +1402,7 @@ describe('6.3. MortgageMarketplace', async () => {
 
         it('6.3.4.11. Buy token unsuccessfully when refund to sender failed', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleMortgageToken: true,
                 listSampleOffers: true,
-                fundERC20ForBuyers: true,
             });
             const { mortgageMarketplace, deployer } = fixture;
 
@@ -1419,10 +1416,7 @@ describe('6.3. MortgageMarketplace', async () => {
         });
 
         it('6.3.4.12. Buy token unsuccessfully when the contract is reentered', async () => {
-            const fixture = await beforeMortgageMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleMortgageToken: true,
-            });
+            const fixture = await beforeMortgageMarketplaceTest();
             const { deployer, mortgageToken, mortgageMarketplace, buyer1, seller1 } = fixture;
 
             const reentrancy = await deployReentrancy(deployer);
@@ -1463,12 +1457,97 @@ describe('6.3. MortgageMarketplace', async () => {
         });
     });
 
-    describe('6.3.5. safeBuy(uint256, uint256)', async () => {
-        it('6.3.5.1. Buy token successfully', async () => {
+    describe('6.3.6. cancel(uint256)', async () => {
+        it('6.3.6.1. Cancel offer successfully by seller', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleMortgageToken: true,
+                listSampleOffers: true,
             });
+            const { mortgageMarketplace, seller1 } = fixture;
+
+            let tx = await getERC721MarketplaceTx_Cancel(mortgageMarketplace, seller1, { offerId: BigNumber.from(1) });
+            await tx.wait();
+
+            const offer = await mortgageMarketplace.getOffer(1);
+            expect(offer.state).to.equal(OfferState.Cancelled);
+
+            await expect(tx).to
+                .emit(mortgageMarketplace, "OfferCancellation")
+                .withArgs(1);
+        });
+
+        it('6.3.6.2. Cancel offer successfully by manager', async () => {
+            const fixture = await beforeMortgageMarketplaceTest({
+                listSampleOffers: true,
+            });
+            const { mortgageMarketplace, manager } = fixture;
+            let tx = await getERC721MarketplaceTx_Cancel(mortgageMarketplace, manager, { offerId: BigNumber.from(1) });
+            await tx.wait();
+
+            const offer = await mortgageMarketplace.getOffer(1);
+            expect(offer.state).to.equal(OfferState.Cancelled);
+
+            await expect(tx).to
+                .emit(mortgageMarketplace, "OfferCancellation")
+                .withArgs(1);
+        });
+
+        it('6.3.6.3. Cancel offer unsuccessfully with invalid offer id', async () => {
+            const fixture = await beforeMortgageMarketplaceTest({
+                listSampleOffers: true,
+            });
+            const { mortgageMarketplace, manager } = fixture;
+
+            await expect(getERC721MarketplaceTx_Cancel(mortgageMarketplace, manager, { offerId: BigNumber.from(0) }))
+                .to.be.revertedWithCustomError(mortgageMarketplace, "InvalidOfferId");
+            await expect(getERC721MarketplaceTx_Cancel(mortgageMarketplace, manager, { offerId: BigNumber.from(3) }))
+                .to.be.revertedWithCustomError(mortgageMarketplace, "InvalidOfferId");
+        });
+
+        it('6.3.6.4. Cancel offer unsuccessfully by unauthorized user', async () => {
+            const fixture = await beforeMortgageMarketplaceTest({
+                listSampleOffers: true,
+            });
+            const { mortgageMarketplace, seller2, moderator } = fixture;
+
+            await expect(getERC721MarketplaceTx_Cancel(mortgageMarketplace, seller2, { offerId: BigNumber.from(1) }))
+                .to.be.revertedWithCustomError(mortgageMarketplace, "Unauthorized");
+
+            await expect(getERC721MarketplaceTx_Cancel(mortgageMarketplace, moderator, { offerId: BigNumber.from(1) }))
+                .to.be.revertedWithCustomError(mortgageMarketplace, "Unauthorized");
+        });
+
+        it('6.3.6.5. Cancel offer unsuccessfully when offer is already cancelled', async () => {
+            const fixture = await beforeMortgageMarketplaceTest({
+                listSampleOffers: true,
+            });
+            const { mortgageMarketplace, manager } = fixture;
+
+            await callTransaction(getERC721MarketplaceTx_Cancel(mortgageMarketplace, manager, { offerId: BigNumber.from(1) }));
+            await expect(getERC721MarketplaceTx_Cancel(mortgageMarketplace, manager, { offerId: BigNumber.from(1) }))
+                .to.be.revertedWithCustomError(mortgageMarketplace, "InvalidCancelling");
+        });
+
+        it('6.3.6.6. Cancel offer unsuccessfully when offer is sold out', async () => {
+            const fixture = await beforeMortgageMarketplaceTest({
+                listSampleOffers: true,
+            });
+            const { mortgageMarketplace, manager, buyer1 } = fixture;
+
+            await callTransaction(getERC721MarketplaceTx_Buy(
+                mortgageMarketplace,
+                buyer1,
+                { offerId: BigNumber.from(1) },
+                { value: 1e9 }
+            ));
+
+            await expect(getERC721MarketplaceTx_Cancel(mortgageMarketplace, manager, { offerId: BigNumber.from(1) }))
+                .to.be.revertedWithCustomError(mortgageMarketplace, "InvalidCancelling");
+        });
+    });
+
+    describe('6.3.5. safeBuy(uint256,uint256)', async () => {
+        it('6.3.5.1. Buy token successfully', async () => {
+            const fixture = await beforeMortgageMarketplaceTest();
             
             await testBuyOffer(
                 fixture,
@@ -1491,8 +1570,6 @@ describe('6.3. MortgageMarketplace', async () => {
 
         it('6.3.5.2. Buy token unsuccessfully with invalid offer id', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleMortgageToken: true,
                 listSampleOffers: true,
             });
             const { mortgageMarketplace, buyer1 } = fixture;
@@ -1520,8 +1597,6 @@ describe('6.3. MortgageMarketplace', async () => {
 
         it('6.3.5.3. Buy token unsuccessfully with invalid anchor', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleMortgageToken: true,
                 listSampleOffers: true,
             });
             const { mortgageMarketplace, buyer1, buyer2 } = fixture;
@@ -1539,112 +1614,6 @@ describe('6.3. MortgageMarketplace', async () => {
                 { offerId: BigNumber.from(2), anchor: BigNumber.from(0) },
                 { value: 1e9 }
             )).to.be.revertedWithCustomError(mortgageMarketplace, "BadAnchor");
-        });
-    });
-
-    describe('6.3.6. cancelOffer(uint256)', async () => {
-        it('6.3.6.1. Cancel offer successfully by seller', async () => {
-            const fixture = await beforeMortgageMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleMortgageToken: true,
-                listSampleOffers: true,
-                fundERC20ForBuyers: true,
-            });
-            const { mortgageMarketplace, seller1 } = fixture;
-
-            let tx = await getERC721MarketplaceTx_Cancel(mortgageMarketplace, seller1, { offerId: BigNumber.from(1) });
-            await tx.wait();
-
-            const offer = await mortgageMarketplace.getOffer(1);
-            expect(offer.state).to.equal(OfferState.Cancelled);
-
-            await expect(tx).to
-                .emit(mortgageMarketplace, "OfferCancellation")
-                .withArgs(1);
-        });
-
-        it('6.3.6.2. Cancel offer successfully by manager', async () => {
-            const fixture = await beforeMortgageMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleMortgageToken: true,
-                listSampleOffers: true,
-                fundERC20ForBuyers: true,
-            });
-            const { mortgageMarketplace, manager } = fixture;
-            let tx = await getERC721MarketplaceTx_Cancel(mortgageMarketplace, manager, { offerId: BigNumber.from(1) });
-            await tx.wait();
-
-            const offer = await mortgageMarketplace.getOffer(1);
-            expect(offer.state).to.equal(OfferState.Cancelled);
-
-            await expect(tx).to
-                .emit(mortgageMarketplace, "OfferCancellation")
-                .withArgs(1);
-        });
-
-        it('6.3.6.3. Cancel offer unsuccessfully with invalid offer id', async () => {
-            const fixture = await beforeMortgageMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleMortgageToken: true,
-                listSampleOffers: true,
-                fundERC20ForBuyers: true,
-            });
-            const { mortgageMarketplace, manager } = fixture;
-
-            await expect(getERC721MarketplaceTx_Cancel(mortgageMarketplace, manager, { offerId: BigNumber.from(0) }))
-                .to.be.revertedWithCustomError(mortgageMarketplace, "InvalidOfferId");
-            await expect(getERC721MarketplaceTx_Cancel(mortgageMarketplace, manager, { offerId: BigNumber.from(3) }))
-                .to.be.revertedWithCustomError(mortgageMarketplace, "InvalidOfferId");
-        });
-
-        it('6.3.6.4. Cancel offer unsuccessfully by unauthorized user', async () => {
-            const fixture = await beforeMortgageMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleMortgageToken: true,
-                listSampleOffers: true,
-                fundERC20ForBuyers: true,
-            });
-            const { mortgageMarketplace, seller2, moderator } = fixture;
-
-            await expect(getERC721MarketplaceTx_Cancel(mortgageMarketplace, seller2, { offerId: BigNumber.from(1) }))
-                .to.be.revertedWithCustomError(mortgageMarketplace, "Unauthorized");
-
-            await expect(getERC721MarketplaceTx_Cancel(mortgageMarketplace, moderator, { offerId: BigNumber.from(1) }))
-                .to.be.revertedWithCustomError(mortgageMarketplace, "Unauthorized");
-        });
-
-        it('6.3.6.5. Cancel offer unsuccessfully when offer is already cancelled', async () => {
-            const fixture = await beforeMortgageMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleMortgageToken: true,
-                listSampleOffers: true,
-                fundERC20ForBuyers: true,
-            });
-            const { mortgageMarketplace, manager } = fixture;
-
-            await callTransaction(getERC721MarketplaceTx_Cancel(mortgageMarketplace, manager, { offerId: BigNumber.from(1) }));
-            await expect(getERC721MarketplaceTx_Cancel(mortgageMarketplace, manager, { offerId: BigNumber.from(1) }))
-                .to.be.revertedWithCustomError(mortgageMarketplace, "InvalidCancelling");
-        });
-
-        it('6.3.6.6. Cancel offer unsuccessfully when offer is sold out', async () => {
-            const fixture = await beforeMortgageMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleMortgageToken: true,
-                listSampleOffers: true,
-                fundERC20ForBuyers: true,
-            });
-            const { mortgageMarketplace, manager, buyer1 } = fixture;
-
-            await callTransaction(getERC721MarketplaceTx_Buy(
-                mortgageMarketplace,
-                buyer1,
-                { offerId: BigNumber.from(1) },
-                { value: 1e9 }
-            ));
-
-            await expect(getERC721MarketplaceTx_Cancel(mortgageMarketplace, manager, { offerId: BigNumber.from(1) }))
-                .to.be.revertedWithCustomError(mortgageMarketplace, "InvalidCancelling");
         });
     });
 });

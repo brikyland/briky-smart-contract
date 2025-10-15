@@ -1,5 +1,31 @@
 import { expect } from 'chai';
-import { ethers, upgrades } from 'hardhat';
+import { randomInt } from 'crypto';
+import {
+    BigNumber,
+    Contract,
+    Wallet
+} from 'ethers';
+import { ethers } from 'hardhat';
+
+// @defi-wonderland/smock
+import {
+    MockContract,
+    smock
+} from '@defi-wonderland/smock';
+
+// @nomicfoundation/hardhat-network-helpers
+import {
+    loadFixture,
+    time
+} from "@nomicfoundation/hardhat-network-helpers";
+
+// @tests
+import { Constant } from '@tests/test.constant';
+
+// @tests/land
+import { Initialization as LandInitialization } from '@tests/land/test.initialization';
+
+// @typechain-types
 import {
     Admin,
     CommissionToken,
@@ -14,38 +40,77 @@ import {
     PriceWatcher,
     ReserveVault,
     FailReceiver,
-    AssetMarketplace,
 } from '@typechain-types';
-import { callTransaction, expectRevertWithModifierCustomError, getBalance, prepareERC20, prepareNativeToken, randomWallet, resetERC20, resetNativeToken, testReentrancy } from '@utils/blockchain';
-import { Constant } from '@tests/test.constant';
-import { deployAdmin } from '@utils/deployments/common/admin';
-import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
-import { deployCurrency } from '@utils/deployments/common/currency';
-import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
-import { OfferState } from "@utils/models/lux/offerState";
-import { MockContract, smock } from '@defi-wonderland/smock';
 
-import { BigNumber, Contract, Wallet } from 'ethers';
-import { randomInt } from 'crypto';
-import { getInterfaceID, randomArrayWithSum, randomBigNumber } from '@utils/utils';
-import { OrderedMap } from '@utils/utils';
-import { deployEstateMarketplace } from '@utils/deployments/lux/estateMarketplace';
-import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
-import { deployReentrancyERC1155Holder } from '@utils/deployments/mock/mockReentrancy/reentrancyERC1155Holder';
-import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
-import { Initialization as LandInitialization } from '@tests/land/test.initialization';
+// @utils
+import {
+    callTransaction,
+    expectRevertWithModifierCustomError,
+    getBalance,
+    prepareERC20,
+    prepareNativeToken,
+    randomWallet,
+    resetERC20,
+    resetNativeToken,
+    testReentrancy
+} from '@utils/blockchain';
+import { applyDiscount } from '@utils/formula';
+import { MockValidator } from '@utils/mockValidator';
+import {
+    randomArrayWithSum,
+    randomBigNumber
+} from '@utils/utils';
+
+// @utils/deployments/common
+import { deployAdmin } from '@utils/deployments/common/admin';
+import { deployCurrency } from '@utils/deployments/common/currency';
+import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
 import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
 import { deployReserveVault } from '@utils/deployments/common/reserveVault';
-import { MockValidator } from '@utils/mockValidator';
-import { RegisterCustodianParams } from '@utils/models/land/estateToken';
-import { getEstateTokenTxByInput_AuthorizeTokenizers, getCallEstateTokenTx_TokenizeEstate, getEstateTokenTx_RegisterCustodian, getEstateTokenTxByInput_UpdateCommissionToken, getEstateTokenTxByInput_RegisterCustodian, getEstateTokenTxByInput_UpdateZoneRoyaltyRate } from '@utils/transaction/land/estateToken';
-import { getCommissionTokenTx_RegisterBroker } from '@utils/transaction/land/commissionToken';
-import { BuyParams, BuyPartParams, ListParams, SafeBuyParams, SafeBuyPartParams } from '@utils/models/lux/assetMarketplace';
-import { getAssetMarketplaceTx_BuyPart, getAssetMarketplaceTx_Buy, getAssetMarketplaceTx_List, getAssetMarketplaceTx_SafeBuyPart, getAssetMarketplaceTx_SafeBuy, getAssetMarketplaceTxByParams_SafeBuy, getAssetMarketplaceTxByParams_SafeBuyPart, getAssetMarketplaceTx_Cancel } from '@utils/transaction/lux/assetMarketplace';
-import { applyDiscount } from '@utils/formula';
-import { getSafeBuyAnchor, getSafeBuyPartAnchor } from '@utils/anchor/lux/assetMarketplace';
-import { getAdminTxByInput_ActivateIn, getAdminTxByInput_AuthorizeManagers, getAdminTxByInput_AuthorizeModerators, getAdminTxByInput_DeclareZone, getAdminTxByInput_UpdateCurrencyRegistries } from '@utils/transaction/common/admin';
+
+// @utils/deployments/mock
+import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
+import { deployReentrancyERC1155Holder } from '@utils/deployments/mock/mockReentrancy/reentrancyERC1155Holder';
+
+// @utils/deployments/lux
+import { deployEstateMarketplace } from '@utils/deployments/lux/estateMarketplace';
+
+// @utils/models/lux
+import { BuyParams, BuyPartParams, ListParams } from '@utils/models/lux/assetMarketplace';
+import { OfferState } from "@utils/models/lux/offerState";
+
+// @utils/transaction/common
+import {
+    getAdminTxByInput_ActivateIn,
+    getAdminTxByInput_AuthorizeManagers,
+    getAdminTxByInput_AuthorizeModerators,
+    getAdminTxByInput_DeclareZone,
+    getAdminTxByInput_UpdateCurrencyRegistries
+} from '@utils/transaction/common/admin';
 import { getPausableTxByInput_Pause } from '@utils/transaction/common/pausable';
+
+// @utils/transaction/land
+import { getCommissionTokenTx_RegisterBroker } from '@utils/transaction/land/commissionToken';
+import {
+    getEstateTokenTxByInput_AuthorizeTokenizers,
+    getCallEstateTokenTx_TokenizeEstate,
+    getEstateTokenTxByInput_UpdateCommissionToken,
+    getEstateTokenTxByInput_RegisterCustodian,
+    getEstateTokenTxByInput_UpdateZoneRoyaltyRate
+} from '@utils/transaction/land/estateToken';
+
+// @utils/transaction/lux
+import {
+    getAssetMarketplaceTx_BuyPart,
+    getAssetMarketplaceTx_Buy,
+    getAssetMarketplaceTx_List,
+    getAssetMarketplaceTx_SafeBuyPart,
+    getAssetMarketplaceTx_SafeBuy,
+    getAssetMarketplaceTxByParams_SafeBuy,
+    getAssetMarketplaceTxByParams_SafeBuyPart,
+    getAssetMarketplaceTx_Cancel
+} from '@utils/transaction/lux/assetMarketplace';
+
 
 interface EstateMarketplaceFixture {
     deployer: any;
@@ -224,10 +289,10 @@ describe('6.2. EstateMarketplace', async () => {
     }
 
     async function beforeEstateMarketplaceTest({
-        listSampleCurrencies = false,
-        listSampleEstateToken = false,
+        skipListSampleCurrencies = false,
+        skipListSampleEstateToken = false,
+        skipFundERC20ForBuyers = false,
         listSampleOffers = false,
-        fundERC20ForBuyers = false,
         useFailRoyaltyReceiver = false,
         pause = false,
     } = {}): Promise<EstateMarketplaceFixture> {
@@ -356,7 +421,7 @@ describe('6.2. EstateMarketplace', async () => {
 
         let currentTimestamp = await time.latest();
         
-        if (listSampleCurrencies) {
+        if (!skipListSampleCurrencies) {
             await callTransaction(getAdminTxByInput_UpdateCurrencyRegistries(
                 admin,
                 deployer,
@@ -373,7 +438,7 @@ describe('6.2. EstateMarketplace', async () => {
             await callTransaction(estateToken.updateFeeReceiver(failReceiver.address));
         }
 
-        if (listSampleEstateToken) {
+        if (!skipListSampleEstateToken) {
             currentTimestamp += 1000;
 
             await time.setNextBlockTimestamp(currentTimestamp);
@@ -439,7 +504,7 @@ describe('6.2. EstateMarketplace', async () => {
             await callTransaction(estateToken.connect(seller2).setApprovalForAll(estateMarketplace.address, true));
         }
 
-        if (fundERC20ForBuyers) {
+        if (!skipFundERC20ForBuyers) {
             await prepareERC20(
                 currency,
                 [buyer1, buyer2],
@@ -457,7 +522,9 @@ describe('6.2. EstateMarketplace', async () => {
         }
     }
 
-    describe('6.2.1. initialize(address, address, address)', async () => {
+
+    /* --- Initialization --- */
+    describe('6.2.1. initialize(address,address,address)', async () => {
         it('6.2.1.1. Deploy successfully', async () => {
             const { admin, estateToken, commissionToken, estateMarketplace } = await beforeEstateMarketplaceTest();
 
@@ -478,11 +545,11 @@ describe('6.2. EstateMarketplace', async () => {
         });
     });
 
+
+    /* --- Query --- */
     describe('6.2.2. getOffer(uint256)', async () => {
         it('6.2.2.1. Return successfully with valid offer id', async () => {
             const { estateMarketplace } = await beforeEstateMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleEstateToken: true,
                 listSampleOffers: true,
             });
 
@@ -495,8 +562,6 @@ describe('6.2. EstateMarketplace', async () => {
 
         it('6.2.2.2. Revert with invalid offer id', async () => {
             const { estateMarketplace } = await beforeEstateMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleEstateToken: true,
                 listSampleOffers: true,
             });
 
@@ -513,7 +578,9 @@ describe('6.2. EstateMarketplace', async () => {
         });
     });
 
-    describe('6.2.3. list(uint256, uint256, uint256, address, bool)', async () => {
+
+    /* --- Command --- */
+    describe('6.2.3. list(uint256,uint256,uint256,address,bool)', async () => {
         async function beforeListTest(fixture: EstateMarketplaceFixture): Promise<{ 
             defaultParams: ListParams 
         }> {
@@ -528,10 +595,7 @@ describe('6.2. EstateMarketplace', async () => {
         }
 
         it('6.2.3.1. List token successfully', async () => {
-            const { estateMarketplace, currency, seller1, seller2, estateToken, feeReceiver } = await beforeEstateMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleEstateToken: true,
-            });
+            const { estateMarketplace, currency, seller1, seller2, estateToken, feeReceiver } = await beforeEstateMarketplaceTest();
 
             const params1: ListParams = {
                 tokenId: BigNumber.from(1),
@@ -613,8 +677,6 @@ describe('6.2. EstateMarketplace', async () => {
 
         it('6.2.3.2. List token unsuccessfully when paused', async () => {
             const fixture = await beforeEstateMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleEstateToken: true,
                 pause: true,
             });
             const { estateMarketplace, seller1 } = fixture;
@@ -626,10 +688,7 @@ describe('6.2. EstateMarketplace', async () => {
         });
 
         it('6.2.3.3. List token unsuccessfully with invalid token id', async () => {
-            const fixture = await beforeEstateMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleEstateToken: true,
-            });
+            const fixture = await beforeEstateMarketplaceTest();
             const { estateMarketplace, seller1 } = fixture;
 
             const { defaultParams } = await beforeListTest(fixture);
@@ -654,10 +713,7 @@ describe('6.2. EstateMarketplace', async () => {
         });
 
         it('6.2.3.3. List token unsuccessfully with non available token', async () => {
-            const fixture = await beforeEstateMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleEstateToken: true,
-            });
+            const fixture = await beforeEstateMarketplaceTest();
             const { estateMarketplace, seller2, estateToken } = fixture;
 
             const { defaultParams } = await beforeListTest(fixture);
@@ -669,10 +725,7 @@ describe('6.2. EstateMarketplace', async () => {
         });
 
         it('6.2.3.4. List token unsuccessfully with zero unit price', async () => {
-            const fixture = await beforeEstateMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleEstateToken: true,
-            });
+            const fixture = await beforeEstateMarketplaceTest();
             const { estateMarketplace, seller1 } = fixture;
 
             const { defaultParams } = await beforeListTest(fixture);
@@ -689,7 +742,7 @@ describe('6.2. EstateMarketplace', async () => {
 
         it('6.2.3.5. List token unsuccessfully with invalid currency', async () => {
             const fixture = await beforeEstateMarketplaceTest({
-                listSampleEstateToken: true,
+                skipListSampleCurrencies: true,
             });
             const { estateMarketplace, seller1 } = fixture;
 
@@ -700,10 +753,7 @@ describe('6.2. EstateMarketplace', async () => {
         });
 
         it('6.2.3.6. List token unsuccessfully with zero selling amount', async () => {
-            const fixture = await beforeEstateMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleEstateToken: true,
-            });
+            const fixture = await beforeEstateMarketplaceTest();
             const { estateMarketplace, seller1 } = fixture;
 
             const { defaultParams } = await beforeListTest(fixture);
@@ -719,10 +769,7 @@ describe('6.2. EstateMarketplace', async () => {
         });
 
         it('6.2.3.7. List token unsuccessfully with selling amount exceeding owned amount', async () => {
-            const fixture = await beforeEstateMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleEstateToken: true,
-            });
+            const fixture = await beforeEstateMarketplaceTest();
             const { estateMarketplace, seller1 } = fixture;
 
             const { defaultParams } = await beforeListTest(fixture);
@@ -972,10 +1019,7 @@ describe('6.2. EstateMarketplace', async () => {
 
     describe('6.2.4. buy(uint256)', async () => {
         it('6.2.4.1. Buy token successfully in all native/erc20 and exclusive/non-exclusive combinations', async () => {
-            const fixture = await beforeEstateMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleEstateToken: true,
-            });
+            const fixture = await beforeEstateMarketplaceTest();
             const { mockCurrencyExclusiveRate, seller1, buyer1 } = fixture;
 
             for (const isERC20 of [false, true]) {
@@ -1003,10 +1047,7 @@ describe('6.2. EstateMarketplace', async () => {
         });
 
         it('6.2.4.2. Buy token successfully at very large amount', async () => {
-            const fixture = await beforeEstateMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleEstateToken: true,
-            });
+            const fixture = await beforeEstateMarketplaceTest();
             const { seller1, buyer1 } = fixture;
 
             for (const isERC20 of [false, true]) {
@@ -1036,10 +1077,7 @@ describe('6.2. EstateMarketplace', async () => {
         });
         
         it('6.2.4.3. Buy token successfully with indivisible offer', async () => {
-            const fixture = await beforeEstateMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleEstateToken: true,
-            });
+            const fixture = await beforeEstateMarketplaceTest();
             const { mockCurrencyExclusiveRate, seller1, buyer1 } = fixture;
     
             await testBuyOffer(
@@ -1076,10 +1114,7 @@ describe('6.2. EstateMarketplace', async () => {
         });
 
         it('6.2.4.4. Buy token successfully in 10 random test cases', async () => {
-            const fixture = await beforeEstateMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleEstateToken: true,
-            });
+            const fixture = await beforeEstateMarketplaceTest();
             const { seller1, buyer1, buyer2 } = fixture;
 
             for (let testcase = 0; testcase < 10; testcase++) {
@@ -1132,10 +1167,7 @@ describe('6.2. EstateMarketplace', async () => {
 
         it('6.2.4.5. Buy token unsuccessfully with invalid offer id', async () => {
             const fixture = await beforeEstateMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleEstateToken: true,
                 listSampleOffers: true,
-                fundERC20ForBuyers: true,
             });
             const { estateMarketplace, buyer1 } = fixture;
 
@@ -1159,12 +1191,9 @@ describe('6.2. EstateMarketplace', async () => {
         });
     });
 
-    describe('6.2.5. buy(uint256, uint256)', async () => {
+    describe('6.2.5. buy(uint256,uint256)', async () => {
         it('6.2.5.1. Buy token successfully in all native/erc20 and exclusive/non-exclusive combinations', async () => {
-            const fixture = await beforeEstateMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleEstateToken: true,
-            });
+            const fixture = await beforeEstateMarketplaceTest();
             const { mockCurrencyExclusiveRate, seller1, buyer1 } = fixture;
 
             for (const isERC20 of [false, true]) {
@@ -1195,10 +1224,7 @@ describe('6.2. EstateMarketplace', async () => {
         });
 
         it('6.2.5.2. Buy token successfully at very large amount in all native/erc20 and exclusive/non-exclusive combinations', async () => {
-            const fixture = await beforeEstateMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleEstateToken: true,
-            });
+            const fixture = await beforeEstateMarketplaceTest();
             const { seller1, buyer1 } = fixture;
 
             for (const isERC20 of [false, true]) {
@@ -1231,10 +1257,7 @@ describe('6.2. EstateMarketplace', async () => {
         });
 
         it('6.2.5.3. Buy token successfully in 10 random test cases', async () => {
-            const fixture = await beforeEstateMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleEstateToken: true,
-            });
+            const fixture = await beforeEstateMarketplaceTest();
             const { seller1, buyer1, buyer2 } = fixture;
 
             for (let testcase = 0; testcase < 10; testcase++) {
@@ -1299,10 +1322,7 @@ describe('6.2. EstateMarketplace', async () => {
 
         it('6.2.5.4. Buy token unsuccessfully when paused', async () => {
             const fixture = await beforeEstateMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleEstateToken: true,
                 listSampleOffers: true,
-                fundERC20ForBuyers: true,
                 pause: true,
             });
             const { estateMarketplace, buyer1 } = fixture;
@@ -1320,10 +1340,7 @@ describe('6.2. EstateMarketplace', async () => {
 
         it('6.2.5.5. Buy token unsuccessfully with invalid offer id', async () => {
             const fixture = await beforeEstateMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleEstateToken: true,
                 listSampleOffers: true,
-                fundERC20ForBuyers: true,
             });
             const { estateMarketplace, buyer1 } = fixture;
 
@@ -1350,10 +1367,7 @@ describe('6.2. EstateMarketplace', async () => {
 
         it('6.2.5.6. Buy token unsuccessfully when token is not available', async () => {
             const fixture = await beforeEstateMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleEstateToken: true,
                 listSampleOffers: true,
-                fundERC20ForBuyers: true,
             });
             const { estateMarketplace, buyer1, estateToken } = fixture;
 
@@ -1372,10 +1386,7 @@ describe('6.2. EstateMarketplace', async () => {
 
         it('6.2.5.6. Buy token unsuccessfully when seller buy their own token', async () => {
             const fixture = await beforeEstateMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleEstateToken: true,
                 listSampleOffers: true,
-                fundERC20ForBuyers: true,
             });
             const { estateMarketplace, seller1, seller2 } = fixture;
 
@@ -1402,10 +1413,7 @@ describe('6.2. EstateMarketplace', async () => {
 
         it('6.2.5.7. Buy token unsuccessfully when offer is not selling', async () => {
             const fixture = await beforeEstateMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleEstateToken: true,
                 listSampleOffers: true,
-                fundERC20ForBuyers: true,
             });
             const { estateMarketplace, buyer1, buyer2 } = fixture;
 
@@ -1432,10 +1440,7 @@ describe('6.2. EstateMarketplace', async () => {
 
         it('6.2.5.8. Buy token unsuccessfully with indivisible offer', async () => {
             const fixture = await beforeEstateMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleEstateToken: true,
                 listSampleOffers: true,
-                fundERC20ForBuyers: true,
             });
             const { estateMarketplace, seller1, buyer1 } = fixture;
             
@@ -1462,10 +1467,7 @@ describe('6.2. EstateMarketplace', async () => {
 
         it('6.2.5.9. Buy token unsuccessfully when there is not enough tokens to sell', async () => {
             const fixture = await beforeEstateMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleEstateToken: true,
                 listSampleOffers: true,
-                fundERC20ForBuyers: true,
             });
             const { estateMarketplace, buyer1, buyer2 } = fixture;
 
@@ -1492,8 +1494,6 @@ describe('6.2. EstateMarketplace', async () => {
 
         it('6.2.5.10. Buy token unsuccessfully with insufficient native token', async () => {
             const fixture = await beforeEstateMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleEstateToken: true,
                 listSampleOffers: true,
             });
             const { estateMarketplace, buyer1 } = fixture;
@@ -1509,10 +1509,7 @@ describe('6.2. EstateMarketplace', async () => {
         });
 
         it('6.2.5.11. Buy token unsuccessfully when native token transfer to seller failed', async () => {
-            const fixture = await beforeEstateMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleEstateToken: true,
-            });
+            const fixture = await beforeEstateMarketplaceTest();
             const { estateMarketplace, seller1, buyer1, deployer, estateToken } = fixture;
             
             const failReceiver = await deployFailReceiver(deployer, true, false);
@@ -1554,10 +1551,7 @@ describe('6.2. EstateMarketplace', async () => {
 
         it('6.2.5.12. Buy token unsuccessfully when native token transfer to royalty receiver failed', async () => {
             const fixture = await beforeEstateMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleEstateToken: true,
                 listSampleOffers: true,
-                fundERC20ForBuyers: true,
                 useFailRoyaltyReceiver: true,
             });
             const { estateMarketplace, buyer1, estateToken, failReceiver } = fixture;
@@ -1578,10 +1572,7 @@ describe('6.2. EstateMarketplace', async () => {
         });
 
         it('6.2.5.13. Buy token unsuccessfully when native token transfer to broker failed', async () => {
-            const fixture = await beforeEstateMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleEstateToken: true,
-            });
+            const fixture = await beforeEstateMarketplaceTest();
             const { estateMarketplace, seller1, buyer1, deployer, estateToken, commissionToken, broker2 } = fixture;
 
             const failReceiver = await deployFailReceiver(deployer, true, false);
@@ -1620,10 +1611,7 @@ describe('6.2. EstateMarketplace', async () => {
 
         it('6.2.5.14. Buy token unsuccessfully when refund to sender failed', async () => {
             const fixture = await beforeEstateMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleEstateToken: true,
                 listSampleOffers: true,
-                fundERC20ForBuyers: true,
             });
             const { estateMarketplace, deployer } = fixture;
 
@@ -1637,10 +1625,7 @@ describe('6.2. EstateMarketplace', async () => {
         });
 
         it('6.2.5.15. Buy token unsuccessfully when the contract is reentered', async () => {
-            const fixture = await beforeEstateMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleEstateToken: true,
-            });
+            const fixture = await beforeEstateMarketplaceTest();
             const { deployer, estateToken, estateMarketplace, buyer1 } = fixture;
 
             const reentrancy = await deployReentrancyERC1155Holder(deployer);
@@ -1675,12 +1660,106 @@ describe('6.2. EstateMarketplace', async () => {
         });
     });
 
-    describe('6.2.6. safeBuy(uint256, uint256)', async () => {
-        it('6.2.6.1. Buy token successfully in both native and ERC20', async () => {
+    describe('6.2.8. cancel(uint256)', async () => {
+        it('6.2.8.1. Cancel offer successfully by seller', async () => {
             const fixture = await beforeEstateMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleEstateToken: true,
+                listSampleOffers: true,
             });
+            const { estateMarketplace, seller1 } = fixture;
+
+            let tx = await getAssetMarketplaceTx_Cancel(
+                estateMarketplace,
+                seller1,
+                { offerId: BigNumber.from(1) }
+            );
+            await tx.wait();
+
+            const offer = await estateMarketplace.getOffer(1);
+            expect(offer.state).to.equal(OfferState.Cancelled);
+
+            await expect(tx).to
+                .emit(estateMarketplace, "OfferCancellation")
+                .withArgs(1);
+        });
+
+        it('6.2.8.2. Cancel offer successfully by manager', async () => {
+            const fixture = await beforeEstateMarketplaceTest({
+                listSampleOffers: true,
+            });
+            const { estateMarketplace, manager } = fixture;
+
+            let tx = await getAssetMarketplaceTx_Cancel(
+                estateMarketplace,
+                manager,
+                { offerId: BigNumber.from(1) }
+            );
+            await tx.wait();
+
+            const offer = await estateMarketplace.getOffer(1);
+            expect(offer.state).to.equal(OfferState.Cancelled);
+
+            await expect(tx).to
+                .emit(estateMarketplace, "OfferCancellation")
+                .withArgs(1);
+        });
+
+        it('6.2.8.3. Cancel offer unsuccessfully with invalid offer id', async () => {
+            const fixture = await beforeEstateMarketplaceTest({
+                listSampleOffers: true,
+            });
+            const { estateMarketplace, manager } = fixture;
+
+            await expect(getAssetMarketplaceTx_Cancel(estateMarketplace, manager, { offerId: BigNumber.from(0) }))
+                .to.be.revertedWithCustomError(estateMarketplace, "InvalidOfferId");
+            await expect(getAssetMarketplaceTx_Cancel(estateMarketplace, manager, { offerId: BigNumber.from(3) }))
+                .to.be.revertedWithCustomError(estateMarketplace, "InvalidOfferId");
+        });
+
+        it('6.2.8.4. Cancel offer unsuccessfully by unauthorized user', async () => {
+            const fixture = await beforeEstateMarketplaceTest({
+                listSampleOffers: true,
+            });
+            const { estateMarketplace, seller2, moderator } = fixture;
+
+            await expect(getAssetMarketplaceTx_Cancel(estateMarketplace, seller2, { offerId: BigNumber.from(1) }))
+                .to.be.revertedWithCustomError(estateMarketplace, "Unauthorized");
+
+            await expect(getAssetMarketplaceTx_Cancel(estateMarketplace, moderator, { offerId: BigNumber.from(1) }))
+                .to.be.revertedWithCustomError(estateMarketplace, "Unauthorized");
+        });
+
+        it('6.2.8.5. Cancel offer unsuccessfully when offer is already cancelled', async () => {
+            const fixture = await beforeEstateMarketplaceTest({
+                listSampleOffers: true,
+            });
+            const { estateMarketplace, manager } = fixture;
+
+            await callTransaction(getAssetMarketplaceTx_Cancel(estateMarketplace, manager, { offerId: BigNumber.from(1) }));
+            await expect(getAssetMarketplaceTx_Cancel(estateMarketplace, manager, { offerId: BigNumber.from(1) }))
+                .to.be.revertedWithCustomError(estateMarketplace, "InvalidCancelling");
+        });
+
+        it('6.2.8.6. Cancel offer unsuccessfully when offer is sold out', async () => {
+            const fixture = await beforeEstateMarketplaceTest({
+                listSampleOffers: true,
+            });
+            const { estateMarketplace, manager, buyer1 } = fixture;
+
+            await callTransaction(getAssetMarketplaceTx_Buy(
+                estateMarketplace,
+                buyer1,
+                { offerId: BigNumber.from(1) },
+                { value: 1e9 }
+            ));
+
+            await expect(getAssetMarketplaceTx_Cancel(estateMarketplace, manager, { offerId: BigNumber.from(1) }))
+                .to.be.revertedWithCustomError(estateMarketplace, "InvalidCancelling");
+        });
+    });
+
+    describe('6.2.6. safeBuy(uint256,bytes32)', async () => {
+        it('6.2.6.1. Buy token successfully in both native and ERC20', async () => {
+            const fixture = await beforeEstateMarketplaceTest();
             const { mockCurrencyExclusiveRate, seller1, buyer1 } = fixture;
 
             for (const isERC20 of [false, true]) {
@@ -1709,10 +1788,7 @@ describe('6.2. EstateMarketplace', async () => {
 
         it('6.2.6.2. Buy token unsuccessfully with invalid offer id', async () => {
             const fixture = await beforeEstateMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleEstateToken: true,
                 listSampleOffers: true,
-                fundERC20ForBuyers: true,
             });
             const { estateMarketplace, buyer1 } = fixture;
 
@@ -1739,10 +1815,7 @@ describe('6.2. EstateMarketplace', async () => {
 
         it('6.2.6.3. Buy token unsuccessfully with invalid anchor', async () => {
             const fixture = await beforeEstateMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleEstateToken: true,
                 listSampleOffers: true,
-                fundERC20ForBuyers: true,
             });
             const { estateMarketplace, buyer1, buyer2 } = fixture;
 
@@ -1768,12 +1841,9 @@ describe('6.2. EstateMarketplace', async () => {
         });
     });
 
-    describe('6.2.7. safeBuy(uint256, uint256, uint256)', async () => {
+    describe('6.2.7. safeBuy(uint256,uint256,bytes32)', async () => {
         it('6.2.7.1. Buy token successfully in both native and ERC20', async () => {
-            const fixture = await beforeEstateMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleEstateToken: true,
-            });
+            const fixture = await beforeEstateMarketplaceTest();
             const { mockCurrencyExclusiveRate, seller1, buyer1 } = fixture;
 
             for (const isERC20 of [false, true]) {
@@ -1805,10 +1875,7 @@ describe('6.2. EstateMarketplace', async () => {
 
         it('6.2.7.2. Buy token unsuccessfully with invalid offer id', async () => {
             const fixture = await beforeEstateMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleEstateToken: true,
                 listSampleOffers: true,
-                fundERC20ForBuyers: true,
             });
             const { estateMarketplace, buyer1 } = fixture;
 
@@ -1837,10 +1904,7 @@ describe('6.2. EstateMarketplace', async () => {
 
         it('6.2.7.3. Buy token unsuccessfully with invalid anchor', async () => {
             const fixture = await beforeEstateMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleEstateToken: true,
                 listSampleOffers: true,
-                fundERC20ForBuyers: true,
             });
             const { estateMarketplace, buyer1, buyer2 } = fixture;
 
@@ -1867,120 +1931,4 @@ describe('6.2. EstateMarketplace', async () => {
             )).to.be.revertedWithCustomError(estateMarketplace, "BadAnchor");
         });
     });
-
-    describe('6.2.8. cancelOffer(uint256)', async () => {
-        it('6.2.8.1. Cancel offer successfully by seller', async () => {
-            const fixture = await beforeEstateMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleEstateToken: true,
-                listSampleOffers: true,
-                fundERC20ForBuyers: true,
-            });
-            const { estateMarketplace, seller1 } = fixture;
-
-            let tx = await getAssetMarketplaceTx_Cancel(
-                estateMarketplace,
-                seller1,
-                { offerId: BigNumber.from(1) }
-            );
-            await tx.wait();
-
-            const offer = await estateMarketplace.getOffer(1);
-            expect(offer.state).to.equal(OfferState.Cancelled);
-
-            await expect(tx).to
-                .emit(estateMarketplace, "OfferCancellation")
-                .withArgs(1);
-        });
-
-        it('6.2.8.2. Cancel offer successfully by manager', async () => {
-            const fixture = await beforeEstateMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleEstateToken: true,
-                listSampleOffers: true,
-                fundERC20ForBuyers: true,
-            });
-            const { estateMarketplace, manager } = fixture;
-
-            let tx = await getAssetMarketplaceTx_Cancel(
-                estateMarketplace,
-                manager,
-                { offerId: BigNumber.from(1) }
-            );
-            await tx.wait();
-
-            const offer = await estateMarketplace.getOffer(1);
-            expect(offer.state).to.equal(OfferState.Cancelled);
-
-            await expect(tx).to
-                .emit(estateMarketplace, "OfferCancellation")
-                .withArgs(1);
-        });
-
-        it('6.2.8.3. Cancel offer unsuccessfully with invalid offer id', async () => {
-            const fixture = await beforeEstateMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleEstateToken: true,
-                listSampleOffers: true,
-                fundERC20ForBuyers: true,
-            });
-            const { estateMarketplace, manager } = fixture;
-
-            await expect(getAssetMarketplaceTx_Cancel(estateMarketplace, manager, { offerId: BigNumber.from(0) }))
-                .to.be.revertedWithCustomError(estateMarketplace, "InvalidOfferId");
-            await expect(getAssetMarketplaceTx_Cancel(estateMarketplace, manager, { offerId: BigNumber.from(3) }))
-                .to.be.revertedWithCustomError(estateMarketplace, "InvalidOfferId");
-        });
-
-        it('6.2.8.4. Cancel offer unsuccessfully by unauthorized user', async () => {
-            const fixture = await beforeEstateMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleEstateToken: true,
-                listSampleOffers: true,
-                fundERC20ForBuyers: true,
-            });
-            const { estateMarketplace, seller2, moderator } = fixture;
-
-            await expect(getAssetMarketplaceTx_Cancel(estateMarketplace, seller2, { offerId: BigNumber.from(1) }))
-                .to.be.revertedWithCustomError(estateMarketplace, "Unauthorized");
-
-            await expect(getAssetMarketplaceTx_Cancel(estateMarketplace, moderator, { offerId: BigNumber.from(1) }))
-                .to.be.revertedWithCustomError(estateMarketplace, "Unauthorized");
-        });
-
-        it('6.2.8.5. Cancel offer unsuccessfully when offer is already cancelled', async () => {
-            const fixture = await beforeEstateMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleEstateToken: true,
-                listSampleOffers: true,
-                fundERC20ForBuyers: true,
-            });
-            const { estateMarketplace, manager } = fixture;
-
-            await callTransaction(getAssetMarketplaceTx_Cancel(estateMarketplace, manager, { offerId: BigNumber.from(1) }));
-            await expect(getAssetMarketplaceTx_Cancel(estateMarketplace, manager, { offerId: BigNumber.from(1) }))
-                .to.be.revertedWithCustomError(estateMarketplace, "InvalidCancelling");
-        });
-
-        it('6.2.8.6. Cancel offer unsuccessfully when offer is sold out', async () => {
-            const fixture = await beforeEstateMarketplaceTest({
-                listSampleCurrencies: true,
-                listSampleEstateToken: true,
-                listSampleOffers: true,
-                fundERC20ForBuyers: true,
-            });
-            const { estateMarketplace, manager, buyer1 } = fixture;
-
-            await callTransaction(getAssetMarketplaceTx_Buy(
-                estateMarketplace,
-                buyer1,
-                { offerId: BigNumber.from(1) },
-                { value: 1e9 }
-            ));
-
-            await expect(getAssetMarketplaceTx_Cancel(estateMarketplace, manager, { offerId: BigNumber.from(1) }))
-                .to.be.revertedWithCustomError(estateMarketplace, "InvalidCancelling");
-        });
-    });
 });
-
