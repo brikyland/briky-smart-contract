@@ -100,25 +100,6 @@ interface DriptributorFixture {
     totalAmount: BigNumber;
 }
 
-// TODO: Add non-reentrant test?
-async function testReentrancy_driptributor(
-    driptributor: Driptributor,
-    reentrancyContract: Contract,
-    assertion: any,
-) {
-    let data = [
-        driptributor.interface.encodeFunctionData("withdraw", [[0]]),
-        driptributor.interface.encodeFunctionData("stake", [[0], 0, 0]),
-    ];
-
-    await testReentrancy(
-        reentrancyContract,
-        driptributor,
-        data,
-        assertion,
-    );
-}
-
 describe('4.3. Driptributor', async () => {
     async function driptributorFixture(): Promise<DriptributorFixture> {
         const [deployer, admin1, admin2, admin3, admin4, admin5, receiver1, receiver2, receiver3] = await ethers.getSigners();

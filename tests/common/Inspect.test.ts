@@ -594,7 +594,7 @@ describe('1.1. Inspect', async () => {
             await testReceiveNotExecuteAnyCode(projectMarketplace, 28223);
 
             await testReceiveNotExecuteAnyCode(projectToken, 28223);
-            await testReceiveNotExecuteAnyCode(prestigePad, 28223);
+            await testReceiveNotExecuteAnyCode(prestigePad, 28228);
         });
     });
 });

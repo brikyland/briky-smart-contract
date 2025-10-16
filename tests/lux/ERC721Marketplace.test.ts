@@ -152,8 +152,11 @@ describe('6.1. ERC721Marketplace', async () => {
             'MockCurrency',
             'MCK'
         ) as Currency;
-        const mockCurrencyExclusiveRate = ethers.utils.parseEther("0.3");
-        await callTransaction(currency.setExclusiveDiscount(mockCurrencyExclusiveRate, Constant.COMMON_RATE_DECIMALS));
+
+        await callTransaction(currency.setExclusiveDiscount(
+            ethers.utils.parseEther('0.3'),
+            Constant.COMMON_RATE_DECIMALS
+        ));
 
         const feeReceiver = await deployFeeReceiver(
             deployer.address,

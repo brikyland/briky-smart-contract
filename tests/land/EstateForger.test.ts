@@ -390,6 +390,7 @@ describe('2.2. EstateForger', async () => {
         confirmRequests = false,        
         useNoCashback = false,
         useFailReceiverAsBroker = false,
+        useFailReceiverAsCustodian = false,
         useReentrancyAsBroker = false,
         pause = false,
     } = {}): Promise<EstateForgerFixture> {
@@ -400,7 +401,6 @@ describe('2.2. EstateForger', async () => {
             manager,
             moderator,
             broker2,
-            custodian1,
             custodian2,
             custodian3,
             depositor1,
@@ -429,6 +429,11 @@ describe('2.2. EstateForger', async () => {
         }
         if (useReentrancyAsBroker) {
             broker1 = reentrancy;
+        }
+
+        let custodian1 = fixture.custodian1;
+        if (useFailReceiverAsCustodian) {
+            custodian1 = failReceiver;
         }
 
         await callTransaction(getAdminTxByInput_AuthorizeManagers(
@@ -4544,6 +4549,24 @@ describe('2.2. EstateForger', async () => {
             )).to.be.revertedWithCustomError(estateForger, "InvalidRequestId");
         });
 
+        it('2.2.12.9. Confirm tokenization unsuccessfully with invalid anchor', async () => {
+            const fixture = await beforeEstateForgerTest({
+                addSampleRequests: true,
+                addDepositions: true,
+            });
+            const { estateForger, manager } = fixture;
+                        
+            await expect(getEstateForgerTx_SafeConfirm(
+                estateForger,
+                manager,
+                {
+                    requestId: BigNumber.from(1),
+                    anchor: ethers.utils.keccak256(ethers.utils.toUtf8Bytes('invalid anchor')),
+                },
+                { value: ethers.utils.parseEther("1000") }
+            )).to.be.revertedWithCustomError(estateForger, 'BadAnchor');
+        });
+
         it('2.2.12.9. Confirm tokenization unsuccessfully when paused', async () => {
             const fixture = await beforeEstateForgerTest({
                 addSampleRequests: true,
@@ -4797,90 +4820,21 @@ describe('2.2. EstateForger', async () => {
         });
 
         it('2.2.12.20. Confirm tokenization unsuccessfully when native token transfer to requester failed', async () => {
-            // TODO: Refactor?
-            const fixture = await beforeEstateForgerTest();
-            const {estateForger, estateToken, zone1, manager, depositor1, deployer, admin, admins, validator, broker1} = fixture;
-            const baseTimestamp = await time.latest();
+            const fixture = await beforeEstateForgerTest({
+                useFailReceiverAsCustodian: true,
+                addSampleRequests: true,
+                addDepositions: true,
+            });
+            const { estateForger, failReceiver, manager } = fixture;
 
-            await callTransaction(getEstateForgerTxByInput_UpdateBaseUnitPriceRange(
-                estateForger,
-                deployer,
-                {
-                    baseMinUnitPrice: ethers.BigNumber.from(0),
-                    baseMaxUnitPrice: ethers.constants.MaxUint256,
-                },
-                admin,
-                admins
-            ));
+            await callTransaction(failReceiver.activate(true));
 
-            const failReceiver = await deployFailReceiver(deployer, true, false);
-
-            await callTransaction(getEstateTokenTxByInput_RegisterCustodian(
-                estateToken as any,
-                manager,
-                {
-                    zone: zone1,
-                    custodian: failReceiver.address,
-                    uri: "uri",
-                },
-                validator
-            ));
-
-            const requestParamsInput: RequestTokenizationParamsInput = {
-                requester: failReceiver.address,
-                estate: {
-                    zone: zone1,
-                    uri: "uri",
-                    expireAt: baseTimestamp + 1e9,
-                },
-                quota: {
-                    totalQuantity: ethers.BigNumber.from(70),
-                    minSellingQuantity: ethers.BigNumber.from(10),
-                    maxSellingQuantity: ethers.BigNumber.from(20),
-                },
-                quote: {
-                    unitPrice: ethers.BigNumber.from(1000000),
-                    currency: ethers.constants.AddressZero,
-                    cashbackThreshold: ethers.BigNumber.from(5),
-                    cashbackBaseRate: ethers.utils.parseEther("0.01"),
-                    cashbackCurrencies: [],
-                    cashbackDenominations: [],
-                    feeDenomination: ethers.BigNumber.from(100000),
-                    broker: broker1.address,
-                },
-                agenda: {
-                    saleStartsAt: baseTimestamp + 10,
-                    privateSaleDuration: 20 * DAY,
-                    publicSaleDuration: 40 * DAY,
-                }
-            };
-
-            const receipt = await callTransaction(getEstateForgerTxByInput_RequestTokenization(
-                estateForger,
-                manager,
-                requestParamsInput,
-                validator
-            ));
-
-            const requestId = receipt.events!.filter(e => e.event === "NewRequest")[0].args![0];
-
-            const privateSaleEndsAt = (await estateForger.getRequest(requestId)).agenda.privateSaleEndsAt;
-            await time.setNextBlockTimestamp(privateSaleEndsAt);
-
-            await callTransaction(getEstateForgerTx_Deposit(
-                estateForger,
-                depositor1,
-                { requestId: BigNumber.from(requestId), quantity: ethers.BigNumber.from(10) },
-                { value: ethers.utils.parseEther("100") },
-            ));
-
-            const params1: ConfirmParams = {
-                requestId: BigNumber.from(requestId),
-            }
             await expect(getEstateForgerTxByParams_SafeConfirm(
                 estateForger,
                 manager,
-                params1,
+                {
+                    requestId: BigNumber.from(1),
+                },
                 { value: ethers.utils.parseEther("1000") }
             )).to.be.revertedWithCustomError(estateForger, "FailedTransfer");
         });

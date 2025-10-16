@@ -139,7 +139,6 @@ interface EstateMarketplaceFixture {
 
     zone1: any;
     zone2: any;
-    mockCurrencyExclusiveRate: BigNumber;
     failReceiver: any;
 }
 
@@ -208,8 +207,10 @@ describe('6.2. EstateMarketplace', async () => {
             admin.address,
         ) as ReserveVault;
 
-        const mockCurrencyExclusiveRate = ethers.utils.parseEther("0.3");
-        await currency.setExclusiveDiscount(mockCurrencyExclusiveRate, Constant.COMMON_RATE_DECIMALS);
+        await callTransaction(currency.setExclusiveDiscount(
+            ethers.utils.parseEther('0.3'),
+            Constant.COMMON_RATE_DECIMALS
+        ));
 
         const SmockEstateTokenFactory = await smock.mock<MockEstateToken__factory>('MockEstateToken');
         const estateToken = await SmockEstateTokenFactory.deploy();
@@ -283,7 +284,6 @@ describe('6.2. EstateMarketplace', async () => {
             estateMarketplace,
             zone1,
             zone2,
-            mockCurrencyExclusiveRate,
             failReceiver,
         };
     }
@@ -1020,7 +1020,7 @@ describe('6.2. EstateMarketplace', async () => {
     describe('6.2.4. buy(uint256)', async () => {
         it('6.2.4.1. Buy token successfully in all native/erc20 and exclusive/non-exclusive combinations', async () => {
             const fixture = await beforeEstateMarketplaceTest();
-            const { mockCurrencyExclusiveRate, seller1, buyer1 } = fixture;
+            const { seller1, buyer1 } = fixture;
 
             for (const isERC20 of [false, true]) {
                 for (const isExclusive of [false, true]) {
@@ -1029,7 +1029,7 @@ describe('6.2. EstateMarketplace', async () => {
                     }
                     await testBuyOffer(
                         fixture,
-                        mockCurrencyExclusiveRate,
+                        ethers.utils.parseEther('0.3'),
                         ethers.utils.parseEther("0.1"),
                         ethers.utils.parseEther("0.2"),
                         isERC20,
@@ -1078,11 +1078,11 @@ describe('6.2. EstateMarketplace', async () => {
         
         it('6.2.4.3. Buy token successfully with indivisible offer', async () => {
             const fixture = await beforeEstateMarketplaceTest();
-            const { mockCurrencyExclusiveRate, seller1, buyer1 } = fixture;
+            const { seller1, buyer1 } = fixture;
     
             await testBuyOffer(
                 fixture,
-                mockCurrencyExclusiveRate,
+                ethers.utils.parseEther('0.3'),
                 ethers.utils.parseEther("0.1"),
                 ethers.utils.parseEther("0.2"),
                 false,
@@ -1098,7 +1098,7 @@ describe('6.2. EstateMarketplace', async () => {
 
             await testBuyOffer(
                 fixture,
-                mockCurrencyExclusiveRate,
+                ethers.utils.parseEther('0.3'),
                 ethers.utils.parseEther("0.1"),
                 ethers.utils.parseEther("0.2"),
                 true,
@@ -1194,7 +1194,7 @@ describe('6.2. EstateMarketplace', async () => {
     describe('6.2.5. buy(uint256,uint256)', async () => {
         it('6.2.5.1. Buy token successfully in all native/erc20 and exclusive/non-exclusive combinations', async () => {
             const fixture = await beforeEstateMarketplaceTest();
-            const { mockCurrencyExclusiveRate, seller1, buyer1 } = fixture;
+            const { seller1, buyer1 } = fixture;
 
             for (const isERC20 of [false, true]) {
                 for (const isExclusive of [false, true]) {
@@ -1203,7 +1203,7 @@ describe('6.2. EstateMarketplace', async () => {
                     }
                     await testBuyOffer(
                         fixture,
-                        mockCurrencyExclusiveRate,
+                        ethers.utils.parseEther('0.3'),
                         ethers.utils.parseEther("0.1"),
                         ethers.utils.parseEther("0.2"),
                         isERC20,
@@ -1760,7 +1760,7 @@ describe('6.2. EstateMarketplace', async () => {
     describe('6.2.6. safeBuy(uint256,bytes32)', async () => {
         it('6.2.6.1. Buy token successfully in both native and ERC20', async () => {
             const fixture = await beforeEstateMarketplaceTest();
-            const { mockCurrencyExclusiveRate, seller1, buyer1 } = fixture;
+            const { seller1, buyer1 } = fixture;
 
             for (const isERC20 of [false, true]) {
                 for (const isExclusive of [false, true]) {
@@ -1769,7 +1769,7 @@ describe('6.2. EstateMarketplace', async () => {
                     }
                     await testBuyOffer(
                         fixture,
-                        mockCurrencyExclusiveRate,
+                        ethers.utils.parseEther('0.3'),
                         ethers.utils.parseEther("0.1"),
                         ethers.utils.parseEther("0.2"),
                         isERC20,
@@ -1844,7 +1844,7 @@ describe('6.2. EstateMarketplace', async () => {
     describe('6.2.7. safeBuy(uint256,uint256,bytes32)', async () => {
         it('6.2.7.1. Buy token successfully in both native and ERC20', async () => {
             const fixture = await beforeEstateMarketplaceTest();
-            const { mockCurrencyExclusiveRate, seller1, buyer1 } = fixture;
+            const { seller1, buyer1 } = fixture;
 
             for (const isERC20 of [false, true]) {
                 for (const isExclusive of [false, true]) {
@@ -1853,7 +1853,7 @@ describe('6.2. EstateMarketplace', async () => {
                     }
                     await testBuyOffer(
                         fixture,
-                        mockCurrencyExclusiveRate,
+                        ethers.utils.parseEther('0.3'),
                         ethers.utils.parseEther("0.1"),
                         ethers.utils.parseEther("0.2"),
                         isERC20,

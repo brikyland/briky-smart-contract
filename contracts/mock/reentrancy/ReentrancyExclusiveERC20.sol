@@ -12,8 +12,6 @@ import {ProxyCaller} from "../common/ProxyCaller.sol";
 
 import {IRate} from "../../common/structs/IRate.sol";
 
-import "hardhat/console.sol";
-
 contract ReentrancyExclusiveERC20 is ERC20Upgradeable, ProxyCaller {
     address public reentrancyTarget;
     bytes public reentrancyData;

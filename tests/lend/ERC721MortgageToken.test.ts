@@ -1336,7 +1336,7 @@ describe('3.1. ERC721MortgageToken', async () => {
                     `NewMockCurrency_${currentMortgageId}`,
                     `NMC_${currentMortgageId}`
                 ) as Currency;
-                await newCurrency.setExclusiveDiscount(currencyExclusiveRate, Constant.COMMON_RATE_DECIMALS);
+                await callTransaction(newCurrency.setExclusiveDiscount(currencyExclusiveRate, Constant.COMMON_RATE_DECIMALS));
                 newCurrencyAddress = newCurrency.address;
             } else {
                 newCurrencyAddress = ethers.constants.AddressZero;

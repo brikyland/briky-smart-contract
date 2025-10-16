@@ -11,7 +11,7 @@ import {
 } from "@utils/models/launch/projectToken";
 
 
-// safeDeprecateEstate
+// safeDeprecateProject
 export async function getSafeDeprecateProjectAnchor(
     projectToken: ProjectToken,
     params: DeprecateProjectParams

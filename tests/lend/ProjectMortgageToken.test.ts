@@ -186,7 +186,6 @@ interface ProjectMortgageTokenFixture {
 
     zone1: string;
     zone2: string;
-    mockCurrencyExclusiveRate: BigNumber;
 }
 
 describe('3.3. ProjectMortgageToken', async () => {
@@ -226,8 +225,10 @@ describe('3.3. ProjectMortgageToken', async () => {
             admin.address
         ) as ReserveVault;
 
-        const mockCurrencyExclusiveRate = ethers.utils.parseEther('0.3');
-        await callTransaction(currency.setExclusiveDiscount(mockCurrencyExclusiveRate, Constant.COMMON_RATE_DECIMALS));
+        await callTransaction(currency.setExclusiveDiscount(
+            ethers.utils.parseEther('0.3'),
+            Constant.COMMON_RATE_DECIMALS
+        ));
 
         const MockEstateTokenFactory = await smock.mock('MockEstateToken') as any;
         const estateToken = await MockEstateTokenFactory.deploy();
@@ -296,7 +297,6 @@ describe('3.3. ProjectMortgageToken', async () => {
             borrower2,
             initiator1,
             initiator2,
-            mockCurrencyExclusiveRate,
             projectMortgageTokenOwner,
             zone1,
             zone2,
@@ -1160,7 +1160,7 @@ describe('3.3. ProjectMortgageToken', async () => {
                     `NewMockCurrency_${currentMortgageId}`,
                     `NMC_${currentMortgageId}`
                 ) as Currency;
-                await newCurrency.setExclusiveDiscount(currencyExclusiveRate, Constant.COMMON_RATE_DECIMALS);
+                await callTransaction(newCurrency.setExclusiveDiscount(currencyExclusiveRate, Constant.COMMON_RATE_DECIMALS));
                 newCurrencyAddress = newCurrency.address;
             } else {
                 newCurrencyAddress = ethers.constants.AddressZero;
@@ -1290,7 +1290,7 @@ describe('3.3. ProjectMortgageToken', async () => {
             });
             await testLend(
                 fixture,
-                fixture.mockCurrencyExclusiveRate,
+                ethers.utils.parseEther('0.3'),
                 LendInitialization.PROJECT_MORTGAGE_TOKEN_FeeRate,
                 false,
                 false,
@@ -1302,7 +1302,7 @@ describe('3.3. ProjectMortgageToken', async () => {
 
             await testLend(
                 fixture,
-                fixture.mockCurrencyExclusiveRate,
+                ethers.utils.parseEther('0.3'),
                 LendInitialization.PROJECT_MORTGAGE_TOKEN_FeeRate,
                 true,
                 true,
@@ -1325,7 +1325,7 @@ describe('3.3. ProjectMortgageToken', async () => {
                     }
                     await testLend(
                         fixture,
-                        fixture.mockCurrencyExclusiveRate,
+                        ethers.utils.parseEther('0.3'),
                         LendInitialization.PROJECT_MORTGAGE_TOKEN_FeeRate,
                         isERC20,
                         isExclusive,

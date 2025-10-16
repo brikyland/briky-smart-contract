@@ -4075,6 +4075,27 @@ describe('7.1. PrestigePad', async () => {
             )).to.be.revertedWithCustomError(prestigePad, 'InvalidLaunchId');
         });
 
+        it('7.1.11.9. Safe confirm current round unsuccessfully with invalid anchor', async () => {
+            const fixture = await beforePrestigePadTest({
+                addSampleLaunch: true,
+                addSampleRounds: true,
+                raiseFirstRound: true,
+                depositFirstRound: true,
+            });
+
+            const { prestigePad, initiator1 } = fixture;
+
+            await expect(getPrestigePadTx_SafeConfirmCurrentRound(
+                prestigePad,
+                initiator1,
+                {
+                    launchId: BigNumber.from(1),
+                    anchor: ethers.utils.keccak256(ethers.utils.toUtf8Bytes('invalid anchor')),
+                },
+                { value: ethers.utils.parseEther('100') }
+            )).to.be.revertedWithCustomError(prestigePad, 'BadAnchor');
+        });
+
         it('7.1.11.9. Safe confirm current round unsuccessfully when sender is not launch initiator', async () => {
             const fixture = await beforePrestigePadTest({
                 addSampleLaunch: true,
@@ -4365,6 +4386,26 @@ describe('7.1. PrestigePad', async () => {
                 initiator1,
                 { launchId: BigNumber.from(1) },
             )).to.be.revertedWith('Pausable: paused');
+        });
+
+        it('7.1.12.3. Finalize launch unsuccessfully with invalid anchor', async () => {
+            const fixture = await beforePrestigePadTest({
+                addSampleLaunch: true,
+                addSampleRounds: true,
+                doAllFirstFound: true,
+                doAllSecondFound: true,
+            });
+            
+            const { prestigePad, initiator1 } = fixture;
+
+            await expect(getPrestigePadTx_SafeFinalize(
+                prestigePad,
+                initiator1,
+                {
+                    launchId: BigNumber.from(1),
+                    anchor: ethers.utils.keccak256(ethers.utils.toUtf8Bytes('invalid anchor')),
+                },
+            )).to.be.revertedWithCustomError(prestigePad, 'BadAnchor');
         });
 
         it('7.1.12.5. Finalize launch unsuccessfully when launch is already finalized', async () => {

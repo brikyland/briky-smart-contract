@@ -7,8 +7,6 @@ import "@openzeppelin/contracts-upgradeable/token/ERC721/utils/ERC721HolderUpgra
 import { Revert } from "../common/utilities/Revert.sol";
 import { ProxyCaller } from "./common/ProxyCaller.sol";
 
-import "hardhat/console.sol";
-
 contract FailReceiver is
 ERC1155HolderUpgradeable,
 ERC721HolderUpgradeable,

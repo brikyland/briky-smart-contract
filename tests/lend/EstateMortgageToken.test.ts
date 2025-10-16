@@ -234,10 +234,10 @@ describe('3.2. EstateMortgageToken', async () => {
             'MCK'
         ) as Currency;
 
-        await callTransaction(
-            currency.setExclusiveDiscount(ethers.utils.parseEther('0.3'),
-            Constant.COMMON_RATE_DECIMALS)
-        );
+        await callTransaction(currency.setExclusiveDiscount(
+            ethers.utils.parseEther('0.3'),
+            Constant.COMMON_RATE_DECIMALS
+        ));
 
         const MockEstateTokenFactory = await smock.mock('MockEstateToken') as any;
         const estateToken = await MockEstateTokenFactory.deploy();
@@ -1233,7 +1233,7 @@ describe('3.2. EstateMortgageToken', async () => {
                     `NewMockCurrency_${currentMortgageId}`,
                     `NMC_${currentMortgageId}`
                 ) as Currency;
-                await newCurrency.setExclusiveDiscount(currencyExclusiveRate, Constant.COMMON_RATE_DECIMALS);
+                await callTransaction(newCurrency.setExclusiveDiscount(currencyExclusiveRate, Constant.COMMON_RATE_DECIMALS));
                 newCurrencyAddress = newCurrency.address;
             } else {
                 newCurrencyAddress = ethers.constants.AddressZero;

@@ -86,16 +86,10 @@ describe('1.a. Pausable', async () => {
         pause = false,
     } = {}): Promise<PausableFixture> {
         const fixture = await loadFixture(pausableFixture);
-        const { admin, admins, pausable } = fixture;
+        const { deployer, admin, admins, pausable } = fixture;
 
         if (pause) {
-            let message = ethers.utils.defaultAbiCoder.encode(
-                ["address", "string"],
-                [pausable.address, "pause"]
-            );
-            let signatures = await getSignatures(message, admins, await admin.nonce());
-
-            await callTransaction(pausable.pause(signatures));
+            await callTransaction(getPausableTxByInput_Pause(pausable, deployer, admin, admins));
         }
 
         return fixture;
