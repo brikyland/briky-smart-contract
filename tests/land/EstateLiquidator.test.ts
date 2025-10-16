@@ -1155,7 +1155,7 @@ describe('2.3. EstateLiquidator', async () => {
             )).to.be.revertedWithCustomError(estateLiquidator, 'Unauthorized');
         });
 
-        it('2.3.3.6. Request extraction unsuccessfully by inactive manager in zone', async () => {
+        it('2.3.3.5. Request extraction unsuccessfully by inactive manager in zone', async () => {
             const fixture = await beforeEstateLiquidatorTest();
 
             const { deployer, admin, admins, zone1, estateLiquidator, manager, estateToken, governanceHub, validator } = fixture;
@@ -1190,7 +1190,7 @@ describe('2.3. EstateLiquidator', async () => {
             )).to.be.revertedWithCustomError(estateLiquidator, 'Unauthorized');
         });
 
-        it('2.3.3.7. Request extraction unsuccessfully with invalid validation', async () => {
+        it('2.3.3.6. Request extraction unsuccessfully with invalid validation', async () => {
             const fixture = await beforeEstateLiquidatorTest();
 
             const { estateLiquidator, manager, estateToken, governanceHub, validator } = fixture;
@@ -1224,7 +1224,7 @@ describe('2.3. EstateLiquidator', async () => {
             )).to.be.revertedWithCustomError(governanceHub, 'InvalidSignature');
         });
 
-        it('2.3.3.8. Request extraction unsuccessfully with expired estate', async () => {
+        it('2.3.3.7. Request extraction unsuccessfully with expired estate', async () => {
             const fixture = await beforeEstateLiquidatorTest();
 
             const { estateToken, governanceHub, estateLiquidator, manager, validator } = fixture;
@@ -1262,7 +1262,7 @@ describe('2.3. EstateLiquidator', async () => {
             )).to.be.revertedWithCustomError(estateLiquidator, 'UnavailableEstate');
         });
 
-        it('2.3.3.9. Request extraction unsuccessfully with deprecated estate', async () => {
+        it('2.3.3.8. Request extraction unsuccessfully with deprecated estate', async () => {
             const fixture = await beforeEstateLiquidatorTest();
 
             const { estateToken, manager, governanceHub, estateLiquidator, validator } = fixture;
@@ -1295,7 +1295,7 @@ describe('2.3. EstateLiquidator', async () => {
             )).to.be.revertedWithCustomError(estateLiquidator, 'UnavailableEstate');
         });
 
-        it('2.3.3.11. Request extraction unsuccessfully with unavailable currency', async () => {
+        it('2.3.3.9. Request extraction unsuccessfully with unavailable currency', async () => {
             const fixture = await beforeEstateLiquidatorTest();
 
             const { manager, validator, governanceHub, estateLiquidator, estateToken } = fixture;
@@ -1321,7 +1321,7 @@ describe('2.3. EstateLiquidator', async () => {
             )).to.be.revertedWithCustomError(estateLiquidator, 'InvalidCurrency');
         });
 
-        it('2.3.3.12. Request extraction unsuccessfully with insufficient native token', async () => {
+        it('2.3.3.10. Request extraction unsuccessfully with insufficient native token', async () => {
             const fixture = await beforeEstateLiquidatorTest();
 
             const { manager, validator, estateToken, governanceHub, estateLiquidator } = fixture;
@@ -1342,7 +1342,7 @@ describe('2.3. EstateLiquidator', async () => {
             )).to.be.revertedWithCustomError(estateLiquidator, 'InsufficientValue');
         });
 
-        it('2.3.3.13. Request extraction unsuccessfully with insufficient erc20 allowance', async () => {
+        it('2.3.3.11. Request extraction unsuccessfully with insufficient erc20 allowance', async () => {
             const fixture = await beforeEstateLiquidatorTest({
                 skipPrepareERC20ForManager: true,
             });
@@ -1371,7 +1371,7 @@ describe('2.3. EstateLiquidator', async () => {
             )).to.be.revertedWith('ERC20: insufficient allowance');
         });
 
-        it('2.3.3.14. Request extraction unsuccessfully with insufficient erc20 balance', async () => {
+        it('2.3.3.12. Request extraction unsuccessfully with insufficient erc20 balance', async () => {
             const fixture = await beforeEstateLiquidatorTest({
                 skipPrepareERC20ForManager: true,
             });
@@ -1400,7 +1400,7 @@ describe('2.3. EstateLiquidator', async () => {
             )).to.be.revertedWith('ERC20: transfer amount exceeds balance');
         });
 
-        it('2.3.3.15. Request extraction unsuccessfully when the estate is not available', async () => {
+        it('2.3.3.13. Request extraction unsuccessfully when the estate is not available', async () => {
             const fixture = await beforeEstateLiquidatorTest();
 
             const { manager, validator, governanceHub, estateLiquidator, estateToken } = fixture;
@@ -1433,7 +1433,7 @@ describe('2.3. EstateLiquidator', async () => {
             )).to.be.revertedWithCustomError(estateLiquidator, 'UnavailableEstate');
         });
 
-        it('2.3.3.16. Request extraction unsuccessfully when estate token is not authorized as governor', async () => {
+        it('2.3.3.14. Request extraction unsuccessfully when estate token is not authorized as governor', async () => {
             const fixture = await beforeEstateLiquidatorTest({
                 skipAuthorizeGovernors: true,
             });

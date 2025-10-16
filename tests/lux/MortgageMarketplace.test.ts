@@ -457,8 +457,8 @@ describe('6.3. MortgageMarketplace', async () => {
 
 
     /* --- Administration --- */
-    describe('6.3.3. registerCollections(address[],bool,bytes[])', async () => {
-        it('6.3.3.1. Register collections successfully with valid signatures', async () => {
+    describe('6.3.2. registerCollections(address[],bool,bytes[])', async () => {
+        it('6.3.2.1. Register collections successfully with valid signatures', async () => {
             const { deployer, mortgageMarketplace, admin, admins, collections } = await beforeMortgageMarketplaceTest({
                 skipRegisterCollection: true,
             });
@@ -491,7 +491,7 @@ describe('6.3. MortgageMarketplace', async () => {
             }
         });
 
-        it('6.3.3.2. Register collections unsuccessfully with invalid signatures', async () => {
+        it('6.3.2.2. Register collections unsuccessfully with invalid signatures', async () => {
             const { deployer, mortgageMarketplace, admin, admins, collections } = await beforeMortgageMarketplaceTest({
                 skipRegisterCollection: true,
             });
@@ -509,7 +509,7 @@ describe('6.3. MortgageMarketplace', async () => {
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('6.3.3.3. Register collections reverted without reason with EOA', async () => {
+        it('6.3.2.3. Register collections reverted without reason with EOA', async () => {
             const { deployer, mortgageMarketplace, admin, admins } = await beforeMortgageMarketplaceTest({
                 skipRegisterCollection: true,
             });
@@ -528,7 +528,7 @@ describe('6.3. MortgageMarketplace', async () => {
             )).to.be.revertedWithCustomError(mortgageMarketplace, 'InvalidCollection');
         });
 
-        it('6.3.3.4. Register collections unsuccessfully when contract does not support IMortgageToken interface', async () => {
+        it('6.3.2.4. Register collections unsuccessfully when contract does not support IMortgageToken interface', async () => {
             const { deployer, mortgageMarketplace, admin, admins } = await beforeMortgageMarketplaceTest({
                 skipRegisterCollection: true,
             });
@@ -547,7 +547,7 @@ describe('6.3. MortgageMarketplace', async () => {
             )).to.be.revertedWithCustomError(mortgageMarketplace, 'InvalidCollection');
         });
 
-        it('6.3.3.5. Register collections unsuccessfully when authorizing the same account twice on the same tx', async () => {
+        it('6.3.2.5. Register collections unsuccessfully when authorizing the same account twice on the same tx', async () => {
             const { deployer, mortgageMarketplace, admin, admins, collections } = await beforeMortgageMarketplaceTest({
                 skipRegisterCollection: true,
             });
@@ -566,7 +566,7 @@ describe('6.3. MortgageMarketplace', async () => {
             )).to.be.revertedWithCustomError(mortgageMarketplace, `RegisteredCollection`);
         });
 
-        it('6.3.3.6. Register collections unsuccessfully when authorizing the same account twice on different txs', async () => {
+        it('6.3.2.6. Register collections unsuccessfully when authorizing the same account twice on different txs', async () => {
             const { deployer, mortgageMarketplace, admin, admins, collections } = await beforeMortgageMarketplaceTest({
                 skipRegisterCollection: true,
             });
@@ -597,7 +597,7 @@ describe('6.3. MortgageMarketplace', async () => {
             )).to.be.revertedWithCustomError(mortgageMarketplace, `RegisteredCollection`)
         })
 
-        it('6.3.3.7. Deregister collections successfully', async () => {
+        it('6.3.2.7. Deregister collections successfully', async () => {
             const { deployer, mortgageMarketplace, admin, admins, collections } = await beforeMortgageMarketplaceTest({
                 skipRegisterCollection: true,
             });
@@ -642,7 +642,7 @@ describe('6.3. MortgageMarketplace', async () => {
             }            
         });
 
-        it('6.3.3.8. Deregister collections unsuccessfully with unauthorized account', async () => {
+        it('6.3.2.8. Deregister collections unsuccessfully with unauthorized account', async () => {
             const { deployer, mortgageMarketplace, admin, admins, collections } = await beforeMortgageMarketplaceTest({
                 skipRegisterCollection: true,
             });
@@ -673,7 +673,7 @@ describe('6.3. MortgageMarketplace', async () => {
             )).to.be.revertedWithCustomError(mortgageMarketplace, `NotRegisteredCollection`)
         });
 
-        it('6.3.3.8. Deauthorize collections unsuccessfully when unauthorizing the same account twice on the same tx', async () => {
+        it('6.3.2.9. Deauthorize collections unsuccessfully when unauthorizing the same account twice on the same tx', async () => {
             const { deployer, mortgageMarketplace, admin, admins, collections } = await beforeMortgageMarketplaceTest({
                 skipRegisterCollection: true,
             });
@@ -703,7 +703,7 @@ describe('6.3. MortgageMarketplace', async () => {
             )).to.be.revertedWithCustomError(mortgageMarketplace, `NotRegisteredCollection`)
         });
 
-        it('6.3.3.9. Deauthorize collections unsuccessfully when unauthorizing the same account twice on different txs', async () => {
+        it('6.3.2.10. Deauthorize collections unsuccessfully when unauthorizing the same account twice on different txs', async () => {
             const { deployer, mortgageMarketplace, admin, admins, collections } = await beforeMortgageMarketplaceTest({
                 skipRegisterCollection: true,
             });
@@ -747,8 +747,8 @@ describe('6.3. MortgageMarketplace', async () => {
 
 
     /* --- Query --- */
-    describe('6.3.2. getOffer(uint256)', async () => {
-        it('6.3.2.1. Return successfully', async () => {
+    describe('6.3.3. getOffer(uint256)', async () => {
+        it('6.3.3.1. Return successfully', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleOffers: true,
             });
@@ -758,7 +758,7 @@ describe('6.3. MortgageMarketplace', async () => {
             expect(await mortgageMarketplace.getOffer(2)).to.not.be.reverted;
         });
 
-        it('6.3.2.2. Revert with invalid offer id', async () => {
+        it('6.3.3.2. Revert with invalid offer id', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleOffers: true,
             });
@@ -779,7 +779,7 @@ describe('6.3. MortgageMarketplace', async () => {
 
     
     /* --- Command --- */
-    describe('6.3.3. list(address,uint256,uint256,address)', async () => {
+    describe('6.3.4. list(address,uint256,uint256,address)', async () => {
         async function beforeListTest(fixture: MortgageMarketplaceFixture): Promise<{ defaultParams: ListParams }> {
             const { mortgageToken } = fixture;
             const defaultParams = {
@@ -791,7 +791,7 @@ describe('6.3. MortgageMarketplace', async () => {
             return { defaultParams };
         }
 
-        it('6.3.3.1. List token successfully', async () => {
+        it('6.3.4.1. List token successfully', async () => {
             const fixture = await beforeMortgageMarketplaceTest();
             const { mortgageMarketplace, mortgageToken, seller1, feeReceiver, currency, seller2, admin } = fixture;
 
@@ -870,7 +870,7 @@ describe('6.3. MortgageMarketplace', async () => {
             expect(offer2.royaltyReceiver).to.equal(feeReceiver.address);
         });
 
-        it('6.3.3.2. List token unsuccessfully when paused', async () => {
+        it('6.3.4.2. List token unsuccessfully when paused', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 pause: true,
             });
@@ -882,7 +882,7 @@ describe('6.3. MortgageMarketplace', async () => {
                 .to.be.revertedWith('Pausable: paused');
         });
 
-        it('6.3.3.3. List token unsuccessfully with invalid token id', async () => {
+        it('6.3.4.3. List token unsuccessfully with invalid token id', async () => {
             const fixture = await beforeMortgageMarketplaceTest();
             const { mortgageMarketplace, seller1 } = fixture;
 
@@ -907,7 +907,7 @@ describe('6.3. MortgageMarketplace', async () => {
             )).to.be.revertedWith('ERC721: invalid token ID');
         });
 
-        it('6.3.3.4. List token unsuccessfully with unregistered collection', async () => {
+        it('6.3.4.4. List token unsuccessfully with unregistered collection', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 skipRegisterCollection: true,
             });
@@ -919,7 +919,7 @@ describe('6.3. MortgageMarketplace', async () => {
                 .to.be.revertedWithCustomError(mortgageMarketplace, 'InvalidCollection');
         });
 
-        it('6.3.3.4. List token unsuccessfully with pending mortgage', async () => {
+        it('6.3.4.5. List token unsuccessfully with pending mortgage', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 initialMortgageState: MortgageState.Pending,
             });
@@ -931,7 +931,7 @@ describe('6.3. MortgageMarketplace', async () => {
                 .to.be.revertedWithCustomError(mortgageMarketplace, 'InvalidTokenId');
         });
 
-        it('6.3.3.4. List token unsuccessfully with repaid mortgage', async () => {
+        it('6.3.4.6. List token unsuccessfully with repaid mortgage', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 initialMortgageState: MortgageState.Repaid,
             });
@@ -943,7 +943,7 @@ describe('6.3. MortgageMarketplace', async () => {
                 .to.be.revertedWithCustomError(mortgageMarketplace, 'InvalidTokenId');
         });
 
-        it('6.3.3.4. List token unsuccessfully with foreclosed mortgage', async () => {
+        it('6.3.4.7. List token unsuccessfully with foreclosed mortgage', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 initialMortgageState: MortgageState.Foreclosed,
             });
@@ -955,7 +955,7 @@ describe('6.3. MortgageMarketplace', async () => {
                 .to.be.revertedWithCustomError(mortgageMarketplace, 'InvalidTokenId');
         });
 
-        it('6.3.3.4. List token unsuccessfully by non token owner', async () => {
+        it('6.3.4.8. List token unsuccessfully by non token owner', async () => {
             const fixture = await beforeMortgageMarketplaceTest();
             const { mortgageMarketplace, seller2 } = fixture;
 
@@ -965,7 +965,7 @@ describe('6.3. MortgageMarketplace', async () => {
                 .to.be.revertedWithCustomError(mortgageMarketplace, 'InvalidTokenId');
         });
 
-        it('6.3.3.5. List token unsuccessfully with zero unit price', async () => {
+        it('6.3.4.9. List token unsuccessfully with zero unit price', async () => {
             const fixture = await beforeMortgageMarketplaceTest();
             const { mortgageMarketplace, seller1 } = fixture;
 
@@ -981,7 +981,7 @@ describe('6.3. MortgageMarketplace', async () => {
             )).to.be.revertedWithCustomError(mortgageMarketplace, 'InvalidPrice');
         });
 
-        it('6.3.3.6. List token unsuccessfully with invalid currency', async () => {
+        it('6.3.4.10. List token unsuccessfully with invalid currency', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 skipListSampleCurrencies: true,
             });
@@ -1163,8 +1163,8 @@ describe('6.3. MortgageMarketplace', async () => {
         }
     }
 
-    describe('6.3.4. buy(uint256)', async () => {
-        it('6.3.4.1. Buy token successfully in native and erc20 token', async () => {
+    describe('6.3.5. buy(uint256)', async () => {
+        it('6.3.5.1. Buy token successfully in native and erc20 token', async () => {
             const fixture = await beforeMortgageMarketplaceTest();
     
             await testBuyOffer(
@@ -1186,7 +1186,7 @@ describe('6.3. MortgageMarketplace', async () => {
             );
         });
 
-        it('6.3.4.2. Buy token successfully in all native/erc20 and exclusive/non-exclusive combinations', async () => {
+        it('6.3.5.2. Buy token successfully in all native/erc20 and exclusive/non-exclusive combinations', async () => {
             const fixture = await beforeMortgageMarketplaceTest();
 
             for (const isERC20 of [false, true]) {
@@ -1206,7 +1206,7 @@ describe('6.3. MortgageMarketplace', async () => {
             }
         });
 
-        it('6.3.4.3. Buy token successfully with very large amount in all native/erc20 and exclusive/non-exclusive combinations', async () => {
+        it('6.3.5.3. Buy token successfully with very large amount in all native/erc20 and exclusive/non-exclusive combinations', async () => {
             const fixture = await beforeMortgageMarketplaceTest();
 
             for (const isERC20 of [false, true]) {
@@ -1227,7 +1227,7 @@ describe('6.3. MortgageMarketplace', async () => {
             }
         });
 
-        it('6.3.4.4. Buy token unsuccessfully when paused', async () => {
+        it('6.3.5.4. Buy token unsuccessfully when paused', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleOffers: true,
                 pause: true,
@@ -1242,7 +1242,7 @@ describe('6.3. MortgageMarketplace', async () => {
             )).to.be.revertedWith("Pausable: paused");
         });
 
-        it('6.3.4.5. Buy token unsuccessfully with invalid offer id', async () => {
+        it('6.3.5.5. Buy token unsuccessfully with invalid offer id', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleOffers: true,
             });
@@ -1263,7 +1263,7 @@ describe('6.3. MortgageMarketplace', async () => {
             )).to.be.revertedWithCustomError(mortgageMarketplace, "InvalidOfferId");
         });
 
-        it('6.3.4.6. Buy token unsuccessfully when seller buy their own token', async () => {
+        it('6.3.5.6. Buy token unsuccessfully when seller buy their own token', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleOffers: true,
             });
@@ -1284,7 +1284,7 @@ describe('6.3. MortgageMarketplace', async () => {
             )).to.be.revertedWithCustomError(mortgageMarketplace, "InvalidBuying");
         });
 
-        it('6.3.4.7. Buy token unsuccessfully when offer is not selling', async () => {
+        it('6.3.5.7. Buy token unsuccessfully when offer is not selling', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleOffers: true,
             });
@@ -1305,7 +1305,7 @@ describe('6.3. MortgageMarketplace', async () => {
             )).to.be.revertedWithCustomError(mortgageMarketplace, "InvalidBuying");
         });
 
-        it('6.3.4.7. Buy token unsuccessfully when mortgage is repaid', async () => {
+        it('6.3.5.8. Buy token unsuccessfully when mortgage is repaid', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleOffers: true,
             });
@@ -1321,7 +1321,7 @@ describe('6.3. MortgageMarketplace', async () => {
             )).to.be.revertedWithCustomError(mortgageMarketplace, "InvalidTokenId");
         });
 
-        it('6.3.4.7. Buy token unsuccessfully when mortgage is foreclosed', async () => {
+        it('6.3.5.9. Buy token unsuccessfully when mortgage is foreclosed', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleOffers: true,
             });
@@ -1337,7 +1337,7 @@ describe('6.3. MortgageMarketplace', async () => {
             )).to.be.revertedWithCustomError(mortgageMarketplace, "InvalidTokenId");
         });
 
-        it('6.3.4.8. Buy token unsuccessfully with insufficient native token', async () => {
+        it('6.3.5.10. Buy token unsuccessfully with insufficient native token', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleOffers: true,
             });
@@ -1350,7 +1350,7 @@ describe('6.3. MortgageMarketplace', async () => {
             )).to.be.revertedWithCustomError(mortgageMarketplace, "InsufficientValue");
         });
 
-        it('6.3.4.9. Buy token unsuccessfully when native token transfer to seller failed', async () => {
+        it('6.3.5.11. Buy token unsuccessfully when native token transfer to seller failed', async () => {
             const fixture = await beforeMortgageMarketplaceTest();
             const { mortgageMarketplace, seller1, buyer1, deployer, mortgageToken } = fixture;
             
@@ -1386,7 +1386,7 @@ describe('6.3. MortgageMarketplace', async () => {
             )).to.be.revertedWithCustomError(mortgageMarketplace, "FailedTransfer");
         });
 
-        it('6.3.4.10. Buy token unsuccessfully when native token transfer to royalty receiver failed', async () => {
+        it('6.3.5.12. Buy token unsuccessfully when native token transfer to royalty receiver failed', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleOffers: true,
                 useFailRoyaltyReceiver: true,
@@ -1403,7 +1403,7 @@ describe('6.3. MortgageMarketplace', async () => {
             )).to.be.revertedWithCustomError(mortgageMarketplace, "FailedTransfer");
         });
 
-        it('6.3.4.11. Buy token unsuccessfully when refund to sender failed', async () => {
+        it('6.3.5.13. Buy token unsuccessfully when refund to sender failed', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleOffers: true,
             });
@@ -1418,7 +1418,7 @@ describe('6.3. MortgageMarketplace', async () => {
             )).to.be.revertedWithCustomError(mortgageMarketplace, "FailedRefund");
         });
 
-        it('6.3.4.12. Buy token unsuccessfully when the contract is reentered', async () => {
+        it('6.3.5.14. Buy token unsuccessfully when the contract is reentered', async () => {
             const fixture = await beforeMortgageMarketplaceTest();
             const { deployer, mortgageToken, mortgageMarketplace, buyer1, seller1 } = fixture;
 
@@ -1548,8 +1548,8 @@ describe('6.3. MortgageMarketplace', async () => {
         });
     });
 
-    describe('6.3.5. safeBuy(uint256,uint256)', async () => {
-        it('6.3.5.1. Buy token successfully', async () => {
+    describe('6.3.7. safeBuy(uint256,uint256)', async () => {
+        it('6.3.7.1. Buy token successfully', async () => {
             const fixture = await beforeMortgageMarketplaceTest();
             
             await testBuyOffer(
@@ -1571,7 +1571,7 @@ describe('6.3. MortgageMarketplace', async () => {
             );
         });
 
-        it('6.3.5.2. Buy token unsuccessfully with invalid offer id', async () => {
+        it('6.3.7.2. Buy token unsuccessfully with invalid offer id', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleOffers: true,
             });
@@ -1598,7 +1598,7 @@ describe('6.3. MortgageMarketplace', async () => {
             )).to.be.revertedWithCustomError(mortgageMarketplace, "InvalidOfferId");
         });
 
-        it('6.3.5.3. Buy token unsuccessfully with invalid anchor', async () => {
+        it('6.3.7.3. Buy token unsuccessfully with invalid anchor', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleOffers: true,
             });

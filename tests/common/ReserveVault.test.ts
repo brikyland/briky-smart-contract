@@ -496,8 +496,8 @@ describe('1.8. ReserveVault', async () => {
         });
     });
 
-    describe('1.8.3. isFundSufficient(uint256)', async () => {
-        it('1.8.3.1. Return false with unprovided fund', async () => {
+    describe('1.8.4. isFundSufficient(uint256)', async () => {
+        it('1.8.4.1. Return false with unprovided fund', async () => {
             const { reserveVault } = await beforeReserveVaultTest({
                 authorizeProviders: true,
                 listFunds: true,
@@ -506,7 +506,7 @@ describe('1.8. ReserveVault', async () => {
             expect(await reserveVault.isFundSufficient(1)).to.be.false;
         });
 
-        it('1.8.3.2. Return true with provided fund', async () => {
+        it('1.8.4.2. Return true with provided fund', async () => {
             const { reserveVault } = await beforeReserveVaultTest({
                 authorizeProviders: true,
                 listFunds: true,
@@ -516,7 +516,7 @@ describe('1.8. ReserveVault', async () => {
             expect(await reserveVault.isFundSufficient(1)).to.be.true;
         });
         
-        it('1.8.3.3. Revert with invalid fund id', async () => {
+        it('1.8.4.3. Revert with invalid fund id', async () => {
             const { reserveVault } = await beforeReserveVaultTest({
                 authorizeProviders: true,
                 listFunds: true,
@@ -538,8 +538,8 @@ describe('1.8. ReserveVault', async () => {
 
 
     /* --- Command --- */
-    describe('1.8.3. openFund(address,uint256,address[],uint256[])', async () => {
-        it('1.8.3.1. Open fund successfully', async () => {
+    describe('1.8.5. openFund(address,uint256,address[],uint256[])', async () => {
+        it('1.8.5.1. Open fund successfully', async () => {
             const { reserveVault, providers, currencies } = await beforeReserveVaultTest({
                 authorizeProviders: true,
             });
@@ -615,7 +615,7 @@ describe('1.8. ReserveVault', async () => {
             expect(fund2.isSufficient).to.equal(false);
         });
 
-        it('1.8.3.2. Open fund successfully with zero denomination main currency', async () => {
+        it('1.8.5.2. Open fund successfully with zero denomination main currency', async () => {
             const { reserveVault, providers, currencies } = await beforeReserveVaultTest({
                 authorizeProviders: true,
             });
@@ -656,7 +656,7 @@ describe('1.8. ReserveVault', async () => {
             expect(fund.isSufficient).to.equal(false);
         });
 
-        it('1.8.3.3. Open fund unsuccessfully when paused', async () => {
+        it('1.8.5.3. Open fund unsuccessfully when paused', async () => {
             const { reserveVault, providers, currencies } = await beforeReserveVaultTest({
                 authorizeProviders: true,
                 pause: true,
@@ -676,7 +676,7 @@ describe('1.8. ReserveVault', async () => {
             )).to.be.revertedWith('Pausable: paused');
         });
 
-        it('1.8.3.4. Open fund unsuccessfully by unauthorized account', async () => {
+        it('1.8.5.4. Open fund unsuccessfully by unauthorized account', async () => {
             const { deployer, reserveVault, currencies } = await beforeReserveVaultTest({
                 authorizeProviders: true,
             });
@@ -693,7 +693,7 @@ describe('1.8. ReserveVault', async () => {
             )).to.be.revertedWithCustomError(reserveVault, 'Unauthorized');
         });
 
-        it('1.8.3.5. Open fund unsuccessfully with invalid params length', async () => {
+        it('1.8.5.5. Open fund unsuccessfully with invalid params length', async () => {
             const { reserveVault, providers, currencies } = await beforeReserveVaultTest({
                 authorizeProviders: true,
             });
@@ -712,7 +712,7 @@ describe('1.8. ReserveVault', async () => {
             )).to.be.revertedWithCustomError(reserveVault, 'InvalidInput');
         });
 
-        it('1.8.3.6. Open fund unsuccessfully with invalid main currency', async () => {
+        it('1.8.5.6. Open fund unsuccessfully with invalid main currency', async () => {
             const { reserveVault, providers, currencies } = await beforeReserveVaultTest({
                 authorizeProviders: true,
             });
@@ -732,7 +732,7 @@ describe('1.8. ReserveVault', async () => {
             )).to.be.revertedWithCustomError(reserveVault, 'InvalidCurrency');
         });
 
-        it('1.8.3.7. Open fund unsuccessfully with invalid sub currencies', async () => {
+        it('1.8.5.7. Open fund unsuccessfully with invalid sub currencies', async () => {
             const { reserveVault, providers, currencies } = await beforeReserveVaultTest({
                 authorizeProviders: true,
             });
@@ -751,7 +751,7 @@ describe('1.8. ReserveVault', async () => {
             )).to.be.revertedWithCustomError(reserveVault, 'InvalidCurrency');
         });
 
-        it('1.8.3.8. Open fund unsuccessfully with zero denomination sub currencies', async () => {
+        it('1.8.5.8. Open fund unsuccessfully with zero denomination sub currencies', async () => {
             const { reserveVault, providers, currencies } = await beforeReserveVaultTest({
                 authorizeProviders: true,
             });
@@ -771,8 +771,8 @@ describe('1.8. ReserveVault', async () => {
         });
     });
 
-    describe('1.8.4. expandFund(uint256,uint256)', async () => {
-        it('1.8.4.1. Expand fund successfully', async () => {
+    describe('1.8.6. expandFund(uint256,uint256)', async () => {
+        it('1.8.6.1. Expand fund successfully', async () => {
             const { reserveVault, providers, deployer } = await beforeReserveVaultTest({
                 authorizeProviders: true,
                 listFunds: true,
@@ -817,7 +817,7 @@ describe('1.8. ReserveVault', async () => {
             expect(newFund2.quantity).to.equal(initTotalQuantity.add(params1.quantity).add(params2.quantity));
         });
 
-        it('1.8.4.2. Expand fund unsuccessfully with invalid fund id', async () => {
+        it('1.8.6.2. Expand fund unsuccessfully with invalid fund id', async () => {
             const { reserveVault, providers } = await beforeReserveVaultTest({
                 authorizeProviders: true,
                 listFunds: true,
@@ -839,7 +839,7 @@ describe('1.8. ReserveVault', async () => {
             }
         });
 
-        it('1.8.4.3. Expand fund unsuccessfully when paused', async () => {
+        it('1.8.6.3. Expand fund unsuccessfully when paused', async () => {
             const { reserveVault, providers } = await beforeReserveVaultTest({
                 authorizeProviders: true,
                 listFunds: true,
@@ -857,7 +857,7 @@ describe('1.8. ReserveVault', async () => {
             )).to.be.revertedWith('Pausable: paused');
         });
 
-        it('1.8.4.4. Expand fund unsuccessfully by unauthorized account', async () => {
+        it('1.8.6.4. Expand fund unsuccessfully by unauthorized account', async () => {
             const { reserveVault, providers } = await beforeReserveVaultTest({
                 authorizeProviders: true,
                 listFunds: true,
@@ -874,7 +874,7 @@ describe('1.8. ReserveVault', async () => {
             )).to.be.revertedWithCustomError(reserveVault, 'Unauthorized');
         });
 
-        it('1.8.4.5. Expand fund unsuccessfully with already provided fund', async () => {
+        it('1.8.6.5. Expand fund unsuccessfully with already provided fund', async () => {
             const { reserveVault, providers } = await beforeReserveVaultTest({
                 authorizeProviders: true,
                 listFunds: true,
@@ -893,8 +893,8 @@ describe('1.8. ReserveVault', async () => {
         });
     });
 
-    describe('1.8.5. provideFund(uint256)', async () => {
-        it('1.8.5.1. Provide fund successfully with just enough native currency', async () => {
+    describe('1.8.7. provideFund(uint256)', async () => {
+        it('1.8.7.1. Provide fund successfully with just enough native currency', async () => {
             const { reserveVault, providers, currencies, deployer } = await beforeReserveVaultTest({
                 authorizeProviders: true,
                 listFunds: true,
@@ -943,7 +943,7 @@ describe('1.8. ReserveVault', async () => {
             expect(fund.isSufficient).to.equal(true);
         });
 
-        it('1.8.5.2. Provide fund successfully with excess native currency', async () => {
+        it('1.8.7.2. Provide fund successfully with excess native currency', async () => {
             const { reserveVault, providers, currencies, deployer } = await beforeReserveVaultTest({
                 authorizeProviders: true,
                 listFunds: true,
@@ -992,7 +992,7 @@ describe('1.8. ReserveVault', async () => {
             expect(fund.isSufficient).to.equal(true);
         });
 
-        it('1.8.5.3. Provide fund unsuccessfully with invalid fund id', async () => {
+        it('1.8.7.3. Provide fund unsuccessfully with invalid fund id', async () => {
             const { reserveVault, providers} = await beforeReserveVaultTest({
                 authorizeProviders: true,
                 listFunds: true,
@@ -1014,7 +1014,7 @@ describe('1.8. ReserveVault', async () => {
             )).to.be.revertedWithCustomError(reserveVault, 'InvalidFundId');
         });
 
-        it('1.8.5.4. Provide fund unsuccessfully when paused', async () => {
+        it('1.8.7.4. Provide fund unsuccessfully when paused', async () => {
             const { reserveVault, providers } = await beforeReserveVaultTest({
                 authorizeProviders: true,
                 listFunds: true,
@@ -1030,7 +1030,7 @@ describe('1.8. ReserveVault', async () => {
             )).to.be.revertedWith('Pausable: paused');
         });
 
-        it('1.8.5.5. Provide fund unsuccessfully by unauthorized account', async () => {
+        it('1.8.7.5. Provide fund unsuccessfully by unauthorized account', async () => {
             const { reserveVault, providers } = await beforeReserveVaultTest({
                 authorizeProviders: true,
                 listFunds: true,
@@ -1045,7 +1045,7 @@ describe('1.8. ReserveVault', async () => {
             )).to.be.revertedWithCustomError(reserveVault, 'Unauthorized');
         });
 
-        it('1.8.5.6. Provide fund unsuccessfully with already provided fund', async () => {
+        it('1.8.7.6. Provide fund unsuccessfully with already provided fund', async () => {
             const { reserveVault, providers } = await beforeReserveVaultTest({
                 authorizeProviders: true,
                 listFunds: true,
@@ -1061,7 +1061,7 @@ describe('1.8. ReserveVault', async () => {
             )).to.be.revertedWithCustomError(reserveVault, 'AlreadyProvided');
         });
 
-        it('1.8.5.7. Provide fund unsuccessfully with insufficient native currency', async () => {
+        it('1.8.7.7. Provide fund unsuccessfully with insufficient native currency', async () => {
             const { reserveVault, providers } = await beforeReserveVaultTest({
                 authorizeProviders: true,
                 listFunds: true,
@@ -1080,7 +1080,7 @@ describe('1.8. ReserveVault', async () => {
         });
 
 
-        it('1.8.5.8. Provide fund unsuccessfully with insufficient ERC20 currencies', async () => {
+        it('1.8.7.8. Provide fund unsuccessfully with insufficient ERC20 currencies', async () => {
             const { reserveVault, providers, deployer } = await beforeReserveVaultTest({
                 authorizeProviders: true,
                 skipFundForProvider: true,
@@ -1108,7 +1108,7 @@ describe('1.8. ReserveVault', async () => {
             )).to.be.revertedWith('ERC20: insufficient allowance');
         });
 
-        it('1.8.5.9. Provide fund unsuccessfully when refunding native currency failed', async () => {
+        it('1.8.7.9. Provide fund unsuccessfully when refunding native currency failed', async () => {
             const { reserveVault, admins, deployer, admin, currencies } = await beforeReserveVaultTest({
                 authorizeProviders: true,
                 listFunds: true,
@@ -1160,7 +1160,7 @@ describe('1.8. ReserveVault', async () => {
             )).to.be.revertedWithCustomError(reserveVault, 'FailedRefund');
         });
 
-        it('1.8.5.10. Provide fund unsuccessfully when the contract is reentered', async () => {
+        it('1.8.7.10. Provide fund unsuccessfully when the contract is reentered', async () => {
             const { deployer, reserveVault, providers, reentrancyERC20 } = await beforeReserveVaultTest({
                 authorizeProviders: true,
                 listFunds: true,
@@ -1197,8 +1197,8 @@ describe('1.8. ReserveVault', async () => {
         });        
     });
 
-    describe('1.8.6. withdrawFund(uint256,address,uint256)', async () => {
-        it('1.8.6.1. Withdraw fund successfully', async () => {
+    describe('1.8.8. withdrawFund(uint256,address,uint256)', async () => {
+        it('1.8.8.1. Withdraw fund successfully', async () => {
             const { reserveVault, providers, currencies, deployer, withdrawer1, withdrawer2 } = await beforeReserveVaultTest({
                 authorizeProviders: true,
                 listFunds: true,
@@ -1264,7 +1264,7 @@ describe('1.8. ReserveVault', async () => {
             expect(await currencies[2].balanceOf(withdrawer2.address)).to.equal(withdrawer2InitCurrency2Balance);
         });
 
-        it('1.8.6.2. Withdraw fund unsuccessfully with invalid fund id', async () => {
+        it('1.8.8.2. Withdraw fund unsuccessfully with invalid fund id', async () => {
             const { reserveVault, providers, withdrawer1 } = await beforeReserveVaultTest({
                 authorizeProviders: true,
                 listFunds: true,
@@ -1283,7 +1283,7 @@ describe('1.8. ReserveVault', async () => {
             )).to.be.revertedWithCustomError(reserveVault, 'InvalidFundId');
         });
 
-        it('1.8.6.3. Withdraw fund unsuccessfully when paused', async () => {
+        it('1.8.8.3. Withdraw fund unsuccessfully when paused', async () => {
             const { reserveVault, providers, withdrawer1 } = await beforeReserveVaultTest({
                 authorizeProviders: true,
                 listFunds: true,
@@ -1303,7 +1303,7 @@ describe('1.8. ReserveVault', async () => {
             )).to.be.revertedWith('Pausable: paused');
         });
 
-        it('1.8.6.4. Withdraw fund unsuccessfully by unauthorized account', async () => {
+        it('1.8.8.4. Withdraw fund unsuccessfully by unauthorized account', async () => {
             const { reserveVault, providers, withdrawer1 } = await beforeReserveVaultTest({
                 authorizeProviders: true,
                 listFunds: true,
@@ -1322,7 +1322,7 @@ describe('1.8. ReserveVault', async () => {
             )).to.be.revertedWithCustomError(reserveVault, 'Unauthorized');
         });
 
-        it('1.8.6.5. Withdraw fund unsuccessfully with unprovided fund', async () => {
+        it('1.8.8.5. Withdraw fund unsuccessfully with unprovided fund', async () => {
             const { reserveVault, providers, withdrawer1 } = await beforeReserveVaultTest({
                 authorizeProviders: true,
                 listFunds: true,
@@ -1340,7 +1340,7 @@ describe('1.8. ReserveVault', async () => {
             )).to.be.revertedWithCustomError(reserveVault, 'InsufficientFunds');
         });
         
-        it('1.8.6.6. Withdraw fund unsuccessfully when withdraw quantity exceed fund quantity', async () => {
+        it('1.8.8.6. Withdraw fund unsuccessfully when withdraw quantity exceed fund quantity', async () => {
             const { reserveVault, providers, withdrawer1 } = await beforeReserveVaultTest({
                 authorizeProviders: true,
                 listFunds: true,
@@ -1360,7 +1360,7 @@ describe('1.8. ReserveVault', async () => {
             )).to.be.revertedWithCustomError(reserveVault, 'InsufficientFunds');
         });
 
-        it('1.8.6.7. Withdraw fund unsuccessfully when the contract is reentered', async () => {
+        it('1.8.8.7. Withdraw fund unsuccessfully when the contract is reentered', async () => {
             const { reserveVault, providers, withdrawer1, reentrancyERC20 } = await beforeReserveVaultTest({
                 authorizeProviders: true,
                 listFunds: true,

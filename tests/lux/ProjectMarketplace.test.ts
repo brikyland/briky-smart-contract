@@ -653,7 +653,7 @@ describe('6.4. ProjectMarketplace', async () => {
                 .to.be.revertedWithCustomError(projectMarketplace, 'InvalidTokenId');``
         });
 
-        it('6.4.3.4. List token unsuccessfully with zero unit price', async () => {
+        it('6.4.3.5. List token unsuccessfully with zero unit price', async () => {
             const fixture = await beforeProjectMarketplaceTest();
             const { projectMarketplace, seller1 } = fixture;
 
@@ -669,7 +669,7 @@ describe('6.4. ProjectMarketplace', async () => {
             )).to.be.revertedWithCustomError(projectMarketplace, 'InvalidUnitPrice');
         });
 
-        it('6.4.3.5. List token unsuccessfully with invalid currency', async () => {
+        it('6.4.3.6. List token unsuccessfully with invalid currency', async () => {
             const fixture = await beforeProjectMarketplaceTest({
                 skipListSampleCurrencies: true,
             });
@@ -681,7 +681,7 @@ describe('6.4. ProjectMarketplace', async () => {
                 .to.be.revertedWithCustomError(projectMarketplace, 'InvalidCurrency');
         });
 
-        it('6.4.3.6. List token unsuccessfully with zero selling amount', async () => {
+        it('6.4.3.7. List token unsuccessfully with zero selling amount', async () => {
             const fixture = await beforeProjectMarketplaceTest();
             const { projectMarketplace, seller1 } = fixture;
 
@@ -695,7 +695,7 @@ describe('6.4. ProjectMarketplace', async () => {
                 .to.be.revertedWithCustomError(projectMarketplace, 'InvalidSellingAmount');
         });
 
-        it('6.4.3.7. List token unsuccessfully with selling amount exceeding owned amount', async () => {
+        it('6.4.3.8. List token unsuccessfully with selling amount exceeding owned amount', async () => {
             const fixture = await beforeProjectMarketplaceTest();
             const { projectMarketplace, seller1 } = fixture;
 
@@ -1278,7 +1278,7 @@ describe('6.4. ProjectMarketplace', async () => {
             )).to.be.revertedWithCustomError(projectMarketplace, "InvalidTokenId");
         });
 
-        it('6.4.5.6. Buy token unsuccessfully when seller buy their own token', async () => {
+        it('6.4.5.7. Buy token unsuccessfully when seller buy their own token', async () => {
             const fixture = await beforeProjectMarketplaceTest({
                 listSampleOffers: true,
             });
@@ -1305,7 +1305,7 @@ describe('6.4. ProjectMarketplace', async () => {
             )).to.be.revertedWithCustomError(projectMarketplace, "InvalidBuying");
         });
 
-        it('6.4.5.7. Buy token unsuccessfully when offer is not selling', async () => {
+        it('6.4.5.8. Buy token unsuccessfully when offer is not selling', async () => {
             const fixture = await beforeProjectMarketplaceTest({
                 listSampleOffers: true,
             });
@@ -1332,7 +1332,7 @@ describe('6.4. ProjectMarketplace', async () => {
             )).to.be.revertedWithCustomError(projectMarketplace, "InvalidBuying");
         });
 
-        it('6.4.5.8. Buy token unsuccessfully with indivisible offer', async () => {
+        it('6.4.5.9. Buy token unsuccessfully with indivisible offer', async () => {
             const fixture = await beforeProjectMarketplaceTest({
                 listSampleOffers: true,
             });
@@ -1360,7 +1360,7 @@ describe('6.4. ProjectMarketplace', async () => {
             )).to.be.revertedWithCustomError(projectMarketplace, "NotDivisible");
         });
 
-        it('6.4.5.9. Buy token unsuccessfully when there is not enough tokens to sell', async () => {
+        it('6.4.5.10. Buy token unsuccessfully when there is not enough tokens to sell', async () => {
             const fixture = await beforeProjectMarketplaceTest({
                 listSampleOffers: true,
             });
@@ -1387,7 +1387,7 @@ describe('6.4. ProjectMarketplace', async () => {
             )).to.be.revertedWithCustomError(projectMarketplace, "NotEnoughTokensToSell");
         });
 
-        it('6.4.5.10. Buy token unsuccessfully with insufficient native token', async () => {
+        it('6.4.5.11. Buy token unsuccessfully with insufficient native token', async () => {
             const fixture = await beforeProjectMarketplaceTest({
                 listSampleOffers: true,
             });
@@ -1403,7 +1403,7 @@ describe('6.4. ProjectMarketplace', async () => {
             )).to.be.revertedWithCustomError(projectMarketplace, "InsufficientValue");
         });
 
-        it('6.4.5.11. Buy token unsuccessfully when native token transfer to seller failed', async () => {
+        it('6.4.5.12. Buy token unsuccessfully when native token transfer to seller failed', async () => {
             const fixture = await beforeProjectMarketplaceTest();
             const { projectMarketplace, seller1, buyer1, projectToken, failReceiver } = fixture;
 
@@ -1446,7 +1446,7 @@ describe('6.4. ProjectMarketplace', async () => {
             )).to.be.revertedWithCustomError(projectMarketplace, "FailedTransfer");
         });
 
-        it('6.4.5.12. Buy token unsuccessfully when native token transfer to royalty receiver failed', async () => {
+        it('6.4.5.13. Buy token unsuccessfully when native token transfer to royalty receiver failed', async () => {
             const fixture = await beforeProjectMarketplaceTest({
                 listSampleOffers: true,
                 useFailRoyaltyReceiver: true,
@@ -1466,7 +1466,7 @@ describe('6.4. ProjectMarketplace', async () => {
             )).to.be.revertedWithCustomError(projectMarketplace, "FailedTransfer");
         });
 
-        it('6.4.5.13. Buy token unsuccessfully when refund to sender failed', async () => {
+        it('6.4.5.14. Buy token unsuccessfully when refund to sender failed', async () => {
             const fixture = await beforeProjectMarketplaceTest({
                 listSampleOffers: true,
             });
@@ -1481,7 +1481,7 @@ describe('6.4. ProjectMarketplace', async () => {
             )).to.be.revertedWithCustomError(projectMarketplace, "FailedRefund");
         });
 
-        it('6.4.5.14. Buy token unsuccessfully when the contract is reentered', async () => {
+        it('6.4.5.15. Buy token unsuccessfully when the contract is reentered', async () => {
             const fixture = await beforeProjectMarketplaceTest();
             const { deployer, projectToken, projectMarketplace, buyer1 } = fixture;
 
@@ -1524,8 +1524,8 @@ describe('6.4. ProjectMarketplace', async () => {
         });
     });
 
-    describe('6.4.8. cancel(uint256)', async () => {
-        it('6.4.8.1. Cancel offer successfully by seller', async () => {
+    describe('6.4.6. cancel(uint256)', async () => {
+        it('6.4.6.1. Cancel offer successfully by seller', async () => {
             const fixture = await beforeProjectMarketplaceTest({
                 listSampleOffers: true,
             });
@@ -1546,7 +1546,7 @@ describe('6.4. ProjectMarketplace', async () => {
                 .withArgs(1);
         });
 
-        it('6.4.8.2. Cancel offer successfully by manager', async () => {
+        it('6.4.6.2. Cancel offer successfully by manager', async () => {
             const fixture = await beforeProjectMarketplaceTest({
                 listSampleOffers: true,
             });
@@ -1567,7 +1567,7 @@ describe('6.4. ProjectMarketplace', async () => {
                 .withArgs(1);
         });
 
-        it('6.4.8.3. Cancel offer unsuccessfully with invalid offer id', async () => {
+        it('6.4.6.3. Cancel offer unsuccessfully with invalid offer id', async () => {
             const fixture = await beforeProjectMarketplaceTest({
                 listSampleOffers: true,
             });
@@ -1579,7 +1579,7 @@ describe('6.4. ProjectMarketplace', async () => {
                 .to.be.revertedWithCustomError(projectMarketplace, "InvalidOfferId");
         });
 
-        it('6.4.8.4. Cancel offer unsuccessfully by unauthorized user', async () => {
+        it('6.4.6.4. Cancel offer unsuccessfully by unauthorized user', async () => {
             const fixture = await beforeProjectMarketplaceTest({
                 listSampleOffers: true,
             });
@@ -1592,7 +1592,7 @@ describe('6.4. ProjectMarketplace', async () => {
                 .to.be.revertedWithCustomError(projectMarketplace, "Unauthorized");
         });
 
-        it('6.4.8.5. Cancel offer unsuccessfully when offer is already cancelled', async () => {
+        it('6.4.6.5. Cancel offer unsuccessfully when offer is already cancelled', async () => {
             const fixture = await beforeProjectMarketplaceTest({
                 listSampleOffers: true,
             });
@@ -1603,7 +1603,7 @@ describe('6.4. ProjectMarketplace', async () => {
                 .to.be.revertedWithCustomError(projectMarketplace, "InvalidCancelling");
         });
 
-        it('6.4.8.6. Cancel offer unsuccessfully when offer is sold out', async () => {
+        it('6.4.6.6. Cancel offer unsuccessfully when offer is sold out', async () => {
             const fixture = await beforeProjectMarketplaceTest({
                 listSampleOffers: true,
             });
@@ -1621,8 +1621,8 @@ describe('6.4. ProjectMarketplace', async () => {
         });
     });
 
-    describe('6.4.6. safeBuy(uint256,bytes32)', async () => {
-        it('6.4.6.1. Buy token successfully in both native and ERC20', async () => {
+    describe('6.4.7. safeBuy(uint256,bytes32)', async () => {
+        it('6.4.7.1. Buy token successfully in both native and ERC20', async () => {
             const fixture = await beforeProjectMarketplaceTest();
             const { seller1, buyer1 } = fixture;
 
@@ -1644,92 +1644,6 @@ describe('6.4. ProjectMarketplace', async () => {
                         [{ buyer: buyer1, amount: null }],
                         true,
                         false,
-                    )
-                }
-            }
-        });
-
-        it('6.4.6.2. Buy token unsuccessfully with invalid offer id', async () => {
-            const fixture = await beforeProjectMarketplaceTest({
-                listSampleOffers: true,
-            });
-            const { projectMarketplace, buyer1 } = fixture;
-
-            await expect(getAssetMarketplaceTx_SafeBuy(
-                projectMarketplace,
-                buyer1,
-                {
-                    offerId: BigNumber.from(0),
-                    anchor: ethers.constants.HashZero
-                },
-                { value: 1e9 }
-            )).to.be.revertedWithCustomError(projectMarketplace, "InvalidOfferId");
-
-            await expect(getAssetMarketplaceTx_SafeBuy(
-                projectMarketplace,
-                buyer1,
-                {
-                    offerId: BigNumber.from(3),
-                    anchor: ethers.constants.HashZero
-                },
-                { value: 1e9 }
-            )).to.be.revertedWithCustomError(projectMarketplace, "InvalidOfferId");
-        });
-
-        it('6.4.6.3. Buy token unsuccessfully with invalid anchor', async () => {
-            const fixture = await beforeProjectMarketplaceTest({
-                listSampleOffers: true,
-            });
-            const { projectMarketplace, buyer1, buyer2 } = fixture;
-
-            await expect(getAssetMarketplaceTx_SafeBuy(
-                projectMarketplace,
-                buyer1,
-                {
-                    offerId: BigNumber.from(1),
-                    anchor: ethers.constants.HashZero
-                },
-                { value: 1e9 }
-            )).to.be.revertedWithCustomError(projectMarketplace, "BadAnchor");
-
-            await expect(getAssetMarketplaceTx_SafeBuy(
-                projectMarketplace,
-                buyer2,
-                {
-                    offerId: BigNumber.from(2),
-                    anchor: ethers.constants.HashZero
-                },
-                { value: 1e9 }
-            )).to.be.revertedWithCustomError(projectMarketplace, "BadAnchor");
-        });
-    });
-
-    describe('6.4.7. safeBuy(uint256,uint256,bytes32)', async () => {
-        it('6.4.7.1. Buy token successfully in both native and ERC20', async () => {
-            const fixture = await beforeProjectMarketplaceTest();
-            const { seller1, buyer1 } = fixture;
-
-            for (const isERC20 of [false, true]) {
-                for (const isExclusive of [false, true]) {
-                    if (!isERC20 && isExclusive) {
-                        continue;
-                    }
-                    await testBuyOffer(
-                        fixture,
-                        ethers.utils.parseEther('0.3'),
-                        ethers.utils.parseEther("0.1"),
-                        isERC20,
-                        isExclusive,
-                        ethers.BigNumber.from(200_000),
-                        ethers.BigNumber.from(150_000),
-                        ethers.BigNumber.from("120"),
-                        seller1,
-                        [
-                            { buyer: buyer1, amount: ethers.BigNumber.from(100_000) },
-                            { buyer: buyer1, amount: ethers.BigNumber.from(50_000) },
-                        ],
-                        true,
-                        true,
                     )
                 }
             }
@@ -1763,6 +1677,92 @@ describe('6.4. ProjectMarketplace', async () => {
         });
 
         it('6.4.7.3. Buy token unsuccessfully with invalid anchor', async () => {
+            const fixture = await beforeProjectMarketplaceTest({
+                listSampleOffers: true,
+            });
+            const { projectMarketplace, buyer1, buyer2 } = fixture;
+
+            await expect(getAssetMarketplaceTx_SafeBuy(
+                projectMarketplace,
+                buyer1,
+                {
+                    offerId: BigNumber.from(1),
+                    anchor: ethers.constants.HashZero
+                },
+                { value: 1e9 }
+            )).to.be.revertedWithCustomError(projectMarketplace, "BadAnchor");
+
+            await expect(getAssetMarketplaceTx_SafeBuy(
+                projectMarketplace,
+                buyer2,
+                {
+                    offerId: BigNumber.from(2),
+                    anchor: ethers.constants.HashZero
+                },
+                { value: 1e9 }
+            )).to.be.revertedWithCustomError(projectMarketplace, "BadAnchor");
+        });
+    });
+
+    describe('6.4.8. safeBuy(uint256,uint256,bytes32)', async () => {
+        it('6.4.8.1. Buy token successfully in both native and ERC20', async () => {
+            const fixture = await beforeProjectMarketplaceTest();
+            const { seller1, buyer1 } = fixture;
+
+            for (const isERC20 of [false, true]) {
+                for (const isExclusive of [false, true]) {
+                    if (!isERC20 && isExclusive) {
+                        continue;
+                    }
+                    await testBuyOffer(
+                        fixture,
+                        ethers.utils.parseEther('0.3'),
+                        ethers.utils.parseEther("0.1"),
+                        isERC20,
+                        isExclusive,
+                        ethers.BigNumber.from(200_000),
+                        ethers.BigNumber.from(150_000),
+                        ethers.BigNumber.from("120"),
+                        seller1,
+                        [
+                            { buyer: buyer1, amount: ethers.BigNumber.from(100_000) },
+                            { buyer: buyer1, amount: ethers.BigNumber.from(50_000) },
+                        ],
+                        true,
+                        true,
+                    )
+                }
+            }
+        });
+
+        it('6.4.8.2. Buy token unsuccessfully with invalid offer id', async () => {
+            const fixture = await beforeProjectMarketplaceTest({
+                listSampleOffers: true,
+            });
+            const { projectMarketplace, buyer1 } = fixture;
+
+            await expect(getAssetMarketplaceTx_SafeBuy(
+                projectMarketplace,
+                buyer1,
+                {
+                    offerId: BigNumber.from(0),
+                    anchor: ethers.constants.HashZero
+                },
+                { value: 1e9 }
+            )).to.be.revertedWithCustomError(projectMarketplace, "InvalidOfferId");
+
+            await expect(getAssetMarketplaceTx_SafeBuy(
+                projectMarketplace,
+                buyer1,
+                {
+                    offerId: BigNumber.from(3),
+                    anchor: ethers.constants.HashZero
+                },
+                { value: 1e9 }
+            )).to.be.revertedWithCustomError(projectMarketplace, "InvalidOfferId");
+        });
+
+        it('6.4.8.3. Buy token unsuccessfully with invalid anchor', async () => {
             const fixture = await beforeProjectMarketplaceTest({
                 listSampleOffers: true,
             });

@@ -542,8 +542,8 @@ describe('4.4. PrimaryToken', async () => {
         });        
     });
 
-    describe('4.4.6. unlockForBackerRound(address,bytes[])', async () => {
-        it('4.4.6.1. Unlock for backer round successfully', async () => {
+    describe('4.4.4. unlockForBackerRound(address,bytes[])', async () => {
+        it('4.4.4.1. Unlock for backer round successfully', async () => {
             const { primaryToken, deployer, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -566,7 +566,7 @@ describe('4.4. PrimaryToken', async () => {
             await expect(tx).to.emit(primaryToken, 'BackerRoundTokensUnlock');
         });
 
-        it('4.4.6.2. Unlock for backer round unsuccessfully with invalid signatures', async () => {
+        it('4.4.4.2. Unlock for backer round unsuccessfully with invalid signatures', async () => {
             const { primaryToken, deployer, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -582,7 +582,7 @@ describe('4.4. PrimaryToken', async () => {
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('4.4.6.3. Unlock for backer round unsuccessfully when already unlocked', async () => {
+        it('4.4.4.3. Unlock for backer round unsuccessfully when already unlocked', async () => {
             const { primaryToken, deployer, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
                 unlockForBackerRound: true,
@@ -600,8 +600,8 @@ describe('4.4. PrimaryToken', async () => {
         });
     });
 
-    describe('4.4.7. unlockForSeedRound(address,bytes[])', async () => {
-        it('4.4.7.1. Unlock for seed round successfully', async () => {
+    describe('4.4.5. unlockForSeedRound(address,bytes[])', async () => {
+        it('4.4.5.1. Unlock for seed round successfully', async () => {
             const { primaryToken, deployer, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -624,7 +624,7 @@ describe('4.4. PrimaryToken', async () => {
             await expect(tx).to.emit(primaryToken, 'SeedRoundTokensUnlock');
         });
 
-        it('4.4.7.2. Unlock for seed round unsuccessfully with invalid signatures', async () => {
+        it('4.4.5.2. Unlock for seed round unsuccessfully with invalid signatures', async () => {
             const { primaryToken, deployer, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -640,7 +640,7 @@ describe('4.4. PrimaryToken', async () => {
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('4.4.7.3. Unlock for seed round unsuccessfully when already unlocked', async () => {
+        it('4.4.5.3. Unlock for seed round unsuccessfully when already unlocked', async () => {
             const { primaryToken, deployer, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
                 unlockForSeedRound: true,
@@ -658,8 +658,8 @@ describe('4.4. PrimaryToken', async () => {
         });
     });
 
-    describe('4.4.8. unlockForPrivateSale1(address,bytes[])', async () => {
-        it('4.4.8.1. Unlock for private sale 1 successfully', async () => {
+    describe('4.4.6. unlockForPrivateSale1(address,bytes[])', async () => {
+        it('4.4.6.1. Unlock for private sale 1 successfully', async () => {
             const { primaryToken, deployer, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -682,7 +682,7 @@ describe('4.4. PrimaryToken', async () => {
             await expect(tx).to.emit(primaryToken, 'PrivateSale1TokensUnlock');
         });
 
-        it('4.4.8.2. Unlock for private sale 1 unsuccessfully with invalid signatures', async () => {
+        it('4.4.6.2. Unlock for private sale 1 unsuccessfully with invalid signatures', async () => {
             const { primaryToken, deployer, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -698,7 +698,7 @@ describe('4.4. PrimaryToken', async () => {
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('4.4.8.3. Unlock for private sale 1 unsuccessfully when already unlocked', async () => {
+        it('4.4.6.3. Unlock for private sale 1 unsuccessfully when already unlocked', async () => {
             const { primaryToken, deployer, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
                 unlockForPrivateSale1: true,
@@ -716,8 +716,8 @@ describe('4.4. PrimaryToken', async () => {
         });
     });
 
-    describe('4.4.9. unlockForPrivateSale2(address,bytes[])', async () => {
-        it('4.4.9.1. Unlock for private sale 2 successfully', async () => {
+    describe('4.4.7. unlockForPrivateSale2(address,bytes[])', async () => {
+        it('4.4.7.1. Unlock for private sale 2 successfully', async () => {
             const { primaryToken, deployer, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -740,7 +740,7 @@ describe('4.4. PrimaryToken', async () => {
             await expect(tx).to.emit(primaryToken, 'PrivateSale2TokensUnlock');
         });
 
-        it('4.4.9.2. Unlock for private sale 2 unsuccessfully with invalid signatures', async () => {
+        it('4.4.7.2. Unlock for private sale 2 unsuccessfully with invalid signatures', async () => {
             const { primaryToken, deployer, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -756,7 +756,7 @@ describe('4.4. PrimaryToken', async () => {
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('4.4.9.3. Unlock for private sale 2 unsuccessfully when already unlocked', async () => {
+        it('4.4.7.3. Unlock for private sale 2 unsuccessfully when already unlocked', async () => {
             const { primaryToken, deployer, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
                 unlockForPrivateSale2: true,
@@ -774,8 +774,8 @@ describe('4.4. PrimaryToken', async () => {
         });
     });
 
-    describe('4.4.10. unlockForPublicSale(address,bytes[])', async () => {
-        it('4.4.10.1. Unlock for public sale successfully', async () => {
+    describe('4.4.8. unlockForPublicSale(address,bytes[])', async () => {
+        it('4.4.8.1. Unlock for public sale successfully', async () => {
             const { primaryToken, deployer, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -798,7 +798,7 @@ describe('4.4. PrimaryToken', async () => {
             await expect(tx).to.emit(primaryToken, 'PublicSaleTokensUnlock');
         });
 
-        it('4.4.10.2. Unlock for public sale unsuccessfully with invalid signatures', async () => {
+        it('4.4.8.2. Unlock for public sale unsuccessfully with invalid signatures', async () => {
             const { primaryToken, deployer, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -814,7 +814,7 @@ describe('4.4. PrimaryToken', async () => {
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('4.4.10.3. Unlock for public sale unsuccessfully when already unlocked', async () => {
+        it('4.4.8.3. Unlock for public sale unsuccessfully when already unlocked', async () => {
             const { primaryToken, deployer, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
                 unlockForPublicSale: true,
@@ -832,8 +832,8 @@ describe('4.4. PrimaryToken', async () => {
         });
     });
 
-    describe('4.4.11. unlockForCoreTeam(address,bytes[])', async () => {
-        it('4.4.11.1. Unlock for core team successfully', async () => {
+    describe('4.4.9. unlockForCoreTeam(address,bytes[])', async () => {
+        it('4.4.9.1. Unlock for core team successfully', async () => {
             const { primaryToken, deployer, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -856,7 +856,7 @@ describe('4.4. PrimaryToken', async () => {
             await expect(tx).to.emit(primaryToken, 'CoreTeamTokensUnlock');
         });
 
-        it('4.4.11.2. Unlock for core team unsuccessfully with invalid signatures', async () => {
+        it('4.4.9.2. Unlock for core team unsuccessfully with invalid signatures', async () => {
             const { primaryToken, deployer, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -872,7 +872,7 @@ describe('4.4. PrimaryToken', async () => {
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('4.4.11.3. Unlock for core team unsuccessfully when already unlocked', async () => {
+        it('4.4.9.3. Unlock for core team unsuccessfully when already unlocked', async () => {
             const { primaryToken, deployer, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
                 unlockForCoreTeam: true,
@@ -890,8 +890,8 @@ describe('4.4. PrimaryToken', async () => {
         });
     });
 
-    describe('4.4.12. unlockForMarketMaker(address,bytes[])', async () => {
-        it('4.4.12.1. Unlock for market maker successfully', async () => {
+    describe('4.4.10. unlockForMarketMaker(address,bytes[])', async () => {
+        it('4.4.10.1. Unlock for market maker successfully', async () => {
             const { primaryToken, deployer, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -914,7 +914,7 @@ describe('4.4. PrimaryToken', async () => {
             await expect(tx).to.emit(primaryToken, 'MarketMakerTokensUnlock');
         });
 
-        it('4.4.12.2. Unlock for market maker unsuccessfully with invalid signatures', async () => {
+        it('4.4.10.2. Unlock for market maker unsuccessfully with invalid signatures', async () => {
             const { primaryToken, deployer, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -930,7 +930,7 @@ describe('4.4. PrimaryToken', async () => {
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('4.4.12.3. Unlock for market maker unsuccessfully when already unlocked', async () => {
+        it('4.4.10.3. Unlock for market maker unsuccessfully when already unlocked', async () => {
             const { primaryToken, deployer, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
                 unlockForMarketMaker: true,
@@ -948,8 +948,8 @@ describe('4.4. PrimaryToken', async () => {
         });
     });
 
-    describe('4.4.13. unlockForExternalTreasury(address,bytes[])', async () => {
-        it('4.4.13.1. Unlock for external treasury successfully', async () => {
+    describe('4.4.11. unlockForExternalTreasury(address,bytes[])', async () => {
+        it('4.4.11.1. Unlock for external treasury successfully', async () => {
             const { primaryToken, deployer, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -972,7 +972,7 @@ describe('4.4. PrimaryToken', async () => {
             await expect(tx).to.emit(primaryToken, 'ExternalTreasuryTokensUnlock');
         });
 
-        it('4.4.13.2. Unlock for external treasury unsuccessfully with invalid signatures', async () => {
+        it('4.4.11.2. Unlock for external treasury unsuccessfully with invalid signatures', async () => {
             const { primaryToken, deployer, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -988,7 +988,7 @@ describe('4.4. PrimaryToken', async () => {
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('4.4.13.3. Unlock for external treasury unsuccessfully when already unlocked', async () => {
+        it('4.4.11.3. Unlock for external treasury unsuccessfully when already unlocked', async () => {
             const { primaryToken, deployer, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
                 unlockForExternalTreasury: true,
@@ -1008,8 +1008,8 @@ describe('4.4. PrimaryToken', async () => {
 
 
     /* --- Query --- */
-    describe('4.4.4. totalStake()', async () => {
-        it('4.4.4.1. Return correct total stake', async () => {
+    describe('4.4.12. totalStake()', async () => {
+        it('4.4.12.1. Return correct total stake', async () => {
             const { primaryToken, stakeToken1, stakeToken2, stakeToken3 } = await setupBeforeTest({
                 updateStakeTokens: true,
             });            
@@ -1028,8 +1028,8 @@ describe('4.4. PrimaryToken', async () => {
         });
     });
 
-    describe('4.4.5. isStakeRewardingCulminated(address)', async () => {
-        it('4.4.5.1. Return corrent value', async () => {
+    describe('4.4.13. isStakeRewardingCulminated(address)', async () => {
+        it('4.4.13.1. Return corrent value', async () => {
             const { primaryToken, stakeToken1, stakeToken2, stakeToken3 } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -1054,7 +1054,7 @@ describe('4.4. PrimaryToken', async () => {
             expect(await primaryToken.isStakeRewardingCulminated(stakeToken3.address)).to.equal(true);
         });
 
-        it('4.4.5.2. Revert with unknown stake token', async () => {
+        it('4.4.13.2. Revert with unknown stake token', async () => {
             const { primaryToken } = await setupBeforeTest({
                 updateStakeTokens: true,
             });

@@ -637,8 +637,8 @@ describe('3.3. ProjectMortgageToken', async () => {
 
 
     /* --- Query --- */
-    describe('3.3.10. getMortgage(uint256)', () => {
-        it('3.3.10.1. Revert with invalid mortgage id', async () => {
+    describe('3.3.4. getMortgage(uint256)', () => {
+        it('3.3.4.1. Revert with invalid mortgage id', async () => {
             const fixture = await beforeProjectMortgageTokenTest({
                 listSampleMortgage: true,
             });
@@ -658,8 +658,8 @@ describe('3.3. ProjectMortgageToken', async () => {
         });
     });
     
-    describe('3.3.10. getCollateral(uint256)', () => {
-        it('3.3.10.1. Revert with invalid mortgage id', async () => {
+    describe('3.3.5. getCollateral(uint256)', () => {
+        it('3.3.5.1. Revert with invalid mortgage id', async () => {
             const fixture = await beforeProjectMortgageTokenTest({
                 listSampleMortgage: true,
             });
@@ -679,8 +679,8 @@ describe('3.3. ProjectMortgageToken', async () => {
         });
     });
 
-    describe('3.3.11. royaltyInfo(uint256,uint256)', () => {
-        it('3.3.11.1. Return correct royalty info', async () => {
+    describe('3.3.6. royaltyInfo(uint256,uint256)', () => {
+        it('3.3.6.1. Return correct royalty info', async () => {
             const fixture = await beforeProjectMortgageTokenTest({
                 listSampleMortgage: true,
                 listSampleLending: true,
@@ -725,7 +725,7 @@ describe('3.3. ProjectMortgageToken', async () => {
             expect(royaltyInfo2[1]).to.equal(royaltyFee2);
         });
 
-        it('3.3.11.2. Revert with invalid token id', async () => {
+        it('3.3.6.2. Revert with invalid token id', async () => {
             const fixture = await beforeProjectMortgageTokenTest({
                 listSampleMortgage: true,
             });
@@ -745,8 +745,8 @@ describe('3.3. ProjectMortgageToken', async () => {
         });
     });
 
-    describe('3.3.13. supportsInterface(bytes4)', () => {
-        it('3.3.13.1. Return true for appropriate interface', async () => {
+    describe('3.3.7. supportsInterface(bytes4)', () => {
+        it('3.3.7.1. Return true for appropriate interface', async () => {
             const fixture = await beforeProjectMortgageTokenTest();
             const { projectMortgageToken } = fixture;
 
@@ -760,7 +760,7 @@ describe('3.3. ProjectMortgageToken', async () => {
 
 
     /* --- Command --- */
-    describe('3.3.4. borrow(uint256,uint256,uint256,uint256,address,uint40)', async () => {
+    describe('3.3.8. borrow(uint256,uint256,uint256,uint256,address,uint40)', async () => {
         async function beforeBorrowTest(fixture: ProjectMortgageTokenFixture): Promise<{ defaultParams: ProjectBorrowParams }> {
             return {
                 defaultParams: {
@@ -774,7 +774,7 @@ describe('3.3. ProjectMortgageToken', async () => {
             }
         }
 
-        it('3.3.4.1. Create mortgage successfully', async () => {
+        it('3.3.8.1. Create mortgage successfully', async () => {
             const fixture = await beforeProjectMortgageTokenTest();
             const { projectMortgageToken, admin, borrower1, borrower2, currency, projectToken } = fixture;
 
@@ -885,7 +885,7 @@ describe('3.3. ProjectMortgageToken', async () => {
             expect(await projectToken.balanceOf(projectMortgageToken.address, 2)).to.equal(initProjectMortgageTokenProject2Balance.add(params2.amount));
         });
 
-        it('3.3.4.2. Create mortgage unsuccessfully when paused', async () => {
+        it('3.3.8.2. Create mortgage unsuccessfully when paused', async () => {
             const fixture = await beforeProjectMortgageTokenTest({
                 pause: true
             });
@@ -897,7 +897,7 @@ describe('3.3. ProjectMortgageToken', async () => {
                 .to.be.revertedWith('Pausable: paused');
         });
 
-        it('3.3.4.3. Create mortgage unsuccessfully with invalid project id', async () => {
+        it('3.3.8.3. Create mortgage unsuccessfully with invalid project id', async () => {
             const fixture = await beforeProjectMortgageTokenTest();
             const { projectMortgageToken, projectToken, borrower1 } = fixture;
 
@@ -933,7 +933,7 @@ describe('3.3. ProjectMortgageToken', async () => {
             )).to.be.revertedWithCustomError(projectMortgageToken, 'InvalidTokenId');
         });
 
-        it('3.3.4.4. Create mortgage unsuccessfully with invalid currency', async () => {
+        it('3.3.8.4. Create mortgage unsuccessfully with invalid currency', async () => {
             const fixture = await beforeProjectMortgageTokenTest({
                 skipListSampleCurrencies: true,
             });
@@ -944,7 +944,7 @@ describe('3.3. ProjectMortgageToken', async () => {
                 .to.be.revertedWithCustomError(projectMortgageToken, 'InvalidCurrency');
         });
 
-        it('3.3.4.5. Create mortgage unsuccessfully with zero amount', async () => {
+        it('3.3.8.5. Create mortgage unsuccessfully with zero amount', async () => {
             const fixture = await beforeProjectMortgageTokenTest();
             const { projectMortgageToken, borrower1 } = fixture;
             const { defaultParams } = await beforeBorrowTest(fixture);
@@ -959,7 +959,7 @@ describe('3.3. ProjectMortgageToken', async () => {
             )).to.be.revertedWithCustomError(projectMortgageToken, 'InvalidInput');
         });
 
-        it('3.3.4.5. Create mortgage unsuccessfully with amount more than balance', async () => {
+        it('3.3.8.6. Create mortgage unsuccessfully with amount more than balance', async () => {
             const fixture = await beforeProjectMortgageTokenTest();
             const { projectMortgageToken, projectToken, borrower1 } = fixture;
             const { defaultParams } = await beforeBorrowTest(fixture);
@@ -976,7 +976,7 @@ describe('3.3. ProjectMortgageToken', async () => {
             )).to.be.revertedWithCustomError(projectMortgageToken, 'InvalidCollateral');
         });
 
-        it('3.3.4.6. Create mortgage unsuccessfully with invalid principal', async () => {
+        it('3.3.8.7. Create mortgage unsuccessfully with invalid principal', async () => {
             const fixture = await beforeProjectMortgageTokenTest();
             const { projectMortgageToken, projectToken, borrower1 } = fixture;
             const { defaultParams } = await beforeBorrowTest(fixture);
@@ -991,7 +991,7 @@ describe('3.3. ProjectMortgageToken', async () => {
             )).to.be.revertedWithCustomError(projectMortgageToken, 'InvalidPrincipal');
         });
 
-        it('3.3.4.7. Create mortgage unsuccessfully with invalid repayment', async () => {
+        it('3.3.8.8. Create mortgage unsuccessfully with invalid repayment', async () => {
             const fixture = await beforeProjectMortgageTokenTest();
             const { projectMortgageToken, borrower1 } = fixture;
             const { defaultParams } = await beforeBorrowTest(fixture);
@@ -1007,8 +1007,8 @@ describe('3.3. ProjectMortgageToken', async () => {
         });
     });
 
-    describe('3.3.5. cancel(uint256)', async () => {
-        it('3.3.5.1. Cancel mortgage successfully by borrower', async () => {
+    describe('3.3.9. cancel(uint256)', async () => {
+        it('3.3.9.1. Cancel mortgage successfully by borrower', async () => {
             const fixture = await beforeProjectMortgageTokenTest({
                 listSampleMortgage: true,
             });
@@ -1027,7 +1027,7 @@ describe('3.3. ProjectMortgageToken', async () => {
             expect(mortgage.state).to.equal(MortgageState.Cancelled);
         });
 
-        it('3.3.5.2. Cancel mortgage successfully by manager', async () => {
+        it('3.3.9.2. Cancel mortgage successfully by manager', async () => {
             const fixture = await beforeProjectMortgageTokenTest({
                 listSampleMortgage: true,
             });
@@ -1046,7 +1046,7 @@ describe('3.3. ProjectMortgageToken', async () => {
             expect(mortgage.state).to.equal(MortgageState.Cancelled);
         });
 
-        it('3.3.5.3. Cancel mortgage unsuccessfully by unauthorized user', async () => {
+        it('3.3.9.3. Cancel mortgage unsuccessfully by unauthorized user', async () => {
             const fixture = await beforeProjectMortgageTokenTest({
                 listSampleMortgage: true,
             });
@@ -1057,7 +1057,7 @@ describe('3.3. ProjectMortgageToken', async () => {
                 .to.be.revertedWithCustomError(projectMortgageToken, 'Unauthorized');
         });
 
-        it('3.3.5.4. Cancel mortgage unsuccessfully with invalid mortgage id', async () => {
+        it('3.3.9.4. Cancel mortgage unsuccessfully with invalid mortgage id', async () => {
             const fixture = await beforeProjectMortgageTokenTest({
                 listSampleMortgage: true,
             });
@@ -1069,7 +1069,7 @@ describe('3.3. ProjectMortgageToken', async () => {
                 .to.be.revertedWithCustomError(projectMortgageToken, 'InvalidMortgageId');
         });
 
-        it('3.3.5.5. Cancel mortgage unsuccessfully with cancelled mortgage', async () => {
+        it('3.3.9.5. Cancel mortgage unsuccessfully with cancelled mortgage', async () => {
             const fixture = await beforeProjectMortgageTokenTest({
                 listSampleMortgage: true,
             });
@@ -1080,7 +1080,7 @@ describe('3.3. ProjectMortgageToken', async () => {
                 .to.be.revertedWithCustomError(projectMortgageToken, 'InvalidCancelling');
         });
 
-        it('3.3.5.6. Cancel mortgage unsuccessfully with supplied mortgage', async () => {
+        it('3.3.9.6. Cancel mortgage unsuccessfully with supplied mortgage', async () => {
             const fixture = await beforeProjectMortgageTokenTest({
                 listSampleMortgage: true,
             });
@@ -1092,7 +1092,7 @@ describe('3.3. ProjectMortgageToken', async () => {
                 .to.be.revertedWithCustomError(projectMortgageToken, 'InvalidCancelling');
         });
 
-        it('3.3.5.7. Cancel mortgage unsuccessfully with foreclosed mortgage', async () => {
+        it('3.3.9.7. Cancel mortgage unsuccessfully with foreclosed mortgage', async () => {
             const fixture = await beforeProjectMortgageTokenTest({
                 listSampleMortgage: true,
             });
@@ -1109,7 +1109,7 @@ describe('3.3. ProjectMortgageToken', async () => {
                 .to.be.revertedWithCustomError(projectMortgageToken, 'InvalidCancelling');
         });
 
-        it('3.3.5.8. Cancel mortgage unsuccessfully with repaid mortgage', async () => {
+        it('3.3.9.8. Cancel mortgage unsuccessfully with repaid mortgage', async () => {
             const fixture = await beforeProjectMortgageTokenTest({
                 listSampleMortgage: true,
             });
@@ -1124,7 +1124,7 @@ describe('3.3. ProjectMortgageToken', async () => {
         });
     });
 
-    describe('3.3.6. lend(uint256)', async () => {
+    describe('3.3.10. lend(uint256)', async () => {
         async function testLend(
             fixture: ProjectMortgageTokenFixture,
             currencyExclusiveRate: BigNumber,
@@ -1283,7 +1283,7 @@ describe('3.3. ProjectMortgageToken', async () => {
             }
         }
 
-        it('3.3.6.1. Lend successfully in native and erc20 token', async () => {
+        it('3.3.10.1. Lend successfully in native and erc20 token', async () => {
             const fixture = await beforeProjectMortgageTokenTest({
                 skipListSampleCurrencies: true,
                 skipListProjectToken: true,
@@ -1313,7 +1313,7 @@ describe('3.3. ProjectMortgageToken', async () => {
             )
         });
 
-        it('3.3.6.2. Lend successfully in all native/erc20 and exclusive/non-exclusive combinations', async () => {
+        it('3.3.10.2. Lend successfully in all native/erc20 and exclusive/non-exclusive combinations', async () => {
             const fixture = await beforeProjectMortgageTokenTest({
                 skipListSampleCurrencies: true,
                 skipListProjectToken: true,
@@ -1338,7 +1338,7 @@ describe('3.3. ProjectMortgageToken', async () => {
             }
         });
 
-        it('3.3.6.3. Lend successfully with very large amount in all native/erc20 and exclusive/non-exclusive combinations', async () => {
+        it('3.3.10.3. Lend successfully with very large amount in all native/erc20 and exclusive/non-exclusive combinations', async () => {
             const fixture = await beforeProjectMortgageTokenTest({
                 skipListSampleCurrencies: true,
                 skipListProjectToken: true,
@@ -1366,7 +1366,7 @@ describe('3.3. ProjectMortgageToken', async () => {
             }
         });
 
-        it('3.3.6.4. Lend successfully in 100 random test cases', async () => {
+        it('3.3.10.4. Lend successfully in 100 random test cases', async () => {
             const fixture = await beforeProjectMortgageTokenTest({
                 skipListSampleCurrencies: true,
                 skipListProjectToken: true,
@@ -1416,7 +1416,7 @@ describe('3.3. ProjectMortgageToken', async () => {
             }
         });
 
-        it('3.3.6.5. Lend unsuccessfully when paused', async () => {
+        it('3.3.10.5. Lend unsuccessfully when paused', async () => {
             const fixture = await beforeProjectMortgageTokenTest({
                 listSampleMortgage: true,
                 pause: true,
@@ -1427,7 +1427,7 @@ describe('3.3. ProjectMortgageToken', async () => {
                 .to.be.revertedWith("Pausable: paused");
         });
 
-        it('3.3.6.6. Lend unsuccessfully with invalid mortgage id', async () => {
+        it('3.3.10.6. Lend unsuccessfully with invalid mortgage id', async () => {
             const fixture = await beforeProjectMortgageTokenTest({
                 listSampleMortgage: true,
             });
@@ -1440,7 +1440,7 @@ describe('3.3. ProjectMortgageToken', async () => {
                 .to.be.revertedWithCustomError(projectMortgageToken, "InvalidMortgageId");
         });
 
-        it('3.3.6.7. Lend unsuccessfully when borrower lend their own mortgage', async () => {
+        it('3.3.10.7. Lend unsuccessfully when borrower lend their own mortgage', async () => {
             const fixture = await beforeProjectMortgageTokenTest({
                 listSampleMortgage: true,
             });
@@ -1453,7 +1453,7 @@ describe('3.3. ProjectMortgageToken', async () => {
                 .to.be.revertedWithCustomError(projectMortgageToken, "InvalidLending");
         });
 
-        it('3.3.6.8. Lend unsuccessfully with supplied mortgage', async () => {
+        it('3.3.10.8. Lend unsuccessfully with supplied mortgage', async () => {
             const fixture = await beforeProjectMortgageTokenTest({
                 listSampleMortgage: true,
             });
@@ -1467,7 +1467,7 @@ describe('3.3. ProjectMortgageToken', async () => {
                 .to.be.revertedWithCustomError(projectMortgageToken, "InvalidLending");
         });
 
-        it('3.3.6.9. Lend unsuccessfully with repaid mortgage', async () => {
+        it('3.3.10.9. Lend unsuccessfully with repaid mortgage', async () => {
             const fixture = await beforeProjectMortgageTokenTest({
                 listSampleMortgage: true,
             });
@@ -1483,7 +1483,7 @@ describe('3.3. ProjectMortgageToken', async () => {
                 .to.be.revertedWithCustomError(projectMortgageToken, "InvalidLending");
         });
 
-        it('3.3.6.10. Lend unsuccessfully with cancelled mortgage', async () => {
+        it('3.3.10.10. Lend unsuccessfully with cancelled mortgage', async () => {
             const fixture = await beforeProjectMortgageTokenTest({
                 listSampleMortgage: true,
             });
@@ -1495,7 +1495,7 @@ describe('3.3. ProjectMortgageToken', async () => {
                 .to.be.revertedWithCustomError(projectMortgageToken, "InvalidLending");
         });
 
-        it('3.3.6.11. Lend unsuccessfully with foreclosed mortgage', async () => {
+        it('3.3.10.11. Lend unsuccessfully with foreclosed mortgage', async () => {
             const fixture = await beforeProjectMortgageTokenTest({
                 listSampleMortgage: true,
             });
@@ -1514,7 +1514,7 @@ describe('3.3. ProjectMortgageToken', async () => {
                 .to.be.revertedWithCustomError(projectMortgageToken, "InvalidLending");
         });
 
-        it('3.3.6.12. Lend unsuccessfully with insufficient native token', async () => {
+        it('3.3.10.12. Lend unsuccessfully with insufficient native token', async () => {
             const fixture = await beforeProjectMortgageTokenTest({
                 listSampleMortgage: true,
             });
@@ -1524,7 +1524,7 @@ describe('3.3. ProjectMortgageToken', async () => {
                 .to.be.revertedWithCustomError(projectMortgageToken, "InsufficientValue");
         });
 
-        it('3.3.6.13. Lend unsuccessfully when native token transfer to borrower failed', async () => {
+        it('3.3.10.13. Lend unsuccessfully when native token transfer to borrower failed', async () => {
             const fixture = await beforeProjectMortgageTokenTest();
             const { projectMortgageToken, lender1, deployer, projectToken } = fixture;
 
@@ -1543,7 +1543,7 @@ describe('3.3. ProjectMortgageToken', async () => {
                 .to.be.revertedWithCustomError(projectMortgageToken, "FailedTransfer");
         });
 
-        it('3.3.6.15. Buy token unsuccessfully when refund to lender failed', async () => {
+        it('3.3.10.14. Buy token unsuccessfully when refund to lender failed', async () => {
             const fixture = await beforeProjectMortgageTokenTest({
                 listSampleMortgage: true,
             });
@@ -1556,7 +1556,7 @@ describe('3.3. ProjectMortgageToken', async () => {
                 .to.be.revertedWithCustomError(projectMortgageToken, "FailedRefund");
         });
 
-        it('3.3.6.16. Buy token unsuccessfully when borrower reenter this function', async () => {
+        it('3.3.10.15. Buy token unsuccessfully when borrower reenter this function', async () => {
             const fixture = await beforeProjectMortgageTokenTest();
             const { projectMortgageToken, deployer, projectToken, lender1 } = fixture;
 
@@ -1597,8 +1597,8 @@ describe('3.3. ProjectMortgageToken', async () => {
         });
     });
 
-    describe('3.3.7. safeLend(uint256,uint256)', async () => {
-        it('3.3.7.1. Safe lend successfully', async () => {
+    describe('3.3.11. safeLend(uint256,uint256)', async () => {
+        it('3.3.11.1. Safe lend successfully', async () => {
             const fixture = await beforeProjectMortgageTokenTest({
                 listSampleMortgage: true,
             });
@@ -1619,7 +1619,7 @@ describe('3.3. ProjectMortgageToken', async () => {
             )).to.not.be.reverted;
         });
 
-        it('3.3.7.2. Safe lend unsuccessfully with invalid mortgage id', async () => {
+        it('3.3.11.2. Safe lend unsuccessfully with invalid mortgage id', async () => {
             const fixture = await beforeProjectMortgageTokenTest({
                 listSampleMortgage: true,
             });
@@ -1640,7 +1640,7 @@ describe('3.3. ProjectMortgageToken', async () => {
             )).to.be.revertedWithCustomError(projectMortgageToken, "InvalidMortgageId");
         });
 
-        it('3.3.7.3. Safe lend unsuccessfully with invalid anchor', async () => {
+        it('3.3.11.3. Safe lend unsuccessfully with invalid anchor', async () => {
             const fixture = await beforeProjectMortgageTokenTest({
                 listSampleMortgage: true,
             });
@@ -1662,8 +1662,8 @@ describe('3.3. ProjectMortgageToken', async () => {
         });
     });
     
-    describe('3.3.8. repay(uint256)', () => {
-        it('3.3.8.1. Repay successfully', async () => {
+    describe('3.3.12. repay(uint256)', () => {
+        it('3.3.12.1. Repay successfully', async () => {
             const fixture = await beforeProjectMortgageTokenTest({
                 listSampleMortgage: true,
                 listSampleLending: true,
@@ -1735,7 +1735,7 @@ describe('3.3. ProjectMortgageToken', async () => {
             expect(await currency.balanceOf(projectMortgageTokenOwner.address)).to.equal(projectMortgageTokenOwnerBalance.add(110000));
         });
 
-        it('3.3.8.2. Repay unsuccessfully when paused', async () => {
+        it('3.3.12.2. Repay unsuccessfully when paused', async () => {
             const fixture = await beforeProjectMortgageTokenTest({
                 listSampleMortgage: true,
                 listSampleLending: true,
@@ -1747,7 +1747,7 @@ describe('3.3. ProjectMortgageToken', async () => {
                 .to.be.revertedWith("Pausable: paused");
         });
 
-        it('3.3.8.3. Repay unsuccessfully with invalid mortgage id', async () => {
+        it('3.3.12.3. Repay unsuccessfully with invalid mortgage id', async () => {
             const fixture = await beforeProjectMortgageTokenTest({
                 listSampleMortgage: true,
                 listSampleLending: true,
@@ -1761,7 +1761,7 @@ describe('3.3. ProjectMortgageToken', async () => {
                 .to.be.revertedWithCustomError(projectMortgageToken, "InvalidMortgageId");
         });
 
-        it('3.3.8.4. Repay unsuccessfully with overdue mortgage', async () => {
+        it('3.3.12.4. Repay unsuccessfully with overdue mortgage', async () => {
             const fixture = await beforeProjectMortgageTokenTest({
                 listSampleMortgage: true,
                 listSampleLending: true,
@@ -1781,7 +1781,7 @@ describe('3.3. ProjectMortgageToken', async () => {
                 .to.be.revertedWithCustomError(projectMortgageToken, "Overdue");
         });
 
-        it('3.3.8.5. Repay unsuccessfully with pending mortgage', async () => {
+        it('3.3.12.5. Repay unsuccessfully with pending mortgage', async () => {
             const fixture = await beforeProjectMortgageTokenTest({
                 listSampleMortgage: true,
             });
@@ -1793,7 +1793,7 @@ describe('3.3. ProjectMortgageToken', async () => {
                 .to.be.revertedWithCustomError(projectMortgageToken, "InvalidRepaying");
         });
 
-        it('3.3.8.6. Repay unsuccessfully with already repaid mortgage', async () => {
+        it('3.3.12.6. Repay unsuccessfully with already repaid mortgage', async () => {
             const fixture = await beforeProjectMortgageTokenTest({
                 listSampleMortgage: true,
                 listSampleLending: true,
@@ -1809,7 +1809,7 @@ describe('3.3. ProjectMortgageToken', async () => {
                 .to.be.revertedWithCustomError(projectMortgageToken, "InvalidRepaying");
         });
 
-        it('3.3.8.7. Repay unsuccessfully with foreclosed mortgage', async () => {
+        it('3.3.12.7. Repay unsuccessfully with foreclosed mortgage', async () => {
             const fixture = await beforeProjectMortgageTokenTest({
                 listSampleMortgage: true,
                 listSampleLending: true,
@@ -1828,7 +1828,7 @@ describe('3.3. ProjectMortgageToken', async () => {
                 .to.be.revertedWithCustomError(projectMortgageToken, "InvalidRepaying");
         });
 
-        it('3.3.8.8. Repay unsuccessfully with cancelled mortgage', async () => {
+        it('3.3.12.8. Repay unsuccessfully with cancelled mortgage', async () => {
             const fixture = await beforeProjectMortgageTokenTest({
                 listSampleMortgage: true,
             });
@@ -1843,7 +1843,7 @@ describe('3.3. ProjectMortgageToken', async () => {
                 .to.be.revertedWithCustomError(projectMortgageToken, "InvalidRepaying");
         });
 
-        it('3.3.8.9. Repay unsuccessfully with insufficient funds', async () => {
+        it('3.3.12.9. Repay unsuccessfully with insufficient funds', async () => {
             const fixture = await beforeProjectMortgageTokenTest({
                 listSampleMortgage: true,
                 listSampleLending: true,
@@ -1858,7 +1858,7 @@ describe('3.3. ProjectMortgageToken', async () => {
                 .to.be.revertedWith("ERC20: transfer amount exceeds balance");
         });
 
-        it('3.3.8.10. Repay unsuccessfully native token transfer to lender failed', async () => {
+        it('3.3.12.10. Repay unsuccessfully native token transfer to lender failed', async () => {
             const fixture = await beforeProjectMortgageTokenTest({
                 listSampleMortgage: true,
             });
@@ -1875,7 +1875,7 @@ describe('3.3. ProjectMortgageToken', async () => {
                 .to.be.revertedWithCustomError(projectMortgageToken, "FailedTransfer");
         });
 
-        it('3.3.8.11. Repay unsuccessfully when the contract is reentered', async () => {
+        it('3.3.12.11. Repay unsuccessfully when the contract is reentered', async () => {
             const fixture = await beforeProjectMortgageTokenTest({
                 listSampleMortgage: true,
             });
@@ -1899,8 +1899,8 @@ describe('3.3. ProjectMortgageToken', async () => {
         });
     });
     
-    describe('3.3.9. safeRepay(uint256,uint256)', () => {
-        it('3.3.9.1. Safe repay successfully', async () => {
+    describe('3.3.13. safeRepay(uint256,uint256)', () => {
+        it('3.3.13.1. Safe repay successfully', async () => {
             const fixture = await beforeProjectMortgageTokenTest({
                 listSampleMortgage: true,
                 listSampleLending: true,
@@ -1921,7 +1921,7 @@ describe('3.3. ProjectMortgageToken', async () => {
             )).to.not.be.reverted;
         });
 
-        it('3.3.9.2. Safe repay unsuccessfully with invalid mortgage id', async () => {
+        it('3.3.13.2. Safe repay unsuccessfully with invalid mortgage id', async () => {
             const fixture = await beforeProjectMortgageTokenTest({
                 listSampleMortgage: true,
                 listSampleLending: true,
@@ -1941,7 +1941,7 @@ describe('3.3. ProjectMortgageToken', async () => {
             )).to.be.revertedWithCustomError(projectMortgageToken, "InvalidMortgageId");
         });
 
-        it('3.3.9.3. Repay unsuccessfully with invalid anchor', async () => {
+        it('3.3.13.3. Repay unsuccessfully with invalid anchor', async () => {
             const fixture = await beforeProjectMortgageTokenTest({
                 listSampleMortgage: true,
                 listSampleLending: true,
@@ -1962,8 +1962,8 @@ describe('3.3. ProjectMortgageToken', async () => {
         });
     });
 
-    describe('3.3.10. foreclose(uint256)', () => {
-        it('3.3.10.1. Foreclose successfully', async () => {
+    describe('3.3.14. foreclose(uint256)', () => {
+        it('3.3.14.1. Foreclose successfully', async () => {
             const fixture = await beforeProjectMortgageTokenTest({
                 listSampleMortgage: true,
                 listSampleLending: true,
@@ -2026,7 +2026,7 @@ describe('3.3. ProjectMortgageToken', async () => {
             expect(await projectToken.balanceOf(projectMortgageToken.address, 2)).to.equal(mortgageContractBalance.sub(200));
         });
 
-        it('3.3.10.2. Foreclose unsuccessfully when paused', async () => {
+        it('3.3.14.2. Foreclose unsuccessfully when paused', async () => {
             const fixture = await beforeProjectMortgageTokenTest({
                 listSampleMortgage: true,
                 listSampleLending: true,
@@ -2038,7 +2038,7 @@ describe('3.3. ProjectMortgageToken', async () => {
                 .to.be.revertedWith("Pausable: paused");
         });
 
-        it('3.3.10.3. Foreclose unsuccessfully with invalid mortgage id', async () => {
+        it('3.3.14.3. Foreclose unsuccessfully with invalid mortgage id', async () => {
             const fixture = await beforeProjectMortgageTokenTest({
                 listSampleMortgage: true,
                 listSampleLending: true,
@@ -2052,7 +2052,7 @@ describe('3.3. ProjectMortgageToken', async () => {
                 .to.be.revertedWithCustomError(projectMortgageToken, "InvalidMortgageId");
         });
 
-        it('3.3.10.4. Foreclose unsuccessfully when mortgage is not overdue', async () => {
+        it('3.3.14.4. Foreclose unsuccessfully when mortgage is not overdue', async () => {
             const fixture = await beforeProjectMortgageTokenTest({
                 listSampleMortgage: true,
                 listSampleLending: true,
@@ -2063,7 +2063,7 @@ describe('3.3. ProjectMortgageToken', async () => {
                 .to.be.revertedWithCustomError(projectMortgageToken, "InvalidForeclosing");
         });
 
-        it('3.3.10.5. Foreclose unsuccessfully with pending mortgage', async () => {
+        it('3.3.14.5. Foreclose unsuccessfully with pending mortgage', async () => {
             const fixture = await beforeProjectMortgageTokenTest({
                 listSampleMortgage: true,
             });
@@ -2073,7 +2073,7 @@ describe('3.3. ProjectMortgageToken', async () => {
                 .to.be.revertedWithCustomError(projectMortgageToken, "InvalidForeclosing");
         });
 
-        it('3.3.10.6. Foreclose unsuccessfully with repaid mortgage', async () => {
+        it('3.3.14.6. Foreclose unsuccessfully with repaid mortgage', async () => {
             const fixture = await beforeProjectMortgageTokenTest({
                 listSampleMortgage: true,
                 listSampleLending: true,
@@ -2089,7 +2089,7 @@ describe('3.3. ProjectMortgageToken', async () => {
                 .to.be.revertedWithCustomError(projectMortgageToken, "InvalidForeclosing");
         });
 
-        it('3.3.10.7. Foreclose unsuccessfully with foreclosed mortgage', async () => {
+        it('3.3.14.7. Foreclose unsuccessfully with foreclosed mortgage', async () => {
             const fixture = await beforeProjectMortgageTokenTest({
                 listSampleMortgage: true,
                 listSampleLending: true,
@@ -2105,7 +2105,7 @@ describe('3.3. ProjectMortgageToken', async () => {
                 .to.be.revertedWithCustomError(projectMortgageToken, "InvalidForeclosing");
         });
 
-        it('3.3.10.8. Foreclose unsuccessfully with cancelled mortgage', async () => {
+        it('3.3.14.8. Foreclose unsuccessfully with cancelled mortgage', async () => {
             const fixture = await beforeProjectMortgageTokenTest({
                 listSampleMortgage: true,
             });

@@ -466,8 +466,8 @@ describe('4.1. Auction', async () => {
 
 
     /* --- Query --- */
-    describe('4.1.5. allocationOf(address)', async () => {
-        it('4.1.5.1. Return correct allocation', async () => {
+    describe('4.1.4. allocationOf(address)', async () => {
+        it('4.1.4.1. Return correct allocation', async () => {
             const fixture = await setupBeforeTest({
                 updateStakeTokens: true,
                 startAuction: true,
@@ -486,7 +486,7 @@ describe('4.1. Auction', async () => {
             expect(await auction.allocationOf(depositor3.address)).to.equal(deposit3.mul(Constant.PRIMARY_TOKEN_PUBLIC_SALE).div(totalDeposit));
         });
 
-        it('4.1.5.2. Return zero allocation before any deposits', async () => {
+        it('4.1.4.2. Return zero allocation before any deposits', async () => {
             const fixture = await setupBeforeTest();
             const { depositor1, depositor2, depositor3, auction } = fixture;
 
@@ -498,8 +498,8 @@ describe('4.1. Auction', async () => {
     
 
     /* --- Command --- */
-    describe('4.1.4. deposit(uint256)', async () => {
-        it('4.1.4.1. Deposit successfully', async () => {
+    describe('4.1.5. deposit(uint256)', async () => {
+        it('4.1.5.1. Deposit successfully', async () => {
             const fixture = await setupBeforeTest({
                 updateStakeTokens: true,
                 startAuction: true,
@@ -554,7 +554,7 @@ describe('4.1. Auction', async () => {
             expect(await auction.deposits(depositor1.address)).to.equal(amount1.add(amount3));
         });
         
-        it('4.1.4.2. Deposit unsuccessfully when paused', async () => {
+        it('4.1.5.2. Deposit unsuccessfully when paused', async () => {
             const fixture = await setupBeforeTest({
                 updateStakeTokens: true,
                 startAuction: true,
@@ -567,7 +567,7 @@ describe('4.1. Auction', async () => {
                 .to.be.revertedWith('Pausable: paused');
         });
 
-        it('4.1.4.3. Deposit unsuccessfully when auction not started', async () => {
+        it('4.1.5.3. Deposit unsuccessfully when auction not started', async () => {
             const fixture = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -578,7 +578,7 @@ describe('4.1. Auction', async () => {
                 .to.be.revertedWithCustomError(auction, 'NotStarted');            
         });
 
-        it('4.1.4.4. Deposit unsuccessfully when auction ended', async () => {
+        it('4.1.5.4. Deposit unsuccessfully when auction ended', async () => {
             const fixture = await setupBeforeTest({
                 updateStakeTokens: true,
                 startAuction: true,
@@ -592,7 +592,7 @@ describe('4.1. Auction', async () => {
                 .to.be.revertedWithCustomError(auction, 'AlreadyEnded');
         });
 
-        it('4.1.4.5. Deposit unsuccessfully when the contract is reentered', async () => {
+        it('4.1.5.5. Deposit unsuccessfully when the contract is reentered', async () => {
             const fixture = await setupBeforeTest({
                 updateStakeTokens: true,
                 startAuction: true,

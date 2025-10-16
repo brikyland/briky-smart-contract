@@ -1682,8 +1682,8 @@ describe('1.2. Admin', async () => {
         });
     });
 
-    describe('1.2.14. updateCurrencyRegistries(address[],bool[],bool[],bytes[])', async () => {
-        it('1.2.14.1. Update currency registries successfully', async () => {
+    describe('1.2.13. updateCurrencyRegistries(address[],bool[],bool[],bytes[])', async () => {
+        it('1.2.13.1. Update currency registries successfully', async () => {
             const fixture = await setupBeforeTest();
             const { deployer, admins, admin } = fixture;            
 
@@ -1724,7 +1724,7 @@ describe('1.2. Admin', async () => {
             }
         });
 
-        it('1.2.14.2. Update currency registries successfully with multiple records of the same currency', async () => {
+        it('1.2.13.2. Update currency registries successfully with multiple records of the same currency', async () => {
             const fixture = await setupBeforeTest();
             const { deployer, admins, admin } = fixture;            
 
@@ -1758,7 +1758,7 @@ describe('1.2. Admin', async () => {
             expect(currencyRegistry.isExclusive).to.equal(isExclusive[1]);
         });
 
-        it('1.2.14.3. Update currency registries unsuccessfully with incorrect signatures', async () => {
+        it('1.2.13.3. Update currency registries unsuccessfully with incorrect signatures', async () => {
             const fixture = await setupBeforeTest();
             const { deployer, admins, admin } = fixture;            
 
@@ -1780,7 +1780,7 @@ describe('1.2. Admin', async () => {
                 .to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('1.2.14.4. Update currency registries unsuccessfully with conflicting params lengths', async () => {
+        it('1.2.13.4. Update currency registries unsuccessfully with conflicting params lengths', async () => {
             const fixture = await setupBeforeTest();
             const { deployer, admins, admin } = fixture;            
 
@@ -1812,8 +1812,8 @@ describe('1.2. Admin', async () => {
 
 
     /* --- Query --- */
-    describe('1.2.15. isExecutive(address)', async () => {
-        it('1.2.15.1. Return true only if the account is authorized as manager or moderator', async () => {
+    describe('1.2.14. isExecutive(address)', async () => {
+        it('1.2.14.1. Return true only if the account is authorized as manager or moderator', async () => {
             const fixture = await setupBeforeTest();
             const { deployer, admins, admin, accounts } = fixture;
 
