@@ -1,8 +1,7 @@
-import { BigNumber } from "ethers";
+import { BigNumber } from 'ethers';
 
 // @utils/models/common
-import { Validation } from "@utils/models/common/validatable";
-
+import { Validation } from '@utils/models/common/validatable';
 
 // updateBaseUnitPriceRange
 export interface UpdateBaseUnitPriceRangeParamsInput {
@@ -13,7 +12,6 @@ export interface UpdateBaseUnitPriceRangeParamsInput {
 export interface UpdateBaseUnitPriceRangeParams extends UpdateBaseUnitPriceRangeParamsInput {
     signatures: string[];
 }
-
 
 // initiateLaunch
 export interface InitiateLaunchParamsInput {
@@ -29,7 +27,6 @@ export interface InitiateLaunchParams extends InitiateLaunchParamsInput {
     validation: Validation;
 }
 
-
 // updateLaunchURI
 export interface UpdateLaunchURIParamsInput {
     launchId: BigNumber;
@@ -40,38 +37,37 @@ export interface UpdateLaunchURIParams extends UpdateLaunchURIParamsInput {
     validation: Validation;
 }
 
-
 // updateRound
 export interface PrestigePadRoundInput {
     uri: string;
     quota: PrestigePadRoundQuotaInput;
     quote: PrestigePadRoundQuoteInput;
-};
+}
 
 export interface PrestigePadRound {
     uri: string;
     quota: PrestigePadRoundQuotaInput;
     quote: PrestigePadRoundQuoteInput;
     agenda: PrestigePadRoundAgendaInput;
-};
+}
 
 export interface PrestigePadRoundQuotaInput {
     totalQuantity: BigNumber;
     minRaisingQuantity: BigNumber;
     maxRaisingQuantity: BigNumber;
-};
+}
 
 export interface PrestigePadRoundQuota {
     totalQuantity: BigNumber;
     minRaisingQuantity: BigNumber;
     maxRaisingQuantity: BigNumber;
     soldQuantity: BigNumber;
-};
+}
 
 export interface PrestigePadRoundQuoteInput {
     unitPrice: BigNumber;
     currency: string;
-};
+}
 
 export interface PrestigePadRoundQuote {
     unitPrice: BigNumber;
@@ -79,18 +75,18 @@ export interface PrestigePadRoundQuote {
     cashbackThreshold: BigNumber;
     cashbackFundId: BigNumber;
     feeDenomination: BigNumber;
-};
+}
 
 export interface PrestigePadRoundAgendaInput {
     raiseStartsAt: number;
     raiseEndsAt: number;
-};
+}
 
 export interface PrestigePadRoundAgenda {
     saleStartsAt: number;
     privateSaleEndsAt: number;
     publicSaleEndsAt: number;
-};
+}
 
 export interface UpdateRoundParamsInput {
     launchId: BigNumber;
@@ -100,14 +96,13 @@ export interface UpdateRoundParamsInput {
 
 export interface PrestigePadRoundInputWithValidation extends PrestigePadRoundInput {
     validation: Validation;
-};
+}
 
 export interface UpdateRoundParams {
     launchId: BigNumber;
     index: BigNumber;
     round: PrestigePadRoundInputWithValidation;
 }
-
 
 // updateRounds
 export interface UpdateRoundsParamsInput {
@@ -122,7 +117,6 @@ export interface UpdateRoundsParams {
     addedRounds: PrestigePadRoundInputWithValidation[];
 }
 
-
 // scheduleNextRound
 export interface ScheduleNextRoundParams {
     launchId: BigNumber;
@@ -134,24 +128,20 @@ export interface ScheduleNextRoundParams {
     raiseDuration: number;
 }
 
-
 // cancelCurrentRound
 export interface CancelCurrentRoundParams {
     launchId: BigNumber;
 }
-
 
 // confirmCurrentRound
 export interface ConfirmCurrentRoundParams {
     launchId: BigNumber;
 }
 
-
 // safeConfirmCurrentRound
 export interface SafeConfirmCurrentRoundParams extends ConfirmCurrentRoundParams {
     anchor: string;
 }
-
 
 // safeFinalize
 export interface FinalizeParams {
@@ -162,25 +152,21 @@ export interface SafeFinalizeParams extends FinalizeParams {
     anchor: string;
 }
 
-
 // contributeCurrentRound
 export interface ContributeCurrentRoundParams {
     launchId: BigNumber;
     quantity: BigNumber;
 }
 
-
 // safeContributeCurrentRound
 export interface SafeContributeCurrentRoundParams extends ContributeCurrentRoundParams {
     anchor: string;
 }
 
-
 // withdrawContribution
 export interface WithdrawContributionParams {
     roundId: BigNumber;
 }
-
 
 // withdrawProjectToken
 export interface WithdrawProjectTokenParams {

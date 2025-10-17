@@ -1,17 +1,13 @@
-import { ethers } from "ethers";
+import { ethers } from 'ethers';
 
 // @typechain-types
-import {
-    Admin,
-    PrestigePad
-} from "@typechain-types";
+import { Admin, PrestigePad } from '@typechain-types';
 
 // @utils/blockchain
-import { getSignatures } from "@utils/blockchain";
+import { getSignatures } from '@utils/blockchain';
 
 // @utils/models/launch
-import { UpdateBaseUnitPriceRangeParamsInput } from "@utils/models/launch/prestigePad";
-
+import { UpdateBaseUnitPriceRangeParamsInput } from '@utils/models/launch/prestigePad';
 
 // updateBaseUnitPriceRange
 export async function getUpdateBaseUnitPriceRangeSignatures(
@@ -22,8 +18,8 @@ export async function getUpdateBaseUnitPriceRangeSignatures(
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "uint256", "uint256"],
-        [prestigePad.address, "updateBaseUnitPriceRange", paramsInput.baseMinUnitPrice, paramsInput.baseMaxUnitPrice]
+        ['address', 'string', 'uint256', 'uint256'],
+        [prestigePad.address, 'updateBaseUnitPriceRange', paramsInput.baseMinUnitPrice, paramsInput.baseMaxUnitPrice]
     );
 
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));

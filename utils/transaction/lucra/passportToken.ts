@@ -1,13 +1,10 @@
-import { ContractTransaction } from "ethers";
+import { ContractTransaction } from 'ethers';
 
 // @nomiclabs/hardhat-ethers
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 // @typechain-types
-import {
-    Admin,
-    PassportToken
-} from "@typechain-types";
+import { Admin, PassportToken } from '@typechain-types';
 
 // @utils/models/lucra
 import {
@@ -18,17 +15,16 @@ import {
     UpdateRoyaltyRateParams,
     UpdateRoyaltyRateParamsInput,
     WithdrawParams,
-    WithdrawParamsInput
-} from "@utils/models/lucra/passportToken";
+    WithdrawParamsInput,
+} from '@utils/models/lucra/passportToken';
 
 // @utils/signatures/lucra
 import {
     getUpdateBaseURISignatures,
     getUpdateFeeSignatures,
     getUpdateRoyaltyRateSignatures,
-    getWithdrawSignatures
-} from "@utils/signatures/lucra/passportToken";
-
+    getWithdrawSignatures,
+} from '@utils/signatures/lucra/passportToken';
 
 // updateBaseURI
 export async function getPassportTokenTx_UpdateBaseURI(
@@ -37,11 +33,7 @@ export async function getPassportTokenTx_UpdateBaseURI(
     params: UpdateBaseURIParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return passportToken.connect(deployer).updateBaseURI(
-        params.uri,
-        params.signatures,
-        txConfig
-    );
+    return passportToken.connect(deployer).updateBaseURI(params.uri, params.signatures, txConfig);
 }
 
 export async function getPassportTokenTxByInput_UpdateBaseURI(
@@ -59,7 +51,6 @@ export async function getPassportTokenTxByInput_UpdateBaseURI(
     return getPassportTokenTx_UpdateBaseURI(passportToken, deployer, params, txConfig);
 }
 
-
 // updateFee
 export async function getPassportTokenTx_UpdateFee(
     passportToken: PassportToken,
@@ -67,11 +58,7 @@ export async function getPassportTokenTx_UpdateFee(
     params: UpdateFeeParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return passportToken.connect(deployer).updateFee(
-        params.fee,
-        params.signatures,
-        txConfig
-    );
+    return passportToken.connect(deployer).updateFee(params.fee, params.signatures, txConfig);
 }
 
 export async function getPassportTokenTxByInput_UpdateFee(
@@ -89,7 +76,6 @@ export async function getPassportTokenTxByInput_UpdateFee(
     return getPassportTokenTx_UpdateFee(passportToken, deployer, params, txConfig);
 }
 
-
 // updateRoyaltyRate
 export async function getPassportTokenTx_UpdateRoyaltyRate(
     passportToken: PassportToken,
@@ -97,11 +83,7 @@ export async function getPassportTokenTx_UpdateRoyaltyRate(
     params: UpdateRoyaltyRateParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return passportToken.connect(deployer).updateRoyaltyRate(
-        params.royaltyRate,
-        params.signatures,
-        txConfig
-    );
+    return passportToken.connect(deployer).updateRoyaltyRate(params.royaltyRate, params.signatures, txConfig);
 }
 
 export async function getPassportTokenTxByInput_UpdateRoyaltyRate(
@@ -119,7 +101,6 @@ export async function getPassportTokenTxByInput_UpdateRoyaltyRate(
     return getPassportTokenTx_UpdateRoyaltyRate(passportToken, deployer, params, txConfig);
 }
 
-
 // withdraw
 export async function getPassportTokenTx_Withdraw(
     passportToken: PassportToken,
@@ -127,13 +108,9 @@ export async function getPassportTokenTx_Withdraw(
     params: WithdrawParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return passportToken.connect(deployer).withdraw(
-        params.receiver,
-        params.currencies,
-        params.values,
-        params.signatures,
-        txConfig
-    );
+    return passportToken
+        .connect(deployer)
+        .withdraw(params.receiver, params.currencies, params.values, params.signatures, txConfig);
 }
 
 export async function getPassportTokenTxByInput_Withdraw(
@@ -150,7 +127,6 @@ export async function getPassportTokenTxByInput_Withdraw(
     };
     return getPassportTokenTx_Withdraw(passportToken, deployer, params, txConfig);
 }
-
 
 // mint
 export async function getPassportTokenTx_Mint(

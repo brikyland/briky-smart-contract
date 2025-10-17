@@ -1,18 +1,14 @@
 // @typechain-types
-import { Admin, CommissionToken } from "@typechain-types";
+import { Admin, CommissionToken } from '@typechain-types';
 
 // @utils/blockchain
-import { getSignatures } from "@utils/blockchain";
+import { getSignatures } from '@utils/blockchain';
 
 // @utils/models/land
-import {
-    UpdateBaseURIParamsInput,
-    UpdateRoyaltyRateParamsInput,
-} from "@utils/models/land/commissionToken";
+import { UpdateBaseURIParamsInput, UpdateRoyaltyRateParamsInput } from '@utils/models/land/commissionToken';
 
 // @ethers
-import { ethers } from "ethers";
-
+import { ethers } from 'ethers';
 
 // updateBaseURI
 export async function getUpdateBaseURISignatures(
@@ -23,13 +19,12 @@ export async function getUpdateBaseURISignatures(
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "string"],
-        [commissionToken.address, "updateBaseURI", paramsInput.uri]
+        ['address', 'string', 'string'],
+        [commissionToken.address, 'updateBaseURI', paramsInput.uri]
     );
 
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
-
 
 // updateRoyaltyRate
 export async function getUpdateRoyaltyRateSignatures(
@@ -40,8 +35,8 @@ export async function getUpdateRoyaltyRateSignatures(
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "uint256"],
-        [commissionToken.address, "updateRoyaltyRate", paramsInput.royaltyRate]
+        ['address', 'string', 'uint256'],
+        [commissionToken.address, 'updateRoyaltyRate', paramsInput.royaltyRate]
     );
 
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));

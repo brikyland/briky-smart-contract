@@ -1,24 +1,12 @@
 import { expect } from 'chai';
-import {
-    BigNumber,
-    Contract
-} from 'ethers';
-import {
-    ethers,
-    upgrades
-} from 'hardhat';
+import { BigNumber, Contract } from 'ethers';
+import { ethers, upgrades } from 'hardhat';
 
 // @nomicfoundation/hardhat-network-helpers
-import {
-    loadFixture,
-    time
-} from "@nomicfoundation/hardhat-network-helpers";
+import { loadFixture, time } from '@nomicfoundation/hardhat-network-helpers';
 
 // @defi-wonderland/smock
-import {
-    MockContract,
-    smock
-} from '@defi-wonderland/smock';
+import { MockContract, smock } from '@defi-wonderland/smock';
 
 // @tests
 import { Constant } from '@tests/test.constant';
@@ -27,7 +15,7 @@ import {
     IEstateTokenReceiverInterfaceId,
     IERC721MetadataUpgradeableInterfaceId,
     IMortgageTokenInterfaceId,
-    IERC2981UpgradeableInterfaceId
+    IERC2981UpgradeableInterfaceId,
 } from '@tests/interfaces';
 
 // @tests/land
@@ -61,18 +49,11 @@ import {
     randomWallet,
     resetERC20,
     resetNativeToken,
-    testReentrancy
+    testReentrancy,
 } from '@utils/blockchain';
-import {
-    applyDiscount,
-    scaleRate
-} from '@utils/formula';
+import { applyDiscount, scaleRate } from '@utils/formula';
 import { MockValidator } from '@utils/mockValidator';
-import {
-    getBytes4Hex,
-    randomBigNumber,
-    structToObject
-} from '@utils/utils';
+import { getBytes4Hex, randomBigNumber, structToObject } from '@utils/utils';
 
 // @utils/deployments/common
 import { deployAdmin } from '@utils/deployments/common/admin';
@@ -95,14 +76,11 @@ import {
     UpdateBaseURIParams,
     UpdateBaseURIParamsInput,
     UpdateFeeRateParams,
-    UpdateFeeRateParamsInput
+    UpdateFeeRateParamsInput,
 } from '@utils/models/lend/mortgageToken';
 
 // @utils/signatures/lend
-import {
-    getUpdateBaseURISignatures,
-    getUpdateFeeRateSignatures
-} from '@utils/signatures/lend/mortgageToken';
+import { getUpdateBaseURISignatures, getUpdateFeeRateSignatures } from '@utils/signatures/lend/mortgageToken';
 
 // @utils/transaction/land
 import { getCommissionTokenTx_RegisterBroker } from '@utils/transaction/land/commissionToken';
@@ -111,7 +89,7 @@ import {
     getCallEstateTokenTx_TokenizeEstate,
     getEstateTokenTxByInput_RegisterCustodian,
     getEstateTokenTxByInput_UpdateCommissionToken,
-    getEstateTokenTxByInput_UpdateZoneRoyaltyRate
+    getEstateTokenTxByInput_UpdateZoneRoyaltyRate,
 } from '@utils/transaction/land/estateToken';
 import { EstateBorrowParams } from '@utils/models/lend/estateMortgageToken';
 
@@ -129,7 +107,7 @@ import {
     getMortgageTokenTx_UpdateBaseURI,
     getMortgageTokenTxByInput_UpdateBaseURI,
     getMortgageTokenTx_UpdateFeeRate,
-    getMortgageTokenTxByInput_UpdateFeeRate
+    getMortgageTokenTxByInput_UpdateFeeRate,
 } from '@utils/transaction/lend/mortgageToken';
 
 // @utils/transaction/common
@@ -138,32 +116,25 @@ import {
     getAdminTxByInput_AuthorizeManagers,
     getAdminTxByInput_AuthorizeModerators,
     getAdminTxByInput_DeclareZone,
-    getAdminTxByInput_UpdateCurrencyRegistries
+    getAdminTxByInput_UpdateCurrencyRegistries,
 } from '@utils/transaction/common/admin';
 import { getPausableTxByInput_Pause } from '@utils/transaction/common/pausable';
-
 
 async function testReentrancy_estateMortgageToken(
     estateMortgageToken: EstateMortgageToken,
     reentrancyContract: Contract,
-    assertion: any,
+    assertion: any
 ) {
     let data = [
-        estateMortgageToken.interface.encodeFunctionData("lend", [0]),
-        estateMortgageToken.interface.encodeFunctionData("repay", [0]),
-        estateMortgageToken.interface.encodeFunctionData("safeLend", [0, 0]),
-        estateMortgageToken.interface.encodeFunctionData("safeRepay", [0, 0]),
-        estateMortgageToken.interface.encodeFunctionData("foreclose", [0]),
+        estateMortgageToken.interface.encodeFunctionData('lend', [0]),
+        estateMortgageToken.interface.encodeFunctionData('repay', [0]),
+        estateMortgageToken.interface.encodeFunctionData('safeLend', [0, 0]),
+        estateMortgageToken.interface.encodeFunctionData('safeRepay', [0, 0]),
+        estateMortgageToken.interface.encodeFunctionData('foreclose', [0]),
     ];
 
-    await testReentrancy(
-        reentrancyContract,
-        estateMortgageToken,
-        data,
-        assertion,
-    );
+    await testReentrancy(reentrancyContract, estateMortgageToken, data, assertion);
 }
-
 
 interface EstateMortgageTokenFixture {
     deployer: any;
@@ -198,91 +169,104 @@ interface EstateMortgageTokenFixture {
 
 describe('3.2. EstateMortgageToken', async () => {
     async function estateMortgageTokenFixture(): Promise<EstateMortgageTokenFixture> {
-        const [deployer, admin1, admin2, admin3, admin4, admin5, lender1, lender2, borrower1, borrower2, manager, moderator, user, estateMortgageTokenOwner, custodian1, custodian2, broker1, broker2] = await ethers.getSigners();
+        const [
+            deployer,
+            admin1,
+            admin2,
+            admin3,
+            admin4,
+            admin5,
+            lender1,
+            lender2,
+            borrower1,
+            borrower2,
+            manager,
+            moderator,
+            user,
+            estateMortgageTokenOwner,
+            custodian1,
+            custodian2,
+            broker1,
+            broker2,
+        ] = await ethers.getSigners();
         const admins = [admin1, admin2, admin3, admin4, admin5];
 
-        const adminAddresses: string[] = admins.map(signer => signer.address);
-        const admin = await deployAdmin(
+        const adminAddresses: string[] = admins.map((signer) => signer.address);
+        const admin = (await deployAdmin(
             deployer.address,
             adminAddresses[0],
             adminAddresses[1],
             adminAddresses[2],
             adminAddresses[3],
-            adminAddresses[4],
-        ) as Admin;
+            adminAddresses[4]
+        )) as Admin;
 
-        const feeReceiver = await deployFeeReceiver(
-            deployer.address,
-            admin.address
-        ) as FeeReceiver;
+        const feeReceiver = (await deployFeeReceiver(deployer.address, admin.address)) as FeeReceiver;
 
-        const priceWatcher = await deployPriceWatcher(
-            deployer.address,
-            admin.address
-        ) as PriceWatcher;
+        const priceWatcher = (await deployPriceWatcher(deployer.address, admin.address)) as PriceWatcher;
 
-        const reserveVault = await deployReserveVault(
-            deployer.address,
-            admin.address
-        ) as ReserveVault;
+        const reserveVault = (await deployReserveVault(deployer.address, admin.address)) as ReserveVault;
 
         const validator = new MockValidator(deployer as any);
 
-        const currency = await deployCurrency(
-            deployer.address,
-            'MockCurrency',
-            'MCK'
-        ) as Currency;
+        const currency = (await deployCurrency(deployer.address, 'MockCurrency', 'MCK')) as Currency;
 
-        await callTransaction(currency.setExclusiveDiscount(
-            ethers.utils.parseEther('0.3'),
-            Constant.COMMON_RATE_DECIMALS
-        ));
+        await callTransaction(
+            currency.setExclusiveDiscount(ethers.utils.parseEther('0.3'), Constant.COMMON_RATE_DECIMALS)
+        );
 
-        const MockEstateTokenFactory = await smock.mock('MockEstateToken') as any;
+        const MockEstateTokenFactory = (await smock.mock('MockEstateToken')) as any;
         const estateToken = await MockEstateTokenFactory.deploy();
-        await callTransaction(estateToken.initialize(
-            admin.address,
-            feeReceiver.address,
-            validator.getAddress(),
-            LandInitialization.ESTATE_TOKEN_BaseURI,
-        ));   
+        await callTransaction(
+            estateToken.initialize(
+                admin.address,
+                feeReceiver.address,
+                validator.getAddress(),
+                LandInitialization.ESTATE_TOKEN_BaseURI
+            )
+        );
 
         const MockCommissionTokenFactory = await smock.mock<CommissionToken__factory>('CommissionToken');
         const commissionToken = await MockCommissionTokenFactory.deploy();
-        await callTransaction(commissionToken.initialize(
-            admin.address,
-            estateToken.address,
-            feeReceiver.address,
-            LandInitialization.COMMISSION_TOKEN_Name,
-            LandInitialization.COMMISSION_TOKEN_Symbol,
-            LandInitialization.COMMISSION_TOKEN_BaseURI,
-            LandInitialization.COMMISSION_TOKEN_RoyaltyRate,
-        ));
-        
-        await callTransaction(getEstateTokenTxByInput_UpdateCommissionToken(
-            estateToken as any,
-            deployer,
-            { commissionToken: commissionToken.address },
-            admin,
-            admins
-        ));
+        await callTransaction(
+            commissionToken.initialize(
+                admin.address,
+                estateToken.address,
+                feeReceiver.address,
+                LandInitialization.COMMISSION_TOKEN_Name,
+                LandInitialization.COMMISSION_TOKEN_Symbol,
+                LandInitialization.COMMISSION_TOKEN_BaseURI,
+                LandInitialization.COMMISSION_TOKEN_RoyaltyRate
+            )
+        );
+
+        await callTransaction(
+            getEstateTokenTxByInput_UpdateCommissionToken(
+                estateToken as any,
+                deployer,
+                { commissionToken: commissionToken.address },
+                admin,
+                admins
+            )
+        );
 
         const MockEstateForgerFactory = await smock.mock<MockEstateForger__factory>('MockEstateForger');
         const estateForger = await MockEstateForgerFactory.deploy();
-        await callTransaction(estateForger.initialize(
-            admin.address,
-            estateToken.address,
-            commissionToken.address,
-            priceWatcher.address,
-            feeReceiver.address,
-            reserveVault.address,
-            validator.getAddress(),
-            LandInitialization.ESTATE_FORGER_BaseMinUnitPrice,
-            LandInitialization.ESTATE_FORGER_BaseMaxUnitPrice,
-        ));
+        await callTransaction(
+            estateForger.initialize(
+                admin.address,
+                estateToken.address,
+                commissionToken.address,
+                priceWatcher.address,
+                feeReceiver.address,
+                reserveVault.address,
+                validator.getAddress(),
+                LandInitialization.ESTATE_FORGER_BaseMinUnitPrice,
+                LandInitialization.ESTATE_FORGER_BaseMaxUnitPrice
+            )
+        );
 
-        const estateMortgageToken = await deployEstateMortgageToken(
+        const estateMortgageToken = (await deployEstateMortgageToken(
             deployer.address,
             admin.address,
             estateToken.address,
@@ -290,11 +274,11 @@ describe('3.2. EstateMortgageToken', async () => {
             LendInitialization.ESTATE_MORTGAGE_TOKEN_Name,
             LendInitialization.ESTATE_MORTGAGE_TOKEN_Symbol,
             LendInitialization.ESTATE_MORTGAGE_TOKEN_BaseURI,
-            LendInitialization.ESTATE_MORTGAGE_TOKEN_FeeRate,
-        ) as EstateMortgageToken;
+            LendInitialization.ESTATE_MORTGAGE_TOKEN_FeeRate
+        )) as EstateMortgageToken;
 
-        const zone1 = ethers.utils.formatBytes32String("TestZone1");
-        const zone2 = ethers.utils.formatBytes32String("TestZone2");
+        const zone1 = ethers.utils.formatBytes32String('TestZone1');
+        const zone2 = ethers.utils.formatBytes32String('TestZone2');
 
         return {
             admin,
@@ -357,110 +341,113 @@ describe('3.2. EstateMortgageToken', async () => {
             custodian2,
             validator,
             zone1,
-            zone2 
+            zone2,
         } = fixture;
 
-        await callTransaction(getAdminTxByInput_AuthorizeManagers(
-            admin,
-            deployer,
-            {
-                accounts: [manager.address],
-                isManager: true,
-            },
-            admins,
-        ));
-
-        await callTransaction(getAdminTxByInput_AuthorizeModerators(
-            admin,
-            deployer,
-            {
-                accounts: [moderator.address],
-                isModerator: true,
-            },
-            admins,
-        ));
-
-        for (const zone of [zone1, zone2]) {
-            await callTransaction(getAdminTxByInput_DeclareZone(
-                admin,
-                deployer,
-                { zone },
-                admins,
-            ));
-        }
-
-        for (const zone of [zone1, zone2]) {
-            await callTransaction(getAdminTxByInput_ActivateIn(
+        await callTransaction(
+            getAdminTxByInput_AuthorizeManagers(
                 admin,
                 deployer,
                 {
-                    zone,
-                    accounts: [manager.address, moderator.address],
-                    isActive: true
+                    accounts: [manager.address],
+                    isManager: true,
                 },
                 admins
-            ));
+            )
+        );
+
+        await callTransaction(
+            getAdminTxByInput_AuthorizeModerators(
+                admin,
+                deployer,
+                {
+                    accounts: [moderator.address],
+                    isModerator: true,
+                },
+                admins
+            )
+        );
+
+        for (const zone of [zone1, zone2]) {
+            await callTransaction(getAdminTxByInput_DeclareZone(admin, deployer, { zone }, admins));
         }
 
-        await callTransaction(getEstateTokenTxByInput_AuthorizeTokenizers(
-            estateToken as any,
-            deployer,
-            {
-                accounts: [estateForger.address],
-                isTokenizer: true
-            },
-            admin,
-            admins
-        ));
+        for (const zone of [zone1, zone2]) {
+            await callTransaction(
+                getAdminTxByInput_ActivateIn(
+                    admin,
+                    deployer,
+                    {
+                        zone,
+                        accounts: [manager.address, moderator.address],
+                        isActive: true,
+                    },
+                    admins
+                )
+            );
+        }
+
+        await callTransaction(
+            getEstateTokenTxByInput_AuthorizeTokenizers(
+                estateToken as any,
+                deployer,
+                {
+                    accounts: [estateForger.address],
+                    isTokenizer: true,
+                },
+                admin,
+                admins
+            )
+        );
 
         for (const zone of [zone1, zone2]) {
             for (const custodian of [custodian1, custodian2]) {
-                await callTransaction(getEstateTokenTxByInput_RegisterCustodian(
-                    estateToken as any,
-                    manager,
-                    {
-                        zone,
-                        custodian: custodian.address,
-                        uri: "TestURI",
-                    },
-                    validator,
-                ))
+                await callTransaction(
+                    getEstateTokenTxByInput_RegisterCustodian(
+                        estateToken as any,
+                        manager,
+                        {
+                            zone,
+                            custodian: custodian.address,
+                            uri: 'TestURI',
+                        },
+                        validator
+                    )
+                );
             }
         }
 
-        await callTransaction(getCommissionTokenTx_RegisterBroker(
-            commissionToken as any,
-            manager,
-            {
+        await callTransaction(
+            getCommissionTokenTx_RegisterBroker(commissionToken as any, manager, {
                 zone: zone1,
                 broker: broker1.address,
                 commissionRate: ethers.utils.parseEther('0.1'),
-            }
-        ));
+            })
+        );
 
-        await callTransaction(getCommissionTokenTx_RegisterBroker(
-            commissionToken as any,
-            manager,
-            {
+        await callTransaction(
+            getCommissionTokenTx_RegisterBroker(commissionToken as any, manager, {
                 zone: zone2,
                 broker: broker2.address,
                 commissionRate: ethers.utils.parseEther('0.2'),
-            }
-        ));
+            })
+        );
 
         let currentTimestamp = await time.latest();
 
         if (!skipListSampleCurrencies) {
-            await callTransaction(getAdminTxByInput_UpdateCurrencyRegistries(
-                admin,
-                deployer,
-                {
-                    currencies: [ethers.constants.AddressZero, currency.address],
-                    isAvailable: [true, true],
-                    isExclusive: [false, true],
-                },
-                admins
-            ));
+            await callTransaction(
+                getAdminTxByInput_UpdateCurrencyRegistries(
+                    admin,
+                    deployer,
+                    {
+                        currencies: [ethers.constants.AddressZero, currency.address],
+                        isAvailable: [true, true],
+                        isExclusive: [false, true],
+                    },
+                    admins
+                )
+            );
         }
 
         if (!skipListEstateToken) {
@@ -468,32 +455,28 @@ describe('3.2. EstateMortgageToken', async () => {
 
             await time.setNextBlockTimestamp(currentTimestamp);
 
-            await callTransaction(getCallEstateTokenTx_TokenizeEstate(
-                estateToken as any,
-                estateForger,
-                {
+            await callTransaction(
+                getCallEstateTokenTx_TokenizeEstate(estateToken as any, estateForger, {
                     totalSupply: BigNumber.from(1e9),
                     zone: zone1,
                     tokenizationId: BigNumber.from(10),
-                    uri: "Token1_URI",
+                    uri: 'Token1_URI',
                     expireAt: currentTimestamp + 1e8,
                     custodian: custodian1.address,
                     broker: broker1.address,
-                }
-            ));
-            await callTransaction(getCallEstateTokenTx_TokenizeEstate(
-                estateToken as any,
-                estateForger,
-                {
+                })
+            );
+            await callTransaction(
+                getCallEstateTokenTx_TokenizeEstate(estateToken as any, estateForger, {
                     totalSupply: BigNumber.from(1e9),
                     zone: zone2,
                     tokenizationId: BigNumber.from(10),
-                    uri: "Token2_URI",
+                    uri: 'Token2_URI',
                     expireAt: currentTimestamp + 2e8,
                     custodian: custodian2.address,
                     broker: broker2.address,
-                }
-            ));
+                })
+            );
 
             estateToken.isAvailable.whenCalledWith(1).returns(true);
             estateToken.isAvailable.whenCalledWith(2).returns(true);
@@ -511,70 +494,77 @@ describe('3.2. EstateMortgageToken', async () => {
         }
 
         if (listSampleMortgage) {
-            await callTransaction(getEstateMortgageTokenTx_Borrow(estateMortgageToken, borrower1, {
-                estateId: BigNumber.from(1),
-                amount: BigNumber.from(150_000),
-                principal: BigNumber.from(10e5),
-                repayment: BigNumber.from(11e5),
-                currency: ethers.constants.AddressZero,
-                duration: 1000,
-            }));
+            await callTransaction(
+                getEstateMortgageTokenTx_Borrow(estateMortgageToken, borrower1, {
+                    estateId: BigNumber.from(1),
+                    amount: BigNumber.from(150_000),
+                    principal: BigNumber.from(10e5),
+                    repayment: BigNumber.from(11e5),
+                    currency: ethers.constants.AddressZero,
+                    duration: 1000,
+                })
+            );
             await callTransaction(estateToken.connect(borrower1).setApprovalForAll(estateMortgageToken.address, true));
 
-            await callTransaction(getEstateMortgageTokenTx_Borrow(estateMortgageToken, borrower2, {
-                estateId: BigNumber.from(2),
-                amount: BigNumber.from(200),
-                principal: BigNumber.from(100000),
-                repayment: BigNumber.from(110000),
-                currency: currency.address,
-                duration: 1000,
-            }));    
-            await callTransaction(estateToken.connect(borrower2).setApprovalForAll(estateMortgageToken.address, true));
-            
-            await prepareERC20(
-                currency,
-                [borrower1, borrower2, lender1, lender2],
-                [estateMortgageToken],
-                1e9
+            await callTransaction(
+                getEstateMortgageTokenTx_Borrow(estateMortgageToken, borrower2, {
+                    estateId: BigNumber.from(2),
+                    amount: BigNumber.from(200),
+                    principal: BigNumber.from(100000),
+                    repayment: BigNumber.from(110000),
+                    currency: currency.address,
+                    duration: 1000,
+                })
             );
+            await callTransaction(estateToken.connect(borrower2).setApprovalForAll(estateMortgageToken.address, true));
+
+            await prepareERC20(currency, [borrower1, borrower2, lender1, lender2], [estateMortgageToken], 1e9);
         }
-        
+
         if (listSampleLending) {
             currentTimestamp += 100;
             await time.setNextBlockTimestamp(currentTimestamp);
-            await callTransaction(getMortgageTokenTx_Lend(estateMortgageToken, lender1, { mortgageId: BigNumber.from(1) }, { value: 1e9 }));
+            await callTransaction(
+                getMortgageTokenTx_Lend(estateMortgageToken, lender1, { mortgageId: BigNumber.from(1) }, { value: 1e9 })
+            );
 
             currentTimestamp += 100;
             await time.setNextBlockTimestamp(currentTimestamp);
-            await callTransaction(getMortgageTokenTx_Lend(estateMortgageToken, lender2, { mortgageId: BigNumber.from(2) }));
+            await callTransaction(
+                getMortgageTokenTx_Lend(estateMortgageToken, lender2, {
+                    mortgageId: BigNumber.from(2),
+                })
+            );
         }
 
         if (pause) {
-            await callTransaction(getPausableTxByInput_Pause(estateMortgageToken, deployer, admin, admins));;
+            await callTransaction(getPausableTxByInput_Pause(estateMortgageToken, deployer, admin, admins));
         }
 
         return {
             ...fixture,
-        }
+        };
     }
-
 
     /* --- Initialization --- */
     describe('3.2.1. initialize(address,address,string,string,string,uint256)', async () => {
         it('3.2.1.1. Deploy successfully', async () => {
-            const { admin, estateToken, feeReceiver, commissionToken, estateMortgageToken } = await beforeEstateMortgageTokenTest();
+            const { admin, estateToken, feeReceiver, commissionToken, estateMortgageToken } =
+                await beforeEstateMortgageTokenTest();
 
             const tx = estateMortgageToken.deployTransaction;
-            await expect(tx).to.emit(estateMortgageToken, "BaseURIUpdate").withArgs(LendInitialization.ESTATE_MORTGAGE_TOKEN_BaseURI);
-            await expect(tx).to.emit(estateMortgageToken, "FeeRateUpdate").withArgs(
-                (rate: any) => {
+            await expect(tx)
+                .to.emit(estateMortgageToken, 'BaseURIUpdate')
+                .withArgs(LendInitialization.ESTATE_MORTGAGE_TOKEN_BaseURI);
+            await expect(tx)
+                .to.emit(estateMortgageToken, 'FeeRateUpdate')
+                .withArgs((rate: any) => {
                     expect(structToObject(rate)).to.deep.equal({
                         value: LendInitialization.ESTATE_MORTGAGE_TOKEN_FeeRate,
                         decimals: Constant.COMMON_RATE_DECIMALS,
                     });
                     return true;
-                }
-            );
+                });
 
             expect(await estateMortgageToken.mortgageNumber()).to.equal(0);
 
@@ -587,27 +577,28 @@ describe('3.2. EstateMortgageToken', async () => {
             expect(await estateMortgageToken.admin()).to.equal(admin.address);
             expect(await estateMortgageToken.estateToken()).to.equal(estateToken.address);
             expect(await estateMortgageToken.feeReceiver()).to.equal(feeReceiver.address);
-            expect(await estateMortgageToken.commissionToken()).to.equal(commissionToken.address);            
+            expect(await estateMortgageToken.commissionToken()).to.equal(commissionToken.address);
         });
 
-
         it('3.2.1.2. Deploy unsuccessfully with invalid fee rate', async () => {
-            const { deployer, admin, estateToken, feeReceiver, commissionToken } = await beforeEstateMortgageTokenTest();
+            const { deployer, admin, estateToken, feeReceiver, commissionToken } =
+                await beforeEstateMortgageTokenTest();
 
             const EstateMortgageToken = await ethers.getContractFactory('EstateMortgageToken', deployer);
 
-            await expect(upgrades.deployProxy(EstateMortgageToken, [
-                admin.address,
-                estateToken.address,
-                feeReceiver.address,
-                LendInitialization.ESTATE_MORTGAGE_TOKEN_Name,
-                LendInitialization.ESTATE_MORTGAGE_TOKEN_Symbol,
-                LendInitialization.ESTATE_MORTGAGE_TOKEN_BaseURI,
-                Constant.COMMON_RATE_MAX_FRACTION.add(1),
-            ])).to.be.reverted;
+            await expect(
+                upgrades.deployProxy(EstateMortgageToken, [
+                    admin.address,
+                    estateToken.address,
+                    feeReceiver.address,
+                    LendInitialization.ESTATE_MORTGAGE_TOKEN_Name,
+                    LendInitialization.ESTATE_MORTGAGE_TOKEN_Symbol,
+                    LendInitialization.ESTATE_MORTGAGE_TOKEN_BaseURI,
+                    Constant.COMMON_RATE_MAX_FRACTION.add(1),
+                ])
+            ).to.be.reverted;
         });
     });
-
 
     /* --- Administration --- */
     describe('3.2.2. updateBaseURI(string,bytes[])', async () => {
@@ -618,29 +609,42 @@ describe('3.2. EstateMortgageToken', async () => {
             });
 
             const paramsInput: UpdateBaseURIParamsInput = {
-                uri: "NewBaseURI:",
+                uri: 'NewBaseURI:',
             };
-            const tx = await getMortgageTokenTxByInput_UpdateBaseURI(estateMortgageToken as any, deployer, paramsInput, admin, admins);
+            const tx = await getMortgageTokenTxByInput_UpdateBaseURI(
+                estateMortgageToken as any,
+                deployer,
+                paramsInput,
+                admin,
+                admins
+            );
             await tx.wait();
-            
-            await expect(tx).to.emit(estateMortgageToken, 'BaseURIUpdate').withArgs("NewBaseURI:");
 
-            expect(await estateMortgageToken.tokenURI(1)).to.equal("NewBaseURI:1");
-            expect(await estateMortgageToken.tokenURI(2)).to.equal("NewBaseURI:2");
+            await expect(tx).to.emit(estateMortgageToken, 'BaseURIUpdate').withArgs('NewBaseURI:');
+
+            expect(await estateMortgageToken.tokenURI(1)).to.equal('NewBaseURI:1');
+            expect(await estateMortgageToken.tokenURI(2)).to.equal('NewBaseURI:2');
         });
 
         it('3.2.2.2. Update base URI unsuccessfully with invalid signatures', async () => {
             const { deployer, estateMortgageToken, admin, admins } = await beforeEstateMortgageTokenTest();
 
             const paramsInput: UpdateBaseURIParamsInput = {
-                uri: "NewBaseURI:",
+                uri: 'NewBaseURI:',
             };
             const params: UpdateBaseURIParams = {
                 ...paramsInput,
-                signatures: await getUpdateBaseURISignatures(estateMortgageToken as any, paramsInput, admin, admins, false),
+                signatures: await getUpdateBaseURISignatures(
+                    estateMortgageToken as any,
+                    paramsInput,
+                    admin,
+                    admins,
+                    false
+                ),
             };
-            await expect(getMortgageTokenTx_UpdateBaseURI(estateMortgageToken as any, deployer, params))
-                .to.be.revertedWithCustomError(admin, 'FailedVerification');
+            await expect(
+                getMortgageTokenTx_UpdateBaseURI(estateMortgageToken as any, deployer, params)
+            ).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
     });
 
@@ -649,20 +653,26 @@ describe('3.2. EstateMortgageToken', async () => {
             const { deployer, estateMortgageToken, admin, admins } = await beforeEstateMortgageTokenTest();
 
             const paramsInput: UpdateFeeRateParamsInput = {
-                feeRate: ethers.utils.parseEther('0.2')
+                feeRate: ethers.utils.parseEther('0.2'),
             };
-            const tx = await getMortgageTokenTxByInput_UpdateFeeRate(estateMortgageToken as any, deployer, paramsInput, admin, admins);
+            const tx = await getMortgageTokenTxByInput_UpdateFeeRate(
+                estateMortgageToken as any,
+                deployer,
+                paramsInput,
+                admin,
+                admins
+            );
             await tx.wait();
 
-            await expect(tx).to.emit(estateMortgageToken, 'FeeRateUpdate').withArgs(
-                (rate: any) => {
+            await expect(tx)
+                .to.emit(estateMortgageToken, 'FeeRateUpdate')
+                .withArgs((rate: any) => {
                     expect(structToObject(rate)).to.deep.equal({
                         value: paramsInput.feeRate,
                         decimals: Constant.COMMON_RATE_DECIMALS,
                     });
                     return true;
-                }
-            );
+                });
 
             const feeRate = await estateMortgageToken.getFeeRate();
             expect(structToObject(feeRate)).to.deep.equal({
@@ -675,14 +685,21 @@ describe('3.2. EstateMortgageToken', async () => {
             const { deployer, estateMortgageToken, admin, admins } = await beforeEstateMortgageTokenTest();
 
             const paramsInput: UpdateFeeRateParamsInput = {
-                feeRate: ethers.utils.parseEther("0.2"),                
-            }
+                feeRate: ethers.utils.parseEther('0.2'),
+            };
             const params: UpdateFeeRateParams = {
                 ...paramsInput,
-                signatures: await getUpdateFeeRateSignatures(estateMortgageToken as any, paramsInput, admin, admins, false)
-            }
-            await expect(getMortgageTokenTx_UpdateFeeRate(estateMortgageToken as any, deployer, params))
-                .to.be.revertedWithCustomError(admin, 'FailedVerification');
+                signatures: await getUpdateFeeRateSignatures(
+                    estateMortgageToken as any,
+                    paramsInput,
+                    admin,
+                    admins,
+                    false
+                ),
+            };
+            await expect(
+                getMortgageTokenTx_UpdateFeeRate(estateMortgageToken as any, deployer, params)
+            ).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
         it('3.2.3.3. Update fee rate unsuccessfully with invalid rate', async () => {
@@ -690,16 +707,16 @@ describe('3.2. EstateMortgageToken', async () => {
 
             const paramsInput: UpdateFeeRateParamsInput = {
                 feeRate: Constant.COMMON_RATE_MAX_FRACTION.add(1),
-            }
+            };
             const params: UpdateFeeRateParams = {
                 ...paramsInput,
                 signatures: await getUpdateFeeRateSignatures(estateMortgageToken as any, paramsInput, admin, admins),
-            }
-            await expect(getMortgageTokenTx_UpdateFeeRate(estateMortgageToken as any, deployer, params))
-                .to.be.revertedWithCustomError(estateMortgageToken, 'InvalidRate');
+            };
+            await expect(
+                getMortgageTokenTx_UpdateFeeRate(estateMortgageToken as any, deployer, params)
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'InvalidRate');
         });
     });
-
 
     /* --- Query --- */
     describe('3.2.4. getMortgage(uint256)', () => {
@@ -722,7 +739,7 @@ describe('3.2. EstateMortgageToken', async () => {
             );
         });
     });
-    
+
     describe('3.2.5. getCollateral(uint256)', () => {
         it('3.2.5.1. Revert with invalid mortgage id', async () => {
             const fixture = await beforeEstateMortgageTokenTest({
@@ -754,31 +771,35 @@ describe('3.2. EstateMortgageToken', async () => {
 
             const zone1RoyaltyRate = ethers.utils.parseEther('0.1');
             const zone2RoyaltyRate = ethers.utils.parseEther('0.2');
-            
-            await callTransaction(getEstateTokenTxByInput_UpdateZoneRoyaltyRate(
-                estateToken as any,
-                deployer,
-                {
-                    zone: zone1,
-                    royaltyRate: zone1RoyaltyRate,
-                },
-                admin,
-                admins,
-            ));
-            
-            await callTransaction(getEstateTokenTxByInput_UpdateZoneRoyaltyRate(
-                estateToken as any,
-                deployer,
-                {
-                    zone: zone2,
-                    royaltyRate: zone2RoyaltyRate,
-                },
-                admin,
-                admins,
-            ));
+
+            await callTransaction(
+                getEstateTokenTxByInput_UpdateZoneRoyaltyRate(
+                    estateToken as any,
+                    deployer,
+                    {
+                        zone: zone1,
+                        royaltyRate: zone1RoyaltyRate,
+                    },
+                    admin,
+                    admins
+                )
+            );
+
+            await callTransaction(
+                getEstateTokenTxByInput_UpdateZoneRoyaltyRate(
+                    estateToken as any,
+                    deployer,
+                    {
+                        zone: zone2,
+                        royaltyRate: zone2RoyaltyRate,
+                    },
+                    admin,
+                    admins
+                )
+            );
 
             const salePrice = ethers.BigNumber.from(1e6);
-            
+
             const royaltyInfo1 = await estateMortgageToken.royaltyInfo(1, salePrice);
             const royaltyFee1 = salePrice.mul(zone1RoyaltyRate).div(Constant.COMMON_RATE_MAX_FRACTION);
             expect(royaltyInfo1[0]).to.equal(feeReceiver.address);
@@ -798,15 +819,13 @@ describe('3.2. EstateMortgageToken', async () => {
 
             const salePrice = ethers.utils.parseEther('10');
 
-            await expect(estateMortgageToken.royaltyInfo(0, salePrice))
-                .to.be.revertedWith("ERC721: invalid token ID");
-            await expect(estateMortgageToken.royaltyInfo(100, salePrice))
-                .to.be.revertedWith("ERC721: invalid token ID");
+            await expect(estateMortgageToken.royaltyInfo(0, salePrice)).to.be.revertedWith('ERC721: invalid token ID');
+            await expect(estateMortgageToken.royaltyInfo(100, salePrice)).to.be.revertedWith(
+                'ERC721: invalid token ID'
+            );
 
-            await expect(estateMortgageToken.royaltyInfo(1, salePrice))
-                .to.be.revertedWith("ERC721: invalid token ID");
-            await expect(estateMortgageToken.royaltyInfo(2, salePrice))
-                .to.be.revertedWith("ERC721: invalid token ID");
+            await expect(estateMortgageToken.royaltyInfo(1, salePrice)).to.be.revertedWith('ERC721: invalid token ID');
+            await expect(estateMortgageToken.royaltyInfo(2, salePrice)).to.be.revertedWith('ERC721: invalid token ID');
         });
     });
 
@@ -815,18 +834,27 @@ describe('3.2. EstateMortgageToken', async () => {
             const fixture = await beforeEstateMortgageTokenTest();
             const { estateMortgageToken } = fixture;
 
-            expect(await estateMortgageToken.supportsInterface(getBytes4Hex(IERC165UpgradeableInterfaceId))).to.equal(true);
-            expect(await estateMortgageToken.supportsInterface(getBytes4Hex(IEstateTokenReceiverInterfaceId))).to.equal(true);
-            expect(await estateMortgageToken.supportsInterface(getBytes4Hex(IERC721MetadataUpgradeableInterfaceId))).to.equal(true);
+            expect(await estateMortgageToken.supportsInterface(getBytes4Hex(IERC165UpgradeableInterfaceId))).to.equal(
+                true
+            );
+            expect(await estateMortgageToken.supportsInterface(getBytes4Hex(IEstateTokenReceiverInterfaceId))).to.equal(
+                true
+            );
+            expect(
+                await estateMortgageToken.supportsInterface(getBytes4Hex(IERC721MetadataUpgradeableInterfaceId))
+            ).to.equal(true);
             expect(await estateMortgageToken.supportsInterface(getBytes4Hex(IMortgageTokenInterfaceId))).to.equal(true);
-            expect(await estateMortgageToken.supportsInterface(getBytes4Hex(IERC2981UpgradeableInterfaceId))).to.equal(true);
+            expect(await estateMortgageToken.supportsInterface(getBytes4Hex(IERC2981UpgradeableInterfaceId))).to.equal(
+                true
+            );
         });
     });
 
-
     /* --- Command --- */
     describe('3.2.8. borrow(uint256,uint256,uint256,uint256,address,uint40)', async () => {
-        async function beforeBorrowTest(fixture: EstateMortgageTokenFixture): Promise<{ defaultParams: EstateBorrowParams }> {
+        async function beforeBorrowTest(
+            fixture: EstateMortgageTokenFixture
+        ): Promise<{ defaultParams: EstateBorrowParams }> {
             return {
                 defaultParams: {
                     estateId: BigNumber.from(1),
@@ -835,8 +863,8 @@ describe('3.2. EstateMortgageToken', async () => {
                     repayment: BigNumber.from(11e5),
                     currency: ethers.constants.AddressZero,
                     duration: 1000,
-                }
-            }
+                },
+            };
         }
 
         it('3.2.8.1. Create mortgage successfully', async () => {
@@ -850,34 +878,34 @@ describe('3.2. EstateMortgageToken', async () => {
                 repayment: BigNumber.from(11e5),
                 currency: ethers.constants.AddressZero,
                 duration: 1000,
-            }
+            };
 
             let initBorrower1Estate1Balance = await estateToken.balanceOf(borrower1.address, 1);
             let initEstateMortgageTokenEstate1Balance = await estateToken.balanceOf(estateMortgageToken.address, 1);
 
             const tx1 = await getEstateMortgageTokenTx_Borrow(estateMortgageToken, borrower1, params1);
             await tx1.wait();
-            
+
             const mortgage1 = await estateMortgageToken.getMortgage(1);
             const fee1 = scaleRate(mortgage1.principal, await estateMortgageToken.getFeeRate());
 
-            await expect(tx1).to.emit(estateMortgageToken, 'NewMortgage').withArgs(
-                1,
-                borrower1.address,
-                params1.principal,
-                params1.repayment,
-                fee1,
-                params1.currency,
-                params1.duration
-            );
-            await expect(tx1).to.emit(estateMortgageToken, 'NewCollateral').withArgs(
-                1,
-                params1.estateId,
-                params1.amount
-            );
+            await expect(tx1)
+                .to.emit(estateMortgageToken, 'NewMortgage')
+                .withArgs(
+                    1,
+                    borrower1.address,
+                    params1.principal,
+                    params1.repayment,
+                    fee1,
+                    params1.currency,
+                    params1.duration
+                );
+            await expect(tx1)
+                .to.emit(estateMortgageToken, 'NewCollateral')
+                .withArgs(1, params1.estateId, params1.amount);
 
             expect(await estateMortgageToken.mortgageNumber()).to.equal(1);
-            
+
             const collateral1 = await estateMortgageToken.getCollateral(1);
             expect(collateral1.tokenId).to.equal(params1.estateId);
             expect(collateral1.amount).to.equal(params1.amount);
@@ -891,8 +919,12 @@ describe('3.2. EstateMortgageToken', async () => {
             expect(mortgage1.borrower).to.equal(borrower1.address);
             expect(mortgage1.lender).to.equal(ethers.constants.AddressZero);
 
-            expect(await estateToken.balanceOf(borrower1.address, 1)).to.equal(initBorrower1Estate1Balance.sub(params1.amount));
-            expect(await estateToken.balanceOf(estateMortgageToken.address, 1)).to.equal(initEstateMortgageTokenEstate1Balance.add(params1.amount));
+            expect(await estateToken.balanceOf(borrower1.address, 1)).to.equal(
+                initBorrower1Estate1Balance.sub(params1.amount)
+            );
+            expect(await estateToken.balanceOf(estateMortgageToken.address, 1)).to.equal(
+                initEstateMortgageTokenEstate1Balance.add(params1.amount)
+            );
 
             const params2: EstateBorrowParams = {
                 estateId: BigNumber.from(2),
@@ -901,7 +933,7 @@ describe('3.2. EstateMortgageToken', async () => {
                 repayment: BigNumber.from(110000),
                 currency: currency.address,
                 duration: 1000,
-            }
+            };
 
             let initBorrower2Estate2Balance = await estateToken.balanceOf(borrower2.address, 2);
             let initEstateMortgageTokenEstate2Balance = await estateToken.balanceOf(estateMortgageToken.address, 2);
@@ -911,25 +943,25 @@ describe('3.2. EstateMortgageToken', async () => {
 
             const mortgage2 = await estateMortgageToken.getMortgage(2);
             const fee2 = await applyDiscount(
-                admin, 
+                admin,
                 scaleRate(mortgage2.principal, await estateMortgageToken.getFeeRate()),
                 currency
             );
 
-            await expect(tx2).to.emit(estateMortgageToken, 'NewMortgage').withArgs(
-                2,
-                borrower2.address,
-                params2.principal,
-                params2.repayment,
-                fee2,
-                params2.currency,
-                params2.duration
-            );
-            await expect(tx2).to.emit(estateMortgageToken, 'NewCollateral').withArgs(
-                2,
-                params2.estateId,
-                params2.amount
-            );
+            await expect(tx2)
+                .to.emit(estateMortgageToken, 'NewMortgage')
+                .withArgs(
+                    2,
+                    borrower2.address,
+                    params2.principal,
+                    params2.repayment,
+                    fee2,
+                    params2.currency,
+                    params2.duration
+                );
+            await expect(tx2)
+                .to.emit(estateMortgageToken, 'NewCollateral')
+                .withArgs(2, params2.estateId, params2.amount);
 
             expect(await estateMortgageToken.mortgageNumber()).to.equal(2);
 
@@ -946,20 +978,25 @@ describe('3.2. EstateMortgageToken', async () => {
             expect(mortgage2.borrower).to.equal(borrower2.address);
             expect(mortgage2.lender).to.equal(ethers.constants.AddressZero);
 
-            expect(await estateToken.balanceOf(borrower2.address, 2)).to.equal(initBorrower2Estate2Balance.sub(params2.amount));
-            expect(await estateToken.balanceOf(estateMortgageToken.address, 2)).to.equal(initEstateMortgageTokenEstate2Balance.add(params2.amount));
+            expect(await estateToken.balanceOf(borrower2.address, 2)).to.equal(
+                initBorrower2Estate2Balance.sub(params2.amount)
+            );
+            expect(await estateToken.balanceOf(estateMortgageToken.address, 2)).to.equal(
+                initEstateMortgageTokenEstate2Balance.add(params2.amount)
+            );
         });
 
         it('3.2.8.2. Create mortgage unsuccessfully when paused', async () => {
             const fixture = await beforeEstateMortgageTokenTest({
-                pause: true
+                pause: true,
             });
             const { estateMortgageToken, borrower1 } = fixture;
 
             const { defaultParams } = await beforeBorrowTest(fixture);
 
-            await expect(getEstateMortgageTokenTx_Borrow(estateMortgageToken, borrower1, defaultParams))
-                .to.be.revertedWith('Pausable: paused');
+            await expect(
+                getEstateMortgageTokenTx_Borrow(estateMortgageToken, borrower1, defaultParams)
+            ).to.be.revertedWith('Pausable: paused');
         });
 
         it('3.2.8.3. Create mortgage unsuccessfully with invalid estate id', async () => {
@@ -968,34 +1005,28 @@ describe('3.2. EstateMortgageToken', async () => {
 
             const { defaultParams } = await beforeBorrowTest(fixture);
 
-            await expect(getEstateMortgageTokenTx_Borrow(
-                estateMortgageToken,
-                borrower1,
-                {
+            await expect(
+                getEstateMortgageTokenTx_Borrow(estateMortgageToken, borrower1, {
                     ...defaultParams,
                     estateId: BigNumber.from(0),
-                }
-            )).to.be.revertedWithCustomError(estateMortgageToken, 'InvalidTokenId');
+                })
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'InvalidTokenId');
 
-            await expect(getEstateMortgageTokenTx_Borrow(
-                estateMortgageToken,
-                borrower1,
-                {
+            await expect(
+                getEstateMortgageTokenTx_Borrow(estateMortgageToken, borrower1, {
                     ...defaultParams,
                     estateId: BigNumber.from(3),
-                }
-            )).to.be.revertedWithCustomError(estateMortgageToken, 'InvalidTokenId');
+                })
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'InvalidTokenId');
 
             estateToken.isAvailable.whenCalledWith(1).returns(false);
 
-            await expect(getEstateMortgageTokenTx_Borrow(
-                estateMortgageToken,
-                borrower1,
-                {
+            await expect(
+                getEstateMortgageTokenTx_Borrow(estateMortgageToken, borrower1, {
                     ...defaultParams,
                     estateId: BigNumber.from(1),
-                }
-            )).to.be.revertedWithCustomError(estateMortgageToken, 'InvalidTokenId');
+                })
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'InvalidTokenId');
         });
 
         it('3.2.8.4. Create mortgage unsuccessfully with invalid currency', async () => {
@@ -1004,9 +1035,10 @@ describe('3.2. EstateMortgageToken', async () => {
             });
             const { estateMortgageToken, borrower1 } = fixture;
             const { defaultParams } = await beforeBorrowTest(fixture);
-            
-            await expect(getEstateMortgageTokenTx_Borrow(estateMortgageToken, borrower1, defaultParams))
-                .to.be.revertedWithCustomError(estateMortgageToken, 'InvalidCurrency');
+
+            await expect(
+                getEstateMortgageTokenTx_Borrow(estateMortgageToken, borrower1, defaultParams)
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'InvalidCurrency');
         });
 
         it('3.2.8.5. Create mortgage unsuccessfully with zero amount', async () => {
@@ -1014,14 +1046,12 @@ describe('3.2. EstateMortgageToken', async () => {
             const { estateMortgageToken, borrower1 } = fixture;
             const { defaultParams } = await beforeBorrowTest(fixture);
 
-            await expect(getEstateMortgageTokenTx_Borrow(
-                estateMortgageToken,
-                borrower1,
-                {
+            await expect(
+                getEstateMortgageTokenTx_Borrow(estateMortgageToken, borrower1, {
                     ...defaultParams,
                     amount: BigNumber.from(0),
-                }
-            )).to.be.revertedWithCustomError(estateMortgageToken, 'InvalidInput');
+                })
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'InvalidInput');
         });
 
         it('3.2.8.6. Create mortgage unsuccessfully with amount more than balance', async () => {
@@ -1031,14 +1061,12 @@ describe('3.2. EstateMortgageToken', async () => {
 
             const borrowerBalance = await estateToken.balanceOf(borrower1.address, defaultParams.estateId);
 
-            await expect(getEstateMortgageTokenTx_Borrow(
-                estateMortgageToken,
-                borrower1,
-                {
+            await expect(
+                getEstateMortgageTokenTx_Borrow(estateMortgageToken, borrower1, {
                     ...defaultParams,
                     amount: borrowerBalance.add(1),
-                }
-            )).to.be.revertedWithCustomError(estateMortgageToken, 'InvalidCollateral');
+                })
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'InvalidCollateral');
         });
 
         it('3.2.8.7. Create mortgage unsuccessfully with invalid principal', async () => {
@@ -1046,14 +1074,12 @@ describe('3.2. EstateMortgageToken', async () => {
             const { estateMortgageToken, estateToken, borrower1 } = fixture;
             const { defaultParams } = await beforeBorrowTest(fixture);
 
-            await expect(getEstateMortgageTokenTx_Borrow(
-                estateMortgageToken,
-                borrower1,
-                {
+            await expect(
+                getEstateMortgageTokenTx_Borrow(estateMortgageToken, borrower1, {
                     ...defaultParams,
                     principal: BigNumber.from(0),
-                }
-            )).to.be.revertedWithCustomError(estateMortgageToken, 'InvalidPrincipal');
+                })
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'InvalidPrincipal');
         });
 
         it('3.2.8.8. Create mortgage unsuccessfully with invalid repayment', async () => {
@@ -1061,14 +1087,12 @@ describe('3.2. EstateMortgageToken', async () => {
             const { estateMortgageToken, borrower1 } = fixture;
             const { defaultParams } = await beforeBorrowTest(fixture);
 
-            await expect(getEstateMortgageTokenTx_Borrow(
-                estateMortgageToken,
-                borrower1,
-                {
+            await expect(
+                getEstateMortgageTokenTx_Borrow(estateMortgageToken, borrower1, {
                     ...defaultParams,
                     repayment: defaultParams.principal.sub(1),
-                }
-            )).to.be.revertedWithCustomError(estateMortgageToken, 'InvalidRepayment');
+                })
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'InvalidRepayment');
         });
     });
 
@@ -1079,7 +1103,9 @@ describe('3.2. EstateMortgageToken', async () => {
             });
             const { estateMortgageToken, borrower1 } = fixture;
 
-            let tx = await getMortgageTokenTx_Cancel(estateMortgageToken, borrower1, { mortgageId: BigNumber.from(1) });
+            let tx = await getMortgageTokenTx_Cancel(estateMortgageToken, borrower1, {
+                mortgageId: BigNumber.from(1),
+            });
             await tx.wait();
 
             expect(tx).to.emit(estateMortgageToken, 'MortgageCancellation').withArgs(1);
@@ -1096,7 +1122,9 @@ describe('3.2. EstateMortgageToken', async () => {
             });
             const { estateMortgageToken, manager } = fixture;
 
-            let tx = await getMortgageTokenTx_Cancel(estateMortgageToken, manager, { mortgageId: BigNumber.from(2) });
+            let tx = await getMortgageTokenTx_Cancel(estateMortgageToken, manager, {
+                mortgageId: BigNumber.from(2),
+            });
             await tx.wait();
 
             expect(tx).to.emit(estateMortgageToken, 'MortgageCancellation').withArgs(2);
@@ -1112,10 +1140,16 @@ describe('3.2. EstateMortgageToken', async () => {
                 listSampleMortgage: true,
             });
             const { estateMortgageToken, lender1, moderator } = fixture;
-            await expect(getMortgageTokenTx_Cancel(estateMortgageToken, lender1, { mortgageId: BigNumber.from(1) }))
-                .to.be.revertedWithCustomError(estateMortgageToken, 'Unauthorized');
-            await expect(getMortgageTokenTx_Cancel(estateMortgageToken, moderator, { mortgageId: BigNumber.from(1) }))
-                .to.be.revertedWithCustomError(estateMortgageToken, 'Unauthorized');
+            await expect(
+                getMortgageTokenTx_Cancel(estateMortgageToken, lender1, {
+                    mortgageId: BigNumber.from(1),
+                })
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'Unauthorized');
+            await expect(
+                getMortgageTokenTx_Cancel(estateMortgageToken, moderator, {
+                    mortgageId: BigNumber.from(1),
+                })
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'Unauthorized');
         });
 
         it('3.2.9.4. Cancel mortgage unsuccessfully with invalid mortgage id', async () => {
@@ -1123,11 +1157,17 @@ describe('3.2. EstateMortgageToken', async () => {
                 listSampleMortgage: true,
             });
             const { estateMortgageToken, borrower1 } = fixture;
-            await expect(getMortgageTokenTx_Cancel(estateMortgageToken, borrower1, { mortgageId: BigNumber.from(0) }))
-                .to.be.revertedWithCustomError(estateMortgageToken, 'InvalidMortgageId');
+            await expect(
+                getMortgageTokenTx_Cancel(estateMortgageToken, borrower1, {
+                    mortgageId: BigNumber.from(0),
+                })
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'InvalidMortgageId');
 
-            await expect(getMortgageTokenTx_Cancel(estateMortgageToken, borrower1, { mortgageId: BigNumber.from(3) }))
-                .to.be.revertedWithCustomError(estateMortgageToken, 'InvalidMortgageId');
+            await expect(
+                getMortgageTokenTx_Cancel(estateMortgageToken, borrower1, {
+                    mortgageId: BigNumber.from(3),
+                })
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'InvalidMortgageId');
         });
 
         it('3.2.9.5. Cancel mortgage unsuccessfully with cancelled mortgage', async () => {
@@ -1135,10 +1175,17 @@ describe('3.2. EstateMortgageToken', async () => {
                 listSampleMortgage: true,
             });
             const { estateMortgageToken, borrower1 } = fixture;
-            await callTransaction(getMortgageTokenTx_Cancel(estateMortgageToken, borrower1, { mortgageId: BigNumber.from(1) }));
+            await callTransaction(
+                getMortgageTokenTx_Cancel(estateMortgageToken, borrower1, {
+                    mortgageId: BigNumber.from(1),
+                })
+            );
 
-            await expect(getMortgageTokenTx_Cancel(estateMortgageToken, borrower1, { mortgageId: BigNumber.from(1) }))
-                .to.be.revertedWithCustomError(estateMortgageToken, 'InvalidCancelling');
+            await expect(
+                getMortgageTokenTx_Cancel(estateMortgageToken, borrower1, {
+                    mortgageId: BigNumber.from(1),
+                })
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'InvalidCancelling');
         });
 
         it('3.2.9.6. Cancel mortgage unsuccessfully with supplied mortgage', async () => {
@@ -1147,10 +1194,15 @@ describe('3.2. EstateMortgageToken', async () => {
             });
             const { estateMortgageToken, borrower1, lender1 } = fixture;
 
-            await callTransaction(getMortgageTokenTx_Lend(estateMortgageToken, lender1, { mortgageId: BigNumber.from(1) }, { value: 1e9 }));
+            await callTransaction(
+                getMortgageTokenTx_Lend(estateMortgageToken, lender1, { mortgageId: BigNumber.from(1) }, { value: 1e9 })
+            );
 
-            await expect(getMortgageTokenTx_Cancel(estateMortgageToken, borrower1, { mortgageId: BigNumber.from(1) }))
-                .to.be.revertedWithCustomError(estateMortgageToken, 'InvalidCancelling');
+            await expect(
+                getMortgageTokenTx_Cancel(estateMortgageToken, borrower1, {
+                    mortgageId: BigNumber.from(1),
+                })
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'InvalidCancelling');
         });
 
         it('3.2.9.7. Cancel mortgage unsuccessfully with foreclosed mortgage', async () => {
@@ -1159,15 +1211,24 @@ describe('3.2. EstateMortgageToken', async () => {
             });
             const { estateMortgageToken, borrower1, lender1 } = fixture;
 
-            await callTransaction(getMortgageTokenTx_Lend(estateMortgageToken, lender1, { mortgageId: BigNumber.from(1) }, { value: 1e9 }));
+            await callTransaction(
+                getMortgageTokenTx_Lend(estateMortgageToken, lender1, { mortgageId: BigNumber.from(1) }, { value: 1e9 })
+            );
 
             const due = (await estateMortgageToken.getMortgage(1)).due;
 
             await time.setNextBlockTimestamp(due);
-            await callTransaction(getMortgageTokenTx_Foreclose(estateMortgageToken, lender1, { mortgageId: BigNumber.from(1) }));
+            await callTransaction(
+                getMortgageTokenTx_Foreclose(estateMortgageToken, lender1, {
+                    mortgageId: BigNumber.from(1),
+                })
+            );
 
-            await expect(getMortgageTokenTx_Cancel(estateMortgageToken, borrower1, { mortgageId: BigNumber.from(1) }))
-                .to.be.revertedWithCustomError(estateMortgageToken, 'InvalidCancelling');
+            await expect(
+                getMortgageTokenTx_Cancel(estateMortgageToken, borrower1, {
+                    mortgageId: BigNumber.from(1),
+                })
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'InvalidCancelling');
         });
 
         it('3.2.9.8. Cancel mortgage unsuccessfully with repaid mortgage', async () => {
@@ -1176,12 +1237,24 @@ describe('3.2. EstateMortgageToken', async () => {
             });
             const { estateMortgageToken, borrower1, lender1 } = fixture;
 
-            await callTransaction(getMortgageTokenTx_Lend(estateMortgageToken, lender1, { mortgageId: BigNumber.from(1) }, { value: 1e9 }));
+            await callTransaction(
+                getMortgageTokenTx_Lend(estateMortgageToken, lender1, { mortgageId: BigNumber.from(1) }, { value: 1e9 })
+            );
 
-            await callTransaction(getMortgageTokenTx_Repay(estateMortgageToken, borrower1, { mortgageId: BigNumber.from(1) }, { value: 1e9 }));
+            await callTransaction(
+                getMortgageTokenTx_Repay(
+                    estateMortgageToken,
+                    borrower1,
+                    { mortgageId: BigNumber.from(1) },
+                    { value: 1e9 }
+                )
+            );
 
-            await expect(getMortgageTokenTx_Cancel(estateMortgageToken, borrower1, { mortgageId: BigNumber.from(1) }))
-                .to.be.revertedWithCustomError(estateMortgageToken, 'InvalidCancelling');
+            await expect(
+                getMortgageTokenTx_Cancel(estateMortgageToken, borrower1, {
+                    mortgageId: BigNumber.from(1),
+                })
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'InvalidCancelling');
         });
     });
 
@@ -1196,75 +1269,91 @@ describe('3.2. EstateMortgageToken', async () => {
             initialAmount: BigNumber,
             amount: BigNumber,
             principal: BigNumber,
-            repayment: BigNumber,
+            repayment: BigNumber
         ) {
-            const { estateMortgageToken, admin, admins, commissionToken, deployer, estateToken, estateForger, borrower1, lender1, feeReceiver, custodian1, manager, zone1 } = fixture;
+            const {
+                estateMortgageToken,
+                admin,
+                admins,
+                commissionToken,
+                deployer,
+                estateToken,
+                estateForger,
+                borrower1,
+                lender1,
+                feeReceiver,
+                custodian1,
+                manager,
+                zone1,
+            } = fixture;
 
             const currentMortgageId = (await estateMortgageToken.mortgageNumber()).add(1);
-            const currentTokenizationId = 0 // Does not matter
+            const currentTokenizationId = 0; // Does not matter
             const zone = zone1;
             const borrower = borrower1;
             const lender = lender1;
             const broker = randomWallet();
-            
-            await callTransaction(getMortgageTokenTxByInput_UpdateFeeRate(
-                estateMortgageToken as any,
-                deployer,
-                { feeRate: estateMortgageTokenFeeRate },
-                admin,
-                admins,
-            ));
 
-            await callTransaction(getCommissionTokenTx_RegisterBroker(
-                commissionToken as any,
-                manager,
-                {
+            await callTransaction(
+                getMortgageTokenTxByInput_UpdateFeeRate(
+                    estateMortgageToken as any,
+                    deployer,
+                    { feeRate: estateMortgageTokenFeeRate },
+                    admin,
+                    admins
+                )
+            );
+
+            await callTransaction(
+                getCommissionTokenTx_RegisterBroker(commissionToken as any, manager, {
                     zone,
                     broker: broker.address,
                     commissionRate: commissionTokenRate,
-                }
-            ));
+                })
+            );
 
             let newCurrency: Currency | null = null;
             let newCurrencyAddress: string;
             if (isERC20) {
-                newCurrency = await deployCurrency(
+                newCurrency = (await deployCurrency(
                     deployer.address,
                     `NewMockCurrency_${currentMortgageId}`,
                     `NMC_${currentMortgageId}`
-                ) as Currency;
-                await callTransaction(newCurrency.setExclusiveDiscount(currencyExclusiveRate, Constant.COMMON_RATE_DECIMALS));
+                )) as Currency;
+                await callTransaction(
+                    newCurrency.setExclusiveDiscount(currencyExclusiveRate, Constant.COMMON_RATE_DECIMALS)
+                );
                 newCurrencyAddress = newCurrency.address;
             } else {
                 newCurrencyAddress = ethers.constants.AddressZero;
             }
 
-            await callTransaction(getAdminTxByInput_UpdateCurrencyRegistries(
-                admin,
-                deployer,
-                {
-                    currencies: [newCurrencyAddress],
-                    isAvailable: [true],
-                    isExclusive: [isExclusive],
-                },
-                admins
-            ));
+            await callTransaction(
+                getAdminTxByInput_UpdateCurrencyRegistries(
+                    admin,
+                    deployer,
+                    {
+                        currencies: [newCurrencyAddress],
+                        isAvailable: [true],
+                        isExclusive: [isExclusive],
+                    },
+                    admins
+                )
+            );
 
-            let currentTimestamp = await time.latest() + 10;
+            let currentTimestamp = (await time.latest()) + 10;
 
-            await callTransaction(getCallEstateTokenTx_TokenizeEstate(
-                estateToken as any,
-                estateForger,
-                {
+            await callTransaction(
+                getCallEstateTokenTx_TokenizeEstate(estateToken as any, estateForger, {
                     totalSupply: BigNumber.from(0),
                     zone,
                     tokenizationId: BigNumber.from(currentTokenizationId),
-                    uri: "TestURI",
+                    uri: 'TestURI',
                     expireAt: currentTimestamp + 1e9,
                     custodian: custodian1.address,
                     broker: broker.address,
-                }
-            ));
+                })
+            );
 
             const currentTokenId = await estateToken.estateNumber();
 
@@ -1280,18 +1369,16 @@ describe('3.2. EstateMortgageToken', async () => {
 
             const due = 1000;
 
-            let receipt = await callTransaction(getEstateMortgageTokenTx_Borrow(
-                estateMortgageToken,
-                borrower,
-                {
+            let receipt = await callTransaction(
+                getEstateMortgageTokenTx_Borrow(estateMortgageToken, borrower, {
                     estateId: currentMortgageId,
                     amount,
                     principal,
                     repayment,
                     currency: newCurrencyAddress,
                     duration: due,
-                }
-            ));
+                })
+            );
 
             let fee = principal.mul(estateMortgageTokenFeeRate).div(Constant.COMMON_RATE_MAX_FRACTION);
             if (isExclusive) {
@@ -1300,7 +1387,7 @@ describe('3.2. EstateMortgageToken', async () => {
             let commissionAmount = fee.mul(commissionTokenRate).div(Constant.COMMON_RATE_MAX_FRACTION);
 
             let ethValue = ethers.BigNumber.from(0);
-            await prepareNativeToken(ethers.provider, deployer, [lender], ethers.utils.parseEther("1.0"));
+            await prepareNativeToken(ethers.provider, deployer, [lender], ethers.utils.parseEther('1.0'));
             if (isERC20) {
                 await prepareERC20(newCurrency!, [lender], [estateMortgageToken], principal);
             } else {
@@ -1336,16 +1423,12 @@ describe('3.2. EstateMortgageToken', async () => {
                 expectedLenderBalance = expectedLenderBalance.sub(gasFee);
             }
 
-            await expect(tx).to.emit(estateMortgageToken, 'NewToken').withArgs(
-                currentMortgageId,
-                lender.address,
-                currentTimestamp + due,
-            );
-            await expect(tx).to.emit(estateMortgageToken, 'CommissionDispatch').withArgs(
-                broker.address,
-                commissionAmount,
-                newCurrencyAddress
-            );
+            await expect(tx)
+                .to.emit(estateMortgageToken, 'NewToken')
+                .withArgs(currentMortgageId, lender.address, currentTimestamp + due);
+            await expect(tx)
+                .to.emit(estateMortgageToken, 'CommissionDispatch')
+                .withArgs(broker.address, commissionAmount, newCurrencyAddress);
 
             const mortgage = await estateMortgageToken.getMortgage(currentMortgageId);
             expect(mortgage.due).to.equal(currentTimestamp + due);
@@ -1356,7 +1439,9 @@ describe('3.2. EstateMortgageToken', async () => {
 
             expect(await getBalance(ethers.provider, borrower.address, newCurrency)).to.equal(expectedBorrowerBalance);
             expect(await getBalance(ethers.provider, lender.address, newCurrency)).to.equal(expectedLenderBalance);
-            expect(await getBalance(ethers.provider, feeReceiver.address, newCurrency)).to.equal(expectedFeeReceiverBalance);
+            expect(await getBalance(ethers.provider, feeReceiver.address, newCurrency)).to.equal(
+                expectedFeeReceiverBalance
+            );
             expect(await getBalance(ethers.provider, broker.address, newCurrency)).to.equal(expectedBrokerBalance);
 
             expect(await estateToken.balanceOf(borrower.address, currentTokenId)).to.equal(initialAmount.sub(amount));
@@ -1368,7 +1453,7 @@ describe('3.2. EstateMortgageToken', async () => {
                 await resetERC20(newCurrency!, [borrower, lender, feeReceiver, broker]);
             } else {
                 await resetNativeToken(ethers.provider, [borrower, lender, feeReceiver, broker]);
-                await prepareNativeToken(ethers.provider, deployer, [borrower, lender], ethers.utils.parseEther("1.0"));
+                await prepareNativeToken(ethers.provider, deployer, [borrower, lender], ethers.utils.parseEther('1.0'));
             }
         }
 
@@ -1387,8 +1472,8 @@ describe('3.2. EstateMortgageToken', async () => {
                 ethers.BigNumber.from(200_000),
                 ethers.BigNumber.from(150_000),
                 ethers.BigNumber.from(10e5),
-                ethers.BigNumber.from(11e5),
-            )
+                ethers.BigNumber.from(11e5)
+            );
 
             await testLend(
                 fixture,
@@ -1400,8 +1485,8 @@ describe('3.2. EstateMortgageToken', async () => {
                 ethers.BigNumber.from(300),
                 ethers.BigNumber.from(200),
                 ethers.BigNumber.from(100000),
-                ethers.BigNumber.from(110000),
-            )
+                ethers.BigNumber.from(110000)
+            );
         });
 
         it('3.2.10.2. Lend successfully in all native/erc20 and exclusive/non-exclusive combinations', async () => {
@@ -1424,8 +1509,8 @@ describe('3.2. EstateMortgageToken', async () => {
                         ethers.BigNumber.from(200_000),
                         ethers.BigNumber.from(150_000),
                         ethers.BigNumber.from(10e5),
-                        ethers.BigNumber.from(11e5),
-                    )
+                        ethers.BigNumber.from(11e5)
+                    );
                 }
             }
         });
@@ -1445,16 +1530,16 @@ describe('3.2. EstateMortgageToken', async () => {
                     const repayment = principal.add(1);
                     await testLend(
                         fixture,
-                        ethers.utils.parseEther("0.99"),
-                        ethers.utils.parseEther("0.99"),
-                        ethers.utils.parseEther("0.99"),
+                        ethers.utils.parseEther('0.99'),
+                        ethers.utils.parseEther('0.99'),
+                        ethers.utils.parseEther('0.99'),
                         isERC20,
                         isExclusive,
                         amount.add(1),
                         amount,
                         principal,
-                        repayment,
-                    )
+                        repayment
+                    );
                 }
             }
         });
@@ -1467,21 +1552,21 @@ describe('3.2. EstateMortgageToken', async () => {
             for (let testcase = 0; testcase < 100; testcase++) {
                 const isERC20 = Math.random() < 0.5;
                 const isExclusive = Math.random() < 0.5;
-                const feeRate = randomBigNumber(ethers.constants.Zero, ethers.utils.parseEther("1.0"));
-                const exclusiveRate = randomBigNumber(ethers.constants.Zero, ethers.utils.parseEther("1.0"));
-                const commissionRate = randomBigNumber(ethers.constants.Zero, ethers.utils.parseEther("1.0"));
+                const feeRate = randomBigNumber(ethers.constants.Zero, ethers.utils.parseEther('1.0'));
+                const exclusiveRate = randomBigNumber(ethers.constants.Zero, ethers.utils.parseEther('1.0'));
+                const commissionRate = randomBigNumber(ethers.constants.Zero, ethers.utils.parseEther('1.0'));
 
                 if (isExclusive && !isERC20) {
                     --testcase;
                     continue;
                 }
 
-                let randomNums = []
+                let randomNums = [];
                 for (let i = 0; i < 2; ++i) {
                     const maxSupply = ethers.BigNumber.from(2).pow(255);
                     randomNums.push(ethers.BigNumber.from(ethers.utils.randomBytes(32)).mod(maxSupply).add(1));
                 }
-                randomNums.sort((a, b) => a.sub(b).lt(0) ? -1 : 1);
+                randomNums.sort((a, b) => (a.sub(b).lt(0) ? -1 : 1));
 
                 const initAmount = randomNums[1];
                 const amount = randomNums[0];
@@ -1491,7 +1576,7 @@ describe('3.2. EstateMortgageToken', async () => {
                     const maxSupply = ethers.BigNumber.from(2).pow(255);
                     randomNums.push(ethers.BigNumber.from(ethers.utils.randomBytes(32)).mod(maxSupply).add(1));
                 }
-                randomNums.sort((a, b) => a.sub(b).lt(0) ? -1 : 1);
+                randomNums.sort((a, b) => (a.sub(b).lt(0) ? -1 : 1));
 
                 const principal = randomNums[0];
                 const repayment = randomNums[1];
@@ -1506,7 +1591,7 @@ describe('3.2. EstateMortgageToken', async () => {
                     initAmount,
                     amount,
                     principal,
-                    repayment,
+                    repayment
                 );
             }
         });
@@ -1518,8 +1603,14 @@ describe('3.2. EstateMortgageToken', async () => {
             });
             const { estateMortgageToken, borrower1 } = fixture;
 
-            await expect(getMortgageTokenTx_Lend(estateMortgageToken, borrower1, { mortgageId: BigNumber.from(1) }, { value: 1e9 }))
-                .to.be.revertedWith("Pausable: paused");
+            await expect(
+                getMortgageTokenTx_Lend(
+                    estateMortgageToken,
+                    borrower1,
+                    { mortgageId: BigNumber.from(1) },
+                    { value: 1e9 }
+                )
+            ).to.be.revertedWith('Pausable: paused');
         });
 
         it('3.2.10.6. Lend unsuccessfully with invalid mortgage id', async () => {
@@ -1528,11 +1619,23 @@ describe('3.2. EstateMortgageToken', async () => {
             });
             const { estateMortgageToken, borrower1 } = fixture;
 
-            await expect(getMortgageTokenTx_Lend(estateMortgageToken, borrower1, { mortgageId: BigNumber.from(0) }, { value: 1e9 }))
-                .to.be.revertedWithCustomError(estateMortgageToken, "InvalidMortgageId");
+            await expect(
+                getMortgageTokenTx_Lend(
+                    estateMortgageToken,
+                    borrower1,
+                    { mortgageId: BigNumber.from(0) },
+                    { value: 1e9 }
+                )
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'InvalidMortgageId');
 
-            await expect(getMortgageTokenTx_Lend(estateMortgageToken, borrower1, { mortgageId: BigNumber.from(3) }, { value: 1e9 }))
-                .to.be.revertedWithCustomError(estateMortgageToken, "InvalidMortgageId");
+            await expect(
+                getMortgageTokenTx_Lend(
+                    estateMortgageToken,
+                    borrower1,
+                    { mortgageId: BigNumber.from(3) },
+                    { value: 1e9 }
+                )
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'InvalidMortgageId');
         });
 
         it('3.2.10.7. Lend unsuccessfully when borrower lend their own mortgage', async () => {
@@ -1541,11 +1644,23 @@ describe('3.2. EstateMortgageToken', async () => {
             });
             const { estateMortgageToken, borrower1, borrower2 } = fixture;
 
-            await expect(getMortgageTokenTx_Lend(estateMortgageToken, borrower1, { mortgageId: BigNumber.from(1) }, { value: 1e9 }))
-                .to.be.revertedWithCustomError(estateMortgageToken, "InvalidLending");
+            await expect(
+                getMortgageTokenTx_Lend(
+                    estateMortgageToken,
+                    borrower1,
+                    { mortgageId: BigNumber.from(1) },
+                    { value: 1e9 }
+                )
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'InvalidLending');
 
-            await expect(getMortgageTokenTx_Lend(estateMortgageToken, borrower2, { mortgageId: BigNumber.from(2) }, { value: 1e9 }))
-                .to.be.revertedWithCustomError(estateMortgageToken, "InvalidLending");
+            await expect(
+                getMortgageTokenTx_Lend(
+                    estateMortgageToken,
+                    borrower2,
+                    { mortgageId: BigNumber.from(2) },
+                    { value: 1e9 }
+                )
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'InvalidLending');
         });
 
         it('3.2.10.8. Lend unsuccessfully with supplied mortgage', async () => {
@@ -1554,12 +1669,16 @@ describe('3.2. EstateMortgageToken', async () => {
             });
             const { estateMortgageToken, borrower1, lender1, lender2 } = fixture;
 
-            await callTransaction(getMortgageTokenTx_Lend(estateMortgageToken, lender1, { mortgageId: BigNumber.from(1) }, { value: 1e9 }));
+            await callTransaction(
+                getMortgageTokenTx_Lend(estateMortgageToken, lender1, { mortgageId: BigNumber.from(1) }, { value: 1e9 })
+            );
 
-            await expect(getMortgageTokenTx_Lend(estateMortgageToken, lender1, { mortgageId: BigNumber.from(1) }, { value: 1e9 }))
-                .to.be.revertedWithCustomError(estateMortgageToken, "InvalidLending");
-            await expect(getMortgageTokenTx_Lend(estateMortgageToken, lender2, { mortgageId: BigNumber.from(1) }, { value: 1e9 }))
-                .to.be.revertedWithCustomError(estateMortgageToken, "InvalidLending");
+            await expect(
+                getMortgageTokenTx_Lend(estateMortgageToken, lender1, { mortgageId: BigNumber.from(1) }, { value: 1e9 })
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'InvalidLending');
+            await expect(
+                getMortgageTokenTx_Lend(estateMortgageToken, lender2, { mortgageId: BigNumber.from(1) }, { value: 1e9 })
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'InvalidLending');
         });
 
         it('3.2.10.9. Lend unsuccessfully with repaid mortgage', async () => {
@@ -1568,14 +1687,25 @@ describe('3.2. EstateMortgageToken', async () => {
             });
             const { estateMortgageToken, borrower1, lender1, lender2 } = fixture;
 
-            await callTransaction(getMortgageTokenTx_Lend(estateMortgageToken, lender1, { mortgageId: BigNumber.from(1) }, { value: 1e9 }));
+            await callTransaction(
+                getMortgageTokenTx_Lend(estateMortgageToken, lender1, { mortgageId: BigNumber.from(1) }, { value: 1e9 })
+            );
 
-            await callTransaction(getMortgageTokenTx_Repay(estateMortgageToken, borrower1, { mortgageId: BigNumber.from(1) }, { value: 1e9 }));
+            await callTransaction(
+                getMortgageTokenTx_Repay(
+                    estateMortgageToken,
+                    borrower1,
+                    { mortgageId: BigNumber.from(1) },
+                    { value: 1e9 }
+                )
+            );
 
-            await expect(getMortgageTokenTx_Lend(estateMortgageToken, lender1, { mortgageId: BigNumber.from(1) }, { value: 1e9 }))
-                .to.be.revertedWithCustomError(estateMortgageToken, "InvalidLending");
-            await expect(getMortgageTokenTx_Lend(estateMortgageToken, lender2, { mortgageId: BigNumber.from(1) }, { value: 1e9 }))
-                .to.be.revertedWithCustomError(estateMortgageToken, "InvalidLending");
+            await expect(
+                getMortgageTokenTx_Lend(estateMortgageToken, lender1, { mortgageId: BigNumber.from(1) }, { value: 1e9 })
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'InvalidLending');
+            await expect(
+                getMortgageTokenTx_Lend(estateMortgageToken, lender2, { mortgageId: BigNumber.from(1) }, { value: 1e9 })
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'InvalidLending');
         });
 
         it('3.2.10.10. Lend unsuccessfully with cancelled mortgage', async () => {
@@ -1584,10 +1714,15 @@ describe('3.2. EstateMortgageToken', async () => {
             });
             const { estateMortgageToken, borrower1, lender1 } = fixture;
 
-            await callTransaction(getMortgageTokenTx_Cancel(estateMortgageToken, borrower1, { mortgageId: BigNumber.from(1) }));
+            await callTransaction(
+                getMortgageTokenTx_Cancel(estateMortgageToken, borrower1, {
+                    mortgageId: BigNumber.from(1),
+                })
+            );
 
-            await expect(getMortgageTokenTx_Lend(estateMortgageToken, lender1, { mortgageId: BigNumber.from(1) }, { value: 1e9 }))
-                .to.be.revertedWithCustomError(estateMortgageToken, "InvalidLending");
+            await expect(
+                getMortgageTokenTx_Lend(estateMortgageToken, lender1, { mortgageId: BigNumber.from(1) }, { value: 1e9 })
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'InvalidLending');
         });
 
         it('3.2.10.11. Lend unsuccessfully with foreclosed mortgage', async () => {
@@ -1596,17 +1731,25 @@ describe('3.2. EstateMortgageToken', async () => {
             });
             const { estateMortgageToken, lender1, lender2 } = fixture;
 
-            await callTransaction(getMortgageTokenTx_Lend(estateMortgageToken, lender1, { mortgageId: BigNumber.from(1) }, { value: 1e9 }));
+            await callTransaction(
+                getMortgageTokenTx_Lend(estateMortgageToken, lender1, { mortgageId: BigNumber.from(1) }, { value: 1e9 })
+            );
 
             const due = (await estateMortgageToken.getMortgage(1)).due;
             await time.setNextBlockTimestamp(due);
 
-            await callTransaction(getMortgageTokenTx_Foreclose(estateMortgageToken, lender1, { mortgageId: BigNumber.from(1) }));
+            await callTransaction(
+                getMortgageTokenTx_Foreclose(estateMortgageToken, lender1, {
+                    mortgageId: BigNumber.from(1),
+                })
+            );
 
-            await expect(getMortgageTokenTx_Lend(estateMortgageToken, lender1, { mortgageId: BigNumber.from(1) }, { value: 1e9 }))
-                .to.be.revertedWithCustomError(estateMortgageToken, "InvalidLending");
-            await expect(getMortgageTokenTx_Lend(estateMortgageToken, lender2, { mortgageId: BigNumber.from(1) }, { value: 1e9 }))
-                .to.be.revertedWithCustomError(estateMortgageToken, "InvalidLending");
+            await expect(
+                getMortgageTokenTx_Lend(estateMortgageToken, lender1, { mortgageId: BigNumber.from(1) }, { value: 1e9 })
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'InvalidLending');
+            await expect(
+                getMortgageTokenTx_Lend(estateMortgageToken, lender2, { mortgageId: BigNumber.from(1) }, { value: 1e9 })
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'InvalidLending');
         });
 
         it('3.2.10.12. Lend unsuccessfully with insufficient native token', async () => {
@@ -1615,8 +1758,11 @@ describe('3.2. EstateMortgageToken', async () => {
             });
             const { estateMortgageToken, lender1 } = fixture;
 
-            await expect(getMortgageTokenTx_Lend(estateMortgageToken, lender1, { mortgageId: BigNumber.from(1) }))
-                .to.be.revertedWithCustomError(estateMortgageToken, "InsufficientValue");
+            await expect(
+                getMortgageTokenTx_Lend(estateMortgageToken, lender1, {
+                    mortgageId: BigNumber.from(1),
+                })
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'InsufficientValue');
         });
 
         it('3.2.10.13. Lend unsuccessfully when native token transfer to borrower failed', async () => {
@@ -1626,46 +1772,54 @@ describe('3.2. EstateMortgageToken', async () => {
             const failReceiver = await deployFailReceiver(deployer, true, false);
 
             await callTransaction(estateToken.mint(failReceiver.address, 1, 200_000));
-            await callTransaction(failReceiver.call(
-                estateToken.address,
-                estateToken.interface.encodeFunctionData("setApprovalForAll", [estateMortgageToken.address, true])
-            ));
+            await callTransaction(
+                failReceiver.call(
+                    estateToken.address,
+                    estateToken.interface.encodeFunctionData('setApprovalForAll', [estateMortgageToken.address, true])
+                )
+            );
 
-            const data = estateMortgageToken.interface.encodeFunctionData("borrow", [1, 150_000, 10e5, 11e5, ethers.constants.AddressZero, 1000]);
+            const data = estateMortgageToken.interface.encodeFunctionData('borrow', [
+                1,
+                150_000,
+                10e5,
+                11e5,
+                ethers.constants.AddressZero,
+                1000,
+            ]);
             await callTransaction(failReceiver.call(estateMortgageToken.address, data));
 
-            await expect(getMortgageTokenTx_Lend(estateMortgageToken, lender1, { mortgageId: BigNumber.from(1) }, { value: 1e9 }))
-                .to.be.revertedWithCustomError(estateMortgageToken, "FailedTransfer");
+            await expect(
+                getMortgageTokenTx_Lend(estateMortgageToken, lender1, { mortgageId: BigNumber.from(1) }, { value: 1e9 })
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'FailedTransfer');
         });
 
         it('3.2.10.14. Lend unsuccessfully when native token transfer to commission receiver failed', async () => {
             const fixture = await beforeEstateMortgageTokenTest();
-            const { estateMortgageToken, borrower2, lender1, deployer, estateToken, commissionToken, broker2 } = fixture;
+            const { estateMortgageToken, borrower2, lender1, deployer, estateToken, commissionToken, broker2 } =
+                fixture;
 
             const failReceiver = await deployFailReceiver(deployer, true, false);
 
-            await callTransaction(getEstateMortgageTokenTx_Borrow(
-                estateMortgageToken,
-                borrower2,
-                {
+            await callTransaction(
+                getEstateMortgageTokenTx_Borrow(estateMortgageToken, borrower2, {
                     estateId: BigNumber.from(2),
                     amount: BigNumber.from(200),
                     principal: BigNumber.from(100000),
                     repayment: BigNumber.from(110000),
                     currency: ethers.constants.AddressZero,
                     duration: 1000,
-                }
-            ));
+                })
+            );
             await callTransaction(estateToken.connect(borrower2).setApprovalForAll(estateMortgageToken.address, true));
-            
-            await callTransaction(commissionToken.connect(broker2).transferFrom(
-                broker2.address,
-                failReceiver.address,
-                2,
-            ));
 
-            await expect(getMortgageTokenTx_Lend(estateMortgageToken, lender1, { mortgageId: BigNumber.from(1) }, { value: 1e9 }))
-                .to.be.revertedWithCustomError(estateMortgageToken, "FailedTransfer");
+            await callTransaction(
+                commissionToken.connect(broker2).transferFrom(broker2.address, failReceiver.address, 2)
+            );
+
+            await expect(
+                getMortgageTokenTx_Lend(estateMortgageToken, lender1, { mortgageId: BigNumber.from(1) }, { value: 1e9 })
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'FailedTransfer');
         });
 
         it('3.2.10.15. Buy token unsuccessfully when refund to lender failed', async () => {
@@ -1675,10 +1829,13 @@ describe('3.2. EstateMortgageToken', async () => {
             const { estateMortgageToken, deployer } = fixture;
             const failReceiver = await deployFailReceiver(deployer, true, false);
 
-            let data = estateMortgageToken.interface.encodeFunctionData("lend", [1]);
+            let data = estateMortgageToken.interface.encodeFunctionData('lend', [1]);
 
-            await expect(failReceiver.call(estateMortgageToken.address, data, { value: 1e9 }))
-                .to.be.revertedWithCustomError(estateMortgageToken, "FailedRefund");
+            await expect(
+                failReceiver.call(estateMortgageToken.address, data, {
+                    value: 1e9,
+                })
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'FailedRefund');
         });
 
         it('3.2.10.16. Buy token unsuccessfully when borrower reenter this function', async () => {
@@ -1689,36 +1846,39 @@ describe('3.2. EstateMortgageToken', async () => {
 
             await callTransaction(estateToken.mint(reentrancy.address, 1, 100_000));
 
-            await callTransaction(reentrancy.call(
-                estateToken.address,
-                estateToken.interface.encodeFunctionData("setApprovalForAll", [
-                    estateMortgageToken.address,
-                    true
-                ])
-            ));
+            await callTransaction(
+                reentrancy.call(
+                    estateToken.address,
+                    estateToken.interface.encodeFunctionData('setApprovalForAll', [estateMortgageToken.address, true])
+                )
+            );
 
-            await callTransaction(reentrancy.call(
-                estateMortgageToken.address,
-                estateMortgageToken.interface.encodeFunctionData("borrow", [
-                    1,
-                    100_000,
-                    10e5,
-                    11e5,
-                    ethers.constants.AddressZero,
-                    1000
-                ])
-            ));
+            await callTransaction(
+                reentrancy.call(
+                    estateMortgageToken.address,
+                    estateMortgageToken.interface.encodeFunctionData('borrow', [
+                        1,
+                        100_000,
+                        10e5,
+                        11e5,
+                        ethers.constants.AddressZero,
+                        1000,
+                    ])
+                )
+            );
 
             const mortgageId = 1;
 
-            await testReentrancy_estateMortgageToken(
-                estateMortgageToken,
-                reentrancy,
-                async () => {
-                    await expect(getMortgageTokenTx_Lend(estateMortgageToken, lender1, { mortgageId: BigNumber.from(mortgageId) }, { value: 1e9 }))
-                        .to.be.revertedWithCustomError(estateMortgageToken, "FailedTransfer");
-                },
-            );
+            await testReentrancy_estateMortgageToken(estateMortgageToken, reentrancy, async () => {
+                await expect(
+                    getMortgageTokenTx_Lend(
+                        estateMortgageToken,
+                        lender1,
+                        { mortgageId: BigNumber.from(mortgageId) },
+                        { value: 1e9 }
+                    )
+                ).to.be.revertedWithCustomError(estateMortgageToken, 'FailedTransfer');
+            });
         });
     });
 
@@ -1729,19 +1889,23 @@ describe('3.2. EstateMortgageToken', async () => {
             });
             const { estateMortgageToken, borrower1, borrower2 } = fixture;
 
-            await expect(getMortgageTokenTxByParams_SafeLend(
-                estateMortgageToken,
-                borrower2,
-                { mortgageId: BigNumber.from(1) },
-                { value: 1e9 }
-            )).to.not.be.reverted;
+            await expect(
+                getMortgageTokenTxByParams_SafeLend(
+                    estateMortgageToken,
+                    borrower2,
+                    { mortgageId: BigNumber.from(1) },
+                    { value: 1e9 }
+                )
+            ).to.not.be.reverted;
 
-            await expect(getMortgageTokenTxByParams_SafeLend(
-                estateMortgageToken,
-                borrower1,
-                { mortgageId: BigNumber.from(2) },
-                { value: 1e9 }
-            )).to.not.be.reverted;
+            await expect(
+                getMortgageTokenTxByParams_SafeLend(
+                    estateMortgageToken,
+                    borrower1,
+                    { mortgageId: BigNumber.from(2) },
+                    { value: 1e9 }
+                )
+            ).to.not.be.reverted;
         });
 
         it('3.2.11.2. Safe lend unsuccessfully with invalid mortgage id', async () => {
@@ -1750,19 +1914,29 @@ describe('3.2. EstateMortgageToken', async () => {
             });
             const { estateMortgageToken, borrower1 } = fixture;
 
-            await expect(getMortgageTokenTx_SafeLend(
-                estateMortgageToken,
-                borrower1,
-                { mortgageId: BigNumber.from(0), anchor: BigNumber.from(0) },
-                { value: 1e9 }
-            )).to.be.revertedWithCustomError(estateMortgageToken, "InvalidMortgageId");
+            await expect(
+                getMortgageTokenTx_SafeLend(
+                    estateMortgageToken,
+                    borrower1,
+                    {
+                        mortgageId: BigNumber.from(0),
+                        anchor: BigNumber.from(0),
+                    },
+                    { value: 1e9 }
+                )
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'InvalidMortgageId');
 
-            await expect(getMortgageTokenTx_SafeLend(
-                estateMortgageToken,
-                borrower1,
-                { mortgageId: BigNumber.from(3), anchor: BigNumber.from(0) },
-                { value: 1e9 }
-            )).to.be.revertedWithCustomError(estateMortgageToken, "InvalidMortgageId");
+            await expect(
+                getMortgageTokenTx_SafeLend(
+                    estateMortgageToken,
+                    borrower1,
+                    {
+                        mortgageId: BigNumber.from(3),
+                        anchor: BigNumber.from(0),
+                    },
+                    { value: 1e9 }
+                )
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'InvalidMortgageId');
         });
 
         it('3.2.11.3. Safe lend unsuccessfully with invalid anchor', async () => {
@@ -1771,31 +1945,50 @@ describe('3.2. EstateMortgageToken', async () => {
             });
             const { estateMortgageToken, lender1 } = fixture;
 
-            await expect(getMortgageTokenTx_SafeLend(
-                estateMortgageToken,
-                lender1,
-                { mortgageId: BigNumber.from(1), anchor: BigNumber.from(0) },
-                { value: 1e9 }
-            )).to.be.revertedWithCustomError(estateMortgageToken, "BadAnchor");
+            await expect(
+                getMortgageTokenTx_SafeLend(
+                    estateMortgageToken,
+                    lender1,
+                    {
+                        mortgageId: BigNumber.from(1),
+                        anchor: BigNumber.from(0),
+                    },
+                    { value: 1e9 }
+                )
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'BadAnchor');
 
-            await expect(getMortgageTokenTx_SafeLend(
-                estateMortgageToken,
-                lender1,
-                { mortgageId: BigNumber.from(2), anchor: BigNumber.from(0) },
-                { value: 1e9 }
-            )).to.be.revertedWithCustomError(estateMortgageToken, "BadAnchor");
+            await expect(
+                getMortgageTokenTx_SafeLend(
+                    estateMortgageToken,
+                    lender1,
+                    {
+                        mortgageId: BigNumber.from(2),
+                        anchor: BigNumber.from(0),
+                    },
+                    { value: 1e9 }
+                )
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'BadAnchor');
         });
     });
-    
+
     describe('3.2.12. repay(uint256)', () => {
         it('3.2.12.1. Repay successfully', async () => {
             const fixture = await beforeEstateMortgageTokenTest({
                 listSampleMortgage: true,
                 listSampleLending: true,
             });
-            const { estateMortgageToken, borrower1, borrower2, lender1, lender2, estateToken, currency, estateMortgageTokenOwner } = fixture;
+            const {
+                estateMortgageToken,
+                borrower1,
+                borrower2,
+                lender1,
+                lender2,
+                estateToken,
+                currency,
+                estateMortgageTokenOwner,
+            } = fixture;
 
-            let currentTimestamp = await time.latest() + 10;
+            let currentTimestamp = (await time.latest()) + 10;
             await time.setNextBlockTimestamp(currentTimestamp);
 
             let due = (await estateMortgageToken.getMortgage(1)).due;
@@ -1805,7 +1998,12 @@ describe('3.2. EstateMortgageToken', async () => {
             let estateMortgageTokenBalance = await estateToken.balanceOf(estateMortgageToken.address, 1);
             let currentTotalSupply = await estateMortgageToken.totalSupply();
 
-            let tx = await getMortgageTokenTx_Repay(estateMortgageToken, borrower1, { mortgageId: BigNumber.from(1) }, { value: 1e9 });
+            let tx = await getMortgageTokenTx_Repay(
+                estateMortgageToken,
+                borrower1,
+                { mortgageId: BigNumber.from(1) },
+                { value: 1e9 }
+            );
             let receipt = await tx.wait();
             let gasFee = receipt.gasUsed.mul(receipt.effectiveGasPrice);
 
@@ -1819,16 +2017,18 @@ describe('3.2. EstateMortgageToken', async () => {
             expect(await estateMortgageToken.totalSupply()).to.equal(currentTotalSupply.sub(1));
 
             expect(await estateToken.balanceOf(borrower1.address, 1)).to.equal(borrower1Balance.add(150_000));
-            expect(await estateToken.balanceOf(estateMortgageToken.address, 1)).to.equal(estateMortgageTokenBalance.sub(150_000));
+            expect(await estateToken.balanceOf(estateMortgageToken.address, 1)).to.equal(
+                estateMortgageTokenBalance.sub(150_000)
+            );
 
-            expect(await ethers.provider.getBalance(borrower1.address)).to.equal(borrower1NativeBalance.sub(gasFee).sub(11e5));
+            expect(await ethers.provider.getBalance(borrower1.address)).to.equal(
+                borrower1NativeBalance.sub(gasFee).sub(11e5)
+            );
             expect(await ethers.provider.getBalance(lender1.address)).to.equal(lender1NativeBalance.add(11e5));
 
-            await callTransaction(estateMortgageToken.connect(lender2).transferFrom(
-                lender2.address,
-                estateMortgageTokenOwner.address,
-                2
-            ));
+            await callTransaction(
+                estateMortgageToken.connect(lender2).transferFrom(lender2.address, estateMortgageTokenOwner.address, 2)
+            );
 
             due = (await estateMortgageToken.getMortgage(2)).due;
             let borrower2CurrencyBalance = await currency.balanceOf(borrower2.address);
@@ -1837,7 +2037,12 @@ describe('3.2. EstateMortgageToken', async () => {
             let borrower2Balance = await estateToken.balanceOf(borrower2.address, 2);
             estateMortgageTokenBalance = await estateToken.balanceOf(estateMortgageToken.address, 2);
 
-            tx = await getMortgageTokenTx_Repay(estateMortgageToken, borrower2, { mortgageId: BigNumber.from(2) }, { value: 1e9 });
+            tx = await getMortgageTokenTx_Repay(
+                estateMortgageToken,
+                borrower2,
+                { mortgageId: BigNumber.from(2) },
+                { value: 1e9 }
+            );
             await tx.wait();
 
             await expect(tx).to.emit(estateMortgageToken, 'MortgageRepayment').withArgs(2);
@@ -1849,11 +2054,15 @@ describe('3.2. EstateMortgageToken', async () => {
             expect(await estateMortgageToken.totalSupply()).to.equal(currentTotalSupply.sub(2));
 
             expect(await estateToken.balanceOf(borrower2.address, 2)).to.equal(borrower2Balance.add(200));
-            expect(await estateToken.balanceOf(estateMortgageToken.address, 2)).to.equal(estateMortgageTokenBalance.sub(200));
+            expect(await estateToken.balanceOf(estateMortgageToken.address, 2)).to.equal(
+                estateMortgageTokenBalance.sub(200)
+            );
 
             expect(await currency.balanceOf(borrower2.address)).to.equal(borrower2CurrencyBalance.sub(110000));
             expect(await currency.balanceOf(lender2.address)).to.equal(lender2CurrencyBalance);
-            expect(await currency.balanceOf(estateMortgageTokenOwner.address)).to.equal(estateMortgageTokenOwnerBalance.add(110000));
+            expect(await currency.balanceOf(estateMortgageTokenOwner.address)).to.equal(
+                estateMortgageTokenOwnerBalance.add(110000)
+            );
         });
 
         it('3.2.12.2. Repay unsuccessfully when paused', async () => {
@@ -1864,8 +2073,14 @@ describe('3.2. EstateMortgageToken', async () => {
             });
             const { estateMortgageToken, borrower1 } = fixture;
 
-            await expect(getMortgageTokenTx_Repay(estateMortgageToken, borrower1, { mortgageId: BigNumber.from(1) }, { value: 1e9 }))
-                .to.be.revertedWith("Pausable: paused");
+            await expect(
+                getMortgageTokenTx_Repay(
+                    estateMortgageToken,
+                    borrower1,
+                    { mortgageId: BigNumber.from(1) },
+                    { value: 1e9 }
+                )
+            ).to.be.revertedWith('Pausable: paused');
         });
 
         it('3.2.12.3. Repay unsuccessfully with invalid mortgage id', async () => {
@@ -1875,11 +2090,17 @@ describe('3.2. EstateMortgageToken', async () => {
             });
             const { estateMortgageToken, borrower1 } = fixture;
 
-            await expect(getMortgageTokenTx_Repay(estateMortgageToken, borrower1, { mortgageId: BigNumber.from(0) }))
-                .to.be.revertedWithCustomError(estateMortgageToken, "InvalidMortgageId");
+            await expect(
+                getMortgageTokenTx_Repay(estateMortgageToken, borrower1, {
+                    mortgageId: BigNumber.from(0),
+                })
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'InvalidMortgageId');
 
-            await expect(getMortgageTokenTx_Repay(estateMortgageToken, borrower1, { mortgageId: BigNumber.from(3) }))
-                .to.be.revertedWithCustomError(estateMortgageToken, "InvalidMortgageId");
+            await expect(
+                getMortgageTokenTx_Repay(estateMortgageToken, borrower1, {
+                    mortgageId: BigNumber.from(3),
+                })
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'InvalidMortgageId');
         });
 
         it('3.2.12.4. Repay unsuccessfully with overdue mortgage', async () => {
@@ -1892,14 +2113,23 @@ describe('3.2. EstateMortgageToken', async () => {
             const due1 = (await estateMortgageToken.getMortgage(1)).due;
             await time.setNextBlockTimestamp(due1);
 
-            await expect(getMortgageTokenTx_Repay(estateMortgageToken, borrower1, { mortgageId: BigNumber.from(1) }, { value: 1e9 }))
-                .to.be.revertedWithCustomError(estateMortgageToken, "Overdue");
+            await expect(
+                getMortgageTokenTx_Repay(
+                    estateMortgageToken,
+                    borrower1,
+                    { mortgageId: BigNumber.from(1) },
+                    { value: 1e9 }
+                )
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'Overdue');
 
             const due2 = (await estateMortgageToken.getMortgage(2)).due;
             await time.setNextBlockTimestamp(due2);
 
-            await expect(getMortgageTokenTx_Repay(estateMortgageToken, borrower2, { mortgageId: BigNumber.from(2) }))
-                .to.be.revertedWithCustomError(estateMortgageToken, "Overdue");
+            await expect(
+                getMortgageTokenTx_Repay(estateMortgageToken, borrower2, {
+                    mortgageId: BigNumber.from(2),
+                })
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'Overdue');
         });
 
         it('3.2.12.5. Repay unsuccessfully with pending mortgage', async () => {
@@ -1908,10 +2138,19 @@ describe('3.2. EstateMortgageToken', async () => {
             });
             const { estateMortgageToken, borrower1, borrower2 } = fixture;
 
-            await expect(getMortgageTokenTx_Repay(estateMortgageToken, borrower1, { mortgageId: BigNumber.from(1) }, { value: 1e9 }))
-                .to.be.revertedWithCustomError(estateMortgageToken, "InvalidRepaying");
-            await expect(getMortgageTokenTx_Repay(estateMortgageToken, borrower2, { mortgageId: BigNumber.from(2) }))
-                .to.be.revertedWithCustomError(estateMortgageToken, "InvalidRepaying");
+            await expect(
+                getMortgageTokenTx_Repay(
+                    estateMortgageToken,
+                    borrower1,
+                    { mortgageId: BigNumber.from(1) },
+                    { value: 1e9 }
+                )
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'InvalidRepaying');
+            await expect(
+                getMortgageTokenTx_Repay(estateMortgageToken, borrower2, {
+                    mortgageId: BigNumber.from(2),
+                })
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'InvalidRepaying');
         });
 
         it('3.2.12.6. Repay unsuccessfully with already repaid mortgage', async () => {
@@ -1921,13 +2160,33 @@ describe('3.2. EstateMortgageToken', async () => {
             });
             const { estateMortgageToken, borrower1, borrower2 } = fixture;
 
-            await callTransaction(getMortgageTokenTx_Repay(estateMortgageToken, borrower1, { mortgageId: BigNumber.from(1) }, { value: 1e9 }));
-            await callTransaction(getMortgageTokenTx_Repay(estateMortgageToken, borrower2, { mortgageId: BigNumber.from(2) }));
+            await callTransaction(
+                getMortgageTokenTx_Repay(
+                    estateMortgageToken,
+                    borrower1,
+                    { mortgageId: BigNumber.from(1) },
+                    { value: 1e9 }
+                )
+            );
+            await callTransaction(
+                getMortgageTokenTx_Repay(estateMortgageToken, borrower2, {
+                    mortgageId: BigNumber.from(2),
+                })
+            );
 
-            await expect(getMortgageTokenTx_Repay(estateMortgageToken, borrower1, { mortgageId: BigNumber.from(1) }, { value: 1e9 }))
-                .to.be.revertedWithCustomError(estateMortgageToken, "InvalidRepaying");
-            await expect(getMortgageTokenTx_Repay(estateMortgageToken, borrower2, { mortgageId: BigNumber.from(2) }))
-                .to.be.revertedWithCustomError(estateMortgageToken, "InvalidRepaying");
+            await expect(
+                getMortgageTokenTx_Repay(
+                    estateMortgageToken,
+                    borrower1,
+                    { mortgageId: BigNumber.from(1) },
+                    { value: 1e9 }
+                )
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'InvalidRepaying');
+            await expect(
+                getMortgageTokenTx_Repay(estateMortgageToken, borrower2, {
+                    mortgageId: BigNumber.from(2),
+                })
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'InvalidRepaying');
         });
 
         it('3.2.12.7. Repay unsuccessfully with foreclosed mortgage', async () => {
@@ -1940,13 +2199,30 @@ describe('3.2. EstateMortgageToken', async () => {
             const due = (await estateMortgageToken.getMortgage(2)).due;
             await time.setNextBlockTimestamp(due);
 
-            await callTransaction(getMortgageTokenTx_Foreclose(estateMortgageToken, borrower1, { mortgageId: BigNumber.from(1) }));
-            await callTransaction(getMortgageTokenTx_Foreclose(estateMortgageToken, borrower2, { mortgageId: BigNumber.from(2) }));
+            await callTransaction(
+                getMortgageTokenTx_Foreclose(estateMortgageToken, borrower1, {
+                    mortgageId: BigNumber.from(1),
+                })
+            );
+            await callTransaction(
+                getMortgageTokenTx_Foreclose(estateMortgageToken, borrower2, {
+                    mortgageId: BigNumber.from(2),
+                })
+            );
 
-            await expect(getMortgageTokenTx_Repay(estateMortgageToken, borrower1, { mortgageId: BigNumber.from(1) }, { value: 1e9 }))
-                .to.be.revertedWithCustomError(estateMortgageToken, "InvalidRepaying");
-            await expect(getMortgageTokenTx_Repay(estateMortgageToken, borrower2, { mortgageId: BigNumber.from(2) }))
-                .to.be.revertedWithCustomError(estateMortgageToken, "InvalidRepaying");
+            await expect(
+                getMortgageTokenTx_Repay(
+                    estateMortgageToken,
+                    borrower1,
+                    { mortgageId: BigNumber.from(1) },
+                    { value: 1e9 }
+                )
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'InvalidRepaying');
+            await expect(
+                getMortgageTokenTx_Repay(estateMortgageToken, borrower2, {
+                    mortgageId: BigNumber.from(2),
+                })
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'InvalidRepaying');
         });
 
         it('3.2.12.8. Repay unsuccessfully with cancelled mortgage', async () => {
@@ -1955,13 +2231,30 @@ describe('3.2. EstateMortgageToken', async () => {
             });
             const { estateMortgageToken, borrower1, borrower2 } = fixture;
 
-            await callTransaction(getMortgageTokenTx_Cancel(estateMortgageToken, borrower1, { mortgageId: BigNumber.from(1) }));
-            await callTransaction(getMortgageTokenTx_Cancel(estateMortgageToken, borrower2, { mortgageId: BigNumber.from(2) }));
+            await callTransaction(
+                getMortgageTokenTx_Cancel(estateMortgageToken, borrower1, {
+                    mortgageId: BigNumber.from(1),
+                })
+            );
+            await callTransaction(
+                getMortgageTokenTx_Cancel(estateMortgageToken, borrower2, {
+                    mortgageId: BigNumber.from(2),
+                })
+            );
 
-            await expect(getMortgageTokenTx_Repay(estateMortgageToken, borrower1, { mortgageId: BigNumber.from(1) }, { value: 1e9 }))
-                .to.be.revertedWithCustomError(estateMortgageToken, "InvalidRepaying");
-            await expect(getMortgageTokenTx_Repay(estateMortgageToken, borrower2, { mortgageId: BigNumber.from(2) }))
-                .to.be.revertedWithCustomError(estateMortgageToken, "InvalidRepaying");
+            await expect(
+                getMortgageTokenTx_Repay(
+                    estateMortgageToken,
+                    borrower1,
+                    { mortgageId: BigNumber.from(1) },
+                    { value: 1e9 }
+                )
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'InvalidRepaying');
+            await expect(
+                getMortgageTokenTx_Repay(estateMortgageToken, borrower2, {
+                    mortgageId: BigNumber.from(2),
+                })
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'InvalidRepaying');
         });
 
         it('3.2.12.9. Repay unsuccessfully with insufficient funds', async () => {
@@ -1971,12 +2264,18 @@ describe('3.2. EstateMortgageToken', async () => {
             });
             const { estateMortgageToken, borrower1, borrower2, currency } = fixture;
 
-            await expect(getMortgageTokenTx_Repay(estateMortgageToken, borrower1, { mortgageId: BigNumber.from(1) }))
-                .to.be.revertedWithCustomError(estateMortgageToken, "InsufficientValue");
+            await expect(
+                getMortgageTokenTx_Repay(estateMortgageToken, borrower1, {
+                    mortgageId: BigNumber.from(1),
+                })
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'InsufficientValue');
 
-            await resetERC20(currency, [borrower2])
-            await expect(getMortgageTokenTx_Repay(estateMortgageToken, borrower2, { mortgageId: BigNumber.from(2) }))
-                .to.be.revertedWith("ERC20: transfer amount exceeds balance");
+            await resetERC20(currency, [borrower2]);
+            await expect(
+                getMortgageTokenTx_Repay(estateMortgageToken, borrower2, {
+                    mortgageId: BigNumber.from(2),
+                })
+            ).to.be.revertedWith('ERC20: transfer amount exceeds balance');
         });
 
         it('3.2.12.10. Repay unsuccessfully native token transfer to lender failed', async () => {
@@ -1989,11 +2288,21 @@ describe('3.2. EstateMortgageToken', async () => {
 
             const principal = (await estateMortgageToken.getMortgage(1)).principal;
 
-            let data = estateMortgageToken.interface.encodeFunctionData("lend", [1]);
-            await callTransaction(failReceiver.call(estateMortgageToken.address, data, { value: principal }));
+            let data = estateMortgageToken.interface.encodeFunctionData('lend', [1]);
+            await callTransaction(
+                failReceiver.call(estateMortgageToken.address, data, {
+                    value: principal,
+                })
+            );
 
-            await expect(getMortgageTokenTx_Repay(estateMortgageToken, borrower1, { mortgageId: BigNumber.from(1) }, { value: 1e9 }))
-                .to.be.revertedWithCustomError(estateMortgageToken, "FailedTransfer");
+            await expect(
+                getMortgageTokenTx_Repay(
+                    estateMortgageToken,
+                    borrower1,
+                    { mortgageId: BigNumber.from(1) },
+                    { value: 1e9 }
+                )
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'FailedTransfer');
         });
 
         it('3.2.12.11. Repay unsuccessfully when the contract is reentered', async () => {
@@ -2006,20 +2315,26 @@ describe('3.2. EstateMortgageToken', async () => {
 
             const principal = (await estateMortgageToken.getMortgage(1)).principal;
 
-            let data = estateMortgageToken.interface.encodeFunctionData("lend", [1]);
-            await callTransaction(reentrancy.call(estateMortgageToken.address, data, { value: principal }));
-
-            await testReentrancy_estateMortgageToken(
-                estateMortgageToken,
-                reentrancy,
-                async () => {
-                    await expect(getMortgageTokenTx_Repay(estateMortgageToken, borrower1, { mortgageId: BigNumber.from(1) }, { value: 1e9 }))
-                        .to.be.revertedWithCustomError(estateMortgageToken, "FailedTransfer");
-                },
+            let data = estateMortgageToken.interface.encodeFunctionData('lend', [1]);
+            await callTransaction(
+                reentrancy.call(estateMortgageToken.address, data, {
+                    value: principal,
+                })
             );
+
+            await testReentrancy_estateMortgageToken(estateMortgageToken, reentrancy, async () => {
+                await expect(
+                    getMortgageTokenTx_Repay(
+                        estateMortgageToken,
+                        borrower1,
+                        { mortgageId: BigNumber.from(1) },
+                        { value: 1e9 }
+                    )
+                ).to.be.revertedWithCustomError(estateMortgageToken, 'FailedTransfer');
+            });
         });
     });
-    
+
     describe('3.2.13. safeRepay(uint256,uint256)', () => {
         it('3.2.13.1. Safe repay successfully', async () => {
             const fixture = await beforeEstateMortgageTokenTest({
@@ -2028,18 +2343,20 @@ describe('3.2. EstateMortgageToken', async () => {
             });
             const { estateMortgageToken, borrower1, borrower2 } = fixture;
 
-            await expect(getMortgageTokenTxByParams_SafeRepay(
-                estateMortgageToken,
-                borrower1,
-                { mortgageId: BigNumber.from(1) },
-                { value: 1e9 }
-            )).to.not.be.reverted;
+            await expect(
+                getMortgageTokenTxByParams_SafeRepay(
+                    estateMortgageToken,
+                    borrower1,
+                    { mortgageId: BigNumber.from(1) },
+                    { value: 1e9 }
+                )
+            ).to.not.be.reverted;
 
-            await expect(getMortgageTokenTxByParams_SafeRepay(
-                estateMortgageToken,
-                borrower2,
-                { mortgageId: BigNumber.from(2) }
-            )).to.not.be.reverted;
+            await expect(
+                getMortgageTokenTxByParams_SafeRepay(estateMortgageToken, borrower2, {
+                    mortgageId: BigNumber.from(2),
+                })
+            ).to.not.be.reverted;
         });
 
         it('3.2.13.2. Safe repay unsuccessfully with invalid mortgage id', async () => {
@@ -2049,17 +2366,19 @@ describe('3.2. EstateMortgageToken', async () => {
             });
             const { estateMortgageToken, borrower1 } = fixture;
 
-            await expect(getMortgageTokenTx_SafeRepay(
-                estateMortgageToken,
-                borrower1,
-                { mortgageId: BigNumber.from(0), anchor: BigNumber.from(0) }
-            )).to.be.revertedWithCustomError(estateMortgageToken, "InvalidMortgageId");
+            await expect(
+                getMortgageTokenTx_SafeRepay(estateMortgageToken, borrower1, {
+                    mortgageId: BigNumber.from(0),
+                    anchor: BigNumber.from(0),
+                })
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'InvalidMortgageId');
 
-            await expect(getMortgageTokenTx_SafeRepay(
-                estateMortgageToken,
-                borrower1,
-                { mortgageId: BigNumber.from(3), anchor: BigNumber.from(0) }
-            )).to.be.revertedWithCustomError(estateMortgageToken, "InvalidMortgageId");
+            await expect(
+                getMortgageTokenTx_SafeRepay(estateMortgageToken, borrower1, {
+                    mortgageId: BigNumber.from(3),
+                    anchor: BigNumber.from(0),
+                })
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'InvalidMortgageId');
         });
 
         it('3.2.13.3. Repay unsuccessfully with invalid anchor', async () => {
@@ -2069,17 +2388,19 @@ describe('3.2. EstateMortgageToken', async () => {
             });
             const { estateMortgageToken, borrower1 } = fixture;
 
-            await expect(getMortgageTokenTx_SafeRepay(
-                estateMortgageToken,
-                borrower1,
-                { mortgageId: BigNumber.from(1), anchor: BigNumber.from(0) }
-            )).to.be.revertedWithCustomError(estateMortgageToken, "BadAnchor");
+            await expect(
+                getMortgageTokenTx_SafeRepay(estateMortgageToken, borrower1, {
+                    mortgageId: BigNumber.from(1),
+                    anchor: BigNumber.from(0),
+                })
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'BadAnchor');
 
-            await expect(getMortgageTokenTx_SafeRepay(
-                estateMortgageToken,
-                borrower1,
-                { mortgageId: BigNumber.from(2), anchor: BigNumber.from(0) }
-            )).to.be.revertedWithCustomError(estateMortgageToken, "BadAnchor");
+            await expect(
+                getMortgageTokenTx_SafeRepay(estateMortgageToken, borrower1, {
+                    mortgageId: BigNumber.from(2),
+                    anchor: BigNumber.from(0),
+                })
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'BadAnchor');
         });
     });
 
@@ -2098,13 +2419,12 @@ describe('3.2. EstateMortgageToken', async () => {
             const due1 = (await estateMortgageToken.getMortgage(1)).due;
             await time.setNextBlockTimestamp(due1);
 
-            let tx = await getMortgageTokenTx_Foreclose(estateMortgageToken, user, { mortgageId: BigNumber.from(1) });
+            let tx = await getMortgageTokenTx_Foreclose(estateMortgageToken, user, {
+                mortgageId: BigNumber.from(1),
+            });
             await tx.wait();
 
-            await expect(tx).to.emit(estateMortgageToken, 'MortgageForeclosure').withArgs(
-                1,
-                lender1.address
-            );
+            await expect(tx).to.emit(estateMortgageToken, 'MortgageForeclosure').withArgs(1, lender1.address);
 
             const mortgage1 = await estateMortgageToken.getMortgage(1);
             expect(mortgage1.state).to.equal(MortgageState.Foreclosed);
@@ -2114,13 +2434,13 @@ describe('3.2. EstateMortgageToken', async () => {
             expect(await estateMortgageToken.totalSupply()).to.equal(currentTotalSupply.sub(1));
 
             expect(await estateToken.balanceOf(lender1.address, 1)).to.equal(lender1Balance.add(150_000));
-            expect(await estateToken.balanceOf(estateMortgageToken.address, 1)).to.equal(mortgageContractBalance.sub(150_000));
+            expect(await estateToken.balanceOf(estateMortgageToken.address, 1)).to.equal(
+                mortgageContractBalance.sub(150_000)
+            );
 
-            await callTransaction(estateMortgageToken.connect(lender2).transferFrom(
-                lender2.address,
-                estateMortgageTokenOwner.address,
-                2
-            ));
+            await callTransaction(
+                estateMortgageToken.connect(lender2).transferFrom(lender2.address, estateMortgageTokenOwner.address, 2)
+            );
 
             const due2 = (await estateMortgageToken.getMortgage(2)).due;
             await time.setNextBlockTimestamp(due2);
@@ -2129,13 +2449,14 @@ describe('3.2. EstateMortgageToken', async () => {
             mortgageContractBalance = await estateToken.balanceOf(estateMortgageToken.address, 2);
             let estateMortgageTokenOwnerBalance = await estateToken.balanceOf(estateMortgageTokenOwner.address, 2);
 
-            tx = await getMortgageTokenTx_Foreclose(estateMortgageToken, user, { mortgageId: BigNumber.from(2) });
+            tx = await getMortgageTokenTx_Foreclose(estateMortgageToken, user, {
+                mortgageId: BigNumber.from(2),
+            });
             await tx.wait();
 
-            await expect(tx).to.emit(estateMortgageToken, 'MortgageForeclosure').withArgs(
-                2,
-                estateMortgageTokenOwner.address
-            );
+            await expect(tx)
+                .to.emit(estateMortgageToken, 'MortgageForeclosure')
+                .withArgs(2, estateMortgageTokenOwner.address);
 
             const mortgage2 = await estateMortgageToken.getMortgage(2);
             expect(mortgage2.state).to.equal(MortgageState.Foreclosed);
@@ -2145,8 +2466,12 @@ describe('3.2. EstateMortgageToken', async () => {
             expect(await estateMortgageToken.totalSupply()).to.equal(currentTotalSupply.sub(2));
 
             expect(await estateToken.balanceOf(lender2.address, 2)).to.equal(lender2Balance);
-            expect(await estateToken.balanceOf(estateMortgageTokenOwner.address, 2)).to.equal(estateMortgageTokenOwnerBalance.add(200));
-            expect(await estateToken.balanceOf(estateMortgageToken.address, 2)).to.equal(mortgageContractBalance.sub(200));
+            expect(await estateToken.balanceOf(estateMortgageTokenOwner.address, 2)).to.equal(
+                estateMortgageTokenOwnerBalance.add(200)
+            );
+            expect(await estateToken.balanceOf(estateMortgageToken.address, 2)).to.equal(
+                mortgageContractBalance.sub(200)
+            );
         });
 
         it('3.2.14.2. Foreclose unsuccessfully when paused', async () => {
@@ -2157,8 +2482,11 @@ describe('3.2. EstateMortgageToken', async () => {
             });
             const { user, estateMortgageToken } = fixture;
 
-            await expect(getMortgageTokenTx_Foreclose(estateMortgageToken, user, { mortgageId: BigNumber.from(1) }))
-                .to.be.revertedWith("Pausable: paused");
+            await expect(
+                getMortgageTokenTx_Foreclose(estateMortgageToken, user, {
+                    mortgageId: BigNumber.from(1),
+                })
+            ).to.be.revertedWith('Pausable: paused');
         });
 
         it('3.2.14.3. Foreclose unsuccessfully with invalid mortgage id', async () => {
@@ -2168,11 +2496,17 @@ describe('3.2. EstateMortgageToken', async () => {
             });
             const { user, estateMortgageToken } = fixture;
 
-            await expect(getMortgageTokenTx_Foreclose(estateMortgageToken, user, { mortgageId: BigNumber.from(0) }))
-                .to.be.revertedWithCustomError(estateMortgageToken, "InvalidMortgageId");
+            await expect(
+                getMortgageTokenTx_Foreclose(estateMortgageToken, user, {
+                    mortgageId: BigNumber.from(0),
+                })
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'InvalidMortgageId');
 
-            await expect(getMortgageTokenTx_Foreclose(estateMortgageToken, user, { mortgageId: BigNumber.from(3) }))
-                .to.be.revertedWithCustomError(estateMortgageToken, "InvalidMortgageId");
+            await expect(
+                getMortgageTokenTx_Foreclose(estateMortgageToken, user, {
+                    mortgageId: BigNumber.from(3),
+                })
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'InvalidMortgageId');
         });
 
         it('3.2.14.4. Foreclose unsuccessfully when mortgage is not overdue', async () => {
@@ -2182,8 +2516,11 @@ describe('3.2. EstateMortgageToken', async () => {
             });
             const { user, estateMortgageToken } = fixture;
 
-            await expect(getMortgageTokenTx_Foreclose(estateMortgageToken, user, { mortgageId: BigNumber.from(1) }))
-                .to.be.revertedWithCustomError(estateMortgageToken, "InvalidForeclosing");
+            await expect(
+                getMortgageTokenTx_Foreclose(estateMortgageToken, user, {
+                    mortgageId: BigNumber.from(1),
+                })
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'InvalidForeclosing');
         });
 
         it('3.2.14.5. Foreclose unsuccessfully with pending mortgage', async () => {
@@ -2192,8 +2529,11 @@ describe('3.2. EstateMortgageToken', async () => {
             });
             const { user, estateMortgageToken } = fixture;
 
-            await expect(getMortgageTokenTx_Foreclose(estateMortgageToken, user, { mortgageId: BigNumber.from(1) }))
-                .to.be.revertedWithCustomError(estateMortgageToken, "InvalidForeclosing");
+            await expect(
+                getMortgageTokenTx_Foreclose(estateMortgageToken, user, {
+                    mortgageId: BigNumber.from(1),
+                })
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'InvalidForeclosing');
         });
 
         it('3.2.14.6. Foreclose unsuccessfully with repaid mortgage', async () => {
@@ -2203,13 +2543,23 @@ describe('3.2. EstateMortgageToken', async () => {
             });
             const { user, estateMortgageToken, borrower1 } = fixture;
 
-            await callTransaction(getMortgageTokenTx_Repay(estateMortgageToken, borrower1, { mortgageId: BigNumber.from(1) }, { value: 1e9 }));
+            await callTransaction(
+                getMortgageTokenTx_Repay(
+                    estateMortgageToken,
+                    borrower1,
+                    { mortgageId: BigNumber.from(1) },
+                    { value: 1e9 }
+                )
+            );
 
             const due = (await estateMortgageToken.getMortgage(1)).due;
             await time.setNextBlockTimestamp(due);
 
-            await expect(getMortgageTokenTx_Foreclose(estateMortgageToken, user, { mortgageId: BigNumber.from(1) }))
-                .to.be.revertedWithCustomError(estateMortgageToken, "InvalidForeclosing");
+            await expect(
+                getMortgageTokenTx_Foreclose(estateMortgageToken, user, {
+                    mortgageId: BigNumber.from(1),
+                })
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'InvalidForeclosing');
         });
 
         it('3.2.14.7. Foreclose unsuccessfully with foreclosed mortgage', async () => {
@@ -2222,10 +2572,17 @@ describe('3.2. EstateMortgageToken', async () => {
             const due = (await estateMortgageToken.getMortgage(1)).due;
             await time.setNextBlockTimestamp(due);
 
-            await callTransaction(getMortgageTokenTx_Foreclose(estateMortgageToken, lender1, { mortgageId: BigNumber.from(1) }));
+            await callTransaction(
+                getMortgageTokenTx_Foreclose(estateMortgageToken, lender1, {
+                    mortgageId: BigNumber.from(1),
+                })
+            );
 
-            await expect(getMortgageTokenTx_Foreclose(estateMortgageToken, user, { mortgageId: BigNumber.from(1) }))
-                .to.be.revertedWithCustomError(estateMortgageToken, "InvalidForeclosing");
+            await expect(
+                getMortgageTokenTx_Foreclose(estateMortgageToken, user, {
+                    mortgageId: BigNumber.from(1),
+                })
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'InvalidForeclosing');
         });
 
         it('3.2.14.8. Foreclose unsuccessfully with cancelled mortgage', async () => {
@@ -2234,10 +2591,17 @@ describe('3.2. EstateMortgageToken', async () => {
             });
             const { user, estateMortgageToken, borrower1 } = fixture;
 
-            await callTransaction(getMortgageTokenTx_Cancel(estateMortgageToken, borrower1, { mortgageId: BigNumber.from(1) }));
+            await callTransaction(
+                getMortgageTokenTx_Cancel(estateMortgageToken, borrower1, {
+                    mortgageId: BigNumber.from(1),
+                })
+            );
 
-            await expect(getMortgageTokenTx_Foreclose(estateMortgageToken, user, { mortgageId: BigNumber.from(1) }))
-                .to.be.revertedWithCustomError(estateMortgageToken, "InvalidForeclosing");
+            await expect(
+                getMortgageTokenTx_Foreclose(estateMortgageToken, user, {
+                    mortgageId: BigNumber.from(1),
+                })
+            ).to.be.revertedWithCustomError(estateMortgageToken, 'InvalidForeclosing');
         });
     });
 });

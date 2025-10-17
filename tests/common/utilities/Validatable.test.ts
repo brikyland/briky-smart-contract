@@ -2,27 +2,16 @@ import { expect } from 'chai';
 import { ethers } from 'hardhat';
 
 // @nomicfoundation/hardhat-network-helpers
-import {
-    loadFixture,
-    time
-} from "@nomicfoundation/hardhat-network-helpers";
+import { loadFixture, time } from '@nomicfoundation/hardhat-network-helpers';
 
 // @typechain-types
-import {
-    Admin,
-    MockValidatable,
-} from '@typechain-types';
+import { Admin, MockValidatable } from '@typechain-types';
 
 // @tests/test.constant
 import { Constant } from '@tests/test.constant';
 
 // @utils/blockchain
-import {
-    callTransaction,
-    getSignatures,
-    getValidationMessage,
-    randomWallet
-} from '@utils/blockchain';
+import { callTransaction, getSignatures, getValidationMessage, randomWallet } from '@utils/blockchain';
 
 // @utils/deployments/common
 import { deployAdmin } from '@utils/deployments/common/admin';
@@ -31,11 +20,7 @@ import { deployAdmin } from '@utils/deployments/common/admin';
 import { deployMockValidatable } from '@utils/deployments/mock/mockValidatable';
 
 // @utils/models/common
-import {
-    UpdateValidatorParams,
-    UpdateValidatorParamsInput,
-    Validation
-} from '@utils/models/common/validatable';
+import { UpdateValidatorParams, UpdateValidatorParamsInput, Validation } from '@utils/models/common/validatable';
 
 // @utils/signatures/common
 import { getUpdateValidatorSignatures } from '@utils/signatures/common/validatable';
@@ -43,9 +28,8 @@ import { getUpdateValidatorSignatures } from '@utils/signatures/common/validatab
 // @utils/transaction/common
 import {
     getValidatableTx_UpdateValidator,
-    getValidatableTxByInput_UpdateValidator
+    getValidatableTxByInput_UpdateValidator,
 } from '@utils/transaction/common/validatable';
-
 
 interface ValidatableFixture {
     deployer: any;
@@ -60,22 +44,22 @@ describe('1.b. Validatable', async () => {
     async function validatableFixture(): Promise<ValidatableFixture> {
         const [deployer, admin1, admin2, admin3, admin4, admin5, validator] = await ethers.getSigners();
         const admins = [admin1, admin2, admin3, admin4, admin5];
-  
-        const adminAddresses: string[] = admins.map(signer => signer.address);
-        const admin = await deployAdmin(
+
+        const adminAddresses: string[] = admins.map((signer) => signer.address);
+        const admin = (await deployAdmin(
             deployer.address,
             adminAddresses[0],
             adminAddresses[1],
             adminAddresses[2],
             adminAddresses[3],
-            adminAddresses[4],
-        ) as Admin;
+            adminAddresses[4]
+        )) as Admin;
 
-        const validatable = await deployMockValidatable(
+        const validatable = (await deployMockValidatable(
             deployer,
             admin.address,
             validator.address
-        ) as MockValidatable;
+        )) as MockValidatable;
 
         return {
             admin,
@@ -91,7 +75,6 @@ describe('1.b. Validatable', async () => {
         return fixture;
     }
 
-
     /* --- Initialization --- */
     describe('1.b.1. __Validatable_init(address)', async () => {
         it('1.b.1.1. Init validator successfully after deploy', async () => {
@@ -105,11 +88,11 @@ describe('1.b. Validatable', async () => {
 
             const newValidator = randomWallet();
 
-            await expect(validatable.testValidatableInitWhenNotInitilizing(newValidator.address))
-                .to.be.revertedWith('Initializable: contract is not initializing');
+            await expect(validatable.testValidatableInitWhenNotInitilizing(newValidator.address)).to.be.revertedWith(
+                'Initializable: contract is not initializing'
+            );
         });
     });
-
 
     /* --- Administration --- */
     describe('1.b.2. updateValidator(address,bytes[])', async () => {
@@ -126,9 +109,7 @@ describe('1.b. Validatable', async () => {
 
             expect(await validatable.validator()).to.equal(newValidator.address);
 
-            await expect(tx).to
-                .emit(validatable, 'ValidatorUpdate')
-                .withArgs(newValidator.address);
+            await expect(tx).to.emit(validatable, 'ValidatorUpdate').withArgs(newValidator.address);
         });
 
         it('1.b.2.2. Update validator unsuccessfully with invalid signatures', async () => {
@@ -143,28 +124,26 @@ describe('1.b. Validatable', async () => {
                 ...paramsInput,
                 signatures: await getUpdateValidatorSignatures(validatable, paramsInput, admin, admins, false),
             };
-            await expect(getValidatableTx_UpdateValidator(validatable, deployer, params))
-                .to.be.revertedWithCustomError(admin, 'FailedVerification');
+            await expect(getValidatableTx_UpdateValidator(validatable, deployer, params)).to.be.revertedWithCustomError(
+                admin,
+                'FailedVerification'
+            );
         });
     });
 
-    
     /* --- Helper --- */
     describe('1.b.3. _validate(bytes,(uint256,uint256,bytes))', async () => {
         it('1.b.3.1. Validate successfully with valid signatures', async () => {
             const { validator, validatable } = await beforeValidatableTest();
 
-            const content = "Bitcoin";
-            let timestamp = await time.latest() + 10;
+            const content = 'Bitcoin';
+            let timestamp = (await time.latest()) + 10;
             await time.setNextBlockTimestamp(timestamp);
 
             const nonce = ethers.BigNumber.from(1);
             const expiry = ethers.BigNumber.from(timestamp + 1);
 
-            let data = ethers.utils.defaultAbiCoder.encode(
-                ["string"],
-                [content]
-            );
+            let data = ethers.utils.defaultAbiCoder.encode(['string'], [content]);
             let message = getValidationMessage(validatable, data, nonce, expiry);
 
             const validation: Validation = {
@@ -182,17 +161,14 @@ describe('1.b. Validatable', async () => {
         it('1.b.3.2. Validate unsuccessfully with different content', async () => {
             const { validator, validatable } = await beforeValidatableTest();
 
-            const content = "Bitcoin";
-            let timestamp = await time.latest() + 10;
+            const content = 'Bitcoin';
+            let timestamp = (await time.latest()) + 10;
             await time.setNextBlockTimestamp(timestamp);
 
             const nonce = ethers.BigNumber.from(1);
             const expiry = ethers.BigNumber.from(timestamp + 1);
 
-            let data = ethers.utils.defaultAbiCoder.encode(
-                ["string"],
-                [content]
-            );
+            let data = ethers.utils.defaultAbiCoder.encode(['string'], [content]);
             let message = getValidationMessage(validatable, data, nonce, expiry);
 
             const validation: Validation = {
@@ -201,24 +177,23 @@ describe('1.b. Validatable', async () => {
                 signature: (await getSignatures(message, [validator], nonce))[0],
             };
 
-            await expect(validatable.testValidation(content + "Blockchain", validation))
-                .to.be.revertedWithCustomError(validatable, 'InvalidSignature');
+            await expect(validatable.testValidation(content + 'Blockchain', validation)).to.be.revertedWithCustomError(
+                validatable,
+                'InvalidSignature'
+            );
         });
 
         it('1.b.3.3. Validate unsuccessfully with different nonce', async () => {
             const { validator, validatable } = await beforeValidatableTest();
 
-            const content = "Bitcoin";
-            let timestamp = await time.latest() + 10;
+            const content = 'Bitcoin';
+            let timestamp = (await time.latest()) + 10;
             await time.setNextBlockTimestamp(timestamp);
 
             const nonce = ethers.BigNumber.from(1);
             const expiry = ethers.BigNumber.from(timestamp + 1);
 
-            let data = ethers.utils.defaultAbiCoder.encode(
-                ["string"],
-                [content]
-            );
+            let data = ethers.utils.defaultAbiCoder.encode(['string'], [content]);
             let message = getValidationMessage(validatable, data, nonce, expiry);
 
             const validation: Validation = {
@@ -227,24 +202,23 @@ describe('1.b. Validatable', async () => {
                 signature: (await getSignatures(message, [validator], nonce))[0],
             };
 
-            await expect(validatable.testValidation(content, validation))
-                .to.be.revertedWithCustomError(validatable, 'InvalidSignature');
+            await expect(validatable.testValidation(content, validation)).to.be.revertedWithCustomError(
+                validatable,
+                'InvalidSignature'
+            );
         });
 
         it('1.b.3.4. Validate unsuccessfully with different expiry', async () => {
             const { validator, validatable } = await beforeValidatableTest();
 
-            const content = "Bitcoin";
-            let timestamp = await time.latest() + 10;
+            const content = 'Bitcoin';
+            let timestamp = (await time.latest()) + 10;
             await time.setNextBlockTimestamp(timestamp);
 
             const nonce = ethers.BigNumber.from(1);
             const expiry = ethers.BigNumber.from(timestamp + 1);
 
-            let data = ethers.utils.defaultAbiCoder.encode(
-                ["string"],
-                [content]
-            );
+            let data = ethers.utils.defaultAbiCoder.encode(['string'], [content]);
             let message = getValidationMessage(validatable, data, nonce, expiry);
 
             const validation: Validation = {
@@ -253,25 +227,24 @@ describe('1.b. Validatable', async () => {
                 signature: (await getSignatures(message, [validator], nonce))[0],
             };
 
-            await expect(validatable.testValidation(content, validation))
-                .to.be.revertedWithCustomError(validatable, 'InvalidSignature');
+            await expect(validatable.testValidation(content, validation)).to.be.revertedWithCustomError(
+                validatable,
+                'InvalidSignature'
+            );
         });
 
         it('1.b.3.5. Validate unsuccessfully with expired validation', async () => {
             const { validator, validatable } = await beforeValidatableTest();
 
-            const content = "Bitcoin";
-            let timestamp = await time.latest() + 10;
+            const content = 'Bitcoin';
+            let timestamp = (await time.latest()) + 10;
             await time.setNextBlockTimestamp(timestamp);
 
             const nonce = ethers.BigNumber.from(1);
             const expiry1 = ethers.BigNumber.from(timestamp - 1);
             const expiry2 = ethers.BigNumber.from(timestamp);
 
-            let data = ethers.utils.defaultAbiCoder.encode(
-                ["string"],
-                [content]
-            );
+            let data = ethers.utils.defaultAbiCoder.encode(['string'], [content]);
             let message1 = getValidationMessage(validatable, data, nonce, expiry1);
             let message2 = getValidationMessage(validatable, data, nonce, expiry2);
 
@@ -286,25 +259,26 @@ describe('1.b. Validatable', async () => {
                 signature: (await getSignatures(message2, [validator], nonce))[0],
             };
 
-            await expect(validatable.testValidation(content, validation1))
-                .to.be.revertedWithCustomError(validatable, 'ValidationExpired');
-            await expect(validatable.testValidation(content, validation2))
-                .to.be.revertedWithCustomError(validatable, 'ValidationExpired');
+            await expect(validatable.testValidation(content, validation1)).to.be.revertedWithCustomError(
+                validatable,
+                'ValidationExpired'
+            );
+            await expect(validatable.testValidation(content, validation2)).to.be.revertedWithCustomError(
+                validatable,
+                'ValidationExpired'
+            );
         });
 
         it('1.b.3.6. Validate unsuccessfully with used nonce', async () => {
             const { validator, validatable } = await beforeValidatableTest();
 
-            const content = "Bitcoin";
-            let timestamp = await time.latest() + 10;
+            const content = 'Bitcoin';
+            let timestamp = (await time.latest()) + 10;
 
             const nonce = ethers.BigNumber.from(1);
             const expiry = ethers.BigNumber.from(timestamp - 1);
 
-            let data = ethers.utils.defaultAbiCoder.encode(
-                ["string"],
-                [content]
-            );
+            let data = ethers.utils.defaultAbiCoder.encode(['string'], [content]);
             let message = getValidationMessage(validatable, data, nonce, expiry);
 
             const validation: Validation = {
@@ -315,8 +289,10 @@ describe('1.b. Validatable', async () => {
 
             await callTransaction(validatable.testValidation(content, validation));
 
-            await expect(validatable.testValidation(content, validation))
-                .to.be.revertedWithCustomError(validatable, 'InvalidNonce');
+            await expect(validatable.testValidation(content, validation)).to.be.revertedWithCustomError(
+                validatable,
+                'InvalidNonce'
+            );
         });
     });
 });

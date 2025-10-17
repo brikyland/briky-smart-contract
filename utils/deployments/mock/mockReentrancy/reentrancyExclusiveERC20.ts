@@ -1,13 +1,8 @@
-import { ethers, upgrades } from "hardhat";
+import { ethers, upgrades } from 'hardhat';
 
-export async function deployReentrancyExclusiveERC20(
-    signer: any,
-) {
+export async function deployReentrancyExclusiveERC20(signer: any) {
     const ReentrancyExclusiveERC20 = await ethers.getContractFactory('ReentrancyExclusiveERC20', signer);
-    const reentrancy = await upgrades.deployProxy(
-        ReentrancyExclusiveERC20,
-        []
-    );
+    const reentrancy = await upgrades.deployProxy(ReentrancyExclusiveERC20, []);
     await reentrancy.deployed();
     return reentrancy;
 }

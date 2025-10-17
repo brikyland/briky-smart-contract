@@ -9,13 +9,7 @@ import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { Initialization as LiquidityInitialization } from '@tests/liquidity/test.initialization';
 
 // @typechain-types
-import {
-    Admin,
-    Currency,
-    Distributor,
-    PrimaryToken,
-    Treasury
-} from '@typechain-types';
+import { Admin, Currency, Distributor, PrimaryToken, Treasury } from '@typechain-types';
 
 // @utils
 import { callTransaction } from '@utils/blockchain';
@@ -30,10 +24,7 @@ import { deployPrimaryToken } from '@utils/deployments/liquidity/primaryToken';
 import { deployTreasury } from '@utils/deployments/liquidity/treasury';
 
 // @utils/models/liquidity
-import {
-    DistributeTokenParams,
-    DistributeTokenParamsInput
-} from '@utils/models/liquidity/distributor';
+import { DistributeTokenParams, DistributeTokenParamsInput } from '@utils/models/liquidity/distributor';
 
 // @utils/signatures/liquidity
 import { getDistributeTokenSignatures } from '@utils/signatures/liquidity/distributor';
@@ -41,15 +32,16 @@ import { getDistributeTokenSignatures } from '@utils/signatures/liquidity/distri
 // @utils/transaction/liquidity
 import {
     getDistributorTx_DistributeToken,
-    getDistributorTxByInput_DistributeToken
+    getDistributorTxByInput_DistributeToken,
 } from '@utils/transaction/liquidity/distributor';
 import { getPrimaryTokenTxByInput_UnlockForCoreTeam } from '@utils/transaction/liquidity/primaryToken';
-
 
 interface DistributorFixture {
     deployer: any;
     admins: any[];
-    receiver1: any, receiver2: any, receiver3: any;
+    receiver1: any;
+    receiver2: any;
+    receiver3: any;
 
     admin: Admin;
     currency: Currency;
@@ -60,47 +52,44 @@ interface DistributorFixture {
 
 describe('4.2. Distributor', async () => {
     async function distributorFixture(): Promise<DistributorFixture> {
-        const [deployer, admin1, admin2, admin3, admin4, admin5, receiver1, receiver2, receiver3] = await ethers.getSigners();
+        const [deployer, admin1, admin2, admin3, admin4, admin5, receiver1, receiver2, receiver3] =
+            await ethers.getSigners();
         const admins = [admin1, admin2, admin3, admin4, admin5];
 
-        const adminAddresses: string[] = admins.map(signer => signer.address);
-        const admin = await deployAdmin(
+        const adminAddresses: string[] = admins.map((signer) => signer.address);
+        const admin = (await deployAdmin(
             deployer.address,
             adminAddresses[0],
             adminAddresses[1],
             adminAddresses[2],
             adminAddresses[3],
-            adminAddresses[4],
-        ) as Admin;
-        
-        const currency = await deployCurrency(
-            deployer.address,
-            'MockCurrency',
-            'MCK'
-        ) as Currency;
-        
-        const primaryToken = await deployPrimaryToken(
+            adminAddresses[4]
+        )) as Admin;
+
+        const currency = (await deployCurrency(deployer.address, 'MockCurrency', 'MCK')) as Currency;
+
+        const primaryToken = (await deployPrimaryToken(
             deployer,
             admin.address,
             LiquidityInitialization.PRIMARY_TOKEN_Name,
             LiquidityInitialization.PRIMARY_TOKEN_Symbol,
-            LiquidityInitialization.PRIMARY_TOKEN_LiquidationUnlockedAt,
-        ) as PrimaryToken;
-        
-        const treasury = await deployTreasury(
+            LiquidityInitialization.PRIMARY_TOKEN_LiquidationUnlockedAt
+        )) as PrimaryToken;
+
+        const treasury = (await deployTreasury(
             deployer,
             admin.address,
             currency.address,
-            primaryToken.address,
-        ) as Treasury;
+            primaryToken.address
+        )) as Treasury;
 
-        const distributor = await deployDistributor(
+        const distributor = (await deployDistributor(
             deployer,
             admin.address,
             primaryToken.address,
-            treasury.address,
-        ) as Distributor;
-        
+            treasury.address
+        )) as Distributor;
+
         return {
             deployer,
             admins,
@@ -119,19 +108,20 @@ describe('4.2. Distributor', async () => {
         const fixture = await loadFixture(distributorFixture);
         const { deployer, admin, admins, primaryToken, distributor } = fixture;
 
-        await callTransaction(getPrimaryTokenTxByInput_UnlockForCoreTeam(
-            primaryToken,
-            deployer,
-            {
-                distributor: distributor.address,
-            },
-            admin,
-            admins,
-        ));
+        await callTransaction(
+            getPrimaryTokenTxByInput_UnlockForCoreTeam(
+                primaryToken,
+                deployer,
+                {
+                    distributor: distributor.address,
+                },
+                admin,
+                admins
+            )
+        );
 
         return fixture;
     }
-
 
     /* --- Initialization --- */
     describe('4.2.1. initialize(address,address,address)', async () => {
@@ -145,7 +135,6 @@ describe('4.2. Distributor', async () => {
         });
     });
 
-
     /* --- Administration --- */
     describe('4.2.2. distributeToken(address[],uint256[],string,bytes[])', async () => {
         it('4.2.2.1. Distribute tokens successfully', async () => {
@@ -153,8 +142,12 @@ describe('4.2. Distributor', async () => {
             const { admin, admins, deployer, distributor, primaryToken, receiver1, receiver2, receiver3 } = fixture;
 
             const receivers = [receiver1.address, receiver2.address, receiver3.address];
-            const amounts = [ethers.utils.parseEther('100'), ethers.utils.parseEther('200'), ethers.utils.parseEther('300')];
-            const note = "Testing Data";
+            const amounts = [
+                ethers.utils.parseEther('100'),
+                ethers.utils.parseEther('200'),
+                ethers.utils.parseEther('300'),
+            ];
+            const note = 'Testing Data';
 
             const paramsInput: DistributeTokenParamsInput = {
                 receivers,
@@ -169,17 +162,22 @@ describe('4.2. Distributor', async () => {
             const tx = await getDistributorTxByInput_DistributeToken(distributor, deployer, paramsInput, admin, admins);
             await tx.wait();
 
-            for(let i = 0; i < receivers.length; i++) {
-                await expect(tx).to.emit(distributor, "TokenDistribution").withArgs(
-                    receivers[i],
-                    amounts[i]
-                );
+            for (let i = 0; i < receivers.length; i++) {
+                await expect(tx).to.emit(distributor, 'TokenDistribution').withArgs(receivers[i], amounts[i]);
             }
 
-            expect(await primaryToken.balanceOf(receiver1.address)).to.equal(initReceiver1Balance.add(ethers.utils.parseEther('100')));
-            expect(await primaryToken.balanceOf(receiver2.address)).to.equal(initReceiver2Balance.add(ethers.utils.parseEther('200')));
-            expect(await primaryToken.balanceOf(receiver3.address)).to.equal(initReceiver3Balance.add(ethers.utils.parseEther('300')));
-            expect(await primaryToken.balanceOf(distributor.address)).to.equal(initDistributorBalance.sub(ethers.utils.parseEther('600')));
+            expect(await primaryToken.balanceOf(receiver1.address)).to.equal(
+                initReceiver1Balance.add(ethers.utils.parseEther('100'))
+            );
+            expect(await primaryToken.balanceOf(receiver2.address)).to.equal(
+                initReceiver2Balance.add(ethers.utils.parseEther('200'))
+            );
+            expect(await primaryToken.balanceOf(receiver3.address)).to.equal(
+                initReceiver3Balance.add(ethers.utils.parseEther('300'))
+            );
+            expect(await primaryToken.balanceOf(distributor.address)).to.equal(
+                initDistributorBalance.sub(ethers.utils.parseEther('600'))
+            );
         });
 
         it('4.2.2.2. Distribute tokens unsuccessfully with invalid signatures', async () => {
@@ -187,8 +185,12 @@ describe('4.2. Distributor', async () => {
             const { admin, admins, deployer, distributor, receiver1, receiver2, receiver3 } = fixture;
 
             const receivers = [receiver1.address, receiver2.address, receiver3.address];
-            const amounts = [ethers.utils.parseEther('100'), ethers.utils.parseEther('200'), ethers.utils.parseEther('300')];
-            const note = "Testing Data";
+            const amounts = [
+                ethers.utils.parseEther('100'),
+                ethers.utils.parseEther('200'),
+                ethers.utils.parseEther('300'),
+            ];
+            const note = 'Testing Data';
 
             const paramsInput: DistributeTokenParamsInput = {
                 receivers,
@@ -199,31 +201,34 @@ describe('4.2. Distributor', async () => {
                 ...paramsInput,
                 signatures: await getDistributeTokenSignatures(distributor, paramsInput, admin, admins, false),
             };
-            await expect(getDistributorTx_DistributeToken(distributor, deployer, params))
-                .to.be.revertedWithCustomError(distributor, "FailedVerification");
+            await expect(getDistributorTx_DistributeToken(distributor, deployer, params)).to.be.revertedWithCustomError(
+                distributor,
+                'FailedVerification'
+            );
         });
 
         it('4.2.2.3. Distribute tokens unsuccessfully with invalid inputs length', async () => {
             const fixture = await setupBeforeTest();
             const { admin, admins, deployer, distributor, primaryToken, receiver1, receiver2, receiver3 } = fixture;
 
-            async function testForInvalidInput(
-                receivers: string[],
-                amounts: BigNumberish[],
-                note: string,
-            ) {
+            async function testForInvalidInput(receivers: string[], amounts: BigNumberish[], note: string) {
                 const paramsInput: DistributeTokenParamsInput = {
                     receivers,
                     amounts,
                     note,
                 };
-                await expect(getDistributorTxByInput_DistributeToken(distributor, deployer, paramsInput, admin, admins))
-                    .to.be.revertedWithCustomError(distributor, "InvalidInput");
+                await expect(
+                    getDistributorTxByInput_DistributeToken(distributor, deployer, paramsInput, admin, admins)
+                ).to.be.revertedWithCustomError(distributor, 'InvalidInput');
             }
 
             const receivers = [receiver1.address, receiver2.address, receiver3.address];
-            const amounts = [ethers.utils.parseEther('100'), ethers.utils.parseEther('200'), ethers.utils.parseEther('300')];
-            const note = "Testing Data";
+            const amounts = [
+                ethers.utils.parseEther('100'),
+                ethers.utils.parseEther('200'),
+                ethers.utils.parseEther('300'),
+            ];
+            const note = 'Testing Data';
 
             await testForInvalidInput(receivers.slice(0, 2), amounts, note);
         });
@@ -236,15 +241,16 @@ describe('4.2. Distributor', async () => {
 
             const receivers = [receiver1.address, receiver2.address, receiver3.address];
             const amounts = [ethers.utils.parseEther('100'), ethers.utils.parseEther('200'), initDistributorBalance];
-            const note = "Testing Data";
+            const note = 'Testing Data';
 
             const paramsInput: DistributeTokenParamsInput = {
                 receivers,
                 amounts,
                 note,
             };
-            await expect(getDistributorTxByInput_DistributeToken(distributor, deployer, paramsInput, admin, admins))
-                .to.be.revertedWithCustomError(distributor, "InsufficientFunds");
-        });        
+            await expect(
+                getDistributorTxByInput_DistributeToken(distributor, deployer, paramsInput, admin, admins)
+            ).to.be.revertedWithCustomError(distributor, 'InsufficientFunds');
+        });
     });
 });

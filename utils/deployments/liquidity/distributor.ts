@@ -1,4 +1,4 @@
-import { ethers, upgrades } from "hardhat";
+import { ethers, upgrades } from 'hardhat';
 
 export async function deployDistributor(
     signer: any,
@@ -7,14 +7,7 @@ export async function deployDistributor(
     treasuryAddress: string
 ) {
     const Distributor = await ethers.getContractFactory('Distributor', signer);
-    const distributor = await upgrades.deployProxy(
-        Distributor,
-        [
-            adminAddress,
-            primaryTokenAddress,
-            treasuryAddress
-        ]
-    );
+    const distributor = await upgrades.deployProxy(Distributor, [adminAddress, primaryTokenAddress, treasuryAddress]);
     await distributor.deployed();
     return distributor;
 }

@@ -1,17 +1,13 @@
-import { ethers, Contract } from "ethers";
+import { ethers, Contract } from 'ethers';
 
 // @nomicfoundation/hardhat-network-helpers
-import { time } from "@nomicfoundation/hardhat-network-helpers";
+import { time } from '@nomicfoundation/hardhat-network-helpers';
 
 // @utils
-import { MockValidator } from "@utils/mockValidator";
+import { MockValidator } from '@utils/mockValidator';
 
 // @utils/models/launch
-import {
-    RegisterInitiatorParamsInput,
-    UpdateProjectURIParamsInput
-} from "@utils/models/launch/projectToken";
-
+import { RegisterInitiatorParamsInput, UpdateProjectURIParamsInput } from '@utils/models/launch/projectToken';
 
 // registerInitiator
 export async function getRegisterInitiatorValidation(
@@ -21,16 +17,15 @@ export async function getRegisterInitiatorValidation(
     isValid = true
 ) {
     const content = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string"],
+        ['address', 'string'],
         [paramsInput.initiator, paramsInput.uri]
     );
-    const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
+    const expiry = ethers.BigNumber.from((await time.latest()) + 1e9);
 
     return isValid
         ? await validator.getValidation(projectToken, content, expiry)
         : await validator.getInvalidValidation(projectToken, content, expiry);
 }
-
 
 // safeUpdateProjectURI
 export async function getSafeUpdateProjectURIValidation(
@@ -40,10 +35,10 @@ export async function getSafeUpdateProjectURIValidation(
     isValid = true
 ) {
     const content = ethers.utils.defaultAbiCoder.encode(
-        ["uint256", "string"],
+        ['uint256', 'string'],
         [paramsInput.projectId, paramsInput.uri]
     );
-    const expiry = ethers.BigNumber.from(await time.latest() + 1e9);
+    const expiry = ethers.BigNumber.from((await time.latest()) + 1e9);
 
     return isValid
         ? await validator.getValidation(projectToken, content, expiry)

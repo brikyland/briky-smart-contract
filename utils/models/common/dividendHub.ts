@@ -1,5 +1,4 @@
-import { BigNumber } from "ethers";
-
+import { BigNumber } from 'ethers';
 
 // issueDividend
 export interface IssueDividendParams {
@@ -9,7 +8,6 @@ export interface IssueDividendParams {
     currency: string;
     note: string;
 }
-
 
 // withdraw
 export interface WithdrawParams {

@@ -1,4 +1,4 @@
-import { ethers, upgrades } from "hardhat";
+import { ethers, upgrades } from 'hardhat';
 
 export async function deployProxyCaller(signer: any) {
     const ProxyCaller = await ethers.getContractFactory('ProxyCaller', signer);

@@ -1,4 +1,4 @@
-import { ethers, upgrades } from "hardhat";
+import { ethers, upgrades } from 'hardhat';
 
 export async function deployMockProvider(signer: any) {
     const MockProvider = await ethers.getContractFactory('MockProvider', signer);

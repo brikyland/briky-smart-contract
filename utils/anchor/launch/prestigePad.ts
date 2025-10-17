@@ -1,15 +1,14 @@
-import { ethers } from "ethers";
+import { ethers } from 'ethers';
 
 // @typechain-types
-import { PrestigePad } from "@typechain-types";
+import { PrestigePad } from '@typechain-types';
 
 // @utils/models/launch
 import {
     ContributeCurrentRoundParams,
     ConfirmCurrentRoundParams,
     FinalizeParams,
-} from "@utils/models/launch/prestigePad";
-
+} from '@utils/models/launch/prestigePad';
 
 // safeContributeCurrentRound
 export async function getSafeContributeCurrentRoundAnchor(
@@ -18,8 +17,7 @@ export async function getSafeContributeCurrentRoundAnchor(
 ): Promise<string> {
     const currentURI = (await prestigePad.getLaunch(params.launchId)).uri;
     return ethers.utils.keccak256(ethers.utils.toUtf8Bytes(currentURI));
-};
-
+}
 
 // safeConfirmCurrentRound
 export async function getSafeConfirmCurrentRoundAnchor(
@@ -30,12 +28,8 @@ export async function getSafeConfirmCurrentRoundAnchor(
     return ethers.utils.keccak256(ethers.utils.toUtf8Bytes(currentURI));
 }
 
-
 // safeFinalize
-export async function getSafeFinalizeAnchor(
-    prestigePad: PrestigePad,
-    params: FinalizeParams
-): Promise<string> {
+export async function getSafeFinalizeAnchor(prestigePad: PrestigePad, params: FinalizeParams): Promise<string> {
     const currentURI = (await prestigePad.getLaunch(params.launchId)).uri;
     return ethers.utils.keccak256(ethers.utils.toUtf8Bytes(currentURI));
 }

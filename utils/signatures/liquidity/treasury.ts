@@ -1,17 +1,13 @@
-import { ethers } from "ethers";
+import { ethers } from 'ethers';
 
 // @typechain-types
-import {
-    Admin,
-    Treasury
-} from "@typechain-types";
+import { Admin, Treasury } from '@typechain-types';
 
 // @utils/blockchain
-import { getSignatures } from "@utils/blockchain";
+import { getSignatures } from '@utils/blockchain';
 
 // @utils/models/liquidity
-import { WithdrawOperationFundParamsInput } from "@utils/models/liquidity/treasury";
-
+import { WithdrawOperationFundParamsInput } from '@utils/models/liquidity/treasury';
 
 // withdrawOperationFund
 export async function getWithdrawOperationFundSignatures(
@@ -22,8 +18,8 @@ export async function getWithdrawOperationFundSignatures(
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "address", "uint256"],
-        [treasury.address, "withdrawOperationFund", paramsInput.operator, paramsInput.value]
+        ['address', 'string', 'address', 'uint256'],
+        [treasury.address, 'withdrawOperationFund', paramsInput.operator, paramsInput.value]
     );
     const nonce = await admin.nonce();
     return await getSignatures(message, admins, isValid ? nonce : nonce.add(1));

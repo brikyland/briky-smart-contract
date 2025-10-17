@@ -1,20 +1,16 @@
-import { ContractTransaction } from "ethers";
+import { ContractTransaction } from 'ethers';
 
 // @nomiclabs/hardhat-ethers
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 // @typechain-types
-import { Admin, Distributor } from "@typechain-types";
+import { Admin, Distributor } from '@typechain-types';
 
 // @utils/models/liquidity
-import {
-    DistributeTokenParams,
-    DistributeTokenParamsInput
-} from "@utils/models/liquidity/distributor";
+import { DistributeTokenParams, DistributeTokenParamsInput } from '@utils/models/liquidity/distributor';
 
 // @utils/signatures/liquidity
-import { getDistributeTokenSignatures } from "@utils/signatures/liquidity/distributor";
-
+import { getDistributeTokenSignatures } from '@utils/signatures/liquidity/distributor';
 
 // distributeToken
 export async function getDistributorTx_DistributeToken(
@@ -23,13 +19,9 @@ export async function getDistributorTx_DistributeToken(
     params: DistributeTokenParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return distributor.connect(deployer).distributeToken(
-        params.receivers,
-        params.amounts,
-        params.note,
-        params.signatures,
-        txConfig
-    );
+    return distributor
+        .connect(deployer)
+        .distributeToken(params.receivers, params.amounts, params.note, params.signatures, txConfig);
 }
 
 export async function getDistributorTxByInput_DistributeToken(

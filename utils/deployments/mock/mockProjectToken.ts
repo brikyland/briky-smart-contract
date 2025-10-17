@@ -1,5 +1,5 @@
-import { BigNumber } from "ethers";
-import { ethers, upgrades } from "hardhat";
+import { BigNumber } from 'ethers';
+import { ethers, upgrades } from 'hardhat';
 
 export async function deployMockProjectToken(
     signer: any,
@@ -7,20 +7,17 @@ export async function deployMockProjectToken(
     estateTokenAddress: string,
     feeReceiverAddress: string,
     validatorAddress: string,
-    baseURI: string,
+    baseURI: string
 ) {
     const MockProjectToken = await ethers.getContractFactory('MockProjectToken', signer);
 
-    const mockProjectToken = await upgrades.deployProxy(
-        MockProjectToken,
-        [
-            adminAddress,
-            estateTokenAddress,
-            feeReceiverAddress,
-            validatorAddress,
-            baseURI,
-        ]
-    );
+    const mockProjectToken = await upgrades.deployProxy(MockProjectToken, [
+        adminAddress,
+        estateTokenAddress,
+        feeReceiverAddress,
+        validatorAddress,
+        baseURI,
+    ]);
     await mockProjectToken.deployed();
     return mockProjectToken;
 }

@@ -16,9 +16,9 @@ import {
     IProjectLaunchpad__factory,
     IProjectTokenReceiver__factory,
     IRoyaltyRateProposer__factory,
-} from "@typechain-types";
+} from '@typechain-types';
 
-import { getInterfaceID } from "@utils/utils";
+import { getInterfaceID } from '@utils/utils';
 
 /* --- Interfaces --- */
 const IERC165Upgradeable = IERC165Upgradeable__factory.createInterface();
@@ -45,15 +45,33 @@ export const IERC165UpgradeableInterfaceId = getInterfaceID(IERC165Upgradeable, 
 export const IERC721UpgradeableInterfaceId = getInterfaceID(IERC721Upgradeable, [IERC165Upgradeable]);
 export const IERC721MetadataUpgradeableInterfaceId = getInterfaceID(IERC721MetadataUpgradeable, [IERC721Upgradeable]);
 export const IERC1155UpgradeableInterfaceId = getInterfaceID(IERC1155Upgradeable, [IERC165Upgradeable]);
-export const IERC1155MetadataURIUpgradeableInterfaceId = getInterfaceID(IERC1155MetadataURIUpgradeable, [IERC1155Upgradeable]);
+export const IERC1155MetadataURIUpgradeableInterfaceId = getInterfaceID(IERC1155MetadataURIUpgradeable, [
+    IERC1155Upgradeable,
+]);
 export const IERC2981UpgradeableInterfaceId = getInterfaceID(IERC2981Upgradeable, [IERC165Upgradeable]);
-export const IERC4906UpgradeableInterfaceId = getInterfaceID(IERC4906Upgradeable, [IERC165Upgradeable, IERC721Upgradeable]);
+export const IERC4906UpgradeableInterfaceId = getInterfaceID(IERC4906Upgradeable, [
+    IERC165Upgradeable,
+    IERC721Upgradeable,
+]);
 
-export const IAssetTokenInterfaceId = getInterfaceID(IAssetToken, [IERC1155MetadataURIUpgradeable, IERC2981Upgradeable, IGovernor]);
+export const IAssetTokenInterfaceId = getInterfaceID(IAssetToken, [
+    IERC1155MetadataURIUpgradeable,
+    IERC2981Upgradeable,
+    IGovernor,
+]);
 export const IEstateTokenizerInterfaceId = getInterfaceID(IEstateTokenizer, [ICommon, IEstateTokenReceiver]);
-export const IEstateTokenReceiverInterfaceId = getInterfaceID(IEstateTokenReceiver, [IERC1155ReceiverUpgradeable])
-export const IProjectTokenReceiverInterfaceId = getInterfaceID(IProjectTokenReceiver, [IERC1155ReceiverUpgradeable])
+export const IEstateTokenReceiverInterfaceId = getInterfaceID(IEstateTokenReceiver, [IERC1155ReceiverUpgradeable]);
+export const IProjectTokenReceiverInterfaceId = getInterfaceID(IProjectTokenReceiver, [IERC1155ReceiverUpgradeable]);
 export const IGovernorInterfaceId = getInterfaceID(IGovernor, [IERC1155Upgradeable]);
-export const IRoyaltyRateProposerInterfaceId = getInterfaceID(IRoyaltyRateProposer, [ICommon, IERC165Upgradeable, IERC2981Upgradeable]);
-export const IProjectLaunchpadInterfaceId = getInterfaceID(IProjectLaunchpad, [ICommon, IProjectTokenReceiver])
-export const IMortgageTokenInterfaceId = getInterfaceID(IMortgageToken, [ICommon, IERC721MetadataUpgradeable, IERC2981Upgradeable, IERC4906Upgradeable]);
+export const IRoyaltyRateProposerInterfaceId = getInterfaceID(IRoyaltyRateProposer, [
+    ICommon,
+    IERC165Upgradeable,
+    IERC2981Upgradeable,
+]);
+export const IProjectLaunchpadInterfaceId = getInterfaceID(IProjectLaunchpad, [ICommon, IProjectTokenReceiver]);
+export const IMortgageTokenInterfaceId = getInterfaceID(IMortgageToken, [
+    ICommon,
+    IERC721MetadataUpgradeable,
+    IERC2981Upgradeable,
+    IERC4906Upgradeable,
+]);

@@ -1,25 +1,21 @@
-import { ContractTransaction } from "ethers";
+import { ContractTransaction } from 'ethers';
 
 // @nomiclabs/hardhat-ethers
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 // @typechain-types
-import {
-    Admin,
-    EstateToken,
-    ProxyCaller
-} from "@typechain-types";
+import { Admin, EstateToken, ProxyCaller } from '@typechain-types';
 
 // @utils
-import { MockValidator } from "@utils/mockValidator";
+import { MockValidator } from '@utils/mockValidator';
 
 // @utils/anchor/land
 import {
     getSafeDeprecateEstateAnchor,
     getSafeExtendEstateExpirationAnchor,
     getSafeUpdateEstateCustodianAnchor,
-    getSafeUpdateEstateURIAnchor
-} from "@utils/anchor/land/estateToken";
+    getSafeUpdateEstateURIAnchor,
+} from '@utils/anchor/land/estateToken';
 
 // @utils/models/land
 import {
@@ -44,15 +40,20 @@ import {
     UpdateZoneRoyaltyRateParams,
     UpdateZoneRoyaltyRateParamsInput,
     ExtractEstateParams,
-    UpdateEstateURIParamsInput
-} from "@utils/models/land/estateToken";
+    UpdateEstateURIParamsInput,
+} from '@utils/models/land/estateToken';
 
 // @utils/validation/land
-import { getRegisterCustodianValidation, getUpdateEstateURIValidation } from "@utils/validation/land/estateToken";
+import { getRegisterCustodianValidation, getUpdateEstateURIValidation } from '@utils/validation/land/estateToken';
 
 // @utils/signatures/land
-import { getAuthorizeExtractorsSignatures, getAuthorizeTokenizersSignatures, getUpdateBaseURISignatures, getUpdateCommissionTokenSignatures, getUpdateZoneRoyaltyRateSignatures } from "@utils/signatures/land/estateToken";
-
+import {
+    getAuthorizeExtractorsSignatures,
+    getAuthorizeTokenizersSignatures,
+    getUpdateBaseURISignatures,
+    getUpdateCommissionTokenSignatures,
+    getUpdateZoneRoyaltyRateSignatures,
+} from '@utils/signatures/land/estateToken';
 
 // updateCommissionToken
 export async function getEstateTokenTx_UpdateCommissionToken(
@@ -61,11 +62,7 @@ export async function getEstateTokenTx_UpdateCommissionToken(
     params: UpdateCommissionTokenParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return estateToken.connect(deployer).updateCommissionToken(
-        params.commissionToken,
-        params.signatures,
-        txConfig
-    );
+    return estateToken.connect(deployer).updateCommissionToken(params.commissionToken, params.signatures, txConfig);
 }
 
 export async function getEstateTokenTxByInput_UpdateCommissionToken(
@@ -78,11 +75,10 @@ export async function getEstateTokenTxByInput_UpdateCommissionToken(
 ): Promise<ContractTransaction> {
     const params: UpdateCommissionTokenParams = {
         ...paramsInput,
-        signatures: await getUpdateCommissionTokenSignatures(estateToken, paramsInput, admin, admins)
+        signatures: await getUpdateCommissionTokenSignatures(estateToken, paramsInput, admin, admins),
     };
     return await getEstateTokenTx_UpdateCommissionToken(estateToken, deployer, params, txConfig);
 }
-
 
 // updateBaseURI
 export async function getEstateTokenTx_UpdateBaseURI(
@@ -91,11 +87,7 @@ export async function getEstateTokenTx_UpdateBaseURI(
     params: UpdateBaseURIParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return estateToken.connect(deployer).updateBaseURI(
-        params.uri,
-        params.signatures,
-        txConfig
-    );
+    return estateToken.connect(deployer).updateBaseURI(params.uri, params.signatures, txConfig);
 }
 
 export async function getEstateTokenTxByInput_UpdateBaseURI(
@@ -108,11 +100,10 @@ export async function getEstateTokenTxByInput_UpdateBaseURI(
 ): Promise<ContractTransaction> {
     const params: UpdateBaseURIParams = {
         ...paramsInput,
-        signatures: await getUpdateBaseURISignatures(estateToken, paramsInput, admin, admins)
+        signatures: await getUpdateBaseURISignatures(estateToken, paramsInput, admin, admins),
     };
     return await getEstateTokenTx_UpdateBaseURI(estateToken, deployer, params, txConfig);
 }
-
 
 // authorizeTokenizers
 export async function getEstateTokenTx_AuthorizeTokenizers(
@@ -121,12 +112,9 @@ export async function getEstateTokenTx_AuthorizeTokenizers(
     params: AuthorizeTokenizersParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return estateToken.connect(deployer).authorizeTokenizers(
-        params.accounts,
-        params.isTokenizer,
-        params.signatures,
-        txConfig
-    );
+    return estateToken
+        .connect(deployer)
+        .authorizeTokenizers(params.accounts, params.isTokenizer, params.signatures, txConfig);
 }
 
 export async function getEstateTokenTxByInput_AuthorizeTokenizers(
@@ -139,11 +127,10 @@ export async function getEstateTokenTxByInput_AuthorizeTokenizers(
 ): Promise<ContractTransaction> {
     const params: AuthorizeTokenizersParams = {
         ...paramsInput,
-        signatures: await getAuthorizeTokenizersSignatures(estateToken, paramsInput, admin, admins)
+        signatures: await getAuthorizeTokenizersSignatures(estateToken, paramsInput, admin, admins),
     };
     return await getEstateTokenTx_AuthorizeTokenizers(estateToken, deployer, params, txConfig);
 }
-
 
 // authorizeExtractors
 export async function getEstateTokenTx_AuthorizeExtractors(
@@ -152,12 +139,9 @@ export async function getEstateTokenTx_AuthorizeExtractors(
     params: AuthorizeExtractorsParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return estateToken.connect(deployer).authorizeExtractors(
-        params.accounts,
-        params.isExtractor,
-        params.signatures,
-        txConfig
-    );
+    return estateToken
+        .connect(deployer)
+        .authorizeExtractors(params.accounts, params.isExtractor, params.signatures, txConfig);
 }
 
 export async function getEstateTokenTxByInput_AuthorizeExtractors(
@@ -170,11 +154,10 @@ export async function getEstateTokenTxByInput_AuthorizeExtractors(
 ): Promise<ContractTransaction> {
     const params: AuthorizeExtractorsParams = {
         ...paramsInput,
-        signatures: await getAuthorizeExtractorsSignatures(estateToken, paramsInput, admin, admins)
+        signatures: await getAuthorizeExtractorsSignatures(estateToken, paramsInput, admin, admins),
     };
     return await getEstateTokenTx_AuthorizeExtractors(estateToken, deployer, params, txConfig);
 }
-
 
 // updateZoneRoyaltyRate
 export async function getEstateTokenTx_UpdateZoneRoyaltyRate(
@@ -183,12 +166,9 @@ export async function getEstateTokenTx_UpdateZoneRoyaltyRate(
     params: UpdateZoneRoyaltyRateParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return estateToken.connect(deployer).updateZoneRoyaltyRate(
-        params.zone,
-        params.royaltyRate,
-        params.signatures,
-        txConfig
-    );
+    return estateToken
+        .connect(deployer)
+        .updateZoneRoyaltyRate(params.zone, params.royaltyRate, params.signatures, txConfig);
 }
 
 export async function getEstateTokenTxByInput_UpdateZoneRoyaltyRate(
@@ -201,11 +181,10 @@ export async function getEstateTokenTxByInput_UpdateZoneRoyaltyRate(
 ): Promise<ContractTransaction> {
     const params: UpdateZoneRoyaltyRateParams = {
         ...paramsInput,
-        signatures: await getUpdateZoneRoyaltyRateSignatures(estateToken, paramsInput, admin, admins)
+        signatures: await getUpdateZoneRoyaltyRateSignatures(estateToken, paramsInput, admin, admins),
     };
     return await getEstateTokenTx_UpdateZoneRoyaltyRate(estateToken, deployer, params, txConfig);
 }
-
 
 // registerCustodian
 export async function getEstateTokenTx_RegisterCustodian(
@@ -214,15 +193,10 @@ export async function getEstateTokenTx_RegisterCustodian(
     params: RegisterCustodianParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return estateToken.connect(deployer).registerCustodian(
-        params.zone,
-        params.custodian,
-        params.uri,
-        params.validation,
-        txConfig
-    );
+    return estateToken
+        .connect(deployer)
+        .registerCustodian(params.zone, params.custodian, params.uri, params.validation, txConfig);
 }
-
 
 export async function getEstateTokenTxByInput_RegisterCustodian(
     estateToken: EstateToken,
@@ -233,11 +207,10 @@ export async function getEstateTokenTxByInput_RegisterCustodian(
 ): Promise<ContractTransaction> {
     const params: RegisterCustodianParams = {
         ...paramsInput,
-        validation: await getRegisterCustodianValidation(estateToken, paramsInput, validator)
+        validation: await getRegisterCustodianValidation(estateToken, paramsInput, validator),
     };
     return await getEstateTokenTx_RegisterCustodian(estateToken, deployer, params, txConfig);
 }
-
 
 // tokenizeEstate
 export async function getCallEstateTokenTx_TokenizeEstate(
@@ -260,7 +233,6 @@ export async function getCallEstateTokenTx_TokenizeEstate(
     return tx;
 }
 
-
 // extractEstate
 export async function getCallEstateTokenTx_ExtractEstate(
     estateToken: EstateToken,
@@ -270,14 +242,10 @@ export async function getCallEstateTokenTx_ExtractEstate(
 ): Promise<ContractTransaction> {
     return caller.call(
         estateToken.address,
-        estateToken.interface.encodeFunctionData('extractEstate', [
-            params.estateId,
-            params.extractionId,
-        ]),
+        estateToken.interface.encodeFunctionData('extractEstate', [params.estateId, params.extractionId]),
         txConfig
     );
 }
-
 
 // safeDeprecateEstate
 export async function getEstateTokenTx_SafeDeprecateEstate(
@@ -286,12 +254,7 @@ export async function getEstateTokenTx_SafeDeprecateEstate(
     params: SafeDeprecateEstateParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    const tx = estateToken.connect(deployer).safeDeprecateEstate(
-        params.estateId,
-        params.note,
-        params.anchor,
-        txConfig
-    );
+    const tx = estateToken.connect(deployer).safeDeprecateEstate(params.estateId, params.note, params.anchor, txConfig);
     return tx;
 }
 
@@ -303,11 +266,10 @@ export async function getEstateTokenTxByParams_SafeDeprecateEstate(
 ): Promise<ContractTransaction> {
     const params: SafeDeprecateEstateParams = {
         ...paramsInput,
-        anchor: await getSafeDeprecateEstateAnchor(estateToken, paramsInput)
+        anchor: await getSafeDeprecateEstateAnchor(estateToken, paramsInput),
     };
     return await getEstateTokenTx_SafeDeprecateEstate(estateToken, deployer, params, txConfig);
 }
-
 
 // safeExtendEstateExpiration
 export async function getEstateTokenTx_SafeExtendEstateExpiration(
@@ -316,12 +278,9 @@ export async function getEstateTokenTx_SafeExtendEstateExpiration(
     params: SafeExtendEstateExpirationParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    const tx = estateToken.connect(deployer).safeExtendEstateExpiration(
-        params.estateId,
-        params.expireAt,
-        params.anchor,
-        txConfig
-    );
+    const tx = estateToken
+        .connect(deployer)
+        .safeExtendEstateExpiration(params.estateId, params.expireAt, params.anchor, txConfig);
     return tx;
 }
 
@@ -333,11 +292,10 @@ export async function getEstateTokenTxByParams_SafeExtendEstateExpiration(
 ): Promise<ContractTransaction> {
     const safeParams: SafeExtendEstateExpirationParams = {
         ...params,
-        anchor: await getSafeExtendEstateExpirationAnchor(estateToken, params)
+        anchor: await getSafeExtendEstateExpirationAnchor(estateToken, params),
     };
     return await getEstateTokenTx_SafeExtendEstateExpiration(estateToken, deployer, safeParams, txConfig);
 }
-
 
 // safeUpdateEstateCustodian
 export async function getEstateTokenTx_SafeUpdateEstateCustodian(
@@ -346,12 +304,9 @@ export async function getEstateTokenTx_SafeUpdateEstateCustodian(
     params: SafeUpdateEstateCustodianParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    const tx = estateToken.connect(deployer).safeUpdateEstateCustodian(
-        params.estateId,
-        params.custodian,
-        params.anchor,
-        txConfig
-    );
+    const tx = estateToken
+        .connect(deployer)
+        .safeUpdateEstateCustodian(params.estateId, params.custodian, params.anchor, txConfig);
     return tx;
 }
 
@@ -363,11 +318,10 @@ export async function getEstateTokenTxByParams_SafeUpdateEstateCustodian(
 ): Promise<ContractTransaction> {
     const safeParams: SafeUpdateEstateCustodianParams = {
         ...params,
-        anchor: await getSafeUpdateEstateCustodianAnchor(estateToken, params)
+        anchor: await getSafeUpdateEstateCustodianAnchor(estateToken, params),
     };
     return await getEstateTokenTx_SafeUpdateEstateCustodian(estateToken, deployer, safeParams, txConfig);
 }
-
 
 // safeUpdateEstateURI
 export async function getEstateTokenTx_SafeUpdateEstateURI(
@@ -376,13 +330,9 @@ export async function getEstateTokenTx_SafeUpdateEstateURI(
     params: SafeUpdateEstateURIParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    const tx = estateToken.connect(deployer).safeUpdateEstateURI(
-        params.estateId,
-        params.uri,
-        params.validation,
-        params.anchor,
-        txConfig
-    );
+    const tx = estateToken
+        .connect(deployer)
+        .safeUpdateEstateURI(params.estateId, params.uri, params.validation, params.anchor, txConfig);
     return tx;
 }
 
@@ -396,7 +346,7 @@ export async function getEstateTokenTxByInput_SafeUpdateEstateURI(
     const params: SafeUpdateEstateURIParams = {
         ...paramsInput,
         anchor: await getSafeUpdateEstateURIAnchor(estateToken, paramsInput),
-        validation: await getUpdateEstateURIValidation(estateToken, paramsInput, validator)
+        validation: await getUpdateEstateURIValidation(estateToken, paramsInput, validator),
     };
     return await getEstateTokenTx_SafeUpdateEstateURI(estateToken, deployer, params, txConfig);
 }

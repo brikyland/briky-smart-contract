@@ -2,22 +2,16 @@ import { expect } from 'chai';
 import { ethers } from 'hardhat';
 
 // @nomicfoundation/hardhat-network-helpers
-import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
+import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 
 // @tests/test.constant
 import { Constant } from '@tests/test.constant';
 
 // @typechain-types
-import {
-    Admin,
-    Pausable,
-} from '@typechain-types';
+import { Admin, Pausable } from '@typechain-types';
 
 // @utils/blockchain
-import {
-    callTransaction,
-    getSignatures
-} from '@utils/blockchain';
+import { callTransaction, getSignatures } from '@utils/blockchain';
 
 // @utils/deployments/common
 import { deployAdmin } from '@utils/deployments/common/admin';
@@ -26,25 +20,18 @@ import { deployAdmin } from '@utils/deployments/common/admin';
 import { deployMockPausable } from '@utils/deployments/mock/mockPausable';
 
 // @utils/models/common
-import {
-    PauseParams,
-    UnpauseParams
-} from '@utils/models/common/pausable';
+import { PauseParams, UnpauseParams } from '@utils/models/common/pausable';
 
 // @utils/signatures/common
-import {
-    getPauseSignatures,
-    getUnpauseSignatures
-} from '@utils/signatures/common/pausable';
+import { getPauseSignatures, getUnpauseSignatures } from '@utils/signatures/common/pausable';
 
 // @utils/transaction/common
 import {
     getPausableTx_Pause,
     getPausableTxByInput_Pause,
     getPausableTx_Unpause,
-    getPausableTxByInput_Unpause
+    getPausableTxByInput_Unpause,
 } from '@utils/transaction/common/pausable';
-
 
 interface PausableFixture {
     deployer: any;
@@ -58,21 +45,18 @@ describe('1.a. Pausable', async () => {
     async function pausableFixture(): Promise<PausableFixture> {
         const [deployer, admin1, admin2, admin3, admin4, admin5] = await ethers.getSigners();
         const admins = [admin1, admin2, admin3, admin4, admin5];
-  
-        const adminAddresses: string[] = admins.map(signer => signer.address);
-        const admin = await deployAdmin(
+
+        const adminAddresses: string[] = admins.map((signer) => signer.address);
+        const admin = (await deployAdmin(
             deployer.address,
             adminAddresses[0],
             adminAddresses[1],
             adminAddresses[2],
             adminAddresses[3],
-            adminAddresses[4],
-        ) as Admin;
+            adminAddresses[4]
+        )) as Admin;
 
-        const pausable = await deployMockPausable(
-            deployer.address,
-            admin.address
-        ) as Pausable;
+        const pausable = (await deployMockPausable(deployer.address, admin.address)) as Pausable;
 
         return {
             deployer,
@@ -82,9 +66,7 @@ describe('1.a. Pausable', async () => {
         };
     }
 
-    async function beforePausableTest({
-        pause = false,
-    } = {}): Promise<PausableFixture> {
+    async function beforePausableTest({ pause = false } = {}): Promise<PausableFixture> {
         const fixture = await loadFixture(pausableFixture);
         const { deployer, admin, admins, pausable } = fixture;
 
@@ -94,7 +76,6 @@ describe('1.a. Pausable', async () => {
 
         return fixture;
     }
-
 
     /* --- Administration --- */
     describe('1.a.1. pause(bytes[])', async () => {
@@ -106,19 +87,19 @@ describe('1.a. Pausable', async () => {
 
             expect(await pausable.paused()).to.equal(true);
 
-            await expect(tx).to
-                .emit(pausable, 'Paused')
-                .withArgs(deployer.address);
+            await expect(tx).to.emit(pausable, 'Paused').withArgs(deployer.address);
         });
 
         it('1.a.1.2. Pause unsuccessfully with invalid signatures', async () => {
             const { deployer, admins, admin, pausable } = await beforePausableTest();
-            
+
             const params: PauseParams = {
-                signatures: await getPauseSignatures(pausable, admin, admins, false)
+                signatures: await getPauseSignatures(pausable, admin, admins, false),
             };
-            await expect(getPausableTx_Pause(pausable, deployer, params))
-                .to.be.revertedWithCustomError(admin, 'FailedVerification');
+            await expect(getPausableTx_Pause(pausable, deployer, params)).to.be.revertedWithCustomError(
+                admin,
+                'FailedVerification'
+            );
         });
 
         it('1.a.1.3. Pause unsuccessfully when already paused', async () => {
@@ -126,8 +107,9 @@ describe('1.a. Pausable', async () => {
                 pause: true,
             });
 
-            await expect(getPausableTxByInput_Pause(pausable, deployer, admin, admins))
-                .to.be.revertedWith('Pausable: paused');
+            await expect(getPausableTxByInput_Pause(pausable, deployer, admin, admins)).to.be.revertedWith(
+                'Pausable: paused'
+            );
         });
     });
 
@@ -140,9 +122,7 @@ describe('1.a. Pausable', async () => {
             const tx = await getPausableTxByInput_Unpause(pausable, deployer, admin, admins);
             await tx.wait();
 
-            await expect(tx).to
-                .emit(pausable, 'Unpaused')
-                .withArgs(deployer.address);
+            await expect(tx).to.emit(pausable, 'Unpaused').withArgs(deployer.address);
         });
 
         it('1.a.2.2. Unpause unsuccessfully with invalid signatures', async () => {
@@ -151,10 +131,12 @@ describe('1.a. Pausable', async () => {
             });
 
             const params: UnpauseParams = {
-                signatures: await getUnpauseSignatures(pausable, admin, admins, false)
+                signatures: await getUnpauseSignatures(pausable, admin, admins, false),
             };
-            await expect(getPausableTx_Unpause(pausable, deployer, params))
-                .to.be.revertedWithCustomError(admin, 'FailedVerification');
+            await expect(getPausableTx_Unpause(pausable, deployer, params)).to.be.revertedWithCustomError(
+                admin,
+                'FailedVerification'
+            );
         });
 
         it('1.a.2.3. Unpause unsuccessfully when not paused', async () => {
@@ -164,8 +146,9 @@ describe('1.a. Pausable', async () => {
 
             await callTransaction(getPausableTxByInput_Unpause(pausable, deployer, admin, admins));
 
-            await expect(getPausableTxByInput_Unpause(pausable, deployer, admin, admins))
-                .to.be.revertedWith('Pausable: not paused');
+            await expect(getPausableTxByInput_Unpause(pausable, deployer, admin, admins)).to.be.revertedWith(
+                'Pausable: not paused'
+            );
         });
     });
 });

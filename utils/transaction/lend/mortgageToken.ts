@@ -1,19 +1,13 @@
-import {
-    Contract,
-    ContractTransaction
-} from "ethers";
+import { Contract, ContractTransaction } from 'ethers';
 
 // @nomiclabs/hardhat-ethers
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 // @typechain-types
-import { Admin } from "@typechain-types";
+import { Admin } from '@typechain-types';
 
 // @utils/anchor/lend
-import {
-    getSafeLendAnchor,
-    getSafeRepayAnchor
-} from "@utils/anchor/lend/mortgageToken";
+import { getSafeLendAnchor, getSafeRepayAnchor } from '@utils/anchor/lend/mortgageToken';
 
 // @utils/models/lend
 import {
@@ -26,15 +20,11 @@ import {
     UpdateBaseURIParams,
     UpdateBaseURIParamsInput,
     UpdateFeeRateParams,
-    UpdateFeeRateParamsInput
-} from "@utils/models/lend/mortgageToken";
+    UpdateFeeRateParamsInput,
+} from '@utils/models/lend/mortgageToken';
 
 // @utils/signatures/lend
-import {
-    getUpdateBaseURISignatures,
-    getUpdateFeeRateSignatures
-} from "@utils/signatures/lend/mortgageToken";
-
+import { getUpdateBaseURISignatures, getUpdateFeeRateSignatures } from '@utils/signatures/lend/mortgageToken';
 
 // updateBaseURI
 export async function getMortgageTokenTx_UpdateBaseURI(
@@ -43,11 +33,7 @@ export async function getMortgageTokenTx_UpdateBaseURI(
     params: UpdateBaseURIParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return mortgageToken.connect(deployer).updateBaseURI(
-        params.uri,
-        params.signatures,
-        txConfig
-    );
+    return mortgageToken.connect(deployer).updateBaseURI(params.uri, params.signatures, txConfig);
 }
 
 export async function getMortgageTokenTxByInput_UpdateBaseURI(
@@ -60,11 +46,10 @@ export async function getMortgageTokenTxByInput_UpdateBaseURI(
 ): Promise<ContractTransaction> {
     const params: UpdateBaseURIParams = {
         ...paramsInput,
-        signatures: await getUpdateBaseURISignatures(mortgageToken, paramsInput, admin, admins)
+        signatures: await getUpdateBaseURISignatures(mortgageToken, paramsInput, admin, admins),
     };
     return getMortgageTokenTx_UpdateBaseURI(mortgageToken, deployer, params, txConfig);
 }
-
 
 // updateFeeRate
 export async function getMortgageTokenTx_UpdateFeeRate(
@@ -73,11 +58,7 @@ export async function getMortgageTokenTx_UpdateFeeRate(
     params: UpdateFeeRateParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return mortgageToken.connect(deployer).updateFeeRate(
-        params.feeRate,
-        params.signatures,
-        txConfig
-    );
+    return mortgageToken.connect(deployer).updateFeeRate(params.feeRate, params.signatures, txConfig);
 }
 
 export async function getMortgageTokenTxByInput_UpdateFeeRate(
@@ -90,11 +71,10 @@ export async function getMortgageTokenTxByInput_UpdateFeeRate(
 ): Promise<ContractTransaction> {
     const params: UpdateFeeRateParams = {
         ...paramsInput,
-        signatures: await getUpdateFeeRateSignatures(mortgageToken, paramsInput, admin, admins)
+        signatures: await getUpdateFeeRateSignatures(mortgageToken, paramsInput, admin, admins),
     };
     return getMortgageTokenTx_UpdateFeeRate(mortgageToken, deployer, params, txConfig);
 }
-
 
 // cancel
 export async function getMortgageTokenTx_Cancel(
@@ -103,12 +83,8 @@ export async function getMortgageTokenTx_Cancel(
     params: CancelParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return mortgageToken.connect(deployer).cancel(
-        params.mortgageId,
-        txConfig
-    );
+    return mortgageToken.connect(deployer).cancel(params.mortgageId, txConfig);
 }
-
 
 // lend
 export async function getMortgageTokenTx_Lend(
@@ -117,12 +93,8 @@ export async function getMortgageTokenTx_Lend(
     params: LendParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return mortgageToken.connect(deployer).lend(
-        params.mortgageId,
-        txConfig
-    );
+    return mortgageToken.connect(deployer).lend(params.mortgageId, txConfig);
 }
-
 
 // safeLend
 export async function getMortgageTokenTx_SafeLend(
@@ -131,11 +103,7 @@ export async function getMortgageTokenTx_SafeLend(
     params: SafeLendParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return mortgageToken.connect(deployer).safeLend(
-        params.mortgageId,
-        params.anchor,
-        txConfig
-    );
+    return mortgageToken.connect(deployer).safeLend(params.mortgageId, params.anchor, txConfig);
 }
 
 export async function getMortgageTokenTxByParams_SafeLend(
@@ -151,7 +119,6 @@ export async function getMortgageTokenTxByParams_SafeLend(
     return getMortgageTokenTx_SafeLend(mortgageToken, deployer, safeParams, txConfig);
 }
 
-
 // repay
 export async function getMortgageTokenTx_Repay(
     mortgageToken: Contract,
@@ -159,12 +126,8 @@ export async function getMortgageTokenTx_Repay(
     params: RepayParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return mortgageToken.connect(deployer).repay(
-        params.mortgageId,
-        txConfig
-    );
+    return mortgageToken.connect(deployer).repay(params.mortgageId, txConfig);
 }
-
 
 // safeRepay
 export async function getMortgageTokenTx_SafeRepay(
@@ -173,11 +136,7 @@ export async function getMortgageTokenTx_SafeRepay(
     params: SafeRepayParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return mortgageToken.connect(deployer).safeRepay(
-        params.mortgageId,
-        params.anchor,
-        txConfig
-    );
+    return mortgageToken.connect(deployer).safeRepay(params.mortgageId, params.anchor, txConfig);
 }
 
 export async function getMortgageTokenTxByParams_SafeRepay(
@@ -193,7 +152,6 @@ export async function getMortgageTokenTxByParams_SafeRepay(
     return getMortgageTokenTx_SafeRepay(mortgageToken, deployer, safeParams, txConfig);
 }
 
-
 // foreclose
 export async function getMortgageTokenTx_Foreclose(
     mortgageToken: Contract,
@@ -201,8 +159,5 @@ export async function getMortgageTokenTx_Foreclose(
     params: ForecloseParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return mortgageToken.connect(deployer).foreclose(
-        params.mortgageId,
-        txConfig
-    );
+    return mortgageToken.connect(deployer).foreclose(params.mortgageId, txConfig);
 }

@@ -1,8 +1,7 @@
-import { BigNumber } from "ethers";
+import { BigNumber } from 'ethers';
 
 // @utils/models/common
-import { Validation } from "@utils/models/common/validatable";
-
+import { Validation } from '@utils/models/common/validatable';
 
 // requestExtraction
 export interface RequestExtractionParamsInput {
@@ -18,7 +17,6 @@ export interface RequestExtractionParamsInput {
 export interface RequestExtractionParams extends RequestExtractionParamsInput {
     validation: Validation;
 }
-
 
 // conclude
 export interface ConcludeParams {

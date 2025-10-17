@@ -1,6 +1,4 @@
-
-import { BigNumberish } from "ethers";
-
+import { BigNumberish } from 'ethers';
 
 // distributeToken
 export interface DistributeTokenParamsInput {
@@ -10,5 +8,5 @@ export interface DistributeTokenParamsInput {
 }
 
 export interface DistributeTokenParams extends DistributeTokenParamsInput {
-    signatures: string[];    
+    signatures: string[];
 }

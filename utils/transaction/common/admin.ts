@@ -1,13 +1,13 @@
-import { ContractTransaction } from "ethers";
+import { ContractTransaction } from 'ethers';
 
 // @nomiclabs/hardhat-ethers
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 // @typechain-types
-import { Admin } from "@typechain-types";
+import { Admin } from '@typechain-types';
 
 // @utils/models/common
-import { 
+import {
     TransferAdministration1Params,
     TransferAdministration2Params,
     TransferAdministration3Params,
@@ -29,8 +29,8 @@ import {
     AuthorizeGovernorsParamsInput,
     DeclareZoneParamsInput,
     ActivateInParamsInput,
-    UpdateCurrencyRegistriesParamsInput
-} from "@utils/models/common/admin";
+    UpdateCurrencyRegistriesParamsInput,
+} from '@utils/models/common/admin';
 import {
     getActivateInSignatures,
     getAuthorizeGovernorsSignatures,
@@ -42,9 +42,8 @@ import {
     getTransferAdministration3Signatures,
     getTransferAdministration4Signatures,
     getTransferAdministration5Signatures,
-    getUpdateCurrencyRegistriesSignatures
-} from "@utils/signatures/common/admin";
-
+    getUpdateCurrencyRegistriesSignatures,
+} from '@utils/signatures/common/admin';
 
 // transferAdministration1
 export async function getAdminTx_TransferAdministration1(
@@ -53,11 +52,7 @@ export async function getAdminTx_TransferAdministration1(
     params: TransferAdministration1Params,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return await admin.connect(signer).transferAdministration1(
-        params.admin1,
-        params.signatures,
-        txConfig
-    );
+    return await admin.connect(signer).transferAdministration1(params.admin1, params.signatures, txConfig);
 }
 
 export async function getAdminTxByInput_TransferAdministration1(
@@ -69,11 +64,10 @@ export async function getAdminTxByInput_TransferAdministration1(
 ): Promise<ContractTransaction> {
     const params: TransferAdministration1Params = {
         ...paramsInput,
-        signatures: await getTransferAdministration1Signatures(admin, paramsInput, admins)
+        signatures: await getTransferAdministration1Signatures(admin, paramsInput, admins),
     };
     return await getAdminTx_TransferAdministration1(admin, signer, params, txConfig);
 }
-
 
 // transferAdministration2
 export async function getAdminTx_TransferAdministration2(
@@ -82,11 +76,7 @@ export async function getAdminTx_TransferAdministration2(
     params: TransferAdministration2Params,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return await admin.connect(signer).transferAdministration2(
-        params.admin2,
-        params.signatures,
-        txConfig
-    );
+    return await admin.connect(signer).transferAdministration2(params.admin2, params.signatures, txConfig);
 }
 
 export async function getAdminTxByInput_TransferAdministration2(
@@ -98,11 +88,10 @@ export async function getAdminTxByInput_TransferAdministration2(
 ): Promise<ContractTransaction> {
     const params: TransferAdministration2Params = {
         ...paramsInput,
-        signatures: await getTransferAdministration2Signatures(admin, paramsInput, admins)
+        signatures: await getTransferAdministration2Signatures(admin, paramsInput, admins),
     };
     return await getAdminTx_TransferAdministration2(admin, signer, params, txConfig);
 }
-
 
 // transferAdministration3
 export async function getAdminTx_TransferAdministration3(
@@ -111,11 +100,7 @@ export async function getAdminTx_TransferAdministration3(
     params: TransferAdministration3Params,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return await admin.connect(signer).transferAdministration3(
-        params.admin3,
-        params.signatures,
-        txConfig
-    );
+    return await admin.connect(signer).transferAdministration3(params.admin3, params.signatures, txConfig);
 }
 
 export async function getAdminTxByInput_TransferAdministration3(
@@ -127,11 +112,10 @@ export async function getAdminTxByInput_TransferAdministration3(
 ): Promise<ContractTransaction> {
     const params: TransferAdministration3Params = {
         ...paramsInput,
-        signatures: await getTransferAdministration3Signatures(admin, paramsInput, admins)
+        signatures: await getTransferAdministration3Signatures(admin, paramsInput, admins),
     };
     return await getAdminTx_TransferAdministration3(admin, signer, params, txConfig);
 }
-
 
 // transferAdministration4
 export async function getAdminTx_TransferAdministration4(
@@ -140,11 +124,7 @@ export async function getAdminTx_TransferAdministration4(
     params: TransferAdministration4Params,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return await admin.connect(signer).transferAdministration4(
-        params.admin4,
-        params.signatures,
-        txConfig
-    );
+    return await admin.connect(signer).transferAdministration4(params.admin4, params.signatures, txConfig);
 }
 
 export async function getAdminTxByInput_TransferAdministration4(
@@ -156,11 +136,10 @@ export async function getAdminTxByInput_TransferAdministration4(
 ): Promise<ContractTransaction> {
     const params: TransferAdministration4Params = {
         ...paramsInput,
-        signatures: await getTransferAdministration4Signatures(admin, paramsInput, admins)
+        signatures: await getTransferAdministration4Signatures(admin, paramsInput, admins),
     };
     return await getAdminTx_TransferAdministration4(admin, signer, params, txConfig);
 }
-
 
 // transferAdministration5
 export async function getAdminTx_TransferAdministration5(
@@ -169,11 +148,7 @@ export async function getAdminTx_TransferAdministration5(
     params: TransferAdministration5Params,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return await admin.connect(signer).transferAdministration5(
-        params.admin5,
-        params.signatures,
-        txConfig
-    );
+    return await admin.connect(signer).transferAdministration5(params.admin5, params.signatures, txConfig);
 }
 
 export async function getAdminTxByInput_TransferAdministration5(
@@ -185,11 +160,10 @@ export async function getAdminTxByInput_TransferAdministration5(
 ): Promise<ContractTransaction> {
     const params: TransferAdministration5Params = {
         ...paramsInput,
-        signatures: await getTransferAdministration5Signatures(admin, paramsInput, admins)
+        signatures: await getTransferAdministration5Signatures(admin, paramsInput, admins),
     };
     return await getAdminTx_TransferAdministration5(admin, signer, params, txConfig);
 }
-
 
 // authorizeManagers
 export async function getAdminTx_AuthorizeManagers(
@@ -198,12 +172,9 @@ export async function getAdminTx_AuthorizeManagers(
     params: AuthorizeManagersParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return await admin.connect(signer).authorizeManagers(
-        params.accounts,
-        params.isManager,
-        params.signatures,
-        txConfig
-    );
+    return await admin
+        .connect(signer)
+        .authorizeManagers(params.accounts, params.isManager, params.signatures, txConfig);
 }
 
 export async function getAdminTxByInput_AuthorizeManagers(
@@ -215,11 +186,10 @@ export async function getAdminTxByInput_AuthorizeManagers(
 ): Promise<ContractTransaction> {
     const params: AuthorizeManagersParams = {
         ...paramsInput,
-        signatures: await getAuthorizeManagersSignatures(admin, paramsInput, admins)
+        signatures: await getAuthorizeManagersSignatures(admin, paramsInput, admins),
     };
     return await getAdminTx_AuthorizeManagers(admin, signer, params, txConfig);
 }
-
 
 // authorizeModerators
 export async function getAdminTx_AuthorizeModerators(
@@ -228,12 +198,9 @@ export async function getAdminTx_AuthorizeModerators(
     params: AuthorizeModeratorsParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return await admin.connect(signer).authorizeModerators(
-        params.accounts,
-        params.isModerator,
-        params.signatures,
-        txConfig
-    );
+    return await admin
+        .connect(signer)
+        .authorizeModerators(params.accounts, params.isModerator, params.signatures, txConfig);
 }
 
 export async function getAdminTxByInput_AuthorizeModerators(
@@ -245,11 +212,10 @@ export async function getAdminTxByInput_AuthorizeModerators(
 ): Promise<ContractTransaction> {
     const params: AuthorizeModeratorsParams = {
         ...paramsInput,
-        signatures: await getAuthorizeModeratorsSignatures(admin, paramsInput, admins)
+        signatures: await getAuthorizeModeratorsSignatures(admin, paramsInput, admins),
     };
     return await getAdminTx_AuthorizeModerators(admin, signer, params, txConfig);
 }
-
 
 // authorizeGovernors
 export async function getAdminTx_AuthorizeGovernors(
@@ -258,12 +224,9 @@ export async function getAdminTx_AuthorizeGovernors(
     params: AuthorizeGovernorsParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return await admin.connect(signer).authorizeGovernors(
-        params.accounts,
-        params.isGovernor,
-        params.signatures,
-        txConfig
-    );
+    return await admin
+        .connect(signer)
+        .authorizeGovernors(params.accounts, params.isGovernor, params.signatures, txConfig);
 }
 
 export async function getAdminTxByInput_AuthorizeGovernors(
@@ -275,11 +238,10 @@ export async function getAdminTxByInput_AuthorizeGovernors(
 ): Promise<ContractTransaction> {
     const params: AuthorizeGovernorsParams = {
         ...paramsInput,
-        signatures: await getAuthorizeGovernorsSignatures(admin, paramsInput, admins)
+        signatures: await getAuthorizeGovernorsSignatures(admin, paramsInput, admins),
     };
     return await getAdminTx_AuthorizeGovernors(admin, signer, params, txConfig);
 }
-
 
 // declareZone
 export async function getAdminTx_DeclareZone(
@@ -288,11 +250,7 @@ export async function getAdminTx_DeclareZone(
     params: DeclareZoneParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return await admin.connect(signer).declareZone(
-        params.zone,
-        params.signatures,
-        txConfig
-    );
+    return await admin.connect(signer).declareZone(params.zone, params.signatures, txConfig);
 }
 
 export async function getAdminTxByInput_DeclareZone(
@@ -304,11 +262,10 @@ export async function getAdminTxByInput_DeclareZone(
 ): Promise<ContractTransaction> {
     const params: DeclareZoneParams = {
         ...paramsInput,
-        signatures: await getDeclareZoneSignatures(admin, paramsInput, admins)
+        signatures: await getDeclareZoneSignatures(admin, paramsInput, admins),
     };
     return await getAdminTx_DeclareZone(admin, signer, params, txConfig);
 }
-
 
 // activateIn
 export async function getAdminTx_ActivateIn(
@@ -317,13 +274,9 @@ export async function getAdminTx_ActivateIn(
     params: ActivateInParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return await admin.connect(signer).activateIn(
-        params.zone,
-        params.accounts,
-        params.isActive,
-        params.signatures,
-        txConfig
-    );
+    return await admin
+        .connect(signer)
+        .activateIn(params.zone, params.accounts, params.isActive, params.signatures, txConfig);
 }
 
 export async function getAdminTxByInput_ActivateIn(
@@ -335,11 +288,10 @@ export async function getAdminTxByInput_ActivateIn(
 ): Promise<ContractTransaction> {
     const params: ActivateInParams = {
         ...paramsInput,
-        signatures: await getActivateInSignatures(admin, paramsInput, admins)
+        signatures: await getActivateInSignatures(admin, paramsInput, admins),
     };
     return await getAdminTx_ActivateIn(admin, signer, params, txConfig);
 }
-
 
 // updateCurrencyRegistries
 export async function getAdminTx_UpdateCurrencyRegistries(
@@ -348,13 +300,15 @@ export async function getAdminTx_UpdateCurrencyRegistries(
     params: UpdateCurrencyRegistriesParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return await admin.connect(signer).updateCurrencyRegistries(
-        params.currencies,
-        params.isAvailable,
-        params.isExclusive,
-        params.signatures,
-        txConfig
-    );
+    return await admin
+        .connect(signer)
+        .updateCurrencyRegistries(
+            params.currencies,
+            params.isAvailable,
+            params.isExclusive,
+            params.signatures,
+            txConfig
+        );
 }
 
 export async function getAdminTxByInput_UpdateCurrencyRegistries(
@@ -366,7 +320,7 @@ export async function getAdminTxByInput_UpdateCurrencyRegistries(
 ): Promise<ContractTransaction> {
     const params: UpdateCurrencyRegistriesParams = {
         ...paramsInput,
-        signatures: await getUpdateCurrencyRegistriesSignatures(admin, paramsInput, admins)
+        signatures: await getUpdateCurrencyRegistriesSignatures(admin, paramsInput, admins),
     };
     return await getAdminTx_UpdateCurrencyRegistries(admin, signer, params, txConfig);
 }

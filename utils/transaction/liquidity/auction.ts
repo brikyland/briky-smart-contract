@@ -1,10 +1,10 @@
-import { ContractTransaction } from "ethers";
+import { ContractTransaction } from 'ethers';
 
 // @nomiclabs/hardhat-ethers
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 // @typechain-types
-import {Admin, Auction} from "@typechain-types";
+import { Admin, Auction } from '@typechain-types';
 
 // @utils/models/liquidity
 import {
@@ -13,15 +13,11 @@ import {
     StartAuctionParams,
     StartAuctionParamsInput,
     UpdateStakeTokensParams,
-    UpdateStakeTokensParamsInput
-} from "@utils/models/liquidity/auction";
+    UpdateStakeTokensParamsInput,
+} from '@utils/models/liquidity/auction';
 
 // @utils/signatures/liquidity
-import {
-    getStartAuctionSignatures,
-    getUpdateStakeTokensSignatures
-} from "@utils/signatures/liquidity/auction";
-
+import { getStartAuctionSignatures, getUpdateStakeTokensSignatures } from '@utils/signatures/liquidity/auction';
 
 // updateStakeTokens
 export async function getAuctionTx_UpdateStakeTokens(
@@ -30,13 +26,9 @@ export async function getAuctionTx_UpdateStakeTokens(
     params: UpdateStakeTokensParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return auction.connect(deployer).updateStakeTokens(
-        params.stakeToken1,
-        params.stakeToken2,
-        params.stakeToken3,
-        params.signatures,
-        txConfig
-    );
+    return auction
+        .connect(deployer)
+        .updateStakeTokens(params.stakeToken1, params.stakeToken2, params.stakeToken3, params.signatures, txConfig);
 }
 
 export async function getAuctionTxByInput_UpdateStakeTokens(
@@ -49,11 +41,10 @@ export async function getAuctionTxByInput_UpdateStakeTokens(
 ): Promise<ContractTransaction> {
     const params: UpdateStakeTokensParams = {
         ...paramsInput,
-        signatures: await getUpdateStakeTokensSignatures(auction, paramsInput, admin, admins)
+        signatures: await getUpdateStakeTokensSignatures(auction, paramsInput, admin, admins),
     };
     return getAuctionTx_UpdateStakeTokens(auction, deployer, params, txConfig);
 }
-
 
 // startAuction
 export async function getAuctionTx_StartAuction(
@@ -62,12 +53,7 @@ export async function getAuctionTx_StartAuction(
     params: StartAuctionParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return auction.connect(deployer).startAuction(
-        params.endAt,
-        params.vestingDuration,
-        params.signatures,
-        txConfig
-    );
+    return auction.connect(deployer).startAuction(params.endAt, params.vestingDuration, params.signatures, txConfig);
 }
 
 export async function getAuctionTxByInput_StartAuction(
@@ -80,11 +66,10 @@ export async function getAuctionTxByInput_StartAuction(
 ): Promise<ContractTransaction> {
     const params: StartAuctionParams = {
         ...paramsInput,
-        signatures: await getStartAuctionSignatures(auction, paramsInput, admin, admins)
+        signatures: await getStartAuctionSignatures(auction, paramsInput, admin, admins),
     };
     return getAuctionTx_StartAuction(auction, deployer, params, txConfig);
 }
-
 
 // deposit
 export async function getAuctionTx_Deposit(
@@ -93,12 +78,8 @@ export async function getAuctionTx_Deposit(
     params: DepositParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return auction.connect(deployer).deposit(
-        params.value,
-        txConfig
-    );
+    return auction.connect(deployer).deposit(params.value, txConfig);
 }
-
 
 // withdraw
 export async function getAuctionTx_Withdraw(
@@ -109,7 +90,6 @@ export async function getAuctionTx_Withdraw(
     return auction.connect(deployer).withdraw(txConfig);
 }
 
-
 // stake
 export async function getAuctionTx_Stake(
     auction: Auction,
@@ -117,9 +97,5 @@ export async function getAuctionTx_Stake(
     params: StakeParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return auction.connect(deployer).stake(
-        params.stake1,
-        params.stake2,
-        txConfig
-    );
+    return auction.connect(deployer).stake(params.stake1, params.stake2, txConfig);
 }

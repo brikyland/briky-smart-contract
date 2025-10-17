@@ -7,7 +7,6 @@ export interface TransferAdministration1Params extends TransferAdministration1Pa
     signatures: string[];
 }
 
-
 // transferAdministration2
 export interface TransferAdministration2ParamsInput {
     admin2: string;
@@ -16,7 +15,6 @@ export interface TransferAdministration2ParamsInput {
 export interface TransferAdministration2Params extends TransferAdministration2ParamsInput {
     signatures: string[];
 }
-
 
 // transferAdministration3
 export interface TransferAdministration3ParamsInput {
@@ -27,7 +25,6 @@ export interface TransferAdministration3Params extends TransferAdministration3Pa
     signatures: string[];
 }
 
-
 // transferAdministration4
 export interface TransferAdministration4ParamsInput {
     admin4: string;
@@ -37,7 +34,6 @@ export interface TransferAdministration4Params extends TransferAdministration4Pa
     signatures: string[];
 }
 
-
 // transferAdministration5
 export interface TransferAdministration5ParamsInput {
     admin5: string;
@@ -46,7 +42,6 @@ export interface TransferAdministration5ParamsInput {
 export interface TransferAdministration5Params extends TransferAdministration5ParamsInput {
     signatures: string[];
 }
-
 
 // authorizeManagers
 export interface AuthorizeManagersParamsInput {
@@ -58,7 +53,6 @@ export interface AuthorizeManagersParams extends AuthorizeManagersParamsInput {
     signatures: string[];
 }
 
-
 // authorizeModerators
 export interface AuthorizeModeratorsParamsInput {
     accounts: string[];
@@ -68,7 +62,6 @@ export interface AuthorizeModeratorsParamsInput {
 export interface AuthorizeModeratorsParams extends AuthorizeModeratorsParamsInput {
     signatures: string[];
 }
-
 
 // authorizeGovernors
 export interface AuthorizeGovernorsParamsInput {
@@ -80,7 +73,6 @@ export interface AuthorizeGovernorsParams extends AuthorizeGovernorsParamsInput 
     signatures: string[];
 }
 
-
 // declareZone
 export interface DeclareZoneParamsInput {
     zone: string;
@@ -89,7 +81,6 @@ export interface DeclareZoneParamsInput {
 export interface DeclareZoneParams extends DeclareZoneParamsInput {
     signatures: string[];
 }
-
 
 // activateIn
 export interface ActivateInParamsInput {
@@ -101,7 +92,6 @@ export interface ActivateInParamsInput {
 export interface ActivateInParams extends ActivateInParamsInput {
     signatures: string[];
 }
-
 
 // updateCurrencyRegistries
 export interface UpdateCurrencyRegistriesParamsInput {

@@ -1,24 +1,20 @@
-import { ContractTransaction } from "ethers";
+import { ContractTransaction } from 'ethers';
 
 // @nomiclabs/hardhat-ethers
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 // @typechain-types
-import { 
-    Admin,
-    ProjectToken,
-    ProxyCaller
-} from "@typechain-types";
+import { Admin, ProjectToken, ProxyCaller } from '@typechain-types';
 
 // @utils
-import { MockValidator } from "@utils/mockValidator";
+import { MockValidator } from '@utils/mockValidator';
 
 // @utils/anchor/launch
 import {
     getSafeDeprecateProjectAnchor,
     getSafeTokenizeProjectAnchor,
-    getSafeUpdateProjectURIAnchor
-} from "@utils/anchor/launch/projectToken";
+    getSafeUpdateProjectURIAnchor,
+} from '@utils/anchor/launch/projectToken';
 
 // @utils/models/launch
 import {
@@ -38,22 +34,21 @@ import {
     UpdateProjectURIParamsInput,
     UpdateZoneRoyaltyRateParams,
     UpdateZoneRoyaltyRateParamsInput,
-    WithdrawEstateTokenParams
-} from "@utils/models/launch/projectToken";
+    WithdrawEstateTokenParams,
+} from '@utils/models/launch/projectToken';
 
 // @utils/signatures/launch
 import {
     getAuthorizeLaunchpadSignatures,
     getUpdateBaseURISignatures,
-    getUpdateZoneRoyaltyRateSignatures
-} from "@utils/signatures/launch/projectToken";
+    getUpdateZoneRoyaltyRateSignatures,
+} from '@utils/signatures/launch/projectToken';
 
 // @utils/validation/launch
 import {
     getRegisterInitiatorValidation,
-    getSafeUpdateProjectURIValidation
-} from "@utils/validation/launch/projectToken";
-
+    getSafeUpdateProjectURIValidation,
+} from '@utils/validation/launch/projectToken';
 
 // updateBaseURI
 export async function getProjectTokenTx_UpdateBaseURI(
@@ -62,11 +57,7 @@ export async function getProjectTokenTx_UpdateBaseURI(
     params: UpdateBaseURIParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return projectToken.connect(deployer).updateBaseURI(
-        params.uri,
-        params.signatures,
-        txConfig
-    );
+    return projectToken.connect(deployer).updateBaseURI(params.uri, params.signatures, txConfig);
 }
 
 export async function getProjectTokenTxByInput_UpdateBaseURI(
@@ -84,7 +75,6 @@ export async function getProjectTokenTxByInput_UpdateBaseURI(
     return getProjectTokenTx_UpdateBaseURI(projectToken, deployer, params, txConfig);
 }
 
-
 // updateZoneRoyaltyRate
 export async function getProjectTokenTx_UpdateZoneRoyaltyRate(
     projectToken: ProjectToken,
@@ -92,12 +82,9 @@ export async function getProjectTokenTx_UpdateZoneRoyaltyRate(
     params: UpdateZoneRoyaltyRateParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return projectToken.connect(deployer).updateZoneRoyaltyRate(
-        params.zone,
-        params.royaltyRate,
-        params.signatures,
-        txConfig
-    );
+    return projectToken
+        .connect(deployer)
+        .updateZoneRoyaltyRate(params.zone, params.royaltyRate, params.signatures, txConfig);
 }
 
 export async function getProjectTokenTxByInput_UpdateZoneRoyaltyRate(
@@ -115,7 +102,6 @@ export async function getProjectTokenTxByInput_UpdateZoneRoyaltyRate(
     return getProjectTokenTx_UpdateZoneRoyaltyRate(projectToken, deployer, params, txConfig);
 }
 
-
 // authorizeLaunchpads
 export async function getProjectTokenTx_AuthorizeLaunchpad(
     projectToken: ProjectToken,
@@ -123,12 +109,9 @@ export async function getProjectTokenTx_AuthorizeLaunchpad(
     params: AuthorizeLaunchpadParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return projectToken.connect(deployer).authorizeLaunchpads(
-        params.accounts,
-        params.isLaunchpad,
-        params.signatures,
-        txConfig
-    );
+    return projectToken
+        .connect(deployer)
+        .authorizeLaunchpads(params.accounts, params.isLaunchpad, params.signatures, txConfig);
 }
 
 export async function getProjectTokenTxByInput_AuthorizeLaunchpad(
@@ -146,7 +129,6 @@ export async function getProjectTokenTxByInput_AuthorizeLaunchpad(
     return getProjectTokenTx_AuthorizeLaunchpad(projectToken, deployer, params, txConfig);
 }
 
-
 // registerInitiator
 export async function getProjectTokenTx_RegisterInitiator(
     projectToken: ProjectToken,
@@ -154,13 +136,9 @@ export async function getProjectTokenTx_RegisterInitiator(
     params: RegisterInitiatorParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return projectToken.connect(deployer).registerInitiator(
-        params.zone,
-        params.initiator,
-        params.uri,
-        params.validation,
-        txConfig
-    );
+    return projectToken
+        .connect(deployer)
+        .registerInitiator(params.zone, params.initiator, params.uri, params.validation, txConfig);
 }
 
 export async function getProjectTokenTxByInput_RegisterInitiator(
@@ -172,11 +150,10 @@ export async function getProjectTokenTxByInput_RegisterInitiator(
 ): Promise<ContractTransaction> {
     const params: RegisterInitiatorParams = {
         ...paramsInput,
-        validation: await getRegisterInitiatorValidation(projectToken, paramsInput, validator)
+        validation: await getRegisterInitiatorValidation(projectToken, paramsInput, validator),
     };
     return getProjectTokenTx_RegisterInitiator(projectToken, deployer, params, txConfig);
 }
-
 
 // launchProject
 export async function getCallProjectTokenTx_LaunchProject(
@@ -197,7 +174,6 @@ export async function getCallProjectTokenTx_LaunchProject(
     );
 }
 
-
 // mint
 export async function getProjectTokenTx_Mint(
     projectToken: ProjectToken,
@@ -205,13 +181,8 @@ export async function getProjectTokenTx_Mint(
     params: MintParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return projectToken.connect(deployer).mint(
-        params.projectId,
-        params.amount,
-        txConfig
-    );
+    return projectToken.connect(deployer).mint(params.projectId, params.amount, txConfig);
 }
-
 
 export async function getCallProjectTokenTx_Mint(
     projectToken: ProjectToken,
@@ -221,14 +192,10 @@ export async function getCallProjectTokenTx_Mint(
 ): Promise<ContractTransaction> {
     return launchpad.call(
         projectToken.address,
-        projectToken.interface.encodeFunctionData('mint', [
-            params.projectId,
-            params.amount,
-        ]),
+        projectToken.interface.encodeFunctionData('mint', [params.projectId, params.amount]),
         txConfig
     );
 }
-
 
 // safeWithdrawEstateToken
 export async function getProjectTokenTx_WithdrawEstateToken(
@@ -237,12 +204,8 @@ export async function getProjectTokenTx_WithdrawEstateToken(
     params: WithdrawEstateTokenParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return projectToken.connect(deployer).withdrawEstateToken(
-        params.projectId,
-        txConfig
-    );
+    return projectToken.connect(deployer).withdrawEstateToken(params.projectId, txConfig);
 }
-
 
 // safeDeprecateProject
 export async function getProjectTokenTx_SafeDeprecateProject(
@@ -251,12 +214,7 @@ export async function getProjectTokenTx_SafeDeprecateProject(
     params: SafeDeprecateProjectParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return projectToken.connect(deployer).safeDeprecateProject(
-        params.projectId,
-        params.data,
-        params.anchor,
-        txConfig
-    );
+    return projectToken.connect(deployer).safeDeprecateProject(params.projectId, params.data, params.anchor, txConfig);
 }
 
 export async function getProjectTokenTxByParams_SafeDeprecateProject(
@@ -267,11 +225,10 @@ export async function getProjectTokenTxByParams_SafeDeprecateProject(
 ): Promise<ContractTransaction> {
     const safeParams: SafeDeprecateProjectParams = {
         ...params,
-        anchor: await getSafeDeprecateProjectAnchor(projectToken, params)
+        anchor: await getSafeDeprecateProjectAnchor(projectToken, params),
     };
     return getProjectTokenTx_SafeDeprecateProject(projectToken, deployer, safeParams, txConfig);
 }
-
 
 // safeUpdateProjectURI
 export async function getProjectTokenTx_SafeUpdateProjectURI(
@@ -280,13 +237,9 @@ export async function getProjectTokenTx_SafeUpdateProjectURI(
     params: SafeUpdateProjectURIParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return projectToken.connect(deployer).safeUpdateProjectURI(
-        params.projectId,
-        params.uri,
-        params.validation,
-        params.anchor,
-        txConfig
-    );
+    return projectToken
+        .connect(deployer)
+        .safeUpdateProjectURI(params.projectId, params.uri, params.validation, params.anchor, txConfig);
 }
 
 export async function getProjectTokenTxByInput_SafeUpdateProjectURI(
@@ -299,11 +252,10 @@ export async function getProjectTokenTxByInput_SafeUpdateProjectURI(
     const params: SafeUpdateProjectURIParams = {
         ...paramsInput,
         validation: await getSafeUpdateProjectURIValidation(projectToken, paramsInput, validator),
-        anchor: await getSafeUpdateProjectURIAnchor(projectToken, paramsInput)
+        anchor: await getSafeUpdateProjectURIAnchor(projectToken, paramsInput),
     };
     return getProjectTokenTx_SafeUpdateProjectURI(projectToken, deployer, params, txConfig);
 }
-
 
 // safeTokenizeProject
 export async function getProjectTokenTx_SafeTokenizeProject(
@@ -312,13 +264,9 @@ export async function getProjectTokenTx_SafeTokenizeProject(
     params: SafeTokenizeProjectParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return projectToken.connect(deployer).safeTokenizeProject(
-        params.projectId,
-        params.custodian,
-        params.broker,
-        params.anchor,
-        txConfig
-    );
+    return projectToken
+        .connect(deployer)
+        .safeTokenizeProject(params.projectId, params.custodian, params.broker, params.anchor, txConfig);
 }
 
 export async function getProjectTokenTxByParams_SafeTokenizeProject(

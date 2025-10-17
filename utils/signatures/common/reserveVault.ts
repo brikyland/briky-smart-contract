@@ -1,17 +1,13 @@
-import { ethers } from "ethers";
+import { ethers } from 'ethers';
 
 // @typechain-types
-import {
-    Admin,
-    ReserveVault
-} from "@typechain-types";
+import { Admin, ReserveVault } from '@typechain-types';
 
 // @utils/blockchain
-import { getSignatures } from "@utils/blockchain";
+import { getSignatures } from '@utils/blockchain';
 
 // @utils/models/common
-import { AuthorizeProviderParamsInput } from "@utils/models/common/reserveVault";
-
+import { AuthorizeProviderParamsInput } from '@utils/models/common/reserveVault';
 
 // authorizeProviders
 export async function getAuthorizeProviderSignatures(
@@ -22,8 +18,8 @@ export async function getAuthorizeProviderSignatures(
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "address[]", "bool"],
-        [reserveVault.address, "authorizeProviders", paramsInput.accounts, paramsInput.isProvider]
+        ['address', 'string', 'address[]', 'bool'],
+        [reserveVault.address, 'authorizeProviders', paramsInput.accounts, paramsInput.isProvider]
     );
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }

@@ -1,10 +1,10 @@
-import { ContractTransaction } from "ethers";
+import { ContractTransaction } from 'ethers';
 
 // @nomiclabs/hardhat-ethers
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 // @typechain-types
-import { Admin, CommissionToken, ProxyCaller } from "@typechain-types";
+import { Admin, CommissionToken, ProxyCaller } from '@typechain-types';
 
 // @utils/models/land
 import {
@@ -14,15 +14,11 @@ import {
     UpdateBaseURIParams,
     UpdateBaseURIParamsInput,
     UpdateRoyaltyRateParams,
-    UpdateRoyaltyRateParamsInput
-} from "@utils/models/land/commissionToken";
+    UpdateRoyaltyRateParamsInput,
+} from '@utils/models/land/commissionToken';
 
 // @utils/signatures/land
-import {
-    getUpdateBaseURISignatures,
-    getUpdateRoyaltyRateSignatures
-} from "@utils/signatures/land/commissionToken";
-
+import { getUpdateBaseURISignatures, getUpdateRoyaltyRateSignatures } from '@utils/signatures/land/commissionToken';
 
 // updateBaseURI
 export async function getCommissionTokenTx_UpdateBaseURI(
@@ -31,11 +27,7 @@ export async function getCommissionTokenTx_UpdateBaseURI(
     params: UpdateBaseURIParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return commissionToken.connect(deployer).updateBaseURI(
-        params.uri,
-        params.signatures,
-        txConfig
-    );
+    return commissionToken.connect(deployer).updateBaseURI(params.uri, params.signatures, txConfig);
 }
 
 export async function getCommissionTokenTxByInput_UpdateBaseURI(
@@ -50,10 +42,9 @@ export async function getCommissionTokenTxByInput_UpdateBaseURI(
         ...paramsInput,
         signatures: await getUpdateBaseURISignatures(commissionToken, paramsInput, admin, admins),
     };
-    
+
     return await getCommissionTokenTx_UpdateBaseURI(commissionToken, deployer, params, txConfig);
 }
-
 
 // updateRoyaltyRate
 export async function getCommissionTokenTx_UpdateRoyaltyRate(
@@ -62,11 +53,7 @@ export async function getCommissionTokenTx_UpdateRoyaltyRate(
     params: UpdateRoyaltyRateParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return commissionToken.connect(deployer).updateRoyaltyRate(
-        params.royaltyRate,
-        params.signatures,
-        txConfig
-    );
+    return commissionToken.connect(deployer).updateRoyaltyRate(params.royaltyRate, params.signatures, txConfig);
 }
 
 export async function getCommissionTokenTxByInput_UpdateRoyaltyRate(
@@ -85,7 +72,6 @@ export async function getCommissionTokenTxByInput_UpdateRoyaltyRate(
     return await getCommissionTokenTx_UpdateRoyaltyRate(commissionToken, deployer, params, txConfig);
 }
 
-
 // registerBroker
 export async function getCommissionTokenTx_RegisterBroker(
     commissionToken: CommissionToken,
@@ -93,14 +79,10 @@ export async function getCommissionTokenTx_RegisterBroker(
     params: RegisterBrokerParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return commissionToken.connect(deployer).registerBroker(
-        params.zone,
-        params.broker,
-        params.commissionRate,
-        txConfig
-    );
+    return commissionToken
+        .connect(deployer)
+        .registerBroker(params.zone, params.broker, params.commissionRate, txConfig);
 }
-
 
 // activateBroker
 export async function getCommissionTokenTx_ActivateBroker(
@@ -109,14 +91,8 @@ export async function getCommissionTokenTx_ActivateBroker(
     params: ActivateBrokerParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return commissionToken.connect(deployer).activateBroker(
-        params.zone,
-        params.broker,
-        params.isActive,
-        txConfig
-    );
+    return commissionToken.connect(deployer).activateBroker(params.zone, params.broker, params.isActive, txConfig);
 }
-
 
 // mint
 export async function getCommissionTokenTx_Mint(
@@ -125,12 +101,7 @@ export async function getCommissionTokenTx_Mint(
     params: MintParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return commissionToken.connect(deployer).mint(
-        params.zone,
-        params.broker,
-        params.tokenId,
-        txConfig
-    );
+    return commissionToken.connect(deployer).mint(params.zone, params.broker, params.tokenId, txConfig);
 }
 
 export async function getCallCommissionTokenTx_Mint(
@@ -141,11 +112,7 @@ export async function getCallCommissionTokenTx_Mint(
 ): Promise<ContractTransaction> {
     return caller.call(
         commissionToken.address,
-        commissionToken.interface.encodeFunctionData('mint', [
-            params.zone,
-            params.broker,
-            params.tokenId,
-        ]),
+        commissionToken.interface.encodeFunctionData('mint', [params.zone, params.broker, params.tokenId]),
         txConfig
     );
 }

@@ -1,14 +1,10 @@
-import { ContractTransaction } from "ethers";
+import { ContractTransaction } from 'ethers';
 
 // @nomiclabs/hardhat-ethers
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 // @typechain-types
-import {
-    Admin,
-    PrimaryToken,
-    ProxyCaller
-} from "@typechain-types";
+import { Admin, PrimaryToken, ProxyCaller } from '@typechain-types';
 
 // @utils/models/liquidity
 import {
@@ -41,7 +37,7 @@ import {
     UpdateStakeTokensParamsInput,
     UpdateTreasuryParams,
     UpdateTreasuryParamsInput,
-} from "@utils/models/liquidity/primaryToken";
+} from '@utils/models/liquidity/primaryToken';
 
 // @utils/signatures/liquidity
 import {
@@ -54,9 +50,8 @@ import {
     getUnlockForPublicSaleSignatures,
     getUnlockForSeedRoundSignatures,
     getUpdateStakeTokensSignatures,
-    getUpdateTreasurySignatures
-} from "@utils/signatures/liquidity/primaryToken";
-
+    getUpdateTreasurySignatures,
+} from '@utils/signatures/liquidity/primaryToken';
 
 // updateTreasury
 export async function getPrimaryTokenTx_UpdateTreasury(
@@ -65,11 +60,7 @@ export async function getPrimaryTokenTx_UpdateTreasury(
     params: UpdateTreasuryParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return primaryToken.connect(deployer).updateTreasury(
-        params.treasury,
-        params.signatures,
-        txConfig
-    );
+    return primaryToken.connect(deployer).updateTreasury(params.treasury, params.signatures, txConfig);
 }
 
 export async function getPrimaryTokenTxByInput_UpdateTreasury(
@@ -87,7 +78,6 @@ export async function getPrimaryTokenTxByInput_UpdateTreasury(
     return getPrimaryTokenTx_UpdateTreasury(primaryToken, deployer, params, txConfig);
 }
 
-
 // updateStakeTokens
 export async function getPrimaryTokenTx_UpdateStakeTokens(
     primaryToken: PrimaryToken,
@@ -95,13 +85,9 @@ export async function getPrimaryTokenTx_UpdateStakeTokens(
     params: UpdateStakeTokensParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return primaryToken.connect(deployer).updateStakeTokens(
-        params.stakeToken1,
-        params.stakeToken2,
-        params.stakeToken3,
-        params.signatures,
-        txConfig
-    );
+    return primaryToken
+        .connect(deployer)
+        .updateStakeTokens(params.stakeToken1, params.stakeToken2, params.stakeToken3, params.signatures, txConfig);
 }
 
 export async function getPrimaryTokenTxByInput_UpdateStakeTokens(
@@ -119,7 +105,6 @@ export async function getPrimaryTokenTxByInput_UpdateStakeTokens(
     return getPrimaryTokenTx_UpdateStakeTokens(primaryToken, deployer, params, txConfig);
 }
 
-
 // unlockForBackerRound
 export async function getPrimaryTokenTx_UnlockForBackerRound(
     primaryToken: PrimaryToken,
@@ -127,11 +112,7 @@ export async function getPrimaryTokenTx_UnlockForBackerRound(
     params: UnlockForBackerRoundParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return primaryToken.connect(deployer).unlockForBackerRound(
-        params.distributor,
-        params.signatures,
-        txConfig
-    );
+    return primaryToken.connect(deployer).unlockForBackerRound(params.distributor, params.signatures, txConfig);
 }
 
 export async function getPrimaryTokenTxByInput_UnlockForBackerRound(
@@ -149,7 +130,6 @@ export async function getPrimaryTokenTxByInput_UnlockForBackerRound(
     return getPrimaryTokenTx_UnlockForBackerRound(primaryToken, deployer, params, txConfig);
 }
 
-
 // unlockForSeedRound
 export async function getPrimaryTokenTx_UnlockForSeedRound(
     primaryToken: PrimaryToken,
@@ -157,11 +137,7 @@ export async function getPrimaryTokenTx_UnlockForSeedRound(
     params: UnlockForSeedRoundParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return primaryToken.connect(deployer).unlockForSeedRound(
-        params.distributor,
-        params.signatures,
-        txConfig
-    );
+    return primaryToken.connect(deployer).unlockForSeedRound(params.distributor, params.signatures, txConfig);
 }
 
 export async function getPrimaryTokenTxByInput_UnlockForSeedRound(
@@ -179,7 +155,6 @@ export async function getPrimaryTokenTxByInput_UnlockForSeedRound(
     return getPrimaryTokenTx_UnlockForSeedRound(primaryToken, deployer, params, txConfig);
 }
 
-
 // unlockForPrivateSale1
 export async function getPrimaryTokenTx_UnlockForPrivateSale1(
     primaryToken: PrimaryToken,
@@ -187,11 +162,7 @@ export async function getPrimaryTokenTx_UnlockForPrivateSale1(
     params: UnlockForPrivateSale1Params,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return primaryToken.connect(deployer).unlockForPrivateSale1(
-        params.distributor,
-        params.signatures,
-        txConfig
-    );
+    return primaryToken.connect(deployer).unlockForPrivateSale1(params.distributor, params.signatures, txConfig);
 }
 
 export async function getPrimaryTokenTxByInput_UnlockForPrivateSale1(
@@ -209,7 +180,6 @@ export async function getPrimaryTokenTxByInput_UnlockForPrivateSale1(
     return getPrimaryTokenTx_UnlockForPrivateSale1(primaryToken, deployer, params, txConfig);
 }
 
-
 // unlockForPrivateSale2
 export async function getPrimaryTokenTx_UnlockForPrivateSale2(
     primaryToken: PrimaryToken,
@@ -217,11 +187,7 @@ export async function getPrimaryTokenTx_UnlockForPrivateSale2(
     params: UnlockForPrivateSale2Params,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return primaryToken.connect(deployer).unlockForPrivateSale2(
-        params.distributor,
-        params.signatures,
-        txConfig
-    );
+    return primaryToken.connect(deployer).unlockForPrivateSale2(params.distributor, params.signatures, txConfig);
 }
 
 export async function getPrimaryTokenTxByInput_UnlockForPrivateSale2(
@@ -239,7 +205,6 @@ export async function getPrimaryTokenTxByInput_UnlockForPrivateSale2(
     return getPrimaryTokenTx_UnlockForPrivateSale2(primaryToken, deployer, params, txConfig);
 }
 
-
 // unlockForPublicSale
 export async function getPrimaryTokenTx_UnlockForPublicSale(
     primaryToken: PrimaryToken,
@@ -247,11 +212,7 @@ export async function getPrimaryTokenTx_UnlockForPublicSale(
     params: UnlockForPublicSaleParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return primaryToken.connect(deployer).unlockForPublicSale(
-        params.distributor,
-        params.signatures,
-        txConfig
-    );
+    return primaryToken.connect(deployer).unlockForPublicSale(params.distributor, params.signatures, txConfig);
 }
 
 export async function getPrimaryTokenTxByInput_UnlockForPublicSale(
@@ -269,7 +230,6 @@ export async function getPrimaryTokenTxByInput_UnlockForPublicSale(
     return getPrimaryTokenTx_UnlockForPublicSale(primaryToken, deployer, params, txConfig);
 }
 
-
 // unlockForCoreTeam
 export async function getPrimaryTokenTx_UnlockForCoreTeam(
     primaryToken: PrimaryToken,
@@ -277,11 +237,7 @@ export async function getPrimaryTokenTx_UnlockForCoreTeam(
     params: UnlockForCoreTeamParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return primaryToken.connect(deployer).unlockForCoreTeam(
-        params.distributor,
-        params.signatures,
-        txConfig
-    );
+    return primaryToken.connect(deployer).unlockForCoreTeam(params.distributor, params.signatures, txConfig);
 }
 
 export async function getPrimaryTokenTxByInput_UnlockForCoreTeam(
@@ -299,7 +255,6 @@ export async function getPrimaryTokenTxByInput_UnlockForCoreTeam(
     return getPrimaryTokenTx_UnlockForCoreTeam(primaryToken, deployer, params, txConfig);
 }
 
-
 // unlockForMarketMaker
 export async function getPrimaryTokenTx_UnlockForMarketMaker(
     primaryToken: PrimaryToken,
@@ -307,11 +262,7 @@ export async function getPrimaryTokenTx_UnlockForMarketMaker(
     params: UnlockForMarketMakerParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return primaryToken.connect(deployer).unlockForMarketMaker(
-        params.distributor,
-        params.signatures,
-        txConfig
-    );
+    return primaryToken.connect(deployer).unlockForMarketMaker(params.distributor, params.signatures, txConfig);
 }
 
 export async function getPrimaryTokenTxByInput_UnlockForMarketMaker(
@@ -329,7 +280,6 @@ export async function getPrimaryTokenTxByInput_UnlockForMarketMaker(
     return getPrimaryTokenTx_UnlockForMarketMaker(primaryToken, deployer, params, txConfig);
 }
 
-
 // unlockForExternalTreasury
 export async function getPrimaryTokenTx_UnlockForExternalTreasury(
     primaryToken: PrimaryToken,
@@ -337,11 +287,7 @@ export async function getPrimaryTokenTx_UnlockForExternalTreasury(
     params: UnlockForExternalTreasuryParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return primaryToken.connect(deployer).unlockForExternalTreasury(
-        params.distributor,
-        params.signatures,
-        txConfig
-    );
+    return primaryToken.connect(deployer).unlockForExternalTreasury(params.distributor, params.signatures, txConfig);
 }
 
 export async function getPrimaryTokenTxByInput_UnlockForExternalTreasury(
@@ -359,7 +305,6 @@ export async function getPrimaryTokenTxByInput_UnlockForExternalTreasury(
     return getPrimaryTokenTx_UnlockForExternalTreasury(primaryToken, deployer, params, txConfig);
 }
 
-
 // contributeLiquidityFromBackerRound
 export async function getPrimaryTokenTx_ContributeLiquidityFromBackerRound(
     primaryToken: PrimaryToken,
@@ -367,12 +312,8 @@ export async function getPrimaryTokenTx_ContributeLiquidityFromBackerRound(
     params: ContributeLiquidityFromBackerRoundParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return primaryToken.connect(deployer).contributeLiquidityFromBackerRound(
-        params.liquidity,
-        txConfig
-    );
+    return primaryToken.connect(deployer).contributeLiquidityFromBackerRound(params.liquidity, txConfig);
 }
-
 
 // contributeLiquidityFromSeedRound
 export async function getPrimaryTokenTx_ContributeLiquidityFromSeedRound(
@@ -381,12 +322,8 @@ export async function getPrimaryTokenTx_ContributeLiquidityFromSeedRound(
     params: ContributeLiquidityFromSeedRoundParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return primaryToken.connect(deployer).contributeLiquidityFromSeedRound(
-        params.liquidity,
-        txConfig
-    );
+    return primaryToken.connect(deployer).contributeLiquidityFromSeedRound(params.liquidity, txConfig);
 }
-
 
 // contributeLiquidityFromPrivateSale1
 export async function getPrimaryTokenTx_ContributeLiquidityFromPrivateSale1(
@@ -395,12 +332,8 @@ export async function getPrimaryTokenTx_ContributeLiquidityFromPrivateSale1(
     params: ContributeLiquidityFromPrivateSale1Params,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return primaryToken.connect(deployer).contributeLiquidityFromPrivateSale1(
-        params.liquidity,
-        txConfig
-    );
+    return primaryToken.connect(deployer).contributeLiquidityFromPrivateSale1(params.liquidity, txConfig);
 }
-
 
 // contributeLiquidityFromPrivateSale2
 export async function getPrimaryTokenTx_ContributeLiquidityFromPrivateSale2(
@@ -409,12 +342,8 @@ export async function getPrimaryTokenTx_ContributeLiquidityFromPrivateSale2(
     params: ContributeLiquidityFromPrivateSale2Params,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return primaryToken.connect(deployer).contributeLiquidityFromPrivateSale2(
-        params.liquidity,
-        txConfig
-    );
+    return primaryToken.connect(deployer).contributeLiquidityFromPrivateSale2(params.liquidity, txConfig);
 }
-
 
 // contributeLiquidityFromPublicSale
 export async function getPrimaryTokenTx_ContributeLiquidityFromPublicSale(
@@ -423,12 +352,8 @@ export async function getPrimaryTokenTx_ContributeLiquidityFromPublicSale(
     params: ContributeLiquidityFromPublicSaleParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return primaryToken.connect(deployer).contributeLiquidityFromPublicSale(
-        params.liquidity,
-        txConfig
-    );
+    return primaryToken.connect(deployer).contributeLiquidityFromPublicSale(params.liquidity, txConfig);
 }
-
 
 // contributeLiquidityFromMarketMaker
 export async function getPrimaryTokenTx_ContributeLiquidityFromMarketMaker(
@@ -437,12 +362,8 @@ export async function getPrimaryTokenTx_ContributeLiquidityFromMarketMaker(
     params: ContributeLiquidityFromMarketMakerParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return primaryToken.connect(deployer).contributeLiquidityFromMarketMaker(
-        params.liquidity,
-        txConfig
-    );
+    return primaryToken.connect(deployer).contributeLiquidityFromMarketMaker(params.liquidity, txConfig);
 }
-
 
 // contributeLiquidityFromExternalTreasury
 export async function getPrimaryTokenTx_ContributeLiquidityFromExternalTreasury(
@@ -451,12 +372,8 @@ export async function getPrimaryTokenTx_ContributeLiquidityFromExternalTreasury(
     params: ContributeLiquidityFromExternalTreasuryParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return primaryToken.connect(deployer).contributeLiquidityFromExternalTreasury(
-        params.liquidity,
-        txConfig
-    );
+    return primaryToken.connect(deployer).contributeLiquidityFromExternalTreasury(params.liquidity, txConfig);
 }
-
 
 // contributeLiquidityFromStakeToken
 export async function getCallPrimaryTokenTx_ContributeLiquidityFromStakeToken(
@@ -467,13 +384,10 @@ export async function getCallPrimaryTokenTx_ContributeLiquidityFromStakeToken(
 ): Promise<ContractTransaction> {
     return caller.call(
         primaryToken.address,
-        primaryToken.interface.encodeFunctionData("contributeLiquidityFromStakeToken", [
-            params.liquidity,
-        ]),
+        primaryToken.interface.encodeFunctionData('contributeLiquidityFromStakeToken', [params.liquidity]),
         txConfig
     );
 }
-
 
 // mintForStake
 export async function getPrimaryTokenTx_MintForStake(
@@ -481,9 +395,7 @@ export async function getPrimaryTokenTx_MintForStake(
     deployer: SignerWithAddress,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return primaryToken.connect(deployer).mintForStake(
-        txConfig
-    );
+    return primaryToken.connect(deployer).mintForStake(txConfig);
 }
 
 export async function getCallPrimaryTokenTx_MintForStake(
@@ -491,13 +403,8 @@ export async function getCallPrimaryTokenTx_MintForStake(
     caller: ProxyCaller,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return caller.call(
-        primaryToken.address,
-        primaryToken.interface.encodeFunctionData("mintForStake"),
-        txConfig
-    );
+    return caller.call(primaryToken.address, primaryToken.interface.encodeFunctionData('mintForStake'), txConfig);
 }
-
 
 // liquidate
 export async function getPrimaryTokenTx_Liquidate(
@@ -506,8 +413,5 @@ export async function getPrimaryTokenTx_Liquidate(
     params: LiquidateParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return primaryToken.connect(deployer).liquidate(
-        params.amount,
-        txConfig
-    );
+    return primaryToken.connect(deployer).liquidate(params.amount, txConfig);
 }

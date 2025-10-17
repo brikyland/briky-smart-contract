@@ -1,13 +1,10 @@
-import { ContractTransaction } from "ethers";
+import { ContractTransaction } from 'ethers';
 
 // @nomiclabs/hardhat-ethers
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 // @typechain-types
-import {
-    AssetMarketplace,
-    ProxyCaller
-} from "@typechain-types";
+import { AssetMarketplace, ProxyCaller } from '@typechain-types';
 
 // @utils/models/lux
 import {
@@ -16,15 +13,11 @@ import {
     CancelParams,
     ListParams,
     SafeBuyParams,
-    SafeBuyPartParams
-} from "@utils/models/lux/assetMarketplace";
+    SafeBuyPartParams,
+} from '@utils/models/lux/assetMarketplace';
 
 // @utils/anchor/lux
-import {
-    getSafeBuyAnchor,
-    getSafeBuyPartAnchor
-} from "@utils/anchor/lux/assetMarketplace";
-
+import { getSafeBuyAnchor, getSafeBuyPartAnchor } from '@utils/anchor/lux/assetMarketplace';
 
 // list
 export async function getAssetMarketplaceTx_List(
@@ -32,13 +25,9 @@ export async function getAssetMarketplaceTx_List(
     signer: SignerWithAddress,
     params: ListParams
 ): Promise<ContractTransaction> {
-    return assetMarketplace.connect(signer).list(
-        params.tokenId,
-        params.sellingAmount,
-        params.unitPrice,
-        params.currency,
-        params.isDivisible
-    );
+    return assetMarketplace
+        .connect(signer)
+        .list(params.tokenId, params.sellingAmount, params.unitPrice, params.currency, params.isDivisible);
 }
 
 export async function getCallAssetMarketplaceTx_List(
@@ -48,16 +37,15 @@ export async function getCallAssetMarketplaceTx_List(
 ): Promise<ContractTransaction> {
     return caller.call(
         assetMarketplace.address,
-        assetMarketplace.interface.encodeFunctionData("list", [
+        assetMarketplace.interface.encodeFunctionData('list', [
             params.tokenId,
             params.sellingAmount,
             params.unitPrice,
             params.currency,
-            params.isDivisible
+            params.isDivisible,
         ])
     );
 }
-
 
 // buy(uint256)
 export async function getAssetMarketplaceTx_Buy(
@@ -66,12 +54,8 @@ export async function getAssetMarketplaceTx_Buy(
     params: BuyParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return assetMarketplace.connect(signer)["buy(uint256)"](
-        params.offerId,
-        txConfig
-    );
+    return assetMarketplace.connect(signer)['buy(uint256)'](params.offerId, txConfig);
 }
-
 
 // buy(uint256,uint256)
 export async function getAssetMarketplaceTx_BuyPart(
@@ -80,13 +64,8 @@ export async function getAssetMarketplaceTx_BuyPart(
     params: BuyPartParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return assetMarketplace.connect(signer)["buy(uint256,uint256)"](
-        params.offerId,
-        params.amount,
-        txConfig
-    );
+    return assetMarketplace.connect(signer)['buy(uint256,uint256)'](params.offerId, params.amount, txConfig);
 }
-
 
 // cancel
 export async function getAssetMarketplaceTx_Cancel(
@@ -95,12 +74,8 @@ export async function getAssetMarketplaceTx_Cancel(
     params: CancelParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return assetMarketplace.connect(signer).cancel(
-        params.offerId,
-        txConfig
-    );
+    return assetMarketplace.connect(signer).cancel(params.offerId, txConfig);
 }
-
 
 // safeBuy(uint256,bytes32)
 export async function getAssetMarketplaceTx_SafeBuy(
@@ -109,11 +84,7 @@ export async function getAssetMarketplaceTx_SafeBuy(
     params: SafeBuyParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return assetMarketplace.connect(signer)["safeBuy(uint256,bytes32)"](
-        params.offerId,
-        params.anchor,
-        txConfig
-    );
+    return assetMarketplace.connect(signer)['safeBuy(uint256,bytes32)'](params.offerId, params.anchor, txConfig);
 }
 
 export async function getAssetMarketplaceTxByParams_SafeBuy(
@@ -129,7 +100,6 @@ export async function getAssetMarketplaceTxByParams_SafeBuy(
     return getAssetMarketplaceTx_SafeBuy(assetMarketplace, signer, safeParams, txConfig);
 }
 
-
 // safeBuy(uint256,uint256,bytes32)
 export async function getAssetMarketplaceTx_SafeBuyPart(
     assetMarketplace: AssetMarketplace,
@@ -137,12 +107,9 @@ export async function getAssetMarketplaceTx_SafeBuyPart(
     params: SafeBuyPartParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return await assetMarketplace.connect(signer)["safeBuy(uint256,uint256,bytes32)"](
-        params.offerId,
-        params.amount,
-        params.anchor,
-        txConfig
-    );
+    return await assetMarketplace
+        .connect(signer)
+        ['safeBuy(uint256,uint256,bytes32)'](params.offerId, params.amount, params.anchor, txConfig);
 }
 
 export async function getAssetMarketplaceTxByParams_SafeBuyPart(

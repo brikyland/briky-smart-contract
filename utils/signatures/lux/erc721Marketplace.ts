@@ -1,17 +1,13 @@
-import { ethers } from "ethers";
+import { ethers } from 'ethers';
 
 // @typechain-types
-import {
-    Admin,
-    ERC721Marketplace
-} from "@typechain-types";
+import { Admin, ERC721Marketplace } from '@typechain-types';
 
 // @utils/blockchain
-import { getSignatures } from "@utils/blockchain";
+import { getSignatures } from '@utils/blockchain';
 
 // @utils/models/lux
-import { RegisterCollectionsParamsInput } from "@utils/models/lux/erc721Marketplace";
-
+import { RegisterCollectionsParamsInput } from '@utils/models/lux/erc721Marketplace';
 
 // registerCollections
 export async function getRegisterCollectionsSignatures(
@@ -22,8 +18,8 @@ export async function getRegisterCollectionsSignatures(
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "address[]", "bool"],
-        [erc721Marketplace.address, "registerCollections", paramsInput.collections, paramsInput.isCollection]
+        ['address', 'string', 'address[]', 'bool'],
+        [erc721Marketplace.address, 'registerCollections', paramsInput.collections, paramsInput.isCollection]
     );
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }

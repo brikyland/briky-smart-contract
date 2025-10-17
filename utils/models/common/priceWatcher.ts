@@ -1,5 +1,4 @@
-import { Rate } from "./common";
-
+import { Rate } from './common';
 
 // updatePriceFeeds
 export interface UpdatePriceFeedsParamsInput {
@@ -11,7 +10,6 @@ export interface UpdatePriceFeedsParamsInput {
 export interface UpdatePriceFeedsParams extends UpdatePriceFeedsParamsInput {
     signatures: string[];
 }
-
 
 // updateDefaultRates
 export interface UpdateDefaultRatesParamsInput {

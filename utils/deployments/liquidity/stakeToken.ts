@@ -1,5 +1,5 @@
-import { ethers, upgrades } from "hardhat";
-import { BigNumber } from "ethers";
+import { ethers, upgrades } from 'hardhat';
+import { BigNumber } from 'ethers';
 
 export async function deployStakeToken(
     signer: any,
@@ -7,19 +7,16 @@ export async function deployStakeToken(
     primaryTokenAddress: string,
     name: string,
     symbol: string,
-    feeRate: BigNumber,
+    feeRate: BigNumber
 ) {
     const StakeToken = await ethers.getContractFactory('StakeToken', signer);
-    const stakeToken = await upgrades.deployProxy(
-        StakeToken,
-        [
-            adminAddress,
-            primaryTokenAddress,
-            name,
-            symbol,
-            feeRate,
-        ]
-    );
+    const stakeToken = await upgrades.deployProxy(StakeToken, [
+        adminAddress,
+        primaryTokenAddress,
+        name,
+        symbol,
+        feeRate,
+    ]);
     await stakeToken.deployed();
-    return stakeToken
+    return stakeToken;
 }

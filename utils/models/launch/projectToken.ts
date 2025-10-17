@@ -1,8 +1,7 @@
-import { BigNumber } from "ethers";
+import { BigNumber } from 'ethers';
 
 // @utils/models/common
-import { Validation } from "@utils/models/common/validatable";
-
+import { Validation } from '@utils/models/common/validatable';
 
 // updateBaseURI
 export interface UpdateBaseURIParamsInput {
@@ -12,7 +11,6 @@ export interface UpdateBaseURIParamsInput {
 export interface UpdateBaseURIParams extends UpdateBaseURIParamsInput {
     signatures: string[];
 }
-
 
 // updateZoneRoyaltyRate
 export interface UpdateZoneRoyaltyRateParamsInput {
@@ -24,7 +22,6 @@ export interface UpdateZoneRoyaltyRateParams extends UpdateZoneRoyaltyRateParams
     signatures: string[];
 }
 
-
 // authorizeLaunchpads
 export interface AuthorizeLaunchpadParamsInput {
     accounts: string[];
@@ -34,7 +31,6 @@ export interface AuthorizeLaunchpadParamsInput {
 export interface AuthorizeLaunchpadParams extends AuthorizeLaunchpadParamsInput {
     signatures: string[];
 }
-
 
 // registerInitiator
 export interface RegisterInitiatorParamsInput {
@@ -47,7 +43,6 @@ export interface RegisterInitiatorParams extends RegisterInitiatorParamsInput {
     validation: Validation;
 }
 
-
 // launchProject
 export interface LaunchProjectParams {
     zone: string;
@@ -56,19 +51,16 @@ export interface LaunchProjectParams {
     uri: string;
 }
 
-
 // mint
 export interface MintParams {
     projectId: BigNumber;
     amount: BigNumber;
 }
 
-
 // withdrawEstateToken
 export interface WithdrawEstateTokenParams {
     projectId: BigNumber;
 }
-
 
 // safeDeprecateProject
 export interface DeprecateProjectParams {
@@ -79,7 +71,6 @@ export interface DeprecateProjectParams {
 export interface SafeDeprecateProjectParams extends DeprecateProjectParams {
     anchor: string;
 }
-
 
 // safeUpdateProjectURI
 export interface UpdateProjectURIParamsInput {
@@ -94,7 +85,6 @@ export interface UpdateProjectURIParams extends UpdateProjectURIParamsInput {
 export interface SafeUpdateProjectURIParams extends UpdateProjectURIParams {
     anchor: string;
 }
-
 
 // safeTokenizeProject
 export interface TokenizeProjectParams {

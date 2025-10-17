@@ -1,13 +1,10 @@
 import { ethers } from 'ethers';
 
 // @typechain-types
-import {
-    Admin,
-    PrimaryToken
-} from "@typechain-types";
+import { Admin, PrimaryToken } from '@typechain-types';
 
 // @utils/blockchain
-import { getSignatures } from "@utils/blockchain";
+import { getSignatures } from '@utils/blockchain';
 
 // @utils/models/liquidity
 import {
@@ -20,9 +17,8 @@ import {
     UnlockForPublicSaleParamsInput,
     UnlockForSeedRoundParamsInput,
     UpdateStakeTokensParamsInput,
-    UpdateTreasuryParamsInput
-} from "@utils/models/liquidity/primaryToken";
-
+    UpdateTreasuryParamsInput,
+} from '@utils/models/liquidity/primaryToken';
 
 // updateTreasury
 export async function getUpdateTreasurySignatures(
@@ -33,12 +29,11 @@ export async function getUpdateTreasurySignatures(
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "address"],
-        [primaryToken.address, "updateTreasury", paramsInput.treasury]
+        ['address', 'string', 'address'],
+        [primaryToken.address, 'updateTreasury', paramsInput.treasury]
     );
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
-
 
 // updateStakeTokens
 export async function getUpdateStakeTokensSignatures(
@@ -49,12 +44,17 @@ export async function getUpdateStakeTokensSignatures(
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "address", "address", "address"],
-        [primaryToken.address, "updateStakeTokens", paramsInput.stakeToken1, paramsInput.stakeToken2, paramsInput.stakeToken3]
+        ['address', 'string', 'address', 'address', 'address'],
+        [
+            primaryToken.address,
+            'updateStakeTokens',
+            paramsInput.stakeToken1,
+            paramsInput.stakeToken2,
+            paramsInput.stakeToken3,
+        ]
     );
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
-
 
 // unlockForBackerRound
 export async function getUnlockForBackerRoundSignatures(
@@ -65,8 +65,8 @@ export async function getUnlockForBackerRoundSignatures(
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "address"],
-        [primaryToken.address, "unlockForBackerRound", paramsInput.distributor]
+        ['address', 'string', 'address'],
+        [primaryToken.address, 'unlockForBackerRound', paramsInput.distributor]
     );
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
@@ -79,8 +79,8 @@ export async function getUnlockForSeedRoundSignatures(
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "address"],
-        [primaryToken.address, "unlockForSeedRound", paramsInput.distributor]
+        ['address', 'string', 'address'],
+        [primaryToken.address, 'unlockForSeedRound', paramsInput.distributor]
     );
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
@@ -93,8 +93,8 @@ export async function getUnlockForPrivateSale1Signatures(
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "address"],
-        [primaryToken.address, "unlockForPrivateSale1", paramsInput.distributor]
+        ['address', 'string', 'address'],
+        [primaryToken.address, 'unlockForPrivateSale1', paramsInput.distributor]
     );
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
@@ -107,8 +107,8 @@ export async function getUnlockForPrivateSale2Signatures(
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "address"],
-        [primaryToken.address, "unlockForPrivateSale2", paramsInput.distributor]
+        ['address', 'string', 'address'],
+        [primaryToken.address, 'unlockForPrivateSale2', paramsInput.distributor]
     );
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
@@ -121,8 +121,8 @@ export async function getUnlockForPublicSaleSignatures(
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "address"],
-        [primaryToken.address, "unlockForPublicSale", paramsInput.distributor]
+        ['address', 'string', 'address'],
+        [primaryToken.address, 'unlockForPublicSale', paramsInput.distributor]
     );
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
@@ -135,8 +135,8 @@ export async function getUnlockForCoreTeamSignatures(
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "address"],
-        [primaryToken.address, "unlockForCoreTeam", paramsInput.distributor]
+        ['address', 'string', 'address'],
+        [primaryToken.address, 'unlockForCoreTeam', paramsInput.distributor]
     );
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
@@ -149,8 +149,8 @@ export async function getUnlockForMarketMakerSignatures(
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "address"],
-        [primaryToken.address, "unlockForMarketMaker", paramsInput.distributor]
+        ['address', 'string', 'address'],
+        [primaryToken.address, 'unlockForMarketMaker', paramsInput.distributor]
     );
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
@@ -163,8 +163,8 @@ export async function getUnlockForExternalTreasurySignatures(
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "address"],
-        [primaryToken.address, "unlockForExternalTreasury", paramsInput.distributor]
+        ['address', 'string', 'address'],
+        [primaryToken.address, 'unlockForExternalTreasury', paramsInput.distributor]
     );
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }

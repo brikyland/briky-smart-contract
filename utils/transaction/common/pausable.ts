@@ -1,26 +1,16 @@
-import {
-    Contract,
-    ContractTransaction
-} from "ethers";
+import { Contract, ContractTransaction } from 'ethers';
 
 // @typechain-types
-import { Admin } from "@typechain-types";
+import { Admin } from '@typechain-types';
 
 // @nomiclabs/hardhat-ethers
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 // @utils/models/common
-import {
-    PauseParams,
-    UnpauseParams
-} from "@utils/models/common/pausable";
+import { PauseParams, UnpauseParams } from '@utils/models/common/pausable';
 
 // @utils/signatures/common
-import {
-    getPauseSignatures,
-    getUnpauseSignatures
-} from "@utils/signatures/common/pausable";
-
+import { getPauseSignatures, getUnpauseSignatures } from '@utils/signatures/common/pausable';
 
 // pause
 export async function getPausableTx_Pause(
@@ -29,10 +19,7 @@ export async function getPausableTx_Pause(
     params: PauseParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return await pausable.connect(signer).pause(
-        params.signatures,
-        txConfig
-    );
+    return await pausable.connect(signer).pause(params.signatures, txConfig);
 }
 
 export async function getPausableTxByInput_Pause(
@@ -43,11 +30,10 @@ export async function getPausableTxByInput_Pause(
     txConfig = {}
 ): Promise<ContractTransaction> {
     const params: PauseParams = {
-        signatures: await getPauseSignatures(pausable, admin, admins)
+        signatures: await getPauseSignatures(pausable, admin, admins),
     };
     return await getPausableTx_Pause(pausable, signer, params, txConfig);
 }
-
 
 // unpause
 export async function getPausableTx_Unpause(
@@ -56,10 +42,7 @@ export async function getPausableTx_Unpause(
     params: UnpauseParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return await pausable.connect(signer).unpause(
-        params.signatures,
-        txConfig
-    );
+    return await pausable.connect(signer).unpause(params.signatures, txConfig);
 }
 
 export async function getPausableTxByInput_Unpause(
@@ -70,7 +53,7 @@ export async function getPausableTxByInput_Unpause(
     txConfig = {}
 ): Promise<ContractTransaction> {
     const params: UnpauseParams = {
-        signatures: await getUnpauseSignatures(pausable, admin, admins)
+        signatures: await getUnpauseSignatures(pausable, admin, admins),
     };
     return await getPausableTx_Unpause(pausable, signer, params, txConfig);
 }

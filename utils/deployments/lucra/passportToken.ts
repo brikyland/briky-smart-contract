@@ -1,5 +1,5 @@
-import { BigNumber } from "ethers";
-import { ethers, upgrades } from "hardhat";
+import { BigNumber } from 'ethers';
+import { ethers, upgrades } from 'hardhat';
 
 export async function deployPassportToken(
     signer: any,
@@ -8,20 +8,17 @@ export async function deployPassportToken(
     symbol: string,
     baseURI: string,
     fee: BigNumber,
-    royaltyRate: BigNumber,
+    royaltyRate: BigNumber
 ) {
     const PassportToken = await ethers.getContractFactory('PassportToken', signer);
-    const passportToken = await upgrades.deployProxy(
-        PassportToken,
-        [
-            adminAddress,
-            name,
-            symbol,
-            baseURI,
-            fee,
-            royaltyRate,
-        ]
-    );
+    const passportToken = await upgrades.deployProxy(PassportToken, [
+        adminAddress,
+        name,
+        symbol,
+        baseURI,
+        fee,
+        royaltyRate,
+    ]);
     await passportToken.deployed();
     return passportToken;
 }

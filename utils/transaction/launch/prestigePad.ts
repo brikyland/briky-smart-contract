@@ -1,24 +1,20 @@
-import { ContractTransaction } from "ethers";
+import { ContractTransaction } from 'ethers';
 
 // @nomiclabs/hardhat-ethers
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 // @typechain-types
-import {
-    Admin,
-    PrestigePad,
-    ProxyCaller
-} from "@typechain-types";
+import { Admin, PrestigePad, ProxyCaller } from '@typechain-types';
 
 // @utils
-import { MockValidator } from "@utils/mockValidator";
+import { MockValidator } from '@utils/mockValidator';
 
 // @utils/anchor/launch
 import {
     getSafeConfirmCurrentRoundAnchor,
     getSafeContributeCurrentRoundAnchor,
-    getSafeFinalizeAnchor
-} from "@utils/anchor/launch/prestigePad";
+    getSafeFinalizeAnchor,
+} from '@utils/anchor/launch/prestigePad';
 
 // @utils/models/launch
 import {
@@ -41,20 +37,19 @@ import {
     UpdateRoundsParams,
     UpdateRoundsParamsInput,
     WithdrawContributionParams,
-    WithdrawProjectTokenParams
-} from "@utils/models/launch/prestigePad";
+    WithdrawProjectTokenParams,
+} from '@utils/models/launch/prestigePad';
 
 // @utils/signatures/launch
-import { getUpdateBaseUnitPriceRangeSignatures } from "@utils/signatures/launch/prestigePad";
+import { getUpdateBaseUnitPriceRangeSignatures } from '@utils/signatures/launch/prestigePad';
 
 // @utils/validation/launch
 import {
     getInitiateLaunchValidation,
     getUpdateLaunchURIValidation,
     getUpdateRoundsValidation,
-    getUpdateRoundValidation
-} from "@utils/validation/launch/prestigePad";
-
+    getUpdateRoundValidation,
+} from '@utils/validation/launch/prestigePad';
 
 // updateBaseUnitPriceRange
 export async function getPrestigePadTx_UpdateBaseUnitPriceRange(
@@ -63,12 +58,9 @@ export async function getPrestigePadTx_UpdateBaseUnitPriceRange(
     params: UpdateBaseUnitPriceRangeParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return prestigePad.connect(deployer).updateBaseUnitPriceRange(
-        params.baseMinUnitPrice,
-        params.baseMaxUnitPrice,
-        params.signatures,
-        txConfig,
-    );
+    return prestigePad
+        .connect(deployer)
+        .updateBaseUnitPriceRange(params.baseMinUnitPrice, params.baseMaxUnitPrice, params.signatures, txConfig);
 }
 
 export async function getPrestigePadTxByInput_UpdateBaseUnitPriceRange(
@@ -81,11 +73,10 @@ export async function getPrestigePadTxByInput_UpdateBaseUnitPriceRange(
 ): Promise<ContractTransaction> {
     const params: UpdateBaseUnitPriceRangeParams = {
         ...paramsInput,
-        signatures: await getUpdateBaseUnitPriceRangeSignatures(prestigePad, paramsInput, admin, admins)
-    }
+        signatures: await getUpdateBaseUnitPriceRangeSignatures(prestigePad, paramsInput, admin, admins),
+    };
     return await getPrestigePadTx_UpdateBaseUnitPriceRange(prestigePad, deployer, params, txConfig);
 }
-
 
 // initiateLaunch
 export async function getPrestigePadTx_InitiateLaunch(
@@ -94,16 +85,18 @@ export async function getPrestigePadTx_InitiateLaunch(
     params: InitiateLaunchParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return prestigePad.connect(deployer).initiateLaunch(
-        params.initiator,
-        params.zone,
-        params.projectURI,
-        params.launchURI,
-        params.initialQuantity,
-        params.feeRate,
-        params.validation,
-        txConfig,
-    );
+    return prestigePad
+        .connect(deployer)
+        .initiateLaunch(
+            params.initiator,
+            params.zone,
+            params.projectURI,
+            params.launchURI,
+            params.initialQuantity,
+            params.feeRate,
+            params.validation,
+            txConfig
+        );
 }
 
 export async function getPrestigePadTxByInput_InitiateLaunch(
@@ -115,11 +108,10 @@ export async function getPrestigePadTxByInput_InitiateLaunch(
 ): Promise<ContractTransaction> {
     const params: InitiateLaunchParams = {
         ...paramsInput,
-        validation: await getInitiateLaunchValidation(prestigePad, paramsInput, validator)
+        validation: await getInitiateLaunchValidation(prestigePad, paramsInput, validator),
     };
     return await getPrestigePadTx_InitiateLaunch(prestigePad, deployer, params, txConfig);
-};
-
+}
 
 // updateLaunchURI
 export async function getPrestigePadTx_UpdateLaunchURI(
@@ -128,12 +120,7 @@ export async function getPrestigePadTx_UpdateLaunchURI(
     params: UpdateLaunchURIParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return prestigePad.connect(deployer).updateLaunchURI(
-        params.launchId,
-        params.uri,
-        params.validation,
-        txConfig,
-    );
+    return prestigePad.connect(deployer).updateLaunchURI(params.launchId, params.uri, params.validation, txConfig);
 }
 
 export async function getPrestigePadTxByInput_UpdateLaunchURI(
@@ -145,11 +132,10 @@ export async function getPrestigePadTxByInput_UpdateLaunchURI(
 ): Promise<ContractTransaction> {
     const params: UpdateLaunchURIParams = {
         ...paramsInput,
-        validation: await getUpdateLaunchURIValidation(prestigePad, paramsInput, validator)
+        validation: await getUpdateLaunchURIValidation(prestigePad, paramsInput, validator),
     };
     return getPrestigePadTx_UpdateLaunchURI(prestigePad, deployer, params, txConfig);
 }
-
 
 // updateRound
 export async function getPrestigePadTx_UpdateRound(
@@ -158,12 +144,7 @@ export async function getPrestigePadTx_UpdateRound(
     params: UpdateRoundParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return prestigePad.connect(deployer).updateRound(
-        params.launchId,
-        params.index,
-        params.round,
-        txConfig,
-    );
+    return prestigePad.connect(deployer).updateRound(params.launchId, params.index, params.round, txConfig);
 }
 
 export async function getPrestigePadTxByInput_UpdateRound(
@@ -177,12 +158,11 @@ export async function getPrestigePadTxByInput_UpdateRound(
         ...paramsInput,
         round: {
             ...paramsInput.round,
-            validation: await getUpdateRoundValidation(prestigePad, paramsInput, validator)
+            validation: await getUpdateRoundValidation(prestigePad, paramsInput, validator),
         },
     };
     return getPrestigePadTx_UpdateRound(prestigePad, deployer, params, txConfig);
 }
-
 
 // updateRounds
 export async function getPrestigePadTx_UpdateRounds(
@@ -191,11 +171,7 @@ export async function getPrestigePadTx_UpdateRounds(
     params: UpdateRoundsParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return prestigePad.connect(deployer).updateRounds(
-        params.launchId,
-        params.removedRoundNumber,
-        params.addedRounds,
-    );
+    return prestigePad.connect(deployer).updateRounds(params.launchId, params.removedRoundNumber, params.addedRounds);
 }
 
 export async function getCallPrestigePadTx_UpdateRounds(
@@ -211,7 +187,7 @@ export async function getCallPrestigePadTx_UpdateRounds(
             params.removedRoundNumber,
             params.addedRounds,
         ]),
-        txConfig,
+        txConfig
     );
 }
 
@@ -253,7 +229,6 @@ export async function getPrestigePadTxByInput_CallUpdateRounds(
     return getCallPrestigePadTx_UpdateRounds(prestigePad, proxyCaller, params, txConfig);
 }
 
-
 // scheduleNextRound
 export async function getPrestigePadTx_ScheduleNextRound(
     prestigePad: PrestigePad,
@@ -261,16 +236,18 @@ export async function getPrestigePadTx_ScheduleNextRound(
     params: ScheduleNextRoundParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return prestigePad.connect(deployer).scheduleNextRound(
-        params.launchId,
-        params.cashbackThreshold,
-        params.cashbackBaseRate,
-        params.cashbackCurrencies,
-        params.cashbackDenominations,
-        params.raiseStartsAt,
-        params.raiseDuration,
-        txConfig,
-    );
+    return prestigePad
+        .connect(deployer)
+        .scheduleNextRound(
+            params.launchId,
+            params.cashbackThreshold,
+            params.cashbackBaseRate,
+            params.cashbackCurrencies,
+            params.cashbackDenominations,
+            params.raiseStartsAt,
+            params.raiseDuration,
+            txConfig
+        );
 }
 
 export async function getCallPrestigePadTx_ScheduleNextRound(
@@ -290,10 +267,9 @@ export async function getCallPrestigePadTx_ScheduleNextRound(
             params.raiseStartsAt,
             params.raiseDuration,
         ]),
-        txConfig,
+        txConfig
     );
 }
-
 
 // cancelCurrentRound
 export async function getPrestigePadTx_CancelCurrentRound(
@@ -302,12 +278,8 @@ export async function getPrestigePadTx_CancelCurrentRound(
     params: CancelCurrentRoundParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return prestigePad.connect(deployer).cancelCurrentRound(
-        params.launchId,
-        txConfig,
-    );
+    return prestigePad.connect(deployer).cancelCurrentRound(params.launchId, txConfig);
 }
-
 
 // safeConfirmCurrentRound
 export async function getPrestigePadTx_SafeConfirmCurrentRound(
@@ -316,11 +288,7 @@ export async function getPrestigePadTx_SafeConfirmCurrentRound(
     params: SafeConfirmCurrentRoundParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return prestigePad.connect(deployer).safeConfirmCurrentRound(
-        params.launchId,
-        params.anchor,
-        txConfig,
-    );
+    return prestigePad.connect(deployer).safeConfirmCurrentRound(params.launchId, params.anchor, txConfig);
 }
 
 export async function getPrestigePadTxByParams_SafeConfirmCurrentRound(
@@ -344,11 +312,8 @@ export async function getCallPrestigePadTx_SafeConfirmCurrentRound(
 ): Promise<ContractTransaction> {
     return proxyCaller.call(
         prestigePad.address,
-        prestigePad.interface.encodeFunctionData('safeConfirmCurrentRound', [
-            params.launchId,
-            params.anchor,
-        ]),
-        txConfig,
+        prestigePad.interface.encodeFunctionData('safeConfirmCurrentRound', [params.launchId, params.anchor]),
+        txConfig
     );
 }
 
@@ -365,7 +330,6 @@ export async function getCallTxByParams_SafeConfirmCurrentRound(
     return getCallPrestigePadTx_SafeConfirmCurrentRound(prestigePad, proxyCaller, safeParams, txConfig);
 }
 
-
 // safeFinalize
 export async function getPrestigePadTx_SafeFinalize(
     prestigePad: PrestigePad,
@@ -373,11 +337,7 @@ export async function getPrestigePadTx_SafeFinalize(
     params: SafeFinalizeParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return prestigePad.connect(deployer).safeFinalize(
-        params.launchId,
-        params.anchor,
-        txConfig,
-    );
+    return prestigePad.connect(deployer).safeFinalize(params.launchId, params.anchor, txConfig);
 }
 
 export async function getPrestigePadTxByParams_SafeFinalize(
@@ -393,7 +353,6 @@ export async function getPrestigePadTxByParams_SafeFinalize(
     return getPrestigePadTx_SafeFinalize(prestigePad, deployer, safeParams, txConfig);
 }
 
-
 // contributeCurrentRound
 export async function getPrestigePadTx_ContributeCurrentRound(
     prestigePad: PrestigePad,
@@ -401,13 +360,8 @@ export async function getPrestigePadTx_ContributeCurrentRound(
     params: ContributeCurrentRoundParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return prestigePad.connect(deployer).contributeCurrentRound(
-        params.launchId,
-        params.quantity,
-        txConfig,
-    );
+    return prestigePad.connect(deployer).contributeCurrentRound(params.launchId, params.quantity, txConfig);
 }
-
 
 // safeContributeCurrentRound
 export async function getPrestigePadTx_SafeContributeCurrentRound(
@@ -416,12 +370,9 @@ export async function getPrestigePadTx_SafeContributeCurrentRound(
     params: SafeContributeCurrentRoundParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return prestigePad.connect(deployer).safeContributeCurrentRound(
-        params.launchId,
-        params.quantity,
-        params.anchor,
-        txConfig,
-    );
+    return prestigePad
+        .connect(deployer)
+        .safeContributeCurrentRound(params.launchId, params.quantity, params.anchor, txConfig);
 }
 
 export async function getPrestigePadTxByParams_SafeContributeCurrentRound(
@@ -437,7 +388,6 @@ export async function getPrestigePadTxByParams_SafeContributeCurrentRound(
     return getPrestigePadTx_SafeContributeCurrentRound(prestigePad, deployer, safeParams, txConfig);
 }
 
-
 // withdrawContribution
 export async function getPrestigePadTx_WithdrawContribution(
     prestigePad: PrestigePad,
@@ -445,12 +395,8 @@ export async function getPrestigePadTx_WithdrawContribution(
     params: WithdrawContributionParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return prestigePad.connect(deployer).withdrawContribution(
-        params.roundId,
-        txConfig,
-    );
+    return prestigePad.connect(deployer).withdrawContribution(params.roundId, txConfig);
 }
-
 
 // withdrawProjectToken
 export async function getPrestigePadTx_WithdrawProjectToken(
@@ -459,9 +405,5 @@ export async function getPrestigePadTx_WithdrawProjectToken(
     params: WithdrawProjectTokenParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return prestigePad.connect(deployer).withdrawProjectToken(
-        params.launchId,
-        params.index,
-        txConfig,
-    );
+    return prestigePad.connect(deployer).withdrawProjectToken(params.launchId, params.index, txConfig);
 }

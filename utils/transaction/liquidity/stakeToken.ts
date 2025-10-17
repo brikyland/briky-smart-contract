@@ -1,13 +1,10 @@
-import { ContractTransaction } from "ethers";
+import { ContractTransaction } from 'ethers';
 
 // @nomiclabs/hardhat-ethers
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 // @typechain-types
-import {
-    Admin,
-    StakeToken
-} from "@typechain-types";
+import { Admin, StakeToken } from '@typechain-types';
 
 // @utils/models/liquidity
 import {
@@ -18,15 +15,11 @@ import {
     TransferParams,
     UnstakeParams,
     UpdateFeeRateParams,
-    UpdateFeeRateParamsInput
-} from "@utils/models/liquidity/stakeToken";
+    UpdateFeeRateParamsInput,
+} from '@utils/models/liquidity/stakeToken';
 
 // @utils/signatures/liquidity
-import {
-    getInitializeRewardingSignatures,
-    getUpdateFeeRateSignatures
-} from "@utils/signatures/liquidity/stakeToken";
-
+import { getInitializeRewardingSignatures, getUpdateFeeRateSignatures } from '@utils/signatures/liquidity/stakeToken';
 
 // initializeRewarding
 export async function getStakeTokenTx_InitializeRewarding(
@@ -35,12 +28,9 @@ export async function getStakeTokenTx_InitializeRewarding(
     params: InitializeRewardingParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return stakeToken.connect(deployer).initializeRewarding(
-        params.initialLastRewardFetch,
-        params.successor,
-        params.signatures,
-        txConfig
-    );
+    return stakeToken
+        .connect(deployer)
+        .initializeRewarding(params.initialLastRewardFetch, params.successor, params.signatures, txConfig);
 }
 
 export async function getStakeTokenTxByInput_InitializeRewarding(
@@ -58,7 +48,6 @@ export async function getStakeTokenTxByInput_InitializeRewarding(
     return getStakeTokenTx_InitializeRewarding(stakeToken, deployer, params, txConfig);
 }
 
-
 // updateFeeRate
 export function getStakeTokenTx_UpdateFeeRate(
     stakeToken: StakeToken,
@@ -66,11 +55,7 @@ export function getStakeTokenTx_UpdateFeeRate(
     params: UpdateFeeRateParams,
     txConfig = {}
 ) {
-    return stakeToken.connect(deployer).updateFeeRate(
-        params.feeRate,
-        params.signatures,
-        txConfig
-    );
+    return stakeToken.connect(deployer).updateFeeRate(params.feeRate, params.signatures, txConfig);
 }
 
 export async function getStakeTokenTxByInput_UpdateFeeRate(
@@ -88,7 +73,6 @@ export async function getStakeTokenTxByInput_UpdateFeeRate(
     return getStakeTokenTx_UpdateFeeRate(stakeToken, deployer, params, txConfig);
 }
 
-
 // fetchReward
 export async function getStakeTokenTx_FetchReward(
     stakeToken: StakeToken,
@@ -98,7 +82,6 @@ export async function getStakeTokenTx_FetchReward(
     return stakeToken.connect(deployer).fetchReward(txConfig);
 }
 
-
 // stake
 export async function getStakeTokenTx_Stake(
     stakeToken: StakeToken,
@@ -106,13 +89,8 @@ export async function getStakeTokenTx_Stake(
     params: StakeParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return stakeToken.connect(deployer).stake(
-        params.account,
-        params.value,
-        txConfig
-    );
+    return stakeToken.connect(deployer).stake(params.account, params.value, txConfig);
 }
-
 
 // unstake
 export async function getStakeTokenTx_Unstake(
@@ -121,12 +99,8 @@ export async function getStakeTokenTx_Unstake(
     params: UnstakeParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return stakeToken.connect(deployer).unstake(
-        params.value,
-        txConfig
-    );
+    return stakeToken.connect(deployer).unstake(params.value, txConfig);
 }
-
 
 // promote
 export async function getStakeTokenTx_Promote(
@@ -135,12 +109,8 @@ export async function getStakeTokenTx_Promote(
     params: PromoteParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return stakeToken.connect(deployer).promote(
-        params.value,
-        txConfig
-    );
+    return stakeToken.connect(deployer).promote(params.value, txConfig);
 }
-
 
 // transfer
 export async function getStakeTokenTx_Transfer(
@@ -149,9 +119,5 @@ export async function getStakeTokenTx_Transfer(
     params: TransferParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return stakeToken.connect(deployer).transfer(
-        params.to,
-        params.amount,
-        txConfig
-    );
+    return stakeToken.connect(deployer).transfer(params.to, params.amount, txConfig);
 }

@@ -1,5 +1,4 @@
-import { BigNumber, BigNumberish } from "ethers";
-
+import { BigNumber, BigNumberish } from 'ethers';
 
 // updateStakeTokens
 export interface UpdateStakeTokensParamsInput {
@@ -11,7 +10,6 @@ export interface UpdateStakeTokensParamsInput {
 export interface UpdateStakeTokensParams extends UpdateStakeTokensParamsInput {
     signatures: string[];
 }
-
 
 // distributeTokensWithDuration
 export interface DistributeTokensWithDurationParamsInput {
@@ -25,7 +23,6 @@ export interface DistributeTokensWithDurationParams extends DistributeTokensWith
     signatures: string[];
 }
 
-
 // distributeTokensWithTimestamp
 export interface DistributeTokensWithTimestampParamsInput {
     receivers: string[];
@@ -38,12 +35,10 @@ export interface DistributeTokensWithTimestampParams extends DistributeTokensWit
     signatures: string[];
 }
 
-
 // withdraw
 export interface WithdrawParams {
     distributionIds: number[];
 }
-
 
 // stake
 export interface StakeParams {

@@ -1,5 +1,4 @@
-import { BigNumber } from "ethers";
-
+import { BigNumber } from 'ethers';
 
 // registerCollections
 export interface RegisterCollectionsParamsInput {
@@ -11,7 +10,6 @@ export interface RegisterCollectionsParams extends RegisterCollectionsParamsInpu
     signatures: string[];
 }
 
-
 // list
 export interface ListParams {
     collection: string;
@@ -20,18 +18,15 @@ export interface ListParams {
     currency: string;
 }
 
-
 // buy
 export interface BuyParams {
     offerId: BigNumber;
 }
 
-
 // cancel
 export interface CancelParams {
     offerId: BigNumber;
 }
-
 
 // safeBuy
 export interface SafeBuyParams {

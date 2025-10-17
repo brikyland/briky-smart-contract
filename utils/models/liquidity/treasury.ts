@@ -1,5 +1,4 @@
-import { BigNumber } from "ethers";
-
+import { BigNumber } from 'ethers';
 
 // withdrawOperationFund
 export interface WithdrawOperationFundParamsInput {
@@ -11,13 +10,11 @@ export interface WithdrawOperationFundParams extends WithdrawOperationFundParams
     signatures: string[];
 }
 
-
 // withdrawLiquidity
 export interface WithdrawLiquidityParams {
     withdrawer: string;
     value: BigNumber;
 }
-
 
 // provideLiquidity
 export interface ProvideLiquidityParams {

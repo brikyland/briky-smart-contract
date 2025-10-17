@@ -1,5 +1,5 @@
-import { ethers } from "hardhat";
+import { ethers } from 'hardhat';
 
 export const Zone = {
-    Vietnam: ethers.utils.formatBytes32String('Vietnam')
-}
+    Vietnam: ethers.utils.formatBytes32String('Vietnam'),
+};

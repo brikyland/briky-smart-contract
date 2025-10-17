@@ -1,8 +1,7 @@
-import { BigNumber } from "ethers";
+import { BigNumber } from 'ethers';
 
 // @utils/models/common
-import { Validation } from "@utils/models/common/validatable";
-
+import { Validation } from '@utils/models/common/validatable';
 
 // updateBaseUnitPriceRange
 export interface UpdateBaseUnitPriceRangeParamsInput {
@@ -14,7 +13,6 @@ export interface UpdateBaseUnitPriceRangeParams extends UpdateBaseUnitPriceRange
     signatures: string[];
 }
 
-
 // whitelist
 export interface WhitelistParamsInput {
     accounts: string[];
@@ -25,33 +23,32 @@ export interface WhitelistParams extends WhitelistParamsInput {
     signatures: string[];
 }
 
-
 // requestTokenization
 export interface RequestEstateInput {
     zone: string;
     uri: string;
     expireAt: number;
-};
+}
 
 export interface RequestEstate {
     estateId: BigNumber;
     zone: string;
     uri: string;
     expireAt: number;
-};
+}
 
 export interface RequestQuotaInput {
     totalQuantity: BigNumber;
     minSellingQuantity: BigNumber;
     maxSellingQuantity: BigNumber;
-};
+}
 
 export interface RequestQuota {
     totalQuantity: BigNumber;
     minSellingQuantity: BigNumber;
     maxSellingQuantity: BigNumber;
     soldQuantity: BigNumber;
-};
+}
 
 export interface RequestQuoteInput {
     unitPrice: BigNumber;
@@ -62,7 +59,7 @@ export interface RequestQuoteInput {
     cashbackDenominations: BigNumber[];
     feeDenomination: BigNumber;
     broker: string;
-};
+}
 
 export interface RequestQuote {
     unitPrice: BigNumber;
@@ -72,20 +69,20 @@ export interface RequestQuote {
     feeDenomination: BigNumber;
     commissionDenomination: BigNumber;
     broker: string;
-};
+}
 
 export interface RequestAgendaInput {
     saleStartsAt: number;
     privateSaleDuration: number;
     publicSaleDuration: number;
-};
+}
 
 export interface RequestAgenda {
     saleStartsAt: number;
     privateSaleEndsAt: number;
     publicSaleEndsAt: number;
     confirmAt: number;
-};
+}
 
 export interface RequestTokenizationParamsInput {
     requester: string;
@@ -99,14 +96,12 @@ export interface RequestTokenizationParams extends RequestTokenizationParamsInpu
     validation: Validation;
 }
 
-
 // whitelistFor
 export interface WhitelistForParams {
     requestId: BigNumber;
     accounts: string[];
     isWhitelisted: boolean;
 }
-
 
 // updateRequestEstateURI
 export interface UpdateRequestEstateURIParamsInput {
@@ -118,19 +113,16 @@ export interface UpdateRequestEstateURIParams extends UpdateRequestEstateURIPara
     validation: Validation;
 }
 
-
 // updateRequestAgenda
 export interface UpdateRequestAgendaParams {
     requestId: BigNumber;
     agenda: RequestAgendaInput;
 }
 
-
 // cancel
 export interface CancelParams {
     requestId: BigNumber;
 }
-
 
 // deposit
 export interface DepositParams {
@@ -138,30 +130,25 @@ export interface DepositParams {
     quantity: BigNumber;
 }
 
-
 // safeDeposit
 export interface SafeDepositParams extends DepositParams {
     anchor: string;
 }
-
 
 // confirm
 export interface ConfirmParams {
     requestId: BigNumber;
 }
 
-
 // safeConfirm
 export interface SafeConfirmParams extends ConfirmParams {
     anchor: string;
 }
 
-
 // withdrawDeposit
 export interface WithdrawDepositParams {
     requestId: BigNumber;
 }
-
 
 // withdrawEstateToken
 export interface WithdrawEstateTokenParams {

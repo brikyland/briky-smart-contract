@@ -1,7 +1,7 @@
-import { ethers } from "ethers";
+import { ethers } from 'ethers';
 
 // @typechain-types
-import { EstateToken } from "@typechain-types";
+import { EstateToken } from '@typechain-types';
 
 // @utils/models/land
 import {
@@ -9,8 +9,7 @@ import {
     ExtendEstateExpirationParams,
     UpdateEstateCustodianParams,
     UpdateEstateURIParamsInput,
-} from "@utils/models/land/estateToken";
-
+} from '@utils/models/land/estateToken';
 
 // safeDeprecateEstate
 export async function getSafeDeprecateEstateAnchor(
@@ -19,8 +18,7 @@ export async function getSafeDeprecateEstateAnchor(
 ): Promise<string> {
     const currentURI = await estateToken.uri(params.estateId);
     return ethers.utils.keccak256(ethers.utils.toUtf8Bytes(currentURI));
-};
-
+}
 
 // safeExtendEstateExpiration
 export async function getSafeExtendEstateExpirationAnchor(
@@ -29,8 +27,7 @@ export async function getSafeExtendEstateExpirationAnchor(
 ): Promise<string> {
     const currentURI = await estateToken.uri(params.estateId);
     return ethers.utils.keccak256(ethers.utils.toUtf8Bytes(currentURI));
-};
-
+}
 
 // safeUpdateEstateCustodian
 export async function getSafeUpdateEstateCustodianAnchor(
@@ -39,8 +36,7 @@ export async function getSafeUpdateEstateCustodianAnchor(
 ): Promise<string> {
     const currentURI = await estateToken.uri(params.estateId);
     return ethers.utils.keccak256(ethers.utils.toUtf8Bytes(currentURI));
-};
-
+}
 
 // safeUpdateEstateURI
 export async function getSafeUpdateEstateURIAnchor(
@@ -49,4 +45,4 @@ export async function getSafeUpdateEstateURIAnchor(
 ): Promise<string> {
     const currentURI = await estateToken.uri(params.estateId);
     return ethers.utils.keccak256(ethers.utils.toUtf8Bytes(currentURI));
-};
+}

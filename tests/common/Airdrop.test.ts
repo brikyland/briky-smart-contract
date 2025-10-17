@@ -2,18 +2,10 @@ import { expect } from 'chai';
 import { ethers } from 'hardhat';
 
 // @typechain-types
-import {
-    Currency,
-    Airdrop,
-} from '@typechain-types';
+import { Currency, Airdrop } from '@typechain-types';
 
 // @utils/blockchain
-import {
-    callTransaction,
-    prepareERC20,
-    prepareNativeToken,
-    resetNativeToken,
-} from '@utils/blockchain';
+import { callTransaction, prepareERC20, prepareNativeToken, resetNativeToken } from '@utils/blockchain';
 
 // @utils/deployments/common
 import { deployAirdrop } from '@utils/deployments/common/airdrop';
@@ -21,7 +13,6 @@ import { deployCurrency } from '@utils/deployments/common/currency';
 
 // @utils/transaction/common
 import { getAirdropTx_Airdrop } from '@utils/transaction/common/airdrop';
-
 
 interface AirdropFixture {
     deployer: any;
@@ -38,13 +29,9 @@ interface AirdropFixture {
 describe('1.3. Airdrop', async () => {
     async function airdropFixture(): Promise<AirdropFixture> {
         const [deployer, sender1, sender2, receiver1, receiver2, receiver3] = await ethers.getSigners();
-        
-        const currency = await deployCurrency(
-            deployer,
-            'Mock Currency',
-            'TEST'
-        ) as Currency;
-        const airdrop = await deployAirdrop(deployer) as Airdrop;
+
+        const currency = (await deployCurrency(deployer, 'Mock Currency', 'TEST')) as Currency;
+        const airdrop = (await deployAirdrop(deployer)) as Airdrop;
 
         return {
             deployer,
@@ -58,12 +45,10 @@ describe('1.3. Airdrop', async () => {
         };
     }
 
-    async function beforeAirdropTest({
-        skipPrepareERC20ForSender = false,
-    } = {}): Promise<AirdropFixture> {
+    async function beforeAirdropTest({ skipPrepareERC20ForSender = false } = {}): Promise<AirdropFixture> {
         const fixture = await airdropFixture();
         const { sender1, sender2, currency, airdrop } = fixture;
-        
+
         if (!skipPrepareERC20ForSender) {
             await prepareERC20(currency, [sender1, sender2], [airdrop], ethers.utils.parseEther('10000'));
         }
@@ -71,14 +56,12 @@ describe('1.3. Airdrop', async () => {
         return fixture;
     }
 
-
     /* --- Initialization --- */
     describe('1.3.1. initialize()', async () => {
         it('1.3.1.1. Deploy successfully', async () => {
             await beforeAirdropTest();
         });
     });
-
 
     /* --- Command --- */
     describe('1.3.2. airdrop(address[],uint256[],address)', async () => {
@@ -105,17 +88,23 @@ describe('1.3. Airdrop', async () => {
                 {
                     receivers: accounts1,
                     amounts: amounts1,
-                    currency: ethers.constants.AddressZero
+                    currency: ethers.constants.AddressZero,
                 },
-                {value: total1}
+                { value: total1 }
             );
             const receipt1 = await tx1.wait();
 
             const tx1GasFee = receipt1.gasUsed.mul(receipt1.effectiveGasPrice);
 
-            expect(await ethers.provider.getBalance(sender1.address)).to.equal(sender1InitBalance.sub(tx1GasFee).sub(total1));
-            expect(await ethers.provider.getBalance(receiver1.address)).to.equal(receiver1InitBalance.add(amount1_receiver1));
-            expect(await ethers.provider.getBalance(receiver2.address)).to.equal(receiver2InitBalance.add(amount1_receiver2));
+            expect(await ethers.provider.getBalance(sender1.address)).to.equal(
+                sender1InitBalance.sub(tx1GasFee).sub(total1)
+            );
+            expect(await ethers.provider.getBalance(receiver1.address)).to.equal(
+                receiver1InitBalance.add(amount1_receiver1)
+            );
+            expect(await ethers.provider.getBalance(receiver2.address)).to.equal(
+                receiver2InitBalance.add(amount1_receiver2)
+            );
 
             const accounts2 = [receiver1.address, receiver3.address];
             const amount2_receiver1 = ethers.utils.parseEther('4');
@@ -130,16 +119,22 @@ describe('1.3. Airdrop', async () => {
                 {
                     receivers: accounts2,
                     amounts: amounts2,
-                    currency: ethers.constants.AddressZero
+                    currency: ethers.constants.AddressZero,
                 },
                 { value: total2.add(ethers.utils.parseEther('1')) }
             );
             const receipt2 = await tx2.wait();
             const tx2GasFee = receipt2.gasUsed.mul(receipt2.effectiveGasPrice);
 
-            expect(await ethers.provider.getBalance(sender2.address)).to.equal(sender2InitBalance.sub(tx2GasFee).sub(total2));
-            expect(await ethers.provider.getBalance(receiver1.address)).to.equal(receiver1InitBalance.add(amount1_receiver1).add(amount2_receiver1));
-            expect(await ethers.provider.getBalance(receiver3.address)).to.equal(receiver3InitBalance.add(amount2_receiver3));
+            expect(await ethers.provider.getBalance(sender2.address)).to.equal(
+                sender2InitBalance.sub(tx2GasFee).sub(total2)
+            );
+            expect(await ethers.provider.getBalance(receiver1.address)).to.equal(
+                receiver1InitBalance.add(amount1_receiver1).add(amount2_receiver1)
+            );
+            expect(await ethers.provider.getBalance(receiver3.address)).to.equal(
+                receiver3InitBalance.add(amount2_receiver3)
+            );
         });
 
         it('1.3.2.2. Airdrop successfully with ERC20 token', async () => {
@@ -157,15 +152,13 @@ describe('1.3. Airdrop', async () => {
             const amounts1 = [amount1_receiver1, amount1_receiver2];
             const total1 = amount1_receiver1.add(amount1_receiver2);
 
-            await callTransaction(getAirdropTx_Airdrop(
-                airdrop,
-                sender1,
-                {
+            await callTransaction(
+                getAirdropTx_Airdrop(airdrop, sender1, {
                     receivers: accounts1,
                     amounts: amounts1,
-                    currency: currency.address
-                }
-            ));
+                    currency: currency.address,
+                })
+            );
 
             expect(await currency.balanceOf(sender1.address)).to.equal(sender1InitBalance.sub(total1));
             expect(await currency.balanceOf(receiver1.address)).to.equal(receiver1InitBalance.add(amount1_receiver1));
@@ -178,18 +171,18 @@ describe('1.3. Airdrop', async () => {
             const total2 = amount2_receiver1.add(amount2_receiver3);
 
             // Should refund when value is more than needed
-            await callTransaction(getAirdropTx_Airdrop(
-                airdrop,
-                sender2,
-                {
+            await callTransaction(
+                getAirdropTx_Airdrop(airdrop, sender2, {
                     receivers: accounts2,
                     amounts: amounts2,
-                    currency: currency.address
-                }
-            ));
+                    currency: currency.address,
+                })
+            );
 
             expect(await currency.balanceOf(sender2.address)).to.equal(sender2InitBalance.sub(total2));
-            expect(await currency.balanceOf(receiver1.address)).to.equal(receiver1InitBalance.add(amount1_receiver1).add(amount2_receiver1));
+            expect(await currency.balanceOf(receiver1.address)).to.equal(
+                receiver1InitBalance.add(amount1_receiver1).add(amount2_receiver1)
+            );
             expect(await currency.balanceOf(receiver3.address)).to.equal(receiver3InitBalance.add(amount2_receiver3));
         });
 
@@ -198,15 +191,13 @@ describe('1.3. Airdrop', async () => {
                 skipPrepareERC20ForSender: true,
             });
 
-            await expect(getAirdropTx_Airdrop(
-                airdrop,
-                sender1,
-                {
+            await expect(
+                getAirdropTx_Airdrop(airdrop, sender1, {
                     receivers: [receiver1.address, receiver2.address],
                     amounts: [ethers.utils.parseEther('1'), ethers.utils.parseEther('2'), ethers.utils.parseEther('3')],
-                    currency: ethers.constants.AddressZero
-                }
-            )).to.be.revertedWith('invalid input');
+                    currency: ethers.constants.AddressZero,
+                })
+            ).to.be.revertedWith('invalid input');
         });
 
         it('1.3.2.4. Airdrop unsuccessfully with insufficient native balance', async () => {
@@ -217,15 +208,13 @@ describe('1.3. Airdrop', async () => {
             await resetNativeToken(ethers.provider, [sender1]);
             await prepareNativeToken(ethers.provider, deployer, [sender1], ethers.utils.parseEther('1'));
 
-            await expect(getAirdropTx_Airdrop(
-                airdrop,
-                sender1,
-                {
+            await expect(
+                getAirdropTx_Airdrop(airdrop, sender1, {
                     receivers: [receiver1.address],
                     amounts: [ethers.utils.parseEther('100')],
-                    currency: ethers.constants.AddressZero
-                }
-            )).to.be.revertedWithCustomError(airdrop, 'InsufficientValue');
+                    currency: ethers.constants.AddressZero,
+                })
+            ).to.be.revertedWithCustomError(airdrop, 'InsufficientValue');
         });
 
         it('1.3.2.5. Airdrop unsuccessfully with insufficient ERC20 balance', async () => {
@@ -233,31 +222,27 @@ describe('1.3. Airdrop', async () => {
                 skipPrepareERC20ForSender: true,
             });
 
-            await expect(getAirdropTx_Airdrop(
-                airdrop,
-                sender1,
-                {
+            await expect(
+                getAirdropTx_Airdrop(airdrop, sender1, {
                     receivers: [receiver1.address],
                     amounts: [ethers.utils.parseEther('100')],
-                    currency: currency.address
-                }
-            )).to.be.revertedWithCustomError(airdrop, 'InsufficientValue');
+                    currency: currency.address,
+                })
+            ).to.be.revertedWithCustomError(airdrop, 'InsufficientValue');
         });
-        
+
         it('1.3.2.6. Airdrop unsuccessfully with invalid address', async () => {
             const { sender1, receiver1, airdrop } = await beforeAirdropTest({
                 skipPrepareERC20ForSender: true,
             });
 
-            await expect(getAirdropTx_Airdrop(
-                airdrop,
-                sender1,
-                {
+            await expect(
+                getAirdropTx_Airdrop(airdrop, sender1, {
                     receivers: [receiver1.address, ethers.constants.AddressZero],
                     amounts: [ethers.utils.parseEther('1'), ethers.utils.parseEther('2')],
-                    currency: ethers.constants.AddressZero
-                }
-            )).to.be.revertedWith('invalid address');
+                    currency: ethers.constants.AddressZero,
+                })
+            ).to.be.revertedWith('invalid address');
         });
 
         it('1.3.2.7. Airdrop unsuccessfully with invalid amount', async () => {
@@ -265,15 +250,13 @@ describe('1.3. Airdrop', async () => {
                 skipPrepareERC20ForSender: true,
             });
 
-            await expect(getAirdropTx_Airdrop(
-                airdrop,
-                sender1,
-                {
+            await expect(
+                getAirdropTx_Airdrop(airdrop, sender1, {
                     receivers: [receiver1.address, receiver2.address],
                     amounts: [ethers.utils.parseEther('1'), ethers.constants.Zero],
-                    currency: ethers.constants.AddressZero
-                }
-            )).to.be.revertedWith('invalid amount');
+                    currency: ethers.constants.AddressZero,
+                })
+            ).to.be.revertedWith('invalid amount');
         });
     });
 });

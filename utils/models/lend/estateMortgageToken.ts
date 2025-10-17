@@ -1,11 +1,9 @@
-import { BigNumber } from "ethers";
-
+import { BigNumber } from 'ethers';
 
 export interface EstateCollateral {
     estateId: BigNumber;
     amount: BigNumber;
 }
-
 
 // borrow
 export interface EstateBorrowParams {

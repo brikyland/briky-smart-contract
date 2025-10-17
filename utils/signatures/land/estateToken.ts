@@ -1,13 +1,10 @@
-import { ethers } from "ethers";
+import { ethers } from 'ethers';
 
 // @typechain-types
-import {
-    Admin,
-    EstateToken
-} from "@typechain-types";
+import { Admin, EstateToken } from '@typechain-types';
 
 // @utils/blockchain
-import { getSignatures } from "@utils/blockchain";
+import { getSignatures } from '@utils/blockchain';
 
 // @utils/models/land
 import {
@@ -16,8 +13,7 @@ import {
     UpdateBaseURIParamsInput,
     UpdateCommissionTokenParamsInput,
     UpdateZoneRoyaltyRateParamsInput,
-} from "@utils/models/land/estateToken";
-
+} from '@utils/models/land/estateToken';
 
 // updateCommissionToken
 export async function getUpdateCommissionTokenSignatures(
@@ -28,12 +24,11 @@ export async function getUpdateCommissionTokenSignatures(
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "address"],
-        [estateToken.address, "updateCommissionToken", paramsInput.commissionToken]
+        ['address', 'string', 'address'],
+        [estateToken.address, 'updateCommissionToken', paramsInput.commissionToken]
     );
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
-
 
 // updateBaseURI
 export async function getUpdateBaseURISignatures(
@@ -44,13 +39,12 @@ export async function getUpdateBaseURISignatures(
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "string"],
-        [estateToken.address, "updateBaseURI", paramsInput.uri]
+        ['address', 'string', 'string'],
+        [estateToken.address, 'updateBaseURI', paramsInput.uri]
     );
 
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
-
 
 // authorizeTokenizers
 export async function getAuthorizeTokenizersSignatures(
@@ -61,13 +55,12 @@ export async function getAuthorizeTokenizersSignatures(
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "address[]", "bool"],
-        [estateToken.address, "authorizeTokenizers", paramsInput.accounts, paramsInput.isTokenizer]
+        ['address', 'string', 'address[]', 'bool'],
+        [estateToken.address, 'authorizeTokenizers', paramsInput.accounts, paramsInput.isTokenizer]
     );
 
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
-
 
 // authorizeExtractors
 export async function getAuthorizeExtractorsSignatures(
@@ -78,13 +71,12 @@ export async function getAuthorizeExtractorsSignatures(
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "address[]", "bool"],
-        [estateToken.address, "authorizeExtractors", paramsInput.accounts, paramsInput.isExtractor]
+        ['address', 'string', 'address[]', 'bool'],
+        [estateToken.address, 'authorizeExtractors', paramsInput.accounts, paramsInput.isExtractor]
     );
 
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
-
 
 // updateZoneRoyaltyRate
 export async function getUpdateZoneRoyaltyRateSignatures(
@@ -95,8 +87,8 @@ export async function getUpdateZoneRoyaltyRateSignatures(
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "bytes32", "uint256"],
-        [estateToken.address, "updateZoneRoyaltyRate", paramsInput.zone, paramsInput.royaltyRate]
+        ['address', 'string', 'bytes32', 'uint256'],
+        [estateToken.address, 'updateZoneRoyaltyRate', paramsInput.zone, paramsInput.royaltyRate]
     );
 
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));

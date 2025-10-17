@@ -1,5 +1,5 @@
-import { BigNumber, BigNumberish } from "ethers";
-import { ethers, upgrades } from "hardhat";
+import { BigNumber, BigNumberish } from 'ethers';
+import { ethers, upgrades } from 'hardhat';
 
 export async function deployMockPrestigePad(
     signer: any,
@@ -10,22 +10,19 @@ export async function deployMockPrestigePad(
     reserveVaultAddress: string,
     validatorAddress: string,
     baseMinUnitPrice: BigNumber,
-    baseMaxUnitPrice: BigNumber,
+    baseMaxUnitPrice: BigNumber
 ) {
     const MockPrestigePad = await ethers.getContractFactory('MockPrestigePad', signer);
-    const mockPrestigePad = await upgrades.deployProxy(
-        MockPrestigePad,
-        [
-            adminAddress,
-            projectTokenAddress,
-            priceWatcherAddress,
-            feeReceiverAddress,
-            reserveVaultAddress,
-            validatorAddress,
-            baseMinUnitPrice,
-            baseMaxUnitPrice,
-        ]
-    );
+    const mockPrestigePad = await upgrades.deployProxy(MockPrestigePad, [
+        adminAddress,
+        projectTokenAddress,
+        priceWatcherAddress,
+        feeReceiverAddress,
+        reserveVaultAddress,
+        validatorAddress,
+        baseMinUnitPrice,
+        baseMaxUnitPrice,
+    ]);
     await mockPrestigePad.deployed();
     return mockPrestigePad;
 }

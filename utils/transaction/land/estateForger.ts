@@ -1,23 +1,16 @@
-import { ContractTransaction } from "ethers";
+import { ContractTransaction } from 'ethers';
 
 // @nomiclabs/hardhat-ethers
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 // @typechain-types
-import {
-    Admin,
-    EstateForger,
-    ProxyCaller
-} from "@typechain-types";
+import { Admin, EstateForger, ProxyCaller } from '@typechain-types';
 
 // @utils
-import { MockValidator } from "@utils/mockValidator";
+import { MockValidator } from '@utils/mockValidator';
 
 // @utils/anchor/land
-import {
-    getSafeConfirmAnchor,
-    getSafeDepositAnchor
-} from "@utils/anchor/land/estateForger";
+import { getSafeConfirmAnchor, getSafeDepositAnchor } from '@utils/anchor/land/estateForger';
 
 // @utils/models/land
 import {
@@ -37,21 +30,17 @@ import {
     WhitelistParams,
     WhitelistParamsInput,
     WithdrawDepositParams,
-    WithdrawEstateTokenParams
-} from "@utils/models/land/estateForger";
+    WithdrawEstateTokenParams,
+} from '@utils/models/land/estateForger';
 
 // @utils/validation/land
 import {
     getRequestTokenizationValidation,
-    getUpdateRequestEstateURIValidation
-} from "@utils/validation/land/estateForger";
+    getUpdateRequestEstateURIValidation,
+} from '@utils/validation/land/estateForger';
 
 // @utils/signatures/land
-import {
-    getUpdateBaseUnitPriceRangeSignatures,
-    getWhitelistSignatures
-} from "@utils/signatures/land/estateForger";
-
+import { getUpdateBaseUnitPriceRangeSignatures, getWhitelistSignatures } from '@utils/signatures/land/estateForger';
 
 // updateBaseUnitPriceRange
 export async function getEstateForgerTx_UpdateBaseUnitPriceRange(
@@ -60,12 +49,9 @@ export async function getEstateForgerTx_UpdateBaseUnitPriceRange(
     params: UpdateBaseUnitPriceRangeParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return estateForger.connect(deployer).updateBaseUnitPriceRange(
-        params.baseMinUnitPrice,
-        params.baseMaxUnitPrice,
-        params.signatures,
-        txConfig,
-    );
+    return estateForger
+        .connect(deployer)
+        .updateBaseUnitPriceRange(params.baseMinUnitPrice, params.baseMaxUnitPrice, params.signatures, txConfig);
 }
 
 export async function getEstateForgerTxByInput_UpdateBaseUnitPriceRange(
@@ -78,11 +64,10 @@ export async function getEstateForgerTxByInput_UpdateBaseUnitPriceRange(
 ): Promise<ContractTransaction> {
     const params: UpdateBaseUnitPriceRangeParams = {
         ...paramsInput,
-        signatures: await getUpdateBaseUnitPriceRangeSignatures(estateForger, paramsInput, admin, admins)
-    }
+        signatures: await getUpdateBaseUnitPriceRangeSignatures(estateForger, paramsInput, admin, admins),
+    };
     return await getEstateForgerTx_UpdateBaseUnitPriceRange(estateForger, deployer, params, txConfig);
 }
-
 
 // whitelist
 export async function getEstateForgerTx_Whitelist(
@@ -91,12 +76,7 @@ export async function getEstateForgerTx_Whitelist(
     params: WhitelistParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return estateForger.connect(deployer).whitelist(
-        params.accounts,
-        params.isWhitelisted,
-        params.signatures,
-        txConfig,
-    );
+    return estateForger.connect(deployer).whitelist(params.accounts, params.isWhitelisted, params.signatures, txConfig);
 }
 
 export async function getEstateForgerTxByInput_Whitelist(
@@ -109,11 +89,10 @@ export async function getEstateForgerTxByInput_Whitelist(
 ): Promise<ContractTransaction> {
     const params: WhitelistParams = {
         ...paramsInput,
-        signatures: await getWhitelistSignatures(estateForger, paramsInput, admin, admins)
-    }
+        signatures: await getWhitelistSignatures(estateForger, paramsInput, admin, admins),
+    };
     return await getEstateForgerTx_Whitelist(estateForger, deployer, params, txConfig);
 }
-
 
 // requestTokenization
 export async function getEstateForgerTx_RequestTokenization(
@@ -122,15 +101,17 @@ export async function getEstateForgerTx_RequestTokenization(
     params: RequestTokenizationParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return estateForger.connect(deployer).requestTokenization(
-        params.requester,
-        params.estate,
-        params.quota,
-        params.quote,
-        params.agenda,
-        params.validation,
-        txConfig,
-    );
+    return estateForger
+        .connect(deployer)
+        .requestTokenization(
+            params.requester,
+            params.estate,
+            params.quota,
+            params.quote,
+            params.agenda,
+            params.validation,
+            txConfig
+        );
 }
 
 export async function getEstateForgerTxByInput_RequestTokenization(
@@ -142,11 +123,10 @@ export async function getEstateForgerTxByInput_RequestTokenization(
 ): Promise<ContractTransaction> {
     const params: RequestTokenizationParams = {
         ...paramsInput,
-        validation: await getRequestTokenizationValidation(estateForger, paramsInput, validator)
-    }
+        validation: await getRequestTokenizationValidation(estateForger, paramsInput, validator),
+    };
     return await getEstateForgerTx_RequestTokenization(estateForger, deployer, params, txConfig);
 }
-
 
 // whitelistFor
 export async function getEstateForgerTx_WhitelistFor(
@@ -155,28 +135,21 @@ export async function getEstateForgerTx_WhitelistFor(
     params: WhitelistForParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return estateForger.connect(deployer).whitelistFor(
-        params.requestId,
-        params.accounts,
-        params.isWhitelisted,
-        txConfig,
-    );
+    return estateForger
+        .connect(deployer)
+        .whitelistFor(params.requestId, params.accounts, params.isWhitelisted, txConfig);
 }
-
 
 // updateRequestEstateURI
 export async function getEstateForgerTx_UpdateRequestEstateURI(
     estateForger: EstateForger,
     deployer: SignerWithAddress,
     params: UpdateRequestEstateURIParams,
-    txConfig = {},
+    txConfig = {}
 ): Promise<ContractTransaction> {
-    return estateForger.connect(deployer).updateRequestEstateURI(
-        params.requestId,
-        params.uri,
-        params.validation,
-        txConfig,
-    );
+    return estateForger
+        .connect(deployer)
+        .updateRequestEstateURI(params.requestId, params.uri, params.validation, txConfig);
 }
 
 export async function getEstateForgerTxByInput_UpdateRequestEstateURI(
@@ -184,15 +157,14 @@ export async function getEstateForgerTxByInput_UpdateRequestEstateURI(
     deployer: SignerWithAddress,
     paramsInput: UpdateRequestEstateURIParamsInput,
     validator: MockValidator,
-    txConfig = {},
+    txConfig = {}
 ): Promise<ContractTransaction> {
     const params: UpdateRequestEstateURIParams = {
         ...paramsInput,
-        validation: await getUpdateRequestEstateURIValidation(estateForger, paramsInput, validator)
-    }
+        validation: await getUpdateRequestEstateURIValidation(estateForger, paramsInput, validator),
+    };
     return getEstateForgerTx_UpdateRequestEstateURI(estateForger, deployer, params, txConfig);
 }
-
 
 // updateRequestAgenda
 export async function getEstateForgerTx_UpdateRequestAgenda(
@@ -200,12 +172,8 @@ export async function getEstateForgerTx_UpdateRequestAgenda(
     deployer: SignerWithAddress,
     params: UpdateRequestAgendaParams
 ): Promise<ContractTransaction> {
-    return estateForger.connect(deployer).updateRequestAgenda(
-        params.requestId,
-        params.agenda,
-    );
+    return estateForger.connect(deployer).updateRequestAgenda(params.requestId, params.agenda);
 }
-
 
 // cancel
 export async function getEstateForgerTx_Cancel(
@@ -214,12 +182,8 @@ export async function getEstateForgerTx_Cancel(
     params: CancelParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return estateForger.connect(deployer).cancel(
-        params.requestId,
-        txConfig,
-    )
+    return estateForger.connect(deployer).cancel(params.requestId, txConfig);
 }
-
 
 // deposit
 export async function getEstateForgerTx_Deposit(
@@ -228,11 +192,7 @@ export async function getEstateForgerTx_Deposit(
     params: DepositParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return estateForger.connect(deployer).deposit(
-        params.requestId,
-        params.quantity,
-        txConfig,
-    );
+    return estateForger.connect(deployer).deposit(params.requestId, params.quantity, txConfig);
 }
 
 export async function getCallEstateForgerTx_Deposit(
@@ -243,14 +203,10 @@ export async function getCallEstateForgerTx_Deposit(
 ): Promise<ContractTransaction> {
     return caller.call(
         estateForger.address,
-        estateForger.interface.encodeFunctionData('deposit', [
-            params.requestId,
-            params.quantity
-        ]),
-        txConfig,
+        estateForger.interface.encodeFunctionData('deposit', [params.requestId, params.quantity]),
+        txConfig
     );
 }
-
 
 // safeDeposit
 export async function getEstateForgerTx_SafeDeposit(
@@ -259,12 +215,7 @@ export async function getEstateForgerTx_SafeDeposit(
     params: SafeDepositParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    const tx = estateForger.connect(deployer).safeDeposit(
-        params.requestId,
-        params.quantity,
-        params.anchor,
-        txConfig,
-    );
+    const tx = estateForger.connect(deployer).safeDeposit(params.requestId, params.quantity, params.anchor, txConfig);
     return tx;
 }
 
@@ -281,7 +232,6 @@ export async function getEstateForgerTxByParams_SafeDeposit(
     return await getEstateForgerTx_SafeDeposit(estateForger, deployer, safeParams, txConfig);
 }
 
-
 // confirm
 export async function getEstateForgerTx_SafeConfirm(
     estateForger: EstateForger,
@@ -289,11 +239,7 @@ export async function getEstateForgerTx_SafeConfirm(
     params: SafeConfirmParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return estateForger.connect(deployer).safeConfirm(
-        params.requestId,
-        params.anchor,
-        txConfig,
-    );
+    return estateForger.connect(deployer).safeConfirm(params.requestId, params.anchor, txConfig);
 }
 
 export async function getEstateForgerTxByParams_SafeConfirm(
@@ -309,7 +255,6 @@ export async function getEstateForgerTxByParams_SafeConfirm(
     return await getEstateForgerTx_SafeConfirm(estateForger, deployer, safeParams, txConfig);
 }
 
-
 // withdrawDeposit
 export async function getEstateForgerTx_WithdrawDeposit(
     estateForger: EstateForger,
@@ -317,12 +262,8 @@ export async function getEstateForgerTx_WithdrawDeposit(
     params: WithdrawDepositParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return estateForger.connect(deployer).withdrawDeposit(
-        params.requestId,
-        txConfig
-    );
+    return estateForger.connect(deployer).withdrawDeposit(params.requestId, txConfig);
 }
-
 
 // withdrawEstateToken
 export async function getEstateForgerTx_WithdrawEstateToken(
@@ -331,8 +272,5 @@ export async function getEstateForgerTx_WithdrawEstateToken(
     params: WithdrawEstateTokenParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return estateForger.connect(deployer).withdrawEstateToken(
-        params.requestId,
-        txConfig
-    );
+    return estateForger.connect(deployer).withdrawEstateToken(params.requestId, txConfig);
 }

@@ -1,4 +1,4 @@
-import { ethers } from "ethers";
+import { ethers } from 'ethers';
 
 export const FIXED_ONE = ethers.constants.Two.pow(128);
 
@@ -24,7 +24,7 @@ export function fixedMul(a: ethers.BigNumber, b: ethers.BigNumber): ethers.BigNu
 
 export function fixedDiv(a: ethers.BigNumber, b: ethers.BigNumber): ethers.BigNumber {
     if (b.isZero()) {
-        throw new Error("Division by zero");
+        throw new Error('Division by zero');
     }
     return a.mul(FIXED_ONE).div(b);
 }

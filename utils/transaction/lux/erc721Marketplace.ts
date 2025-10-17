@@ -1,17 +1,13 @@
-import { ContractTransaction } from "ethers";
+import { ContractTransaction } from 'ethers';
 
 // @nomiclabs/hardhat-ethers
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 // @typechain-types
-import {
-    Admin,
-    ERC721Marketplace,
-    ProxyCaller
-} from "@typechain-types";
+import { Admin, ERC721Marketplace, ProxyCaller } from '@typechain-types';
 
 // @utils/anchor/lux
-import { getSafeBuyAnchor } from "@utils/anchor/lux/erc721Marketplace";
+import { getSafeBuyAnchor } from '@utils/anchor/lux/erc721Marketplace';
 
 // @utils/models/lux
 import {
@@ -20,12 +16,11 @@ import {
     ListParams,
     RegisterCollectionsParams,
     RegisterCollectionsParamsInput,
-    SafeBuyParams
-} from "@utils/models/lux/erc721Marketplace";
+    SafeBuyParams,
+} from '@utils/models/lux/erc721Marketplace';
 
 // @utils/signatures/lux
-import { getRegisterCollectionsSignatures } from "@utils/signatures/lux/erc721Marketplace";
-
+import { getRegisterCollectionsSignatures } from '@utils/signatures/lux/erc721Marketplace';
 
 // registerCollections
 export async function getERC721MarketplaceTx_RegisterCollections(
@@ -34,12 +29,9 @@ export async function getERC721MarketplaceTx_RegisterCollections(
     params: RegisterCollectionsParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return await erc721Marketplace.connect(signer).registerCollections(
-        params.collections,
-        params.isCollection,
-        params.signatures,
-        txConfig
-    );
+    return await erc721Marketplace
+        .connect(signer)
+        .registerCollections(params.collections, params.isCollection, params.signatures, txConfig);
 }
 
 export async function getERC721MarketplaceTxByInput_RegisterCollections(
@@ -52,11 +44,10 @@ export async function getERC721MarketplaceTxByInput_RegisterCollections(
 ): Promise<ContractTransaction> {
     const params: RegisterCollectionsParams = {
         ...paramsInput,
-        signatures: await getRegisterCollectionsSignatures(erc721Marketplace, paramsInput, admin, admins)
+        signatures: await getRegisterCollectionsSignatures(erc721Marketplace, paramsInput, admin, admins),
     };
     return getERC721MarketplaceTx_RegisterCollections(erc721Marketplace, signer, params, txConfig);
 }
-
 
 // list
 export async function getERC721MarketplaceTx_List(
@@ -64,12 +55,9 @@ export async function getERC721MarketplaceTx_List(
     signer: SignerWithAddress,
     params: ListParams
 ): Promise<ContractTransaction> {
-    return await erc721Marketplace.connect(signer).list(
-        params.collection,
-        params.tokenId,
-        params.price,
-        params.currency
-    );
+    return await erc721Marketplace
+        .connect(signer)
+        .list(params.collection, params.tokenId, params.price, params.currency);
 }
 
 export async function getCallERC721MarketplaceTx_List(
@@ -79,15 +67,14 @@ export async function getCallERC721MarketplaceTx_List(
 ): Promise<ContractTransaction> {
     return await caller.call(
         erc721Marketplace.address,
-        erc721Marketplace.interface.encodeFunctionData("list", [
+        erc721Marketplace.interface.encodeFunctionData('list', [
             params.collection,
             params.tokenId,
             params.price,
-            params.currency
+            params.currency,
         ])
     );
 }
-
 
 // buy
 export async function getERC721MarketplaceTx_Buy(
@@ -96,12 +83,8 @@ export async function getERC721MarketplaceTx_Buy(
     params: BuyParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return await erc721Marketplace.connect(signer).buy(
-        params.offerId,
-        txConfig
-    );
+    return await erc721Marketplace.connect(signer).buy(params.offerId, txConfig);
 }
-
 
 // cancel
 export async function getERC721MarketplaceTx_Cancel(
@@ -110,12 +93,8 @@ export async function getERC721MarketplaceTx_Cancel(
     params: CancelParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return await erc721Marketplace.connect(signer).cancel(
-        params.offerId,
-        txConfig
-    );
+    return await erc721Marketplace.connect(signer).cancel(params.offerId, txConfig);
 }
-
 
 // safeBuy
 export async function getERC721MarketplaceTx_SafeBuy(
@@ -124,11 +103,7 @@ export async function getERC721MarketplaceTx_SafeBuy(
     params: SafeBuyParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return await erc721Marketplace.connect(signer).safeBuy(
-        params.offerId,
-        params.anchor,
-        txConfig
-    );
+    return await erc721Marketplace.connect(signer).safeBuy(params.offerId, params.anchor, txConfig);
 }
 
 export async function getERC721MarketplaceTxByParams_SafeBuy(

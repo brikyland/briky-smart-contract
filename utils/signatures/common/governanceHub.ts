@@ -1,17 +1,13 @@
-import { ethers } from "ethers";
+import { ethers } from 'ethers';
 
 // @typechain-types
-import {
-    Admin,
-    GovernanceHub
-} from "@typechain-types";
+import { Admin, GovernanceHub } from '@typechain-types';
 
 // @utils/blockchain
-import { getSignatures } from "@utils/blockchain";
+import { getSignatures } from '@utils/blockchain';
 
 // @utils/models/common
-import { UpdateFeeParamsInput } from "@utils/models/common/governanceHub";
-
+import { UpdateFeeParamsInput } from '@utils/models/common/governanceHub';
 
 // updateFee
 export async function getUpdateFeeSignatures(
@@ -22,8 +18,8 @@ export async function getUpdateFeeSignatures(
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "uint256"],
-        [governanceHub.address, "updateFee", paramsInput.fee]
+        ['address', 'string', 'uint256'],
+        [governanceHub.address, 'updateFee', paramsInput.fee]
     );
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }

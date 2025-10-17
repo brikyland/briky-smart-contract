@@ -1,26 +1,21 @@
-import { ContractTransaction } from "ethers";
+import { ContractTransaction } from 'ethers';
 
 // @nomiclabs/hardhat-ethers
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 // @typechain-types
-import {
-    Admin,
-    ProxyCaller,
-    Treasury
-} from "@typechain-types";
+import { Admin, ProxyCaller, Treasury } from '@typechain-types';
 
 // @utils/models/liquidity
 import {
     ProvideLiquidityParams,
     WithdrawLiquidityParams,
     WithdrawOperationFundParams,
-    WithdrawOperationFundParamsInput
-} from "@utils/models/liquidity/treasury";
+    WithdrawOperationFundParamsInput,
+} from '@utils/models/liquidity/treasury';
 
 // @utils/signatures/liquidity
-import { getWithdrawOperationFundSignatures } from "@utils/signatures/liquidity/treasury";
-
+import { getWithdrawOperationFundSignatures } from '@utils/signatures/liquidity/treasury';
 
 // withdrawOperationFund
 export async function getTreasuryTx_WithdrawOperationFund(
@@ -29,12 +24,7 @@ export async function getTreasuryTx_WithdrawOperationFund(
     params: WithdrawOperationFundParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return treasury.connect(deployer).withdrawOperationFund(
-        params.operator,
-        params.value,
-        params.signatures,
-        txConfig
-    );
+    return treasury.connect(deployer).withdrawOperationFund(params.operator, params.value, params.signatures, txConfig);
 }
 
 export async function getTreasuryTxByInput_WithdrawOperationFund(
@@ -52,7 +42,6 @@ export async function getTreasuryTxByInput_WithdrawOperationFund(
     return getTreasuryTx_WithdrawOperationFund(treasury, deployer, params, txConfig);
 }
 
-
 // withdrawLiquidity
 export async function getTreasuryTx_WithdrawLiquidity(
     treasury: Treasury,
@@ -60,11 +49,7 @@ export async function getTreasuryTx_WithdrawLiquidity(
     params: WithdrawLiquidityParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return treasury.connect(deployer).withdrawLiquidity(
-        params.withdrawer,
-        params.value,
-        txConfig
-    );
+    return treasury.connect(deployer).withdrawLiquidity(params.withdrawer, params.value, txConfig);
 }
 
 export async function getCallTreasuryTx_WithdrawLiquidity(
@@ -75,14 +60,10 @@ export async function getCallTreasuryTx_WithdrawLiquidity(
 ): Promise<ContractTransaction> {
     return caller.call(
         treasury.address,
-        treasury.interface.encodeFunctionData('withdrawLiquidity', [
-            params.withdrawer,
-            params.value,
-        ]),
-        txConfig,
+        treasury.interface.encodeFunctionData('withdrawLiquidity', [params.withdrawer, params.value]),
+        txConfig
     );
 }
-
 
 // provideLiquidity
 export async function getTreasuryTx_ProvideLiquidity(
@@ -91,8 +72,5 @@ export async function getTreasuryTx_ProvideLiquidity(
     params: ProvideLiquidityParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return treasury.connect(deployer).provideLiquidity(
-        params.value,
-        txConfig
-    );
+    return treasury.connect(deployer).provideLiquidity(params.value, txConfig);
 }

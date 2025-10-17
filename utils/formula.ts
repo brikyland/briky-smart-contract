@@ -1,14 +1,13 @@
-import { BigNumber, Contract, ethers } from "ethers";
+import { BigNumber, Contract, ethers } from 'ethers';
 
 // @typechain-types
-import { Admin } from "@typechain-types";
+import { Admin } from '@typechain-types';
 
 // @utils/constant
-import { Constant } from "@utils/constant";
+import { Constant } from '@utils/constant';
 
 // @utils/models/common
-import { Rate } from "@utils/models/common/common";
-
+import { Rate } from '@utils/models/common/common';
 
 export function getStakingFee(
     liquidity: ethers.BigNumber,
@@ -19,37 +18,31 @@ export function getStakingFee(
     return liquidity.mul(value).div(totalSupply).mul(feeRate).div(Constant.COMMON_RATE_MAX_FRACTION);
 }
 
-export function remain(
-    value: ethers.BigNumber,
-    rate: ethers.BigNumber,
-): ethers.BigNumber {
+export function remain(value: ethers.BigNumber, rate: ethers.BigNumber): ethers.BigNumber {
     return value.sub(value.mul(rate).div(Constant.COMMON_RATE_MAX_FRACTION));
 }
 
 export function getCashbackBaseDenomination(
     unitPrice: ethers.BigNumber,
     commissionRate: ethers.BigNumber,
-    cashbackBaseRate: ethers.BigNumber,
+    cashbackBaseRate: ethers.BigNumber
 ): ethers.BigNumber {
     return remain(unitPrice, commissionRate).mul(cashbackBaseRate).div(Constant.COMMON_RATE_MAX_FRACTION);
 }
 
-export function scale(value: ethers.BigNumber, rate_value: ethers.BigNumberish, rate_decimals: number): ethers.BigNumber {
+export function scale(
+    value: ethers.BigNumber,
+    rate_value: ethers.BigNumberish,
+    rate_decimals: number
+): ethers.BigNumber {
     return value.mul(rate_value).div(ethers.BigNumber.from(10).pow(rate_decimals));
 }
 
-export function scaleRate(
-    value: ethers.BigNumber,
-    Rate: Rate,
-): ethers.BigNumber {
+export function scaleRate(value: ethers.BigNumber, Rate: Rate): ethers.BigNumber {
     return value.mul(Rate.value).div(ethers.BigNumber.from(10).pow(Rate.decimals));
 }
 
-export async function applyDiscount(
-    admin: Admin,
-    feeAmount: BigNumber,
-    currency: Contract | null,
-) {
+export async function applyDiscount(admin: Admin, feeAmount: BigNumber, currency: Contract | null) {
     const isExclusive = currency ? await admin.isExclusiveCurrency(currency.address) : false;
     if (isExclusive) {
         const exclusiveRate = currency ? (await currency.exclusiveDiscount()).value : ethers.BigNumber.from(0);

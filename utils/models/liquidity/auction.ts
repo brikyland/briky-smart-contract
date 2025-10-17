@@ -1,5 +1,4 @@
-import { BigNumber } from "ethers";
-
+import { BigNumber } from 'ethers';
 
 // updateStakeTokens
 export interface UpdateStakeTokensParamsInput {
@@ -12,7 +11,6 @@ export interface UpdateStakeTokensParams extends UpdateStakeTokensParamsInput {
     signatures: string[];
 }
 
-
 // startAuction
 export interface StartAuctionParamsInput {
     endAt: number;
@@ -23,12 +21,10 @@ export interface StartAuctionParams extends StartAuctionParamsInput {
     signatures: string[];
 }
 
-
 // deposit
 export interface DepositParams {
     value: BigNumber;
 }
-
 
 // stake
 export interface StakeParams {

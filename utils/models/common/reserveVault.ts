@@ -1,5 +1,4 @@
-import { BigNumber } from "ethers";
-
+import { BigNumber } from 'ethers';
 
 // authorizeProviders
 export interface AuthorizeProviderParamsInput {
@@ -11,7 +10,6 @@ export interface AuthorizeProviderParams extends AuthorizeProviderParamsInput {
     signatures: string[];
 }
 
-
 // openFund
 export interface OpenFundParams {
     mainCurrency: string;
@@ -20,13 +18,11 @@ export interface OpenFundParams {
     extraDenominations: number[];
 }
 
-
 // expandFund
 export interface ExpandFundParams {
     fundId: BigNumber;
     quantity: BigNumber;
 }
-
 
 // provideFund
 export interface ProvideFundParams {

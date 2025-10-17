@@ -1,20 +1,13 @@
-import { ethers } from "ethers";
+import { ethers } from 'ethers';
 
 // @typechain-types
-import {
-    Admin,
-    StakeToken
-} from "@typechain-types";
+import { Admin, StakeToken } from '@typechain-types';
 
 // @utils/blockchain
-import { getSignatures } from "@utils/blockchain";
+import { getSignatures } from '@utils/blockchain';
 
 // @utils/models/liquidity
-import { 
-    InitializeRewardingParamsInput,
-    UpdateFeeRateParamsInput
-} from "@utils/models/liquidity/stakeToken";
-
+import { InitializeRewardingParamsInput, UpdateFeeRateParamsInput } from '@utils/models/liquidity/stakeToken';
 
 // initializeRewarding
 export async function getInitializeRewardingSignatures(
@@ -25,12 +18,11 @@ export async function getInitializeRewardingSignatures(
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "uint256", "address"],
-        [stakeToken.address, "initializeRewarding", paramsInput.initialLastRewardFetch, paramsInput.successor]
+        ['address', 'string', 'uint256', 'address'],
+        [stakeToken.address, 'initializeRewarding', paramsInput.initialLastRewardFetch, paramsInput.successor]
     );
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
-
 
 // updateFeeRate
 export async function getUpdateFeeRateSignatures(
@@ -41,8 +33,8 @@ export async function getUpdateFeeRateSignatures(
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "uint256"],
-        [stakeToken.address, "updateFeeRate", paramsInput.feeRate]
+        ['address', 'string', 'uint256'],
+        [stakeToken.address, 'updateFeeRate', paramsInput.feeRate]
     );
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }

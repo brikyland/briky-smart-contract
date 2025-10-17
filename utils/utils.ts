@@ -1,4 +1,4 @@
-import { ethers } from "ethers";
+import { ethers } from 'ethers';
 
 export function nextPermutation(nums: number[]): boolean {
     let k = -1;
@@ -73,7 +73,7 @@ export function getInterfaceID(contractInterface: ethers.utils.Interface, parent
 export function getBytes4Hex(interfaceID: ethers.BigNumber): string {
     const hex = interfaceID.toHexString().slice(0, 10);
     if (hex.length < 10) {
-        return "0x" + "0".repeat(10 - hex.length) + hex.slice(2);
+        return '0x' + '0'.repeat(10 - hex.length) + hex.slice(2);
     }
     return hex;
 }
@@ -83,19 +83,19 @@ export function getBytes4Hex(interfaceID: ethers.BigNumber): string {
 export function randomArrayWithSum(
     n: number,
     s: ethers.BigNumber,
-    min: ethers.BigNumber = ethers.constants.Zero,
+    min: ethers.BigNumber = ethers.constants.Zero
 ): ethers.BigNumber[] {
     if (n <= 0) {
-        throw new Error("Length must be positive");
+        throw new Error('Length must be positive');
     }
     if (s.lt(0)) {
-        throw new Error("Sum must be non-negative");
+        throw new Error('Sum must be non-negative');
     }
     if (min.lt(0)) {
-        throw new Error("Minimum value must be non-negative");
+        throw new Error('Minimum value must be non-negative');
     }
     if (s.lt(min.mul(n))) {
-        throw new Error("Sum too small to satisfy minimum value constraint");
+        throw new Error('Sum too small to satisfy minimum value constraint');
     }
     if (n == 1) {
         return [s];
@@ -159,14 +159,13 @@ export class OrderedMap<int, V> {
 
 export function shuffle(array: any[]) {
     let currentIndex = array.length;
-  
+
     // While there remain elements to shuffle...
     while (currentIndex != 0) {
-  
         // Pick a remaining element...
         let randomIndex = Math.floor(Math.random() * currentIndex);
         currentIndex--;
-    
+
         // And swap it with the current element.
         [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
     }
@@ -177,15 +176,15 @@ export function replaceFromIndex(str: string, index: number, pattern: string, re
 }
 
 export function getAddressShortString(address: string): string {
-    return address.slice(0, 6) + "..." + address.slice(-4);
+    return address.slice(0, 6) + '...' + address.slice(-4);
 }
 
 export function isPureArray(arr: any): boolean {
     const hasObjectProps = Object.keys(arr).some(
-        key => isNaN(Number(key)) // Any key that isn't a numeric index
+        (key) => isNaN(Number(key)) // Any key that isn't a numeric index
     );
     return !hasObjectProps;
-}      
+}
 
 export function structToObject(struct: any): any {
     if (!struct || typeof struct !== 'object' || struct instanceof ethers.BigNumber) {
@@ -193,13 +192,13 @@ export function structToObject(struct: any): any {
     }
 
     if (struct instanceof Array && isPureArray(struct)) {
-        return struct.map(item => structToObject(item));
+        return struct.map((item) => structToObject(item));
     }
 
     // Only keep named keys, ignore numeric keys
     return Object.fromEntries(
-      Object.entries(struct)
-        .filter(([key]) => isNaN(Number(key)))
-        .map(([key, value]) => [key, structToObject(value)])
+        Object.entries(struct)
+            .filter(([key]) => isNaN(Number(key)))
+            .map(([key, value]) => [key, structToObject(value)])
     );
 }

@@ -1,20 +1,13 @@
-import {
-    ethers,
-    Contract
-} from "ethers";
+import { ethers, Contract } from 'ethers';
 
 // @typechain-types
-import { Admin } from "@typechain-types";
+import { Admin } from '@typechain-types';
 
 // @utils/blockchain
-import { getSignatures } from "@utils/blockchain";
+import { getSignatures } from '@utils/blockchain';
 
 // @utils/models/lend
-import {
-    UpdateBaseURIParamsInput,
-    UpdateFeeRateParamsInput
-} from "@utils/models/lend/mortgageToken";
-
+import { UpdateBaseURIParamsInput, UpdateFeeRateParamsInput } from '@utils/models/lend/mortgageToken';
 
 // updateBaseURI
 export async function getUpdateBaseURISignatures(
@@ -25,12 +18,11 @@ export async function getUpdateBaseURISignatures(
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "string"],
-        [mortgageToken.address, "updateBaseURI", paramsInput.uri]
+        ['address', 'string', 'string'],
+        [mortgageToken.address, 'updateBaseURI', paramsInput.uri]
     );
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
-
 
 // updateFeeRate
 export async function getUpdateFeeRateSignatures(
@@ -41,8 +33,8 @@ export async function getUpdateFeeRateSignatures(
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "uint256"],
-        [mortgageToken.address, "updateFeeRate", paramsInput.feeRate]
+        ['address', 'string', 'uint256'],
+        [mortgageToken.address, 'updateFeeRate', paramsInput.feeRate]
     );
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }

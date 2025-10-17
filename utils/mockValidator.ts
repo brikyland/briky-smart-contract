@@ -1,14 +1,13 @@
-import { BigNumber, ethers, Wallet } from "ethers";
+import { BigNumber, ethers, Wallet } from 'ethers';
 
 // @defi-wonderland/smock
-import { MockContract } from "@defi-wonderland/smock";
+import { MockContract } from '@defi-wonderland/smock';
 
 // @utils/blockchain
-import { getSignatures } from "@utils/blockchain";
+import { getSignatures } from '@utils/blockchain';
 
 // @utils/models/common
-import { Validation } from "@utils/models/common/validatable";
-
+import { Validation } from '@utils/models/common/validatable';
 
 export class MockValidator {
     public signer: Wallet;
@@ -22,10 +21,10 @@ export class MockValidator {
     async getValidation(
         validatable: ethers.Contract | MockContract<ethers.Contract>,
         content: string,
-        expiry: BigNumber,
+        expiry: BigNumber
     ) {
         const message = ethers.utils.defaultAbiCoder.encode(
-            ["address", "bytes", "uint256", "uint256"],
+            ['address', 'bytes', 'uint256', 'uint256'],
             [validatable.address, content, this.nonce, expiry]
         );
         const validation: Validation = {
@@ -42,10 +41,10 @@ export class MockValidator {
     async getInvalidValidation(
         validatable: ethers.Contract | MockContract<ethers.Contract>,
         content: string,
-        expiry: BigNumber,
+        expiry: BigNumber
     ) {
         const message = ethers.utils.defaultAbiCoder.encode(
-            ["address", "bytes", "uint256", "uint256"],
+            ['address', 'bytes', 'uint256', 'uint256'],
             [validatable.address, content, this.nonce, expiry]
         );
         const validation: Validation = {

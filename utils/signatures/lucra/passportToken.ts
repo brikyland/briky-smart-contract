@@ -1,22 +1,18 @@
-import { ethers } from "ethers";
+import { ethers } from 'ethers';
 
 // @typechain-types
-import {
-    Admin,
-    PassportToken
-} from "@typechain-types";
+import { Admin, PassportToken } from '@typechain-types';
 
 // @utils/blockchain
-import { getSignatures } from "@utils/blockchain";
+import { getSignatures } from '@utils/blockchain';
 
 // @utils/models/lucra
 import {
     UpdateBaseURIParamsInput,
     UpdateFeeParamsInput,
     UpdateRoyaltyRateParamsInput,
-    WithdrawParamsInput
-} from "@utils/models/lucra/passportToken";
-
+    WithdrawParamsInput,
+} from '@utils/models/lucra/passportToken';
 
 // updateBaseURI
 export async function getUpdateBaseURISignatures(
@@ -27,12 +23,11 @@ export async function getUpdateBaseURISignatures(
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "string"],
-        [passportToken.address, "updateBaseURI", paramsInput.uri]
+        ['address', 'string', 'string'],
+        [passportToken.address, 'updateBaseURI', paramsInput.uri]
     );
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
-
 
 // updateFee
 export async function getUpdateFeeSignatures(
@@ -43,12 +38,11 @@ export async function getUpdateFeeSignatures(
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "uint256"],
-        [passportToken.address, "updateFee", paramsInput.fee]
+        ['address', 'string', 'uint256'],
+        [passportToken.address, 'updateFee', paramsInput.fee]
     );
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
-
 
 // updateRoyaltyRate
 export async function getUpdateRoyaltyRateSignatures(
@@ -59,12 +53,11 @@ export async function getUpdateRoyaltyRateSignatures(
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "uint256"],
-        [passportToken.address, "updateRoyaltyRate", paramsInput.royaltyRate]
+        ['address', 'string', 'uint256'],
+        [passportToken.address, 'updateRoyaltyRate', paramsInput.royaltyRate]
     );
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
-
 
 // withdraw
 export async function getWithdrawSignatures(
@@ -75,8 +68,8 @@ export async function getWithdrawSignatures(
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "address", "address[]", "uint256[]"],
-        [passportToken.address, "withdraw", paramsInput.receiver, paramsInput.currencies, paramsInput.values]
+        ['address', 'string', 'address', 'address[]', 'uint256[]'],
+        [passportToken.address, 'withdraw', paramsInput.receiver, paramsInput.currencies, paramsInput.values]
     );
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }

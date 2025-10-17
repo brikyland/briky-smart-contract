@@ -1,8 +1,7 @@
-import { BigNumber } from "ethers";
+import { BigNumber } from 'ethers';
 
 // @utils/models/common
-import { Validation } from "@utils/models/common/validatable";
-
+import { Validation } from '@utils/models/common/validatable';
 
 // updateCommissionToken
 export interface UpdateCommissionTokenParamsInput {
@@ -13,7 +12,6 @@ export interface UpdateCommissionTokenParams extends UpdateCommissionTokenParams
     signatures: string[];
 }
 
-
 // updateBaseURI
 export interface UpdateBaseURIParamsInput {
     uri: string;
@@ -22,7 +20,6 @@ export interface UpdateBaseURIParamsInput {
 export interface UpdateBaseURIParams extends UpdateBaseURIParamsInput {
     signatures: string[];
 }
-
 
 // authorizeTokenizers
 export interface AuthorizeTokenizersParamsInput {
@@ -34,7 +31,6 @@ export interface AuthorizeTokenizersParams extends AuthorizeTokenizersParamsInpu
     signatures: string[];
 }
 
-
 // authorizeExtractors
 export interface AuthorizeExtractorsParamsInput {
     accounts: string[];
@@ -45,7 +41,6 @@ export interface AuthorizeExtractorsParams extends AuthorizeExtractorsParamsInpu
     signatures: string[];
 }
 
-
 // updateZoneRoyaltyRate
 export interface UpdateZoneRoyaltyRateParamsInput {
     zone: string;
@@ -55,7 +50,6 @@ export interface UpdateZoneRoyaltyRateParamsInput {
 export interface UpdateZoneRoyaltyRateParams extends UpdateZoneRoyaltyRateParamsInput {
     signatures: string[];
 }
-
 
 // registerCustodian
 export interface RegisterCustodianParamsInput {
@@ -68,7 +62,6 @@ export interface RegisterCustodianParams extends RegisterCustodianParamsInput {
     validation: Validation;
 }
 
-
 // tokenizeEstate
 export interface TokenizeEstateParams {
     totalSupply: BigNumber;
@@ -80,13 +73,11 @@ export interface TokenizeEstateParams {
     broker: string;
 }
 
-
 // extractEstate
 export interface ExtractEstateParams {
     estateId: BigNumber;
     extractionId: BigNumber;
 }
-
 
 // safeDeprecateEstate
 export interface DeprecateEstateParams {
@@ -98,7 +89,6 @@ export interface SafeDeprecateEstateParams extends DeprecateEstateParams {
     anchor: string;
 }
 
-
 // safeExtendEstateExpiration
 export interface ExtendEstateExpirationParams {
     estateId: BigNumber;
@@ -106,9 +96,8 @@ export interface ExtendEstateExpirationParams {
 }
 
 export interface SafeExtendEstateExpirationParams extends ExtendEstateExpirationParams {
-    anchor: string
+    anchor: string;
 }
-
 
 // safeUpdateEstateCustodian
 export interface UpdateEstateCustodianParams {
@@ -119,7 +108,6 @@ export interface UpdateEstateCustodianParams {
 export interface SafeUpdateEstateCustodianParams extends UpdateEstateCustodianParams {
     anchor: string;
 }
-
 
 // safeUpdateEstateURI
 export interface UpdateEstateURIParamsInput {

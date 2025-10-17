@@ -16,5 +16,5 @@ export const Initialization = {
     STAKE_TOKEN_Name_3: 'Briky Stake 2032',
     STAKE_TOKEN_Symbol_3: 'sBRIK-32',
 
-    STAKE_TOKEN_FeeRate: parseEther("0.001"),
-}
+    STAKE_TOKEN_FeeRate: parseEther('0.001'),
+};

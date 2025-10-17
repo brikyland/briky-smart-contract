@@ -1,7 +1,7 @@
-import { BigNumber } from "ethers";
+import { BigNumber } from 'ethers';
 
 // @utils/blockchain
-import { parseEther } from "@utils/blockchain";
+import { parseEther } from '@utils/blockchain';
 
 export const MINUTE = 60;
 export const HOUR = 60 * MINUTE;
@@ -10,7 +10,7 @@ export const DAY = 24 * HOUR;
 export const Constant = {
     // Common
     COMMON_RATE_DECIMALS: 18,
-    COMMON_RATE_MAX_FRACTION: parseEther("1"),
+    COMMON_RATE_MAX_FRACTION: parseEther('1'),
     COMMON_INFINITE_TIMESTAMP: BigNumber.from(2).pow(40).sub(1),
 
     // Admin
@@ -27,11 +27,11 @@ export const Constant = {
 
     // Estate Liquidator
     ESTATE_LIQUIDATOR_UNANIMOUS_GUARD_DURATION: 365 * DAY,
-    ESTATE_LIQUIDATOR_UNANIMOUS_QUORUM_RATE: parseEther("1"),
-    ESTATE_LIQUIDATOR_MAJORITY_QUORUM_RATE: parseEther("0.75"),
+    ESTATE_LIQUIDATOR_UNANIMOUS_QUORUM_RATE: parseEther('1'),
+    ESTATE_LIQUIDATOR_MAJORITY_QUORUM_RATE: parseEther('0.75'),
 
     ESTATE_LIQUIDATOR_VOTING_DURATION: 30 * DAY,
-    ESTATE_LIQUIDATOR_DIVIDEND_ISSUANCE_DATA: "LIQUIDATED",
+    ESTATE_LIQUIDATOR_DIVIDEND_ISSUANCE_DATA: 'LIQUIDATED',
 
     // Project Token
     PROJECT_TOKEN_MAX_DECIMALS: 18,
@@ -41,7 +41,7 @@ export const Constant = {
     PRESTIGE_PAD_RAISE_CONFIRMATION_TIME_LIMIT: 30 * DAY,
 
     // Primary Token
-    PRIMARY_TOKEN_BASE_DISCOUNT: parseEther("0.15"),
+    PRIMARY_TOKEN_BASE_DISCOUNT: parseEther('0.15'),
 
     PRIMARY_TOKEN_MAXIMUM_SUPPLY: parseEther(String(20_000_000_000)),
     PRIMARY_TOKEN_BACKER_ROUND: parseEther(String(100_000_000)),
@@ -65,8 +65,8 @@ export const Constant = {
     STAKE_TOKEN_REWARD_FETCH_COOLDOWN: DAY - 5 * MINUTE,
 
     // Treasury
-    TREASURY_OPERATION_FUND_RATE: parseEther("0.2"),
+    TREASURY_OPERATION_FUND_RATE: parseEther('0.2'),
 
     // Governance Hub
-    GOVERNANCE_HUB_CONFIRMATION_TIME_LIMIT: 30 * DAY
-}
+    GOVERNANCE_HUB_CONFIRMATION_TIME_LIMIT: 30 * DAY,
+};

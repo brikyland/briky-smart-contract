@@ -10,17 +10,13 @@ import { EstateToken, EstateLiquidator, GovernanceHub } from '@typechain-types';
 import { MockValidator } from '@utils/mockValidator';
 
 // @utils/models/common
-import {
-    ProposeParamsInput,
-    ProposalRule
-} from '@utils/models/common/governanceHub';
+import { ProposeParamsInput, ProposalRule } from '@utils/models/common/governanceHub';
 
 // @utils/models/land
 import { RequestExtractionParamsInput } from '@utils/models/land/estateLiquidator';
 
 // @utils/validation/common
 import { getProposeValidation } from '@utils/validation/common/governanceHub';
-
 
 // requestExtraction
 export async function getRequestExtractionValidation(
@@ -34,9 +30,12 @@ export async function getRequestExtractionValidation(
 ) {
     let quorumRate;
     try {
-        quorumRate = ((await estateToken.getEstate(paramsInput.estateId)).tokenizeAt + Constant.ESTATE_LIQUIDATOR_UNANIMOUS_GUARD_DURATION > timestamp)
-            ? Constant.ESTATE_LIQUIDATOR_UNANIMOUS_QUORUM_RATE
-            : Constant.ESTATE_LIQUIDATOR_MAJORITY_QUORUM_RATE;
+        quorumRate =
+            (await estateToken.getEstate(paramsInput.estateId)).tokenizeAt +
+                Constant.ESTATE_LIQUIDATOR_UNANIMOUS_GUARD_DURATION >
+            timestamp
+                ? Constant.ESTATE_LIQUIDATOR_UNANIMOUS_QUORUM_RATE
+                : Constant.ESTATE_LIQUIDATOR_MAJORITY_QUORUM_RATE;
     } catch (error) {
         quorumRate = BigNumber.from(0);
     }

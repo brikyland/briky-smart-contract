@@ -1,16 +1,10 @@
-import { ContractTransaction } from "ethers";
+import { ContractTransaction } from 'ethers';
 
 // @typechain-types
-import {
-    Admin,
-    ProxyCaller,
-    ReserveVault
-} from "@typechain-types";
+import { Admin, ProxyCaller, ReserveVault } from '@typechain-types';
 
 // @utils/signatures/common
-import {
-    getAuthorizeProviderSignatures,
-} from "@utils/signatures/common/reserveVault";
+import { getAuthorizeProviderSignatures } from '@utils/signatures/common/reserveVault';
 
 // @utils/models/common
 import {
@@ -20,22 +14,18 @@ import {
     OpenFundParams,
     ProvideFundParams,
     WithdrawFundParams,
-} from "@utils/models/common/reserveVault";
-
+} from '@utils/models/common/reserveVault';
 
 // authorizeProviders
 export async function getReserveVaultTx_AuthorizeProvider(
     reserveVault: ReserveVault,
     deployer: any,
     params: AuthorizeProviderParams,
-    txConfig = {},
+    txConfig = {}
 ): Promise<ContractTransaction> {
-    return await reserveVault.connect(deployer).authorizeProviders(
-        params.accounts,
-        params.isProvider,
-        params.signatures,
-        txConfig
-    );
+    return await reserveVault
+        .connect(deployer)
+        .authorizeProviders(params.accounts, params.isProvider, params.signatures, txConfig);
 }
 
 export async function getReserveVaultTxByInput_AuthorizeProvider(
@@ -44,7 +34,7 @@ export async function getReserveVaultTxByInput_AuthorizeProvider(
     paramsInput: AuthorizeProviderParamsInput,
     admin: Admin,
     admins: any[],
-    txConfig = {},
+    txConfig = {}
 ): Promise<ContractTransaction> {
     const params: AuthorizeProviderParams = {
         ...paramsInput,
@@ -54,28 +44,29 @@ export async function getReserveVaultTxByInput_AuthorizeProvider(
     return await getReserveVaultTx_AuthorizeProvider(reserveVault, deployer, params, txConfig);
 }
 
-
 // openFund
 export async function getReserveVaultTx_OpenFund(
     reserveVault: ReserveVault,
     deployer: any,
     params: OpenFundParams,
-    txConfig = {},
+    txConfig = {}
 ): Promise<ContractTransaction> {
-    return await reserveVault.connect(deployer).openFund(
-        params.mainCurrency,
-        params.mainDenomination,
-        params.extraCurrencies,
-        params.extraDenominations,
-        txConfig
-    );
+    return await reserveVault
+        .connect(deployer)
+        .openFund(
+            params.mainCurrency,
+            params.mainDenomination,
+            params.extraCurrencies,
+            params.extraDenominations,
+            txConfig
+        );
 }
 
 export async function getCallReserveVaultTx_OpenFund(
     reserveVault: ReserveVault,
     caller: ProxyCaller,
     params: OpenFundParams,
-    txConfig = {},
+    txConfig = {}
 ): Promise<ContractTransaction> {
     return await caller.call(
         reserveVault.address,
@@ -85,60 +76,48 @@ export async function getCallReserveVaultTx_OpenFund(
             params.extraCurrencies,
             params.extraDenominations,
         ]),
-        txConfig,
+        txConfig
     );
 }
-
 
 // expandFund
 export async function getCallReserveVaultTx_ExpandFund(
     reserveVault: ReserveVault,
     caller: ProxyCaller,
     params: ExpandFundParams,
-    txConfig = {},
+    txConfig = {}
 ): Promise<ContractTransaction> {
     return await caller.call(
         reserveVault.address,
-        reserveVault.interface.encodeFunctionData('expandFund', [
-            params.fundId,
-            params.quantity,
-        ]),
-        txConfig,
+        reserveVault.interface.encodeFunctionData('expandFund', [params.fundId, params.quantity]),
+        txConfig
     );
 }
-
 
 // provideFund
 export async function getCallReserveVaultTx_ProvideFund(
     reserveVault: ReserveVault,
     caller: ProxyCaller,
     params: ProvideFundParams,
-    txConfig = {},
+    txConfig = {}
 ): Promise<ContractTransaction> {
     return await caller.call(
         reserveVault.address,
-        reserveVault.interface.encodeFunctionData('provideFund', [
-            params.fundId,
-        ]),
-        txConfig,
+        reserveVault.interface.encodeFunctionData('provideFund', [params.fundId]),
+        txConfig
     );
 }
-
 
 // withdrawFund
 export async function getCallReserveVaultTx_WithdrawFund(
     reserveVault: ReserveVault,
     caller: ProxyCaller,
     params: WithdrawFundParams,
-    txConfig = {},
+    txConfig = {}
 ): Promise<ContractTransaction> {
     return await caller.call(
         reserveVault.address,
-        reserveVault.interface.encodeFunctionData('withdrawFund', [
-            params.fundId,
-            params.receiver,
-            params.quantity,
-        ]),
-        txConfig,
+        reserveVault.interface.encodeFunctionData('withdrawFund', [params.fundId, params.receiver, params.quantity]),
+        txConfig
     );
 }

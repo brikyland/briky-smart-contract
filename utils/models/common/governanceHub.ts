@@ -1,11 +1,10 @@
-import { BigNumber } from "ethers";
+import { BigNumber } from 'ethers';
 
-import { Validation } from "@utils/models/common/validatable";
-
+import { Validation } from '@utils/models/common/validatable';
 
 export enum ProposalRule {
     ApprovalBeyondQuorum,
-    DisapprovalBeyondQuorum
+    DisapprovalBeyondQuorum,
 }
 
 export enum ProposalState {
@@ -16,22 +15,20 @@ export enum ProposalState {
     SuccessfulExecuted,
     UnsuccessfulExecuted,
     Disqualified,
-    Rejected
+    Rejected,
 }
-
 
 export enum ProposalVerdict {
     Unsettled,
     Passed,
-    Failed
+    Failed,
 }
 
 export enum ProposalVoteOption {
     Nil,
     Approval,
-    Disapproval
+    Disapproval,
 }
-
 
 // updateFee
 export interface UpdateFeeParamsInput {
@@ -41,7 +38,6 @@ export interface UpdateFeeParamsInput {
 export interface UpdateFeeParams extends UpdateFeeParamsInput {
     signatures: string[];
 }
-
 
 // propose
 export interface ProposeParamsInput {
@@ -59,7 +55,6 @@ export interface ProposeParams extends ProposeParamsInput {
     validation: Validation;
 }
 
-
 // admit
 export interface AdmitParamsInput {
     proposalId: BigNumber;
@@ -72,7 +67,6 @@ export interface AdmitParams extends AdmitParamsInput {
     validation: Validation;
 }
 
-
 // disqualify
 export interface DisqualifyParamsInput {
     proposalId: BigNumber;
@@ -84,19 +78,16 @@ export interface DisqualifyParams extends DisqualifyParamsInput {
     validation: Validation;
 }
 
-
 // vote
 export interface VoteParams {
     proposalId: BigNumber;
     voteOption: ProposalVoteOption;
 }
 
-
 // safeVote
 export interface SafeVoteParams extends VoteParams {
     anchor: string;
 }
-
 
 // contributeBudget
 export interface ContributeBudgetParams {
@@ -104,30 +95,25 @@ export interface ContributeBudgetParams {
     value: BigNumber;
 }
 
-
 // safeContributeBudget
 export interface SafeContributeBudgetParams extends ContributeBudgetParams {
     anchor: string;
 }
-
 
 // withdrawBudgetContribution
 export interface WithdrawBudgetContributionParams {
     proposalId: BigNumber;
 }
 
-
 // confirm
 export interface ConfirmParams {
     proposalId: BigNumber;
 }
 
-
 // rejectExecution
 export interface RejectExecutionParams {
     proposalId: BigNumber;
 }
-
 
 // logExecution
 export interface LogExecutionParamsInput {
@@ -138,7 +124,6 @@ export interface LogExecutionParamsInput {
 export interface LogExecutionParams extends LogExecutionParamsInput {
     validation: Validation;
 }
-
 
 // concludeExecution
 export interface ConcludeExecutionParamsInput {

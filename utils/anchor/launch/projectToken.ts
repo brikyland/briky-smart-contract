@@ -1,15 +1,14 @@
-import { ethers } from "ethers";
+import { ethers } from 'ethers';
 
 // @typechain-types
-import { ProjectToken } from "@typechain-types";
+import { ProjectToken } from '@typechain-types';
 
 // @utils/models/launch
 import {
     DeprecateProjectParams,
     TokenizeProjectParams,
     UpdateProjectURIParamsInput,
-} from "@utils/models/launch/projectToken";
-
+} from '@utils/models/launch/projectToken';
 
 // safeDeprecateProject
 export async function getSafeDeprecateProjectAnchor(
@@ -18,8 +17,7 @@ export async function getSafeDeprecateProjectAnchor(
 ): Promise<string> {
     const currentURI = await projectToken.uri(params.projectId);
     return ethers.utils.keccak256(ethers.utils.toUtf8Bytes(currentURI));
-};
-
+}
 
 // safeUpdateProjectURI
 export async function getSafeUpdateProjectURIAnchor(
@@ -28,8 +26,7 @@ export async function getSafeUpdateProjectURIAnchor(
 ): Promise<string> {
     const currentURI = await projectToken.uri(params.projectId);
     return ethers.utils.keccak256(ethers.utils.toUtf8Bytes(currentURI));
-};
-
+}
 
 // safeTokenizeProject
 export async function getSafeTokenizeProjectAnchor(
@@ -38,4 +35,4 @@ export async function getSafeTokenizeProjectAnchor(
 ): Promise<string> {
     const currentURI = await projectToken.uri(params.projectId);
     return ethers.utils.keccak256(ethers.utils.toUtf8Bytes(currentURI));
-};
+}

@@ -1,13 +1,13 @@
-import { ethers } from "ethers";
+import { ethers } from 'ethers';
 
 // @typechain-types
-import { Admin } from "@typechain-types";
+import { Admin } from '@typechain-types';
 
 // @utils/blockchain
-import { getSignatures } from "@utils/blockchain";
+import { getSignatures } from '@utils/blockchain';
 
 // @utils/models/common
-import { 
+import {
     TransferAdministration1ParamsInput,
     TransferAdministration2ParamsInput,
     TransferAdministration3ParamsInput,
@@ -18,9 +18,8 @@ import {
     AuthorizeGovernorsParamsInput,
     DeclareZoneParamsInput,
     ActivateInParamsInput,
-    UpdateCurrencyRegistriesParamsInput
-} from "@utils/models/common/admin";
-
+    UpdateCurrencyRegistriesParamsInput,
+} from '@utils/models/common/admin';
 
 // transferAdministration1
 export async function getTransferAdministration1Signatures(
@@ -30,12 +29,11 @@ export async function getTransferAdministration1Signatures(
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "address"],
-        [admin.address, "transferAdministration1", params.admin1]
+        ['address', 'string', 'address'],
+        [admin.address, 'transferAdministration1', params.admin1]
     );
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
-
 
 // transferAdministration2
 export async function getTransferAdministration2Signatures(
@@ -45,12 +43,11 @@ export async function getTransferAdministration2Signatures(
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "address"],
-        [admin.address, "transferAdministration2", params.admin2]
+        ['address', 'string', 'address'],
+        [admin.address, 'transferAdministration2', params.admin2]
     );
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
-
 
 // transferAdministration3
 export async function getTransferAdministration3Signatures(
@@ -60,12 +57,11 @@ export async function getTransferAdministration3Signatures(
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "address"],
-        [admin.address, "transferAdministration3", params.admin3]
+        ['address', 'string', 'address'],
+        [admin.address, 'transferAdministration3', params.admin3]
     );
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
-
 
 // transferAdministration4
 export async function getTransferAdministration4Signatures(
@@ -75,12 +71,11 @@ export async function getTransferAdministration4Signatures(
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "address"],
-        [admin.address, "transferAdministration4", params.admin4]
+        ['address', 'string', 'address'],
+        [admin.address, 'transferAdministration4', params.admin4]
     );
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
-
 
 // transferAdministration5
 export async function getTransferAdministration5Signatures(
@@ -90,12 +85,11 @@ export async function getTransferAdministration5Signatures(
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "address"],
-        [admin.address, "transferAdministration5", params.admin5]
+        ['address', 'string', 'address'],
+        [admin.address, 'transferAdministration5', params.admin5]
     );
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
-
 
 // authorizeManagers
 export async function getAuthorizeManagersSignatures(
@@ -105,12 +99,11 @@ export async function getAuthorizeManagersSignatures(
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "address[]", "bool"],
-        [admin.address, "authorizeManagers", params.accounts, params.isManager]
+        ['address', 'string', 'address[]', 'bool'],
+        [admin.address, 'authorizeManagers', params.accounts, params.isManager]
     );
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
-
 
 // authorizeModerators
 export async function getAuthorizeModeratorsSignatures(
@@ -120,12 +113,11 @@ export async function getAuthorizeModeratorsSignatures(
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "address[]", "bool"],
-        [admin.address, "authorizeModerators", params.accounts, params.isModerator]
+        ['address', 'string', 'address[]', 'bool'],
+        [admin.address, 'authorizeModerators', params.accounts, params.isModerator]
     );
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
-
 
 // authorizeGovernors
 export async function getAuthorizeGovernorsSignatures(
@@ -135,12 +127,11 @@ export async function getAuthorizeGovernorsSignatures(
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "address[]", "bool"],
-        [admin.address, "authorizeGovernors", params.accounts, params.isGovernor]
+        ['address', 'string', 'address[]', 'bool'],
+        [admin.address, 'authorizeGovernors', params.accounts, params.isGovernor]
     );
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
-
 
 // declareZone
 export async function getDeclareZoneSignatures(
@@ -150,12 +141,11 @@ export async function getDeclareZoneSignatures(
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "bytes32"],
-        [admin.address, "declareZone", params.zone]
+        ['address', 'string', 'bytes32'],
+        [admin.address, 'declareZone', params.zone]
     );
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
-
 
 // activateIn
 export async function getActivateInSignatures(
@@ -165,12 +155,11 @@ export async function getActivateInSignatures(
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "bytes32", "address[]", "bool"],
-        [admin.address, "activateIn", params.zone, params.accounts, params.isActive]
+        ['address', 'string', 'bytes32', 'address[]', 'bool'],
+        [admin.address, 'activateIn', params.zone, params.accounts, params.isActive]
     );
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
-
 
 // updateCurrencyRegistries
 export async function getUpdateCurrencyRegistriesSignatures(
@@ -180,8 +169,8 @@ export async function getUpdateCurrencyRegistriesSignatures(
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "address[]", "bool[]", "bool[]"],
-        [admin.address, "updateCurrencyRegistries", params.currencies, params.isAvailable, params.isExclusive]
+        ['address', 'string', 'address[]', 'bool[]', 'bool[]'],
+        [admin.address, 'updateCurrencyRegistries', params.currencies, params.isAvailable, params.isExclusive]
     );
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }

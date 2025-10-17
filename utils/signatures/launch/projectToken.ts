@@ -1,21 +1,17 @@
-import { ethers } from "ethers";
+import { ethers } from 'ethers';
 
 // @typechain-types
-import {
-    Admin,
-    ProjectToken
-} from "@typechain-types";
+import { Admin, ProjectToken } from '@typechain-types';
 
 // @utils/blockchain
-import { getSignatures } from "@utils/blockchain";
+import { getSignatures } from '@utils/blockchain';
 
 // @utils/models/launch
 import {
     AuthorizeLaunchpadParamsInput,
     UpdateBaseURIParamsInput,
     UpdateZoneRoyaltyRateParamsInput,
-} from "@utils/models/launch/projectToken";
-
+} from '@utils/models/launch/projectToken';
 
 // updateBaseURI
 export async function getUpdateBaseURISignatures(
@@ -26,13 +22,12 @@ export async function getUpdateBaseURISignatures(
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "string"],
-        [projectToken.address, "updateBaseURI", paramsInput.uri]
+        ['address', 'string', 'string'],
+        [projectToken.address, 'updateBaseURI', paramsInput.uri]
     );
 
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
-
 
 // updateZoneRoyaltyRate
 export async function getUpdateZoneRoyaltyRateSignatures(
@@ -43,13 +38,12 @@ export async function getUpdateZoneRoyaltyRateSignatures(
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "bytes32", "uint256"],
-        [projectToken.address, "updateZoneRoyaltyRate", paramsInput.zone, paramsInput.royaltyRate]
+        ['address', 'string', 'bytes32', 'uint256'],
+        [projectToken.address, 'updateZoneRoyaltyRate', paramsInput.zone, paramsInput.royaltyRate]
     );
 
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }
-
 
 // authorizeLaunchpads
 export async function getAuthorizeLaunchpadSignatures(
@@ -60,8 +54,8 @@ export async function getAuthorizeLaunchpadSignatures(
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "address[]", "bool"],
-        [projectToken.address, "authorizeLaunchpads", paramsInput.accounts, paramsInput.isLaunchpad]
+        ['address', 'string', 'address[]', 'bool'],
+        [projectToken.address, 'authorizeLaunchpads', paramsInput.accounts, paramsInput.isLaunchpad]
     );
 
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));

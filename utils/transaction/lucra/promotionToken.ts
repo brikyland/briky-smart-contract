@@ -1,13 +1,10 @@
-import { ContractTransaction } from "ethers";
+import { ContractTransaction } from 'ethers';
 
 // @nomiclabs/hardhat-ethers
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 // @typechain-types
-import {
-    Admin,
-    PromotionToken
-} from "@typechain-types";
+import { Admin, PromotionToken } from '@typechain-types';
 
 // @utils/models/lucra
 import {
@@ -23,8 +20,8 @@ import {
     CreateContentsParamsInput,
     UpdateContentURIsParamsInput,
     CancelContentsParamsInput,
-    MintParams
-} from "@utils/models/lucra/promotionToken";
+    MintParams,
+} from '@utils/models/lucra/promotionToken';
 
 // @utils/signatures/lucra
 import {
@@ -33,9 +30,8 @@ import {
     getUpdateContentURIsSignatures,
     getUpdateFeeSignatures,
     getUpdateRoyaltyRateSignatures,
-    getWithdrawSignatures
-} from "@utils/signatures/lucra/promotionToken";
-
+    getWithdrawSignatures,
+} from '@utils/signatures/lucra/promotionToken';
 
 // updateFee
 export async function getPromotionTokenTx_UpdateFee(
@@ -44,11 +40,7 @@ export async function getPromotionTokenTx_UpdateFee(
     params: UpdateFeeParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return promotionToken.connect(deployer).updateFee(
-        params.fee,
-        params.signatures,
-        txConfig
-    );
+    return promotionToken.connect(deployer).updateFee(params.fee, params.signatures, txConfig);
 }
 
 export async function getPromotionTokenTxByInput_UpdateFee(
@@ -66,7 +58,6 @@ export async function getPromotionTokenTxByInput_UpdateFee(
     return getPromotionTokenTx_UpdateFee(promotionToken, deployer, params, txConfig);
 }
 
-
 // updateRoyaltyRate
 export async function getPromotionTokenTx_UpdateRoyaltyRate(
     promotionToken: PromotionToken,
@@ -74,11 +65,7 @@ export async function getPromotionTokenTx_UpdateRoyaltyRate(
     params: UpdateRoyaltyRateParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return promotionToken.connect(deployer).updateRoyaltyRate(
-        params.royaltyRate,
-        params.signatures,
-        txConfig
-    );
+    return promotionToken.connect(deployer).updateRoyaltyRate(params.royaltyRate, params.signatures, txConfig);
 }
 
 export async function getPromotionTokenTxByInput_UpdateRoyaltyRate(
@@ -96,7 +83,6 @@ export async function getPromotionTokenTxByInput_UpdateRoyaltyRate(
     return getPromotionTokenTx_UpdateRoyaltyRate(promotionToken, deployer, params, txConfig);
 }
 
-
 // withdraw
 export async function getPromotionTokenTx_Withdraw(
     promotionToken: PromotionToken,
@@ -104,13 +90,9 @@ export async function getPromotionTokenTx_Withdraw(
     params: WithdrawParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return promotionToken.connect(deployer).withdraw(
-        params.receiver,
-        params.currencies,
-        params.values,
-        params.signatures,
-        txConfig
-    );
+    return promotionToken
+        .connect(deployer)
+        .withdraw(params.receiver, params.currencies, params.values, params.signatures, txConfig);
 }
 
 export async function getPromotionTokenTxByInput_Withdraw(
@@ -128,7 +110,6 @@ export async function getPromotionTokenTxByInput_Withdraw(
     return getPromotionTokenTx_Withdraw(promotionToken, deployer, params, txConfig);
 }
 
-
 // createContents
 export async function getPromotionTokenTx_CreateContents(
     promotionToken: PromotionToken,
@@ -136,13 +117,9 @@ export async function getPromotionTokenTx_CreateContents(
     params: CreateContentsParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return promotionToken.connect(deployer).createContents(
-        params.uris,
-        params.startAts,
-        params.durations,
-        params.signatures,
-        txConfig
-    );
+    return promotionToken
+        .connect(deployer)
+        .createContents(params.uris, params.startAts, params.durations, params.signatures, txConfig);
 }
 
 export async function getPromotionTokenTxByInput_CreateContents(
@@ -160,7 +137,6 @@ export async function getPromotionTokenTxByInput_CreateContents(
     return getPromotionTokenTx_CreateContents(promotionToken, deployer, params, txConfig);
 }
 
-
 // updateContentURIs
 export async function getPromotionTokenTx_UpdateContentURIs(
     promotionToken: PromotionToken,
@@ -168,12 +144,9 @@ export async function getPromotionTokenTx_UpdateContentURIs(
     params: UpdateContentURIsParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return promotionToken.connect(deployer).updateContentURIs(
-        params.contentIds,
-        params.uris,
-        params.signatures,
-        txConfig
-    );
+    return promotionToken
+        .connect(deployer)
+        .updateContentURIs(params.contentIds, params.uris, params.signatures, txConfig);
 }
 
 export async function getPromotionTokenTxByInput_UpdateContentURIs(
@@ -191,7 +164,6 @@ export async function getPromotionTokenTxByInput_UpdateContentURIs(
     return getPromotionTokenTx_UpdateContentURIs(promotionToken, deployer, params, txConfig);
 }
 
-
 // cancelContents
 export async function getPromotionTokenTx_CancelContents(
     promotionToken: PromotionToken,
@@ -199,11 +171,7 @@ export async function getPromotionTokenTx_CancelContents(
     params: CancelContentsParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return promotionToken.connect(deployer).cancelContents(
-        params.contentIds,
-        params.signatures,
-        txConfig
-    );
+    return promotionToken.connect(deployer).cancelContents(params.contentIds, params.signatures, txConfig);
 }
 
 export async function getPromotionTokenTxByInput_CancelContents(
@@ -221,7 +189,6 @@ export async function getPromotionTokenTxByInput_CancelContents(
     return getPromotionTokenTx_CancelContents(promotionToken, deployer, params, txConfig);
 }
 
-
 // mint
 export async function getPromotionTokenTx_Mint(
     promotionToken: PromotionToken,
@@ -229,9 +196,5 @@ export async function getPromotionTokenTx_Mint(
     params: MintParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return promotionToken.connect(deployer).mint(
-        params.contentId,
-        params.amount,
-        txConfig
-    );
+    return promotionToken.connect(deployer).mint(params.contentId, params.amount, txConfig);
 }

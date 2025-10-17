@@ -23,7 +23,7 @@ import { Initialization as LiquidityInitialization } from '@tests/liquidity/test
 import { Initialization as LaunchInitialization } from '@tests/launch/test.initialization';
 
 // @typechain-types
-import { 
+import {
     Admin,
     FeeReceiver,
     CommissionToken,
@@ -54,7 +54,7 @@ import {
     PrestigePad,
     ProjectMarketplace,
     ProjectMortgageToken,
-    ERC721MortgageToken
+    ERC721MortgageToken,
 } from '@typechain-types';
 
 // @utils
@@ -104,7 +104,6 @@ import { deployEstateMarketplace } from '@utils/deployments/lux/estateMarketplac
 import { deployMortgageMarketplace } from '@utils/deployments/lux/mortgageMarketplace';
 import { deployProjectMarketplace } from '@utils/deployments/lux/projectMarketplace';
 
-
 interface CommonFixture {
     deployer: any;
     admins: any[];
@@ -123,12 +122,12 @@ interface CommonFixture {
     estateToken: EstateToken;
     estateForger: EstateForger;
     estateLiquidator: EstateLiquidator;
-    
+
     // Lend
     estateMortgageToken: EstateMortgageToken;
     projectMortgageToken: ProjectMortgageToken;
     erc721MortgageToken: ERC721MortgageToken;
-    
+
     // Liquidity
     treasury: Treasury;
     primaryToken: PrimaryToken;
@@ -136,7 +135,7 @@ interface CommonFixture {
     distributor: Distributor;
     dripDistributor: Driptributor;
     auction: Auction;
-    
+
     // Lucra
     passportToken: PassportToken;
     promotionToken: PromotionToken;
@@ -146,71 +145,58 @@ interface CommonFixture {
     erc721Marketplace: ERC721Marketplace;
     mortgageMarketplace: MortgageMarketplace;
     projectMarketplace: ProjectMarketplace;
-    
+
     // Launch
     projectToken: ProjectToken;
     prestigePad: PrestigePad;
 }
 
-
 describe('1.1. Inspect', async () => {
     async function commonFixture(): Promise<CommonFixture> {
         const [deployer, admin1, admin2, admin3, admin4, admin5, validatorWallet] = await ethers.getSigners();
         const admins = [admin1, admin2, admin3, admin4, admin5];
-        
-        const adminAddresses: string[] = admins.map(signer => signer.address);
+
+        const adminAddresses: string[] = admins.map((signer) => signer.address);
 
         const validator = new MockValidator(validatorWallet as any);
 
         // Common
-        const admin = await deployAdmin(
+        const admin = (await deployAdmin(
             deployer.address,
             adminAddresses[0],
             adminAddresses[1],
             adminAddresses[2],
             adminAddresses[3],
-            adminAddresses[4],
-        ) as Admin;
+            adminAddresses[4]
+        )) as Admin;
 
-        const feeReceiver = await deployFeeReceiver(
-            deployer.address,
-            admin.address,
-        ) as FeeReceiver;
+        const feeReceiver = (await deployFeeReceiver(deployer.address, admin.address)) as FeeReceiver;
 
-        const dividendHub = await deployDividendHub(
-            deployer,
-            admin.address,
-        ) as DividendHub;
+        const dividendHub = (await deployDividendHub(deployer, admin.address)) as DividendHub;
 
-        const governanceHub = await deployGovernanceHub(
+        const governanceHub = (await deployGovernanceHub(
             deployer,
             admin.address,
             validator.getAddress(),
-            CommonInitialization.GOVERNANCE_HUB_Fee,
-        ) as GovernanceHub;
+            CommonInitialization.GOVERNANCE_HUB_Fee
+        )) as GovernanceHub;
 
-        const priceWatcher = await deployPriceWatcher(
-            deployer,
-            admin.address,
-        ) as PriceWatcher;
+        const priceWatcher = (await deployPriceWatcher(deployer, admin.address)) as PriceWatcher;
 
-        const reserveVault = await deployReserveVault(
-            deployer,
-            admin.address,
-        ) as ReserveVault;
+        const reserveVault = (await deployReserveVault(deployer, admin.address)) as ReserveVault;
 
-        const airdrop = await deployAirdrop(deployer) as Airdrop;
+        const airdrop = (await deployAirdrop(deployer)) as Airdrop;
 
         // Land
-        const estateToken = await deployEstateToken(
+        const estateToken = (await deployEstateToken(
             deployer.address,
             admin.address,
             feeReceiver.address,
             validator.getAddress(),
-            LandInitialization.ESTATE_TOKEN_BaseURI,
-        ) as MockEstateToken;        
-      
-        const commissionToken = await deployCommissionToken(
+            LandInitialization.ESTATE_TOKEN_BaseURI
+        )) as MockEstateToken;
+
+        const commissionToken = (await deployCommissionToken(
             deployer,
             admin.address,
             estateToken.address,
@@ -218,10 +204,10 @@ describe('1.1. Inspect', async () => {
             LandInitialization.COMMISSION_TOKEN_Name,
             LandInitialization.COMMISSION_TOKEN_Symbol,
             LandInitialization.COMMISSION_TOKEN_BaseURI,
-            LandInitialization.COMMISSION_TOKEN_RoyaltyRate,
-        ) as CommissionToken;
+            LandInitialization.COMMISSION_TOKEN_RoyaltyRate
+        )) as CommissionToken;
 
-        const estateForger = await deployEstateForger(
+        const estateForger = (await deployEstateForger(
             deployer,
             admin.address,
             estateToken.address,
@@ -231,10 +217,10 @@ describe('1.1. Inspect', async () => {
             reserveVault.address,
             validator.getAddress(),
             LandInitialization.ESTATE_FORGER_BaseMinUnitPrice,
-            LandInitialization.ESTATE_FORGER_BaseMaxUnitPrice,
-        ) as MockEstateForger;
+            LandInitialization.ESTATE_FORGER_BaseMaxUnitPrice
+        )) as MockEstateForger;
 
-        const estateLiquidator = await deployEstateLiquidator(
+        const estateLiquidator = (await deployEstateLiquidator(
             deployer,
             admin.address,
             estateToken.address,
@@ -242,91 +228,83 @@ describe('1.1. Inspect', async () => {
             governanceHub.address,
             dividendHub.address,
             feeReceiver.address,
-            validator.getAddress(),
-        ) as EstateLiquidator;
-  
-        // Liquidity
-        const currency = await deployCurrency(
-            deployer,
-            'MockCurrency',
-            'MCK'
-        ) as Currency;
+            validator.getAddress()
+        )) as EstateLiquidator;
 
-        const primaryToken = await deployPrimaryToken(
+        // Liquidity
+        const currency = (await deployCurrency(deployer, 'MockCurrency', 'MCK')) as Currency;
+
+        const primaryToken = (await deployPrimaryToken(
             deployer,
             admin.address,
             LiquidityInitialization.PRIMARY_TOKEN_Name,
             LiquidityInitialization.PRIMARY_TOKEN_Symbol,
             LiquidityInitialization.PRIMARY_TOKEN_LiquidationUnlockedAt
-        ) as PrimaryToken;
+        )) as PrimaryToken;
 
-        const treasury = await deployTreasury(
+        const treasury = (await deployTreasury(
             deployer,
             admin.address,
             currency.address,
-            primaryToken.address,
-        ) as Treasury;
+            primaryToken.address
+        )) as Treasury;
 
-        const stakeToken = await deployStakeToken(
+        const stakeToken = (await deployStakeToken(
             deployer,
             admin.address,
             primaryToken.address,
             LiquidityInitialization.STAKE_TOKEN_Name_1,
             LiquidityInitialization.STAKE_TOKEN_Symbol_1,
-            LiquidityInitialization.STAKE_TOKEN_FeeRate,
-        ) as StakeToken;
+            LiquidityInitialization.STAKE_TOKEN_FeeRate
+        )) as StakeToken;
 
-        const distributor = await deployDistributor(
+        const distributor = (await deployDistributor(
             deployer,
             admin.address,
             primaryToken.address,
-            treasury.address,
-        ) as Distributor;
+            treasury.address
+        )) as Distributor;
 
-        const dripDistributor = await deployDriptributor(
+        const dripDistributor = (await deployDriptributor(
             deployer,
             admin.address,
             primaryToken.address,
-            ethers.utils.parseEther(String(1e6)),
-        ) as Driptributor;
+            ethers.utils.parseEther(String(1e6))
+        )) as Driptributor;
 
-        const auction = await deployAuction(
-            deployer,
-            admin.address,
-            primaryToken.address,
-        ) as Auction;
+        const auction = (await deployAuction(deployer, admin.address, primaryToken.address)) as Auction;
 
         // Launch
-        const passportToken = await deployPassportToken(
+        const passportToken = (await deployPassportToken(
             deployer,
             admin.address,
             LucraInitialization.PASSPORT_TOKEN_Name,
             LucraInitialization.PASSPORT_TOKEN_Symbol,
             LucraInitialization.PASSPORT_TOKEN_BaseURI,
             LucraInitialization.PASSPORT_TOKEN_Fee,
-            LucraInitialization.PASSPORT_TOKEN_RoyaltyRate,
-        ) as PassportToken;
+            LucraInitialization.PASSPORT_TOKEN_RoyaltyRate
+        )) as PassportToken;
 
-        const promotionToken = await deployPromotionToken(
+        const promotionToken = (await deployPromotionToken(
             deployer,
             admin.address,
             LucraInitialization.PROMOTION_TOKEN_Name,
             LucraInitialization.PROMOTION_TOKEN_Symbol,
             LucraInitialization.PROMOTION_TOKEN_Fee,
-            LucraInitialization.PROMOTION_TOKEN_RoyaltyRate,
-        ) as PromotionToken;
+            LucraInitialization.PROMOTION_TOKEN_RoyaltyRate
+        )) as PromotionToken;
 
         // Launch
-        const projectToken = await deployProjectToken(
+        const projectToken = (await deployProjectToken(
             deployer,
             admin.address,
             estateToken.address,
             feeReceiver.address,
             validator.getAddress(),
-            LaunchInitialization.PROJECT_TOKEN_BaseURI,
-        ) as ProjectToken;
+            LaunchInitialization.PROJECT_TOKEN_BaseURI
+        )) as ProjectToken;
 
-        const prestigePad = await deployPrestigePad(
+        const prestigePad = (await deployPrestigePad(
             deployer,
             admin.address,
             projectToken.address,
@@ -335,11 +313,11 @@ describe('1.1. Inspect', async () => {
             reserveVault.address,
             validator.getAddress(),
             LaunchInitialization.PRESTIGE_PAD_BaseMinUnitPrice,
-            LaunchInitialization.PRESTIGE_PAD_BaseMaxUnitPrice,
-        ) as PrestigePad;
+            LaunchInitialization.PRESTIGE_PAD_BaseMaxUnitPrice
+        )) as PrestigePad;
 
         // Lend
-        const estateMortgageToken = await deployEstateMortgageToken(
+        const estateMortgageToken = (await deployEstateMortgageToken(
             deployer,
             admin.address,
             estateToken.address,
@@ -347,10 +325,10 @@ describe('1.1. Inspect', async () => {
             LendInitialization.ESTATE_MORTGAGE_TOKEN_Name,
             LendInitialization.ESTATE_MORTGAGE_TOKEN_Symbol,
             LendInitialization.ESTATE_MORTGAGE_TOKEN_BaseURI,
-            LendInitialization.ESTATE_MORTGAGE_TOKEN_FeeRate,
-        ) as EstateMortgageToken;
+            LendInitialization.ESTATE_MORTGAGE_TOKEN_FeeRate
+        )) as EstateMortgageToken;
 
-        const projectMortgageToken = await deployProjectMortgageToken(
+        const projectMortgageToken = (await deployProjectMortgageToken(
             deployer,
             admin.address,
             projectToken.address,
@@ -358,44 +336,44 @@ describe('1.1. Inspect', async () => {
             LendInitialization.PROJECT_MORTGAGE_TOKEN_Name,
             LendInitialization.PROJECT_MORTGAGE_TOKEN_Symbol,
             LendInitialization.PROJECT_MORTGAGE_TOKEN_BaseURI,
-            LendInitialization.PROJECT_MORTGAGE_TOKEN_FeeRate,
-        ) as ProjectMortgageToken;
+            LendInitialization.PROJECT_MORTGAGE_TOKEN_FeeRate
+        )) as ProjectMortgageToken;
 
-        const erc721MortgageToken = await deployERC721MortgageToken(
+        const erc721MortgageToken = (await deployERC721MortgageToken(
             deployer,
             admin.address,
             feeReceiver.address,
             LendInitialization.ERC721_MORTGAGE_TOKEN_Name,
             LendInitialization.ERC721_MORTGAGE_TOKEN_Symbol,
             LendInitialization.ERC721_MORTGAGE_TOKEN_BaseURI,
-            LendInitialization.ERC721_MORTGAGE_TOKEN_FeeRate,
-        ) as ERC721MortgageToken;
+            LendInitialization.ERC721_MORTGAGE_TOKEN_FeeRate
+        )) as ERC721MortgageToken;
 
         // Lux
-        const estateMarketplace = await deployEstateMarketplace(
+        const estateMarketplace = (await deployEstateMarketplace(
             deployer.address,
             admin.address,
             estateToken.address,
-            commissionToken.address,
-        ) as EstateMarketplace;
+            commissionToken.address
+        )) as EstateMarketplace;
 
-        const erc721Marketplace = await deployERC721Marketplace(
+        const erc721Marketplace = (await deployERC721Marketplace(
             deployer,
             admin.address,
-            feeReceiver.address,
-        ) as ERC721Marketplace;
+            feeReceiver.address
+        )) as ERC721Marketplace;
 
-        const mortgageMarketplace = await deployMortgageMarketplace(
+        const mortgageMarketplace = (await deployMortgageMarketplace(
             deployer,
             admin.address,
-            feeReceiver.address,
-        ) as MortgageMarketplace;
+            feeReceiver.address
+        )) as MortgageMarketplace;
 
-        const projectMarketplace = await deployProjectMarketplace(
+        const projectMarketplace = (await deployProjectMarketplace(
             deployer,
             admin.address,
-            projectToken.address,
-        ) as ProjectMarketplace;
+            projectToken.address
+        )) as ProjectMarketplace;
 
         return {
             deployer,
@@ -428,7 +406,7 @@ describe('1.1. Inspect', async () => {
             erc721Marketplace,
             mortgageMarketplace,
             projectMarketplace,
-        }
+        };
     }
 
     describe('1.1.1. version', async () => {
@@ -511,10 +489,12 @@ describe('1.1. Inspect', async () => {
                 const initialBalance = await ethers.provider.getBalance(contract.address);
 
                 // Send Ether to the contract and wait for the transaction to be mined
-                const receipt = await callTransaction(owner.sendTransaction({
-                    to: contract.address,
-                    value: ethers.utils.parseEther('1.0'), // Sending 1 Ether
-                }));
+                const receipt = await callTransaction(
+                    owner.sendTransaction({
+                        to: contract.address,
+                        value: ethers.utils.parseEther('1.0'), // Sending 1 Ether
+                    })
+                );
 
                 // Get the final balance of the contract
                 const finalBalance = await ethers.provider.getBalance(contract.address);
@@ -561,7 +541,7 @@ describe('1.1. Inspect', async () => {
             } = fixture;
 
             await testReceiveNotExecuteAnyCode(admin, 28223);
-            
+
             await testReceiveNotExecuteAnyCode(feeReceiver, 28228);
             await testReceiveNotExecuteAnyCode(priceWatcher, 28223);
             await testReceiveNotExecuteAnyCode(reserveVault, 28223);

@@ -1,17 +1,13 @@
-import { ethers } from "ethers";
+import { ethers } from 'ethers';
 
 // @typechain-types
-import {
-    Admin,
-    Distributor
-} from "@typechain-types";
+import { Admin, Distributor } from '@typechain-types';
 
 // @utils/blockchain
-import { getSignatures } from "@utils/blockchain";
+import { getSignatures } from '@utils/blockchain';
 
 // @utils/models/liquidity
-import { DistributeTokenParamsInput } from "@utils/models/liquidity/distributor";
-
+import { DistributeTokenParamsInput } from '@utils/models/liquidity/distributor';
 
 // distributeToken
 export async function getDistributeTokenSignatures(
@@ -22,8 +18,8 @@ export async function getDistributeTokenSignatures(
     isValid: boolean = true
 ) {
     const message = ethers.utils.defaultAbiCoder.encode(
-        ["address", "string", "address[]", "uint256[]", "string"],
-        [distributor.address, "distributeToken", paramsInput.receivers, paramsInput.amounts, paramsInput.note]
+        ['address', 'string', 'address[]', 'uint256[]', 'string'],
+        [distributor.address, 'distributeToken', paramsInput.receivers, paramsInput.amounts, paramsInput.note]
     );
     return await getSignatures(message, admins, isValid ? await admin.nonce() : (await admin.nonce()).add(1));
 }

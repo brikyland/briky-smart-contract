@@ -1,5 +1,4 @@
-import { BigNumber } from "ethers";
-
+import { BigNumber } from 'ethers';
 
 // updateFee
 export interface UpdateFeeParamsInput {
@@ -10,7 +9,6 @@ export interface UpdateFeeParams extends UpdateFeeParamsInput {
     signatures: string[];
 }
 
-
 // updateRoyaltyRate
 export interface UpdateRoyaltyRateParamsInput {
     royaltyRate: BigNumber;
@@ -19,7 +17,6 @@ export interface UpdateRoyaltyRateParamsInput {
 export interface UpdateRoyaltyRateParams extends UpdateRoyaltyRateParamsInput {
     signatures: string[];
 }
-
 
 // withdraw
 export interface WithdrawParamsInput {
@@ -32,7 +29,6 @@ export interface WithdrawParams extends WithdrawParamsInput {
     signatures: string[];
 }
 
-
 // createContents
 export interface CreateContentsParamsInput {
     uris: string[];
@@ -44,7 +40,6 @@ export interface CreateContentsParams extends CreateContentsParamsInput {
     signatures: string[];
 }
 
-
 // updateContentURIs
 export interface UpdateContentURIsParamsInput {
     contentIds: BigNumber[];
@@ -55,7 +50,6 @@ export interface UpdateContentURIsParams extends UpdateContentURIsParamsInput {
     signatures: string[];
 }
 
-
 // cancelContents
 export interface CancelContentsParamsInput {
     contentIds: BigNumber[];
@@ -64,7 +58,6 @@ export interface CancelContentsParamsInput {
 export interface CancelContentsParams extends CancelContentsParamsInput {
     signatures: string[];
 }
-
 
 // mint
 export interface MintParams {

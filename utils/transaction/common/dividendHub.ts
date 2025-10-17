@@ -1,43 +1,31 @@
-import { ContractTransaction } from "ethers";
+import { ContractTransaction } from 'ethers';
 
 // @nomiclabs/hardhat-ethers
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 // @typechain-types
-import {
-    DividendHub,
-    ProxyCaller
-} from "@typechain-types";
+import { DividendHub, ProxyCaller } from '@typechain-types';
 
 // @utils/models/common
-import {
-    IssueDividendParams,
-    WithdrawParams
-} from "@utils/models/common/dividendHub";
-
+import { IssueDividendParams, WithdrawParams } from '@utils/models/common/dividendHub';
 
 // issueDividend
 export async function getDividendTx_IssueDividend(
     dividendHub: DividendHub,
     signer: SignerWithAddress,
     params: IssueDividendParams,
-    txConfig = {},
+    txConfig = {}
 ): Promise<ContractTransaction> {
-    return await dividendHub.connect(signer).issueDividend(
-        params.governor,
-        params.tokenId,
-        params.value,
-        params.currency,
-        params.note,
-        txConfig,
-    );
+    return await dividendHub
+        .connect(signer)
+        .issueDividend(params.governor, params.tokenId, params.value, params.currency, params.note, txConfig);
 }
 
 export async function getCallDividendHubTx_IssueDividend(
     dividendHub: DividendHub,
     caller: ProxyCaller,
     params: IssueDividendParams,
-    txConfig = {},
+    txConfig = {}
 ): Promise<ContractTransaction> {
     return await caller.call(
         dividendHub.address,
@@ -48,20 +36,16 @@ export async function getCallDividendHubTx_IssueDividend(
             params.currency,
             params.note,
         ]),
-        txConfig,
+        txConfig
     );
 }
-
 
 // withdraw
 export async function getWithdrawTx(
     signer: SignerWithAddress,
     dividendHub: DividendHub,
     params: WithdrawParams,
-    txConfig = {},
+    txConfig = {}
 ): Promise<ContractTransaction> {
-    return await dividendHub.connect(signer).withdraw(
-        params.dividendIds,
-        txConfig,
-    );
+    return await dividendHub.connect(signer).withdraw(params.dividendIds, txConfig);
 }
