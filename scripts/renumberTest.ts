@@ -45,10 +45,6 @@ function renumberTest(filePath: string, outputPath: string) {
 }
 
 function renumberTests() {
-    // const input = "tests/common/admin.test.ts"
-    // const output = "tests/common/admin.renumbered.test.ts"
-    // renumberTest(input, output);
-
     const testFiles = globSync("tests/**/*.test.ts");
 
     for (const file of testFiles) {

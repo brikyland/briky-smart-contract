@@ -1017,13 +1017,14 @@ describe('3.1. ERC721MortgageToken', async () => {
             const fixture = await beforeERC721MortgageTokenTest();
             const { erc721MortgageToken } = fixture;
 
+            expect(await erc721MortgageToken.supportsInterface(getBytes4Hex(IMortgageTokenInterfaceId))).to.equal(true);
+
             expect(await erc721MortgageToken.supportsInterface(getBytes4Hex(IERC165UpgradeableInterfaceId))).to.equal(
                 true
             );
             expect(
                 await erc721MortgageToken.supportsInterface(getBytes4Hex(IERC721MetadataUpgradeableInterfaceId))
             ).to.equal(true);
-            expect(await erc721MortgageToken.supportsInterface(getBytes4Hex(IMortgageTokenInterfaceId))).to.equal(true);
             expect(await erc721MortgageToken.supportsInterface(getBytes4Hex(IERC2981UpgradeableInterfaceId))).to.equal(
                 true
             );

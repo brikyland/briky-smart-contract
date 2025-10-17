@@ -130,6 +130,8 @@ import {
 
 // @tests
 import {
+    IERC1155MetadataURIUpgradeableInterfaceId,
+    IERC1155ReceiverUpgradeableInterfaceId,
     IERC165UpgradeableInterfaceId,
     IProjectLaunchpadInterfaceId,
     IProjectTokenReceiverInterfaceId,

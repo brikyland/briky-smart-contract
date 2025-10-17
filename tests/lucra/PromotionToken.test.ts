@@ -1006,16 +1006,17 @@ describe('5.2. PromotionToken', async () => {
         it('5.2.9.1. Return true for appropriate interface', async () => {
             const { promotionToken } = await beforePromotionTokenTest();
 
-            expect(await promotionToken.supportsInterface(getBytes4Hex(IERC4906UpgradeableInterfaceId))).to.equal(true);
             expect(await promotionToken.supportsInterface(getBytes4Hex(IRoyaltyRateProposerInterfaceId))).to.equal(
                 true
             );
-            expect(await promotionToken.supportsInterface(getBytes4Hex(IERC2981UpgradeableInterfaceId))).to.equal(true);
+
             expect(await promotionToken.supportsInterface(getBytes4Hex(IERC165UpgradeableInterfaceId))).to.equal(true);
             expect(await promotionToken.supportsInterface(getBytes4Hex(IERC721UpgradeableInterfaceId))).to.equal(true);
             expect(
                 await promotionToken.supportsInterface(getBytes4Hex(IERC721MetadataUpgradeableInterfaceId))
             ).to.equal(true);
+            expect(await promotionToken.supportsInterface(getBytes4Hex(IERC2981UpgradeableInterfaceId))).to.equal(true);
+            expect(await promotionToken.supportsInterface(getBytes4Hex(IERC4906UpgradeableInterfaceId))).to.equal(true);
         });
     });
 

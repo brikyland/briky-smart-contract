@@ -11,6 +11,7 @@ import { loadFixture, time } from '@nomicfoundation/hardhat-network-helpers';
 
 // @tests
 import {
+    IERC1155ReceiverUpgradeableInterfaceId,
     IERC165UpgradeableInterfaceId,
     IEstateTokenizerInterfaceId,
     IEstateTokenReceiverInterfaceId,

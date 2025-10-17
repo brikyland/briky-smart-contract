@@ -13,6 +13,7 @@ import { loadFixture, time } from '@nomicfoundation/hardhat-network-helpers';
 import {
     IAssetTokenInterfaceId,
     IERC1155MetadataURIUpgradeableInterfaceId,
+    IERC1155ReceiverUpgradeableInterfaceId,
     IERC165UpgradeableInterfaceId,
     IERC2981UpgradeableInterfaceId,
     IEstateTokenizerInterfaceId,

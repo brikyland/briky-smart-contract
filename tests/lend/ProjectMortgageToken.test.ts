@@ -28,6 +28,8 @@ import {
     IERC721MetadataUpgradeableInterfaceId,
     IMortgageTokenInterfaceId,
     IERC2981UpgradeableInterfaceId,
+    IAssetMortgageTokenInterfaceId,
+    IERC1155ReceiverUpgradeableInterfaceId,
 } from '@tests/interfaces';
 import { Constant } from '@tests/test.constant';
 
@@ -793,18 +795,20 @@ describe('3.3. ProjectMortgageToken', async () => {
             const fixture = await beforeProjectMortgageTokenTest();
             const { projectMortgageToken } = fixture;
 
-            expect(await projectMortgageToken.supportsInterface(getBytes4Hex(IERC165UpgradeableInterfaceId))).to.equal(
+            expect(await projectMortgageToken.supportsInterface(getBytes4Hex(IAssetMortgageTokenInterfaceId))).to.equal(true);
+            expect(await projectMortgageToken.supportsInterface(getBytes4Hex(IMortgageTokenInterfaceId))).to.equal(
                 true
             );
             expect(
                 await projectMortgageToken.supportsInterface(getBytes4Hex(IProjectTokenReceiverInterfaceId))
             ).to.equal(true);
+
+            expect(await projectMortgageToken.supportsInterface(getBytes4Hex(IERC165UpgradeableInterfaceId))).to.equal(
+                true
+            );
             expect(
                 await projectMortgageToken.supportsInterface(getBytes4Hex(IERC721MetadataUpgradeableInterfaceId))
             ).to.equal(true);
-            expect(await projectMortgageToken.supportsInterface(getBytes4Hex(IMortgageTokenInterfaceId))).to.equal(
-                true
-            );
             expect(await projectMortgageToken.supportsInterface(getBytes4Hex(IERC2981UpgradeableInterfaceId))).to.equal(
                 true
             );

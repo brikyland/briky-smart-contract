@@ -11,6 +11,7 @@ import { loadFixture, time } from '@nomicfoundation/hardhat-network-helpers';
 
 // @tests
 import {
+    IAssetTokenInterfaceId,
     IERC1155MetadataURIUpgradeableInterfaceId,
     IERC1155UpgradeableInterfaceId,
     IERC165UpgradeableInterfaceId,
@@ -2326,14 +2327,15 @@ describe('2.4. EstateToken', async () => {
             const fixture = await beforeEstateTokenTest();
             const { estateToken } = fixture;
 
-            expect(await estateToken.supportsInterface(getBytes4Hex(IERC2981UpgradeableInterfaceId))).to.equal(true);
+            expect(await estateToken.supportsInterface(getBytes4Hex(IAssetTokenInterfaceId))).to.equal(true);
+            expect(await estateToken.supportsInterface(getBytes4Hex(IGovernorInterfaceId))).to.equal(true);
             expect(await estateToken.supportsInterface(getBytes4Hex(IRoyaltyRateProposerInterfaceId))).to.equal(true);
             expect(await estateToken.supportsInterface(getBytes4Hex(IERC165UpgradeableInterfaceId))).to.equal(true);
             expect(await estateToken.supportsInterface(getBytes4Hex(IERC1155UpgradeableInterfaceId))).to.equal(true);
             expect(
                 await estateToken.supportsInterface(getBytes4Hex(IERC1155MetadataURIUpgradeableInterfaceId))
             ).to.equal(true);
-            expect(await estateToken.supportsInterface(getBytes4Hex(IGovernorInterfaceId))).to.equal(true);
+            expect(await estateToken.supportsInterface(getBytes4Hex(IERC2981UpgradeableInterfaceId))).to.equal(true);
         });
     });
 

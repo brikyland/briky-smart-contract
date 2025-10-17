@@ -1,4 +1,5 @@
 import {
+    IAssetMortgageToken__factory,
     IAssetToken__factory,
     ICommon__factory,
     IERC1155MetadataURIUpgradeable__factory,
@@ -30,6 +31,7 @@ const IERC1155MetadataURIUpgradeable = IERC1155MetadataURIUpgradeable__factory.c
 const IERC2981Upgradeable = IERC2981Upgradeable__factory.createInterface();
 const IERC4906Upgradeable = IERC4906Upgradeable__factory.createInterface();
 
+const IAssetMortgageToken = IAssetMortgageToken__factory.createInterface();
 const IAssetToken = IAssetToken__factory.createInterface();
 const ICommon = ICommon__factory.createInterface();
 const IEstateTokenizer = IEstateTokenizer__factory.createInterface();
@@ -48,12 +50,16 @@ export const IERC1155UpgradeableInterfaceId = getInterfaceID(IERC1155Upgradeable
 export const IERC1155MetadataURIUpgradeableInterfaceId = getInterfaceID(IERC1155MetadataURIUpgradeable, [
     IERC1155Upgradeable,
 ]);
+export const IERC1155ReceiverUpgradeableInterfaceId = getInterfaceID(IERC1155ReceiverUpgradeable, [IERC165Upgradeable]);
 export const IERC2981UpgradeableInterfaceId = getInterfaceID(IERC2981Upgradeable, [IERC165Upgradeable]);
 export const IERC4906UpgradeableInterfaceId = getInterfaceID(IERC4906Upgradeable, [
     IERC165Upgradeable,
     IERC721Upgradeable,
 ]);
 
+export const IAssetMortgageTokenInterfaceId = getInterfaceID(IAssetMortgageToken, [
+    IMortgageToken,
+]);
 export const IAssetTokenInterfaceId = getInterfaceID(IAssetToken, [
     IERC1155MetadataURIUpgradeable,
     IERC2981Upgradeable,
