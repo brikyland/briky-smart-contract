@@ -78,7 +78,7 @@ export function getBytes4Hex(interfaceID: ethers.BigNumber): string {
     return hex;
 }
 
-// generate a random array of length n with sum equal to s and each element >= min
+// generate a random array of length n whose sum equals to s and each element >= min
 // all possible arrays satisfying the condition should be equiprobably generated
 export function randomArrayWithSum(
     n: number,
@@ -113,7 +113,7 @@ export function randomArrayWithSum(
     // Sort the points
     points.sort((a, b) => (a.gt(b) ? 1 : -1));
 
-    // Use differences between consecutive points to generate array
+    // Use differences between consecutive points to generate the array
     const result: ethers.BigNumber[] = new Array(n);
     result[0] = points[0].add(min);
     for (let i = 1; i < n - 1; ++i) {
@@ -162,7 +162,7 @@ export function shuffle(array: any[]) {
 
     // While there remain elements to shuffle...
     while (currentIndex != 0) {
-        // Pick a remaining element...
+        // Pick a random remaining element...
         let randomIndex = Math.floor(Math.random() * currentIndex);
         currentIndex--;
 

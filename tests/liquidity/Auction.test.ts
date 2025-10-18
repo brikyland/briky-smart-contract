@@ -202,7 +202,6 @@ describe('4.1. Auction', async () => {
             depositor2,
             depositor3,
             admin,
-            treasury,
             currency,
             primaryToken,
             stakeToken1,
@@ -298,7 +297,7 @@ describe('4.1. Auction', async () => {
 
     /* --- Administration --- */
     describe('4.1.2. updateStakeTokens(address,address,address,bytes[])', async () => {
-        it('4.1.2.1. Update stake tokenssuccessfully', async () => {
+        it('4.1.2.1. Update stake tokens successfully', async () => {
             const fixture = await setupBeforeTest({});
             const { admin, admins, deployer, auction, stakeToken1, stakeToken2, stakeToken3 } = fixture;
 
@@ -315,7 +314,7 @@ describe('4.1. Auction', async () => {
             expect(await auction.stakeToken3()).to.equal(stakeToken3.address);
         });
 
-        it('4.1.2.2. Update stake tokensunsuccessfully with invalid signatures', async () => {
+        it('4.1.2.2. Update stake tokens unsuccessfully with invalid signatures', async () => {
             const { admin, admins, deployer, auction, stakeToken1, stakeToken2, stakeToken3 } = await setupBeforeTest(
                 {}
             );
@@ -352,7 +351,7 @@ describe('4.1. Auction', async () => {
             ).to.be.revertedWithCustomError(auction, 'InvalidUpdating');
         }
 
-        it('4.1.2.3. Update stake tokensunsuccessfully with zero address stake tokens', async () => {
+        it('4.1.2.3. Update stake tokens unsuccessfully with zero address stake tokens', async () => {
             const fixture = await setupBeforeTest({});
             const { stakeToken1, stakeToken2, stakeToken3 } = fixture;
 
@@ -361,7 +360,7 @@ describe('4.1. Auction', async () => {
             await testForInvalidInput(fixture, stakeToken1.address, stakeToken2.address, ethers.constants.AddressZero);
         });
 
-        it('4.1.2.4. Update stake tokensunsuccessfully with already updated stake tokens', async () => {
+        it('4.1.2.4. Update stake tokens unsuccessfully when they have already been updated', async () => {
             const fixture = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -471,7 +470,7 @@ describe('4.1. Auction', async () => {
             const deposit1 = await auction.deposits(depositor1.address);
             const deposit2 = await auction.deposits(depositor2.address);
             const deposit3 = await auction.deposits(depositor3.address);
-            const totalDeposit = await deposit1.add(deposit2).add(deposit3);
+            const totalDeposit = deposit1.add(deposit2).add(deposit3);
 
             expect(await auction.allocationOf(depositor1.address)).to.equal(
                 deposit1.mul(Constant.PRIMARY_TOKEN_PUBLIC_SALE).div(totalDeposit)
@@ -622,7 +621,7 @@ describe('4.1. Auction', async () => {
                 )
             );
 
-            treasury.setVariable('currency', reentrancyERC20.address);
+            await treasury.setVariable('currency', reentrancyERC20.address);
 
             const amount = ethers.utils.parseEther('100');
             await testReentrancy_Auction(auction, reentrancyERC20, async () => {
@@ -817,7 +816,7 @@ describe('4.1. Auction', async () => {
                 .mul(timestamp2.sub(endAt))
                 .div(vestingDuration);
 
-            const depositor2_timestamp2_tx = await getAuctionTx_Withdraw(auction, depositor2);
+            await getAuctionTx_Withdraw(auction, depositor2);
             await ethers.provider.send('evm_mine', []);
 
             expect(await primaryToken.balanceOf(depositor2.address)).to.equal(vestedAmount2_timestamp2);

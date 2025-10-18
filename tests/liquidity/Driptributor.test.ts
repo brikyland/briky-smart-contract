@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { BigNumber, BigNumberish, Contract } from 'ethers';
+import { BigNumber, BigNumberish } from 'ethers';
 import { ethers } from 'hardhat';
 
 // @defi-wonderland/smock
@@ -15,7 +15,7 @@ import { Initialization as LiquidityInitialization } from '@tests/liquidity/test
 import { Admin, Currency, Driptributor, StakeToken, Treasury, MockPrimaryToken } from '@typechain-types';
 
 // @utils
-import { callTransaction, expectRevertWithModifierCustomError, prepareERC20, testReentrancy } from '@utils/blockchain';
+import { callTransaction, expectRevertWithModifierCustomError, prepareERC20 } from '@utils/blockchain';
 
 // @utils/deployments/common
 import { deployAdmin } from '@utils/deployments/common/admin';
@@ -297,7 +297,7 @@ describe('4.3. Driptributor', async () => {
 
     /* --- Administration --- */
     describe('4.3.2. updateStakeTokens(address,address,address,bytes[])', async () => {
-        it('4.3.2.1. Update stake tokenssuccessfully', async () => {
+        it('4.3.2.1. Update stake tokens successfully', async () => {
             const { deployer, admin, admins, driptributor, stakeToken1, stakeToken2, stakeToken3 } =
                 await setupBeforeTest();
 
@@ -320,7 +320,7 @@ describe('4.3. Driptributor', async () => {
             expect(await driptributor.stakeToken3()).to.equal(stakeToken3.address);
         });
 
-        it('4.3.2.2. Update stake tokensunsuccessfully with invalid signatures', async () => {
+        it('4.3.2.2. Update stake tokens unsuccessfully with invalid signatures', async () => {
             const { deployer, admin, admins, driptributor, stakeToken1, stakeToken2, stakeToken3 } =
                 await setupBeforeTest();
 
@@ -355,7 +355,7 @@ describe('4.3. Driptributor', async () => {
             ).to.be.revertedWithCustomError(driptributor, 'InvalidUpdating');
         }
 
-        it('4.3.2.3. Update stake tokensunsuccessfully with zero address stake tokens', async () => {
+        it('4.3.2.3. Update stake tokens unsuccessfully with zero address stake tokens', async () => {
             const fixture = await setupBeforeTest();
             const { stakeToken1, stakeToken2, stakeToken3 } = fixture;
 
@@ -364,7 +364,7 @@ describe('4.3. Driptributor', async () => {
             await testForInvalidInput(fixture, stakeToken1.address, stakeToken2.address, ethers.constants.AddressZero);
         });
 
-        it('4.3.2.4. Update stake tokensunsuccessfully with already updated stake tokens', async () => {
+        it('4.3.2.4. Update stake tokens unsuccessfully with already updated stake tokens', async () => {
             const fixture = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -374,7 +374,7 @@ describe('4.3. Driptributor', async () => {
     });
 
     describe('4.3.3. distributeTokensWithDuration(address[],uint256[],uint40[],string[],bytes[])', async () => {
-        it('4.3.3.1. DistributeTokensWithDuration successfully with valid signatures', async () => {
+        it('4.3.3.1. Distribute tokens with duration successfully with valid signatures', async () => {
             const { deployer, admin, admins, driptributor, totalAmount, receiver1, receiver2 } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -496,7 +496,7 @@ describe('4.3. Driptributor', async () => {
             expect(distribution4.isStaked).to.equal(false);
         });
 
-        it('4.3.3.2. DistributeTokensWithDuration unsuccessfully with invalid signatures', async () => {
+        it('4.3.3.2. Distribute tokens with duration unsuccessfully with invalid signatures', async () => {
             const { deployer, admin, admins, driptributor, receiver1, receiver2 } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -522,7 +522,7 @@ describe('4.3. Driptributor', async () => {
             ).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('4.3.3.3. DistributeTokensWithDuration unsuccessfully with invalid input', async () => {
+        it('4.3.3.3. Distribute tokens with duration unsuccessfully with invalid input', async () => {
             const { deployer, admin, admins, driptributor, receiver1, receiver2 } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -561,7 +561,7 @@ describe('4.3. Driptributor', async () => {
             await testForInvalidInput(receivers, amounts, vestingDurations, data.slice(0, 1));
         });
 
-        it('4.3.3.4. DistributeTokensWithDuration unsuccessfully with insufficient funds', async () => {
+        it('4.3.3.4. Distribute tokens with duration unsuccessfully with insufficient funds', async () => {
             const { deployer, admin, admins, driptributor, receiver1, receiver2 } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -597,7 +597,7 @@ describe('4.3. Driptributor', async () => {
     });
 
     describe('4.3.4. distributeTokensWithTimestamp(address[],uint256[],uint40[],string[],bytes[])', async () => {
-        it('4.3.4.1. DistributeTokensWithTimestamp successfully with valid signatures', async () => {
+        it('4.3.4.1. Distribute tokens with timestamp successfully with valid signatures', async () => {
             const { deployer, admin, admins, driptributor, totalAmount, receiver1, receiver2 } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -689,7 +689,7 @@ describe('4.3. Driptributor', async () => {
             expect(distribution4.isStaked).to.equal(false);
         });
 
-        it('4.3.4.2. DistributeTokensWithTimestamp unsuccessfully with invalid signatures', async () => {
+        it('4.3.4.2. Distribute tokens with timestamp unsuccessfully with invalid signatures', async () => {
             const { deployer, admin, admins, driptributor, receiver1, receiver2 } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -717,7 +717,7 @@ describe('4.3. Driptributor', async () => {
             ).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('4.3.4.3. DistributeTokensWithTimestamp unsuccessfully with invalid input', async () => {
+        it('4.3.4.3. Distribute tokens with timestamp unsuccessfully with invalid input', async () => {
             const { admin, admins, driptributor, receiver1, receiver2, deployer } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -758,7 +758,7 @@ describe('4.3. Driptributor', async () => {
             await testForInvalidInput(receivers, amounts, endAts, data.slice(0, 1));
         });
 
-        it('4.3.4.4. DistributeTokensWithTimestamp unsuccessfully with insufficient funds', async () => {
+        it('4.3.4.4. Distribute tokens with timestamp unsuccessfully with insufficient funds', async () => {
             const { admin, admins, driptributor, receiver1, receiver2, deployer } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -817,7 +817,7 @@ describe('4.3. Driptributor', async () => {
                     admin,
                     admins
                 )
-            );
+            ).to.be.revertedWithCustomError(driptributor, 'InvalidTimestamp');
         });
     });
 
@@ -826,8 +826,8 @@ describe('4.3. Driptributor', async () => {
         it('4.3.5.1. Revert with invalid distribution id', async () => {
             const { driptributor } = await setupBeforeTest();
 
-            expectRevertWithModifierCustomError(driptributor, driptributor.getDistribution(0), 'InvalidDistributionId');
-            expectRevertWithModifierCustomError(
+            await expectRevertWithModifierCustomError(driptributor, driptributor.getDistribution(0), 'InvalidDistributionId');
+            await expectRevertWithModifierCustomError(
                 driptributor,
                 driptributor.getDistribution(100),
                 'InvalidDistributionId'
@@ -1202,7 +1202,7 @@ describe('4.3. Driptributor', async () => {
             ).to.be.revertedWithCustomError(driptributor, 'Unauthorized');
         });
 
-        it('4.3.7.5. Stake unsuccessfully when distribution is already staked', async () => {
+        it('4.3.7.5. Stake unsuccessfully with already staked distribution', async () => {
             const { driptributor, receiver1 } = await setupBeforeTest({
                 updateStakeTokens: true,
                 addDistribution: true,

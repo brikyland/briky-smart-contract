@@ -1,96 +1,95 @@
-import { expect } from 'chai';
-import { randomInt } from 'crypto';
-import { BigNumber } from 'ethers';
-import { ethers } from 'hardhat';
+import {expect} from 'chai';
+import {randomInt} from 'crypto';
+import {BigNumber} from 'ethers';
+import {ethers} from 'hardhat';
 
 // @defi-wonderland/smock
-import { MockContract, smock } from '@defi-wonderland/smock';
+import {MockContract, smock} from '@defi-wonderland/smock';
 
 // @nomicfoundation/hardhat-network-helpers
-import { loadFixture, time } from '@nomicfoundation/hardhat-network-helpers';
+import {loadFixture, time} from '@nomicfoundation/hardhat-network-helpers';
 
 // @tests
 import {
-    IAssetTokenInterfaceId,
+    IERC165UpgradeableInterfaceId,
     IERC1155MetadataURIUpgradeableInterfaceId,
     IERC1155UpgradeableInterfaceId,
-    IERC165UpgradeableInterfaceId,
     IERC2981UpgradeableInterfaceId,
+    IAssetTokenInterfaceId,
     IGovernorInterfaceId,
     IRoyaltyRateProposerInterfaceId,
 } from '@tests/interfaces';
-import { Constant } from '@tests/test.constant';
+import {Constant} from '@tests/test.constant';
 
 // @tests/common
-import { Initialization as CommonInitialization } from '@tests/common/test.initialization';
+import {Initialization as CommonInitialization} from '@tests/common/test.initialization';
 
 // @tests/land
-import { Initialization as LandInitialization } from '@tests/land/test.initialization';
+import {Initialization as LandInitialization} from '@tests/land/test.initialization';
 
 // @typechain-types
 import {
     Admin,
     CommissionToken,
     Currency,
-    FeeReceiver,
-    MockEstateToken,
-    MockEstateForger__factory,
-    ReserveVault,
-    PriceWatcher,
-    GovernanceHub,
     DividendHub,
-    MockEstateLiquidator,
+    FeeReceiver,
+    GovernanceHub,
     MockEstateForger,
+    MockEstateForger__factory,
+    MockEstateLiquidator,
     MockEstateLiquidator__factory,
+    MockEstateToken,
+    PriceWatcher,
+    ReserveVault,
 } from '@typechain-types';
 
 // @utils
-import { callTransaction, callTransactionAtTimestamp, randomWallet } from '@utils/blockchain';
-import { MockValidator } from '@utils/mockValidator';
-import { getBytes4Hex, randomBigNumber, structToObject, OrderedMap } from '@utils/utils';
+import {callTransaction, callTransactionAtTimestamp, randomWallet} from '@utils/blockchain';
+import {MockValidator} from '@utils/mockValidator';
+import {getBytes4Hex, OrderedMap, randomBigNumber, structToObject} from '@utils/utils';
 
 // @utils/anchor/land
-import { getSafeUpdateEstateURIAnchor } from '@utils/anchor/land/estateToken';
+import {getSafeUpdateEstateURIAnchor} from '@utils/anchor/land/estateToken';
 
 // @utils/deployments/common
-import { deployAdmin } from '@utils/deployments/common/admin';
-import { deployCurrency } from '@utils/deployments/common/currency';
-import { deployDividendHub } from '@utils/deployments/common/dividendHub';
-import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
-import { deployGovernanceHub } from '@utils/deployments/common/governanceHub';
-import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
-import { deployReserveVault } from '@utils/deployments/common/reserveVault';
+import {deployAdmin} from '@utils/deployments/common/admin';
+import {deployCurrency} from '@utils/deployments/common/currency';
+import {deployDividendHub} from '@utils/deployments/common/dividendHub';
+import {deployFeeReceiver} from '@utils/deployments/common/feeReceiver';
+import {deployGovernanceHub} from '@utils/deployments/common/governanceHub';
+import {deployPriceWatcher} from '@utils/deployments/common/priceWatcher';
+import {deployReserveVault} from '@utils/deployments/common/reserveVault';
 
 // @utils/deployments/mock
-import { deployMockEstateToken } from '@utils/deployments/mock/mockEstateToken';
+import {deployMockEstateToken} from '@utils/deployments/mock/mockEstateToken';
 
 // @utils/deployments/land
-import { deployCommissionToken } from '@utils/deployments/land/commissionToken';
+import {deployCommissionToken} from '@utils/deployments/land/commissionToken';
 
 // @utils/models/land
 import {
-    RegisterCustodianParams,
-    TokenizeEstateParams,
-    SafeUpdateEstateURIParams,
-    SafeUpdateEstateCustodianParams,
-    UpdateEstateURIParams,
-    DeprecateEstateParams,
-    SafeDeprecateEstateParams,
-    ExtendEstateExpirationParams,
-    SafeExtendEstateExpirationParams,
-    UpdateEstateCustodianParams,
-    UpdateCommissionTokenParamsInput,
-    UpdateCommissionTokenParams,
-    UpdateBaseURIParamsInput,
-    UpdateBaseURIParams,
-    AuthorizeTokenizersParamsInput,
-    AuthorizeTokenizersParams,
-    AuthorizeExtractorsParamsInput,
     AuthorizeExtractorsParams,
-    UpdateZoneRoyaltyRateParamsInput,
-    UpdateZoneRoyaltyRateParams,
+    AuthorizeExtractorsParamsInput,
+    AuthorizeTokenizersParams,
+    AuthorizeTokenizersParamsInput,
+    DeprecateEstateParams,
+    ExtendEstateExpirationParams,
+    RegisterCustodianParams,
     RegisterCustodianParamsInput,
+    SafeDeprecateEstateParams,
+    SafeExtendEstateExpirationParams,
+    SafeUpdateEstateCustodianParams,
+    SafeUpdateEstateURIParams,
+    TokenizeEstateParams,
+    UpdateBaseURIParams,
+    UpdateBaseURIParamsInput,
+    UpdateCommissionTokenParams,
+    UpdateCommissionTokenParamsInput,
+    UpdateEstateCustodianParams,
     UpdateEstateURIParamsInput,
+    UpdateZoneRoyaltyRateParams,
+    UpdateZoneRoyaltyRateParamsInput,
 } from '@utils/models/land/estateToken';
 
 // @utils/signatures/land
@@ -103,7 +102,7 @@ import {
 } from '@utils/signatures/land/estateToken';
 
 // @utils/validation/land
-import { getRegisterCustodianValidation, getUpdateEstateURIValidation } from '@utils/validation/land/estateToken';
+import {getRegisterCustodianValidation, getUpdateEstateURIValidation} from '@utils/validation/land/estateToken';
 
 // @utils/transaction/common
 import {
@@ -112,33 +111,33 @@ import {
     getAdminTxByInput_AuthorizeModerators,
     getAdminTxByInput_DeclareZone,
 } from '@utils/transaction/common/admin';
-import { getPausableTxByInput_Pause } from '@utils/transaction/common/pausable';
+import {getPausableTxByInput_Pause} from '@utils/transaction/common/pausable';
 
 // @utils/transaction/land
-import { getCommissionTokenTx_RegisterBroker } from '@utils/transaction/land/commissionToken';
+import {getCommissionTokenTx_RegisterBroker} from '@utils/transaction/land/commissionToken';
 import {
-    getEstateTokenTx_AuthorizeExtractors,
-    getEstateTokenTxByInput_AuthorizeExtractors,
-    getEstateTokenTx_AuthorizeTokenizers,
-    getEstateTokenTxByInput_AuthorizeTokenizers,
     getCallEstateTokenTx_ExtractEstate,
     getCallEstateTokenTx_TokenizeEstate,
+    getEstateTokenTx_AuthorizeExtractors,
+    getEstateTokenTx_AuthorizeTokenizers,
     getEstateTokenTx_RegisterCustodian,
-    getEstateTokenTxByInput_RegisterCustodian,
     getEstateTokenTx_SafeDeprecateEstate,
-    getEstateTokenTxByParams_SafeDeprecateEstate,
     getEstateTokenTx_SafeExtendEstateExpiration,
-    getEstateTokenTxByParams_SafeExtendEstateExpiration,
     getEstateTokenTx_SafeUpdateEstateCustodian,
-    getEstateTokenTxByParams_SafeUpdateEstateCustodian,
     getEstateTokenTx_SafeUpdateEstateURI,
+    getEstateTokenTx_UpdateBaseURI,
+    getEstateTokenTx_UpdateCommissionToken,
+    getEstateTokenTx_UpdateZoneRoyaltyRate,
+    getEstateTokenTxByInput_AuthorizeExtractors,
+    getEstateTokenTxByInput_AuthorizeTokenizers,
+    getEstateTokenTxByInput_RegisterCustodian,
     getEstateTokenTxByInput_SafeUpdateEstateURI,
     getEstateTokenTxByInput_UpdateBaseURI,
-    getEstateTokenTx_UpdateCommissionToken,
     getEstateTokenTxByInput_UpdateCommissionToken,
-    getEstateTokenTx_UpdateZoneRoyaltyRate,
     getEstateTokenTxByInput_UpdateZoneRoyaltyRate,
-    getEstateTokenTx_UpdateBaseURI,
+    getEstateTokenTxByParams_SafeDeprecateEstate,
+    getEstateTokenTxByParams_SafeExtendEstateExpiration,
+    getEstateTokenTxByParams_SafeUpdateEstateCustodian,
 } from '@utils/transaction/land/estateToken';
 
 interface EstateTokenFixture {
@@ -591,7 +590,7 @@ describe('2.4. EstateToken', async () => {
             ).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('2.4.2.3. Update commission token unsuccessfully when already set', async () => {
+        it('2.4.2.3. Update commission token unsuccessfully when it has already been set', async () => {
             const { deployer, admins, admin, estateToken, commissionToken } = await beforeEstateTokenTest();
 
             await expect(
@@ -676,7 +675,7 @@ describe('2.4. EstateToken', async () => {
             }
         });
 
-        it('2.4.4.2. Authorize tokenizer unsuccessfully with invalid signatures', async () => {
+        it('2.4.4.2. Authorize tokenizers unsuccessfully with invalid signatures', async () => {
             const { deployer, admins, admin, estateToken, tokenizers } = await beforeEstateTokenTest({
                 skipAuthorizeEstateForger: true,
             });
@@ -696,7 +695,7 @@ describe('2.4. EstateToken', async () => {
             ).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('2.4.4.3. Authorize tokenizer reverted without reason with EOA', async () => {
+        it('2.4.4.3. Authorize tokenizers unsuccessfully with EOA', async () => {
             const { deployer, admins, admin, estateToken } = await beforeEstateTokenTest({
                 skipAuthorizeEstateForger: true,
             });
@@ -717,19 +716,17 @@ describe('2.4. EstateToken', async () => {
             ).to.be.revertedWithCustomError(estateToken, 'InvalidTokenizer');
         });
 
-        it('2.4.4.4. Authorize tokenizer reverted when contract does not support EstateTokenizer interface', async () => {
+        it('2.4.4.4. Authorize tokenizers reverted when contract does not support EstateTokenizer interface', async () => {
             const { deployer, estateToken, admin, admins } = await beforeEstateTokenTest({
                 skipAuthorizeEstateForger: true,
             });
-
-            const invalidTokenizer = estateToken;
 
             await expect(
                 getEstateTokenTxByInput_AuthorizeTokenizers(
                     estateToken,
                     deployer,
                     {
-                        accounts: [invalidTokenizer.address],
+                        accounts: [estateToken.address],
                         isTokenizer: true,
                     },
                     admin,
@@ -738,7 +735,7 @@ describe('2.4. EstateToken', async () => {
             ).to.be.revertedWithCustomError(estateToken, 'InvalidTokenizer');
         });
 
-        it('2.4.4.5. Authorize tokenizer unsuccessfully when authorizing the same account twice on the same tx', async () => {
+        it('2.4.4.5. Authorize tokenizers unsuccessfully when authorizing the same account twice on the same tx', async () => {
             const { deployer, estateToken, admin, admins, tokenizers } = await beforeEstateTokenTest({
                 skipAuthorizeEstateForger: true,
             });
@@ -759,7 +756,7 @@ describe('2.4. EstateToken', async () => {
             ).to.be.revertedWithCustomError(estateToken, `AuthorizedAccount`);
         });
 
-        it('2.4.4.6. Authorize tokenizer unsuccessfully when authorizing the same account twice on different txs', async () => {
+        it('2.4.4.6. Authorize tokenizers unsuccessfully when authorizing the same account twice on different txs', async () => {
             const { deployer, admins, admin, estateToken, tokenizers } = await beforeEstateTokenTest({
                 skipAuthorizeEstateForger: true,
             });
@@ -809,7 +806,7 @@ describe('2.4. EstateToken', async () => {
             );
         }
 
-        it('2.4.4.7. Deauthorize tokenizer successfully', async () => {
+        it('2.4.4.7. Deauthorize tokenizers successfully', async () => {
             const fixture = await beforeEstateTokenTest({
                 skipAuthorizeEstateForger: true,
             });
@@ -843,7 +840,7 @@ describe('2.4. EstateToken', async () => {
             }
         });
 
-        it('2.4.4.8. Deauthorize tokenizer unsuccessfully with unauthorized account', async () => {
+        it('2.4.4.8. Deauthorize tokenizers unsuccessfully with unauthorized account', async () => {
             const fixture = await beforeEstateTokenTest({
                 skipAuthorizeEstateForger: true,
             });
@@ -867,7 +864,7 @@ describe('2.4. EstateToken', async () => {
             ).to.be.revertedWithCustomError(estateToken, `NotAuthorizedAccount`);
         });
 
-        it('2.4.4.9. Deauthorize tokenizer unsuccessfully when unauthorizing the same account twice on the same tx', async () => {
+        it('2.4.4.9. Deauthorize tokenizers unsuccessfully when unauthorizing the same account twice on the same tx', async () => {
             const fixture = await beforeEstateTokenTest({
                 skipAuthorizeEstateForger: true,
             });
@@ -889,7 +886,7 @@ describe('2.4. EstateToken', async () => {
             ).to.be.revertedWithCustomError(estateToken, `NotAuthorizedAccount`);
         });
 
-        it('2.4.4.10. Deauthorize tokenizer unsuccessfully when unauthorizing the same account twice on different txs', async () => {
+        it('2.4.4.10. Deauthorize tokenizers unsuccessfully when unauthorizing the same account twice on different txs', async () => {
             const fixture = await beforeEstateTokenTest({
                 skipAuthorizeEstateForger: true,
             });
@@ -962,7 +959,7 @@ describe('2.4. EstateToken', async () => {
             }
         });
 
-        it('2.4.5.2. Authorize extractor unsuccessfully with invalid signatures', async () => {
+        it('2.4.5.2. Authorize extractors unsuccessfully with invalid signatures', async () => {
             const fixture = await beforeEstateTokenTest({
                 skipAuthorizeEstateForger: true,
             });
@@ -983,7 +980,7 @@ describe('2.4. EstateToken', async () => {
             ).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('2.4.5.3. Authorize extractor unsuccessfully when authorizing the same account twice on the same tx', async () => {
+        it('2.4.5.3. Authorize extractors unsuccessfully when authorizing the same account twice on the same tx', async () => {
             const fixture = await beforeEstateTokenTest({
                 skipAuthorizeEstateForger: true,
             });
@@ -1005,7 +1002,7 @@ describe('2.4. EstateToken', async () => {
             ).to.be.revertedWithCustomError(estateToken, `AuthorizedAccount`);
         });
 
-        it('2.4.5.4. Authorize extractor unsuccessfully when authorizing the same account twice on different txs', async () => {
+        it('2.4.5.4. Authorize extractors unsuccessfully when authorizing the same account twice on different txs', async () => {
             const fixture = await beforeEstateTokenTest({
                 skipAuthorizeEstateForger: true,
             });
@@ -1057,7 +1054,7 @@ describe('2.4. EstateToken', async () => {
             );
         }
 
-        it('2.4.5.5. Deauthorize extractor successfully', async () => {
+        it('2.4.5.5. Deauthorize extractors successfully', async () => {
             const fixture = await beforeEstateTokenTest({
                 skipAuthorizeEstateForger: true,
             });
@@ -1091,7 +1088,7 @@ describe('2.4. EstateToken', async () => {
             }
         });
 
-        it('2.4.5.6. Deauthorize extractor unsuccessfully with unauthorized account', async () => {
+        it('2.4.5.6. Deauthorize extractors unsuccessfully with unauthorized account', async () => {
             const fixture = await beforeEstateTokenTest({
                 skipAuthorizeEstateForger: true,
             });
@@ -1115,7 +1112,7 @@ describe('2.4. EstateToken', async () => {
             ).to.be.revertedWithCustomError(estateToken, `NotAuthorizedAccount`);
         });
 
-        it('2.4.5.7. Deauthorize extractor unsuccessfully when unauthorizing the same account twice on the same tx', async () => {
+        it('2.4.5.7. Deauthorize extractors unsuccessfully when unauthorizing the same account twice on the same tx', async () => {
             const fixture = await beforeEstateTokenTest({
                 skipAuthorizeEstateForger: true,
             });
@@ -1137,7 +1134,7 @@ describe('2.4. EstateToken', async () => {
             ).to.be.revertedWithCustomError(estateToken, `NotAuthorizedAccount`);
         });
 
-        it('2.4.5.8. Deauthorize extractor unsuccessfully when unauthorizing the same account twice on different txs', async () => {
+        it('2.4.5.8. Deauthorize extractors unsuccessfully when unauthorizing the same account twice on different txs', async () => {
             const fixture = await beforeEstateTokenTest({
                 skipAuthorizeEstateForger: true,
             });
@@ -1524,9 +1521,6 @@ describe('2.4. EstateToken', async () => {
                 }
             }
 
-            const lastTimestamp = (await ethers.provider.getBlock('latest')).timestamp;
-            currentTimestamp = lastTimestamp;
-
             await ethers.provider.send('evm_setAutomine', [true]);
             estateForger.allocationOfAt.reset();
         });
@@ -1591,7 +1585,7 @@ describe('2.4. EstateToken', async () => {
         });
 
         it('2.4.8.7. Revert with timestamp after expiration', async () => {
-            const { estateToken, depositor1, manager } = await beforeEstateTokenTest({
+            const { estateToken, depositor1 } = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
 
@@ -1906,7 +1900,7 @@ describe('2.4. EstateToken', async () => {
             const fixture = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
-            const { estateToken, estateForger, manager, depositor1 } = fixture;
+            const { estateToken, estateForger, depositor1 } = fixture;
 
             await callTransaction(estateToken.mint(depositor1.address, 1, 10_000));
 
@@ -1970,7 +1964,7 @@ describe('2.4. EstateToken', async () => {
         });
 
         it('2.4.14.2. Revert with inexistent estate id', async () => {
-            const { estateToken, depositor1, estateForger } = await beforeEstateTokenTest({
+            const { estateToken } = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
 
@@ -1987,7 +1981,7 @@ describe('2.4. EstateToken', async () => {
         });
 
         it('2.4.14.3. Revert with timestamp after current block timestamp', async () => {
-            const { estateToken, manager } = await beforeEstateTokenTest({
+            const { estateToken } = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
 
@@ -2100,7 +2094,7 @@ describe('2.4. EstateToken', async () => {
         });
 
         it('2.4.14.7. Return total vote of each equityOfAt', async () => {
-            // Note: this variant is only true when total supply of estate does not change
+            // Note: this variant is only true when the total supply of estate does not change
             const { estateToken, manager, depositor1, depositor2, estateForger, zone1, custodian1, broker1 } =
                 await beforeEstateTokenTest({
                     addSampleEstates: true,
@@ -2992,7 +2986,7 @@ describe('2.4. EstateToken', async () => {
             expect((await estateToken.getEstate(1)).expireAt).to.equal(params2.expireAt);
         });
 
-        it('2.4.21.2. Extend estate expiration successfully by manager with invalid anchor', async () => {
+        it('2.4.21.2. Extend estate expiration unsuccessfully with invalid anchor', async () => {
             const { manager, estateToken } = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -3337,7 +3331,7 @@ describe('2.4. EstateToken', async () => {
             );
         });
 
-        it('2.4.23.2. Update estate URI successfully by manager with invalid anchor', async () => {
+        it('2.4.23.2. Update estate URI unsuccessfully with invalid anchor', async () => {
             const fixture = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -3357,7 +3351,7 @@ describe('2.4. EstateToken', async () => {
             ).to.be.revertedWithCustomError(estateToken, 'BadAnchor');
         });
 
-        it('2.4.23.3. Update estate URI successfully by manager with invalid validation', async () => {
+        it('2.4.23.3. Update estate URI unsuccessfully with invalid validation', async () => {
             const fixture = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
@@ -3531,7 +3525,7 @@ describe('2.4. EstateToken', async () => {
         });
 
         it('2.4.24.2. Transfer unsuccessfully when the token is expired', async () => {
-            const { estateToken, manager, depositor1, depositor2 } = await beforeEstateTokenTest({
+            const { estateToken, depositor1, depositor2 } = await beforeEstateTokenTest({
                 addSampleEstates: true,
             });
 

@@ -228,7 +228,7 @@ describe('1.3. Airdrop', async () => {
                     amounts: [ethers.utils.parseEther('100')],
                     currency: currency.address,
                 })
-            ).to.be.revertedWithCustomError(airdrop, 'InsufficientValue');
+            ).to.be.revertedWith('ERC20: insufficient allowance');
         });
 
         it('1.3.2.6. Airdrop unsuccessfully with invalid address', async () => {

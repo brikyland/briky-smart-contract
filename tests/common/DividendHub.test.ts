@@ -94,11 +94,8 @@ describe('1.4. DividendHub', async () => {
             adminAddresses[4]
         )) as Admin;
 
-        const currency1 = (await deployCurrency(deployer.address, 'MockCurrency1', 'MCK1')) as Currency;
-        const currency2 = (await deployCurrency(deployer.address, 'MockCurrency2', 'MCK2')) as Currency;
-        const currency3 = (await deployCurrency(deployer.address, 'MockCurrency3', 'MCK3')) as Currency;
-        const currency4 = (await deployCurrency(deployer.address, 'MockCurrency4', 'MCK4')) as Currency;
-        const currencies = [currency1, currency2, currency3, currency4];
+        const currency = (await deployCurrency(deployer.address, 'MockCurrency1', 'MCK1')) as Currency;
+        const currencies = [currency];
 
         const SmockGovernor = await smock.mock<Governor__factory>('Governor');
         const governor = await SmockGovernor.deploy();
@@ -325,7 +322,7 @@ describe('1.4. DividendHub', async () => {
             expect(dividend.governor).to.equal(governor.address);
         });
 
-        it('1.4.2.2. revert with invalid dividend id', async () => {
+        it('1.4.2.2. Revert with invalid dividend id', async () => {
             const fixture = await beforeDividendHubTest({
                 issueSampleDividends: true,
             });
@@ -934,7 +931,7 @@ describe('1.4. DividendHub', async () => {
             ).to.be.revertedWithCustomError(dividendHub, 'InvalidDividendId');
         });
 
-        it('1.4.4.5. Withdraw unsuccessfully when withdraw the same dividend id in the same tx', async () => {
+        it('1.4.4.5. Withdraw unsuccessfully when withdrawing the same dividend id in the same tx', async () => {
             const fixture = await beforeDividendHubTest({
                 issueSampleDividends: true,
             });
@@ -947,7 +944,7 @@ describe('1.4. DividendHub', async () => {
             ).to.be.revertedWithCustomError(dividendHub, 'AlreadyWithdrawn');
         });
 
-        it('1.4.4.6. Withdraw unsuccessfully when withdraw the same dividend id in different txs', async () => {
+        it('1.4.4.6. Withdraw unsuccessfully when withdrawing the same dividend id in different txs', async () => {
             const fixture = await beforeDividendHubTest({
                 issueSampleDividends: true,
             });

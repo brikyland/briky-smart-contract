@@ -102,7 +102,7 @@ describe('1.a. Pausable', async () => {
             );
         });
 
-        it('1.a.1.3. Pause unsuccessfully when already paused', async () => {
+        it('1.a.1.3. Pause unsuccessfully when the contract has already been paused', async () => {
             const { deployer, admins, admin, pausable } = await beforePausableTest({
                 pause: true,
             });

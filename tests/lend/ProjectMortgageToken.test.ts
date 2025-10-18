@@ -24,12 +24,11 @@ import {
 // @tests
 import {
     IERC165UpgradeableInterfaceId,
-    IProjectTokenReceiverInterfaceId,
     IERC721MetadataUpgradeableInterfaceId,
-    IMortgageTokenInterfaceId,
     IERC2981UpgradeableInterfaceId,
     IAssetMortgageTokenInterfaceId,
-    IERC1155ReceiverUpgradeableInterfaceId,
+    IMortgageTokenInterfaceId,
+    IProjectTokenReceiverInterfaceId,
 } from '@tests/interfaces';
 import { Constant } from '@tests/test.constant';
 
@@ -1767,7 +1766,7 @@ describe('3.3. ProjectMortgageToken', async () => {
             ).to.be.revertedWithCustomError(projectMortgageToken, 'InsufficientValue');
         });
 
-        it('3.3.10.13. Lend unsuccessfully when native token transfer to borrower failed', async () => {
+        it('3.3.10.13. Lend unsuccessfully when transferring native token to borrower failed', async () => {
             const fixture = await beforeProjectMortgageTokenTest();
             const { projectMortgageToken, lender1, deployer, projectToken } = fixture;
 
@@ -1801,7 +1800,7 @@ describe('3.3. ProjectMortgageToken', async () => {
             ).to.be.revertedWithCustomError(projectMortgageToken, 'FailedTransfer');
         });
 
-        it('3.3.10.14. Buy token unsuccessfully when refund to lender failed', async () => {
+        it('3.3.10.14. Buy token unsuccessfully when refunding to lender failed', async () => {
             const fixture = await beforeProjectMortgageTokenTest({
                 listSampleMortgage: true,
             });
@@ -1817,7 +1816,7 @@ describe('3.3. ProjectMortgageToken', async () => {
             ).to.be.revertedWithCustomError(projectMortgageToken, 'FailedRefund');
         });
 
-        it('3.3.10.15. Buy token unsuccessfully when borrower reenter this function', async () => {
+        it('3.3.10.15. Buy token unsuccessfully when the contract is reentered', async () => {
             const fixture = await beforeProjectMortgageTokenTest();
             const { projectMortgageToken, deployer, projectToken, lender1 } = fixture;
 
@@ -2259,7 +2258,7 @@ describe('3.3. ProjectMortgageToken', async () => {
             ).to.be.revertedWith('ERC20: transfer amount exceeds balance');
         });
 
-        it('3.3.12.10. Repay unsuccessfully native token transfer to lender failed', async () => {
+        it('3.3.12.10. Repay unsuccessfully transferring native token to lender failed', async () => {
             const fixture = await beforeProjectMortgageTokenTest({
                 listSampleMortgage: true,
             });

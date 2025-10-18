@@ -11,9 +11,6 @@ import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 // @typechain-types
 import { Admin, Currency, ReserveVault, ReserveVault__factory, MockProvider, ReentrancyERC20 } from '@typechain-types';
 
-// @tests/test.constant
-import { Constant } from '@tests/test.constant';
-
 // @utils/blockchain
 import {
     callTransaction,
@@ -273,7 +270,7 @@ describe('1.8. ReserveVault', async () => {
             }
         });
 
-        it('1.8.2.2. Authorize provider unsuccessfully with invalid signatures', async () => {
+        it('1.8.2.2. Authorize providers unsuccessfully with invalid signatures', async () => {
             const { deployer, reserveVault, admin, admins, providers } = await beforeReserveVaultTest();
 
             const toBeProviders = providers.slice(0, 2);
@@ -297,7 +294,7 @@ describe('1.8. ReserveVault', async () => {
             ).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('1.8.2.3. Authorize provider unsuccessfully when authorizing the same account twice on the same tx', async () => {
+        it('1.8.2.3. Authorize providers unsuccessfully when authorizing the same account twice on the same tx', async () => {
             const { deployer, reserveVault, admin, admins, providers } = await beforeReserveVaultTest();
 
             const toBeProviders = [providers[0], providers[1], providers[2], providers[0]];
@@ -316,7 +313,7 @@ describe('1.8. ReserveVault', async () => {
             ).to.be.revertedWithCustomError(reserveVault, `AuthorizedAccount`);
         });
 
-        it('1.8.2.4. Authorize provider unsuccessfully when authorizing the same account twice on different txs', async () => {
+        it('1.8.2.4. Authorize providers unsuccessfully when authorizing the same account twice on different txs', async () => {
             const { deployer, reserveVault, admin, admins, providers } = await beforeReserveVaultTest();
 
             const tx1Providers = providers.slice(0, 2);
@@ -350,7 +347,7 @@ describe('1.8. ReserveVault', async () => {
             ).to.be.revertedWithCustomError(reserveVault, `AuthorizedAccount`);
         });
 
-        it('1.8.2.5. Deauthorize provider successfully', async () => {
+        it('1.8.2.5. Deauthorize providers successfully', async () => {
             const { deployer, reserveVault, admin, admins, providers } = await beforeReserveVaultTest({
                 authorizeProviders: true,
             });
@@ -384,7 +381,7 @@ describe('1.8. ReserveVault', async () => {
             }
         });
 
-        it('1.8.2.6. Deauthorize provider unsuccessfully with unauthorized account', async () => {
+        it('1.8.2.6. Deauthorize providers unsuccessfully with unauthorized account', async () => {
             const { deployer, reserveVault, admin, admins, providers } = await beforeReserveVaultTest({
                 authorizeProviders: true,
             });
@@ -406,7 +403,7 @@ describe('1.8. ReserveVault', async () => {
             ).to.be.revertedWithCustomError(reserveVault, `NotAuthorizedAccount`);
         });
 
-        it('1.8.2.7. Deauthorize provider unsuccessfully when unauthorizing the same account twice on the same tx', async () => {
+        it('1.8.2.7. Deauthorize providers unsuccessfully when unauthorizing the same account twice on the same tx', async () => {
             const { deployer, reserveVault, admin, admins, providers } = await beforeReserveVaultTest({
                 authorizeProviders: true,
             });
@@ -427,7 +424,7 @@ describe('1.8. ReserveVault', async () => {
             ).to.be.revertedWithCustomError(reserveVault, `NotAuthorizedAccount`);
         });
 
-        it('1.8.2.8. Deauthorize provider unsuccessfully when unauthorizing the same account twice on different txs', async () => {
+        it('1.8.2.8. Deauthorize providers unsuccessfully when unauthorizing the same account twice on different txs', async () => {
             const { deployer, reserveVault, admin, admins, providers } = await beforeReserveVaultTest({
                 authorizeProviders: true,
             });
@@ -1139,7 +1136,7 @@ describe('1.8. ReserveVault', async () => {
         });
 
         it('1.8.7.10. Provide fund unsuccessfully when the contract is reentered', async () => {
-            const { deployer, reserveVault, providers, reentrancyERC20 } = await beforeReserveVaultTest({
+            const { reserveVault, providers, reentrancyERC20 } = await beforeReserveVaultTest({
                 authorizeProviders: true,
                 listFunds: true,
                 expandFunds: true,
@@ -1316,7 +1313,7 @@ describe('1.8. ReserveVault', async () => {
             ).to.be.revertedWithCustomError(reserveVault, 'InsufficientFunds');
         });
 
-        it('1.8.8.6. Withdraw fund unsuccessfully when withdraw quantity exceed fund quantity', async () => {
+        it('1.8.8.6. Withdraw fund unsuccessfully when withdrawing quantity exceed fund quantity', async () => {
             const { reserveVault, providers, withdrawer1 } = await beforeReserveVaultTest({
                 authorizeProviders: true,
                 listFunds: true,

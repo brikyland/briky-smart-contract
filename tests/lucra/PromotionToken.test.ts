@@ -9,10 +9,10 @@ import { loadFixture, time } from '@nomicfoundation/hardhat-network-helpers';
 import { Constant } from '@tests/test.constant';
 import {
     IERC165UpgradeableInterfaceId,
-    IERC2981UpgradeableInterfaceId,
-    IERC4906UpgradeableInterfaceId,
     IERC721MetadataUpgradeableInterfaceId,
     IERC721UpgradeableInterfaceId,
+    IERC2981UpgradeableInterfaceId,
+    IERC4906UpgradeableInterfaceId,
     IRoyaltyRateProposerInterfaceId,
 } from '@tests/interfaces';
 
@@ -284,7 +284,7 @@ describe('5.2. PromotionToken', async () => {
             expect(royaltyRate.decimals).to.equal(Constant.COMMON_RATE_DECIMALS);
         });
 
-        it('5.2.3.2. UpdateRoyaltyRate unsuccessfully with invalid signatures', async () => {
+        it('5.2.3.2. Update royalty rate unsuccessfully with invalid signatures', async () => {
             const { deployer, promotionToken, admin, admins } = await beforePromotionTokenTest();
 
             const paramsInput: UpdateRoyaltyRateParamsInput = {
@@ -299,7 +299,7 @@ describe('5.2. PromotionToken', async () => {
             ).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('5.2.3.3. UpdateRoyaltyRate unsuccessfully with invalid rate', async () => {
+        it('5.2.3.3. Update royalty rate unsuccessfully with invalid rate', async () => {
             const { deployer, promotionToken, admin, admins } = await beforePromotionTokenTest();
 
             await expect(
@@ -506,7 +506,7 @@ describe('5.2. PromotionToken', async () => {
             ).to.be.revertedWith('ERC20: transfer amount exceeds balance');
         });
 
-        it('5.2.4.7. Withdraw unsuccessfully when native token receiving failed', async () => {
+        it('5.2.4.7. Withdraw unsuccessfully when transferring native token to withdrawer failed', async () => {
             const { deployer, admins, admin, promotionToken } = await beforePromotionTokenTest();
 
             const failReceiver = await deployFailReceiver(deployer, true, false);
@@ -834,8 +834,6 @@ describe('5.2. PromotionToken', async () => {
             const startAt2 = (await promotionToken.getContent(2)).startAt;
             const startAt3 = (await promotionToken.getContent(3)).startAt;
             const endAt1 = (await promotionToken.getContent(1)).endAt;
-            const endAt2 = (await promotionToken.getContent(2)).endAt;
-            const endAt3 = (await promotionToken.getContent(3)).endAt;
 
             const cancelAt = startAt1 + 50;
             // assuming startAt1 < cancelAt < endAt1 < startAt2 < startAt3 < endAt2 < endAt3

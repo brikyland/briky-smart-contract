@@ -95,7 +95,7 @@ import {
     getAssetMarketplaceTx_SafeBuy,
     getAssetMarketplaceTxByParams_SafeBuy,
     getAssetMarketplaceTxByParams_SafeBuyPart,
-    getAssetMarketplaceTx_Cancel,
+    getAssetMarketplaceTx_Cancel, getAssetMarketplaceTx_SafeBuyPart,
 } from '@utils/transaction/lux/assetMarketplace';
 
 interface ProjectMarketplaceFixture {
@@ -287,7 +287,6 @@ describe('6.4. ProjectMarketplace', async () => {
             admin,
             admins,
             currency,
-            estateToken,
             prestigePad,
             projectToken,
             projectMarketplace,
@@ -295,12 +294,10 @@ describe('6.4. ProjectMarketplace', async () => {
             seller2,
             buyer1,
             buyer2,
-            commissionReceiver,
             manager,
             moderator,
             initiator1,
             initiator2,
-            validator,
             zone1,
             zone2,
             failReceiver,
@@ -1443,7 +1440,7 @@ describe('6.4. ProjectMarketplace', async () => {
             ).to.be.revertedWithCustomError(projectMarketplace, 'InsufficientValue');
         });
 
-        it('6.4.5.12. Buy token unsuccessfully when native token transfer to seller failed', async () => {
+        it('6.4.5.12. Buy token unsuccessfully when transferring native token to seller failed', async () => {
             const fixture = await beforeProjectMarketplaceTest();
             const { projectMarketplace, seller1, buyer1, projectToken, failReceiver } = fixture;
 
@@ -1492,7 +1489,7 @@ describe('6.4. ProjectMarketplace', async () => {
             ).to.be.revertedWithCustomError(projectMarketplace, 'FailedTransfer');
         });
 
-        it('6.4.5.13. Buy token unsuccessfully when native token transfer to royalty receiver failed', async () => {
+        it('6.4.5.13. Buy token unsuccessfully when transferring native token to royalty receiver failed', async () => {
             const fixture = await beforeProjectMarketplaceTest({
                 listSampleOffers: true,
                 useFailRoyaltyReceiver: true,
@@ -1514,7 +1511,7 @@ describe('6.4. ProjectMarketplace', async () => {
             ).to.be.revertedWithCustomError(projectMarketplace, 'FailedTransfer');
         });
 
-        it('6.4.5.14. Buy token unsuccessfully when refund to sender failed', async () => {
+        it('6.4.5.14. Buy token unsuccessfully when refunding to sender failed', async () => {
             const fixture = await beforeProjectMarketplaceTest({
                 listSampleOffers: true,
             });
@@ -1645,7 +1642,7 @@ describe('6.4. ProjectMarketplace', async () => {
             ).to.be.revertedWithCustomError(projectMarketplace, 'Unauthorized');
         });
 
-        it('6.4.6.5. Cancel offer unsuccessfully when offer is already cancelled', async () => {
+        it('6.4.6.5. Cancel offer unsuccessfully when offer has already been cancelled', async () => {
             const fixture = await beforeProjectMarketplaceTest({
                 listSampleOffers: true,
             });
@@ -1703,7 +1700,7 @@ describe('6.4. ProjectMarketplace', async () => {
                         seller1,
                         [{ buyer: buyer1, amount: null }],
                         true,
-                        false
+                        true
                     );
                 }
             }
@@ -1816,11 +1813,12 @@ describe('6.4. ProjectMarketplace', async () => {
             const { projectMarketplace, buyer1 } = fixture;
 
             await expect(
-                getAssetMarketplaceTx_SafeBuy(
+                getAssetMarketplaceTx_SafeBuyPart(
                     projectMarketplace,
                     buyer1,
                     {
                         offerId: BigNumber.from(0),
+                        amount: BigNumber.from(100_000),
                         anchor: ethers.constants.HashZero,
                     },
                     { value: 1e9 }
@@ -1828,11 +1826,12 @@ describe('6.4. ProjectMarketplace', async () => {
             ).to.be.revertedWithCustomError(projectMarketplace, 'InvalidOfferId');
 
             await expect(
-                getAssetMarketplaceTx_SafeBuy(
+                getAssetMarketplaceTx_SafeBuyPart(
                     projectMarketplace,
                     buyer1,
                     {
                         offerId: BigNumber.from(3),
+                        amount: BigNumber.from(100_000),
                         anchor: ethers.constants.HashZero,
                     },
                     { value: 1e9 }
@@ -1847,11 +1846,12 @@ describe('6.4. ProjectMarketplace', async () => {
             const { projectMarketplace, buyer1, buyer2 } = fixture;
 
             await expect(
-                getAssetMarketplaceTx_SafeBuy(
+                getAssetMarketplaceTx_SafeBuyPart(
                     projectMarketplace,
                     buyer1,
                     {
                         offerId: BigNumber.from(1),
+                        amount: BigNumber.from(100_000),
                         anchor: ethers.constants.HashZero,
                     },
                     { value: 1e9 }
@@ -1859,11 +1859,12 @@ describe('6.4. ProjectMarketplace', async () => {
             ).to.be.revertedWithCustomError(projectMarketplace, 'BadAnchor');
 
             await expect(
-                getAssetMarketplaceTx_SafeBuy(
+                getAssetMarketplaceTx_SafeBuyPart(
                     projectMarketplace,
                     buyer2,
                     {
                         offerId: BigNumber.from(2),
+                        amount: BigNumber.from(100_000),
                         anchor: ethers.constants.HashZero,
                     },
                     { value: 1e9 }

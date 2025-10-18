@@ -271,7 +271,7 @@ export async function getGovernanceHubTxByInput_SafeContributeBudget(
 }
 
 // withdrawBudgetContribution
-export async function getGovernancHubTx_WithdrawBudgetContribution(
+export async function getGovernanceHubTx_WithdrawBudgetContribution(
     governanceHub: GovernanceHub,
     signer: SignerWithAddress,
     params: WithdrawBudgetContributionParams,

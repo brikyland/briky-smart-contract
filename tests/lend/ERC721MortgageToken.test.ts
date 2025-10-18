@@ -1,31 +1,31 @@
-import { expect } from 'chai';
-import { BigNumber, Contract } from 'ethers';
-import { ethers, upgrades } from 'hardhat';
+import {expect} from 'chai';
+import {BigNumber, Contract} from 'ethers';
+import {ethers, upgrades} from 'hardhat';
 
 // @defi-wonderland/smock
-import { MockContract, smock } from '@defi-wonderland/smock';
+import {MockContract, smock} from '@defi-wonderland/smock';
 
 // @nomicfoundation/hardhat-network-helpers
-import { loadFixture, time } from '@nomicfoundation/hardhat-network-helpers';
+import {loadFixture, time} from '@nomicfoundation/hardhat-network-helpers';
 
 // @tests
-import { Constant } from '@tests/test.constant';
+import {Constant} from '@tests/test.constant';
 import {
     IERC165UpgradeableInterfaceId,
     IERC721MetadataUpgradeableInterfaceId,
-    IMortgageTokenInterfaceId,
     IERC2981UpgradeableInterfaceId,
+    IMortgageTokenInterfaceId,
 } from '@tests/interfaces';
 
 // @tests/lend
-import { Initialization as LendInitialization } from '@tests/lend/test.initialization';
+import {Initialization as LendInitialization} from '@tests/lend/test.initialization';
 
 // @typechain-types
 import {
     Admin,
     Currency,
-    FeeReceiver,
     ERC721MortgageToken,
+    FeeReceiver,
     RoyaltyCollection,
     RoyaltyCollection__factory,
 } from '@typechain-types';
@@ -41,21 +41,21 @@ import {
     resetNativeToken,
     testReentrancy,
 } from '@utils/blockchain';
-import { applyDiscount, scaleRate } from '@utils/formula';
-import { getBytes4Hex, randomBigNumber, structToObject } from '@utils/utils';
+import {applyDiscount, scaleRate} from '@utils/formula';
+import {getBytes4Hex, randomBigNumber, structToObject} from '@utils/utils';
 
 // @utils/deployments/common
-import { deployAdmin } from '@utils/deployments/common/admin';
-import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
-import { deployCurrency } from '@utils/deployments/common/currency';
+import {deployAdmin} from '@utils/deployments/common/admin';
+import {deployFeeReceiver} from '@utils/deployments/common/feeReceiver';
+import {deployCurrency} from '@utils/deployments/common/currency';
 
 // @utils/deployments/lend
-import { deployERC721MortgageToken } from '@utils/deployments/lend/erc721MortgageToken';
+import {deployERC721MortgageToken} from '@utils/deployments/lend/erc721MortgageToken';
 
 // @utils/deployments/mock
-import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
-import { deployReentrancyERC1155Holder } from '@utils/deployments/mock/mockReentrancy/reentrancyERC1155Holder';
-import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
+import {deployFailReceiver} from '@utils/deployments/mock/failReceiver';
+import {deployReentrancyERC1155Holder} from '@utils/deployments/mock/mockReentrancy/reentrancyERC1155Holder';
+import {deployReentrancy} from '@utils/deployments/mock/mockReentrancy/reentrancy';
 
 // @utils/models/lend
 import {
@@ -74,10 +74,10 @@ import {
 } from '@utils/models/lend/erc721MortgageToken';
 
 // @utils/signatures/lend
-import { getRegisterCollateralsSignatures } from '@utils/signatures/lend/erc721MortgageToken';
+import {getRegisterCollateralsSignatures} from '@utils/signatures/lend/erc721MortgageToken';
 
 // @utils/signatures/lend
-import { getUpdateBaseURISignatures, getUpdateFeeRateSignatures } from '@utils/signatures/lend/mortgageToken';
+import {getUpdateBaseURISignatures, getUpdateFeeRateSignatures} from '@utils/signatures/lend/mortgageToken';
 
 // @utils/transaction/lend
 import {
@@ -93,13 +93,13 @@ import {
     getMortgageTokenTx_Lend,
     getMortgageTokenTx_Repay,
     getMortgageTokenTx_SafeLend,
-    getMortgageTokenTxByParams_SafeLend,
     getMortgageTokenTx_SafeRepay,
-    getMortgageTokenTxByParams_SafeRepay,
     getMortgageTokenTx_UpdateBaseURI,
-    getMortgageTokenTxByInput_UpdateBaseURI,
     getMortgageTokenTx_UpdateFeeRate,
+    getMortgageTokenTxByInput_UpdateBaseURI,
     getMortgageTokenTxByInput_UpdateFeeRate,
+    getMortgageTokenTxByParams_SafeLend,
+    getMortgageTokenTxByParams_SafeRepay,
 } from '@utils/transaction/lend/mortgageToken';
 
 // @utils/transaction/common
@@ -108,7 +108,7 @@ import {
     getAdminTxByInput_AuthorizeModerators,
     getAdminTxByInput_UpdateCurrencyRegistries,
 } from '@utils/transaction/common/admin';
-import { getPausableTxByInput_Pause } from '@utils/transaction/common/pausable';
+import {getPausableTxByInput_Pause} from '@utils/transaction/common/pausable';
 
 async function testReentrancy_erc721MortgageToken(
     erc721MortgageToken: ERC721MortgageToken,
@@ -270,13 +270,10 @@ describe('3.1. ERC721MortgageToken', async () => {
             lender2,
             manager,
             moderator,
-            royaltyReceiver,
-            user,
             admin,
             currency,
             feeReceiverCollection,
             otherCollection,
-            collaterals,
             erc721MortgageToken,
         } = fixture;
 
@@ -648,14 +645,12 @@ describe('3.1. ERC721MortgageToken', async () => {
         it('3.1.4.4. Register collaterals reverted when contract does not support ProjectLaunchpad interface', async () => {
             const { deployer, erc721MortgageToken, admin, admins } = await beforeERC721MortgageTokenTest();
 
-            const invalidCollateral = erc721MortgageToken;
-
             await expect(
                 getERC721MortgageTokenTxByInput_RegisterCollaterals(
                     erc721MortgageToken as any,
                     deployer,
                     {
-                        tokens: [invalidCollateral.address],
+                        tokens: [erc721MortgageToken.address],
                         isCollateral: true,
                     },
                     admin,
@@ -1503,7 +1498,7 @@ describe('3.1. ERC721MortgageToken', async () => {
             }
 
             const due = 1000;
-            let receipt = await callTransaction(
+            await callTransaction(
                 getERC721MortgageTokenTx_Borrow(erc721MortgageToken, borrower, {
                     token: collection.address,
                     tokenId: currentTokenId,
@@ -1553,7 +1548,7 @@ describe('3.1. ERC721MortgageToken', async () => {
                     { value: ethValue }
                 );
             }
-            receipt = await tx.wait();
+            const receipt = await tx.wait();
 
             let expectedBorrowerBalance = initBorrowerBalance.add(principal).sub(fee);
             let expectedLenderBalance = initLenderBalance.sub(principal);
@@ -1653,7 +1648,6 @@ describe('3.1. ERC721MortgageToken', async () => {
                     if (isExclusive && !isERC20) {
                         continue;
                     }
-                    const amount = ethers.BigNumber.from(2).pow(255);
                     const principal = ethers.BigNumber.from(2).pow(255);
                     const repayment = principal.add(1);
                     await testLend(
@@ -1772,7 +1766,7 @@ describe('3.1. ERC721MortgageToken', async () => {
             const fixture = await beforeERC721MortgageTokenTest({
                 listSampleMortgage: true,
             });
-            const { erc721MortgageToken, borrower1, lender1, lender2 } = fixture;
+            const { erc721MortgageToken, lender1, lender2 } = fixture;
 
             await callTransaction(
                 getMortgageTokenTx_Lend(erc721MortgageToken, lender1, { mortgageId: BigNumber.from(1) }, { value: 1e9 })
@@ -1870,7 +1864,7 @@ describe('3.1. ERC721MortgageToken', async () => {
             ).to.be.revertedWithCustomError(erc721MortgageToken, 'InsufficientValue');
         });
 
-        it('3.1.11.13. Lend unsuccessfully when native token transfer to borrower failed', async () => {
+        it('3.1.11.13. Lend unsuccessfully when transferring native token to borrower failed', async () => {
             const fixture = await beforeERC721MortgageTokenTest({
                 skipListSampleCollectionTokens: true,
             });
@@ -1904,7 +1898,7 @@ describe('3.1. ERC721MortgageToken', async () => {
             ).to.be.revertedWithCustomError(erc721MortgageToken, 'FailedTransfer');
         });
 
-        it('3.1.11.14. Buy token unsuccessfully when refund to lender failed', async () => {
+        it('3.1.11.14. Buy token unsuccessfully when refunding to lender failed', async () => {
             const fixture = await beforeERC721MortgageTokenTest({
                 listSampleMortgage: true,
             });
@@ -1920,7 +1914,7 @@ describe('3.1. ERC721MortgageToken', async () => {
             ).to.be.revertedWithCustomError(erc721MortgageToken, 'FailedRefund');
         });
 
-        it('3.1.11.15. Buy token unsuccessfully when borrower reenter this function', async () => {
+        it('3.1.11.15. Buy token unsuccessfully when the contract is reentered', async () => {
             const fixture = await beforeERC721MortgageTokenTest({
                 skipListSampleCollectionTokens: true,
             });
@@ -2076,7 +2070,6 @@ describe('3.1. ERC721MortgageToken', async () => {
             let currentTimestamp = (await time.latest()) + 10;
             await time.setNextBlockTimestamp(currentTimestamp);
 
-            let due = (await erc721MortgageToken.getMortgage(1)).due;
             let lender1NativeBalance = await ethers.provider.getBalance(lender1.address);
             let borrower1NativeBalance = await ethers.provider.getBalance(borrower1.address);
             let currentTotalSupply = await erc721MortgageToken.totalSupply();
@@ -2110,7 +2103,6 @@ describe('3.1. ERC721MortgageToken', async () => {
                 erc721MortgageToken.connect(lender2).transferFrom(lender2.address, erc721MortgageTokenOwner.address, 2)
             );
 
-            due = (await erc721MortgageToken.getMortgage(2)).due;
             let borrower2CurrencyBalance = await currency.balanceOf(borrower2.address);
             let lender2CurrencyBalance = await currency.balanceOf(lender2.address);
             let erc721MortgageTokenOwnerBalance = await currency.balanceOf(erc721MortgageTokenOwner.address);
@@ -2353,7 +2345,7 @@ describe('3.1. ERC721MortgageToken', async () => {
             ).to.be.revertedWith('ERC20: transfer amount exceeds balance');
         });
 
-        it('3.1.13.10. Repay unsuccessfully native token transfer to lender failed', async () => {
+        it('3.1.13.10. Repay unsuccessfully transferring native token to lender failed', async () => {
             const fixture = await beforeERC721MortgageTokenTest({
                 listSampleMortgage: true,
             });
@@ -2584,7 +2576,7 @@ describe('3.1. ERC721MortgageToken', async () => {
                 listSampleMortgage: true,
                 listSampleLending: true,
             });
-            const { user, erc721MortgageToken, borrower1, borrower2 } = fixture;
+            const { user, erc721MortgageToken } = fixture;
 
             await expect(
                 getMortgageTokenTx_Foreclose(erc721MortgageToken, user, {

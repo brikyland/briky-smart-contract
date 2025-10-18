@@ -1,16 +1,16 @@
-import { ContractTransaction } from 'ethers';
+import {ContractTransaction} from 'ethers';
 
 // @nomiclabs/hardhat-ethers
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import {SignerWithAddress} from '@nomiclabs/hardhat-ethers/signers';
 
 // @typechain-types
-import { Admin, EstateForger, ProxyCaller } from '@typechain-types';
+import {Admin, EstateForger, ProxyCaller} from '@typechain-types';
 
 // @utils
-import { MockValidator } from '@utils/mockValidator';
+import {MockValidator} from '@utils/mockValidator';
 
 // @utils/anchor/land
-import { getSafeConfirmAnchor, getSafeDepositAnchor } from '@utils/anchor/land/estateForger';
+import {getSafeConfirmAnchor, getSafeDepositAnchor} from '@utils/anchor/land/estateForger';
 
 // @utils/models/land
 import {
@@ -40,7 +40,7 @@ import {
 } from '@utils/validation/land/estateForger';
 
 // @utils/signatures/land
-import { getUpdateBaseUnitPriceRangeSignatures, getWhitelistSignatures } from '@utils/signatures/land/estateForger';
+import {getUpdateBaseUnitPriceRangeSignatures, getWhitelistSignatures} from '@utils/signatures/land/estateForger';
 
 // updateBaseUnitPriceRange
 export async function getEstateForgerTx_UpdateBaseUnitPriceRange(
@@ -215,8 +215,7 @@ export async function getEstateForgerTx_SafeDeposit(
     params: SafeDepositParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    const tx = estateForger.connect(deployer).safeDeposit(params.requestId, params.quantity, params.anchor, txConfig);
-    return tx;
+    return estateForger.connect(deployer).safeDeposit(params.requestId, params.quantity, params.anchor, txConfig);
 }
 
 export async function getEstateForgerTxByParams_SafeDeposit(

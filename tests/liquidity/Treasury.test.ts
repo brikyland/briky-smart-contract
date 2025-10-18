@@ -100,7 +100,7 @@ describe('4.6. Treasury', async () => {
     async function setupBeforeTest({ skipPrepareLiquidity = false, pause = false } = {}): Promise<TreasuryFixture> {
         const fixture = await loadFixture(treasuryFixture);
 
-        const { deployer, treasury, admin, admins, currency, primaryToken } = fixture;
+        const { deployer, treasury, admin, admins, currency } = fixture;
 
         if (!skipPrepareLiquidity) {
             await prepareERC20(currency, [deployer], [treasury as any], ethers.utils.parseEther('1000000'));

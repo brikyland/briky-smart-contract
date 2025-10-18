@@ -1,13 +1,13 @@
-import { ContractTransaction } from 'ethers';
+import {ContractTransaction} from 'ethers';
 
 // @nomiclabs/hardhat-ethers
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import {SignerWithAddress} from '@nomiclabs/hardhat-ethers/signers';
 
 // @typechain-types
-import { Admin, EstateToken, ProxyCaller } from '@typechain-types';
+import {Admin, EstateToken, ProxyCaller} from '@typechain-types';
 
 // @utils
-import { MockValidator } from '@utils/mockValidator';
+import {MockValidator} from '@utils/mockValidator';
 
 // @utils/anchor/land
 import {
@@ -19,32 +19,32 @@ import {
 
 // @utils/models/land
 import {
-    RegisterCustodianParams,
-    TokenizeEstateParams,
-    SafeUpdateEstateURIParams,
-    SafeUpdateEstateCustodianParams,
-    SafeDeprecateEstateParams,
-    SafeExtendEstateExpirationParams,
-    UpdateEstateCustodianParams,
-    DeprecateEstateParams,
-    ExtendEstateExpirationParams,
-    RegisterCustodianParamsInput,
-    UpdateCommissionTokenParams,
-    UpdateCommissionTokenParamsInput,
-    UpdateBaseURIParams,
-    UpdateBaseURIParamsInput,
-    AuthorizeTokenizersParams,
-    AuthorizeTokenizersParamsInput,
     AuthorizeExtractorsParams,
     AuthorizeExtractorsParamsInput,
+    AuthorizeTokenizersParams,
+    AuthorizeTokenizersParamsInput,
+    DeprecateEstateParams,
+    ExtendEstateExpirationParams,
+    ExtractEstateParams,
+    RegisterCustodianParams,
+    RegisterCustodianParamsInput,
+    SafeDeprecateEstateParams,
+    SafeExtendEstateExpirationParams,
+    SafeUpdateEstateCustodianParams,
+    SafeUpdateEstateURIParams,
+    TokenizeEstateParams,
+    UpdateBaseURIParams,
+    UpdateBaseURIParamsInput,
+    UpdateCommissionTokenParams,
+    UpdateCommissionTokenParamsInput,
+    UpdateEstateCustodianParams,
+    UpdateEstateURIParamsInput,
     UpdateZoneRoyaltyRateParams,
     UpdateZoneRoyaltyRateParamsInput,
-    ExtractEstateParams,
-    UpdateEstateURIParamsInput,
 } from '@utils/models/land/estateToken';
 
 // @utils/validation/land
-import { getRegisterCustodianValidation, getUpdateEstateURIValidation } from '@utils/validation/land/estateToken';
+import {getRegisterCustodianValidation, getUpdateEstateURIValidation} from '@utils/validation/land/estateToken';
 
 // @utils/signatures/land
 import {
@@ -218,7 +218,7 @@ export async function getCallEstateTokenTx_TokenizeEstate(
     proxyCaller: any,
     params: TokenizeEstateParams
 ): Promise<ContractTransaction> {
-    const tx = proxyCaller.call(
+    return proxyCaller.call(
         estateToken.address,
         estateToken.interface.encodeFunctionData('tokenizeEstate', [
             params.totalSupply,
@@ -230,7 +230,6 @@ export async function getCallEstateTokenTx_TokenizeEstate(
             params.broker,
         ])
     );
-    return tx;
 }
 
 // extractEstate
@@ -254,8 +253,7 @@ export async function getEstateTokenTx_SafeDeprecateEstate(
     params: SafeDeprecateEstateParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    const tx = estateToken.connect(deployer).safeDeprecateEstate(params.estateId, params.note, params.anchor, txConfig);
-    return tx;
+    return estateToken.connect(deployer).safeDeprecateEstate(params.estateId, params.note, params.anchor, txConfig);
 }
 
 export async function getEstateTokenTxByParams_SafeDeprecateEstate(
@@ -278,10 +276,9 @@ export async function getEstateTokenTx_SafeExtendEstateExpiration(
     params: SafeExtendEstateExpirationParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    const tx = estateToken
+    return estateToken
         .connect(deployer)
         .safeExtendEstateExpiration(params.estateId, params.expireAt, params.anchor, txConfig);
-    return tx;
 }
 
 export async function getEstateTokenTxByParams_SafeExtendEstateExpiration(
@@ -304,10 +301,9 @@ export async function getEstateTokenTx_SafeUpdateEstateCustodian(
     params: SafeUpdateEstateCustodianParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    const tx = estateToken
+    return estateToken
         .connect(deployer)
         .safeUpdateEstateCustodian(params.estateId, params.custodian, params.anchor, txConfig);
-    return tx;
 }
 
 export async function getEstateTokenTxByParams_SafeUpdateEstateCustodian(
@@ -330,10 +326,9 @@ export async function getEstateTokenTx_SafeUpdateEstateURI(
     params: SafeUpdateEstateURIParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    const tx = estateToken
+    return estateToken
         .connect(deployer)
         .safeUpdateEstateURI(params.estateId, params.uri, params.validation, params.anchor, txConfig);
-    return tx;
 }
 
 export async function getEstateTokenTxByInput_SafeUpdateEstateURI(

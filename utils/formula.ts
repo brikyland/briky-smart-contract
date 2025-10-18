@@ -22,14 +22,6 @@ export function remain(value: ethers.BigNumber, rate: ethers.BigNumber): ethers.
     return value.sub(value.mul(rate).div(Constant.COMMON_RATE_MAX_FRACTION));
 }
 
-export function getCashbackBaseDenomination(
-    unitPrice: ethers.BigNumber,
-    commissionRate: ethers.BigNumber,
-    cashbackBaseRate: ethers.BigNumber
-): ethers.BigNumber {
-    return remain(unitPrice, commissionRate).mul(cashbackBaseRate).div(Constant.COMMON_RATE_MAX_FRACTION);
-}
-
 export function scale(
     value: ethers.BigNumber,
     rate_value: ethers.BigNumberish,
@@ -49,4 +41,12 @@ export async function applyDiscount(admin: Admin, feeAmount: BigNumber, currency
         return remain(feeAmount, exclusiveRate);
     }
     return feeAmount;
+}
+
+export async function getCashbackBaseDenomination(
+    feeDenomination: BigNumber,
+    commissionDenomination: BigNumber,
+    cashbackBaseRate: Rate
+) {
+    return scaleRate(feeDenomination.sub(commissionDenomination), cashbackBaseRate);
 }

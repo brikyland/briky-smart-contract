@@ -1134,7 +1134,7 @@ describe('1.2. Admin', async () => {
             );
         });
 
-        it('1.2.10.3. Authorize governors reverted without reason with EOA', async () => {
+        it('1.2.10.3. Authorize governors unsuccessfully with EOA', async () => {
             const fixture = await setupBeforeTest();
             const { deployer, admins, admin } = fixture;
 

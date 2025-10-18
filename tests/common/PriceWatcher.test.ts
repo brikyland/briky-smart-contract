@@ -598,7 +598,7 @@ describe('1.7. PriceWatcher', async () => {
             ).to.be.revertedWithCustomError(priceWatcher, 'StalePriceFeed');
         });
 
-        it('1.7.4.6. Revert when price feed return invalid data', async () => {
+        it('1.7.4.6. Revert when price feed returns invalid data', async () => {
             const fixture = await beforePriceWatcherTest({
                 listPriceFeeds: true,
             });

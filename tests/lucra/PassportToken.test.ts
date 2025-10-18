@@ -11,10 +11,10 @@ import { Admin, PassportToken, Currency } from '@typechain-types';
 // @tests
 import {
     IERC165UpgradeableInterfaceId,
-    IERC2981UpgradeableInterfaceId,
-    IERC4906UpgradeableInterfaceId,
     IERC721MetadataUpgradeableInterfaceId,
     IERC721UpgradeableInterfaceId,
+    IERC2981UpgradeableInterfaceId,
+    IERC4906UpgradeableInterfaceId,
     IRoyaltyRateProposerInterfaceId,
 } from '@tests/interfaces';
 import { Constant } from '@tests/test.constant';
@@ -338,7 +338,7 @@ describe('5.1. PassportToken', async () => {
             ).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('5.1.4.3. UpdateRoyaltyRate unsuccessfully with invalid rate', async () => {
+        it('5.1.4.3. Update royalty rate unsuccessfully with invalid rate', async () => {
             const { deployer, passportToken, admin, admins } = await beforePassportTokenTest();
 
             await expect(
@@ -526,7 +526,7 @@ describe('5.1. PassportToken', async () => {
             ).to.be.revertedWith('ERC20: transfer amount exceeds balance');
         });
 
-        it('5.1.5.7. Withdraw unsuccessfully when native token receiving failed', async () => {
+        it('5.1.5.7. Withdraw unsuccessfully when transferring native token to withdrawer failed', async () => {
             const { deployer, admins, admin, passportToken } = await beforePassportTokenTest();
 
             const failReceiver = await deployFailReceiver(deployer, true, false);
@@ -670,7 +670,7 @@ describe('5.1. PassportToken', async () => {
             );
         });
 
-        it('5.1.7.3. Mint unsuccessfully when already minted', async () => {
+        it('5.1.7.3. Mint unsuccessfully with already minted token', async () => {
             const { passportToken, minter1, minter2 } = await beforePassportTokenTest();
 
             const fee = await passportToken.fee();

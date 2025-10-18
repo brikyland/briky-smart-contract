@@ -7,12 +7,12 @@ import { loadFixture, time } from '@nomicfoundation/hardhat-network-helpers';
 
 // @tests
 import {
-    IERC2981UpgradeableInterfaceId,
-    IERC4906UpgradeableInterfaceId,
+    IERC165UpgradeableInterfaceId,
     IERC721UpgradeableInterfaceId,
     IERC721MetadataUpgradeableInterfaceId,
+    IERC2981UpgradeableInterfaceId,
+    IERC4906UpgradeableInterfaceId,
     IRoyaltyRateProposerInterfaceId,
-    IERC165UpgradeableInterfaceId,
 } from '@tests/interfaces';
 import { Constant } from '@tests/test.constant';
 
@@ -800,7 +800,7 @@ describe('2.1. CommissionToken', async () => {
             ).to.be.revertedWithCustomError(commissionToken, 'InvalidRate');
         });
 
-        it('2.1.10.7. Register broker unsuccessfully when broker is already registered', async () => {
+        it('2.1.10.7. Register broker unsuccessfully with already registered broker', async () => {
             const fixture = await beforeCommissionTokenTest({
                 registerSampleBrokers: true,
             });
@@ -1053,7 +1053,7 @@ describe('2.1. CommissionToken', async () => {
             );
         });
 
-        it('2.1.12.4. Mint unsuccessfully when already minted', async () => {
+        it('2.1.12.4. Mint unsuccessfully with already minted token', async () => {
             const fixture = await beforeCommissionTokenTest({
                 registerSampleBrokers: true,
             });
@@ -1098,7 +1098,7 @@ describe('2.1. CommissionToken', async () => {
             ).to.be.revertedWithCustomError(commissionToken, 'InvalidZone');
         });
 
-        it('2.1.12.6. Mint unsuccessfully when broker not registered', async () => {
+        it('2.1.12.6. Mint unsuccessfully when broker is not registered', async () => {
             const fixture = await beforeCommissionTokenTest();
 
             const { commissionToken, estateToken } = fixture;

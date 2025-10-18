@@ -59,15 +59,11 @@ import { deployMockEstateForger } from '@utils/deployments/mock/mockEstateForger
 import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
 
 // @utils/models/common
-import { Rate } from '@utils/models/common/common';
-
-// @utils/models/common
 import { ProposalState } from '@utils/models/common/governanceHub';
 import { ProposalRule } from '@utils/models/common/governanceHub';
 
 // @utils/models/land
 import { RequestExtractionParams, RequestExtractionParamsInput } from '@utils/models/land/estateLiquidator';
-import { DeprecateEstateParams } from '@utils/models/land/estateToken';
 
 // @utils/transaction/common
 import {
@@ -192,22 +188,6 @@ async function testReentrancy_estateLiquidator(
     );
 
     await assertion(timestamp);
-}
-
-export async function getCommissionDenomination(
-    commissionToken: CommissionToken,
-    feeDenomination: BigNumber,
-    estateId: BigNumber
-) {
-    return scaleRate(feeDenomination, await commissionToken.getCommissionRate(estateId));
-}
-
-export async function getCashbackBaseDenomination(
-    feeDenomination: BigNumber,
-    commissionDenomination: BigNumber,
-    cashbackBaseRate: Rate
-) {
-    return scaleRate(feeDenomination.sub(commissionDenomination), cashbackBaseRate);
 }
 
 describe('2.3. EstateLiquidator', async () => {
@@ -401,7 +381,6 @@ describe('2.3. EstateLiquidator', async () => {
             zone2,
             operator1,
             operator2,
-            operator3,
             broker1,
             broker2,
             manager,
@@ -2141,12 +2120,12 @@ describe('2.3. EstateLiquidator', async () => {
             governanceHub.getProposalState.reset();
         });
 
-        it('2.3.4.15. Conclude unsuccessfully when proposal is pending', async () => {
+        it('2.3.4.15. Conclude unsuccessfully with pending proposal', async () => {
             const fixture = await beforeEstateLiquidatorTest({
                 listSampleExtractionRequests: true,
             });
 
-            const { estateLiquidator, operator1, governanceHub } = fixture;
+            const { estateLiquidator, operator1 } = fixture;
 
             await expect(
                 getEstateLiquidatorTx_Conclude(estateLiquidator, operator1, {
@@ -2155,7 +2134,7 @@ describe('2.3. EstateLiquidator', async () => {
             ).to.be.revertedWithCustomError(estateLiquidator, 'InvalidConclusion');
         });
 
-        it('2.3.4.16. Conclude unsuccessfully when proposal is voting', async () => {
+        it('2.3.4.16. Conclude unsuccessfully with voting proposal', async () => {
             const fixture = await beforeEstateLiquidatorTest({
                 listSampleExtractionRequests: true,
             });
@@ -2173,7 +2152,7 @@ describe('2.3. EstateLiquidator', async () => {
             governanceHub.getProposalState.reset();
         });
 
-        it('2.3.4.17. Conclude unsuccessfully when proposal is executing', async () => {
+        it('2.3.4.17. Conclude unsuccessfully with executing proposal', async () => {
             const fixture = await beforeEstateLiquidatorTest({
                 listSampleExtractionRequests: true,
             });

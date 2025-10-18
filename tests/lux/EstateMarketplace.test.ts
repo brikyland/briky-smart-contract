@@ -1539,7 +1539,7 @@ describe('6.2. EstateMarketplace', async () => {
             ).to.be.revertedWithCustomError(estateMarketplace, 'InsufficientValue');
         });
 
-        it('6.2.5.12. Buy token unsuccessfully when native token transfer to seller failed', async () => {
+        it('6.2.5.12. Buy token unsuccessfully when transferring native token to seller failed', async () => {
             const fixture = await beforeEstateMarketplaceTest();
             const { estateMarketplace, seller1, buyer1, deployer, estateToken } = fixture;
 
@@ -1590,7 +1590,7 @@ describe('6.2. EstateMarketplace', async () => {
             ).to.be.revertedWithCustomError(estateMarketplace, 'FailedTransfer');
         });
 
-        it('6.2.5.13. Buy token unsuccessfully when native token transfer to royalty receiver failed', async () => {
+        it('6.2.5.13. Buy token unsuccessfully when transferring native token to royalty receiver failed', async () => {
             const fixture = await beforeEstateMarketplaceTest({
                 listSampleOffers: true,
                 useFailRoyaltyReceiver: true,
@@ -1614,7 +1614,7 @@ describe('6.2. EstateMarketplace', async () => {
             ).to.be.revertedWithCustomError(estateMarketplace, 'FailedTransfer');
         });
 
-        it('6.2.5.14. Buy token unsuccessfully when native token transfer to broker failed', async () => {
+        it('6.2.5.14. Buy token unsuccessfully when transferring native token to broker failed', async () => {
             const fixture = await beforeEstateMarketplaceTest();
             const { estateMarketplace, seller1, buyer1, deployer, estateToken, commissionToken, broker2 } = fixture;
 
@@ -1650,7 +1650,7 @@ describe('6.2. EstateMarketplace', async () => {
             ).to.be.revertedWithCustomError(estateMarketplace, 'FailedTransfer');
         });
 
-        it('6.2.5.15. Buy token unsuccessfully when refund to sender failed', async () => {
+        it('6.2.5.15. Buy token unsuccessfully when refunding to sender failed', async () => {
             const fixture = await beforeEstateMarketplaceTest({
                 listSampleOffers: true,
             });
@@ -1783,7 +1783,7 @@ describe('6.2. EstateMarketplace', async () => {
             ).to.be.revertedWithCustomError(estateMarketplace, 'Unauthorized');
         });
 
-        it('6.2.6.5. Cancel offer unsuccessfully when offer is already cancelled', async () => {
+        it('6.2.6.5. Cancel offer unsuccessfully with already cancelled offer', async () => {
             const fixture = await beforeEstateMarketplaceTest({
                 listSampleOffers: true,
             });
@@ -1842,7 +1842,7 @@ describe('6.2. EstateMarketplace', async () => {
                         seller1,
                         [{ buyer: buyer1, amount: null }],
                         true,
-                        false
+                        true
                     );
                 }
             }

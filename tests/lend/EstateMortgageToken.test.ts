@@ -12,12 +12,11 @@ import { MockContract, smock } from '@defi-wonderland/smock';
 import { Constant } from '@tests/test.constant';
 import {
     IERC165UpgradeableInterfaceId,
-    IEstateTokenReceiverInterfaceId,
     IERC721MetadataUpgradeableInterfaceId,
-    IMortgageTokenInterfaceId,
     IERC2981UpgradeableInterfaceId,
-    IERC1155MetadataURIUpgradeableInterfaceId,
     IAssetMortgageTokenInterfaceId,
+    IEstateTokenReceiverInterfaceId,
+    IMortgageTokenInterfaceId,
 } from '@tests/interfaces';
 
 // @tests/land
@@ -583,7 +582,7 @@ describe('3.2. EstateMortgageToken', async () => {
         });
 
         it('3.2.1.2. Deploy unsuccessfully with invalid fee rate', async () => {
-            const { deployer, admin, estateToken, feeReceiver, commissionToken } =
+            const { deployer, admin, estateToken, feeReceiver } =
                 await beforeEstateMortgageTokenTest();
 
             const EstateMortgageToken = await ethers.getContractFactory('EstateMortgageToken', deployer);
@@ -1075,7 +1074,7 @@ describe('3.2. EstateMortgageToken', async () => {
 
         it('3.2.8.7. Create mortgage unsuccessfully with invalid principal', async () => {
             const fixture = await beforeEstateMortgageTokenTest();
-            const { estateMortgageToken, estateToken, borrower1 } = fixture;
+            const { estateMortgageToken, borrower1 } = fixture;
             const { defaultParams } = await beforeBorrowTest(fixture);
 
             await expect(
@@ -1373,7 +1372,7 @@ describe('3.2. EstateMortgageToken', async () => {
 
             const due = 1000;
 
-            let receipt = await callTransaction(
+            await callTransaction(
                 getEstateMortgageTokenTx_Borrow(estateMortgageToken, borrower, {
                     estateId: currentMortgageId,
                     amount,
@@ -1415,7 +1414,7 @@ describe('3.2. EstateMortgageToken', async () => {
                 { mortgageId: currentMortgageId },
                 { value: ethValue }
             );
-            receipt = await tx.wait();
+            const receipt = await tx.wait();
 
             let expectedBorrowerBalance = initBorrowerBalance.add(principal).sub(fee);
             let expectedLenderBalance = initLenderBalance.sub(principal);
@@ -1671,7 +1670,7 @@ describe('3.2. EstateMortgageToken', async () => {
             const fixture = await beforeEstateMortgageTokenTest({
                 listSampleMortgage: true,
             });
-            const { estateMortgageToken, borrower1, lender1, lender2 } = fixture;
+            const { estateMortgageToken, lender1, lender2 } = fixture;
 
             await callTransaction(
                 getMortgageTokenTx_Lend(estateMortgageToken, lender1, { mortgageId: BigNumber.from(1) }, { value: 1e9 })
@@ -1769,7 +1768,7 @@ describe('3.2. EstateMortgageToken', async () => {
             ).to.be.revertedWithCustomError(estateMortgageToken, 'InsufficientValue');
         });
 
-        it('3.2.10.13. Lend unsuccessfully when native token transfer to borrower failed', async () => {
+        it('3.2.10.13. Lend unsuccessfully when transferring native token to borrower failed', async () => {
             const fixture = await beforeEstateMortgageTokenTest();
             const { estateMortgageToken, lender1, deployer, estateToken } = fixture;
 
@@ -1798,7 +1797,7 @@ describe('3.2. EstateMortgageToken', async () => {
             ).to.be.revertedWithCustomError(estateMortgageToken, 'FailedTransfer');
         });
 
-        it('3.2.10.14. Lend unsuccessfully when native token transfer to commission receiver failed', async () => {
+        it('3.2.10.14. Lend unsuccessfully when transferring native token to commission receiver failed', async () => {
             const fixture = await beforeEstateMortgageTokenTest();
             const { estateMortgageToken, borrower2, lender1, deployer, estateToken, commissionToken, broker2 } =
                 fixture;
@@ -1826,7 +1825,7 @@ describe('3.2. EstateMortgageToken', async () => {
             ).to.be.revertedWithCustomError(estateMortgageToken, 'FailedTransfer');
         });
 
-        it('3.2.10.15. Buy token unsuccessfully when refund to lender failed', async () => {
+        it('3.2.10.15. Buy token unsuccessfully when refunding to lender failed', async () => {
             const fixture = await beforeEstateMortgageTokenTest({
                 listSampleMortgage: true,
             });
@@ -1842,7 +1841,7 @@ describe('3.2. EstateMortgageToken', async () => {
             ).to.be.revertedWithCustomError(estateMortgageToken, 'FailedRefund');
         });
 
-        it('3.2.10.16. Buy token unsuccessfully when borrower reenter this function', async () => {
+        it('3.2.10.16. Buy token unsuccessfully when the contract is reentered', async () => {
             const fixture = await beforeEstateMortgageTokenTest();
             const { estateMortgageToken, deployer, estateToken, lender1 } = fixture;
 
@@ -1995,7 +1994,6 @@ describe('3.2. EstateMortgageToken', async () => {
             let currentTimestamp = (await time.latest()) + 10;
             await time.setNextBlockTimestamp(currentTimestamp);
 
-            let due = (await estateMortgageToken.getMortgage(1)).due;
             let lender1NativeBalance = await ethers.provider.getBalance(lender1.address);
             let borrower1NativeBalance = await ethers.provider.getBalance(borrower1.address);
             let borrower1Balance = await estateToken.balanceOf(borrower1.address, 1);
@@ -2034,7 +2032,6 @@ describe('3.2. EstateMortgageToken', async () => {
                 estateMortgageToken.connect(lender2).transferFrom(lender2.address, estateMortgageTokenOwner.address, 2)
             );
 
-            due = (await estateMortgageToken.getMortgage(2)).due;
             let borrower2CurrencyBalance = await currency.balanceOf(borrower2.address);
             let lender2CurrencyBalance = await currency.balanceOf(lender2.address);
             let estateMortgageTokenOwnerBalance = await currency.balanceOf(estateMortgageTokenOwner.address);
@@ -2282,7 +2279,7 @@ describe('3.2. EstateMortgageToken', async () => {
             ).to.be.revertedWith('ERC20: transfer amount exceeds balance');
         });
 
-        it('3.2.12.10. Repay unsuccessfully native token transfer to lender failed', async () => {
+        it('3.2.12.10. Repay unsuccessfully transferring native token to lender failed', async () => {
             const fixture = await beforeEstateMortgageTokenTest({
                 listSampleMortgage: true,
             });

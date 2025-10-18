@@ -171,7 +171,7 @@ export async function getPrestigePadTx_UpdateRounds(
     params: UpdateRoundsParams,
     txConfig = {}
 ): Promise<ContractTransaction> {
-    return prestigePad.connect(deployer).updateRounds(params.launchId, params.removedRoundNumber, params.addedRounds);
+    return prestigePad.connect(deployer).updateRounds(params.launchId, params.removedRoundNumber, params.addedRounds, txConfig);
 }
 
 export async function getCallPrestigePadTx_UpdateRounds(

@@ -4,7 +4,7 @@ import { ContractTransaction } from 'ethers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 // @typechain-types
-import { Admin, ProjectToken, ProxyCaller } from '@typechain-types';
+import { Admin, ProjectToken } from '@typechain-types';
 
 // @utils
 import { MockValidator } from '@utils/mockValidator';
@@ -280,35 +280,4 @@ export async function getProjectTokenTxByParams_SafeTokenizeProject(
         anchor: await getSafeTokenizeProjectAnchor(projectToken, params),
     };
     return getProjectTokenTx_SafeTokenizeProject(projectToken, deployer, safeParams, txConfig);
-}
-
-export async function getCallProjectTokenTx_SafeTokenizeProject(
-    projectToken: ProjectToken,
-    caller: ProxyCaller,
-    params: SafeTokenizeProjectParams,
-    txConfig = {}
-): Promise<ContractTransaction> {
-    return caller.call(
-        projectToken.address,
-        projectToken.interface.encodeFunctionData('safeTokenizeProject', [
-            params.projectId,
-            params.custodian,
-            params.broker,
-            params.anchor,
-        ]),
-        txConfig
-    );
-}
-
-export async function getCallProjectTokenTxByParams_SafeTokenizeProject(
-    projectToken: ProjectToken,
-    caller: ProxyCaller,
-    params: TokenizeProjectParams,
-    txConfig = {}
-): Promise<ContractTransaction> {
-    const safeParams: SafeTokenizeProjectParams = {
-        ...params,
-        anchor: await getSafeTokenizeProjectAnchor(projectToken, params),
-    };
-    return getCallProjectTokenTx_SafeTokenizeProject(projectToken, caller, safeParams, txConfig);
 }

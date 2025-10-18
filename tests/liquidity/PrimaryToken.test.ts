@@ -222,6 +222,8 @@ describe('4.4. PrimaryToken', async () => {
         unlockForCoreTeam = false,
         unlockForMarketMaker = false,
         unlockForExternalTreasury = false,
+        transferPrimaryTokenToContributor = false,
+        provideLiquidityForTreasury = false,
         pause = false,
     } = {}): Promise<PrimaryTokenFixture> {
         const fixture = await loadFixture(primaryTokenFixture);
@@ -244,6 +246,22 @@ describe('4.4. PrimaryToken', async () => {
             [primaryToken as any],
             ethers.utils.parseEther('10000')
         );
+
+        if (transferPrimaryTokenToContributor) {
+            await primaryToken.mint(contributor.address, ethers.utils.parseEther('10000'));
+            await primaryToken.call(
+                primaryToken.address,
+                primaryToken.interface.encodeFunctionData('burn', [
+                    primaryToken.address,
+                    ethers.utils.parseEther('10000'),
+                ])
+            );
+        }
+
+        if (provideLiquidityForTreasury) {
+            await prepareERC20(currency, [deployer], [treasury as any], ethers.utils.parseEther('1000000'));
+            await treasury.provideLiquidity(ethers.utils.parseEther('1000000'));
+        }
 
         if (updateStakeTokens) {
             await callTransaction(
@@ -290,9 +308,6 @@ describe('4.4. PrimaryToken', async () => {
         }
 
         if (unlockForPrivateSale1) {
-            const paramsInput: UnlockForPrivateSale1ParamsInput = {
-                distributor: contributor.address,
-            };
             await callTransaction(
                 getPrimaryTokenTxByInput_UnlockForPrivateSale1(
                     primaryToken as any,
@@ -449,7 +464,7 @@ describe('4.4. PrimaryToken', async () => {
             ).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('4.4.2.3. Update treasury unsuccessfully when already updated', async () => {
+        it('4.4.2.3. Update treasury unsuccessfully when it has already been updated', async () => {
             const { deployer, admin, admins, primaryToken, treasury } = await setupBeforeTest({
                 updateTreasury: true,
             });
@@ -574,7 +589,7 @@ describe('4.4. PrimaryToken', async () => {
     });
 
     describe('4.4.4. unlockForBackerRound(address,bytes[])', async () => {
-        it('4.4.4.1. Unlock for backer round successfully', async () => {
+        it('4.4.4.1. Unlock token allocation for backer round successfully', async () => {
             const { primaryToken, deployer, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -597,7 +612,7 @@ describe('4.4. PrimaryToken', async () => {
             await expect(tx).to.emit(primaryToken, 'BackerRoundTokensUnlock');
         });
 
-        it('4.4.4.2. Unlock for backer round unsuccessfully with invalid signatures', async () => {
+        it('4.4.4.2. Unlock token allocation for backer round unsuccessfully with invalid signatures', async () => {
             const { primaryToken, deployer, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -620,7 +635,7 @@ describe('4.4. PrimaryToken', async () => {
             ).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('4.4.4.3. Unlock for backer round unsuccessfully when already unlocked', async () => {
+        it('4.4.4.3. Unlock token allocation for backer round unsuccessfully when it has already been unlocked', async () => {
             const { primaryToken, deployer, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
                 unlockForBackerRound: true,
@@ -641,7 +656,7 @@ describe('4.4. PrimaryToken', async () => {
     });
 
     describe('4.4.5. unlockForSeedRound(address,bytes[])', async () => {
-        it('4.4.5.1. Unlock for seed round successfully', async () => {
+        it('4.4.5.1. Unlock token allocation for seed round successfully', async () => {
             const { primaryToken, deployer, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -664,7 +679,7 @@ describe('4.4. PrimaryToken', async () => {
             await expect(tx).to.emit(primaryToken, 'SeedRoundTokensUnlock');
         });
 
-        it('4.4.5.2. Unlock for seed round unsuccessfully with invalid signatures', async () => {
+        it('4.4.5.2. Unlock token allocation for seed round unsuccessfully with invalid signatures', async () => {
             const { primaryToken, deployer, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -687,7 +702,7 @@ describe('4.4. PrimaryToken', async () => {
             ).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('4.4.5.3. Unlock for seed round unsuccessfully when already unlocked', async () => {
+        it('4.4.5.3. Unlock token allocation for seed round unsuccessfully when it has already been unlocked', async () => {
             const { primaryToken, deployer, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
                 unlockForSeedRound: true,
@@ -708,7 +723,7 @@ describe('4.4. PrimaryToken', async () => {
     });
 
     describe('4.4.6. unlockForPrivateSale1(address,bytes[])', async () => {
-        it('4.4.6.1. Unlock for private sale 1 successfully', async () => {
+        it('4.4.6.1. Unlock token allocation for private sale 1 successfully', async () => {
             const { primaryToken, deployer, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -731,7 +746,7 @@ describe('4.4. PrimaryToken', async () => {
             await expect(tx).to.emit(primaryToken, 'PrivateSale1TokensUnlock');
         });
 
-        it('4.4.6.2. Unlock for private sale 1 unsuccessfully with invalid signatures', async () => {
+        it('4.4.6.2. Unlock token allocation for private sale 1 unsuccessfully with invalid signatures', async () => {
             const { primaryToken, deployer, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -754,7 +769,7 @@ describe('4.4. PrimaryToken', async () => {
             ).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('4.4.6.3. Unlock for private sale 1 unsuccessfully when already unlocked', async () => {
+        it('4.4.6.3. Unlock token allocation for private sale 1 unsuccessfully when it has already been unlocked', async () => {
             const { primaryToken, deployer, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
                 unlockForPrivateSale1: true,
@@ -775,7 +790,7 @@ describe('4.4. PrimaryToken', async () => {
     });
 
     describe('4.4.7. unlockForPrivateSale2(address,bytes[])', async () => {
-        it('4.4.7.1. Unlock for private sale 2 successfully', async () => {
+        it('4.4.7.1. Unlock token allocation for private sale 2 successfully', async () => {
             const { primaryToken, deployer, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -798,7 +813,7 @@ describe('4.4. PrimaryToken', async () => {
             await expect(tx).to.emit(primaryToken, 'PrivateSale2TokensUnlock');
         });
 
-        it('4.4.7.2. Unlock for private sale 2 unsuccessfully with invalid signatures', async () => {
+        it('4.4.7.2. Unlock token allocation for private sale 2 unsuccessfully with invalid signatures', async () => {
             const { primaryToken, deployer, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -821,7 +836,7 @@ describe('4.4. PrimaryToken', async () => {
             ).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('4.4.7.3. Unlock for private sale 2 unsuccessfully when already unlocked', async () => {
+        it('4.4.7.3. Unlock token allocation for private sale 2 unsuccessfully when it has already been unlocked', async () => {
             const { primaryToken, deployer, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
                 unlockForPrivateSale2: true,
@@ -842,7 +857,7 @@ describe('4.4. PrimaryToken', async () => {
     });
 
     describe('4.4.8. unlockForPublicSale(address,bytes[])', async () => {
-        it('4.4.8.1. Unlock for public sale successfully', async () => {
+        it('4.4.8.1. Unlock token allocation for public sale successfully', async () => {
             const { primaryToken, deployer, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -865,7 +880,7 @@ describe('4.4. PrimaryToken', async () => {
             await expect(tx).to.emit(primaryToken, 'PublicSaleTokensUnlock');
         });
 
-        it('4.4.8.2. Unlock for public sale unsuccessfully with invalid signatures', async () => {
+        it('4.4.8.2. Unlock token allocation for public sale unsuccessfully with invalid signatures', async () => {
             const { primaryToken, deployer, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -888,7 +903,7 @@ describe('4.4. PrimaryToken', async () => {
             ).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('4.4.8.3. Unlock for public sale unsuccessfully when already unlocked', async () => {
+        it('4.4.8.3. Unlock token allocation for public sale unsuccessfully when it has already been unlocked', async () => {
             const { primaryToken, deployer, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
                 unlockForPublicSale: true,
@@ -909,7 +924,7 @@ describe('4.4. PrimaryToken', async () => {
     });
 
     describe('4.4.9. unlockForCoreTeam(address,bytes[])', async () => {
-        it('4.4.9.1. Unlock for core team successfully', async () => {
+        it('4.4.9.1. Unlock token allocation for core team successfully', async () => {
             const { primaryToken, deployer, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -932,7 +947,7 @@ describe('4.4. PrimaryToken', async () => {
             await expect(tx).to.emit(primaryToken, 'CoreTeamTokensUnlock');
         });
 
-        it('4.4.9.2. Unlock for core team unsuccessfully with invalid signatures', async () => {
+        it('4.4.9.2. Unlock token allocation for core team unsuccessfully with invalid signatures', async () => {
             const { primaryToken, deployer, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -955,7 +970,7 @@ describe('4.4. PrimaryToken', async () => {
             ).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('4.4.9.3. Unlock for core team unsuccessfully when already unlocked', async () => {
+        it('4.4.9.3. Unlock token allocation for core team unsuccessfully when it has already been unlocked', async () => {
             const { primaryToken, deployer, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
                 unlockForCoreTeam: true,
@@ -1022,7 +1037,7 @@ describe('4.4. PrimaryToken', async () => {
             ).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('4.4.10.3. Unlock for market maker unsuccessfully when already unlocked', async () => {
+        it('4.4.10.3. Unlock for market maker unsuccessfully when it has already been unlocked', async () => {
             const { primaryToken, deployer, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
                 unlockForMarketMaker: true,
@@ -1089,7 +1104,7 @@ describe('4.4. PrimaryToken', async () => {
             ).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('4.4.11.3. Unlock for external treasury unsuccessfully when already unlocked', async () => {
+        it('4.4.11.3. Unlock token allocation for external treasury unsuccessfully when it has already been unlocked', async () => {
             const { primaryToken, deployer, admins, admin, receiver } = await setupBeforeTest({
                 updateStakeTokens: true,
                 unlockForExternalTreasury: true,
@@ -1108,6 +1123,7 @@ describe('4.4. PrimaryToken', async () => {
             ).to.be.revertedWithCustomError(primaryToken, 'AlreadyUnlockedTokens');
         });
     });
+
 
     /* --- Query --- */
     describe('4.4.12. totalStake()', async () => {
@@ -1131,7 +1147,7 @@ describe('4.4. PrimaryToken', async () => {
     });
 
     describe('4.4.13. isStakeRewardingCulminated(address)', async () => {
-        it('4.4.13.1. Return corrent value', async () => {
+        it('4.4.13.1. Return correct value', async () => {
             const { primaryToken, stakeToken1, stakeToken2, stakeToken3 } = await setupBeforeTest({
                 updateStakeTokens: true,
             });
@@ -1140,17 +1156,17 @@ describe('4.4. PrimaryToken', async () => {
             expect(await primaryToken.isStakeRewardingCulminated(stakeToken2.address)).to.equal(false);
             expect(await primaryToken.isStakeRewardingCulminated(stakeToken3.address)).to.equal(false);
 
-            primaryToken.setVariable('stakeToken1Waves', Constant.PRIMARY_TOKEN_STAKE_1_CULMINATING_WAVE);
+            await primaryToken.setVariable('stakeToken1Waves', Constant.PRIMARY_TOKEN_STAKE_1_CULMINATING_WAVE);
             expect(await primaryToken.isStakeRewardingCulminated(stakeToken1.address)).to.equal(true);
             expect(await primaryToken.isStakeRewardingCulminated(stakeToken2.address)).to.equal(false);
             expect(await primaryToken.isStakeRewardingCulminated(stakeToken3.address)).to.equal(false);
 
-            primaryToken.setVariable('stakeToken2Waves', Constant.PRIMARY_TOKEN_STAKE_2_CULMINATING_WAVE);
+            await primaryToken.setVariable('stakeToken2Waves', Constant.PRIMARY_TOKEN_STAKE_2_CULMINATING_WAVE);
             expect(await primaryToken.isStakeRewardingCulminated(stakeToken1.address)).to.equal(true);
             expect(await primaryToken.isStakeRewardingCulminated(stakeToken2.address)).to.equal(true);
             expect(await primaryToken.isStakeRewardingCulminated(stakeToken3.address)).to.equal(false);
 
-            primaryToken.setVariable('stakeToken3Waves', Constant.PRIMARY_TOKEN_STAKE_3_CULMINATING_WAVE);
+            await primaryToken.setVariable('stakeToken3Waves', Constant.PRIMARY_TOKEN_STAKE_3_CULMINATING_WAVE);
             expect(await primaryToken.isStakeRewardingCulminated(stakeToken1.address)).to.equal(true);
             expect(await primaryToken.isStakeRewardingCulminated(stakeToken2.address)).to.equal(true);
             expect(await primaryToken.isStakeRewardingCulminated(stakeToken3.address)).to.equal(true);
@@ -1468,8 +1484,8 @@ describe('4.4. PrimaryToken', async () => {
             expect(treasury.provideLiquidity).to.be.calledWith(value);
         });
 
-        it('4.4.21.2. ContributeLiquidityFromStakeToken successfully from stake token 2', async () => {
-            const { primaryToken, contributor, currency, stakeToken2, treasury } = await setupBeforeTest({
+        it('4.4.21.2. Contribute liquidity from stake token 2 successfully', async () => {
+            const { primaryToken, currency, stakeToken2, treasury } = await setupBeforeTest({
                 updateStakeTokens: true,
                 updateTreasury: true,
             });
@@ -1495,7 +1511,7 @@ describe('4.4. PrimaryToken', async () => {
             expect(treasury.provideLiquidity).to.be.calledWith(value);
         });
 
-        it('4.4.21.3. ContributeLiquidityFromStakeToken successfully from stake token 3', async () => {
+        it('4.4.21.3. Contribute liquidity from stake token 3 successfully', async () => {
             const { primaryToken, currency, stakeToken3, treasury } = await setupBeforeTest({
                 updateStakeTokens: true,
                 updateTreasury: true,
@@ -1652,7 +1668,7 @@ describe('4.4. PrimaryToken', async () => {
         });
 
         it('4.4.22.6. Mint for stake token successfully by stake token 3 when total supply is nearly capped', async () => {
-            const { primaryToken, receiver, currency, stakeToken3 } = await setupBeforeTest({
+            const { primaryToken, receiver, stakeToken3 } = await setupBeforeTest({
                 updateStakeTokens: true,
                 updateTreasury: true,
             });
@@ -1703,22 +1719,12 @@ describe('4.4. PrimaryToken', async () => {
 
     describe('4.4.23. liquidate(uint256)', async () => {
         it('4.4.23.1. Liquidate successfully', async () => {
-            const { primaryToken, contributor, currency, treasury, deployer } = await setupBeforeTest({
+            const { primaryToken, contributor, currency, treasury } = await setupBeforeTest({
                 updateStakeTokens: true,
                 updateTreasury: true,
+                transferPrimaryTokenToContributor: true,
+                provideLiquidityForTreasury: true,
             });
-
-            await primaryToken.mint(contributor.address, ethers.utils.parseEther('10000'));
-            await primaryToken.call(
-                primaryToken.address,
-                primaryToken.interface.encodeFunctionData('burn', [
-                    primaryToken.address,
-                    ethers.utils.parseEther('10000'),
-                ])
-            );
-
-            await prepareERC20(currency, [deployer], [treasury as any], ethers.utils.parseEther('1000000'));
-            await treasury.provideLiquidity(ethers.utils.parseEther('1000000'));
 
             const supplyBefore = await primaryToken.totalSupply();
             const liquidityBefore = await treasury.liquidity();
@@ -1756,22 +1762,12 @@ describe('4.4. PrimaryToken', async () => {
         });
 
         it('4.4.23.2. Liquidate unsuccessfully when liquidation is not unlocked', async () => {
-            const { primaryToken, contributor, currency, treasury, deployer } = await setupBeforeTest({
+            const { primaryToken, contributor } = await setupBeforeTest({
                 updateStakeTokens: true,
                 updateTreasury: true,
+                transferPrimaryTokenToContributor: true,
+                provideLiquidityForTreasury: true,
             });
-
-            await primaryToken.mint(contributor.address, ethers.utils.parseEther('10000'));
-            await primaryToken.call(
-                primaryToken.address,
-                primaryToken.interface.encodeFunctionData('burn', [
-                    primaryToken.address,
-                    ethers.utils.parseEther('10000'),
-                ])
-            );
-
-            await prepareERC20(currency, [deployer], [treasury as any], ethers.utils.parseEther('1000000'));
-            await treasury.provideLiquidity(ethers.utils.parseEther('1000000'));
 
             await time.setNextBlockTimestamp((await primaryToken.liquidationUnlockedAt()).sub(1));
             await expect(
@@ -1782,22 +1778,12 @@ describe('4.4. PrimaryToken', async () => {
         });
 
         it('4.4.23.3. Liquidate unsuccessfully when the contract is paused', async () => {
-            const { primaryToken, contributor, currency, treasury, deployer, admins, admin } = await setupBeforeTest({
+            const { primaryToken, contributor, deployer, admins, admin } = await setupBeforeTest({
                 updateStakeTokens: true,
                 updateTreasury: true,
+                transferPrimaryTokenToContributor: true,
+                provideLiquidityForTreasury: true,
             });
-
-            await primaryToken.mint(contributor.address, ethers.utils.parseEther('10000'));
-            await primaryToken.call(
-                primaryToken.address,
-                primaryToken.interface.encodeFunctionData('burn', [
-                    primaryToken.address,
-                    ethers.utils.parseEther('10000'),
-                ])
-            );
-
-            await prepareERC20(currency, [deployer], [treasury as any], ethers.utils.parseEther('1000000'));
-            await treasury.provideLiquidity(ethers.utils.parseEther('1000000'));
 
             await callTransaction(getPausableTxByInput_Pause(primaryToken as any, deployer, admin, admins));
 
@@ -1810,22 +1796,12 @@ describe('4.4. PrimaryToken', async () => {
         });
 
         it('4.4.23.4. Liquidate unsuccessfully when the amount to liquidate is greater than the liquidity', async () => {
-            const { primaryToken, contributor, currency, treasury, deployer } = await setupBeforeTest({
+            const { primaryToken, contributor } = await setupBeforeTest({
                 updateStakeTokens: true,
                 updateTreasury: true,
+                transferPrimaryTokenToContributor: true,
+                provideLiquidityForTreasury: true,
             });
-
-            await primaryToken.mint(contributor.address, ethers.utils.parseEther('10000'));
-            await primaryToken.call(
-                primaryToken.address,
-                primaryToken.interface.encodeFunctionData('burn', [
-                    primaryToken.address,
-                    ethers.utils.parseEther('10000'),
-                ])
-            );
-
-            await prepareERC20(currency, [deployer], [treasury as any], ethers.utils.parseEther('1000000'));
-            await treasury.provideLiquidity(ethers.utils.parseEther('1000000'));
 
             const burnAmount = (await primaryToken.totalSupply()).add(ethers.utils.parseEther('1'));
             await time.setNextBlockTimestamp(await primaryToken.liquidationUnlockedAt());

@@ -209,7 +209,7 @@ describe('4.2. Distributor', async () => {
 
         it('4.2.2.3. Distribute tokens unsuccessfully with invalid inputs length', async () => {
             const fixture = await setupBeforeTest();
-            const { admin, admins, deployer, distributor, primaryToken, receiver1, receiver2, receiver3 } = fixture;
+            const { admin, admins, deployer, distributor, receiver1, receiver2, receiver3 } = fixture;
 
             async function testForInvalidInput(receivers: string[], amounts: BigNumberish[], note: string) {
                 const paramsInput: DistributeTokenParamsInput = {

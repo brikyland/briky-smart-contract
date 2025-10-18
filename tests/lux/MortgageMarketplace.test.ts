@@ -1,72 +1,72 @@
-import { expect } from 'chai';
-import { Contract, BigNumber } from 'ethers';
-import { ethers } from 'hardhat';
+import {expect} from 'chai';
+import {BigNumber, Contract} from 'ethers';
+import {ethers} from 'hardhat';
 
 // @defi-wonderland/smock
-import { smock } from '@defi-wonderland/smock';
+import {smock} from '@defi-wonderland/smock';
 
 // @nomicfoundation/hardhat-network-helpers
-import { loadFixture, time } from '@nomicfoundation/hardhat-network-helpers';
+import {loadFixture, time} from '@nomicfoundation/hardhat-network-helpers';
 
 // @tests
-import { Constant } from '@tests/test.constant';
+import {Constant} from '@tests/test.constant';
 
 // @tests/land
-import { Initialization as LandInitialization } from '@tests/land/test.initialization';
+import {Initialization as LandInitialization} from '@tests/land/test.initialization';
 
 // @tests/lend
-import { Initialization as LendInitialization } from '@tests/lend/test.initialization';
+import {Initialization as LendInitialization} from '@tests/lend/test.initialization';
 
 // @typechain-types
 import {
     Admin,
-    Currency,
-    FeeReceiver,
-    MortgageMarketplace,
-    MockMortgageToken,
     CommissionToken__factory,
-    EstateMortgageToken,
-    ProjectMortgageToken,
+    Currency,
     ERC721MortgageToken,
+    EstateMortgageToken,
+    FeeReceiver,
+    MockMortgageToken,
+    MortgageMarketplace,
+    ProjectMortgageToken,
     ProxyCaller,
 } from '@typechain-types';
 
 // @utils
-import { getBalance } from '@utils/blockchain';
 import {
     callTransaction,
     expectRevertWithModifierCustomError,
+    getBalance,
     prepareERC20,
     prepareNativeToken,
     randomWallet,
     resetERC20,
     resetNativeToken,
-    testReentrancy,
+    testReentrancy
 } from '@utils/blockchain';
-import { applyDiscount } from '@utils/formula';
-import { MockValidator } from '@utils/mockValidator';
+import {applyDiscount} from '@utils/formula';
+import {MockValidator} from '@utils/mockValidator';
 
 // @utils/deployments/common
-import { deployAdmin } from '@utils/deployments/common/admin';
-import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
-import { deployCurrency } from '@utils/deployments/common/currency';
+import {deployAdmin} from '@utils/deployments/common/admin';
+import {deployFeeReceiver} from '@utils/deployments/common/feeReceiver';
+import {deployCurrency} from '@utils/deployments/common/currency';
 
 // @utils/deployments/lend
-import { deployEstateMortgageToken } from '@utils/deployments/lend/estateMortgageToken';
+import {deployEstateMortgageToken} from '@utils/deployments/lend/estateMortgageToken';
 
 // @utils/deployments/lux
-import { deployMortgageMarketplace } from '@utils/deployments/lux/mortgageMarketplace';
+import {deployMortgageMarketplace} from '@utils/deployments/lux/mortgageMarketplace';
 
 // @utils/deployments/mock
-import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
-import { deployMockMortgageToken } from '@utils/deployments/mock/mockMortgageToken';
-import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
+import {deployFailReceiver} from '@utils/deployments/mock/failReceiver';
+import {deployMockMortgageToken} from '@utils/deployments/mock/mockMortgageToken';
+import {deployReentrancy} from '@utils/deployments/mock/mockReentrancy/reentrancy';
 
 // @utils/models/lux
-import { OfferState } from '@utils/models/lux/offerState';
+import {OfferState} from '@utils/models/lux/offerState';
 
 // @utils/models/lend
-import { MortgageState } from '@utils/models/lend/mortgageToken';
+import {MortgageState} from '@utils/models/lend/mortgageToken';
 import {
     BuyParams,
     ListParams,
@@ -75,14 +75,14 @@ import {
 } from '@utils/models/lux/erc721Marketplace';
 
 // @utils/transaction/land
-import { getEstateTokenTxByInput_UpdateCommissionToken } from '@utils/transaction/land/estateToken';
+import {getEstateTokenTxByInput_UpdateCommissionToken} from '@utils/transaction/land/estateToken';
 
 // @utils/deployments/lend
-import { deployERC721MortgageToken } from '@utils/deployments/lend/erc721MortgageToken';
-import { deployProjectMortgageToken } from '@utils/deployments/lend/projectMortgageToken';
+import {deployERC721MortgageToken} from '@utils/deployments/lend/erc721MortgageToken';
+import {deployProjectMortgageToken} from '@utils/deployments/lend/projectMortgageToken';
 
 // @utils/signatures/lux
-import { getRegisterCollectionsSignatures } from '@utils/signatures/lux/erc721Marketplace';
+import {getRegisterCollectionsSignatures} from '@utils/signatures/lux/erc721Marketplace';
 
 // @utils/transaction/common
 import {
@@ -90,20 +90,20 @@ import {
     getAdminTxByInput_AuthorizeModerators,
     getAdminTxByInput_UpdateCurrencyRegistries,
 } from '@utils/transaction/common/admin';
-import { getPausableTxByInput_Pause } from '@utils/transaction/common/pausable';
+import {getPausableTxByInput_Pause} from '@utils/transaction/common/pausable';
 
 // @utils/transaction/lend
-import { getMortgageTokenTx_Foreclose, getMortgageTokenTx_Repay } from '@utils/transaction/lend/mortgageToken';
+import {getMortgageTokenTx_Foreclose, getMortgageTokenTx_Repay} from '@utils/transaction/lend/mortgageToken';
 
 // @utils/transaction/lux
 import {
-    getERC721MarketplaceTx_Buy,
     getCallERC721MarketplaceTx_List,
+    getERC721MarketplaceTx_Buy,
+    getERC721MarketplaceTx_Cancel,
     getERC721MarketplaceTx_List,
     getERC721MarketplaceTx_RegisterCollections,
     getERC721MarketplaceTx_SafeBuy,
     getERC721MarketplaceTxByInput_RegisterCollections,
-    getERC721MarketplaceTx_Cancel,
     getERC721MarketplaceTxByParams_SafeBuy,
 } from '@utils/transaction/lux/erc721Marketplace';
 
@@ -530,7 +530,7 @@ describe('6.3. MortgageMarketplace', async () => {
             ).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
-        it('6.3.2.3. Register collections reverted without reason with EOA', async () => {
+        it('6.3.2.3. Register collections unsuccessfully with EOA', async () => {
             const { deployer, mortgageMarketplace, admin, admins } = await beforeMortgageMarketplaceTest({
                 skipRegisterCollection: true,
             });
@@ -556,14 +556,12 @@ describe('6.3. MortgageMarketplace', async () => {
                 skipRegisterCollection: true,
             });
 
-            const invalidCollection = mortgageMarketplace;
-
             await expect(
                 getERC721MarketplaceTxByInput_RegisterCollections(
                     mortgageMarketplace as any,
                     deployer,
                     {
-                        collections: [invalidCollection.address],
+                        collections: [mortgageMarketplace.address],
                         isCollection: true,
                     },
                     admin,
@@ -1050,7 +1048,7 @@ describe('6.3. MortgageMarketplace', async () => {
         price: BigNumber,
         isSafeBuy: boolean
     ) {
-        const { deployer, mortgageMarketplace, borrower1, seller1, buyer1, feeReceiver, admins, admin, manager } =
+        const { deployer, mortgageMarketplace, borrower1, seller1, buyer1, feeReceiver, admins, admin } =
             fixture;
 
         const mortgageToken = (await deployMockMortgageToken(
@@ -1063,7 +1061,6 @@ describe('6.3. MortgageMarketplace', async () => {
             LendInitialization.ERC721_MORTGAGE_TOKEN_FeeRate
         )) as MockMortgageToken;
 
-        const broker = randomWallet();
         const currentTokenId = (await mortgageToken.mortgageNumber()).add(1);
         const currentOfferId = (await mortgageMarketplace.offerNumber()).add(1);
 
@@ -1374,7 +1371,7 @@ describe('6.3. MortgageMarketplace', async () => {
             ).to.be.revertedWithCustomError(mortgageMarketplace, 'InsufficientValue');
         });
 
-        it('6.3.5.11. Buy token unsuccessfully when native token transfer to seller failed', async () => {
+        it('6.3.5.11. Buy token unsuccessfully when transferring native token to seller failed', async () => {
             const fixture = await beforeMortgageMarketplaceTest();
             const { mortgageMarketplace, seller1, buyer1, deployer, mortgageToken } = fixture;
 
@@ -1405,7 +1402,7 @@ describe('6.3. MortgageMarketplace', async () => {
             ).to.be.revertedWithCustomError(mortgageMarketplace, 'FailedTransfer');
         });
 
-        it('6.3.5.12. Buy token unsuccessfully when native token transfer to royalty receiver failed', async () => {
+        it('6.3.5.12. Buy token unsuccessfully when transferring native token to royalty receiver failed', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleOffers: true,
                 useFailRoyaltyReceiver: true,
@@ -1419,7 +1416,7 @@ describe('6.3. MortgageMarketplace', async () => {
             ).to.be.revertedWithCustomError(mortgageMarketplace, 'FailedTransfer');
         });
 
-        it('6.3.5.13. Buy token unsuccessfully when refund to sender failed', async () => {
+        it('6.3.5.13. Buy token unsuccessfully when refunding to sender failed', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleOffers: true,
             });
@@ -1547,7 +1544,7 @@ describe('6.3. MortgageMarketplace', async () => {
             ).to.be.revertedWithCustomError(mortgageMarketplace, 'Unauthorized');
         });
 
-        it('6.3.6.5. Cancel offer unsuccessfully when offer is already cancelled', async () => {
+        it('6.3.6.5. Cancel offer unsuccessfully with already cancelled offer', async () => {
             const fixture = await beforeMortgageMarketplaceTest({
                 listSampleOffers: true,
             });

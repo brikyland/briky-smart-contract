@@ -36,11 +36,6 @@ export function randomWallet(): ethers.Wallet {
     return Wallet.createRandom();
 }
 
-export async function isContract(provider: any, address: string) {
-    const code = await provider.getCode(address);
-    return code != '0x';
-}
-
 export async function prepareNativeToken(
     provider: JsonRpcProvider,
     signer: ethers.Wallet,
@@ -113,20 +108,13 @@ export async function getBalance(provider: JsonRpcProvider, address: string, cur
     return await provider.getBalance(address);
 }
 
-export function getAddress(wallet: ethers.Wallet | ethers.Contract | undefined) {
-    if (!wallet) {
-        return ethers.constants.AddressZero;
-    }
-    return wallet.address;
-}
-
 export async function testReentrancy(
     reentrancyContract: ethers.Contract,
     target: ethers.Contract,
     reentrancyData: string[],
     callback: any
 ) {
-    for (const [index, data] of reentrancyData.entries()) {
+    for (const data of reentrancyData) {
         await callTransaction(reentrancyContract.updateReentrancyPlan(target.address, data));
         await callback();
     }

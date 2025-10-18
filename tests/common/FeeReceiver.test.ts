@@ -241,10 +241,8 @@ describe('1.5. FeeReceiver', async () => {
                 ...paramsInput,
                 signatures: await getWithdrawSignatures(feeReceiver, paramsInput, admin, admins, false),
             };
-            const tx = await getFeeReceiverTx_Withdraw(feeReceiver, deployer, params);
-            await tx.wait();
 
-            await expect(tx).to.be.revertedWithCustomError(admin, 'FailedVerification');
+            await expect(getFeeReceiverTx_Withdraw(feeReceiver, deployer, params)).to.be.revertedWithCustomError(admin, 'FailedVerification');
         });
 
         it('1.5.2.5. Withdraw unsuccessfully with insufficient native tokens', async () => {
@@ -283,7 +281,7 @@ describe('1.5. FeeReceiver', async () => {
             ).to.be.revertedWith('ERC20: transfer amount exceeds balance');
         });
 
-        it('1.5.2.7. Withdraw unsuccessfully when native token receiving failed', async () => {
+        it('1.5.2.7. Withdraw unsuccessfully when transferring native token to withdrawer failed', async () => {
             const { deployer, admins, admin, feeReceiver } = await setupBeforeTest();
 
             const failReceiver = await deployFailReceiver(deployer, true, false);

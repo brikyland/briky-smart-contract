@@ -77,7 +77,7 @@ describe('1.b. Validatable', async () => {
 
     /* --- Initialization --- */
     describe('1.b.1. __Validatable_init(address)', async () => {
-        it('1.b.1.1. Init validator successfully after deploy', async () => {
+        it('1.b.1.1. Init validator successfully after deployment', async () => {
             const { validator, validatable } = await beforeValidatableTest();
 
             expect(await validatable.validator()).to.equal(validator.address);

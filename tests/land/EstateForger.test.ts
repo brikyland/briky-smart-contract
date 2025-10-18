@@ -1,38 +1,36 @@
-import chai from 'chai';
-import { expect } from 'chai';
-import { BigNumber, Contract } from 'ethers';
-import { ethers } from 'hardhat';
+import chai, {expect} from 'chai';
+import {BigNumber, Contract} from 'ethers';
+import {ethers} from 'hardhat';
 
 // @defi-wonderland/smock
-import { MockContract, smock } from '@defi-wonderland/smock';
+import {MockContract, smock} from '@defi-wonderland/smock';
 
 // @nomicfoundation/hardhat-network-helpers
-import { loadFixture, time } from '@nomicfoundation/hardhat-network-helpers';
+import {loadFixture, time} from '@nomicfoundation/hardhat-network-helpers';
 
 // @tests
 import {
-    IERC1155ReceiverUpgradeableInterfaceId,
     IERC165UpgradeableInterfaceId,
     IEstateTokenizerInterfaceId,
     IEstateTokenReceiverInterfaceId,
 } from '@tests/interfaces';
-import { Constant, DAY } from '@tests/test.constant';
+import {Constant, DAY} from '@tests/test.constant';
 
 // @tests/land
-import { Initialization as LandInitialization } from '@tests/land/test.initialization';
+import {Initialization as LandInitialization} from '@tests/land/test.initialization';
 
 // @typechain-types
 import {
     Admin,
     CommissionToken,
     Currency,
+    EstateForger,
     EstateToken,
     FeeReceiver,
-    EstateForger,
-    MockPriceFeed,
     MockEstateForger,
-    ReserveVault,
+    MockPriceFeed,
     PriceWatcher,
+    ReserveVault,
 } from '@typechain-types';
 
 // @utils
@@ -47,53 +45,45 @@ import {
     resetNativeToken,
     testReentrancy,
 } from '@utils/blockchain';
-import { scaleRate } from '@utils/formula';
-import { MockValidator } from '@utils/mockValidator';
-import { getBytes4Hex, randomBigNumber, structToObject, OrderedMap } from '@utils/utils';
+import {getCashbackBaseDenomination, scaleRate} from '@utils/formula';
+import {MockValidator} from '@utils/mockValidator';
+import {getBytes4Hex, OrderedMap, randomBigNumber, structToObject} from '@utils/utils';
 
 // @utils/deployments/common
-import { deployAdmin } from '@utils/deployments/common/admin';
-import { deployCurrency } from '@utils/deployments/common/currency';
-import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
-import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
+import {deployAdmin} from '@utils/deployments/common/admin';
+import {deployCurrency} from '@utils/deployments/common/currency';
+import {deployFeeReceiver} from '@utils/deployments/common/feeReceiver';
+import {deployPriceWatcher} from '@utils/deployments/common/priceWatcher';
 
 // @utils/deployments/mock
-import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
-import { deployMockEstateForger } from '@utils/deployments/mock/mockEstateForger';
-import { deployMockPriceFeed } from '@utils/deployments/mock/mockPriceFeed';
-import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
-import { deployReentrancyERC1155Holder } from '@utils/deployments/mock/mockReentrancy/reentrancyERC1155Holder';
-
-// @utils/models/common
-import { Rate } from '@utils/models/common/common';
+import {deployFailReceiver} from '@utils/deployments/mock/failReceiver';
+import {deployMockEstateForger} from '@utils/deployments/mock/mockEstateForger';
+import {deployMockPriceFeed} from '@utils/deployments/mock/mockPriceFeed';
+import {deployReentrancy} from '@utils/deployments/mock/mockReentrancy/reentrancy';
+import {deployReentrancyERC1155Holder} from '@utils/deployments/mock/mockReentrancy/reentrancyERC1155Holder';
 
 // @utils/models/land
 import {
-    RequestQuote,
+    ConfirmParams,
+    DepositParams,
     RequestAgenda,
     RequestEstate,
     RequestQuota,
-    SafeDepositParams,
-    DepositParams,
-    ConfirmParams,
-    RequestTokenizationParamsInput,
-    UpdateBaseUnitPriceRangeParamsInput,
-    UpdateBaseUnitPriceRangeParams,
-    WhitelistParamsInput,
-    WhitelistParams,
-    WhitelistForParams,
-    UpdateRequestEstateURIParamsInput,
-} from '@utils/models/land/estateForger';
-
-// @utils/models/land
-import {
+    RequestQuote,
     RequestTokenizationParams,
-    UpdateRequestEstateURIParams,
+    RequestTokenizationParamsInput,
+    UpdateBaseUnitPriceRangeParams,
+    UpdateBaseUnitPriceRangeParamsInput,
     UpdateRequestAgendaParams,
+    UpdateRequestEstateURIParams,
+    UpdateRequestEstateURIParamsInput,
+    WhitelistForParams,
+    WhitelistParams,
+    WhitelistParamsInput,
 } from '@utils/models/land/estateForger';
 
 // @utils/signatures/land
-import { getUpdateBaseUnitPriceRangeSignatures, getWhitelistSignatures } from '@utils/signatures/land/estateForger';
+import {getUpdateBaseUnitPriceRangeSignatures, getWhitelistSignatures} from '@utils/signatures/land/estateForger';
 
 // @utils/validation/land
 import {
@@ -111,21 +101,21 @@ import {
     getEstateForgerTx_Cancel,
     getEstateForgerTx_Deposit,
     getEstateForgerTx_RequestTokenization,
-    getEstateForgerTxByInput_RequestTokenization,
     getEstateForgerTx_SafeConfirm,
-    getEstateForgerTxByParams_SafeConfirm,
     getEstateForgerTx_SafeDeposit,
-    getEstateForgerTxByParams_SafeDeposit,
-    getEstateForgerTxByInput_UpdateBaseUnitPriceRange,
+    getEstateForgerTx_UpdateBaseUnitPriceRange,
     getEstateForgerTx_UpdateRequestAgenda,
     getEstateForgerTx_UpdateRequestEstateURI,
-    getEstateForgerTxByInput_UpdateRequestEstateURI,
+    getEstateForgerTx_Whitelist,
     getEstateForgerTx_WhitelistFor,
-    getEstateForgerTxByInput_Whitelist,
     getEstateForgerTx_WithdrawDeposit,
     getEstateForgerTx_WithdrawEstateToken,
-    getEstateForgerTx_UpdateBaseUnitPriceRange,
-    getEstateForgerTx_Whitelist,
+    getEstateForgerTxByInput_RequestTokenization,
+    getEstateForgerTxByInput_UpdateBaseUnitPriceRange,
+    getEstateForgerTxByInput_UpdateRequestEstateURI,
+    getEstateForgerTxByInput_Whitelist,
+    getEstateForgerTxByParams_SafeConfirm,
+    getEstateForgerTxByParams_SafeDeposit,
 } from '@utils/transaction/land/estateForger';
 import {
     getEstateTokenTxByInput_AuthorizeTokenizers,
@@ -141,13 +131,13 @@ import {
     getAdminTxByInput_DeclareZone,
     getAdminTxByInput_UpdateCurrencyRegistries,
 } from '@utils/transaction/common/admin';
-import { getReserveVaultTxByInput_AuthorizeProvider } from '@utils/transaction/common/reserveVault';
-import { getPausableTxByInput_Pause } from '@utils/transaction/common/pausable';
+import {getReserveVaultTxByInput_AuthorizeProvider} from '@utils/transaction/common/reserveVault';
+import {getPausableTxByInput_Pause} from '@utils/transaction/common/pausable';
 import {
     getPriceWatcherTxByInput_UpdateDefaultRates,
     getPriceWatcherTxByInput_UpdatePriceFeeds,
 } from '@utils/transaction/common/priceWatcher';
-import { deployGovernor } from '@utils/deployments/common/governor';
+import {deployGovernor} from '@utils/deployments/common/governor';
 
 chai.use(smock.matchers);
 
@@ -205,14 +195,6 @@ export async function getCommissionDenomination(
     broker: string
 ) {
     return scaleRate(feeDenomination, await commissionToken.getBrokerCommissionRate(zone, broker));
-}
-
-export async function getCashbackBaseDenomination(
-    feeDenomination: BigNumber,
-    commissionDenomination: BigNumber,
-    cashbackBaseRate: Rate
-) {
-    return scaleRate(feeDenomination.sub(commissionDenomination), cashbackBaseRate);
 }
 
 describe('2.2. EstateForger', async () => {
@@ -1319,7 +1301,7 @@ describe('2.2. EstateForger', async () => {
     });
 
     describe('2.2.8. onERC1155Received(address,address,uint256,uint256,bytes)', async () => {
-        it('2.2.8.1. Successfully receive ERC1155 tokens when receiving project token', async () => {
+        it('2.2.8.1. Successfully receive estate token', async () => {
             const fixture = await beforeEstateForgerTest({
                 addSampleRequests: true,
                 addDepositions: true,
@@ -1334,7 +1316,7 @@ describe('2.2. EstateForger', async () => {
             ).to.not.be.reverted;
         });
 
-        it('2.2.8.2. Revert when receiving ERC1155 tokens when receiving unknown ERC1155 token', async () => {
+        it('2.2.8.2. Revert when receiving unknown ERC1155 token', async () => {
             const fixture = await beforeEstateForgerTest();
             const { deployer, depositor1, estateForger, admin } = fixture;
 
@@ -1351,7 +1333,7 @@ describe('2.2. EstateForger', async () => {
     });
 
     describe('2.2.9. onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)', async () => {
-        it('2.2.9.1. Successfully receive ERC1155 tokens batch when receiving project token', async () => {
+        it('2.2.9.1. Successfully receive estate tokens batch', async () => {
             const fixture = await beforeEstateForgerTest({
                 addSampleRequests: true,
                 addDepositions: true,
@@ -1369,7 +1351,7 @@ describe('2.2. EstateForger', async () => {
             );
         });
 
-        it('2.2.9.2. Revert when receiving ERC1155 tokens batch from unknown ERC1155 token', async () => {
+        it('2.2.9.2. Revert when receiving unknown ERC1155 tokens batch', async () => {
             const fixture = await beforeEstateForgerTest();
             const { deployer, depositor1, admin, estateForger } = fixture;
 
@@ -1392,7 +1374,7 @@ describe('2.2. EstateForger', async () => {
             const { custodian1, zone1, currencies, broker1 } = fixture;
             let timestamp = (await time.latest()) + 1000;
 
-            const defaultParamsInput: RequestTokenizationParamsInput = {
+            return {
                 requester: custodian1.address,
                 estate: {
                     zone: zone1,
@@ -1420,8 +1402,6 @@ describe('2.2. EstateForger', async () => {
                     publicSaleDuration: 40 * DAY,
                 },
             };
-
-            return defaultParamsInput;
         }
 
         it('2.2.10.1. RequestTokenization successfully by manager', async () => {
@@ -2571,8 +2551,6 @@ describe('2.2. EstateForger', async () => {
 
     describe('2.2.13. updateRequestAgenda(uint256,(uint40,uint40,uint40))', async () => {
         async function getDefaultParams(fixture: EstateForgerFixture): Promise<UpdateRequestAgendaParams> {
-            const { estateForger } = fixture;
-            let saleStartsAt = (await estateForger.getRequest(1)).agenda.saleStartsAt;
             return {
                 requestId: BigNumber.from(1),
                 agenda: {
@@ -2737,7 +2715,7 @@ describe('2.2. EstateForger', async () => {
             ).to.be.revertedWithCustomError(estateForger, 'AlreadyConfirmed');
         });
 
-        it('2.2.13.8. Update tokenization request agenda unsuccessfully when request already have deposits', async () => {
+        it('2.2.13.8. Update tokenization request agenda unsuccessfully when request is deposited', async () => {
             const fixture = await beforeEstateForgerTest({
                 addSampleRequests: true,
                 addDepositions: true,
@@ -2836,7 +2814,7 @@ describe('2.2. EstateForger', async () => {
             await expect(getEstateForgerTx_UpdateRequestAgenda(estateForger, manager, data4)).to.not.be.reverted;
         });
 
-        it('2.2.13.11. Update tokenization request agenda unsuccessfully when updating start time of already sales started request', async () => {
+        it('2.2.13.11. Update tokenization request agenda unsuccessfully when updating start time of already started request', async () => {
             const fixture = await beforeEstateForgerTest({
                 addSampleRequests: true,
             });
@@ -2944,7 +2922,7 @@ describe('2.2. EstateForger', async () => {
             const fixture = await beforeEstateForgerTest({
                 addSampleRequests: true,
             });
-            const { manager, estateForger, depositor1 } = fixture;
+            const { manager, estateForger } = fixture;
 
             await expect(
                 getEstateForgerTx_Cancel(estateForger, manager, {
@@ -3057,10 +3035,9 @@ describe('2.2. EstateForger', async () => {
             const { depositor1, depositor2, reserveVault, estateForger } = fixture;
 
             let initBalance1 = await ethers.provider.getBalance(depositor1.address);
-            let initBalance2 = await ethers.provider.getBalance(depositor2.address);
 
             // During private sale
-            // Fund not expanded
+            // Fund is not expanded
 
             const requestId = 1;
             const quantity1 = 2;
@@ -3098,10 +3075,9 @@ describe('2.2. EstateForger', async () => {
 
             expect((await reserveVault.getFund(1)).quantity).to.equal(0);
 
-            // During public sale
+            // During the public sale
             // Another user deposit
-            initBalance1 = await ethers.provider.getBalance(depositor1.address);
-            initBalance2 = await ethers.provider.getBalance(depositor2.address);
+            let initBalance2 = await ethers.provider.getBalance(depositor2.address);
 
             const timestamp = (await estateForger.getRequest(requestId)).agenda.privateSaleEndsAt;
             await time.setNextBlockTimestamp(timestamp);
@@ -3138,7 +3114,6 @@ describe('2.2. EstateForger', async () => {
 
             // Fund expanded to total quantity (2 + 5 = 7)
             initBalance1 = await ethers.provider.getBalance(depositor1.address);
-            initBalance2 = await ethers.provider.getBalance(depositor2.address);
 
             const quantity3 = 5;
             let value3 = (await estateForger.getRequest(requestId)).quote.unitPrice.mul(quantity3);
@@ -3172,7 +3147,6 @@ describe('2.2. EstateForger', async () => {
 
             // Fund expanded by quantity4
             initBalance1 = await ethers.provider.getBalance(depositor1.address);
-            initBalance2 = await ethers.provider.getBalance(depositor2.address);
 
             const quantity4 = 8;
             let value4 = (await estateForger.getRequest(requestId)).quote.unitPrice.mul(quantity4);
@@ -3223,7 +3197,7 @@ describe('2.2. EstateForger', async () => {
             const initNativeBalance2 = await ethers.provider.getBalance(depositor2.address);
             const requestId = 2;
 
-            // During private sale
+            // During the private sale
             let value1 = (await estateForger.getRequest(requestId)).quote.unitPrice.mul(100);
 
             let saleStartsAt = (await estateForger.getRequest(requestId)).agenda.saleStartsAt;
@@ -3287,9 +3261,8 @@ describe('2.2. EstateForger', async () => {
             const { estateForger, depositor1, depositor2 } = fixture;
 
             let initBalance1 = await ethers.provider.getBalance(depositor1.address);
-            let initBalance2 = await ethers.provider.getBalance(depositor2.address);
 
-            // During private sale
+            // During the private sale
             const requestId = 1;
             const quantity1 = 2;
             let value1 = (await estateForger.getRequest(requestId)).quote.unitPrice.mul(quantity1);
@@ -3324,10 +3297,9 @@ describe('2.2. EstateForger', async () => {
             expect(request.quota.soldQuantity).to.equal(quantity1);
             expect(await estateForger.deposits(requestId, depositor1.address)).to.equal(quantity1);
 
-            // During public sale
+            // During the public sale
             // Another user deposit
-            initBalance1 = await ethers.provider.getBalance(depositor1.address);
-            initBalance2 = await ethers.provider.getBalance(depositor2.address);
+            let initBalance2 = await ethers.provider.getBalance(depositor2.address);
 
             const timestamp = (await estateForger.getRequest(requestId)).agenda.privateSaleEndsAt;
             await time.setNextBlockTimestamp(timestamp);
@@ -3502,7 +3474,7 @@ describe('2.2. EstateForger', async () => {
                 addDepositions: true,
                 confirmRequests: true,
             });
-            const { manager, estateForger, depositor1 } = fixture;
+            const { estateForger, depositor1 } = fixture;
 
             await expect(
                 getEstateForgerTx_Deposit(
@@ -3529,7 +3501,7 @@ describe('2.2. EstateForger', async () => {
             ).to.be.revertedWithCustomError(estateForger, 'AlreadyConfirmed');
         });
 
-        it('2.2.15.8. Deposit tokenization unsuccessfully by whitelisted account before private sale start', async () => {
+        it('2.2.15.8. Deposit tokenization unsuccessfully when depositing before private sale starts', async () => {
             const fixture = await beforeEstateForgerTest({
                 addSampleRequests: true,
                 whitelistDepositors: true,
@@ -3683,7 +3655,7 @@ describe('2.2. EstateForger', async () => {
                 whitelistDepositors: true,
                 whitelistDepositorsForRequests: true,
             });
-            const { manager, estateForger, depositor1 } = fixture;
+            const { estateForger, depositor1 } = fixture;
 
             const publicSaleEndsAt1 = (await estateForger.getRequest(1)).agenda.publicSaleEndsAt;
             await time.setNextBlockTimestamp(publicSaleEndsAt1);
@@ -3914,7 +3886,7 @@ describe('2.2. EstateForger', async () => {
             });
             const { estateForger, depositor1 } = fixture;
 
-            // During private sale
+            // During the private sale
             const initBalance1 = await ethers.provider.getBalance(depositor1.address);
 
             const params: DepositParams = {
@@ -4377,7 +4349,6 @@ describe('2.2. EstateForger', async () => {
             const {
                 deployer,
                 admins,
-                manager,
                 depositor1,
                 depositor2,
                 depositor3,
@@ -4401,7 +4372,7 @@ describe('2.2. EstateForger', async () => {
                 )
             );
 
-            // Native token as main currency, ERC20 as extra currency
+            // Native token as the main currency, ERC20 as an extra currency
             await testConfirmTokenization(
                 1,
                 fixture,
@@ -4440,7 +4411,7 @@ describe('2.2. EstateForger', async () => {
                 ethers.utils.parseEther('0.1')
             );
 
-            // ERC20 as main currency, native token as extra currency
+            // ERC20 as the main currency, native token as an extra currency
             await testConfirmTokenization(
                 2,
                 fixture,
@@ -4501,7 +4472,7 @@ describe('2.2. EstateForger', async () => {
                 )
             );
 
-            // Native token as main currency and as extra currency
+            // Native token as the main currency and as an extra currency
             await testConfirmTokenization(
                 1,
                 fixture,
@@ -4540,7 +4511,7 @@ describe('2.2. EstateForger', async () => {
                 ethers.utils.parseEther('0.1')
             );
 
-            // ERC20 as main currency, native token as extra currency
+            // ERC20 as the main currency and as an extra currency
             await testConfirmTokenization(
                 2,
                 fixture,
@@ -4601,7 +4572,7 @@ describe('2.2. EstateForger', async () => {
                 )
             );
 
-            // Native token as main currency
+            // Native token as the main currency
             await testConfirmTokenization(
                 1,
                 fixture,
@@ -4640,7 +4611,7 @@ describe('2.2. EstateForger', async () => {
                 ethers.utils.parseEther('0.1')
             );
 
-            // ERC20 as main currency, native token as extra currency
+            // ERC20 as the main currency, native token as an extra currency
             await testConfirmTokenization(
                 2,
                 fixture,
@@ -4743,7 +4714,7 @@ describe('2.2. EstateForger', async () => {
                 skipFundERC20ForDepositors: true,
                 skipFundERC20ForManagers: true,
             });
-            const { deployer, admins, depositor1, currencies, broker1, admin, estateForger } = fixture;
+            const { deployer, admins, depositor1, currencies, admin, estateForger } = fixture;
 
             await callTransaction(
                 getEstateForgerTxByInput_UpdateBaseUnitPriceRange(
@@ -4994,7 +4965,7 @@ describe('2.2. EstateForger', async () => {
                 addDepositions: true,
                 pause: true,
             });
-            const { deployer, estateForger, admin, admins, manager } = fixture;
+            const { estateForger, manager } = fixture;
 
             const params1: ConfirmParams = {
                 requestId: BigNumber.from(1),
@@ -5238,7 +5209,7 @@ describe('2.2. EstateForger', async () => {
             ).to.be.revertedWith('ERC20: insufficient allowance');
         });
 
-        it('2.2.17.21. Confirm tokenization unsuccessfully when native token transfer to requester failed', async () => {
+        it('2.2.17.21. Confirm tokenization unsuccessfully when transferring native token to requester failed', async () => {
             const fixture = await beforeEstateForgerTest({
                 useFailReceiverAsCustodian: true,
                 addSampleRequests: true,
@@ -5260,7 +5231,7 @@ describe('2.2. EstateForger', async () => {
             ).to.be.revertedWithCustomError(estateForger, 'FailedTransfer');
         });
 
-        it('2.2.17.22. Confirm tokenization unsuccessfully when native token transfer to fee receiver failed', async () => {
+        it('2.2.17.22. Confirm tokenization unsuccessfully when transferring native token to fee receiver failed', async () => {
             const fixture = await beforeEstateForgerTest({
                 addSampleRequests: true,
                 addDepositions: true,
@@ -5281,7 +5252,7 @@ describe('2.2. EstateForger', async () => {
             ).to.be.revertedWithCustomError(estateForger, 'FailedTransfer');
         });
 
-        it('2.2.17.23. Confirm tokenization unsuccessfully when native token transfer to broker failed', async () => {
+        it('2.2.17.23. Confirm tokenization unsuccessfully when transferring native token to broker failed', async () => {
             const fixture = await beforeEstateForgerTest({
                 addSampleRequests: true,
                 addDepositions: true,
@@ -5371,7 +5342,7 @@ describe('2.2. EstateForger', async () => {
             tx = await getEstateForgerTx_WithdrawDeposit(estateForger, depositor2, {
                 requestId: BigNumber.from(2),
             });
-            receipt = await tx.wait();
+            await tx.wait();
 
             value = depositAmount.mul(request.quote.unitPrice);
             await expect(tx)
@@ -5579,7 +5550,7 @@ describe('2.2. EstateForger', async () => {
             ).to.be.revertedWithCustomError(estateForger, 'InvalidWithdrawing');
         });
 
-        it('2.2.18.9. Withdraw deposit unsuccessfully by already withdrawn user', async () => {
+        it('2.2.18.9. Withdraw deposit unsuccessfully with already withdrawn deposits', async () => {
             const fixture = await beforeEstateForgerTest({
                 addSampleRequests: true,
                 addDepositions: true,
@@ -5964,7 +5935,7 @@ describe('2.2. EstateForger', async () => {
                 confirmRequests: true,
                 useNoCashback: true,
             });
-            const { estateForger, estateToken, depositor1, depositor2, depositor3, reserveVault, currencies } = fixture;
+            const { estateForger, estateToken, depositor1, currencies } = fixture;
 
             let timestamp = (await time.latest()) + 100;
 
@@ -6083,7 +6054,7 @@ describe('2.2. EstateForger', async () => {
                 addSampleRequests: true,
                 addDepositions: true,
             });
-            const { estateForger, depositor1, depositor2 } = fixture;
+            const { estateForger, depositor1 } = fixture;
 
             await expect(
                 getEstateForgerTx_WithdrawEstateToken(estateForger, depositor1, {
@@ -6092,7 +6063,7 @@ describe('2.2. EstateForger', async () => {
             ).to.be.revertedWithCustomError(estateForger, 'NotTokenized');
         });
 
-        it('2.2.19.6. Withdraw token unsuccessfully when sender is already withdrawn', async () => {
+        it('2.2.19.6. Withdraw token unsuccessfully when sender has already withdrawn token', async () => {
             const fixture = await beforeEstateForgerTest({
                 addSampleRequests: true,
                 addDepositions: true,
