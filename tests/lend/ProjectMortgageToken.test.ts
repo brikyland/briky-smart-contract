@@ -8,19 +8,6 @@ import { MockContract, smock } from '@defi-wonderland/smock';
 // @nomicfoundation/hardhat-network-helpers
 import { loadFixture, time } from '@nomicfoundation/hardhat-network-helpers';
 
-// @typechain-types
-import {
-    Admin,
-    Currency,
-    FeeReceiver,
-    MockProjectToken,
-    ProjectMortgageToken,
-    PriceWatcher,
-    ReserveVault,
-    MockPrestigePad__factory,
-    MockPrestigePad,
-} from '@typechain-types';
-
 // @tests
 import {
     IERC165UpgradeableInterfaceId,
@@ -40,6 +27,19 @@ import { Initialization as LandInitialization } from '@tests/land/test.initializ
 
 // @tests/lend
 import { Initialization as LendInitialization } from '@tests/lend/test.initialization';
+
+// @typechain-types
+import {
+    Admin,
+    Currency,
+    FeeReceiver,
+    MockProjectToken,
+    ProjectMortgageToken,
+    PriceWatcher,
+    ReserveVault,
+    MockPrestigePad__factory,
+    MockPrestigePad,
+} from '@typechain-types';
 
 // @utils
 import {
@@ -65,8 +65,7 @@ import { deployReserveVault } from '@utils/deployments/common/reserveVault';
 
 // @utils/deployments/mock
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
-import { deployReentrancyERC1155Holder } from '@utils/deployments/mock/mockReentrancy/reentrancyERC1155Holder';
-import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
+import { deployReentrancyReceiver } from '@utils/deployments/mock/mockReentrancy/reentrancyReceiver';
 
 // @utils/deployments/lend
 import { deployProjectMortgageToken } from '@utils/deployments/lend/projectMortgageToken';
@@ -1820,7 +1819,7 @@ describe('3.3. ProjectMortgageToken', async () => {
             const fixture = await beforeProjectMortgageTokenTest();
             const { projectMortgageToken, deployer, projectToken, lender1 } = fixture;
 
-            const reentrancy = await deployReentrancyERC1155Holder(deployer);
+            const reentrancy = await deployReentrancyReceiver(deployer, true, false);
 
             await callTransaction(projectToken.mintTo(reentrancy.address, 1, 100_000));
 
@@ -2291,7 +2290,7 @@ describe('3.3. ProjectMortgageToken', async () => {
             });
             const { projectMortgageToken, borrower1, deployer } = fixture;
 
-            const reentrancy = await deployReentrancy(deployer);
+            const reentrancy = await deployReentrancyReceiver(deployer, true, false);
 
             const principal = (await projectMortgageToken.getMortgage(1)).principal;
 

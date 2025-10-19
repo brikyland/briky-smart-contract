@@ -3,7 +3,7 @@ import { ethers } from 'ethers';
 // @typechain-types
 import { Admin, Driptributor } from '@typechain-types';
 
-// @utils/blockchain
+// @utils
 import { getSignatures } from '@utils/blockchain';
 
 // @utils/models/liquidity

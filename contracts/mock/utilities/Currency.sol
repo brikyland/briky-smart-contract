@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-import {IRate} from "../common/structs/IRate.sol";
+import {IRate} from "../../common/structs/IRate.sol";
 
 contract Currency is ERC20Upgradeable {
     IRate.Rate public exclusiveDiscount;

@@ -57,10 +57,10 @@ import {deployPriceWatcher} from '@utils/deployments/common/priceWatcher';
 
 // @utils/deployments/mock
 import {deployFailReceiver} from '@utils/deployments/mock/failReceiver';
+import {deployGovernor} from '@utils/deployments/common/governor';
 import {deployMockEstateForger} from '@utils/deployments/mock/mockEstateForger';
 import {deployMockPriceFeed} from '@utils/deployments/mock/mockPriceFeed';
-import {deployReentrancy} from '@utils/deployments/mock/mockReentrancy/reentrancy';
-import {deployReentrancyERC1155Holder} from '@utils/deployments/mock/mockReentrancy/reentrancyERC1155Holder';
+import {deployReentrancyReceiver} from '@utils/deployments/mock/mockReentrancy/reentrancyReceiver';
 
 // @utils/models/land
 import {
@@ -90,6 +90,21 @@ import {
     getRequestTokenizationValidation,
     getUpdateRequestEstateURIValidation,
 } from '@utils/validation/land/estateForger';
+
+// @utils/transaction/common
+import {
+    getAdminTxByInput_ActivateIn,
+    getAdminTxByInput_AuthorizeManagers,
+    getAdminTxByInput_AuthorizeModerators,
+    getAdminTxByInput_DeclareZone,
+    getAdminTxByInput_UpdateCurrencyRegistries,
+} from '@utils/transaction/common/admin';
+import {getReserveVaultTxByInput_AuthorizeProvider} from '@utils/transaction/common/reserveVault';
+import {getPausableTxByInput_Pause} from '@utils/transaction/common/pausable';
+import {
+    getPriceWatcherTxByInput_UpdateDefaultRates,
+    getPriceWatcherTxByInput_UpdatePriceFeeds,
+} from '@utils/transaction/common/priceWatcher';
 
 // @utils/transaction/land
 import {
@@ -122,22 +137,6 @@ import {
     getEstateTokenTxByInput_RegisterCustodian,
     getEstateTokenTxByInput_UpdateCommissionToken,
 } from '@utils/transaction/land/estateToken';
-
-// @utils/transaction/common
-import {
-    getAdminTxByInput_ActivateIn,
-    getAdminTxByInput_AuthorizeManagers,
-    getAdminTxByInput_AuthorizeModerators,
-    getAdminTxByInput_DeclareZone,
-    getAdminTxByInput_UpdateCurrencyRegistries,
-} from '@utils/transaction/common/admin';
-import {getReserveVaultTxByInput_AuthorizeProvider} from '@utils/transaction/common/reserveVault';
-import {getPausableTxByInput_Pause} from '@utils/transaction/common/pausable';
-import {
-    getPriceWatcherTxByInput_UpdateDefaultRates,
-    getPriceWatcherTxByInput_UpdatePriceFeeds,
-} from '@utils/transaction/common/priceWatcher';
-import {deployGovernor} from '@utils/deployments/common/governor';
 
 chai.use(smock.matchers);
 
@@ -314,7 +313,7 @@ describe('2.2. EstateForger', async () => {
         )) as MockEstateForger;
 
         const failReceiver = await deployFailReceiver(deployer, false, false);
-        const reentrancy = await deployReentrancyERC1155Holder(deployer);
+        const reentrancy = await deployReentrancyReceiver(deployer, true, true);
 
         const zone1 = ethers.utils.formatBytes32String('TestZone1');
         const zone2 = ethers.utils.formatBytes32String('TestZone2');
@@ -3850,7 +3849,7 @@ describe('2.2. EstateForger', async () => {
             });
             const { deployer, estateForger } = fixture;
 
-            let reentrancy = await deployReentrancy(deployer);
+            let reentrancy = await deployReentrancyReceiver(deployer, true, false);
             await callTransaction(
                 reentrancy.updateReentrancyPlan(
                     estateForger.address,
@@ -5651,7 +5650,7 @@ describe('2.2. EstateForger', async () => {
             });
             const { estateForger, deployer, manager } = fixture;
 
-            const reentrancy = await deployReentrancy(deployer);
+            const reentrancy = await deployReentrancyReceiver(deployer, true, false);
 
             let message = estateForger.interface.encodeFunctionData('deposit', [1, 10]);
 

@@ -65,8 +65,7 @@ import { deployReserveVault } from '@utils/deployments/common/reserveVault';
 
 // @utils/deployments/mock
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
-import { deployReentrancyERC1155Holder } from '@utils/deployments/mock/mockReentrancy/reentrancyERC1155Holder';
-import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
+import { deployReentrancyReceiver } from '@utils/deployments/mock/mockReentrancy/reentrancyReceiver';
 
 // @utils/deployments/lend
 import { deployEstateMortgageToken } from '@utils/deployments/lend/estateMortgageToken';
@@ -1845,7 +1844,7 @@ describe('3.2. EstateMortgageToken', async () => {
             const fixture = await beforeEstateMortgageTokenTest();
             const { estateMortgageToken, deployer, estateToken, lender1 } = fixture;
 
-            const reentrancy = await deployReentrancyERC1155Holder(deployer);
+            const reentrancy = await deployReentrancyReceiver(deployer, true, false);
 
             await callTransaction(estateToken.mint(reentrancy.address, 1, 100_000));
 
@@ -2312,7 +2311,7 @@ describe('3.2. EstateMortgageToken', async () => {
             });
             const { estateMortgageToken, borrower1, deployer } = fixture;
 
-            const reentrancy = await deployReentrancy(deployer);
+            const reentrancy = await deployReentrancyReceiver(deployer, true, false);
 
             const principal = (await estateMortgageToken.getMortgage(1)).principal;
 

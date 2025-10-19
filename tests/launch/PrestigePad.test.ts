@@ -3,14 +3,19 @@ import { expect } from 'chai';
 import { BigNumber, Contract } from 'ethers';
 import { ethers } from 'hardhat';
 
-// @nomicfoundation/hardhat-network-helpers
-import { loadFixture, time } from '@nomicfoundation/hardhat-network-helpers';
-
 // @defi-wonderland/smock
 import { MockContract, smock } from '@defi-wonderland/smock';
 
+// @nomicfoundation/hardhat-network-helpers
+import { loadFixture, time } from '@nomicfoundation/hardhat-network-helpers';
+
 // @tests
 import { Constant } from '@tests/test.constant';
+import {
+    IERC165UpgradeableInterfaceId,
+    IProjectLaunchpadInterfaceId,
+    IProjectTokenReceiverInterfaceId,
+} from '@tests/interfaces';
 
 // @tests/land
 import { Initialization as LandInitialization } from '@tests/land/test.initialization';
@@ -43,14 +48,14 @@ import { getBytes4Hex, structToObject, OrderedMap } from '@utils/utils';
 // @utils/deployments/common
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
+import { deployGovernor } from '@utils/deployments/common/governor';
 import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
 
 // @utils/deployments/mock
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployMockPriceFeed } from '@utils/deployments/mock/mockPriceFeed';
 import { deployMockPrestigePad } from '@utils/deployments/mock/mockPrestigePad';
-import { deployReentrancyERC1155Receiver } from '@utils/deployments/mock/mockReentrancy/reentrancyERC1155Receiver';
-import { deployReentrancyExclusiveERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyExclusiveERC20';
+import { deployReentrancyReceiver } from '@utils/deployments/mock/mockReentrancy/reentrancyReceiver';
 import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
 
 // @utils/models/common
@@ -127,14 +132,6 @@ import {
     getUpdateRoundsValidation,
     getUpdateRoundValidation,
 } from '@utils/validation/launch/prestigePad';
-
-// @tests
-import {
-    IERC165UpgradeableInterfaceId,
-    IProjectLaunchpadInterfaceId,
-    IProjectTokenReceiverInterfaceId,
-} from '@tests/interfaces';
-import { deployGovernor } from '@utils/deployments/common/governor';
 
 chai.use(smock.matchers);
 
@@ -407,8 +404,8 @@ describe('7.1. PrestigePad', async () => {
         const zone1 = ethers.utils.formatBytes32String('TestZone1');
         const zone2 = ethers.utils.formatBytes32String('TestZone2');
 
-        const reentrancyExclusiveERC20 = (await deployReentrancyExclusiveERC20(deployer)) as ReentrancyExclusiveERC20;
-        const reentrancyERC20 = (await deployReentrancyERC20(deployer)) as ReentrancyERC20;
+        const reentrancyExclusiveERC20 = (await deployReentrancyERC20(deployer, true, true)) as ReentrancyExclusiveERC20;
+        const reentrancyERC20 = (await deployReentrancyERC20(deployer, true, false)) as ReentrancyERC20;
 
         const failReceiver = (await deployFailReceiver(deployer, false, false)) as FailReceiver;
 
@@ -1677,7 +1674,7 @@ describe('7.1. PrestigePad', async () => {
 
             const { prestigePad, validator, manager, zone1, deployer, projectToken } = fixture;
 
-            const reentrancy = await deployReentrancyERC1155Receiver(deployer);
+            const reentrancy = await deployReentrancyReceiver(deployer, true, false);
 
             await callTransaction(
                 getProjectTokenTxByInput_RegisterInitiator(

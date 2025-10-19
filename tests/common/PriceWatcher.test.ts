@@ -12,8 +12,9 @@ import { loadFixture, time } from '@nomicfoundation/hardhat-network-helpers';
 // @typechain-types
 import { Admin, Currency, MockPriceFeed, PriceWatcher } from '@typechain-types';
 
-// @utils/blockchain
+// @utils
 import { callTransaction, expectRevertWithModifierCustomError, randomWallet } from '@utils/blockchain';
+import { randomBigNumber, randomInt, structToObject } from '@utils/utils';
 
 // @utils/deployments/common
 import { deployAdmin } from '@utils/deployments/common/admin';
@@ -36,16 +37,13 @@ import {
 import { getUpdateDefaultRatesSignatures, getUpdatePriceFeedsSignatures } from '@utils/signatures/common/priceWatcher';
 
 // @utils/transaction/common
+import { getAdminTxByInput_UpdateCurrencyRegistries } from '@utils/transaction/common/admin';
 import {
     getPriceWatcherTxByInput_UpdateDefaultRates,
     getPriceWatcherTx_UpdatePriceFeeds,
     getPriceWatcherTxByInput_UpdatePriceFeeds,
     getPriceWatcherTx_UpdateDefaultRates,
 } from '@utils/transaction/common/priceWatcher';
-
-// @utils/utils
-import { randomBigNumber, randomInt, structToObject } from '@utils/utils';
-import { getAdminTxByInput_UpdateCurrencyRegistries } from '@utils/transaction/common/admin';
 
 chai.use(smock.matchers);
 

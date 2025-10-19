@@ -66,7 +66,7 @@ import { deployCommissionToken } from '@utils/deployments/land/commissionToken';
 // @utils/deployments/mock
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployMockProjectToken } from '@utils/deployments/mock/mockProjectToken';
-import { deployReentrancyERC1155Receiver } from '@utils/deployments/mock/mockReentrancy/reentrancyERC1155Receiver';
+import { deployReentrancyReceiver } from '@utils/deployments/mock/mockReentrancy/reentrancyReceiver';
 
 // @utils/models/launch
 import {
@@ -336,9 +336,7 @@ describe('7.2. ProjectToken', async () => {
         const zone1 = ethers.utils.formatBytes32String('TestZone1');
         const zone2 = ethers.utils.formatBytes32String('TestZone2');
 
-        const reentrancyERC1155Receiver = (await deployReentrancyERC1155Receiver(
-            deployer.address
-        )) as ReentrancyERC1155Receiver;
+        const reentrancyERC1155Receiver = (await deployReentrancyReceiver(deployer, true, true)) as ReentrancyERC1155Receiver;
         const failReceiver = (await deployFailReceiver(deployer.address, false, false)) as FailReceiver;
 
         return {

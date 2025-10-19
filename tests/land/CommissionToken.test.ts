@@ -268,7 +268,7 @@ describe('2.1. CommissionToken', async () => {
     }
 
     /* --- Initialization --- */
-    describe('2.1.1. initialize(address,address,address,string,string,string,uint256)', async () => {
+    describe.only('2.1.1. initialize(address,address,address,string,string,string,uint256)', async () => {
         it('2.1.1.1. Deploy successfully', async () => {
             const { admin, feeReceiver, estateToken, commissionToken } = await beforeCommissionTokenTest();
 

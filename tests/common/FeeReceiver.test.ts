@@ -8,7 +8,7 @@ import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 // @typechain-types
 import { Admin, Currency, FeeReceiver } from '@typechain-types';
 
-// @utils/blockchain
+// @utils
 import { callTransaction, getSignatures, randomWallet } from '@utils/blockchain';
 
 // @utils/deployments/common
@@ -23,9 +23,11 @@ import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 // @utils/models/common
 import { WithdrawParams, WithdrawParamsInput } from '@utils/models/common/feeReceiver';
 
+// @utils/signatures/common
+import { getWithdrawSignatures } from '@utils/signatures/common/feeReceiver';
+
 // @utils/transaction/common
 import { getFeeReceiverTx_Withdraw, getFeeReceiverTxByInput_Withdraw } from '@utils/transaction/common/feeReceiver';
-import { getWithdrawSignatures } from '@utils/signatures/common/feeReceiver';
 
 interface FeeReceiverFixture {
     deployer: any;
@@ -311,7 +313,7 @@ describe('1.5. FeeReceiver', async () => {
         it('1.5.2.8. Withdraw unsuccessfully when the contract is reentered', async () => {
             const { deployer, admins, admin, feeReceiver } = await setupBeforeTest();
 
-            const reentrancyERC20 = await deployReentrancyERC20(deployer);
+            const reentrancyERC20 = await deployReentrancyERC20(deployer, true, false);
 
             await callTransaction(reentrancyERC20.mint(feeReceiver.address, 1000));
 

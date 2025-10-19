@@ -3,7 +3,7 @@ import { BigNumber, ethers, Wallet } from 'ethers';
 // @defi-wonderland/smock
 import { MockContract } from '@defi-wonderland/smock';
 
-// @utils/blockchain
+// @utils
 import { getSignatures } from '@utils/blockchain';
 
 // @utils/models/common

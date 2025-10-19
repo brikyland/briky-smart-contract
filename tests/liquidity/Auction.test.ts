@@ -8,14 +8,14 @@ import { MockContract, smock } from '@defi-wonderland/smock';
 // @nomicfoundation/hardhat-network-helpers
 import { loadFixture, time } from '@nomicfoundation/hardhat-network-helpers';
 
-// @typechain-types
-import { Admin, Auction, Currency, PrimaryToken, StakeToken, Treasury, Treasury__factory } from '@typechain-types';
-
 // @tests
 import { Constant } from '@tests/test.constant';
 
 // @tests/liquidity
 import { Initialization as LiquidityInitialization } from '@tests/liquidity/test.initialization';
+
+// @typechain-types
+import { Admin, Auction, Currency, PrimaryToken, StakeToken, Treasury, Treasury__factory } from '@typechain-types';
 
 // @utils
 import { callTransaction, prepareERC20, testReentrancy } from '@utils/blockchain';
@@ -613,7 +613,7 @@ describe('4.1. Auction', async () => {
 
             const { deployer, depositor1, auction, treasury } = fixture;
 
-            const reentrancyERC20 = await deployReentrancyERC20(deployer);
+            const reentrancyERC20 = await deployReentrancyERC20(deployer, true, false);
             await callTransaction(
                 reentrancyERC20.updateReentrancyPlan(
                     auction.address,

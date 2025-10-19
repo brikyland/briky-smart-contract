@@ -1,41 +1,37 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-import {Revert} from "../../common/utilities/Revert.sol";
-import {ProxyCaller} from "../common/ProxyCaller.sol";
+
+import {ReentrancyBase} from "../utilities/ReentrancyBase.sol";
+
 import {IRate} from "../../common/structs/IRate.sol";
 
-contract ReentrancyERC20 is ERC20Upgradeable, ProxyCaller {
-    address public reentrancyTarget;
-    bytes public reentrancyData;
+contract ReentrancyERC20 is
+ERC20Upgradeable,
+ReentrancyBase {
+    bool public isTriggeredOnTransfer;
+    bool public isTriggeredOnExclusiveDiscount;
 
-    function initialize() public initializer {}
+    function initialize(bool _isTriggeredOnTransfer, bool _isTriggeredOnExclusiveDiscount) public initializer {
+        __ERC20_init("ReentrancyERC20", "RE");
 
-    function updateReentrancyPlan(address _reentrancyTarget, bytes memory _reentrancyData) external {
-        reentrancyTarget = _reentrancyTarget;
-        reentrancyData = _reentrancyData;
+        isTriggeredOnTransfer = _isTriggeredOnTransfer;
+        isTriggeredOnExclusiveDiscount = _isTriggeredOnExclusiveDiscount;
     }
 
     function transfer(address _to, uint256 _value) public override returns (bool) {
-        return _reentrancy();
+        if (isTriggeredOnTransfer) {
+            _reentrancy();
+        }
+        return super.transfer(_to, _value);
     }
 
     function transferFrom(address _from, address _to, uint256 _value) public override returns (bool) {
-        return _reentrancy();
-    }
-
-    function _reentrancy() internal returns (bool) {
-        if (reentrancyTarget != address(0)) {
-            (bool success, bytes memory res) = reentrancyTarget.call{value: msg.value}(reentrancyData);
-            if (!success) {
-                Revert.revertFromReturnedData(res);
-            }
-            return success;
+        if (isTriggeredOnTransfer) {
+            _reentrancy();
         }
-        return true;
+        return super.transferFrom(_from, _to, _value);
     }
 
     function mint(address to, uint256 amount) external {
@@ -43,6 +39,9 @@ contract ReentrancyERC20 is ERC20Upgradeable, ProxyCaller {
     }
 
     function exclusiveDiscount() external returns (IRate.Rate memory) {
+        if (isTriggeredOnExclusiveDiscount) {
+            _reentrancy();
+        }
         return IRate.Rate(0, 0);
     }
 }

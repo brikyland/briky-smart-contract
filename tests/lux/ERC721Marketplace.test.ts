@@ -2,11 +2,14 @@ import {expect} from 'chai';
 import {BigNumber, Contract, Wallet} from 'ethers';
 import {ethers, upgrades} from 'hardhat';
 
+// @defi-wonderland/smock
+import {MockContract, smock} from '@defi-wonderland/smock';
+
 // @nomicfoundation/hardhat-network-helpers
 import {loadFixture} from '@nomicfoundation/hardhat-network-helpers';
 
-// @defi-wonderland/smock
-import {MockContract, smock} from '@defi-wonderland/smock';
+// @tests
+import {Constant} from '@tests/test.constant';
 
 // @typechain-types
 import {
@@ -33,9 +36,6 @@ import {
 } from '@utils/blockchain';
 import {applyDiscount, remain} from '@utils/formula';
 
-// @tests
-import {Constant} from '@tests/test.constant';
-
 // @utils/deployments/common
 import {deployAdmin} from '@utils/deployments/common/admin';
 import {deployFeeReceiver} from '@utils/deployments/common/feeReceiver';
@@ -46,7 +46,7 @@ import {deployERC721Marketplace} from '@utils/deployments/lux/erc721Marketplace'
 
 // @utils/deployments/mock
 import {deployFailReceiver} from '@utils/deployments/mock/failReceiver';
-import {deployReentrancy} from '@utils/deployments/mock/mockReentrancy/reentrancy';
+import {deployReentrancyReceiver} from '@utils/deployments/mock/mockReentrancy/reentrancyReceiver';
 
 // @utils/models/lux
 import {
@@ -1480,7 +1480,7 @@ describe('6.1. ERC721Marketplace', async () => {
             });
             const { deployer, feeReceiverCollection, erc721Marketplace, buyer1 } = fixture;
 
-            const reentrancy = await deployReentrancy(deployer);
+            const reentrancy = await deployReentrancyReceiver(deployer, true, false);
 
             await callTransaction(feeReceiverCollection.mint(reentrancy.address, 1));
 

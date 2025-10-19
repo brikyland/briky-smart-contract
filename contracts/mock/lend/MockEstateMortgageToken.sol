@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { ProjectMortgageToken } from "../lend/ProjectMortgageToken.sol";
-import { Revert } from "../common/utilities/Revert.sol";
-import { ProxyCaller } from "./common/ProxyCaller.sol";
+import { EstateMortgageToken } from "../../lend/EstateMortgageToken.sol";
+import { ProxyCaller } from "../utilities/ProxyCaller.sol";
 
-contract MockProjectMortgageToken is ProjectMortgageToken, ProxyCaller {
+contract MockEstateMortgageToken is EstateMortgageToken, ProxyCaller {
     function mint(address to, uint256 _mortgageId) external {
         _mint(to, _mortgageId);
     }

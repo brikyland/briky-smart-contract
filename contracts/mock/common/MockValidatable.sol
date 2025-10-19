@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-import {Validatable} from "../common/utilities/Validatable.sol";
+import {Validatable} from "../../common/utilities/Validatable.sol";
 
 contract MockValidatable is Validatable {
     address public admin;

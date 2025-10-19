@@ -53,6 +53,8 @@ import {deployCurrency} from '@utils/deployments/common/currency';
 
 // @utils/deployments/lend
 import {deployEstateMortgageToken} from '@utils/deployments/lend/estateMortgageToken';
+import {deployERC721MortgageToken} from '@utils/deployments/lend/erc721MortgageToken';
+import {deployProjectMortgageToken} from '@utils/deployments/lend/projectMortgageToken';
 
 // @utils/deployments/lux
 import {deployMortgageMarketplace} from '@utils/deployments/lux/mortgageMarketplace';
@@ -60,7 +62,7 @@ import {deployMortgageMarketplace} from '@utils/deployments/lux/mortgageMarketpl
 // @utils/deployments/mock
 import {deployFailReceiver} from '@utils/deployments/mock/failReceiver';
 import {deployMockMortgageToken} from '@utils/deployments/mock/mockMortgageToken';
-import {deployReentrancy} from '@utils/deployments/mock/mockReentrancy/reentrancy';
+import { deployReentrancyReceiver } from '@utils/deployments/mock/mockReentrancy/reentrancyReceiver';
 
 // @utils/models/lux
 import {OfferState} from '@utils/models/lux/offerState';
@@ -74,13 +76,6 @@ import {
     RegisterCollectionsParamsInput,
 } from '@utils/models/lux/erc721Marketplace';
 
-// @utils/transaction/land
-import {getEstateTokenTxByInput_UpdateCommissionToken} from '@utils/transaction/land/estateToken';
-
-// @utils/deployments/lend
-import {deployERC721MortgageToken} from '@utils/deployments/lend/erc721MortgageToken';
-import {deployProjectMortgageToken} from '@utils/deployments/lend/projectMortgageToken';
-
 // @utils/signatures/lux
 import {getRegisterCollectionsSignatures} from '@utils/signatures/lux/erc721Marketplace';
 
@@ -91,6 +86,9 @@ import {
     getAdminTxByInput_UpdateCurrencyRegistries,
 } from '@utils/transaction/common/admin';
 import {getPausableTxByInput_Pause} from '@utils/transaction/common/pausable';
+
+// @utils/transaction/land
+import {getEstateTokenTxByInput_UpdateCommissionToken} from '@utils/transaction/land/estateToken';
 
 // @utils/transaction/lend
 import {getMortgageTokenTx_Foreclose, getMortgageTokenTx_Repay} from '@utils/transaction/lend/mortgageToken';
@@ -1437,7 +1435,7 @@ describe('6.3. MortgageMarketplace', async () => {
             const fixture = await beforeMortgageMarketplaceTest();
             const { deployer, mortgageToken, mortgageMarketplace, buyer1, seller1 } = fixture;
 
-            const reentrancy = await deployReentrancy(deployer);
+            const reentrancy = await deployReentrancyReceiver(deployer, true, false);
 
             await callTransaction(mortgageToken.connect(seller1).transferFrom(seller1.address, reentrancy.address, 1));
 

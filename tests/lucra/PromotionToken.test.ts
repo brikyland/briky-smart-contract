@@ -536,7 +536,7 @@ describe('5.2. PromotionToken', async () => {
         it('5.2.4.8. Withdraw unsuccessfully when the contract is reentered', async () => {
             const { deployer, admins, admin, promotionToken } = await beforePromotionTokenTest();
 
-            const reentrancyERC20 = await deployReentrancyERC20(deployer);
+            const reentrancyERC20 = await deployReentrancyERC20(deployer, true, false);
 
             await callTransaction(reentrancyERC20.mint(promotionToken.address, 1000));
 

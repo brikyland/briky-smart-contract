@@ -3,7 +3,7 @@ import { ethers } from 'ethers';
 // @typechain-types
 import { Admin, ERC721MortgageToken } from '@typechain-types';
 
-// @utils/blockchain
+// @utils
 import { getSignatures } from '@utils/blockchain';
 
 // @utils/models/lend

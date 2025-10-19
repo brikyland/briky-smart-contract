@@ -1,32 +1,26 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {ERC1155HolderUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
-
 import {Revert} from "../../common/utilities/Revert.sol";
-import {ProxyCaller} from "./../common/ProxyCaller.sol";
+import {ProxyCaller} from "../utilities/ProxyCaller.sol";
 
-contract ReentrancyERC1155Holder is ERC1155HolderUpgradeable, ProxyCaller {
+abstract contract ReentrancyBase is ProxyCaller {
     address public reentrancyTarget;
     bytes public reentrancyData;
 
-    function initialize() public initializer {}
-
-    function updateReentrancyPlan(address _reentrancyTarget, bytes memory _reentrancyData) external {
+    function updateReentrancyPlan(address _reentrancyTarget, bytes memory _reentrancyData) external {        
         reentrancyTarget = _reentrancyTarget;
         reentrancyData = _reentrancyData;
     }
 
-    receive() external payable {
-        _reentrancy();
-    }
-
-    function _reentrancy() internal {
+    function _reentrancy() internal returns (bool) {
         if (reentrancyTarget != address(0)) {
             (bool success, bytes memory res) = reentrancyTarget.call{value: msg.value}(reentrancyData);
             if (!success) {
                 Revert.revertFromReturnedData(res);
             }
+            return success;
         }
+        return true;
     }
 }

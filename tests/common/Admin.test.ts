@@ -8,14 +8,15 @@ import { smock } from '@defi-wonderland/smock';
 // @nomicfoundation/hardhat-network-helpers
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 
+// @tests
+import { Constant } from '@tests/test.constant';
+
 // @typechain-types
 import { Admin, Governor__factory } from '@typechain-types';
 
-// @tests/test.constant
-import { Constant } from '@tests/test.constant';
-
-// @utils/blockchain
+// @utils
 import { callTransaction, getSignatures, randomWallet } from '@utils/blockchain';
+import { nextPermutation } from '@utils/utils';
 
 // @utils/deployments/common
 import { deployAdmin } from '@utils/deployments/common/admin';
@@ -87,9 +88,6 @@ import {
     getAdminTxByInput_TransferAdministration5,
     getAdminTxByInput_UpdateCurrencyRegistries,
 } from '@utils/transaction/common/admin';
-
-// @utils/utils
-import { nextPermutation } from '@utils/utils';
 
 interface AdminFixture {
     deployer: any;

@@ -19,13 +19,14 @@ import {
     ReentrancyERC20,
 } from '@typechain-types';
 
-// @utils/blockchain
+// @utils
 import {
     callTransaction,
     expectRevertWithModifierCustomError,
     prepareERC20,
     prepareNativeToken,
 } from '@utils/blockchain';
+import { expectEqualWithErrorMargin } from '@utils/testHelper';
 
 // @utils/deployments/common
 import { deployAdmin } from '@utils/deployments/common/admin';
@@ -38,9 +39,6 @@ import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/re
 
 // @utils/models/common
 import { IssueDividendParams } from '@utils/models/common/dividendHub';
-
-// @utils/testHelper
-import { expectEqualWithErrorMargin } from '@utils/testHelper';
 
 // @utils/transaction/common
 import {
@@ -103,7 +101,7 @@ describe('1.4. DividendHub', async () => {
 
         const dividendHub = (await deployDividendHub(deployer.address, admin.address)) as DividendHub;
 
-        const reentrancyERC20 = (await deployReentrancyERC20(deployer)) as ReentrancyERC20;
+        const reentrancyERC20 = (await deployReentrancyERC20(deployer, true, false)) as ReentrancyERC20;
         const failReceiver = (await deployFailReceiver(deployer, false, false)) as FailReceiver;
 
         return {

@@ -1,7 +1,7 @@
 // @typechain-types
 import { Admin, CommissionToken } from '@typechain-types';
 
-// @utils/blockchain
+// @utils
 import { getSignatures } from '@utils/blockchain';
 
 // @utils/models/land

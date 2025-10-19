@@ -1,6 +1,6 @@
 import { BigNumber } from 'ethers';
 
-// @utils/blockchain
+// @utils
 import { parseEther } from '@utils/blockchain';
 
 export const MINUTE = 60;

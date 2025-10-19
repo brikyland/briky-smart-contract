@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { MortgageToken } from "../lend/utilities/MortgageToken.sol";
-import { Revert } from "../common/utilities/Revert.sol";
-import { ProxyCaller } from "./common/ProxyCaller.sol";
-import { CommonConstant } from "../common/constants/CommonConstant.sol";
-import { Formula } from "../common/utilities/Formula.sol";
+import { MortgageToken } from "../../lend/utilities/MortgageToken.sol";
+import { ProxyCaller } from "../utilities/ProxyCaller.sol";
+import { CommonConstant } from "../../common/constants/CommonConstant.sol";
+import { Formula } from "../../common/utilities/Formula.sol";
 
 contract MockMortgageToken is MortgageToken, ProxyCaller {
     using Formula for uint256;

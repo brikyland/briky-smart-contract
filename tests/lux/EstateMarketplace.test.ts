@@ -57,7 +57,7 @@ import { deployReserveVault } from '@utils/deployments/common/reserveVault';
 
 // @utils/deployments/mock
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
-import { deployReentrancyERC1155Holder } from '@utils/deployments/mock/mockReentrancy/reentrancyERC1155Holder';
+import { deployReentrancyReceiver } from '@utils/deployments/mock/mockReentrancy/reentrancyReceiver';
 
 // @utils/deployments/lux
 import { deployEstateMarketplace } from '@utils/deployments/lux/estateMarketplace';
@@ -1671,7 +1671,7 @@ describe('6.2. EstateMarketplace', async () => {
             const fixture = await beforeEstateMarketplaceTest();
             const { deployer, estateToken, estateMarketplace, buyer1 } = fixture;
 
-            const reentrancy = await deployReentrancyERC1155Holder(deployer);
+            const reentrancy = await deployReentrancyReceiver(deployer, true, false);
 
             await callTransaction(estateToken.mint(reentrancy.address, 1, 100_000));
 

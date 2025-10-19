@@ -4,8 +4,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/utils/ERC721HolderUpgradeable.sol";
 
-import { Revert } from "../common/utilities/Revert.sol";
-import { ProxyCaller } from "./common/ProxyCaller.sol";
+import { ProxyCaller } from "../utilities/ProxyCaller.sol";
 
 contract FailReceiver is
 ERC1155HolderUpgradeable,
@@ -34,28 +33,28 @@ ProxyCaller {
     }
     
     function onERC1155Received(
-        address,
-        address,
-        uint256,
-        uint256,
-        bytes memory
-    ) public view override returns (bytes4) {
+        address _operator,
+        address _from,
+        uint256 _id,
+        uint256 _value,
+        bytes memory _data
+    ) public override returns (bytes4) {
         if (isActiveRejectERC1155) {
             revert("Fail");
         }
-        return this.onERC1155Received.selector;
+        return super.onERC1155Received(_operator, _from, _id, _value, _data);
     }
 
     function onERC1155BatchReceived(
-        address,
-        address,
-        uint256[] memory,
-        uint256[] memory,
-        bytes memory
-    ) public view override returns (bytes4) {
+        address _operator,
+        address _from,
+        uint256[] memory _ids,
+        uint256[] memory _values,
+        bytes memory _data
+    ) public override returns (bytes4) {
         if (isActiveRejectERC1155) {
             revert("Fail");
         }
-        return this.onERC1155BatchReceived.selector;
+        return super.onERC1155BatchReceived(_operator, _from, _ids, _values, _data);
     }
 }

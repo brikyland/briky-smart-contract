@@ -5,11 +5,11 @@ import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces
 import {IERC2981Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 
-import {CommonConstant} from "../common/constants/CommonConstant.sol";
+import {CommonConstant} from "../../common/constants/CommonConstant.sol";
 
-import {ICommon} from "../common/interfaces/ICommon.sol";
+import {ICommon} from "../../common/interfaces/ICommon.sol";
 
-import {RoyaltyRateProposer} from "../common/utilities/RoyaltyRateProposer.sol";
+import {RoyaltyRateProposer} from "../../common/utilities/RoyaltyRateProposer.sol";
 
 contract RoyaltyCollection is ERC721Upgradeable, RoyaltyRateProposer {
     address public admin;

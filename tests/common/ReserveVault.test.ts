@@ -11,7 +11,7 @@ import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 // @typechain-types
 import { Admin, Currency, ReserveVault, ReserveVault__factory, MockProvider, ReentrancyERC20 } from '@typechain-types';
 
-// @utils/blockchain
+// @utils
 import {
     callTransaction,
     expectRevertWithModifierCustomError,
@@ -102,7 +102,7 @@ describe('1.8. ReserveVault', async () => {
         const reserveVault = await SmockReserveVaultFactory.deploy();
         await callTransaction(reserveVault.initialize(admin.address));
 
-        const reentrancyERC20 = (await deployReentrancyERC20(deployer)) as ReentrancyERC20;
+        const reentrancyERC20 = (await deployReentrancyERC20(deployer, true, false)) as ReentrancyERC20;
 
         return {
             deployer,

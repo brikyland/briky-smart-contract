@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { ERC721MortgageToken } from "../lend/ERC721MortgageToken.sol";
-import { Revert } from "../common/utilities/Revert.sol";
-import { ProxyCaller } from "./common/ProxyCaller.sol";
+import { ERC721MortgageToken } from "../../lend/ERC721MortgageToken.sol";
+import { ProxyCaller } from "../utilities/ProxyCaller.sol";
 
 contract MockERC721MortgageToken is ERC721MortgageToken, ProxyCaller {
     function mint(address to, uint256 _mortgageId) external {

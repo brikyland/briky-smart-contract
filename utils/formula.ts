@@ -3,7 +3,7 @@ import { BigNumber, Contract, ethers } from 'ethers';
 // @typechain-types
 import { Admin } from '@typechain-types';
 
-// @utils/constant
+// @utils
 import { Constant } from '@utils/constant';
 
 // @utils/models/common

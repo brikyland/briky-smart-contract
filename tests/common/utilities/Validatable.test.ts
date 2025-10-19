@@ -7,10 +7,7 @@ import { loadFixture, time } from '@nomicfoundation/hardhat-network-helpers';
 // @typechain-types
 import { Admin, MockValidatable } from '@typechain-types';
 
-// @tests/test.constant
-import { Constant } from '@tests/test.constant';
-
-// @utils/blockchain
+// @utils
 import { callTransaction, getSignatures, getValidationMessage, randomWallet } from '@utils/blockchain';
 
 // @utils/deployments/common

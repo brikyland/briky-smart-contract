@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
-
-import {Pausable} from "../common/utilities/Pausable.sol";
-import {IAdmin} from "../common/interfaces/IAdmin.sol";
+import {Pausable} from "../../common/utilities/Pausable.sol";
 
 contract MockPausable is Pausable {
     address public admin;

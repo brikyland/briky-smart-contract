@@ -8,23 +8,23 @@ import { MockContract, smock } from '@defi-wonderland/smock';
 // @nomicfoundation/hardhat-network-helpers
 import { loadFixture, time } from '@nomicfoundation/hardhat-network-helpers';
 
-// @typechain-types
-import {
-    Admin,
-    GovernanceHub,
-    Governor,
-    Governor__factory,
-    Currency,
-    ReentrancyERC20,
-    FailReceiver,
-    Reentrancy,
-} from '@typechain-types';
-
-// @tests/test.constant
+// @tests
 import { Constant } from '@tests/test.constant';
 
 // @tests/common
 import { Initialization as CommonInitialization } from '@tests/common/test.initialization';
+
+// @typechain-types
+import {
+    Admin,
+    Currency,
+    GovernanceHub,
+    Governor,
+    Governor__factory,
+    FailReceiver,
+    ReentrancyERC20,
+    ReentrancyReceiver,
+} from '@typechain-types';
 
 // @utils
 import {
@@ -36,10 +36,6 @@ import {
 } from '@utils/blockchain';
 import { scale } from '@utils/formula';
 import { MockValidator } from '@utils/mockValidator';
-
-// @utils/deployments/common
-import { deployAdmin } from '@utils/deployments/common/admin';
-import { deployGovernanceHub } from '@utils/deployments/common/governanceHub';
 
 // @utils/models/common
 import {
@@ -58,12 +54,14 @@ import {
 } from '@utils/models/common/governanceHub';
 
 // @utils/deployments/common
+import { deployAdmin } from '@utils/deployments/common/admin';
 import { deployCurrency } from '@utils/deployments/common/currency';
+import { deployGovernanceHub } from '@utils/deployments/common/governanceHub';
 
 // @utils/deployments/mock
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
-import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
+import { deployReentrancyReceiver } from '@utils/deployments/mock/mockReentrancy/reentrancyReceiver';
 
 // @utils/models/common
 import {
@@ -251,7 +249,7 @@ describe('1.6. GovernanceHub', async () => {
 
         const zone = ethers.utils.formatBytes32String('TestZone');
         const failReceiver = (await deployFailReceiver(deployer.address, false, false)) as FailReceiver;
-        const reentrancyERC20 = (await deployReentrancyERC20(deployer.address)) as ReentrancyERC20;
+        const reentrancyERC20 = (await deployReentrancyERC20(deployer.address, true, false)) as ReentrancyERC20;
 
         return {
             deployer,
@@ -1525,7 +1523,7 @@ describe('1.6. GovernanceHub', async () => {
 
             const { defaultParams } = await beforeProposeTest(fixture);
 
-            const reentrancy = (await deployReentrancy(deployer.address)) as Reentrancy;
+            const reentrancy = (await deployReentrancyReceiver(deployer.address, true, false)) as ReentrancyReceiver;
 
             const fee = await governanceHub.fee();
 

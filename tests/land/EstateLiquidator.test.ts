@@ -45,17 +45,13 @@ import { structToObject } from '@utils/utils';
 // @utils/deployments/common
 import { deployAdmin } from '@utils/deployments/common/admin';
 import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
-
-// @utils/deployments/mock
-import { deployMockPriceFeed } from '@utils/deployments/mock/mockPriceFeed';
-import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
-import { deployMockEstateLiquidator } from '@utils/deployments/mock/mockEstateLiquidator';
-
-// @utils/deployments/common
 import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
 
 // @utils/deployments/mock
+import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
+import { deployMockPriceFeed } from '@utils/deployments/mock/mockPriceFeed';
 import { deployMockEstateForger } from '@utils/deployments/mock/mockEstateForger';
+import { deployMockEstateLiquidator } from '@utils/deployments/mock/mockEstateLiquidator';
 import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
 
 // @utils/models/common
@@ -325,7 +321,7 @@ describe('2.3. EstateLiquidator', async () => {
         )) as MockEstateLiquidator;
 
         const failReceiver = (await deployFailReceiver(deployer.address, false, false)) as FailReceiver;
-        const reentrancyERC20 = (await deployReentrancyERC20(deployer.address)) as ReentrancyERC20;
+        const reentrancyERC20 = (await deployReentrancyERC20(deployer.address, true, false)) as ReentrancyERC20;
 
         const zone1 = ethers.utils.formatBytes32String('TestZone1');
         const zone2 = ethers.utils.formatBytes32String('TestZone2');

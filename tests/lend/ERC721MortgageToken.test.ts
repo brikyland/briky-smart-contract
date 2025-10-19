@@ -54,8 +54,7 @@ import {deployERC721MortgageToken} from '@utils/deployments/lend/erc721MortgageT
 
 // @utils/deployments/mock
 import {deployFailReceiver} from '@utils/deployments/mock/failReceiver';
-import {deployReentrancyERC1155Holder} from '@utils/deployments/mock/mockReentrancy/reentrancyERC1155Holder';
-import {deployReentrancy} from '@utils/deployments/mock/mockReentrancy/reentrancy';
+import {deployReentrancyReceiver} from '@utils/deployments/mock/mockReentrancy/reentrancyReceiver';
 
 // @utils/models/lend
 import {
@@ -1920,7 +1919,7 @@ describe('3.1. ERC721MortgageToken', async () => {
             });
             const { erc721MortgageToken, deployer, feeReceiverCollection, lender1 } = fixture;
 
-            const reentrancy = await deployReentrancyERC1155Holder(deployer);
+            const reentrancy = await deployReentrancyReceiver(deployer, true, false);
 
             await callTransaction(feeReceiverCollection.mint(reentrancy.address, 1));
 
@@ -2378,7 +2377,7 @@ describe('3.1. ERC721MortgageToken', async () => {
             });
             const { erc721MortgageToken, borrower1, deployer } = fixture;
 
-            const reentrancy = await deployReentrancy(deployer);
+            const reentrancy = await deployReentrancyReceiver(deployer, true, false);
 
             const principal = (await erc721MortgageToken.getMortgage(1)).principal;
 

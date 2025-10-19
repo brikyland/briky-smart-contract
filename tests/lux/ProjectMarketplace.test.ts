@@ -52,18 +52,18 @@ import { randomArrayWithSum, randomBigNumber } from '@utils/utils';
 
 // @utils/deployments/common
 import { deployAdmin } from '@utils/deployments/common/admin';
-import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
 import { deployCurrency } from '@utils/deployments/common/currency';
-
-// @utils/deployments/lux
-import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
-import { deployMockPrestigePad } from '@utils/deployments/mock/mockPrestigePad';
-import { deployProjectMarketplace } from '@utils/deployments/lux/projectMarketplace';
-import { deployReentrancyERC1155Holder } from '@utils/deployments/mock/mockReentrancy/reentrancyERC1155Holder';
-
-// @utils/deployments/common
+import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
 import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
 import { deployReserveVault } from '@utils/deployments/common/reserveVault';
+
+// @utils/deployments/mock
+import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
+import { deployMockPrestigePad } from '@utils/deployments/mock/mockPrestigePad';
+import { deployReentrancyReceiver } from '@utils/deployments/mock/mockReentrancy/reentrancyReceiver';
+
+// @utils/deployments/lux
+import { deployProjectMarketplace } from '@utils/deployments/lux/projectMarketplace';
 
 // @utils/models/lux
 import { BuyParams, BuyPartParams, ListParams } from '@utils/models/lux/assetMarketplace';
@@ -1532,7 +1532,7 @@ describe('6.4. ProjectMarketplace', async () => {
             const fixture = await beforeProjectMarketplaceTest();
             const { deployer, projectToken, projectMarketplace, buyer1 } = fixture;
 
-            const reentrancy = await deployReentrancyERC1155Holder(deployer);
+            const reentrancy = await deployReentrancyReceiver(deployer, true, false);
 
             await callTransaction(projectToken.mintTo(reentrancy.address, 1, 100_000));
 

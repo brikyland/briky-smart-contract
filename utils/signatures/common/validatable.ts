@@ -3,7 +3,7 @@ import { Contract, ethers } from 'ethers';
 // @typechain-types
 import { Admin } from '@typechain-types';
 
-// @utils/blockchain
+// @utils
 import { getSignatures } from '@utils/blockchain';
 
 // @utils/models/common

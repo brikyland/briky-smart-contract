@@ -4,7 +4,7 @@ import { ethers } from 'hardhat';
 // @typechain-types
 import { Currency, Airdrop } from '@typechain-types';
 
-// @utils/blockchain
+// @utils
 import { callTransaction, prepareERC20, prepareNativeToken, resetNativeToken } from '@utils/blockchain';
 
 // @utils/deployments/common

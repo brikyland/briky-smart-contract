@@ -5,9 +5,6 @@ import { ethers, upgrades } from 'hardhat';
 // @nomicfoundation/hardhat-network-helpers
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 
-// @typechain-types
-import { Admin, PassportToken, Currency } from '@typechain-types';
-
 // @tests
 import {
     IERC165UpgradeableInterfaceId,
@@ -22,6 +19,9 @@ import { Constant } from '@tests/test.constant';
 // @tests/lucra
 import { Initialization } from '@tests/lucra/test.initialization';
 
+// @typechain-types
+import { Admin, PassportToken, Currency } from '@typechain-types';
+
 // @utils
 import { getBytes4Hex, structToObject } from '@utils/utils';
 import { callTransaction, getSignatures, randomWallet, testReentrancy } from '@utils/blockchain';
@@ -32,9 +32,9 @@ import { deployCurrency } from '@utils/deployments/common/currency';
 import { deployPassportToken } from '@utils/deployments/lucra/passportToken';
 
 // @utils/deployments/mock
-import { deployReentrancy } from '@utils/deployments/mock/mockReentrancy/reentrancy';
 import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
 import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
+import { deployReentrancyReceiver } from '@utils/deployments/mock/mockReentrancy/reentrancyReceiver';
 
 // @utils/models/lucra
 import {
@@ -556,7 +556,7 @@ describe('5.1. PassportToken', async () => {
         it('5.1.5.8. Withdraw unsuccessfully when the contract is reentered', async () => {
             const { deployer, admins, admin, passportToken } = await beforePassportTokenTest();
 
-            const reentrancyERC20 = await deployReentrancyERC20(deployer);
+            const reentrancyERC20 = await deployReentrancyERC20(deployer, true, false);
 
             await callTransaction(reentrancyERC20.mint(passportToken.address, 1000));
 
@@ -700,7 +700,7 @@ describe('5.1. PassportToken', async () => {
         it('5.1.7.5. Mint unsuccessfully when sender reenter the contract', async () => {
             const { passportToken, deployer } = await beforePassportTokenTest();
 
-            const reentrancy = await deployReentrancy(deployer);
+            const reentrancy = await deployReentrancyReceiver(deployer, true, false);
 
             const fee = await passportToken.fee();
 
