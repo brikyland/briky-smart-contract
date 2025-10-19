@@ -30,7 +30,7 @@ import { deployPrimaryToken } from '@utils/deployments/liquidity/primaryToken';
 import { deployStakeToken } from '@utils/deployments/liquidity/stakeToken';
 
 // @utils/deployments/mock
-import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
+import { deployReentrancyERC20 } from '@utils/deployments/mock/reentrancy/reentrancyERC20';
 
 // @utils/models/liquidity
 import {

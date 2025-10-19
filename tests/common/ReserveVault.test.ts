@@ -25,9 +25,9 @@ import { deployAdmin } from '@utils/deployments/common/admin';
 import { deployCurrency } from '@utils/deployments/common/currency';
 
 // @utils/deployments/mock
-import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
-import { deployMockProvider } from '@utils/deployments/mock/mockProvider';
-import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
+import { deployReentrancyERC20 } from '@utils/deployments/mock/reentrancy/reentrancyERC20';
+import { deployMockProvider } from '@utils/deployments/mock/utilities/mockProvider';
+import { deployFailReceiver } from '@utils/deployments/mock/utilities/failReceiver';
 
 // @utils/models/common
 import {

@@ -17,7 +17,9 @@ export async function deployMockProjectToken(
         feeReceiverAddress,
         validatorAddress,
         baseURI,
-    ]);
+    ], {
+        unsafeAllow: ['missing-initializer']
+    });
     await mockProjectToken.deployed();
     return mockProjectToken;
 }

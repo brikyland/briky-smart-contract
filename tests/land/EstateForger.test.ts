@@ -56,11 +56,11 @@ import {deployFeeReceiver} from '@utils/deployments/common/feeReceiver';
 import {deployPriceWatcher} from '@utils/deployments/common/priceWatcher';
 
 // @utils/deployments/mock
-import {deployFailReceiver} from '@utils/deployments/mock/failReceiver';
+import {deployFailReceiver} from '@utils/deployments/mock/utilities/failReceiver';
 import {deployGovernor} from '@utils/deployments/common/governor';
-import {deployMockEstateForger} from '@utils/deployments/mock/mockEstateForger';
-import {deployMockPriceFeed} from '@utils/deployments/mock/mockPriceFeed';
-import {deployReentrancyReceiver} from '@utils/deployments/mock/mockReentrancy/reentrancyReceiver';
+import {deployMockEstateForger} from '@utils/deployments/mock/land/mockEstateForger';
+import {deployMockPriceFeed} from '@utils/deployments/mock/utilities/mockPriceFeed';
+import {deployReentrancyReceiver} from '@utils/deployments/mock/reentrancy/reentrancyReceiver';
 
 // @utils/models/land
 import {

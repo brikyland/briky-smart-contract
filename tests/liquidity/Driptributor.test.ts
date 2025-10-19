@@ -26,7 +26,7 @@ import { deployTreasury } from '@utils/deployments/liquidity/treasury';
 import { deployDriptributor } from '@utils/deployments/liquidity/driptributor';
 
 // @utils/deployments/mock
-import { deployMockPrimaryToken } from '@utils/deployments/mock/mockPrimaryToken';
+import { deployMockPrimaryToken } from '@utils/deployments/mock/liquidity/mockPrimaryToken';
 
 // @utils/models/liquidity
 import {

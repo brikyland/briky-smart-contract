@@ -24,7 +24,7 @@ import { deployAdmin } from '@utils/deployments/common/admin';
 import { deployCurrency } from '@utils/deployments/common/currency';
 
 // @utils/deployments/mock
-import { deployProxyCaller } from '@utils/deployments/mock/proxyCaller';
+import { deployProxyCaller } from '@utils/deployments/mock/utilities/proxyCaller';
 
 // @utils/models/liquidity
 import {

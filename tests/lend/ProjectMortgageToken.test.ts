@@ -64,8 +64,8 @@ import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
 import { deployReserveVault } from '@utils/deployments/common/reserveVault';
 
 // @utils/deployments/mock
-import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
-import { deployReentrancyReceiver } from '@utils/deployments/mock/mockReentrancy/reentrancyReceiver';
+import { deployFailReceiver } from '@utils/deployments/mock/utilities/failReceiver';
+import { deployReentrancyReceiver } from '@utils/deployments/mock/reentrancy/reentrancyReceiver';
 
 // @utils/deployments/lend
 import { deployProjectMortgageToken } from '@utils/deployments/lend/projectMortgageToken';

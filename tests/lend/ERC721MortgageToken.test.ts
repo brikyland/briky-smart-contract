@@ -53,8 +53,8 @@ import {deployCurrency} from '@utils/deployments/common/currency';
 import {deployERC721MortgageToken} from '@utils/deployments/lend/erc721MortgageToken';
 
 // @utils/deployments/mock
-import {deployFailReceiver} from '@utils/deployments/mock/failReceiver';
-import {deployReentrancyReceiver} from '@utils/deployments/mock/mockReentrancy/reentrancyReceiver';
+import {deployFailReceiver} from '@utils/deployments/mock/utilities/failReceiver';
+import {deployReentrancyReceiver} from '@utils/deployments/mock/reentrancy/reentrancyReceiver';
 
 // @utils/models/lend
 import {

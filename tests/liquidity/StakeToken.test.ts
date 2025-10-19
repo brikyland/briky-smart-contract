@@ -319,13 +319,19 @@ describe('4.5. StakeToken', async () => {
             const { admin, primaryToken } = await setupBeforeTest();
 
             // StakeToken1
-            const stakeToken1 = (await upgrades.deployProxy(await ethers.getContractFactory('MockStakeToken'), [
-                admin.address,
-                primaryToken.address,
-                LiquidityInitialization.STAKE_TOKEN_Name_1,
-                LiquidityInitialization.STAKE_TOKEN_Symbol_1,
-                LiquidityInitialization.STAKE_TOKEN_FeeRate,
-            ])) as MockStakeToken;
+            const stakeToken1 = (await upgrades.deployProxy(
+                await ethers.getContractFactory('MockStakeToken'),
+                [
+                    admin.address,
+                    primaryToken.address,
+                    LiquidityInitialization.STAKE_TOKEN_Name_1,
+                    LiquidityInitialization.STAKE_TOKEN_Symbol_1,
+                    LiquidityInitialization.STAKE_TOKEN_FeeRate,
+                ],
+                {
+                    unsafeAllow: ['missing-initializer'],
+                }
+            )) as MockStakeToken;
 
             expect(await stakeToken1.name()).to.equal(LiquidityInitialization.STAKE_TOKEN_Name_1);
             expect(await stakeToken1.symbol()).to.equal(LiquidityInitialization.STAKE_TOKEN_Symbol_1);
@@ -355,13 +361,19 @@ describe('4.5. StakeToken', async () => {
                 });
 
             // StakeToken2
-            const stakeToken2 = (await upgrades.deployProxy(await ethers.getContractFactory('MockStakeToken'), [
-                admin.address,
-                primaryToken.address,
-                LiquidityInitialization.STAKE_TOKEN_Name_2,
-                LiquidityInitialization.STAKE_TOKEN_Symbol_2,
-                LiquidityInitialization.STAKE_TOKEN_FeeRate,
-            ])) as MockStakeToken;
+            const stakeToken2 = (await upgrades.deployProxy(
+                await ethers.getContractFactory('MockStakeToken'),
+                [
+                    admin.address,
+                    primaryToken.address,
+                    LiquidityInitialization.STAKE_TOKEN_Name_2,
+                    LiquidityInitialization.STAKE_TOKEN_Symbol_2,
+                    LiquidityInitialization.STAKE_TOKEN_FeeRate,
+                ],
+                {
+                    unsafeAllow: ['missing-initializer'],
+                }
+            )) as MockStakeToken;
 
             expect(await stakeToken2.name()).to.equal(LiquidityInitialization.STAKE_TOKEN_Name_2);
             expect(await stakeToken2.symbol()).to.equal(LiquidityInitialization.STAKE_TOKEN_Symbol_2);
@@ -391,13 +403,19 @@ describe('4.5. StakeToken', async () => {
                 });
 
             // StakeToken3
-            const stakeToken3 = (await upgrades.deployProxy(await ethers.getContractFactory('MockStakeToken'), [
-                admin.address,
-                primaryToken.address,
-                LiquidityInitialization.STAKE_TOKEN_Name_3,
-                LiquidityInitialization.STAKE_TOKEN_Symbol_3,
-                LiquidityInitialization.STAKE_TOKEN_FeeRate,
-            ])) as MockStakeToken;
+            const stakeToken3 = (await upgrades.deployProxy(
+                await ethers.getContractFactory('MockStakeToken'),
+                [
+                    admin.address,
+                    primaryToken.address,
+                    LiquidityInitialization.STAKE_TOKEN_Name_3,
+                    LiquidityInitialization.STAKE_TOKEN_Symbol_3,
+                    LiquidityInitialization.STAKE_TOKEN_FeeRate,
+                ],
+                {
+                    unsafeAllow: ['missing-initializer'],
+                }
+            )) as MockStakeToken;
 
             expect(await stakeToken3.name()).to.equal(LiquidityInitialization.STAKE_TOKEN_Name_3);
             expect(await stakeToken3.symbol()).to.equal(LiquidityInitialization.STAKE_TOKEN_Symbol_3);

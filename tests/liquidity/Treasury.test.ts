@@ -24,7 +24,7 @@ import { deployCurrency } from '@utils/deployments/common/currency';
 import { deployTreasury } from '@utils/deployments/liquidity/treasury';
 
 // @utils/deployments/mock
-import { deployMockPrimaryToken } from '@utils/deployments/mock/mockPrimaryToken';
+import { deployMockPrimaryToken } from '@utils/deployments/mock/liquidity/mockPrimaryToken';
 
 // @utils/models/liquidity
 import { WithdrawOperationFundParams, WithdrawOperationFundParamsInput } from '@utils/models/liquidity/treasury';

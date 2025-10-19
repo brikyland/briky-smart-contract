@@ -40,7 +40,7 @@ import {
     MockProjectToken,
     MockEstateToken__factory,
     MockPrestigePad__factory,
-    ReentrancyERC1155Receiver,
+    ReentrancyReceiver,
     FailReceiver,
 } from '@typechain-types';
 
@@ -64,9 +64,9 @@ import { deployReserveVault } from '@utils/deployments/common/reserveVault';
 import { deployCommissionToken } from '@utils/deployments/land/commissionToken';
 
 // @utils/deployments/mock
-import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
-import { deployMockProjectToken } from '@utils/deployments/mock/mockProjectToken';
-import { deployReentrancyReceiver } from '@utils/deployments/mock/mockReentrancy/reentrancyReceiver';
+import { deployFailReceiver } from '@utils/deployments/mock/utilities/failReceiver';
+import { deployMockProjectToken } from '@utils/deployments/mock/launch/mockProjectToken';
+import { deployReentrancyReceiver } from '@utils/deployments/mock/reentrancy/reentrancyReceiver';
 
 // @utils/models/launch
 import {
@@ -172,7 +172,7 @@ interface ProjectTokenFixture {
     commissionToken: CommissionToken;
 
     launchpads: any[];
-    reentrancyERC1155Receiver: ReentrancyERC1155Receiver;
+    reentrancyReceiver: ReentrancyReceiver;
     failReceiver: FailReceiver;
     zone1: string;
     zone2: string;
@@ -336,7 +336,7 @@ describe('7.2. ProjectToken', async () => {
         const zone1 = ethers.utils.formatBytes32String('TestZone1');
         const zone2 = ethers.utils.formatBytes32String('TestZone2');
 
-        const reentrancyERC1155Receiver = (await deployReentrancyReceiver(deployer, true, true)) as ReentrancyERC1155Receiver;
+        const reentrancyReceiver = (await deployReentrancyReceiver(deployer, true, true)) as ReentrancyReceiver;
         const failReceiver = (await deployFailReceiver(deployer.address, false, false)) as FailReceiver;
 
         return {
@@ -370,7 +370,7 @@ describe('7.2. ProjectToken', async () => {
             projectToken,
             prestigePad,
             launchpads,
-            reentrancyERC1155Receiver,
+            reentrancyReceiver,
             failReceiver,
             zone1,
             zone2,
@@ -384,7 +384,7 @@ describe('7.2. ProjectToken', async () => {
         skipAddCustodianAsEstateCustodian = false,
         skipRegisterBroker = false,
         skipDeclareZone = false,
-        useReentrancyERC1155ReceiverAsDepositor = false,
+        useReentrancyReceiverAsDepositor = false,
         useFailReceiverAsDepositor = false,
         addSampleProjects = false,
         deprecateProjects = false,
@@ -414,13 +414,13 @@ describe('7.2. ProjectToken', async () => {
             broker2,
             depositor2,
             depositor3,
-            reentrancyERC1155Receiver,
+            reentrancyReceiver,
             failReceiver,
         } = fixture;
 
         let depositor1 = fixture.depositor1;
-        if (useReentrancyERC1155ReceiverAsDepositor) {
-            depositor1 = reentrancyERC1155Receiver;
+        if (useReentrancyReceiverAsDepositor) {
+            depositor1 = reentrancyReceiver;
         }
         if (useFailReceiverAsDepositor) {
             depositor1 = failReceiver;
@@ -2824,16 +2824,16 @@ describe('7.2. ProjectToken', async () => {
 
         it('7.2.22.3. Withdraw estate token unsuccessfully when the contract is reentered', async () => {
             const fixture = await beforeProjectTokenTest({
-                useReentrancyERC1155ReceiverAsDepositor: true,
+                useReentrancyReceiverAsDepositor: true,
                 addSampleProjects: true,
                 mintProjectTokenForDepositor: true,
                 tokenizeProject: true,
             });
-            const { projectToken, reentrancyERC1155Receiver } = fixture;
+            const { projectToken, reentrancyReceiver } = fixture;
 
-            await testReentrancy_projectToken(fixture, reentrancyERC1155Receiver, async (timestamp: number) => {
+            await testReentrancy_projectToken(fixture, reentrancyReceiver, async (timestamp: number) => {
                 await expect(
-                    reentrancyERC1155Receiver.call(
+                    reentrancyReceiver.call(
                         projectToken.address,
                         projectToken.interface.encodeFunctionData('withdrawEstateToken', [1])
                     )

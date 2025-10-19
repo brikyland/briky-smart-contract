@@ -60,9 +60,9 @@ import {deployProjectMortgageToken} from '@utils/deployments/lend/projectMortgag
 import {deployMortgageMarketplace} from '@utils/deployments/lux/mortgageMarketplace';
 
 // @utils/deployments/mock
-import {deployFailReceiver} from '@utils/deployments/mock/failReceiver';
-import {deployMockMortgageToken} from '@utils/deployments/mock/mockMortgageToken';
-import { deployReentrancyReceiver } from '@utils/deployments/mock/mockReentrancy/reentrancyReceiver';
+import {deployFailReceiver} from '@utils/deployments/mock/utilities/failReceiver';
+import {deployMockMortgageToken} from '@utils/deployments/mock/lend/mockMortgageToken';
+import { deployReentrancyReceiver } from '@utils/deployments/mock/reentrancy/reentrancyReceiver';
 
 // @utils/models/lux
 import {OfferState} from '@utils/models/lux/offerState';

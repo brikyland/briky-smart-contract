@@ -62,7 +62,7 @@ import {deployPriceWatcher} from '@utils/deployments/common/priceWatcher';
 import {deployReserveVault} from '@utils/deployments/common/reserveVault';
 
 // @utils/deployments/mock
-import {deployMockEstateToken} from '@utils/deployments/mock/mockEstateToken';
+import {deployMockEstateToken} from '@utils/deployments/mock/land/mockEstateToken';
 
 // @utils/deployments/land
 import {deployCommissionToken} from '@utils/deployments/land/commissionToken';

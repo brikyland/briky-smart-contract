@@ -17,8 +17,8 @@ import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
 import { deployCurrency } from '@utils/deployments/common/currency';
 
 // @utils/deployments/mock
-import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
-import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
+import { deployReentrancyERC20 } from '@utils/deployments/mock/reentrancy/reentrancyERC20';
+import { deployFailReceiver } from '@utils/deployments/mock/utilities/failReceiver';
 
 // @utils/models/common
 import { WithdrawParams, WithdrawParamsInput } from '@utils/models/common/feeReceiver';

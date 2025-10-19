@@ -45,8 +45,8 @@ import {deployCurrency} from '@utils/deployments/common/currency';
 import {deployERC721Marketplace} from '@utils/deployments/lux/erc721Marketplace';
 
 // @utils/deployments/mock
-import {deployFailReceiver} from '@utils/deployments/mock/failReceiver';
-import {deployReentrancyReceiver} from '@utils/deployments/mock/mockReentrancy/reentrancyReceiver';
+import {deployFailReceiver} from '@utils/deployments/mock/utilities/failReceiver';
+import {deployReentrancyReceiver} from '@utils/deployments/mock/reentrancy/reentrancyReceiver';
 
 // @utils/models/lux
 import {

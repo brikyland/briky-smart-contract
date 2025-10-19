@@ -14,7 +14,7 @@ import { callTransaction, getSignatures, getValidationMessage, randomWallet } fr
 import { deployAdmin } from '@utils/deployments/common/admin';
 
 // @utils/deployments/mock
-import { deployMockValidatable } from '@utils/deployments/mock/mockValidatable';
+import { deployMockValidatable } from '@utils/deployments/mock/common/mockValidatable';
 
 // @utils/models/common
 import { UpdateValidatorParams, UpdateValidatorParamsInput, Validation } from '@utils/models/common/validatable';

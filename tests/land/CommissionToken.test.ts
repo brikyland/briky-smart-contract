@@ -34,7 +34,7 @@ import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
 import { deployCurrency } from '@utils/deployments/common/currency';
 
 // @utils/deployments/mock
-import { deployMockEstateToken } from '@utils/deployments/mock/mockEstateToken';
+import { deployMockEstateToken } from '@utils/deployments/mock/land/mockEstateToken';
 import { deployCommissionToken } from '@utils/deployments/land/commissionToken';
 
 // @utils/models/land
@@ -268,7 +268,7 @@ describe('2.1. CommissionToken', async () => {
     }
 
     /* --- Initialization --- */
-    describe.only('2.1.1. initialize(address,address,address,string,string,string,uint256)', async () => {
+    describe('2.1.1. initialize(address,address,address,string,string,string,uint256)', async () => {
         it('2.1.1.1. Deploy successfully', async () => {
             const { admin, feeReceiver, estateToken, commissionToken } = await beforeCommissionTokenTest();
 

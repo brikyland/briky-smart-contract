@@ -48,11 +48,11 @@ import { deployFeeReceiver } from '@utils/deployments/common/feeReceiver';
 import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
 
 // @utils/deployments/mock
-import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
-import { deployMockPriceFeed } from '@utils/deployments/mock/mockPriceFeed';
-import { deployMockEstateForger } from '@utils/deployments/mock/mockEstateForger';
-import { deployMockEstateLiquidator } from '@utils/deployments/mock/mockEstateLiquidator';
-import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
+import { deployFailReceiver } from '@utils/deployments/mock/utilities/failReceiver';
+import { deployMockPriceFeed } from '@utils/deployments/mock/utilities/mockPriceFeed';
+import { deployMockEstateForger } from '@utils/deployments/mock/land/mockEstateForger';
+import { deployMockEstateLiquidator } from '@utils/deployments/mock/land/mockEstateLiquidator';
+import { deployReentrancyERC20 } from '@utils/deployments/mock/reentrancy/reentrancyERC20';
 
 // @utils/models/common
 import { ProposalState } from '@utils/models/common/governanceHub';

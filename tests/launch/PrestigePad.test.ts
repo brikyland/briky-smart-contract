@@ -35,7 +35,6 @@ import {
     ProjectToken,
     MockPrestigePad,
     ReentrancyERC20,
-    ReentrancyExclusiveERC20,
     FailReceiver,
 } from '@typechain-types';
 
@@ -52,11 +51,11 @@ import { deployGovernor } from '@utils/deployments/common/governor';
 import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
 
 // @utils/deployments/mock
-import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
-import { deployMockPriceFeed } from '@utils/deployments/mock/mockPriceFeed';
-import { deployMockPrestigePad } from '@utils/deployments/mock/mockPrestigePad';
-import { deployReentrancyReceiver } from '@utils/deployments/mock/mockReentrancy/reentrancyReceiver';
-import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
+import { deployFailReceiver } from '@utils/deployments/mock/utilities/failReceiver';
+import { deployMockPriceFeed } from '@utils/deployments/mock/utilities/mockPriceFeed';
+import { deployMockPrestigePad } from '@utils/deployments/mock/launch/mockPrestigePad';
+import { deployReentrancyReceiver } from '@utils/deployments/mock/reentrancy/reentrancyReceiver';
+import { deployReentrancyERC20 } from '@utils/deployments/mock/reentrancy/reentrancyERC20';
 
 // @utils/models/common
 import { Rate } from '@utils/models/common/common';
@@ -161,7 +160,7 @@ export interface PrestigePadFixture {
     priceWatcher: PriceWatcher;
     prestigePad: MockPrestigePad;
 
-    reentrancyExclusiveERC20: ReentrancyExclusiveERC20;
+    reentrancyExclusiveERC20: ReentrancyERC20;
     reentrancyERC20: ReentrancyERC20;
     failReceiver: FailReceiver;
     zone1: string;
@@ -404,7 +403,7 @@ describe('7.1. PrestigePad', async () => {
         const zone1 = ethers.utils.formatBytes32String('TestZone1');
         const zone2 = ethers.utils.formatBytes32String('TestZone2');
 
-        const reentrancyExclusiveERC20 = (await deployReentrancyERC20(deployer, true, true)) as ReentrancyExclusiveERC20;
+        const reentrancyExclusiveERC20 = (await deployReentrancyERC20(deployer, true, true)) as ReentrancyERC20;
         const reentrancyERC20 = (await deployReentrancyERC20(deployer, true, false)) as ReentrancyERC20;
 
         const failReceiver = (await deployFailReceiver(deployer, false, false)) as FailReceiver;

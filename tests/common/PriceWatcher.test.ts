@@ -22,7 +22,7 @@ import { deployCurrency } from '@utils/deployments/common/currency';
 import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
 
 // @utils/deployments/mock
-import { deployMockPriceFeed } from '@utils/deployments/mock/mockPriceFeed';
+import { deployMockPriceFeed } from '@utils/deployments/mock/utilities/mockPriceFeed';
 
 // @utils/models/common
 import { Rate } from '@utils/models/common/common';

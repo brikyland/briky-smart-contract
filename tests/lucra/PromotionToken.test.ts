@@ -32,8 +32,8 @@ import { deployCurrency } from '@utils/deployments/common/currency';
 import { deployPromotionToken } from '@utils/deployments/lucra/promotionToken';
 
 // @utils/deployments/mock
-import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
-import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
+import { deployFailReceiver } from '@utils/deployments/mock/utilities/failReceiver';
+import { deployReentrancyERC20 } from '@utils/deployments/mock/reentrancy/reentrancyERC20';
 
 // @utils/models/lucra
 import {

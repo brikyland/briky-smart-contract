@@ -9,7 +9,14 @@ export async function deployMockPrimaryToken(
 ) {
     const PrimaryToken = await ethers.getContractFactory('MockPrimaryToken', signer);
 
-    const primaryToken = await upgrades.deployProxy(PrimaryToken, [adminAddress, name, symbol, liquidationUnlockedAt]);
+    const primaryToken = await upgrades.deployProxy(PrimaryToken, [
+        adminAddress,
+        name,
+        symbol,
+        liquidationUnlockedAt
+    ], {
+        unsafeAllow: ['missing-initializer']
+    });
     await primaryToken.deployed();
     return primaryToken;
 }

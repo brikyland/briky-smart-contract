@@ -34,8 +34,8 @@ import { deployCurrency } from '@utils/deployments/common/currency';
 import { deployDividendHub } from '@utils/deployments/common/dividendHub';
 
 // @utils/deployments/mock
-import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
-import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
+import { deployFailReceiver } from '@utils/deployments/mock/utilities/failReceiver';
+import { deployReentrancyERC20 } from '@utils/deployments/mock/reentrancy/reentrancyERC20';
 
 // @utils/models/common
 import { IssueDividendParams } from '@utils/models/common/dividendHub';

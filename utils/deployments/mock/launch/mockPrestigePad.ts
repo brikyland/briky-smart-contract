@@ -22,7 +22,9 @@ export async function deployMockPrestigePad(
         validatorAddress,
         baseMinUnitPrice,
         baseMaxUnitPrice,
-    ]);
+    ], {
+        unsafeAllow: ['missing-initializer']
+    });
     await mockPrestigePad.deployed();
     return mockPrestigePad;
 }

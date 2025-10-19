@@ -59,9 +59,9 @@ import { deployCurrency } from '@utils/deployments/common/currency';
 import { deployGovernanceHub } from '@utils/deployments/common/governanceHub';
 
 // @utils/deployments/mock
-import { deployFailReceiver } from '@utils/deployments/mock/failReceiver';
-import { deployReentrancyERC20 } from '@utils/deployments/mock/mockReentrancy/reentrancyERC20';
-import { deployReentrancyReceiver } from '@utils/deployments/mock/mockReentrancy/reentrancyReceiver';
+import { deployFailReceiver } from '@utils/deployments/mock/utilities/failReceiver';
+import { deployReentrancyERC20 } from '@utils/deployments/mock/reentrancy/reentrancyERC20';
+import { deployReentrancyReceiver } from '@utils/deployments/mock/reentrancy/reentrancyReceiver';
 
 // @utils/models/common
 import {

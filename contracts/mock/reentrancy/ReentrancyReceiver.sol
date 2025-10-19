@@ -11,7 +11,13 @@ ERC1155HolderUpgradeable {
     bool public isTriggeredOnReceive;
     bool public isTriggeredOnERC1155Receive;
 
-    function initialize() public initializer {}
+    function initialize(
+        bool _isTriggeredOnReceive,
+        bool _isTriggeredOnERC1155Receive
+    ) public initializer {
+        isTriggeredOnReceive = _isTriggeredOnReceive;
+        isTriggeredOnERC1155Receive = _isTriggeredOnERC1155Receive;
+    }
 
     receive() external payable {
         if (isTriggeredOnReceive) {

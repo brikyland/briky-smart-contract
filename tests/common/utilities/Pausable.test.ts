@@ -14,7 +14,7 @@ import { callTransaction } from '@utils/blockchain';
 import { deployAdmin } from '@utils/deployments/common/admin';
 
 // @utils/deployments/mock
-import { deployMockPausable } from '@utils/deployments/mock/mockPausable';
+import { deployMockPausable } from '@utils/deployments/mock/common/mockPausable';
 
 // @utils/models/common
 import { PauseParams, UnpauseParams } from '@utils/models/common/pausable';
