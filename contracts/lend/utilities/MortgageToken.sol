@@ -98,7 +98,7 @@ ReentrancyGuardUpgradeable {
     onlyInitializing {
         require(_feeRate <= CommonConstant.RATE_MAX_SUBUNIT);
 
-        /// Initializer.
+        /// Initializer
         __ERC721_init(_name, _symbol);
         __ERC721Pausable_init();
 

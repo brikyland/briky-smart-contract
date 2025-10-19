@@ -91,6 +91,11 @@ ReentrancyGuardUpgradeable {
         address _collection
     ) internal
     onlyInitializing {
+        /// Initializer
+        __Pausable_init();
+        __ReentrancyGuard_init();
+
+        /// Dependency
         admin = _admin;
         collection = _collection;
     }

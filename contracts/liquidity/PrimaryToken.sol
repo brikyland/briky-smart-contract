@@ -108,7 +108,6 @@ ReentrancyGuardUpgradeable {
         __ERC20Capped_init(PrimaryTokenConstant.MAX_SUPPLY);
         __ERC20Pausable_init();
         __ERC20Permit_init(_name);
-
         __ReentrancyGuard_init();
 
         /// Dependency

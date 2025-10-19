@@ -112,7 +112,6 @@ ReentrancyGuardUpgradeable {
         __ERC20_init(_name, _symbol);
         __ERC20Pausable_init();
         __ERC20Permit_init(_name);
-
         __ReentrancyGuard_init();
 
         /// Dependency

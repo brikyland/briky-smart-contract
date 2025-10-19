@@ -88,7 +88,7 @@ ReentrancyGuardUpgradeable {
         address _feeReceiver
     ) public virtual
     initializer {
-        /// Initializer.
+        /// Initializer
         __Pausable_init();
         __ReentrancyGuard_init();
 

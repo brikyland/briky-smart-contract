@@ -30,11 +30,7 @@ AssetMarketplace {
         address _projectToken
     ) external
     initializer {
-        /// Initializer.
-        __Pausable_init();
-        __ReentrancyGuard_init();
-
-        /// Dependency.
+        /// Initializer
         __AssetMarketplace_init(_admin, _projectToken);        
     }
 }
