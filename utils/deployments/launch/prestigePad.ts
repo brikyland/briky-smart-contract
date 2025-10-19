@@ -1,4 +1,4 @@
-import { BigNumber, BigNumberish } from 'ethers';
+import { BigNumber } from 'ethers';
 import { ethers, upgrades } from 'hardhat';
 
 export async function deployPrestigePad(

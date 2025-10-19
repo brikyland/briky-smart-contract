@@ -1,4 +1,3 @@
-import { DAY } from '@tests/test.constant';
 import { parseEther } from '@utils/blockchain';
 
 export const Initialization = {

@@ -1034,7 +1034,7 @@ describe('3.3. ProjectMortgageToken', async () => {
 
         it('3.3.8.7. Create mortgage unsuccessfully with invalid principal', async () => {
             const fixture = await beforeProjectMortgageTokenTest();
-            const { projectMortgageToken, projectToken, borrower1 } = fixture;
+            const { projectMortgageToken, borrower1 } = fixture;
             const { defaultParams } = await beforeBorrowTest(fixture);
 
             await expect(
@@ -1332,7 +1332,7 @@ describe('3.3. ProjectMortgageToken', async () => {
 
             const due = 1000;
 
-            let receipt = await callTransaction(
+            await callTransaction(
                 getProjectMortgageTokenTx_Borrow(projectMortgageToken, borrower, {
                     projectId: currentMortgageId,
                     amount,
@@ -1372,7 +1372,7 @@ describe('3.3. ProjectMortgageToken', async () => {
                 { mortgageId: currentMortgageId },
                 { value: ethValue }
             );
-            receipt = await tx.wait();
+            let receipt = await tx.wait();
 
             let expectedBorrowerBalance = initBorrowerBalance.add(principal).sub(fee);
             let expectedLenderBalance = initLenderBalance.sub(principal);
@@ -1617,7 +1617,7 @@ describe('3.3. ProjectMortgageToken', async () => {
             const fixture = await beforeProjectMortgageTokenTest({
                 listSampleMortgage: true,
             });
-            const { projectMortgageToken, borrower1, lender1, lender2 } = fixture;
+            const { projectMortgageToken, lender1, lender2 } = fixture;
 
             await callTransaction(
                 getMortgageTokenTx_Lend(
@@ -1968,7 +1968,6 @@ describe('3.3. ProjectMortgageToken', async () => {
             let currentTimestamp = (await time.latest()) + 10;
             await time.setNextBlockTimestamp(currentTimestamp);
 
-            let due = (await projectMortgageToken.getMortgage(1)).due;
             let lender1NativeBalance = await ethers.provider.getBalance(lender1.address);
             let borrower1NativeBalance = await ethers.provider.getBalance(borrower1.address);
             let borrower1Balance = await projectToken.balanceOf(borrower1.address, 1);
@@ -2009,7 +2008,6 @@ describe('3.3. ProjectMortgageToken', async () => {
                     .transferFrom(lender2.address, projectMortgageTokenOwner.address, 2)
             );
 
-            due = (await projectMortgageToken.getMortgage(2)).due;
             let borrower2CurrencyBalance = await currency.balanceOf(borrower2.address);
             let lender2CurrencyBalance = await currency.balanceOf(lender2.address);
             let projectMortgageTokenOwnerBalance = await currency.balanceOf(projectMortgageTokenOwner.address);
@@ -2495,7 +2493,7 @@ describe('3.3. ProjectMortgageToken', async () => {
                 listSampleMortgage: true,
                 listSampleLending: true,
             });
-            const { user, projectMortgageToken, borrower1, borrower2 } = fixture;
+            const { user, projectMortgageToken } = fixture;
 
             await expect(
                 getMortgageTokenTx_Foreclose(projectMortgageToken, user, {

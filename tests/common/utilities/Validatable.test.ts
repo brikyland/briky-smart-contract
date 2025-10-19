@@ -1,26 +1,26 @@
-import { expect } from 'chai';
-import { ethers } from 'hardhat';
+import {expect} from 'chai';
+import {ethers} from 'hardhat';
 
 // @nomicfoundation/hardhat-network-helpers
-import { loadFixture, time } from '@nomicfoundation/hardhat-network-helpers';
+import {loadFixture, time} from '@nomicfoundation/hardhat-network-helpers';
 
 // @typechain-types
-import { Admin, MockValidatable } from '@typechain-types';
+import {Admin, MockValidatable} from '@typechain-types';
 
 // @utils
-import { callTransaction, getSignatures, getValidationMessage, randomWallet } from '@utils/blockchain';
+import {callTransaction, getSignatures, getValidationMessage, randomWallet} from '@utils/blockchain';
 
 // @utils/deployments/common
-import { deployAdmin } from '@utils/deployments/common/admin';
+import {deployAdmin} from '@utils/deployments/common/admin';
 
 // @utils/deployments/mock
-import { deployMockValidatable } from '@utils/deployments/mock/common/mockValidatable';
+import {deployMockValidatable} from '@utils/deployments/mock/common/mockValidatable';
 
 // @utils/models/common
-import { UpdateValidatorParams, UpdateValidatorParamsInput, Validation } from '@utils/models/common/validatable';
+import {UpdateValidatorParams, UpdateValidatorParamsInput, Validation} from '@utils/models/common/validatable';
 
 // @utils/signatures/common
-import { getUpdateValidatorSignatures } from '@utils/signatures/common/validatable';
+import {getUpdateValidatorSignatures} from '@utils/signatures/common/validatable';
 
 // @utils/transaction/common
 import {
@@ -68,8 +68,7 @@ describe('1.b. Validatable', async () => {
     }
 
     async function beforeValidatableTest(): Promise<ValidatableFixture> {
-        const fixture = await loadFixture(validatableFixture);
-        return fixture;
+        return await loadFixture(validatableFixture);
     }
 
     /* --- Initialization --- */

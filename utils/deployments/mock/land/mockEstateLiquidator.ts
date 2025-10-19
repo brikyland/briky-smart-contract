@@ -1,5 +1,4 @@
 import { ethers, upgrades } from 'hardhat';
-import { BigNumberish } from 'ethers';
 
 export async function deployMockEstateLiquidator(
     signer: any,

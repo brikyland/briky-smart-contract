@@ -1,4 +1,3 @@
-import { BigNumber } from 'ethers';
 import { ethers, upgrades } from 'hardhat';
 
 export async function deployProjectToken(

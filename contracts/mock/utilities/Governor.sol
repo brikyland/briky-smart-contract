@@ -15,9 +15,9 @@ contract Governor is
 IGovernor,
 ERC1155Upgradeable,
 ERC1155SupplyUpgradeable {
-    mapping(uint256 => mapping(address => Snapshot[])) internal balanceSnapshots;
-    mapping(uint256 => bytes32) zones;
-    mapping(uint256 => address) custodians;
+    mapping(uint256 => mapping(address => Snapshot[])) public balanceSnapshots;
+    mapping(uint256 => bytes32) public zones;
+    mapping(uint256 => address) public custodians;
     address public admin;
 
     struct Snapshot {

@@ -48,7 +48,6 @@ export const IERC1155UpgradeableInterfaceId = getInterfaceID(IERC1155Upgradeable
 export const IERC1155MetadataURIUpgradeableInterfaceId = getInterfaceID(IERC1155MetadataURIUpgradeable, [
     IERC1155Upgradeable,
 ]);
-export const IERC1155ReceiverUpgradeableInterfaceId = getInterfaceID(IERC1155ReceiverUpgradeable, [IERC165Upgradeable]);
 export const IERC2981UpgradeableInterfaceId = getInterfaceID(IERC2981Upgradeable, [IERC165Upgradeable]);
 export const IERC4906UpgradeableInterfaceId = getInterfaceID(IERC4906Upgradeable, [
     IERC165Upgradeable,

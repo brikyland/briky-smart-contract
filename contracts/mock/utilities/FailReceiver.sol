@@ -10,8 +10,8 @@ contract FailReceiver is
 ERC1155HolderUpgradeable,
 ERC721HolderUpgradeable,
 ProxyCaller {
-    bool isActive;
-    bool isActiveRejectERC1155;
+    bool public isActive;
+    bool public isActiveRejectERC1155;
 
     function initialize(bool _isActive, bool _isActiveRejectERC1155) external initializer {
         isActive = _isActive;

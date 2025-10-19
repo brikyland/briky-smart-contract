@@ -35,7 +35,7 @@ contract MockMortgageToken is MortgageToken, ProxyCaller {
     }
 
     function royaltyInfo(
-        uint256 _mortgageId,
+        uint256,
         uint256 _price
     ) external view returns (address, uint256) {
         Rate memory mockRoyaltyRate = Rate(0.1 ether, CommonConstant.RATE_DECIMALS);
