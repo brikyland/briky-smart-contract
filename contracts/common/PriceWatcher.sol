@@ -70,8 +70,10 @@ ReentrancyGuardUpgradeable {
         address _admin
     ) external
     initializer {
+        /// Initializer
         __ReentrancyGuard_init();
         
+        /// Dependency
         admin = _admin;
     }
 

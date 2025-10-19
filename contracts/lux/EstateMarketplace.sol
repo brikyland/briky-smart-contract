@@ -48,11 +48,7 @@ CommissionDispatchable {
         address _commissionToken
     ) external
     initializer {
-        /// Initializer.
-        __Pausable_init();
-        __ReentrancyGuard_init();
-
-        /// Dependency.
+        /// Initializer
         __AssetMarketplace_init(_admin, _estateToken);
         __CommissionDispatchable_init(_commissionToken);
     }

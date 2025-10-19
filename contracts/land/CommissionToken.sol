@@ -90,10 +90,9 @@ ReentrancyGuardUpgradeable {
     initializer {
         require(_royaltyRate <= CommonConstant.RATE_MAX_SUBUNIT);
         
-        /// Initializer.
+        /// Initializer
         __ERC721_init(_name, _symbol);
         __ERC721Pausable_init();
-
         __ReentrancyGuard_init();
 
         /// Dependency

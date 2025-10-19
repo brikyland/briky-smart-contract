@@ -118,7 +118,7 @@ ReentrancyGuardUpgradeable {
         address _validator
     ) external
     initializer {
-        /// Initializer.
+        /// Initializer
         __CommissionDispatchable_init(_commissionToken);
         __Pausable_init();
         __Validatable_init(_validator);
