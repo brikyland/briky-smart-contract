@@ -34,6 +34,8 @@ ERC1155SupplyUpgradeable {
     receive() external payable {}
 
     function initialize(address _admin) external initializer {
+        __ERC1155_init("");
+
         admin = _admin;
     }
 

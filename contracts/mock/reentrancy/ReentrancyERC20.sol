@@ -22,14 +22,14 @@ ReentrancyBase {
 
     function transfer(address _to, uint256 _value) public override returns (bool) {
         if (isTriggeredOnTransfer) {
-            _reentrancy();
+            return _reentrancy();
         }
         return super.transfer(_to, _value);
     }
 
     function transferFrom(address _from, address _to, uint256 _value) public override returns (bool) {
         if (isTriggeredOnTransfer) {
-            _reentrancy();
+            return _reentrancy();
         }
         return super.transferFrom(_from, _to, _value);
     }

@@ -1673,7 +1673,7 @@ describe('7.1. PrestigePad', async () => {
 
             const { prestigePad, validator, manager, zone1, deployer, projectToken } = fixture;
 
-            const reentrancy = await deployReentrancyReceiver(deployer, true, false);
+            const reentrancy = await deployReentrancyReceiver(deployer, true, true);
 
             await callTransaction(
                 getProjectTokenTxByInput_RegisterInitiator(

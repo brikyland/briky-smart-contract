@@ -9,6 +9,8 @@ contract MockPausable is Pausable {
     string constant private VERSION = "v1.2.1";
 
     function initialize(address _admin) external initializer {
+        __Pausable_init();
+        
         admin = _admin;
     }
 
