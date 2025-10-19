@@ -23,14 +23,30 @@ import {ERC721Marketplace} from "./ERC721Marketplace.sol";
  */
 contract MortgageMarketplace is
 IMortgage,
-ERC721Marketplace,
-CommissionDispatchable {
+ERC721Marketplace {
     /** ===== LIBRARY ===== **/
     using ERC165CheckerUpgradeable for address;
 
 
     /** ===== CONSTANT ===== **/
     string constant private VERSION = "v1.2.1";
+
+
+    /* --- Initialization --- */
+    /**
+     *  @notice Initialize the contract after deployment, serving as the constructor.
+     * 
+     *          Name            Description
+     *  @param  _admin          `Admin` contract address.
+     *  @param  _feeReceiver    `FeeReceiver` contract address.
+     */
+    function initialize(
+        address _admin,
+        address _feeReceiver
+    ) public override
+    initializer {
+        super.initialize(_admin, _feeReceiver);
+    }
 
 
     /** ===== FUNCTION ===== **/

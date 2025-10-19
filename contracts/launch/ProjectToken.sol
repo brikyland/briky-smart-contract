@@ -165,9 +165,12 @@ ReentrancyGuardUpgradeable {
     ) external
     initializer {
         /// Initializer
+        __ERC1155_init("");
         __ERC1155Pausable_init();
-        __ReentrancyGuard_init();
+        __ERC1155URIStorage_init();
+
         __Validatable_init(_validator);
+        __ReentrancyGuard_init();
 
         /// Dependency
         admin = _admin;
