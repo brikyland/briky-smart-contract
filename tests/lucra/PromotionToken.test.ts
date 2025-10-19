@@ -13,7 +13,6 @@ import {
     IERC721UpgradeableInterfaceId,
     IERC2981UpgradeableInterfaceId,
     IERC4906UpgradeableInterfaceId,
-    IRoyaltyRateProposerInterfaceId,
 } from '@tests/interfaces';
 
 // @tests/lucra
@@ -1003,10 +1002,6 @@ describe('5.2. PromotionToken', async () => {
     describe('5.2.9. supportsInterface(bytes4)', async () => {
         it('5.2.9.1. Return true for appropriate interface', async () => {
             const { promotionToken } = await beforePromotionTokenTest();
-
-            expect(await promotionToken.supportsInterface(getBytes4Hex(IRoyaltyRateProposerInterfaceId))).to.equal(
-                true
-            );
 
             expect(await promotionToken.supportsInterface(getBytes4Hex(IERC165UpgradeableInterfaceId))).to.equal(true);
             expect(await promotionToken.supportsInterface(getBytes4Hex(IERC721UpgradeableInterfaceId))).to.equal(true);

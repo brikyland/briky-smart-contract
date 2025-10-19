@@ -17,7 +17,6 @@ import {
     IAssetTokenInterfaceId,
     IEstateTokenizerInterfaceId,
     IGovernorInterfaceId,
-    IRoyaltyRateProposerInterfaceId,
 } from '@tests/interfaces';
 import { Constant } from '@tests/test.constant';
 
@@ -2211,7 +2210,6 @@ describe('7.2. ProjectToken', async () => {
             expect(await projectToken.supportsInterface(getBytes4Hex(IAssetTokenInterfaceId))).to.equal(true);
             expect(await projectToken.supportsInterface(getBytes4Hex(IGovernorInterfaceId))).to.equal(true);
             expect(await projectToken.supportsInterface(getBytes4Hex(IEstateTokenizerInterfaceId))).to.equal(true);
-            expect(await projectToken.supportsInterface(getBytes4Hex(IRoyaltyRateProposerInterfaceId))).to.equal(true);
             expect(await projectToken.supportsInterface(getBytes4Hex(IERC165UpgradeableInterfaceId))).to.equal(true);
             expect(
                 await projectToken.supportsInterface(getBytes4Hex(IERC1155MetadataURIUpgradeableInterfaceId))

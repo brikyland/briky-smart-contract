@@ -17,7 +17,6 @@ import {
     IERC2981UpgradeableInterfaceId,
     IAssetTokenInterfaceId,
     IGovernorInterfaceId,
-    IRoyaltyRateProposerInterfaceId,
 } from '@tests/interfaces';
 import {Constant} from '@tests/test.constant';
 
@@ -2323,7 +2322,6 @@ describe('2.4. EstateToken', async () => {
 
             expect(await estateToken.supportsInterface(getBytes4Hex(IAssetTokenInterfaceId))).to.equal(true);
             expect(await estateToken.supportsInterface(getBytes4Hex(IGovernorInterfaceId))).to.equal(true);
-            expect(await estateToken.supportsInterface(getBytes4Hex(IRoyaltyRateProposerInterfaceId))).to.equal(true);
             expect(await estateToken.supportsInterface(getBytes4Hex(IERC165UpgradeableInterfaceId))).to.equal(true);
             expect(await estateToken.supportsInterface(getBytes4Hex(IERC1155UpgradeableInterfaceId))).to.equal(true);
             expect(

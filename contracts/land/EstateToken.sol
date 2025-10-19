@@ -19,7 +19,6 @@ import {CommonConstant} from "../common/constants/CommonConstant.sol";
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
 import {IAssetToken} from "../common/interfaces/IAssetToken.sol";
 import {IGovernor} from "../common/interfaces/IGovernor.sol";
-import {IRoyaltyRateProposer} from "../common/interfaces/IRoyaltyRateProposer.sol";
 
 /// contracts/common/utilities/
 import {Administrable} from "../common/utilities/Administrable.sol";
@@ -578,7 +577,6 @@ Validatable {
     ) returns (bool) {
         return _interfaceId == type(IGovernor).interfaceId
             || _interfaceId == type(IAssetToken).interfaceId
-            || _interfaceId == type(IRoyaltyRateProposer).interfaceId
             || _interfaceId == type(IERC2981Upgradeable).interfaceId
             || super.supportsInterface(_interfaceId);
     }

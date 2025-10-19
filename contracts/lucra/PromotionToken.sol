@@ -12,7 +12,6 @@ import {ERC721PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/tok
 
 /// contracts/common/interfaces/
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
-import {IRoyaltyRateProposer} from "../common/interfaces/IRoyaltyRateProposer.sol";
 
 /// contracts/common/constants/
 import {CommonConstant} from "../common/constants/CommonConstant.sol";
@@ -395,8 +394,7 @@ ReentrancyGuardUpgradeable {
         IERC165Upgradeable,
         ERC721Upgradeable
     ) returns (bool) {
-        return _interfaceId == type(IRoyaltyRateProposer).interfaceId
-            || _interfaceId == type(IERC2981Upgradeable).interfaceId
+        return _interfaceId == type(IERC2981Upgradeable).interfaceId
             || _interfaceId == type(IERC4906Upgradeable).interfaceId
             || super.supportsInterface(_interfaceId);
     }

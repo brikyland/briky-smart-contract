@@ -16,7 +16,6 @@ import {
     IMortgageToken__factory,
     IProjectLaunchpad__factory,
     IProjectTokenReceiver__factory,
-    IRoyaltyRateProposer__factory,
 } from '@typechain-types';
 
 import { getInterfaceID } from '@utils/utils';
@@ -38,7 +37,6 @@ const IEstateTokenizer = IEstateTokenizer__factory.createInterface();
 const IProjectLaunchpad = IProjectLaunchpad__factory.createInterface();
 const IEstateTokenReceiver = IEstateTokenReceiver__factory.createInterface();
 const IGovernor = IGovernor__factory.createInterface();
-const IRoyaltyRateProposer = IRoyaltyRateProposer__factory.createInterface();
 const IProjectTokenReceiver = IProjectTokenReceiver__factory.createInterface();
 const IMortgageToken = IMortgageToken__factory.createInterface();
 
@@ -69,11 +67,6 @@ export const IEstateTokenizerInterfaceId = getInterfaceID(IEstateTokenizer, [ICo
 export const IEstateTokenReceiverInterfaceId = getInterfaceID(IEstateTokenReceiver, [IERC1155ReceiverUpgradeable]);
 export const IProjectTokenReceiverInterfaceId = getInterfaceID(IProjectTokenReceiver, [IERC1155ReceiverUpgradeable]);
 export const IGovernorInterfaceId = getInterfaceID(IGovernor, [IERC1155Upgradeable]);
-export const IRoyaltyRateProposerInterfaceId = getInterfaceID(IRoyaltyRateProposer, [
-    ICommon,
-    IERC165Upgradeable,
-    IERC2981Upgradeable,
-]);
 export const IProjectLaunchpadInterfaceId = getInterfaceID(IProjectLaunchpad, [ICommon, IProjectTokenReceiver]);
 export const IMortgageTokenInterfaceId = getInterfaceID(IMortgageToken, [
     ICommon,
