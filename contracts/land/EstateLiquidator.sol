@@ -119,11 +119,10 @@ ReentrancyGuardUpgradeable {
     ) external
     initializer {
         /// Initializer.
-        __Pausable_init();
-        __ReentrancyGuard_init();
-
         __CommissionDispatchable_init(_commissionToken);
+        __Pausable_init();
         __Validatable_init(_validator);
+        __ReentrancyGuard_init();
 
         /// Dependency.
         admin = _admin;

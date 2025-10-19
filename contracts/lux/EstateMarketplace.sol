@@ -52,10 +52,9 @@ CommissionDispatchable {
         __Pausable_init();
         __ReentrancyGuard_init();
 
-        __CommissionDispatchable_init(_commissionToken);
-
         /// Dependency.
-        __AssetMarketplace_init(_admin, _estateToken);        
+        __AssetMarketplace_init(_admin, _estateToken);
+        __CommissionDispatchable_init(_commissionToken);
     }
 
 

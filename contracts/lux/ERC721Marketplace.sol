@@ -86,28 +86,13 @@ ReentrancyGuardUpgradeable {
     function initialize(
         address _admin,
         address _feeReceiver
-    ) public
+    ) public virtual
     initializer {
         /// Initializer.
         __Pausable_init();
         __ReentrancyGuard_init();
 
         /// Dependency
-        __ERC721Marketplace_init(_admin, _feeReceiver);
-    }
-
-    /**
-     *  @notice Helper function to initialize the dependencies of the contract.
-     *
-     *          Name            Description
-     *  @param  _admin          `Admin` contract address.
-     *  @param  _feeReceiver    `FeeReceiver` contract address.
-     */
-    function __ERC721Marketplace_init(
-        address _admin,
-        address _feeReceiver
-    ) internal
-    onlyInitializing {
         admin = _admin;
         feeReceiver = _feeReceiver;
     }

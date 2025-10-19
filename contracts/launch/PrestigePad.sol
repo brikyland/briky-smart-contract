@@ -155,8 +155,8 @@ ReentrancyGuardUpgradeable {
     initializer {
         /// Initializer
         __Pausable_init();
-        __ReentrancyGuard_init();
         __Validatable_init(_validator);
+        __ReentrancyGuard_init();
 
         /// Dependency
         admin = _admin;

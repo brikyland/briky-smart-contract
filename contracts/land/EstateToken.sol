@@ -132,8 +132,10 @@ Validatable {
     ) external
     initializer {
         /// Initializer
+        __ERC1155_init("");
         __ERC1155Pausable_init();
-
+        __ERC1155URIStorage_init();
+        
         __Validatable_init(_validator);
 
         /// Dependency
