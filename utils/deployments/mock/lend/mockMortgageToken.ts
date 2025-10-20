@@ -19,9 +19,7 @@ export async function deployMockMortgageToken(
         symbol,
         baseURI,
         feeRate,
-    ], {
-        unsafeAllow: ['missing-initializer']
-    });
+    ]);
     await mockMortgageToken.deployed();
     return mockMortgageToken;
 }

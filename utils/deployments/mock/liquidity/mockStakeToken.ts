@@ -16,9 +16,7 @@ export async function deployMockStakeToken(
         name,
         symbol,
         feeRate
-    ], {
-        unsafeAllow: ['missing-initializer']
-    });
+    ]);
     await stakeToken.deployed();
     return stakeToken;
 }

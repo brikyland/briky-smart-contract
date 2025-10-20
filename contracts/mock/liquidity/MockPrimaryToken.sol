@@ -7,6 +7,7 @@ import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC
 import { PrimaryToken } from "../../liquidity/PrimaryToken.sol";
 import { ProxyCaller } from "../misc/utilities/ProxyCaller.sol";
 
+/// @custom:oz-upgrades-unsafe-allow missing-initializer
 contract MockPrimaryToken is PrimaryToken, ProxyCaller {
     function burn(address _from, uint256 _amount) external {
         _burn(_from, _amount);

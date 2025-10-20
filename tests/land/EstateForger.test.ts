@@ -59,7 +59,7 @@ import {deployPriceWatcher} from '@utils/deployments/common/priceWatcher';
 import {deployFailReceiver} from '@utils/deployments/mock/utilities/failReceiver';
 import {deployGovernor} from '@utils/deployments/common/governor';
 import {deployMockEstateForger} from '@utils/deployments/mock/land/mockEstateForger';
-import {deployMockPriceFeed} from '@utils/deployments/mock/utilities/priceFeed';
+import {deployPriceFeed} from '@utils/deployments/mock/utilities/priceFeed';
 import {deployReentrancyReceiver} from '@utils/deployments/mock/reentrancy/reentrancyReceiver';
 
 // @utils/models/land
@@ -253,8 +253,8 @@ describe('2.2. EstateForger', async () => {
 
         const currencies = [currency1, currency2, currency3];
 
-        const nativePriceFeed = (await deployMockPriceFeed(deployer.address, 0, 0)) as PriceFeed;
-        const currencyPriceFeed = (await deployMockPriceFeed(deployer.address, 0, 0)) as PriceFeed;
+        const nativePriceFeed = (await deployPriceFeed(deployer.address, 0, 0)) as PriceFeed;
+        const currencyPriceFeed = (await deployPriceFeed(deployer.address, 0, 0)) as PriceFeed;
 
         const feeReceiver = (await deployFeeReceiver(deployer.address, admin.address)) as FeeReceiver;
 

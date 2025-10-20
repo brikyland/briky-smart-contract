@@ -19,9 +19,7 @@ export async function deployMockEstateLiquidator(
         dividendHubAddress,
         feeReceiverAddress,
         validatorAddress,
-    ], {
-        unsafeAllow: ['missing-initializer']
-    });
+    ]);
     await mockEstateLiquidator.deployed();
     return mockEstateLiquidator;
 }

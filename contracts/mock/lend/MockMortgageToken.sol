@@ -6,6 +6,7 @@ import { ProxyCaller } from "../misc/utilities/ProxyCaller.sol";
 import { CommonConstant } from "../../common/constants/CommonConstant.sol";
 import { Formula } from "../../common/utilities/Formula.sol";
 
+/// @custom:oz-upgrades-unsafe-allow missing-initializer
 contract MockMortgageToken is MortgageToken, ProxyCaller {
     using Formula for uint256;
 

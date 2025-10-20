@@ -49,7 +49,7 @@ import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
 
 // @utils/deployments/mock
 import { deployFailReceiver } from '@utils/deployments/mock/utilities/failReceiver';
-import { deployMockPriceFeed } from '@utils/deployments/mock/utilities/priceFeed';
+import { deployPriceFeed } from '@utils/deployments/mock/utilities/priceFeed';
 import { deployMockEstateForger } from '@utils/deployments/mock/land/mockEstateForger';
 import { deployMockEstateLiquidator } from '@utils/deployments/mock/land/mockEstateLiquidator';
 import { deployReentrancyERC20 } from '@utils/deployments/mock/reentrancy/reentrancyERC20';
@@ -230,8 +230,8 @@ describe('2.3. EstateLiquidator', async () => {
 
         const currencies = [currency1, currency2, currency3];
 
-        const nativePriceFeed = (await deployMockPriceFeed(deployer.address, 0, 0)) as PriceFeed;
-        const currencyPriceFeed = (await deployMockPriceFeed(deployer.address, 0, 0)) as PriceFeed;
+        const nativePriceFeed = (await deployPriceFeed(deployer.address, 0, 0)) as PriceFeed;
+        const currencyPriceFeed = (await deployPriceFeed(deployer.address, 0, 0)) as PriceFeed;
 
         const adminAddresses: string[] = admins.map((signer) => signer.address);
         const admin = (await deployAdmin(

@@ -52,8 +52,8 @@ import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
 
 // @utils/deployments/mock
 import { deployFailReceiver } from '@utils/deployments/mock/utilities/failReceiver';
-import { deployMockPriceFeed } from '@utils/deployments/mock/utilities/priceFeed';
 import { deployMockPrestigePad } from '@utils/deployments/mock/launch/mockPrestigePad';
+import { deployPriceFeed } from '@utils/deployments/mock/utilities/priceFeed';
 import { deployReentrancyReceiver } from '@utils/deployments/mock/reentrancy/reentrancyReceiver';
 import { deployReentrancyERC20 } from '@utils/deployments/mock/reentrancy/reentrancyERC20';
 
@@ -354,8 +354,8 @@ describe('7.1. PrestigePad', async () => {
 
         const currencies = [currency1, currency2, currency3];
 
-        const nativePriceFeed = (await deployMockPriceFeed(deployer.address, 0, 0)) as PriceFeed;
-        const currencyPriceFeed = (await deployMockPriceFeed(deployer.address, 0, 0)) as PriceFeed;
+        const currencyPriceFeed = (await deployPriceFeed(deployer.address, 0, 0)) as PriceFeed;
+        const nativePriceFeed = (await deployPriceFeed(deployer.address, 0, 0)) as PriceFeed;
 
         const feeReceiver = (await deployFeeReceiver(deployer.address, admin.address)) as FeeReceiver;
 

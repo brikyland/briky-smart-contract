@@ -14,9 +14,7 @@ export async function deployMockPrimaryToken(
         name,
         symbol,
         liquidationUnlockedAt
-    ], {
-        unsafeAllow: ['missing-initializer']
-    });
+    ]);
     await primaryToken.deployed();
     return primaryToken;
 }

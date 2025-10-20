@@ -24,9 +24,7 @@ export async function deployMockEstateForger(
         validatorAddress,
         baseMinUnitPrice,
         baseMaxUnitPrice,
-    ], {
-        unsafeAllow: ['missing-initializer']
-    });
+    ]);
     await mockEstateForger.deployed();
     return mockEstateForger;
 }
