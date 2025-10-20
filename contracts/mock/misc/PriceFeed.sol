@@ -6,7 +6,7 @@ import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-contract MockPriceFeed is 
+contract PriceFeed is 
 AggregatorV3Interface,
 Initializable,
 IERC165Upgradeable {
