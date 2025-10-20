@@ -5,6 +5,7 @@ pragma solidity ^0.8.20;
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC721Upgradeable.sol";
 import {IERC2981Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
 import {ERC165CheckerUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
+import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 
 /// contracts/common/interfaces/
 import {IAdmin} from "../common/interfaces/IAdmin.sol";
@@ -27,6 +28,7 @@ import {ERC721MortgageTokenStorage} from "./storages/ERC721MortgageTokenStorage.
  */
 contract ERC721MortgageToken is
 ERC721MortgageTokenStorage,
+ERC721Holder,
 MortgageToken {
     /** ===== LIBRARY ===== **/
     using ERC165CheckerUpgradeable for address;
@@ -123,7 +125,7 @@ MortgageToken {
                 if (!isCollateral[_tokens[i]]) {
                     revert NotRegisteredCollateral();
                 }
-                isCollateral[_tokens[i]] = true;
+                isCollateral[_tokens[i]] = false;
                 emit CollateralDeregistration(_tokens[i]);
             } 
         }
@@ -143,6 +145,31 @@ MortgageToken {
     validMortgage(_mortgageId)
     returns (ERC721Collateral memory) {
         return collaterals[_mortgageId];
+    }
+
+
+    /**
+     *          Name        Description
+     *  @param  _tokenId    Token identifier.
+     *  @param  _price      Reference value.
+     * 
+     *  @return receiver    Royalty receiver address.
+     *  @return royalty     Royalty derived from the reference value.
+     */
+    function royaltyInfo(
+        uint256 _tokenId,
+        uint256 _price
+    ) external view override returns (address, uint256) {
+        _requireMinted(_tokenId);
+        ERC721Collateral memory collateral = collaterals[_tokenId];
+        if (collateral.collection.supportsInterface(type(IERC2981Upgradeable).interfaceId)) {
+            ( , uint256 royalty) = IERC2981Upgradeable(collateral.collection).royaltyInfo(
+                collateral.tokenId,
+                _price
+            );
+            return (feeReceiver, royalty);
+        }
+        return (address(0), 0);
     }
 
 
@@ -206,32 +233,6 @@ MortgageToken {
         );
 
         return mortgageId;
-    }
-
-
-    /* --- Override --- */
-    /**
-     *          Name        Description
-     *  @param  _tokenId    Token identifier.
-     *  @param  _price      Reference value.
-     * 
-     *  @return receiver    Royalty receiver address.
-     *  @return royalty     Royalty derived from the reference value.
-     */
-    function royaltyInfo(
-        uint256 _tokenId,
-        uint256 _price
-    ) external view override returns (address, uint256) {
-        _requireMinted(_tokenId);
-        ERC721Collateral memory collateral = collaterals[_tokenId];
-        if (collateral.collection.supportsInterface(type(IERC2981Upgradeable).interfaceId)) {
-            ( , uint256 royalty) = IERC2981Upgradeable(collateral.collection).royaltyInfo(
-                collateral.tokenId,
-                _price
-            );
-            return (feeReceiver, royalty);
-        }
-        return (address(0), 0);
     }
 
 
