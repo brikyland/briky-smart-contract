@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { Revert } from "../../common/utilities/Revert.sol";
+import { Revert } from "./Revert.sol";
 
 contract ProxyCaller {
     function call(address _to, bytes calldata _data) external payable {
