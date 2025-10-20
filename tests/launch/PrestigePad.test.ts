@@ -29,7 +29,7 @@ import {
     Currency,
     EstateToken,
     FeeReceiver,
-    MockPriceFeed,
+    PriceFeed,
     ReserveVault,
     PriceWatcher,
     ProjectToken,
@@ -52,7 +52,7 @@ import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
 
 // @utils/deployments/mock
 import { deployFailReceiver } from '@utils/deployments/mock/utilities/failReceiver';
-import { deployMockPriceFeed } from '@utils/deployments/mock/utilities/mockPriceFeed';
+import { deployMockPriceFeed } from '@utils/deployments/mock/utilities/priceFeed';
 import { deployMockPrestigePad } from '@utils/deployments/mock/launch/mockPrestigePad';
 import { deployReentrancyReceiver } from '@utils/deployments/mock/reentrancy/reentrancyReceiver';
 import { deployReentrancyERC20 } from '@utils/deployments/mock/reentrancy/reentrancyERC20';
@@ -151,8 +151,8 @@ export interface PrestigePadFixture {
 
     admin: Admin;
     currencies: Currency[];
-    nativePriceFeed: MockPriceFeed;
-    currencyPriceFeed: MockPriceFeed;
+    nativePriceFeed: PriceFeed;
+    currencyPriceFeed: PriceFeed;
     feeReceiver: FeeReceiver;
     estateToken: MockContract<EstateToken>;
     projectToken: MockContract<ProjectToken>;
@@ -354,8 +354,8 @@ describe('7.1. PrestigePad', async () => {
 
         const currencies = [currency1, currency2, currency3];
 
-        const nativePriceFeed = (await deployMockPriceFeed(deployer.address, 0, 0)) as MockPriceFeed;
-        const currencyPriceFeed = (await deployMockPriceFeed(deployer.address, 0, 0)) as MockPriceFeed;
+        const nativePriceFeed = (await deployMockPriceFeed(deployer.address, 0, 0)) as PriceFeed;
+        const currencyPriceFeed = (await deployMockPriceFeed(deployer.address, 0, 0)) as PriceFeed;
 
         const feeReceiver = (await deployFeeReceiver(deployer.address, admin.address)) as FeeReceiver;
 

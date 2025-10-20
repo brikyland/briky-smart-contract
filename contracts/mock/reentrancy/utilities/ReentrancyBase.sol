@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {Revert} from "./Revert.sol";
-import {ProxyCaller} from "../utilities/ProxyCaller.sol";
+import {Revert} from "../../misc/utilities/Revert.sol";
+import {ProxyCaller} from "../../misc/utilities/ProxyCaller.sol";
 
 abstract contract ReentrancyBase is ProxyCaller {
     address public reentrancyTarget;

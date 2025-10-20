@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import { MortgageToken } from "../../lend/utilities/MortgageToken.sol";
-import { ProxyCaller } from "../utilities/ProxyCaller.sol";
+import { ProxyCaller } from "../misc/utilities/ProxyCaller.sol";
 import { CommonConstant } from "../../common/constants/CommonConstant.sol";
 import { Formula } from "../../common/utilities/Formula.sol";
 

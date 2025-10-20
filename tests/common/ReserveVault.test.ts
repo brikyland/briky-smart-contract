@@ -9,7 +9,7 @@ import { MockContract, smock } from '@defi-wonderland/smock';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 
 // @typechain-types
-import { Admin, Currency, ReserveVault, ReserveVault__factory, MockProvider, ReentrancyERC20 } from '@typechain-types';
+import { Admin, Currency, ReserveVault, ReserveVault__factory, FundProvider, ReentrancyERC20 } from '@typechain-types';
 
 // @utils
 import {
@@ -26,7 +26,7 @@ import { deployCurrency } from '@utils/deployments/common/currency';
 
 // @utils/deployments/mock
 import { deployReentrancyERC20 } from '@utils/deployments/mock/reentrancy/reentrancyERC20';
-import { deployMockProvider } from '@utils/deployments/mock/utilities/mockProvider';
+import { deployFundProvider } from '@utils/deployments/mock/utilities/fundProvider';
 import { deployFailReceiver } from '@utils/deployments/mock/utilities/failReceiver';
 
 // @utils/models/common
@@ -65,7 +65,7 @@ interface ReserveVaultFixture {
 
     admin: Admin;
     currencies: Currency[];
-    providers: MockProvider[];
+    providers: FundProvider[];
     reserveVault: MockContract<ReserveVault>;
 
     reentrancyERC20: ReentrancyERC20;
@@ -93,9 +93,9 @@ describe('1.8. ReserveVault', async () => {
         const currency4 = (await deployCurrency(deployer.address, 'MockCurrency4', 'MCK4')) as Currency;
         const currencies = [currency1, currency2, currency3, currency4];
 
-        const provider1 = (await deployMockProvider(deployer)) as MockProvider;
-        const provider2 = (await deployMockProvider(deployer)) as MockProvider;
-        const provider3 = (await deployMockProvider(deployer)) as MockProvider;
+        const provider1 = (await deployFundProvider(deployer)) as FundProvider;
+        const provider2 = (await deployFundProvider(deployer)) as FundProvider;
+        const provider3 = (await deployFundProvider(deployer)) as FundProvider;
         const providers = [provider1, provider2, provider3];
 
         const SmockReserveVaultFactory = await smock.mock<ReserveVault__factory>('ReserveVault');

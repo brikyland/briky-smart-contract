@@ -5,7 +5,7 @@ import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC2
 import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 
 import { PrimaryToken } from "../../liquidity/PrimaryToken.sol";
-import { ProxyCaller } from "../utilities/ProxyCaller.sol";
+import { ProxyCaller } from "../misc/utilities/ProxyCaller.sol";
 
 contract MockPrimaryToken is PrimaryToken, ProxyCaller {
     function burn(address _from, uint256 _amount) external {

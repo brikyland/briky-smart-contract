@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import { EstateToken } from "../../land/EstateToken.sol";
-import { ProxyCaller } from "../utilities/ProxyCaller.sol";
+import { ProxyCaller } from "../misc/utilities/ProxyCaller.sol";
 
 contract MockEstateToken is EstateToken, ProxyCaller {
     function updateFeeReceiver(address _feeReceiver) external {

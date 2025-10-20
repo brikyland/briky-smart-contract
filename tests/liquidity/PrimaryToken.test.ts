@@ -1538,7 +1538,7 @@ describe('4.4. PrimaryToken', async () => {
             expect(treasury.provideLiquidity).to.be.calledWith(value);
         });
 
-        it('4.4.21.4. ContributeLiquidityFromStakeToken unsuccessfully with unknown contract sender', async () => {
+        it('4.4.21.4. Contribute liquidity from stake token unsuccessfully with unknown contract sender', async () => {
             const { primaryToken, deployer, currency } = await setupBeforeTest({
                 updateStakeTokens: true,
                 updateTreasury: true,

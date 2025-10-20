@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import { PrestigePad } from "../../launch/PrestigePad.sol";
-import { ProxyCaller } from "../utilities/ProxyCaller.sol";
+import { ProxyCaller } from "../misc/utilities/ProxyCaller.sol";
 import { IProjectToken } from "../../launch/interfaces/IProjectToken.sol";
 
 contract MockPrestigePad is PrestigePad, ProxyCaller {

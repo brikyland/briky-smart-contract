@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import { EstateLiquidator } from "../../land/EstateLiquidator.sol";
-import { ProxyCaller } from "../utilities/ProxyCaller.sol";
+import { ProxyCaller } from "../misc/utilities/ProxyCaller.sol";
 
 contract MockEstateLiquidator is EstateLiquidator, ProxyCaller {
     function setFeeReceiver(address _feeReceiver) external {

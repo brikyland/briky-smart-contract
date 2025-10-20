@@ -10,7 +10,7 @@ import { smock } from '@defi-wonderland/smock';
 import { loadFixture, time } from '@nomicfoundation/hardhat-network-helpers';
 
 // @typechain-types
-import { Admin, Currency, MockPriceFeed, PriceWatcher } from '@typechain-types';
+import { Admin, Currency, PriceFeed, PriceWatcher } from '@typechain-types';
 
 // @utils
 import { callTransaction, expectRevertWithModifierCustomError, randomWallet } from '@utils/blockchain';
@@ -22,7 +22,7 @@ import { deployCurrency } from '@utils/deployments/common/currency';
 import { deployPriceWatcher } from '@utils/deployments/common/priceWatcher';
 
 // @utils/deployments/mock
-import { deployMockPriceFeed } from '@utils/deployments/mock/utilities/mockPriceFeed';
+import { deployPriceFeed } from '@utils/deployments/mock/utilities/priceFeed';
 
 // @utils/models/common
 import { Rate } from '@utils/models/common/common';
@@ -53,9 +53,9 @@ interface PriceWatcherFixture {
 
     admin: Admin;
     currency: Currency;
-    nativePriceFeed: MockPriceFeed;
-    currencyPriceFeed: MockPriceFeed;
-    priceFeeds: MockPriceFeed[];
+    nativePriceFeed: PriceFeed;
+    currencyPriceFeed: PriceFeed;
+    priceFeeds: PriceFeed[];
     priceWatcher: PriceWatcher;
 }
 
@@ -78,12 +78,12 @@ describe('1.7. PriceWatcher', async () => {
         const currency = await SmockCurrencyFactory.deploy();
         await callTransaction(currency.initialize('MockCurrency', 'MCK'));
 
-        const nativePriceFeed = (await deployMockPriceFeed(deployer.address, 0, 0)) as MockPriceFeed;
-        const currencyPriceFeed = (await deployMockPriceFeed(deployer.address, 0, 0)) as MockPriceFeed;
+        const nativePriceFeed = (await deployPriceFeed(deployer.address, 0, 0)) as PriceFeed;
+        const currencyPriceFeed = (await deployPriceFeed(deployer.address, 0, 0)) as PriceFeed;
 
         const priceFeeds = [];
         while (priceFeeds.length < 5) {
-            const priceFeed = (await deployMockPriceFeed(deployer.address, 0, 0)) as MockPriceFeed;
+            const priceFeed = (await deployPriceFeed(deployer.address, 0, 0)) as PriceFeed;
             priceFeeds.push(priceFeed);
         }
 
