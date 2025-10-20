@@ -32,23 +32,6 @@ ERC721Marketplace {
     string constant private VERSION = "v1.2.1";
 
 
-    /* --- Initialization --- */
-    /**
-     *  @notice Initialize the contract after deployment, serving as the constructor.
-     * 
-     *          Name            Description
-     *  @param  _admin          `Admin` contract address.
-     *  @param  _feeReceiver    `FeeReceiver` contract address.
-     */
-    function initialize(
-        address _admin,
-        address _feeReceiver
-    ) public override
-    initializer {
-        super.initialize(_admin, _feeReceiver);
-    }
-
-
     /** ===== FUNCTION ===== **/
     /* --- Helper --- */
     /**
