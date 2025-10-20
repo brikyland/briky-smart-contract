@@ -1,4 +1,4 @@
-import { ethers, upgrades } from "hardhat";
+import { ethers, upgrades } from 'hardhat';
 
 export async function deployAdmin(
     signer: any,
@@ -9,16 +9,13 @@ export async function deployAdmin(
     admin5Address: string
 ) {
     const Admin = await ethers.getContractFactory('Admin', signer);
-    const admin = await upgrades.deployProxy(
-        Admin,
-        [
-            admin1Address,
-            admin2Address,
-            admin3Address,
-            admin4Address,
-            admin5Address
-        ]
-    );
+    const admin = await upgrades.deployProxy(Admin, [
+        admin1Address,
+        admin2Address,
+        admin3Address,
+        admin4Address,
+        admin5Address,
+    ]);
     await admin.deployed();
     return admin;
 }

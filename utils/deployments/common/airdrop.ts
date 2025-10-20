@@ -1,4 +1,4 @@
-import { ethers, upgrades } from "hardhat";
+import { ethers, upgrades } from 'hardhat';
 
 export async function deployAirdrop(signer: any) {
     const Airdrop = await ethers.getContractFactory('Airdrop', signer);

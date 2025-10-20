@@ -1,5 +1,4 @@
-import { BigNumber } from "ethers";
-import { ethers, upgrades } from "hardhat";
+import { ethers, upgrades } from 'hardhat';
 
 export async function deployEstateLiquidator(
     signer: any,
@@ -9,21 +8,18 @@ export async function deployEstateLiquidator(
     governanceHubAddress: string,
     dividendHubAddress: string,
     feeReceiverAddress: string,
-    estateLiquidatorValidatorAddress: string,
+    estateLiquidatorValidatorAddress: string
 ) {
     const EstateLiquidator = await ethers.getContractFactory('EstateLiquidator', signer);
-    const estateLiquidator = await upgrades.deployProxy(
-        EstateLiquidator,
-        [
-            adminAddress,
-            estateTokenAddress,
-            commissionTokenAddress,
-            governanceHubAddress,
-            dividendHubAddress,
-            feeReceiverAddress,
-            estateLiquidatorValidatorAddress,
-        ]
-    );
+    const estateLiquidator = await upgrades.deployProxy(EstateLiquidator, [
+        adminAddress,
+        estateTokenAddress,
+        commissionTokenAddress,
+        governanceHubAddress,
+        dividendHubAddress,
+        feeReceiverAddress,
+        estateLiquidatorValidatorAddress,
+    ]);
     await estateLiquidator.deployed();
     return estateLiquidator;
 }

@@ -1,5 +1,5 @@
-import { ethers, upgrades } from "hardhat";
-import { BigNumber } from "ethers";
+import { ethers, upgrades } from 'hardhat';
+import { BigNumber } from 'ethers';
 
 export async function deployDriptributor(
     signer: any,
@@ -9,14 +9,7 @@ export async function deployDriptributor(
 ) {
     const Driptributor = await ethers.getContractFactory('Driptributor', signer);
 
-    const driptributor = await upgrades.deployProxy(
-        Driptributor,
-        [
-            adminAddress,
-            primaryTokenAddress,
-            totalAmount,
-        ]
-    );
+    const driptributor = await upgrades.deployProxy(Driptributor, [adminAddress, primaryTokenAddress, totalAmount]);
     await driptributor.deployed();
     return driptributor;
 }

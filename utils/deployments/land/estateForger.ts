@@ -1,5 +1,5 @@
-import { BigNumber, BigNumberish } from "ethers";
-import { ethers, upgrades } from "hardhat";
+import { BigNumber } from 'ethers';
+import { ethers, upgrades } from 'hardhat';
 
 export async function deployEstateForger(
     signer: any,
@@ -11,23 +11,20 @@ export async function deployEstateForger(
     reserveVaultAddress: string,
     validatorAddress: string,
     baseMinUnitPrice: BigNumber,
-    baseMaxUnitPrice: BigNumber,
+    baseMaxUnitPrice: BigNumber
 ) {
     const EstateForger = await ethers.getContractFactory('EstateForger', signer);
-    const estateForger = await upgrades.deployProxy(
-        EstateForger,
-        [
-            adminAddress,
-            estateTokenAddress,
-            commissionTokenAddress,
-            priceWatcherAddress,
-            feeReceiverAddress,
-            reserveVaultAddress,
-            validatorAddress,
-            baseMinUnitPrice,
-            baseMaxUnitPrice,
-        ]
-    );
+    const estateForger = await upgrades.deployProxy(EstateForger, [
+        adminAddress,
+        estateTokenAddress,
+        commissionTokenAddress,
+        priceWatcherAddress,
+        feeReceiverAddress,
+        reserveVaultAddress,
+        validatorAddress,
+        baseMinUnitPrice,
+        baseMaxUnitPrice,
+    ]);
     await estateForger.deployed();
     return estateForger;
 }

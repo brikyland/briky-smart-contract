@@ -1,24 +1,20 @@
-import { BigNumber } from "ethers";
-import { ethers, upgrades } from "hardhat";
+import { ethers, upgrades } from 'hardhat';
 
 export async function deployEstateToken(
     signer: any,
     adminAddress: string,
     feeReceiverAddress: string,
     validatorAddress: string,
-    baseURI: string,
+    baseURI: string
 ) {
     const EstateToken = await ethers.getContractFactory('EstateToken', signer);
 
-    const estateToken = await upgrades.deployProxy(
-        EstateToken,
-        [
-            adminAddress,
-            feeReceiverAddress,
-            validatorAddress,
-            baseURI,
-        ]
-    );
+    const estateToken = await upgrades.deployProxy(EstateToken, [
+        adminAddress,
+        feeReceiverAddress,
+        validatorAddress,
+        baseURI,
+    ]);
     await estateToken.deployed();
     return estateToken;
 }
