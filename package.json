@@ -28,7 +28,7 @@
     "deployPrestigePad:local": "npx hardhat --network localhost run scripts/deployments/launch/prestigePad.deployment.ts",
     "deployProjectMarketplace:local": "npx hardhat --network localhost run scripts/deployments/lux/projectMarketplace.deployment.ts",
     "deployProjectMortgageToken:local": "npx hardhat --network localhost run scripts/deployments/lend/projectMortgageToken.deployment.ts",
-    "deployProjectToken:local": "npx hardhat --network localhost run scripts/deployments/launch/projectToken.deployment.ts",    
+    "deployProjectToken:local": "npx hardhat --network localhost run scripts/deployments/launch/projectToken.deployment.ts",
     "deployPromotionToken:local": "npx hardhat --network localhost run scripts/deployments/lucra/promotionToken.deployment.ts",
     "deployPublicSaleAuction:local": "npx hardhat --network localhost run scripts/deployments/liquidity/investments/publicSaleAuction.deployment.ts",
     "deployReserveVault:local": "npx hardhat --network localhost run scripts/deployments/common/reserveVault.deployment.ts",
@@ -37,7 +37,6 @@
     "deployStakeToken2:local": "npx hardhat --network localhost run scripts/deployments/liquidity/stakeToken2.deployment.ts",
     "deployStakeToken3:local": "npx hardhat --network localhost run scripts/deployments/liquidity/stakeToken3.deployment.ts",
     "deployTreasury:local": "npx hardhat --network localhost run scripts/deployments/liquidity/treasury.deployment.ts",
-
     "console:staging": "npx hardhat --network staging console",
     "deployAdmin:staging": "npx hardhat --network staging run scripts/deployments/common/admin.deployment.ts",
     "deployAirdrop:staging": "npx hardhat --network staging run scripts/deployments/common/airdrop.deployment.ts",
@@ -65,7 +64,7 @@
     "deployPrestigePad:staging": "npx hardhat --network staging run scripts/deployments/launch/prestigePad.deployment.ts",
     "deployProjectMarketplace:staging": "npx hardhat --network staging run scripts/deployments/lux/projectMarketplace.deployment.ts",
     "deployProjectMortgageToken:staging": "npx hardhat --network staging run scripts/deployments/lend/projectMortgageToken.deployment.ts",
-    "deployProjectToken:staging": "npx hardhat --network staging run scripts/deployments/launch/projectToken.deployment.ts",    
+    "deployProjectToken:staging": "npx hardhat --network staging run scripts/deployments/launch/projectToken.deployment.ts",
     "deployPromotionToken:staging": "npx hardhat --network staging run scripts/deployments/lucra/promotionToken.deployment.ts",
     "deployPublicSaleAuction:staging": "npx hardhat --network staging run scripts/deployments/liquidity/investments/publicSaleAuction.deployment.ts",
     "deployReserveVault:staging": "npx hardhat --network staging run scripts/deployments/common/reserveVault.deployment.ts",
@@ -74,7 +73,6 @@
     "deployStakeToken2:staging": "npx hardhat --network staging run scripts/deployments/liquidity/stakeToken2.deployment.ts",
     "deployStakeToken3:staging": "npx hardhat --network staging run scripts/deployments/liquidity/stakeToken3.deployment.ts",
     "deployTreasury:staging": "npx hardhat --network staging run scripts/deployments/liquidity/treasury.deployment.ts",
-
     "console:testnet": "npx hardhat --network testnet console",
     "deployAdmin:testnet": "npx hardhat --network testnet run scripts/deployments/common/admin.deployment.ts",
     "deployAirdrop:testnet": "npx hardhat --network testnet run scripts/deployments/common/airdrop.deployment.ts",
@@ -110,8 +108,7 @@
     "deployStakeToken2:testnet": "npx hardhat --network testnet run scripts/deployments/liquidity/stakeToken2.deployment.ts",
     "deployStakeToken3:testnet": "npx hardhat --network testnet run scripts/deployments/liquidity/stakeToken3.deployment.ts",
     "deployTreasury:testnet": "npx hardhat --network testnet run scripts/deployments/liquidity/treasury.deployment.ts",
-    "deployProjectToken:testnet": "npx hardhat --network testnet run scripts/deployments/launch/projectToken.deployment.ts",    
-
+    "deployProjectToken:testnet": "npx hardhat --network testnet run scripts/deployments/launch/projectToken.deployment.ts",
     "console:mainnet": "npx hardhat --network mainnet console",
     "deployAdmin:mainnet": "npx hardhat --network mainnet run scripts/deployments/common/admin.deployment.ts",
     "deployAirdrop:mainnet": "npx hardhat --network mainnet run scripts/deployments/common/airdrop.deployment.ts",
@@ -149,8 +146,9 @@
     "deployTreasury:mainnet": "npx hardhat --network mainnet run scripts/deployments/liquidity/treasury.deployment.ts"
   },
   "devDependencies": {
-    "@chainlink/contracts": "^1.4.0",
     "@anders-t/ethers-ledger": "^1.0.4",
+    "@chainlink/contracts": "^1.4.0",
+    "@defi-wonderland/smock": "^2.4.1",
     "@ledgerhq/hw-transport-node-hid": "^6.29.1",
     "@nomicfoundation/hardhat-network-helpers": "^1.0.8",
     "@nomicfoundation/hardhat-toolbox": "^2.0.2",
@@ -161,6 +159,10 @@
     "hardhat-contract-sizer": "^2.10.0",
     "mocha-junit-reporter": "^2.2.0",
     "mocha-multi-reporters": "^1.5.1",
+    "prettier": "3.6.2",
     "tsconfig-paths": "^4.2.0"
+  },
+  "dependencies": {
+    "glob": "^11.0.3"
   }
 }
