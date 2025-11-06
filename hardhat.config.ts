@@ -7,6 +7,7 @@ import '@nomiclabs/hardhat-solhint';
 import '@openzeppelin/hardhat-upgrades';
 import 'hardhat-contract-sizer';
 import 'tsconfig-paths/register';
+import 'solidity-docgen';
 
 function getNetworkEnvVariable(
     networkName: string,
@@ -170,6 +171,9 @@ const config: HardhatUserConfig = {
         reporterOptions: {
             configFile: './mocha-report.json',
         },
+    },
+    docgen: {
+        pages: 'files',
     },
 };
 
