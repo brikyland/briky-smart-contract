@@ -7,7 +7,7 @@ import '@nomiclabs/hardhat-solhint';
 import '@openzeppelin/hardhat-upgrades';
 import 'hardhat-contract-sizer';
 import 'tsconfig-paths/register';
-import 'solidity-docgen';
+import 'solidity-docgen-brikyland';
 
 function getNetworkEnvVariable(
     networkName: string,
@@ -174,6 +174,10 @@ const config: HardhatUserConfig = {
     },
     docgen: {
         pages: 'files',
+        outputDir: 'docs/Contracts',
+        exclude: [
+            'mock',
+        ],
     },
 };
 

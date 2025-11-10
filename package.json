@@ -143,7 +143,8 @@
     "deployStakeToken1:mainnet": "npx hardhat --network mainnet run scripts/deployments/liquidity/stakeToken1.deployment.ts",
     "deployStakeToken2:mainnet": "npx hardhat --network mainnet run scripts/deployments/liquidity/stakeToken2.deployment.ts",
     "deployStakeToken3:mainnet": "npx hardhat --network mainnet run scripts/deployments/liquidity/stakeToken3.deployment.ts",
-    "deployTreasury:mainnet": "npx hardhat --network mainnet run scripts/deployments/liquidity/treasury.deployment.ts"
+    "deployTreasury:mainnet": "npx hardhat --network mainnet run scripts/deployments/liquidity/treasury.deployment.ts",
+    "docify": "npx hardhat docgen"
   },
   "devDependencies": {
     "@anders-t/ethers-ledger": "^1.0.4",
@@ -160,10 +161,10 @@
     "mocha-junit-reporter": "^2.2.0",
     "mocha-multi-reporters": "^1.5.1",
     "prettier": "3.6.2",
-    "tsconfig-paths": "^4.2.0"
+    "tsconfig-paths": "^4.2.0",
+    "solidity-docgen-brikyland": "git+ssh://git@gh-prometheus:prometheus1129/solidity-docgen-brikyland.git"
   },
   "dependencies": {
-    "glob": "^11.0.3",
-    "solidity-docgen": "^0.6.0-beta.36"
+    "glob": "^11.0.3"
   }
 }
