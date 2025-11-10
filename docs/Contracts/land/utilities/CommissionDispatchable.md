@@ -1,11 +1,9 @@
-# Solidity API
-
-## CommissionDispatchable
+# CommissionDispatchable
 
 A `CommissionDispatchable` contract allows sharing a portion of incomes as affiliate commission, according to the
 commission token.
 
-### __CommissionDispatchable_init
+## __CommissionDispatchable_init
 
 ```solidity
 function __CommissionDispatchable_init(address _commissionToken) internal
@@ -13,15 +11,13 @@ function __CommissionDispatchable_init(address _commissionToken) internal
 
 Initialize `CommissionDispatchable`.
 
-Name                Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _commissionToken | address | `CommissionToken` contract address. |
 
-### _dispatchCommission
+## _dispatchCommission
 
 ```solidity
 function _dispatchCommission(uint256 _estateId, uint256 _value, address _currency) internal returns (uint256 commission)
@@ -29,9 +25,7 @@ function _dispatchCommission(uint256 _estateId, uint256 _value, address _currenc
 
 Dispatch commission to the receiver corresponding to the commission token of an estate.
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |

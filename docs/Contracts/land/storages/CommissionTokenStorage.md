@@ -1,93 +1,89 @@
-# Solidity API
-
-## CommissionTokenStorage
+# CommissionTokenStorage
 
 Storage contract for contract `CommissionToken`.
 
-### brokerCommissionRates
+## brokerCommissionRates
 
 ```solidity
 mapping(bytes32 => mapping(address => struct IRate.Rate)) brokerCommissionRates
 ```
 
-_brokerCommissionRates[zone][account]_
+{% hint style="info" %}
+brokerCommissionRates[zone][account]
+{% endhint %}
 
-### isActiveIn
+## isActiveIn
 
 ```solidity
 mapping(bytes32 => mapping(address => bool)) isActiveIn
 ```
 
-_isActiveIn[zone][account]_
+{% hint style="info" %}
+isActiveIn[zone][account]
+{% endhint %}
 
-### commissionRates
+## commissionRates
 
 ```solidity
 mapping(uint256 => struct IRate.Rate) commissionRates
 ```
 
-_commissionRates[tokenId]_
+{% hint style="info" %}
+commissionRates[tokenId]
+{% endhint %}
 
-### baseURI
+## baseURI
 
 ```solidity
 string baseURI
 ```
 
-### royaltyRate
+## royaltyRate
 
 ```solidity
 uint256 royaltyRate
 ```
 
-### totalSupply
+## totalSupply
 
 ```solidity
 uint256 totalSupply
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### admin
+## admin
 
 ```solidity
 address admin
 ```
 
-Name        Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### estateToken
+## estateToken
 
 ```solidity
 address estateToken
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### feeReceiver
+## feeReceiver
 
 ```solidity
 address feeReceiver
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |

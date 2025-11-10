@@ -1,10 +1,8 @@
-# Solidity API
-
-## StakeTokenConstant
+# StakeTokenConstant
 
 Constant library for contract `StakeToken`.
 
-### REWARD_FETCH_COOLDOWN
+## REWARD_FETCH_COOLDOWN
 
 ```solidity
 uint256 REWARD_FETCH_COOLDOWN
@@ -12,5 +10,7 @@ uint256 REWARD_FETCH_COOLDOWN
 
 Minimal time gap between two consecutive staking reward waves, approximately 1 day.
 
-_5-minute offset is subtracted to mitigate potential timing errors._
+{% hint style="info" %}
+5-minute offset is subtracted to mitigate potential timing errors.
+{% endhint %}
 

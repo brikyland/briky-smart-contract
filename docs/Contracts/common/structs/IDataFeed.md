@@ -1,10 +1,8 @@
-# Solidity API
-
-## IDataFeed
+# IDataFeed
 
 Interface for struct `DataFeed`.
 
-### InvalidDataFeed
+## InvalidDataFeed
 
 ```solidity
 error InvalidDataFeed()
@@ -12,11 +10,13 @@ error InvalidDataFeed()
 
 ===== ERROR ===== *
 
-### DataFeed
+## DataFeed
 
 Connection configuration of a Data Feed.
 
-_Document for Data Feed: https://docs.chain.link/data-feeds_
+{% hint style="info" %}
+Document for Data Feed: https://docs.chain.link/data-feeds
+{% endhint %}
 
 ```solidity
 struct DataFeed {

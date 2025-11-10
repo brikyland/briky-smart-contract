@@ -1,77 +1,69 @@
-# Solidity API
-
-## MortgageTokenStorage
+# MortgageTokenStorage
 
 Storage contract for contract `MortgageToken`.
 
-### mortgages
+## mortgages
 
 ```solidity
 mapping(uint256 => struct IMortgage.Mortgage) mortgages
 ```
 
-_mortgages[mortgageId]_
+{% hint style="info" %}
+mortgages[mortgageId]
+{% endhint %}
 
-### baseURI
+## baseURI
 
 ```solidity
 string baseURI
 ```
 
-### totalSupply
+## totalSupply
 
 ```solidity
 uint256 totalSupply
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### mortgageNumber
+## mortgageNumber
 
 ```solidity
 uint256 mortgageNumber
 ```
 
-Name              Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### feeRate
+## feeRate
 
 ```solidity
 uint256 feeRate
 ```
 
-### admin
+## admin
 
 ```solidity
 address admin
 ```
 
-Name        Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### feeReceiver
+## feeReceiver
 
 ```solidity
 address feeReceiver
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |

@@ -1,15 +1,23 @@
-# Solidity API
-
-## ReserveVault
+# ReserveVault
 
 The `ReserveVault` contracts allows providers to open cryptocurrency reserve fund and withdraw them on demand.
 
-_The fund is determined by a `quantity` value and denominations for each currency.
-   Provision or withdrawal operations must specify a `quantity` to indicate equivalent values, calculated by
-multiplying with predefined denomination of each currency.
-   The fund need to specify a main currency, other extras are optional._
+{% hint style="info" %}
+The fund is determined by a `quantity` value and denominations for each currency.
 
-### validFund
+{% endhint %}
+
+{% hint style="info" %}
+Provision or withdrawal operations must specify a `quantity` to indicate equivalent values, calculated by
+multiplying with predefined denomination of each currency.
+
+{% endhint %}
+
+{% hint style="info" %}
+The fund need to specify a main currency, other extras are optional.
+{% endhint %}
+
+## validFund
 
 ```solidity
 modifier validFund(uint256 _fundId)
@@ -17,15 +25,13 @@ modifier validFund(uint256 _fundId)
 
 Verify a valid fund identifier.
 
-Name       Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _fundId | uint256 | Fund identifier. |
 
-### onlyProvider
+## onlyProvider
 
 ```solidity
 modifier onlyProvider(uint256 _fundId)
@@ -33,15 +39,13 @@ modifier onlyProvider(uint256 _fundId)
 
 Verify the message sender is the provider of a fund.
 
-Name       Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _fundId | uint256 | Fund identifier. |
 
-### receive
+## receive
 
 ```solidity
 receive() external payable
@@ -49,19 +53,17 @@ receive() external payable
 
 Executed on a call to this contract with empty calldata.
 
-### version
+## version
 
 ```solidity
 function version() external pure returns (string)
 ```
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | string | Version of implementation. |
+Version of implementation.
 
-### initialize
+## initialize
 
 ```solidity
 function initialize(address _admin) external
@@ -69,15 +71,13 @@ function initialize(address _admin) external
 
 Initialize the contract after deployment, serving as the constructor.
 
-Name      Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _admin | address | Admin` contract address. |
 
-### authorizeProviders
+## authorizeProviders
 
 ```solidity
 function authorizeProviders(address[] _accounts, bool _isProvider, bytes[] _signatures) external
@@ -85,11 +85,11 @@ function authorizeProviders(address[] _accounts, bool _isProvider, bytes[] _sign
 
 Authorize or deauthorize addresses as providers.
 
-Name           Description
+{% hint style="info" %}
+Administrative operator.
+{% endhint %}
 
-_Administrative operator._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -97,47 +97,39 @@ _Administrative operator._
 | _isProvider | bool | Whether the operation is authorizing or deauthorizing. |
 | _signatures | bytes[] | Array of admin signatures. |
 
-### getFund
+## getFund
 
 ```solidity
 function getFund(uint256 _fundId) external view returns (struct IFund.Fund)
 ```
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _fundId | uint256 | Fund identifier. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | struct IFund.Fund | Configuration and reserves of the fund. |
+Configuration and reserves of the fund.
 
-### isFundSufficient
+## isFundSufficient
 
 ```solidity
 function isFundSufficient(uint256 _fundId) external view returns (bool)
 ```
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _fundId | uint256 | Fund identifier. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | bool | Whether the fund is provided sufficiently for the current quantity. |
+Whether the fund is provided sufficiently for the current quantity.
 
-### openFund
+## openFund
 
 ```solidity
 function openFund(address _mainCurrency, uint256 _mainDenomination, address[] _extraCurrencies, uint256[] _extraDenominations) external returns (uint256)
@@ -145,11 +137,11 @@ function openFund(address _mainCurrency, uint256 _mainDenomination, address[] _e
 
 Open a new fund.
 
-Name                    Description
+{% hint style="info" %}
+Permission: Providers.
+{% endhint %}
 
-_Permission: Providers._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -158,13 +150,11 @@ _Permission: Providers._
 | _extraCurrencies | address[] | Array of extra currency addresses. |
 | _extraDenominations | uint256[] | Array of extra currency denominations, respective to each extra currency. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | uint256 | New fund identifier. |
+New fund identifier.
 
-### expandFund
+## expandFund
 
 ```solidity
 function expandFund(uint256 _fundId, uint256 _quantity) external
@@ -172,18 +162,18 @@ function expandFund(uint256 _fundId, uint256 _quantity) external
 
 Expand a fund.
 
-Name                    Description
+{% hint style="info" %}
+Permission: Provider of the fund.
+{% endhint %}
 
-_Permission: Provider of the fund._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _fundId | uint256 | Fund identifier. |
 | _quantity | uint256 | Expanded quantity. |
 
-### provideFund
+## provideFund
 
 ```solidity
 function provideFund(uint256 _fundId) external payable
@@ -191,17 +181,17 @@ function provideFund(uint256 _fundId) external payable
 
 Provide sufficiently to a fund.
 
-Name                    Description
+{% hint style="info" %}
+Permission: Provider of the fund.
+{% endhint %}
 
-_Permission: Provider of the fund._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _fundId | uint256 | Fund identifier. |
 
-### withdrawFund
+## withdrawFund
 
 ```solidity
 function withdrawFund(uint256 _fundId, address _receiver, uint256 _quantity) external
@@ -209,11 +199,11 @@ function withdrawFund(uint256 _fundId, address _receiver, uint256 _quantity) ext
 
 Withdraw from a fund to an account.
 
-Name                    Description
+{% hint style="info" %}
+Permission: Provider of the fund.
+{% endhint %}
 
-_Permission: Provider of the fund._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |

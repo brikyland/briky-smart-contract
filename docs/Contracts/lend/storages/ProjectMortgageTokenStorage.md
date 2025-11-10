@@ -1,26 +1,24 @@
-# Solidity API
-
-## ProjectMortgageTokenStorage
+# ProjectMortgageTokenStorage
 
 Storage contract for contract `ProjectMortgageToken`.
 
-### collaterals
+## collaterals
 
 ```solidity
 mapping(uint256 => struct IAssetCollateral.AssetCollateral) collaterals
 ```
 
-_collaterals[mortgageId]_
+{% hint style="info" %}
+collaterals[mortgageId]
+{% endhint %}
 
-### projectToken
+## projectToken
 
 ```solidity
 address projectToken
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |

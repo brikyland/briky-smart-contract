@@ -1,16 +1,17 @@
-# Solidity API
-
-## IAdmin
+# IAdmin
 
 Interface for contract `Admin`.
+
 A single `Admin` contract is responsible for governing the entire system with a designated group of administrator
 addresses. Any global configurations of contracts within the system must be verified by their signatures. This
 contract also maintains authorization registries and common configurations applied across the system.
 
-_ERC-20 tokens are identified by their contract addresses.
-Native coin is represented by the zero address (0x0000000000000000000000000000000000000000)._
+{% hint style="info" %}
+ERC-20 tokens are identified by their contract addresses.
+Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
+{% endhint %}
 
-### AdminSignaturesVerification
+## AdminSignaturesVerification
 
 ```solidity
 event AdminSignaturesVerification(bytes message, uint256 nonce, bytes[] signatures)
@@ -18,9 +19,7 @@ event AdminSignaturesVerification(bytes message, uint256 nonce, bytes[] signatur
 
 Emitted when a message is successfully verified with the current nonce and a set of admin signatures.
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -28,7 +27,7 @@ Name        Description
 | nonce | uint256 | Number used once combined with the message to prevent replay attacks. |
 | signatures | bytes[] | Array of admin signatures generated from the message and the current nonce of this contract. |
 
-### Administration1Transfer
+## Administration1Transfer
 
 ```solidity
 event Administration1Transfer(address newAdmin1)
@@ -36,15 +35,13 @@ event Administration1Transfer(address newAdmin1)
 
 Emitted when the admin #1 role is transferred to another address.
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | newAdmin1 | address | New admin #1 address. |
 
-### Administration2Transfer
+## Administration2Transfer
 
 ```solidity
 event Administration2Transfer(address newAdmin2)
@@ -52,15 +49,13 @@ event Administration2Transfer(address newAdmin2)
 
 Emitted when the admin #2 role is transferred to another address.
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | newAdmin2 | address | New admin #2 address. |
 
-### Administration3Transfer
+## Administration3Transfer
 
 ```solidity
 event Administration3Transfer(address newAdmin3)
@@ -68,15 +63,13 @@ event Administration3Transfer(address newAdmin3)
 
 Emitted when the admin #3 role is transferred to another address.
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | newAdmin3 | address | New admin #3 address. |
 
-### Administration4Transfer
+## Administration4Transfer
 
 ```solidity
 event Administration4Transfer(address newAdmin4)
@@ -84,15 +77,13 @@ event Administration4Transfer(address newAdmin4)
 
 Emitted when the admin #4 role is transferred to another address.
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | newAdmin4 | address | New admin #4 address. |
 
-### Administration5Transfer
+## Administration5Transfer
 
 ```solidity
 event Administration5Transfer(address newAdmin5)
@@ -100,15 +91,13 @@ event Administration5Transfer(address newAdmin5)
 
 Emitted when the admin #5 is transferred to another address.
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | newAdmin5 | address | New admin #5 address. |
 
-### ZoneDeclaration
+## ZoneDeclaration
 
 ```solidity
 event ZoneDeclaration(bytes32 zone)
@@ -116,15 +105,13 @@ event ZoneDeclaration(bytes32 zone)
 
 Emitted when a new zone is declared.
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | zone | bytes32 | Zone code. |
 
-### Activation
+## Activation
 
 ```solidity
 event Activation(bytes32 zone, address account)
@@ -132,16 +119,14 @@ event Activation(bytes32 zone, address account)
 
 Emitted when an account is activated in a zone.
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | zone | bytes32 | Zone code. |
 | account | address | Activated address. |
 
-### Deactivation
+## Deactivation
 
 ```solidity
 event Deactivation(bytes32 zone, address account)
@@ -149,16 +134,14 @@ event Deactivation(bytes32 zone, address account)
 
 Emitted when an account is deactivated in a zone.
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | zone | bytes32 | Zone code. |
 | account | address | Deactivated address. |
 
-### ManagerAuthorization
+## ManagerAuthorization
 
 ```solidity
 event ManagerAuthorization(address account)
@@ -166,15 +149,13 @@ event ManagerAuthorization(address account)
 
 Emitted when an account is authorized as a manager.
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | account | address | Authorized address. |
 
-### ManagerDeauthorization
+## ManagerDeauthorization
 
 ```solidity
 event ManagerDeauthorization(address account)
@@ -182,15 +163,13 @@ event ManagerDeauthorization(address account)
 
 Emitted when a manager is deauthorized.
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | account | address | Deauthorized address. |
 
-### ModeratorAuthorization
+## ModeratorAuthorization
 
 ```solidity
 event ModeratorAuthorization(address account)
@@ -198,15 +177,13 @@ event ModeratorAuthorization(address account)
 
 Emitted when an account is authorized as a moderator.
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | account | address | Authorized address. |
 
-### ModeratorDeauthorization
+## ModeratorDeauthorization
 
 ```solidity
 event ModeratorDeauthorization(address account)
@@ -214,15 +191,13 @@ event ModeratorDeauthorization(address account)
 
 Emitted when a moderator is deauthorized.
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | account | address | Deauthorized address. |
 
-### GovernorAuthorization
+## GovernorAuthorization
 
 ```solidity
 event GovernorAuthorization(address account)
@@ -230,15 +205,13 @@ event GovernorAuthorization(address account)
 
 Emitted when a contract is authorized as a governor contract.
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | account | address | Authorized contract address. |
 
-### GovernorDeauthorization
+## GovernorDeauthorization
 
 ```solidity
 event GovernorDeauthorization(address account)
@@ -246,15 +219,13 @@ event GovernorDeauthorization(address account)
 
 Emitted when a governor contract is deauthorized.
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | account | address | Deauthorized contract address. |
 
-### CurrencyRegistryUpdate
+## CurrencyRegistryUpdate
 
 ```solidity
 event CurrencyRegistryUpdate(address currency, bool isAvailable, bool isExclusive)
@@ -262,9 +233,7 @@ event CurrencyRegistryUpdate(address currency, bool isAvailable, bool isExclusiv
 
 Emitted when the registry of a currency is updated.
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -272,7 +241,7 @@ Name            Description
 | isAvailable | bool | Whether the currency is interactable within the system. |
 | isExclusive | bool | Whether the currency grants exclusive privileges within the system. |
 
-### ActivatedAccount
+## ActivatedAccount
 
 ```solidity
 error ActivatedAccount()
@@ -280,378 +249,355 @@ error ActivatedAccount()
 
 ===== ERROR ===== *
 
-### AuthorizedAccount
+## AuthorizedAccount
 
 ```solidity
 error AuthorizedAccount()
 ```
 
-### AuthorizedZone
+## AuthorizedZone
 
 ```solidity
 error AuthorizedZone()
 ```
 
-### CannotSelfDeauthorizing
+## CannotSelfDeauthorizing
 
 ```solidity
 error CannotSelfDeauthorizing()
 ```
 
-### FailedVerification
+## FailedVerification
 
 ```solidity
 error FailedVerification()
 ```
 
-### InvalidGovernor
+## InvalidGovernor
 
 ```solidity
 error InvalidGovernor()
 ```
 
-### InvalidInput
+## InvalidInput
 
 ```solidity
 error InvalidInput()
 ```
 
-### InvalidSignatureNumber
+## InvalidSignatureNumber
 
 ```solidity
 error InvalidSignatureNumber()
 ```
 
-### NotActivatedAccount
+## NotActivatedAccount
 
 ```solidity
 error NotActivatedAccount()
 ```
 
-### NotAuthorizedAccount
+## NotAuthorizedAccount
 
 ```solidity
 error NotAuthorizedAccount()
 ```
 
-### NotAuthorizedZone
+## NotAuthorizedZone
 
 ```solidity
 error NotAuthorizedZone()
 ```
 
-### Unauthorized
+## Unauthorized
 
 ```solidity
 error Unauthorized()
 ```
 
-### version
+## version
 
 ```solidity
 function version() external pure returns (string version)
 ```
 
-Name        Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | version | string | Version of implementation. |
 
-### admin1
+## admin1
 
 ```solidity
 function admin1() external view returns (address admin1)
 ```
 
-Name    Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | admin1 | address | Admin #1 address. |
 
-### admin2
+## admin2
 
 ```solidity
 function admin2() external view returns (address admin2)
 ```
 
-Name    Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | admin2 | address | Admin #2 address. |
 
-### admin3
+## admin3
 
 ```solidity
 function admin3() external view returns (address admin3)
 ```
 
-Name    Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | admin3 | address | Admin #3 address. |
 
-### admin4
+## admin4
 
 ```solidity
 function admin4() external view returns (address admin4)
 ```
 
-Name    Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | admin4 | address | Admin #4 address. |
 
-### admin5
+## admin5
 
 ```solidity
 function admin5() external view returns (address admin5)
 ```
 
-Name    Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | admin5 | address | Admin #5 address. |
 
-### nonce
+## nonce
 
 ```solidity
 function nonce() external view returns (uint256 nonce)
 ```
 
-Name    Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | nonce | uint256 | Number used once in the next verification. |
 
-### isExecutive
+## isExecutive
 
 ```solidity
 function isExecutive(address account) external view returns (bool isExecutive)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | account | address | EVM address. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | isExecutive | bool | Whether the account is an authorized manager or an authorized moderator. |
 
-### isGovernor
+## isGovernor
 
 ```solidity
 function isGovernor(address account) external view returns (bool isGovernor)
 ```
 
-Name            Description
+{% hint style="info" %}
+The contract must support interface `IGovernor`.
+{% endhint %}
 
-_The contract must support interface `IGovernor`._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | account | address | EVM address. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | isGovernor | bool | Whether the account is an authorized governor contract. |
 
-### isManager
+## isManager
 
 ```solidity
 function isManager(address account) external view returns (bool isManager)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | account | address | EVM address. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | isManager | bool | Whether the account is an authorized manager. |
 
-### isModerator
+## isModerator
 
 ```solidity
 function isModerator(address account) external view returns (bool isModerator)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | account | address | EVM address. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | isModerator | bool | Whether the account is an authorized moderator. |
 
-### isZone
+## isZone
 
 ```solidity
 function isZone(bytes32 value) external view returns (bool isZone)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | value | bytes32 | Zone code. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | isZone | bool | Whether there is a zone declared with code `value`. |
 
-### getCurrencyRegistry
+## getCurrencyRegistry
 
 ```solidity
 function getCurrencyRegistry(address currency) external view returns (struct ICurrencyRegistry.CurrencyRegistry currencyRegistry)
 ```
 
-Name                Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | currency | address | Currency address. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | currencyRegistry | struct ICurrencyRegistry.CurrencyRegistry | Interaction configuration of the currency. |
 
-### isAvailableCurrency
+## isAvailableCurrency
 
 ```solidity
 function isAvailableCurrency(address currency) external view returns (bool isAvailable)
 ```
 
-Name                Description
+{% hint style="info" %}
+Cryptocurrencies require authorization to be interactable to prevent unknown deceptive codes.
+{% endhint %}
 
-_Cryptocurrencies require authorization to be interactable to prevent unknown deceptive codes._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | currency | address | Currency address. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | isAvailable | bool | Whether the currency is interactable within the system. |
 
-### isExclusiveCurrency
+## isExclusiveCurrency
 
 ```solidity
 function isExclusiveCurrency(address currency) external view returns (bool isExclusive)
 ```
 
-Name                Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | currency | address | Currency address. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | isExclusive | bool | Whether the currency grants exclusive privileges within the system. |
 
-### isActiveIn
+## isActiveIn
 
 ```solidity
 function isActiveIn(bytes32 zone, address account) external view returns (bool isActive)
 ```
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | zone | bytes32 | Zone code. |
 | account | address | EVM address. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | isActive | bool | Whether the account is eligible in the zone. |
 
-### verifyAdminSignatures
+## verifyAdminSignatures
 
 ```solidity
 function verifyAdminSignatures(bytes message, bytes[] signatures) external
 ```
 
 Verify a message and a set of signatures conform admin addresses and the current nonce of this contract.
+
 After successful verification, the nonce is incremented by 1 for the next message.
 
-Name        Description
+{% hint style="info" %}
+Only transactions whose original sender is a manager can request verification.
 
-_Only transactions whose original sender is a manager can request verification.
-   Pseudo code of signature for `_message` and `nonce`:
+{% endhint %}
+
+{% hint style="info" %}
+Pseudo code of signature for `_message` and `nonce`:
 ```
 signature = ethSign(
-keccak256(abi.encodePacked(
-_message,
-nonce
-))
+    keccak256(abi.encodePacked(
+        _message,
+        nonce
+    ))
 );
-```_
+```
+{% endhint %}
 
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |

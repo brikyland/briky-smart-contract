@@ -1,14 +1,15 @@
-# Solidity API
-
-## IERC721Marketplace
+# IERC721Marketplace
 
 Interface for contract `ERC721Marketplace`.
+
 An `ERC721Marketplace` contract hosts a marketplace for ERC-721 tokens.
 
-_ERC-20 tokens are identified by their contract addresses.
-Native coin is represented by the zero address (0x0000000000000000000000000000000000000000)._
+{% hint style="info" %}
+ERC-20 tokens are identified by their contract addresses.
+Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
+{% endhint %}
 
-### CollectionRegistration
+## CollectionRegistration
 
 ```solidity
 event CollectionRegistration(address collection)
@@ -16,15 +17,13 @@ event CollectionRegistration(address collection)
 
 Emitted when a collection is registered.
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | collection | address | Registered collection contract address. |
 
-### CollectionDeregistration
+## CollectionDeregistration
 
 ```solidity
 event CollectionDeregistration(address collection)
@@ -32,15 +31,13 @@ event CollectionDeregistration(address collection)
 
 Emitted when a collection is deregistered.
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | collection | address | Deregistered collection contract address. |
 
-### NewOffer
+## NewOffer
 
 ```solidity
 event NewOffer(address collection, uint256 offerId, uint256 tokenId, address seller, uint256 price, uint256 royalty, address royaltyReceiver, address currency)
@@ -48,9 +45,7 @@ event NewOffer(address collection, uint256 offerId, uint256 tokenId, address sel
 
 Emitted when a new offer is listed.
 
-Name                Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -63,7 +58,7 @@ Name                Description
 | royaltyReceiver | address | Royalty receiver address. |
 | currency | address | Sale currency address. |
 
-### OfferCancellation
+## OfferCancellation
 
 ```solidity
 event OfferCancellation(uint256 offerId)
@@ -71,15 +66,13 @@ event OfferCancellation(uint256 offerId)
 
 Emitted when an offer is cancelled.
 
-Name                Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | offerId | uint256 | Offer identifier. |
 
-### OfferSale
+## OfferSale
 
 ```solidity
 event OfferSale(uint256 offerId, address buyer, address royaltyReceiver, uint256 royalty)
@@ -87,9 +80,7 @@ event OfferSale(uint256 offerId, address buyer, address royaltyReceiver, uint256
 
 Emitted when an offer is sold.
 
-Name                Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -98,7 +89,7 @@ Name                Description
 | royaltyReceiver | address | Royalty receiver address. |
 | royalty | uint256 | Royalty derived from the sale value of the offer. |
 
-### InvalidBuying
+## InvalidBuying
 
 ```solidity
 error InvalidBuying()
@@ -106,83 +97,79 @@ error InvalidBuying()
 
 ===== ERROR ===== *
 
-### InvalidCancelling
+## InvalidCancelling
 
 ```solidity
 error InvalidCancelling()
 ```
 
-### InvalidCollection
+## InvalidCollection
 
 ```solidity
 error InvalidCollection()
 ```
 
-### InvalidTokenId
+## InvalidTokenId
 
 ```solidity
 error InvalidTokenId()
 ```
 
-### InvalidOfferId
+## InvalidOfferId
 
 ```solidity
 error InvalidOfferId()
 ```
 
-### InvalidPrice
+## InvalidPrice
 
 ```solidity
 error InvalidPrice()
 ```
 
-### NotRegisteredCollection
+## NotRegisteredCollection
 
 ```solidity
 error NotRegisteredCollection()
 ```
 
-### RegisteredCollection
+## RegisteredCollection
 
 ```solidity
 error RegisteredCollection()
 ```
 
-### offerNumber
+## offerNumber
 
 ```solidity
 function offerNumber() external view returns (uint256 offerNumber)
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | offerNumber | uint256 | Number of offers. |
 
-### getOffer
+## getOffer
 
 ```solidity
 function getOffer(uint256 offerId) external view returns (struct IERC721Offer.ERC721Offer offer)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | offerId | uint256 | Offer identifier. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | offer | struct IERC721Offer.ERC721Offer | Configuration and progress of the offer. |
 
-### list
+## list
 
 ```solidity
 function list(address collection, uint256 tokenId, uint256 price, address currency) external returns (uint256 offerId)
@@ -190,12 +177,12 @@ function list(address collection, uint256 tokenId, uint256 price, address curren
 
 List a new offer of an ERC721 token.
 
-Name        Description
+{% hint style="info" %}
+Approval must be granted for this contract to transfer collateral before borrowing. A mortgage can only be
+lent while approval remains active.
+{% endhint %}
 
-_Approval must be granted for this contract to transfer collateral before borrowing. A mortgage can only be
-lent while approval remains active._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -204,77 +191,78 @@ lent while approval remains active._
 | price | uint256 | Sale value. |
 | currency | address | Sale currency address. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | offerId | uint256 | New offer identifier. |
 
-### buy
+## buy
 
 ```solidity
 function buy(uint256 offerId) external payable returns (uint256 value)
 ```
 
 Buy an offer.
+
 Buy only if the offer is in `Selling` state.
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | offerId | uint256 | Offer identifier. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | value | uint256 | Sum of sale price and royalty. |
 
-### cancel
+## cancel
 
 ```solidity
 function cancel(uint256 offerId) external
 ```
 
 Cancel an offer.
+
 Cancel only if the offer is in `Selling` state.
 
-Name        Description
-
-_Permission:
+{% hint style="info" %}
+Permission:
 - Seller of the offer.
-- Managers: disqualify defected offers only._
+- Managers: disqualify defected offers only.
+{% endhint %}
 
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | offerId | uint256 | Offer identifier. |
 
-### safeBuy
+## safeBuy
 
 ```solidity
 function safeBuy(uint256 offerId, uint256 anchor) external payable returns (uint256 value)
 ```
 
 Buy an offer.
+
 Buy only if the offer is in `Selling` state.
 
-Name        Description
+{% hint style="info" %}
+Anchor enforces consistency between this contract and the client-side.
+{% endhint %}
 
-_Anchor enforces consistency between this contract and the client-side._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | offerId | uint256 | Offer identifier. |
 | anchor | uint256 | `tokenId` of the offer. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |

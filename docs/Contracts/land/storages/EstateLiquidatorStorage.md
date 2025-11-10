@@ -1,91 +1,79 @@
-# Solidity API
-
-## EstateLiquidatorStorage
+# EstateLiquidatorStorage
 
 Storage contract for contract `EstateLiquidator`.
 
-### requests
+## requests
 
 ```solidity
 mapping(uint256 => struct IEstateLiquidatorRequest.EstateLiquidatorRequest) requests
 ```
 
-_requests[requestId]_
+{% hint style="info" %}
+requests[requestId]
+{% endhint %}
 
-### requestNumber
+## requestNumber
 
 ```solidity
 uint256 requestNumber
 ```
 
-Name             Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### admin
+## admin
 
 ```solidity
 address admin
 ```
 
-Name        Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### dividendHub
+## dividendHub
 
 ```solidity
 address dividendHub
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### estateToken
+## estateToken
 
 ```solidity
 address estateToken
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### feeReceiver
+## feeReceiver
 
 ```solidity
 address feeReceiver
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### governanceHub
+## governanceHub
 
 ```solidity
 address governanceHub
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |

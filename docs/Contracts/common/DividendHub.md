@@ -1,14 +1,14 @@
-# Solidity API
-
-## DividendHub
+# DividendHub
 
 The `DividendHub` contract collects incomes associated to assets from governor contracts and distribute them
 among asset holders.
 
-_ERC-20 tokens are identified by their contract addresses.
-Native coin is represented by the zero address (0x0000000000000000000000000000000000000000)._
+{% hint style="info" %}
+ERC-20 tokens are identified by their contract addresses.
+Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
+{% endhint %}
 
-### validDividend
+## validDividend
 
 ```solidity
 modifier validDividend(uint256 _dividendId)
@@ -16,15 +16,13 @@ modifier validDividend(uint256 _dividendId)
 
 Verify a valid dividend identifier.
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _dividendId | uint256 | Dividend identifier. |
 
-### receive
+## receive
 
 ```solidity
 receive() external payable
@@ -32,19 +30,17 @@ receive() external payable
 
 Executed on a call to this contract with empty calldata.
 
-### version
+## version
 
 ```solidity
 function version() external pure returns (string)
 ```
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | string | Version of implementation. |
+Version of implementation.
 
-### initialize
+## initialize
 
 ```solidity
 function initialize(address _admin) external
@@ -52,35 +48,29 @@ function initialize(address _admin) external
 
 Initialize the contract after deployment, serving as the constructor.
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _admin | address | `Admin` contract address. |
 
-### getDividend
+## getDividend
 
 ```solidity
 function getDividend(uint256 _dividendId) external view returns (struct IDividend.Dividend)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _dividendId | uint256 | Dividend identifier. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | struct IDividend.Dividend | Configuration and progress of the dividend package. |
+Configuration and progress of the dividend package.
 
-### issueDividend
+## issueDividend
 
 ```solidity
 function issueDividend(address _governor, uint256 _tokenId, uint256 _value, address _currency, string _note) external payable returns (uint256)
@@ -88,9 +78,7 @@ function issueDividend(address _governor, uint256 _tokenId, uint256 _value, addr
 
 Issue a new dividend package for an asset from a governor contract.
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -100,13 +88,11 @@ Name        Description
 | _currency | address | Dividend currency address. |
 | _note | string | Issuance note. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | uint256 | dividendId  New dividend identifier. |
+dividendId  New dividend identifier.
 
-### withdraw
+## withdraw
 
 ```solidity
 function withdraw(uint256[] _dividendIds) external
@@ -114,9 +100,7 @@ function withdraw(uint256[] _dividendIds) external
 
 Withdraw entitled portions of the message sender from multiple dividend packages.
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |

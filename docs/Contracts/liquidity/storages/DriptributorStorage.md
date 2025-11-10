@@ -1,117 +1,101 @@
-# Solidity API
-
-## DriptributorStorage
+# DriptributorStorage
 
 Storage contract for contract `Driptributor`.
 
-### distributions
+## distributions
 
 ```solidity
 mapping(uint256 => struct IDistribution.Distribution) distributions
 ```
 
-_distributions[distributionId]_
+{% hint style="info" %}
+distributions[distributionId]
+{% endhint %}
 
-### distributionNumber
+## distributionNumber
 
 ```solidity
 uint256 distributionNumber
 ```
 
-Name                Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### totalAllocation
+## totalAllocation
 
 ```solidity
 uint256 totalAllocation
 ```
 
-Name                Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### distributedAmount
+## distributedAmount
 
 ```solidity
 uint256 distributedAmount
 ```
 
-Name                Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### admin
+## admin
 
 ```solidity
 address admin
 ```
 
-Name        Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### primaryToken
+## primaryToken
 
 ```solidity
 address primaryToken
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### stakeToken1
+## stakeToken1
 
 ```solidity
 address stakeToken1
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### stakeToken2
+## stakeToken2
 
 ```solidity
 address stakeToken2
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### stakeToken3
+## stakeToken3
 
 ```solidity
 address stakeToken3
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |

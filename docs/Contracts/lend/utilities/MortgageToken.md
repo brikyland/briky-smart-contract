@@ -1,15 +1,15 @@
-# Solidity API
-
-## MortgageToken
+# MortgageToken
 
 A `MortgageToken` contract facilitates peer-to-peer lending secured by crypto collateral. Each provided mortgage
 is tokenized into an ERC-721 token, whose owner has the right to receive repayments from the borrower or foreclose
 on the collateral from the contract once overdue.
 
-_ERC-20 tokens are identified by their contract addresses.
-Native coin is represented by the zero address (0x0000000000000000000000000000000000000000)._
+{% hint style="info" %}
+ERC-20 tokens are identified by their contract addresses.
+Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
+{% endhint %}
 
-### validMortgage
+## validMortgage
 
 ```solidity
 modifier validMortgage(uint256 _mortgageId)
@@ -17,15 +17,13 @@ modifier validMortgage(uint256 _mortgageId)
 
 Verify a mortgage identifier is valid.
 
-Name           Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _mortgageId | uint256 | Mortgage identifier. |
 
-### receive
+## receive
 
 ```solidity
 receive() external payable
@@ -33,7 +31,7 @@ receive() external payable
 
 Executed on a call to this contract with empty calldata.
 
-### __MortgageToken_init
+## __MortgageToken_init
 
 ```solidity
 function __MortgageToken_init(address _admin, address _feeReceiver, string _name, string _symbol, string _uri, uint256 _feeRate) internal
@@ -41,9 +39,7 @@ function __MortgageToken_init(address _admin, address _feeReceiver, string _name
 
 Initialize `MortgageToken`.
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -54,7 +50,7 @@ Name            Description
 | _uri | string | Base URI. |
 | _feeRate | uint256 | Borrowing fee rate. |
 
-### updateBaseURI
+## updateBaseURI
 
 ```solidity
 function updateBaseURI(string _uri, bytes[] _signatures) external
@@ -62,18 +58,18 @@ function updateBaseURI(string _uri, bytes[] _signatures) external
 
 Update the base URI.
 
-Name            Description
+{% hint style="info" %}
+Administrative operator.
+{% endhint %}
 
-_Administrative operator._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _uri | string | New base URI. |
 | _signatures | bytes[] | Array of admin signatures. |
 
-### updateFeeRate
+## updateFeeRate
 
 ```solidity
 function updateFeeRate(uint256 _feeRate, bytes[] _signatures) external
@@ -81,236 +77,229 @@ function updateFeeRate(uint256 _feeRate, bytes[] _signatures) external
 
 Update the borrowing fee rate.
 
-Name            Description
+{% hint style="info" %}
+Administrative operator.
+{% endhint %}
 
-_Administrative operator._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _feeRate | uint256 | New borrowing fee rate. |
 | _signatures | bytes[] | Array of admin signatures. |
 
-### getFeeRate
+## getFeeRate
 
 ```solidity
 function getFeeRate() external view returns (struct IRate.Rate)
 ```
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | struct IRate.Rate | Borrowing fee rate. |
+Borrowing fee rate.
 
-### getMortgage
+## getMortgage
 
 ```solidity
 function getMortgage(uint256 _mortgageId) external view returns (struct IMortgage.Mortgage)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _mortgageId | uint256 | Mortgage identifier. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | struct IMortgage.Mortgage | Configuration and progress of the mortgage. |
+Configuration and progress of the mortgage.
 
-### tokenURI
+## tokenURI
 
 ```solidity
 function tokenURI(uint256 _tokenId) public view returns (string)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _tokenId | uint256 | Token identifier. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | string | Token URI. |
+Token URI.
 
-### supportsInterface
+## supportsInterface
 
 ```solidity
 function supportsInterface(bytes4 _interfaceId) public view virtual returns (bool)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _interfaceId | bytes4 | Interface identifier. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | bool | Whether this contract supports the interface. |
+Whether this contract supports the interface.
 
-### cancel
+## cancel
 
 ```solidity
 function cancel(uint256 _mortgageId) external virtual
 ```
 
 Cancel a mortgage.
+
 Cancel only if the mortgage is in `Pending` state.
 
-Name            Description
-
-_Permission:
+{% hint style="info" %}
+Permission:
 - Borrower of the mortgage.
-- Managers: disqualify defected mortgages only._
+- Managers: disqualify defected mortgages only.
+{% endhint %}
 
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _mortgageId | uint256 | Mortgage identifier. |
 
-### lend
+## lend
 
 ```solidity
 function lend(uint256 _mortgageId) external payable virtual returns (uint40)
 ```
 
 Lend a mortgage.
+
 Lend only if the mortgage is in `Pending` state.
+
 Mint new token associated with the mortgage.
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _mortgageId | uint256 | Mortgage identifier. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | uint40 | Maturity timestamp. |
+Maturity timestamp.
 
-### safeLend
+## safeLend
 
 ```solidity
 function safeLend(uint256 _mortgageId, uint256 _anchor) external payable virtual returns (uint40)
 ```
 
 Lend a mortgage.
+
 Lend only if the mortgage is in `Pending` state.
+
 Mint new token associated with the mortgage.
 
-Name            Description
+{% hint style="info" %}
+Anchor enforces consistency between this contract and the client-side.
+{% endhint %}
 
-_Anchor enforces consistency between this contract and the client-side._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _mortgageId | uint256 | Mortgage identifier. |
 | _anchor | uint256 | `principal` of the mortgage. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | uint40 | Maturity timestamp. |
+Maturity timestamp.
 
-### repay
+## repay
 
 ```solidity
 function repay(uint256 _mortgageId) external payable virtual
 ```
 
 Repay a mortgage.
+
 Repay only if the mortgage is in `Supplied` state and not overdue.
+
 Burn the token associated with the mortgage.
 
-Name            Description
+{% hint style="info" %}
+Permission: Borrower of the mortgage.
+{% endhint %}
 
-_Permission: Borrower of the mortgage._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _mortgageId | uint256 | Mortgage identifier. |
 
-### safeRepay
+## safeRepay
 
 ```solidity
 function safeRepay(uint256 _mortgageId, uint256 _anchor) external payable virtual
 ```
 
 Repay a mortgage.
+
 Repay only if the mortgage is in `Supplied` state and not overdue.
+
 Burn the token associated with the mortgage.
 
-Name            Description
+{% hint style="info" %}
+Permission: Borrower of the mortgage.
 
-_Permission: Borrower of the mortgage.
-   Anchor enforces consistency between this contract and the client-side._
+{% endhint %}
 
-#### Parameters
+{% hint style="info" %}
+Anchor enforces consistency between this contract and the client-side.
+{% endhint %}
+
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _mortgageId | uint256 | Mortgage identifier. |
 | _anchor | uint256 | `repayment` of the mortgage. |
 
-### foreclose
+## foreclose
 
 ```solidity
 function foreclose(uint256 _mortgageId) external virtual
 ```
 
 Foreclose on the collateral of a mortgage.
+
 Foreclose only if the mortgage is overdue.
+
 Burn the token associated with the mortgage.
 
-Name            Description
+{% hint style="info" %}
+The collateral is transferred to the mortgage token owner.
+{% endhint %}
 
-_The collateral is transferred to the mortgage token owner._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _mortgageId | uint256 | Mortgage identifier. |
 
-### _baseURI
+## _baseURI
 
 ```solidity
 function _baseURI() internal view returns (string)
 ```
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | string | Prefix of all token URI. |
+Prefix of all token URI.
 
-### _mint
+## _mint
 
 ```solidity
 function _mint(address _to, uint256 _tokenId) internal
@@ -318,16 +307,14 @@ function _mint(address _to, uint256 _tokenId) internal
 
 Mint a token.
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _to | address | Receiver address. |
 | _tokenId | uint256 | Token identifier. |
 
-### _burn
+## _burn
 
 ```solidity
 function _burn(uint256 _tokenId) internal
@@ -335,15 +322,13 @@ function _burn(uint256 _tokenId) internal
 
 Burn a token.
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _tokenId | uint256 | Token identifier. |
 
-### _borrow
+## _borrow
 
 ```solidity
 function _borrow(uint256 _principal, uint256 _repayment, address _currency, uint40 _duration) internal returns (uint256)
@@ -351,12 +336,12 @@ function _borrow(uint256 _principal, uint256 _repayment, address _currency, uint
 
 List a new mortgage.
 
-Name            Description
+{% hint style="info" %}
+Approval must be granted for this contract to transfer collateral before borrowing. A mortgage can only be
+lent while approval remains active.
+{% endhint %}
 
-_Approval must be granted for this contract to transfer collateral before borrowing. A mortgage can only be
-lent while approval remains active._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -365,55 +350,51 @@ lent while approval remains active._
 | _currency | address | Currency address. |
 | _duration | uint40 | Borrowing duration. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | uint256 | New mortgage identifier. |
+New mortgage identifier.
 
-### _lend
+## _lend
 
 ```solidity
 function _lend(uint256 _mortgageId) internal returns (uint40)
 ```
 
 Lend a mortgage.
+
 Mint the token associated with the mortgage.
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _mortgageId | uint256 | Mortgage identifier. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | uint40 | Repayment due timestamp. |
+Repayment due timestamp.
 
-### _repay
+## _repay
 
 ```solidity
 function _repay(uint256 _mortgageId) internal
 ```
 
 Repay a mortgage.
+
 Burn the token associated with the mortgage.
 
-Name            Description
+{% hint style="info" %}
+Permission: Borrower of the mortgage.
+{% endhint %}
 
-_Permission: Borrower of the mortgage._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _mortgageId | uint256 | Mortgage identifier. |
 
-### _chargeFee
+## _chargeFee
 
 ```solidity
 function _chargeFee(uint256 _mortgageId) internal virtual
@@ -421,15 +402,13 @@ function _chargeFee(uint256 _mortgageId) internal virtual
 
 Charge borrowing fee.
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _mortgageId | uint256 | Mortgage identifier. |
 
-### _transferCollateral
+## _transferCollateral
 
 ```solidity
 function _transferCollateral(uint256 _mortgageId, address _from, address _to) internal virtual
@@ -437,9 +416,7 @@ function _transferCollateral(uint256 _mortgageId, address _from, address _to) in
 
 Transfer the collateral of a mortgage.
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |

@@ -1,12 +1,10 @@
-# Solidity API
-
-## CommissionToken
+# CommissionToken
 
 The `CommissionToken` contract is codependent with the `EstateToken` contract. For each newly tokenized estate,
 it will issue a unique corresponding token that represents the commission fraction shareable to its owner from
 incomes of designated operators involving the estate.
 
-### receive
+## receive
 
 ```solidity
 receive() external payable
@@ -14,19 +12,17 @@ receive() external payable
 
 Executed on a call to this contract with empty calldata.
 
-### version
+## version
 
 ```solidity
 function version() external pure returns (string)
 ```
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | string | Version of implementation. |
+Version of implementation.
 
-### initialize
+## initialize
 
 ```solidity
 function initialize(address _admin, address _estateToken, address _feeReceiver, string _name, string _symbol, string _uri, uint256 _royaltyRate) external
@@ -34,9 +30,7 @@ function initialize(address _admin, address _estateToken, address _feeReceiver, 
 
 Initialize the contract after deployment, serving as the constructor.
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -48,7 +42,7 @@ Name            Description
 | _uri | string | Base URI. |
 | _royaltyRate | uint256 | Default royalty rate. |
 
-### updateBaseURI
+## updateBaseURI
 
 ```solidity
 function updateBaseURI(string _uri, bytes[] _signatures) external
@@ -56,18 +50,18 @@ function updateBaseURI(string _uri, bytes[] _signatures) external
 
 Update the base URI.
 
-Name            Description
+{% hint style="info" %}
+Administrative operator.
+{% endhint %}
 
-_Administrative operator._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _uri | string | New base URI. |
 | _signatures | bytes[] | Array of admin signatures. |
 
-### updateRoyaltyRate
+## updateRoyaltyRate
 
 ```solidity
 function updateRoyaltyRate(uint256 _royaltyRate, bytes[] _signatures) external
@@ -75,133 +69,112 @@ function updateRoyaltyRate(uint256 _royaltyRate, bytes[] _signatures) external
 
 Update the default royalty rate.
 
-Name            Description
+{% hint style="info" %}
+Administrative operator.
+{% endhint %}
 
-_Administrative operator._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _royaltyRate | uint256 | New default royalty rate. |
 | _signatures | bytes[] | Array of admin signatures. |
 
-### getCommissionRate
+## getCommissionRate
 
 ```solidity
 function getCommissionRate(uint256 _tokenId) public view returns (struct IRate.Rate)
 ```
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _tokenId | uint256 | Token identifier. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | struct IRate.Rate | Commission rate of the token identifier. |
+Commission rate of the token identifier.
 
-### getBrokerCommissionRate
+## getBrokerCommissionRate
 
 ```solidity
 function getBrokerCommissionRate(bytes32 _zone, address _broker) external view returns (struct IRate.Rate)
 ```
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _zone | bytes32 | Zone code. |
 | _broker | address | Broker address. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | struct IRate.Rate | Commission rate of the broker in the zone. |
+Commission rate of the broker in the zone.
 
-### commissionInfo
+## commissionInfo
 
 ```solidity
 function commissionInfo(uint256 _tokenId, uint256 _value) external view returns (address, uint256)
 ```
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _tokenId | uint256 | Token identifier. |
 | _value | uint256 | Value. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | address | Commission receiver address. |
-| [1] | uint256 | Commission derived from the value. |
+Commission receiver address.
 
-### getRoyaltyRate
+Commission derived from the value.
+
+## getRoyaltyRate
 
 ```solidity
 function getRoyaltyRate(uint256) external view returns (struct IRate.Rate)
 ```
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | struct IRate.Rate | Royalty rate of the token identifier. |
+Royalty rate of the token identifier.
 
-### tokenURI
+## tokenURI
 
 ```solidity
 function tokenURI(uint256 _tokenId) public view returns (string)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _tokenId | uint256 | Token identifier. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | string | Token URI. |
+Token URI.
 
-### supportsInterface
+## supportsInterface
 
 ```solidity
 function supportsInterface(bytes4 _interfaceId) public view returns (bool)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _interfaceId | bytes4 | Interface identifier. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | bool | Whether this contract implements the interface. |
+Whether this contract implements the interface.
 
-### registerBroker
+## registerBroker
 
 ```solidity
 function registerBroker(bytes32 _zone, address _broker, uint256 _commissionRate) external
@@ -209,11 +182,11 @@ function registerBroker(bytes32 _zone, address _broker, uint256 _commissionRate)
 
 Register a broker in a zone.
 
-Name                Description
+{% hint style="info" %}
+Permission: Managers in the zone.
+{% endhint %}
 
-_Permission: Managers in the zone._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -221,7 +194,7 @@ _Permission: Managers in the zone._
 | _broker | address | Broker address. |
 | _commissionRate | uint256 | Commission rate. |
 
-### activateBroker
+## activateBroker
 
 ```solidity
 function activateBroker(bytes32 _zone, address _broker, bool _isActive) external
@@ -229,11 +202,11 @@ function activateBroker(bytes32 _zone, address _broker, bool _isActive) external
 
 Activate or deactivate a broker in a zone.
 
-Name            Description
+{% hint style="info" %}
+Permission: Managers in the zone.
+{% endhint %}
 
-_Permission: Managers in the zone._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -241,7 +214,7 @@ _Permission: Managers in the zone._
 | _broker | address | Broker address. |
 | _isActive | bool | Whether the operation is activating or deactivating. |
 
-### mint
+## mint
 
 ```solidity
 function mint(bytes32 _zone, address _broker, uint256 _tokenId) external
@@ -249,9 +222,7 @@ function mint(bytes32 _zone, address _broker, uint256 _tokenId) external
 
 Mint a commission token.
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -259,19 +230,17 @@ Name        Description
 | _broker | address | Associated broker address. |
 | _tokenId | uint256 | Token identifier to be minted. |
 
-### _baseURI
+## _baseURI
 
 ```solidity
 function _baseURI() internal view returns (string)
 ```
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | string | Prefix of all token URI. |
+Prefix of all token URI.
 
-### _mint
+## _mint
 
 ```solidity
 function _mint(address _to, uint256 _tokenId) internal
@@ -279,24 +248,20 @@ function _mint(address _to, uint256 _tokenId) internal
 
 Mint a token.
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _to | address | To address. |
 | _tokenId | uint256 | Token identifier. |
 
-### _royaltyReceiver
+## _royaltyReceiver
 
 ```solidity
 function _royaltyReceiver() internal view returns (address)
 ```
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | address | Default royalty receiver address. |
+Default royalty receiver address.
 

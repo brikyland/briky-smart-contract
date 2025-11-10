@@ -1,20 +1,17 @@
-# Solidity API
-
-## IExclusiveToken
+# IExclusiveToken
 
 Interface for exclusive ERC-20 tokens of the system.
+
 An `IExclusiveToken` contract provides a discount rate applied when it is used as the currency of fee charged in
 operators within the system.
 
-### exclusiveDiscount
+## exclusiveDiscount
 
 ```solidity
 function exclusiveDiscount() external view returns (struct IRate.Rate rate)
 ```
 
-Name    Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |

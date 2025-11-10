@@ -1,10 +1,8 @@
-# Solidity API
-
-## IRate
+# IRate
 
 Interface for struct `Rate`.
 
-### InvalidRate
+## InvalidRate
 
 ```solidity
 error InvalidRate()
@@ -12,7 +10,7 @@ error InvalidRate()
 
 ===== ERROR ===== *
 
-### Rate
+## Rate
 
 Representation of an unsigned rational rate.
 

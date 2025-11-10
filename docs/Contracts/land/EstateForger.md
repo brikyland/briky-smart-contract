@@ -1,6 +1,4 @@
-# Solidity API
-
-## EstateForger
+# EstateForger
 
 The `EstateForger` contract facilitates the tokenization of real estate through community sales. Authorized
 custodians select estates and submit tokenization requests. During the sale period, accounts may deposit into these
@@ -11,13 +9,23 @@ obligations within the allotted timeframe. In that case, the deposit is transfer
 settlement, and depositors may redeem their corresponding portion of a new class of estate token. Otherwise,
 depositors are entitled to withdraw their deposits, and the tokenization attempt is deemed unsuccessful.
 
-_Quantities are expressed in absolute units. Scale these values by `10 ** IAssetToken(estateToken).decimals()` to
+{% hint style="info" %}
+Quantities are expressed in absolute units. Scale these values by `10 ** IAssetToken(estateToken).decimals()` to
 obtain the correct amounts under the `IAssetToken` convention.
-   Implementation involves server-side support.
-   ERC-20 tokens are identified by their contract addresses.
-Native coin is represented by the zero address (0x0000000000000000000000000000000000000000)._
 
-### validRequest
+{% endhint %}
+
+{% hint style="info" %}
+Implementation involves server-side support.
+
+{% endhint %}
+
+{% hint style="info" %}
+ERC-20 tokens are identified by their contract addresses.
+Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
+{% endhint %}
+
+## validRequest
 
 ```solidity
 modifier validRequest(uint256 _requestId)
@@ -25,15 +33,13 @@ modifier validRequest(uint256 _requestId)
 
 Verify a valid request identifier.
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _requestId | uint256 | Request identifier. |
 
-### onlyActiveInZoneOf
+## onlyActiveInZoneOf
 
 ```solidity
 modifier onlyActiveInZoneOf(uint256 _requestId)
@@ -41,15 +47,13 @@ modifier onlyActiveInZoneOf(uint256 _requestId)
 
 Verify the message sender is active in the zone of the estate of the request.
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _requestId | uint256 | Request identifier. |
 
-### receive
+## receive
 
 ```solidity
 receive() external payable
@@ -57,19 +61,17 @@ receive() external payable
 
 Executed on a call to this contract with empty calldata.
 
-### version
+## version
 
 ```solidity
 function version() external pure returns (string)
 ```
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | string | Version of implementation. |
+Version of implementation.
 
-### initialize
+## initialize
 
 ```solidity
 function initialize(address _admin, address _estateToken, address _commissionToken, address _priceWatcher, address _feeReceiver, address _reserveVault, address _validator, uint256 _baseMinUnitPrice, uint256 _baseMaxUnitPrice) external
@@ -77,9 +79,7 @@ function initialize(address _admin, address _estateToken, address _commissionTok
 
 Initialize the contract after deployment, serving as the constructor.
 
-Name                Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -93,7 +93,7 @@ Name                Description
 | _baseMinUnitPrice | uint256 | Minimum unit price denominated in USD. |
 | _baseMaxUnitPrice | uint256 | Maximum unit price denominated in USD. |
 
-### updateBaseUnitPriceRange
+## updateBaseUnitPriceRange
 
 ```solidity
 function updateBaseUnitPriceRange(uint256 _baseMinUnitPrice, uint256 _baseMaxUnitPrice, bytes[] _signatures) external
@@ -101,11 +101,11 @@ function updateBaseUnitPriceRange(uint256 _baseMinUnitPrice, uint256 _baseMaxUni
 
 Update the acceptable range of unit price denominated in USD.
 
-Name                Description
+{% hint style="info" %}
+Administrative operator.
+{% endhint %}
 
-_Administrative operator._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -113,7 +113,7 @@ _Administrative operator._
 | _baseMaxUnitPrice | uint256 | New maximum unit price denominated in USD. |
 | _signatures | bytes[] | Array of admin signatures. |
 
-### whitelist
+## whitelist
 
 ```solidity
 function whitelist(address[] _accounts, bool _isWhitelisted, bytes[] _signatures) external
@@ -121,11 +121,11 @@ function whitelist(address[] _accounts, bool _isWhitelisted, bytes[] _signatures
 
 Whitelist or unwhitelist globally multiple addresses for private sales.
 
-Name                Description
+{% hint style="info" %}
+Administrative operator.
+{% endhint %}
 
-_Administrative operator._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -133,65 +133,57 @@ _Administrative operator._
 | _isWhitelisted | bool | Whether the operation is whitelisting or unwhitelisting. |
 | _signatures | bytes[] | Array of admin signatures. |
 
-### getRequest
+## getRequest
 
 ```solidity
 function getRequest(uint256 _requestId) external view returns (struct IEstateForgerRequest.EstateForgerRequest)
 ```
 
-Name            Description
-
-_Phases of a request:
+{% hint style="info" %}
+Phases of a request:
 - Pending: block.timestamp < agenda.saleStartsAt
 - Private Sale: agenda.saleStartsAt <= block.timestamp < agenda.privateSaleEndsAt
 - Public Sale: agenda.privateSaleEndsAt <= block.timestamp <= agenda.publicSaleEndsAt
 - Awaiting Confirmation: agenda.publicSaleEndsAt
-<= block.timestamp
-< agenda.publicSaleEndsAt + EstateForgerConstant.SALE_CONFIRMATION_TIME_LIMIT
+                            <= block.timestamp
+                            < agenda.publicSaleEndsAt + EstateForgerConstant.SALE_CONFIRMATION_TIME_LIMIT
 - Confirmed: estate.estateId > 0
-- Cancelled: quota.totalSupply = 0_
+- Cancelled: quota.totalSupply = 0
+{% endhint %}
 
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _requestId | uint256 | Request identifier. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | struct IEstateForgerRequest.EstateForgerRequest | Configuration and progress of the request. |
+Configuration and progress of the request.
 
-### isTokenized
+## isTokenized
 
 ```solidity
 function isTokenized(uint256 _requestId) external view returns (bool)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _requestId | uint256 | Request identifier. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | bool | Whether the request has been confirmed and tokenized. |
+Whether the request has been confirmed and tokenized.
 
-### allocationOfAt
+## allocationOfAt
 
 ```solidity
 function allocationOfAt(address _account, uint256 _requestId, uint256 _at) external view returns (uint256)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -199,33 +191,27 @@ Name            Description
 | _requestId | uint256 | Request identifier. |
 | _at | uint256 | Reference timestamp. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | uint256 | Allocation of the account at the reference timestamp. |
+Allocation of the account at the reference timestamp.
 
-### supportsInterface
+## supportsInterface
 
 ```solidity
 function supportsInterface(bytes4 _interfaceId) public view virtual returns (bool)
 ```
 
-Name                Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _interfaceId | bytes4 | Interface identifier. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | bool | Whether this contract supports the interface. |
+Whether this contract supports the interface.
 
-### requestTokenization
+## requestTokenization
 
 ```solidity
 function requestTokenization(address _requester, struct IEstateForgerRequest.EstateForgerRequestEstateInput _estate, struct IEstateForgerRequest.EstateForgerRequestQuotaInput _quota, struct IEstateForgerRequest.EstateForgerRequestQuoteInput _quote, struct IEstateForgerRequest.EstateForgerRequestAgendaInput _agenda, struct IValidation.Validation _validation) external returns (uint256)
@@ -233,12 +219,16 @@ function requestTokenization(address _requester, struct IEstateForgerRequest.Est
 
 Request a new estate to be tokenized.
 
-Name            Description
+{% hint style="info" %}
+Permission: Executives active in the zone of the estate.
 
-_Permission: Executives active in the zone of the estate.
-   Total sale duration must be no less than `EstateForgerConstant.SALE_MINIMUM_DURATION`._
+{% endhint %}
 
-#### Parameters
+{% hint style="info" %}
+Total sale duration must be no less than `EstateForgerConstant.SALE_MINIMUM_DURATION`.
+{% endhint %}
+
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -249,26 +239,25 @@ _Permission: Executives active in the zone of the estate.
 | _agenda | struct IEstateForgerRequest.EstateForgerRequestAgendaInput | Initialization input for `EstateForgerRequestAgenda` of the request. |
 | _validation | struct IValidation.Validation | Validation package from the validator. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | uint256 | New request identifier. |
+New request identifier.
 
-### whitelistFor
+## whitelistFor
 
 ```solidity
 function whitelistFor(uint256 _requestId, address[] _accounts, bool _isWhitelisted) external
 ```
 
 Whitelist or unwhitelist accounts for participation in the private sale of a specific request.
+
 Whitelist only before the private sale ends.
 
-Name            Description
+{% hint style="info" %}
+Permission: Executives active in the zone of the estate.
+{% endhint %}
 
-_Permission: Executives active in the zone of the estate._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -276,20 +265,21 @@ _Permission: Executives active in the zone of the estate._
 | _accounts | address[] | Array of EVM addresses. |
 | _isWhitelisted | bool | Whether the operation is whitelisting or unwhitelisting. |
 
-### updateRequestEstateURI
+## updateRequestEstateURI
 
 ```solidity
 function updateRequestEstateURI(uint256 _requestId, string _uri, struct IValidation.Validation _validation) external
 ```
 
 Update the URI of estate metadata of a request.
+
 Update only before the request is either confirmed or cancelled.
 
-Name            Description
+{% hint style="info" %}
+Permission: Executives active in the zone of the estate.
+{% endhint %}
 
-_Permission: Executives active in the zone of the estate._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -297,86 +287,94 @@ _Permission: Executives active in the zone of the estate._
 | _uri | string | New URI of estate metadata. |
 | _validation | struct IValidation.Validation | Validation package from the validator. |
 
-### updateRequestAgenda
+## updateRequestAgenda
 
 ```solidity
 function updateRequestAgenda(uint256 _requestId, struct IEstateForgerRequest.EstateForgerRequestAgendaInput _agenda) external
 ```
 
 Update the agenda of a request.
+
 Update only before any account deposits.
 
-Name            Description
+{% hint style="info" %}
+Permission: Executives active in the zone of the estate.
 
-_Permission: Executives active in the zone of the estate.
-   Total sale duration must be no less than `EstateForgerConstant.SALE_MINIMUM_DURATION`.
-   Can only update `saleStartsAt` before the sale actually starts. If its corresponding input is 0, the timestamp
-remains unchanged._
+{% endhint %}
 
-#### Parameters
+{% hint style="info" %}
+Total sale duration must be no less than `EstateForgerConstant.SALE_MINIMUM_DURATION`.
+
+{% endhint %}
+
+{% hint style="info" %}
+Can only update `saleStartsAt` before the sale actually starts. If its corresponding input is 0, the timestamp
+remains unchanged.
+{% endhint %}
+
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _requestId | uint256 | Request identifier. |
 | _agenda | struct IEstateForgerRequest.EstateForgerRequestAgendaInput | Initialization input for `EstateForgerRequestAgenda`. |
 
-### cancel
+## cancel
 
 ```solidity
 function cancel(uint256 _requestId) external
 ```
 
 Cancel a request.
+
 Cancel only before the request is either confirmed or cancelled.
 
-Name            Description
+{% hint style="info" %}
+Permission: Managers active in the zone of the estate.
+{% endhint %}
 
-_Permission: Managers active in the zone of the estate._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _requestId | uint256 | Request identifier. |
 
-### deposit
+## deposit
 
 ```solidity
 function deposit(uint256 _requestId, uint256 _quantity) external payable returns (uint256)
 ```
 
 Deposit to purchase tokens in a request.
+
 Deposit only during sale period. Only accounts whitelisted globally or specifically for the request can deposit during the private sale.
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _requestId | uint256 | Request identifier. |
 | _quantity | uint256 | Deposited quantity. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | uint256 | Deposited value. |
+Deposited value.
 
-### safeDeposit
+## safeDeposit
 
 ```solidity
 function safeDeposit(uint256 _requestId, uint256 _quantity, bytes32 _anchor) external payable returns (uint256)
 ```
 
 Deposit to a request.
+
 Deposit only during sale period. Only accounts whitelisted globally or specifically for the request can deposit during the private sale.
 
-Name            Description
+{% hint style="info" %}
+Anchor enforces consistency between this contract and the client-side.
+{% endhint %}
 
-_Anchor enforces consistency between this contract and the client-side._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -384,89 +382,82 @@ _Anchor enforces consistency between this contract and the client-side._
 | _quantity | uint256 | Deposited quantity. |
 | _anchor | bytes32 | Keccak256 hash of `estate.uri` of the request. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | uint256 | Deposited value. |
+Deposited value.
 
-### safeConfirm
+## safeConfirm
 
 ```solidity
 function safeConfirm(uint256 _requestId, bytes32 _anchor) external payable returns (uint256)
 ```
 
 Confirm a request to be tokenized.
+
 Confirm only if the request has sold at least minimum quantity (even if the sale period has not yet ended) and
 before the confirmation time limit has expired.
+
 The message sender must provide sufficient extra-currency amounts for the cashback fund.
 
-Name            Description
+{% hint style="info" %}
+Permission: Managers active in the zone of the estate.
+{% endhint %}
 
-_Permission: Managers active in the zone of the estate._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _requestId | uint256 | Request identifier. |
 | _anchor | bytes32 | Keccak256 hash of `estate.uri` of the request. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | uint256 | New estate token identifier. |
+New estate token identifier.
 
-### withdrawDeposit
+## withdrawDeposit
 
 ```solidity
 function withdrawDeposit(uint256 _requestId) external returns (uint256)
 ```
 
 Withdraw the deposit of the message sender from a request which can no longer be confirmed.
+
 Withdraw only if the request is cancelled or the sale ends without enough sold quantity or the confirmation
 time limit has expired.
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _requestId | uint256 | Request identifier. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | uint256 | Withdrawn value. |
+Withdrawn value.
 
-### withdrawEstateToken
+## withdrawEstateToken
 
 ```solidity
 function withdrawEstateToken(uint256 _requestId) external returns (uint256)
 ```
 
 Withdraw the allocation of the message sender from a tokenization.
+
 Withdraw only after the request is confirmed.
+
 Also receive corresponding cashback.
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _requestId | uint256 | Request identifier. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | uint256 | Withdrawn amount. |
+Withdrawn amount.
 
-### _deposit
+## _deposit
 
 ```solidity
 function _deposit(uint256 _requestId, uint256 _quantity) internal returns (uint256)
@@ -474,22 +465,18 @@ function _deposit(uint256 _requestId, uint256 _quantity) internal returns (uint2
 
 Deposit to a request.
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _requestId | uint256 | Request identifier. |
 | _quantity | uint256 | Deposited quantity. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | uint256 | Deposited value. |
+Deposited value.
 
-### _provideCashbackFund
+## _provideCashbackFund
 
 ```solidity
 function _provideCashbackFund(uint256 _cashbackFundId) internal returns (uint256)
@@ -498,17 +485,13 @@ function _provideCashbackFund(uint256 _cashbackFundId) internal returns (uint256
 Provide cashback fund in the main currency, using a sufficient portion of the tokenization fee and in other
 extras, using amounts forwarded from the message sender.
 
-Name                Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _cashbackFundId | uint256 | Cashback fund identifier. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | uint256 | Main currency cashback value. |
+Main currency cashback value.
 

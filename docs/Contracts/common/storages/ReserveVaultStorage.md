@@ -1,47 +1,45 @@
-# Solidity API
-
-## ReserveVaultStorage
+# ReserveVaultStorage
 
 Storage contract for contract `ReserveVault`.
 
-### funds
+## funds
 
 ```solidity
 mapping(uint256 => struct IFund.Fund) funds
 ```
 
-_funds[fundId]_
+{% hint style="info" %}
+funds[fundId]
+{% endhint %}
 
-### isProvider
+## isProvider
 
 ```solidity
 mapping(address => bool) isProvider
 ```
 
-_isProvider[account]_
+{% hint style="info" %}
+isProvider[account]
+{% endhint %}
 
-### fundNumber
+## fundNumber
 
 ```solidity
 uint256 fundNumber
 ```
 
-Name        Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### admin
+## admin
 
 ```solidity
 address admin
 ```
 
-Name        Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |

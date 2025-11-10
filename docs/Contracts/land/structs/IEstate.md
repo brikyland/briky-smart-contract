@@ -1,10 +1,8 @@
-# Solidity API
-
-## IEstate
+# IEstate
 
 Interface for struct `Estate`.
 
-### Estate
+## Estate
 
 Estate information.
 

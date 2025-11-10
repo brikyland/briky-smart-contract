@@ -1,13 +1,14 @@
-# Solidity API
-
-## IValidatable
+# IValidatable
 
 Interface for contract `Validatable`.
+
 A `Validatable` contract relies on a trusted validator to verify data that is difficult to process on-chain.
 
-_Implementation involves server-side support._
+{% hint style="info" %}
+Implementation involves server-side support.
+{% endhint %}
 
-### ValidatorUpdate
+## ValidatorUpdate
 
 ```solidity
 event ValidatorUpdate(address newAddress)
@@ -15,15 +16,13 @@ event ValidatorUpdate(address newAddress)
 
 Emitted when the validator is updated.
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | newAddress | address | New validator address. |
 
-### ValidationExpired
+## ValidationExpired
 
 ```solidity
 error ValidationExpired()
@@ -31,41 +30,37 @@ error ValidationExpired()
 
 ===== ERROR ===== *
 
-### InvalidNonce
+## InvalidNonce
 
 ```solidity
 error InvalidNonce()
 ```
 
-### InvalidSignature
+## InvalidSignature
 
 ```solidity
 error InvalidSignature()
 ```
 
-### validator
+## validator
 
 ```solidity
 function validator() external view returns (address validator)
 ```
 
-Name        Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | validator | address | Validator address. |
 
-### isNonceUsed
+## isNonceUsed
 
 ```solidity
 function isNonceUsed(uint256 nonce) external view returns (bool isUsed)
 ```
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |

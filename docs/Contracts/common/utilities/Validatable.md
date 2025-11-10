@@ -1,12 +1,12 @@
-# Solidity API
-
-## Validatable
+# Validatable
 
 A `Validatable` contract relies on a trusted validator to verify data that is difficult to process on-chain.
 
-_Implementation involves server-side support._
+{% hint style="info" %}
+Implementation involves server-side support.
+{% endhint %}
 
-### __Validatable_init
+## __Validatable_init
 
 ```solidity
 function __Validatable_init(address _validator) internal
@@ -14,15 +14,13 @@ function __Validatable_init(address _validator) internal
 
 Initialize `Validatable`.
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _validator | address | Validator address. |
 
-### updateValidator
+## updateValidator
 
 ```solidity
 function updateValidator(address _validator, bytes[] _signatures) external
@@ -30,18 +28,18 @@ function updateValidator(address _validator, bytes[] _signatures) external
 
 Update the validator.
 
-Name            Description
+{% hint style="info" %}
+Administrative operator.
+{% endhint %}
 
-_Administrative operator._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _validator | address | New validator address. |
 | _signatures | bytes[] | Array of admin signatures. |
 
-### _validate
+## _validate
 
 ```solidity
 function _validate(bytes _data, struct IValidation.Validation _validation) internal
@@ -49,11 +47,11 @@ function _validate(bytes _data, struct IValidation.Validation _validation) inter
 
 Validate a data.
 
-Name            Description
+{% hint style="info" %}
+Revert on validation failure.
+{% endhint %}
 
-_Revert on validation failure._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |

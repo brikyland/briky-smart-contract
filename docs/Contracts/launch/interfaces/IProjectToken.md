@@ -1,18 +1,23 @@
-# Solidity API
-
-## IProjectToken
+# IProjectToken
 
 Interface for contract `ProjectToken`.
+
 The `ProjectToken` contract securitizes real-world estate projects into classes of fungible ERC-1155 tokens, where
 each token class represents fractional credits for contributions to a project. Officially disclosed third-party
 organizations are registered as initiators in designated zones to actively initiate a project they're developing
 through a launchpad, serving as reference for future investment benefit distributions. Finalized estate projects
 that satisfy the required conditions may be tokenized into `EstateToken` at the discretion of the initiator.
 
-_Each unit of estate tokens is represented in scaled form as `10 ** decimals()`.
-   Implementation involves server-side support._
+{% hint style="info" %}
+Each unit of estate tokens is represented in scaled form as `10 ** decimals()`.
 
-### BaseURIUpdate
+{% endhint %}
+
+{% hint style="info" %}
+Implementation involves server-side support.
+{% endhint %}
+
+## BaseURIUpdate
 
 ```solidity
 event BaseURIUpdate(string newValue)
@@ -20,15 +25,13 @@ event BaseURIUpdate(string newValue)
 
 Emitted when the base URI is updated.
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | newValue | string | New base URI. |
 
-### ZoneRoyaltyRateUpdate
+## ZoneRoyaltyRateUpdate
 
 ```solidity
 event ZoneRoyaltyRateUpdate(bytes32 zone, struct IRate.Rate newValue)
@@ -36,16 +39,14 @@ event ZoneRoyaltyRateUpdate(bytes32 zone, struct IRate.Rate newValue)
 
 Emitted when the royalty rate for a zone is updated.
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | zone | bytes32 | Zone code. |
 | newValue | struct IRate.Rate | New royalty rate value. |
 
-### LaunchpadAuthorization
+## LaunchpadAuthorization
 
 ```solidity
 event LaunchpadAuthorization(address account)
@@ -53,15 +54,13 @@ event LaunchpadAuthorization(address account)
 
 Emitted when a contract address is authorized as a launchpad contract.
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | account | address | Authorized contract address. |
 
-### LaunchpadDeauthorization
+## LaunchpadDeauthorization
 
 ```solidity
 event LaunchpadDeauthorization(address account)
@@ -69,15 +68,13 @@ event LaunchpadDeauthorization(address account)
 
 Emitted when a contract is deauthorized as a launchpad contract.
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | account | address | Deauthorized contract address. |
 
-### InitiatorRegistration
+## InitiatorRegistration
 
 ```solidity
 event InitiatorRegistration(bytes32 zone, address initiator, string uri)
@@ -85,9 +82,7 @@ event InitiatorRegistration(bytes32 zone, address initiator, string uri)
 
 Emitted when an initiator is registered in a zone.
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -95,7 +90,7 @@ Name        Description
 | initiator | address | Initiator address. |
 | uri | string | URI of initiator information. |
 
-### NewToken
+## NewToken
 
 ```solidity
 event NewToken(uint256 tokenId, bytes32 zone, uint256 launchId, address launchpad, address initiator)
@@ -103,9 +98,7 @@ event NewToken(uint256 tokenId, bytes32 zone, uint256 launchId, address launchpa
 
 Emitted when a new class of project token is minted.
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -115,7 +108,7 @@ Name        Description
 | launchpad | address | Launchpad contract address. |
 | initiator | address | Initiator address. |
 
-### ProjectDeprecation
+## ProjectDeprecation
 
 ```solidity
 event ProjectDeprecation(uint256 projectId, string note)
@@ -123,16 +116,14 @@ event ProjectDeprecation(uint256 projectId, string note)
 
 Emitted when a project is deprecated due to force majeure.
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | projectId | uint256 | Project identifier. |
 | note | string | Deprecation note. |
 
-### ProjectTokenization
+## ProjectTokenization
 
 ```solidity
 event ProjectTokenization(uint256 projectId, uint256 estateId, uint256 totalSupply, address custodian, address broker)
@@ -140,9 +131,7 @@ event ProjectTokenization(uint256 projectId, uint256 estateId, uint256 totalSupp
 
 Emitted when a project is tokenized into an estate token.
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -152,7 +141,7 @@ Name            Description
 | custodian | address | Associated custodian address. |
 | broker | address | Associated broker address. |
 
-### InvalidLaunchpad
+## InvalidLaunchpad
 
 ```solidity
 error InvalidLaunchpad(address account)
@@ -160,167 +149,153 @@ error InvalidLaunchpad(address account)
 
 ===== ERROR ===== *
 
-### InvalidProjectId
+## InvalidProjectId
 
 ```solidity
 error InvalidProjectId()
 ```
 
-### InvalidTokenizing
+## InvalidTokenizing
 
 ```solidity
 error InvalidTokenizing()
 ```
 
-### InvalidURI
+## InvalidURI
 
 ```solidity
 error InvalidURI()
 ```
 
-### InvalidWithdrawing
+## InvalidWithdrawing
 
 ```solidity
 error InvalidWithdrawing()
 ```
 
-### NothingToTokenize
+## NothingToTokenize
 
 ```solidity
 error NothingToTokenize()
 ```
 
-### feeReceiver
+## feeReceiver
 
 ```solidity
 function feeReceiver() external view returns (address feeReceiver)
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | feeReceiver | address | `FeeReceiver` contract address. |
 
-### projectNumber
+## projectNumber
 
 ```solidity
 function projectNumber() external view returns (uint256 projectNumber)
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | projectNumber | uint256 | Number of projects. |
 
-### getProject
+## getProject
 
 ```solidity
 function getProject(uint256 projectId) external view returns (struct IProject.Project project)
 ```
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | projectId | uint256 | Project identifier. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | project | struct IProject.Project | Project information. |
 
-### getZoneRoyaltyRate
+## getZoneRoyaltyRate
 
 ```solidity
 function getZoneRoyaltyRate(bytes32 zone) external view returns (struct IRate.Rate royaltyRate)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | zone | bytes32 | Zone code. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | royaltyRate | struct IRate.Rate | Royalty rate of the zone. |
 
-### isLaunchpad
+## isLaunchpad
 
 ```solidity
 function isLaunchpad(address account) external view returns (bool isLaunchpad)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | account | address | EVM address. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | isLaunchpad | bool | Whether the account is an authorized launchpad. |
 
-### initiatorURI
+## initiatorURI
 
 ```solidity
 function initiatorURI(bytes32 zone, address account) external view returns (string uri)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | zone | bytes32 | Zone code. |
 | account | address | Initiator address. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | uri | string | URI of initiator information. |
 
-### isInitiatorIn
+## isInitiatorIn
 
 ```solidity
 function isInitiatorIn(bytes32 zone, address account) external view returns (bool isInitiator)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | zone | bytes32 | Zone code. |
 | account | address | Address to check. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | isInitiator | bool | Whether the account is a registered initiator in the zone. |
 
-### registerInitiator
+## registerInitiator
 
 ```solidity
 function registerInitiator(bytes32 zone, address initiator, string uri, struct IValidation.Validation validation) external
@@ -328,11 +303,11 @@ function registerInitiator(bytes32 zone, address initiator, string uri, struct I
 
 Register an initiator in a zone.
 
-Name        Description
+{% hint style="info" %}
+Permission: Managers active in the zone.
+{% endhint %}
 
-_Permission: Managers active in the zone._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -341,7 +316,7 @@ _Permission: Managers active in the zone._
 | uri | string | URI of initiator information. |
 | validation | struct IValidation.Validation | Validation package from the validator. |
 
-### launchProject
+## launchProject
 
 ```solidity
 function launchProject(bytes32 zone, uint256 launchId, address initiator, string uri) external returns (uint256 projectId)
@@ -349,11 +324,11 @@ function launchProject(bytes32 zone, uint256 launchId, address initiator, string
 
 Launch a project associated with a new class of token.
 
-Name        Description
+{% hint style="info" %}
+Permission: Launchpads.
+{% endhint %}
 
-_Permission: Launchpads._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -362,13 +337,13 @@ _Permission: Launchpads._
 | initiator | address | Initiator address for the project. |
 | uri | string | URI of project metadata. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | projectId | uint256 | New project identifier. |
 
-### mint
+## mint
 
 ```solidity
 function mint(uint256 projectId, uint256 amount) external
@@ -376,18 +351,18 @@ function mint(uint256 projectId, uint256 amount) external
 
 Mint new tokens for a project.
 
-Name        Description
+{% hint style="info" %}
+Permission: Launchpad of the project.
+{% endhint %}
 
-_Permission: Launchpad of the project._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | projectId | uint256 | Project identifier. |
 | amount | uint256 | Minted amount. |
 
-### safeDeprecateProject
+## safeDeprecateProject
 
 ```solidity
 function safeDeprecateProject(uint256 projectId, string data, bytes32 anchor) external
@@ -395,12 +370,16 @@ function safeDeprecateProject(uint256 projectId, string data, bytes32 anchor) ex
 
 Deprecate a project due to force majeure.
 
-Name        Description
+{% hint style="info" %}
+Permission: Managers active in the zone of the project.
 
-_Permission: Managers active in the zone of the project.
-   Anchor enforces consistency between this contract and the client-side._
+{% endhint %}
 
-#### Parameters
+{% hint style="info" %}
+Anchor enforces consistency between this contract and the client-side.
+{% endhint %}
+
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -408,21 +387,26 @@ _Permission: Managers active in the zone of the project.
 | data | string | Deprecation note. |
 | anchor | bytes32 | Keccak256 hash of `uri` of the estate. |
 
-### safeTokenizeProject
+## safeTokenizeProject
 
 ```solidity
 function safeTokenizeProject(uint256 projectId, address custodian, address broker, bytes32 anchor) external returns (uint256 estateId)
 ```
 
 Tokenize an legitimate estate project into a new class of estate token.
+
 Tokenize only if the project has been finalized.
 
-Name        Description
+{% hint style="info" %}
+Permission: Managers active in the zone of the project.
 
-_Permission: Managers active in the zone of the project.
-   Anchor enforces consistency between this contract and the client-side._
+{% endhint %}
 
-#### Parameters
+{% hint style="info" %}
+Anchor enforces consistency between this contract and the client-side.
+{% endhint %}
+
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -431,13 +415,13 @@ _Permission: Managers active in the zone of the project.
 | broker | address | Associated broker address. |
 | anchor | bytes32 | Keccak256 hash of `uri` of the project. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | estateId | uint256 | Estate identifier tokenized from the project. |
 
-### safeUpdateProjectURI
+## safeUpdateProjectURI
 
 ```solidity
 function safeUpdateProjectURI(uint256 projectId, string uri, struct IValidation.Validation validation, bytes32 anchor) external
@@ -445,19 +429,27 @@ function safeUpdateProjectURI(uint256 projectId, string uri, struct IValidation.
 
 Update the URI of metadata of a project.
 
-Name        Description
+{% hint style="info" %}
+Permission: Managers active in the zone of the project.
 
-_Permission: Managers active in the zone of the project.
-   Anchor enforces consistency between this contract and the client-side.
-   Validation data:
+{% endhint %}
+
+{% hint style="info" %}
+Anchor enforces consistency between this contract and the client-side.
+
+{% endhint %}
+
+{% hint style="info" %}
+Validation data:
 ```
 data = abi.encode(
-projectId,
-uri
+    projectId,
+    uri
 );
-```_
+```
+{% endhint %}
 
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |

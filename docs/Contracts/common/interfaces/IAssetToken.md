@@ -1,55 +1,50 @@
-# Solidity API
-
-## IAssetToken
+# IAssetToken
 
 Interface for ERC-1155 tokens that securitizes RWAs.
+
 An `IAssetToken` contract securitizes RWAs and represents share holdings in form of a class of ERC-1155 tokens.
 
-_Each unit of asset tokens is represented in scaled form as `10 ** decimals()`._
+{% hint style="info" %}
+Each unit of asset tokens is represented in scaled form as `10 ** decimals()`.
+{% endhint %}
 
-### decimals
+## decimals
 
 ```solidity
 function decimals() external view returns (uint8 decimals)
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | decimals | uint8 | Token decimals. |
 
-### totalSupply
+## totalSupply
 
 ```solidity
 function totalSupply(uint256 tokenId) external view returns (uint256 totalSupply)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | tokenId | uint256 | Asset identifier. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | totalSupply | uint256 | Total supply of the token class. |
 
-### balanceOfAt
+## balanceOfAt
 
 ```solidity
 function balanceOfAt(address account, uint256 tokenId, uint256 at) external view returns (uint256 balance)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -57,7 +52,7 @@ Name            Description
 | tokenId | uint256 | Asset identifier. |
 | at | uint256 | Reference timestamp. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |

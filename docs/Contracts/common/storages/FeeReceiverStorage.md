@@ -1,18 +1,14 @@
-# Solidity API
-
-## FeeReceiverStorage
+# FeeReceiverStorage
 
 Storage contract for contract `FeeReceiver`.
 
-### admin
+## admin
 
 ```solidity
 address admin
 ```
 
-Name        Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |

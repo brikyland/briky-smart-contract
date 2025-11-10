@@ -1,22 +1,24 @@
-# Solidity API
-
-## ERC721MortgageTokenStorage
+# ERC721MortgageTokenStorage
 
 Storage contract for contract `ERC721MortgageToken`.
 
-### collaterals
+## collaterals
 
 ```solidity
 mapping(uint256 => struct IERC721Collateral.ERC721Collateral) collaterals
 ```
 
-_collaterals[mortgageId]_
+{% hint style="info" %}
+collaterals[mortgageId]
+{% endhint %}
 
-### isCollateral
+## isCollateral
 
 ```solidity
 mapping(address => bool) isCollateral
 ```
 
-_isCollateral[collection]_
+{% hint style="info" %}
+isCollateral[collection]
+{% endhint %}
 

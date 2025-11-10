@@ -1,47 +1,45 @@
-# Solidity API
-
-## DividendHubStorage
+# DividendHubStorage
 
 Storage contract for contract `DividendHub`.
 
-### withdrawAt
+## withdrawAt
 
 ```solidity
 mapping(uint256 => mapping(address => uint256)) withdrawAt
 ```
 
-_withdrawAt[dividendId][account]_
+{% hint style="info" %}
+withdrawAt[dividendId][account]
+{% endhint %}
 
-### dividends
+## dividends
 
 ```solidity
 mapping(uint256 => struct IDividend.Dividend) dividends
 ```
 
-_dividends[dividendId]_
+{% hint style="info" %}
+dividends[dividendId]
+{% endhint %}
 
-### dividendNumber
+## dividendNumber
 
 ```solidity
 uint256 dividendNumber
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### admin
+## admin
 
 ```solidity
 address admin
 ```
 
-Name        Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |

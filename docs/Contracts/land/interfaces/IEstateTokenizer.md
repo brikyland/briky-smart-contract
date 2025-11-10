@@ -1,13 +1,11 @@
-# Solidity API
-
-## IEstateTokenizer
+# IEstateTokenizer
 
 Interface for tokenizer contracts of `EstateToken`.
 
 An `IEstateTokenizer` contract instructs `EstateToken` to securitize a real estate into a new class of tokens and
 receive them for subsequent distribution to holders.
 
-### EstateTokenWithdrawal
+## EstateTokenWithdrawal
 
 ```solidity
 event EstateTokenWithdrawal(uint256 tokenizationId, address withdrawer, uint256 amount)
@@ -15,9 +13,7 @@ event EstateTokenWithdrawal(uint256 tokenizationId, address withdrawer, uint256 
 
 Emitted when a holder withdraw allocation from a tokenization.
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -25,7 +21,7 @@ Name            Description
 | withdrawer | address | Withdrawer address. |
 | amount | uint256 | Withdrawn amount. |
 
-### AlreadyTokenized
+## AlreadyTokenized
 
 ```solidity
 error AlreadyTokenized()
@@ -33,47 +29,43 @@ error AlreadyTokenized()
 
 ===== ERROR ===== *
 
-### NotRegisteredCustodian
+## NotRegisteredCustodian
 
 ```solidity
 error NotRegisteredCustodian()
 ```
 
-### NotTokenized
+## NotTokenized
 
 ```solidity
 error NotTokenized()
 ```
 
-### isTokenized
+## isTokenized
 
 ```solidity
 function isTokenized(uint256 tokenizationId) external view returns (bool isTokenized)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | tokenizationId | uint256 | Tokenization identifier. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | isTokenized | bool | Whether the tokenization has succeeded. |
 
-### allocationOfAt
+## allocationOfAt
 
 ```solidity
 function allocationOfAt(address account, uint256 tokenizationId, uint256 at) external view returns (uint256 allocation)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -81,13 +73,13 @@ Name            Description
 | tokenizationId | uint256 | Tokenization identifier. |
 | at | uint256 | Reference timestamp. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | allocation | uint256 | Allocation of the account at the reference timestamp. |
 
-### withdrawEstateToken
+## withdrawEstateToken
 
 ```solidity
 function withdrawEstateToken(uint256 tokenizationId) external returns (uint256 amount)
@@ -95,15 +87,13 @@ function withdrawEstateToken(uint256 tokenizationId) external returns (uint256 a
 
 Withdraw the allocation of the message sender from a tokenization.
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | tokenizationId | uint256 | Tokenization identifier. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |

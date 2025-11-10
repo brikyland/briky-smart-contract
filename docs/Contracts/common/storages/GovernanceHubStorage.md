@@ -1,68 +1,66 @@
-# Solidity API
-
-## GovernanceHubStorage
+# GovernanceHubStorage
 
 Storage contract for contract `GovernanceHub`.
 
-### voteOptions
+## voteOptions
 
 ```solidity
 mapping(uint256 => mapping(address => enum IProposal.ProposalVoteOption)) voteOptions
 ```
 
-_voteOptions[proposalId][account]_
+{% hint style="info" %}
+voteOptions[proposalId][account]
+{% endhint %}
 
-### contributions
+## contributions
 
 ```solidity
 mapping(uint256 => mapping(address => uint256)) contributions
 ```
 
-_contributions[proposalId][account]_
+{% hint style="info" %}
+contributions[proposalId][account]
+{% endhint %}
 
-### proposals
+## proposals
 
 ```solidity
 mapping(uint256 => struct IProposal.Proposal) proposals
 ```
 
-_proposals[proposalId]_
+{% hint style="info" %}
+proposals[proposalId]
+{% endhint %}
 
-### fee
+## fee
 
 ```solidity
 uint256 fee
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### proposalNumber
+## proposalNumber
 
 ```solidity
 uint256 proposalNumber
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### admin
+## admin
 
 ```solidity
 address admin
 ```
 
-Name        Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |

@@ -1,6 +1,4 @@
-# Solidity API
-
-## EstateLiquidator
+# EstateLiquidator
 
 The `EstateLiquidator` contract facilitates the extraction of real estate through approved liquidations. Official
 disclosed accounts, who is legally qualified to own the estate, can offer to buy the entire asset with a specific
@@ -10,11 +8,17 @@ finalized only if the custodian fulfills these obligations within the allotted t
 proceeds are distributed to holders as the ultimate dividend, and then the corresponding class of estate token will
 be deprecated permanently.
 
-_Implementation involves server-side support.
-   ERC-20 tokens are identified by their contract addresses.
-Native coin is represented by the zero address (0x0000000000000000000000000000000000000000)._
+{% hint style="info" %}
+Implementation involves server-side support.
 
-### validRequest
+{% endhint %}
+
+{% hint style="info" %}
+ERC-20 tokens are identified by their contract addresses.
+Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
+{% endhint %}
+
+## validRequest
 
 ```solidity
 modifier validRequest(uint256 _requestId)
@@ -22,15 +26,13 @@ modifier validRequest(uint256 _requestId)
 
 Verify a valid request identifier.
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _requestId | uint256 | Request identifier. |
 
-### receive
+## receive
 
 ```solidity
 receive() external payable
@@ -38,19 +40,17 @@ receive() external payable
 
 Executed on a call to this contract with empty calldata.
 
-### version
+## version
 
 ```solidity
 function version() external pure returns (string)
 ```
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | string | Version of implementation. |
+Version of implementation.
 
-### initialize
+## initialize
 
 ```solidity
 function initialize(address _admin, address _estateToken, address _commissionToken, address _governanceHub, address _dividendHub, address _feeReceiver, address _validator) external
@@ -58,9 +58,7 @@ function initialize(address _admin, address _estateToken, address _commissionTok
 
 Initialize the contract after deployment, serving as the constructor.
 
-Name                Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -72,46 +70,52 @@ Name                Description
 | _feeReceiver | address | `FeeReceiver` contract address. |
 | _validator | address | Validator address. |
 
-### getRequest
+## getRequest
 
 ```solidity
 function getRequest(uint256 _requestId) external view returns (struct IEstateLiquidatorRequest.EstateLiquidatorRequest)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _requestId | uint256 | Request identifier. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | struct IEstateLiquidatorRequest.EstateLiquidatorRequest | Configuration and progress of the extraction request. |
+Configuration and progress of the extraction request.
 
-### requestExtraction
+## requestExtraction
 
 ```solidity
 function requestExtraction(uint256 _estateId, address _buyer, uint256 _value, address _currency, uint256 _feeRate, bytes32 _uuid, uint40 _admissionExpiry, struct IValidation.Validation _validation) external payable returns (uint256)
 ```
 
 Request an estate to be extracted.
+
 To prevent deceptive manipulation, the approval quorum to liquidate is initially set at 100% during the first
 year of estate and reduced to 75% thereafter.
+
 The message sender must provide sufficient liquidation value and proposing fee for `GovernanceHub`.
 
-Name            Description
+{% hint style="info" %}
+Permission: Executives active in the zone of the estate.
 
-_Permission: Executives active in the zone of the estate.
-   Through the validation mechanism, the server-side determines `uuid` and `admissionExpiry` based on the specific
+{% endhint %}
+
+{% hint style="info" %}
+Through the validation mechanism, the server-side determines `uuid` and `admissionExpiry` based on the specific
 supported type of proposal and its context. Operators are also required to be pre-registered on the server-side
 to ensure proper assignments.
-   `uuid`, `admissionExpiry`, and `validation` are used for proposing in `GovernanceHub`._
 
-#### Parameters
+{% endhint %}
+
+{% hint style="info" %}
+`uuid`, `admissionExpiry`, and `validation` are used for proposing in `GovernanceHub`.
+{% endhint %}
+
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -124,32 +128,27 @@ to ensure proper assignments.
 | _admissionExpiry | uint40 |  |
 | _validation | struct IValidation.Validation | Validation package from the validator. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | uint256 | New request identifier. |
+New request identifier.
 
-### conclude
+## conclude
 
 ```solidity
 function conclude(uint256 _requestId) external returns (bool)
 ```
 
 Conclude a request according to the result of the proposal.
+
 The class of estate token to be extract will be deprecated.
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _requestId | uint256 | Request identifier. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | bool | Whether the extraction has succeeded. |
+Whether the extraction has succeeded.
 

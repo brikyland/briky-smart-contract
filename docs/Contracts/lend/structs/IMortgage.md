@@ -1,10 +1,8 @@
-# Solidity API
-
-## IMortgage
+# IMortgage
 
 Interface for struct `Mortgage`.
 
-### MortgageState
+## MortgageState
 
 Variants of state of a mortgage.
 
@@ -19,7 +17,7 @@ enum MortgageState {
 }
 ```
 
-### Mortgage
+## Mortgage
 
 Mortgage information.
 

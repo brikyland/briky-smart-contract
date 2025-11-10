@@ -1,54 +1,50 @@
-# Solidity API
-
-## AssetMarketplaceStorage
+# AssetMarketplaceStorage
 
 Storage contract for contract `AssetMarketplace`.
 
-### offers
+## offers
 
 ```solidity
 mapping(uint256 => struct IAssetOffer.AssetOffer) offers
 ```
 
-_offers[offerId]_
+{% hint style="info" %}
+offers[offerId]
+{% endhint %}
 
-### offerNumber
+## offerNumber
 
 ```solidity
 uint256 offerNumber
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### admin
+## admin
 
 ```solidity
 address admin
 ```
 
-Name        Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### collection
+## collection
 
 ```solidity
 address collection
 ```
 
-Name        Description
+{% hint style="info" %}
+The asset token must support interface `IAssetToken`.
+{% endhint %}
 
-_The asset token must support interface `IAssetToken`._
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |

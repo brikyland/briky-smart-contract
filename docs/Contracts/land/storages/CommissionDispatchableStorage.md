@@ -1,18 +1,14 @@
-# Solidity API
-
-## CommissionDispatchableStorage
+# CommissionDispatchableStorage
 
 Storage contract for contract `CommissionDispatchable`.
 
-### commissionToken
+## commissionToken
 
 ```solidity
 address commissionToken
 ```
 
-Name               Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |

@@ -1,20 +1,16 @@
-# Solidity API
-
-## IEstateTokenReceiver
+# IEstateTokenReceiver
 
 Interface for contract `EstateTokenReceiver`.
 
 A `EstateTokenReceiver` contract always accepts ERC-1155 income tokens from the `EstateToken` contract.
 
-### estateToken
+## estateToken
 
 ```solidity
 function estateToken() external view returns (address estateToken)
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |

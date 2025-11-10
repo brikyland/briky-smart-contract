@@ -1,87 +1,83 @@
-# Solidity API
-
-## PromotionTokenStorage
+# PromotionTokenStorage
 
 Storage contract for contract `PromotionToken`.
 
-### mintCounts
+## mintCounts
 
 ```solidity
 mapping(address => mapping(uint256 => uint256)) mintCounts
 ```
 
-_mintCounts[account][contentId]_
+{% hint style="info" %}
+mintCounts[account][contentId]
+{% endhint %}
 
-### contents
+## contents
 
 ```solidity
 mapping(uint256 => struct IContent.Content) contents
 ```
 
-_contents[contentId]_
+{% hint style="info" %}
+contents[contentId]
+{% endhint %}
 
-### tokenContents
+## tokenContents
 
 ```solidity
 mapping(uint256 => uint256) tokenContents
 ```
 
-_tokenContents[tokenId]_
+{% hint style="info" %}
+tokenContents[tokenId]
+{% endhint %}
 
-### contentNumber
+## contentNumber
 
 ```solidity
 uint256 contentNumber
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### tokenNumber
+## tokenNumber
 
 ```solidity
 uint256 tokenNumber
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### fee
+## fee
 
 ```solidity
 uint256 fee
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### royaltyRate
+## royaltyRate
 
 ```solidity
 uint256 royaltyRate
 ```
 
-### admin
+## admin
 
 ```solidity
 address admin
 ```
 
-Name        Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |

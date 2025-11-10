@@ -1,12 +1,11 @@
-# Solidity API
-
-## IPromotionToken
+# IPromotionToken
 
 Interface for contract `PromotionToken`.
+
 The `PromotionToken` contract is an ERC-721 token issued exclusively for airdrop campaigns. It provides
 limited-time content that grants its minter airdrop scores.
 
-### FeeUpdate
+## FeeUpdate
 
 ```solidity
 event FeeUpdate(uint256 newValue)
@@ -14,15 +13,13 @@ event FeeUpdate(uint256 newValue)
 
 Emitted when the minting fee is updated.
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | newValue | uint256 | New minting fee. |
 
-### RoyaltyRateUpdate
+## RoyaltyRateUpdate
 
 ```solidity
 event RoyaltyRateUpdate(struct IRate.Rate newRate)
@@ -30,15 +27,13 @@ event RoyaltyRateUpdate(struct IRate.Rate newRate)
 
 Emitted when the default royalty rate is updated.
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | newRate | struct IRate.Rate | New default royalty rate. |
 
-### NewContent
+## NewContent
 
 ```solidity
 event NewContent(uint256 contentId, string uri, uint40 startAt, uint40 duration)
@@ -46,9 +41,7 @@ event NewContent(uint256 contentId, string uri, uint40 startAt, uint40 duration)
 
 Emitted when a new content is created.
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -57,7 +50,7 @@ Name            Description
 | startAt | uint40 | Start timestamp for minting. |
 | duration | uint40 | Mintable duration. |
 
-### ContentCancellation
+## ContentCancellation
 
 ```solidity
 event ContentCancellation(uint256 contentId)
@@ -65,15 +58,13 @@ event ContentCancellation(uint256 contentId)
 
 Emitted when a content is cancelled.
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | contentId | uint256 | Content identifier. |
 
-### ContentURIUpdate
+## ContentURIUpdate
 
 ```solidity
 event ContentURIUpdate(uint256 contentId, string uri)
@@ -81,16 +72,14 @@ event ContentURIUpdate(uint256 contentId, string uri)
 
 Emitted when the URI of a content is updated.
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | contentId | uint256 | Content identifier. |
 | uri | string | URI of content metadata. |
 
-### NewToken
+## NewToken
 
 ```solidity
 event NewToken(uint256 tokenId, uint256 contentId, address owner)
@@ -98,9 +87,7 @@ event NewToken(uint256 tokenId, uint256 contentId, address owner)
 
 Emitted when a new promotion token is minted.
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -108,114 +95,104 @@ Name            Description
 | contentId | uint256 | Content identifier associated with the token. |
 | owner | address | Owner address. |
 
-### AlreadyEnded
+## AlreadyEnded
 
 ```solidity
 error AlreadyEnded()
 ```
 
-### AlreadyStarted
+## AlreadyStarted
 
 ```solidity
 error AlreadyStarted()
 ```
 
-### InvalidContentId
+## InvalidContentId
 
 ```solidity
 error InvalidContentId()
 ```
 
-### NotOpened
+## NotOpened
 
 ```solidity
 error NotOpened()
 ```
 
-### contentNumber
+## contentNumber
 
 ```solidity
 function contentNumber() external view returns (uint256 contentNumber)
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | contentNumber | uint256 | Number of contents. |
 
-### tokenNumber
+## tokenNumber
 
 ```solidity
 function tokenNumber() external view returns (uint256 tokenNumber)
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | tokenNumber | uint256 | Number of tokens. |
 
-### fee
+## fee
 
 ```solidity
 function fee() external view returns (uint256 fee)
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | fee | uint256 | Minting fee. |
 
-### getContent
+## getContent
 
 ```solidity
 function getContent(uint256 contentId) external view returns (struct IContent.Content content)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | contentId | uint256 | Content identifier. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | content | struct IContent.Content | Content information. |
 
-### mintCounts
+## mintCounts
 
 ```solidity
 function mintCounts(address account, uint256 contentId) external view returns (uint256 count)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | account | address | EVM address. |
 | contentId | uint256 | Content identifier. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | count | uint256 | Number of tokens of the content minted by the account. |
 
-### mint
+## mint
 
 ```solidity
 function mint(uint256 contentId, uint256 amount) external payable returns (uint256 firstTokenId, uint256 lastTokenId)
@@ -223,16 +200,14 @@ function mint(uint256 contentId, uint256 amount) external payable returns (uint2
 
 Mint tokens of a content.
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | contentId | uint256 | Content identifier. |
 | amount | uint256 | Number of tokens to mint. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |

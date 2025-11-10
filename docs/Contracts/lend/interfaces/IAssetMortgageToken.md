@@ -1,16 +1,17 @@
-# Solidity API
-
-## IAssetMortgageToken
+# IAssetMortgageToken
 
 Interface for mortgage token using `IAssetToken` as collateral.
+
 An `IAssetMortgageToken` contract facilitates peer-to-peer lending secured by estate tokens as collateral. Each
 provided mortgage is tokenized into an ERC-721 token, whose owner has the right to receive repayments from the
 borrower or foreclose on the collateral from the contract once overdue.
 
-_ERC-20 tokens are identified by their contract addresses.
-Native coin is represented by the zero address (0x0000000000000000000000000000000000000000)._
+{% hint style="info" %}
+ERC-20 tokens are identified by their contract addresses.
+Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
+{% endhint %}
 
-### NewCollateral
+## NewCollateral
 
 ```solidity
 event NewCollateral(uint256 mortgageId, uint256 tokenId, uint256 amount)
@@ -18,9 +19,7 @@ event NewCollateral(uint256 mortgageId, uint256 tokenId, uint256 amount)
 
 Emitted when a new asset collateral is secured.
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -28,27 +27,25 @@ Name        Description
 | tokenId | uint256 | Collateral asset identifier. |
 | amount | uint256 | Collateral amount. |
 
-### getCollateral
+## getCollateral
 
 ```solidity
 function getCollateral(uint256 mortgageId) external view returns (struct IAssetCollateral.AssetCollateral collateral)
 ```
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | mortgageId | uint256 | Mortgage identifier. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | collateral | struct IAssetCollateral.AssetCollateral | Collateral information. |
 
-### borrow
+## borrow
 
 ```solidity
 function borrow(uint256 tokenId, uint256 amount, uint256 principal, uint256 repayment, address currency, uint40 duration) external returns (uint256 mortgageId)
@@ -56,11 +53,11 @@ function borrow(uint256 tokenId, uint256 amount, uint256 principal, uint256 repa
 
 List a new mortgage with asset tokens as collateral.
 
-Name        Description
+{% hint style="info" %}
+Approval must be granted for this contract to secure the collateral before borrowing.
+{% endhint %}
 
-_Approval must be granted for this contract to secure the collateral before borrowing._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -71,7 +68,7 @@ _Approval must be granted for this contract to secure the collateral before borr
 | currency | address | Currency address. |
 | duration | uint40 | Borrowing duration. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |

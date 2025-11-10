@@ -1,26 +1,24 @@
-# Solidity API
-
-## ValidatableStorage
+# ValidatableStorage
 
 Storage contract for contract `Validatable`.
 
-### isNonceUsed
+## isNonceUsed
 
 ```solidity
 mapping(uint256 => bool) isNonceUsed
 ```
 
-_isNonceUsed[nonce]_
+{% hint style="info" %}
+isNonceUsed[nonce]
+{% endhint %}
 
-### validator
+## validator
 
 ```solidity
 address validator
 ```
 
-Name        Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |

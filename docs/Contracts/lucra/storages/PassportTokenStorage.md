@@ -1,64 +1,58 @@
-# Solidity API
-
-## PassportTokenStorage
+# PassportTokenStorage
 
 Storage contract for contract `PassportToken`.
 
-### hasMinted
+## hasMinted
 
 ```solidity
 mapping(address => bool) hasMinted
 ```
 
-_hasMinted[account]_
+{% hint style="info" %}
+hasMinted[account]
+{% endhint %}
 
-### baseURI
+## baseURI
 
 ```solidity
 string baseURI
 ```
 
-### tokenNumber
+## tokenNumber
 
 ```solidity
 uint256 tokenNumber
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### fee
+## fee
 
 ```solidity
 uint256 fee
 ```
 
-Name    Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### royaltyRate
+## royaltyRate
 
 ```solidity
 uint256 royaltyRate
 ```
 
-### admin
+## admin
 
 ```solidity
 address admin
 ```
 
-Name        Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |

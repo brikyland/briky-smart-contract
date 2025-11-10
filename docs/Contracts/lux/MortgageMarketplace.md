@@ -1,49 +1,41 @@
-# Solidity API
-
-## MortgageMarketplace
+# MortgageMarketplace
 
 The `MortgageMarketplace` contract hosts a marketplace for mortgage tokens.
 
-### _validCollection
+## _validCollection
 
 ```solidity
 function _validCollection(address _collection) internal view returns (bool)
 ```
 
-Name            Description
+{% hint style="info" %}
+The collection must support interface `IMortgageToken`.
+{% endhint %}
 
-_The collection must support interface `IMortgageToken`._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _collection | address | Collection contract address. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | bool | Whether the collection is supported by the marketplace. |
+Whether the collection is supported by the marketplace.
 
-### _validToken
+## _validToken
 
 ```solidity
 function _validToken(address _collection, uint256 _tokenId) internal view returns (bool)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _collection | address | Collection contract address. |
 | _tokenId | uint256 | Token identifier. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | bool | Whether the mortgage token is valid for sale. |
+Whether the mortgage token is valid for sale.
 

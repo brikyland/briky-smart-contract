@@ -1,16 +1,21 @@
-# Solidity API
-
-## IAssetMarketplace
+# IAssetMarketplace
 
 Interface for contract `AssetMarketplace`.
+
 An `AssetMarketplace` contract hosts a marketplace for a specific `IAssetToken`.
 
-_Each unit of asset token is represented in scaled form as `10 ** IAssetToken(collection).decimals()` following the
+{% hint style="info" %}
+Each unit of asset token is represented in scaled form as `10 ** IAssetToken(collection).decimals()` following the
 convention of `IAssetToken`.
-   ERC-20 tokens are identified by their contract addresses.
-Native coin is represented by the zero address (0x0000000000000000000000000000000000000000)._
 
-### NewOffer
+{% endhint %}
+
+{% hint style="info" %}
+ERC-20 tokens are identified by their contract addresses.
+Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
+{% endhint %}
+
+## NewOffer
 
 ```solidity
 event NewOffer(uint256 offerId, uint256 tokenId, address seller, uint256 sellingAmount, uint256 unitPrice, address currency, bool isDivisible, uint256 royaltyDenomination, address royaltyReceiver)
@@ -18,9 +23,7 @@ event NewOffer(uint256 offerId, uint256 tokenId, address seller, uint256 selling
 
 Emitted when a new offer is listed.
 
-Name                    Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -34,7 +37,7 @@ Name                    Description
 | royaltyDenomination | uint256 | Royalty charged on each token. |
 | royaltyReceiver | address | Royalty receiver address. |
 
-### OfferCancellation
+## OfferCancellation
 
 ```solidity
 event OfferCancellation(uint256 offerId)
@@ -42,15 +45,13 @@ event OfferCancellation(uint256 offerId)
 
 Emitted when an offer is cancelled.
 
-Name                Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | offerId | uint256 | Offer identifier. |
 
-### OfferSale
+## OfferSale
 
 ```solidity
 event OfferSale(uint256 offerId, address buyer, uint256 amount, uint256 value, uint256 royalty, address royaltyReceiver)
@@ -58,9 +59,7 @@ event OfferSale(uint256 offerId, address buyer, uint256 amount, uint256 value, u
 
 Emitted when an offer is sold, partially or fully.
 
-Name                Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -71,7 +70,7 @@ Name                Description
 | royalty | uint256 | Royalty derived from the sale value. |
 | royaltyReceiver | address | Royalty receiver address. |
 
-### InvalidAmount
+## InvalidAmount
 
 ```solidity
 error InvalidAmount()
@@ -79,105 +78,101 @@ error InvalidAmount()
 
 ===== ERROR ===== *
 
-### InvalidBuying
+## InvalidBuying
 
 ```solidity
 error InvalidBuying()
 ```
 
-### InvalidCancelling
+## InvalidCancelling
 
 ```solidity
 error InvalidCancelling()
 ```
 
-### InvalidTokenId
+## InvalidTokenId
 
 ```solidity
 error InvalidTokenId()
 ```
 
-### InvalidOfferId
+## InvalidOfferId
 
 ```solidity
 error InvalidOfferId()
 ```
 
-### InvalidSellingAmount
+## InvalidSellingAmount
 
 ```solidity
 error InvalidSellingAmount()
 ```
 
-### InvalidUnitPrice
+## InvalidUnitPrice
 
 ```solidity
 error InvalidUnitPrice()
 ```
 
-### NotDivisible
+## NotDivisible
 
 ```solidity
 error NotDivisible()
 ```
 
-### NotEnoughTokensToSell
+## NotEnoughTokensToSell
 
 ```solidity
 error NotEnoughTokensToSell()
 ```
 
-### collection
+## collection
 
 ```solidity
 function collection() external view returns (address collection)
 ```
 
-Name        Description
+{% hint style="info" %}
+The asset token must support interface `IAssetToken`.
+{% endhint %}
 
-_The asset token must support interface `IAssetToken`._
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | collection | address | `IAssetToken` contract address. |
 
-### offerNumber
+## offerNumber
 
 ```solidity
 function offerNumber() external view returns (uint256 offerNumber)
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | offerNumber | uint256 | Number of offers. |
 
-### getOffer
+## getOffer
 
 ```solidity
 function getOffer(uint256 offerId) external view returns (struct IAssetOffer.AssetOffer offer)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | offerId | uint256 | Offer identifier. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | offer | struct IAssetOffer.AssetOffer | Configuration and progress of the offer. |
 
-### list
+## list
 
 ```solidity
 function list(uint256 tokenId, uint256 sellingAmount, uint256 unitPrice, address currency, bool isDivisible) external returns (uint256 offerId)
@@ -185,12 +180,12 @@ function list(uint256 tokenId, uint256 sellingAmount, uint256 unitPrice, address
 
 List a new offer of asset tokens.
 
-Name             Description
+{% hint style="info" %}
+Approval must be granted for this contract to transfer asset tokens before listing. An offer can only be
+sold while approval remains active.
+{% endhint %}
 
-_Approval must be granted for this contract to transfer asset tokens before listing. An offer can only be
-sold while approval remains active._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -200,120 +195,121 @@ sold while approval remains active._
 | currency | address | Sale currency address. |
 | isDivisible | bool | Whether the offer can be sold partially. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | offerId | uint256 | New offer identifier. |
 
-### buy
+## buy
 
 ```solidity
 function buy(uint256 offerId) external payable returns (uint256 value)
 ```
 
 Buy an offer.
+
 Buy only if the offer is in `Selling` state.
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | offerId | uint256 | Offer identifier. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | value | uint256 | Sum of sale price and royalty. |
 
-### buy
+## buy
 
 ```solidity
 function buy(uint256 offerId, uint256 amount) external payable returns (uint256 value)
 ```
 
 Buy a part of the offer.
+
 Buy only if the offer is in `Selling` state.
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | offerId | uint256 | Offer identifier. |
 | amount | uint256 | Amount of tokens to be bought. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | value | uint256 | Sum of sale price and royalty. |
 
-### cancel
+## cancel
 
 ```solidity
 function cancel(uint256 offerId) external
 ```
 
 Cancel an offer.
+
 Cancel only if the offer is in `Selling` state.
 
-Name            Description
-
-_Permission:
+{% hint style="info" %}
+Permission:
 - Seller of the offer.
-- Managers: disqualify defected offers only._
+- Managers: disqualify defected offers only.
+{% endhint %}
 
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | offerId | uint256 | Offer identifier. |
 
-### safeBuy
+## safeBuy
 
 ```solidity
 function safeBuy(uint256 offerId, bytes32 anchor) external payable returns (uint256 value)
 ```
 
 Buy an offer.
+
 Buy only if the offer is in `Selling` state.
 
-Name        Description
+{% hint style="info" %}
+Anchor enforces consistency between this contract and the client-side.
+{% endhint %}
 
-_Anchor enforces consistency between this contract and the client-side._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | offerId | uint256 | Offer identifier. |
 | anchor | bytes32 | `tokenId` of the offer. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | value | uint256 | Sum of sale price and royalty. |
 
-### safeBuy
+## safeBuy
 
 ```solidity
 function safeBuy(uint256 offerId, uint256 amount, bytes32 anchor) external payable returns (uint256 value)
 ```
 
 Buy a part of the offer.
+
 Buy only if the offer is in `Selling` state.
 
-Name        Description
+{% hint style="info" %}
+Anchor enforces consistency between this contract and the client-side.
+{% endhint %}
 
-_Anchor enforces consistency between this contract and the client-side._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -321,7 +317,7 @@ _Anchor enforces consistency between this contract and the client-side._
 | amount | uint256 | Amount of tokens to be bought. |
 | anchor | bytes32 | `tokenId` of the offer. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |

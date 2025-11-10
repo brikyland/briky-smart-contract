@@ -1,49 +1,41 @@
-# Solidity API
-
-## TreasuryStorage
+# TreasuryStorage
 
 Storage contract for contract `Treasury`.
 
-### liquidity
+## liquidity
 
 ```solidity
 uint256 liquidity
 ```
 
-Name        Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### operationFund
+## operationFund
 
 ```solidity
 uint256 operationFund
 ```
 
-Name        Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### admin
+## admin
 
 ```solidity
 address admin
 ```
 
-Name        Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### currency
+## currency
 
 ```solidity
 address currency
@@ -51,22 +43,18 @@ address currency
 
 ERC-20 stablecoin.
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### primaryToken
+## primaryToken
 
 ```solidity
 address primaryToken
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |

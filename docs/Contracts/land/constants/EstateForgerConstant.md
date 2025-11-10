@@ -1,10 +1,8 @@
-# Solidity API
-
-## EstateForgerConstant
+# EstateForgerConstant
 
 Constant library for contract `EstateForger`.
 
-### SALE_MINIMUM_DURATION
+## SALE_MINIMUM_DURATION
 
 ```solidity
 uint40 SALE_MINIMUM_DURATION
@@ -12,7 +10,7 @@ uint40 SALE_MINIMUM_DURATION
 
 Minimum sale duration in total, include private sale and public sale.
 
-### SALE_CONFIRMATION_TIME_LIMIT
+## SALE_CONFIRMATION_TIME_LIMIT
 
 ```solidity
 uint40 SALE_CONFIRMATION_TIME_LIMIT

@@ -1,13 +1,13 @@
-# Solidity API
-
-## Administrable
+# Administrable
 
 A `Administrable` contract need to query administrative information from the `Admin` contract for its operations.
 
-_ERC-20 tokens are identified by their contract addresses.
-Native coin is represented by the zero address (0x0000000000000000000000000000000000000000)._
+{% hint style="info" %}
+ERC-20 tokens are identified by their contract addresses.
+Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
+{% endhint %}
 
-### onlyManager
+## onlyManager
 
 ```solidity
 modifier onlyManager()
@@ -15,7 +15,7 @@ modifier onlyManager()
 
 Verify the message sender is an authorized manager.
 
-### onlyExecutive
+## onlyExecutive
 
 ```solidity
 modifier onlyExecutive()
@@ -23,7 +23,7 @@ modifier onlyExecutive()
 
 Verify the message sender is an authorized manager or an authorized moderator.
 
-### validGovernor
+## validGovernor
 
 ```solidity
 modifier validGovernor(address _account)
@@ -31,15 +31,13 @@ modifier validGovernor(address _account)
 
 Verify an account is an authorized governor contract.
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _account | address | EVM address. |
 
-### onlyAvailableCurrency
+## onlyAvailableCurrency
 
 ```solidity
 modifier onlyAvailableCurrency(address _currency)
@@ -47,9 +45,7 @@ modifier onlyAvailableCurrency(address _currency)
 
 Verify a currency is interactable within the system.
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |

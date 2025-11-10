@@ -1,154 +1,142 @@
-# Solidity API
-
-## PrestigePadStorage
+# PrestigePadStorage
 
 Storage contract for contract `PrestigePad`.
 
-### contributions
+## contributions
 
 ```solidity
 mapping(uint256 => mapping(address => uint256)) contributions
 ```
 
-_contributions[roundId][account]_
+{% hint style="info" %}
+contributions[roundId][account]
+{% endhint %}
 
-### withdrawAt
+## withdrawAt
 
 ```solidity
 mapping(uint256 => mapping(address => uint256)) withdrawAt
 ```
 
-_withdrawAt[roundId][account]_
+{% hint style="info" %}
+withdrawAt[roundId][account]
+{% endhint %}
 
-### launches
+## launches
 
 ```solidity
 mapping(uint256 => struct IPrestigePadLaunch.PrestigePadLaunch) launches
 ```
 
-_launches[launchId]_
+{% hint style="info" %}
+launches[launchId]
+{% endhint %}
 
-### rounds
+## rounds
 
 ```solidity
 mapping(uint256 => struct IPrestigePadRound.PrestigePadRound) rounds
 ```
 
-_rounds[roundId]_
+{% hint style="info" %}
+rounds[roundId]
+{% endhint %}
 
-### launchNumber
+## launchNumber
 
 ```solidity
 uint256 launchNumber
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### roundNumber
+## roundNumber
 
 ```solidity
 uint256 roundNumber
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### baseMinUnitPrice
+## baseMinUnitPrice
 
 ```solidity
 uint256 baseMinUnitPrice
 ```
 
-Name                Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### baseMaxUnitPrice
+## baseMaxUnitPrice
 
 ```solidity
 uint256 baseMaxUnitPrice
 ```
 
-Name                Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### admin
+## admin
 
 ```solidity
 address admin
 ```
 
-Name        Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### projectToken
+## projectToken
 
 ```solidity
 address projectToken
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### feeReceiver
+## feeReceiver
 
 ```solidity
 address feeReceiver
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### priceWatcher
+## priceWatcher
 
 ```solidity
 address priceWatcher
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### reserveVault
+## reserveVault
 
 ```solidity
 address reserveVault
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |

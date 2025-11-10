@@ -1,15 +1,16 @@
-# Solidity API
-
-## ITreasury
+# ITreasury
 
 The `Treasury` contract serves as a stablecoin reserve pool that backs the intrinsic value of `PrimaryToken` and
 facilitates token liquidation.
+
 20% of provided liquidity is allocated into the operation fund for sponsoring administrative expenses.
 
-_ERC-20 tokens are identified by their contract addresses.
-Native coin is represented by the zero address (0x0000000000000000000000000000000000000000)._
+{% hint style="info" %}
+ERC-20 tokens are identified by their contract addresses.
+Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
+{% endhint %}
 
-### LiquidityProvision
+## LiquidityProvision
 
 ```solidity
 event LiquidityProvision(address provider, uint256 value, uint256 operationContribution)
@@ -17,9 +18,7 @@ event LiquidityProvision(address provider, uint256 value, uint256 operationContr
 
 Emitted when liquidity is provided to the treasury.
 
-Name                    Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -27,7 +26,7 @@ Name                    Description
 | value | uint256 | Provided value. |
 | operationContribution | uint256 | Contribution for the operation fund. |
 
-### LiquidityWithdrawal
+## LiquidityWithdrawal
 
 ```solidity
 event LiquidityWithdrawal(address receiver, uint256 value)
@@ -35,16 +34,14 @@ event LiquidityWithdrawal(address receiver, uint256 value)
 
 Emitted when liquidity is withdrawn from the treasury.
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | receiver | address | Receiver address. |
 | value | uint256 | Withdrawn value. |
 
-### OperationFundWithdrawal
+## OperationFundWithdrawal
 
 ```solidity
 event OperationFundWithdrawal(address operator, uint256 value)
@@ -52,16 +49,14 @@ event OperationFundWithdrawal(address operator, uint256 value)
 
 Emitted when the operation fund is withdrawn to an operator.
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | operator | address | Operator address. |
 | value | uint256 | Withdrawn value. |
 
-### currency
+## currency
 
 ```solidity
 function currency() external view returns (address currency)
@@ -69,57 +64,49 @@ function currency() external view returns (address currency)
 
 ERC-20 stablecoin.
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | currency | address | Liquidity currency address. |
 
-### primaryToken
+## primaryToken
 
 ```solidity
 function primaryToken() external view returns (address primaryToken)
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | primaryToken | address | `PrimaryToken` contract address. |
 
-### operationFund
+## operationFund
 
 ```solidity
 function operationFund() external view returns (uint256 fund)
 ```
 
-Name        Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | fund | uint256 | Reserved operation fund. |
 
-### liquidity
+## liquidity
 
 ```solidity
 function liquidity() external view returns (uint256 liquidity)
 ```
 
-Name        Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | liquidity | uint256 | Reserved liquidity. |
 
-### provideLiquidity
+## provideLiquidity
 
 ```solidity
 function provideLiquidity(uint256 value) external
@@ -127,15 +114,13 @@ function provideLiquidity(uint256 value) external
 
 Provide liquidity to the treasury.
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | value | uint256 | Provided value. |
 
-### withdrawLiquidity
+## withdrawLiquidity
 
 ```solidity
 function withdrawLiquidity(address receiver, uint256 value) external
@@ -143,11 +128,11 @@ function withdrawLiquidity(address receiver, uint256 value) external
 
 Withdraw liquidity from the treasury.
 
-Name        Description
+{% hint style="info" %}
+Permission: PrimaryToken.
+{% endhint %}
 
-_Permission: PrimaryToken._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |

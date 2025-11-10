@@ -1,10 +1,8 @@
-# Solidity API
-
-## AdminConstant
+# AdminConstant
 
 Constant library for contract `Admin`.
 
-### SIGNATURE_VERIFICATION_QUORUM
+## SIGNATURE_VERIFICATION_QUORUM
 
 ```solidity
 uint256 SIGNATURE_VERIFICATION_QUORUM

@@ -1,10 +1,8 @@
-# Solidity API
-
-## ProjectTokenConstant
+# ProjectTokenConstant
 
 Constant library for contract `ProjectToken`.
 
-### TOKEN_DECIMALS
+## TOKEN_DECIMALS
 
 ```solidity
 uint8 TOKEN_DECIMALS

@@ -1,26 +1,24 @@
-# Solidity API
-
-## EstateMortgageTokenStorage
+# EstateMortgageTokenStorage
 
 Storage contract for contract `EstateMortgageToken`.
 
-### collaterals
+## collaterals
 
 ```solidity
 mapping(uint256 => struct IAssetCollateral.AssetCollateral) collaterals
 ```
 
-_collaterals[mortgageId]_
+{% hint style="info" %}
+collaterals[mortgageId]
+{% endhint %}
 
-### estateToken
+## estateToken
 
 ```solidity
 address estateToken
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |

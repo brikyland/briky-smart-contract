@@ -1,10 +1,8 @@
-# Solidity API
-
-## IDistribution
+# IDistribution
 
 Interface for struct `Distribution`.
 
-### Distribution
+## Distribution
 
 Distribution of token that vests evenly on a per-second basis.
 

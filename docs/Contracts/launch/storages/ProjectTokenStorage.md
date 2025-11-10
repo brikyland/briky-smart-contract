@@ -1,105 +1,107 @@
-# Solidity API
-
-## ProjectTokenStorage
+# ProjectTokenStorage
 
 Storage contract for contract `ProjectToken`.
 
-### balanceSnapshots
+## balanceSnapshots
 
 ```solidity
 mapping(uint256 => mapping(address => struct ISnapshot.Uint256Snapshot[])) balanceSnapshots
 ```
 
-_balanceSnapshots[projectId][account]_
+{% hint style="info" %}
+balanceSnapshots[projectId][account]
+{% endhint %}
 
-### initiatorURI
+## initiatorURI
 
 ```solidity
 mapping(bytes32 => mapping(address => string)) initiatorURI
 ```
 
-_initiatorURI[zone][account]_
+{% hint style="info" %}
+initiatorURI[zone][account]
+{% endhint %}
 
-### totalSupplySnapshots
+## totalSupplySnapshots
 
 ```solidity
 mapping(uint256 => struct ISnapshot.Uint256Snapshot[]) totalSupplySnapshots
 ```
 
-_totalSupplySnapshots[projectId]_
+{% hint style="info" %}
+totalSupplySnapshots[projectId]
+{% endhint %}
 
-### projects
+## projects
 
 ```solidity
 mapping(uint256 => struct IProject.Project) projects
 ```
 
-_projects[projectId]_
+{% hint style="info" %}
+projects[projectId]
+{% endhint %}
 
-### zoneRoyaltyRates
+## zoneRoyaltyRates
 
 ```solidity
 mapping(bytes32 => uint256) zoneRoyaltyRates
 ```
 
-_zoneRoyaltyRates[zone]_
+{% hint style="info" %}
+zoneRoyaltyRates[zone]
+{% endhint %}
 
-### isLaunchpad
+## isLaunchpad
 
 ```solidity
 mapping(address => bool) isLaunchpad
 ```
 
-_isLaunchpad[account]_
+{% hint style="info" %}
+isLaunchpad[account]
+{% endhint %}
 
-### projectNumber
+## projectNumber
 
 ```solidity
 uint256 projectNumber
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### admin
+## admin
 
 ```solidity
 address admin
 ```
 
-Name        Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### estateToken
+## estateToken
 
 ```solidity
 address estateToken
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### feeReceiver
+## feeReceiver
 
 ```solidity
 address feeReceiver
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |

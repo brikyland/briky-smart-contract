@@ -1,10 +1,8 @@
-# Solidity API
-
-## IContent
+# IContent
 
 Interface for struct `Content`.
 
-### Content
+## Content
 
 Content for `PromotionToken`.
 

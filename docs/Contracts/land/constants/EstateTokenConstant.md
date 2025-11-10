@@ -1,10 +1,8 @@
-# Solidity API
-
-## EstateTokenConstant
+# EstateTokenConstant
 
 Constant library for contract `EstateToken`.
 
-### TOKEN_DECIMALS
+## TOKEN_DECIMALS
 
 ```solidity
 uint8 TOKEN_DECIMALS

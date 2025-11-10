@@ -1,53 +1,51 @@
-# Solidity API
-
-## ERC721MarketplaceStorage
+# ERC721MarketplaceStorage
 
 Storage contract for contract `ERC721Marketplace`.
 
-### offers
+## offers
 
 ```solidity
 mapping(uint256 => struct IERC721Offer.ERC721Offer) offers
 ```
 
-_offers[offerId]_
+{% hint style="info" %}
+offers[offerId]
+{% endhint %}
 
-### isCollection
+## isCollection
 
 ```solidity
 mapping(address => bool) isCollection
 ```
 
-_isCollection[collection]_
+{% hint style="info" %}
+isCollection[collection]
+{% endhint %}
 
-### admin
+## admin
 
 ```solidity
 address admin
 ```
 
-Name        Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### feeReceiver
+## feeReceiver
 
 ```solidity
 address feeReceiver
 ```
 
-### offerNumber
+## offerNumber
 
 ```solidity
 uint256 offerNumber
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |

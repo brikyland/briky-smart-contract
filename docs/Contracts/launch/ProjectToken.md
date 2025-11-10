@@ -1,6 +1,4 @@
-# Solidity API
-
-## ProjectToken
+# ProjectToken
 
 The `ProjectToken` contract securitizes real-world estate projects into classes of fungible ERC-1155 tokens, where
 each token class represents fractional credits for contributions to a project. Officially disclosed third-party
@@ -8,10 +6,16 @@ organizations are registered as initiators in designated zones to actively initi
 through a launchpad, serving as reference for future investment benefit distributions. Finalized estate projects
 that satisfy the required conditions may be tokenized into `EstateToken` at the discretion of the initiator.
 
-_Each unit of estate tokens is represented in scaled form as `10 ** decimals()`.
-   Implementation involves server-side support._
+{% hint style="info" %}
+Each unit of estate tokens is represented in scaled form as `10 ** decimals()`.
 
-### validProject
+{% endhint %}
+
+{% hint style="info" %}
+Implementation involves server-side support.
+{% endhint %}
+
+## validProject
 
 ```solidity
 modifier validProject(uint256 _projectId)
@@ -19,15 +23,13 @@ modifier validProject(uint256 _projectId)
 
 Verify a valid project identifier.
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _projectId | uint256 | Project identifier. |
 
-### onlyLaunchpad
+## onlyLaunchpad
 
 ```solidity
 modifier onlyLaunchpad(uint256 _projectId)
@@ -35,15 +37,13 @@ modifier onlyLaunchpad(uint256 _projectId)
 
 Verify the message sender is the launchpad of a project.
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _projectId | uint256 | Project identifier. |
 
-### onlyActiveInZoneOf
+## onlyActiveInZoneOf
 
 ```solidity
 modifier onlyActiveInZoneOf(uint256 _projectId)
@@ -51,15 +51,13 @@ modifier onlyActiveInZoneOf(uint256 _projectId)
 
 Verify the message sender is active in the zone of a project.
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _projectId | uint256 | Project identifier. |
 
-### receive
+## receive
 
 ```solidity
 receive() external payable
@@ -67,19 +65,17 @@ receive() external payable
 
 Executed on a call to this contract with empty calldata.
 
-### version
+## version
 
 ```solidity
 function version() external pure returns (string)
 ```
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | string | Version of implementation. |
+Version of implementation.
 
-### initialize
+## initialize
 
 ```solidity
 function initialize(address _admin, address _estateToken, address _feeReceiver, address _validator, string _uri) external
@@ -87,9 +83,7 @@ function initialize(address _admin, address _estateToken, address _feeReceiver, 
 
 Initialize the contract after deployment, serving as the constructor.
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -99,7 +93,7 @@ Name            Description
 | _validator | address | Validator address. |
 | _uri | string | Base URI for project metadata. |
 
-### updateBaseURI
+## updateBaseURI
 
 ```solidity
 function updateBaseURI(string _uri, bytes[] _signatures) external
@@ -107,18 +101,18 @@ function updateBaseURI(string _uri, bytes[] _signatures) external
 
 Update the base URI.
 
-Name            Description
+{% hint style="info" %}
+Administrative operator.
+{% endhint %}
 
-_Administrative operator._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _uri | string | New base URI. |
 | _signatures | bytes[] | Array of admin signatures. |
 
-### updateZoneRoyaltyRate
+## updateZoneRoyaltyRate
 
 ```solidity
 function updateZoneRoyaltyRate(bytes32 _zone, uint256 _royaltyRate, bytes[] _signatures) external
@@ -126,11 +120,11 @@ function updateZoneRoyaltyRate(bytes32 _zone, uint256 _royaltyRate, bytes[] _sig
 
 Update the royalty rate of a zone.
 
-Name            Description
+{% hint style="info" %}
+Administrative operator.
+{% endhint %}
 
-_Administrative operator._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -138,7 +132,7 @@ _Administrative operator._
 | _royaltyRate | uint256 | New default royalty rate. |
 | _signatures | bytes[] | Array of admin signatures. |
 
-### authorizeLaunchpads
+## authorizeLaunchpads
 
 ```solidity
 function authorizeLaunchpads(address[] _accounts, bool _isLaunchpad, bytes[] _signatures) external
@@ -146,11 +140,11 @@ function authorizeLaunchpads(address[] _accounts, bool _isLaunchpad, bytes[] _si
 
 Authorize or deauthorize contract addresses as launchpads.
 
-Name            Description
+{% hint style="info" %}
+Administrative operator.
+{% endhint %}
 
-_Administrative operator._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -158,181 +152,147 @@ _Administrative operator._
 | _isLaunchpad | bool | Whether the operation is authorizing or deauthorizing. |
 | _signatures | bytes[] | Array of admin signatures. |
 
-### decimals
+## decimals
 
 ```solidity
 function decimals() external pure returns (uint8)
 ```
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | uint8 | decimals        Token decimals. |
+decimals        Token decimals.
 
-### projectToken
+## projectToken
 
 ```solidity
 function projectToken() external view returns (address)
 ```
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | address | projectToken    Address of this contract. |
+projectToken    Address of this contract.
 
-### getZoneRoyaltyRate
+## getZoneRoyaltyRate
 
 ```solidity
 function getZoneRoyaltyRate(bytes32 zone) external view returns (struct IRate.Rate)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | zone | bytes32 | Zone code. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | struct IRate.Rate | royaltyRate     Royalty rate of the zone. |
+royaltyRate     Royalty rate of the zone.
 
-### isInitiatorIn
+## isInitiatorIn
 
 ```solidity
 function isInitiatorIn(bytes32 zone, address account) public view returns (bool)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | zone | bytes32 | Zone code. |
 | account | address | EVM address. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | bool | isInitiator     Whether the account is a registered initiator in the zone. |
+isInitiator     Whether the account is a registered initiator in the zone.
 
-### getProject
+## getProject
 
 ```solidity
 function getProject(uint256 _projectId) external view returns (struct IProject.Project)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _projectId | uint256 | Project identifier. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | struct IProject.Project | project         Project information. |
+project         Project information.
 
-### getRepresentative
+## getRepresentative
 
 ```solidity
 function getRepresentative(uint256 _projectId) external view returns (address)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _projectId | uint256 | Project identifier. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | address | representative  Representative address of the project. |
+representative  Representative address of the project.
 
-### isAvailable
+## isAvailable
 
 ```solidity
 function isAvailable(uint256 _projectId) public view returns (bool)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _projectId | uint256 | Project identifier. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | bool | isAvailable     Whether the project is available. |
+isAvailable     Whether the project is available.
 
-### zoneOf
+## zoneOf
 
 ```solidity
 function zoneOf(uint256 _projectId) public view returns (bytes32)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _projectId | uint256 | Project identifier. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | bytes32 | zone            Zone code of the project. |
+zone            Zone code of the project.
 
-### balanceOf
+## balanceOf
 
 ```solidity
 function balanceOf(address _account, uint256 _projectId) public view returns (uint256)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _account | address | Account address. |
 | _projectId | uint256 | Project identifier. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | uint256 | balance         Token balance of the account. |
+balance         Token balance of the account.
 
-### balanceOfAt
+## balanceOfAt
 
 ```solidity
 function balanceOfAt(address _account, uint256 _projectId, uint256 _at) public view returns (uint256)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -340,21 +300,17 @@ Name            Description
 | _projectId | uint256 | Project identifier. |
 | _at | uint256 | Reference timestamp. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | uint256 | balance         Balance of the account in the project at the reference timestamp. |
+balance         Balance of the account in the project at the reference timestamp.
 
-### allocationOfAt
+## allocationOfAt
 
 ```solidity
 function allocationOfAt(address _account, uint256 _tokenizationId, uint256 _at) external view returns (uint256)
 ```
 
-Name                Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -362,21 +318,17 @@ Name                Description
 | _tokenizationId | uint256 | Tokenization identifier. |
 | _at | uint256 | Reference timestamp. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | uint256 | Allocation of the account at the reference timestamp. |
+Allocation of the account at the reference timestamp.
 
-### equityOfAt
+## equityOfAt
 
 ```solidity
 function equityOfAt(address _account, uint256 _projectId, uint256 _at) external view returns (uint256)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -384,142 +336,114 @@ Name            Description
 | _projectId | uint256 | Project identifier. |
 | _at | uint256 | Reference timestamp. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | uint256 | Equity of the account in the project at the reference timestamp. |
+Equity of the account in the project at the reference timestamp.
 
-### uri
+## uri
 
 ```solidity
 function uri(uint256 _projectId) public view returns (string)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _projectId | uint256 | Project identifier. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | string | URI of project metadata. |
+URI of project metadata.
 
-### totalSupply
+## totalSupply
 
 ```solidity
 function totalSupply(uint256 _projectId) public view returns (uint256)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _projectId | uint256 | Project identifier. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | uint256 | Total supply of the token class. |
+Total supply of the token class.
 
-### totalEquityAt
+## totalEquityAt
 
 ```solidity
 function totalEquityAt(uint256 _projectId, uint256 _at) external view returns (uint256)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _projectId | uint256 | Project identifier. |
 | _at | uint256 | Reference timestamp. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | uint256 | Total equity in the project at the reference timestamp. |
+Total equity in the project at the reference timestamp.
 
-### getRoyaltyRate
+## getRoyaltyRate
 
 ```solidity
 function getRoyaltyRate(uint256 _tokenId) external view returns (struct IRate.Rate)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _tokenId | uint256 | Token identifier. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | struct IRate.Rate | Royalty rate of the token identifier. |
+Royalty rate of the token identifier.
 
-### isTokenized
+## isTokenized
 
 ```solidity
 function isTokenized(uint256 _projectId) public view returns (bool)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _projectId | uint256 | Project identifier. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | bool | Whether the project tokens is converted to estate tokens. |
+Whether the project tokens is converted to estate tokens.
 
-### supportsInterface
+## supportsInterface
 
 ```solidity
 function supportsInterface(bytes4 _interfaceId) public view virtual returns (bool)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _interfaceId | bytes4 | Interface identifier. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | bool | Whether this contract supports the interface. |
+Whether this contract supports the interface.
 
-### onERC1155Received
+## onERC1155Received
 
 ```solidity
 function onERC1155Received(address _operator, address _from, uint256 _id, uint256 _value, bytes _data) public virtual returns (bytes4)
 ```
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -529,21 +453,18 @@ Name        Description
 | _value | uint256 | Token amount. |
 | _data | bytes | Additional data. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | bytes4 | Selector of the `onERC1155Received` function if the message sender is either the estate token contract or the project token contract. |
+Selector of the `onERC1155Received` function if the message sender is either the estate token contract or the
+project token contract.
 
-### onERC1155BatchReceived
+## onERC1155BatchReceived
 
 ```solidity
 function onERC1155BatchReceived(address _operator, address _from, uint256[] _ids, uint256[] _values, bytes _data) public virtual returns (bytes4)
 ```
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -553,13 +474,12 @@ Name        Description
 | _values | uint256[] | List of token amounts, respective to each token identifier. |
 | _data | bytes | Additional data. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | bytes4 | Selector of the `onERC1155Received` function if the message sender is either the estate token contract or the project token contract. |
+Selector of the `onERC1155Received` function if the message sender is either the estate token contract or the
+project token contract.
 
-### registerInitiator
+## registerInitiator
 
 ```solidity
 function registerInitiator(bytes32 _zone, address _initiator, string _uri, struct IValidation.Validation _validation) external
@@ -567,11 +487,11 @@ function registerInitiator(bytes32 _zone, address _initiator, string _uri, struc
 
 Register an initiator in a zone.
 
-Name            Description
+{% hint style="info" %}
+Permission: Managers active in the zone.
+{% endhint %}
 
-_Permission: Managers active in the zone._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -580,7 +500,7 @@ _Permission: Managers active in the zone._
 | _uri | string | URI of initiator information. |
 | _validation | struct IValidation.Validation | Validation package from the validator. |
 
-### launchProject
+## launchProject
 
 ```solidity
 function launchProject(bytes32 _zone, uint256 _launchId, address _initiator, string _uri) external returns (uint256)
@@ -588,11 +508,11 @@ function launchProject(bytes32 _zone, uint256 _launchId, address _initiator, str
 
 Launch a project associated with a new class of token.
 
-Name            Description
+{% hint style="info" %}
+Permission: Launchpads.
+{% endhint %}
 
-_Permission: Launchpads._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -601,13 +521,11 @@ _Permission: Launchpads._
 | _initiator | address | Initiator address. |
 | _uri | string | URI of project metadata. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | uint256 | New project identifier. |
+New project identifier.
 
-### mint
+## mint
 
 ```solidity
 function mint(uint256 _projectId, uint256 _amount) external
@@ -615,41 +533,38 @@ function mint(uint256 _projectId, uint256 _amount) external
 
 Mint new tokens for a project to the launchpad contract.
 
-Name            Description
+{% hint style="info" %}
+Permission: Launchpad of the project.
+{% endhint %}
 
-_Permission: Launchpad of the project._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _projectId | uint256 | Project identifier. |
 | _amount | uint256 | Minted amount. |
 
-### withdrawEstateToken
+## withdrawEstateToken
 
 ```solidity
 function withdrawEstateToken(uint256 _projectId) external returns (uint256)
 ```
 
 Withdraw the allocation of the message sender from a tokenization.
+
 Withdraw only if the project has been tokenized.
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _projectId | uint256 | Project identifier. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | uint256 | amount          Amount of estate tokens withdrawn. |
+amount          Amount of estate tokens withdrawn.
 
-### safeDeprecateProject
+## safeDeprecateProject
 
 ```solidity
 function safeDeprecateProject(uint256 _projectId, string _data, bytes32 _anchor) external
@@ -657,12 +572,16 @@ function safeDeprecateProject(uint256 _projectId, string _data, bytes32 _anchor)
 
 Deprecate a project due to force majeure.
 
-Name            Description
+{% hint style="info" %}
+Permission: Managers active in the zone of the project.
 
-_Permission: Managers active in the zone of the project.
-   Anchor enforces consistency between this contract and the client-side._
+{% endhint %}
 
-#### Parameters
+{% hint style="info" %}
+Anchor enforces consistency between this contract and the client-side.
+{% endhint %}
+
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -670,7 +589,7 @@ _Permission: Managers active in the zone of the project.
 | _data | string | Deprecation note. |
 | _anchor | bytes32 | Keccak256 hash of `uri` of the estate. |
 
-### safeUpdateProjectURI
+## safeUpdateProjectURI
 
 ```solidity
 function safeUpdateProjectURI(uint256 _projectId, string _uri, struct IValidation.Validation _validation, bytes32 _anchor) external
@@ -678,12 +597,16 @@ function safeUpdateProjectURI(uint256 _projectId, string _uri, struct IValidatio
 
 Update the URI of metadata of a project.
 
-Name            Description
+{% hint style="info" %}
+Permission: Managers active in the zone of the project.
 
-_Permission: Managers active in the zone of the project.
-   Anchor enforces consistency between this contract and the client-side._
+{% endhint %}
 
-#### Parameters
+{% hint style="info" %}
+Anchor enforces consistency between this contract and the client-side.
+{% endhint %}
+
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -692,21 +615,26 @@ _Permission: Managers active in the zone of the project.
 | _validation | struct IValidation.Validation | Validation package from the validator. |
 | _anchor | bytes32 | Keccak256 hash of `uri` of the project. |
 
-### safeTokenizeProject
+## safeTokenizeProject
 
 ```solidity
 function safeTokenizeProject(uint256 _projectId, address _custodian, address _broker, bytes32 _anchor) external returns (uint256)
 ```
 
 Tokenize an legitimate estate project into a new class of estate token.
+
 Tokenize only if the project has been finalized.
 
-Name            Description
+{% hint style="info" %}
+Permission: Managers active in the zone of the project.
 
-_Permission: Managers active in the zone of the project.
-   Anchor enforces consistency between this contract and the client-side._
+{% endhint %}
 
-#### Parameters
+{% hint style="info" %}
+Anchor enforces consistency between this contract and the client-side.
+{% endhint %}
+
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -715,13 +643,11 @@ _Permission: Managers active in the zone of the project.
 | _broker | address | Associated broker address. |
 | _anchor | bytes32 | Keccak256 hash of `uri` of the project. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | uint256 | Estate identifier tokenized from the project. |
+Estate identifier tokenized from the project.
 
-### _beforeTokenTransfer
+## _beforeTokenTransfer
 
 ```solidity
 function _beforeTokenTransfer(address _operator, address _from, address _to, uint256[] _projectIds, uint256[] _amounts, bytes _data) internal
@@ -729,9 +655,7 @@ function _beforeTokenTransfer(address _operator, address _from, address _to, uin
 
 Hook to be called before any token transfer.
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -742,7 +666,7 @@ Name            Description
 | _amounts | uint256[] | Array of transferred amounts, respective to each estate identifier. |
 | _data | bytes | Additional data. |
 
-### _afterTokenTransfer
+## _afterTokenTransfer
 
 ```solidity
 function _afterTokenTransfer(address _operator, address _from, address _to, uint256[] _projectIds, uint256[] _amounts, bytes _data) internal
@@ -750,9 +674,7 @@ function _afterTokenTransfer(address _operator, address _from, address _to, uint
 
 Hook to be called after any token transfer.
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -763,15 +685,13 @@ Name            Description
 | _amounts | uint256[] | Array of transferred amounts, respective to each estate identifier. |
 | _data | bytes | Additional data. |
 
-### _royaltyReceiver
+## _royaltyReceiver
 
 ```solidity
 function _royaltyReceiver() internal view returns (address)
 ```
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | address | Default royalty receiver address. |
+Default royalty receiver address.
 

@@ -1,15 +1,15 @@
-# Solidity API
-
-## ERC721MortgageToken
+# ERC721MortgageToken
 
 A `ERC721MortgageToken` contract facilitates peer-to-peer lending secured by ERC-721 tokens as collateral. Each
 provided mortgage is tokenized into an ERC-721 token, whose owner has the right to receive repayments from the
 borrower or foreclose on the collateral from the contract once overdue.
 
-_ERC-20 tokens are identified by their contract addresses.
-Native coin is represented by the zero address (0x0000000000000000000000000000000000000000)._
+{% hint style="info" %}
+ERC-20 tokens are identified by their contract addresses.
+Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
+{% endhint %}
 
-### initialize
+## initialize
 
 ```solidity
 function initialize(address _admin, address _feeReceiver, string _name, string _symbol, string _uri, uint256 _feeRate) external
@@ -17,9 +17,7 @@ function initialize(address _admin, address _feeReceiver, string _name, string _
 
 Initialize the contract after deployment, serving as the constructor.
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -30,21 +28,17 @@ Name            Description
 | _uri | string | Base URI. |
 | _feeRate | uint256 | Borrowing fee rate. |
 
-### version
+## version
 
 ```solidity
 function version() external pure returns (string)
 ```
 
-Name       Description
+### Return Values
 
-#### Return Values
+version    Version of implementation.
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | string | version    Version of implementation. |
-
-### registerCollaterals
+## registerCollaterals
 
 ```solidity
 function registerCollaterals(address[] _tokens, bool _isCollateral, bytes[] _signatures) external
@@ -52,12 +46,16 @@ function registerCollaterals(address[] _tokens, bool _isCollateral, bytes[] _sig
 
 Register or deregister collections as collaterals.
 
-Name             Description
+{% hint style="info" %}
+Administrative operator.
 
-_Administrative operator.
-   Collections must support interface `IERC721Upgradeable`._
+{% endhint %}
 
-#### Parameters
+{% hint style="info" %}
+Collections must support interface `IERC721Upgradeable`.
+{% endhint %}
+
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -65,49 +63,42 @@ _Administrative operator.
 | _isCollateral | bool | Whether the operation is register or deregister. |
 | _signatures | bytes[] | Array of admin signatures. |
 
-### getCollateral
+## getCollateral
 
 ```solidity
 function getCollateral(uint256 _mortgageId) external view returns (struct IERC721Collateral.ERC721Collateral)
 ```
 
-Name           Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _mortgageId | uint256 | Mortgage identifier. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | struct IERC721Collateral.ERC721Collateral | Collateral information. |
+Collateral information.
 
-### royaltyInfo
+## royaltyInfo
 
 ```solidity
 function royaltyInfo(uint256 _tokenId, uint256 _price) external view returns (address, uint256)
 ```
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _tokenId | uint256 | Token identifier. |
 | _price | uint256 | Reference value. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | address | receiver    Royalty receiver address. |
-| [1] | uint256 | royalty     Royalty derived from the reference value. |
+receiver    Royalty receiver address.
 
-### borrow
+royalty     Royalty derived from the reference value.
+
+## borrow
 
 ```solidity
 function borrow(address _token, uint256 _tokenId, uint256 _principal, uint256 _repayment, address _currency, uint40 _duration) external returns (uint256)
@@ -115,14 +106,22 @@ function borrow(address _token, uint256 _tokenId, uint256 _principal, uint256 _r
 
 List a new mortgage offer with an ERC-721 token as collateral.
 
-Name          Description
+{% hint style="info" %}
+The collection must support interface `IERC721Upgradeable`.
 
-_The collection must support interface `IERC721Upgradeable`.
-   Approval must be granted for this contract to transfer collateral before borrowing. A mortgage can only be
+{% endhint %}
+
+{% hint style="info" %}
+Approval must be granted for this contract to transfer collateral before borrowing. A mortgage can only be
 lent while approval remains active.
-   Collateral will be secured in the contract until the mortgage is either repaid, foreclosed, or cancelled._
 
-#### Parameters
+{% endhint %}
+
+{% hint style="info" %}
+Collateral will be secured in the contract until the mortgage is either repaid, foreclosed, or cancelled.
+{% endhint %}
+
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -133,13 +132,11 @@ lent while approval remains active.
 | _currency | address | Currency address. |
 | _duration | uint40 | Borrowing duration. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | uint256 | mortgageId    New mortgage identifier. |
+mortgageId    New mortgage identifier.
 
-### _transferCollateral
+## _transferCollateral
 
 ```solidity
 function _transferCollateral(uint256 _mortgageId, address _from, address _to) internal
@@ -147,9 +144,7 @@ function _transferCollateral(uint256 _mortgageId, address _from, address _to) in
 
 Transfer the collateral of a mortgage.
 
-Name           Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |

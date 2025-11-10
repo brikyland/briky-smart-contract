@@ -1,10 +1,8 @@
-# Solidity API
-
-## Formula
+# Formula
 
 Utility library for common mathematical calculations.
 
-### scale
+## scale
 
 ```solidity
 function scale(uint256 _value, uint256 _numerator, uint256 _denominator) internal pure returns (uint256)
@@ -12,11 +10,11 @@ function scale(uint256 _value, uint256 _numerator, uint256 _denominator) interna
 
 Scale a value by a rational multiplier.
 
-Name            Description
+{% hint style="info" %}
+`_denominator != 0`.
+{% endhint %}
 
-_`_denominator != 0`._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -24,13 +22,11 @@ _`_denominator != 0`._
 | _numerator | uint256 | Scaling multiplier numerator. |
 | _denominator | uint256 | Scaling multiplier denominator. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | uint256 | (Corresponding) fixed-point or integer value of `_value * _numerator / _denominator`. |
+(Corresponding) fixed-point or integer value of `_value * _numerator / _denominator`.
 
-### scale
+## scale
 
 ```solidity
 function scale(uint256 _value, struct IRate.Rate _rate) internal pure returns (uint256)
@@ -38,22 +34,18 @@ function scale(uint256 _value, struct IRate.Rate _rate) internal pure returns (u
 
 Scale a value by a rate.
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _value | uint256 | Fixed-point or integer value. |
 | _rate | struct IRate.Rate | Scaling rate. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | uint256 | (Corresponding) fixed-point or integer value of `_value * _rate`. |
+(Corresponding) fixed-point or integer value of `_value * _rate`.
 
-### remain
+## remain
 
 ```solidity
 function remain(uint256 _value, uint256 _numerator, uint256 _denominator) internal pure returns (uint256)
@@ -61,11 +53,11 @@ function remain(uint256 _value, uint256 _numerator, uint256 _denominator) intern
 
 Remain after scale down a value by a rational multiplier.
 
-Name            Description
+{% hint style="info" %}
+_numerator <= _denominator.
+{% endhint %}
 
-__numerator <= _denominator._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -73,13 +65,11 @@ __numerator <= _denominator._
 | _numerator | uint256 | Scaling multiplier numerator. |
 | _denominator | uint256 | Scaling multiplier denominator. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | uint256 | (Corresponding) fixed-point or integer value of `_value - _value * _numerator / _denominator`. |
+(Corresponding) fixed-point or integer value of `_value - _value * _numerator / _denominator`.
 
-### remain
+## remain
 
 ```solidity
 function remain(uint256 _value, struct IRate.Rate _rate) internal pure returns (uint256)
@@ -87,20 +77,18 @@ function remain(uint256 _value, struct IRate.Rate _rate) internal pure returns (
 
 Remain after scale down a value by a rate.
 
-Name            Description
+{% hint style="info" %}
+`_rate <= 1.0`.
+{% endhint %}
 
-_`_rate <= 1.0`._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _value | uint256 | Fixed-point or integer value. |
 | _rate | struct IRate.Rate | Scaling rate. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | uint256 | (Corresponding) fixed-point or integer value of `_value - _value * _rate`. |
+(Corresponding) fixed-point or integer value of `_value - _value * _rate`.
 

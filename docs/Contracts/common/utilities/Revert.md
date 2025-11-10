@@ -1,8 +1,6 @@
-# Solidity API
+# Revert
 
-## Revert
-
-### revertFromReturnedData
+## revertFromReturnedData
 
 ```solidity
 function revertFromReturnedData(bytes returnedData) internal pure
@@ -10,9 +8,12 @@ function revertFromReturnedData(bytes returnedData) internal pure
 
 This is needed in order to provide some human-readable revert message from a call
 
-_Bubble up the revert from the returnedData (supports Panic, Error & Custom Errors)_
+{% hint style="info" %}
+Bubble up the revert from the returnedData (supports Panic, Error & Custom Errors)
 
-#### Parameters
+{% endhint %}
+
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |

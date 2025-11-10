@@ -1,10 +1,8 @@
-# Solidity API
-
-## ICommon
+# ICommon
 
 Interface for standard contract administered by the `Admin` contract.
 
-### AuthorizedAccount
+## AuthorizedAccount
 
 ```solidity
 error AuthorizedAccount()
@@ -12,101 +10,97 @@ error AuthorizedAccount()
 
 ===== ERROR ===== *
 
-### BadAnchor
+## BadAnchor
 
 ```solidity
 error BadAnchor()
 ```
 
-### FailedVerification
+## FailedVerification
 
 ```solidity
 error FailedVerification()
 ```
 
-### InsufficientFunds
+## InsufficientFunds
 
 ```solidity
 error InsufficientFunds()
 ```
 
-### InvalidCurrency
+## InvalidCurrency
 
 ```solidity
 error InvalidCurrency()
 ```
 
-### InvalidGovernor
+## InvalidGovernor
 
 ```solidity
 error InvalidGovernor()
 ```
 
-### InvalidInput
+## InvalidInput
 
 ```solidity
 error InvalidInput()
 ```
 
-### InvalidSignatureNumber
+## InvalidSignatureNumber
 
 ```solidity
 error InvalidSignatureNumber()
 ```
 
-### InvalidTimestamp
+## InvalidTimestamp
 
 ```solidity
 error InvalidTimestamp()
 ```
 
-### InvalidUpdating
+## InvalidUpdating
 
 ```solidity
 error InvalidUpdating()
 ```
 
-### InvalidZone
+## InvalidZone
 
 ```solidity
 error InvalidZone()
 ```
 
-### NotAuthorizedAccount
+## NotAuthorizedAccount
 
 ```solidity
 error NotAuthorizedAccount()
 ```
 
-### Unauthorized
+## Unauthorized
 
 ```solidity
 error Unauthorized()
 ```
 
-### version
+## version
 
 ```solidity
 function version() external pure returns (string version)
 ```
 
-Name        Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | version | string | Version of implementation. |
 
-### admin
+## admin
 
 ```solidity
 function admin() external view returns (address admin)
 ```
 
-Name        Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |

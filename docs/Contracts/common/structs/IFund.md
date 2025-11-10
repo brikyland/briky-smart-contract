@@ -1,20 +1,30 @@
-# Solidity API
-
-## IFund
+# IFund
 
 Interface for struct `Fund`.
 
-_ERC-20 tokens are identified by their contract addresses.
-Native coin is represented by the zero address (0x0000000000000000000000000000000000000000)._
+{% hint style="info" %}
+ERC-20 tokens are identified by their contract addresses.
+Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
+{% endhint %}
 
-### Fund
+## Fund
 
 A package of one or multiple cryptocurrencies to provide and withdraw on demand of provider.
 
-_The fund is determined by a `quantity` value and denominations for each currency.
-   Provision or withdrawal operations must specify a `quantity` to indicate equivalent values, calculated by
+{% hint style="info" %}
+The fund is determined by a `quantity` value and denominations for each currency.
+
+{% endhint %}
+
+{% hint style="info" %}
+Provision or withdrawal operations must specify a `quantity` to indicate equivalent values, calculated by
 multiplying with predefined denomination of each currency.
-   The fund need to specify a main currency, other extras are optional._
+
+{% endhint %}
+
+{% hint style="info" %}
+The fund need to specify a main currency, other extras are optional.
+{% endhint %}
 
 ```solidity
 struct Fund {

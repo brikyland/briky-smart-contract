@@ -1,10 +1,8 @@
-# Solidity API
-
-## IProject
+# IProject
 
 Interface for struct `Project`.
 
-### Project
+## Project
 
 Project information.
 

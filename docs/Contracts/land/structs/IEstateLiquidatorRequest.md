@@ -1,16 +1,17 @@
-# Solidity API
-
-## IEstateLiquidatorRequest
+# IEstateLiquidatorRequest
 
 Interface for struct `EstateLiquidatorRequest`.
 
-_ERC-20 tokens are identified by their contract addresses.
-Native coin is represented by the zero address (0x0000000000000000000000000000000000000000)._
+{% hint style="info" %}
+ERC-20 tokens are identified by their contract addresses.
+Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
+{% endhint %}
 
-### EstateLiquidatorRequest
+## EstateLiquidatorRequest
 
 A request for `EstateLiquidator` to extract an estate from `EstateToken` by selling the asset to a legitimate
 estate buyer.
+
 Proceeds from the sale will be shared among holders proportionally to their balances.
 
 ```solidity

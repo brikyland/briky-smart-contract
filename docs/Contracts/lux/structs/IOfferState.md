@@ -1,10 +1,8 @@
-# Solidity API
-
-## IOfferState
+# IOfferState
 
 Interface for enum `OfferState`.
 
-### OfferState
+## OfferState
 
 Variants of state of an offer.
 

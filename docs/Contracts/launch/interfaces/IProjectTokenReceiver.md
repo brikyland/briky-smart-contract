@@ -1,20 +1,16 @@
-# Solidity API
-
-## IProjectTokenReceiver
+# IProjectTokenReceiver
 
 Interface for contract `ProjectTokenReceiver`.
 
 A `ProjectTokenReceiver` contract always accepts ERC-1155 income tokens from the `ProjectToken` contract.
 
-### projectToken
+## projectToken
 
 ```solidity
 function projectToken() external view returns (address projectToken)
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |

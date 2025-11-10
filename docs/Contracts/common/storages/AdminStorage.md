@@ -1,132 +1,130 @@
-# Solidity API
-
-## AdminStorage
+# AdminStorage
 
 Storage contract for contract `Admin`.
 
-### isManager
+## isManager
 
 ```solidity
 mapping(address => bool) isManager
 ```
 
-_isManager[account]_
+{% hint style="info" %}
+isManager[account]
+{% endhint %}
 
-### nonce
+## nonce
 
 ```solidity
 uint256 nonce
 ```
 
-Name    Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### admin1
+## admin1
 
 ```solidity
 address admin1
 ```
 
-Name    Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### admin2
+## admin2
 
 ```solidity
 address admin2
 ```
 
-Name    Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### admin3
+## admin3
 
 ```solidity
 address admin3
 ```
 
-Name    Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### admin4
+## admin4
 
 ```solidity
 address admin4
 ```
 
-Name    Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### admin5
+## admin5
 
 ```solidity
 address admin5
 ```
 
-Name    Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### isModerator
+## isModerator
 
 ```solidity
 mapping(address => bool) isModerator
 ```
 
-_isModerator[account]_
+{% hint style="info" %}
+isModerator[account]
+{% endhint %}
 
-### currencyRegistries
+## currencyRegistries
 
 ```solidity
 mapping(address => struct ICurrencyRegistry.CurrencyRegistry) currencyRegistries
 ```
 
-_currencyRegistries[currency]_
+{% hint style="info" %}
+currencyRegistries[currency]
+{% endhint %}
 
-### isZone
+## isZone
 
 ```solidity
 mapping(bytes32 => bool) isZone
 ```
 
-_isZone[zone]_
+{% hint style="info" %}
+isZone[zone]
+{% endhint %}
 
-### isActiveIn
+## isActiveIn
 
 ```solidity
 mapping(bytes32 => mapping(address => bool)) isActiveIn
 ```
 
-_isActiveIn[zone][account]_
+{% hint style="info" %}
+isActiveIn[zone][account]
+{% endhint %}
 
-### isGovernor
+## isGovernor
 
 ```solidity
 mapping(address => bool) isGovernor
 ```
 
-_isGovernor[account]_
+{% hint style="info" %}
+isGovernor[account]
+{% endhint %}
 

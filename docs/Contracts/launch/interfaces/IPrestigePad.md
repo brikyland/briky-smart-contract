@@ -1,18 +1,27 @@
-# Solidity API
-
-## IPrestigePad
+# IPrestigePad
 
 Interface for contract `PrestigePad`.
+
 The `PrestigePad` contract facilitates the launch of real estate project through crowdfunding. Authorized
 initiators
 
-_Implementation involves server-side support.
-   ERC-20 tokens are identified by their contract addresses.
-Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
-   Quantities are expressed in absolute units. Scale these values by `10 ** IAssetToken(projectToken).decimals()` to
-obtain the correct amounts under the `IAssetToken` convention._
+{% hint style="info" %}
+Implementation involves server-side support.
 
-### BaseUnitPriceRangeUpdate
+{% endhint %}
+
+{% hint style="info" %}
+ERC-20 tokens are identified by their contract addresses.
+Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
+
+{% endhint %}
+
+{% hint style="info" %}
+Quantities are expressed in absolute units. Scale these values by `10 ** IAssetToken(projectToken).decimals()` to
+obtain the correct amounts under the `IAssetToken` convention.
+{% endhint %}
+
+## BaseUnitPriceRangeUpdate
 
 ```solidity
 event BaseUnitPriceRangeUpdate(uint256 baseMinUnitPrice, uint256 baseMaxUnitPrice)
@@ -20,16 +29,14 @@ event BaseUnitPriceRangeUpdate(uint256 baseMinUnitPrice, uint256 baseMaxUnitPric
 
 Emitted when the acceptable range of unit price denominated in USD is updated.
 
-Name                 Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | baseMinUnitPrice | uint256 | New minimum unit price denominated in USD. |
 | baseMaxUnitPrice | uint256 | New maximum unit price denominated in USD. |
 
-### InitiatorRegistration
+## InitiatorRegistration
 
 ```solidity
 event InitiatorRegistration(bytes32 zone, address account)
@@ -37,16 +44,14 @@ event InitiatorRegistration(bytes32 zone, address account)
 
 Emitted when an initiator is registered in a zone.
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | zone | bytes32 | Zone code. |
 | account | address | Initiator address. |
 
-### InitiatorDeregistration
+## InitiatorDeregistration
 
 ```solidity
 event InitiatorDeregistration(bytes32 zone, address account)
@@ -54,16 +59,14 @@ event InitiatorDeregistration(bytes32 zone, address account)
 
 Emitted when an initiator is deregistered from a zone.
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | zone | bytes32 | Zone code. |
 | account | address | Initiator address. |
 
-### NewLaunch
+## NewLaunch
 
 ```solidity
 event NewLaunch(uint256 launchId, uint256 projectId, address initiator, string uri, uint256 initialQuantity, struct IRate.Rate feeRate)
@@ -71,9 +74,7 @@ event NewLaunch(uint256 launchId, uint256 projectId, address initiator, string u
 
 Emitted when a new launch is initiated.
 
-Name                Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -84,7 +85,7 @@ Name                Description
 | initialQuantity | uint256 | Initial quantity of tokens to be minted. |
 | feeRate | struct IRate.Rate | Fraction of raised value charged as fee, applied across all rounds. |
 
-### NewRound
+## NewRound
 
 ```solidity
 event NewRound(uint256 roundId, uint256 launchId, string uri, struct IPrestigePadRound.PrestigePadRoundQuotaInput quota, struct IPrestigePadRound.PrestigePadRoundQuoteInput quote)
@@ -92,9 +93,7 @@ event NewRound(uint256 roundId, uint256 launchId, string uri, struct IPrestigePa
 
 Emitted when a new round is created for a launch.
 
-Name                Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -104,7 +103,7 @@ Name                Description
 | quota | struct IPrestigePadRound.PrestigePadRoundQuotaInput | Initialization input for `PrestigePadRoundQuota`. |
 | quote | struct IPrestigePadRound.PrestigePadRoundQuoteInput | Initialization input for `PrestigePadRoundQuote`. |
 
-### LaunchRoundAppendage
+## LaunchRoundAppendage
 
 ```solidity
 event LaunchRoundAppendage(uint256 launchId, uint256 roundId)
@@ -112,16 +111,14 @@ event LaunchRoundAppendage(uint256 launchId, uint256 roundId)
 
 Emitted when a round is appended to a launch.
 
-Name                Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | launchId | uint256 | Launch identifier. |
 | roundId | uint256 | Round identifier. |
 
-### LaunchCurrentRoundCancellation
+## LaunchCurrentRoundCancellation
 
 ```solidity
 event LaunchCurrentRoundCancellation(uint256 launchId, uint256 roundId)
@@ -129,16 +126,14 @@ event LaunchCurrentRoundCancellation(uint256 launchId, uint256 roundId)
 
 Emitted when the current round of a launch is cancelled.
 
-Name                Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | launchId | uint256 | Launch identifier. |
 | roundId | uint256 | Round identifier. |
 
-### LaunchCurrentRoundConfirmation
+## LaunchCurrentRoundConfirmation
 
 ```solidity
 event LaunchCurrentRoundConfirmation(uint256 launchId, uint256 roundId, uint256 raisedQuantity, uint256 contribution, uint256 fee, uint256 cashbackBaseAmount)
@@ -146,9 +141,7 @@ event LaunchCurrentRoundConfirmation(uint256 launchId, uint256 roundId, uint256 
 
 Emitted when the current round of a launch is confirmed.
 
-Name                Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -159,7 +152,7 @@ Name                Description
 | fee | uint256 | Tokenizing fee. |
 | cashbackBaseAmount | uint256 | Cashback derived from the contribution. |
 
-### LaunchFinalization
+## LaunchFinalization
 
 ```solidity
 event LaunchFinalization(uint256 launchId)
@@ -167,15 +160,13 @@ event LaunchFinalization(uint256 launchId)
 
 Emitted when a launch is finalized.
 
-Name                    Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | launchId | uint256 | Launch identifier. |
 
-### LaunchRoundsRemoval
+## LaunchRoundsRemoval
 
 ```solidity
 event LaunchRoundsRemoval(uint256 launchId, uint256 removedRoundNumber, uint256 index)
@@ -183,9 +174,7 @@ event LaunchRoundsRemoval(uint256 launchId, uint256 removedRoundNumber, uint256 
 
 Emitted when a launch gets its rounds removed from an index.
 
-Name                    Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -193,7 +182,7 @@ Name                    Description
 | removedRoundNumber | uint256 | Number of removed rounds. |
 | index | uint256 | Index of the first removed round. |
 
-### LaunchNextRoundSchedule
+## LaunchNextRoundSchedule
 
 ```solidity
 event LaunchNextRoundSchedule(uint256 launchId, uint256 roundId, uint256 cashbackFundId, uint40 raiseStartsAt, uint40 raiseEndsAt)
@@ -201,9 +190,7 @@ event LaunchNextRoundSchedule(uint256 launchId, uint256 roundId, uint256 cashbac
 
 Emitted when the next round of a launch is scheduled.
 
-Name                    Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -213,7 +200,7 @@ Name                    Description
 | raiseStartsAt | uint40 | When the raise starts. |
 | raiseEndsAt | uint40 | When the raise ends. |
 
-### LaunchRoundUpdate
+## LaunchRoundUpdate
 
 ```solidity
 event LaunchRoundUpdate(uint256 launchId, uint256 roundId, uint256 index)
@@ -221,9 +208,7 @@ event LaunchRoundUpdate(uint256 launchId, uint256 roundId, uint256 index)
 
 Emitted when a round in a launch is updated.
 
-Name                    Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -231,7 +216,7 @@ Name                    Description
 | roundId | uint256 | New round identifier. |
 | index | uint256 | Index of the round in the launch. |
 
-### LaunchURIUpdate
+## LaunchURIUpdate
 
 ```solidity
 event LaunchURIUpdate(uint256 launchId, string launchURI)
@@ -239,16 +224,14 @@ event LaunchURIUpdate(uint256 launchId, string launchURI)
 
 Emitted when the URI of a launch is updated.
 
-Name                    Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | launchId | uint256 | Launch identifier. |
 | launchURI | string | New URI of project metadata. |
 
-### Contribution
+## Contribution
 
 ```solidity
 event Contribution(uint256 launchId, uint256 roundId, address contributor, uint256 quantity, uint256 value)
@@ -256,9 +239,7 @@ event Contribution(uint256 launchId, uint256 roundId, address contributor, uint2
 
 Emitted when a contribution is made to a round.
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -268,7 +249,7 @@ Name            Description
 | quantity | uint256 | Contributed quantity. |
 | value | uint256 | Contributed value. |
 
-### ContributionWithdrawal
+## ContributionWithdrawal
 
 ```solidity
 event ContributionWithdrawal(uint256 roundId, address contributor, uint256 quantity, uint256 value)
@@ -276,9 +257,7 @@ event ContributionWithdrawal(uint256 roundId, address contributor, uint256 quant
 
 Emitted when a contribution is withdrawn from a round.
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -287,7 +266,7 @@ Name            Description
 | quantity | uint256 | Withdrawn quantity. |
 | value | uint256 | Withdrawn value. |
 
-### AlreadyConfirmed
+## AlreadyConfirmed
 
 ```solidity
 error AlreadyConfirmed()
@@ -295,323 +274,303 @@ error AlreadyConfirmed()
 
 ===== ERROR ===== *
 
-### AlreadyWithdrawn
+## AlreadyWithdrawn
 
 ```solidity
 error AlreadyWithdrawn()
 ```
 
-### InvalidCancelling
+## InvalidCancelling
 
 ```solidity
 error InvalidCancelling()
 ```
 
-### InvalidConfirming
+## InvalidConfirming
 
 ```solidity
 error InvalidConfirming()
 ```
 
-### InvalidContributing
+## InvalidContributing
 
 ```solidity
 error InvalidContributing()
 ```
 
-### InvalidFinalizing
+## InvalidFinalizing
 
 ```solidity
 error InvalidFinalizing()
 ```
 
-### InvalidLaunchId
+## InvalidLaunchId
 
 ```solidity
 error InvalidLaunchId()
 ```
 
-### InvalidScheduling
+## InvalidScheduling
 
 ```solidity
 error InvalidScheduling()
 ```
 
-### InvalidRemoving
+## InvalidRemoving
 
 ```solidity
 error InvalidRemoving()
 ```
 
-### InvalidRoundId
+## InvalidRoundId
 
 ```solidity
 error InvalidRoundId()
 ```
 
-### InvalidUnitPrice
+## InvalidUnitPrice
 
 ```solidity
 error InvalidUnitPrice()
 ```
 
-### InvalidWithdrawing
+## InvalidWithdrawing
 
 ```solidity
 error InvalidWithdrawing()
 ```
 
-### MaxRaisingQuantityExceeded
+## MaxRaisingQuantityExceeded
 
 ```solidity
 error MaxRaisingQuantityExceeded()
 ```
 
-### NoRoundToInitiate
+## NoRoundToInitiate
 
 ```solidity
 error NoRoundToInitiate()
 ```
 
-### NotConfirmed
+## NotConfirmed
 
 ```solidity
 error NotConfirmed()
 ```
 
-### NotEnoughSoldQuantity
+## NotEnoughSoldQuantity
 
 ```solidity
 error NotEnoughSoldQuantity()
 ```
 
-### NotInitiated
+## NotInitiated
 
 ```solidity
 error NotInitiated()
 ```
 
-### NotRegisteredAccount
+## NotRegisteredAccount
 
 ```solidity
 error NotRegisteredAccount()
 ```
 
-### NothingToWithdraw
+## NothingToWithdraw
 
 ```solidity
 error NothingToWithdraw()
 ```
 
-### RegisteredAccount
+## RegisteredAccount
 
 ```solidity
 error RegisteredAccount()
 ```
 
-### StillRaising
+## StillRaising
 
 ```solidity
 error StillRaising()
 ```
 
-### Timeout
+## Timeout
 
 ```solidity
 error Timeout()
 ```
 
-### feeReceiver
+## feeReceiver
 
 ```solidity
 function feeReceiver() external view returns (address feeReceiver)
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | feeReceiver | address | `FeeReceiver` contract address. |
 
-### priceWatcher
+## priceWatcher
 
 ```solidity
 function priceWatcher() external view returns (address priceWatcher)
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | priceWatcher | address | `PriceWatcher` contract address. |
 
-### reserveVault
+## reserveVault
 
 ```solidity
 function reserveVault() external view returns (address reserveVault)
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | reserveVault | address | `ReserveVault` contract address. |
 
-### baseMinUnitPrice
+## baseMinUnitPrice
 
 ```solidity
 function baseMinUnitPrice() external view returns (uint256 baseMinUnitPrice)
 ```
 
-Name                Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | baseMinUnitPrice | uint256 | Minimum unit price denominated in USD. |
 
-### baseMaxUnitPrice
+## baseMaxUnitPrice
 
 ```solidity
 function baseMaxUnitPrice() external view returns (uint256 baseMaxUnitPrice)
 ```
 
-Name                Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | baseMaxUnitPrice | uint256 | Maximum unit price denominated in USD. |
 
-### launchNumber
+## launchNumber
 
 ```solidity
 function launchNumber() external view returns (uint256 launchNumber)
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | launchNumber | uint256 | Total number of launches created. |
 
-### roundNumber
+## roundNumber
 
 ```solidity
 function roundNumber() external view returns (uint256 roundNumber)
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | roundNumber | uint256 | Total number of rounds created. |
 
-### getLaunch
+## getLaunch
 
 ```solidity
 function getLaunch(uint256 launchId) external view returns (struct IPrestigePadLaunch.PrestigePadLaunch launch)
 ```
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | launchId | uint256 | Launch identifier. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | launch | struct IPrestigePadLaunch.PrestigePadLaunch | Configuration and rounds of the launch. |
 
-### getRound
+## getRound
 
 ```solidity
 function getRound(uint256 roundId) external view returns (struct IPrestigePadRound.PrestigePadRound round)
 ```
 
-Name        Description
-
-_Phases of a round:
+{% hint style="info" %}
+Phases of a round:
 - Unscheduled: agenda.raiseStartsAt = 0
 - Scheduled: block.timestamp < agenda.raiseStartsAt
 - Raise: agenda.raiseStartsAt <= block.timestamp < agenda.raiseEndsAt
 - Awaiting Confirmation: agenda.raiseEndsAt
-<= block.timestamp
-< agenda.raiseEndsAt + PrestigePadConstant.RAISE_CONFIRMATION_TIME_LIMIT
+                            <= block.timestamp
+                            < agenda.raiseEndsAt + PrestigePadConstant.RAISE_CONFIRMATION_TIME_LIMIT
 - Confirmed: agenda.confirmedAt > 0
-- Cancelled: quota.totalSupply = 0_
+- Cancelled: quota.totalSupply = 0
+{% endhint %}
 
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | roundId | uint256 | Round identifier. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | round | struct IPrestigePadRound.PrestigePadRound | Configuration and progress of the round. |
 
-### contributions
+## contributions
 
 ```solidity
 function contributions(uint256 roundId, address account) external view returns (uint256 quantity)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | roundId | uint256 | Round identifier. |
 | account | address | EVM address. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | quantity | uint256 | Contributed quantity of the account in the round. |
 
-### withdrawAt
+## withdrawAt
 
 ```solidity
 function withdrawAt(uint256 roundId, address account) external view returns (uint256 withdrawAt)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | roundId | uint256 | Round identifier. |
 | account | address | EVM address. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | withdrawAt | uint256 | Withdrawal timestamp of the account in the round. |
 
-### initiateLaunch
+## initiateLaunch
 
 ```solidity
 function initiateLaunch(address initiator, bytes32 zone, string projectURI, string launchURI, uint256 initialQuantity, uint256 feeRate, struct IValidation.Validation validation) external returns (uint256 launchId)
@@ -619,11 +578,11 @@ function initiateLaunch(address initiator, bytes32 zone, string projectURI, stri
 
 Initiate a new launch for an estate project.
 
-Name                Description
+{% hint style="info" %}
+Permission: Executives active in the zone of the estate.
+{% endhint %}
 
-_Permission: Executives active in the zone of the estate._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -635,32 +594,37 @@ _Permission: Executives active in the zone of the estate._
 | feeRate | uint256 | Fraction of raised value charged as fee, applied for all rounds. |
 | validation | struct IValidation.Validation | Validation package from the validator. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | launchId | uint256 | New launch identifier. |
 
-### updateLaunchURI
+## updateLaunchURI
 
 ```solidity
 function updateLaunchURI(uint256 launchId, string uri, struct IValidation.Validation validation) external
 ```
 
 Update the URI of information a launch.
+
 Update only if the launch is not finalized.
 
-Name                    Description
+{% hint style="info" %}
+Permission: Initiator of the launch.
 
-_Permission: Initiator of the launch.
-   Validation data:
+{% endhint %}
+
+{% hint style="info" %}
+Validation data:
 ```
 data = abi.encode(
-_launchId,
-_uri
-);_
+    _launchId,
+    _uri
+);
+{% endhint %}
 
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -668,26 +632,31 @@ _uri
 | uri | string | URI of launch metadata. |
 | validation | struct IValidation.Validation | Validation package from the validator. |
 
-### updateRound
+## updateRound
 
 ```solidity
 function updateRound(uint256 launchId, uint256 index, struct IPrestigePadRound.PrestigePadRoundInput round) external returns (uint256 roundId)
 ```
 
 Update a round in a launch.
+
 Update only before the round is scheduled.
 
-Name                    Description
+{% hint style="info" %}
+Permission: Initiator of the launch.
 
-_Permission: Initiator of the launch.
-   Validation data:
+{% endhint %}
+
+{% hint style="info" %}
+Validation data:
 ```
 data = abi.encode(
-_launchId,
-_uri
-);_
+    _launchId,
+    _uri
+);
+{% endhint %}
 
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -695,26 +664,27 @@ _uri
 | index | uint256 | Index of the round in the launch. |
 | round | struct IPrestigePadRound.PrestigePadRoundInput | New round configuration. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | roundId | uint256 | New round identifier. |
 
-### updateRounds
+## updateRounds
 
 ```solidity
 function updateRounds(uint256 launchId, uint256 removedRoundNumber, struct IPrestigePadRound.PrestigePadRoundInput[] addedRounds) external returns (uint256 lastIndex)
 ```
 
 Update multiple rounds in a launch by removing multiple rounds from the end and appending new ones.
+
 Update only with rounds that are not scheduled.
 
-Name                    Description
+{% hint style="info" %}
+Permission: Initiator of the launch.
+{% endhint %}
 
-_Permission: Initiator of the launch._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -722,52 +692,54 @@ _Permission: Initiator of the launch._
 | removedRoundNumber | uint256 | Number of rounds to remove from the end. |
 | addedRounds | struct IPrestigePadRound.PrestigePadRoundInput[] | Array of new rounds. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | lastIndex | uint256 | Index of the last added round. |
 
-### cancelCurrentRound
+## cancelCurrentRound
 
 ```solidity
 function cancelCurrentRound(uint256 launchId) external returns (uint256 index, uint256 roundId)
 ```
 
 Cancel the current round of a launch.
+
 Cancel only before the current round is confirmed.
 
-Name                    Description
+{% hint style="info" %}
+Permission: Initiator of the launch.
+{% endhint %}
 
-_Permission: Initiator of the launch._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | launchId | uint256 | Launch identifier. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | index | uint256 | Index of the cancelled round. |
 | roundId | uint256 | New round identifier at the index. |
 
-### scheduleNextRound
+## scheduleNextRound
 
 ```solidity
 function scheduleNextRound(uint256 launchId, uint256 cashbackThreshold, uint256 cashbackBaseRate, address[] cashbackCurrencies, uint256[] cashbackDenominations, uint40 raiseStartsAt, uint40 raiseDuration) external returns (uint256 index)
 ```
 
 Schedule the next round for a launch with cashback configuration.
+
 Schedule only if the previous round has been confirmed.
 
-Name                    Description
+{% hint style="info" %}
+Permission: Initiator of the launch.
+{% endhint %}
 
-_Permission: Initiator of the launch._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -779,103 +751,108 @@ _Permission: Initiator of the launch._
 | raiseStartsAt | uint40 | Raise start timestamp. |
 | raiseDuration | uint40 | Raise duration. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | index | uint256 | Index of the scheduled round. |
 
-### contributeCurrentRound
+## contributeCurrentRound
 
 ```solidity
 function contributeCurrentRound(uint256 launchId, uint256 quantity) external payable returns (uint256 value)
 ```
 
 Contribute to the current round of a launch.
+
 Contribute only during raise period.
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | launchId | uint256 | Launch identifier. |
 | quantity | uint256 | Contributed quantity. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | value | uint256 | Contributed value. |
 
-### withdrawContribution
+## withdrawContribution
 
 ```solidity
 function withdrawContribution(uint256 roundId) external returns (uint256 value)
 ```
 
 Withdraw contribution of the message sender from a round which can no longer be confirmed.
+
 Withdraw only when the round is cancelled or the raise ends without enough raised quantity or the confirmation
 time limit has expired.
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | roundId | uint256 | Round identifier. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | value | uint256 | Withdrawn value. |
 
-### safeConfirmCurrentRound
+## safeConfirmCurrentRound
 
 ```solidity
 function safeConfirmCurrentRound(uint256 launchId, bytes32 anchor) external payable returns (uint256 index)
 ```
 
 Confirm the current round of a launch and mint tokens to contributors.
+
 Confirm only if the round has raised at least minimum quantity (even if the sale period has not yet ended) and
 before the confirmation time limit has expired.
+
 The message sender must provide sufficient extra-currency amounts for the cashback fund.
 
-Name        Description
+{% hint style="info" %}
+Permission: Initiator of the launch.
 
-_Permission: Initiator of the launch.
-   Anchor enforces consistency between this contract and the client-side._
+{% endhint %}
 
-#### Parameters
+{% hint style="info" %}
+Anchor enforces consistency between this contract and the client-side.
+{% endhint %}
+
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | launchId | uint256 | Launch identifier. |
 | anchor | bytes32 | Keccak256 hash of `uri` of the launch. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | index | uint256 | Index of the confirmed round. |
 
-### safeContributeCurrentRound
+## safeContributeCurrentRound
 
 ```solidity
 function safeContributeCurrentRound(uint256 launchId, uint256 quantity, bytes32 anchor) external payable returns (uint256 value)
 ```
 
 Contribute to the current round of a launch with anchor verification.
+
 Contribute only during raise period.
 
-Name        Description
+{% hint style="info" %}
+Anchor enforces consistency between this contract and the client-side.
+{% endhint %}
 
-_Anchor enforces consistency between this contract and the client-side._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -883,28 +860,37 @@ _Anchor enforces consistency between this contract and the client-side._
 | quantity | uint256 | Contributed quantity. |
 | anchor | bytes32 | Keccak256 hash of `uri` of the launch. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | value | uint256 | Contributed value. |
 
-### safeFinalize
+## safeFinalize
 
 ```solidity
 function safeFinalize(uint256 launchId, bytes32 anchor) external
 ```
 
 Finalize a launch to finish capital raising.
+
 Finalize only when all rounds are confirmed.
 
-Name        Description
+{% hint style="info" %}
+Permission: Initiator of the launch.
 
-_Permission: Initiator of the launch.
-   The launch can only be finalized after all rounds are confirmed, and no further rounds can be created.
-   Anchor enforces consistency between this contract and the client-side._
+{% endhint %}
 
-#### Parameters
+{% hint style="info" %}
+The launch can only be finalized after all rounds are confirmed, and no further rounds can be created.
+
+{% endhint %}
+
+{% hint style="info" %}
+Anchor enforces consistency between this contract and the client-side.
+{% endhint %}
+
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |

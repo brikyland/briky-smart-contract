@@ -1,149 +1,141 @@
-# Solidity API
-
-## EstateForgerStorage
+# EstateForgerStorage
 
 Storage contract for contract `EstateForger`.
 
-### deposits
+## deposits
 
 ```solidity
 mapping(uint256 => mapping(address => uint256)) deposits
 ```
 
-_deposits[requestId][account]_
+{% hint style="info" %}
+deposits[requestId][account]
+{% endhint %}
 
-### withdrawAt
+## withdrawAt
 
 ```solidity
 mapping(uint256 => mapping(address => uint256)) withdrawAt
 ```
 
-_withdrawAt[requestId][account]_
+{% hint style="info" %}
+withdrawAt[requestId][account]
+{% endhint %}
 
-### isWhitelistedFor
+## isWhitelistedFor
 
 ```solidity
 mapping(uint256 => mapping(address => bool)) isWhitelistedFor
 ```
 
-_isWhitelistedFor[requestId][account]_
+{% hint style="info" %}
+isWhitelistedFor[requestId][account]
+{% endhint %}
 
-### requests
+## requests
 
 ```solidity
 mapping(uint256 => struct IEstateForgerRequest.EstateForgerRequest) requests
 ```
 
-_requests[requestId]_
+{% hint style="info" %}
+requests[requestId]
+{% endhint %}
 
-### isWhitelisted
+## isWhitelisted
 
 ```solidity
 mapping(address => bool) isWhitelisted
 ```
 
-_isWhitelisted[account]_
+{% hint style="info" %}
+isWhitelisted[account]
+{% endhint %}
 
-### requestNumber
+## requestNumber
 
 ```solidity
 uint256 requestNumber
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### baseMinUnitPrice
+## baseMinUnitPrice
 
 ```solidity
 uint256 baseMinUnitPrice
 ```
 
-Name                Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### baseMaxUnitPrice
+## baseMaxUnitPrice
 
 ```solidity
 uint256 baseMaxUnitPrice
 ```
 
-Name                Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### admin
+## admin
 
 ```solidity
 address admin
 ```
 
-Name        Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### estateToken
+## estateToken
 
 ```solidity
 address estateToken
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### feeReceiver
+## feeReceiver
 
 ```solidity
 address feeReceiver
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### priceWatcher
+## priceWatcher
 
 ```solidity
 address priceWatcher
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### reserveVault
+## reserveVault
 
 ```solidity
 address reserveVault
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |

@@ -1,10 +1,8 @@
-# Solidity API
-
-## IPrestigePadLaunch
+# IPrestigePadLaunch
 
 Interface for struct `PrestigePadLaunch`.
 
-### PrestigePadLaunch
+## PrestigePadLaunch
 
 A launch of `PrestigePad` for capital raise for a project and initial issuance of a new associated class of
 `ProjectToken` to contributors as referenced distribution for future benefit returning.

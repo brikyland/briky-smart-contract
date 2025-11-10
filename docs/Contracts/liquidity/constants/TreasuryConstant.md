@@ -1,10 +1,8 @@
-# Solidity API
-
-## TreasuryConstant
+# TreasuryConstant
 
 Constant library for contract `StakeToken`.
 
-### OPERATION_FUND_RATE
+## OPERATION_FUND_RATE
 
 ```solidity
 uint256 OPERATION_FUND_RATE
@@ -12,5 +10,7 @@ uint256 OPERATION_FUND_RATE
 
 Fraction from provided liquidity to fund system operations.
 
-_Percentage: 20%_
+{% hint style="info" %}
+Percentage: 20%
+{% endhint %}
 

@@ -1,16 +1,24 @@
-# Solidity API
-
-## IPrestigePadRound
+# IPrestigePadRound
 
 Interface for struct `PrestigePadRound`.
 
-_Implementation involves server-side support.
-   ERC-20 tokens are identified by their contract addresses.
-Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
-   Quantities are expressed in absolute units. Scale these values by `10 ** IAssetToken(projectToken).decimals()` to
-obtain the correct amounts under the `IAssetToken` convention._
+{% hint style="info" %}
+Implementation involves server-side support.
 
-### PrestigePadRoundQuota
+{% endhint %}
+
+{% hint style="info" %}
+ERC-20 tokens are identified by their contract addresses.
+Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
+
+{% endhint %}
+
+{% hint style="info" %}
+Quantities are expressed in absolute units. Scale these values by `10 ** IAssetToken(projectToken).decimals()` to
+obtain the correct amounts under the `IAssetToken` convention.
+{% endhint %}
+
+## PrestigePadRoundQuota
 
 Volume configuration and progress.
 
@@ -23,7 +31,7 @@ struct PrestigePadRoundQuota {
 }
 ```
 
-### PrestigePadRoundQuotaInput
+## PrestigePadRoundQuotaInput
 
 Initialization input for `PrestigePadRoundQuota`.
 
@@ -35,7 +43,7 @@ struct PrestigePadRoundQuotaInput {
 }
 ```
 
-### PrestigePadRoundQuote
+## PrestigePadRoundQuote
 
 Price configuration.
 
@@ -49,7 +57,7 @@ struct PrestigePadRoundQuote {
 }
 ```
 
-### PrestigePadRoundQuoteInput
+## PrestigePadRoundQuoteInput
 
 Initialization input for `PrestigePadRoundQuote`.
 
@@ -60,7 +68,7 @@ struct PrestigePadRoundQuoteInput {
 }
 ```
 
-### PrestigePadRoundAgenda
+## PrestigePadRoundAgenda
 
 Timeline configuration and progress.
 
@@ -72,7 +80,7 @@ struct PrestigePadRoundAgenda {
 }
 ```
 
-### PrestigePadRound
+## PrestigePadRound
 
 Initialization input for `EstateForgerRequestAgenda`.
 
@@ -85,20 +93,22 @@ struct PrestigePadRound {
 }
 ```
 
-### PrestigePadRoundInput
+## PrestigePadRoundInput
 
 A round in a launch of `PrestigePad` operating a phase of capital raising for a estate project that issues
 new corresponding project token to be minted for contributors of the round.
 
-_Phases of a round:
+{% hint style="info" %}
+Phases of a round:
 - Unscheduled: agenda.raiseStartsAt = 0
 - Scheduled: block.timestamp < agenda.raiseStartsAt
 - Raise: agenda.raiseStartsAt <= block.timestamp < agenda.raiseEndsAt
 - Awaiting Confirmation: agenda.raiseEndsAt
-<= block.timestamp
-< agenda.raiseEndsAt + PrestigePadConstant.RAISE_CONFIRMATION_TIME_LIMIT
+                            <= block.timestamp
+                            < agenda.raiseEndsAt + PrestigePadConstant.RAISE_CONFIRMATION_TIME_LIMIT
 - Confirmed: agenda.confirmedAt > 0
-- Cancelled: quota.totalSupply = 0_
+- Cancelled: quota.totalSupply = 0
+{% endhint %}
 
 ```solidity
 struct PrestigePadRoundInput {

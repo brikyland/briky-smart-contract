@@ -1,16 +1,24 @@
-# Solidity API
-
-## IEstateForgerRequest
+# IEstateForgerRequest
 
 Interface for struct `EstateForgerRequest`.
 
-_Implementation involves server-side support.
-   ERC-20 tokens are identified by their contract addresses.
-Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
-   Quantities are expressed in absolute units. Scale these values by `10 ** IAssetToken(estateToken).decimals()` to
-obtain the correct amounts under the `IAssetToken` convention._
+{% hint style="info" %}
+Implementation involves server-side support.
 
-### EstateForgerRequestEstate
+{% endhint %}
+
+{% hint style="info" %}
+ERC-20 tokens are identified by their contract addresses.
+Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
+
+{% endhint %}
+
+{% hint style="info" %}
+Quantities are expressed in absolute units. Scale these values by `10 ** IAssetToken(estateToken).decimals()` to
+obtain the correct amounts under the `IAssetToken` convention.
+{% endhint %}
+
+## EstateForgerRequestEstate
 
 Estate information.
 
@@ -23,7 +31,7 @@ struct EstateForgerRequestEstate {
 }
 ```
 
-### EstateForgerRequestEstateInput
+## EstateForgerRequestEstateInput
 
 Initialization input for `EstateForgerRequestEstate`.
 
@@ -35,7 +43,7 @@ struct EstateForgerRequestEstateInput {
 }
 ```
 
-### EstateForgerRequestQuota
+## EstateForgerRequestQuota
 
 Volume configuration and progress.
 
@@ -48,7 +56,7 @@ struct EstateForgerRequestQuota {
 }
 ```
 
-### EstateForgerRequestQuotaInput
+## EstateForgerRequestQuotaInput
 
 Initialization input for `EstateForgerRequestQuota`.
 
@@ -60,7 +68,7 @@ struct EstateForgerRequestQuotaInput {
 }
 ```
 
-### EstateForgerRequestQuote
+## EstateForgerRequestQuote
 
 Price configuration.
 
@@ -76,7 +84,7 @@ struct EstateForgerRequestQuote {
 }
 ```
 
-### EstateForgerRequestQuoteInput
+## EstateForgerRequestQuoteInput
 
 Initialization input for `EstateForgerRequestQuote`.
 
@@ -93,9 +101,10 @@ struct EstateForgerRequestQuoteInput {
 }
 ```
 
-### EstateForgerRequestAgenda
+## EstateForgerRequestAgenda
 
 Timeline configuration and progress.
+
 A sale may consist of at least one of two phases:
 -   Private sale: Only whitelisted addresses can deposit.
 -   Public sale: Every address can deposit.
@@ -109,7 +118,7 @@ struct EstateForgerRequestAgenda {
 }
 ```
 
-### EstateForgerRequestAgendaInput
+## EstateForgerRequestAgendaInput
 
 Initialization input for `EstateForgerRequestAgenda`.
 
@@ -121,20 +130,22 @@ struct EstateForgerRequestAgendaInput {
 }
 ```
 
-### EstateForgerRequest
+## EstateForgerRequest
 
 A request of `EstateForger` for tokenizing a real-world estate into a new class of `EstateToken` through a
 deposited-based fixed-price sale.
 
-_Phases of a request:
+{% hint style="info" %}
+Phases of a request:
 - Pending: block.timestamp < agenda.saleStartsAt
 - Private Sale: agenda.saleStartsAt <= block.timestamp < agenda.privateSaleEndsAt
 - Public Sale: agenda.privateSaleEndsAt <= block.timestamp < agenda.publicSaleEndsAt
 - Awaiting Confirmation: agenda.publicSaleEndsAt
-<= block.timestamp
-< agenda.publicSaleEndsAt + EstateForgerConstant.SALE_CONFIRMATION_TIME_LIMIT
+                            <= block.timestamp
+                            < agenda.publicSaleEndsAt + EstateForgerConstant.SALE_CONFIRMATION_TIME_LIMIT
 - Confirmed: estate.estateId > 0
-- Cancelled: quota.totalSupply = 0_
+- Cancelled: quota.totalSupply = 0
+{% endhint %}
 
 ```solidity
 struct EstateForgerRequest {

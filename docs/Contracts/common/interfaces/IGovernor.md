@@ -1,102 +1,91 @@
-# Solidity API
-
-## IGovernor
+# IGovernor
 
 Interface for ERC-1155 tokens that governs RWAs.
+
 A `Governor` contract digitizes shared holdings and supports querying holder equity for governance decisions or
 dividend distributions. Each asset must have a representative address entitled to perform restricted functions
 that involve the real condition of the asset on the behalf of holders.
 
-### isAvailable
+## isAvailable
 
 ```solidity
 function isAvailable(uint256 tokenId) external view returns (bool isAvailable)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | tokenId | uint256 | Asset identifier. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | isAvailable | bool | Whether the asset is available. |
 
-### getRepresentative
+## getRepresentative
 
 ```solidity
 function getRepresentative(uint256 tokenId) external view returns (address representative)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | tokenId | uint256 | Asset identifier. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | representative | address | Representative address of the asset. |
 
-### zoneOf
+## zoneOf
 
 ```solidity
 function zoneOf(uint256 tokenId) external view returns (bytes32 zone)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | tokenId | uint256 | Asset identifier. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | zone | bytes32 | Zone code of the asset. |
 
-### totalEquityAt
+## totalEquityAt
 
 ```solidity
 function totalEquityAt(uint256 tokenId, uint256 at) external view returns (uint256 totalEquity)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | tokenId | uint256 | Asset identifier. |
 | at | uint256 | Reference timestamp. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | totalEquity | uint256 | Total equity in the asset at the reference timestamp. |
 
-### equityOfAt
+## equityOfAt
 
 ```solidity
 function equityOfAt(address account, uint256 tokenId, uint256 at) external view returns (uint256 equity)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -104,7 +93,7 @@ Name            Description
 | tokenId | uint256 | Asset identifier. |
 | at | uint256 | Reference timestamp. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |

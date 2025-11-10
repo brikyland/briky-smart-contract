@@ -1,13 +1,14 @@
-# Solidity API
-
-## Driptributor
+# Driptributor
 
 Interface for contract `Driptributor`.
+
 The `Driptributor` contract facilitates distribution of `PrimaryToken` through a continuous vesting mechanism.
+
 Token allocations vest evenly on a per-second basis after distribution.
+
 When the staking pools are opened, accounts that have unwithdrawn allocation can stake all their remain tokens.
 
-### receive
+## receive
 
 ```solidity
 receive() external payable
@@ -15,19 +16,17 @@ receive() external payable
 
 Executed on a call to this contract with empty calldata.
 
-### version
+## version
 
 ```solidity
 function version() external pure returns (string)
 ```
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | string | Version of implementation. |
+Version of implementation.
 
-### initialize
+## initialize
 
 ```solidity
 function initialize(address _admin, address _primaryToken, uint256 _totalAllocation) external
@@ -35,9 +34,7 @@ function initialize(address _admin, address _primaryToken, uint256 _totalAllocat
 
 Initialize the contract after deployment, serving as the constructor.
 
-Name                Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -45,7 +42,7 @@ Name                Description
 | _primaryToken | address | `PrimaryToken` contract address. |
 | _totalAllocation | uint256 | Total tokens to distribute. |
 
-### updateStakeTokens
+## updateStakeTokens
 
 ```solidity
 function updateStakeTokens(address _stakeToken1, address _stakeToken2, address _stakeToken3, bytes[] _signatures) external
@@ -53,11 +50,11 @@ function updateStakeTokens(address _stakeToken1, address _stakeToken2, address _
 
 Update staking pools contract.
 
-Name            Description
+{% hint style="info" %}
+Administrative operator.
+{% endhint %}
 
-_Administrative operator._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -66,7 +63,7 @@ _Administrative operator._
 | _stakeToken3 | address | `StakeToken` contract address #3. |
 | _signatures | bytes[] | Array of admin signatures. |
 
-### distributeTokensWithDuration
+## distributeTokensWithDuration
 
 ```solidity
 function distributeTokensWithDuration(address[] _receivers, uint256[] _amounts, uint40[] _durations, string[] _notes, bytes[] _signatures) external
@@ -74,11 +71,11 @@ function distributeTokensWithDuration(address[] _receivers, uint256[] _amounts, 
 
 Distribute tokens to multiple receivers with vesting duration.
 
-Name                Description
+{% hint style="info" %}
+Administrative operator.
+{% endhint %}
 
-_Administrative operator._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -88,7 +85,7 @@ _Administrative operator._
 | _notes | string[] | Array of distribution notes, respective to each distribution. |
 | _signatures | bytes[] | Array of admin signatures. |
 
-### distributeTokensWithTimestamp
+## distributeTokensWithTimestamp
 
 ```solidity
 function distributeTokensWithTimestamp(address[] _receivers, uint256[] _amounts, uint40[] _endAts, string[] _notes, bytes[] _signatures) external
@@ -96,11 +93,11 @@ function distributeTokensWithTimestamp(address[] _receivers, uint256[] _amounts,
 
 Distribute tokens to multiple receivers with vesting end timestamp.
 
-Name            Description
+{% hint style="info" %}
+Administrative operator.
+{% endhint %}
 
-_Administrative operator._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -110,27 +107,23 @@ _Administrative operator._
 | _notes | string[] | Array of distribution notes, respective to each distribution. |
 | _signatures | bytes[] | Array of admin signatures. |
 
-### getDistribution
+## getDistribution
 
 ```solidity
 function getDistribution(uint256 _distributionId) public view returns (struct IDistribution.Distribution)
 ```
 
-Name                Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _distributionId | uint256 | Distribution identifier. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | struct IDistribution.Distribution | Distribution information. |
+Distribution information.
 
-### withdraw
+## withdraw
 
 ```solidity
 function withdraw(uint256[] _distributionIds) external returns (uint256)
@@ -138,32 +131,27 @@ function withdraw(uint256[] _distributionIds) external returns (uint256)
 
 Withdraw vested tokens from multiple distributions.
 
-Name                Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _distributionIds | uint256[] | Array of distribution identifiers. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | uint256 | Total withdrawn amounts. |
+Total withdrawn amounts.
 
-### stake
+## stake
 
 ```solidity
 function stake(uint256[] _distributionIds, uint256 _stake1, uint256 _stake2) external returns (uint256)
 ```
 
 Stake unwithdrawn tokens from multiple distributions to staking pools.
+
 Stake only when staking pools are opened and assigned.
 
-Name                Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -171,9 +159,7 @@ Name                Description
 | _stake1 | uint256 | Staked amount for staking pool #1. |
 | _stake2 | uint256 | Staked amount for staking pool #2. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | uint256 | Staked amount for staking pool #3, which also is the remain tokens. |
+Staked amount for staking pool #3, which also is the remain tokens.
 

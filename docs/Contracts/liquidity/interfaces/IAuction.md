@@ -1,16 +1,18 @@
-# Solidity API
-
-## IAuction
+# IAuction
 
 Interface for contract `Auction`.
+
 The `Auction` contract facilitates public distribution of `PrimaryToken`. Accounts can deposit to acquire tokens,
 which are distributed proportionally to their deposit and can be withdrawn with a continuous vesting mechanism. All
 the deposit will be contributed to the liquidity of the `Treasury`.
+
 Token allocations vest evenly on a per-second basis after the auction ends.
+
 When the staking pools are opened, accounts that have unwithdrawn allocation can stake all their remain tokens.
+
 Auction currency is the stablecoin currency of the treasury.
 
-### Deposit
+## Deposit
 
 ```solidity
 event Deposit(address depositor, uint256 value)
@@ -18,16 +20,14 @@ event Deposit(address depositor, uint256 value)
 
 Emitted when an account deposits.
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | depositor | address | EVM address. |
 | value | uint256 | Deposited value. |
 
-### Stake
+## Stake
 
 ```solidity
 event Stake(address staker, uint256 stake1, uint256 stake2, uint256 stake3)
@@ -35,9 +35,7 @@ event Stake(address staker, uint256 stake1, uint256 stake2, uint256 stake3)
 
 Emitted when an account stakes unwithdrawn allocation.
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -46,7 +44,7 @@ Name        Description
 | stake2 | uint256 | Staked amount for staking pool #2. |
 | stake3 | uint256 | Staked amount for staking pool #3. |
 
-### Withdrawal
+## Withdrawal
 
 ```solidity
 event Withdrawal(address withdrawer, uint256 amount)
@@ -54,16 +52,14 @@ event Withdrawal(address withdrawer, uint256 amount)
 
 Emitted when an account withdraws vested allocation.
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | withdrawer | address | Withdrawer address. |
 | amount | uint256 | Withdrawn amount. |
 
-### AlreadyEnded
+## AlreadyEnded
 
 ```solidity
 error AlreadyEnded()
@@ -71,255 +67,230 @@ error AlreadyEnded()
 
 ===== ERROR ===== *
 
-### AlreadyStarted
+## AlreadyStarted
 
 ```solidity
 error AlreadyStarted()
 ```
 
-### NotAssignedStakeTokens
+## NotAssignedStakeTokens
 
 ```solidity
 error NotAssignedStakeTokens()
 ```
 
-### NotEnded
+## NotEnded
 
 ```solidity
 error NotEnded()
 ```
 
-### NotStarted
+## NotStarted
 
 ```solidity
 error NotStarted()
 ```
 
-### primaryToken
+## primaryToken
 
 ```solidity
 function primaryToken() external view returns (address primaryToken)
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | primaryToken | address | `PrimaryToken` contract address. |
 
-### stakeToken1
+## stakeToken1
 
 ```solidity
 function stakeToken1() external view returns (address stakeToken1)
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | stakeToken1 | address | `StakeToken` contract address #1. |
 
-### stakeToken2
+## stakeToken2
 
 ```solidity
 function stakeToken2() external view returns (address stakeToken2)
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | stakeToken2 | address | `StakeToken` contract address #2. |
 
-### stakeToken3
+## stakeToken3
 
 ```solidity
 function stakeToken3() external view returns (address stakeToken3)
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | stakeToken3 | address | `StakeToken` contract address #3. |
 
-### endAt
+## endAt
 
 ```solidity
 function endAt() external view returns (uint256 endAt)
 ```
 
-Name    Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | endAt | uint256 | Auction end timestamp. |
 
-### totalDeposit
+## totalDeposit
 
 ```solidity
 function totalDeposit() external view returns (uint256 totalDeposit)
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | totalDeposit | uint256 | Total deposited value. |
 
-### totalToken
+## totalToken
 
 ```solidity
 function totalToken() external view returns (uint256 totalToken)
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | totalToken | uint256 | Total tokens to auction. |
 
-### vestingDuration
+## vestingDuration
 
 ```solidity
 function vestingDuration() external view returns (uint256 vestingDuration)
 ```
 
-Name                Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | vestingDuration | uint256 | Vesting duration after the auction ends. |
 
-### deposits
+## deposits
 
 ```solidity
 function deposits(address account) external view returns (uint256 deposit)
 ```
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | account | address | EVM address. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | deposit | uint256 | Deposited value of the account. |
 
-### withdrawnAmount
+## withdrawnAmount
 
 ```solidity
 function withdrawnAmount(address account) external view returns (uint256 amount)
 ```
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | account | address | EVM address. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | amount | uint256 | Withdrawn tokens of the account. |
 
-### allocationOf
+## allocationOf
 
 ```solidity
 function allocationOf(address account) external view returns (uint256 amount)
 ```
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | account | address | EVM address. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | amount | uint256 | Tokens allocated in proportion to deposit of the account relative to all others. |
 
-### deposit
+## deposit
 
 ```solidity
 function deposit(uint256 value) external
 ```
 
 Deposit value into the auction.
+
 Deposit only before the auction ends.
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | value | uint256 | Deposited value. |
 
-### stake
+## stake
 
 ```solidity
 function stake(uint256 stake1, uint256 stake2) external returns (uint256 stake3)
 ```
 
 Stake unwithdrawn tokens to staking pools.
+
 Stake only when staking pools are opened and assigned.
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | stake1 | uint256 | Staked amount for staking pool #1. |
 | stake2 | uint256 | Staked amount for staking pool #2. |
 
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | stake3 | uint256 | Staked amount for staking pool #3, which also is the remain tokens. |
 
-### withdraw
+## withdraw
 
 ```solidity
 function withdraw() external returns (uint256 amount)
 ```
 
 Withdraw vested tokens.
+
 Withdraw only after auction ends.
 
-Name        Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |

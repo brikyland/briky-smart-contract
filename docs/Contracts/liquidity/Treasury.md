@@ -1,15 +1,16 @@
-# Solidity API
-
-## Treasury
+# Treasury
 
 The `Treasury` contract serves as a stablecoin reserve pool that backs the intrinsic value of `PrimaryToken` and
 facilitates token liquidation.
+
 20% of provided liquidity is allocated into the operation fund for sponsoring administrative expenses.
 
-_ERC-20 tokens are identified by their contract addresses.
-Native coin is represented by the zero address (0x0000000000000000000000000000000000000000)._
+{% hint style="info" %}
+ERC-20 tokens are identified by their contract addresses.
+Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
+{% endhint %}
 
-### receive
+## receive
 
 ```solidity
 receive() external payable
@@ -17,19 +18,17 @@ receive() external payable
 
 Executed on a call to this contract with empty calldata.
 
-### version
+## version
 
 ```solidity
 function version() external pure returns (string)
 ```
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | string | Version of implementation. |
+Version of implementation.
 
-### initialize
+## initialize
 
 ```solidity
 function initialize(address _admin, address _currency, address _primaryToken) external
@@ -37,9 +36,7 @@ function initialize(address _admin, address _currency, address _primaryToken) ex
 
 Initialize the contract after deployment, serving as the constructor.
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -47,7 +44,7 @@ Name            Description
 | _currency | address | Currency contract address used by the treasury. |
 | _primaryToken | address | `PrimaryToken` contract address. |
 
-### withdrawOperationFund
+## withdrawOperationFund
 
 ```solidity
 function withdrawOperationFund(address _operator, uint256 _value, bytes[] _signatures) external
@@ -55,11 +52,11 @@ function withdrawOperationFund(address _operator, uint256 _value, bytes[] _signa
 
 Withdraw from the operation fund to an operator.
 
-Name            Description
+{% hint style="info" %}
+Administrative operator.
+{% endhint %}
 
-_Administrative operator._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -67,7 +64,7 @@ _Administrative operator._
 | _value | uint256 | Amount withdrawn from operation fund. |
 | _signatures | bytes[] | Array of admin signatures. |
 
-### withdrawLiquidity
+## withdrawLiquidity
 
 ```solidity
 function withdrawLiquidity(address _withdrawer, uint256 _value) external
@@ -75,18 +72,18 @@ function withdrawLiquidity(address _withdrawer, uint256 _value) external
 
 Withdraw liquidity from the treasury.
 
-Name            Description
+{% hint style="info" %}
+Permission: PrimaryToken.
+{% endhint %}
 
-_Permission: PrimaryToken._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _withdrawer | address | Receiver address. |
 | _value | uint256 | Withdrawn value. |
 
-### provideLiquidity
+## provideLiquidity
 
 ```solidity
 function provideLiquidity(uint256 _value) external
@@ -94,9 +91,7 @@ function provideLiquidity(uint256 _value) external
 
 Provide liquidity to the treasury.
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |

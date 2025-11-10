@@ -1,105 +1,107 @@
-# Solidity API
-
-## EstateTokenStorage
+# EstateTokenStorage
 
 Storage contract for contract `EstateToken`.
 
-### balanceSnapshots
+## balanceSnapshots
 
 ```solidity
 mapping(uint256 => mapping(address => struct ISnapshot.Uint256Snapshot[])) balanceSnapshots
 ```
 
-_balanceSnapshots[estateId][account]_
+{% hint style="info" %}
+balanceSnapshots[estateId][account]
+{% endhint %}
 
-### custodianURIs
+## custodianURIs
 
 ```solidity
 mapping(bytes32 => mapping(address => string)) custodianURIs
 ```
 
-_custodianURI[zone][account]_
+{% hint style="info" %}
+custodianURI[zone][account]
+{% endhint %}
 
-### estates
+## estates
 
 ```solidity
 mapping(uint256 => struct IEstate.Estate) estates
 ```
 
-_estates[estateId]_
+{% hint style="info" %}
+estates[estateId]
+{% endhint %}
 
-### zoneRoyaltyRates
+## zoneRoyaltyRates
 
 ```solidity
 mapping(bytes32 => uint256) zoneRoyaltyRates
 ```
 
-_zoneRoyaltyRates[zone]_
+{% hint style="info" %}
+zoneRoyaltyRates[zone]
+{% endhint %}
 
-### isExtractor
+## isExtractor
 
 ```solidity
 mapping(address => bool) isExtractor
 ```
 
-_isExtractor[account]_
+{% hint style="info" %}
+isExtractor[account]
+{% endhint %}
 
-### isTokenizer
+## isTokenizer
 
 ```solidity
 mapping(address => bool) isTokenizer
 ```
 
-_isTokenizer[account]_
+{% hint style="info" %}
+isTokenizer[account]
+{% endhint %}
 
-### estateNumber
+## estateNumber
 
 ```solidity
 uint256 estateNumber
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### admin
+## admin
 
 ```solidity
 address admin
 ```
 
-Name        Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### commissionToken
+## commissionToken
 
 ```solidity
 address commissionToken
 ```
 
-Name                Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### feeReceiver
+## feeReceiver
 
 ```solidity
 address feeReceiver
 ```
 
-Name                Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |

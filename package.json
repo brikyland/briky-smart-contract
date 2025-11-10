@@ -162,7 +162,7 @@
     "mocha-multi-reporters": "^1.5.1",
     "prettier": "3.6.2",
     "tsconfig-paths": "^4.2.0",
-    "solidity-docgen-brikyland": "git+ssh://git@gh-prometheus:prometheus1129/solidity-docgen-brikyland.git"
+    "solidity-docgen-brikyland": "git+ssh://git@gh-prometheus/prometheus1129/solidity-docgen-brikyland.git#a848e52"
   },
   "dependencies": {
     "glob": "^11.0.3"

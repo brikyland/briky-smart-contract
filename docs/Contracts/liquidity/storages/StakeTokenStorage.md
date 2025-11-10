@@ -1,83 +1,75 @@
-# Solidity API
-
-## StakeTokenStorage
+# StakeTokenStorage
 
 Storage contract for contract `StakeToken`.
 
-### weights
+## weights
 
 ```solidity
 mapping(address => uint256) weights
 ```
 
-_weights[account]_
+{% hint style="info" %}
+weights[account]
+{% endhint %}
 
-### lastRewardFetch
+## lastRewardFetch
 
 ```solidity
 uint256 lastRewardFetch
 ```
 
-Name        Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### feeRate
+## feeRate
 
 ```solidity
 uint256 feeRate
 ```
 
-### interestAccumulation
+## interestAccumulation
 
 ```solidity
 uint256 interestAccumulation
 ```
 
-### totalStake
+## totalStake
 
 ```solidity
 uint256 totalStake
 ```
 
-### admin
+## admin
 
 ```solidity
 address admin
 ```
 
-Name        Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### primaryToken
+## primaryToken
 
 ```solidity
 address primaryToken
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### successor
+## successor
 
 ```solidity
 address successor
 ```
 
-Name            Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |

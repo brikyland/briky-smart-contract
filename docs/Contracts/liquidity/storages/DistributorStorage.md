@@ -1,53 +1,47 @@
-# Solidity API
-
-## DistributorStorage
+# DistributorStorage
 
 Storage contract for contract `Distributor`.
 
-### admin
+## admin
 
 ```solidity
 address admin
 ```
 
-Name        Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### primaryToken
+## primaryToken
 
 ```solidity
 address primaryToken
 ```
 
-Name        Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### treasury
+## treasury
 
 ```solidity
 address treasury
 ```
 
-Name        Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 
-### distributedTokens
+## distributedTokens
 
 ```solidity
 mapping(address => uint256) distributedTokens
 ```
 
-_distributedTokens[account]_
+{% hint style="info" %}
+distributedTokens[account]
+{% endhint %}
 

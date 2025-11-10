@@ -1,10 +1,8 @@
-# Solidity API
-
-## IAssetCollateral
+# IAssetCollateral
 
 Interface for struct `AssetCollateral`.
 
-### AssetCollateral
+## AssetCollateral
 
 `IAssetToken` collateral.
 

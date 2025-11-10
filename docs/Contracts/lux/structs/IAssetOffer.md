@@ -1,13 +1,13 @@
-# Solidity API
-
-## IAssetOffer
+# IAssetOffer
 
 Interface for struct `AssetOffer`.
 
-_ERC-20 tokens are identified by their contract addresses.
-Native coin is represented by the zero address (0x0000000000000000000000000000000000000000)._
+{% hint style="info" %}
+ERC-20 tokens are identified by their contract addresses.
+Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
+{% endhint %}
 
-### AssetOffer
+## AssetOffer
 
 An offer to sell an amount of `IAssetToken`.
 

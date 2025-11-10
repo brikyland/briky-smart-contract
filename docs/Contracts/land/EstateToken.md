@@ -1,16 +1,20 @@
-# Solidity API
-
-## EstateToken
+# EstateToken
 
 The `EstateToken` contract securitizes real-world estates into classes of fungible ERC-1155 tokens, where each
 token class represents fractional ownership of a specific tokenized estate. Official disclosed third party
 agents are registered as custodians in designated zones to actively provide estates to tokenize and escrows those
 assets on behalf of holders after successful tokenization.
 
-_Each unit of estate tokens is represented in scaled form as `10 ** decimals()`.
-   Implementation involves server-side support._
+{% hint style="info" %}
+Each unit of estate tokens is represented in scaled form as `10 ** decimals()`.
 
-### validEstate
+{% endhint %}
+
+{% hint style="info" %}
+Implementation involves server-side support.
+{% endhint %}
+
+## validEstate
 
 ```solidity
 modifier validEstate(uint256 _estateId)
@@ -18,15 +22,13 @@ modifier validEstate(uint256 _estateId)
 
 Verify a valid estate identifier.
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _estateId | uint256 | Estate identifier. |
 
-### onlyActiveInZoneOf
+## onlyActiveInZoneOf
 
 ```solidity
 modifier onlyActiveInZoneOf(uint256 _estateId)
@@ -34,15 +36,13 @@ modifier onlyActiveInZoneOf(uint256 _estateId)
 
 Verify the message sender is active in the zone of the estate.
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _estateId | uint256 | Estate identifier. |
 
-### receive
+## receive
 
 ```solidity
 receive() external payable
@@ -50,19 +50,17 @@ receive() external payable
 
 Executed on a call to this contract with empty calldata.
 
-### version
+## version
 
 ```solidity
 function version() external pure returns (string)
 ```
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | string | Version of implementation. |
+Version of implementation.
 
-### initialize
+## initialize
 
 ```solidity
 function initialize(address _admin, address _feeReceiver, address _validator, string _uri) external
@@ -70,9 +68,7 @@ function initialize(address _admin, address _feeReceiver, address _validator, st
 
 Initialize the contract after deployment, serving as the constructor.
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -81,7 +77,7 @@ Name            Description
 | _validator | address | Validator address. |
 | _uri | string | Base URI. |
 
-### updateCommissionToken
+## updateCommissionToken
 
 ```solidity
 function updateCommissionToken(address _commissionToken, bytes[] _signatures) external
@@ -89,18 +85,18 @@ function updateCommissionToken(address _commissionToken, bytes[] _signatures) ex
 
 Update the commission token contract.
 
-Name                Description
+{% hint style="info" %}
+Administrative operator.
+{% endhint %}
 
-_Administrative operator._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _commissionToken | address | `CommissionToken` contract address. |
 | _signatures | bytes[] | Array of admin signatures. |
 
-### updateBaseURI
+## updateBaseURI
 
 ```solidity
 function updateBaseURI(string _uri, bytes[] _signatures) external
@@ -108,18 +104,18 @@ function updateBaseURI(string _uri, bytes[] _signatures) external
 
 Update the base URI.
 
-Name            Description
+{% hint style="info" %}
+Administrative operator.
+{% endhint %}
 
-_Administrative operator._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _uri | string | New base URI. |
 | _signatures | bytes[] | Array of admin signatures. |
 
-### authorizeTokenizers
+## authorizeTokenizers
 
 ```solidity
 function authorizeTokenizers(address[] _accounts, bool _isTokenizer, bytes[] _signatures) external
@@ -127,11 +123,11 @@ function authorizeTokenizers(address[] _accounts, bool _isTokenizer, bytes[] _si
 
 Authorize or deauthorize contract addresses as tokenizers.
 
-Name            Description
+{% hint style="info" %}
+Administrative operator.
+{% endhint %}
 
-_Administrative operator._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -139,7 +135,7 @@ _Administrative operator._
 | _isTokenizer | bool | This whether the operation is authorizing or deauthorizing. |
 | _signatures | bytes[] | Array of admin signatures. |
 
-### authorizeExtractors
+## authorizeExtractors
 
 ```solidity
 function authorizeExtractors(address[] _accounts, bool _isExtractor, bytes[] _signatures) external
@@ -147,11 +143,11 @@ function authorizeExtractors(address[] _accounts, bool _isExtractor, bytes[] _si
 
 Authorize or deauthorize contract addresses as extractors.
 
-Name            Description
+{% hint style="info" %}
+Administrative operator.
+{% endhint %}
 
-_Administrative operator._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -159,7 +155,7 @@ _Administrative operator._
 | _isExtractor | bool | This whether the operation is authorizing or deauthorizing. |
 | _signatures | bytes[] | Array of admin signatures. |
 
-### updateZoneRoyaltyRate
+## updateZoneRoyaltyRate
 
 ```solidity
 function updateZoneRoyaltyRate(bytes32 _zone, uint256 _royaltyRate, bytes[] _signatures) external
@@ -167,11 +163,11 @@ function updateZoneRoyaltyRate(bytes32 _zone, uint256 _royaltyRate, bytes[] _sig
 
 Update the royalty rate of a zone.
 
-Name            Description
+{% hint style="info" %}
+Administrative operator.
+{% endhint %}
 
-_Administrative operator._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -179,68 +175,56 @@ _Administrative operator._
 | _royaltyRate | uint256 | New royalty rate for the zone. |
 | _signatures | bytes[] | Array of admin signatures. |
 
-### decimals
+## decimals
 
 ```solidity
 function decimals() external pure returns (uint8)
 ```
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | uint8 | Token decimals. |
+Token decimals.
 
-### getZoneRoyaltyRate
+## getZoneRoyaltyRate
 
 ```solidity
 function getZoneRoyaltyRate(bytes32 _zone) external view returns (struct IRate.Rate)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _zone | bytes32 | Zone code. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | struct IRate.Rate | Royalty rate of the zone. |
+Royalty rate of the zone.
 
-### isCustodianIn
+## isCustodianIn
 
 ```solidity
 function isCustodianIn(bytes32 _zone, address _account) public view returns (bool)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _zone | bytes32 | Zone code. |
 | _account | address | EVM address. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | bool | Whether the account is a registered custodian in the zone. |
+Whether the account is a registered custodian in the zone.
 
-### balanceOfAt
+## balanceOfAt
 
 ```solidity
 function balanceOfAt(address _account, uint256 _tokenId, uint256 _at) public view returns (uint256)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -248,121 +232,97 @@ Name            Description
 | _tokenId | uint256 | Estate identifier. |
 | _at | uint256 | Reference timestamp. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | uint256 | Balance of the account in the estate at the reference timestamp. |
+Balance of the account in the estate at the reference timestamp.
 
-### totalSupply
+## totalSupply
 
 ```solidity
 function totalSupply(uint256 _tokenId) public view returns (uint256)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _tokenId | uint256 | Estate identifier. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | uint256 | Total supply of the token class. |
+Total supply of the token class.
 
-### getEstate
+## getEstate
 
 ```solidity
 function getEstate(uint256 _estateId) external view returns (struct IEstate.Estate)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _estateId | uint256 | Estate identifier. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | struct IEstate.Estate | Estate information. |
+Estate information.
 
-### getRepresentative
+## getRepresentative
 
 ```solidity
 function getRepresentative(uint256 _estateId) external view returns (address)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _estateId | uint256 | Estate identifier. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | address | Representative address of the estate. |
+Representative address of the estate.
 
-### isAvailable
+## isAvailable
 
 ```solidity
 function isAvailable(uint256 _estateId) public view returns (bool)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _estateId | uint256 | Estate identifier. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | bool | Whether the estate is available. |
+Whether the estate is available.
 
-### zoneOf
+## zoneOf
 
 ```solidity
 function zoneOf(uint256 _estateId) external view returns (bytes32)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _estateId | uint256 | Estate identifier. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | bytes32 | Zone code of the estate. |
+Zone code of the estate.
 
-### equityOfAt
+## equityOfAt
 
 ```solidity
 function equityOfAt(address _account, uint256 _estateId, uint256 _at) external view returns (uint256)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -370,94 +330,76 @@ Name            Description
 | _estateId | uint256 | Estate identifier. |
 | _at | uint256 | Reference timestamp. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | uint256 | Equity of the account in the estate at the reference timestamp. |
+Equity of the account in the estate at the reference timestamp.
 
-### uri
+## uri
 
 ```solidity
 function uri(uint256 _estateId) public view returns (string)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _estateId | uint256 | Estate identifier. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | string | URI of estate metadata. |
+URI of estate metadata.
 
-### totalEquityAt
+## totalEquityAt
 
 ```solidity
 function totalEquityAt(uint256 _estateId, uint256 _at) external view returns (uint256)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _estateId | uint256 | Estate identifier. |
 | _at | uint256 | Reference timestamp. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | uint256 | Total equity in the estate at the reference timestamp. |
+Total equity in the estate at the reference timestamp.
 
-### getRoyaltyRate
+## getRoyaltyRate
 
 ```solidity
 function getRoyaltyRate(uint256 _tokenId) external view returns (struct IRate.Rate)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _tokenId | uint256 | Estate identifier. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | struct IRate.Rate | Royalty rate of the token identifier. |
+Royalty rate of the token identifier.
 
-### supportsInterface
+## supportsInterface
 
 ```solidity
 function supportsInterface(bytes4 _interfaceId) public view returns (bool)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _interfaceId | bytes4 | Interface identifier. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | bool | Whether the interface is supported. |
+Whether the interface is supported.
 
-### registerCustodian
+## registerCustodian
 
 ```solidity
 function registerCustodian(bytes32 _zone, address _custodian, string _uri, struct IValidation.Validation _validation) external
@@ -465,11 +407,11 @@ function registerCustodian(bytes32 _zone, address _custodian, string _uri, struc
 
 Register a custodian in a zone.
 
-Name            Description
+{% hint style="info" %}
+Permissions: Managers active in the zone.
+{% endhint %}
 
-_Permissions: Managers active in the zone._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -478,7 +420,7 @@ _Permissions: Managers active in the zone._
 | _uri | string | URI of custodian information. |
 | _validation | struct IValidation.Validation | Validation package from the validator. |
 
-### tokenizeEstate
+## tokenizeEstate
 
 ```solidity
 function tokenizeEstate(uint256 _totalSupply, bytes32 _zone, uint256 _tokenizationId, string _uri, uint40 _expireAt, address _custodian, address _broker) external returns (uint256)
@@ -486,11 +428,11 @@ function tokenizeEstate(uint256 _totalSupply, bytes32 _zone, uint256 _tokenizati
 
 Tokenize an estate into a new class of token.
 
-Name                Description
+{% hint style="info" %}
+Permissions: Tokenizers.
+{% endhint %}
 
-_Permissions: Tokenizers._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -502,13 +444,11 @@ _Permissions: Tokenizers._
 | _custodian | address | Assigned custodian address. |
 | _broker | address | Associated broker address. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | uint256 | New estate identifier. |
+New estate identifier.
 
-### extractEstate
+## extractEstate
 
 ```solidity
 function extractEstate(uint256 _estateId, uint256 _extractionId) external
@@ -516,18 +456,18 @@ function extractEstate(uint256 _estateId, uint256 _extractionId) external
 
 Extract an estate.
 
-Name                Description
+{% hint style="info" %}
+Permissions: Extractors.
+{% endhint %}
 
-_Permissions: Extractors._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _estateId | uint256 | Estate identifier. |
 | _extractionId | uint256 | Extraction identifier. |
 
-### safeDeprecateEstate
+## safeDeprecateEstate
 
 ```solidity
 function safeDeprecateEstate(uint256 _estateId, string _note, bytes32 _anchor) external
@@ -535,12 +475,16 @@ function safeDeprecateEstate(uint256 _estateId, string _note, bytes32 _anchor) e
 
 Deprecate an estate by managers due to force majeure or extraction.
 
-Name        Description
+{% hint style="info" %}
+Permissions: Managers active in the zone of the estate.
 
-_Permissions: Managers active in the zone of the estate.
-   Anchor enforces consistency between this contract and the client-side._
+{% endhint %}
 
-#### Parameters
+{% hint style="info" %}
+Anchor enforces consistency between this contract and the client-side.
+{% endhint %}
+
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -548,7 +492,7 @@ _Permissions: Managers active in the zone of the estate.
 | _note | string | Deprecation note. |
 | _anchor | bytes32 | Keccak256 hash of `uri` of the estate. |
 
-### safeExtendEstateExpiration
+## safeExtendEstateExpiration
 
 ```solidity
 function safeExtendEstateExpiration(uint256 _estateId, uint40 _expireAt, bytes32 _anchor) external
@@ -556,12 +500,16 @@ function safeExtendEstateExpiration(uint256 _estateId, uint40 _expireAt, bytes32
 
 Extend the expiration of an estate.
 
-Name            Description
+{% hint style="info" %}
+Permissions: Managers active in the zone of the estate.
 
-_Permissions: Managers active in the zone of the estate.
-   Anchor enforces consistency between this contract and the client-side._
+{% endhint %}
 
-#### Parameters
+{% hint style="info" %}
+Anchor enforces consistency between this contract and the client-side.
+{% endhint %}
+
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -569,7 +517,7 @@ _Permissions: Managers active in the zone of the estate.
 | _expireAt | uint40 | New expiration timestamp. |
 | _anchor | bytes32 | Keccak256 hash of `uri` of the estate. |
 
-### safeUpdateEstateCustodian
+## safeUpdateEstateCustodian
 
 ```solidity
 function safeUpdateEstateCustodian(uint256 _estateId, address _custodian, bytes32 _anchor) external
@@ -577,12 +525,16 @@ function safeUpdateEstateCustodian(uint256 _estateId, address _custodian, bytes3
 
 Update the custodian of an estate.
 
-Name            Description
+{% hint style="info" %}
+Permissions: Managers active in the zone of the estate.
 
-_Permissions: Managers active in the zone of the estate.
-   Anchor enforces consistency between this contract and the client-side._
+{% endhint %}
 
-#### Parameters
+{% hint style="info" %}
+Anchor enforces consistency between this contract and the client-side.
+{% endhint %}
+
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -590,7 +542,7 @@ _Permissions: Managers active in the zone of the estate.
 | _custodian | address | New custodian address. |
 | _anchor | bytes32 | Keccak256 hash of `uri` of the estate. |
 
-### safeUpdateEstateURI
+## safeUpdateEstateURI
 
 ```solidity
 function safeUpdateEstateURI(uint256 _estateId, string _uri, struct IValidation.Validation _validation, bytes32 _anchor) external
@@ -598,12 +550,16 @@ function safeUpdateEstateURI(uint256 _estateId, string _uri, struct IValidation.
 
 Update the URI of metadata of an estate.
 
-Name            Description
+{% hint style="info" %}
+Permissions: Managers active in the zone of the estate.
 
-_Permissions: Managers active in the zone of the estate.
-   Anchor enforces consistency between this contract and the client-side._
+{% endhint %}
 
-#### Parameters
+{% hint style="info" %}
+Anchor enforces consistency between this contract and the client-side.
+{% endhint %}
+
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -612,19 +568,17 @@ _Permissions: Managers active in the zone of the estate.
 | _validation | struct IValidation.Validation | Validation package from the validator. |
 | _anchor | bytes32 | Keccak256 hash of `uri` of the estate. |
 
-### _royaltyReceiver
+## _royaltyReceiver
 
 ```solidity
 function _royaltyReceiver() internal view returns (address)
 ```
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | address | Default royalty receiver address. |
+Default royalty receiver address.
 
-### _beforeTokenTransfer
+## _beforeTokenTransfer
 
 ```solidity
 function _beforeTokenTransfer(address _operator, address _from, address _to, uint256[] _estateIds, uint256[] _amounts, bytes _data) internal
@@ -632,9 +586,7 @@ function _beforeTokenTransfer(address _operator, address _from, address _to, uin
 
 Hook to be called before any token transfer.
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -645,7 +597,7 @@ Name            Description
 | _amounts | uint256[] | Array of transferred amounts, respective to each estate identifier. |
 | _data | bytes | Additional data. |
 
-### _afterTokenTransfer
+## _afterTokenTransfer
 
 ```solidity
 function _afterTokenTransfer(address _operator, address _from, address _to, uint256[] _estateIds, uint256[] _amounts, bytes _data) internal
@@ -653,9 +605,7 @@ function _afterTokenTransfer(address _operator, address _from, address _to, uint
 
 Hook to be called after any token transfer.
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |

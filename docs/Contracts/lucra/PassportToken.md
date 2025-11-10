@@ -1,12 +1,11 @@
-# Solidity API
-
-## PassportToken
+# PassportToken
 
 Interface for contract `PassportToken`.
+
 The `PassportToken` contract is an ERC-721 token issued exclusively for airdrop campaigns. It grants its
 minter airdrop privileges, and each account may mint only one passport.
 
-### receive
+## receive
 
 ```solidity
 receive() external payable
@@ -14,19 +13,17 @@ receive() external payable
 
 Executed on a call to this contract with empty calldata.
 
-### version
+## version
 
 ```solidity
 function version() external pure returns (string)
 ```
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | string | Version of implementation. |
+Version of implementation.
 
-### initialize
+## initialize
 
 ```solidity
 function initialize(address _admin, string _name, string _symbol, string _uri, uint256 _fee, uint256 _royaltyRate) external
@@ -34,9 +31,7 @@ function initialize(address _admin, string _name, string _symbol, string _uri, u
 
 Initialize the contract after deployment, serving as the constructor.
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -47,7 +42,7 @@ Name            Description
 | _fee | uint256 | Minting fee. |
 | _royaltyRate | uint256 | Default royalty rate. |
 
-### updateBaseURI
+## updateBaseURI
 
 ```solidity
 function updateBaseURI(string _uri, bytes[] _signatures) external
@@ -55,18 +50,18 @@ function updateBaseURI(string _uri, bytes[] _signatures) external
 
 Update the base URI.
 
-Name            Description
+{% hint style="info" %}
+Administrative operator.
+{% endhint %}
 
-_Administrative operator._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _uri | string | New base URI. |
 | _signatures | bytes[] | Array of admin signatures. |
 
-### updateFee
+## updateFee
 
 ```solidity
 function updateFee(uint256 _fee, bytes[] _signatures) external
@@ -74,18 +69,18 @@ function updateFee(uint256 _fee, bytes[] _signatures) external
 
 Update the minting fee.
 
-Name            Description
+{% hint style="info" %}
+Administrative operator.
+{% endhint %}
 
-_Administrative operator._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _fee | uint256 | New minting fee. |
 | _signatures | bytes[] | Array of admin signatures. |
 
-### updateRoyaltyRate
+## updateRoyaltyRate
 
 ```solidity
 function updateRoyaltyRate(uint256 _royaltyRate, bytes[] _signatures) external
@@ -93,18 +88,18 @@ function updateRoyaltyRate(uint256 _royaltyRate, bytes[] _signatures) external
 
 Update the default royalty rate.
 
-Name            Description
+{% hint style="info" %}
+Administrative operator.
+{% endhint %}
 
-_Administrative operator._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _royaltyRate | uint256 | New default royalty rate. |
 | _signatures | bytes[] | Array of admin signatures. |
 
-### withdraw
+## withdraw
 
 ```solidity
 function withdraw(address _receiver, address[] _currencies, uint256[] _values, bytes[] _signatures) external
@@ -112,12 +107,16 @@ function withdraw(address _receiver, address[] _currencies, uint256[] _values, b
 
 Withdraw sufficient amounts in multiple cryptocurrencies from this contract to an account.
 
-Name            Description
+{% hint style="info" %}
+Administrative operator.
 
-_Administrative operator.
-   Used to withdraw fee and royalty._
+{% endhint %}
 
-#### Parameters
+{% hint style="info" %}
+Used to withdraw fee and royalty.
+{% endhint %}
+
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -126,74 +125,63 @@ _Administrative operator.
 | _values | uint256[] | Array of withdraw values, respective to each currency. |
 | _signatures | bytes[] | Array of admin signatures. |
 
-### getRoyaltyRate
+## getRoyaltyRate
 
 ```solidity
 function getRoyaltyRate(uint256) external view returns (struct IRate.Rate)
 ```
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | struct IRate.Rate | Royalty rate of the token identifier. |
+Royalty rate of the token identifier.
 
-### tokenURI
+## tokenURI
 
 ```solidity
 function tokenURI(uint256) public view returns (string)
 ```
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | string | Token URI. |
+Token URI.
 
-### supportsInterface
+## supportsInterface
 
 ```solidity
 function supportsInterface(bytes4 _interfaceId) public view returns (bool)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _interfaceId | bytes4 | Interface identifier. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | bool | Whether this contract implements the interface. |
+Whether this contract implements the interface.
 
-### mint
+## mint
 
 ```solidity
 function mint() external payable returns (uint256)
 ```
 
 Mint the passport token to an account.
+
 Mint only once for each account.
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | uint256 | Minted token identifier. |
+Minted token identifier.
 
-### _royaltyReceiver
+## _royaltyReceiver
 
 ```solidity
 function _royaltyReceiver() internal view returns (address)
 ```
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | address | Default royalty receiver address. |
+Default royalty receiver address.
 

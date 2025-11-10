@@ -1,14 +1,14 @@
-# Solidity API
-
-## FeeReceiver
+# FeeReceiver
 
 The `FeeReceiver` contract passively receives and holds fee from operators within the system until being withdrawn
 on demands of admins.
 
-_ERC-20 tokens are identified by their contract addresses.
-Native coin is represented by the zero address (0x0000000000000000000000000000000000000000)._
+{% hint style="info" %}
+ERC-20 tokens are identified by their contract addresses.
+Native coin is represented by the zero address (0x0000000000000000000000000000000000000000).
+{% endhint %}
 
-### receive
+## receive
 
 ```solidity
 receive() external payable
@@ -16,19 +16,17 @@ receive() external payable
 
 Executed on a call to this contract with empty calldata.
 
-### version
+## version
 
 ```solidity
 function version() external pure returns (string)
 ```
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | string | Version of implementation. |
+Version of implementation.
 
-### initialize
+## initialize
 
 ```solidity
 function initialize(address _admin) external
@@ -36,15 +34,13 @@ function initialize(address _admin) external
 
 Initialize the contract after deployment, serving as the constructor.
 
-Name    Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _admin | address | `Admin` contract address. |
 
-### withdraw
+## withdraw
 
 ```solidity
 function withdraw(address _receiver, address[] _currencies, uint256[] _values, bytes[] _signatures) external
@@ -52,11 +48,11 @@ function withdraw(address _receiver, address[] _currencies, uint256[] _values, b
 
 Withdraw sufficient amounts in multiple cryptocurrencies from this contract to an account.
 
-Name            Description
+{% hint style="info" %}
+Administrative operator.
+{% endhint %}
 
-_Administrative operator._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |

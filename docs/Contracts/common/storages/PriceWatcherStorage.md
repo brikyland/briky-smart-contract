@@ -1,34 +1,34 @@
-# Solidity API
-
-## PriceWatcherStorage
+# PriceWatcherStorage
 
 Storage contract for contract `PriceWatcher`.
 
-### priceFeeds
+## priceFeeds
 
 ```solidity
 mapping(address => struct IDataFeed.DataFeed) priceFeeds
 ```
 
-_priceFeeds[currency]_
+{% hint style="info" %}
+priceFeeds[currency]
+{% endhint %}
 
-### defaultRates
+## defaultRates
 
 ```solidity
 mapping(address => struct IRate.Rate) defaultRates
 ```
 
-_defaultRates[currency]_
+{% hint style="info" %}
+defaultRates[currency]
+{% endhint %}
 
-### admin
+## admin
 
 ```solidity
 address admin
 ```
 
-Name        Description
-
-#### Return Values
+### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |

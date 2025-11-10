@@ -1,43 +1,43 @@
-# Solidity API
-
-## Pausable
+# Pausable
 
 A `Pausable` contract applies pausing mechanism on its methods and can be paused by admins for maintenance or
 damage control on attacks.
 
-### pause
+## pause
 
 ```solidity
 function pause(bytes[] _signatures) external
 ```
 
 Pause contract.
+
 For maintenance only.
 
-Name            Description
+{% hint style="info" %}
+Administrative operator.
+{% endhint %}
 
-_Administrative operator._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _signatures | bytes[] | Array of admin signatures. |
 
-### unpause
+## unpause
 
 ```solidity
 function unpause(bytes[] _signatures) external
 ```
 
 Unpause contract.
+
 After maintenance completes.
 
-Name            Description
+{% hint style="info" %}
+Administrative operator.
+{% endhint %}
 
-_Administrative operator._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |

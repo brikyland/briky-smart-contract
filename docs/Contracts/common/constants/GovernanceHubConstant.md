@@ -1,10 +1,8 @@
-# Solidity API
-
-## GovernanceHubConstant
+# GovernanceHubConstant
 
 Constant library for contract `GovernanceHub`.
 
-### VOTE_CONFIRMATION_TIME_LIMIT
+## VOTE_CONFIRMATION_TIME_LIMIT
 
 ```solidity
 uint40 VOTE_CONFIRMATION_TIME_LIMIT

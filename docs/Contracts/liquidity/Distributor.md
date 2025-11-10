@@ -1,10 +1,8 @@
-# Solidity API
-
-## Distributor
+# Distributor
 
 The `Distributor` contract facilitates direct distributions of `PrimaryToken`.
 
-### receive
+## receive
 
 ```solidity
 receive() external payable
@@ -12,19 +10,17 @@ receive() external payable
 
 Executed on a call to this contract with empty calldata.
 
-### version
+## version
 
 ```solidity
 function version() external pure returns (string)
 ```
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | string | Version of implementation. |
+Version of implementation.
 
-### initialize
+## initialize
 
 ```solidity
 function initialize(address _admin, address _primaryToken, address _treasury) external
@@ -32,9 +28,7 @@ function initialize(address _admin, address _primaryToken, address _treasury) ex
 
 Initialize the contract after deployment, serving as the constructor.
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -42,7 +36,7 @@ Name            Description
 | _primaryToken | address | `PrimaryToken` contract address. |
 | _treasury | address | `Treasury` contract address. |
 
-### distributeToken
+## distributeToken
 
 ```solidity
 function distributeToken(address[] _receivers, uint256[] _amounts, string _note, bytes[] _signatures) external
@@ -50,11 +44,11 @@ function distributeToken(address[] _receivers, uint256[] _amounts, string _note,
 
 Distribute tokens to multiple receivers through administrative operations.
 
-Name            Description
+{% hint style="info" %}
+Administrative operator.
+{% endhint %}
 
-_Administrative operator._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |

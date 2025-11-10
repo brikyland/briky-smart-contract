@@ -1,12 +1,12 @@
-# Solidity API
-
-## IValidation
+# IValidation
 
 Interface for struct `Validation`.
 
-_Implementation involves server-side support._
+{% hint style="info" %}
+Implementation involves server-side support.
+{% endhint %}
 
-### Validation
+## Validation
 
 Validation information provided from a trusted validator.
 

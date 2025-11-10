@@ -1,12 +1,11 @@
-# Solidity API
-
-## PromotionToken
+# PromotionToken
 
 Interface for contract `PromotionToken`.
+
 The `PromotionToken` contract is an ERC-721 token issued exclusively for airdrop campaigns. It provides
 limited-time content that grants its minter airdrop scores.
 
-### receive
+## receive
 
 ```solidity
 receive() external payable
@@ -14,19 +13,17 @@ receive() external payable
 
 Executed on a call to this contract with empty calldata.
 
-### version
+## version
 
 ```solidity
 function version() external pure returns (string)
 ```
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | string | Version of implementation. |
+Version of implementation.
 
-### initialize
+## initialize
 
 ```solidity
 function initialize(address _admin, string _name, string _symbol, uint256 _fee, uint256 _royaltyRate) external
@@ -34,9 +31,7 @@ function initialize(address _admin, string _name, string _symbol, uint256 _fee, 
 
 Initialize the contract after deployment, serving as the constructor.
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -46,7 +41,7 @@ Name            Description
 | _fee | uint256 | Minting fee. |
 | _royaltyRate | uint256 | Default royalty rate. |
 
-### updateFee
+## updateFee
 
 ```solidity
 function updateFee(uint256 _fee, bytes[] _signatures) external
@@ -54,18 +49,18 @@ function updateFee(uint256 _fee, bytes[] _signatures) external
 
 Update the minting fee.
 
-Name            Description
+{% hint style="info" %}
+Administrative operator.
+{% endhint %}
 
-_Administrative operator._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _fee | uint256 | New minting fee. |
 | _signatures | bytes[] | Array of admin signatures. |
 
-### updateRoyaltyRate
+## updateRoyaltyRate
 
 ```solidity
 function updateRoyaltyRate(uint256 _royaltyRate, bytes[] _signatures) external
@@ -73,18 +68,18 @@ function updateRoyaltyRate(uint256 _royaltyRate, bytes[] _signatures) external
 
 Update the default royalty rate.
 
-Name            Description
+{% hint style="info" %}
+Administrative operator.
+{% endhint %}
 
-_Administrative operator._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _royaltyRate | uint256 | New default royalty rate. |
 | _signatures | bytes[] | Array of admin signatures. |
 
-### withdraw
+## withdraw
 
 ```solidity
 function withdraw(address _receiver, address[] _currencies, uint256[] _values, bytes[] _signatures) external
@@ -92,12 +87,16 @@ function withdraw(address _receiver, address[] _currencies, uint256[] _values, b
 
 Withdraw sufficient amounts in multiple cryptocurrencies from this contract to an account.
 
-Name            Description
+{% hint style="info" %}
+Administrative operator.
 
-_Administrative operator.
-   Used to withdraw fee and royalty._
+{% endhint %}
 
-#### Parameters
+{% hint style="info" %}
+Used to withdraw fee and royalty.
+{% endhint %}
+
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -106,7 +105,7 @@ _Administrative operator.
 | _values | uint256[] | Array of withdraw values, respective to each currency. |
 | _signatures | bytes[] | Array of admin signatures. |
 
-### createContents
+## createContents
 
 ```solidity
 function createContents(string[] _uris, uint40[] _startAts, uint40[] _durations, bytes[] _signatures) external
@@ -114,11 +113,11 @@ function createContents(string[] _uris, uint40[] _startAts, uint40[] _durations,
 
 Create new contents.
 
-Name            Description
+{% hint style="info" %}
+Administrative operator.
+{% endhint %}
 
-_Administrative operator._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -127,7 +126,7 @@ _Administrative operator._
 | _durations | uint40[] | Array of mintable durations, respective to each content. |
 | _signatures | bytes[] | Array of admin signatures. |
 
-### updateContentURIs
+## updateContentURIs
 
 ```solidity
 function updateContentURIs(uint256[] _contentIds, string[] _uris, bytes[] _signatures) external
@@ -135,11 +134,11 @@ function updateContentURIs(uint256[] _contentIds, string[] _uris, bytes[] _signa
 
 Update URIs of multiple contents.
 
-Name            Description
+{% hint style="info" %}
+Administrative operator.
+{% endhint %}
 
-_Administrative operator._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -147,7 +146,7 @@ _Administrative operator._
 | _uris | string[] | Array of new URIs, respectively for each content. |
 | _signatures | bytes[] | Array of admin signatures. |
 
-### cancelContents
+## cancelContents
 
 ```solidity
 function cancelContents(uint256[] _contentIds, bytes[] _signatures) external
@@ -155,90 +154,76 @@ function cancelContents(uint256[] _contentIds, bytes[] _signatures) external
 
 Cancel multiple contents.
 
-Name            Description
+{% hint style="info" %}
+Administrative operator.
+{% endhint %}
 
-_Administrative operator._
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _contentIds | uint256[] | Array of content identifiers. |
 | _signatures | bytes[] | Array of admin signatures. |
 
-### getContent
+## getContent
 
 ```solidity
 function getContent(uint256 _contentId) public view returns (struct IContent.Content)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _contentId | uint256 | Content identifier. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | struct IContent.Content | Content information. |
+Content information.
 
-### tokenURI
+## tokenURI
 
 ```solidity
 function tokenURI(uint256 _tokenId) public view returns (string)
 ```
 
-Name        Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _tokenId | uint256 | Token identifier. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | string | Token URI. |
+Token URI.
 
-### getRoyaltyRate
+## getRoyaltyRate
 
 ```solidity
 function getRoyaltyRate(uint256) external view returns (struct IRate.Rate)
 ```
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | struct IRate.Rate | Royalty rate of the token identifier. |
+Royalty rate of the token identifier.
 
-### supportsInterface
+## supportsInterface
 
 ```solidity
 function supportsInterface(bytes4 _interfaceId) public view returns (bool)
 ```
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _interfaceId | bytes4 | Interface identifier. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | bool | Whether this contract implements the interface. |
+Whether this contract implements the interface.
 
-### mint
+## mint
 
 ```solidity
 function mint(uint256 _contentId, uint256 _amount) external payable returns (uint256, uint256)
@@ -246,31 +231,26 @@ function mint(uint256 _contentId, uint256 _amount) external payable returns (uin
 
 Mint tokens of a content.
 
-Name            Description
-
-#### Parameters
+### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _contentId | uint256 | Content identifier. |
 | _amount | uint256 | Number of tokens to mint. |
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | uint256 | First token identifier of the minted tokens. |
-| [1] | uint256 | Last token identifier of the minted tokens. |
+First token identifier of the minted tokens.
 
-### _royaltyReceiver
+Last token identifier of the minted tokens.
+
+## _royaltyReceiver
 
 ```solidity
 function _royaltyReceiver() internal view returns (address)
 ```
 
-#### Return Values
+### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | address | Default royalty receiver address. |
+Default royalty receiver address.
 
