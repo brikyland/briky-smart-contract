@@ -719,8 +719,8 @@ describe('6.1. ERC721Marketplace', async () => {
             expect(tx1)
                 .to.emit(erc721Marketplace, 'NewOffer')
                 .withArgs(
-                    params1.collection,
                     1,
+                    params1.collection,
                     params1.tokenId,
                     seller1.address,
                     params1.price,
@@ -757,8 +757,8 @@ describe('6.1. ERC721Marketplace', async () => {
             expect(tx2)
                 .to.emit(erc721Marketplace, 'NewOffer')
                 .withArgs(
-                    params2.collection,
                     2,
+                    params2.collection,
                     params2.tokenId,
                     seller2.address,
                     params2.price,
@@ -796,8 +796,8 @@ describe('6.1. ERC721Marketplace', async () => {
             expect(tx3)
                 .to.emit(erc721Marketplace, 'NewOffer')
                 .withArgs(
-                    params3.collection,
                     1,
+                    params3.collection,
                     params3.tokenId,
                     seller1.address,
                     params3.price,
@@ -855,8 +855,8 @@ describe('6.1. ERC721Marketplace', async () => {
             expect(tx)
                 .to.emit(erc721Marketplace, 'NewOffer')
                 .withArgs(
-                    params.collection,
                     1,
+                    params.collection,
                     params.tokenId,
                     seller1.address,
                     params.price,

@@ -387,6 +387,7 @@ describe('1.4. DividendHub', async () => {
             await expect(tx1)
                 .to.emit(dividendHub, 'NewDividend')
                 .withArgs(
+                    1,
                     governor.address,
                     tokenId1,
                     issuer1.address,
@@ -433,6 +434,7 @@ describe('1.4. DividendHub', async () => {
             await expect(tx2)
                 .to.emit(dividendHub, 'NewDividend')
                 .withArgs(
+                    2,
                     governor.address,
                     tokenId2,
                     issuer2.address,

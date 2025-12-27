@@ -36,12 +36,14 @@ import {
     UpdateRoundParamsInput,
     UpdateRoundsParams,
     UpdateRoundsParamsInput,
+    WhitelistParams,
+    WhitelistParamsInput,
     WithdrawContributionParams,
     WithdrawProjectTokenParams,
 } from '@utils/models/launch/prestigePad';
 
 // @utils/signatures/launch
-import { getUpdateBaseUnitPriceRangeSignatures } from '@utils/signatures/launch/prestigePad';
+import { getUpdateBaseUnitPriceRangeSignatures, getWhitelistSignatures } from '@utils/signatures/launch/prestigePad';
 
 // @utils/validation/launch
 import {
@@ -76,6 +78,31 @@ export async function getPrestigePadTxByInput_UpdateBaseUnitPriceRange(
         signatures: await getUpdateBaseUnitPriceRangeSignatures(prestigePad, paramsInput, admin, admins),
     };
     return await getPrestigePadTx_UpdateBaseUnitPriceRange(prestigePad, deployer, params, txConfig);
+}
+
+// whitelist
+export async function getPrestigePadTx_Whitelist(
+    prestigePad: PrestigePad,
+    deployer: SignerWithAddress,
+    params: WhitelistParams,
+    txConfig = {}
+): Promise<ContractTransaction> {
+    return prestigePad.connect(deployer).whitelist(params.accounts, params.isWhitelisted, params.signatures, txConfig);
+}
+
+export async function getPrestigePadTxByInput_Whitelist(
+    prestigePad: PrestigePad,
+    deployer: SignerWithAddress,
+    paramsInput: WhitelistParamsInput,
+    admin: Admin,
+    admins: any[],
+    txConfig = {}
+): Promise<ContractTransaction> {
+    const params: WhitelistParams = {
+        ...paramsInput,
+        signatures: await getWhitelistSignatures(prestigePad, paramsInput, admin, admins),
+    };
+    return await getPrestigePadTx_Whitelist(prestigePad, deployer, params, txConfig);
 }
 
 // initiateLaunch
@@ -245,7 +272,8 @@ export async function getPrestigePadTx_ScheduleNextRound(
             params.cashbackCurrencies,
             params.cashbackDenominations,
             params.raiseStartsAt,
-            params.raiseDuration,
+            params.privateRaiseDuration,
+            params.publicRaiseDuration,
             txConfig
         );
 }
@@ -265,7 +293,8 @@ export async function getCallPrestigePadTx_ScheduleNextRound(
             params.cashbackCurrencies,
             params.cashbackDenominations,
             params.raiseStartsAt,
-            params.raiseDuration,
+            params.privateRaiseDuration,
+            params.publicRaiseDuration,
         ]),
         txConfig
     );

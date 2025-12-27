@@ -374,8 +374,6 @@ describe('1.6. GovernanceHub', async () => {
             );
         }
 
-        let timestamp = (await time.latest()) + 10;
-
         if (!skipListGovernorTokens) {
             await callTransaction(governor.setZone(1, zone));
             await callTransaction(governor.setCustodian(1, custodian1.address));
@@ -389,7 +387,9 @@ describe('1.6. GovernanceHub', async () => {
             await callTransaction(governor.connect(voter2).mint(2, ethers.utils.parseEther('300')));
         }
 
+        
         if (addSampleProposals) {
+            let timestamp = (await time.latest()) + 10;
             await time.setNextBlockTimestamp(timestamp);
             await callTransaction(
                 getGovernanceHubTxByInput_Propose(
@@ -594,7 +594,7 @@ describe('1.6. GovernanceHub', async () => {
         }
 
         if (confirmExecutionSampleProposals) {
-            timestamp = (await governanceHub.getProposal(1)).due;
+            let timestamp = (await governanceHub.getProposal(1)).due;
             await time.setNextBlockTimestamp(timestamp);
             await callTransaction(
                 getGovernanceHubTx_Confirm(governanceHub, manager, {
@@ -612,7 +612,7 @@ describe('1.6. GovernanceHub', async () => {
         }
 
         if (rejectExecutionSampleProposals) {
-            timestamp = (await governanceHub.getProposal(1)).due;
+            let timestamp = (await governanceHub.getProposal(1)).due;
             await time.setNextBlockTimestamp(timestamp);
             await callTransaction(
                 getGovernanceHubTx_RejectExecution(governanceHub, operator1, {
@@ -1248,10 +1248,10 @@ describe('1.6. GovernanceHub', async () => {
             await expect(tx1)
                 .to.emit(governanceHub, 'NewProposal')
                 .withArgs(
-                    paramsInput1.governor,
                     1,
-                    proposer1.address,
+                    paramsInput1.governor,
                     paramsInput1.tokenId,
+                    proposer1.address,
                     paramsInput1.operator,
                     paramsInput1.uuid,
                     paramsInput1.rule,
@@ -1310,10 +1310,10 @@ describe('1.6. GovernanceHub', async () => {
             await expect(tx2)
                 .to.emit(governanceHub, 'NewProposal')
                 .withArgs(
-                    paramsInput2.governor,
                     2,
-                    proposer2.address,
+                    paramsInput2.governor,
                     paramsInput2.tokenId,
+                    proposer2.address,
                     paramsInput2.operator,
                     paramsInput2.uuid,
                     paramsInput2.rule,

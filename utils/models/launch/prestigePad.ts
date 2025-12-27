@@ -13,6 +13,16 @@ export interface UpdateBaseUnitPriceRangeParams extends UpdateBaseUnitPriceRange
     signatures: string[];
 }
 
+// whitelist
+export interface WhitelistParamsInput {
+    accounts: string[];
+    isWhitelisted: boolean;
+}
+
+export interface WhitelistParams extends WhitelistParamsInput {
+    signatures: string[];
+}
+
 // initiateLaunch
 export interface InitiateLaunchParamsInput {
     initiator: string;
@@ -125,7 +135,8 @@ export interface ScheduleNextRoundParams {
     cashbackCurrencies: string[];
     cashbackDenominations: BigNumber[];
     raiseStartsAt: number;
-    raiseDuration: number;
+    privateRaiseDuration: number;
+    publicRaiseDuration: number;
 }
 
 // cancelCurrentRound
