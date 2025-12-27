@@ -331,7 +331,7 @@ IEstateTokenizer {
      *          Name            Description
      *  @param  requestId       Request identifier.
      *  @param  account         EVM address.
-     *  @return isWhitelisted   Whether the account is whitelisted for the private raise of the request.
+     *  @return isWhitelisted   Whether the account is whitelisted for the private sale of the request.
      */
     function isWhitelistedFor(
         uint256 requestId,
@@ -341,7 +341,7 @@ IEstateTokenizer {
     /**
      *          Name            Description
      *  @param  account         EVM address.
-     *  @return isWhitelisted   Whether the account is whitelisted globally for private raises.
+     *  @return isWhitelisted   Whether the account is whitelisted globally for private sales.
      */
     function isWhitelisted(
         address account
